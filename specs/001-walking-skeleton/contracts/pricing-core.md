@@ -30,6 +30,6 @@ export function computePrice(input: PriceInput): PriceResult;
 | 100 | 1 | 20 | 50 | 2.00 | 3.00 |
 | 100 | 1 | 0  | 50 | 0.00 | 0.00 |
 | 100 | 1 | 20 | 0  | 2.00 | 2.00 |
-| 201.11 | 2 | 158 | 30 | 15.89 (±0.01) | 20.66 (±0.01) |
+| 201.11 | 2 | 158 | 30 | 15.89 (±0.01) | 20.65 (±0.01) |
 | any | 0 | any | any | → throws ValidationError | — |
 | negative any | — | — | — | → throws ValidationError | — |

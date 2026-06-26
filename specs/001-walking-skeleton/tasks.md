@@ -14,7 +14,7 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 
 ## Phase 1: Setup (Shared Infrastructure)
 
-- [ ] T001 Create monorepo workspace at repo root (npm workspaces): root `package.json` with workspaces
+- [x] T001 Create monorepo workspace at repo root (npm workspaces): root `package.json` with workspaces
       `["packages/*","apps/*"]`, base `tsconfig.base.json`.
 - [ ] T002 [P] Configure lint/format/type-check at root (ESLint + Prettier + tsc) with scripts `lint`,
       `format:check`, `typecheck` in root `package.json`.
@@ -29,7 +29,7 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 
 **⚠️ Must complete before user stories.**
 
-- [ ] T005 [P] Scaffold `packages/pricing-core` (package.json, tsconfig, Vitest config) — empty module + test stub.
+- [x] T005 [P] Scaffold `packages/pricing-core` (package.json, tsconfig, Vitest) — module + tests.
 - [ ] T006 [P] Scaffold `apps/web` (Vite + React + TS, `vite-plugin-pwa`, Vitest, Playwright config).
 - [ ] T007 [P] Scaffold `backend/app` (FastAPI app, public `GET /health` → `{status:"ok"}`, pytest config).
 - [ ] T008 Firebase wiring (env-driven, no secrets committed): web client init in
@@ -67,19 +67,19 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 **Independent Test**: Inputs → results match the formula; offline recompute still works.
 
 ### Tests for User Story 2 (MANDATORY — write first, must FAIL) ⚠️
-- [ ] T015 [P] [US2] Vitest numeric cases for `computePrice` (full table incl. R$2,00/R$3,00 and edge cases:
-      grams=0, markup=0, rollWeight=0→throws, negatives→throws) in
-      `packages/pricing-core/tests/computePrice.test.ts`.
+- [x] T015 [P] [US2] Vitest numeric cases for `computePrice` (full table incl. R$2,00/R$3,00 and edge cases:
+      grams=0, markup=0, rollWeight=0→throws, negatives→throws, NaN→throws) in
+      `packages/pricing-core/tests/computePrice.test.ts`. ✅ 7/7 green.
 - [ ] T016 [P] [US2] Playwright spec: enter sample inputs → `R$ 2,00` / `R$ 3,00`; rollWeight=0 → friendly
       pt-BR message in `apps/web/tests/pricing.spec.ts`.
 
 ### Implementation for User Story 2
-- [ ] T017 [US2] Implement `computePrice` (formula + `ValidationError`) in
-      `packages/pricing-core/src/computePrice.ts` per `contracts/pricing-core.md`.
+- [x] T017 [US2] Implement `computePrice` (formula + `ValidationError`) in
+      `packages/pricing-core/src/index.ts` per `contracts/pricing-core.md`. ✅ test-first (red→green).
 - [ ] T018 [US2] Build the calculator screen (4 inputs, 2 results, pt-BR copy, BRL formatting) consuming
       `pricing-core` in `apps/web/src/features/pricing/`.
 - [ ] T019 [US2] Place the calculator behind the auth guard (reachable only when signed in).
-- [ ] T020 [US2] Visual homologation by `qa-produto` (calculator + offline recompute) via MCP.
+- [ ] T020 [US2] Visual homologation by `qa-produto` (calculator + offline recompute + **renders without breakage at ≤414px viewport**, SC-005) via MCP.
 
 **Checkpoint**: US1 + US2 both work independently → demoable MVP.
 
