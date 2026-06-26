@@ -1,0 +1,38 @@
+# --- Secrets / environment ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Claude Code local state (keep skills/ and agents/, ignore local settings) ---
+.claude/settings.local.json
+.claude/.credentials*
+.claude/*.local.json
+
+# --- Node ---
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-error.log*
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
