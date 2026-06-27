@@ -13,12 +13,13 @@ Cross-cutting consensus (raised by ≥3 agents): **CI that actually runs tests +
 - SOON: product roadmap/backlog artifact; cadence/close ritual.
 - LATER: commit cadence/convention; estimation & WIP.
 
-## 2. Product & Business Rules (Product Owner)
-- NOW: **Freemium boundary** (free vs premium matrix) — Principle IV is unenforceable until this exists.
-- NOW: Roadmap epics sequence (E1 full pricing → E2 catalog CRUD+persistence → E3 BOM → E4 history/export → E5 marketplace sim → E6 billing → E7 Android).
-- NOW: Subscription tiers/prices/periods + free-tier quotas (the integers the entitlement check enforces).
+## 2. Product & Business Rules (Product Owner) — DECIDED 2026-06-26 → docs/product/business-rules.md
+- DONE: **Freemium boundary** = compute free / persistence & scale premium (R2.1=B + quota lever).
+- DONE: Roadmap epics sequence E1→E7 as proposed (R2.3=A); entitlement scaffolding lands at E2, purchase at E6.
+- DONE: Tiers = Free + single Premium with monthly & annual periods (R2.2=B). Quota integers PROVISIONAL (finalize at E2).
+- DONE: Pricing in R$ deferred until validated with real sellers (R2.4=A) — set before E6.
 - SOON: free trial policy; MVP/launch definition; catalog ownership (user-scoped); acceptance-criteria standard; KPIs.
-- SOON (flagged premise, ~55%): willingness-to-pay unvalidated — validate with real sellers before locking prices.
+- OPEN PREMISE (~55%): willingness-to-pay still unvalidated — validate with real sellers before locking prices (R2.4 defers it).
 - LATER: user roles (single owner for launch); onboarding/first-run + starter catalog seed.
 
 ## 3. Architecture
