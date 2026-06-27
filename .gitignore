@@ -4,6 +4,12 @@
 !.env.example
 *.pem
 *.key
+# Firebase / Google service-account keys — NEVER commit
+*serviceAccount*.json
+*service-account*.json
+firebase-adminsdk*.json
+*-credentials.json
+gcp-*.json
 
 # --- Claude Code local state (keep skills/ and agents/, ignore local settings) ---
 .claude/settings.local.json
