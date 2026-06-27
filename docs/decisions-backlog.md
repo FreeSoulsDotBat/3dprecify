@@ -22,11 +22,13 @@ Cross-cutting consensus (raised by ≥3 agents): **CI that actually runs tests +
 - OPEN PREMISE (~55%): willingness-to-pay still unvalidated — validate with real sellers before locking prices (R2.4 defers it).
 - LATER: user roles (single owner for launch); onboarding/first-run + starter catalog seed.
 
-## 3. Architecture
-- NOW: API contract source of truth = OpenAPI → generated TS types; pick ONE wire casing (snake_case JSON ↔ camelCase TS). Casing already drifts (`costPerRoll` vs `cost_per_roll`).
-- NOW: ADR template/location/index (same as 1).
-- NOW: Error model — stable error CODES + envelope (`{error:{code,message,details}}`); decide throw-vs-Result in TS core. Needed for FR-011 friendly msgs + i18n.
-- SOON: pricing-core packaging (build ESM/CJS + d.ts) + cross-language parity guard (golden-vector fixture for Python); monorepo task runner (npm workspaces + Turbo?); i18n architecture; config/secrets/env matrix (separate Firebase project per env); observability (structured logs, Sentry); entitlement architecture (see Security GAP2).
+## 3. Architecture — partly DECIDED 2026-06-27 → ADR-0002
+- DONE: API contract source of truth = server-authoritative OpenAPI (FastAPI) → codegen TS client (R3.1=A).
+- DONE: Wire casing = snake_case JSON + camelCase TS via codegen/orval (R3.2=A).
+- DONE: ADR template/location/index (R1 → docs/adr/).
+- DONE: Error model = `{error:{code,message,details,correlation_id}}` + stable code enum (R3.3); pricing-core keeps enriched typed `throw`, zod at web edge (R3.4).
+- DONE: Observability = structured JSON logs + correlation_id middleware + Sentry (R3.3 add-on, ADR-0002 §5).
+- SOON: pricing-core packaging (build ESM/CJS + d.ts) + cross-language parity guard (golden-vector fixture for Python); monorepo task runner (npm workspaces + Turbo?); i18n architecture; config/secrets/env matrix (separate Firebase project per env); entitlement architecture (see Security GAP2).
 - LATER: offline persistence/sync & conflict strategy; dependency/version policy.
 
 ## 4. Data / Database

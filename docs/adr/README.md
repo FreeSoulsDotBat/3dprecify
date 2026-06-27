@@ -8,7 +8,8 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | ADR | Title | Status |
 |-----|-------|--------|
 | [0001](0001-development-process.md) | Development process & meta-plan | Accepted |
+| [0002](0002-api-contract-error-observability.md) | API contract, wire casing, error model & observability | Accepted |
 
-## Pending (to be written)
-- ADR-0002 — Payments: Google Play Billing vs Mercado Pago recurring (blocking before any payment code).
-- ADR-0003 — Entitlement enforcement design (offline + TTL vs per-request).
+## Pending (to be written; numbers assigned when authored)
+- Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).
+- Entitlement enforcement design — offline + TTL vs per-request (lands at E2).
