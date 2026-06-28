@@ -100,6 +100,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | C1.6 | Versioning | **`/api/v1` prefix + versioned folders from day one** | (85%) |
 
 ## Round T1 — Testing strategy
+**DECIDED 2026-06-28:** T1.1=V8 coverage ≥80%/≥70% branch, pricing 100% (adopted) · T1.2=**polyfactory** · T1.3=Firebase emulator + @nearform/playwright-firebase (adopted) · T1.4=Vitest4 component + Playwright page, pinned runner image (adopted) · T1.5=Playwright MCP + Chrome DevTools MCP non-gating (adopted) · T1.6=0 local/2 CI retries + quarantine (adopted) · npm-audit=**Vitest 2→4**, applied during the pnpm toolchain setup (not a throwaway npm upgrade now).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | T1.1 | FE coverage | **V8 (AST)**, lines/stmts ≥80% branches ≥70%, pricing 100% | (80%) |
@@ -111,6 +113,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | — | npm-audit | resolve via **vitest 2→4** here | Vitest 4.0 GA Oct-2025 |
 
 ## Round D1 — Data layer irreversibles (lock before E2 model)
+**DECIDED 2026-06-28:** D1.1=**SQLAlchemy 2.0** · D1.2=**psycopg3** · D1.3=**Numeric(18,6) unit / Numeric(12,2) settled, Decimal, ISO-4217 col, ROUND_HALF_UP** · D1.4=**UUIDv7 native uuid (uuid-utils)**.
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | D1.1 | ORM | **SQLAlchemy 2.0** / SQLModel / raw asyncpg | SA 2.0 (80%) |
@@ -119,6 +123,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | D1.4 | PK | **UUIDv7 native uuid** (uuid-utils) | UUIDv4 only for must-not-leak tokens (82%) |
 
 ## Round D2 — Data layer patterns (E2)
+**DECIDED 2026-06-28:** D2.1=**defense-in-depth phased** (app-layer owner_uid helper first + RLS backstop later; owner_uid on every owned table) · D2.2=**deleted_at + partial unique idx + append-only history for money/saved-calcs** · D2.3=Alembic async+naming_convention+date-prefixed (adopted) · D2.4=hybrid seeding (adopted).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | D2.1 | Tenant isolation | **defense-in-depth phased** (app-layer helper first + RLS backstop) / app-only / RLS-only | owner_uid on EVERY table from row zero (75%) |
@@ -126,7 +132,9 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | D2.3 | Migrations | **Alembic async template + naming_convention + date-prefixed + manual review** | (high) |
 | D2.4 | Seeding | **hybrid** (Alembic bulk_insert enums + idempotent ON CONFLICT scripts gated APP_ENV + polyfactory) | (78%) |
 
-## Round S1 — Secrets & config
+## Rounds S1 + X — Secrets, config, deploy
+**DECIDED 2026-06-28:** X.1=**Google Cloud Run** (backend) · X.2=**Firebase Hosting** (SPA) · X.3=PWA Capacitor-ready now, `cap add android` post-MVP (adopted) · S1.1=**WIF keyless CI auth** (adopted) · S1.2=**ADC keyless** (Cloud Run, no downloaded key) · S1.3=**GitHub Environments now → GCP Secret Manager later** · S1.4=dev+prod, 2 Firebase projects (adopted) · S1.5=zod FE env validation (adopted) · S1.6=pydantic-settings + SecretStr (adopted) · S1.7=gitleaks + trufflehog + rotation-first (adopted).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | S1.1 | CI auth to Google | **WIF (keyless, google-github-actions/auth@v3)** / SA-key JSON | WIF (92%) |
