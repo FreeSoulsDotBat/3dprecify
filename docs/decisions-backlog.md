@@ -56,9 +56,13 @@ Cross-cutting consensus (raised by ≥3 agents): **CI that actually runs tests +
 - LATER: iconography (Lucide/Phosphor — Claude Design call); empty-catalog onboarding (E2).
 - FLAGS: wordmark "TRUTHS'S FORGE" typo (assume "TRUTH'S FORGE"); flowchart TF.txt = store, not Precifica3D.
 
-## 6b. Frontend defaults taken (deferral rule, low risk) — applied at implementation
-- React Router; Context for session; typed fetch client (token + 401 interceptor); ESLint+Prettier flat config; Vitest.
-- i18n library DEFERRED → TD-001 (pt-BR typed messages module meanwhile).
+## 6b. Frontend/Backend technical decisions — OPEN (NO inference; decide WITH Jonatan)
+**Directive (Jonatan, 2026-06-28):** architecture, structure, inter-application communication, and coding
+standards MUST be defined COMPLETELY via interaction with Jonatan BEFORE any implementation. **I infer NOTHING**
+in these areas. The earlier "conventional defaults taken" (React Router, Context, ESLint/Prettier, pydantic-
+settings, CurrentUser dep, CORS, Ruff+mypy, app-factory, secret path, per-env Firebase) are **RETRACTED** — each
+becomes an explicit open decision. Under research by a 10-agent internet sweep (2025-2026) → themed decision
+rounds. npm-audit (vitest 2→4) folds into the test-tooling decision.
 
 ## 8. QA / Test strategy
 - NOW: CI runs Vitest+pytest+Playwright and gates merge (today nothing enforces test-first; hook is pwsh-only, lint-only); e2e auth env = Firebase Auth emulator (real Google OAuth not automatable); visual-homologation concrete checklist (zero console.error, no failed requests, viewport set, pt-BR copy match, canonical R$2,00/R$3,00, evidence pasted); coverage targets (pricing-core 100% line/≥95% branch; backend ≥90% auth; web ≥70% logic).

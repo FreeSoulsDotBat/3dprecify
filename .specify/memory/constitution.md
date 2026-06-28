@@ -1,20 +1,19 @@
 <!--
 SYNC IMPACT REPORT
-Version change: (template) → 1.0.0
-Bump rationale: Initial ratification of the project constitution (MAJOR baseline).
-Modified principles: all placeholders replaced with concrete principles.
-Added sections:
-  - Core Principles (7 principles)
-  - Product & Platform Constraints
-  - Development Workflow & Quality Gates
-  - Governance
+Version change: 1.0.0 → 1.1.0
+Bump rationale: MINOR — added Principle VIII (Architecture Decided Before Implementation — No Inference),
+  on the project owner's explicit directive (2026-06-28) recorded in ADR-0003.
+Modified principles: none redefined; one appended (VIII).
+Added sections: Core Principles now lists 8 principles.
 Removed sections: none.
 Templates requiring updates:
-  - .specify/templates/plan-template.md ........ ✅ updated (Constitution Check now enumerates 7 gates)
-  - .specify/templates/spec-template.md ......... ✅ compatible (no mandatory section change)
-  - .specify/templates/tasks-template.md ........ ✅ updated (tests made MANDATORY + visual test added;
-                                                   removed "tests OPTIONAL" language that violated Principle III)
-Deferred TODOs: none.
+  - .specify/templates/plan-template.md ........ ⚠ pending: add an 8th Constitution-Check gate for Principle VIII.
+  - .specify/templates/spec-template.md ......... ✅ compatible.
+  - .specify/templates/tasks-template.md ........ ✅ compatible.
+Deferred TODOs: update plan-template Constitution Check to 8 gates at next plan run.
+
+Prior report (→ 1.0.0): initial ratification (7 principles + constraints + workflow + governance);
+plan-template updated to 7 gates; tasks-template made tests MANDATORY + visual.
 -->
 
 # 3dprecify (Precifica3D) Constitution
@@ -66,6 +65,17 @@ analyze → implement` is mandatory. `clarify`, `checklist`, `analyze`, and the 
 GATES that MUST BLOCK progress on violation or unresolved ambiguity. The spec is the source of truth; code
 conforms to the spec, never the reverse.
 
+### VIII. Architecture Decided Before Implementation — No Inference (NON-NEGOTIABLE)
+Decisions about **structure, architecture, inter-application communication, and coding standards** MUST be
+defined COMPLETELY and explicitly — through interaction with the project owner (Jonatan) — BEFORE any
+implementation that depends on them. Agents MUST NOT infer, assume, or silently default these choices:
+build/tooling, package manager and monorepo orchestration, project/module structure and boundaries, state
+management, styling/UI system and design tokens, API contract & codegen tooling, data-layer/ORM/migration
+patterns, secrets/config strategy, and lint/format/type/test conventions. When any such choice is unresolved,
+work STOPS at that boundary and the options are surfaced (≥3, with confidence) for the owner to decide; the
+outcome is recorded (ADR or a decisions doc). Product, UX, and content choices MAY use reasonable conventions;
+the four areas named above MAY NOT.
+
 ## Product & Platform Constraints
 
 - **Codename**: `3dprecify`. **Public name (initial)**: Precifica3D. Market: Brazil first, international next.
@@ -99,4 +109,4 @@ principle/section; PATCH: clarification). Every quality gate MUST verify complia
 blocks the increment until resolved or formally waived by an approved ADR. Runtime agent guidance lives in
 `CLAUDE.md` and agent files under `.claude/agents/`, which MUST stay consistent with these principles.
 
-**Version**: 1.0.0 | **Ratified**: 2026-06-26 | **Last Amended**: 2026-06-26
+**Version**: 1.1.0 | **Ratified**: 2026-06-26 | **Last Amended**: 2026-06-28
