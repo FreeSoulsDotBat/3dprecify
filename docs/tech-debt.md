@@ -12,7 +12,7 @@ choices with low change-risk (≤~20%) are taken inline and noted in the relevan
 | ID | Deferred decision | change % | Trigger (when to decide) | Placeholder used now |
 |----|-------------------|----------|--------------------------|----------------------|
 | TD-001 | i18n architecture (full i18n library) | 40% | Internationalization epic (post-launch) | Typed pt-BR messages module keyed by error `code`; no i18n lib in 001 |
-| TD-002 | Visual design system / tokens / styling lib | 85% | Claude Design handoff (UI is theirs; we own UX) | Minimal utilitarian CSS for 001; UX (flows, states, terminology, a11y) defined by us |
+| ~~TD-002~~ | ~~Visual design system / tokens / styling~~ | — | **Being addressed now (2026-06-27)**: co-authoring the Claude Design prompt with Jonatan's vision + UX decided here; final UI rendered by Claude Design | resolved-in-progress |
 | TD-003 | Deploy target (SPA host + FastAPI host) | 35% | 001 deploy task (devops step) | Pick cheapest free-tier in research; revisit if limits hit |
 | TD-004 | DB physical schema / money repr / multi-tenancy / migrations | 70% | E2 spec (catalog/persistence) | None — 001 is stateless, no DB |
 | TD-005 | Entitlement enforcement design (offline+TTL vs per-request) | 50% | E2 + its ADR | None — 001 has no premium surface |

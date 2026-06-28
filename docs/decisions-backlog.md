@@ -49,11 +49,16 @@ Cross-cutting consensus (raised by ≥3 agents): **CI that actually runs tests +
 - SOON: styling = Tailwind + tokens; component lib = shadcn/ui; forms = RHF + zod (schema aligned with pricing-core); PWA data layer (IndexedDB/Dexie when persistence lands); loading/empty/error patterns + error boundary + WCAG 2.2 AA + jsx-a11y; perf/bundle budget (lazy-load Firebase); typed/validated client env (zod).
 - LATER: offline entitlement-token handling.
 
-## 7. UX / UI rules
-- NOW: design tokens (needs Jonatan's brand hue) — color/neutral ramp/semantic/type scale (tabular numerals)/spacing/radii; handoff artifact format to Claude Design (markdown UX packet, Figma-free); component STATES matrix (loading/empty/error/success/disabled); currency/number/unit input UX (R$ prefix, unit suffix, comma decimal, inputmode); a11y target WCAG 2.2 AA (contrast 4.5:1, 44px targets, focus).
-- NOW(terminology trap): pt-BR term for markup — sellers say "margem" but markup-over-cost ≠ margin; disambiguate ("Markup (margem sobre o custo)").
-- SOON: light/dark policy (light v1, themeable tokens); breakpoints/grid; nav model (bottom tabs mobile / sidebar desktop); PWA install + offline UX; copy/tone glossary.
-- LATER: iconography (Lucide/Phosphor); empty-catalog onboarding.
+## 7. UX / UI rules — DECIDED 2026-06-28 → docs/product/ux-decisions.md + docs/design/claude-design-brief.md
+- DONE: brand identity sourced from Truth's Forge manual/mockups (palette #7800ff/#f7931e/#15bddc + neutros, Peace Sans/Lilita One/Inter, logo+grafismos) → handoff = Claude Design brief.
+- DONE: UX foundations — bottom-tab nav, single-screen live-recompute + progressive disclosure, full breakdown result (varejo/atacado), catalog-driven inputs (UX1-4 = A/A/A/A).
+- DONE: states matrix; currency/number input UX (R$/comma/unit/inputmode/tabular); WCAG 2.2 AA; markup terminology "Markup (margem sobre o custo)"; light v1 + dark 2nd theme; copy tone direct/technical-cordial.
+- LATER: iconography (Lucide/Phosphor — Claude Design call); empty-catalog onboarding (E2).
+- FLAGS: wordmark "TRUTHS'S FORGE" typo (assume "TRUTH'S FORGE"); flowchart TF.txt = store, not Precifica3D.
+
+## 6b. Frontend defaults taken (deferral rule, low risk) — applied at implementation
+- React Router; Context for session; typed fetch client (token + 401 interceptor); ESLint+Prettier flat config; Vitest.
+- i18n library DEFERRED → TD-001 (pt-BR typed messages module meanwhile).
 
 ## 8. QA / Test strategy
 - NOW: CI runs Vitest+pytest+Playwright and gates merge (today nothing enforces test-first; hook is pwsh-only, lint-only); e2e auth env = Firebase Auth emulator (real Google OAuth not automatable); visual-homologation concrete checklist (zero console.error, no failed requests, viewport set, pt-BR copy match, canonical R$2,00/R$3,00, evidence pasted); coverage targets (pricing-core 100% line/≥95% branch; backend ≥90% auth; web ≥70% logic).
