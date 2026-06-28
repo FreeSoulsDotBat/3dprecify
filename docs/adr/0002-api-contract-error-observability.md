@@ -14,10 +14,12 @@ context must be rich enough for an AI to debug from.
 ## Decision
 1. **Contract source of truth (R3.1 = A)** — FastAPI Pydantic models → auto-generated **OpenAPI is THE
    contract**. The web generates a typed client from it; CI guards drift (regenerate + diff fails the build).
-2. **Wire casing (R3.2 = A)** — JSON wire is **snake_case** (Python-idiomatic); the web codegen maps it to
-   **camelCase TS**. Tooling: **orval** (or openapi-typescript + a casing transform) at the generated-client
-   boundary — never a hand-written mapping. Trade-off accepted vs option B (camelCase wire, zero mapping):
-   Jonatan chose snake_case wire; the mapping lives only in generated code.
+2. **Wire casing (R3.2 = B — REVISED 2026-06-28)** — JSON wire is **camelCase**, emitted by FastAPI via Pydantic
+   `alias_generator=to_camel` + `populate_by_name=True` (`model_dump(by_alias=True)`). This needs **zero** runtime
+   case-mapping and matches `pricing-core`/TS directly. *Revision rationale:* the codegen research (C1 round)
+   showed no tool transforms case "for free" — the original R3.2=A (snake wire) would have required a runtime
+   Orval transformer; B removes that layer entirely. Codegen tool = **Orval + TanStack Query v5** (C1.1), now
+   without a snake→camel transformer; wrap its client to throw on 4xx/5xx.
 3. **Error model (R3.3)** — chosen for max AI-debuggability. Single envelope, identical shape everywhere:
    ```json
    {
@@ -54,8 +56,8 @@ context must be rich enough for an AI to debug from.
 
 ## Options considered (confidence = "best choice" likelihood)
 - R3.1: **A server-authoritative 75%** (chosen) · C TS-first 60% · B hand-written OpenAPI 55%.
-- R3.2: **A snake wire + camel TS 55%** (chosen by Jonatan) · B camelCase wire 75% (lead's rec, not taken) ·
-  C snake everywhere 35%.
+- R3.2: A snake wire + transformer 55% · **B camelCase wire 75% (REVISED to B 2026-06-28** after codegen-cost
+  research — no tool transforms case for free; B = zero mapping) · C snake everywhere 35%.
 - R3.3: **A custom envelope + codes + correlation_id** (chosen) · B RFC 9457 (too verbose) · C `{detail}` (no
   stable code → fails FR-011/debuggability).
 - R3.4: **A enriched typed throw + zod at the web edge** (chosen) · C throw+zod-in-core (weight in offline path)
@@ -64,9 +66,10 @@ context must be rich enough for an AI to debug from.
 ## Consequences
 - Positive: uniform error shape across core + API; every failure carries a `correlation_id` → log/trace; AI/human
   debugging gets structured, linkable context; OpenAPI single source prevents contract drift.
-- Trade-offs: a snake↔camel mapping step exists via codegen (R3.2=A, accepted over zero-mapping B); Sentry is a
-  third-party dep (free tier, PII-scrubbed); observability lands early (small cost now, large debug payoff).
+- Trade-offs: camelCase wire (R3.2=B) means Pydantic models carry `alias_generator`/`populate_by_name` config
+  (minor) but need NO runtime case-mapping; Sentry is a third-party dep (free tier, PII-scrubbed); observability
+  lands early (small cost now, large debug payoff).
 - Follow-ups: correlation-id middleware + structured logger when the backend lands; orval codegen + CI drift
   check when the web consumes the API; Sentry init + CI source-map upload (devops); shared **error-code enum
   module** (seed list above) consumed by both pricing-core and the API. Align `001` `contracts/api.md` response
-  fields to snake_case at implementation.
+  fields to **camelCase** (R3.2=B) at implementation.

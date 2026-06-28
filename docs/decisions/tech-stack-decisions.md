@@ -15,6 +15,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 > - **Branch protection** as a hard gate needs GitHub Pro on a private repo (ADR-0001) — currently convention-only.
 
 ## Round F1 — Monorepo foundation (highest cost-to-change; lock first)
+**DECIDED 2026-06-28:** F1.1=**pnpm** (+catalogs for single React/Vite) · F1.2=**lefthook** · F1.3=**none now → Turborepo later** · F1.4=**Node 24 LTS** · F1.5=Vite `base:'./'` + single-React dedupe (adopted).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | F1.1 | Package manager | npm / **pnpm** / bun | pnpm — strict deps + catalogs (single-React for Capacitor) (70%) |
@@ -24,6 +26,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | F1.5 | Vite/Capacitor readiness | set `base:'./'` + single-React dedupe from day one; `cap add android` post-MVP | (80–88%) |
 
 ## Round F2 — Frontend styling & design system
+**DECIDED 2026-06-28:** F2.1=**Tailwind v4** · F2.2=**shadcn/ui (Radix, Base UI fallback)** · F2.3=**CSS vars now → Style Dictionary later** · F2.4=**data-theme + CSS-var token sets** · F2.5=self-host WOFF2 (adopted; GATE Peace Sans license) · F2.6=WCAG 2.2 AA + CI contrast (adopted; GATE palette contrast).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | F2.1 | Styling engine | **Tailwind v4** / Panda / vanilla-extract / CSS Modules | Tailwind v4 — zero-runtime, CSS-var tokens, AI-reliable (82%) |
@@ -34,6 +38,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | F2.6 | A11y enforcement | primitives + CI axe/Lighthouse + token contrast check | (83%) (GATE: verify #7800ff/#f7931e/#15bddc contrast both themes) |
 
 ## Round F3 — Frontend code architecture & standards
+**DECIDED 2026-06-28 (partial):** F3.2=**eslint-plugin-boundaries + dependency-cruiser (CI) + TS project refs** · F3.3=pricing-core pure-TS package (adopted) · F3.4=**no internal barrels** · F3.5=hooks+composition/headless (adopted) · F3.6=**kebab-case all files** · F3.7=max-lines guardrails (adopted). F3.1=**FSD-Lite topology + Atomic Design as taxonomy inside `shared/ui` + each slice's `ui` segment** (shadcn = atoms/molecules; atomic levels are naming vocabulary, NOT top-level folders/boundaries). No-barrel public API via eslint-plugin-boundaries entry-point rules (D2), consistent with F3.4. Layers: app>pages>widgets>features>entities>shared>pricing-core. (confirmed by Jonatan 2026-06-28; 78%)
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | F3.1 | Folder methodology | **bulletproof-react feature-based** (shared→features→app) / full FSD v2.1 / ad-hoc | feature-based + FSD rules, migration path to FSD (75%) |
@@ -45,6 +51,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | F3.7 | God-component guardrail | soft ESLint max-lines + "extract on 2nd responsibility" | (70%) |
 
 ## Round F4 — Frontend state, data, forms
+**DECIDED 2026-06-28:** F4.1=**Zustand v5** · F4.2=**TanStack Query v5** · F4.3=RHF v7 + Zod v4 (adopted; reuse zod as pricing-core guard) · F4.4=**onIdTokenChanged → Zustand store** · F4.5=**hybrid IndexedDB pending-sync record + TanStack transport**.
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | F4.1 | Client state | **Zustand v5** / Jotai / Redux Toolkit / Context | Zustand (tiny, store-first) (90%) |
@@ -54,6 +62,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | F4.5 | Offline-write/sync (E2) | **Hybrid: own IndexedDB pending-sync record** + TanStack transport | not paused-mutations-as-sole-durability on a paid tier (72%) |
 
 ## Round B1 — Backend architecture (FastAPI)
+**DECIDED 2026-06-28:** B1.1=**domain-modular → modular-monolith + import-linter** · B1.2=**thin-selective repository** · B1.3=N/A (no Python pricing engine; formula canonical in TS) · B1.4=**Depends now → container later** · B1.5=firebase-admin in run_in_threadpool (adopted) · B1.6=central exception handlers + structlog + asgi-correlation-id + Sentry (adopted) · B1.7=**strict Pydantic DTO ≠ SQLAlchemy ORM** · B1.8=create_app() factory + lifespan + pydantic-settings (adopted).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | B1.1 | Project structure | **domain-modular** `src/<domain>/...` → modular-monolith+import-linter / layered / hexagonal | domain-modular now (80%) |
@@ -66,6 +76,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | B1.8 | App wiring | **create_app() factory + lifespan + pydantic-settings via Depends** | (90%) |
 
 ## Round B2 — Backend tooling & quality gate
+**DECIDED 2026-06-28:** B2.1=Ruff lint+format (adopted) · B2.2=**basedpyright strict** (ty as fast local until 1.0) · B2.3=single uv package (adopted) · B2.4=**pytest + pytest-asyncio auto + httpx AsyncClient** · B2.5=**coverage ratchet + ~100% pricing, branch=true** · B2.6=CI gate job + uv sync --locked + lefthook mirror + anti--no-verify (adopted; hard block pending GitHub Pro).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | B2.1 | Linter/formatter | **Ruff (lint+format)** / black+isort+flake8 | Ruff, select E/W/F/I/B/C4/UP/N/S/SIM/RUF (95%) |
@@ -76,6 +88,8 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | B2.6 | Enforcement | **CI required gate job + `uv sync --locked` + lefthook mirror + anti---no-verify guard** | (92%) |
 
 ## Round C1 — API contracts & communication (extends ADR-0002)
+**DECIDED 2026-06-28:** C1.1=**Orval + TanStack Query v5** (throw-on-4xx/5xx wrapper) · C1.2=**B camelCase wire** (Pydantic alias_generator — REVISES ADR-0002 R3.2 A→B; zero mapping) · C1.3=Python ErrorCode enum→TS (adopted) · C1.4=regen+git-diff drift guard (adopted) · C1.5=Schemathesis (adopted) · C1.6=`/api/v1` from day one (adopted).
+
 | ID | Decision | Options | Rec (conf) |
 |----|----------|---------|------------|
 | C1.1 | Codegen tool | **Orval + TanStack Query v5** / Hey API / openapi-typescript | Orval (only mature tool doing snake→camel + TanStack hooks); wrap to throw on 4xx/5xx (75%) |
