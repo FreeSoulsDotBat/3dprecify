@@ -20,7 +20,8 @@ Decided with Jonatan, UX round (2026-06-27/28). UI styling is **Claude Design's*
 - **Terminology:** the cost multiplier is labeled **"Markup (margem sobre o custo)"** — disambiguates the
   colloquial "margem" (sellers say margin but mean markup-over-cost). Glossary grows per epic.
 - **Numeric/currency input:** `R$` prefix, comma decimal (pt-BR), unit suffix (g, kg, kWh, h), `inputmode`
-  numeric/decimal, **tabular figures** for all money/number readouts (echoes the brand "data strip" cue).
+  numeric/decimal, **tabular figures** for all money/number readouts (Inter `tnum` — no separate monospace,
+  per the brand manual).
 - **Accessibility target:** WCAG 2.2 AA (contrast ≥4.5:1, ≥44px touch targets, visible focus, labels).
 - **Component states matrix:** every interactive surface defines loading / empty / error / success / disabled.
   Errors render the ADR-0002 envelope (`code` → pt-BR message), never a raw stack.
@@ -33,7 +34,7 @@ Decided with Jonatan, UX round (2026-06-27/28). UI styling is **Claude Design's*
 - Onboarding / first-run + starter catalog seed → E2.
 - i18n library → internationalization epic (pt-BR messages module meanwhile).
 
-## Open flags for Jonatan
-- Logo wordmark in assets reads **"TRUTHS'S FORGE"** (extra S) — digital assumes **"TRUTH'S FORGE"** unless
-  intentional.
+## Resolved / notes
+- Wordmark in digital = **"TRUTH'S FORGE"** (assets' "TRUTHS'S FORGE" is a typo → brand-debt for Jonatan's designer).
+- Numerals follow the manual: Inter tabular, **no monospace** (mockup "data strip" not in the manual).
 - `flowchart TF.txt` is the **Truth's Forge store** e-commerce flow, **not** Precifica3D — out of scope here.

@@ -38,9 +38,10 @@ Purple is the signature; orange and cyan support.
 - **Peace Sans** — display/titles and the brand name; always UPPERCASE + Bold. (Logo/headlines.)
 - **Lilita One** — secondary titles/subtitles, mostly UPPERCASE.
 - **Inter** — body, UI text, forms, labels (the web/body face).
-- **Numbers:** all money/quantity readouts use **tabular figures** (Inter `font-feature-settings: "tnum"`).
-  For hero result values and technical metadata, a clean **monospace** accent is welcome — it echoes the brand's
-  packaging "data strip" and reinforces a precise/maker feel. (Exact mono face is Claude Design's call.)
+- **Numbers:** per the manual, the type system is **Peace Sans / Lilita One / Inter — no separate monospace**.
+  Money/quantity readouts use **Inter with tabular figures** (`font-feature-settings: "tnum"`) for clean numeric
+  alignment. (The monospace "data strip" seen in some product mockups is not part of the manual's type system;
+  the manual is authoritative.)
 
 ### Logo & graphic kit
 - Logo = forge monogram (sword/blade stem + orange spark-arc + purple curved banner) + stacked wordmark
@@ -89,5 +90,5 @@ Walking skeleton (001) — two screens only, full model NOT yet present:
 - Don't bury the result; don't intimidate with all advanced fields open at once; no dark-pattern upsells.
 
 ---
-*Open items to confirm with Jonatan before finalizing: wordmark spelling ("TRUTH'S FORGE" assumed), and whether
-a monospace numeric face is desired for hero values.*
+*Confirmed with Jonatan (2026-06-28): wordmark = **"TRUTH'S FORGE"**; numerals **follow the manual** — Inter with
+tabular figures, no monospace.*
