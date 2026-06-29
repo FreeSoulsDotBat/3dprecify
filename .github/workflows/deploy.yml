@@ -1,0 +1,66 @@
+name: Deploy
+
+# ADR-0005 + ADR-0006. MANUAL only (no deploy on merge). Pick the environment; keyless via WIF.
+# develop is the intended UAT source, release the prod source — but shipping is always a deliberate trigger.
+# Each target is INERT until its GitHub Environment sets var DEPLOY_ENABLED=true and the secrets/vars below.
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Target environment
+        type: choice
+        options: [uat, prod]
+        required: true
+
+permissions:
+  contents: read
+  id-token: write # required for WIF
+
+concurrency: deploy-${{ inputs.environment }}
+
+jobs:
+  deploy:
+    name: Deploy to ${{ inputs.environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard — environment must be enabled
+        run: |
+          if [ "${{ vars.DEPLOY_ENABLED }}" != "true" ]; then
+            echo "Environment '${{ inputs.environment }}' is not enabled. Set its DEPLOY_ENABLED var to true."
+            exit 1
+          fi
+
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy backend (Cloud Run)
+        run: |
+          gcloud run deploy precifica3d-backend \
+            --source ./backend \
+            --region "${{ vars.GCP_REGION }}" \
+            --project "${{ vars.GCP_PROJECT }}" \
+            --allow-unauthenticated \
+            --set-env-vars "P3D_APP_ENV=${{ inputs.environment }},P3D_REGION=${{ vars.GCP_REGION }}"
+
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @3dprecify/web build
+
+      - name: Deploy SPA (Firebase Hosting)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_PROJECT }}
+          channelId: live

@@ -55,6 +55,11 @@ until resolved or justified in Complexity Tracking with an approved ADR.*
       introduced.
 - [ ] **VII. Spec-Driven Flow** — clarify/checklist/analyze gates accounted for; spec remains the source of
       truth.
+- [ ] **VIII. Architecture Decided Before Implementation (No Inference, NON-NEGOTIABLE)** — every structural,
+      architectural, inter-application-communication, and coding-standard choice in this plan traces to an
+      approved ADR or a recorded decision with the owner; NOTHING in these areas is inferred. Any unresolved
+      such item STOPS the plan and is surfaced as ≥3 options with confidence %, not defaulted. (Product/UX/
+      content may use conventions.)
 
 ## Project Structure
 

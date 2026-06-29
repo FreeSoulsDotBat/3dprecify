@@ -1,0 +1,11 @@
+**/node_modules/**
+**/dist/**
+**/coverage/**
+**/.venv/**
+backend/**
+pnpm-lock.yaml
+# Generated API client (Orval, A8) + the server-authoritative OpenAPI — exempt from format/lint.
+apps/web/src/shared/api/**
+contracts/openapi.json
+# Markdown is hand-authored (SDD docs, specs, ADRs) — not auto-formatted.
+**/*.md

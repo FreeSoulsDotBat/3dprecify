@@ -2,22 +2,121 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [develop, main, release]
   pull_request:
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  node:
-    name: Node (pricing-core + web)
+  frontend:
+    name: Frontend (lint · boundaries · types · coverage · build)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: npm
-      - run: npm ci
-      - name: Type-check pricing-core
-        run: npm run typecheck --workspace @3dprecify/pricing-core
-      - name: Test (all workspaces)
-        run: npm test
-  # backend (pytest/ruff/mypy) and e2e (Playwright) jobs are added when backend/ and apps/web/ land.
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm depcruise
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - run: pnpm --filter @3dprecify/web build
+
+  backend:
+    name: Backend (ruff · basedpyright · pytest · import-linter)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run basedpyright
+      - run: uv run pytest -q
+      - run: uv run lint-imports
+
+  contract-drift:
+    name: Contract drift-guard (OpenAPI + Orval) — SC-6
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen
+        working-directory: backend
+      - name: Regenerate OpenAPI + client
+        run: |
+          cd backend && PYTHONPATH=. uv run python scripts/export_openapi.py && cd ..
+          pnpm --filter @3dprecify/web gen:api
+      - name: Fail on drift
+        run: git diff --exit-code -- contracts/openapi.json apps/web/src/shared/api
+
+  e2e:
+    name: E2E smoke (Playwright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @3dprecify/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @3dprecify/web test:e2e
+
+  docker:
+    name: Backend image build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t precifica3d-backend:ci ./backend
+
+  secret-scan:
+    name: Secret scan (gitleaks + trufflehog)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks lists PR commits via the API
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --results=verified # fail only on verified secrets (avoid false positives)
+
+  # Single roll-up status for the convention-only merge gate (ADR-0001). Make THIS the required check.
+  ci-pass:
+    name: CI pass
+    runs-on: ubuntu-latest
+    needs: [frontend, backend, contract-drift, e2e, docker, secret-scan]
+    if: always()
+    steps:
+      - name: Verify all gates passed
+        run: |
+          if [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') }}" = "true" ]; then
+            echo "One or more gates failed."; exit 1
+          fi
+          echo "All gates green."

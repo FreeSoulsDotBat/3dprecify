@@ -1,0 +1,24 @@
+# pnpm workspace (ADR-0004). Backend (Python) is managed by uv, NOT a pnpm workspace.
+# The catalog pins single versions across the workspace (single React/Vite for Capacitor — added in Phase 5).
+packages:
+  - packages/*
+  - apps/web
+
+catalog:
+  typescript: ^5.9.0
+  vitest: ^4.1.0
+  # Single React + Vite across the workspace (Capacitor single-instance requirement).
+  react: ^19.2.0
+  react-dom: ^19.2.0
+  "@types/react": ^19.2.0
+  "@types/react-dom": ^19.2.0
+  vite: ^8.1.0
+
+# Deps permitted to run install/build scripts (pnpm 11 blocks them by default).
+allowBuilds:
+  # firebase/protobufjs postinstall scripts are not needed (Vite bundles the client JS).
+  "@firebase/util": false
+  protobufjs: false
+  lefthook: true
+  esbuild: true
+  unrs-resolver: true

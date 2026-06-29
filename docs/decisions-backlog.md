@@ -1,5 +1,23 @@
 # Decisions Backlog — gaps found by the 10-specialist SDD review (2026-06-26)
 
+> **⚠️ HISTORICAL SNAPSHOT (dated 2026-06-26/27).** This file is the original working agenda. It has been
+> SUPERSEDED by the authoritative records: `docs/decisions/tech-stack-decisions.md` (the ~40 decided choices),
+> the ADRs `docs/adr/0001..0004`, and `docs/decisions/audit-findings.md` (post-audit decisions G1–G4 + deferrals).
+> Where this file disagrees with those, **they win.** Known stale lines and their corrections:
+> - **§1 L9 / §3 — ADR numbering:** payments & entitlement ADRs are PENDING and UNNUMBERED. ADR-0002 = API
+>   contract/error/observability, ADR-0003 = no-inference (Principle VIII), ADR-0004 = stack. (Don't cite
+>   "ADR-0002" for payments.)
+> - **§3 L27 — wire casing:** REVISED R3.2 = **B camelCase wire** via Pydantic `alias_generator=to_camel`
+>   (ADR-0002), NOT snake_case JSON.
+> - **§4 L36 — money/percent:** **Numeric(18,6)** unit / **Numeric(12,2)** settled (not 12,4); **percentages =
+>   integer** (30 = 30%, A12), not decimal fraction.
+> - **§4 L37 — tenancy column:** `owner_uid` (Firebase uid), not `owner_id`.
+> - **§4 L40 / §3 — ORM:** **DECIDED** = SQLAlchemy 2.0 + psycopg3 + Alembic (ADR-0004), not "LATER".
+> - **§6 L48 — frontend triad:** RETRACTED (see §6b) and now decided: router = **TanStack Router** (A1), state =
+>   **Zustand v5** (not Context), format = **Prettier + prettier-plugin-tailwindcss** (A2), React **19** (A3).
+> - **§5/§10 — CORS:** decided = **per-env allowlist** via pydantic-settings (A7). **Local auth:** Firebase
+>   **emulator** (A6). **Region:** southamerica-east1 (A10).
+
 Working agenda of what is NOT yet defined. Priority: **NOW** (decide before more code) · **SOON** (this/next increment) · **LATER**.
 Items get decided in themed rounds with Jonatan; architectural ones become ADRs under `docs/adr/`.
 Cross-cutting consensus (raised by ≥3 agents): **CI that actually runs tests + gates merges**, **ADR mechanism**, **error model/codes**, **API contract source + casing**, **entitlement design (offline+TTL)**, **service-account secret handling**.

@@ -1,0 +1,19 @@
+# Local git hooks (ADR-0004). Runs the SAME checks as CI (parity by construction — FR-C2.3).
+# Fast checks on commit (format + lint on staged files); heavier checks on push (types + tests).
+pre-commit:
+  parallel: true
+  commands:
+    format:
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}"
+      run: pnpm prettier --check {staged_files}
+    lint:
+      glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
+      run: pnpm eslint {staged_files}
+
+pre-push:
+  parallel: false
+  commands:
+    typecheck:
+      run: pnpm typecheck
+    test:
+      run: pnpm -r test

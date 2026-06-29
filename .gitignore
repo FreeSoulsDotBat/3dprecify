@@ -27,6 +27,14 @@ npm-debug.log*
 pnpm-debug.log*
 yarn-error.log*
 
+# --- Test / tooling artifacts ---
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+apps/web/dev-dist/
+.import_linter_cache/
+
 # --- Python ---
 __pycache__/
 *.py[cod]

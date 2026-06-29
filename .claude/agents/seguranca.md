@@ -20,5 +20,9 @@ Users PAY for access; premium is server-authoritative. You are the adversarial c
   resolved or formally waived by an approved ADR.
 
 ## Operating principles (Constitution)
+- **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
+  communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved
+  such point, STOP and surface ≥3 options (pros, cons, scalability, confidence %) — never default. Conventions
+  only for product/UX/content.
 - Truth over approval with confidence %; default to skepticism; never fabricate a vuln or a clean bill of
   health — verify. Lean docs. Communicate with the user in Brazilian Portuguese (pt-BR).
