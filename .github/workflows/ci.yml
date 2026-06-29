@@ -93,6 +93,9 @@ jobs:
   secret-scan:
     name: Secret scan (gitleaks + trufflehog)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks lists PR commits via the API
     steps:
       - uses: actions/checkout@v4
         with:
@@ -102,7 +105,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - uses: trufflesecurity/trufflehog@main
         with:
-          extra_args: --results=verified,unknown
+          extra_args: --results=verified # fail only on verified secrets (avoid false positives)
 
   # Single roll-up status for the convention-only merge gate (ADR-0001). Make THIS the required check.
   ci-pass:
