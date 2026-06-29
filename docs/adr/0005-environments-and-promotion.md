@@ -16,10 +16,12 @@ Three tiers, but at most **two cloud projects**:
 | **uat (homologação)** | cloud | `precifica3d-uat` | Cloud Run (scale-to-zero) | **now** |
 | **prod** | cloud | `precifica3d-prod` | Cloud Run | **at launch** (config templated now) |
 
-**Promotion:**
+**Promotion (branch flow in ADR-0006):**
 - Every branch → local (emulator).
-- Merge to `main` → **auto-deploy to UAT** (homologation URL).
-- Git **tag/release `v*`** → **manual-trigger deploy to prod** (gated by GitHub Environment `production`).
+- `develop` is the **UAT** source; `release` is the **prod** source; `main` is the stable gate (no env).
+- **Deploys are MANUAL** (`deploy.yml` = `workflow_dispatch`, pick env) — nothing deploys on merge. Promotion
+  *PRs* are auto-opened on green CI (ADR-0006), but shipping to UAT/prod is always a deliberate trigger, gated
+  by the GitHub Environment + `DEPLOY_ENABLED`. Prod stays inert until launch.
 
 **Mechanics:**
 - Per-tier config via `pydantic-settings` (backend `P3D_*`) + `VITE_*` (web) + separate Firebase projects.

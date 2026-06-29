@@ -17,8 +17,12 @@ Three tiers, at most two cloud projects. Production is provisioned only at launc
   values): `GCP_PROJECT`, `GCP_REGION`, `FIREBASE_PROJECT`, `WIF_PROVIDER`, `WIF_SERVICE_ACCOUNT`,
   `FIREBASE_SERVICE_ACCOUNT`. Repo vars `UAT_ENABLED` / `PROD_ENABLED` arm the deploy jobs.
 
-## Promotion
-branch → local · merge to `main` → UAT (auto) · tag `v*` → prod (manual). See `.github/workflows/deploy.yml`.
+## Promotion (ADR-0006)
+Branch flow: `feature/* → develop → main → release` (convention-only; do not merge on red CI).
+- On green CI, the next promotion PR is **auto-opened** (`develop→main`, `main→release`) — never auto-merged.
+- **Deploys are manual**: run the `Deploy` workflow (`workflow_dispatch`) and pick `uat` or `prod`. `develop`
+  is the UAT source, `release` the prod source. Each target is inert until its GitHub Environment sets
+  `DEPLOY_ENABLED=true`. Prod ships only at launch.
 
 ## Local `.env` (not committed)
 Create `apps/web/.env.local` and `backend/.env` from the field lists above. For pure-local work the Firebase

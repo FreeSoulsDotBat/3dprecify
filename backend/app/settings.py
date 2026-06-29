@@ -16,7 +16,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_prefix="P3D_", env_file=".env", extra="ignore")
 
-    app_env: Literal["dev", "prod"] = "dev"
+    app_env: Literal["dev", "uat", "prod"] = "dev"
     region: str = "southamerica-east1"
     service_name: str = "precifica3d-backend"
     release: str | None = None  # git SHA, used as the Sentry release tag

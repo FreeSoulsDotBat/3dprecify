@@ -49,7 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     api = APIRouter(prefix="/api/v1")
 
-    if settings.app_env != "prod":
+    if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
         @api.get("/_debug/boom", include_in_schema=False)
         async def _boom() -> None:
