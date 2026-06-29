@@ -19,6 +19,11 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
+export interface CurrentUser {
+  uid: string;
+  email?: string | null;
+}
+
 export type ErrorBodyDetails = { [key: string]: unknown }[] | null;
 
 /**
@@ -45,6 +50,20 @@ export interface ErrorBody {
 
 export interface ErrorEnvelope {
   error: ErrorBody;
+}
+
+export type ValidationErrorCtx = { [key: string]: unknown };
+
+export interface ValidationError {
+  loc: (string | number)[];
+  msg: string;
+  type: string;
+  input?: unknown;
+  ctx?: ValidationErrorCtx;
+}
+
+export interface HTTPValidationError {
+  detail?: ValidationError[];
 }
 
 export type HealthHealthGet200 = {[key: string]: string};
@@ -179,6 +198,133 @@ export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealt
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getHealthHealthGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getMeApiV1MeGetResponse200 = {
+  data: CurrentUser
+  status: 200
+}
+
+export type getMeApiV1MeGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getMeApiV1MeGetResponseSuccess = (getMeApiV1MeGetResponse200) & {
+  headers: Headers;
+};
+export type getMeApiV1MeGetResponseError = (getMeApiV1MeGetResponse422) & {
+  headers: Headers;
+};
+
+export type getMeApiV1MeGetResponse = (getMeApiV1MeGetResponseSuccess | getMeApiV1MeGetResponseError)
+
+export const getGetMeApiV1MeGetUrl = () => {
+
+
+
+
+  return `/api/v1/me`
+}
+
+/**
+ * @summary Get Me
+ */
+export const getMeApiV1MeGet = async ( options?: RequestInit): Promise<getMeApiV1MeGetResponse> => {
+
+  const res = await fetch(getGetMeApiV1MeGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+)
+
+
+  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
+
+  const data: getMeApiV1MeGetResponse['data'] = body ? JSON.parse(body) : {}
+  return { data, status: res.status, headers: res.headers } as getMeApiV1MeGetResponse
+}
+
+
+
+
+
+export const getGetMeApiV1MeGetQueryKey = () => {
+    return [
+    `/api/v1/me`
+    ] as const;
+    }
+
+
+export const getGetMeApiV1MeGetQueryOptions = <TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+) => {
+
+const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetMeApiV1MeGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeApiV1MeGet>>> = ({ signal }) => getMeApiV1MeGet({ signal, ...fetchOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetMeApiV1MeGetQueryResult = NonNullable<Awaited<ReturnType<typeof getMeApiV1MeGet>>>
+export type GetMeApiV1MeGetQueryError = HTTPValidationError
+
+
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMeApiV1MeGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMeApiV1MeGet>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getMeApiV1MeGet>>,
+          TError,
+          Awaited<ReturnType<typeof getMeApiV1MeGet>>
+        > , 'initialData'
+      >, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Me
+ */
+
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetMeApiV1MeGetQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

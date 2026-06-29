@@ -56,12 +56,8 @@ async def verify_id_token(token: str) -> dict[str, Any]:
     return decoded
 
 
-async def current_uid(authorization: str | None = Header(default=None)) -> str:
-    """Dependency yielding the Firebase uid. Not mounted on any product route yet (skeleton)."""
+async def current_claims(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    """Dependency yielding the verified Firebase token claims. 401 if missing/invalid."""
     if not authorization or not authorization.startswith("Bearer "):
         raise AppError(ErrorCode.UNAUTHENTICATED, "Missing bearer token", status_code=401)
-    decoded = await verify_id_token(authorization.removeprefix("Bearer "))
-    uid = decoded.get("uid")
-    if not isinstance(uid, str):
-        raise AppError(ErrorCode.UNAUTHENTICATED, "Token missing uid", status_code=401)
-    return uid
+    return await verify_id_token(authorization.removeprefix("Bearer "))
