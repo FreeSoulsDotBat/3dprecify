@@ -11,6 +11,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0002](0002-api-contract-error-observability.md) | API contract, wire casing, error model & observability | Accepted |
 | [0003](0003-no-inference-decide-before-implement.md) | Architecture & standards decided before implementation (no inference) | Accepted |
 | [0004](0004-technology-stack-and-coding-standards.md) | Technology stack & coding standards (full ratified stack) | Accepted |
+| [0005](0005-environments-and-promotion.md) | Environments (local/UAT/prod) & promotion model | Accepted |
 
 ## Pending (to be written; numbers assigned when authored)
 - Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).
