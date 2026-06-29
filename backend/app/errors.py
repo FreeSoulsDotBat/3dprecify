@@ -30,18 +30,18 @@ class ErrorCode(StrEnum):
     INTERNAL = "INTERNAL"
 
 
-class _CamelModel(BaseModel):
+class CamelModel(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
 
-class ErrorBody(_CamelModel):
+class ErrorBody(CamelModel):
     code: ErrorCode
     message: str
     details: list[dict[str, Any]] | None = None
     correlation_id: str | None = None  # serialized as ``correlationId``
 
 
-class ErrorEnvelope(_CamelModel):
+class ErrorEnvelope(CamelModel):
     error: ErrorBody
 
 

@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.me import router as me_router
 from .auth import init_firebase
 from .errors import AppError, ErrorCode, ErrorEnvelope, register_exception_handlers
 from .observability import CORRELATION_HEADER, configure_observability
@@ -48,6 +49,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok"}
 
     api = APIRouter(prefix="/api/v1")
+    api.include_router(me_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
