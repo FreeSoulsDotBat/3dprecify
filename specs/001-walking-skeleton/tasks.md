@@ -1,5 +1,11 @@
 # Tasks: Walking Skeleton — minimal authenticated price
 
+> **⚠️ SUPERSEDED for setup/tooling (2026-06-29).** Phases 1–2 (T001–T008: npm monorepo, generic ESLint/
+> Prettier, `requirements.txt`, `GOOGLE_APPLICATION_CREDENTIALS`) are replaced by **`specs/002-foundation/`**
+> (pnpm/uv, full gates, FastAPI skeleton, Firebase emulator, CI). T015/T017 (pricing-core) are done & kept.
+> T022 deploy (Cloudflare/Render) → Cloud Run + Firebase Hosting. The **product** tasks (US1 auth gate, US2
+> calculator, T018–T020 UI) will be re-generated against the 002 foundation when 001 is implemented.
+
 **Input**: Design documents from `specs/001-walking-skeleton/`
 **Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md
 

@@ -1,0 +1,76 @@
+[project]
+name = "precifica3d-backend"
+version = "0.0.0"
+description = "Precifica3D backend (FastAPI). Verifies Firebase tokens; never recomputes the pricing formula."
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "firebase-admin",
+    "pydantic-settings",
+    "structlog",
+    "asgi-correlation-id",
+    "sentry-sdk[fastapi]",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "schemathesis",
+    "ruff",
+    "basedpyright",
+    "import-linter",
+]
+
+[tool.uv]
+package = false
+
+# --- Lint & format (Ruff) ---
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "ASYNC", "S", "SIM", "RUF"]
+# S101 (assert) is fine in tests; relaxed per-file below.
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S101"]
+
+# --- Type checking (basedpyright, strict) ---
+[tool.basedpyright]
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+include = ["app", "tests"]
+extraPaths = ["."]  # resolve the `app` package from the backend root (matches pytest pythonpath)
+# FastAPI registers route handlers via decorators; pyright can't see that use → false positives.
+reportUnusedFunction = false
+# Third-party libs (firebase-admin) ship no type stubs; don't fail strict on that.
+reportMissingTypeStubs = false
+
+[[tool.basedpyright.executionEnvironments]]
+# Starlette TestClient / httpx are partially untyped; relax "unknown type" noise in tests only (app/ stays strict).
+root = "tests"
+reportUnknownMemberType = false
+reportUnknownVariableType = false
+reportUnknownArgumentType = false
+
+# --- Tests ---
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+# --- Architecture contracts (import-linter) ---
+# Domain/layer contracts grow as real modules land (E1+). For the skeleton we enforce the one invariant
+# that matters now: settings is a dependency-free config leaf (imports nothing from app.*).
+[tool.importlinter]
+root_package = "app"
+
+[[tool.importlinter.contracts]]
+name = "Settings is a dependency-free leaf"
+type = "forbidden"
+source_modules = ["app.settings"]
+forbidden_modules = ["app.main", "app.auth", "app.errors", "app.observability"]

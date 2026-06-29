@@ -28,20 +28,20 @@ describe("computePrice — material + markup (canonical, offline)", () => {
   });
 
   it("rollWeightKg = 0 → throws ValidationError (no division by zero)", () => {
-    expect(() => computePrice({ costPerRoll: 100, rollWeightKg: 0, grams: 20, markupPct: 50 })).toThrow(
-      ValidationError,
-    );
+    expect(() =>
+      computePrice({ costPerRoll: 100, rollWeightKg: 0, grams: 20, markupPct: 50 }),
+    ).toThrow(ValidationError);
   });
 
   it("negative input → throws ValidationError", () => {
-    expect(() => computePrice({ costPerRoll: -1, rollWeightKg: 1, grams: 20, markupPct: 50 })).toThrow(
-      ValidationError,
-    );
+    expect(() =>
+      computePrice({ costPerRoll: -1, rollWeightKg: 1, grams: 20, markupPct: 50 }),
+    ).toThrow(ValidationError);
   });
 
   it("NaN input → throws ValidationError", () => {
-    expect(() => computePrice({ costPerRoll: NaN, rollWeightKg: 1, grams: 20, markupPct: 50 })).toThrow(
-      ValidationError,
-    );
+    expect(() =>
+      computePrice({ costPerRoll: NaN, rollWeightKg: 1, grams: 20, markupPct: 50 }),
+    ).toThrow(ValidationError);
   });
 });

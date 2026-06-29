@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "precifica3d-dev",
+    "dev": "precifica3d-dev",
+    "prod": "precifica3d-prod"
+  }
+}

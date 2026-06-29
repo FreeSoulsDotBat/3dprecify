@@ -19,5 +19,11 @@ choices with low change-risk (≤~20%) are taken inline and noted in the relevan
 | TD-006 | Payments (Play Billing vs Mercado Pago recurring) | 60% | E6 + ADR (regulatory flux) | None — no payment code before E6 |
 | ~~TD-007~~ | ~~Monorepo task runner (Turbo)~~ | — | **RESOLVED 2026-06-28**: pnpm workspaces now → Turborepo at first CI/build pain (F1.3) | resolved |
 | TD-008 | pricing-core packaging (ESM/CJS + d.ts) + cross-lang parity | 40% | A 2nd consumer needs the built pkg (server won't reimplement the formula per ADR) | Direct TS import within the monorepo |
+| TD-008b | Formal TS **composite project references** (`tsc -b`) wiring apps/web → pricing-core | 30% | Folded into TD-008 (composite needs emit; conflicts with current `noEmit`) | Per-package `tsc --noEmit` (`pnpm -r typecheck`) + tsconfig `paths` + Vite alias |
+| TD-009 | pricing-core **version identifier** (to stamp E2 saved-calc snapshots → reproducible quotes) | 60% | E2 persistence (subset of TD-008) | None — 001/002 don't persist calcs |
+| TD-010 | Peace Sans **font license** clearance for product/PWA embedding | 50% | Before any public deploy that ships the display font | Use only for logo/static art until cleared; body/UI = Inter (licensed) |
+| TD-011 | Design-token **semantic role→color** mapping (palette→text/surface roles) | 45% | Palette **AA contrast gate** (TD-002 design) clears | Brand palette wired as raw CSS vars; semantic roles left as TODO in the token file |
+| TD-012 | correlation-id **FE-originates** mode (correlate even when no response arrives) | 35% | Network-failure debugging proves the server-originates model insufficient | A9 = server-originates; FE consumes + tags Sentry |
+| TD-013 | Sentry **Session Replay** (AI/human sees the exact user session) | 50% | After LGPD privacy notice + cost review; likely premium-gated | Sentry **breadcrumbs** only (console/network/clicks) |
 
 Resolved debt moves to the relevant ADR/doc and is struck from this table.

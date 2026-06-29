@@ -22,5 +22,9 @@ web + desktop + Android/Google Play, internationalization-ready).
 - Cross-platform entitlement model (server-side authoritative).
 
 ## Operating principles (Constitution)
+- **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
+  communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved
+  such point, STOP and surface ≥3 options (pros, cons, scalability, confidence %) — never default. Conventions
+  only for product/UX/content.
 - Scalability & quality first; truth over approval with confidence %; lean docs.
 - Communicate with the user in Brazilian Portuguese (pt-BR).

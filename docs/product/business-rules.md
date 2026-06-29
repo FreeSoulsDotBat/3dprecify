@@ -1,7 +1,8 @@
 # Product & Business Rules (source of truth)
 
 Decided with Jonatan, Round 2 (2026-06-26). This file is what the **server-side entitlement check enforces**
-(Constitution Principle IV). Architecture of the enforcement itself → future ADR-0003.
+(Constitution Principle IV). Architecture of the enforcement itself → a PENDING, unnumbered entitlement ADR
+(NOT ADR-0003 — that is the no-inference ADR; ADR-0002 = API contract, ADR-0004 = stack).
 
 ## Freemium boundary (R2.1 = B + quota lever)
 Principle: **computation is free; persistence & scale are premium.**
@@ -44,7 +45,7 @@ Walking skeleton (001) is pre-E1 (auth gate + minimal material+markup calc). The
 | **E3** | Multi-piece BOM | quota |
 | **E4** | History + reproducible snapshots + export | export = premium |
 | **E5** | Marketplace simulator (ML, Shopee) | saved scenarios = premium |
-| **E6** | Billing (Mercado Pago recurring / Play Billing — ADR-0002) | actual purchase flow |
+| **E6** | Billing (Mercado Pago recurring / Play Billing — PENDING unnumbered payments ADR) | actual purchase flow |
 | **E7** | Android / Play packaging (Capacitor) | — |
 
 ### Sequencing truth (recorded, Principle II)
