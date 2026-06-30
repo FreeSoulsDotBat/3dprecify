@@ -13,6 +13,7 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "test:coverage": "vitest run --coverage",
+    "e2e": "firebase emulators:exec --only auth --project=demo-precifica3d \"pnpm --filter @3dprecify/web test:e2e\"",
     "depcruise": "depcruise packages apps --config .dependency-cruiser.cjs",
     "gate": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
     "prepare": "lefthook install"
@@ -25,6 +26,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.5",
     "eslint-plugin-boundaries": "^6.0.2",
+    "firebase-tools": "^15.22.3",
     "globals": "^17.7.0",
     "lefthook": "^2.1.9",
     "prettier": "^3.9.0",

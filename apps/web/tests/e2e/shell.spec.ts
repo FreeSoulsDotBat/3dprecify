@@ -2,10 +2,10 @@ import { expect, test } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
-// US1 login gate (anonymous path). Without Firebase credentials the build resolves auth to
-// "not-configured" (a non-authenticated state), so the protected calculator at "/" must redirect
-// to the sign-in screen. The authenticated path (signed-in → calculator) is exercised by the
-// emulator-backed e2e once the Auth emulator is wired into CI (TD: see specs/001 tasks).
+// US1 login gate (anonymous path). The e2e build runs in emulator mode with no signed-in user,
+// so auth resolves to "anonymous" and the protected calculator at "/" must redirect to the
+// sign-in screen. The authenticated path (signed-in → calculator) is exercised by calculator.spec
+// via the Firebase Auth emulator (run with `pnpm e2e` at the repo root).
 test("signed-out user hitting / is redirected to the sign-in screen", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/sign-in$/);
