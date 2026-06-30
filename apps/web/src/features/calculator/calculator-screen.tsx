@@ -6,10 +6,10 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 export function CalculatorScreen() {
   return (
     <section className="space-y-4">
-      <h1 className="text-2xl font-semibold" style={{ color: "var(--color-accent)" }}>
+      <h1 className="text-2xl font-semibold" style={{ color: "var(--accent-text)" }}>
         {messages.calculator.title}
       </h1>
-      <p style={{ color: "var(--color-muted)" }}>{messages.calculator.placeholder}</p>
+      <p style={{ color: "var(--text-muted)" }}>{messages.calculator.placeholder}</p>
     </section>
   );
 }

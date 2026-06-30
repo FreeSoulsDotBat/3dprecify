@@ -1,0 +1,37 @@
+/* ============================================================
+   Truth's Forge — Elevation tokens
+   Brand is flat & matte: shadows are TIGHT and low-spread, used
+   only to lift interactive surfaces. Hero/CTA elements may carry
+   an optional purple glow (the metallic rim-light from the brand
+   buttons) — used sparingly, one focal element per zone.
+   ============================================================ */
+:root {
+  --shadow-none: none;
+  --shadow-xs: 0 1px 2px rgba(11, 12, 15, 0.06);
+  --shadow-sm: 0 2px 6px rgba(11, 12, 15, 0.08);
+  --shadow-md: 0 6px 18px -6px rgba(11, 12, 15, 0.14);
+  --shadow-lg: 0 16px 40px -12px rgba(11, 12, 15, 0.2);
+  --shadow-card: var(--shadow-sm);
+
+  /* Rim-light (subtle top highlight on dark/metallic surfaces) */
+  --rim-light: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+  /* Focal glows — sparingly, hero CTAs only */
+  --glow-purple: 0 10px 30px -8px rgba(120, 0, 255, 0.5);
+  --glow-orange: 0 10px 30px -8px rgba(247, 147, 30, 0.45);
+  --glow-cyan: 0 10px 30px -8px rgba(21, 189, 220, 0.42);
+
+  /* Focus ring (2px ring + soft halo) */
+  --ring-width: 3px;
+  /* Solid ring (AA 1.4.11) + secondary halo layer */
+  --ring:
+    0 0 0 var(--ring-width) var(--focus-ring),
+    0 0 0 calc(var(--ring-width) + 3px) color-mix(in srgb, var(--focus-ring) 28%, transparent);
+}
+
+[data-theme="dark"] {
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.5);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.55);
+  --shadow-md: 0 8px 22px -6px rgba(0, 0, 0, 0.65);
+  --shadow-lg: 0 20px 48px -12px rgba(0, 0, 0, 0.7);
+}

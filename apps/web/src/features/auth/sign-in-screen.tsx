@@ -22,10 +22,10 @@ export function SignInScreen() {
 
   return (
     <section className="mx-auto flex max-w-sm flex-col gap-4 py-8">
-      <h1 className="text-2xl font-semibold" style={{ color: "var(--color-accent)" }}>
+      <h1 className="text-2xl font-semibold" style={{ color: "var(--accent-text)" }}>
         {messages.signIn.title}
       </h1>
-      <p style={{ color: "var(--color-muted)" }}>{messages.signIn.subtitle}</p>
+      <p style={{ color: "var(--text-muted)" }}>{messages.signIn.subtitle}</p>
       <button
         type="button"
         onClick={handleSignIn}
@@ -35,12 +35,12 @@ export function SignInScreen() {
         {messages.signIn.google}
       </button>
       {!configured && (
-        <p role="note" style={{ color: "var(--color-muted)" }}>
+        <p role="note" style={{ color: "var(--text-muted)" }}>
           {messages.signIn.notConfigured}
         </p>
       )}
       {error && (
-        <p role="alert" style={{ color: "var(--color-danger)" }}>
+        <p role="alert" style={{ color: "var(--danger-deep)" }}>
           {messages.signIn.error}
         </p>
       )}
