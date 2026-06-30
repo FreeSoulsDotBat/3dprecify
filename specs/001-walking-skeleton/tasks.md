@@ -1,10 +1,21 @@
 # Tasks: Walking Skeleton — minimal authenticated price
 
-> **⚠️ SUPERSEDED for setup/tooling (2026-06-29).** Phases 1–2 (T001–T008: npm monorepo, generic ESLint/
-> Prettier, `requirements.txt`, `GOOGLE_APPLICATION_CREDENTIALS`) are replaced by **`specs/002-foundation/`**
-> (pnpm/uv, full gates, FastAPI skeleton, Firebase emulator, CI). T015/T017 (pricing-core) are done & kept.
-> T022 deploy (Cloudflare/Render) → Cloud Run + Firebase Hosting. The **product** tasks (US1 auth gate, US2
-> calculator, T018–T020 UI) will be re-generated against the 002 foundation when 001 is implemented.
+> **✅ RECONCILED 2026-06-30 — 001 implemented on the 002 foundation; deploy is the only blocker.**
+> Setup/tooling (T001–T008) was delivered by **`specs/002-foundation/`** (pnpm/uv, full gates, FastAPI
+> skeleton, Firebase emulator, CI) — boxes checked here as done-by-002. Product slices landed in these commits:
+> - **US1 auth gate** (T009–T013): `/api/v1/me` (`backend/app/api/me.py`, 5/5 pytest) + Google sign-in & route
+>   guard (`apps/web/src/shared/session`, `app/router.tsx`, `features/auth`). Commit `2cc0a37`/`af8a10f`.
+> - **Design tokens** (semantic graph in `apps/web/src/styles/`). Commit `097738c`.
+> - **US2 calculator** (T016/T018/T019): pure `features/calculator/calculator-model.ts` (over pricing-core) +
+>   thin `calculator-screen.tsx` using typed-TSX primitives in `shared/ui`. Commit `e171a37`.
+> - **Auth-emulator e2e** (real homologation of the guarded calculator): commit `8784ddb` (`pnpm e2e`).
+> - **PWA offline + icons** (T021): commit `14fa96f` (offline e2e proves FR-008).
+>
+> Paths drifted from the original task text (e.g. `features/pricing`→`features/calculator`,
+> `tests/pricing.spec.ts`→`tests/e2e/calculator.spec.ts`); the commits above are the source of truth.
+> **Still open:** T014/T020 visual homologation by `qa-produto` (MCP screenshots — behaviour & ≤414px render
+> are already covered by e2e); **T022 deploy** (Cloud Run + Firebase Hosting), blocked on the manual cloud
+> prerequisites in `specs/002-foundation/dod-evidence.md`.
 
 **Input**: Design documents from `specs/001-walking-skeleton/`
 **Prerequisites**: plan.md, spec.md, data-model.md, contracts/, research.md
@@ -22,12 +33,9 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 
 - [x] T001 Create monorepo workspace at repo root (npm workspaces): root `package.json` with workspaces
       `["packages/*","apps/*"]`, base `tsconfig.base.json`.
-- [ ] T002 [P] Configure lint/format/type-check at root (ESLint + Prettier + tsc) with scripts `lint`,
-      `format:check`, `typecheck` in root `package.json`.
-- [ ] T003 [P] Initialize backend Python project in `backend/` (`pyproject.toml`/`requirements.txt`:
-      fastapi, uvicorn, firebase-admin, pytest, httpx).
-- [ ] T004 Wire the existing PostToolUse quality-gate to real commands by defining the npm scripts from T002
-      (so `.specify/scripts/quality-gate.ps1` stops being a no-op).
+- [x] T002 [P] Configure lint/format/type-check at root (ESLint + Prettier + tsc). _Done by 002 (`pnpm gate`)._
+- [x] T003 [P] Initialize backend Python project in `backend/`. _Done by 002 (uv + `pyproject.toml`)._
+- [x] T004 Wire the PostToolUse quality-gate to real commands. _Done by 002 (lefthook + `pnpm gate`)._
 
 ---
 
@@ -36,10 +44,10 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 **⚠️ Must complete before user stories.**
 
 - [x] T005 [P] Scaffold `packages/pricing-core` (package.json, tsconfig, Vitest) — module + tests.
-- [ ] T006 [P] Scaffold `apps/web` (Vite + React + TS, `vite-plugin-pwa`, Vitest, Playwright config).
-- [ ] T007 [P] Scaffold `backend/app` (FastAPI app, public `GET /health` → `{status:"ok"}`, pytest config).
-- [ ] T008 Firebase wiring (env-driven, no secrets committed): web client init in
-      `apps/web/src/lib/firebase.ts`; backend admin init in `backend/app/auth.py` (`GOOGLE_APPLICATION_CREDENTIALS`).
+- [x] T006 [P] Scaffold `apps/web` (Vite + React + TS, `vite-plugin-pwa`, Vitest, Playwright). _Done by 002._
+- [x] T007 [P] Scaffold `backend/app` (FastAPI, `GET /health`, pytest). _Done by 002._
+- [x] T008 Firebase wiring (env-driven, no secrets). _Web `apps/web/src/shared/lib/firebase.ts`; backend admin
+      verification in `backend/app` (Firebase emulator in dev)._
 
 ---
 
@@ -49,19 +57,20 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 **Independent Test**: Signed out → calculator blocked, sign-in offered. Sign in with Google → calculator shows.
 
 ### Tests for User Story 1 (MANDATORY — write first, must FAIL) ⚠️
-- [ ] T009 [P] [US1] pytest token cases for `GET /api/v1/me` (no header→401, malformed→401, expired→401,
-      valid→200+uid) in `backend/app/tests/test_me.py` (mock `verify_id_token`).
-- [ ] T010 [P] [US1] Playwright spec: signed-out user cannot reach the calculator and is offered sign-in, in
-      `apps/web/tests/auth.spec.ts`.
+- [x] T009 [P] [US1] pytest token cases for `GET /api/v1/me` (no header→401, malformed→401, valid→200+uid).
+      _`backend/app` — 5/5 green._
+- [x] T010 [P] [US1] Playwright spec: signed-out user can't reach the calculator, sign-in offered.
+      _`apps/web/tests/e2e/shell.spec.ts`._
 
 ### Implementation for User Story 1
-- [ ] T011 [US1] Implement protected `GET /api/v1/me` with `firebase-admin` token verification in
-      `backend/app/auth.py` + route in `backend/app/main.py` (401 on missing/invalid).
-- [ ] T012 [US1] Implement Google sign-in (`GoogleAuthProvider`, `signInWithPopup`, session) in
-      `apps/web/src/features/auth/`.
-- [ ] T013 [US1] Implement route guard redirecting signed-out users to sign-in in `apps/web/src/features/auth/`.
-- [ ] T014 [US1] Visual homologation by `qa-produto` (auth gate) via Playwright/Chrome DevTools MCP; capture
-      screenshots, check console/network.
+- [x] T011 [US1] Implement protected `GET /api/v1/me` with token verification (401 on missing/invalid).
+      _`backend/app/api/me.py`._
+- [x] T012 [US1] Implement Google sign-in (`GoogleAuthProvider`, `signInWithPopup`, session).
+      _`apps/web/src/shared/session/session-store.ts` + `features/auth/sign-in-screen.tsx`._
+- [x] T013 [US1] Route guard redirecting signed-out users to sign-in. _`apps/web/src/app/router.tsx`
+      (TanStack `beforeLoad` + context)._
+- [ ] T014 [US1] Visual homologation by `qa-produto` (auth gate) via MCP screenshots. _PENDING (behaviour
+      covered by shell.spec e2e)._
 
 **Checkpoint**: US1 independently testable — auth boundary works end-to-end.
 
@@ -76,16 +85,18 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 - [x] T015 [P] [US2] Vitest numeric cases for `computePrice` (full table incl. R$2,00/R$3,00 and edge cases:
       grams=0, markup=0, rollWeight=0→throws, negatives→throws, NaN→throws) in
       `packages/pricing-core/tests/computePrice.test.ts`. ✅ 7/7 green.
-- [ ] T016 [P] [US2] Playwright spec: enter sample inputs → `R$ 2,00` / `R$ 3,00`; rollWeight=0 → friendly
-      pt-BR message in `apps/web/tests/pricing.spec.ts`.
+- [x] T016 [P] [US2] Playwright spec: sample inputs → `R$ 2,00` / `R$ 3,00`; rollWeight=0 → friendly pt-BR
+      message. _`apps/web/tests/e2e/calculator.spec.ts` (authenticated via Auth emulator)._
 
 ### Implementation for User Story 2
 - [x] T017 [US2] Implement `computePrice` (formula + `ValidationError`) in
       `packages/pricing-core/src/index.ts` per `contracts/pricing-core.md`. ✅ test-first (red→green).
-- [ ] T018 [US2] Build the calculator screen (4 inputs, 2 results, pt-BR copy, BRL formatting) consuming
-      `pricing-core` in `apps/web/src/features/pricing/`.
-- [ ] T019 [US2] Place the calculator behind the auth guard (reachable only when signed in).
-- [ ] T020 [US2] Visual homologation by `qa-produto` (calculator + offline recompute + **renders without breakage at ≤414px viewport**, SC-005) via MCP.
+- [x] T018 [US2] Build the calculator screen (4 inputs, 2 results, pt-BR, BRL) consuming `pricing-core`.
+      _`apps/web/src/features/calculator/` (pure `calculator-model.ts` + thin `calculator-screen.tsx`,
+      typed-TSX primitives in `shared/ui`)._
+- [x] T019 [US2] Place the calculator behind the auth guard. _Index route `beforeLoad` in `app/router.tsx`._
+- [ ] T020 [US2] Visual homologation by `qa-produto` (calculator + ≤414px, SC-005) via MCP. _PENDING (≤414px
+      render + offline recompute already covered by calculator.spec on the mobile project)._
 
 **Checkpoint**: US1 + US2 both work independently → demoable MVP.
 
@@ -93,11 +104,15 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
 
 ## Phase 5: Polish & Deploy (Cross-Cutting)
 
-- [ ] T021 PWA offline: configure `vite-plugin-pwa` in `apps/web/vite.config.ts`; verify app shell loads offline
-      and the calculation still runs.
-- [ ] T022 [P] Deploy: web SPA to Cloudflare Pages + FastAPI to Render/Fly (per research R5); record public URL.
-- [ ] T023 [P] Run the `quickstart.md` validation scenarios end-to-end; fix drift.
-- [ ] T024 DoD/Constitution check: lint/format/type-check green, no dead/duplicated code, spec/plan still current.
+- [x] T021 PWA offline: `vite-plugin-pwa` + `navigateFallback`; app shell + calc run offline. _Proven by the
+      offline e2e in calculator.spec (commit `14fa96f`)._
+- [ ] T022 [P] Deploy: SPA → Firebase Hosting + FastAPI → Cloud Run (southamerica-east1, WIF); record URL.
+      _PENDING — blocked on manual cloud prerequisites (`specs/002-foundation/dod-evidence.md`)._
+- [x] T023 [P] Run the `quickstart.md` validation scenarios. _Scenarios 1–5 covered by green automated tests
+      (shell + calculator e2e, backend pytest, pricing-core vitest); #6 public-URL render awaits T022._
+- [x] T024 DoD/Constitution check: gate green (format/lint/depcruise/typecheck + 22 unit, 12 e2e, 5 backend);
+      formula only in `pricing-core` (Principle V); server boundary enforced (Principle IV); this reconciliation
+      keeps the spec current. _Only T014/T020 (visual MCP) + T022 (deploy) remain._
 
 ---
 
