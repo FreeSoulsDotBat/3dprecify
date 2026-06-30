@@ -69,8 +69,9 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
       _`apps/web/src/shared/session/session-store.ts` + `features/auth/sign-in-screen.tsx`._
 - [x] T013 [US1] Route guard redirecting signed-out users to sign-in. _`apps/web/src/app/router.tsx`
       (TanStack `beforeLoad` + context)._
-- [ ] T014 [US1] Visual homologation by `qa-produto` (auth gate) via MCP screenshots. _PENDING (behaviour
-      covered by shell.spec e2e)._
+- [x] T014 [US1] Visual homologation by `qa-produto` (auth gate) via screenshot review (light/dark, ≤414px).
+      _PASS — renders correctly, AA, dark-mode first-class. Design-fidelity gap (rich LoginScreen treatment)
+      logged as TD-017; not a walking-skeleton blocker._
 
 **Checkpoint**: US1 independently testable — auth boundary works end-to-end.
 
@@ -95,8 +96,9 @@ implementation. Monorepo: `packages/pricing-core` (TS), `apps/web` (React+Vite P
       _`apps/web/src/features/calculator/` (pure `calculator-model.ts` + thin `calculator-screen.tsx`,
       typed-TSX primitives in `shared/ui`)._
 - [x] T019 [US2] Place the calculator behind the auth guard. _Index route `beforeLoad` in `app/router.tsx`._
-- [ ] T020 [US2] Visual homologation by `qa-produto` (calculator + ≤414px, SC-005) via MCP. _PENDING (≤414px
-      render + offline recompute already covered by calculator.spec on the mobile project)._
+- [x] T020 [US2] Visual homologation by `qa-produto` (calculator + ≤414px, SC-005) via screenshot review.
+      _PASS — faithful to the design (PriceHero/Card/Field/BreakdownRow), AA in light & dark, clean at ≤414px;
+      accent stays purple in dark (token bug fixed). Behaviour/offline/≤414px also covered by calculator.spec._
 
 **Checkpoint**: US1 + US2 both work independently → demoable MVP.
 
