@@ -1,0 +1,119 @@
+/* Field + NumberField shared styles. Ported from Truth's Forge (Claude Design),
+   adapted for apps/web: raw --tf-danger → semantic --danger/--danger-deep, and
+   the CDN-Lucide error glyph dropped (offline/no-CDN); the error text + role
+   convey the state. */
+.tf-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.tf-field__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  letter-spacing: var(--tracking-snug);
+}
+.tf-field__req {
+  color: var(--energy);
+  font-weight: var(--fw-bold);
+}
+.tf-field__optional {
+  margin-left: auto;
+  font-weight: var(--fw-regular);
+  color: var(--text-faint);
+  font-size: var(--fs-caption);
+}
+.tf-field__hint {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+.tf-field__error {
+  font-size: var(--fs-caption);
+  color: var(--danger-deep);
+  font-weight: var(--fw-medium);
+}
+
+.tf-inputwrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  background: var(--surface-card);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-field);
+  cursor: text;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.tf-inputwrap:hover {
+  border-color: var(--border-strong);
+}
+.tf-inputwrap:focus-within {
+  border-color: var(--border-accent);
+  box-shadow: var(--ring);
+}
+.tf-inputwrap--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+}
+.tf-inputwrap--lg {
+  height: var(--control-h-lg);
+  padding: 0 var(--space-5);
+}
+.tf-inputwrap--error {
+  border-color: var(--danger);
+}
+.tf-inputwrap--error:focus-within {
+  box-shadow: 0 0 0 var(--ring-width) color-mix(in srgb, var(--danger) 38%, transparent);
+}
+.tf-inputwrap--disabled {
+  background: var(--bg-muted);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.tf-inputwrap__affix {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  user-select: none;
+}
+.tf-inputwrap__affix--strong {
+  color: var(--text-strong);
+  font-weight: var(--fw-semibold);
+}
+.tf-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-strong);
+  font: inherit;
+  font-size: var(--fs-base);
+  height: 100%;
+}
+.tf-input::placeholder {
+  color: var(--text-faint);
+}
+.tf-input:disabled {
+  cursor: not-allowed;
+}
+.tf-input--num {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features);
+  text-align: right;
+}

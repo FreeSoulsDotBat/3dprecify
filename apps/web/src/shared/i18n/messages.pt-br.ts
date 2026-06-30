@@ -13,8 +13,20 @@ export const messages = {
     notConfigured: "Login indisponível: Firebase não configurado neste ambiente.",
   },
   calculator: {
-    title: "Calculadora de preço",
-    placeholder: "Em breve: cálculo de preço a partir do material e da margem.",
+    title: "Calcular preço",
+    fields: {
+      costPerRoll: "Custo do rolo",
+      rollWeight: "Peso do rolo",
+      grams: "Gramas usadas",
+      markup: "Markup",
+    },
+    markupHint: "Margem sobre o custo (não sobre o preço de venda).",
+    rollWeightError: "O peso do rolo deve ser maior que zero.",
+    results: {
+      material: "Material",
+      suggested: "Preço sugerido",
+    },
+    freemiumNote: "Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium.",
   },
   account: {
     signedInAs: "Conectado como",
