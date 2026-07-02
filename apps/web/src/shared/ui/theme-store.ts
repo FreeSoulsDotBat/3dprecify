@@ -9,7 +9,7 @@ interface ThemeState {
 
 // Light/dark via the `data-theme` attribute on <html> (FR-C5.2).
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: "light",
+  theme: "dark",
   toggle: () => {
     const next: Theme = get().theme === "light" ? "dark" : "light";
     document.documentElement.dataset.theme = next;

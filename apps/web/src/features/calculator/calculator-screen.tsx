@@ -23,7 +23,7 @@ export function CalculatorScreen() {
     setForm((s) => ({ ...s, [key]: e.target.value }));
 
   const result = computeCalculator(form);
-  const markupCaption = `markup ${form.markupPct || "0"}%`;
+  const markupCaption = `${t.markupCaptionPrefix} ${form.markupPct || "0"}%`;
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">

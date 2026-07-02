@@ -21,6 +21,7 @@ export const messages = {
       markup: "Markup",
     },
     markupHint: "Margem sobre o custo (não sobre o preço de venda).",
+    markupCaptionPrefix: "markup",
     rollWeightError: "O peso do rolo deve ser maior que zero.",
     results: {
       material: "Material",

@@ -67,7 +67,7 @@
   --tf-info-soft: var(--tf-cyan-soft);
   --tf-warning-soft: var(--tf-orange-soft);
 
-  /* ============ Semantic — LIGHT (default, v1) ============ */
+  /* ============ Semantic — LIGHT (first-class; dark is the v1 default) ============ */
   --bg-base: var(--tf-white);
   --bg-subtle: var(--tf-neutral-50);
   --bg-muted: var(--tf-neutral-100);

@@ -24,13 +24,23 @@ function AccountChrome() {
   const email = useSessionStore((s) => s.user?.email);
   if (status !== "authenticated") return null;
   return (
-    <div className="flex items-center gap-3 text-sm">
+    <div className="flex min-w-0 items-center gap-3 text-sm">
       {email && (
-        <span style={{ color: "var(--text-muted)" }}>
+        // Hidden on mobile (identity moves to the Conta tab later); truncates from sm up so the
+        // header never overflows the viewport and pushes the theme toggle off-screen.
+        <span
+          className="hidden min-w-0 max-w-[220px] truncate sm:inline"
+          style={{ color: "var(--text-muted)" }}
+          title={email}
+        >
           {messages.account.signedInAs} {email}
         </span>
       )}
-      <button type="button" onClick={() => void signOutUser()} className="rounded border px-3 py-1">
+      <button
+        type="button"
+        onClick={() => void signOutUser()}
+        className="inline-flex min-h-11 shrink-0 items-center rounded border px-3"
+      >
         {messages.account.signOut}
       </button>
     </div>
@@ -42,15 +52,15 @@ function RootLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <span className="text-lg font-semibold" style={{ color: "var(--accent-text)" }}>
+        <span className="shrink-0 text-lg font-semibold" style={{ color: "var(--accent-text)" }}>
           {messages.appName}
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 items-center gap-3">
           <AccountChrome />
           <button
             type="button"
             onClick={toggle}
-            className="rounded border px-3 py-1 text-sm"
+            className="inline-flex min-h-11 shrink-0 items-center rounded border px-3 text-sm"
             aria-label={messages.theme.toggle}
           >
             {messages.theme.toggle}
