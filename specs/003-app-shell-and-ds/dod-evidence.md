@@ -73,5 +73,10 @@ veracity, security). Findings and resolution (authorized by owner):
   production-mode e2e/preview build — accepted with code comment).
 - **Gates after the batch**: unit **79/79** (web 72 · pricing-core 7), e2e **62/62** (incl. new D2/D3
   cases), lint/format/tsc/depcruise clean, coverage 100% in `packages/*` — these supersede the table above.
-- **Re-homologation**: targeted adversarial re-run (account-switch dev+prod, huge-value overflow,
-  light-banner contrast, hang-timeout, full regression) — see below for verdict.
+- **Re-homologation (2026-07-03): PASS — SC-008 RELEASED.** All HIGH/MEDIUM fixes re-verified against the
+  PRODUCTION build (vite preview): D1 account-switch correct in dev AND prod (fresh `GET /me` for user B),
+  D2 overflow 585→0px @390, D3 banner light contrast 4.08→**5.34:1** (locked in CI by the new e2e case
+  measuring over the real tint), D5 hang → error+retry at 15s with successful recovery, D6 label per
+  contract. Full regression clean (0 console errors, 0 token-in-URL, open-redirect still blindado); only
+  known dev-only artifacts remain (no SW in `pnpm dev`; StrictMode first-load focus — production correct).
+  The 003 increment is now closed on a TRUE green.
