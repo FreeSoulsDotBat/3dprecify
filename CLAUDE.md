@@ -1,4 +1,3 @@
-<!-- SPECKIT START -->
 Current ground: **002-foundation BUILT & green** (toolchain, gates, backend+web skeletons, contract pipeline,
 CI). See `specs/002-foundation/{spec,tasks,dod-evidence}.md`. Next real increment: implement **001-walking-
 skeleton** product stories ON this foundation (its plan/tasks are bannered as superseded for tooling).
@@ -15,4 +14,9 @@ Decided stack/standards (authoritative): ADR-0001..0004 + `docs/decisions/{tech-
 Constitution: `.specify/memory/constitution.md` (incl. **Principle VIII** — no inferring architecture/standards).
 Pricing domain reference: `docs/pricing-model-from-spreadsheet.md` (original model — third-party sheet NOT copied).
 **Nothing committed yet** — Jonatan authorizes the first commit (see 002 dod-evidence for manual prereqs).
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+at specs/003-app-shell-and-ds/plan.md
 <!-- SPECKIT END -->
