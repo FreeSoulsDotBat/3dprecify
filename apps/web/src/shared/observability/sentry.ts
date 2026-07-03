@@ -43,6 +43,16 @@ export function initObservability({
         history: true,
       }),
     ],
+    // PII scrub (defence-in-depth with the Conta fix that dropped the email `title`): the DOM
+    // breadcrumb instrumentation serializes clicked elements into a selector that can carry a
+    // `title="…"` attribute. Redact any title value out of ui.* breadcrumbs so a titled element
+    // (e.g. an email) never rides into Sentry.
+    beforeBreadcrumb(breadcrumb) {
+      if (breadcrumb.category?.startsWith("ui.") && typeof breadcrumb.message === "string") {
+        breadcrumb.message = breadcrumb.message.replace(/title="[^"]*"/g, 'title="[redacted]"');
+      }
+      return breadcrumb;
+    },
   });
   initialised = true;
   return true;

@@ -55,9 +55,9 @@ function IdentitySection() {
       <span className="tf-conta__avatar" aria-hidden="true">
         {initial}
       </span>
-      <span className="tf-conta__email" title={label}>
-        {q.data.email ?? label}
-      </span>
+      {/* No `title` here (PII): a DOM title would be captured verbatim in Sentry click
+          breadcrumbs. The email is already the visible text; the tooltip isn't worth the leak. */}
+      <span className="tf-conta__email">{q.data.email ?? label}</span>
     </Card>
   );
 }
@@ -79,7 +79,7 @@ function ThemeSection() {
   return (
     <Card className="tf-conta__row">
       <span id="tf-conta-theme-label" className="tf-conta__row-label">
-        {messages.conta.themeDark}
+        {messages.conta.themeLabel}
       </span>
       <Switch
         aria-labelledby="tf-conta-theme-label"

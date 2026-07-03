@@ -12,7 +12,12 @@ import { applyInitialTheme } from "@/shared/ui/theme-store";
 import "@/styles/global.css";
 
 // FE observability (D2). No-op without a DSN — dev/e2e run silent; prod injects it (A22).
-initObservability({ dsn: env.VITE_SENTRY_DSN, environment: import.meta.env.MODE });
+// `release` (VITE_RELEASE) is forwarded when the build provides it, so errors group by release.
+initObservability({
+  dsn: env.VITE_SENTRY_DSN,
+  release: env.VITE_RELEASE,
+  environment: import.meta.env.MODE,
+});
 applyInitialTheme();
 initSessionListener();
 

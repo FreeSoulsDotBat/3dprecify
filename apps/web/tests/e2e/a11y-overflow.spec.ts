@@ -56,6 +56,21 @@ test.describe("no horizontal overflow at 390px — public surfaces", () => {
       expect(scrollWidth, `/calcular ${theme}`).toBe(clientWidth);
     });
 
+    test(`/calcular has no horizontal overflow with giant values (${theme})`, async ({ page }) => {
+      // D2 regression: an enormous suggested price + material value must WRAP, not push a
+      // horizontal scrollbar. Roll weight stays at the seeded "1" so the price renders (no
+      // zero-weight error); the other three fields get 15-digit / huge inputs.
+      await page.setViewportSize(VIEWPORT);
+      await page.goto("/calcular");
+      await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
+      await page.getByLabel(messages.calculator.fields.costPerRoll).fill("999999999999999,99");
+      await page.getByLabel(messages.calculator.fields.grams).fill("999999999999999");
+      await page.getByLabel(messages.calculator.fields.markup).fill("999999999");
+      await setTheme(page, theme);
+      const { scrollWidth, clientWidth } = await overflow(page);
+      expect(scrollWidth - clientWidth, `/calcular giant ${theme}`).toBeLessThanOrEqual(1);
+    });
+
     test(`/sign-in has no horizontal overflow (${theme})`, async ({ page }) => {
       await page.setViewportSize(VIEWPORT);
       await page.goto("/sign-in");

@@ -80,10 +80,11 @@ beforeEach(() => {
   document.documentElement.dataset.theme = "dark";
   useThemeStore.setState({ theme: "dark" });
   // Authenticated session whose CLIENT email deliberately differs from the /me email,
-  // so a passing identity assertion can only come from the server response (A23).
+  // so a passing identity assertion can only come from the server response (A23). A `uid`
+  // is present because the /me query is now keyed by it (D1) and stays disabled without one.
   useSessionStore.setState({
     status: "authenticated",
-    user: { email: "old-session@client.invalid" } as never,
+    user: { uid: "session-uid", email: "old-session@client.invalid" } as never,
   });
 });
 
@@ -178,5 +179,60 @@ describe("ContaPage theme Switch + sign-out (T057)", () => {
     // /conta) is proven end to end in `app/router.guards.test.tsx` (T034) — asserting it
     // here would require a forbidden pages→app import (FSD boundary).
     expect(useSessionStore.getState().status).toBe("anonymous");
+  });
+});
+
+// ---- D1 — identity isolation across users on a SHARED QueryClient --------------------
+// Regression for the cross-user identity leak: the real app has ONE QueryClient (app/
+// providers) whose cache survives navigation across sign-out/sign-in. With a constant
+// ["me"] key, a re-login as user B within staleTime would read user A's cached identity.
+// The /me query is now keyed by the signed-in uid, so B gets a distinct cache entry.
+describe("ContaPage identity isolation across users (D1)", () => {
+  it("shows B's email after A→logout→B on a shared client, never A's cached identity", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const renderShared = () =>
+      render(
+        <QueryClientProvider client={client}>
+          <ContaPage />
+        </QueryClientProvider>,
+      );
+
+    // The /me email is tied to the signed-in user; the mock answers with the CURRENT body,
+    // which we swap between the two sign-ins (uid drives the query key, not the response).
+    let meBody: MeBody = { uid: "uid-A", email: "ana@precifica.dev" };
+    const fetchMock = vi.fn<FetchFn>(() =>
+      Promise.resolve(
+        new Response(JSON.stringify(meBody), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        }),
+      ),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    // --- User A signs in ---
+    useSessionStore.setState({
+      status: "authenticated",
+      user: { uid: "uid-A", email: "ana@client.invalid" } as never,
+    });
+    const a = renderShared();
+    expect(await screen.findByText("ana@precifica.dev")).toBeInTheDocument();
+    a.unmount(); // navigate away — the shared cache survives (default gcTime)
+
+    // --- Sign out ---
+    useSessionStore.setState({ status: "anonymous", user: null });
+
+    // --- User B signs in (different uid + email) ---
+    meBody = { uid: "uid-B", email: "bruno@precifica.dev" };
+    useSessionStore.setState({
+      status: "authenticated",
+      user: { uid: "uid-B", email: "bruno@client.invalid" } as never,
+    });
+    renderShared();
+
+    expect(await screen.findByText("bruno@precifica.dev")).toBeInTheDocument();
+    // NEVER A's identity — and a fresh fetch fired for B (not served from A's stale cache).
+    expect(screen.queryByText("ana@precifica.dev")).not.toBeInTheDocument();
+    expect(fetchMock.mock.calls.length).toBeGreaterThanOrEqual(2);
   });
 });

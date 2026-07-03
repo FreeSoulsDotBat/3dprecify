@@ -52,6 +52,10 @@ function captureApiError(error: ApiError): void {
   });
 }
 
+// Per-request timeout (hardening c/b). A hung request (server accepts the socket but never
+// answers) would otherwise spin forever; 15s bounds it, aborting into the status-0 error path.
+const REQUEST_TIMEOUT_MS = 15_000;
+
 async function authHeaders(): Promise<Record<string, string>> {
   const user = auth?.currentUser;
   if (!user) return {};
@@ -66,6 +70,17 @@ function resolveUrl(path: string): string {
   return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
+// Origin allowlist (hardening c). The Firebase ID token is attached ONLY when the resolved
+// URL is the configured API origin — relative paths resolve against the base, so they're
+// same-origin by construction; an absolute URL to any OTHER origin never leaks the token.
+function isApiOrigin(resolvedUrl: string): boolean {
+  try {
+    return new URL(resolvedUrl).origin === new URL(env.VITE_API_BASE_URL).origin;
+  } catch {
+    return false;
+  }
+}
+
 interface RawResponse {
   status: number;
   headers: Headers;
@@ -78,15 +93,30 @@ interface RawResponse {
  * the parsed body with its status + headers so either entry point can shape the result.
  */
 async function request(path: string, init: RequestInit): Promise<RawResponse> {
+  const url = resolveUrl(path);
+
+  // 15s timeout via an AbortController (hardening b). An externally-supplied signal is MERGED
+  // in: aborting either the caller's signal OR the timeout cancels the same in-flight request.
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  if (init.signal) {
+    if (init.signal.aborted) controller.abort();
+    else init.signal.addEventListener("abort", () => controller.abort(), { once: true });
+  }
+
   let res: Response;
   try {
     const headers = new Headers(init.headers);
-    for (const [key, value] of Object.entries(await authHeaders())) headers.set(key, value);
+    // Origin allowlist (hardening c): only the API origin gets the token.
+    if (isApiOrigin(url)) {
+      for (const [key, value] of Object.entries(await authHeaders())) headers.set(key, value);
+    }
     if (!headers.has("Accept")) headers.set("Accept", "application/json");
-    res = await fetch(resolveUrl(path), { ...init, headers });
+    res = await fetch(url, { ...init, headers, signal: controller.signal });
   } catch (cause) {
-    // No HTTP response (offline / DNS / connection refused / token-refresh failure):
-    // normalise so callers — and Sentry — always see a typed ApiError. status 0 = no response.
+    // No HTTP response (offline / DNS / connection refused / token-refresh failure) OR the
+    // 15s timeout / external abort (AbortError): normalise so callers — and Sentry — always
+    // see a typed ApiError. status 0 = no response.
     const error = new ApiError({
       status: 0,
       code: "UNKNOWN",
@@ -95,11 +125,29 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
     });
     captureApiError(error);
     throw error;
+  } finally {
+    clearTimeout(timeout);
   }
 
   const headerCorrelationId = res.headers.get("X-Correlation-Id");
   const isJson = res.headers.get("content-type")?.includes("application/json") ?? false;
-  const body = res.status === 204 ? null : isJson ? await res.json() : await res.text();
+
+  let body: unknown;
+  try {
+    body = res.status === 204 ? null : isJson ? await res.json() : await res.text();
+  } catch (cause) {
+    // Malformed body (hardening a): e.g. a 502 that advertises JSON but returns an HTML error
+    // page — `res.json()` throws a raw SyntaxError. Normalise to a typed ApiError carrying the
+    // REAL response status + the header correlation id, and report it like any other failure.
+    const error = new ApiError({
+      status: res.status,
+      code: "UNKNOWN",
+      message: cause instanceof Error ? cause.message : `Malformed response body (${res.status})`,
+      correlationId: headerCorrelationId,
+    });
+    captureApiError(error);
+    throw error;
+  }
 
   if (!res.ok) {
     const envelope = typeof body === "object" && body !== null ? (body as ErrorEnvelope) : null;

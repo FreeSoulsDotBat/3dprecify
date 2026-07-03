@@ -21,6 +21,9 @@ const schema = z.object({
   // tests) Sentry init is a silent no-op; prod/staging inject it as a GitHub Environment
   // secret → build-time var (A22). Never gates anything — it only routes errors/breadcrumbs.
   VITE_SENTRY_DSN: z.string().optional(),
+  // Release identifier for Sentry (optional). When the CI injects it at build time, errors are
+  // grouped by release; absent (dev/e2e/tests) Sentry simply omits it. Only routes errors.
+  VITE_RELEASE: z.string().optional(),
 });
 
 export const env = schema.parse(import.meta.env);

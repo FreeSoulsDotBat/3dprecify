@@ -34,6 +34,8 @@ describe("initObservability (T069 / D2) — DSN gating", () => {
     const live = initObservability({
       dsn: "https://key@o0.ingest.sentry.io/1",
       environment: "test",
+      // 6c wiring: a provided release is forwarded to Sentry.init so errors group by release.
+      release: "web@1.2.3",
     });
     expect(live).toBe(true);
     expect(Sentry.init).toHaveBeenCalledTimes(1);
@@ -48,8 +50,27 @@ describe("initObservability (T069 / D2) — DSN gating", () => {
     expect(initArg).toMatchObject({
       dsn: "https://key@o0.ingest.sentry.io/1",
       environment: "test",
+      release: "web@1.2.3",
     });
     expect(Array.isArray(initArg?.integrations)).toBe(true);
+
+    // 6b PII scrub: the beforeBreadcrumb hook redacts any title="…" out of DOM (ui.*)
+    // breadcrumbs, so a titled element (e.g. an email) never reaches Sentry.
+    const beforeBreadcrumb = initArg?.beforeBreadcrumb;
+    expect(typeof beforeBreadcrumb).toBe("function");
+    const scrubbed = beforeBreadcrumb?.(
+      { category: "ui.click", message: 'span.tf-conta__email[title="zeca@precifica.dev"]' },
+      undefined,
+    );
+    expect(scrubbed?.message).not.toContain("zeca@precifica.dev");
+    expect(scrubbed?.message).toContain('title="[redacted]"');
+
+    // Non-ui breadcrumbs are passed through untouched.
+    const passthrough = beforeBreadcrumb?.(
+      { category: "navigation", message: "/calcular → /conta" },
+      undefined,
+    );
+    expect(passthrough?.message).toBe("/calcular → /conta");
   });
 });
 

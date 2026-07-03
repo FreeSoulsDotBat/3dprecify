@@ -120,10 +120,13 @@
 
   /* Status AS TEXT (INV-3/4) — the AA-measured "deep" hues for status text on
      light surfaces. Components use these, never a raw --tf-* hue. Contrast vs
-     white surface: danger ~6.0:1, success ~5.0:1, info ~4.6:1 (all ≥4.5:1 AA). */
+     white surface: danger ~6.0:1, success ~5.0:1, info ~6.0:1 (all ≥4.5:1 AA). */
   --danger-text: var(--tf-danger-deep);
   --success-text: var(--tf-success-deep);
-  --info-text: var(--tf-teal-deep);
+  /* D3: calibrated to clear 4.5:1 on BOTH white AND the offline-banner info tint
+     (--tf-info-soft #e0f6fb). The old --tf-teal-deep (#0b8196) read only ~4.1:1 on the
+     tint (the D3 miss); #0a6d80 reads ~5.3:1 on the tint and ~6.0:1 on white. */
+  --info-text: #0a6d80;
 
   --focus-ring: var(--tf-purple);
   --selection-bg: var(--tf-purple);

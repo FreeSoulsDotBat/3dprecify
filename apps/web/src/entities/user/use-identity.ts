@@ -25,9 +25,13 @@ export const ME_QUERY_KEY = ["me"] as const;
 
 export function useIdentity(): UseQueryResult<UserIdentity, ApiError> {
   const status = useSessionStore((s) => s.status);
+  const uid = useSessionStore((s) => s.user?.uid);
   return useQuery<UserIdentity, ApiError>({
-    queryKey: ME_QUERY_KEY,
-    enabled: status === "authenticated",
+    // Keyed by uid (D1): a re-login as a DIFFERENT user gets a distinct cache entry, so the
+    // shell can never read the previous user's cached identity within staleTime. `enabled`
+    // also requires the uid so the query never fires with a partial `["me", undefined]` key.
+    queryKey: [...ME_QUERY_KEY, uid],
+    enabled: status === "authenticated" && !!uid,
     retry: false,
     staleTime: 5 * 60_000,
     queryFn: async () => toUserIdentity(await apiFetch<CurrentUser>("/api/v1/me")),

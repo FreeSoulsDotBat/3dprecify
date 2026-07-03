@@ -4,7 +4,7 @@ import { defineConfig } from "orval";
 // OpenAPI (A8). Output lands in src/shared/api (committed; exempt from ESLint/Prettier).
 //
 // A9/T067: the generated client no longer calls `fetch` directly — it routes through the
-// custom mutator `apiFetch` in `transport.ts` (A20). That gives every generated call the
+// custom mutator `orvalFetch` in `transport.ts` (A20). That gives every generated call the
 // fresh Firebase ID token, the typed `VITE_API_BASE_URL`, the typed `ApiError`
 // (code + correlationId), and the Sentry tag hook — for free, uniformly.
 export default defineConfig({

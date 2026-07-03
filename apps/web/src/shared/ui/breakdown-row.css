@@ -40,7 +40,12 @@
   font-size: var(--fs-body-sm);
   font-weight: var(--fw-semibold);
   color: var(--text-strong);
-  white-space: nowrap;
+  /* D2: was `nowrap` — a huge value could not wrap and pushed horizontal overflow at
+     390px. Let the value wrap/break within its (min-width:0) flex column. */
+  white-space: normal;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   text-align: right;
 }
 .tf-brow--muted .tf-brow__label,

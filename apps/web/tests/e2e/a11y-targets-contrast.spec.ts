@@ -25,6 +25,27 @@ function parseRgb(value: string): [number, number, number] {
   return [Number(m[1]), Number(m[2]), Number(m[3])];
 }
 
+// Parse an rgb/rgba string keeping alpha (defaults to 1 for opaque rgb).
+function parseRgba(value: string): [number, number, number, number] {
+  const m = value.match(/rgba?\(\s*(\d+)[,\s]+(\d+)[,\s]+(\d+)(?:[,\s/]+([\d.]+))?/i);
+  if (!m) throw new Error(`Unparseable colour: ${value}`);
+  return [Number(m[1]), Number(m[2]), Number(m[3]), m[4] === undefined ? 1 : Number(m[4])];
+}
+
+// Alpha-composite a (possibly translucent) foreground over an opaque background — models
+// what the browser actually paints for a semi-transparent tint (dark --tf-info-soft is 16%).
+function composite(
+  fg: [number, number, number, number],
+  bg: [number, number, number],
+): [number, number, number] {
+  const a = fg[3];
+  return [
+    Math.round(fg[0] * a + bg[0] * (1 - a)),
+    Math.round(fg[1] * a + bg[1] * (1 - a)),
+    Math.round(fg[2] * a + bg[2] * (1 - a)),
+  ];
+}
+
 function relativeLuminance([r, g, b]: [number, number, number]): number {
   const lin = [r, g, b].map((c) => {
     const s = c / 255;
@@ -40,15 +61,15 @@ function contrastRatio(fg: [number, number, number], bg: [number, number, number
   return (hi + 0.05) / (lo + 0.05);
 }
 
-// Resolve a CSS colour expression (e.g. `var(--danger-text)`) to computed rgb by probing
-// a throwaway element in the live, themed document — getPropertyValue would return the
-// unresolved `var(...)` chain, so we read the browser's computed value instead.
-async function resolve(
+// Resolve a CSS colour expression (e.g. `var(--danger-text)`) to its computed string by
+// probing a throwaway element in the live, themed document — getPropertyValue would return
+// the unresolved `var(...)` chain, so we read the browser's computed value instead.
+async function resolveRaw(
   page: Page,
   value: string,
   prop: "color" | "background-color",
-): Promise<[number, number, number]> {
-  const computed = await page.evaluate(
+): Promise<string> {
+  return page.evaluate(
     ({ value, prop }) => {
       const el = document.createElement("span");
       el.style.setProperty(prop, value);
@@ -59,7 +80,14 @@ async function resolve(
     },
     { value, prop },
   );
-  return parseRgb(computed);
+}
+
+async function resolve(
+  page: Page,
+  value: string,
+  prop: "color" | "background-color",
+): Promise<[number, number, number]> {
+  return parseRgb(await resolveRaw(page, value, prop));
 }
 
 test.describe("interactive targets are ≥44×44px", () => {
@@ -141,4 +169,27 @@ test.describe("status-text contrast ≥4.5:1 in both themes", () => {
       ).toBeGreaterThanOrEqual(AA_TEXT);
     }
   });
+});
+
+// D3 — the offline banner paints `--info-text` on a `--tf-info-soft` tint (NOT --surface-card).
+// The tint composites over the page `--bg-base` (both body + .tf-shell use it). Measure the
+// TEXT over the ACTUAL painted banner background in BOTH themes — the surface the D3 miss
+// slipped through (the old contrast spec only measured status text on --surface-card, so the
+// low ratio of --info-text on the light info tint went uncaught).
+test.describe("offline-banner text contrast over its real tint ≥4.5:1 (D3)", () => {
+  for (const theme of THEMES) {
+    test(`--info-text on the composited offline-banner tint (${theme})`, async ({ page }) => {
+      await page.goto("/calcular");
+      await setTheme(page, theme);
+      const fg = await resolve(page, "var(--info-text)", "color");
+      const tint = parseRgba(await resolveRaw(page, "var(--tf-info-soft)", "background-color"));
+      const pageBg = await resolve(page, "var(--bg-base)", "background-color");
+      const bannerBg = composite(tint, pageBg);
+      const ratio = contrastRatio(fg, bannerBg);
+      expect(
+        ratio,
+        `--info-text on offline-banner tint (${theme}) = ${ratio.toFixed(2)}:1`,
+      ).toBeGreaterThanOrEqual(AA_TEXT);
+    });
+  }
 });

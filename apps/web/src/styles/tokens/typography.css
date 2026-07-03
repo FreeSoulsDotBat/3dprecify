@@ -6,14 +6,15 @@
    Numerals follow the manual: Inter with tabular figures
    (font-feature-settings: "tnum"). No separate monospace.
 
-   Webfont files (woff2) are a FOLLOW-UP: fonts.css + assets/fonts
-   not yet vendored into apps/web, so the system-ui fallbacks render
-   for now. See docs/decisions / business roadmap.
+   Webfonts are vendored: the .woff2 files live in public/brand/fonts/
+   and are declared via @font-face in styles/base.css (Inter 400/500/600/700,
+   Lilita One 400, Paytone One 400). The system-ui entries below are only
+   fallbacks while a face loads.
    ============================================================ */
 :root {
   /* ---- Families ---- */
   /* Display = Peace Sans (brand). Substituted with Paytone One until a
-     Peace Sans .woff2 is self-hosted — see tokens/fonts.css. */
+     Peace Sans .woff2 is self-hosted (@font-face lives in styles/base.css). */
   --font-display: "Paytone One", "Lilita One", system-ui, sans-serif;
   --font-title: "Lilita One", "Paytone One", system-ui, sans-serif;
   --font-body: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
