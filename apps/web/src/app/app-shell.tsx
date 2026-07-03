@@ -37,6 +37,12 @@ function useIsMobile(): boolean {
  *   - app-nav (TabBar mobile / side desktop) → widgets/app-nav (T028), variant by viewport
  * No auth guards live here — guards are router `beforeLoad` (US2). The former inline
  * 001 top-bar chrome is superseded by `widgets/top-bar`.
+ *
+ * Focus-to-title on navigation (T045 / NAV-2) is owned by `widgets/page-header`: each
+ * section title focuses itself on mount (skipping the first, initial-load mount). That
+ * mount is the only reliable "the new title is in the DOM" signal — a pathname-keyed
+ * effect here fires before the `<Outlet/>` commits the destination page, so the shell
+ * would focus the OUTGOING title. See page-header.tsx.
  */
 export function AppShell() {
   const isMobile = useIsMobile();

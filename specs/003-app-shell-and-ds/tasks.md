@@ -102,9 +102,9 @@ that ALL user stories build on.
 ### Tests for User Story 2 (write FIRST, observe FAILING) ⚠️
 
 - [x] T034 [P] [US2] Integration test: guarded routes redirect unauthenticated users to `/sign-in?redirect=<path>`; `/calcular` renders without auth — in `apps/web/src/app/router.guards.test.tsx`.
-- [x] T035 [P] [US2] E2E test (Playwright): select a guarded tab signed-out → sign in via emulator → land on the originally requested section — in `apps/web/e2e/auth-boundary.spec.ts`.
+- [x] T035 [P] [US2] E2E test (Playwright): select a guarded tab signed-out → sign in via emulator → land on the originally requested section — in `apps/web/tests/e2e/auth-boundary.spec.ts`.
 - [x] T036 [P] [US2] Integration test: a protected server request without valid auth is rejected (regression of existing `/me` 401 behavior) — in `apps/web/src/app/router.guards.test.tsx` or existing suite.
-- [ ] T070 [US2] Visual test: `qa-produto` homologates the re-skinned `/sign-in` (DS primitives, offline sign-in message per A33 Phase 1), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
+- [x] T070 [US2] Visual test: `qa-produto` homologates the re-skinned `/sign-in` (DS primitives, offline sign-in message per A33 Phase 1), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
 
 ### Implementation for User Story 2
 
@@ -113,7 +113,7 @@ that ALL user stories build on.
 - [x] T039 [US2] Implement `/sign-in` return-to-intent + already-authenticated redirect (honor `search.redirect`, else `/calcular`) in `apps/web/src/app/router.tsx`.
 - [x] T040 [US2] Build `pages/sign-in` re-skinned over `features/auth/sign-in-screen` (DS primitives) in `apps/web/src/pages/sign-in/`.
 
-**Checkpoint**: freemium boundary holds; US1 still passes.
+**Checkpoint**: freemium boundary holds; US1 still passes. **VALIDATED 2026-07-03 — owner homologation PASS (T070: sign-in re-skin, return-to-intent, public /calcular, A33 offline message; dual-logo layout accepted as-is).**
 
 ---
 
@@ -125,17 +125,17 @@ that ALL user stories build on.
 
 ### Tests for User Story 3 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T041 [P] [US3] Automated a11y test: 0px horizontal overflow at 390px on all 7 surfaces, both themes — in `apps/web/e2e/a11y-overflow.spec.ts`.
-- [ ] T042 [P] [US3] Test: interactive targets ≥44×44px and status-text contrast ≥4.5:1 both themes — in `apps/web/e2e/a11y-targets-contrast.spec.ts`.
-- [ ] T043 [P] [US3] Keyboard test: section change moves focus to the destination `page-header` title — in `apps/web/e2e/focus-to-title.spec.ts`.
+- [x] T041 [P] [US3] Automated a11y test: 0px horizontal overflow at 390px on all 7 surfaces, both themes — in `apps/web/tests/e2e/a11y-overflow.spec.ts`.
+- [x] T042 [P] [US3] Test: interactive targets ≥44×44px and status-text contrast ≥4.5:1 both themes — in `apps/web/tests/e2e/a11y-targets-contrast.spec.ts`.
+- [x] T043 [P] [US3] Keyboard test: section change moves focus to the destination `page-header` title — in `apps/web/tests/e2e/focus-to-title.spec.ts`.
 - [ ] T044 [US3] Visual test: `qa-produto` homologates a11y + brand fidelity across all surfaces, dark + light, ≤414px + desktop.
 
 ### Implementation for User Story 3
 
-- [ ] T045 [US3] Implement focus-to-title on navigation (move focus to `page-header` after route change) in `app-shell`/router integration.
-- [ ] T046 [P] [US3] Honor `prefers-reduced-motion` (suppress splash/shimmer/decorative motion) across `Grafismo`/splash/skeletons.
-- [ ] T047 [P] [US3] Verify dark-default + no-flash first paint end-to-end (theme-store ↔ pre-paint script) and fix any mismatch.
-- [ ] T048 [US3] Resolve any contrast/target/overflow defects surfaced by T041–T044 using semantic tokens (no raw hues; INV-1..5).
+- [x] T045 [US3] Implement focus-to-title on navigation (move focus to `page-header` after route change) in `app-shell`/router integration.
+- [x] T046 [P] [US3] Honor `prefers-reduced-motion` (suppress splash/shimmer/decorative motion) across `Grafismo`/splash/skeletons.
+- [x] T047 [P] [US3] Verify dark-default + no-flash first paint end-to-end (theme-store ↔ pre-paint script) and fix any mismatch.
+- [x] T048 [US3] Resolve any contrast/target/overflow defects surfaced by T041–T044 using semantic tokens (no raw hues; INV-1..5).
 
 **Checkpoint**: shell meets SC-004/005/006 and FR-007 in both themes.
 
@@ -149,7 +149,7 @@ that ALL user stories build on.
 
 ### Tests for User Story 4 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T049 [P] [US4] E2E test: going offline shows the `role="status"` banner within 1s and Calcular still computes; also verify the PWA SPA fallback serves `/calcular` offline after the `/`→`/calcular` route move (analyze I1) — in `apps/web/e2e/offline-banner.spec.ts`.
+- [ ] T049 [P] [US4] E2E test: going offline shows the `role="status"` banner within 1s and Calcular still computes; also verify the PWA SPA fallback serves `/calcular` offline after the `/`→`/calcular` route move (analyze I1) — in `apps/web/tests/e2e/offline-banner.spec.ts`.
 - [ ] T050 [P] [US4] Test: unknown route renders the branded 404 with a way back; error boundary renders reload + `Código de suporte: <id>` — in `apps/web/src/pages/{not-found,error}/*.test.tsx`.
 - [ ] T051 [P] [US4] Copy-honesty test: shell/state copy contains no payment-provider name, no cancellation policy, no price — in `apps/web/src/shared/i18n/copy-honesty.test.ts`.
 - [ ] T071 [US4] Visual test: `qa-produto` homologates the offline banner, 404, and generic-error screen (support code visible), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
