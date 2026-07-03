@@ -7,9 +7,14 @@ export const messages = {
   },
   signIn: {
     title: "Entrar",
-    subtitle: "Faça login para calcular seus preços.",
+    // Calcular é público (US2/T038): o login dá acesso às áreas guardadas, não ao cálculo.
+    subtitle: "Entre para acessar seu catálogo, histórico e conta.",
     google: "Entrar com Google",
     error: "Não foi possível entrar. Tente novamente.",
+    // A33 Fase 1: erro Firebase `auth/network-request-failed` → mensagem específica de
+    // offline (o login precisa de internet; o cálculo continua funcionando). Demais
+    // erros mantêm a mensagem genérica acima.
+    offline: "Você está offline. O login precisa de internet — o cálculo continua funcionando.",
     notConfigured: "Login indisponível: Firebase não configurado neste ambiente.",
   },
   calculator: {

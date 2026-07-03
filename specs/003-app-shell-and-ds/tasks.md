@@ -27,12 +27,12 @@ before implementation. The `001` regression suites (`calculator-model.test.ts`, 
 
 **Purpose**: tokens, assets, fonts, deps, and copy the shell needs before any layer/component work.
 
-- [ ] T001 Add batch-1 Radix runtime deps (`@radix-ui/react-tabs` → T028, `-dialog` → T073, `-switch` → T059) to `apps/web/package.json` and record the shadcn-CLI scaffold-then-reskin convention (ADR-0007) in a short comment; run `pnpm install`. *(All three deps are consumed — `-dialog` kept per decision C1 = build now.)*
-- [ ] T002 [P] Copy the 43 homologated SVGs into `apps/web/public/brand/{logo,grafismos,icons/lucide}/` (static-serve placement per research R10).
-- [ ] T003 [P] Self-host brand fonts under `apps/web/public/brand/fonts/` with `@font-face` in `apps/web/src/styles/base.css`; keep the display-face fallback for the absent `.woff2` (owner-accepted, do not block).
-- [ ] T004 [P] Add semantic status-text tokens `--danger-text` / `--success-text` / `--info-text` for BOTH themes in `apps/web/src/styles/tokens/colors.css` (measured ≥4.5:1).
-- [ ] T005 Add the pre-paint theme-resolution inline script (saved pref → OS `prefers-color-scheme` → dark, per decision **A34** / research R4 as corrected) to `apps/web/index.html` so first paint never flashes the wrong theme; add `persist` to `theme-store`.
-- [ ] T006 [P] Extend `apps/web/src/shared/i18n/messages.pt-br.ts` with `nav.*`, `conta.*`, `catalogo.*`, `historico.*`, and `state/notFound/error/*` keys per `contracts/copy.pt-br.md` (honest copy: no provider, price, or cancellation).
+- [x] T001 Add batch-1 Radix runtime deps (`@radix-ui/react-tabs` → T028, `-dialog` → T073, `-switch` → T059) to `apps/web/package.json` and record the shadcn-CLI scaffold-then-reskin convention (ADR-0007) in a short comment; run `pnpm install`. *(All three deps are consumed — `-dialog` kept per decision C1 = build now.)*
+- [x] T002 [P] Copy the 43 homologated SVGs into `apps/web/public/brand/{logo,grafismos,icons/lucide}/` (static-serve placement per research R10).
+- [x] T003 [P] Self-host brand fonts under `apps/web/public/brand/fonts/` with `@font-face` in `apps/web/src/styles/base.css`; keep the display-face fallback for the absent `.woff2` (owner-accepted, do not block).
+- [x] T004 [P] Add semantic status-text tokens `--danger-text` / `--success-text` / `--info-text` for BOTH themes in `apps/web/src/styles/tokens/colors.css` (measured ≥4.5:1).
+- [x] T005 Add the pre-paint theme-resolution inline script (saved pref → OS `prefers-color-scheme` → dark, per decision **A34** / research R4 as corrected) to `apps/web/index.html` so first paint never flashes the wrong theme; add `persist` to `theme-store`.
+- [x] T006 [P] Extend `apps/web/src/shared/i18n/messages.pt-br.ts` with `nav.*`, `conta.*`, `catalogo.*`, `historico.*`, and `state/notFound/error/*` keys per `contracts/copy.pt-br.md` (honest copy: no provider, price, or cancellation).
 
 ---
 
@@ -43,26 +43,26 @@ that ALL user stories build on.
 
 **⚠️ CRITICAL**: no user-story work begins until this phase is complete.
 
-- [ ] T007 Create the FSD-Lite layer folders `apps/web/src/{pages,widgets,entities}/` with per-domain subfolders and minimal placeholder modules (materializes ADR-0004/0007 layers).
-- [ ] T008 Extend `eslint.config.mjs` boundaries: add `pages`/`widgets`/`entities` element types and the canonical FSD import-direction rules (`app → pages → widgets → features → entities → shared`; no upward/sideways-sibling imports).
-- [ ] T009 Extend `.dependency-cruiser.cjs`: add a forbidden layer-direction rule (upward imports) alongside the existing `no-circular` + `pricing-core-is-canonical` rules.
-- [ ] T010 [P] Write the token-parity snapshot test in `apps/web` asserting the app token set (incl. the new status-text tokens) matches the homologated DS graph — **write FIRST, observe FAILING** (ADR-0007 follow-up).
-- [ ] T011 Refactor the 5 existing `tf-*` primitives to typed prop contracts (no visual rewrite): `shared/ui/{card,field,number-field,price-hero,breakdown-row}.{tsx,css}` per `contracts/ui-components.md`.
-- [ ] T012 [P] Build `Button` primitive (variants/size/loading, ≥44×44px) in `shared/ui/button.{tsx,css}`.
-- [ ] T013 [P] Build `Icon` primitive (typed `name` from the 43-SVG set; `currentColor` inline) in `shared/ui/icon.{tsx,css}`.
-- [ ] T014 [P] Build `Logo` primitive (full/mark, theme-aware) in `shared/ui/logo.{tsx,css}`.
-- [ ] T015 [P] Build `Grafismo` primitive (decorative, reduced-motion safe) in `shared/ui/grafismo.{tsx,css}`.
-- [ ] T016 [P] Build `Spinner` primitive (`role="status"` + SR label) in `shared/ui/spinner.{tsx,css}`.
-- [ ] T017 [P] Build `Badge` primitive (tones via semantic tokens) in `shared/ui/badge.{tsx,css}`.
-- [ ] T018 [P] Build `Alert` primitive (`role="alert"` for danger; semantic-token tones) in `shared/ui/alert.{tsx,css}`.
-- [ ] T019 [P] Build `EmptyState` primitive (icon/title/body/action) in `shared/ui/empty-state.{tsx,css}`.
-- [ ] T020 Build `Toast` primitive and mount the `Toaster` provider in `app/providers.tsx` (`shared/ui/toast.{tsx,css}`).
-- [ ] T021 Update the single permitted barrel `shared/ui/index.ts` to export all batch-1 components (no internal barrels).
-- [ ] T022 Create the `entities/user` identity view-model (read-only, fed by the **`/api/v1/me` response** — server-confirmed identity per decision **A23**, NOT the client session object; no `plan` field) in `apps/web/src/entities/user/`. Depends on T067.
-- [ ] T023 Build the `app-shell` scaffold (hosts `<Outlet/>`; slots for app-nav, top-bar, offline-banner) in `apps/web/src/app/app-shell.tsx`, replacing the inline `RootLayout` chrome in `router.tsx`.
-- [ ] T024 Rebuild the router route-tree skeleton in `apps/web/src/app/router.tsx`: wire all 7 surfaces (`/`→`/calcular`, `/calcular`, `/catalogo`, `/historico`, `/conta`, `/sign-in`, 404 catch-all, error boundary) to minimal page stubs — **no auth guards yet** (guards land in US2).
-- [ ] T072 [P] Component test (write FIRST, observe FAILING) for the `Dialog`/`Sheet` primitive: focus is trapped while open, Escape closes, and focus returns to the opener (FR-016) — in `apps/web/src/shared/ui/dialog.test.tsx`. *(Decision C1 = build now — Jonatan 2026-07-02.)*
-- [ ] T073 [P] Build the Radix-skinned `Dialog`/`Sheet` primitive (`@radix-ui/react-dialog`; focus-trap + Escape + focus-return; ≥44×44px close control; `tf-*` skin) in `apps/web/src/shared/ui/dialog.{tsx,css}` and export from the `shared/ui/index.ts` barrel (T021). Satisfies FR-016 as delivered DS batch-1 library surface; **no shell surface consumes it in 003** (first product consumer at E2 catálogo) — the T072 component test proves the a11y contract. *(Decision C1 = build now; ADR-0007 Radix-skinned.)*
+- [x] T007 Create the FSD-Lite layer folders `apps/web/src/{pages,widgets,entities}/` with per-domain subfolders and minimal placeholder modules (materializes ADR-0004/0007 layers).
+- [x] T008 Extend `eslint.config.mjs` boundaries: add `pages`/`widgets`/`entities` element types and the canonical FSD import-direction rules (`app → pages → widgets → features → entities → shared`; no upward/sideways-sibling imports).
+- [x] T009 Extend `.dependency-cruiser.cjs`: add a forbidden layer-direction rule (upward imports) alongside the existing `no-circular` + `pricing-core-is-canonical` rules.
+- [x] T010 [P] Write the token-parity snapshot test in `apps/web` asserting the app token set (incl. the new status-text tokens) matches the homologated DS graph — **write FIRST, observe FAILING** (ADR-0007 follow-up).
+- [x] T011 Refactor the 5 existing `tf-*` primitives to typed prop contracts (no visual rewrite): `shared/ui/{card,field,number-field,price-hero,breakdown-row}.{tsx,css}` per `contracts/ui-components.md`.
+- [x] T012 [P] Build `Button` primitive (variants/size/loading, ≥44×44px) in `shared/ui/button.{tsx,css}`.
+- [x] T013 [P] Build `Icon` primitive (typed `name` from the 43-SVG set; `currentColor` inline) in `shared/ui/icon.{tsx,css}`.
+- [x] T014 [P] Build `Logo` primitive (full/mark, theme-aware) in `shared/ui/logo.{tsx,css}`.
+- [x] T015 [P] Build `Grafismo` primitive (decorative, reduced-motion safe) in `shared/ui/grafismo.{tsx,css}`.
+- [x] T016 [P] Build `Spinner` primitive (`role="status"` + SR label) in `shared/ui/spinner.{tsx,css}`.
+- [x] T017 [P] Build `Badge` primitive (tones via semantic tokens) in `shared/ui/badge.{tsx,css}`.
+- [x] T018 [P] Build `Alert` primitive (`role="alert"` for danger; semantic-token tones) in `shared/ui/alert.{tsx,css}`.
+- [x] T019 [P] Build `EmptyState` primitive (icon/title/body/action) in `shared/ui/empty-state.{tsx,css}`.
+- [x] T020 Build `Toast` primitive and mount the `Toaster` provider in `app/providers.tsx` (`shared/ui/toast.{tsx,css}`).
+- [x] T021 Update the single permitted barrel `shared/ui/index.ts` to export all batch-1 components (no internal barrels).
+- [x] T022 Create the `entities/user` identity view-model (read-only, fed by the **`/api/v1/me` response** — server-confirmed identity per decision **A23**, NOT the client session object; no `plan` field) in `apps/web/src/entities/user/`. Depends on T067.
+- [x] T023 Build the `app-shell` scaffold (hosts `<Outlet/>`; slots for app-nav, top-bar, offline-banner) in `apps/web/src/app/app-shell.tsx`, replacing the inline `RootLayout` chrome in `router.tsx`.
+- [x] T024 Rebuild the router route-tree skeleton in `apps/web/src/app/router.tsx`: wire all 7 surfaces (`/`→`/calcular`, `/calcular`, `/catalogo`, `/historico`, `/conta`, `/sign-in`, 404 catch-all, error boundary) to minimal page stubs — **no auth guards yet** (guards land in US2).
+- [x] T072 [P] Component test (write FIRST, observe FAILING) for the `Dialog`/`Sheet` primitive: focus is trapped while open, Escape closes, and focus returns to the opener (FR-016) — in `apps/web/src/shared/ui/dialog.test.tsx`. *(Decision C1 = build now — Jonatan 2026-07-02.)*
+- [x] T073 [P] Build the Radix-skinned `Dialog`/`Sheet` primitive (`@radix-ui/react-dialog`; focus-trap + Escape + focus-return; ≥44×44px close control; `tf-*` skin) in `apps/web/src/shared/ui/dialog.{tsx,css}` and export from the `shared/ui/index.ts` barrel (T021). Satisfies FR-016 as delivered DS batch-1 library surface; **no shell surface consumes it in 003** (first product consumer at E2 catálogo) — the T072 component test proves the a11y contract. *(Decision C1 = build now; ADR-0007 Radix-skinned.)*
 
 **Checkpoint**: layers + gates + DS (incl. `Dialog`/`Sheet`) + shell + routes exist; `pnpm gate` passes with the extended boundaries; user stories can start.
 
@@ -76,20 +76,20 @@ that ALL user stories build on.
 
 ### Tests for User Story 1 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T025 [P] [US1] Integration test: app-nav renders 4 tabs on mobile (bottom) and desktop (sidebar), exactly one active, switching updates it — in `apps/web/src/widgets/app-nav/app-nav.test.tsx`.
-- [ ] T026 [P] [US1] Integration test: `/calcular` renders canonical R$ 2,00 / R$ 3,00 (guards the `001` calc through the refactor) — in `apps/web/src/pages/calcular/calcular.test.tsx`.
-- [ ] T027 [US1] Visual test: `qa-produto` homologates the 4-tab shell at 390×844 + desktop, dark + light (renders real UI, screenshots, console/network).
+- [x] T025 [P] [US1] Integration test: app-nav renders 4 tabs on mobile (bottom) and desktop (sidebar), exactly one active, switching updates it — in `apps/web/src/widgets/app-nav/app-nav.test.tsx`.
+- [x] T026 [P] [US1] Integration test: `/calcular` renders canonical R$ 2,00 / R$ 3,00 (guards the `001` calc through the refactor) — in `apps/web/src/pages/calcular/calcular.test.tsx`.
+- [x] T027 [US1] Visual test: `qa-produto` homologates the 4-tab shell at 390×844 + desktop, dark + light (renders real UI, screenshots, console/network).
 
 ### Implementation for User Story 1
 
-- [ ] T028 [P] [US1] Build `widgets/app-nav` — Radix-skinned TabBar (mobile bottom) + Sidebar (desktop), active from current route, each item ≥44×44px, links to routes — in `apps/web/src/widgets/app-nav/`.
-- [ ] T029 [P] [US1] Build `widgets/top-bar` — `Logo` + theme toggle + account-chrome slot — in `apps/web/src/widgets/top-bar/`.
-- [ ] T030 [P] [US1] Build `widgets/page-header` — section title element, focusable (`tabindex="-1"`) — in `apps/web/src/widgets/page-header/`.
-- [ ] T031 [US1] Build `pages/calcular` — move `features/calculator/calculator-screen` into the page, re-skin with DS primitives, keep model/logic unchanged — in `apps/web/src/pages/calcular/`.
-- [ ] T032 [US1] Build `pages/catalogo` and `pages/historico` as on-brand `EmptyState` placeholders (no CRUD/list) — in `apps/web/src/pages/{catalogo,historico}/`.
-- [ ] T033 [US1] Wire the responsive breakpoint in `app-shell` so app-nav renders TabBar **≤425px** and Sidebar **>425px** (owner decision 2026-07-03, post-MVP homologation — widens desktop coverage), hosting pages via `<Outlet/>`.
+- [x] T028 [P] [US1] Build `widgets/app-nav` — Radix-skinned TabBar (mobile bottom) + Sidebar (desktop), active from current route, each item ≥44×44px, links to routes — in `apps/web/src/widgets/app-nav/`.
+- [x] T029 [P] [US1] Build `widgets/top-bar` — `Logo` + theme toggle + account-chrome slot — in `apps/web/src/widgets/top-bar/`.
+- [x] T030 [P] [US1] Build `widgets/page-header` — section title element, focusable (`tabindex="-1"`) — in `apps/web/src/widgets/page-header/`.
+- [x] T031 [US1] Build `pages/calcular` — move `features/calculator/calculator-screen` into the page, re-skin with DS primitives, keep model/logic unchanged — in `apps/web/src/pages/calcular/`.
+- [x] T032 [US1] Build `pages/catalogo` and `pages/historico` as on-brand `EmptyState` placeholders (no CRUD/list) — in `apps/web/src/pages/{catalogo,historico}/`.
+- [x] T033 [US1] Wire the responsive breakpoint in `app-shell` so app-nav renders TabBar **≤425px** and Sidebar **>425px** (owner decision 2026-07-03, post-MVP homologation — widens desktop coverage), hosting pages via `<Outlet/>`.
 
-**Checkpoint**: the 4-tab shell is navigable on both viewports and the calculator matches `001`.
+**Checkpoint**: the 4-tab shell is navigable on both viewports and the calculator matches `001`. **VALIDATED 2026-07-03 — owner homologation PASS (MVP STOP & VALIDATE); brand webfonts live; nav breakpoint adjusted to 425px during homologation (A39 partial).**
 
 ---
 
@@ -101,17 +101,17 @@ that ALL user stories build on.
 
 ### Tests for User Story 2 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T034 [P] [US2] Integration test: guarded routes redirect unauthenticated users to `/sign-in?redirect=<path>`; `/calcular` renders without auth — in `apps/web/src/app/router.guards.test.tsx`.
-- [ ] T035 [P] [US2] E2E test (Playwright): select a guarded tab signed-out → sign in via emulator → land on the originally requested section — in `apps/web/e2e/auth-boundary.spec.ts`.
-- [ ] T036 [P] [US2] Integration test: a protected server request without valid auth is rejected (regression of existing `/me` 401 behavior) — in `apps/web/src/app/router.guards.test.tsx` or existing suite.
+- [x] T034 [P] [US2] Integration test: guarded routes redirect unauthenticated users to `/sign-in?redirect=<path>`; `/calcular` renders without auth — in `apps/web/src/app/router.guards.test.tsx`.
+- [x] T035 [P] [US2] E2E test (Playwright): select a guarded tab signed-out → sign in via emulator → land on the originally requested section — in `apps/web/e2e/auth-boundary.spec.ts`.
+- [x] T036 [P] [US2] Integration test: a protected server request without valid auth is rejected (regression of existing `/me` 401 behavior) — in `apps/web/src/app/router.guards.test.tsx` or existing suite.
 - [ ] T070 [US2] Visual test: `qa-produto` homologates the re-skinned `/sign-in` (DS primitives, offline sign-in message per A33 Phase 1), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
 
 ### Implementation for User Story 2
 
-- [ ] T037 [US2] Add `beforeLoad` auth guards to `/catalogo`, `/historico`, `/conta` (redirect to `/sign-in` with `search.redirect`) in `apps/web/src/app/router.tsx`.
-- [ ] T038 [US2] Make `/calcular` public and `/`→`/calcular` (remove the `001` auth guard that gated `/`) in `apps/web/src/app/router.tsx`.
-- [ ] T039 [US2] Implement `/sign-in` return-to-intent + already-authenticated redirect (honor `search.redirect`, else `/calcular`) in `apps/web/src/app/router.tsx`.
-- [ ] T040 [US2] Build `pages/sign-in` re-skinned over `features/auth/sign-in-screen` (DS primitives) in `apps/web/src/pages/sign-in/`.
+- [x] T037 [US2] Add `beforeLoad` auth guards to `/catalogo`, `/historico`, `/conta` (redirect to `/sign-in` with `search.redirect`) in `apps/web/src/app/router.tsx`.
+- [x] T038 [US2] Make `/calcular` public and `/`→`/calcular` (remove the `001` auth guard that gated `/`) in `apps/web/src/app/router.tsx`.
+- [x] T039 [US2] Implement `/sign-in` return-to-intent + already-authenticated redirect (honor `search.redirect`, else `/calcular`) in `apps/web/src/app/router.tsx`.
+- [x] T040 [US2] Build `pages/sign-in` re-skinned over `features/auth/sign-in-screen` (DS primitives) in `apps/web/src/pages/sign-in/`.
 
 **Checkpoint**: freemium boundary holds; US1 still passes.
 
