@@ -13,7 +13,9 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0004](0004-technology-stack-and-coding-standards.md) | Technology stack & coding standards (full ratified stack) | Accepted |
 | [0005](0005-environments-and-promotion.md) | Environments (local/UAT/prod) & promotion model | Accepted |
 | [0006](0006-branching-and-pr-automation.md) | Branching model, PR automation, convention-only protection | Accepted |
+| [0007](0007-design-system-layer.md) | Design system layer — Radix behavior skinned with `tf-*` tokens | Accepted |
 
 ## Pending (to be written; numbers assigned when authored)
+- `pricing-core` version registry & rounding policy (blocking E1; likely ADR-0008).
+- Entitlement enforcement design — server-authoritative DB source of truth, offline + TTL vs per-request (lands at E2).
 - Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).
-- Entitlement enforcement design — offline + TTL vs per-request (lands at E2).
