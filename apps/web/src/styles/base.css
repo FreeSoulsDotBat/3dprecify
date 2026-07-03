@@ -4,6 +4,33 @@
    via the custom properties in tokens/. Loaded after Tailwind
    preflight so brand body/heading defaults win.
    ============================================================ */
+/* ---- Self-hosted brand webfonts (offline-capable) ----
+   Placement convention: `.woff2` files live in `apps/web/public/brand/fonts/`
+   and are served static (no CDN at runtime). The @font-face rules below are the
+   activation contract: uncomment each once its `.woff2` is delivered.
+
+   The brand faces (Inter, Lilita One, Paytone One, and the display face) are
+   currently ABSENT — owner-accepted (TD-014). Until they land, the token stacks
+   in tokens/typography.css fall back to the display face → system-ui, so the UI
+   renders with no flash and no failed font request. Do NOT reference a missing
+   file (that would emit a 404); activate a rule only when its file exists.
+
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/brand/fonts/inter-400.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url("/brand/fonts/inter-500.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap;
+  src: url("/brand/fonts/inter-600.woff2") format("woff2"); }
+@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap;
+  src: url("/brand/fonts/inter-700.woff2") format("woff2"); }
+@font-face { font-family: "Lilita One"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/brand/fonts/lilita-one-400.woff2") format("woff2"); }
+@font-face { font-family: "Paytone One"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url("/brand/fonts/paytone-one-400.woff2") format("woff2"); }
+@font-face { font-family: "Peace Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("/brand/fonts/PeaceSans.woff2") format("woff2"); }
+*/
+
 *,
 *::before,
 *::after {
@@ -84,6 +111,19 @@ body {
   font-family: var(--font-numeric);
   font-feature-settings: var(--num-features);
   font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Screen-reader-only text (keeps a label for AT while hiding it visually). */
+.tf-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* Decorative grafismo (recolour via `color`; keep ONE per screen) */

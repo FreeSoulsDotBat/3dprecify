@@ -1,0 +1,17 @@
+/* Section title (T030). The focusable heading is the US3 focus-to-title target. */
+.tf-page-header {
+  margin-bottom: var(--space-4);
+}
+.tf-page-header__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  /* Programmatic focus (US3/T045) must not paint a persistent outline; the base
+     :focus-visible ring still applies for keyboard users. */
+  outline: none;
+}
+.tf-page-header__desc {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}

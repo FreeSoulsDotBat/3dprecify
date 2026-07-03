@@ -118,6 +118,13 @@
   --info: var(--tf-cyan);
   --info-deep: var(--tf-teal-deep);
 
+  /* Status AS TEXT (INV-3/4) — the AA-measured "deep" hues for status text on
+     light surfaces. Components use these, never a raw --tf-* hue. Contrast vs
+     white surface: danger ~6.0:1, success ~5.0:1, info ~4.6:1 (all ≥4.5:1 AA). */
+  --danger-text: var(--tf-danger-deep);
+  --success-text: var(--tf-success-deep);
+  --info-text: var(--tf-teal-deep);
+
   --focus-ring: var(--tf-purple);
   --selection-bg: var(--tf-purple);
   --selection-fg: var(--tf-white);
@@ -171,6 +178,13 @@
   --tf-danger-soft: rgba(239, 51, 64, 0.16);
   --tf-info-soft: rgba(21, 189, 220, 0.16);
   --tf-warning-soft: rgba(247, 147, 30, 0.16);
+
+  /* Status AS TEXT (INV-3/4) — the brighter base hues read for status text on
+     the dark plane. Contrast vs #14151a card: danger ~5.9:1, success ~5.5:1,
+     info ~8.0:1 (all ≥4.5:1 AA). */
+  --danger-text: var(--tf-danger);
+  --success-text: var(--tf-success);
+  --info-text: var(--tf-cyan);
 }
 
 /* First-paint theme selection is the consuming app's job: set

@@ -1,5 +1,8 @@
 // Truth's Forge UI primitives (typed TSX rebuild of the Claude Design system).
-// First batch covers the walking-skeleton calculator; more land at E1.
+// This is the ONLY permitted barrel in the app (ADR-0007 / A38) — no internal
+// barrels elsewhere. DS batch-1 for the 4-tab shell lives here.
+
+// ---- Refactored 001 primitives (contract-only, no visual rewrite) ----
 export { Field } from "./field";
 export type { FieldProps, FieldRenderProps } from "./field";
 
@@ -14,3 +17,53 @@ export type { PriceHeroProps, PriceHeroTone } from "./price-hero";
 
 export { BreakdownRow } from "./breakdown-row";
 export type { BreakdownRowProps, BreakdownEmphasis } from "./breakdown-row";
+
+// ---- Added batch-1 primitives (pure tf-*) ----
+export { Button } from "./button";
+export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
+
+export { Icon } from "./icon";
+export type { IconProps, IconName } from "./icon";
+
+export { Logo } from "./logo";
+export type { LogoProps, LogoVariant } from "./logo";
+
+export { Grafismo } from "./grafismo";
+export type { GrafismoProps, GrafismoName } from "./grafismo";
+
+export { Spinner } from "./spinner";
+export type { SpinnerProps, SpinnerSize } from "./spinner";
+
+export { Badge } from "./badge";
+export type { BadgeProps, BadgeTone } from "./badge";
+
+export { Alert } from "./alert";
+export type { AlertProps, AlertTone } from "./alert";
+
+export { EmptyState } from "./empty-state";
+export type { EmptyStateProps } from "./empty-state";
+
+export { Toaster, toast, useToastStore } from "./toast";
+export type { ToastTone, ToastItem } from "./toast";
+
+// ---- Added batch-1 primitives (Radix-skinned) ----
+export {
+  Dialog,
+  DialogTrigger,
+  DialogClose,
+  DialogPortal,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetTitle,
+  SheetDescription,
+} from "./dialog";
+export type { DialogContentProps, DialogVariant, SheetSide } from "./dialog";
+
+// ---- Theme store (shared UI state) ----
+export { useThemeStore, applyInitialTheme, THEME_STORAGE_KEY } from "./theme-store";
+export type { Theme } from "./theme-store";

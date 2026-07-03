@@ -33,4 +33,46 @@ export const messages = {
     signedInAs: "Conectado como",
     signOut: "Sair",
   },
+  // App shell navigation (app-nav) — the fixed IA labels (ds-readme §2).
+  // `ariaLabel` names the <nav> landmark for assistive tech (a11y copy, honest).
+  nav: {
+    ariaLabel: "Navegação principal",
+    calcular: "Calcular",
+    catalogo: "Catálogo",
+    historico: "Histórico",
+    conta: "Conta",
+  },
+  // Conta page. Plan indicator is a static, honest "Gratuito" (display-only,
+  // gates nothing — no entitlement field exists yet; Principle IV).
+  conta: {
+    title: "Conta",
+    planLabel: "Plano",
+    planFree: "Gratuito",
+    themeLabel: "Tema",
+  },
+  // Catálogo / Histórico placeholders — state intent, promise no price/date.
+  catalogo: {
+    emptyTitle: "Catálogo em breve",
+    emptyBody: "Aqui você vai salvar filamentos, impressoras e produtos.",
+  },
+  historico: {
+    emptyTitle: "Histórico em breve",
+    emptyBody: "Seus cálculos salvos vão aparecer aqui.",
+  },
+  // System states (offline / 404 / generic error). Honest pt-BR: no provider,
+  // no price, no cancellation policy (FR-014).
+  state: {
+    offline: "Você está offline. O cálculo continua funcionando.",
+  },
+  notFound: {
+    title: "Página não encontrada",
+    body: "O endereço que você abriu não existe.",
+    back: "Voltar para Calcular",
+  },
+  error: {
+    title: "Algo deu errado",
+    body: "Tente novamente. Se persistir, informe o código de suporte.",
+    reload: "Recarregar",
+    supportCode: "Código de suporte:",
+  },
 } as const;

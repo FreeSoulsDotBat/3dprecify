@@ -1,0 +1,89 @@
+/* App navigation (T028). One markup, two skins: a fixed bottom TabBar on mobile
+   and a side nav on desktop. Targets are ≥44×44px (INV-2); active section uses the
+   semantic accent-text token (INV-3/4), never a raw hue. */
+
+.tf-nav__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tf-nav__item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: var(--fw-medium);
+  border-radius: var(--radius-md);
+}
+.tf-nav__item[aria-current="page"] {
+  color: var(--accent-text);
+}
+.tf-nav__label {
+  white-space: nowrap;
+}
+
+/* ---- Mobile: bottom TabBar (≤414px) ---- */
+.tf-nav--tabbar {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 30;
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.tf-nav--tabbar .tf-nav__list {
+  display: flex;
+  height: var(--tabbar-h);
+}
+.tf-nav--tabbar .tf-nav__cell {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+.tf-nav--tabbar .tf-nav__item {
+  position: relative;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-1);
+  font-size: var(--fs-caption);
+}
+.tf-nav--tabbar .tf-nav__item[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28px;
+  height: 3px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+}
+
+/* ---- Desktop: side nav ---- */
+.tf-nav--sidebar {
+  flex: 0 0 auto;
+  width: 240px;
+  background: var(--surface-card);
+  border-right: 1px solid var(--border-subtle);
+  padding: var(--space-4) var(--space-3);
+}
+.tf-nav--sidebar .tf-nav__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+.tf-nav--sidebar .tf-nav__item {
+  justify-content: flex-start;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-3) var(--space-4);
+}
+.tf-nav--sidebar .tf-nav__item[aria-current="page"] {
+  background: var(--accent-soft);
+}

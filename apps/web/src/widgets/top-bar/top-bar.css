@@ -1,0 +1,59 @@
+/* Top bar (T029). Brand logo + account chrome + stateful theme toggle. */
+.tf-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  height: var(--topbar-h);
+  padding-inline: var(--gutter);
+  background: var(--surface-card);
+  border-bottom: 1px solid var(--border-subtle);
+}
+.tf-topbar__logo {
+  height: 28px;
+  width: auto;
+  flex-shrink: 0;
+}
+.tf-topbar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.tf-topbar__account {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.tf-topbar__email {
+  display: none;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+}
+@media (min-width: 640px) {
+  .tf-topbar__email {
+    display: inline;
+  }
+}
+.tf-topbar__theme {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-body);
+  cursor: pointer;
+}
+.tf-topbar__theme[aria-pressed="true"] {
+  color: var(--accent-text);
+  border-color: var(--border-default);
+}

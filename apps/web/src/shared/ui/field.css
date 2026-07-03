@@ -34,7 +34,9 @@
 }
 .tf-field__error {
   font-size: var(--fs-caption);
-  color: var(--danger-deep);
+  /* Status text uses the semantic --danger-text token, never a raw hue (INV-4,
+     ADR-0007). Same measured "deep" red on light; theme-aware on dark. */
+  color: var(--danger-text);
   font-weight: var(--fw-medium);
 }
 
