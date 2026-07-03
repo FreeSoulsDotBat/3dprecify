@@ -64,6 +64,11 @@ Convention (the "when to use which" the option's Cons calls for):
 - **Radix-skinned** (`shared/ui/*` wrapping a `@radix-ui/react-*` primitive) is REQUIRED for any component
   whose accessibility is non-trivial: modal/sheet, listbox/select, switch/checkbox/radio, tabs, tooltip,
   collapsible/accordion, and anything needing focus-trap / focus-restore / roving-tabindex / typeahead.
+  **Exception (clarified 2026-07-03, post-close audit):** ROUTE NAVIGATION rendered as tabs (the shell's
+  TabBar/sidebar `app-nav`) must be a `nav` landmark of links with `aria-current="page"` (hand-rolled
+  roving-tabindex) — NOT `@radix-ui/react-tabs`, whose `tablist/tabpanel` semantics are for same-view
+  panel switching and would be an ARIA anti-pattern for navigation. Sanctioned by the 003
+  `contracts/ui-components.md`; do not "fix" app-nav to Radix Tabs.
 - **Pure `tf-*` typed-TSX + CSS** for purely-presentational or simple-interaction primitives.
 - Both live in `shared/ui`; **Atomic Design stays a taxonomy** (ADR-0004 F3.1) — no top-level
   `atoms/`/`molecules/` folders; the only permitted barrel is `shared/ui/index.ts` (no internal barrels).

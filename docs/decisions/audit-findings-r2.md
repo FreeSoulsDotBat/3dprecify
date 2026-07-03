@@ -193,6 +193,14 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
 - **STILL OPEN:** A36 (visual baseline: recommend reference PNGs now + pixel-regression post-003), A39
   (breakpoints), A41 (Postgres host, E2), A42 (rounding/money → ADR-0008, E1), plus the product queue
   A24–A31 and mechanical reconciles R2-1..6.
+- **POST-CLOSE AUDIT + FIX BATCH** (2026-07-03, 5-agent adversarial sweep, authorized by Jonatan): found
+  **1 HIGH** (cross-user identity leak on Conta — confirmed in dev AND production build; fixed with
+  uid-keyed `/me` query + sign-out cache purge + regression test) and 6 mediums, all fixed (transport
+  invalid-JSON normalization + 15s timeout + Authorization origin allowlist; 390px huge-value overflow;
+  light-theme banner contrast + the e2e gap that hid it; Sentry PII scrub + release stamping; dead
+  `-tabs` dep; doc rewording incl. the "Radix TabBar" trap → ADR-0007 nav exception note). Registered
+  TD-020 (parseDecimal) and TD-021 (shared/network). Full record: `dod-evidence.md` §"Post-close audit".
+  Gates after batch: 79/79 unit · 62/62 e2e · coverage 100%. Re-homologation pending.
 - **003-app-shell-and-ds CLOSED** (2026-07-03): all 73 tasks done, five stories owner-homologated same
   day, T065 owner-accepted per V2; gates 75/75 unit · 54/54 e2e · depcruise/lint/tsc clean. Evidence:
   `specs/003-app-shell-and-ds/dod-evidence.md`. Closed with it: TD-014, TD-015, TD-017, D1, D2, A20,

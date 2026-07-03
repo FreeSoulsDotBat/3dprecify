@@ -12,7 +12,7 @@ delivers: (1) the FSD-Lite `pages/` + `widgets/` + `entities/` layers and the bo
 every later epoch reuses; (2) the app shell (mobile TabBar / desktop sidebar, top bar, offline banner, splash,
 toaster, focus-to-title on navigation); (3) the batch-1 design-system components per ADR-0007 (refactor the 5
 existing `tf-*` primitives to typed contracts, add the ~13 the shell needs — Button, Icon, Logo, Grafismo,
-Spinner, Badge, Alert, Toast, plus the Radix-skinned TabBar/Sidebar-nav, Switch, Dialog/Sheet); (4) tokens +
+Spinner, Badge, Alert, Toast, plus the app-nav (roving-tabindex route-link nav per ui-components.md), Radix-skinned Switch and Dialog/Sheet); (4) tokens +
 self-hosted fonts + the semantic `--danger/success/info-text` tokens + 43 brand SVGs; (5) the five pages
 (re-skinned sign-in, moved calculator, real Conta, Catálogo/Histórico placeholders); (6) system states (offline
 banner, 404, generic-error with `Código de suporte: {correlationId}`) with honest pt-BR copy.
@@ -150,7 +150,7 @@ apps/web/
     │   └── user/                # identity view-model derived from /me (read-only)
     └── shared/                  # EXISTING layer
         ├── ui/                  # DS batch-1: refactor 5 tf-* + add Button/Icon/Logo/Grafismo/Spinner/
-        │                        #   Badge/Alert/Toast + Radix-skinned TabBar/Switch/Dialog|Sheet; barrel index.ts
+        │                        #   Badge/Alert/Toast + roving-tabindex app-nav + Radix-skinned Switch/Dialog|Sheet; barrel index.ts
         ├── api/                 # generated Orval client (unchanged) + error-code→pt-BR map
         ├── i18n/                # messages.pt-br.ts extended (nav/states/conta/errors)
         ├── session/             # session-store (unchanged)

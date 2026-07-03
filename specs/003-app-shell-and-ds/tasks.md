@@ -27,7 +27,7 @@ before implementation. The `001` regression suites (`calculator-model.test.ts`, 
 
 **Purpose**: tokens, assets, fonts, deps, and copy the shell needs before any layer/component work.
 
-- [x] T001 Add batch-1 Radix runtime deps (`@radix-ui/react-tabs` → T028, `-dialog` → T073, `-switch` → T059) to `apps/web/package.json` and record the shadcn-CLI scaffold-then-reskin convention (ADR-0007) in a short comment; run `pnpm install`. *(All three deps are consumed — `-dialog` kept per decision C1 = build now.)*
+- [x] T001 Add batch-1 Radix runtime deps (`@radix-ui/react-tabs` → T028, `-dialog` → T073, `-switch` → T059) to `apps/web/package.json` and record the shadcn-CLI scaffold-then-reskin convention (ADR-0007) in a short comment; run `pnpm install`. *(`-dialog` kept per decision C1 = build now; `-tabs` was removed in the 2026-07-03 post-close audit — dead dep, app-nav is a route-link nav by contract.)*
 - [x] T002 [P] Copy the 43 homologated SVGs into `apps/web/public/brand/{logo,grafismos,icons/lucide}/` (static-serve placement per research R10).
 - [x] T003 [P] Self-host brand fonts under `apps/web/public/brand/fonts/` with `@font-face` in `apps/web/src/styles/base.css`; keep the display-face fallback for the absent `.woff2` (owner-accepted, do not block).
 - [x] T004 [P] Add semantic status-text tokens `--danger-text` / `--success-text` / `--info-text` for BOTH themes in `apps/web/src/styles/tokens/colors.css` (measured ≥4.5:1).
@@ -58,7 +58,7 @@ that ALL user stories build on.
 - [x] T019 [P] Build `EmptyState` primitive (icon/title/body/action) in `shared/ui/empty-state.{tsx,css}`.
 - [x] T020 Build `Toast` primitive and mount the `Toaster` provider in `app/providers.tsx` (`shared/ui/toast.{tsx,css}`).
 - [x] T021 Update the single permitted barrel `shared/ui/index.ts` to export all batch-1 components (no internal barrels).
-- [x] T022 Create the `entities/user` identity view-model (read-only, fed by the **`/api/v1/me` response** — server-confirmed identity per decision **A23**, NOT the client session object; no `plan` field) in `apps/web/src/entities/user/`. Depends on T067.
+- [x] T022 Create the `entities/user` identity view-model (read-only, fed by the **`/api/v1/me` response** — server-confirmed identity per decision **A23**, NOT the client session object; no `plan` field) in `apps/web/src/entities/user/`. (Types-only; the `/me` fetch dependency on T067 lives in T068.)
 - [x] T023 Build the `app-shell` scaffold (hosts `<Outlet/>`; slots for app-nav, top-bar, offline-banner) in `apps/web/src/app/app-shell.tsx`, replacing the inline `RootLayout` chrome in `router.tsx`.
 - [x] T024 Rebuild the router route-tree skeleton in `apps/web/src/app/router.tsx`: wire all 7 surfaces (`/`→`/calcular`, `/calcular`, `/catalogo`, `/historico`, `/conta`, `/sign-in`, 404 catch-all, error boundary) to minimal page stubs — **no auth guards yet** (guards land in US2).
 - [x] T072 [P] Component test (write FIRST, observe FAILING) for the `Dialog`/`Sheet` primitive: focus is trapped while open, Escape closes, and focus returns to the opener (FR-016) — in `apps/web/src/shared/ui/dialog.test.tsx`. *(Decision C1 = build now — Jonatan 2026-07-02.)*
@@ -82,7 +82,7 @@ that ALL user stories build on.
 
 ### Implementation for User Story 1
 
-- [x] T028 [P] [US1] Build `widgets/app-nav` — Radix-skinned TabBar (mobile bottom) + Sidebar (desktop), active from current route, each item ≥44×44px, links to routes — in `apps/web/src/widgets/app-nav/`.
+- [x] T028 [P] [US1] Build `widgets/app-nav` — roving-tabindex nav of route links (per contracts/ui-components.md; NOT Radix Tabs — route navigation must be nav+links+aria-current, not ARIA tablist) as TabBar (mobile bottom) + Sidebar (desktop), active from current route, each item ≥44×44px, links to routes — in `apps/web/src/widgets/app-nav/`.
 - [x] T029 [P] [US1] Build `widgets/top-bar` — `Logo` + theme toggle + account-chrome slot — in `apps/web/src/widgets/top-bar/`.
 - [x] T030 [P] [US1] Build `widgets/page-header` — section title element, focusable (`tabindex="-1"`) — in `apps/web/src/widgets/page-header/`.
 - [x] T031 [US1] Build `pages/calcular` — move `features/calculator/calculator-screen` into the page, re-skin with DS primitives, keep model/logic unchanged — in `apps/web/src/pages/calcular/`.

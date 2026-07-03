@@ -26,7 +26,9 @@ All 73 tasks done (T001–T073); every user story homologated by the owner the s
 - **US4 T071 PASS** — offline banner (<1s, calc keeps working), branded 404, error screen with stable
   "Código de suporte: {correlationId}", copy-honesty locked by test.
 - **US5 T058 PASS** — server-confirmed identity via live `/api/v1/me` against emulator-validated backend
-  (A23 proven end-to-end), honest "Gratuito", persisting theme Switch, sign-out re-guards.
+  (A23: live wire proven by OWNER MANUAL homologation with a locally-run backend; the automated e2e suite
+  proves the transport→/me wire with a route-mocked response — it does not spin FastAPI), honest
+  "Gratuito", persisting theme Switch, sign-out re-guards.
 - **T065 final** — ACCEPTED BY OWNER per V2 (advisory homologation): the five story passes cover every
   surface in both themes/viewports; quickstart V1–V10 all PASS (record appended to quickstart.md).
 
@@ -49,3 +51,27 @@ normalization), A23 (identity from `/me` response only), A33 phases 1+2, A34 (th
 - **R2-1..R2-7** — mechanical doc reconciles incl. stale `CLAUDE.md` "Nothing committed yet" and the
   `quality-gate.ps1` hook inconsistency.
 - Deploy (T022 of 001 / FR-010) remains out of 003 scope — blocked on manual cloud prereqs.
+
+## Post-close audit (2026-07-03, 5-agent adversarial sweep) — fix batch applied
+
+The close above was audited by 5 independent agents (architecture, logic, rendered-adversarial, record
+veracity, security). Findings and resolution (authorized by owner):
+
+- **D1 HIGH (fixed)** — identity of the PREVIOUS user served to the next user on Conta (query cache
+  `["me"]` without uid + 5-min staleTime + client never cleared on sign-out). Confirmed in dev AND the
+  production build. Fixed: uid-keyed query + app-layer cache purge on sign-out + shared-client regression
+  test that failed pre-fix. This invalidated the original SC-008 claim until fixed.
+- **Fixed with it (mediums)**: transport now normalizes invalid-JSON bodies into `ApiError` (real status +
+  header correlationId + Sentry) and aborts hung requests at 15s; `Authorization` only attaches to the
+  API origin; huge-value overflow at 390px removed (PriceHero/BreakdownRow wrap) + e2e case; light-theme
+  offline-banner contrast raised to ≥4.5:1 over the tint (+ the e2e gap that let it slip is closed);
+  e-mail removed from `title` + Sentry `beforeBreadcrumb` scrub (LGPD); optional `VITE_RELEASE` stamping;
+  dead `@radix-ui/react-tabs` removed; stale comments fixed; switch label aligned to the copy contract.
+- **Deferred/registered**: TD-020 (`parseDecimal` silent misparse — fix with per-field validation UX, E1),
+  TD-021 (`shared/network` store extraction trigger), StrictMode-only first-load focus (dev-only,
+  production correct), `__e2eAuth` seam intentionally gated by env flag (a DEV gate would break the
+  production-mode e2e/preview build — accepted with code comment).
+- **Gates after the batch**: unit **79/79** (web 72 · pricing-core 7), e2e **62/62** (incl. new D2/D3
+  cases), lint/format/tsc/depcruise clean, coverage 100% in `packages/*` — these supersede the table above.
+- **Re-homologation**: targeted adversarial re-run (account-switch dev+prod, huge-value overflow,
+  light-banner contrast, hang-timeout, full regression) — see below for verdict.
