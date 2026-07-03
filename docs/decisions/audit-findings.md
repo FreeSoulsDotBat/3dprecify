@@ -27,8 +27,11 @@ pre-decision artifacts to reconcile, (C) missing artifacts to author. Full repor
 ### Deferred to their increment as documented tech debt (do NOT block 002-foundation)
 - **A13 pricing-core version id** → E2 (subset of TD-008); needed to stamp saved-calc snapshots. Lock before E2 persistence.
 - **A14 Base/Mixin + owner_uid index + FK/cascade + system-row carve-out + BOM/product/piece** → E2 data-model.
-- **A15 IP/provenance gate (Amado3D)** → blocks **E1 full model only**; 001 skeleton + 002 foundation use the MINIMAL original formula (material+markup), so NOT blocked. Decide before E1 spec.
-- **A16 freeze pricing-model v1 vars + which defects to fix vs replicate** → before E1 spec.
+- **A15 IP/provenance gate (Amado3D)** → **RESOLVED 2026-07-02 (R2-G1): clean-room rebuild** — E1 specified
+  from public cost-engineering first principles; spreadsheet doc demoted to category checklist. See
+  `audit-findings-r2.md` §5.
+- **A16 freeze pricing-model v1 vars** → before E1 spec. (Reframed by A15 clean-room: define the ORIGINAL v1
+  variable set; "defects to fix vs replicate" dissolved — nothing is replicated.)
 - **A17 WTP validation plan** → business, start collecting E1–E5; decide prices by E6.
 - **A18 free-trial / catalog ownership / MVP-launch def / KPIs / final quota integers** → E2.
 - **A19 security.md/STRIDE, LGPD notice, deletion/erasure, App Check, rate-limit, headers, check_revoked** → E2/launch (LGPD notice at E1 if public).
@@ -55,8 +58,8 @@ pre-decision artifacts to reconcile, (C) missing artifacts to author. Full repor
 - **A14 Base/Mixin spec** (owner_uid index, FK/cascade policy, system-row nullable-owner_uid carve-out) + **BOM/product/piece** structure.
 
 ### Product (block E1 / business-critical)
-- **A15 IP/provenance gate on pricing model** [CRITICAL/E1] — 3rd-party source (Amado3D); legal precondition to building the full model (E1).
-- **A16 Freeze pricing-model v1 variable set + which spreadsheet defects to fix vs replicate** [HIGH/E1].
+- ~~A15 IP/provenance gate~~ → RESOLVED 2026-07-02: clean-room rebuild (`audit-findings-r2.md` §5).
+- **A16 Freeze pricing-model v1 variable set** [HIGH/E1] (reframed by A15 clean-room; defect question dissolved).
 - **A17 WTP validation plan** [CRITICAL/start-now] — collect E1–E5, decide prices by E6.
 - **A18 Free-trial policy** (affects E2 entitlement schema), **catalog ownership/global-default**, MVP/launch def, KPIs, quota integers (final at E2).
 
