@@ -87,7 +87,7 @@ that ALL user stories build on.
 - [ ] T030 [P] [US1] Build `widgets/page-header` — section title element, focusable (`tabindex="-1"`) — in `apps/web/src/widgets/page-header/`.
 - [ ] T031 [US1] Build `pages/calcular` — move `features/calculator/calculator-screen` into the page, re-skin with DS primitives, keep model/logic unchanged — in `apps/web/src/pages/calcular/`.
 - [ ] T032 [US1] Build `pages/catalogo` and `pages/historico` as on-brand `EmptyState` placeholders (no CRUD/list) — in `apps/web/src/pages/{catalogo,historico}/`.
-- [ ] T033 [US1] Wire the responsive breakpoint in `app-shell` so app-nav renders TabBar ≤414px and Sidebar on desktop, hosting pages via `<Outlet/>`.
+- [ ] T033 [US1] Wire the responsive breakpoint in `app-shell` so app-nav renders TabBar **≤425px** and Sidebar **>425px** (owner decision 2026-07-03, post-MVP homologation — widens desktop coverage), hosting pages via `<Outlet/>`.
 
 **Checkpoint**: the 4-tab shell is navigable on both viewports and the calculator matches `001`.
 

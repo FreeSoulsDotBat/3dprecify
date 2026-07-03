@@ -16,8 +16,9 @@ export default tseslint.config(
       // Backend is Python (Ruff/basedpyright own it); ESLint must not scan its venv vendored JS.
       "backend/**",
       "**/*.min.js",
-      // Generated API client (Orval, A8) — exempt.
-      "apps/web/src/shared/api/**",
+      // Generated API client (Orval, A8) — exempt. Hand-written modules in shared/api
+      // (e.g. transport.ts) ARE linted; only the generated file is exempt.
+      "apps/web/src/shared/api/generated.ts",
     ],
   },
   js.configs.recommended,

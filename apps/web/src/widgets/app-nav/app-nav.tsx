@@ -9,7 +9,7 @@ import "./app-nav.css";
 export type AppNavVariant = "tabbar" | "sidebar";
 
 export interface AppNavProps {
-  /** `tabbar` = mobile bottom bar (≤414px); `sidebar` = desktop side nav. */
+  /** `tabbar` = mobile bottom bar (≤425px); `sidebar` = desktop side nav (>425px). */
   variant: AppNavVariant;
 }
 

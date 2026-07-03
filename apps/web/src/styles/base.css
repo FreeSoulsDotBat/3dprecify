@@ -5,28 +5,54 @@
    preflight so brand body/heading defaults win.
    ============================================================ */
 /* ---- Self-hosted brand webfonts (offline-capable) ----
-   Placement convention: `.woff2` files live in `apps/web/public/brand/fonts/`
-   and are served static (no CDN at runtime). The @font-face rules below are the
-   activation contract: uncomment each once its `.woff2` is delivered.
+   `.woff2` files live in `apps/web/public/brand/fonts/`, served static (no CDN at
+   runtime). Inter 400/500/600/700 + Lilita One + Paytone One vendored 2026-07-03
+   (Google Fonts latin subset — covers pt-BR) → closes TD-014. Peace Sans stays
+   commented until its license clears (TD-010); do NOT reference a missing file. */
 
-   The brand faces (Inter, Lilita One, Paytone One, and the display face) are
-   currently ABSENT — owner-accepted (TD-014). Until they land, the token stacks
-   in tokens/typography.css fall back to the display face → system-ui, so the UI
-   renders with no flash and no failed font request. Do NOT reference a missing
-   file (that would emit a 404); activate a rule only when its file exists.
-
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/brand/fonts/inter-400.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 500; font-display: swap;
-  src: url("/brand/fonts/inter-500.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 600; font-display: swap;
-  src: url("/brand/fonts/inter-600.woff2") format("woff2"); }
-@font-face { font-family: "Inter"; font-style: normal; font-weight: 700; font-display: swap;
-  src: url("/brand/fonts/inter-700.woff2") format("woff2"); }
-@font-face { font-family: "Lilita One"; font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/brand/fonts/lilita-one-400.woff2") format("woff2"); }
-@font-face { font-family: "Paytone One"; font-style: normal; font-weight: 400; font-display: swap;
-  src: url("/brand/fonts/paytone-one-400.woff2") format("woff2"); }
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/brand/fonts/inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/brand/fonts/inter-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/brand/fonts/inter-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lilita One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/lilita-one-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Paytone One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/paytone-one-400.woff2") format("woff2");
+}
+/* Peace Sans (TD-010, license pending):
 @font-face { font-family: "Peace Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
   src: url("/brand/fonts/PeaceSans.woff2") format("woff2"); }
 */

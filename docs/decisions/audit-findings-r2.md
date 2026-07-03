@@ -193,6 +193,17 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
 - **STILL OPEN:** A36 (visual baseline: recommend reference PNGs now + pixel-regression post-003), A39
   (breakpoints), A41 (Postgres host, E2), A42 (rounding/money → ADR-0008, E1), plus the product queue
   A24–A31 and mechanical reconciles R2-1..6.
+- **A39 (partial) → nav breakpoint = mobile ≤425px / desktop >425px, decided by Jonatan** (2026-07-03,
+  after MVP homologation — "cobertura de telas é baixa"; supersedes the ≤414px draft). Implemented in
+  `app-shell.tsx` MOBILE_QUERY; T033 updated. Full breakpoint system (tablet/content-max tiers) still open.
+- **TD-014 → CLOSED** (2026-07-03): Inter 400/500/600/700 + Lilita One + Paytone One vendored from Google
+  Fonts (latin subset, covers pt-BR) into `apps/web/public/brand/fonts/`; `@font-face` block activated in
+  `base.css`. Peace Sans remains commented (TD-010). Also: shared/api lint exemption narrowed to
+  `generated.ts` only — `transport.ts` is now linted (clean).
+- **New reconcile item R2-7:** `.specify/scripts/quality-gate.ps1` (PostToolUse hook) behaves
+  inconsistently — manual run prints the pre-decision placeholder ("Stack not chosen yet — no-op"), hook
+  runs execute prettier+eslint but report exit failures as opaque "blocking error / no stderr" noise.
+  Reconcile the script with the real gate (or align it with the D4 shared `gate:all` target).
 - **C1/FR-016 → RESOLVED: build now (Option B), decided by Jonatan** (2026-07-02, via the agent channel).
   `Dialog`/`Sheet` ships in 003 as tested DS batch-1 library surface (T072 focus-trap test-first + T073
   Radix-skinned build); first product consumer arrives at E2 (catálogo). FR coverage now 17/17, SC 8/8.

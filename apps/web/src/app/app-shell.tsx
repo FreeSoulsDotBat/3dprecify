@@ -7,9 +7,10 @@ import { TopBar } from "@/widgets/top-bar/top-bar";
 
 import "./app-shell.css";
 
-// Mobile ≤414px ⇒ bottom TabBar; wider ⇒ desktop side nav (T033). Defensive against
-// jsdom/SSR where matchMedia is absent (defaults to desktop) so tests never crash.
-const MOBILE_QUERY = "(max-width: 414px)";
+// Mobile ≤425px ⇒ bottom TabBar; >425px ⇒ desktop side nav (owner decision 2026-07-03,
+// post-MVP homologation — widens desktop coverage; supersedes the 414px draft). Defensive
+// against jsdom/SSR where matchMedia is absent (defaults to desktop) so tests never crash.
+const MOBILE_QUERY = "(max-width: 425px)";
 
 function useIsMobile(): boolean {
   const read = () =>
