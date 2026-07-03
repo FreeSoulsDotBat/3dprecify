@@ -152,7 +152,7 @@ that ALL user stories build on.
 - [x] T049 [P] [US4] E2E test: going offline shows the `role="status"` banner within 1s and Calcular still computes; also verify the PWA SPA fallback serves `/calcular` offline after the `/`→`/calcular` route move (analyze I1) — in `apps/web/tests/e2e/offline-banner.spec.ts`.
 - [x] T050 [P] [US4] Test: unknown route renders the branded 404 with a way back; error boundary renders reload + `Código de suporte: <id>` — in `apps/web/src/pages/{not-found,error}/*.test.tsx`.
 - [x] T051 [P] [US4] Copy-honesty test: shell/state copy contains no payment-provider name, no cancellation policy, no price — in `apps/web/src/shared/i18n/copy-honesty.test.ts`.
-- [ ] T071 [US4] Visual test: `qa-produto` homologates the offline banner, 404, and generic-error screen (support code visible), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
+- [x] T071 [US4] Visual test: `qa-produto` homologates the offline banner, 404, and generic-error screen (support code visible), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
 
 ### Implementation for User Story 4
 
@@ -161,7 +161,7 @@ that ALL user stories build on.
 - [x] T054 [US4] Build `pages/error` (router error boundary; reload action; `Código de suporte: {correlationId}` read from the typed `ApiError` surfaced by the **T067** transport wrapper — `X-Correlation-Id` header/envelope per A20 — or a local fallback) in `apps/web/src/pages/error/`.
 - [x] T055 [US4] Add the `ErrorCode` → friendly pt-BR map (consumed by Toast/Alert from the T067 `ApiError.code`) in `apps/web/src/shared/api/` per `contracts/copy.pt-br.md`; include a unit assertion that **every** `ErrorCode` union member maps to a non-empty pt-BR phrase (closes analyze D1).
 
-**Checkpoint**: SC-007 states demonstrable; copy honest (FR-014).
+**Checkpoint**: SC-007 states demonstrable; copy honest (FR-014). **VALIDATED 2026-07-03 — owner homologation PASS (T071: offline banner + live calc, branded 404, error screen contract, honest copy).**
 
 ---
 
@@ -173,16 +173,16 @@ that ALL user stories build on.
 
 ### Tests for User Story 5 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T056 [P] [US5] Integration test: Conta renders identity from the **`/api/v1/me` response** (server-confirmed per A23 — not hardcoded, not the client session) and a static `Gratuito` label — in `apps/web/src/pages/conta/conta.test.tsx`.
-- [ ] T057 [P] [US5] Test: theme Switch toggles + persists; sign-out returns to signed-out state and re-guards `/catalogo`/`/historico`/`/conta` — in `apps/web/src/pages/conta/conta.test.tsx`.
+- [x] T056 [P] [US5] Integration test: Conta renders identity from the **`/api/v1/me` response** (server-confirmed per A23 — not hardcoded, not the client session) and a static `Gratuito` label — in `apps/web/src/pages/conta/conta.test.tsx`.
+- [x] T057 [P] [US5] Test: theme Switch toggles + persists; sign-out returns to signed-out state and re-guards `/catalogo`/`/historico`/`/conta` — in `apps/web/src/pages/conta/conta.test.tsx`.
 - [ ] T058 [US5] Visual test: `qa-produto` homologates Conta, dark + light, ≤414px + desktop.
 
 ### Implementation for User Story 5
 
-- [ ] T059 [P] [US5] Build the Radix-skinned `Switch` primitive (labelled, ≥44px hit area) in `shared/ui/switch.{tsx,css}` and export from the barrel.
-- [ ] T067 [US5] Build the HTTP transport wrapper per decision **A20** (R2-G2; closes D1): custom Orval fetch mutator in `apps/web/src/shared/api/` — `user.getIdToken()` per request, `baseURL` from `VITE_API_BASE_URL` (typed env), throw typed `ApiError` on 4xx/5xx reading `code` + `correlationId` from the error envelope / `X-Correlation-Id` header, Sentry-tag hook point. *(Reconciliation addition — prerequisite of T022/T060/T068.)*
-- [ ] T068 [US5] Wire the post-login `/api/v1/me` call through the T067 wrapper; failures route through the T055 `ErrorCode`→pt-BR map (401 → re-login message). This satisfies **A23** (FR-003/SC-004 proven in the real app, not only pytest). *(Reconciliation addition.)*
-- [ ] T060 [US5] Build `pages/conta` — `entities/user` identity, static `conta.planFree` indicator (display-only, gates nothing), theme `Switch`, sign-out — in `apps/web/src/pages/conta/`.
+- [x] T059 [P] [US5] Build the Radix-skinned `Switch` primitive (labelled, ≥44px hit area) in `shared/ui/switch.{tsx,css}` and export from the barrel.
+- [x] T067 [US5] Build the HTTP transport wrapper per decision **A20** (R2-G2; closes D1): custom Orval fetch mutator in `apps/web/src/shared/api/` — `user.getIdToken()` per request, `baseURL` from `VITE_API_BASE_URL` (typed env), throw typed `ApiError` on 4xx/5xx reading `code` + `correlationId` from the error envelope / `X-Correlation-Id` header, Sentry-tag hook point. *(Reconciliation addition — prerequisite of T022/T060/T068.)*
+- [x] T068 [US5] Wire the post-login `/api/v1/me` call through the T067 wrapper; failures route through the T055 `ErrorCode`→pt-BR map (401 → re-login message). This satisfies **A23** (FR-003/SC-004 proven in the real app, not only pytest). *(Reconciliation addition.)*
+- [x] T060 [US5] Build `pages/conta` — `entities/user` identity, static `conta.planFree` indicator (display-only, gates nothing), theme `Switch`, sign-out — in `apps/web/src/pages/conta/`.
 
 **Checkpoint**: all five stories independently functional.
 

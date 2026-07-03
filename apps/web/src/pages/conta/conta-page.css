@@ -1,0 +1,60 @@
+/* Conta page skin (T060). Single mobile column; cards stacked with a steady rhythm.
+   Everything wraps/truncates so a long email never causes horizontal overflow (INV-1). */
+.tf-conta {
+  gap: var(--space-4);
+}
+
+.tf-conta__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.tf-conta__identity--loading {
+  justify-content: center;
+}
+
+.tf-conta__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-family: var(--font-title);
+  font-size: var(--fs-md);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tf-conta__email {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-strong);
+  font-weight: var(--fw-medium);
+}
+
+.tf-conta__retry {
+  margin-top: var(--space-3);
+}
+
+.tf-conta__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.tf-conta__row-label {
+  color: var(--text-body);
+}
+
+.tf-conta__signout {
+  margin-top: var(--space-2);
+  display: flex;
+  justify-content: flex-start;
+}

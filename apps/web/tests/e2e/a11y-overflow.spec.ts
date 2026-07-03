@@ -88,6 +88,17 @@ test.describe("no horizontal overflow at 390px — guarded surfaces (signed-in)"
       page,
     }, info) => {
       await page.setViewportSize(VIEWPORT);
+      // /conta now fetches server-confirmed identity through the transport wrapper (US5).
+      // No backend runs in the e2e harness, so serve a real-contract camelCase {uid,email}
+      // for /api/v1/me: this renders the actual signed-in Conta surface we mean to measure
+      // (not its handled error fallback) and proves the transport→/me→identity wire.
+      await page.route("**/api/v1/me", (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ uid: "e2e-uid", email: "e2e@precifica.local" }),
+        }),
+      );
       await page.goto("/sign-in");
       await signUpThrowaway(page, `overflow-${theme}-${info.workerIndex}`);
       await expect(page).toHaveURL(/\/calcular$/);

@@ -64,6 +64,9 @@ export {
 } from "./dialog";
 export type { DialogContentProps, DialogVariant, SheetSide } from "./dialog";
 
+export { Switch } from "./switch";
+export type { SwitchProps } from "./switch";
+
 // ---- Theme store (shared UI state) ----
 export { useThemeStore, applyInitialTheme, THEME_STORAGE_KEY } from "./theme-store";
 export type { Theme } from "./theme-store";

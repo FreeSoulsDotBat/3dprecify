@@ -1,9 +1,11 @@
 // HTTP transport wrapper (decision A20 / R2-G2; closes D1). This is the custom
 // Orval fetch mutator: it injects a fresh Firebase ID token per authenticated
-// request, resolves the baseURL from the typed env, and normalises 4xx/5xx into a
-// typed ApiError carrying the wire `code` + `correlationId`. Sentry tagging has a
-// hook point here (Sentry init itself is T069/D2). The post-login `/me` call that
-// consumes this wrapper is wired in T068 (US5) — this module only builds the seam.
+// request, resolves the baseURL from the typed env, and normalises BOTH 4xx/5xx
+// responses AND transport-phase failures (offline / DNS / connection refused / a
+// failed token refresh) into a typed ApiError carrying the wire `code` +
+// `correlationId`. Sentry tagging has a hook point here (Sentry init itself is
+// T069/D2). The post-login `/me` call that consumes this wrapper is wired in T068
+// (US5) — this module only builds the seam.
 
 import { env } from "@/shared/lib/env";
 import { auth } from "@/shared/lib/firebase";
@@ -62,11 +64,25 @@ function resolveUrl(path: string): string {
  * ApiError (with `code` + `correlationId`) on 4xx/5xx.
  */
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const headers = new Headers(init.headers);
-  for (const [key, value] of Object.entries(await authHeaders())) headers.set(key, value);
-  if (!headers.has("Accept")) headers.set("Accept", "application/json");
-
-  const res = await fetch(resolveUrl(path), { ...init, headers });
+  let res: Response;
+  try {
+    const headers = new Headers(init.headers);
+    for (const [key, value] of Object.entries(await authHeaders())) headers.set(key, value);
+    if (!headers.has("Accept")) headers.set("Accept", "application/json");
+    res = await fetch(resolveUrl(path), { ...init, headers });
+  } catch (cause) {
+    // No HTTP response (offline / DNS / connection refused / token-refresh failure):
+    // normalise so callers — and Sentry — always see a typed ApiError, and A23's
+    // network-failure branch on the Conta page works uniformly. status 0 = no response.
+    const error = new ApiError({
+      status: 0,
+      code: "UNKNOWN",
+      message: cause instanceof Error ? cause.message : "Network request failed",
+      correlationId: null,
+    });
+    captureApiError(error);
+    throw error;
+  }
 
   const headerCorrelationId = res.headers.get("X-Correlation-Id");
   const isJson = res.headers.get("content-type")?.includes("application/json") ?? false;

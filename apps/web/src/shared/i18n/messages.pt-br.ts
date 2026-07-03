@@ -54,6 +54,11 @@ export const messages = {
     planLabel: "Plano",
     planFree: "Gratuito",
     themeLabel: "Tema",
+    themeDark: "Tema escuro",
+    // Identity comes from GET /api/v1/me (A23). On failure the section shows an error,
+    // never a fabricated fallback identity. Honest copy (no provider/price/cancellation).
+    identityErrorTitle: "Não foi possível carregar sua conta",
+    retry: "Tentar novamente",
   },
   // Catálogo / Histórico placeholders — state intent, promise no price/date.
   catalogo: {
