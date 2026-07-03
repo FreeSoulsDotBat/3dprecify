@@ -193,6 +193,11 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
 - **STILL OPEN:** A36 (visual baseline: recommend reference PNGs now + pixel-regression post-003), A39
   (breakpoints), A41 (Postgres host, E2), A42 (rounding/money → ADR-0008, E1), plus the product queue
   A24–A31 and mechanical reconciles R2-1..6.
+- **003-app-shell-and-ds CLOSED** (2026-07-03): all 73 tasks done, five stories owner-homologated same
+  day, T065 owner-accepted per V2; gates 75/75 unit · 54/54 e2e · depcruise/lint/tsc clean. Evidence:
+  `specs/003-app-shell-and-ds/dod-evidence.md`. Closed with it: TD-014, TD-015, TD-017, D1, D2, A20,
+  A23, A33 (both phases), A34, A35, A37, A38, A40, C1. New debt: TD-018 (top-bar identity), TD-019
+  (use-identity → generated client after A21).
 - **A39 (partial) → nav breakpoint = mobile ≤425px / desktop >425px, decided by Jonatan** (2026-07-03,
   after MVP homologation — "cobertura de telas é baixa"; supersedes the ≤414px draft). Implemented in
   `app-shell.tsx` MOBILE_QUERY; T033 updated. Full breakpoint system (tablet/content-max tiers) still open.
