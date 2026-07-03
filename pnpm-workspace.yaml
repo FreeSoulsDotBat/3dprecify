@@ -19,6 +19,9 @@ allowBuilds:
   # firebase/protobufjs postinstall scripts are not needed (Vite bundles the client JS).
   "@firebase/util": false
   protobufjs: false
+  # optional native dep via firebase-tools -> superstatic; JS fallback works, native build unnecessary
+  # (undeclared entries make pnpm 11 `install --frozen-lockfile` exit 1 in CI — ERR_PNPM_IGNORED_BUILDS).
+  re2: false
   lefthook: true
   esbuild: true
   unrs-resolver: true
