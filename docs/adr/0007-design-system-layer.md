@@ -81,8 +81,25 @@ Jonatan approved Option C in the 2026-07-02 planning session.
   above and by `ds-adherence.oxlintrc.json` used as a supplemental, non-gating oxlint check); Radix runtime
   deps added to `apps/web`.
 - **Follow-ups / new ADRs triggered**:
-  - Materialize FSD-Lite `pages/` + `widgets/` + `entities/` layers and extend the boundary gates
-    (`eslint-plugin-boundaries`, dependency-cruiser) — carried by the `003-app-shell-and-ds` spec.
-  - Add a **token-parity snapshot test** so DS↔app token drift is caught in CI.
+  - ~~Materialize FSD-Lite `pages/` + `widgets/` + `entities/` layers and extend the boundary gates
+    (`eslint-plugin-boundaries`, dependency-cruiser)~~ — **DONE (2026-07-03, 003 Phase 8 / T066)**. The
+    `pages/`, `widgets/`, `entities/` layers exist and hold the shell (`app/app-shell.tsx` +
+    `widgets/{app-nav,top-bar,page-header,offline-banner}` + `pages/*` + `entities/user`); the canonical
+    import direction `app → pages → widgets → features → entities → shared` is enforced by
+    `eslint.config.mjs` (`boundaries/dependencies`) and `.dependency-cruiser.cjs` (no-upward-imports).
+    `pnpm lint` + `pnpm depcruise` green.
+  - ~~Add a **token-parity snapshot test** so DS↔app token drift is caught in CI~~ — **DONE (2026-07-03,
+    003 / T010 + T062)**. `apps/web/src/styles/token-parity.test.ts` freezes the homologated 87-token color
+    graph (84 DS + the 3 semantic status-text tokens `--danger/success/info-text`) and asserts both themes;
+    any renamed/removed/unsanctioned token fails the gate. Green 4/4.
+  - **FE observability now materialized (2026-07-03, 003 / T069, decision D2)**: `@sentry/react` init gated
+    on `VITE_SENTRY_DSN` (silent no-op in dev/e2e), console/network/click breadcrumbs, the transport's
+    `captureApiError` reports every `ApiError` tagged `code`+`correlationId`+`status`, and the router error
+    boundary (`pages/error`) reports the boundary hit tagged with the user-visible support code. Makes the
+    002 DoD observability claim true.
+  - **Orval mutator now wired (2026-07-03, 003 / T067 follow-up, decision A20)**: the generated client routes
+    through `shared/api/transport.ts` (`orvalFetch`) — every generated call gets the fresh Firebase ID token,
+    typed baseURL, and `ApiError` normalisation. `orval.config.ts` `clean` is OFF because the mutator lives in
+    the output folder (a bare `clean:true` would wipe it).
   - ADR-0008 (pending) — `pricing-core` version registry + rounding policy (blocks E1).
   - Entitlement enforcement ADR (pending, TD-005) — server-authoritative, blocks E2.

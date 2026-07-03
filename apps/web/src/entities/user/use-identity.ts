@@ -12,6 +12,14 @@ import { toUserIdentity, type UserIdentity } from "./user";
 // acknowledged, not the client Firebase session. Gated on `authenticated`: it never
 // fires signed-out. `retry: false` so a 401/expired session surfaces the re-login
 // message immediately instead of spinning (the Conta page maps the error to pt-BR).
+//
+// Kept on the ergonomic `apiFetch<CurrentUser>` rather than the now-transport-backed
+// generated `getMeApiV1MeGet`: the generated hook's success type is the envelope
+// `{ data: CurrentUser | HTTPValidationError, … }` (the 422 union is a phantom from the
+// OpenAPI, an A21 backend fix out of this slice), forcing a `.data as CurrentUser` cast
+// and losing the clean `ApiError` error typing. `apiFetch` gives `CurrentUser` + `ApiError`
+// directly. Both paths share the exact same A20 transport core, so nothing observability-
+// or auth-wise differs — this is purely the cleaner call ergonomics.
 
 export const ME_QUERY_KEY = ["me"] as const;
 

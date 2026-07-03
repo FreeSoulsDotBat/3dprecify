@@ -1,14 +1,19 @@
-// HTTP transport wrapper (decision A20 / R2-G2; closes D1). This is the custom
-// Orval fetch mutator: it injects a fresh Firebase ID token per authenticated
-// request, resolves the baseURL from the typed env, and normalises BOTH 4xx/5xx
-// responses AND transport-phase failures (offline / DNS / connection refused / a
-// failed token refresh) into a typed ApiError carrying the wire `code` +
-// `correlationId`. Sentry tagging has a hook point here (Sentry init itself is
-// T069/D2). The post-login `/me` call that consumes this wrapper is wired in T068
-// (US5) — this module only builds the seam.
+// HTTP transport (decision A20 / R2-G2; closes D1). Two public entry points share one
+// core so the behaviour is identical:
+//   - `orvalFetch` — the Orval custom fetch mutator: the generated client (`generated.ts`)
+//     calls THIS instead of raw `fetch`, so every generated request gets a fresh Firebase
+//     ID token, the typed baseURL, and the ApiError normalisation for free (A9/T067).
+//   - `apiFetch`   — the ergonomic hand-written entry: same transport, but returns the
+//     parsed body directly (used by `entities/user/use-identity` where the `{data,…}`
+//     envelope + phantom-422 union the generated hook carries would only add noise).
+// Both inject a fresh token per request, resolve the baseURL from the typed env, normalise
+// BOTH 4xx/5xx responses AND transport-phase failures (offline / DNS / connection refused /
+// a failed token refresh) into a typed ApiError carrying the wire `code` + `correlationId`,
+// and report that ApiError to Sentry (T069/D2; silent no-op with no DSN).
 
 import { env } from "@/shared/lib/env";
 import { auth } from "@/shared/lib/firebase";
+import { reportError } from "@/shared/observability/sentry";
 
 import { type ErrorCode, type ErrorEnvelope } from "./generated";
 
@@ -36,13 +41,15 @@ export class ApiError extends Error {
   }
 }
 
-// Sentry-tag hook point. Sentry is initialised in T069 (D2); until then this is a
-// no-op seam so the first real API call (A23) is born observable.
+// Sentry-tag hook point (T069/D2 — now live). Every typed transport failure is reported
+// with the wire `code`, the `correlationId`, and the HTTP `status` as searchable tags.
+// When no DSN is configured (dev / e2e / tests) `reportError` is a silent no-op, so the
+// seam never changes call-site behaviour — it only makes the first real API call (A23)
+// observable in prod.
 function captureApiError(error: ApiError): void {
-  // TODO(T069): Sentry.captureException(error, {
-  //   tags: { code: error.code, correlationId: error.correlationId, status: error.status },
-  // });
-  void error;
+  reportError(error, {
+    tags: { code: error.code, correlationId: error.correlationId, status: error.status },
+  });
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
@@ -59,11 +66,18 @@ function resolveUrl(path: string): string {
   return `${base}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
+interface RawResponse {
+  status: number;
+  headers: Headers;
+  body: unknown;
+}
+
 /**
- * Authenticated JSON fetch. Resolves to the parsed body on 2xx; throws a typed
- * ApiError (with `code` + `correlationId`) on 4xx/5xx.
+ * Shared transport core. Sends the authenticated request and normalises transport-phase
+ * failures AND 4xx/5xx responses into a thrown, Sentry-reported `ApiError`; on 2xx returns
+ * the parsed body with its status + headers so either entry point can shape the result.
  */
-export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request(path: string, init: RequestInit): Promise<RawResponse> {
   let res: Response;
   try {
     const headers = new Headers(init.headers);
@@ -72,8 +86,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     res = await fetch(resolveUrl(path), { ...init, headers });
   } catch (cause) {
     // No HTTP response (offline / DNS / connection refused / token-refresh failure):
-    // normalise so callers — and Sentry — always see a typed ApiError, and A23's
-    // network-failure branch on the Conta page works uniformly. status 0 = no response.
+    // normalise so callers — and Sentry — always see a typed ApiError. status 0 = no response.
     const error = new ApiError({
       status: 0,
       code: "UNKNOWN",
@@ -101,5 +114,26 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     throw error;
   }
 
+  return { status: res.status, headers: res.headers, body };
+}
+
+/**
+ * Ergonomic authenticated JSON fetch. Resolves to the parsed body on 2xx; throws a typed
+ * ApiError (with `code` + `correlationId`) on 4xx/5xx. Used for direct app calls.
+ */
+export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const { body } = await request(path, init);
   return body as T;
+}
+
+/**
+ * Orval custom fetch mutator (A9/T067). Orval binds `T` to the FULL response envelope type
+ * and expects `{ data, status, headers }` back — which is why it can't reuse `apiFetch`'s
+ * body-only return. On 4xx/5xx this throws `ApiError` (react-query surfaces it as
+ * `query.error`), so the generated hooks' phantom `HTTPValidationError` `TError` is never
+ * actually produced. Wired in `orval.config.ts`; the generated client calls this per request.
+ */
+export async function orvalFetch<T>(url: string, init: RequestInit = {}): Promise<T> {
+  const { status, headers, body } = await request(url, init);
+  return { data: body, status, headers } as T;
 }

@@ -175,7 +175,7 @@ that ALL user stories build on.
 
 - [x] T056 [P] [US5] Integration test: Conta renders identity from the **`/api/v1/me` response** (server-confirmed per A23 — not hardcoded, not the client session) and a static `Gratuito` label — in `apps/web/src/pages/conta/conta.test.tsx`.
 - [x] T057 [P] [US5] Test: theme Switch toggles + persists; sign-out returns to signed-out state and re-guards `/catalogo`/`/historico`/`/conta` — in `apps/web/src/pages/conta/conta.test.tsx`.
-- [ ] T058 [US5] Visual test: `qa-produto` homologates Conta, dark + light, ≤414px + desktop.
+- [x] T058 [US5] Visual test: `qa-produto` homologates Conta, dark + light, ≤414px + desktop.
 
 ### Implementation for User Story 5
 
@@ -184,7 +184,7 @@ that ALL user stories build on.
 - [x] T068 [US5] Wire the post-login `/api/v1/me` call through the T067 wrapper; failures route through the T055 `ErrorCode`→pt-BR map (401 → re-login message). This satisfies **A23** (FR-003/SC-004 proven in the real app, not only pytest). *(Reconciliation addition.)*
 - [x] T060 [US5] Build `pages/conta` — `entities/user` identity, static `conta.planFree` indicator (display-only, gates nothing), theme `Switch`, sign-out — in `apps/web/src/pages/conta/`.
 
-**Checkpoint**: all five stories independently functional.
+**Checkpoint**: all five stories independently functional. **VALIDATED 2026-07-03 — owner homologation PASS (T058: server-confirmed identity via live /me against emulator-validated backend, honest Gratuito label, persisting theme Switch, sign-out re-guards). A23 wire proven end-to-end in the real app.**
 
 ---
 
@@ -192,13 +192,13 @@ that ALL user stories build on.
 
 **Purpose**: validate the whole slice and remove refactor debt.
 
-- [ ] T061 Run `quickstart.md` V1–V10 and record outcomes; fix any gaps.
-- [ ] T062 Confirm the token-parity snapshot (T010) is green and reflects final tokens.
-- [ ] T063 Remove dead code from the `001` shell (old inline `RootLayout`/`AccountChrome` now superseded by `app-shell`/`top-bar`); no orphan imports (Principle V).
-- [ ] T064 Run `pnpm gate` (format/lint+boundaries/depcruise/typecheck/coverage) and the Playwright suite green; keep `001`/`pricing-core` tests green.
+- [x] T061 Run `quickstart.md` V1–V10 and record outcomes; fix any gaps. **DONE 2026-07-03** — V1–V9 PASS via the committed unit/e2e suites; V8 no-flash + V10 full-shell recorded as homologation-covered (T044/T027/T058/T070/T071 VALIDATED; final T065 owner). No gaps surfaced. Results table appended to `quickstart.md` ("Execution record 2026-07-03").
+- [x] T062 Confirm the token-parity snapshot (T010) is green and reflects final tokens. **DONE 2026-07-03** — `styles/token-parity.test.ts` 4/4 green; freezes the 87-token graph incl. `--danger/success/info-text` in both themes.
+- [x] T063 Remove dead code from the `001` shell (old inline `RootLayout`/`AccountChrome` now superseded by `app-shell`/`top-bar`); no orphan imports (Principle V). **DONE 2026-07-03** — verified: the inline `RootLayout` was already superseded by `app/app-shell.tsx` (T023) and `AccountChrome` relocated into `widgets/top-bar` (T029); orphan-module scan clean (0), no unused keyframes (only `tf-spin`, used), no commented-out code blocks. Also resolved two stale seams as part of the sweep: the `TODO(A9)` in `orval.config.ts` and the `TODO(T069)` no-op in `transport.ts`.
+- [x] T064 Run `pnpm gate` (format/lint+boundaries/depcruise/typecheck/coverage) and the Playwright suite green; keep `001`/`pricing-core` tests green. **DONE 2026-07-03** — `format:check` clean · `lint` clean · `depcruise` clean (126 modules, 0 violations) · `typecheck` clean (both projects) · `test:coverage` 100% (packages/*) · unit **75/75** (web 68 + pricing-core 7) · Playwright **54/54** (chromium + mobile). `001`/`pricing-core` regression suites green.
 - [ ] T065 Final full `qa-produto` visual homologation of the shell (both themes, ≤414px + desktop) — zero high-severity defects (SC-008).
-- [ ] T066 [P] Update `docs/adr/0007-design-system-layer.md` follow-up status (FSD-Lite layers + token-parity now materialized) and log any residual tech-debt.
-- [ ] T069 [P] FE observability per decision **D2** (R2-G3): `@sentry/react` init with breadcrumbs (console/network/clicks), `VITE_SENTRY_DSN` in the typed env schema (optional in dev), and the `pages/error` boundary logging `code` + `correlationId` to Sentry — makes the 002 DoD claim true. *(Reconciliation addition.)*
+- [x] T066 [P] Update `docs/adr/0007-design-system-layer.md` follow-up status (FSD-Lite layers + token-parity now materialized) and log any residual tech-debt. **DONE 2026-07-03** — ADR-0007 follow-ups struck (FSD-Lite layers + boundary gates + token-parity materialized; FE observability + Orval mutator noted); tech-debt TD-018 (top-bar shows client-session e-mail, not `/me`) + TD-019 (`use-identity` stays on `apiFetch` pending A21 `/me` contract fix; `orval clean:false`) logged.
+- [x] T069 [P] FE observability per decision **D2** (R2-G3): `@sentry/react` init with breadcrumbs (console/network/clicks), `VITE_SENTRY_DSN` in the typed env schema (optional in dev), and the `pages/error` boundary logging `code` + `correlationId` to Sentry — makes the 002 DoD claim true. *(Reconciliation addition.)* **DONE 2026-07-03** — `shared/observability/sentry.ts` (`initObservability` DSN-gated silent no-op + `reportError` tag hygiene); `main.tsx` inits it; `transport.ts` `captureApiError` reports `ApiError` tagged `code`+`correlationId`+`status`; `pages/error` reports the boundary hit tagged with the support code; `VITE_SENTRY_DSN` added to `shared/lib/env.ts` (optional). Wiring tests: `sentry.test.ts` 5/5 + `error.test.tsx` +2. **Bonus (T067 follow-up / A20):** Orval custom fetch mutator wired to `transport.ts` (`orvalFetch`) so the generated client is transport-backed; `use-identity` kept on `apiFetch` (justified — TD-019).
 
 ---
 

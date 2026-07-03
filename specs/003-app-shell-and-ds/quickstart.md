@@ -66,3 +66,28 @@ pnpm --filter @3dprecify/web test:e2e   # Playwright (offline + auth-guard + foc
 ## Done signals
 - `pnpm gate` green (including the extended boundary rules) · Playwright green · token-parity green ·
   `qa-produto` visual sign-off · `001` pricing tests still green (frozen).
+
+## Execution record 2026-07-03 (T061)
+
+Ran under the Phase-8 polish. Gate + suites executed from a clean tree; ports 5173/9099/8000 free.
+Automatable scenarios are proven by the committed unit/e2e suites; the eyeball-only steps are marked
+"covered by homologation T0xx VALIDATED" (per-story `qa-produto` owner sign-offs already recorded in
+`tasks.md`). Numbers this run: web unit **68/68** (13 files), pricing-core **7/7**, Playwright **54/54**
+(chromium + mobile), token-parity **4/4**, `pnpm lint` / `depcruise` / `typecheck` clean.
+
+| # | Scenario | Result | Evidence |
+|---|----------|--------|----------|
+| V1 | 4-tab shell on mobile + desktop, exactly one active | PASS (auto) | `widgets/app-nav/app-nav.test.tsx`; `tests/e2e/shell.spec.ts`; homologation **T027 VALIDATED** |
+| V2 | Calcular free + offline, R$ 2,00 / R$ 3,00 | PASS (auto) | `pages/calcular/calcular.test.tsx`; `tests/e2e/calculator.spec.ts` (R$ 2,00 / R$ 3,00 + offline compute); `tests/e2e/offline-banner.spec.ts` |
+| V3 | Auth boundary + return-to-intent; server rejects unauth | PASS (auto) | `app/router.guards.test.tsx`; `tests/e2e/auth-boundary.spec.ts`; 401→ApiError guard test |
+| V4 | 0px horizontal overflow at 390px, both themes | PASS (auto) | `tests/e2e/a11y-overflow.spec.ts` (public + guarded, dark + light) |
+| V5 | Status-text contrast ≥4.5:1 + targets ≥44×44px, both themes | PASS (auto) | `tests/e2e/a11y-targets-contrast.spec.ts` (incl. real calculator validation error uses `--danger-text`) |
+| V6 | Focus-to-title on nav | PASS (auto) | `tests/e2e/focus-to-title.spec.ts` (first load does NOT move focus; tab switch does) |
+| V7 | System states + honest copy | PASS (auto) | `tests/e2e/offline-banner.spec.ts`; `pages/not-found/not-found.test.tsx`; `pages/error/error.test.tsx` (support code); `shared/i18n/copy-honesty.test.ts` |
+| V8 | Theme resolves without flash | PASS (auto toggle + homolog) | `tests/e2e/shell.spec.ts` flips `data-theme`; pre-paint no-flash first paint covered by homologation **T044 VALIDATED** (light first-class + persistence) |
+| V9 | Token parity (incl. `--danger/success/info-text`) | PASS (auto) | `styles/token-parity.test.ts` 4/4 |
+| V10 | Full-shell visual homologation, both themes, ≤414px + desktop | Per-story VALIDATED; final **T065** pending owner | T027/T044/T058/T070/T071 all **VALIDATED** in `tasks.md`; T065 is the owner's final full-shell pass (out of this polish) |
+
+No gaps surfaced — every automatable scenario passed on first run; no fixes required. The one behavioural
+note carried forward (top-bar shows the client-session e-mail, not the server-confirmed `/me` identity which
+lives only on Conta) is logged as tech-debt, not a V-scenario failure (see `docs/tech-debt.md` TD-018).

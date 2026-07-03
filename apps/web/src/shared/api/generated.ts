@@ -19,6 +19,7 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
+import { orvalFetch } from './transport';
 export interface CurrentUser {
   uid: string;
   email?: string | null;
@@ -68,6 +69,10 @@ export interface HTTPValidationError {
 
 export type HealthHealthGet200 = {[key: string]: string};
 
+type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+
+
 const withQueryKey = <T extends object, K>(query: T, queryKey: K): T & { queryKey: K } => {
   const result = { queryKey } as T & { queryKey: K };
   for (const key of Object.keys(query)) {
@@ -115,21 +120,14 @@ export const getHealthHealthGetUrl = () => {
  */
 export const healthHealthGet = async ( options?: RequestInit): Promise<healthHealthGetResponse> => {
 
-  const res = await fetch(getHealthHealthGetUrl(),
+  return orvalFetch<healthHealthGetResponse>(getHealthHealthGetUrl(),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: healthHealthGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as healthHealthGetResponse
-}
+);}
 
 
 
@@ -142,16 +140,16 @@ export const getHealthHealthGetQueryKey = () => {
     }
 
 
-export const getHealthHealthGetQueryOptions = <TData = Awaited<ReturnType<typeof healthHealthGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, fetch?: RequestInit}
+export const getHealthHealthGetQueryOptions = <TData = Awaited<ReturnType<typeof healthHealthGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getHealthHealthGetQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthHealthGet>>> = ({ signal }) => healthHealthGet({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof healthHealthGet>>> = ({ signal }) => healthHealthGet({ signal, ...requestOptions });
 
 
 
@@ -171,7 +169,7 @@ export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealt
           TError,
           Awaited<ReturnType<typeof healthHealthGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealthGet>>, TError = ErrorEnvelope>(
@@ -181,11 +179,11 @@ export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealt
           TError,
           Awaited<ReturnType<typeof healthHealthGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealthGet>>, TError = ErrorEnvelope>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -193,7 +191,7 @@ export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealt
  */
 
 export function useHealthHealthGet<TData = Awaited<ReturnType<typeof healthHealthGet>>, TError = ErrorEnvelope>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof healthHealthGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
@@ -242,21 +240,14 @@ export const getGetMeApiV1MeGetUrl = () => {
  */
 export const getMeApiV1MeGet = async ( options?: RequestInit): Promise<getMeApiV1MeGetResponse> => {
 
-  const res = await fetch(getGetMeApiV1MeGetUrl(),
+  return orvalFetch<getMeApiV1MeGetResponse>(getGetMeApiV1MeGetUrl(),
   {
     ...options,
     method: 'GET'
 
 
   }
-)
-
-
-  const body = [204, 205, 304].includes(res.status) ? null : await res.text();
-
-  const data: getMeApiV1MeGetResponse['data'] = body ? JSON.parse(body) : {}
-  return { data, status: res.status, headers: res.headers } as getMeApiV1MeGetResponse
-}
+);}
 
 
 
@@ -269,16 +260,16 @@ export const getGetMeApiV1MeGetQueryKey = () => {
     }
 
 
-export const getGetMeApiV1MeGetQueryOptions = <TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+export const getGetMeApiV1MeGetQueryOptions = <TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
 
-const {query: queryOptions, fetch: fetchOptions} = options ?? {};
+const {query: queryOptions, request: requestOptions} = options ?? {};
 
   const queryKey =  queryOptions?.queryKey ?? getGetMeApiV1MeGetQueryKey();
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeApiV1MeGet>>> = ({ signal }) => getMeApiV1MeGet({ signal, ...fetchOptions });
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getMeApiV1MeGet>>> = ({ signal }) => getMeApiV1MeGet({ signal, ...requestOptions });
 
 
 
@@ -298,7 +289,7 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
           TError,
           Awaited<ReturnType<typeof getMeApiV1MeGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
@@ -308,11 +299,11 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
           TError,
           Awaited<ReturnType<typeof getMeApiV1MeGet>>
         > , 'initialData'
-      >, fetch?: RequestInit}
+      >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
@@ -320,7 +311,7 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
  */
 
 export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
-  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, fetch?: RequestInit}
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 

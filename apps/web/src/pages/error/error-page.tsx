@@ -1,7 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { ApiError } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { reportError } from "@/shared/observability/sentry";
 import { Button, Grafismo } from "@/shared/ui";
 
 import "./error-page.css";
@@ -29,6 +30,19 @@ function resolveSupportCode(error: unknown): string {
 // copy. (Sentry logging of code+correlationId is the T069/D2 follow-up.)
 export function ErrorPage({ error }: ErrorPageProps) {
   const supportCode = useMemo(() => resolveSupportCode(error), [error]);
+
+  // Report the boundary hit to Sentry (T069/D2), tagging the same support code the user
+  // sees so the human/AI triager can jump straight to the event by `correlationId`. When
+  // the failure is an `ApiError` its wire `code` is tagged too. Silent no-op with no DSN.
+  useEffect(() => {
+    reportError(error, {
+      tags: {
+        correlationId: supportCode,
+        code: error instanceof ApiError ? error.code : undefined,
+      },
+    });
+  }, [error, supportCode]);
+
   return (
     <section className="tf-error">
       <Grafismo name="espada" className="tf-error__grafismo" />

@@ -17,6 +17,10 @@ const schema = z.object({
   // page's handled identity error state; a same-origin relative "/api/v1/me" would instead
   // hit the SPA fallback and mask the failure with a 200 HTML page.
   VITE_API_BASE_URL: z.string().default("http://localhost:8000"),
+  // FE observability DSN (decision D2 / R2-G3). Optional: when absent (dev, e2e, unit
+  // tests) Sentry init is a silent no-op; prod/staging inject it as a GitHub Environment
+  // secret → build-time var (A22). Never gates anything — it only routes errors/breadcrumbs.
+  VITE_SENTRY_DSN: z.string().optional(),
 });
 
 export const env = schema.parse(import.meta.env);
