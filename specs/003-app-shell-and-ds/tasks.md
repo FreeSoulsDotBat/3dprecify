@@ -128,7 +128,7 @@ that ALL user stories build on.
 - [x] T041 [P] [US3] Automated a11y test: 0px horizontal overflow at 390px on all 7 surfaces, both themes — in `apps/web/tests/e2e/a11y-overflow.spec.ts`.
 - [x] T042 [P] [US3] Test: interactive targets ≥44×44px and status-text contrast ≥4.5:1 both themes — in `apps/web/tests/e2e/a11y-targets-contrast.spec.ts`.
 - [x] T043 [P] [US3] Keyboard test: section change moves focus to the destination `page-header` title — in `apps/web/tests/e2e/focus-to-title.spec.ts`.
-- [ ] T044 [US3] Visual test: `qa-produto` homologates a11y + brand fidelity across all surfaces, dark + light, ≤414px + desktop.
+- [x] T044 [US3] Visual test: `qa-produto` homologates a11y + brand fidelity across all surfaces, dark + light, ≤414px + desktop.
 
 ### Implementation for User Story 3
 
@@ -137,7 +137,7 @@ that ALL user stories build on.
 - [x] T047 [P] [US3] Verify dark-default + no-flash first paint end-to-end (theme-store ↔ pre-paint script) and fix any mismatch.
 - [x] T048 [US3] Resolve any contrast/target/overflow defects surfaced by T041–T044 using semantic tokens (no raw hues; INV-1..5).
 
-**Checkpoint**: shell meets SC-004/005/006 and FR-007 in both themes.
+**Checkpoint**: shell meets SC-004/005/006 and FR-007 in both themes. **VALIDATED 2026-07-03 — owner homologation PASS (T044: focus-to-title, light first-class + persistence, danger-text contrast, reduced-motion).**
 
 ---
 
@@ -149,17 +149,17 @@ that ALL user stories build on.
 
 ### Tests for User Story 4 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T049 [P] [US4] E2E test: going offline shows the `role="status"` banner within 1s and Calcular still computes; also verify the PWA SPA fallback serves `/calcular` offline after the `/`→`/calcular` route move (analyze I1) — in `apps/web/tests/e2e/offline-banner.spec.ts`.
-- [ ] T050 [P] [US4] Test: unknown route renders the branded 404 with a way back; error boundary renders reload + `Código de suporte: <id>` — in `apps/web/src/pages/{not-found,error}/*.test.tsx`.
-- [ ] T051 [P] [US4] Copy-honesty test: shell/state copy contains no payment-provider name, no cancellation policy, no price — in `apps/web/src/shared/i18n/copy-honesty.test.ts`.
+- [x] T049 [P] [US4] E2E test: going offline shows the `role="status"` banner within 1s and Calcular still computes; also verify the PWA SPA fallback serves `/calcular` offline after the `/`→`/calcular` route move (analyze I1) — in `apps/web/tests/e2e/offline-banner.spec.ts`.
+- [x] T050 [P] [US4] Test: unknown route renders the branded 404 with a way back; error boundary renders reload + `Código de suporte: <id>` — in `apps/web/src/pages/{not-found,error}/*.test.tsx`.
+- [x] T051 [P] [US4] Copy-honesty test: shell/state copy contains no payment-provider name, no cancellation policy, no price — in `apps/web/src/shared/i18n/copy-honesty.test.ts`.
 - [ ] T071 [US4] Visual test: `qa-produto` homologates the offline banner, 404, and generic-error screen (support code visible), dark + light, ≤414px + desktop. *(Reconciliation addition — analyze G1; Constitution III per-story visual homologation.)*
 
 ### Implementation for User Story 4
 
-- [ ] T052 [P] [US4] Build `widgets/offline-banner` (`role="status"` `aria-live="polite"`, `navigator.onLine` + online/offline events) in `apps/web/src/widgets/offline-banner/`.
-- [ ] T053 [P] [US4] Build `pages/not-found` (branded 404 + "Voltar para Calcular") in `apps/web/src/pages/not-found/`.
-- [ ] T054 [US4] Build `pages/error` (router error boundary; reload action; `Código de suporte: {correlationId}` read from the typed `ApiError` surfaced by the **T067** transport wrapper — `X-Correlation-Id` header/envelope per A20 — or a local fallback) in `apps/web/src/pages/error/`.
-- [ ] T055 [US4] Add the `ErrorCode` → friendly pt-BR map (consumed by Toast/Alert from the T067 `ApiError.code`) in `apps/web/src/shared/api/` per `contracts/copy.pt-br.md`; include a unit assertion that **every** `ErrorCode` union member maps to a non-empty pt-BR phrase (closes analyze D1).
+- [x] T052 [P] [US4] Build `widgets/offline-banner` (`role="status"` `aria-live="polite"`, `navigator.onLine` + online/offline events) in `apps/web/src/widgets/offline-banner/`.
+- [x] T053 [P] [US4] Build `pages/not-found` (branded 404 + "Voltar para Calcular") in `apps/web/src/pages/not-found/`.
+- [x] T054 [US4] Build `pages/error` (router error boundary; reload action; `Código de suporte: {correlationId}` read from the typed `ApiError` surfaced by the **T067** transport wrapper — `X-Correlation-Id` header/envelope per A20 — or a local fallback) in `apps/web/src/pages/error/`.
+- [x] T055 [US4] Add the `ErrorCode` → friendly pt-BR map (consumed by Toast/Alert from the T067 `ApiError.code`) in `apps/web/src/shared/api/` per `contracts/copy.pt-br.md`; include a unit assertion that **every** `ErrorCode` union member maps to a non-empty pt-BR phrase (closes analyze D1).
 
 **Checkpoint**: SC-007 states demonstrable; copy honest (FR-014).
 

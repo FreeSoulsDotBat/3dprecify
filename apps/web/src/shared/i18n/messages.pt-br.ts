@@ -80,4 +80,16 @@ export const messages = {
     reload: "Recarregar",
     supportCode: "Código de suporte:",
   },
+  // ErrorCode → friendly pt-BR (T055), consumed by Toast/Alert via `shared/api/error-messages`.
+  // Users never see raw wire codes (FR-017). Honest: no provider, no price, no cancellation.
+  // Keyed by the semantic intent so the shared/api map can wire each generated `ErrorCode`.
+  apiError: {
+    validation: "Confira os dados informados.",
+    unauthenticated: "Sua sessão expirou. Entre novamente.",
+    tokenExpired: "Sua sessão expirou. Entre novamente.",
+    forbidden: "Você não tem acesso a este recurso.",
+    notFound: "Não encontramos o que você procura.",
+    internal: "Algo deu errado. Tente novamente.",
+    unknown: "Algo deu errado. Tente novamente.",
+  },
 } as const;
