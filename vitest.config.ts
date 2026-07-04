@@ -1,10 +1,12 @@
 import { defineConfig } from "vitest/config";
 
-// Root Vitest config (V8 coverage). apps/web is added to `projects` in Phase 5.
+// Root Vitest config (V8 coverage). Runs every workspace project's unit tests so the
+// gate enforces them; the coverage ratchet stays scoped to the pure-logic core
+// (packages/*) — apps/web view code is validated by visual homologation, not a 100% gate.
 // The coverage ratchet enforcer (baseline + fail-on-drop) is wired in CI (T112/T136).
 export default defineConfig({
   test: {
-    projects: ["packages/*"],
+    projects: ["packages/*", "apps/web"],
     coverage: {
       provider: "v8",
       reporter: ["text", "json-summary"],

@@ -1,0 +1,17 @@
+/* ============================================================
+   Truth's Forge — Radius tokens
+   Geometry with confident, slightly generous rounding —
+   premium-modern, never bubbly. Pills for chips/segmented;
+   solid radii for cards & CTAs.
+   ============================================================ */
+:root {
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px; /* inputs, buttons */
+  --radius-lg: 18px; /* cards */
+  --radius-xl: 24px; /* sheets, hero panels */
+  --radius-2xl: 32px;
+  --radius-pill: 999px; /* chips, tags, segmented control */
+  --radius-card: var(--radius-lg);
+  --radius-field: var(--radius-md);
+}

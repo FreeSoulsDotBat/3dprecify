@@ -13,6 +13,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: "autoUpdate",
+      // Brand assets in public/ that the SW should precache for offline (FR-008).
+      includeAssets: ["favicon.svg", "icons/icon-192.png", "icons/icon-512.png"],
+      // SPA offline routing: serve the precached app shell for any navigation when
+      // offline, so a reload (or deep link) still boots and the calculator runs.
+      workbox: {
+        navigateFallback: "index.html",
+        navigateFallbackDenylist: [/^\/api\//],
+      },
       manifest: {
         name: "Precifica3D",
         short_name: "Precifica3D",
@@ -21,8 +29,12 @@ export default defineConfig({
         theme_color: "#7800ff",
         background_color: "#0f0f12",
         display: "standalone",
-        // TODO: icons generated from the Truth's Forge logo symbol (asset pipeline).
-        icons: [],
+        // Truth's Forge app icons (vendored from the Claude Design project). Maskable
+        // variant is a follow-up (TD-016) — needs a padded safe-zone render.
+        icons: [
+          { src: "icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icons/icon-512.png", sizes: "512x512", type: "image/png" },
+        ],
       },
     }),
   ],

@@ -4,27 +4,29 @@ Decided with Jonatan, Round 2 (2026-06-26). This file is what the **server-side 
 (Constitution Principle IV). Architecture of the enforcement itself → a PENDING, unnumbered entitlement ADR
 (NOT ADR-0003 — that is the no-inference ADR; ADR-0002 = API contract, ADR-0004 = stack).
 
-## Freemium boundary (R2.1 = B + quota lever)
-Principle: **computation is free; persistence & scale are premium.**
+## Freemium boundary (R2.1 = B — no free persistence quota)
+Principle: **computation is free; persistence & scale are premium.** Revised Round 3 (2026-06-29): the free tier
+saves **nothing** — there is no "taste it first" quota; the only thing unlocked for free is the calculator itself.
 
 ### FREE (no payment; runs client-side, offline-capable)
 - Every pricing **calculator**, including the full corrected model (material, energy, machine/depreciation,
   failure, finishing, marketplace-fee math, multi-piece BOM compute). The math is never paywalled.
-- Ephemeral use: enter inputs → see result. Plus a **small persistence allowance** (quota lever, below) so the
-  user tastes saving/catalog before hitting the wall.
+- Ephemeral use **only**: enter inputs → see the full transparent breakdown. **No saving of any kind on free** —
+  saving calculations, catalog, history and export are all Premium.
 
 ### PREMIUM (server-side validated)
 - Persist calculations & quotes (cloud).
-- Product / material / printer **catalog** (CRUD + cloud sync) beyond the free quota.
+- Product / material / printer **catalog** (CRUD + cloud sync).
 - Calculation **history** + reproducible frozen snapshots (calc + pricing-core semver).
 - **Export / share** (PDF / CSV).
 - Saved **marketplace-simulation** scenarios.
-- Catalog-scale **multi-product / BOM** management beyond the free quota.
+- Catalog-scale **multi-product / BOM** management.
 
-### Free-tier quota (the integers the entitlement check enforces)
-**PROVISIONAL — finalized when E2 (catalog/persistence) is specified.** Anchors: free = up to **3 saved
-products** and **5 saved calculations**, **no export**, **no saved marketplace scenarios**. Premium = unlimited.
-Quotas are updatable system config, not hard-coded.
+### Free-tier persistence: NONE (the rule the entitlement check enforces)
+Free saves **zero** of everything: no saved calculations, no catalog (filaments/printers/products), no history,
+no export, no saved marketplace scenarios. The **calculator is fully free** (compute + transparent breakdown,
+offline); **any persistence is Premium**. Premium = unlimited. (Revised Round 3, 2026-06-29 — replaces the prior
+provisional 3-products / 5-calculations quota.)
 
 ## Tiers (R2.2 = B)
 - **Free** — as above.
@@ -41,8 +43,8 @@ Walking skeleton (001) is pre-E1 (auth gate + minimal material+markup calc). The
 | Epic | Scope | Premium gate introduced |
 |------|-------|-------------------------|
 | **E1** | Full corrected pricing model (energy, machine/depreciation, failure, finishing, marketplace fees) | — (calc stays free) |
-| **E2** | Catalog (filaments/printers/products) + persistence | **Entitlement scaffolding lands here** (quota + premium flag), even though purchase comes at E6 |
-| **E3** | Multi-piece BOM | quota |
+| **E2** | Catalog (filaments/printers/products) + persistence | **Entitlement scaffolding lands here** (binary premium flag — persistence gated entirely, no free quota), even though purchase comes at E6 |
+| **E3** | Multi-piece BOM | premium |
 | **E4** | History + reproducible snapshots + export | export = premium |
 | **E5** | Marketplace simulator (ML, Shopee) | saved scenarios = premium |
 | **E6** | Billing (Mercado Pago recurring / Play Billing — PENDING unnumbered payments ADR) | actual purchase flow |

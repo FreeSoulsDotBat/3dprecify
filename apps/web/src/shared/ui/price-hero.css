@@ -1,0 +1,83 @@
+/* Hero suggested-price readout. Ported from Truth's Forge (Claude Design);
+   success tone uses semantic --success / --text-on-accent. */
+.tf-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+}
+.tf-price--accent {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+  box-shadow: var(--glow-purple);
+}
+.tf-price--energy {
+  background: var(--energy);
+  border-color: transparent;
+  color: var(--energy-contrast);
+}
+.tf-price--inverse {
+  background: var(--surface-inverse);
+  border-color: transparent;
+  color: var(--text-on-inverse);
+}
+.tf-price--success {
+  background: var(--success);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+.tf-price--plain {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+.tf-price--center {
+  align-items: center;
+  text-align: center;
+}
+.tf-price__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  opacity: 0.9;
+}
+.tf-price__amount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features);
+  line-height: 1;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+}
+.tf-price__cur {
+  font-size: 0.42em;
+  font-weight: var(--fw-bold);
+  opacity: 0.85;
+  transform: translateY(-0.55em);
+}
+.tf-price__int {
+  font-size: var(--fs-price);
+}
+.tf-price--lg .tf-price__int {
+  font-size: clamp(3rem, 12vw, 4.75rem);
+}
+.tf-price--md .tf-price__int {
+  font-size: var(--fs-2xl);
+}
+.tf-price__dec {
+  font-size: 0.5em;
+  font-weight: var(--fw-bold);
+}
+.tf-price__cap {
+  font-size: var(--fs-caption);
+  opacity: 0.92;
+  font-weight: var(--fw-medium);
+}

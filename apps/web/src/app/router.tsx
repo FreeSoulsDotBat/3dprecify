@@ -26,7 +26,7 @@ function AccountChrome() {
   return (
     <div className="flex items-center gap-3 text-sm">
       {email && (
-        <span style={{ color: "var(--color-muted)" }}>
+        <span style={{ color: "var(--text-muted)" }}>
           {messages.account.signedInAs} {email}
         </span>
       )}
@@ -42,7 +42,7 @@ function RootLayout() {
   return (
     <div className="flex min-h-dvh flex-col">
       <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <span className="text-lg font-semibold" style={{ color: "var(--color-accent)" }}>
+        <span className="text-lg font-semibold" style={{ color: "var(--accent-text)" }}>
           {messages.appName}
         </span>
         <div className="flex items-center gap-3">

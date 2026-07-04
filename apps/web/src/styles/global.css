@@ -1,9 +1,13 @@
+/* Tailwind preflight first, then the Truth's Forge token graph, then the
+   brand base layer (so brand body/heading defaults win over preflight).
+   Tokens adopted verbatim from Claude Design project fad776. */
 @import "tailwindcss";
-@import "./tokens.css";
 
-body {
-  margin: 0;
-  background: var(--color-bg);
-  color: var(--color-fg);
-  font-family: Inter, system-ui, sans-serif;
-}
+@import "./tokens/colors.css";
+@import "./tokens/typography.css";
+@import "./tokens/spacing.css";
+@import "./tokens/radius.css";
+@import "./tokens/elevation.css";
+@import "./tokens/motion.css";
+
+@import "./base.css";
