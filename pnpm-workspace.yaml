@@ -22,3 +22,6 @@ allowBuilds:
   lefthook: true
   esbuild: true
   unrs-resolver: true
+  # re2 is an optional native dep (firebase-tools → superstatic); its build is not needed
+  # (superstatic falls back to JS regex). Declaring it here clears ERR_PNPM_IGNORED_BUILDS in CI.
+  re2: false
