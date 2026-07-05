@@ -227,3 +227,36 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
   `docs/design/prompts/claude-design-prototype-fixes.md`. A35/A36/A37 now have their material (Lucide
   self-hosted mask+currentColor; tokens byte-identical to app + full screen inventory; good 404, missing
   generic error screen + code→message map) — capture the three decisions next round.
+
+### E1 pricing-model scope frozen (2026-07-05, owner decision round — unblocks the E1 spec)
+
+- **A16 → E1 v1 cost model = "complete corrected + fine refinements"** (Jonatan, 2026-07-05). Beyond the
+  001 `material + markup`, the clean-room (A15) v1 model computes, from first principles:
+  1. **Material** — cost/roll ÷ roll-weight × grams, **plus explicit waste** (purge/brim/support/refugo)
+     as a modelled quantity, not a flat % (fixes spreadsheet defect #4/#6).
+  2. **Energy** — time × power(kW) × tariff(kWh) with a **configurable duty cycle** (real FDM average draw,
+     not the 1.2 kW nameplate — fixes defect #3).
+  3. **Machine-hour cost** — a **single coherent** capital-recovery method (NO triple-count of
+     maintenance + ROI + depreciation — fixes defect #2). Exact method is an ADR (see below).
+  4. **Failure** — a failure factor applied to **all production inputs** (material + energy + machine-time),
+     not material-only (fixes defect #4).
+  5. **Finishing / post-processing** — **explicit time × rate**, not a flat % of material (surpasses sheet).
+  6. **Markup** over cost (retail/wholesale) — see A25 for the base change.
+- **A25 → labor + admin both IN, as OPTIONAL inputs (default 0)** (Jonatan, 2026-07-05). Labor = hours ×
+  R$/h; admin = packaging/freight/domain/supplies/internet. **Markup base moves `material` → `custo_total`
+  at E1** — a SEMANTIC change: `pricing-core` gets a **major semver bump** and a version identifier
+  (interacts with TD-009/A13 saved-calc snapshots). Optional-with-default-0 keeps the calc approachable
+  while surpassing the sheet's `custo_total`.
+- **A24 → taxes OUT of v1, with rationale** (Jonatan, 2026-07-05). Rationale: the audience is the **MEI solo
+  seller**, whose **DAS is a FIXED monthly amount, not a per-unit %** — modelling it as a per-piece cost line
+  would be wrong. Recorded as an explicit non-goal for E1; revisit as its own fiscal concern (own epic) if a
+  Simples-regime module is ever validated. No `imposto %` field in the E1 calculator.
+- **Marketplace fees → BASIC single-channel fee IN E1** (Jonatan, 2026-07-05). One channel: commission % +
+  fixed fee with the **correct gross-up `(base + fixa) / (1 − pct)`** (fixes defect #5). The **multi-channel
+  simulator** (ML/Shopee side-by-side, saved scenarios) stays **E5** per the roadmap — resolves the
+  `business-rules.md:45` (E1 lists "marketplace fees") vs E5 ("Marketplace simulator") tension. E1 calc stays
+  **free** (no premium gate).
+- **Follow-ups triggered:** (a) new ADR — **machine-hour capital-recovery method** (the "single coherent"
+  choice in A16.3), blocks the E1 domain model; (b) `pricing-core` **version registry + rounding policy**
+  (ADR-0008, already pending) is now on the E1 critical path; (c) update `business-rules.md:45` roadmap line
+  to reflect labor/admin IN, taxes OUT, marketplace-basic-in-E1/simulator-E5.
