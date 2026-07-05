@@ -260,3 +260,23 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
   choice in A16.3), blocks the E1 domain model; (b) `pricing-core` **version registry + rounding policy**
   (ADR-0008, already pending) is now on the E1 critical path; (c) update `business-rules.md:45` roadmap line
   to reflect labor/admin IN, taxes OUT, marketplace-basic-in-E1/simulator-E5.
+
+- **E1 model sub-decisions resolved (2026-07-05, owner round 2 — closes the E1 open questions):**
+  - **ADR-0009 → Option A: straight-line amortization/hour** (Jonatan). Machine-hour cost =
+    `valor_maquina / vida_util_horas` + an optional SEPARATE maintenance reserve (default 0). The ROI/return
+    lives once in the markup over `custo_total` (A25) — provably no triple-count. ADR now Accepted.
+  - **ADR-0008 → 1A + 2B** (Jonatan). `PRICING_MODEL_VERSION = 2.0.0` (001 material+markup treated as v1);
+    rounding = `decimal.js-light`, each cost line → 2dp `ROUND_HALF_UP`, aggregates = sum of already-rounded
+    lines, intermediates full-precision; markup + marketplace gross-up run on the displayed (rounded)
+    `custo_total` (WYSIWYG). Consistent with ADR-0004 money policy. ADR now Accepted.
+  - **OQ-1 markup defaults → +50% varejo / +30% atacado** (Jonatan) — editable pre-fills (UX starting
+    values, NOT formula constants; clean-room integrity kept).
+  - **OQ-2 energy → single "consumo médio efetivo (kW)" field** (Jonatan), suggested default ~0,12 kW +
+    tooltip. Corrects the nameplate-as-continuous defect at the input, not with a hidden duty constant.
+  - **OQ-5 marketplace → gross-up on BOTH varejo and atacado**, showing price-to-list + a "recebido líquido"
+    (net-after-fee) transparency line for each (Jonatan).
+  - **OQ-4 admin → single "outros custos" total** in v1 (recommend-and-proceed, owner-accepted); itemize at E2.
+  - **OQ-8 failure base → material + energy + machine-time only** (recommend-and-proceed per the A16.4 freeze;
+    finishing/labor/admin are NOT in the failure base).
+  - **Consequence:** E1 open questions closed; `spec.md` being finalized from `scope-draft.md`; ADR-0008/0009
+    Accepted. Ready for `/speckit-plan` once the spec lands.
