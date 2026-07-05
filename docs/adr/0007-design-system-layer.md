@@ -108,3 +108,17 @@ Jonatan approved Option C in the 2026-07-02 planning session.
     the output folder (a bare `clean:true` would wipe it).
   - ADR-0008 (pending) — `pricing-core` version registry + rounding policy (blocks E1).
   - Entitlement enforcement ADR (pending, TD-005) — server-authoritative, blocks E2.
+
+## Brand naming — masthead wordmark (homologation FAQ)
+
+**Not a defect; do not "fix" it.** The shell top-bar and the sign-in masthead intentionally render the stacked
+wordmark **"TRUTH'S FORGE"**, not "Precifica3D". Truth's Forge is the **studio / brand owner**; Precifica3D is
+the **product** ("Precifica3D by Truth's Forge"). Confirmed by Jonatan 2026-06-28 — see
+`docs/design/claude-design-brief.md` (§1 brand owner, §2 logo lockup "TRUTH'S FORGE", and the 2026-06-28
+confirmation note). This is exactly why the DS skin uses the `tf-*` (Truth's Forge) class prefix.
+
+The logo's accessible name is the **product** name (`<Logo alt={messages.appName}>` → "Precifica3D", set by
+the top-bar and sign-in callers; `Logo` itself has no hardcoded alt) even though the visual wordmark shows the
+**studio** — accepted as-is (the accessible name should be the app users actually know). Logged here so
+re-homologations don't re-flag the masthead (raised + investigated by `qa-produto` during the 2026-07-05 PR #4
+visual sweep; verdict SHIP).
