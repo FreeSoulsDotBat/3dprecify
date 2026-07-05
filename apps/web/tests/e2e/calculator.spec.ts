@@ -25,16 +25,31 @@ async function signInThrowaway(page: import("@playwright/test").Page, tag: strin
   await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
 }
 
-test("authenticated user computes material + price (R$ 2,00 / R$ 3,00)", async ({ page }, info) => {
+test("authenticated user computes the full E1 model (SC-001 canonical vector)", async ({
+  page,
+}, info) => {
   await signInThrowaway(page, `base-${info.workerIndex}`);
 
-  await page.getByLabel(messages.calculator.fields.costPerRoll).fill("100");
-  await page.getByLabel(messages.calculator.fields.rollWeight).fill("1");
-  await page.getByLabel(messages.calculator.fields.grams).fill("20");
-  await page.getByLabel(messages.calculator.fields.markup).fill("50");
+  const f = messages.calculator.fields;
+  // The SC-001 worked example → custo_total R$ 28,65, varejo R$ 42,98, atacado R$ 37,25.
+  await page.getByLabel(f.costPerRoll).fill("100");
+  await page.getByLabel(f.rollWeight).fill("1");
+  await page.getByLabel(f.grams).fill("100");
+  await page.getByLabel(f.wasteGrams).fill("10");
+  await page.getByLabel(f.printTime).fill("5");
+  await page.getByLabel(f.avgPower).fill("0,10");
+  await page.getByLabel(f.tariff).fill("1");
+  await page.getByLabel(f.machineValue).fill("4000");
+  await page.getByLabel(f.machineLifetime).fill("2000");
+  await page.getByLabel(f.failure).fill("10");
+  await page.getByLabel(f.finishTime).fill("0,5");
+  await page.getByLabel(f.finishRate).fill("10");
+  await page.getByLabel(f.markupVarejo).fill("50");
+  await page.getByLabel(f.markupAtacado).fill("30");
 
-  await expect(page.getByText("R$ 2,00")).toBeVisible(); // material breakdown row
-  await expect(page.getByText("R$ 3,00")).toBeVisible(); // suggested-price total row
+  await expect(page.getByText("R$ 28,65")).toBeVisible(); // custo_total breakdown row
+  await expect(page.getByText("R$ 42,98")).toBeVisible(); // varejo derivation row
+  await expect(page.getByText("R$ 37,25")).toBeVisible(); // atacado derivation row
 });
 
 test("zero roll weight shows a friendly error, no division by zero", async ({ page }, info) => {
@@ -61,9 +76,10 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
   // The pricing calc is client-side, so it still works with no network.
   await page.getByLabel(messages.calculator.fields.costPerRoll).fill("100");
   await page.getByLabel(messages.calculator.fields.rollWeight).fill("1");
-  await page.getByLabel(messages.calculator.fields.grams).fill("20");
-  await page.getByLabel(messages.calculator.fields.markup).fill("50");
-  await expect(page.getByText("R$ 3,00")).toBeVisible();
+  await page.getByLabel(messages.calculator.fields.grams).fill("100");
+  // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/2000 h)
+  // this yields custo_total R$ 20,60 → varejo R$ 30,90.
+  await expect(page.getByText("R$ 30,90")).toBeVisible();
 
   await context.setOffline(false);
 });

@@ -17,6 +17,10 @@ export const messages = {
     offline: "Você está offline. O login precisa de internet — o cálculo continua funcionando.",
     notConfigured: "Login indisponível: Firebase não configurado neste ambiente.",
   },
+  // E1 full corrected pricing calculator (spec 004). US1 (correct retail + wholesale) +
+  // US2 (transparent breakdown) are the MVP. Copy is pt-BR, i18n-ready (TD-001). The
+  // `costPerRoll/rollWeight/grams/markup` keys are kept as the stable labels some pre-E1
+  // e2e specs still address (migrated to the full model in T041); E1 adds the rest.
   calculator: {
     title: "Calcular preço",
     fields: {
@@ -24,14 +28,58 @@ export const messages = {
       rollWeight: "Peso do rolo",
       grams: "Gramas usadas",
       markup: "Markup",
+      wasteGrams: "Desperdício",
+      printTime: "Tempo de impressão",
+      avgPower: "Consumo médio",
+      tariff: "Tarifa de energia",
+      machineValue: "Valor da máquina",
+      machineLifetime: "Vida útil da máquina",
+      maintenance: "Reserva de manutenção",
+      failure: "Taxa de falha",
+      finishTime: "Tempo de acabamento",
+      finishRate: "Valor do acabamento",
+      markupVarejo: "Markup varejo",
+      markupAtacado: "Markup atacado",
     },
-    markupHint: "Margem sobre o custo (não sobre o preço de venda).",
-    markupCaptionPrefix: "markup",
+    // avgPower tooltip is a mandated clarification (FR-022): the real average draw, not
+    // the nameplate power printed on the machine.
+    hints: {
+      avgPower: "Consumo médio real da impressora, não a potência de placa (~0,12 kW).",
+      markup: "Margem sobre o custo total (não sobre o preço de venda).",
+    },
+    sections: {
+      inputs: "Custos da peça",
+      optional: "Ajustes opcionais",
+      optionalHint: "Comece em 0 — preencha só o que se aplica ao seu caso.",
+      markup: "Markup",
+      breakdown: "Como chegamos no preço",
+    },
+    // rollWeightError is the field-specific "> 0" message reused by the schema for the
+    // roll weight (kept as its own key for the a11y e2e that asserts it verbatim).
     rollWeightError: "O peso do rolo deve ser maior que zero.",
+    validation: {
+      invalid: "Informe um número válido.",
+      negative: "Não pode ser negativo.",
+      required: "Campo obrigatório.",
+      machineLifetimePositive: "A vida útil deve ser maior que zero.",
+    },
     results: {
       material: "Material",
-      suggested: "Preço sugerido",
+      energy: "Energia",
+      machine: "Máquina",
+      failure: "Falha / perdas",
+      finishing: "Acabamento",
+      custoTotal: "Custo total",
+      varejo: "Preço varejo",
+      atacado: "Preço atacado",
     },
+    captions: {
+      varejo: "Varejo",
+      atacado: "Atacado",
+      markup: "markup",
+      derivedFrom: "custo total ×",
+    },
+    invalidNote: "Confira os campos destacados para ver o preço.",
     freemiumNote: "Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium.",
   },
   account: {

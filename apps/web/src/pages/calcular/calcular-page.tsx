@@ -1,106 +1,202 @@
-import { type ChangeEvent, useState } from "react";
+import { type CSSProperties } from "react";
+import { type Control, Controller, useForm } from "react-hook-form";
 
-import { type CalculatorInput, computeCalculator } from "@/features/calculator/calculator-model";
+import { computeFromForm } from "@/features/calculator/calculator-model";
+import {
+  type CalcFieldMeta,
+  type CalcFormValues,
+  calculatorResolver,
+  defaultCalcValues,
+  MANDATORY_FIELDS,
+  MARKUP_FIELDS,
+  OPTIONAL_FIELDS,
+} from "@/features/calculator/calculator-schema";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { BreakdownRow, Card, Field, NumberField, PriceHero } from "@/shared/ui";
+import type { PriceResult } from "@3dprecify/pricing-core";
+import { Alert, BreakdownRow, Card, Field, NumberField, PriceHero } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// Calculator screen (T031) — moved out of features/calculator into pages/calcular
-// and re-skinned with the DS primitives + the focusable PageHeader. The math is
-// unchanged: the pure calculator-model over canonical pricing-core (never recomputed
-// here). The full corrected model (energy/machine/failure/marketplace) is the E1 work.
-//
-// R2-6 (audit-findings-r2): the seed inputs are the canonical documented example
-// (R$100 / 1kg / 20g / 50%) so the default render shows material R$ 2,00 / suggested
-// R$ 3,00 (spec.md:45-46) — previously seeded 110/1/85/50, which hurt eyeball
-// homologation.
-const initial: CalculatorInput = {
-  costPerRoll: "100,00",
-  rollWeightKg: "1",
-  grams: "20",
-  markupPct: "50",
+// E1 calculator screen (US1 + US2). RHF (form state) + Zod (calculatorResolver) own the pt-BR
+// inputs; the price + breakdown come from one synchronous computeFromForm pass over the
+// canonical pricing-core engine (recompute on every change, deterministic, offline — FR-036/
+// FR-039). US1 = a correct retail + wholesale price (PriceHero); US2 = the transparent per-line
+// breakdown that visibly sums to custo_total + the markup derivation (BreakdownRow). labor/admin
+// (US4) and marketplace (US5) are intentionally NOT surfaced yet. No persistence / paywall (US6).
+
+const t = messages.calculator;
+
+const gridCard: CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "1fr 1fr",
+  gap: "var(--space-3)",
 };
 
-export function CalcularPage() {
-  const t = messages.calculator;
-  const [form, setForm] = useState<CalculatorInput>(initial);
-  const update = (key: keyof CalculatorInput) => (e: ChangeEvent<HTMLInputElement>) =>
-    setForm((s) => ({ ...s, [key]: e.target.value }));
+const sectionLabel: CSSProperties = {
+  margin: 0,
+  fontSize: "var(--fs-sm)",
+  fontWeight: "var(--fw-semibold)",
+  color: "var(--text-strong)",
+};
 
-  const result = computeCalculator(form);
-  const markupCaption = `${t.markupCaptionPrefix} ${form.markupPct || "0"}%`;
+const captionText: CSSProperties = {
+  margin: 0,
+  fontSize: "var(--fs-caption)",
+  color: "var(--text-muted)",
+};
+
+/** One controlled numeric input wired to RHF + the DS Field/NumberField. */
+function ControlledField({
+  control,
+  meta,
+}: {
+  control: Control<CalcFormValues>;
+  meta: CalcFieldMeta;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={meta.name}
+      render={({ field, fieldState }) => (
+        <Field
+          label={meta.label}
+          required={meta.required}
+          optional={!meta.required}
+          hint={meta.hint}
+          error={fieldState.error?.message}
+        >
+          {(p) => (
+            <NumberField
+              {...p}
+              currency={meta.currency}
+              unit={meta.unit}
+              name={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              error={Boolean(fieldState.error)}
+            />
+          )}
+        </Field>
+      )}
+    />
+  );
+}
+
+/** US1 hero prices + US2 transparent breakdown. Rendered only for a fully valid form. */
+function PriceResults({ result, values }: { result: PriceResult; values: CalcFormValues }) {
+  const line = (value: number, optional: boolean) =>
+    optional && value === 0 ? ("muted" as const) : ("default" as const);
+
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+        <PriceHero
+          label={t.results.varejo}
+          value={result.precoVarejo}
+          caption={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
+          tone="accent"
+          size="md"
+        />
+        <PriceHero
+          label={t.results.atacado}
+          value={result.precoAtacado}
+          caption={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
+          tone="energy"
+          size="md"
+        />
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <p style={sectionLabel}>{t.sections.breakdown}</p>
+        <Card padding="md">
+          <BreakdownRow label={t.results.material} value={result.material} color="var(--accent)" />
+          <BreakdownRow label={t.results.energy} value={result.energy} color="var(--energy)" />
+          <BreakdownRow label={t.results.machine} value={result.machine} />
+          <BreakdownRow
+            label={t.results.failure}
+            value={result.falha}
+            emphasis={line(result.falha, true)}
+          />
+          <BreakdownRow
+            label={t.results.finishing}
+            value={result.finishing}
+            emphasis={line(result.finishing, true)}
+          />
+          <BreakdownRow label={t.results.custoTotal} value={result.custoTotal} emphasis="total" />
+          {/* How each sale price derives from custo_total via markup (FR-033). */}
+          <BreakdownRow
+            label={t.results.varejo}
+            sublabel={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
+            value={result.precoVarejo}
+            emphasis="accent"
+          />
+          <BreakdownRow
+            label={t.results.atacado}
+            sublabel={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
+            value={result.precoAtacado}
+          />
+        </Card>
+      </div>
+    </>
+  );
+}
+
+/** A titled grid of controlled fields. */
+function FieldGroup({
+  control,
+  title,
+  hint,
+  fields,
+}: {
+  control: Control<CalcFormValues>;
+  title: string;
+  hint?: string;
+  fields: readonly CalcFieldMeta[];
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <p style={sectionLabel}>{title}</p>
+      {hint && <p style={captionText}>{hint}</p>}
+      <Card padding="md" style={gridCard}>
+        {fields.map((meta) => (
+          <ControlledField key={meta.name} control={control} meta={meta} />
+        ))}
+      </Card>
+    </div>
+  );
+}
+
+export function CalcularPage() {
+  const { control, watch } = useForm<CalcFormValues>({
+    defaultValues: defaultCalcValues,
+    resolver: calculatorResolver,
+    mode: "onChange",
+  });
+
+  const values = watch();
+  const { result } = computeFromForm(values);
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} />
 
-      <PriceHero
-        label={t.results.suggested}
-        value={result.suggestedPrice}
-        caption={markupCaption}
-        tone="accent"
-        size="md"
+      {result ? (
+        <PriceResults result={result} values={values} />
+      ) : (
+        <Alert tone="danger">{t.invalidNote}</Alert>
+      )}
+
+      <FieldGroup control={control} title={t.sections.inputs} fields={MANDATORY_FIELDS} />
+      <FieldGroup
+        control={control}
+        title={t.sections.optional}
+        hint={t.sections.optionalHint}
+        fields={OPTIONAL_FIELDS}
       />
+      <FieldGroup control={control} title={t.sections.markup} fields={MARKUP_FIELDS} />
 
-      <Card
-        padding="md"
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}
-      >
-        <Field label={t.fields.costPerRoll} required>
-          {(p) => (
-            <NumberField
-              {...p}
-              currency
-              value={form.costPerRoll}
-              onChange={update("costPerRoll")}
-            />
-          )}
-        </Field>
-        <Field
-          label={t.fields.rollWeight}
-          required
-          error={result.rollWeightError ? t.rollWeightError : undefined}
-        >
-          {(p) => (
-            <NumberField
-              {...p}
-              unit="kg"
-              value={form.rollWeightKg}
-              onChange={update("rollWeightKg")}
-              error={result.rollWeightError}
-            />
-          )}
-        </Field>
-        <Field label={t.fields.grams} required>
-          {(p) => <NumberField {...p} unit="g" value={form.grams} onChange={update("grams")} />}
-        </Field>
-        <Field label={t.fields.markup} hint={t.markupHint}>
-          {(p) => (
-            <NumberField {...p} unit="%" value={form.markupPct} onChange={update("markupPct")} />
-          )}
-        </Field>
-      </Card>
-
-      <Card padding="md">
-        <BreakdownRow
-          label={t.results.material}
-          sublabel={`${form.grams || "0"} g`}
-          value={result.materialCost}
-          color="var(--accent)"
-        />
-        <BreakdownRow label={t.results.suggested} value={result.suggestedPrice} emphasis="total" />
-      </Card>
-
-      <p
-        style={{
-          margin: 0,
-          textAlign: "center",
-          fontSize: "var(--fs-caption)",
-          color: "var(--text-muted)",
-        }}
-      >
-        {t.freemiumNote}
-      </p>
+      <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>
   );
 }
