@@ -1,0 +1,59 @@
+/* Inline alert. Soft tinted surface; icon + title use the semantic status-text
+   token so the tone reads ≥4.5:1 in both themes (INV-3/4). */
+.tf-alert {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+.tf-alert__icon {
+  flex: 0 0 auto;
+  margin-top: 0.0625rem;
+}
+.tf-alert__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+.tf-alert__title {
+  margin: 0;
+  font-weight: var(--fw-semibold);
+  font-size: var(--fs-body-sm);
+}
+.tf-alert__text {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+  line-height: var(--lh-normal);
+}
+.tf-alert--neutral {
+  background: var(--bg-muted);
+  color: var(--text-body);
+}
+.tf-alert--neutral .tf-alert__icon,
+.tf-alert--neutral .tf-alert__title {
+  color: var(--text-strong);
+}
+.tf-alert--info {
+  background: var(--tf-info-soft);
+}
+.tf-alert--info .tf-alert__icon,
+.tf-alert--info .tf-alert__title {
+  color: var(--info-text);
+}
+.tf-alert--success {
+  background: var(--tf-success-soft);
+}
+.tf-alert--success .tf-alert__icon,
+.tf-alert--success .tf-alert__title {
+  color: var(--success-text);
+}
+.tf-alert--danger {
+  background: var(--tf-danger-soft);
+}
+.tf-alert--danger .tf-alert__icon,
+.tf-alert--danger .tf-alert__title {
+  color: var(--danger-text);
+}

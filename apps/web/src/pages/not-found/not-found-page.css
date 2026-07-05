@@ -1,0 +1,14 @@
+/* Branded 404 (T053). Centered on-brand column; the Grafismo is a soft accent flourish above
+   the EmptyState. Decorative only (aria-hidden) and reduced-motion safe (no animation). */
+.tf-notfound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-block: var(--space-6);
+}
+.tf-notfound__grafismo {
+  width: 96px;
+  height: 48px;
+  color: var(--accent);
+  opacity: 0.55;
+}

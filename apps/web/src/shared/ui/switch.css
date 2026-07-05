@@ -1,0 +1,59 @@
+/* Switch primitive skin over Radix behavior. The Root is the ≥44×44px touch target
+   (INV-2); the visible pill track (44×24) is centred inside it. Accent track when on. */
+.tf-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.tf-switch:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.tf-switch__track {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: var(--radius-pill);
+  background: var(--border-default);
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.tf-switch[data-state="checked"] .tf-switch__track {
+  background: var(--accent);
+}
+
+.tf-switch__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--tf-white);
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.tf-switch[data-state="checked"] .tf-switch__thumb {
+  transform: translateX(20px);
+}
+
+.tf-switch:focus-visible {
+  outline: none;
+}
+.tf-switch:focus-visible .tf-switch__track {
+  box-shadow: var(--ring);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-switch__track,
+  .tf-switch__thumb {
+    transition: none;
+  }
+}

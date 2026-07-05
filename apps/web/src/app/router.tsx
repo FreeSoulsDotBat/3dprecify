@@ -1,96 +1,120 @@
 import {
-  Outlet,
   createRootRouteWithContext,
   createRoute,
   createRouter,
   redirect,
 } from "@tanstack/react-router";
 
-import { SignInScreen } from "@/features/auth/sign-in-screen";
-import { CalculatorScreen } from "@/features/calculator/calculator-screen";
-import { messages } from "@/shared/i18n/messages.pt-br";
-import { type SessionStatus, signOutUser, useSessionStore } from "@/shared/session/session-store";
-import { useThemeStore } from "@/shared/ui/theme-store";
+import { AppShell } from "@/app/app-shell";
+import { CalcularPage } from "@/pages/calcular/calcular-page";
+import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
+import { ContaPage } from "@/pages/conta/conta-page";
+import { ErrorPage } from "@/pages/error/error-page";
+import { HistoricoPage } from "@/pages/historico/historico-page";
+import { NotFoundPage } from "@/pages/not-found/not-found-page";
+import { SignInPage } from "@/pages/sign-in/sign-in-page";
+import { type SessionStatus } from "@/shared/session/session-store";
 
-// Auth state the router needs to gate routes. Fed from the session store via RouterProvider context
-// in main.tsx; beforeLoad guards read it synchronously (Option A — beforeLoad + context).
+// Auth state the router needs, fed from the session store via RouterProvider context
+// in main.tsx. The guards (US2) read `context.status`; when the session listener flips
+// it, main.tsx re-invalidates so `beforeLoad` re-runs (e.g. sign-out on a guarded tab
+// → redirect, or sign-in on /sign-in → return-to-intent).
 export interface RouterContext {
   status: SessionStatus;
 }
 
-// Account chrome (identity + sign-out) lives in the app shell header, so feature screens stay pure.
-function AccountChrome() {
-  const status = useSessionStore((s) => s.status);
-  const email = useSessionStore((s) => s.user?.email);
-  if (status !== "authenticated") return null;
-  return (
-    <div className="flex items-center gap-3 text-sm">
-      {email && (
-        <span style={{ color: "var(--text-muted)" }}>
-          {messages.account.signedInAs} {email}
-        </span>
-      )}
-      <button type="button" onClick={() => void signOutUser()} className="rounded border px-3 py-1">
-        {messages.account.signOut}
-      </button>
-    </div>
-  );
+// The sign-in return-to-intent target. Only the guarded product sections set it, so we
+// whitelist known internal routes: this is both the "same-origin/known" clause of GC-3
+// and an open-redirect guard (external / protocol-relative targets fall back to Calcular).
+const RETURN_TO_INTENT = ["/catalogo", "/historico", "/conta"] as const;
+type ReturnToIntent = (typeof RETURN_TO_INTENT)[number];
+type SignInLanding = ReturnToIntent | "/calcular";
+
+function safeRedirect(target: string | undefined): SignInLanding {
+  return RETURN_TO_INTENT.includes(target as ReturnToIntent)
+    ? (target as ReturnToIntent)
+    : "/calcular";
 }
 
-function RootLayout() {
-  const toggle = useThemeStore((s) => s.toggle);
-  return (
-    <div className="flex min-h-dvh flex-col">
-      <header className="flex items-center justify-between gap-2 border-b px-4 py-3">
-        <span className="text-lg font-semibold" style={{ color: "var(--accent-text)" }}>
-          {messages.appName}
-        </span>
-        <div className="flex items-center gap-3">
-          <AccountChrome />
-          <button
-            type="button"
-            onClick={toggle}
-            className="rounded border px-3 py-1 text-sm"
-            aria-label={messages.theme.toggle}
-          >
-            {messages.theme.toggle}
-          </button>
-        </div>
-      </header>
-      <main className="flex-1 p-4">
-        <Outlet />
-      </main>
-    </div>
-  );
+// GC-2: guarded tabs require an authenticated session. Anything else (anonymous OR
+// not-configured) is bounced to /sign-in carrying the return-to-intent. Client guards
+// are UX only — the server stays the boundary (GC-5, Principle IV).
+function requireAuth(status: SessionStatus, pathname: string): void {
+  if (status !== "authenticated") {
+    throw redirect({ to: "/sign-in", search: { redirect: pathname } });
+  }
 }
 
-const rootRoute = createRootRouteWithContext<RouterContext>()({ component: RootLayout });
+const rootRoute = createRootRouteWithContext<RouterContext>()({
+  component: AppShell,
+  errorComponent: ErrorPage,
+  notFoundComponent: NotFoundPage,
+});
 
-// Protected calculator (US1 destination). Anonymous/not-configured users are redirected to /sign-in.
+// `/` → `/calcular` (path redirect, not an auth gate). The former 001 guard that gated
+// `/` behind sign-in is gone — Calcular is public (T038).
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  beforeLoad: ({ context }) => {
-    if (context.status !== "authenticated") {
-      throw redirect({ to: "/sign-in" });
-    }
+  beforeLoad: () => {
+    throw redirect({ to: "/calcular" });
   },
-  component: CalculatorScreen,
 });
 
-// Public sign-in. Already-authenticated users are bounced to the calculator.
+// GC-1: public. Renders for anonymous, not-configured, and authenticated — online or
+// offline. No `beforeLoad` auth check.
+const calcularRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/calcular",
+  component: CalcularPage,
+});
+
+const catalogoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/catalogo",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: CatalogoPage,
+});
+
+const historicoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/historico",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: HistoricoPage,
+});
+
+const contaRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/conta",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: ContaPage,
+});
+
+// GC-3 / GC-4: `/sign-in` carries an optional `redirect` return-to-intent. An already-
+// authenticated visitor (or one who just signed in — main.tsx invalidates on the status
+// flip) is bounced to that target when known, else to Calcular.
 const signInRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/sign-in",
-  beforeLoad: ({ context }) => {
+  validateSearch: (search: Record<string, unknown>): { redirect?: string } => ({
+    redirect: typeof search.redirect === "string" ? search.redirect : undefined,
+  }),
+  beforeLoad: ({ context, search }) => {
     if (context.status === "authenticated") {
-      throw redirect({ to: "/" });
+      throw redirect({ to: safeRedirect(search.redirect) });
     }
   },
-  component: SignInScreen,
+  component: SignInPage,
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, signInRoute]);
+export const routeTree = rootRoute.addChildren([
+  indexRoute,
+  calcularRoute,
+  catalogoRoute,
+  historicoRoute,
+  contaRoute,
+  signInRoute,
+]);
 
 export const router = createRouter({
   routeTree,

@@ -1,0 +1,30 @@
+/* Status pill. Soft tinted surface + semantic status-text token for the label. */
+.tf-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 0.125rem var(--space-3);
+  min-height: 24px;
+  border-radius: var(--radius-pill);
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  letter-spacing: var(--tracking-snug);
+  line-height: 1;
+  white-space: nowrap;
+}
+.tf-badge--neutral {
+  background: var(--bg-muted);
+  color: var(--text-body);
+}
+.tf-badge--info {
+  background: var(--tf-info-soft);
+  color: var(--info-text);
+}
+.tf-badge--success {
+  background: var(--tf-success-soft);
+  color: var(--success-text);
+}
+.tf-badge--danger {
+  background: var(--tf-danger-soft);
+  color: var(--danger-text);
+}

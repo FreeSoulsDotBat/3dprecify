@@ -1,0 +1,33 @@
+/* Indeterminate spinner. Ring spins on --dur-slower; global prefers-reduced-motion
+   (base.css) neutralises the animation. */
+.tf-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+}
+.tf-spinner__ring {
+  display: block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid color-mix(in srgb, currentColor 28%, transparent);
+  border-top-color: currentColor;
+  border-radius: var(--radius-pill);
+  animation: tf-spin 0.7s linear infinite;
+}
+.tf-spinner--sm .tf-spinner__ring {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  border-width: 2px;
+}
+.tf-spinner--lg .tf-spinner__ring {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-width: 3px;
+}
+
+@keyframes tf-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

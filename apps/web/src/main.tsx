@@ -5,10 +5,19 @@ import { createRoot } from "react-dom/client";
 import { AppProviders } from "@/app/providers";
 import { router } from "@/app/router";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { env } from "@/shared/lib/env";
+import { initObservability } from "@/shared/observability/sentry";
 import { initSessionListener, useSessionStore } from "@/shared/session/session-store";
 import { applyInitialTheme } from "@/shared/ui/theme-store";
 import "@/styles/global.css";
 
+// FE observability (D2). No-op without a DSN — dev/e2e run silent; prod injects it (A22).
+// `release` (VITE_RELEASE) is forwarded when the build provides it, so errors group by release.
+initObservability({
+  dsn: env.VITE_SENTRY_DSN,
+  release: env.VITE_RELEASE,
+  environment: import.meta.env.MODE,
+});
 applyInitialTheme();
 initSessionListener();
 

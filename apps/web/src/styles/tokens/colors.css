@@ -67,7 +67,7 @@
   --tf-info-soft: var(--tf-cyan-soft);
   --tf-warning-soft: var(--tf-orange-soft);
 
-  /* ============ Semantic — LIGHT (default, v1) ============ */
+  /* ============ Semantic — LIGHT (first-class; dark is the v1 default) ============ */
   --bg-base: var(--tf-white);
   --bg-subtle: var(--tf-neutral-50);
   --bg-muted: var(--tf-neutral-100);
@@ -117,6 +117,16 @@
   --warning: var(--energy);
   --info: var(--tf-cyan);
   --info-deep: var(--tf-teal-deep);
+
+  /* Status AS TEXT (INV-3/4) — the AA-measured "deep" hues for status text on
+     light surfaces. Components use these, never a raw --tf-* hue. Contrast vs
+     white surface: danger ~6.0:1, success ~5.0:1, info ~6.0:1 (all ≥4.5:1 AA). */
+  --danger-text: var(--tf-danger-deep);
+  --success-text: var(--tf-success-deep);
+  /* D3: calibrated to clear 4.5:1 on BOTH white AND the offline-banner info tint
+     (--tf-info-soft #e0f6fb). The old --tf-teal-deep (#0b8196) read only ~4.1:1 on the
+     tint (the D3 miss); #0a6d80 reads ~5.3:1 on the tint and ~6.0:1 on white. */
+  --info-text: #0a6d80;
 
   --focus-ring: var(--tf-purple);
   --selection-bg: var(--tf-purple);
@@ -171,6 +181,13 @@
   --tf-danger-soft: rgba(239, 51, 64, 0.16);
   --tf-info-soft: rgba(21, 189, 220, 0.16);
   --tf-warning-soft: rgba(247, 147, 30, 0.16);
+
+  /* Status AS TEXT (INV-3/4) — the brighter base hues read for status text on
+     the dark plane. Contrast vs #14151a card: danger ~5.9:1, success ~5.5:1,
+     info ~8.0:1 (all ≥4.5:1 AA). */
+  --danger-text: var(--tf-danger);
+  --success-text: var(--tf-success);
+  --info-text: var(--tf-cyan);
 }
 
 /* First-paint theme selection is the consuming app's job: set

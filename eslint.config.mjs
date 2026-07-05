@@ -1,5 +1,5 @@
-// Flat ESLint config (ADR-0004). eslint-plugin-boundaries + dependency-cruiser rules land in Phase 5,
-// once the apps/web FSD-Lite folders exist (configuring layer rules against missing folders is premature).
+// Flat ESLint config (ADR-0004). eslint-plugin-boundaries enforces the FSD-Lite import
+// direction (materialized in 003): app → pages → widgets → features → entities → shared.
 import js from "@eslint/js";
 import boundaries from "eslint-plugin-boundaries";
 import tseslint from "typescript-eslint";
@@ -16,8 +16,9 @@ export default tseslint.config(
       // Backend is Python (Ruff/basedpyright own it); ESLint must not scan its venv vendored JS.
       "backend/**",
       "**/*.min.js",
-      // Generated API client (Orval, A8) — exempt.
-      "apps/web/src/shared/api/**",
+      // Generated API client (Orval, A8) — exempt. Hand-written modules in shared/api
+      // (e.g. transport.ts) ARE linted; only the generated file is exempt.
+      "apps/web/src/shared/api/generated.ts",
     ],
   },
   js.configs.recommended,
@@ -27,8 +28,12 @@ export default tseslint.config(
       globals: { ...globals.node, ...globals.browser },
     },
   },
-  // FSD-Lite boundaries (apps/web only): app → feature/shared; feature → shared + own feature;
-  // shared → shared. Cross-feature and upward imports are forbidden.
+  // FSD-Lite boundaries (apps/web only). Canonical import direction:
+  //   app → pages → widgets → features → entities → shared.
+  // A layer may import only from layers STRICTLY below it; upward and
+  // sideways-across-siblings (feature→other-feature, page→other-page, …) imports
+  // are forbidden. Same-slice imports (within one folder) are auto-allowed, so
+  // NOT listing a layer's own type below is what blocks its cross-sibling imports.
   {
     files: ["apps/web/src/**/*.{ts,tsx}"],
     plugins: { boundaries },
@@ -40,11 +45,19 @@ export default tseslint.config(
       "boundaries/elements": [
         { type: "app", pattern: "apps/web/src/main.tsx", mode: "file" },
         { type: "app", pattern: "apps/web/src/app", mode: "folder" },
+        { type: "pages", pattern: "apps/web/src/pages/*", mode: "folder", capture: ["page"] },
+        { type: "widgets", pattern: "apps/web/src/widgets/*", mode: "folder", capture: ["widget"] },
         {
           type: "feature",
           pattern: "apps/web/src/features/*",
           mode: "folder",
           capture: ["feature"],
+        },
+        {
+          type: "entities",
+          pattern: "apps/web/src/entities/*",
+          mode: "folder",
+          capture: ["entity"],
         },
         { type: "shared", pattern: "apps/web/src/shared", mode: "folder" },
       ],
@@ -54,12 +67,22 @@ export default tseslint.config(
         "error",
         {
           default: "disallow",
-          // Same-element imports (within one feature folder) are allowed automatically, so with
-          // default:disallow this also blocks cross-feature (feature→other-feature) imports.
           rules: [
-            { from: { type: "app" }, allow: { to: { type: ["app", "feature", "shared"] } } },
-            { from: { type: "feature" }, allow: { to: { type: "shared" } } },
-            { from: { type: "shared" }, allow: { to: { type: "shared" } } },
+            {
+              from: { type: "app" },
+              allow: { to: { type: ["app", "pages", "widgets", "feature", "entities", "shared"] } },
+            },
+            {
+              from: { type: "pages" },
+              allow: { to: { type: ["widgets", "feature", "entities", "shared"] } },
+            },
+            {
+              from: { type: "widgets" },
+              allow: { to: { type: ["feature", "entities", "shared"] } },
+            },
+            { from: { type: "feature" }, allow: { to: { type: ["entities", "shared"] } } },
+            { from: { type: "entities" }, allow: { to: { type: ["shared"] } } },
+            { from: { type: "shared" }, allow: { to: { type: ["shared"] } } },
           ],
         },
       ],

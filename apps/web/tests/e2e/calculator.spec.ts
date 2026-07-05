@@ -44,7 +44,7 @@ test("zero roll weight shows a friendly error, no division by zero", async ({ pa
   await expect(page.getByText(messages.calculator.rollWeightError)).toBeVisible();
 });
 
-test("app shell + calculator work offline once the SW has precached (FR-008)", async ({
+test("app shell + calculator work offline once the SW has precached (FR-003/FR-011)", async ({
   page,
   context,
 }, info) => {

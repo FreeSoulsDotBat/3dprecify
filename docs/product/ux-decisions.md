@@ -25,8 +25,8 @@ Decided with Jonatan, UX round (2026-06-27/28). UI styling is **Claude Design's*
 - **Accessibility target:** WCAG 2.2 AA (contrast ≥4.5:1, ≥44px touch targets, visible focus, labels).
 - **Component states matrix:** every interactive surface defines loading / empty / error / success / disabled.
   Errors render the ADR-0002 envelope (`code` → pt-BR message), never a raw stack.
-- **Theme:** light default (v1), dark as a first-class second theme (brand is high-contrast both ways);
-  tokens themeable from day one.
+- **Theme:** **dark default (v1)** (Jonatan, 2026-07-01), light as a first-class second theme (brand is
+  high-contrast both ways); tokens themeable from day one.
 - **Copy tone:** direct / technical-cordial pt-BR — precise, no flattery, talks in numbers (matches the brand
   and the project Constitution).
 

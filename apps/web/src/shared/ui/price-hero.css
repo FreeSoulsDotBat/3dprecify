@@ -8,6 +8,9 @@
   border-radius: var(--radius-xl);
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
+  /* D2: allow the flex column to shrink below its content's intrinsic width so a huge
+     price wraps instead of pushing horizontal overflow at 390px. */
+  min-width: 0;
 }
 .tf-price--accent {
   background: var(--accent);
@@ -56,6 +59,11 @@
   line-height: 1;
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-tight);
+  /* D2: wrap the currency/int/dec parts and let each break so an oversized value
+     never forces horizontal overflow. */
+  flex-wrap: wrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .tf-price__cur {
   font-size: 0.42em;
@@ -65,6 +73,10 @@
 }
 .tf-price__int {
   font-size: var(--fs-price);
+  /* D2: the integer part is the widest token — let it shrink + break within the amount. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .tf-price--lg .tf-price__int {
   font-size: clamp(3rem, 12vw, 4.75rem);
