@@ -117,7 +117,8 @@ the **product** ("Precifica3D by Truth's Forge"). Confirmed by Jonatan 2026-06-2
 `docs/design/claude-design-brief.md` (§1 brand owner, §2 logo lockup "TRUTH'S FORGE", and the 2026-06-28
 confirmation note). This is exactly why the DS skin uses the `tf-*` (Truth's Forge) class prefix.
 
-The logo `<img alt="Precifica3D">` deliberately gives screen readers the **product** name even though the
-visual wordmark shows the **studio** — accepted as-is (the accessible name should be the app users actually
-know). Logged here so re-homologations don't re-flag the masthead (raised + investigated by `qa-produto` during
-the 2026-07-05 PR #4 visual sweep; verdict SHIP).
+The logo's accessible name is the **product** name (`<Logo alt={messages.appName}>` → "Precifica3D", set by
+the top-bar and sign-in callers; `Logo` itself has no hardcoded alt) even though the visual wordmark shows the
+**studio** — accepted as-is (the accessible name should be the app users actually know). Logged here so
+re-homologations don't re-flag the masthead (raised + investigated by `qa-produto` during the 2026-07-05 PR #4
+visual sweep; verdict SHIP).

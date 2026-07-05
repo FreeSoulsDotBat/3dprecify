@@ -40,6 +40,6 @@ Resolved debt moves to the relevant ADR/doc and is struck from this table.
 
 ## Not debt — logged to stop re-flags during homologation
 - **Masthead wordmark "TRUTH'S FORGE" (not "Precifica3D")** is intentional — Truth's Forge = studio, Precifica3D
-  = product ("Precifica3D by Truth's Forge"); confirmed 2026-06-28. The logo `alt="Precifica3D"` (product name
-  for screen readers) vs the visual studio wordmark is also intentional. Full note in **ADR-0007 → "Brand naming
+  = product ("Precifica3D by Truth's Forge"); confirmed 2026-06-28. The logo's accessible name = product
+  ("Precifica3D", via `<Logo alt={messages.appName}>`) vs the visual studio wordmark is also intentional. Full note in **ADR-0007 → "Brand naming
   — masthead wordmark"** and `docs/design/claude-design-brief.md`. Do not "fix" the masthead or the `tf-*` prefix.
