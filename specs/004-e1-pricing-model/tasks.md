@@ -24,9 +24,9 @@ description: "Task list — E1 full corrected pricing calculator"
 
 **Purpose**: prepare the `pricing-core` v2 package surface.
 
-- [ ] T001 Bump `packages/pricing-core/package.json` version `0.0.0 → 2.0.0` (major, A25) and add `decimal.js-light` dependency (ADR-0008)
-- [ ] T002 [P] Scaffold `packages/pricing-core/src/index.ts` type surface per `contracts/pricing-core.md` (`PriceInput`, `PriceResult`, `MarketplaceResult`, `ValidationError`, `PRICING_MODEL_VERSION`) — types + signatures only, bodies `throw new Error("not implemented")`
-- [ ] T003 [P] Create `packages/pricing-core/src/rounding.ts` module stub (money quantize helper signature) per ADR-0008
+- [X] T001 Bump `packages/pricing-core/package.json` version `0.0.0 → 2.0.0` (major, A25) and add `decimal.js-light` dependency (ADR-0008)
+- [X] T002 [P] Scaffold `packages/pricing-core/src/index.ts` type surface per `contracts/pricing-core.md` (`PriceInput`, `PriceResult`, `MarketplaceResult`, `ValidationError`, `PRICING_MODEL_VERSION`) — types + signatures only, bodies `throw new Error("not implemented")`
+- [X] T003 [P] Create `packages/pricing-core/src/rounding.ts` module stub (money quantize helper signature) per ADR-0008
 
 **Checkpoint**: package builds/typechecks with stubbed bodies.
 
@@ -38,12 +38,12 @@ description: "Task list — E1 full corrected pricing calculator"
 
 **⚠️ CRITICAL**: no user story compute can begin until this phase is complete.
 
-- [ ] T004 Write FAILING tests for the rounding policy (2dp `ROUND_HALF_UP`; sum-of-rounded-lines == rounded-aggregate; full-precision intermediates) in `packages/pricing-core/src/rounding.test.ts`
-- [ ] T005 Implement `rounding.ts` with `decimal.js-light` (quantize to 2dp HALF_UP; `sumRounded` helper) — makes T004 pass (ADR-0008)
-- [ ] T006 [P] Write FAILING test: `PRICING_MODEL_VERSION === "2.0.0"` AND it tracks `package.json` major, in `packages/pricing-core/src/version.test.ts`
-- [ ] T007 [P] Implement `PRICING_MODEL_VERSION` constant + the version↔major gate — makes T006 pass
-- [ ] T008 Write FAILING validation tests (SC-008): non-finite, `rollWeightKg ≤ 0`, `machineLifetimeHours ≤ 0`, `marketplaceCommissionPct ∉ [0,100)`, any negative → `ValidationError{field}`, in `packages/pricing-core/src/index.test.ts`
-- [ ] T009 Implement input validation + optional-field default-0 normalization in `computeCalculator` skeleton (returns a typed shell; no line math yet) — makes T008 pass
+- [X] T004 Write FAILING tests for the rounding policy (2dp `ROUND_HALF_UP`; sum-of-rounded-lines == rounded-aggregate; full-precision intermediates) in `packages/pricing-core/src/rounding.test.ts`
+- [X] T005 Implement `rounding.ts` with `decimal.js-light` (quantize to 2dp HALF_UP; `sumRounded` helper) — makes T004 pass (ADR-0008)
+- [X] T006 [P] Write FAILING test: `PRICING_MODEL_VERSION === "2.0.0"` AND it tracks `package.json` major, in `packages/pricing-core/src/version.test.ts`
+- [X] T007 [P] Implement `PRICING_MODEL_VERSION` constant + the version↔major gate — makes T006 pass
+- [X] T008 Write FAILING validation tests (SC-008): non-finite, `rollWeightKg ≤ 0`, `machineLifetimeHours ≤ 0`, `marketplaceCommissionPct ∉ [0,100)`, any negative → `ValidationError{field}`, in `packages/pricing-core/src/index.test.ts`
+- [X] T009 Implement input validation + optional-field default-0 normalization in `computeCalculator` skeleton (returns a typed shell; no line math yet) — makes T008 pass
 
 **Checkpoint**: rounding + version + validation are green; the engine refuses bad numbers and defaults optionals.
 
@@ -57,14 +57,14 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 1 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T010 [P] [US1] Canonical worked-example test (full SC-001 vector → exact material 11,00 / energy 0,50 / machine 10,00 / falha 2,15 / finishing 5,00 / custo_total 28,65 / varejo 42,98 / atacado 37,25) in `packages/pricing-core/src/index.test.ts`
-- [ ] T011 [P] [US1] Test: both prices returned and `precoVarejo ≥ precoAtacado` when markupVarejo ≥ markupAtacado (SC-010 core); AND `printTimeHours = 0` → energy and machine lines = 0, coherent material-only `custoTotal`, no crash (spec Edge, analyze A2) — in `packages/pricing-core/src/index.test.ts`
+- [X] T010 [P] [US1] Canonical worked-example test (full SC-001 vector → exact material 11,00 / energy 0,50 / machine 10,00 / falha 2,15 / finishing 5,00 / custo_total 28,65 / varejo 42,98 / atacado 37,25) in `packages/pricing-core/src/index.test.ts`
+- [X] T011 [P] [US1] Test: both prices returned and `precoVarejo ≥ precoAtacado` when markupVarejo ≥ markupAtacado (SC-010 core); AND `printTimeHours = 0` → energy and machine lines = 0, coherent material-only `custoTotal`, no crash (spec Edge, analyze A2) — in `packages/pricing-core/src/index.test.ts`
 
 ### Implementation for User Story 1
 
-- [ ] T012 [US1] Implement the production lines in `computeCalculator` (`packages/pricing-core/src/index.ts`): `material = (costPerRoll/(rollWeightKg*1000))*(printGrams+wasteGrams)`, `energy = printTimeHours*avgPowerKw*tariffPerKwh`, `machine = (machineValue/machineLifetimeHours + maintenanceReservePerHour)*printTimeHours` (ADR-0009 A) — FR-024/025/026
-- [ ] T013 [US1] Implement `falha = (material+energy+machine)*failurePct/100`, `finishing = finishTimeHours*finishRatePerHour`, and `custoTotal` = sum of the (rounded) lines in `packages/pricing-core/src/index.ts` — FR-027/028/029
-- [ ] T014 [US1] Implement `precoVarejo/precoAtacado = custoTotal*(1+markup/100)` over the rounded `custoTotal` in `packages/pricing-core/src/index.ts` — FR-030 (T010/T011 now pass)
+- [X] T012 [US1] Implement the production lines in `computeCalculator` (`packages/pricing-core/src/index.ts`): `material = (costPerRoll/(rollWeightKg*1000))*(printGrams+wasteGrams)`, `energy = printTimeHours*avgPowerKw*tariffPerKwh`, `machine = (machineValue/machineLifetimeHours + maintenanceReservePerHour)*printTimeHours` (ADR-0009 A) — FR-024/025/026
+- [X] T013 [US1] Implement `falha = (material+energy+machine)*failurePct/100`, `finishing = finishTimeHours*finishRatePerHour`, and `custoTotal` = sum of the (rounded) lines in `packages/pricing-core/src/index.ts` — FR-027/028/029
+- [X] T014 [US1] Implement `precoVarejo/precoAtacado = custoTotal*(1+markup/100)` over the rounded `custoTotal` in `packages/pricing-core/src/index.ts` — FR-030 (T010/T011 now pass)
 - [X] T015 [P] [US1] Create `apps/web/src/features/calculator/calculator-schema.ts` — RHF + Zod schema for ALL US1 fields: the mandatory ones (FR-001..003,005..009,017,018) AND the optional-but-core ones the model + SC-001 exercise — `wasteGrams` (FR-004), `maintenanceReservePerHour` (FR-010), `failurePct` (FR-011), `finishTimeHours`/`finishRatePerHour` (FR-012/013), each **optional, default 0** — with pt-BR/BRL parsing + per-field messages. (labor/admin → US4; marketplace → US5.) Resolves analyze finding C1.
 - [X] T016 [US1] Rewrite `apps/web/src/features/calculator/calculator-model.ts` as the thin adapter (pt-BR parse → validate → `computeCalculator` → format); delete the 001 `parseDecimal` lenient coercion (closes TD-020) — update `calculator-model.test.ts`
 - [X] T017 [US1] Update `apps/web/src/pages/calcular/calcular-page.tsx` to render the US1 inputs — mandatory + the optional-core `wasteGrams`/`maintenanceReservePerHour`/`failurePct`/`finishTimeHours`/`finishRatePerHour` (de-emphasized at their 0 default; reuse `Field`/`NumberField`) + retail/wholesale via `PriceHero`; wire recompute on change
@@ -82,11 +82,11 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 2 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T019 [P] [US2] Test: breakdown lines sum to `custoTotal` with 0 residual under HALF_UP, for SC-001 AND randomized valid inputs (SC-002) in `packages/pricing-core/src/index.test.ts`
+- [X] T019 [P] [US2] Test: breakdown lines sum to `custoTotal` with 0 residual under HALF_UP, for SC-001 AND randomized valid inputs (SC-002) in `packages/pricing-core/src/index.test.ts`
 
 ### Implementation for User Story 2
 
-- [ ] T020 [US2] Confirm `PriceResult` exposes all seven lines + `custoTotal` + the markup-derivation values (already produced in US1) — adjust `packages/pricing-core/src/index.ts` shape if needed (T019 passes)
+- [X] T020 [US2] Confirm `PriceResult` exposes all seven lines + `custoTotal` + the markup-derivation values (already produced in US1) — adjust `packages/pricing-core/src/index.ts` shape if needed (T019 passes)
 - [X] T021 [US2] Update `apps/web/src/pages/calcular/calcular-page.tsx` to render a `BreakdownRow` per line and show how varejo/atacado derive from `custo_total` (the applied markup); zero optional lines de-emphasized/omitted without breaking the sum — FR-032/033/034
 - [ ] T022 [US2] Visual test — QA homologates the breakdown: labelled pt-BR lines, visible sum == `custo_total`, markup derivation shown
 
