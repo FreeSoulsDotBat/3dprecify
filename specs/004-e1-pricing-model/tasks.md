@@ -58,16 +58,16 @@ description: "Task list — E1 full corrected pricing calculator"
 ### Tests for User Story 1 (write FIRST, observe FAILING) ⚠️
 
 - [ ] T010 [P] [US1] Canonical worked-example test (full SC-001 vector → exact material 11,00 / energy 0,50 / machine 10,00 / falha 2,15 / finishing 5,00 / custo_total 28,65 / varejo 42,98 / atacado 37,25) in `packages/pricing-core/src/index.test.ts`
-- [ ] T011 [P] [US1] Test: both prices returned and `precoVarejo ≥ precoAtacado` when markupVarejo ≥ markupAtacado (SC-010 core) in `packages/pricing-core/src/index.test.ts`
+- [ ] T011 [P] [US1] Test: both prices returned and `precoVarejo ≥ precoAtacado` when markupVarejo ≥ markupAtacado (SC-010 core); AND `printTimeHours = 0` → energy and machine lines = 0, coherent material-only `custoTotal`, no crash (spec Edge, analyze A2) — in `packages/pricing-core/src/index.test.ts`
 
 ### Implementation for User Story 1
 
 - [ ] T012 [US1] Implement the production lines in `computeCalculator` (`packages/pricing-core/src/index.ts`): `material = (costPerRoll/(rollWeightKg*1000))*(printGrams+wasteGrams)`, `energy = printTimeHours*avgPowerKw*tariffPerKwh`, `machine = (machineValue/machineLifetimeHours + maintenanceReservePerHour)*printTimeHours` (ADR-0009 A) — FR-024/025/026
 - [ ] T013 [US1] Implement `falha = (material+energy+machine)*failurePct/100`, `finishing = finishTimeHours*finishRatePerHour`, and `custoTotal` = sum of the (rounded) lines in `packages/pricing-core/src/index.ts` — FR-027/028/029
 - [ ] T014 [US1] Implement `precoVarejo/precoAtacado = custoTotal*(1+markup/100)` over the rounded `custoTotal` in `packages/pricing-core/src/index.ts` — FR-030 (T010/T011 now pass)
-- [ ] T015 [P] [US1] Create `apps/web/src/features/calculator/calculator-schema.ts` — RHF + Zod schema for the mandatory fields (FR-001..003,005..009,017,018) with pt-BR/BRL parsing + per-field messages
+- [ ] T015 [P] [US1] Create `apps/web/src/features/calculator/calculator-schema.ts` — RHF + Zod schema for ALL US1 fields: the mandatory ones (FR-001..003,005..009,017,018) AND the optional-but-core ones the model + SC-001 exercise — `wasteGrams` (FR-004), `maintenanceReservePerHour` (FR-010), `failurePct` (FR-011), `finishTimeHours`/`finishRatePerHour` (FR-012/013), each **optional, default 0** — with pt-BR/BRL parsing + per-field messages. (labor/admin → US4; marketplace → US5.) Resolves analyze finding C1.
 - [ ] T016 [US1] Rewrite `apps/web/src/features/calculator/calculator-model.ts` as the thin adapter (pt-BR parse → validate → `computeCalculator` → format); delete the 001 `parseDecimal` lenient coercion (closes TD-020) — update `calculator-model.test.ts`
-- [ ] T017 [US1] Update `apps/web/src/pages/calcular/calcular-page.tsx` to render the mandatory inputs (reuse `Field`/`NumberField`) + retail/wholesale via `PriceHero`; wire recompute on change
+- [ ] T017 [US1] Update `apps/web/src/pages/calcular/calcular-page.tsx` to render the US1 inputs — mandatory + the optional-core `wasteGrams`/`maintenanceReservePerHour`/`failurePct`/`finishTimeHours`/`finishRatePerHour` (de-emphasized at their 0 default; reuse `Field`/`NumberField`) + retail/wholesale via `PriceHero`; wire recompute on change
 - [ ] T018 [US1] Visual test — QA homologates the rendered calculator: SC-001 inputs → shown values match; both prices together; pt-BR/BRL formatting
 
 **Checkpoint**: US1 fully functional — a correct retail + wholesale price from the full model. **MVP candidate.**
@@ -178,7 +178,7 @@ description: "Task list — E1 full corrected pricing calculator"
 
 - [ ] T039 [P] Determinism test (SC-012): identical `PriceInput` → byte-identical `PriceResult` across runs/locales, in `packages/pricing-core/src/index.test.ts`
 - [ ] T040 [P] Single-source + version-stamp test (SC-011): no server round-trip for any price; `result.modelVersion === "2.0.0"`, in `packages/pricing-core/src/index.test.ts`
-- [ ] T041 [P] Extend `apps/web/tests/e2e/calculator.spec.ts`: full-model happy path, SC-008 bad-number validation messages rendered, and no horizontal scroll at 390 px (inherits 003 FR-010)
+- [ ] T041 [P] Extend `apps/web/tests/e2e/calculator.spec.ts`: full-model happy path, SC-008 bad-number validation messages rendered, **assert no `imposto`/tax field is present (FR-021, analyze A1)**, and no horizontal scroll at 390 px (inherits 003 FR-010)
 - [ ] T042 Retire TD-020 in `docs/tech-debt.md` (per-field validation now replaces the `parseDecimal` coercion) and note the `pricing-core` 2.0.0 bump
 - [ ] T043 Run quickstart.md validation (`pnpm --filter @3dprecify/pricing-core test` · `pnpm gate` · `pnpm e2e`); record results in `specs/004-e1-pricing-model/dod-evidence.md`
 - [ ] T044 Update `docs/product/business-rules.md` roadmap (E1 status → built) and the decision log (`audit-findings-r2.md` §5) with the E1-built entry
