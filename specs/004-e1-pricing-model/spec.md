@@ -4,7 +4,7 @@
 
 **Created**: 2026-07-05
 
-**Status**: Draft (owner decisions 2026-07-05 applied; minor residuals flagged for `/speckit-clarify`)
+**Status**: Homologated by owner 2026-07-05 (all frozen-scope decisions + the 4 residuals resolved); ready for `/speckit-plan`
 
 **Input**: On the 003 app shell, build the full corrected clean-room pricing model whose scope was **frozen
 2026-07-05** (`docs/decisions/audit-findings-r2.md` §5 — A16 / A24 / A25 + marketplace-basic-in-E1). Owner
@@ -372,22 +372,19 @@ constant).
 
 ---
 
-## 5. Residual questions for `/speckit-clarify`
+## 5. Residual questions — RESOLVED by owner (2026-07-05)
 
-All frozen-scope open questions were resolved by the owner on 2026-07-05. These residuals are minor and
-low-risk; change-likelihood flags follow the tech-debt governing rule.
+All frozen-scope open questions AND these four minor residuals were resolved by the owner on 2026-07-05
+("homologado, aceito os defaults"). No open clarifications remain; recorded here for traceability.
 
-- **R-1 — Waste granularity.** v1 ships a single `desperdício (g)` field (mirrors the admin single-field
-  decision). Confirm itemization (purga/brim/suporte/refugo) is deferred (candidate E2). **Change-likelihood:
-  LOW.**
-- **R-2 — Failure / finishing pre-fill.** This spec sets both to "optional, default 0" (approachable,
-  consistent with all other optional cost inputs). Confirm the owner does not want a suggested non-zero failure
-  starting value (e.g. 5%). **Change-likelihood: LOW.**
-- **R-3 — Marketplace fee delta line.** Beyond `preço para anunciar` and `recebido líquido`, should the
-  breakdown also surface the explicit fee amount deducted (anúncio − líquido) as its own transparency line?
-  **Change-likelihood: LOW.**
-- **R-4 — Exact `avgPowerKw` pre-fill.** Owner said "~0,12 kW"; this spec pins **0,12**. Confirm the exact
-  value (research range 0,10–0,15 kW). **Change-likelihood: LOW.**
+- **R-1 — Waste granularity → RESOLVED: single `desperdício (g)` field in v1.** Itemization
+  (purga/brim/suporte/refugo) deferred to E2. (Owner accepted the default.)
+- **R-2 — Failure / finishing pre-fill → RESOLVED: both "optional, default 0".** No suggested non-zero
+  failure starting value in v1. (Owner accepted the default.)
+- **R-3 — Marketplace fee delta line → RESOLVED: NOT added in v1.** The breakdown shows `preço para anunciar`
+  + `recebido líquido` (the confirmatory net-at-listed-price line); no separate deducted-fee line. (Owner
+  accepted the default.)
+- **R-4 — `avgPowerKw` pre-fill → RESOLVED: 0,12 kW** (research range 0,10–0,15). (Owner accepted the default.)
 
 ---
 
