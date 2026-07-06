@@ -2,6 +2,11 @@
 .tf-page-header {
   margin-bottom: var(--space-4);
 }
+/* Opt-in centred title (Calcular tab). Scoped modifier — other pages keep the
+   default leading-edge alignment. */
+.tf-page-header--center {
+  text-align: center;
+}
 .tf-page-header__title {
   margin: 0;
   font-size: var(--fs-lg);

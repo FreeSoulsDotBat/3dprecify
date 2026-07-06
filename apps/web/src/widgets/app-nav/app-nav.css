@@ -86,7 +86,7 @@
 /* ---- Desktop: side nav ---- */
 .tf-nav--sidebar {
   flex: 0 0 auto;
-  width: 240px;
+  width: var(--sidebar-w, 240px);
   background: var(--surface-card);
   border-right: 1px solid var(--border-subtle);
   padding: var(--space-4) var(--space-3);

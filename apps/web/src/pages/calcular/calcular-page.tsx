@@ -196,7 +196,7 @@ export function CalcularPage() {
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
-      <PageHeader title={t.title} />
+      <PageHeader title={t.title} className="tf-page-header--center" />
 
       {/* Top→bottom: (1) mandatory costs → (2) optional adjustments → (3) markup →
           (4) breakdown → (5) suggested prices. The user enters costs and sees how the
