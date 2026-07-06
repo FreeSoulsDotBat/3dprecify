@@ -102,13 +102,13 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 3 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T023 [P] [US3] SC-005 test: changing `avgPowerKw` p1→p2 scales only the energy line by p2/p1; no nameplate/duty input exists — `packages/pricing-core/src/index.test.ts`
-- [ ] T024 [P] [US3] SC-006 test: `falha == failurePct%*(material+energy+machine)` = R$ 2,15 for SC-001, NOT R$ 1,10 (material-only) — `packages/pricing-core/src/index.test.ts`
-- [ ] T025 [P] [US3] SC-007 test: `machineHourRate = machineValue/machineLifetimeHours + reserve` (4.000/2.000 = R$ 2,00/h → machine R$ 10,00); no separate maintenance/ROI/depreciation lines — `packages/pricing-core/src/index.test.ts`
+- [X] T023 [P] [US3] SC-005 test: changing `avgPowerKw` p1→p2 scales only the energy line by p2/p1; no nameplate/duty input exists — `packages/pricing-core/tests/computeCalculator.test.ts`
+- [X] T024 [P] [US3] SC-006 test: `falha == failurePct%*(material+energy+machine)` = R$ 2,15 for SC-001, NOT R$ 1,10 (material-only) — `packages/pricing-core/tests/computeCalculator.test.ts`
+- [X] T025 [P] [US3] SC-007 test: `machineHourRate = machineValue/machineLifetimeHours + reserve` (4.000/2.000 = R$ 2,00/h → machine R$ 10,00); no separate maintenance/ROI/depreciation lines — `packages/pricing-core/tests/computeCalculator.test.ts`
 
 ### Implementation for User Story 3
 
-- [ ] T026 [US3] Reconcile the US1 engine so T023–T025 pass (fix any line that regressed to a legacy shortcut); add code comments citing A16.2/A16.4/ADR-0009 at each corrected line in `packages/pricing-core/src/index.ts`
+- [X] T026 [US3] Reconcile the US1 engine so T023–T025 pass (fix any line that regressed to a legacy shortcut); add code comments citing A16.2/A16.4/ADR-0009 at each corrected line in `packages/pricing-core/src/index.ts`
 
 **Checkpoint**: the defect-fixes are locked by tests and cannot silently drift.
 

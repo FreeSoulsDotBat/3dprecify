@@ -123,19 +123,27 @@ export function computeCalculator(input: PriceInput): PriceResult {
   const material = new Decimal(input.costPerRoll)
     .dividedBy(new Decimal(input.rollWeightKg).times(1000))
     .times(new Decimal(input.printGrams).plus(wasteGrams)); // FR-024
+  // A16.2 (SC-005): energy = the effective average draw (avgPowerKw) × time × tariff.
+  // There is deliberately NO nameplate-power × duty-cycle path — the corrected model takes the
+  // real average kW directly, so only this line moves when avgPowerKw changes.
   const energy = new Decimal(input.printTimeHours)
     .times(input.avgPowerKw)
     .times(input.tariffPerKwh); // FR-025
+  // ADR-0009 A (SC-007): ONE coherent capital-recovery rate — straight-line amortization
+  // (machineValue / lifetimeHours) + a maintenance reserve/hour. No separate depreciation/ROI/
+  // maintenance lines that would triple-count the same wear.
   const machineHourRate = new Decimal(input.machineValue)
     .dividedBy(input.machineLifetimeHours)
-    .plus(maintenanceReservePerHour); // ADR-0009 A — one coherent capital recovery, no triple-count
+    .plus(maintenanceReservePerHour);
   const machine = machineHourRate.times(input.printTimeHours); // FR-026
 
   const materialR = toMoney(material);
   const energyR = toMoney(energy);
   const machineR = toMoney(machine);
 
-  // Failure over the (rounded) production inputs so the shown number = failure% of the shown 21,50 (SC-006).
+  // A16.4 (SC-006): a failed print wastes ALL production inputs, so failure is a % of
+  // material + energy + machine — never material alone. Taken over the (rounded) production
+  // subtotal so the shown falha = failure% of the shown subtotal (21,50 → 2,15 for SC-001).
   const producaoR = sumMoney([materialR, energyR, machineR]);
   const falhaR = toMoney(new Decimal(producaoR).times(failurePct).dividedBy(100)); // FR-027
 
