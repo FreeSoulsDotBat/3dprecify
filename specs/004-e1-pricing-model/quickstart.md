@@ -55,7 +55,7 @@ gross-up, no-bad-numbers guards, and **signed-out + offline** computation of ret
 
 ## Definition of done (for the increment)
 
-- [ ] SC-001..SC-012 all covered by `pricing-core` tests, written before the implementation.
-- [ ] `pnpm gate` green; `pricing-core` at `2.0.0`; TD-020 (`parseDecimal`) retired via per-field validation.
-- [ ] e2e calculator suite green (incl. free/offline + no-bad-numbers).
-- [ ] Owner homologates the rendered calculator (values match SC-001; breakdown transparent).
+- [X] SC-001..SC-012 all covered by `pricing-core` tests, written before the implementation.
+- [X] `pnpm gate` green; `pricing-core` at `2.0.0`; TD-020 (`parseDecimal`) retired via per-field validation.
+- [X] e2e calculator suite green (incl. free/offline + no-bad-numbers) — 66/66.
+- [~] Owner homologates the rendered calculator: **MVP (US1+US2) homologated 2026-07-05**; US4/US5 (T031/T036) pending.

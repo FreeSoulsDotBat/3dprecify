@@ -280,3 +280,24 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
     finishing/labor/admin are NOT in the failure base).
   - **Consequence:** E1 open questions closed; `spec.md` being finalized from `scope-draft.md`; ADR-0008/0009
     Accepted. Ready for `/speckit-plan` once the spec lands.
+
+### E1 BUILT (2026-07-06 — US1–US6 + polish, `feature/004-e1-pricing-model`)
+
+The frozen scope above is implemented and green — owner-authorized commits on
+`feature/004-e1-pricing-model` (NOT yet merged to `develop`; owner authorizes the PR).
+- **Engine** (`packages/pricing-core` 2.0.0): `computeCalculator` — material+explicit waste,
+  effective-draw energy (A16.2, no nameplate×duty), single machine-hour recovery (ADR-0009 A),
+  failure over material+energy+machine (A16.4), finishing time×rate, optional labor+admin folded
+  into `custo_total`, markup over the rounded `custo_total` (WYSIWYG, ADR-0008), single-channel
+  marketplace gross-up `(base+fixa)/(1−pct)` netting back on BOTH varejo+atacado. Money via
+  `decimal.js-light`, 2dp HALF_UP, aggregates = sum of rounded lines.
+- **UI** (`apps/web` calculator): mandatory + optional-core inputs, transparent per-line breakdown,
+  both prices, labor/admin + marketplace sections, per-section ⓘ tooltips; pt-BR/BRL per-field
+  validation (**TD-020 retired**). No `imposto` field (A24 / FR-021). Free + offline, no
+  persistence/paywall (US6).
+- **Verification:** SC-001 = custo_total 28,65 / varejo 42,98 / atacado 37,25; SC-003 marketplace
+  anúncio 59,98/52,81, líquido 42,98/37,25. `pnpm gate` green (100% pricing-core coverage);
+  `pnpm e2e` green (66). Full evidence: `specs/004-e1-pricing-model/dod-evidence.md`.
+- **Homologation:** US1+US2 (MVP) owner-homologated 2026-07-05 + the 8-item UI remediation +
+  title/logo centring. US4 (labor/admin) + US5 (marketplace) visual homologation (T031/T036)
+  pending owner sign-off, then the develop PR (owner-authorized).
