@@ -176,8 +176,8 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ## Phase 9: Polish & Cross-Cutting Concerns
 
-- [ ] T039 [P] Determinism test (SC-012): identical `PriceInput` → byte-identical `PriceResult` across runs/locales, in `packages/pricing-core/src/index.test.ts`
-- [ ] T040 [P] Single-source + version-stamp test (SC-011): no server round-trip for any price; `result.modelVersion === "2.0.0"`, in `packages/pricing-core/src/index.test.ts`
+- [X] T039 [P] Determinism test (SC-012): identical `PriceInput` → byte-identical `PriceResult` across runs/locales, in `packages/pricing-core/tests/determinism.test.ts`
+- [X] T040 [P] Single-source + version-stamp test (SC-011): no server round-trip for any price; `result.modelVersion === "2.0.0"`, in `packages/pricing-core/tests/determinism.test.ts`
 - [ ] T041 [P] Extend `apps/web/tests/e2e/calculator.spec.ts`: full-model happy path, SC-008 bad-number validation messages rendered, **assert no `imposto`/tax field is present (FR-021, analyze A1)**, and no horizontal scroll at 390 px (inherits 003 FR-010)
 - [ ] T042 Retire TD-020 in `docs/tech-debt.md` (per-field validation now replaces the `parseDecimal` coercion) and note the `pricing-core` 2.0.0 bump
 - [ ] T043 Run quickstart.md validation (`pnpm --filter @3dprecify/pricing-core test` · `pnpm gate` · `pnpm e2e`); record results in `specs/004-e1-pricing-model/dod-evidence.md`
