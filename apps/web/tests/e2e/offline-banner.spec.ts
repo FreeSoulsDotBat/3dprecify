@@ -33,13 +33,13 @@ test("offline shows the status banner within 1s and online hides it (SS-1)", asy
 test("Calcular keeps computing while offline (SS-1)", async ({ page, context }) => {
   await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
-  // Canonical seed (R$100 / 1kg / 20g / 50%): material R$ 2,00.
-  await expect(page.getByText("R$ 2,00")).toBeVisible();
+  // E1 seed (R$100 / 1kg / 100g, 5h · 0,12kW · tarifa 1 · máquina 4000/2000h): custo_total R$ 20,60.
+  await expect(page.getByText("R$ 20,60")).toBeVisible();
 
   await context.setOffline(true);
   await expect(offlineBanner(page)).toBeVisible({ timeout: 1000 });
 
-  // Change grams 20 → 40; the material cost recomputes to R$ 4,00 with no network.
+  // Set gramas → 40; the material line recomputes to R$ 4,00 (100/1000 × 40) with no network.
   await page.getByLabel(messages.calculator.fields.grams).fill("40");
   await expect(page.getByText("R$ 4,00")).toBeVisible();
 

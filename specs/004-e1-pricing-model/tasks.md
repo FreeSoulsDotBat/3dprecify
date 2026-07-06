@@ -164,11 +164,11 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 6 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T037 [US6] e2e (SC-009): signed-out + offline full compute + breakdown; assert NO save/export/history affordance and NO paywall, in `apps/web/tests/e2e/calculator.spec.ts`
+- [X] T037 [US6] e2e (SC-009): signed-out + offline full compute + breakdown; assert NO save/export/history affordance and NO paywall, in `apps/web/tests/e2e/calculator.spec.ts`
 
 ### Implementation for User Story 6
 
-- [ ] T038 [US6] Confirm `apps/web/src/pages/calcular/calcular-page.tsx` presents no persistence/premium affordance (assert absence; inherits 003 public `/calcular`) — FR-035
+- [X] T038 [US6] Confirm `apps/web/src/pages/calcular/calcular-page.tsx` presents no persistence/premium affordance (assert absence; inherits 003 public `/calcular`) — FR-035
 
 **Checkpoint**: the freemium boundary is encoded onto E1.
 
@@ -178,7 +178,7 @@ description: "Task list — E1 full corrected pricing calculator"
 
 - [X] T039 [P] Determinism test (SC-012): identical `PriceInput` → byte-identical `PriceResult` across runs/locales, in `packages/pricing-core/tests/determinism.test.ts`
 - [X] T040 [P] Single-source + version-stamp test (SC-011): no server round-trip for any price; `result.modelVersion === "2.0.0"`, in `packages/pricing-core/tests/determinism.test.ts`
-- [ ] T041 [P] Extend `apps/web/tests/e2e/calculator.spec.ts`: full-model happy path, SC-008 bad-number validation messages rendered, **assert no `imposto`/tax field is present (FR-021, analyze A1)**, and no horizontal scroll at 390 px (inherits 003 FR-010)
+- [X] T041 [P] Extend `apps/web/tests/e2e/calculator.spec.ts`: full-model happy path, SC-008 bad-number validation messages rendered, **assert no `imposto`/tax field is present (FR-021, analyze A1)**, and no horizontal scroll at 390 px (inherits 003 FR-010) — also fixed the `getByLabel("Markup")` ambiguity (a11y-overflow) + stale seed/sign-in-logo e2e
 - [ ] T042 Retire TD-020 in `docs/tech-debt.md` (per-field validation now replaces the `parseDecimal` coercion) and note the `pricing-core` 2.0.0 bump
 - [ ] T043 Run quickstart.md validation (`pnpm --filter @3dprecify/pricing-core test` · `pnpm gate` · `pnpm e2e`); record results in `specs/004-e1-pricing-model/dod-evidence.md`
 - [ ] T044 Update `docs/product/business-rules.md` roadmap (E1 status → built) and the decision log (`audit-findings-r2.md` §5) with the E1-built entry

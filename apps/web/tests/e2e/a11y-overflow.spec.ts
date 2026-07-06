@@ -65,7 +65,9 @@ test.describe("no horizontal overflow at 390px — public surfaces", () => {
       await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
       await page.getByLabel(messages.calculator.fields.costPerRoll).fill("999999999999999,99");
       await page.getByLabel(messages.calculator.fields.grams).fill("999999999999999");
-      await page.getByLabel(messages.calculator.fields.markup).fill("999999999");
+      // markupVarejo (not the ambiguous "Markup" substring, which now matches both
+      // "Markup varejo" and "Markup atacado" — E1 split the single markup into two).
+      await page.getByLabel(messages.calculator.fields.markupVarejo).fill("999999999");
       await setTheme(page, theme);
       const { scrollWidth, clientWidth } = await overflow(page);
       expect(scrollWidth - clientWidth, `/calcular giant ${theme}`).toBeLessThanOrEqual(1);
