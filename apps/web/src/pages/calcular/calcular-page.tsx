@@ -7,7 +7,9 @@ import {
   type CalcFormValues,
   calculatorResolver,
   defaultCalcValues,
+  LABOR_FIELDS,
   MANDATORY_FIELDS,
+  MARKETPLACE_FIELDS,
   MARKUP_FIELDS,
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
@@ -16,12 +18,13 @@ import type { PriceResult } from "@3dprecify/pricing-core";
 import { Alert, BreakdownRow, Card, Field, InfoTip, NumberField, PriceHero } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// E1 calculator screen (US1 + US2). RHF (form state) + Zod (calculatorResolver) own the pt-BR
-// inputs; the price + breakdown come from one synchronous computeFromForm pass over the
+// E1 calculator screen (US1 + US2 + US4 + US5). RHF (form state) + Zod (calculatorResolver) own
+// the pt-BR inputs; the price + breakdown come from one synchronous computeFromForm pass over the
 // canonical pricing-core engine (recompute on every change, deterministic, offline — FR-036/
 // FR-039). US1 = a correct retail + wholesale price (PriceHero); US2 = the transparent per-line
-// breakdown that visibly sums to custo_total + the markup derivation (BreakdownRow). labor/admin
-// (US4) and marketplace (US5) are intentionally NOT surfaced yet. No persistence / paywall (US6).
+// breakdown that visibly sums to custo_total + the markup derivation (BreakdownRow); US4 = the
+// optional labor + admin costs that fold into custo_total; US5 = the marketplace fee gross-up
+// (channel prices shown only once a fee is set — FR-033). No persistence / paywall (US6).
 
 const t = messages.calculator;
 
@@ -119,6 +122,16 @@ function PriceResults({ result, values }: { result: PriceResult; values: CalcFor
             value={result.finishing}
             emphasis={line(result.finishing, true)}
           />
+          <BreakdownRow
+            label={t.results.labor}
+            value={result.labor}
+            emphasis={line(result.labor, true)}
+          />
+          <BreakdownRow
+            label={t.results.admin}
+            value={result.admin}
+            emphasis={line(result.admin, true)}
+          />
           <BreakdownRow label={t.results.custoTotal} value={result.custoTotal} emphasis="total" />
           {/* How each sale price derives from custo_total via markup (FR-033). */}
           <BreakdownRow
@@ -184,6 +197,48 @@ function FieldGroup({
   );
 }
 
+/**
+ * US5 marketplace gross-up. The fee inputs are always visible (default 0 → no channel); the
+ * channel prices appear ONLY once a fee is set (`result.marketplace` non-null — FR-033). For
+ * each channel we show the price to advertise (so the base price nets out after commission +
+ * fixed fee) and what actually lands after those deductions.
+ */
+function MarketplaceSection({
+  control,
+  result,
+}: {
+  control: Control<CalcFormValues>;
+  result: PriceResult | null;
+}) {
+  const marketplace = result?.marketplace ?? null;
+  return (
+    <div className="flex flex-col gap-2">
+      <FieldGroup
+        control={control}
+        title={t.sections.marketplace}
+        info={t.sectionInfo.marketplace}
+        fields={MARKETPLACE_FIELDS}
+      />
+      {marketplace && (
+        <Card padding="md">
+          <p style={sectionLabel}>{t.captions.varejo}</p>
+          <BreakdownRow label={t.results.precoAnuncio} value={marketplace.precoAnuncioVarejo} />
+          <BreakdownRow
+            label={t.results.recebidoLiquido}
+            value={marketplace.recebidoLiquidoVarejo}
+          />
+          <p style={{ ...sectionLabel, marginTop: "var(--space-2)" }}>{t.captions.atacado}</p>
+          <BreakdownRow label={t.results.precoAnuncio} value={marketplace.precoAnuncioAtacado} />
+          <BreakdownRow
+            label={t.results.recebidoLiquido}
+            value={marketplace.recebidoLiquidoAtacado}
+          />
+        </Card>
+      )}
+    </div>
+  );
+}
+
 export function CalcularPage() {
   const { control, watch } = useForm<CalcFormValues>({
     defaultValues: defaultCalcValues,
@@ -216,6 +271,12 @@ export function CalcularPage() {
       />
       <FieldGroup
         control={control}
+        title={t.sections.labor}
+        info={t.sectionInfo.labor}
+        fields={LABOR_FIELDS}
+      />
+      <FieldGroup
+        control={control}
         title={t.sections.markup}
         info={t.sectionInfo.markup}
         fields={MARKUP_FIELDS}
@@ -226,6 +287,10 @@ export function CalcularPage() {
       ) : (
         <Alert tone="danger">{t.invalidNote}</Alert>
       )}
+
+      {/* (6) Marketplace — the fee inputs live at the bottom (default 0 → no channel); the
+          per-channel gross-up appears only once a fee is set (US5 / FR-033). */}
+      <MarketplaceSection control={control} result={result} />
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>

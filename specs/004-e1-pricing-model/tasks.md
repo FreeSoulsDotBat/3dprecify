@@ -122,13 +122,13 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 4 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T027 [P] [US4] SC-004 test: labor+admin at 0 ≡ mandatory-only; `laborHours 2 × laborRatePerHour 25` → custoTotal +R$ 50,00 (→ 78,65), only labor line changes — `packages/pricing-core/src/index.test.ts`
+- [X] T027 [P] [US4] SC-004 test: labor+admin at 0 ≡ mandatory-only; `laborHours 2 × laborRatePerHour 25` → custoTotal +R$ 50,00, only labor line changes — `packages/pricing-core/tests/computeCalculator.test.ts`
 
 ### Implementation for User Story 4
 
-- [ ] T028 [US4] Implement `labor = laborHours*laborRatePerHour` and `admin = adminTotal` folded into `custoTotal` (outside the failure base) in `packages/pricing-core/src/index.ts` — FR-029 (T027 passes)
-- [ ] T029 [US4] Add optional labor/admin fields (FR-014/015/016, default 0) to `apps/web/src/features/calculator/calculator-schema.ts`
-- [ ] T030 [US4] Render optional labor/admin inputs + their breakdown lines in `apps/web/src/pages/calcular/calcular-page.tsx` (de-emphasized at 0)
+- [X] T028 [US4] Implement `labor = laborHours*laborRatePerHour` and `admin = adminTotal` folded into `custoTotal` (outside the failure base) in `packages/pricing-core/src/index.ts` — FR-029 (T027 passes)
+- [X] T029 [US4] Add optional labor/admin fields (FR-014/015/016, default 0) to `apps/web/src/features/calculator/calculator-schema.ts`
+- [X] T030 [US4] Render optional labor/admin inputs + their breakdown lines in `apps/web/src/pages/calcular/calcular-page.tsx` (de-emphasized at 0)
 - [ ] T031 [US4] Visual test — QA homologates: untouched → price unchanged; entered → folds into total and both prices
 
 **Checkpoint**: a serious seller can reach true `custo_total`.
@@ -148,8 +148,8 @@ description: "Task list — E1 full corrected pricing calculator"
 ### Implementation for User Story 5
 
 - [X] T033 [US5] Implement the marketplace block in `computeCalculator` (`packages/pricing-core/src/index.ts`): for each of precoVarejo/precoAtacado compute `precoAnuncio` + `recebidoLiquido`; return `MarketplaceResult | null` — FR-031 (T032 passes)
-- [ ] T034 [US5] Add optional `marketplaceCommissionPct`/`marketplaceFixedFee` fields (FR-019/020, default 0, commission in [0,100)) to `apps/web/src/features/calculator/calculator-schema.ts`
-- [ ] T035 [US5] Render marketplace inputs + `preço para anunciar` and `recebido líquido` for both prices in `apps/web/src/pages/calcular/calcular-page.tsx`; hide when both fees 0 — FR-033
+- [X] T034 [US5] Add optional `marketplaceCommissionPct`/`marketplaceFixedFee` fields (FR-019/020, default 0, commission in [0,100)) to `apps/web/src/features/calculator/calculator-schema.ts`
+- [X] T035 [US5] Render marketplace inputs + `preço para anunciar` and `recebido líquido` for both prices in `apps/web/src/pages/calcular/calcular-page.tsx`; hide when both fees 0 — FR-033
 - [ ] T036 [US5] Visual test — QA homologates: both prices grossed up, net lines correct, marketplace lines appear/disappear with the fee inputs
 
 **Checkpoint**: the seller sees the price to list on ML/Shopee and what actually lands.

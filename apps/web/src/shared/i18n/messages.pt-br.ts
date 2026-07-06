@@ -38,8 +38,13 @@ export const messages = {
       failure: "Taxa de falha",
       finishTime: "Tempo de acabamento",
       finishRate: "Valor do acabamento",
+      laborHours: "Mão de obra (horas)",
+      laborRate: "Valor da hora",
+      adminTotal: "Outros custos",
       markupVarejo: "Markup varejo",
       markupAtacado: "Markup atacado",
+      marketplaceCommission: "Comissão do canal",
+      marketplaceFixedFee: "Taxa fixa",
     },
     // avgPower tooltip is a mandated clarification (FR-022): the real average draw, not
     // the nameplate power printed on the machine.
@@ -51,8 +56,10 @@ export const messages = {
       inputs: "Custos da peça",
       optional: "Ajustes opcionais",
       optionalHint: "Comece em 0 — preencha só o que se aplica ao seu caso.",
+      labor: "Mão de obra e custos",
       markup: "Markup",
       breakdown: "Como chegamos no preço",
+      marketplace: "Marketplace",
     },
     // Section info tooltips (E1 homologation item 8): honest, derived from the spec
     // formulas — never copied from the third-party Amado3D sheet. `label` names the ⓘ
@@ -66,6 +73,10 @@ export const messages = {
         label: "Sobre os ajustes opcionais",
         body: "Custos que somam ao total quando preenchidos (0 = ignorado). Falha = % aplicada sobre material + energia + máquina (um print que falha desperdiça os três). Acabamento = tempo × valor por hora. Desperdício = gramas extras (purga/suporte/refugo). Reserva de manutenção = reais por hora de desgaste.",
       },
+      labor: {
+        label: "Sobre mão de obra e custos",
+        body: "Custos opcionais que somam ao total. Mão de obra = horas × valor da hora. Outros custos = um valor fixo (embalagem, taxas, overhead) somado ao custo total.",
+      },
       markup: {
         label: "Sobre o markup",
         body: "A margem sobre o custo total. Preço = custo total × (1 + markup%). Varejo e atacado aplicam markups diferentes sobre o mesmo custo.",
@@ -73,6 +84,10 @@ export const messages = {
       breakdown: {
         label: "Sobre o cálculo do preço",
         body: "Cada linha em reais soma exatamente ao custo total; os preços vêm do custo total × markup.",
+      },
+      marketplace: {
+        label: "Sobre o marketplace",
+        body: "Calcula o preço para anunciar em um marketplace de modo que, após a comissão e a taxa fixa, você receba o preço-base. Anúncio = (preço + taxa fixa) ÷ (1 − comissão%). Recebido líquido = o que sobra após a comissão sobre o anúncio e a taxa fixa.",
       },
     },
     // rollWeightError is the field-specific "> 0" message reused by the schema for the
@@ -83,6 +98,7 @@ export const messages = {
       negative: "Não pode ser negativo.",
       required: "Campo obrigatório.",
       machineLifetimePositive: "A vida útil deve ser maior que zero.",
+      commissionMax: "A comissão deve ser menor que 100%.",
     },
     results: {
       material: "Material",
@@ -90,9 +106,13 @@ export const messages = {
       machine: "Máquina",
       failure: "Falha / perdas",
       finishing: "Acabamento",
+      labor: "Mão de obra",
+      admin: "Outros custos",
       custoTotal: "Custo total",
       varejo: "Preço varejo",
       atacado: "Preço atacado",
+      precoAnuncio: "Preço para anunciar",
+      recebidoLiquido: "Recebido líquido",
     },
     captions: {
       varejo: "Varejo",

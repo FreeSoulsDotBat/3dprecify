@@ -104,3 +104,51 @@ describe("CalcularPage — US2 transparency + validation", () => {
     expect(screen.getByText(t.invalidNote)).toBeInTheDocument();
   });
 });
+
+// US4 (optional labor + admin folded into custo_total) + US5 (marketplace fee gross-up). The
+// labor section sits between the optional adjustments and markup; the marketplace section is the
+// last block on the screen. Both default to 0 → the seed price is unchanged and no channel exists.
+describe("CalcularPage — US4 labor/admin + US5 marketplace", () => {
+  it("renders the labor + admin breakdown rows (US4)", () => {
+    render(<CalcularPage />);
+
+    // "Mão de obra" is unique; "Outros custos" is shared with the adminTotal field label, so it
+    // legitimately appears more than once (the field input + the breakdown row).
+    expect(screen.getByText(t.results.labor)).toBeInTheDocument();
+    expect(screen.getAllByText(t.results.admin).length).toBeGreaterThan(0);
+  });
+
+  it("shows an ⓘ info tip on the labor + marketplace section titles", () => {
+    render(<CalcularPage />);
+
+    expect(screen.getByRole("button", { name: t.sectionInfo.labor.label })).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: t.sectionInfo.marketplace.label }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows the marketplace fee inputs but NO channel rows by default (FR-033)", () => {
+    render(<CalcularPage />);
+
+    // The fee inputs are always visible (the accessible name carries the DS "opcional" badge).
+    expect(
+      screen.getByRole("textbox", { name: new RegExp(t.fields.marketplaceCommission) }),
+    ).toBeInTheDocument();
+    // …but with both fees at 0 there is no channel, so no anúncio/líquido rows.
+    expect(screen.queryByText(t.results.precoAnuncio)).toBeNull();
+    expect(screen.queryByText(t.results.recebidoLiquido)).toBeNull();
+  });
+
+  it("reveals the per-channel gross-up once a commission is set (US5 / FR-033)", async () => {
+    render(<CalcularPage />);
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: new RegExp(t.fields.marketplaceCommission) }),
+      { target: { value: "20" } },
+    );
+
+    // Both channels (varejo + atacado) surface the price-to-advertise + net-received rows.
+    expect((await screen.findAllByText(t.results.precoAnuncio)).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
+  });
+});

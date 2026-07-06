@@ -8,7 +8,8 @@ import { computeFromForm, formatBRL } from "./calculator-model";
 // @3dprecify/pricing-core tests; here we only pin that the adapter wires it correctly and
 // that bad input surfaces a per-field message instead of silently coercing to 0 (TD-020).
 
-/** The SC-001 canonical vector as pt-BR form strings (MVP fields only; marketplace = US5). */
+/** The SC-001 canonical vector as pt-BR form strings. labor/admin (US4) and the marketplace
+ *  fees (US5) start at 0 so this vector still maps onto the documented MVP breakdown + prices. */
 const canonical: CalcFormValues = {
   costPerRoll: "100,00",
   rollWeightKg: "1",
@@ -23,8 +24,13 @@ const canonical: CalcFormValues = {
   failurePct: "10",
   finishTimeHours: "0,5",
   finishRatePerHour: "10,00",
+  laborHours: "0",
+  laborRatePerHour: "0",
+  adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
+  marketplaceCommissionPct: "0",
+  marketplaceFixedFee: "0",
 };
 
 describe("computeFromForm — canonical vector flows through the engine (SC-001)", () => {

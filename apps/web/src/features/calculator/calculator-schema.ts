@@ -4,16 +4,18 @@ import { z } from "zod";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 
-// RHF + Zod schema for the E1 MVP calculator form (US1 + US2). It parses the raw pt-BR/BRL
-// form strings into the numbers `pricing-core` expects and rejects bad input with a per-field
-// pt-BR message — the fix TD-020 asked for (never silently coerce a bad string to 0). The
-// MVP surfaces the mandatory inputs (FR-001..003,005..009,017,018) plus the optional-core
-// ones (FR-004,010..013). labor/admin (US4) and marketplace (US5) are NOT surfaced yet; the
-// engine accepts them as optional and defaults them to 0/null.
+// RHF + Zod schema for the E1 calculator form. It parses the raw pt-BR/BRL form strings into
+// the numbers `pricing-core` expects and rejects bad input with a per-field pt-BR message —
+// the fix TD-020 asked for (never silently coerce a bad string to 0). It surfaces the mandatory
+// inputs (FR-001..003,005..009,017,018), the optional-core ones (FR-004,010..013), the US4
+// labor + admin costs (laborHours/laborRatePerHour/adminTotal — optional, default 0) and the
+// US5 marketplace fees (marketplaceCommissionPct/marketplaceFixedFee — optional, default 0;
+// the commission is bounded < 100% here so the user gets a pt-BR message before the engine
+// throws). All optionals default to 0/null in the engine.
 
 const t = messages.calculator;
 
-/** The 15 MVP fields — names mirror `pricing-core`'s `PriceInput` so a thrown
+/** The 20 calculator fields — names mirror `pricing-core`'s `PriceInput` so a thrown
  *  `ValidationError.field` maps straight back to a form field. */
 export const CALC_FIELD_NAMES = [
   "costPerRoll",
@@ -29,8 +31,13 @@ export const CALC_FIELD_NAMES = [
   "failurePct",
   "finishTimeHours",
   "finishRatePerHour",
+  "laborHours",
+  "laborRatePerHour",
+  "adminTotal",
   "markupVarejoPct",
   "markupAtacadoPct",
+  "marketplaceCommissionPct",
+  "marketplaceFixedFee",
 ] as const;
 
 export type CalcFieldName = (typeof CALC_FIELD_NAMES)[number];
@@ -46,6 +53,10 @@ interface NumRule {
   positive?: boolean;
   /** Field-specific "> 0" message (defaults to the generic one). */
   positiveMessage?: string;
+  /** Exclusive upper bound (n must be strictly < this, e.g. marketplace commission < 100%). */
+  ltExclusive?: number;
+  /** Message shown when the exclusive upper bound is hit (defaults to the generic one). */
+  ltExclusiveMessage?: string;
 }
 
 /**
@@ -78,6 +89,10 @@ function numField(rule: NumRule) {
       ctx.addIssue({ code: "custom", message: t.validation.negative });
       return z.NEVER;
     }
+    if (rule.ltExclusive !== undefined && n >= rule.ltExclusive) {
+      ctx.addIssue({ code: "custom", message: rule.ltExclusiveMessage ?? t.validation.invalid });
+      return z.NEVER;
+    }
     return n;
   });
 }
@@ -101,8 +116,17 @@ export const calculatorSchema = z.object({
   failurePct: numField({ kind: "optional" }),
   finishTimeHours: numField({ kind: "optional" }),
   finishRatePerHour: numField({ kind: "optional" }),
+  laborHours: numField({ kind: "optional" }),
+  laborRatePerHour: numField({ kind: "optional" }),
+  adminTotal: numField({ kind: "optional" }),
   markupVarejoPct: numField({ kind: "prefilled" }),
   markupAtacadoPct: numField({ kind: "prefilled" }),
+  marketplaceCommissionPct: numField({
+    kind: "optional",
+    ltExclusive: 100,
+    ltExclusiveMessage: t.validation.commissionMax,
+  }),
+  marketplaceFixedFee: numField({ kind: "optional" }),
 });
 
 /** Validated numeric MVP input (a subset of `pricing-core`'s `PriceInput`). */
@@ -141,8 +165,13 @@ export const defaultCalcValues: CalcFormValues = {
   failurePct: "0",
   finishTimeHours: "0",
   finishRatePerHour: "0",
+  laborHours: "0",
+  laborRatePerHour: "0",
+  adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
+  marketplaceCommissionPct: "0",
+  marketplaceFixedFee: "0",
 };
 
 /** Render metadata (label, unit, requiredness) so the page maps fields → DS controls. */
@@ -205,4 +234,33 @@ export const MARKUP_FIELDS: readonly CalcFieldMeta[] = [
     required: true,
   },
   { name: "markupAtacadoPct", label: t.fields.markupAtacado, unit: "%", required: true },
+] as const;
+
+// US4: optional labor + admin costs that sum into custo_total (default 0 → no effect).
+export const LABOR_FIELDS: readonly CalcFieldMeta[] = [
+  { name: "laborHours", label: t.fields.laborHours, unit: "h", required: false },
+  {
+    name: "laborRatePerHour",
+    label: t.fields.laborRate,
+    currency: true,
+    unit: "/h",
+    required: false,
+  },
+  { name: "adminTotal", label: t.fields.adminTotal, currency: true, required: false },
+] as const;
+
+// US5: marketplace fees driving the gross-up. Both default 0 → no channel (result.marketplace null).
+export const MARKETPLACE_FIELDS: readonly CalcFieldMeta[] = [
+  {
+    name: "marketplaceCommissionPct",
+    label: t.fields.marketplaceCommission,
+    unit: "%",
+    required: false,
+  },
+  {
+    name: "marketplaceFixedFee",
+    label: t.fields.marketplaceFixedFee,
+    currency: true,
+    required: false,
+  },
 ] as const;
