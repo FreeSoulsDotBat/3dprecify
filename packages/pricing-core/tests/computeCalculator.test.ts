@@ -3,8 +3,8 @@ import { describe, it, expect } from "vitest";
 import { computeCalculator, ValidationError, PRICING_MODEL_VERSION } from "../src/index";
 import type { PriceInput } from "../src/index";
 
-// Canonical SC-001 vector (spec §3). Marketplace inputs are present but the MVP engine leaves the
-// marketplace block null — the gross-up is E1 US5.
+// Canonical SC-001 vector (spec §3). The marketplace inputs (commission 20%, fixed fee 5) drive
+// the US5 single-channel gross-up (see the marketplace describe block below).
 const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
@@ -52,10 +52,42 @@ describe("computeCalculator — canonical worked example (SC-001)", () => {
     expect(r.precoAtacado).toBe(37.25);
   });
 
-  it("stamps modelVersion 2.0.0; MVP leaves marketplace null", () => {
+  it("stamps modelVersion 2.0.0 (= PRICING_MODEL_VERSION)", () => {
     expect(r.modelVersion).toBe("2.0.0");
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
+  });
+});
+
+describe("computeCalculator — marketplace gross-up (US5, SC-003)", () => {
+  it("grosses up BOTH prices so the seller nets the base after commission + fee (SC-003)", () => {
+    const r = computeCalculator(SC001); // commission 20%, fixed fee 5
+    expect(r.marketplace).not.toBeNull();
+    const m = r.marketplace!;
+    // anúncio = (base + fixedFee) / (1 − commission/100)
+    expect(m.precoAnuncioVarejo).toBe(59.98); // (42,98 + 5) / 0,8
+    expect(m.precoAnuncioAtacado).toBe(52.81); // (37,25 + 5) / 0,8
+    // recebido líquido nets back to the base price (round-trip)
+    expect(m.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 42,98
+    expect(m.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 37,25
+  });
+
+  it("both fees 0 ⇒ no marketplace block (null) — no channel configured", () => {
+    const r = computeCalculator({ ...SC001, marketplaceCommissionPct: 0, marketplaceFixedFee: 0 });
     expect(r.marketplace).toBeNull();
+  });
+
+  it("a fixed fee with 0 commission still yields a block (fee-only channel)", () => {
+    const r = computeCalculator({ ...SC001, marketplaceCommissionPct: 0, marketplaceFixedFee: 2 });
+    expect(r.marketplace).not.toBeNull();
+    // commission 0 ⇒ anúncio = base + fee; líquido nets exactly back to base
+    expect(r.marketplace!.precoAnuncioVarejo).toBe(Number((r.precoVarejo + 2).toFixed(2)));
+    expect(r.marketplace!.recebidoLiquidoVarejo).toBe(r.precoVarejo);
+  });
+
+  it("commission = 100 throws (gross-up denominator would be 0)", () => {
+    expect(() => computeCalculator({ ...SC001, marketplaceCommissionPct: 100 })).toThrow(
+      ValidationError,
+    );
   });
 });
 

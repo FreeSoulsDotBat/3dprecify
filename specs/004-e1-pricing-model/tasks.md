@@ -143,11 +143,11 @@ description: "Task list — E1 full corrected pricing calculator"
 
 ### Tests for User Story 5 (write FIRST, observe FAILING) ⚠️
 
-- [ ] T032 [P] [US5] SC-003 test: gross-up + net round-trip for varejo AND atacado (SC-001 → anúncio 59,98/52,81, líquido 42,98/37,25); commission=100 → `ValidationError`; both fees 0 → `marketplace === null` — `packages/pricing-core/src/index.test.ts`
+- [X] T032 [P] [US5] SC-003 test: gross-up + net round-trip for varejo AND atacado (SC-001 → anúncio 59,98/52,81, líquido 42,98/37,25); commission=100 → `ValidationError`; both fees 0 → `marketplace === null` — `packages/pricing-core/tests/computeCalculator.test.ts`
 
 ### Implementation for User Story 5
 
-- [ ] T033 [US5] Implement the marketplace block in `computeCalculator` (`packages/pricing-core/src/index.ts`): for each of precoVarejo/precoAtacado compute `precoAnuncio` + `recebidoLiquido`; return `MarketplaceResult | null` — FR-031 (T032 passes)
+- [X] T033 [US5] Implement the marketplace block in `computeCalculator` (`packages/pricing-core/src/index.ts`): for each of precoVarejo/precoAtacado compute `precoAnuncio` + `recebidoLiquido`; return `MarketplaceResult | null` — FR-031 (T032 passes)
 - [ ] T034 [US5] Add optional `marketplaceCommissionPct`/`marketplaceFixedFee` fields (FR-019/020, default 0, commission in [0,100)) to `apps/web/src/features/calculator/calculator-schema.ts`
 - [ ] T035 [US5] Render marketplace inputs + `preço para anunciar` and `recebido líquido` for both prices in `apps/web/src/pages/calcular/calcular-page.tsx`; hide when both fees 0 — FR-033
 - [ ] T036 [US5] Visual test — QA homologates: both prices grossed up, net lines correct, marketplace lines appear/disappear with the fee inputs

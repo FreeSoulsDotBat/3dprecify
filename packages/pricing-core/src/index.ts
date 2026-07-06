@@ -162,6 +162,19 @@ export function computeCalculator(input: PriceInput): PriceResult {
     new Decimal(custoTotal).times(percentMultiplier(input.markupAtacadoPct)),
   );
 
+  // US5: basic single-channel marketplace gross-up over BOTH suggested prices (FR-031). No
+  // channel configured (commission AND fixed fee both 0) ⇒ no block, so the calculator stays
+  // clean for direct sellers.
+  const marketplace =
+    marketplaceCommissionPct === 0 && marketplaceFixedFee === 0
+      ? null
+      : marketplaceGrossUp(
+          precoVarejo,
+          precoAtacado,
+          marketplaceCommissionPct,
+          marketplaceFixedFee,
+        );
+
   return {
     material: materialR,
     energy: energyR,
@@ -173,8 +186,38 @@ export function computeCalculator(input: PriceInput): PriceResult {
     custoTotal,
     precoVarejo,
     precoAtacado,
-    marketplace: null, // E1 US5 fills the basic single-channel gross-up; MVP leaves it null.
+    marketplace,
     modelVersion: PRICING_MODEL_VERSION,
+  };
+}
+
+/**
+ * Gross up each base price so that, after the channel takes `commissionPct` of the LISTED price
+ * plus a `fixedFee`, the seller still nets the base (FR-031). Derived over the displayed (rounded)
+ * base and displayed (rounded) list price — WYSIWYG, per ADR-0008:
+ *   anúncio  = (base + fixedFee) / (1 − commissionPct/100)
+ *   líquido  = anúncioRounded × (1 − commissionPct/100) − fixedFee   (nets back to base)
+ * The denominator is safe: commissionPct is validated to [0, 100), so `keep` ∈ (0, 1].
+ */
+function marketplaceGrossUp(
+  precoVarejo: number,
+  precoAtacado: number,
+  commissionPct: number,
+  fixedFee: number,
+): MarketplaceResult {
+  const keep = new Decimal(1).minus(new Decimal(commissionPct).dividedBy(100));
+  const listAndNet = (base: number): [anuncio: number, liquido: number] => {
+    const anuncioR = toMoney(new Decimal(base).plus(fixedFee).dividedBy(keep));
+    const liquidoR = toMoney(new Decimal(anuncioR).times(keep).minus(fixedFee));
+    return [anuncioR, liquidoR];
+  };
+  const [precoAnuncioVarejo, recebidoLiquidoVarejo] = listAndNet(precoVarejo);
+  const [precoAnuncioAtacado, recebidoLiquidoAtacado] = listAndNet(precoAtacado);
+  return {
+    precoAnuncioVarejo,
+    recebidoLiquidoVarejo,
+    precoAnuncioAtacado,
+    recebidoLiquidoAtacado,
   };
 }
 
