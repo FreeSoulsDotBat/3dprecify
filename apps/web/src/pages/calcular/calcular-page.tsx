@@ -13,7 +13,7 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import type { PriceResult } from "@3dprecify/pricing-core";
-import { Alert, BreakdownRow, Card, Field, NumberField, PriceHero } from "@/shared/ui";
+import { Alert, BreakdownRow, Card, Field, InfoTip, NumberField, PriceHero } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 // E1 calculator screen (US1 + US2). RHF (form state) + Zod (calculatorResolver) own the pt-BR
@@ -43,6 +43,16 @@ const captionText: CSSProperties = {
   fontSize: "var(--fs-caption)",
   color: "var(--text-muted)",
 };
+
+/** A section title with an inline ⓘ info tip explaining what/how the section calculates. */
+function SectionTitle({ title, info }: { title: string; info: { label: string; body: string } }) {
+  return (
+    <div className="flex items-center gap-1">
+      <p style={sectionLabel}>{title}</p>
+      <InfoTip label={info.label}>{info.body}</InfoTip>
+    </div>
+  );
+}
 
 /** One controlled numeric input wired to RHF + the DS Field/NumberField. */
 function ControlledField({
@@ -90,25 +100,11 @@ function PriceResults({ result, values }: { result: PriceResult; values: CalcFor
 
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
-        <PriceHero
-          label={t.results.varejo}
-          value={result.precoVarejo}
-          caption={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
-          tone="accent"
-          size="md"
-        />
-        <PriceHero
-          label={t.results.atacado}
-          value={result.precoAtacado}
-          caption={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
-          tone="energy"
-          size="md"
-        />
-      </div>
-
+      {/* (4) Transparent breakdown — every R$ line sums to custo_total, then the markup
+          derivation (SC-002). Shown BEFORE the suggested prices so the user sees how the
+          number is built before the takeaway. */}
       <div className="flex flex-col gap-2">
-        <p style={sectionLabel}>{t.sections.breakdown}</p>
+        <SectionTitle title={t.sections.breakdown} info={t.sectionInfo.breakdown} />
         <Card padding="md">
           <BreakdownRow label={t.results.material} value={result.material} color="var(--accent)" />
           <BreakdownRow label={t.results.energy} value={result.energy} color="var(--energy)" />
@@ -138,25 +134,46 @@ function PriceResults({ result, values }: { result: PriceResult; values: CalcFor
           />
         </Card>
       </div>
+
+      {/* (5) The suggested prices — the user's final takeaway, so they close the screen.
+          Both retail + wholesale are always shown together (SC-010). */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+        <PriceHero
+          label={t.results.varejo}
+          value={result.precoVarejo}
+          caption={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
+          tone="accent"
+          size="md"
+        />
+        <PriceHero
+          label={t.results.atacado}
+          value={result.precoAtacado}
+          caption={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
+          tone="energy"
+          size="md"
+        />
+      </div>
     </>
   );
 }
 
-/** A titled grid of controlled fields. */
+/** A titled grid of controlled fields, with an ⓘ info tip on the section title. */
 function FieldGroup({
   control,
   title,
+  info,
   hint,
   fields,
 }: {
   control: Control<CalcFormValues>;
   title: string;
+  info: { label: string; body: string };
   hint?: string;
   fields: readonly CalcFieldMeta[];
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <p style={sectionLabel}>{title}</p>
+      <SectionTitle title={title} info={info} />
       {hint && <p style={captionText}>{hint}</p>}
       <Card padding="md" style={gridCard}>
         {fields.map((meta) => (
@@ -181,20 +198,34 @@ export function CalcularPage() {
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} />
 
+      {/* Top→bottom: (1) mandatory costs → (2) optional adjustments → (3) markup →
+          (4) breakdown → (5) suggested prices. The user enters costs and sees how the
+          number is built before the final retail/wholesale takeaway closes the screen. */}
+      <FieldGroup
+        control={control}
+        title={t.sections.inputs}
+        info={t.sectionInfo.inputs}
+        fields={MANDATORY_FIELDS}
+      />
+      <FieldGroup
+        control={control}
+        title={t.sections.optional}
+        info={t.sectionInfo.optional}
+        hint={t.sections.optionalHint}
+        fields={OPTIONAL_FIELDS}
+      />
+      <FieldGroup
+        control={control}
+        title={t.sections.markup}
+        info={t.sectionInfo.markup}
+        fields={MARKUP_FIELDS}
+      />
+
       {result ? (
         <PriceResults result={result} values={values} />
       ) : (
         <Alert tone="danger">{t.invalidNote}</Alert>
       )}
-
-      <FieldGroup control={control} title={t.sections.inputs} fields={MANDATORY_FIELDS} />
-      <FieldGroup
-        control={control}
-        title={t.sections.optional}
-        hint={t.sections.optionalHint}
-        fields={OPTIONAL_FIELDS}
-      />
-      <FieldGroup control={control} title={t.sections.markup} fields={MARKUP_FIELDS} />
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>

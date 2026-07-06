@@ -9,9 +9,20 @@
   background: var(--surface-card);
   border-bottom: 1px solid var(--border-subtle);
 }
-.tf-topbar__logo {
-  height: 28px;
+/* The mark (mobile) sits comfortably in the 56px bar. The `.tf-topbar` selector adds
+   enough specificity to win over the DS `.tf-logo--full` / `.tf-logo--mark` heights. */
+.tf-topbar .tf-topbar__logo {
+  height: 32px;
   width: auto;
+  flex-shrink: 0;
+}
+/* Desktop: the full horizontal lockup was too small next to the side nav — size it up
+   proportionally (width stays auto, so the aspect ratio is preserved) so it reads
+   balanced with the sidebar. */
+.tf-shell[data-layout="desktop"] .tf-topbar .tf-topbar__logo {
+  height: 40px;
+}
+.tf-topbar__logo-spacer {
   flex-shrink: 0;
 }
 .tf-topbar__actions {

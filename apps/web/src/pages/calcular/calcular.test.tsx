@@ -12,6 +12,14 @@ afterEach(() => cleanup());
 
 const t = messages.calculator;
 
+/** Assert the given nodes appear in document order (each precedes the next). */
+function expectDomOrder(nodes: readonly HTMLElement[]) {
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const rel = nodes[i].compareDocumentPosition(nodes[i + 1]);
+    expect(rel & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+}
+
 // E1 MVP (US1 + US2). The default seed (100/1kg/100g, 5h, 0,12kW, tariff 1, machine 4000/2000h,
 // optionals 0) renders a coherent price with no user input: custo_total R$ 20,60, varejo
 // R$ 30,90, atacado R$ 26,78. The numeric formula is pinned in pricing-core + the model test;
@@ -30,6 +38,30 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
     expect(screen.getByText("R$ 20,60")).toBeInTheDocument(); // custo_total (unique)
     expect(screen.getByText("R$ 30,90")).toBeInTheDocument(); // varejo derivation
     expect(screen.getByText("R$ 26,78")).toBeInTheDocument(); // atacado derivation
+  });
+
+  it("orders the sections top→bottom: inputs → optional → markup → breakdown → prices (SC-010, item 1)", () => {
+    render(<CalcularPage />);
+
+    const inputs = screen.getByText(t.sections.inputs);
+    const optional = screen.getByText(t.sections.optional);
+    const markup = screen.getByText(t.sections.markup);
+    const breakdown = screen.getByText(t.sections.breakdown);
+    // "Preço varejo" appears in the breakdown derivation row AND the closing hero — the
+    // LAST occurrence is the hero, which must be the final price block on the screen.
+    const varejoNodes = screen.getAllByText(t.results.varejo);
+    const priceHero = varejoNodes[varejoNodes.length - 1];
+
+    expectDomOrder([inputs, optional, markup, breakdown, priceHero]);
+  });
+
+  it("shows an ⓘ info tip on each section title (item 8)", () => {
+    render(<CalcularPage />);
+
+    expect(screen.getByRole("button", { name: t.sectionInfo.inputs.label })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.sectionInfo.optional.label })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.sectionInfo.markup.label })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.sectionInfo.breakdown.label })).toBeInTheDocument();
   });
 
   it("presents the calculator title through a focusable page header", () => {

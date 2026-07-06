@@ -51,7 +51,7 @@ export function AppShell() {
       {/* slot: offline-banner (US4/T052) */}
       <OfflineBanner />
 
-      <TopBar />
+      <TopBar isMobile={isMobile} />
 
       <div className="tf-shell__body">
         {!isMobile && <AppNav variant="sidebar" />}

@@ -43,6 +43,9 @@ export type { AlertProps, AlertTone } from "./alert";
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
 
+export { InfoTip } from "./info-tip";
+export type { InfoTipProps } from "./info-tip";
+
 export { Toaster, toast, useToastStore } from "./toast";
 export type { ToastTone, ToastItem } from "./toast";
 

@@ -54,6 +54,27 @@ export const messages = {
       markup: "Markup",
       breakdown: "Como chegamos no preço",
     },
+    // Section info tooltips (E1 homologation item 8): honest, derived from the spec
+    // formulas — never copied from the third-party Amado3D sheet. `label` names the ⓘ
+    // trigger for assistive tech; `body` explains what/how each section calculates.
+    sectionInfo: {
+      inputs: {
+        label: "Sobre os custos da peça",
+        body: "O custo de produção da peça. Material = (custo do rolo ÷ peso do rolo) × (gramas usadas + desperdício). Energia = tempo de impressão × consumo médio × tarifa. Máquina = (valor da máquina ÷ vida útil em horas) × tempo de impressão.",
+      },
+      optional: {
+        label: "Sobre os ajustes opcionais",
+        body: "Custos que somam ao total quando preenchidos (0 = ignorado). Falha = % aplicada sobre material + energia + máquina (um print que falha desperdiça os três). Acabamento = tempo × valor por hora. Desperdício = gramas extras (purga/suporte/refugo). Reserva de manutenção = reais por hora de desgaste.",
+      },
+      markup: {
+        label: "Sobre o markup",
+        body: "A margem sobre o custo total. Preço = custo total × (1 + markup%). Varejo e atacado aplicam markups diferentes sobre o mesmo custo.",
+      },
+      breakdown: {
+        label: "Sobre o cálculo do preço",
+        body: "Cada linha em reais soma exatamente ao custo total; os preços vêm do custo total × markup.",
+      },
+    },
     // rollWeightError is the field-specific "> 0" message reused by the schema for the
     // roll weight (kept as its own key for the a11y e2e that asserts it verbatim).
     rollWeightError: "O peso do rolo deve ser maior que zero.",
