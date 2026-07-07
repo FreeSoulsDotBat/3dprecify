@@ -19,8 +19,26 @@
   font-weight: var(--fw-medium);
   border-radius: var(--radius-md);
 }
+/* Active section reads by COLOUR — purple text + icon (the Icon inherits via
+   currentColor) + a stronger weight — never a border box. The subtle lightened
+   background is added per-variant below. */
 .tf-nav__item[aria-current="page"] {
   color: var(--accent-text);
+  font-weight: var(--fw-semibold);
+}
+/* Keyboard focus: a subtle lightened surface, NOT the global a/button outline box
+   (which would repaint the reported "purple box" on a nav link). The nav is a
+   composite widget; its own indicator is the accent-soft wash. */
+.tf-nav__item:focus-visible {
+  outline: none;
+  box-shadow: none;
+  background: var(--accent-soft);
+}
+@media (forced-colors: active) {
+  .tf-nav__item:focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: -2px;
+  }
 }
 .tf-nav__label {
   white-space: nowrap;
@@ -68,7 +86,7 @@
 /* ---- Desktop: side nav ---- */
 .tf-nav--sidebar {
   flex: 0 0 auto;
-  width: 240px;
+  width: var(--sidebar-w, 240px);
   background: var(--surface-card);
   border-right: 1px solid var(--border-subtle);
   padding: var(--space-4) var(--space-3);

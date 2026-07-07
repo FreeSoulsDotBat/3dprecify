@@ -42,7 +42,7 @@ Walking skeleton (001) is pre-E1 (auth gate + minimal material+markup calc). The
 
 | Epic | Scope | Premium gate introduced |
 |------|-------|-------------------------|
-| **E1** | Full corrected pricing model (energy, machine/depreciation, failure, finishing, marketplace fees) | — (calc stays free) |
+| **E1** | Full corrected pricing model, clean-room (A15). **BUILT 2026-07-06** (US1–US6 + polish on `feature/004-e1-pricing-model`; pricing-core 2.0.0; gate + e2e green; MVP owner-homologated 2026-07-05). Scope **frozen 2026-07-05** (A16/A24/A25): material + explicit waste · energy (real duty cycle) · single machine-hour recovery (no triple-count) · failure over all inputs · finishing time×rate · **optional labor + admin** (default 0; markup base → `custo_total`) · **basic single-channel marketplace fee** (correct gross-up). **Taxes OUT of v1** (MEI DAS is a fixed monthly amount, not a per-unit %); multi-channel simulator stays E5. | — (calc stays free) |
 | **E2** | Catalog (filaments/printers/products) + persistence | **Entitlement scaffolding lands here** (binary premium flag — persistence gated entirely, no free quota), even though purchase comes at E6 |
 | **E3** | Multi-piece BOM | premium |
 | **E4** | History + reproducible snapshots + export | export = premium |

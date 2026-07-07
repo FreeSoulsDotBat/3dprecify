@@ -34,12 +34,15 @@ async function signUpThrowaway(page: Page, tag: string): Promise<void> {
   await page.waitForFunction(() => "__e2eAuth" in window);
   const email = `e2e-${tag}-${Date.now()}@e2e.local`;
   await page.evaluate(
-    async ({ em, pw }) => {
+    ({ em, pw }) => {
       const w = window as unknown as {
         __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
       };
       if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      await w.__e2eAuth.signUp(em, pw);
+      // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
+      // awaiting it here would let that navigation destroy this evaluate's execution context
+      // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
+      void w.__e2eAuth.signUp(em, pw);
     },
     { em: email, pw: "test-passw0rd" },
   );
@@ -65,7 +68,9 @@ test.describe("no horizontal overflow at 390px — public surfaces", () => {
       await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
       await page.getByLabel(messages.calculator.fields.costPerRoll).fill("999999999999999,99");
       await page.getByLabel(messages.calculator.fields.grams).fill("999999999999999");
-      await page.getByLabel(messages.calculator.fields.markup).fill("999999999");
+      // markupVarejo (not the ambiguous "Markup" substring, which now matches both
+      // "Markup varejo" and "Markup atacado" — E1 split the single markup into two).
+      await page.getByLabel(messages.calculator.fields.markupVarejo).fill("999999999");
       await setTheme(page, theme);
       const { scrollWidth, clientWidth } = await overflow(page);
       expect(scrollWidth - clientWidth, `/calcular giant ${theme}`).toBeLessThanOrEqual(1);

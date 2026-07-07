@@ -9,6 +9,9 @@ export type { FieldProps, FieldRenderProps } from "./field";
 export { NumberField, parseDecimal, formatDecimal } from "./number-field";
 export type { NumberFieldProps, NumberFieldSize } from "./number-field";
 
+export { Select } from "./select";
+export type { SelectProps, SelectOption } from "./select";
+
 export { Card } from "./card";
 export type { CardProps, CardVariant, CardPadding } from "./card";
 
@@ -42,6 +45,9 @@ export type { AlertProps, AlertTone } from "./alert";
 
 export { EmptyState } from "./empty-state";
 export type { EmptyStateProps } from "./empty-state";
+
+export { InfoTip } from "./info-tip";
+export type { InfoTipProps } from "./info-tip";
 
 export { Toaster, toast, useToastStore } from "./toast";
 export type { ToastTone, ToastItem } from "./toast";

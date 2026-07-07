@@ -1,8 +1,15 @@
+import { useRouterState } from "@tanstack/react-router";
+
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { signOutUser, useSessionStore } from "@/shared/session/session-store";
 import { Button, Icon, Logo, useThemeStore } from "@/shared/ui";
 
 import "./top-bar.css";
+
+export interface TopBarProps {
+  /** From the shell's `(max-width: 425px)` breakpoint — drives the compact mark logo. */
+  isMobile: boolean;
+}
 
 // Theme toggle (T029). A real toggle control whose `aria-pressed` reflects the
 // current theme — closes the audit note that the 001 toggle had no state. Pressed =
@@ -50,11 +57,26 @@ function AccountChrome() {
  * Top bar (T029). The app-layer chrome extracted from the 001 inline header: brand
  * Logo + account chrome + theme toggle. Rendered once by the app-shell above the
  * page outlet. Top-level `<header>` ⇒ the single `banner` landmark.
+ *
+ * Logo: the compact mark on mobile (≤425px, from the shell breakpoint) and the full
+ * horizontal lockup on desktop. On `/sign-in` the masthead logo is suppressed — the
+ * sign-in card already shows a centred brand lockup, so the top-bar logo would be a
+ * redundant second logo on that screen.
  */
-export function TopBar() {
+export function TopBar({ isMobile }: TopBarProps) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const showLogo = pathname !== "/sign-in";
   return (
     <header className="tf-topbar">
-      <Logo variant="full" alt={messages.appName} className="tf-topbar__logo" />
+      {showLogo ? (
+        <Logo
+          variant={isMobile ? "mark" : "full"}
+          alt={messages.appName}
+          className="tf-topbar__logo"
+        />
+      ) : (
+        <span className="tf-topbar__logo-spacer" aria-hidden="true" />
+      )}
       <div className="tf-topbar__actions">
         <AccountChrome />
         <ThemeToggle />

@@ -100,17 +100,34 @@ body {
   font: inherit;
 }
 
-/* Visible keyboard focus only (WCAG 2.2 AA) */
-:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+/* Visible keyboard focus (WCAG 2.4.7). The purple ring is reserved for form INPUTS
+   (single, clean — see --ring). Links/buttons get a LIGHT keyboard outline, not the
+   heavy input box. Components may override (e.g. app-nav, DS controls). */
+:where(input, select, textarea):focus-visible {
   outline: none;
   box-shadow: var(--ring);
   border-radius: var(--radius-xs);
 }
+:where(a, button):focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  box-shadow: none;
+  border-radius: var(--radius-xs);
+}
 
-/* Windows High Contrast / forced-colors: box-shadow rings are dropped,
-   so provide a real system-coloured outline. */
+/* Programmatically-focused, non-interactive elements (e.g. the page <h1 tabindex="-1">
+   that receives focus on navigation) must show NO ring — the focus is a screen-reader
+   affordance, not a visual state the user chose. */
+:where([tabindex="-1"]):focus,
+:where([tabindex="-1"]):focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Windows High Contrast / forced-colors: box-shadow rings are dropped, so provide a
+   real system-coloured outline for genuinely interactive elements. */
 @media (forced-colors: active) {
-  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  :where(a, button, input, select, textarea):focus-visible {
     outline: 2px solid Highlight;
     outline-offset: 2px;
   }

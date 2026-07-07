@@ -21,12 +21,12 @@
   --glow-orange: 0 10px 30px -8px rgba(247, 147, 30, 0.45);
   --glow-cyan: 0 10px 30px -8px rgba(21, 189, 220, 0.42);
 
-  /* Focus ring (2px ring + soft halo) */
-  --ring-width: 3px;
-  /* Solid ring (AA 1.4.11) + secondary halo layer */
-  --ring:
-    0 0 0 var(--ring-width) var(--focus-ring),
-    0 0 0 calc(var(--ring-width) + 3px) color-mix(in srgb, var(--focus-ring) 28%, transparent);
+  /* Focus ring — a SINGLE clean solid ring (AA 1.4.11). The purple ring belongs on
+     INPUTS only (see base.css): links/buttons get a light keyboard outline, and
+     programmatically-focused non-interactive elements get no ring at all. The former
+     double-layer (ring + 28% halo) read as a double border, so the halo is dropped. */
+  --ring-width: 2px;
+  --ring: 0 0 0 var(--ring-width) var(--focus-ring);
 }
 
 [data-theme="dark"] {

@@ -6,6 +6,9 @@
   flex-direction: column;
   min-height: 100dvh;
   background: var(--bg-base);
+  /* Side-nav column width — single source, so the top-bar can centre the desktop
+     logo over the exact menu width (consumed by app-nav + top-bar). */
+  --sidebar-w: 240px;
 }
 .tf-shell__body {
   display: flex;

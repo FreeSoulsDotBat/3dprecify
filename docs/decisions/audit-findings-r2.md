@@ -227,3 +227,77 @@ Format mirrors `audit-findings.md` RESOLVED section. Fill as rounds happen.
   `docs/design/prompts/claude-design-prototype-fixes.md`. A35/A36/A37 now have their material (Lucide
   self-hosted mask+currentColor; tokens byte-identical to app + full screen inventory; good 404, missing
   generic error screen + code→message map) — capture the three decisions next round.
+
+### E1 pricing-model scope frozen (2026-07-05, owner decision round — unblocks the E1 spec)
+
+- **A16 → E1 v1 cost model = "complete corrected + fine refinements"** (Jonatan, 2026-07-05). Beyond the
+  001 `material + markup`, the clean-room (A15) v1 model computes, from first principles:
+  1. **Material** — cost/roll ÷ roll-weight × grams, **plus explicit waste** (purge/brim/support/refugo)
+     as a modelled quantity, not a flat % (fixes spreadsheet defect #4/#6).
+  2. **Energy** — time × power(kW) × tariff(kWh) with a **configurable duty cycle** (real FDM average draw,
+     not the 1.2 kW nameplate — fixes defect #3).
+  3. **Machine-hour cost** — a **single coherent** capital-recovery method (NO triple-count of
+     maintenance + ROI + depreciation — fixes defect #2). Exact method is an ADR (see below).
+  4. **Failure** — a failure factor applied to **all production inputs** (material + energy + machine-time),
+     not material-only (fixes defect #4).
+  5. **Finishing / post-processing** — **explicit time × rate**, not a flat % of material (surpasses sheet).
+  6. **Markup** over cost (retail/wholesale) — see A25 for the base change.
+- **A25 → labor + admin both IN, as OPTIONAL inputs (default 0)** (Jonatan, 2026-07-05). Labor = hours ×
+  R$/h; admin = packaging/freight/domain/supplies/internet. **Markup base moves `material` → `custo_total`
+  at E1** — a SEMANTIC change: `pricing-core` gets a **major semver bump** and a version identifier
+  (interacts with TD-009/A13 saved-calc snapshots). Optional-with-default-0 keeps the calc approachable
+  while surpassing the sheet's `custo_total`.
+- **A24 → taxes OUT of v1, with rationale** (Jonatan, 2026-07-05). Rationale: the audience is the **MEI solo
+  seller**, whose **DAS is a FIXED monthly amount, not a per-unit %** — modelling it as a per-piece cost line
+  would be wrong. Recorded as an explicit non-goal for E1; revisit as its own fiscal concern (own epic) if a
+  Simples-regime module is ever validated. No `imposto %` field in the E1 calculator.
+- **Marketplace fees → BASIC single-channel fee IN E1** (Jonatan, 2026-07-05). One channel: commission % +
+  fixed fee with the **correct gross-up `(base + fixa) / (1 − pct)`** (fixes defect #5). The **multi-channel
+  simulator** (ML/Shopee side-by-side, saved scenarios) stays **E5** per the roadmap — resolves the
+  `business-rules.md:45` (E1 lists "marketplace fees") vs E5 ("Marketplace simulator") tension. E1 calc stays
+  **free** (no premium gate).
+- **Follow-ups triggered:** (a) new ADR — **machine-hour capital-recovery method** (the "single coherent"
+  choice in A16.3), blocks the E1 domain model; (b) `pricing-core` **version registry + rounding policy**
+  (ADR-0008, already pending) is now on the E1 critical path; (c) update `business-rules.md:45` roadmap line
+  to reflect labor/admin IN, taxes OUT, marketplace-basic-in-E1/simulator-E5.
+
+- **E1 model sub-decisions resolved (2026-07-05, owner round 2 — closes the E1 open questions):**
+  - **ADR-0009 → Option A: straight-line amortization/hour** (Jonatan). Machine-hour cost =
+    `valor_maquina / vida_util_horas` + an optional SEPARATE maintenance reserve (default 0). The ROI/return
+    lives once in the markup over `custo_total` (A25) — provably no triple-count. ADR now Accepted.
+  - **ADR-0008 → 1A + 2B** (Jonatan). `PRICING_MODEL_VERSION = 2.0.0` (001 material+markup treated as v1);
+    rounding = `decimal.js-light`, each cost line → 2dp `ROUND_HALF_UP`, aggregates = sum of already-rounded
+    lines, intermediates full-precision; markup + marketplace gross-up run on the displayed (rounded)
+    `custo_total` (WYSIWYG). Consistent with ADR-0004 money policy. ADR now Accepted.
+  - **OQ-1 markup defaults → +50% varejo / +30% atacado** (Jonatan) — editable pre-fills (UX starting
+    values, NOT formula constants; clean-room integrity kept).
+  - **OQ-2 energy → single "consumo médio efetivo (kW)" field** (Jonatan), suggested default ~0,12 kW +
+    tooltip. Corrects the nameplate-as-continuous defect at the input, not with a hidden duty constant.
+  - **OQ-5 marketplace → gross-up on BOTH varejo and atacado**, showing price-to-list + a "recebido líquido"
+    (net-after-fee) transparency line for each (Jonatan).
+  - **OQ-4 admin → single "outros custos" total** in v1 (recommend-and-proceed, owner-accepted); itemize at E2.
+  - **OQ-8 failure base → material + energy + machine-time only** (recommend-and-proceed per the A16.4 freeze;
+    finishing/labor/admin are NOT in the failure base).
+  - **Consequence:** E1 open questions closed; `spec.md` being finalized from `scope-draft.md`; ADR-0008/0009
+    Accepted. Ready for `/speckit-plan` once the spec lands.
+
+### E1 BUILT (2026-07-06 — US1–US6 + polish, `feature/004-e1-pricing-model`)
+
+The frozen scope above is implemented and green — owner-authorized commits on
+`feature/004-e1-pricing-model` (NOT yet merged to `develop`; owner authorizes the PR).
+- **Engine** (`packages/pricing-core` 2.0.0): `computeCalculator` — material+explicit waste,
+  effective-draw energy (A16.2, no nameplate×duty), single machine-hour recovery (ADR-0009 A),
+  failure over material+energy+machine (A16.4), finishing time×rate, optional labor+admin folded
+  into `custo_total`, markup over the rounded `custo_total` (WYSIWYG, ADR-0008), single-channel
+  marketplace gross-up `(base+fixa)/(1−pct)` netting back on BOTH varejo+atacado. Money via
+  `decimal.js-light`, 2dp HALF_UP, aggregates = sum of rounded lines.
+- **UI** (`apps/web` calculator): mandatory + optional-core inputs, transparent per-line breakdown,
+  both prices, labor/admin + marketplace sections, per-section ⓘ tooltips; pt-BR/BRL per-field
+  validation (**TD-020 retired**). No `imposto` field (A24 / FR-021). Free + offline, no
+  persistence/paywall (US6).
+- **Verification:** SC-001 = custo_total 28,65 / varejo 42,98 / atacado 37,25; SC-003 marketplace
+  anúncio 59,98/52,81, líquido 42,98/37,25. `pnpm gate` green (100% pricing-core coverage);
+  `pnpm e2e` green (66). Full evidence: `specs/004-e1-pricing-model/dod-evidence.md`.
+- **Homologation:** US1+US2 (MVP) owner-homologated 2026-07-05 + the 8-item UI remediation +
+  title/logo centring. US4 (labor/admin) + US5 (marketplace) visual homologation (T031/T036)
+  pending owner sign-off, then the develop PR (owner-authorized).

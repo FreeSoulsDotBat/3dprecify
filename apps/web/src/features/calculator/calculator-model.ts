@@ -1,41 +1,262 @@
-import { computePrice } from "@3dprecify/pricing-core";
+import {
+  type ChannelInput,
+  type ChannelResult,
+  computeCalculator,
+  type PriceInput,
+  type PriceResult,
+  ValidationError,
+} from "@3dprecify/pricing-core";
 
-import { parseDecimal } from "@/shared/lib/decimal-ptbr";
+import {
+  type CalcFieldName,
+  type CalcFormValues,
+  type ChannelFieldName,
+  type ChannelSlotForm,
+  calculatorSchema,
+} from "@/features/calculator/calculator-schema";
+import {
+  entryToChannelFees,
+  feeSealState,
+  resolveSlotEntry,
+} from "@/features/calculator/fee-prefill";
+import type { FeeSealState } from "@/features/calculator/fee-seal";
+import type { CatalogSource, FeeCatalog } from "@/shared/fee-catalog";
+import { messages } from "@/shared/i18n/messages.pt-br";
+import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
 
-// Pure view-model for the walking-skeleton calculator (US2). Maps the screen's
-// raw pt-BR form strings onto the canonical pricing-core formula. The math lives
-// in pricing-core (never re-implemented here — ADR-formula-source-of-truth); this
-// only parses, coerces, validates the roll weight, and surfaces a flag for the view.
-export interface CalculatorInput {
-  costPerRoll: string;
-  rollWeightKg: string;
-  grams: string;
-  markupPct: string;
+// Thin adapter for the E1 calculator. It is the ONLY seam between the pt-BR form strings and the
+// canonical engine: parse + validate → computeCalculator (pricing-core, the single source of the
+// formula — FR-036) → a view-ready outcome. The scalar cost fields gate the whole price (a bad
+// denominator dooms the calc); each marketplace CHANNEL is parsed + gross-up'd in isolation so one
+// bad slot (e.g. commission ≥ 100%) errors only itself while the siblings still compute (SC-107).
+
+const t = messages.calculator;
+
+/** Format a number as a pt-BR BRL string ("28.65" → "R$ 28,65"). Reuses the shared pt-BR
+ *  formatter (single source of the locale rule); pricing-core already rounded to 2dp. */
+export function formatBRL(value: number): string {
+  return `R$ ${formatDecimal(value, 2)}`;
 }
 
-export interface CalculatorResult {
-  /** True when the roll weight is missing or ≤ 0 (the one blocking validation). */
-  rollWeightError: boolean;
-  materialCost: number;
-  suggestedPrice: number;
+export type CalcFieldErrors = Partial<Record<CalcFieldName, string>>;
+export type ChannelSlotErrors = Partial<Record<ChannelFieldName, string>>;
+
+/** One channel slot's outcome, aligned to `form.channels[i]`: inline pt-BR errors (empty when the
+ *  slot is valid) + the engine's gross-up result (null when the slot has an error). `hasFee` is
+ *  false while every fee is blank/0 — the UI then shows a hint instead of base==anúncio rows. `seal`
+ *  is the honesty seal (where the fees came from); `freightIsEstimate` marks a subsidy-based freight. */
+export interface ChannelSlotOutcome {
+  errors: ChannelSlotErrors;
+  result: ChannelResult | null;
+  hasFee: boolean;
+  seal: FeeSealState;
+  freightIsEstimate: boolean;
 }
 
-/** Parse a non-negative numeric field; blank/NaN/negative all coerce to 0. */
-function nonNeg(value: string): number {
-  const v = parseDecimal(value);
-  return Number.isFinite(v) && v > 0 ? v : 0;
+/** The resolved fee catalog + where it came from + the clock, for the honesty seal + pre-fill. */
+export interface CatalogContext {
+  catalog: FeeCatalog;
+  source: CatalogSource;
+  now: number;
 }
 
-export function computeCalculator(input: CalculatorInput): CalculatorResult {
-  const rollWeightKg = parseDecimal(input.rollWeightKg);
-  if (!(rollWeightKg > 0)) {
-    return { rollWeightError: true, materialCost: 0, suggestedPrice: 0 };
+export interface CalcOutcome {
+  /** True when every scalar field parsed/validated and the engine returned a price. */
+  ok: boolean;
+  /** Per-field pt-BR validation messages for the scalar inputs (empty when ok). */
+  fieldErrors: CalcFieldErrors;
+  /** The computed breakdown + prices, or null when a scalar input is invalid. */
+  result: PriceResult | null;
+  /** Per-slot channel outcomes, aligned to `values.channels` (empty when the scalars are invalid). */
+  channels: ChannelSlotOutcome[];
+}
+
+const CHANNEL_NUM_FIELDS: readonly ChannelFieldName[] = [
+  "commissionPct",
+  "fixedFee",
+  "minPerItem",
+  "freightCost",
+];
+
+/**
+ * Parse ONE channel slot's pt-BR fee strings in isolation. A blank numeric field is an untouched
+ * optional (→ 0). A non-numeric string, a negative value, or a commission ≥ 100% is an inline
+ * per-field error (pt-BR) that fails ONLY this slot — never a silent clamp, never a NaN.
+ * `hasManualInput` is true when the user typed into ANY fee field (the signal that they are entering
+ * or overriding fees rather than accepting a catalog pre-fill).
+ */
+function parseManualFees(slot: ChannelSlotForm): {
+  nums: Record<ChannelFieldName, number>;
+  errors: ChannelSlotErrors;
+  hasManualInput: boolean;
+} {
+  const errors: ChannelSlotErrors = {};
+  const nums: Record<ChannelFieldName, number> = {
+    commissionPct: 0,
+    fixedFee: 0,
+    minPerItem: 0,
+    freightCost: 0,
+  };
+  let hasManualInput = false;
+  for (const f of CHANNEL_NUM_FIELDS) {
+    const raw = (slot[f] ?? "").trim();
+    if (raw === "") continue; // untouched optional → 0
+    hasManualInput = true;
+    const n = parseDecimal(raw.replace(/[^\d.,-]/g, ""));
+    if (!Number.isFinite(n)) {
+      errors[f] = t.validation.invalid;
+    } else if (n < 0) {
+      errors[f] = t.validation.negative;
+    } else {
+      nums[f] = n;
+    }
   }
-  const { materialCost, suggestedPrice } = computePrice({
-    costPerRoll: nonNeg(input.costPerRoll),
-    rollWeightKg,
-    grams: nonNeg(input.grams),
-    markupPct: nonNeg(input.markupPct),
-  });
-  return { rollWeightError: false, materialCost, suggestedPrice };
+  // Upper bound gets its own pt-BR message (the gross-up denominator 1 − c/100 must stay > 0).
+  if (errors.commissionPct === undefined && nums.commissionPct >= 100) {
+    errors.commissionPct = t.validation.commissionMax;
+  }
+  return { nums, errors, hasManualInput };
+}
+
+interface SlotProcessing {
+  input: ChannelInput | null;
+  errors: ChannelSlotErrors;
+  hasFee: boolean;
+  seal: FeeSealState;
+  freightIsEstimate: boolean;
+}
+
+/**
+ * Resolve ONE slot's effective fees + honesty seal. A covered marketplace+modality with NO typed
+ * fees pre-fills from the catalog (reference seal); any typed fee is a manual override ("ajustado por
+ * você" over a covered combo, else "sem referência"). A per-field error fails only this slot (SC-107).
+ */
+function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessing {
+  const manual = parseManualFees(slot);
+  const entry = ctx ? resolveSlotEntry(ctx.catalog, slot.marketplace, slot.modality) : null;
+
+  if (Object.keys(manual.errors).length > 0) {
+    return {
+      input: null,
+      errors: manual.errors,
+      hasFee: false,
+      seal: entry ? { kind: "adjusted" } : { kind: "none" },
+      freightIsEstimate: false,
+    };
+  }
+
+  // Use the catalog entry only when the user hasn't typed any fee (a blank slot accepts the pre-fill).
+  const useCatalog = entry !== null && !manual.hasManualInput;
+  const fees = useCatalog
+    ? entryToChannelFees(entry)
+    : {
+        ...manual.nums,
+        priceBands: undefined,
+        freightVoucherBands: undefined,
+        freightIsEstimate: false,
+      };
+  const seal: FeeSealState = useCatalog
+    ? feeSealState({ entry, source: ctx!.source, now: ctx!.now, edited: false })
+    : entry
+      ? { kind: "adjusted" }
+      : { kind: "none" };
+  // Provenance echoed onto the result — only when the fees actually came from the catalog (blank slot);
+  // a manual override is not "from" the reference, so it carries no feeSource.
+  const feeSource = useCatalog && entry ? entry.source : undefined;
+
+  const hasFee =
+    fees.commissionPct > 0 ||
+    fees.fixedFee > 0 ||
+    fees.minPerItem > 0 ||
+    fees.freightCost > 0 ||
+    (fees.priceBands?.length ?? 0) > 0 ||
+    (fees.freightVoucherBands?.length ?? 0) > 0;
+
+  return {
+    input: {
+      marketplace: slot.marketplace,
+      feeDeterminants: slot.modality ? { modality: slot.modality } : undefined,
+      feeSource,
+      commissionPct: fees.commissionPct,
+      fixedFee: fees.fixedFee,
+      minPerItem: fees.minPerItem,
+      priceBands: fees.priceBands,
+      freightCost: fees.freightCost,
+      freightVoucherBands: fees.freightVoucherBands,
+    },
+    errors: {},
+    hasFee,
+    seal,
+    freightIsEstimate: fees.freightIsEstimate,
+  };
+}
+
+/**
+ * Parse + validate the raw form strings, then compute. Returns per-field messages instead of ever
+ * throwing or emitting a NaN/Infinity (SC-008). Valid channel slots are passed to the engine and
+ * their gross-up results mapped back onto their form position; invalid slots carry inline errors.
+ */
+export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): CalcOutcome {
+  const parsed = calculatorSchema.safeParse(values);
+  if (!parsed.success) {
+    const fieldErrors: CalcFieldErrors = {};
+    for (const issue of parsed.error.issues) {
+      const key = issue.path[0] as CalcFieldName | undefined;
+      if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
+    }
+    return { ok: false, fieldErrors, result: null, channels: [] };
+  }
+
+  try {
+    // Map the flat form onto the 3.0.0 engine shape (ADR-0011): the single "Outros custos" field
+    // becomes a one-item `otherCosts` slot (multi-slot is US5); the channel slots become `channels[]`
+    // with catalog pre-fill applied per slot (blank → reference, typed → manual/adjusted).
+    const { adminTotal, ...cost } = parsed.data;
+    const processed = (values.channels ?? []).map((slot) => processSlot(slot, ctx));
+    const engineChannels = processed
+      .map((p) => p.input)
+      .filter((x): x is ChannelInput => x !== null);
+    // Stamp the catalog version ONLY when at least one channel actually resolved its fees from the
+    // catalog (a slot carries `feeSource` iff it used the pre-fill). An all-manual calc records no
+    // catalog provenance — "null when all-manual" (ADR-0011), so a future saved quote isn't mislabelled.
+    const usedCatalog = processed.some((p) => p.input?.feeSource != null);
+    const input: PriceInput = {
+      ...cost,
+      otherCosts: adminTotal > 0 ? [{ name: "Outros custos", value: adminTotal }] : [],
+      channels: engineChannels,
+      catalogVersion: usedCatalog ? ctx?.catalog.catalogVersion : undefined,
+    };
+    const result = computeCalculator(input);
+    // Re-align engine results (valid slots only, in order) back onto every form slot.
+    let ep = 0;
+    const channels: ChannelSlotOutcome[] = processed.map((p) =>
+      p.input === null
+        ? {
+            errors: p.errors,
+            result: null,
+            hasFee: p.hasFee,
+            seal: p.seal,
+            freightIsEstimate: false,
+          }
+        : {
+            errors: {},
+            result: result.channels[ep++] ?? null,
+            hasFee: p.hasFee,
+            seal: p.seal,
+            freightIsEstimate: p.freightIsEstimate,
+          },
+    );
+    return { ok: true, fieldErrors: {}, result, channels };
+  } catch (err) {
+    if (err instanceof ValidationError) {
+      const key = err.field as CalcFieldName | undefined;
+      return {
+        ok: false,
+        fieldErrors: key ? { [key]: err.message } : {},
+        result: null,
+        channels: [],
+      };
+    }
+    throw err;
+  }
 }

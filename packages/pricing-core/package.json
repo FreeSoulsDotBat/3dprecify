@@ -1,6 +1,6 @@
 {
   "name": "@3dprecify/pricing-core",
-  "version": "0.0.0",
+  "version": "3.0.0",
   "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
@@ -11,5 +11,8 @@
   "devDependencies": {
     "typescript": "catalog:",
     "vitest": "catalog:"
+  },
+  "dependencies": {
+    "decimal.js-light": "^2.5.1"
   }
 }

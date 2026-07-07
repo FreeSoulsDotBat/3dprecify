@@ -1,0 +1,16 @@
+/* Honesty-seal presentation overrides on the shared Badge — feature-local (FSD-Lite): the DS Badge is
+   a short status pill, but the seal is domain copy that can run long and must stay a legible "pill".
+   Both fixes come from the US2 homologation (T026b) and are scoped to `.tf-badge.fee-seal` (specificity
+   0,2,0 > the DS `.tf-badge`) so the design-system Badge itself is never changed:
+   (1) the online reference seal carries a long string ("Referência: <source> · atualizada em dd/mm/aaaa")
+       — it MUST wrap inside 390px instead of forcing horizontal overflow (FR-010); `white-space: normal`
+       drops the badge's min-content from the whole line to its longest word so the flex item shrinks and
+       wraps.
+   (2) a hairline border keeps the seal reading as a pill in the DARK theme, where the neutral badge fill
+       (`--bg-muted`) equals the card surface (both neutral-900) and the pill would otherwise vanish. */
+.tf-badge.fee-seal {
+  white-space: normal;
+  text-align: left;
+  line-height: 1.3;
+  border: 1px solid var(--border-default);
+}

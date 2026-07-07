@@ -1,83 +1,322 @@
 import { describe, expect, it } from "vitest";
 
-import { computeCalculator } from "./calculator-model";
+import { feeCatalogSchema } from "@/shared/fee-catalog";
 
-// Mirrors specs/001-walking-skeleton (US2): material + markup, pt-BR string inputs.
-// The numeric formula itself is covered by @3dprecify/pricing-core tests; here we
-// assert the form-string → parse → validate → result mapping the screen depends on.
-describe("computeCalculator — form strings → result", () => {
-  it("base case: R$100/kg roll, 20 g, 50% → 2,00 material / 3,00 price", () => {
-    const r = computeCalculator({
-      costPerRoll: "100",
+import {
+  type CalcFormValues,
+  type ChannelSlotForm,
+  defaultCalcValues,
+  defaultChannelSlot,
+} from "./calculator-schema";
+import { type CatalogContext, computeFromForm, formatBRL } from "./calculator-model";
+
+// E1 adapter (US1 + US2). We assert the form-string → parse → validate → compute → format
+// mapping the screen depends on. The numeric formula is covered exhaustively by the
+// @3dprecify/pricing-core tests; here we only pin that the adapter wires it correctly and
+// that bad input surfaces a per-field message instead of silently coercing to 0 (TD-020).
+
+/** The SC-001 canonical vector as pt-BR form strings. labor/admin (US4) and the marketplace
+ *  fees (US5) start at 0 so this vector still maps onto the documented MVP breakdown + prices. */
+const canonical: CalcFormValues = {
+  costPerRoll: "100,00",
+  rollWeightKg: "1",
+  printGrams: "100",
+  wasteGrams: "10",
+  printTimeHours: "5",
+  avgPowerKw: "0,10",
+  tariffPerKwh: "1,00",
+  machineValue: "4000,00",
+  machineLifetimeHours: "2000",
+  maintenanceReservePerHour: "0",
+  failurePct: "10",
+  finishTimeHours: "0,5",
+  finishRatePerHour: "10,00",
+  laborHours: "0",
+  laborRatePerHour: "0",
+  adminTotal: "0",
+  markupVarejoPct: "50",
+  markupAtacadoPct: "30",
+  channels: [],
+};
+
+describe("computeFromForm — canonical vector flows through the engine (SC-001)", () => {
+  it("maps the SC-001 form strings onto the documented breakdown + prices", () => {
+    const { ok, result, fieldErrors } = computeFromForm(canonical);
+    expect(ok).toBe(true);
+    expect(fieldErrors).toEqual({});
+    expect(result).not.toBeNull();
+    expect(result?.material).toBeCloseTo(11.0, 2);
+    expect(result?.energy).toBeCloseTo(0.5, 2);
+    expect(result?.machine).toBeCloseTo(10.0, 2);
+    expect(result?.falha).toBeCloseTo(2.15, 2);
+    expect(result?.finishing).toBeCloseTo(5.0, 2);
+    expect(result?.custoTotal).toBeCloseTo(28.65, 2);
+    expect(result?.precoVarejo).toBeCloseTo(42.98, 2);
+    expect(result?.precoAtacado).toBeCloseTo(37.25, 2);
+  });
+
+  it("the default (seed) form is valid and produces a coherent price", () => {
+    const { ok, result } = computeFromForm(defaultCalcValues);
+    expect(ok).toBe(true);
+    // seed: 100/1kg/100g, printTime 5h, avgPower 0,12kW, tariff 1, machine 4000/2000h, no optionals.
+    expect(result?.custoTotal).toBeCloseTo(20.6, 2);
+    expect(result?.precoVarejo).toBeCloseTo(30.9, 2);
+    expect(result?.precoAtacado).toBeCloseTo(26.78, 2);
+  });
+});
+
+describe("computeFromForm — pt-BR/BRL parsing", () => {
+  it("accepts comma decimals and thousands separators", () => {
+    const r = computeFromForm({
+      ...canonical,
+      costPerRoll: "1.000,00",
       rollWeightKg: "1",
-      grams: "20",
-      markupPct: "50",
+      printGrams: "10",
+      wasteGrams: "0",
     });
-    expect(r.rollWeightError).toBe(false);
-    expect(r.materialCost).toBeCloseTo(2.0, 2);
-    expect(r.suggestedPrice).toBeCloseTo(3.0, 2);
+    expect(r.ok).toBe(true);
+    // (1000 / 1000g) * 10g = 10,00
+    expect(r.result?.material).toBeCloseTo(10.0, 2);
   });
 
-  it("accepts pt-BR formatted strings (comma decimals)", () => {
-    const r = computeCalculator({
-      costPerRoll: "110,00",
-      rollWeightKg: "1",
-      grams: "85",
-      markupPct: "50",
-    });
-    expect(r.rollWeightError).toBe(false);
-    expect(r.materialCost).toBeCloseTo(9.35, 2);
-    expect(r.suggestedPrice).toBeCloseTo(14.025, 2);
+  it("tolerates typed R$ / unit affixes around the number", () => {
+    const r = computeFromForm({ ...canonical, costPerRoll: "R$ 100,00", avgPowerKw: "0,10 kW" });
+    expect(r.ok).toBe(true);
+    expect(r.result?.material).toBeCloseTo(11.0, 2);
   });
 
-  it("grams = 0 → 0,00 / 0,00", () => {
-    const r = computeCalculator({
-      costPerRoll: "100",
-      rollWeightKg: "1",
-      grams: "0",
-      markupPct: "50",
+  it("treats a blank optional field as 0 (does not error)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      wasteGrams: "",
+      finishTimeHours: "",
+      failurePct: "",
     });
-    expect(r.materialCost).toBeCloseTo(0, 2);
-    expect(r.suggestedPrice).toBeCloseTo(0, 2);
+    expect(r.ok).toBe(true);
+    // waste 0 → material = (100/1000)*100 = 10,00; falha/finishing 0
+    expect(r.result?.material).toBeCloseTo(10.0, 2);
+    expect(r.result?.falha).toBeCloseTo(0, 2);
+    expect(r.result?.finishing).toBeCloseTo(0, 2);
+  });
+});
+
+describe("computeFromForm — per-field validation (never coerce a bad string to 0)", () => {
+  it("rejects a non-numeric string instead of treating it as 0", () => {
+    const r = computeFromForm({ ...canonical, costPerRoll: "abc" });
+    expect(r.ok).toBe(false);
+    expect(r.result).toBeNull();
+    expect(r.fieldErrors.costPerRoll).toBeTruthy();
   });
 
-  it("markup = 0 → price equals material cost", () => {
-    const r = computeCalculator({
-      costPerRoll: "100",
-      rollWeightKg: "1",
-      grams: "20",
-      markupPct: "0",
-    });
-    expect(r.materialCost).toBeCloseTo(2.0, 2);
-    expect(r.suggestedPrice).toBeCloseTo(2.0, 2);
+  it("rejects a non-numeric OPTIONAL string too (only blank means 0)", () => {
+    const r = computeFromForm({ ...canonical, wasteGrams: "xx" });
+    expect(r.ok).toBe(false);
+    expect(r.fieldErrors.wasteGrams).toBeTruthy();
   });
 
-  it("rollWeight = 0 → rollWeightError, zeroed results (no division by zero)", () => {
-    const r = computeCalculator({
-      costPerRoll: "100",
-      rollWeightKg: "0",
-      grams: "20",
-      markupPct: "50",
-    });
-    expect(r.rollWeightError).toBe(true);
-    expect(r.materialCost).toBe(0);
-    expect(r.suggestedPrice).toBe(0);
+  it("flags a blank required field as obrigatório", () => {
+    const r = computeFromForm({ ...canonical, printGrams: "" });
+    expect(r.ok).toBe(false);
+    expect(r.fieldErrors.printGrams).toMatch(/obrigat/i);
   });
 
-  it("empty rollWeight → rollWeightError", () => {
-    const r = computeCalculator({
-      costPerRoll: "100",
-      rollWeightKg: "",
-      grams: "20",
-      markupPct: "50",
-    });
-    expect(r.rollWeightError).toBe(true);
+  it("flags roll weight <= 0 with the specific '> 0' message (no division by zero)", () => {
+    const r = computeFromForm({ ...canonical, rollWeightKg: "0" });
+    expect(r.ok).toBe(false);
+    expect(r.result).toBeNull();
+    expect(r.fieldErrors.rollWeightKg).toMatch(/maior que zero/i);
   });
 
-  it("blank/negative non-weight fields coerce to 0 (only weight drives the error)", () => {
-    const r = computeCalculator({ costPerRoll: "", rollWeightKg: "1", grams: "-5", markupPct: "" });
-    expect(r.rollWeightError).toBe(false);
-    expect(r.materialCost).toBe(0);
-    expect(r.suggestedPrice).toBe(0);
+  it("flags machine lifetime <= 0", () => {
+    const r = computeFromForm({ ...canonical, machineLifetimeHours: "0" });
+    expect(r.ok).toBe(false);
+    expect(r.fieldErrors.machineLifetimeHours).toBeTruthy();
+  });
+
+  it("flags a negative value as não pode ser negativo", () => {
+    const r = computeFromForm({ ...canonical, printTimeHours: "-5" });
+    expect(r.ok).toBe(false);
+    expect(r.fieldErrors.printTimeHours).toMatch(/negativ/i);
+  });
+
+  it("collects errors from multiple fields at once", () => {
+    const r = computeFromForm({ ...canonical, costPerRoll: "abc", rollWeightKg: "0" });
+    expect(r.ok).toBe(false);
+    expect(r.fieldErrors.costPerRoll).toBeTruthy();
+    expect(r.fieldErrors.rollWeightKg).toBeTruthy();
+  });
+});
+
+describe("computeFromForm — channels adapter (US1, per-slot isolation)", () => {
+  const slot = (over: Partial<ChannelSlotForm>): ChannelSlotForm => ({
+    ...defaultChannelSlot(),
+    ...over,
+  });
+
+  it("gross-ups each channel and aligns the result to its form slot", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [
+        slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" }),
+        slot({ marketplace: "SHOPEE", modality: "", commissionPct: "20", fixedFee: "4" }),
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect(r.channels).toHaveLength(2);
+    // ML Clássico 12% + R$6,75 on varejo 42,98 → 56,51; nets back to 42,98.
+    expect(r.channels[0].errors).toEqual({});
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
+    // Shopee 20% + R$4 → 58,73.
+    expect(r.channels[1].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+  });
+
+  it("a commission ≥ 100% errors ONLY its slot; the siblings still compute (SC-107)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [
+        slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" }),
+        slot({ marketplace: "AMAZON", modality: "", commissionPct: "100" }),
+        slot({ marketplace: "SHOPEE", modality: "", commissionPct: "20", fixedFee: "4" }),
+      ],
+    });
+    expect(r.ok).toBe(true); // the main price is unaffected by a bad channel
+    expect(r.channels[1].errors.commissionPct).toMatch(/100%/);
+    expect(r.channels[1].result).toBeNull();
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
+    expect(r.channels[2].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+  });
+
+  it("a non-numeric channel fee errors its slot without a NaN", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [slot({ commissionPct: "abc" })],
+    });
+    expect(r.channels[0].errors.commissionPct).toBeTruthy();
+    expect(r.channels[0].result).toBeNull();
+  });
+
+  it("blank channel fees are a valid zero-fee channel (anúncio == base)", () => {
+    const r = computeFromForm({ ...canonical, channels: [slot({ modality: "" })] });
+    expect(r.channels[0].errors).toEqual({});
+    // commission 0 + fixed 0 → announce equals the base varejo price 42,98.
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(42.98, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
+  });
+});
+
+// US2 pre-fill through the catalog context: a blank covered slot adopts the catalog fees + echoes
+// provenance (feeSource + catalogVersion, ADR-0011), and the Shopee co-funded voucher is DEDUCTED from
+// the líquido (FR-111a — the truth gap where it was dropped to 0 under an authoritative seal).
+describe("computeFromForm — catalog context (US2 pre-fill + provenance + voucher)", () => {
+  const catalog = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-07.x",
+    schemaVersion: "1",
+    generatedAt: "2026-07-07T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "SHOPEE",
+        entries: [
+          {
+            determinants: null,
+            commissionPct: null,
+            fixedFee: null,
+            priceBands: [
+              { minPrice: 0, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
+              { minPrice: 80, maxPrice: 200, commissionPct: 14, fixedFee: 18 },
+              { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
+            ],
+            freight: {
+              kind: "BAND_VOUCHER",
+              bands: [
+                { minPrice: 0, maxPrice: 80, voucherCeiling: 20 },
+                { minPrice: 80, maxPrice: 200, voucherCeiling: 30 },
+                { minPrice: 200, maxPrice: null, voucherCeiling: 40 },
+              ],
+            },
+            source: "Central do Vendedor Shopee",
+            sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
+            effectiveDate: "2026-03-01",
+            lastReviewed: "2026-07-07",
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = { catalog, source: "catalog", now: Date.parse("2026-07-10") };
+  const slot = (over: Partial<ChannelSlotForm>): ChannelSlotForm => ({
+    ...defaultChannelSlot(),
+    ...over,
+  });
+
+  it("a blank Shopee slot pre-fills from the catalog and DEDUCTS the voucher (FR-111a)", () => {
+    const r = computeFromForm(
+      { ...canonical, channels: [slot({ marketplace: "SHOPEE", modality: "" })] },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.errors).toEqual({});
+    // varejo 42,98 → Shopee 20% + R$4 announce 58,73 (∈ [0,80) → R$20 voucher).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    // The co-funded voucher lowers the net below base — NOT 42,98 (the old truth gap).
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
+    // atacado 37,25 → announce 51,56 (still ∈ [0,80) → R$20 voucher) → líquido 17,25.
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
+    // Provenance echoed onto the result (ADR-0011).
+    expect(ch.result?.feeSource).toBe("Central do Vendedor Shopee");
+    expect(r.result?.catalogVersion).toBe("2026-07-07.x");
+    expect(ch.seal.kind).toBe("reference"); // dated reference, not a manual entry
+  });
+
+  it("typing a fee overrides the catalog → manual (no voucher, no feeSource, seal 'ajustado')", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", commissionPct: "10" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2); // manual 10%, nets to base
+    expect(ch.result?.freightCostVarejo).toBe(0); // no voucher on a manual override
+    expect(ch.result?.feeSource).toBeNull(); // provenance cleared — not from the reference
+    expect(ch.seal.kind).toBe("adjusted");
+    // catalogVersion is NOT stamped when no channel used the catalog (all-manual override).
+    expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  it("stamps no catalogVersion when there is no catalog context (all-manual)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" })],
+    });
+    expect(r.result?.catalogVersion).toBeNull();
+    expect(r.channels[0].result?.feeSource).toBeNull();
+  });
+
+  it("deducts DIFFERENT vouchers for varejo vs atacado when they fall in different bands", () => {
+    // markup varejo 180% → precoVarejo 80,22 → Shopee announce ∈ [80,200) → R$30 voucher; atacado 30%
+    // → precoAtacado 37,25 → announce ∈ [0,80) → R$20 voucher. Proves the per-level resolution end-to-end.
+    const r = computeFromForm(
+      {
+        ...canonical,
+        markupVarejoPct: "180",
+        channels: [slot({ marketplace: "SHOPEE", modality: "" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(30, 2);
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
+  });
+});
+
+describe("formatBRL — pt-BR/BRL formatting", () => {
+  it("formats with the R$ prefix, comma decimals and thousands separator", () => {
+    expect(formatBRL(28.65)).toBe("R$ 28,65");
+    expect(formatBRL(1234.5)).toBe("R$ 1.234,50");
+    expect(formatBRL(0)).toBe("R$ 0,00");
   });
 });
