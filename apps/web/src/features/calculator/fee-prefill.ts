@@ -1,4 +1,4 @@
-import type { PriceBand } from "@3dprecify/pricing-core";
+import type { PriceBand, VoucherBand } from "@3dprecify/pricing-core";
 
 import {
   type CatalogSource,
@@ -47,27 +47,38 @@ export function resolveSlotEntry(
 }
 
 /** A resolved entry mapped into the pure engine's channel fee inputs. `freightIsEstimate` marks the
- *  ML free-shipping subsidy so the UI can seal that specific value as an "estimativa" (A4). */
+ *  ML free-shipping subsidy so the UI can seal that specific value as an "estimativa" (A4);
+ *  `freightVoucherBands` carries the Shopee co-funded voucher for the engine to resolve by announce. */
 export interface ResolvedChannelFees {
   commissionPct: number;
   fixedFee: number;
   minPerItem: number;
   priceBands?: PriceBand[];
   freightCost: number;
+  freightVoucherBands?: VoucherBand[];
   freightIsEstimate: boolean;
 }
 
 /**
- * Map a resolved catalog entry → the pure engine's channel fees (SC-111). A price-band entry (Shopee)
- * carries its `priceBands` through (the engine's fixed-point owns the price-keyed selection); a single
- * entry carries commission/fixed/minPerItem. The ML free-shipping `ESTIMATE.defaultSubsidy` becomes an
- * editable `freightCost` that lowers the líquido and is sealed "estimativa". `BAND_VOUCHER` freight is
- * band-dependent and not yet modelled in the single-value engine freight → 0 for now (documented).
+ * Map a resolved catalog entry → the pure engine's channel fees (SC-111 / FR-111a). A price-band entry
+ * (Shopee) carries its `priceBands` through (the engine's fixed-point owns the price-keyed selection); a
+ * single entry carries commission/fixed/minPerItem. Freight per its kind: the ML free-shipping
+ * `ESTIMATE.defaultSubsidy` becomes an editable flat `freightCost` sealed "estimativa"; the Shopee
+ * `BAND_VOUCHER` carries its `bands` so pricing-core deducts the co-funded voucher for the resulting
+ * announce band (never dropping it — that overstated the líquido); `NONE` → no freight.
  */
 export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
   const freight = entry.freight;
   const freightIsEstimate = freight.kind === "ESTIMATE";
   const freightCost = freight.kind === "ESTIMATE" ? freight.defaultSubsidy : 0;
+  const freightVoucherBands =
+    freight.kind === "BAND_VOUCHER"
+      ? freight.bands.map((b) => ({
+          minPrice: b.minPrice,
+          maxPrice: b.maxPrice,
+          voucherCeiling: b.voucherCeiling,
+        }))
+      : undefined;
   return {
     commissionPct: entry.commissionPct ?? 0,
     fixedFee: entry.fixedFee ?? 0,
@@ -81,6 +92,7 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
         }))
       : undefined,
     freightCost,
+    freightVoucherBands,
     freightIsEstimate,
   };
 }

@@ -1,7 +1,7 @@
 import type { FeeCatalog } from "./fee-catalog";
 
 // Bundled seed (ADR-0010 R1) — guarantees first-ever OFFLINE pre-fills before any fetch persists to
-// the store. It MIRRORS the committed fee-catalog/catalog.json (the source of truth the backend
+// the store. It MIRRORS the committed backend/app/data/catalog.json (the source of truth the backend
 // serves); the truth-gate test asserts both parse under the same schemaVersion and carry provenance.
 // US2 curation (T022): Shopee is curated (price-band based, category-independent — sourced from the
 // official 2026 commission policy). ML + Amazon stay empty pending their category-specific rates

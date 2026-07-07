@@ -22,7 +22,7 @@ import { FEE_CATALOG_SEED } from "./seed";
 // exempt from the per-field provenance gate; entry-level provenance still applies.
 
 const catalogPath = fileURLToPath(
-  new URL("../../../../../fee-catalog/catalog.json", import.meta.url),
+  new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
 );
 const servedCatalog: unknown = JSON.parse(readFileSync(catalogPath, "utf8"));
 

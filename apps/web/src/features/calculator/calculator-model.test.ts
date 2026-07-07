@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
+import { feeCatalogSchema } from "@/shared/fee-catalog";
+
 import {
   type CalcFormValues,
   type ChannelSlotForm,
   defaultCalcValues,
   defaultChannelSlot,
 } from "./calculator-schema";
-import { computeFromForm, formatBRL } from "./calculator-model";
+import { type CatalogContext, computeFromForm, formatBRL } from "./calculator-model";
 
 // E1 adapter (US1 + US2). We assert the form-string → parse → validate → compute → format
 // mapping the screen depends on. The numeric formula is covered exhaustively by the
@@ -200,6 +202,84 @@ describe("computeFromForm — channels adapter (US1, per-slot isolation)", () =>
     // commission 0 + fixed 0 → announce equals the base varejo price 42,98.
     expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(42.98, 2);
     expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
+  });
+});
+
+// US2 pre-fill through the catalog context: a blank covered slot adopts the catalog fees + echoes
+// provenance (feeSource + catalogVersion, ADR-0011), and the Shopee co-funded voucher is DEDUCTED from
+// the líquido (FR-111a — the truth gap where it was dropped to 0 under an authoritative seal).
+describe("computeFromForm — catalog context (US2 pre-fill + provenance + voucher)", () => {
+  const catalog = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-07.x",
+    schemaVersion: "1",
+    generatedAt: "2026-07-07T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "SHOPEE",
+        entries: [
+          {
+            determinants: null,
+            commissionPct: null,
+            fixedFee: null,
+            priceBands: [
+              { minPrice: 0, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
+              { minPrice: 80, maxPrice: 200, commissionPct: 14, fixedFee: 18 },
+              { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
+            ],
+            freight: {
+              kind: "BAND_VOUCHER",
+              bands: [
+                { minPrice: 0, maxPrice: 80, voucherCeiling: 20 },
+                { minPrice: 80, maxPrice: 200, voucherCeiling: 30 },
+                { minPrice: 200, maxPrice: null, voucherCeiling: 40 },
+              ],
+            },
+            source: "Central do Vendedor Shopee",
+            sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
+            effectiveDate: "2026-03-01",
+            lastReviewed: "2026-07-07",
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = { catalog, source: "catalog", now: Date.parse("2026-07-10") };
+  const slot = (over: Partial<ChannelSlotForm>): ChannelSlotForm => ({
+    ...defaultChannelSlot(),
+    ...over,
+  });
+
+  it("a blank Shopee slot pre-fills from the catalog and DEDUCTS the voucher (FR-111a)", () => {
+    const r = computeFromForm(
+      { ...canonical, channels: [slot({ marketplace: "SHOPEE", modality: "" })] },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.errors).toEqual({});
+    // varejo 42,98 → Shopee 20% + R$4 announce 58,73 (∈ [0,80) → R$20 voucher).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    // The co-funded voucher lowers the net below base — NOT 42,98 (the old truth gap).
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    expect(ch.result?.freightCost).toBeCloseTo(20, 2);
+    // Provenance echoed onto the result (ADR-0011).
+    expect(ch.result?.feeSource).toBe("Central do Vendedor Shopee");
+    expect(r.result?.catalogVersion).toBe("2026-07-07.x");
+    expect(ch.seal.kind).toBe("reference"); // dated reference, not a manual entry
+  });
+
+  it("typing a fee overrides the catalog → manual (no voucher, no feeSource, seal 'ajustado')", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", commissionPct: "10" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2); // manual 10%, nets to base
+    expect(ch.result?.freightCost).toBe(0); // no voucher on a manual override
+    expect(ch.result?.feeSource).toBeNull(); // provenance cleared — not from the reference
+    expect(ch.seal.kind).toBe("adjusted");
   });
 });
 

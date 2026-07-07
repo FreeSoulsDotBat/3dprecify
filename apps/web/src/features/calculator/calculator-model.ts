@@ -149,29 +149,40 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
   const useCatalog = entry !== null && !manual.hasManualInput;
   const fees = useCatalog
     ? entryToChannelFees(entry)
-    : { ...manual.nums, priceBands: undefined, freightIsEstimate: false };
+    : {
+        ...manual.nums,
+        priceBands: undefined,
+        freightVoucherBands: undefined,
+        freightIsEstimate: false,
+      };
   const seal: FeeSealState = useCatalog
     ? feeSealState({ entry, source: ctx!.source, now: ctx!.now, edited: false })
     : entry
       ? { kind: "adjusted" }
       : { kind: "none" };
+  // Provenance echoed onto the result — only when the fees actually came from the catalog (blank slot);
+  // a manual override is not "from" the reference, so it carries no feeSource.
+  const feeSource = useCatalog && entry ? entry.source : undefined;
 
   const hasFee =
     fees.commissionPct > 0 ||
     fees.fixedFee > 0 ||
     fees.minPerItem > 0 ||
     fees.freightCost > 0 ||
-    (fees.priceBands?.length ?? 0) > 0;
+    (fees.priceBands?.length ?? 0) > 0 ||
+    (fees.freightVoucherBands?.length ?? 0) > 0;
 
   return {
     input: {
       marketplace: slot.marketplace,
       feeDeterminants: slot.modality ? { modality: slot.modality } : undefined,
+      feeSource,
       commissionPct: fees.commissionPct,
       fixedFee: fees.fixedFee,
       minPerItem: fees.minPerItem,
       priceBands: fees.priceBands,
       freightCost: fees.freightCost,
+      freightVoucherBands: fees.freightVoucherBands,
     },
     errors: {},
     hasFee,
@@ -209,6 +220,9 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
       ...cost,
       otherCosts: adminTotal > 0 ? [{ name: "Outros custos", value: adminTotal }] : [],
       channels: engineChannels,
+      // Stamp which catalog version was active so a computed quote records its fee provenance
+      // (ADR-0011 reproducibility key, with marketplace + feeDeterminants + feeSource per channel).
+      catalogVersion: ctx?.catalog.catalogVersion,
     };
     const result = computeCalculator(input);
     // Re-align engine results (valid slots only, in order) back onto every form slot.

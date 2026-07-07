@@ -8,7 +8,7 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 // The committed fee-catalog served by GET /api/v1/fee-catalog — used to force the ONLINE reference
 // seal (source ≠ seed) in the overflow regression below, matching what the deployed endpoint returns.
 const servedCatalogJson = readFileSync(
-  fileURLToPath(new URL("../../../../fee-catalog/catalog.json", import.meta.url)),
+  fileURLToPath(new URL("../../../../backend/app/data/catalog.json", import.meta.url)),
   "utf-8",
 );
 

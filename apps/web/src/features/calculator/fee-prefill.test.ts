@@ -137,12 +137,16 @@ describe("feeSealState — the honesty seal per slot (SC-103 / FR-107)", () => {
 });
 
 describe("entryToChannelFees — map a resolved entry to the engine (SC-111)", () => {
-  it("carries a price-band entry's bands through (Shopee)", () => {
+  it("carries a price-band entry's bands + the co-funded voucher through (Shopee, FR-111a)", () => {
     const shopee = resolveSlotEntry(catalog, "SHOPEE", "");
     const fees = entryToChannelFees(shopee!);
     expect(fees.priceBands).toEqual([
       { minPrice: 0, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
     ]);
+    // The BAND_VOUCHER is carried to the engine (resolved by announce) — never dropped to a flat 0,
+    // which used to overstate the líquido under an authoritative seal.
+    expect(fees.freightVoucherBands).toEqual([{ minPrice: 0, maxPrice: null, voucherCeiling: 20 }]);
+    expect(fees.freightCost).toBe(0); // not a flat cost — the voucher lives in freightVoucherBands
     expect(fees.freightIsEstimate).toBe(false);
   });
 
