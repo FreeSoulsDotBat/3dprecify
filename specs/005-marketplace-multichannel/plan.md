@@ -151,8 +151,9 @@ VI); the pricing-core `3.0.0` contract is inline in ADR-0011 Part 2; the endpoin
 ### Source Code (repository root)
 
 ```text
-fee-catalog/                       # NEW — the committed, versioned catalog artifact (source of truth, PR-gated)
-└── catalog.json                   #   served by apps/api; the web seed is built/copied from it; ML job edits it via PR
+backend/app/data/                  # NEW — the committed, versioned catalog artifact (source of truth, PR-gated)
+└── catalog.json                   #   served by the endpoint (bundled via `COPY app`); web seed mirrors it; ML job edits via PR
+                                   #   (moved from repo-root fee-catalog/ 2026-07-07 so `COPY app ./app` bundles it — ADR-0010 amendment)
 
 packages/pricing-core/
 ├── src/
@@ -196,9 +197,9 @@ never a price-keyed backend resolver.
 **Catalog artifact placement — REVISED by the delivery reversal (owner to confirm).** The old Option A (artifact
 only in `apps/web`) no longer fits: the **backend must read the same artifact to serve it**. Decision (planned
 default):
-- **Committed artifact → `fee-catalog/catalog.json` at the repo root** (one PR-gated source of truth). The FastAPI
-  endpoint reads it (bundled into the Cloud Run image) and serves it; the web **seed** is built/copied from it; the
-  ML ingestion Job edits it via PR.
+- **Committed artifact → `backend/app/data/catalog.json`** (one PR-gated source of truth; moved from repo-root
+  `fee-catalog/` on 2026-07-07 so `COPY app ./app` bundles it into the Cloud Run image — ADR-0010 amendment). The
+  FastAPI endpoint reads it and serves it; the web **seed** mirrors it; the ML ingestion Job edits it via PR.
 - **TS schema + resolver + staleness + store + seed → `apps/web/src/shared/fee-catalog/`** (consumes the JSON).
 - Alternative (if the ingestion Job or backend wants shared TS types): promote to **`packages/fee-catalog`** (schema
   + JSON) imported by web + tooling — a cheap lift-and-shift. Recommend the repo-root JSON now; revisit the package

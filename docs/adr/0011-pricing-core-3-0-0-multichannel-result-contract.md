@@ -202,5 +202,25 @@ deferred to E2/E4, exactly as ADR-0008 scheduled.
   + the ADR-0010 served/cached catalog + seed/seal; the `MODEL_REGISTRY` (ADR-0008 Option 1B) upgrades at E2/E4 when snapshots of
   two versions coexist.
 
+## Amendment — freight in pricing-core + E1 provenance scope (2026-07-07, owner-directed)
+
+Two clarifications applied during the pre-merge review of the E1 implementation:
+
+- **Freight resolved in pricing-core (FR-111a), per ADR-0010 Part 4.** `ChannelInput` carries the Shopee
+  co-funded `freightVoucherBands`; `grossUp` deducts the voucher for the band of the RESULTING announce
+  (per level — varejo/atacado can differ), a truthful post-deduction never folded into the gross-up. This
+  closes the truth gap where a blank Shopee slot dropped the voucher to 0 and overstated `recebido líquido`
+  under an authoritative seal. The ML free-shipping `ESTIMATE` stays an editable flat prefill on the FE (a
+  labelled, user-overridable estimate); its price-threshold gating is deferred until an ML `ESTIMATE` entry
+  is actually curated (dormant — none ships in E1).
+- **E1 result provenance = the reproducibility KEY, not a denormalized fee echo.** `PriceResult.catalogVersion`
+  is now threaded from the active catalog (it was always null before), and `ChannelResult` carries
+  `marketplace` + `feeDeterminants` + `feeSource`. Together these let a future E4 snapshot re-resolve the
+  exact entry from the versioned catalog and recompute — full reproducibility. The **denormalized** echo of
+  the resolved `commissionPct/fixedFee/minPerItem/appliedBand` onto `ChannelResult` (this ADR's Part 2/Part 4
+  wording) is **deferred to E4**: those values are re-derivable from the key, and their per-level band shape
+  is best designed against a real save/export need (E1 has no save/export). This supersedes the Part 4
+  assertion that the result carries the resolved fees "already in E1".
+
 ### Sources verified (2026-07-06)
 - Amazon Brasil — referral commission 10–15 % by category, **referral minimum R$ 1,00**, plan Individual **R$ 2,00/item** vs Profissional R$ 19/mês (1º ano grátis): <https://venda.amazon.com.br/precos> · corrob. <https://gosmarter.com.br/taxas-amazon-brasil-2026/>

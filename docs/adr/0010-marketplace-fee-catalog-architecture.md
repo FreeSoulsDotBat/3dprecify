@@ -245,6 +245,20 @@ served value is provenance-stamped; the offline/free guarantee is held by the **
   toward "**fetch from the backend when online → persist to a store → offline uses the store → a bundled seed covers
   first-run offline**". Exact deltas are handed to the owner alongside this amendment.
 
+## Amendment — committed-artifact placement (2026-07-07, owner-directed)
+
+The committed source-of-truth artifact moves from repo-root `fee-catalog/catalog.json` to
+**`backend/app/data/catalog.json`**. Rationale: the served endpoint MUST bundle the artifact into the
+Cloud Run image, and `backend/Dockerfile` builds with context `./backend` + `COPY app ./app` — an artifact
+at the repo root is OUTSIDE that context (it would 500 the endpoint in prod, silently, since the client
+falls back to its seed). Placing it under `app/` makes the read path identical in the repo and the
+container (`Path(__file__).parents[1] / "data" / "catalog.json"`) with **no** Dockerfile/CI/deploy
+build-context change. It remains the **single source of truth**: the FE bundled seed mirrors it, the
+truth-gate test parses it, and the ML ingestion Job (D3) edits it via PR. A backend contract test guards
+that the served path resolves inside the `app/` package so it can never silently leave the build context
+again. Trade-off accepted: the FE truth-gate + e2e read the artifact via a cross-package path into
+`backend/app/data/` (test-only reach); the neutral repo-root location is given up for guaranteed bundling.
+
 ### Sources verified (2026-07-06)
 - ML OAuth (Bearer token, auth-code exchange, refresh) + `get_listing_prices` filters:
   <https://developers.mercadolivre.com.br/en_us/authentication-and-authorization> · <https://github.com/matihick/mercadolibre>

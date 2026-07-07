@@ -71,7 +71,7 @@
 
 ### Tests (write FAILING first) ⚠️
 - [x] T020 [P] [US2] SC-103 resolve+seal logic + test — `features/calculator/fee-prefill.ts` (`slotDeterminants` A6 mapping, `resolveSlotEntry`, pure `feeSealState`) + `fee-prefill.test.ts` (10 tests): covered → dated reference; seed source → "embutida"; >30 d → stale; override → "ajustado por você"; uncovered/OUTRO → null → "sem referência" (no fabrication). Fixture catalog (real curation = T022).
-- [x] T021 [P] [US2] SC-111 — `entryToChannelFees` (in `fee-prefill.ts`) maps a resolved entry → engine fees: price-band entries carry `priceBands` through; the ML free-shipping `ESTIMATE.defaultSubsidy` becomes an editable `freightCost` that lowers the líquido by exactly that amount (`grossUp` verified) and is flagged `freightIsEstimate` for the "estimativa" seal (A4). `BAND_VOUCHER` freight is band-dependent → 0 for now (documented; needs band-freight in the engine). Test in `fee-prefill.test.ts`.
+- [x] T021 [P] [US2] SC-111 — `entryToChannelFees` (in `fee-prefill.ts`) maps a resolved entry → engine fees: price-band entries carry `priceBands` through; the ML free-shipping `ESTIMATE.defaultSubsidy` becomes an editable `freightCost` that lowers the líquido by exactly that amount (`grossUp` verified) and is flagged `freightIsEstimate` for the "estimativa" seal (A4). **The Shopee `BAND_VOUCHER` is carried through as `freightVoucherBands` and DEDUCTED in pricing-core by the resulting announce band (FR-111a) — pre-merge remediation 2026-07-07 (see below); no longer dropped to 0.** Tests in `fee-prefill.test.ts` + `band-floor.test.ts` + `calculator-model.test.ts`.
 
 ### Implementation
 - [~] T022 [US2] Curate **`fee-catalog/catalog.json`** (+ mirror in `seed.ts`), each entry carrying `sourceUrl`/`effectiveDate`/`lastReviewed`. **Owner decision 2026-07-07: add a `category` determinant to ML/Amazon slots** (their commission is category-specific), alongside Shopee. **Sourcing** (owner-directed): prefer a deterministic fetch script over WebSearch — but the ML `listing_prices` API is 403 (house-account OAuth + BR geo-gate, the Q-D infra), so WebSearch-sourced + owner-approved for the MVP; the ML ingestion script (D1–D3) lands when the house account exists. **DONE: Shopee** (price-band based, category-independent — 4 bands 20%+R$4 / 14%+R$16 / 14%+R$20 / 14%+R$26, freight BAND_VOUCHER R$20/30/40; sourced from the official 2026 commission policy; truth-gate green). **PENDING: ML + Amazon** — need the exact per-category % (JS-gated official tables not scrapeable here; awaiting owner-provided rates) + the category selector.
@@ -190,3 +190,15 @@
 - `resolveFee(…, listingPrice)` (FR-110) = **`resolveEntry`** (FE) **+ band/floor fixed-point** (core) — A6.
 - Every curated fee carries provenance; unverifiable → manual + "sem referência" (Constitution II); the ML `defaultSubsidy` is a labelled estimate, never asserted exact.
 - Test-first is NON-NEGOTIABLE: SC-101…SC-112 FAIL before their implementation. Commit after each task/group; ships in the 004 PR (owner-authorized).
+
+---
+
+## Pre-merge remediation (2026-07-07) — 3 blockers from the 5-agent review, fixed before the develop PR
+
+A 5-agent review of the E1 branch (arquiteto · pricing-core · frontend · seguranca · qa) surfaced 3 merge blockers; all fixed + tested before opening the PR (owner-directed):
+
+- **B1 (truth / FR-111a) — Shopee co-funded voucher was dropped → overstated `recebido líquido` under an authoritative seal.** Fixed by resolving freight in **pricing-core** (ADR-0010 P4 / ADR-0011 amendment): `ChannelInput.freightVoucherBands` + `grossUp` deducts the voucher by the resulting announce band (per level). Tests: `band-floor.test.ts` (FR-111a/SC-111), `fee-prefill.test.ts`, `calculator-model.test.ts` (catalog-context end-to-end).
+- **B2 (deploy) — the served endpoint would 500 in the Cloud Run image** (artifact `fee-catalog/catalog.json` outside the `./backend` build context). Fixed by moving the artifact to **`backend/app/data/catalog.json`** (bundled by the existing `COPY app ./app`; no Dockerfile/CI/deploy change) + a contract-test guard that the served path resolves inside the `app/` package. ADR-0010 amendment records the placement.
+- **B3 (ADR-0011 drift) — `PriceResult.catalogVersion` was always null; `ChannelResult` lacked provenance.** Fixed by threading `catalogVersion` from the active catalog + adding `feeSource` to `ChannelResult`; the denormalized resolved-fee/`appliedBand` echo is **deferred to E4** (re-derivable from the key) — ADR-0011 amendment. Covered by `calculator-model.test.ts`.
+
+Green after remediation: pricing-core 50 · web 140 · backend 5 · e2e US1+US2 (chromium+mobile) · lint/format/typecheck.
