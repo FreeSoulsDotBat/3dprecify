@@ -1,9 +1,10 @@
 """Public GET /api/v1/fee-catalog — serves the committed fee catalog (ADR-0010, R6=a).
 
 Data only, never computes a price (FR-118). Public, unauthenticated, never a gate (FR-117 /
-Constitution IV — no ``current_claims`` dependency). Serves the versioned repo artifact
-``fee-catalog/catalog.json`` (bundled into the image) with an ETag; a matching ``If-None-Match``
-yields 304. The payload shape mirrors the client Zod schema (apps/web/src/shared/fee-catalog).
+Constitution IV — no ``current_claims`` dependency). Serves the versioned artifact
+``app/data/catalog.json`` (bundled beside the app, COPYed into the image with ``app``) with an ETag;
+a matching ``If-None-Match`` yields 304. The payload shape mirrors the client Zod schema
+(apps/web/src/shared/fee-catalog).
 """
 
 from __future__ import annotations
@@ -19,8 +20,10 @@ from app.errors import CamelModel
 
 router = APIRouter(tags=["fee-catalog"])
 
-# backend/app/api/fee_catalog.py → parents[3] == repo root; the artifact is bundled beside the app.
-_CATALOG_PATH = Path(__file__).resolve().parents[3] / "fee-catalog" / "catalog.json"
+# backend/app/api/fee_catalog.py → parents[1] == backend/app; the artifact lives beside the app at
+# app/data/catalog.json. `COPY app ./app` carries it into the image, so this path is IDENTICAL in the
+# repo and the container — no Docker/CI/deploy build-context change (placement decided w/ owner 2026-07-07).
+_CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "catalog.json"
 
 
 class PriceBand(CamelModel):
