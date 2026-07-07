@@ -22,12 +22,15 @@ async function signInThrowaway(page: import("@playwright/test").Page, tag: strin
   await page.waitForFunction(() => "__e2eAuth" in window);
   const email = `e2e-${tag}-${Date.now()}@e2e.local`;
   await page.evaluate(
-    async ({ em, pw }) => {
+    ({ em, pw }) => {
       const w = window as unknown as {
         __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
       };
       if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      await w.__e2eAuth.signUp(em, pw);
+      // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
+      // awaiting it here would let that navigation destroy this evaluate's execution context
+      // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
+      void w.__e2eAuth.signUp(em, pw);
     },
     { em: email, pw: "test-passw0rd" },
   );
