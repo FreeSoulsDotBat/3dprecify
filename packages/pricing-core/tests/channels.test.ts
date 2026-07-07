@@ -112,6 +112,36 @@ describe("SC-107 — per-slot error isolation (never a silent clamp, never a thr
     expect(r.channels[1].error).toBeTruthy();
     expect(r.channels[0].error).toBeNull();
   });
+
+  it("each per-field fee validation errors only its own slot (fixedFee/minPerItem/freight/voucher)", () => {
+    const r = computeCalculator({
+      ...SC001,
+      channels: [
+        { marketplace: "OK", commissionPct: 12, fixedFee: 6.75 },
+        { marketplace: "BAD_FIXED", commissionPct: 12, fixedFee: -1 },
+        { marketplace: "BAD_MIN", commissionPct: 12, minPerItem: -1 },
+        { marketplace: "BAD_FREIGHT", commissionPct: 12, freightCost: -1 },
+        {
+          marketplace: "BAD_VOUCHER",
+          commissionPct: 12,
+          freightVoucherBands: [{ minPrice: 0, maxPrice: null, voucherCeiling: -5 }],
+        },
+      ],
+    });
+    expect(r.channels[0].error).toBeNull();
+    expect(r.channels[1].error).toBe("fixedFee must be a finite number >= 0");
+    expect(r.channels[2].error).toBe("minPerItem must be a finite number >= 0");
+    expect(r.channels[3].error).toBe("freightCost must be a finite number >= 0");
+    expect(r.channels[4].error).toBe(
+      "freightVoucherBands.voucherCeiling must be a finite number >= 0",
+    );
+    // Every errored slot carries null prices + zeroed per-level freight (never a partial number).
+    for (const bad of [1, 2, 3, 4]) {
+      expect(r.channels[bad].precoAnuncioVarejo).toBeNull();
+      expect(r.channels[bad].freightCostVarejo).toBe(0);
+      expect(r.channels[bad].freightCostAtacado).toBe(0);
+    }
+  });
 });
 
 describe("SC-110 — determinism at scale", () => {

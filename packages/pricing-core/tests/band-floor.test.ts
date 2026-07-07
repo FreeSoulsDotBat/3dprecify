@@ -144,6 +144,16 @@ describe("FR-111a / SC-111 — Shopee co-funded freight voucher", () => {
     expect(a).toEqual(b);
   });
 
+  it("no voucher applies when the announce falls outside every voucher band (→ freight 0)", () => {
+    // Voucher only covers announces ≥ R$1000; a R$58,73 announce matches none → bandContaining
+    // returns null → the `?? 0` fallback → no freight deducted, net == base (guards the empty-match path).
+    const voucher: VoucherBand[] = [{ minPrice: 1000, maxPrice: null, voucherCeiling: 50 }];
+    const r = grossUp(42.98, { commissionPct: 20, fixedFee: 4, freightVoucherBands: voucher });
+    expect(r.anuncio).toBe(58.73);
+    expect(r.freightCost).toBe(0);
+    expect(r.liquido).toBe(42.98);
+  });
+
   it("a voucher larger than the margin yields a TRUTHFUL negative net — never clamped", () => {
     // base 10 → announce (10+4)/0,80 = 17,50 (∈ [0,80) → R$20 voucher). The R$20 voucher exceeds the
     // ~R$3,50 margin, so the seller LOSES money: líquido = 17,50 − 3,50 − 4 − 20 = −10,00. The engine
@@ -158,5 +168,32 @@ describe("FR-111a / SC-111 — Shopee co-funded freight voucher", () => {
     expect(r.anuncio).toBe(17.5);
     expect(r.freightCost).toBe(20);
     expect(r.liquido).toBe(-10.0);
+  });
+});
+
+// grossUp defensive fallbacks — the `?? default` paths when fees omit a field or a price lands
+// outside every configured band. They must stay deterministic and never NaN/throw (SC-108/SC-111).
+describe("grossUp — omitted-field + no-band-match fallbacks", () => {
+  it("fixedFee defaults to 0 when the fee is omitted", () => {
+    const r = grossUp(50, { commissionPct: 10 }); // no fixedFee, no bands, no floor
+    expect(r.anuncio).toBe(55.56); // 50 / 0,90
+    expect(r.liquido).toBe(50.0);
+    expect(r.freightCost).toBe(0);
+  });
+
+  it("a base below every price band seeds the last band and stays deterministic", () => {
+    // Bands start at R$50, so a base of R$10 matches NONE → seeds bands[last]; the resulting
+    // announce also lands below all bands → bandContaining(announce) null → keeps that band. Both
+    // `?? fallback` paths (base-seed and re-select) fire; the result still nets to base, no throw.
+    const bands: PriceBand[] = [
+      { minPrice: 50, maxPrice: 100, commissionPct: 10, fixedFee: 2 },
+      { minPrice: 100, maxPrice: null, commissionPct: 12, fixedFee: 5 },
+    ];
+    const r = grossUp(10, { commissionPct: 99, fixedFee: 0, priceBands: bands });
+    expect(Number.isFinite(r.anuncio)).toBe(true);
+    expect(r.appliedBand).toEqual([100, null]); // fell back to the terminal band
+    expect(r.liquido).toBe(10.0);
+    const again = grossUp(10, { commissionPct: 99, fixedFee: 0, priceBands: bands });
+    expect(again).toEqual(r); // deterministic
   });
 });
