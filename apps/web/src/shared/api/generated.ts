@@ -53,6 +53,75 @@ export interface ErrorEnvelope {
   error: ErrorBody;
 }
 
+export type MarketplaceCatalogMarketplace = typeof MarketplaceCatalogMarketplace[keyof typeof MarketplaceCatalogMarketplace];
+
+
+export const MarketplaceCatalogMarketplace = {
+  MERCADO_LIVRE: 'MERCADO_LIVRE',
+  AMAZON: 'AMAZON',
+  SHOPEE: 'SHOPEE',
+} as const;
+
+export interface PriceBand {
+  minPrice: number;
+  maxPrice: number | null;
+  commissionPct: number | null;
+  fixedFee: number | null;
+}
+
+export const FreightNoneValue = {
+  kind: 'NONE',
+} as const;
+export type FreightNone = typeof FreightNoneValue;
+
+export interface FreightEstimate {
+  kind: 'ESTIMATE';
+  thresholdPrice: number;
+  defaultSubsidy: number;
+  inputs?: string[] | null;
+}
+
+export interface VoucherBand {
+  minPrice: number;
+  maxPrice: number | null;
+  voucherCeiling: number;
+}
+
+export interface FreightBandVoucher {
+  kind: 'BAND_VOUCHER';
+  bands: VoucherBand[];
+}
+
+export type FeeEntryDeterminants = {[key: string]: string} | null;
+
+export interface FeeEntry {
+  determinants: FeeEntryDeterminants;
+  commissionPct: number | null;
+  fixedFee: number | null;
+  minPerItem?: number | null;
+  priceBands?: PriceBand[] | null;
+  freight: FreightNone | FreightEstimate | FreightBandVoucher;
+  source: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  lastReviewed: string;
+}
+
+export type MarketplaceCatalogDeterminantsSchema = { [key: string]: unknown } | null;
+
+export interface MarketplaceCatalog {
+  marketplace: MarketplaceCatalogMarketplace;
+  determinantsSchema?: MarketplaceCatalogDeterminantsSchema;
+  entries: FeeEntry[];
+}
+
+export interface FeeCatalog {
+  catalogVersion: string;
+  schemaVersion: string;
+  generatedAt: string;
+  marketplaces: MarketplaceCatalog[];
+}
+
 export type ValidationErrorCtx = { [key: string]: unknown };
 
 export interface ValidationError {
@@ -316,6 +385,131 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetMeApiV1MeGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getFeeCatalogApiV1FeeCatalogGetResponse200 = {
+  data: FeeCatalog
+  status: 200
+}
+
+export type getFeeCatalogApiV1FeeCatalogGetResponse304 = {
+  data: void
+  status: 304
+}
+
+export type getFeeCatalogApiV1FeeCatalogGetResponse422 = {
+  data: HTTPValidationError
+  status: 422
+}
+
+export type getFeeCatalogApiV1FeeCatalogGetResponseSuccess = (getFeeCatalogApiV1FeeCatalogGetResponse200) & {
+  headers: Headers;
+};
+export type getFeeCatalogApiV1FeeCatalogGetResponseError = (getFeeCatalogApiV1FeeCatalogGetResponse304 | getFeeCatalogApiV1FeeCatalogGetResponse422) & {
+  headers: Headers;
+};
+
+export type getFeeCatalogApiV1FeeCatalogGetResponse = (getFeeCatalogApiV1FeeCatalogGetResponseSuccess | getFeeCatalogApiV1FeeCatalogGetResponseError)
+
+export const getGetFeeCatalogApiV1FeeCatalogGetUrl = () => {
+
+
+
+
+  return `/api/v1/fee-catalog`
+}
+
+/**
+ * @summary Get Fee Catalog
+ */
+export const getFeeCatalogApiV1FeeCatalogGet = async ( options?: RequestInit): Promise<getFeeCatalogApiV1FeeCatalogGetResponse> => {
+
+  return orvalFetch<getFeeCatalogApiV1FeeCatalogGetResponse>(getGetFeeCatalogApiV1FeeCatalogGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetFeeCatalogApiV1FeeCatalogGetQueryKey = () => {
+    return [
+    `/api/v1/fee-catalog`
+    ] as const;
+    }
+
+
+export const getGetFeeCatalogApiV1FeeCatalogGetQueryOptions = <TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetFeeCatalogApiV1FeeCatalogGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>> = ({ signal }) => getFeeCatalogApiV1FeeCatalogGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetFeeCatalogApiV1FeeCatalogGetQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>>
+export type GetFeeCatalogApiV1FeeCatalogGetQueryError = void | HTTPValidationError
+
+
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>,
+          TError,
+          Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Fee Catalog
+ */
+
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetFeeCatalogApiV1FeeCatalogGetQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

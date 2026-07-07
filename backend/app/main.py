@@ -12,6 +12,7 @@ from contextlib import asynccontextmanager
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.fee_catalog import router as fee_catalog_router
 from .api.me import router as me_router
 from .auth import init_firebase
 from .errors import AppError, ErrorCode, ErrorEnvelope, register_exception_handlers
@@ -50,6 +51,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     api = APIRouter(prefix="/api/v1")
     api.include_router(me_router)
+    # Public, unauthenticated reference data (never a gate — FR-117 / Constitution IV).
+    api.include_router(fee_catalog_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
