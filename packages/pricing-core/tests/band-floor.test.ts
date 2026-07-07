@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
 import { grossUp } from "../src/index";
-import type { PriceBand } from "../src/index";
+import type { PriceBand, VoucherBand } from "../src/index";
 
 // SC-112 — Amazon per-item commission MINIMUM (floor): the charged commission is
 // `max(commissionPct/100 × list, minPerItem)`, so the gross-up is piecewise. Tested on the pure
@@ -77,5 +77,70 @@ describe("SC-108 — price-band fixed-point determinism", () => {
     expect(a).toEqual(b); // deterministic
     expect(a.appliedBand).toEqual([12.5, 79]);
     expect(a.liquido).toBe(6.25); // still nets to base
+  });
+});
+
+// FR-111a / SC-111 — the Shopee co-funded free-shipping voucher: a truthful POST-deduction that
+// lowers the seller's net by the voucher for the band of the RESULTING announce (never grossed up,
+// never folded into custo_total). The voucher is resolved by the ANNOUNCE, not the base — so a slot
+// whose base is below a band edge but whose announce crosses it deducts the higher band's voucher,
+// and varejo/atacado can deduct different vouchers. Guards the truth gap where dropping it (freightCost
+// 0) overstated the líquido under an authoritative seal.
+describe("FR-111a / SC-111 — Shopee co-funded freight voucher", () => {
+  const shopeeBands: PriceBand[] = [
+    { minPrice: 0, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
+    { minPrice: 80, maxPrice: 200, commissionPct: 14, fixedFee: 18 },
+    { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
+  ];
+  const shopeeVoucher: VoucherBand[] = [
+    { minPrice: 0, maxPrice: 80, voucherCeiling: 20 },
+    { minPrice: 80, maxPrice: 200, voucherCeiling: 30 },
+    { minPrice: 200, maxPrice: null, voucherCeiling: 40 },
+  ];
+
+  it("deducts the voucher for the announce band, lowering the net below base", () => {
+    const withVoucher = grossUp(42.98, {
+      commissionPct: 20,
+      fixedFee: 4,
+      priceBands: shopeeBands,
+      freightVoucherBands: shopeeVoucher,
+    });
+    expect(withVoucher.anuncio).toBe(58.73); // unchanged — freight is NEVER grossed up
+    expect(withVoucher.freightCost).toBe(20); // announce 58,73 ∈ [0,80) → R$20 voucher
+    expect(withVoucher.liquido).toBe(22.98); // 42,98 − 20 (the seller co-funds the voucher)
+
+    // Same fees WITHOUT the voucher would have overstated the net by exactly R$20 (the old bug).
+    const dropped = grossUp(42.98, { commissionPct: 20, fixedFee: 4, priceBands: shopeeBands });
+    expect(dropped.freightCost).toBe(0);
+    expect(dropped.liquido).toBe(42.98);
+    expect(dropped.liquido - withVoucher.liquido).toBeCloseTo(20, 2);
+  });
+
+  it("resolves the voucher by the ANNOUNCE band, not the base (base 76 → announce in [80,200))", () => {
+    const r = grossUp(76, {
+      commissionPct: 20,
+      fixedFee: 4,
+      priceBands: shopeeBands,
+      freightVoucherBands: shopeeVoucher,
+    });
+    expect(r.anuncio).toBe(109.3); // base 76 seeds [0,80) but the announce lands in [80,200)
+    expect(r.freightCost).toBe(30); // → the R$30 voucher, not R$20 from the base's band
+    expect(r.liquido).toBe(46.0); // 76 − 30
+  });
+
+  it("is deterministic across runs (same input → same voucher/net)", () => {
+    const a = grossUp(42.98, {
+      commissionPct: 20,
+      fixedFee: 4,
+      priceBands: shopeeBands,
+      freightVoucherBands: shopeeVoucher,
+    });
+    const b = grossUp(42.98, {
+      commissionPct: 20,
+      fixedFee: 4,
+      priceBands: shopeeBands,
+      freightVoucherBands: shopeeVoucher,
+    });
+    expect(a).toEqual(b);
   });
 });

@@ -3,7 +3,7 @@
 // of specs/004-e1-pricing-model). ADR-0008 (money) · ADR-0009 (machine) · ADR-0011 (3.0.0 result
 // contract). The backend never recomputes any price (FR-118); this module is the single source of
 // the formula.
-import { grossUp, type ChannelFees, type PriceBand } from "./channels";
+import { grossUp, type ChannelFees, type PriceBand, type VoucherBand } from "./channels";
 import { Decimal, toMoney, sumMoney } from "./rounding";
 
 // 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
@@ -18,18 +18,21 @@ export interface OtherCostItem {
 }
 
 /**
- * One marketplace listing channel to price. `marketplace`/`feeDeterminants` are opaque provenance
- * labels the engine echoes back — it never resolves fees (the client passes already-resolved fees in,
- * FR-110 / A6). The Amazon per-item commission floor (`minPerItem`) and the price-band fixed-point
- * arrive in US1 (SC-108 / SC-112); Foundational handles %-commission + fixedFee + generic freight.
+ * One marketplace listing channel to price. `marketplace`/`feeDeterminants`/`feeSource` are opaque
+ * provenance labels the engine echoes back onto the result — it never resolves fees (the client passes
+ * already-resolved fees in, FR-110 / A6). Price-keyed resolution the engine DOES own: the Amazon
+ * per-item commission floor (`minPerItem`, SC-112), the price-band fixed-point (`priceBands`, SC-108),
+ * and the co-funded freight voucher (`freightVoucherBands`, Shopee, FR-111a) — all by listing price.
  */
 export interface ChannelInput {
   marketplace?: string;
   feeDeterminants?: Record<string, string>;
+  feeSource?: string; // human-readable provenance of the resolved fees (catalog source), echoed back
   commissionPct: number; // %, [0, 100) — the base commission (a matching priceBand overrides it)
   fixedFee?: number; // R$, ≥ 0, default 0
   minPerItem?: number; // R$, ≥ 0, default 0 — Amazon per-item commission floor
   freightCost?: number; // R$, ≥ 0, default 0 — deducted from líquido (never added to custo_total)
+  freightVoucherBands?: VoucherBand[]; // Shopee co-funded voucher, deducted by the announce band (FR-111a)
   priceBands?: PriceBand[]; // fee by listing-price band (Shopee / ML custo fixo) — resolved by pricing-core
 }
 
@@ -41,11 +44,12 @@ export interface ChannelInput {
 export interface ChannelResult {
   marketplace: string | null;
   feeDeterminants: Record<string, string> | null;
+  feeSource: string | null; // provenance of the resolved fees (catalog source) — echoed, null when manual
   precoAnuncioVarejo: number | null;
   recebidoLiquidoVarejo: number | null;
   precoAnuncioAtacado: number | null;
   recebidoLiquidoAtacado: number | null;
-  freightCost: number;
+  freightCost: number; // total freight deducted from the VAREJO líquido (atacado may differ by band)
   error: string | null;
 }
 
@@ -229,10 +233,12 @@ function computeChannel(
   const fixedFee = ch.fixedFee ?? 0;
   const minPerItem = ch.minPerItem ?? 0;
   const freightCost = ch.freightCost ?? 0;
+  const voucherBands = ch.freightVoucherBands ?? [];
 
   const shell: ChannelResult = {
     marketplace: ch.marketplace ?? null,
     feeDeterminants: ch.feeDeterminants ?? null,
+    feeSource: ch.feeSource ?? null,
     precoAnuncioVarejo: null,
     recebidoLiquidoVarejo: null,
     precoAnuncioAtacado: null,
@@ -253,19 +259,23 @@ function computeChannel(
   if (!Number.isFinite(freightCost) || freightCost < 0) {
     return fail("freightCost must be a finite number >= 0");
   }
+  if (voucherBands.some((b) => !Number.isFinite(b.voucherCeiling) || b.voucherCeiling < 0)) {
+    return fail("freightVoucherBands.voucherCeiling must be a finite number >= 0");
+  }
 
   const fees: ChannelFees = {
     commissionPct,
     fixedFee,
     minPerItem,
     freightCost,
+    freightVoucherBands: voucherBands.length > 0 ? voucherBands : undefined,
     priceBands: ch.priceBands,
   };
   const varejo = grossUp(precoVarejo, fees);
   const atacado = grossUp(precoAtacado, fees);
   return {
     ...shell,
-    freightCost,
+    freightCost: varejo.freightCost,
     precoAnuncioVarejo: varejo.anuncio,
     recebidoLiquidoVarejo: varejo.liquido,
     precoAnuncioAtacado: atacado.anuncio,
@@ -281,4 +291,4 @@ function percentMultiplier(pct: number): Decimal {
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
 export { grossUp } from "./channels";
-export type { ChannelFees, ChannelLevel, PriceBand } from "./channels";
+export type { ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
