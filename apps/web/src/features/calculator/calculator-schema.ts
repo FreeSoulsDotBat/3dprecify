@@ -3,15 +3,16 @@ import { z } from "zod";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
+import type { SelectOption } from "@/shared/ui";
 
 // RHF + Zod schema for the E1 calculator form. It parses the raw pt-BR/BRL form strings into
 // the numbers `pricing-core` expects and rejects bad input with a per-field pt-BR message —
 // the fix TD-020 asked for (never silently coerce a bad string to 0). It surfaces the mandatory
-// inputs (FR-001..003,005..009,017,018), the optional-core ones (FR-004,010..013), the US4
-// labor + admin costs (laborHours/laborRatePerHour/adminTotal — optional, default 0) and the
-// US5 marketplace fees (marketplaceCommissionPct/marketplaceFixedFee — optional, default 0;
-// the commission is bounded < 100% here so the user gets a pt-BR message before the engine
-// throws). All optionals default to 0/null in the engine.
+// inputs (FR-001..003,005..009,017,018), the optional-core ones (FR-004,010..013) and the US4
+// labor + admin costs (laborHours/laborRatePerHour/adminTotal — optional, default 0). All
+// optionals default to 0/null in the engine. The US1 multi-channel marketplace fees are NOT in
+// this Zod object: each channel slot is parsed + validated per-slot in the model so one bad
+// channel (e.g. commission ≥ 100%) errors only its own slot without hiding the others (SC-107).
 
 const t = messages.calculator;
 
@@ -36,14 +37,32 @@ export const CALC_FIELD_NAMES = [
   "adminTotal",
   "markupVarejoPct",
   "markupAtacadoPct",
-  "marketplaceCommissionPct",
-  "marketplaceFixedFee",
 ] as const;
 
 export type CalcFieldName = (typeof CALC_FIELD_NAMES)[number];
 
-/** The form's live value shape: one controlled pt-BR string per field. */
-export type CalcFormValues = Record<CalcFieldName, string>;
+// US1 — a channel slot: a marketplace + optional modality (ML Clássico/Premium, Amazon
+// Profissional/Individual; Shopee/Outro have none) plus its manual fees. Values are pt-BR
+// strings like the scalar fields; the model parses + gross-ups each slot in isolation.
+export type MarketplaceId = "MERCADO_LIVRE" | "SHOPEE" | "AMAZON" | "OUTRO";
+export type Modality = "CLASSICO" | "PREMIUM" | "PROFISSIONAL" | "INDIVIDUAL" | "";
+
+export interface ChannelSlotForm {
+  marketplace: MarketplaceId;
+  modality: Modality;
+  commissionPct: string;
+  fixedFee: string;
+  minPerItem: string;
+  freightCost: string;
+}
+
+/** The channel numeric fields the model validates per-slot (keys of the inline error map). */
+export type ChannelFieldName = "commissionPct" | "fixedFee" | "minPerItem" | "freightCost";
+
+/** The form's live value shape: one controlled pt-BR string per scalar field + N channel slots. */
+export interface CalcFormValues extends Record<CalcFieldName, string> {
+  channels: ChannelSlotForm[];
+}
 
 type FieldKind = "required" | "prefilled" | "optional";
 
@@ -121,12 +140,6 @@ export const calculatorSchema = z.object({
   adminTotal: numField({ kind: "optional" }),
   markupVarejoPct: numField({ kind: "prefilled" }),
   markupAtacadoPct: numField({ kind: "prefilled" }),
-  marketplaceCommissionPct: numField({
-    kind: "optional",
-    ltExclusive: 100,
-    ltExclusiveMessage: t.validation.commissionMax,
-  }),
-  marketplaceFixedFee: numField({ kind: "optional" }),
 });
 
 /** Validated numeric MVP input (a subset of `pricing-core`'s `PriceInput`). */
@@ -147,6 +160,56 @@ export const calculatorResolver: Resolver<CalcFormValues> = (values) => {
   }
   return { values: {}, errors };
 };
+
+// US1: the marketplace channel slot — a marketplace picker, its modality (when it has one) and
+// the manual fees fed into the per-channel gross-up. The determinant selectors key the catalog
+// pre-fill in US2; here they identify the channel and choose the modality-specific fee. Defined
+// before `defaultCalcValues` so its `defaultChannelSlot()` reads a fully-initialized MODALITY_OPTIONS.
+export const MARKETPLACE_OPTIONS: readonly SelectOption[] = [
+  { value: "MERCADO_LIVRE", label: t.marketplaceNames.MERCADO_LIVRE },
+  { value: "SHOPEE", label: t.marketplaceNames.SHOPEE },
+  { value: "AMAZON", label: t.marketplaceNames.AMAZON },
+  { value: "OUTRO", label: t.marketplaceNames.OUTRO },
+];
+
+/** Modalities by marketplace — Shopee/Outro have none (empty ⇒ the modality select is hidden). */
+export const MODALITY_OPTIONS: Record<MarketplaceId, readonly SelectOption[]> = {
+  MERCADO_LIVRE: [
+    { value: "CLASSICO", label: t.modalityNames.CLASSICO },
+    { value: "PREMIUM", label: t.modalityNames.PREMIUM },
+  ],
+  AMAZON: [
+    { value: "PROFISSIONAL", label: t.modalityNames.PROFISSIONAL },
+    { value: "INDIVIDUAL", label: t.modalityNames.INDIVIDUAL },
+  ],
+  SHOPEE: [],
+  OUTRO: [],
+};
+
+/** A fresh channel slot — defaults to the marketplace's first modality (or none) + blank fees. */
+export function defaultChannelSlot(marketplace: MarketplaceId = "MERCADO_LIVRE"): ChannelSlotForm {
+  return {
+    marketplace,
+    modality: (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality,
+    commissionPct: "",
+    fixedFee: "",
+    minPerItem: "",
+    freightCost: "",
+  };
+}
+
+/** The channel numeric fields shown as a compact 2-col grid, with pt-BR labels + affixes. */
+export const CHANNEL_FEE_FIELDS: readonly {
+  name: ChannelFieldName;
+  label: string;
+  currency?: boolean;
+  unit?: string;
+}[] = [
+  { name: "commissionPct", label: t.channels.commission, unit: "%" },
+  { name: "fixedFee", label: t.channels.fixedFee, currency: true },
+  { name: "minPerItem", label: t.channels.minPerItem, currency: true },
+  { name: "freightCost", label: t.channels.freight, currency: true },
+];
 
 /** UX starting values (pt-BR strings). Required/prefilled ship an editable value so the
  *  page renders a coherent price on load; optional-core fields start at 0 (de-emphasized,
@@ -170,8 +233,7 @@ export const defaultCalcValues: CalcFormValues = {
   adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
-  marketplaceCommissionPct: "0",
-  marketplaceFixedFee: "0",
+  channels: [defaultChannelSlot()],
 };
 
 /** Render metadata (label, unit, requiredness) so the page maps fields → DS controls. */
@@ -247,20 +309,4 @@ export const LABOR_FIELDS: readonly CalcFieldMeta[] = [
     required: false,
   },
   { name: "adminTotal", label: t.fields.adminTotal, currency: true, required: false },
-] as const;
-
-// US5: marketplace fees driving the gross-up. Both default 0 → no channel (result.marketplace null).
-export const MARKETPLACE_FIELDS: readonly CalcFieldMeta[] = [
-  {
-    name: "marketplaceCommissionPct",
-    label: t.fields.marketplaceCommission,
-    unit: "%",
-    required: false,
-  },
-  {
-    name: "marketplaceFixedFee",
-    label: t.fields.marketplaceFixedFee,
-    currency: true,
-    required: false,
-  },
 ] as const;

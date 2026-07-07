@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -11,6 +12,17 @@ import { CalcularPage } from "./calcular-page";
 afterEach(() => cleanup());
 
 const t = messages.calculator;
+
+/** Render the page inside a fresh QueryClient (the fee-catalog store uses TanStack Query). The
+ *  served fetch fails in jsdom → the hook falls back to the bundled seed, which is what we want. */
+function renderPage() {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <CalcularPage />
+    </QueryClientProvider>,
+  );
+}
 
 /** Assert the given nodes appear in document order (each precedes the next). */
 function expectDomOrder(nodes: readonly HTMLElement[]) {
@@ -27,7 +39,7 @@ function expectDomOrder(nodes: readonly HTMLElement[]) {
 // the per-field validation path).
 describe("CalcularPage — US1 correct retail + wholesale price", () => {
   it("shows BOTH prices together (SC-010) and the breakdown by default", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     // Retail + wholesale are always shown together (label appears in the hero + derivation row).
     expect(screen.getAllByText(t.results.varejo).length).toBeGreaterThan(0);
@@ -41,7 +53,7 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
   });
 
   it("orders the sections top→bottom: inputs → optional → markup → breakdown → prices (SC-010, item 1)", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     const inputs = screen.getByText(t.sections.inputs);
     const optional = screen.getByText(t.sections.optional);
@@ -56,7 +68,7 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
   });
 
   it("shows an ⓘ info tip on each section title (item 8)", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     expect(screen.getByRole("button", { name: t.sectionInfo.inputs.label })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.sectionInfo.optional.label })).toBeInTheDocument();
@@ -65,14 +77,14 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
   });
 
   it("presents the calculator title through a focusable page header", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     const heading = screen.getByRole("heading", { name: /calcular/i });
     expect(heading).toHaveAttribute("tabindex", "-1");
   });
 
   it("carries no tax/imposto input (FR-021) and keeps the free-tier note (US6)", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     expect(screen.queryByText(/imposto/i)).toBeNull();
     expect(screen.getByText(t.freemiumNote)).toBeInTheDocument();
@@ -81,7 +93,7 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
 
 describe("CalcularPage — US2 transparency + validation", () => {
   it("labels the breakdown lines in pt-BR", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     expect(screen.getByText(t.results.material)).toBeInTheDocument();
     expect(screen.getByText(t.results.energy)).toBeInTheDocument();
@@ -90,7 +102,7 @@ describe("CalcularPage — US2 transparency + validation", () => {
   });
 
   it("rejects an invalid roll weight with a pt-BR message and hides the price (SC-008)", async () => {
-    render(<CalcularPage />);
+    renderPage();
 
     // Query by accessible name (the aria-hidden "*" is excluded), like the Playwright e2e.
     fireEvent.change(screen.getByRole("textbox", { name: t.fields.rollWeight }), {
@@ -105,12 +117,12 @@ describe("CalcularPage — US2 transparency + validation", () => {
   });
 });
 
-// US4 (optional labor + admin folded into custo_total) + US5 (marketplace fee gross-up). The
-// labor section sits between the optional adjustments and markup; the marketplace section is the
-// last block on the screen. Both default to 0 → the seed price is unchanged and no channel exists.
-describe("CalcularPage — US4 labor/admin + US5 marketplace", () => {
+// US4 (optional labor + admin folded into custo_total) + US1 multi-channel marketplace. The labor
+// section sits between the optional adjustments and markup; the marketplace section is the last
+// block, starting with one Mercado Livre channel slot whose prices show in "Preços por canal".
+describe("CalcularPage — US4 labor/admin + US1 marketplace", () => {
   it("renders the labor + admin breakdown rows (US4)", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     // "Mão de obra" is unique; "Outros custos" is shared with the adminTotal field label, so it
     // legitimately appears more than once (the field input + the breakdown row).
@@ -119,7 +131,7 @@ describe("CalcularPage — US4 labor/admin + US5 marketplace", () => {
   });
 
   it("shows an ⓘ info tip on the labor + marketplace section titles", () => {
-    render(<CalcularPage />);
+    renderPage();
 
     expect(screen.getByRole("button", { name: t.sectionInfo.labor.label })).toBeInTheDocument();
     expect(
@@ -127,28 +139,37 @@ describe("CalcularPage — US4 labor/admin + US5 marketplace", () => {
     ).toBeInTheDocument();
   });
 
-  it("shows the marketplace fee inputs but NO channel rows by default (FR-033)", () => {
-    render(<CalcularPage />);
+  it("starts with one Mercado Livre channel slot and its fee inputs (US1)", () => {
+    renderPage();
 
-    // The fee inputs are always visible (the accessible name carries the DS "opcional" badge).
+    // The default slot: a Marketplace selector defaulting to Mercado Livre + a Comissão fee input.
+    expect(screen.getByRole("combobox", { name: new RegExp(t.channels.marketplace) })).toHaveValue(
+      "MERCADO_LIVRE",
+    );
     expect(
-      screen.getByRole("textbox", { name: new RegExp(t.fields.marketplaceCommission) }),
+      screen.getByRole("textbox", {
+        name: (n) => n.startsWith(t.channels.commission) && !n.includes("mínima"),
+      }),
     ).toBeInTheDocument();
-    // …but with both fees at 0 there is no channel, so no anúncio/líquido rows.
-    expect(screen.queryByText(t.results.precoAnuncio)).toBeNull();
-    expect(screen.queryByText(t.results.recebidoLiquido)).toBeNull();
+    // The channel is listed together with the others under "Preços por canal".
+    expect(screen.getByText(t.channels.pricesTitle)).toBeInTheDocument();
   });
 
-  it("reveals the per-channel gross-up once a commission is set (US5 / FR-033)", async () => {
-    render(<CalcularPage />);
+  it("updates the channel's gross-up prices as its commission changes (US1)", () => {
+    renderPage();
 
     fireEvent.change(
-      screen.getByRole("textbox", { name: new RegExp(t.fields.marketplaceCommission) }),
-      { target: { value: "20" } },
+      screen.getByRole("textbox", {
+        name: (n) => n.startsWith(t.channels.commission) && !n.includes("mínima"),
+      }),
+      {
+        target: { value: "20" },
+      },
     );
 
-    // Both channels (varejo + atacado) surface the price-to-advertise + net-received rows.
-    expect((await screen.findAllByText(t.results.precoAnuncio)).length).toBeGreaterThan(0);
+    // Seed varejo 30,90 grossed up at 20% → 38,63 to advertise; anúncio + líquido rows are shown.
+    expect(screen.getByText("R$ 38,63")).toBeInTheDocument();
+    expect(screen.getAllByText(t.results.precoAnuncio).length).toBeGreaterThan(0);
     expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
   });
 });

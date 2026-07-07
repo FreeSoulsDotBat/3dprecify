@@ -1,21 +1,39 @@
 import { type CSSProperties } from "react";
-import { type Control, Controller, useForm } from "react-hook-form";
+import { type Control, Controller, useFieldArray, useForm } from "react-hook-form";
 
-import { computeFromForm } from "@/features/calculator/calculator-model";
+import { type ChannelSlotOutcome, computeFromForm } from "@/features/calculator/calculator-model";
+import { FeeSeal } from "@/features/calculator/fee-seal";
 import {
   type CalcFieldMeta,
   type CalcFormValues,
   calculatorResolver,
+  CHANNEL_FEE_FIELDS,
+  type ChannelSlotForm,
   defaultCalcValues,
+  defaultChannelSlot,
   LABOR_FIELDS,
   MANDATORY_FIELDS,
-  MARKETPLACE_FIELDS,
+  type MarketplaceId,
+  MARKETPLACE_OPTIONS,
   MARKUP_FIELDS,
+  type Modality,
+  MODALITY_OPTIONS,
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
+import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import type { PriceResult } from "@3dprecify/pricing-core";
-import { Alert, BreakdownRow, Card, Field, InfoTip, NumberField, PriceHero } from "@/shared/ui";
+import {
+  Alert,
+  BreakdownRow,
+  Button,
+  Card,
+  Field,
+  InfoTip,
+  NumberField,
+  PriceHero,
+  Select,
+} from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 // E1 calculator screen (US1 + US2 + US4 + US5). RHF (form state) + Zod (calculatorResolver) own
@@ -45,6 +63,18 @@ const captionText: CSSProperties = {
   margin: 0,
   fontSize: "var(--fs-caption)",
   color: "var(--text-muted)",
+};
+
+// "Preços por canal": the modality reads lighter than the marketplace name, and a divider separates
+// stacked channels — so a channel header is distinct from the group sub-title above it (T019b #4).
+const channelModality: CSSProperties = {
+  fontWeight: "var(--fw-regular)",
+  color: "var(--text-muted)",
+};
+
+const channelDivider: CSSProperties = {
+  borderTop: "1px solid var(--border-default)",
+  paddingTop: "var(--space-3)",
 };
 
 /** A section title with an inline ⓘ info tip explaining what/how the section calculates. */
@@ -197,57 +227,273 @@ function FieldGroup({
   );
 }
 
+/** One channel fee input, wired to `channels.{i}.{field}`. Its error comes from the per-slot
+ *  model outcome (not RHF), so a bad slot flags itself while the siblings keep computing. */
+function ChannelFeeField({
+  control,
+  index,
+  meta,
+  error,
+}: {
+  control: Control<CalcFormValues>;
+  index: number;
+  meta: (typeof CHANNEL_FEE_FIELDS)[number];
+  error?: string;
+}) {
+  return (
+    <Controller
+      control={control}
+      name={`channels.${index}.${meta.name}` as const}
+      render={({ field }) => (
+        <Field label={meta.label} optional error={error}>
+          {(p) => (
+            <NumberField
+              {...p}
+              currency={meta.currency}
+              unit={meta.unit}
+              name={field.name}
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              ref={field.ref}
+              error={Boolean(error)}
+            />
+          )}
+        </Field>
+      )}
+    />
+  );
+}
+
+/** One editable channel slot: marketplace + (conditional) modality selectors, the manual fee grid,
+ *  and a remove control. Changing the marketplace resets the modality to that market's default. */
+function ChannelSlot({
+  control,
+  index,
+  slot,
+  outcome,
+  onRemove,
+  onMarketplaceChange,
+}: {
+  control: Control<CalcFormValues>;
+  index: number;
+  slot: ChannelSlotForm;
+  outcome?: ChannelSlotOutcome;
+  onRemove: (index: number) => void;
+  onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
+}) {
+  const modalityOptions = MODALITY_OPTIONS[slot.marketplace] ?? [];
+  return (
+    <Card padding="md" className="flex flex-col gap-3" data-testid="channel-slot">
+      <div className="flex items-end gap-2">
+        <Controller
+          control={control}
+          name={`channels.${index}.marketplace` as const}
+          render={({ field }) => (
+            <Field label={t.channels.marketplace} className="flex-1" tightLabel>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={MARKETPLACE_OPTIONS}
+                  name={field.name}
+                  value={field.value}
+                  onChange={(e) => {
+                    field.onChange(e);
+                    onMarketplaceChange(index, e.target.value as MarketplaceId);
+                  }}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                />
+              )}
+            </Field>
+          )}
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => onRemove(index)}
+          aria-label={t.channels.removeChannel}
+        >
+          ✕
+        </Button>
+      </div>
+      {modalityOptions.length > 0 && (
+        <Controller
+          control={control}
+          name={`channels.${index}.modality` as const}
+          render={({ field }) => (
+            <Field label={t.channels.modality} tightLabel>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={modalityOptions}
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                />
+              )}
+            </Field>
+          )}
+        />
+      )}
+      <div style={gridCard}>
+        {CHANNEL_FEE_FIELDS.map((meta) => (
+          <ChannelFeeField
+            key={meta.name}
+            control={control}
+            index={index}
+            meta={meta}
+            error={outcome?.errors[meta.name]}
+          />
+        ))}
+      </div>
+      {/* Honesty seal (FR-107): where this slot's fees came from + how fresh they are; the ML
+          free-shipping subsidy carries its own "estimativa" seal (A4). */}
+      {outcome && (
+        <div className="flex flex-wrap items-center gap-2">
+          <FeeSeal state={outcome.seal} />
+          {outcome.freightIsEstimate && <FeeSeal state={{ kind: "estimate" }} />}
+        </div>
+      )}
+    </Card>
+  );
+}
+
+/** "Preços por canal": every slot's anúncio + líquido for varejo e atacado, shown together so the
+ *  seller compares channels at a glance. A slot with an inline error shows a note, not stale prices. */
+function ChannelPrices({
+  values,
+  channelOutcomes,
+}: {
+  values: CalcFormValues;
+  channelOutcomes: ChannelSlotOutcome[];
+}) {
+  if (channelOutcomes.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <p style={sectionLabel}>{t.channels.pricesTitle}</p>
+      <Card padding="md" className="flex flex-col gap-4">
+        {channelOutcomes.map((oc, i) => {
+          const slot = values.channels[i];
+          const name = t.marketplaceNames[slot.marketplace] ?? t.channels.channelFallback;
+          const modName = slot.modality ? t.modalityNames[slot.modality] : "";
+          const r = oc.result;
+          // Three states: a valid priced channel shows its rows; a valid slot with no fee yet shows
+          // a hint (base==anúncio rows would just echo the headline); a bad slot shows its note.
+          const priced = r && r.error === null && oc.hasFee;
+          return (
+            <div
+              key={i}
+              className="flex flex-col gap-1"
+              data-testid="channel-price"
+              style={i > 0 ? channelDivider : undefined}
+            >
+              <p style={sectionLabel}>
+                {name}
+                {modName && <span style={channelModality}> · {modName}</span>}
+              </p>
+              {priced ? (
+                <>
+                  <p style={captionText}>{t.captions.varejo}</p>
+                  <BreakdownRow label={t.results.precoAnuncio} value={r.precoAnuncioVarejo ?? 0} />
+                  <BreakdownRow
+                    label={t.results.recebidoLiquido}
+                    value={r.recebidoLiquidoVarejo ?? 0}
+                  />
+                  <p style={{ ...captionText, marginTop: "var(--space-2)" }}>
+                    {t.captions.atacado}
+                  </p>
+                  <BreakdownRow label={t.results.precoAnuncio} value={r.precoAnuncioAtacado ?? 0} />
+                  <BreakdownRow
+                    label={t.results.recebidoLiquido}
+                    value={r.recebidoLiquidoAtacado ?? 0}
+                  />
+                </>
+              ) : (
+                <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>
+              )}
+            </div>
+          );
+        })}
+      </Card>
+    </div>
+  );
+}
+
 /**
- * US5 marketplace gross-up. The fee inputs are always visible (default 0 → no channel); the
- * channel prices appear ONLY once a fee is set (`result.marketplace` non-null — FR-033). For
- * each channel we show the price to advertise (so the base price nets out after commission +
- * fixed fee) and what actually lands after those deductions.
+ * US1 multi-channel marketplace pricing. Starts with one Mercado Livre slot; the user adds/removes
+ * slots, picks each marketplace + modality, enters (or, in US2, pre-fills) its fees, and reads every
+ * channel's grossed-up anúncio + líquido (varejo e atacado) together in "Preços por canal". Each
+ * slot validates in isolation — commission ≥ 100% errors only its slot (SC-107).
  */
 function MarketplaceSection({
   control,
-  result,
+  values,
+  fields,
+  channelOutcomes,
+  onAppend,
+  onRemove,
+  onMarketplaceChange,
 }: {
   control: Control<CalcFormValues>;
-  result: PriceResult | null;
+  values: CalcFormValues;
+  fields: { id: string }[];
+  channelOutcomes: ChannelSlotOutcome[];
+  onAppend: (slot: ChannelSlotForm) => void;
+  onRemove: (index: number) => void;
+  onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
 }) {
-  const marketplace = result?.marketplace ?? null;
   return (
-    <div className="flex flex-col gap-2">
-      <FieldGroup
-        control={control}
-        title={t.sections.marketplace}
-        info={t.sectionInfo.marketplace}
-        fields={MARKETPLACE_FIELDS}
-      />
-      {marketplace && (
-        <Card padding="md">
-          <p style={sectionLabel}>{t.captions.varejo}</p>
-          <BreakdownRow label={t.results.precoAnuncio} value={marketplace.precoAnuncioVarejo} />
-          <BreakdownRow
-            label={t.results.recebidoLiquido}
-            value={marketplace.recebidoLiquidoVarejo}
+    <div className="flex flex-col gap-3">
+      <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
+      <div className="flex flex-col gap-3">
+        {fields.map((f, i) => (
+          <ChannelSlot
+            key={f.id}
+            control={control}
+            index={i}
+            slot={values.channels[i]}
+            outcome={channelOutcomes[i]}
+            onRemove={onRemove}
+            onMarketplaceChange={onMarketplaceChange}
           />
-          <p style={{ ...sectionLabel, marginTop: "var(--space-2)" }}>{t.captions.atacado}</p>
-          <BreakdownRow label={t.results.precoAnuncio} value={marketplace.precoAnuncioAtacado} />
-          <BreakdownRow
-            label={t.results.recebidoLiquido}
-            value={marketplace.recebidoLiquidoAtacado}
-          />
-        </Card>
-      )}
+        ))}
+      </div>
+      <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
+        {t.channels.addChannel}
+      </Button>
+      <ChannelPrices values={values} channelOutcomes={channelOutcomes} />
     </div>
   );
 }
 
 export function CalcularPage() {
-  const { control, watch } = useForm<CalcFormValues>({
+  const { control, watch, setValue } = useForm<CalcFormValues>({
     defaultValues: defaultCalcValues,
     resolver: calculatorResolver,
     mode: "onChange",
   });
+  const { fields, append, remove } = useFieldArray({ control, name: "channels" });
+
+  // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
+  // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local.
+  const { catalog, source } = useFeeCatalog();
 
   const values = watch();
-  const { result } = computeFromForm(values);
+  const { result, channels: channelOutcomes } = computeFromForm(values, {
+    catalog,
+    source,
+    now: Date.now(),
+  });
+
+  // Switching a slot's marketplace resets its modality to that market's default (or none), so a
+  // stale ML "Clássico" never lingers on a Shopee slot.
+  const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
+    const first = (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality;
+    setValue(`channels.${index}.modality`, first);
+  };
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
@@ -288,9 +534,17 @@ export function CalcularPage() {
         <Alert tone="danger">{t.invalidNote}</Alert>
       )}
 
-      {/* (6) Marketplace — the fee inputs live at the bottom (default 0 → no channel); the
-          per-channel gross-up appears only once a fee is set (US5 / FR-033). */}
-      <MarketplaceSection control={control} result={result} />
+      {/* (6) Marketplace — one slot per channel (add/remove); each channel's grossed-up anúncio +
+          líquido for varejo e atacado are read together below in "Preços por canal" (US1). */}
+      <MarketplaceSection
+        control={control}
+        values={values}
+        fields={fields}
+        channelOutcomes={channelOutcomes}
+        onAppend={append}
+        onRemove={remove}
+        onMarketplaceChange={handleMarketplaceChange}
+      />
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>

@@ -43,8 +43,6 @@ export const messages = {
       adminTotal: "Outros custos",
       markupVarejo: "Markup varejo",
       markupAtacado: "Markup atacado",
-      marketplaceCommission: "Comissão do canal",
-      marketplaceFixedFee: "Taxa fixa",
     },
     // avgPower tooltip is a mandated clarification (FR-022): the real average draw, not
     // the nameplate power printed on the machine.
@@ -119,6 +117,47 @@ export const messages = {
       atacado: "Atacado",
       markup: "markup",
       derivedFrom: "custo total ×",
+    },
+    // US1 — multi-channel marketplace pricing. Each slot names a marketplace + modality and its
+    // fees; "Preços por canal" shows every slot's anúncio + líquido for varejo e atacado together.
+    channels: {
+      addChannel: "Adicionar canal",
+      removeChannel: "Remover canal",
+      marketplace: "Marketplace",
+      modality: "Modalidade",
+      commission: "Comissão",
+      fixedFee: "Taxa fixa",
+      minPerItem: "Comissão mínima/item",
+      freight: "Frete",
+      freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
+      pricesTitle: "Preços por canal",
+      channelFallback: "Canal",
+      errorRow: "Corrija os campos deste canal para ver os preços.",
+      noFeeHint: "Informe a comissão do canal para ver os preços.",
+    },
+    // US2 — honesty seal (FR-107): where a slot's fee numbers came from and how fresh they are. The
+    // reference/embedded states append the source + review date; the estimate marks the ML freight
+    // subsidy as a labelled estimate (A4). Never asserts a fabricated number is exact.
+    seals: {
+      reference: "Referência",
+      updatedOn: "atualizada em",
+      outdated: "pode estar desatualizada",
+      embedded: "referência embutida (offline)",
+      adjusted: "ajustado por você",
+      none: "sem referência — informe as taxas",
+      estimate: "estimativa de frete",
+    },
+    marketplaceNames: {
+      MERCADO_LIVRE: "Mercado Livre",
+      SHOPEE: "Shopee",
+      AMAZON: "Amazon",
+      OUTRO: "Outro",
+    },
+    modalityNames: {
+      CLASSICO: "Clássico",
+      PREMIUM: "Premium",
+      PROFISSIONAL: "Profissional",
+      INDIVIDUAL: "Individual",
     },
     invalidNote: "Confira os campos destacados para ver o preço.",
     freemiumNote: "Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium.",

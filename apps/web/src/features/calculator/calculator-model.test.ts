@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { type CalcFormValues, defaultCalcValues } from "./calculator-schema";
+import {
+  type CalcFormValues,
+  type ChannelSlotForm,
+  defaultCalcValues,
+  defaultChannelSlot,
+} from "./calculator-schema";
 import { computeFromForm, formatBRL } from "./calculator-model";
 
 // E1 adapter (US1 + US2). We assert the form-string → parse → validate → compute → format
@@ -29,8 +34,7 @@ const canonical: CalcFormValues = {
   adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
-  marketplaceCommissionPct: "0",
-  marketplaceFixedFee: "0",
+  channels: [],
 };
 
 describe("computeFromForm — canonical vector flows through the engine (SC-001)", () => {
@@ -138,6 +142,64 @@ describe("computeFromForm — per-field validation (never coerce a bad string to
     expect(r.ok).toBe(false);
     expect(r.fieldErrors.costPerRoll).toBeTruthy();
     expect(r.fieldErrors.rollWeightKg).toBeTruthy();
+  });
+});
+
+describe("computeFromForm — channels adapter (US1, per-slot isolation)", () => {
+  const slot = (over: Partial<ChannelSlotForm>): ChannelSlotForm => ({
+    ...defaultChannelSlot(),
+    ...over,
+  });
+
+  it("gross-ups each channel and aligns the result to its form slot", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [
+        slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" }),
+        slot({ marketplace: "SHOPEE", modality: "", commissionPct: "20", fixedFee: "4" }),
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect(r.channels).toHaveLength(2);
+    // ML Clássico 12% + R$6,75 on varejo 42,98 → 56,51; nets back to 42,98.
+    expect(r.channels[0].errors).toEqual({});
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
+    // Shopee 20% + R$4 → 58,73.
+    expect(r.channels[1].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+  });
+
+  it("a commission ≥ 100% errors ONLY its slot; the siblings still compute (SC-107)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [
+        slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" }),
+        slot({ marketplace: "AMAZON", modality: "", commissionPct: "100" }),
+        slot({ marketplace: "SHOPEE", modality: "", commissionPct: "20", fixedFee: "4" }),
+      ],
+    });
+    expect(r.ok).toBe(true); // the main price is unaffected by a bad channel
+    expect(r.channels[1].errors.commissionPct).toMatch(/100%/);
+    expect(r.channels[1].result).toBeNull();
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
+    expect(r.channels[2].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+  });
+
+  it("a non-numeric channel fee errors its slot without a NaN", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [slot({ commissionPct: "abc" })],
+    });
+    expect(r.channels[0].errors.commissionPct).toBeTruthy();
+    expect(r.channels[0].result).toBeNull();
+  });
+
+  it("blank channel fees are a valid zero-fee channel (anúncio == base)", () => {
+    const r = computeFromForm({ ...canonical, channels: [slot({ modality: "" })] });
+    expect(r.channels[0].errors).toEqual({});
+    // commission 0 + fixed 0 → announce equals the base varejo price 42,98.
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(42.98, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
   });
 });
 

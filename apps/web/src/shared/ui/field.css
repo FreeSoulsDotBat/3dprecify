@@ -22,6 +22,11 @@
   color: var(--text-strong);
   letter-spacing: var(--tracking-snug);
 }
+/* Standalone full-width control (e.g. a select) whose label never wraps: reserve one line,
+   so it doesn't inherit the 2-line reservation the 2-col grids use for baseline alignment. */
+.tf-field__label--tight {
+  min-height: calc(var(--lh-snug) * 1em);
+}
 .tf-field__req {
   color: var(--energy);
   font-weight: var(--fw-bold);
@@ -80,7 +85,11 @@
 .tf-inputwrap--error {
   border-color: var(--danger);
 }
+/* Keep the border RED while an invalid field is focused: without this, `.tf-inputwrap:focus-within`
+   (same specificity, declared earlier) would repaint it the purple focus-ring colour and the field
+   would stop looking like an error. The danger-tinted ring below replaces the purple halo too. */
 .tf-inputwrap--error:focus-within {
+  border-color: var(--danger);
   box-shadow: 0 0 0 var(--ring-width) color-mix(in srgb, var(--danger) 38%, transparent);
 }
 .tf-inputwrap--disabled {

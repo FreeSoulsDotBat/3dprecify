@@ -9,6 +9,9 @@ export type { FieldProps, FieldRenderProps } from "./field";
 export { NumberField, parseDecimal, formatDecimal } from "./number-field";
 export type { NumberFieldProps, NumberFieldSize } from "./number-field";
 
+export { Select } from "./select";
+export type { SelectProps, SelectOption } from "./select";
+
 export { Card } from "./card";
 export type { CardProps, CardVariant, CardPadding } from "./card";
 

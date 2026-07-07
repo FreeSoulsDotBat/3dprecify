@@ -1,0 +1,26 @@
+/* tf-Select — native <select> in the shared tf-input frame. Strips the OS chrome and
+   draws a token-driven caret so it matches NumberField across light/dark themes. */
+.tf-selectwrap {
+  cursor: pointer;
+  padding-right: var(--space-3);
+  position: relative;
+}
+.tf-select {
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  text-align: left;
+  /* Leave room for the caret so long option labels never sit under it. */
+  padding-right: var(--space-5);
+}
+.tf-select__caret {
+  position: absolute;
+  right: var(--space-4);
+  color: var(--text-strong);
+  font-size: var(--fs-sm);
+  pointer-events: none;
+  user-select: none;
+}
+.tf-selectwrap.tf-inputwrap--disabled .tf-select {
+  cursor: not-allowed;
+}

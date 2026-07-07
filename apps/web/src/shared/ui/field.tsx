@@ -14,6 +14,9 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
   required?: boolean;
   /** Shows a muted "opcional" tag on the right of the label. */
   optional?: boolean;
+  /** Reserve only ONE line for the label (default reserves two, to baseline-align 2-col grids).
+   *  Use for a standalone full-width control whose label never wraps (e.g. a select). */
+  tightLabel?: boolean;
   hint?: ReactNode;
   /** Error message — replaces the hint and sets aria-invalid on the control. */
   error?: ReactNode;
@@ -30,6 +33,7 @@ export function Field({
   htmlFor,
   required = false,
   optional = false,
+  tightLabel = false,
   hint,
   error,
   children,
@@ -48,7 +52,10 @@ export function Field({
   return (
     <div className={`tf-field ${className}`.trim()} {...rest}>
       {label && (
-        <label className="tf-field__label" htmlFor={id}>
+        <label
+          className={`tf-field__label${tightLabel ? " tf-field__label--tight" : ""}`}
+          htmlFor={id}
+        >
           {label}
           {required && (
             <span className="tf-field__req" aria-hidden="true">

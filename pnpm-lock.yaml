@@ -101,6 +101,9 @@ importers:
       firebase:
         specifier: ^12.15.0
         version: 12.15.0
+      idb-keyval:
+        specifier: ^6.2.6
+        version: 6.2.6
       react:
         specifier: 'catalog:'
         version: 19.2.7
@@ -4075,6 +4078,9 @@ packages:
   iconv-lite@0.7.2:
     resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
+
+  idb-keyval@6.2.6:
+    resolution: {integrity: sha512-FY64UEhw+5liMzMQ1R9Mw6AF0+wyBrg1CIA1z4CjI/EvT5ty/SvQcWZgd8s9sgaNhX10Y8UzScTh89tEAls5nA==}
 
   idb@7.1.1:
     resolution: {integrity: sha512-gchesWBzyvGHRO9W8tzUWFDycow5gwjvFKfyV9FF32Y7F50yZMp7mP+T2mJIWFx49zicqyC4uefHM17o6xKIVQ==}
@@ -10928,6 +10934,8 @@ snapshots:
   iconv-lite@0.7.2:
     dependencies:
       safer-buffer: 2.1.2
+
+  idb-keyval@6.2.6: {}
 
   idb@7.1.1: {}
 
