@@ -228,6 +228,15 @@ Two clarifications applied during the pre-merge review of the E1 implementation:
   `"CATALOG" | "CATALOG_STALE" | "MANUAL" | "NO_REFERENCE"` seal enum drawn in the Part 2 block (line 81);
   that provenance/seal classification lives in the FE `FeeSealState.kind` (ADR-0010 P2), computed from the
   entry + freshness. Two distinct concerns that happened to share a name in the draft.
+- **Field-name/shape reconciliation (as-built vs the Part 2 draft block).** The Part 2 contract sketch
+  predates the implementation and keeps draft labels the shipped types refined. As-built in
+  `packages/pricing-core/src/index.ts` (the source of truth): the per-level prices are
+  `precoAnuncioVarejo`/`recebidoLiquidoVarejo`/`precoAnuncioAtacado`/`recebidoLiquidoAtacado` (each
+  `number | null`, not `anuncio*`/`liquido*`); `marketplace` (`string | null`) and `feeDeterminants`
+  (`Record<string,string> | null`) are opaque, not closed enums; `error` is `string | null`; and
+  **`PriceResult.includeInHeadline` (the "Incluir marketplaces no preço" toggle, FR-113 / 005-US4) is NOT
+  shipped in this MVP** — the toggle is tracked pending in `tasks.md`. Part 2 stays as the original design
+  intent; the exported engine types are authoritative.
 
 ### Sources verified (2026-07-06)
 - Amazon Brasil — referral commission 10–15 % by category, **referral minimum R$ 1,00**, plan Individual **R$ 2,00/item** vs Profissional R$ 19/mês (1º ano grátis): <https://venda.amazon.com.br/precos> · corrob. <https://gosmarter.com.br/taxas-amazon-brasil-2026/>

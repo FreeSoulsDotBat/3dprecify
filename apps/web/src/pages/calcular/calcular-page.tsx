@@ -36,13 +36,16 @@ import {
 } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// E1 calculator screen (US1 + US2 + US4 + US5). RHF (form state) + Zod (calculatorResolver) own
-// the pt-BR inputs; the price + breakdown come from one synchronous computeFromForm pass over the
-// canonical pricing-core engine (recompute on every change, deterministic, offline — FR-036/
-// FR-039). US1 = a correct retail + wholesale price (PriceHero); US2 = the transparent per-line
-// breakdown that visibly sums to custo_total + the markup derivation (BreakdownRow); US4 = the
-// optional labor + admin costs that fold into custo_total; US5 = the marketplace fee gross-up
-// (channel prices shown only once a fee is set — FR-033). No persistence / paywall (US6).
+// E1 calculator screen. The US refs below are spec 004's user stories — NOT 005's (005-US4 is the
+// pending "Incluir marketplaces no preço" toggle, not delivered in this MVP). RHF (form state) + Zod
+// (calculatorResolver) own the pt-BR inputs; the price + breakdown come from one synchronous
+// computeFromForm pass over the canonical pricing-core engine (recompute on every change,
+// deterministic, offline — FR-036/FR-039). 004-US1 = a correct retail + wholesale price (PriceHero);
+// 004-US2 = the transparent per-line breakdown that visibly sums to custo_total + the markup
+// derivation (BreakdownRow); 004-US4 = the optional labor + admin costs that fold into custo_total;
+// 004-US5 = the marketplace fee gross-up (channel prices shown only once a fee is set — FR-033). No
+// persistence / paywall (004-US6). The 005 multi-channel expansion (channels[] + honesty seals) layers
+// on top; its US3–US6 (toggle, itemized Outros custos, offline cache) remain pending (tasks.md).
 
 const t = messages.calculator;
 
