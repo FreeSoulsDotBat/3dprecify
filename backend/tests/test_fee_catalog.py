@@ -61,15 +61,17 @@ def test_fee_catalog_computes_no_price(client: TestClient) -> None:
 
 
 def test_served_artifact_is_bundled_inside_the_app_package() -> None:
-    # The image builds with `COPY app ./app`; the served artifact MUST resolve to a path INSIDE the app
-    # package so it is carried into the container. If it ever moves back outside app/, the endpoint 500s
-    # in prod — silently, since the client falls back to its seed. This guard makes the repo path ==
-    # the container path by construction and fails FIRST on any such regression.
+    # The image builds with `COPY app ./app`; the served artifact MUST resolve to a path
+    # INSIDE the app package so it is carried into the container. If it moves back outside
+    # app/, the endpoint 500s in prod — silently, since the client falls back to its seed.
+    # This guard makes the repo path == the container path by construction and fails FIRST
+    # on any such regression.
     import app as app_pkg
-    from app.api.fee_catalog import _CATALOG_PATH as endpoint_path
+    from app.api import fee_catalog
 
     app_dir = Path(app_pkg.__file__).resolve().parent
-    resolved = endpoint_path.resolve()
+    # White-box: assert the endpoint's own resolved artifact path (an internal) lives in app/.
+    resolved = fee_catalog._CATALOG_PATH.resolve()  # pyright: ignore[reportPrivateUsage]
     assert resolved.is_file(), f"served catalog missing at {resolved}"
     assert app_dir in resolved.parents, (
         f"{resolved} must live under the app package ({app_dir}) so `COPY app ./app` bundles it"

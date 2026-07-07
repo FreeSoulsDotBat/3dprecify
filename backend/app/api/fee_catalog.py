@@ -20,9 +20,10 @@ from app.errors import CamelModel
 
 router = APIRouter(tags=["fee-catalog"])
 
-# backend/app/api/fee_catalog.py → parents[1] == backend/app; the artifact lives beside the app at
-# app/data/catalog.json. `COPY app ./app` carries it into the image, so this path is IDENTICAL in the
-# repo and the container — no Docker/CI/deploy build-context change (placement decided w/ owner 2026-07-07).
+# backend/app/api/fee_catalog.py → parents[1] == backend/app; the artifact lives beside the
+# app at app/data/catalog.json. `COPY app ./app` carries it into the image, so this path is
+# IDENTICAL in the repo and the container — no Docker/CI/deploy build-context change
+# (placement decided with owner 2026-07-07).
 _CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "catalog.json"
 
 
