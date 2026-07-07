@@ -1,10 +1,53 @@
-// Canonical 3D-print pricing core — E1 full corrected model. Pure, deterministic, offline.
-// Spec: specs/004-e1-pricing-model/{spec,contracts/pricing-core}.md · ADR-0008 (money) · ADR-0009 (machine).
-// The backend never recomputes any price (FR-036); this module is the single source of the formula.
+// Canonical 3D-print pricing core — E1 v3: itemized "outros custos" + multi-channel marketplace
+// pricing. Pure, deterministic, offline. Specs: specs/005-marketplace-multichannel/spec.md (on top
+// of specs/004-e1-pricing-model). ADR-0008 (money) · ADR-0009 (machine) · ADR-0011 (3.0.0 result
+// contract). The backend never recomputes any price (FR-118); this module is the single source of
+// the formula.
+import { grossUp, type ChannelFees, type PriceBand } from "./channels";
 import { Decimal, toMoney, sumMoney } from "./rounding";
 
-// A25: markup base moved material → custo_total, a semantic change ⇒ MAJOR bump (implicit v1 = 001 material+markup).
-export const PRICING_MODEL_VERSION = "2.0.0";
+// 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
+// breaking to the 2.0.0 result contract ⇒ MAJOR bump. The constant tracks the package.json major so
+// a saved calc records which formula produced it.
+export const PRICING_MODEL_VERSION = "3.0.0";
+
+/** One named "outros custos" sub-cost; its value folds into custo_total exactly as 004's adminTotal. */
+export interface OtherCostItem {
+  name: string;
+  value: number; // R$, ≥ 0
+}
+
+/**
+ * One marketplace listing channel to price. `marketplace`/`feeDeterminants` are opaque provenance
+ * labels the engine echoes back — it never resolves fees (the client passes already-resolved fees in,
+ * FR-110 / A6). The Amazon per-item commission floor (`minPerItem`) and the price-band fixed-point
+ * arrive in US1 (SC-108 / SC-112); Foundational handles %-commission + fixedFee + generic freight.
+ */
+export interface ChannelInput {
+  marketplace?: string;
+  feeDeterminants?: Record<string, string>;
+  commissionPct: number; // %, [0, 100) — the base commission (a matching priceBand overrides it)
+  fixedFee?: number; // R$, ≥ 0, default 0
+  minPerItem?: number; // R$, ≥ 0, default 0 — Amazon per-item commission floor
+  freightCost?: number; // R$, ≥ 0, default 0 — deducted from líquido (never added to custo_total)
+  priceBands?: PriceBand[]; // fee by listing-price band (Shopee / ML custo fixo) — resolved by pricing-core
+}
+
+/**
+ * Per-channel gross-up outcome (varejo + atacado), shown together in "Preços por canal" (FR-112). A
+ * slot that fails its own validation carries an `error` and null prices — its siblings still compute
+ * (per-slot isolation, SC-107); the engine never throws for one bad channel.
+ */
+export interface ChannelResult {
+  marketplace: string | null;
+  feeDeterminants: Record<string, string> | null;
+  precoAnuncioVarejo: number | null;
+  recebidoLiquidoVarejo: number | null;
+  precoAnuncioAtacado: number | null;
+  recebidoLiquidoAtacado: number | null;
+  freightCost: number;
+  error: string | null;
+}
 
 export interface PriceInput {
   costPerRoll: number; // R$, ≥ 0
@@ -22,18 +65,11 @@ export interface PriceInput {
   finishRatePerHour?: number; // R$/h, ≥ 0, default 0
   laborHours?: number; // h, ≥ 0, default 0
   laborRatePerHour?: number; // R$/h, ≥ 0, default 0
-  adminTotal?: number; // R$, ≥ 0, default 0
+  otherCosts?: OtherCostItem[]; // 0..N named sub-costs; Σ value = admin (replaces 004 `adminTotal`)
   markupVarejoPct: number; // %, ≥ 0
   markupAtacadoPct: number; // %, ≥ 0
-  marketplaceCommissionPct?: number; // %, in [0, 100), default 0
-  marketplaceFixedFee?: number; // R$, ≥ 0, default 0
-}
-
-export interface MarketplaceResult {
-  precoAnuncioVarejo: number;
-  recebidoLiquidoVarejo: number;
-  precoAnuncioAtacado: number;
-  recebidoLiquidoAtacado: number;
+  channels?: ChannelInput[]; // 0..N listing channels (replaces the 004 single marketplace fee)
+  catalogVersion?: string; // provenance of the resolved fees, echoed onto the result; null when all-manual
 }
 
 export interface PriceResult {
@@ -47,7 +83,8 @@ export interface PriceResult {
   custoTotal: number;
   precoVarejo: number;
   precoAtacado: number;
-  marketplace: MarketplaceResult | null;
+  channels: ChannelResult[];
+  catalogVersion: string | null;
   modelVersion: string;
 }
 
@@ -83,11 +120,11 @@ export function computeCalculator(input: PriceInput): PriceResult {
   const finishRatePerHour = input.finishRatePerHour ?? 0;
   const laborHours = input.laborHours ?? 0;
   const laborRatePerHour = input.laborRatePerHour ?? 0;
-  const adminTotal = input.adminTotal ?? 0;
-  const marketplaceCommissionPct = input.marketplaceCommissionPct ?? 0;
-  const marketplaceFixedFee = input.marketplaceFixedFee ?? 0;
+  const otherCosts = input.otherCosts ?? [];
+  const channels = input.channels ?? [];
 
-  // Validation (FR-038 / SC-008) — never compute a bad number.
+  // Validation (FR-038 / SC-008) — never compute a bad number. Shared cost inputs still throw
+  // (a bad denominator dooms the whole calc); per-channel validation lives in computeChannel.
   assertNonNegative(input.costPerRoll, "costPerRoll");
   assertPositive(input.rollWeightKg, "rollWeightKg");
   assertNonNegative(input.printGrams, "printGrams");
@@ -103,20 +140,9 @@ export function computeCalculator(input: PriceInput): PriceResult {
   assertNonNegative(finishRatePerHour, "finishRatePerHour");
   assertNonNegative(laborHours, "laborHours");
   assertNonNegative(laborRatePerHour, "laborRatePerHour");
-  assertNonNegative(adminTotal, "adminTotal");
+  otherCosts.forEach((c, i) => assertNonNegative(c.value, `otherCosts[${i}].value`));
   assertNonNegative(input.markupVarejoPct, "markupVarejoPct");
   assertNonNegative(input.markupAtacadoPct, "markupAtacadoPct");
-  assertNonNegative(marketplaceFixedFee, "marketplaceFixedFee");
-  if (
-    !Number.isFinite(marketplaceCommissionPct) ||
-    marketplaceCommissionPct < 0 ||
-    marketplaceCommissionPct >= 100
-  ) {
-    throw new ValidationError(
-      "marketplaceCommissionPct must be a finite number in [0, 100)",
-      "marketplaceCommissionPct",
-    );
-  }
 
   // Full-precision intermediates (Decimal); quantize only at emit (ADR-0008).
   // Production inputs — the three lines the failure factor covers (A16.4).
@@ -150,7 +176,9 @@ export function computeCalculator(input: PriceInput): PriceResult {
   // Cost lines OUTSIDE the failure base (OQ-8).
   const finishingR = toMoney(new Decimal(finishTimeHours).times(finishRatePerHour)); // FR-028
   const laborR = toMoney(new Decimal(laborHours).times(laborRatePerHour));
-  const adminR = toMoney(adminTotal);
+  // FR-114: "outros custos" is now a slot of named sub-costs; admin = Σ value (each rounded per
+  // ADR-0008). An empty slot ⇒ 0 — behaviourally identical to 004's single `adminTotal`.
+  const adminR = sumMoney(otherCosts.map((c) => toMoney(c.value)));
 
   const custoTotal = sumMoney([materialR, energyR, machineR, falhaR, finishingR, laborR, adminR]); // FR-029
 
@@ -162,18 +190,11 @@ export function computeCalculator(input: PriceInput): PriceResult {
     new Decimal(custoTotal).times(percentMultiplier(input.markupAtacadoPct)),
   );
 
-  // US5: basic single-channel marketplace gross-up over BOTH suggested prices (FR-031). No
-  // channel configured (commission AND fixed fee both 0) ⇒ no block, so the calculator stays
-  // clean for direct sellers.
-  const marketplace =
-    marketplaceCommissionPct === 0 && marketplaceFixedFee === 0
-      ? null
-      : marketplaceGrossUp(
-          precoVarejo,
-          precoAtacado,
-          marketplaceCommissionPct,
-          marketplaceFixedFee,
-        );
+  // Multi-channel gross-up (FR-110/112): each configured channel is priced independently over BOTH
+  // suggested prices and shown together ("Preços por canal"). No marketplace fee is EVER folded into
+  // custo_total. Foundational covers %-commission + fixedFee + a generic freightCost; the Amazon
+  // per-item floor + price-band fixed-point + per-slot error isolation land in US1.
+  const channelResults = channels.map((ch) => computeChannel(precoVarejo, precoAtacado, ch));
 
   return {
     material: materialR,
@@ -186,38 +207,69 @@ export function computeCalculator(input: PriceInput): PriceResult {
     custoTotal,
     precoVarejo,
     precoAtacado,
-    marketplace,
+    channels: channelResults,
+    catalogVersion: input.catalogVersion ?? null,
     modelVersion: PRICING_MODEL_VERSION,
   };
 }
 
 /**
- * Gross up each base price so that, after the channel takes `commissionPct` of the LISTED price
- * plus a `fixedFee`, the seller still nets the base (FR-031). Derived over the displayed (rounded)
- * base and displayed (rounded) list price — WYSIWYG, per ADR-0008:
- *   anúncio  = (base + fixedFee) / (1 − commissionPct/100)
- *   líquido  = anúncioRounded × (1 − commissionPct/100) − fixedFee   (nets back to base)
- * The denominator is safe: commissionPct is validated to [0, 100), so `keep` ∈ (0, 1].
+ * Price ONE channel over both base prices (FR-110/112). The client passes ALREADY-RESOLVED fees
+ * (commission %, fixed fee, per-item floor, freight, price bands); pricing-core owns the price-keyed
+ * math — the band fixed-point + the commission floor + the gross-up (see ./channels). A slot that
+ * fails its OWN validation returns an `error` with null prices and never throws, so its siblings keep
+ * computing (per-slot isolation, SC-107).
  */
-function marketplaceGrossUp(
+function computeChannel(
   precoVarejo: number,
   precoAtacado: number,
-  commissionPct: number,
-  fixedFee: number,
-): MarketplaceResult {
-  const keep = new Decimal(1).minus(new Decimal(commissionPct).dividedBy(100));
-  const listAndNet = (base: number): [anuncio: number, liquido: number] => {
-    const anuncioR = toMoney(new Decimal(base).plus(fixedFee).dividedBy(keep));
-    const liquidoR = toMoney(new Decimal(anuncioR).times(keep).minus(fixedFee));
-    return [anuncioR, liquidoR];
+  ch: ChannelInput,
+): ChannelResult {
+  const commissionPct = ch.commissionPct;
+  const fixedFee = ch.fixedFee ?? 0;
+  const minPerItem = ch.minPerItem ?? 0;
+  const freightCost = ch.freightCost ?? 0;
+
+  const shell: ChannelResult = {
+    marketplace: ch.marketplace ?? null,
+    feeDeterminants: ch.feeDeterminants ?? null,
+    precoAnuncioVarejo: null,
+    recebidoLiquidoVarejo: null,
+    precoAnuncioAtacado: null,
+    recebidoLiquidoAtacado: null,
+    freightCost: 0,
+    error: null,
   };
-  const [precoAnuncioVarejo, recebidoLiquidoVarejo] = listAndNet(precoVarejo);
-  const [precoAnuncioAtacado, recebidoLiquidoAtacado] = listAndNet(precoAtacado);
+  const fail = (error: string): ChannelResult => ({ ...shell, error });
+
+  if (!Number.isFinite(commissionPct) || commissionPct < 0 || commissionPct >= 100) {
+    return fail("commissionPct must be a finite number in [0, 100)");
+  }
+  if (!Number.isFinite(fixedFee) || fixedFee < 0)
+    return fail("fixedFee must be a finite number >= 0");
+  if (!Number.isFinite(minPerItem) || minPerItem < 0) {
+    return fail("minPerItem must be a finite number >= 0");
+  }
+  if (!Number.isFinite(freightCost) || freightCost < 0) {
+    return fail("freightCost must be a finite number >= 0");
+  }
+
+  const fees: ChannelFees = {
+    commissionPct,
+    fixedFee,
+    minPerItem,
+    freightCost,
+    priceBands: ch.priceBands,
+  };
+  const varejo = grossUp(precoVarejo, fees);
+  const atacado = grossUp(precoAtacado, fees);
   return {
-    precoAnuncioVarejo,
-    recebidoLiquidoVarejo,
-    precoAnuncioAtacado,
-    recebidoLiquidoAtacado,
+    ...shell,
+    freightCost,
+    precoAnuncioVarejo: varejo.anuncio,
+    recebidoLiquidoVarejo: varejo.liquido,
+    precoAnuncioAtacado: atacado.anuncio,
+    recebidoLiquidoAtacado: atacado.liquido,
   };
 }
 
@@ -225,3 +277,8 @@ function marketplaceGrossUp(
 function percentMultiplier(pct: number): Decimal {
   return new Decimal(1).plus(new Decimal(pct).dividedBy(100));
 }
+
+// The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
+// ./channels; re-export so consumers and tests reach them from the package entry.
+export { grossUp } from "./channels";
+export type { ChannelFees, ChannelLevel, PriceBand } from "./channels";

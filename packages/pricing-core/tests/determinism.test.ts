@@ -3,9 +3,9 @@ import { describe, it, expect } from "vitest";
 import { computeCalculator, PRICING_MODEL_VERSION } from "../src/index";
 import type { PriceInput } from "../src/index";
 
-// Cross-cutting guarantees (spec §9): the engine is a pure, offline, deterministic function of its
-// input — no Date/random/locale drift, no server round-trip — and every result carries the model
-// version so a saved calc records which formula produced it.
+// Cross-cutting guarantees (spec §9 / SC-110): the engine is a pure, offline, deterministic function
+// of its input — no Date/random/locale drift, no server round-trip — and every result carries the
+// model version so a saved calc records which formula produced it.
 
 const INPUT: PriceInput = {
   costPerRoll: 137.5,
@@ -23,14 +23,13 @@ const INPUT: PriceInput = {
   finishRatePerHour: 18,
   laborHours: 1.5,
   laborRatePerHour: 30,
-  adminTotal: 4,
+  otherCosts: [{ name: "Admin", value: 4 }],
   markupVarejoPct: 55,
   markupAtacadoPct: 35,
-  marketplaceCommissionPct: 16,
-  marketplaceFixedFee: 6,
+  channels: [{ marketplace: "MERCADO_LIVRE", commissionPct: 16, fixedFee: 6 }],
 };
 
-describe("computeCalculator — determinism (SC-012)", () => {
+describe("computeCalculator — determinism (SC-110)", () => {
   it("identical input → deeply-equal AND byte-identical result across repeated runs", () => {
     const a = computeCalculator(INPUT);
     const b = computeCalculator(INPUT);
@@ -39,14 +38,14 @@ describe("computeCalculator — determinism (SC-012)", () => {
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
   });
 
-  it("does not mutate its input", () => {
+  it("does not mutate its input (incl. nested otherCosts/channels)", () => {
     const snapshot = JSON.stringify(INPUT);
     computeCalculator(INPUT);
     expect(JSON.stringify(INPUT)).toBe(snapshot);
   });
 });
 
-describe("computeCalculator — single source + version stamp (SC-011)", () => {
+describe("computeCalculator — single source + version stamp (SC-109)", () => {
   it("returns a synchronous value (no async server round-trip)", () => {
     const r = computeCalculator(INPUT);
     expect(r).not.toBeInstanceOf(Promise);
@@ -54,7 +53,7 @@ describe("computeCalculator — single source + version stamp (SC-011)", () => {
 
   it("stamps every result with the model version", () => {
     const r = computeCalculator(INPUT);
-    expect(r.modelVersion).toBe("2.0.0");
+    expect(r.modelVersion).toBe("3.0.0");
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });

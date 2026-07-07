@@ -3,8 +3,9 @@ import { describe, it, expect } from "vitest";
 import { computeCalculator, ValidationError, PRICING_MODEL_VERSION } from "../src/index";
 import type { PriceInput } from "../src/index";
 
-// Canonical SC-001 vector (spec §3). The marketplace inputs (commission 20%, fixed fee 5) drive
-// the US5 single-channel gross-up (see the marketplace describe block below).
+// Canonical SC-001 vector (004 §3). Marketplace + admin start empty here so the vector maps onto the
+// documented cost breakdown + prices; the single-channel gross-up is exercised in its own block via
+// `channels` (3.0.0 shape — the 004 `marketplace`/`adminTotal` inputs are gone, ADR-0011 / A1).
 const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
@@ -21,11 +22,10 @@ const SC001: PriceInput = {
   finishRatePerHour: 10,
   laborHours: 0,
   laborRatePerHour: 0,
-  adminTotal: 0,
+  otherCosts: [],
   markupVarejoPct: 50,
   markupAtacadoPct: 30,
-  marketplaceCommissionPct: 20,
-  marketplaceFixedFee: 5,
+  channels: [],
 };
 
 describe("computeCalculator — canonical worked example (SC-001)", () => {
@@ -52,42 +52,59 @@ describe("computeCalculator — canonical worked example (SC-001)", () => {
     expect(r.precoAtacado).toBe(37.25);
   });
 
-  it("stamps modelVersion 2.0.0 (= PRICING_MODEL_VERSION)", () => {
-    expect(r.modelVersion).toBe("2.0.0");
+  it("no channel configured ⇒ channels is [] and catalogVersion null", () => {
+    expect(r.channels).toEqual([]);
+    expect(r.catalogVersion).toBeNull();
+  });
+
+  it("stamps modelVersion 3.0.0 (= PRICING_MODEL_VERSION)", () => {
+    expect(r.modelVersion).toBe("3.0.0");
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });
 
-describe("computeCalculator — marketplace gross-up (US5, SC-003)", () => {
-  it("grosses up BOTH prices so the seller nets the base after commission + fee (SC-003)", () => {
-    const r = computeCalculator(SC001); // commission 20%, fixed fee 5
-    expect(r.marketplace).not.toBeNull();
-    const m = r.marketplace!;
+describe("computeCalculator — single-channel gross-up (3.0.0 channels[])", () => {
+  it("grosses up BOTH prices so the seller nets the base after commission + fee (SC-003 → channels)", () => {
+    const r = computeCalculator({
+      ...SC001,
+      channels: [{ marketplace: "GENERIC", commissionPct: 20, fixedFee: 5 }],
+    });
+    expect(r.channels).toHaveLength(1);
+    const c = r.channels[0];
     // anúncio = (base + fixedFee) / (1 − commission/100)
-    expect(m.precoAnuncioVarejo).toBe(59.98); // (42,98 + 5) / 0,8
-    expect(m.precoAnuncioAtacado).toBe(52.81); // (37,25 + 5) / 0,8
-    // recebido líquido nets back to the base price (round-trip)
-    expect(m.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 42,98
-    expect(m.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 37,25
+    expect(c.precoAnuncioVarejo).toBe(59.98); // (42,98 + 5) / 0,8
+    expect(c.precoAnuncioAtacado).toBe(52.81); // (37,25 + 5) / 0,8
+    // recebido líquido nets back to the base price (round-trip; freightCost 0)
+    expect(c.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 42,98
+    expect(c.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 37,25
+    expect(c.freightCost).toBe(0);
+    expect(c.marketplace).toBe("GENERIC");
   });
 
-  it("both fees 0 ⇒ no marketplace block (null) — no channel configured", () => {
-    const r = computeCalculator({ ...SC001, marketplaceCommissionPct: 0, marketplaceFixedFee: 0 });
-    expect(r.marketplace).toBeNull();
+  it("no channels ⇒ empty channel list (direct seller, unchanged headline)", () => {
+    const r = computeCalculator({ ...SC001, channels: [] });
+    expect(r.channels).toEqual([]);
   });
 
-  it("a fixed fee with 0 commission still yields a block (fee-only channel)", () => {
-    const r = computeCalculator({ ...SC001, marketplaceCommissionPct: 0, marketplaceFixedFee: 2 });
-    expect(r.marketplace).not.toBeNull();
+  it("a fee-only channel (commission 0, fixed fee 2) still computes and nets to base", () => {
+    const r = computeCalculator({ ...SC001, channels: [{ commissionPct: 0, fixedFee: 2 }] });
+    expect(r.channels).toHaveLength(1);
     // commission 0 ⇒ anúncio = base + fee; líquido nets exactly back to base
-    expect(r.marketplace!.precoAnuncioVarejo).toBe(Number((r.precoVarejo + 2).toFixed(2)));
-    expect(r.marketplace!.recebidoLiquidoVarejo).toBe(r.precoVarejo);
+    expect(r.channels[0].precoAnuncioVarejo).toBe(Number((r.precoVarejo + 2).toFixed(2)));
+    expect(r.channels[0].recebidoLiquidoVarejo).toBe(r.precoVarejo);
   });
 
-  it("commission = 100 throws (gross-up denominator would be 0)", () => {
-    expect(() => computeCalculator({ ...SC001, marketplaceCommissionPct: 100 })).toThrow(
-      ValidationError,
-    );
+  it("a generic freightCost lowers the líquido by exactly that amount (never custo_total)", () => {
+    const r = computeCalculator({
+      ...SC001,
+      channels: [{ commissionPct: 0, fixedFee: 0, freightCost: 3 }],
+    });
+    const c = r.channels[0];
+    // commission 0, fee 0 ⇒ anúncio = base; líquido = base − freight
+    expect(c.precoAnuncioVarejo).toBe(r.precoVarejo);
+    expect(c.recebidoLiquidoVarejo).toBe(Number((r.precoVarejo - 3).toFixed(2)));
+    // custo_total is untouched by any channel fee/freight
+    expect(r.custoTotal).toBe(28.65);
   });
 });
 
@@ -128,7 +145,7 @@ describe("computeCalculator — edges & robustness", () => {
     expect(r.custoTotal).toBe(11.0);
   });
 
-  it("omitted optional fields default to 0", () => {
+  it("omitted optional fields default to 0 / empty", () => {
     const minimal: PriceInput = {
       costPerRoll: 100,
       rollWeightKg: 1,
@@ -146,16 +163,34 @@ describe("computeCalculator — edges & robustness", () => {
     expect(r.finishing).toBe(0);
     expect(r.labor).toBe(0);
     expect(r.admin).toBe(0);
+    expect(r.channels).toEqual([]);
     // material 10.00 (no waste) + energy 0.50 + machine 10.00 = custo_total 20.50
     expect(r.material).toBe(10.0);
     expect(r.custoTotal).toBe(20.5);
   });
 
-  it("labor and admin fold into custo_total (US4 formula already in the engine)", () => {
-    const r = computeCalculator({ ...SC001, laborHours: 2, laborRatePerHour: 25, adminTotal: 3 });
+  it("itemized otherCosts sum into custo_total exactly as a single admin did (FR-114)", () => {
+    const r = computeCalculator({
+      ...SC001,
+      laborHours: 2,
+      laborRatePerHour: 25,
+      otherCosts: [{ name: "Embalagem", value: 3 }],
+    });
     expect(r.labor).toBe(50.0);
     expect(r.admin).toBe(3.0);
     expect(r.custoTotal).toBe(81.65); // 28.65 + 50 + 3
+  });
+
+  it("multiple named sub-costs sum (each rounded) into admin", () => {
+    const r = computeCalculator({
+      ...SC001,
+      otherCosts: [
+        { name: "Embalagem", value: 3 },
+        { name: "Frete", value: 2 },
+      ],
+    });
+    expect(r.admin).toBe(5.0);
+    expect(r.custoTotal).toBe(33.65); // 28.65 + 5
   });
 });
 
@@ -168,16 +203,29 @@ describe("computeCalculator — validation (SC-008, never a bad number)", () => 
     expect(() => computeCalculator({ ...SC001, machineLifetimeHours: 0 })).toThrow(ValidationError);
   });
 
-  it("marketplaceCommissionPct = 100 throws (gross-up denominator ≤ 0)", () => {
-    expect(() => computeCalculator({ ...SC001, marketplaceCommissionPct: 100 })).toThrow(
-      ValidationError,
-    );
+  // 3.0.0 (SC-107): a bad channel no longer throws — it isolates to that slot's `error` while the
+  // shared cost calc and the sibling channels still compute. Full isolation lives in channels.test.ts.
+  it("a channel commission = 100 yields a per-slot error, not a throw", () => {
+    const r = computeCalculator({ ...SC001, channels: [{ commissionPct: 100 }] });
+    expect(r.channels[0].error).toBeTruthy();
+    expect(r.channels[0].precoAnuncioVarejo).toBeNull();
+    expect(r.custoTotal).toBeGreaterThan(0); // the shared cost calc is unaffected
   });
 
-  it("negative commission throws", () => {
-    expect(() => computeCalculator({ ...SC001, marketplaceCommissionPct: -1 })).toThrow(
-      ValidationError,
-    );
+  it("a negative channel commission yields a per-slot error, not a throw", () => {
+    const r = computeCalculator({ ...SC001, channels: [{ commissionPct: -1 }] });
+    expect(r.channels[0].error).toBeTruthy();
+    expect(r.channels[0].precoAnuncioVarejo).toBeNull();
+  });
+
+  it("a negative otherCosts value throws with the offending field name", () => {
+    try {
+      computeCalculator({ ...SC001, otherCosts: [{ name: "x", value: -1 }] });
+      expect.unreachable("should have thrown");
+    } catch (e) {
+      expect(e).toBeInstanceOf(ValidationError);
+      expect((e as ValidationError).field).toBe("otherCosts[0].value");
+    }
   });
 
   it("negative input throws with the offending field name", () => {
