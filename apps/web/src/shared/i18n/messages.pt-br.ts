@@ -116,7 +116,6 @@ export const messages = {
       varejo: "Varejo",
       atacado: "Atacado",
       markup: "markup",
-      derivedFrom: "custo total ×",
     },
     // US1 — multi-channel marketplace pricing. Each slot names a marketplace + modality and its
     // fees; "Preços por canal" shows every slot's anúncio + líquido for varejo e atacado together.
@@ -130,6 +129,8 @@ export const messages = {
       minPerItem: "Comissão mínima/item",
       freight: "Frete",
       freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
+      freightLine: "Frete / cupom",
+      negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
       pricesTitle: "Preços por canal",
       channelFallback: "Canal",
       errorRow: "Corrija os campos deste canal para ver os preços.",

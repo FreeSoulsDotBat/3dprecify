@@ -77,6 +77,13 @@ const channelDivider: CSSProperties = {
   paddingTop: "var(--space-3)",
 };
 
+// Warning caption for a co-funded voucher that exceeds the margin (líquido < 0) — truthful, not clamped.
+const warnCaption: CSSProperties = {
+  margin: 0,
+  fontSize: "var(--fs-caption)",
+  color: "var(--danger-text)",
+};
+
 /** A section title with an inline ⓘ info tip explaining what/how the section calculates. */
 function SectionTitle({ title, info }: { title: string; info: { label: string; body: string } }) {
   return (
@@ -361,6 +368,41 @@ function ChannelSlot({
   );
 }
 
+/** One markup level's rows for a priced channel: anúncio, an optional freight/voucher deduction line
+ *  (Shopee co-funded voucher / manual freight), and líquido — flagged when negative, since a voucher
+ *  can exceed the margin (FR-111a). The deduction is shown, never hidden, so the líquido drop is honest. */
+function ChannelLevelRows({
+  caption,
+  anuncio,
+  liquido,
+  freight,
+  marginTop,
+}: {
+  caption: string;
+  anuncio: number;
+  liquido: number;
+  freight: number;
+  marginTop?: boolean;
+}) {
+  return (
+    <>
+      <p style={marginTop ? { ...captionText, marginTop: "var(--space-2)" } : captionText}>
+        {caption}
+      </p>
+      <BreakdownRow label={t.results.precoAnuncio} value={anuncio} />
+      {freight > 0 && (
+        <BreakdownRow label={t.channels.freightLine} value={-freight} emphasis="muted" />
+      )}
+      <BreakdownRow
+        label={t.results.recebidoLiquido}
+        value={liquido}
+        emphasis={liquido < 0 ? "negative" : "default"}
+      />
+      {liquido < 0 && <p style={warnCaption}>{t.channels.negativeLiquido}</p>}
+    </>
+  );
+}
+
 /** "Preços por canal": every slot's anúncio + líquido for varejo e atacado, shown together so the
  *  seller compares channels at a glance. A slot with an inline error shows a note, not stale prices. */
 function ChannelPrices({
@@ -396,20 +438,22 @@ function ChannelPrices({
               </p>
               {priced ? (
                 <>
-                  <p style={captionText}>{t.captions.varejo}</p>
-                  <BreakdownRow label={t.results.precoAnuncio} value={r.precoAnuncioVarejo ?? 0} />
-                  <BreakdownRow
-                    label={t.results.recebidoLiquido}
-                    value={r.recebidoLiquidoVarejo ?? 0}
+                  <ChannelLevelRows
+                    caption={t.captions.varejo}
+                    anuncio={r.precoAnuncioVarejo ?? 0}
+                    liquido={r.recebidoLiquidoVarejo ?? 0}
+                    freight={r.freightCostVarejo}
                   />
-                  <p style={{ ...captionText, marginTop: "var(--space-2)" }}>
-                    {t.captions.atacado}
-                  </p>
-                  <BreakdownRow label={t.results.precoAnuncio} value={r.precoAnuncioAtacado ?? 0} />
-                  <BreakdownRow
-                    label={t.results.recebidoLiquido}
-                    value={r.recebidoLiquidoAtacado ?? 0}
+                  <ChannelLevelRows
+                    caption={t.captions.atacado}
+                    anuncio={r.precoAnuncioAtacado ?? 0}
+                    liquido={r.recebidoLiquidoAtacado ?? 0}
+                    freight={r.freightCostAtacado}
+                    marginTop
                   />
+                  {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
+                    <p style={captionText}>{t.channels.freightHint}</p>
+                  )}
                 </>
               ) : (
                 <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>

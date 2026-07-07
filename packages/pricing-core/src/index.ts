@@ -49,7 +49,10 @@ export interface ChannelResult {
   recebidoLiquidoVarejo: number | null;
   precoAnuncioAtacado: number | null;
   recebidoLiquidoAtacado: number | null;
-  freightCost: number; // total freight deducted from the VAREJO líquido (atacado may differ by band)
+  // Total freight deducted from EACH level's líquido — per level because a co-funded voucher is
+  // resolved by that level's announce band (varejo/atacado can differ). 0 when the slot has no freight.
+  freightCostVarejo: number;
+  freightCostAtacado: number;
   error: string | null;
 }
 
@@ -243,7 +246,8 @@ function computeChannel(
     recebidoLiquidoVarejo: null,
     precoAnuncioAtacado: null,
     recebidoLiquidoAtacado: null,
-    freightCost: 0,
+    freightCostVarejo: 0,
+    freightCostAtacado: 0,
     error: null,
   };
   const fail = (error: string): ChannelResult => ({ ...shell, error });
@@ -275,7 +279,8 @@ function computeChannel(
   const atacado = grossUp(precoAtacado, fees);
   return {
     ...shell,
-    freightCost: varejo.freightCost,
+    freightCostVarejo: varejo.freightCost,
+    freightCostAtacado: atacado.freightCost,
     precoAnuncioVarejo: varejo.anuncio,
     recebidoLiquidoVarejo: varejo.liquido,
     precoAnuncioAtacado: atacado.anuncio,

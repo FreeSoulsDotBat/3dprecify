@@ -143,4 +143,20 @@ describe("FR-111a / SC-111 — Shopee co-funded freight voucher", () => {
     });
     expect(a).toEqual(b);
   });
+
+  it("a voucher larger than the margin yields a TRUTHFUL negative net — never clamped", () => {
+    // base 10 → announce (10+4)/0,80 = 17,50 (∈ [0,80) → R$20 voucher). The R$20 voucher exceeds the
+    // ~R$3,50 margin, so the seller LOSES money: líquido = 17,50 − 3,50 − 4 − 20 = −10,00. The engine
+    // surfaces the loss (Constitution II) rather than clamping to 0 and hiding it. This pins the value
+    // so a future display-side clamp can't silently change the formula's output.
+    const r = grossUp(10, {
+      commissionPct: 20,
+      fixedFee: 4,
+      priceBands: shopeeBands,
+      freightVoucherBands: shopeeVoucher,
+    });
+    expect(r.anuncio).toBe(17.5);
+    expect(r.freightCost).toBe(20);
+    expect(r.liquido).toBe(-10.0);
+  });
 });

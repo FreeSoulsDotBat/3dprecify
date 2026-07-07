@@ -260,7 +260,10 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
     // The co-funded voucher lowers the net below base — NOT 42,98 (the old truth gap).
     expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
-    expect(ch.result?.freightCost).toBeCloseTo(20, 2);
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
+    // atacado 37,25 → announce 51,56 (still ∈ [0,80) → R$20 voucher) → líquido 17,25.
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
     // Provenance echoed onto the result (ADR-0011).
     expect(ch.result?.feeSource).toBe("Central do Vendedor Shopee");
     expect(r.result?.catalogVersion).toBe("2026-07-07.x");
@@ -277,9 +280,36 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     );
     const ch = r.channels[0];
     expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2); // manual 10%, nets to base
-    expect(ch.result?.freightCost).toBe(0); // no voucher on a manual override
+    expect(ch.result?.freightCostVarejo).toBe(0); // no voucher on a manual override
     expect(ch.result?.feeSource).toBeNull(); // provenance cleared — not from the reference
     expect(ch.seal.kind).toBe("adjusted");
+    // catalogVersion is NOT stamped when no channel used the catalog (all-manual override).
+    expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  it("stamps no catalogVersion when there is no catalog context (all-manual)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [slot({ marketplace: "MERCADO_LIVRE", commissionPct: "12", fixedFee: "6,75" })],
+    });
+    expect(r.result?.catalogVersion).toBeNull();
+    expect(r.channels[0].result?.feeSource).toBeNull();
+  });
+
+  it("deducts DIFFERENT vouchers for varejo vs atacado when they fall in different bands", () => {
+    // markup varejo 180% → precoVarejo 80,22 → Shopee announce ∈ [80,200) → R$30 voucher; atacado 30%
+    // → precoAtacado 37,25 → announce ∈ [0,80) → R$20 voucher. Proves the per-level resolution end-to-end.
+    const r = computeFromForm(
+      {
+        ...canonical,
+        markupVarejoPct: "180",
+        channels: [slot({ marketplace: "SHOPEE", modality: "" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(30, 2);
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
   });
 });
 

@@ -216,13 +216,15 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
     const engineChannels = processed
       .map((p) => p.input)
       .filter((x): x is ChannelInput => x !== null);
+    // Stamp the catalog version ONLY when at least one channel actually resolved its fees from the
+    // catalog (a slot carries `feeSource` iff it used the pre-fill). An all-manual calc records no
+    // catalog provenance — "null when all-manual" (ADR-0011), so a future saved quote isn't mislabelled.
+    const usedCatalog = processed.some((p) => p.input?.feeSource != null);
     const input: PriceInput = {
       ...cost,
       otherCosts: adminTotal > 0 ? [{ name: "Outros custos", value: adminTotal }] : [],
       channels: engineChannels,
-      // Stamp which catalog version was active so a computed quote records its fee provenance
-      // (ADR-0011 reproducibility key, with marketplace + feeDeterminants + feeSource per channel).
-      catalogVersion: ctx?.catalog.catalogVersion,
+      catalogVersion: usedCatalog ? ctx?.catalog.catalogVersion : undefined,
     };
     const result = computeCalculator(input);
     // Re-align engine results (valid slots only, in order) back onto every form slot.

@@ -53,9 +53,11 @@ describe("SC-101 — price the same product across channels at once", () => {
     expect(shopee.recebidoLiquidoAtacado).toBe(37.25);
   });
 
-  it("no channel errors; freightCost 0 (all four prices < R$79)", () => {
+  it("no channel errors; freightCost 0 (no freight configured)", () => {
     expect(r.channels.every((c) => c.error === null)).toBe(true);
-    expect(r.channels.every((c) => c.freightCost === 0)).toBe(true);
+    expect(r.channels.every((c) => c.freightCostVarejo === 0 && c.freightCostAtacado === 0)).toBe(
+      true,
+    );
     expect(r.channels[0].marketplace).toBe("MERCADO_LIVRE");
     expect(r.channels[0].feeDeterminants).toEqual({ listingType: "CLASSICO", category: "casa" });
   });

@@ -77,7 +77,8 @@ describe("computeCalculator — single-channel gross-up (3.0.0 channels[])", () 
     // recebido líquido nets back to the base price (round-trip; freightCost 0)
     expect(c.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 42,98
     expect(c.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 37,25
-    expect(c.freightCost).toBe(0);
+    expect(c.freightCostVarejo).toBe(0);
+    expect(c.freightCostAtacado).toBe(0);
     expect(c.marketplace).toBe("GENERIC");
   });
 
