@@ -212,7 +212,9 @@ Two clarifications applied during the pre-merge review of the E1 implementation:
   closes the truth gap where a blank Shopee slot dropped the voucher to 0 and overstated `recebido líquido`
   under an authoritative seal. The ML free-shipping `ESTIMATE` stays an editable flat prefill on the FE (a
   labelled, user-overridable estimate); its price-threshold gating is deferred until an ML `ESTIMATE` entry
-  is actually curated (dormant — none ships in E1).
+  is actually curated (dormant — none ships in E1). **Shipped shape:** because the voucher is band-resolved
+  per level, `ChannelResult` carries `freightCostVarejo` + `freightCostAtacado` (each a per-level deduction),
+  **superseding** the single `freightCost` field in this ADR's Part 2 contract block (line 80).
 - **E1 result provenance = the reproducibility KEY, not a denormalized fee echo.** `PriceResult.catalogVersion`
   is now threaded from the active catalog (it was always null before), and `ChannelResult` carries
   `marketplace` + `feeDeterminants` + `feeSource`. Together these let a future E4 snapshot re-resolve the
@@ -220,7 +222,12 @@ Two clarifications applied during the pre-merge review of the E1 implementation:
   the resolved `commissionPct/fixedFee/minPerItem/appliedBand` onto `ChannelResult` (this ADR's Part 2/Part 4
   wording) is **deferred to E4**: those values are re-derivable from the key, and their per-level band shape
   is best designed against a real save/export need (E1 has no save/export). This supersedes the Part 4
-  assertion that the result carries the resolved fees "already in E1".
+  assertion that the result carries the resolved fees "already in E1". **Shape note:** the shipped
+  `ChannelResult.feeSource` is `string | null` — the free-form catalog **source name** the fees were resolved
+  from (e.g. `"Central do Vendedor Shopee"`), `null` when the slot is manual/uncovered. It is NOT the
+  `"CATALOG" | "CATALOG_STALE" | "MANUAL" | "NO_REFERENCE"` seal enum drawn in the Part 2 block (line 81);
+  that provenance/seal classification lives in the FE `FeeSealState.kind` (ADR-0010 P2), computed from the
+  entry + freshness. Two distinct concerns that happened to share a name in the draft.
 
 ### Sources verified (2026-07-06)
 - Amazon Brasil — referral commission 10–15 % by category, **referral minimum R$ 1,00**, plan Individual **R$ 2,00/item** vs Profissional R$ 19/mês (1º ano grátis): <https://venda.amazon.com.br/precos> · corrob. <https://gosmarter.com.br/taxas-amazon-brasil-2026/>

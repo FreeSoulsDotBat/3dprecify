@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 // Fee-catalog contract (ADR-0010 §1, snapshot shape 1B). ONE shape used identically by the served
-// artifact (fee-catalog/catalog.json), the persisted client store and the bundled seed. The client
+// artifact (backend/app/data/catalog.json), the persisted client store and the bundled seed. The client
 // resolves fees for any (marketplace, determinants) OFFLINE; pricing-core owns the price math — the
 // backend serves data only (FR-118). Every curated entry MUST carry provenance (sourceUrl /
 // effectiveDate / lastReviewed) — the truth-gate test fails the build otherwise (Constitution II).

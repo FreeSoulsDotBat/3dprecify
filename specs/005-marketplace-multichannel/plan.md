@@ -76,7 +76,8 @@ in the persisted store + seed, not the SW). Future **Android via Capacitor fetch
 without a store release. `Calcular` stays the public, sign-in-free surface.
 
 **Project Type**: Web app in a pnpm monorepo — `apps/web` (client) + `packages/pricing-core` (shared offline
-engine) + a **new public `apps/api` endpoint** (fee-catalog) + a **committed catalog artifact** (backend-readable).
+engine) + a **new public endpoint in `backend/`** (fee-catalog; the FastAPI backend lives at `backend/`, not
+`apps/api`) + a **committed catalog artifact** at `backend/app/data/catalog.json` (bundled into the image).
 The ML ingestion Job is a **separate, isolated deployable** (devops), off this plan's critical path.
 
 **Performance Goals**: instantaneous client-side recompute on every input change (no server round-trip for the
@@ -163,13 +164,13 @@ packages/pricing-core/
 │   └── tests/*.test.ts      # SC-101..SC-112 (test-first) + constant↔major gate test (A7 tests/ convention)
 └── package.json             # version 2.0.0 → 3.0.0
 
-apps/api/                          # NEW ENDPOINT (data only, no price compute)
-└── (fee-catalog router)     # GET /api/v1/fee-catalog → serves fee-catalog/catalog.json (camelCase, ETag, public/no-auth/no-gate) + contract test
+backend/app/api/                   # NEW ENDPOINT (data only, no price compute) — the FastAPI backend lives at `backend/`, not `apps/api`
+└── fee_catalog.py            # GET /api/v1/fee-catalog → serves backend/app/data/catalog.json (camelCase, ETag, public/no-auth/no-gate) + contract test
 
 apps/web/src/
-├── shared/fee-catalog/       # schema types + pure resolveEntry() + staleness(30d) + SEED (from fee-catalog/catalog.json) + the fetch→persist store
+├── shared/fee-catalog/       # schema types + pure resolveEntry() + staleness(30d) + SEED (from backend/app/data/catalog.json) + the fetch→persist store
 │   ├── fee-catalog.ts        #   schema/types + resolveEntry + staleness
-│   ├── seed.ts               #   bundled seed (first-run offline) — built from fee-catalog/catalog.json
+│   ├── seed.ts               #   bundled seed (first-run offline) — built from backend/app/data/catalog.json
 │   ├── use-fee-catalog.ts    #   TanStack Query: fetch GET /api/v1/fee-catalog on first load, PERSIST to IndexedDB (idb-keyval), fallback store→seed
 │   └── *.test.ts             #   served-artifact + seed parse/provenance gate; resolveEntry/staleness; store fallback
 ├── features/calculator/      # EXTEND: resolve fees from store/seed → feed pricing-core; per-channel + sub-cost adapters; schema (channels[]+otherCosts[]+toggle)
@@ -178,7 +179,7 @@ apps/web/src/
 
 apps/web/tests/e2e/calculator.spec.ts   # EXTEND: multi-channel, pre-fill+override+seal, offline-first-load-via-seed, online-fetch-persists, fetch-error retry+manual, toggle, itemized admin, no-bad-numbers
 
-# OFF the critical path (devops + seguranca): the ML ingestion Cloud Run Job → opens a PR editing fee-catalog/catalog.json;
+# OFF the critical path (devops + seguranca): the ML ingestion Cloud Run Job → opens a PR editing backend/app/data/catalog.json;
 #   VPC/NAT static egress; Secret Manager house-account token + rotation runbook.
 ```
 
@@ -202,9 +203,9 @@ default):
   FastAPI endpoint reads it and serves it; the web **seed** mirrors it; the ML ingestion Job edits it via PR.
 - **TS schema + resolver + staleness + store + seed → `apps/web/src/shared/fee-catalog/`** (consumes the JSON).
 - Alternative (if the ingestion Job or backend wants shared TS types): promote to **`packages/fee-catalog`** (schema
-  + JSON) imported by web + tooling — a cheap lift-and-shift. Recommend the repo-root JSON now; revisit the package
-  if TS sharing with the Job is wanted. Placement = **repo-root `fee-catalog/catalog.json`** is the owner-directed default (2026-07-06); confirmable before the fee-catalog tasks start (Principle
-  VIII).
+  + JSON) imported by web + tooling — a cheap lift-and-shift. Revisit the package if TS sharing with the Job is
+  wanted. Placement = **`backend/app/data/catalog.json`** (the earlier repo-root `fee-catalog/` default of 2026-07-06
+  was superseded on 2026-07-07 by the ADR-0010 amendment when the Docker build could not bundle a repo-root artifact).
 
 **Delivery (ADR-0010 amendment):** `GET /api/v1/fee-catalog` serves the committed artifact (**R6=a**); the client
 fetches on first `Calcular` load, **persists to IndexedDB**, and reads the store thereafter; a **bundled seed**
@@ -216,5 +217,6 @@ covers first-run offline. The price math never blocks on the network.
 > an **owner-directed amendment to ADR-0010 (2026-07-06)** with a risk review (R1 seed mandatory · R2 persisted
 > store · R3 public no-gate endpoint). Close-out: **(1) the spec delivery re-flip is APPLIED (2026-07-06)** —
 > FR-105/107/108/117, US2/US3/US6, SC-104, §model/§5/Assumptions reconciled, spec↔ADR agree; **(2) artifact
-> placement `fee-catalog/catalog.json` at repo root + R6=(a)** are adopted as the **owner-directed defaults** (from
-> the ADR-0010 amendment conversation), confirmable. No Constitution violation requires a waiver.
+> placement `backend/app/data/catalog.json` + R6=(a)** are the adopted defaults — the earlier repo-root
+> `fee-catalog/catalog.json` placement (2026-07-06) was **superseded on 2026-07-07** by the ADR-0010 amendment (a
+> repo-root artifact fell outside the `./backend` Docker build context). No Constitution violation requires a waiver.

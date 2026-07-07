@@ -27,7 +27,7 @@ const catalogPath = fileURLToPath(
 const servedCatalog: unknown = JSON.parse(readFileSync(catalogPath, "utf8"));
 
 describe("fee-catalog truth-gate (served artifact + seed)", () => {
-  it("the committed fee-catalog/catalog.json parses under the schema", () => {
+  it("the committed backend/app/data/catalog.json parses under the schema", () => {
     expect(() => parseFeeCatalog(servedCatalog)).not.toThrow();
   });
 
