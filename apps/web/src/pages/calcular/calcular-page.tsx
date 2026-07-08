@@ -510,18 +510,18 @@ function MarketplaceSection({
     <div className="flex flex-col gap-3">
       {/* US4: the "Incluir marketplaces no preço" master toggle stays OUTSIDE the collapsible body so
           the section is always re-enableable. It is pure visibility — off hides every channel row and
-          stops computing the channels (SC-105); the direct varejo/atacado headline is untouched. */}
-      <div className="flex items-center justify-between gap-3">
-        <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
-        <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text-muted)]">
-          <span>{t.channels.includeToggle}</span>
-          <Switch
-            checked={included}
-            onCheckedChange={onToggleInclude}
-            aria-label={t.channels.includeToggle}
-          />
-        </label>
-      </div>
+          stops computing the channels (SC-105); the direct varejo/atacado headline is untouched.
+          The toggle sits on its OWN full-width row (label left, switch right) so the label never gets
+          squeezed into a 2-line wrap beside the switch at 390px (homologation nit). */}
+      <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
+      <label className="flex cursor-pointer items-center justify-between gap-3 text-sm text-[var(--text-muted)]">
+        <span>{t.channels.includeToggle}</span>
+        <Switch
+          checked={included}
+          onCheckedChange={onToggleInclude}
+          aria-label={t.channels.includeToggle}
+        />
+      </label>
       {included && (
         <>
           {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
@@ -579,19 +579,24 @@ function OtherCostRow({
   error?: string;
   onRemove: (index: number) => void;
 }) {
+  // The per-row labels are omitted (they'd repeat down the list — homologation nit); the name's
+  // placeholder + the value's R$ affix carry the meaning, and each input keeps an `aria-label` so the
+  // control is still named for assistive tech. The name column is wider than the value (3:2) so longer
+  // names ("Frete até a transportadora") truncate less while the money field stays comfortably usable.
   return (
     <div className="flex items-end gap-2" data-testid="other-cost-row">
       <Controller
         control={control}
         name={`otherCosts.${index}.name` as const}
         render={({ field }) => (
-          <Field label={t.outrosCustos.name} className="flex-1" tightLabel>
+          <Field className="flex-[3]">
             {(p) => (
               <div className="tf-inputwrap">
                 <input
                   {...p}
                   type="text"
                   className="tf-input"
+                  aria-label={t.outrosCustos.name}
                   placeholder={t.outrosCustos.namePlaceholder}
                   name={field.name}
                   value={field.value}
@@ -608,11 +613,12 @@ function OtherCostRow({
         control={control}
         name={`otherCosts.${index}.value` as const}
         render={({ field }) => (
-          <Field label={t.outrosCustos.value} className="flex-1" tightLabel error={error}>
+          <Field className="flex-[2]" error={error}>
             {(p) => (
               <NumberField
                 {...p}
                 currency
+                aria-label={t.outrosCustos.value}
                 name={field.name}
                 value={field.value}
                 onChange={field.onChange}
