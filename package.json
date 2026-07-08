@@ -16,7 +16,10 @@
     "test:coverage": "vitest run --coverage",
     "e2e": "firebase emulators:exec --only auth --project=demo-precifica3d \"pnpm --filter @3dprecify/web test:e2e\"",
     "depcruise": "depcruise packages apps --config .dependency-cruiser.cjs",
-    "gate": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
+    "gate": "pnpm gate:all",
+    "gate:fe": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
+    "gate:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run pytest -q && uv run lint-imports",
+    "gate:all": "pnpm gate:fe && pnpm gate:be",
     "prepare": "lefthook install"
   },
   "devDependencies": {

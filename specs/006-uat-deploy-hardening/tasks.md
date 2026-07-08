@@ -26,7 +26,7 @@ and runs IN PARALLEL with the code phases.
 
 ## Phase 1: Setup
 
-- [ ] T001 Create `docs/runbooks/` and skeleton `docs/runbooks/uat-deploy.md` with the four fixed sections
+- [x] T001 Create `docs/runbooks/` and skeleton `docs/runbooks/uat-deploy.md` with the four fixed sections
       (research §1.4): Config & prerequisites · Deploy · Smoke checklist · Rollback & half-deploy triage.
 
 ---
@@ -66,19 +66,19 @@ possible, console where unavoidable. Every value lands in the GitHub `uat` Envir
 asserted (SC-206). Retires the `local-gate-vs-ci-gap` tribal knowledge.
 **Independent Test**: quickstart §1 (deliberate-failure check + parity inspection).
 
-- [ ] T007 [US2] Add composable scripts to root `package.json`: `gate:fe` (= current `gate` chain), `gate:be`
+- [x] T007 [US2] Add composable scripts to root `package.json`: `gate:fe` (= current `gate` chain), `gate:be`
       (`cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run
       pytest -q && uv run lint-imports`), `gate:all` (`pnpm gate:fe && pnpm gate:be`). Keep `gate` as an alias
       of `gate:fe` or remove it (no dead duplicate — Constitution V; check references first).
-- [ ] T008 [US2] Point `lefthook.yml` pre-push at `pnpm gate:all`, REPLACING the current thin
+- [x] T008 [US2] Point `lefthook.yml` pre-push at `pnpm gate:all`, REPLACING the current thin
       `typecheck`+`pnpm -r test` subset (no reduced local subset survives, FR-212).
-- [ ] T009 [US2] Rewire `.github/workflows/ci.yml`: ONE job running the literal `pnpm gate:all` (runner with
+- [x] T009 [US2] Rewire `.github/workflows/ci.yml`: ONE job running the literal `pnpm gate:all` (runner with
       Node 24/pnpm + uv/Py 3.12, same dual setup as `contract-drift`) REPLACES the separate Frontend/Backend
       gate jobs; **keep an explicit small parallel `build` job** (`pnpm --filter @3dprecify/web build`) so
       the Vite build verification the old Frontend job carried does not silently vanish (analyze I1 — the
       e2e webServer build is incidental, not declared coverage); `e2e`, `docker`, `contract-drift`,
       `secret-scan` stay parallel; update the `ci-pass` roll-up needs list accordingly.
-- [ ] T010 [US2] SC-206 deliberate-failure verification: introduce a backend lint violation + drop one
+- [x] T010 [US2] SC-206 deliberate-failure verification: introduce a backend lint violation + drop one
       pricing-core test → `pnpm gate:all` fails locally on both; revert; capture the two failure outputs for
       `dod-evidence.md`. Verify pre-push actually blocks (attempt a push with the violation in place, then
       revert).
