@@ -74,8 +74,10 @@ asserted (SC-206). Retires the `local-gate-vs-ci-gap` tribal knowledge.
       `typecheck`+`pnpm -r test` subset (no reduced local subset survives, FR-212).
 - [ ] T009 [US2] Rewire `.github/workflows/ci.yml`: ONE job running the literal `pnpm gate:all` (runner with
       Node 24/pnpm + uv/Py 3.12, same dual setup as `contract-drift`) REPLACES the separate Frontend/Backend
-      gate jobs; `e2e`, `docker`, `contract-drift`, `secret-scan` stay parallel; update the `ci-pass` roll-up
-      needs list accordingly.
+      gate jobs; **keep an explicit small parallel `build` job** (`pnpm --filter @3dprecify/web build`) so
+      the Vite build verification the old Frontend job carried does not silently vanish (analyze I1 — the
+      e2e webServer build is incidental, not declared coverage); `e2e`, `docker`, `contract-drift`,
+      `secret-scan` stay parallel; update the `ci-pass` roll-up needs list accordingly.
 - [ ] T010 [US2] SC-206 deliberate-failure verification: introduce a backend lint violation + drop one
       pricing-core test → `pnpm gate:all` fails locally on both; revert; capture the two failure outputs for
       `dod-evidence.md`. Verify pre-push actually blocks (attempt a push with the violation in place, then
@@ -131,9 +133,11 @@ the (owner-veto-pending) release-correlation stamp.
       `apps/web/src/features/auth/sign-in-screen.tsx`. Tests from T017 pass.
 - [ ] T019 [P] [US1] Fill `docs/runbooks/uat-deploy.md`: §1 config tables (research §1.1/§1.2 verbatim), §2
       deploy steps (workflow → `uat`, **ref `develop`**, record run URL + `github.sha`), §3 the ordered
-      device-executable smoke checklist (data-model §3), §4 rollback per-half (`gcloud run services
-      update-traffic --to-revisions <PREV>=100` · `firebase hosting:rollback`) + half-deploy triage
-      (research §7).
+      device-executable smoke checklist (data-model §3) **plus one correlation-id verification step (analyze
+      C1 / FR-205): force a benign API error (signed-out Conta → friendly `/me` error) and confirm the
+      `correlationId` via the Sentry event or the response header — the single tooling-permitted step**, §4
+      rollback per-half (`gcloud run services update-traffic --to-revisions <PREV>=100` · `firebase
+      hosting:rollback`) + half-deploy triage (research §7).
 - [ ] T020 [US1] **OWNER-GATED (veto pending)** Optional `VITE_RELEASE` stamp (research §7, recommended):
       1-line `deploy.yml` addition passing `VITE_RELEASE=${{ github.sha }}` into the SPA build + optional
       typed-env entry (`apps/web/src/shared/lib/env.ts`) + Sentry `release` wiring in
@@ -164,7 +168,8 @@ the (owner-veto-pending) release-correlation stamp.
 merges, or deploys is **OWNER-GATED** (ADR-0006).
 
 - [ ] T023 [US1] Full local verification then PR: `pnpm gate:all` + `pnpm e2e` green → push
-      `feature/006-uat-deploy-hardening` → open PR to `develop` (evidence-rich body) → CI 8-checks green →
+      `feature/006-uat-deploy-hardening` → open PR to `develop` (evidence-rich body) → **all CI checks
+      green** (the check set changes with T009 — gate job + build job replace Frontend/Backend) →
       **OWNER-GATED** squash-merge.
 - [ ] T024 [US1] **OWNER-GATED** First release merge `develop`→`main` (FR-209): merge (no squash — a release
       snapshot), confirm `deploy.yml` now renders the "Run workflow" control and `auto-pr.yml` activates;
@@ -175,16 +180,21 @@ merges, or deploys is **OWNER-GATED** (ADR-0006).
       a failed deploy, no partial success.
 - [ ] T026 [US1] FR-207 negative check: dispatch `Deploy` against the still-inert `prod` environment → the
       guard step MUST fail loudly at "environment must be enabled"; capture the run link as evidence.
-- [ ] T027 [US1] **OWNER-GATED** Privacy copy ratification (FR-214 gate) THEN smoke checklist from a fresh
-      phone (runbook §3, all items binary pass/fail): shell loads → calculator computes → **served** fee seal
-      → Google sign-in → `/me` identity → airplane-mode compute (SC-203) → cold vs warm load recorded. ALL
-      pass ⇒ deploy verified (SC-201/202); any fail ⇒ FAILED deploy, triage + redo.
+- [ ] T027 [US1] **OWNER-GATED** Privacy copy ratification **+ visual sign-off of the `/privacidade` page and
+      the sign-in link (analyze C2 — the page's QA homologation)** (FR-214 gate) THEN smoke checklist from a
+      fresh phone (runbook §3, all items binary pass/fail): shell loads → calculator computes → **served**
+      fee seal → Google sign-in → `/me` identity → airplane-mode compute (SC-203) → correlation-id check
+      (C1) → cold vs warm load recorded. ALL pass ⇒ deploy verified (SC-201/202); any fail ⇒ FAILED deploy,
+      triage + redo.
 - [ ] T028 [US1] Rollback rehearsal (FR-206/SC-204): roll back the Cloud Run revision AND the Hosting release
       per runbook §4, verify the previous version serves, re-deploy, time both directions (<10 min target).
+      **The timed re-deploy doubles as the SC-204 repeat-deploy measurement (idempotent, <30 min, no
+      user-visible change — analyze C3).**
 - [ ] T029 [US1] Write `specs/006-uat-deploy-hardening/dod-evidence.md` (gates, SC-201..207 map, smoke +
-      rollback record, deliberate-failure outputs, veto/ratification decisions) and mark **A21/D4/T022 done**
-      in `docs/decisions/audit-findings-r2.md` (+ retire the MEMORY `local-gate-vs-ci-gap` note — parity now
-      structural).
+      rollback record, deliberate-failure outputs, **the T011 failing-first conformance output recorded as
+      the SC-205 divergence-detection evidence (analyze A1)**, veto/ratification decisions) and mark
+      **A21/D4/T022 done** in `docs/decisions/audit-findings-r2.md` (+ retire the MEMORY
+      `local-gate-vs-ci-gap` note — parity now structural).
 
 ---
 
