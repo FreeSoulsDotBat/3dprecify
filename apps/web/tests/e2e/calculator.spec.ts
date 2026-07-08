@@ -362,3 +362,117 @@ test("US5: itemized 'Outros custos' — named sub-costs each show as a breakdown
   await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
   await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
 });
+
+// US6 (T037, SC-109): the FULL 005 surface — several channels (manual + catalog-prefilled), the
+// visibility toggle exercised, itemized sub-costs — never renders a bad number and never grows a
+// save/export/history/paywall affordance. Signed-out throughout (/calcular is public). The
+// `PRICING_MODEL_VERSION === "3.0.0"` half of SC-109 is pinned at the source in pricing-core's
+// version.test.ts (single source — the e2e asserts the user-visible behaviors); "backend does no
+// price compute" is proven behaviorally by the offline test below (prices render with NO backend).
+test("US6: full multi-channel + sub-costs surface — no bad numbers, no save/export/paywall, signed-out (SC-109)", async ({
+  page,
+}) => {
+  const t = messages.calculator;
+  await page.goto("/calcular"); // public — no sign-in, no wall
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // Channel 1 (default Mercado Livre): manual fees, including a HIGH commission (95% — a valid but
+  // extreme gross-up whose denominator 0,05 amplifies any float slip into a visible bad number).
+  const slot0 = page.getByTestId("channel-slot").nth(0);
+  await slot0.getByLabel(/^Comissão(?! mínima)/).fill("95");
+  await slot0.getByLabel(t.channels.fixedFee).fill("10");
+
+  // Channel 2: Shopee with BLANK fees → the seed catalog pre-fills bands + voucher (the offline
+  // reference path), so both fee models (manual + curated bands) compute side by side.
+  await page.getByRole("button", { name: t.channels.addChannel }).click();
+  const slot1 = page.getByTestId("channel-slot").nth(1);
+  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+
+  // Itemized sub-costs: a named one and a BLANK-named one (falls back to the neutral label).
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  const costRows = page.getByTestId("other-cost-row");
+  await costRows.nth(0).getByLabel(t.outrosCustos.name).fill("Embalagem");
+  await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("3,00");
+  await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("1,005"); // rounds HALF_UP → 1,01
+
+  // Everything computes together: both channels price both markup levels (2×2 anúncio rows).
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
+  await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
+  await expect(page.getByText("R$ 1,01")).toBeVisible(); // the HALF_UP-rounded blank-named line
+
+  // Exercise the toggle across the full surface: off hides the channels (headline intact)…
+  await page.getByRole("switch", { name: t.channels.includeToggle }).click();
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(0);
+  await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+  // …and back on restores BOTH slots with their fees/prefill intact (RHF state survives).
+  await page.getByRole("switch", { name: t.channels.includeToggle }).click();
+  await expect(page.getByTestId("channel-slot")).toHaveCount(2);
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
+
+  // SC-109: never a NaN/Infinity/#DIV! anywhere on this full surface…
+  await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
+  // …and no save/export/history/paywall affordance ever appears; the freemium note is an honest
+  // statement, not a CTA. (The bottom-nav "Histórico" LINK is the app shell placeholder, not a
+  // calculator affordance — the assertion targets buttons.)
+  await expect(
+    page.getByRole("button", {
+      name: /salvar|exportar|histórico|assinar|premium|upgrade|desbloquear/i,
+    }),
+  ).toHaveCount(0);
+  await expect(page.getByText(t.freemiumNote)).toBeVisible();
+});
+
+// US6 (T038): the FULL 005 surface computes OFFLINE and signed-out from the bundled seed — channels
+// (manual fees + Shopee catalog pre-fill), the toggle, and sub-costs — with the failed catalog
+// refresh staying non-blocking and nothing gating on the network or a sign-in.
+test("US6: offline + signed-out — channels, toggle and sub-costs all compute from the seed (SC-109)", async ({
+  page,
+  context,
+}) => {
+  const t = messages.calculator;
+  // Load online once so the SW precaches, then go fully offline.
+  await page.goto("/calcular");
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+  await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, {
+    timeout: 20_000,
+  });
+  await context.setOffline(true);
+  await page.reload(); // served from the SW precache; no user, no network
+
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // The catalog refresh fails offline → the US3 notice appears but blocks NOTHING.
+  await expect(page.getByText(t.channels.refreshErrorTitle)).toBeVisible();
+
+  // Manual channel fee → gross-up computes locally (seed varejo 30,90 @20% + R$0 → 38,63).
+  const slot0 = page.getByTestId("channel-slot").nth(0);
+  await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
+  await expect(page.getByText("R$ 38,63")).toBeVisible();
+
+  // Shopee pre-fills from the BUNDLED SEED while offline (the honesty seal says so).
+  await page.getByRole("button", { name: t.channels.addChannel }).click();
+  const slot1 = page.getByTestId("channel-slot").nth(1);
+  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded);
+
+  // Sub-cost folds into custo_total offline (seed 20,60 + 3,00 = 23,60).
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  const costRow = page.getByTestId("other-cost-row").first();
+  await costRow.getByLabel(t.outrosCustos.name).fill("Embalagem");
+  await costRow.getByLabel(t.outrosCustos.value).fill("3,00");
+  await expect(page.getByText("R$ 23,60")).toBeVisible();
+
+  // The toggle works offline too: off → channels gone, direct headline intact.
+  await page.getByRole("switch", { name: t.channels.includeToggle }).click();
+  await expect(page.getByTestId("channel-slot")).toHaveCount(0);
+  await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+
+  // Signed-out + offline the whole way: no sign-in wall, nothing offered to save, no bad numbers.
+  await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
+  await expect(
+    page.getByRole("button", { name: /salvar|exportar|assinar|premium|upgrade|desbloquear/i }),
+  ).toHaveCount(0);
+
+  await context.setOffline(false);
+});

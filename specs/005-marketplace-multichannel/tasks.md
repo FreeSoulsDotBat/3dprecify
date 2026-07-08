@@ -117,7 +117,7 @@
 - [x] T030 [P] [US4] SC-105 test — model (`calculator-model.test.ts`): `includeMarketplace:false` → 0 channel outcomes + byte-identical custoTotal/precoVarejo/precoAtacado + null catalogVersion; component (`calcular.test.tsx`): default on shows section, off hides "Adicionar canal"/"Preços por canal" while the headline stays. Written FAILING first.
 - [x] T031 [US4] `includeMarketplace: boolean` in `calculator-schema.ts` (default `true`); model gates channel compute in `calculator-model.ts`; `calcular-page.tsx` renders a DS `Switch` (labelled `channels.includeToggle`) in the MarketplaceSection header (outside the collapsible body so it stays re-enableable) + conditional body render. **Deviation**: no `includeInHeadline` on `PriceResult` (owner clarification above).
 - [x] T032 [US4] e2e (`calculator.spec.ts`): toggle off → channel slots + "Preços por canal" hidden, direct varejo headline stays, no NaN; toggle back on → section returns. Green on chromium + mobile.
-- [ ] T032b [US4] **Visual homologation (QA)**: toggle states.
+- [x] T032b [US4] **Visual homologation (QA)**: qa-produto drove the rendered `/calcular` (390 px, ON/OFF/reON) → **PASS (97%)**: pure UI visibility confirmed (headline byte-identical in both states, R$ 30,90 / R$ 26,78), switch stays reachable when off, 44×44 px touch target (INV-2), no overflow. Label-wrap nit fixed in `85118ba` (toggle on its own full-width row). Owner homologated 2026-07-08.
 
 ---
 
@@ -130,7 +130,7 @@
 - [x] T034 [US5] `admin = Σ otherCosts.value` in `computeCalculator` (uses T004 `otherCosts[]`); each named sub-cost **echoed onto `PriceResult.otherCosts[]`** (rounded, in order) so it renders as its own breakdown line (FR-114/115); breakdown still sums to `custo_total` (0 residual, HALF_UP). Additive to the 3.0.0 result contract (still unreleased) — no version bump.
 - [x] T035 [US5] `calcular-page.tsx`: "Outros custos" slot (`OtherCostsSection`/`OtherCostRow`) — add/remove named sub-costs via `useFieldArray`, per-row pt-BR validation (finite ≥0, isolated so a bad row errors only itself), blank name → neutral placeholder + `outrosCustos.lineFallback` in the breakdown. Schema: `adminTotal` scalar removed, `otherCosts: OtherCostForm[]` added (Constitution V — no dead field left behind).
 - [x] T036 [US5] e2e (`calculator.spec.ts`): Embalagem R$3 + Etiqueta R$2 → each a named breakdown line; remove Etiqueta → its line drops, Embalagem stays, no NaN. Green on chromium + mobile. (Also migrated the 390px-overflow test off the removed `adminTotal` field onto the slot.)
-- [ ] T036b [US5] **Visual homologation (QA)**: outros-custos slot.
+- [x] T036b [US5] **Visual homologation (QA)**: qa-produto drove the rendered `/calcular` (390 px) → **PASS (~97%)**, 25/25 checks: exact sums in the breakdown (20,60 → 23,60 → 25,60), removal lowers exactly, per-row negative error without breaking the price, blank name → neutral label, no overflow with 1/2/3 rows. Verbose-labels + narrow-name nits fixed in `85118ba` (labels → aria-label/placeholder; name column 3:2). Owner homologated 2026-07-08.
 
 ---
 
@@ -139,8 +139,8 @@
 **Goal**: the whole expansion stays free/offline/signed-out; no save/export/history; no paywall; the fee endpoint is public read-only reference data, never a gate; the price math never depends on the network.
 **Independent Test**: SC-109.
 
-- [ ] T037 [P] [US6] SC-109 e2e (no NaN/Infinity across channels+sub-costs; no save/export/history/paywall; `PRICING_MODEL_VERSION==="3.0.0"`; backend does no price compute) — FAILING first.
-- [ ] T038 [US6] e2e signed-out + offline: multi-channel + manual + toggle + outros-custos all compute (seed/store); the fee endpoint requires no auth and never gates; nothing offered to save; no sign-in wall.
+- [x] T037 [P] [US6] SC-109 e2e (`calculator.spec.ts`): the FULL 005 surface signed-out — manual 95%-commission channel + Shopee seed-prefilled channel + toggle off/on (state survives) + named & blank-named sub-costs (HALF_UP 1,005→1,01) → no NaN/Infinity/#DIV, no save/export/history/paywall button, freemium note stays. The `PRICING_MODEL_VERSION === "3.0.0"` half is pinned at the source in `pricing-core/tests/version.test.ts` (single source; T039 consolidates); "backend does no price compute" is proven behaviorally by T038 (prices render with NO backend/network) + statically by `test_fee_catalog.py` (data-only endpoint).
+- [x] T038 [US6] e2e signed-out + offline (SW precache → `setOffline` → reload): manual channel gross-up (30,90 @20% → 38,63), Shopee pre-fills from the BUNDLED SEED with the "referência embutida (offline)" seal, sub-cost folds into custo_total (20,60+3 → 23,60), toggle works, US3 notice appears non-blocking; no sign-in wall, nothing offered to save, no bad numbers. The fee endpoint's no-auth guarantee is asserted in `backend/tests/test_fee_catalog.py` (FR-117). Green chromium + mobile.
 
 ---
 
