@@ -483,6 +483,9 @@ function MarketplaceSection({
   onAppend,
   onRemove,
   onMarketplaceChange,
+  refreshFailed,
+  refreshing,
+  onRetryCatalog,
 }: {
   control: Control<CalcFormValues>;
   values: CalcFormValues;
@@ -491,10 +494,29 @@ function MarketplaceSection({
   onAppend: (slot: ChannelSlotForm) => void;
   onRemove: (index: number) => void;
   onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
+  refreshFailed: boolean;
+  refreshing: boolean;
+  onRetryCatalog: () => void;
 }) {
   return (
     <div className="flex flex-col gap-3">
       <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
+      {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
+          and every price computes; this only offers a retry (tone "info", role="status" — no alarm). */}
+      {refreshFailed && (
+        <Alert tone="info" title={t.channels.refreshErrorTitle}>
+          <p>{t.channels.refreshErrorBody}</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={onRetryCatalog}
+            loading={refreshing}
+            className="mt-2"
+          >
+            {t.channels.refreshRetry}
+          </Button>
+        </Alert>
+      )}
       <div className="flex flex-col gap-3">
         {fields.map((f, i) => (
           <ChannelSlot
@@ -525,8 +547,15 @@ export function CalcularPage() {
   const { fields, append, remove } = useFieldArray({ control, name: "channels" });
 
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
-  // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local.
-  const { catalog, source } = useFeeCatalog();
+  // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
+  // failed online refresh is surfaced as a non-blocking retry (US3), never an error wall.
+  const {
+    catalog,
+    source,
+    isError: catalogRefreshFailed,
+    isFetching: catalogRefreshing,
+    refetch: retryCatalog,
+  } = useFeeCatalog();
 
   const values = watch();
   const { result, channels: channelOutcomes } = computeFromForm(values, {
@@ -591,6 +620,9 @@ export function CalcularPage() {
         onAppend={append}
         onRemove={remove}
         onMarketplaceChange={handleMarketplaceChange}
+        refreshFailed={catalogRefreshFailed}
+        refreshing={catalogRefreshing}
+        onRetryCatalog={retryCatalog}
       />
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>

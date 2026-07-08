@@ -135,6 +135,12 @@ export const messages = {
       channelFallback: "Canal",
       errorRow: "Corrija os campos deste canal para ver os preços.",
       noFeeHint: "Informe a comissão do canal para ver os preços.",
+      // US3 — the online catalog refresh failed. NON-BLOCKING: the saved/seed reference still
+      // pre-fills and every price computes; this only offers a retry (never an error wall).
+      refreshErrorTitle: "Não foi possível atualizar as taxas",
+      refreshErrorBody:
+        "Usando a referência salva no dispositivo — o cálculo continua funcionando. Você também pode informar as taxas manualmente.",
+      refreshRetry: "Tentar novamente",
     },
     // US2 — honesty seal (FR-107): where a slot's fee numbers came from and how fresh they are. The
     // reference/embedded states append the source + review date; the estimate marks the ML freight

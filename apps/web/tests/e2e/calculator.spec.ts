@@ -133,6 +133,33 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   await context.setOffline(false);
 });
 
+test("US3: a failed fee refresh shows a non-blocking retry; the calculator still computes (SC-104)", async ({
+  page,
+}) => {
+  const t = messages.calculator;
+  // Force the online catalog refresh to fail; a later retry succeeds. /calcular is public (no sign-in).
+  let failFetch = true;
+  await page.route("**/api/v1/fee-catalog", async (route) => {
+    if (failFetch) return route.abort();
+    return route.fulfill({ status: 200, contentType: "application/json", body: servedCatalogJson });
+  });
+
+  await page.goto("/calcular");
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // Non-blocking: a retry notice appears, but the calculator computes from the seed regardless.
+  await expect(page.getByText(t.channels.refreshErrorTitle)).toBeVisible();
+  await page.getByLabel(t.fields.costPerRoll).fill("100");
+  await page.getByLabel(t.fields.rollWeight).fill("1");
+  await page.getByLabel(t.fields.grams).fill("100");
+  await expect(page.getByText("R$ 30,90")).toBeVisible(); // varejo from the seed — never a blank grid
+
+  // Retry now succeeds → the notice clears (the served catalog is adopted).
+  failFetch = false;
+  await page.getByRole("button", { name: t.channels.refreshRetry }).click();
+  await expect(page.getByText(t.channels.refreshErrorTitle)).toHaveCount(0);
+});
+
 test("full model incl. labor + marketplace has no horizontal overflow at 390px (US4/US1, FR-010)", async ({
   page,
 }) => {
