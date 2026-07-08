@@ -525,7 +525,9 @@ function MarketplaceSection({
       {included && (
         <>
           {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
-              and every price computes; this only offers a retry (tone "info", role="status" — no alarm). */}
+              and every price computes; this only offers a retry (tone "info", role="status" — no alarm).
+              `refreshFailed` is STICKY (see the hook) so the notice doesn't blink out during a retry's
+              transient pending window; `refreshing` then drives the button's in-flight spinner. */}
           {refreshFailed && (
             <Alert tone="info" title={t.channels.refreshErrorTitle}>
               <p>{t.channels.refreshErrorBody}</p>
@@ -688,8 +690,8 @@ export function CalcularPage() {
   const {
     catalog,
     source,
-    isError: catalogRefreshFailed,
-    isFetching: catalogRefreshing,
+    refreshFailed: catalogRefreshFailed,
+    refreshing: catalogRefreshing,
     refetch: retryCatalog,
   } = useFeeCatalog();
 

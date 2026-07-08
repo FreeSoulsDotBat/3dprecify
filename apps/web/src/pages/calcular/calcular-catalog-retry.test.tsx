@@ -12,7 +12,7 @@ import { CalcularPage } from "./calcular-page";
 
 // US3 (SC-104): the online catalog refresh is non-blocking — a failure must surface a RETRY without
 // ever blocking the calculator (seed/store keep it live). We mock ONLY the store hook so we can drive
-// isError/isFetching/refetch deterministically; the seed, schema and pricing model stay real.
+// isError/isRefetching/refetch deterministically; the seed, schema and pricing model stay real.
 const { useFeeCatalogMock } = vi.hoisted(() => ({ useFeeCatalogMock: vi.fn() }));
 vi.mock("@/shared/fee-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
@@ -26,8 +26,8 @@ function catalogState(over: Partial<UseFeeCatalog> = {}): UseFeeCatalog {
   return {
     catalog: FEE_CATALOG_SEED,
     source: "seed",
-    isError: false,
-    isFetching: false,
+    refreshFailed: false,
+    refreshing: false,
     refetch: vi.fn(),
     ...over,
   };
@@ -44,7 +44,7 @@ function renderPage() {
 
 describe("US3 — non-blocking catalog refresh retry (SC-104)", () => {
   it("surfaces a retry notice on a failed refresh WHILE the calculator still computes (no blank grid)", () => {
-    useFeeCatalogMock.mockReturnValue(catalogState({ isError: true }));
+    useFeeCatalogMock.mockReturnValue(catalogState({ refreshFailed: true }));
     renderPage();
 
     // The non-blocking notice + a retry affordance are shown.
@@ -66,7 +66,7 @@ describe("US3 — non-blocking catalog refresh retry (SC-104)", () => {
 
   it("clicking 'Tentar novamente' calls refetch", () => {
     const refetch = vi.fn();
-    useFeeCatalogMock.mockReturnValue(catalogState({ isError: true, refetch }));
+    useFeeCatalogMock.mockReturnValue(catalogState({ refreshFailed: true, refetch }));
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: t.channels.refreshRetry }));
@@ -74,7 +74,32 @@ describe("US3 — non-blocking catalog refresh retry (SC-104)", () => {
   });
 
   it("shows NO retry notice when the catalog is healthy", () => {
-    useFeeCatalogMock.mockReturnValue(catalogState({ isError: false }));
+    useFeeCatalogMock.mockReturnValue(catalogState({ refreshFailed: false }));
+    renderPage();
+
+    expect(screen.queryByText(t.channels.refreshErrorTitle)).not.toBeInTheDocument();
+  });
+
+  // Regression (homologação US3): a bare `refetch()` of a no-data errored query re-enters 'pending', so
+  // the raw isError drops to false mid-retry. The hook's `refreshFailed` is STICKY, so the page must
+  // keep the notice on `refreshFailed` alone (never blinking out) while `refreshing` drives the spinner.
+  it("keeps the notice mounted and shows the button loading WHILE a retry is in flight", () => {
+    useFeeCatalogMock.mockReturnValue(catalogState({ refreshFailed: true, refreshing: true }));
+    renderPage();
+
+    // The notice persists (refreshFailed is sticky through the retry's transient pending window)…
+    expect(screen.getByText(t.channels.refreshErrorTitle)).toBeInTheDocument();
+    // …and the retry button reflects the in-flight state (Button loading → aria-busy + disabled). Its
+    // accessible name now also carries the Spinner's "Carregando…" SR label, so match by substring.
+    const retry = screen.getByRole("button", { name: new RegExp(t.channels.refreshRetry) });
+    expect(retry).toHaveAttribute("aria-busy", "true");
+    expect(retry).toBeDisabled();
+  });
+
+  // The initial load is fetching but has NOT failed → refreshFailed is false, so no notice appears (the
+  // notice must never flash during the first fetch, only after a real failure).
+  it("shows NO notice during the initial load (fetching, not yet failed)", () => {
+    useFeeCatalogMock.mockReturnValue(catalogState({ refreshFailed: false, refreshing: true }));
     renderPage();
 
     expect(screen.queryByText(t.channels.refreshErrorTitle)).not.toBeInTheDocument();
