@@ -146,9 +146,9 @@
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T039 [P] Consolidate determinism/version tests (SC-110 + SC-109 version stamp) in `packages/pricing-core/tests/determinism.test.ts`.
-- [ ] T040 [P] No-overflow-390px e2e with the full US1–US5 model (inherits 003 FR-010 / 004).
-- [ ] T041 Docs: update `docs/product/business-rules.md` (E1 expanded), write `specs/005-marketplace-multichannel/dod-evidence.md`, log in `docs/decisions/audit-findings-r2.md`.
+- [x] T039 [P] Determinism/version consolidated in `determinism.test.ts`: SC-110 **at scale** — 5 channels covering every fee shape (plain %, %+fixed, `minPerItem` floor, price bands + voucher bands, an ERRORING slot) in deliberate non-alphabetical order + 3 sub-costs (HALF_UP boundary, blank name, long name) → byte-identical across runs, input-order echo (never sorted), deterministic per-slot error, 3.0.0 stamp (SC-109). Locale independence rides on byte-identity (numbers-in → numbers-out, no Intl).
+- [x] T040 [P] The 390px overflow e2e extended to the FULL US1–US5 model: labor + 2 sub-costs (long name + inline per-row error) + manual-fee channel + Shopee seed-prefilled channel (long embedded seal) + all 4 gross-up rows → `scrollWidth === clientWidth`. Green chromium + mobile.
+- [x] T041 Docs: `business-rules.md` E1 row EXPANDED (005 supersedes the E5 multi-channel deferral; E5 keeps saved scenarios + per-account auth); `specs/005-marketplace-multichannel/dod-evidence.md` written (gates + SC-101..112 map + homologation record); "005 BUILT" logged in `docs/decisions/audit-findings-r2.md`.
 - [ ] T042 Design reconciliation (non-blocking): confirm with Claude Design the **catalog fetch loading / refresh / error+retry** states (now IN scope — there is a network fetch) plus the **seed "referência embutida"** + stale seals.
 
 ---

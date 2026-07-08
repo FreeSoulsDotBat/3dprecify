@@ -160,26 +160,35 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await expect(page.getByText(t.channels.refreshErrorTitle)).toHaveCount(0);
 });
 
-test("full model incl. labor + marketplace has no horizontal overflow at 390px (US4/US1, FR-010)", async ({
-  page,
-}) => {
+test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", async ({ page }) => {
   const t = messages.calculator;
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/calcular"); // public — no sign-in needed
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
-  // Fill the US4 labor + a US5 "Outros custos" sub-cost + the default channel's fees so every new
-  // section + the gross-up rows render, then assert the page still fits 390px with no h-scrollbar.
+  // Build the COMPLETE 005 surface: labor (US4-004), several long-named sub-costs incl. an inline
+  // error (US5), a manual-fee channel + a Shopee catalog-prefilled channel with its long seal and
+  // voucher line (US1/US2), and every gross-up row rendered — then assert no h-scrollbar anywhere.
   await page.getByLabel(t.fields.laborHours).fill("2");
   await page.getByLabel(t.fields.laborRate).fill("30");
+
   await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
-  const costRow = page.getByTestId("other-cost-row").first();
-  await costRow.getByLabel(t.outrosCustos.name).fill("Embalagem");
-  await costRow.getByLabel(t.outrosCustos.value).fill("15");
-  const slot = page.getByTestId("channel-slot").first();
-  await slot.getByLabel(/^Comissão(?! mínima)/).fill("20");
-  await slot.getByLabel(t.channels.fixedFee).fill("5");
-  await expect(page.getByText(t.results.precoAnuncio).first()).toBeVisible();
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  const costRows = page.getByTestId("other-cost-row");
+  await costRows.nth(0).getByLabel(t.outrosCustos.name).fill("Frete até a transportadora parceira");
+  await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("15");
+  await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("-1"); // inline per-row error renders too
+
+  const slot0 = page.getByTestId("channel-slot").first();
+  await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
+  await slot0.getByLabel(t.channels.fixedFee).fill("5");
+  await page.getByRole("button", { name: t.channels.addChannel }).click();
+  const slot1 = page.getByTestId("channel-slot").nth(1);
+  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4); // 2 channels × 2 levels
+  await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded); // the long seal wraps
+  await expect(costRows.nth(1).getByText(t.validation.negative)).toBeVisible();
 
   const { scrollWidth, clientWidth } = await page.evaluate(() => {
     const el = document.scrollingElement ?? document.documentElement;
