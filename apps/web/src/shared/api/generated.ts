@@ -122,20 +122,6 @@ export interface FeeCatalog {
   marketplaces: MarketplaceCatalog[];
 }
 
-export type ValidationErrorCtx = { [key: string]: unknown };
-
-export interface ValidationError {
-  loc: (string | number)[];
-  msg: string;
-  type: string;
-  input?: unknown;
-  ctx?: ValidationErrorCtx;
-}
-
-export interface HTTPValidationError {
-  detail?: ValidationError[];
-}
-
 export type HealthHealthGet200 = {[key: string]: string};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -282,15 +268,15 @@ export type getMeApiV1MeGetResponse200 = {
   status: 200
 }
 
-export type getMeApiV1MeGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
+export type getMeApiV1MeGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
 }
 
 export type getMeApiV1MeGetResponseSuccess = (getMeApiV1MeGetResponse200) & {
   headers: Headers;
 };
-export type getMeApiV1MeGetResponseError = (getMeApiV1MeGetResponse422) & {
+export type getMeApiV1MeGetResponseError = (getMeApiV1MeGetResponse401) & {
   headers: Headers;
 };
 
@@ -329,7 +315,7 @@ export const getGetMeApiV1MeGetQueryKey = () => {
     }
 
 
-export const getGetMeApiV1MeGetQueryOptions = <TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+export const getGetMeApiV1MeGetQueryOptions = <TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -348,10 +334,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetMeApiV1MeGetQueryResult = NonNullable<Awaited<ReturnType<typeof getMeApiV1MeGet>>>
-export type GetMeApiV1MeGetQueryError = HTTPValidationError
+export type GetMeApiV1MeGetQueryError = ErrorEnvelope
 
 
-export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = ErrorEnvelope>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMeApiV1MeGet>>,
@@ -361,7 +347,7 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
       >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getMeApiV1MeGet>>,
@@ -371,7 +357,7 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
       >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -379,7 +365,7 @@ export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1M
  * @summary Get Me
  */
 
-export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = HTTPValidationError>(
+export function useGetMeApiV1MeGet<TData = Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError = ErrorEnvelope>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getMeApiV1MeGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
@@ -407,15 +393,10 @@ export type getFeeCatalogApiV1FeeCatalogGetResponse304 = {
   status: 304
 }
 
-export type getFeeCatalogApiV1FeeCatalogGetResponse422 = {
-  data: HTTPValidationError
-  status: 422
-}
-
 export type getFeeCatalogApiV1FeeCatalogGetResponseSuccess = (getFeeCatalogApiV1FeeCatalogGetResponse200) & {
   headers: Headers;
 };
-export type getFeeCatalogApiV1FeeCatalogGetResponseError = (getFeeCatalogApiV1FeeCatalogGetResponse304 | getFeeCatalogApiV1FeeCatalogGetResponse422) & {
+export type getFeeCatalogApiV1FeeCatalogGetResponseError = (getFeeCatalogApiV1FeeCatalogGetResponse304) & {
   headers: Headers;
 };
 
@@ -454,7 +435,7 @@ export const getGetFeeCatalogApiV1FeeCatalogGetQueryKey = () => {
     }
 
 
-export const getGetFeeCatalogApiV1FeeCatalogGetQueryOptions = <TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+export const getGetFeeCatalogApiV1FeeCatalogGetQueryOptions = <TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
@@ -473,10 +454,10 @@ const {query: queryOptions, request: requestOptions} = options ?? {};
 }
 
 export type GetFeeCatalogApiV1FeeCatalogGetQueryResult = NonNullable<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>>
-export type GetFeeCatalogApiV1FeeCatalogGetQueryError = void | HTTPValidationError
+export type GetFeeCatalogApiV1FeeCatalogGetQueryError = void
 
 
-export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void>(
   options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
           Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>,
@@ -486,7 +467,7 @@ export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
           Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>,
@@ -496,7 +477,7 @@ export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<ty
       >, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
@@ -504,7 +485,7 @@ export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<ty
  * @summary Get Fee Catalog
  */
 
-export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void | HTTPValidationError>(
+export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError = void>(
   options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getFeeCatalogApiV1FeeCatalogGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {

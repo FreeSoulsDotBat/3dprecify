@@ -93,24 +93,24 @@ asserted (SC-206). Retires the `local-gate-vs-ci-gap` tribal knowledge.
 phantom 403 added; Schemathesis-as-pytest (ASGI) fails CI on any contract↔reality divergence.
 **Independent Test**: quickstart §2; contracts/error-contract.md is the target state.
 
-- [ ] T011 [US3] Write `backend/tests/test_conformance.py` FIRST: Schemathesis v4 `openapi.from_asgi("/openapi.json", create_app(...))`
+- [x] T011 [US3] Write `backend/tests/test_conformance.py` FIRST: Schemathesis v4 `openapi.from_asgi("/openapi.json", create_app(...))`
       + `@schema.parametrize()` + `case.call_and_validate()` over ALL operations; deterministic Hypothesis CI
       profile (`deadline=None`, fixed `max_examples`, `derandomize=True`); token-verify stub (reuse the
       `test_me.py` monkeypatch pattern) so fuzzed `Authorization` yields a stable 401. **Run and observe it
       FAILING** against the current contract (undocumented 401 on `/me`) — record the failure for evidence.
-- [ ] T012 [US3] Declare the reachable statuses: shared constants in `backend/app/errors.py`
+- [x] T012 [US3] Declare the reachable statuses: shared constants in `backend/app/errors.py`
       (`AUTH_ERRORS = {401: {"model": ErrorEnvelope}}`, optional `INTERNAL_ERRORS`) and apply
       `responses=AUTH_ERRORS` on `/me` in `backend/app/api/me.py`. NO 403 (would be a fresh phantom).
-- [ ] T013 [US3] Strip the phantom: `app.openapi()` override in `backend/app/main.py` deleting any `422`
+- [x] T013 [US3] Strip the phantom: `app.openapi()` override in `backend/app/main.py` deleting any `422`
       response whose schema `$ref` ends in `HTTPValidationError` (per-route `responses=` cannot remove the
       auto-422). `test_conformance.py` now passes; `HTTPValidationError`/`ValidationError` components drop out.
-- [ ] T014 [US3] Regenerate the wire artifacts in the same commit: `contracts/openapi.json` + Orval client
+- [x] T014 [US3] Regenerate the wire artifacts in the same commit: `contracts/openapi.json` + Orval client
       (`apps/web/src/shared/api/generated.ts`); verify `grep -c HTTPValidationError contracts/openapi.json`
       → 0 and the contract drift-guard is green.
-- [ ] T015 [US3] Migrate `apps/web/src/entities/user/use-identity` to the generated client now that the
+- [x] T015 [US3] Migrate `apps/web/src/entities/user/use-identity` to the generated client now that the
       phantom-422 union is gone (**retires TD-019**); remove any now-dead hand-rolled typing; frontend gate +
       e2e stay green.
-- [ ] T016 [US3] Update the substitute note in `backend/tests/test_fee_catalog.py` (the hand-written contract
+- [x] T016 [US3] Update the substitute note in `backend/tests/test_fee_catalog.py` (the hand-written contract
       test no longer "replaces Schemathesis" — it complements it); confirm the conformance test runs inside
       `gate:be`/`gate:all` (Phase 3 wiring) and in the CI gate job.
 

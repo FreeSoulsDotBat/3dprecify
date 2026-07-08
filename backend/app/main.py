@@ -6,8 +6,10 @@ A dev-only ``/api/v1/_debug/boom`` demonstrates the error envelope + correlation
 
 from __future__ import annotations
 
+import json
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,6 +26,40 @@ from .settings import Settings, get_settings
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
     init_firebase(get_settings())
     yield
+
+
+def _strip_phantom_422(schema: dict[str, Any]) -> dict[str, Any]:
+    """Remove FastAPI's auto-injected 422 (``HTTPValidationError``) from the published contract.
+
+    A21/FR-210: none of our routes can actually fail request validation (their only params are
+    optional headers), so the auto-422 is a phantom — and per-route ``responses=`` can only
+    *replace* it, never remove it. Real validation failures (if a future route gains required
+    params) are handled by ``register_exception_handlers`` as a 422 ``ErrorEnvelope``; such a route
+    must then DECLARE that envelope explicitly instead of relying on the phantom default.
+    """
+    for path_item in schema.get("paths", {}).values():
+        for operation in path_item.values():
+            responses = operation.get("responses", {})
+            ref = (
+                responses.get("422", {})
+                .get("content", {})
+                .get("application/json", {})
+                .get("schema", {})
+                .get("$ref", "")
+            )
+            if ref.endswith("HTTPValidationError"):
+                del responses["422"]
+    # Drop the now-unreferenced components — defensively verified, never blind.
+    components = schema.get("components", {}).get("schemas", {})
+    for name in ("HTTPValidationError", "ValidationError"):
+        if name in components:
+            without = {k: v for k, v in components.items() if k != name}
+            still_referenced = f"#/components/schemas/{name}" in json.dumps(
+                {**schema, "components": {"schemas": without}}
+            )
+            if not still_referenced:
+                del components[name]
+    return schema
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -61,6 +97,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise AppError(ErrorCode.INTERNAL, "Boom (debug)", status_code=500)
 
     app.include_router(api)
+
+    # A21: the published OpenAPI is the default one minus the phantom auto-422 (see helper above).
+    default_openapi = app.openapi
+
+    def openapi_without_phantom_422() -> dict[str, Any]:
+        if app.openapi_schema:
+            return app.openapi_schema
+        app.openapi_schema = _strip_phantom_422(default_openapi())
+        return app.openapi_schema
+
+    app.openapi = openapi_without_phantom_422  # pyright: ignore[reportAttributeAccessIssue]
+
     return app
 
 
