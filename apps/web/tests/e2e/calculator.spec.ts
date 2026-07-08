@@ -168,11 +168,14 @@ test("full model incl. labor + marketplace has no horizontal overflow at 390px (
   await page.goto("/calcular"); // public — no sign-in needed
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
-  // Fill the US4 labor/admin + the default channel's fees so every new section + the gross-up
-  // rows render, then assert the page still fits 390px with no horizontal scrollbar.
+  // Fill the US4 labor + a US5 "Outros custos" sub-cost + the default channel's fees so every new
+  // section + the gross-up rows render, then assert the page still fits 390px with no h-scrollbar.
   await page.getByLabel(t.fields.laborHours).fill("2");
   await page.getByLabel(t.fields.laborRate).fill("30");
-  await page.getByLabel(t.fields.adminTotal).fill("15");
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  const costRow = page.getByTestId("other-cost-row").first();
+  await costRow.getByLabel(t.outrosCustos.name).fill("Embalagem");
+  await costRow.getByLabel(t.outrosCustos.value).fill("15");
   const slot = page.getByTestId("channel-slot").first();
   await slot.getByLabel(/^Comissão(?! mínima)/).fill("20");
   await slot.getByLabel(t.channels.fixedFee).fill("5");
@@ -322,4 +325,40 @@ test("US4: the 'Incluir marketplaces no preço' toggle shows/hides the whole mar
   await page.getByRole("switch", { name: t.channels.includeToggle }).click();
   await expect(page.getByText(t.channels.pricesTitle)).toBeVisible();
   await expect(page.getByTestId("channel-slot")).toHaveCount(1);
+});
+
+test("US5: itemized 'Outros custos' — named sub-costs each show as a breakdown line; removing one drops it (SC-106)", async ({
+  page,
+}) => {
+  const t = messages.calculator;
+  const oc = t.outrosCustos;
+  await page.goto("/calcular"); // public — no sign-in needed
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // Add two named sub-costs (Embalagem R$ 3,00 + Etiqueta R$ 2,00). "Etiqueta" avoids colliding with
+  // the marketplace channel's "Frete" fee label so the breakdown assertions stay unambiguous.
+  await page.getByRole("button", { name: oc.addCost }).click();
+  await page.getByRole("button", { name: oc.addCost }).click();
+  const rows = page.getByTestId("other-cost-row");
+  await expect(rows).toHaveCount(2);
+
+  await rows.nth(0).getByLabel(oc.name).fill("Embalagem");
+  await rows.nth(0).getByLabel(oc.value).fill("3,00");
+  await rows.nth(1).getByLabel(oc.name).fill("Etiqueta");
+  await rows.nth(1).getByLabel(oc.value).fill("2,00");
+
+  // Each named sub-cost is its own breakdown line with its rounded value (FR-115). `exact` so the
+  // "Embalagem" breakdown line isn't confused with the slot hint text that also mentions it.
+  await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
+  await expect(page.getByText("Etiqueta", { exact: true })).toBeVisible();
+  await expect(page.getByText("R$ 3,00")).toBeVisible();
+  await expect(page.getByText("R$ 2,00")).toBeVisible();
+
+  // Remove "Etiqueta" → its row + breakdown line drop; "Embalagem" stays. Never a NaN.
+  await rows.nth(1).getByRole("button", { name: oc.removeCost }).click();
+  await expect(page.getByTestId("other-cost-row")).toHaveCount(1);
+  await expect(page.getByText("Etiqueta", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("R$ 2,00")).toHaveCount(0);
+  await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
+  await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
 });

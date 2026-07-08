@@ -125,10 +125,10 @@
 **Goal**: "Outros custos" becomes 0..N named sub-costs summing into `custo_total` exactly as 004's single admin; each named line in the breakdown.
 **Independent Test**: SC-106.
 
-- [ ] T033 [P] [US5] SC-106 test (sub-costs sum ≡ single admin; each named line in breakdown; remove lowers exactly; empty ≡ 004 byte-for-byte) in `packages/pricing-core/tests/` — FAILING first.
-- [ ] T034 [US5] `admin = Σ otherCosts.value` in `computeCalculator` (uses T004 `otherCosts[]`); each named sub-cost as its own breakdown line (FR-114/115); breakdown still sums to `custo_total` (0 residual, HALF_UP).
-- [ ] T035 [US5] `calcular-page.tsx`: "Outros custos" slot — add/remove named sub-costs, per-field pt-BR validation (finite ≥0), blank name → neutral placeholder.
-- [ ] T036 [US5] e2e: Embalagem R$3 + Frete R$2 → custo_total +R$5; each line in breakdown; remove Frete → −R$2 exactly.
+- [x] T033 [P] [US5] SC-106 test (sub-costs sum ≡ single admin; each named line echoed on the result; remove lowers exactly; empty ≡ 004 byte-for-byte) in `packages/pricing-core/tests/computeCalculator.test.ts` — plus per-row FE mapping tests in `calculator-model.test.ts`. Written FAILING first.
+- [x] T034 [US5] `admin = Σ otherCosts.value` in `computeCalculator` (uses T004 `otherCosts[]`); each named sub-cost **echoed onto `PriceResult.otherCosts[]`** (rounded, in order) so it renders as its own breakdown line (FR-114/115); breakdown still sums to `custo_total` (0 residual, HALF_UP). Additive to the 3.0.0 result contract (still unreleased) — no version bump.
+- [x] T035 [US5] `calcular-page.tsx`: "Outros custos" slot (`OtherCostsSection`/`OtherCostRow`) — add/remove named sub-costs via `useFieldArray`, per-row pt-BR validation (finite ≥0, isolated so a bad row errors only itself), blank name → neutral placeholder + `outrosCustos.lineFallback` in the breakdown. Schema: `adminTotal` scalar removed, `otherCosts: OtherCostForm[]` added (Constitution V — no dead field left behind).
+- [x] T036 [US5] e2e (`calculator.spec.ts`): Embalagem R$3 + Etiqueta R$2 → each a named breakdown line; remove Etiqueta → its line drops, Embalagem stays, no NaN. Green on chromium + mobile. (Also migrated the 390px-overflow test off the removed `adminTotal` field onto the slot.)
 - [ ] T036b [US5] **Visual homologation (QA)**: outros-custos slot.
 
 ---

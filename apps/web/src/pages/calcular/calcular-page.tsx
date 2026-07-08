@@ -11,6 +11,7 @@ import {
   type ChannelSlotForm,
   defaultCalcValues,
   defaultChannelSlot,
+  defaultOtherCost,
   LABOR_FIELDS,
   MANDATORY_FIELDS,
   type MarketplaceId,
@@ -37,16 +38,14 @@ import {
 } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// E1 calculator screen. The US refs below are spec 004's user stories — NOT 005's (005-US4 is the
-// pending "Incluir marketplaces no preço" toggle, not delivered in this MVP). RHF (form state) + Zod
-// (calculatorResolver) own the pt-BR inputs; the price + breakdown come from one synchronous
-// computeFromForm pass over the canonical pricing-core engine (recompute on every change,
-// deterministic, offline — FR-036/FR-039). 004-US1 = a correct retail + wholesale price (PriceHero);
-// 004-US2 = the transparent per-line breakdown that visibly sums to custo_total + the markup
-// derivation (BreakdownRow); 004-US4 = the optional labor + admin costs that fold into custo_total;
-// 004-US5 = the marketplace fee gross-up (channel prices shown only once a fee is set — FR-033). No
-// persistence / paywall (004-US6). The 005 multi-channel expansion (channels[] + honesty seals) layers
-// on top; its US3–US6 (toggle, itemized Outros custos, offline cache) remain pending (tasks.md).
+// E1 calculator screen. RHF (form state) + Zod (calculatorResolver) own the pt-BR inputs; the price +
+// breakdown come from one synchronous computeFromForm pass over the canonical pricing-core engine
+// (recompute on every change, deterministic, offline — FR-036/FR-039). 004-US1 = a correct retail +
+// wholesale price (PriceHero); 004-US2 = the transparent per-line breakdown that visibly sums to
+// custo_total + the markup derivation (BreakdownRow); 004-US4 = the optional labor cost. The 005
+// multi-channel expansion layers on top: multi-channel marketplace gross-up + honesty seals (US1/US2),
+// non-blocking offline catalog refresh (US3), the "Incluir marketplaces no preço" visibility toggle
+// (US4), and the itemized "Outros custos" named sub-costs slot (US5). No persistence / paywall (US6).
 
 const t = messages.calculator;
 
@@ -168,11 +167,15 @@ function PriceResults({ result, values }: { result: PriceResult; values: CalcFor
             value={result.labor}
             emphasis={line(result.labor, true)}
           />
-          <BreakdownRow
-            label={t.results.admin}
-            value={result.admin}
-            emphasis={line(result.admin, true)}
-          />
+          {/* US5 (FR-115): each named "Outros custos" sub-cost is its own breakdown line (a blank name
+              falls back to a neutral label). Their sum is folded into custo_total below. */}
+          {result.otherCosts.map((c, i) => (
+            <BreakdownRow
+              key={`other-cost-${i}`}
+              label={c.name.trim() || t.outrosCustos.lineFallback}
+              value={c.value}
+            />
+          ))}
           <BreakdownRow label={t.results.custoTotal} value={result.custoTotal} emphasis="total" />
           {/* How each sale price derives from custo_total via markup (FR-033). */}
           <BreakdownRow
@@ -560,6 +563,112 @@ function MarketplaceSection({
   );
 }
 
+/** One "Outros custos" row (US5): a free-text name + a currency value, wired to `otherCosts.{i}`. The
+ *  value error comes from the per-row model outcome (not RHF), so a bad row flags itself while the
+ *  price still computes from the valid rows (FR-116). A blank name is accepted (neutral placeholder). */
+function OtherCostRow({
+  control,
+  index,
+  error,
+  onRemove,
+}: {
+  control: Control<CalcFormValues>;
+  index: number;
+  error?: string;
+  onRemove: (index: number) => void;
+}) {
+  return (
+    <div className="flex items-end gap-2" data-testid="other-cost-row">
+      <Controller
+        control={control}
+        name={`otherCosts.${index}.name` as const}
+        render={({ field }) => (
+          <Field label={t.outrosCustos.name} className="flex-1" tightLabel>
+            {(p) => (
+              <div className="tf-inputwrap">
+                <input
+                  {...p}
+                  type="text"
+                  className="tf-input"
+                  placeholder={t.outrosCustos.namePlaceholder}
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  ref={field.ref}
+                />
+              </div>
+            )}
+          </Field>
+        )}
+      />
+      <Controller
+        control={control}
+        name={`otherCosts.${index}.value` as const}
+        render={({ field }) => (
+          <Field label={t.outrosCustos.value} className="flex-1" tightLabel error={error}>
+            {(p) => (
+              <NumberField
+                {...p}
+                currency
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+                error={Boolean(error)}
+              />
+            )}
+          </Field>
+        )}
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemove(index)}
+        aria-label={t.outrosCustos.removeCost}
+      >
+        ✕
+      </Button>
+    </div>
+  );
+}
+
+/** The "Outros custos" slot (US5): 0..N named sub-costs the user adds/removes; each value sums into
+ *  custo_total and shows its own breakdown line. Sits alongside the labor fields. */
+function OtherCostsSection({
+  control,
+  fields,
+  errors,
+  onAppend,
+  onRemove,
+}: {
+  control: Control<CalcFormValues>;
+  fields: { id: string }[];
+  errors: (string | undefined)[];
+  onAppend: () => void;
+  onRemove: (index: number) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <SectionTitle title={t.outrosCustos.title} info={t.sectionInfo.outrosCustos} />
+      <p className="text-sm text-[var(--text-muted)]">{t.outrosCustos.hint}</p>
+      {fields.map((f, i) => (
+        <OtherCostRow
+          key={f.id}
+          control={control}
+          index={i}
+          error={errors[i]}
+          onRemove={onRemove}
+        />
+      ))}
+      <Button variant="secondary" size="sm" onClick={onAppend}>
+        {t.outrosCustos.addCost}
+      </Button>
+    </div>
+  );
+}
+
 export function CalcularPage() {
   const { control, watch, setValue } = useForm<CalcFormValues>({
     defaultValues: defaultCalcValues,
@@ -567,6 +676,11 @@ export function CalcularPage() {
     mode: "onChange",
   });
   const { fields, append, remove } = useFieldArray({ control, name: "channels" });
+  const {
+    fields: otherCostFields,
+    append: appendOtherCost,
+    remove: removeOtherCost,
+  } = useFieldArray({ control, name: "otherCosts" });
 
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
   // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
@@ -580,7 +694,11 @@ export function CalcularPage() {
   } = useFeeCatalog();
 
   const values = watch();
-  const { result, channels: channelOutcomes } = computeFromForm(values, {
+  const {
+    result,
+    channels: channelOutcomes,
+    otherCostErrors,
+  } = computeFromForm(values, {
     catalog,
     source,
     now: Date.now(),
@@ -618,6 +736,13 @@ export function CalcularPage() {
         title={t.sections.labor}
         info={t.sectionInfo.labor}
         fields={LABOR_FIELDS}
+      />
+      <OtherCostsSection
+        control={control}
+        fields={otherCostFields}
+        errors={otherCostErrors}
+        onAppend={() => appendOtherCost(defaultOtherCost())}
+        onRemove={removeOtherCost}
       />
       <FieldGroup
         control={control}

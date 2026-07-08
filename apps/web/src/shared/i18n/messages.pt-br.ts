@@ -40,7 +40,6 @@ export const messages = {
       finishRate: "Valor do acabamento",
       laborHours: "Mão de obra (horas)",
       laborRate: "Valor da hora",
-      adminTotal: "Outros custos",
       markupVarejo: "Markup varejo",
       markupAtacado: "Markup atacado",
     },
@@ -73,7 +72,11 @@ export const messages = {
       },
       labor: {
         label: "Sobre mão de obra e custos",
-        body: "Custos opcionais que somam ao total. Mão de obra = horas × valor da hora. Outros custos = um valor fixo (embalagem, taxas, overhead) somado ao custo total.",
+        body: "Custos opcionais que somam ao total. Mão de obra = horas × valor da hora. Outros custos = um ou mais itens nomeados (embalagem, taxas, overhead), cada um somado ao custo total.",
+      },
+      outrosCustos: {
+        label: "Sobre outros custos",
+        body: "Itens nomeados que somam ao custo total: embalagem, frete até a transportadora, taxas, overhead. A soma entra no custo total exatamente como um valor único faria, e cada item aparece na sua própria linha do detalhamento.",
       },
       markup: {
         label: "Sobre o markup",
@@ -105,7 +108,6 @@ export const messages = {
       failure: "Falha / perdas",
       finishing: "Acabamento",
       labor: "Mão de obra",
-      admin: "Outros custos",
       custoTotal: "Custo total",
       varejo: "Preço varejo",
       atacado: "Preço atacado",
@@ -116,6 +118,19 @@ export const messages = {
       varejo: "Varejo",
       atacado: "Atacado",
       markup: "markup",
+    },
+    // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Frete até a transportadora…);
+    // each value soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria
+    // linha no detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
+    outrosCustos: {
+      title: "Outros custos",
+      hint: "Embalagem, frete até a transportadora, etc. Cada item soma ao custo total.",
+      addCost: "Adicionar custo",
+      removeCost: "Remover custo",
+      name: "Nome do custo",
+      namePlaceholder: "Ex.: Embalagem",
+      value: "Valor",
+      lineFallback: "Outros custos",
     },
     // US1 — multi-channel marketplace pricing. Each slot names a marketplace + modality and its
     // fees; "Preços por canal" shows every slot's anúncio + líquido for varejo e atacado together.

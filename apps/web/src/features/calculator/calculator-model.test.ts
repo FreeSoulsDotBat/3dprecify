@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { feeCatalogSchema } from "@/shared/fee-catalog";
+import { messages } from "@/shared/i18n/messages.pt-br";
 
 import {
   type CalcFormValues,
@@ -33,11 +34,11 @@ const canonical: CalcFormValues = {
   finishRatePerHour: "10,00",
   laborHours: "0",
   laborRatePerHour: "0",
-  adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
   channels: [],
   includeMarketplace: true,
+  otherCosts: [],
 };
 
 describe("computeFromForm — canonical vector flows through the engine (SC-001)", () => {
@@ -332,6 +333,58 @@ describe("US4 — 'Incluir marketplaces no preço' master toggle (SC-105)", () =
     expect(off.result?.precoAtacado).toBe(on.result?.precoAtacado);
     // Off also stamps no catalog provenance — there is no channel that could have used it.
     expect(off.result?.catalogVersion).toBeNull();
+  });
+});
+
+describe("US5 — itemized 'Outros custos' slot maps to the engine (SC-106 / FR-114-116)", () => {
+  it("named sub-costs sum into custo_total; each is echoed as its own result line", () => {
+    const base = computeFromForm(canonical);
+    const withCosts = computeFromForm({
+      ...canonical,
+      otherCosts: [
+        { name: "Embalagem", value: "3,00" },
+        { name: "Frete", value: "2,00" },
+      ],
+    });
+    expect(withCosts.result?.otherCosts).toEqual([
+      { name: "Embalagem", value: 3 },
+      { name: "Frete", value: 2 },
+    ]);
+    expect(withCosts.result?.custoTotal).toBeCloseTo((base.result?.custoTotal ?? 0) + 5, 2);
+    expect(withCosts.otherCostErrors).toEqual([undefined, undefined]);
+  });
+
+  it("a blank-value row contributes nothing and yields no engine line (untouched → 0)", () => {
+    const r = computeFromForm({ ...canonical, otherCosts: [{ name: "Embalagem", value: "" }] });
+    expect(r.result?.otherCosts).toEqual([]);
+    expect(r.result?.admin).toBe(0);
+    expect(r.otherCostErrors).toEqual([undefined]);
+  });
+
+  it("a negative row errors ONLY that row; the valid rows still fold into the price (FR-116)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      otherCosts: [
+        { name: "Embalagem", value: "3,00" },
+        { name: "Ruim", value: "-1" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect(r.otherCostErrors[0]).toBeUndefined();
+    expect(r.otherCostErrors[1]).toBe(messages.calculator.validation.negative);
+    // Only the valid row is folded in — the bad row is dropped from the sum, never a NaN.
+    expect(r.result?.otherCosts).toEqual([{ name: "Embalagem", value: 3 }]);
+  });
+
+  it("a non-numeric row errors that row with the 'invalid' message", () => {
+    const r = computeFromForm({ ...canonical, otherCosts: [{ name: "x", value: "abc" }] });
+    expect(r.otherCostErrors[0]).toBe(messages.calculator.validation.invalid);
+    expect(r.result?.otherCosts).toEqual([]);
+  });
+
+  it("a blank name is accepted (kept as an empty label for the UI fallback, FR-116)", () => {
+    const r = computeFromForm({ ...canonical, otherCosts: [{ name: "", value: "5" }] });
+    expect(r.result?.otherCosts).toEqual([{ name: "", value: 5 }]);
   });
 });
 
