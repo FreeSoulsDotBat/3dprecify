@@ -33,6 +33,7 @@ import {
   NumberField,
   PriceHero,
   Select,
+  Switch,
 } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
@@ -480,6 +481,8 @@ function MarketplaceSection({
   values,
   fields,
   channelOutcomes,
+  included,
+  onToggleInclude,
   onAppend,
   onRemove,
   onMarketplaceChange,
@@ -491,6 +494,8 @@ function MarketplaceSection({
   values: CalcFormValues;
   fields: { id: string }[];
   channelOutcomes: ChannelSlotOutcome[];
+  included: boolean;
+  onToggleInclude: (included: boolean) => void;
   onAppend: (slot: ChannelSlotForm) => void;
   onRemove: (index: number) => void;
   onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
@@ -500,40 +505,57 @@ function MarketplaceSection({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
-      {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
-          and every price computes; this only offers a retry (tone "info", role="status" — no alarm). */}
-      {refreshFailed && (
-        <Alert tone="info" title={t.channels.refreshErrorTitle}>
-          <p>{t.channels.refreshErrorBody}</p>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={onRetryCatalog}
-            loading={refreshing}
-            className="mt-2"
-          >
-            {t.channels.refreshRetry}
-          </Button>
-        </Alert>
-      )}
-      <div className="flex flex-col gap-3">
-        {fields.map((f, i) => (
-          <ChannelSlot
-            key={f.id}
-            control={control}
-            index={i}
-            slot={values.channels[i]}
-            outcome={channelOutcomes[i]}
-            onRemove={onRemove}
-            onMarketplaceChange={onMarketplaceChange}
+      {/* US4: the "Incluir marketplaces no preço" master toggle stays OUTSIDE the collapsible body so
+          the section is always re-enableable. It is pure visibility — off hides every channel row and
+          stops computing the channels (SC-105); the direct varejo/atacado headline is untouched. */}
+      <div className="flex items-center justify-between gap-3">
+        <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-[var(--text-muted)]">
+          <span>{t.channels.includeToggle}</span>
+          <Switch
+            checked={included}
+            onCheckedChange={onToggleInclude}
+            aria-label={t.channels.includeToggle}
           />
-        ))}
+        </label>
       </div>
-      <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
-        {t.channels.addChannel}
-      </Button>
-      <ChannelPrices values={values} channelOutcomes={channelOutcomes} />
+      {included && (
+        <>
+          {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
+              and every price computes; this only offers a retry (tone "info", role="status" — no alarm). */}
+          {refreshFailed && (
+            <Alert tone="info" title={t.channels.refreshErrorTitle}>
+              <p>{t.channels.refreshErrorBody}</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={onRetryCatalog}
+                loading={refreshing}
+                className="mt-2"
+              >
+                {t.channels.refreshRetry}
+              </Button>
+            </Alert>
+          )}
+          <div className="flex flex-col gap-3">
+            {fields.map((f, i) => (
+              <ChannelSlot
+                key={f.id}
+                control={control}
+                index={i}
+                slot={values.channels[i]}
+                outcome={channelOutcomes[i]}
+                onRemove={onRemove}
+                onMarketplaceChange={onMarketplaceChange}
+              />
+            ))}
+          </div>
+          <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
+            {t.channels.addChannel}
+          </Button>
+          <ChannelPrices values={values} channelOutcomes={channelOutcomes} />
+        </>
+      )}
     </div>
   );
 }
@@ -617,6 +639,8 @@ export function CalcularPage() {
         values={values}
         fields={fields}
         channelOutcomes={channelOutcomes}
+        included={values.includeMarketplace !== false}
+        onToggleInclude={(next) => setValue("includeMarketplace", next)}
         onAppend={append}
         onRemove={remove}
         onMarketplaceChange={handleMarketplaceChange}

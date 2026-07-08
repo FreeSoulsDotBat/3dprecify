@@ -294,3 +294,32 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
   });
   expect(scrollWidth).toBe(clientWidth);
 });
+
+test("US4: the 'Incluir marketplaces no preço' toggle shows/hides the whole marketplace section; the direct price stays (SC-105)", async ({
+  page,
+}) => {
+  const t = messages.calculator;
+  await page.goto("/calcular"); // public — no sign-in needed
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // Default ON: the switch is checked and the marketplace machinery is visible.
+  const toggle = page.getByRole("switch", { name: t.channels.includeToggle });
+  await expect(toggle).toBeChecked();
+  await expect(page.getByRole("button", { name: t.channels.addChannel })).toBeVisible();
+  await expect(page.getByText(t.channels.pricesTitle)).toBeVisible();
+
+  // Toggle OFF → the entire marketplace section collapses (no channel slots, no "Preços por canal")…
+  await toggle.click();
+  await expect(page.getByRole("switch", { name: t.channels.includeToggle })).not.toBeChecked();
+  await expect(page.getByTestId("channel-slot")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: t.channels.addChannel })).toHaveCount(0);
+  await expect(page.getByText(t.channels.pricesTitle)).toHaveCount(0);
+  // …but the direct varejo/atacado headline the seller reads first is untouched, and never a NaN.
+  await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+  await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
+
+  // Toggle back ON → the section (and its channel slot) return; the switch stays reachable throughout.
+  await page.getByRole("switch", { name: t.channels.includeToggle }).click();
+  await expect(page.getByText(t.channels.pricesTitle)).toBeVisible();
+  await expect(page.getByTestId("channel-slot")).toHaveCount(1);
+});

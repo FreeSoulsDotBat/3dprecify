@@ -102,14 +102,20 @@
 
 ---
 
-## Phase 6: User Story 4 — Include/exclude toggle framing (P2)
+## Phase 6: User Story 4 — Include/exclude marketplace toggle (P2)
 
-**Goal**: "Incluir marketplaces no preço" (default on) frames the headline; off → headline = direct 004 cost×markup exactly, channels = labelled simulation.
+**Goal**: "Incluir marketplaces no preço" (default on) shows the whole marketplace section; off → the section is hidden and no channel is computed. The direct 004 cost×markup varejo/atacado headline is byte-identical either way.
 **Independent Test**: SC-105.
 
-- [ ] T030 [P] [US4] SC-105 test (on → per-channel prices are the result; off → headline equals 004 direct varejo/atacado exactly, no fee folded into custo_total) — FAILING first.
-- [ ] T031 [US4] `includeInHeadline` flag in schema/model + `PriceResult`; `calcular-page.tsx` toggle (default on); headline selection in UI.
-- [ ] T032 [US4] e2e: toggle off → headline reverts to direct varejo/atacado (== 004), channel list labelled simulation-only.
+> **Owner clarification (2026-07-07)** — this toggle is pure **UI visibility**: it shows/hides the marketplace
+> section, it does NOT reframe which price is the headline. So `includeInHeadline` on `PriceResult` was NOT added
+> (it stays DEFERRED to E4 per ADR-0011). The toggle lives in `CalcFormValues.includeMarketplace` (FE-only); when
+> off, the model passes an empty `channels[]` so nothing is computed and no catalog version is stamped — the
+> headline never changes because a marketplace fee is a gross-up ON TOP of the price, never folded into custo_total.
+
+- [x] T030 [P] [US4] SC-105 test — model (`calculator-model.test.ts`): `includeMarketplace:false` → 0 channel outcomes + byte-identical custoTotal/precoVarejo/precoAtacado + null catalogVersion; component (`calcular.test.tsx`): default on shows section, off hides "Adicionar canal"/"Preços por canal" while the headline stays. Written FAILING first.
+- [x] T031 [US4] `includeMarketplace: boolean` in `calculator-schema.ts` (default `true`); model gates channel compute in `calculator-model.ts`; `calcular-page.tsx` renders a DS `Switch` (labelled `channels.includeToggle`) in the MarketplaceSection header (outside the collapsible body so it stays re-enableable) + conditional body render. **Deviation**: no `includeInHeadline` on `PriceResult` (owner clarification above).
+- [x] T032 [US4] e2e (`calculator.spec.ts`): toggle off → channel slots + "Preços por canal" hidden, direct varejo headline stays, no NaN; toggle back on → section returns. Green on chromium + mobile.
 - [ ] T032b [US4] **Visual homologation (QA)**: toggle states.
 
 ---

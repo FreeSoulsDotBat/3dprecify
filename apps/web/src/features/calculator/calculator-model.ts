@@ -212,7 +212,12 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
     // becomes a one-item `otherCosts` slot (multi-slot is US5); the channel slots become `channels[]`
     // with catalog pre-fill applied per slot (blank → reference, typed → manual/adjusted).
     const { adminTotal, ...cost } = parsed.data;
-    const processed = (values.channels ?? []).map((slot) => processSlot(slot, ctx));
+    // US4 — the master "Incluir marketplaces no preço" toggle (default on). When off, the marketplace
+    // section is hidden and NO channel is computed (an empty channels[] → the headline is the direct
+    // cost×markup exactly, with no fee ever folded into custo_total — SC-105).
+    const includeMarketplace = values.includeMarketplace !== false;
+    const slots = includeMarketplace ? (values.channels ?? []) : [];
+    const processed = slots.map((slot) => processSlot(slot, ctx));
     const engineChannels = processed
       .map((p) => p.input)
       .filter((x): x is ChannelInput => x !== null);

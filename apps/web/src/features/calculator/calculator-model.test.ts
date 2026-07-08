@@ -37,6 +37,7 @@ const canonical: CalcFormValues = {
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
   channels: [],
+  includeMarketplace: true,
 };
 
 describe("computeFromForm — canonical vector flows through the engine (SC-001)", () => {
@@ -310,6 +311,27 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     const ch = r.channels[0];
     expect(ch.result?.freightCostVarejo).toBeCloseTo(30, 2);
     expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
+  });
+});
+
+describe("US4 — 'Incluir marketplaces no preço' master toggle (SC-105)", () => {
+  // The toggle is UI visibility, not math: when off we simply stop computing the channels. The
+  // direct cost×markup headline is byte-identical either way (a marketplace fee is a gross-up ON
+  // TOP of the price, never folded into custo_total), so this pins that toggling off drops the
+  // channel outcomes WITHOUT perturbing the headline the seller reads first.
+  it("off → zero channel outcomes, byte-identical custoTotal + varejo + atacado", () => {
+    const on = computeFromForm({ ...defaultCalcValues, includeMarketplace: true });
+    const off = computeFromForm({ ...defaultCalcValues, includeMarketplace: false });
+
+    expect(on.channels.length).toBeGreaterThan(0);
+    expect(off.channels).toHaveLength(0);
+    expect(off.result?.channels).toHaveLength(0);
+
+    expect(off.result?.custoTotal).toBe(on.result?.custoTotal);
+    expect(off.result?.precoVarejo).toBe(on.result?.precoVarejo);
+    expect(off.result?.precoAtacado).toBe(on.result?.precoAtacado);
+    // Off also stamps no catalog provenance — there is no channel that could have used it.
+    expect(off.result?.catalogVersion).toBeNull();
   });
 });
 

@@ -131,6 +131,8 @@ export const messages = {
       freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
       freightLine: "Frete / cupom",
       negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
+      // US4 — master toggle: show/hide the whole marketplace section (default on).
+      includeToggle: "Incluir marketplaces no preço",
       pricesTitle: "Preços por canal",
       channelFallback: "Canal",
       errorRow: "Corrija os campos deste canal para ver os preços.",

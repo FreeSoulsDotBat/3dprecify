@@ -59,9 +59,12 @@ export interface ChannelSlotForm {
 /** The channel numeric fields the model validates per-slot (keys of the inline error map). */
 export type ChannelFieldName = "commissionPct" | "fixedFee" | "minPerItem" | "freightCost";
 
-/** The form's live value shape: one controlled pt-BR string per scalar field + N channel slots. */
+/** The form's live value shape: one controlled pt-BR string per scalar field + N channel slots +
+ *  the master "include marketplaces" toggle (US4 — a pure visibility switch; when off the whole
+ *  marketplace section is hidden and its channels are not computed. Default on). */
 export interface CalcFormValues extends Record<CalcFieldName, string> {
   channels: ChannelSlotForm[];
+  includeMarketplace: boolean;
 }
 
 type FieldKind = "required" | "prefilled" | "optional";
@@ -234,6 +237,7 @@ export const defaultCalcValues: CalcFormValues = {
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
   channels: [defaultChannelSlot()],
+  includeMarketplace: true,
 };
 
 /** Render metadata (label, unit, requiredness) so the page maps fields → DS controls. */

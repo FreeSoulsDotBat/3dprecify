@@ -173,3 +173,41 @@ describe("CalcularPage — US4 labor/admin + US1 marketplace", () => {
     expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
   });
 });
+
+// US4 — the "Incluir marketplaces no preço" master toggle is pure UI visibility (owner-clarified):
+// it shows/hides the whole marketplace section. The direct varejo/atacado headline never changes.
+describe("CalcularPage — US4 'Incluir marketplaces no preço' visibility toggle", () => {
+  it("defaults ON: the switch is checked and the marketplace section is visible", () => {
+    renderPage();
+
+    expect(screen.getByRole("switch", { name: t.channels.includeToggle })).toBeChecked();
+    expect(screen.getByRole("button", { name: t.channels.addChannel })).toBeInTheDocument();
+    expect(screen.getByText(t.channels.pricesTitle)).toBeInTheDocument();
+  });
+
+  it("toggling OFF hides the whole marketplace section but keeps the direct headline", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("switch", { name: t.channels.includeToggle }));
+
+    const toggle = screen.getByRole("switch", { name: t.channels.includeToggle });
+    expect(toggle).not.toBeChecked();
+    // The channel machinery is gone: no "Adicionar canal", no "Preços por canal".
+    expect(screen.queryByRole("button", { name: t.channels.addChannel })).not.toBeInTheDocument();
+    expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
+    // …but the direct varejo headline the seller reads first is untouched (seed varejo R$ 30,90).
+    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+  });
+
+  it("toggling OFF then ON restores the marketplace section (the switch stays reachable)", () => {
+    renderPage();
+
+    const toggle = screen.getByRole("switch", { name: t.channels.includeToggle });
+    fireEvent.click(toggle);
+    expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("switch", { name: t.channels.includeToggle }));
+    expect(screen.getByText(t.channels.pricesTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.channels.addChannel })).toBeInTheDocument();
+  });
+});
