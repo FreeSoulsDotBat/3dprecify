@@ -13,6 +13,11 @@
    TD-011 (semantic role->color mapping) and the dark-accent=cyan bug.
    ============================================================ */
 :root {
+  /* Native controls (the <option> popup, scrollbars, number spinners, caret) follow the
+     browser's `color-scheme`. Declaring it per theme is the root-cause fix for the white
+     <select> dropdown on the dark plane — the popup is OS/browser chrome, not our DOM. */
+  color-scheme: light;
+
   /* ---- Brand — primary (institucionais) ---- */
   --tf-purple: #7800ff; /* signature: CTAs, brand highlights, active */
   --tf-orange: #f7931e; /* energy: secondary actions, badges */
@@ -135,6 +140,8 @@
 
 /* ================ Semantic — DARK (first-class) ================ */
 [data-theme="dark"] {
+  color-scheme: dark; /* paints the native <option> popup, scrollbars + caret dark */
+
   --bg-base: var(--tf-black);
   --bg-subtle: var(--tf-neutral-950);
   --bg-muted: var(--tf-neutral-900);
