@@ -301,3 +301,30 @@ The frozen scope above is implemented and green — owner-authorized commits on
 - **Homologation:** US1+US2 (MVP) owner-homologated 2026-07-05 + the 8-item UI remediation +
   title/logo centring. US4 (labor/admin) + US5 (marketplace) visual homologation (T031/T036)
   pending owner sign-off, then the develop PR (owner-authorized).
+
+### 005 BUILT (2026-07-08 — E1 marketplace expansion, `feature/005-us3-offline-cache` on the 004 base)
+
+Spec 005 (multi-channel + fee catalog + itemized outros custos — supersedes the E5 multi-channel
+deferral, owner-decided) is implemented, green, and homologated. NOT yet merged to `develop`
+(owner authorizes the PR).
+- **Engine** (`packages/pricing-core` **3.0.0**, ADR-0011): `channels[]` (per-slot gross-up on BOTH
+  levels, error isolation SC-107), price-band + Amazon `minPerItem` fixed-point (SC-108/112),
+  Shopee co-funded voucher per level (SC-111), itemized `otherCosts[]` echoed rounded onto the
+  result (FR-114/115). 004's single-channel surface REMOVED (A1, Constitution V).
+- **Fee catalog** (ADR-0010 amended): curated artifact at `backend/app/data/catalog.json` served by
+  public data-only `GET /api/v1/fee-catalog` (no-auth FR-117, no price compute FR-118) → persisted
+  IndexedDB cache → bundled seed for first-run offline. Honesty seals (reference/embedded/adjusted/
+  none/estimate/stale); provenance truth-gate with the ML-freight ESTIMATE exemption (A4).
+- **UI**: channel slots (marketplace+modality determinants, catalog pre-fill, per-slot inline
+  errors), "Preços por canal", non-blocking failed-refresh retry (US3), "Incluir marketplaces no
+  preço" visibility toggle (US4 — owner-clarified pure show/hide; NO `includeInHeadline`, deferred
+  E4), itemized "Outros custos" slot (US5 — `adminTotal` field removed).
+- **Verification:** `pnpm gate` 224 tests + 100% pricing-core coverage; backend gate clean;
+  `pnpm e2e` 26/26; SC-101..112 mapped in `specs/005-marketplace-multichannel/dod-evidence.md`.
+- **Homologation (2026-07-08, qa-produto agents + owner):** US4 PASS · US5 PASS · US3 ISSUE
+  found-and-fixed — the retry notice unmounted mid-refetch (raw `isError` drops during TanStack's
+  transient `'pending'`); fixed with a sticky `refreshFailed` latch + deterministic latch test
+  (mocked-hook tests alone had missed it — lesson: homologate against the REAL render). Cosmetic
+  nits (toggle-label wrap, verbose row labels) fixed same day. **Open:** T042 design reconciliation
+  (non-blocking) · D1–D4 ML ingestion (off critical path, blocked on the house ML account Q-D) ·
+  the owner-authorized squash-merge PR to `develop`.

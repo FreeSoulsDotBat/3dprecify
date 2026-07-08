@@ -58,8 +58,14 @@ interface ActiveCatalog {
 }
 
 export interface UseFeeCatalog extends ActiveCatalog {
-  isFetching: boolean;
-  isError: boolean;
+  /** STICKY: true from the first failed refresh until the next successful one. It must NOT track
+   *  `query.isError` directly — a `refetch()` of a no-data errored query re-enters `'pending'`, so
+   *  `isError` (and `isRefetching`) briefly drop to false mid-retry; gating the US3 notice on that
+   *  made the whole notice blink out for the retry's duration. Latching keeps it steady until success. */
+  refreshFailed: boolean;
+  /** A refresh is in flight (initial load OR retry). The notice only renders under `refreshFailed`, so
+   *  this drives the retry button's spinner without flagging the very first load. */
+  refreshing: boolean;
   refetch: () => void;
 }
 
@@ -109,11 +115,19 @@ export function useFeeCatalog(): UseFeeCatalog {
     }
   }, [fetched]);
 
+  // Sticky failure latch (US3): raise on a settled error, lower only when a refresh finally succeeds.
+  // Staying up through a retry's transient `'pending'` window is the whole point — see `refreshFailed`.
+  const [refreshFailed, setRefreshFailed] = useState(false);
+  useEffect(() => {
+    if (query.isError) setRefreshFailed(true);
+    else if (query.isSuccess) setRefreshFailed(false);
+  }, [query.isError, query.isSuccess]);
+
   return {
     catalog: active.catalog,
     source: active.source,
-    isFetching: query.isFetching,
-    isError: query.isError,
+    refreshFailed,
+    refreshing: query.isFetching,
     refetch: () => void query.refetch(),
   };
 }

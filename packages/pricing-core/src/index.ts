@@ -87,6 +87,9 @@ export interface PriceResult {
   finishing: number;
   labor: number;
   admin: number;
+  /** The named sub-costs, rounded (ADR-0008) and in input order — each renders as its own breakdown
+   *  line (FR-115); Σ value === `admin`. Empty when the "Outros custos" slot is empty. */
+  otherCosts: OtherCostItem[];
   custoTotal: number;
   precoVarejo: number;
   precoAtacado: number;
@@ -183,9 +186,14 @@ export function computeCalculator(input: PriceInput): PriceResult {
   // Cost lines OUTSIDE the failure base (OQ-8).
   const finishingR = toMoney(new Decimal(finishTimeHours).times(finishRatePerHour)); // FR-028
   const laborR = toMoney(new Decimal(laborHours).times(laborRatePerHour));
-  // FR-114: "outros custos" is now a slot of named sub-costs; admin = Σ value (each rounded per
-  // ADR-0008). An empty slot ⇒ 0 — behaviourally identical to 004's single `adminTotal`.
-  const adminR = sumMoney(otherCosts.map((c) => toMoney(c.value)));
+  // FR-114/115: "outros custos" is now a slot of named sub-costs. Each value is rounded per ADR-0008
+  // and echoed back (in order) as its own breakdown line; admin = Σ of those rounded lines. An empty
+  // slot ⇒ [] / 0 — behaviourally identical to 004's single `adminTotal`.
+  const otherCostsR: OtherCostItem[] = otherCosts.map((c) => ({
+    name: c.name,
+    value: toMoney(c.value),
+  }));
+  const adminR = sumMoney(otherCostsR.map((c) => c.value));
 
   const custoTotal = sumMoney([materialR, energyR, machineR, falhaR, finishingR, laborR, adminR]); // FR-029
 
@@ -211,6 +219,7 @@ export function computeCalculator(input: PriceInput): PriceResult {
     finishing: finishingR,
     labor: laborR,
     admin: adminR,
+    otherCosts: otherCostsR,
     custoTotal,
     precoVarejo,
     precoAtacado,

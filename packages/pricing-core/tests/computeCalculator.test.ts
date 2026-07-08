@@ -193,6 +193,64 @@ describe("computeCalculator — edges & robustness", () => {
     expect(r.admin).toBe(5.0);
     expect(r.custoTotal).toBe(33.65); // 28.65 + 5
   });
+
+  // FR-115 / SC-106: each named sub-cost is echoed onto the result (rounded, in order) so the UI can
+  // render it as its own breakdown line — and those per-line values sum to `admin` with 0 residual.
+  it("echoes each named sub-cost as its own rounded, ordered result line (FR-115)", () => {
+    const r = computeCalculator({
+      ...SC001,
+      otherCosts: [
+        { name: "Embalagem", value: 3 },
+        { name: "Frete", value: 2 },
+      ],
+    });
+    expect(r.otherCosts).toEqual([
+      { name: "Embalagem", value: 3.0 },
+      { name: "Frete", value: 2.0 },
+    ]);
+    // The named lines sum to admin with no residual (each already ADR-0008 rounded).
+    const sum = r.otherCosts.reduce((acc, c) => acc + c.value, 0);
+    expect(Number(sum.toFixed(2))).toBe(r.admin);
+  });
+
+  it("rounds each sub-cost line per ADR-0008 (HALF_UP, 2dp) before summing", () => {
+    const r = computeCalculator({
+      ...SC001,
+      otherCosts: [
+        { name: "a", value: 1.005 },
+        { name: "b", value: 2.004 },
+      ],
+    });
+    // 1.005 → 1.01, 2.004 → 2.00 ⇒ admin 3.01 (each line rounded, THEN summed — FR-114/ADR-0008).
+    expect(r.otherCosts).toEqual([
+      { name: "a", value: 1.01 },
+      { name: "b", value: 2.0 },
+    ]);
+    expect(r.admin).toBe(3.01);
+  });
+
+  it("removing a sub-cost lowers custo_total by exactly its value, with one line left (SC-106)", () => {
+    const two = computeCalculator({
+      ...SC001,
+      otherCosts: [
+        { name: "Embalagem", value: 3 },
+        { name: "Frete", value: 2 },
+      ],
+    });
+    const one = computeCalculator({ ...SC001, otherCosts: [{ name: "Embalagem", value: 3 }] });
+    expect(two.custoTotal).toBe(33.65);
+    expect(one.custoTotal).toBe(31.65); // exactly −2,00, no residual
+    expect(one.otherCosts).toEqual([{ name: "Embalagem", value: 3.0 }]);
+  });
+
+  it("an empty slot yields no named lines and reproduces the 004 result byte-for-byte (SC-106)", () => {
+    const empty = computeCalculator({ ...SC001, otherCosts: [] });
+    const none = computeCalculator({ ...SC001 });
+    expect(empty.otherCosts).toEqual([]);
+    expect(empty.admin).toBe(0);
+    // Byte-identical to the mandatory-only 004 result (otherCosts is the only differing input).
+    expect(JSON.stringify(empty)).toBe(JSON.stringify(none));
+  });
 });
 
 describe("computeCalculator — validation (SC-008, never a bad number)", () => {

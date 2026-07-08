@@ -94,23 +94,30 @@
 **Goal**: the catalog is **fetched on first load and persisted to a store**; a **bundled seed** covers the first-ever offline load; **manual entry** for uncovered/override; the seal warns when the active data is stale (>30 d). A fetch failure is non-blocking (store→seed). *(Reverted from bundle-only: there IS a network fetch, so loading/error/retry states apply — but the calculator never blocks because seed/store always answer.)*
 **Independent Test**: SC-104.
 
-- [ ] T027 [P] [US3] SC-104 test in `fee-catalog.test.ts` / e2e (FAILING first): **cold first load offline → the seed pre-fills and everything computes** (no blocking error); **online → fetch persists to the store** and later offline reloads use it; **active data >30 d → possibly-stale seal**; **uncovered → manual**; **fetch error → retry affordance, and the calculator still works from seed/store**.
-- [ ] T028 [US3] Implement the fetch→persist→seed flow via `use-fee-catalog` (T009c) in the page/model: first-load fetch (online), persist to IndexedDB, read store thereafter; **seed fallback** for first-run offline; **manual entry** for uncovered/override; staleness from the active data's `lastReviewed` vs the device clock. The catalog fetch may be pending/failed — surface a **non-blocking** loading/refresh + a **retry** affordance, never a blocking error (seed/store keep the calculator live).
-- [ ] T029 [US3] e2e: offline cold first-load → seed pre-fills + computes (no spinner-lock, no error wall); go online → fetch persists (assert store updated); drop network mid-session → store still serves; first-ever fetch error → seed + a "tentar de novo" that does not block. *(Design: the prototype's catalog loading/error/retry states ARE used now — reconcile the seed "referência embutida" + stale states with design in T042.)*
+- [x] T027 [P] [US3] SC-104 test (FAILING first, then green): the retry-state wiring is proven in `calcular-catalog-retry.test.tsx` (fetch error → non-blocking retry notice + the calculator still computes from the seed; retry calls `refetch`; healthy → no notice). Seed-parse + fresher-wins + persist-fallback were already covered in `use-fee-catalog.test.ts`; the >30 d **possibly-stale seal** in the US2 seal tests; **manual/uncovered** in the calculator-model catalog tests.
+- [x] T028 [US3] The fetch→persist→seed flow already shipped in `use-fee-catalog` (T009c, MVP): first-load fetch → persist to IndexedDB → store thereafter, seed fallback, staleness from `lastReviewed` vs the device clock. **This slice wired the remaining UI**: `calcular-page.tsx` consumes `refreshFailed`/`refreshing`/`refetch` and renders a **non-blocking retry** (`Alert` tone "info", role="status" + a "Tentar novamente" button) in the Marketplace section — the seed/store keep every price live, never a blocking error.
+- [x] T029 [US3] e2e (`calculator.spec.ts`): the offline cold-load → seed pre-fills + computes flow is covered by the signed-out offline test; the new **SC-104 retry** test routes `GET /api/v1/fee-catalog` to fail → asserts the non-blocking notice + a computed price from the seed → a successful retry clears the notice. *(Design reconciliation of the loading/error/retry states with the prototype stays as T042.)*
+- [x] T029b [US3] **Visual homologation (QA)**: qa-produto drove the rendered `/calcular` (390 px, no backend) → **ISSUE found + fixed**. The non-blocking notice was gated on the raw `query.isError`; a `refetch()` of a no-data errored query re-enters TanStack's `'pending'`, so `isError` dropped to false mid-retry → the whole notice (and its button) **unmounted for ~2 s** and the button spinner never showed (the `loading={refreshing}` was effectively dead — contradicting SC-104's "notice persists + button loads"). **Fix**: `useFeeCatalog` now exposes a **sticky** `refreshFailed` (raise on settled error, lower only on success) + `refreshing` (isFetching); the page gates the notice on the sticky flag. Guarded by a deterministic hook test (`use-fee-catalog-latch.test.tsx`, drives error→pending→success) + the page retry-in-flight test, and re-verified in the real browser (notice never blinks out, button shows loading). The mocked unit tests missed it because they never exercised the real `isError→pending→isError` transition.
 
 **Checkpoint**: online freshness + offline resilience (seed/store) proven; the price math never blocks on the network.
 
 ---
 
-## Phase 6: User Story 4 — Include/exclude toggle framing (P2)
+## Phase 6: User Story 4 — Include/exclude marketplace toggle (P2)
 
-**Goal**: "Incluir marketplaces no preço" (default on) frames the headline; off → headline = direct 004 cost×markup exactly, channels = labelled simulation.
+**Goal**: "Incluir marketplaces no preço" (default on) shows the whole marketplace section; off → the section is hidden and no channel is computed. The direct 004 cost×markup varejo/atacado headline is byte-identical either way.
 **Independent Test**: SC-105.
 
-- [ ] T030 [P] [US4] SC-105 test (on → per-channel prices are the result; off → headline equals 004 direct varejo/atacado exactly, no fee folded into custo_total) — FAILING first.
-- [ ] T031 [US4] `includeInHeadline` flag in schema/model + `PriceResult`; `calcular-page.tsx` toggle (default on); headline selection in UI.
-- [ ] T032 [US4] e2e: toggle off → headline reverts to direct varejo/atacado (== 004), channel list labelled simulation-only.
-- [ ] T032b [US4] **Visual homologation (QA)**: toggle states.
+> **Owner clarification (2026-07-07)** — this toggle is pure **UI visibility**: it shows/hides the marketplace
+> section, it does NOT reframe which price is the headline. So `includeInHeadline` on `PriceResult` was NOT added
+> (it stays DEFERRED to E4 per ADR-0011). The toggle lives in `CalcFormValues.includeMarketplace` (FE-only); when
+> off, the model passes an empty `channels[]` so nothing is computed and no catalog version is stamped — the
+> headline never changes because a marketplace fee is a gross-up ON TOP of the price, never folded into custo_total.
+
+- [x] T030 [P] [US4] SC-105 test — model (`calculator-model.test.ts`): `includeMarketplace:false` → 0 channel outcomes + byte-identical custoTotal/precoVarejo/precoAtacado + null catalogVersion; component (`calcular.test.tsx`): default on shows section, off hides "Adicionar canal"/"Preços por canal" while the headline stays. Written FAILING first.
+- [x] T031 [US4] `includeMarketplace: boolean` in `calculator-schema.ts` (default `true`); model gates channel compute in `calculator-model.ts`; `calcular-page.tsx` renders a DS `Switch` (labelled `channels.includeToggle`) in the MarketplaceSection header (outside the collapsible body so it stays re-enableable) + conditional body render. **Deviation**: no `includeInHeadline` on `PriceResult` (owner clarification above).
+- [x] T032 [US4] e2e (`calculator.spec.ts`): toggle off → channel slots + "Preços por canal" hidden, direct varejo headline stays, no NaN; toggle back on → section returns. Green on chromium + mobile.
+- [x] T032b [US4] **Visual homologation (QA)**: qa-produto drove the rendered `/calcular` (390 px, ON/OFF/reON) → **PASS (97%)**: pure UI visibility confirmed (headline byte-identical in both states, R$ 30,90 / R$ 26,78), switch stays reachable when off, 44×44 px touch target (INV-2), no overflow. Label-wrap nit fixed in `85118ba` (toggle on its own full-width row). Owner homologated 2026-07-08.
 
 ---
 
@@ -119,11 +126,11 @@
 **Goal**: "Outros custos" becomes 0..N named sub-costs summing into `custo_total` exactly as 004's single admin; each named line in the breakdown.
 **Independent Test**: SC-106.
 
-- [ ] T033 [P] [US5] SC-106 test (sub-costs sum ≡ single admin; each named line in breakdown; remove lowers exactly; empty ≡ 004 byte-for-byte) in `packages/pricing-core/tests/` — FAILING first.
-- [ ] T034 [US5] `admin = Σ otherCosts.value` in `computeCalculator` (uses T004 `otherCosts[]`); each named sub-cost as its own breakdown line (FR-114/115); breakdown still sums to `custo_total` (0 residual, HALF_UP).
-- [ ] T035 [US5] `calcular-page.tsx`: "Outros custos" slot — add/remove named sub-costs, per-field pt-BR validation (finite ≥0), blank name → neutral placeholder.
-- [ ] T036 [US5] e2e: Embalagem R$3 + Frete R$2 → custo_total +R$5; each line in breakdown; remove Frete → −R$2 exactly.
-- [ ] T036b [US5] **Visual homologation (QA)**: outros-custos slot.
+- [x] T033 [P] [US5] SC-106 test (sub-costs sum ≡ single admin; each named line echoed on the result; remove lowers exactly; empty ≡ 004 byte-for-byte) in `packages/pricing-core/tests/computeCalculator.test.ts` — plus per-row FE mapping tests in `calculator-model.test.ts`. Written FAILING first.
+- [x] T034 [US5] `admin = Σ otherCosts.value` in `computeCalculator` (uses T004 `otherCosts[]`); each named sub-cost **echoed onto `PriceResult.otherCosts[]`** (rounded, in order) so it renders as its own breakdown line (FR-114/115); breakdown still sums to `custo_total` (0 residual, HALF_UP). Additive to the 3.0.0 result contract (still unreleased) — no version bump.
+- [x] T035 [US5] `calcular-page.tsx`: "Outros custos" slot (`OtherCostsSection`/`OtherCostRow`) — add/remove named sub-costs via `useFieldArray`, per-row pt-BR validation (finite ≥0, isolated so a bad row errors only itself), blank name → neutral placeholder + `outrosCustos.lineFallback` in the breakdown. Schema: `adminTotal` scalar removed, `otherCosts: OtherCostForm[]` added (Constitution V — no dead field left behind).
+- [x] T036 [US5] e2e (`calculator.spec.ts`): Embalagem R$3 + Etiqueta R$2 → each a named breakdown line; remove Etiqueta → its line drops, Embalagem stays, no NaN. Green on chromium + mobile. (Also migrated the 390px-overflow test off the removed `adminTotal` field onto the slot.)
+- [x] T036b [US5] **Visual homologation (QA)**: qa-produto drove the rendered `/calcular` (390 px) → **PASS (~97%)**, 25/25 checks: exact sums in the breakdown (20,60 → 23,60 → 25,60), removal lowers exactly, per-row negative error without breaking the price, blank name → neutral label, no overflow with 1/2/3 rows. Verbose-labels + narrow-name nits fixed in `85118ba` (labels → aria-label/placeholder; name column 3:2). Owner homologated 2026-07-08.
 
 ---
 
@@ -132,16 +139,16 @@
 **Goal**: the whole expansion stays free/offline/signed-out; no save/export/history; no paywall; the fee endpoint is public read-only reference data, never a gate; the price math never depends on the network.
 **Independent Test**: SC-109.
 
-- [ ] T037 [P] [US6] SC-109 e2e (no NaN/Infinity across channels+sub-costs; no save/export/history/paywall; `PRICING_MODEL_VERSION==="3.0.0"`; backend does no price compute) — FAILING first.
-- [ ] T038 [US6] e2e signed-out + offline: multi-channel + manual + toggle + outros-custos all compute (seed/store); the fee endpoint requires no auth and never gates; nothing offered to save; no sign-in wall.
+- [x] T037 [P] [US6] SC-109 e2e (`calculator.spec.ts`): the FULL 005 surface signed-out — manual 95%-commission channel + Shopee seed-prefilled channel + toggle off/on (state survives) + named & blank-named sub-costs (HALF_UP 1,005→1,01) → no NaN/Infinity/#DIV, no save/export/history/paywall button, freemium note stays. The `PRICING_MODEL_VERSION === "3.0.0"` half is pinned at the source in `pricing-core/tests/version.test.ts` (single source; T039 consolidates); "backend does no price compute" is proven behaviorally by T038 (prices render with NO backend/network) + statically by `test_fee_catalog.py` (data-only endpoint).
+- [x] T038 [US6] e2e signed-out + offline (SW precache → `setOffline` → reload): manual channel gross-up (30,90 @20% → 38,63), Shopee pre-fills from the BUNDLED SEED with the "referência embutida (offline)" seal, sub-cost folds into custo_total (20,60+3 → 23,60), toggle works, US3 notice appears non-blocking; no sign-in wall, nothing offered to save, no bad numbers. The fee endpoint's no-auth guarantee is asserted in `backend/tests/test_fee_catalog.py` (FR-117). Green chromium + mobile.
 
 ---
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T039 [P] Consolidate determinism/version tests (SC-110 + SC-109 version stamp) in `packages/pricing-core/tests/determinism.test.ts`.
-- [ ] T040 [P] No-overflow-390px e2e with the full US1–US5 model (inherits 003 FR-010 / 004).
-- [ ] T041 Docs: update `docs/product/business-rules.md` (E1 expanded), write `specs/005-marketplace-multichannel/dod-evidence.md`, log in `docs/decisions/audit-findings-r2.md`.
+- [x] T039 [P] Determinism/version consolidated in `determinism.test.ts`: SC-110 **at scale** — 5 channels covering every fee shape (plain %, %+fixed, `minPerItem` floor, price bands + voucher bands, an ERRORING slot) in deliberate non-alphabetical order + 3 sub-costs (HALF_UP boundary, blank name, long name) → byte-identical across runs, input-order echo (never sorted), deterministic per-slot error, 3.0.0 stamp (SC-109). Locale independence rides on byte-identity (numbers-in → numbers-out, no Intl).
+- [x] T040 [P] The 390px overflow e2e extended to the FULL US1–US5 model: labor + 2 sub-costs (long name + inline per-row error) + manual-fee channel + Shopee seed-prefilled channel (long embedded seal) + all 4 gross-up rows → `scrollWidth === clientWidth`. Green chromium + mobile.
+- [x] T041 Docs: `business-rules.md` E1 row EXPANDED (005 supersedes the E5 multi-channel deferral; E5 keeps saved scenarios + per-account auth); `specs/005-marketplace-multichannel/dod-evidence.md` written (gates + SC-101..112 map + homologation record); "005 BUILT" logged in `docs/decisions/audit-findings-r2.md`.
 - [ ] T042 Design reconciliation (non-blocking): confirm with Claude Design the **catalog fetch loading / refresh / error+retry** states (now IN scope — there is a network fetch) plus the **seed "referência embutida"** + stale seals.
 
 ---

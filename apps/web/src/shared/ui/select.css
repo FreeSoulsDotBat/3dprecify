@@ -24,3 +24,21 @@
 .tf-selectwrap.tf-inputwrap--disabled .tf-select {
   cursor: not-allowed;
 }
+
+/* The native <option> popup follows the theme's `color-scheme` (declared in tokens/colors.css —
+   the root-cause fix for the white dropdown on dark). Where the browser also honors option
+   styling (Chrome/Firefox), brand the selected row with DS tokens so it matches the app; Safari
+   ignores these and relies on color-scheme alone. `--surface-raised`/`--text-body` resolve per
+   theme via the cascade, so only the checked row needs a dark override (softer accent tint). */
+.tf-select option {
+  background-color: var(--surface-raised);
+  color: var(--text-body);
+}
+.tf-select option:checked {
+  background-color: var(--selection-bg);
+  color: var(--selection-fg);
+}
+[data-theme="dark"] .tf-select option:checked {
+  background-color: var(--accent-soft);
+  color: var(--text-strong);
+}

@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -117,17 +117,18 @@ describe("CalcularPage — US2 transparency + validation", () => {
   });
 });
 
-// US4 (optional labor + admin folded into custo_total) + US1 multi-channel marketplace. The labor
-// section sits between the optional adjustments and markup; the marketplace section is the last
-// block, starting with one Mercado Livre channel slot whose prices show in "Preços por canal".
-describe("CalcularPage — US4 labor/admin + US1 marketplace", () => {
-  it("renders the labor + admin breakdown rows (US4)", () => {
+// US4 (optional labor folded into custo_total) + US5 (itemized "Outros custos" slot) + US1 multi-
+// channel marketplace. The labor section + Outros custos slot sit between the optional adjustments
+// and markup; the marketplace section is the last block, starting with one Mercado Livre channel slot.
+describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () => {
+  it("renders the labor breakdown row and the empty 'Outros custos' slot (US4/US5)", () => {
     renderPage();
 
-    // "Mão de obra" is unique; "Outros custos" is shared with the adminTotal field label, so it
-    // legitimately appears more than once (the field input + the breakdown row).
+    // "Mão de obra" (breakdown row) is unique. The "Outros custos" slot title is present even with 0
+    // sub-costs (the slot is always shown so the user can add named costs), but no admin line yet.
     expect(screen.getByText(t.results.labor)).toBeInTheDocument();
-    expect(screen.getAllByText(t.results.admin).length).toBeGreaterThan(0);
+    expect(screen.getByText(t.outrosCustos.title)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.outrosCustos.addCost })).toBeInTheDocument();
   });
 
   it("shows an ⓘ info tip on the labor + marketplace section titles", () => {
@@ -171,5 +172,99 @@ describe("CalcularPage — US4 labor/admin + US1 marketplace", () => {
     expect(screen.getByText("R$ 38,63")).toBeInTheDocument();
     expect(screen.getAllByText(t.results.precoAnuncio).length).toBeGreaterThan(0);
     expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
+  });
+});
+
+// US4 — the "Incluir marketplaces no preço" master toggle is pure UI visibility (owner-clarified):
+// it shows/hides the whole marketplace section. The direct varejo/atacado headline never changes.
+describe("CalcularPage — US4 'Incluir marketplaces no preço' visibility toggle", () => {
+  it("defaults ON: the switch is checked and the marketplace section is visible", () => {
+    renderPage();
+
+    expect(screen.getByRole("switch", { name: t.channels.includeToggle })).toBeChecked();
+    expect(screen.getByRole("button", { name: t.channels.addChannel })).toBeInTheDocument();
+    expect(screen.getByText(t.channels.pricesTitle)).toBeInTheDocument();
+  });
+
+  it("toggling OFF hides the whole marketplace section but keeps the direct headline", () => {
+    renderPage();
+
+    fireEvent.click(screen.getByRole("switch", { name: t.channels.includeToggle }));
+
+    const toggle = screen.getByRole("switch", { name: t.channels.includeToggle });
+    expect(toggle).not.toBeChecked();
+    // The channel machinery is gone: no "Adicionar canal", no "Preços por canal".
+    expect(screen.queryByRole("button", { name: t.channels.addChannel })).not.toBeInTheDocument();
+    expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
+    // …but the direct varejo headline the seller reads first is untouched (seed varejo R$ 30,90).
+    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+  });
+
+  it("toggling OFF then ON restores the marketplace section (the switch stays reachable)", () => {
+    renderPage();
+
+    const toggle = screen.getByRole("switch", { name: t.channels.includeToggle });
+    fireEvent.click(toggle);
+    expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("switch", { name: t.channels.includeToggle }));
+    expect(screen.getByText(t.channels.pricesTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.channels.addChannel })).toBeInTheDocument();
+  });
+});
+
+// US5 — "Outros custos" is a slot of 0..N named sub-costs. Adding one shows it as its own breakdown
+// line; removing it drops the line; a bad value errors only its row while the price still computes.
+describe("CalcularPage — US5 itemized 'Outros custos' slot", () => {
+  const oc = t.outrosCustos;
+
+  it("starts empty; adding a named sub-cost shows it as its own breakdown line", () => {
+    renderPage();
+    expect(screen.queryByTestId("other-cost-row")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: oc.addCost }));
+    const row = screen.getByTestId("other-cost-row");
+    fireEvent.change(within(row).getByRole("textbox", { name: oc.name }), {
+      target: { value: "Embalagem" },
+    });
+    fireEvent.change(within(row).getByRole("textbox", { name: oc.value }), {
+      target: { value: "3,00" },
+    });
+
+    // The named line appears in the breakdown with its rounded value.
+    expect(screen.getByText("Embalagem")).toBeInTheDocument();
+    expect(screen.getAllByText("R$ 3,00").length).toBeGreaterThan(0);
+  });
+
+  it("removing a sub-cost drops both its row and its breakdown line", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: oc.addCost }));
+    const row = screen.getByTestId("other-cost-row");
+    // "Etiqueta" — a name that doesn't collide with any DS label (e.g. the channel "Frete" field).
+    fireEvent.change(within(row).getByRole("textbox", { name: oc.name }), {
+      target: { value: "Etiqueta" },
+    });
+    fireEvent.change(within(row).getByRole("textbox", { name: oc.value }), {
+      target: { value: "2,00" },
+    });
+    expect(screen.getByText("Etiqueta")).toBeInTheDocument();
+
+    fireEvent.click(within(row).getByRole("button", { name: oc.removeCost }));
+    expect(screen.queryByTestId("other-cost-row")).not.toBeInTheDocument();
+    expect(screen.queryByText("Etiqueta")).not.toBeInTheDocument();
+  });
+
+  it("a negative sub-cost value shows an inline error but the price still computes (FR-116)", () => {
+    renderPage();
+    fireEvent.click(screen.getByRole("button", { name: oc.addCost }));
+    const row = screen.getByTestId("other-cost-row");
+    fireEvent.change(within(row).getByRole("textbox", { name: oc.value }), {
+      target: { value: "-5" },
+    });
+
+    expect(within(row).getByText(t.validation.negative)).toBeInTheDocument();
+    // No error wall — the headline varejo price is still shown, never a NaN.
+    expect(screen.getAllByText(t.results.varejo).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/NaN|Infinity/)).not.toBeInTheDocument();
   });
 });

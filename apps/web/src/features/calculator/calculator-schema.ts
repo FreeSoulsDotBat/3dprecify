@@ -9,10 +9,10 @@ import type { SelectOption } from "@/shared/ui";
 // the numbers `pricing-core` expects and rejects bad input with a per-field pt-BR message —
 // the fix TD-020 asked for (never silently coerce a bad string to 0). It surfaces the mandatory
 // inputs (FR-001..003,005..009,017,018), the optional-core ones (FR-004,010..013) and the US4
-// labor + admin costs (laborHours/laborRatePerHour/adminTotal — optional, default 0). All
-// optionals default to 0/null in the engine. The US1 multi-channel marketplace fees are NOT in
-// this Zod object: each channel slot is parsed + validated per-slot in the model so one bad
-// channel (e.g. commission ≥ 100%) errors only its own slot without hiding the others (SC-107).
+// labor cost (laborHours/laborRatePerHour — optional, default 0). All optionals default to 0/null
+// in the engine. The US1 multi-channel marketplace fees and the US5 "Outros custos" sub-costs are
+// NOT in this Zod object: each channel slot and each named sub-cost is parsed + validated per-item
+// in the model so one bad item (e.g. commission ≥ 100%) errors only itself without hiding the rest.
 
 const t = messages.calculator;
 
@@ -34,7 +34,6 @@ export const CALC_FIELD_NAMES = [
   "finishRatePerHour",
   "laborHours",
   "laborRatePerHour",
-  "adminTotal",
   "markupVarejoPct",
   "markupAtacadoPct",
 ] as const;
@@ -59,9 +58,19 @@ export interface ChannelSlotForm {
 /** The channel numeric fields the model validates per-slot (keys of the inline error map). */
 export type ChannelFieldName = "commissionPct" | "fixedFee" | "minPerItem" | "freightCost";
 
-/** The form's live value shape: one controlled pt-BR string per scalar field + N channel slots. */
+// US5 — one "Outros custos" sub-cost: a free-text name + a pt-BR value string. 0..N of these replace
+// 004's single `adminTotal`; their sum flows into custo_total exactly as the single field did.
+export interface OtherCostForm {
+  name: string;
+  value: string;
+}
+
+/** The form's live value shape: one controlled pt-BR string per scalar field + N channel slots +
+ *  the master "include marketplaces" toggle (US4) + the "Outros custos" named sub-costs (US5). */
 export interface CalcFormValues extends Record<CalcFieldName, string> {
   channels: ChannelSlotForm[];
+  includeMarketplace: boolean;
+  otherCosts: OtherCostForm[];
 }
 
 type FieldKind = "required" | "prefilled" | "optional";
@@ -137,7 +146,6 @@ export const calculatorSchema = z.object({
   finishRatePerHour: numField({ kind: "optional" }),
   laborHours: numField({ kind: "optional" }),
   laborRatePerHour: numField({ kind: "optional" }),
-  adminTotal: numField({ kind: "optional" }),
   markupVarejoPct: numField({ kind: "prefilled" }),
   markupAtacadoPct: numField({ kind: "prefilled" }),
 });
@@ -198,6 +206,12 @@ export function defaultChannelSlot(marketplace: MarketplaceId = "MERCADO_LIVRE")
   };
 }
 
+/** A fresh, blank "Outros custos" row (US5). Blank name is accepted — the UI shows a neutral
+ *  placeholder and the breakdown falls back to a generic label (FR-116). */
+export function defaultOtherCost(): OtherCostForm {
+  return { name: "", value: "" };
+}
+
 /** The channel numeric fields shown as a compact 2-col grid, with pt-BR labels + affixes. */
 export const CHANNEL_FEE_FIELDS: readonly {
   name: ChannelFieldName;
@@ -230,10 +244,12 @@ export const defaultCalcValues: CalcFormValues = {
   finishRatePerHour: "0",
   laborHours: "0",
   laborRatePerHour: "0",
-  adminTotal: "0",
   markupVarejoPct: "50",
   markupAtacadoPct: "30",
   channels: [defaultChannelSlot()],
+  includeMarketplace: true,
+  // Starts empty — 0 sub-costs is behaviourally identical to 004's `adminTotal: 0` (admin = 0).
+  otherCosts: [],
 };
 
 /** Render metadata (label, unit, requiredness) so the page maps fields → DS controls. */
@@ -298,7 +314,8 @@ export const MARKUP_FIELDS: readonly CalcFieldMeta[] = [
   { name: "markupAtacadoPct", label: t.fields.markupAtacado, unit: "%", required: true },
 ] as const;
 
-// US4: optional labor + admin costs that sum into custo_total (default 0 → no effect).
+// Optional labor cost that sums into custo_total (default 0 → no effect). The "Outros custos" slot
+// (US5) lives alongside these fields on the page but is a named-sub-cost array, not a scalar field.
 export const LABOR_FIELDS: readonly CalcFieldMeta[] = [
   { name: "laborHours", label: t.fields.laborHours, unit: "h", required: false },
   {
@@ -308,5 +325,4 @@ export const LABOR_FIELDS: readonly CalcFieldMeta[] = [
     unit: "/h",
     required: false,
   },
-  { name: "adminTotal", label: t.fields.adminTotal, currency: true, required: false },
 ] as const;

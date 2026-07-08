@@ -2,6 +2,7 @@ import {
   type ChannelInput,
   type ChannelResult,
   computeCalculator,
+  type OtherCostItem,
   type PriceInput,
   type PriceResult,
   ValidationError,
@@ -69,6 +70,9 @@ export interface CalcOutcome {
   result: PriceResult | null;
   /** Per-slot channel outcomes, aligned to `values.channels` (empty when the scalars are invalid). */
   channels: ChannelSlotOutcome[];
+  /** Per-row "Outros custos" value errors (US5), aligned to `values.otherCosts`; `undefined` = ok.
+   *  Empty when the scalars are invalid. A bad row errors only itself — the price still computes. */
+  otherCostErrors: (string | undefined)[];
 }
 
 const CHANNEL_NUM_FIELDS: readonly ChannelFieldName[] = [
@@ -192,6 +196,38 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
 }
 
 /**
+ * Parse the itemized "Outros custos" slot (US5). Each row's value is validated in isolation: a blank
+ * value is an untouched row (contributes nothing, no engine item), a non-finite or negative value is
+ * an inline per-row error that fails ONLY that row (never a NaN, FR-116). The name is free text — a
+ * blank name is accepted (the UI shows a neutral placeholder). Returns the engine items (valid rows,
+ * in order) alongside a per-row error array aligned to `forms`.
+ */
+function parseOtherCosts(forms: readonly { name: string; value: string }[]): {
+  items: OtherCostItem[];
+  errors: (string | undefined)[];
+} {
+  const items: OtherCostItem[] = [];
+  const errors: (string | undefined)[] = [];
+  for (const row of forms) {
+    const raw = (row.value ?? "").trim();
+    if (raw === "") {
+      errors.push(undefined); // untouched row → 0, no engine item
+      continue;
+    }
+    const n = parseDecimal(raw.replace(/[^\d.,-]/g, ""));
+    if (!Number.isFinite(n)) {
+      errors.push(t.validation.invalid);
+    } else if (n < 0) {
+      errors.push(t.validation.negative);
+    } else {
+      errors.push(undefined);
+      items.push({ name: (row.name ?? "").trim(), value: n });
+    }
+  }
+  return { items, errors };
+}
+
+/**
  * Parse + validate the raw form strings, then compute. Returns per-field messages instead of ever
  * throwing or emitting a NaN/Infinity (SC-008). Valid channel slots are passed to the engine and
  * their gross-up results mapped back onto their form position; invalid slots carry inline errors.
@@ -204,15 +240,24 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
       const key = issue.path[0] as CalcFieldName | undefined;
       if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
     }
-    return { ok: false, fieldErrors, result: null, channels: [] };
+    return { ok: false, fieldErrors, result: null, channels: [], otherCostErrors: [] };
   }
 
+  // US5 — the "Outros custos" slot is parsed outside the Zod object (like the channels): each named
+  // sub-cost's value is validated per-row so one bad row errors only itself while the price computes.
+  const { items: otherCosts, errors: otherCostErrors } = parseOtherCosts(values.otherCosts ?? []);
+
   try {
-    // Map the flat form onto the 3.0.0 engine shape (ADR-0011): the single "Outros custos" field
-    // becomes a one-item `otherCosts` slot (multi-slot is US5); the channel slots become `channels[]`
-    // with catalog pre-fill applied per slot (blank → reference, typed → manual/adjusted).
-    const { adminTotal, ...cost } = parsed.data;
-    const processed = (values.channels ?? []).map((slot) => processSlot(slot, ctx));
+    // Map the flat form onto the 3.0.0 engine shape (ADR-0011): the itemized "Outros custos" rows
+    // become `otherCosts[]` (each named sub-cost sums into custo_total + shows its own breakdown line,
+    // FR-114/115); the channel slots become `channels[]` with catalog pre-fill applied per slot.
+    const cost = parsed.data;
+    // US4 — the master "Incluir marketplaces no preço" toggle (default on). When off, the marketplace
+    // section is hidden and NO channel is computed (an empty channels[] → the headline is the direct
+    // cost×markup exactly, with no fee ever folded into custo_total — SC-105).
+    const includeMarketplace = values.includeMarketplace !== false;
+    const slots = includeMarketplace ? (values.channels ?? []) : [];
+    const processed = slots.map((slot) => processSlot(slot, ctx));
     const engineChannels = processed
       .map((p) => p.input)
       .filter((x): x is ChannelInput => x !== null);
@@ -222,7 +267,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
     const usedCatalog = processed.some((p) => p.input?.feeSource != null);
     const input: PriceInput = {
       ...cost,
-      otherCosts: adminTotal > 0 ? [{ name: "Outros custos", value: adminTotal }] : [],
+      otherCosts,
       channels: engineChannels,
       catalogVersion: usedCatalog ? ctx?.catalog.catalogVersion : undefined,
     };
@@ -246,7 +291,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             freightIsEstimate: p.freightIsEstimate,
           },
     );
-    return { ok: true, fieldErrors: {}, result, channels };
+    return { ok: true, fieldErrors: {}, result, channels, otherCostErrors };
   } catch (err) {
     if (err instanceof ValidationError) {
       const key = err.field as CalcFieldName | undefined;
@@ -255,6 +300,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
         fieldErrors: key ? { [key]: err.message } : {},
         result: null,
         channels: [],
+        otherCostErrors: [],
       };
     }
     throw err;
