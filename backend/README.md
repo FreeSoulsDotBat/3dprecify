@@ -16,6 +16,9 @@ uv run alembic upgrade head          # apply migrations (0001 = full E2 schema)
 - Connection URL: `P3D_DATABASE_URL` (settings default matches the compose service).
 - The engine is **lazy**: the app boots and serves the free surfaces (`/health`, fee catalog, auth) with the
   DB down — only entitlement/catalog routes need it (FR-313).
+- **Windows dev note**: psycopg async cannot run on the default ProactorEventLoop — the test suite
+  sets the selector policy itself; a local `uvicorn` on Windows touching DB routes needs the same
+  (Linux CI/Cloud Run unaffected).
 - **Tests**: DB-backed tests use testcontainers and **SKIP VISIBLY** when Docker isn't running (`gate:be`
   stays honest); CI always runs them. Cloud SQL provisioning happens at v1-launch by replaying the same
   migrations — nothing to migrate away from.

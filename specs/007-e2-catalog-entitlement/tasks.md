@@ -59,14 +59,14 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: 100% of persistence routes deny non-active writers server-side; client never trusted.
 **Independent Test**: quickstart §1.
 
-- [ ] T009 [US1] Write FAILING pytest first — `backend/tests/test_entitlement_gate.py`: free identity denied
+- [x] T009 [US1] Write FAILING pytest first — `backend/tests/test_entitlement_gate.py`: free identity denied
       `403 ENTITLEMENT_REQUIRED` on every persistence route (parametrized over the route table); forged
       client premium state is a non-event; nothing persisted on deny; signed-out → 401. Observe failing
       (routes/dependency don't exist yet — the test defines the target).
-- [ ] T010 [US1] Implement `backend/app/entitlement/` — `require_entitlement` dependency (ADR-0012):
+- [x] T010 [US1] Implement `backend/app/entitlement/` — `require_entitlement` dependency (ADR-0012):
       `active = granted ∧ ¬revoked ∧ (expiry null ∨ now < expiry)`; write-binary + lapsed-read semantics per
       the contracts authorization table; wired as THE single seam every catalog router must pass through.
-- [ ] T011 [US1] Route-audit test green: a pytest asserting 100% of routes under `/api/v1/{filaments,
+- [x] T011 [US1] Route-audit test green: a pytest asserting 100% of routes under `/api/v1/{filaments,
       printers,products}` carry the dependency (inspect the FastAPI route table — no bypass path);
       `test_conformance.py` still green (token stub stays invalid → fuzz never reaches the DB).
       **Plus the FR-313 resilience test (analyze R1)**: with the database UNREACHABLE, the free surfaces

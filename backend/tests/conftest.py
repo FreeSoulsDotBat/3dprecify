@@ -1,3 +1,5 @@
+import asyncio
+import sys
 from collections.abc import Iterator
 from functools import lru_cache
 
@@ -6,6 +8,11 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.settings import Settings
+
+# psycopg async cannot run on Windows' default ProactorEventLoop — tests (and any Windows dev
+# server touching DB routes) need the selector loop. Linux (CI/Cloud Run) is unaffected.
+if sys.platform == "win32":  # pragma: no cover - platform-specific
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 
 @pytest.fixture
@@ -45,6 +52,11 @@ requires_db = pytest.mark.skipif(
 @pytest.fixture(scope="session")
 def postgres_url() -> Iterator[str]:
     """A real Postgres for the test session (testcontainers), psycopg3 URL."""
+    import os
+
+    # Ryuk (the reaper sidecar) fails its port mapping on Docker Desktop/Windows setups; the
+    # context manager below already guarantees container cleanup, so the reaper is redundant.
+    os.environ.setdefault("TESTCONTAINERS_RYUK_DISABLED", "true")
     from testcontainers.postgres import PostgresContainer
 
     with PostgresContainer("postgres:17-alpine", driver="psycopg") as pg:
