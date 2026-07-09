@@ -8,7 +8,7 @@ is canonical in `packages/pricing-core` (FR-118/FR-313).
 The catalog + entitlement features need PostgreSQL. Locally it runs via Docker Compose (repo root):
 
 ```bash
-docker compose up -d postgres        # postgres:17, dev credentials (compose defaults)
+docker compose up -d postgres        # postgres:17, dev creds; host port 5433 (avoids native-Postgres clashes)
 cd backend
 uv run alembic upgrade head          # apply migrations (0001 = full E2 schema)
 ```

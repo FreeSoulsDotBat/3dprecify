@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # driver for BOTH async app engine and sync Alembic. The engine is created LAZILY (FR-313: free
     # calculator surfaces keep responding with the DB unreachable).
     database_url: SecretStr = SecretStr(
-        "postgresql+psycopg://precifica3d:precifica3d-dev@localhost:5432/precifica3d"
+        "postgresql+psycopg://precifica3d:precifica3d-dev@localhost:5433/precifica3d"
     )
 
     # Observability.
