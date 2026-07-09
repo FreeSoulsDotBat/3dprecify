@@ -35,7 +35,7 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       **VISIBLE Docker-availability skip guard** (skip reason printed, never silently green — quickstart §6);
       `.github/workflows/ci.yml` gate job verified to run DB tests (ubuntu runners ship Docker — research R3;
       no service container needed if testcontainers manages its own).
-- [ ] T005 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all backend work): catalog
+- [x] T005 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all backend work): catalog
       list/create/edit flows + states (empty/loading/error/offline), calculator "usar do catálogo" picker
       affordance, honest free-tier teaser (US7), Conta plan line — research §7. Output feeds the US3+/US7 UI
       tasks; NOT a merge blocker for PR-A.
