@@ -69,6 +69,9 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [ ] T011 [US1] Route-audit test green: a pytest asserting 100% of routes under `/api/v1/{filaments,
       printers,products}` carry the dependency (inspect the FastAPI route table — no bypass path);
       `test_conformance.py` still green (token stub stays invalid → fuzz never reaches the DB).
+      **Plus the FR-313 resilience test (analyze R1)**: with the database UNREACHABLE, the free surfaces
+      (`/health`, `GET /api/v1/fee-catalog`, `/me` auth path) still respond — the engine/session must be
+      lazy; only entitlement/catalog routes may fail, honestly.
 
 ## Phase 4: US2 — out-of-band grant/revoke (P1)
 
@@ -80,7 +83,9 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       same data writable; ledger rows carry grantor/source/granted_at/expires_at; JIT account creation (D1).
 - [ ] T013 [US2] Implement the operator CLI `backend/app/scripts/grant_premium.py` + `[project.scripts]`
       entry (`uv run grant-premium grant|revoke|list`) writing the ledger directly — NO HTTP route
-      (operator-only by construction, ADR-0012). Tests green.
+      (operator-only by construction, ADR-0012). Target = **uid or e-mail of an EXISTING account** (the
+      e-mail lookup resolves `accounts.email`, populated at first sign-in; email-invite/grant-before-sign-in
+      is explicitly deferred — data-model §12, analyze P1). Tests green.
 - [ ] T014 [US2] `GET /api/v1/entitlement` in `backend/app/api/entitlement.py` → `200 {status, source?,
       expiresAt?}` + 401 only (no grantor leak; any authenticated account may ask) — failing contract test
       first, then regen ripple (openapi + Orval + drift-guard green; conformance auto-covers it).
@@ -137,10 +142,16 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [ ] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
       pre-fill → computed price matches manual; offline read after online load; **SC-310: the whole existing
       E1 suite passes unchanged**.
+- [ ] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
+      honest Conta surface, and the owner's beta-grant walk needs somewhere to SEE the plan): FAILING
+      component test first — plan line renders none/active/lapsed from `GET /api/v1/entitlement` with the
+      ≤1-refresh honest UX copy ("recarregar/entre novamente", never a fake state); then implement the
+      entitlement state hook in `apps/web/src/entities/user/` + the plan line in
+      `apps/web/src/pages/conta/conta-page.tsx` + pt-BR keys.
 - [ ] T026 [US5] **Visual homologation (QA + OWNER)**: qa-produto drives catalog screens + pickers (390px,
       states); then the **owner beta-grant homologation** — owner runs `uv run grant-premium grant <own
       account> --source beta` and exercises the full premium loop end-to-end (grant → save filament/printer
-      → calculator fills itself). 005 pattern, recorded as evidence.
+      → calculator fills itself → **Conta shows the active plan, T025b**). 005 pattern, recorded as evidence.
 - [ ] T027 [US5] **OWNER-GATED** PR-B ship: full `gate:all` + e2e → push → PR to `develop` → CI green →
       owner squash-merge. **Checkpoint: the demoable MVP exists.**
 
@@ -171,13 +182,12 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 - [ ] T031 [US7] Write FAILING tests first: teaser component test (visible affordance → tap → honest panel,
       NO price/date, nothing persists, no fake success) + e2e (signed-out Catálogo tab + calculator picker
-      slot → teaser); Conta plan line component test (none/active/lapsed states from
-      `GET /api/v1/entitlement`; ≤1-refresh honest UX copy).
+      slot → teaser). (Conta plan line moved to T025b/PR-B — analyze I1.)
 - [ ] T032 [US7] Implement: teaser (extends the shipped Catálogo empty-state; copy in `messages.pt-br.ts` —
-      final wording owner-ratified at T033) + Conta plan line in `apps/web/src/pages/conta/conta-page.tsx` +
-      entitlement state hook in `apps/web/src/entities/user/`. Tests green.
-- [ ] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out) and
-      the Conta plan line (none/active/lapsed via CLI toggling); owner ratifies the teaser copy.
+      final wording owner-ratified at T033). Tests green. (Conta line already shipped in PR-B, T025b.)
+- [ ] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
+      Conta plan line states (none/active/lapsed via CLI toggling) re-verified together; owner ratifies the
+      teaser copy.
 
 ## Phase 10: Polish & PR-C ship
 
@@ -197,7 +207,8 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
   design handoff feeding later UI).
 - **PR-B needs PR-A merged** (gate + DB + models). Inside PR-B: T016→T017 and T020→T021 (test-first);
   T018 ∥ backend tasks (different surface); T019 after T017+T018; T022 after T021+T018; US5 (T023–T024)
-  after T017/T021 (needs both entities) — T023 before T024 (test-first); T025→T026→T027 ordered.
+  after T017/T021 (needs both entities) — T023 before T024 (test-first); T025→T025b→T026→T027 ordered
+  (T025b needs T014's GET /entitlement, already merged in PR-A).
 - **PR-C needs PR-B** (products reference filaments/printers; teaser attaches to catalog surfaces).
   T028→T029→T030; T031→T032→T033; T034→T035.
 - Test-first pairs throughout: T009→T010, T012→T013, T016→T017, T018 (failing first), T020→T021, T023→T024,

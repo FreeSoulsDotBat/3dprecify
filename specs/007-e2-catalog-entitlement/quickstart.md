@@ -21,7 +21,8 @@ cd backend && uv run pytest tests/test_entitlement*.py -q   # written FAILING fi
 - Forge: client-faked premium state → still denied (server never consults the client).
 - Grant walk (CLI, operator-only by construction):
   ```bash
-  uv run grant-premium grant <uid-or-email> --source beta [--expires 2026-12-31]
+  uv run grant-premium grant <uid-or-email-of-EXISTING-account> --source beta [--expires 2026-12-31]
+  # e-mail lookup resolves accounts.email (populated at first sign-in); email-invite is deferred (data-model §12)
   uv run grant-premium list            # ledger: grantor, source, granted_at, expires_at
   uv run grant-premium revoke <uid>
   ```
