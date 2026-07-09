@@ -216,7 +216,7 @@ def test_every_catalog_route_carries_the_gate() -> None:
 def test_free_surfaces_respond_with_db_unreachable(monkeypatch: pytest.MonkeyPatch) -> None:
     from app.db import reset_engine_for_tests
 
-    monkeypatch.setenv("P3D_DATABASE_URL", "postgresql+psycopg://nobody:nothing@localhost:1/nope")
+    monkeypatch.setenv("P3D_DATABASE_URL", "postgresql+psycopg://nobody@localhost:1/nope")
     get_settings.cache_clear()
     reset_engine_for_tests()
     try:

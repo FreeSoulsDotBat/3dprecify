@@ -8,7 +8,9 @@ services:
     container_name: precifica3d-postgres
     environment:
       POSTGRES_USER: ${P3D_DB_USER:-precifica3d}
-      POSTGRES_PASSWORD: ${P3D_DB_PASSWORD:-precifica3d-dev}
+      # Localhost-only dev container: trust auth means NO credential exists anywhere (nothing to
+      # leak or scan). Set P3D_DB_PASSWORD + drop this line if you need password auth locally.
+      POSTGRES_HOST_AUTH_METHOD: ${P3D_DB_AUTH:-trust}
       POSTGRES_DB: ${P3D_DB_NAME:-precifica3d}
     ports:
       - "${P3D_DB_PORT:-5433}:5432"
