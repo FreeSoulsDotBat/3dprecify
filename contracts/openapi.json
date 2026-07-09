@@ -1,0 +1,568 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Precifica3D API",
+    "version": "0.0.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "tags": [
+          "me"
+        ],
+        "summary": "Get Me",
+        "operationId": "get_me_api_v1_me_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CurrentUser"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/fee-catalog": {
+      "get": {
+        "tags": [
+          "fee-catalog"
+        ],
+        "summary": "Get Fee Catalog",
+        "operationId": "get_fee_catalog_api_v1_fee_catalog_get",
+        "parameters": [
+          {
+            "name": "if-none-match",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "If-None-Match"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeeCatalog"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "ETag matched — not modified"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CurrentUser": {
+        "properties": {
+          "uid": {
+            "type": "string",
+            "title": "Uid"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "uid"
+        ],
+        "title": "CurrentUser"
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Details"
+          },
+          "correlationId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlationid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody"
+      },
+      "ErrorCode": {
+        "type": "string",
+        "enum": [
+          "VALIDATION_ERROR",
+          "UNAUTHENTICATED",
+          "TOKEN_EXPIRED",
+          "FORBIDDEN",
+          "NOT_FOUND",
+          "INTERNAL"
+        ],
+        "title": "ErrorCode",
+        "description": "Single source of wire error codes. Mirrored to TS via Orval (A5)."
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope"
+      },
+      "FeeCatalog": {
+        "properties": {
+          "catalogVersion": {
+            "type": "string",
+            "title": "Catalogversion"
+          },
+          "schemaVersion": {
+            "type": "string",
+            "title": "Schemaversion"
+          },
+          "generatedAt": {
+            "type": "string",
+            "title": "Generatedat"
+          },
+          "marketplaces": {
+            "items": {
+              "$ref": "#/components/schemas/MarketplaceCatalog"
+            },
+            "type": "array",
+            "title": "Marketplaces"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalogVersion",
+          "schemaVersion",
+          "generatedAt",
+          "marketplaces"
+        ],
+        "title": "FeeCatalog"
+      },
+      "FeeEntry": {
+        "properties": {
+          "determinants": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Determinants"
+          },
+          "commissionPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commissionpct"
+          },
+          "fixedFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixedfee"
+          },
+          "minPerItem": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minperitem"
+          },
+          "priceBands": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PriceBand"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pricebands"
+          },
+          "freight": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/FreightNone"
+              },
+              {
+                "$ref": "#/components/schemas/FreightEstimate"
+              },
+              {
+                "$ref": "#/components/schemas/FreightBandVoucher"
+              }
+            ],
+            "title": "Freight",
+            "discriminator": {
+              "propertyName": "kind",
+              "mapping": {
+                "BAND_VOUCHER": "#/components/schemas/FreightBandVoucher",
+                "ESTIMATE": "#/components/schemas/FreightEstimate",
+                "NONE": "#/components/schemas/FreightNone"
+              }
+            }
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "title": "Effectivedate"
+          },
+          "lastReviewed": {
+            "type": "string",
+            "title": "Lastreviewed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "determinants",
+          "commissionPct",
+          "fixedFee",
+          "freight",
+          "source",
+          "sourceUrl",
+          "effectiveDate",
+          "lastReviewed"
+        ],
+        "title": "FeeEntry"
+      },
+      "FreightBandVoucher": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "BAND_VOUCHER",
+            "title": "Kind"
+          },
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/VoucherBand"
+            },
+            "type": "array",
+            "title": "Bands"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "bands"
+        ],
+        "title": "FreightBandVoucher"
+      },
+      "FreightEstimate": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "ESTIMATE",
+            "title": "Kind"
+          },
+          "thresholdPrice": {
+            "type": "number",
+            "title": "Thresholdprice"
+          },
+          "defaultSubsidy": {
+            "type": "number",
+            "title": "Defaultsubsidy"
+          },
+          "inputs": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Inputs"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "thresholdPrice",
+          "defaultSubsidy"
+        ],
+        "title": "FreightEstimate"
+      },
+      "FreightNone": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "NONE",
+            "title": "Kind"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "FreightNone"
+      },
+      "MarketplaceCatalog": {
+        "properties": {
+          "marketplace": {
+            "type": "string",
+            "enum": [
+              "MERCADO_LIVRE",
+              "AMAZON",
+              "SHOPEE"
+            ],
+            "title": "Marketplace"
+          },
+          "determinantsSchema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Determinantsschema"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/FeeEntry"
+            },
+            "type": "array",
+            "title": "Entries"
+          }
+        },
+        "type": "object",
+        "required": [
+          "marketplace",
+          "entries"
+        ],
+        "title": "MarketplaceCatalog"
+      },
+      "PriceBand": {
+        "properties": {
+          "minPrice": {
+            "type": "number",
+            "title": "Minprice"
+          },
+          "maxPrice": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxprice"
+          },
+          "commissionPct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commissionpct"
+          },
+          "fixedFee": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixedfee"
+          }
+        },
+        "type": "object",
+        "required": [
+          "minPrice",
+          "maxPrice",
+          "commissionPct",
+          "fixedFee"
+        ],
+        "title": "PriceBand"
+      },
+      "VoucherBand": {
+        "properties": {
+          "minPrice": {
+            "type": "number",
+            "title": "Minprice"
+          },
+          "maxPrice": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxprice"
+          },
+          "voucherCeiling": {
+            "type": "number",
+            "title": "Voucherceiling"
+          }
+        },
+        "type": "object",
+        "required": [
+          "minPrice",
+          "maxPrice",
+          "voucherCeiling"
+        ],
+        "title": "VoucherBand"
+      }
+    }
+  }
+}

@@ -1,5 +1,13 @@
 # Implementation Plan: Walking Skeleton — minimal authenticated price
 
+> **⚠️ SUPERSEDED for tooling/stack (2026-06-29).** This plan predates the stack decisions. The toolchain,
+> structure, contracts, deploy, and standards now live in **`specs/002-foundation/`** + ADR-0004 +
+> `docs/decisions/{tech-stack-decisions,audit-findings}.md`. The **product** content here (user stories US1/US2,
+> the calculator) is still valid, but the technical sections (npm, React 18, bulletproof layout, Cloudflare/
+> Render, snake_case, `{detail}` 401, `GOOGLE_APPLICATION_CREDENTIALS`) are stale and will be **regenerated
+> against the 002 foundation** when 001 is implemented. `spec.md` (tech-agnostic) and `contracts/pricing-core.md`
+> remain authoritative; `packages/pricing-core` (T015/T017) is done and unchanged.
+
 **Branch**: `001-walking-skeleton` | **Date**: 2026-06-26 | **Spec**: [spec.md](./spec.md)
 
 **Input**: Feature specification from `specs/001-walking-skeleton/spec.md`

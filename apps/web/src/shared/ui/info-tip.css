@@ -1,0 +1,40 @@
+/* InfoTip skin over Radix Popover. A quiet inline ⓘ affordance next to a section
+   title; opens a matte brand card explaining what/how the section calculates. */
+.tf-infotip__trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /* ≥24px hit target (WCAG 2.2 AA §2.5.8) kept compact so it reads as an inline
+     affordance beside the label, not a primary control. */
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.tf-infotip__trigger:hover,
+.tf-infotip__trigger[data-state="open"] {
+  color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.tf-infotip__content {
+  z-index: 71;
+  /* Never overflow the viewport edge at 390px (003 FR-010). */
+  max-width: min(20rem, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-card);
+  color: var(--text-body);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}
+.tf-infotip__arrow {
+  fill: var(--surface-card);
+}

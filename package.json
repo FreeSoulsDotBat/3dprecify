@@ -2,15 +2,40 @@
   "name": "3dprecify",
   "private": true,
   "version": "0.0.0",
-  "workspaces": [
-    "packages/*",
-    "apps/*"
-  ],
+  "packageManager": "pnpm@11.0.8",
+  "engines": {
+    "node": ">=24 <25"
+  },
   "scripts": {
-    "test": "npm run test --workspaces --if-present"
+    "dev": "firebase emulators:exec --only auth --project=demo-precifica3d \"pnpm --filter @3dprecify/web dev\"",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:coverage": "vitest run --coverage",
+    "e2e": "firebase emulators:exec --only auth --project=demo-precifica3d \"pnpm --filter @3dprecify/web test:e2e\"",
+    "depcruise": "depcruise packages apps --config .dependency-cruiser.cjs",
+    "gate": "pnpm gate:all",
+    "gate:fe": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
+    "gate:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run pytest -q && uv run lint-imports",
+    "gate:all": "pnpm gate:fe && pnpm gate:be",
+    "prepare": "lefthook install"
   },
   "devDependencies": {
-    "typescript": "^5.6.3",
-    "vitest": "^2.1.9"
+    "@eslint/js": "^10.0.1",
+    "@vitest/coverage-v8": "^4.1.9",
+    "dependency-cruiser": "^18.0.0",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-boundaries": "^6.0.2",
+    "firebase-tools": "^15.22.3",
+    "globals": "^17.7.0",
+    "lefthook": "^2.1.9",
+    "prettier": "^3.9.0",
+    "typescript": "catalog:",
+    "typescript-eslint": "^8.62.0",
+    "vitest": "catalog:"
   }
 }

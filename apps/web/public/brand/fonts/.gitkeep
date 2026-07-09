@@ -1,0 +1,4 @@
+# Brand webfonts placement (T003). Drop the self-hosted `.woff2` here and
+# activate the matching `@font-face` in `apps/web/src/styles/base.css`.
+# Files are ABSENT for now (owner-accepted, TD-014); the display-face
+# fallback in tokens/typography.css renders until they are delivered.

@@ -1,0 +1,20 @@
+/* ============================================================
+   Truth's Forge — Motion tokens
+   Energetic but precise. Quick, confident transitions with a
+   touch of spring on press/affordance feedback. Respect
+   prefers-reduced-motion in components.
+   ============================================================ */
+:root {
+  --dur-instant: 80ms;
+  --dur-fast: 130ms;
+  --dur: 190ms;
+  --dur-slow: 280ms;
+  --dur-slower: 440ms;
+
+  --ease-out: cubic-bezier(0.22, 0.8, 0.28, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0.3);
+  --ease-in-out: cubic-bezier(0.45, 0, 0.2, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  --press-scale: 0.97;
+}

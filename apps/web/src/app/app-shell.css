@@ -1,0 +1,32 @@
+/* App shell layout (T033). Column: top-bar, body (side nav + main), and — on mobile —
+   a fixed bottom TabBar. The main column caps its own width per page; the shell only
+   owns the frame. No horizontal overflow at 390px (INV-1). */
+.tf-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  /* Side-nav column width — single source, so the top-bar can centre the desktop
+     logo over the exact menu width (consumed by app-nav + top-bar). */
+  --sidebar-w: 240px;
+}
+.tf-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.tf-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--gutter);
+}
+
+/* Mobile: reserve space under the content for the fixed bottom TabBar. */
+.tf-shell[data-layout="mobile"] .tf-shell__main {
+  padding-bottom: calc(var(--tabbar-h) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Desktop: roomier gutter next to the side nav. */
+.tf-shell[data-layout="desktop"] .tf-shell__main {
+  padding: var(--gutter-lg);
+}

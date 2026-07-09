@@ -2,6 +2,22 @@
 
 Proves the slice end-to-end. See [data-model.md](./data-model.md) and [contracts/](./contracts/) for shapes.
 
+## Run locally for homologation (no cloud, Firebase Auth emulator)
+
+Requires Node 24 + `pnpm install` done, and Java (for the emulator — already present).
+
+1. From the repo root: **`pnpm dev`** — this starts the Firebase Auth emulator and the Vite
+   dev server together (env comes from `apps/web/.env.development`, copied from `.env.example`).
+2. Open the printed local URL (Vite, e.g. `http://localhost:5173`). On a phone-sized viewport
+   (DevTools device toolbar) to homologate the mobile-first layout.
+3. Click **"Entrar com Google"** → the emulator's sign-in popup opens → **"Add new account"**
+   (any fake name/email) → you land on the calculator. Toggle light/dark with **"Alternar tema"**.
+4. The calculator computes live (try costPerRoll=100, rollWeightKg=1, grams=20, markup=50 →
+   **R$ 2,00 / R$ 3,00**; set rollWeight=0 → friendly error). The backend is **not** needed for
+   the UI flow (the calc is client-side); the Auth emulator UI is at `http://localhost:4000`.
+
+Full automated run (build + emulator + Playwright, incl. authenticated + offline): **`pnpm e2e`**.
+
 ## Prerequisites
 - Node 20+ and Python 3.12 (both present on the dev machine).
 - A Firebase project: a Web App registered, **Google** sign-in provider enabled, and a **service-account**
