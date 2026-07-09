@@ -78,15 +78,15 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: operator CLI makes the gate operable; ledger auditable; freeze on lapse.
 **Independent Test**: quickstart §1 grant walk.
 
-- [ ] T012 [US2] Write FAILING pytest first — `backend/tests/test_entitlement_grants.py`: grant → writes
+- [x] T012 [US2] Write FAILING pytest first — `backend/tests/test_entitlement_grants.py`: grant → writes
       allowed; revoke/expiry → writes 403 + reads 200 + **zero rows deleted** (freeze, SC-309); re-grant →
       same data writable; ledger rows carry grantor/source/granted_at/expires_at; JIT account creation (D1).
-- [ ] T013 [US2] Implement the operator CLI `backend/app/scripts/grant_premium.py` + `[project.scripts]`
+- [x] T013 [US2] Implement the operator CLI `backend/app/scripts/grant_premium.py` + `[project.scripts]`
       entry (`uv run grant-premium grant|revoke|list`) writing the ledger directly — NO HTTP route
       (operator-only by construction, ADR-0012). Target = **uid or e-mail of an EXISTING account** (the
       e-mail lookup resolves `accounts.email`, populated at first sign-in; email-invite/grant-before-sign-in
       is explicitly deferred — data-model §12, analyze P1). Tests green.
-- [ ] T014 [US2] `GET /api/v1/entitlement` in `backend/app/api/entitlement.py` → `200 {status, source?,
+- [x] T014 [US2] `GET /api/v1/entitlement` in `backend/app/api/entitlement.py` → `200 {status, source?,
       expiresAt?}` + 401 only (no grantor leak; any authenticated account may ask) — failing contract test
       first, then regen ripple (openapi + Orval + drift-guard green; conformance auto-covers it).
 

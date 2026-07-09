@@ -65,3 +65,28 @@ def postgres_url() -> Iterator[str]:
 
     with PostgresContainer("postgres:17-alpine", driver="psycopg") as pg:
         yield pg.get_connection_url()
+
+
+@pytest.fixture(scope="session")
+def migrated_db(postgres_url: str) -> Iterator[str]:
+    """Point the app at the testcontainer DB (env) + apply migration 0001 (session-wide)."""
+    import os
+
+    from alembic.config import Config
+
+    from alembic import command
+    from app.db import reset_engine_for_tests
+    from app.settings import get_settings
+
+    old = os.environ.get("P3D_DATABASE_URL")
+    os.environ["P3D_DATABASE_URL"] = postgres_url
+    get_settings.cache_clear()
+    reset_engine_for_tests()
+    command.upgrade(Config("alembic.ini"), "head")
+    yield postgres_url
+    if old is None:
+        os.environ.pop("P3D_DATABASE_URL", None)
+    else:
+        os.environ["P3D_DATABASE_URL"] = old
+    get_settings.cache_clear()
+    reset_engine_for_tests()

@@ -8,7 +8,6 @@ automatically when the PR-B routers land (no rewrite), plus the FR-313 resilienc
 Postgres (testcontainers) and SKIP VISIBLY without Docker (ADR-0013).
 """
 
-import os
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -51,28 +50,6 @@ def _app_with_probe(settings: Settings) -> FastAPI:
 
     app.include_router(probe)
     return app
-
-
-@pytest.fixture(scope="session")
-def migrated_db(postgres_url: str) -> Iterator[str]:
-    """Point the app at the testcontainer DB (env) and apply migration 0001."""
-    from alembic.config import Config
-
-    from alembic import command
-    from app.db import reset_engine_for_tests
-
-    old = os.environ.get("P3D_DATABASE_URL")
-    os.environ["P3D_DATABASE_URL"] = postgres_url
-    get_settings.cache_clear()
-    reset_engine_for_tests()
-    command.upgrade(Config("alembic.ini"), "head")
-    yield postgres_url
-    if old is None:
-        os.environ.pop("P3D_DATABASE_URL", None)
-    else:
-        os.environ["P3D_DATABASE_URL"] = old
-    get_settings.cache_clear()
-    reset_engine_for_tests()
 
 
 @pytest.fixture
