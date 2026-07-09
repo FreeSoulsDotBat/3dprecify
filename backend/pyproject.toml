@@ -11,6 +11,9 @@ dependencies = [
     "structlog",
     "asgi-correlation-id",
     "sentry-sdk[fastapi]",
+    "sqlalchemy>=2.0.51",
+    "alembic>=1.18.5",
+    "psycopg[binary]>=3.3.4",
 ]
 
 [dependency-groups]
@@ -22,6 +25,7 @@ dev = [
     "ruff",
     "basedpyright",
     "import-linter",
+    "testcontainers>=4.14.2",
 ]
 
 [tool.uv]
@@ -73,4 +77,15 @@ root_package = "app"
 name = "Settings is a dependency-free leaf"
 type = "forbidden"
 source_modules = ["app.settings"]
-forbidden_modules = ["app.main", "app.auth", "app.errors", "app.observability"]
+forbidden_modules = ["app.main", "app.auth", "app.errors", "app.observability", "app.db", "app.entitlement", "app.models"]
+
+# E2 layering (ADR-0012/0013): API routes depend on the entitlement seam, which depends on the DB
+# layer — never the other way around. `layers` enforces the downward-only import direction.
+[[tool.importlinter.contracts]]
+name = "E2 layering: api -> entitlement -> db"
+type = "layers"
+layers = [
+    "app.api",
+    "app.entitlement",
+    "app.db",
+]

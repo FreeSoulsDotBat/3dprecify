@@ -28,6 +28,14 @@ class Settings(BaseSettings):
     firebase_project_id: str | None = None
     firebase_auth_emulator_host: str | None = None  # e.g. "localhost:9099"
 
+    # Database (E2 / ADR-0013). Default targets the compose-local Postgres (docker-compose.yml);
+    # dev/CI only — Cloud SQL lands at v1-launch by replaying the same Alembic migrations. psycopg3
+    # driver for BOTH async app engine and sync Alembic. The engine is created LAZILY (FR-313: free
+    # calculator surfaces keep responding with the DB unreachable).
+    database_url: SecretStr = SecretStr(
+        "postgresql+psycopg://precifica3d:precifica3d-dev@localhost:5432/precifica3d"
+    )
+
     # Observability.
     sentry_dsn: SecretStr | None = None
 
