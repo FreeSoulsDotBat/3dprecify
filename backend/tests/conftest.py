@@ -11,8 +11,12 @@ from app.settings import Settings
 
 # psycopg async cannot run on Windows' default ProactorEventLoop — tests (and any Windows dev
 # server touching DB routes) need the selector loop. Linux (CI/Cloud Run) is unaffected.
+# set_event_loop_policy is deprecated from Py 3.14, but we pin >=3.12,<3.13 (pyproject) and it
+# is the only policy hook on 3.12 — revisit when the Python pin moves.
 if sys.platform == "win32":  # pragma: no cover - platform-specific
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+    asyncio.set_event_loop_policy(  # pyright: ignore[reportDeprecated]
+        asyncio.WindowsSelectorEventLoopPolicy()
+    )
 
 
 @pytest.fixture
