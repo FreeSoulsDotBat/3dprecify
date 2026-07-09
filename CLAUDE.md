@@ -31,5 +31,5 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/006-uat-deploy-hardening/plan.md
+at specs/007-e2-catalog-entitlement/plan.md
 <!-- SPECKIT END -->

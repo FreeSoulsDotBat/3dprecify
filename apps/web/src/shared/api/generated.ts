@@ -25,6 +25,21 @@ export interface CurrentUser {
   email?: string | null;
 }
 
+export type EntitlementViewStatus = typeof EntitlementViewStatus[keyof typeof EntitlementViewStatus];
+
+
+export const EntitlementViewStatus = {
+  none: 'none',
+  active: 'active',
+  lapsed: 'lapsed',
+} as const;
+
+export interface EntitlementView {
+  status: EntitlementViewStatus;
+  source?: string | null;
+  expiresAt?: string | null;
+}
+
 export type ErrorBodyDetails = { [key: string]: unknown }[] | null;
 
 /**
@@ -40,6 +55,7 @@ export const ErrorCode = {
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   INTERNAL: 'INTERNAL',
+  ENTITLEMENT_REQUIRED: 'ENTITLEMENT_REQUIRED',
 } as const;
 
 export interface ErrorBody {
@@ -491,6 +507,126 @@ export function useGetFeeCatalogApiV1FeeCatalogGet<TData = Awaited<ReturnType<ty
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetFeeCatalogApiV1FeeCatalogGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getEntitlementApiV1EntitlementGetResponse200 = {
+  data: EntitlementView
+  status: 200
+}
+
+export type getEntitlementApiV1EntitlementGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getEntitlementApiV1EntitlementGetResponseSuccess = (getEntitlementApiV1EntitlementGetResponse200) & {
+  headers: Headers;
+};
+export type getEntitlementApiV1EntitlementGetResponseError = (getEntitlementApiV1EntitlementGetResponse401) & {
+  headers: Headers;
+};
+
+export type getEntitlementApiV1EntitlementGetResponse = (getEntitlementApiV1EntitlementGetResponseSuccess | getEntitlementApiV1EntitlementGetResponseError)
+
+export const getGetEntitlementApiV1EntitlementGetUrl = () => {
+
+
+
+
+  return `/api/v1/entitlement`
+}
+
+/**
+ * @summary Get Entitlement
+ */
+export const getEntitlementApiV1EntitlementGet = async ( options?: RequestInit): Promise<getEntitlementApiV1EntitlementGetResponse> => {
+
+  return orvalFetch<getEntitlementApiV1EntitlementGetResponse>(getGetEntitlementApiV1EntitlementGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetEntitlementApiV1EntitlementGetQueryKey = () => {
+    return [
+    `/api/v1/entitlement`
+    ] as const;
+    }
+
+
+export const getGetEntitlementApiV1EntitlementGetQueryOptions = <TData = Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetEntitlementApiV1EntitlementGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>> = ({ signal }) => getEntitlementApiV1EntitlementGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetEntitlementApiV1EntitlementGetQueryResult = NonNullable<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>>
+export type GetEntitlementApiV1EntitlementGetQueryError = ErrorEnvelope
+
+
+export function useGetEntitlementApiV1EntitlementGet<TData = Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>,
+          TError,
+          Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntitlementApiV1EntitlementGet<TData = Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>,
+          TError,
+          Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetEntitlementApiV1EntitlementGet<TData = Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Entitlement
+ */
+
+export function useGetEntitlementApiV1EntitlementGet<TData = Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getEntitlementApiV1EntitlementGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetEntitlementApiV1EntitlementGetQueryOptions(options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

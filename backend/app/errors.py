@@ -28,6 +28,10 @@ class ErrorCode(StrEnum):
     FORBIDDEN = "FORBIDDEN"
     NOT_FOUND = "NOT_FOUND"
     INTERNAL = "INTERNAL"
+    # E2 (ADR-0012): persistence is Premium; the server-side gate denies with this code (403).
+    # The ONLY new E2 code — no quota (free=zero, premium=unlimited) and no conflict (writes are
+    # online-only) codes exist; they would be phantoms (spec 007 Edge Cases).
+    ENTITLEMENT_REQUIRED = "ENTITLEMENT_REQUIRED"
 
 
 class CamelModel(BaseModel):
@@ -55,6 +59,11 @@ AUTH_ERRORS: dict[int | str, dict[str, Any]] = {
 }
 INTERNAL_ERRORS: dict[int | str, dict[str, Any]] = {
     500: {"model": ErrorEnvelope, "description": "Unexpected server error"},
+}
+# E2 catalog routes (ADR-0012): 401 (bad/missing token) + 403 (not entitled).
+ENTITLEMENT_ERRORS: dict[int | str, dict[str, Any]] = {
+    **AUTH_ERRORS,
+    403: {"model": ErrorEnvelope, "description": "Persistence requires an active premium grant"},
 }
 
 

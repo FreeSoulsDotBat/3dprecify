@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.entitlement import router as entitlement_router
 from .api.fee_catalog import router as fee_catalog_router
 from .api.me import router as me_router
 from .auth import init_firebase
@@ -89,6 +90,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(me_router)
     # Public, unauthenticated reference data (never a gate — FR-117 / Constitution IV).
     api.include_router(fee_catalog_router)
+    # E2: the account's own plan state (honest Conta surface — FR-304/ADR-0012).
+    api.include_router(entitlement_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
