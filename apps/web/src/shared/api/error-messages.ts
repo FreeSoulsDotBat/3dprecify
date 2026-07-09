@@ -18,6 +18,7 @@ const MESSAGE_BY_CODE: Record<ApiErrorCode, string> = {
   [ErrorCode.FORBIDDEN]: messages.apiError.forbidden,
   [ErrorCode.NOT_FOUND]: messages.apiError.notFound,
   [ErrorCode.INTERNAL]: messages.apiError.internal,
+  [ErrorCode.ENTITLEMENT_REQUIRED]: messages.apiError.entitlementRequired,
   UNKNOWN: messages.apiError.unknown,
 };
 

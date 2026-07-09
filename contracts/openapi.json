@@ -209,7 +209,8 @@
           "TOKEN_EXPIRED",
           "FORBIDDEN",
           "NOT_FOUND",
-          "INTERNAL"
+          "INTERNAL",
+          "ENTITLEMENT_REQUIRED"
         ],
         "title": "ErrorCode",
         "description": "Single source of wire error codes. Mirrored to TS via Orval (A5)."

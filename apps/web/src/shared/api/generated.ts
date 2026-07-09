@@ -40,6 +40,7 @@ export const ErrorCode = {
   FORBIDDEN: 'FORBIDDEN',
   NOT_FOUND: 'NOT_FOUND',
   INTERNAL: 'INTERNAL',
+  ENTITLEMENT_REQUIRED: 'ENTITLEMENT_REQUIRED',
 } as const;
 
 export interface ErrorBody {

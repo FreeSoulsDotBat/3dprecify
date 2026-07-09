@@ -23,15 +23,15 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 ## Phase 1: Setup
 
-- [ ] T001 Local Postgres: `docker-compose.yml` (postgres service, dev credentials via env, volume) +
+- [x] T001 Local Postgres: `docker-compose.yml` (postgres service, dev credentials via env, volume) +
       `P3D_DATABASE_URL` in `backend/app/settings.py` (settings stays an import-linter leaf) + a "local DB"
       section in `backend/README.md` (or repo README) with `docker compose up -d postgres`.
-- [ ] T002 Backend deps (ADR-0013): add `sqlalchemy`, `alembic`, `psycopg[binary]` (+ `testcontainers` as
+- [x] T002 Backend deps (ADR-0013): add `sqlalchemy`, `alembic`, `psycopg[binary]` (+ `testcontainers` as
       dev-dep) to `backend/pyproject.toml`; `uv sync`; lockfile committed.
-- [ ] T003 `backend/app/db/` — async engine + session factory (settings-driven URL, `postgresql+psycopg://`);
+- [x] T003 `backend/app/db/` — async engine + session factory (settings-driven URL, `postgresql+psycopg://`);
       extend `[tool.importlinter]` contracts in `backend/pyproject.toml`: `app.api → app.entitlement →
       app.db` layering, `app.settings` stays dependency-free.
-- [ ] T004 Test infrastructure: `backend/tests/conftest.py` gains a testcontainers Postgres fixture with a
+- [x] T004 Test infrastructure: `backend/tests/conftest.py` gains a testcontainers Postgres fixture with a
       **VISIBLE Docker-availability skip guard** (skip reason printed, never silently green — quickstart §6);
       `.github/workflows/ci.yml` gate job verified to run DB tests (ubuntu runners ship Docker — research R3;
       no service container needed if testcontainers manages its own).
@@ -42,14 +42,14 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 ## Phase 2: Foundational (blocking)
 
-- [ ] T006 SQLAlchemy 2.0 typed models per data-model §2 in `backend/app/models/`: `accounts` (uid PK, JIT),
+- [x] T006 SQLAlchemy 2.0 typed models per data-model §2 in `backend/app/models/`: `accounts` (uid PK, JIT),
       `entitlement_grants` (append-only ledger), `filaments`, `printers`, `products` (FK `ON DELETE SET
       NULL` + typed resolved-value columns + link-or-snapshot CHECK), NUMERIC money domains, text+CHECK
       enums, soft-delete columns, owner-uid indices (§7).
-- [ ] T007 Alembic: `backend/alembic.ini` + `backend/alembic/` init + **migration 0001** carrying the full
+- [x] T007 Alembic: `backend/alembic.ini` + `backend/alembic/` init + **migration 0001** carrying the full
       data-model schema; `uv run alembic upgrade head` green against the compose DB; migration replay is the
       future Cloud SQL provisioning path (ADR-0013).
-- [ ] T008 ErrorCode ripple (same commit): `ENTITLEMENT_REQUIRED` in `backend/app/errors.py` ErrorCode +
+- [x] T008 ErrorCode ripple (same commit): `ENTITLEMENT_REQUIRED` in `backend/app/errors.py` ErrorCode +
       `ENTITLEMENT_ERRORS: {403: ErrorEnvelope}` responses constant; regen `contracts/openapi.json` + Orval
       client; pt-BR message in `apps/web/src/shared/api/error-messages.ts` ("Salvar faz parte do Premium." —
       final copy ratified with US7); contract drift-guard green.

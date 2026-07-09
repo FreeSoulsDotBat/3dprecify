@@ -258,5 +258,8 @@ export const messages = {
     notFound: "Não encontramos o que você procura.",
     internal: "Algo deu errado. Tente novamente.",
     unknown: "Algo deu errado. Tente novamente.",
+    // E2 (ADR-0012): the server-side premium gate. Honest — no price, no date (FR-014/US7);
+    // final wording owner-ratified with the US7 teaser copy.
+    entitlementRequired: "Salvar faz parte do Premium.",
   },
 } as const;
