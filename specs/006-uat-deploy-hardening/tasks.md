@@ -138,7 +138,7 @@ the (owner-veto-pending) release-correlation stamp.
       `correlationId` via the Sentry event or the response header — the single tooling-permitted step**, §4
       rollback per-half (`gcloud run services update-traffic --to-revisions <PREV>=100` · `firebase
       hosting:rollback`) + half-deploy triage (research §7).
-- [ ] T020 [US1] **OWNER-GATED (veto pending)** Optional `VITE_RELEASE` stamp (research §7, recommended):
+- [x] T020 [US1] **OWNER-GATED (veto pending)** Optional `VITE_RELEASE` stamp (research §7, recommended):
       1-line `deploy.yml` addition passing `VITE_RELEASE=${{ github.sha }}` into the SPA build + optional
       typed-env entry (`apps/web/src/shared/lib/env.ts`) + Sentry `release` wiring in
       `apps/web/src/shared/observability/sentry.ts`. If the owner vetoes: record the veto in
@@ -155,7 +155,7 @@ the (owner-veto-pending) release-correlation stamp.
       homologated); ADR-0008..0011 Accepted; A20/A22/A23/D2 done; current increment = 006 (T022 UAT deploy +
       FR-209 release cut + A21 + D4 + privacy + reconcile). Remove every stale "pending" phrasing contradicted
       by the repo.
-- [ ] T022 [US4] **OWNER-GATED** Prune `fix/deploy-env-wiring`: supersession ALREADY verified 2026-07-08
+- [x] T022 [US4] **OWNER-GATED** Prune `fix/deploy-env-wiring`: supersession ALREADY verified 2026-07-08
       (`deploy.yml` + `docs/environments.md` byte-identical vs `develop` — recorded in research/plan). On
       owner authorization run `git push origin --delete fix/deploy-env-wiring` and add the evidence line to
       `specs/006-uat-deploy-hardening/dod-evidence.md`.
