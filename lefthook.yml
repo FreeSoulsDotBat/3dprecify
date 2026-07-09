@@ -1,5 +1,8 @@
-# Local git hooks (ADR-0004). Runs the SAME checks as CI (parity by construction — FR-C2.3).
-# Fast checks on commit (format + lint on staged files); heavier checks on push (types + tests).
+# Local git hooks (ADR-0004 + D4/R2-G3). Fast checks on commit (format + lint on staged files);
+# pre-push runs the LITERAL same `pnpm gate:all` the CI gate job runs — frontend gates
+# (format/lint/boundaries/types/coverage) AND backend gates (ruff/basedpyright/pytest/import-linter).
+# Parity is by identical invocation, inspectable here and in .github/workflows/ci.yml (SC-206).
+# Accepted cost: slower push (decided R2-G3). e2e/docker/drift/secret-scan are CI-only by nature.
 pre-commit:
   parallel: true
   commands:
@@ -13,7 +16,5 @@ pre-commit:
 pre-push:
   parallel: false
   commands:
-    typecheck:
-      run: pnpm typecheck
-    test:
-      run: pnpm -r test
+    gate:
+      run: pnpm gate:all

@@ -92,6 +92,7 @@ jobs:
           VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
           VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_WEB }} # optional
+          VITE_RELEASE: ${{ github.sha }} # 006 T020 (owner-accepted): symmetric web release correlation
           VITE_USE_AUTH_EMULATOR: "false"
         run: pnpm --filter @3dprecify/web build
 

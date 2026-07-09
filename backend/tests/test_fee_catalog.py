@@ -2,9 +2,10 @@
 
 Validates the wire contract end-to-end: public (no auth), a camelCase body that round-trips through
 the served Pydantic schema, an ETag + 304 on revalidation, and DATA ONLY (the served catalogVersion
-matches the committed artifact; no computed price fields). A static-data GET has no input space to
-fuzz, so this hand-written contract test replaces a Schemathesis property test (schemathesis is
-available for future parametrized endpoints).
+matches the committed artifact; no computed price fields). Since 006/A21, ``test_conformance.py``
+runs Schemathesis over EVERY published operation (this one included) — this hand-written test no
+longer substitutes for it; it complements it with the semantic assertions Schemathesis cannot know
+(catalog↔artifact equality, no-price-fields, cache semantics).
 """
 
 from __future__ import annotations
