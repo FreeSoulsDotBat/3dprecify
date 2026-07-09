@@ -31,7 +31,11 @@ and runs IN PARALLEL with the code phases.
 
 ---
 
-## Phase 2: Owner-gated provisioning track (parallel — blocks ONLY Phase 7)
+## Phase 2: Owner-gated provisioning track — **DEFERRED to v1-complete (owner decision 2026-07-09)**
+
+> **OWNER DECISION 2026-07-09 (spec Clarifications):** provisioning + first deploy wait until
+> **v1 complete = E1–E6 delivered**. T002–T006 stay specified and ready (runbook §1 carries the tables);
+> nothing here is done until the owner re-opens the v1-launch increment.
 
 **Purpose**: stand up the cloud side (research §1.1–1.3). No repo/branch dependency; guided `gcloud` where
 possible, console where unavoidable. Every value lands in the GitHub `uat` Environment, never in the repo
@@ -167,6 +171,10 @@ the (owner-veto-pending) release-correlation stamp.
 **Goal**: hardened `develop` → release cut → first real deploy → verified live. Every step below that pushes,
 merges, or deploys is **OWNER-GATED** (ADR-0006).
 
+> **T025–T028 DEFERRED to v1-complete (owner decision 2026-07-09, spec Clarifications):** the deploy
+> trigger exists and everything is dry-ready, but the first real deploy + smoke + rollback rehearsal wait
+> for E1–E6. FR-010 consciously stays open until then. T029 re-scoped to close the CODE half now.
+
 - [x] T023 [US1] Full local verification then PR: `pnpm gate:all` + `pnpm e2e` green → push
       `feature/006-uat-deploy-hardening` → open PR to `develop` (evidence-rich body) → **all CI checks
       green** (the check set changes with T009 — gate job + build job replace Frontend/Backend) →
@@ -190,11 +198,14 @@ merges, or deploys is **OWNER-GATED** (ADR-0006).
       per runbook §4, verify the previous version serves, re-deploy, time both directions (<10 min target).
       **The timed re-deploy doubles as the SC-204 repeat-deploy measurement (idempotent, <30 min, no
       user-visible change — analyze C3).**
-- [ ] T029 [US1] Write `specs/006-uat-deploy-hardening/dod-evidence.md` (gates, SC-201..207 map, smoke +
-      rollback record, deliberate-failure outputs, **the T011 failing-first conformance output recorded as
-      the SC-205 divergence-detection evidence (analyze A1)**, veto/ratification decisions) and mark
-      **A21/D4/T022 done** in `docs/decisions/audit-findings-r2.md` (+ retire the MEMORY
-      `local-gate-vs-ci-gap` note — parity now structural).
+- [x] T029 [US1] **(re-scoped 2026-07-09)** Write `specs/006-uat-deploy-hardening/dod-evidence.md`
+      closing the CODE half: gates, SC-205..207 evidence (T011 failing-first conformance output as the
+      SC-205 divergence-detection evidence — analyze A1; deliberate-failure outputs for SC-206), the
+      release-cut record, the deferral decision (SC-201..204 measurement moves to the v1-launch
+      increment), veto/ratification status (privacy wording ratification ALSO deferred to pre-launch —
+      the URL is not being shared). Mark **A21/D4 done** in `docs/decisions/audit-findings-r2.md`
+      (T022-deploy stays open/deferred) + retire the MEMORY `local-gate-vs-ci-gap` note (parity now
+      structural).
 
 ---
 

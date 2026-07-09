@@ -340,3 +340,21 @@ from `develop`, nothing was deployed FROM `main`. Snapshot = 002 + 001/003 (PRs 
 (004+005, PRs #6/#7) + 006 code half (PR #8: `gate:all` parity D4 · honest error contract + Schemathesis
 A21 · privacy notice FR-214 · UAT runbook · ground reconcile). NOT a new ADR — ADR-0006 already rules
 `main` = release; this line records the first exercise of that rule.
+
+### 006 BUILT — CODE HALF (2026-07-09) + DEPLOY DEFERRED TO V1 (owner decision)
+
+**Shipped to `develop` (PR #8) and cut to `main` (`0b12426`):** D4 `gate:all` (literal same command in
+lefthook pre-push and ONE CI job + explicit `build` job; deliberate-failure verified — **A21 and D4 are
+DONE**) · A21 honest error contract (`/me` 200+401, phantom `HTTPValidationError` stripped, Schemathesis
+conformance as pytest/ASGI failing-first, Orval regen, `use-identity` on the generated client — **TD-019
+retired**) · FR-214 privacy notice (`/privacidade` + sign-in link, test-first) · UAT runbook
+(`docs/runbooks/uat-deploy.md`) · ground reconcile + orphan `fix/deploy-env-wiring` pruned (supersession
+proven) · `VITE_RELEASE` stamp (owner-accepted).
+
+**OWNER DECISION (2026-07-09): provisioning + first deploy DEFERRED until v1 complete = E1–E6** (catalog,
+BOM, history/export, scenarios, billing on top of the shipped calculator). Consequences recorded in the 006
+spec Clarifications: **T022-deploy / FR-010 (MUST) consciously stays open across E2–E6**; remote
+homologation waits; everything is dry-ready (trigger visible on `main`, runbook, parity, honest contract).
+The execution half (P1–P11 provisioning, Deploy trigger, smoke, rollback — 006 T002–T006/T025–T028)
+re-opens as the **v1-launch increment**. Next real increment: **E2 (catalog + persistence + entitlement
+scaffolding)**.
