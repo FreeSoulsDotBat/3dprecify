@@ -226,8 +226,11 @@ nothing persists; nothing reports success; no price/date appears anywhere.
 ### Functional Requirements
 
 - **FR-301**: Every persistence operation (create/read/update/delete of any saved catalog data) MUST be
-  authorized **server-side** against the account's binary premium entitlement; the client MUST never be
-  trusted for the decision (Constitution IV).
+  authorized **server-side** against the account's premium entitlement; the client MUST never be trusted for
+  the decision (Constitution IV). Precision (data-model reconciliation 2026-07-09): the entitlement is
+  **binary for WRITES** (active ⇒ create/edit/delete allowed; anything else ⇒ denied); READ/pre-fill access
+  additionally survives a lapse per the freeze policy (FR-311) — in effect three observable states: active
+  (read+write), lapsed (read-only), none (no saved data access).
 - **FR-302**: A denied persistence attempt MUST return the honest wire error `ENTITLEMENT_REQUIRED`, persist
   nothing, and leak nothing; this code MUST join the existing error vocabulary end-to-end (server enum → typed
   client → friendly pt-BR message).
@@ -336,6 +339,9 @@ nothing persists; nothing reports success; no price/date appears anywhere.
   reused — E2 extends them (one new error code) rather than rebuilding.
 - The fee catalog (marketplace rates, 005) is unrelated infrastructure: it stays curated in-repo and public;
   E2's catalog is the USER's private data.
+- Energy tariff (`R$/kWh`) belongs to neither filament nor printer: it is modeled as a saved-product input
+  (like the piece fields), staying a manual calculator field otherwise. A per-account "default tariff"
+  setting is a candidate later refinement (designer-ux may revisit), not E2 scope.
 
 ## Out of Scope
 
