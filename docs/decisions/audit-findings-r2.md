@@ -328,3 +328,15 @@ deferral, owner-decided) is implemented, green, and homologated. NOT yet merged 
   nits (toggle-label wrap, verbose row labels) fixed same day. **Open:** T042 design reconciliation
   (non-blocking) · D1–D4 ML ingestion (off critical path, blocked on the house ML account Q-D) ·
   the owner-authorized squash-merge PR to `develop`.
+
+### FIRST RELEASE CUT (2026-07-09 — `develop`→`main`, FR-209 / 006)
+
+Owner-authorized first formal release merge (`0b12426`, --no-ff), per the 006 spec Clarification of
+2026-07-08. **Purpose: deploy-trigger availability** — GitHub only surfaces `workflow_dispatch` for
+workflows on the default branch; with `deploy.yml` now on `main`, the manual `Deploy` control exists
+(verified: workflow listed active post-push) and `auto-pr.yml` activated as the ADR-0006 side effect.
+**Explicitly accepted:** the release snapshot was cut BEFORE a verified deploy exists; UAT deploys build
+from `develop`, nothing was deployed FROM `main`. Snapshot = 002 + 001/003 (PRs #3/#4) + E1 complete
+(004+005, PRs #6/#7) + 006 code half (PR #8: `gate:all` parity D4 · honest error contract + Schemathesis
+A21 · privacy notice FR-214 · UAT runbook · ground reconcile). NOT a new ADR — ADR-0006 already rules
+`main` = release; this line records the first exercise of that rule.

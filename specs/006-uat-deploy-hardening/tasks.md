@@ -167,11 +167,11 @@ the (owner-veto-pending) release-correlation stamp.
 **Goal**: hardened `develop` → release cut → first real deploy → verified live. Every step below that pushes,
 merges, or deploys is **OWNER-GATED** (ADR-0006).
 
-- [ ] T023 [US1] Full local verification then PR: `pnpm gate:all` + `pnpm e2e` green → push
+- [x] T023 [US1] Full local verification then PR: `pnpm gate:all` + `pnpm e2e` green → push
       `feature/006-uat-deploy-hardening` → open PR to `develop` (evidence-rich body) → **all CI checks
       green** (the check set changes with T009 — gate job + build job replace Frontend/Backend) →
       **OWNER-GATED** squash-merge.
-- [ ] T024 [US1] **OWNER-GATED** First release merge `develop`→`main` (FR-209): merge (no squash — a release
+- [x] T024 [US1] **OWNER-GATED** First release merge `develop`→`main` (FR-209): merge (no squash — a release
       snapshot), confirm `deploy.yml` now renders the "Run workflow" control and `auto-pr.yml` activates;
       append the release-cut decision-log line to `docs/decisions/audit-findings-r2.md` §5 (owner, date,
       purpose = trigger availability, accepted release-before-verified-deploy).
