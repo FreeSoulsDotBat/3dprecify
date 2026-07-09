@@ -356,5 +356,6 @@ BOM, history/export, scenarios, billing on top of the shipped calculator). Conse
 spec Clarifications: **T022-deploy / FR-010 (MUST) consciously stays open across E2–E6**; remote
 homologation waits; everything is dry-ready (trigger visible on `main`, runbook, parity, honest contract).
 The execution half (P1–P11 provisioning, Deploy trigger, smoke, rollback — 006 T002–T006/T025–T028)
-re-opens as the **v1-launch increment**. Next real increment: **E2 (catalog + persistence + entitlement
-scaffolding)**.
+re-opens as the **v1-launch increment**. **The trigger is REVISITABLE** — the owner may bring the deploy
+forward or defer further as development unfolds; any change is a new dated entry here + a spec
+Clarification. Next real increment: **E2 (catalog + persistence + entitlement scaffolding)**.

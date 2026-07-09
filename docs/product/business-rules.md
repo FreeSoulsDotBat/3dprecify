@@ -53,6 +53,8 @@ Walking skeleton (001) is pre-E1 (auth gate + minimal material+markup calc). The
 ### Deploy posture (owner decision 2026-07-09)
 The **first public deploy waits for v1 complete = E1–E6** (006 spec Clarifications). Everything deploy-side
 is dry-ready (pipeline on `main`, runbook, gate parity); FR-010 consciously stays open across E2–E6.
+**Revisitable**: the owner may move this trigger either way as development unfolds (dated decision-log entry
++ spec Clarification when it changes).
 
 ### Sequencing truth (recorded, Principle II)
 Premium gates persistence from **E2**, but the **purchase** flow only arrives at **E6**. Between E2 and E6 the

@@ -4,8 +4,9 @@
 owner-merged, CI 8/8 on the NEW layout's first run) and cut to `main` as the **first release merge**
 (`0b12426`, --no-ff, owner-authorized; Deploy `workflow_dispatch` verified visible; `auto-pr.yml`
 activated). **The EXECUTION half (T002–T006 provisioning, T025–T028 deploy/smoke/rollback) is DEFERRED by
-owner decision 2026-07-09** (spec Clarifications): first deploy waits for **v1 complete = E1–E6**; FR-010
-consciously stays open until then. This file closes what shipped; SC-201..204 measurement moves to the
+owner decision 2026-07-09** (spec Clarifications): first deploy waits for **v1 complete = E1–E6** — a
+REVISITABLE posture (the owner may move the trigger either way as development unfolds; changes land as
+dated spec Clarifications); FR-010 consciously stays open until then. This file closes what shipped; SC-201..204 measurement moves to the
 v1-launch increment.
 
 ## Gates (final runs, 2026-07-09)

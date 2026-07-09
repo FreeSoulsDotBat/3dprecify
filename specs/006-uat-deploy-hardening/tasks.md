@@ -34,8 +34,9 @@ and runs IN PARALLEL with the code phases.
 ## Phase 2: Owner-gated provisioning track — **DEFERRED to v1-complete (owner decision 2026-07-09)**
 
 > **OWNER DECISION 2026-07-09 (spec Clarifications):** provisioning + first deploy wait until
-> **v1 complete = E1–E6 delivered**. T002–T006 stay specified and ready (runbook §1 carries the tables);
-> nothing here is done until the owner re-opens the v1-launch increment.
+> **v1 complete = E1–E6 delivered** — a REVISITABLE posture, not a lock: the owner may re-open this
+> earlier (or later) as development unfolds; any change lands as a dated spec Clarification. T002–T006
+> stay specified and ready (runbook §1 carries the tables) until then.
 
 **Purpose**: stand up the cloud side (research §1.1–1.3). No repo/branch dependency; guided `gcloud` where
 possible, console where unavoidable. Every value lands in the GitHub `uat` Environment, never in the repo
@@ -173,7 +174,8 @@ merges, or deploys is **OWNER-GATED** (ADR-0006).
 
 > **T025–T028 DEFERRED to v1-complete (owner decision 2026-07-09, spec Clarifications):** the deploy
 > trigger exists and everything is dry-ready, but the first real deploy + smoke + rollback rehearsal wait
-> for E1–E6. FR-010 consciously stays open until then. T029 re-scoped to close the CODE half now.
+> for E1–E6 (REVISITABLE — the owner may move this trigger as development unfolds). FR-010 consciously
+> stays open until then. T029 re-scoped to close the CODE half now.
 
 - [x] T023 [US1] Full local verification then PR: `pnpm gate:all` + `pnpm e2e` green → push
       `feature/006-uat-deploy-hardening` → open PR to `develop` (evidence-rich body) → **all CI checks

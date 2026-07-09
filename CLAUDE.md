@@ -7,7 +7,8 @@ Current ground: **E1 COMPLETE and SHIPPED to `develop`** — 004-e1-pricing-mode
 **006-uat-deploy-hardening CODE HALF SHIPPED** (PR #8, 2026-07-09): D4 `gate:all` parity + A21 honest
 contract/Schemathesis + privacy notice + UAT runbook; **first release cut `develop`→`main` done
 (`0b12426`, Deploy trigger visible)**. **OWNER DECISION 2026-07-09: provisioning + first deploy DEFERRED
-until v1 complete = E1–E6** — FR-010 consciously open until then (006 spec Clarifications). Next real
+until v1 complete = E1–E6** — REVISITABLE as development unfolds (a change lands as a dated spec
+Clarification + decision-log entry); FR-010 consciously open until then (006 spec Clarifications). Next real
 increment: **E2 (catalog + persistence + entitlement scaffolding)**. Still open elsewhere: 005 T042 (design
 reconciliation, non-blocking) + D1–D4 ML ingestion (blocked on the house ML account, Q-D).
 

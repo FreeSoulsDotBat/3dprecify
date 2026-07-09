@@ -260,7 +260,10 @@ current; the orphan branch no longer exists on the remote (its unique changes ve
   honest contract, privacy notice. Risk accepted: the first real deploy will carry a much larger surface;
   mitigants are the hardened pipeline, the runbook, and the conformance/e2e suites. This feature therefore
   CLOSES with its code half (US2, US3, US1-code, US4) + the release cut; the execution half re-opens as
-  the v1-launch increment.
+  the v1-launch increment. **This posture is explicitly REVISITABLE**: the owner may bring the deploy
+  forward (e.g. after E2, to validate with real users) or push it later as development unfolds — the
+  E1–E6 trigger is the CURRENT default, not a lock. Any change lands as a new dated Clarification here
+  and in the decision log.
 
 ## Assumptions
 
