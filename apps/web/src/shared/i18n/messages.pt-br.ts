@@ -190,6 +190,17 @@ export const messages = {
     signedInAs: "Conectado como",
     signOut: "Sair",
   },
+  // FR-214 (006) — minimal honest privacy notice (owner-decided Option A, 2026-07-08; final wording
+  // ratified by the owner before the UAT URL is shared — T027). No consent library: a notice, not a
+  // consent gate. Full LGPD (consent mgmt, data deletion) is deliberately deferred to E2 (persistence).
+  privacy: {
+    title: "Como tratamos seus dados",
+    google:
+      "Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.",
+    monitoring: "Registramos erros técnicos (Sentry) para corrigir falhas.",
+    noSale: "Não vendemos seus dados nem fazemos rastreamento para publicidade.",
+    calculatorFree: "A calculadora funciona sem login e não coleta nada.",
+  },
   // App shell navigation (app-nav) — the fixed IA labels (ds-readme §2).
   // `ariaLabel` names the <nav> landmark for assistive tech (a11y copy, honest).
   nav: {

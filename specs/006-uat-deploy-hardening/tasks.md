@@ -122,16 +122,16 @@ phantom 403 added; Schemathesis-as-pytest (ASGI) fails CI on any contract↔real
 the (owner-veto-pending) release-correlation stamp.
 **Independent Test**: quickstart §3; runbook review.
 
-- [ ] T017 [P] [US1] Write the FAILING tests first: component test
+- [x] T017 [P] [US1] Write the FAILING tests first: component test
       `apps/web/src/pages/privacidade/privacidade.test.tsx` (renders the pt-BR notice signed-out) + e2e
       addition in `apps/web/tests/e2e/` (open `/privacidade` signed-out → notice visible; sign-in screen
       shows the "Como tratamos seus dados" link). Observe both failing.
-- [ ] T018 [US1] Implement: `apps/web/src/pages/privacidade/privacidade-page.tsx` (compose existing
+- [x] T018 [US1] Implement: `apps/web/src/pages/privacidade/privacidade-page.tsx` (compose existing
       `shared/ui` — no new DS component), public route in `apps/web/src/app/router.tsx` (no guard), `privacy`
       copy keys in `apps/web/src/shared/i18n/messages.pt-br.ts` (research §5 draft — **owner ratifies the
       final wording in T027 before the URL is shared**), link in
       `apps/web/src/features/auth/sign-in-screen.tsx`. Tests from T017 pass.
-- [ ] T019 [P] [US1] Fill `docs/runbooks/uat-deploy.md`: §1 config tables (research §1.1/§1.2 verbatim), §2
+- [x] T019 [P] [US1] Fill `docs/runbooks/uat-deploy.md`: §1 config tables (research §1.1/§1.2 verbatim), §2
       deploy steps (workflow → `uat`, **ref `develop`**, record run URL + `github.sha`), §3 the ordered
       device-executable smoke checklist (data-model §3) **plus one correlation-id verification step (analyze
       C1 / FR-205): force a benign API error (signed-out Conta → friendly `/me` error) and confirm the
@@ -151,7 +151,7 @@ the (owner-veto-pending) release-correlation stamp.
 **Goal**: recorded state matches reality; the orphan branch dies with its supersession evidence.
 **Independent Test**: quickstart §5.
 
-- [ ] T021 [US4] Rewrite CLAUDE.md "Current ground" (research §6): 004+005 shipped to `develop` (PRs #6/#7,
+- [x] T021 [US4] Rewrite CLAUDE.md "Current ground" (research §6): 004+005 shipped to `develop` (PRs #6/#7,
       homologated); ADR-0008..0011 Accepted; A20/A22/A23/D2 done; current increment = 006 (T022 UAT deploy +
       FR-209 release cut + A21 + D4 + privacy + reconcile). Remove every stale "pending" phrasing contradicted
       by the repo.

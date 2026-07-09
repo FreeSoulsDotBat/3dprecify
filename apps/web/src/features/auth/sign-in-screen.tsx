@@ -1,3 +1,4 @@
+import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -67,6 +68,12 @@ export function SignInScreen() {
         {state === "offline" && <Alert tone="info">{t.offline}</Alert>}
         {state === "error" && <Alert tone="danger">{t.error}</Alert>}
       </Card>
+
+      {/* FR-214 (006): the honest privacy notice is one tap away from the screen that collects
+          the e-mail — a quiet footer link, not a consent gate. */}
+      <Link to="/privacidade" className="text-sm underline" style={{ color: "var(--text-muted)" }}>
+        {messages.privacy.title}
+      </Link>
     </section>
   );
 }

@@ -12,6 +12,7 @@ import { ContaPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
 import { HistoricoPage } from "@/pages/historico/historico-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
+import { PrivacidadePage } from "@/pages/privacidade/privacidade-page";
 import { SignInPage } from "@/pages/sign-in/sign-in-page";
 import { type SessionStatus } from "@/shared/session/session-store";
 
@@ -107,6 +108,14 @@ const signInRoute = createRoute({
   component: SignInPage,
 });
 
+// FR-214 (006): the minimal honest privacy notice — public content, reachable signed-out (like
+// /calcular), linked from the sign-in screen. No `beforeLoad` guard.
+const privacidadeRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/privacidade",
+  component: PrivacidadePage,
+});
+
 export const routeTree = rootRoute.addChildren([
   indexRoute,
   calcularRoute,
@@ -114,6 +123,7 @@ export const routeTree = rootRoute.addChildren([
   historicoRoute,
   contaRoute,
   signInRoute,
+  privacidadeRoute,
 ]);
 
 export const router = createRouter({

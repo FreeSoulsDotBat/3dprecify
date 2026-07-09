@@ -15,6 +15,7 @@ from typing import Any
 
 import pytest
 import schemathesis
+from hypothesis import HealthCheck
 from hypothesis import settings as hypothesis_settings
 from schemathesis import Case
 from schemathesis.specs.openapi.checks import unsupported_method
@@ -39,7 +40,15 @@ def _stable_token_verify(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 @schema.parametrize()  # pyright: ignore[reportUntypedFunctionDecorator] — schemathesis decorator is untyped
-@hypothesis_settings(deadline=None, max_examples=20, derandomize=True)
+@hypothesis_settings(
+    deadline=None,
+    max_examples=20,
+    derandomize=True,
+    # Our operations' only inputs are optional headers; many fuzzed values are rightly discarded
+    # as invalid header bytes, which trips Hypothesis's filter-efficiency heuristic. Suppressing
+    # it does NOT weaken conformance — every executed case is still fully validated.
+    suppress_health_check=[HealthCheck.filter_too_much],
+)
 def test_api_conformance(case: Case[Any]) -> None:
     # `unsupported_method` is excluded as out of FR-210/211 scope: it probes methods the contract
     # never declares (e.g. TRACE) and demands an RFC-9110 `Allow` header on the framework's default
