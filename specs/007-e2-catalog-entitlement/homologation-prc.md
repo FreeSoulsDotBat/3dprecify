@@ -36,8 +36,15 @@ NULL)` — material is a display label, not required for a valid snapshot. Chang
 migration `0001` (dev DBs recreated) with a failing-first regression test
 (`test_material_less_filament_degrades_cleanly`). Re-drove the whole flow: clean.
 
-> **Owner homologation still pending (T033):** this is the QA half. The owner ratifies the teaser
-> copy and re-drives the premium loop before PR-C ships (T035). As on PR-B, further homologation
-> rounds MAY be required as development unfolds — this covers the PR-C scope only.
+## Owner homologation (2026-07-10)
+
+Owner (Jonatan) **homologated PR-C** on 2026-07-10 after driving the running app himself
+(`http://localhost:4173`, real stack) — including the owner beta-grant walk: the owner granted
+premium to his own throwaway account through the operator CLI (`grant-premium grant
+raccoon.panda.934@example.com --source beta`) and exercised the premium surfaces. Teaser copy
+ratified. **"homologado, pode continuar"** authorized the PR-C ship (T035).
+
+> **Owner caveat carried forward (as on PR-B):** further homologation rounds MAY be required as
+> development unfolds — this sign-off covers the PR-C scope only, not future increments.
 
 Screenshots are session artifacts (scratchpad), not committed — 005/PR-B evidence pattern.

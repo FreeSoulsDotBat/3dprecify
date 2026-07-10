@@ -201,11 +201,11 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       final wording owner-ratified at T033). Tests green. (Conta line already shipped in PR-B, T025b.)
       *(DONE 2026-07-10: `premium-teaser.tsx` (dialog + Catálogo surface, no price/date/purchase-CTA) +
       calculator teaser slot; 232 web tests + 92 e2e + gate:all green. Copy awaits T033 ratification.)*
-- [~] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
+- [x] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
       Conta plan line states (none/active/lapsed via CLI toggling) re-verified together; owner ratifies the
-      teaser copy. *(QA HALF DONE 2026-07-10: `homologation-prc.md` — teaser (free + signed-out) + full
-      US6 product flow + degradation drove clean; found+fixed the material-less-snapshot bug. OWNER HALF
-      PENDING: owner re-drives + ratifies the teaser copy.)*
+      teaser copy. *(DONE 2026-07-10: QA drive clean (`homologation-prc.md`) — found+fixed the
+      material-less-snapshot bug; then OWNER homologated the running app incl. the beta-grant walk and
+      ratified the teaser copy ("homologado, pode continuar").)*
 
 ## Phase 10: Polish & PR-C ship
 
