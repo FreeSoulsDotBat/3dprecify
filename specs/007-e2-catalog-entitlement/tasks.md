@@ -112,10 +112,10 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [x] T017 [US3] Implement: pydantic wire schemas (camelCase, money-as-string per contract) + CRUD router
       `backend/app/api/filaments.py` (statuses exactly per contracts/api-surface.md; `require_entitlement`)
       → pytest green → regen ripple (openapi/Orval/drift green; conformance green).
-- [ ] T018 [P] [US3] Frontend read cache — FAILING vitest first in `apps/web/src/entities/catalog/`:
+- [x] T018 [P] [US3] Frontend read cache — FAILING vitest first in `apps/web/src/entities/catalog/`:
       uid-KEYED cache (fee-catalog pattern: TanStack Query + idb-keyval) where the IndexedDB key AND the
       query key carry the uid; **purge-on-signout** (identity-leak lesson); honest staleness. Then implement.
-- [ ] T019 [US3] Catalog UI — FAILING component tests first: filament form (RHF+Zod, E1 validation
+- [x] T019 [US3] Catalog UI — FAILING component tests first: filament form (RHF+Zod, E1 validation
       messages) in `apps/web/src/features/catalog/` + real list/create/edit screens in
       `apps/web/src/pages/catalogo/` (replaces the placeholder; premium state only — free state is US7) +
       pt-BR keys in `messages.pt-br.ts`. Then implement to green.
@@ -125,7 +125,7 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [x] T020 [US4] Write FAILING pytest first — `backend/tests/test_printers.py`: mirror T016 with the printer
       field set (machineLifetimeHours > 0 denominator rule).
 - [x] T021 [US4] Implement `backend/app/api/printers.py` + wire schemas → green → regen ripple.
-- [ ] T022 [US4] Printer form + screens (FAILING component tests first) — mirror T019.
+- [x] T022 [US4] Printer form + screens (FAILING component tests first) — mirror T019.
 
 ## Phase 7: US5 — calculator pre-fill (P1, the payoff)
 

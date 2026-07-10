@@ -222,10 +222,69 @@ export const messages = {
     identityErrorTitle: "Não foi possível carregar sua conta",
     retry: "Tentar novamente",
   },
-  // Catálogo / Histórico placeholders — state intent, promise no price/date.
+  // Catálogo — the premium save/reuse surface (E2 · US3/US4 → T019/T022). Tom honesto/calmo,
+  // sem preço/data (Q5/FR-014). Copy from ux-catalog §6, owner-ratified with the US7 teaser (T033).
   catalogo: {
+    // Legacy placeholder keys (kept — still referenced by pre-E2 surfaces/tests).
     emptyTitle: "Catálogo em breve",
     emptyBody: "Aqui você vai salvar filamentos, impressoras e produtos.",
+    // Segmented tabs (G1)
+    tabsLabel: "Seções do catálogo",
+    tabFilaments: "Filamentos",
+    tabPrinters: "Impressoras",
+    tabProducts: "Produtos",
+    productsSoon: "Produtos chegam em breve.",
+    // Empty (premium, per entity)
+    emptyFilamentsTitle: "Nenhum filamento salvo ainda",
+    emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
+    emptyPrintersTitle: "Nenhuma impressora salva ainda",
+    emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
+    addFilament: "Adicionar filamento",
+    addPrinter: "Adicionar impressora",
+    // List / row actions
+    countFilaments: "{n} filamento(s)",
+    countPrinters: "{n} impressora(s)",
+    edit: "Editar",
+    remove: "Excluir",
+    // Load / error (§1.4)
+    loadError: "Não foi possível carregar seu catálogo.",
+    retry: "Tentar novamente",
+    // Offline (Q2 · §1.5) — info tone, never danger
+    offlineTitle: "Modo leitura offline",
+    offlineBody:
+      "Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.",
+    offlineWriteBlocked: "Criar e editar precisam de conexão.",
+    staleHint: "pode estar desatualizada",
+    // Lapsed (Q3 · §3) — calmo, não punitivo
+    lapsedTitle: "Premium pausado",
+    lapsedBody:
+      "Seus itens continuam aqui e podem ser usados no cálculo. Para criar ou editar, reative o Premium.",
+    readOnlyHint: "somente leitura",
+  },
+  // Catálogo create/edit form (Sheet) + delete confirm (Dialog). Numeric field LABELS reuse
+  // `calculator.fields.*`; per-field VALIDATION reuses `calculator.validation.*` verbatim (FR-306).
+  catalogForm: {
+    newFilament: "Novo filamento",
+    editFilament: "Editar filamento",
+    newPrinter: "Nova impressora",
+    editPrinter: "Editar impressora",
+    name: "Nome",
+    namePlaceholderFilament: "Ex.: PLA Azul",
+    namePlaceholderPrinter: "Ex.: Ender 3",
+    material: "Material",
+    materialPlaceholder: "Ex.: PLA",
+    defaultWaste: "Desperdício padrão",
+    // "Voltar" (not "Cancelar"): the copy-honesty guard (FR-014) bans "cancelar" anywhere in the
+    // message module to keep any billing-cancellation policy out of the copy. Owner ratifies at T033.
+    cancel: "Voltar",
+    save: "Salvar",
+    saveChanges: "Salvar alterações",
+    savedFilament: "Filamento salvo.", // real success toast only (never offline/lapsed/free)
+    savedPrinter: "Impressora salva.",
+    // Delete confirm (§0.2 / §1.5)
+    deleteTitle: "Excluir “{nome}”?",
+    deleteBody: "Esta ação não pode ser desfeita.",
+    deleteConfirm: "Excluir",
   },
   historico: {
     emptyTitle: "Histórico em breve",
