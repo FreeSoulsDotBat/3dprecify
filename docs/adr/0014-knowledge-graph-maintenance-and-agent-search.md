@@ -104,3 +104,32 @@ policy on 2026-07-10.
   future graphify version ships one (would let subagents query the graph as a tool, not via Bash).
   If the corpus gains substantial docs, set `GEMINI_API_KEY` to keep semantic extraction off the
   Claude token budget.
+
+## Revision 2026-07-10 — amendment after pattern audit (owner-approved)
+
+A same-day audit against the canonical graphify usage patterns (P1–P10) confirmed the decision and
+its wiring (graph fresh past the last `develop` merge; health check clean: 0 dangling/missing/
+collapsed edges on 2877 nodes), and produced one factual correction plus four 0-token extensions:
+
+1. **Factual correction — MCP exists.** The claim above that "there is no MCP server in the
+   installed CLI" is outdated: graphify 0.9.12 ships `graphify.serve` (MCP stdio server), though
+   `graphify --help` does not list it. Decision: **defer MCP adoption** — every code-searching
+   agent with Bash is already served by the CLI, and agents without Bash get `GRAPH_REPORT.md`
+   (item 2). Revisit if subagent orchestration outgrows Bash. A generated wiki (`--wiki`) is
+   likewise available and likewise deferred.
+2. **Pointer coverage widened.** The graph-first block now also lives in `devops.md` and
+   `qa-produto.md` (Bash-capable, previously missing). Agents WITHOUT Bash — `arquiteto`,
+   `designer-ux`, `product-owner`, `scrum-master` — cannot execute the CLI at all; their configs
+   now direct them to Read `graphify-out/GRAPH_REPORT.md` (§Community Hubs) as the graph surface.
+3. **Query discipline in every pointer.** The query matcher is literal substring (no stemming, no
+   synonyms): use terms that exist in the graph's labels, cap output with `--budget 1500`, and
+   fall back to Grep when no vocabulary matches. Prevents noise answers from agents that only read
+   the one-line pointer.
+4. **Work-memory loop adopted.** At the start of graph work: `graphify reflect --if-stale` + read
+   `graphify-out/reflections/LESSONS.md`; after a graph-based answer: `graphify save-result
+   --question "…" --answer "…" --type query --nodes … --outcome useful|dead_end|corrected`. Both
+   deterministic, 0 LLM tokens (verified against the installed 0.9.12). Recorded in `CLAUDE.md`.
+
+Still open (owner decision — the only path that costs real tokens): semantic ingestion of the 008
+spec docs (~7.8k words ≈ 10–15k tokens one-time in-session, or off-budget via `GEMINI_API_KEY`);
+until then the graph does not know the multi-piece BOM vocabulary during E3 implementation.
