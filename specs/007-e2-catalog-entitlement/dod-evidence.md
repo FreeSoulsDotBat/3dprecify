@@ -1,12 +1,12 @@
 # 007-e2-catalog-entitlement — DoD evidence
 
-**Status (2026-07-10):** E2 built across three owner-authorized slices on `develop`. **PR-A** (US1+US2 —
-the first database + Constitution IV: entitlement gate, ledger, operator CLI) squash-merged as **PR #10**.
-**PR-B** (US3·US4·US5 — the demoable premium catalog loop) squash-merged as **PR #11** (`e655504`),
-owner-homologated + QA-homologated (`homologation-prb.md`). **PR-C** (US6 products + US7 honest free tier)
-is built on `feature/007-e2-pr-c`, QA-homologated (`homologation-prc.md`); it awaits the owner homologation
-(T033) and the owner-authorized squash-merge (T035). This file is the E2 DoD map; the owner ratifies the
-teaser copy and re-drives the premium loop before PR-C ships.
+**Status (2026-07-10): E2 COMPLETE and SHIPPED to `develop`.** Built across three owner-authorized slices.
+**PR-A** (US1+US2 — the first database + Constitution IV: entitlement gate, ledger, operator CLI)
+squash-merged as **PR #10** (`16c1824`). **PR-B** (US3·US4·US5 — the demoable premium catalog loop)
+squash-merged as **PR #11** (`e655504`), owner-homologated + QA-homologated (`homologation-prb.md`).
+**PR-C** (US6 products + US7 honest free tier) owner-homologated (`homologation-prc.md`) and squash-merged
+as **PR #12** (`3a940ba`) — full CI green including the Contract drift-guard (SC-6). This file is the E2 DoD
+map; all ten success criteria are met and every slice is on `develop`.
 
 ## Gates (final PR-C run, 2026-07-10)
 | Gate | Result |
@@ -41,7 +41,8 @@ teaser copy and re-drives the premium loop before PR-C ships.
 ## Homologation evidence
 - **PR-B**: `homologation-prb.md` — owner-homologated 2026-07-10 + QA drive 14/14 PASS (390px + desktop).
 - **PR-C**: `homologation-prc.md` — QA drive PASS; **found + fixed a real bug** (the material-less filament
-  degradation CHECK violation, `e02a9b1`) that the unit tests missed; owner homologation pending (T033).
+  degradation CHECK violation, `e02a9b1`) that the unit tests missed; **owner-homologated 2026-07-10**
+  (teaser copy ratified + owner beta-grant walk) → shipped as PR #12 (`3a940ba`).
 
 ## Decisions honored / recorded
 - ADR-0012 (server-authoritative entitlement; grant = operator CLI, no HTTP grant route) · ADR-0013 (SQLAlchemy
@@ -53,7 +54,9 @@ teaser copy and re-drives the premium loop before PR-C ships.
 - Privacy notice gains an honest catalog-data line (T034); full LGPD consent still deferred.
 
 ## Open / deferred
-- **T033 owner homologation + T035 owner-gated ship** — the remaining PR-C steps (owner-driven).
+- **E2 is closed** — T033 owner homologation + T035 owner-gated ship both DONE (PR #12 merged `3a940ba`).
+  Owner caveat carried forward: further homologation rounds MAY be required as development unfolds (each
+  change lands as a dated spec Clarification).
 - First public deploy still **DEFERRED to v1 = E1–E6** (006 Clarifications; REVISITABLE).
 - 005 T042 (design reconciliation, non-blocking) and D1–D4 ML ingestion (blocked on the house ML account)
   remain off E2's critical path.

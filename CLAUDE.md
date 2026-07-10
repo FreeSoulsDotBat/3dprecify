@@ -8,9 +8,16 @@ Current ground: **E1 COMPLETE and SHIPPED to `develop`** — 004-e1-pricing-mode
 contract/Schemathesis + privacy notice + UAT runbook; **first release cut `develop`→`main` done
 (`0b12426`, Deploy trigger visible)**. **OWNER DECISION 2026-07-09: provisioning + first deploy DEFERRED
 until v1 complete = E1–E6** — REVISITABLE as development unfolds (a change lands as a dated spec
-Clarification + decision-log entry); FR-010 consciously open until then (006 spec Clarifications). Next real
-increment: **E2 (catalog + persistence + entitlement scaffolding)**. Still open elsewhere: 005 T042 (design
-reconciliation, non-blocking) + D1–D4 ML ingestion (blocked on the house ML account, Q-D).
+Clarification + decision-log entry); FR-010 consciously open until then (006 spec Clarifications).
+**E2 COMPLETE and SHIPPED to `develop`** — 007-e2-catalog-entitlement, three owner-authorized slices:
+PR-A #10 (`16c1824`, first DB + Constitution IV: entitlement gate + append-only ledger + operator grant CLI,
+ADR-0012) + PR-B #11 (`e655504`, premium catalog loop — filaments/printers CRUD + uid-keyed offline cache +
+SC-305 byte-identical prefill) + PR-C #12 (`3a940ba`, products live-recomputed w/ reference + last-known
+degradation US6, and the honest free-tier teaser US7 with `/catalogo` public); all owner-homologated + full CI
+green (incl. contract drift-guard). Evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md`. Entitlement
+(ADR-0012) + SQLAlchemy 2.0 schema/migration `0001` (ADR-0013) now live. Next real increment: **E3 (multi-piece
+BOM, premium)**. Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
+(blocked on the house ML account, Q-D).
 
 Decided stack/standards (authoritative): ADR-0001..0011 + `docs/decisions/{tech-stack-decisions,audit-findings,audit-findings-r2}.md`.
 - pnpm workspaces (Node 24) · React 19 + Vite 8 PWA + Tailwind v4 + Radix-wired `tf-*` DS (ADR-0007 — NOT the
