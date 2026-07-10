@@ -18,6 +18,12 @@ You implement the client UI from UX specs (designer-ux) and final UI (Claude Des
 - Test-first incl. component/interaction tests; hand the rendered UI to `qa-produto` for visual homologation.
 - Reuse existing components; no duplication or dead code; respect the agreed structure.
 
+## Code search (ADR-0014)
+For **structural / navigational** lookups — "where is X", "what calls Y", "how does subsystem Z
+connect" — query the graphify knowledge graph FIRST: `pnpm graph:query "…"` (or `graphify query`),
+`graphify explain "X"`, `graphify path "A" "B"`. Reserve Grep/Glob/Read for exact-string lookups,
+known files, and every edit/verification. The graph refreshes on each `develop` merge (CLAUDE.md).
+
 ## Operating principles (Constitution)
 - **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
   communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved
