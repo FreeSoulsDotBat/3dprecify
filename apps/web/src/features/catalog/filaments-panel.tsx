@@ -2,6 +2,7 @@ import {
   useCreateFilament,
   useDeleteFilament,
   useFilaments,
+  useProducts,
   useUpdateFilament,
 } from "@/entities/catalog/use-catalog";
 import type { FilamentIn, FilamentOut } from "@/shared/api/generated";
@@ -27,6 +28,12 @@ export function FilamentsPanel() {
   const create = useCreateFilament();
   const update = useUpdateFilament();
   const remove = useDeleteFilament();
+  // US6-4: deleting a referenced filament warns first (the server keeps last-known + unlinks).
+  const { items: products } = useProducts();
+  const deleteWarning = (f: FilamentOut) => {
+    const n = products.filter((p) => p.filamentId === f.id).length;
+    return n > 0 ? messages.productForm.deleteWarnFilament.replace("{n}", String(n)) : undefined;
+  };
 
   return (
     <CatalogPanel<FilamentOut, FilamentFormValues, FilamentIn>
@@ -50,6 +57,7 @@ export function FilamentsPanel() {
       remove={(id) => remove.mutateAsync(id)}
       saving={create.isPending || update.isPending}
       deleting={remove.isPending}
+      deleteWarning={deleteWarning}
     />
   );
 }

@@ -8,6 +8,7 @@ import {
 import { AppShell } from "@/app/app-shell";
 import { CalcularPage } from "@/pages/calcular/calcular-page";
 import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
+import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { ContaPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
 import { HistoricoPage } from "@/pages/historico/historico-page";
@@ -77,6 +78,26 @@ const catalogoRoute = createRoute({
   component: CatalogoPage,
 });
 
+// US6/T030 (ux §1.6b): the product create/edit FULL PAGE routes — guarded like /catalogo.
+const produtoNovoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/catalogo/produtos/novo",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: ProdutoPage,
+});
+
+function ProdutoEditRouteComponent() {
+  const { productId } = produtoEditRoute.useParams();
+  return <ProdutoPage productId={productId} />;
+}
+
+const produtoEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/catalogo/produtos/$productId",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: ProdutoEditRouteComponent,
+});
+
 const historicoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico",
@@ -120,6 +141,8 @@ export const routeTree = rootRoute.addChildren([
   indexRoute,
   calcularRoute,
   catalogoRoute,
+  produtoNovoRoute,
+  produtoEditRoute,
   historicoRoute,
   contaRoute,
   signInRoute,

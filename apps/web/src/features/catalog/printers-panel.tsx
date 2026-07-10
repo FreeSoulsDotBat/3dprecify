@@ -2,6 +2,7 @@ import {
   useCreatePrinter,
   useDeletePrinter,
   usePrinters,
+  useProducts,
   useUpdatePrinter,
 } from "@/entities/catalog/use-catalog";
 import type { PrinterIn, PrinterOut } from "@/shared/api/generated";
@@ -27,6 +28,12 @@ export function PrintersPanel() {
   const create = useCreatePrinter();
   const update = useUpdatePrinter();
   const remove = useDeletePrinter();
+  // US6-4: deleting a referenced printer warns first (the server keeps last-known + unlinks).
+  const { items: products } = useProducts();
+  const deleteWarning = (p: PrinterOut) => {
+    const n = products.filter((prod) => prod.printerId === p.id).length;
+    return n > 0 ? messages.productForm.deleteWarnPrinter.replace("{n}", String(n)) : undefined;
+  };
 
   return (
     <CatalogPanel<PrinterOut, PrinterFormValues, PrinterIn>
@@ -50,6 +57,7 @@ export function PrintersPanel() {
       remove={(id) => remove.mutateAsync(id)}
       saving={create.isPending || update.isPending}
       deleting={remove.isPending}
+      deleteWarning={deleteWarning}
     />
   );
 }

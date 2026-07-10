@@ -255,17 +255,22 @@ export const messages = {
     tabFilaments: "Filamentos",
     tabPrinters: "Impressoras",
     tabProducts: "Produtos",
-    productsSoon: "Produtos chegam em breve.",
     // Empty (premium, per entity)
     emptyFilamentsTitle: "Nenhum filamento salvo ainda",
     emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
     emptyPrintersTitle: "Nenhuma impressora salva ainda",
     emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
+    emptyProductsTitle: "Nenhum produto salvo ainda",
+    emptyProductsBody: "Salve uma peça com seus custos e reabra com o preço sempre recalculado.",
     addFilament: "Adicionar filamento",
     addPrinter: "Adicionar impressora",
+    addProduct: "Adicionar produto",
     // List / row actions
     countFilaments: "{n} filamento(s)",
     countPrinters: "{n} impressora(s)",
+    countProducts: "{n} produto(s)",
+    // Product row summary shows the reference names; a removed reference reads as manual (US6-4).
+    manualRef: "manual",
     edit: "Editar",
     remove: "Excluir",
     // Load / error (§1.4)
@@ -307,6 +312,33 @@ export const messages = {
     deleteTitle: "Excluir “{nome}”?",
     deleteBody: "Esta ação não pode ser desfeita.",
     deleteConfirm: "Excluir",
+  },
+  // Produto create/edit — FULL PAGE route reusing the Calcular layout (US6/T030, ux §1.6b).
+  // No stored price is ever shown: the page recomputes live via computeFromForm (FR-310/FR-313).
+  productForm: {
+    newProduct: "Novo produto",
+    editProduct: "Editar produto",
+    nameLabel: "Nome do produto",
+    namePlaceholder: "Ex.: Vaso G",
+    nameRequired: "Dê um nome ao produto.",
+    saveProduct: "Salvar produto",
+    savedProduct: "Produto salvo.", // real success toast only (never offline/lapsed/free)
+    saveInvalid: "Confira os campos destacados antes de salvar.",
+    // FR-310: a product references SAVED items at create — honest prerequisite, not a dead end.
+    needRefs: "Para criar um produto, salve antes um filamento e uma impressora no catálogo.",
+    // Degraded reference (US6-4) — calm info, never an error wall; values stay editable.
+    manualOption: "— Manual —",
+    degradedFilament:
+      "O filamento vinculado foi removido. Mantivemos os últimos valores — edite se precisar.",
+    degradedPrinter:
+      "A impressora vinculada foi removida. Mantivemos os últimos valores — edite se precisar.",
+    // Referenced-item delete warn (shown inside the filament/printer delete confirm).
+    deleteWarnFilament:
+      "Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.",
+    deleteWarnPrinter:
+      "Esta impressora é usada em {n} produto(s). Eles manterão os últimos valores, editáveis.",
+    notFound: "Não encontramos este produto.",
+    backToCatalog: "Voltar ao catálogo",
   },
   historico: {
     emptyTitle: "Histórico em breve",

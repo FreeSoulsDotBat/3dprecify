@@ -71,9 +71,10 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   copy: CatalogPanelCopy;
   rowName: (item: TItem) => string;
   rowSummary: (item: TItem) => string;
-  emptyForm: TForm;
-  toFormValues: (item: TItem) => TForm;
-  renderForm: (args: {
+  /** Sheet mode (filaments/printers, §0.2). Omitted when the panel NAVIGATES instead (products). */
+  emptyForm?: TForm;
+  toFormValues?: (item: TItem) => TForm;
+  renderForm?: (args: {
     mode: "create" | "edit";
     defaultValues: TForm;
     submitting: boolean;
@@ -81,13 +82,18 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
     onSubmit: (body: TWire) => void;
     onCancel: () => void;
   }) => ReactNode;
-  create: (body: TWire) => Promise<unknown>;
-  update: (id: string, body: TWire) => Promise<unknown>;
+  create?: (body: TWire) => Promise<unknown>;
+  update?: (id: string, body: TWire) => Promise<unknown>;
+  /** Navigation mode (products, ux §1.6b): create/edit are FULL PAGE routes, not a Sheet. */
+  onCreateNavigate?: () => void;
+  onEditNavigate?: (item: TItem) => void;
   remove: (id: string) => Promise<unknown>;
   /** A create/update is in flight (drives the form's save spinner). */
-  saving: boolean;
+  saving?: boolean;
   /** A delete is in flight (drives the confirm-dialog spinner). */
   deleting: boolean;
+  /** US6-4: an honest info line added to the delete confirm when products reference this item. */
+  deleteWarning?: (item: TItem) => string | undefined;
 }
 
 type SheetState<TItem> = { mode: "create" } | { mode: "edit"; item: TItem };
@@ -102,9 +108,12 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   renderForm,
   create,
   update,
+  onCreateNavigate,
+  onEditNavigate,
   remove,
   saving,
   deleting,
+  deleteWarning,
 }: CatalogPanelProps<TItem, TForm, TWire>) {
   const [sheet, setSheet] = useState<SheetState<TItem> | null>(null);
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
@@ -112,10 +121,12 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   const [deleteError, setDeleteError] = useState<string | undefined>(undefined);
 
   const openCreate = () => {
+    if (onCreateNavigate) return onCreateNavigate(); // full-page route (products, §1.6b)
     setSubmitError(undefined);
     setSheet({ mode: "create" });
   };
   const openEdit = (item: TItem) => {
+    if (onEditNavigate) return onEditNavigate(item);
     setSubmitError(undefined);
     setSheet({ mode: "edit", item });
   };
@@ -127,8 +138,8 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   const handleSubmit = async (body: TWire) => {
     setSubmitError(undefined);
     try {
-      if (sheet?.mode === "edit") await update(sheet.item.id, body);
-      else await create(body);
+      if (sheet?.mode === "edit") await update?.(sheet.item.id, body);
+      else await create?.(body);
       toast(copy.savedToast, { tone: "success" }); // real 2xx only
       setSheet(null);
     } catch (err) {
@@ -244,13 +255,14 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         }}
       >
         <SheetContent side="right">
-          {sheet && (
+          {sheet && renderForm && (
             <div className="flex flex-col gap-4">
               <SheetTitle>{sheet.mode === "edit" ? copy.editTitle : copy.newTitle}</SheetTitle>
               {renderForm({
                 mode: sheet.mode,
-                defaultValues: sheet.mode === "edit" ? toFormValues(sheet.item) : emptyForm,
-                submitting: saving,
+                defaultValues:
+                  sheet.mode === "edit" ? toFormValues!(sheet.item) : (emptyForm as TForm),
+                submitting: saving ?? false,
                 submitError,
                 onSubmit: handleSubmit,
                 onCancel: closeSheet,
@@ -275,6 +287,11 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
             <div className="flex flex-col gap-3">
               <DialogTitle>{cf.deleteTitle.replace("{nome}", nameOf(deleteTarget))}</DialogTitle>
               <DialogDescription>{cf.deleteBody}</DialogDescription>
+              {/* US6-4: referenced-item warn — honest heads-up, still deletable (server captures
+                  last-known + unlinks in the same txn). */}
+              {deleteWarning?.(deleteTarget) && (
+                <Alert tone="info">{deleteWarning(deleteTarget)}</Alert>
+              )}
               {deleteError && <Alert tone="danger">{deleteError}</Alert>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" onClick={() => setDeleteTarget(null)}>

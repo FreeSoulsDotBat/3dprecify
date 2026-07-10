@@ -1424,6 +1424,9 @@
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
               }
             ],
             "title": "Commissionpct"
@@ -1436,10 +1439,12 @@
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
               }
             ],
-            "title": "Fixedfee",
-            "default": "0"
+            "title": "Fixedfee"
           },
           "minPerItem": {
             "anyOf": [
@@ -1449,10 +1454,12 @@
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
               }
             ],
-            "title": "Minperitem",
-            "default": "0"
+            "title": "Minperitem"
           },
           "freightCost": {
             "anyOf": [
@@ -1462,19 +1469,20 @@
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
               }
             ],
-            "title": "Freightcost",
-            "default": "0"
+            "title": "Freightcost"
           }
         },
         "type": "object",
         "required": [
-          "marketplace",
-          "commissionPct"
+          "marketplace"
         ],
         "title": "ChannelSlot",
-        "description": "One marketplace slot — the same shape the calculator form validates (D4/§2.5.1)."
+        "description": "One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).\n\nEvery fee is NULLABLE on purpose: in the calculator a BLANK fee means \"resolve from the\nlive fee catalog\", so persisting a fabricated 0 would dishonestly freeze today's fee.\nnull round-trips back to a blank field on reopen; a present value validates as before."
       },
       "CurrentUser": {
         "properties": {

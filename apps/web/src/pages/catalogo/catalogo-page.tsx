@@ -2,14 +2,16 @@ import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react"
 
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
+import { ProductsPanel } from "@/features/catalog/products-panel";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Button, EmptyState } from "@/shared/ui";
+import { Button } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022). IA = segmented tabs (ux §0.1-A,
-// G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex + `aria-selected`
-// (no new DS primitive invented). Each tab owns one premium panel; Produtos is the PR-C slot (an
-// honest "em breve" placeholder for now). The route is auth-guarded; the free/lapsed teaser is US7.
+// Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022; US6 → T030). IA = segmented
+// tabs (ux §0.1-A, G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex
+// + `aria-selected` (no new DS primitive invented). Each tab owns one premium panel; Produtos
+// navigates to its full-page create/edit routes (§1.6b). The route is auth-guarded; the
+// free/lapsed teaser is US7.
 
 const catalogo = messages.catalogo;
 
@@ -25,11 +27,6 @@ const tablistStyle: CSSProperties = {
   display: "flex",
   gap: "var(--space-2)",
 };
-
-/** Honest placeholder for a domain not yet built in this PR (Produtos = PR-C). */
-function ComingSoon({ title }: { title: string }) {
-  return <EmptyState icon="package" title={title} description={catalogo.productsSoon} />;
-}
 
 function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId) => void }) {
   const refs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
@@ -87,7 +84,7 @@ export function CatalogoPage() {
       <div role="tabpanel" id={`catalog-panel-${active}`} aria-labelledby={`catalog-tab-${active}`}>
         {active === "filaments" && <FilamentsPanel />}
         {active === "printers" && <PrintersPanel />}
-        {active === "products" && <ComingSoon title={catalogo.tabProducts} />}
+        {active === "products" && <ProductsPanel />}
       </div>
     </section>
   );

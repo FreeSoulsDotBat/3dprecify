@@ -304,6 +304,12 @@ items, FR-310); they become NULL only via the delete-degradation path (§5). The
 App-layer validation mirrors the calculator's per-slot rules (`commissionPct` in `[0,100)`, others `>= 0`,
 finite) so one bad slot errors only itself (005 SC-107). Empty list `[]` = "sem marketplaces".
 
+> **Refinement (2026-07-10, T029/T030):** every fee field is **nullable** (`null` = blank). In the calculator
+> a BLANK fee means "resolve from the live fee catalog"; persisting a fabricated `0` would freeze today's fee
+> and silently override the catalog on reopen. This follows directly from this section's own premise —
+> "channels[] = the same shapes the calculator form uses" — the calculator form allows blank fees. A present
+> value validates exactly as specified above.
+
 #### 2.5.2 `other_costs` JSONB item shape
 
 ```

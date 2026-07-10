@@ -9,16 +9,22 @@ import { useEffect, useState } from "react";
 import {
   createFilamentApiV1FilamentsPost,
   createPrinterApiV1PrintersPost,
+  createProductApiV1ProductsPost,
   deleteFilamentApiV1FilamentsFilamentIdDelete,
   deletePrinterApiV1PrintersPrinterIdDelete,
+  deleteProductApiV1ProductsProductIdDelete,
   type FilamentIn,
   type FilamentOut,
   listFilamentsApiV1FilamentsGet,
   listPrintersApiV1PrintersGet,
+  listProductsApiV1ProductsGet,
   type PrinterIn,
   type PrinterOut,
+  type ProductIn,
+  type ProductOut,
   updateFilamentApiV1FilamentsFilamentIdPut,
   updatePrinterApiV1PrintersPrinterIdPut,
+  updateProductApiV1ProductsProductIdPut,
 } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -51,7 +57,7 @@ export interface CatalogListState<T> {
   refetch: () => void;
 }
 
-type CatalogItem = FilamentOut | PrinterOut;
+type CatalogItem = FilamentOut | PrinterOut | ProductOut;
 
 /** Shared read hook: uid-keyed Query + idb pre-fill/persist + honest staleness. The generated list
  *  clients return a status-discriminated union; we narrow on 200 (the only branch the transport can
@@ -117,6 +123,10 @@ export function usePrinters(): CatalogListState<PrinterOut> {
   return useCatalogList<PrinterOut>("printers", listPrintersApiV1PrintersGet);
 }
 
+export function useProducts(): CatalogListState<ProductOut> {
+  return useCatalogList<ProductOut>("products", listProductsApiV1ProductsGet);
+}
+
 /** Invalidate the uid-keyed query for a resource after a successful write (never optimistic). */
 function useInvalidateCatalog(resource: CatalogResource): () => void {
   const client = useQueryClient();
@@ -156,11 +166,16 @@ export function useUpdateFilament(): UseMutationResult<
 
 export function useDeleteFilament(): UseMutationResult<void, ApiError, string> {
   const invalidate = useInvalidateCatalog("filaments");
+  const invalidateProducts = useInvalidateCatalog("products");
   return useMutation({
     mutationFn: async (id: string) => {
       await deleteFilamentApiV1FilamentsFilamentIdDelete(id);
     },
-    onSuccess: invalidate,
+    // A filament deletion DEGRADES referencing products server-side (D6) — refresh both lists.
+    onSuccess: () => {
+      invalidate();
+      invalidateProducts();
+    },
   });
 }
 
@@ -196,9 +211,54 @@ export function useUpdatePrinter(): UseMutationResult<
 
 export function useDeletePrinter(): UseMutationResult<void, ApiError, string> {
   const invalidate = useInvalidateCatalog("printers");
+  const invalidateProducts = useInvalidateCatalog("products");
   return useMutation({
     mutationFn: async (id: string) => {
       await deletePrinterApiV1PrintersPrinterIdDelete(id);
+    },
+    // A printer deletion DEGRADES referencing products server-side (D6) — refresh both lists.
+    onSuccess: () => {
+      invalidate();
+      invalidateProducts();
+    },
+  });
+}
+
+// ── Product writes (mirror the filament set; US6/T030) ──────────────────────────────────────────
+
+export function useCreateProduct(): UseMutationResult<ProductOut, ApiError, ProductIn> {
+  const invalidate = useInvalidateCatalog("products");
+  return useMutation({
+    mutationFn: async (body: ProductIn) => {
+      const res = await createProductApiV1ProductsPost(body);
+      if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+export function useUpdateProduct(): UseMutationResult<
+  ProductOut,
+  ApiError,
+  { id: string; body: ProductIn }
+> {
+  const invalidate = useInvalidateCatalog("products");
+  return useMutation({
+    mutationFn: async ({ id, body }: { id: string; body: ProductIn }) => {
+      const res = await updateProductApiV1ProductsProductIdPut(id, body);
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+export function useDeleteProduct(): UseMutationResult<void, ApiError, string> {
+  const invalidate = useInvalidateCatalog("products");
+  return useMutation({
+    mutationFn: async (id: string) => {
+      await deleteProductApiV1ProductsProductIdDelete(id);
     },
     onSuccess: invalidate,
   });

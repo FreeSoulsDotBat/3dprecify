@@ -46,25 +46,34 @@ def _finite_non_negative(value: Decimal, field: str) -> Decimal:
 
 
 class ChannelSlot(CamelModel):
-    """One marketplace slot — the same shape the calculator form validates (D4/§2.5.1)."""
+    """One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).
+
+    Every fee is NULLABLE on purpose: in the calculator a BLANK fee means "resolve from the
+    live fee catalog", so persisting a fabricated 0 would dishonestly freeze today's fee.
+    null round-trips back to a blank field on reopen; a present value validates as before.
+    """
 
     marketplace: Literal["MERCADO_LIVRE", "SHOPEE", "AMAZON", "OUTRO"]
     modality: Literal["CLASSICO", "PREMIUM", "PROFISSIONAL", "INDIVIDUAL", ""] = ""
-    commission_pct: Decimal
-    fixed_fee: Decimal = Decimal("0")
-    min_per_item: Decimal = Decimal("0")
-    freight_cost: Decimal = Decimal("0")
+    commission_pct: Decimal | None = None
+    fixed_fee: Decimal | None = None
+    min_per_item: Decimal | None = None
+    freight_cost: Decimal | None = None
 
     @field_validator("commission_pct")
     @classmethod
-    def _commission(cls, v: Decimal) -> Decimal:
+    def _commission(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
         if not v.is_finite() or v < 0 or v >= 100:
             raise ValueError("commissionPct must be a finite number in [0, 100)")
         return v
 
     @field_validator("fixed_fee", "min_per_item", "freight_cost")
     @classmethod
-    def _money(cls, v: Decimal) -> Decimal:
+    def _money(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
         return _finite_non_negative(v, "channel money field")
 
 

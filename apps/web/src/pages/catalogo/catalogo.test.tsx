@@ -20,13 +20,20 @@ const idleMutation = { mutateAsync: vi.fn(), isPending: false };
 vi.mock("@/entities/catalog/use-catalog", () => ({
   useFilaments: () => emptyList,
   usePrinters: () => emptyList,
+  useProducts: () => emptyList,
   useCreateFilament: () => idleMutation,
   useUpdateFilament: () => idleMutation,
   useDeleteFilament: () => idleMutation,
   useCreatePrinter: () => idleMutation,
   useUpdatePrinter: () => idleMutation,
   useDeletePrinter: () => idleMutation,
+  useDeleteProduct: () => idleMutation,
 }));
+// The Produtos panel navigates to its full-page create/edit routes (ux §1.6b).
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, useNavigate: () => vi.fn() };
+});
 
 import { CatalogoPage } from "./catalogo-page";
 
@@ -48,7 +55,7 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
     expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
   });
 
-  it("switches the active panel when another tab is selected", () => {
+  it("switches to the REAL Produtos panel when its tab is selected (US6/T030)", () => {
     render(<CatalogoPage />);
     fireEvent.click(screen.getByRole("tab", { name: catalogo.tabProducts }));
 
@@ -56,7 +63,8 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
       "aria-selected",
       "true",
     );
-    expect(screen.getByText(catalogo.productsSoon)).toBeInTheDocument();
+    expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: catalogo.addProduct })).toBeInTheDocument();
     expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
   });
 

@@ -177,10 +177,14 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [x] T029 [US6] Implement `backend/app/api/products.py` + wire schemas (channels[]/otherCosts[] validated
       JSONB shapes per data-model D4) → green → regen ripple. *(DONE 2026-07-10: `03e89b0` — incl. the
       D6 last-known capture in filament/printer DELETE; gate:all green.)*
-- [ ] T030 [US6] Product UI — FAILING component tests first: product form + list/edit in
+- [x] T030 [US6] Product UI — FAILING component tests first: product form + list/edit in
       `features/catalog` + `pages/catalogo`; reopen → recompute via the EXISTING `computeFromForm` (current
       `PRICING_MODEL_VERSION`); dangling-reference warn UX (delete flow warns; product shows last-known
-      values as editable overrides). Then implement.
+      values as editable overrides). Then implement. *(DONE 2026-07-10: full-page route
+      `/catalogo/produtos/novo|:id` per ux §1.6b; calculator body extracted to
+      `features/calculator/calculator-form.tsx` and mounted by BOTH pages — SC-305 holds on the product
+      page (26,48 anchor asserted); nullable channel fees keep blank = live-catalog (data-model §2.5.1
+      refinement); 223 web tests + gate:all green.)*
 
 ## Phase 9: US7 — honest free-tier teaser + Conta plan line (P2)
 
