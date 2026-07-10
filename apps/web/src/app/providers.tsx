@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
 
+import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
 import { ME_QUERY_KEY } from "@/entities/user/use-identity";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Toaster } from "@/shared/ui";
@@ -18,8 +19,15 @@ export function AppProviders({ children }: { children: ReactNode }) {
   // every ["me", uid] entry.
   useEffect(() => {
     return useSessionStore.subscribe((state, prev) => {
-      if (state.status === "anonymous" && prev.status !== "anonymous") {
+      const wentAnonymous = state.status === "anonymous" && prev.status !== "anonymous";
+      const uidChanged = !!prev.user?.uid && prev.user.uid !== state.user?.uid;
+      if (wentAnonymous || uidChanged) {
         queryClient.removeQueries({ queryKey: ME_QUERY_KEY });
+        // Catalog isolation (FR-309/Q2 identity-leak lesson): evict the previous account's
+        // uid-keyed queries AND sweep its persisted device cache so a signed-out (or swapped)
+        // account can never linger in memory or IndexedDB. Best-effort — never blocks sign-out.
+        queryClient.removeQueries({ queryKey: CATALOG_QUERY_ROOT });
+        if (prev.user?.uid) void purgeCatalogCache(prev.user.uid);
       }
     });
   }, []);

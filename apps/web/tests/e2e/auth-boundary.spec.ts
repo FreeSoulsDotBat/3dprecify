@@ -50,8 +50,10 @@ test("a guarded tab signed-out routes through sign-in and lands on the intended 
   await signUpThrowaway(page, `boundary-${info.workerIndex}`);
 
   // GC-3/GC-4: land on the originally requested section (Catálogo), not the calculator.
+  // The real catalog screen (E2 US3/US4) renders its page heading; the honest premium/network
+  // state of its panels is exercised by catalog.spec.ts, not this routing boundary test.
   await expect(page).toHaveURL(/\/catalogo$/);
-  await expect(page.getByText(messages.catalogo.emptyTitle)).toBeVisible();
+  await expect(page.getByRole("heading", { name: messages.nav.catalogo })).toBeVisible();
 });
 
 test("a signed-in user is bounced off /sign-in to the calculator by default", async ({

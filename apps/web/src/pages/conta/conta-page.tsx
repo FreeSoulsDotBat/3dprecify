@@ -1,3 +1,6 @@
+import { type ReactNode } from "react";
+
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
 import { apiErrorMessage } from "@/shared/api/error-messages";
@@ -62,12 +65,54 @@ function IdentitySection() {
   );
 }
 
-// Static, honest plan indicator — display-only (Principle IV: gates nothing).
+// E2/T025b (FR-304) — the plan line reads GET /api/v1/entitlement and never fabricates a
+// state: none→Gratuito, active→Premium (+source; expiry when set; grantor never shown),
+// lapsed→honest expired + read-only reassurance, error→honest unknown. "Atualizar" covers the
+// ≤1-refresh just-granted window (ADR-0012). Display-only: the SERVER gates everything (IV).
 function PlanSection() {
+  const q = useEntitlement();
+  const t = messages.conta;
+
+  let badge: ReactNode;
+  let caption: string | null = null;
+  if (q.isError) {
+    badge = <Badge tone="neutral">{t.planUnknown}</Badge>;
+  } else if (q.data?.status === "active") {
+    badge = <Badge tone="success">{t.planPremium}</Badge>;
+    const source = q.data.source ? t.planSources[q.data.source as "beta" | "comp"] : null;
+    const expires = q.data.expiresAt
+      ? `${t.planExpires} ${new Date(q.data.expiresAt).toLocaleDateString("pt-BR")}`
+      : null;
+    caption = [source, expires].filter(Boolean).join(" · ") || null;
+  } else if (q.data?.status === "lapsed") {
+    badge = <Badge tone="neutral">{t.planLapsed}</Badge>;
+    caption = t.planLapsedHint;
+  } else {
+    badge = <Badge tone="neutral">{t.planFree}</Badge>;
+  }
+
   return (
-    <Card className="tf-conta__row">
-      <span className="tf-conta__row-label">{messages.conta.planLabel}</span>
-      <Badge tone="neutral">{messages.conta.planFree}</Badge>
+    <Card className="tf-conta__row tf-conta__row--plan">
+      <div className="flex flex-1 flex-col gap-1">
+        <span className="tf-conta__row-label">{t.planLabel}</span>
+        <div className="flex items-center gap-2">
+          {badge}
+          {caption && (
+            <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
+              {caption}
+            </span>
+          )}
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => void q.refetch()}
+        loading={q.isFetching}
+        aria-label={t.planRefresh}
+      >
+        {t.planRefresh}
+      </Button>
     </Card>
   );
 }

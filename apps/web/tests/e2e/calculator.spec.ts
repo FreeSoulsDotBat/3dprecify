@@ -162,6 +162,9 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
 
 test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", async ({ page }) => {
   const t = messages.calculator;
+  // This test's premise is the SEED fee reference (embedded seal). Since E2 the e2e stack runs a
+  // real backend, so the catalog fetch is aborted to keep the seed path under test.
+  await page.route("**/api/v1/fee-catalog", (route) => route.abort());
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/calcular"); // public — no sign-in needed
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
@@ -247,6 +250,9 @@ test("US2: a covered marketplace pre-fills fees with an honesty seal; editing fl
 }) => {
   const t = messages.calculator;
   const seals = t.seals;
+  // Premise: no served catalog → bundled-seed fallback (the embedded seal). Abort the fetch since
+  // the E2 e2e stack now runs a real backend.
+  await page.route("**/api/v1/fee-catalog", (route) => route.abort());
   await page.goto("/calcular"); // public — no sign-in needed
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
@@ -440,6 +446,9 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
   context,
 }) => {
   const t = messages.calculator;
+  // Premise: the BUNDLED SEED answers offline (embedded seal). Abort the served-catalog fetch so
+  // the online pre-load never persists a fresher store (the E2 e2e stack runs a real backend).
+  await page.route("**/api/v1/fee-catalog", (route) => route.abort());
   // Load online once so the SW precaches, then go fully offline.
   await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();

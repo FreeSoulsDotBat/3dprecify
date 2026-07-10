@@ -1,5 +1,8 @@
-import { type CSSProperties } from "react";
+import { type CSSProperties, useState } from "react";
 import { type Control, Controller, useFieldArray, useForm } from "react-hook-form";
+
+import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
+import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
 
 import { type ChannelSlotOutcome, computeFromForm } from "@/features/calculator/calculator-model";
 import { FeeSeal } from "@/features/calculator/fee-seal";
@@ -23,6 +26,7 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 import type { PriceResult } from "@3dprecify/pricing-core";
 import {
   Alert,
@@ -690,6 +694,39 @@ export function CalcularPage() {
     remove: removeOtherCost,
   } = useFieldArray({ control, name: "otherCosts" });
 
+  // US5 (E2/T024) — the catalog pickers. Rendered ONLY for authenticated accounts WITH saved
+  // items, so the free manual flow is untouched (SC-310); the read hooks are uid-gated and
+  // answer from the offline cache after one online load (Q2). Picking pre-fills via setValue —
+  // fields stay ordinary editable inputs (pre-fill, never lock; byte-identity by construction,
+  // SC-305/catalog-prefill.ts).
+  const sessionStatus = useSessionStore((s) => s.status);
+  const { items: filaments } = useFilaments();
+  const { items: printers } = usePrinters();
+  const [pickedFilamentId, setPickedFilamentId] = useState("");
+  const [pickedPrinterId, setPickedPrinterId] = useState("");
+  const applyFilament = (id: string) => {
+    setPickedFilamentId(id);
+    const picked = filaments.find((f) => f.id === id);
+    if (!picked) return;
+    for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
+      setValue(field as "costPerRoll" | "rollWeightKg" | "wasteGrams", value);
+    }
+  };
+  const applyPrinter = (id: string) => {
+    setPickedPrinterId(id);
+    const picked = printers.find((p) => p.id === id);
+    if (!picked) return;
+    for (const [field, value] of Object.entries(printerToCalcFields(picked))) {
+      setValue(
+        field as
+          "machineValue" | "machineLifetimeHours" | "avgPowerKw" | "maintenanceReservePerHour",
+        value,
+      );
+    }
+  };
+  const showFilamentPicker = sessionStatus === "authenticated" && filaments.length > 0;
+  const showPrinterPicker = sessionStatus === "authenticated" && printers.length > 0;
+
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
   // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
   // failed online refresh is surfaced as a non-blocking retry (US3), never an error wall.
@@ -722,6 +759,45 @@ export function CalcularPage() {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} className="tf-page-header--center" />
+
+      {(showFilamentPicker || showPrinterPicker) && (
+        <Card padding="md" className="flex flex-col gap-3">
+          <p style={sectionLabel}>{t.catalogPicker.title}</p>
+          <p style={captionText}>{t.catalogPicker.hint}</p>
+          <div style={gridCard}>
+            {showFilamentPicker && (
+              <Field label={t.catalogPicker.filament} tightLabel>
+                {(p) => (
+                  <Select
+                    {...p}
+                    options={[
+                      { value: "", label: t.catalogPicker.placeholder },
+                      ...filaments.map((f) => ({ value: f.id, label: f.name })),
+                    ]}
+                    value={pickedFilamentId}
+                    onChange={(e) => applyFilament(e.target.value)}
+                  />
+                )}
+              </Field>
+            )}
+            {showPrinterPicker && (
+              <Field label={t.catalogPicker.printer} tightLabel>
+                {(p) => (
+                  <Select
+                    {...p}
+                    options={[
+                      { value: "", label: t.catalogPicker.placeholder },
+                      ...printers.map((pr) => ({ value: pr.id, label: pr.name })),
+                    ]}
+                    value={pickedPrinterId}
+                    onChange={(e) => applyPrinter(e.target.value)}
+                  />
+                )}
+              </Field>
+            )}
+          </div>
+        </Card>
+      )}
 
       {/* Top→bottom: (1) mandatory costs → (2) optional adjustments → (3) markup →
           (4) breakdown → (5) suggested prices. The user enters costs and sees how the

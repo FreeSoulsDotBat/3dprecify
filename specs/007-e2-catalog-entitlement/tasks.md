@@ -105,44 +105,44 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: save/reuse filaments, per-account, validated, offline-readable.
 **Independent Test**: quickstart §2.
 
-- [ ] T016 [US3] Write FAILING pytest first — `backend/tests/test_filaments.py`: CRUD round-trip
+- [x] T016 [US3] Write FAILING pytest first — `backend/tests/test_filaments.py`: CRUD round-trip
       (create→reload identical→edit→delete), per-field validation (E1 rules: finite ≥0, rollWeightKg>0 —
       rejected NEVER stored, FR-306), per-account isolation (account B sees zero of A — SC-308),
       lapsed=read-only.
-- [ ] T017 [US3] Implement: pydantic wire schemas (camelCase, money-as-string per contract) + CRUD router
+- [x] T017 [US3] Implement: pydantic wire schemas (camelCase, money-as-string per contract) + CRUD router
       `backend/app/api/filaments.py` (statuses exactly per contracts/api-surface.md; `require_entitlement`)
       → pytest green → regen ripple (openapi/Orval/drift green; conformance green).
-- [ ] T018 [P] [US3] Frontend read cache — FAILING vitest first in `apps/web/src/entities/catalog/`:
+- [x] T018 [P] [US3] Frontend read cache — FAILING vitest first in `apps/web/src/entities/catalog/`:
       uid-KEYED cache (fee-catalog pattern: TanStack Query + idb-keyval) where the IndexedDB key AND the
       query key carry the uid; **purge-on-signout** (identity-leak lesson); honest staleness. Then implement.
-- [ ] T019 [US3] Catalog UI — FAILING component tests first: filament form (RHF+Zod, E1 validation
+- [x] T019 [US3] Catalog UI — FAILING component tests first: filament form (RHF+Zod, E1 validation
       messages) in `apps/web/src/features/catalog/` + real list/create/edit screens in
       `apps/web/src/pages/catalogo/` (replaces the placeholder; premium state only — free state is US7) +
       pt-BR keys in `messages.pt-br.ts`. Then implement to green.
 
 ## Phase 6: US4 — printers CRUD (P1)
 
-- [ ] T020 [US4] Write FAILING pytest first — `backend/tests/test_printers.py`: mirror T016 with the printer
+- [x] T020 [US4] Write FAILING pytest first — `backend/tests/test_printers.py`: mirror T016 with the printer
       field set (machineLifetimeHours > 0 denominator rule).
-- [ ] T021 [US4] Implement `backend/app/api/printers.py` + wire schemas → green → regen ripple.
-- [ ] T022 [US4] Printer form + screens (FAILING component tests first) — mirror T019.
+- [x] T021 [US4] Implement `backend/app/api/printers.py` + wire schemas → green → regen ripple.
+- [x] T022 [US4] Printer form + screens (FAILING component tests first) — mirror T019.
 
 ## Phase 7: US5 — calculator pre-fill (P1, the payoff)
 
 **Goal**: pick saved filament/printer → fields fill, stay editable, math byte-identical.
 **Independent Test**: quickstart §3.
 
-- [ ] T023 [US5] Write the FAILING **SC-305 byte-identity test** first in
+- [x] T023 [US5] Write the FAILING **SC-305 byte-identity test** first in
       `apps/web/src/features/calculator/`: `computeFromForm` output from catalog-picked values equals
       (JSON.stringify) the manual-entry output — pricing-core untouched.
-- [ ] T024 [US5] Implement the pickers in `apps/web/src/pages/calcular/calcular-page.tsx` (+
+- [x] T024 [US5] Implement the pickers in `apps/web/src/pages/calcular/calcular-page.tsx` (+
       `features/calculator/` glue): filament/printer selectors populate the six fields, remain editable;
       free/signed-out renders no usable picker (teaser slot reserved for US7); offline pick works from the
       uid-keyed cache (Q2).
 - [ ] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
       pre-fill → computed price matches manual; offline read after online load; **SC-310: the whole existing
       E1 suite passes unchanged**.
-- [ ] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
+- [x] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
       honest Conta surface, and the owner's beta-grant walk needs somewhere to SEE the plan): FAILING
       component test first — plan line renders none/active/lapsed from `GET /api/v1/entitlement` with the
       ≤1-refresh honest UX copy ("recarregar/entre novamente", never a fake state); then implement the
