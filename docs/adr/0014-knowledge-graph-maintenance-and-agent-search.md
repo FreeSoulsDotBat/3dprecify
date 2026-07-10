@@ -130,6 +130,10 @@ collapsed edges on 2877 nodes), and produced one factual correction plus four 0-
    --question "…" --answer "…" --type query --nodes … --outcome useful|dead_end|corrected`. Both
    deterministic, 0 LLM tokens (verified against the installed 0.9.12). Recorded in `CLAUDE.md`.
 
-Still open (owner decision — the only path that costs real tokens): semantic ingestion of the 008
-spec docs (~7.8k words ≈ 10–15k tokens one-time in-session, or off-budget via `GEMINI_API_KEY`);
-until then the graph does not know the multi-piece BOM vocabulary during E3 implementation.
+**Executed 2026-07-10 (owner-approved):** the 008 spec docs plus the changed policy docs (26 files,
+curated against git ground truth — the stale manifest falsely reported 233 changed files) were
+semantically ingested in-session: 99 new nodes / 277 new edges; `bom`/`piece` vocabulary queries now
+start at the E3 entities (BomResult, bom_lines, PieceInputs). Actual cost: 216,831 aggregate
+subagent tokens — well above the ~10–15k naive word-count estimate, because subagent read+reason
+overhead dominates; recorded in `graphify-out/cost.json` (file created — it did not exist before).
+The semantic cache is now persisted for all 26 files, so a future full rebuild will not re-pay this.
