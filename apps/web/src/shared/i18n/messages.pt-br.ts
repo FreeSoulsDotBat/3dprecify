@@ -250,9 +250,6 @@ export const messages = {
   // Catálogo — the premium save/reuse surface (E2 · US3/US4 → T019/T022). Tom honesto/calmo,
   // sem preço/data (Q5/FR-014). Copy from ux-catalog §6, owner-ratified with the US7 teaser (T033).
   catalogo: {
-    // Legacy placeholder keys (kept — still referenced by pre-E2 surfaces/tests).
-    emptyTitle: "Catálogo em breve",
-    emptyBody: "Aqui você vai salvar filamentos, impressoras e produtos.",
     // Segmented tabs (G1)
     tabsLabel: "Seções do catálogo",
     tabFilaments: "Filamentos",

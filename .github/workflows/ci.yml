@@ -71,7 +71,7 @@ jobs:
         run: git diff --exit-code -- contracts/openapi.json apps/web/src/shared/api
 
   e2e:
-    name: E2E (Playwright + Firebase Auth emulator)
+    name: E2E (Playwright + Firebase Auth emulator + backend/Postgres)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -85,9 +85,18 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      # E2 T025 — the catalog e2e drives the REAL backend: the Playwright global-setup brings up
+      # the compose Postgres + applies migration 0001, the backend webServer runs `uv run …`, and
+      # the premium-loop spec grants via the operator CLI (`uv run python -m app.scripts.…`).
+      # uv + the backend venv are therefore required (Docker Compose ships on the ubuntu runner).
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
       - run: pnpm install --frozen-lockfile
+      - run: uv sync --frozen
+        working-directory: backend
       - run: pnpm --filter @3dprecify/web exec playwright install --with-deps chromium
-      # Shell gate + authenticated calculator e2e, both under the Auth emulator.
+      # Shell + authenticated calculator + full-stack catalog premium loop, all under the emulator.
       - run: pnpm e2e
 
   docker:
