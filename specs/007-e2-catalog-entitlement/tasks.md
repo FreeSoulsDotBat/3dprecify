@@ -92,9 +92,10 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T015 **OWNER-GATED** PR-A: `pnpm gate:all` (DB tests running or VISIBLY skipped) + `pnpm e2e` (SC-310:
+- [x] T015 **OWNER-GATED** PR-A: `pnpm gate:all` (DB tests running or VISIBLY skipped) + `pnpm e2e` (SC-310:
       E1 guards unchanged) → push `feature/007-e2-catalog-entitlement` → PR to `develop` (evidence-rich) →
       all CI checks green → owner squash-merge. **Checkpoint: Constitution IV is live and audited.**
+      *(DONE 2026-07-09: PR #10 squash-merged to `develop`.)*
 
 ---
 
@@ -139,21 +140,26 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       `features/calculator/` glue): filament/printer selectors populate the six fields, remain editable;
       free/signed-out renders no usable picker (teaser slot reserved for US7); offline pick works from the
       uid-keyed cache (Q2).
-- [ ] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
+- [x] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
       pre-fill → computed price matches manual; offline read after online load; **SC-310: the whole existing
-      E1 suite passes unchanged**.
+      E1 suite passes unchanged**. *(DONE 2026-07-10: commit `f2bffa3`, shipped in PR #11.)*
 - [x] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
       honest Conta surface, and the owner's beta-grant walk needs somewhere to SEE the plan): FAILING
       component test first — plan line renders none/active/lapsed from `GET /api/v1/entitlement` with the
       ≤1-refresh honest UX copy ("recarregar/entre novamente", never a fake state); then implement the
       entitlement state hook in `apps/web/src/entities/user/` + the plan line in
       `apps/web/src/pages/conta/conta-page.tsx` + pt-BR keys.
-- [ ] T026 [US5] **Visual homologation (QA + OWNER)**: qa-produto drives catalog screens + pickers (390px,
+- [x] T026 [US5] **Visual homologation (QA + OWNER)**: qa-produto drives catalog screens + pickers (390px,
       states); then the **owner beta-grant homologation** — owner runs `uv run grant-premium grant <own
       account> --source beta` and exercises the full premium loop end-to-end (grant → save filament/printer
       → calculator fills itself → **Conta shows the active plan, T025b**). 005 pattern, recorded as evidence.
-- [ ] T027 [US5] **OWNER-GATED** PR-B ship: full `gate:all` + e2e → push → PR to `develop` → CI green →
+      *(DONE 2026-07-10: owner homologated the PR-B premium loop — declared post-merge, evidence in
+      `homologation-prb.md`. NOTE (owner, 2026-07-10): further homologation rounds MAY be required as
+      development unfolds — this sign-off covers the PR-B scope only, not future increments. A Claude/QA
+      homologation run of the same loop is recorded in the same evidence file.)*
+- [x] T027 [US5] **OWNER-GATED** PR-B ship: full `gate:all` + e2e → push → PR to `develop` → CI green →
       owner squash-merge. **Checkpoint: the demoable MVP exists.**
+      *(DONE 2026-07-10: PR #11 squash-merged to `develop` — `e655504`.)*
 
 ---
 
