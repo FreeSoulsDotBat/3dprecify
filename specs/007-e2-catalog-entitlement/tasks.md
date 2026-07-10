@@ -92,9 +92,10 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T015 **OWNER-GATED** PR-A: `pnpm gate:all` (DB tests running or VISIBLY skipped) + `pnpm e2e` (SC-310:
+- [x] T015 **OWNER-GATED** PR-A: `pnpm gate:all` (DB tests running or VISIBLY skipped) + `pnpm e2e` (SC-310:
       E1 guards unchanged) → push `feature/007-e2-catalog-entitlement` → PR to `develop` (evidence-rich) →
       all CI checks green → owner squash-merge. **Checkpoint: Constitution IV is live and audited.**
+      *(DONE 2026-07-09: PR #10 squash-merged to `develop`.)*
 
 ---
 
@@ -139,21 +140,26 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       `features/calculator/` glue): filament/printer selectors populate the six fields, remain editable;
       free/signed-out renders no usable picker (teaser slot reserved for US7); offline pick works from the
       uid-keyed cache (Q2).
-- [ ] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
+- [x] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
       pre-fill → computed price matches manual; offline read after online load; **SC-310: the whole existing
-      E1 suite passes unchanged**.
+      E1 suite passes unchanged**. *(DONE 2026-07-10: commit `f2bffa3`, shipped in PR #11.)*
 - [x] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
       honest Conta surface, and the owner's beta-grant walk needs somewhere to SEE the plan): FAILING
       component test first — plan line renders none/active/lapsed from `GET /api/v1/entitlement` with the
       ≤1-refresh honest UX copy ("recarregar/entre novamente", never a fake state); then implement the
       entitlement state hook in `apps/web/src/entities/user/` + the plan line in
       `apps/web/src/pages/conta/conta-page.tsx` + pt-BR keys.
-- [ ] T026 [US5] **Visual homologation (QA + OWNER)**: qa-produto drives catalog screens + pickers (390px,
+- [x] T026 [US5] **Visual homologation (QA + OWNER)**: qa-produto drives catalog screens + pickers (390px,
       states); then the **owner beta-grant homologation** — owner runs `uv run grant-premium grant <own
       account> --source beta` and exercises the full premium loop end-to-end (grant → save filament/printer
       → calculator fills itself → **Conta shows the active plan, T025b**). 005 pattern, recorded as evidence.
-- [ ] T027 [US5] **OWNER-GATED** PR-B ship: full `gate:all` + e2e → push → PR to `develop` → CI green →
+      *(DONE 2026-07-10: owner homologated the PR-B premium loop — declared post-merge, evidence in
+      `homologation-prb.md`. NOTE (owner, 2026-07-10): further homologation rounds MAY be required as
+      development unfolds — this sign-off covers the PR-B scope only, not future increments. A Claude/QA
+      homologation run of the same loop is recorded in the same evidence file.)*
+- [x] T027 [US5] **OWNER-GATED** PR-B ship: full `gate:all` + e2e → push → PR to `develop` → CI green →
       owner squash-merge. **Checkpoint: the demoable MVP exists.**
+      *(DONE 2026-07-10: PR #11 squash-merged to `develop` — `e655504`.)*
 
 ---
 
@@ -164,38 +170,51 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: named reusable piece; reopening recomputes with the CURRENT formula; reference+fallback semantics.
 **Independent Test**: quickstart §4.
 
-- [ ] T028 [US6] Write FAILING pytest first — `backend/tests/test_products.py`: round-trip; response carries
+- [x] T028 [US6] Write FAILING pytest first — `backend/tests/test_products.py`: round-trip; response carries
       INPUTS ONLY (no stored price — FR-310/FR-313); editing a referenced filament reflects on reopen;
       deleting a referenced item → FK SET NULL + fallback columns satisfy the link-or-snapshot CHECK;
-      isolation + lapse.
-- [ ] T029 [US6] Implement `backend/app/api/products.py` + wire schemas (channels[]/otherCosts[] validated
-      JSONB shapes per data-model D4) → green → regen ripple.
-- [ ] T030 [US6] Product UI — FAILING component tests first: product form + list/edit in
+      isolation + lapse. *(DONE 2026-07-10: 19 tests, failing-first 404s captured — `03e89b0`.)*
+- [x] T029 [US6] Implement `backend/app/api/products.py` + wire schemas (channels[]/otherCosts[] validated
+      JSONB shapes per data-model D4) → green → regen ripple. *(DONE 2026-07-10: `03e89b0` — incl. the
+      D6 last-known capture in filament/printer DELETE; gate:all green.)*
+- [x] T030 [US6] Product UI — FAILING component tests first: product form + list/edit in
       `features/catalog` + `pages/catalogo`; reopen → recompute via the EXISTING `computeFromForm` (current
       `PRICING_MODEL_VERSION`); dangling-reference warn UX (delete flow warns; product shows last-known
-      values as editable overrides). Then implement.
+      values as editable overrides). Then implement. *(DONE 2026-07-10: full-page route
+      `/catalogo/produtos/novo|:id` per ux §1.6b; calculator body extracted to
+      `features/calculator/calculator-form.tsx` and mounted by BOTH pages — SC-305 holds on the product
+      page (26,48 anchor asserted); nullable channel fees keep blank = live-catalog (data-model §2.5.1
+      refinement); 223 web tests + gate:all green.)*
 
 ## Phase 9: US7 — honest free-tier teaser + Conta plan line (P2)
 
 **Goal**: free users meet honest teasers, never fake saves; Conta shows the true plan.
 **Independent Test**: quickstart §5.
 
-- [ ] T031 [US7] Write FAILING tests first: teaser component test (visible affordance → tap → honest panel,
+- [x] T031 [US7] Write FAILING tests first: teaser component test (visible affordance → tap → honest panel,
       NO price/date, nothing persists, no fake success) + e2e (signed-out Catálogo tab + calculator picker
-      slot → teaser). (Conta plan line moved to T025b/PR-B — analyze I1.)
-- [ ] T032 [US7] Implement: teaser (extends the shipped Catálogo empty-state; copy in `messages.pt-br.ts` —
+      slot → teaser). (Conta plan line moved to T025b/PR-B — analyze I1.) *(DONE 2026-07-10: 8 failing
+      captured, then green. NOTE: `/catalogo` left the GC-2 guarded set — spec US7 scenario 2 requires the
+      signed-out teaser there, never a bounce; guards test + auth-boundary e2e updated, product routes
+      stay guarded.)*
+- [x] T032 [US7] Implement: teaser (extends the shipped Catálogo empty-state; copy in `messages.pt-br.ts` —
       final wording owner-ratified at T033). Tests green. (Conta line already shipped in PR-B, T025b.)
-- [ ] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
+      *(DONE 2026-07-10: `premium-teaser.tsx` (dialog + Catálogo surface, no price/date/purchase-CTA) +
+      calculator teaser slot; 232 web tests + 92 e2e + gate:all green. Copy awaits T033 ratification.)*
+- [x] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
       Conta plan line states (none/active/lapsed via CLI toggling) re-verified together; owner ratifies the
-      teaser copy.
+      teaser copy. *(DONE 2026-07-10: QA drive clean (`homologation-prc.md`) — found+fixed the
+      material-less-snapshot bug; then OWNER homologated the running app incl. the beta-grant walk and
+      ratified the teaser copy ("homologado, pode continuar").)*
 
 ## Phase 10: Polish & PR-C ship
 
-- [ ] T034 Docs + evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md` (gates, SC-301..310 map incl.
+- [x] T034 Docs + evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md` (gates, SC-301..310 map incl.
       failing-first outputs, grant-walk record, homologation evidence); mark E2 progress in
       `docs/product/business-rules.md` roadmap row + `docs/decisions/audit-findings-r2.md` capture log;
       update the 006 privacy notice with a data-saving line (catalog stores user data now — spec Out of
-      Scope note).
+      Scope note). *(DONE 2026-07-10: dod-evidence.md written; E2 roadmap row + r2 capture log updated;
+      privacy notice gains `catalogData` line, test extended.)*
 - [ ] T035 **OWNER-GATED** PR-C ship: full `gate:all` + e2e → push → PR to `develop` → CI green → owner
       squash-merge. E2 closes.
 

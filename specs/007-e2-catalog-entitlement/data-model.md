@@ -101,8 +101,14 @@ it in §12.
   the filament would NOT reflect on reopen). **Conf 20%.**
 
 **Recommendation: A.** A product **must always resolve** a full filament + printer field set: `CHECK ((filament_id
-IS NOT NULL) OR (filament_material IS NOT NULL AND filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg
-IS NOT NULL))` and the printer analogue — this enforces "never a broken/blank product" (US6-4) at the DB.
+IS NOT NULL) OR (filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg IS NOT NULL))` and the printer
+analogue — this enforces "never a broken/blank product" (US6-4) at the DB.
+
+> **Correction (2026-07-10, PR-C homologation):** the filament snapshot clause originally also required
+> `filament_material IS NOT NULL`, but `material` is an **optional** label (nullable on `filaments`) — a
+> material-less filament could never form a valid snapshot, so deleting one referenced by a product 500'd on
+> the CHECK. The load-bearing snapshot fields are the pricing inputs only (`cost_per_roll` + `roll_weight_kg`);
+> `material` is dropped from the constraint. Fixed in the model + migration `0001` with a regression test.
 
 ### D4 — `channels[]` and `otherCosts[]`: JSONB vs normalized child tables
 
@@ -303,6 +309,12 @@ items, FR-310); they become NULL only via the delete-degradation path (§5). The
 ```
 App-layer validation mirrors the calculator's per-slot rules (`commissionPct` in `[0,100)`, others `>= 0`,
 finite) so one bad slot errors only itself (005 SC-107). Empty list `[]` = "sem marketplaces".
+
+> **Refinement (2026-07-10, T029/T030):** every fee field is **nullable** (`null` = blank). In the calculator
+> a BLANK fee means "resolve from the live fee catalog"; persisting a fabricated `0` would freeze today's fee
+> and silently override the catalog on reopen. This follows directly from this section's own premise —
+> "channels[] = the same shapes the calculator form uses" — the calculator form allows blank fees. A present
+> value validates exactly as specified above.
 
 #### 2.5.2 `other_costs` JSONB item shape
 

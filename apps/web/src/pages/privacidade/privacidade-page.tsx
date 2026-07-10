@@ -16,6 +16,7 @@ export function PrivacidadePage() {
         <p style={{ margin: 0 }}>{t.monitoring}</p>
         <p style={{ margin: 0 }}>{t.noSale}</p>
         <p style={{ margin: 0 }}>{t.calculatorFree}</p>
+        <p style={{ margin: 0 }}>{t.catalogData}</p>
       </Card>
     </section>
   );

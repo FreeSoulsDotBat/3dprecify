@@ -308,7 +308,10 @@ def upgrade() -> None:
             name=op.f("ck_products_waste_grams_valid"),
         ),
         sa.CheckConstraint(
-            "filament_id IS NOT NULL OR (filament_material IS NOT NULL AND filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg IS NOT NULL)",
+            # material is an OPTIONAL display label (nullable on `filaments`), NOT load-bearing —
+            # a valid snapshot needs only the pricing inputs cost_per_roll + roll_weight_kg, so a
+            # material-less filament degrades cleanly (homologation 2026-07-10).
+            "filament_id IS NOT NULL OR (filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg IS NOT NULL)",
             name=op.f("ck_products_filament_link_or_snapshot"),
         ),
         sa.CheckConstraint(

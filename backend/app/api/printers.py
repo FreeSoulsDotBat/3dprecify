@@ -13,7 +13,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
 from pydantic import field_validator
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
@@ -26,7 +26,7 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
-from app.models import Printer
+from app.models import Printer, Product
 
 router = APIRouter(tags=["printers"])
 
@@ -201,5 +201,18 @@ async def delete_printer(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
     row = await _owned(session, claims["uid"], printer_id)
+    # D6/US6-4: the SAME txn writes last-known values into every referencing product and
+    # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
+    await session.execute(
+        update(Product)
+        .where(Product.printer_id == row.id)
+        .values(
+            printer_id=None,
+            printer_machine_value=row.machine_value,
+            printer_machine_lifetime_hours=row.machine_lifetime_hours,
+            printer_avg_power_kw=row.avg_power_kw,
+            printer_maintenance_reserve_per_hour=row.maintenance_reserve_per_hour,
+        )
+    )
     row.deleted_at = datetime.now(UTC)  # soft-delete (D6)
     await session.commit()

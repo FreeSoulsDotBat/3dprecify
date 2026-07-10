@@ -1,6 +1,6 @@
 import { del, get, set } from "idb-keyval";
 
-import type { FilamentOut, PrinterOut } from "@/shared/api/generated";
+import type { FilamentOut, PrinterOut, ProductOut } from "@/shared/api/generated";
 
 // Uid-keyed read-cache primitives for the personal catalog (T018). This mirrors the fee-catalog
 // store (TanStack Query + idb-keyval) with the CRITICAL differences the identity-leak lesson
@@ -9,8 +9,8 @@ import type { FilamentOut, PrinterOut } from "@/shared/api/generated";
 // pre-fill (every write is online via the generated client). A device shared by two accounts can
 // never surface one account's catalog under the other's uid, and a sign-out sweeps the device.
 
-export type CatalogResource = "filaments" | "printers";
-export type CatalogItem = FilamentOut | PrinterOut;
+export type CatalogResource = "filaments" | "printers" | "products";
+export type CatalogItem = FilamentOut | PrinterOut | ProductOut;
 
 /** IndexedDB key — uid-scoped so a device-shared cache never crosses accounts (FR-309). */
 export function catalogIdbKey(resource: CatalogResource, uid: string): string {
@@ -64,11 +64,15 @@ export async function persistCachedCatalog<T extends CatalogItem>(
   }
 }
 
-/** Purge BOTH resource caches for a uid — the sign-out privacy sweep (Q2/FR-309). Called from the
+/** Purge EVERY resource cache for a uid — the sign-out privacy sweep (Q2/FR-309). Called from the
  *  app-layer session subscription the moment the session goes anonymous / the uid changes. */
 export async function purgeCatalogCache(uid: string): Promise<void> {
   try {
-    await Promise.all([del(catalogIdbKey("filaments", uid)), del(catalogIdbKey("printers", uid))]);
+    await Promise.all([
+      del(catalogIdbKey("filaments", uid)),
+      del(catalogIdbKey("printers", uid)),
+      del(catalogIdbKey("products", uid)),
+    ]);
   } catch {
     /* ignore — a failed purge must never crash the sign-out flow */
   }

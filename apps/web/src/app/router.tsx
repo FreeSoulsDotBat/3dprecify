@@ -8,6 +8,7 @@ import {
 import { AppShell } from "@/app/app-shell";
 import { CalcularPage } from "@/pages/calcular/calcular-page";
 import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
+import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { ContaPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
 import { HistoricoPage } from "@/pages/historico/historico-page";
@@ -70,11 +71,37 @@ const calcularRoute = createRoute({
   component: CalcularPage,
 });
 
+// 007/US7 (2026-07-10): /catalogo is PUBLIC — a signed-out user must SEE the honest premium
+// teaser there (spec US7 scenario 2, ux §2.2), never a bounce. Writes stay server-gated (GC-5);
+// the product create/edit routes below remain auth-guarded.
 const catalogoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  // `?tab=products` lets the product page land back on the Produtos tab after a save.
+  validateSearch: (search: Record<string, unknown>): { tab?: "products" } => ({
+    tab: search.tab === "products" ? "products" : undefined,
+  }),
   component: CatalogoPage,
+});
+
+// US6/T030 (ux §1.6b): the product create/edit FULL PAGE routes — guarded like /catalogo.
+const produtoNovoRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/catalogo/produtos/novo",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: ProdutoPage,
+});
+
+function ProdutoEditRouteComponent() {
+  const { productId } = produtoEditRoute.useParams();
+  return <ProdutoPage productId={productId} />;
+}
+
+const produtoEditRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/catalogo/produtos/$productId",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: ProdutoEditRouteComponent,
 });
 
 const historicoRoute = createRoute({
@@ -120,6 +147,8 @@ export const routeTree = rootRoute.addChildren([
   indexRoute,
   calcularRoute,
   catalogoRoute,
+  produtoNovoRoute,
+  produtoEditRoute,
   historicoRoute,
   contaRoute,
   signInRoute,

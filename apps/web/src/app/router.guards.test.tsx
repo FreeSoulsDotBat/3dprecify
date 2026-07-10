@@ -29,8 +29,11 @@ function redirectParam(search: unknown): string | undefined {
 }
 
 // ---- T034 / US2 — guard contract (routes.md GC-1..GC-4) -------------------------
+// 007/US7 (2026-07-10): /catalogo left the guarded set — a signed-out user must SEE the honest
+// premium teaser there (spec US7 scenario 2, ux §2.2), never a bounce. Writes stay server-gated
+// (GC-5); the product create/edit FULL PAGE routes remain guarded.
 describe("router auth guards (T034 / US2)", () => {
-  const guarded = ["/catalogo", "/historico", "/conta"] as const;
+  const guarded = ["/historico", "/conta", "/catalogo/produtos/novo"] as const;
 
   it.each(guarded)(
     "GC-2: an unauthenticated user hitting %s is sent to /sign-in?redirect=<path>",
@@ -58,6 +61,11 @@ describe("router auth guards (T034 / US2)", () => {
   it("GC-1: /calcular renders for an anonymous user (public)", async () => {
     const router = await loadAt("anonymous", "/calcular");
     expect(router.state.location.pathname).toBe("/calcular");
+  });
+
+  it("US7: /catalogo renders for an anonymous user (the honest teaser, never a bounce)", async () => {
+    const router = await loadAt("anonymous", "/catalogo");
+    expect(router.state.location.pathname).toBe("/catalogo");
   });
 
   it("GC-1: /calcular renders when Firebase is not configured (offline-friendly)", async () => {

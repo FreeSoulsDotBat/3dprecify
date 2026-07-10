@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -20,17 +20,40 @@ const idleMutation = { mutateAsync: vi.fn(), isPending: false };
 vi.mock("@/entities/catalog/use-catalog", () => ({
   useFilaments: () => emptyList,
   usePrinters: () => emptyList,
+  useProducts: () => emptyList,
   useCreateFilament: () => idleMutation,
   useUpdateFilament: () => idleMutation,
   useDeleteFilament: () => idleMutation,
   useCreatePrinter: () => idleMutation,
   useUpdatePrinter: () => idleMutation,
   useDeletePrinter: () => idleMutation,
+  useDeleteProduct: () => idleMutation,
 }));
+// The Produtos panel navigates to its full-page create/edit routes (ux §1.6b).
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
+});
+// US7: the page teasers on a POSITIVELY known non-premium state — these IA tests exercise the
+// premium surface, so the session is authenticated + the entitlement answers "active".
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+}));
+
+import { useSessionStore } from "@/shared/session/session-store";
 
 import { CatalogoPage } from "./catalogo-page";
 
-afterEach(() => cleanup());
+beforeEach(() => {
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
+});
+afterEach(() => {
+  cleanup();
+  useSessionStore.setState({ status: "anonymous", user: null });
+});
 const catalogo = messages.catalogo;
 
 describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () => {
@@ -48,7 +71,7 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
     expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
   });
 
-  it("switches the active panel when another tab is selected", () => {
+  it("switches to the REAL Produtos panel when its tab is selected (US6/T030)", () => {
     render(<CatalogoPage />);
     fireEvent.click(screen.getByRole("tab", { name: catalogo.tabProducts }));
 
@@ -56,7 +79,8 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
       "aria-selected",
       "true",
     );
-    expect(screen.getByText(catalogo.productsSoon)).toBeInTheDocument();
+    expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: catalogo.addProduct })).toBeInTheDocument();
     expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
   });
 

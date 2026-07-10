@@ -1,15 +1,22 @@
 import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
 
+import { useSearch } from "@tanstack/react-router";
+
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
+import { CatalogTeaser } from "@/features/catalog/premium-teaser";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
+import { ProductsPanel } from "@/features/catalog/products-panel";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Button, EmptyState } from "@/shared/ui";
+import { useSessionStore } from "@/shared/session/session-store";
+import { Button } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
-// Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022). IA = segmented tabs (ux §0.1-A,
-// G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex + `aria-selected`
-// (no new DS primitive invented). Each tab owns one premium panel; Produtos is the PR-C slot (an
-// honest "em breve" placeholder for now). The route is auth-guarded; the free/lapsed teaser is US7.
+// Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022; US6 → T030). IA = segmented
+// tabs (ux §0.1-A, G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex
+// + `aria-selected` (no new DS primitive invented). Each tab owns one premium panel; Produtos
+// navigates to its full-page create/edit routes (§1.6b). The route is auth-guarded; the
+// free/lapsed teaser is US7.
 
 const catalogo = messages.catalogo;
 
@@ -25,11 +32,6 @@ const tablistStyle: CSSProperties = {
   display: "flex",
   gap: "var(--space-2)",
 };
-
-/** Honest placeholder for a domain not yet built in this PR (Produtos = PR-C). */
-function ComingSoon({ title }: { title: string }) {
-  return <EmptyState icon="package" title={title} description={catalogo.productsSoon} />;
-}
 
 function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId) => void }) {
   const refs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
@@ -78,7 +80,25 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
 }
 
 export function CatalogoPage() {
-  const [active, setActive] = useState<TabId>("filaments");
+  // Landing tab: `?tab=products` (the product page returns here after a save) else Filamentos.
+  const search = useSearch({ strict: false }) as { tab?: string };
+  const [active, setActive] = useState<TabId>(search.tab === "products" ? "products" : "filaments");
+
+  // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
+  // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
+  // (signed-out, or the server said "none"); while loading/unknown the real panels render and
+  // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
+  const sessionStatus = useSessionStore((s) => s.status);
+  const entitlement = useEntitlement();
+  const signedOut = sessionStatus !== "authenticated";
+  if (signedOut || entitlement.data?.status === "none") {
+    return (
+      <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+        <PageHeader title={messages.nav.catalogo} />
+        <CatalogTeaser signedOut={signedOut} />
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
@@ -87,7 +107,7 @@ export function CatalogoPage() {
       <div role="tabpanel" id={`catalog-panel-${active}`} aria-labelledby={`catalog-tab-${active}`}>
         {active === "filaments" && <FilamentsPanel />}
         {active === "printers" && <PrintersPanel />}
-        {active === "products" && <ComingSoon title={catalogo.tabProducts} />}
+        {active === "products" && <ProductsPanel />}
       </div>
     </section>
   );

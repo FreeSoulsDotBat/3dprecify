@@ -210,6 +210,10 @@ export const messages = {
     monitoring: "Registramos erros técnicos (Sentry) para corrigir falhas.",
     noSale: "Não vendemos seus dados nem fazemos rastreamento para publicidade.",
     calculatorFree: "A calculadora funciona sem login e não coleta nada.",
+    // E2 (007/T034): the catalog now stores user data (filaments, printers, products) per account.
+    // Honest, minimal — no consent library yet (full LGPD still deferred); a notice, not a gate.
+    catalogData:
+      "Se você usar o Premium, salvamos seu catálogo (filamentos, impressoras e produtos) na sua conta para você reutilizar nos cálculos.",
   },
   // App shell navigation (app-nav) — the fixed IA labels (ds-readme §2).
   // `ariaLabel` names the <nav> landmark for assistive tech (a11y copy, honest).
@@ -255,17 +259,22 @@ export const messages = {
     tabFilaments: "Filamentos",
     tabPrinters: "Impressoras",
     tabProducts: "Produtos",
-    productsSoon: "Produtos chegam em breve.",
     // Empty (premium, per entity)
     emptyFilamentsTitle: "Nenhum filamento salvo ainda",
     emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
     emptyPrintersTitle: "Nenhuma impressora salva ainda",
     emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
+    emptyProductsTitle: "Nenhum produto salvo ainda",
+    emptyProductsBody: "Salve uma peça com seus custos e reabra com o preço sempre recalculado.",
     addFilament: "Adicionar filamento",
     addPrinter: "Adicionar impressora",
+    addProduct: "Adicionar produto",
     // List / row actions
     countFilaments: "{n} filamento(s)",
     countPrinters: "{n} impressora(s)",
+    countProducts: "{n} produto(s)",
+    // Product row summary shows the reference names; a removed reference reads as manual (US6-4).
+    manualRef: "manual",
     edit: "Editar",
     remove: "Excluir",
     // Load / error (§1.4)
@@ -277,6 +286,18 @@ export const messages = {
       "Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.",
     offlineWriteBlocked: "Criar e editar precisam de conexão.",
     staleHint: "pode estar desatualizada",
+    // US7/T032 — the honest free-tier teaser (ux §2; final wording owner-ratified at T033).
+    // NO price, NO date, NO purchase CTA (billing is E6 — the panel informs, it does not sell).
+    teaserTitle: "Salve e reutilize seu catálogo",
+    teaserBody:
+      "Guarde filamentos, impressoras e produtos uma vez e preencha o cálculo com um toque.",
+    teaserDialogTitle: "Salvar faz parte do Premium",
+    teaserDialogBody:
+      "No Premium você salva filamentos, impressoras e produtos e preenche o cálculo com um toque.",
+    teaserFreeNote: "Calcular e ver a conta continuam grátis.",
+    teaserSignedOutBody: "Para salvar seu catálogo, entre e ative o Premium.",
+    teaserDismiss: "Entendi",
+    teaserSignIn: "Entrar",
     // Lapsed (Q3 · §3) — calmo, não punitivo
     lapsedTitle: "Premium pausado",
     lapsedBody:
@@ -307,6 +328,33 @@ export const messages = {
     deleteTitle: "Excluir “{nome}”?",
     deleteBody: "Esta ação não pode ser desfeita.",
     deleteConfirm: "Excluir",
+  },
+  // Produto create/edit — FULL PAGE route reusing the Calcular layout (US6/T030, ux §1.6b).
+  // No stored price is ever shown: the page recomputes live via computeFromForm (FR-310/FR-313).
+  productForm: {
+    newProduct: "Novo produto",
+    editProduct: "Editar produto",
+    nameLabel: "Nome do produto",
+    namePlaceholder: "Ex.: Vaso G",
+    nameRequired: "Dê um nome ao produto.",
+    saveProduct: "Salvar produto",
+    savedProduct: "Produto salvo.", // real success toast only (never offline/lapsed/free)
+    saveInvalid: "Confira os campos destacados antes de salvar.",
+    // FR-310: a product references SAVED items at create — honest prerequisite, not a dead end.
+    needRefs: "Para criar um produto, salve antes um filamento e uma impressora no catálogo.",
+    // Degraded reference (US6-4) — calm info, never an error wall; values stay editable.
+    manualOption: "— Manual —",
+    degradedFilament:
+      "O filamento vinculado foi removido. Mantivemos os últimos valores — edite se precisar.",
+    degradedPrinter:
+      "A impressora vinculada foi removida. Mantivemos os últimos valores — edite se precisar.",
+    // Referenced-item delete warn (shown inside the filament/printer delete confirm).
+    deleteWarnFilament:
+      "Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.",
+    deleteWarnPrinter:
+      "Esta impressora é usada em {n} produto(s). Eles manterão os últimos valores, editáveis.",
+    notFound: "Não encontramos este produto.",
+    backToCatalog: "Voltar ao catálogo",
   },
   historico: {
     emptyTitle: "Histórico em breve",
