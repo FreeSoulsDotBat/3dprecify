@@ -185,6 +185,16 @@ export const messages = {
     },
     invalidNote: "Confira os campos destacados para ver o preço.",
     freemiumNote: "Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium.",
+    // US5 (E2/T024) — the catalog pickers: pre-fill the fields from a saved filament/printer.
+    // Picked values stay editable (pre-fill, never lock). Rendered only for signed-in accounts
+    // WITH saved items — the free manual flow is untouched (SC-310).
+    catalogPicker: {
+      title: "Usar do catálogo",
+      filament: "Filamento salvo",
+      printer: "Impressora salva",
+      placeholder: "Escolher…",
+      hint: "Preenche os campos com o item salvo — você ainda pode editar tudo.",
+    },
   },
   account: {
     signedInAs: "Conectado como",

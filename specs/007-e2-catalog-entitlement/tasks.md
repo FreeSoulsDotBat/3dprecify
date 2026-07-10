@@ -132,10 +132,10 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: pick saved filament/printer → fields fill, stay editable, math byte-identical.
 **Independent Test**: quickstart §3.
 
-- [ ] T023 [US5] Write the FAILING **SC-305 byte-identity test** first in
+- [x] T023 [US5] Write the FAILING **SC-305 byte-identity test** first in
       `apps/web/src/features/calculator/`: `computeFromForm` output from catalog-picked values equals
       (JSON.stringify) the manual-entry output — pricing-core untouched.
-- [ ] T024 [US5] Implement the pickers in `apps/web/src/pages/calcular/calcular-page.tsx` (+
+- [x] T024 [US5] Implement the pickers in `apps/web/src/pages/calcular/calcular-page.tsx` (+
       `features/calculator/` glue): filament/printer selectors populate the six fields, remain editable;
       free/signed-out renders no usable picker (teaser slot reserved for US7); offline pick works from the
       uid-keyed cache (Q2).
