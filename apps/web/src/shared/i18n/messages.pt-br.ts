@@ -226,6 +226,21 @@ export const messages = {
     title: "Conta",
     planLabel: "Plano",
     planFree: "Gratuito",
+    // E2/T025b (FR-304) — the plan line reads GET /api/v1/entitlement and NEVER fabricates a
+    // state: none→Gratuito, active→Premium (+source/expiry; grantor never shown), lapsed→honest
+    // expired + read-only reassurance, query error→honest unknown. "Atualizar" covers the
+    // ≤1-refresh just-granted window. No price, no date promises, no billing (FR-014).
+    planPremium: "Premium",
+    planLapsed: "Premium expirado",
+    planLapsedHint: "Seus itens salvos continuam disponíveis para leitura.",
+    planSources: {
+      beta: "via programa beta",
+      comp: "cortesia",
+    },
+    planExpires: "expira em",
+    planRefresh: "Atualizar",
+    planRefreshHint: "Mudou de plano agora?",
+    planUnknown: "Não foi possível confirmar seu plano.",
     themeLabel: "Tema",
     // Identity comes from GET /api/v1/me (A23). On failure the section shows an error,
     // never a fabricated fallback identity. Honest copy (no provider/price/cancellation).

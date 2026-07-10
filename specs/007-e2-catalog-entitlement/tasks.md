@@ -142,7 +142,7 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 - [ ] T025 [US5] E2E in `apps/web/tests/e2e/catalog.spec.ts`: premium (seeded grant) CRUD round-trip →
       pre-fill → computed price matches manual; offline read after online load; **SC-310: the whole existing
       E1 suite passes unchanged**.
-- [ ] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
+- [x] T025b [US2] Conta plan line (moved from PR-C — analyze I1: US2's FR-304 acceptance includes the
       honest Conta surface, and the owner's beta-grant walk needs somewhere to SEE the plan): FAILING
       component test first — plan line renders none/active/lapsed from `GET /api/v1/entitlement` with the
       ≤1-refresh honest UX copy ("recarregar/entre novamente", never a fake state); then implement the
