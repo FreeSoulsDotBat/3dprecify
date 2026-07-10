@@ -21,11 +21,13 @@ describe("PrivacidadePage — minimal honest privacy notice (FR-214)", () => {
     expect(screen.getByRole("heading", { name: t.title })).toBeInTheDocument();
   });
 
-  it("states all four honest facts — never more, never marketing-speak", () => {
+  it("states the honest facts — never more, never marketing-speak", () => {
     render(<PrivacidadePage />);
     expect(screen.getByText(t.google)).toBeInTheDocument();
     expect(screen.getByText(t.monitoring)).toBeInTheDocument();
     expect(screen.getByText(t.noSale)).toBeInTheDocument();
     expect(screen.getByText(t.calculatorFree)).toBeInTheDocument();
+    // E2 (007/T034): now that the catalog persists user data, the notice says so honestly.
+    expect(screen.getByText(t.catalogData)).toBeInTheDocument();
   });
 });

@@ -359,3 +359,15 @@ The execution half (P1–P11 provisioning, Deploy trigger, smoke, rollback — 0
 re-opens as the **v1-launch increment**. **The trigger is REVISITABLE** — the owner may bring the deploy
 forward or defer further as development unfolds; any change is a new dated entry here + a spec
 Clarification. Next real increment: **E2 (catalog + persistence + entitlement scaffolding)**.
+
+## E2 (007-e2-catalog-entitlement) capture — 2026-07-09..10
+E2 built across three owner-authorized slices on `develop`: **PR-A #10** (entitlement gate + ledger +
+operator CLI — the first database, Constitution IV live), **PR-B #11** (`e655504` — the demoable premium
+catalog loop US3/US4/US5, owner + QA homologated), and **PR-C** (US6 products + US7 honest free tier, on
+`feature/007-e2-pr-c`, QA-homologated, awaiting owner homologation + merge). Dated refinements landed as
+data-model notes: channel fees nullable (blank = live-catalog); the filament last-known-snapshot CHECK
+dropped the `material IS NOT NULL` clause (material is an optional label — a PR-C **homologation-found bug**
+where deleting a material-less referenced filament 500'd, `e02a9b1`, regression-tested); `/catalogo` left the
+GC-2 guarded set so signed-out sees the honest US7 teaser (writes stay server-gated). Evidence:
+`specs/007-e2-catalog-entitlement/{dod-evidence,homologation-prb,homologation-prc}.md`. The first public
+deploy stays DEFERRED to v1 = E1–E6 (REVISITABLE). Next real increment after E2 closes: **E3 (multi-piece BOM)**.

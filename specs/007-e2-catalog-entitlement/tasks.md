@@ -201,17 +201,20 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       final wording owner-ratified at T033). Tests green. (Conta line already shipped in PR-B, T025b.)
       *(DONE 2026-07-10: `premium-teaser.tsx` (dialog + Catálogo surface, no price/date/purchase-CTA) +
       calculator teaser slot; 232 web tests + 92 e2e + gate:all green. Copy awaits T033 ratification.)*
-- [ ] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
+- [~] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
       Conta plan line states (none/active/lapsed via CLI toggling) re-verified together; owner ratifies the
-      teaser copy.
+      teaser copy. *(QA HALF DONE 2026-07-10: `homologation-prc.md` — teaser (free + signed-out) + full
+      US6 product flow + degradation drove clean; found+fixed the material-less-snapshot bug. OWNER HALF
+      PENDING: owner re-drives + ratifies the teaser copy.)*
 
 ## Phase 10: Polish & PR-C ship
 
-- [ ] T034 Docs + evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md` (gates, SC-301..310 map incl.
+- [x] T034 Docs + evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md` (gates, SC-301..310 map incl.
       failing-first outputs, grant-walk record, homologation evidence); mark E2 progress in
       `docs/product/business-rules.md` roadmap row + `docs/decisions/audit-findings-r2.md` capture log;
       update the 006 privacy notice with a data-saving line (catalog stores user data now — spec Out of
-      Scope note).
+      Scope note). *(DONE 2026-07-10: dod-evidence.md written; E2 roadmap row + r2 capture log updated;
+      privacy notice gains `catalogData` line, test extended.)*
 - [ ] T035 **OWNER-GATED** PR-C ship: full `gate:all` + e2e → push → PR to `develop` → CI green → owner
       squash-merge. E2 closes.
 
