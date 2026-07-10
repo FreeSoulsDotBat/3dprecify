@@ -122,9 +122,9 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 
 ## Phase 6: US4 — printers CRUD (P1)
 
-- [ ] T020 [US4] Write FAILING pytest first — `backend/tests/test_printers.py`: mirror T016 with the printer
+- [x] T020 [US4] Write FAILING pytest first — `backend/tests/test_printers.py`: mirror T016 with the printer
       field set (machineLifetimeHours > 0 denominator rule).
-- [ ] T021 [US4] Implement `backend/app/api/printers.py` + wire schemas → green → regen ripple.
+- [x] T021 [US4] Implement `backend/app/api/printers.py` + wire schemas → green → regen ripple.
 - [ ] T022 [US4] Printer form + screens (FAILING component tests first) — mirror T019.
 
 ## Phase 7: US5 — calculator pre-fill (P1, the payoff)

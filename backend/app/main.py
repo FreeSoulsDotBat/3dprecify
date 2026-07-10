@@ -18,6 +18,7 @@ from .api.entitlement import router as entitlement_router
 from .api.fee_catalog import router as fee_catalog_router
 from .api.filaments import router as filaments_router
 from .api.me import router as me_router
+from .api.printers import router as printers_router
 from .auth import init_firebase
 from .errors import AppError, ErrorCode, ErrorEnvelope, register_exception_handlers
 from .observability import CORRELATION_HEADER, configure_observability
@@ -95,6 +96,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(entitlement_router)
     # E2 catalog (premium, gated per-route — US1-4 audits that every route carries a gate).
     api.include_router(filaments_router)
+    api.include_router(printers_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
