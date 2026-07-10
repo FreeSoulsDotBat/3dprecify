@@ -170,12 +170,13 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: named reusable piece; reopening recomputes with the CURRENT formula; reference+fallback semantics.
 **Independent Test**: quickstart §4.
 
-- [ ] T028 [US6] Write FAILING pytest first — `backend/tests/test_products.py`: round-trip; response carries
+- [x] T028 [US6] Write FAILING pytest first — `backend/tests/test_products.py`: round-trip; response carries
       INPUTS ONLY (no stored price — FR-310/FR-313); editing a referenced filament reflects on reopen;
       deleting a referenced item → FK SET NULL + fallback columns satisfy the link-or-snapshot CHECK;
-      isolation + lapse.
-- [ ] T029 [US6] Implement `backend/app/api/products.py` + wire schemas (channels[]/otherCosts[] validated
-      JSONB shapes per data-model D4) → green → regen ripple.
+      isolation + lapse. *(DONE 2026-07-10: 19 tests, failing-first 404s captured — `03e89b0`.)*
+- [x] T029 [US6] Implement `backend/app/api/products.py` + wire schemas (channels[]/otherCosts[] validated
+      JSONB shapes per data-model D4) → green → regen ripple. *(DONE 2026-07-10: `03e89b0` — incl. the
+      D6 last-known capture in filament/printer DELETE; gate:all green.)*
 - [ ] T030 [US6] Product UI — FAILING component tests first: product form + list/edit in
       `features/catalog` + `pages/catalogo`; reopen → recompute via the EXISTING `computeFromForm` (current
       `PRICING_MODEL_VERSION`); dangling-reference warn UX (delete flow warns; product shows last-known
