@@ -1,5 +1,7 @@
 import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
 
+import { useSearch } from "@tanstack/react-router";
+
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
 import { CatalogTeaser } from "@/features/catalog/premium-teaser";
@@ -78,7 +80,9 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
 }
 
 export function CatalogoPage() {
-  const [active, setActive] = useState<TabId>("filaments");
+  // Landing tab: `?tab=products` (the product page returns here after a save) else Filamentos.
+  const search = useSearch({ strict: false }) as { tab?: string };
+  const [active, setActive] = useState<TabId>(search.tab === "products" ? "products" : "filaments");
 
   // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
   // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state

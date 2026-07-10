@@ -101,8 +101,14 @@ it in §12.
   the filament would NOT reflect on reopen). **Conf 20%.**
 
 **Recommendation: A.** A product **must always resolve** a full filament + printer field set: `CHECK ((filament_id
-IS NOT NULL) OR (filament_material IS NOT NULL AND filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg
-IS NOT NULL))` and the printer analogue — this enforces "never a broken/blank product" (US6-4) at the DB.
+IS NOT NULL) OR (filament_cost_per_roll IS NOT NULL AND filament_roll_weight_kg IS NOT NULL))` and the printer
+analogue — this enforces "never a broken/blank product" (US6-4) at the DB.
+
+> **Correction (2026-07-10, PR-C homologation):** the filament snapshot clause originally also required
+> `filament_material IS NOT NULL`, but `material` is an **optional** label (nullable on `filaments`) — a
+> material-less filament could never form a valid snapshot, so deleting one referenced by a product 500'd on
+> the CHECK. The load-bearing snapshot fields are the pricing inputs only (`cost_per_roll` + `roll_weight_kg`);
+> `material` is dropped from the constraint. Fixed in the model + migration `0001` with a regression test.
 
 ### D4 — `channels[]` and `otherCosts[]`: JSONB vs normalized child tables
 

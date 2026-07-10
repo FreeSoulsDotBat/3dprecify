@@ -32,7 +32,7 @@ vi.mock("@/entities/catalog/use-catalog", () => ({
 // The Produtos panel navigates to its full-page create/edit routes (ux §1.6b).
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => vi.fn() };
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
 });
 // US7: the page teasers on a POSITIVELY known non-premium state — these IA tests exercise the
 // premium surface, so the session is authenticated + the entitlement answers "active".

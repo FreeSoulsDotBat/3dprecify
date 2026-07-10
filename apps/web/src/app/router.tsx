@@ -77,6 +77,10 @@ const calcularRoute = createRoute({
 const catalogoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo",
+  // `?tab=products` lets the product page land back on the Produtos tab after a save.
+  validateSearch: (search: Record<string, unknown>): { tab?: "products" } => ({
+    tab: search.tab === "products" ? "products" : undefined,
+  }),
   component: CatalogoPage,
 });
 

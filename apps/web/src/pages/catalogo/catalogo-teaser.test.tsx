@@ -18,7 +18,7 @@ const { navigateMock, useEntitlementMock } = vi.hoisted(() => ({
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => navigateMock };
+  return { ...actual, useNavigate: () => navigateMock, useSearch: () => ({}) };
 });
 vi.mock("@/entities/user/use-entitlement", () => ({
   useEntitlement: () => useEntitlementMock(),

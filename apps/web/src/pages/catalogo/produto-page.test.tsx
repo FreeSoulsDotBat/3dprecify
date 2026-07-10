@@ -172,7 +172,7 @@ describe("ProdutoPage — create (US6/T030)", () => {
     const body = createMock.mock.calls[0][0];
     expect(body).toMatchObject({ name: "Vaso G", filamentId: "f-1", printerId: "p-1" });
     expect(body.pieceInputs.markupVarejoPct).toBe("50");
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo" });
+    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo", search: { tab: "products" } });
   });
 
   it("without a saved filament AND printer, explains honestly why a product cannot be created", () => {

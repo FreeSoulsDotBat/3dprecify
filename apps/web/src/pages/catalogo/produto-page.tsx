@@ -166,7 +166,7 @@ export function ProdutoPage({ productId }: { productId?: string }) {
       if (editing) await update.mutateAsync({ id: editing.id, body });
       else await create.mutateAsync(body);
       toast(pf.savedProduct, { tone: "success" }); // real 2xx only
-      void navigate({ to: "/catalogo" });
+      void navigate({ to: "/catalogo", search: { tab: "products" } });
     } catch (err) {
       setSubmitError(honestWriteError(err));
     }

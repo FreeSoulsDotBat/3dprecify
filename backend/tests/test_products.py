@@ -224,6 +224,26 @@ def test_deleting_referenced_items_degrades_with_last_known(
     assert degraded["printerValues"]["machineValue"] == "1200.00"
 
 
+def test_material_less_filament_degrades_cleanly(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Regression (homologation 2026-07-10): material is an OPTIONAL label — deleting a
+    referenced filament that has NO material must still degrade (the snapshot needs only the
+    pricing inputs), never a 500 from the link-or-snapshot CHECK."""
+    h = _premium(monkeypatch, migrated_db, "prod-nomat-1")
+    fid = db_client.post(
+        "/api/v1/filaments", headers=h, json={**FILAMENT, "material": None}
+    ).json()["id"]
+    pid = db_client.post("/api/v1/printers", headers=h, json=dict(PRINTER)).json()["id"]
+    prod_id = _post(db_client, h, _product_body(fid, pid)).json()["id"]
+
+    assert db_client.delete(f"/api/v1/filaments/{fid}", headers=h).status_code == 204
+    degraded = db_client.get(f"/api/v1/products/{prod_id}", headers=h).json()
+    assert degraded["filamentId"] is None
+    assert degraded["filamentValues"]["material"] is None
+    assert degraded["filamentValues"]["costPerRoll"] == "110.00"
+
+
 def test_degraded_values_are_editable_overrides(
     db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
