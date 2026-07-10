@@ -71,10 +71,12 @@ const calcularRoute = createRoute({
   component: CalcularPage,
 });
 
+// 007/US7 (2026-07-10): /catalogo is PUBLIC — a signed-out user must SEE the honest premium
+// teaser there (spec US7 scenario 2, ux §2.2), never a bounce. Writes stay server-gated (GC-5);
+// the product create/edit routes below remain auth-guarded.
 const catalogoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
   component: CatalogoPage,
 });
 

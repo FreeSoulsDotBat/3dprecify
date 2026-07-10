@@ -282,6 +282,18 @@ export const messages = {
       "Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.",
     offlineWriteBlocked: "Criar e editar precisam de conexão.",
     staleHint: "pode estar desatualizada",
+    // US7/T032 — the honest free-tier teaser (ux §2; final wording owner-ratified at T033).
+    // NO price, NO date, NO purchase CTA (billing is E6 — the panel informs, it does not sell).
+    teaserTitle: "Salve e reutilize seu catálogo",
+    teaserBody:
+      "Guarde filamentos, impressoras e produtos uma vez e preencha o cálculo com um toque.",
+    teaserDialogTitle: "Salvar faz parte do Premium",
+    teaserDialogBody:
+      "No Premium você salva filamentos, impressoras e produtos e preenche o cálculo com um toque.",
+    teaserFreeNote: "Calcular e ver a conta continuam grátis.",
+    teaserSignedOutBody: "Para salvar seu catálogo, entre e ative o Premium.",
+    teaserDismiss: "Entendi",
+    teaserSignIn: "Entrar",
     // Lapsed (Q3 · §3) — calmo, não punitivo
     lapsedTitle: "Premium pausado",
     lapsedBody:

@@ -1,9 +1,12 @@
 import { type CSSProperties, type KeyboardEvent, useRef, useState } from "react";
 
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
+import { CatalogTeaser } from "@/features/catalog/premium-teaser";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 import { Button } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
@@ -76,6 +79,22 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
 
 export function CatalogoPage() {
   const [active, setActive] = useState<TabId>("filaments");
+
+  // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
+  // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
+  // (signed-out, or the server said "none"); while loading/unknown the real panels render and
+  // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
+  const sessionStatus = useSessionStore((s) => s.status);
+  const entitlement = useEntitlement();
+  const signedOut = sessionStatus !== "authenticated";
+  if (signedOut || entitlement.data?.status === "none") {
+    return (
+      <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+        <PageHeader title={messages.nav.catalogo} />
+        <CatalogTeaser signedOut={signedOut} />
+      </section>
+    );
+  }
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">

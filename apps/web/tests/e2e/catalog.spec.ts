@@ -140,3 +140,25 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   ).toHaveCount(0);
   await expect(page.getByText("R$ 30,90")).toBeVisible(); // seed varejo — the free math lives
 });
+
+test("signed-out: Catálogo tab + calculator slot show the honest teaser — no price, no fake save (US7/T031)", async ({
+  page,
+}) => {
+  // The Catálogo tab explains the premium value honestly — never a bounce, never broken CRUD.
+  await page.goto("/catalogo");
+  await expect(page.getByText(t.catalogo.teaserTitle)).toBeVisible();
+  await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
+  await expect(dialog.getByText(t.catalogo.teaserSignedOutBody)).toBeVisible();
+  await expect(dialog).not.toContainText("R$"); // no price, ever (Q5/FR-312)
+  await dialog.getByRole("button", { name: t.catalogo.teaserDismiss }).click();
+
+  // The calculator's "usar do catálogo" slot is a visible affordance → the same teaser; the
+  // free manual calculator keeps computing behind it (SC-310).
+  await page.goto("/calcular");
+  await page.getByRole("button", { name: t.calculator.catalogPicker.title }).click();
+  await expect(page.getByRole("dialog").getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
+  await page.getByRole("dialog").getByRole("button", { name: t.catalogo.teaserDismiss }).click();
+  await expect(page.getByText("R$ 30,90")).toBeVisible();
+});

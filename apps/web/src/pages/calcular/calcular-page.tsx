@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import {
   captionText,
   FieldGroup,
@@ -11,6 +12,7 @@ import {
   PriceResults,
   sectionLabel,
 } from "@/features/calculator/calculator-form";
+import { PremiumTeaserDialog } from "@/features/catalog/premium-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
 import {
@@ -29,7 +31,7 @@ import {
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Card, Field, Select } from "@/shared/ui";
+import { Alert, Button, Card, Field, Select } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 // E1 calculator screen. RHF (form state) + Zod (calculatorResolver) own the pt-BR inputs; the price +
@@ -91,6 +93,14 @@ export function CalcularPage() {
   const showFilamentPicker = sessionStatus === "authenticated" && filaments.length > 0;
   const showPrinterPicker = sessionStatus === "authenticated" && printers.length > 0;
 
+  // US7 (T032): free/signed-out users meet a VISIBLE "usar do catálogo" affordance whose tap
+  // opens the honest teaser — never a broken picker, never a fake save. Rendered only on a
+  // POSITIVELY known non-premium state; the manual calculator is untouched either way (SC-310).
+  const entitlement = useEntitlement();
+  const signedOut = sessionStatus !== "authenticated";
+  const showTeaserSlot = signedOut || entitlement.data?.status === "none";
+  const [teaserOpen, setTeaserOpen] = useState(false);
+
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
   // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
   // failed online refresh is surfaced as a non-blocking retry (US3), never an error wall.
@@ -123,6 +133,22 @@ export function CalcularPage() {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} className="tf-page-header--center" />
+
+      {showTeaserSlot && (
+        <Card padding="md" className="flex flex-col gap-2">
+          <Button variant="secondary" onClick={() => setTeaserOpen(true)}>
+            {t.catalogPicker.title}
+          </Button>
+          <p style={{ ...captionText, textAlign: "center" }}>
+            {messages.apiError.entitlementRequired}
+          </p>
+          <PremiumTeaserDialog
+            open={teaserOpen}
+            onOpenChange={setTeaserOpen}
+            signedOut={signedOut}
+          />
+        </Card>
+      )}
 
       {(showFilamentPicker || showPrinterPicker) && (
         <Card padding="md" className="flex flex-col gap-3">

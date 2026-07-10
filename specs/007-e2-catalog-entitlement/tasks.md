@@ -191,11 +191,16 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: free users meet honest teasers, never fake saves; Conta shows the true plan.
 **Independent Test**: quickstart §5.
 
-- [ ] T031 [US7] Write FAILING tests first: teaser component test (visible affordance → tap → honest panel,
+- [x] T031 [US7] Write FAILING tests first: teaser component test (visible affordance → tap → honest panel,
       NO price/date, nothing persists, no fake success) + e2e (signed-out Catálogo tab + calculator picker
-      slot → teaser). (Conta plan line moved to T025b/PR-B — analyze I1.)
-- [ ] T032 [US7] Implement: teaser (extends the shipped Catálogo empty-state; copy in `messages.pt-br.ts` —
+      slot → teaser). (Conta plan line moved to T025b/PR-B — analyze I1.) *(DONE 2026-07-10: 8 failing
+      captured, then green. NOTE: `/catalogo` left the GC-2 guarded set — spec US7 scenario 2 requires the
+      signed-out teaser there, never a bounce; guards test + auth-boundary e2e updated, product routes
+      stay guarded.)*
+- [x] T032 [US7] Implement: teaser (extends the shipped Catálogo empty-state; copy in `messages.pt-br.ts` —
       final wording owner-ratified at T033). Tests green. (Conta line already shipped in PR-B, T025b.)
+      *(DONE 2026-07-10: `premium-teaser.tsx` (dialog + Catálogo surface, no price/date/purchase-CTA) +
+      calculator teaser slot; 232 web tests + 92 e2e + gate:all green. Copy awaits T033 ratification.)*
 - [ ] T033 [US7] **Visual homologation (QA + OWNER)**: qa-produto drives the teaser (free + signed-out);
       Conta plan line states (none/active/lapsed via CLI toggling) re-verified together; owner ratifies the
       teaser copy.

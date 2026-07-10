@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -34,10 +34,26 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => vi.fn() };
 });
+// US7: the page teasers on a POSITIVELY known non-premium state — these IA tests exercise the
+// premium surface, so the session is authenticated + the entitlement answers "active".
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+}));
+
+import { useSessionStore } from "@/shared/session/session-store";
 
 import { CatalogoPage } from "./catalogo-page";
 
-afterEach(() => cleanup());
+beforeEach(() => {
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
+});
+afterEach(() => {
+  cleanup();
+  useSessionStore.setState({ status: "anonymous", user: null });
+});
 const catalogo = messages.catalogo;
 
 describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () => {
