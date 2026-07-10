@@ -215,8 +215,12 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
       update the 006 privacy notice with a data-saving line (catalog stores user data now — spec Out of
       Scope note). *(DONE 2026-07-10: dod-evidence.md written; E2 roadmap row + r2 capture log updated;
       privacy notice gains `catalogData` line, test extended.)*
-- [ ] T035 **OWNER-GATED** PR-C ship: full `gate:all` + e2e → push → PR to `develop` → CI green → owner
-      squash-merge. E2 closes.
+- [x] T035 **OWNER-GATED** PR-C ship: full `gate:all` + e2e → push → PR to `develop` → CI green → owner
+      squash-merge. E2 closes. *(SHIPPED 2026-07-10: owner authorized ("pode continuar"); local `gate:all`
+      + e2e green → pushed `feature/007-e2-pr-c` → **PR #12** to `develop`. Full CI green — Gate, E2E
+      (92/92), Web/Backend build, Secret scan, GitGuardian, and **Contract drift-guard SC-6** (fixed by
+      `89f026b`: `generated.ts` restored to raw Orval output). Owner squash-merged as `3a940ba`
+      ("mergeado"). **E2 COMPLETE and SHIPPED to `develop`** — three slices: PR-A #10, PR-B #11, PR-C #12.)*
 
 ---
 
