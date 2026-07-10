@@ -65,6 +65,18 @@ ENTITLEMENT_ERRORS: dict[int | str, dict[str, Any]] = {
     **AUTH_ERRORS,
     403: {"model": ErrorEnvelope, "description": "Persistence requires an active premium grant"},
 }
+NOT_FOUND_ERRORS: dict[int | str, dict[str, Any]] = {
+    404: {"model": ErrorEnvelope, "description": "No such resource under this account"},
+}
+# Declared explicitly on routes whose 422 is REACHABLE (bodies with constrained fields) — this
+# REPLACES FastAPI's auto-422 schema with the honest ErrorEnvelope, so the openapi() phantom
+# strip (which only removes HTTPValidationError-typed 422s) keeps it. 400 is FastAPI's
+# unparseable-body response — also reachable on any body-carrying route (conformance caught it
+# day 1), distinct from 422 (parseable but invalid) on purpose.
+VALIDATION_ERRORS: dict[int | str, dict[str, Any]] = {
+    400: {"model": ErrorEnvelope, "description": "Malformed request body (unparseable)"},
+    422: {"model": ErrorEnvelope, "description": "Per-field validation failed"},
+}
 
 
 class AppError(Exception):
@@ -122,8 +134,14 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def _handle_http(_request: Request, exc: StarletteHTTPException) -> JSONResponse:
-        is_404 = exc.status_code == status.HTTP_404_NOT_FOUND
-        code = ErrorCode.NOT_FOUND if is_404 else ErrorCode.INTERNAL
+        # 400 here is FastAPI's "There was an error parsing the body" (unparseable payload) —
+        # a client-input problem, so it maps to VALIDATION_ERROR, never INTERNAL (E2/conformance).
+        if exc.status_code == status.HTTP_404_NOT_FOUND:
+            code = ErrorCode.NOT_FOUND
+        elif exc.status_code == status.HTTP_400_BAD_REQUEST:
+            code = ErrorCode.VALIDATION_ERROR
+        else:
+            code = ErrorCode.INTERNAL
         message = exc.detail or "HTTP error"
         return JSONResponse(status_code=exc.status_code, content=_envelope(code, message))
 

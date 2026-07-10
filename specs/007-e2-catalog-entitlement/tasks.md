@@ -105,11 +105,11 @@ Every push/merge is **OWNER-GATED** (ADR-0006).
 **Goal**: save/reuse filaments, per-account, validated, offline-readable.
 **Independent Test**: quickstart §2.
 
-- [ ] T016 [US3] Write FAILING pytest first — `backend/tests/test_filaments.py`: CRUD round-trip
+- [x] T016 [US3] Write FAILING pytest first — `backend/tests/test_filaments.py`: CRUD round-trip
       (create→reload identical→edit→delete), per-field validation (E1 rules: finite ≥0, rollWeightKg>0 —
       rejected NEVER stored, FR-306), per-account isolation (account B sees zero of A — SC-308),
       lapsed=read-only.
-- [ ] T017 [US3] Implement: pydantic wire schemas (camelCase, money-as-string per contract) + CRUD router
+- [x] T017 [US3] Implement: pydantic wire schemas (camelCase, money-as-string per contract) + CRUD router
       `backend/app/api/filaments.py` (statuses exactly per contracts/api-surface.md; `require_entitlement`)
       → pytest green → regen ripple (openapi/Orval/drift green; conformance green).
 - [ ] T018 [P] [US3] Frontend read cache — FAILING vitest first in `apps/web/src/entities/catalog/`:
