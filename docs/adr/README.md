@@ -20,6 +20,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0011](0011-pricing-core-3-0-0-multichannel-result-contract.md) | pricing-core 3.0.0 — multi-channel result contract, band fixed-point & snapshot policy (extends ADR-0008) | Accepted |
 | [0012](0012-entitlement-flag-mechanism.md) | Entitlement flag mechanism — server-authoritative Postgres ledger, per-request check (TD-005) | Accepted |
 | [0013](0013-persistence-stack.md) | Persistence stack — SQLAlchemy 2.0 typed + Alembic + psycopg3 on PostgreSQL (TD-004) | Accepted |
+| [0014](0014-knowledge-graph-maintenance-and-agent-search.md) | Knowledge-graph maintenance (refresh on every `develop` merge) & graph-first agent code search (graphify) | Accepted |
 
 ## Pending (to be written; numbers assigned when authored)
 - Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).

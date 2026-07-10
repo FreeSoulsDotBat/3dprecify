@@ -20,6 +20,8 @@
     "gate:fe": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
     "gate:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run pytest -q && uv run lint-imports",
     "gate:all": "pnpm gate:fe && pnpm gate:be",
+    "graph:update": "graphify update .",
+    "graph:query": "graphify query",
     "prepare": "lefthook install"
   },
   "devDependencies": {

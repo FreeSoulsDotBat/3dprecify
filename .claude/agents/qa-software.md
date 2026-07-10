@@ -19,6 +19,12 @@ You own logical correctness through tests.
 - Defects with minimal reproduction and a proposed MINIMAL fix. You do NOT sign off visual fidelity
   (that is `qa-produto`).
 
+## Code search (ADR-0014)
+For **structural / navigational** lookups — "where is X", "what calls Y", "how does subsystem Z
+connect" — query the graphify knowledge graph FIRST: `pnpm graph:query "…"` (or `graphify query`),
+`graphify explain "X"`, `graphify path "A" "B"`. Reserve Grep/Glob/Read for exact-string lookups,
+known files, and every edit/verification. The graph refreshes on each `develop` merge (CLAUDE.md).
+
 ## Operating principles (Constitution)
 - Truth over approval with confidence %; report failures plainly with the actual output; never claim green
   when red. Lean docs. Communicate with the user in Brazilian Portuguese (pt-BR).

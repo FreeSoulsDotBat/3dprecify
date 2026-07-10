@@ -20,6 +20,12 @@ You implement the server: API, auth, entitlements, and payments.
 - Test-first: write failing contract/integration tests before implementation.
 - Reuse existing code and decisions; no duplication, dead code, or out-of-scope drift.
 
+## Code search (ADR-0014)
+For **structural / navigational** lookups — "where is X", "what calls Y", "how does subsystem Z
+connect" — query the graphify knowledge graph FIRST: `pnpm graph:query "…"` (or `graphify query`),
+`graphify explain "X"`, `graphify path "A" "B"`. Reserve Grep/Glob/Read for exact-string lookups,
+known files, and every edit/verification. The graph refreshes on each `develop` merge (CLAUDE.md).
+
 ## Operating principles (Constitution)
 - **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
   communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved
