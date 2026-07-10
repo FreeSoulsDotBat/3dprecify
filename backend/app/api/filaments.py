@@ -18,7 +18,7 @@ from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
 from pydantic import field_validator
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db import get_session
@@ -31,7 +31,7 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
-from app.models import Filament
+from app.models import Filament, Product
 
 router = APIRouter(tags=["filaments"])
 
@@ -202,5 +202,17 @@ async def delete_filament(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
     row = await _owned(session, claims["uid"], filament_id)
+    # D6/US6-4: the SAME txn writes last-known values into every referencing product and
+    # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
+    await session.execute(
+        update(Product)
+        .where(Product.filament_id == row.id)
+        .values(
+            filament_id=None,
+            filament_material=row.material,
+            filament_cost_per_roll=row.cost_per_roll,
+            filament_roll_weight_kg=row.roll_weight_kg,
+        )
+    )
     row.deleted_at = datetime.now(UTC)  # soft-delete (D6) — voluntary deletion only
     await session.commit()

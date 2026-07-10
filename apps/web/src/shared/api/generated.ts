@@ -24,6 +24,39 @@ import type {
 } from '@tanstack/react-query';
 
 import { orvalFetch } from './transport';
+export type ChannelSlotMarketplace = typeof ChannelSlotMarketplace[keyof typeof ChannelSlotMarketplace];
+
+
+export const ChannelSlotMarketplace = {
+  MERCADO_LIVRE: 'MERCADO_LIVRE',
+  SHOPEE: 'SHOPEE',
+  AMAZON: 'AMAZON',
+  OUTRO: 'OUTRO',
+} as const;
+
+export type ChannelSlotModality = typeof ChannelSlotModality[keyof typeof ChannelSlotModality];
+
+
+export const ChannelSlotModality = {
+  CLASSICO: 'CLASSICO',
+  PREMIUM: 'PREMIUM',
+  PROFISSIONAL: 'PROFISSIONAL',
+  INDIVIDUAL: 'INDIVIDUAL',
+  '': '',
+} as const;
+
+/**
+ * One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).
+ */
+export interface ChannelSlot {
+  marketplace: ChannelSlotMarketplace;
+  modality?: ChannelSlotModality;
+  commissionPct: number | string;
+  fixedFee?: number | string;
+  minPerItem?: number | string;
+  freightCost?: number | string;
+}
+
 export interface CurrentUser {
   uid: string;
   email?: string | null;
@@ -164,6 +197,76 @@ export interface FilamentOut {
   updatedAt: string;
 }
 
+/**
+ * Resolved filament fields — live cache while linked, editable override when degraded.
+ */
+export interface FilamentValuesInput {
+  material?: string | null;
+  costPerRoll: number | string;
+  rollWeightKg: number | string;
+}
+
+/**
+ * Resolved filament fields — live cache while linked, editable override when degraded.
+ */
+export interface FilamentValuesOutput {
+  material?: string | null;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  costPerRoll: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  rollWeightKg: string;
+}
+
+/**
+ * One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116).
+ */
+export interface OtherCost {
+  name?: string;
+  value: number | string;
+}
+
+/**
+ * The product-owned E1 piece fields (data-model §2.5).
+ */
+export interface PieceInputsInput {
+  printGrams: number | string;
+  wasteGrams?: number | string;
+  printTimeHours: number | string;
+  failurePct?: number | string;
+  finishTimeHours?: number | string;
+  finishRatePerHour?: number | string;
+  laborHours?: number | string;
+  laborRatePerHour?: number | string;
+  markupVarejoPct: number | string;
+  markupAtacadoPct: number | string;
+}
+
+/**
+ * The product-owned E1 piece fields (data-model §2.5).
+ */
+export interface PieceInputsOutput {
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  printGrams: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  wasteGrams?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  printTimeHours: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  failurePct?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  finishTimeHours?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  finishRatePerHour?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  laborHours?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  laborRatePerHour?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  markupVarejoPct: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  markupAtacadoPct: string;
+}
+
 export interface PrinterIn {
   name: string;
   machineValue: number | string;
@@ -183,6 +286,64 @@ export interface PrinterOut {
   avgPowerKw: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   maintenanceReservePerHour: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Resolved printer fields — live cache while linked, editable override when degraded.
+ */
+export interface PrinterValuesInput {
+  machineValue: number | string;
+  machineLifetimeHours: number | string;
+  avgPowerKw: number | string;
+  maintenanceReservePerHour?: number | string;
+}
+
+/**
+ * Resolved printer fields — live cache while linked, editable override when degraded.
+ */
+export interface PrinterValuesOutput {
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  machineValue: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  machineLifetimeHours: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  avgPowerKw: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  maintenanceReservePerHour?: string;
+}
+
+export interface ProductIn {
+  name: string;
+  filamentId?: string | null;
+  printerId?: string | null;
+  filamentValues?: FilamentValuesInput | null;
+  printerValues?: PrinterValuesInput | null;
+  pieceInputs: PieceInputsInput;
+  tariffPerKwh: number | string;
+  includeMarketplace?: boolean;
+  channels?: ChannelSlot[];
+  otherCosts?: OtherCost[];
+}
+
+export type ProductOutChannelsItem = { [key: string]: unknown };
+
+export type ProductOutOtherCostsItem = { [key: string]: unknown };
+
+export interface ProductOut {
+  id: string;
+  name: string;
+  filamentId: string | null;
+  printerId: string | null;
+  filamentValues: FilamentValuesOutput;
+  printerValues: PrinterValuesOutput;
+  pieceInputs: PieceInputsOutput;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  tariffPerKwh: string;
+  includeMarketplace: boolean;
+  channels: ProductOutChannelsItem[];
+  otherCosts: ProductOutOtherCostsItem[];
   createdAt: string;
   updatedAt: string;
 }
@@ -1828,4 +1989,575 @@ export const useDeletePrinterApiV1PrintersPrinterIdDelete = <TError = ErrorEnvel
         TContext
       > => {
       return useMutation(getDeletePrinterApiV1PrintersPrinterIdDeleteMutationOptions(options), queryClient);
+    }
+
+export type listProductsApiV1ProductsGetResponse200 = {
+  data: ProductOut[]
+  status: 200
+}
+
+export type listProductsApiV1ProductsGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listProductsApiV1ProductsGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listProductsApiV1ProductsGetResponseSuccess = (listProductsApiV1ProductsGetResponse200) & {
+  headers: Headers;
+};
+export type listProductsApiV1ProductsGetResponseError = (listProductsApiV1ProductsGetResponse401 | listProductsApiV1ProductsGetResponse403) & {
+  headers: Headers;
+};
+
+export type listProductsApiV1ProductsGetResponse = (listProductsApiV1ProductsGetResponseSuccess | listProductsApiV1ProductsGetResponseError)
+
+export const getListProductsApiV1ProductsGetUrl = () => {
+
+
+
+
+  return `/api/v1/products`
+}
+
+/**
+ * @summary List Products
+ */
+export const listProductsApiV1ProductsGet = async ( options?: RequestInit): Promise<listProductsApiV1ProductsGetResponse> => {
+
+  return orvalFetch<listProductsApiV1ProductsGetResponse>(getListProductsApiV1ProductsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListProductsApiV1ProductsGetQueryKey = () => {
+    return [
+    `/api/v1/products`
+    ] as const;
+    }
+
+
+export const getListProductsApiV1ProductsGetQueryOptions = <TData = Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListProductsApiV1ProductsGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>> = ({ signal }) => listProductsApiV1ProductsGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListProductsApiV1ProductsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>>
+export type ListProductsApiV1ProductsGetQueryError = ErrorEnvelope
+
+
+export function useListProductsApiV1ProductsGet<TData = Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProductsApiV1ProductsGet<TData = Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListProductsApiV1ProductsGet<TData = Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Products
+ */
+
+export function useListProductsApiV1ProductsGet<TData = Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listProductsApiV1ProductsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListProductsApiV1ProductsGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createProductApiV1ProductsPostResponse201 = {
+  data: ProductOut
+  status: 201
+}
+
+export type createProductApiV1ProductsPostResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createProductApiV1ProductsPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createProductApiV1ProductsPostResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createProductApiV1ProductsPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createProductApiV1ProductsPostResponseSuccess = (createProductApiV1ProductsPostResponse201) & {
+  headers: Headers;
+};
+export type createProductApiV1ProductsPostResponseError = (createProductApiV1ProductsPostResponse400 | createProductApiV1ProductsPostResponse401 | createProductApiV1ProductsPostResponse403 | createProductApiV1ProductsPostResponse422) & {
+  headers: Headers;
+};
+
+export type createProductApiV1ProductsPostResponse = (createProductApiV1ProductsPostResponseSuccess | createProductApiV1ProductsPostResponseError)
+
+export const getCreateProductApiV1ProductsPostUrl = () => {
+
+
+
+
+  return `/api/v1/products`
+}
+
+/**
+ * @summary Create Product
+ */
+export const createProductApiV1ProductsPost = async (productIn: ProductIn, options?: RequestInit): Promise<createProductApiV1ProductsPostResponse> => {
+
+  return orvalFetch<createProductApiV1ProductsPostResponse>(getCreateProductApiV1ProductsPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(productIn)
+  }
+);}
+
+
+
+
+
+export const getCreateProductApiV1ProductsPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProductApiV1ProductsPost>>, TError,{data: ProductIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createProductApiV1ProductsPost>>, TError,{data: ProductIn}, TContext> => {
+
+const mutationKey = ['createProductApiV1ProductsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createProductApiV1ProductsPost>>, {data: ProductIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createProductApiV1ProductsPost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateProductApiV1ProductsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createProductApiV1ProductsPost>>>
+    export type CreateProductApiV1ProductsPostMutationBody = ProductIn
+    export type CreateProductApiV1ProductsPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Create Product
+ */
+export const useCreateProductApiV1ProductsPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createProductApiV1ProductsPost>>, TError,{data: ProductIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createProductApiV1ProductsPost>>,
+        TError,
+        {data: ProductIn},
+        TContext
+      > => {
+      return useMutation(getCreateProductApiV1ProductsPostMutationOptions(options), queryClient);
+    }
+
+export type getProductApiV1ProductsProductIdGetResponse200 = {
+  data: ProductOut
+  status: 200
+}
+
+export type getProductApiV1ProductsProductIdGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getProductApiV1ProductsProductIdGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type getProductApiV1ProductsProductIdGetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type getProductApiV1ProductsProductIdGetResponseSuccess = (getProductApiV1ProductsProductIdGetResponse200) & {
+  headers: Headers;
+};
+export type getProductApiV1ProductsProductIdGetResponseError = (getProductApiV1ProductsProductIdGetResponse401 | getProductApiV1ProductsProductIdGetResponse403 | getProductApiV1ProductsProductIdGetResponse404) & {
+  headers: Headers;
+};
+
+export type getProductApiV1ProductsProductIdGetResponse = (getProductApiV1ProductsProductIdGetResponseSuccess | getProductApiV1ProductsProductIdGetResponseError)
+
+export const getGetProductApiV1ProductsProductIdGetUrl = (productId: string,) => {
+
+
+
+
+  return `/api/v1/products/${productId}`
+}
+
+/**
+ * @summary Get Product
+ */
+export const getProductApiV1ProductsProductIdGet = async (productId: string, options?: RequestInit): Promise<getProductApiV1ProductsProductIdGetResponse> => {
+
+  return orvalFetch<getProductApiV1ProductsProductIdGetResponse>(getGetProductApiV1ProductsProductIdGetUrl(productId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetProductApiV1ProductsProductIdGetQueryKey = (productId: string,) => {
+    return [
+    `/api/v1/products/${productId}`
+    ] as const;
+    }
+
+
+export const getGetProductApiV1ProductsProductIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError = ErrorEnvelope>(productId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetProductApiV1ProductsProductIdGetQueryKey(productId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>> = ({ signal }) => getProductApiV1ProductsProductIdGet(productId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: productId !== null && productId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetProductApiV1ProductsProductIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>>
+export type GetProductApiV1ProductsProductIdGetQueryError = ErrorEnvelope
+
+
+export function useGetProductApiV1ProductsProductIdGet<TData = Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError = ErrorEnvelope>(
+ productId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductApiV1ProductsProductIdGet<TData = Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError = ErrorEnvelope>(
+ productId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetProductApiV1ProductsProductIdGet<TData = Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError = ErrorEnvelope>(
+ productId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Product
+ */
+
+export function useGetProductApiV1ProductsProductIdGet<TData = Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError = ErrorEnvelope>(
+ productId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getProductApiV1ProductsProductIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetProductApiV1ProductsProductIdGetQueryOptions(productId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type updateProductApiV1ProductsProductIdPutResponse200 = {
+  data: ProductOut
+  status: 200
+}
+
+export type updateProductApiV1ProductsProductIdPutResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateProductApiV1ProductsProductIdPutResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateProductApiV1ProductsProductIdPutResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateProductApiV1ProductsProductIdPutResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateProductApiV1ProductsProductIdPutResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateProductApiV1ProductsProductIdPutResponseSuccess = (updateProductApiV1ProductsProductIdPutResponse200) & {
+  headers: Headers;
+};
+export type updateProductApiV1ProductsProductIdPutResponseError = (updateProductApiV1ProductsProductIdPutResponse400 | updateProductApiV1ProductsProductIdPutResponse401 | updateProductApiV1ProductsProductIdPutResponse403 | updateProductApiV1ProductsProductIdPutResponse404 | updateProductApiV1ProductsProductIdPutResponse422) & {
+  headers: Headers;
+};
+
+export type updateProductApiV1ProductsProductIdPutResponse = (updateProductApiV1ProductsProductIdPutResponseSuccess | updateProductApiV1ProductsProductIdPutResponseError)
+
+export const getUpdateProductApiV1ProductsProductIdPutUrl = (productId: string,) => {
+
+
+
+
+  return `/api/v1/products/${productId}`
+}
+
+/**
+ * @summary Update Product
+ */
+export const updateProductApiV1ProductsProductIdPut = async (productId: string,
+    productIn: ProductIn, options?: RequestInit): Promise<updateProductApiV1ProductsProductIdPutResponse> => {
+
+  return orvalFetch<updateProductApiV1ProductsProductIdPutResponse>(getUpdateProductApiV1ProductsProductIdPutUrl(productId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(productIn)
+  }
+);}
+
+
+
+
+
+export const getUpdateProductApiV1ProductsProductIdPutMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>, TError,{productId: string;data: ProductIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>, TError,{productId: string;data: ProductIn}, TContext> => {
+
+const mutationKey = ['updateProductApiV1ProductsProductIdPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>, {productId: string;data: ProductIn}> = (props) => {
+          const {productId,data} = props ?? {};
+
+          return  updateProductApiV1ProductsProductIdPut(productId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateProductApiV1ProductsProductIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>>
+    export type UpdateProductApiV1ProductsProductIdPutMutationBody = ProductIn
+    export type UpdateProductApiV1ProductsProductIdPutMutationError = ErrorEnvelope
+
+    /**
+ * @summary Update Product
+ */
+export const useUpdateProductApiV1ProductsProductIdPut = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>, TError,{productId: string;data: ProductIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateProductApiV1ProductsProductIdPut>>,
+        TError,
+        {productId: string;data: ProductIn},
+        TContext
+      > => {
+      return useMutation(getUpdateProductApiV1ProductsProductIdPutMutationOptions(options), queryClient);
+    }
+
+export type deleteProductApiV1ProductsProductIdDeleteResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteProductApiV1ProductsProductIdDeleteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteProductApiV1ProductsProductIdDeleteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteProductApiV1ProductsProductIdDeleteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteProductApiV1ProductsProductIdDeleteResponseSuccess = (deleteProductApiV1ProductsProductIdDeleteResponse204) & {
+  headers: Headers;
+};
+export type deleteProductApiV1ProductsProductIdDeleteResponseError = (deleteProductApiV1ProductsProductIdDeleteResponse401 | deleteProductApiV1ProductsProductIdDeleteResponse403 | deleteProductApiV1ProductsProductIdDeleteResponse404) & {
+  headers: Headers;
+};
+
+export type deleteProductApiV1ProductsProductIdDeleteResponse = (deleteProductApiV1ProductsProductIdDeleteResponseSuccess | deleteProductApiV1ProductsProductIdDeleteResponseError)
+
+export const getDeleteProductApiV1ProductsProductIdDeleteUrl = (productId: string,) => {
+
+
+
+
+  return `/api/v1/products/${productId}`
+}
+
+/**
+ * @summary Delete Product
+ */
+export const deleteProductApiV1ProductsProductIdDelete = async (productId: string, options?: RequestInit): Promise<deleteProductApiV1ProductsProductIdDeleteResponse> => {
+
+  return orvalFetch<deleteProductApiV1ProductsProductIdDeleteResponse>(getDeleteProductApiV1ProductsProductIdDeleteUrl(productId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteProductApiV1ProductsProductIdDeleteMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>, TError,{productId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>, TError,{productId: string}, TContext> => {
+
+const mutationKey = ['deleteProductApiV1ProductsProductIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>, {productId: string}> = (props) => {
+          const {productId} = props ?? {};
+
+          return  deleteProductApiV1ProductsProductIdDelete(productId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteProductApiV1ProductsProductIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>>
+
+    export type DeleteProductApiV1ProductsProductIdDeleteMutationError = ErrorEnvelope
+
+    /**
+ * @summary Delete Product
+ */
+export const useDeleteProductApiV1ProductsProductIdDelete = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>, TError,{productId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteProductApiV1ProductsProductIdDelete>>,
+        TError,
+        {productId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteProductApiV1ProductsProductIdDeleteMutationOptions(options), queryClient);
     }
