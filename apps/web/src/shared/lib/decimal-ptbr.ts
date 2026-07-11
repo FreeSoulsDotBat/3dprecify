@@ -17,3 +17,10 @@ export function formatDecimal(n: number, digits = 2): string {
     maximumFractionDigits: digits,
   });
 }
+
+/** Format a number as a pt-BR BRL string (28.65 → "R$ 28,65"). Values arrive already rounded to
+ *  2dp by pricing-core; this only renders. Shared home (008 R7) so `features/bom` and the
+ *  calculator print money through one rule — the calculator re-exports it unchanged. */
+export function formatBRL(value: number): string {
+  return `R$ ${formatDecimal(value, 2)}`;
+}

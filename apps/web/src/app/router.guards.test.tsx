@@ -68,6 +68,19 @@ describe("router auth guards (T034 / US2)", () => {
     expect(router.state.location.pathname).toBe("/catalogo");
   });
 
+  // 008/US5 (ADR-0015): /bom is public like /catalogo — a signed-out user must SEE the honest
+  // premium teaser there (never a bounce); the composer itself gates on the server entitlement.
+  it("US5(008): /bom matches a real route for an anonymous user (teaser, never a bounce)", async () => {
+    const router = await loadAt("anonymous", "/bom");
+    expect(router.state.location.pathname).toBe("/bom");
+    expect(router.state.matches.some((m) => m.routeId === "/bom")).toBe(true);
+  });
+
+  it("US5(008): an authenticated user reaches /bom directly (gate is in-page, server-informed)", async () => {
+    const router = await loadAt("authenticated", "/bom");
+    expect(router.state.matches.some((m) => m.routeId === "/bom")).toBe(true);
+  });
+
   it("GC-1: /calcular renders when Firebase is not configured (offline-friendly)", async () => {
     const router = await loadAt("not-configured", "/calcular");
     expect(router.state.location.pathname).toBe("/calcular");

@@ -54,15 +54,15 @@ product delete), which requires the `boms`/`bom_lines` persistence delivered in 
 **Goal**: a premium user composes ad-hoc + catalog-ref lines with quantities and sees a transparent combined
 breakdown + per-channel rollup, free-standing (no save). **Independent Test**: quickstart §2.
 
-- [ ] T004 [US1] Write FAILING tests first — `apps/web/src/features/bom/*`: the line→`PriceInput` adapter
+- [X] T004 [US1] Write FAILING tests first — `apps/web/src/features/bom/*`: the line→`PriceInput` adapter
       (ad-hoc inputs vs resolve a live E2 product via `entities/catalog`) + composer component (add lines,
       quantity, live per-line + assembly + per-channel rollup, remove-line updates) + e2e (premium composes a
       3-line BOM incl. a catalog-ref line). Observe failing.
-- [ ] T005 [US1] Implement `apps/web/src/features/bom/` composer + `bom-compute.ts` adapter (resolve line →
+- [X] T005 [US1] Implement `apps/web/src/features/bom/` composer + `bom-compute.ts` adapter (resolve line →
       `PriceInput`, call `computeBom`). **FSD-Lite**: `feature/bom` MUST NOT import `feature/calculator`
       internals or `pages` — share via `pricing-core` + `entities/catalog` (eslint-boundaries + depcruise
       clean). Tests green.
-- [ ] T006 [US1] Server-informed route-guard + BOM route in `apps/web/src/pages/bom/` and `app/router.tsx`:
+- [X] T006 [US1] Server-informed route-guard + BOM route in `apps/web/src/pages/bom/` and `app/router.tsx`:
       gate feature access on `GET /api/v1/entitlement` (`status === active`) — free/lapsed/signed-out → teaser
       (US5), NEVER a local flag (ADR-0015). Guarded like the E2 product routes.
 - [ ] T006b [US1] Visual test: qa-produto homologates the composer at 390px + desktop (compose, per-channel
@@ -73,10 +73,10 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 **Goal**: free/signed-out sees an honest teaser; the free single-piece calculator is untouched.
 **Independent Test**: quickstart §2 (teaser half).
 
-- [ ] T007 [US5] Write FAILING tests first — teaser component (crown, no price/date, no pre-E6 purchase CTA;
+- [X] T007 [US5] Write FAILING tests first — teaser component (crown, no price/date, no pre-E6 purchase CTA;
       signed-out adds Entrar → `/sign-in?redirect=/bom`) + e2e (signed-out/free at `/bom` sees teaser; the
       single-piece calculator stays fully usable, SC-408/SC-409). Observe failing.
-- [ ] T008 [US5] Implement the BOM teaser (reuse the E2 `premium-teaser` pattern) wired into the T006 guard.
+- [X] T008 [US5] Implement the BOM teaser (reuse the E2 `premium-teaser` pattern) wired into the T006 guard.
       Tests green.
 
 ## PR-A ship (STRICTLY ORDERED)

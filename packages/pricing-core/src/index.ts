@@ -418,18 +418,20 @@ export function computeBom(lines: BomLineInput[]): BomResult {
         continue;
       }
       acc.contributingLines += 1;
-      // Non-error slots always carry the four prices (see computeChannel) — `?? 0` only narrows.
+      // Non-error slots ALWAYS carry the four prices (computeChannel's invariant): a `?? 0`
+      // here would add four dead branches the 100%-branch gate can never cover — the non-null
+      // assertion states the invariant instead of pretending null is reachable.
       acc.anuncioVarejo = acc.anuncioVarejo.plus(
-        new Decimal(slot.precoAnuncioVarejo ?? 0).times(quantity),
+        new Decimal(slot.precoAnuncioVarejo!).times(quantity),
       );
       acc.liquidoVarejo = acc.liquidoVarejo.plus(
-        new Decimal(slot.recebidoLiquidoVarejo ?? 0).times(quantity),
+        new Decimal(slot.recebidoLiquidoVarejo!).times(quantity),
       );
       acc.anuncioAtacado = acc.anuncioAtacado.plus(
-        new Decimal(slot.precoAnuncioAtacado ?? 0).times(quantity),
+        new Decimal(slot.precoAnuncioAtacado!).times(quantity),
       );
       acc.liquidoAtacado = acc.liquidoAtacado.plus(
-        new Decimal(slot.recebidoLiquidoAtacado ?? 0).times(quantity),
+        new Decimal(slot.recebidoLiquidoAtacado!).times(quantity),
       );
       acc.freightVarejo = acc.freightVarejo.plus(
         new Decimal(slot.freightCostVarejo).times(quantity),

@@ -356,6 +356,60 @@ export const messages = {
     notFound: "Não encontramos este produto.",
     backToCatalog: "Voltar ao catálogo",
   },
+  // 008/E3 — the multi-piece BOM composer (ux-bom.md §5). Premium feature (Q3, ADR-0015);
+  // copy is honest/calm: NO price, NO date, NO pre-E6 purchase CTA anywhere (FR-410).
+  bom: {
+    title: "Montagem",
+    subtitle: "Some várias peças e veja o preço do pedido.",
+    // Empty state (§1.8)
+    emptyTitle: "Monte seu pedido peça por peça",
+    emptyBody:
+      "Some várias peças — avulsas ou do seu catálogo — com quantidade e veja o preço da montagem inteira.",
+    addLine: "Adicionar peça",
+    // Line (§1.1/§1.3)
+    lineLabel: "Peça {n}",
+    lineAdhoc: "(avulsa)",
+    quantity: "Quantidade",
+    quantityUnit: "un",
+    removeLine: "Remover peça",
+    qtyZero: "Quantidade 0 — não entra no total.",
+    expand: "Editar esta peça",
+    collapse: "Recolher",
+    // Invalid line: honest exclusion, never a silent zero (§1.3)
+    lineInvalid: "Confira os campos desta peça — ela não entra no total até ser corrigida.",
+    // In-line catalog picker (§1.2-C / §1.4) — product level
+    useProduct: "Usar produto salvo",
+    productPlaceholder: "Escolher produto…",
+    manual: "— Manual —",
+    fromCatalog: "do catálogo: {nome}",
+    fromCatalogAdjusted: "do catálogo: {nome} · ajustado por você",
+    offlineNeedsLoad: "Conecte para carregar seu catálogo",
+    // Per-line breakdown (§1.6)
+    perUnitCusto: "Custo total /un",
+    lineTotal: "Total da linha ({qty}×)",
+    // Assembly total + per-channel rollup (§1.7)
+    assemblyTitle: "Total da montagem",
+    assemblyCusto: "Custo total",
+    channelsTitle: "Preços por canal (montagem)",
+    channelContributing: "{n} peça(s) somaram neste canal",
+    channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
+    channelNoContrib: "Nenhuma peça com preço neste canal.",
+    // Teaser (US5 / §2) — NO price, NO date, NO purchase CTA
+    teaserTitle: "Monte e precifique pedidos com várias peças",
+    teaserBody:
+      "Some várias peças — avulsas ou do seu catálogo — com quantidade e veja o preço da montagem inteira.",
+    teaserDialogTitle: "A montagem faz parte do Premium",
+    teaserDialogBody:
+      "No Premium você monta um pedido com várias peças e vê o preço da montagem inteira, por canal.",
+    teaserFreeNote: "A calculadora de peça única continua grátis.",
+    teaserSignedOutBody: "Para montar pedidos, entre e ative o Premium.",
+    teaserSignIn: "Entrar",
+    teaserDismiss: "Entendi",
+    // Guard states (§0.1) — honest, specific; a network failure is NOT "not premium"
+    guardChecking: "Verificando seu plano…",
+    guardError: "Não foi possível verificar seu plano.",
+    guardRetry: "Tentar novamente",
+  },
   historico: {
     emptyTitle: "Histórico em breve",
     emptyBody: "Seus cálculos salvos vão aparecer aqui.",

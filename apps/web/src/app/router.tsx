@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 
 import { AppShell } from "@/app/app-shell";
+import { BomPage } from "@/pages/bom/bom-page";
 import { CalcularPage } from "@/pages/calcular/calcular-page";
 import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
 import { ProdutoPage } from "@/pages/catalogo/produto-page";
@@ -104,6 +105,15 @@ const produtoEditRoute = createRoute({
   component: ProdutoEditRouteComponent,
 });
 
+// 008/US5 (ADR-0015): /bom is PUBLIC like /catalogo — a free/signed-out user must SEE the honest
+// premium teaser there, never a bounce. The composer itself gates IN-PAGE on the authoritative
+// GET /api/v1/entitlement (`status === active`) — a server-informed guard, never a local flag.
+const bomRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/bom",
+  component: BomPage,
+});
+
 const historicoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico",
@@ -149,6 +159,7 @@ export const routeTree = rootRoute.addChildren([
   catalogoRoute,
   produtoNovoRoute,
   produtoEditRoute,
+  bomRoute,
   historicoRoute,
   contaRoute,
   signInRoute,
