@@ -21,6 +21,12 @@ a catalog-referenced line (resolve a live E2 product → `PriceInput` for `compu
 What PR-C (US3) adds is the **persisted-reference degradation lifecycle** (D3 live-reflect + D6 last-known on
 product delete), which requires the `boms`/`bom_lines` persistence delivered in PR-B.
 
+**K-amendment (2026-07-11 — spec K1–K4, research R8, ADR-0017 Proposed):** user-facing name is **Kits**.
+**K1 (rename + route `/kits` + 5th nav tab + icon) folds into the unpushed PR-A** (T008b/T008c below).
+**K2–K4 (catalog Kits tab + atomic save-time materialization of ad-hoc pieces as manual products with name
+dedup + attention indicator) land in PR-B** (T010/T012/T015 amended; T015c/T015d added; US6). "BOM" stays the
+internal/technical term (code modules, tables, wire routes).
+
 ## Format: `[ID] [P?] [Story] Description`
 
 ---
@@ -79,12 +85,26 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 - [X] T008 [US5] Implement the BOM teaser (reuse the E2 `premium-teaser` pattern) wired into the T006 guard.
       Tests green.
 
+## Phase 4b: K1 — Kits vocabulary + /kits route + 5th nav tab (folds into PR-A; R8 D-K1)
+
+- [ ] T008b [K1] Write FAILING tests first — router guards (`/kits` matches; anonymous never bounced),
+      app-nav (5 tabs, "Kits" entry, roving tabindex over 5), bom-page/teaser copy tests updated to the Kit
+      vocabulary ("Monte seus kits" + approved subtitle), e2e `bom.spec.ts` → `/kits` + a11y-overflow 5-tab
+      390px. Observe failing.
+- [ ] T008c [K1] Implement: route path `/kits` (module stays `pages/bom/`); 5th `NAV_ITEMS` entry "Kits"
+      (`boxes` glyph inlined in `shared/ui/icon.tsx` from lucide-static; nav grid CSS 4→5); i18n `bom.*`
+      reworded to Kit vocabulary (title "Monte seus kits"; subtitle "Aqui você pode montar Kits para anúncios
+      únicos de acordo com seus produtos cadastrados ou peças avulsas"; teaser/empty follow; `nav.kits`);
+      sign-in redirect target becomes `/kits`. Tests green; `pnpm gate:all` + `pnpm e2e` re-run.
+
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T009 [US1][US5] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/**SC-409**:
-      E1 + E2 guards unchanged) → push `feature/008-e3-multi-piece-bom` → PR to `develop` (evidence-rich) → CI
-      green (incl. contract drift-guard) → owner squash-merge. Graph refresh on merge (ADR-0014).
-      **Checkpoint: a premium user can compose + price a multi-piece BOM; everyone else sees an honest teaser.**
+- [ ] T009 [US1][US5][K1] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/SC-410
+      nav-half/**SC-409**: E1 + E2 guards unchanged) → push `feature/008-e3-multi-piece-bom` → PR to `develop`
+      (evidence-rich: T006b homologation + nit fixes + K1 rename) → CI green (incl. contract drift-guard) →
+      owner squash-merge. Owner walk covers the Kit vocabulary + 5-tab nav. Graph refresh on merge (ADR-0014).
+      **Checkpoint: a premium user composes + prices a kit at /kits from the nav; everyone else sees an honest
+      teaser.**
 
 ---
 
@@ -94,30 +114,45 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 **Goal**: premium save/list/reload, per-account, no stored price. **Independent Test**: quickstart §3–§4.
 
-- [ ] T010 [US2] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none write
-      `403 ENTITLEMENT_REQUIRED`; signed-out `401`; faked client premium denied; nothing persisted on deny);
-      CRUD round-trip (create→reload identical on a fresh `TestClient`, decimal-string money, **no price
-      stored**); per-field validation (rejected NEVER stored); per-account isolation (account B → `404`, no
-      existence oracle, SC-308/406); link-or-snapshot `422`. Observe failing.
+- [ ] T010 [US2][US6] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none
+      write `403 ENTITLEMENT_REQUIRED`; signed-out `401`; faked client premium denied; nothing persisted on
+      deny); CRUD round-trip (create→reload identical on a fresh `TestClient`, decimal-string money, **no
+      price stored**); per-field validation (rejected NEVER stored); per-account isolation (account B →
+      `404`, no existence oracle, SC-308/406); ad-hoc line without `pieceName` → `422`. **Materialization
+      suite (K3/K4, ADR-0017)**: atomic (a failing line materializes NOTHING); ad-hoc line → manual product
+      created (refs NULL + snapshot, `action: "created"`), line born WITH `product_id`; name dedup (`btrim`
+      exact, live rows only; soft-deleted never matches) → `action: "referenced"`, values superseded; denied
+      save (free) materializes nothing (SC-411); public `POST /products` still requires refs (FR-310
+      untouched). Observe failing.
 - [ ] T011 [US2] Alembic **migration `0002`** (`down_revision = "0001"` — never amend `0001`) + SQLAlchemy 2.0
       models `Bom`/`BomLine` per `data-model.md` (typed link-or-snapshot columns, value CHECKs, `boms`/`bom_
       lines` indices, FK `bom_id` ON DELETE CASCADE, FK `product_id` ON DELETE SET NULL). `uv run alembic
       upgrade head` green against the compose DB.
-- [ ] T012 [US2] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
+- [ ] T012 [US2][US6] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
       `require_catalog_read` (reads) per `contracts/api-surface.md`; pydantic wire schemas (camelCase, money-
-      as-string; **reuse** `PieceInputs`/`ChannelSlot`/`OtherCost` from `products.py`); `_apply` re-snapshot +
-      `_to_out` live/last-known resolution + `_unresolvable` `422` (no oracle). Extend `[tool.importlinter]`
-      layering (`app.api → app.entitlement → app.db`). Tests green.
+      as-string; **reuse** `PieceInputs`/`ChannelSlot`/`OtherCost` from `products.py`; `BomLineIn.pieceName` +
+      ProductIn value-set); **`_materialize` step INSIDE the same transaction** (ADR-0017: dedup → insert
+      manual products → kit + lines, one commit; `BomOut.materializations[]` on writes; FR-310 relaxation
+      lives ONLY here); `_apply` re-snapshot + `_to_out` live/last-known resolution + `_unresolvable` `422`
+      (no oracle). Extend `[tool.importlinter]` layering (`app.api → app.entitlement → app.db`). Tests green.
 - [ ] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
       `.prettierignore` exempt); drift-guard `git diff --exit-code` green. No new `ErrorCode`
       (`ENTITLEMENT_REQUIRED` + `VALIDATION_ERROR` already exist).
 - [ ] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
       `useUpdateBom`/`useDeleteBom` hooks mirroring `entities/catalog`; purge-on-signout; "boms" added to the
       cache resource sweep.
-- [ ] T015 [US2] Web BOM save UI: name + Save → toast → lands on the BOM list; failing-first component test
-      (save round-trip) then green.
+- [ ] T015 [US2][US6] Web kit save UI: kit name + a name `Field` PER AD-HOC PIECE (pre-filled "Peça {n} ·
+      {kit name}", K4) → Save → real-2xx toast; the response's `materializations[]` is surfaced honestly
+      ("criado no catálogo" vs "já existia — referenciado", values-superseded warning on reference) → lands
+      on the kit list. Failing-first component test (save round-trip + materialization messaging) then green.
 - [ ] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
       no stored price).
+- [ ] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
+      per-account, empty state) → implement in `features/catalog` reading the `entities/bom` cache/hooks.
+      Tests green.
+- [ ] T015d [US6/K3] Manual-product **attention indicator** (unified with the degraded state): failing-first
+      tests (Produtos list + product page show the calm indicator when `filamentId`/`printerId` is null;
+      linking both clears it, SC-412) → implement. Tests green.
 
 ## Phase 6: US4 — manage saved BOMs + honest lapse policy (P2)
 
@@ -133,9 +168,12 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 ## PR-B ship (STRICTLY ORDERED)
 
-- [ ] T018 [US2][US4] **OWNER-GATED** PR-B: `pnpm gate:all` + `pnpm e2e` (gate/isolation/lapse + **SC-409**) →
-      PR to `develop` → CI green → owner squash-merge. Graph refresh on merge.
-      **Checkpoint: premium sellers save, reload, and manage BOMs; the gate is server-authoritative.**
+- [ ] T018 [US2][US4][US6] **OWNER-GATED** PR-B: `pnpm gate:all` + `pnpm e2e` (gate/isolation/lapse +
+      materialization SC-411/412 + **SC-409**) → PR to `develop` → CI green → owner squash-merge. **Owner
+      accepts ADR-0017 at this gate** (incl. the flagged dedup case-rule, exact vs case-insensitive, ~75%).
+      Graph refresh on merge.
+      **Checkpoint: premium sellers save, reload, and manage kits; saved kits + materialized products appear
+      in the catalog; the gate is server-authoritative.**
 
 ---
 
@@ -169,8 +207,9 @@ values when the product is deleted (D6). **Independent Test**: quickstart §5.
 
 - [ ] T023 [P] `specs/008-e3-multi-piece-bom/dod-evidence.md` — SC-401..409 map + gate/e2e results; PR-A/B/C
       homologation records (owner + qa-produto).
-- [ ] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) → BUILT/SHIPPED; ADR-0015/0016 stay
-      Accepted; CLAUDE.md ground line → E3 shipped (after PR-C merges).
+- [ ] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) → BUILT/SHIPPED with the **Kits**
+      user-facing name; ADR-0015/0016 stay Accepted; **ADR-0017 Proposed → Accepted at the PR-B gate**;
+      CLAUDE.md ground line → E3 shipped (after PR-C merges).
 - [ ] T025 Run `quickstart.md` §1..§7 end-to-end as the final validation before E3 close-out.
 
 ---
@@ -179,10 +218,12 @@ values when the product is deleted (D6). **Independent Test**: quickstart §5.
 
 - **Phase 1 ∥**; **Phase 2 (T002→T003) blocks all stories** (shared engine). Test-first pair T002→T003.
 - **PR-A**: T004→T005 (test-first); T006 after T005 (guard wraps the composer); T006 needs `GET /entitlement`
-  (already shipped, E2 T014); T007→T008 (test-first); T009 after T003/T005/T006/T008.
+  (already shipped, E2 T014); T007→T008 (test-first); T008b→T008c (K1 test-first, after T008); T009 after
+  T003/T005/T006/T008/T008c.
 - **PR-B needs PR-A merged** (composer exists to save from). Inside: T010→T011→T012 (test-first → migration →
-  router); T013 after T012 (contract ripple); T014 ∥ backend (different surface); T015 after T012+T014;
-  T016→T017 (test-first) after T012.
+  router incl. `_materialize`); T013 after T012 (contract ripple); T014 ∥ backend (different surface); T015
+  after T012+T014; T015c after T014 (kits list reads the cache); T015d ∥ (products surface); T016→T017
+  (test-first) after T012.
 - **PR-C needs PR-B** (persistence + `product_id` FK exist to degrade). T019→T020→T021 (test-first → D6
   capture → degraded UI).
 - Test-first pairs throughout: T002→T003, T004→T005, T007→T008, T010→…→T012, T016→T017, T019→T020.
