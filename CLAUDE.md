@@ -51,6 +51,11 @@ Knowledge graph — **graphify** (ADR-0014, amended 2026-07-10). A structural (A
   --type query --nodes … --outcome useful|dead_end|corrected` — deterministic, 0 LLM tokens; the
   next graph update ingests the Q&A.
 
+Token-spend ledger (owner rule 2026-07-10): every AI operation that costs real tokens — semantic
+extraction, subagent fan-outs, multi-agent workflows — appends a row to `docs/token-ledger.md`
+(date · operation · estimate → actual · lesson). Estimate BEFORE running, record the actual AFTER;
+graphify runs also mirror into local `graphify-out/cost.json`.
+
 Constitution: `.specify/memory/constitution.md` (incl. **Principle VIII** — no inferring architecture/standards).
 Pricing domain reference: `docs/pricing-model-from-spreadsheet.md` (original model — third-party sheet NOT copied).
 Integration branch is **`develop`** (slices land via owner-authorized squash-merged PRs; `main` = release, per
