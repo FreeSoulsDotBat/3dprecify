@@ -29,20 +29,20 @@ product delete), which requires the `boms`/`bom_lines` persistence delivered in 
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all PR-A work): BOM composer
+- [X] T001 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all PR-A work): BOM composer
       (line list; add ad-hoc line; add catalog-ref line; quantity; per-line breakdown; assembly total; **per-
       channel rollup**; empty/loading/degraded states) + the US5 teaser. Output feeds T005/T008; not a merge
       blocker.
 
 ## Phase 2: Foundational (blocking) — canonical assembly engine (ADR-0016)
 
-- [ ] T002 Write FAILING vitest first — `packages/pricing-core/src/*.test.ts`: `computeBom` numeric suite —
+- [X] T002 Write FAILING vitest first — `packages/pricing-core/src/*.test.ts`: `computeBom` numeric suite —
       **SC-402** (single line ×1 total byte-identical to `computeCalculator`), **FR-412** (aggregate =
       `sumMoney(perLine×qty)`, anchored fixtures, no double-rounding), qty×line via `Decimal`, `quantity: 0`
       contributes zero (honest empty), **per-channel rollup** grouping by `marketplace`, **per-slot isolation**
       (a `ChannelResult` in `error` contributes zero + increments `skippedLines`, never throws/NaNs a sibling),
       `modelVersion === "3.1.0"`, and the version↔major gate-test updated. Observe failing.
-- [ ] T003 Implement `computeBom` + types (`BomLineInput`/`BomLineResult`/`BomChannelRollup`/`BomResult`) in
+- [X] T003 Implement `computeBom` + types (`BomLineInput`/`BomLineResult`/`BomChannelRollup`/`BomResult`) in
       `packages/pricing-core/src/index.ts` composing `computeCalculator` per line; **export** `toMoney`/
       `sumMoney`/`Decimal` from the entry (the MINOR public surface); bump `PRICING_MODEL_VERSION → "3.1.0"`.
       Contract: `contracts/pricing-core-bom.md`. Tests green.

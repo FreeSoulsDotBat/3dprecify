@@ -9,7 +9,9 @@ import { Decimal, toMoney, sumMoney } from "./rounding";
 // 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
 // breaking to the 2.0.0 result contract ⇒ MAJOR bump. The constant tracks the package.json major so
 // a saved calc records which formula produced it.
-export const PRICING_MODEL_VERSION = "3.0.0";
+// 3.1.0 (ADR-0016): E3 adds `computeBom` (assembly = independent per-piece sum + per-marketplace
+// rollup) and exports `toMoney`/`sumMoney`/`Decimal` — additive public surface ⇒ MINOR bump.
+export const PRICING_MODEL_VERSION = "3.1.0";
 
 /** One named "outros custos" sub-cost; its value folds into custo_total exactly as 004's adminTotal. */
 export interface OtherCostItem {
@@ -302,7 +304,168 @@ function percentMultiplier(pct: number): Decimal {
   return new Decimal(1).plus(new Decimal(pct).dividedBy(100));
 }
 
+// ── E3 assembly compute (ADR-0016, 3.1.0) ────────────────────────────────────────────────────────
+// A BOM prices N independent lines (each a full single-piece input × a quantity) and sums them —
+// no shared-plate amortization in 3.1.0 (spec Q1; a shared-plate mode can extend this additively).
+// Contract: specs/008-e3-multi-piece-bom/contracts/pricing-core-bom.md.
+
+/** One BOM line: the existing single-piece input (reused verbatim) × a finite integer qty ≥ 0. */
+export interface BomLineInput {
+  input: PriceInput;
+  quantity: number;
+}
+
+/** Per-line outcome: the per-UNIT result (unchanged) + its money scaled by quantity. */
+export interface BomLineResult {
+  line: PriceResult;
+  quantity: number;
+  custoTotal: number;
+  precoVarejo: number;
+  precoAtacado: number;
+}
+
+/**
+ * Per-marketplace assembly rollup (FR-403). Money fields are assembly TOTALS — Σ over the
+ * contributing lines of (that line's slot value × quantity), per level. A slot in `error`
+ * contributes zero and increments `skippedLines` (honest, not silent — extends SC-107); a rollup
+ * nobody fed (`contributingLines === 0`) reports null prices, never a fake R$ 0,00.
+ */
+export interface BomChannelRollup {
+  marketplace: string | null;
+  precoAnuncioVarejo: number | null;
+  recebidoLiquidoVarejo: number | null;
+  precoAnuncioAtacado: number | null;
+  recebidoLiquidoAtacado: number | null;
+  freightCostVarejo: number;
+  freightCostAtacado: number;
+  contributingLines: number;
+  skippedLines: number;
+}
+
+export interface BomResult {
+  lines: BomLineResult[];
+  custoTotal: number;
+  precoVarejo: number;
+  precoAtacado: number;
+  channels: BomChannelRollup[];
+  modelVersion: string;
+}
+
+/** Decimal accumulator behind one BomChannelRollup while the lines stream in. */
+interface RollupAccumulator {
+  marketplace: string | null;
+  anuncioVarejo: Decimal;
+  liquidoVarejo: Decimal;
+  anuncioAtacado: Decimal;
+  liquidoAtacado: Decimal;
+  freightVarejo: Decimal;
+  freightAtacado: Decimal;
+  contributingLines: number;
+  skippedLines: number;
+}
+
+/**
+ * Canonical assembly compute (ADR-0016). Money rule one level up from ADR-0008: the per-unit line
+ * is already rounded (2dp), per-line×qty is `toMoney(Decimal × qty)` — never native `*` — and every
+ * aggregate is `sumMoney` of those already-rounded per-line values, so the assembly total equals
+ * the sum of the numbers the user SEES (FR-412, no double-rounding). A line's channel error stays
+ * channel-local (per-slot isolation); a bad quantity or piece input throws ValidationError exactly
+ * like computeCalculator does.
+ */
+export function computeBom(lines: BomLineInput[]): BomResult {
+  lines.forEach((l, i) => {
+    if (!Number.isInteger(l.quantity) || l.quantity < 0) {
+      throw new ValidationError(
+        `lines[${i}].quantity must be a finite integer >= 0`,
+        `lines[${i}].quantity`,
+      );
+    }
+  });
+
+  const lineResults: BomLineResult[] = lines.map(({ input, quantity }) => {
+    const line = computeCalculator(input);
+    const times = (perUnit: number): number => toMoney(new Decimal(perUnit).times(quantity));
+    return {
+      line,
+      quantity,
+      custoTotal: times(line.custoTotal),
+      precoVarejo: times(line.precoVarejo),
+      precoAtacado: times(line.precoAtacado),
+    };
+  });
+
+  // Per-marketplace rollup — grouped in first-appearance order (deterministic; Map keeps it).
+  const rollups = new Map<string | null, RollupAccumulator>();
+  for (const { line, quantity } of lineResults) {
+    for (const slot of line.channels) {
+      let acc = rollups.get(slot.marketplace);
+      if (!acc) {
+        acc = {
+          marketplace: slot.marketplace,
+          anuncioVarejo: new Decimal(0),
+          liquidoVarejo: new Decimal(0),
+          anuncioAtacado: new Decimal(0),
+          liquidoAtacado: new Decimal(0),
+          freightVarejo: new Decimal(0),
+          freightAtacado: new Decimal(0),
+          contributingLines: 0,
+          skippedLines: 0,
+        };
+        rollups.set(slot.marketplace, acc);
+      }
+      if (slot.error !== null) {
+        acc.skippedLines += 1; // honest: shown as skipped, never silently dropped
+        continue;
+      }
+      acc.contributingLines += 1;
+      // Non-error slots always carry the four prices (see computeChannel) — `?? 0` only narrows.
+      acc.anuncioVarejo = acc.anuncioVarejo.plus(
+        new Decimal(slot.precoAnuncioVarejo ?? 0).times(quantity),
+      );
+      acc.liquidoVarejo = acc.liquidoVarejo.plus(
+        new Decimal(slot.recebidoLiquidoVarejo ?? 0).times(quantity),
+      );
+      acc.anuncioAtacado = acc.anuncioAtacado.plus(
+        new Decimal(slot.precoAnuncioAtacado ?? 0).times(quantity),
+      );
+      acc.liquidoAtacado = acc.liquidoAtacado.plus(
+        new Decimal(slot.recebidoLiquidoAtacado ?? 0).times(quantity),
+      );
+      acc.freightVarejo = acc.freightVarejo.plus(
+        new Decimal(slot.freightCostVarejo).times(quantity),
+      );
+      acc.freightAtacado = acc.freightAtacado.plus(
+        new Decimal(slot.freightCostAtacado).times(quantity),
+      );
+    }
+  }
+
+  const channels: BomChannelRollup[] = [...rollups.values()].map((acc) => ({
+    marketplace: acc.marketplace,
+    precoAnuncioVarejo: acc.contributingLines === 0 ? null : toMoney(acc.anuncioVarejo),
+    recebidoLiquidoVarejo: acc.contributingLines === 0 ? null : toMoney(acc.liquidoVarejo),
+    precoAnuncioAtacado: acc.contributingLines === 0 ? null : toMoney(acc.anuncioAtacado),
+    recebidoLiquidoAtacado: acc.contributingLines === 0 ? null : toMoney(acc.liquidoAtacado),
+    freightCostVarejo: toMoney(acc.freightVarejo),
+    freightCostAtacado: toMoney(acc.freightAtacado),
+    contributingLines: acc.contributingLines,
+    skippedLines: acc.skippedLines,
+  }));
+
+  return {
+    lines: lineResults,
+    custoTotal: sumMoney(lineResults.map((l) => l.custoTotal)),
+    precoVarejo: sumMoney(lineResults.map((l) => l.precoVarejo)),
+    precoAtacado: sumMoney(lineResults.map((l) => l.precoAtacado)),
+    channels,
+    modelVersion: PRICING_MODEL_VERSION,
+  };
+}
+
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
 export { grossUp } from "./channels";
 export type { ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
+// 3.1.0 public money primitives (ADR-0016): consumers (the BOM feature layer) format/verify with
+// these instead of ever doing native float arithmetic — pricing-core stays the only money home.
+export { Decimal, toMoney, sumMoney } from "./rounding";

@@ -53,7 +53,7 @@ describe("computeCalculator — single source + version stamp (SC-109)", () => {
 
   it("stamps every result with the model version", () => {
     const r = computeCalculator(INPUT);
-    expect(r.modelVersion).toBe("3.0.0");
+    // The literal pin lives in version.test.ts (single source); here only the stamping matters.
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });
