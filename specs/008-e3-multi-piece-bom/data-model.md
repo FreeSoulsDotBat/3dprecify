@@ -67,12 +67,19 @@ product_id IS NOT NULL
 A "blank line" is unrepresentable, exactly like `products`. (Load-bearing snapshot fields = the pricing
 inputs + denominators; optional labels/reserves may be null.)
 
-## Write logic (mirrors `products._apply` + `_to_out`)
+## Write logic (mirrors `products._apply` + `_to_out`; amended 2026-07-11 — K3/K4, R8/ADR-0017)
 
+- **Atomic kit-save + materialization (ADR-0017)**: ONE transaction per write. For each **ad-hoc** line:
+  dedup by `btrim(name)` exact match against the account's LIVE products → hit ⇒ the line references the
+  existing product (`action: "referenced"`); miss ⇒ a **manual product** row is inserted (refs NULL + the
+  full value snapshot — the existing `products` CHECKs already admit this shape, **no products migration**),
+  and the line references it (`action: "created"`). Then the kit + lines commit together — a denied/failed
+  save materializes nothing.
+- **Consequence**: every persisted `bom_line` is **born with `product_id`**. The snapshot-only branch of the
+  link-or-snapshot CHECK is reachable ONLY via D6 degradation (referenced product deleted later) — the CHECK
+  and snapshot columns stay exactly as specified above.
 - **`product_id` present** ⇒ re-snapshot the resolved live product on every write (the product itself resolves
   its filament/printer); the snapshot columns are refreshed so a later delete degrades to *these* values.
-- **`product_id` NULL** (ad-hoc or degraded) ⇒ persist the submitted editable overrides into the snapshot
-  columns.
 - A `product_id` that does not resolve to an **owned, live** product ⇒ **422, no existence oracle** (reuse the
   E2 `_unresolvable`; SC-308).
 - **Degradation (D6)**: deleting a referenced product fires `ON DELETE SET NULL` on `bom_lines.product_id`;
@@ -80,19 +87,26 @@ inputs + denominators; optional labels/reserves may be null.)
   write is required here because E3 keeps the snapshot **continuously refreshed on each BOM write** — but if a
   product can be deleted between BOM writes, the delete path SHOULD capture last-known into referencing
   `bom_lines` in the same txn (mirror the E2 filament/printer delete D6 pattern). Resolve in tasks.
+- **Manual product state (K3)**: no new column — the attention indicator is DERIVED
+  (`filament_id IS NULL OR printer_id IS NULL`), one unified honest state for "born manual" and "degraded by
+  deletion"; linking a saved filament + printer through the ordinary product edit clears it (SC-412).
 
 ## `owner_uid` on `bom_lines`?
 
 Not denormalized — the owner comes from `boms`; every read is owner-scoped through `boms` (single source of
 truth). Optional defense-in-depth (a redundant `owner_uid` + RLS) may be added in tasks if desired.
 
-## Wire (contract summary — full surface in `contracts/api-surface.md`)
+## Wire (contract summary — full surface in `contracts/api-surface.md`; amended 2026-07-11)
 
-- `BomLineIn`: `{ quantity, productId? , pieceInputs? , channels?, otherCosts? }` — camelCase, money as decimal
-  strings; either `productId` or a full `pieceInputs` (link-or-snapshot enforced server-side, 422 otherwise).
+- `BomLineIn`: `{ quantity, productId?, pieceName?, pieceInputs?, filamentValues?, printerValues?,
+  tariffPerKwh?, includeMarketplace?, channels?, otherCosts? }` — camelCase, money as decimal strings; either
+  `productId` OR `pieceName` + the full ad-hoc value-set (the ProductIn shape, so the manual product can be
+  materialized); else 422.
 - `BomIn`: `{ name, lines: BomLineIn[] }`.
-- `BomOut`: `{ id, name, lines: BomLineOut[], createdAt, updatedAt }` — **no price** (recomputed client-side
-  via `computeBom`, ADR-0016). Each `BomLineOut` resolves live vs last-known and flags `degraded: boolean`.
+- `BomOut`: `{ id, name, lines: BomLineOut[], createdAt, updatedAt, materializations? }` — **no price**
+  (recomputed client-side via `computeBom`, ADR-0016). Each `BomLineOut` resolves live vs last-known and
+  flags `degraded: boolean`; write responses carry `materializations[{position, productId, action}]` (K4
+  honesty: "criado" vs "referenciou o existente").
 
 ## Indices
 

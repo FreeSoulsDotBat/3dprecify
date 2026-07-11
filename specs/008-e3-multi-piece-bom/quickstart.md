@@ -51,3 +51,14 @@ Implementation lives in tasks; this is the run/verify guide.
 - The full E1 + E2 e2e suite passes **unchanged**; the free single-piece calculator, offline behavior, and the
   E2 catalog/entitlement guarantees are not regressed. `pnpm gate:all` green (frontend + backend); contract
   drift-guard 0 diff; `generated.ts` raw Orval.
+
+## §8 — Kits vocabulary + catalog materialization (K1–K4, US6 — added 2026-07-11)
+
+- **K1 (with PR-A)**: the bottom nav shows the 5th tab **"Kits"** → `/kits`; the page reads "Monte seus kits"
+  + the approved subtitle; teaser/empty copy uses Kit vocabulary; 5-tab nav has NO 390px overflow (SC-410).
+- **K2–K4 (with PR-B)**: premium saves a kit with 1 catalog-ref + 2 ad-hoc lines, naming each ad-hoc piece →
+  the kit appears in the catalog's **Kits** tab on a fresh session; the 2 pieces appear in Produtos as manual
+  products with the attention indicator (SC-411/412). Re-save with the same names → ZERO duplicates (the
+  response says "referenced"). Link filament+printer to a materialized product → indicator clears. A free
+  caller's save is denied AND materializes nothing (atomicity). Deleting a materialized product later →
+  the kit line degrades (D6, §5).

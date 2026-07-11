@@ -15,6 +15,13 @@ paywalled compute — enforced by a **server-informed client route-guard** + **s
 mirroring the E2 `products` link-or-snapshot + last-known degradation (ADR-0013 pattern). The free single-piece
 calculator and all E1/E2 guarantees stay unchanged.
 
+**K-amendment (2026-07-11, spec K1–K4 + research R8 + ADR-0017 Proposed):** the user-facing name is **Kits**
+— route **`/kits`**, a **5th nav tab "Kits"** (icon `boxes`), title "Monte seus kits" + approved subtitle
+(all folded into the unpushed PR-A); saved kits list in a **4th catalog tab**; and every kit WRITE is an
+**atomic kit-save + materialization** transaction — ad-hoc lines become **manual products** (refs NULL +
+value snapshot, attention indicator derived, FR-310 relaxed ONLY on this service path) with **name dedup**
+(`btrim` exact, live rows) — all PR-B scope. "BOM" stays the internal/technical term (code, tables, wire).
+
 ## Technical Context
 
 **Language/Version**: TypeScript (React 19 / Vite / pricing-core, Node 24) + Python 3.12 (FastAPI, uv).
@@ -74,6 +81,19 @@ BOM feature module + composer UI; delivery in 3 owner-gated PR slices (research 
 
 **Result: GATE PASS.** No unjustified violations; Complexity Tracking empty.
 
+**Re-evaluated 2026-07-11 (K-amendment): GATE PASS holds.**
+- **II (Truth)** — materialization outcomes are surfaced honestly (`materializations[].action`
+  "created"/"referenced"; the reference-wins collision is visible, never silent); the manual-product
+  attention indicator states plainly that filament+printer should be linked.
+- **IV (Server entitlements)** — unchanged; materialization rides INSIDE the already-gated kit write.
+- **V (Clean architecture)** — the FR-310 relaxation is **path-scoped to the kit-save service**; the public
+  products API contract is untouched; "manual product" REUSES the existing refs-null degraded row shape
+  (zero products migration); the dedup is service logic, not a new constraint that could break E2 accounts.
+- **VI (Lean docs)** — recorded as dated spec Clarifications (K1–K4), research R8, and **ADR-0017
+  (Proposed** — owner accepts at the PR-B gate; the dedup case-rule, exact vs case-insensitive, is the
+  explicitly flagged low-confidence item ~75%).
+- **VIII (Architecture first)** — all K decisions went through the arquiteto (R8) BEFORE implementation.
+
 ## Project Structure
 
 ### Documentation (this feature)
@@ -119,6 +139,18 @@ apps/web/src/
 `backend/app`, and `apps/web` FSD-Lite layers. A new `feature/bom` module composes the calculator; it MUST NOT
 import from `feature/calculator` internals or `pages` (E2's boundary lesson — share via `pricing-core` +
 `entities`). BOM feature routes are guarded like E2 product routes but gate on the server entitlement status.
+
+**K-amendment structure deltas (R8):**
+- `apps/web/src/app/router.tsx` — route path becomes **`/kits`** (module stays `pages/bom/`; no redirect —
+  nothing was ever published at /bom).
+- `apps/web/src/widgets/app-nav/` — 5th `NAV_ITEMS` entry "Kits" (roving tabindex self-adapts; grid CSS +
+  nav tests + 390px overflow e2e go 4→5); `shared/ui/icon.tsx` inlines the `boxes` glyph (lucide-static).
+- `apps/web/src/features/catalog/` — a 4th catalog tab "Kits" listing saved kits (PR-B, reads the new
+  `entities/bom` cache).
+- `backend/app/api/boms.py` + a **kit-save service** (`_materialize` step inside the SAME transaction):
+  dedup → insert manual products (refs NULL + snapshot) → kit + lines; public `products.py` untouched.
+- Slicing: **K1 (vocabulary + /kits + 5th tab + icon) folds into the unpushed PR-A**; K2–K4 land with PR-B;
+  PR-C unchanged (degradation lifecycle).
 
 ## Complexity Tracking
 

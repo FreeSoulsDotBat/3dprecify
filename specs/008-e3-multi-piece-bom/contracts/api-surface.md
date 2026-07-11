@@ -8,6 +8,10 @@ header. Persistence is the **server-authoritative** boundary (ADR-0015): writes 
 > Compute is **not** an endpoint — `computeBom` runs client-side (ADR-0016). The backend stores/serves BOM
 > **inputs/structure**, never a price (FR-407).
 
+> **K-amendment (2026-07-11, R8/ADR-0017):** every kit WRITE is an **atomic kit-save + materialization**
+> transaction — ad-hoc lines become manual catalog products (name-dedup'd) and the kit's lines reference
+> them, all-or-nothing. "BOM" stays the technical wire/route term; the user-facing name is **Kit** (K1).
+
 ## Routes
 
 | Method | Path | Auth | Entitlement | Success | Notes |
@@ -28,10 +32,16 @@ header. Persistence is the **server-authoritative** boundary (ADR-0015): writes 
 BomLineIn:
   quantity: integer >= 0
   productId?: uuid                # live catalog reference (E2 product)
-  pieceInputs?: PieceInputs       # ad-hoc / last-known override (the E1 single-piece fields)
+  # ── ad-hoc piece (MATERIALIZED on save — ADR-0017, K3/K4): the ProductIn value-set ──
+  pieceName?: string (non-blank)  # REQUIRED for ad-hoc lines (K4) — the manual product's name
+  pieceInputs?: PieceInputs       # the E1 single-piece fields
+  filamentValues?: FilamentValues # resolved filament snapshot (costPerRoll, rollWeightKg, material?)
+  printerValues?: PrinterValues   # resolved printer snapshot (machineValue, lifetime, avgPowerKw, reserve?)
+  tariffPerKwh?: decimal-string
+  includeMarketplace?: boolean
   channels?: ChannelSlot[]        # optional per-line marketplace slots (nullable fees = live catalog)
   otherCosts?: OtherCost[]
-  # exactly one of {productId, pieceInputs} must resolve — link-or-snapshot; else 422 (no existence oracle)
+  # exactly one of {productId} OR {pieceName + full ad-hoc value-set} must resolve; else 422 (no oracle)
 
 BomIn:
   name: string (non-blank)
@@ -52,16 +62,36 @@ BomOut:
   name: string
   lines: BomLineOut[]
   createdAt, updatedAt: string (ISO)
+  # WRITE responses only (POST/PUT) — what the save did per ad-hoc line, so the client can message
+  # "criado no catálogo" vs "referenciou o existente" honestly (K4):
+  materializations?: [{ position: integer, productId: uuid, action: "created" | "referenced" }]
   # NO price field — the client recomputes via computeBom (ADR-0016)
 ```
 
 `PieceInputs`, `ChannelSlot` (nullable fees), `OtherCost` are **reused verbatim** from the E2 products contract
 (`products.py`) — same names, same validation (finite ≥ 0, `rollWeightKg` > 0, decimal-string money).
 
+## Atomic materialization on write (ADR-0017 — K3/K4, R8)
+
+- ONE server transaction per POST/PUT: for each ad-hoc line, **dedup** then **materialize** then create the
+  kit + lines — a denied or failed save materializes NOTHING (spec edge; all-or-nothing).
+- **Dedup (K4)**: per-account, `btrim(name)` **exact** (case-sensitive) match against **live** products only
+  (`deleted_at IS NULL`). Hit → the line references the existing product (`action: "referenced"`; the typed
+  values are superseded — surfaced honestly by the client). Miss → a **manual product** is created
+  (`action: "created"`): refs NULL + the full value snapshot (the existing products CHECKs already admit this
+  row shape — NO products migration).
+- The **FR-310 relaxation lives ONLY here** (service-level construction). The public `POST /api/v1/products`
+  keeps requiring saved filament+printer references — its contract is unchanged.
+- Consequence: **every persisted `bom_line` is born with `product_id`**; the snapshot-only branch of the
+  `bom_lines` CHECK is reachable only via D6 degradation (product deleted later), never at create.
+- No `products(owner_uid, name)` unique index (E2 allows duplicate names today; a constraint could fail
+  existing accounts). Dedup is service logic inside the transaction.
+
 ## Validation (server, mirrors products)
 
 - Rejected input is NEVER stored (FR-306 lineage); per-field finite ≥ 0; denominators > 0.
 - `productId` must resolve to an **owned, live** product, else `422` `VALIDATION_ERROR` (no existence oracle).
+- An ad-hoc line without `pieceName` (or with a blank one) → `422` (K4 — the manual product needs a name).
 - Link-or-snapshot enforced by the DB CHECK + a pydantic `@model_validator` (mirror `products` `_link_or_snapshot`).
 
 ## Contract drift-guard
