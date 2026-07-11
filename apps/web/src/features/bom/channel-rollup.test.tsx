@@ -75,3 +75,32 @@ describe("ChannelRollup — skippedLines honesty (ux §1.7, SC-107 extended)", (
     expect(container).toBeEmptyDOMElement();
   });
 });
+
+// T006b top-nit fix: a FORM-invalid slot never reaches the engine (per-slot validation fires
+// first), so the page counts it per marketplace and the rollup merges those counts into the
+// honest skipped caption — counts only, never money (ux §0.2 still holds).
+describe("ChannelRollup — form-invalid slots merge into the skipped caption (ux §1.7)", () => {
+  it("adds ui-skipped counts to an existing marketplace block", () => {
+    render(
+      <ChannelRollup
+        channels={[rollup({ contributingLines: 1, skippedLines: 0 })]}
+        uiSkipped={[{ marketplace: "MERCADO_LIVRE", count: 1 }]}
+      />,
+    );
+    expect(screen.getByText(t.channelSkipped.replace("{n}", "1"))).toBeInTheDocument();
+    expect(screen.getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
+  });
+
+  it("a marketplace with ONLY ui-skipped slots gets an honest block (absence + skipped, no prices)", () => {
+    render(<ChannelRollup channels={[]} uiSkipped={[{ marketplace: "SHOPEE", count: 2 }]} />);
+    expect(screen.getByText(messages.calculator.marketplaceNames.SHOPEE)).toBeInTheDocument();
+    expect(screen.getByText(t.channelNoContrib)).toBeInTheDocument();
+    expect(screen.getByText(t.channelSkipped.replace("{n}", "2"))).toBeInTheDocument();
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+  });
+
+  it("still renders nothing when there is neither an engine rollup nor a ui-skipped slot", () => {
+    const { container } = render(<ChannelRollup channels={[]} uiSkipped={[]} />);
+    expect(container).toBeEmptyDOMElement();
+  });
+});

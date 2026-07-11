@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -24,7 +24,7 @@ import {
 import type { ProductOut } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Card, Field, Select } from "@/shared/ui";
+import { Alert, Card, Field, Icon, Select } from "@/shared/ui";
 
 // 008/T005 — the expanded BOM line editor (research R7): the widgets layer is the sanctioned
 // home for this cross-feature composite — it may import `features/calculator` (FSD: widgets →
@@ -94,6 +94,15 @@ export function BomLineEditor({
     ...products.map((p) => ({ value: p.id, label: p.name })),
   ];
 
+  // ux §1.3 secondary disclosure — label composed from the existing section titles (no new copy).
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const advancedLabel = [
+    t.sections.optional,
+    t.sections.labor,
+    t.outrosCustos.title,
+    t.sections.marketplace,
+  ].join(" · ");
+
   return (
     <div className="flex flex-col gap-3">
       {/* In-line catalog picker (§1.2-C): a line is ad-hoc by default; binding a saved product
@@ -116,7 +125,11 @@ export function BomLineEditor({
         </Card>
       )}
 
-      {/* The calculator body — identical sections, identical engine (SC-402 lineage). */}
+      {/* The calculator body — identical sections, identical engine (SC-402 lineage). The
+          mandatory costs + markup stay visible; the secondary sections collapse under ONE
+          disclosure (ux §1.3, T006b nit #2) so only the line being tuned pays the height.
+          Collapsing UNMOUNTS the sections but RHF keeps their VALUES, and both the resolver and
+          computeFromForm run over values — a collapsed bad fee still errors/rolls up honestly. */}
       <FieldGroup
         control={control}
         title={t.sections.inputs}
@@ -125,51 +138,65 @@ export function BomLineEditor({
       />
       <FieldGroup
         control={control}
-        title={t.sections.optional}
-        info={t.sectionInfo.optional}
-        hint={t.sections.optionalHint}
-        fields={OPTIONAL_FIELDS}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.labor}
-        info={t.sectionInfo.labor}
-        fields={LABOR_FIELDS}
-      />
-      <OtherCostsSection
-        control={control}
-        fields={otherCostFields}
-        errors={otherCostErrors}
-        onAppend={() => appendOtherCost(defaultOtherCost())}
-        onRemove={removeOtherCost}
-      />
-      <FieldGroup
-        control={control}
         title={t.sections.markup}
         info={t.sectionInfo.markup}
         fields={MARKUP_FIELDS}
       />
+
+      <button
+        type="button"
+        className="flex min-h-11 items-center gap-2 text-left text-sm text-[var(--text-muted)]"
+        aria-expanded={advancedOpen}
+        onClick={() => setAdvancedOpen((open) => !open)}
+      >
+        <Icon name={advancedOpen ? "chevron-up" : "chevron-down"} size={16} aria-hidden />
+        <span>{advancedLabel}</span>
+      </button>
+
+      {advancedOpen && (
+        <div className="flex flex-col gap-3">
+          <FieldGroup
+            control={control}
+            title={t.sections.optional}
+            info={t.sectionInfo.optional}
+            hint={t.sections.optionalHint}
+            fields={OPTIONAL_FIELDS}
+          />
+          <FieldGroup
+            control={control}
+            title={t.sections.labor}
+            info={t.sectionInfo.labor}
+            fields={LABOR_FIELDS}
+          />
+          <OtherCostsSection
+            control={control}
+            fields={otherCostFields}
+            errors={otherCostErrors}
+            onAppend={() => appendOtherCost(defaultOtherCost())}
+            onRemove={removeOtherCost}
+          />
+          <MarketplaceSection
+            control={control}
+            values={current}
+            fields={fields}
+            channelOutcomes={channelOutcomes}
+            included={current.includeMarketplace !== false}
+            onToggleInclude={(next) => setValue("includeMarketplace", next)}
+            onAppend={append}
+            onRemove={remove}
+            onMarketplaceChange={handleMarketplaceChange}
+            refreshFailed={refreshFailed}
+            refreshing={refreshing}
+            onRetryCatalog={retryCatalog}
+          />
+        </div>
+      )}
 
       {result ? (
         <PriceResults result={result} values={current} />
       ) : (
         <Alert tone="danger">{t.invalidNote}</Alert>
       )}
-
-      <MarketplaceSection
-        control={control}
-        values={current}
-        fields={fields}
-        channelOutcomes={channelOutcomes}
-        included={current.includeMarketplace !== false}
-        onToggleInclude={(next) => setValue("includeMarketplace", next)}
-        onAppend={append}
-        onRemove={remove}
-        onMarketplaceChange={handleMarketplaceChange}
-        refreshFailed={refreshFailed}
-        refreshing={refreshing}
-        onRetryCatalog={retryCatalog}
-      />
     </div>
   );
 }

@@ -106,6 +106,21 @@ function BomComposer() {
   });
   const { bom, lineResults } = composeBom(composerLines);
 
+  // T006b top nit (ux §1.7): a FORM-invalid channel slot is rejected by the per-slot validation
+  // BEFORE the engine, so it can never reach `skippedLines` — count those per marketplace (on
+  // lines that otherwise compute; a fully-invalid line already carries its own caption) and let
+  // the rollup surface them honestly. Counts only — no money leaves pricing-core.
+  const uiSkippedCounts = new Map<string | null, number>();
+  lines.forEach((l, i) => {
+    if (parseQuantity(l.quantityRaw) === null || !outcomes[i].ok) return;
+    outcomes[i].channels.forEach((slot, j) => {
+      if (Object.keys(slot.errors).length === 0) return;
+      const marketplace = l.values.channels[j]?.marketplace ?? null;
+      uiSkippedCounts.set(marketplace, (uiSkippedCounts.get(marketplace) ?? 0) + 1);
+    });
+  });
+  const uiSkipped = [...uiSkippedCounts].map(([marketplace, count]) => ({ marketplace, count }));
+
   const addLine = () => {
     const id = nextId.current++;
     setLines((prev) => [
@@ -196,7 +211,7 @@ function BomComposer() {
             <Icon name="plus" size={16} aria-hidden /> {t.addLine}
           </Button>
 
-          <AssemblySummary bom={bom} />
+          <AssemblySummary bom={bom} uiSkipped={uiSkipped} />
         </>
       )}
     </section>

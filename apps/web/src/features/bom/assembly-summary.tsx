@@ -4,7 +4,7 @@ import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { BreakdownRow, Card, PriceHero } from "@/shared/ui";
 
-import { ChannelRollup } from "./channel-rollup";
+import { ChannelRollup, type UiSkippedChannel } from "./channel-rollup";
 
 // 008/T005 — the assembly summary (ux §1.1/§1.7): the headline the seller came for. Custo total
 // as a breakdown row, the varejo/atacado pair as PriceHeroes (mirroring Calcular's results), then
@@ -13,7 +13,13 @@ import { ChannelRollup } from "./channel-rollup";
 const t = messages.bom;
 const tc = messages.calculator;
 
-export function AssemblySummary({ bom }: { bom: BomResult }) {
+export function AssemblySummary({
+  bom,
+  uiSkipped,
+}: {
+  bom: BomResult;
+  uiSkipped?: UiSkippedChannel[];
+}) {
   return (
     <div className="flex flex-col gap-3">
       <Card padding="md" className="flex flex-col gap-2">
@@ -24,7 +30,7 @@ export function AssemblySummary({ bom }: { bom: BomResult }) {
           <PriceHero label={tc.results.atacado} value={bom.precoAtacado} prefix="R$" />
         </div>
       </Card>
-      <ChannelRollup channels={bom.channels} />
+      <ChannelRollup channels={bom.channels} uiSkipped={uiSkipped} />
     </div>
   );
 }

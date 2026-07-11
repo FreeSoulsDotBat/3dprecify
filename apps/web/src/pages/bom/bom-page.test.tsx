@@ -235,19 +235,91 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
   });
 });
 
+// The §1.3 secondary disclosure keeps a line short: optional/labor/outros/marketplace collapse
+// under one affordance; its accessible label is composed from the existing section titles.
+const advancedLabel = [
+  messages.calculator.sections.optional,
+  messages.calculator.sections.labor,
+  messages.calculator.outrosCustos.title,
+  messages.calculator.sections.marketplace,
+].join(" · ");
+
+/** Open the expanded line's secondary disclosure, then type a commission (calcular.test idiom —
+ *  the accessible name carries the "opcional" tag). */
+function typeCommission(value: string) {
+  fireEvent.click(screen.getByRole("button", { name: new RegExp(advancedLabel) }));
+  const commission = screen.getByRole("textbox", {
+    name: (n) => n.startsWith(messages.calculator.channels.commission) && !n.includes("mínima"),
+  });
+  fireEvent.change(commission, { target: { value } });
+}
+
+describe("BomPage — line density (ux §1.3 secondary disclosure)", () => {
+  it("a fresh line keeps the secondary sections collapsed — only Custos da peça pays the height", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    // The disclosure affordance is visible; the sections behind it are not mounted yet.
+    expect(screen.getByRole("button", { name: new RegExp(advancedLabel) })).toBeInTheDocument();
+    expect(
+      screen.queryByRole("textbox", {
+        name: (n) => n.startsWith(messages.calculator.channels.commission) && !n.includes("mínima"),
+      }),
+    ).not.toBeInTheDocument();
+    // The primary sections stay visible (mandatory costs + the per-unit price).
+    expect(
+      screen.getByRole("textbox", {
+        name: new RegExp(messages.calculator.fields.costPerRoll),
+      }),
+    ).toBeInTheDocument();
+  });
+
+  it("opening the disclosure reveals the marketplace section (and the rest)", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(advancedLabel) }));
+    expect(
+      screen.getByRole("textbox", {
+        name: (n) => n.startsWith(messages.calculator.channels.commission) && !n.includes("mínima"),
+      }),
+    ).toBeInTheDocument();
+  });
+});
+
 describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", () => {
   it("a line with a manual channel fee rolls up under 'Preços por canal (montagem)'", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     // The default line ships one Mercado Livre slot with blank fees; over the EMPTY test catalog
     // nothing pre-fills, so type a manual 20% commission: anúncio varejo = 30,90 / 0,8 = 38,63.
-    // The accessible name carries the "opcional" tag — the calcular.test idiom filters it.
-    const commission = screen.getByRole("textbox", {
-      name: (n) => n.startsWith(messages.calculator.channels.commission) && !n.includes("mínima"),
-    });
-    fireEvent.change(commission, { target: { value: "20" } });
+    typeCommission("20");
     const rollup = screen.getByText(t.channelsTitle).closest("section, div");
     expect(rollup).not.toBeNull();
     expect(within(rollup as HTMLElement).getAllByText(/38,63/).length).toBeGreaterThan(0);
+  });
+
+  // T006b top nit: a FORM-invalid channel slot (commission ≥ 100) never reaches the engine, so
+  // it must surface in the assembly rollup as an honest skipped count — never a silent drop
+  // from "N peça(s) somaram" (ux §1.7).
+  it("a form-invalid slot on one line surfaces as skipped in the rollup, siblings still sum", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    // Line 2 is the expanded one — make its ML slot invalid (commission 100).
+    typeCommission("100");
+    // Line 1 (default ML slot, zero fees) still contributes; line 2 is counted as skipped.
+    const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
+    expect(within(rollup).getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
+    expect(within(rollup).getByText(t.channelSkipped.replace("{n}", "1"))).toBeInTheDocument();
+  });
+
+  it("a marketplace whose ONLY slot is form-invalid still gets an honest rollup block", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    typeCommission("100");
+    const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
+    expect(within(rollup).getByText(t.channelNoContrib)).toBeInTheDocument();
+    expect(within(rollup).getByText(t.channelSkipped.replace("{n}", "1"))).toBeInTheDocument();
+    // Honest absence — never a fabricated R$ 0,00 price in the block.
+    expect(within(rollup).queryByText(/R\$\s?0,00/)).not.toBeInTheDocument();
   });
 });

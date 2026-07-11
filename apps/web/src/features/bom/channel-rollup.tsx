@@ -62,14 +62,49 @@ function RollupBlock({ rollup }: { rollup: BomChannelRollup }) {
   );
 }
 
+/** A per-marketplace count of FORM-invalid slots (T006b top nit): per-slot validation rejects a
+ *  bad fee BEFORE the engine, so those slots never appear in `BomChannelRollup.skippedLines` —
+ *  the page counts them and this component merges the COUNTS (never money) into the honest
+ *  skipped caption, so a line that can't price is never silently missing from "N somaram". */
+export interface UiSkippedChannel {
+  marketplace: string | null;
+  count: number;
+}
+
 /** The whole rollup card; omitted entirely when no line carries a channel (like the calculator
  *  with marketplaces off — ux §1.7). */
-export function ChannelRollup({ channels }: { channels: BomChannelRollup[] }) {
-  if (channels.length === 0) return null;
+export function ChannelRollup({
+  channels,
+  uiSkipped = [],
+}: {
+  channels: BomChannelRollup[];
+  uiSkipped?: UiSkippedChannel[];
+}) {
+  const extra = new Map(uiSkipped.filter((u) => u.count > 0).map((u) => [u.marketplace, u.count]));
+  const merged = channels.map((rollup) => {
+    const add = extra.get(rollup.marketplace) ?? 0;
+    extra.delete(rollup.marketplace);
+    return add === 0 ? rollup : { ...rollup, skippedLines: rollup.skippedLines + add };
+  });
+  // A marketplace whose EVERY slot was form-invalid has no engine rollup at all — it still gets
+  // an honest block (absence + skipped), never a silent omission.
+  const synthetic: BomChannelRollup[] = [...extra].map(([marketplace, count]) => ({
+    marketplace,
+    precoAnuncioVarejo: null,
+    recebidoLiquidoVarejo: null,
+    precoAnuncioAtacado: null,
+    recebidoLiquidoAtacado: null,
+    freightCostVarejo: 0,
+    freightCostAtacado: 0,
+    contributingLines: 0,
+    skippedLines: count,
+  }));
+  const blocks = [...merged, ...synthetic];
+  if (blocks.length === 0) return null;
   return (
     <Card padding="md" className="flex flex-col gap-2">
       <p className="text-sm font-semibold">{t.channelsTitle}</p>
-      {channels.map((rollup, i) => (
+      {blocks.map((rollup, i) => (
         <RollupBlock key={`${rollup.marketplace ?? "manual"}-${i}`} rollup={rollup} />
       ))}
     </Card>
