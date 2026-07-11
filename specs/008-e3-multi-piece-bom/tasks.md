@@ -87,11 +87,11 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 ## Phase 4b: K1 — Kits vocabulary + /kits route + 5th nav tab (folds into PR-A; R8 D-K1)
 
-- [ ] T008b [K1] Write FAILING tests first — router guards (`/kits` matches; anonymous never bounced),
+- [X] T008b [K1] Write FAILING tests first — router guards (`/kits` matches; anonymous never bounced),
       app-nav (5 tabs, "Kits" entry, roving tabindex over 5), bom-page/teaser copy tests updated to the Kit
       vocabulary ("Monte seus kits" + approved subtitle), e2e `bom.spec.ts` → `/kits` + a11y-overflow 5-tab
       390px. Observe failing.
-- [ ] T008c [K1] Implement: route path `/kits` (module stays `pages/bom/`); 5th `NAV_ITEMS` entry "Kits"
+- [X] T008c [K1] Implement: route path `/kits` (module stays `pages/bom/`); 5th `NAV_ITEMS` entry "Kits"
       (`boxes` glyph inlined in `shared/ui/icon.tsx` from lucide-static; nav grid CSS 4→5); i18n `bom.*`
       reworded to Kit vocabulary (title "Monte seus kits"; subtitle "Aqui você pode montar Kits para anúncios
       únicos de acordo com seus produtos cadastrados ou peças avulsas"; teaser/empty follow; `nav.kits`);

@@ -24,7 +24,7 @@ export function BomTeaser({ signedOut }: { signedOut: boolean }) {
         {signedOut && (
           <Button
             variant="secondary"
-            onClick={() => void navigate({ to: "/sign-in", search: { redirect: "/bom" } })}
+            onClick={() => void navigate({ to: "/sign-in", search: { redirect: "/kits" } })}
           >
             {t.teaserSignIn}
           </Button>

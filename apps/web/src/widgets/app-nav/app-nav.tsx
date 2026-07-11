@@ -13,11 +13,13 @@ export interface AppNavProps {
   variant: AppNavVariant;
 }
 
-// The fixed four-section IA (routes.md). Icons come from the DS Icon set; labels
-// from the i18n `nav.*` keys. `to` values are registered TanStack routes.
+// The five-section IA (routes.md; 008/K1 added Kits — owner-approved amendment of the
+// original fixed four). Icons come from the DS Icon set; labels from the i18n `nav.*`
+// keys. `to` values are registered TanStack routes.
 const NAV_ITEMS = [
   { to: "/calcular", label: messages.nav.calcular, icon: "calculator" },
   { to: "/catalogo", label: messages.nav.catalogo, icon: "package" },
+  { to: "/kits", label: messages.nav.kits, icon: "boxes" },
   { to: "/historico", label: messages.nav.historico, icon: "history" },
   { to: "/conta", label: messages.nav.conta, icon: "circle-user" },
 ] as const satisfies readonly { to: string; label: string; icon: IconName }[];

@@ -47,7 +47,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
   const email = await signUpThrowaway(page, `bom-${info.workerIndex}`);
 
   // Free (never granted): /bom shows the honest teaser, never the composer (ADR-0015).
-  await page.goto("/bom");
+  await page.goto("/kits");
   await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
 
   grantPremium(email);
@@ -94,7 +94,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
   await expect(page.getByText(t.productForm.savedProduct)).toBeVisible();
 
   // The composer: 3 lines — 2 ad-hoc (one requantified) + 1 catalog-referenced.
-  await page.goto("/bom");
+  await page.goto("/kits");
   await expect(page.getByText(t.bom.emptyTitle)).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
@@ -129,8 +129,10 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
 test("signed-out at /bom sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
   page,
 }) => {
-  // Signed-out: /bom renders the teaser (no bounce), with the honest sign-in path.
-  await page.goto("/bom");
+  // Signed-out: /kits renders the teaser (no bounce), with the honest sign-in path. The 5th
+  // nav tab "Kits" is the entry point (K1/SC-410) and must be present on every surface.
+  await page.goto("/kits");
+  await expect(page.getByRole("link", { name: t.nav.kits })).toBeVisible();
   await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
   await expect(page.getByText(t.bom.teaserSignedOutBody)).toBeVisible();
   // NO price, NO date, NO purchase CTA (FR-410): the only actions are Entrar/Entendi.
@@ -140,7 +142,7 @@ test("signed-out at /bom sees the honest teaser; the FREE calculator is untouche
 
   // Entrar carries the return-to-intent to /bom.
   await page.getByRole("button", { name: t.bom.teaserSignIn }).click();
-  await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fbom/);
+  await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fkits/);
 
   // The free single-piece calculator stays fully usable, signed-out (SC-409 spot check).
   await page.goto("/calcular");

@@ -29,7 +29,8 @@ export interface RouterContext {
 // The sign-in return-to-intent target. Only the guarded product sections set it, so we
 // whitelist known internal routes: this is both the "same-origin/known" clause of GC-3
 // and an open-redirect guard (external / protocol-relative targets fall back to Calcular).
-const RETURN_TO_INTENT = ["/catalogo", "/historico", "/conta"] as const;
+// 008/K1: /kits joins the whitelist — the kit teaser's "Entrar" promises a return there.
+const RETURN_TO_INTENT = ["/catalogo", "/kits", "/historico", "/conta"] as const;
 type ReturnToIntent = (typeof RETURN_TO_INTENT)[number];
 type SignInLanding = ReturnToIntent | "/calcular";
 
@@ -105,12 +106,13 @@ const produtoEditRoute = createRoute({
   component: ProdutoEditRouteComponent,
 });
 
-// 008/US5 (ADR-0015): /bom is PUBLIC like /catalogo — a free/signed-out user must SEE the honest
-// premium teaser there, never a bounce. The composer itself gates IN-PAGE on the authoritative
-// GET /api/v1/entitlement (`status === active`) — a server-informed guard, never a local flag.
+// 008/US5 (ADR-0015) + K1 (R8 D-K1): /kits is PUBLIC like /catalogo — a free/signed-out user
+// must SEE the honest premium teaser there, never a bounce. The composer itself gates IN-PAGE on
+// the authoritative GET /api/v1/entitlement (`status === active`) — a server-informed guard,
+// never a local flag. Route = user vocabulary (Kits); the code module stays pages/bom (K1).
 const bomRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: "/bom",
+  path: "/kits",
   component: BomPage,
 });
 

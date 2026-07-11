@@ -103,12 +103,12 @@ describe("BOM teaser — signed-out (US5, ux §2.2)", () => {
     expect(screen.getByRole("button", { name: t.teaserSignIn })).toBeInTheDocument();
   });
 
-  it("Entrar carries the return-to-intent to /bom", () => {
+  it("Entrar carries the return-to-intent to /kits (K1 route)", () => {
     renderAt("anonymous");
     fireEvent.click(screen.getByRole("button", { name: t.teaserSignIn }));
     expect(navigateMock).toHaveBeenCalledWith({
       to: "/sign-in",
-      search: { redirect: "/bom" },
+      search: { redirect: "/kits" },
     });
   });
 });
