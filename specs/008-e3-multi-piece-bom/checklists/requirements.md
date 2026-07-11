@@ -38,3 +38,10 @@
 - **Plan-phase items flagged** (not spec-level): (a) how a client-side compute is honestly gated Premium under
   Principle IV; (b) the pricing-core contract shape (compose helper + semver vs pure client orchestration).
 - Spec is READY for `/speckit-clarify` (none needed — decisions taken) or `/speckit-plan`.
+- **Re-validated 2026-07-11 after the K1–K4 amendment** ("Kits" rename + 5th nav tab + catalog Kits tab +
+  ad-hoc→manual-product materialization with name dedup): all items still PASS. The 3 clarification
+  candidates were answered by the owner interactively (K2 catalog placement · K3 manual-product relaxation
+  of FR-310 with attention indicator · K4 name-per-piece + name dedup) — zero markers remain. New US6 +
+  FR-413..416 + SC-410..412 are testable/measurable; materialization is scoped to the persistence slice.
+  Plan-phase items: route naming (/bom vs /kits), atomic save+materialization design, FR-310 relaxation
+  seam, nav icon for the 5th tab.

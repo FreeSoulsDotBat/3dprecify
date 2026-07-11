@@ -44,6 +44,33 @@ inputs, with a quantity. E3 adds (a) multi-piece composition and (b) a combined 
     honest mechanism (and how it satisfies Principle IV for a client-side computation) is an architecture
     decision for `/speckit-plan` (an ADR).
 
+### Session 2026-07-11 (owner decisions — "Kits" rename + catalog materialization; PR-A code-complete)
+
+Recorded after PR-A (US1+US5) was code-complete and visually homologated but BEFORE any push. These
+amendments extend — never replace — the 2026-07-10 decisions above.
+
+- **K1 — User-facing name is "Kits"; 5th nav tab APPROVED.** Every user-facing surface says **Kit/Kits**
+  (never "BOM"/"Montagem"): the bottom-nav gains a 5th tab **"Kits"** (this closes the ux §0.4 owner flag and
+  amends the fixed 4-tab IA), the page title is **"Monte seus kits"** and the subtitle is **"Aqui você pode
+  montar Kits para anúncios únicos de acordo com seus produtos cadastrados ou peças avulsas"**; teaser/empty
+  states follow the Kit vocabulary. "BOM" remains only as the internal/technical term (code, tables, spec
+  cross-references). Route naming is a plan-level decision.
+- **K2 — Saved kits surface in the catalog: a 4th "Kits" tab in the catalog screen** (Filamentos ·
+  Impressoras · Produtos · **Kits**), listing the account's saved kits. The nav "Kits" tab opens the composer.
+- **K3 — Ad-hoc pieces MATERIALIZE as catalog products on kit save (automatic).** When a kit is saved, every
+  ad-hoc line becomes a **manual product** in the catalog: it carries the line's own values, starts with NO
+  filament/printer references, is **editable later** to link a saved filament and printer, and shows an
+  **attention indicator** signalling it should be linked to a printer and filament (cleared once linked).
+  This is a **dated relaxation of FR-310** (E2's "products reference saved items at create") scoped ONLY to
+  this materialization path; direct product creation keeps requiring references.
+- **K4 — Naming + dedup at save: name-per-piece, dedup by name.** The kit save flow asks a name for each
+  ad-hoc piece (pre-filled "Peça {n} · {kit name}"); within the account, if a product with that name already
+  exists the line **references the existing product** instead of creating a duplicate. After a successful
+  save, every kit line therefore corresponds to a catalog product (pre-existing or materialized) and reflects
+  it live (D3 semantics, uniform with catalog-referenced lines).
+- Materialization happens **only after save** (the free-standing composer persists nothing — unchanged), so
+  the whole K2–K4 behavior belongs to the persistence slice (PR-B scope).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Compose and price a multi-piece order (Premium) (Priority: P1) [FOUNDATIONAL]
@@ -170,6 +197,40 @@ free.
 
 ---
 
+### User Story 6 - A saved kit lives in the catalog; ad-hoc pieces materialize as products (Priority: P2)
+
+When a premium seller **saves** a kit (K1 naming), the kit itself becomes part of their catalog — visible in
+a **Kits** tab beside Filamentos/Impressoras/Produtos (K2) — and every ad-hoc piece in it **materializes** as
+a catalog **manual product** (K3): named by the seller at save time (pre-filled "Peça {n} · {kit name}"),
+carrying the piece's values, with an **attention indicator** that it should be linked to a saved filament and
+printer (editable later to add the links). If a product with the chosen name already exists, the line
+references it instead of duplicating (K4). Composing free-standing still persists nothing.
+
+**Why this priority**: This is the owner-directed bridge between kits and the E2 catalog — it turns one-off
+piece entries into reusable catalog assets and makes the kit itself a first-class saved object. It depends on
+kit save (US2), so it lands with the persistence slice.
+
+**Independent Test**: Save a kit with one catalog-referenced line and two ad-hoc lines → the kit appears in
+the catalog's Kits tab; the two ad-hoc pieces appear in Produtos as manual products with the attention
+indicator; re-saving with the same piece names creates zero duplicates; linking a filament+printer to a
+materialized product clears its indicator.
+
+**Acceptance Scenarios**:
+
+1. **Given** a premium user saves a kit, **When** the save succeeds, **Then** the kit appears in the
+   catalog's Kits tab on a fresh session (per-account, like every catalog entity).
+2. **Given** a kit with ad-hoc lines, **When** saving, **Then** the user names each ad-hoc piece (pre-filled
+   "Peça {n} · {kit name}") and each becomes a manual product in Produtos — no filament/printer references,
+   values preserved, attention indicator shown.
+3. **Given** an ad-hoc piece whose chosen name matches an existing product of the account, **When** saving,
+   **Then** no duplicate is created — the kit line references the existing product (live, D3).
+4. **Given** a materialized manual product, **When** the user edits it and links a saved filament and
+   printer, **Then** the attention indicator clears and it behaves as an ordinary product.
+5. **Given** a free/signed-out/lapsed-write caller, **When** a save is denied (US2 rules), **Then** NOTHING
+   materializes — no kit in the catalog, no products created.
+
+---
+
 ### Edge Cases
 
 - Empty BOM (zero lines) or a line with quantity 0 — how is the total presented (no crash, honest zero/empty)?
@@ -183,6 +244,11 @@ free.
 - Client-side gate honesty: a determined user could invoke the offline engine directly — the product treats
   BOM as Premium via the client route-guard + server-gated persistence; the plan must state this honestly
   rather than imply the compute is server-enforced.
+- Materialization edges (K3/K4): a piece name colliding with an existing product whose VALUES differ (the
+  line references the existing product — the piece's typed values are superseded; the save flow must make
+  this visible, never silent); a save that materializes products must be all-or-nothing with the kit save
+  (no half-materialized catalog on failure); deleting a materialized product later follows the existing D6
+  degradation; the 5-tab bottom nav must stay usable at 390px (no overflow, targets ≥ 44px).
 
 ## Requirements *(mandatory)*
 
@@ -220,6 +286,21 @@ free.
 - **FR-412**: Monetary values in any BOM the system persists or transmits MUST preserve exact decimal
   semantics (no precision drift) consistent with the established money handling; the assembly total MUST NOT
   exhibit user-visible double-rounding versus its honestly-rounded lines.
+- **FR-413** (K1, 2026-07-11): Every user-facing surface MUST use the **Kit/Kits** vocabulary (title "Monte
+  seus kits"; subtitle "Aqui você pode montar Kits para anúncios únicos de acordo com seus produtos
+  cadastrados ou peças avulsas"; teaser/empty/nav copy follow). The bottom nav MUST gain a 5th tab **"Kits"**
+  opening the composer; the 390px layout MUST remain overflow-free with 5 tabs.
+- **FR-414** (K2, 2026-07-11): The catalog screen MUST gain a **Kits** tab listing the account's saved kits
+  (per-account, recomputed prices — never stored), beside Filamentos/Impressoras/Produtos.
+- **FR-415** (K3, 2026-07-11): Saving a kit MUST automatically materialize each ad-hoc line as a catalog
+  **manual product**: the line's values, no filament/printer references at creation (a dated, path-scoped
+  relaxation of FR-310 — direct product creation keeps requiring references), an **attention indicator**
+  until a saved filament AND printer are linked, and full editability to add those links later. A denied or
+  failed save MUST materialize nothing (atomic with the kit save).
+- **FR-416** (K4, 2026-07-11): The save flow MUST ask a name per ad-hoc piece (pre-filled "Peça {n} · {kit
+  name}") and MUST dedup by name within the account: an existing product with that name is referenced (live,
+  D3) instead of duplicated — and the flow MUST surface that a reference (not a creation) happened. After a
+  successful save every kit line corresponds to a catalog product.
 
 ### Key Entities *(include if feature involves data)*
 
@@ -232,6 +313,10 @@ free.
   redefined here.
 - **Entitlement (E2)**: the existing server-authoritative premium check; reused verbatim to gate BOM
   persistence (and, together with a client route-guard, to gate BOM feature access).
+- **Kit (user-facing name of a saved BOM, K1)**: a saved assembly, listed in the catalog's Kits tab (K2);
+  internally the BOM entity above — one concept, two vocabularies (user vs technical).
+- **Manual Product (K3)**: a product materialized from an ad-hoc kit piece — own values, no filament/printer
+  references at creation, attention indicator until linked; otherwise an ordinary Product (D3/D6 apply).
 
 ## Success Criteria *(mandatory)*
 
@@ -255,6 +340,13 @@ free.
   purchase CTA), verified on the rendered UI; the free single-piece calculator remains fully free.
 - **SC-409**: All E1 + E2 acceptance guarantees pass **unchanged** after E3 (no regression of the free
   calculator, free/offline/signed-out behavior, or the entitlement gate).
+- **SC-410** (K1/K2): The "Kits" nav tab and the approved title/subtitle copy are live; a saved kit appears
+  in the catalog's Kits tab on a fresh session; the 5-tab nav has no 390px overflow.
+- **SC-411** (K3/K4): 100% of ad-hoc lines in a successfully saved kit end as catalog products (materialized
+  or name-referenced), with ZERO duplicates across repeated saves using the same names; a denied/failed save
+  materializes nothing.
+- **SC-412** (K3): Every materialized manual product shows the attention indicator until a saved filament AND
+  printer are linked; linking clears it and the product behaves as an ordinary product.
 
 ## Assumptions
 
