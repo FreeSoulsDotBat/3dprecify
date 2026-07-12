@@ -100,15 +100,20 @@ describe("BOM teaser — free account (US5, SC-408)", () => {
     expect(navigateMock).toHaveBeenCalledWith({ to: "/calcular" });
   });
 
-  it("a LAPSED account is NOT teased — its saved kits stay reachable (FR-409, the Q3 freeze)", () => {
+  it("a LAPSED account is NOT teased — it gets the calm reactivation panel (FR-409 / ux §3)", () => {
     // PR-A parked this: nothing was saveable then, so lapsed fell through to the teaser. Now that
-    // kits persist they are the seller's own data — a lapse freezes WRITES, it does not repossess
-    // the work. So a lapsed account reaches the composer, can reopen and recompute, and is told
-    // plainly that only saving needs an active Premium (the save call itself denies server-side).
+    // kits persist, a lapse freezes WRITES without repossessing the seller's work — so the teaser
+    // (which sells the feature to someone who never had it) is the wrong door. But the CREATE
+    // entry is still gated: handing a lapsed seller a full composer and only revealing at "Salvar"
+    // that none of it can be kept would be a fake affordance. So: a calm panel, pointing at the
+    // kits they still have (reopening one lands in the composer and recomputes — a read).
     renderAt("authenticated", "lapsed");
     expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
-    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
-    expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.lapsedTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.lapsedBody)).toBeInTheDocument();
+    // No composer, and above all no save affordance that would fail at the end.
+    expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: t.save })).not.toBeInTheDocument();
   });
 });
 

@@ -297,6 +297,28 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
     }
   };
 
+  // Lapsed + NOT reopening a saved kit = the CREATE entry, and creating is exactly what a lapse
+  // freezes (ADR-0015 gates feature access on `active`; FR-409 only promises the DATA stays
+  // readable). Handing a lapsed seller a full composer and letting them discover at "Salvar" that
+  // none of it can be kept is a fake affordance — so the create door is a calm reactivation panel
+  // that points at the kits they still have (ux §3, the reconciliation the plan asked PR-B to
+  // settle). Reopening a saved kit (`?id=`) still lands in the composer below and recomputes.
+  if (lapsed && !openedKit) {
+    return (
+      <GateShell>
+        <Alert tone="info" title={t.lapsedTitle}>
+          {t.lapsedBody}
+        </Alert>
+        <Button
+          variant="secondary"
+          onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+        >
+          {t.viewKits}
+        </Button>
+      </GateShell>
+    );
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} description={t.subtitle} />
@@ -305,9 +327,9 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
           keep the work (the query refetches on focus/reconnect by itself). */}
       {staleEntitlement && <Alert tone="info">{t.guardError}</Alert>}
 
-      {/* Lapsed (FR-409): nothing was deleted, reopening and recalculating still work — only
-          saving needs an active Premium. The save affordance below stays VISIBLE and answers
-          honestly when tapped, rather than sitting disabled and silent (ux §5). */}
+      {/* Reopened a saved kit while lapsed (FR-409): nothing was deleted, and reading and
+          recalculating still work — saving is what needs an active Premium. The save affordance
+          stays VISIBLE and answers honestly when tapped, never disabled-and-silent (ux §5). */}
       {lapsed && <Alert tone="info">{t.lapsedBanner}</Alert>}
 
       {lines.length === 0 ? (

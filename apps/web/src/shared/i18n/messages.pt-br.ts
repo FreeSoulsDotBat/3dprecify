@@ -442,10 +442,15 @@ export const messages = {
       "As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.",
     // Bound line edited after binding → it becomes an avulsa piece and enters the catalog (ADR-0017)
     adjustedBecomesPiece: "Você ajustou esta peça — ela será salva como uma peça nova no catálogo.",
-    // Lapse (FR-409 / Q3 freeze): the kits are the seller's data, not a rented view. Nothing was
-    // deleted; reopening and recalculating keep working; only saving needs an active Premium.
+    // Lapse (FR-409 / Q3 freeze / ux §3) — calm, never punitive ("expirou/bloqueado/suspenso" are
+    // banned, FR-014). The kits are the seller's data, not a rented view: nothing was deleted and
+    // reopening + recalculating keep working. Creating/editing is what needs an active Premium, so
+    // the CREATE entry is gated rather than left as an affordance that fails at the end.
+    lapsedTitle: "Premium pausado",
+    lapsedBody:
+      "Seus kits salvos continuam aqui e podem ser reabertos e recalculados. Para criar ou editar, reative o Premium.",
     lapsedBanner:
-      "Seu Premium não está ativo. Seus kits continuam aqui para reabrir e recalcular — salvar precisa do Premium.",
+      "Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.",
   },
   historico: {
     emptyTitle: "Histórico em breve",
