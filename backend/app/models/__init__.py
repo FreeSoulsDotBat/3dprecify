@@ -378,10 +378,13 @@ class BomLine(Base):
 
     After ADR-0017 every line is BORN with ``product_id`` (an ad-hoc piece materializes a manual
     product first, name-dedup'd, in the same transaction), so the snapshot-only branch of the
-    CHECK is reachable ONLY via D6 degradation — the referenced product is deleted later, the FK
-    goes NULL (``ON DELETE SET NULL``) and these columns become the authoritative, editable
-    source. They are therefore re-snapshotted from the live product on EVERY kit write, which is
-    what makes that degradation lossless.
+    CHECK is reachable only via D6 degradation. The referenced product is **soft-deleted** later;
+    the kit read resolver (owner + live-only) stops resolving it and these columns become the
+    authoritative, editable source — the ``product_id`` column itself stays pointed at the
+    soft-deleted row (the ``ON DELETE SET NULL`` FK fires only on a hard purge, for which this
+    snapshot is already current). They are re-snapshotted from the live product on EVERY kit write,
+    which is what makes that degradation lossless (ADR-0017 addendum — read-time D6, not
+    delete-capture).
 
     No ``deleted_at``: the root kit governs the lifecycle (``bom_id`` cascades on hard delete).
     No ``owner_uid``: ownership comes from ``boms`` — one source of truth, every read is

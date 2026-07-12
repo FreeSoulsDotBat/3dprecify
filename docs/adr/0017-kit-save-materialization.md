@@ -124,3 +124,60 @@ Jonatan approves this ADR at the PR-B gate (Proposed until then).
   BomOut `materializations`, "born product_id" note) — applied by the parent from R8; tasks add the kit-save
   service, the derived-indicator UI, and the intra-save dedup test. A hard DB-level dedup, if ever desired, is a
   separate ADR that must first reconcile existing E2 duplicate names.
+
+---
+
+## Addendum — 2026-07-12 (PR-B review gate): §6 — D6 kit-line degradation is READ-TIME, not delete-capture
+
+- **Status**: Accepted (owner, at the PR-B gate — 2026-07-12), same gate as the body above.
+- **Deciders**: Jonatan (owner) + arquiteto + Claude.
+
+### Context
+A PR-B pre-merge review found a BLOCKER in the kit read path: soft-deleting a product a kit
+referenced left the read serving the dead product as `degraded: false` (an honesty lie) AND made the
+kit unsaveable (a PUT re-sent the stale `productId` → 422). The plan (T020, data-model §D6, quickstart
+§5) documented D6 as an `ON DELETE SET NULL` event and/or "delete-capture" mirroring the E2
+filament/printer → product delete. Two verified facts make that unreachable as written: (a)
+`delete_product` is a **soft delete** (`deleted_at = now`, unchanged since E2) — `ON DELETE SET NULL`
+never fires on a soft delete; (b) the kit read resolver did not filter `deleted_at`, so it disagreed
+with the write resolver (`_resolve_product`, owner + live).
+
+### Options considered
+- **Option R — read-time degrade in the kit resolver (CHOSEN, 88%).** `delete_product` stays a plain
+  soft-delete. `_resolve_views` resolves owner-scoped AND live-only (`deleted_at IS NULL`) — the SAME
+  filter as the write path — so a soft-deleted/cross-tenant product is absent from the map and its line
+  serves `degraded: true` + the last-known snapshot. `_snapshot_line` re-writes the FULL value-set on
+  EVERY kit save, so the snapshot is always current and degradation is lossless without delete-time
+  capture. The `product_id` FK keeps `ON DELETE SET NULL` purely as defense for a hypothetical HARD
+  purge. Pros: read path self-defends (can't serve a dead product as live however it died); NO
+  `products` → `bom_lines` coupling; zero change to the shipped E2 delete path (SC-409 by construction);
+  write and read resolvers share one live+owner filter (closes the 422-on-re-save bug). Cons: the stored
+  `product_id` keeps pointing at the soft-deleted (still-present) row — a dangling-but-harmless reference
+  (FK intact, read-filtered, safe under hard purge); a deliberate inconsistency with E2's eager-unlink.
+- **Option C — eager delete-capture (the planned T020, mirror E2), 55%.** `delete_product` UPDATEs every
+  referencing `bom_line` (snapshot + `product_id` NULL) in the same txn. Cons: couples the `products`
+  aggregate to `bom_lines` (inverts the clean dependency direction); modifies a shipped, homologated E2
+  handler (SC-409 risk); duplicates the snapshot policy; makes the FK redundant; a read that trusts
+  "FK ⇒ live" is fragile to any future delete path that forgets to unlink.
+- **Option H — hard delete so `ON DELETE SET NULL` fires (literal plan text), 20%.** Requires making
+  `delete_product` a hard delete — destroys the soft-delete/lapse-freeze guarantee (FR-409/Q3) and the
+  E2 catalog's own D6. Non-starter.
+
+### Decision
+**Option R.** D6 for kit lines is read-time degradation, not delete-capture. The `product_id` FK retains
+`ON DELETE SET NULL` as defense for a hard purge only.
+
+### On the deliberate E2 inconsistency (why it is acceptable)
+The two subsystems degrade at DIFFERENT layers because their read paths differ: `products._live_links`
+does NOT filter the linked filament/printer's `deleted_at` (so E2 MUST eager-unlink to keep "a present
+link ⇒ a live row" true); the kit read (`_resolve_views`) DOES filter the linked product's `deleted_at`
+(so it degrades at read). Both honor the same D6 contract — a deleted reference ⇒ degraded, lossless,
+editable, re-saveable. R is the stronger mechanism. If uniformity is ever wanted, the correct direction
+is to migrate E2 toward R under its own ADR — never to drag E3 back to eager-capture.
+
+### Consequences
+- Positive: SC-405 (degraded line priceable + re-saveable) and the D6 honesty fix hold by construction;
+  SC-409 untouched (no E2 delete change); the link-or-snapshot CHECK holds in every state.
+- Accepted: a non-null `product_id` to a soft-deleted row (harmless, documented); D6 differs from E2;
+  `_snapshot_line` running on every save is load-bearing (skipping it for product-linked lines would
+  break the hard-purge CHECK safety) — pinned by test.

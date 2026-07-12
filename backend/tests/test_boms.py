@@ -697,6 +697,114 @@ def test_degraded_kit_line_serves_the_same_values_as_a_degraded_product(
     assert degraded_line["tariffPerKwh"] == degraded_product["tariffPerKwh"]
 
 
+# --- D3 live reflection + the read-time-degrade DB pins (ADR-0017 addendum, 2026-07-12) -------
+
+
+def _edit_product_grams(
+    client: TestClient, h: dict[str, str], product_id: str, fid: str, pid: str, grams: str
+) -> None:
+    """PUT the product (full ProductIn replace, saved refs required) with a new printGrams."""
+    r = client.put(
+        f"/api/v1/products/{product_id}",
+        headers=h,
+        json={
+            "name": "Base",
+            "filamentId": fid,
+            "printerId": pid,
+            "pieceInputs": {**PIECE, "printGrams": grams},
+            "tariffPerKwh": "1.000000",
+            "includeMarketplace": True,
+            "channels": [dict(CHANNEL)],
+            "otherCosts": [dict(OTHER_COST)],
+        },
+    )
+    assert r.status_code == 200, r.text
+
+
+def test_editing_a_referenced_product_reflects_live_on_kit_reopen(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """D3 (SC-405): a kit line reads its referenced product **live on every reopen** — there is no
+    stored copy at save time. Edit the product and the kit resolves the NEW values on the next
+    read, no re-save. This is the whole reason `_resolve_views` reads the live product instead of
+    freezing a snapshot into the line at write time."""
+    h = _premium(monkeypatch, migrated_db, "bom-d3-1")
+    fid, pid = _mk_refs(db_client, h)
+    prod = _mk_product(db_client, h, fid, pid, "Base")
+    bom_id = _post(db_client, h, _bom_body([_ref_line(prod, quantity=4)])).json()["id"]
+
+    before = db_client.get(f"/api/v1/boms/{bom_id}", headers=h).json()["lines"][0]
+    assert before["degraded"] is False
+    assert before["pieceInputs"]["printGrams"] == "100.000"
+
+    _edit_product_grams(db_client, h, prod, fid, pid, "250.000")
+
+    after = db_client.get(f"/api/v1/boms/{bom_id}", headers=h).json()["lines"][0]
+    assert after["degraded"] is False
+    assert after["productId"] == prod
+    assert after["pieceInputs"]["printGrams"] == "250.000"  # the LIVE value, not the saved one
+
+
+def test_soft_delete_leaves_the_line_product_id_dangling_degradation_is_read_time(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """ADR-0017 addendum: `delete_product` is a PLAIN soft-delete — it does NOT touch `bom_lines`
+    (no eager delete-capture, unlike the E2 filament/printer→product path). The line's
+    `product_id` keeps pointing at the (now soft-deleted) row; the line degrades on the API read
+    ONLY because `_resolve_views` is live-only. Pinned at the DB level so a future 'optimization'
+    that eager-nulls the FK on delete would fail here and flag the divergence from the accepted
+    read-time design."""
+    h = _premium(monkeypatch, migrated_db, "bom-rt-1")
+    fid, pid = _mk_refs(db_client, h)
+    prod = _mk_product(db_client, h, fid, pid, "Base")
+    bom_id = _post(db_client, h, _bom_body([_ref_line(prod, quantity=4)])).json()["id"]
+
+    assert db_client.delete(f"/api/v1/products/{prod}", headers=h).status_code == 204
+
+    # The line row STILL points at the dead product — soft-delete rewrote nothing in bom_lines.
+    line_rows = _rows(migrated_db, "SELECT product_id FROM bom_lines WHERE bom_id = :b", b=bom_id)
+    assert str(line_rows[0][0]) == prod  # dangling on purpose (read-time degrade)
+    # The product row is soft-deleted (present, deleted_at set), not physically gone.
+    prod_rows = _rows(migrated_db, "SELECT deleted_at FROM products WHERE id = :p", p=prod)
+    assert len(prod_rows) == 1
+    assert prod_rows[0][0] is not None
+    # …yet the API read degrades it, purely via the live-only resolver.
+    line = db_client.get(f"/api/v1/boms/{bom_id}", headers=h).json()["lines"][0]
+    assert line["degraded"] is True
+    assert line["productId"] is None
+
+
+def test_a_hard_purge_nulls_the_fk_and_the_line_still_degrades_and_the_check_holds(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The `ON DELETE SET NULL` FK is defense for a HARD purge only (ADR-0017 addendum). Force a
+    raw `DELETE FROM products` (the disaster-recovery / erasure path that bypasses the soft-delete
+    service): the FK nulls `bom_lines.product_id`, the link-or-snapshot CHECK still holds because
+    `_snapshot_line` wrote the full snapshot on every save, and the API read still degrades to the
+    last-known values — no orphan, no CHECK violation, no 500."""
+    h = _premium(monkeypatch, migrated_db, "bom-purge-1")
+    fid, pid = _mk_refs(db_client, h)
+    prod = _mk_product(db_client, h, fid, pid, "Base")
+    bom_id = _post(db_client, h, _bom_body([_ref_line(prod, quantity=4)])).json()["id"]
+
+    # Hard purge — raw DELETE, NOT the soft-delete endpoint. The FK must absorb it cleanly.
+    engine = sa.create_engine(migrated_db)
+    with engine.begin() as conn:
+        conn.execute(sa.text("DELETE FROM products WHERE id = :p"), {"p": prod})
+    engine.dispose()
+
+    # FK fired: the column is NULL now (and the CHECK held, or the DELETE would have raised).
+    line_rows = _rows(migrated_db, "SELECT product_id FROM bom_lines WHERE bom_id = :b", b=bom_id)
+    assert line_rows[0][0] is None
+    # The read still degrades honestly from the snapshot columns — priceable, no crash.
+    line = db_client.get(f"/api/v1/boms/{bom_id}", headers=h).json()["lines"][0]
+    assert line["degraded"] is True
+    assert line["productId"] is None
+    assert line["quantity"] == 4
+    assert line["pieceInputs"]["printGrams"] == "100.000"
+    assert line["filamentValues"]["costPerRoll"] == "110.00"
+
+
 # --- US4: manage + the honest lapse policy (FR-409 / SC-407) ---------------------------------
 
 

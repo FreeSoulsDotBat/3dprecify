@@ -185,13 +185,25 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 **Goal**: a saved BOM line referencing a product reflects live edits (D3) and degrades to editable last-known
 values when the product is deleted (D6). **Independent Test**: quickstart §5.
 
-- [ ] T019 [US3] Write FAILING pytest first (`backend/tests/test_boms.py` additions): **D3** live-reflect (edit
-      product → saved BOM reload recomputes with new values); **D6** degradation (delete referenced product →
-      `bom_lines.product_id` set NULL AND last-known captured in the SAME txn → degraded reopen editable, still
-      priceable, SC-405); `422` no-oracle for an unresolvable/cross-account `productId`. Observe failing.
-- [ ] T020 [US3] Implement D6 delete-capture: the product DELETE path updates referencing `bom_lines` (set
-      `product_id` NULL + persist last-known snapshot columns) in the SAME txn — mirror the E2 filament/printer
-      D6 delete pattern; `_to_out` sets `degraded: true`. Tests green.
+- [~] T019 [US3] pytest (`backend/tests/test_boms.py`) — PARTIALLY DELIVERED in PR-B. **D6 read-time
+      degradation** (soft-delete a referenced product → reopen: `productId: null` + `degraded: true`, snapshot
+      intact, still priceable AND re-saveable as ad-hoc, SC-405) DELIVERED via
+      `test_deleting_a_referenced_product_degrades_the_line_not_breaks_the_kit` + byte-identity guard
+      `test_degraded_kit_line_serves_the_same_values_as_a_degraded_product`; `422` no-oracle DELIVERED via
+      `test_unresolvable_product_reference_is_422_with_no_existence_oracle`. **STILL TO WRITE** (PR-C, failing-
+      first): (1) **D3 live-reflect** — edit a referenced product → kit reload recomputes with new values;
+      (2) decision-pins for read-time-degrade (ADR-0017 addendum): after a product soft-delete
+      `bom_lines.product_id` is UNCHANGED yet the read degrades (`delete_product` does NOT touch `bom_lines`);
+      the dangling-`product_id` re-save materializes a NEW product; the hard-purge defense (raw
+      `DELETE FROM products` → FK sets `product_id` NULL, line still degrades losslessly, CHECK holds).
+- [X] T020 [US3] D6 is **read-time degradation, NOT eager delete-capture** (ADR-0017 addendum, 2026-07-12 —
+      supersedes the earlier "mirror the E2 filament/printer delete" plan; the documented `ON DELETE SET NULL`
+      never fired because `delete_product` is a soft-delete). DELIVERED in PR-B: `delete_product` stays a plain
+      soft-delete (unchanged E2 handler — SC-409 by construction); `_resolve_views` resolves owner-scoped
+      **live-only** so a soft-deleted product is absent and its line degrades; `_snapshot_line` keeps the
+      snapshot lossless on every kit save; `_to_out` serves `degraded: true`; the FK keeps `ON DELETE SET NULL`
+      as hard-purge defense only. **No `products` → `bom_lines` coupling.** Closed by decision; PR-C's remaining
+      backend work is only the T019 gaps.
 - [ ] T021 [US3] Web: catalog-ref degraded line UI (— Manual — indicator, editable last-known values, calm
       info alert), mirroring the E2 product degradation surface; failing-first component test then green.
 - [ ] T021b [US3] Visual test: qa-produto homologates a degraded reopen (delete a referenced product → BOM

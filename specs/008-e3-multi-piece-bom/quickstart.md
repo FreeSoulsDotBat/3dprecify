@@ -36,10 +36,14 @@ Implementation lives in tasks; this is the run/verify guide.
 
 ## §5 — Catalog reference: live + last-known degradation (US3, SC-405)
 
-- Add product P as a line ×N → assembly uses P's live values. Edit P → BOM total reflects it on reopen. Delete
-  P → the line's `product_id` goes NULL (`ON DELETE SET NULL`), `degraded: true`, editable last-known values
-  remain, BOM stays priceable (no crash, no silent wrong number). A `productId` that isn't an owned/live
-  product → `422` (no existence oracle, SC-308/SC-406).
+- Add product P as a line ×N → assembly uses P's live values. Edit P → BOM total reflects it on reopen (D3,
+  resolved from the live product on every read). Delete P (a **soft** delete) → on reopen the line reads
+  `productId: null` + `degraded: true` with editable last-known values; the kit stays priceable (no crash, no
+  silent wrong number) **and** re-saveable (the degraded line re-saves as an ad-hoc piece and re-materializes).
+  Degradation is **read-time**: `_resolve_views` is live-only, so P is absent from the resolved map; the stored
+  `product_id` still points at the soft-deleted row (the `ON DELETE SET NULL` FK is defense for a hard purge
+  only) — ADR-0017 addendum. A `productId` that isn't an owned/live product → `422` (no existence oracle,
+  SC-308/SC-406).
 
 ## §6 — Per-account isolation + lapse freeze (US4, SC-406/SC-407)
 
