@@ -9,7 +9,7 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { ErrorCode } from "./generated";
-import { type ApiError, type ApiErrorCode } from "./transport";
+import { ApiError, type ApiErrorCode } from "./transport";
 
 const MESSAGE_BY_CODE: Record<ApiErrorCode, string> = {
   [ErrorCode.VALIDATION_ERROR]: messages.apiError.validation,
@@ -30,4 +30,16 @@ export function errorCodeMessage(code: ApiErrorCode): string {
 /** Convenience for the transport's typed error — maps its `code` to a friendly phrase. */
 export function apiErrorMessage(error: ApiError): string {
   return errorCodeMessage(error.code);
+}
+
+/** Map a FAILED WRITE onto an honest, specific pt-BR line (never a generic error, never a fake
+ *  save): a transport-phase failure (status 0 = offline / DNS / refused) says the write needs a
+ *  connection; any coded server error gets its friendly phrase (a lapsed 403 → "Salvar faz parte
+ *  do Premium."). Lived as a private copy in catalog-panel + produto-page; the kit save is the
+ *  third caller, so it moved here — one rule for "how a denied write speaks". */
+export function honestWriteError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return err.status === 0 ? messages.catalogo.offlineWriteBlocked : apiErrorMessage(err);
+  }
+  return messages.catalogo.offlineWriteBlocked;
 }

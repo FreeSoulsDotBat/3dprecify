@@ -139,10 +139,10 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 - [X] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
       `.prettierignore` exempt); drift-guard `git diff --exit-code` green. No new `ErrorCode`
       (`ENTITLEMENT_REQUIRED` + `VALIDATION_ERROR` already exist).
-- [ ] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
+- [X] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
       `useUpdateBom`/`useDeleteBom` hooks mirroring `entities/catalog`; purge-on-signout; "boms" added to the
       cache resource sweep.
-- [ ] T015 [US2][US6] Web kit save UI: kit name + a name `Field` PER AD-HOC PIECE (pre-filled "Peça {n} ·
+- [X] T015 [US2][US6] Web kit save UI: kit name + a name `Field` PER AD-HOC PIECE (pre-filled "Peça {n} ·
       {kit name}", K4) → Save → real-2xx toast; the response's `materializations[]` is surfaced honestly
       ("criado no catálogo" vs "já existia — referenciado", values-superseded warning on reference) → lands
       on the kit list. Failing-first component test (save round-trip + materialization messaging) then green.

@@ -1,5 +1,7 @@
+import { useNavigate } from "@tanstack/react-router";
 import { type ReactNode, useRef, useState } from "react";
 
+import { useCreateBom } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { AssemblySummary } from "@/features/bom/assembly-summary";
@@ -9,12 +11,16 @@ import { BomTeaser } from "@/features/bom/bom-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { type CalcFormValues, defaultCalcValues } from "@/features/calculator/calculator-schema";
 import { productToForm } from "@/features/calculator/product-mapping";
+import { honestWriteError } from "@/shared/api/error-messages";
+import type { Materialization } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Button, EmptyState, Icon, Spinner } from "@/shared/ui";
+import { Alert, Button, EmptyState, Field, Icon, Spinner, toast } from "@/shared/ui";
 import { BomLineEditor } from "@/widgets/bom-line-editor/bom-line-editor";
 import { PageHeader } from "@/widgets/page-header/page-header";
+
+import { defaultPieceName, type KitSaveLine, linesToBomIn, savesAsReference } from "./kit-save";
 
 // 008/T005+T006 — the /kits page (module stays pages/bom, K1; research R7 wiring): the
 // SERVER-INFORMED premium gate
@@ -34,8 +40,14 @@ interface LineState {
   /** Bound product id; "" = ad-hoc. Binding pre-fills `values` from the LIVE product (Q2). */
   productId: string;
   productName: string | null;
+  /** Optional filament label carried from the bound product (kept so a materialized piece
+   *  does not lose it). */
+  filamentMaterial: string | null;
   /** A bound line's fields were edited after binding (drives the "ajustado por você" seal). */
   adjusted: boolean;
+  /** The name this piece takes in the catalog when it materializes (K4). Empty = use the
+   *  "Peça {n} · {kit}" pre-fill; the seller may override it. */
+  pieceNameRaw: string;
 }
 
 /** Quantity is a finite integer ≥ 0 (contract); anything else marks the line invalid. */
@@ -106,8 +118,13 @@ function BomGatePanel({ signedOut }: { signedOut: boolean }) {
 function BomComposer({ staleEntitlement }: { staleEntitlement: boolean }) {
   const products = useProducts();
   const { catalog, source } = useFeeCatalog();
+  const navigate = useNavigate();
+  const createBom = useCreateBom();
   const [lines, setLines] = useState<LineState[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [kitName, setKitName] = useState("");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [materializations, setMaterializations] = useState<Materialization[] | null>(null);
   const nextId = useRef(1);
 
   // One computeFromForm pass per line (the SAME parse the calculator uses — R7 seam), then the
@@ -157,7 +174,9 @@ function BomComposer({ staleEntitlement }: { staleEntitlement: boolean }) {
         quantityRaw: "1",
         productId: "",
         productName: null,
+        filamentMaterial: null,
         adjusted: false,
+        pieceNameRaw: "",
       },
     ]);
     setExpandedId(id);
@@ -177,12 +196,48 @@ function BomComposer({ staleEntitlement }: { staleEntitlement: boolean }) {
     if (!product) return;
     // LIVE reference (Q2): pre-fill from the product's current values via the E2 wire⇄form
     // mapping — the same strings a manual entry would produce (SC-305 lineage). No price stored.
+    const bundle = productToForm(product);
     updateLine(id, {
-      values: productToForm(product).values,
+      values: bundle.values,
       productId,
       productName: product.name,
+      filamentMaterial: bundle.filamentMaterial,
       adjusted: false,
     });
+  };
+
+  // The lines exactly as the save adapter sees them (T015). A line that is bound AND untouched
+  // saves as a live reference; every other line materializes as a named catalog piece — including
+  // a bound line that was EDITED (ADR-0017's edit-after-bind rule: saving it as a reference would
+  // let the live product's values overwrite the adjustment the seller just made).
+  const saveLines: KitSaveLine[] = lines.map((l, i) => ({
+    values: l.values,
+    quantityRaw: l.quantityRaw,
+    productId: l.productId,
+    productName: l.productName,
+    filamentMaterial: l.filamentMaterial,
+    adjusted: l.adjusted,
+    pieceName: l.pieceNameRaw.trim() || defaultPieceName(i, kitName),
+  }));
+
+  const allLinesValid = lines.every(
+    (l, i) => parseQuantity(l.quantityRaw) !== null && outcomes[i].ok,
+  );
+
+  const save = async () => {
+    setSaveError(null);
+    setMaterializations(null);
+    if (lines.length === 0) return setSaveError(t.saveEmpty);
+    if (!kitName.trim()) return setSaveError(t.kitNameRequired);
+    if (!allLinesValid) return setSaveError(t.saveInvalid);
+
+    try {
+      const saved = await createBom.mutateAsync(linesToBomIn(kitName, saveLines));
+      toast(t.saved, { tone: "success" }); // real 2xx only — never an optimistic fake
+      setMaterializations(saved.materializations ?? []);
+    } catch (err) {
+      setSaveError(honestWriteError(err));
+    }
   };
 
   return (
@@ -233,6 +288,30 @@ function BomComposer({ staleEntitlement }: { staleEntitlement: boolean }) {
                   onBindProduct={(productId) => bindProduct(line.id, productId)}
                   adjusted={line.adjusted}
                 />
+                {/* Any line that does NOT save as a live reference becomes a catalog piece on
+                    save (K4), so it needs a name — and the seller sees that before it happens,
+                    never as a surprise row appearing in Produtos. */}
+                {!savesAsReference(saveLines[i]) && (
+                  <div className="flex flex-col gap-1 pt-2">
+                    {line.adjusted && line.productId !== "" && (
+                      <p className="text-xs text-[var(--text-muted)]">{t.adjustedBecomesPiece}</p>
+                    )}
+                    <Field label={t.pieceName}>
+                      {(p) => (
+                        <div className="tf-inputwrap">
+                          <input
+                            {...p}
+                            type="text"
+                            className="tf-input"
+                            placeholder={defaultPieceName(i, kitName)}
+                            value={line.pieceNameRaw}
+                            onChange={(e) => updateLine(line.id, { pieceNameRaw: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </Field>
+                  </div>
+                )}
               </BomLineCard>
             );
           })}
@@ -242,6 +321,57 @@ function BomComposer({ staleEntitlement }: { staleEntitlement: boolean }) {
           </Button>
 
           <AssemblySummary bom={bom} uiSkipped={uiSkipped} />
+
+          {/* Save (§1.9). No optimistic fake: the toast and the catalog summary below appear only
+              after a real 2xx from the server, which is also the entitlement boundary. */}
+          <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--border)] p-4">
+            <Field label={t.kitName} required>
+              {(p) => (
+                <div className="tf-inputwrap">
+                  <input
+                    {...p}
+                    type="text"
+                    className="tf-input"
+                    placeholder={t.kitNamePlaceholder}
+                    value={kitName}
+                    onChange={(e) => setKitName(e.target.value)}
+                  />
+                </div>
+              )}
+            </Field>
+            {saveError && <Alert tone="danger">{saveError}</Alert>}
+            <Button onClick={() => void save()} disabled={createBom.isPending}>
+              {createBom.isPending ? t.saving : t.save}
+            </Button>
+
+            {materializations && (
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium">{t.savedTitle}</p>
+                <ul className="flex flex-col gap-1">
+                  {materializations.map((m) => {
+                    const name = saveLines[m.position]?.pieceName ?? "";
+                    const copy = m.action === "created" ? t.savedCreated : t.savedReferenced;
+                    return (
+                      <li key={m.position} className="text-sm text-[var(--text-muted)]">
+                        {copy.replace("{nome}", name)}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {/* The reference wins over the values typed here — say it, never let the seller
+                    discover it by finding different numbers on reopen (ADR-0017 §3). */}
+                {materializations.some((m) => m.action === "referenced") && (
+                  <Alert tone="info">{t.savedSuperseded}</Alert>
+                )}
+                <Button
+                  variant="secondary"
+                  onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+                >
+                  {t.viewKits}
+                </Button>
+              </div>
+            )}
+          </div>
         </>
       )}
     </section>

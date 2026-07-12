@@ -34,8 +34,7 @@ import {
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
-import { apiErrorMessage } from "@/shared/api/error-messages";
-import { ApiError } from "@/shared/api/transport";
+import { honestWriteError } from "@/shared/api/error-messages";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Button, Card, Field, Select, Spinner, toast } from "@/shared/ui";
@@ -51,14 +50,6 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 const t = messages.calculator;
 const pf = messages.productForm;
-const catalogo = messages.catalogo;
-
-function honestWriteError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.status === 0 ? catalogo.offlineWriteBlocked : apiErrorMessage(err);
-  }
-  return catalogo.offlineWriteBlocked;
-}
 
 export function ProdutoPage({ productId }: { productId?: string }) {
   const navigate = useNavigate();

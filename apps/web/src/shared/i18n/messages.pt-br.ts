@@ -410,6 +410,26 @@ export const messages = {
     guardChecking: "Verificando seu plano…",
     guardError: "Não foi possível verificar seu plano.",
     guardRetry: "Tentar novamente",
+    // Save (§1.9 / T015) — Kit vocabulary (K1). A success toast fires ONLY on a real 2xx.
+    kitName: "Nome do kit",
+    kitNamePlaceholder: "Kit suporte + base",
+    kitNameRequired: "Dê um nome ao kit para salvar.",
+    pieceName: "Nome da peça no catálogo",
+    pieceNameRequired: "Dê um nome a cada peça avulsa.",
+    save: "Salvar kit",
+    saving: "Salvando…",
+    saved: "Kit salvo.",
+    saveInvalid: "Confira as peças com aviso antes de salvar.",
+    saveEmpty: "Adicione ao menos uma peça para salvar.",
+    viewKits: "Ver meus kits",
+    // Materialization feedback (K4) — created vs referenced, said out loud, never silently
+    savedTitle: "O que este kit fez no seu catálogo",
+    savedCreated: "{nome} — criado no catálogo",
+    savedReferenced: "{nome} — já existia no catálogo, referenciado",
+    savedSuperseded:
+      "As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.",
+    // Bound line edited after binding → it becomes an avulsa piece and enters the catalog (ADR-0017)
+    adjustedBecomesPiece: "Você ajustou esta peça — ela será salva como uma peça nova no catálogo.",
   },
   historico: {
     emptyTitle: "Histórico em breve",

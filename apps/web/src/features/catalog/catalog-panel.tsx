@@ -1,8 +1,7 @@
 import { type CSSProperties, type ReactNode, useState } from "react";
 
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
-import { apiErrorMessage } from "@/shared/api/error-messages";
-import { ApiError } from "@/shared/api/transport";
+import { honestWriteError } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import {
   Alert,
@@ -45,16 +44,6 @@ const rowSummary: CSSProperties = {
   fontSize: "var(--fs-caption)",
   color: "var(--text-muted)",
 };
-
-/** Map a failed write onto an HONEST, specific pt-BR line (never a generic error, never a fake save):
- *  a transport-phase failure (status 0 = offline / DNS / refused) → "precisa de conexão"; any coded
- *  server error → its friendly phrase (e.g. a lapsed 403 → "Salvar faz parte do Premium."). */
-function honestWriteError(err: unknown): string {
-  if (err instanceof ApiError) {
-    return err.status === 0 ? catalogo.offlineWriteBlocked : apiErrorMessage(err);
-  }
-  return catalogo.offlineWriteBlocked;
-}
 
 export interface CatalogPanelCopy {
   addLabel: string;
