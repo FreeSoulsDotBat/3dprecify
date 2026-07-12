@@ -100,7 +100,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T009 [US1][US5][K1] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/SC-410
+- [X] T009 [US1][US5][K1] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/SC-410
       nav-half/**SC-409**: E1 + E2 guards unchanged) → push `feature/008-e3-multi-piece-bom` → PR to `develop`
       (evidence-rich: T006b homologation + nit fixes + K1 rename) → CI green (incl. contract drift-guard) →
       owner squash-merge. Owner walk covers the Kit vocabulary + 5-tab nav. Graph refresh on merge (ADR-0014).
@@ -115,7 +115,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 **Goal**: premium save/list/reload, per-account, no stored price. **Independent Test**: quickstart §3–§4.
 
-- [ ] T010 [US2][US6] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none
+- [X] T010 [US2][US6] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none
       write `403 ENTITLEMENT_REQUIRED`; signed-out `401`; faked client premium denied; nothing persisted on
       deny); CRUD round-trip (create→reload identical on a fresh `TestClient`, decimal-string money, **no
       price stored**); per-field validation (rejected NEVER stored); per-account isolation (account B →
