@@ -1,6 +1,7 @@
 import type { CalcFormValues } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import type { BomIn, BomLineIn, BomLineOut, ProductOut } from "@/shared/api/generated";
+import { messages } from "@/shared/i18n/messages.pt-br";
 
 // 008/T015 — the composer→wire adapter. It lives at the PAGE layer on purpose: the mapping needs
 // `formToProductIn` from `features/calculator`, and FSD-Lite forbids a feature importing another
@@ -25,10 +26,14 @@ export interface KitSaveLine {
   pieceName: string;
 }
 
-/** The K4 pre-fill: "Peça {n} · {kit}" — the seller can always rename it before saving. */
+/** The K4 pre-fill: "Peça {n} · {kit}" — the seller can always rename it before saving. Copy lives
+ *  in i18n (the "Peça" noun is pt-BR product vocabulary, not a code constant). */
 export function defaultPieceName(index: number, kitName: string): string {
   const kit = kitName.trim();
-  return kit ? `Peça ${index + 1} · ${kit}` : `Peça ${index + 1}`;
+  const n = String(index + 1);
+  return kit
+    ? messages.bom.pieceNameKit.replace("{n}", n).replace("{kit}", kit)
+    : messages.bom.lineLabel.replace("{n}", n);
 }
 
 /** A line saves as a live REFERENCE only while it is bound AND untouched. The moment the seller

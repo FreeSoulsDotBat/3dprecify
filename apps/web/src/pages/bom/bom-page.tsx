@@ -12,7 +12,7 @@ import { computeFromForm } from "@/features/calculator/calculator-model";
 import { type CalcFormValues, defaultCalcValues } from "@/features/calculator/calculator-schema";
 import { productToForm } from "@/features/calculator/product-mapping";
 import { honestWriteError } from "@/shared/api/error-messages";
-import type { Materialization } from "@/shared/api/generated";
+import type { BomOut, Materialization } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -41,6 +41,7 @@ import {
 // is no longer teased, because its saved kits are its own data (FR-409, the Q3 freeze).
 
 const t = messages.bom;
+const tc = messages.calculator;
 
 interface LineState {
   id: number;
@@ -63,6 +64,27 @@ interface LineState {
 function parseQuantity(raw: string): number | null {
   const trimmed = raw.trim();
   return /^\d+$/.test(trimmed) ? Number(trimmed) : null;
+}
+
+/** Map a saved kit's server-resolved lines onto the composer's editable LineState. `nextId` mints
+ *  the local row ids. Used both when REOPENING a kit and when adopting the CREATE response, so the
+ *  two paths can never drift (and post-create adoption needs no second round-trip). */
+function kitToLineStates(kit: BomOut, nextId: { current: number }): LineState[] {
+  return (kit.lines ?? []).map((line) => {
+    const { values, filamentMaterial } = lineToForm(line);
+    return {
+      id: nextId.current++,
+      values,
+      quantityRaw: String(line.quantity),
+      // A line whose product is still live stays a LIVE reference on the next save; a degraded one
+      // (product deleted) has no product to point at and saves as its own piece.
+      productId: line.productId ?? "",
+      productName: line.pieceName,
+      filamentMaterial,
+      adjusted: false,
+      pieceNameRaw: line.pieceName ?? "",
+    };
+  });
 }
 
 export function BomPage() {
@@ -134,7 +156,7 @@ function BomGatePanel({ signedOut }: { signedOut: boolean }) {
 
 function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; lapsed: boolean }) {
   const products = useProducts();
-  const { catalog, source } = useFeeCatalog();
+  const { catalog, source, refreshFailed, refreshing, refetch: retryCatalog } = useFeeCatalog();
   const navigate = useNavigate();
   const search = useSearch({ strict: false }) as { id?: string; copy?: boolean };
   const savedKits = useBoms();
@@ -162,23 +184,7 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
     if (!openedKit || hydratedId.current === openedKit.id) return;
     hydratedId.current = openedKit.id;
     setKitName(duplicating ? `${openedKit.name} ${t.copySuffix}` : openedKit.name);
-    setLines(
-      (openedKit.lines ?? []).map((line) => {
-        const { values, filamentMaterial } = lineToForm(line);
-        return {
-          id: nextId.current++,
-          values,
-          quantityRaw: String(line.quantity),
-          // A line whose product is still live stays a LIVE reference on the next save; a degraded
-          // one (product deleted) has no product to point at and saves as its own piece.
-          productId: line.productId ?? "",
-          productName: line.pieceName,
-          filamentMaterial,
-          adjusted: false,
-          pieceNameRaw: line.pieceName ?? "",
-        };
-      }),
-    );
+    setLines(kitToLineStates(openedKit, nextId));
   }, [openedKit, duplicating]);
 
   // Leaving a saved kit for a fresh composer (the Kits nav tab routes to a bare `/kits`, and the
@@ -204,6 +210,10 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
     return { input: qty === null ? null : outcomes[i].input, quantity: qty ?? 0 };
   });
   const { bom, lineResults } = composeBom(composerLines);
+  // Lines that did NOT reach the total (invalid field or quantity) — surfaced as an honest note on
+  // the headline so a partial kit never reads as a complete price (review 2026-07-12). A quantity-0
+  // line is NOT excluded: it still contributed to `bom.lines` as a truthful zero.
+  const excludedLineCount = lineResults.filter((r) => r === null).length;
 
   // T006b top nit (ux §1.7): a FORM-invalid channel slot is rejected by the per-slot validation
   // BEFORE the engine, so it can never reach `skippedLines` — count those per marketplace (on
@@ -314,9 +324,15 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
       setMaterializations(saved.materializations ?? []);
       if (!targetId) {
         justSavedId.current = saved.id;
-        // Reopening it also brings back the SERVER's version of the kit, which is what makes any
-        // superseded values (a referenced piece) visible immediately instead of on the next visit.
-        hydratedId.current = null;
+        // Adopt the SERVER's version of the just-saved kit straight from the RESPONSE: this shows
+        // any superseded values (a referenced piece takes the live product's numbers) immediately,
+        // and — crucially — marks the composer as already hydrated for this id so the reopen effect
+        // below does NOT re-run and clobber edits the seller makes after the save (review
+        // 2026-07-12). Nulling hydratedId here (the old code) reopened a window: the effect fired
+        // whenever the kit-list refetch landed and overwrote in-progress edits with the server copy.
+        hydratedId.current = saved.id;
+        setKitName(saved.name);
+        setLines(kitToLineStates(saved, nextId));
         void navigate({ to: "/kits", search: { id: saved.id } });
       }
     } catch (err) {
@@ -359,15 +375,46 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
           stays VISIBLE and answers honestly when tapped, never disabled-and-silent (ux §5). */}
       {lapsed && <Alert tone="info">{t.lapsedBanner}</Alert>}
 
+      {/* The fee catalog feeds EVERY line's per-channel prices, so a failed online refresh is a
+          kit-wide condition, not a per-line one — surface it ONCE here (the calculator does the
+          same per form). NON-BLOCKING: the saved/seed reference still pre-fills and every price
+          computes; this only offers a retry. `refreshFailed` is sticky so it does not blink out
+          during the retry's pending window; `refreshing` drives the button spinner. */}
+      {refreshFailed && (
+        <Alert tone="info" title={tc.channels.refreshErrorTitle}>
+          <p>{tc.channels.refreshErrorBody}</p>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => retryCatalog()}
+            loading={refreshing}
+            className="mt-2"
+          >
+            {tc.channels.refreshRetry}
+          </Button>
+        </Alert>
+      )}
+
       {lines.length === 0 ? (
         <EmptyState
           icon="package"
           title={t.emptyTitle}
           description={t.emptyBody}
           action={
-            <Button onClick={addLine}>
-              <Icon name="plus" size={16} aria-hidden /> {t.addLine}
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button onClick={addLine}>
+                <Icon name="plus" size={16} aria-hidden /> {t.addLine}
+              </Button>
+              {/* A seller with saved kits should reach them from the empty composer, not only from
+                  the nav tab (review IA nit, 2026-07-12). */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+              >
+                {t.viewKits}
+              </Button>
+            </div>
           }
         />
       ) : (
@@ -431,7 +478,16 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
             <Icon name="plus" size={16} aria-hidden /> {t.addLine}
           </Button>
 
-          <AssemblySummary bom={bom} uiSkipped={uiSkipped} />
+          {/* ux §1.7 / G4: the headline the seller came for stays reachable as a long kit scrolls
+              — a small sticky container over the bottom summary (mobile keeps the single scroll +
+              bottom bar). The cards inside are opaque, so pinned content never bleeds through. */}
+          <div className="sticky bottom-2 z-10">
+            <AssemblySummary
+              bom={bom}
+              uiSkipped={uiSkipped}
+              excludedLineCount={excludedLineCount}
+            />
+          </div>
 
           {/* Save (§1.9). No optimistic fake: the toast and the catalog summary below appear only
               after a real 2xx from the server, which is also the entitlement boundary. */}

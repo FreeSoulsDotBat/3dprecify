@@ -384,6 +384,8 @@ export const messages = {
     addLine: "Adicionar peça",
     // Line (§1.1/§1.3)
     lineLabel: "Peça {n}",
+    // K4 pre-fill: the catalog name a materialized piece takes ("Peça {n}" alone when unnamed).
+    pieceNameKit: "Peça {n} · {kit}",
     lineAdhoc: "(avulsa)",
     quantity: "Quantidade",
     quantityUnit: "un",
@@ -404,6 +406,12 @@ export const messages = {
     // Assembly total + per-channel rollup (§1.7)
     assemblyTitle: "Total do kit",
     assemblyCusto: "Custo total",
+    // Honest headline states (review 2026-07-12): with NO valid line the total is not "R$ 0,00",
+    // it simply does not exist yet; a partial kit says how many pieces are out of the sum.
+    assemblyNoPriceTitle: "Sem preço ainda",
+    assemblyNoPriceBody:
+      "O preço do kit aparece assim que ao menos uma peça estiver completa e válida.",
+    assemblyExcluded: "{n} peça(s) fora do total — confira os avisos nas peças acima.",
     channelsTitle: "Preços por canal (kit)",
     channelContributing: "{n} peça(s) somaram neste canal",
     channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
@@ -412,7 +420,6 @@ export const messages = {
     teaserTitle: "Monte e precifique kits com várias peças",
     teaserBody:
       "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.",
-    teaserDialogTitle: "Os kits fazem parte do Premium",
     teaserDialogBody:
       "No Premium você monta kits com várias peças e vê o preço do kit inteiro, por canal.",
     teaserFreeNote: "A calculadora de peça única continua grátis.",
@@ -428,7 +435,6 @@ export const messages = {
     kitNamePlaceholder: "Kit suporte + base",
     kitNameRequired: "Dê um nome ao kit para salvar.",
     pieceName: "Nome da peça no catálogo",
-    pieceNameRequired: "Dê um nome a cada peça avulsa.",
     save: "Salvar kit",
     saving: "Salvando…",
     saved: "Kit salvo.",

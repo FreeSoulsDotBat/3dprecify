@@ -16,10 +16,28 @@ const tc = messages.calculator;
 export function AssemblySummary({
   bom,
   uiSkipped,
+  excludedLineCount = 0,
 }: {
   bom: BomResult;
   uiSkipped?: UiSkippedChannel[];
+  /** Composer lines that did NOT reach the total (invalid field or quantity). A truthful zero
+   *  (every line quantity 0) is NOT excluded — those lines still contributed to `bom.lines`. */
+  excludedLineCount?: number;
 }) {
+  // No line contributed: the total is not "R$ 0,00", it does not exist yet. Show the honest
+  // waiting state instead of three fake zeros (review 2026-07-12).
+  if (bom.lines.length === 0) {
+    return (
+      <div className="flex flex-col gap-3">
+        <Card padding="md" className="flex flex-col gap-1">
+          <p className="text-sm font-semibold">{t.assemblyTitle}</p>
+          <p className="text-sm text-[var(--text-muted)]">{t.assemblyNoPriceTitle}</p>
+          <p className="text-xs text-[var(--text-muted)]">{t.assemblyNoPriceBody}</p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-3">
       <Card padding="md" className="flex flex-col gap-2">
@@ -29,6 +47,11 @@ export function AssemblySummary({
           <PriceHero label={tc.results.varejo} value={bom.precoVarejo} prefix="R$" />
           <PriceHero label={tc.results.atacado} value={bom.precoAtacado} prefix="R$" />
         </div>
+        {excludedLineCount > 0 ? (
+          <p className="text-xs text-[var(--text-muted)]">
+            {t.assemblyExcluded.replace("{n}", String(excludedLineCount))}
+          </p>
+        ) : null}
       </Card>
       <ChannelRollup channels={bom.channels} uiSkipped={uiSkipped} />
     </div>

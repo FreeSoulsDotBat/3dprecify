@@ -66,13 +66,20 @@ export function BomLineCard({
           unit={t.quantityUnit}
           inputMode="numeric"
           placeholder="1"
-          aria-label={t.quantity}
+          // Include the line label so a screen reader distinguishes each line's quantity field
+          // ("Quantidade — Peça 1 · …") instead of announcing N identical "Quantidade" fields.
+          aria-label={`${t.quantity} — ${label}`}
           value={quantityRaw}
           onChange={(e) => onQuantityChange(e.target.value)}
           className="w-24"
         />
-        <Button variant="ghost" size="sm" aria-label={t.removeLine} onClick={onRemove}>
-          ✕
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={`${t.removeLine} — ${label}`}
+          onClick={onRemove}
+        >
+          <Icon name="x" size={16} aria-hidden />
         </Button>
       </div>
 

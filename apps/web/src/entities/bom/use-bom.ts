@@ -19,6 +19,14 @@ import { useSessionStore } from "@/shared/session/session-store";
 
 import { bomQueryKey, loadCachedBoms, persistCachedBoms } from "./bom-cache";
 
+// A kit write materializes catalog products (ADR-0017), so it must invalidate the products list.
+// That key is OWNED by entities/catalog (`catalogQueryKey("products", uid)`), but FSD-Lite forbids
+// an entity importing another entity (eslint-boundaries), so — exactly like bom-cache mirrors
+// catalog-cache — we restate the key here as a deliberate mirror. Both copies are pinned by tests
+// (use-bom.test.tsx here, catalog-cache.test.ts there) against the SAME literal, so neither can
+// drift into invalidating the wrong list. Keep in lockstep with entities/catalog/catalog-cache.
+const productsQueryKey = (uid: string | undefined) => ["catalog", "products", uid] as const;
+
 // Saved-kit reads + writes (T014). Reads: uid-keyed cache pre-fill → online refresh → persist,
 // with HONEST staleness (a failed online read keeps serving the device cache and raises `stale`
 // so the surface can say "pode estar desatualizado"). Writes are ONLINE-ONLY — the server is the
@@ -98,7 +106,7 @@ function useInvalidateAfterKitWrite(): () => void {
   const uid = useSessionStore((s) => s.user?.uid);
   return () => {
     void client.invalidateQueries({ queryKey: bomQueryKey(uid) });
-    void client.invalidateQueries({ queryKey: ["catalog", "products", uid] });
+    void client.invalidateQueries({ queryKey: productsQueryKey(uid) });
   };
 }
 

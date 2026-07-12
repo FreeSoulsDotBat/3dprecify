@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { BomIn, ProductOut } from "@/shared/api/generated";
+import type { BomIn, BomLineOut, ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -98,6 +98,27 @@ const productP: ProductOut = {
   updatedAt: "2026-07-01T00:00:00Z",
 };
 
+// A saved kit ALWAYS echoes its server-resolved lines — a 0-line kit cannot be saved — so the
+// create/update mocks mirror that contract. The composer adopts the response directly after a
+// create (no refetch-window clobber of in-progress edits, review 2026-07-12), which means an empty
+// `lines: []` here would wrongly collapse the composer to its empty state. Values reuse productP's
+// already-typed output surfaces.
+const savedLine: BomLineOut = {
+  id: "l1",
+  position: 0,
+  quantity: 1,
+  productId: null,
+  pieceName: "Peça 1 · Kit Suporte",
+  degraded: false,
+  pieceInputs: productP.pieceInputs,
+  filamentValues: productP.filamentValues,
+  printerValues: productP.printerValues,
+  tariffPerKwh: "1.00",
+  includeMarketplace: true,
+  channels: [],
+  otherCosts: [],
+};
+
 function renderPremiumPage(products: ProductOut[] = []) {
   useSessionStore.setState({ status: "authenticated" });
   useEntitlementMock.mockReturnValue({
@@ -175,7 +196,7 @@ describe("kit save — the save round-trip", () => {
     createBomMock.mockResolvedValue({
       id: "k1",
       name: "Kit Suporte",
-      lines: [],
+      lines: [savedLine],
       materializations: [],
     });
     renderPremiumPage();
@@ -195,7 +216,12 @@ describe("kit save — the save round-trip", () => {
   });
 
   it("a bound, untouched line saves as a live reference — no piece name, no value-set", async () => {
-    createBomMock.mockResolvedValue({ id: "k1", name: "Kit", lines: [], materializations: [] });
+    createBomMock.mockResolvedValue({
+      id: "k1",
+      name: "Kit",
+      lines: [savedLine],
+      materializations: [],
+    });
     renderPremiumPage([productP]);
     addLine();
     // Bind the line to the saved product through the in-line picker.
@@ -239,7 +265,7 @@ describe("kit save — what it did to the catalog is said out loud (K4)", () => 
     createBomMock.mockResolvedValue({
       id: "k1",
       name: "Kit Suporte",
-      lines: [],
+      lines: [savedLine],
       materializations: [{ position: 0, productId: "np1", action: "created" }],
     });
     renderPremiumPage();
@@ -259,7 +285,7 @@ describe("kit save — what it did to the catalog is said out loud (K4)", () => 
     createBomMock.mockResolvedValue({
       id: "k1",
       name: "Kit Suporte",
-      lines: [],
+      lines: [savedLine],
       materializations: [{ position: 0, productId: "p1", action: "referenced" }],
     });
     renderPremiumPage();
@@ -281,13 +307,13 @@ describe("kit save — saving twice edits the kit, it does not file a second one
     createBomMock.mockResolvedValue({
       id: "k1",
       name: "Kit Suporte",
-      lines: [],
+      lines: [savedLine],
       materializations: [],
     });
     updateBomMock.mockResolvedValue({
       id: "k1",
       name: "Kit Suporte",
-      lines: [],
+      lines: [savedLine],
       materializations: [],
     });
     renderPremiumPage();

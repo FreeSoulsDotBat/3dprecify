@@ -165,6 +165,28 @@ describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
     expect(screen.getByText(t.subtitle)).toBeInTheDocument();
     expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: new RegExp(t.addLine) })).toBeInTheDocument();
+    // Review IA nit (2026-07-12): the empty composer also links to the seller's saved kits, not
+    // only the nav tab.
+    expect(screen.getByRole("button", { name: t.viewKits })).toBeInTheDocument();
+  });
+
+  it("a failed fee-catalog refresh is surfaced ONCE, kit-wide, with a retry (honest, non-blocking)", () => {
+    mockFees();
+    useFeeCatalogMock.mockReturnValue({
+      catalog: EMPTY_FEES,
+      source: "cache" as const,
+      refreshFailed: true,
+      refreshing: false,
+      refetch: vi.fn(),
+    });
+    renderPremiumPage();
+
+    // The composer still renders (non-blocking) AND says the fees may be stale, with a retry.
+    expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(messages.calculator.channels.refreshErrorTitle)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: messages.calculator.channels.refreshRetry }),
+    ).toBeInTheDocument();
   });
 
   // Review major (2026-07-11): in React Query v5 a failed BACKGROUND refetch flips isError while
