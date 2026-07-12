@@ -91,11 +91,21 @@ inputs + denominators; optional labels/reserves may be null.)
   its filament/printer); the snapshot columns are refreshed so a later delete degrades to *these* values.
 - A `product_id` that does not resolve to an **owned, live** product ⇒ **422, no existence oracle** (reuse the
   E2 `_unresolvable`; SC-308).
-- **Degradation (D6)**: deleting a referenced product fires `ON DELETE SET NULL` on `bom_lines.product_id`;
-  the row keeps its last-known snapshot columns and stays priceable/editable (SC-405). No pre-delete snapshot
-  write is required here because E3 keeps the snapshot **continuously refreshed on each BOM write** — but if a
-  product can be deleted between BOM writes, the delete path SHOULD capture last-known into referencing
-  `bom_lines` in the same txn (mirror the E2 filament/printer delete D6 pattern). Resolve in tasks.
+- **Degradation (D6) — read-time, not delete-capture (ADR-0017 addendum, 2026-07-12).**
+  `delete_product` is a **soft delete** (`deleted_at = now`), so the `ON DELETE SET NULL` FK does **not**
+  fire and `bom_lines.product_id` keeps pointing at the (still-present) soft-deleted row. Degradation
+  happens on **read**: the kit read resolver (`_resolve_views`) is owner-scoped **and live-only**
+  (`deleted_at IS NULL`) — the SAME filter as the write resolver (`_resolve_product`) — so a soft-deleted
+  (or cross-tenant) product is simply **absent** from the resolved map and its line serves `degraded: true`
+  from the last-known snapshot (SC-405), stays editable, and re-saves as an ad-hoc piece (re-materializing a
+  new product; the dead row is never referenced again). The snapshot is lossless because `_snapshot_line`
+  re-writes the **full** value-set on **every** kit write — no delete-time capture, and the `products`
+  aggregate never learns about `bom_lines`. The `product_id` FK keeps **`ON DELETE SET NULL`** purely as
+  defense for a hypothetical **hard** purge: if that runs, the FK nulls the column and the (already-current)
+  snapshot columns satisfy the link-or-snapshot CHECK. **This deliberately differs from the E2
+  filament/printer → product D6 (eager delete-capture)** — the two degrade at different layers because
+  `products._live_links` does not filter the linked row's `deleted_at` while the kit read does; see the
+  ADR-0017 addendum for why the divergence is the stronger choice.
 - **Manual product state (K3)**: no new column — the attention indicator is DERIVED
   (`filament_id IS NULL OR printer_id IS NULL`), one unified honest state for "born manual" and "degraded by
   deletion"; linking a saved filament + printer through the ordinary product edit clears it (SC-412).

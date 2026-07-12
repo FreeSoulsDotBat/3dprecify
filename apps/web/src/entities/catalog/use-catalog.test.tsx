@@ -16,6 +16,9 @@ const {
   updateFilamentMock,
   deleteFilamentMock,
   listPrintersMock,
+  listProductsMock,
+  updateProductMock,
+  deleteProductMock,
 } = vi.hoisted(() => ({
   idbGet: vi.fn(),
   idbSet: vi.fn(),
@@ -25,6 +28,9 @@ const {
   updateFilamentMock: vi.fn(),
   deleteFilamentMock: vi.fn(),
   listPrintersMock: vi.fn(),
+  listProductsMock: vi.fn(),
+  updateProductMock: vi.fn(),
+  deleteProductMock: vi.fn(),
 }));
 vi.mock("idb-keyval", () => ({ get: idbGet, set: idbSet, del: idbDel }));
 vi.mock("@/shared/api/generated", () => ({
@@ -36,6 +42,10 @@ vi.mock("@/shared/api/generated", () => ({
   createPrinterApiV1PrintersPost: vi.fn(),
   updatePrinterApiV1PrintersPrinterIdPut: vi.fn(),
   deletePrinterApiV1PrintersPrinterIdDelete: vi.fn(),
+  listProductsApiV1ProductsGet: listProductsMock,
+  createProductApiV1ProductsPost: vi.fn(),
+  updateProductApiV1ProductsProductIdPut: updateProductMock,
+  deleteProductApiV1ProductsProductIdDelete: deleteProductMock,
 }));
 
 import type { FilamentOut } from "@/shared/api/generated";
@@ -48,7 +58,7 @@ import {
   persistCachedCatalog,
   purgeCatalogCache,
 } from "./catalog-cache";
-import { useCreateFilament, useFilaments } from "./use-catalog";
+import { useCreateFilament, useDeleteProduct, useFilaments, useUpdateProduct } from "./use-catalog";
 
 function filament(over: Partial<FilamentOut> = {}): FilamentOut {
   return {
@@ -84,6 +94,9 @@ beforeEach(() => {
   updateFilamentMock.mockReset();
   deleteFilamentMock.mockReset();
   listPrintersMock.mockReset().mockResolvedValue({ data: [], status: 200 });
+  listProductsMock.mockReset().mockResolvedValue({ data: [], status: 200 });
+  updateProductMock.mockReset();
+  deleteProductMock.mockReset();
   signInAs("uidA");
 });
 
@@ -207,5 +220,50 @@ describe("useCreateFilament — online-only write that invalidates the query", (
     await waitFor(() =>
       expect(invalidate).toHaveBeenCalledWith({ queryKey: catalogQueryKey("filaments", "uidA") }),
     );
+  });
+});
+
+// PR-C freshness fix (homologation blocker): a product write that an existing kit could be
+// resolving through MUST invalidate the KITS list too, or a reopened kit keeps serving the old
+// product — stale values after an edit (D3), or a deleted product shown as LIVE after a delete
+// (D6). The kits key is a deliberate literal mirror of entities/bom `bomQueryKey`; these tests pin
+// BOTH invalidations against the SAME literal so the mirror can never drift.
+describe("product update/delete — invalidates the kits list too (D3/D6 freshness)", () => {
+  function productWrapper() {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    const Wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    return { invalidate, Wrapper };
+  }
+
+  it("useDeleteProduct invalidates BOTH the products and the kits query", async () => {
+    const { invalidate, Wrapper } = productWrapper();
+    deleteProductMock.mockResolvedValue({ data: undefined, status: 204 });
+
+    const { result } = renderHook(() => useDeleteProduct(), { wrapper: Wrapper });
+    await result.current.mutateAsync("p1");
+
+    expect(deleteProductMock).toHaveBeenCalledWith("p1");
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: catalogQueryKey("products", "uidA") }),
+    );
+    // The blocker fix: the kits list refetches so a referencing line degrades honestly.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["boms", "uidA"] });
+  });
+
+  it("useUpdateProduct invalidates BOTH the products and the kits query", async () => {
+    const { invalidate, Wrapper } = productWrapper();
+    updateProductMock.mockResolvedValue({ data: { id: "p1", name: "Base" }, status: 200 });
+
+    const { result } = renderHook(() => useUpdateProduct(), { wrapper: Wrapper });
+    await result.current.mutateAsync({ id: "p1", body: {} as never });
+
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: catalogQueryKey("products", "uidA") }),
+    );
+    // D3 live-reflect: an edited product changes a referencing kit's resolved values on reopen.
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ["boms", "uidA"] });
   });
 });

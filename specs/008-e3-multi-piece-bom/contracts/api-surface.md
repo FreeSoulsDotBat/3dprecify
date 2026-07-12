@@ -52,7 +52,8 @@ BomLineOut:                      # amended 2026-07-11 (T012): the FULL resolved 
   position: integer
   quantity: integer
   productId: uuid | null
-  pieceName: string | null       # the live product's name; null once degraded (UI: "— Manual —")
+  pieceName: string | null       # the live product's name; null once degraded (UI: "(avulsa)" + a calm
+                                 #   "valores mantidos" caption — never a removal claim, F1/K3; ux §1.2-D)
   degraded: boolean              # true when productId is null but a reference existed (last-known in use)
   # Resolved (live product → resolved, else last-known snapshot). The line is SELF-SUFFICIENT for
   # computeBom (ADR-0016) — the client never needs a second round-trip to price it.

@@ -185,32 +185,54 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 **Goal**: a saved BOM line referencing a product reflects live edits (D3) and degrades to editable last-known
 values when the product is deleted (D6). **Independent Test**: quickstart §5.
 
-- [ ] T019 [US3] Write FAILING pytest first (`backend/tests/test_boms.py` additions): **D3** live-reflect (edit
-      product → saved BOM reload recomputes with new values); **D6** degradation (delete referenced product →
-      `bom_lines.product_id` set NULL AND last-known captured in the SAME txn → degraded reopen editable, still
-      priceable, SC-405); `422` no-oracle for an unresolvable/cross-account `productId`. Observe failing.
-- [ ] T020 [US3] Implement D6 delete-capture: the product DELETE path updates referencing `bom_lines` (set
-      `product_id` NULL + persist last-known snapshot columns) in the SAME txn — mirror the E2 filament/printer
-      D6 delete pattern; `_to_out` sets `degraded: true`. Tests green.
-- [ ] T021 [US3] Web: catalog-ref degraded line UI (— Manual — indicator, editable last-known values, calm
-      info alert), mirroring the E2 product degradation surface; failing-first component test then green.
-- [ ] T021b [US3] Visual test: qa-produto homologates a degraded reopen (delete a referenced product → BOM
-      still priceable with last-known, honest indicator).
+- [X] T019 [US3] pytest (`backend/tests/test_boms.py`) — the D6 read-time-degradation core + byte-identity
+      guard + `422` no-oracle landed in PR-B; PR-C added the remaining test-first cases (2026-07-12): (1)
+      **D3 live-reflect** — `test_editing_a_referenced_product_reflects_live_on_kit_reopen`; (2) decision-pins
+      for read-time-degrade (ADR-0017 addendum) — `test_soft_delete_leaves_the_line_product_id_dangling_
+      degradation_is_read_time` (soft-delete does NOT touch `bom_lines`; DB-pinned) and
+      `test_a_hard_purge_nulls_the_fk_and_the_line_still_degrades_and_the_check_holds` (raw `DELETE FROM
+      products` → FK `SET NULL`, line still degrades losslessly, link-or-snapshot CHECK holds). The
+      dangling-`product_id` re-save path is covered by the re-save half of
+      `test_deleting_a_referenced_product_degrades_the_line_not_breaks_the_kit`. gate:be green (142 passed).
+- [X] T020 [US3] D6 is **read-time degradation, NOT eager delete-capture** (ADR-0017 addendum, 2026-07-12 —
+      supersedes the earlier "mirror the E2 filament/printer delete" plan; the documented `ON DELETE SET NULL`
+      never fired because `delete_product` is a soft-delete). DELIVERED in PR-B: `delete_product` stays a plain
+      soft-delete (unchanged E2 handler — SC-409 by construction); `_resolve_views` resolves owner-scoped
+      **live-only** so a soft-deleted product is absent and its line degrades; `_snapshot_line` keeps the
+      snapshot lossless on every kit save; `_to_out` serves `degraded: true`; the FK keeps `ON DELETE SET NULL`
+      as hard-purge defense only. **No `products` → `bom_lines` coupling.** Closed by decision; PR-C's remaining
+      backend work is only the T019 gaps.
+- [X] T021 [US3] Web: catalog-ref degraded line UI — DELIVERED (2026-07-12) as a calm **muted caption**
+      reusing `productForm.manualValuesKept`, NOT the originally-planned "info alert" (ux §1.2-D, owner-ratified:
+      an Alert over-dramatizes a normal recoverable state and a "removido" claim violates F1/K3). Wired via
+      `LineState.degraded` → `BomLineCard degraded?` prop, gated `degraded && productId === ""`. Failing-first
+      component test `bom-line-card.test.tsx` (6 cases incl. the F1 honesty guard) green; keeps "(avulsa)".
+- [X] T021b [US3] Visual test: qa-produto homologates a degraded reopen (delete a referenced product → kit
+      still priceable with last-known, honest caption, no removal claim). DONE 2026-07-12 →
+      `homologation-t021.md`. **Verdict FAIL → fixed → PASS:** caught a real honesty blocker (deleted product
+      shown as a LIVE reference on reopen — the inverse honesty bug) rooted in the PR-B freshness/hydration seam,
+      NOT the T021 component. Fixed with (a) products+kits invalidation (`useInvalidateProductsAndKits`) and (b)
+      content-signature re-hydration (`kitSignature`/`[openedSig]`). Reverified clean 10/10 e2e both projects
+      (the "chromium flaky" was an orphaned :4173 preview serving a frozen pre-fix bundle — addendum + memory).
 
 ## PR-C ship (STRICTLY ORDERED)
 
 - [ ] T022 [US3] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (D3/D6/SC-405 + **SC-409**) → PR to
-      `develop` → CI green → owner squash-merge. **E3 closes.** Graph refresh on merge.
+      `develop` → CI green → owner squash-merge. **E3 closes.** Graph refresh on merge. **Local gates GREEN +
+      PR-ready 2026-07-12:** `gate:all` green (FE 414 tests · BE 142 pytest · coverage 85.33%); `pnpm e2e`
+      **102/102** both projects. Awaiting owner authorization to push + open the PR (ADR-0006).
 
 ---
 
 ## Phase 8: Polish & cross-cutting
 
-- [ ] T023 [P] `specs/008-e3-multi-piece-bom/dod-evidence.md` — SC-401..409 map + gate/e2e results; PR-A/B/C
-      homologation records (owner + qa-produto).
-- [ ] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) → BUILT/SHIPPED with the **Kits**
-      user-facing name; ADR-0015/0016 stay Accepted; **ADR-0017 Proposed → Accepted at the PR-B gate**;
-      CLAUDE.md ground line → E3 shipped (after PR-C merges).
+- [~] T023 [P] `specs/008-e3-multi-piece-bom/dod-evidence.md` — DRAFTED 2026-07-12 (SC-401..412 map + gates
+      142 pytest/85.33% + e2e 102/102 + PR-A/B/C homologation records; **T021 verdict FAIL→fix→PASS now filled**).
+      Only two blanks remain, both post-owner-action: the PR-C merge SHA + the owner sign-off line.
+- [~] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) DONE 2026-07-12 (expanded from the stub
+      to the **Kits** vocabulary + BUILT/awaiting-merge state); ADR-0015/0016 stay Accepted; **ADR-0017 is
+      Accepted** (PR-B gate) + §6 addendum Accepted. STILL POST-MERGE: flip the roadmap row to SHIPPED with the
+      PR-C SHA + update the CLAUDE.md ground line to "E3 shipped".
 - [ ] T025 Run `quickstart.md` §1..§7 end-to-end as the final validation before E3 close-out.
 
 ---
