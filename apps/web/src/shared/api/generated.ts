@@ -24,6 +24,41 @@ import type {
 } from '@tanstack/react-query';
 
 import { orvalFetch } from './transport';
+/**
+ * The product-owned E1 piece fields (data-model §2.5).
+ */
+export interface PieceInputsInput {
+  printGrams: number | string;
+  wasteGrams?: number | string;
+  printTimeHours: number | string;
+  failurePct?: number | string;
+  finishTimeHours?: number | string;
+  finishRatePerHour?: number | string;
+  laborHours?: number | string;
+  laborRatePerHour?: number | string;
+  markupVarejoPct: number | string;
+  markupAtacadoPct: number | string;
+}
+
+/**
+ * Resolved filament fields — live cache while linked, editable override when degraded.
+ */
+export interface FilamentValuesInput {
+  material?: string | null;
+  costPerRoll: number | string;
+  rollWeightKg: number | string;
+}
+
+/**
+ * Resolved printer fields — live cache while linked, editable override when degraded.
+ */
+export interface PrinterValuesInput {
+  machineValue: number | string;
+  machineLifetimeHours: number | string;
+  avgPowerKw: number | string;
+  maintenanceReservePerHour?: number | string;
+}
+
 export type ChannelSlotMarketplace = typeof ChannelSlotMarketplace[keyof typeof ChannelSlotMarketplace];
 
 
@@ -59,6 +94,143 @@ export interface ChannelSlot {
   fixedFee?: number | string | null;
   minPerItem?: number | string | null;
   freightCost?: number | string | null;
+}
+
+/**
+ * One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116).
+ */
+export interface OtherCost {
+  name?: string;
+  value: number | string;
+}
+
+/**
+ * One submitted line: EITHER a live product reference OR a nameable ad-hoc piece.
+ *
+ * The ad-hoc branch carries the whole ``ProductIn`` value-set precisely because it has to
+ * materialize into a product (ADR-0017/K4) — ``pieceName`` is what that product is called.
+ */
+export interface BomLineIn {
+  quantity: number;
+  productId?: string | null;
+  pieceName?: string | null;
+  pieceInputs?: PieceInputsInput | null;
+  filamentValues?: FilamentValuesInput | null;
+  printerValues?: PrinterValuesInput | null;
+  tariffPerKwh?: number | string | null;
+  includeMarketplace?: boolean;
+  channels?: ChannelSlot[];
+  otherCosts?: OtherCost[];
+}
+
+export interface BomIn {
+  name: string;
+  lines?: BomLineIn[];
+}
+
+export type BomLineOutChannelsItem = { [key: string]: unknown };
+
+export type BomLineOutOtherCostsItem = { [key: string]: unknown };
+
+/**
+ * The product-owned E1 piece fields (data-model §2.5).
+ */
+export interface PieceInputsOutput {
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  printGrams: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  wasteGrams?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  printTimeHours: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  failurePct?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  finishTimeHours?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  finishRatePerHour?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  laborHours?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  laborRatePerHour?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  markupVarejoPct: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  markupAtacadoPct: string;
+}
+
+/**
+ * Resolved filament fields — live cache while linked, editable override when degraded.
+ */
+export interface FilamentValuesOutput {
+  material?: string | null;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  costPerRoll: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  rollWeightKg: string;
+}
+
+/**
+ * Resolved printer fields — live cache while linked, editable override when degraded.
+ */
+export interface PrinterValuesOutput {
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  machineValue: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  machineLifetimeHours: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  avgPowerKw: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  maintenanceReservePerHour?: string;
+}
+
+/**
+ * A resolved line — self-sufficient for ``computeBom`` (no second round-trip).
+ *
+ * Live product ⇒ every value is resolved from it (which in turn resolves its filament/printer,
+ * D3). Degraded (``productId`` is null after the product was deleted, D6) ⇒ the values are the
+ * line's own last-known snapshot, and ``degraded`` says so honestly.
+ */
+export interface BomLineOut {
+  id: string;
+  position: number;
+  quantity: number;
+  productId: string | null;
+  pieceName: string | null;
+  degraded: boolean;
+  pieceInputs: PieceInputsOutput;
+  filamentValues: FilamentValuesOutput;
+  printerValues: PrinterValuesOutput;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  tariffPerKwh: string;
+  includeMarketplace: boolean;
+  channels: BomLineOutChannelsItem[];
+  otherCosts: BomLineOutOtherCostsItem[];
+}
+
+export type MaterializationAction = typeof MaterializationAction[keyof typeof MaterializationAction];
+
+
+export const MaterializationAction = {
+  created: 'created',
+  referenced: 'referenced',
+} as const;
+
+/**
+ * What the save DID to a line's catalog product — so the client can say it out loud (K4).
+ */
+export interface Materialization {
+  position: number;
+  productId: string;
+  action: MaterializationAction;
+}
+
+export interface BomOut {
+  id: string;
+  name: string;
+  lines: BomLineOut[];
+  createdAt: string;
+  updatedAt: string;
+  materializations?: Materialization[] | null;
 }
 
 export interface CurrentUser {
@@ -201,76 +373,6 @@ export interface FilamentOut {
   updatedAt: string;
 }
 
-/**
- * Resolved filament fields — live cache while linked, editable override when degraded.
- */
-export interface FilamentValuesInput {
-  material?: string | null;
-  costPerRoll: number | string;
-  rollWeightKg: number | string;
-}
-
-/**
- * Resolved filament fields — live cache while linked, editable override when degraded.
- */
-export interface FilamentValuesOutput {
-  material?: string | null;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  costPerRoll: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  rollWeightKg: string;
-}
-
-/**
- * One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116).
- */
-export interface OtherCost {
-  name?: string;
-  value: number | string;
-}
-
-/**
- * The product-owned E1 piece fields (data-model §2.5).
- */
-export interface PieceInputsInput {
-  printGrams: number | string;
-  wasteGrams?: number | string;
-  printTimeHours: number | string;
-  failurePct?: number | string;
-  finishTimeHours?: number | string;
-  finishRatePerHour?: number | string;
-  laborHours?: number | string;
-  laborRatePerHour?: number | string;
-  markupVarejoPct: number | string;
-  markupAtacadoPct: number | string;
-}
-
-/**
- * The product-owned E1 piece fields (data-model §2.5).
- */
-export interface PieceInputsOutput {
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  printGrams: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  wasteGrams?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  printTimeHours: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  failurePct?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  finishTimeHours?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  finishRatePerHour?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  laborHours?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  laborRatePerHour?: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  markupVarejoPct: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  markupAtacadoPct: string;
-}
-
 export interface PrinterIn {
   name: string;
   machineValue: number | string;
@@ -292,30 +394,6 @@ export interface PrinterOut {
   maintenanceReservePerHour: string;
   createdAt: string;
   updatedAt: string;
-}
-
-/**
- * Resolved printer fields — live cache while linked, editable override when degraded.
- */
-export interface PrinterValuesInput {
-  machineValue: number | string;
-  machineLifetimeHours: number | string;
-  avgPowerKw: number | string;
-  maintenanceReservePerHour?: number | string;
-}
-
-/**
- * Resolved printer fields — live cache while linked, editable override when degraded.
- */
-export interface PrinterValuesOutput {
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  machineValue: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  machineLifetimeHours: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  avgPowerKw: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  maintenanceReservePerHour?: string;
 }
 
 export interface ProductIn {
@@ -2564,4 +2642,575 @@ export const useDeleteProductApiV1ProductsProductIdDelete = <TError = ErrorEnvel
         TContext
       > => {
       return useMutation(getDeleteProductApiV1ProductsProductIdDeleteMutationOptions(options), queryClient);
+    }
+
+export type listBomsApiV1BomsGetResponse200 = {
+  data: BomOut[]
+  status: 200
+}
+
+export type listBomsApiV1BomsGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listBomsApiV1BomsGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listBomsApiV1BomsGetResponseSuccess = (listBomsApiV1BomsGetResponse200) & {
+  headers: Headers;
+};
+export type listBomsApiV1BomsGetResponseError = (listBomsApiV1BomsGetResponse401 | listBomsApiV1BomsGetResponse403) & {
+  headers: Headers;
+};
+
+export type listBomsApiV1BomsGetResponse = (listBomsApiV1BomsGetResponseSuccess | listBomsApiV1BomsGetResponseError)
+
+export const getListBomsApiV1BomsGetUrl = () => {
+
+
+
+
+  return `/api/v1/boms`
+}
+
+/**
+ * @summary List Boms
+ */
+export const listBomsApiV1BomsGet = async ( options?: RequestInit): Promise<listBomsApiV1BomsGetResponse> => {
+
+  return orvalFetch<listBomsApiV1BomsGetResponse>(getListBomsApiV1BomsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListBomsApiV1BomsGetQueryKey = () => {
+    return [
+    `/api/v1/boms`
+    ] as const;
+    }
+
+
+export const getListBomsApiV1BomsGetQueryOptions = <TData = Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListBomsApiV1BomsGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>> = ({ signal }) => listBomsApiV1BomsGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListBomsApiV1BomsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>>
+export type ListBomsApiV1BomsGetQueryError = ErrorEnvelope
+
+
+export function useListBomsApiV1BomsGet<TData = Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBomsApiV1BomsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listBomsApiV1BomsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBomsApiV1BomsGet<TData = Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listBomsApiV1BomsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listBomsApiV1BomsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListBomsApiV1BomsGet<TData = Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Boms
+ */
+
+export function useListBomsApiV1BomsGet<TData = Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listBomsApiV1BomsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListBomsApiV1BomsGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createBomApiV1BomsPostResponse201 = {
+  data: BomOut
+  status: 201
+}
+
+export type createBomApiV1BomsPostResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createBomApiV1BomsPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createBomApiV1BomsPostResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createBomApiV1BomsPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createBomApiV1BomsPostResponseSuccess = (createBomApiV1BomsPostResponse201) & {
+  headers: Headers;
+};
+export type createBomApiV1BomsPostResponseError = (createBomApiV1BomsPostResponse400 | createBomApiV1BomsPostResponse401 | createBomApiV1BomsPostResponse403 | createBomApiV1BomsPostResponse422) & {
+  headers: Headers;
+};
+
+export type createBomApiV1BomsPostResponse = (createBomApiV1BomsPostResponseSuccess | createBomApiV1BomsPostResponseError)
+
+export const getCreateBomApiV1BomsPostUrl = () => {
+
+
+
+
+  return `/api/v1/boms`
+}
+
+/**
+ * @summary Create Bom
+ */
+export const createBomApiV1BomsPost = async (bomIn: BomIn, options?: RequestInit): Promise<createBomApiV1BomsPostResponse> => {
+
+  return orvalFetch<createBomApiV1BomsPostResponse>(getCreateBomApiV1BomsPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bomIn)
+  }
+);}
+
+
+
+
+
+export const getCreateBomApiV1BomsPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBomApiV1BomsPost>>, TError,{data: BomIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createBomApiV1BomsPost>>, TError,{data: BomIn}, TContext> => {
+
+const mutationKey = ['createBomApiV1BomsPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createBomApiV1BomsPost>>, {data: BomIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createBomApiV1BomsPost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateBomApiV1BomsPostMutationResult = NonNullable<Awaited<ReturnType<typeof createBomApiV1BomsPost>>>
+    export type CreateBomApiV1BomsPostMutationBody = BomIn
+    export type CreateBomApiV1BomsPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Create Bom
+ */
+export const useCreateBomApiV1BomsPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createBomApiV1BomsPost>>, TError,{data: BomIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createBomApiV1BomsPost>>,
+        TError,
+        {data: BomIn},
+        TContext
+      > => {
+      return useMutation(getCreateBomApiV1BomsPostMutationOptions(options), queryClient);
+    }
+
+export type getBomApiV1BomsBomIdGetResponse200 = {
+  data: BomOut
+  status: 200
+}
+
+export type getBomApiV1BomsBomIdGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getBomApiV1BomsBomIdGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type getBomApiV1BomsBomIdGetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type getBomApiV1BomsBomIdGetResponseSuccess = (getBomApiV1BomsBomIdGetResponse200) & {
+  headers: Headers;
+};
+export type getBomApiV1BomsBomIdGetResponseError = (getBomApiV1BomsBomIdGetResponse401 | getBomApiV1BomsBomIdGetResponse403 | getBomApiV1BomsBomIdGetResponse404) & {
+  headers: Headers;
+};
+
+export type getBomApiV1BomsBomIdGetResponse = (getBomApiV1BomsBomIdGetResponseSuccess | getBomApiV1BomsBomIdGetResponseError)
+
+export const getGetBomApiV1BomsBomIdGetUrl = (bomId: string,) => {
+
+
+
+
+  return `/api/v1/boms/${bomId}`
+}
+
+/**
+ * @summary Get Bom
+ */
+export const getBomApiV1BomsBomIdGet = async (bomId: string, options?: RequestInit): Promise<getBomApiV1BomsBomIdGetResponse> => {
+
+  return orvalFetch<getBomApiV1BomsBomIdGetResponse>(getGetBomApiV1BomsBomIdGetUrl(bomId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetBomApiV1BomsBomIdGetQueryKey = (bomId: string,) => {
+    return [
+    `/api/v1/boms/${bomId}`
+    ] as const;
+    }
+
+
+export const getGetBomApiV1BomsBomIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError = ErrorEnvelope>(bomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetBomApiV1BomsBomIdGetQueryKey(bomId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>> = ({ signal }) => getBomApiV1BomsBomIdGet(bomId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: bomId !== null && bomId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetBomApiV1BomsBomIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>>
+export type GetBomApiV1BomsBomIdGetQueryError = ErrorEnvelope
+
+
+export function useGetBomApiV1BomsBomIdGet<TData = Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError = ErrorEnvelope>(
+ bomId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBomApiV1BomsBomIdGet<TData = Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError = ErrorEnvelope>(
+ bomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetBomApiV1BomsBomIdGet<TData = Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError = ErrorEnvelope>(
+ bomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Bom
+ */
+
+export function useGetBomApiV1BomsBomIdGet<TData = Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError = ErrorEnvelope>(
+ bomId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getBomApiV1BomsBomIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetBomApiV1BomsBomIdGetQueryOptions(bomId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type updateBomApiV1BomsBomIdPutResponse200 = {
+  data: BomOut
+  status: 200
+}
+
+export type updateBomApiV1BomsBomIdPutResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateBomApiV1BomsBomIdPutResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateBomApiV1BomsBomIdPutResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateBomApiV1BomsBomIdPutResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateBomApiV1BomsBomIdPutResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateBomApiV1BomsBomIdPutResponseSuccess = (updateBomApiV1BomsBomIdPutResponse200) & {
+  headers: Headers;
+};
+export type updateBomApiV1BomsBomIdPutResponseError = (updateBomApiV1BomsBomIdPutResponse400 | updateBomApiV1BomsBomIdPutResponse401 | updateBomApiV1BomsBomIdPutResponse403 | updateBomApiV1BomsBomIdPutResponse404 | updateBomApiV1BomsBomIdPutResponse422) & {
+  headers: Headers;
+};
+
+export type updateBomApiV1BomsBomIdPutResponse = (updateBomApiV1BomsBomIdPutResponseSuccess | updateBomApiV1BomsBomIdPutResponseError)
+
+export const getUpdateBomApiV1BomsBomIdPutUrl = (bomId: string,) => {
+
+
+
+
+  return `/api/v1/boms/${bomId}`
+}
+
+/**
+ * @summary Update Bom
+ */
+export const updateBomApiV1BomsBomIdPut = async (bomId: string,
+    bomIn: BomIn, options?: RequestInit): Promise<updateBomApiV1BomsBomIdPutResponse> => {
+
+  return orvalFetch<updateBomApiV1BomsBomIdPutResponse>(getUpdateBomApiV1BomsBomIdPutUrl(bomId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(bomIn)
+  }
+);}
+
+
+
+
+
+export const getUpdateBomApiV1BomsBomIdPutMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>, TError,{bomId: string;data: BomIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>, TError,{bomId: string;data: BomIn}, TContext> => {
+
+const mutationKey = ['updateBomApiV1BomsBomIdPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>, {bomId: string;data: BomIn}> = (props) => {
+          const {bomId,data} = props ?? {};
+
+          return  updateBomApiV1BomsBomIdPut(bomId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateBomApiV1BomsBomIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>>
+    export type UpdateBomApiV1BomsBomIdPutMutationBody = BomIn
+    export type UpdateBomApiV1BomsBomIdPutMutationError = ErrorEnvelope
+
+    /**
+ * @summary Update Bom
+ */
+export const useUpdateBomApiV1BomsBomIdPut = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>, TError,{bomId: string;data: BomIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateBomApiV1BomsBomIdPut>>,
+        TError,
+        {bomId: string;data: BomIn},
+        TContext
+      > => {
+      return useMutation(getUpdateBomApiV1BomsBomIdPutMutationOptions(options), queryClient);
+    }
+
+export type deleteBomApiV1BomsBomIdDeleteResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteBomApiV1BomsBomIdDeleteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteBomApiV1BomsBomIdDeleteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteBomApiV1BomsBomIdDeleteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteBomApiV1BomsBomIdDeleteResponseSuccess = (deleteBomApiV1BomsBomIdDeleteResponse204) & {
+  headers: Headers;
+};
+export type deleteBomApiV1BomsBomIdDeleteResponseError = (deleteBomApiV1BomsBomIdDeleteResponse401 | deleteBomApiV1BomsBomIdDeleteResponse403 | deleteBomApiV1BomsBomIdDeleteResponse404) & {
+  headers: Headers;
+};
+
+export type deleteBomApiV1BomsBomIdDeleteResponse = (deleteBomApiV1BomsBomIdDeleteResponseSuccess | deleteBomApiV1BomsBomIdDeleteResponseError)
+
+export const getDeleteBomApiV1BomsBomIdDeleteUrl = (bomId: string,) => {
+
+
+
+
+  return `/api/v1/boms/${bomId}`
+}
+
+/**
+ * @summary Delete Bom
+ */
+export const deleteBomApiV1BomsBomIdDelete = async (bomId: string, options?: RequestInit): Promise<deleteBomApiV1BomsBomIdDeleteResponse> => {
+
+  return orvalFetch<deleteBomApiV1BomsBomIdDeleteResponse>(getDeleteBomApiV1BomsBomIdDeleteUrl(bomId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteBomApiV1BomsBomIdDeleteMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>, TError,{bomId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>, TError,{bomId: string}, TContext> => {
+
+const mutationKey = ['deleteBomApiV1BomsBomIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>, {bomId: string}> = (props) => {
+          const {bomId} = props ?? {};
+
+          return  deleteBomApiV1BomsBomIdDelete(bomId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteBomApiV1BomsBomIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>>
+
+    export type DeleteBomApiV1BomsBomIdDeleteMutationError = ErrorEnvelope
+
+    /**
+ * @summary Delete Bom
+ */
+export const useDeleteBomApiV1BomsBomIdDelete = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>, TError,{bomId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteBomApiV1BomsBomIdDelete>>,
+        TError,
+        {bomId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteBomApiV1BomsBomIdDeleteMutationOptions(options), queryClient);
     }

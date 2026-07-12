@@ -100,7 +100,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T009 [US1][US5][K1] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/SC-410
+- [X] T009 [US1][US5][K1] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (SC-402/FR-412/SC-408/SC-410
       nav-half/**SC-409**: E1 + E2 guards unchanged) → push `feature/008-e3-multi-piece-bom` → PR to `develop`
       (evidence-rich: T006b homologation + nit fixes + K1 rename) → CI green (incl. contract drift-guard) →
       owner squash-merge. Owner walk covers the Kit vocabulary + 5-tab nav. Graph refresh on merge (ADR-0014).
@@ -115,7 +115,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 
 **Goal**: premium save/list/reload, per-account, no stored price. **Independent Test**: quickstart §3–§4.
 
-- [ ] T010 [US2][US6] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none
+- [X] T010 [US2][US6] Write FAILING pytest first — `backend/tests/test_boms.py`: entitlement gate (free/none
       write `403 ENTITLEMENT_REQUIRED`; signed-out `401`; faked client premium denied; nothing persisted on
       deny); CRUD round-trip (create→reload identical on a fresh `TestClient`, decimal-string money, **no
       price stored**); per-field validation (rejected NEVER stored); per-account isolation (account B →
@@ -125,33 +125,33 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       exact, live rows only; soft-deleted never matches) → `action: "referenced"`, values superseded; denied
       save (free) materializes nothing (SC-411); public `POST /products` still requires refs (FR-310
       untouched). Observe failing.
-- [ ] T011 [US2] Alembic **migration `0002`** (`down_revision = "0001"` — never amend `0001`) + SQLAlchemy 2.0
+- [X] T011 [US2] Alembic **migration `0002`** (`down_revision = "0001"` — never amend `0001`) + SQLAlchemy 2.0
       models `Bom`/`BomLine` per `data-model.md` (typed link-or-snapshot columns, value CHECKs, `boms`/`bom_
       lines` indices, FK `bom_id` ON DELETE CASCADE, FK `product_id` ON DELETE SET NULL). `uv run alembic
       upgrade head` green against the compose DB.
-- [ ] T012 [US2][US6] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
+- [X] T012 [US2][US6] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
       `require_catalog_read` (reads) per `contracts/api-surface.md`; pydantic wire schemas (camelCase, money-
       as-string; **reuse** `PieceInputs`/`ChannelSlot`/`OtherCost` from `products.py`; `BomLineIn.pieceName` +
       ProductIn value-set); **`_materialize` step INSIDE the same transaction** (ADR-0017: dedup → insert
       manual products → kit + lines, one commit; `BomOut.materializations[]` on writes; FR-310 relaxation
       lives ONLY here); `_apply` re-snapshot + `_to_out` live/last-known resolution + `_unresolvable` `422`
       (no oracle). Extend `[tool.importlinter]` layering (`app.api → app.entitlement → app.db`). Tests green.
-- [ ] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
+- [X] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
       `.prettierignore` exempt); drift-guard `git diff --exit-code` green. No new `ErrorCode`
       (`ENTITLEMENT_REQUIRED` + `VALIDATION_ERROR` already exist).
-- [ ] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
+- [X] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
       `useUpdateBom`/`useDeleteBom` hooks mirroring `entities/catalog`; purge-on-signout; "boms" added to the
       cache resource sweep.
-- [ ] T015 [US2][US6] Web kit save UI: kit name + a name `Field` PER AD-HOC PIECE (pre-filled "Peça {n} ·
+- [X] T015 [US2][US6] Web kit save UI: kit name + a name `Field` PER AD-HOC PIECE (pre-filled "Peça {n} ·
       {kit name}", K4) → Save → real-2xx toast; the response's `materializations[]` is surfaced honestly
       ("criado no catálogo" vs "já existia — referenciado", values-superseded warning on reference) → lands
       on the kit list. Failing-first component test (save round-trip + materialization messaging) then green.
-- [ ] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
+- [X] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
       no stored price).
-- [ ] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
+- [X] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
       per-account, empty state) → implement in `features/catalog` reading the `entities/bom` cache/hooks.
       Tests green.
-- [ ] T015d [US6/K3] Manual-product **attention indicator** (unified with the degraded state): failing-first
+- [X] T015d [US6/K3] Manual-product **attention indicator** (unified with the degraded state): failing-first
       tests (Produtos list + product page show the calm indicator when `filamentId`/`printerId` is null;
       linking both clears it, SC-412) → implement. Tests green.
 
@@ -160,12 +160,12 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 **Goal**: list/rename/edit/duplicate/delete, per-account; lapse = read-only freeze, nothing deleted.
 **Independent Test**: quickstart §6.
 
-- [ ] T016 [US4] Write FAILING pytest first — manage (list/edit/delete/duplicate) per-account isolated; **lapse**
+- [X] T016 [US4] Write FAILING pytest first — manage (list/edit/delete/duplicate) per-account isolated; **lapse**
       (revoked/expired: reads `200`, writes `403`, **zero rows deleted**, SC-407); re-grant → writable, data
       intact. Observe failing.
-- [ ] T017 [US4] Implement manage behaviors (edit/delete/duplicate; voluntary soft-delete only) + web manage
+- [X] T017 [US4] Implement manage behaviors (edit/delete/duplicate; voluntary soft-delete only) + web manage
       UI (list/rename/delete, lapse read-only state). Tests green.
-- [ ] T017b [US4] Visual test: qa-produto homologates the manage screen + the lapse read-only state.
+- [X] T017b [US4] Visual test: qa-produto homologates the manage screen + the lapse read-only state.
 
 ## PR-B ship (STRICTLY ORDERED)
 

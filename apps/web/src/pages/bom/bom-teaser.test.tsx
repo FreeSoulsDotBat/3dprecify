@@ -19,8 +19,20 @@ const { useEntitlementMock, useProductsMock, navigateMock } = vi.hoisted(() => (
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => navigateMock };
+  return { ...actual, useNavigate: () => navigateMock, useSearch: () => ({}) };
 });
+vi.mock("@/entities/bom/use-bom", () => ({
+  useBoms: () => ({
+    items: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    stale: false,
+    refetch: vi.fn(),
+  }),
+  useCreateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 vi.mock("@/entities/user/use-entitlement", () => ({
   useEntitlement: () => useEntitlementMock(),
 }));
@@ -88,10 +100,20 @@ describe("BOM teaser — free account (US5, SC-408)", () => {
     expect(navigateMock).toHaveBeenCalledWith({ to: "/calcular" });
   });
 
-  it("a LAPSED account (PR-A: no saved BOMs exist yet) also meets the teaser, calmly", () => {
+  it("a LAPSED account is NOT teased — it gets the calm reactivation panel (FR-409 / ux §3)", () => {
+    // PR-A parked this: nothing was saveable then, so lapsed fell through to the teaser. Now that
+    // kits persist, a lapse freezes WRITES without repossessing the seller's work — so the teaser
+    // (which sells the feature to someone who never had it) is the wrong door. But the CREATE
+    // entry is still gated: handing a lapsed seller a full composer and only revealing at "Salvar"
+    // that none of it can be kept would be a fake affordance. So: a calm panel, pointing at the
+    // kits they still have (reopening one lands in the composer and recomputes — a read).
     renderAt("authenticated", "lapsed");
-    expect(screen.getByText(t.teaserTitle)).toBeInTheDocument();
+    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.getByText(t.lapsedTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.lapsedBody)).toBeInTheDocument();
+    // No composer, and above all no save affordance that would fail at the end.
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: t.save })).not.toBeInTheDocument();
   });
 });
 

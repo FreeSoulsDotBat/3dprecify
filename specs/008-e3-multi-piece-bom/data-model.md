@@ -46,7 +46,9 @@ last-known snapshot (link-or-snapshot, exactly like `products`).
 | `labor_rate_per_hour` | `MONEY_RATE` | CHECK `>= 0 AND <> 'NaN'` |
 | `markup_varejo_pct` | `PERCENT` | CHECK `>= 0 AND <> 'NaN'` |
 | `markup_atacado_pct` | `PERCENT` | CHECK `>= 0 AND <> 'NaN'` |
+| `include_marketplace` | Boolean NOT NULL | `server_default true` — **amended 2026-07-11 (T011)** |
 | **resolved filament/printer values** (what a product resolves to) | | |
+| `filament_material` | Text NULL | optional display label — **amended 2026-07-11 (T011)** |
 | `filament_cost_per_roll` | `MONEY_SETTLED` | CHECK `>= 0 AND <> 'NaN'` |
 | `filament_roll_weight_kg` | `QTY_KG` | CHECK `> 0 AND <> 'NaN'` (denominator) |
 | `printer_machine_value` | `MONEY_SETTLED` | CHECK `>= 0 AND <> 'NaN'` |
@@ -55,6 +57,13 @@ last-known snapshot (link-or-snapshot, exactly like `products`).
 | `printer_maintenance_reserve_per_hour` | `MONEY_RATE` | CHECK `>= 0 AND <> 'NaN'` |
 | `channels` | JSONB | 0..N `ChannelInput`, decimal-string money — as `products.channels` |
 | `other_costs` | JSONB | 0..N named sub-costs — as `products.other_costs` |
+
+> **Amendment 2026-07-11 (owner-approved at T011).** `include_marketplace` + `filament_material` were added
+> to the snapshot above. Neither is a `PriceInput` field — which is why the original "resolved `PriceInput`"
+> table omitted them — but BOTH exist on `products` precisely so a **degraded** row does not silently lose
+> what the seller typed. Without them a kit line that degrades (D6) would drop the marketplace toggle and the
+> material label while still claiming to hold a complete last-known snapshot. The snapshot is now a full
+> mirror of the `products` value surface: whatever a degraded product keeps, a degraded line keeps.
 
 **Table CHECK — link-or-snapshot** (mirrors `ck_products_filament_link_or_snapshot`, corrected form):
 ```
@@ -107,6 +116,11 @@ truth). Optional defense-in-depth (a redundant `owner_uid` + RLS) may be added i
   (recomputed client-side via `computeBom`, ADR-0016). Each `BomLineOut` resolves live vs last-known and
   flags `degraded: boolean`; write responses carry `materializations[{position, productId, action}]` (K4
   honesty: "criado" vs "referenciou o existente").
+- `BomLineOut` (**amended 2026-07-11, T012**) carries the **full resolved value-set** — `pieceInputs`,
+  `filamentValues`, `printerValues`, `tariffPerKwh`, `includeMarketplace`, `channels`, `otherCosts`, plus
+  `pieceName` (the live product's name; `null` once degraded → the UI's honest "— Manual —"). A line must be
+  self-sufficient for client-side `computeBom` (ADR-0016) without a second round-trip; these are exactly the
+  snapshot columns above. The earlier summary abbreviated the shape — it was never a smaller wire.
 
 ## Indices
 

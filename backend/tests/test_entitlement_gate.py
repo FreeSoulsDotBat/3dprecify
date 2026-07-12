@@ -22,7 +22,12 @@ from app.main import create_app
 from app.settings import Settings, get_settings
 from tests.conftest import requires_db
 
-CATALOG_PREFIXES = ("/api/v1/filaments", "/api/v1/printers", "/api/v1/products")
+CATALOG_PREFIXES = (
+    "/api/v1/filaments",
+    "/api/v1/printers",
+    "/api/v1/products",
+    "/api/v1/boms",  # E3/PR-B: kit persistence joins the gated catalog surface (ADR-0015)
+)
 
 
 def _patch_verify(monkeypatch: pytest.MonkeyPatch, uid: str, email: str | None = None) -> None:

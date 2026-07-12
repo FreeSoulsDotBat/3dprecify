@@ -47,13 +47,20 @@ BomIn:
   name: string (non-blank)
   lines: BomLineIn[]              # 0..N
 
-BomLineOut:
+BomLineOut:                      # amended 2026-07-11 (T012): the FULL resolved value-set
   id: uuid
   position: integer
   quantity: integer
   productId: uuid | null
+  pieceName: string | null       # the live product's name; null once degraded (UI: "— Manual —")
   degraded: boolean              # true when productId is null but a reference existed (last-known in use)
-  pieceInputs: PieceInputs       # resolved (live product → resolved, else last-known snapshot)
+  # Resolved (live product → resolved, else last-known snapshot). The line is SELF-SUFFICIENT for
+  # computeBom (ADR-0016) — the client never needs a second round-trip to price it.
+  pieceInputs: PieceInputs
+  filamentValues: FilamentValues
+  printerValues: PrinterValues
+  tariffPerKwh: decimal-string
+  includeMarketplace: boolean
   channels: ChannelSlot[]
   otherCosts: OtherCost[]
 

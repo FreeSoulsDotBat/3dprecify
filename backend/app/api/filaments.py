@@ -36,9 +36,18 @@ from app.models import Filament, Product
 router = APIRouter(tags=["filaments"])
 
 
-def _finite_non_negative(value: Decimal, field: str) -> Decimal:
+# NUMERIC integer-digit ceilings (precision minus scale, in lockstep with models.py). A value
+# at/above its ceiling overflows the column at write time (Postgres → 500); reject here as 422.
+_CEIL_MONEY = Decimal(10) ** 10  # MONEY_SETTLED Numeric(12,2)
+_CEIL_GRAMS = Decimal(10) ** 9  # QTY_G        Numeric(12,3)
+_CEIL_KG = Decimal(10) ** 6  # QTY_KG       Numeric(9,3)
+
+
+def _finite_non_negative(value: Decimal, field: str, ceiling: Decimal) -> Decimal:
     if not value.is_finite() or value < 0:
         raise ValueError(f"{field} must be a finite number >= 0")
+    if value >= ceiling:
+        raise ValueError(f"{field} exceeds the maximum storable magnitude")
     return value
 
 
@@ -59,19 +68,19 @@ class FilamentIn(CamelModel):
     @field_validator("cost_per_roll")
     @classmethod
     def _cost(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "costPerRoll")
+        return _finite_non_negative(v, "costPerRoll", _CEIL_MONEY)
 
     @field_validator("roll_weight_kg")
     @classmethod
     def _roll(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0:
-            raise ValueError("rollWeightKg must be a finite number > 0")
+        if not v.is_finite() or v <= 0 or v >= _CEIL_KG:
+            raise ValueError("rollWeightKg must be a finite number > 0 within the storable range")
         return v
 
     @field_validator("default_waste_grams")
     @classmethod
     def _waste(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "defaultWasteGrams")
+        return _finite_non_negative(v, "defaultWasteGrams", _CEIL_GRAMS)
 
 
 class FilamentOut(CamelModel):

@@ -1,7 +1,7 @@
 # ADR-0017: Kit-save materialization — atomic transaction, path-scoped FR-310 relaxation, name-dedup
 
-- **Status**: Proposed
-- **Date**: 2026-07-11
+- **Status**: Accepted (owner, at the PR-B gate — 2026-07-12)
+- **Date**: 2026-07-11 (accepted 2026-07-12)
 - **Deciders**: Jonatan (owner) + arquiteto + Claude
 - **Extends**: ADR-0013 (persistence stack) · relates ADR-0012 (entitlement) · ADR-0015 (BOM enforcement) · ADR-0016 (compose contract)
 
@@ -97,6 +97,17 @@ service builds `Product` rows itself and never calls `create_product`.
    honestly message created-vs-referenced (absent on GET).
 
 Jonatan approves this ADR at the PR-B gate (Proposed until then).
+
+**Accepted 2026-07-12 at the PR-B gate**, as built and as specified. Two notes from the implementation:
+
+- The **case-sensitivity flag** in sub-rule 3 (exact vs case-insensitive, ~75% confidence) held: dedup is
+  trim + exact, consistent with E2, and is pinned by a test asserting that `"suporte l"` and `"Suporte L"` are
+  two different pieces. If sellers report this as surprising, case-folding is a contained follow-up (one SELECT
+  and one test) — it was not guessed at now.
+- Sub-rule 5's **edit-after-bind** case (left to "a PR-B UI detail") was settled in the composer: a bound line
+  the seller EDITS unbinds and materializes as its own piece. Saving it as a reference would let the live
+  product's values supersede the adjustment they just typed — silent data loss, the exact failure this ADR
+  exists to prevent.
 
 ## Consequences
 

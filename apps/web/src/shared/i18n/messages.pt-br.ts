@@ -260,6 +260,7 @@ export const messages = {
     tabFilaments: "Filamentos",
     tabPrinters: "Impressoras",
     tabProducts: "Produtos",
+    tabKits: "Kits",
     // Empty (premium, per entity)
     emptyFilamentsTitle: "Nenhum filamento salvo ainda",
     emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
@@ -267,13 +268,23 @@ export const messages = {
     emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
     emptyProductsTitle: "Nenhum produto salvo ainda",
     emptyProductsBody: "Salve uma peça com seus custos e reabra com o preço sempre recalculado.",
+    emptyKitsTitle: "Nenhum kit salvo ainda",
+    emptyKitsBody: "Monte um kit com várias peças e reabra com o preço sempre recalculado.",
     addFilament: "Adicionar filamento",
     addPrinter: "Adicionar impressora",
     addProduct: "Adicionar produto",
+    addKit: "Montar kit",
+    editKit: "Editar kit",
+    duplicate: "Duplicar",
     // List / row actions
     countFilaments: "{n} filamento(s)",
     countPrinters: "{n} impressora(s)",
     countProducts: "{n} produto(s)",
+    countKits: "{n} kit(s)",
+    countKitPieces: "{n} peça(s)",
+    // K3 — the manual/degraded product state. ONE honest state for "born manual" (materialized
+    // from a kit) and "degraded by deletion": same remedy, so the same words (SC-412).
+    needsAttention: "Vincule um filamento e uma impressora salvos",
     // Product row summary shows the reference names; a removed reference reads as manual (US6-4).
     manualRef: "manual",
     edit: "Editar",
@@ -343,12 +354,14 @@ export const messages = {
     saveInvalid: "Confira os campos destacados antes de salvar.",
     // FR-310: a product references SAVED items at create — honest prerequisite, not a dead end.
     needRefs: "Para criar um produto, salve antes um filamento e uma impressora no catálogo.",
-    // Degraded reference (US6-4) — calm info, never an error wall; values stay editable.
+    // Unlinked reference — calm info, never an error wall; values stay editable. E2 said "o
+    // filamento vinculado foi REMOVIDO" here, which was true when every product was born with
+    // links. E3 breaks that premise: a kit save materializes products with NO links (K3/ADR-0017
+    // §4), and telling those sellers something was removed would be inventing an event that never
+    // happened. Data cannot tell the two apart — by design — so the copy states what IS true of
+    // both: nothing is linked, the values were kept, link them to follow the catalog again.
     manualOption: "— Manual —",
-    degradedFilament:
-      "O filamento vinculado foi removido. Mantivemos os últimos valores — edite se precisar.",
-    degradedPrinter:
-      "A impressora vinculada foi removida. Mantivemos os últimos valores — edite se precisar.",
+    manualValuesKept: "Os valores atuais foram mantidos e continuam editáveis.",
     // Referenced-item delete warn (shown inside the filament/printer delete confirm).
     deleteWarnFilament:
       "Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.",
@@ -371,6 +384,8 @@ export const messages = {
     addLine: "Adicionar peça",
     // Line (§1.1/§1.3)
     lineLabel: "Peça {n}",
+    // K4 pre-fill: the catalog name a materialized piece takes ("Peça {n}" alone when unnamed).
+    pieceNameKit: "Peça {n} · {kit}",
     lineAdhoc: "(avulsa)",
     quantity: "Quantidade",
     quantityUnit: "un",
@@ -391,6 +406,12 @@ export const messages = {
     // Assembly total + per-channel rollup (§1.7)
     assemblyTitle: "Total do kit",
     assemblyCusto: "Custo total",
+    // Honest headline states (review 2026-07-12): with NO valid line the total is not "R$ 0,00",
+    // it simply does not exist yet; a partial kit says how many pieces are out of the sum.
+    assemblyNoPriceTitle: "Sem preço ainda",
+    assemblyNoPriceBody:
+      "O preço do kit aparece assim que ao menos uma peça estiver completa e válida.",
+    assemblyExcluded: "{n} peça(s) fora do total — confira os avisos nas peças acima.",
     channelsTitle: "Preços por canal (kit)",
     channelContributing: "{n} peça(s) somaram neste canal",
     channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
@@ -399,7 +420,6 @@ export const messages = {
     teaserTitle: "Monte e precifique kits com várias peças",
     teaserBody:
       "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.",
-    teaserDialogTitle: "Os kits fazem parte do Premium",
     teaserDialogBody:
       "No Premium você monta kits com várias peças e vê o preço do kit inteiro, por canal.",
     teaserFreeNote: "A calculadora de peça única continua grátis.",
@@ -410,6 +430,35 @@ export const messages = {
     guardChecking: "Verificando seu plano…",
     guardError: "Não foi possível verificar seu plano.",
     guardRetry: "Tentar novamente",
+    // Save (§1.9 / T015) — Kit vocabulary (K1). A success toast fires ONLY on a real 2xx.
+    kitName: "Nome do kit",
+    kitNamePlaceholder: "Kit suporte + base",
+    kitNameRequired: "Dê um nome ao kit para salvar.",
+    pieceName: "Nome da peça no catálogo",
+    save: "Salvar kit",
+    saving: "Salvando…",
+    saved: "Kit salvo.",
+    saveInvalid: "Confira as peças com aviso antes de salvar.",
+    saveEmpty: "Adicione ao menos uma peça para salvar.",
+    viewKits: "Ver meus kits",
+    copySuffix: "(cópia)",
+    // Materialization feedback (K4) — created vs referenced, said out loud, never silently
+    savedTitle: "O que este kit fez no seu catálogo",
+    savedCreated: "{nome} — criado no catálogo",
+    savedReferenced: "{nome} — já existia no catálogo, referenciado",
+    savedSuperseded:
+      "As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.",
+    // Bound line edited after binding → it becomes an avulsa piece and enters the catalog (ADR-0017)
+    adjustedBecomesPiece: "Você ajustou esta peça — ela será salva como uma peça nova no catálogo.",
+    // Lapse (FR-409 / Q3 freeze / ux §3) — calm, never punitive ("expirou/bloqueado/suspenso" are
+    // banned, FR-014). The kits are the seller's data, not a rented view: nothing was deleted and
+    // reopening + recalculating keep working. Creating/editing is what needs an active Premium, so
+    // the CREATE entry is gated rather than left as an affordance that fails at the end.
+    lapsedTitle: "Premium pausado",
+    lapsedBody:
+      "Seus kits salvos continuam aqui e podem ser reabertos e recalculados. Para criar ou editar, reative o Premium.",
+    lapsedBanner:
+      "Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.",
   },
   historico: {
     emptyTitle: "Histórico em breve",

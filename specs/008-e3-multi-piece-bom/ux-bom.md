@@ -381,12 +381,35 @@ forbids a button that appears to save but can't. So:
   2xx (`POST /api/v1/boms`); offline/lapsed/free never toast success (§0.1). Save → route to the saved-BOM list
   (PR-B). Copy uses **"Voltar"**, never "Cancelar" (FR-014 bans "cancelar" in the message module).
 
+> **Amendment 2026-07-12 — what PR-B actually shipped (T015).** This section predates the K-amendment, so its
+> copy is the pre-Kit vocabulary and it does not yet know about materialization. As built:
+>
+> - Vocabulary is **Kit** (K1): `Nome do kit` · **"Salvar kit"** · toast **"Kit salvo."**
+> - Each line that will **materialize** carries its own `Nome da peça no catálogo` Field, pre-filled
+>   `Peça {n} · {kit}` (K4) — so the seller names the catalog row *before* it exists, never after.
+> - The save response's `materializations[]` renders as an honest panel: **"{nome} — criado no catálogo"** vs
+>   **"{nome} — já existia no catálogo, referenciado"**, plus, when anything was referenced, the supersede
+>   warning: *"As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou
+>   aqui."* (ADR-0017 §3 — the seller learns this at save time, not by reopening and finding other numbers.)
+> - A **bound line edited after binding** unbinds and materializes as its own piece, and says so
+>   (*"Você ajustou esta peça — ela será salva como uma peça nova no catálogo."*). Saving it as a reference
+>   would let the live product's values overwrite the adjustment — silent data loss.
+> - Save does **not** navigate away: the panel appears in place with a **"Ver meus kits"** exit, so the seller
+>   reads what happened to their catalog before leaving.
+
 ```
- (PR-B)  ┌──────────────────────────────────┐
-         │ Nome da montagem                  │
-         │ [ Kit suporte + base            ] │  ← Field (non-blank)
-         │              [ Salvar montagem ]  │  ← real 2xx only → toast → list
-         └──────────────────────────────────┘
+ (as built, PR-B) ┌────────────────────────────────────┐
+                  │ Nome do kit *                       │
+                  │ [ Kit suporte + base              ] │  ← Field (non-blank)
+                  │                    [ Salvar kit ]   │  ← real 2xx only → toast
+                  │ ─────────────────────────────────── │
+                  │ O que este kit fez no seu catálogo  │  ← only after a real 2xx (K4)
+                  │ · Peça 1 · Kit — criado no catálogo │
+                  │ · Base — já existia, referenciado   │
+                  │ (i) As peças referenciadas usam os  │  ← supersede warning, when it applies
+                  │     valores do produto já salvo…    │
+                  │              [ Ver meus kits ]      │
+                  └────────────────────────────────────┘
 ```
 
 ---
@@ -457,6 +480,15 @@ PR-B ships save/list, these states apply to the **saved-BOM management surface**
 > `none`/signed-out (no data); lapsed-with-data gets the calm read-only freeze below. This keeps both ADR-0015
 > (feature access is active-informed) and FR-409 (data stays readable) true — the plan/ADR should record it
 > explicitly.
+>
+> **SETTLED 2026-07-12 (T017, PR-B) — the recommendation above was implemented as written.** At `/kits`:
+> `none`/signed-out → the §2 teaser; **`lapsed` WITHOUT a kit open → the calm "Premium pausado" panel** (not
+> the teaser: it would sell a feature they already had) with a "Ver meus kits" exit; **`lapsed` reopening a
+> saved kit (`?id=`) → the composer**, which recomputes normally (a read) and carries the calm banner. The
+> save affordance there stays visible and denies honestly when tapped (§5), and the server denies it anyway
+> (`403`, pinned by pytest). The deciding argument for gating the CREATE door: letting a lapsed seller compose
+> a whole new kit and only telling them at "Salvar" that none of it can be kept is a fake affordance —
+> precisely what §0.1 forbids.
 
 **Lapsed (read-only freeze — calm, never punitive; "expirou/bloqueado/suspenso" banned):**
 ```

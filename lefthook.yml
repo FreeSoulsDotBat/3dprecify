@@ -18,6 +18,10 @@ pre-push:
   commands:
     gate:
       run: pnpm gate:all
+    # A merged migration is immutable — catch an in-place amend before it leaves the machine
+    # (mirrors the CI migration-guard job; needs origin/develop, fetched best-effort by the script).
+    migration-guard:
+      run: sh scripts/check-migrations.sh
 
 # post-merge (ADR-0014): after a merge into `develop`, incrementally refresh the graphify
 # knowledge graph — code is AST-extracted (no LLM, 0 tokens, ~20s). Best-effort/non-fatal: a

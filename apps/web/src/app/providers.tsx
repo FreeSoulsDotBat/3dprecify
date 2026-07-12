@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useEffect, type ReactNode } from "react";
 
+import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
 import { ME_QUERY_KEY } from "@/entities/user/use-identity";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -27,7 +28,13 @@ export function AppProviders({ children }: { children: ReactNode }) {
         // uid-keyed queries AND sweep its persisted device cache so a signed-out (or swapped)
         // account can never linger in memory or IndexedDB. Best-effort — never blocks sign-out.
         queryClient.removeQueries({ queryKey: CATALOG_QUERY_ROOT });
-        if (prev.user?.uid) void purgeCatalogCache(prev.user.uid);
+        // Saved kits are the same kind of user data and get the same sweep (E3/T014) — a kit list
+        // left behind on a shared device would leak exactly what the catalog sweep prevents.
+        queryClient.removeQueries({ queryKey: BOM_QUERY_ROOT });
+        if (prev.user?.uid) {
+          void purgeCatalogCache(prev.user.uid);
+          void purgeBomCache(prev.user.uid);
+        }
       }
     });
   }, []);

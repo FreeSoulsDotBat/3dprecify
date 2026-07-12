@@ -94,6 +94,8 @@ def test_crud_round_trip(
         ("costPerRoll", "-5"),
         ("costPerRoll", "NaN"),
         ("costPerRoll", "abc"),
+        ("costPerRoll", "10000000000"),  # 10^10 = MONEY_SETTLED ceiling → overflow, must be 422
+        ("rollWeightKg", "1000000"),  # 10^6 = QTY_KG ceiling → overflow, must be 422
         ("name", "   "),  # blank name
     ],
 )

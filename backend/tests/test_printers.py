@@ -76,7 +76,10 @@ def test_crud_round_trip(
         ("machineLifetimeHours", "0"),  # divisor must be > 0 (the E1 rule)
         ("machineLifetimeHours", "-10"),
         ("machineValue", "-1"),
+        ("machineValue", "10000000000"),  # 10^10 = MONEY_SETTLED ceiling → overflow, must be 422
+        ("machineLifetimeHours", "1000000"),  # 10^6 = QTY_H ceiling → overflow, must be 422
         ("avgPowerKw", "NaN"),
+        ("avgPowerKw", "100000"),  # 10^5 = QTY_KW ceiling → overflow, must be 422
         ("maintenanceReservePerHour", "-0.5"),
         ("name", ""),
     ],

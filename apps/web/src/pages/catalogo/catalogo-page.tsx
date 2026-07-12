@@ -4,6 +4,7 @@ import { useSearch } from "@tanstack/react-router";
 
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
+import { KitsPanel } from "@/features/catalog/kits-panel";
 import { CatalogTeaser } from "@/features/catalog/premium-teaser";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
@@ -20,12 +21,13 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 const catalogo = messages.catalogo;
 
-type TabId = "filaments" | "printers" | "products";
+type TabId = "filaments" | "printers" | "products" | "kits";
 
 const TABS: readonly { id: TabId; label: string }[] = [
   { id: "filaments", label: catalogo.tabFilaments },
   { id: "printers", label: catalogo.tabPrinters },
   { id: "products", label: catalogo.tabProducts },
+  { id: "kits", label: catalogo.tabKits },
 ];
 
 const tablistStyle: CSSProperties = {
@@ -80,9 +82,14 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
 }
 
 export function CatalogoPage() {
-  // Landing tab: `?tab=products` (the product page returns here after a save) else Filamentos.
+  // Landing tab: `?tab=products` (the product page returns here after a save) or `?tab=kits` (a
+  // saved kit lands the seller on its list, E3/K2); otherwise Filamentos.
   const search = useSearch({ strict: false }) as { tab?: string };
-  const [active, setActive] = useState<TabId>(search.tab === "products" ? "products" : "filaments");
+  const [active, setActive] = useState<TabId>(() => {
+    if (search.tab === "products") return "products";
+    if (search.tab === "kits") return "kits";
+    return "filaments";
+  });
 
   // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
   // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
@@ -108,6 +115,7 @@ export function CatalogoPage() {
         {active === "filaments" && <FilamentsPanel />}
         {active === "printers" && <PrintersPanel />}
         {active === "products" && <ProductsPanel />}
+        {active === "kits" && <KitsPanel />}
       </div>
     </section>
   );

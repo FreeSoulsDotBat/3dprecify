@@ -22,6 +22,8 @@ dist/
 build/
 .next/
 coverage/
+.coverage
+htmlcov/
 *.log
 npm-debug.log*
 pnpm-debug.log*
