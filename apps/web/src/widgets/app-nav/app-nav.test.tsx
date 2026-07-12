@@ -81,6 +81,17 @@ describe("AppNav (T025 / US1 — NAV-1)", () => {
     expect(active[0]).toHaveAccessibleName("Calcular");
   });
 
+  it("the roving tabstop covers all FIVE items (End jumps to the last section)", async () => {
+    const user = userEvent.setup();
+    render(<RouterProvider router={makeRouter("tabbar")} />);
+    await screen.findByText("page /calcular");
+
+    const nav = screen.getByRole("navigation", { name: /navegação principal/i });
+    await user.click(within(nav).getByRole("link", { name: "Calcular" }));
+    await user.keyboard("{End}");
+    expect(within(nav).getByRole("link", { name: "Conta" })).toHaveFocus();
+  });
+
   it("moves the active indicator when the user switches sections", async () => {
     const user = userEvent.setup();
     render(<RouterProvider router={makeRouter("tabbar")} />);

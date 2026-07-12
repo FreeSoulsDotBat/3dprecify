@@ -73,7 +73,8 @@ export function BomLineCard({
 
       {lineResult !== null && (
         <p className="text-sm text-[var(--text-muted)]">
-          {formatBRL(lineResult.line.custoTotal)} /{t.quantityUnit} · Total{" "}
+          {formatBRL(lineResult.line.custoTotal)} /{t.quantityUnit} ·{" "}
+          {t.lineTotal.replace("{qty}", String(lineResult.quantity))}{" "}
           {formatBRL(lineResult.custoTotal)}
         </p>
       )}

@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -14,9 +14,10 @@ import { useSessionStore } from "@/shared/session/session-store";
 // Every money number on this page comes from `computeBom` via `composeBom` (ux §0.2) — these
 // tests assert the rendered outcome, not any view-layer arithmetic. Teaser specifics are T007.
 
-const { useEntitlementMock, useProductsMock } = vi.hoisted(() => ({
+const { useEntitlementMock, useProductsMock, useFeeCatalogMock } = vi.hoisted(() => ({
   useEntitlementMock: vi.fn(),
   useProductsMock: vi.fn(),
+  useFeeCatalogMock: vi.fn(),
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
@@ -29,26 +30,54 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/catalog/use-catalog")>();
   return { ...actual, useProducts: () => useProductsMock() };
 });
-// Deterministic fee context: an EMPTY catalog (no pre-fill) so every channel number in these
-// tests derives only from typed fees — never from the bundled seed's current values.
+// Deterministic fee context: an EMPTY catalog by default (no pre-fill), a controlled ML entry
+// where a test PINS the catalog→ctx→rollup wiring (review major: with only an empty catalog,
+// dropping the page's ctx threading would stay green).
 vi.mock("@/shared/fee-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
-  return {
-    ...actual,
-    useFeeCatalog: () => ({
-      catalog: {
-        catalogVersion: "test-0",
-        schemaVersion: "1",
-        generatedAt: "2026-01-01T00:00:00Z",
-        marketplaces: [],
-      },
-      source: "seed" as const,
-      refreshFailed: false,
-      refreshing: false,
-      refetch: vi.fn(),
-    }),
-  };
+  return { ...actual, useFeeCatalog: () => useFeeCatalogMock() };
 });
+
+const EMPTY_FEES = {
+  catalogVersion: "test-0",
+  schemaVersion: "1",
+  generatedAt: "2026-01-01T00:00:00Z",
+  marketplaces: [],
+};
+/** ML Clássico 10% / no fixed fee: anúncio varejo do default line = 30,90 / 0,9 = 34,33. */
+const ML_FEES = {
+  catalogVersion: "test-1",
+  schemaVersion: "1",
+  generatedAt: "2026-01-01T00:00:00Z",
+  marketplaces: [
+    {
+      marketplace: "MERCADO_LIVRE",
+      entries: [
+        {
+          determinants: { listingType: "CLASSICO" }, // ML's determinant key (fee-prefill slotDeterminants)
+          commissionPct: 10,
+          fixedFee: 0,
+          priceBands: null,
+          freight: { kind: "NONE" },
+          source: "referência de teste",
+          sourceUrl: "https://example.com/fees",
+          effectiveDate: "2026-01-01",
+          lastReviewed: "2026-01-01",
+        },
+      ],
+    },
+  ],
+};
+
+function mockFees(catalog: unknown = EMPTY_FEES) {
+  useFeeCatalogMock.mockReturnValue({
+    catalog,
+    source: "catalog" as const,
+    refreshFailed: false,
+    refreshing: false,
+    refetch: vi.fn(),
+  });
+}
 
 import { BomPage } from "./bom-page";
 
@@ -108,6 +137,8 @@ function renderPremiumPage(products: ProductOut[] = []) {
   );
 }
 
+beforeEach(() => mockFees()); // empty catalog default; a test overrides with mockFees(ML_FEES)
+
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
@@ -115,10 +146,59 @@ afterEach(() => {
 });
 
 describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
-  it("premium (active) reaches the composer: empty state + add affordance", () => {
+  it("premium (active) reaches the composer: approved K1 copy + empty state + add affordance", () => {
     renderPremiumPage();
+    // SC-410 copy half: the owner-approved title/subtitle are live on the page.
+    expect(screen.getByRole("heading", { name: t.title })).toBeInTheDocument();
+    expect(screen.getByText(t.subtitle)).toBeInTheDocument();
     expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: new RegExp(t.addLine) })).toBeInTheDocument();
+  });
+
+  // Review major (2026-07-11): in React Query v5 a failed BACKGROUND refetch flips isError while
+  // `data` keeps the last server answer. That state must NOT tear the composer down (it would
+  // destroy every composed line); the wall is only for "no server answer at all".
+  it("a refetch error WITH last-known active data keeps the composer mounted (stale, honest)", () => {
+    useSessionStore.setState({ status: "authenticated" });
+    useEntitlementMock.mockReturnValue({
+      data: { status: "active" },
+      isLoading: false,
+      isError: true, // background refetch failed; data is the last-known server truth
+      refetch: vi.fn(),
+    });
+    useProductsMock.mockReturnValue(listState([]));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <BomPage />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText(t.emptyTitle)).toBeInTheDocument(); // composer stays
+    expect(screen.queryByRole("button", { name: t.guardRetry })).not.toBeInTheDocument();
+    // The failed re-check is stated calmly, not hidden (truth over approval).
+    expect(screen.getByText(t.guardError)).toBeInTheDocument();
+  });
+
+  // Review minor (2026-07-11): session "loading" was rendered as the signed-out teaser — a brief
+  // false "entre e ative o Premium" for a premium user during session bootstrap.
+  it("session 'loading' shows the checking state, never the signed-out teaser", () => {
+    useSessionStore.setState({ status: "loading" });
+    useEntitlementMock.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    useProductsMock.mockReturnValue(listState([]));
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={client}>
+        <BomPage />
+      </QueryClientProvider>,
+    );
+    expect(screen.getByText(t.guardChecking)).toBeInTheDocument();
+    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.teaserSignedOutBody)).not.toBeInTheDocument();
   });
 
   it("while the entitlement check is in flight, neither composer nor teaser renders (honest wait)", () => {
@@ -180,6 +260,15 @@ describe("BomPage — compose ad-hoc lines (US1-1/US1-2)", () => {
     const qty = screen.getByRole("textbox", { name: new RegExp(t.quantity) });
     fireEvent.change(qty, { target: { value: "3" } });
     expect(screen.getAllByText(/R\$\s?61,80/).length).toBeGreaterThan(0);
+  });
+
+  it("a blank quantity marks the line invalid honestly (captioned, excluded) — never a crash", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    const qty = screen.getByRole("textbox", { name: new RegExp(t.quantity) });
+    fireEvent.change(qty, { target: { value: "" } });
+    expect(screen.getByText(t.lineInvalid)).toBeInTheDocument();
+    expect(screen.getAllByText(/R\$\s?0,00/).length).toBeGreaterThan(0); // assembly honest zero
   });
 
   it("quantity 0 is an honest zero: captioned, listed, contributing nothing (edge)", () => {
@@ -286,7 +375,18 @@ describe("BomPage — line density (ux §1.3 secondary disclosure)", () => {
 });
 
 describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", () => {
-  it("a line with a manual channel fee rolls up under 'Preços por canal (montagem)'", () => {
+  // Review major (2026-07-11): pins the page's fee-catalog ctx threading — this number can ONLY
+  // come from the catalog entry pre-filling the default blank ML slot (34,33 = 30,90 / 0,9).
+  it("a catalog-covered blank slot pre-fills and rolls up from the CATALOG fees", () => {
+    mockFees(ML_FEES);
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    const rollup = screen.getByText(t.channelsTitle).closest("section, div");
+    expect(rollup).not.toBeNull();
+    expect(within(rollup as HTMLElement).getAllByText(/34,33/).length).toBeGreaterThan(0);
+  });
+
+  it("a line with a manual channel fee rolls up under the kit channels card", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     // The default line ships one Mercado Livre slot with blank fees; over the EMPTY test catalog
@@ -321,5 +421,35 @@ describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", 
     expect(within(rollup).getByText(t.channelSkipped.replace("{n}", "1"))).toBeInTheDocument();
     // Honest absence — never a fabricated R$ 0,00 price in the block.
     expect(within(rollup).queryByText(/R\$\s?0,00/)).not.toBeInTheDocument();
+  });
+
+  // Pins the widget's documented claim: collapsing UNMOUNTS the sections but RHF keeps the
+  // values, so a collapsed bad fee still rolls up as skipped (review finding, 2026-07-11).
+  it("a bad fee stays excluded+captioned after its disclosure collapses", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    typeCommission("100"); // opens the disclosure and types the invalid fee
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(advancedLabel) })); // collapse
+    const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
+    expect(within(rollup).getByText(t.channelSkipped.replace("{n}", "1"))).toBeInTheDocument();
+  });
+
+  // Mixed rule (lines-not-slots, aligned with pricing-core): a line with one valid + one invalid
+  // slot of the same marketplace CONTRIBUTED — it must not also read as skipped.
+  it("one valid + one form-invalid slot of the same marketplace: contributes, never 'sem preço'", () => {
+    renderPremiumPage();
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(advancedLabel) }));
+    fireEvent.click(screen.getByRole("button", { name: messages.calculator.channels.addChannel })); // second ML slot
+    const commissions = screen.getAllByRole("textbox", {
+      name: (n) => n.startsWith(messages.calculator.channels.commission) && !n.includes("mínima"),
+    });
+    expect(commissions).toHaveLength(2);
+    fireEvent.change(commissions[0], { target: { value: "20" } });
+    fireEvent.change(commissions[1], { target: { value: "100" } }); // invalid sibling slot
+    const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
+    expect(within(rollup).getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
+    expect(within(rollup).queryByText(/sem preço neste canal/)).not.toBeInTheDocument();
+    expect(within(rollup).getAllByText(/38,63/).length).toBeGreaterThan(0); // valid slot's money
   });
 });

@@ -70,7 +70,8 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       clean). Tests green.
 - [X] T006 [US1] Server-informed route-guard + BOM route in `apps/web/src/pages/bom/` and `app/router.tsx`:
       gate feature access on `GET /api/v1/entitlement` (`status === active`) — free/lapsed/signed-out → teaser
-      (US5), NEVER a local flag (ADR-0015). Guarded like the E2 product routes.
+      (US5), NEVER a local flag (ADR-0015). [Built as a PUBLIC route + in-page gate, like `/catalogo` — the
+      signed-out teaser needs the page to render; "guarded like product routes" was superseded, review note.]
 - [X] T006b [US1] Visual test: qa-produto homologates the composer at 390px + desktop (compose, per-channel
       rollup, remove-line, guard→teaser boundary). PASS-with-nits — `homologation-t006b.md` + `evidence/t006b/`.
 

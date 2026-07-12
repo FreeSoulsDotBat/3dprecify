@@ -1,5 +1,11 @@
 # UX Spec — E3 Multi-piece BOM (T001 · designer-ux → Claude Design handoff)
 
+> **K1 supersession (2026-07-11):** the owner renamed every user-facing surface to **Kit/Kits** (spec K1) —
+> route `/kits`, nav tab "Kits", title "Monte seus kits" + approved subtitle. This document's "Montagem"
+> vocabulary, `/bom` routing and §5 copy blocks are SUPERSEDED where they differ; `messages.pt-br.ts`
+> (`bom.*` block) is the shipping copy source. §0.4's entry-point question is CLOSED (5th tab approved).
+> Wireframes/flows/states remain the design reference.
+
 **Level**: wireframe / flow / state — NOT pixel-final. Final UI is produced in Claude Design from this + the UI
 the owner envisions. Structure in English; all user-facing copy in pt-BR (i18n-ready, tom honesto/calmo).
 

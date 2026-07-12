@@ -8,9 +8,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-// 008/T007 — the honest BOM teaser (US5, ux §2): free/lapsed/signed-out at /bom meet an honest
+// 008/T007 — the honest kit teaser (US5, ux §2): free/lapsed/signed-out at /kits meet an honest
 // Premium panel — NO fake success, NO price, NO date, NO pre-E6 purchase CTA (FR-410/SC-408).
-// Signed-out adds Entrar → /sign-in?redirect=/bom. The E2 teaser lineage, BOM copy.
+// Signed-out adds Entrar → /sign-in?redirect=/kits. The E2 teaser lineage, Kit copy (K1).
 
 const { useEntitlementMock, useProductsMock, navigateMock } = vi.hoisted(() => ({
   useEntitlementMock: vi.fn(),

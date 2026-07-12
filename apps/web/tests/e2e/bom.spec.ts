@@ -8,7 +8,7 @@ import { E2E_DATABASE_URL } from "../../playwright.config";
 
 // 008/T004+T007 e2e — the E3 PR-A loop against the REAL stack: a premium account composes a
 // 3-line BOM (ad-hoc + catalog-referenced) free-standing (nothing persisted, quickstart §2);
-// free/signed-out at /bom meet the honest teaser while the FREE single-piece calculator stays
+// free/signed-out at /kits meet the honest teaser while the FREE single-piece calculator stays
 // fully usable (SC-408/SC-409). Persistence e2e lands in PR-B.
 
 const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
@@ -46,7 +46,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
 }, info) => {
   const email = await signUpThrowaway(page, `bom-${info.workerIndex}`);
 
-  // Free (never granted): /bom shows the honest teaser, never the composer (ADR-0015).
+  // Free (never granted): /kits shows the honest teaser, never the composer (ADR-0015).
   await page.goto("/kits");
   await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
 
@@ -126,7 +126,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
   await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
 });
 
-test("signed-out at /bom sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
+test("signed-out at /kits sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
   page,
 }) => {
   // Signed-out: /kits renders the teaser (no bounce), with the honest sign-in path. The 5th
@@ -140,7 +140,7 @@ test("signed-out at /bom sees the honest teaser; the FREE calculator is untouche
   await expect(page.getByRole("button", { name: t.bom.teaserSignIn })).toBeVisible();
   await expect(page.getByRole("button", { name: t.bom.teaserDismiss })).toBeVisible();
 
-  // Entrar carries the return-to-intent to /bom.
+  // Entrar carries the return-to-intent to /kits.
   await page.getByRole("button", { name: t.bom.teaserSignIn }).click();
   await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fkits/);
 
@@ -148,6 +148,8 @@ test("signed-out at /bom sees the honest teaser; the FREE calculator is untouche
   await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.grams) }).fill("200");
-  // Recomputes live offline-style: a price renders (no premium wall anywhere on this page).
+  // Recomputes live: a REAL price renders (review nit — assert it, don't just claim it) and no
+  // premium wall appears anywhere on this page.
+  await expect(page.getByText(/R\$\s?\d/).first()).toBeVisible();
   await expect(page.getByText(t.bom.teaserTitle)).toHaveCount(0);
 });

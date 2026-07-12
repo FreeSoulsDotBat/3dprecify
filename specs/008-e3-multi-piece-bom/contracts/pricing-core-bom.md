@@ -59,8 +59,11 @@ export function computeBom(lines: BomLineInput[]): BomResult;
 - Group each line's `line.channels: ChannelResult[]` by `marketplace`.
 - For each marketplace group, sum each money field × the line's quantity, per level (varejo/atacado).
 - **Per-slot isolation (extends SC-107)**: a `ChannelResult` with `error != null` (null prices) contributes
-  **zero** and increments `skippedLines`; it never throws, never NaNs a sibling, never silently drops. A
-  rollup with `contributingLines === 0` reports null prices honestly.
+  **zero**; it never throws, never NaNs a sibling, never silently drops. A rollup with
+  `contributingLines === 0` reports null prices honestly.
+- **Counts are per LINE, not per slot** (clarified 2026-07-11, review finding): a line carrying several slots
+  of one marketplace counts ONE `contributingLines` (its money still sums every valid slot); it increments
+  `skippedLines` only when EVERY one of its slots for that marketplace errored — "N peça(s)" copy stays true.
 
 ## Invariants (unit-tested in the core — failing-first)
 

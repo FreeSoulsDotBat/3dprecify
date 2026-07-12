@@ -73,3 +73,12 @@ Jonatan approved Option A on 2026-07-10 (spec 008 plan phase).
 - Follow-ups: the client route-guard implementation (a guarded route like E2's product routes) is a plan/tasks
   concern; `GET /api/v1/entitlement` already exists (E2 T014). Revisit if a future tier needs
   compute-level enforcement (would require moving compute server-side — reopen ADR-0008).
+- **Follow-up recorded 2026-07-11 (PR-A review):** the "free/**lapsed**/signed-out see the teaser" line above
+  holds for PR-A only because no saved kits can exist yet. FR-409 + the API surface allow lapsed READS, so
+  **PR-B must split lapsed**: saved-kit list + reopen + re-price stay readable (read-only freeze, E2 lapse
+  lineage); only compose/create is active-gated. The reconciliation is designed in `ux-bom.md` §3 (~76%) and
+  is an explicit decision point at the PR-B gate — this note keeps the ADR from silently contradicting it.
+- **Guard nuance recorded 2026-07-11 (review major):** "server-informed" includes the LAST-KNOWN server
+  response — a failed background re-check with cached data must NOT tear the composer down (that would
+  destroy composed work); the hard retry wall applies only when no server answer exists at all. The banned
+  anti-pattern remains a client-held FLAG, not a cached server response.

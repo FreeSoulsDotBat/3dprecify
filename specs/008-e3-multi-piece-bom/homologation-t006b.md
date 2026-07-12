@@ -133,3 +133,17 @@ Evidence: `G1-desktop-composer-1280.png`, `G2-desktop-line-expanded-1280.png`
    than a disabled "cadastre um produto"/offline hint). Reasonable, but slightly deviates from "each line carries a
    picker" (§1.2-C). Low priority.
 8. **PWA manifest icon warning** — pre-existing `icon-192.png` not a valid image; not BOM.
+
+---
+
+## Addendum (2026-07-11, post-homologation)
+
+- **Top nit #1 (skippedLines caption)**: RESOLVED — form-invalid slots now surface in the rollup as honest
+  per-LINE skipped counts (commit `ad988ed`; counts refined to lines-not-slots in the pre-push review round).
+- **Deferred nit #2 (line density)**: RESOLVED early — the ux §1.3 secondary disclosure shipped in `ad988ed`.
+- **K1 rename (2026-07-11)**: the surfaces homologated here now read the Kit vocabulary (route `/kits`,
+  title "Monte seus kits", 5th nav tab) — commit `a389dc8`. Screenshots show the pre-rename copy; the
+  behaviors homologated are unchanged.
+- **Pre-push review round**: a 6-dimension multi-agent review confirmed 2 majors (entitlement-guard
+  tear-down on background refetch error; missing catalog-prefill coverage at the kit surface) — both fixed
+  test-first with the remaining actionable minors; see the PR description for the full disposition.

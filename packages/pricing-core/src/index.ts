@@ -326,9 +326,11 @@ export interface BomLineResult {
 
 /**
  * Per-marketplace assembly rollup (FR-403). Money fields are assembly TOTALS — Σ over the
- * contributing lines of (that line's slot value × quantity), per level. A slot in `error`
- * contributes zero and increments `skippedLines` (honest, not silent — extends SC-107); a rollup
- * nobody fed (`contributingLines === 0`) reports null prices, never a fake R$ 0,00.
+ * contributing lines of (that line's slot values × quantity), per level. Counts are per LINE,
+ * not per slot: a line with several slots of one marketplace contributes once (its money still
+ * sums every valid slot), and it counts as skipped only when EVERY one of its slots for that
+ * marketplace errored (honest, not silent — extends SC-107). A rollup nobody fed
+ * (`contributingLines === 0`) reports null prices, never a fake R$ 0,00.
  */
 export interface BomChannelRollup {
   marketplace: string | null;
@@ -397,6 +399,9 @@ export function computeBom(lines: BomLineInput[]): BomResult {
   // Per-marketplace rollup — grouped in first-appearance order (deterministic; Map keeps it).
   const rollups = new Map<string | null, RollupAccumulator>();
   for (const { line, quantity } of lineResults) {
+    // Line-scoped flags so the counts stay per LINE even when a line carries several slots of
+    // the same marketplace (money accumulates per slot; counts resolve after the line closes).
+    const lineFlags = new Map<string | null, { ok: boolean; err: boolean }>();
     for (const slot of line.channels) {
       let acc = rollups.get(slot.marketplace);
       if (!acc) {
@@ -413,11 +418,13 @@ export function computeBom(lines: BomLineInput[]): BomResult {
         };
         rollups.set(slot.marketplace, acc);
       }
+      const flags = lineFlags.get(slot.marketplace) ?? { ok: false, err: false };
+      lineFlags.set(slot.marketplace, flags);
       if (slot.error !== null) {
-        acc.skippedLines += 1; // honest: shown as skipped, never silently dropped
+        flags.err = true; // honest: resolved to a skipped LINE below, never silently dropped
         continue;
       }
-      acc.contributingLines += 1;
+      flags.ok = true;
       // Non-error slots ALWAYS carry the four prices (computeChannel's invariant): a `?? 0`
       // here would add four dead branches the 100%-branch gate can never cover — the non-null
       // assertion states the invariant instead of pretending null is reachable.
@@ -439,6 +446,15 @@ export function computeBom(lines: BomLineInput[]): BomResult {
       acc.freightAtacado = acc.freightAtacado.plus(
         new Decimal(slot.freightCostAtacado).times(quantity),
       );
+    }
+    // Close the line: one contributing count per marketplace it fed; skipped only when every
+    // slot of that marketplace on this line errored. A flags entry exists only because a slot
+    // set ok OR err, so `!ok` implies err — a third branch would be dead code the 100%-branch
+    // gate can never cover.
+    for (const [marketplace, flags] of lineFlags) {
+      const acc = rollups.get(marketplace)!;
+      if (flags.ok) acc.contributingLines += 1;
+      else acc.skippedLines += 1;
     }
   }
 

@@ -19,7 +19,8 @@ function marketplaceLabel(marketplace: string | null): string {
   return names[marketplace] ?? marketplace;
 }
 
-function plural(template: string, n: number): string {
+/** Interpolate the honest count into a "{n} peça(s)…" caption (the "(s)" is in the copy itself). */
+function withCount(template: string, n: number): string {
   return template.replace("{n}", String(n));
 }
 
@@ -49,13 +50,13 @@ function RollupBlock({ rollup }: { rollup: BomChannelRollup }) {
             value={formatBRL(rollup.recebidoLiquidoAtacado ?? 0)}
           />
           <p className="text-xs text-[var(--text-muted)]">
-            {plural(t.channelContributing, rollup.contributingLines)}
+            {withCount(t.channelContributing, rollup.contributingLines)}
           </p>
         </>
       )}
       {rollup.skippedLines > 0 && (
         <p className="text-xs text-[var(--text-muted)]">
-          {plural(t.channelSkipped, rollup.skippedLines)}
+          {withCount(t.channelSkipped, rollup.skippedLines)}
         </p>
       )}
     </div>
@@ -80,7 +81,11 @@ export function ChannelRollup({
   channels: BomChannelRollup[];
   uiSkipped?: UiSkippedChannel[];
 }) {
-  const extra = new Map(uiSkipped.filter((u) => u.count > 0).map((u) => [u.marketplace, u.count]));
+  // Accumulate (never overwrite) so duplicate marketplace entries can't silently drop counts.
+  const extra = new Map<string | null, number>();
+  for (const u of uiSkipped) {
+    if (u.count > 0) extra.set(u.marketplace, (extra.get(u.marketplace) ?? 0) + u.count);
+  }
   const merged = channels.map((rollup) => {
     const add = extra.get(rollup.marketplace) ?? 0;
     extra.delete(rollup.marketplace);

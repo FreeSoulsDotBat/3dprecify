@@ -380,15 +380,13 @@ export const messages = {
     collapse: "Recolher",
     // Invalid line: honest exclusion, never a silent zero (§1.3)
     lineInvalid: "Confira os campos desta peça — ela não entra no total até ser corrigida.",
-    // In-line catalog picker (§1.2-C / §1.4) — product level
+    // In-line catalog picker (§1.2-C / §1.4) — product level. PR-B reintroduces the picker
+    // placeholder/offline copy it needs (ux §5 keeps the full proposed set) — no dead keys here.
     useProduct: "Usar produto salvo",
-    productPlaceholder: "Escolher produto…",
     manual: "— Manual —",
     fromCatalog: "do catálogo: {nome}",
     fromCatalogAdjusted: "do catálogo: {nome} · ajustado por você",
-    offlineNeedsLoad: "Conecte para carregar seu catálogo",
     // Per-line breakdown (§1.6)
-    perUnitCusto: "Custo total /un",
     lineTotal: "Total da linha ({qty}×)",
     // Assembly total + per-channel rollup (§1.7)
     assemblyTitle: "Total do kit",

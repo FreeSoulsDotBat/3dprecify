@@ -320,10 +320,72 @@ describe("computeBom — per-slot isolation (extends SC-107)", () => {
   });
 });
 
+// The contract reads "how many LINES fed this rollup" — a line carrying several slots of the
+// SAME marketplace must count once (its money still sums every slot), and it is "skipped" only
+// when EVERY one of its slots for that marketplace errored (review finding, 2026-07-11).
+describe("computeBom — rollup counts are LINES, not slots", () => {
+  it("two same-marketplace slots on ONE line count one contributing line; money sums both", () => {
+    const bom = computeBom([
+      {
+        input: {
+          ...SC001,
+          channels: [
+            { marketplace: "SHOPEE", commissionPct: 20, fixedFee: 5 },
+            { marketplace: "SHOPEE", commissionPct: 0, fixedFee: 2 },
+          ],
+        },
+        quantity: 1,
+      },
+    ]);
+    expect(bom.channels).toHaveLength(1);
+    const s = bom.channels[0];
+    expect(s.contributingLines).toBe(1); // one PIECE fed the rollup, via two slots
+    expect(s.skippedLines).toBe(0);
+    expect(s.precoAnuncioVarejo).toBe(104.96); // 59,98 + (42,98+2)
+  });
+
+  it("one valid + one errored slot of the SAME marketplace on a line: contributes once, not skipped", () => {
+    const bom = computeBom([
+      {
+        input: {
+          ...SC001,
+          channels: [
+            { marketplace: "SHOPEE", commissionPct: 20, fixedFee: 5 },
+            { marketplace: "SHOPEE", commissionPct: 100 }, // slot error
+          ],
+        },
+        quantity: 1,
+      },
+    ]);
+    const s = bom.channels[0];
+    expect(s.contributingLines).toBe(1);
+    expect(s.skippedLines).toBe(0); // the piece DID sum — only its extra slot failed
+    expect(s.precoAnuncioVarejo).toBe(59.98); // valid slot only
+  });
+
+  it("a line whose EVERY slot for a marketplace errors counts skipped exactly once", () => {
+    const bom = computeBom([
+      {
+        input: {
+          ...SC001,
+          channels: [
+            { marketplace: "X", commissionPct: 100 },
+            { marketplace: "X", commissionPct: -1 },
+          ],
+        },
+        quantity: 2,
+      },
+    ]);
+    const x = bom.channels[0];
+    expect(x.contributingLines).toBe(0);
+    expect(x.skippedLines).toBe(1); // one PIECE without a price here, not two slots
+    expect(x.precoAnuncioVarejo).toBeNull();
+  });
+});
+
 describe("computeBom — versioning (3.1.0 MINOR, ADR-0016)", () => {
-  it("stamps modelVersion 3.1.0 (= PRICING_MODEL_VERSION)", () => {
+  it("stamps modelVersion (= PRICING_MODEL_VERSION — the literal pin lives in version.test.ts)", () => {
     const bom = computeBom([{ input: SC001, quantity: 1 }]);
-    expect(bom.modelVersion).toBe("3.1.0");
     expect(bom.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 
