@@ -103,6 +103,53 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
   await expect(page.getByText("Peça 1 · Kit Suporte")).toHaveCount(1); // no duplicate, ever
 });
 
+test("deleting a referenced product degrades the kit line on reopen — never a live-reference lie (D6/SC-405)", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `kit-degrade-${info.workerIndex}`);
+  grantPremium(email);
+
+  await page.goto("/kits");
+  await page.reload();
+
+  // Save a kit with one ad-hoc line → it materializes a manual product the kit line references.
+  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible();
+  await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Degrada");
+  await page.getByRole("button", { name: t.bom.save, exact: true }).click();
+  await expect(page.getByText(t.bom.saved)).toBeVisible();
+  // The save navigated to /kits?id=<kit>; keep that URL to reopen the exact kit after the delete.
+  await expect(page).toHaveURL(/\/kits\?id=/);
+  const kitUrl = page.url();
+
+  const piece = "Peça 1 · Kit Degrada";
+
+  // Delete the materialized product the kit line references.
+  await page.goto("/catalogo?tab=products");
+  await expect(page.getByText(piece)).toBeVisible();
+  await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
+  await page
+    .getByRole("dialog")
+    .getByRole("button", { name: t.catalogForm.deleteConfirm, exact: true })
+    .click();
+  await expect(page.getByText(piece)).toHaveCount(0); // gone from the catalog
+
+  // Reopen the kit. The server resolves the soft-deleted product LIVE-only, so the line comes back
+  // degraded; the composer recomputes from the last-known snapshot and re-hydrates to it (the
+  // client-side staleness + re-hydration are pinned deterministically in the unit tests —
+  // use-catalog.test.tsx invalidation + bom-page.test.tsx re-hydration).
+  await page.goto(kitUrl);
+
+  // The line degrades HONESTLY: a calm "(avulsa)" + valores-mantidos caption, still priced; it
+  // NEVER presents the deleted product as a live reference, and NEVER claims a removal.
+  await expect(page.getByText(t.productForm.manualValuesKept)).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByText(/\(avulsa\)/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible(); // still priceable
+  await expect(page.getByText(piece)).toHaveCount(0); // the deleted product is NOT shown as live
+  // F1/K3 honesty guard: no removal/deletion claim anywhere on the degraded surface.
+  await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);
+});
+
 test("a FREE account cannot save a kit — and nothing is materialized (SC-411)", async ({
   page,
 }, info) => {

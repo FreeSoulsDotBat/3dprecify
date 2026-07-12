@@ -134,6 +134,29 @@ function useInvalidateCatalog(resource: CatalogResource): () => void {
   return () => void client.invalidateQueries({ queryKey: catalogQueryKey(resource, uid) });
 }
 
+// A product EDIT or DELETE ripples into any saved kit that references it: the kit resolves the
+// product live on every read (D3 live-reflect / D6 read-time degrade — the kit's own row is
+// untouched, only its resolved view changes). If the kits list does not refetch, a reopened kit
+// keeps serving stale values, or a deleted product as a LIVE reference — the inverse honesty bug
+// the PR-C homologation caught. The kits key is OWNED by entities/bom (`bomQueryKey`), but FSD-Lite
+// forbids importing another entity (eslint-boundaries), so — exactly as entities/bom mirrors the
+// products key — we restate it here as a deliberate mirror, pinned by a test against the SAME
+// literal. Keep in lockstep with entities/bom/bom-cache `bomQueryKey`.
+const bomsQueryKey = (uid: string | undefined) => ["boms", uid] as const;
+
+/** Invalidate the products list AND the kits list after a product write that an existing kit could
+ *  be resolving through (update/delete). A create needs only the products half — a brand-new
+ *  product is referenced by no kit yet. */
+function useInvalidateProductsAndKits(): () => void {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+  const invalidateProducts = useInvalidateCatalog("products");
+  return () => {
+    invalidateProducts();
+    void client.invalidateQueries({ queryKey: bomsQueryKey(uid) });
+  };
+}
+
 // ── Filament writes (online-only; a failure surfaces as the mutation's typed ApiError) ──────────
 
 export function useCreateFilament(): UseMutationResult<FilamentOut, ApiError, FilamentIn> {
@@ -243,7 +266,7 @@ export function useUpdateProduct(): UseMutationResult<
   ApiError,
   { id: string; body: ProductIn }
 > {
-  const invalidate = useInvalidateCatalog("products");
+  const invalidate = useInvalidateProductsAndKits();
   return useMutation({
     mutationFn: async ({ id, body }: { id: string; body: ProductIn }) => {
       const res = await updateProductApiV1ProductsProductIdPut(id, body);
@@ -255,7 +278,9 @@ export function useUpdateProduct(): UseMutationResult<
 }
 
 export function useDeleteProduct(): UseMutationResult<void, ApiError, string> {
-  const invalidate = useInvalidateCatalog("products");
+  // Refresh BOTH lists: the catalog loses the product, and any kit that referenced it must refetch
+  // so its line degrades honestly instead of serving a deleted product as live (D6).
+  const invalidate = useInvalidateProductsAndKits();
   return useMutation({
     mutationFn: async (id: string) => {
       await deleteProductApiV1ProductsProductIdDelete(id);

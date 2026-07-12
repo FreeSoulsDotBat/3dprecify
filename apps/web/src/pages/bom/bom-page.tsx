@@ -91,6 +91,16 @@ function kitToLineStates(kit: BomOut, nextId: { current: number }): LineState[] 
   });
 }
 
+/** A signature of the SERVER-resolved kit — id, name, copy/edit mode, and the full resolved line
+ *  content. It changes when a referenced product is edited (D3 live values) OR deleted (D6:
+ *  `productId`→null, `degraded`→true), but is byte-stable across an identical background refetch.
+ *  The composer re-hydrates only when this changes, so fresh server truth flows in WITHOUT a
+ *  same-content refetch clobbering in-progress edits (the PR-B guard, kept). `updatedAt` alone can't
+ *  do this: read-time degradation never touches the kit row, so its `updatedAt` stays put. */
+function kitSignature(kit: BomOut, duplicating: boolean): string {
+  return `${kit.id}|${duplicating ? "copy" : "edit"}|${kit.name}|${JSON.stringify(kit.lines ?? [])}`;
+}
+
 export function BomPage() {
   const sessionStatus = useSessionStore((s) => s.status);
   const entitlement = useEntitlement();
@@ -181,15 +191,29 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   // kit. The seller reviews the copy and saves it — a duplicate is never written behind their back.
   const duplicating = Boolean(search.copy) && Boolean(openedKit);
   const editing = duplicating ? undefined : openedKit;
-  const hydratedId = useRef<string | null>(null);
+  /** The signature of the server-resolved kit we last hydrated from. Re-hydrating only when it
+   *  CHANGES lets fresh server truth (a referenced product edited or deleted) flow into an open
+   *  composer, while an identical background refetch is a no-op (no clobber). */
+  const hydratedSig = useRef<string | null>(null);
+  /** The seller has edited since the last hydration — do not overwrite their work when newer
+   *  server content arrives (they will see it on the next clean reopen). */
+  const dirty = useRef(false);
   /** The kit this composer just created, so a second Salvar edits it instead of filing a copy. */
   const justSavedId = useRef<string | null>(null);
+  // Depend on the CONTENT signature (a string), not the `openedKit` object ref: React Query's
+  // structural sharing can keep the kit object reference stable across a live→degraded refetch, so
+  // an object-ref dependency would miss the re-hydration the whole D6 fix hinges on. The string
+  // changes whenever the server-resolved lines change (a referenced product edited or deleted).
+  const openedSig = openedKit ? kitSignature(openedKit, duplicating) : null;
   useEffect(() => {
-    if (!openedKit || hydratedId.current === openedKit.id) return;
-    hydratedId.current = openedKit.id;
+    if (!openedKit || openedSig === null) return;
+    if (hydratedSig.current === openedSig) return; // already showing exactly this server truth
+    if (dirty.current && hydratedSig.current !== null) return; // keep in-progress edits
+    hydratedSig.current = openedSig;
+    dirty.current = false;
     setKitName(duplicating ? `${openedKit.name} ${t.copySuffix}` : openedKit.name);
     setLines(kitToLineStates(openedKit, nextId));
-  }, [openedKit, duplicating]);
+  }, [openedSig]);
 
   // Leaving a saved kit for a fresh composer (the Kits nav tab routes to a bare `/kits`, and the
   // page stays MOUNTED across that search change) must not carry the previous kit's identity: the
@@ -197,7 +221,8 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   useEffect(() => {
     if (search.id) return;
     justSavedId.current = null;
-    hydratedId.current = null;
+    hydratedSig.current = null;
+    dirty.current = false;
     setLines([]);
     setKitName("");
     setMaterializations(null);
@@ -246,6 +271,7 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   const uiSkipped = [...uiSkippedCounts].map(([marketplace, count]) => ({ marketplace, count }));
 
   const addLine = () => {
+    dirty.current = true;
     const id = nextId.current++;
     setLines((prev) => [
       ...prev,
@@ -265,10 +291,12 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   };
 
   const updateLine = (id: number, patch: Partial<LineState>) => {
+    dirty.current = true;
     setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
   };
 
   const bindProduct = (id: number, productId: string) => {
+    dirty.current = true;
     if (productId === "") {
       // Unbind → the line stays editable with its current values ("— Manual —", ux §1.2-C).
       updateLine(id, { productId: "", productName: null, adjusted: false });
@@ -331,11 +359,13 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
         justSavedId.current = saved.id;
         // Adopt the SERVER's version of the just-saved kit straight from the RESPONSE: this shows
         // any superseded values (a referenced piece takes the live product's numbers) immediately,
-        // and — crucially — marks the composer as already hydrated for this id so the reopen effect
-        // below does NOT re-run and clobber edits the seller makes after the save (review
-        // 2026-07-12). Nulling hydratedId here (the old code) reopened a window: the effect fired
-        // whenever the kit-list refetch landed and overwrote in-progress edits with the server copy.
-        hydratedId.current = saved.id;
+        // and — crucially — records this exact server truth as the hydrated signature so the reopen
+        // effect below does NOT re-run and clobber edits the seller makes after the save (review
+        // 2026-07-12). The reopen effect re-hydrates only when the signature CHANGES (a referenced
+        // product later edited/deleted), so an ordinary kit-list refetch of the same content is a
+        // no-op — the window the old id-nulling reopened stays closed.
+        hydratedSig.current = kitSignature(saved, false);
+        dirty.current = false;
         setKitName(saved.name);
         setLines(kitToLineStates(saved, nextId));
         void navigate({ to: "/kits", search: { id: saved.id } });
@@ -436,7 +466,10 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
                 onQuantityChange={(raw) => updateLine(line.id, { quantityRaw: raw })}
                 expanded={expandedId === line.id}
                 onToggle={() => setExpandedId(expandedId === line.id ? null : line.id)}
-                onRemove={() => setLines((prev) => prev.filter((l) => l.id !== line.id))}
+                onRemove={() => {
+                  dirty.current = true;
+                  setLines((prev) => prev.filter((l) => l.id !== line.id));
+                }}
                 lineResult={lineResults[i]}
                 invalid={invalid}
                 // Caption only while the degraded line is still Manual — rebinding a saved product
@@ -502,7 +535,10 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
                     className="tf-input"
                     placeholder={t.kitNamePlaceholder}
                     value={kitName}
-                    onChange={(e) => setKitName(e.target.value)}
+                    onChange={(e) => {
+                      dirty.current = true;
+                      setKitName(e.target.value);
+                    }}
                   />
                 </div>
               )}

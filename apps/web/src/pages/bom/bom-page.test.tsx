@@ -2,10 +2,10 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import type { ProductOut } from "@/shared/api/generated";
+import type { BomLineOut, BomOut, ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -14,27 +14,32 @@ import { useSessionStore } from "@/shared/session/session-store";
 // Every money number on this page comes from `computeBom` via `composeBom` (ux §0.2) — these
 // tests assert the rendered outcome, not any view-layer arithmetic. Teaser specifics are T007.
 
-const { useEntitlementMock, useProductsMock, useFeeCatalogMock } = vi.hoisted(() => ({
-  useEntitlementMock: vi.fn(),
-  useProductsMock: vi.fn(),
-  useFeeCatalogMock: vi.fn(),
-}));
+const { useEntitlementMock, useProductsMock, useFeeCatalogMock, useBomsMock, useSearchMock } =
+  vi.hoisted(() => ({
+    useEntitlementMock: vi.fn(),
+    useProductsMock: vi.fn(),
+    useFeeCatalogMock: vi.fn(),
+    useBomsMock: vi.fn(),
+    useSearchMock: vi.fn(),
+  }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => useSearchMock() };
 });
 vi.mock("@/entities/bom/use-bom", () => ({
-  useBoms: () => ({
-    items: [],
-    isLoading: false,
-    isError: false,
-    error: null,
-    stale: false,
-    refetch: vi.fn(),
-  }),
+  useBoms: () => useBomsMock(),
   useCreateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useUpdateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }));
+
+const emptyBoms = {
+  items: [] as unknown[],
+  isLoading: false,
+  isError: false,
+  error: null,
+  stale: false,
+  refetch: vi.fn(),
+};
 vi.mock("@/entities/user/use-entitlement", () => ({
   useEntitlement: () => useEntitlementMock(),
 }));
@@ -149,7 +154,11 @@ function renderPremiumPage(products: ProductOut[] = []) {
   );
 }
 
-beforeEach(() => mockFees()); // empty catalog default; a test overrides with mockFees(ML_FEES)
+beforeEach(() => {
+  mockFees(); // empty catalog default; a test overrides with mockFees(ML_FEES)
+  useSearchMock.mockReturnValue({}); // no ?id → fresh composer; a reopen test overrides with { id }
+  useBomsMock.mockReturnValue(emptyBoms); // no saved kits by default
+});
 
 afterEach(() => {
   cleanup();
@@ -485,5 +494,99 @@ describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", 
     expect(within(rollup).getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
     expect(within(rollup).queryByText(/sem preço neste canal/)).not.toBeInTheDocument();
     expect(within(rollup).getAllByText(/38,63/).length).toBeGreaterThan(0); // valid slot's money
+  });
+});
+
+// PR-C freshness fix (homologation blocker): the composer used to hydrate a reopened kit ONCE per
+// id and lock on the first (stale) paint — so after a referenced product was deleted, the kit kept
+// showing it as a LIVE reference. The fix re-hydrates when the SERVER-resolved lines change (the
+// signature), while keeping the PR-B clobber guard for in-progress edits.
+const liveLine: BomLineOut = {
+  id: "l1",
+  position: 0,
+  quantity: 2,
+  productId: "p1",
+  pieceName: "Vaso G",
+  degraded: false,
+  pieceInputs: productP.pieceInputs,
+  filamentValues: productP.filamentValues,
+  printerValues: productP.printerValues,
+  tariffPerKwh: productP.tariffPerKwh,
+  includeMarketplace: productP.includeMarketplace,
+  channels: productP.channels,
+  otherCosts: productP.otherCosts,
+};
+const degradedLine: BomLineOut = { ...liveLine, productId: null, pieceName: null, degraded: true };
+const liveKit: BomOut = {
+  id: "k1",
+  name: "Kit A",
+  lines: [liveLine],
+  createdAt: "2026-07-01T00:00:00Z",
+  updatedAt: "2026-07-01T00:00:00Z",
+};
+const degradedKit: BomOut = { ...liveKit, lines: [degradedLine] };
+
+// A FRESH element tree per render — reusing one element object triggers React's element-reference
+// bailout (the child skips re-render), which would mask a real re-hydration bug. In the app, React
+// Query's subscription drives this re-render when the kits query refetches.
+function bomTree(client: QueryClient) {
+  return (
+    <QueryClientProvider client={client}>
+      <BomPage />
+    </QueryClientProvider>
+  );
+}
+
+function reopenKit(kit: BomOut, products: ProductOut[]) {
+  useSessionStore.setState({ status: "authenticated" });
+  useEntitlementMock.mockReturnValue({
+    data: { status: "active" },
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  useProductsMock.mockReturnValue(listState(products));
+  useSearchMock.mockReturnValue({ id: "k1" });
+  useBomsMock.mockReturnValue({ ...emptyBoms, items: [kit] });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return { client, ...render(bomTree(client)) };
+}
+
+describe("BomPage — reopen re-hydrates on fresh server truth (D6 degrade, PR-C blocker)", () => {
+  it("a live→degraded kit refetch re-hydrates: the deleted product stops showing as live", async () => {
+    const { client, rerender } = reopenKit(liveKit, [productP]);
+    // Reopened live: the line carries the product name and its price.
+    expect(screen.getAllByText(/Vaso G/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(messages.productForm.manualValuesKept)).not.toBeInTheDocument();
+
+    // The product is deleted → the kits list refetches degraded. The composer must re-hydrate.
+    useBomsMock.mockReturnValue({ ...emptyBoms, items: [degradedKit] });
+    useProductsMock.mockReturnValue(listState([]));
+    rerender(bomTree(client));
+
+    await waitFor(() =>
+      expect(screen.getByText(messages.productForm.manualValuesKept)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(new RegExp("\\(avulsa\\)"))).toBeInTheDocument();
+    // The honesty core: the deleted product is NO LONGER presented as a live reference.
+    expect(screen.queryByText(/Vaso G/)).not.toBeInTheDocument();
+  });
+
+  it("an in-progress edit is NOT clobbered when newer server content arrives (PR-B guard kept)", () => {
+    const { client, rerender } = reopenKit(liveKit, [productP]);
+    // The seller edits the quantity → the composer is now dirty.
+    fireEvent.change(screen.getByRole("textbox", { name: new RegExp(t.quantity) }), {
+      target: { value: "5" },
+    });
+
+    // A background refetch brings the degraded version — it must NOT overwrite the edit.
+    useBomsMock.mockReturnValue({ ...emptyBoms, items: [degradedKit] });
+    rerender(bomTree(client));
+
+    expect(screen.getByRole("textbox", { name: new RegExp(t.quantity) })).toHaveValue("5");
+    expect(screen.queryByText(messages.productForm.manualValuesKept)).not.toBeInTheDocument();
+    // Still shows the (now-stale) live reference — the seller keeps their work; they will see the
+    // degraded truth on the next CLEAN reopen. Preserving edits beats a surprise overwrite.
+    expect(screen.getAllByText(/Vaso G/).length).toBeGreaterThan(0);
   });
 });
