@@ -314,6 +314,21 @@ def test_quantity_zero_is_an_honest_zero_not_a_rejection(
     assert r.json()["lines"][0]["quantity"] == 0
 
 
+def test_over_ceiling_line_input_is_422_never_a_500(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A huge-but-finite snapshot value would overflow the bom_lines NUMERIC column at write time
+    (Postgres → 500). The shared PieceInputs ceiling rejects it up front as a clean 422 and the kit
+    (with its atomic materialization) is never partially written."""
+    h = _premium(monkeypatch, migrated_db, "bom-ceil-1")
+    line = _ad_hoc_line(pieceInputs={**PIECE, "printGrams": "1000000000"})  # 10^9 = QTY_G ceiling
+    r = _post(db_client, h, _bom_body([line]))
+    assert r.status_code == 422
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert db_client.get("/api/v1/boms", headers=h).json() == []
+    assert db_client.get("/api/v1/products", headers=h).json() == []  # nothing materialized
+
+
 # --- Materialization (ADR-0017 / K3 / K4) ----------------------------------------------------
 
 
@@ -597,6 +612,89 @@ def test_per_account_isolation(
     # A still owns its kit, untouched.
     patch_verify(monkeypatch, "bom-iso-a")
     assert db_client.get(f"/api/v1/boms/{bom_id}", headers=h_a).status_code == 200
+
+
+# --- D6: deleting a referenced product DEGRADES the line (review BLOCKER regression) ----------
+
+
+def test_deleting_a_referenced_product_degrades_the_line_not_breaks_the_kit(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Review 2026-07-12 BLOCKER: soft-deleting a product a kit references used to leave the read
+    path serving the dead product as `degraded: false` (an honesty lie) AND make the kit
+    unsaveable (any PUT re-sent the stale productId → 422). The fix: the read resolver is
+    owner-scoped + live-only, exactly like the write resolver, so the line DEGRADES to its
+    last-known snapshot — priceable, editable, re-saveable (SC-405)."""
+    h = _premium(monkeypatch, migrated_db, "bom-d6-1")
+    fid, pid = _mk_refs(db_client, h)
+    prod = _mk_product(db_client, h, fid, pid, "Base")
+    bom_id = _post(db_client, h, _bom_body([_ref_line(prod, quantity=4)])).json()["id"]
+
+    assert db_client.delete(f"/api/v1/products/{prod}", headers=h).status_code == 204
+
+    # Read: the line degrades honestly (NOT served as a live link to a deleted row).
+    got = db_client.get(f"/api/v1/boms/{bom_id}", headers=h)
+    assert got.status_code == 200
+    line = got.json()["lines"][0]
+    assert line["degraded"] is True
+    assert line["productId"] is None
+    assert line["quantity"] == 4
+    # The last-known snapshot is intact and still priceable — the values the product resolved to.
+    assert line["pieceInputs"]["printGrams"] == "100.000"
+    assert line["filamentValues"]["costPerRoll"] == "110.00"
+    assert line["printerValues"]["machineValue"] == "1200.00"
+
+    # Write: the kit is STILL SAVEABLE — a degraded line re-saves as an ad-hoc piece (it
+    # re-materializes a manual product; the dead row is never referenced again).
+    reopened = db_client.put(
+        f"/api/v1/boms/{bom_id}",
+        headers=h,
+        json=_bom_body(
+            [
+                _ad_hoc_line(
+                    piece_name="Base (recuperada)",
+                    quantity=4,
+                    pieceInputs=line["pieceInputs"],
+                    filamentValues=line["filamentValues"],
+                    printerValues=line["printerValues"],
+                    tariffPerKwh=line["tariffPerKwh"],
+                )
+            ],
+            name="Kit Recuperado",
+        ),
+    )
+    assert reopened.status_code == 200, reopened.text
+    assert reopened.json()["name"] == "Kit Recuperado"
+    assert reopened.json()["lines"][0]["degraded"] is False  # re-materialized → live again
+
+
+def test_degraded_kit_line_serves_the_same_values_as_a_degraded_product(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Review F3 safety net (before the PR-C helper extraction): a degraded kit line and a
+    degraded product built from the SAME snapshot must resolve to byte-identical values. Today
+    the fallback policy is DUPLICATED in `products._to_out` and `boms._to_out`; this pins that
+    they agree, so an extraction (or a drift) that changed one and not the other would fail here."""
+    h = _premium(monkeypatch, migrated_db, "bom-f3-1")
+    fid, pid = _mk_refs(db_client, h)
+    prod = _mk_product(db_client, h, fid, pid, "Peça X")
+    bom_id = _post(db_client, h, _bom_body([_ref_line(prod)])).json()["id"]
+
+    # Degrade BOTH surfaces the same way: delete the product's filament + printer (product
+    # degrades via the E2 D6 path) and delete the product itself (kit line degrades via E3 D6).
+    assert db_client.delete(f"/api/v1/filaments/{fid}", headers=h).status_code == 204
+    assert db_client.delete(f"/api/v1/printers/{pid}", headers=h).status_code == 204
+    degraded_product = db_client.get(f"/api/v1/products/{prod}", headers=h).json()
+
+    assert db_client.delete(f"/api/v1/products/{prod}", headers=h).status_code == 204
+    degraded_line = db_client.get(f"/api/v1/boms/{bom_id}", headers=h).json()["lines"][0]
+
+    assert degraded_line["degraded"] is True
+    # The resolved value surface must match field-for-field (the money-drift guard).
+    assert degraded_line["pieceInputs"] == degraded_product["pieceInputs"]
+    assert degraded_line["filamentValues"] == degraded_product["filamentValues"]
+    assert degraded_line["printerValues"] == degraded_product["printerValues"]
+    assert degraded_line["tariffPerKwh"] == degraded_product["tariffPerKwh"]
 
 
 # --- US4: manage + the honest lapse policy (FR-409 / SC-407) ---------------------------------

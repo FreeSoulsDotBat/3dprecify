@@ -20,7 +20,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, status
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, ValidationInfo, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -39,9 +39,37 @@ from app.models import Filament, Printer, Product
 router = APIRouter(tags=["products"])
 
 
-def _finite_non_negative(value: Decimal, field: str) -> Decimal:
+# Integer-digit budget per NUMERIC domain (precision minus scale, in lockstep with the type domains
+# in models.py). A value AT/ABOVE the ceiling overflows its column at write time — Postgres raises
+# `numeric field overflow` and FastAPI surfaces an opaque 500. We reject it here as a clean 422.
+_CEIL_MONEY = Decimal(10) ** 10  # MONEY_SETTLED Numeric(12,2)
+_CEIL_RATE = Decimal(10) ** 12  # MONEY_RATE   Numeric(18,6)
+_CEIL_GRAMS = Decimal(10) ** 9  # QTY_G        Numeric(12,3)
+_CEIL_HOURS = Decimal(10) ** 6  # QTY_H        Numeric(9,3)
+_CEIL_KG = Decimal(10) ** 6  # QTY_KG       Numeric(9,3)
+_CEIL_KW = Decimal(10) ** 5  # QTY_KW       Numeric(9,4)
+_CEIL_PERCENT = Decimal(10) ** 3  # PERCENT      Numeric(6,3)
+
+# Piece-input fields fan out to different NUMERIC domains, so the "*" validator picks per field.
+_PIECE_CEILINGS: dict[str, Decimal] = {
+    "print_grams": _CEIL_GRAMS,
+    "waste_grams": _CEIL_GRAMS,
+    "print_time_hours": _CEIL_HOURS,
+    "failure_pct": _CEIL_PERCENT,
+    "finish_time_hours": _CEIL_HOURS,
+    "finish_rate_per_hour": _CEIL_RATE,
+    "labor_hours": _CEIL_HOURS,
+    "labor_rate_per_hour": _CEIL_RATE,
+    "markup_varejo_pct": _CEIL_PERCENT,
+    "markup_atacado_pct": _CEIL_PERCENT,
+}
+
+
+def _finite_non_negative(value: Decimal, field: str, ceiling: Decimal = _CEIL_RATE) -> Decimal:
     if not value.is_finite() or value < 0:
         raise ValueError(f"{field} must be a finite number >= 0")
+    if value >= ceiling:
+        raise ValueError(f"{field} exceeds the maximum storable magnitude")
     return value
 
 
@@ -74,7 +102,7 @@ class ChannelSlot(CamelModel):
     def _money(cls, v: Decimal | None) -> Decimal | None:
         if v is None:
             return v
-        return _finite_non_negative(v, "channel money field")
+        return _finite_non_negative(v, "channel money field", _CEIL_MONEY)
 
 
 class OtherCost(CamelModel):
@@ -86,7 +114,7 @@ class OtherCost(CamelModel):
     @field_validator("value")
     @classmethod
     def _value(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "value")
+        return _finite_non_negative(v, "value", _CEIL_MONEY)
 
 
 class PieceInputs(CamelModel):
@@ -105,8 +133,9 @@ class PieceInputs(CamelModel):
 
     @field_validator("*")
     @classmethod
-    def _all_finite_non_negative(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "piece input")
+    def _all_finite_non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
+        field = info.field_name or "piece input"
+        return _finite_non_negative(v, field, _PIECE_CEILINGS.get(field, _CEIL_RATE))
 
 
 class FilamentValues(CamelModel):
@@ -119,13 +148,13 @@ class FilamentValues(CamelModel):
     @field_validator("cost_per_roll")
     @classmethod
     def _cost(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "costPerRoll")
+        return _finite_non_negative(v, "costPerRoll", _CEIL_MONEY)
 
     @field_validator("roll_weight_kg")
     @classmethod
     def _roll(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0:
-            raise ValueError("rollWeightKg must be a finite number > 0")
+        if not v.is_finite() or v <= 0 or v >= _CEIL_KG:
+            raise ValueError("rollWeightKg must be a finite number > 0 within the storable range")
         return v
 
 
@@ -139,14 +168,22 @@ class PrinterValues(CamelModel):
 
     @field_validator("machine_value", "avg_power_kw", "maintenance_reserve_per_hour")
     @classmethod
-    def _non_negative(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "printer value")
+    def _non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
+        ceilings = {
+            "machine_value": _CEIL_MONEY,
+            "avg_power_kw": _CEIL_KW,
+            "maintenance_reserve_per_hour": _CEIL_RATE,
+        }
+        field = info.field_name or "printer value"
+        return _finite_non_negative(v, field, ceilings.get(field, _CEIL_RATE))
 
     @field_validator("machine_lifetime_hours")
     @classmethod
     def _lifetime(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0:
-            raise ValueError("machineLifetimeHours must be a finite number > 0")
+        if not v.is_finite() or v <= 0 or v >= _CEIL_HOURS:
+            raise ValueError(
+                "machineLifetimeHours must be a finite number > 0 within the storable range"
+            )
         return v
 
 
@@ -172,7 +209,7 @@ class ProductIn(CamelModel):
     @field_validator("tariff_per_kwh")
     @classmethod
     def _tariff(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "tariffPerKwh")
+        return _finite_non_negative(v, "tariffPerKwh", _CEIL_RATE)
 
     @model_validator(mode="after")
     def _link_or_snapshot(self) -> ProductIn:

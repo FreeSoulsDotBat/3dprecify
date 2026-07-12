@@ -341,6 +341,11 @@ def test_unresolvable_reference_is_422_never_stored(
         ({"channels": [{**CHANNEL, "fixedFee": "-1"}]}, "negative fee"),
         ({"otherCosts": [{"name": "x", "value": "-2"}]}, "negative other cost"),
         ({"otherCosts": [{"name": "x", "value": "abc"}]}, "non-numeric other cost"),
+        # Magnitude ceiling — a huge-but-finite value would overflow its NUMERIC column at write
+        # time (Postgres → 500); it must be rejected up front as a clean 422 (never a 500).
+        ({"pieceInputs": {**PIECE, "printGrams": "1000000000"}}, "grams at QTY_G ceiling (10^9)"),
+        ({"pieceInputs": {**PIECE, "markupVarejoPct": "1000"}}, "markup at PERCENT ceiling (10^3)"),
+        ({"tariffPerKwh": "1000000000000"}, "tariff at MONEY_RATE ceiling (10^12)"),
     ],
 )
 def test_invalid_input_is_422_and_never_stored(

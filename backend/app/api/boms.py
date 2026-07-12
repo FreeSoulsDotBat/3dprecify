@@ -319,15 +319,61 @@ def _snapshot_line(line: BomLine, resolved: ProductOut) -> None:
     line.other_costs = list(resolved.other_costs)
 
 
-async def _resolved_view(session: AsyncSession, product: Product) -> ProductOut:
-    """The product's resolved value-set — reusing the products serializer, so the D3 rule
-    (linked ⇒ live row wins; degraded ⇒ columns) has exactly ONE implementation."""
-    filaments, printers = await _live_links(session, [product])
-    return _product_to_out(
-        product,
-        filaments.get(product.filament_id) if product.filament_id else None,
-        printers.get(product.printer_id) if product.printer_id else None,
+async def _resolve_views(
+    session: AsyncSession, uid: str, product_ids: set[uuid.UUID]
+) -> dict[uuid.UUID, ProductOut]:
+    """Resolve MANY products to their value-sets in a BOUNDED number of queries (one for the
+    products, one for filaments, one for printers) — the batched replacement for a per-line N+1
+    in the read path.
+
+    Owner-scoped and LIVE-only BY CONSTRUCTION: a soft-deleted or cross-tenant ``product_id`` is
+    simply absent from the returned map, so its line degrades to its last-known snapshot (D6).
+    This is the single place the read path decides "still live vs degraded", and it now agrees
+    with the write path's ``_resolve_product`` (same ``owner_uid`` + ``deleted_at`` filter) —
+    the disagreement that used to serve a deleted product as live and then 422 the re-save.
+    """
+    if not product_ids:
+        return {}
+    products = list(
+        (
+            await session.execute(
+                select(Product).where(
+                    Product.id.in_(product_ids),
+                    Product.owner_uid == uid,
+                    Product.deleted_at.is_(None),
+                )
+            )
+        ).scalars()
     )
+    filaments, printers = await _live_links(session, products)
+    return {
+        p.id: _product_to_out(
+            p,
+            filaments.get(p.filament_id) if p.filament_id else None,
+            printers.get(p.printer_id) if p.printer_id else None,
+        )
+        for p in products
+    }
+
+
+async def _lines_by_bom(
+    session: AsyncSession, bom_ids: list[uuid.UUID]
+) -> dict[uuid.UUID, list[BomLine]]:
+    """All lines for many kits in ONE ordered query — keeps ``list_boms`` at a flat query count
+    instead of one SELECT per kit."""
+    if not bom_ids:
+        return {}
+    out: dict[uuid.UUID, list[BomLine]] = {bid: [] for bid in bom_ids}
+    rows = (
+        await session.execute(
+            select(BomLine)
+            .where(BomLine.bom_id.in_(bom_ids))
+            .order_by(BomLine.bom_id, BomLine.position)
+        )
+    ).scalars()
+    for line in rows:
+        out[line.bom_id].append(line)
+    return out
 
 
 async def _materialize(
@@ -379,33 +425,41 @@ async def _materialize(
 async def _write_lines(
     session: AsyncSession, bom: Bom, body: BomIn, products: list[Product]
 ) -> list[BomLine]:
+    # Resolve every line's product ONCE (batched), then snapshot from the map — the write path's
+    # last-known copy is what makes a later D6 degradation lossless, so it must be the same
+    # resolved view the read path serves.
+    views = await _resolve_views(session, bom.owner_uid, {p.id for p in products})
     lines: list[BomLine] = []
     for position, (line_in, product) in enumerate(zip(body.lines, products, strict=True)):
         line = BomLine(bom_id=bom.id, position=position, quantity=line_in.quantity)
-        _snapshot_line(line, await _resolved_view(session, product))
+        _snapshot_line(line, views[product.id])
         session.add(line)
         lines.append(line)
     return lines
 
 
-async def _to_out(
-    session: AsyncSession,
+def _degraded_or(value: Decimal | None, fallback: str) -> Decimal:
+    """Preserve a STORED zero verbatim and substitute ONLY on a genuine NULL. A plain
+    ``x or Decimal("0")`` corrupts ``Decimal("0.000")`` (which is falsy) to ``Decimal("0")``,
+    dropping the column scale and breaking byte-identity with a degraded PRODUCT built from the
+    same snapshot (SC-305; caught by test_degraded_kit_line_serves_the_same_values...). On a
+    persisted line these are always non-null (``_snapshot_line`` writes them all) — defensive only.
+    """
+    return value if value is not None else Decimal(fallback)
+
+
+def _to_out(
     bom: Bom,
+    lines: list[BomLine],
+    views: dict[uuid.UUID, ProductOut],
     materializations: list[Materialization] | None = None,
 ) -> BomOut:
-    lines = await _lines_of(session, bom.id)
-    live: dict[uuid.UUID, ProductOut] = {}
-    for line in lines:
-        if line.product_id is not None and line.product_id not in live:
-            product = (
-                await session.execute(select(Product).where(Product.id == line.product_id))
-            ).scalar_one_or_none()
-            if product is not None:
-                live[product.id] = await _resolved_view(session, product)
-
+    """Serialize a kit from its lines + a pre-resolved product map. A line whose product is
+    absent from ``views`` (soft-deleted, D6) falls into the degraded branch — the read path's
+    single live-vs-degraded decision lives in ``_resolve_views``, never here."""
     out_lines: list[BomLineOut] = []
     for line in lines:
-        resolved = live.get(line.product_id) if line.product_id is not None else None
+        resolved = views.get(line.product_id) if line.product_id is not None else None
         if resolved is not None:
             out_lines.append(
                 BomLineOut(
@@ -425,8 +479,10 @@ async def _to_out(
                 )
             )
             continue
+
         # Degraded (D6): the referenced product is gone — the last-known snapshot takes over and
         # stays editable. It has no name of its own; the UI shows the honest "— Manual —" state.
+        # `_degraded_or` guards byte-identity (see its docstring).
         out_lines.append(
             BomLineOut(
                 id=line.id,
@@ -436,30 +492,31 @@ async def _to_out(
                 piece_name=None,
                 degraded=True,
                 piece_inputs=PieceInputs(
-                    print_grams=line.print_grams or Decimal("0"),
-                    waste_grams=line.waste_grams or Decimal("0"),
-                    print_time_hours=line.print_time_hours or Decimal("0"),
-                    failure_pct=line.failure_pct or Decimal("0"),
-                    finish_time_hours=line.finish_time_hours or Decimal("0"),
-                    finish_rate_per_hour=line.finish_rate_per_hour or Decimal("0"),
-                    labor_hours=line.labor_hours or Decimal("0"),
-                    labor_rate_per_hour=line.labor_rate_per_hour or Decimal("0"),
-                    markup_varejo_pct=line.markup_varejo_pct or Decimal("0"),
-                    markup_atacado_pct=line.markup_atacado_pct or Decimal("0"),
+                    print_grams=_degraded_or(line.print_grams, "0"),
+                    waste_grams=_degraded_or(line.waste_grams, "0"),
+                    print_time_hours=_degraded_or(line.print_time_hours, "0"),
+                    failure_pct=_degraded_or(line.failure_pct, "0"),
+                    finish_time_hours=_degraded_or(line.finish_time_hours, "0"),
+                    finish_rate_per_hour=_degraded_or(line.finish_rate_per_hour, "0"),
+                    labor_hours=_degraded_or(line.labor_hours, "0"),
+                    labor_rate_per_hour=_degraded_or(line.labor_rate_per_hour, "0"),
+                    markup_varejo_pct=_degraded_or(line.markup_varejo_pct, "0"),
+                    markup_atacado_pct=_degraded_or(line.markup_atacado_pct, "0"),
                 ),
                 filament_values=FilamentValues(
                     material=line.filament_material,
-                    cost_per_roll=line.filament_cost_per_roll or Decimal("0"),
-                    roll_weight_kg=line.filament_roll_weight_kg or Decimal("1"),
+                    cost_per_roll=_degraded_or(line.filament_cost_per_roll, "0"),
+                    roll_weight_kg=_degraded_or(line.filament_roll_weight_kg, "1"),
                 ),
                 printer_values=PrinterValues(
-                    machine_value=line.printer_machine_value or Decimal("0"),
-                    machine_lifetime_hours=line.printer_machine_lifetime_hours or Decimal("1"),
-                    avg_power_kw=line.printer_avg_power_kw or Decimal("0"),
-                    maintenance_reserve_per_hour=line.printer_maintenance_reserve_per_hour
-                    or Decimal("0"),
+                    machine_value=_degraded_or(line.printer_machine_value, "0"),
+                    machine_lifetime_hours=_degraded_or(line.printer_machine_lifetime_hours, "1"),
+                    avg_power_kw=_degraded_or(line.printer_avg_power_kw, "0"),
+                    maintenance_reserve_per_hour=_degraded_or(
+                        line.printer_maintenance_reserve_per_hour, "0"
+                    ),
                 ),
-                tariff_per_kwh=line.tariff_per_kwh or Decimal("0"),
+                tariff_per_kwh=_degraded_or(line.tariff_per_kwh, "0"),
                 include_marketplace=line.include_marketplace,
                 channels=line.channels,
                 other_costs=line.other_costs,
@@ -481,16 +538,28 @@ async def list_boms(
     claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[BomOut]:
+    uid = claims["uid"]
     rows = list(
         (
             await session.execute(
                 select(Bom)
-                .where(Bom.owner_uid == claims["uid"], Bom.deleted_at.is_(None))
+                .where(Bom.owner_uid == uid, Bom.deleted_at.is_(None))
                 .order_by(Bom.created_at)
             )
         ).scalars()
     )
-    return [await _to_out(session, row) for row in rows]
+    # Flat query count regardless of how many kits: 1 (boms) + 1 (all lines) + 3 (products +
+    # filaments + printers), never one round-trip per line — the old shape scaled AGAINST the
+    # premium seller (more kits ⇒ slower list).
+    lines_by_bom = await _lines_by_bom(session, [b.id for b in rows])
+    product_ids = {
+        line.product_id
+        for lines in lines_by_bom.values()
+        for line in lines
+        if line.product_id is not None
+    }
+    views = await _resolve_views(session, uid, product_ids)
+    return [_to_out(bom, lines_by_bom[bom.id], views) for bom in rows]
 
 
 @router.post(
@@ -513,7 +582,21 @@ async def create_bom(
     await _write_lines(session, bom, body, products)
     await session.commit()
     await session.refresh(bom)
-    return await _to_out(session, bom, materializations)
+    return await _rendered(session, uid, bom, materializations)
+
+
+async def _rendered(
+    session: AsyncSession,
+    uid: str,
+    bom: Bom,
+    materializations: list[Materialization] | None = None,
+) -> BomOut:
+    """Load a single kit's lines + resolve their products (batched), then serialize."""
+    lines = await _lines_of(session, bom.id)
+    views = await _resolve_views(
+        session, uid, {line.product_id for line in lines if line.product_id is not None}
+    )
+    return _to_out(bom, lines, views, materializations)
 
 
 @router.get("/boms/{bom_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -523,7 +606,7 @@ async def get_bom(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> BomOut:
     bom = await _owned(session, claims["uid"], bom_id)
-    return await _to_out(session, bom)
+    return await _rendered(session, claims["uid"], bom)
 
 
 @router.put(
@@ -547,7 +630,7 @@ async def update_bom(
     await _write_lines(session, bom, body, products)
     await session.commit()
     await session.refresh(bom)
-    return await _to_out(session, bom, materializations)
+    return await _rendered(session, uid, bom, materializations)
 
 
 @router.delete(
