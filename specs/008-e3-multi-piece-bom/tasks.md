@@ -146,7 +146,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       {kit name}", K4) → Save → real-2xx toast; the response's `materializations[]` is surfaced honestly
       ("criado no catálogo" vs "já existia — referenciado", values-superseded warning on reference) → lands
       on the kit list. Failing-first component test (save round-trip + materialization messaging) then green.
-- [ ] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
+- [X] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
       no stored price).
 - [X] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
       per-account, empty state) → implement in `features/catalog` reading the `entities/bom` cache/hooks.
@@ -165,7 +165,7 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       intact. Observe failing.
 - [X] T017 [US4] Implement manage behaviors (edit/delete/duplicate; voluntary soft-delete only) + web manage
       UI (list/rename/delete, lapse read-only state). Tests green.
-- [ ] T017b [US4] Visual test: qa-produto homologates the manage screen + the lapse read-only state.
+- [X] T017b [US4] Visual test: qa-produto homologates the manage screen + the lapse read-only state.
 
 ## PR-B ship (STRICTLY ORDERED)
 
