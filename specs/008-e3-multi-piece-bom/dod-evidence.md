@@ -1,13 +1,13 @@
 # 008-e3-multi-piece-bom — DoD evidence
 
-**Status (2026-07-12): E3 code COMPLETE; PR-A + PR-B on `develop`, PR-C awaiting the owner-gated squash-merge.**
+**Status (2026-07-12): E3 COMPLETE and SHIPPED to `develop` — PR-A #15, PR-B #16, PR-C #17 all owner-merged.**
 Built across three owner-authorized slices, mirroring the E2 cadence. **PR-A** (US1/US5 compose + teaser +
 K1 Kits nav) squash-merged as **PR #15**. **PR-B** (US2/US4/US6 persistence + atomic materialization +
 ADR-0017) squash-merged as **PR #16**. **PR-C** (US3 catalog-reference lifecycle — D3 live-reflect + D6
 read-time degradation, T019–T022) is the slice this file closes: `gate:all` green, e2e 102/102, visual
 homologation recorded below. This file is the E3 DoD map; PR-C's merge SHA is filled at close-out.
 
-> **PR-C merge:** `<SHA — filled after the owner squash-merges PR-C>`.
+> **PR-C merge:** `e0ed56e` (PR #17, squash-merged into `develop` 2026-07-12).
 
 ## Gates (PR-C run, 2026-07-12)
 | Gate | Result |
@@ -43,7 +43,7 @@ homologation recorded below. This file is the E3 DoD map; PR-C's merge SHA is fi
 - **PR-A** (T006b): `homologation-t006b.md` — QA drive PASS-with-nits (390px + desktop); the skippedLines-caption nit answered with a component-level contract test.
 - **PR-B** (T015b/T017b): `homologation-t015b.md` — QA drive; **found 2 real honesty blockers a green gate + e2e + prior homologation all missed** (a born-manual product claiming a deletion that never happened; a second Salvar filing a duplicate kit) → fixed; owner-homologated.
 - **PR-C** (T021): `homologation-t021.md` — degraded-reopen visual homologation (the calm "(avulsa)" label + valores-mantidos muted caption; the F1 guard: no "removido/excluído/deletado" copy; still-priceable + re-saveable). **Verdict: FAIL → fixed → PASS.** The first qa-produto pass caught a real honesty blocker that a green gate + e2e both missed: on reopen the deleted product rendered as a LIVE catalog reference (the inverse honesty bug — F1-guard still passed). Root cause was the PR-B freshness/hydration seam, NOT the T021 component: (a) `useDeleteProduct` invalidated only the products query, never the kits list; (b) the composer hydrated once per kit id and locked on the first stale-cache paint. Fixed by (a) `useInvalidateProductsAndKits` (product edit/delete now invalidates `["boms", uid]` too — a deliberate literal mirror of `bomQueryKey`, pinned by test) and (b) content-signature re-hydration (`kitSignature` on `[openedSig]`, not the object ref RQ structural-sharing can keep stable), with a `dirty` guard preserving in-progress edits. Reverified: backend +5 (D3 live-reflect, read-time-degrade DB pins, hard-purge FK), FE unit (`use-catalog.test.tsx` invalidation + `bom-page.test.tsx` re-hydration/clobber-guard), and the new `kits-save.spec.ts` D6/SC-405 e2e — **10/10 clean on both projects** (see the addendum for the orphaned-preview-server confound that briefly masked the fix as a false chromium "flaky").
-- **Owner homologation** of PR-C: `<owner sign-off at the PR-C gate>`.
+- **Owner homologation** of PR-C: owner-authorized the push + PR (#17), CI green end-to-end, **squash-merged into `develop`** (`e0ed56e`, 2026-07-12). E3 closed.
 
 ## Decisions honored / recorded
 - ADR-0015 (server-authoritative kit persistence) · ADR-0016 (`computeBom` client-side, no price endpoint) — both Accepted, carried through all three slices.
@@ -51,6 +51,6 @@ homologation recorded below. This file is the E3 DoD map; PR-C's merge SHA is fi
 - **Degraded-line indicator (T021, owner-ratified 2026-07-12):** a calm **muted caption reusing `productForm.manualValuesKept`** — not an Alert, never a removal claim, keeps "(avulsa)". Reconciled with the F1/K3 indistinguishability lesson from PR-B; retires the planned `bom.degradedLine` copy (ux-bom §1.2-D, errata of §4/§5).
 
 ## Open / deferred
-- **PR-C ships only on** the owner-gated squash-merge into `develop` + graph refresh on merge (ADR-0014). CLAUDE.md ground line flips to "E3 shipped" post-merge (T024).
+- **PR-C shipped:** owner squash-merged (`e0ed56e`, #17) into `develop` 2026-07-12; graph refreshed on merge (ADR-0014 — 3583 nodes/5781 edges, AST-only, 0 tokens); CLAUDE.md ground line flipped to "E3 COMPLETE and SHIPPED" (T024 done). **E3 closed.**
 - First public deploy still **DEFERRED to v1 = E1–E6** (006 Clarifications; REVISITABLE as development unfolds — each change a dated Clarification).
 - 005 T042 (design reconciliation, non-blocking) and D1–D4 ML ingestion (blocked on the house ML account) remain off E3's critical path.

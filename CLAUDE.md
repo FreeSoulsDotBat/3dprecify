@@ -15,8 +15,15 @@ ADR-0012) + PR-B #11 (`e655504`, premium catalog loop — filaments/printers CRU
 SC-305 byte-identical prefill) + PR-C #12 (`3a940ba`, products live-recomputed w/ reference + last-known
 degradation US6, and the honest free-tier teaser US7 with `/catalogo` public); all owner-homologated + full CI
 green (incl. contract drift-guard). Evidence: `specs/007-e2-catalog-entitlement/dod-evidence.md`. Entitlement
-(ADR-0012) + SQLAlchemy 2.0 schema/migration `0001` (ADR-0013) now live. Next real increment: **E3 (multi-piece
-BOM, premium)**. Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
+(ADR-0012) + SQLAlchemy 2.0 schema/migration `0001` (ADR-0013) now live.
+**E3 COMPLETE and SHIPPED to `develop`** — 008-e3-multi-piece-bom (multi-piece BOM / Kits, premium), three
+owner-authorized slices: PR-A #15 (`64fe10e`, kit composer + honest US5 teaser + K1 Kits IA — US1+US5) + PR-B #16
+(`b8b5eee`, kit persistence + atomic materialization + ADR-0017 — US2·US4·US6) + PR-C #17 (`e0ed56e`, US3
+catalog-reference lifecycle — D3 live-reflect + D6 read-time degradation + the honest degraded "(avulsa)" caption);
+all owner-homologated + full CI green (gate:all + e2e 102/102 + contract drift-guard). Evidence:
+`specs/008-e3-multi-piece-bom/dod-evidence.md`. **ADR-0017** (atomic kit-save + materialization; §6 addendum:
+D6 kit-line degradation is read-time, not eager delete-capture) now Accepted + live. Next real increment: **E4**.
+Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
 Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-stack-decisions,audit-findings,audit-findings-r2}.md`.

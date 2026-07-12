@@ -217,22 +217,23 @@ values when the product is deleted (D6). **Independent Test**: quickstart §5.
 
 ## PR-C ship (STRICTLY ORDERED)
 
-- [ ] T022 [US3] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (D3/D6/SC-405 + **SC-409**) → PR to
-      `develop` → CI green → owner squash-merge. **E3 closes.** Graph refresh on merge. **Local gates GREEN +
-      PR-ready 2026-07-12:** `gate:all` green (FE 414 tests · BE 142 pytest · coverage 85.33%); `pnpm e2e`
-      **102/102** both projects. Awaiting owner authorization to push + open the PR (ADR-0006).
+- [X] T022 [US3] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (D3/D6/SC-405 + **SC-409**) → PR to
+      `develop` → CI green → owner squash-merge. **DONE 2026-07-12 — E3 CLOSED.** `gate:all` green (FE 414 · BE
+      142 pytest · cov 85.33%); `pnpm e2e` **102/102** both projects; owner-authorized push → **PR #17** → CI
+      green end-to-end (gate 4m1s, e2e 3m11s, drift-guard, secret-scan, builds) → owner squash-merged (`e0ed56e`).
+      Graph refreshed on merge (3583 nodes/5781 edges, AST-only, 0 tokens).
 
 ---
 
 ## Phase 8: Polish & cross-cutting
 
-- [~] T023 [P] `specs/008-e3-multi-piece-bom/dod-evidence.md` — DRAFTED 2026-07-12 (SC-401..412 map + gates
-      142 pytest/85.33% + e2e 102/102 + PR-A/B/C homologation records; **T021 verdict FAIL→fix→PASS now filled**).
-      Only two blanks remain, both post-owner-action: the PR-C merge SHA + the owner sign-off line.
-- [~] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) DONE 2026-07-12 (expanded from the stub
-      to the **Kits** vocabulary + BUILT/awaiting-merge state); ADR-0015/0016 stay Accepted; **ADR-0017 is
-      Accepted** (PR-B gate) + §6 addendum Accepted. STILL POST-MERGE: flip the roadmap row to SHIPPED with the
-      PR-C SHA + update the CLAUDE.md ground line to "E3 shipped".
+- [X] T023 [P] `specs/008-e3-multi-piece-bom/dod-evidence.md` — DONE 2026-07-12 (SC-401..412 map + gates
+      142 pytest/85.33% + e2e 102/102 + PR-A/B/C homologation records; T021 verdict FAIL→fix→PASS; PR-C merge SHA
+      `e0ed56e` + owner sign-off all filled at close-out).
+- [X] T024 [P] Docs: roadmap E3 row (`docs/product/business-rules.md`) flipped to **E3 COMPLETE + SHIPPED** with
+      the three PR SHAs (`64fe10e`/`b8b5eee`/`e0ed56e`) + e2e 102/102; CLAUDE.md ground line updated to "E3
+      COMPLETE and SHIPPED to `develop`" with the same SHAs; ADR-0015/0016 Accepted; **ADR-0017 Accepted** + §6
+      addendum Accepted. DONE 2026-07-12 (post-merge close-out).
 - [ ] T025 Run `quickstart.md` §1..§7 end-to-end as the final validation before E3 close-out.
 
 ---
