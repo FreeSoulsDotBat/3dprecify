@@ -68,6 +68,20 @@ describe("router auth guards (T034 / US2)", () => {
     expect(router.state.location.pathname).toBe("/catalogo");
   });
 
+  // 008/US5 (ADR-0015) + K1 (R8 D-K1): /kits is public like /catalogo — a signed-out user must
+  // SEE the honest premium teaser there (never a bounce); the composer gates on the server
+  // entitlement in-page. The route is /kits (user vocabulary); the code module stays pages/bom.
+  it("US5(008/K1): /kits matches a real route for an anonymous user (teaser, never a bounce)", async () => {
+    const router = await loadAt("anonymous", "/kits");
+    expect(router.state.location.pathname).toBe("/kits");
+    expect(router.state.matches.some((m) => m.routeId === "/kits")).toBe(true);
+  });
+
+  it("US5(008/K1): an authenticated user reaches /kits directly (gate is in-page, server-informed)", async () => {
+    const router = await loadAt("authenticated", "/kits");
+    expect(router.state.matches.some((m) => m.routeId === "/kits")).toBe(true);
+  });
+
   it("GC-1: /calcular renders when Firebase is not configured (offline-friendly)", async () => {
     const router = await loadAt("not-configured", "/calcular");
     expect(router.state.location.pathname).toBe("/calcular");
@@ -89,6 +103,13 @@ describe("sign-in return-to-intent (T034 / US2)", () => {
   it("GC-4: an already-authenticated user on /sign-in without a redirect lands on /calcular", async () => {
     const router = await loadAt("authenticated", "/sign-in");
     expect(router.state.location.pathname).toBe("/calcular");
+  });
+
+  // 008/K1: the kit teaser's "Entrar" carries redirect=/kits — the whitelist must honor it, or
+  // the post-sign-in landing silently falls back to /calcular (a broken promise).
+  it("GC-4(008/K1): /sign-in?redirect=/kits lands the authenticated user on /kits", async () => {
+    const router = await loadAt("authenticated", "/sign-in?redirect=/kits");
+    expect(router.state.location.pathname).toBe("/kits");
   });
 
   it("GC-3: an anonymous user stays on /sign-in and the intent is preserved", async () => {

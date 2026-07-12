@@ -9,10 +9,17 @@ Principle: **computation is free; persistence & scale are premium.** Revised Rou
 saves **nothing** — there is no "taste it first" quota; the only thing unlocked for free is the calculator itself.
 
 ### FREE (no payment; runs client-side, offline-capable)
-- Every pricing **calculator**, including the full corrected model (material, energy, machine/depreciation,
-  failure, finishing, marketplace-fee math, multi-piece BOM compute). The math is never paywalled.
+- The **single-piece** pricing calculator, including the full corrected model (material, energy, machine/
+  depreciation, failure, finishing, marketplace-fee math). The single-piece math is never paywalled.
 - Ephemeral use **only**: enter inputs → see the full transparent breakdown. **No saving of any kind on free** —
   saving calculations, catalog, history and export are all Premium.
+
+> **Amendment 2026-07-10 (E3, owner decision — spec 008 Clarifications Q3):** the **multi-piece BOM** feature
+> (compose + price an assembly of several pieces) is **Premium**, not free — the product's **first paywalled
+> compute**, a deliberate, dated exception to "the math is never paywalled" above. The single-piece calculator
+> stays fully free. Because BOM math runs client-side/offline, premium access to the composer is a **client
+> route-guard** with an honest teaser, while **persistence stays server-authoritative** (Principle IV holds for
+> anything server-side; the client-side compute cannot be server-enforced). Revisitable as development unfolds.
 
 ### PREMIUM (server-side validated)
 - Persist calculations & quotes (cloud).

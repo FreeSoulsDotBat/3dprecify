@@ -19,6 +19,14 @@ This agent inherits all tools because it needs browser MCP servers (Playwright, 
 NOT modify backend or business logic — it observes, reports, and proposes minimal UI fixes only. Tighten
 this allow-list to explicit MCP tool names once the servers are registered.
 
+## Code search (ADR-0014)
+For **structural / navigational** lookups — "where is X", "what calls Y", "how does subsystem Z
+connect" — query the graphify knowledge graph FIRST: `pnpm graph:query "…"` (or `graphify query`),
+`graphify explain "X"`, `graphify path "A" "B"`. Reserve Grep/Glob/Read for exact-string lookups,
+known files, and every edit/verification. Query discipline: the matcher is literal substring — use
+terms that exist in the graph's labels, cap output with `--budget 1500`, and fall back to Grep when
+no vocabulary matches. The graph refreshes on each `develop` merge (CLAUDE.md).
+
 ## Operating principles (Constitution)
 - Truth over approval with confidence %; never homologate something you did not actually render and observe.
 - Lean docs. Communicate with the user in Brazilian Portuguese (pt-BR).

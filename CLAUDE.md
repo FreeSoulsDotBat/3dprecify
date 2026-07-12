@@ -30,8 +30,8 @@ Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-
   job (D4, no local↔CI drift). Pricing formula canonical in `packages/pricing-core` (TS, offline) — backend
   never recomputes (only e2e/docker/drift/secret-scan are CI-only).
 
-Knowledge graph — **graphify** (ADR-0014). A structural (AST) code graph lives in `graphify-out/`
-(gitignored; ~2858 nodes, built with **0 LLM tokens**). Two standing rules:
+Knowledge graph — **graphify** (ADR-0014, amended 2026-07-10). A structural (AST) code graph lives in
+`graphify-out/` (gitignored; ~2877 nodes, built with **0 LLM tokens**). Standing rules:
 - **Freshness — every merge into `develop` refreshes the graph.** The refresh is `graphify update .`
   (AST-only, ~20s, 0 tokens). The AI runs it as part of the `develop` close-out/bookkeeping step;
   `pnpm graph:update` is the manual command; a best-effort lefthook `post-merge` hook is a safety net
@@ -41,6 +41,20 @@ Knowledge graph — **graphify** (ADR-0014). A structural (AST) code graph lives
   connect / what's in this area" questions, consult `pnpm graph:query "…"` (or `graphify query/
   explain/path`) **before** blind Grep/Read sweeps — it's cheaper and answers navigation directly.
   Grep/Glob/Read stay correct for exact-string lookups, known single files, and every edit/verify.
+  Query discipline: the matcher is literal substring — use terms that exist in the graph's labels,
+  cap output with `--budget 1500`, and fall back to Grep when no vocabulary matches. Agents without
+  Bash (arquiteto, designer-ux, product-owner, scrum-master) Read `graphify-out/GRAPH_REPORT.md`
+  (§Community Hubs) as their graph surface instead.
+- **Work memory — the graph learns.** At the start of graph work run `graphify reflect --if-stale`
+  and read `graphify-out/reflections/LESSONS.md` (preferred sources, known dead ends, corrections).
+  After answering from the graph, save it back: `graphify save-result --question "…" --answer "…"
+  --type query --nodes … --outcome useful|dead_end|corrected` — deterministic, 0 LLM tokens; the
+  next graph update ingests the Q&A.
+
+Token-spend ledger (owner rule 2026-07-10): every AI operation that costs real tokens — semantic
+extraction, subagent fan-outs, multi-agent workflows — appends a row to `docs/token-ledger.md`
+(date · operation · estimate → actual · lesson). Estimate BEFORE running, record the actual AFTER;
+graphify runs also mirror into local `graphify-out/cost.json`.
 
 Constitution: `.specify/memory/constitution.md` (incl. **Principle VIII** — no inferring architecture/standards).
 Pricing domain reference: `docs/pricing-model-from-spreadsheet.md` (original model — third-party sheet NOT copied).
@@ -50,5 +64,5 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/007-e2-catalog-entitlement/plan.md
+at specs/008-e3-multi-piece-bom/plan.md
 <!-- SPECKIT END -->

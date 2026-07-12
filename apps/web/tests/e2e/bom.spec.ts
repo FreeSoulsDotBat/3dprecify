@@ -1,0 +1,155 @@
+import { execSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
+import { expect, test, type Page } from "@playwright/test";
+
+import { messages } from "../../src/shared/i18n/messages.pt-br";
+import { E2E_DATABASE_URL } from "../../playwright.config";
+
+// 008/T004+T007 e2e — the E3 PR-A loop against the REAL stack: a premium account composes a
+// 3-line BOM (ad-hoc + catalog-referenced) free-standing (nothing persisted, quickstart §2);
+// free/signed-out at /kits meet the honest teaser while the FREE single-piece calculator stays
+// fully usable (SC-408/SC-409). Persistence e2e lands in PR-B.
+
+const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
+const t = messages;
+
+async function signUpThrowaway(page: Page, tag: string): Promise<string> {
+  await page.goto("/sign-in");
+  await page.waitForFunction(() => "__e2eAuth" in window);
+  const email = `e2e-${tag}-${Date.now()}@e2e.local`;
+  await page.evaluate(
+    ({ em, pw }) => {
+      const w = window as unknown as {
+        __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
+      };
+      if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
+      void w.__e2eAuth.signUp(em, pw); // fire-and-forget (redirect destroys the eval context)
+    },
+    { em: email, pw: "test-passw0rd" },
+  );
+  await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
+  return email;
+}
+
+/** Grant premium through the REAL operator path (the CLI writing the ledger — ADR-0012). */
+function grantPremium(email: string): void {
+  execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
+    cwd: backendDir,
+    stdio: "pipe",
+    env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
+  });
+}
+
+test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1, quickstart §2)", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `bom-${info.workerIndex}`);
+
+  // Free (never granted): /kits shows the honest teaser, never the composer (ADR-0015).
+  await page.goto("/kits");
+  await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
+
+  grantPremium(email);
+
+  // Build one saved product to reference (filament + printer + product — the E2 loop).
+  await page.goto("/catalogo");
+  await page.reload();
+  await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
+  await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+  await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
+  await page
+    .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
+    .fill("100");
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) }).fill("1");
+  await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
+  await expect(page.getByText("PLA Azul")).toBeVisible();
+
+  await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
+  await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
+  await page.getByRole("textbox", { name: t.catalogForm.name }).fill("Ender 3");
+  await page
+    .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) })
+    .fill("4000");
+  await page
+    .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineLifetime) })
+    .fill("2000");
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.avgPower) }).fill("0,10");
+  await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
+  await expect(page.getByText("Ender 3")).toBeVisible();
+
+  await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
+  await page.getByRole("button", { name: t.catalogo.addProduct }).click();
+  await page.getByRole("textbox", { name: t.productForm.nameLabel }).fill("Vaso G");
+  await page
+    .getByRole("combobox", { name: t.calculator.catalogPicker.filament })
+    .selectOption({ label: "PLA Azul" });
+  await page
+    .getByRole("combobox", { name: t.calculator.catalogPicker.printer })
+    .selectOption({ label: "Ender 3" });
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.grams) }).fill("100");
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.printTime) }).fill("5");
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.tariff) }).fill("1");
+  await page.getByRole("button", { name: t.productForm.saveProduct, exact: true }).click();
+  await expect(page.getByText(t.productForm.savedProduct)).toBeVisible();
+
+  // The composer: 3 lines — 2 ad-hoc (one requantified) + 1 catalog-referenced.
+  await page.goto("/kits");
+  await expect(page.getByText(t.bom.emptyTitle)).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible(); // default line, live
+
+  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+  await page
+    .getByRole("textbox", { name: new RegExp(t.bom.quantity) })
+    .last()
+    .fill("3");
+  // Assembly = 20,60 + 61,80 = 82,40 — read from computeBom, live.
+  await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
+
+  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+  await page
+    .getByRole("combobox", { name: new RegExp(t.bom.useProduct) })
+    .last()
+    .selectOption({ label: "Vaso G" });
+  // Product line: 100g of 100/1kg + 5h×0,10kW×1 + 4000/2000×5 = 10 + 0,50 + 10 = custo 20,50.
+  // Assembly total: 20,60 + 61,80 + 20,50 = 102,90.
+  await expect(page.getByText(/R\$\s?102,90/).first()).toBeVisible();
+  await expect(page.getByText(new RegExp("do catálogo: Vaso G")).first()).toBeVisible();
+
+  // Remove the catalog line → total updates live (US1 acceptance 2).
+  await page
+    .getByRole("button", { name: new RegExp(t.bom.removeLine) })
+    .last()
+    .click();
+  await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
+});
+
+test("signed-out at /kits sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
+  page,
+}) => {
+  // Signed-out: /kits renders the teaser (no bounce), with the honest sign-in path. The 5th
+  // nav tab "Kits" is the entry point (K1/SC-410) and must be present on every surface.
+  await page.goto("/kits");
+  await expect(page.getByRole("link", { name: t.nav.kits })).toBeVisible();
+  await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
+  await expect(page.getByText(t.bom.teaserSignedOutBody)).toBeVisible();
+  // NO price, NO date, NO purchase CTA (FR-410): the only actions are Entrar/Entendi.
+  await expect(page.getByText(/R\$\s?\d/)).toHaveCount(0);
+  await expect(page.getByRole("button", { name: t.bom.teaserSignIn })).toBeVisible();
+  await expect(page.getByRole("button", { name: t.bom.teaserDismiss })).toBeVisible();
+
+  // Entrar carries the return-to-intent to /kits.
+  await page.getByRole("button", { name: t.bom.teaserSignIn }).click();
+  await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fkits/);
+
+  // The free single-piece calculator stays fully usable, signed-out (SC-409 spot check).
+  await page.goto("/calcular");
+  await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.grams) }).fill("200");
+  // Recomputes live: a REAL price renders (review nit — assert it, don't just claim it) and no
+  // premium wall appears anywhere on this page.
+  await expect(page.getByText(/R\$\s?\d/).first()).toBeVisible();
+  await expect(page.getByText(t.bom.teaserTitle)).toHaveCount(0);
+});

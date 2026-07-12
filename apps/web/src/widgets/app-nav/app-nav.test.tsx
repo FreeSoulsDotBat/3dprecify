@@ -18,8 +18,8 @@ import { AppNav, type AppNavVariant } from "./app-nav";
 afterEach(() => cleanup());
 
 // A minimal router whose root hosts the nav + an <Outlet/>; child routes mirror the
-// four product sections. This exercises the real active-route derivation (NAV-1) and
-// real router links without pulling in the full app-shell (session/firebase/theme).
+// five product sections (008/K1 added Kits). This exercises the real active-route
+// derivation (NAV-1) and real router links without pulling in the full app-shell.
 function makeRouter(variant: AppNavVariant, initialPath = "/calcular") {
   const rootRoute = createRootRoute({
     component: () => (
@@ -29,7 +29,7 @@ function makeRouter(variant: AppNavVariant, initialPath = "/calcular") {
       </>
     ),
   });
-  const paths = ["/calcular", "/catalogo", "/historico", "/conta"] as const;
+  const paths = ["/calcular", "/catalogo", "/kits", "/historico", "/conta"] as const;
   const children = paths.map((path) =>
     createRoute({
       getParentRoute: () => rootRoute,
@@ -51,15 +51,16 @@ function activeLinks(nav: HTMLElement) {
 }
 
 describe("AppNav (T025 / US1 — NAV-1)", () => {
-  it("renders the four sections as a bottom TabBar on mobile, exactly one active", async () => {
+  it("renders the five sections as a bottom TabBar on mobile, exactly one active (008/K1)", async () => {
     render(<RouterProvider router={makeRouter("tabbar")} />);
     await screen.findByText("page /calcular");
 
     const nav = screen.getByRole("navigation", { name: /navegação principal/i });
     const links = within(nav).getAllByRole("link");
-    expect(links).toHaveLength(4);
+    expect(links).toHaveLength(5);
     expect(within(nav).getByRole("link", { name: "Calcular" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Catálogo" })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: "Kits" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Histórico" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Conta" })).toBeInTheDocument();
 
@@ -68,16 +69,27 @@ describe("AppNav (T025 / US1 — NAV-1)", () => {
     expect(active[0]).toHaveAccessibleName("Calcular");
   });
 
-  it("renders the four sections as a side nav on desktop, exactly one active", async () => {
+  it("renders the five sections as a side nav on desktop, exactly one active", async () => {
     render(<RouterProvider router={makeRouter("sidebar")} />);
     await screen.findByText("page /calcular");
 
     const nav = screen.getByRole("navigation", { name: /navegação principal/i });
-    expect(within(nav).getAllByRole("link")).toHaveLength(4);
+    expect(within(nav).getAllByRole("link")).toHaveLength(5);
 
     const active = activeLinks(nav);
     expect(active).toHaveLength(1);
     expect(active[0]).toHaveAccessibleName("Calcular");
+  });
+
+  it("the roving tabstop covers all FIVE items (End jumps to the last section)", async () => {
+    const user = userEvent.setup();
+    render(<RouterProvider router={makeRouter("tabbar")} />);
+    await screen.findByText("page /calcular");
+
+    const nav = screen.getByRole("navigation", { name: /navegação principal/i });
+    await user.click(within(nav).getByRole("link", { name: "Calcular" }));
+    await user.keyboard("{End}");
+    expect(within(nav).getByRole("link", { name: "Conta" })).toHaveFocus();
   });
 
   it("moves the active indicator when the user switches sections", async () => {

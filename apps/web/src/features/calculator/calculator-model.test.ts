@@ -1,3 +1,4 @@
+import { computeCalculator } from "@3dprecify/pricing-core";
 import { describe, expect, it } from "vitest";
 
 import { feeCatalogSchema } from "@/shared/fee-catalog";
@@ -393,5 +394,42 @@ describe("formatBRL — pt-BR/BRL formatting", () => {
     expect(formatBRL(28.65)).toBe("R$ 28,65");
     expect(formatBRL(1234.5)).toBe("R$ 1.234,50");
     expect(formatBRL(0)).toBe("R$ 0,00");
+  });
+});
+
+// 008/T004 — the R7 seam: the BOM page reuses the calculator's parse by reading the EXACT
+// engine input computeFromForm built, so a BOM line and the single-piece calculator derive from
+// one PriceInput (SC-402 anchoring at the web layer; the numeric identity lives in pricing-core).
+describe("computeFromForm — exposes the engine input it computed from (008 R7)", () => {
+  it("returns the built PriceInput; recomputing it reproduces the result byte-for-byte", () => {
+    const r = computeFromForm(canonical);
+    expect(r.input).toBeTruthy();
+    expect(JSON.stringify(computeCalculator(r.input!))).toBe(JSON.stringify(r.result));
+  });
+
+  it("carries the parsed channels + otherCosts on the input (same slots the result shows)", () => {
+    const r = computeFromForm({
+      ...canonical,
+      channels: [
+        {
+          marketplace: "OUTRO",
+          modality: "",
+          commissionPct: "20",
+          fixedFee: "5,00",
+          minPerItem: "",
+          freightCost: "",
+        },
+      ],
+      otherCosts: [{ name: "Embalagem", value: "3,00" }],
+    });
+    expect(r.input?.channels).toHaveLength(1);
+    expect(r.input?.channels?.[0].commissionPct).toBe(20);
+    expect(r.input?.channels?.[0].fixedFee).toBe(5);
+    expect(r.input?.otherCosts).toEqual([{ name: "Embalagem", value: 3 }]);
+  });
+
+  it("is null when a scalar field is invalid (no engine input was built)", () => {
+    const r = computeFromForm({ ...canonical, costPerRoll: "abc" });
+    expect(r.input).toBeNull();
   });
 });

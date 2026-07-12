@@ -57,8 +57,7 @@ describe("computeCalculator — canonical worked example (SC-001)", () => {
     expect(r.catalogVersion).toBeNull();
   });
 
-  it("stamps modelVersion 3.0.0 (= PRICING_MODEL_VERSION)", () => {
-    expect(r.modelVersion).toBe("3.0.0");
+  it("stamps modelVersion (= PRICING_MODEL_VERSION — the literal pin lives in version.test.ts)", () => {
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });

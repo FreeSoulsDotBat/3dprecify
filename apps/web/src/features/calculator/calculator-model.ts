@@ -23,7 +23,7 @@ import {
 import type { FeeSealState } from "@/features/calculator/fee-seal";
 import type { CatalogSource, FeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
+import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 
 // Thin adapter for the E1 calculator. It is the ONLY seam between the pt-BR form strings and the
 // canonical engine: parse + validate → computeCalculator (pricing-core, the single source of the
@@ -33,11 +33,9 @@ import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
 
 const t = messages.calculator;
 
-/** Format a number as a pt-BR BRL string ("28.65" → "R$ 28,65"). Reuses the shared pt-BR
- *  formatter (single source of the locale rule); pricing-core already rounded to 2dp. */
-export function formatBRL(value: number): string {
-  return `R$ ${formatDecimal(value, 2)}`;
-}
+// formatBRL moved to the shared pt-BR module (008 R7 — `features/bom` prints money through the
+// same rule); re-exported here so every existing consumer keeps its import path.
+export { formatBRL } from "@/shared/lib/decimal-ptbr";
 
 export type CalcFieldErrors = Partial<Record<CalcFieldName, string>>;
 export type ChannelSlotErrors = Partial<Record<ChannelFieldName, string>>;
@@ -68,6 +66,10 @@ export interface CalcOutcome {
   fieldErrors: CalcFieldErrors;
   /** The computed breakdown + prices, or null when a scalar input is invalid. */
   result: PriceResult | null;
+  /** The EXACT engine input `result` was computed from, or null when invalid (008 R7): the BOM
+   *  page reads it so a BOM line and the single-piece calculator derive from ONE `PriceInput`
+   *  (`computeBom` then reproduces `result` per line byte-for-byte — SC-402 by construction). */
+  input: PriceInput | null;
   /** Per-slot channel outcomes, aligned to `values.channels` (empty when the scalars are invalid). */
   channels: ChannelSlotOutcome[];
   /** Per-row "Outros custos" value errors (US5), aligned to `values.otherCosts`; `undefined` = ok.
@@ -240,7 +242,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
       const key = issue.path[0] as CalcFieldName | undefined;
       if (key && !fieldErrors[key]) fieldErrors[key] = issue.message;
     }
-    return { ok: false, fieldErrors, result: null, channels: [], otherCostErrors: [] };
+    return { ok: false, fieldErrors, result: null, input: null, channels: [], otherCostErrors: [] };
   }
 
   // US5 — the "Outros custos" slot is parsed outside the Zod object (like the channels): each named
@@ -291,7 +293,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             freightIsEstimate: p.freightIsEstimate,
           },
     );
-    return { ok: true, fieldErrors: {}, result, channels, otherCostErrors };
+    return { ok: true, fieldErrors: {}, result, input, channels, otherCostErrors };
   } catch (err) {
     if (err instanceof ValidationError) {
       const key = err.field as CalcFieldName | undefined;
@@ -299,6 +301,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
         ok: false,
         fieldErrors: key ? { [key]: err.message } : {},
         result: null,
+        input: null,
         channels: [],
         otherCostErrors: [],
       };

@@ -221,6 +221,7 @@ export const messages = {
     ariaLabel: "Navegação principal",
     calcular: "Calcular",
     catalogo: "Catálogo",
+    kits: "Kits", // 008/K1 — the 5th section (owner-approved IA change)
     historico: "Histórico",
     conta: "Conta",
   },
@@ -355,6 +356,60 @@ export const messages = {
       "Esta impressora é usada em {n} produto(s). Eles manterão os últimos valores, editáveis.",
     notFound: "Não encontramos este produto.",
     backToCatalog: "Voltar ao catálogo",
+  },
+  // 008/E3 — the KIT composer (user-facing name per K1, 2026-07-11; "BOM" stays technical).
+  // Premium feature (Q3, ADR-0015); copy is honest/calm: NO price, NO date, NO pre-E6
+  // purchase CTA anywhere (FR-410). Title/subtitle are the owner's approved wording (K1).
+  bom: {
+    title: "Monte seus kits",
+    subtitle:
+      "Aqui você pode montar Kits para anúncios únicos de acordo com seus produtos cadastrados ou peças avulsas",
+    // Empty state (§1.8)
+    emptyTitle: "Monte seu kit peça por peça",
+    emptyBody:
+      "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.",
+    addLine: "Adicionar peça",
+    // Line (§1.1/§1.3)
+    lineLabel: "Peça {n}",
+    lineAdhoc: "(avulsa)",
+    quantity: "Quantidade",
+    quantityUnit: "un",
+    removeLine: "Remover peça",
+    qtyZero: "Quantidade 0 — não entra no total.",
+    expand: "Editar esta peça",
+    collapse: "Recolher",
+    // Invalid line: honest exclusion, never a silent zero (§1.3)
+    lineInvalid: "Confira os campos desta peça — ela não entra no total até ser corrigida.",
+    // In-line catalog picker (§1.2-C / §1.4) — product level. PR-B reintroduces the picker
+    // placeholder/offline copy it needs (ux §5 keeps the full proposed set) — no dead keys here.
+    useProduct: "Usar produto salvo",
+    manual: "— Manual —",
+    fromCatalog: "do catálogo: {nome}",
+    fromCatalogAdjusted: "do catálogo: {nome} · ajustado por você",
+    // Per-line breakdown (§1.6)
+    lineTotal: "Total da linha ({qty}×)",
+    // Assembly total + per-channel rollup (§1.7)
+    assemblyTitle: "Total do kit",
+    assemblyCusto: "Custo total",
+    channelsTitle: "Preços por canal (kit)",
+    channelContributing: "{n} peça(s) somaram neste canal",
+    channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
+    channelNoContrib: "Nenhuma peça com preço neste canal.",
+    // Teaser (US5 / §2) — NO price, NO date, NO purchase CTA
+    teaserTitle: "Monte e precifique kits com várias peças",
+    teaserBody:
+      "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.",
+    teaserDialogTitle: "Os kits fazem parte do Premium",
+    teaserDialogBody:
+      "No Premium você monta kits com várias peças e vê o preço do kit inteiro, por canal.",
+    teaserFreeNote: "A calculadora de peça única continua grátis.",
+    teaserSignedOutBody: "Para montar kits, entre e ative o Premium.",
+    teaserSignIn: "Entrar",
+    teaserDismiss: "Entendi",
+    // Guard states (§0.1) — honest, specific; a network failure is NOT "not premium"
+    guardChecking: "Verificando seu plano…",
+    guardError: "Não foi possível verificar seu plano.",
+    guardRetry: "Tentar novamente",
   },
   historico: {
     emptyTitle: "Histórico em breve",

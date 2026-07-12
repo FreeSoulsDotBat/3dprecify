@@ -21,6 +21,9 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0012](0012-entitlement-flag-mechanism.md) | Entitlement flag mechanism — server-authoritative Postgres ledger, per-request check (TD-005) | Accepted |
 | [0013](0013-persistence-stack.md) | Persistence stack — SQLAlchemy 2.0 typed + Alembic + psycopg3 on PostgreSQL (TD-004) | Accepted |
 | [0014](0014-knowledge-graph-maintenance-and-agent-search.md) | Knowledge-graph maintenance (refresh on every `develop` merge) & graph-first agent code search (graphify) | Accepted |
+| [0015](0015-e3-bom-entitlement-enforcement.md) | E3 BOM entitlement — server-informed feature guard over a client-side compute (extends ADR-0012) | Accepted |
+| [0016](0016-pricing-core-3-1-0-bom-compose-contract.md) | pricing-core 3.1.0 — `computeBom` assembly contract with per-channel rollup (extends ADR-0008/0011) | Accepted |
+| [0017](0017-kit-save-materialization.md) | Kit-save materialization — atomic txn, path-scoped FR-310 relaxation, name-dedup (extends ADR-0013) | Proposed |
 
 ## Pending (to be written; numbers assigned when authored)
 - Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).
