@@ -1388,10 +1388,683 @@
           }
         }
       }
+    },
+    "/api/v1/boms": {
+      "get": {
+        "tags": [
+          "boms"
+        ],
+        "summary": "List Boms",
+        "operationId": "list_boms_api_v1_boms_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BomOut"
+                  },
+                  "title": "Response List Boms Api V1 Boms Get"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "boms"
+        ],
+        "summary": "Create Bom",
+        "operationId": "create_bom_api_v1_boms_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BomIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BomOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/boms/{bom_id}": {
+      "get": {
+        "tags": [
+          "boms"
+        ],
+        "summary": "Get Bom",
+        "operationId": "get_bom_api_v1_boms__bom_id__get",
+        "parameters": [
+          {
+            "name": "bom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bom Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BomOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "boms"
+        ],
+        "summary": "Update Bom",
+        "operationId": "update_bom_api_v1_boms__bom_id__put",
+        "parameters": [
+          {
+            "name": "bom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bom Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BomIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BomOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "boms"
+        ],
+        "summary": "Delete Bom",
+        "operationId": "delete_bom_api_v1_boms__bom_id__delete",
+        "parameters": [
+          {
+            "name": "bom_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Bom Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "BomIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BomLineIn"
+            },
+            "type": "array",
+            "title": "Lines"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "BomIn"
+      },
+      "BomLineIn": {
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "productId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Productid"
+          },
+          "pieceName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piecename"
+          },
+          "pieceInputs": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PieceInputs-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "filamentValues": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FilamentValues-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "printerValues": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrinterValues-Input"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "tariffPerKwh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tariffperkwh"
+          },
+          "includeMarketplace": {
+            "type": "boolean",
+            "title": "Includemarketplace",
+            "default": true
+          },
+          "channels": {
+            "items": {
+              "$ref": "#/components/schemas/ChannelSlot"
+            },
+            "type": "array",
+            "title": "Channels"
+          },
+          "otherCosts": {
+            "items": {
+              "$ref": "#/components/schemas/OtherCost"
+            },
+            "type": "array",
+            "title": "Othercosts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantity"
+        ],
+        "title": "BomLineIn",
+        "description": "One submitted line: EITHER a live product reference OR a nameable ad-hoc piece.\n\nThe ad-hoc branch carries the whole ``ProductIn`` value-set precisely because it has to\nmaterialize into a product (ADR-0017/K4) — ``pieceName`` is what that product is called."
+      },
+      "BomLineOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "productId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Productid"
+          },
+          "pieceName": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Piecename"
+          },
+          "degraded": {
+            "type": "boolean",
+            "title": "Degraded"
+          },
+          "pieceInputs": {
+            "$ref": "#/components/schemas/PieceInputs-Output"
+          },
+          "filamentValues": {
+            "$ref": "#/components/schemas/FilamentValues-Output"
+          },
+          "printerValues": {
+            "$ref": "#/components/schemas/PrinterValues-Output"
+          },
+          "tariffPerKwh": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Tariffperkwh"
+          },
+          "includeMarketplace": {
+            "type": "boolean",
+            "title": "Includemarketplace"
+          },
+          "channels": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Channels"
+          },
+          "otherCosts": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Othercosts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "position",
+          "quantity",
+          "productId",
+          "pieceName",
+          "degraded",
+          "pieceInputs",
+          "filamentValues",
+          "printerValues",
+          "tariffPerKwh",
+          "includeMarketplace",
+          "channels",
+          "otherCosts"
+        ],
+        "title": "BomLineOut",
+        "description": "A resolved line — self-sufficient for ``computeBom`` (no second round-trip).\n\nLive product ⇒ every value is resolved from it (which in turn resolves its filament/printer,\nD3). Degraded (``productId`` is null after the product was deleted, D6) ⇒ the values are the\nline's own last-known snapshot, and ``degraded`` says so honestly."
+      },
+      "BomOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/BomLineOut"
+            },
+            "type": "array",
+            "title": "Lines"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Createdat"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updatedat"
+          },
+          "materializations": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/Materialization"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Materializations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "lines",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "BomOut"
+      },
       "ChannelSlot": {
         "properties": {
           "marketplace": {
@@ -2076,6 +2749,35 @@
           "entries"
         ],
         "title": "MarketplaceCatalog"
+      },
+      "Materialization": {
+        "properties": {
+          "position": {
+            "type": "integer",
+            "title": "Position"
+          },
+          "productId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Productid"
+          },
+          "action": {
+            "type": "string",
+            "enum": [
+              "created",
+              "referenced"
+            ],
+            "title": "Action"
+          }
+        },
+        "type": "object",
+        "required": [
+          "position",
+          "productId",
+          "action"
+        ],
+        "title": "Materialization",
+        "description": "What the save DID to a line's catalog product — so the client can say it out loud (K4)."
       },
       "OtherCost": {
         "properties": {
