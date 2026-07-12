@@ -195,6 +195,44 @@ filament/printer).
 catalog-ref *coexist in one line type* (Q2) instead of forking two row shapes, and it makes degradation a
 picker reset rather than a special screen.
 
+### 1.2-D Linha degradada (produto referenciado deletado) — decisão T021 (PR-C, 2026-07-12)
+
+> **Errata de §4 e §5.** A pintura original de §4 (um `Alert tone="info"` com "O produto vinculado foi
+> removido…") e a chave `bom.degradedLine` de §5 estão **substituídas** por esta seção onde divergirem.
+> Motivo: honestidade (F1/K3) + calma. Este bloco é a fonte da verdade para o indicador de linha degradada.
+
+**Decisão (owner-ratificada 2026-07-12): legenda muda calma, reusando `productForm.manualValuesKept` — NÃO um
+Alert, NÃO uma alegação de remoção.** Uma linha cujo produto referenciado foi soft-deletado reabre com
+`degraded: true` + `productId: null`; a UI a trata como uma linha avulsa comum e adiciona **uma única legenda
+discreta** sob a linha de valores:
+
+```
+│ Peça 2 · (avulsa)            5×   ▾   🗑  │  ← nome "(avulsa)" (nunca "removido/excluído/deletado")
+│ │ Usar produto salvo                  │   │
+│ │ [ — Manual —                     ▾ ]│   │  ← picker em Manual (§1.2-C), campos editáveis
+│ │  … últimos valores, editáveis …     │   │
+│   Os valores atuais foram mantidos e      │  ← <p> text-sm text-[var(--text-muted)] — legenda, NÃO Alert
+│   continuam editáveis.                    │     (= productForm.manualValuesKept, já homologada E2)
+```
+
+- **Por que legenda muda e não `Alert`**: um Alert (mesmo `tone="info"`) grita "algo aconteceu com você"; a
+  degradação por deleção é um estado *normal e recuperável* (K3 — nascer-manual e degradar-por-deleção são
+  **indistinguíveis por design**), então a UI não deve dramatizá-lo nem contar uma história de remoção. Uma
+  legenda `text-muted` reaproveita **exatamente** a copy que o E2 já usa para produtos manuais
+  (`productForm.manualValuesKept` — "Os valores atuais foram mantidos e continuam editáveis."), unificando os
+  dois estados numa só frase honesta.
+- **Honestidade (F1/FR-014)**: a copy **nunca** afirma "produto removido/excluído/deletado" — isso seria uma
+  narrativa de evento que o usuário pode não ter causado (o produto pode ter sido deletado noutra sessão) e que
+  a UI não precisa contar para deixar a linha priceável. O guard de teste (`queryByText(/removid|excluíd|
+  deletad/i)` === null) trava qualquer regressão para a copy antiga de §4.
+- **Nome da peça**: "(avulsa)" (não "— Manual —") — alinhado com `contracts/api-surface.md` linha 55 e o
+  vocabulário de peça avulsa do composer; "— Manual —" permanece só como o **valor do picker** (§1.2-C), que é
+  um controle, não um rótulo de estado.
+- **Reuso de chave**: sem chave `bom.degradedLine` nova — a legenda é `messages.productForm.manualValuesKept`,
+  já homologada no E2. `bom.degradedLine` de §5 fica **retirada** (não implementar).
+- **Gatilho da legenda**: só quando `degraded === true` **e** o picker está em Manual (`productId === ""`) — se
+  o usuário reatar um produto salvo na linha degradada, a legenda some (voltou a ser catalog-ref viva).
+
 ### 1.3 Line — EXPANDED, ad-hoc (reuses the calculator piece-input vocabulary)
 
 Do **not** redesign the piece form. The expanded ad-hoc line hosts the **same sections/fields/validation** the
@@ -517,6 +555,11 @@ never fake-saved. The offline **compute still works** (that's the whole point of
 
 ## 4. Degraded catalog-ref line (US3 / PR-C — designed now)
 
+> **⚠ SUPERSEDED por §1.2-D (2026-07-12).** O indicador degradado final é uma **legenda muda**
+> (`productForm.manualValuesKept`), **não** o `Alert tone="info"` + "produto removido" pintado abaixo. O
+> mockup/copy desta seção fica como histórico de design; implemente §1.2-D. Válido aqui ainda: o mecanismo
+> (picker reset para Manual, campos last-known editáveis, linha priceável) e o warn de delete-confirm.
+
 A saved BOM line that referenced a product **deleted after save** degrades gracefully (Q2 / FR-404, mirroring
 E2 product↔filament D6). On reopen the server returns `BomLineOut.degraded: true`, `productId: null`,
 `pieceInputs: <last-known>`. The line stays **priceable** — never a crash, never a silent wrong number.
@@ -591,8 +634,8 @@ bom: {
   save: "Salvar montagem",
   saved: "Montagem salva.",
   saveOffline: "Criar e salvar precisam de conexão.",
-  // degraded (US3 / PR-C / §4)
-  degradedLine: "O produto vinculado foi removido. Mantivemos os últimos valores — edite se precisar.",
+  // degraded (US3 / PR-C) — RETIRADA: §1.2-D substituiu por productForm.manualValuesKept (legenda muda).
+  // degradedLine: NÃO implementar — a antiga copy "produto removido" viola F1 (alegação de remoção). Ver §1.2-D.
   deleteWarnProduct: "Este produto é usado em {n} montagem(ns). Elas manterão os últimos valores, editáveis.",
   // teaser (US5 / §2) — NO price, NO date, NO purchase CTA
   teaserTitle: "Monte e precifique pedidos com várias peças",

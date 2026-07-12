@@ -26,6 +26,9 @@ export interface BomLineCardProps {
   lineResult: BomLineResult | null;
   /** True when the line's inputs or quantity fail validation — captioned, never silently zero. */
   invalid: boolean;
+  /** The referenced product was deleted after save: the line reopened on its last-known snapshot
+   *  (F1/K3 — a calm caption, NEVER a "produto removido" claim; ux §1.2-D). */
+  degraded?: boolean;
   children?: ReactNode;
 }
 
@@ -39,6 +42,7 @@ export function BomLineCard({
   onRemove,
   lineResult,
   invalid,
+  degraded,
   children,
 }: BomLineCardProps) {
   // The K4 pre-fill names a materialized piece "Peça {n} · {kit}", which is exactly this prefix —
@@ -92,6 +96,12 @@ export function BomLineCard({
       )}
       {qtyZero && <p className="text-sm text-[var(--text-muted)]">{t.qtyZero}</p>}
       {invalid && <p className="text-sm text-[var(--text-muted)]">{t.lineInvalid}</p>}
+      {/* Degraded (product deleted after save): a calm legenda reusing the E2 manual-product copy —
+          the line kept its last-known values and stays editable. NEVER says "removido/excluído"
+          (F1/K3 — born-manual and delete-degraded are one honest state; ux §1.2-D). */}
+      {degraded && (
+        <p className="text-sm text-[var(--text-muted)]">{messages.productForm.manualValuesKept}</p>
+      )}
 
       {expanded && children}
     </Card>

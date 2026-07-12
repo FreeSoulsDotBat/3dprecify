@@ -55,6 +55,9 @@ interface LineState {
   filamentMaterial: string | null;
   /** A bound line's fields were edited after binding (drives the "ajustado por você" seal). */
   adjusted: boolean;
+  /** Reopened on a last-known snapshot because the referenced product was deleted after save
+   *  (server `degraded`). Drives the calm caption while the line is still Manual (ux §1.2-D). */
+  degraded: boolean;
   /** The name this piece takes in the catalog when it materializes (K4). Empty = use the
    *  "Peça {n} · {kit}" pre-fill; the seller may override it. */
   pieceNameRaw: string;
@@ -82,6 +85,7 @@ function kitToLineStates(kit: BomOut, nextId: { current: number }): LineState[] 
       productName: line.pieceName,
       filamentMaterial,
       adjusted: false,
+      degraded: line.degraded,
       pieceNameRaw: line.pieceName ?? "",
     };
   });
@@ -253,6 +257,7 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
         productName: null,
         filamentMaterial: null,
         adjusted: false,
+        degraded: false,
         pieceNameRaw: "",
       },
     ]);
@@ -434,6 +439,9 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
                 onRemove={() => setLines((prev) => prev.filter((l) => l.id !== line.id))}
                 lineResult={lineResults[i]}
                 invalid={invalid}
+                // Caption only while the degraded line is still Manual — rebinding a saved product
+                // (productId set) resolves it live again and retires the caption (ux §1.2-D).
+                degraded={line.degraded && line.productId === ""}
               >
                 <BomLineEditor
                   key={`${line.id}:${line.productId}`}
