@@ -478,16 +478,9 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
             <Icon name="plus" size={16} aria-hidden /> {t.addLine}
           </Button>
 
-          {/* ux §1.7 / G4: the headline the seller came for stays reachable as a long kit scrolls
-              — a small sticky container over the bottom summary (mobile keeps the single scroll +
-              bottom bar). The cards inside are opaque, so pinned content never bleeds through. */}
-          <div className="sticky bottom-2 z-10">
-            <AssemblySummary
-              bom={bom}
-              uiSkipped={uiSkipped}
-              excludedLineCount={excludedLineCount}
-            />
-          </div>
+          {/* ux §1.7/G4: AssemblySummary pins only its COMPACT total as the bottom bar (the
+              channel rollup scrolls in normal flow) — so the sticky lives inside it, not here. */}
+          <AssemblySummary bom={bom} uiSkipped={uiSkipped} excludedLineCount={excludedLineCount} />
 
           {/* Save (§1.9). No optimistic fake: the toast and the catalog summary below appear only
               after a real 2xx from the server, which is also the entitlement boundary. */}
