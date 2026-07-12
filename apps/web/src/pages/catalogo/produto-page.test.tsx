@@ -208,11 +208,17 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
     expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
   });
 
-  it("a DEGRADED product shows the calm info alert + manual picker + editable last-known values", () => {
+  it("an UNLINKED product shows the calm state + manual picker + editable last-known values", () => {
+    // E3 amended this copy (homologation F1). It used to say the filament "foi removido" — true
+    // in E2, where every product was born with links. A kit save now materializes products with
+    // NO links (ADR-0017), and those two histories are indistinguishable in the data BY DESIGN:
+    // same state, same remedy. So the page states what it can know — nothing is linked, the
+    // values were kept — instead of inventing a removal that may never have happened.
     useProductsMock.mockReturnValue(listState([{ ...savedProduct, filamentId: null }]));
     renderPage("prod-1");
 
-    expect(screen.getByText(pf.degradedFilament)).toBeInTheDocument();
+    expect(screen.getByText(messages.catalogo.needsAttention)).toBeInTheDocument();
+    expect(screen.getByText(pf.manualValuesKept)).toBeInTheDocument();
     const picker = screen.getByRole("combobox", { name: t.catalogPicker.filament });
     expect(picker).toHaveValue("");
     expect(screen.getByDisplayValue("110,00")).toBeInTheDocument(); // last-known, editable

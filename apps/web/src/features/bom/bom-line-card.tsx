@@ -41,7 +41,12 @@ export function BomLineCard({
   invalid,
   children,
 }: BomLineCardProps) {
-  const label = `${t.lineLabel.replace("{n}", String(index))} · ${name ?? t.lineAdhoc}`;
+  // The K4 pre-fill names a materialized piece "Peça {n} · {kit}", which is exactly this prefix —
+  // so a reopened kit would read "Peça 1 · Peça 1 · Kit X". Don't repeat a prefix the name already
+  // carries (homologation nit).
+  const prefix = t.lineLabel.replace("{n}", String(index));
+  const label =
+    name && name.startsWith(`${prefix} · `) ? name : `${prefix} · ${name ?? t.lineAdhoc}`;
   const qtyZero = lineResult !== null && lineResult.quantity === 0;
   return (
     <Card padding="md" className="flex flex-col gap-2">

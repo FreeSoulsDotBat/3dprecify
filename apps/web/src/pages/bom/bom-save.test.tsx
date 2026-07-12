@@ -15,14 +15,21 @@ import { useSessionStore } from "@/shared/session/session-store";
 // referenced instead of created, the seller is told that the saved product's values won — never
 // left to discover it by reopening the kit and finding different numbers (ADR-0017 §3).
 
-const { useEntitlementMock, useProductsMock, useFeeCatalogMock, createBomMock, toastMock } =
-  vi.hoisted(() => ({
-    useEntitlementMock: vi.fn(),
-    useProductsMock: vi.fn(),
-    useFeeCatalogMock: vi.fn(),
-    createBomMock: vi.fn(),
-    toastMock: vi.fn(),
-  }));
+const {
+  useEntitlementMock,
+  useProductsMock,
+  useFeeCatalogMock,
+  createBomMock,
+  updateBomMock,
+  toastMock,
+} = vi.hoisted(() => ({
+  useEntitlementMock: vi.fn(),
+  useProductsMock: vi.fn(),
+  useFeeCatalogMock: vi.fn(),
+  createBomMock: vi.fn(),
+  updateBomMock: vi.fn(),
+  toastMock: vi.fn(),
+}));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
@@ -42,7 +49,7 @@ vi.mock("@/entities/bom/use-bom", () => ({
     refetch: vi.fn(),
   }),
   useCreateBom: () => ({ mutateAsync: createBomMock, isPending: false }),
-  useUpdateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateBom: () => ({ mutateAsync: updateBomMock, isPending: false }),
 }));
 vi.mock("@/shared/fee-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
@@ -141,6 +148,7 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   createBomMock.mockReset();
+  updateBomMock.mockReset();
   toastMock.mockReset();
 });
 
@@ -265,5 +273,35 @@ describe("kit save — what it did to the catalog is said out loud (K4)", () => 
       ).toBeInTheDocument(),
     );
     expect(screen.getByText(t.savedSuperseded)).toBeInTheDocument();
+  });
+});
+
+describe("kit save — saving twice edits the kit, it does not file a second one", () => {
+  it("adopts the created kit's id, so a second Salvar REPLACES it (homologation F2)", async () => {
+    createBomMock.mockResolvedValue({
+      id: "k1",
+      name: "Kit Suporte",
+      lines: [],
+      materializations: [],
+    });
+    updateBomMock.mockResolvedValue({
+      id: "k1",
+      name: "Kit Suporte",
+      lines: [],
+      materializations: [],
+    });
+    renderPremiumPage();
+    addLine();
+    typeKitName("Kit Suporte");
+
+    clickSave();
+    await waitFor(() => expect(createBomMock).toHaveBeenCalledTimes(1));
+
+    // Tap it again — the seller re-reads the panel and saves once more. Before the fix this filed
+    // a SECOND kit with the same name and re-materialized its pieces.
+    clickSave();
+    await waitFor(() => expect(updateBomMock).toHaveBeenCalledTimes(1));
+    expect(updateBomMock.mock.calls[0][0].id).toBe("k1");
+    expect(createBomMock).toHaveBeenCalledTimes(1); // still exactly ONE create
   });
 });

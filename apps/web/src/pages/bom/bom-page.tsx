@@ -156,6 +156,8 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   const duplicating = Boolean(search.copy) && Boolean(openedKit);
   const editing = duplicating ? undefined : openedKit;
   const hydratedId = useRef<string | null>(null);
+  /** The kit this composer just created, so a second Salvar edits it instead of filing a copy. */
+  const justSavedId = useRef<string | null>(null);
   useEffect(() => {
     if (!openedKit || hydratedId.current === openedKit.id) return;
     hydratedId.current = openedKit.id;
@@ -178,6 +180,19 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
       }),
     );
   }, [openedKit, duplicating]);
+
+  // Leaving a saved kit for a fresh composer (the Kits nav tab routes to a bare `/kits`, and the
+  // page stays MOUNTED across that search change) must not carry the previous kit's identity: the
+  // next Salvar would silently overwrite it instead of filing a new one.
+  useEffect(() => {
+    if (search.id) return;
+    justSavedId.current = null;
+    hydratedId.current = null;
+    setLines([]);
+    setKitName("");
+    setMaterializations(null);
+    setSaveError(null);
+  }, [search.id]);
 
   // One computeFromForm pass per line (the SAME parse the calculator uses — R7 seam), then the
   // canonical assembly over the exact PriceInputs. Invalid lines (bad field OR bad qty) pass a
@@ -286,12 +301,24 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
     if (!allLinesValid) return setSaveError(t.saveInvalid);
 
     const body = linesToBomIn(kitName, saveLines);
+    // A CREATE must not stay a create: tapping Salvar again after a successful save would file the
+    // same kit a second time (homologation F2). The id is adopted from the RESPONSE, so the next
+    // save replaces that kit — and it is held in a ref rather than waiting for the kit list to
+    // refetch, which would leave a window where a second tap still created a duplicate.
+    const targetId = editing?.id ?? justSavedId.current;
     try {
-      const saved = editing
-        ? await updateBom.mutateAsync({ id: editing.id, body })
+      const saved = targetId
+        ? await updateBom.mutateAsync({ id: targetId, body })
         : await createBom.mutateAsync(body);
       toast(t.saved, { tone: "success" }); // real 2xx only — never an optimistic fake
       setMaterializations(saved.materializations ?? []);
+      if (!targetId) {
+        justSavedId.current = saved.id;
+        // Reopening it also brings back the SERVER's version of the kit, which is what makes any
+        // superseded values (a referenced piece) visible immediately instead of on the next visit.
+        hydratedId.current = null;
+        void navigate({ to: "/kits", search: { id: saved.id } });
+      }
     } catch (err) {
       setSaveError(honestWriteError(err));
     }
@@ -423,7 +450,9 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
                 </div>
               )}
             </Field>
-            {saveError && <Alert tone="danger">{saveError}</Alert>}
+            {/* While lapsed, a refused save is the EXPECTED answer, not a failure — the rest of
+                the lapse surface is calm and this must not be the one red thing on it. */}
+            {saveError && <Alert tone={lapsed ? "info" : "danger"}>{saveError}</Alert>}
             <Button onClick={() => void save()} disabled={saving}>
               {saving ? t.saving : t.save}
             </Button>

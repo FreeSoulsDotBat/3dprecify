@@ -129,13 +129,15 @@ export function ProdutoPage({ productId }: { productId?: string }) {
     setValue(`channels.${index}.modality`, first);
   };
 
-  // Degraded reference state (US6-4): editing a product whose link was severed.
-  const degradedFilament = Boolean(editing) && initial?.filamentId === "" && filamentId === "";
-  const degradedPrinter = Boolean(editing) && initial?.printerId === "" && printerId === "";
+  // An UNLINKED reference (US6-4 + K3): the product carries values with no live row behind them.
+  // Two histories land here — a deletion severed the link, or a kit save materialized the product
+  // with no links at all (ADR-0017) — and the data cannot tell them apart, deliberately: the state
+  // and the remedy are identical. So the copy never claims a removal it cannot know happened.
+  const manualFilament = Boolean(editing) && initial?.filamentId === "" && filamentId === "";
+  const manualPrinter = Boolean(editing) && initial?.printerId === "" && printerId === "";
 
-  // K3 (E3): the SAME honest state for a product born manual (materialized by a kit save) and one
-  // degraded by a deletion — it needs a saved filament AND printer. It is derived from the live
-  // picker state, so it clears the instant the seller links both, before they even save (SC-412).
+  // Derived from the LIVE picker state, so it clears the instant the seller links both — before
+  // they even save (SC-412).
   const needsAttention = Boolean(editing) && (filamentId === "" || printerId === "");
 
   const handleSave = async () => {
@@ -205,11 +207,11 @@ export function ProdutoPage({ productId }: { productId?: string }) {
   }
 
   const filamentOptions = [
-    { value: "", label: degradedFilament ? pf.manualOption : t.catalogPicker.placeholder },
+    { value: "", label: manualFilament ? pf.manualOption : t.catalogPicker.placeholder },
     ...filaments.map((f) => ({ value: f.id, label: f.name })),
   ];
   const printerOptions = [
-    { value: "", label: degradedPrinter ? pf.manualOption : t.catalogPicker.placeholder },
+    { value: "", label: manualPrinter ? pf.manualOption : t.catalogPicker.placeholder },
     ...printers.map((p) => ({ value: p.id, label: p.name })),
   ];
 
@@ -217,9 +219,15 @@ export function ProdutoPage({ productId }: { productId?: string }) {
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={title} />
 
-      {/* K3: calm, actionable, and identical whether the product was born manual (a kit save
-          materialized it) or lost its links to a deletion — the remedy is the same. */}
-      {needsAttention && <Alert tone="info">{messages.catalogo.needsAttention}</Alert>}
+      {/* K3: ONE calm, actionable state — the product has no live filament/printer behind it,
+          whether a kit save materialized it that way or a deletion severed the links. It says
+          what is true (nothing linked, values kept) and never invents a removal it cannot know
+          happened. Clears live, the moment both pickers are set (SC-412). */}
+      {needsAttention && (
+        <Alert tone="info" title={messages.catalogo.needsAttention}>
+          {pf.manualValuesKept}
+        </Alert>
+      )}
 
       {/* Name + save — the page's header action (ux §1.6b). */}
       <Card padding="md" className="flex flex-col gap-3">
@@ -242,10 +250,6 @@ export function ProdutoPage({ productId }: { productId?: string }) {
         </Button>
         {submitError && <Alert tone="danger">{submitError}</Alert>}
       </Card>
-
-      {/* Degraded reference (US6-4): calm info, values stay editable below. */}
-      {degradedFilament && <Alert tone="info">{pf.degradedFilament}</Alert>}
-      {degradedPrinter && <Alert tone="info">{pf.degradedPrinter}</Alert>}
 
       {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
       <Card padding="md" className="flex flex-col gap-3">

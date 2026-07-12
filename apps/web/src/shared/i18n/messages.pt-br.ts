@@ -354,12 +354,14 @@ export const messages = {
     saveInvalid: "Confira os campos destacados antes de salvar.",
     // FR-310: a product references SAVED items at create — honest prerequisite, not a dead end.
     needRefs: "Para criar um produto, salve antes um filamento e uma impressora no catálogo.",
-    // Degraded reference (US6-4) — calm info, never an error wall; values stay editable.
+    // Unlinked reference — calm info, never an error wall; values stay editable. E2 said "o
+    // filamento vinculado foi REMOVIDO" here, which was true when every product was born with
+    // links. E3 breaks that premise: a kit save materializes products with NO links (K3/ADR-0017
+    // §4), and telling those sellers something was removed would be inventing an event that never
+    // happened. Data cannot tell the two apart — by design — so the copy states what IS true of
+    // both: nothing is linked, the values were kept, link them to follow the catalog again.
     manualOption: "— Manual —",
-    degradedFilament:
-      "O filamento vinculado foi removido. Mantivemos os últimos valores — edite se precisar.",
-    degradedPrinter:
-      "A impressora vinculada foi removida. Mantivemos os últimos valores — edite se precisar.",
+    manualValuesKept: "Os valores atuais foram mantidos e continuam editáveis.",
     // Referenced-item delete warn (shown inside the filament/printer delete confirm).
     deleteWarnFilament:
       "Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.",
