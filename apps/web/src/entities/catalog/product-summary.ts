@@ -14,3 +14,11 @@ export function productSummary(
   const prn = product.printerId ? (printerName ?? manual) : manual;
   return `${fil} · ${prn}`;
 }
+
+/** K3 (ADR-0017 §4) — the attention state, DERIVED from the missing references and never stored.
+ *  A product born manual (materialized by a kit save) and one degraded by a deletion are the same
+ *  honest state, because the remedy is identical: link a saved filament AND printer. It clears the
+ *  moment both are linked (SC-412). Deriving it is what keeps the two paths from drifting apart. */
+export function productNeedsAttention(product: ProductOut): boolean {
+  return product.filamentId === null || product.printerId === null;
+}

@@ -21,8 +21,20 @@ const { useEntitlementMock, useProductsMock, useFeeCatalogMock } = vi.hoisted(()
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => vi.fn() };
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
 });
+vi.mock("@/entities/bom/use-bom", () => ({
+  useBoms: () => ({
+    items: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    stale: false,
+    refetch: vi.fn(),
+  }),
+  useCreateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 vi.mock("@/entities/user/use-entitlement", () => ({
   useEntitlement: () => useEntitlementMock(),
 }));

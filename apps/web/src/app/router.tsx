@@ -114,6 +114,14 @@ const produtoEditRoute = createRoute({
 const bomRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/kits",
+  // `?id=<kitId>` reopens a SAVED kit in the composer (E3/PR-B): it reloads the kit's inputs and
+  // recomputes the price — no price was ever stored (FR-407). `&copy=1` loads the same inputs as a
+  // NEW, unsaved kit (US4 duplicate) — the seller reviews and saves it themselves; nothing is
+  // written behind their back.
+  validateSearch: (search: Record<string, unknown>): { id?: string; copy?: boolean } => ({
+    id: typeof search.id === "string" && search.id ? search.id : undefined,
+    copy: search.copy === true || search.copy === "1" ? true : undefined,
+  }),
   component: BomPage,
 });
 

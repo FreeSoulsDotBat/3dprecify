@@ -19,8 +19,20 @@ const { useEntitlementMock, useProductsMock, navigateMock } = vi.hoisted(() => (
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => navigateMock };
+  return { ...actual, useNavigate: () => navigateMock, useSearch: () => ({}) };
 });
+vi.mock("@/entities/bom/use-bom", () => ({
+  useBoms: () => ({
+    items: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    stale: false,
+    refetch: vi.fn(),
+  }),
+  useCreateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useUpdateBom: () => ({ mutateAsync: vi.fn(), isPending: false }),
+}));
 vi.mock("@/entities/user/use-entitlement", () => ({
   useEntitlement: () => useEntitlementMock(),
 }));
@@ -88,10 +100,15 @@ describe("BOM teaser — free account (US5, SC-408)", () => {
     expect(navigateMock).toHaveBeenCalledWith({ to: "/calcular" });
   });
 
-  it("a LAPSED account (PR-A: no saved BOMs exist yet) also meets the teaser, calmly", () => {
+  it("a LAPSED account is NOT teased — its saved kits stay reachable (FR-409, the Q3 freeze)", () => {
+    // PR-A parked this: nothing was saveable then, so lapsed fell through to the teaser. Now that
+    // kits persist they are the seller's own data — a lapse freezes WRITES, it does not repossess
+    // the work. So a lapsed account reaches the composer, can reopen and recompute, and is told
+    // plainly that only saving needs an active Premium (the save call itself denies server-side).
     renderAt("authenticated", "lapsed");
-    expect(screen.getByText(t.teaserTitle)).toBeInTheDocument();
-    expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
+    expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
   });
 });
 

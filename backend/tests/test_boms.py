@@ -597,3 +597,133 @@ def test_per_account_isolation(
     # A still owns its kit, untouched.
     patch_verify(monkeypatch, "bom-iso-a")
     assert db_client.get(f"/api/v1/boms/{bom_id}", headers=h_a).status_code == 200
+
+
+# --- US4: manage + the honest lapse policy (FR-409 / SC-407) ---------------------------------
+
+
+def _revoke(db_url: str, uid: str) -> None:
+    engine = sa.create_engine(db_url)
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text(
+                "UPDATE entitlement_grants SET revoked_at = now(), revoked_by = 'op'"
+                " WHERE account_uid = :uid"
+            ),
+            {"uid": uid},
+        )
+    engine.dispose()
+
+
+def test_update_replaces_the_kit_and_renames_it(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """US4 edit: PUT is REPLACE — the submitted lines ARE the kit, positions re-derived."""
+    h = _premium(monkeypatch, migrated_db, "bom-edit-1")
+    created = _post(
+        db_client,
+        h,
+        _bom_body([_ad_hoc_line(piece_name="A"), _ad_hoc_line(piece_name="B", quantity=5)]),
+    ).json()
+    bom_id = created["id"]
+
+    updated = db_client.put(
+        f"/api/v1/boms/{bom_id}",
+        headers=h,
+        json=_bom_body([_ad_hoc_line(piece_name="B", quantity=9)], name="Kit Renomeado"),
+    )
+    assert updated.status_code == 200
+    body = updated.json()
+    assert body["name"] == "Kit Renomeado"
+    assert [line["position"] for line in body["lines"]] == [0]
+    assert body["lines"][0]["quantity"] == 9
+    # "B" already exists (this save created it) — the edit REFERENCES it, never a duplicate.
+    assert body["materializations"] == [
+        {"position": 0, "productId": body["lines"][0]["productId"], "action": "referenced"}
+    ]
+    assert sorted(p["name"] for p in db_client.get("/api/v1/products", headers=h).json()) == [
+        "A",
+        "B",
+    ]
+
+
+def test_duplicate_is_a_plain_create_from_an_existing_kit(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """US4 duplicate: no endpoint of its own — reopening a kit and saving it under a new name
+    references the SAME products (the dedup rule), so a copy never forks the catalog."""
+    h = _premium(monkeypatch, migrated_db, "bom-dup-1")
+    original = _post(db_client, h, _bom_body([_ad_hoc_line(piece_name="Perna")])).json()
+    original_product = original["lines"][0]["productId"]
+
+    copy = _post(
+        db_client,
+        h,
+        _bom_body([_ref_line(original_product)], name="Kit Suporte (cópia)"),
+    )
+    assert copy.status_code == 201
+    assert copy.json()["id"] != original["id"]
+    assert copy.json()["lines"][0]["productId"] == original_product
+    assert len(db_client.get("/api/v1/boms", headers=h).json()) == 2
+    assert [p["name"] for p in db_client.get("/api/v1/products", headers=h).json()] == ["Perna"]
+
+
+def test_lapsed_reads_everything_but_writes_nothing_and_deletes_nothing(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """SC-407 / FR-409 — the Q3 freeze: a lapsed premium keeps READING its kits (they are the
+    seller's data, not a rented view), every WRITE denies honestly, and NOTHING is deleted. A
+    lapse that quietly dropped rows would be the single most destructive thing this app could do.
+    """
+    uid = "bom-lapse-1"
+    h = _premium(monkeypatch, migrated_db, uid)
+    bom_id = _post(db_client, h, _bom_body([_ad_hoc_line(piece_name="Peça viva")])).json()["id"]
+
+    _revoke(migrated_db, uid)
+
+    # Reads keep working…
+    listed = db_client.get("/api/v1/boms", headers=h)
+    assert listed.status_code == 200
+    assert [b["id"] for b in listed.json()] == [bom_id]
+    assert db_client.get(f"/api/v1/boms/{bom_id}", headers=h).status_code == 200
+
+    # …writes deny honestly.
+    for resp in (
+        _post(db_client, h, _bom_body([_ad_hoc_line(piece_name="Nova")])),
+        db_client.put(
+            f"/api/v1/boms/{bom_id}", headers=h, json=_bom_body([_ad_hoc_line(piece_name="X")])
+        ),
+        db_client.delete(f"/api/v1/boms/{bom_id}", headers=h),
+    ):
+        assert resp.status_code == 403
+        assert resp.json()["error"]["code"] == "ENTITLEMENT_REQUIRED"
+
+    # ZERO rows deleted, and the denied writes materialized nothing.
+    assert _count(migrated_db, "boms", uid) == 1
+    assert _count(migrated_db, "products", uid) == 1
+    assert len(db_client.get("/api/v1/boms", headers=h).json()) == 1
+
+
+def test_a_re_grant_restores_writes_with_the_data_intact(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """The other half of the freeze: coming back finds everything exactly where it was."""
+    uid = "bom-regrant-1"
+    h = _premium(monkeypatch, migrated_db, uid)
+    bom_id = _post(db_client, h, _bom_body([_ad_hoc_line(piece_name="Peça viva")])).json()["id"]
+
+    _revoke(migrated_db, uid)
+    assert db_client.delete(f"/api/v1/boms/{bom_id}", headers=h).status_code == 403
+
+    seed_grant(migrated_db, uid)  # a NEW grant row (the ledger is append-only — ADR-0012)
+
+    reopened = db_client.get(f"/api/v1/boms/{bom_id}", headers=h)
+    assert reopened.status_code == 200
+    assert reopened.json()["lines"][0]["quantity"] == 2
+    renamed = db_client.put(
+        f"/api/v1/boms/{bom_id}",
+        headers=h,
+        json=_bom_body([_ad_hoc_line(piece_name="Peça viva")], name="De volta"),
+    )
+    assert renamed.status_code == 200
+    assert renamed.json()["name"] == "De volta"

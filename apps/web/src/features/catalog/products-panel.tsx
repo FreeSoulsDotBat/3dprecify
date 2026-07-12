@@ -9,7 +9,7 @@ import {
 import type { ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { productSummary } from "@/entities/catalog/product-summary";
+import { productNeedsAttention, productSummary } from "@/entities/catalog/product-summary";
 
 import { CatalogPanel } from "./catalog-panel";
 
@@ -50,6 +50,9 @@ export function ProductsPanel() {
       rowSummary={(p) =>
         productSummary(p, nameOf(p.filamentId, "filament"), nameOf(p.printerId, "printer"))
       }
+      // K3: one honest state for a product born manual (materialized by a kit save) and one
+      // degraded by a deletion — same missing links, same remedy, so the same calm line.
+      rowNote={(p) => (productNeedsAttention(p) ? catalogo.needsAttention : undefined)}
       onCreateNavigate={() => void navigate({ to: "/catalogo/produtos/novo" })}
       onEditNavigate={(p) =>
         void navigate({ to: "/catalogo/produtos/$productId", params: { productId: p.id } })

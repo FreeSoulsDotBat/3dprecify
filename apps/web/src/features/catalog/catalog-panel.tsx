@@ -77,6 +77,11 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   onCreateNavigate?: () => void;
   onEditNavigate?: (item: TItem) => void;
   remove: (id: string) => Promise<unknown>;
+  /** A calm per-row note (E3/K3): the honest "needs attention" line on a product whose saved
+   *  filament/printer references are missing. Absent → the row renders exactly as before. */
+  rowNote?: (item: TItem) => string | undefined;
+  /** Optional per-row duplicate action (E3/US4 — kits). Absent → no duplicate affordance. */
+  onDuplicate?: (item: TItem) => void;
   /** A create/update is in flight (drives the form's save spinner). */
   saving?: boolean;
   /** A delete is in flight (drives the confirm-dialog spinner). */
@@ -92,6 +97,8 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   copy,
   rowName: nameOf,
   rowSummary: summaryOf,
+  rowNote: noteOf,
+  onDuplicate,
   emptyForm,
   toFormValues,
   renderForm,
@@ -199,6 +206,11 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                 >
                   <span style={rowName}>{nameOf(item)}</span>
                   <span style={rowSummary}>{summaryOf(item)}</span>
+                  {noteOf?.(item) && (
+                    <span style={rowSummary} data-testid="row-note">
+                      {noteOf(item)}
+                    </span>
+                  )}
                   {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
                 </button>
                 <Button
@@ -209,6 +221,16 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                 >
                   <Icon name="pencil" size={18} aria-hidden />
                 </Button>
+                {onDuplicate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    aria-label={`${catalogo.duplicate} ${nameOf(item)}`}
+                    onClick={() => onDuplicate(item)}
+                  >
+                    <Icon name="copy" size={18} aria-hidden />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"

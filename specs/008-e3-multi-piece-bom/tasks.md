@@ -148,10 +148,10 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       on the kit list. Failing-first component test (save round-trip + materialization messaging) then green.
 - [ ] T015b [US2] Visual test: qa-produto homologates save → reload round-trip (recomputes via `computeBom`,
       no stored price).
-- [ ] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
+- [X] T015c [US6/K2] Catalog **Kits tab**: failing-first component test (4th tab lists saved kits,
       per-account, empty state) → implement in `features/catalog` reading the `entities/bom` cache/hooks.
       Tests green.
-- [ ] T015d [US6/K3] Manual-product **attention indicator** (unified with the degraded state): failing-first
+- [X] T015d [US6/K3] Manual-product **attention indicator** (unified with the degraded state): failing-first
       tests (Produtos list + product page show the calm indicator when `filamentId`/`printerId` is null;
       linking both clears it, SC-412) → implement. Tests green.
 
@@ -160,10 +160,10 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
 **Goal**: list/rename/edit/duplicate/delete, per-account; lapse = read-only freeze, nothing deleted.
 **Independent Test**: quickstart §6.
 
-- [ ] T016 [US4] Write FAILING pytest first — manage (list/edit/delete/duplicate) per-account isolated; **lapse**
+- [X] T016 [US4] Write FAILING pytest first — manage (list/edit/delete/duplicate) per-account isolated; **lapse**
       (revoked/expired: reads `200`, writes `403`, **zero rows deleted**, SC-407); re-grant → writable, data
       intact. Observe failing.
-- [ ] T017 [US4] Implement manage behaviors (edit/delete/duplicate; voluntary soft-delete only) + web manage
+- [X] T017 [US4] Implement manage behaviors (edit/delete/duplicate; voluntary soft-delete only) + web manage
       UI (list/rename/delete, lapse read-only state). Tests green.
 - [ ] T017b [US4] Visual test: qa-produto homologates the manage screen + the lapse read-only state.
 

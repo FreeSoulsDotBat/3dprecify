@@ -133,6 +133,11 @@ export function ProdutoPage({ productId }: { productId?: string }) {
   const degradedFilament = Boolean(editing) && initial?.filamentId === "" && filamentId === "";
   const degradedPrinter = Boolean(editing) && initial?.printerId === "" && printerId === "";
 
+  // K3 (E3): the SAME honest state for a product born manual (materialized by a kit save) and one
+  // degraded by a deletion — it needs a saved filament AND printer. It is derived from the live
+  // picker state, so it clears the instant the seller links both, before they even save (SC-412).
+  const needsAttention = Boolean(editing) && (filamentId === "" || printerId === "");
+
   const handleSave = async () => {
     setSubmitError(undefined);
     const blankName = name.trim() === "";
@@ -211,6 +216,10 @@ export function ProdutoPage({ productId }: { productId?: string }) {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={title} />
+
+      {/* K3: calm, actionable, and identical whether the product was born manual (a kit save
+          materialized it) or lost its links to a deletion — the remedy is the same. */}
+      {needsAttention && <Alert tone="info">{messages.catalogo.needsAttention}</Alert>}
 
       {/* Name + save — the page's header action (ux §1.6b). */}
       <Card padding="md" className="flex flex-col gap-3">

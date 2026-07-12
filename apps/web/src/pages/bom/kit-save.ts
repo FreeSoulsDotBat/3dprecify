@@ -1,6 +1,6 @@
-import { formToProductIn } from "@/features/calculator/product-mapping";
 import type { CalcFormValues } from "@/features/calculator/calculator-schema";
-import type { BomIn, BomLineIn } from "@/shared/api/generated";
+import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
+import type { BomIn, BomLineIn, BomLineOut, ProductOut } from "@/shared/api/generated";
 
 // 008/T015 — the composer→wire adapter. It lives at the PAGE layer on purpose: the mapping needs
 // `formToProductIn` from `features/calculator`, and FSD-Lite forbids a feature importing another
@@ -73,4 +73,34 @@ export function linesToBomIn(
   lines: KitSaveLine[],
 ): BomIn & { lines: BomLineIn[] } {
   return { name: kitName.trim(), lines: lines.map(toLineIn) };
+}
+
+/** Reopen: a saved line → the composer's form state. The server already applied the D3 rule (a
+ *  live line resolves from its product; a degraded one from its last-known snapshot), so the
+ *  values arrive RESOLVED and land in the ordinary editable fields — exactly how a reopened
+ *  product behaves. The price is not among them: it is recomputed here (FR-407/ADR-0016).
+ *
+ *  `productToForm` is reused verbatim by handing it the line's value-set, which is the ProductOut
+ *  value surface. The synthesized refs are null on purpose: the line's values are the resolved
+ *  ones, so the form must treat them as its own editable state, not as a link to re-resolve. */
+export function lineToForm(line: BomLineOut): {
+  values: CalcFormValues;
+  filamentMaterial: string | null;
+} {
+  const bundle = productToForm({
+    id: line.productId ?? "",
+    name: line.pieceName ?? "",
+    filamentId: null,
+    printerId: null,
+    filamentValues: line.filamentValues,
+    printerValues: line.printerValues,
+    pieceInputs: line.pieceInputs,
+    tariffPerKwh: line.tariffPerKwh,
+    includeMarketplace: line.includeMarketplace,
+    channels: line.channels,
+    otherCosts: line.otherCosts,
+    createdAt: "",
+    updatedAt: "",
+  } as ProductOut);
+  return { values: bundle.values, filamentMaterial: bundle.filamentMaterial };
 }

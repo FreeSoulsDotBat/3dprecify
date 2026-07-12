@@ -260,6 +260,7 @@ export const messages = {
     tabFilaments: "Filamentos",
     tabPrinters: "Impressoras",
     tabProducts: "Produtos",
+    tabKits: "Kits",
     // Empty (premium, per entity)
     emptyFilamentsTitle: "Nenhum filamento salvo ainda",
     emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
@@ -267,13 +268,23 @@ export const messages = {
     emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
     emptyProductsTitle: "Nenhum produto salvo ainda",
     emptyProductsBody: "Salve uma peça com seus custos e reabra com o preço sempre recalculado.",
+    emptyKitsTitle: "Nenhum kit salvo ainda",
+    emptyKitsBody: "Monte um kit com várias peças e reabra com o preço sempre recalculado.",
     addFilament: "Adicionar filamento",
     addPrinter: "Adicionar impressora",
     addProduct: "Adicionar produto",
+    addKit: "Montar kit",
+    editKit: "Editar kit",
+    duplicate: "Duplicar",
     // List / row actions
     countFilaments: "{n} filamento(s)",
     countPrinters: "{n} impressora(s)",
     countProducts: "{n} produto(s)",
+    countKits: "{n} kit(s)",
+    countKitPieces: "{n} peça(s)",
+    // K3 — the manual/degraded product state. ONE honest state for "born manual" (materialized
+    // from a kit) and "degraded by deletion": same remedy, so the same words (SC-412).
+    needsAttention: "Vincule um filamento e uma impressora salvos",
     // Product row summary shows the reference names; a removed reference reads as manual (US6-4).
     manualRef: "manual",
     edit: "Editar",
@@ -422,6 +433,7 @@ export const messages = {
     saveInvalid: "Confira as peças com aviso antes de salvar.",
     saveEmpty: "Adicione ao menos uma peça para salvar.",
     viewKits: "Ver meus kits",
+    copySuffix: "(cópia)",
     // Materialization feedback (K4) — created vs referenced, said out loud, never silently
     savedTitle: "O que este kit fez no seu catálogo",
     savedCreated: "{nome} — criado no catálogo",
@@ -430,6 +442,10 @@ export const messages = {
       "As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.",
     // Bound line edited after binding → it becomes an avulsa piece and enters the catalog (ADR-0017)
     adjustedBecomesPiece: "Você ajustou esta peça — ela será salva como uma peça nova no catálogo.",
+    // Lapse (FR-409 / Q3 freeze): the kits are the seller's data, not a rented view. Nothing was
+    // deleted; reopening and recalculating keep working; only saving needs an active Premium.
+    lapsedBanner:
+      "Seu Premium não está ativo. Seus kits continuam aqui para reabrir e recalcular — salvar precisa do Premium.",
   },
   historico: {
     emptyTitle: "Histórico em breve",
