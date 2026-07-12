@@ -125,18 +125,18 @@ breakdown + per-channel rollup, free-standing (no save). **Independent Test**: q
       exact, live rows only; soft-deleted never matches) → `action: "referenced"`, values superseded; denied
       save (free) materializes nothing (SC-411); public `POST /products` still requires refs (FR-310
       untouched). Observe failing.
-- [ ] T011 [US2] Alembic **migration `0002`** (`down_revision = "0001"` — never amend `0001`) + SQLAlchemy 2.0
+- [X] T011 [US2] Alembic **migration `0002`** (`down_revision = "0001"` — never amend `0001`) + SQLAlchemy 2.0
       models `Bom`/`BomLine` per `data-model.md` (typed link-or-snapshot columns, value CHECKs, `boms`/`bom_
       lines` indices, FK `bom_id` ON DELETE CASCADE, FK `product_id` ON DELETE SET NULL). `uv run alembic
       upgrade head` green against the compose DB.
-- [ ] T012 [US2][US6] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
+- [X] T012 [US2][US6] Implement CRUD router `backend/app/api/boms.py` behind `require_entitlement` (writes) /
       `require_catalog_read` (reads) per `contracts/api-surface.md`; pydantic wire schemas (camelCase, money-
       as-string; **reuse** `PieceInputs`/`ChannelSlot`/`OtherCost` from `products.py`; `BomLineIn.pieceName` +
       ProductIn value-set); **`_materialize` step INSIDE the same transaction** (ADR-0017: dedup → insert
       manual products → kit + lines, one commit; `BomOut.materializations[]` on writes; FR-310 relaxation
       lives ONLY here); `_apply` re-snapshot + `_to_out` live/last-known resolution + `_unresolvable` `422`
       (no oracle). Extend `[tool.importlinter]` layering (`app.api → app.entitlement → app.db`). Tests green.
-- [ ] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
+- [X] T013 [US2] Contract ripple (same commit): regen `contracts/openapi.json` + Orval client (RAW output —
       `.prettierignore` exempt); drift-guard `git diff --exit-code` green. No new `ErrorCode`
       (`ENTITLEMENT_REQUIRED` + `VALIDATION_ERROR` already exist).
 - [ ] T014 [US2] Web `apps/web/src/entities/bom/`: uid-keyed offline read cache + `useBoms`/`useCreateBom`/
