@@ -1791,6 +1791,425 @@
           }
         }
       }
+    },
+    "/api/v1/history": {
+      "post": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Record Snapshot",
+        "description": "Record a snapshot — the ONLY writer of frozen fields, and idempotent by construction.\n\n`ON CONFLICT DO NOTHING` + read-back is what makes a retry an idempotent SUCCESS rather than a\nduplicate or an error: the outbox may replay the same `clientSnapshotId` any number of times\n(lost response, reconnect, app restart, two tabs) and always gets back the row the server\nalready created. Because the unique key is UNCONDITIONAL — tombstones included — a replay that\narrives AFTER the seller deleted the entry cannot RESURRECT it: the insert no-ops, and the\nread-back finds only the soft-deleted row, which is not served.",
+        "operationId": "record_snapshot_api_v1_history_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "List History",
+        "description": "Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).",
+        "operationId": "list_history_api_v1_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/{snapshot_id}": {
+      "get": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Get Snapshot",
+        "description": "Serves the STORED document. No recomputation, ever — that is the whole promise.",
+        "operationId": "get_snapshot_api_v1_history__snapshot_id__get",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Relabel Snapshot",
+        "description": "The label, and ONLY the label. Anything else was already rejected as a 422 by the model.",
+        "operationId": "relabel_snapshot_api_v1_history__snapshot_id__patch",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotLabelIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "history"
+        ],
+        "summary": "Delete Snapshot",
+        "description": "Voluntary soft-delete. The tombstone is ALSO the idempotency guard: it lives inside the\nunique key, so a queued retry cannot bring the entry back (SC-513).",
+        "operationId": "delete_snapshot_api_v1_history__snapshot_id__delete",
+        "parameters": [
+          {
+            "name": "snapshot_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Snapshot Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No such resource under this account",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3467,6 +3886,229 @@
           "updatedAt"
         ],
         "title": "ProductOut"
+      },
+      "SnapshotIn": {
+        "properties": {
+          "clientSnapshotId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Clientsnapshotid"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "SINGLE",
+              "KIT"
+            ],
+            "title": "Kind"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "quoteValidityDays": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quotevaliditydays"
+          },
+          "deviceQuotedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Devicequotedat"
+          },
+          "deviceUtcOffsetMinutes": {
+            "type": "integer",
+            "title": "Deviceutcoffsetminutes"
+          },
+          "modelVersion": {
+            "type": "string",
+            "title": "Modelversion"
+          },
+          "headlineTotal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Headlinetotal"
+          },
+          "headlineBasis": {
+            "type": "string",
+            "enum": [
+              "PRECO_VAREJO",
+              "PRECO_ATACADO"
+            ],
+            "title": "Headlinebasis"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clientSnapshotId",
+          "kind",
+          "deviceQuotedAt",
+          "deviceUtcOffsetMinutes",
+          "modelVersion",
+          "headlineTotal",
+          "headlineBasis",
+          "payload"
+        ],
+        "title": "SnapshotIn",
+        "description": "A recorded claim. Self-contained and frozen on the device at record time — the outbox stores\nexactly this body and replays it byte-for-byte."
+      },
+      "SnapshotLabelIn": {
+        "properties": {
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SnapshotLabelIn",
+        "description": "The ONLY mutable surface of a snapshot. `extra=\"forbid\"` is load-bearing: it is what turns a\nsmuggled frozen field into a 422 instead of a silent no-op (ADR-0019 §1)."
+      },
+      "SnapshotOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "clientSnapshotId": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Clientsnapshotid"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "quoteValidityDays": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quotevaliditydays"
+          },
+          "deviceQuotedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Devicequotedat"
+          },
+          "deviceUtcOffsetMinutes": {
+            "type": "integer",
+            "title": "Deviceutcoffsetminutes"
+          },
+          "modelVersion": {
+            "type": "string",
+            "title": "Modelversion"
+          },
+          "payloadSchemaVersion": {
+            "type": "integer",
+            "title": "Payloadschemaversion"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload"
+          },
+          "headlineTotal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Headlinetotal"
+          },
+          "headlineBasis": {
+            "type": "string",
+            "title": "Headlinebasis"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "clientSnapshotId",
+          "kind",
+          "label",
+          "quoteValidityDays",
+          "deviceQuotedAt",
+          "deviceUtcOffsetMinutes",
+          "modelVersion",
+          "payloadSchemaVersion",
+          "payload",
+          "headlineTotal",
+          "headlineBasis"
+        ],
+        "title": "SnapshotOut"
+      },
+      "SnapshotPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SnapshotOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nextcursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items"
+        ],
+        "title": "SnapshotPage"
       },
       "VoucherBand": {
         "properties": {

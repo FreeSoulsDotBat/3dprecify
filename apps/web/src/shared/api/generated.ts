@@ -430,7 +430,81 @@ export interface ProductOut {
   updatedAt: string;
 }
 
+export type SnapshotInKind = typeof SnapshotInKind[keyof typeof SnapshotInKind];
+
+
+export const SnapshotInKind = {
+  SINGLE: 'SINGLE',
+  KIT: 'KIT',
+} as const;
+
+export type SnapshotInHeadlineBasis = typeof SnapshotInHeadlineBasis[keyof typeof SnapshotInHeadlineBasis];
+
+
+export const SnapshotInHeadlineBasis = {
+  PRECO_VAREJO: 'PRECO_VAREJO',
+  PRECO_ATACADO: 'PRECO_ATACADO',
+} as const;
+
+export type SnapshotInPayload = { [key: string]: unknown };
+
+/**
+ * A recorded claim. Self-contained and frozen on the device at record time — the outbox stores
+ * exactly this body and replays it byte-for-byte.
+ */
+export interface SnapshotIn {
+  clientSnapshotId: string;
+  kind: SnapshotInKind;
+  label?: string | null;
+  quoteValidityDays?: number | null;
+  deviceQuotedAt: string;
+  deviceUtcOffsetMinutes: number;
+  modelVersion: string;
+  headlineTotal: number | string;
+  headlineBasis: SnapshotInHeadlineBasis;
+  payload: SnapshotInPayload;
+}
+
+/**
+ * The ONLY mutable surface of a snapshot. `extra="forbid"` is load-bearing: it is what turns a
+ * smuggled frozen field into a 422 instead of a silent no-op (ADR-0019 §1).
+ */
+export interface SnapshotLabelIn {
+  label?: string | null;
+}
+
+export type SnapshotOutPayload = { [key: string]: unknown };
+
+export interface SnapshotOut {
+  id: string;
+  clientSnapshotId: string;
+  kind: string;
+  label: string | null;
+  quoteValidityDays: number | null;
+  deviceQuotedAt: string;
+  deviceUtcOffsetMinutes: number;
+  modelVersion: string;
+  payloadSchemaVersion: number;
+  payload: SnapshotOutPayload;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  headlineTotal: string;
+  headlineBasis: string;
+}
+
+export interface SnapshotPage {
+  items: SnapshotOut[];
+  nextCursor?: string | null;
+}
+
 export type HealthHealthGet200 = {[key: string]: string};
+
+export type ListHistoryApiV1HistoryGetParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
@@ -3213,4 +3287,595 @@ export const useDeleteBomApiV1BomsBomIdDelete = <TError = ErrorEnvelope,
         TContext
       > => {
       return useMutation(getDeleteBomApiV1BomsBomIdDeleteMutationOptions(options), queryClient);
+    }
+
+export type recordSnapshotApiV1HistoryPostResponse201 = {
+  data: SnapshotOut
+  status: 201
+}
+
+export type recordSnapshotApiV1HistoryPostResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type recordSnapshotApiV1HistoryPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type recordSnapshotApiV1HistoryPostResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type recordSnapshotApiV1HistoryPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type recordSnapshotApiV1HistoryPostResponseSuccess = (recordSnapshotApiV1HistoryPostResponse201) & {
+  headers: Headers;
+};
+export type recordSnapshotApiV1HistoryPostResponseError = (recordSnapshotApiV1HistoryPostResponse400 | recordSnapshotApiV1HistoryPostResponse401 | recordSnapshotApiV1HistoryPostResponse403 | recordSnapshotApiV1HistoryPostResponse422) & {
+  headers: Headers;
+};
+
+export type recordSnapshotApiV1HistoryPostResponse = (recordSnapshotApiV1HistoryPostResponseSuccess | recordSnapshotApiV1HistoryPostResponseError)
+
+export const getRecordSnapshotApiV1HistoryPostUrl = () => {
+
+
+
+
+  return `/api/v1/history`
+}
+
+/**
+ * Record a snapshot — the ONLY writer of frozen fields, and idempotent by construction.
+ *
+ * `ON CONFLICT DO NOTHING` + read-back is what makes a retry an idempotent SUCCESS rather than a
+ * duplicate or an error: the outbox may replay the same `clientSnapshotId` any number of times
+ * (lost response, reconnect, app restart, two tabs) and always gets back the row the server
+ * already created. Because the unique key is UNCONDITIONAL — tombstones included — a replay that
+ * arrives AFTER the seller deleted the entry cannot RESURRECT it: the insert no-ops, and the
+ * read-back finds only the soft-deleted row, which is not served.
+ * @summary Record Snapshot
+ */
+export const recordSnapshotApiV1HistoryPost = async (snapshotIn: SnapshotIn, options?: RequestInit): Promise<recordSnapshotApiV1HistoryPostResponse> => {
+
+  return orvalFetch<recordSnapshotApiV1HistoryPostResponse>(getRecordSnapshotApiV1HistoryPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(snapshotIn)
+  }
+);}
+
+
+
+
+
+export const getRecordSnapshotApiV1HistoryPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>, TError,{data: SnapshotIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>, TError,{data: SnapshotIn}, TContext> => {
+
+const mutationKey = ['recordSnapshotApiV1HistoryPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>, {data: SnapshotIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  recordSnapshotApiV1HistoryPost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecordSnapshotApiV1HistoryPostMutationResult = NonNullable<Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>>
+    export type RecordSnapshotApiV1HistoryPostMutationBody = SnapshotIn
+    export type RecordSnapshotApiV1HistoryPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Record Snapshot
+ */
+export const useRecordSnapshotApiV1HistoryPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>, TError,{data: SnapshotIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof recordSnapshotApiV1HistoryPost>>,
+        TError,
+        {data: SnapshotIn},
+        TContext
+      > => {
+      return useMutation(getRecordSnapshotApiV1HistoryPostMutationOptions(options), queryClient);
+    }
+
+export type listHistoryApiV1HistoryGetResponse200 = {
+  data: SnapshotPage
+  status: 200
+}
+
+export type listHistoryApiV1HistoryGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listHistoryApiV1HistoryGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listHistoryApiV1HistoryGetResponseSuccess = (listHistoryApiV1HistoryGetResponse200) & {
+  headers: Headers;
+};
+export type listHistoryApiV1HistoryGetResponseError = (listHistoryApiV1HistoryGetResponse401 | listHistoryApiV1HistoryGetResponse403) & {
+  headers: Headers;
+};
+
+export type listHistoryApiV1HistoryGetResponse = (listHistoryApiV1HistoryGetResponseSuccess | listHistoryApiV1HistoryGetResponseError)
+
+export const getListHistoryApiV1HistoryGetUrl = (params?: ListHistoryApiV1HistoryGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/history?${stringifiedParams}` : `/api/v1/history`
+}
+
+/**
+ * Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
+ * @summary List History
+ */
+export const listHistoryApiV1HistoryGet = async (params?: ListHistoryApiV1HistoryGetParams, options?: RequestInit): Promise<listHistoryApiV1HistoryGetResponse> => {
+
+  return orvalFetch<listHistoryApiV1HistoryGetResponse>(getListHistoryApiV1HistoryGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListHistoryApiV1HistoryGetQueryKey = (params?: ListHistoryApiV1HistoryGetParams,) => {
+    return [
+    `/api/v1/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListHistoryApiV1HistoryGetQueryOptions = <TData = Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError = ErrorEnvelope>(params?: ListHistoryApiV1HistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListHistoryApiV1HistoryGetQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>> = ({ signal }) => listHistoryApiV1HistoryGet(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListHistoryApiV1HistoryGetQueryResult = NonNullable<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>>
+export type ListHistoryApiV1HistoryGetQueryError = ErrorEnvelope
+
+
+export function useListHistoryApiV1HistoryGet<TData = Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError = ErrorEnvelope>(
+ params: undefined |  ListHistoryApiV1HistoryGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>,
+          TError,
+          Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListHistoryApiV1HistoryGet<TData = Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError = ErrorEnvelope>(
+ params?: ListHistoryApiV1HistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>,
+          TError,
+          Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListHistoryApiV1HistoryGet<TData = Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError = ErrorEnvelope>(
+ params?: ListHistoryApiV1HistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List History
+ */
+
+export function useListHistoryApiV1HistoryGet<TData = Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError = ErrorEnvelope>(
+ params?: ListHistoryApiV1HistoryGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listHistoryApiV1HistoryGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListHistoryApiV1HistoryGetQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponse200 = {
+  data: SnapshotOut
+  status: 200
+}
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponseSuccess = (getSnapshotApiV1HistorySnapshotIdGetResponse200) & {
+  headers: Headers;
+};
+export type getSnapshotApiV1HistorySnapshotIdGetResponseError = (getSnapshotApiV1HistorySnapshotIdGetResponse401 | getSnapshotApiV1HistorySnapshotIdGetResponse403 | getSnapshotApiV1HistorySnapshotIdGetResponse404) & {
+  headers: Headers;
+};
+
+export type getSnapshotApiV1HistorySnapshotIdGetResponse = (getSnapshotApiV1HistorySnapshotIdGetResponseSuccess | getSnapshotApiV1HistorySnapshotIdGetResponseError)
+
+export const getGetSnapshotApiV1HistorySnapshotIdGetUrl = (snapshotId: string,) => {
+
+
+
+
+  return `/api/v1/history/${snapshotId}`
+}
+
+/**
+ * Serves the STORED document. No recomputation, ever — that is the whole promise.
+ * @summary Get Snapshot
+ */
+export const getSnapshotApiV1HistorySnapshotIdGet = async (snapshotId: string, options?: RequestInit): Promise<getSnapshotApiV1HistorySnapshotIdGetResponse> => {
+
+  return orvalFetch<getSnapshotApiV1HistorySnapshotIdGetResponse>(getGetSnapshotApiV1HistorySnapshotIdGetUrl(snapshotId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSnapshotApiV1HistorySnapshotIdGetQueryKey = (snapshotId: string,) => {
+    return [
+    `/api/v1/history/${snapshotId}`
+    ] as const;
+    }
+
+
+export const getGetSnapshotApiV1HistorySnapshotIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError = ErrorEnvelope>(snapshotId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSnapshotApiV1HistorySnapshotIdGetQueryKey(snapshotId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>> = ({ signal }) => getSnapshotApiV1HistorySnapshotIdGet(snapshotId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: snapshotId !== null && snapshotId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSnapshotApiV1HistorySnapshotIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>>
+export type GetSnapshotApiV1HistorySnapshotIdGetQueryError = ErrorEnvelope
+
+
+export function useGetSnapshotApiV1HistorySnapshotIdGet<TData = Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError = ErrorEnvelope>(
+ snapshotId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSnapshotApiV1HistorySnapshotIdGet<TData = Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError = ErrorEnvelope>(
+ snapshotId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSnapshotApiV1HistorySnapshotIdGet<TData = Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError = ErrorEnvelope>(
+ snapshotId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Snapshot
+ */
+
+export function useGetSnapshotApiV1HistorySnapshotIdGet<TData = Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError = ErrorEnvelope>(
+ snapshotId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSnapshotApiV1HistorySnapshotIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSnapshotApiV1HistorySnapshotIdGetQueryOptions(snapshotId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse200 = {
+  data: SnapshotOut
+  status: 200
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponseSuccess = (relabelSnapshotApiV1HistorySnapshotIdPatchResponse200) & {
+  headers: Headers;
+};
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponseError = (relabelSnapshotApiV1HistorySnapshotIdPatchResponse400 | relabelSnapshotApiV1HistorySnapshotIdPatchResponse401 | relabelSnapshotApiV1HistorySnapshotIdPatchResponse403 | relabelSnapshotApiV1HistorySnapshotIdPatchResponse404 | relabelSnapshotApiV1HistorySnapshotIdPatchResponse422) & {
+  headers: Headers;
+};
+
+export type relabelSnapshotApiV1HistorySnapshotIdPatchResponse = (relabelSnapshotApiV1HistorySnapshotIdPatchResponseSuccess | relabelSnapshotApiV1HistorySnapshotIdPatchResponseError)
+
+export const getRelabelSnapshotApiV1HistorySnapshotIdPatchUrl = (snapshotId: string,) => {
+
+
+
+
+  return `/api/v1/history/${snapshotId}`
+}
+
+/**
+ * The label, and ONLY the label. Anything else was already rejected as a 422 by the model.
+ * @summary Relabel Snapshot
+ */
+export const relabelSnapshotApiV1HistorySnapshotIdPatch = async (snapshotId: string,
+    snapshotLabelIn: SnapshotLabelIn, options?: RequestInit): Promise<relabelSnapshotApiV1HistorySnapshotIdPatchResponse> => {
+
+  return orvalFetch<relabelSnapshotApiV1HistorySnapshotIdPatchResponse>(getRelabelSnapshotApiV1HistorySnapshotIdPatchUrl(snapshotId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(snapshotLabelIn)
+  }
+);}
+
+
+
+
+
+export const getRelabelSnapshotApiV1HistorySnapshotIdPatchMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>, TError,{snapshotId: string;data: SnapshotLabelIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>, TError,{snapshotId: string;data: SnapshotLabelIn}, TContext> => {
+
+const mutationKey = ['relabelSnapshotApiV1HistorySnapshotIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>, {snapshotId: string;data: SnapshotLabelIn}> = (props) => {
+          const {snapshotId,data} = props ?? {};
+
+          return  relabelSnapshotApiV1HistorySnapshotIdPatch(snapshotId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RelabelSnapshotApiV1HistorySnapshotIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>>
+    export type RelabelSnapshotApiV1HistorySnapshotIdPatchMutationBody = SnapshotLabelIn
+    export type RelabelSnapshotApiV1HistorySnapshotIdPatchMutationError = ErrorEnvelope
+
+    /**
+ * @summary Relabel Snapshot
+ */
+export const useRelabelSnapshotApiV1HistorySnapshotIdPatch = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>, TError,{snapshotId: string;data: SnapshotLabelIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof relabelSnapshotApiV1HistorySnapshotIdPatch>>,
+        TError,
+        {snapshotId: string;data: SnapshotLabelIn},
+        TContext
+      > => {
+      return useMutation(getRelabelSnapshotApiV1HistorySnapshotIdPatchMutationOptions(options), queryClient);
+    }
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponseSuccess = (deleteSnapshotApiV1HistorySnapshotIdDeleteResponse204) & {
+  headers: Headers;
+};
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponseError = (deleteSnapshotApiV1HistorySnapshotIdDeleteResponse401 | deleteSnapshotApiV1HistorySnapshotIdDeleteResponse403 | deleteSnapshotApiV1HistorySnapshotIdDeleteResponse404) & {
+  headers: Headers;
+};
+
+export type deleteSnapshotApiV1HistorySnapshotIdDeleteResponse = (deleteSnapshotApiV1HistorySnapshotIdDeleteResponseSuccess | deleteSnapshotApiV1HistorySnapshotIdDeleteResponseError)
+
+export const getDeleteSnapshotApiV1HistorySnapshotIdDeleteUrl = (snapshotId: string,) => {
+
+
+
+
+  return `/api/v1/history/${snapshotId}`
+}
+
+/**
+ * Voluntary soft-delete. The tombstone is ALSO the idempotency guard: it lives inside the
+ * unique key, so a queued retry cannot bring the entry back (SC-513).
+ * @summary Delete Snapshot
+ */
+export const deleteSnapshotApiV1HistorySnapshotIdDelete = async (snapshotId: string, options?: RequestInit): Promise<deleteSnapshotApiV1HistorySnapshotIdDeleteResponse> => {
+
+  return orvalFetch<deleteSnapshotApiV1HistorySnapshotIdDeleteResponse>(getDeleteSnapshotApiV1HistorySnapshotIdDeleteUrl(snapshotId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteSnapshotApiV1HistorySnapshotIdDeleteMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>, TError,{snapshotId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>, TError,{snapshotId: string}, TContext> => {
+
+const mutationKey = ['deleteSnapshotApiV1HistorySnapshotIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>, {snapshotId: string}> = (props) => {
+          const {snapshotId} = props ?? {};
+
+          return  deleteSnapshotApiV1HistorySnapshotIdDelete(snapshotId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSnapshotApiV1HistorySnapshotIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>>
+
+    export type DeleteSnapshotApiV1HistorySnapshotIdDeleteMutationError = ErrorEnvelope
+
+    /**
+ * @summary Delete Snapshot
+ */
+export const useDeleteSnapshotApiV1HistorySnapshotIdDelete = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>, TError,{snapshotId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSnapshotApiV1HistorySnapshotIdDelete>>,
+        TError,
+        {snapshotId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteSnapshotApiV1HistorySnapshotIdDeleteMutationOptions(options), queryClient);
     }

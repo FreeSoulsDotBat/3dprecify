@@ -93,7 +93,7 @@ on the device before it exists in the account. The vocabulary below is the whole
 
 ### 1.1 The four states, their triggers, and the exact copy
 
-`syncState: synced | pending | blocked | failed` (ADR-0018 §7 — the list is ONE selector, *server ∪ outbox*,
+`syncState: synced | pending | blocked | failed` (ADR-0018 §8 — the list is ONE selector, *server ∪ outbox*,
 deduped on `clientSnapshotId`, **server-wins**).
 
 | state | What actually happened | Badge (list card) | Icon | Tone | Auto-retry | Actions offered | Exportable |
@@ -140,10 +140,10 @@ synced   — (sem badge). Toast real, só no 2xx: "Registro salvo no histórico.
 "falhou" for a non-answer; "bloqueado" / "expirou" / "suspenso" for `blocked` (the calm-lapse vocabulary rule,
 E2 §3); any fabricated date or price.
 
-> **Divergence from ADR-0018 §8's sketch copy, recorded.** The ADR sketches *"não foi registrado — precisa de
+> **Divergence from ADR-0018 §9's sketch copy, recorded.** The ADR sketches *"não foi registrado — precisa de
 > Premium ativo"*. Proposed instead: **"Envio pausado · precisa de Premium"**. Why: (a) *pausado* is already the
 > product's calm word for a lapse (`Premium pausado`, E2 §3 — one vocabulary, not two); (b) it is **literally
-> true** — the retry is paused and **resumes by itself** when the entitlement returns (ADR-0018 §8), which "não
+> true** — the retry is paused and **resumes by itself** when the entitlement returns (ADR-0018 §9), which "não
 > foi registrado" hides; (c) "não foi registrado" reads as a terminal failure and would collide with `failed`.
 > The *body* copy still states plainly that it has **not** reached the account. **Owner ratifies at homologation.**
 
@@ -152,7 +152,7 @@ E2 §3); any fabricated date or price.
 **Option A — merged list, newest-first, with a per-card badge (RECOMMENDED, ~88%).** A pending entry sits in its
 natural chronological slot (it was recorded *now*, so it lands on top) and carries the "Pendente neste
 dispositivo" badge; a queue banner above the list aggregates (§2.2).
-- Pros: it **is** the list — ADR-0018 §7 makes the merged selector structural, so no component can read the server
+- Pros: it **is** the list — ADR-0018 §8 makes the merged selector structural, so no component can read the server
   query alone and lie by omission (the E3 PR-C lesson answered by construction); the entry is ordinary data, so it
   renders, tests and audits like any other; one mental model.
 - Cons: a badge must be scannable at 390px (solved: text badge, not color-only).
@@ -505,7 +505,7 @@ the fair-seller a re-quote. **Owner/plan call.**
 
 ---
 
-## 5. Surface 4 — Sign-out with a non-empty queue (ADR-0018 §9 → T011)
+## 5. Surface 4 — Sign-out with a non-empty queue (ADR-0018 §10 → T011)
 
 **Blocking, honest, at the sign-out action.** Entries must never vanish silently nor leak into the next account.
 
@@ -809,7 +809,7 @@ placeholder `historico.emptyTitle` ("Histórico em breve") / `emptyBody` — E4 
 
 - **C1 — the sign-out guard has TWO entry points (load-bearing).** `widgets/top-bar/top-bar.tsx` **and**
   `pages/conta/conta-page.tsx` both call `signOutUser()` from `shared/session/session-store`. A dialog added to one
-  leaves a hole through which unsynced quotes vanish silently — exactly what ADR-0018 §9 forbids. FSD-Lite also
+  leaves a hole through which unsynced quotes vanish silently — exactly what ADR-0018 §10 forbids. FSD-Lite also
   blocks the obvious shortcut (`shared` may not import `entities/history`). **Recommendation**: `shared/session`
   exposes a `requestSignOut()` intent (a store flag); **one app-level guard component** (mounted in the app shell,
   free to import `entities/history`) reads the outbox count, renders the dialog, performs the purge, and only then
@@ -841,7 +841,7 @@ placeholder `historico.emptyTitle` ("Histórico em breve") / `emptyBody` — E4 
 | **F4** | **The `pending` durability sentence** — *"se os dados do app forem limpos, ele se perde"* is **true** (IndexedDB eviction; `navigator.storage.persist()` is best-effort) but it is the most alarming sentence in the app. | **Keep it, detail-only, muted, never on the card** (**75%**). Softer alternative: rely on "neste dispositivo" alone to carry the caveat (55% — cheaper, but it leaves a real risk unsaid, and E4's whole premise is that we say the uncomfortable thing). |
 | **F5** | **Accent-sensitive label search** (`data-model.md` §7.5): `joao` will **not** find `João`. | Accept for E4 (**65%**) — labels are usually typed with accents by the same person who searches them. If not accepted, it is an `unaccent` extension migration (a new DB posture ⇒ owner call). |
 | **F6** | **Copy conflict with the task brief**: the sign-out dialog was specified with a **[Cancelar]** button; **FR-014 bans "cancelar"** in the message module (the house uses **"Voltar"**). | **"Voltar"** (**95%**) — flagged so the divergence from the brief is a decision, not a slip. |
-| **F7** | **`blocked` badge copy diverges from ADR-0018 §8's sketch** ("não foi registrado — precisa de Premium ativo" → **"Envio pausado · precisa de Premium"**). | Adopt the proposed copy (**80%**) — one calm vocabulary with `Premium pausado`, and it is literally true (the retry resumes on the next `active`). Owner ratifies at PR-A homologation. |
+| **F7** | **`blocked` badge copy diverges from ADR-0018 §9's sketch** ("não foi registrado — precisa de Premium ativo" → **"Envio pausado · precisa de Premium"**). | Adopt the proposed copy (**80%**) — one calm vocabulary with `Premium pausado`, and it is literally true (the retry resumes on the next `active`). Owner ratifies at PR-A homologation. |
 
 ---
 

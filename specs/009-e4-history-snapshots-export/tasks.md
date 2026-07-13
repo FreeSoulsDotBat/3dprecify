@@ -118,7 +118,7 @@ quickstart §1 + §3 + §4.
       from the calculator **and from a kit** (Q2 — both from this slice), optional label + validity period (Q9),
       honest pending feedback. Recording is only OFFERED when the **last-known server** entitlement was `active`
       (ADR-0015's nuance: a cached server response, **never** a client-held flag). Tests green.
-- [ ] T011 [US1] Sign-out with a **non-empty queue** (ADR-0018 §9): a blocking, honest dialog at the sign-out
+- [ ] T011 [US1] Sign-out with a **non-empty queue** (ADR-0018 §10): a blocking, honest dialog at the sign-out
       action — *"N registros ainda não sincronizados"* → **[Sincronizar agora]** (online only) · **[Sair e
       descartar]** (explicit destructive confirm) · **[Cancelar]**. Discard purges the outbox with the uid-keyed
       sweep. Entries **never vanish silently** and **never leak into the next account**.

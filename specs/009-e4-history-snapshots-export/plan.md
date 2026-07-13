@@ -161,7 +161,7 @@ apps/web/src/
 
 **Structure Decision**: extend the existing pnpm-monorepo web layout. A new `feature/history` + `entities/history`
 pair mirrors the E2/E3 FSD-Lite layering. **The pending union is structural, not cosmetic**: no component may read
-the server query alone — the merged selector *is* the list (ADR-0018 §7). This is the direct answer to the E3
+the server query alone — the merged selector *is* the list (ADR-0018 §8). This is the direct answer to the E3
 PR-C lesson: *a correct component starved of correct data still lies.*
 
 ## Complexity Tracking

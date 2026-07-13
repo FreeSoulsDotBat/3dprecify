@@ -18,6 +18,7 @@ from .api.boms import router as boms_router
 from .api.entitlement import router as entitlement_router
 from .api.fee_catalog import router as fee_catalog_router
 from .api.filaments import router as filaments_router
+from .api.history import router as history_router
 from .api.me import router as me_router
 from .api.printers import router as printers_router
 from .api.products import router as products_router
@@ -103,6 +104,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # E3 kits (premium persistence — the same gates; writes also materialize catalog products,
     # ADR-0017).
     api.include_router(boms_router)
+    api.include_router(history_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 

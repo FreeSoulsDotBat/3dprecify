@@ -4,7 +4,7 @@ Revision ID: 0003
 Revises: 0002
 Create Date: 2026-07-13
 
-E4 history persistence (ADR-0018 / ADR-0019, data-model D1–D6). Additive only — `0001` and `0002`
+E4 history persistence (ADR-0018 / ADR-0019, data-model D1-D6). Additive only — `0001` and `0002`
 are SHIPPED and are never amended.
 
 THREE THINGS HERE DELIBERATELY BREAK THE HOUSE PATTERN, each for a reason that would otherwise

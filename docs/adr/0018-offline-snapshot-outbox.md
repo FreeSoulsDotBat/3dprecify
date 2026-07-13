@@ -76,19 +76,26 @@ mints `clientSnapshotId = crypto.randomUUID()` at **record** time; the server de
 4. **Ambiguous failure** (request sent, response lost): the entry stays pending; retry uses the **same** key; the
    server returns what it already created. A no-response error renders **"pendente"** — never "falhou", never
    "salvo". *No answer is not the same as not saved.*
-5. **Two tabs**: single-flight via `navigator.locks.request("history-outbox:" + uid, …)` (Web Locks — Baseline
+5. **Replay of a DELETED snapshot ⇒ 404, and the outbox drops the entry quietly** (added at implementation,
+   2026-07-13 — this ADR had not foreseen the case). It only arises when the original POST's response was lost
+   (so the outbox still believes the entry is pending) **and** the seller then deleted the snapshot from another
+   device. The server must not resurrect it — that would silently undo a deliberate deletion, the one outcome
+   nobody could defend — so it answers **404: it existed, and you deleted it.** Dropping the queued entry on a
+   404 is therefore **not** a silent data loss (which §8/§9 forbid): it is the seller's own later deletion
+   winning, and it needs no alarm.
+6. **Two tabs**: single-flight via `navigator.locks.request("history-outbox:" + uid, …)` (Web Locks — Baseline
    since March 2022). **Correctness does not depend on the lock** — the DB unique key does; the lock only avoids
    wasted duplicate requests.
-6. **Drain triggers**: app boot (after session + entitlement resolve), the `online` event, focus /
+7. **Drain triggers**: app boot (after session + entitlement resolve), the `online` event, focus /
    `visibilitychange`, and post-sign-in. Exponential backoff, capped. Entries are **independent** — a failing
    entry never blocks the queue.
-7. **Honest pending state.** The Histórico list is ONE selector merging *(server list) ∪ (outbox)*, each item
+8. **Honest pending state.** The Histórico list is ONE selector merging *(server list) ∪ (outbox)*, each item
    tagged `syncState: synced | pending | blocked | failed`, **deduped on `clientSnapshotId` with server-wins** —
    so no interleaving of drain and invalidation can render an entry twice or show a synced entry as pending.
    Post-sync order: delete the outbox entry → write the server entity into the read cache → invalidate the query
    key. *(The E3 PR-C lesson — a correct component starved of correct data still lies — is answered
    structurally: no component may read the server query alone; the pending union IS the list.)*
-8. **Entitlement at sync (FR-529).** A 403 `ENTITLEMENT_REQUIRED` ⇒ the entry becomes **blocked**: retained in
+9. **Entitlement at sync (FR-529).** A 403 `ENTITLEMENT_REQUIRED` ⇒ the entry becomes **blocked**: retained in
    the outbox, auto-retry stopped, rendered honestly with **Tentar novamente** and **Descartar** (destructive,
    confirmed). On the next `active` entitlement, blocked entries retry automatically. **Never silently discarded;
    never left claiming to be saved.** Recording is only OFFERED when the **last-known server** entitlement was
@@ -97,7 +104,7 @@ mints `clientSnapshotId = crypto.randomUUID()` at **record** time; the server de
      precisa de Premium"**, tone **info, never danger**. *Paused* is already the product's calm vocabulary for a
      lapse, and it is **literally true** — the retry resumes by itself when the entitlement returns. The earlier
      draft copy ("não foi registrado") read as a permanent failure, which this state is not.
-9. **Sign-out with a non-empty queue.** A **blocking, honest guard** at the sign-out action: a dialog stating how
+10. **Sign-out with a non-empty queue.** A **blocking, honest guard** at the sign-out action: a dialog stating how
    many entries are unsynced, offering **[Sincronizar agora]** (online only) · **[Sair e descartar]** (explicit
    destructive confirm) · **[Cancelar]**. Discard purges the outbox key with the uid-keyed sweep. Entries never
    vanish silently and never leak into the next account. *Alternatives weighed: retain-across-sign-out (60% —

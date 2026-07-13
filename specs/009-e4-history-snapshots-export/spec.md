@@ -145,12 +145,12 @@ recommendation.
 
 - **The sign-out guard must cover BOTH entry points.** `signOutUser()` is called from `widgets/top-bar` **and**
   `pages/conta` (verified). Guarding only one leaves a hole through which unsynced records vanish silently —
-  precisely what ADR-0018 §9 forbids. The guard therefore lives in the app-shell over a `requestSignOut()` seam,
+  precisely what ADR-0018 §10 forbids. The guard therefore lives in the app-shell over a `requestSignOut()` seam,
   not inside one widget.
 - **An error in the design handoff, flagged not accepted:** it claimed (95%) that **FR-014 bans the word
   "Cancelar"**. It does not. FR-014 (spec 003) bans **stating undecided commercial facts** — *"no cancellation
   policy"* means no subscription-cancellation **policy** may be asserted before E6, not that a dialog may not
-  have a *Cancelar* button. ADR-0018 §9 keeps `[Cancelar]`.
+  have a *Cancelar* button. ADR-0018 §10 keeps `[Cancelar]`.
 
 ### Working defaults — status after `/speckit-clarify`
 

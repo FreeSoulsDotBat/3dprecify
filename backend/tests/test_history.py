@@ -34,6 +34,7 @@ from typing import Any
 import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
+from sqlalchemy.exc import DatabaseError
 
 from app.main import create_app
 from app.settings import Settings
@@ -128,7 +129,18 @@ def test_a_replay_after_a_DELETE_does_not_resurrect_the_snapshot(
     db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
 ) -> None:
     """The tombstone lives INSIDE the unique key (the constraint is unconditional). Without that, a
-    queued retry arriving after the seller deleted the entry would silently bring it back."""
+    queued retry arriving after the seller deleted the entry would silently bring it back.
+
+    WHEN this actually happens (worth stating, because it decides the right status): to delete a
+    snapshot the seller must already have it on the SERVER. So this race only arises when the
+    response to the original POST was LOST — the outbox still believes the entry is pending — and
+    the seller then deletes it from another device. The honest answer is therefore **404: it
+    existed, and you deleted it.** Resurrecting it (200 with the row) would silently undo a
+    deliberate deletion, and that is the one outcome nobody could defend.
+
+    The outbox contract that follows (ADR-0018): a 404 on replay ⇒ drop the queued entry WITHOUT
+    alarming the user. It is not data loss — it is the seller's own later deletion winning.
+    """
     h = _premium(monkeypatch, migrated_db, "u-tomb")
 
     created = db_client.post("/api/v1/history", headers=h, json=_body(CSID))
@@ -140,7 +152,7 @@ def test_a_replay_after_a_DELETE_does_not_resurrect_the_snapshot(
     # It must NOT create a second row, and it must NOT undelete the first.
     assert _count(migrated_db, "u-tomb") == 1
     assert db_client.get(f"/api/v1/history/{snapshot_id}", headers=h).status_code == 404
-    assert replay.status_code in (200, 409)
+    assert replay.status_code == 404
     assert db_client.get("/api/v1/history", headers=h).json()["items"] == []
 
 
@@ -168,13 +180,13 @@ def test_a_raw_UPDATE_of_a_frozen_column_RAISES_at_the_database(
     snapshot_id = db_client.post("/api/v1/history", headers=h, json=_body(CSID)).json()["id"]
 
     engine = sa.create_engine(migrated_db)
-    with engine.begin() as conn, pytest.raises(sa.exc.DatabaseError):
+    with engine.begin() as conn, pytest.raises(DatabaseError):
         conn.execute(
             sa.text("UPDATE snapshots SET headline_total = '1.00' WHERE id = :i"),
             {"i": snapshot_id},
         )
 
-    with engine.begin() as conn, pytest.raises(sa.exc.DatabaseError):
+    with engine.begin() as conn, pytest.raises(DatabaseError):
         conn.execute(
             sa.text("UPDATE snapshots SET device_quoted_at = now() WHERE id = :i"),
             {"i": snapshot_id},
