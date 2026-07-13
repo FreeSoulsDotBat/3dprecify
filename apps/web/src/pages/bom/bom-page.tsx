@@ -3,12 +3,14 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { useBoms, useCreateBom, useUpdateBom } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
+import { freezeBomResult, type FrozenProvenance } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { AssemblySummary } from "@/features/bom/assembly-summary";
 import { composeBom, type ComposerLine } from "@/features/bom/bom-compute";
 import { BomLineCard } from "@/features/bom/bom-line-card";
 import { BomTeaser } from "@/features/bom/bom-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
+import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import { type CalcFormValues, defaultCalcValues } from "@/features/calculator/calculator-schema";
 import { productToForm } from "@/features/calculator/product-mapping";
 import { honestWriteError } from "@/shared/api/error-messages";
@@ -243,6 +245,29 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   // the headline so a partial kit never reads as a complete price (review 2026-07-12). A quantity-0
   // line is NOT excluded: it still contributed to `bom.lines` as a truthful zero.
   const excludedLineCount = lineResults.filter((r) => r === null).length;
+
+  // 009/T010 — the kit lines a snapshot would freeze, aligned with `bom.lines` (which the engine
+  // computes over the VALID lines only, compacted). An excluded line is not silently renumbered
+  // into someone else's numbers: it is simply not part of the quote.
+  const frozenKitLines = lines
+    .map((l, i) => ({
+      input: composerLines[i]?.input ?? null,
+      quantity: composerLines[i]?.quantity ?? 0,
+      name: l.productName?.trim() || null,
+    }))
+    .filter(
+      (
+        l,
+      ): l is {
+        input: NonNullable<ComposerLine["input"]>;
+        quantity: number;
+        name: string | null;
+      } => l.input !== null,
+    );
+  // Provenance ONLY — never a source of value (the two-shelf rule). A snapshot taken from a saved
+  // kit remembers which kit it came from; editing or deleting that kit later changes nothing here.
+  const kitProvenance: FrozenProvenance | null =
+    openedKit && !duplicating ? { kind: "KIT", id: openedKit.id, name: openedKit.name } : null;
 
   // T006b top nit (ux §1.7): a FORM-invalid channel slot is rejected by the per-slot validation
   // BEFORE the engine, so it can never reach `skippedLines` — count those per marketplace (on
@@ -522,6 +547,21 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
           {/* ux §1.7/G4: AssemblySummary pins only its COMPACT total as the bottom bar (the
               channel rollup scrolls in normal flow) — so the sticky lives inside it, not here. */}
           <AssemblySummary bom={bom} uiSkipped={uiSkipped} excludedLineCount={excludedLineCount} />
+
+          {/* 009/T010 — record the kit as a quote (Q2: kits are recordable from PR-A). This is NOT
+              the kit save: saving a kit puts a LIVE, recomputing thing in the catalog; recording a
+              snapshot freezes what the seller quoted TODAY. The two coexist deliberately. Only the
+              lines that reached the total are frozen — a kit quote itemizes its pieces (SC-515),
+              and an excluded line has no numbers to itemize. */}
+          <div className="flex justify-center">
+            <RecordSnapshotButton
+              disabled={frozenKitLines.length === 0}
+              source={{
+                kind: "KIT",
+                freeze: () => freezeBomResult(frozenKitLines, bom, kitProvenance),
+              }}
+            />
+          </div>
 
           {/* Save (§1.9). No optimistic fake: the toast and the catalog summary below appear only
               after a real 2xx from the server, which is also the entitlement boundary. */}

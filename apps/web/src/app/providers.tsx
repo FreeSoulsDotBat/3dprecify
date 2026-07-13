@@ -3,6 +3,8 @@ import { useEffect, type ReactNode } from "react";
 
 import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
+import { purgeOutbox } from "@/entities/history/outbox";
+import { HISTORY_QUERY_ROOT } from "@/entities/history/use-history";
 import { ME_QUERY_KEY } from "@/entities/user/use-identity";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Toaster } from "@/shared/ui";
@@ -31,9 +33,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         // Saved kits are the same kind of user data and get the same sweep (E3/T014) — a kit list
         // left behind on a shared device would leak exactly what the catalog sweep prevents.
         queryClient.removeQueries({ queryKey: BOM_QUERY_ROOT });
+        // The Histórico joins the same sweep (E4/T011) — and it is the one store where the sweep
+        // can DESTROY data, not just a rebuildable cache: an unsynced record exists nowhere else.
+        // That is exactly why sign-out is now guarded (features/history/sign-out-outbox-guard):
+        // by the time this runs, the seller has already been asked and has chosen. The purge
+        // itself must therefore stay unconditional — it is the privacy guarantee.
+        queryClient.removeQueries({ queryKey: HISTORY_QUERY_ROOT });
         if (prev.user?.uid) {
           void purgeCatalogCache(prev.user.uid);
           void purgeBomCache(prev.user.uid);
+          void purgeOutbox(prev.user.uid);
         }
       }
     });

@@ -42,7 +42,7 @@ the **export content rules**. **SC-512 in every PR**: all E1/E2/E3 guards pass U
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all PR-A work): the Histórico
+- [x] T001 [P] designer-ux → Claude Design handoff (NON-BLOCKING, parallel with all PR-A work): the Histórico
       list (label · total · **date** on every card), the snapshot detail (renders STORED values), the **pending /
       blocked** sync states ("pendente **neste dispositivo**" — never "guardado"), the sign-out-with-queue dialog,
       and the US5 teaser. Output feeds T010/T013/T015; not a merge blocker. Write to
@@ -50,17 +50,17 @@ the **export content rules**. **SC-512 in every PR**: all E1/E2/E3 guards pass U
 
 ## Phase 2: Foundational (blocking) — the frozen document + the immutable table
 
-- [ ] T002 Write FAILING vitest first — `apps/web/src/entities/history/frozen-payload.test.ts`: the payload
+- [x] T002 Write FAILING vitest first — `apps/web/src/entities/history/frozen-payload.test.ts`: the payload
       serializer emits **decimal STRINGS** for every money/quantity/percentage leaf and integer JSON numbers only
       for counts; a round-trip preserves the exact strings (**no float anywhere**, FR-525); a payload missing a
       breakdown line renders **without it** and **never as `0,00`** (FR-507); the frozen types are **structurally
       independent of `PriceResult`** (a type-level test pinning that a pricing-core field addition cannot make the
       renderer assert an old snapshot has it). Observe failing.
-- [ ] T003 Implement the frozen payload contract in `apps/web/src/entities/history/frozen-payload.ts` — its own
+- [x] T003 Implement the frozen payload contract in `apps/web/src/entities/history/frozen-payload.ts` — its own
       version-tolerant types (per `data-model.md` D1) + the serializer from a `PriceResult`/`BomResult` into the
       frozen document (kit lines **with quantity-scaled money** + the per-channel rollup — required so the export
       can *print* instead of *calculate*, ADR-0020 §1) + the captured provenance `{kind, id, name}`. Tests green.
-- [ ] T004 Write FAILING pytest first — `backend/tests/test_history.py`: **idempotency** (POST → `201`; replay
+- [x] T004 Write FAILING pytest first — `backend/tests/test_history.py`: **idempotency** (POST → `201`; replay
       with the same `clientSnapshotId` → `200` **and the same row**, never a duplicate; **delete-then-retry does
       NOT resurrect** — the tombstone is inside the unique key); **immutability at the DB** (raw `UPDATE snapshots
       SET headline_total = …` → the trigger **raises**; only `label`/`deleted_at`/`updated_at` may move);
@@ -68,7 +68,7 @@ the **export content rules**. **SC-512 in every PR**: all E1/E2/E3 guards pass U
       the **entitlement gate** (free/signed-out → `403 ENTITLEMENT_REQUIRED`, nothing written/read; a faked client
       premium denied); **isolation** (account B → `404`, no existence oracle); **lapse** (reads `200`, writes
       `403`, zero rows deleted). Observe failing.
-- [ ] T005 Alembic **migration `0003`** (`down_revision = "0002"` — never amend an existing migration) +
+- [x] T005 Alembic **migration `0003`** (`down_revision = "0002"` — never amend an existing migration) +
       SQLAlchemy 2.0 `Snapshot` model per `data-model.md`: typed columns + `payload` JSONB; `UNIQUE (owner_uid,
       client_snapshot_id)` **unconditional** (includes tombstones — this is what makes exactly-once survive a
       delete-then-retry); `device_quoted_at` + `device_utc_offset_minutes` (**the `device_` prefix is
@@ -80,14 +80,14 @@ the **export content rules**. **SC-512 in every PR**: all E1/E2/E3 guards pass U
       pre-selected) and every surface **labels** it (design round F1: a seller quoting a shopkeeper quoted
       *atacado*; forcing varejo would record a number they never said to the customer). `uv run alembic upgrade
       head` green against the compose DB.
-- [ ] T006 Implement `backend/app/api/history.py` per `contracts/api-surface.md`: `POST` (the ONLY writer of
+- [x] T006 Implement `backend/app/api/history.py` per `contracts/api-surface.md`: `POST` (the ONLY writer of
       frozen fields — `INSERT … ON CONFLICT DO NOTHING` + read-back ⇒ a retry is an **idempotent success**, never
       a duplicate and never an error the outbox would misread as failure) · `GET` list (keyset pagination, never
       `OFFSET`) · `GET /{id}` · `PATCH` (`label` only, `extra="forbid"`) · `DELETE` (soft). Plus the SQLAlchemy
       `before_update` **ORM guard** (raises unless the dirty set ⊆ `{label, deleted_at, updated_at}`) — defence
       against *future* code (ADR-0019 §2). **The server holds no queue state**: no `pending`/`rejected` column
       exists or may be added. Tests green.
-- [ ] T007 Contract ripple (same commit): regen `contracts/openapi.json` + the Orval client (RAW output);
+- [x] T007 Contract ripple (same commit): regen `contracts/openapi.json` + the Orval client (RAW output);
       drift-guard `git diff --exit-code` green. No new `ErrorCode` (`ENTITLEMENT_REQUIRED` + `VALIDATION_ERROR`
       already exist).
 
@@ -99,7 +99,7 @@ duplicate.
 **Goal**: a premium seller records a single piece **or a kit** (Q2), online or offline. **Independent Test**:
 quickstart §1 + §3 + §4.
 
-- [ ] T008 [US1] Write FAILING vitest first — `apps/web/src/entities/history/*`: the **outbox** (`idb-keyval`
+- [x] T008 [US1] Write FAILING vitest first — `apps/web/src/entities/history/*`: the **outbox** (`idb-keyval`
       store `history:outbox:{uid}`; a failed enqueue **throws** — unlike the read cache, which swallows write
       failures by design; the entry survives an app restart); the **sync engine** (drain on boot/`online`/focus/
       post-sign-in; capped backoff; entries independent — a failing entry never blocks the queue; **two tabs**
@@ -108,17 +108,17 @@ quickstart §1 + §3 + §4.
       duplicates**); the **blocked** state on `403` (retained, visible, auto-retry stopped, retried on the next
       `active` entitlement); the **merge selector** (server ∪ outbox, deduped on `clientSnapshotId`,
       **server-wins**, `syncState: synced | pending | blocked | failed`). Observe failing.
-- [ ] T009 [US1] Implement `apps/web/src/entities/history/{outbox,sync-engine,use-history}.ts` (ADR-0018).
+- [x] T009 [US1] Implement `apps/web/src/entities/history/{outbox,sync-engine,use-history}.ts` (ADR-0018).
       `clientSnapshotId = crypto.randomUUID()` is minted at **RECORD** time — *minting at send time regenerates
       after an app restart and duplicates*. The queued entry is a **complete, self-contained POST body**, frozen
       at record time; never re-derived, never patched at send time. A no-response error renders **"pendente"** —
       never "falhou", never "salvo" (*no answer is not the same as not saved*). Best-effort
       `navigator.storage.persist()` at first enqueue (**verify the API at implementation**). Tests green.
-- [ ] T010 [US1] Write FAILING tests then implement the **record action** in `apps/web/src/features/history/`:
+- [x] T010 [US1] Write FAILING tests then implement the **record action** in `apps/web/src/features/history/`:
       from the calculator **and from a kit** (Q2 — both from this slice), optional label + validity period (Q9),
       honest pending feedback. Recording is only OFFERED when the **last-known server** entitlement was `active`
       (ADR-0015's nuance: a cached server response, **never** a client-held flag). Tests green.
-- [ ] T011 [US1] Sign-out with a **non-empty queue** (ADR-0018 §10): a blocking, honest dialog at the sign-out
+- [x] T011 [US1] Sign-out with a **non-empty queue** (ADR-0018 §10): a blocking, honest dialog at the sign-out
       action — *"N registros ainda não sincronizados"* → **[Sincronizar agora]** (online only) · **[Sair e
       descartar]** (explicit destructive confirm) · **[Cancelar]**. Discard purges the outbox with the uid-keyed
       sweep. Entries **never vanish silently** and **never leak into the next account**.

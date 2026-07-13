@@ -460,9 +460,51 @@ export const messages = {
     lapsedBanner:
       "Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.",
   },
+  // E4 (009) — o Histórico prova o que o vendedor COBROU (o Catálogo mostra o que vale hoje).
+  // Vocabulário deliberado: "Valor cotado", nunca "Preço" (preço é o que a calculadora diz HOJE);
+  // "salvo" só é dito quando o servidor confirmou; um envio ainda não sincronizado é "pendente
+  // neste dispositivo" — nunca "falhou" (resposta perdida ≠ não gravado) e nunca "salvo".
   historico: {
     emptyTitle: "Histórico em breve",
     emptyBody: "Seus cálculos salvos vão aparecer aqui.",
+    // record (T010)
+    saveAction: "Salvar no histórico",
+    saveSheetTitle: "Salvar no histórico",
+    saveSheetIntro:
+      "Vamos guardar os valores exatamente como estão nesta tela, com a data de hoje.",
+    saveSheetSubmit: "Salvar no histórico",
+    labelField: "Rótulo (opcional)",
+    labelHint: "Cliente, pedido…",
+    validityField: "Validade da proposta",
+    validityUnit: "dias",
+    basisField: "Preço que você está cotando",
+    basisRetail: "Varejo",
+    basisWholesale: "Atacado",
+    quotedAt: "Cotado em {data}",
+    saved: "Registro salvo no histórico.",
+    saveDeviceFailed: "Não foi possível guardar o registro neste aparelho. Ele não foi salvo.",
+    // sync states (ADR-0018) — o vocabulário honesto
+    syncPendingToast: "Pendente neste dispositivo. Sincroniza sozinho quando houver conexão.",
+    syncBlockedToast:
+      "Envio pausado — o Premium não está ativo. O registro continua neste aparelho.",
+    syncFailedToast: "Não foi possível registrar. O servidor não aceitou este registro.",
+    // sign-out guard (ADR-0018 §10 / T011)
+    signOutQueueTitle: "{n} registro(s) ainda não foram sincronizados",
+    signOutQueueBody:
+      "Eles estão só neste dispositivo. Se você sair agora sem enviar, eles são apagados deste aparelho e não vão para a sua conta.",
+    signOutSyncNow: "Sincronizar agora",
+    signOutSyncOffline: "Precisa de conexão para enviar.",
+    signOutDiscard: "Sair e descartar",
+    signOutDiscardConfirmTitle: "Descartar {n} registro(s) e sair?",
+    signOutDiscardConfirmBody:
+      "Eles não foram enviados para a sua conta e não poderão ser recuperados.",
+    signOutDiscardConfirm: "Descartar e sair",
+    signOutPartial: "{n} registro(s) não puderam ser enviados. Eles continuam neste aparelho.",
+    back: "Voltar",
+    // teaser (US5 lineage — E2 US7 / E3 US5). Honest: no price, no date (FR-014).
+    teaserTitle: "O histórico faz parte do Premium",
+    teaserBody:
+      "Com o Premium você guarda cada cotação com a data e a versão da fórmula — e prova depois o que cobrou. A calculadora continua sua, de graça.",
   },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).

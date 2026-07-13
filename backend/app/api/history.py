@@ -154,7 +154,18 @@ async def _owned(session: AsyncSession, uid: str, snapshot_id: uuid.UUID) -> Sna
 @router.post(
     "/history",
     status_code=status.HTTP_201_CREATED,
-    responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS},
+    responses={
+        # An idempotent REPLAY answers 200 with the row the server already had. It is declared here
+        # so the generated client's types know it: a contract that advertised only 201 would type a
+        # legitimate 200 as an error envelope, and the outbox drain would treat a successful replay
+        # as a failure — the exact duplicate this endpoint exists to prevent.
+        status.HTTP_200_OK: {
+            "model": SnapshotOut,
+            "description": "Already recorded — the same clientSnapshotId was replayed.",
+        },
+        **ENTITLEMENT_ERRORS,
+        **VALIDATION_ERRORS,
+    },
 )
 async def record_snapshot(
     body: SnapshotIn,

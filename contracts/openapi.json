@@ -1839,6 +1839,16 @@
               }
             }
           },
+          "200": {
+            "description": "Already recorded — the same clientSnapshotId was replayed.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotOut"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Missing/invalid/expired bearer token",
             "content": {

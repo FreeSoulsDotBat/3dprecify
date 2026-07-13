@@ -1,0 +1,136 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { drainOutbox, listOutbox, purgeOutbox } from "@/entities/history/outbox";
+import { postSnapshot } from "@/entities/history/use-history";
+import { messages } from "@/shared/i18n/messages.pt-br";
+import { registerSignOutGuard } from "@/shared/session/sign-out-guard";
+import { useSessionStore } from "@/shared/session/session-store";
+import { Alert, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui";
+
+// 009/T011 (E4, PR-A) — sign-out with a non-empty queue (ADR-0018 §10).
+//
+// Two guarantees collide here and BOTH are right:
+//
+//   * purge-on-sign-out is a privacy guarantee we already shipped — a shared device must not keep
+//     the previous account's data;
+//   * the outbox is the ONLY copy of a quote that never reached the account.
+//
+// So sign-out can now destroy the seller's work, and neither guarantee may be quietly dropped. The
+// seller decides, in a BLOCKING dialog that states the count. Never a toast after the fact: that is
+// a silent drop with a receipt attached.
+//
+// Mounted in the app shell because FSD-Lite forbids `shared` importing `entities/history` — the
+// interception seam lives in `shared/session`, and this is what registers into it.
+
+const t = messages.historico;
+const count = (s: string, n: number) => s.replace("{n}", String(n));
+
+type Decision = (proceed: boolean) => void;
+
+export function SignOutOutboxGuard() {
+  const uid = useSessionStore((s) => s.user?.uid);
+  const [pending, setPending] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState(false);
+  const [partial, setPartial] = useState<number | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const decide = useRef<Decision | null>(null);
+
+  const close = useCallback((proceed: boolean) => {
+    decide.current?.(proceed);
+    decide.current = null;
+    setPending(null);
+    setConfirming(false);
+    setPartial(null);
+    setSyncing(false);
+  }, []);
+
+  useEffect(() => {
+    return registerSignOutGuard(async () => {
+      if (!uid) return true;
+      const queued = await listOutbox(uid);
+      if (queued.length === 0) return true; // nothing at stake — never get in the way
+
+      setPending(queued.length);
+      // Sign-out is held here until the seller answers.
+      return new Promise<boolean>((resolve) => {
+        decide.current = resolve;
+      });
+    });
+  }, [uid]);
+
+  if (pending === null || !uid) return null;
+
+  async function syncNow(owner: string) {
+    setSyncing(true);
+    setPartial(null);
+    await drainOutbox(owner, { post: postSnapshot });
+    const left = await listOutbox(owner);
+    setSyncing(false);
+    // Everything reached the account — sign out with nothing lost, and nothing discarded.
+    if (left.length === 0) {
+      close(true);
+      return;
+    }
+    // Some entries did not make it (a rejection, a 403, a dropped connection). We do NOT sign out
+    // over them: that would be exactly the silent destruction this dialog exists to prevent.
+    setPending(left.length);
+    setPartial(left.length);
+  }
+
+  async function discardAndSignOut(owner: string) {
+    await purgeOutbox(owner);
+    close(true);
+  }
+
+  const online = typeof navigator === "undefined" || navigator.onLine;
+
+  return (
+    <Dialog open onOpenChange={(next) => !next && close(false)}>
+      <DialogContent showClose={false}>
+        {confirming ? (
+          <>
+            <DialogTitle>{count(t.signOutDiscardConfirmTitle, pending)}</DialogTitle>
+            <DialogDescription>{t.signOutDiscardConfirmBody}</DialogDescription>
+            <div className="mt-4 flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setConfirming(false)}>
+                {t.back}
+              </Button>
+              <Button variant="danger" onClick={() => void discardAndSignOut(uid)}>
+                {t.signOutDiscardConfirm}
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogTitle>{count(t.signOutQueueTitle, pending)}</DialogTitle>
+            <DialogDescription>{t.signOutQueueBody}</DialogDescription>
+
+            {partial !== null && (
+              <Alert tone="danger" className="mt-3">
+                {count(t.signOutPartial, partial)}
+              </Alert>
+            )}
+
+            <div className="mt-4 flex flex-col gap-2">
+              <Button disabled={!online || syncing} onClick={() => void syncNow(uid)}>
+                {t.signOutSyncNow}
+              </Button>
+              {/* A button that cannot work says why, instead of pretending it can. */}
+              {!online && (
+                <p className="text-center text-sm text-[var(--text-muted)]">
+                  {t.signOutSyncOffline}
+                </p>
+              )}
+              <Button variant="danger" onClick={() => setConfirming(true)}>
+                {t.signOutDiscard}
+              </Button>
+              <Button variant="secondary" onClick={() => close(false)}>
+                {t.back}
+              </Button>
+            </div>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
