@@ -123,6 +123,35 @@ only by them — they can only lie to themselves). What it **constrains**: any f
 as proof *toward a third party* (fiscal export, dispute, marketplace integration) would require server-side
 verification and would **reopen ADR-0008**.
 
+### Session 2026-07-13 (design round — owner decisions on the UX honesty surfaces)
+
+Raised by the `designer-ux` T001 handoff (`ux-history.md`) and decided by the owner. All four followed the
+recommendation.
+
+- **F1 — the seller CHOOSES the quoted basis at record time** (varejo pre-selected), and every surface **labels**
+  it. Rationale: a seller quoting a shopkeeper quoted **atacado** — forcing varejo would make the Histórico
+  record a number they never said to the customer, which is fatal in an epic whose promise is *"prove what you
+  charged"*. **This unblocks the backend `headline_basis` column** (data-model §7.1).
+- **F2 — the device-clock caveat appears as one muted line in the technical sheet** (never on the card): the
+  snapshot still **asserts** its date; it simply does not pretend the date was **verified** (FR-528).
+- **F3 — "Recalcular hoje" works OFFLINE**, re-resolving from the catalog **cache**, with an honest caption that
+  the values may be stale. Coherent with the decision to record offline. *(The spec had not answered this.)*
+- **F4 — the pending-durability sentence is shown, on the detail only**: *"Enquanto não sincroniza, ele existe só
+  aqui — se os dados do app forem limpos, ele se perde."* It is literally true (IndexedDB can be evicted under
+  storage pressure; ADR-0018 already concedes durability is *in practice*, not *in guarantee*) and it is the most
+  alarming sentence in the app — which is exactly why it earns its place, and why it stays off the card.
+
+**Two corrections from this round, recorded rather than absorbed:**
+
+- **The sign-out guard must cover BOTH entry points.** `signOutUser()` is called from `widgets/top-bar` **and**
+  `pages/conta` (verified). Guarding only one leaves a hole through which unsynced records vanish silently —
+  precisely what ADR-0018 §9 forbids. The guard therefore lives in the app-shell over a `requestSignOut()` seam,
+  not inside one widget.
+- **An error in the design handoff, flagged not accepted:** it claimed (95%) that **FR-014 bans the word
+  "Cancelar"**. It does not. FR-014 (spec 003) bans **stating undecided commercial facts** — *"no cancellation
+  policy"* means no subscription-cancellation **policy** may be asserted before E6, not that a dialog may not
+  have a *Cancelar* button. ADR-0018 §9 keeps `[Cancelar]`.
+
 ### Working defaults — status after `/speckit-clarify`
 
 The nine defaults carried the product-owner's recommendation (confidence in parentheses). Three were put to the

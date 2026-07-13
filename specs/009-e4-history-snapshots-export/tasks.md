@@ -76,7 +76,10 @@ the **export content rules**. **SC-512 in every PR**: all E1/E2/E3 guards pass U
       **NO foreign key to products/kits** (ADR-0019 §5: `SET NULL` would *write to the immutable row* and would
       make the product delete fail against the trigger); the `BEFORE UPDATE` **immutability trigger** (the
       project's first PL/pgSQL, owner-approved); the partial index `(owner_uid, device_quoted_at, id) WHERE
-      deleted_at IS NULL`. `uv run alembic upgrade head` green against the compose DB.
+      deleted_at IS NULL`; **`headline_basis`** — the seller **chooses the quoted basis at record time** (varejo
+      pre-selected) and every surface **labels** it (design round F1: a seller quoting a shopkeeper quoted
+      *atacado*; forcing varejo would record a number they never said to the customer). `uv run alembic upgrade
+      head` green against the compose DB.
 - [ ] T006 Implement `backend/app/api/history.py` per `contracts/api-surface.md`: `POST` (the ONLY writer of
       frozen fields — `INSERT … ON CONFLICT DO NOTHING` + read-back ⇒ a retry is an **idempotent success**, never
       a duplicate and never an error the outbox would misread as failure) · `GET` list (keyset pagination, never
@@ -118,8 +121,11 @@ quickstart §1 + §3 + §4.
 - [ ] T011 [US1] Sign-out with a **non-empty queue** (ADR-0018 §9): a blocking, honest dialog at the sign-out
       action — *"N registros ainda não sincronizados"* → **[Sincronizar agora]** (online only) · **[Sair e
       descartar]** (explicit destructive confirm) · **[Cancelar]**. Discard purges the outbox with the uid-keyed
-      sweep. Entries **never vanish silently** and **never leak into the next account**. Failing-first test, then
-      implement.
+      sweep. Entries **never vanish silently** and **never leak into the next account**.
+      ⚠️ **The guard MUST cover BOTH entry points** (design round C1, verified): `signOutUser()` is called from
+      `widgets/top-bar` **and** `pages/conta` — guarding one leaves a silent hole. FSD-Lite blocks the shortcut
+      (`shared` may not import `entities/history`), so: a `requestSignOut()` seam in `shared/session` + the guard
+      mounted in the **app shell**. Failing-first test (**both** entry points), then implement.
 
 ## Phase 4: US2 — consult the Histórico (list · open · offline read) (P1)
 

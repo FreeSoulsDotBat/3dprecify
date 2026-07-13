@@ -89,11 +89,14 @@ mints `clientSnapshotId = crypto.randomUUID()` at **record** time; the server de
    key. *(The E3 PR-C lesson — a correct component starved of correct data still lies — is answered
    structurally: no component may read the server query alone; the pending union IS the list.)*
 8. **Entitlement at sync (FR-529).** A 403 `ENTITLEMENT_REQUIRED` ⇒ the entry becomes **blocked**: retained in
-   the outbox, auto-retry stopped, rendered honestly ("não foi registrado — precisa de Premium ativo") with
-   **Tentar novamente** and **Descartar** (destructive, confirmed). On the next `active` entitlement, blocked
-   entries retry automatically. **Never silently discarded; never left claiming to be saved.** Recording is only
-   OFFERED when the **last-known server** entitlement was `active` (ADR-0015's nuance: a cached server response,
-   never a client-held flag).
+   the outbox, auto-retry stopped, rendered honestly with **Tentar novamente** and **Descartar** (destructive,
+   confirmed). On the next `active` entitlement, blocked entries retry automatically. **Never silently discarded;
+   never left claiming to be saved.** Recording is only OFFERED when the **last-known server** entitlement was
+   `active` (ADR-0015's nuance: a cached server response, never a client-held flag).
+   - **Copy (design round, 2026-07-13 — supersedes this ADR's first draft):** the badge is **"Envio pausado ·
+     precisa de Premium"**, tone **info, never danger**. *Paused* is already the product's calm vocabulary for a
+     lapse, and it is **literally true** — the retry resumes by itself when the entitlement returns. The earlier
+     draft copy ("não foi registrado") read as a permanent failure, which this state is not.
 9. **Sign-out with a non-empty queue.** A **blocking, honest guard** at the sign-out action: a dialog stating how
    many entries are unsynced, offering **[Sincronizar agora]** (online only) · **[Sair e descartar]** (explicit
    destructive confirm) · **[Cancelar]**. Discard purges the outbox key with the uid-keyed sweep. Entries never
@@ -101,6 +104,14 @@ mints `clientSnapshotId = crypto.randomUUID()` at **record** time; the server de
    zero data loss, but it contradicts the shipped purge-on-signout privacy guarantee: unsynced quotes with client
    names and prices left on a shared device); block-sign-out-until-drained (35% — offline, the user could never
    sign out); discard-with-a-toast (25% — that IS a silent drop, with a receipt).*
+   - **The guard MUST cover BOTH sign-out entry points** (design round, 2026-07-13 — verified): `signOutUser()`
+     is called from `widgets/top-bar` **and** `pages/conta`. Guarding one leaves a hole through which unsynced
+     records vanish silently — exactly what this section forbids. FSD-Lite also blocks the shortcut (`shared`
+     may not import `entities/history`), so the seam is a `requestSignOut()` in `shared/session` with the guard
+     mounted in the **app shell**, which reads the outbox, shows the dialog, purges, and only then calls the real
+     `signOutUser()`.
+   - *(`[Cancelar]` stands. The design round claimed FR-014 bans that word; it does not — FR-014 bans asserting
+     undecided commercial facts, i.e. no subscription-cancellation **policy** before E6.)*
 
 ## Consequences
 
