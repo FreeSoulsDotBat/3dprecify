@@ -14,7 +14,16 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       // Brand assets in public/ that the SW should precache for offline (FR-008).
-      includeAssets: ["favicon.svg", "icons/icon-192.png", "icons/icon-512.png"],
+      // The brand marks are precached (009/T016-N5): `Logo` renders them as `<img src="/brand/…">`,
+      // which the service worker never cached — so OFFLINE the top bar showed a broken-image icon
+      // and the alt text. A pre-existing app-shell gap, but it surfaces on the very screen E4 just
+      // won (the seller working offline at a feira), and it is the first thing they see there.
+      includeAssets: [
+        "favicon.svg",
+        "icons/icon-192.png",
+        "icons/icon-512.png",
+        "brand/logo/*.svg",
+      ],
       // SPA offline routing: serve the precached app shell for any navigation when
       // offline, so a reload (or deep link) still boots and the calculator runs.
       workbox: {

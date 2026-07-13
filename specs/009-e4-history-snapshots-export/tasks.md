@@ -158,7 +158,7 @@ quickstart §1 + §3 + §4.
 
 ## PR-A ship (STRICTLY ORDERED)
 
-- [ ] T016 [US1][US2][US5] Visual test: **qa-produto homologates the offline → sync → reopen walk** at 390px +
+- [x] T016 [US1][US2][US5] Visual test: **qa-produto homologates the offline → sync → reopen walk** at 390px +
       desktop (record offline → visibly pending → restart the app still offline → still pending → go online →
       syncs exactly once → reopen byte-identical), plus the blocked-on-lapse state, the sign-out-with-queue dialog,
       and the teaser. **This is the walk that matters in E4** — the honesty class of bug lives here.
@@ -188,6 +188,12 @@ here.** **Independent Test**: quickstart §2 + §7.
 - [ ] T019 [US3] Implement the snapshot detail surface: the **record date** + the **formula version** shown
       honestly (Q3/A29 — *this closes A29*, open since 2026-07-02); the "abrir origem" affordance resolved **at
       read time** and simply **absent** when the origin no longer resolves. Tests green.
+      ⚠️ **Carried from T016 (2026-07-13):** PR-A ships **no entry point that produces `provenance.kind = PRODUCT`**.
+      The calculator is not bound to a saved product (its pickers bind filament/printer, not products), so a
+      calculator snapshot is genuinely **ad-hoc** and `provenance: null` is the honest answer — but it means US3's
+      whole origin story is currently unreachable from a **product**. T019 therefore also has to add the record
+      action to `pages/catalogo/produto-page` (capturing `{kind: "PRODUCT", id, name}`); without it, SC-502 can only
+      be exercised through a **kit** line. Only kits carry provenance today.
 - [ ] T020 [US3] **"Recalcular hoje"** (FR-505, semantics settled in the plan round): a **new** snapshot (a POST
       with a new `clientSnapshotId`), never an update. It **re-resolves the origin** — repricing with **today's
       catalog values**, not merely the frozen inputs under a newer formula. **The test that pins it**: raise the

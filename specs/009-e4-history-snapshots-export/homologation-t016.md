@@ -268,3 +268,109 @@ está sólido o bastante para que valha a pena corrigir em vez de replanejar:
 Depois, **re-homologar exatamente a jornada 6→7** (gravar offline → reconectar → drenar → uma linha só no banco),
 que é a única que hoje não passa. Todo o resto — teaser, Q15, Sheet, detalhe congelado, duas prateleiras, guard
 de sign-out, blocked, lapse, idempotência — já está homologado e não precisa ser re-testado.
+
+---
+---
+
+# Re-verificação (correções B1/B2) — 2026-07-13
+
+> O relatório acima fica **intacto**: o FAIL é evidência, não vergonha. Esta seção é uma verificação
+> **focada** nos dois bloqueadores + o nit do banner. O que já passou não foi re-testado.
+
+- **Ambiente reconstruído:** front :4600 com **build novo** (`dist/` 12:27, posterior às fontes corrigidas, 12:25) ·
+  backend :8100 **reiniciado com CORS liberando `http://127.0.0.1:4600`** (verificado por preflight real:
+  `access-control-allow-origin: http://127.0.0.1:4600`) · Postgres `precifica3d_homolog` · Auth emulator :9099.
+- **O workaround `--disable-web-security` foi REMOVIDO.** Chromium roda com CORS normal, e **não houve nenhum
+  erro de CORS no console**. Este resultado é o CORS real. → **Risco R4 do relatório original: RESOLVIDO.**
+- **IndexedDB zerado** (perfil novo) + conta throwaway nova (`qa-t016-fix-…`, uid `rvdL4oQ7…`) + grant pelo CLI real.
+- 390px **e** 1280px em todas as telas.
+
+## VEREDICTO DA RE-VERIFICAÇÃO: **PASS-WITH-NITS**
+
+**Os dois bloqueadores estão corrigidos e verificados na jornada real.** Gravar offline funciona de ponta a
+ponta, a fila é durável, drena sozinha, e **nada se perde** na corrida que antes destruía um registro. Os nits
+remanescentes são cosméticos/escopo e nenhum deles mente para o vendedor.
+
+### B1 — gravar OFFLINE de verdade (`context.setOffline(true)`) · ✅ **CORRIGIDO**
+
+| Contrato | Resultado |
+|---|---|
+| `navigator.onLine === false` (offline **real**, não só API fora) | ✅ confirmado |
+| Botão existe e **não muda de rótulo** ("Salvar no histórico", botão e submit) | ✅ |
+| Toast **"Pendente neste dispositivo. Sincroniza sozinho quando houver conexão."** (tom info) | ✅ |
+| Nunca "salvo" / "guardado" | ✅ (0 ocorrências) |
+| Nunca "falhou" / "não foi possível" | ✅ (0 ocorrências) |
+| Sheet **fecha** (a gravação de fato aconteceu) | ✅ |
+| **IndexedDB tem o body COMPLETO** | ✅ `{id, state:"pending", label, total:"42.98", basis:"PRECO_VAREJO", kind:"SINGLE", deviceQuotedAt, payload:[schemaVersion, kind, modelVersion, inputs, breakdown, totals, channels, provenance]}` |
+| Aparece na lista com badge **"Pendente neste dispositivo"** e **os próprios valores** | ✅ "Feira offline A · Cotado em 13/07/2026 · Peça única · Valor cotado R$ 42,98 · preço de varejo" |
+| Banner de fila **offline sem** [Sincronizar agora] | ✅ "Sem conexão. 1 registro(s) pendente(s)…" · **0 botões** |
+| Detalhe do pendente abre **offline**, com badge | ✅ |
+| **Sobrevive a reload offline** | ✅ fila intacta (`["Feira offline A[pending]"]`) |
+| F1 guard | ✅ 0 ocorrências |
+
+**Reconexão (`setOffline(false)`)** → drena **sozinho** (sem clique): badge some, banner some, fila = `[]`.
+**Banco: UMA linha só**, com o `client_snapshot_id` **exatamente igual** ao cunhado offline no IDB
+(`61b2964b-fa0c-4114-9a16-ab9f88b3801a`).
+
+**Ciclo duro** (gravar offline → **reload** → reconectar): fila sobrevive ao reload (`["Ciclo duro B[pending]"]`),
+drena após reconectar, **1 linha** no banco (`5a0a245d-…`). **Zero duplicatas.**
+
+*Evidência:* `fix-01`…`fix-09`.
+
+### B2 — a corrida (o "pendente falso") · ✅ **CORRIGIDO**
+
+Repro **idêntico** ao que provou o bug: drain de A com **POST segurado 8s** e gravação de B **durante** o voo.
+
+```
+FASE 3 (B gravado com o POST de A em voo)
+  toast de B pendente? true
+  fila: [RACE-A fix(pending), RACE-B fix(pending)]
+
+FASE 4 — o drain de A conclui (o instante que ANTES apagava B)
+  fila DEPOIS: [RACE-B fix(pending)]      ← ANTES era []  ⇒  B era destruído
+```
+
+O drain removeu **apenas** a entrada que ele de fato resolveu (A, 2xx) e **preservou B**, que fora enfileirada
+depois da sua leitura. Liberado o servidor, ambas drenam.
+
+**Conservação (o teste do pendente falso):** IDs cunhados pelo app = `{1bc8670a (A), 1ec72b80 (B)}`;
+fila final = `[]`; banco = `{1bc8670a, 1ec72b80}`. **fila ∪ banco ⊇ todos os gravados. Nada sumiu.**
+
+**Variante "rajada"** (2 cotações offline + a 3ª gravada **em cima do drain** do evento `online`): os 3 IDs
+(`240c9294`, `74c8af6e`, `801b2dc7`) estão **todos** no banco, fila final `[]`.
+
+**Idempotência global da run:** `SELECT COUNT(*), COUNT(DISTINCT client_snapshot_id) FROM snapshots`
+⇒ **17 / 17**. Zero duplicatas em toda a re-verificação.
+
+*Evidência:* `fix-10`, `fix-11`, `fix-12`.
+
+### Nit do banner · ✅ **CORRIGIDO**
+
+| Situação | Esperado | Resultado |
+|---|---|---|
+| **Offline** | "Modo leitura offline" (calmo), linhas visíveis | ✅ banner calmo, **sem** tira de erro, linhas renderizando |
+| **Online + leitura falhando** | tira `danger` + **[Tentar novamente]**, linhas visíveis | ✅ "Não foi possível carregar seu histórico." + **[Tentar novamente]**; **7 cards ainda visíveis** (nenhum muro de erro sobre dado que o vendedor já tem); "Modo leitura offline" **corretamente ausente** |
+
+*Evidência:* `fix-13`/`fix-14` (offline) · `fix-15`/`fix-16` (erro online).
+
+## Achados remanescentes (nenhum bloqueia)
+
+| # | Sev | Achado |
+|---|-----|--------|
+| **N5** | Nit (novo, **pré-existente**, fora do E4) | **Offline, o logo da top-bar quebra** (aparece o `alt` "Precifica3D" e o ícone de imagem quebrada). Causa: `apps/web/vite.config.ts` → `includeAssets: ["favicon.svg", "icons/icon-192.png", "icons/icon-512.png"]` **não inclui** `brand/logo/*.svg`, e `logo.tsx:28` serve `/brand/logo/${file}` — grep no `dist/sw.js` confirma **nenhuma entrada `brand/logo`** no precache. Não é regressão das correções (o SW/logo não foi tocado), mas aparece **justamente na jornada offline que o E4 existe para servir**. Correção mínima: acrescentar `"brand/logo/*.svg"` a `includeAssets`. |
+| **N2** | Nit | "Mão de obra R$ 0,00" no detalhe — **não é zero fabricado** (o payload contém `"labor":"0.00"`; a calculadora ao vivo mostra a mesma linha). Mantido do relatório original. |
+| **N3** | Nit | Linhas ad-hoc de kit como "Cálculo avulso" (payload tem `name: null`). Mantido. |
+| **N4** | Info / escopo | Snapshots da calculadora congelam `provenance: null` mesmo com pré-preenchimento do catálogo (T018/T019 são **PR-B**). Mantido — vale confirmação do owner. |
+
+**Riscos R1/R2/R3/R4 do relatório original:** R1 (B2 piorar com B1) e R2 (duas abas) **fechados** — o
+`withOutboxLock` com `navigator.locks` cobre inter-abas e a seção crítica não contém rede. R3 (testes verdes não
+pegavam) **endereçado** pelos testes de regressão dos dois bloqueadores. R4 (CORS) **resolvido** no ambiente.
+
+## Recomendação
+
+**Liberado para merge.** Os dois bloqueadores foram corrigidos na causa-raiz certa (device-first write +
+single-flight sob lock, sem rede na seção crítica) e a jornada que define o épico — *o vendedor na feira, sem
+sinal, gravando uma cotação que sobrevive ao aparelho reiniciar e chega íntegra à conta quando o sinal volta* —
+**funciona de ponta a ponta, sem duplicar e sem perder nada**. O único item que eu levaria junto é o **N5**
+(uma linha no `vite.config.ts`), porque um logo quebrado é a primeira coisa que o vendedor vê exatamente na tela
+offline que o épico acabou de conquistar.
