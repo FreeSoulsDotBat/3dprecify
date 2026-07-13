@@ -65,6 +65,16 @@ export function useRecordSnapshot(): UseMutationResult<RecordOutcome, Error, Sna
   const uid = useSessionStore((s) => s.user?.uid);
 
   return useMutation<RecordOutcome, Error, SnapshotIn>({
+    // T016/B1 — the blocker the visual homologation found. TanStack's DEFAULT `networkMode:
+    // "online"` PAUSES a mutation while the browser reports offline: `mutationFn` never runs, so
+    // `enqueueSnapshot` never runs either. The seller tapped "Salvar" at the feira, nothing
+    // happened, and a reload lost the quote FOREVER. ADR-0018 explicitly rejected paused mutations
+    // as the sync strategy — and we inherited them anyway, by omission.
+    //
+    // Recording is a DEVICE-first write (ADR-0018 §1): it must reach IndexedDB whether or not there
+    // is a network, and the drain that follows is what deals with connectivity. `"always"` is
+    // therefore not a workaround, it is the actual semantics of this operation.
+    networkMode: "always",
     mutationFn: async (body: SnapshotIn) => {
       // The queue is uid-keyed; there is nowhere to put a record that has no account.
       if (!uid) throw new Error("cannot record without a signed-in account");
@@ -152,6 +162,10 @@ export function useHistory(): HistoryListState {
     enabled: status === "authenticated" && !!uid,
     retry: false,
     staleTime: 60_000,
+    // Offline, a PAUSED query would leave the page in a permanent "loading" limbo. Let it run and
+    // FAIL: the failure is what tells the surface it is serving the device cache (`stale`), which
+    // is the honest thing to say — the alternative is a spinner that never resolves.
+    networkMode: "always",
     queryFn: async () => {
       const res = await listHistoryApiV1HistoryGet();
       if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
@@ -189,6 +203,10 @@ export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
   const retryBlocked = opts.retryBlocked ?? false;
 
   const mutation = useMutation({
+    // Same reason as the record mutation: the drain reads and rewrites the DEVICE's queue, and it
+    // must run even when the browser says offline — that is when it classifies a lost response as
+    // `pending` instead of leaving the seller staring at a frozen button.
+    networkMode: "always",
     mutationFn: async () => {
       if (!uid) return;
       // Correctness does not rest on avoiding a concurrent drain: the DB's unique key is what makes

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -62,6 +62,9 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => {
   vi.clearAllMocks();
   idbStore.clear();
+  // A paused mutation never settles, so a failing offline test would otherwise leave the online
+  // manager off and poison every test after it.
+  onlineManager.setOnline(true);
   useSessionStore.setState({ status: "authenticated", user: { uid: "u1" } as never });
 });
 
@@ -123,6 +126,35 @@ describe("useRecordSnapshot — durable first, then send", () => {
 
     await expect(result.current.mutateAsync(BODY)).rejects.toThrow();
   });
+});
+
+describe("OFFLINE (T016/B1 regression — the blocker the visual homologation found)", () => {
+  it("records while `navigator.onLine === false` — the whole point of the queue", async () => {
+    // TanStack Query's DEFAULT `networkMode: "online"` PAUSES a mutation when the browser reports
+    // offline: `mutationFn` never runs. Which means `enqueueSnapshot` never runs either — so
+    // offline, the seller tapped "Salvar", nothing happened, and a reload lost the quote FOREVER.
+    //
+    // The durability this feature exists for is DEVICE-first (ADR-0018 §1): the record must reach
+    // IndexedDB whether or not there is a network. Waiting for connectivity to even *try* is the
+    // one behaviour the outbox was built to replace — and ADR-0018 explicitly REJECTED the paused-
+    // mutation option, which we then inherited by omission.
+    onlineManager.setOnline(false);
+    postSnapshot.mockRejectedValue({ status: 0 });
+    const { result } = renderHook(() => useRecordSnapshot(), { wrapper });
+
+    try {
+      // With the default network mode this promise never settles — the mutation is PAUSED, so the
+      // assertion below times out rather than failing loudly. That timeout IS the bug.
+      const outcome = await result.current.mutateAsync(BODY);
+
+      expect(outcome.syncState).toBe("pending");
+      const queued = await listOutbox("u1");
+      expect(queued).toHaveLength(1);
+      expect(queued[0]?.body).toEqual(BODY);
+    } finally {
+      onlineManager.setOnline(true);
+    }
+  }, 3000);
 });
 
 describe("the drain is idempotent by construction", () => {

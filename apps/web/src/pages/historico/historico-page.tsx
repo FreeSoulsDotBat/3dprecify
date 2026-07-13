@@ -101,11 +101,26 @@ function HistoryLedger() {
           Premium (FR-517). */}
       {entitlement.data?.status === "lapsed" && <Alert tone="info">{t.lapsedBanner}</Alert>}
 
-      {history.stale && (
-        <Alert tone="info" title={t.offlineTitle}>
-          {t.offlineBody}
-        </Alert>
-      )}
+      {/* Serving the device cache. WHY it is serving it changes what is honest to say: offline is a
+          calm, expected state; a failed read while ONLINE is something the seller can retry. Saying
+          "Modo leitura offline" to someone who is plainly online would be a small, needless lie
+          (T016 nit). Either way the rows below still render — never an error wall over data the
+          seller already holds. */}
+      {history.stale &&
+        (online ? (
+          <Alert tone="danger">
+            <span className="tf-historico__banner">
+              {t.loadError}
+              <Button size="sm" variant="secondary" onClick={history.refetch}>
+                {t.retry}
+              </Button>
+            </span>
+          </Alert>
+        ) : (
+          <Alert tone="info" title={t.offlineTitle}>
+            {t.offlineBody}
+          </Alert>
+        ))}
 
       {queued.length > 0 && (
         <QueueBanner queued={queued} online={online} syncing={syncing} onSync={sync} />

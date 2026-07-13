@@ -189,6 +189,44 @@ describe("draining: exactly-once, and honest about every failure mode", () => {
   });
 });
 
+describe("T016/B2 regression — a drain must never DESTROY a record queued while it runs", () => {
+  it("keeps a snapshot enqueued mid-flight — a false 'pendente' is the worst lie this epic can tell", async () => {
+    // The bug the visual homologation caught: `drainOutbox` read the queue, posted (slow), then
+    // wrote back `remaining` — computed from the list it read BEFORE the network round-trip. Any
+    // record enqueued in that window was simply not in `remaining`, so the write-back ERASED it.
+    //
+    // The database's unique key does not save us here: it prevents DUPLICATES, not a record that is
+    // never POSTed at all. And the app had already told the seller "Pendente neste dispositivo" —
+    // over a record that no longer existed anywhere. Fixing the offline blocker (B1) makes this
+    // MORE likely, not less: reconnection is exactly when a drain and a fresh record collide.
+    const store: OutboxEntry[][] = [[entry({ clientSnapshotId: "a" })]];
+    idbGet.mockImplementation(() => Promise.resolve(store[0]));
+    idbSet.mockImplementation((_k: string, v: OutboxEntry[]) => {
+      store[0] = v;
+      return Promise.resolve();
+    });
+
+    // The POST for "a" is in flight when the seller records "b".
+    let releasePost!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releasePost = resolve;
+    });
+    const post = vi.fn(async () => {
+      await inFlight;
+      return { id: "s-a" } as never;
+    });
+
+    const draining = drainOutbox("u1", { post });
+    await enqueueSnapshot("u1", { ...BODY, clientSnapshotId: "b" });
+    releasePost();
+    await draining;
+
+    // "a" reached the server and left. "b" is still queued — it was NEVER sent, so it must still be
+    // here. Losing it would mean the seller's quote vanished while the UI said it was pending.
+    expect(store[0].map((e) => e.clientSnapshotId)).toEqual(["b"]);
+  });
+});
+
 describe("mergeHistory — the list IS the union (the E3 PR-C lesson, answered structurally)", () => {
   const server = [
     {

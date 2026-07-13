@@ -75,29 +75,92 @@ async function writeOutbox(uid: string, entries: OutboxEntry[]): Promise<void> {
   await set(historyOutboxKey(uid), entries);
 }
 
+// EVERY read-modify-write of the queue runs under this lock (ADR-0018 §6).
+//
+// This is not defensive plumbing — it fixes a real record-destroying bug the T016 visual
+// homologation caught. The drain used to read the queue, POST (slow), then write back the list it
+// had computed BEFORE the round-trip. Anything the seller recorded in that window was not in that
+// list, so the write-back ERASED it — while the UI had already said "Pendente neste dispositivo".
+// A false pending is the worst lie this feature can tell, and the DB's unique key cannot catch it:
+// that key prevents DUPLICATES, not a record that is never POSTed at all.
+//
+// `navigator.locks` serializes across TABS; the promise chain serializes within one tab and covers
+// browsers (and jsdom) where the Web Locks API is absent. The critical section stays SHORT — no
+// network call ever happens inside it.
+let tabChain: Promise<unknown> = Promise.resolve();
+
+async function withOutboxLock<T>(uid: string, fn: () => Promise<T>): Promise<T> {
+  const locks = (navigator as { locks?: LockManager }).locks;
+  const run = async (): Promise<T> =>
+    locks ? ((await locks.request(historyOutboxKey(uid), fn)) as T) : fn();
+  const next: Promise<T> = tabChain.then(run, run);
+  tabChain = next.then(
+    () => undefined,
+    () => undefined,
+  );
+  return next;
+}
+
 /**
  * Queue a snapshot. **Throws** if the device cannot store it — the record action has to be able to
  * tell the seller it did NOT queue, rather than show "pendente" over nothing.
  */
 export async function enqueueSnapshot(uid: string, body: SnapshotIn): Promise<OutboxEntry> {
-  const existing = await listOutbox(uid);
   const entry: OutboxEntry = {
     clientSnapshotId: String(body.clientSnapshotId),
     body,
     syncState: "pending",
     attempts: 0,
   };
-  await writeOutbox(uid, [
-    ...existing.filter((e) => e.clientSnapshotId !== entry.clientSnapshotId),
-    entry,
-  ]);
+  await withOutboxLock(uid, async () => {
+    const existing = await listOutbox(uid);
+    await writeOutbox(uid, [
+      ...existing.filter((e) => e.clientSnapshotId !== entry.clientSnapshotId),
+      entry,
+    ]);
+  });
   return entry;
+}
+
+/** Drop ONE entry, re-reading the queue inside the lock so a concurrent enqueue survives. */
+async function removeEntry(uid: string, clientSnapshotId: string): Promise<void> {
+  try {
+    await withOutboxLock(uid, async () => {
+      const current = await listOutbox(uid);
+      await writeOutbox(
+        uid,
+        current.filter((e) => e.clientSnapshotId !== clientSnapshotId),
+      );
+    });
+  } catch {
+    // The entry is already on the server; a failed write-back only means it will be replayed, and
+    // the replay is idempotent. Never surface this as a recording failure.
+  }
+}
+
+/** Update ONE entry in place, same re-read-inside-the-lock discipline. */
+async function updateEntry(
+  uid: string,
+  clientSnapshotId: string,
+  patch: (entry: OutboxEntry) => OutboxEntry,
+): Promise<void> {
+  try {
+    await withOutboxLock(uid, async () => {
+      const current = await listOutbox(uid);
+      await writeOutbox(
+        uid,
+        current.map((e) => (e.clientSnapshotId === clientSnapshotId ? patch(e) : e)),
+      );
+    });
+  } catch {
+    // The entry keeps its previous state and is retried later — never dropped.
+  }
 }
 
 /** Part of the sign-out privacy sweep — the queue never leaks into the next account. */
 export async function purgeOutbox(uid: string): Promise<void> {
   try {
-    await del(historyOutboxKey(uid));
+    await withOutboxLock(uid, () => del(historyOutboxKey(uid)));
   } catch {
     /* a failed purge must never crash the sign-out flow */
   }
@@ -113,19 +176,21 @@ export interface DrainDeps {
 /**
  * Drain the queue. Entries are INDEPENDENT — a failing entry never blocks the ones behind it.
  *
- * Correctness does not rest on this function: the DB's unique key is what makes a retry idempotent.
- * A caller may therefore drain from several triggers (boot, `online`, focus, post-sign-in) and even
- * from two tabs without risking a duplicate; a Web Lock around the call only avoids wasted requests.
+ * Each entry is settled ON ITS OWN, under the lock, against the queue as it stands AT THAT MOMENT.
+ * The earlier shape — read the whole list, post, write the list back — destroyed any record queued
+ * during the round-trip (T016/B2): it wrote a list computed before the seller had even tapped Save.
+ *
+ * Correctness of the SEND does not rest on this function either: the DB's unique key is what makes a
+ * retry idempotent. A caller may drain from several triggers (boot, `online`, focus, post-sign-in)
+ * and even from two tabs without risking a duplicate.
  */
 export async function drainOutbox(uid: string, deps: DrainDeps): Promise<void> {
   const entries = await listOutbox(uid);
-  const remaining: OutboxEntry[] = [];
 
   for (const entry of entries) {
     // A permanent rejection is never auto-retried; a blocked entry waits for the seller (or for
-    // premium to come back).
+    // premium to come back). Untouched — not rewritten, not reordered.
     if (entry.syncState === "failed" || (entry.syncState === "blocked" && !deps.retryBlocked)) {
-      remaining.push(entry);
       continue;
     }
 
@@ -133,24 +198,33 @@ export async function drainOutbox(uid: string, deps: DrainDeps): Promise<void> {
       await deps.post(entry.body);
       // Accepted — 201 (created) or 200 (the server returned the row it already had). Identical to
       // the client: the record is on the server, so the queue entry has done its job.
+      await removeEntry(uid, entry.clientSnapshotId);
     } catch (error) {
       const status = (error as { status?: number }).status ?? 0;
-      const attempts = entry.attempts + 1;
 
-      if (status === 404) continue; // deleted elsewhere by the seller — drop quietly (§5)
-
-      if (status === 403) {
-        remaining.push({ ...entry, syncState: "blocked", attempts, lastStatus: status });
-      } else if (status === 422) {
-        remaining.push({ ...entry, syncState: "failed", attempts, lastStatus: status });
-      } else {
-        // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
-        remaining.push({ ...entry, syncState: "pending", attempts, lastStatus: status });
+      // Deleted elsewhere by the seller — drop quietly (§5). Resurrecting it would be the one
+      // outcome nobody could defend.
+      if (status === 404) {
+        await removeEntry(uid, entry.clientSnapshotId);
+        continue;
       }
+
+      const syncState: OutboxEntry["syncState"] =
+        status === 403
+          ? "blocked"
+          : status === 422
+            ? "failed"
+            : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
+              "pending";
+
+      await updateEntry(uid, entry.clientSnapshotId, (current) => ({
+        ...current,
+        syncState,
+        attempts: current.attempts + 1,
+        lastStatus: status,
+      }));
     }
   }
-
-  await writeOutbox(uid, remaining);
 }
 
 /** One row of the Histórico, whether it lives on the server or is still on this device. */

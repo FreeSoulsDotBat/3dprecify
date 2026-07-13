@@ -191,12 +191,24 @@ describe("states", () => {
     expect(screen.getByRole("button", { name: t.retry })).toBeInTheDocument();
   });
 
-  it("never an error wall OVER data the seller already holds — the rows render, the strip warns", () => {
+  it("never an error wall OVER data the seller already holds — the rows render, a strip warns", () => {
     useHistoryMock.mockReturnValue(listState({ items: [item()], stale: true }));
     render(<HistoricoPage />);
 
-    expect(screen.getByText("R$ 275,00")).toBeInTheDocument(); // the rows are there
-    expect(screen.getByText(t.offlineTitle)).toBeInTheDocument(); // and it says they may be old
+    expect(screen.getByText("R$ 275,00")).toBeInTheDocument(); // the rows are there…
+    expect(screen.getByText(t.loadError)).toBeInTheDocument(); // …and the failure is stated
+    expect(screen.getByRole("button", { name: t.retry })).toBeInTheDocument();
+  });
+
+  it("offline: the SAME stale data gets the calm offline wording, not an error", () => {
+    // Telling someone who is plainly online "Modo leitura offline" is a small, needless lie — and
+    // telling someone offline that their read "failed" is another. Same state, two honest readings.
+    Object.defineProperty(window.navigator, "onLine", { value: false, configurable: true });
+    useHistoryMock.mockReturnValue(listState({ items: [item()], stale: true }));
+    render(<HistoricoPage />);
+
+    expect(screen.getByText(t.offlineTitle)).toBeInTheDocument();
+    expect(screen.queryByText(t.loadError)).not.toBeInTheDocument();
   });
 
   it("lapsed: the ledger stays readable — nothing is deleted by a lapse", () => {
