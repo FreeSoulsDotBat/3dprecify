@@ -71,5 +71,5 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/008-e3-multi-piece-bom/plan.md
+at specs/009-e4-history-snapshots-export/plan.md
 <!-- SPECKIT END -->
