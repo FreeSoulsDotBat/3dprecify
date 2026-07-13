@@ -173,6 +173,20 @@ Found while implementing T010/T011 and put to the owner rather than absorbed.
     its calm *"não foi possível reconferir"* line. **FR-529 amended accordingly** (the entitlement the record
     action reads may be the persisted last-known answer). → `docs/adr/0018-offline-snapshot-outbox.md` §9 addendum.
 
+- **Q15 — the record button does NOT exist on the free calculator.** **Decided: keep the free calculator literally
+  untouched** (the design handoff, ux §4.1, was overruled here — recorded, not absorbed).
+  - *The conflict:* ux §4.1 put `[ Salvar no histórico ]` under the calculator results for **everyone**, with the
+    teaser intercepting free sellers. But **SC-109 (spec 005, shipped and e2e-pinned)** asserts that *no*
+    save/export/history/paywall **button** ever appears on the free calculator — *"the freemium note is an honest
+    statement, not a CTA"* — and **SC-507/512 of this very spec** promise the free calculator stays **intact**.
+    Both could not hold.
+  - *Decision:* without an **active** premium the button is **absent** — not disabled, not a teaser trigger. A
+    seller who came to price a piece is **never sold to mid-task**. The honest door is the **Histórico tab**
+    (US5/T014-T015), where someone is actually asking about history. SC-109 needs **no amendment**.
+  - *Accepted cost:* less conversion pressure at the moment of value. (Noted: E2 already placed a premium
+    affordance on that page — the *"Usar item do catálogo"* teaser button — so the page is not pristine; the
+    owner's line is specifically about **save/export**, the affordances SC-109 names.)
+
 ### Working defaults — status after `/speckit-clarify`
 
 The nine defaults carried the product-owner's recommendation (confidence in parentheses). Three were put to the

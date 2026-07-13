@@ -139,10 +139,10 @@ quickstart §1 + §3 + §4.
 
 **Goal**: the ledger, readable offline, purged on sign-out. **Independent Test**: quickstart §1 + §2 (read half).
 
-- [ ] T012 [US2] Write FAILING tests first — list newest-first with **a date on every card** (never a live-looking
+- [x] T012 [US2] Write FAILING tests first — list newest-first with **a date on every card** (never a live-looking
       price, FR-523); the detail renders the **stored** breakdown with **zero recomputation** (SC-501); offline
       read from cache; purge-on-signout; cross-account invisibility (no existence oracle). Observe failing.
-- [ ] T013 [US2] Implement `apps/web/src/pages/historico/` — **fills the existing honest "em breve" placeholder;
+- [x] T013 [US2] Implement `apps/web/src/pages/historico/` — **fills the existing honest "em breve" placeholder;
       the IA does not change and NO new nav tab is added** (FR-524). The list reads the **merged selector only**
       (never the server query alone). "history" joins the cache-resource sweep. Tests green.
 
@@ -150,11 +150,11 @@ quickstart §1 + §3 + §4.
 
 **Goal**: an honest door for everyone else. **Independent Test**: quickstart §8.
 
-- [ ] T014 [US5] Write FAILING tests first — the Histórico tab, signed-out/free, **explains** (never a broken
+- [x] T014 [US5] Write FAILING tests first — the Histórico tab, signed-out/free, **explains** (never a broken
       list, never a **fabricated sample entry**); "salvar no histórico" / "exportar" → the honest teaser (no fake
       "salvo!", no price, no availability date, no pre-E6 purchase CTA); the free calculator stays fully usable
       (SC-507/512). Observe failing.
-- [ ] T015 [US5] Implement the history teaser (reuse the E2/E3 `premium-teaser` pattern). Tests green.
+- [x] T015 [US5] Implement the history teaser (reuse the E2/E3 `premium-teaser` pattern). Tests green.
 
 ## PR-A ship (STRICTLY ORDERED)
 

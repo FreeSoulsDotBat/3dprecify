@@ -1,6 +1,7 @@
 import { Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { OutboxSyncer } from "@/features/history/outbox-syncer";
 import { SignOutOutboxGuard } from "@/features/history/sign-out-outbox-guard";
 import { AppNav } from "@/widgets/app-nav/app-nav";
 import { OfflineBanner } from "@/widgets/offline-banner/offline-banner";
@@ -68,6 +69,10 @@ export function AppShell() {
           queue, and because guarding one of the two call sites would leave the other silently
           destroying unsynced records. */}
       <SignOutOutboxGuard />
+
+      {/* The queue drains itself on boot, on reconnect, and when Premium comes back (ADR-0018 §7) —
+          the app promises "sincroniza sozinho quando a conexão voltar", so it must. */}
+      <OutboxSyncer />
     </div>
   );
 }

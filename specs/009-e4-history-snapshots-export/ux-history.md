@@ -408,8 +408,15 @@ undermines the seller's own record for no benefit). **Owner decides.**
 
 ### 4.1 Entry points (no IA change — FR-524)
 
+> ⚠ **OVERRULED BY THE OWNER, 2026-07-13 (spec §Clarifications Q15).** The "Free/signed-out → teaser" half of the
+> first bullet is **not** what shipped: on the free calculator the record button is **absent**, not a teaser
+> trigger. It collided head-on with **SC-109 (spec 005, shipped + e2e-pinned)** — *no save/export/paywall button
+> ever appears on the free calculator* — and with this spec's own SC-507/512. The honest door is the **Histórico
+> tab** (§7). Everything else in this section stands.
+
 - **Calcular** (single piece): a `[ Salvar no histórico ]` `Button` **below the results block**, beside/under the
-  existing `freemiumNote`. Free/signed-out → teaser (§7). *(The E1 free calculator is otherwise untouched.)*
+  existing `freemiumNote`. ~~Free/signed-out → teaser (§7).~~ **Premium-only (owner, 2026-07-13).** *(The E1 free
+  calculator is otherwise untouched.)*
 - **Kits** (composer + a saved kit): the same button in/near the pinned assembly summary — the kit's frozen
   payload carries lines + the per-channel rollup from PR-A (Q2).
 - **No new nav tab. The Histórico tab already exists (FR-524).**

@@ -1,13 +1,29 @@
-import { useMutation, useQueryClient, type UseMutationResult } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+} from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 
 import {
   type SnapshotIn,
   type SnapshotOut,
+  listHistoryApiV1HistoryGet,
   recordSnapshotApiV1HistoryPost,
 } from "@/shared/api/generated";
 import { useSessionStore } from "@/shared/session/session-store";
 
-import { drainOutbox, enqueueSnapshot, listOutbox, type SyncState } from "./outbox";
+import { loadCachedSnapshots, persistCachedSnapshots } from "./history-cache";
+import {
+  drainOutbox,
+  enqueueSnapshot,
+  listOutbox,
+  mergeHistory,
+  type HistoryItem,
+  type OutboxEntry,
+  type SyncState,
+} from "./outbox";
 
 // 009/T010 (E4, PR-A) — RECORDING a snapshot.
 //
@@ -74,4 +90,116 @@ export function useRecordSnapshot(): UseMutationResult<RecordOutcome, Error, Sna
       void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
     },
   });
+}
+
+// ---------------------------------------------------------------------------------------------
+// 009/T013 — READING the Histórico.
+// ---------------------------------------------------------------------------------------------
+
+/** The read state the Histórico renders — the MERGED union plus honest load/stale/error flags. */
+export interface HistoryListState {
+  /** (server) ∪ (outbox), deduped on clientSnapshotId, server-wins, newest-first. */
+  items: HistoryItem[];
+  /** First online read in flight with nothing on the device yet. */
+  isLoading: boolean;
+  /** A COLD failure: the server refused AND there is nothing cached AND nothing queued. */
+  isError: boolean;
+  /** Serving the device cache because the online read failed — the honest "may be outdated". */
+  stale: boolean;
+  refetch: () => void;
+}
+
+/** The queue, as a query, so the list and the banner re-render when a drain moves it. */
+function useOutboxQuery(uid: string | undefined) {
+  return useQuery<OutboxEntry[]>({
+    queryKey: outboxQueryKey(uid),
+    enabled: !!uid,
+    queryFn: () => (uid ? listOutbox(uid) : Promise.resolve([])),
+    initialData: [],
+  });
+}
+
+/**
+ * THE LIST IS THE UNION — and this hook is the ONLY way to read it.
+ *
+ * No component may read the server query alone. That is not style: it is the structural answer to
+ * the E3 PR-C lesson (*a correct component starved of correct data still lies*), where a perfectly
+ * correct degraded-line component rendered a deleted product as live because it was handed a stale
+ * cache. A queued record that the list did not show would be worse still — the seller would believe
+ * the quote was never made.
+ */
+export function useHistory(): HistoryListState {
+  const status = useSessionStore((s) => s.status);
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  // Pre-fill from the uid-keyed device cache; reset whenever the uid changes, so account B never
+  // flashes account A's ledger.
+  const [cached, setCached] = useState<SnapshotOut[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setCached(null);
+    if (!uid) return;
+    void loadCachedSnapshots(uid).then((items) => {
+      if (!cancelled && items) setCached(items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
+  const query = useQuery({
+    queryKey: historyQueryKey(uid),
+    enabled: status === "authenticated" && !!uid,
+    retry: false,
+    staleTime: 60_000,
+    queryFn: async () => {
+      const res = await listHistoryApiV1HistoryGet();
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data.items;
+    },
+  });
+
+  const fetched = query.data;
+  useEffect(() => {
+    if (fetched && uid) void persistCachedSnapshots(uid, fetched);
+  }, [fetched, uid]);
+
+  const outbox = useOutboxQuery(uid).data ?? [];
+  const server = query.data ?? cached ?? [];
+  const items = mergeHistory(server, outbox);
+
+  // A queued record is data the seller HOLDS. An error wall over it would hide their own quote.
+  const hasLocal = cached !== null || outbox.length > 0;
+  return {
+    items,
+    isLoading: query.isFetching && query.data === undefined && !hasLocal,
+    isError: query.isError && !hasLocal,
+    stale: query.isError && query.data === undefined && hasLocal,
+    refetch: () => void query.refetch(),
+  };
+}
+
+/** Drain the queue on demand (the "Sincronizar agora" action, and the app's reconnect sweep). */
+export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
+  sync: () => void;
+  syncing: boolean;
+} {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+  const retryBlocked = opts.retryBlocked ?? false;
+
+  const mutation = useMutation({
+    mutationFn: async () => {
+      if (!uid) return;
+      // Correctness does not rest on avoiding a concurrent drain: the DB's unique key is what makes
+      // a replay idempotent. A second drain can only waste a request, never duplicate a record.
+      await drainOutbox(uid, { post: postSnapshot, retryBlocked });
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: historyQueryKey(uid) });
+      void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
+    },
+  });
+
+  return { sync: () => mutation.mutate(), syncing: mutation.isPending };
 }

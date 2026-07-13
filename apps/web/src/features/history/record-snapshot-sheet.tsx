@@ -21,8 +21,6 @@ import {
   toast,
 } from "@/shared/ui";
 
-import { HistoryTeaserDialog } from "./history-teaser";
-
 import "./record-snapshot-sheet.css";
 
 // 009/T010 (E4, PR-A) — where a snapshot is born (US1/US2, FR-501/502/519/520).
@@ -64,15 +62,18 @@ export function RecordSnapshotButton({
   const { data } = useEntitlement();
   const entitled = data?.status === "active";
   const [open, setOpen] = useState(false);
-  const [teaser, setTeaser] = useState(false);
+
+  // Owner decision, 2026-07-13: without an ACTIVE premium the button does not exist — it is not a
+  // greyed-out affordance and not a teaser trigger. The free calculator stays LITERALLY untouched
+  // (SC-109 of spec 005, and SC-507/512 of this one), so a seller who came to price a piece is
+  // never sold to mid-task. The honest door lives on the Histórico tab, where someone is actually
+  // asking about history. `useEntitlement` is the SERVER's last word (persisted, T011b) — never a
+  // client-held flag, and never assumed on silence.
+  if (!entitled) return null;
 
   return (
     <>
-      <Button
-        variant="secondary"
-        disabled={disabled}
-        onClick={() => (entitled ? setOpen(true) : setTeaser(true))}
-      >
+      <Button variant="secondary" disabled={disabled} onClick={() => setOpen(true)}>
         <Icon name="save" size={18} />
         {t.saveAction}
       </Button>
@@ -85,8 +86,6 @@ export function RecordSnapshotButton({
           </SheetContent>
         )}
       </Sheet>
-
-      <HistoryTeaserDialog open={teaser} onOpenChange={setTeaser} />
     </>
   );
 }

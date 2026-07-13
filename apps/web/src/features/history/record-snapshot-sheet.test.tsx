@@ -193,37 +193,35 @@ describe("honest feedback — 'saved' is said only when it IS saved", () => {
 });
 
 describe("the gate is the SERVER's last word (Principle IV)", () => {
-  it("free: the button converts instead of recording — and queues NOTHING", async () => {
+  // Owner decision, 2026-07-13: without an ACTIVE premium the button does not EXIST. Not disabled,
+  // not a teaser trigger — absent. The free calculator is not a sales floor: SC-109 (spec 005) says
+  // no save/export/paywall affordance ever appears there, and this epic's own SC-507/512 promise the
+  // free calculator stays intact. The honest door is the Histórico tab, where a seller is actually
+  // asking about history. (This is the ONE place the design handoff was overruled — see spec §Clar.)
+  it("free: the button does not exist — the calculator is not a sales floor", () => {
     entitlement.data = { status: "none" };
-    const user = setup();
     renderButton();
 
-    await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
-
-    expect(await screen.findByText(messages.historico.teaserTitle)).toBeInTheDocument();
-    expect(screen.queryByText(messages.historico.saveSheetIntro)).not.toBeInTheDocument();
-    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: messages.historico.saveAction }),
+    ).not.toBeInTheDocument();
   });
 
-  it("lapsed: same — reading stays open, but recording needs an ACTIVE premium (FR-515 lineage)", async () => {
+  it("lapsed: same — recording needs an ACTIVE premium (reading stays open elsewhere, FR-517)", () => {
     entitlement.data = { status: "lapsed" };
-    const user = setup();
     renderButton();
 
-    await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
-
-    expect(await screen.findByText(messages.historico.teaserTitle)).toBeInTheDocument();
-    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: messages.historico.saveAction }),
+    ).not.toBeInTheDocument();
   });
 
-  it("unknown (no server answer yet): it does not FABRICATE premium", async () => {
+  it("unknown (no server answer at all): it does not FABRICATE premium", () => {
     entitlement.data = undefined;
-    const user = setup();
     renderButton();
 
-    await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
-
-    expect(await screen.findByText(messages.historico.teaserTitle)).toBeInTheDocument();
-    expect(mutateAsync).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("button", { name: messages.historico.saveAction }),
+    ).not.toBeInTheDocument();
   });
 });

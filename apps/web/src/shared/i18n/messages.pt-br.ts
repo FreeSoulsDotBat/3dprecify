@@ -467,8 +467,54 @@ export const messages = {
   // "salvo" só é dito quando o servidor confirmou; um envio ainda não sincronizado é "pendente
   // neste dispositivo" — nunca "falhou" (resposta perdida ≠ não gravado) e nunca "salvo".
   historico: {
-    emptyTitle: "Histórico em breve",
-    emptyBody: "Seus cálculos salvos vão aparecer aqui.",
+    // list + detail (T013)
+    title: "Histórico",
+    subtitle: "O que você cotou, com a data. Os valores ficam como estavam no dia.",
+    emptyTitle: "Nenhum registro ainda",
+    emptyBody:
+      "Calcule uma peça ou um kit e toque em “Salvar no histórico” para guardar o preço com a data.",
+    emptyAction: "Ir para a calculadora",
+    quotedAtCard: "Cotado em {data}",
+    quotedAtTime: "Cotado em {data} às {hora}",
+    quotedValue: "Valor cotado",
+    basisRetailCaption: "preço de varejo",
+    basisWholesaleCaption: "preço de atacado",
+    kindSingle: "Peça única",
+    kindKit: "Kit · {n} peças",
+    adhocFallback: "Cálculo avulso",
+    loadError: "Não foi possível carregar seu histórico.",
+    retry: "Tentar novamente",
+    notFound: "Registro não encontrado.",
+    backToList: "Voltar",
+    // detail
+    frozenCaption: "Valores congelados em {data}",
+    validityLine: "Validade da proposta: {n} dias",
+    kitPieces: "Peças do kit",
+    breakdown: "Detalhamento",
+    channels: "Preços por canal",
+    techTitle: "Ficha técnica",
+    modelVersionLine: "Calculado com a fórmula versão {versao}",
+    originLine: "Registro criado a partir de: {nome}",
+    frozenExplainer:
+      "Este registro guarda os valores como foram calculados naquele dia. Ele não muda quando você edita o catálogo nem quando a fórmula do app é atualizada.",
+    deviceClockNote: "Data registrada pelo seu aparelho no momento da cotação.",
+    // queue banner (§2.2)
+    queuePending: "{n} registro(s) pendente(s) neste dispositivo.",
+    queuePendingOffline:
+      "Sem conexão. {n} registro(s) pendente(s) neste dispositivo — sincronizam sozinhos quando você voltar a ficar online.",
+    queueBlocked: "{n} registro(s) não foram enviados: o Premium não está ativo.",
+    queueFailed: "{n} registro(s) não puderam ser registrados.",
+    syncNow: "Sincronizar agora",
+    // per-card sync badges (§1)
+    syncPendingBadge: "Pendente neste dispositivo",
+    syncBlockedBadge: "Envio pausado · precisa de Premium",
+    syncFailedBadge: "Não foi possível registrar",
+    // offline / lapsed (same family as E2/E3)
+    offlineTitle: "Modo leitura offline",
+    offlineBody:
+      "Seus registros continuam aqui. Novos registros ficam pendentes neste dispositivo até você voltar a ficar online.",
+    lapsedBanner:
+      "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
     // record (T010)
     saveAction: "Salvar no histórico",
     saveSheetTitle: "Salvar no histórico",
@@ -506,7 +552,9 @@ export const messages = {
     // teaser (US5 lineage — E2 US7 / E3 US5). Honest: no price, no date (FR-014).
     teaserTitle: "O histórico faz parte do Premium",
     teaserBody:
-      "Com o Premium você guarda cada cotação com a data e a versão da fórmula — e prova depois o que cobrou. A calculadora continua sua, de graça.",
+      "Com o Premium, cada cotação fica guardada com a data e a versão da fórmula — para você provar depois o que cobrou, mesmo que o catálogo mude.",
+    teaserFreeNote: "A calculadora continua grátis e sem limite.",
+    teaserSignedOutBody: "Entre na sua conta para guardar suas cotações.",
   },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).

@@ -13,6 +13,7 @@ import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { ContaPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
 import { HistoricoPage } from "@/pages/historico/historico-page";
+import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
 import { PrivacidadePage } from "@/pages/privacidade/privacidade-page";
 import { SignInPage } from "@/pages/sign-in/sign-in-page";
@@ -125,11 +126,31 @@ const bomRoute = createRoute({
   component: BomPage,
 });
 
+// 009/US5: /historico joins /catalogo and /kits as PUBLIC — a signed-out seller must SEE the honest
+// teaser on the tab, never a bounce to sign-in. The ledger itself gates IN-PAGE on the authoritative
+// entitlement (server-informed, never a local flag), and the server gates every read and write
+// regardless (GC-5, Principle IV). The DETAIL route below stays guarded: there is nothing to teach a
+// signed-out visitor at a snapshot's URL, and it addresses one specific record.
 const historicoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
   component: HistoricoPage,
+});
+
+// 009/T013 — the frozen detail. The URL key is the **clientSnapshotId**, not the server id: it is
+// minted on the device at record time and is the only id a still-unsynced record HAS. Keying on the
+// server id would make a pending quote unopenable — and it is stable across the sync, so a link
+// taken while pending keeps working afterwards.
+function SnapshotDetailRouteComponent() {
+  const { snapshotId } = snapshotDetailRoute.useParams();
+  return <SnapshotDetailPage snapshotId={snapshotId} />;
+}
+
+const snapshotDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/historico/$snapshotId",
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  component: SnapshotDetailRouteComponent,
 });
 
 const contaRoute = createRoute({
@@ -172,6 +193,7 @@ export const routeTree = rootRoute.addChildren([
   produtoEditRoute,
   bomRoute,
   historicoRoute,
+  snapshotDetailRoute,
   contaRoute,
   signInRoute,
   privacidadeRoute,

@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from "react";
 
 import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
+import { purgeHistoryCache } from "@/entities/history/history-cache";
 import { purgeOutbox } from "@/entities/history/outbox";
 import { HISTORY_QUERY_ROOT } from "@/entities/history/use-history";
 import { purgeEntitlementCache } from "@/entities/user/entitlement-cache";
@@ -48,6 +49,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           void purgeCatalogCache(prev.user.uid);
           void purgeBomCache(prev.user.uid);
           void purgeOutbox(prev.user.uid);
+          void purgeHistoryCache(prev.user.uid);
           void purgeEntitlementCache(prev.user.uid);
         }
       }
