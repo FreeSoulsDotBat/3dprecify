@@ -90,6 +90,11 @@ function PlanSection() {
   } else {
     badge = <Badge tone="neutral">{t.planFree}</Badge>;
   }
+  // 009/T011b — the plan shown is the server's LAST answer, not a fresh one (offline). Saying so is
+  // the price of using it: the badge is honest about the plan AND about how it knows.
+  if (q.stale) {
+    caption = [caption, t.planStale].filter(Boolean).join(" · ");
+  }
 
   return (
     <Card className="tf-conta__row tf-conta__row--plan">

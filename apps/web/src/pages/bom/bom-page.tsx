@@ -133,7 +133,7 @@ export function BomPage() {
   if (entitlement.data.status === "none") return <BomGatePanel signedOut={false} />;
   return (
     <BomComposer
-      staleEntitlement={entitlement.isError}
+      staleEntitlement={entitlement.stale}
       lapsed={entitlement.data.status === "lapsed"}
     />
   );

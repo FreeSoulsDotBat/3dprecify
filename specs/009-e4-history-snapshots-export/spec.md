@@ -152,6 +152,27 @@ recommendation.
   policy"* means no subscription-cancellation **policy** may be asserted before E6, not that a dialog may not
   have a *Cancelar* button. ADR-0018 §10 keeps `[Cancelar]`.
 
+### Session 2026-07-13 (implementation round — the offline cold-boot gap)
+
+Found while implementing T010/T011 and put to the owner rather than absorbed.
+
+- **Q14 — the last-known SERVER entitlement is now PERSISTED** (uid-keyed IndexedDB, purged on sign-out), so it
+  survives a cold boot. **Decided: persist it.**
+  - *The gap:* ADR-0018 §9 offers recording on the **last-known server** entitlement — *"a cached server response,
+    never a client-held flag"*. That cache was React Query's **in-memory** one, which is **empty on a cold boot**.
+    A premium seller opening the app **already offline** — the feira the outbox exists for — therefore had no
+    server answer at all, met the free teaser, and **could not reach the offline queue in the one scenario it was
+    built for**. The outbox was unreachable exactly when it mattered.
+  - *Why this does not move the gate (Principle IV / ADR-0015 §nuance):* the stored value is the **server's own
+    last word**, not a client-held flag; the store can only **echo** what the server said (a corrupt or forged
+    shape resolves to *no answer*, never to premium); and the server still decides where it counts — a write
+    attempted on a stale `active` is refused at sync with a `403` and its record becomes **blocked**: retained and
+    visible, never silently accepted.
+  - *Consequence, accepted:* a plan shown from the device cache is **labelled as not fresh** (`stale`) on every
+    surface that reads it — the Conta badge gains *"última informação do servidor"*, and the kits composer keeps
+    its calm *"não foi possível reconferir"* line. **FR-529 amended accordingly** (the entitlement the record
+    action reads may be the persisted last-known answer). → `docs/adr/0018-offline-snapshot-outbox.md` §9 addendum.
+
 ### Working defaults — status after `/speckit-clarify`
 
 The nine defaults carried the product-owner's recommendation (confidence in parentheses). Three were put to the
@@ -490,6 +511,10 @@ unambiguous labels and dates, and the frozen entry remains unmodified.
   whose sync is denied (free/lapsed caller) MUST fail **honestly and visibly** — never silently dropped, never
   left claiming to be saved. *(A client offline cannot verify entitlement; the queue is a client convenience,
   the server remains the authority — Principle IV.)*
+  **Amended 2026-07-13 (Q14):** the entitlement the record action reads MAY be the **persisted last-known server
+  answer** (uid-keyed, purged on sign-out), so an offline cold boot can still record. It is the server's own last
+  word — never a client-held flag — it is **labelled as not fresh** wherever it is shown, and it changes nothing
+  above: the server still authorizes at sync, and a denial still lands as a visible `blocked` entry.
 
 ### Key Entities *(include if feature involves data)*
 

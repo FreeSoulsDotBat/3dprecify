@@ -5,6 +5,8 @@ import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
 import { purgeOutbox } from "@/entities/history/outbox";
 import { HISTORY_QUERY_ROOT } from "@/entities/history/use-history";
+import { purgeEntitlementCache } from "@/entities/user/entitlement-cache";
+import { ENTITLEMENT_QUERY_KEY } from "@/entities/user/use-entitlement";
 import { ME_QUERY_KEY } from "@/entities/user/use-identity";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Toaster } from "@/shared/ui";
@@ -39,10 +41,14 @@ export function AppProviders({ children }: { children: ReactNode }) {
         // by the time this runs, the seller has already been asked and has chosen. The purge
         // itself must therefore stay unconditional — it is the privacy guarantee.
         queryClient.removeQueries({ queryKey: HISTORY_QUERY_ROOT });
+        // The persisted plan (009/T011b) is swept too: a device shared by two accounts must never
+        // let one of them read — let alone act on — the other's premium.
+        queryClient.removeQueries({ queryKey: ENTITLEMENT_QUERY_KEY });
         if (prev.user?.uid) {
           void purgeCatalogCache(prev.user.uid);
           void purgeBomCache(prev.user.uid);
           void purgeOutbox(prev.user.uid);
+          void purgeEntitlementCache(prev.user.uid);
         }
       }
     });

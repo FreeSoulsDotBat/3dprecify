@@ -126,6 +126,14 @@ quickstart §1 + §3 + §4.
       `widgets/top-bar` **and** `pages/conta` — guarding one leaves a silent hole. FSD-Lite blocks the shortcut
       (`shared` may not import `entities/history`), so: a `requestSignOut()` seam in `shared/session` + the guard
       mounted in the **app shell**. Failing-first test (**both** entry points), then implement.
+- [x] T011b [US1] **Persist the last-known SERVER entitlement** (owner decision Q14, 2026-07-13 — found while
+      implementing T010/T011, spec §Clarifications + ADR-0018 §9 addendum). The in-memory cache is **empty on a
+      cold boot**, so a premium seller opening the app **already offline** met the free teaser and **could not
+      reach the outbox in the one scenario it exists for**. Failing-first tests, then:
+      `apps/web/src/entities/user/entitlement-cache.ts` (uid-keyed idb-keyval, strict shape guard — a corrupt or
+      forged value resolves to *no answer*, **never** to premium) + `use-entitlement.ts` pre-fill/persist +
+      the sign-out sweep. The gate does not move: the value is the **server's own last word**, it is **labelled
+      `stale`** wherever it is shown, and the server still refuses a write on a stale `active` (403 ⇒ `blocked`).
 
 ## Phase 4: US2 — consult the Histórico (list · open · offline read) (P1)
 

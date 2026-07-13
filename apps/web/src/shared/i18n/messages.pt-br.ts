@@ -238,6 +238,8 @@ export const messages = {
     planPremium: "Premium",
     planLapsed: "Premium expirado",
     planLapsedHint: "Seus itens salvos continuam disponíveis para leitura.",
+    // 009/T011b: o plano exibido é a ÚLTIMA resposta do servidor, guardada no aparelho (offline).
+    planStale: "última informação do servidor",
     planSources: {
       beta: "via programa beta",
       comp: "cortesia",

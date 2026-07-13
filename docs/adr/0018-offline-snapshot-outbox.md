@@ -104,6 +104,15 @@ mints `clientSnapshotId = crypto.randomUUID()` at **record** time; the server de
      precisa de Premium"**, tone **info, never danger**. *Paused* is already the product's calm vocabulary for a
      lapse, and it is **literally true** — the retry resumes by itself when the entitlement returns. The earlier
      draft copy ("não foi registrado") read as a permanent failure, which this state is not.
+   - **Addendum (implementation round, 2026-07-13 — owner decision Q14):** *"last-known server entitlement"* was
+     satisfied only by an **in-memory** cache, which is **empty on a cold boot** — so a premium seller opening the
+     app **already offline** got the free teaser and **could not reach this queue at all**, in the exact scenario
+     it was built for. The last server answer is therefore **PERSISTED** (uid-keyed IndexedDB, purged on sign-out:
+     `entities/user/entitlement-cache.ts`). This does not move the gate: the stored value is the **server's own
+     last word**, the store can only **echo** it (a corrupt or forged shape resolves to *no answer*, never to
+     premium), and the server still decides at sync — a write on a stale `active` is refused with a `403` and its
+     record becomes **blocked**. A plan served from the device is **labelled as not fresh** on every surface that
+     reads it (`stale`).
 10. **Sign-out with a non-empty queue.** A **blocking, honest guard** at the sign-out action: a dialog stating how
    many entries are unsynced, offering **[Sincronizar agora]** (online only) · **[Sair e descartar]** (explicit
    destructive confirm) · **[Cancelar]**. Discard purges the outbox key with the uid-keyed sweep. Entries never
