@@ -20,19 +20,27 @@ const emulatorEnv = {
 // Single source for the e2e DB URL (global-setup.ts recreates this database every run).
 export const E2E_DATABASE_URL = "postgresql+psycopg://precifica3d@localhost:5433/precifica3d_e2e";
 
+// The preview port is an ENVIRONMENT concern, not a product constant. 4173 stays the default (CI
+// and every existing script are untouched), but a Windows host running Docker/Hyper-V periodically
+// reserves whole port ranges for dynamic use — 4126–4225 among them — and a reserved port fails to
+// bind with EACCES before Playwright even starts. Overriding beats hard-coding a second magic
+// number: `E2E_PREVIEW_PORT=4600 pnpm e2e`.
+const PREVIEW_PORT = process.env.E2E_PREVIEW_PORT ?? "4173";
+const PREVIEW_URL = `http://localhost:${PREVIEW_PORT}`;
+
 export default defineConfig({
   testDir: "./tests/e2e",
   fullyParallel: true,
   reporter: "list",
   globalSetup: "./tests/e2e/global-setup.ts",
   use: {
-    baseURL: "http://localhost:4173",
+    baseURL: PREVIEW_URL,
     trace: "on-first-retry",
   },
   webServer: [
     {
-      command: "pnpm build && pnpm preview",
-      url: "http://localhost:4173",
+      command: `pnpm build && pnpm exec vite preview --port ${PREVIEW_PORT}`,
+      url: PREVIEW_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,
       env: emulatorEnv,
@@ -49,6 +57,12 @@ export default defineConfig({
         P3D_DATABASE_URL: E2E_DATABASE_URL,
         P3D_FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099",
         P3D_FIREBASE_PROJECT_ID: "demo-precifica3d",
+        // The preview's origin must be in the CORS allowlist, or EVERY API call from the app is
+        // blocked by the browser — and the failure is deeply indirect: the account is created
+        // just-in-time on the first authenticated request, so no request means no account, and the
+        // operator grant then fails with "no existing account matches …". The default allowlist
+        // only knows 5173/4173, so an overridden port MUST carry its origin with it.
+        P3D_CORS_ORIGINS: JSON.stringify([PREVIEW_URL, "http://localhost:4173"]),
       },
     },
   ],
