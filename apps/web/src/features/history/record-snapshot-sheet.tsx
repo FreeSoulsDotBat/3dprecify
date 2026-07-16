@@ -41,7 +41,9 @@ import "./record-snapshot-sheet.css";
 //
 // The gate is the SERVER's last word (Principle IV / ADR-0015 nuance): recording is offered on a
 // last-known server entitlement of `active` — a cached server answer, never a client-held flag.
-// Everyone else sees the button and meets the honest teaser; nothing is queued.
+// Owner decision Q15 (2026-07-13): without an active premium the button does NOT exist — it is not a
+// greyed affordance and not a teaser trigger (`RecordSnapshotButton` returns null). The free
+// calculator is not a sales floor (SC-109); the honest door lives on the Histórico tab (§7).
 
 const t = messages.historico;
 
@@ -96,8 +98,11 @@ const BASIS_LABEL: Record<SnapshotInHeadlineBasis, string> = {
 };
 
 function RecordForm({ source, onDone }: { source: RecordSource; onDone: () => void }) {
-  // Frozen ONCE, when the Sheet opened.
-  const payload = useMemo(() => source.freeze(), [source]);
+  // Frozen ONCE, when the Sheet opened. `useState(initializer)` runs the initializer exactly once at
+  // mount — and `RecordForm` mounts only while `open` — so a parent re-render that hands down a new
+  // `source` object can never re-capture the on-screen values (review PR-A, minor). `useMemo([source])`
+  // did re-freeze on that new identity, breaking the "freeze at open" invariant the test now pins.
+  const [payload] = useState(() => source.freeze());
   const quotedAt = useMemo(() => new Date(), []);
 
   const record = useRecordSnapshot();

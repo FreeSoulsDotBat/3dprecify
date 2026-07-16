@@ -235,26 +235,38 @@ backstop — E4 introduces no divergence).
 
 ## 3. The frozen document (`payload`, `payload_schema_version = 1`)
 
+The envelope is **FLAT** (I2 / Option A, owner-decided 2026-07-13): `catalogVersion`, `inputs`/`lines`,
+`breakdown`, `totals` and `channels` all sit at the **ROOT** — there is **no nested `result` wrapper**. This is
+the exact shape `entities/history/frozen-payload.ts` serialises (`FrozenSnapshotPayload`).
+
 ```jsonc
 {
-  "schemaVersion": 1,                       // int — mirrors the column
+  "schemaVersion": 1,                       // int — mirrors `payload_schema_version` (CHECK, §4)
   "kind": "SINGLE",                         // "SINGLE" | "KIT"  (bound to the column by CHECK)
   "modelVersion": "3.1.0",                  // PRICING_MODEL_VERSION (bound to the column by CHECK)
-  "catalogVersion": "2026-07-05" | null,    // fee-catalog provenance echoed by pricing-core (ADR-0010)
-  "provenance": {                           // D3 — PROVENANCE ONLY, no FK, may dangle
-    "kind": "PRODUCT" | "BOM" | "ADHOC",
-    "id":   "0192f0…" | null,               // captured id; never resolved for VALUES
-    "name": "Vaso G"  | null                // captured NAME — displays forever (US3-2)
+  "catalogVersion": "2026-07-05" | null,    // ROOT field — fee-catalog provenance echoed by pricing-core
+                                            //   (ADR-0010); null when every channel used manual fees
+  "provenance": {                           // D3 — PROVENANCE ONLY, no FK, may dangle; whole obj null = ad-hoc
+    "kind": "PRODUCT" | "KIT",
+    "id":   "0192f0…",                      // captured id; never resolved for VALUES
+    "name": "Vaso G"                        // captured NAME — displays forever (US3-2)
   },
-  "inputs": { /* SINGLE: the PriceInput exactly as submitted                                  */
-              /* KIT:    { "lines": [ { "quantity": 3,                                        */
-              /*                        "input": { …PriceInput… },                            */
-              /*                        "provenance": { "kind","id","name" } } ] }            */ },
-  "result": { /* SINGLE: PriceResult — material, energy, machine, falha, finishing, labor,    */
-              /*   admin, otherCosts[], custoTotal, precoVarejo, precoAtacado, channels[]     */
-              /* KIT:    BomResult   — lines[] (each: line: PriceResult, quantity, custoTotal,*/
-              /*   precoVarejo, precoAtacado), custoTotal, precoVarejo, precoAtacado,         */
-              /*   channels[] (the per-marketplace ROLLUP — Q2 requires it from PR-A)         */ }
+
+  // --- SINGLE only ---
+  "inputs":    { /* the fully-RESOLVED PriceInput (filament/printer values inlined); every numeric leaf
+                    a decimal STRING, RECURSIVELY (channel bands included, I1) */ },
+  "breakdown": { /* material?, energy?, machine?, falha?, finishing?, labor?, admin?, otherCosts[]  */ },
+
+  // --- KIT only ---
+  "lines": [ { "name": "Vaso G", "quantity": 3,        // quantity is an int count
+               "input":     { …resolved PriceInput… },
+               "breakdown": { …per-UNIT…          },
+               "totals":    { …quantity-SCALED money… } } ],
+
+  // --- both ---
+  "totals":   { "custoTotal": "14.60", "precoVarejo": "21.90", "precoAtacado": "18.98" },
+  "channels": [ { "marketplace": "shopee", "precoAnuncioVarejo": "…", "recebidoLiquidoVarejo": "…",
+                  "contributingLines": 3, "skippedLines": 0 /* kit ROLLUP counts only */ } ]
 }
 ```
 
@@ -263,8 +275,8 @@ backstop — E4 introduces no divergence).
 1. **Money/quantity leaves are decimal STRINGS** (`"187.35"`, `"0.00"`); the only JSON numbers are true integer
    counts (`schemaVersion`, `quantity`, `contributingLines`, `skippedLines`). See the D1 box for why (float at
    the serializer boundary, not in the DB). FR-525.
-2. **Absence ≠ zero (FR-507).** The renderer iterates the keys **present** in `result`; an absent key renders
-   **nothing**. When a future pricing-core adds a breakdown line, **no stored document changes and no migration
+2. **Absence ≠ zero (FR-507).** The renderer iterates the keys **present** in `breakdown`/`totals`; an absent key
+   renders **nothing**. When a future pricing-core adds a breakdown line, **no stored document changes and no migration
    runs** — the old document simply lacks the key, and a UI that knows the new line must show *N* lines, not
    *N+1* with a fabricated `R$ 0,00`. A `null` leaf means "recorded as not applicable" and renders as absent
    too — never as `0`.
@@ -278,23 +290,39 @@ backstop — E4 introduces no divergence).
 
 Table `snapshots` (all `CHECK`s named via `NAMING_CONVENTION` ⇒ `ck_snapshots_*`):
 
+These are the constraint names as ACTUALLY shipped in `0003` (the migration is the source of truth; the ORM
+`__table_args__` mirrors them via `NAMING_CONVENTION`):
+
 ```
-ck_snapshots_kind_enum             kind IN ('SINGLE','KIT')
-ck_snapshots_label_valid           label IS NULL
-                                     OR (length(btrim(label)) > 0 AND length(label) <= 120)
-ck_snapshots_validity_valid        quote_validity_days IS NULL
-                                     OR (quote_validity_days > 0 AND quote_validity_days <= 3650)
-ck_snapshots_device_quoted_finite  device_quoted_at > '-infinity' AND device_quoted_at < 'infinity'
-ck_snapshots_utc_offset_range      device_utc_offset_minutes BETWEEN -840 AND 840
-ck_snapshots_model_version_set     length(btrim(model_version)) > 0
-ck_snapshots_payload_schema_valid  payload_schema_version >= 1
-ck_snapshots_payload_is_object     jsonb_typeof(payload) = 'object'
-ck_snapshots_headline_valid        headline_total >= 0 AND headline_total <> 'NaN'::numeric
-ck_snapshots_headline_basis_enum   headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO')
+ck_snapshots_kind_enum                 kind IN ('SINGLE','KIT')
+ck_snapshots_headline_basis_enum       headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO')
+ck_snapshots_label_not_blank           label IS NULL OR length(btrim(label)) > 0
+ck_snapshots_quote_validity_days_range quote_validity_days IS NULL
+                                         OR (quote_validity_days > 0 AND quote_validity_days <= 3650)
+ck_snapshots_device_quoted_at_finite   device_quoted_at > '-infinity' AND device_quoted_at < 'infinity'
+ck_snapshots_device_utc_offset_range   device_utc_offset_minutes BETWEEN -840 AND 840
+ck_snapshots_payload_is_object         jsonb_typeof(payload) = 'object'
+ck_snapshots_model_version_set         length(btrim(model_version)) > 0
+ck_snapshots_payload_schema_valid      payload_schema_version >= 1
+ck_snapshots_headline_total_valid      headline_total >= 0 AND headline_total <> 'NaN'::numeric
 -- the document↔column bindings (immutable expressions ⇒ plain CHECKs, no trigger needed):
-ck_snapshots_payload_kind_matches  (payload->>'kind') = kind
-ck_snapshots_payload_version_match (payload->>'modelVersion') = model_version
+ck_snapshots_payload_kind_matches      (payload->>'kind') = kind
+ck_snapshots_payload_version_matches   (payload->>'modelVersion') = model_version
+ck_snapshots_payload_schema_matches    (payload->>'schemaVersion')::int = payload_schema_version
+-- the MONEY binding = the DB BACKSTOP for VR-503 (the app-layer validator is primary).
+--   map = {PRECO_VAREJO -> precoVarejo, PRECO_ATACADO -> precoAtacado}:
+ck_snapshots_headline_matches_totals   headline_total =
+                                         ((payload->'totals') ->> (CASE headline_basis
+                                           WHEN 'PRECO_VAREJO' THEN 'precoVarejo'
+                                           WHEN 'PRECO_ATACADO' THEN 'precoAtacado' END))::numeric
 ```
+
+> Why the last three were added late (review PR-A §2b): the DB already bound `kind` and `modelVersion` to the
+> document for free — the two fields that are **not** money — but bound **neither** field that **is** money.
+> `ck_snapshots_headline_matches_totals` (the card total ↔ the detail's basis total) and
+> `ck_snapshots_headline_total_valid` (the ADR-0008 finite-non-negative guard, previously the only money column
+> in the schema without it) close that gap. Both are cheap now and **impossible** to add after the first
+> immutable row.
 
 **Immutability trigger (D2 — pending owner/arquiteto approval):**
 
@@ -323,11 +351,16 @@ END $$;
 
 CREATE TRIGGER trg_snapshots_immutable BEFORE UPDATE ON snapshots
   FOR EACH ROW EXECUTE FUNCTION snapshots_reject_content_update();
+-- ENABLE ALWAYS, not the default origin mode (review PR-A, C7): an origin-mode trigger does NOT fire
+-- under `session_replication_role='replica'` (logical-replication apply, pg_restore --disable-triggers,
+-- some DMS), which would silently void SC-504 in the DATABASE — the one thing the trigger exists to make
+-- true. As SHIPPED, the function is named `snapshots_forbid_content_update()`.
+ALTER TABLE snapshots ENABLE ALWAYS TRIGGER trg_snapshots_immutable;
 ```
 
-Allowed to change: **`label`, `deleted_at`, `updated_at`** — nothing else, from any writer, ever. (Note the
-`quote_validity_days` line: per FR-504 *"only its label is editable"*, the validity period is **frozen content**
-— ⚠ §7.)
+The trigger covers **13 frozen columns** — the 16 table columns MINUS the 3 mutable below. Allowed to change:
+**`label`, `deleted_at`, `updated_at`** — nothing else, from any writer, ever. (Note the `quote_validity_days`
+line: per FR-504 *"only its label is editable"*, the validity period is **frozen content** — ⚠ §7.)
 
 ---
 
@@ -401,7 +434,7 @@ table. No data migration exists in either direction (the table is new; nothing p
 |---|---|---|
 | **VR-501** | Every money/quantity leaf in `payload` parses as a **finite** `Decimal`. ⚠ `Decimal("NaN")` **is valid Python** — the validator must assert `d.is_finite()` (the in-JSON twin of the `<> 'NaN'::numeric` CHECK, which cannot reach inside JSONB). Magnitude ceilings mirror `app/api/products.py::_CEIL_*`. | FR-502, FR-525 |
 | **VR-502** | **No JSON float anywhere in `payload`** — a recursive write-time scan rejects any `float` leaf; a stored-document test re-scans after a round-trip (psycopg would silently decode a JSON number to `float`). | FR-525 |
-| **VR-503** | The denormalized columns agree with the document at write: `payload->>'kind' = kind` and `payload->>'modelVersion' = model_version` (**DB CHECKs**, §4); `headline_total == Decimal(payload.result[headline_basis])` (service + invariant test). Immutability then makes drift impossible forever. | FR-502 |
+| **VR-503** | The denormalized columns agree with the document at write: `payload->>'kind' = kind`, `payload->>'modelVersion' = model_version` and `(payload->>'schemaVersion')::int = payload_schema_version` (**DB CHECKs**, §4); and the money binding `headline_total == Decimal(payload.totals[map(headline_basis)])`, where `map = {PRECO_VAREJO -> precoVarejo, PRECO_ATACADO -> precoAtacado}` — the app-layer validator is **primary**, the DB CHECK `ck_snapshots_headline_matches_totals` is the backstop. (The FLAT envelope has `totals` at the ROOT — there is no `payload.result`.) Immutability then makes drift impossible forever. | FR-502 |
 | **VR-504** | **Absence ≠ zero.** Golden-fixture test: a `3.1.0` document rendered by a UI that knows a *later* line shows **only the recorded lines** — never a fabricated `R$ 0,00`. | FR-507 |
 | **VR-505** | Immutability: `UPDATE snapshots SET payload/device_quoted_at/model_version/headline_total …` **raises**; `UPDATE … SET label` succeeds; `UPDATE … SET deleted_at` succeeds. | FR-504, SC-504 |
 | **VR-506** | **Zero catalog FKs**: a schema assertion that `snapshots` has **exactly one** foreign key, to `accounts` — the two-shelf rule as an executable guard. Plus: hard-delete a `products` row → the snapshot row is **byte-identical** (payload, total, date, version). | FR-503, SC-502 |
@@ -435,11 +468,13 @@ table. No data migration exists in either direction (the table is new; nothing p
 5. **Provenance never resolves for values.** The "abrir origem" affordance is a **read-time** resolution
    (owner-scoped + `deleted_at IS NULL`); when it misses, the affordance is **absent** — no degraded caption, no
    "produto excluído", no warning (that would be the E3 reflex misfiring, and FR-503 forbids it).
-6. **Payload validation is structural, not shape-pinning (80%).** Validate the **envelope** (`schemaVersion`,
-   `kind`, `modelVersion`, `provenance`, `inputs`/`result` present) and the **leaves** generically (finite
-   decimal strings, no floats, magnitude + size caps) — do **not** mirror `PriceResult`/`BomResult` field-by-field
-   in pydantic. Pinning the inner shape would make a pricing-core version bump **reject its own payloads** until
-   the backend redeploys — which destroys the one property JSONB was chosen for.
+6. **Payload validation is structural, not shape-pinning (80%).** Validate the **flat envelope**
+   (`schemaVersion`, `kind`, `modelVersion`, `catalogVersion`, `provenance`, and `totals` present — plus
+   `inputs`/`breakdown` for SINGLE or `lines` for KIT; there is **no `result` wrapper**) and the **leaves**
+   generically (finite decimal strings, no floats, magnitude + size caps) — do **not** mirror
+   `PriceResult`/`BomResult` field-by-field in pydantic. Pinning the inner shape would make a pricing-core
+   version bump **reject its own payloads** until the backend redeploys — which destroys the one property JSONB
+   was chosen for.
 7. **Export (FR-513) reads the stored decimal strings.** No parse-to-float, no re-derivation, no recompute — the
    exported cell **is** the stored character sequence.
 8. **`pricing-core` needs no change for recording** (recording freezes existing outputs). "Recalcular hoje"

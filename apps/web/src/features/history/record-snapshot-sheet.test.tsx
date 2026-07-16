@@ -40,6 +40,7 @@ const PAYLOAD: FrozenSnapshotPayload = {
   schemaVersion: 1,
   kind: "SINGLE",
   modelVersion: "3.1.0",
+  catalogVersion: null,
   totals: { custoTotal: "12.00", precoVarejo: "27.50", precoAtacado: "23.00" },
   provenance: null,
 };
@@ -151,6 +152,35 @@ describe("the record Sheet (premium, active)", () => {
     const body = mutateAsync.mock.calls[0]?.[0] as SnapshotIn;
     expect(body.deviceQuotedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
     expect(typeof body.deviceUtcOffsetMinutes).toBe("number");
+  });
+});
+
+describe("the payload is frozen ONCE, when the Sheet opens (review PR-A, minor)", () => {
+  it("a parent re-render never re-freezes — 'freeze at open' must be literally true", async () => {
+    const user = setup();
+    const freeze = vi.fn(() => PAYLOAD);
+    // A NEW `source` object identity every render — a `useMemo([source])` would re-freeze on it.
+    const tree = (
+      <>
+        <RecordSnapshotButton source={{ kind: "SINGLE", freeze }} />
+        <Toaster />
+      </>
+    );
+    const { rerender } = render(tree);
+
+    await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+    await screen.findByText(messages.historico.saveSheetIntro);
+    expect(freeze).toHaveBeenCalledTimes(1);
+
+    // Re-render with a fresh `source` while the Sheet is still open (the open state is preserved) —
+    // the values on screen must NOT be re-captured.
+    rerender(
+      <>
+        <RecordSnapshotButton source={{ kind: "SINGLE", freeze }} />
+        <Toaster />
+      </>,
+    );
+    expect(freeze).toHaveBeenCalledTimes(1);
   });
 });
 

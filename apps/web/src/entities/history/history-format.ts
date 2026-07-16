@@ -1,7 +1,13 @@
-import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
-import type { HistoryItem, SyncState } from "@/entities/history/outbox";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
+
+import type { FrozenSnapshotPayload } from "./frozen-payload";
+import type { HistoryItem, SyncState } from "./outbox";
+
+// 009 (E4, PR-A) — Histórico DOMAIN formatting. Lives in `entities/history` (not the page slice)
+// so `features/history` (PR-B/PR-C) may import it too — FSD-Lite forbids a feature reaching into a
+// page. Precedent: `entities/catalog/product-summary.ts` (E2). Review PR-A, Minor (history-format
+// in a page slice).
 
 const t = messages.historico;
 

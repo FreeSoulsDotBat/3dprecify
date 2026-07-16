@@ -504,6 +504,7 @@ export type ListHistoryApiV1HistoryGetParams = {
  * @maximum 100
  */
 limit?: number;
+cursor?: string | null;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -3412,6 +3413,11 @@ export type listHistoryApiV1HistoryGetResponse200 = {
   status: 200
 }
 
+export type listHistoryApiV1HistoryGetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
 export type listHistoryApiV1HistoryGetResponse401 = {
   data: ErrorEnvelope
   status: 401
@@ -3422,10 +3428,15 @@ export type listHistoryApiV1HistoryGetResponse403 = {
   status: 403
 }
 
+export type listHistoryApiV1HistoryGetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
 export type listHistoryApiV1HistoryGetResponseSuccess = (listHistoryApiV1HistoryGetResponse200) & {
   headers: Headers;
 };
-export type listHistoryApiV1HistoryGetResponseError = (listHistoryApiV1HistoryGetResponse401 | listHistoryApiV1HistoryGetResponse403) & {
+export type listHistoryApiV1HistoryGetResponseError = (listHistoryApiV1HistoryGetResponse400 | listHistoryApiV1HistoryGetResponse401 | listHistoryApiV1HistoryGetResponse403 | listHistoryApiV1HistoryGetResponse422) & {
   headers: Headers;
 };
 
@@ -3448,6 +3459,12 @@ export const getListHistoryApiV1HistoryGetUrl = (params?: ListHistoryApiV1Histor
 
 /**
  * Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
+ *
+ * Keyset pagination (data-model D4), never OFFSET and never a silent cap: a page size is NOT a
+ * limit on how many snapshots a seller may keep (that would be a business-rules amendment). The
+ * client follows ``nextCursor`` to exhaustion, so the whole unbounded history reaches the device —
+ * the 51st entry cannot vanish, and the detail-via-list resolution stays truthful (review PR-A
+ * M3). ``limit + 1`` peeks one row ahead to decide whether a next page exists.
  * @summary List History
  */
 export const listHistoryApiV1HistoryGet = async (params?: ListHistoryApiV1HistoryGetParams, options?: RequestInit): Promise<listHistoryApiV1HistoryGetResponse> => {
@@ -3720,6 +3737,11 @@ export const getRelabelSnapshotApiV1HistorySnapshotIdPatchUrl = (snapshotId: str
 
 /**
  * The label, and ONLY the label. Anything else was already rejected as a 422 by the model.
+ *
+ * Presence-sensitive (M4): the label is the ONE mutable field, so a PATCH that OMITS ``label``
+ * must leave it untouched — erasing it on omission would silently drop the seller's reference.
+ * ``null`` clears it; a blank/whitespace string is a 422 (the DB ``ck_snapshots_label_not_blank``
+ * would otherwise surface as a 500), never a silent no-op.
  * @summary Relabel Snapshot
  */
 export const relabelSnapshotApiV1HistorySnapshotIdPatch = async (snapshotId: string,

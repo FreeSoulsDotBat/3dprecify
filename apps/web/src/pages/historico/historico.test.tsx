@@ -4,14 +4,18 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useHistoryMock, useSyncOutboxMock, useEntitlementMock } = vi.hoisted(() => ({
-  useHistoryMock: vi.fn(),
-  useSyncOutboxMock: vi.fn(),
-  useEntitlementMock: vi.fn(),
-}));
+const { useHistoryMock, useSyncOutboxMock, useEntitlementMock, useEntryActionsMock } = vi.hoisted(
+  () => ({
+    useHistoryMock: vi.fn(),
+    useSyncOutboxMock: vi.fn(),
+    useEntitlementMock: vi.fn(),
+    useEntryActionsMock: vi.fn(),
+  }),
+);
 vi.mock("@/entities/history/use-history", () => ({
   useHistory: useHistoryMock,
   useSyncOutbox: useSyncOutboxMock,
+  useEntryActions: useEntryActionsMock,
 }));
 vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: useEntitlementMock }));
 vi.mock("@tanstack/react-router", () => ({
@@ -84,6 +88,12 @@ beforeEach(() => {
     refetch: vi.fn(),
   });
   useSyncOutboxMock.mockReturnValue({ sync: vi.fn(), syncing: false });
+  useEntryActionsMock.mockReturnValue({
+    retry: vi.fn(),
+    discard: vi.fn(),
+    retrying: false,
+    discarding: false,
+  });
   useHistoryMock.mockReturnValue(listState());
   Object.defineProperty(window.navigator, "onLine", { value: true, configurable: true });
 });
@@ -171,6 +181,47 @@ describe("the queue banner — the state that needs a decision wins", () => {
 
     expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
     expect(screen.queryByText(t.queuePending.replace("{n}", "1"))).not.toBeInTheDocument();
+  });
+
+  it("C6 — a single failed entry no longer HIDES the drain for healthy pendings (review PR-A)", () => {
+    // The trap: `failed>0` used to return a banner with no button, hiding the app's only manual
+    // drain and stranding every healthy pending behind it. Sync must still be offered.
+    useHistoryMock.mockReturnValue(
+      listState({
+        items: [
+          item({ clientSnapshotId: "f", id: null, syncState: "failed" }),
+          item({ clientSnapshotId: "p1", id: null, syncState: "pending" }),
+          item({ clientSnapshotId: "p2", id: null, syncState: "pending" }),
+        ],
+      }),
+    );
+    render(<HistoricoPage />);
+
+    expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
+    // The drain button is present again — the healthy pendings can be sent by hand.
+    expect(screen.getByRole("button", { name: t.syncNow })).toBeInTheDocument();
+    // …and a [Ver] jump to the entry that needs a decision.
+    expect(screen.getByRole("button", { name: t.queueSee })).toBeInTheDocument();
+  });
+});
+
+describe("C5 — the gate has a branch for 'the server never answered about the plan' (review PR-A)", () => {
+  it("shows a calm 'could not verify your plan' + retry, NOT the cold ledger error wall", () => {
+    useEntitlementMock.mockReturnValue({
+      data: undefined,
+      isError: true,
+      isLoading: false,
+      stale: false,
+      isFetching: false,
+      refetch: vi.fn(),
+    });
+    render(<HistoricoPage />);
+
+    expect(screen.getByText(t.guardError)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.guardRetry })).toBeInTheDocument();
+    // It must NOT presume "free" (no teaser) and must NOT hit the cold history error wall.
+    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.loadError)).not.toBeInTheDocument();
   });
 });
 

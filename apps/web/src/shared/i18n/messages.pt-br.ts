@@ -490,8 +490,15 @@ export const messages = {
     frozenCaption: "Valores congelados em {data}",
     validityLine: "Validade da proposta: {n} dias",
     kitPieces: "Peças do kit",
+    // A COUNT ("3 un"), never "3×" glued to a total that is ALREADY quantity-scaled (review PR-A,
+    // C2) — "3× R$ 135,00" would read as a unit price and be multiplied again.
+    kitPieceQty: "{n} un",
     breakdown: "Detalhamento",
     channels: "Preços por canal",
+    // per-channel rollup captions (M11) — contributing/skipped kit lines, stated honestly
+    channelContributing: "{n} de {total} peças",
+    channelSkipped: "{n} sem este canal",
+    channelNet: "líquido",
     techTitle: "Ficha técnica",
     modelVersionLine: "Calculado com a fórmula versão {versao}",
     originLine: "Registro criado a partir de: {nome}",
@@ -536,6 +543,30 @@ export const messages = {
     syncBlockedToast:
       "Envio pausado — o Premium não está ativo. O registro continua neste aparelho.",
     syncFailedToast: "Não foi possível registrar. O servidor não aceitou este registro.",
+    // detail sync alerts (§1.2) — the copy verbatim, one calm reading per state
+    syncPendingTitle: "Ainda não sincronizado",
+    syncPendingBody:
+      "Este registro está só neste dispositivo e ainda não chegou à sua conta. Ele sincroniza sozinho quando você voltar a ficar online.",
+    syncPendingDurability:
+      "Enquanto não sincroniza, ele existe só aqui — se os dados do app forem limpos, ele se perde.",
+    syncBlockedTitle: "Envio pausado",
+    syncBlockedBody:
+      "Este registro não foi enviado para a sua conta: o Premium não está ativo. Ele continua aqui, neste dispositivo. Assim que o Premium voltar a ficar ativo, ele é enviado automaticamente.",
+    syncFailedTitle: "Não foi possível registrar",
+    syncFailedBody:
+      "O servidor não aceitou este registro. Ele não será reenviado sozinho. Você pode tentar de novo ou descartar.",
+    syncedAnnounce: "Registro sincronizado.",
+    // per-entry actions (B2) + the destructive confirm (§1.5)
+    retryNow: "Tentar agora",
+    retryAgain: "Tentar novamente",
+    discard: "Descartar",
+    discardConfirmTitle: "Descartar este registro?",
+    discardConfirmBody: "Ele não foi enviado para a sua conta e não poderá ser recuperado.",
+    // queue banner "Ver" jump (§2.2) — scrolls to the first entry that needs a decision
+    queueSee: "Ver",
+    // gate: the server never answered about the plan (C5) — mirrors the E2/E3 guard family
+    guardError: "Não foi possível verificar seu plano.",
+    guardRetry: "Tentar novamente",
     // sign-out guard (ADR-0018 §10 / T011)
     signOutQueueTitle: "{n} registro(s) ainda não foram sincronizados",
     signOutQueueBody:

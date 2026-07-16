@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -55,6 +56,18 @@ function setOnline(online: boolean) {
 
 const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 
+// The guard now reads `useQueryClient` (M10 — it invalidates the merged list after a drain), so it
+// must render inside a provider. `client` is exposed so the M10 test can spy on `invalidateQueries`.
+let client: QueryClient;
+function renderGuard() {
+  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <SignOutOutboxGuard />
+    </QueryClientProvider>,
+  );
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   setOnline(true);
@@ -66,7 +79,7 @@ afterEach(() => cleanup());
 
 describe("an EMPTY queue never gets in the way", () => {
   it("signs out straight away, with no dialog", async () => {
-    render(<SignOutOutboxGuard />);
+    renderGuard();
 
     await requestSignOut();
 
@@ -81,7 +94,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
   });
 
   it("stops the sign-out and states the count", async () => {
-    render(<SignOutOutboxGuard />);
+    renderGuard();
 
     void requestSignOut();
 
@@ -93,7 +106,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
 
   it("Voltar keeps the seller signed in — and keeps every record", async () => {
     const user = setup();
-    render(<SignOutOutboxGuard />);
+    renderGuard();
     void requestSignOut();
     await screen.findByRole("dialog");
 
@@ -106,7 +119,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
 
   it("discarding is DESTRUCTIVE and asks a second time before it happens", async () => {
     const user = setup();
-    render(<SignOutOutboxGuard />);
+    renderGuard();
     void requestSignOut();
     await screen.findByRole("dialog");
 
@@ -129,7 +142,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
 
   it("OFFLINE: 'Sincronizar agora' is disabled, with the reason on screen — never a button that pretends", async () => {
     setOnline(false);
-    render(<SignOutOutboxGuard />);
+    renderGuard();
     void requestSignOut();
     await screen.findByRole("dialog");
 
@@ -142,7 +155,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
     drainOutbox.mockImplementation(async () => {
       listOutbox.mockResolvedValue([]);
     });
-    render(<SignOutOutboxGuard />);
+    renderGuard();
     void requestSignOut();
     await screen.findByRole("dialog");
 
@@ -159,7 +172,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
     drainOutbox.mockImplementation(async () => {
       listOutbox.mockResolvedValue([entry("b")]);
     });
-    render(<SignOutOutboxGuard />);
+    renderGuard();
     void requestSignOut();
     await screen.findByRole("dialog");
 
@@ -170,5 +183,39 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
     ).toBeInTheDocument();
     expect(signOutUser).not.toHaveBeenCalled();
     expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
+
+  it("M10 — syncNow invalidates the merged list so a partial sync stops stamping 'Pendente' (review PR-A)", async () => {
+    const user = setup();
+    drainOutbox.mockImplementation(async () => {
+      listOutbox.mockResolvedValue([entry("b")]);
+    });
+    renderGuard();
+    const spy = vi.spyOn(client, "invalidateQueries");
+    void requestSignOut();
+    await screen.findByRole("dialog");
+
+    await user.click(screen.getByRole("button", { name: messages.historico.signOutSyncNow }));
+
+    await waitFor(() => expect(spy).toHaveBeenCalled());
+    const keys = spy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey ?? []));
+    expect(keys.some((k) => k.includes("snapshots"))).toBe(true);
+    expect(keys.some((k) => k.includes("outbox"))).toBe(true);
+  });
+
+  it("C6 — a dialog opened OFFLINE re-enables Sincronizar when the network returns (review PR-A)", async () => {
+    setOnline(false);
+    renderGuard();
+    void requestSignOut();
+    await screen.findByRole("dialog");
+
+    // Frozen `navigator.onLine` would leave this disabled forever, with only "Sair e descartar".
+    expect(screen.getByRole("button", { name: messages.historico.signOutSyncNow })).toBeDisabled();
+
+    await waitFor(() => {
+      setOnline(true);
+      window.dispatchEvent(new Event("online"));
+      expect(screen.getByRole("button", { name: messages.historico.signOutSyncNow })).toBeEnabled();
+    });
   });
 });

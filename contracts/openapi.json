@@ -1896,7 +1896,7 @@
           "history"
         ],
         "summary": "List History",
-        "description": "Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).",
+        "description": "Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).\n\nKeyset pagination (data-model D4), never OFFSET and never a silent cap: a page size is NOT a\nlimit on how many snapshots a seller may keep (that would be a business-rules amendment). The\nclient follows ``nextCursor`` to exhaustion, so the whole unbounded history reaches the device —\nthe 51st entry cannot vanish, and the detail-via-list resolution stays truthful (review PR-A\nM3). ``limit + 1`` peeks one row ahead to decide whether a next page exists.",
         "operationId": "list_history_api_v1_history_get",
         "parameters": [
           {
@@ -1909,6 +1909,22 @@
               "minimum": 1,
               "default": 50,
               "title": "Limit"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
             }
           },
           {
@@ -1951,6 +1967,26 @@
           },
           "403": {
             "description": "Persistence requires an active premium grant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
             "content": {
               "application/json": {
                 "schema": {
@@ -2046,7 +2082,7 @@
           "history"
         ],
         "summary": "Relabel Snapshot",
-        "description": "The label, and ONLY the label. Anything else was already rejected as a 422 by the model.",
+        "description": "The label, and ONLY the label. Anything else was already rejected as a 422 by the model.\n\nPresence-sensitive (M4): the label is the ONE mutable field, so a PATCH that OMITS ``label``\nmust leave it untouched — erasing it on omission would silently drop the seller's reference.\n``null`` clears it; a blank/whitespace string is a 422 (the DB ``ck_snapshots_label_not_blank``\nwould otherwise surface as a 500), never a silent no-op.",
         "operationId": "relabel_snapshot_api_v1_history__snapshot_id__patch",
         "parameters": [
           {

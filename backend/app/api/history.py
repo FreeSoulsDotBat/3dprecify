@@ -32,14 +32,16 @@ Consequences that shape this module:
 
 from __future__ import annotations
 
+import base64
 import datetime
 import decimal
+import json
 import uuid
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, Literal, cast
 
 from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import ConfigDict
-from sqlalchemy import select
+from pydantic import ConfigDict, field_validator, model_validator
+from sqlalchemy import literal, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -56,6 +58,75 @@ from app.errors import (
 from app.models import Snapshot
 
 router = APIRouter(tags=["history"])
+
+# Integer-digit budget for MONEY_SETTLED Numeric(12,2): a value AT/ABOVE this OVERFLOWS the column
+# at write time — Postgres raises `numeric field overflow` and FastAPI would surface an opaque 500.
+# We reject it here as a clean 422 (the outbox re-POSTs a 5xx forever, so a permanent 500 is an
+# infinite loop). Copied module-local, following the filaments/printers/products precedent — the
+# 4-way dedup of this constant is a separate janitorial task, NOT this fix.
+_CEIL_MONEY = decimal.Decimal(10) ** 10
+
+# One frozen document has a maximum size (abuse/DoS guard, data-model §7 item 6 — owner-confirmed
+# 512 KB). A document over the cap is an HONEST 422, never a silent truncation: truncating an
+# immutable record would make a snapshot quietly lie about what it froze — the worst outcome.
+_PAYLOAD_SIZE_CAP_BYTES = 512 * 1024
+
+# map(headline_basis) -> the key of the matching total inside `payload.totals`. The envelope is FLAT
+# (I2 / Option A): `totals` sits at the ROOT, there is no `payload.result` wrapper. VR-503 binds the
+# denormalised `headline_total` to exactly this leaf.
+_BASIS_TOTAL_KEY: dict[str, str] = {
+    "PRECO_VAREJO": "precoVarejo",
+    "PRECO_ATACADO": "precoAtacado",
+}
+
+
+def _finite_non_negative(
+    value: decimal.Decimal, field: str, ceiling: decimal.Decimal = _CEIL_MONEY
+) -> decimal.Decimal:
+    if not value.is_finite() or value < 0:
+        raise ValueError(f"{field} must be a finite number >= 0")
+    if value >= ceiling:
+        raise ValueError(f"{field} exceeds the maximum storable magnitude")
+    return value
+
+
+def _reject_bad_leaves(node: object) -> None:
+    """VR-501 / VR-502 — the recursive money guard over the whole frozen document.
+
+    The payload is opaque JSONB, so this walks it GENERICALLY rather than pinning
+    `PriceResult`/`BomResult` field-by-field (pinning would make a pricing-core version bump reject
+    its own payloads — the exact property JSONB exists to avoid, data-model §9.6). Two rules:
+
+    * **VR-502 — no JSON float anywhere.** A float leaf means precision already died at the
+      serializer boundary (a JSON number decodes to binary64 in BOTH runtimes). This is the LAST
+      defence before a float freezes into the immutable table; the client (I1) also stops emitting
+      them. `bool`/`int` pass — the only legal JSON numbers are integer counts (`schemaVersion`,
+      `quantity`, `contributingLines`, `skippedLines`).
+    * **VR-501 — every string that PARSES as a Decimal must be finite** (rejects `"NaN"`/
+      `"Infinity"` — the in-JSON twin of the `<> 'NaN'::numeric` CHECK, which cannot reach inside
+      JSONB) and within magnitude. A non-numeric string (a name, a label, an id) is ignored —
+      generic leaf validation, no shape-pin.
+    """
+    if isinstance(node, dict):
+        for value in cast("dict[str, object]", node).values():
+            _reject_bad_leaves(value)
+    elif isinstance(node, list):
+        for item in cast("list[object]", node):
+            _reject_bad_leaves(item)
+    elif isinstance(node, bool):
+        return  # a JSON true/false — never money
+    elif isinstance(node, float):
+        raise ValueError(
+            "payload contains a JSON float; every money leaf must be a decimal STRING (FR-525)"
+        )
+    elif isinstance(node, str):
+        try:
+            parsed = decimal.Decimal(node)
+        except decimal.InvalidOperation:
+            return  # a non-numeric string (a name/label/id) — not a money leaf
+        if not parsed.is_finite() or abs(parsed) >= _CEIL_MONEY:
+            raise ValueError("payload money string is non-finite or exceeds the storable magnitude")
+    # int / None fall through unchanged.
 
 
 class SnapshotIn(CamelModel):
@@ -77,6 +148,61 @@ class SnapshotIn(CamelModel):
     #: The frozen document. Money leaves inside it are decimal STRINGS (a JSON number would come
     #: back from `json.loads` as a float — the precision dies in the serializer, silently).
     payload: dict[str, Any]
+
+    @field_validator("headline_total")
+    @classmethod
+    def _headline_total_finite(cls, v: decimal.Decimal) -> decimal.Decimal:
+        # Overflow of Numeric(12,2) would be a 500 at INSERT time; catch it here (and NaN/Infinity/
+        # negatives) as a clean 422. The DB `ck_snapshots_headline_total_valid` is the backstop.
+        return _finite_non_negative(v, "headlineTotal", _CEIL_MONEY)
+
+    @model_validator(mode="after")
+    def _validate_frozen_document(self) -> SnapshotIn:
+        """M2 — the app-layer PRIMARY defence for the immutable table (the DB CHECKs are backstops).
+
+        Nothing reachable by input may become a 500: `history.py`'s POST insert can violate several
+        CHECKs (and the money guards) that would otherwise raise `IntegrityError`/`DataError` → the
+        generic handler → 500. The outbox re-POSTs a 5xx forever, so a permanent 500 on an invalid
+        body is an infinite loop; every one of those cases is mirrored here as a terminal 422.
+        """
+        # VR-501 / VR-502 — the recursive money guard (floats, NaN/Infinity, magnitude).
+        _reject_bad_leaves(self.payload)
+
+        # The denormalised columns may never diverge from the document (immutability freezes both,
+        # the DB `payload_kind_matches` / `payload_version_matches` CHECKs are the backstops).
+        if self.payload.get("kind") != self.kind:
+            raise ValueError("payload.kind must equal kind")
+        if self.payload.get("modelVersion") != self.model_version:
+            raise ValueError("payload.modelVersion must equal modelVersion")
+
+        # VR-503 — the anti-lie invariant: the card total (headline_total) IS the detail's basis
+        # total. Divergence would show two different "what you charged" for one immutable line.
+        totals = self.payload.get("totals")
+        if not isinstance(totals, dict):
+            raise ValueError("payload.totals is required")
+        key = _BASIS_TOTAL_KEY[self.headline_basis]
+        basis_total = cast("dict[str, object]", totals).get(key)
+        if basis_total is None:
+            raise ValueError(f"payload.totals.{key} must be present and equal headlineTotal")
+        try:
+            basis_decimal = decimal.Decimal(str(basis_total))
+        except decimal.InvalidOperation as exc:
+            raise ValueError(f"payload.totals.{key} is not a valid decimal") from exc
+        if basis_decimal != self.headline_total:
+            raise ValueError(f"headlineTotal must equal payload.totals.{key}")
+
+        # The remaining column CHECK mirrors — range guards + blank-label normalisation.
+        if self.quote_validity_days is not None and not 1 <= self.quote_validity_days <= 3650:
+            raise ValueError("quoteValidityDays must be within [1, 3650]")
+        if not -840 <= self.device_utc_offset_minutes <= 840:
+            raise ValueError("deviceUtcOffsetMinutes must be within [-840, 840]")
+        if self.label is not None and not self.label.strip():
+            self.label = None  # blank is unrepresentable as '' (ck_snapshots_label_not_blank)
+
+        # Size cap — an HONEST 422, never a silent truncation of an immutable record.
+        if len(json.dumps(self.payload).encode("utf-8")) > _PAYLOAD_SIZE_CAP_BYTES:
+            raise ValueError("payload exceeds the maximum document size")
+        return self
 
 
 class SnapshotLabelIn(CamelModel):
@@ -149,6 +275,27 @@ async def _owned(session: AsyncSession, uid: str, snapshot_id: uuid.UUID) -> Sna
     if row is None:
         raise _not_found()
     return row
+
+
+def _encode_cursor(row: Snapshot) -> str:
+    """Keyset cursor = base64url(JSON ``[deviceQuotedAt, id]``) — the exact ORDER BY key
+    (``device_quoted_at``, ``id``) DESC. Opaque to the client, which only echoes ``nextCursor``
+    back verbatim on the next page."""
+    raw = json.dumps([row.device_quoted_at.isoformat(), str(row.id)]).encode("utf-8")
+    return base64.urlsafe_b64encode(raw).decode("ascii")
+
+
+def _decode_cursor(cursor: str) -> tuple[datetime.datetime, uuid.UUID]:
+    try:
+        raw = base64.urlsafe_b64decode(cursor.encode("ascii"))
+        dt_iso, id_str = json.loads(raw)
+        return datetime.datetime.fromisoformat(dt_iso), uuid.UUID(id_str)
+    except (ValueError, TypeError) as exc:
+        # A malformed cursor is CLIENT input, never a 500 (base64/JSON/UUID all raise ValueError
+        # subclasses; a wrong-shape tuple raises ValueError/TypeError on unpack).
+        raise AppError(
+            ErrorCode.VALIDATION_ERROR, "malformed pagination cursor", status_code=422
+        ) from exc
 
 
 @router.post(
@@ -224,27 +371,43 @@ async def record_snapshot(
     return _to_out(existing)
 
 
-@router.get("/history", responses=ENTITLEMENT_ERRORS)
+@router.get("/history", responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS})
 async def list_history(
     claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
+    cursor: Annotated[str | None, Query()] = None,
 ) -> SnapshotPage:
-    """Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523)."""
+    """Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
+
+    Keyset pagination (data-model D4), never OFFSET and never a silent cap: a page size is NOT a
+    limit on how many snapshots a seller may keep (that would be a business-rules amendment). The
+    client follows ``nextCursor`` to exhaustion, so the whole unbounded history reaches the device —
+    the 51st entry cannot vanish, and the detail-via-list resolution stays truthful (review PR-A
+    M3). ``limit + 1`` peeks one row ahead to decide whether a next page exists.
+    """
     uid: str = claims["uid"]
-    rows = (
-        (
-            await session.execute(
-                select(Snapshot)
-                .where(Snapshot.owner_uid == uid, Snapshot.deleted_at.is_(None))
-                .order_by(Snapshot.device_quoted_at.desc(), Snapshot.id.desc())
-                .limit(limit)
-            )
-        )
-        .scalars()
-        .all()
+    stmt = (
+        select(Snapshot)
+        .where(Snapshot.owner_uid == uid, Snapshot.deleted_at.is_(None))
+        .order_by(Snapshot.device_quoted_at.desc(), Snapshot.id.desc())
+        .limit(limit + 1)
     )
-    return SnapshotPage(items=[_to_out(r) for r in rows], next_cursor=None)
+    if cursor is not None:
+        cur_dt, cur_id = _decode_cursor(cursor)
+        # Row-value comparison matches the composite DESC order exactly — the next page is every
+        # row strictly "older" than the last one already returned (the index serves it backwards).
+        # The cursor scalars become bound literals (SQLAlchemy infers DateTime/Uuid) so the row
+        # comparison renders `(device_quoted_at, id) < ($1, $2)`.
+        stmt = stmt.where(
+            tuple_(Snapshot.device_quoted_at, Snapshot.id)
+            < tuple_(literal(cur_dt), literal(cur_id))
+        )
+    rows = list((await session.execute(stmt)).scalars().all())
+    has_more = len(rows) > limit
+    page = rows[:limit]
+    next_cursor = _encode_cursor(page[-1]) if has_more and page else None
+    return SnapshotPage(items=[_to_out(r) for r in page], next_cursor=next_cursor)
 
 
 @router.get("/history/{snapshot_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -267,9 +430,20 @@ async def relabel_snapshot(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
-    """The label, and ONLY the label. Anything else was already rejected as a 422 by the model."""
+    """The label, and ONLY the label. Anything else was already rejected as a 422 by the model.
+
+    Presence-sensitive (M4): the label is the ONE mutable field, so a PATCH that OMITS ``label``
+    must leave it untouched — erasing it on omission would silently drop the seller's reference.
+    ``null`` clears it; a blank/whitespace string is a 422 (the DB ``ck_snapshots_label_not_blank``
+    would otherwise surface as a 500), never a silent no-op.
+    """
     row = await _owned(session, claims["uid"], snapshot_id)
-    row.label = body.label
+    if "label" not in body.model_fields_set:
+        return _to_out(row)  # label omitted ⇒ untouched
+    new_label = body.label
+    if new_label is not None and not new_label.strip():
+        raise AppError(ErrorCode.VALIDATION_ERROR, "label must not be blank", status_code=422)
+    row.label = new_label
     await session.commit()
     await session.refresh(row)
     return _to_out(row)

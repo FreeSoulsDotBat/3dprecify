@@ -63,6 +63,12 @@ export function useEntitlement(): EntitlementState {
     enabled: status === "authenticated" && !!uid,
     retry: false,
     staleTime: 60_000,
+    // Same reason as the outbox query (review PR-A, C4): the default `networkMode` PAUSES this the
+    // instant the window fires `offline`, and a paused query never errors — so `stale` would read
+    // FALSE and the surface would pass a remembered `active` off as fresh, hiding a possible lapse.
+    // `"always"` + `retry: false` makes it RUN and FAIL offline, feeding the honest `stale` flag
+    // (the persisted cache still supplies the value).
+    networkMode: "always",
     queryFn: async () => {
       const res = await getEntitlementApiV1EntitlementGet();
       // The transport throws a typed ApiError on any non-2xx — only 200 reaches here.

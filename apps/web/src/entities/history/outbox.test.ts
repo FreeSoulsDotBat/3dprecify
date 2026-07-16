@@ -5,8 +5,16 @@ const idbSet = vi.fn();
 const idbDel = vi.fn();
 vi.mock("idb-keyval", () => ({ get: idbGet, set: idbSet, del: idbDel }));
 
-const { drainOutbox, enqueueSnapshot, listOutbox, mergeHistory, purgeOutbox } =
-  await import("./outbox");
+const {
+  discardEntry,
+  drainOutbox,
+  enqueueSnapshot,
+  listOutbox,
+  mergeHistory,
+  purgeOutbox,
+  retryEntry,
+  settleEntry,
+} = await import("./outbox");
 const { historyOutboxKey } = await import("./outbox");
 import type { OutboxEntry } from "./outbox";
 
@@ -224,6 +232,72 @@ describe("T016/B2 regression — a drain must never DESTROY a record queued whil
     // "a" reached the server and left. "b" is still queued — it was NEVER sent, so it must still be
     // here. Losing it would mean the seller's quote vanished while the UI said it was pending.
     expect(store[0].map((e) => e.clientSnapshotId)).toEqual(["b"]);
+  });
+});
+
+describe("drainOutbox reports each entry's FINAL state (review PR-A, M1)", () => {
+  it("returns the outcome keyed by clientSnapshotId — synced when accepted, kept state when skipped", async () => {
+    idbGet.mockResolvedValue([
+      entry({ clientSnapshotId: "ok", body: { ...BODY, clientSnapshotId: "ok" } }),
+      entry({
+        clientSnapshotId: "bad",
+        body: { ...BODY, clientSnapshotId: "bad" },
+        syncState: "failed",
+      }),
+    ]);
+    const post = vi.fn().mockResolvedValue({ id: "s1" });
+
+    const results = await drainOutbox("u1", { post });
+
+    expect(results).toEqual({ ok: "synced", bad: "failed" });
+    // The failed entry is NOT re-sent by an auto-drain.
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("per-entry actions — a blocked/failed entry is never a dead end (review PR-A, B2)", () => {
+  it("retryEntry re-enqueues a failed entry and re-sends it — the queue empties on a 2xx", async () => {
+    idbGet.mockResolvedValue([entry({ syncState: "failed", lastStatus: 422 })]);
+    const post = vi.fn().mockResolvedValue({ id: "s1" });
+
+    const state = await retryEntry("u1", BODY.clientSnapshotId, { post });
+
+    expect(post).toHaveBeenCalledTimes(1); // a failed entry IS retried on demand
+    expect(state).toBe("synced");
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toEqual([]);
+  });
+
+  it("retryEntry on a still-rejecting entry keeps it visible, never a false synced", async () => {
+    idbGet.mockResolvedValue([entry({ syncState: "failed" })]);
+    const post = vi.fn().mockRejectedValue({ status: 422 });
+
+    const state = await retryEntry("u1", BODY.clientSnapshotId, { post });
+
+    expect(state).toBe("failed");
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value[0]?.syncState).toBe("failed");
+  });
+
+  it("discardEntry removes ONLY the target entry", async () => {
+    idbGet.mockResolvedValue([
+      entry({ clientSnapshotId: "a", body: { ...BODY, clientSnapshotId: "a" } }),
+      entry({ clientSnapshotId: "b", body: { ...BODY, clientSnapshotId: "b" } }),
+    ]);
+
+    await discardEntry("u1", "a");
+
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value.map((e) => e.clientSnapshotId)).toEqual(["b"]);
+  });
+
+  it("settleEntry returns the honest state directly — status 0 is pending, never failed", async () => {
+    idbGet.mockResolvedValue([entry()]);
+    const post = vi.fn().mockRejectedValue({ status: 0 });
+
+    const state = await settleEntry("u1", entry(), { post });
+
+    expect(state).toBe("pending");
   });
 });
 

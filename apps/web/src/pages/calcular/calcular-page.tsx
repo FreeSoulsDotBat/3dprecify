@@ -252,8 +252,10 @@ export function CalcularPage() {
       />
 
       {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium note:
-          the offer sits exactly where the value is. Free/lapsed/signed-out see the button and meet
-          the honest teaser — nothing is queued (the free calculator itself stays untouched). */}
+          the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the button is
+          PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here (`RecordSnapshotButton`
+          returns null), so the free calculator stays literally untouched (SC-109 / SC-507 / SC-512).
+          The honest door is the Histórico tab. */}
       {result && input && (
         <div className="flex justify-center">
           <RecordSnapshotButton

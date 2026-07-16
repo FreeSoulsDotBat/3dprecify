@@ -87,3 +87,22 @@
   color: var(--text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Per-channel rollup (M11) — one block per channel, its rows share the piece layout. */
+.tf-historico__channel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.tf-historico__channel-name {
+  font-weight: 600;
+}
+
+/* [Tentar novamente] / [Descartar] on a stuck record (B2) — inline, wraps at 390px. */
+.tf-historico__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  margin-block-start: var(--space-2, 0.5rem);
+}

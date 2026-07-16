@@ -1,9 +1,15 @@
 import { Link } from "@tanstack/react-router";
 
-import type { FrozenBreakdown, FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
+import type {
+  FrozenBreakdown,
+  FrozenChannel,
+  FrozenSnapshotPayload,
+} from "@/entities/history/frozen-payload";
+import type { HistoryItem } from "@/entities/history/outbox";
 import { useHistory } from "@/entities/history/use-history";
+import { EntryActions } from "@/features/history/entry-actions";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Badge, BreakdownRow, Card, Icon, Spinner } from "@/shared/ui";
+import { Alert, Badge, BreakdownRow, Button, Card, Icon, Spinner } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 import {
@@ -15,7 +21,7 @@ import {
   quotedDate,
   quotedTime,
   SYNC_BADGE,
-} from "./history-format";
+} from "@/entities/history/history-format";
 
 import "./historico-page.css";
 
@@ -60,6 +66,23 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
     );
   }
 
+  // A COLD read failure is NOT the same as "this record does not exist" (review PR-A, M7). Saying
+  // "Registro não encontrado" when the truth is "we could not load your history" would tell the
+  // seller their quote is gone. Distinct branch, distinct copy, with a retry.
+  if (!item && history.isError) {
+    return (
+      <Shell>
+        <div className="flex flex-col items-center gap-3 py-8">
+          <Alert tone="danger">{t.loadError}</Alert>
+          <Button variant="secondary" onClick={history.refetch}>
+            {t.retry}
+          </Button>
+        </div>
+      </Shell>
+    );
+  }
+
+  // Loaded, and the record genuinely is not here.
   if (!item) {
     return (
       <Shell>
@@ -101,10 +124,16 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
         )}
       </Card>
 
+      {/* §1.2 — the honest per-state alert, with the durability caveat (F4) and the retry/discard
+          actions (B2). Only when the record has not reached the account. */}
+      <SyncAlert item={item} />
+
       {payload && (
         <>
           <p className="tf-historico__meta">{t.frozenCaption.replace("{data}", date)}</p>
-          {payload.lines && payload.lines.length > 0 && <KitLines payload={payload} />}
+          {payload.lines && payload.lines.length > 0 && (
+            <KitLines payload={payload} basis={item.headlineBasis} />
+          )}
           {payload.breakdown && <Breakdown breakdown={payload.breakdown} />}
           {payload.totals.custoTotal && (
             <BreakdownRow
@@ -113,10 +142,119 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
               emphasis="total"
             />
           )}
+          {payload.channels && payload.channels.length > 0 && (
+            <ChannelsBlock channels={payload.channels} />
+          )}
           <TechnicalSheet payload={payload} />
         </>
       )}
     </Shell>
+  );
+}
+
+/**
+ * §1.2 — the record's sync state in plain words, one calm reading per state. `pending` carries the
+ * durability caveat (F4, detail-only, muted — never on the card); `failed` shows the support code so
+ * the seller has something to report. All three offer [Tentar novamente]/[Descartar] (B2) except a
+ * pending offline, where retry cannot work (handled inside `EntryActions`). Never rendered for a
+ * synced record — a badge on everything would be noise.
+ */
+function SyncAlert({ item }: { item: HistoryItem }) {
+  if (item.syncState === "synced") return null;
+
+  const state = item.syncState;
+  const title =
+    state === "pending"
+      ? t.syncPendingTitle
+      : state === "blocked"
+        ? t.syncBlockedTitle
+        : t.syncFailedTitle;
+  const body =
+    state === "pending"
+      ? t.syncPendingBody
+      : state === "blocked"
+        ? t.syncBlockedBody
+        : t.syncFailedBody;
+  const supportCode = item.entry?.lastStatus;
+
+  return (
+    <Alert tone={state === "failed" ? "danger" : "info"} title={title}>
+      <p>{body}</p>
+      {/* F4 — true (IndexedDB eviction is best-effort) and the most alarming line in the app, so it
+          lives HERE only, muted, and never on the card. */}
+      {state === "pending" && <p className="tf-historico__meta">{t.syncPendingDurability}</p>}
+      {state === "failed" && supportCode != null && (
+        <p className="tf-historico__meta">
+          {messages.error.supportCode} {supportCode}
+        </p>
+      )}
+      <EntryActions item={item} />
+    </Alert>
+  );
+}
+
+/**
+ * The per-channel prices the seller actually quoted — frozen strings, only formatted (M11). A `null`
+ * price renders ABSENT, never `R$ 0,00` (FR-507). A kit rollup additionally states its honest line
+ * counts (how many pieces contributed, how many had no such channel).
+ */
+function ChannelsBlock({ channels }: { channels: FrozenChannel[] }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <h2 className="tf-historico__section">{t.channels}</h2>
+      {channels.map((channel, i) => (
+        <div key={i} className="tf-historico__channel">
+          <span className="tf-historico__channel-name">
+            {channel.marketplace ?? messages.calculator.channels.channelFallback}
+          </span>
+          {channel.precoAnuncioVarejo != null && (
+            <span className="tf-historico__piece">
+              <span>
+                {tr.precoAnuncio} · {messages.calculator.captions.varejo}
+              </span>
+              <strong>{money(channel.precoAnuncioVarejo)}</strong>
+            </span>
+          )}
+          {channel.recebidoLiquidoVarejo != null && (
+            <span className="tf-historico__piece">
+              <span>
+                {tr.recebidoLiquido} · {messages.calculator.captions.varejo}
+              </span>
+              <strong>{money(channel.recebidoLiquidoVarejo)}</strong>
+            </span>
+          )}
+          {channel.precoAnuncioAtacado != null && (
+            <span className="tf-historico__piece">
+              <span>
+                {tr.precoAnuncio} · {messages.calculator.captions.atacado}
+              </span>
+              <strong>{money(channel.precoAnuncioAtacado)}</strong>
+            </span>
+          )}
+          {channel.recebidoLiquidoAtacado != null && (
+            <span className="tf-historico__piece">
+              <span>
+                {tr.recebidoLiquido} · {messages.calculator.captions.atacado}
+              </span>
+              <strong>{money(channel.recebidoLiquidoAtacado)}</strong>
+            </span>
+          )}
+          {/* An honestly recorded per-slot failure, echoed as recorded — never hidden. */}
+          {channel.error && <span className="tf-historico__meta">{channel.error}</span>}
+          {/* Kit rollup: how many lines contributed to this channel, how many had none. */}
+          {channel.contributingLines != null && (
+            <span className="tf-historico__meta">
+              {t.channelContributing
+                .replace("{n}", String(channel.contributingLines))
+                .replace(
+                  "{total}",
+                  String((channel.contributingLines ?? 0) + (channel.skippedLines ?? 0)),
+                )}
+            </span>
+          )}
+        </div>
+      ))}
+    </div>
   );
 }
 
@@ -133,18 +271,27 @@ function Shell({ title, children }: { title?: string; children: React.ReactNode 
 }
 
 /** A kit quote ITEMIZES its pieces (SC-515) — with the names as CAPTURED, so the renderer never has
- *  to look anything up (and so a renamed product cannot rewrite a past quote). */
-function KitLines({ payload }: { payload: FrozenSnapshotPayload }) {
+ *  to look anything up (and so a renamed product cannot rewrite a past quote). Each piece is priced
+ *  at the SNAPSHOT'S headline basis (review PR-A, C1): a kit quoted at ATACADO itemizes at atacado,
+ *  or the pieces would contradict the very total the seller charged (`freezeTotals` stores both). */
+function KitLines({ payload, basis }: { payload: FrozenSnapshotPayload; basis: string }) {
   return (
     <div className="flex flex-col gap-1">
       <h2 className="tf-historico__section">{t.kitPieces}</h2>
-      {(payload.lines ?? []).map((line, i) => (
-        <span key={i} className="tf-historico__piece">
-          <span>{line.name ?? t.adhocFallback}</span>
-          <span className="tf-historico__qty">{line.quantity}×</span>
-          <strong>{line.totals.precoVarejo ? money(line.totals.precoVarejo) : "—"}</strong>
-        </span>
-      ))}
+      {(payload.lines ?? []).map((line, i) => {
+        const total =
+          basis === "PRECO_ATACADO" ? line.totals.precoAtacado : line.totals.precoVarejo;
+        return (
+          <span key={i} className="tf-historico__piece">
+            <span>{line.name ?? t.adhocFallback}</span>
+            {/* A COUNT, not a "×" factor: `total` is ALREADY quantity-scaled (review PR-A, C2). */}
+            <span className="tf-historico__qty">
+              {t.kitPieceQty.replace("{n}", String(line.quantity))}
+            </span>
+            <strong>{total ? money(total) : "—"}</strong>
+          </span>
+        );
+      })}
     </div>
   );
 }

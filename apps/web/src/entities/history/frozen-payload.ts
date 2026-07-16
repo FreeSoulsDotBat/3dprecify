@@ -90,16 +90,23 @@ export interface FrozenChannel {
   error?: string | null;
 }
 
+/**
+ * A frozen INPUT value: every numeric leaf is an exact decimal STRING (inputs are stringified
+ * WITHOUT rounding — 0.125 kW is not 0.13 kW); strings and null pass through; arrays and nested
+ * objects (a channel's `priceBands`, `freightVoucherBands`, `feeDeterminants`) are frozen
+ * RECURSIVELY. The one-level-deep freeze that first shipped froze channel-band leaves as floats
+ * inside the immutable document (review PR-A, finding I1) — a recursive value type forbids that.
+ */
+export type FrozenInputValue =
+  MoneyString | null | FrozenInputValue[] | { [field: string]: FrozenInputValue };
+
 /** The fully RESOLVED inputs (filament/printer values inlined, never references) — so a snapshot
  *  reproduces with nothing but itself, and "Recalcular hoje" has something to fall back on when the
  *  origin no longer resolves. */
-export interface FrozenPriceInput {
-  [field: string]: MoneyString | FrozenOtherCost[] | FrozenChannelInput[] | string | null;
-}
+export type FrozenPriceInput = { [field: string]: FrozenInputValue };
 
-export interface FrozenChannelInput {
-  [field: string]: MoneyString | string | Record<string, string> | null | undefined;
-}
+/** One frozen channel is just a frozen input object — kept as a name for readability. */
+export type FrozenChannelInput = { [field: string]: FrozenInputValue };
 
 export interface FrozenKitLine {
   /** The piece's name as captured — a kit quote itemizes its pieces (SC-515), and the renderer must
@@ -130,6 +137,10 @@ export interface FrozenSnapshotPayload {
   kind: "SINGLE" | "KIT";
   /** The formula that produced these numbers (`PRICING_MODEL_VERSION`) — closes A29. */
   modelVersion: string;
+  /** The fee-catalog version that priced the channels (ADR-0010) — root-level provenance, captured
+   *  so a snapshot records WHICH tariff table it used; `null` when every channel used manual fees.
+   *  Owner decision I2/Option A: a first-class root field, not buried inside `inputs`. */
+  catalogVersion: string | null;
   /** SINGLE only. */
   inputs?: FrozenPriceInput;
   /** SINGLE only. */
@@ -213,30 +224,34 @@ function freezeRollupChannels(bom: BomResult): FrozenChannel[] {
   }));
 }
 
-/** Stringify every numeric leaf of a resolved `PriceInput` — exactly, without rounding. */
+/** Freeze one INPUT value RECURSIVELY: a numeric leaf → an exact decimal string (never rounded);
+ *  strings/null pass through; arrays and nested objects are descended so no float can hide in a
+ *  channel band (review PR-A, I1). A `PriceInput` has no integer-count leaves, so every number
+ *  legitimately becomes a string here. */
+function freezeInputValue(value: unknown): FrozenInputValue {
+  if (value === null) return null;
+  if (typeof value === "number") return toExactString(value);
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) return value.map(freezeInputValue);
+  if (typeof value === "object") {
+    const out: { [field: string]: FrozenInputValue } = {};
+    for (const [key, child] of Object.entries(value)) {
+      if (child === undefined) continue;
+      out[key] = freezeInputValue(child);
+    }
+    return out;
+  }
+  // Booleans / other non-money leaves do not occur in a resolved PriceInput; invent nothing.
+  return null;
+}
+
+/** Stringify every numeric leaf of a resolved `PriceInput`, at any depth. */
 function freezeInput(input: PriceInput): FrozenPriceInput {
   const frozen: FrozenPriceInput = {};
-
   for (const [key, value] of Object.entries(input)) {
     if (value === undefined) continue;
-    if (typeof value === "number") {
-      frozen[key] = toExactString(value);
-    } else if (key === "otherCosts") {
-      frozen[key] = freezeOtherCosts(value as { name: string; value: number }[]);
-    } else if (key === "channels") {
-      frozen[key] = (value as Record<string, unknown>[]).map((channel) => {
-        const out: FrozenChannelInput = {};
-        for (const [ck, cv] of Object.entries(channel)) {
-          if (cv === undefined) continue;
-          out[ck] = typeof cv === "number" ? toExactString(cv) : (cv as FrozenChannelInput[string]);
-        }
-        return out;
-      });
-    } else {
-      frozen[key] = value as string | null;
-    }
+    frozen[key] = freezeInputValue(value);
   }
-
   return frozen;
 }
 
@@ -250,6 +265,7 @@ export function freezePriceResult(
     schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
     kind: "SINGLE",
     modelVersion: result.modelVersion,
+    catalogVersion: result.catalogVersion,
     inputs: freezeInput(input),
     breakdown: freezeBreakdown(result),
     totals: freezeTotals(result),
@@ -264,11 +280,15 @@ export function freezeBomResult(
   lines: readonly { input: PriceInput; quantity: number; name: string | null }[],
   bom: BomResult,
   provenance: FrozenProvenance | null,
+  // `BomResult` carries no catalogVersion (every line resolves from the same catalog); the call
+  // site supplies it explicitly (I2/Option A) rather than bumping pricing-core to add it.
+  catalogVersion: string | null,
 ): FrozenSnapshotPayload {
   return {
     schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
     kind: "KIT",
     modelVersion: bom.modelVersion,
+    catalogVersion,
     lines: bom.lines.map((lineResult, index) => ({
       name: lines[index]?.name ?? null,
       quantity: lineResult.quantity,

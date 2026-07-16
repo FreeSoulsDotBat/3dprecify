@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { onlineManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { idbStore, getEntitlement } = vi.hoisted(() => ({
   idbStore: new Map<string, unknown>(),
@@ -46,7 +46,13 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => {
   vi.clearAllMocks();
   idbStore.clear();
+  onlineManager.setOnline(true);
   useSessionStore.setState({ status: "authenticated", user: { uid: "u1" } as never });
+});
+
+afterEach(() => {
+  // A paused query never settles — leaving the online manager off would poison every later test.
+  onlineManager.setOnline(true);
 });
 
 describe("useEntitlement — the server's last word, kept across restarts", () => {
@@ -98,4 +104,21 @@ describe("useEntitlement — the server's last word, kept across restarts", () =
     await waitFor(() => expect(result.current.isError).toBe(true));
     expect(result.current.data).toBeUndefined();
   });
+
+  it("C4 — an IN-SESSION offline transition keeps serving the cache, flagged STALE (review PR-A)", async () => {
+    // The gate query is the same family as the outbox one: TanStack's default `networkMode`
+    // PAUSES it the moment the window fires `offline`. A paused query never errors, so `stale`
+    // would read FALSE and the surface would present a remembered `active` as if it were FRESH —
+    // exactly the lapse-hiding lie the stale flag exists to prevent. `networkMode: "always"` makes
+    // it RUN and FAIL offline, which is what turns the honest stale flag on.
+    onlineManager.setOnline(false);
+    idbStore.set("entitlement:u1", { status: "active" });
+    getEntitlement.mockRejectedValue({ status: 0 });
+    const { result } = renderHook(() => useEntitlement(), { wrapper });
+
+    await waitFor(() => expect(result.current.data?.status).toBe("active"));
+    // Not fresh — the seller is offline and this is the last answer we had.
+    await waitFor(() => expect(result.current.stale).toBe(true));
+    expect(result.current.isError).toBe(false);
+  }, 3000);
 });

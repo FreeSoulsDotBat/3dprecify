@@ -607,6 +607,30 @@ class Snapshot(Base):
         # the row is immutable — in E2/E3 this would invite drift; here nothing can update them.
         CheckConstraint("payload->>'kind' = kind", name="payload_kind_matches"),
         CheckConstraint("payload->>'modelVersion' = model_version", name="payload_version_matches"),
+        # The ADR-0008 money guard — `headline_total` is the ONE money column here and was the only
+        # money column in the schema lacking it. `<> 'NaN'` because numeric CAN hold NaN and treats
+        # `NaN = NaN` as TRUE (the numeric twin of the 'infinity' guard on device_quoted_at).
+        CheckConstraint(
+            "headline_total >= 0 AND headline_total <> 'NaN'::numeric", name="headline_total_valid"
+        ),
+        # The two MONEY-bound facts the DB did NOT guard until now: the denormalised total must
+        # equal the document's basis total (DB backstop for VR-503, app-layer primary), and the
+        # version column must equal the document's own `schemaVersion`. Immutability freezes both.
+        CheckConstraint(
+            "headline_total = ("
+            "(payload->'totals') ->> ("
+            "CASE headline_basis"
+            " WHEN 'PRECO_VAREJO' THEN 'precoVarejo'"
+            " WHEN 'PRECO_ATACADO' THEN 'precoAtacado'"
+            " END))::numeric",
+            name="headline_matches_totals",
+        ),
+        CheckConstraint(
+            "(payload->>'schemaVersion')::int = payload_schema_version",
+            name="payload_schema_matches",
+        ),
+        CheckConstraint("payload_schema_version >= 1", name="payload_schema_valid"),
+        CheckConstraint("length(btrim(model_version)) > 0", name="model_version_set"),
         Index(
             "ix_snapshots_owner_active",
             "owner_uid",

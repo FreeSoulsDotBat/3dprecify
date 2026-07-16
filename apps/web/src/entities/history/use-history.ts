@@ -16,10 +16,12 @@ import { useSessionStore } from "@/shared/session/session-store";
 
 import { loadCachedSnapshots, persistCachedSnapshots } from "./history-cache";
 import {
+  discardEntry,
   drainOutbox,
   enqueueSnapshot,
   listOutbox,
   mergeHistory,
+  retryEntry,
   type HistoryItem,
   type OutboxEntry,
   type SyncState,
@@ -83,15 +85,19 @@ export function useRecordSnapshot(): UseMutationResult<RecordOutcome, Error, Sna
       // telling the seller "pendente" over nothing at all.
       const entry = await enqueueSnapshot(uid, body);
 
-      // Best-effort immediate send. `drainOutbox` never throws — it classifies each failure into an
-      // honest state and keeps the entry.
-      await drainOutbox(uid, { post: postSnapshot });
+      // Best-effort immediate send of the WHOLE queue (this record plus any prior pendings).
+      // `drainOutbox` never throws — it classifies each failure into an honest state and returns
+      // every processed entry's FINAL state, keyed by id.
+      const settled = await drainOutbox(uid, { post: postSnapshot });
 
-      const still = (await listOutbox(uid)).find(
-        (e) => e.clientSnapshotId === entry.clientSnapshotId,
-      );
-      // Gone from the queue ⇒ the server has it. Still there ⇒ whatever state the drain gave it.
-      return { clientSnapshotId: entry.clientSnapshotId, syncState: still?.syncState ?? "synced" };
+      // Read THIS entry's outcome straight from the drain — never by re-reading the queue and
+      // inferring "gone ⇒ saved" (review PR-A, M1). If the drain could not even reach this entry
+      // (its own queue read failed), it is ABSENT from the map, and "absent" is `pending`, never a
+      // fabricated `synced`: an unconfirmed send is not a saved one.
+      return {
+        clientSnapshotId: entry.clientSnapshotId,
+        syncState: settled[entry.clientSnapshotId] ?? "pending",
+      };
     },
     onSettled: () => {
       // Both halves of the union (server list + queue) may have moved — even on failure, since the
@@ -124,6 +130,12 @@ function useOutboxQuery(uid: string | undefined) {
   return useQuery<OutboxEntry[]>({
     queryKey: outboxQueryKey(uid),
     enabled: !!uid,
+    // A LOCAL IndexedDB read must NEVER depend on the network (review PR-A, B1). With the default
+    // `networkMode: "online"` this query PAUSES the instant the window fires `offline` and reports
+    // its `initialData: []` — so the seller's own queued quote disappears from the Histórico in the
+    // exact scenario (the fair, offline) the outbox exists for. It was the one query in this module
+    // still missing `"always"`.
+    networkMode: "always",
     queryFn: () => (uid ? listOutbox(uid) : Promise.resolve([])),
     initialData: [],
   });
@@ -167,9 +179,21 @@ export function useHistory(): HistoryListState {
     // is the honest thing to say — the alternative is a spinner that never resolves.
     networkMode: "always",
     queryFn: async () => {
-      const res = await listHistoryApiV1HistoryGet();
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data.items;
+      // Follow the keyset cursor to EXHAUSTION (review PR-A, M3). The server pages to avoid a silent
+      // cap on how many snapshots a seller may keep; if the client stopped at the first page, the
+      // TAIL of the history would never reach the device — and a detail opened for an unfetched
+      // record (the detail resolves via this list) would falsely read "não encontrado". Walking
+      // every page also lands the WHOLE ledger in the cache, which is what makes the offline read
+      // complete.
+      const all: SnapshotOut[] = [];
+      let cursor: string | null | undefined;
+      do {
+        const res = await listHistoryApiV1HistoryGet(cursor ? { cursor } : undefined);
+        if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+        all.push(...res.data.items);
+        cursor = res.data.nextCursor;
+      } while (cursor);
+      return all;
     },
   });
 
@@ -182,13 +206,19 @@ export function useHistory(): HistoryListState {
   const server = query.data ?? cached ?? [];
   const items = mergeHistory(server, outbox);
 
-  // A queued record is data the seller HOLDS. An error wall over it would hide their own quote.
-  const hasLocal = cached !== null || outbox.length > 0;
+  // "Do we have ANYTHING to show?" — and the retained server data counts (review PR-A, M6).
+  // TanStack KEEPS `query.data` through a failed background refetch, so a refetch that fails while
+  // rows are on screen must flag `stale` (a calm strip), NEVER `isError` (a wall over the seller's
+  // own data). The old `hasLocal` looked only at the cache/queue and missed the retained data, so
+  // the error wall rendered on top of the list it was erroring about.
+  const hasData = query.data !== undefined || cached !== null || outbox.length > 0;
   return {
     items,
-    isLoading: query.isFetching && query.data === undefined && !hasLocal,
-    isError: query.isError && !hasLocal,
-    stale: query.isError && query.data === undefined && hasLocal,
+    isLoading: query.isFetching && !hasData,
+    // The wall is ONLY for a COLD failure — nothing fetched, nothing cached, nothing queued.
+    isError: query.isError && !hasData,
+    // Serving something non-fresh (retained data OR the device cache) after a failed read.
+    stale: query.isError && hasData,
     refetch: () => void query.refetch(),
   };
 }
@@ -220,4 +250,51 @@ export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
   });
 
   return { sync: () => mutation.mutate(), syncing: mutation.isPending };
+}
+
+/**
+ * Per-entry actions for a `blocked`/`failed` record — the [Tentar novamente] / [Descartar] a stuck
+ * entry needs so it is not a dead end (review PR-A, B2). Both invalidate the merged list so the card
+ * and the detail re-derive; a still-poisoned queue is what makes every future sign-out prompt.
+ */
+export function useEntryActions(): {
+  retry: (clientSnapshotId: string) => void;
+  discard: (clientSnapshotId: string) => void;
+  retrying: boolean;
+  discarding: boolean;
+} {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  const invalidate = () => {
+    void client.invalidateQueries({ queryKey: historyQueryKey(uid) });
+    void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
+  };
+
+  const retryMutation = useMutation({
+    networkMode: "always",
+    mutationFn: async (clientSnapshotId: string) => {
+      if (!uid) return;
+      // `retryBlocked` implicitly true: retrying is an explicit re-send, so a blocked entry is
+      // reset to pending and attempted just like a failed one.
+      await retryEntry(uid, clientSnapshotId, { post: postSnapshot });
+    },
+    onSettled: invalidate,
+  });
+
+  const discardMutation = useMutation({
+    networkMode: "always",
+    mutationFn: async (clientSnapshotId: string) => {
+      if (!uid) return;
+      await discardEntry(uid, clientSnapshotId);
+    },
+    onSettled: invalidate,
+  });
+
+  return {
+    retry: (id) => retryMutation.mutate(id),
+    discard: (id) => discardMutation.mutate(id),
+    retrying: retryMutation.isPending,
+    discarding: discardMutation.isPending,
+  };
 }

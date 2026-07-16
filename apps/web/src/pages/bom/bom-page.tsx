@@ -558,7 +558,17 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
               disabled={frozenKitLines.length === 0}
               source={{
                 kind: "KIT",
-                freeze: () => freezeBomResult(frozenKitLines, bom, kitProvenance),
+                // catalogVersion is fee-catalog provenance (I2/Option A). Mirror the SINGLE rule:
+                // null unless a line actually priced a channel from the catalog. Every line shares
+                // the same catalog, so the first non-null line version is the kit's.
+                freeze: () =>
+                  freezeBomResult(
+                    frozenKitLines,
+                    bom,
+                    kitProvenance,
+                    frozenKitLines.find((l) => l.input.catalogVersion != null)?.input
+                      .catalogVersion ?? null,
+                  ),
               }}
             />
           </div>

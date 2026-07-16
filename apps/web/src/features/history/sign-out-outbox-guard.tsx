@@ -1,8 +1,10 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { drainOutbox, listOutbox, purgeOutbox } from "@/entities/history/outbox";
-import { postSnapshot } from "@/entities/history/use-history";
+import { historyQueryKey, outboxQueryKey, postSnapshot } from "@/entities/history/use-history";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useOnline } from "@/shared/lib/use-online";
 import { registerSignOutGuard } from "@/shared/session/sign-out-guard";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui";
@@ -29,6 +31,7 @@ type Decision = (proceed: boolean) => void;
 
 export function SignOutOutboxGuard() {
   const uid = useSessionStore((s) => s.user?.uid);
+  const client = useQueryClient();
   const [pending, setPending] = useState<number | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [partial, setPartial] = useState<number | null>(null);
@@ -58,12 +61,22 @@ export function SignOutOutboxGuard() {
     });
   }, [uid]);
 
+  // Subscribes to connectivity, so a dialog opened OFFLINE re-enables [Sincronizar agora] the moment
+  // the network returns (review PR-A, C6) — the old one-time `navigator.onLine` read froze it
+  // disabled forever, leaving only "Sair e descartar".
+  const online = useOnline();
+
   if (pending === null || !uid) return null;
 
   async function syncNow(owner: string) {
     setSyncing(true);
     setPartial(null);
     await drainOutbox(owner, { post: postSnapshot });
+    // Invalidate the merged list after the drain (review PR-A, M10). Draining raw — outside the
+    // `useSyncOutbox` seam that normally does this — used to leave a partially-synced list stamping
+    // "Pendente" on records the server had already accepted, until some later invalidation.
+    void client.invalidateQueries({ queryKey: historyQueryKey(owner) });
+    void client.invalidateQueries({ queryKey: outboxQueryKey(owner) });
     const left = await listOutbox(owner);
     setSyncing(false);
     // Everything reached the account — sign out with nothing lost, and nothing discarded.
@@ -81,8 +94,6 @@ export function SignOutOutboxGuard() {
     await purgeOutbox(owner);
     close(true);
   }
-
-  const online = typeof navigator === "undefined" || navigator.onLine;
 
   return (
     <Dialog open onOpenChange={(next) => !next && close(false)}>

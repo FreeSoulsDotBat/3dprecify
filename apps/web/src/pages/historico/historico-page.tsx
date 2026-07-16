@@ -3,8 +3,10 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import type { HistoryItem } from "@/entities/history/outbox";
 import { useHistory, useSyncOutbox } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
+import { EntryActions } from "@/features/history/entry-actions";
 import { HistoryTeaserPanel } from "@/features/history/history-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Badge, Button, Card, EmptyState, Spinner } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
@@ -17,7 +19,7 @@ import {
   offsetOf,
   quotedDate,
   SYNC_BADGE,
-} from "./history-format";
+} from "@/entities/history/history-format";
 
 import "./historico-page.css";
 
@@ -51,7 +53,25 @@ export function HistoricoPage() {
   // data, and FR-517 promises they stay readable — it reaches the ledger and is simply told, calmly,
   // that writing needs an active Premium.
   if (entitlement.data?.status === "none") return <TeaserShell signedOut={false} />;
+  // Settled with NO answer and nothing cached (offline / server down / no persisted plan): do NOT
+  // fall through to the ledger's COLD error wall, and do NOT presume "free" for a premium seller
+  // whose plan simply could not be checked. A calm "could not verify your plan" + retry, mirroring
+  // the shipped E2/E3 gate (review PR-A, C5).
+  if (!entitlement.data) return <GateError onRetry={entitlement.refetch} />;
   return <HistoryLedger />;
+}
+
+function GateError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <GateShell>
+      <div className="flex flex-col items-center gap-3 py-8">
+        <Alert tone="danger">{t.guardError}</Alert>
+        <Button variant="secondary" onClick={onRetry}>
+          {t.guardRetry}
+        </Button>
+      </div>
+    </GateShell>
+  );
 }
 
 function GateShell({ children }: { children: React.ReactNode }) {
@@ -88,9 +108,18 @@ function HistoryLedger() {
   const { sync, syncing } = useSyncOutbox({ retryBlocked: entitled });
   const navigate = useNavigate();
 
-  const online = typeof navigator === "undefined" || navigator.onLine;
+  // One connectivity truth that REACTS to reconnection (review PR-A, C6) — not a one-time read.
+  const online = useOnline();
   const queued = history.items.filter((i) => i.syncState !== "synced");
   const showEmpty = !history.isLoading && !history.isError && history.items.length === 0;
+
+  // [Ver] jumps to the first entry that needs a human decision (a failed/blocked card).
+  const firstProblem = queued.find((i) => i.syncState === "failed" || i.syncState === "blocked");
+  const seeFirstProblem = () => {
+    if (!firstProblem) return;
+    const el = document.getElementById(`snap-${firstProblem.clientSnapshotId}`);
+    el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
+  };
 
   return (
     <section className="tf-historico mx-auto flex w-full max-w-md flex-col gap-4">
@@ -123,7 +152,13 @@ function HistoryLedger() {
         ))}
 
       {queued.length > 0 && (
-        <QueueBanner queued={queued} online={online} syncing={syncing} onSync={sync} />
+        <QueueBanner
+          queued={queued}
+          online={online}
+          syncing={syncing}
+          onSync={sync}
+          onSee={seeFirstProblem}
+        />
       )}
 
       {history.isLoading && (
@@ -159,40 +194,66 @@ function HistoryLedger() {
   );
 }
 
-/** Precedence: failed > blocked > pending — the state that needs a human decision wins the banner.
- *  The per-card badges tell the full truth regardless of what the banner happens to say. */
+/**
+ * The aggregate banner. Its TITLE follows the precedence failed > blocked > pending — the state that
+ * needs a human decision wins the wording. But the DRAINAGE action is no longer held hostage by it
+ * (review PR-A, C6): a single failed/blocked entry used to hide [Sincronizar agora] entirely,
+ * trapping every healthy pending behind it — the app's only manual drain, gone. Now the banner
+ * ALWAYS offers to sync when there is a healthy pending online, and a [Ver] jump when something needs
+ * a decision. The per-card badges tell the full truth regardless of what the banner says.
+ */
 function QueueBanner({
   queued,
   online,
   syncing,
   onSync,
+  onSee,
 }: {
   queued: HistoryItem[];
   online: boolean;
   syncing: boolean;
   onSync: () => void;
+  onSee: () => void;
 }) {
   const failed = queued.filter((i) => i.syncState === "failed").length;
   const blocked = queued.filter((i) => i.syncState === "blocked").length;
   const pending = queued.filter((i) => i.syncState === "pending").length;
 
+  const hasProblem = failed > 0 || blocked > 0;
+  // A healthy pending can be sent by hand — but only online, where the button can actually work.
+  const canDrain = pending > 0 && online;
+
+  let tone: "info" | "danger" = "info";
+  let text: string;
   if (failed > 0) {
-    return <Alert tone="danger">{t.queueFailed.replace("{n}", String(failed))}</Alert>;
+    tone = "danger";
+    text = t.queueFailed.replace("{n}", String(failed));
+  } else if (blocked > 0) {
+    text = t.queueBlocked.replace("{n}", String(blocked));
+  } else if (!online) {
+    text = t.queuePendingOffline.replace("{n}", String(pending));
+  } else {
+    text = t.queuePending.replace("{n}", String(pending));
   }
-  if (blocked > 0) {
-    return <Alert tone="info">{t.queueBlocked.replace("{n}", String(blocked))}</Alert>;
-  }
-  // Offline there is no button: one that cannot work is a button that pretends.
-  if (!online) {
-    return <Alert tone="info">{t.queuePendingOffline.replace("{n}", String(pending))}</Alert>;
-  }
+
   return (
-    <Alert tone="info">
+    <Alert tone={tone}>
       <span className="tf-historico__banner">
-        {t.queuePending.replace("{n}", String(pending))}
-        <Button size="sm" variant="secondary" onClick={onSync} loading={syncing}>
-          {t.syncNow}
-        </Button>
+        {text}
+        <span className="flex gap-2">
+          {/* Jump to the first entry that needs a decision, so it is never buried below the fold. */}
+          {hasProblem && (
+            <Button size="sm" variant="secondary" onClick={onSee}>
+              {t.queueSee}
+            </Button>
+          )}
+          {/* Never a button that cannot work: sync is offered only for a healthy pending, online. */}
+          {canDrain && (
+            <Button size="sm" variant="secondary" onClick={onSync} loading={syncing}>
+              {t.syncNow}
+            </Button>
+          )}
+        </span>
       </span>
     </Alert>
   );
@@ -202,11 +263,16 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
   const pieces = frozenPayloadOf(item)?.lines?.length ?? 0;
   const kind = item.kind === "KIT" ? t.kindKit.replace("{n}", String(pieces)) : t.kindSingle;
 
+  // A blocked/failed entry needs an escape hatch right where the seller sees it, or it is a dead end
+  // that poisons every future sign-out (review PR-A, B2). Pending is drained by the banner instead.
+  const stuck = item.syncState === "blocked" || item.syncState === "failed";
+
   return (
     <Link
       to="/historico/$snapshotId"
       params={{ snapshotId: item.clientSnapshotId }}
       className="tf-historico__link"
+      id={`snap-${item.clientSnapshotId}`}
     >
       <Card padding="sm" className="tf-historico__card">
         <span className="tf-historico__label">{cardTitle(item)}</span>
@@ -228,6 +294,8 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
           <strong>{money(item.headlineTotal)}</strong>
         </span>
         <span className="tf-historico__basis">{basisCaption(item.headlineBasis)}</span>
+
+        {stuck && <EntryActions item={item} />}
       </Card>
     </Link>
   );

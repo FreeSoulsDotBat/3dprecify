@@ -4,9 +4,10 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { idbStore, postSnapshot } = vi.hoisted(() => ({
+const { idbStore, postSnapshot, listHistory } = vi.hoisted(() => ({
   idbStore: new Map<string, unknown>(),
   postSnapshot: vi.fn(),
+  listHistory: vi.fn(),
 }));
 
 vi.mock("idb-keyval", () => ({
@@ -21,15 +22,19 @@ vi.mock("idb-keyval", () => ({
 
 vi.mock("@/shared/api/generated", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/api/generated")>();
-  return { ...actual, recordSnapshotApiV1HistoryPost: postSnapshot };
+  return {
+    ...actual,
+    recordSnapshotApiV1HistoryPost: postSnapshot,
+    listHistoryApiV1HistoryGet: listHistory,
+  };
 });
 
-import { set as idbSet } from "idb-keyval";
+import { get as idbGet, set as idbSet } from "idb-keyval";
 import type { SnapshotIn } from "@/shared/api/generated";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { listOutbox } from "./outbox";
-import { useRecordSnapshot } from "./use-history";
+import { useHistory, useRecordSnapshot } from "./use-history";
 
 // 009/T010 (E4, PR-A) — RECORDING, written FAILING-first.
 //
@@ -54,6 +59,21 @@ const BODY: SnapshotIn = {
   payload: { schemaVersion: 1, kind: "SINGLE", modelVersion: "3.1.0" },
 };
 
+const SERVER_ROW = {
+  id: "s1",
+  clientSnapshotId: "srv-1",
+  kind: "SINGLE",
+  label: "Sincronizado",
+  quoteValidityDays: null,
+  deviceQuotedAt: "2026-07-10T10:00:00Z",
+  deviceUtcOffsetMinutes: -180,
+  modelVersion: "3.1.0",
+  payloadSchemaVersion: 1,
+  payload: {},
+  headlineTotal: "10.00",
+  headlineBasis: "PRECO_VAREJO",
+};
+
 function wrapper({ children }: { children: ReactNode }) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
   return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
@@ -62,9 +82,17 @@ function wrapper({ children }: { children: ReactNode }) {
 beforeEach(() => {
   vi.clearAllMocks();
   idbStore.clear();
+  // `clearAllMocks` clears CALLS but not IMPLEMENTATIONS — a test that made get/set reject would
+  // otherwise poison every test after it. Restore the store-backed defaults each time.
+  vi.mocked(idbGet).mockImplementation(async (k) => idbStore.get(k as string));
+  vi.mocked(idbSet).mockImplementation(async (k, v) => {
+    idbStore.set(k as string, v);
+  });
   // A paused mutation never settles, so a failing offline test would otherwise leave the online
   // manager off and poison every test after it.
   onlineManager.setOnline(true);
+  // Default: no server (each useHistory test overrides as needed).
+  listHistory.mockRejectedValue({ status: 0 });
   useSessionStore.setState({ status: "authenticated", user: { uid: "u1" } as never });
 });
 
@@ -181,4 +209,81 @@ describe("waitFor keeps the mutation state honest", () => {
 
     await waitFor(() => expect(result.current.isError).toBe(true));
   });
+});
+
+describe("M1 — never a false 'salvo' when the send cannot be confirmed (review PR-A)", () => {
+  it("reports PENDING (not synced) when the queue read fails after enqueue — and never claims 'saved'", async () => {
+    // `listOutbox` swallows read errors and returns [] (its convenience contract). The old record
+    // path read "not in the queue ⇒ the server has it" and would toast "Registro salvo" for a
+    // record the server NEVER saw. The drain now reports each entry's ACTUAL settle result, so an
+    // entry it could not even re-read is `pending`, never a fabricated `synced`.
+    postSnapshot.mockResolvedValue({ status: 201, data: { id: "s1" } });
+    vi.mocked(idbGet).mockRejectedValue(new Error("read glitch"));
+    const { result } = renderHook(() => useRecordSnapshot(), { wrapper });
+
+    const outcome = await result.current.mutateAsync(BODY);
+
+    expect(outcome.syncState).toBe("pending");
+    expect(outcome.syncState).not.toBe("synced");
+    // The drain never reached the entry, so nothing was even sent — "salvo" would be a pure lie.
+    expect(postSnapshot).not.toHaveBeenCalled();
+  });
+});
+
+describe("M6 — a failed refetch never walls over the list already on screen (review PR-A)", () => {
+  it("serves the RETAINED rows and flags STALE, not isError", async () => {
+    listHistory.mockResolvedValueOnce({ status: 200, data: { items: [SERVER_ROW] } });
+    const { result } = renderHook(() => useHistory(), { wrapper });
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+
+    // The background refetch fails — TanStack RETAINS the last good `query.data`.
+    listHistory.mockRejectedValue({ status: 500 });
+    result.current.refetch();
+
+    await waitFor(() => expect(result.current.stale).toBe(true));
+    // The wall must NOT render over rows the seller already holds.
+    expect(result.current.isError).toBe(false);
+    expect(result.current.items).toHaveLength(1);
+  });
+});
+
+describe("M3 — the client follows the keyset cursor to exhaustion (review PR-A)", () => {
+  it("walks every page so the TAIL of the history reaches the device", async () => {
+    const row = (csid: string) => ({ ...SERVER_ROW, id: csid, clientSnapshotId: csid });
+    // The server pages to avoid a silent cap; a single un-paged fetch would show only the first
+    // page and lose the rest — and a detail opened for an unfetched record would falsely read
+    // "não encontrado". The client must walk `nextCursor` until it is null.
+    listHistory
+      .mockResolvedValueOnce({ status: 200, data: { items: [row("a")], nextCursor: "cur1" } })
+      .mockResolvedValueOnce({ status: 200, data: { items: [row("b")], nextCursor: null } });
+
+    const { result } = renderHook(() => useHistory(), { wrapper });
+
+    await waitFor(() => expect(result.current.items).toHaveLength(2));
+    expect(result.current.items.map((i) => i.clientSnapshotId).sort()).toEqual(["a", "b"]);
+    // The second call carried the cursor the first page handed back.
+    expect(listHistory).toHaveBeenNthCalledWith(2, { cursor: "cur1" });
+  });
+});
+
+describe("B1 read regression — a pending record is visible OFFLINE (review PR-A)", () => {
+  it("shows a queued entry while `navigator.onLine === false` — a LOCAL read never depends on the network", async () => {
+    // `useOutboxQuery` reads the DEVICE's own IndexedDB. TanStack's default `networkMode: "online"`
+    // PAUSES it the instant the browser goes offline: it reports its `initialData: []` and the
+    // seller's own queued quote vanishes from the Histórico — the very scenario (the fair) this
+    // feature exists for. A local read must run REGARDLESS of connectivity (`networkMode: "always"`).
+    onlineManager.setOnline(false);
+    idbStore.set("history:outbox:u1", [
+      { clientSnapshotId: "csid-off", body: BODY, syncState: "pending", attempts: 0 },
+    ]);
+    const { result } = renderHook(() => useHistory(), { wrapper });
+
+    try {
+      // With the default network mode the outbox query is paused, so this stays 0 and times out.
+      await waitFor(() => expect(result.current.items).toHaveLength(1));
+      expect(result.current.items[0]?.syncState).toBe("pending");
+    } finally {
+      onlineManager.setOnline(true);
+    }
+  }, 3000);
 });

@@ -174,7 +174,65 @@ export interface DrainDeps {
 }
 
 /**
+ * Settle ONE entry against the server and return its FINAL state — read DIRECTLY from the send
+ * outcome, never re-inferred by re-reading the queue.
+ *
+ * That directness is the fix for the "false salvo" (review PR-A, M1): the record path used to POST,
+ * then re-read the queue and treat "not there ⇒ the server has it". But `listOutbox` returns `[]` on
+ * ANY read error, so a glitched re-read reported `synced` over a record the server never accepted —
+ * the worst lie this feature can tell. Here `synced` is returned ONLY when `post` actually resolved;
+ * an unconfirmable send stays `pending`.
+ *
+ * PR-B (M5): a status-0 (lost response) MUST stay `pending` and be retried — it may have landed. The
+ * coming backoff/cap policy may space retries out, but it must NEVER flip a status 0 to `failed`.
+ */
+export async function settleEntry(
+  uid: string,
+  entry: OutboxEntry,
+  deps: DrainDeps,
+): Promise<SyncState> {
+  try {
+    await deps.post(entry.body);
+    // Accepted — 201 (created) or 200 (the server returned the row it already had). Identical to
+    // the client: the record is on the server, so the queue entry has done its job.
+    await removeEntry(uid, entry.clientSnapshotId);
+    return "synced";
+  } catch (error) {
+    const status = (error as { status?: number }).status ?? 0;
+
+    // Deleted elsewhere by the seller — drop quietly (§5). It is gone from the account AND the
+    // queue, so there is nothing left to report as unsent. (Unreachable on a first-time record: a
+    // just-minted id the server has never seen cannot 404.)
+    if (status === 404) {
+      await removeEntry(uid, entry.clientSnapshotId);
+      return "synced";
+    }
+
+    const syncState: OutboxEntry["syncState"] =
+      status === 403
+        ? "blocked"
+        : status === 422
+          ? "failed"
+          : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
+            "pending";
+
+    await updateEntry(uid, entry.clientSnapshotId, (current) => ({
+      ...current,
+      syncState,
+      attempts: current.attempts + 1,
+      lastStatus: status,
+    }));
+    return syncState;
+  }
+}
+
+/**
  * Drain the queue. Entries are INDEPENDENT — a failing entry never blocks the ones behind it.
+ *
+ * Returns each processed entry's FINAL `SyncState`, keyed by `clientSnapshotId`, so a caller (the
+ * record action) can read the outcome of ITS entry without a lying re-read (M1). An entry the drain
+ * never reached — because the queue read itself failed — is simply absent from the map, and the
+ * caller treats "absent" as `pending`, never `synced`.
  *
  * Each entry is settled ON ITS OWN, under the lock, against the queue as it stands AT THAT MOMENT.
  * The earlier shape — read the whole list, post, write the list back — destroyed any record queued
@@ -184,47 +242,50 @@ export interface DrainDeps {
  * retry idempotent. A caller may drain from several triggers (boot, `online`, focus, post-sign-in)
  * and even from two tabs without risking a duplicate.
  */
-export async function drainOutbox(uid: string, deps: DrainDeps): Promise<void> {
+export async function drainOutbox(
+  uid: string,
+  deps: DrainDeps,
+): Promise<Record<string, SyncState>> {
   const entries = await listOutbox(uid);
+  const results: Record<string, SyncState> = {};
 
   for (const entry of entries) {
     // A permanent rejection is never auto-retried; a blocked entry waits for the seller (or for
-    // premium to come back). Untouched — not rewritten, not reordered.
+    // premium to come back). Untouched — not rewritten, not reordered — but its existing state is
+    // still recorded so the caller can read the target's outcome.
     if (entry.syncState === "failed" || (entry.syncState === "blocked" && !deps.retryBlocked)) {
+      results[entry.clientSnapshotId] = entry.syncState;
       continue;
     }
 
-    try {
-      await deps.post(entry.body);
-      // Accepted — 201 (created) or 200 (the server returned the row it already had). Identical to
-      // the client: the record is on the server, so the queue entry has done its job.
-      await removeEntry(uid, entry.clientSnapshotId);
-    } catch (error) {
-      const status = (error as { status?: number }).status ?? 0;
-
-      // Deleted elsewhere by the seller — drop quietly (§5). Resurrecting it would be the one
-      // outcome nobody could defend.
-      if (status === 404) {
-        await removeEntry(uid, entry.clientSnapshotId);
-        continue;
-      }
-
-      const syncState: OutboxEntry["syncState"] =
-        status === 403
-          ? "blocked"
-          : status === 422
-            ? "failed"
-            : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
-              "pending";
-
-      await updateEntry(uid, entry.clientSnapshotId, (current) => ({
-        ...current,
-        syncState,
-        attempts: current.attempts + 1,
-        lastStatus: status,
-      }));
-    }
+    results[entry.clientSnapshotId] = await settleEntry(uid, entry, deps);
   }
+
+  return results;
+}
+
+/**
+ * Re-send ONE entry on demand — the [Tentar novamente] action a `blocked`/`failed` entry needs so it
+ * is not a dead end (review PR-A, B2). Reset to `pending` under the lock, then settle it. Returns the
+ * resulting state (or `pending` if it could not be re-read — never a fabricated `synced`).
+ */
+export async function retryEntry(
+  uid: string,
+  clientSnapshotId: string,
+  deps: DrainDeps,
+): Promise<SyncState> {
+  await updateEntry(uid, clientSnapshotId, (current) => ({ ...current, syncState: "pending" }));
+  const entry = (await listOutbox(uid)).find((e) => e.clientSnapshotId === clientSnapshotId);
+  if (!entry) return "pending"; // could not re-read it — never claim it was accepted
+  return settleEntry(uid, entry, deps);
+}
+
+/**
+ * Discard ONE entry — the [Descartar] action. The seller's EXPLICIT choice (always confirmed at the
+ * UI), never automatic: a blocked/failed record is retained until they decide (ADR-0018 §9).
+ */
+export async function discardEntry(uid: string, clientSnapshotId: string): Promise<void> {
+  await removeEntry(uid, clientSnapshotId);
 }
 
 /** One row of the Histórico, whether it lives on the server or is still on this device. */

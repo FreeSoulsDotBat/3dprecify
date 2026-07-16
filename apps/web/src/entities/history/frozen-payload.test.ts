@@ -193,6 +193,7 @@ describe("the document is self-sufficient — the export PRINTS, it never CALCUL
       [{ input: priceInput(), quantity: 3, name: "Vaso G" }],
       bom,
       null,
+      null,
     );
 
     expect(payload.kind).toBe("KIT");
@@ -227,5 +228,118 @@ describe("provenance is captured, never referenced (ADR-0019 §5)", () => {
 
   it("a snapshot with no origin (an ad-hoc calculation) has null provenance, never a fake one", () => {
     expect(freezePriceResult(priceInput(), priceResult(), null).provenance).toBeNull();
+  });
+});
+
+// 009 — review PR-A, finding I1. The ORIGINAL `freezeInput` only stringified TOP-LEVEL numbers and
+// each channel's scalar fields; a channel's `priceBands`/`freightVoucherBands` (arrays of objects)
+// fell through untouched and their numeric leaves (commissionPct, fixedFee, voucherCeiling, …) were
+// FROZEN AS FLOATS inside the immutable document. Any real Shopee/ML quote would corrupt permanently.
+describe("I1 — every numeric leaf of a channel band is frozen too (no float survives, FR-525)", () => {
+  it("stringifies the leaves inside priceBands and freightVoucherBands", () => {
+    const payload = freezePriceResult(
+      priceInput({
+        channels: [
+          {
+            marketplace: "Shopee",
+            commissionPct: 14,
+            fixedFee: 4,
+            priceBands: [
+              { minPrice: 0, maxPrice: 79.9, commissionPct: 12.5, fixedFee: 5.99 },
+              { minPrice: 79.9, maxPrice: null, commissionPct: 14.5, fixedFee: 6.5 },
+            ],
+            freightVoucherBands: [{ minPrice: 0, maxPrice: null, voucherCeiling: 6.5 }],
+          },
+        ],
+      }),
+      priceResult(),
+      null,
+    );
+
+    const numericLeaves: string[] = [];
+    const walk = (node: unknown, path: string): void => {
+      if (typeof node === "number") {
+        if (!Number.isInteger(node)) numericLeaves.push(path);
+        return;
+      }
+      if (Array.isArray(node)) {
+        node.forEach((child, i) => walk(child, `${path}[${i}]`));
+        return;
+      }
+      if (node && typeof node === "object") {
+        for (const [key, value] of Object.entries(node)) walk(value, `${path}.${key}`);
+      }
+    };
+    walk(JSON.parse(JSON.stringify(payload)), "$");
+    expect(numericLeaves).toEqual([]);
+
+    // Every band leaf — integer or not — is an exact decimal STRING (inputs are never rounded).
+    const channels = payload.inputs?.channels as unknown as Record<string, unknown>[];
+    const band0 = (channels[0].priceBands as Record<string, unknown>[])[0];
+    expect(band0.minPrice).toBe("0");
+    expect(band0.maxPrice).toBe("79.9");
+    expect(band0.commissionPct).toBe("12.5");
+    expect(band0.fixedFee).toBe("5.99");
+    const voucher0 = (channels[0].freightVoucherBands as Record<string, unknown>[])[0];
+    expect(voucher0.voucherCeiling).toBe("6.5");
+    // A null band ceiling (maxPrice: ∞) stays null, never "0".
+    const band1 = (channels[0].priceBands as Record<string, unknown>[])[1];
+    expect(band1.maxPrice).toBeNull();
+  });
+});
+
+// 009 — review PR-A, finding I2 (owner decision: Option A — flattened envelope + catalogVersion at
+// the root). The fee-catalog provenance (ADR-0010) must be a first-class root field of the frozen
+// document, or every v1 snapshot freezes forever without knowing which tariff table priced it.
+describe("I2 — catalogVersion is captured at the document root (fee provenance, ADR-0010)", () => {
+  it("SINGLE carries the result's catalogVersion", () => {
+    const payload = freezePriceResult(
+      priceInput(),
+      priceResult({ catalogVersion: "2026-07-05" }),
+      null,
+    );
+    expect(payload.catalogVersion).toBe("2026-07-05");
+  });
+
+  it("SINGLE with all-manual fees records a null catalogVersion — never an absent key", () => {
+    const payload = freezePriceResult(priceInput(), priceResult({ catalogVersion: null }), null);
+    expect(payload.catalogVersion).toBeNull();
+    expect("catalogVersion" in payload).toBe(true);
+  });
+
+  it("KIT carries the catalogVersion passed from the call site (BomResult has none)", () => {
+    const bom: BomResult = {
+      lines: [
+        {
+          line: priceResult(),
+          quantity: 1,
+          custoTotal: 25.45,
+          precoVarejo: 38.18,
+          precoAtacado: 33.09,
+        },
+      ],
+      custoTotal: 25.45,
+      precoVarejo: 38.18,
+      precoAtacado: 33.09,
+      channels: [],
+      modelVersion: "3.1.0",
+    };
+
+    const withCatalog = freezeBomResult(
+      [{ input: priceInput(), quantity: 1, name: "Vaso G" }],
+      bom,
+      null,
+      "2026-07-05",
+    );
+    expect(withCatalog.catalogVersion).toBe("2026-07-05");
+
+    const allManual = freezeBomResult(
+      [{ input: priceInput(), quantity: 1, name: "Vaso G" }],
+      bom,
+      null,
+      null,
+    );
+    expect(allManual.catalogVersion).toBeNull();
+    expect("catalogVersion" in allManual).toBe(true);
   });
 });

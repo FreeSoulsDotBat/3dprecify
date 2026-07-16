@@ -4,7 +4,6 @@ import { useEffect, type ReactNode } from "react";
 import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
 import { purgeHistoryCache } from "@/entities/history/history-cache";
-import { purgeOutbox } from "@/entities/history/outbox";
 import { HISTORY_QUERY_ROOT } from "@/entities/history/use-history";
 import { purgeEntitlementCache } from "@/entities/user/entitlement-cache";
 import { ENTITLEMENT_QUERY_KEY } from "@/entities/user/use-entitlement";
@@ -36,11 +35,8 @@ export function AppProviders({ children }: { children: ReactNode }) {
         // Saved kits are the same kind of user data and get the same sweep (E3/T014) — a kit list
         // left behind on a shared device would leak exactly what the catalog sweep prevents.
         queryClient.removeQueries({ queryKey: BOM_QUERY_ROOT });
-        // The Histórico joins the same sweep (E4/T011) — and it is the one store where the sweep
-        // can DESTROY data, not just a rebuildable cache: an unsynced record exists nowhere else.
-        // That is exactly why sign-out is now guarded (features/history/sign-out-outbox-guard):
-        // by the time this runs, the seller has already been asked and has chosen. The purge
-        // itself must therefore stay unconditional — it is the privacy guarantee.
+        // The Histórico READ cache joins the same in-memory sweep (E4/T011) — it is rebuildable
+        // from the server, so evicting it is free.
         queryClient.removeQueries({ queryKey: HISTORY_QUERY_ROOT });
         // The persisted plan (009/T011b) is swept too: a device shared by two accounts must never
         // let one of them read — let alone act on — the other's premium.
@@ -48,9 +44,16 @@ export function AppProviders({ children }: { children: ReactNode }) {
         if (prev.user?.uid) {
           void purgeCatalogCache(prev.user.uid);
           void purgeBomCache(prev.user.uid);
-          void purgeOutbox(prev.user.uid);
           void purgeHistoryCache(prev.user.uid);
           void purgeEntitlementCache(prev.user.uid);
+          // NOTE (review PR-A, B3): the OUTBOX is deliberately NOT purged here. It is the ONLY copy
+          // of a quote that never reached the account, and this subscription ALSO fires on
+          // INVOLUNTARY transitions the sign-out guard never mediated — a revoked/expired token
+          // makes the Firebase SDK auto-sign-out (onIdTokenChanged(null)) with no dialog, no toast.
+          // Purging here would silently destroy the seller's work (ADR-0018 §10). The uid-keyed
+          // outbox (`history:outbox:{uid}`) cannot leak cross-account, so retaining it is safe; the
+          // ONLY place it is purged is the guard's explicit "descartar" branch, where the seller
+          // chose it. On the next sign-in of the same uid it reappears and drains.
         }
       }
     });

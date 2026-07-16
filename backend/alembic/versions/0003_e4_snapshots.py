@@ -131,6 +131,40 @@ def upgrade() -> None:
             "payload->>'modelVersion' = model_version",
             name=op.f("ck_snapshots_payload_version_matches"),
         ),
+        # The ADR-0008 money guard. `headline_total` is the ONE money column on this table and,
+        # until now, the ONLY money column in the whole schema without it. `<> 'NaN'` because
+        # Postgres `numeric` CAN hold NaN and treats `NaN = NaN` as TRUE — the numeric twin of the
+        # temporal 'infinity' hole already guarded on `device_quoted_at`.
+        sa.CheckConstraint(
+            "headline_total >= 0 AND headline_total <> 'NaN'::numeric",
+            name=op.f("ck_snapshots_headline_total_valid"),
+        ),
+        # The denormalised money column may never diverge from the document it summarises — the DB
+        # BACKSTOP for VR-503 (the app-layer validator is primary). Immutability then makes the
+        # agreement permanent. map = {PRECO_VAREJO->precoVarejo, PRECO_ATACADO->precoAtacado}. Two
+        # columns used to be bound to the document for free (`kind`, `modelVersion`); the two that
+        # are MONEY were not — this closes that gap.
+        sa.CheckConstraint(
+            "headline_total = ("
+            "(payload->'totals') ->> ("
+            "CASE headline_basis"
+            " WHEN 'PRECO_VAREJO' THEN 'precoVarejo'"
+            " WHEN 'PRECO_ATACADO' THEN 'precoAtacado'"
+            " END))::numeric",
+            name=op.f("ck_snapshots_headline_matches_totals"),
+        ),
+        # The envelope's version column may never diverge from the document's own `schemaVersion`
+        # (the label is frozen ⇒ a wrong version would be permanent).
+        sa.CheckConstraint(
+            "(payload->>'schemaVersion')::int = payload_schema_version",
+            name=op.f("ck_snapshots_payload_schema_matches"),
+        ),
+        sa.CheckConstraint(
+            "payload_schema_version >= 1", name=op.f("ck_snapshots_payload_schema_valid")
+        ),
+        sa.CheckConstraint(
+            "length(btrim(model_version)) > 0", name=op.f("ck_snapshots_model_version_set")
+        ),
         sa.ForeignKeyConstraint(
             ["owner_uid"],
             ["accounts.account_uid"],
@@ -163,6 +197,14 @@ def upgrade() -> None:
         FOR EACH ROW EXECUTE FUNCTION snapshots_forbid_content_update();
         """
     )
+    # ENABLE ALWAYS, not the default `ENABLE` (origin mode). A trigger in origin mode does NOT fire
+    # under `session_replication_role = 'replica'` — the GUC used by logical-replication apply,
+    # `pg_restore --disable-triggers` and several migration/DMS tools. ADR-0019 sells the trigger as
+    # what makes SC-504 ("0 write paths may alter a snapshot") demonstrable IN THE DATABASE, not a
+    # promise about the code we happen to write; under that GUC the demonstration would silently
+    # fall. Setting the GUC needs superuser (the Cloud SQL app role is not), hence low reach — but
+    # it costs one line here and a whole second migration on immutable rows later. (Review PR-A, C7.)
+    op.execute("ALTER TABLE snapshots ENABLE ALWAYS TRIGGER trg_snapshots_immutable;")
 
 
 def downgrade() -> None:
