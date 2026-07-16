@@ -3,6 +3,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -15,15 +16,25 @@ import { useSessionStore } from "@/shared/session/session-store";
 // Reopening a DEGRADED product (deleted reference) shows the calm info alert and the last-known
 // values as ordinary editable fields (US6-4) — never blank, never broken.
 
-const { navigateMock, useProductsMock, useFilamentsMock, usePrintersMock, createMock, updateMock } =
-  vi.hoisted(() => ({
-    navigateMock: vi.fn(),
-    useProductsMock: vi.fn(),
-    useFilamentsMock: vi.fn(),
-    usePrintersMock: vi.fn(),
-    createMock: vi.fn(),
-    updateMock: vi.fn(),
-  }));
+const {
+  navigateMock,
+  useProductsMock,
+  useFilamentsMock,
+  usePrintersMock,
+  createMock,
+  updateMock,
+  recordMock,
+  entitlement,
+} = vi.hoisted(() => ({
+  navigateMock: vi.fn(),
+  useProductsMock: vi.fn(),
+  useFilamentsMock: vi.fn(),
+  usePrintersMock: vi.fn(),
+  createMock: vi.fn(),
+  updateMock: vi.fn(),
+  recordMock: vi.fn(),
+  entitlement: { data: undefined as { status: string } | undefined },
+}));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => navigateMock };
@@ -39,6 +50,12 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useUpdateProduct: () => ({ mutateAsync: updateMock, isPending: false }),
   };
 });
+// US3/T019 — the record action on the product page needs the entitlement gate (server's last word)
+// and the record mutation. Mocked so the button's presence and the frozen provenance are driven here.
+vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: () => entitlement }));
+vi.mock("@/entities/history/use-history", () => ({
+  useRecordSnapshot: () => ({ mutateAsync: recordMock, isPending: false }),
+}));
 
 import { ProdutoPage } from "./produto-page";
 
@@ -120,6 +137,8 @@ beforeEach(() => {
   usePrintersMock.mockReturnValue(listState([printer]));
   createMock.mockResolvedValue(savedProduct);
   updateMock.mockResolvedValue(savedProduct);
+  entitlement.data = { status: "active" };
+  recordMock.mockResolvedValue({ clientSnapshotId: "csid-1", syncState: "synced" });
 });
 
 afterEach(() => {
@@ -232,5 +251,40 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
     const { id, body } = updateMock.mock.calls[0][0];
     expect(id).toBe("prod-1");
     expect(body).toMatchObject({ name: "Vaso G", filamentId: "f-1", printerId: "p-1" });
+  });
+});
+
+describe("ProdutoPage — record a snapshot with PRODUCT provenance (US3/T019)", () => {
+  const h = messages.historico;
+  const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
+
+  it("a premium seller can record the on-screen price, tagged with the product as its origin", async () => {
+    // This is the entry point PR-A lacked: the calculator binds filament/printer, never a product,
+    // so a calculator snapshot is genuinely ad-hoc (provenance null). Only THIS surface can produce
+    // `provenance.kind = "PRODUCT"`, which is what makes SC-502 reachable from a product at all.
+    const user = setup();
+    renderPage("prod-1");
+
+    await user.click(screen.getByRole("button", { name: h.saveAction }));
+    await user.click(await screen.findByRole("button", { name: h.saveSheetSubmit }));
+
+    await waitFor(() => expect(recordMock).toHaveBeenCalledTimes(1));
+    const body = recordMock.mock.calls[0][0];
+    expect(body.kind).toBe("SINGLE");
+    // The captured origin — informational, resolved at read time later (ADR-0019 §5).
+    expect(body.payload.provenance).toEqual({ kind: "PRODUCT", id: "prod-1", name: "Vaso G" });
+    // And it is a real frozen document: money as strings, never a float leaf.
+    expect(typeof body.payload.totals.precoVarejo).toBe("string");
+  });
+
+  it("a NEW (unsaved) product offers NO record action — there is no origin to tag yet", () => {
+    renderPage(); // create mode, no productId
+    expect(screen.queryByRole("button", { name: h.saveAction })).not.toBeInTheDocument();
+  });
+
+  it("without an active premium the record action does not exist (server's last word)", () => {
+    entitlement.data = { status: "none" };
+    renderPage("prod-1");
+    expect(screen.queryByRole("button", { name: h.saveAction })).not.toBeInTheDocument();
   });
 });

@@ -57,6 +57,19 @@
   text-decoration: none;
 }
 
+/* US3/T019 — "abrir origem" inside the ficha técnica. A quiet inline link (an affordance, not a
+   primary action): present only when the origin still resolves; its absence is silent. */
+.tf-historico__origin-link {
+  align-self: flex-start;
+  color: var(--color-accent, var(--text-link, #2563eb));
+  font-size: var(--fs-caption, 0.8125rem);
+  text-decoration: none;
+}
+
+.tf-historico__origin-link:hover {
+  text-decoration: underline;
+}
+
 .tf-historico__claim,
 .tf-historico__tech {
   display: flex;
@@ -105,4 +118,28 @@
   flex-wrap: wrap;
   gap: var(--space-2, 0.5rem);
   margin-block-start: var(--space-2, 0.5rem);
+}
+
+/* US6/T021 — the filter bar (search + período). Stacks on the phone; the período chips wrap so
+   [Período…] never overflows the 390px column. */
+.tf-historico__filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.tf-historico__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* The active custom-range chip — the picked [de – até] plus its [Limpar filtro] escape. */
+.tf-historico__filterchip {
+  align-items: center;
+  color: var(--text-muted);
+  display: inline-flex;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption, 0.8125rem);
+  gap: var(--space-2, 0.5rem);
 }

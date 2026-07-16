@@ -377,14 +377,29 @@ async def list_history(
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     cursor: Annotated[str | None, Query()] = None,
+    q: Annotated[str | None, Query(max_length=120)] = None,
+    from_: Annotated[datetime.datetime | None, Query(alias="from")] = None,
+    to: Annotated[datetime.datetime | None, Query()] = None,
+    client_snapshot_id: Annotated[uuid.UUID | None, Query(alias="clientSnapshotId")] = None,
 ) -> SnapshotPage:
     """Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
 
     Keyset pagination (data-model D4), never OFFSET and never a silent cap: a page size is NOT a
     limit on how many snapshots a seller may keep (that would be a business-rules amendment). The
-    client follows ``nextCursor`` to exhaustion, so the whole unbounded history reaches the device —
-    the 51st entry cannot vanish, and the detail-via-list resolution stays truthful (review PR-A
-    M3). ``limit + 1`` peeks one row ahead to decide whether a next page exists.
+    client follows ``nextCursor`` to exhaustion — or, from PR-B, lazily via [Carregar mais] — so the
+    whole unbounded history is reachable. ``limit + 1`` peeks one row ahead to decide whether a next
+    page exists.
+
+    US6 filters (ux §2.6), all owner-scoped and composing with the keyset:
+
+    * ``q`` — a substring label search, ILIKE (case-insensitive) and **accent-sensitive** (F5,
+      owner-accepted for E4: ``joao`` does not find ``João``). ILIKE metacharacters in the term are
+      escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
+      label never matches (an unlabelled row is not a search hit).
+    * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
+      ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
+    * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
+      may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
     """
     uid: str = claims["uid"]
     stmt = (
@@ -393,6 +408,15 @@ async def list_history(
         .order_by(Snapshot.device_quoted_at.desc(), Snapshot.id.desc())
         .limit(limit + 1)
     )
+    if q:
+        term = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+        stmt = stmt.where(Snapshot.label.ilike(f"%{term}%", escape="\\"))
+    if from_ is not None:
+        stmt = stmt.where(Snapshot.device_quoted_at >= from_)
+    if to is not None:
+        stmt = stmt.where(Snapshot.device_quoted_at <= to)
+    if client_snapshot_id is not None:
+        stmt = stmt.where(Snapshot.client_snapshot_id == client_snapshot_id)
     if cursor is not None:
         cur_dt, cur_id = _decode_cursor(cursor)
         # Row-value comparison matches the composite DESC order exactly — the next page is every

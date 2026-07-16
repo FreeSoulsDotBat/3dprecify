@@ -4,10 +4,12 @@ import { renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { idbStore, postSnapshot, listHistory } = vi.hoisted(() => ({
+const { idbStore, postSnapshot, listHistory, patchLabel, deleteSnap } = vi.hoisted(() => ({
   idbStore: new Map<string, unknown>(),
   postSnapshot: vi.fn(),
   listHistory: vi.fn(),
+  patchLabel: vi.fn(),
+  deleteSnap: vi.fn(),
 }));
 
 vi.mock("idb-keyval", () => ({
@@ -26,6 +28,8 @@ vi.mock("@/shared/api/generated", async (importOriginal) => {
     ...actual,
     recordSnapshotApiV1HistoryPost: postSnapshot,
     listHistoryApiV1HistoryGet: listHistory,
+    relabelSnapshotApiV1HistorySnapshotIdPatch: patchLabel,
+    deleteSnapshotApiV1HistorySnapshotIdDelete: deleteSnap,
   };
 });
 
@@ -34,7 +38,13 @@ import type { SnapshotIn } from "@/shared/api/generated";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { listOutbox } from "./outbox";
-import { useHistory, useRecordSnapshot } from "./use-history";
+import {
+  useDeleteSnapshot,
+  useHistory,
+  useRecordSnapshot,
+  useSnapshot,
+  useUpdateLabel,
+} from "./use-history";
 
 // 009/T010 (E4, PR-A) — RECORDING, written FAILING-first.
 //
@@ -247,22 +257,89 @@ describe("M6 — a failed refetch never walls over the list already on screen (r
   });
 });
 
-describe("M3 — the client follows the keyset cursor to exhaustion (review PR-A)", () => {
-  it("walks every page so the TAIL of the history reaches the device", async () => {
+describe("T022 — LAZY keyset pagination ([Carregar mais]), no silent cap", () => {
+  it("loads only the first page, then fetches the next on loadMore()", async () => {
     const row = (csid: string) => ({ ...SERVER_ROW, id: csid, clientSnapshotId: csid });
-    // The server pages to avoid a silent cap; a single un-paged fetch would show only the first
-    // page and lose the rest — and a detail opened for an unfetched record would falsely read
-    // "não encontrado". The client must walk `nextCursor` until it is null.
+    // PR-A walked every page eagerly (so the detail resolved via the list). PR-B loads lazily — one
+    // page at a time — and the detail now resolves by clientSnapshotId (useSnapshot), so the eager
+    // walk is no longer needed. A page size is still NOT a cap: [Carregar mais] reaches every row.
     listHistory
       .mockResolvedValueOnce({ status: 200, data: { items: [row("a")], nextCursor: "cur1" } })
       .mockResolvedValueOnce({ status: 200, data: { items: [row("b")], nextCursor: null } });
 
     const { result } = renderHook(() => useHistory(), { wrapper });
 
+    await waitFor(() => expect(result.current.items).toHaveLength(1)); // FIRST page only
+    expect(result.current.hasMore).toBe(true);
+    expect(result.current.items[0]?.clientSnapshotId).toBe("a");
+
+    result.current.loadMore();
     await waitFor(() => expect(result.current.items).toHaveLength(2));
-    expect(result.current.items.map((i) => i.clientSnapshotId).sort()).toEqual(["a", "b"]);
-    // The second call carried the cursor the first page handed back.
+    expect(result.current.hasMore).toBe(false); // the tail reached the device, no cap
     expect(listHistory).toHaveBeenNthCalledWith(2, { cursor: "cur1" });
+  });
+});
+
+describe("US6 — server-side filters + the outbox is NEVER filtered out (ux §2.6)", () => {
+  it("passes the label search and the period straight to the server", async () => {
+    listHistory.mockResolvedValue({ status: 200, data: { items: [], nextCursor: null } });
+    renderHook(() => useHistory({ q: "João", from: "2026-07-01T00:00:00Z" }), { wrapper });
+
+    await waitFor(() => expect(listHistory).toHaveBeenCalled());
+    expect(listHistory).toHaveBeenCalledWith({ q: "João", from: "2026-07-01T00:00:00Z" });
+  });
+
+  it("a pending record still shows under an active filter — an unsynced quote never disappears", async () => {
+    listHistory.mockResolvedValue({ status: 200, data: { items: [], nextCursor: null } });
+    idbStore.set("history:outbox:u1", [
+      { clientSnapshotId: "csid-off", body: BODY, syncState: "pending", attempts: 0 },
+    ]);
+    const { result } = renderHook(() => useHistory({ q: "nothing-matches-this" }), { wrapper });
+
+    await waitFor(() => expect(result.current.items).toHaveLength(1));
+    expect(result.current.items[0]?.syncState).toBe("pending");
+  });
+});
+
+describe("useSnapshot — resolve ONE record by clientSnapshotId (lazy-safe detail)", () => {
+  it("fetches the row by exact clientSnapshotId — a deep link need not be on the first page", async () => {
+    listHistory.mockResolvedValue({
+      status: 200,
+      data: { items: [{ ...SERVER_ROW, clientSnapshotId: "deep" }], nextCursor: null },
+    });
+    const { result } = renderHook(() => useSnapshot("deep"), { wrapper });
+
+    await waitFor(() => expect(result.current.item).not.toBeNull());
+    expect(result.current.item?.clientSnapshotId).toBe("deep");
+    expect(listHistory).toHaveBeenCalledWith({ clientSnapshotId: "deep" });
+  });
+
+  it("resolves a PENDING record from the outbox even with no server row (detail opens while pending)", async () => {
+    listHistory.mockResolvedValue({ status: 200, data: { items: [], nextCursor: null } });
+    idbStore.set("history:outbox:u1", [
+      { clientSnapshotId: "csid-1", body: BODY, syncState: "pending", attempts: 0 },
+    ]);
+    const { result } = renderHook(() => useSnapshot("csid-1"), { wrapper });
+
+    await waitFor(() => expect(result.current.item?.syncState).toBe("pending"));
+  });
+});
+
+describe("useUpdateLabel / useDeleteSnapshot — the ONLY mutations of a synced record", () => {
+  it("PATCHes the label by SERVER id (contents stay immutable — only the label moves)", async () => {
+    patchLabel.mockResolvedValue({ status: 200, data: { ...SERVER_ROW, label: "Novo" } });
+    const { result } = renderHook(() => useUpdateLabel(), { wrapper });
+
+    await result.current.mutateAsync({ id: "s1", label: "Novo" });
+    expect(patchLabel).toHaveBeenCalledWith("s1", { label: "Novo" });
+  });
+
+  it("DELETEs by SERVER id (soft-delete)", async () => {
+    deleteSnap.mockResolvedValue({ status: 204 });
+    const { result } = renderHook(() => useDeleteSnapshot(), { wrapper });
+
+    await result.current.mutateAsync("s1");
+    expect(deleteSnap).toHaveBeenCalledWith("s1");
   });
 });
 

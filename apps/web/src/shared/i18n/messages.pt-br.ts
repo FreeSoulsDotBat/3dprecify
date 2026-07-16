@@ -502,6 +502,49 @@ export const messages = {
     techTitle: "Ficha técnica",
     modelVersionLine: "Calculado com a fórmula versão {versao}",
     originLine: "Registro criado a partir de: {nome}",
+    // US3/T019 — "abrir origem" is resolved at READ TIME and shown ONLY when the origin still exists
+    // (ADR-0019 §5: provenance is not an FK, the id may dangle). Gone ⇒ the affordance is simply
+    // absent — never a "produto excluído" claim. The two labels name the origin's kind honestly.
+    openProduct: "Abrir produto",
+    openKit: "Abrir kit",
+    // US3/T020 — "Recalcular hoje": a NEW record at TODAY's catalog values, never a change to this
+    // one. It re-resolves the origin; where the origin is gone, it reprices the frozen inputs under
+    // the current formula and SAYS SO (never silently presented as catalog-current). Copy = ux §8.
+    recalcAction: "Recalcular hoje",
+    recalcTitle: "Recalcular hoje",
+    recalcBody:
+      "Isso cria um NOVO registro com os valores do seu catálogo hoje. O registro de {data} continua como está.",
+    recalcNoOriginBody:
+      "A origem deste registro não está mais no seu catálogo. Dá para recalcular usando os valores guardados neste registro e a fórmula atual — mas isso não reflete os preços de hoje do seu catálogo.",
+    recalcOfflineNote:
+      "Sem conexão: usando os valores do catálogo salvos neste aparelho, que podem estar desatualizados.",
+    recalcConfirm: "Recalcular",
+    // US6/T022 — manage the ledger (label edit · search · date range · delete · lazy pagination).
+    // Copy = ux §8. The label is the ONE mutable field; the contents stay immutable (ADR-0019).
+    editLabel: "Editar rótulo",
+    editLabelSave: "Salvar rótulo",
+    labelSaved: "Rótulo atualizado.",
+    labelSaveFailed: "Não foi possível atualizar o rótulo.",
+    deleteAction: "Excluir",
+    deleteTitle: "Excluir este registro?",
+    deleteBody: "Esta ação não pode ser desfeita.",
+    deleteConfirm: "Excluir",
+    deleteFailed: "Não foi possível excluir o registro.",
+    deleted: "Registro excluído.",
+    searchLabel: "Buscar por rótulo",
+    searchPlaceholder: "Cliente, pedido…",
+    searchEmpty: "Nenhum registro encontrado para “{termo}”.",
+    searchClear: "Limpar busca",
+    period30: "30 dias",
+    period90: "90 dias",
+    periodAll: "Tudo",
+    periodCustom: "Período…",
+    periodFrom: "De",
+    periodTo: "Até",
+    periodApply: "Aplicar",
+    filterActive: "Período: {de} – {ate}",
+    filterClear: "Limpar filtro",
+    loadMore: "Carregar mais",
     frozenExplainer:
       "Este registro guarda os valores como foram calculados naquele dia. Ele não muda quando você edita o catálogo nem quando a fórmula do app é atualizada.",
     deviceClockNote: "Data registrada pelo seu aparelho no momento da cotação.",
