@@ -241,11 +241,16 @@ here.** **Independent Test**: quickstart §2 + §7.
 
 **Goal**: the quote leaves the app and reaches a customer. **Independent Test**: quickstart §6.
 
-- [ ] T025 [US4] **VERIFY and PIN the PDF library — do NOT assume one** (ADR-0020 §5; ADR-0008's own precedent:
+- [x] T025 [US4] **VERIFY and PIN the PDF library — do NOT assume one** (ADR-0020 §5; ADR-0008's own precedent:
       *"re-verify the exact package + version pin at that point"*). Judge on: **no native deps > DS fidelity >
       licence**. Candidates: WeasyPrint (native Pango deps), ReportLab (no native deps, more layout code), fpdf2
       (pure Python — **check the licence**). Record the pick + pin in ADR-0020 Consequences. *(Deploy is deferred
-      to v1, so a backend image change is cheap now and expensive later.)*
+      to v1, so a backend image change is cheap now and expensive later.)* *(**PINNED `reportlab==5.0.0`**,
+      owner-ratified 2026-07-16 — verified current facts: pure-Python `py3-none-any` wheel installs on
+      `python:3.12-slim` with no compiler/`apt` (the C accel is now the optional `rl_accel` extra), deps
+      pillow+charset-normalizer, **BSD** licence. WeasyPrint rejected on native Pango/cairo/GDK-PixBuf; fpdf2 2.8.7
+      kept as fallback (no native deps but LGPL-3.0 + thinner layout). Base install only — no cairo/harfbuzz extras.
+      Recorded in ADR-0020 §5.)*
 - [ ] T026 [US4] Write FAILING pytest first — `backend/tests/test_export.py`: **zero internal cost lines**
       (material/energy/machine/failure/margin) unless `includeCostBreakdown=true` (SC-506); a **kit** quote
       **itemizes every piece** (name + quantity) + total, still with zero cost lines (SC-515); the quote carries
