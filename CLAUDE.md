@@ -22,7 +22,16 @@ owner-authorized slices: PR-A #15 (`64fe10e`, kit composer + honest US5 teaser +
 catalog-reference lifecycle — D3 live-reflect + D6 read-time degradation + the honest degraded "(avulsa)" caption);
 all owner-homologated + full CI green (gate:all + e2e 102/102 + contract drift-guard). Evidence:
 `specs/008-e3-multi-piece-bom/dod-evidence.md`. **ADR-0017** (atomic kit-save + materialization; §6 addendum:
-D6 kit-line degradation is read-time, not eager delete-capture) now Accepted + live. Next real increment: **E4**.
+D6 kit-line degradation is read-time, not eager delete-capture) now Accepted + live.
+**E4 IN PROGRESS** — 009-e4-history-snapshots-export (immutable price snapshots / Histórico, premium); **2 of 3
+slices shipped to `develop`**: PR-A #18 (`b1fbd80`, the frozen shelf — record online+offline via a durable
+uid-keyed outbox + consult + honest US5 teaser; **ADR-0018** offline outbox + **ADR-0019** immutable snapshots,
+incl. the project's first PL/pgSQL immutability trigger; frozen-payload envelope Option A) + PR-B #19 (`bd9d95e`,
+the two-shelf rule made visible — US3 catalog-churn inertness + read-time origin + "Recalcular hoje" + US6
+manage/lapse over a keyset-paginated **unbounded** ledger; **A29 closed**); both owner-homologated after full
+multi-agent review-fix cycles, all CI green (gate:all + history e2e + contract drift-guard). Evidence:
+`specs/009-e4-history-snapshots-export/{tasks.md,dod-evidence.md}`. **Next increment: E4 PR-C — Export** (US4 quote
+render/**ADR-0020**, PDF lib to be pinned not assumed; droppable US7 compare; then the E4 close-out docs).
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 

@@ -163,11 +163,12 @@ quickstart §1 + §3 + §4.
       syncs exactly once → reopen byte-identical), plus the blocked-on-lapse state, the sign-out-with-queue dialog,
       and the teaser. **This is the walk that matters in E4** — the honesty class of bug lives here.
       ⚠️ Kill any orphaned `vite preview` on `:4173` **before** diagnosing any "flaky" e2e.
-- [ ] T017 [US1][US2][US5] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (idempotency · trigger · gate ·
+- [x] T017 [US1][US2][US5] **OWNER-GATED** PR-A: `pnpm gate:all` + `pnpm e2e` (idempotency · trigger · gate ·
       isolation · lapse · **SC-512**) → push → PR to `develop` → CI green (incl. contract drift-guard) → owner
       squash-merge. **Owner accepts ADR-0018 + ADR-0019 at this gate** (incl. the project's first PL/pgSQL).
       Graph refresh on merge. **Checkpoint: a premium seller records a quote — at a fair, offline — and reopens it
-      identical; a free user sees an honest door.**
+      identical; a free user sees an honest door.** *(Shipped as PR #18, `b1fbd80`, 2026-07-15, after a full
+      multi-agent review-fix cycle; envelope Option A frozen; owner-homologated.)*
 
 ---
 
@@ -178,14 +179,16 @@ quickstart §1 + §3 + §4.
 **Goal**: catalog churn is **inert** against history. **This is the slice that proves the epic — the risk lives
 here.** **Independent Test**: quickstart §2 + §7.
 
-- [ ] T018 [US3] Write FAILING tests first — **SC-502**: edit the origin product's filament cost → the snapshot's
+- [x] T018 [US3] Write FAILING tests first — **SC-502**: edit the origin product's filament cost → the snapshot's
       values/total are **unchanged**; **delete** the origin → the snapshot is **fully intact**, with **no degraded
       state, no last-known caption, no warning, and no "produto excluído" claim** (the captured name still shows;
       "abrir produto" is simply **not offered**); a **hard purge** of the origin must **not fail** and must **not
       touch** the snapshot (there is no FK — ADR-0019 §5); FR-507 (an older payload missing a line renders without
       it, **never a fabricated zero**). Plus the honesty guard: the word "removido/excluído/deletado" appears
-      **nowhere** on a snapshot surface. Observe failing.
-- [ ] T019 [US3] Implement the snapshot detail surface: the **record date** + the **formula version** shown
+      **nowhere** on a snapshot surface. Observe failing. *(SC-502 + the no-degrade/no-"removed"-lie honesty guards
+      in `snapshot-detail.test.tsx`; read-time origin resolution in `origin.test.ts`; e2e SC-502 in
+      `history-manage.spec.ts` via UI soft-delete + client-nav.)*
+- [x] T019 [US3] Implement the snapshot detail surface: the **record date** + the **formula version** shown
       honestly (Q3/A29 — *this closes A29*, open since 2026-07-02); the "abrir origem" affordance resolved **at
       read time** and simply **absent** when the origin no longer resolves. Tests green.
       ⚠️ **Carried from T016 (2026-07-13):** PR-A ships **no entry point that produces `provenance.kind = PRODUCT`**.
@@ -193,14 +196,18 @@ here.** **Independent Test**: quickstart §2 + §7.
       calculator snapshot is genuinely **ad-hoc** and `provenance: null` is the honest answer — but it means US3's
       whole origin story is currently unreachable from a **product**. T019 therefore also has to add the record
       action to `pages/catalogo/produto-page` (capturing `{kind: "PRODUCT", id, name}`); without it, SC-502 can only
-      be exercised through a **kit** line. Only kits carry provenance today.
-- [ ] T020 [US3] **"Recalcular hoje"** (FR-505, semantics settled in the plan round): a **new** snapshot (a POST
+      be exercised through a **kit** line. Only kits carry provenance today. *(`snapshot-detail-page.tsx` +
+      `origin.ts` read-time resolution against the live catalog/kits; the technical sheet shows the formula version
+      — **A29 closed**; the product record action lands the PRODUCT provenance path.)*
+- [x] T020 [US3] **"Recalcular hoje"** (FR-505, semantics settled in the plan round): a **new** snapshot (a POST
       with a new `clientSnapshotId`), never an update. It **re-resolves the origin** — repricing with **today's
       catalog values**, not merely the frozen inputs under a newer formula. **The test that pins it**: raise the
       filament price, recalculate, assert the new entry is **higher** — *repricing frozen inputs could never
       answer "sim" to a price rise, which would leave US7 structurally unable to do its job*. Where the origin no
       longer resolves, the recalculation is offered from the frozen inputs and **says so** — never silently
-      presented as catalog-current. Failing-first, then implement.
+      presented as catalog-current. Failing-first, then implement. *(`recalc-today.tsx`: the price-rise pin +
+      provenance-carry-forward tests in `recalc-today.test.tsx`; the review-fix hardened honesty — dialog copy and
+      the recorded document both derive from the actual `fromFrozen` outcome, and KIT recompute is all-or-nothing.)*
 
 ## Phase 7: US6 — manage the Histórico + lapse policy (P2)
 
@@ -219,9 +226,12 @@ here.** **Independent Test**: quickstart §2 + §7.
       retained, no "removed" lie). Homologated at **390px + desktop** via deterministic capture through the real
       preview+backend+Postgres stack (`_homolog-twoshelf` capture, since removed). *(Done directly rather than via
       the qa-produto subagent — real production build, both viewports; a formal qa-produto pass can still be run on request.)*
-- [ ] T024 [US3][US6] **OWNER-GATED** PR-B: `pnpm gate:all` + `pnpm e2e` (SC-502/504/508 + **SC-512**) → PR to
+- [x] T024 [US3][US6] **OWNER-GATED** PR-B: `pnpm gate:all` + `pnpm e2e` (SC-502/504/508 + **SC-512**) → PR to
       `develop` → CI green → owner squash-merge. Graph refresh on merge.
-      **Checkpoint: catalog churn provably cannot rewrite history; A29 is closed.**
+      **Checkpoint: catalog churn provably cannot rewrite history; A29 is closed.** *(Shipped as PR #19, `bd9d95e`,
+      2026-07-16, after a capped multi-agent pre-merge review + review-fix cycle — 2 honesty majors + 3 minors
+      applied, all confirmed findings tested, contract drift-guard realigned; all 9 CI checks green; graph refreshed
+      on merge. Owner-homologated.)*
 
 ---
 
