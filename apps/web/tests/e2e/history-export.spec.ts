@@ -21,8 +21,14 @@ import {
 //   · It DOES prove the WIRE: that the seller's cost-breakdown decision travels as the parameter the
 //     server actually reads. A camelCase/snake_case mismatch would make FastAPI silently default it,
 //     and the switch would become decorative — the failure mode with no error message.
-//   · It DOES prove the gate is the SERVER's: on a revoked grant the endpoint itself refuses with
-//     ENTITLEMENT_REQUIRED and sends no bytes (FR-515). A client-side `if` proves nothing here.
+//   · It DOES prove the client REFLECTS the server's word: a revoked grant reaches the UI as a
+//     paused plan (visible, disabled, named) over a record that is still whole — the half of FR-515
+//     no backend test can see.
+//   · It does NOT prove the server's own 403. That is settled against real Postgres in
+//     `test_export.py::TestExportEndpoints` and was re-confirmed on the running stack with a real
+//     token at T030. Proving it a third time here would mean widening the e2e auth seam
+//     (`firebase.ts` exposes `signUp` only) to hand out ID tokens — a production seam grown for a
+//     claim already closed.
 //   · It does NOT re-prove SC-506's CONTENT. ReportLab deflates its page streams, so grepping the
 //     downloaded bytes for "Material" would pass whether or not the line is in the document — a test
 //     that cannot fail is worse than no test. The content is pinned where it can actually be read:
@@ -33,6 +39,18 @@ import {
 // `/historico/$id` is a 2-segment auth-guarded route and `base: "./"` blanks it on a full load.
 
 const t = messages;
+
+/** Record from the calculator and WAIT for the server's own "Salvo" before moving on.
+ *
+ *  Every test here needs a SYNCED record (an export needs a server row), and the ledger is rendered
+ *  from the account — so navigating to /historico before the POST lands is a race, and losing it
+ *  shows "Nenhum registro ainda" and a click that finds nothing. Under 8 workers, mobile lost it.
+ *  The wait cannot live in the shared `recordFromCalculator`: the offline specs record while offline,
+ *  where the honest confirmation is "pendente", not "salvo". */
+async function recordAndWaitSaved(page: Page): Promise<void> {
+  await recordFromCalculator(page);
+  await expect(page.getByText(t.historico.saved)).toBeVisible();
+}
 
 async function openFirstRecord(page: Page): Promise<void> {
   await page.goto("/historico");
@@ -48,9 +66,7 @@ test("US4: the export round trip — a real PDF, and the default asks for NO cos
 
   await page.goto("/calcular");
   await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
-  await recordFromCalculator(page);
-  await expect(page.getByText(t.historico.saved)).toBeVisible();
-
+  await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
   // Watch the actual request the app makes — the switch is only real if its value reaches the server.
@@ -85,7 +101,7 @@ test("US4: the opt-in is the ONLY way the breakdown travels (Q4/FR-512)", async 
 
   await page.goto("/calcular");
   await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
-  await recordFromCalculator(page);
+  await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
   const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
@@ -122,7 +138,7 @@ test("SC-508: a lapse pauses the export and says so — the record itself stays 
 
   await page.goto("/calcular");
   await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
-  await recordFromCalculator(page);
+  await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
   revokePremium(email);
@@ -147,7 +163,7 @@ test("US4: offline, the affordance is disabled WITH ITS REASON — never a spinn
 
   await page.goto("/calcular");
   await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
-  await recordFromCalculator(page);
+  await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
   await goOffline(page, context);
