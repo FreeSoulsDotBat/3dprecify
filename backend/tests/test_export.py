@@ -320,6 +320,35 @@ class TestHistoryCsv:
         assert "created" not in header
         assert "createdat" not in header.replace("_", "")
 
+    def test_the_quoted_date_is_the_DEVICE_day_the_seller_saw_not_the_UTC_day(self) -> None:
+        """T030 homologation defect: the CSV emitted the stored UTC instant and DROPPED the offset.
+
+        A quote made at 22:30 in Brazil (UTC-3) is stored as 01:30Z the NEXT day. The card, the
+        detail and the PDF all say 13/07 — the CSV said 14/07, and the local day was not even
+        recoverable from the file. FR-513 ("the same dates") and SC-511 ("every snapshot surface
+        displays its record date") both break, on the one export surface nobody had rendered.
+
+        Emitting the offset-aware ISO string is MORE faithful to the stored row, not less: same
+        instant, and the offset column the model keeps precisely for this comes back with it.
+        """
+        near_midnight = datetime.datetime(2026, 7, 14, 1, 30, tzinfo=datetime.UTC)
+        row = next(
+            csv.DictReader(
+                io.StringIO(
+                    build_history_csv(
+                        [_snap(device_quoted_at=near_midnight, device_utc_offset_minutes=-180)]
+                    )
+                )
+            )
+        )
+
+        quoted = datetime.datetime.fromisoformat(row["deviceQuotedAt"])
+        assert quoted.strftime("%d/%m/%Y") == "13/07/2026"  # the day the seller SAW
+        # The same instant — the fix re-anchors the offset, it never shifts the moment.
+        assert quoted == near_midnight
+        # And the offset travels, so the reader can recover the local day themselves.
+        assert quoted.utcoffset() == datetime.timedelta(minutes=-180)
+
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════
 # Endpoints — the gate is real (FR-515/FR-516), and the wiring returns the right artifact.

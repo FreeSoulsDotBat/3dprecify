@@ -289,7 +289,14 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
 
 def build_history_csv(snapshots: Sequence[Snapshot]) -> str:
     """The history as a data file whose rows equal the stored snapshots exactly (FR-513) — headline
-    money as the STORED decimal string, no re-derivation, and `created_at` never a column."""
+    money as the STORED decimal string, no re-derivation, and `created_at` never a column.
+
+    `deviceQuotedAt` carries the seller's OWN offset, not bare UTC (T030 homologation). A quote made
+    at 22:30 in Brazil is stored as 01:30Z the next day; emitting that raw made the CSV say 14/07
+    while the card, the detail and the PDF all said 13/07 — and the local day was not recoverable
+    from the file at all. Re-anchoring the offset changes no instant and re-derives nothing: it
+    hands back exactly what the row stores, including the column the model keeps for this reason.
+    """
     buffer = io.StringIO()
     writer = csv.DictWriter(buffer, fieldnames=list(_CSV_FIELDS), lineterminator="\n")
     writer.writeheader()
@@ -298,7 +305,9 @@ def build_history_csv(snapshots: Sequence[Snapshot]) -> str:
             {
                 "label": snap.label or "",
                 "kind": snap.kind,
-                "deviceQuotedAt": snap.device_quoted_at.isoformat(),
+                "deviceQuotedAt": snap.device_quoted_at.astimezone(
+                    datetime.timezone(datetime.timedelta(minutes=snap.device_utc_offset_minutes))
+                ).isoformat(),
                 "headlineBasis": snap.headline_basis,
                 "headlineTotal": str(snap.headline_total),
             }

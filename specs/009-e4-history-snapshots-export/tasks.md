@@ -300,9 +300,41 @@ here.** **Independent Test**: quickstart §2 + §7.
       Origin unresolvable ⇒ the affordance is **silently absent** (FR-503 precedent: same as "abrir origem").
       **NEW copy** (ux never drew this surface) — `compareAction` · `compareToday` · `compareNote` ·
       `compareUnavailable`. **Ratify at T030.**
-- [ ] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;
+- [x] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;
       kit itemized), the opt-in breakdown, the **lapse denial**, the offline disabled-with-reason, and the pending
       "sincronize para exportar".
+      *Done 2026-07-16 — **PASS-WITH-NITS** (168k tokens / 93 tool uses; ledger row filed).* Verified ON THE REAL
+      RENDERED ARTIFACT (downloaded through the running app, not asserted from a 200): SC-506 default quote has
+      **zero** cost lines · opt-in reveals them · the switch is **OFF again on reopen even after an opt-in export**
+      · SC-515 kit itemizes · **FR-515 the server genuinely refuses on lapse** (403 ENTITLEMENT_REQUIRED, no bytes,
+      real token) · offline/pending reasons · the midnight trap (01:30Z, offset −180 → PDF prints "13/07/2026") ·
+      pt-BR money · regression 3/3 · zero pageerror at 390px + desktop.
+      **DEFECT FOUND + FIXED (the one a green gate could not see):** `build_history_csv` emitted the stored **UTC**
+      instant and **discarded the offset** — a 22:30 BRT quote is stored as 01:30Z, so card/detail/PDF said 13/07
+      and the **CSV said 14/07**, with the local day *unrecoverable* from the file (FR-513 "the same dates",
+      SC-511). It survived because `TestHistoryCsv` asserted label/total/basis/kind and **never the
+      `deviceQuotedAt` value**. This is the **same defect class** ("the date is a day off") the backend
+      homologation already caught in the PDF — it came back on the sibling surface nobody had rendered. Fixed
+      failing-first (red proved "14/07/2026") by re-anchoring the stored offset: same instant, correct local day,
+      and the offset now travels so a reader can recover the day themselves — **more** faithful to the stored row,
+      no re-derivation (ADR-0008 intact).
+      **NOT fixed, reported as ratification notes:** N1 `exportIncludeCostsWarn` says the customer would see
+      "margem" though no margin LINE prints (it is derivable from costs+price); N2 `exportContents` says "nome e
+      e-mail" though an account without a display name prints e-mail only. Both **over-warn** — they disclose more
+      exposure than occurs, which is the safe direction for a privacy/margin notice — and both are ux §8 copy the
+      owner already ratified; rewording ratified copy on a specialist's note is exactly what the 008 designer-ux
+      lesson forbids. N3 (`Falhas R$ 0,00` under opt-in) is NOT a defect: those are **stored** zeros, not
+      fabricated (FR-507).
+      **Owner ratifications carried to T031:** all 8 new strings approved (`compareUnavailable` approved *with a
+      tone caveat* — correct but long/technical); the **lapse deviation approved** — the page banner already says
+      the sentence a "reactivation panel" would open, and the visible-disabled/absent asymmetry is defensible
+      because export has three distinct unavailability causes while rename/delete have one. Optional trim offered:
+      drop the 2nd sentence of `exportLapsed` (it echoes the banner).
+      **Honestly not reached:** the US7 "change the catalog ⇒ hoje moves, frozen does not" walk has no UI lever (a
+      kit line has no filament selector; re-saving a kit references the existing product), so only the degenerate
+      equal-values case was seen in the browser. It IS proven at component level against the real `recalcToday`
+      (`compare-today.test.tsx`, filament cost doubled + the atacado case). Residual risk low, but it is a test,
+      not an artifact — recorded rather than rounded up to a pass.
 - [ ] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
       to `develop` → CI green → owner squash-merge. **Owner accepts ADR-0020 at this gate** (incl. the accepted
       asymmetry: **recording works offline; exporting does not**). Graph refresh on merge.
