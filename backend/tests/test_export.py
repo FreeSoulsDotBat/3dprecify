@@ -216,6 +216,54 @@ class TestQuotePresentation:
             format_date_pt_br(datetime.datetime(2026, 7, 13, tzinfo=datetime.UTC)) == "13/07/2026"
         )
 
+    def test_the_sellers_label_rides_along_as_the_quote_reference(self) -> None:
+        """Owner decision (2026-07-16): the label prints as "Referência" — shown for what it IS (a
+        reference the seller wrote), never asserted to be the customer's name. It is FREE TEXT that
+        reaches the customer, so it is carried verbatim and never reinterpreted."""
+        q = build_quote_view(
+            _snap(label="Cliente João"),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert q.reference == "Cliente João"
+
+    def test_an_ad_hoc_quote_names_the_ITEM_never_the_buyer(self) -> None:
+        """The label prints as "Referência"; it must NOT also become the line-item name. An ad-hoc
+        calculator snapshot has `provenance: null` (the common case — T019), and falling back to the
+        label would title the item after the CUSTOMER ("Item: Cliente João") and duplicate the
+        reference. Caught by homologating the Referência line."""
+        ad_hoc = dict(SINGLE_PAYLOAD)
+        ad_hoc["provenance"] = None
+        q = build_quote_view(
+            _snap(ad_hoc, label="Cliente João"),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert q.reference == "Cliente João"
+        assert q.lines[0].name != "Cliente João"  # the buyer is never the item
+        assert q.lines[0].name == "Peça única"
+
+    def test_a_quote_with_an_origin_names_the_item_by_its_captured_origin(self) -> None:
+        q = build_quote_view(
+            _snap(label="Cliente João"),  # SINGLE_PAYLOAD carries provenance "Vaso Grande"
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert q.lines[0].name == "Vaso Grande"
+
+    def test_an_unlabelled_snapshot_carries_NO_reference(self) -> None:
+        """Absent stays absent — an unlabelled quote must not print an empty "Referência:" line."""
+        q = build_quote_view(
+            _snap(label=None),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert q.reference is None
+
     @pytest.mark.parametrize(
         ("stored", "printed"),
         [

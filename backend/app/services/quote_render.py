@@ -42,6 +42,12 @@ _COST_LABELS: tuple[tuple[str, str], ...] = (
     ("admin", "Custos administrativos"),
 )
 
+# What a single piece is called on the quote when the snapshot has NO captured origin (an ad-hoc
+# calculator snapshot — `provenance: null`). Mirrors the app's own `kindSingle` wording: it names
+# the ITEM, where the frontend's `adhocFallback` ("Cálculo avulso") names the RECORD — a customer
+# is not buying a calculation.
+_ADHOC_ITEM = "Peça única"
+
 # The CSV columns — the stored row, verbatim. `created_at` is deliberately ABSENT: it is
 # unverifiable metadata, never displayed and never exported (FR-528).
 _CSV_FIELDS = ("label", "kind", "deviceQuotedAt", "headlineBasis", "headlineTotal")
@@ -69,6 +75,10 @@ class QuoteView:
 
     seller_name: str | None
     seller_email: str | None
+    # The seller's own label, printed as "Referência" (owner decision, 2026-07-16). It is FREE TEXT
+    # and reaches the customer, so it is shown for what it is — a reference the seller wrote — and
+    # never asserted to be the buyer's name. Absent when unlabelled: never an empty "Referência:".
+    reference: str | None
     quoted_at: datetime.datetime
     utc_offset_minutes: int
     validity_days: int | None
@@ -139,8 +149,13 @@ def build_quote_view(
             for line in _seq(payload.get("lines"))
         ]
     else:
-        name = _obj(payload.get("provenance")).get("name") or snapshot.label
-        lines = [QuoteLineView(name=str(name or ""), quantity=1, total=total)]
+        # A customer-facing quote names the ITEM, never the buyer. The label is the seller's own
+        # reference and prints as "Referência" — reusing it here would title the line after the
+        # CUSTOMER ("Item: Cliente João") and duplicate the reference line. An ad-hoc calculator
+        # snapshot genuinely has NO product name (`provenance: null` — the common case per T019),
+        # so it falls back to the app's existing neutral for a single piece rather than a lie.
+        name = _obj(payload.get("provenance")).get("name") or _ADHOC_ITEM
+        lines = [QuoteLineView(name=str(name), quantity=1, total=total)]
 
     cost_breakdown: list[CostLineView] = []
     if include_cost_breakdown:
@@ -156,6 +171,7 @@ def build_quote_view(
     return QuoteView(
         seller_name=seller_name,
         seller_email=seller_email,
+        reference=snapshot.label,
         quoted_at=snapshot.device_quoted_at,
         utc_offset_minutes=snapshot.device_utc_offset_minutes,
         validity_days=snapshot.quote_validity_days,
@@ -225,6 +241,9 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
         story.append(Paragraph(seller, styles["Normal"]))
     if quote.seller_name and quote.seller_email:
         story.append(Paragraph(quote.seller_email, styles["Normal"]))
+
+    if quote.reference:
+        story.append(Paragraph(f"Referência: {quote.reference}", styles["Normal"]))
 
     quoted = format_date_pt_br(device_local_date(quote))
     story.append(Paragraph(f"Cotado em {quoted}", styles["Normal"]))
