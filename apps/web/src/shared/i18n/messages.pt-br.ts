@@ -539,7 +539,10 @@ export const messages = {
     exportCsvNote: "O CSV vem da sua conta: registros ainda não sincronizados não entram nele.",
     exportOffline: "Exportar precisa de conexão.",
     exportPending: "Sincronize para exportar.",
-    exportLapsed: "Exportar precisa do Premium ativo. Seus registros continuam aqui para leitura.",
+    // Owner decision 2026-07-16 (qa's T030 trim): the 2nd sentence — "Seus registros continuam aqui
+    // para leitura" — is gone. The page's `lapsedBanner` says it two lines above, and repeating it
+    // under the button read as the app not trusting the seller to have read it.
+    exportLapsed: "Exportar precisa do Premium ativo.",
     exportFailed: "Não foi possível gerar o arquivo.", // NEW — never a fake file
     // US7/T029 — the comparison (owner decision 2026-07-16: built, not dropped). ALL NEW copy: ux
     // never drew this surface. Purely informational — it records nothing, and it says so, because
