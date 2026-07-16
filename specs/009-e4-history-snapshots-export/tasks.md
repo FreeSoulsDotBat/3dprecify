@@ -330,11 +330,25 @@ here.** **Independent Test**: quickstart §2 + §7.
       the sentence a "reactivation panel" would open, and the visible-disabled/absent asymmetry is defensible
       because export has three distinct unavailability causes while rename/delete have one. Optional trim offered:
       drop the 2nd sentence of `exportLapsed` (it echoes the banner).
-      **Honestly not reached:** the US7 "change the catalog ⇒ hoje moves, frozen does not" walk has no UI lever (a
-      kit line has no filament selector; re-saving a kit references the existing product), so only the degenerate
-      equal-values case was seen in the browser. It IS proven at component level against the real `recalcToday`
-      (`compare-today.test.tsx`, filament cost doubled + the atacado case). Residual risk low, but it is a test,
-      not an artifact — recorded rather than rounded up to a pass.
+      **RE-VERIFICATION 2026-07-16 (same agent via SendMessage) — verdict raised to PASS (confidence 85%→92%).**
+      Both open items closed on real artifacts:
+      · **The CSV fix, re-read on the downloaded file** under a REAL straddle (browser context in `Asia/Dubai`,
+        UTC+4: UTC still 16/07 21:18Z while the device was already 17/07 01:18). Card, detail, **PDF and CSV all
+        four agree on 17/07**, and `+04:00` travels in the file — the local day is recoverable, which was the half
+        of the defect nobody could see. The old code would have emitted 16/07. (The −03:00 direction was not
+        forcible on the real clock, but is covered by the new pytest and by the T027 direct render at −180 → 13/07;
+        both directions go through the same `astimezone`.)
+      · **US7 IS reachable, and is now proven in the browser — the earlier "no lever" finding was WRONG.** It was
+        a bad generalization from a true fact: a product materialized from a KIT is born `filament_id=None`
+        (`boms.py:157`), but a product **created in the Catálogo requires the links** (`produto-page.tsx:173`) ⇒ D3
+        live-reflect ⇒ the lever exists. Walk: filament `PLA Azul` 110 → **220** ⇒ `Cotado em 16/07/2026 R$ 26,48`
+        vs `Hoje R$ 43,80` (matches the predicted arithmetic), and **the frozen record did not move** — the detail
+        still shows `Material R$ 11,55` from the old roll. The Ficha Técnica's promise ("não muda quando você edita
+        o catálogo") is now **demonstrated, not asserted**. No blocker: "Hoje" never wore the frozen number — the
+        `fromFrozen` gate holds. Judged readable as an ANSWER, not a riddle; `compareNote` does its job.
+      *Known and correct:* a kit-materialized product (unlinked) will always show `Hoje == frozen` — it genuinely
+      is not linked, exactly as its "Vincule um filamento e uma impressora" notice says. Not a defect; it just
+      means the US7 lever depends on the link.
 - [ ] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
       to `develop` → CI green → owner squash-merge. **Owner accepts ADR-0020 at this gate** (incl. the accepted
       asymmetry: **recording works offline; exporting does not**). Graph refresh on merge.
