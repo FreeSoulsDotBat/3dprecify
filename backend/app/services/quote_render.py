@@ -169,9 +169,44 @@ def build_quote_view(
 _BASIS_CAPTION = {"PRECO_VAREJO": "Preço de varejo", "PRECO_ATACADO": "Preço de atacado"}
 
 
+def format_money_pt_br(value: str) -> str:
+    """A STORED decimal string as pt-BR currency: "44.10" → "R$ 44,10"; "1234.56" → "R$ 1.234,56".
+
+    A pure STRING/locale transform — ADR-0020 §1 still holds: no arithmetic, no rounding, no
+    float. The digits printed are the frozen document's own, only regrouped and re-punctuated.
+    The artifact reaches a CUSTOMER, so a raw machine string ("44.10", dot-decimal) is not an
+    option: the rest of the app says "R$ 44,10"; the quote must not be the one surface that
+    doesn't."""
+    if not value:
+        return ""
+    negative = value.startswith("-")
+    whole, _, cents = value.lstrip("-+").partition(".")
+    whole = whole or "0"
+    cents = (cents + "00")[:2]
+    groups: list[str] = []
+    while len(whole) > 3:
+        groups.insert(0, whole[-3:])
+        whole = whole[:-3]
+    groups.insert(0, whole)
+    return f"{'-' if negative else ''}R$ {'.'.join(groups)},{cents}"
+
+
+def device_local_date(quote: QuoteView) -> datetime.datetime:
+    """The instant AS THE DEVICE SAW IT — the stored UTC instant shifted by the offset the device
+    recorded. The date on a snapshot is the SELLER'S CLAIM (FR-528), so printing the UTC date would
+    put the wrong DAY on the customer's quote whenever the two straddle midnight (a quote given at
+    22:00 in Brazil is stored 01:00Z the NEXT day)."""
+    return quote.quoted_at + datetime.timedelta(minutes=quote.utc_offset_minutes)
+
+
+def format_date_pt_br(moment: datetime.datetime) -> str:
+    """dd/mm/aaaa — the locale the quote's reader actually uses."""
+    return f"{moment.day:02d}/{moment.month:02d}/{moment.year}"
+
+
 def render_quote_pdf(quote: QuoteView) -> bytes:
-    """Print a QuoteView to a PDF. Layout only — every value is already decided and stored as a
-    string on the view; this function performs no arithmetic and no rounding."""
+    """Print a QuoteView to a PDF. Layout + locale formatting only — every value is already decided
+    and stored as a string on the view; this function performs no arithmetic and no rounding."""
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -191,14 +226,16 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     if quote.seller_name and quote.seller_email:
         story.append(Paragraph(quote.seller_email, styles["Normal"]))
 
-    quoted = quote.quoted_at.date().isoformat()
+    quoted = format_date_pt_br(device_local_date(quote))
     story.append(Paragraph(f"Cotado em {quoted}", styles["Normal"]))
     if quote.validity_days is not None:
         story.append(Paragraph(f"Validade: {quote.validity_days} dias", styles["Normal"]))
     story.append(Spacer(1, 8 * mm))
 
     item_rows = [["Item", "Qtd.", "Total"]]
-    item_rows += [[line.name, str(line.quantity), line.total] for line in quote.lines]
+    item_rows += [
+        [line.name, str(line.quantity), format_money_pt_br(line.total)] for line in quote.lines
+    ]
     items = Table(item_rows, hAlign="LEFT", colWidths=[95 * mm, 25 * mm, 40 * mm])
     items.setStyle(
         TableStyle(
@@ -213,7 +250,8 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     story.append(Spacer(1, 4 * mm))
     story.append(
         Paragraph(
-            f"<b>Total ({_BASIS_CAPTION.get(quote.basis, quote.basis)}): {quote.total}</b>",
+            f"<b>Total ({_BASIS_CAPTION.get(quote.basis, quote.basis)}): "
+            f"{format_money_pt_br(quote.total)}</b>",
             styles["Normal"],
         )
     )
@@ -221,7 +259,7 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     if quote.cost_breakdown:
         story.append(Spacer(1, 8 * mm))
         story.append(Paragraph("Detalhamento de custos", styles["Heading3"]))
-        cost_rows = [[line.label, line.value] for line in quote.cost_breakdown]
+        cost_rows = [[line.label, format_money_pt_br(line.value)] for line in quote.cost_breakdown]
         costs = Table(cost_rows, hAlign="LEFT", colWidths=[120 * mm, 40 * mm])
         costs.setStyle(TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT")]))
         story.append(costs)

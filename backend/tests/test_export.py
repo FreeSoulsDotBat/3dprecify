@@ -35,7 +35,13 @@ from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.models import Snapshot
-from app.services.quote_render import build_history_csv, build_quote_view
+from app.services.quote_render import (
+    build_history_csv,
+    build_quote_view,
+    device_local_date,
+    format_date_pt_br,
+    format_money_pt_br,
+)
 from app.settings import Settings
 from tests.conftest import requires_db
 from tests.helpers import patch_verify, seed_grant
@@ -183,6 +189,50 @@ class TestQuoteContent:
         assert q.quoted_at == _QUOTED_AT
         assert q.utc_offset_minutes == -180
         assert q.validity_days == 15
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# Presentation — the artifact reaches a CUSTOMER, so locale is correctness, not polish.
+# (Found by homologating the PDF: the content model was right and the document still wrong.)
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+class TestQuotePresentation:
+    def test_the_printed_date_is_the_DEVICE_day_not_the_UTC_day(self) -> None:
+        """FR-528 — the date on a snapshot is the SELLER'S CLAIM. A quote given at 22:00 in Brazil
+        (UTC-3) is STORED as 01:00Z the NEXT day; printing the UTC date would put the wrong DAY on
+        the customer's quote. Homologation caught this: the PDF said 14/07 for a 13/07 quote."""
+        q = build_quote_view(
+            _snap(device_quoted_at=datetime.datetime(2026, 7, 14, 1, 0, tzinfo=datetime.UTC)),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert device_local_date(q).date() == datetime.date(2026, 7, 13)
+        assert format_date_pt_br(device_local_date(q)) == "13/07/2026"
+
+    def test_dates_print_in_pt_br(self) -> None:
+        assert (
+            format_date_pt_br(datetime.datetime(2026, 7, 13, tzinfo=datetime.UTC)) == "13/07/2026"
+        )
+
+    @pytest.mark.parametrize(
+        ("stored", "printed"),
+        [
+            ("44.10", "R$ 44,10"),  # the ordinary case — comma decimal, never a dot
+            ("0.60", "R$ 0,60"),
+            ("1234.56", "R$ 1.234,56"),  # thousands DOT, decimal COMMA (pt-BR)
+            ("1234567.89", "R$ 1.234.567,89"),
+            ("21.9", "R$ 21,90"),  # a short cents string still prints two places
+            ("", ""),  # absent stays absent — never "R$ 0,00" (FR-507)
+        ],
+    )
+    def test_money_prints_as_pt_br_currency_from_the_stored_string(
+        self, stored: str, printed: str
+    ) -> None:
+        """A pure string/locale transform of the FROZEN digits — no arithmetic, no float (ADR-0020
+        §1 holds). The customer must not receive a raw machine string like "44.10"."""
+        assert format_money_pt_br(stored) == printed
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════
