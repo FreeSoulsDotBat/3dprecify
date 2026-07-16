@@ -519,6 +519,28 @@ export const messages = {
     recalcOfflineNote:
       "Sem conexão: usando os valores do catálogo salvos neste aparelho, que podem estar desatualizados.",
     recalcConfirm: "Recalcular",
+    // US4/T028 — export (FR-512..516). Copy = ux §8, verbatim except where marked. The artifact is
+    // SERVER-rendered (ADR-0020), and that is why three of these strings exist at all: no connection
+    // and no server row mean no document, and each unavailable case must say WHICH, in place. The
+    // `exportIncludeCostsWarn` line names the harm the switch prevents — a customer who reads the
+    // cost lines can compute the seller's margin — instead of leaving the label neutral.
+    exportAction: "Exportar",
+    exportFormatField: "O que exportar", // NEW (ux draws the radios unlabelled) — ratify at T030
+    exportQuotePdf: "Orçamento para o cliente (PDF)",
+    exportHistoryCsv: "Meu histórico (CSV)",
+    exportIncludeCosts: "Incluir detalhamento de custos",
+    exportIncludeCostsWarn: "Seu cliente veria material, energia, máquina, falha e margem.",
+    exportContents:
+      "O orçamento leva: itens, quantidades, o valor cotado, a data e a validade, e identifica você pelo nome e e-mail da sua conta.",
+    exportGenerate: "Gerar PDF",
+    exportGenerateCsv: "Baixar CSV", // NEW (ux §6 draws only the PDF state) — ratify at T030
+    // NEW — the CSV is rendered from the ACCOUNT, so a record still queued on this device is not in
+    // it. Saying so beats a ledger that silently omits a quote the seller knows they made.
+    exportCsvNote: "O CSV vem da sua conta: registros ainda não sincronizados não entram nele.",
+    exportOffline: "Exportar precisa de conexão.",
+    exportPending: "Sincronize para exportar.",
+    exportLapsed: "Exportar precisa do Premium ativo. Seus registros continuam aqui para leitura.",
+    exportFailed: "Não foi possível gerar o arquivo.", // NEW — never a fake file
     // US6/T022 — manage the ledger (label edit · search · date range · delete · lazy pagination).
     // Copy = ux §8. The label is the ONE mutable field; the contents stay immutable (ADR-0019).
     editLabel: "Editar rótulo",

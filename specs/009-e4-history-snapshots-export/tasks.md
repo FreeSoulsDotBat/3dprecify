@@ -263,11 +263,28 @@ here.** **Independent Test**: quickstart §2 + §7.
       arithmetic** — no formula, no markup, no gross-up. *"The backend never recomputes" (ADR-0008) stands,
       untouched — a document renderer forks nothing, which is exactly why the ADR-0015 precedent does not
       transfer.* Tests green.
-- [ ] T028 [US4] Web export UI: the opt-in "incluir detalhamento de custos" toggle (**off by default** — leaking
+- [x] T028 [US4] Web export UI: the opt-in "incluir detalhamento de custos" toggle (**off by default** — leaking
       margin to the seller's client is a product-level harm); **offline ⇒ the affordance is disabled WITH ITS
       REASON** ("exportar precisa de conexão"), never a fake success; a **pending** snapshot ⇒ **not exportable**
       until it syncs ("sincronize para exportar") — *you cannot export a record the record-keeper has never seen*.
       Failing-first, then implement.
+      *Done 2026-07-16 (failing-first: 15 red → green).* `features/history/export-sheet.tsx` (`ExportButton` +
+      Sheet, copy = ux §6/§8) mounted on the snapshot detail beside `RecalcTodayButton`;
+      `entities/history/use-export.ts` (mutations, not queries — an export is an action with a device side
+      effect, and a query would refetch on focus and re-download a file nobody asked for);
+      `shared/lib/save-file.ts`. **`shared/api/transport.ts` gained `apiFetchFile`** — the generated Orval
+      client CANNOT carry these: its mutator reads a non-JSON body with `res.text()`, which decodes the bytes
+      as UTF-8 and corrupts every PDF; the generated **url builders** stay the contract's source of truth, and
+      the error path still parses the JSON envelope so a 403 keeps `ENTITLEMENT_REQUIRED`.
+      **Three copy strings are NEW** (ux §8 has no CSV-state button, no radio legend, no failure line) —
+      `exportGenerateCsv` · `exportFormatField` · `exportFailed`, plus `exportCsvNote` (the CSV is rendered from
+      the ACCOUNT, so a queued record is not in it — silence there would be a ledger that omits a quote the
+      seller knows they made). **Ratify at T030** (ux §8 is "owner-ratified at homologation").
+      **⚠ DEVIATION for T030:** ux §6 says lapsed ⇒ *"visible → reactivation panel"*; implemented as
+      **visible + disabled + `exportLapsed`**, matching the offline/pending reason-pattern beside it and the
+      shipped PR-B siblings (rename/delete/recalc are simply absent, explained by the page's lapse banner). A
+      panel would open a dialog whose only content is the sentence already on screen, and there is no
+      reactivation FLOW to offer before E6 (billing) — it would promise a door that does not exist.
 - [ ] T029 [P] [US7] **DROPPABLE (P3)** — snapshot vs today's cost, side by side ("cotado em {data}" vs "hoje"),
       purely informational; the frozen entry stays unmodified. **Cut this before cutting anything in US4.**
 - [ ] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;

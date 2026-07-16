@@ -87,12 +87,21 @@ interface RawResponse {
   body: unknown;
 }
 
+/** How to read a 2xx body. `blob` is for the server-rendered artifacts (009/T028, ADR-0020):
+ *  `res.text()` decodes bytes as UTF-8 and silently CORRUPTS a PDF, so binary must opt out. An
+ *  ERROR body is always JSON (the ErrorEnvelope) and is parsed as such regardless. */
+type BodyMode = "auto" | "blob";
+
 /**
  * Shared transport core. Sends the authenticated request and normalises transport-phase
  * failures AND 4xx/5xx responses into a thrown, Sentry-reported `ApiError`; on 2xx returns
  * the parsed body with its status + headers so either entry point can shape the result.
  */
-async function request(path: string, init: RequestInit): Promise<RawResponse> {
+async function request(
+  path: string,
+  init: RequestInit,
+  mode: BodyMode = "auto",
+): Promise<RawResponse> {
   const url = resolveUrl(path);
 
   // 15s timeout via an AbortController (hardening b). An externally-supplied signal is MERGED
@@ -134,7 +143,11 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
 
   let body: unknown;
   try {
-    body = res.status === 204 ? null : isJson ? await res.json() : await res.text();
+    if (res.status === 204) body = null;
+    // Binary opts out ONLY on success: a failed export still answers with a JSON ErrorEnvelope, and
+    // reading it as a Blob would throw away the `code` the call site needs (lapse vs generic).
+    else if (mode === "blob" && res.ok) body = await res.blob();
+    else body = isJson ? await res.json() : await res.text();
   } catch (cause) {
     // Malformed body (hardening a): e.g. a 502 that advertises JSON but returns an HTML error
     // page — `res.json()` throws a raw SyntaxError. Normalise to a typed ApiError carrying the
@@ -172,6 +185,33 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { body } = await request(path, init);
   return body as T;
+}
+
+/** A file the server rendered for us, with the name the SERVER chose (009/T028, ADR-0020). */
+export interface FetchedFile {
+  blob: Blob;
+  /** From `Content-Disposition`; null when the server sent none — the caller then names it. */
+  filename: string | null;
+}
+
+// `filename="orcamento.pdf"` / `filename=historico.csv` — the plain form the API actually sends.
+// RFC 5987's `filename*=UTF-8''…` is deliberately NOT parsed: this backend never emits it, and a
+// half-right decoder would be worse than an honest null (the caller has a sane default either way).
+function filenameFrom(disposition: string | null): string | null {
+  const match = /filename="?([^";]+)"?/i.exec(disposition ?? "");
+  return match?.[1]?.trim() || null;
+}
+
+/**
+ * Authenticated fetch for a SERVER-RENDERED file (009/T028). The generated Orval client cannot be
+ * used for these: its mutator reads any non-JSON body with `res.text()`, which decodes the bytes as
+ * UTF-8 and hands back a corrupted PDF. Everything else is identical — same token, same origin
+ * allowlist, same timeout, same typed `ApiError` on 4xx/5xx (so a 403 still carries
+ * `ENTITLEMENT_REQUIRED`). The generated URL builders stay the source of truth for the paths.
+ */
+export async function apiFetchFile(path: string, init: RequestInit = {}): Promise<FetchedFile> {
+  const { headers, body } = await request(path, init, "blob");
+  return { blob: body as Blob, filename: filenameFrom(headers.get("Content-Disposition")) };
 }
 
 /**
