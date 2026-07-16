@@ -29,6 +29,7 @@ import {
   SYNC_BADGE,
 } from "@/entities/history/history-format";
 
+import { CompareTodayBlock } from "./compare-today";
 import { RecalcTodayButton } from "./recalc-today";
 
 import "./historico-page.css";
@@ -180,6 +181,9 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
             <ChannelsBlock channels={payload.channels} />
           )}
           <TechnicalSheet payload={payload} origin={origin} />
+          {/* US7/T029 — "meu custo subiu desde que cotei?" answered on request, side by side. It
+              records nothing; only "Recalcular hoje" below turns today's number into a record. */}
+          <CompareTodayBlock item={item} product={originProduct} kit={originKit} />
         </>
       )}
 

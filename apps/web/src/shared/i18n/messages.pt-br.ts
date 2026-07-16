@@ -541,6 +541,15 @@ export const messages = {
     exportPending: "Sincronize para exportar.",
     exportLapsed: "Exportar precisa do Premium ativo. Seus registros continuam aqui para leitura.",
     exportFailed: "Não foi possível gerar o arquivo.", // NEW — never a fake file
+    // US7/T029 — the comparison (owner decision 2026-07-16: built, not dropped). ALL NEW copy: ux
+    // never drew this surface. Purely informational — it records nothing, and it says so, because
+    // two totals side by side look exactly like a thing that just changed the record. Ratify at T030.
+    compareAction: "Comparar com hoje",
+    compareToday: "Hoje",
+    compareNote:
+      'Comparação informativa: este registro não muda. Para gravar o valor de hoje, use "Recalcular hoje".',
+    compareUnavailable:
+      "Não foi possível calcular o valor de hoje para este registro com o seu catálogo atual.",
     // US6/T022 — manage the ledger (label edit · search · date range · delete · lazy pagination).
     // Copy = ux §8. The label is the ONE mutable field; the contents stay immutable (ADR-0019).
     editLabel: "Editar rótulo",

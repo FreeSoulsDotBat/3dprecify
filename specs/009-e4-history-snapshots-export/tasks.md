@@ -285,8 +285,21 @@ here.** **Independent Test**: quickstart §2 + §7.
       shipped PR-B siblings (rename/delete/recalc are simply absent, explained by the page's lapse banner). A
       panel would open a dialog whose only content is the sentence already on screen, and there is no
       reactivation FLOW to offer before E6 (billing) — it would promise a door that does not exist.
-- [ ] T029 [P] [US7] **DROPPABLE (P3)** — snapshot vs today's cost, side by side ("cotado em {data}" vs "hoje"),
+- [x] T029 [P] [US7] **DROPPABLE (P3)** — snapshot vs today's cost, side by side ("cotado em {data}" vs "hoje"),
       purely informational; the frozen entry stays unmodified. **Cut this before cutting anything in US4.**
+      *Done 2026-07-16 — **owner decision: BUILT, not dropped** (US4 landed whole, so nothing forced the cut).*
+      `pages/historico/compare-today.tsx` (page layer, same reason as `recalc-today`: the recompute needs
+      `features/calculator`, and FSD-Lite forbids a feature importing a feature) + 7 failing-first tests.
+      It **reuses `recalcToday`**, which already carries the honesty flag this surface depends on: it renders
+      "Hoje" **only when `fromFrozen === false`**. Under an unchanged formula a frozen fallback reprices to the
+      frozen values exactly — so labelling those "Hoje" would answer *"seu custo não mudou"* with July's own
+      number. The render keys off the ACTUAL outcome, never `!!product` (the trap the PR-A review caught in
+      `RecalcDialog`). Compares **like with like** (an atacado quote vs today's atacado — pairing it with varejo
+      would manufacture an increase that never happened) and **computes no delta**: money arithmetic lives in
+      `pricing-core` (ADR-0008), and two labelled numbers answer the question without inventing a third.
+      Origin unresolvable ⇒ the affordance is **silently absent** (FR-503 precedent: same as "abrir origem").
+      **NEW copy** (ux never drew this surface) — `compareAction` · `compareToday` · `compareNote` ·
+      `compareUnavailable`. **Ratify at T030.**
 - [ ] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;
       kit itemized), the opt-in breakdown, the **lapse denial**, the offline disabled-with-reason, and the pending
       "sincronize para exportar".
