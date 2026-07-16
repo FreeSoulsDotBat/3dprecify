@@ -206,7 +206,11 @@ describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
     useEntitlementMock.mockReturnValue({
       data: { status: "active" },
       isLoading: false,
-      isError: true, // background refetch failed; data is the last-known server truth
+      // The read failed but the server's word survives — in memory from this session, or (009/T011b)
+      // from the persisted last-known answer. `stale`, not `isError`: the wall is only for "no
+      // answer at all".
+      isError: false,
+      stale: true,
       refetch: vi.fn(),
     });
     useProductsMock.mockReturnValue(listState([]));

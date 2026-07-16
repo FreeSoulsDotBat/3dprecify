@@ -5,7 +5,7 @@ import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { signOutUser } from "@/shared/session/session-store";
+import { requestSignOut } from "@/shared/session/sign-out-guard";
 import { Alert, Badge, Button, Card, Icon, Spinner, Switch, useThemeStore } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
@@ -90,6 +90,11 @@ function PlanSection() {
   } else {
     badge = <Badge tone="neutral">{t.planFree}</Badge>;
   }
+  // 009/T011b — the plan shown is the server's LAST answer, not a fresh one (offline). Saying so is
+  // the price of using it: the badge is honest about the plan AND about how it knows.
+  if (q.stale) {
+    caption = [caption, t.planStale].filter(Boolean).join(" · ");
+  }
 
   return (
     <Card className="tf-conta__row tf-conta__row--plan">
@@ -145,7 +150,7 @@ export function ContaPage() {
       <PlanSection />
       <ThemeSection />
       <div className="tf-conta__signout">
-        <Button variant="secondary" onClick={() => void signOutUser()}>
+        <Button variant="secondary" onClick={() => void requestSignOut()}>
           <Icon name="log-out" size={18} />
           {messages.account.signOut}
         </Button>

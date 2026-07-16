@@ -1,6 +1,8 @@
 import { Outlet } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 
+import { OutboxSyncer } from "@/features/history/outbox-syncer";
+import { SignOutOutboxGuard } from "@/features/history/sign-out-outbox-guard";
 import { AppNav } from "@/widgets/app-nav/app-nav";
 import { OfflineBanner } from "@/widgets/offline-banner/offline-banner";
 import { TopBar } from "@/widgets/top-bar/top-bar";
@@ -61,6 +63,16 @@ export function AppShell() {
       </div>
 
       {isMobile && <AppNav variant="tabbar" />}
+
+      {/* Sign-out with a non-empty outbox (009/T011, ADR-0018 §10). It lives at the shell — NOT at
+          either Sair button — because the FSD-Lite boundary keeps `shared/session` from seeing the
+          queue, and because guarding one of the two call sites would leave the other silently
+          destroying unsynced records. */}
+      <SignOutOutboxGuard />
+
+      {/* The queue drains itself on boot, on reconnect, and when Premium comes back (ADR-0018 §7) —
+          the app promises "sincroniza sozinho quando a conexão voltar", so it must. */}
+      <OutboxSyncer />
     </div>
   );
 }

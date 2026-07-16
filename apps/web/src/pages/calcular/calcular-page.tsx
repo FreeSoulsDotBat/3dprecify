@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
+import { freezePriceResult } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
+import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import {
   captionText,
   FieldGroup,
@@ -115,6 +117,7 @@ export function CalcularPage() {
   const values = watch();
   const {
     result,
+    input,
     channels: channelOutcomes,
     otherCostErrors,
   } = computeFromForm(values, {
@@ -247,6 +250,19 @@ export function CalcularPage() {
         refreshing={catalogRefreshing}
         onRetryCatalog={retryCatalog}
       />
+
+      {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium note:
+          the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the button is
+          PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here (`RecordSnapshotButton`
+          returns null), so the free calculator stays literally untouched (SC-109 / SC-507 / SC-512).
+          The honest door is the Histórico tab. */}
+      {result && input && (
+        <div className="flex justify-center">
+          <RecordSnapshotButton
+            source={{ kind: "SINGLE", freeze: () => freezePriceResult(input, result, null) }}
+          />
+        </div>
+      )}
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>

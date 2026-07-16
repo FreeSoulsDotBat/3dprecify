@@ -238,6 +238,8 @@ export const messages = {
     planPremium: "Premium",
     planLapsed: "Premium expirado",
     planLapsedHint: "Seus itens salvos continuam disponíveis para leitura.",
+    // 009/T011b: o plano exibido é a ÚLTIMA resposta do servidor, guardada no aparelho (offline).
+    planStale: "última informação do servidor",
     planSources: {
       beta: "via programa beta",
       comp: "cortesia",
@@ -460,9 +462,130 @@ export const messages = {
     lapsedBanner:
       "Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.",
   },
+  // E4 (009) — o Histórico prova o que o vendedor COBROU (o Catálogo mostra o que vale hoje).
+  // Vocabulário deliberado: "Valor cotado", nunca "Preço" (preço é o que a calculadora diz HOJE);
+  // "salvo" só é dito quando o servidor confirmou; um envio ainda não sincronizado é "pendente
+  // neste dispositivo" — nunca "falhou" (resposta perdida ≠ não gravado) e nunca "salvo".
   historico: {
-    emptyTitle: "Histórico em breve",
-    emptyBody: "Seus cálculos salvos vão aparecer aqui.",
+    // list + detail (T013)
+    title: "Histórico",
+    subtitle: "O que você cotou, com a data. Os valores ficam como estavam no dia.",
+    emptyTitle: "Nenhum registro ainda",
+    emptyBody:
+      "Calcule uma peça ou um kit e toque em “Salvar no histórico” para guardar o preço com a data.",
+    emptyAction: "Ir para a calculadora",
+    quotedAtCard: "Cotado em {data}",
+    quotedAtTime: "Cotado em {data} às {hora}",
+    quotedValue: "Valor cotado",
+    basisRetailCaption: "preço de varejo",
+    basisWholesaleCaption: "preço de atacado",
+    kindSingle: "Peça única",
+    kindKit: "Kit · {n} peças",
+    adhocFallback: "Cálculo avulso",
+    loadError: "Não foi possível carregar seu histórico.",
+    retry: "Tentar novamente",
+    notFound: "Registro não encontrado.",
+    backToList: "Voltar",
+    // detail
+    frozenCaption: "Valores congelados em {data}",
+    validityLine: "Validade da proposta: {n} dias",
+    kitPieces: "Peças do kit",
+    // A COUNT ("3 un"), never "3×" glued to a total that is ALREADY quantity-scaled (review PR-A,
+    // C2) — "3× R$ 135,00" would read as a unit price and be multiplied again.
+    kitPieceQty: "{n} un",
+    breakdown: "Detalhamento",
+    channels: "Preços por canal",
+    // per-channel rollup captions (M11) — contributing/skipped kit lines, stated honestly
+    channelContributing: "{n} de {total} peças",
+    channelSkipped: "{n} sem este canal",
+    channelNet: "líquido",
+    techTitle: "Ficha técnica",
+    modelVersionLine: "Calculado com a fórmula versão {versao}",
+    originLine: "Registro criado a partir de: {nome}",
+    frozenExplainer:
+      "Este registro guarda os valores como foram calculados naquele dia. Ele não muda quando você edita o catálogo nem quando a fórmula do app é atualizada.",
+    deviceClockNote: "Data registrada pelo seu aparelho no momento da cotação.",
+    // queue banner (§2.2)
+    queuePending: "{n} registro(s) pendente(s) neste dispositivo.",
+    queuePendingOffline:
+      "Sem conexão. {n} registro(s) pendente(s) neste dispositivo — sincronizam sozinhos quando você voltar a ficar online.",
+    queueBlocked: "{n} registro(s) não foram enviados: o Premium não está ativo.",
+    queueFailed: "{n} registro(s) não puderam ser registrados.",
+    syncNow: "Sincronizar agora",
+    // per-card sync badges (§1)
+    syncPendingBadge: "Pendente neste dispositivo",
+    syncBlockedBadge: "Envio pausado · precisa de Premium",
+    syncFailedBadge: "Não foi possível registrar",
+    // offline / lapsed (same family as E2/E3)
+    offlineTitle: "Modo leitura offline",
+    offlineBody:
+      "Seus registros continuam aqui. Novos registros ficam pendentes neste dispositivo até você voltar a ficar online.",
+    lapsedBanner:
+      "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
+    // record (T010)
+    saveAction: "Salvar no histórico",
+    saveSheetTitle: "Salvar no histórico",
+    saveSheetIntro:
+      "Vamos guardar os valores exatamente como estão nesta tela, com a data de hoje.",
+    saveSheetSubmit: "Salvar no histórico",
+    labelField: "Rótulo (opcional)",
+    labelHint: "Cliente, pedido…",
+    validityField: "Validade da proposta",
+    validityUnit: "dias",
+    basisField: "Preço que você está cotando",
+    basisRetail: "Varejo",
+    basisWholesale: "Atacado",
+    quotedAt: "Cotado em {data}",
+    saved: "Registro salvo no histórico.",
+    saveDeviceFailed: "Não foi possível guardar o registro neste aparelho. Ele não foi salvo.",
+    // sync states (ADR-0018) — o vocabulário honesto
+    syncPendingToast: "Pendente neste dispositivo. Sincroniza sozinho quando houver conexão.",
+    syncBlockedToast:
+      "Envio pausado — o Premium não está ativo. O registro continua neste aparelho.",
+    syncFailedToast: "Não foi possível registrar. O servidor não aceitou este registro.",
+    // detail sync alerts (§1.2) — the copy verbatim, one calm reading per state
+    syncPendingTitle: "Ainda não sincronizado",
+    syncPendingBody:
+      "Este registro está só neste dispositivo e ainda não chegou à sua conta. Ele sincroniza sozinho quando você voltar a ficar online.",
+    syncPendingDurability:
+      "Enquanto não sincroniza, ele existe só aqui — se os dados do app forem limpos, ele se perde.",
+    syncBlockedTitle: "Envio pausado",
+    syncBlockedBody:
+      "Este registro não foi enviado para a sua conta: o Premium não está ativo. Ele continua aqui, neste dispositivo. Assim que o Premium voltar a ficar ativo, ele é enviado automaticamente.",
+    syncFailedTitle: "Não foi possível registrar",
+    syncFailedBody:
+      "O servidor não aceitou este registro. Ele não será reenviado sozinho. Você pode tentar de novo ou descartar.",
+    syncedAnnounce: "Registro sincronizado.",
+    // per-entry actions (B2) + the destructive confirm (§1.5)
+    retryNow: "Tentar agora",
+    retryAgain: "Tentar novamente",
+    discard: "Descartar",
+    discardConfirmTitle: "Descartar este registro?",
+    discardConfirmBody: "Ele não foi enviado para a sua conta e não poderá ser recuperado.",
+    // queue banner "Ver" jump (§2.2) — scrolls to the first entry that needs a decision
+    queueSee: "Ver",
+    // gate: the server never answered about the plan (C5) — mirrors the E2/E3 guard family
+    guardError: "Não foi possível verificar seu plano.",
+    guardRetry: "Tentar novamente",
+    // sign-out guard (ADR-0018 §10 / T011)
+    signOutQueueTitle: "{n} registro(s) ainda não foram sincronizados",
+    signOutQueueBody:
+      "Eles estão só neste dispositivo. Se você sair agora sem enviar, eles são apagados deste aparelho e não vão para a sua conta.",
+    signOutSyncNow: "Sincronizar agora",
+    signOutSyncOffline: "Precisa de conexão para enviar.",
+    signOutDiscard: "Sair e descartar",
+    signOutDiscardConfirmTitle: "Descartar {n} registro(s) e sair?",
+    signOutDiscardConfirmBody:
+      "Eles não foram enviados para a sua conta e não poderão ser recuperados.",
+    signOutDiscardConfirm: "Descartar e sair",
+    signOutPartial: "{n} registro(s) não puderam ser enviados. Eles continuam neste aparelho.",
+    back: "Voltar",
+    // teaser (US5 lineage — E2 US7 / E3 US5). Honest: no price, no date (FR-014).
+    teaserTitle: "O histórico faz parte do Premium",
+    teaserBody:
+      "Com o Premium, cada cotação fica guardada com a data e a versão da fórmula — para você provar depois o que cobrou, mesmo que o catálogo mude.",
+    teaserFreeNote: "A calculadora continua grátis e sem limite.",
+    teaserSignedOutBody: "Entre na sua conta para guardar suas cotações.",
   },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).

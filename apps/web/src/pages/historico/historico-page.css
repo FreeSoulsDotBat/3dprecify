@@ -1,0 +1,108 @@
+/* 009/T013 — the Histórico. Token-only (tf-*), no utility skin (ADR-0007).
+   The card is a LEDGER ROW: the date sits above the money, and the money never gets the live
+   PriceHero treatment. That ordering is load-bearing, not decorative. */
+
+.tf-historico__link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.tf-historico__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.tf-historico__label {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The date and the total NEVER truncate — they are the claim. */
+.tf-historico__meta {
+  color: var(--text-muted);
+  font-size: var(--fs-caption, 0.8125rem);
+}
+
+.tf-historico__money {
+  align-items: baseline;
+  display: flex;
+  justify-content: space-between;
+}
+
+.tf-historico__money strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.tf-historico__basis {
+  color: var(--text-muted);
+  font-size: var(--fs-caption, 0.8125rem);
+}
+
+.tf-historico__banner {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  justify-content: space-between;
+}
+
+.tf-historico__back {
+  align-items: center;
+  color: var(--text-muted);
+  display: inline-flex;
+  gap: var(--space-1, 0.25rem);
+  text-decoration: none;
+}
+
+.tf-historico__claim,
+.tf-historico__tech {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.tf-historico__section {
+  font-size: var(--fs-caption, 0.8125rem);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.tf-historico__piece {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.tf-historico__piece strong {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.tf-historico__qty {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Per-channel rollup (M11) — one block per channel, its rows share the piece layout. */
+.tf-historico__channel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+}
+
+.tf-historico__channel-name {
+  font-weight: 600;
+}
+
+/* [Tentar novamente] / [Descartar] on a stuck record (B2) — inline, wraps at 390px. */
+.tf-historico__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2, 0.5rem);
+  margin-block-start: var(--space-2, 0.5rem);
+}

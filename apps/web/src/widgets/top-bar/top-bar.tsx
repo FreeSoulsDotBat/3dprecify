@@ -1,7 +1,8 @@
 import { useRouterState } from "@tanstack/react-router";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { signOutUser, useSessionStore } from "@/shared/session/session-store";
+import { requestSignOut } from "@/shared/session/sign-out-guard";
+import { useSessionStore } from "@/shared/session/session-store";
 import { Button, Icon, Logo, useThemeStore } from "@/shared/ui";
 
 import "./top-bar.css";
@@ -46,7 +47,7 @@ function AccountChrome() {
           {messages.account.signedInAs} {email}
         </span>
       )}
-      <Button variant="secondary" size="sm" onClick={() => void signOutUser()}>
+      <Button variant="secondary" size="sm" onClick={() => void requestSignOut()}>
         {messages.account.signOut}
       </Button>
     </div>
