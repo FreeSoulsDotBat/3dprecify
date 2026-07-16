@@ -32,7 +32,7 @@ vi.mock("@/shared/fee-catalog", async (importOriginal) => {
 import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
 import type { HistoryItem } from "@/entities/history/outbox";
 import type { CatalogContext } from "@/features/calculator/calculator-model";
-import type { ProductOut } from "@/shared/api/generated";
+import type { BomLineOut, BomOut, ProductOut } from "@/shared/api/generated";
 import { FEE_CATALOG_SEED } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Toaster, useToastStore } from "@/shared/ui";
@@ -98,6 +98,47 @@ const FROZEN: FrozenSnapshotPayload = {
   provenance: { kind: "PRODUCT", id: "prod-1", name: "Vaso G" },
 };
 
+const FROZEN_KIT: FrozenSnapshotPayload = {
+  schemaVersion: 1,
+  kind: "KIT",
+  modelVersion: "3.1.0",
+  catalogVersion: null,
+  lines: [],
+  totals: { custoTotal: "41.20", precoVarejo: "61.80", precoAtacado: "53.56" },
+  provenance: { kind: "KIT", id: "kit-1", name: "Kit Festa" },
+};
+
+/** A recomputable kit line built from the same valid values `productAt` produces. */
+function bomLine(over: Partial<BomLineOut> = {}): BomLineOut {
+  const p = productAt("110.00");
+  return {
+    id: "l1",
+    position: 0,
+    quantity: 1,
+    productId: "prod-1",
+    pieceName: "Vaso G",
+    degraded: false,
+    pieceInputs: p.pieceInputs,
+    filamentValues: p.filamentValues,
+    printerValues: p.printerValues,
+    tariffPerKwh: p.tariffPerKwh,
+    includeMarketplace: false,
+    channels: [],
+    otherCosts: [],
+    ...over,
+  };
+}
+
+function kitOf(lines: BomLineOut[]): BomOut {
+  return {
+    id: "kit-1",
+    name: "Kit Festa",
+    lines,
+    createdAt: "2026-07-10T00:00:00Z",
+    updatedAt: "2026-07-10T00:00:00Z",
+  };
+}
+
 function makeItem(over: Partial<HistoryItem> = {}): HistoryItem {
   return {
     id: "s1",
@@ -149,6 +190,27 @@ describe("recalcToday — reprices at TODAY's catalog when the origin resolves (
     const out = recalcToday(FROZEN, {}, ctx);
     expect(out.fromFrozen).toBe(true);
     expect(out.payload).toBe(FROZEN); // frozen inputs under an unchanged formula ARE the frozen values
+  });
+
+  it("a KIT whose EVERY line resolves reprices from today's catalog (fromFrozen false)", () => {
+    const out = recalcToday(FROZEN_KIT, { kit: kitOf([bomLine(), bomLine({ id: "l2" })]) }, ctx);
+    expect(out.fromFrozen).toBe(false);
+    expect(out.payload.kind).toBe("KIT");
+    expect(out.payload.lines).toHaveLength(2); // both pieces carried onto the new document
+  });
+
+  it("all-or-nothing — ONE un-recomputable kit line ⇒ frozen document, never a PARTIAL kit", () => {
+    // The critic's cross-domain finding (review PR-B, recalc-today.ts:106): dropping the pieces that
+    // fail to recompute and repricing only the survivors would record a two-piece kit as a one-piece
+    // quote at a lower total. A single failed line ⇒ the WHOLE recalc falls through to the frozen
+    // document, flagged not catalog-current — the kit is repriced whole or not at all.
+    const bad = bomLine({
+      id: "l2",
+      pieceInputs: { ...productAt("110.00").pieceInputs, printGrams: "" }, // fails the calc schema
+    });
+    const out = recalcToday(FROZEN_KIT, { kit: kitOf([bomLine(), bad]) }, ctx);
+    expect(out.fromFrozen).toBe(true);
+    expect(out.payload).toBe(FROZEN_KIT); // the untouched frozen document, not a survivors-only reprice
   });
 });
 

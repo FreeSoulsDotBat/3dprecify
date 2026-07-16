@@ -323,6 +323,34 @@ describe("useSnapshot — resolve ONE record by clientSnapshotId (lazy-safe deta
 
     await waitFor(() => expect(result.current.item?.syncState).toBe("pending"));
   });
+
+  it("an AUTHORITATIVE server 'gone' overrides a stale device-cache row — a deleted snapshot is not shown as live", async () => {
+    // The two-shelf lie in reverse (review PR-B, confirmed major, use-history.ts:320). The offline
+    // cache is a fallback ONLY while the server has not answered yet; once the server settles to
+    // `null` (the record was soft-deleted from another device), the cache must NOT resurrect it. We
+    // hold the server answer back so the cache loads first (the row IS a live fallback while offline),
+    // then let the server answer "gone" and assert the row disappears — not a stale live detail, and
+    // NOT the cold-load-error wall (`isError === false`): the honest state is "não encontrado".
+    let answerServer!: (v: unknown) => void;
+    listHistory.mockReturnValue(
+      new Promise((resolve) => {
+        answerServer = resolve;
+      }),
+    );
+    idbStore.set("history:snapshots:u1", [
+      { ...SERVER_ROW, id: "cached-del", clientSnapshotId: "deleted-1" },
+    ]);
+    const { result } = renderHook(() => useSnapshot("deleted-1"), { wrapper });
+
+    // 1) server unanswered ⇒ the cached row is a live fallback (offline read still opens the detail).
+    await waitFor(() => expect(result.current.item?.clientSnapshotId).toBe("deleted-1"));
+
+    // 2) the server authoritatively says the record is gone.
+    answerServer({ status: 200, data: { items: [], nextCursor: null } });
+
+    await waitFor(() => expect(result.current.item).toBeNull());
+    expect(result.current.isError).toBe(false);
+  });
 });
 
 describe("useUpdateLabel / useDeleteSnapshot — the ONLY mutations of a synced record", () => {

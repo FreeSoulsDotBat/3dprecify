@@ -5,7 +5,7 @@ import {
   useQueryClient,
   type UseMutationResult,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   type SnapshotIn,
@@ -228,7 +228,10 @@ export function useHistory(filters: HistoryFilters = {}): HistoryListState {
     getNextPageParam: (last) => last.nextCursor ?? undefined,
   });
 
-  const serverPages = query.data?.pages.flatMap((p) => p.items);
+  // Memoise on the STABLE `query.data` ref: a bare `flatMap` produces a fresh array every render,
+  // which would make the persist effect below fire (an IndexedDB write) on every render, not only
+  // when the pages actually change.
+  const serverPages = useMemo(() => query.data?.pages.flatMap((p) => p.items), [query.data]);
   // Persist ONLY the unfiltered ledger for offline reads (a filtered page is not the whole ledger).
   useEffect(() => {
     if (!filtered && serverPages && uid) void persistCachedSnapshots(uid, serverPages);
@@ -308,7 +311,13 @@ export function useSnapshot(clientSnapshotId: string): SnapshotState {
 
   const outbox = useOutboxQuery(uid).data ?? [];
   const cachedRow = cached?.find((s) => s.clientSnapshotId === clientSnapshotId);
-  const serverRow = query.data ?? cachedRow ?? null;
+  // A SETTLED server answer of `null` means "this record is gone" — it must NOT fall back to a
+  // stale device-cache row, which would render a DELETED snapshot as a live detail (the two-shelf
+  // lie in reverse; the cache is written by `useHistory` and never drops a row `useSnapshot` alone
+  // learns is gone). The cache is a fallback ONLY while the server has not answered yet
+  // (`data === undefined`, e.g. offline); an authoritative `null` overrides it, so the detail can
+  // honestly say "não encontrado" instead of showing a record the account no longer has.
+  const serverRow = query.data !== undefined ? query.data : (cachedRow ?? null);
   const server = serverRow ? [serverRow] : [];
   const item =
     mergeHistory(server, outbox).find((i) => i.clientSnapshotId === clientSnapshotId) ?? null;

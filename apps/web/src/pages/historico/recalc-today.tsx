@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 import { type PriceInput } from "@3dprecify/pricing-core";
 
@@ -92,16 +92,18 @@ export function recalcToday(
     }
   }
   if (frozen.kind === "KIT" && origin.kit && provenance) {
-    const lines = origin.kit.lines
-      .map((line) => ({
-        input: bomLineToInput(line, ctx),
-        quantity: line.quantity,
-        name: line.pieceName,
-      }))
-      .filter(
-        (l): l is { input: PriceInput; quantity: number; name: string | null } => l.input !== null,
-      );
-    if (lines.length > 0) {
+    const mapped = origin.kit.lines.map((line) => ({
+      input: bomLineToInput(line, ctx),
+      quantity: line.quantity,
+      name: line.pieceName,
+    }));
+    const lines = mapped.filter(
+      (l): l is { input: PriceInput; quantity: number; name: string | null } => l.input !== null,
+    );
+    // ALL pieces must recompute, or we do NOT claim a today's-catalog price: dropping the pieces
+    // that failed and repricing only the survivors would record a partial kit as if it were the
+    // whole one. Any failure ⇒ fall through to re-emitting the frozen document (fromFrozen: true).
+    if (lines.length > 0 && lines.length === mapped.length) {
       const { bom } = composeBom(lines.map((l) => ({ input: l.input, quantity: l.quantity })));
       return {
         payload: freezeBomResult(lines, bom, provenance, ctx.catalog.catalogVersion ?? null),
@@ -155,15 +157,26 @@ function RecalcDialog({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const originResolves =
-    (frozen.kind === "SINGLE" && !!product) || (frozen.kind === "KIT" && !!kit);
+  // Reprice ONCE when the dialog opens, and let the ACTUAL outcome — not a proxy — drive BOTH the
+  // copy and what gets recorded. `recalcToday` sets `fromFrozen: true` whenever it could NOT reprice
+  // from the live origin (the origin is not resolvable locally — which may just be offline, not
+  // deleted — OR a kit piece failed to recompute). Deriving the copy from a separate `!!product`
+  // check let the dialog promise "today's catalog" while re-emitting frozen values, and assert a
+  // deletion that may not have happened. One source of truth closes both gaps.
+  const recalced = useMemo(
+    () =>
+      open ? recalcToday(frozen, { product, kit }, { catalog, source, now: Date.now() }) : null,
+    // `now`/catalog captured at open; recompute when the dialog opens or the resolved origin moves.
+    [open, product, kit, frozen, catalog, source],
+  );
+  const repriced = recalced !== null && !recalced.fromFrozen;
   const quotedDate = new Date(item.deviceQuotedAt).toLocaleDateString("pt-BR");
 
   async function onConfirm() {
+    if (!recalced) return;
     setBusy(true);
     try {
-      const ctx: CatalogContext = { catalog, source, now: Date.now() };
-      const { payload } = recalcToday(frozen, { product, kit }, ctx);
+      const { payload } = recalced;
       const basis = item.headlineBasis as SnapshotInHeadlineBasis;
       const total = payload.totals[BASIS_TOTAL[basis]];
       if (!total) {
@@ -210,7 +223,7 @@ function RecalcDialog({
         <DialogContent showClose={false}>
           <DialogTitle>{t.recalcTitle}</DialogTitle>
           <DialogDescription>
-            {originResolves ? t.recalcBody.replace("{data}", quotedDate) : t.recalcNoOriginBody}
+            {repriced ? t.recalcBody.replace("{data}", quotedDate) : t.recalcNoOriginBody}
           </DialogDescription>
           {/* F3 — offline, "today's catalog" is the cached catalog; say it may be stale. */}
           {!online && <p className="tf-historico__meta">{t.recalcOfflineNote}</p>}

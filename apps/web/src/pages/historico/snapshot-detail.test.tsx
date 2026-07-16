@@ -4,14 +4,21 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useSnapshotMock, useSyncOutboxMock, useEntryActionsMock, useProductsMock, useBomsMock } =
-  vi.hoisted(() => ({
-    useSnapshotMock: vi.fn(),
-    useSyncOutboxMock: vi.fn(),
-    useEntryActionsMock: vi.fn(),
-    useProductsMock: vi.fn(),
-    useBomsMock: vi.fn(),
-  }));
+const {
+  useSnapshotMock,
+  useSyncOutboxMock,
+  useEntryActionsMock,
+  useProductsMock,
+  useBomsMock,
+  useEntitlementMock,
+} = vi.hoisted(() => ({
+  useSnapshotMock: vi.fn(),
+  useSyncOutboxMock: vi.fn(),
+  useEntryActionsMock: vi.fn(),
+  useProductsMock: vi.fn(),
+  useBomsMock: vi.fn(),
+  useEntitlementMock: vi.fn(),
+}));
 vi.mock("@/entities/history/use-history", () => ({
   useSnapshot: useSnapshotMock,
   useSyncOutbox: useSyncOutboxMock,
@@ -22,6 +29,9 @@ vi.mock("@/entities/history/use-history", () => ({
 // the test, never a real query.
 vi.mock("@/entities/catalog/use-catalog", () => ({ useProducts: useProductsMock }));
 vi.mock("@/entities/bom/use-bom", () => ({ useBoms: useBomsMock }));
+// The detail reads the entitlement for ONE thing: the lapse note that explains the absent write
+// affordances. Mocked (no QueryClient here); defaulted to active so the ordinary tests see no banner.
+vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: useEntitlementMock }));
 // "Recalcular hoje" and the manage bar are exercised in their own tests (recalc-today.test.tsx,
 // snapshot-manage.test.tsx); stub them here so this surface's tests stay isolated from their
 // entitlement/record/fee-catalog dependencies.
@@ -124,6 +134,8 @@ beforeEach(() => {
   // affordance seed the pool explicitly — the PR-A tests keep rendering identically with it absent.
   useProductsMock.mockReturnValue({ items: [] });
   useBomsMock.mockReturnValue({ items: [] });
+  // Default: an active premium — no lapse note. The lapse test overrides it.
+  useEntitlementMock.mockReturnValue({ data: { status: "active" }, isLoading: false });
 });
 
 afterEach(() => cleanup());
@@ -390,5 +402,22 @@ describe("not found", () => {
     render(<SnapshotDetailPage snapshotId="nope" />);
 
     expect(screen.getByText(t.notFound)).toBeInTheDocument();
+  });
+});
+
+describe("lapse — the ledger stays readable, and the detail SAYS why writing is paused (review PR-B)", () => {
+  it("a lapsed premium sees the record AND the lapse note (not a silently missing manage bar)", () => {
+    useEntitlementMock.mockReturnValue({ data: { status: "lapsed" }, isLoading: false });
+    render1();
+
+    // The frozen figures still render — a lapse deletes nothing (FR-517).
+    expect(screen.getByText("R$ 275,00")).toBeInTheDocument();
+    // ...and the note explains why rename/delete/recalc are absent, mirroring the list banner.
+    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
+  });
+
+  it("an ACTIVE premium never sees the lapse note", () => {
+    render1(); // default entitlement is active
+    expect(screen.queryByText(t.lapsedBanner)).not.toBeInTheDocument();
   });
 });

@@ -144,14 +144,19 @@ function HistoryLedger() {
   const online = useOnline();
   const queued = history.items.filter((i) => i.syncState !== "synced");
 
-  // "Is a refinement in force?" reads the RAW search so the bar (and its clear affordance) never
-  // flickers out during the debounce window. An empty ledger UNDER a filter is a search miss, not
-  // the cold "you have no history" state — the two must never be confused.
-  const filterActive = Boolean(search.trim()) || period !== "all";
+  // Two different questions, two different truths. The BAR (and its [Limpar]) keys off the RAW input
+  // so it never flickers out mid-keystroke. But WHICH empty state to show keys off the EFFECTIVE
+  // filter — the debounced `filters` the list was actually read under — because `history.items`
+  // reflects `filters`, not the keystroke. Reading the raw input here flashed the cold "you have no
+  // history" screen for the 250 ms debounce window right after clearing a no-match search: raw goes
+  // empty instantly while the list is still the filtered (empty) result (review PR-B minor). An empty
+  // ledger UNDER a filter is a search MISS, never the cold empty state — the two must never be confused.
+  const rawFilterActive = Boolean(search.trim()) || period !== "all";
+  const effectiveFilter = Boolean(filters.q || filters.from || filters.to);
   const settled = !history.isLoading && !history.isError;
-  const showFilters = history.items.length > 0 || filterActive;
-  const showEmpty = settled && history.items.length === 0 && !filterActive;
-  const showSearchEmpty = settled && history.items.length === 0 && filterActive;
+  const showFilters = history.items.length > 0 || rawFilterActive || effectiveFilter;
+  const showEmpty = settled && history.items.length === 0 && !effectiveFilter;
+  const showSearchEmpty = settled && history.items.length === 0 && effectiveFilter;
 
   const clearFilters = () => {
     setSearch("");
@@ -159,8 +164,9 @@ function HistoryLedger() {
     setCustom({ from: "", to: "" });
   };
 
-  // What the "no match" line names as the refinement: the typed term if any, else the período in
-  // force (so a período-only miss still reads honestly, never an empty quote).
+  // What the "no match" line names as the refinement: the EFFECTIVE search term the empty result
+  // reflects (`filters.q`, the debounced value — not the raw keystroke, which may already be cleared),
+  // else the período in force (so a período-only miss still reads honestly, never an empty quote).
   const periodLabel =
     period === "30"
       ? t.period30
@@ -169,7 +175,7 @@ function HistoryLedger() {
         : period === "custom"
           ? `${custom.from || "—"} – ${custom.to || "—"}`
           : "";
-  const searchEmptyTerm = search.trim() || periodLabel;
+  const searchEmptyTerm = (filters.q ?? "") || periodLabel;
 
   // [Ver] jumps to the first entry that needs a human decision (a failed/blocked card).
   const firstProblem = queued.find((i) => i.syncState === "failed" || i.syncState === "blocked");

@@ -10,6 +10,7 @@ import type {
 import { resolveOrigin, type OriginTarget } from "@/entities/history/origin";
 import type { HistoryItem } from "@/entities/history/outbox";
 import { useSnapshot } from "@/entities/history/use-history";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
 import { SnapshotManageActions } from "@/features/history/snapshot-manage";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -65,6 +66,11 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
   // today's catalog — the exact lie the two-shelf rule forbids). Hooks run before any early return.
   const products = useProducts();
   const kits = useBoms();
+  // The entitlement drives ONE thing on this surface: whether to explain the absent write affordances.
+  // On lapse the rename/delete/recalc actions are gone (they are WRITES — Principle IV), and without a
+  // word here the seller would just find them missing. The list carries this banner; the detail must
+  // too, or `snapshot-manage`'s promise ("the lapse banner explains why") is false when reached direct.
+  const entitlement = useEntitlement();
   const item = snap.item;
 
   if (snap.isLoading) {
@@ -142,6 +148,11 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
           </span>
         )}
       </Card>
+
+      {/* A lapse deletes NOTHING and hides nothing readable (FR-517) — it only pauses WRITES. Say so
+          right where the rename/delete/recalc affordances would be, so their absence reads as a paused
+          plan, not a broken record. Mirrors the list banner. */}
+      {entitlement.data?.status === "lapsed" && <Alert tone="info">{t.lapsedBanner}</Alert>}
 
       {/* US6/T022 — rename + delete, offered only for a synced record on an active premium. */}
       <SnapshotManageActions item={item} />

@@ -985,6 +985,33 @@ def test_US6_label_search_is_owner_scoped_case_insensitive_and_accent_sensitive(
     assert len(b_hits) == 0
 
 
+def test_US6_label_search_treats_ILIKE_metacharacters_as_LITERALS_not_wildcards(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    # A label search is a SUBSTRING match — a ``%`` or ``_`` the seller typed is a character IN the
+    # label, never a SQL wildcard. Unescaped, ``q="50%"`` (a trailing wildcard) would match every
+    # label starting "50…", and ``q="a_b"`` (``_`` = any single char) would match "axb": both silent
+    # false hits on the seller's OWN ledger (review PR-B minor — escape ``\``, ``%``, ``_`` first).
+    h = _premium(monkeypatch, migrated_db, "u-search-meta")
+
+    def post(label: str) -> None:
+        db_client.post(
+            "/api/v1/history", headers=h, json=_body(str(uuid.uuid4()), label=label)
+        ).raise_for_status()
+
+    post("50% OFF hoje")  # the ONLY row containing a literal "50%"
+    post("5000 reais")  # an unescaped "50%" wildcard would ALSO catch this — it must not
+    post("a_b unidade")  # the ONLY row containing a literal "a_b"
+    post("axb unidade")  # an unescaped "a_b" (underscore = any char) would ALSO catch this
+
+    def labels_for(term: str) -> list[str]:
+        r = db_client.get("/api/v1/history", headers=h, params={"q": term}).json()["items"]
+        return [it["label"] for it in r]
+
+    assert labels_for("50%") == ["50% OFF hoje"]  # the literal percent, never a wildcard
+    assert labels_for("a_b") == ["a_b unidade"]  # the literal underscore, never "any char"
+
+
 def test_US6_date_range_filters_on_the_DEVICE_date_and_composes_with_search(
     db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
 ) -> None:

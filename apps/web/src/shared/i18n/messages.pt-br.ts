@@ -515,7 +515,7 @@ export const messages = {
     recalcBody:
       "Isso cria um NOVO registro com os valores do seu catálogo hoje. O registro de {data} continua como está.",
     recalcNoOriginBody:
-      "A origem deste registro não está mais no seu catálogo. Dá para recalcular usando os valores guardados neste registro e a fórmula atual — mas isso não reflete os preços de hoje do seu catálogo.",
+      "Não foi possível localizar a origem deste registro no seu catálogo agora. Dá para recalcular usando os valores guardados neste registro e a fórmula atual — mas isso não reflete os preços de hoje do seu catálogo.",
     recalcOfflineNote:
       "Sem conexão: usando os valores do catálogo salvos neste aparelho, que podem estar desatualizados.",
     recalcConfirm: "Recalcular",

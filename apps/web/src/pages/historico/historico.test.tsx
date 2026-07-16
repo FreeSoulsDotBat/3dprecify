@@ -333,6 +333,10 @@ describe("US6 — filtering the ledger (search + período)", () => {
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: t.searchClear }));
+    // Right after clearing, the RAW input is empty but the list still reflects the OLD filter for the
+    // debounce window — the empty state must stay the search-miss one, NEVER flash the cold "you have
+    // no history" screen (review PR-B minor: the empty STATE keys off the effective filter, not raw).
+    expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
     await waitFor(() =>
       expect(screen.queryByText(t.searchEmpty.replace("{termo}", "zzz"))).not.toBeInTheDocument(),
     );
