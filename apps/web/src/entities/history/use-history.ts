@@ -1,16 +1,19 @@
 import {
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
   type UseMutationResult,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   type SnapshotIn,
   type SnapshotOut,
+  deleteSnapshotApiV1HistorySnapshotIdDelete,
   listHistoryApiV1HistoryGet,
   recordSnapshotApiV1HistoryPost,
+  relabelSnapshotApiV1HistorySnapshotIdPatch,
 } from "@/shared/api/generated";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -27,12 +30,12 @@ import {
   type SyncState,
 } from "./outbox";
 
-// 009/T010 (E4, PR-A) — RECORDING a snapshot.
+// 009/T010 (E4, PR-A) — RECORDING a snapshot; 009/T022 (PR-B) — LAZY reading + manage.
 //
-// ONE code path, online and offline. The record is ALWAYS queued durably first, then the queue is
-// drained immediately. Online, the drain finishes inside the same interaction and the record comes
-// back `synced`; offline, it stays `pending` and syncs itself later. There is no separate "offline
-// branch" that could rot: the only difference between the two is whether the drain got an answer.
+// Recording is ONE code path, online and offline. The record is ALWAYS queued durably first, then
+// the queue is drained immediately. Online, the drain finishes inside the same interaction and the
+// record comes back `synced`; offline, it stays `pending` and syncs itself later. There is no
+// separate "offline branch" that could rot: the only difference is whether the drain got an answer.
 //
 // Queue-then-drain (rather than post-then-queue-on-failure) is what makes the honesty possible. A
 // post that never answers (`status === 0`) may well have LANDED — with post-first we would not know
@@ -41,7 +44,17 @@ import {
 
 export const HISTORY_QUERY_ROOT = ["history"] as const;
 
-export const historyQueryKey = (uid: string | undefined) => ["history", "snapshots", uid] as const;
+/** The list is keyed by the ACTIVE FILTERS too (US6): each (q · período) combination is its own
+ *  infinite query. The prefix (filters omitted) invalidates every variant at once after a write. */
+export const historyQueryPrefix = (uid: string | undefined) =>
+  ["history", "snapshots", uid] as const;
+export const historyQueryKey = (uid: string | undefined, filters: HistoryFilters = {}) =>
+  [...historyQueryPrefix(uid), filters] as const;
+/** The single-snapshot (detail) query — resolved by clientSnapshotId (a pending record's only id). */
+export const historyDetailPrefix = (uid: string | undefined) =>
+  ["history", "snapshot", uid] as const;
+export const historyDetailKey = (uid: string | undefined, clientSnapshotId: string) =>
+  [...historyDetailPrefix(uid), clientSnapshotId] as const;
 export const outboxQueryKey = (uid: string | undefined) => ["history", "outbox", uid] as const;
 
 /** POSTs one frozen body. 201 (created) and 200 (idempotent replay) are the same to the client:
@@ -69,13 +82,9 @@ export function useRecordSnapshot(): UseMutationResult<RecordOutcome, Error, Sna
   return useMutation<RecordOutcome, Error, SnapshotIn>({
     // T016/B1 — the blocker the visual homologation found. TanStack's DEFAULT `networkMode:
     // "online"` PAUSES a mutation while the browser reports offline: `mutationFn` never runs, so
-    // `enqueueSnapshot` never runs either. The seller tapped "Salvar" at the feira, nothing
-    // happened, and a reload lost the quote FOREVER. ADR-0018 explicitly rejected paused mutations
-    // as the sync strategy — and we inherited them anyway, by omission.
-    //
-    // Recording is a DEVICE-first write (ADR-0018 §1): it must reach IndexedDB whether or not there
-    // is a network, and the drain that follows is what deals with connectivity. `"always"` is
-    // therefore not a workaround, it is the actual semantics of this operation.
+    // `enqueueSnapshot` never runs either. Recording is a DEVICE-first write (ADR-0018 §1): it must
+    // reach IndexedDB whether or not there is a network, and the drain that follows deals with
+    // connectivity. `"always"` is therefore not a workaround, it is the operation's real semantics.
     networkMode: "always",
     mutationFn: async (body: SnapshotIn) => {
       // The queue is uid-keyed; there is nowhere to put a record that has no account.
@@ -101,28 +110,59 @@ export function useRecordSnapshot(): UseMutationResult<RecordOutcome, Error, Sna
     },
     onSettled: () => {
       // Both halves of the union (server list + queue) may have moved — even on failure, since the
-      // record may be queued and merely unsent.
-      void client.invalidateQueries({ queryKey: historyQueryKey(uid) });
+      // record may be queued and merely unsent. The list prefix invalidates every filter variant.
+      void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
+      void client.invalidateQueries({ queryKey: historyDetailPrefix(uid) });
       void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
     },
   });
 }
 
 // ---------------------------------------------------------------------------------------------
-// 009/T013 — READING the Histórico.
+// 009/T013 + T022 — READING the Histórico (lazy pagination + server filters).
 // ---------------------------------------------------------------------------------------------
 
-/** The read state the Histórico renders — the MERGED union plus honest load/stale/error flags. */
+/** Owner-scoped server filters (US6, ux §2.6): a label substring and a device-date range. Empty
+ *  fields are simply omitted from the request — never sent as blank, which the server would honour
+ *  as a real filter. */
+export interface HistoryFilters {
+  q?: string;
+  /** ISO instant — inclusive lower bound on the DEVICE date. */
+  from?: string;
+  /** ISO instant — inclusive upper bound on the DEVICE date. */
+  to?: string;
+}
+
+function toParams(filters: HistoryFilters): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (filters.q?.trim()) params.q = filters.q.trim();
+  if (filters.from) params.from = filters.from;
+  if (filters.to) params.to = filters.to;
+  return params;
+}
+
+function hasActiveFilters(filters: HistoryFilters): boolean {
+  return Boolean(filters.q?.trim() || filters.from || filters.to);
+}
+
+/** The read state the Histórico renders — the MERGED union plus honest load/stale/error flags and
+ *  the lazy-pagination controls. */
 export interface HistoryListState {
-  /** (server) ∪ (outbox), deduped on clientSnapshotId, server-wins, newest-first. */
+  /** (loaded server pages) ∪ (outbox), deduped on clientSnapshotId, server-wins, newest-first. */
   items: HistoryItem[];
-  /** First online read in flight with nothing on the device yet. */
+  /** First read in flight with nothing on the device yet. */
   isLoading: boolean;
   /** A COLD failure: the server refused AND there is nothing cached AND nothing queued. */
   isError: boolean;
-  /** Serving the device cache because the online read failed — the honest "may be outdated". */
+  /** Serving retained/cached rows because a read failed — the honest "may be outdated". */
   stale: boolean;
   refetch: () => void;
+  /** Fetch the next keyset page ([Carregar mais]) — never an OFFSET, never a cap (FR-518). */
+  loadMore: () => void;
+  /** A next page exists on the server. */
+  hasMore: boolean;
+  /** A [Carregar mais] fetch is in flight (distinct from the initial spinner). */
+  isFetchingMore: boolean;
 }
 
 /** The queue, as a query, so the list and the banner re-render when a drain moves it. */
@@ -133,8 +173,7 @@ function useOutboxQuery(uid: string | undefined) {
     // A LOCAL IndexedDB read must NEVER depend on the network (review PR-A, B1). With the default
     // `networkMode: "online"` this query PAUSES the instant the window fires `offline` and reports
     // its `initialData: []` — so the seller's own queued quote disappears from the Histórico in the
-    // exact scenario (the fair, offline) the outbox exists for. It was the one query in this module
-    // still missing `"always"`.
+    // exact scenario (the fair, offline) the outbox exists for.
     networkMode: "always",
     queryFn: () => (uid ? listOutbox(uid) : Promise.resolve([])),
     initialData: [],
@@ -144,18 +183,106 @@ function useOutboxQuery(uid: string | undefined) {
 /**
  * THE LIST IS THE UNION — and this hook is the ONLY way to read it.
  *
- * No component may read the server query alone. That is not style: it is the structural answer to
- * the E3 PR-C lesson (*a correct component starved of correct data still lies*), where a perfectly
- * correct degraded-line component rendered a deleted product as live because it was handed a stale
- * cache. A queued record that the list did not show would be worse still — the seller would believe
- * the quote was never made.
+ * No component may read the server query alone (the E3 PR-C lesson: *a correct component starved of
+ * correct data still lies*). The server pages are fetched LAZILY (keyset, [Carregar mais]); the
+ * OUTBOX is NEVER filtered out — an unsynced record must never disappear because of a search or a
+ * period (ux §2.6). The offline cache is the UNFILTERED ledger only: a filtered read is a live
+ * server refinement, so offline it degrades to "just the queue + whatever pages already loaded",
+ * never a stale filtered result presented as authoritative.
  */
-export function useHistory(): HistoryListState {
+export function useHistory(filters: HistoryFilters = {}): HistoryListState {
+  const status = useSessionStore((s) => s.status);
+  const uid = useSessionStore((s) => s.user?.uid);
+  const filtered = hasActiveFilters(filters);
+
+  // Pre-fill from the uid-keyed device cache (unfiltered only); reset whenever the uid changes, so
+  // account B never flashes account A's ledger.
+  const [cached, setCached] = useState<SnapshotOut[] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    setCached(null);
+    if (!uid) return;
+    void loadCachedSnapshots(uid).then((items) => {
+      if (!cancelled && items) setCached(items);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [uid]);
+
+  const query = useInfiniteQuery({
+    queryKey: historyQueryKey(uid, filters),
+    enabled: status === "authenticated" && !!uid,
+    retry: false,
+    staleTime: 60_000,
+    // Offline, a PAUSED query would leave the page in a permanent "loading" limbo. Let it run and
+    // FAIL: the failure is what tells the surface it is serving the device cache (`stale`).
+    networkMode: "always",
+    initialPageParam: undefined as string | undefined,
+    queryFn: async ({ pageParam }) => {
+      const params = { ...toParams(filters), ...(pageParam ? { cursor: pageParam } : {}) };
+      const res = await listHistoryApiV1HistoryGet(Object.keys(params).length ? params : undefined);
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    getNextPageParam: (last) => last.nextCursor ?? undefined,
+  });
+
+  // Memoise on the STABLE `query.data` ref: a bare `flatMap` produces a fresh array every render,
+  // which would make the persist effect below fire (an IndexedDB write) on every render, not only
+  // when the pages actually change.
+  const serverPages = useMemo(() => query.data?.pages.flatMap((p) => p.items), [query.data]);
+  // Persist ONLY the unfiltered ledger for offline reads (a filtered page is not the whole ledger).
+  useEffect(() => {
+    if (!filtered && serverPages && uid) void persistCachedSnapshots(uid, serverPages);
+  }, [filtered, serverPages, uid]);
+
+  const outbox = useOutboxQuery(uid).data ?? [];
+  // Under a filter, do NOT fall back to the unfiltered cache — showing unfiltered rows beneath a
+  // search box would be a lie. The outbox still shows regardless (never filtered).
+  const server = serverPages ?? (filtered ? [] : (cached ?? []));
+  const items = mergeHistory(server, outbox);
+
+  // "Do we have ANYTHING authoritative to show?" — retained server pages count (review PR-A, M6);
+  // the unfiltered cache counts only when unfiltered; the outbox always counts.
+  const hasServer = serverPages !== undefined;
+  const hasCache = !filtered && cached !== null;
+  const hasData = hasServer || hasCache || outbox.length > 0;
+  return {
+    items,
+    isLoading: query.isFetching && !hasData,
+    // The wall is ONLY for a COLD failure — nothing fetched, nothing cached, nothing queued.
+    isError: query.isError && !hasData,
+    // Serving something non-fresh (retained pages OR the device cache) after a failed read.
+    stale: query.isError && hasData,
+    refetch: () => void query.refetch(),
+    loadMore: () => void query.fetchNextPage(),
+    hasMore: query.hasNextPage,
+    isFetchingMore: query.isFetchingNextPage,
+  };
+}
+
+/** The read state a snapshot DETAIL renders — one item plus honest flags. */
+export interface SnapshotState {
+  item: HistoryItem | null;
+  isLoading: boolean;
+  isError: boolean;
+  stale: boolean;
+  refetch: () => void;
+}
+
+/**
+ * Resolve ONE snapshot by its clientSnapshotId — the detail's URL key (a pending record's only id).
+ *
+ * Under lazy pagination a deep-linked snapshot need not be on the first page, so this does NOT scan
+ * the list: it resolves from three sources, server-wins over local, and NEVER from the server query
+ * alone (a pending record only exists in the outbox). (1) The outbox (a pending record). (2) An exact
+ * server lookup by clientSnapshotId. (3) The offline cache, so a synced record still opens offline.
+ */
+export function useSnapshot(clientSnapshotId: string): SnapshotState {
   const status = useSessionStore((s) => s.status);
   const uid = useSessionStore((s) => s.user?.uid);
 
-  // Pre-fill from the uid-keyed device cache; reset whenever the uid changes, so account B never
-  // flashes account A's ledger.
   const [cached, setCached] = useState<SnapshotOut[] | null>(null);
   useEffect(() => {
     let cancelled = false;
@@ -170,57 +297,79 @@ export function useHistory(): HistoryListState {
   }, [uid]);
 
   const query = useQuery({
-    queryKey: historyQueryKey(uid),
+    queryKey: historyDetailKey(uid, clientSnapshotId),
     enabled: status === "authenticated" && !!uid,
     retry: false,
     staleTime: 60_000,
-    // Offline, a PAUSED query would leave the page in a permanent "loading" limbo. Let it run and
-    // FAIL: the failure is what tells the surface it is serving the device cache (`stale`), which
-    // is the honest thing to say — the alternative is a spinner that never resolves.
     networkMode: "always",
     queryFn: async () => {
-      // Follow the keyset cursor to EXHAUSTION (review PR-A, M3). The server pages to avoid a silent
-      // cap on how many snapshots a seller may keep; if the client stopped at the first page, the
-      // TAIL of the history would never reach the device — and a detail opened for an unfetched
-      // record (the detail resolves via this list) would falsely read "não encontrado". Walking
-      // every page also lands the WHOLE ledger in the cache, which is what makes the offline read
-      // complete.
-      const all: SnapshotOut[] = [];
-      let cursor: string | null | undefined;
-      do {
-        const res = await listHistoryApiV1HistoryGet(cursor ? { cursor } : undefined);
-        if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-        all.push(...res.data.items);
-        cursor = res.data.nextCursor;
-      } while (cursor);
-      return all;
+      const res = await listHistoryApiV1HistoryGet({ clientSnapshotId });
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data.items[0] ?? null;
     },
   });
 
-  const fetched = query.data;
-  useEffect(() => {
-    if (fetched && uid) void persistCachedSnapshots(uid, fetched);
-  }, [fetched, uid]);
-
   const outbox = useOutboxQuery(uid).data ?? [];
-  const server = query.data ?? cached ?? [];
-  const items = mergeHistory(server, outbox);
+  const cachedRow = cached?.find((s) => s.clientSnapshotId === clientSnapshotId);
+  // A SETTLED server answer of `null` means "this record is gone" — it must NOT fall back to a
+  // stale device-cache row, which would render a DELETED snapshot as a live detail (the two-shelf
+  // lie in reverse; the cache is written by `useHistory` and never drops a row `useSnapshot` alone
+  // learns is gone). The cache is a fallback ONLY while the server has not answered yet
+  // (`data === undefined`, e.g. offline); an authoritative `null` overrides it, so the detail can
+  // honestly say "não encontrado" instead of showing a record the account no longer has.
+  const serverRow = query.data !== undefined ? query.data : (cachedRow ?? null);
+  const server = serverRow ? [serverRow] : [];
+  const item =
+    mergeHistory(server, outbox).find((i) => i.clientSnapshotId === clientSnapshotId) ?? null;
 
-  // "Do we have ANYTHING to show?" — and the retained server data counts (review PR-A, M6).
-  // TanStack KEEPS `query.data` through a failed background refetch, so a refetch that fails while
-  // rows are on screen must flag `stale` (a calm strip), NEVER `isError` (a wall over the seller's
-  // own data). The old `hasLocal` looked only at the cache/queue and missed the retained data, so
-  // the error wall rendered on top of the list it was erroring about.
-  const hasData = query.data !== undefined || cached !== null || outbox.length > 0;
+  const hasData = query.data !== undefined || cachedRow !== undefined || outbox.length > 0;
   return {
-    items,
-    isLoading: query.isFetching && !hasData,
-    // The wall is ONLY for a COLD failure — nothing fetched, nothing cached, nothing queued.
-    isError: query.isError && !hasData,
-    // Serving something non-fresh (retained data OR the device cache) after a failed read.
-    stale: query.isError && hasData,
+    item,
+    isLoading: query.isFetching && !hasData && !item,
+    // A cold read failure is NOT "this record does not exist" — the detail tells them apart (M7).
+    isError: query.isError && !item,
+    stale: query.isError && !!item,
     refetch: () => void query.refetch(),
   };
+}
+
+/** Edit a snapshot's label — the ONE mutable field (contents stay immutable, ADR-0019). Keyed by the
+ *  SERVER id, so it applies to a synced record; a pending record is renamed only once it syncs. */
+export function useUpdateLabel(): UseMutationResult<
+  SnapshotOut,
+  Error,
+  { id: string; label: string | null }
+> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+  return useMutation<SnapshotOut, Error, { id: string; label: string | null }>({
+    mutationFn: async ({ id, label }) => {
+      const res = await relabelSnapshotApiV1HistorySnapshotIdPatch(id, { label });
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
+      void client.invalidateQueries({ queryKey: historyDetailPrefix(uid) });
+    },
+  });
+}
+
+/** Delete a synced snapshot (soft, server-side). A pending record is removed via `useEntryActions`
+ *  (discard) instead — it has no server id to delete. */
+export function useDeleteSnapshot(): UseMutationResult<void, Error, string> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+  return useMutation<void, Error, string>({
+    mutationFn: async (id: string) => {
+      const res = await deleteSnapshotApiV1HistorySnapshotIdDelete(id);
+      if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
+    },
+    onSettled: () => {
+      void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
+      void client.invalidateQueries({ queryKey: historyDetailPrefix(uid) });
+    },
+  });
 }
 
 /** Drain the queue on demand (the "Sincronizar agora" action, and the app's reconnect sweep). */
@@ -244,7 +393,7 @@ export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
       await drainOutbox(uid, { post: postSnapshot, retryBlocked });
     },
     onSettled: () => {
-      void client.invalidateQueries({ queryKey: historyQueryKey(uid) });
+      void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
       void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
     },
   });
@@ -267,7 +416,8 @@ export function useEntryActions(): {
   const uid = useSessionStore((s) => s.user?.uid);
 
   const invalidate = () => {
-    void client.invalidateQueries({ queryKey: historyQueryKey(uid) });
+    void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
+    void client.invalidateQueries({ queryKey: historyDetailPrefix(uid) });
     void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
   };
 

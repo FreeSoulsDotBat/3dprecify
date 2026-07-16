@@ -4,19 +4,46 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { useHistoryMock, useSyncOutboxMock, useEntryActionsMock } = vi.hoisted(() => ({
-  useHistoryMock: vi.fn(),
+const {
+  useSnapshotMock,
+  useSyncOutboxMock,
+  useEntryActionsMock,
+  useProductsMock,
+  useBomsMock,
+  useEntitlementMock,
+} = vi.hoisted(() => ({
+  useSnapshotMock: vi.fn(),
   useSyncOutboxMock: vi.fn(),
   useEntryActionsMock: vi.fn(),
+  useProductsMock: vi.fn(),
+  useBomsMock: vi.fn(),
+  useEntitlementMock: vi.fn(),
 }));
 vi.mock("@/entities/history/use-history", () => ({
-  useHistory: useHistoryMock,
+  useSnapshot: useSnapshotMock,
   useSyncOutbox: useSyncOutboxMock,
   useEntryActions: useEntryActionsMock,
 }));
+// US3/T019 — the detail resolves the origin at READ TIME against the LIVE catalog (products + kits),
+// so the affordance appears only when the origin still exists. Mocked so the resolution is driven by
+// the test, never a real query.
+vi.mock("@/entities/catalog/use-catalog", () => ({ useProducts: useProductsMock }));
+vi.mock("@/entities/bom/use-bom", () => ({ useBoms: useBomsMock }));
+// The detail reads the entitlement for ONE thing: the lapse note that explains the absent write
+// affordances. Mocked (no QueryClient here); defaulted to active so the ordinary tests see no banner.
+vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: useEntitlementMock }));
+// "Recalcular hoje" and the manage bar are exercised in their own tests (recalc-today.test.tsx,
+// snapshot-manage.test.tsx); stub them here so this surface's tests stay isolated from their
+// entitlement/record/fee-catalog dependencies.
+vi.mock("./recalc-today", () => ({ RecalcTodayButton: () => null }));
+vi.mock("@/features/history/snapshot-manage", () => ({ SnapshotManageActions: () => null }));
 vi.mock("@tanstack/react-router", () => ({
-  Link: ({ children, ...rest }: { children: unknown; [k: string]: unknown }) => (
-    <a {...(rest as object)}>{children as never}</a>
+  // An <a> only carries the implicit ARIA role "link" when it has an href — so the mock derives one
+  // from `to`, letting `getByRole("link", …)` assert the affordance IS a navigable link.
+  Link: ({ children, to, ...rest }: { children: unknown; to?: unknown; [k: string]: unknown }) => (
+    <a href={typeof to === "string" ? to : "#"} {...(rest as object)}>
+      {children as never}
+    </a>
   ),
   useNavigate: () => vi.fn(),
 }));
@@ -84,8 +111,8 @@ function item(over: Partial<HistoryItem> = {}, payload: FrozenSnapshotPayload = 
 }
 
 function render1(over: Partial<HistoryItem> = {}, payload: FrozenSnapshotPayload = PAYLOAD) {
-  useHistoryMock.mockReturnValue({
-    items: [item(over, payload)],
+  useSnapshotMock.mockReturnValue({
+    item: item(over, payload),
     isLoading: false,
     isError: false,
     stale: false,
@@ -103,6 +130,12 @@ beforeEach(() => {
     retrying: false,
     discarding: false,
   });
+  // Default: the origin no longer resolves (empty catalog). Tests that pin the "abrir origem"
+  // affordance seed the pool explicitly — the PR-A tests keep rendering identically with it absent.
+  useProductsMock.mockReturnValue({ items: [] });
+  useBomsMock.mockReturnValue({ items: [] });
+  // Default: an active premium — no lapse note. The lapse test overrides it.
+  useEntitlementMock.mockReturnValue({ data: { status: "active" }, isLoading: false });
 });
 
 afterEach(() => cleanup());
@@ -257,8 +290,8 @@ describe("M8 — the sync-state Alert on the detail (review PR-A, §1.2)", () =>
 
 describe("M7 — a read failure is not a missing record (review PR-A)", () => {
   it("says 'could not load' with a retry, NEVER 'Registro não encontrado'", () => {
-    useHistoryMock.mockReturnValue({
-      items: [],
+    useSnapshotMock.mockReturnValue({
+      item: null,
       isLoading: false,
       isError: true,
       stale: false,
@@ -315,10 +348,52 @@ describe("a snapshot NEVER degrades (FR-503) — the absence IS the feature", ()
   });
 });
 
+describe("the origin affordance — resolved at read time, SC-502 (US3/T019)", () => {
+  it("offers 'Abrir produto' to the live product while the origin still exists", () => {
+    useProductsMock.mockReturnValue({ items: [{ id: "p1" }] }); // PAYLOAD.provenance.id === "p1"
+    render1();
+
+    expect(screen.getByRole("link", { name: t.openProduct })).toBeInTheDocument();
+    // The captured name is part of the frozen document — it shows whether or not the origin resolves.
+    expect(screen.getByText(t.originLine.replace("{nome}", "Vaso G"))).toBeInTheDocument();
+  });
+
+  it("SC-502 — a live origin never leaks a value in: the figures stay the STORED ones", () => {
+    // Even with a live product of the same id present, the detail consults the catalog ONLY to decide
+    // whether to OFFER the link — never for a number. Every figure is the payload's, byte-for-byte.
+    useProductsMock.mockReturnValue({ items: [{ id: "p1" }] });
+    render1();
+
+    expect(screen.getByText("R$ 42,10")).toBeInTheDocument(); // material, from the payload
+    expect(screen.getByText("R$ 180,00")).toBeInTheDocument(); // custo total, from the payload
+  });
+
+  it("origin DELETED → no 'Abrir produto', no degrade vocabulary, the name still shows (two-shelf)", () => {
+    useProductsMock.mockReturnValue({ items: [] }); // the origin product was deleted
+    const { container } = render1();
+
+    expect(screen.queryByRole("link", { name: t.openProduct })).not.toBeInTheDocument();
+    expect(screen.getByText(t.originLine.replace("{nome}", "Vaso G"))).toBeInTheDocument();
+    // The word "removido/excluído/deletado" must appear NOWHERE — a snapshot never rots (FR-503/FR-507).
+    expect(container.textContent ?? "").not.toMatch(/removid|excluíd|deletad|desatualizad/i);
+  });
+
+  it("a KIT origin offers 'Abrir kit' while the kit still exists", () => {
+    useBomsMock.mockReturnValue({ items: [{ id: "k1" }] });
+    render1(
+      { kind: "KIT" },
+      { ...PAYLOAD, kind: "KIT", provenance: { kind: "KIT", id: "k1", name: "Kit Festa" } },
+    );
+
+    expect(screen.getByRole("link", { name: t.openKit })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: t.openProduct })).not.toBeInTheDocument();
+  });
+});
+
 describe("not found", () => {
   it("says so plainly instead of rendering an empty document", () => {
-    useHistoryMock.mockReturnValue({
-      items: [],
+    useSnapshotMock.mockReturnValue({
+      item: null,
       isLoading: false,
       isError: false,
       stale: false,
@@ -327,5 +402,22 @@ describe("not found", () => {
     render(<SnapshotDetailPage snapshotId="nope" />);
 
     expect(screen.getByText(t.notFound)).toBeInTheDocument();
+  });
+});
+
+describe("lapse — the ledger stays readable, and the detail SAYS why writing is paused (review PR-B)", () => {
+  it("a lapsed premium sees the record AND the lapse note (not a silently missing manage bar)", () => {
+    useEntitlementMock.mockReturnValue({ data: { status: "lapsed" }, isLoading: false });
+    render1();
+
+    // The frozen figures still render — a lapse deletes nothing (FR-517).
+    expect(screen.getByText("R$ 275,00")).toBeInTheDocument();
+    // ...and the note explains why rename/delete/recalc are absent, mirroring the list banner.
+    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
+  });
+
+  it("an ACTIVE premium never sees the lapse note", () => {
+    render1(); // default entitlement is active
+    expect(screen.queryByText(t.lapsedBanner)).not.toBeInTheDocument();
   });
 });

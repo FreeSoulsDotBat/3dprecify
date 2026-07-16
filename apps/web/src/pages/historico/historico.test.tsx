@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { useHistoryMock, useSyncOutboxMock, useEntitlementMock, useEntryActionsMock } = vi.hoisted(
@@ -73,6 +74,9 @@ function baseList() {
     isError: false,
     stale: false,
     refetch: vi.fn(),
+    loadMore: vi.fn(),
+    hasMore: false,
+    isFetchingMore: false,
   };
 }
 
@@ -276,5 +280,86 @@ describe("states", () => {
 
     expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
     expect(screen.getByText("R$ 275,00")).toBeInTheDocument();
+  });
+});
+
+// 009/T021 (E4, PR-B, US6) — filtering + lazy pagination, written FAILING-first.
+//
+// The filter bar refines a LIVE server read, so two things must hold. (1) A search is DEBOUNCED —
+// one server request per settled term, not one per keystroke. (2) The offline queue is never a
+// victim of a filter: it is merged in `useHistory`, below this layer, so nothing here can hide a
+// seller's own unsynced quote. And the page must NEVER load the whole ledger at once (FR-518) — the
+// server keysets, and [Carregar mais] fetches the next page on demand.
+describe("US6 — filtering the ledger (search + período)", () => {
+  const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
+
+  it("passes a DEBOUNCED label search to useHistory, never one call per keystroke", async () => {
+    const user = setup();
+    useHistoryMock.mockReturnValue(listState({ items: [item()] }));
+    render(<HistoricoPage />);
+
+    await user.type(screen.getByLabelText(t.searchLabel), "Maria");
+    await waitFor(() => expect(useHistoryMock).toHaveBeenCalledWith({ q: "Maria" }));
+  });
+
+  it("a período preset sends a device-date lower bound; 'Tudo' clears it", async () => {
+    const user = setup();
+    useHistoryMock.mockReturnValue(listState({ items: [item()] }));
+    render(<HistoricoPage />);
+
+    await user.click(screen.getByRole("button", { name: t.period30 }));
+    expect(useHistoryMock.mock.lastCall?.[0]).toEqual(
+      expect.objectContaining({ from: expect.any(String) }),
+    );
+    expect(useHistoryMock.mock.lastCall?.[0]).not.toHaveProperty("q");
+
+    await user.click(screen.getByRole("button", { name: t.periodAll }));
+    expect(useHistoryMock.mock.lastCall?.[0]).toEqual({});
+  });
+
+  it("an EMPTY filtered result says so by term and offers to clear — never the cold empty state", async () => {
+    const user = setup();
+    // The ledger has rows unfiltered, but the search matches nothing.
+    useHistoryMock.mockImplementation((filters?: { q?: string }) =>
+      listState({ items: filters?.q ? [] : [item()] }),
+    );
+    render(<HistoricoPage />);
+
+    await user.type(screen.getByLabelText(t.searchLabel), "zzz");
+    await waitFor(() =>
+      expect(screen.getByText(t.searchEmpty.replace("{termo}", "zzz"))).toBeInTheDocument(),
+    );
+    // NOT the "you have no history yet" empty state — the seller HAS history; this search is empty.
+    expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: t.searchClear }));
+    // Right after clearing, the RAW input is empty but the list still reflects the OLD filter for the
+    // debounce window — the empty state must stay the search-miss one, NEVER flash the cold "you have
+    // no history" screen (review PR-B minor: the empty STATE keys off the effective filter, not raw).
+    expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText(t.searchEmpty.replace("{termo}", "zzz"))).not.toBeInTheDocument(),
+    );
+  });
+});
+
+describe("US6 — lazy pagination ([Carregar mais])", () => {
+  const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
+
+  it("offers [Carregar mais] only when a next page exists, and it fetches it", async () => {
+    const user = setup();
+    const loadMore = vi.fn();
+    useHistoryMock.mockReturnValue(listState({ items: [item()], hasMore: true, loadMore }));
+    render(<HistoricoPage />);
+
+    await user.click(screen.getByRole("button", { name: t.loadMore }));
+    expect(loadMore).toHaveBeenCalledTimes(1);
+  });
+
+  it("hides [Carregar mais] when the ledger is fully loaded", () => {
+    useHistoryMock.mockReturnValue(listState({ items: [item()], hasMore: false }));
+    render(<HistoricoPage />);
+
+    expect(screen.queryByRole("button", { name: t.loadMore })).not.toBeInTheDocument();
   });
 });

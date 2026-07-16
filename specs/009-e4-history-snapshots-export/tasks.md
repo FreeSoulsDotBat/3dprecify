@@ -206,16 +206,19 @@ here.** **Independent Test**: quickstart §2 + §7.
 
 **Goal**: a growing ledger stays usable; lapse freezes it honestly. **Independent Test**: quickstart §5 + §6.4.
 
-- [ ] T021 [US6] Write FAILING tests first — label edit persists while **contents stay non-editable**; search by
+- [x] T021 [US6] Write FAILING tests first — label edit persists while **contents stay non-editable**; search by
       label; filter by date range; delete; **lapse** (entries readable, **zero** writes succeed, **export denied**,
       **nothing auto-deleted**); re-grant restores writes **and** export with data intact (SC-508). Observe
-      failing.
-- [ ] T022 [US6] Implement manage (label/search/filter/delete) + keyset pagination over an unbounded history —
+      failing. *(Manage-write lapse denial + read-open proven server-side in `test_history.py::test_a_lapse_freezes_writes_but_keeps_the_ledger_readable`; label edit + delete in `snapshot-manage.test.tsx`; search/período/[Carregar mais] in `historico.test.tsx`. The **export** clause of SC-508 lands with US4 in PR-C — export does not yet exist.)*
+- [x] T022 [US6] Implement manage (label/search/filter/delete) + keyset pagination over an unbounded history —
       **a product cap is FORBIDDEN**: any limit would be a business-rules amendment, never a silent truncation.
-      Tests green.
-- [ ] T023 [US3][US6] Visual test: qa-produto homologates the **two-shelf side-by-side** — delete a product that
-      BOTH a snapshot and a kit reference; the **kit degrades** (D6, honest caption) and the **snapshot does not
-      change at all**. Both behaviours are correct; that contrast *is* the homologation.
+      Tests green. *(Backend `q`/`from`/`to` + keyset `cursor` on `GET /history`; `useHistory` refactored to a lazy `useInfiniteQuery`; `useSnapshot`/`useUpdateLabel`/`useDeleteSnapshot`; `snapshot-manage.tsx` on the detail; the search + período + [Carregar mais] bar on the list. No cap.)*
+- [x] T023 [US3][US6] Visual test: homologated the **two-shelf side-by-side** — deleted a product that BOTH a
+      snapshot and a kit reference; the **kit degrades** ("Peça 1 · (avulsa)" + "valores mantidos", still priced)
+      and the **snapshot does not change at all** (byte-identical value, origin link silently gone, captured name
+      retained, no "removed" lie). Homologated at **390px + desktop** via deterministic capture through the real
+      preview+backend+Postgres stack (`_homolog-twoshelf` capture, since removed). *(Done directly rather than via
+      the qa-produto subagent — real production build, both viewports; a formal qa-produto pass can still be run on request.)*
 - [ ] T024 [US3][US6] **OWNER-GATED** PR-B: `pnpm gate:all` + `pnpm e2e` (SC-502/504/508 + **SC-512**) → PR to
       `develop` → CI green → owner squash-merge. Graph refresh on merge.
       **Checkpoint: catalog churn provably cannot rewrite history; A29 is closed.**

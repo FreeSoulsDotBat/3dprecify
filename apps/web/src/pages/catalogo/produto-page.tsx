@@ -9,6 +9,7 @@ import {
   useProducts,
   useUpdateProduct,
 } from "@/entities/catalog/use-catalog";
+import { freezePriceResult } from "@/entities/history/frozen-payload";
 import {
   captionText,
   FieldGroup,
@@ -34,6 +35,7 @@ import {
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
+import { RecordSnapshotButton, type RecordSource } from "@/features/history/record-snapshot-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -120,9 +122,29 @@ export function ProdutoPage({ productId }: { productId?: string }) {
   const values = watch();
   const {
     result,
+    input,
     channels: channelOutcomes,
     otherCostErrors,
   } = computeFromForm(values, { catalog, source, now: Date.now() });
+
+  // US3/T019 — a snapshot recorded from THIS surface carries the product as its origin
+  // (`provenance.kind = "PRODUCT"`), the one entry point the calculator cannot produce (it binds
+  // filament/printer, never a product). Offered only on a SAVED product with a valid live price;
+  // a new/unsaved product has no origin to capture yet. The gate on ACTIVE premium lives inside
+  // `RecordSnapshotButton` (the server's last word), so it is not re-implemented here. `freeze`
+  // runs at Sheet open, capturing the on-screen values exactly (never re-derived at send time).
+  const recordSource: RecordSource | null =
+    editing && result && input
+      ? {
+          kind: "SINGLE",
+          freeze: () =>
+            freezePriceResult(input, result, {
+              kind: "PRODUCT",
+              id: editing.id,
+              name: editing.name,
+            }),
+        }
+      : null;
 
   const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
     const first = (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality;
@@ -318,6 +340,10 @@ export function ProdutoPage({ productId }: { productId?: string }) {
       ) : (
         <Alert tone="danger">{t.invalidNote}</Alert>
       )}
+
+      {/* Record the on-screen price as a frozen snapshot, tagged with this product as its origin
+          (US3/T019). Present only for a premium seller on a saved product with a valid live price. */}
+      {recordSource && <RecordSnapshotButton source={recordSource} />}
 
       <MarketplaceSection
         control={control}

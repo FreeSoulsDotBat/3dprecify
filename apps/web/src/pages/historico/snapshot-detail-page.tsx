@@ -1,13 +1,18 @@
 import { Link } from "@tanstack/react-router";
 
+import { useBoms } from "@/entities/bom/use-bom";
+import { useProducts } from "@/entities/catalog/use-catalog";
 import type {
   FrozenBreakdown,
   FrozenChannel,
   FrozenSnapshotPayload,
 } from "@/entities/history/frozen-payload";
+import { resolveOrigin, type OriginTarget } from "@/entities/history/origin";
 import type { HistoryItem } from "@/entities/history/outbox";
-import { useHistory } from "@/entities/history/use-history";
+import { useSnapshot } from "@/entities/history/use-history";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
+import { SnapshotManageActions } from "@/features/history/snapshot-manage";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Badge, BreakdownRow, Button, Card, Icon, Spinner } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
@@ -22,6 +27,8 @@ import {
   quotedTime,
   SYNC_BADGE,
 } from "@/entities/history/history-format";
+
+import { RecalcTodayButton } from "./recalc-today";
 
 import "./historico-page.css";
 
@@ -50,13 +57,23 @@ const t = messages.historico;
 const tr = messages.calculator.results;
 
 export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
-  const history = useHistory();
-  // The union again — never the server query alone. A pending record must open exactly like a
-  // synced one: it is the same document, and the seller's own quote must not be unreadable simply
-  // because the server has not seen it yet.
-  const item = history.items.find((i) => i.clientSnapshotId === snapshotId) ?? null;
+  // Resolve THIS record by its clientSnapshotId (the URL key). Under lazy pagination it need not be
+  // on a loaded list page, so useSnapshot fetches it by exact id — and still never reads the server
+  // query alone: a pending record lives only in the outbox and must open exactly like a synced one.
+  const snap = useSnapshot(snapshotId);
+  // US3/T019 — the LIVE catalog, consulted for ONE thing only: whether the captured origin still
+  // exists, so we can offer "abrir origem". Never for a value (that would make the snapshot track
+  // today's catalog — the exact lie the two-shelf rule forbids). Hooks run before any early return.
+  const products = useProducts();
+  const kits = useBoms();
+  // The entitlement drives ONE thing on this surface: whether to explain the absent write affordances.
+  // On lapse the rename/delete/recalc actions are gone (they are WRITES — Principle IV), and without a
+  // word here the seller would just find them missing. The list carries this banner; the detail must
+  // too, or `snapshot-manage`'s promise ("the lapse banner explains why") is false when reached direct.
+  const entitlement = useEntitlement();
+  const item = snap.item;
 
-  if (history.isLoading) {
+  if (snap.isLoading) {
     return (
       <Shell>
         <div className="flex justify-center py-8">
@@ -69,12 +86,12 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
   // A COLD read failure is NOT the same as "this record does not exist" (review PR-A, M7). Saying
   // "Registro não encontrado" when the truth is "we could not load your history" would tell the
   // seller their quote is gone. Distinct branch, distinct copy, with a retry.
-  if (!item && history.isError) {
+  if (!item && snap.isError) {
     return (
       <Shell>
         <div className="flex flex-col items-center gap-3 py-8">
           <Alert tone="danger">{t.loadError}</Alert>
-          <Button variant="secondary" onClick={history.refetch}>
+          <Button variant="secondary" onClick={snap.refetch}>
             {t.retry}
           </Button>
         </div>
@@ -92,6 +109,14 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
   }
 
   const payload = frozenPayloadOf(item);
+  // Read-time resolution (ADR-0019 §5): null when the origin was deleted OR was never set — the
+  // affordance is then simply absent, and the two cases are indistinguishable ON PURPOSE.
+  const origin = resolveOrigin(payload?.provenance ?? null, products.items, kits.items);
+  // The live origin rows (when they resolve) — "Recalcular hoje" reprices from these at today's
+  // catalog values (FR-505); when absent, it reprices the frozen inputs and says so.
+  const originProduct =
+    origin?.kind === "PRODUCT" ? products.items.find((p) => p.id === origin.id) : undefined;
+  const originKit = origin?.kind === "KIT" ? kits.items.find((k) => k.id === origin.id) : undefined;
   const offset = offsetOf(item);
   const validity = item.snapshot?.quoteValidityDays ?? item.entry?.body.quoteValidityDays ?? null;
   const date = quotedDate(item.deviceQuotedAt, offset);
@@ -124,6 +149,14 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
         )}
       </Card>
 
+      {/* A lapse deletes NOTHING and hides nothing readable (FR-517) — it only pauses WRITES. Say so
+          right where the rename/delete/recalc affordances would be, so their absence reads as a paused
+          plan, not a broken record. Mirrors the list banner. */}
+      {entitlement.data?.status === "lapsed" && <Alert tone="info">{t.lapsedBanner}</Alert>}
+
+      {/* US6/T022 — rename + delete, offered only for a synced record on an active premium. */}
+      <SnapshotManageActions item={item} />
+
       {/* §1.2 — the honest per-state alert, with the durability caveat (F4) and the retry/discard
           actions (B2). Only when the record has not reached the account. */}
       <SyncAlert item={item} />
@@ -145,7 +178,9 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
           {payload.channels && payload.channels.length > 0 && (
             <ChannelsBlock channels={payload.channels} />
           )}
-          <TechnicalSheet payload={payload} />
+          <TechnicalSheet payload={payload} origin={origin} />
+          {/* US3/T020 — reprice at today's catalog into a NEW record; the original is immutable. */}
+          <RecalcTodayButton item={item} product={originProduct} kit={originKit} />
         </>
       )}
     </Shell>
@@ -328,8 +363,16 @@ function Breakdown({ breakdown }: { breakdown: FrozenBreakdown }) {
 }
 
 /** The date and the formula version, labelled (A29 / FR-506) — plus the two-shelf rule in plain
- *  words, because the seller has every reason to expect the number to have moved, and it did not. */
-function TechnicalSheet({ payload }: { payload: FrozenSnapshotPayload }) {
+ *  words, because the seller has every reason to expect the number to have moved, and it did not.
+ *  The "abrir origem" affordance (T019) appears ONLY when `origin` resolved: a captured name whose
+ *  id no longer exists shows its name but offers no link — never a "produto excluído" claim. */
+function TechnicalSheet({
+  payload,
+  origin,
+}: {
+  payload: FrozenSnapshotPayload;
+  origin: OriginTarget | null;
+}) {
   return (
     <Card className="tf-historico__tech">
       <h2 className="tf-historico__section">{t.techTitle}</h2>
@@ -342,6 +385,22 @@ function TechnicalSheet({ payload }: { payload: FrozenSnapshotPayload }) {
         <span className="tf-historico__meta">
           {t.originLine.replace("{nome}", payload.provenance.name)}
         </span>
+      )}
+      {/* Resolved at read time: present iff the origin still exists. Its ABSENCE is silent — the
+          two-shelf rule means a gone origin is not a problem the seller has (FR-503). */}
+      {origin?.kind === "PRODUCT" && (
+        <Link
+          to="/catalogo/produtos/$productId"
+          params={{ productId: origin.id }}
+          className="tf-historico__origin-link"
+        >
+          {t.openProduct}
+        </Link>
+      )}
+      {origin?.kind === "KIT" && (
+        <Link to="/kits" search={{ id: origin.id }} className="tf-historico__origin-link">
+          {t.openKit}
+        </Link>
       )}
       <p className="tf-historico__meta">{t.frozenExplainer}</p>
       {/* FR-528, owner decision F2: the snapshot ASSERTS its date; it does not pretend the date was

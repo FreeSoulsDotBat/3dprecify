@@ -505,6 +505,10 @@ export type ListHistoryApiV1HistoryGetParams = {
  */
 limit?: number;
 cursor?: string | null;
+q?: string | null;
+from?: string | null;
+to?: string | null;
+clientSnapshotId?: string | null;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -3462,9 +3466,20 @@ export const getListHistoryApiV1HistoryGetUrl = (params?: ListHistoryApiV1Histor
  *
  * Keyset pagination (data-model D4), never OFFSET and never a silent cap: a page size is NOT a
  * limit on how many snapshots a seller may keep (that would be a business-rules amendment). The
- * client follows ``nextCursor`` to exhaustion, so the whole unbounded history reaches the device —
- * the 51st entry cannot vanish, and the detail-via-list resolution stays truthful (review PR-A
- * M3). ``limit + 1`` peeks one row ahead to decide whether a next page exists.
+ * client follows ``nextCursor`` to exhaustion — or, from PR-B, lazily via [Carregar mais] — so the
+ * whole unbounded history is reachable. ``limit + 1`` peeks one row ahead to decide whether a next
+ * page exists.
+ *
+ * US6 filters (ux §2.6), all owner-scoped and composing with the keyset:
+ *
+ * * ``q`` — a substring label search, ILIKE (case-insensitive) and **accent-sensitive** (F5,
+ *   owner-accepted for E4: ``joao`` does not find ``João``). ILIKE metacharacters in the term are
+ *   escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
+ *   label never matches (an unlabelled row is not a search hit).
+ * * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
+ *   ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
+ * * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
+ *   may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
  * @summary List History
  */
 export const listHistoryApiV1HistoryGet = async (params?: ListHistoryApiV1HistoryGetParams, options?: RequestInit): Promise<listHistoryApiV1HistoryGetResponse> => {

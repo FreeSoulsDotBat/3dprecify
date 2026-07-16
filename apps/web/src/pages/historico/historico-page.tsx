@@ -1,14 +1,27 @@
 import { Link, useNavigate } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
 
 import type { HistoryItem } from "@/entities/history/outbox";
-import { useHistory, useSyncOutbox } from "@/entities/history/use-history";
+import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
 import { HistoryTeaserPanel } from "@/features/history/history-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Badge, Button, Card, EmptyState, Spinner } from "@/shared/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  Field,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  Spinner,
+} from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 import {
@@ -103,15 +116,66 @@ function TeaserShell({ signedOut }: { signedOut: boolean }) {
 
 function HistoryLedger() {
   const entitlement = useEntitlement();
-  const history = useHistory();
+  const navigate = useNavigate();
+
+  // The filter state (US6). The search DEBOUNCES into the query key — the input stays responsive
+  // while at most one server read fires per settled term. The período is a preset (or a custom
+  // range); `filters` is the single derived value the read keys off, memoised so a re-render for an
+  // unrelated reason never re-fires the query.
+  const [search, setSearch] = useState("");
+  const [period, setPeriod] = useState<PeriodKey>("all");
+  const [custom, setCustom] = useState<CustomRange>({ from: "", to: "" });
+  const debouncedSearch = useDebouncedValue(search, 250);
+
+  const filters = useMemo<HistoryFilters>(() => {
+    const f: HistoryFilters = {};
+    if (debouncedSearch.trim()) f.q = debouncedSearch.trim();
+    const range = periodRange(period, custom);
+    if (range.from) f.from = range.from;
+    if (range.to) f.to = range.to;
+    return f;
+  }, [debouncedSearch, period, custom]);
+
+  const history = useHistory(filters);
   const entitled = entitlement.data?.status === "active";
   const { sync, syncing } = useSyncOutbox({ retryBlocked: entitled });
-  const navigate = useNavigate();
 
   // One connectivity truth that REACTS to reconnection (review PR-A, C6) — not a one-time read.
   const online = useOnline();
   const queued = history.items.filter((i) => i.syncState !== "synced");
-  const showEmpty = !history.isLoading && !history.isError && history.items.length === 0;
+
+  // Two different questions, two different truths. The BAR (and its [Limpar]) keys off the RAW input
+  // so it never flickers out mid-keystroke. But WHICH empty state to show keys off the EFFECTIVE
+  // filter — the debounced `filters` the list was actually read under — because `history.items`
+  // reflects `filters`, not the keystroke. Reading the raw input here flashed the cold "you have no
+  // history" screen for the 250 ms debounce window right after clearing a no-match search: raw goes
+  // empty instantly while the list is still the filtered (empty) result (review PR-B minor). An empty
+  // ledger UNDER a filter is a search MISS, never the cold empty state — the two must never be confused.
+  const rawFilterActive = Boolean(search.trim()) || period !== "all";
+  const effectiveFilter = Boolean(filters.q || filters.from || filters.to);
+  const settled = !history.isLoading && !history.isError;
+  const showFilters = history.items.length > 0 || rawFilterActive || effectiveFilter;
+  const showEmpty = settled && history.items.length === 0 && !effectiveFilter;
+  const showSearchEmpty = settled && history.items.length === 0 && effectiveFilter;
+
+  const clearFilters = () => {
+    setSearch("");
+    setPeriod("all");
+    setCustom({ from: "", to: "" });
+  };
+
+  // What the "no match" line names as the refinement: the EFFECTIVE search term the empty result
+  // reflects (`filters.q`, the debounced value — not the raw keystroke, which may already be cleared),
+  // else the período in force (so a período-only miss still reads honestly, never an empty quote).
+  const periodLabel =
+    period === "30"
+      ? t.period30
+      : period === "90"
+        ? t.period90
+        : period === "custom"
+          ? `${custom.from || "—"} – ${custom.to || "—"}`
+          : "";
+  const searchEmptyTerm = (filters.q ?? "") || periodLabel;
 
   // [Ver] jumps to the first entry that needs a human decision (a failed/blocked card).
   const firstProblem = queued.find((i) => i.syncState === "failed" || i.syncState === "blocked");
@@ -161,6 +225,21 @@ function HistoryLedger() {
         />
       )}
 
+      {/* The filter bar refines a LIVE server read — so it appears only once there IS a ledger to
+          refine (or a filter is already in force, to keep [Limpar] reachable). It never touches the
+          queue: `useHistory` merges the outbox below this layer, so a search can never hide the
+          seller's own unsynced quote. */}
+      {showFilters && (
+        <HistoryFilterBar
+          search={search}
+          onSearch={setSearch}
+          period={period}
+          onPeriod={setPeriod}
+          custom={custom}
+          onCustom={setCustom}
+        />
+      )}
+
       {history.isLoading && (
         <div className="flex justify-center py-8">
           <Spinner />
@@ -187,10 +266,186 @@ function HistoryLedger() {
         </div>
       )}
 
+      {/* A filtered read that found nothing is NOT the cold empty state — the seller HAS history, this
+          search simply misses. Say so by term, and offer the one move that recovers: clear it. */}
+      {showSearchEmpty && (
+        <div className="flex flex-col items-center gap-3">
+          <EmptyState icon="history" title={t.searchEmpty.replace("{termo}", searchEmptyTerm)} />
+          <Button variant="secondary" onClick={clearFilters}>
+            {t.searchClear}
+          </Button>
+        </div>
+      )}
+
       {history.items.map((item) => (
         <SnapshotCard key={item.clientSnapshotId} item={item} />
       ))}
+
+      {/* The ledger is NEVER loaded whole (FR-518): the server keysets, and this fetches the next
+          page on demand. Absent once the last page is in — there is no silent cap behind it. */}
+      {history.hasMore && (
+        <div className="flex justify-center pt-1">
+          <Button variant="secondary" loading={history.isFetchingMore} onClick={history.loadMore}>
+            {t.loadMore}
+          </Button>
+        </div>
+      )}
     </section>
+  );
+}
+
+// ── US6 período presets ──────────────────────────────────────────────────────────────────────
+// A preset maps to a device-date LOWER bound; "custom" carries an explicit [from, to] the seller
+// picked. The bounds are ISO instants (what the server filter expects); an empty custom field is
+// simply omitted, never sent as a blank the server would honour as a real bound.
+
+type PeriodKey = "all" | "30" | "90" | "custom";
+interface CustomRange {
+  from: string;
+  to: string;
+}
+
+const DAY_MS = 86_400_000;
+
+function periodRange(period: PeriodKey, custom: CustomRange): { from?: string; to?: string } {
+  if (period === "30") return { from: new Date(Date.now() - 30 * DAY_MS).toISOString() };
+  if (period === "90") return { from: new Date(Date.now() - 90 * DAY_MS).toISOString() };
+  if (period === "custom") {
+    const out: { from?: string; to?: string } = {};
+    if (custom.from) out.from = new Date(`${custom.from}T00:00:00`).toISOString();
+    // Inclusive upper bound: the whole picked day, to its last millisecond.
+    if (custom.to) out.to = new Date(`${custom.to}T23:59:59.999`).toISOString();
+    return out;
+  }
+  return {};
+}
+
+function HistoryFilterBar({
+  search,
+  onSearch,
+  period,
+  onPeriod,
+  custom,
+  onCustom,
+}: {
+  search: string;
+  onSearch: (value: string) => void;
+  period: PeriodKey;
+  onPeriod: (period: PeriodKey) => void;
+  custom: CustomRange;
+  onCustom: (range: CustomRange) => void;
+}) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [draft, setDraft] = useState<CustomRange>(custom);
+
+  const presets: { key: PeriodKey; label: string }[] = [
+    { key: "all", label: t.periodAll },
+    { key: "30", label: t.period30 },
+    { key: "90", label: t.period90 },
+  ];
+  const customActive = period === "custom" && Boolean(custom.from || custom.to);
+
+  return (
+    <div className="tf-historico__filters">
+      <Field label={t.searchLabel}>
+        {({ id, ...aria }) => (
+          <div className="tf-inputwrap">
+            <input
+              id={id}
+              {...aria}
+              className="tf-input"
+              type="search"
+              maxLength={120}
+              placeholder={t.searchPlaceholder}
+              value={search}
+              onChange={(e) => onSearch(e.target.value)}
+            />
+          </div>
+        )}
+      </Field>
+
+      <div className="tf-historico__chips" role="group" aria-label={t.periodCustom}>
+        {presets.map((p) => (
+          <Button
+            key={p.key}
+            size="sm"
+            variant={period === p.key ? "primary" : "secondary"}
+            onClick={() => onPeriod(p.key)}
+          >
+            {p.label}
+          </Button>
+        ))}
+        <Button
+          size="sm"
+          variant={period === "custom" ? "primary" : "secondary"}
+          onClick={() => {
+            setDraft(custom);
+            setSheetOpen(true);
+          }}
+        >
+          {t.periodCustom}
+        </Button>
+      </div>
+
+      {customActive && (
+        <span className="tf-historico__filterchip">
+          {t.filterActive.replace("{de}", custom.from || "—").replace("{ate}", custom.to || "—")}
+          <Button size="sm" variant="ghost" onClick={() => onPeriod("all")}>
+            {t.filterClear}
+          </Button>
+        </span>
+      )}
+
+      <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+        <SheetContent showClose={false}>
+          <SheetTitle>{t.periodCustom}</SheetTitle>
+          <div className="flex flex-col gap-3">
+            <Field label={t.periodFrom}>
+              {({ id, ...aria }) => (
+                <div className="tf-inputwrap">
+                  <input
+                    id={id}
+                    {...aria}
+                    className="tf-input"
+                    type="date"
+                    value={draft.from}
+                    onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+                  />
+                </div>
+              )}
+            </Field>
+            <Field label={t.periodTo}>
+              {({ id, ...aria }) => (
+                <div className="tf-inputwrap">
+                  <input
+                    id={id}
+                    {...aria}
+                    className="tf-input"
+                    type="date"
+                    value={draft.to}
+                    onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+                  />
+                </div>
+              )}
+            </Field>
+            <div className="flex justify-end gap-2">
+              <Button variant="secondary" onClick={() => setSheetOpen(false)}>
+                {t.back}
+              </Button>
+              <Button
+                onClick={() => {
+                  onCustom(draft);
+                  onPeriod("custom");
+                  setSheetOpen(false);
+                }}
+              >
+                {t.periodApply}
+              </Button>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+    </div>
   );
 }
 
