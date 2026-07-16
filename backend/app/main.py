@@ -16,6 +16,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.boms import router as boms_router
 from .api.entitlement import router as entitlement_router
+from .api.export import router as export_router
 from .api.fee_catalog import router as fee_catalog_router
 from .api.filaments import router as filaments_router
 from .api.history import router as history_router
@@ -104,6 +105,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # E3 kits (premium persistence — the same gates; writes also materialize catalog products,
     # ADR-0017).
     api.include_router(boms_router)
+    # Export BEFORE history: `/history/export.csv` is a LITERAL path that must win over history's
+    # `/history/{snapshot_id}` GET (Starlette matches in registration order — otherwise "export.csv"
+    # is parsed as a snapshot UUID and 422s). The quote route (`/history/{id}/quote.pdf`) is deeper,
+    # so it never collides.
+    api.include_router(export_router)
     api.include_router(history_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)

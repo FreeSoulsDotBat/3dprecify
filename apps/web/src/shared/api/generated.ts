@@ -498,6 +498,10 @@ export interface SnapshotPage {
 
 export type HealthHealthGet200 = {[key: string]: string};
 
+export type ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams = {
+includeCostBreakdown?: boolean;
+};
+
 export type ListHistoryApiV1HistoryGetParams = {
 /**
  * @minimum 1
@@ -3293,6 +3297,279 @@ export const useDeleteBomApiV1BomsBomIdDelete = <TError = ErrorEnvelope,
       > => {
       return useMutation(getDeleteBomApiV1BomsBomIdDeleteMutationOptions(options), queryClient);
     }
+
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponseSuccess = (exportHistoryCsvApiV1HistoryExportCsvGetResponse200) & {
+  headers: Headers;
+};
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponseError = (exportHistoryCsvApiV1HistoryExportCsvGetResponse401 | exportHistoryCsvApiV1HistoryExportCsvGetResponse403) & {
+  headers: Headers;
+};
+
+export type exportHistoryCsvApiV1HistoryExportCsvGetResponse = (exportHistoryCsvApiV1HistoryExportCsvGetResponseSuccess | exportHistoryCsvApiV1HistoryExportCsvGetResponseError)
+
+export const getExportHistoryCsvApiV1HistoryExportCsvGetUrl = () => {
+
+
+
+
+  return `/api/v1/history/export.csv`
+}
+
+/**
+ * The whole ledger as a data file whose rows equal the stored snapshots exactly (FR-513).
+ * @summary Export History Csv
+ */
+export const exportHistoryCsvApiV1HistoryExportCsvGet = async ( options?: RequestInit): Promise<exportHistoryCsvApiV1HistoryExportCsvGetResponse> => {
+
+  return orvalFetch<exportHistoryCsvApiV1HistoryExportCsvGetResponse>(getExportHistoryCsvApiV1HistoryExportCsvGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportHistoryCsvApiV1HistoryExportCsvGetQueryKey = () => {
+    return [
+    `/api/v1/history/export.csv`
+    ] as const;
+    }
+
+
+export const getExportHistoryCsvApiV1HistoryExportCsvGetQueryOptions = <TData = Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportHistoryCsvApiV1HistoryExportCsvGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>> = ({ signal }) => exportHistoryCsvApiV1HistoryExportCsvGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportHistoryCsvApiV1HistoryExportCsvGetQueryResult = NonNullable<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>>
+export type ExportHistoryCsvApiV1HistoryExportCsvGetQueryError = ErrorEnvelope
+
+
+export function useExportHistoryCsvApiV1HistoryExportCsvGet<TData = Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>,
+          TError,
+          Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportHistoryCsvApiV1HistoryExportCsvGet<TData = Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>,
+          TError,
+          Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportHistoryCsvApiV1HistoryExportCsvGet<TData = Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export History Csv
+ */
+
+export function useExportHistoryCsvApiV1HistoryExportCsvGet<TData = Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportHistoryCsvApiV1HistoryExportCsvGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportHistoryCsvApiV1HistoryExportCsvGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse200 = {
+  data: void
+  status: 200
+}
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponseSuccess = (exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse200) & {
+  headers: Headers;
+};
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponseError = (exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse401 | exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse403 | exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse404) & {
+  headers: Headers;
+};
+
+export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse = (exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponseSuccess | exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponseError)
+
+export const getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetUrl = (snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/history/${snapshotId}/quote.pdf?${stringifiedParams}` : `/api/v1/history/${snapshotId}/quote.pdf`
+}
+
+/**
+ * A customer-facing PDF quote for ONE snapshot. Zero internal cost lines unless the seller opts
+ * in (SC-506); seller identity from the verified ID-token claims (FR-514 / Q13).
+ * @summary Export Quote Pdf
+ */
+export const exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet = async (snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options?: RequestInit): Promise<exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse> => {
+
+  return orvalFetch<exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse>(getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetUrl(snapshotId,params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryKey = (snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams,) => {
+    return [
+    `/api/v1/history/${snapshotId}/quote.pdf`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryOptions = <TData = Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError = ErrorEnvelope>(snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryKey(snapshotId,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>> = ({ signal }) => exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet(snapshotId,params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: snapshotId !== null && snapshotId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryResult = NonNullable<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>>
+export type ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryError = ErrorEnvelope
+
+
+export function useExportQuotePdfApiV1HistorySnapshotIdQuotePdfGet<TData = Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError = ErrorEnvelope>(
+ snapshotId: string,
+    params: undefined |  ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>,
+          TError,
+          Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportQuotePdfApiV1HistorySnapshotIdQuotePdfGet<TData = Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError = ErrorEnvelope>(
+ snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>,
+          TError,
+          Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useExportQuotePdfApiV1HistorySnapshotIdQuotePdfGet<TData = Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError = ErrorEnvelope>(
+ snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Export Quote Pdf
+ */
+
+export function useExportQuotePdfApiV1HistorySnapshotIdQuotePdfGet<TData = Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError = ErrorEnvelope>(
+ snapshotId: string,
+    params?: ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof exportQuotePdfApiV1HistorySnapshotIdQuotePdfGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetQueryOptions(snapshotId,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
 
 export type recordSnapshotApiV1HistoryPostResponse200 = {
   data: SnapshotOut

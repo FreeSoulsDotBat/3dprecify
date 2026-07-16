@@ -9,13 +9,23 @@ import sqlalchemy as sa
 from app import auth
 
 
-def patch_verify(monkeypatch: pytest.MonkeyPatch, uid: str, email: str | None = None) -> None:
-    """Deterministic token verification: any bearer resolves to the given uid/email."""
+def patch_verify(
+    monkeypatch: pytest.MonkeyPatch,
+    uid: str,
+    email: str | None = None,
+    name: str | None = None,
+) -> None:
+    """Deterministic token verification: any bearer resolves to the given uid/email/name.
+
+    ``name`` mirrors the Firebase ID-token ``name`` claim the export reads for seller identity
+    (FR-514 / Q13) — absent by default, so existing callers are unchanged."""
 
     def ok(_token: str) -> dict[str, Any]:
         claims: dict[str, Any] = {"uid": uid}
         if email:
             claims["email"] = email
+        if name:
+            claims["name"] = name
         return claims
 
     monkeypatch.setattr(auth.firebase_auth, "verify_id_token", ok)
