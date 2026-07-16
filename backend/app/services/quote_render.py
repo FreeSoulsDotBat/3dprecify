@@ -17,6 +17,7 @@ import io
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, cast
+from xml.sax.saxutils import escape
 
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
@@ -39,8 +40,11 @@ _COST_LABELS: tuple[tuple[str, str], ...] = (
     ("falha", "Falhas"),
     ("finishing", "Acabamento"),
     ("labor", "Mão de obra"),
-    ("admin", "Custos administrativos"),
 )
+# `admin` is deliberately ABSENT (review PR-C, BLOCKER). `pricing-core` (index.ts:77/93) defines it
+# as "Σ otherCosts === admin" — it IS their sum, not a line beside them. Printing both counted the
+# same money twice and showed the customer an inflated cost. The app's own detail screen omits it
+# for this reason; the quote must agree with the screen the seller read before sending it.
 
 # What a single piece is called on the quote when the snapshot has NO captured origin (an ad-hoc
 # calculator snapshot — `provenance: null`). Mirrors the app's own `kindSingle` wording: it names
@@ -98,6 +102,28 @@ def _str_or_empty(value: Any) -> str:
     return value if isinstance(value, str) else ""
 
 
+def _int_or_zero(value: Any) -> int:
+    """A stored count, printed as stored. NOT `int(value or 1)`: `0` is falsy in Python, and a
+    zero-quantity kit line is a real decision the seller made (Q1 — "não entra neste pedido"), so
+    that idiom silently promoted it to 1 on the CUSTOMER's quote (review PR-C, BLOCKER)."""
+    return value if isinstance(value, int) and not isinstance(value, bool) else 0
+
+
+def _xml(value: str) -> str:
+    """Escape text before it enters a Platypus `Paragraph`.
+
+    A Paragraph parses its content as intra-paragraph markup — this file relies on that itself to
+    bold the total. So free text interpolated into one is PARSED, not printed: a seller's label of
+    `Vaso <grande>` printed as `Vaso` (the text vanished from the customer's quote, silently) and
+    `Cliente <b>Joao` raised ValueError → HTTP 500 with no artifact, forever, for that snapshot
+    (review PR-C, BLOCKER, found independently by 3 lenses). `label` is free text with no character
+    constraint, and `<` / `&` are ordinary things a seller types ("Peça <2>", "R&D", "M&M Ateliê").
+
+    ADR-0020 §1 promises the renderer PRINTS what is stored. This is what makes that literally true.
+    """
+    return escape(value)
+
+
 def _obj(value: Any) -> dict[str, Any]:
     """A nested JSONB object as an Any-valued dict (empty if missing) — the frozen document is
     trusted, so its shape is read, never type-inferred."""
@@ -142,8 +168,15 @@ def build_quote_view(
     if snapshot.kind == "KIT":
         lines = [
             QuoteLineView(
-                name=str(_obj(line).get("name") or ""),
-                quantity=int(_obj(line).get("quantity") or 1),
+                # A piece with no captured name is legitimate (an ad-hoc line). `or ""` printed a
+                # BLANK Item cell with a price beside it (review PR-C, BLOCKER) — the app names it,
+                # and so must the quote, with the same neutral the SINGLE branch uses below.
+                name=str(_obj(line).get("name") or _ADHOC_ITEM),
+                # `quantity` 0 is a legal, deliberate state (CHECK quantity >= 0; decision Q1 —
+                # "não entra neste pedido"). `int(x or 1)` turns 0 into 1 in Python (review PR-C,
+                # BLOCKER), so the customer's quote claimed they were buying one of something the
+                # seller had zeroed out. Print what is stored.
+                quantity=_int_or_zero(_obj(line).get("quantity")),
                 total=_str_or_empty(_obj(_obj(line).get("totals")).get(key)),
             )
             for line in _seq(payload.get("lines"))
@@ -236,14 +269,16 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     styles = getSampleStyleSheet()
     story: list[Any] = [Paragraph("Orçamento", styles["Title"])]
 
+    # Every free-text value below is escaped: the label is the seller's own, and the name/e-mail
+    # come from the ID-token claims ("M&M Ateliê" is an ordinary shop name — the critic's catch).
     seller = quote.seller_name or quote.seller_email or ""
     if seller:
-        story.append(Paragraph(seller, styles["Normal"]))
+        story.append(Paragraph(_xml(seller), styles["Normal"]))
     if quote.seller_name and quote.seller_email:
-        story.append(Paragraph(quote.seller_email, styles["Normal"]))
+        story.append(Paragraph(_xml(quote.seller_email), styles["Normal"]))
 
     if quote.reference:
-        story.append(Paragraph(f"Referência: {quote.reference}", styles["Normal"]))
+        story.append(Paragraph(f"Referência: {_xml(quote.reference)}", styles["Normal"]))
 
     quoted = format_date_pt_br(device_local_date(quote))
     story.append(Paragraph(f"Cotado em {quoted}", styles["Normal"]))

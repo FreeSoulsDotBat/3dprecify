@@ -41,6 +41,7 @@ from app.services.quote_render import (
     device_local_date,
     format_date_pt_br,
     format_money_pt_br,
+    render_quote_pdf,
 )
 from app.settings import Settings
 from tests.conftest import requires_db
@@ -503,3 +504,166 @@ class TestExportEndpoints:
         patch_verify(monkeypatch, "u-csv-free", email="free@x.com")
         resp = db_client.get("/api/v1/history/export.csv", headers={"Authorization": "Bearer x"})
         assert resp.status_code == 403, resp.text
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# Review PR-C (2026-07-16) — the four blockers, each written FAILING-first.
+#
+# Every one of these is DATA-DEPENDENT, and that is the whole lesson. Two homologations opened the
+# rendered artifact and read it — with benign data ("Cliente João", no otherCosts, no zero quantity,
+# every piece named) — and passed it. Looking at the artifact is necessary and NOT sufficient: the
+# data has to be adversarial too. These fixtures are the data that makes each defect visible.
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+def _unescape_pdf_string(raw: bytes) -> str:
+    """Decode a PDF literal string: `\\ddd` octal (that is how "ê" reaches the page), plus the
+    escaped `\\(`, `\\)` and `\\\\`. Without this, "Ateliê" reads as "Ateli\\352" and an assertion
+    about printed text would be asserting about the encoding instead."""
+    import re
+
+    out = bytearray()
+    i = 0
+    while i < len(raw):
+        if raw[i] == 0x5C and i + 1 < len(raw):  # backslash
+            octal = re.match(rb"[0-7]{1,3}", raw[i + 1 : i + 4])
+            if octal:
+                out.append(int(octal.group(), 8))
+                i += 1 + len(octal.group())
+            else:
+                out.append(raw[i + 1])
+                i += 2
+            continue
+        out.append(raw[i])
+        i += 1
+    return out.decode("latin-1")
+
+
+def _pdf_text(pdf: bytes) -> str:
+    """What the page ACTUALLY prints.
+
+    ReportLab encodes its page streams ASCII85 **then** Flate, so a byte-grep for "Material" would
+    pass whether or not the line is on the page — the exact reason `history-export.spec.ts` refuses
+    to assert PDF content at all. Decode both layers and read the text-showing operands.
+
+    The operands are joined with NO separator: one printed line arrives as several text runs
+    (escaping `Vaso <grande>` splits it into "Vaso <", "grande", ">"), so a separator would invent
+    spaces the page does not show.
+
+    This helper is the trap it exists to catch: an extractor that silently returns "" makes every
+    `assert x in text` fail loudly (visible) but every `assert x not in text` PASS (invisible) — a
+    green test certifying a page it never read. The self-check at the end forbids that.
+    """
+    import base64
+    import re
+    import zlib
+
+    out: list[str] = []
+    for raw in re.findall(rb"stream\r?\n(.*?)endstream", pdf, re.S):
+        body = raw.strip(b"\r\n")
+        try:
+            data = zlib.decompress(base64.a85decode(body, adobe=True))
+        except Exception:
+            try:
+                data = zlib.decompress(body)
+            except zlib.error:
+                continue
+        for chunk in re.findall(rb"\((?:[^()\\]|\\.)*\)", data):
+            out.append(_unescape_pdf_string(chunk[1:-1]))
+    text = "".join(out)
+    # Every quote this suite renders prints its title. Missing => the EXTRACTOR broke: fail HERE
+    # rather than let a silent "" certify an assertion about the page.
+    assert "Orçamento" in text, f"PDF text extraction failed: {text[:200]!r}"
+    return text
+
+
+class TestReviewBlockers:
+    def test_a_label_with_markup_characters_PRINTS_VERBATIM_and_never_500s(self) -> None:
+        """BLOCKER (3 lenses, confirmed 2/2). `label` is free text with no character constraint —
+        `<` and `&` are things a Brazilian seller types ("Peça <2>", "R&D", "M&M Ateliê"). It was
+        interpolated raw into a Platypus `Paragraph`, which parses its content as intra-paragraph
+        markup: `Vaso <grande>` printed as `Vaso` (the text SILENTLY vanished from the customer's
+        quote) and `Cliente <b>Joao` raised ValueError → HTTP 500, no artifact, forever, with the
+        seller unable to guess that their own label was the cause.
+
+        ADR-0020 §1 promises the renderer PRINTS what is stored. It must print it, not parse it.
+        """
+        for label in ("Vaso <grande>", "R&D", "M&M Ateliê", "Cliente <b>Joao", "Promo </b> hoje"):
+            quote = build_quote_view(
+                _snap(label=label),
+                seller_name=None,
+                seller_email=None,
+                include_cost_breakdown=False,
+            )
+            text = _pdf_text(render_quote_pdf(quote))  # must not raise
+            assert label in text, f"{label!r} was mangled or dropped: {text!r}"
+
+    def test_the_seller_identity_is_escaped_too(self) -> None:
+        """The completeness critic's catch: the fix must cover `seller_name`/`seller_email`, which
+        reach the SAME Paragraph from the ID-token claims. "M&M Ateliê" is an ordinary shop name."""
+        quote = build_quote_view(
+            _snap(label=None),
+            seller_name="M&M Ateliê <3D>",
+            seller_email="ana@m&m.com.br",
+            include_cost_breakdown=False,
+        )
+        text = _pdf_text(render_quote_pdf(quote))
+        assert "M&M Ateliê <3D>" in text
+
+    def test_the_breakdown_never_counts_the_same_money_twice(self) -> None:
+        """BLOCKER. `pricing-core` (index.ts:77/93): "Σ otherCosts === admin" — it IS their sum.
+        The renderer printed `admin` AND every otherCosts line, so a customer allowed to see the
+        breakdown read the administrative money twice and an inflated cost. The app's own detail
+        screen omits `admin` for exactly this reason; the quote must agree with it."""
+        payload = {
+            **SINGLE_PAYLOAD,
+            "breakdown": {
+                **SINGLE_PAYLOAD["breakdown"],
+                "admin": "8.00",  # == 5.00 + 3.00
+                "otherCosts": [
+                    {"name": "Aluguel", "value": "5.00"},
+                    {"name": "Luz", "value": "3.00"},
+                ],
+            },
+        }
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
+        )
+        labels = [c.label for c in quote.cost_breakdown]
+        values = [c.value for c in quote.cost_breakdown]
+
+        assert "Aluguel" in labels and "Luz" in labels  # the itemized truth is what prints
+        assert "Custos administrativos" not in labels  # their sum must NOT print beside them
+        assert values.count("8.00") == 0
+
+    def test_a_zero_quantity_line_prints_ZERO_never_one(self) -> None:
+        """BLOCKER. `quantity == 0` is a legal, deliberate state (`CHECK quantity >= 0`; owner
+        decision Q1 — "não entra neste pedido"). `int(x or 1)` turns 0 into 1 in Python, so the
+        customer's quote said they were buying one of something the seller had zeroed out."""
+        payload = {
+            **KIT_PAYLOAD,
+            "lines": [
+                {**KIT_PAYLOAD["lines"][0], "quantity": 0},
+                KIT_PAYLOAD["lines"][1],
+            ],
+        }
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=False
+        )
+        assert quote.lines[0].quantity == 0
+        assert quote.lines[1].quantity == 1
+
+    def test_a_nameless_kit_piece_is_NAMED_never_a_blank_cell(self) -> None:
+        """BLOCKER. A kit line may legitimately have no captured name (an ad-hoc piece). `or ""`
+        printed an empty Item cell with a price beside it — the customer reads a blank line item.
+        The app names it; so must the quote, with the same neutral the SINGLE branch already uses
+        (a customer is not buying a "Cálculo avulso" — they are buying a piece)."""
+        payload = {**KIT_PAYLOAD, "lines": [{**KIT_PAYLOAD["lines"][0], "name": None}]}
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=False
+        )
+        # The literal, not the constant: `== _ADHOC_ITEM` would compare the module to itself and
+        # pass whatever it said. This is customer-visible copy — pin the words (matching the SINGLE
+        # ad-hoc test above, which does the same).
+        assert quote.lines[0].name == "Peça única"
+        assert quote.lines[0].name.strip() != ""
