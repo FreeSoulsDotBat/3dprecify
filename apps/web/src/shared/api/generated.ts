@@ -3472,10 +3472,10 @@ export const getListHistoryApiV1HistoryGetUrl = (params?: ListHistoryApiV1Histor
  *
  * US6 filters (ux §2.6), all owner-scoped and composing with the keyset:
  *
- * * ``q`` — a substring label search, ILIKE (case-insensitive) and **accent-sensitive** (F5, owner-
- *   accepted for E4: ``joao`` does not find ``João``). ILIKE metacharacters in the term are escaped,
- *   so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL label never
- *   matches (an unlabelled row is not a search hit).
+ * * ``q`` — a substring label search, ILIKE (case-insensitive) and **accent-sensitive** (F5,
+ *   owner-accepted for E4: ``joao`` does not find ``João``). ILIKE metacharacters in the term are
+ *   escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
+ *   label never matches (an unlabelled row is not a search hit).
  * * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
  *   ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
  * * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
