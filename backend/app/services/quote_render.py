@@ -284,9 +284,20 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
         story.append(Paragraph(f"Validade: {quote.validity_days} dias", styles["Normal"]))
     story.append(Spacer(1, 8 * mm))
 
-    item_rows = [["Item", "Qtd.", "Total"]]
+    item_rows: list[list[Any]] = [["Item", "Qtd.", "Total"]]
+    # The name is a `Paragraph`, not a raw str, for the reason the two columns beside it exist: a
+    # raw str in a Table cell does NOT wrap — it runs straight through `Qtd.` and `Total` and
+    # overprints them once the name passes ~68 characters, and nothing anywhere bounds a name's
+    # length (DB `Text`, no `max_length`, no `maxLength` on the form). The customer then reads a
+    # quote whose quantity and price are illegible. `_xml` is what keeps the Paragraph PRINTING the
+    # name instead of parsing it (same reason as the seller/label fields above).
     item_rows += [
-        [line.name, str(line.quantity), format_money_pt_br(line.total)] for line in quote.lines
+        [
+            Paragraph(_xml(line.name), styles["Normal"]),
+            str(line.quantity),
+            format_money_pt_br(line.total),
+        ]
+        for line in quote.lines
     ]
     items = Table(item_rows, hAlign="LEFT", colWidths=[95 * mm, 25 * mm, 40 * mm])
     items.setStyle(
@@ -294,6 +305,9 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
             [
                 ("LINEBELOW", (0, 0), (-1, 0), 0.6, colors.black),
                 ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
+                # A wrapped name makes its row taller; without this the quantity and price float
+                # to the row's vertical centre and stop reading as the name's first line.
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
             ]
         )
@@ -311,9 +325,17 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     if quote.cost_breakdown:
         story.append(Spacer(1, 8 * mm))
         story.append(Paragraph("Detalhamento de custos", styles["Heading3"]))
-        cost_rows = [[line.label, format_money_pt_br(line.value)] for line in quote.cost_breakdown]
+        # Same rule as `item_rows` above, and for the same reason: an "Outros custos" label is the
+        # seller's own free text (`_cost_lines`), so it is unbounded and must wrap rather than run
+        # through the value column. `_xml` keeps the Paragraph printing it instead of parsing it.
+        cost_rows: list[list[Any]] = [
+            [Paragraph(_xml(line.label), styles["Normal"]), format_money_pt_br(line.value)]
+            for line in quote.cost_breakdown
+        ]
         costs = Table(cost_rows, hAlign="LEFT", colWidths=[120 * mm, 40 * mm])
-        costs.setStyle(TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT")]))
+        costs.setStyle(
+            TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
+        )
         story.append(costs)
 
     doc.build(story)

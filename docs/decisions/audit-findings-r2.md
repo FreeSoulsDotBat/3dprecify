@@ -68,9 +68,17 @@ tension — the DoD record must be made true either way).
   LGPD interplay (A19: retention vs erasure). Must exist before E2 schema.
 - **A28 Launch auth-provider set** [MED/E2-E7] — Google-only was decided "for this slice" only; store
   policies commonly require an alternative (e-mail/Apple); prerequisite for paid accounts. Decide the launch set.
-- **A29 Formula-version UX for saved quotes** [MED/E4] — mechanism decided (frozen snapshot + semver,
-  A13/TD-009); user-facing behavior not: silent freeze · labeled ("calculado com a fórmula v1") · offer
-  recalculation with diff. Pair with E4 spec.
+- ~~**A29 Formula-version UX for saved quotes**~~ [MED/E4] — **RESOLVED 2026-07-16 (E4 Q3): LABELED +
+  "Recalcular hoje"** — of the three candidates, **not** silent freeze and **not** recalculation-with-diff.
+  A snapshot displays *when* it was calculated and *with which formula version* (FR-506); "Recalcular hoje"
+  creates a **new** snapshot leaving the original untouched (FR-505), and it **re-resolves the origin**
+  against today's catalog rather than repricing frozen inputs under a newer formula — *"meu custo subiu
+  desde que cotei?" is the question the seller is actually asking, and a frozen-input reprice could never
+  answer "sim" to a filament price rise.* The rejected **diff** survives as US7's side-by-side ("cotado em
+  {data}" vs "hoje"), which labels two numbers and **computes no delta** — money arithmetic lives in
+  `pricing-core` (ADR-0008). Open since 2026-07-02 and explicitly reserved for E4; closed by it.
+  Shipped in PR-B #19 (`bd9d95e`) + US7 in PR-C #20 (`e10b49f`). See `specs/009-e4-history-snapshots-export/spec.md`
+  §Q3 + FR-505/506/507.
 - **A30 Persona/ICP as ratified product artifact** [MED/now] — persona exists only in design briefs
   (`claude-design-brief.md:16`); A17 (WTP validation) has no target population without it. Formalize segments
   (MEI vs non-MEI, hobbyist vs prestador) + anti-persona.

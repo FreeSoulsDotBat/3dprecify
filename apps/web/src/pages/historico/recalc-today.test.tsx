@@ -253,6 +253,32 @@ describe("RecalcTodayButton — a NEW record, the original untouched", () => {
     expect(Number(body.headlineTotal)).toBeGreaterThan(30.9);
   });
 
+  it("inherits the original's label but NOT its validity (owner decision 2026-07-17)", async () => {
+    const user = setup();
+    // Same customer, re-quoted today ⇒ the new entry belongs under the same name (and that is what
+    // makes the US7 "then vs now" comparison legible). Validity is a fresh window the seller sets.
+    renderButton({ label: "Cliente João" }, productAt("220.00"));
+
+    await user.click(screen.getByRole("button", { name: t.recalcAction }));
+    await user.click(screen.getByRole("button", { name: t.recalcConfirm }));
+
+    await waitFor(() => expect(recordMock).toHaveBeenCalledTimes(1));
+    const body = recordMock.mock.calls[0][0];
+    expect(body.label).toBe("Cliente João"); // carried from the original
+    expect(body.quoteValidityDays).toBeNull(); // a new quote starts a fresh validity window
+  });
+
+  it("an unlabelled original stays unlabelled on recalc — never an invented label", async () => {
+    const user = setup();
+    renderButton({ label: null }, productAt("220.00"));
+
+    await user.click(screen.getByRole("button", { name: t.recalcAction }));
+    await user.click(screen.getByRole("button", { name: t.recalcConfirm }));
+
+    await waitFor(() => expect(recordMock).toHaveBeenCalledTimes(1));
+    expect(recordMock.mock.calls[0][0].label).toBeNull();
+  });
+
   it("origin gone ⇒ the dialog says it does NOT reflect today's catalog (never a silent reprice)", async () => {
     const user = setup();
     renderButton({}, undefined); // no live product

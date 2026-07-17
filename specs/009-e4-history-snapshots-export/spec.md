@@ -448,7 +448,10 @@ unambiguous labels and dates, and the frozen entry remains unmodified.
   repricing frozen inputs could never answer "sim" to a filament price rise, which would leave US7 structurally
   unable to do its job.* Where the origin **no longer resolves** (deleted product/kit), the recalculation is
   offered honestly from the frozen inputs, and the app says so plainly — it MUST NOT silently present a
-  frozen-input reprice as a catalog-current one.
+  frozen-input reprice as a catalog-current one. **The new snapshot inherits the original's label** (owner
+  decision, 2026-07-17, surfaced by the T034 homologation): the recalc is the same customer re-quoted today, so
+  it belongs under the same name — and that is what makes the US7 "then vs now" comparison legible. It does
+  **not** inherit the validity period (a new quote starts a fresh validity window the seller sets when they send).
 - **FR-506**: A snapshot MUST display *when* it was calculated and *with which formula version* on its detail
   surface (Q3/A29 — closes A29).
 - **FR-507**: A snapshot recorded under an older formula version MUST render **only the lines it recorded** —
@@ -472,7 +475,14 @@ unambiguous labels and dates, and the frozen entry remains unmodified.
   kit's pieces** (name + quantity) alongside the total — an opaque "Kit — R$ 500" is not acceptable — while
   still exposing **zero** internal cost lines (clarified 2026-07-12).
 - **FR-513**: The system MUST export the history as a **data file** whose rows equal the stored snapshots
-  exactly — same values, same rounding, same dates; no re-derivation, no drift (Q5).
+  exactly — same values, same rounding, same dates; no re-derivation, no drift (Q5). *Operative meaning, settled
+  by precedent inside the renderer: a transformation is allowed when it changes bytes but **preserves the
+  round-trip** (RFC4180 escaping; the device-offset re-anchoring), and forbidden when the cell no longer reads
+  back as the stored value.* **CSV formula injection was consciously accepted, not overlooked** (2026-07-17,
+  `seguranca` review, 85%): `label` is the only attacker-influenceable column, the export is owner-scoped with no
+  cross-account write path into it, so payload author and file reader are the same principal — and every guard
+  (a `'` prefix) breaks this round-trip while protecting nobody. Reasoning + the four **mandatory re-open
+  triggers** live in `docs/adr/0020-export-artifact-rendering.md` §Consequences.
 - **FR-514**: The exported quote MUST identify the seller using **only the account's name and e-mail** — E4
   introduces **no new seller-profile data** (Q13, owner decision). *Accepted consequence: the quote carries the
   seller's personal login e-mail and no business name.*

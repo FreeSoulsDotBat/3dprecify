@@ -1,7 +1,7 @@
 # ADR-0018: Offline snapshot outbox — device-durable queue, exactly-once sync, entitlement at sync
 
-- **Status**: Proposed (owner accepts at the E4 PR-A gate)
-- **Date**: 2026-07-12
+- **Status**: Accepted (owner, at the E4 PR-A gate — 2026-07-16, PR #18 `b1fbd80`)
+- **Date**: 2026-07-12 (accepted 2026-07-16)
 - **Deciders**: Jonatan (owner) + arquiteto, 2026-07-12
 - **Extends**: ADR-0012 (entitlement) · ADR-0013 (persistence) · ADR-0015 (enforcement honesty)
 

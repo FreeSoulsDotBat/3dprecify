@@ -80,9 +80,15 @@ How to prove E4 actually works, end to end. Prerequisites mirror E2/E3: Firebase
 
 ## §8 — The honest door (US5 · SC-507)
 
-Signed out / free: the Histórico tab **explains** honestly (never a broken list, never a fabricated sample entry);
-"salvar" / "exportar" show the teaser — nothing persists, **no artifact is generated**, no fake success, no price,
-no date, no pre-E6 purchase CTA. The **free calculator is untouched**.
+Signed out / free: the Histórico tab **explains** honestly (never a broken list, never a fabricated sample entry) —
+nothing persists, **no artifact is generated**, no fake success, no price, no date, no pre-E6 purchase CTA. The
+**free calculator is untouched**.
+
+> **Corrected 2026-07-17 (T034 found this line stale).** It used to read *"'salvar' / 'exportar' show the
+> teaser"*, which contradicts **owner decision Q15 (2026-07-13)**: without an active premium the record button
+> **does not exist** — not a greyed affordance, not a teaser trigger (`RecordSnapshotButton` returns null). The
+> free calculator is not a sales floor (SC-109), so the honest door lives on the **Histórico tab**, not under the
+> calculator's results. The code is correct; this line simply aged past the decision.
 
 ## §9 — Regression (SC-512)
 
