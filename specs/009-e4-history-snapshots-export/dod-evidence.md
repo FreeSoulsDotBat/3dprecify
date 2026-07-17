@@ -136,11 +136,20 @@ Two process findings worth carrying forward:
 
 ## T034 — final quickstart validation (§1..§9)
 
-**Verdict: PASS-WITH-NITS** (qa-produto, 2026-07-17, ~257k tokens / 146 tool uses; ledger row filed). The only
-pass that crosses the **seams between slices** — the three per-slice homologations each stayed inside their own
-slice. Driven on the real stack (preview `:4173` + backend `:8100` + compose Postgres `:5433` + Auth emulator),
-with **adversarial** data throughout (per E4's own recorded lesson), the immutability trigger proven by a **direct
-DB UPDATE**, and revoke/re-grant cycles via the operator CLI.
+**Verdict: PASS-WITH-NITS on the first walk → raised to PASS after the fix was applied and RE-VERIFIED LIVE**
+(qa-produto, 2026-07-17; ledger rows filed). The only pass that crosses the **seams between slices** — the three
+per-slice homologations each stayed inside their own slice. Driven on the real stack (preview `:4173` + backend
+`:8100` + compose Postgres `:5433` + Auth emulator), with **adversarial** data throughout (per E4's own recorded
+lesson), the immutability trigger proven by a **direct DB UPDATE**, and revoke/re-grant cycles via the operator CLI.
+
+> **Raised to PASS (same qa-produto agent, re-driven on the committed fix `5a0f5f9`).** The corrected quote was
+> re-rendered with the adversarial names and read on the real bytes — long names now wrap, `Qtd.`/`Total` legible,
+> markup still verbatim; the cost-label twin fixed too. The label decision was verified **in the browser**: an
+> original labelled "Cliente João & Cia · pedido 41" recalculated after a filament rise produced a new entry that
+> **inherited the label**, took a **fresh (null) validity**, and repriced to **75,90** at today's catalog while the
+> original stayed intact — and searching "pedido 41" returns **both** (the then-vs-now payoff of the inherit
+> decision). Gates on that exact HEAD: recalc unit 11/11 (incl. the 2 label tests), backend 257, typecheck+lint
+> clean, **e2e 120/120**. The three nits are resolved and re-verified; nothing regressed.
 
 | § | Verdict | Load-bearing evidence |
 |---|---------|----------------------|
@@ -160,7 +169,7 @@ filament 100→400 **and deleted the product** → exported. The frozen provenan
 printed the frozen `Material R$ 10,00`** with the catalog already at R$ 400 — the document did not rot crossing the
 three slices. **No seam defect.**
 
-### The one real defect — found, fixed, regression-guarded (post-homologation follow-up)
+### The one real defect — found, fixed, regression-guarded, re-verified (close-out PR #21)
 
 **§6 · PDF item name overran the quantity and price columns.** `render_quote_pdf` put `line.name` into a
 ReportLab `Table` cell as a **raw str**, which does not wrap; past ~68 characters it crossed the *Qtd.* and *Total*
@@ -196,6 +205,9 @@ only `maxLength={120}` is on the *label*, not the name).
 ## Owner sign-off
 
 E4 functionality shipped and homologated across PR #18 / #19 / #20. The close-out homologation (T034) found one
-customer-facing defect (PDF overflow), now fixed with mutation-proven regression tests, plus two recorded
-decisions and one open product question (the recalc label). **The fix + close-out docs are a post-merge follow-up
-awaiting owner authorization to branch/PR** (ADR-0006). *(Owner sign-off recorded on that merge.)*
+customer-facing defect (PDF overflow), fixed with mutation-proven regression tests and **re-verified live** by the
+same qa-produto agent on the committed fix; plus two recorded decisions (CSV-injection accept; recalc label
+inherit) and the doc correction. **The fix + close-out docs are the close-out follow-up — `feature/009-e4-close-out`,
+opened as PR #21 (all 9 CI checks green), awaiting the owner's squash-merge** (ADR-0006). On that merge: graph
+refresh, then T033 (roadmap `SHIPPED` row + `CLAUDE.md` ground line) — the last step, held because it asserts epic
+completion. *(Owner sign-off recorded on that merge.)*
