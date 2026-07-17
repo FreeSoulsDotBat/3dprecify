@@ -32,6 +32,7 @@ from typing import Any
 import pytest
 import sqlalchemy as sa
 from fastapi.testclient import TestClient
+from reportlab.pdfbase.pdfmetrics import stringWidth
 
 from app.main import create_app
 from app.models import Snapshot
@@ -314,6 +315,25 @@ class TestHistoryCsv:
         assert rows[0]["headlineBasis"] == "PRECO_VAREJO"
         assert rows[1]["kind"] == "KIT"
         assert rows[1]["headlineTotal"] == "42.00"
+
+    def test_a_label_with_quotes_commas_and_newlines_ROUND_TRIPS_exactly(self) -> None:
+        """FR-513 says the rows EQUAL the stored snapshots — and for the three characters that
+        break naive CSV, nothing tested it: every other case in this class uses a benign label
+        ("Cliente A"), so RFC4180 conformance was an untested gift from `csv.DictWriter`.
+
+        Worth pinning because the plausible next change breaks it silently rather than loudly:
+        this ledger is unbounded (A29) and the route materializes the whole list, so a streaming
+        rewrite that swaps the writer for a `",".join(...)` would corrupt the file for every seller
+        who ever typed a comma — with every existing test still green.
+
+        This is also the FR-513-preserving half of the CSV-injection decision (ADR-0020
+        Consequences, 2026-07-17): the escaping that round-trips is kept and pinned; a `'` prefix,
+        which would NOT round-trip, is not added.
+        """
+        hostile = 'Ana "A", com vírgula\ne uma quebra de linha'
+        rows = list(csv.DictReader(io.StringIO(build_history_csv([_snap(label=hostile)]))))
+        assert len(rows) == 1
+        assert rows[0]["label"] == hostile
 
     def test_created_at_is_never_a_column(self) -> None:
         """`created_at` is unverifiable row metadata — never displayed, never exported (FR-528)."""
@@ -660,6 +680,214 @@ class TestQuoteContentAdversarialData:
         # ad-hoc test above, which does the same).
         assert quote.lines[0].name == "Peça única"
         assert quote.lines[0].name.strip() != ""
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# LAYOUT — the geometry every assertion above is blind to.
+#
+# Everything so far asks WHAT the quote says. These ask whether the customer can READ it, and that
+# is a different question. It is the question that caught a real defect at the E4 close-out
+# homologation (T034), after 253 backend tests, two homologations and a 2.13M-token review had all
+# passed the export: `line.name` went into a `Table` cell as a RAW str, and a raw str in ReportLab
+# does not wrap. Past ~68 characters the name crossed the *Qtd.* and *Total* columns and overprinted
+# them — in the document that goes to the CUSTOMER.
+#
+# It survived everything because `_pdf_text` returns the operands, and the operands are perfect: the
+# glyphs collide on the PAGE, not in the string. Text extraction reads a quote it cannot see.
+# Hence: assert POSITIONS.
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+def _pdf_runs(pdf: bytes) -> list[tuple[float, float, float, str]]:
+    """Every text run the page draws, as `(x, y, x_end, text)` in page points.
+
+    `_pdf_text` answers *what the page says*; this answers *where*, and no text assertion
+    substitutes for it — see the block comment above.
+
+    It has to follow the text state properly, because a wrapped `Paragraph` is ONE text object:
+
+        BT 1 0 0 1 0 14 Tm 12 TL /F1 10 Tf (…em resina) Tj T* (epoxi &…<) Tj (premium) Tj … ET
+
+    `T*` returns to the line start and drops by the leading, and consecutive `Tj`s do NOT carry a
+    position — PDF advances the cursor by the glyphs it just drew. Reading `Tm` alone would report
+    every one of those runs at the same spot and quietly measure a page that does not exist. The
+    advance needs real font metrics, so the run's `x_end` is computed here and handed to the caller
+    rather than re-derived (and mis-derived) at the assertion.
+
+    The enclosing `cm` translations are tracked (with `q`/`Q` push/pop) so runs from different
+    flowables share one coordinate space.
+    """
+    import base64
+    import re
+    import zlib
+
+    # /F1 → Helvetica, /F2 → Helvetica-Bold. Read from the PDF's own font objects: hard-coding the
+    # mapping would make every width silently wrong the day a style changes font.
+    fonts: dict[str, str] = {}
+    for obj in re.finditer(rb"<<[^<>]*?/BaseFont[^<>]*?>>", pdf, re.S):
+        base = re.search(rb"/BaseFont /(\S+)", obj.group(0))
+        name = re.search(rb"/Name /(\S+)", obj.group(0))
+        if base and name:
+            fonts[name.group(1).decode()] = base.group(1).decode()
+
+    runs: list[tuple[float, float, float, str]] = []
+    ops = re.compile(
+        r"(?P<q>\bq\b)|(?P<Q>\bQ\b)"
+        r"|[-\d.]+ [-\d.]+ [-\d.]+ [-\d.]+ (?P<e>[-\d.]+) (?P<f>[-\d.]+) cm"
+        r"|BT(?P<body>.*?)ET",
+        re.S,
+    )
+    inner = re.compile(
+        r"1 0 0 1 (?P<mx>[-\d.]+) (?P<my>[-\d.]+) Tm"
+        r"|/(?P<font>F\d+) (?P<size>[-\d.]+) Tf"
+        r"|(?P<tl>[-\d.]+) TL"
+        r"|(?P<dx>[-\d.]+) (?P<dy>[-\d.]+) (?P<td>TD|Td)"
+        r"|(?P<star>T\*)"
+        r"|\((?P<s>(?:[^()\\]|\\.)*)\) Tj"
+    )
+    for raw in re.findall(rb"stream\r?\n(.*?)endstream", pdf, re.S):
+        body = raw.strip(b"\r\n")
+        try:
+            data = zlib.decompress(base64.a85decode(body, adobe=True))
+        except Exception:
+            try:
+                data = zlib.decompress(body)
+            except zlib.error:
+                continue
+        stream = data.decode("latin-1")
+        stack: list[tuple[float, float]] = []
+        tx = ty = 0.0
+        for op in ops.finditer(stream):
+            if op.group("q"):
+                stack.append((tx, ty))
+            elif op.group("Q"):
+                if stack:
+                    tx, ty = stack.pop()
+            elif op.group("e") is not None:
+                tx += float(op.group("e"))
+                ty += float(op.group("f"))
+            elif op.group("body") is not None:
+                x = y = line_x = leading = 0.0
+                font, size = "Helvetica", 10.0
+                for t in inner.finditer(op.group("body")):
+                    if t.group("mx") is not None:
+                        line_x = x = float(t.group("mx"))
+                        y = float(t.group("my"))
+                    elif t.group("font") is not None:
+                        font = fonts.get(t.group("font"), "Helvetica")
+                        size = float(t.group("size"))
+                    elif t.group("tl") is not None:
+                        leading = float(t.group("tl"))
+                    elif t.group("td") is not None:
+                        line_x += float(t.group("dx"))
+                        y += float(t.group("dy"))
+                        x = line_x
+                        if t.group("td") == "TD":
+                            leading = -float(t.group("dy"))
+                    elif t.group("star") is not None:
+                        x = line_x
+                        y -= leading
+                    else:
+                        text = _unescape_pdf_string(t.group("s").encode("latin-1"))
+                        width = stringWidth(text, font, size)
+                        runs.append((tx + x, ty + y, tx + x + width, text))
+                        x += width  # PDF advances by the glyphs drawn; the next Tj starts here.
+    # Same trap `_pdf_text` guards: an extractor that silently returns nothing turns every
+    # "does not overlap" assertion into a green test about a page it never read.
+    assert runs, "PDF run extraction failed: no positioned text found"
+    return runs
+
+
+class TestQuoteLayout:
+    # Long, but ordinary: a seller who names their pieces descriptively writes this. Carries `&`
+    # and `<…>` too, so the fix cannot buy wrapping back by dropping the markup guarantee —
+    # a `Paragraph` PARSES its content, which is why `_xml` has to stay on this path.
+    LONG_NAME = (
+        "Vaso decorativo grande com acabamento em resina epoxi & detalhe dourado <premium> 2026"
+    )
+
+    def _long_name_quote(self, *, breakdown: bool = False) -> Any:
+        payload = {
+            **KIT_PAYLOAD,
+            "lines": [{**KIT_PAYLOAD["lines"][0], "name": self.LONG_NAME}],
+        }
+        return build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=breakdown
+        )
+
+    @staticmethod
+    def _assert_no_overprint(runs: list[tuple[float, float, float, str]], right_cell: str) -> None:
+        """Nothing drawn left of `right_cell` may reach it, ON ITS OWN BASELINE.
+
+        Baseline-scoped on purpose: the column header is right-aligned, so it legitimately starts
+        left of the value below it and would read as a collision against a whole-page filter. Only
+        runs sharing a baseline can actually overprint each other.
+        """
+        anchor = [r for r in runs if r[3] == right_cell]
+        assert len(anchor) == 1, f"expected exactly one {right_cell!r} run, got {anchor!r}"
+        anchor_x, row_y = anchor[0][0], anchor[0][1]
+
+        on_row = [r for r in runs if abs(r[1] - row_y) < 0.5 and r[0] < anchor_x]
+        assert on_row, f"nothing rendered left of {right_cell!r} — the row did not render"
+
+        for x, _y, x_end, text in on_row:
+            assert x_end <= anchor_x, (
+                f"{text!r} overprints {right_cell!r}: it runs from {x:.1f}pt to {x_end:.1f}pt, "
+                f"but {right_cell!r} is drawn at {anchor_x:.1f}pt. "
+                "A raw str in a Table cell does not wrap."
+            )
+
+    def test_a_long_item_name_never_overprints_the_quantity_or_the_price(self) -> None:
+        """The defect, stated as geometry: no part of the Item cell may reach the Qtd. column.
+
+        Measured on the real page — the name's right edge landed at 389.5pt with the quantity
+        drawn at 328.6pt, so the digit sat UNDER the name. `_pdf_text` still returned both
+        perfectly; only the customer could tell.
+        """
+        runs = _pdf_runs(render_quote_pdf(self._long_name_quote()))
+        self._assert_no_overprint(runs, "2")  # the quantity
+        self._assert_no_overprint(runs, "R$ 30,00")  # the price
+
+    def test_a_long_other_costs_label_never_overprints_its_value(self) -> None:
+        """The SAME defect, one table over, and the reason this class checks both: an "Outros
+        custos" label is the seller's own free text (`_cost_lines`), unbounded exactly like a piece
+        name, in a `Table` with the same fixed `colWidths`. Fixing only the name it was reported on
+        would have left the identical bug in the breakdown — which is the surface the seller opts
+        IN to show the customer.
+        """
+        payload = {
+            **SINGLE_PAYLOAD,
+            "breakdown": {
+                "material": "11.00",
+                "otherCosts": [
+                    {
+                        "name": "Embalagem presente com laço de cetim & etiqueta <personalizada> "
+                        "impressa em papel couche 2026",
+                        "value": "3.60",
+                    }
+                ],
+            },
+        }
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
+        )
+        runs = _pdf_runs(render_quote_pdf(quote))
+        self._assert_no_overprint(runs, "R$ 3,60")
+
+    def test_the_long_name_WRAPS_rather_than_being_truncated_or_dropped(self) -> None:
+        """The other half, and the honest one: fitting the column by LOSING characters would pass
+        the geometry test above while quietly shipping a different defect — a customer reading a
+        piece name that is not the piece's name. It must wrap; every character stays on the page.
+
+        The markup is the second guard: a `Paragraph` parses its content, so `<premium>` would be
+        swallowed as an unknown tag and `&` mangled if `_xml` ever left this path — the exact bug
+        the PR-C review fixed on the seller/label fields, one column over.
+        """
+        text = _pdf_text(render_quote_pdf(self._long_name_quote()))
+        for word in self.LONG_NAME.split():
+            assert word in text, f"{word!r} was dropped from the wrapped name: {text!r}"
+        assert "<premium>" in text, "the markup guarantee regressed — `_xml` left the name path"
+        assert "&" in text
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════

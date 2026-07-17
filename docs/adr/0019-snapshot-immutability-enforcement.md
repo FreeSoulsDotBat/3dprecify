@@ -1,7 +1,7 @@
 # ADR-0019: Snapshot immutability — enforcement in depth + provenance without a foreign key
 
-- **Status**: Proposed (owner accepts at the E4 PR-A gate)
-- **Date**: 2026-07-12
+- **Status**: Accepted (owner, at the E4 PR-A gate — 2026-07-16, PR #18 `b1fbd80`)
+- **Date**: 2026-07-12 (accepted 2026-07-16)
 - **Deciders**: Jonatan (owner) + arquiteto + dev-estrutura-de-dados, 2026-07-12
 - **Relates**: ADR-0008 (what freezes) · ADR-0013 (persistence) · ADR-0017 §6 (read-time degradation)
 

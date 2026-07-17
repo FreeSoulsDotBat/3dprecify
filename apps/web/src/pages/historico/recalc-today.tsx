@@ -191,7 +191,11 @@ function RecalcDialog({
         // A NEW id — the recalc is a distinct quote, never an edit of the original (FR-505/ADR-0019).
         clientSnapshotId: crypto.randomUUID(),
         kind: payload.kind === "KIT" ? "KIT" : "SINGLE",
-        label: null,
+        // Inherit the original's label (owner decision, 2026-07-17): the recalc is the SAME customer
+        // re-quoted today, so it belongs under the same name — and that is what makes the US7
+        // "then vs now" comparison legible. Validity does NOT carry: a new quote starts a fresh
+        // validity window, and the seller sets it when they send.
+        label: item.label,
         quoteValidityDays: null,
         deviceQuotedAt: now.toISOString(),
         deviceUtcOffsetMinutes: -now.getTimezoneOffset(),

@@ -1,7 +1,7 @@
 # ADR-0020: Export artifact rendering — server-rendered PDF/CSV behind an active-entitlement gate
 
-- **Status**: Proposed (owner accepts at the E4 PR-C gate)
-- **Date**: 2026-07-12
+- **Status**: Accepted (owner, at the E4 PR-C gate — 2026-07-17, PR #20 `e10b49f`)
+- **Date**: 2026-07-12 (accepted 2026-07-17)
 - **Deciders**: Jonatan (owner) + arquiteto, 2026-07-12
 - **Relates**: ADR-0008 (backend never recomputes) · ADR-0012 (entitlement) · ADR-0015 (enforcement honesty)
 
@@ -103,3 +103,45 @@ asymmetry it creates: **recording works offline for the seller at a fair; export
 - **If the owner ever prefers offline export:** FR-515 **must be reworded** — the export gate becomes an honest
   client route-guard over data the lapsed user legitimately holds, and neither spec nor UI may imply server
   enforcement. That is a coherent product, but a **different product decision**, not an implementation detail.
+
+### CSV formula injection — consciously accepted, 2026-07-17 (E4 close-out, `seguranca` review, 85%)
+
+`build_history_csv` emits cell values **raw**: a `label` of `=SUM(A1:A9)` (or a `+`/`-`/`@`/tab/CR leader) reaches
+the file verbatim. **No guard is added.** The reasoning, recorded because a future reader will otherwise "fix" it:
+
+- **`label` is the only attacker-influenceable column.** `kind` and `headlineBasis` are CHECK-constrained enums,
+  `deviceQuotedAt` is digit-leading ISO, `headlineTotal` is a numeric string (`-21.90` is a *number* to Excel, not
+  a formula).
+- **The author of the payload and the reader of the file are the same principal.** The export is owner-scoped
+  (`require_entitlement` + the `owner_uid` predicate + `deleted_at IS NULL`, pinned by
+  `test_one_account_can_NEVER_export_another_account_row`), and there is **no cross-account write path into a
+  label** (`PATCH` is owner-scoped, `extra="forbid"`, label-only). Classic CSV injection needs attacker-controlled
+  data reaching a **victim's** spreadsheet; here it is the seller's own text in the seller's own file — the shape
+  of **self-XSS**. A seller who wants a formula in their spreadsheet can type one. **The guard would protect
+  nobody**, so in this topology it is a borrowed checklist item, and saying so is the honest answer.
+- **Every neutralization costs FR-513, measured not assumed.** A `'` prefix does **not** round-trip
+  (`csv.DictReader` returns `'=SUM(A1:A9)` ≠ the stored label); quoting does not neutralize at all (Excel still
+  evaluates `"=SUM(A1)"`). This module has already fixed FR-513's operative meaning twice — RFC4180 escaping and
+  the offset re-anchoring both change bytes while **preserving the round-trip**. A prefix breaks it. So
+  "guard only at render, the stored value is untouched" is a **rationalization, not a reconciliation**: the file
+  would say something the seller never typed.
+- **E4's own precedent cuts against the guard.** `_xml()` on the PDF path *raises* fidelity (without it the
+  customer's quote silently lost `Vaso <grande>`); a `'` prefix *lowers* it. The standing rule is *never silently
+  alter the seller's data*.
+
+**Mandatory re-open triggers** (any one of these, and the preferred formulation then is a **write-boundary**
+charset guard — the only FR-513-preserving one, since a stored value with no leader exports verbatim and safe —
+or an `.xlsx` artifact for the cross-principal case):
+
+1. **Any write to `snapshots.label` by a principal other than the exporter** — team/multi-member accounts; **D1–D4
+   (ML ingestion)** populating a label from a Mercado Livre title/order; any snapshot/label import.
+2. **Any export serving account A's rows to principal B** — e.g. the operator CLI (ADR-0012) gaining a ledger
+   read/dump subcommand, or any support tooling.
+3. **Any automated delivery of the CSV to a third party** — a scheduled/e-mailed bookkeeping export, or an
+   accountant integration (adjacent to E6).
+4. **The public shareable link** (Q5, today explicitly OUT) landing.
+
+**Kept and pinned instead** (the FR-513-preserving half): the RFC4180 escaping that already round-trips is now
+guarded by `test_a_label_with_quotes_commas_and_newlines_ROUND_TRIPS_exactly` — it was previously an *untested*
+gift from `csv.DictWriter`, and the plausible next change (streaming this **unbounded** ledger instead of
+`list(...)`-ing it) would have silently corrupted the file for every seller who typed a comma.

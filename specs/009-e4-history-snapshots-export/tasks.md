@@ -350,7 +350,7 @@ here.** **Independent Test**: quickstart §2 + §7.
       *Known and correct:* a kit-materialized product (unlinked) will always show `Hoje == frozen` — it genuinely
       is not linked, exactly as its "Vincule um filamento e uma impressora" notice says. Not a defect; it just
       means the US7 lever depends on the link.
-- [ ] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
+- [x] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
       to `develop` → CI green → owner squash-merge. **Owner accepts ADR-0020 at this gate** (incl. the accepted
       asymmetry: **recording works offline; exporting does not**). Graph refresh on merge.
       **PR #20 aberto** (`feature/009-e4-pr-c-export`); 9/9 checks verdes no commit pré-revisão.
@@ -379,17 +379,35 @@ here.** **Independent Test**: quickstart §2 + §7.
       `export.py` removendo o check de posse** para testar se algum teste pegava (nenhum pegava — esse era
       o achado) e reverteu. A árvore foi verificada antes de seguir. Próxima revisão: refutadores em
       `isolation: 'worktree'` ou sem ferramenta de escrita.
+      **MERGED 2026-07-17** — owner squash-merged PR #20 into `develop` as **`e10b49f`**, CI green
+      end-to-end. **ADR-0020 accepted at this gate**, incl. the accepted asymmetry it names explicitly:
+      **recording works offline; exporting does not** — an export is a server-rendered artifact, and the
+      server is exactly what an offline device does not have. Graph refreshed on merge (`post-merge` hook,
+      AST-only, 0 tokens). With PR-A (#18 `b1fbd80`) and PR-B (#19 `bd9d95e`), all three E4 slices are on
+      `develop`.
 
 ---
 
 ## Phase 9: Polish & cross-cutting
 
-- [ ] T032 [P] `specs/009-e4-history-snapshots-export/dod-evidence.md` — SC-501..515 map + gate/e2e evidence +
+- [x] T032 [P] `specs/009-e4-history-snapshots-export/dod-evidence.md` — SC-501..515 map + gate/e2e evidence +
       the three homologation records + PR SHAs + owner sign-off.
+      *Done 2026-07-17.* Written with **real** CI numbers (run `29548507245`): 253→**257** pytest (86.58%, floor
+      82) after the T034 follow-up tests, 626 FE / 78 files, 120/120 e2e, import-linter 3 kept. Full SC-501..515
+      map, all three homologation records, the review lesson, ADR-0018/0019/0020 statuses, and the T034 verdict.
 - [ ] T033 [P] Docs at close-out: the roadmap E4 row (`docs/product/business-rules.md`) → SHIPPED with the three
       PR SHAs; the `CLAUDE.md` ground line; **ADR-0018/0019/0020 → Accepted**; **A29 flipped to CLOSED** in
       `docs/decisions/audit-findings-r2.md` (open since 2026-07-02, closed by this epic).
-- [ ] T034 Run `quickstart.md` §1..§9 end-to-end as the final validation before E4 close-out.
+- [x] T034 Run `quickstart.md` §1..§9 end-to-end as the final validation before E4 close-out.
+      *Done 2026-07-17 — **PASS-WITH-NITS** (qa-produto, the only cross-slice walk: record offline → sync → churn
+      → export). §1–§5, §7, §9 PASS; §6/§8 PASS-WITH-NITS. Real stack, adversarial data, DB trigger proven by
+      direct UPDATE, revoke/re-grant cycles. **One real defect** (PDF item-name overflowed the Qtd./Total columns
+      — raw str in a Table cell, no length bound anywhere; text extraction was blind to the glyph collision) —
+      **fixed** (name **and** the twin cost-label the `seguranca` review caught → `Paragraph(_xml(...))` + `VALIGN
+      TOP`) with **geometry-based, mutation-proven** regression tests (`TestQuoteLayout`). Two recorded decisions
+      (quickstart §8 doc corrected to Q15; CSV formula injection → consciously accepted in ADR-0020 §Consequences
+      with 4 re-open triggers + the RFC4180 round-trip now pinned) and one open product question (recalc writes
+      `label: null` — owner to decide). Full verdict in `dod-evidence.md`.)*
 
 ---
 
