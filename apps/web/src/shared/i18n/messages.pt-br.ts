@@ -525,7 +525,7 @@ export const messages = {
     // `exportIncludeCostsWarn` line names the harm the switch prevents — a customer who reads the
     // cost lines can compute the seller's margin — instead of leaving the label neutral.
     exportAction: "Exportar",
-    exportFormatField: "O que exportar", // NEW (ux draws the radios unlabelled) — ratify at T030
+    exportFormatField: "O que exportar", // ux draws the radios unlabelled; this names the group
     exportQuotePdf: "Orçamento para o cliente (PDF)",
     exportHistoryCsv: "Meu histórico (CSV)",
     exportIncludeCosts: "Incluir detalhamento de custos",
@@ -546,7 +546,7 @@ export const messages = {
     exportContents:
       "O orçamento leva: itens, quantidades, o valor cotado, a data, a validade, o rótulo deste registro (impresso como “Referência”), e identifica você pelo nome e e-mail da sua conta.",
     exportGenerate: "Gerar PDF",
-    exportGenerateCsv: "Baixar CSV", // NEW (ux §6 draws only the PDF state) — ratify at T030
+    exportGenerateCsv: "Baixar CSV",
     // NEW — the CSV is rendered from the ACCOUNT, so a record still queued on this device is not in
     // it. Saying so beats a ledger that silently omits a quote the seller knows they made.
     exportCsvNote: "O CSV vem da sua conta: registros ainda não sincronizados não entram nele.",
@@ -557,9 +557,8 @@ export const messages = {
     // under the button read as the app not trusting the seller to have read it.
     exportLapsed: "Exportar precisa do Premium ativo.",
     exportFailed: "Não foi possível gerar o arquivo.", // NEW — never a fake file
-    // US7/T029 — the comparison (owner decision 2026-07-16: built, not dropped). ALL NEW copy: ux
-    // never drew this surface. Purely informational — it records nothing, and it says so, because
-    // two totals side by side look exactly like a thing that just changed the record. Ratify at T030.
+    // US7/T029 — the comparison. Purely informational: it records nothing, and it SAYS so,
+    // because two totals side by side look exactly like a thing that just changed the record.
     compareAction: "Comparar com hoje",
     compareToday: "Hoje",
     compareNote:

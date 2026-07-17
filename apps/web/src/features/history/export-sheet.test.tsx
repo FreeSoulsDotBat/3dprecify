@@ -138,7 +138,7 @@ describe("the cost breakdown is OPT-IN (Q4/FR-512, SC-506)", () => {
     expect(screen.getByText(t.exportContents)).toBeInTheDocument();
   });
 
-  it("a KIT warns about the artifact a KIT actually gets (review PR-C)", async () => {
+  it("a KIT warns about the artifact a KIT actually gets", async () => {
     // The kit quote carries ONE stored cost line ("Custo total"), not the per-piece detail — the
     // single-piece wording would describe a document the seller is not about to receive.
     const user = setup();

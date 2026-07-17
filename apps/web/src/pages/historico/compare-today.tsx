@@ -15,7 +15,7 @@ import {
   quotedDate,
 } from "@/entities/history/history-format";
 
-import { recalcToday } from "./recalc-today";
+import { BASIS_TOTAL, recalcToday } from "./recalc-today";
 
 // 009/T029 (E4, PR-C, US7) — *"meu custo subiu desde que cotei?"*, answered by putting the two
 // numbers next to each other. Purely informational: recording today's number is still the explicit
@@ -38,11 +38,6 @@ import { recalcToday } from "./recalc-today";
 // `pricing-core` (ADR-0008) — two labelled numbers answer the question without inventing a third.
 
 const t = messages.historico;
-
-const BASIS_TOTAL: Record<SnapshotInHeadlineBasis, "precoVarejo" | "precoAtacado"> = {
-  PRECO_VAREJO: "precoVarejo",
-  PRECO_ATACADO: "precoAtacado",
-};
 
 export function CompareTodayBlock({
   item,

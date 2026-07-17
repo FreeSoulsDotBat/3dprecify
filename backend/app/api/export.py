@@ -19,13 +19,6 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only
 
-# The ownership predicate is IMPORTED, not copied (review PR-C): it IS the cross-account isolation
-# invariant (FR-511/SC-509), and history.py carries the comment explaining why the answer must be
-# identical for a nonexistent, a deleted and someone else's id — so the API is never an existence
-# oracle. Two copies could drift, and what would drift is that invariant. `app.api` is a single
-# import-linter layer and `boms.py` already imports from `products.py`: reuse is the direction.
-# (It is `owned_snapshot`, not the `_owned` of the sibling routers, because a shared helper has no
-# business being private — basedpyright is right to refuse the cross-module reach into a `_` name.)
 from app.api.history import owned_snapshot
 from app.db import get_session
 from app.entitlement import require_entitlement

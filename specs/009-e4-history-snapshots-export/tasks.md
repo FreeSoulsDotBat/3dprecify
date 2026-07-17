@@ -251,14 +251,14 @@ here.** **Independent Test**: quickstart §2 + §7.
       pillow+charset-normalizer, **BSD** licence. WeasyPrint rejected on native Pango/cairo/GDK-PixBuf; fpdf2 2.8.7
       kept as fallback (no native deps but LGPL-3.0 + thinner layout). Base install only — no cairo/harfbuzz extras.
       Recorded in ADR-0020 §5.)*
-- [ ] T026 [US4] Write FAILING pytest first — `backend/tests/test_export.py`: **zero internal cost lines**
+- [x] T026 [US4] Write FAILING pytest first — `backend/tests/test_export.py`: **zero internal cost lines**
       (material/energy/machine/failure/margin) unless `includeCostBreakdown=true` (SC-506); a **kit** quote
       **itemizes every piece** (name + quantity) + total, still with zero cost lines (SC-515); the quote carries
       the **device record date** + validity period + seller identity from the **verified ID-token claims** (no
       display-name column exists; e-mail only when the claim is absent — Q13); **CSV rows equal the stored
       snapshots exactly** (no re-derivation, no drift — FR-513); **lapse ⇒ denied with NO partial artifact**
       (FR-515); free/signed-out ⇒ **no artifact produced** (Q7). Observe failing.
-- [ ] T027 [US4] Implement `backend/app/services/quote_render.py` + the export endpoints behind
+- [x] T027 [US4] Implement `backend/app/services/quote_render.py` + the export endpoints behind
       `require_entitlement` (**ACTIVE**). The renderer **prints stored, already-rounded values and performs ZERO
       arithmetic** — no formula, no markup, no gross-up. *"The backend never recomputes" (ADR-0008) stands,
       untouched — a document renderer forks nothing, which is exactly why the ADR-0015 precedent does not
@@ -273,9 +273,10 @@ here.** **Independent Test**: quickstart §2 + §7.
       `entities/history/use-export.ts` (mutations, not queries — an export is an action with a device side
       effect, and a query would refetch on focus and re-download a file nobody asked for);
       `shared/lib/save-file.ts`. **`shared/api/transport.ts` gained `apiFetchFile`** — the generated Orval
-      client CANNOT carry these: its mutator reads a non-JSON body with `res.text()`, which decodes the bytes
-      as UTF-8 and corrupts every PDF; the generated **url builders** stay the contract's source of truth, and
-      the error path still parses the JSON envelope so a 403 keeps `ENTITLEMENT_REQUIRED`.
+      hooks are `useQuery`, and an export is an ACTION with a device side effect (a query would refetch on
+      focus and re-download the file); only `apiFetchFile` reads `Content-Disposition`. The generated **url
+      builders** stay the contract's source of truth, and the error path still parses the JSON envelope so a
+      403 keeps `ENTITLEMENT_REQUIRED`.
       **Three copy strings are NEW** (ux §8 has no CSV-state button, no radio legend, no failure line) —
       `exportGenerateCsv` · `exportFormatField` · `exportFailed`, plus `exportCsvNote` (the CSV is rendered from
       the ACCOUNT, so a queued record is not in it — silence there would be a ledger that omits a quote the

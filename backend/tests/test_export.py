@@ -409,20 +409,6 @@ class TestExportEndpoints:
         assert resp.headers["content-type"].startswith("application/pdf")
         assert resp.content[:5] == b"%PDF-"  # a genuine PDF, not an empty or JSON body
 
-    def test_include_cost_breakdown_query_param_is_accepted(
-        self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
-    ) -> None:
-        h = _premium(monkeypatch, migrated_db, "u-exp2", name="Ana", email="ana@x.com")
-        sid = db_client.post("/api/v1/history", headers=h, json=_body(str(uuid.uuid4()))).json()[
-            "id"
-        ]
-
-        resp = db_client.get(
-            f"/api/v1/history/{sid}/quote.pdf", headers=h, params={"includeCostBreakdown": "true"}
-        )
-        assert resp.status_code == 200, resp.text
-        assert resp.content[:5] == b"%PDF-"
-
     def test_a_lapse_denies_the_export_with_NO_partial_artifact(
         self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
     ) -> None:
@@ -507,12 +493,13 @@ class TestExportEndpoints:
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════
-# Review PR-C (2026-07-16) — the four blockers, each written FAILING-first.
+# ADVERSARIAL DATA — the quote rendered from input a real seller produces and a fixture rarely does:
+# markup characters in free text, `otherCosts` present, a zero quantity, a nameless kit piece.
 #
-# Every one of these is DATA-DEPENDENT, and that is the whole lesson. Two homologations opened the
-# rendered artifact and read it — with benign data ("Cliente João", no otherCosts, no zero quantity,
-# every piece named) — and passed it. Looking at the artifact is necessary and NOT sufficient: the
-# data has to be adversarial too. These fixtures are the data that makes each defect visible.
+# These live apart from `TestQuoteContent` because the FIXTURE is the point. Every defect below is
+# invisible to benign data ("Cliente João", no otherCosts, every piece named) — the document
+# renders,
+# reads correctly, and is wrong only for the seller who typed "R&D" or zeroed a line.
 # ════════════════════════════════════════════════════════════════════════════════════════════════
 
 
@@ -577,9 +564,9 @@ def _pdf_text(pdf: bytes) -> str:
     return text
 
 
-class TestReviewBlockers:
+class TestQuoteContentAdversarialData:
     def test_a_label_with_markup_characters_PRINTS_VERBATIM_and_never_500s(self) -> None:
-        """BLOCKER (3 lenses, confirmed 2/2). `label` is free text with no character constraint —
+        """`label` is free text with no character constraint —
         `<` and `&` are things a Brazilian seller types ("Peça <2>", "R&D", "M&M Ateliê"). It was
         interpolated raw into a Platypus `Paragraph`, which parses its content as intra-paragraph
         markup: `Vaso <grande>` printed as `Vaso` (the text SILENTLY vanished from the customer's
@@ -599,19 +586,25 @@ class TestReviewBlockers:
             assert label in text, f"{label!r} was mangled or dropped: {text!r}"
 
     def test_the_seller_identity_is_escaped_too(self) -> None:
-        """The completeness critic's catch: the fix must cover `seller_name`/`seller_email`, which
-        reach the SAME Paragraph from the ID-token claims. "M&M Ateliê" is an ordinary shop name."""
+        """`seller_name` and `seller_email` reach a Paragraph the same way `label` does, straight
+        from the ID-token claims — which this renderer did not validate and must not trust.
+
+        Both values need data carrying `<` to be worth asserting: measured against the real parser,
+        a lone `&` prints verbatim unescaped, so "M&M" would pass this test either way.
+        """
         quote = build_quote_view(
             _snap(label=None),
-            seller_name="M&M Ateliê <3D>",
-            seller_email="ana@m&m.com.br",
+            seller_name="M&M Ateliê <3D>",  # unescaped, the unknown tag SWALLOWS the shop name
+            seller_email="ana<b>@m&m.com.br",  # unescaped, the known tag RAISES → 500, no artifact
             include_cost_breakdown=False,
         )
         text = _pdf_text(render_quote_pdf(quote))
         assert "M&M Ateliê <3D>" in text
+        # The e-mail is a SECOND Paragraph, so the name passing proves nothing about it.
+        assert "ana<b>@m&m.com.br" in text
 
     def test_the_breakdown_never_counts_the_same_money_twice(self) -> None:
-        """BLOCKER. `pricing-core` (index.ts:77/93): "Σ otherCosts === admin" — it IS their sum.
+        """`pricing-core` (index.ts:77/93): "Σ otherCosts === admin" — it IS their sum.
         The renderer printed `admin` AND every otherCosts line, so a customer allowed to see the
         breakdown read the administrative money twice and an inflated cost. The app's own detail
         screen omits `admin` for exactly this reason; the quote must agree with it."""
@@ -637,7 +630,7 @@ class TestReviewBlockers:
         assert values.count("8.00") == 0
 
     def test_a_zero_quantity_line_prints_ZERO_never_one(self) -> None:
-        """BLOCKER. `quantity == 0` is a legal, deliberate state (`CHECK quantity >= 0`; owner
+        """`quantity == 0` is a legal, deliberate state (`CHECK quantity >= 0`; owner
         decision Q1 — "não entra neste pedido"). `int(x or 1)` turns 0 into 1 in Python, so the
         customer's quote said they were buying one of something the seller had zeroed out."""
         payload = {
@@ -654,7 +647,7 @@ class TestReviewBlockers:
         assert quote.lines[1].quantity == 1
 
     def test_a_nameless_kit_piece_is_NAMED_never_a_blank_cell(self) -> None:
-        """BLOCKER. A kit line may legitimately have no captured name (an ad-hoc piece). `or ""`
+        """A kit line may legitimately have no captured name (an ad-hoc piece). `or ""`
         printed an empty Item cell with a price beside it — the customer reads a blank line item.
         The app names it; so must the quote, with the same neutral the SINGLE branch already uses
         (a customer is not buying a "Cálculo avulso" — they are buying a piece)."""
@@ -670,25 +663,23 @@ class TestReviewBlockers:
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════
-# Review PR-C — the coverage the review PROVED was missing, each by executing the mutation.
+# ROUTE GUARANTEES — what the ENDPOINT returns, not what the content model builds.
 #
-# Every test below was written against a mutation the reviewer ran and watched pass: delete the
-# assertion's subject, and the old suite stayed green. That is the standard for "is this test worth
-# writing" — not "does it look covered".
+# The distinction is the reason this block exists: `TestQuoteContent` pins the model, and a route
+# can satisfy every one of those tests while ignoring the caller's flag, serving another account's
+# row, or resurrecting a deleted one. These assert the bytes that leave the route.
 # ════════════════════════════════════════════════════════════════════════════════════════════════
 
 
-class TestReviewCoverage:
+@requires_db
+class TestRouteGuarantees:
     def test_the_endpoint_HONOURS_the_opt_in_flag_in_the_ARTIFACT_it_returns(
         self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
     ) -> None:
-        """MAJOR (mutation proven). Hard-code `include_cost_breakdown=True` in export.py and the old
-        suite still passed 30/30: every default quote would ship the seller's costs to their
-        customer with CI fully green. The endpoint tests stopped at `%PDF-`; `TestQuoteContent`
-        pinned the content MODEL, never the document the ROUTE builds. This asserts the bytes.
-
-        Same class as the CSV date defect (`TestHistoryCsv` asserted every column except the one
-        that was wrong) — fixed there, left standing one file over.
+        """Hard-code `include_cost_breakdown=True` in export.py and nothing else notices: every
+        default quote would ship the seller's costs to their customer with CI fully green.
+        `TestQuoteContent` pins the content MODEL; only this asserts the bytes the ROUTE returns,
+        which is where the seller's flag is actually read.
         """
         h = _premium(monkeypatch, migrated_db, "u-optin-art", name="Ana", email="ana@x.com")
         sid = db_client.post("/api/v1/history", headers=h, json=_body(str(uuid.uuid4()))).json()[
@@ -716,8 +707,8 @@ class TestReviewCoverage:
     def test_one_account_can_NEVER_export_another_account_row(
         self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
     ) -> None:
-        """MAJOR (mutation proven). Remove `Snapshot.owner_uid == uid` from export.py and the old
-        suite passed 30/30 — any premium account could export ANY seller's quote by id, and pull
+        """Remove `Snapshot.owner_uid == uid` from export.py and nothing above notices — any premium
+        account could export ANY seller's quote by id, and pull
         the whole platform's ledger as CSV. The existing 404 test used a random uuid, which is not
         the same question: an id that exists for SOMEBODY is the one an attacker has. Nothing
         proved the promise `owned_snapshot` makes in its own docstring (FR-511/SC-509).
@@ -740,8 +731,8 @@ class TestReviewCoverage:
     def test_a_deleted_record_never_comes_back_in_the_csv(
         self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
     ) -> None:
-        """MAJOR (mutation proven). Remove `deleted_at.is_(None)` from the CSV query and the old
-        suite passed 30/30 — records the seller deleted would reappear in their export. Deletion has
+        """Remove `deleted_at.is_(None)` from the CSV query and nothing above notices — records the
+        seller deleted would reappear in their export. Deletion has
         to mean deletion on every surface, or the ledger is not the seller's to curate."""
         h = _premium(monkeypatch, migrated_db, "u-del-csv", name="Ana", email="ana@x.com")
         keep = db_client.post(
@@ -761,8 +752,8 @@ class TestReviewCoverage:
         assert db_client.get(f"/api/v1/history/{keep}/quote.pdf", headers=h).status_code == 200
 
     def test_a_kit_opt_in_actually_returns_the_kit_cost_line(self) -> None:
-        """MINOR (mutation proven). Replace the KIT branch of the opt-in with `pass` and the old
-        suite passed 30/30: the seller flips the switch on a kit quote and silently gets nothing.
+        """Replace the KIT branch of the opt-in with `pass` and nothing above notices: the seller
+        flips the switch on a kit quote and silently gets nothing.
         The failure is conservative (it leaks nothing), but a control that does nothing without
         saying so is still a promise the app does not keep."""
         q = build_quote_view(

@@ -35,12 +35,9 @@ import "./export-sheet.css";
 //   * On a LAPSE the export is refused by the server anyway (`require_entitlement`), so the client
 //     never has to be trusted with the gate; it only has to be honest about it.
 //
-// Deviation flagged for T030 (ux §6 says lapsed ⇒ "visible → reactivation panel"): the affordance is
-// visible + disabled + `exportLapsed` instead, matching the reason-pattern of the two cases beside
-// it and the shipped PR-B siblings (rename/delete/recalc are simply absent, explained by the page's
-// lapse banner). A "reactivation panel" would open a dialog whose only content is the sentence
-// already shown here — and there is no reactivation FLOW to offer before E6 (billing), so a panel
-// would promise a door that does not exist (Principle II).
+// Departs from ux §6 ("lapsed ⇒ visible → reactivation panel"), owner-ratified: a panel would open
+// a dialog whose only content is the sentence already shown here, and there is no reactivation FLOW
+// to offer before E6 (billing) — so it would promise a door that does not exist (Principle II).
 
 const t = messages.historico;
 
@@ -206,9 +203,8 @@ function ExportForm({
               onCheckedChange={setIncludeCosts}
             />
           </div>
-          {/* The harm, said out loud, next to the switch that causes it — and it must name the
-              lines THIS artifact would actually carry (review PR-C: the old wording named "margem",
-              which is never a printed line, and omitted acabamento/mão de obra/outros custos). */}
+          {/* The harm, said out loud, next to the switch that causes it — naming the lines THIS
+              artifact carries, not the ones a seller might assume. "Margem" is never printed. */}
           <p className="tf-export__warn">
             {isKit ? t.exportIncludeCostsWarnKit : t.exportIncludeCostsWarn}
           </p>

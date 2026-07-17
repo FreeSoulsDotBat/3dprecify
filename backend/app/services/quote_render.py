@@ -41,10 +41,10 @@ _COST_LABELS: tuple[tuple[str, str], ...] = (
     ("finishing", "Acabamento"),
     ("labor", "Mão de obra"),
 )
-# `admin` is deliberately ABSENT (review PR-C, BLOCKER). `pricing-core` (index.ts:77/93) defines it
-# as "Σ otherCosts === admin" — it IS their sum, not a line beside them. Printing both counted the
-# same money twice and showed the customer an inflated cost. The app's own detail screen omits it
-# for this reason; the quote must agree with the screen the seller read before sending it.
+# `admin` is deliberately ABSENT. `pricing-core` (index.ts:77/93) defines it as "Σ otherCosts ===
+# admin" — it IS their sum, not a line beside them, so printing both counts the same money twice and
+# shows the customer an inflated cost. The app's own detail screen omits it for this reason; the
+# quote must agree with the screen the seller read before sending it.
 
 # What a single piece is called on the quote when the snapshot has NO captured origin (an ad-hoc
 # calculator snapshot — `provenance: null`). Mirrors the app's own `kindSingle` wording: it names
@@ -104,8 +104,8 @@ def _str_or_empty(value: Any) -> str:
 
 def _int_or_zero(value: Any) -> int:
     """A stored count, printed as stored. NOT `int(value or 1)`: `0` is falsy in Python, and a
-    zero-quantity kit line is a real decision the seller made (Q1 — "não entra neste pedido"), so
-    that idiom silently promoted it to 1 on the CUSTOMER's quote (review PR-C, BLOCKER)."""
+    zero-quantity kit line is a real decision the seller made (Q1 — "não entra neste pedido"), and
+    that idiom silently promotes it to 1 on the CUSTOMER's quote."""
     return value if isinstance(value, int) and not isinstance(value, bool) else 0
 
 
@@ -113,11 +113,14 @@ def _xml(value: str) -> str:
     """Escape text before it enters a Platypus `Paragraph`.
 
     A Paragraph parses its content as intra-paragraph markup — this file relies on that itself to
-    bold the total. So free text interpolated into one is PARSED, not printed: a seller's label of
-    `Vaso <grande>` printed as `Vaso` (the text vanished from the customer's quote, silently) and
-    `Cliente <b>Joao` raised ValueError → HTTP 500 with no artifact, forever, for that snapshot
-    (review PR-C, BLOCKER, found independently by 3 lenses). `label` is free text with no character
-    constraint, and `<` / `&` are ordinary things a seller types ("Peça <2>", "R&D", "M&M Ateliê").
+    bold the total. So free text interpolated into one is PARSED, not printed, and `label` is free
+    text with no character constraint. Measured against the real parser:
+
+    * `<` is the hazard. An unknown tag is SWALLOWED — `Vaso <grande>` prints as `Vaso`, the text
+      gone from the customer's quote with nothing to notice. A known one is worse: `Cliente <b>Joao`
+      raises ValueError → HTTP 500, no artifact, forever, for that snapshot.
+    * `&` is safe on its own. `R&D`, `M&M`, `A & B` all print verbatim unescaped — only the ENTITY
+      form bites: `Tom &amp; Jerry` renders as `Tom & Jerry`, silently eating what was typed.
 
     ADR-0020 §1 promises the renderer PRINTS what is stored. This is what makes that literally true.
     """
@@ -168,14 +171,9 @@ def build_quote_view(
     if snapshot.kind == "KIT":
         lines = [
             QuoteLineView(
-                # A piece with no captured name is legitimate (an ad-hoc line). `or ""` printed a
-                # BLANK Item cell with a price beside it (review PR-C, BLOCKER) — the app names it,
-                # and so must the quote, with the same neutral the SINGLE branch uses below.
+                # A piece with no captured name is legitimate (an ad-hoc line); it gets the same
+                # neutral the SINGLE branch uses below, never a blank cell with a price beside it.
                 name=str(_obj(line).get("name") or _ADHOC_ITEM),
-                # `quantity` 0 is a legal, deliberate state (CHECK quantity >= 0; decision Q1 —
-                # "não entra neste pedido"). `int(x or 1)` turns 0 into 1 in Python (review PR-C,
-                # BLOCKER), so the customer's quote claimed they were buying one of something the
-                # seller had zeroed out. Print what is stored.
                 quantity=_int_or_zero(_obj(line).get("quantity")),
                 total=_str_or_empty(_obj(_obj(line).get("totals")).get(key)),
             )
@@ -270,7 +268,7 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     story: list[Any] = [Paragraph("Orçamento", styles["Title"])]
 
     # Every free-text value below is escaped: the label is the seller's own, and the name/e-mail
-    # come from the ID-token claims ("M&M Ateliê" is an ordinary shop name — the critic's catch).
+    # come from the ID-token claims ("M&M Ateliê" is an ordinary shop name).
     seller = quote.seller_name or quote.seller_email or ""
     if seller:
         story.append(Paragraph(_xml(seller), styles["Normal"]))
@@ -326,11 +324,11 @@ def build_history_csv(snapshots: Sequence[Snapshot]) -> str:
     """The history as a data file whose rows equal the stored snapshots exactly (FR-513) — headline
     money as the STORED decimal string, no re-derivation, and `created_at` never a column.
 
-    `deviceQuotedAt` carries the seller's OWN offset, not bare UTC (T030 homologation). A quote made
-    at 22:30 in Brazil is stored as 01:30Z the next day; emitting that raw made the CSV say 14/07
-    while the card, the detail and the PDF all said 13/07 — and the local day was not recoverable
-    from the file at all. Re-anchoring the offset changes no instant and re-derives nothing: it
-    hands back exactly what the row stores, including the column the model keeps for this reason.
+    `deviceQuotedAt` carries the seller's OWN offset, not bare UTC. A quote made at 22:30 in Brazil
+    is stored as 01:30Z the NEXT day, so emitting the instant raw makes this file say a different
+    date than the card, the detail and the PDF — and the local day is then unrecoverable from the
+    file. Re-anchoring the offset changes no instant and re-derives nothing: it hands back exactly
+    what the row stores, including the column the model keeps for this reason.
     """
     buffer = io.StringIO()
     writer = csv.DictWriter(buffer, fieldnames=list(_CSV_FIELDS), lineterminator="\n")

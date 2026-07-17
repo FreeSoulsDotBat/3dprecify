@@ -21,11 +21,6 @@ import { saveFile } from "@/shared/lib/save-file";
 // `useMutation`, not `useQuery`, on purpose: an export is an ACTION the seller takes, with a side
 // effect on their device. The generated hooks are `useQuery`, which would cache the bytes, refetch
 // them on window focus, and re-download a file nobody asked for.
-//
-// (The contract declares `application/pdf` / `text/csv` and the transport returns a real Blob for a
-// non-JSON 2xx, so the generated client is no longer a trap either — it just is not what an action
-// wants. Both were true the other way round before the PR-C review: the routes declared no content,
-// Orval typed them `data: void`, and the mutator `res.text()`d the bytes into a corrupted string.)
 
 /** Fallbacks only — the server names the file via `Content-Disposition`; these cover its absence. */
 const QUOTE_FILENAME = "orcamento.pdf";
