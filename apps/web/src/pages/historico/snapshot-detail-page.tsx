@@ -12,6 +12,7 @@ import type { HistoryItem } from "@/entities/history/outbox";
 import { useSnapshot } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
+import { ExportButton } from "@/features/history/export-sheet";
 import { SnapshotManageActions } from "@/features/history/snapshot-manage";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Badge, BreakdownRow, Button, Card, Icon, Spinner } from "@/shared/ui";
@@ -28,6 +29,7 @@ import {
   SYNC_BADGE,
 } from "@/entities/history/history-format";
 
+import { CompareTodayBlock } from "./compare-today";
 import { RecalcTodayButton } from "./recalc-today";
 
 import "./historico-page.css";
@@ -179,10 +181,22 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
             <ChannelsBlock channels={payload.channels} />
           )}
           <TechnicalSheet payload={payload} origin={origin} />
-          {/* US3/T020 — reprice at today's catalog into a NEW record; the original is immutable. */}
-          <RecalcTodayButton item={item} product={originProduct} kit={originKit} />
+          {/* US7/T029 — "meu custo subiu desde que cotei?" answered on request, side by side. It
+              records nothing; only "Recalcular hoje" below turns today's number into a record. */}
+          <CompareTodayBlock item={item} product={originProduct} kit={originKit} />
         </>
       )}
+
+      {/* ux §4 — the two actions the document itself offers, side by side. They sit OUTSIDE the
+          `payload &&` block on purpose: a payload this client cannot parse (a future schema) must
+          not take the export with it — the SERVER renders the artifact from the stored row, and it
+          can read what it wrote. Each button decides its own visibility. */}
+      <div className="flex flex-wrap gap-2">
+        {/* US3/T020 — reprice at today's catalog into a NEW record; the original is immutable. */}
+        <RecalcTodayButton item={item} product={originProduct} kit={originKit} />
+        {/* US4/T028 — the server-rendered quote/ledger (ADR-0020). */}
+        <ExportButton item={item} />
+      </div>
     </Shell>
   );
 }

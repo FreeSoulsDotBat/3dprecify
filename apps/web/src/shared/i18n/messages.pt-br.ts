@@ -519,6 +519,52 @@ export const messages = {
     recalcOfflineNote:
       "Sem conexão: usando os valores do catálogo salvos neste aparelho, que podem estar desatualizados.",
     recalcConfirm: "Recalcular",
+    // US4/T028 — export (FR-512..516). Copy = ux §8, verbatim except where marked. The artifact is
+    // SERVER-rendered (ADR-0020), and that is why three of these strings exist at all: no connection
+    // and no server row mean no document, and each unavailable case must say WHICH, in place. The
+    // `exportIncludeCostsWarn` line names the harm the switch prevents — a customer who reads the
+    // cost lines can compute the seller's margin — instead of leaving the label neutral.
+    exportAction: "Exportar",
+    exportFormatField: "O que exportar", // ux draws the radios unlabelled; this names the group
+    exportQuotePdf: "Orçamento para o cliente (PDF)",
+    exportHistoryCsv: "Meu histórico (CSV)",
+    exportIncludeCosts: "Incluir detalhamento de custos",
+    // Corrigido pela revisão PR-C. A copy do ux §8 errava nos DOIS sentidos: nomeava "margem" (que
+    // NUNCA é uma linha impressa) e omitia acabamento, mão de obra e os nomes que o vendedor deu aos
+    // seus "outros custos" — que o PDF imprime literalmente. Um aviso de exposição que erra a lista
+    // não é um aviso: é um palpite. Agora nomeia o que sai e diz o que dá para deduzir.
+    exportIncludeCostsWarn:
+      "Seu cliente veria as linhas gravadas — material, energia, máquina, falhas, acabamento, mão de obra e os seus outros custos — e poderia calcular a sua margem.",
+    // Num kit o documento leva UMA linha (o custo total gravado), não o detalhe peça a peça: a copy
+    // acima descreveria um artefato que o vendedor não vai receber (revisão PR-C).
+    exportIncludeCostsWarnKit:
+      "Seu cliente veria o custo total gravado do kit — e poderia calcular a sua margem.",
+    // Corrigido pela revisão PR-C: esta é a linha do "sem surpresa", e omitia justamente o único
+    // campo AUTORAL do vendedor que chega ao cliente. O rótulo é escrito em contexto privado ("não
+    // fechar abaixo de 40") e é impresso como "Referência" no orçamento. Uma lista que promete ser
+    // exaustiva e esquece o campo de texto livre é pior que nenhuma lista.
+    exportContents:
+      "O orçamento leva: itens, quantidades, o valor cotado, a data, a validade, o rótulo deste registro (impresso como “Referência”), e identifica você pelo nome e e-mail da sua conta.",
+    exportGenerate: "Gerar PDF",
+    exportGenerateCsv: "Baixar CSV",
+    // NEW — the CSV is rendered from the ACCOUNT, so a record still queued on this device is not in
+    // it. Saying so beats a ledger that silently omits a quote the seller knows they made.
+    exportCsvNote: "O CSV vem da sua conta: registros ainda não sincronizados não entram nele.",
+    exportOffline: "Exportar precisa de conexão.",
+    exportPending: "Sincronize para exportar.",
+    // Owner decision 2026-07-16 (qa's T030 trim): the 2nd sentence — "Seus registros continuam aqui
+    // para leitura" — is gone. The page's `lapsedBanner` says it two lines above, and repeating it
+    // under the button read as the app not trusting the seller to have read it.
+    exportLapsed: "Exportar precisa do Premium ativo.",
+    exportFailed: "Não foi possível gerar o arquivo.", // NEW — never a fake file
+    // US7/T029 — the comparison. Purely informational: it records nothing, and it SAYS so,
+    // because two totals side by side look exactly like a thing that just changed the record.
+    compareAction: "Comparar com hoje",
+    compareToday: "Hoje",
+    compareNote:
+      'Comparação informativa: este registro não muda. Para gravar o valor de hoje, use "Recalcular hoje".',
+    compareUnavailable:
+      "Não foi possível calcular o valor de hoje para este registro com o seu catálogo atual.",
     // US6/T022 — manage the ledger (label edit · search · date range · delete · lazy pagination).
     // Copy = ux §8. The label is the ONE mutable field; the contents stay immutable (ADR-0019).
     editLabel: "Editar rótulo",

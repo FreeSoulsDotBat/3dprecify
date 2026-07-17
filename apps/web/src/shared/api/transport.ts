@@ -134,7 +134,16 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
 
   let body: unknown;
   try {
-    body = res.status === 204 ? null : isJson ? await res.json() : await res.text();
+    if (res.status === 204) body = null;
+    // A successful NON-JSON body is BYTES (the server-rendered export artifacts, ADR-0020). It must
+    // never go through `res.text()`, which decodes as UTF-8 and silently corrupts a PDF (review
+    // PR-C): the contract declares `application/pdf` / `text/csv`, so Orval types these responses
+    // `data: Blob` — and this is what makes that type TRUE for the generated client too, instead of
+    // a promise the mutator breaks. An ERROR body stays JSON-parsed regardless: a failed export
+    // answers with the ErrorEnvelope, and reading it as a Blob would throw away the `code` the call
+    // site needs to tell a lapse from a generic failure.
+    else if (res.ok && !isJson) body = await res.blob();
+    else body = isJson ? await res.json() : await res.text();
   } catch (cause) {
     // Malformed body (hardening a): e.g. a 502 that advertises JSON but returns an HTML error
     // page — `res.json()` throws a raw SyntaxError. Normalise to a typed ApiError carrying the
@@ -172,6 +181,36 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { body } = await request(path, init);
   return body as T;
+}
+
+/** A file the server rendered for us, with the name the SERVER chose (009/T028, ADR-0020). The
+ *  name only survives cross-origin because `main.py` exposes `Content-Disposition` via CORS — it is
+ *  not safelisted, so without that the browser hides it and this is always `null` (review PR-C). */
+export interface FetchedFile {
+  blob: Blob;
+  /** From `Content-Disposition`; null when the server sent none — the caller then names it. */
+  filename: string | null;
+}
+
+// `filename="orcamento.pdf"` / `filename=historico.csv` — the plain form the API actually sends.
+// RFC 5987's `filename*=UTF-8''…` is deliberately NOT parsed: this backend never emits it, and a
+// half-right decoder would be worse than an honest null (the caller has a sane default either way).
+function filenameFrom(disposition: string | null): string | null {
+  const match = /filename="?([^";]+)"?/i.exec(disposition ?? "");
+  return match?.[1]?.trim() || null;
+}
+
+/**
+ * Authenticated fetch for a SERVER-RENDERED file (009/T028): the bytes, plus the name the server
+ * chose. Same token, same origin allowlist, same timeout, same typed `ApiError` on 4xx/5xx (so a 403
+ * still carries `ENTITLEMENT_REQUIRED`); the generated URL builders stay the source of truth for the
+ * paths. This exists over the generated hooks because an export is an ACTION with a device side
+ * effect — the generated `useQuery` hooks would cache the bytes and refetch them on window focus,
+ * re-downloading a file nobody asked for — and because only this entry reads `Content-Disposition`.
+ */
+export async function apiFetchFile(path: string, init: RequestInit = {}): Promise<FetchedFile> {
+  const { headers, body } = await request(path, init);
+  return { blob: body as Blob, filename: filenameFrom(headers.get("Content-Disposition")) };
 }
 
 /**

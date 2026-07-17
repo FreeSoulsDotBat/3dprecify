@@ -32,10 +32,11 @@ vi.mock("@/entities/bom/use-bom", () => ({ useBoms: useBomsMock }));
 // The detail reads the entitlement for ONE thing: the lapse note that explains the absent write
 // affordances. Mocked (no QueryClient here); defaulted to active so the ordinary tests see no banner.
 vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: useEntitlementMock }));
-// "Recalcular hoje" and the manage bar are exercised in their own tests (recalc-today.test.tsx,
-// snapshot-manage.test.tsx); stub them here so this surface's tests stay isolated from their
-// entitlement/record/fee-catalog dependencies.
+// "Recalcular hoje", the comparison and the manage bar are exercised in their own tests
+// (recalc-today.test.tsx, compare-today.test.tsx, snapshot-manage.test.tsx); stub them here so this
+// surface's tests stay isolated from their entitlement/record/fee-catalog dependencies.
 vi.mock("./recalc-today", () => ({ RecalcTodayButton: () => null }));
+vi.mock("./compare-today", () => ({ CompareTodayBlock: () => null }));
 vi.mock("@/features/history/snapshot-manage", () => ({ SnapshotManageActions: () => null }));
 vi.mock("@tanstack/react-router", () => ({
   // An <a> only carries the implicit ARIA role "link" when it has an href — so the mock derives one

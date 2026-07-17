@@ -39,7 +39,10 @@ import { frozenPayloadOf } from "@/entities/history/history-format";
 
 const t = messages.historico;
 
-const BASIS_TOTAL: Record<SnapshotInHeadlineBasis, "precoVarejo" | "precoAtacado"> = {
+/** Which leaf of `payload.totals` the recorded basis points at. Exported because `compare-today`
+ *  reads the same leaf to answer "and what would it cost today?" — two copies of this map is two
+ *  chances to point a wholesale quote at the retail number. */
+export const BASIS_TOTAL: Record<SnapshotInHeadlineBasis, "precoVarejo" | "precoAtacado"> = {
   PRECO_VAREJO: "precoVarejo",
   PRECO_ATACADO: "precoAtacado",
 };

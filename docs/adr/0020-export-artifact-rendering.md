@@ -71,12 +71,28 @@ asymmetry it creates: **recording works offline for the seller at a fair; export
 4. **Content rules are server-side and testable:** zero internal cost lines unless `includeCostBreakdown` is
    explicitly true (Q4 / FR-512 / SC-506); a kit quote itemizes every piece (name + quantity) with the total and
    still zero cost lines (SC-515); every artifact carries the **device record date** and the validity period.
-5. **PDF library: to be VERIFIED at implementation, not asserted here** (ADR-0008's own precedent: *"re-verify the
-   exact package + version pin at that point — do not assume this ADR's version facts remain current"*). Evaluate
-   on: no native deps > fidelity to the DS > licence compatibility. Candidates: WeasyPrint (HTML/CSS → PDF; native
-   Pango deps), ReportLab (no native deps; more layout code), fpdf2 (pure Python; check licence). The pick and its
-   pin are recorded here at implementation. **Deploy is deferred to v1, so an image change is cheap now and
-   expensive later.**
+5. **PDF library — VERIFIED and PINNED (T025, 2026-07-16; owner-ratified): `reportlab==5.0.0`** (the open-source
+   BSD toolkit). Evaluated on the stated priority order — **no native deps > fidelity to the DS > licence** — with
+   current facts re-verified per ADR-0008's precedent (*do not assume version facts remain current*):
+   - **ReportLab 5.0.0 — CHOSEN.** Ships a **pure-Python `reportlab-5.0.0-py3-none-any.whl`** (the C accelerator is
+     now the optional `rl_accel` extra), so it installs on the `python:3.12-slim` image with **no compiler and no
+     `apt` layer**; runtime deps are `pillow>=9.0.0` + `charset-normalizer` (both pip wheels). Licence **BSD**
+     (permissive). Python `>=3.9,<4`. Its Platypus flowables (Paragraph/Table/ParagraphStyle) give programmatic
+     control for an itemized kit quote and are the most **deterministic/testable** fit for "the renderer PRINTS,
+     never CALCULATES" (SC-506). Wins criteria 1 (no native deps) and 3 (licence); on criterion 2 it is close
+     enough given criterion 1 eliminates the only better option. **Install base only** — the `rlPyCairo` /
+     `freetype-py` (cairo) and `uharfbuzz` extras are NOT added; they would reintroduce native deps and are
+     unneeded for a text+table quote.
+   - **fpdf2 2.8.7 — fallback.** Also zero native deps (pure Python; Pillow/defusedxml/fontTools) and actively
+     maintained, but **LGPL-3.0** (fine for server-side unmodified import, more encumbered than BSD) and a thinner
+     layout engine. Adopt only if a ReportLab-specific blocker surfaces.
+   - **WeasyPrint 69 — rejected.** Best DS fidelity (HTML/CSS → PDF) but requires the native **Pango + cairo +
+     GDK-PixBuf + libffi** system libs, which **cannot be pip-installed** and would add an `apt` layer to the slim
+     image — failing the top criterion. Reconsider only if the owner later prioritises pixel-DS-fidelity over image
+     simplicity.
+
+   **Deploy is deferred to v1, so an image change is cheap now and expensive later** — pinning the pure-Python pick
+   now keeps the backend image `apt`-clean through the deploy increment.
 
 ## Consequences
 

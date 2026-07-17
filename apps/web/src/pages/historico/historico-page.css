@@ -143,3 +143,23 @@
   font-size: var(--fs-caption, 0.8125rem);
   gap: var(--space-2, 0.5rem);
 }
+
+/* 009/T029 (US7) — the comparison: the frozen total and today's, side by side. The two rows are
+   deliberately IDENTICAL in weight: styling "hoje" as the headline would make an informational
+   comparison read like the new truth, when the record still says what it says. */
+.tf-compare {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+.tf-compare__row {
+  align-items: baseline;
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+}
+
+.tf-compare__row strong {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}

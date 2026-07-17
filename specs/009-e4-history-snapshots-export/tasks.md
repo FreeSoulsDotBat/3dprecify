@@ -241,36 +241,144 @@ here.** **Independent Test**: quickstart §2 + §7.
 
 **Goal**: the quote leaves the app and reaches a customer. **Independent Test**: quickstart §6.
 
-- [ ] T025 [US4] **VERIFY and PIN the PDF library — do NOT assume one** (ADR-0020 §5; ADR-0008's own precedent:
+- [x] T025 [US4] **VERIFY and PIN the PDF library — do NOT assume one** (ADR-0020 §5; ADR-0008's own precedent:
       *"re-verify the exact package + version pin at that point"*). Judge on: **no native deps > DS fidelity >
       licence**. Candidates: WeasyPrint (native Pango deps), ReportLab (no native deps, more layout code), fpdf2
       (pure Python — **check the licence**). Record the pick + pin in ADR-0020 Consequences. *(Deploy is deferred
-      to v1, so a backend image change is cheap now and expensive later.)*
-- [ ] T026 [US4] Write FAILING pytest first — `backend/tests/test_export.py`: **zero internal cost lines**
+      to v1, so a backend image change is cheap now and expensive later.)* *(**PINNED `reportlab==5.0.0`**,
+      owner-ratified 2026-07-16 — verified current facts: pure-Python `py3-none-any` wheel installs on
+      `python:3.12-slim` with no compiler/`apt` (the C accel is now the optional `rl_accel` extra), deps
+      pillow+charset-normalizer, **BSD** licence. WeasyPrint rejected on native Pango/cairo/GDK-PixBuf; fpdf2 2.8.7
+      kept as fallback (no native deps but LGPL-3.0 + thinner layout). Base install only — no cairo/harfbuzz extras.
+      Recorded in ADR-0020 §5.)*
+- [x] T026 [US4] Write FAILING pytest first — `backend/tests/test_export.py`: **zero internal cost lines**
       (material/energy/machine/failure/margin) unless `includeCostBreakdown=true` (SC-506); a **kit** quote
       **itemizes every piece** (name + quantity) + total, still with zero cost lines (SC-515); the quote carries
       the **device record date** + validity period + seller identity from the **verified ID-token claims** (no
       display-name column exists; e-mail only when the claim is absent — Q13); **CSV rows equal the stored
       snapshots exactly** (no re-derivation, no drift — FR-513); **lapse ⇒ denied with NO partial artifact**
       (FR-515); free/signed-out ⇒ **no artifact produced** (Q7). Observe failing.
-- [ ] T027 [US4] Implement `backend/app/services/quote_render.py` + the export endpoints behind
+- [x] T027 [US4] Implement `backend/app/services/quote_render.py` + the export endpoints behind
       `require_entitlement` (**ACTIVE**). The renderer **prints stored, already-rounded values and performs ZERO
       arithmetic** — no formula, no markup, no gross-up. *"The backend never recomputes" (ADR-0008) stands,
       untouched — a document renderer forks nothing, which is exactly why the ADR-0015 precedent does not
       transfer.* Tests green.
-- [ ] T028 [US4] Web export UI: the opt-in "incluir detalhamento de custos" toggle (**off by default** — leaking
+- [x] T028 [US4] Web export UI: the opt-in "incluir detalhamento de custos" toggle (**off by default** — leaking
       margin to the seller's client is a product-level harm); **offline ⇒ the affordance is disabled WITH ITS
       REASON** ("exportar precisa de conexão"), never a fake success; a **pending** snapshot ⇒ **not exportable**
       until it syncs ("sincronize para exportar") — *you cannot export a record the record-keeper has never seen*.
       Failing-first, then implement.
-- [ ] T029 [P] [US7] **DROPPABLE (P3)** — snapshot vs today's cost, side by side ("cotado em {data}" vs "hoje"),
+      *Done 2026-07-16 (failing-first: 15 red → green).* `features/history/export-sheet.tsx` (`ExportButton` +
+      Sheet, copy = ux §6/§8) mounted on the snapshot detail beside `RecalcTodayButton`;
+      `entities/history/use-export.ts` (mutations, not queries — an export is an action with a device side
+      effect, and a query would refetch on focus and re-download a file nobody asked for);
+      `shared/lib/save-file.ts`. **`shared/api/transport.ts` gained `apiFetchFile`** — the generated Orval
+      hooks are `useQuery`, and an export is an ACTION with a device side effect (a query would refetch on
+      focus and re-download the file); only `apiFetchFile` reads `Content-Disposition`. The generated **url
+      builders** stay the contract's source of truth, and the error path still parses the JSON envelope so a
+      403 keeps `ENTITLEMENT_REQUIRED`.
+      **Three copy strings are NEW** (ux §8 has no CSV-state button, no radio legend, no failure line) —
+      `exportGenerateCsv` · `exportFormatField` · `exportFailed`, plus `exportCsvNote` (the CSV is rendered from
+      the ACCOUNT, so a queued record is not in it — silence there would be a ledger that omits a quote the
+      seller knows they made). **Ratify at T030** (ux §8 is "owner-ratified at homologation").
+      **⚠ DEVIATION for T030:** ux §6 says lapsed ⇒ *"visible → reactivation panel"*; implemented as
+      **visible + disabled + `exportLapsed`**, matching the offline/pending reason-pattern beside it and the
+      shipped PR-B siblings (rename/delete/recalc are simply absent, explained by the page's lapse banner). A
+      panel would open a dialog whose only content is the sentence already on screen, and there is no
+      reactivation FLOW to offer before E6 (billing) — it would promise a door that does not exist.
+- [x] T029 [P] [US7] **DROPPABLE (P3)** — snapshot vs today's cost, side by side ("cotado em {data}" vs "hoje"),
       purely informational; the frozen entry stays unmodified. **Cut this before cutting anything in US4.**
-- [ ] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;
+      *Done 2026-07-16 — **owner decision: BUILT, not dropped** (US4 landed whole, so nothing forced the cut).*
+      `pages/historico/compare-today.tsx` (page layer, same reason as `recalc-today`: the recompute needs
+      `features/calculator`, and FSD-Lite forbids a feature importing a feature) + 7 failing-first tests.
+      It **reuses `recalcToday`**, which already carries the honesty flag this surface depends on: it renders
+      "Hoje" **only when `fromFrozen === false`**. Under an unchanged formula a frozen fallback reprices to the
+      frozen values exactly — so labelling those "Hoje" would answer *"seu custo não mudou"* with July's own
+      number. The render keys off the ACTUAL outcome, never `!!product` (the trap the PR-A review caught in
+      `RecalcDialog`). Compares **like with like** (an atacado quote vs today's atacado — pairing it with varejo
+      would manufacture an increase that never happened) and **computes no delta**: money arithmetic lives in
+      `pricing-core` (ADR-0008), and two labelled numbers answer the question without inventing a third.
+      Origin unresolvable ⇒ the affordance is **silently absent** (FR-503 precedent: same as "abrir origem").
+      **NEW copy** (ux never drew this surface) — `compareAction` · `compareToday` · `compareNote` ·
+      `compareUnavailable`. **Ratify at T030.**
+- [x] T030 [US4] Visual test: qa-produto homologates the export walk — quote content (zero cost lines by default;
       kit itemized), the opt-in breakdown, the **lapse denial**, the offline disabled-with-reason, and the pending
       "sincronize para exportar".
+      *Done 2026-07-16 — **PASS-WITH-NITS** (168k tokens / 93 tool uses; ledger row filed).* Verified ON THE REAL
+      RENDERED ARTIFACT (downloaded through the running app, not asserted from a 200): SC-506 default quote has
+      **zero** cost lines · opt-in reveals them · the switch is **OFF again on reopen even after an opt-in export**
+      · SC-515 kit itemizes · **FR-515 the server genuinely refuses on lapse** (403 ENTITLEMENT_REQUIRED, no bytes,
+      real token) · offline/pending reasons · the midnight trap (01:30Z, offset −180 → PDF prints "13/07/2026") ·
+      pt-BR money · regression 3/3 · zero pageerror at 390px + desktop.
+      **DEFECT FOUND + FIXED (the one a green gate could not see):** `build_history_csv` emitted the stored **UTC**
+      instant and **discarded the offset** — a 22:30 BRT quote is stored as 01:30Z, so card/detail/PDF said 13/07
+      and the **CSV said 14/07**, with the local day *unrecoverable* from the file (FR-513 "the same dates",
+      SC-511). It survived because `TestHistoryCsv` asserted label/total/basis/kind and **never the
+      `deviceQuotedAt` value**. This is the **same defect class** ("the date is a day off") the backend
+      homologation already caught in the PDF — it came back on the sibling surface nobody had rendered. Fixed
+      failing-first (red proved "14/07/2026") by re-anchoring the stored offset: same instant, correct local day,
+      and the offset now travels so a reader can recover the day themselves — **more** faithful to the stored row,
+      no re-derivation (ADR-0008 intact).
+      **NOT fixed, reported as ratification notes:** N1 `exportIncludeCostsWarn` says the customer would see
+      "margem" though no margin LINE prints (it is derivable from costs+price); N2 `exportContents` says "nome e
+      e-mail" though an account without a display name prints e-mail only. Both **over-warn** — they disclose more
+      exposure than occurs, which is the safe direction for a privacy/margin notice — and both are ux §8 copy the
+      owner already ratified; rewording ratified copy on a specialist's note is exactly what the 008 designer-ux
+      lesson forbids. N3 (`Falhas R$ 0,00` under opt-in) is NOT a defect: those are **stored** zeros, not
+      fabricated (FR-507).
+      **Owner ratifications carried to T031:** all 8 new strings approved (`compareUnavailable` approved *with a
+      tone caveat* — correct but long/technical); the **lapse deviation approved** — the page banner already says
+      the sentence a "reactivation panel" would open, and the visible-disabled/absent asymmetry is defensible
+      because export has three distinct unavailability causes while rename/delete have one. Optional trim offered:
+      drop the 2nd sentence of `exportLapsed` (it echoes the banner).
+      **RE-VERIFICATION 2026-07-16 (same agent via SendMessage) — verdict raised to PASS (confidence 85%→92%).**
+      Both open items closed on real artifacts:
+      · **The CSV fix, re-read on the downloaded file** under a REAL straddle (browser context in `Asia/Dubai`,
+        UTC+4: UTC still 16/07 21:18Z while the device was already 17/07 01:18). Card, detail, **PDF and CSV all
+        four agree on 17/07**, and `+04:00` travels in the file — the local day is recoverable, which was the half
+        of the defect nobody could see. The old code would have emitted 16/07. (The −03:00 direction was not
+        forcible on the real clock, but is covered by the new pytest and by the T027 direct render at −180 → 13/07;
+        both directions go through the same `astimezone`.)
+      · **US7 IS reachable, and is now proven in the browser — the earlier "no lever" finding was WRONG.** It was
+        a bad generalization from a true fact: a product materialized from a KIT is born `filament_id=None`
+        (`boms.py:157`), but a product **created in the Catálogo requires the links** (`produto-page.tsx:173`) ⇒ D3
+        live-reflect ⇒ the lever exists. Walk: filament `PLA Azul` 110 → **220** ⇒ `Cotado em 16/07/2026 R$ 26,48`
+        vs `Hoje R$ 43,80` (matches the predicted arithmetic), and **the frozen record did not move** — the detail
+        still shows `Material R$ 11,55` from the old roll. The Ficha Técnica's promise ("não muda quando você edita
+        o catálogo") is now **demonstrated, not asserted**. No blocker: "Hoje" never wore the frozen number — the
+        `fromFrozen` gate holds. Judged readable as an ANSWER, not a riddle; `compareNote` does its job.
+      *Known and correct:* a kit-materialized product (unlinked) will always show `Hoje == frozen` — it genuinely
+      is not linked, exactly as its "Vincule um filamento e uma impressora" notice says. Not a defect; it just
+      means the US7 lever depends on the link.
 - [ ] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
       to `develop` → CI green → owner squash-merge. **Owner accepts ADR-0020 at this gate** (incl. the accepted
       asymmetry: **recording works offline; exporting does not**). Graph refresh on merge.
+      **PR #20 aberto** (`feature/009-e4-pr-c-export`); 9/9 checks verdes no commit pré-revisão.
+      **Ciclo de revisão multi-agente (2026-07-16, ~2,13M tokens — ver `docs/token-ledger.md`):** 6 lentes
+      sobre o diff → 21 achados, **zero refutados**, **4 BLOCKERs reais**, todos corrigidos test-first:
+      (1) markup do ReportLab (`Paragraph` parseia o conteúdo — `label`/nome/e-mail crus sumiam, corrompiam
+      ou davam 500; achado por 3 lentes independentes), (2) dinheiro contado 2× (`admin` **É** Σ otherCosts,
+      pricing-core `index.ts:77/93`), (3) `int(0 or 1) == 1` (quantidade 0 é estado legal, Q1), (4) célula
+      "item" em branco numa peça sem nome. Commit `c8977da`.
+      **Depois, o restante dos achados** (MAJORs + os 5 sem veredicto + MINORs) — commit desta leva:
+      `Content-Disposition` exposto via CORS (não é safelisted ⇒ `filenameFrom()` era código morto), o
+      contrato passa a declarar os bytes (`format: "binary"` ⇒ Orval tipa `data: Blob`) e o `request()`
+      devolve Blob real num 2xx não-JSON (o `res.text()` corrompia o PDF — o tipo prometia o que o mutator
+      quebrava), `load_only` na query do CSV (a query puxava todo o JSONB para imprimir 6 escalares),
+      `owned_snapshot` **compartilhado** em vez de copiado (2 cópias de um predicado de posse derivam, e o
+      que deriva é o isolamento entre contas), contrato import-linter `api -> services -> models`, e a
+      correção de copy (o aviso do opt-in nomeava "margem" — que nunca é linha impressa — e omitia
+      acabamento/mão de obra/outros custos; kit tem aviso próprio; `exportContents` passa a nomear a
+      "Referência", que é a nota privada do vendedor viajando até o cliente).
+      **A lição, registrada:** as duas homologações **abriram o artefato** e passaram — com dados
+      **benignos**. Os 4 blockers são todos dependentes de dado. Olhar o artefato é necessário e **não é
+      suficiente**: é preciso olhar com dado **adversarial**. Os fixtures novos (`TestReviewBlockers`,
+      `TestReviewCoverage`) são esse dado, e cada teste de `TestReviewCoverage` foi escrito contra uma
+      mutação que o revisor rodou e viu passar verde.
+      **Achado de processo (segurança do próprio review):** um refutador com Bash+escrita **editou
+      `export.py` removendo o check de posse** para testar se algum teste pegava (nenhum pegava — esse era
+      o achado) e reverteu. A árvore foi verificada antes de seguir. Próxima revisão: refutadores em
+      `isolation: 'worktree'` ou sem ferramenta de escrita.
 
 ---
 
