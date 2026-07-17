@@ -137,6 +137,23 @@ describe("the cost breakdown is OPT-IN (Q4/FR-512, SC-506)", () => {
 
     expect(screen.getByText(t.exportContents)).toBeInTheDocument();
   });
+
+  it("a KIT warns about the artifact a KIT actually gets (review PR-C)", async () => {
+    // The kit quote carries ONE stored cost line ("Custo total"), not the per-piece detail — the
+    // single-piece wording would describe a document the seller is not about to receive.
+    const user = setup();
+    render(
+      <>
+        <ExportButton item={{ ...SYNCED, kind: "KIT" } as unknown as HistoryItem} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
+    await screen.findByText(t.exportContents);
+
+    expect(screen.getByText(t.exportIncludeCostsWarnKit)).toBeInTheDocument();
+    expect(screen.queryByText(t.exportIncludeCostsWarn)).not.toBeInTheDocument();
+  });
 });
 
 describe("the artifact is server-rendered, so it needs a connection AND a server row", () => {
@@ -156,31 +173,38 @@ describe("the artifact is server-rendered, so it needs a connection AND a server
     expect(exportQuote).not.toHaveBeenCalled();
   });
 
-  it("pending: visible, DISABLED — you cannot export a record the server has never seen", async () => {
+  it("pending: the QUOTE is disabled with its reason — you cannot quote a record the server has never seen", async () => {
     const user = setup();
     renderButton(PENDING);
 
-    const button = screen.getByRole("button", { name: t.exportAction });
-    expect(button).toBeDisabled();
-    expect(screen.getByText(t.exportPending)).toBeInTheDocument();
+    // The button itself opens: the CSV behind it is the ACCOUNT's ledger and does not depend on
+    // this record at all (review PR-C — denying it here showed a reason that was false of it).
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
 
-    await user.click(button);
+    const pdf = await screen.findByRole("radio", { name: t.exportQuotePdf });
+    expect(pdf).toBeDisabled();
+    expect(screen.getByText(t.exportPending)).toBeInTheDocument();
+    // ...and the seller lands on the artifact that IS available, not on a dead option.
+    expect(screen.getByRole("radio", { name: t.exportHistoryCsv })).toBeChecked();
     expect(exportQuote).not.toHaveBeenCalled();
   });
 
-  it("failed/blocked read the same way — the record is not in the account either", () => {
+  it("failed/blocked read the same way — the record is not in the account either", async () => {
+    const user = setup();
     renderButton({ ...PENDING, syncState: "failed" } as unknown as HistoryItem);
 
-    expect(screen.getByRole("button", { name: t.exportAction })).toBeDisabled();
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
+
+    expect(await screen.findByRole("radio", { name: t.exportQuotePdf })).toBeDisabled();
     expect(screen.getByText(t.exportPending)).toBeInTheDocument();
   });
 
-  it("offline AND pending: says the connection first — it is the root cause of both", () => {
+  it("offline AND pending: the button says the connection — it blocks BOTH artifacts", () => {
     setOnline(false);
     renderButton(PENDING);
 
+    expect(screen.getByRole("button", { name: t.exportAction })).toBeDisabled();
     expect(screen.getByText(t.exportOffline)).toBeInTheDocument();
-    expect(screen.queryByText(t.exportPending)).not.toBeInTheDocument();
   });
 });
 

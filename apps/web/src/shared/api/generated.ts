@@ -3299,7 +3299,7 @@ export const useDeleteBomApiV1BomsBomIdDelete = <TError = ErrorEnvelope,
     }
 
 export type exportHistoryCsvApiV1HistoryExportCsvGetResponse200 = {
-  data: void
+  data: Blob
   status: 200
 }
 
@@ -3425,7 +3425,7 @@ export function useExportHistoryCsvApiV1HistoryExportCsvGet<TData = Awaited<Retu
 
 
 export type exportQuotePdfApiV1HistorySnapshotIdQuotePdfGetResponse200 = {
-  data: void
+  data: Blob
   status: 200
 }
 

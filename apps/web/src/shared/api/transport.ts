@@ -87,21 +87,12 @@ interface RawResponse {
   body: unknown;
 }
 
-/** How to read a 2xx body. `blob` is for the server-rendered artifacts (009/T028, ADR-0020):
- *  `res.text()` decodes bytes as UTF-8 and silently CORRUPTS a PDF, so binary must opt out. An
- *  ERROR body is always JSON (the ErrorEnvelope) and is parsed as such regardless. */
-type BodyMode = "auto" | "blob";
-
 /**
  * Shared transport core. Sends the authenticated request and normalises transport-phase
  * failures AND 4xx/5xx responses into a thrown, Sentry-reported `ApiError`; on 2xx returns
  * the parsed body with its status + headers so either entry point can shape the result.
  */
-async function request(
-  path: string,
-  init: RequestInit,
-  mode: BodyMode = "auto",
-): Promise<RawResponse> {
+async function request(path: string, init: RequestInit): Promise<RawResponse> {
   const url = resolveUrl(path);
 
   // 15s timeout via an AbortController (hardening b). An externally-supplied signal is MERGED
@@ -144,9 +135,14 @@ async function request(
   let body: unknown;
   try {
     if (res.status === 204) body = null;
-    // Binary opts out ONLY on success: a failed export still answers with a JSON ErrorEnvelope, and
-    // reading it as a Blob would throw away the `code` the call site needs (lapse vs generic).
-    else if (mode === "blob" && res.ok) body = await res.blob();
+    // A successful NON-JSON body is BYTES (the server-rendered export artifacts, ADR-0020). It must
+    // never go through `res.text()`, which decodes as UTF-8 and silently corrupts a PDF (review
+    // PR-C): the contract declares `application/pdf` / `text/csv`, so Orval types these responses
+    // `data: Blob` — and this is what makes that type TRUE for the generated client too, instead of
+    // a promise the mutator breaks. An ERROR body stays JSON-parsed regardless: a failed export
+    // answers with the ErrorEnvelope, and reading it as a Blob would throw away the `code` the call
+    // site needs to tell a lapse from a generic failure.
+    else if (res.ok && !isJson) body = await res.blob();
     else body = isJson ? await res.json() : await res.text();
   } catch (cause) {
     // Malformed body (hardening a): e.g. a 502 that advertises JSON but returns an HTML error
@@ -187,7 +183,9 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   return body as T;
 }
 
-/** A file the server rendered for us, with the name the SERVER chose (009/T028, ADR-0020). */
+/** A file the server rendered for us, with the name the SERVER chose (009/T028, ADR-0020). The
+ *  name only survives cross-origin because `main.py` exposes `Content-Disposition` via CORS — it is
+ *  not safelisted, so without that the browser hides it and this is always `null` (review PR-C). */
 export interface FetchedFile {
   blob: Blob;
   /** From `Content-Disposition`; null when the server sent none — the caller then names it. */
@@ -203,14 +201,15 @@ function filenameFrom(disposition: string | null): string | null {
 }
 
 /**
- * Authenticated fetch for a SERVER-RENDERED file (009/T028). The generated Orval client cannot be
- * used for these: its mutator reads any non-JSON body with `res.text()`, which decodes the bytes as
- * UTF-8 and hands back a corrupted PDF. Everything else is identical — same token, same origin
- * allowlist, same timeout, same typed `ApiError` on 4xx/5xx (so a 403 still carries
- * `ENTITLEMENT_REQUIRED`). The generated URL builders stay the source of truth for the paths.
+ * Authenticated fetch for a SERVER-RENDERED file (009/T028): the bytes, plus the name the server
+ * chose. Same token, same origin allowlist, same timeout, same typed `ApiError` on 4xx/5xx (so a 403
+ * still carries `ENTITLEMENT_REQUIRED`); the generated URL builders stay the source of truth for the
+ * paths. This exists over the generated hooks because an export is an ACTION with a device side
+ * effect — the generated `useQuery` hooks would cache the bytes and refetch them on window focus,
+ * re-downloading a file nobody asked for — and because only this entry reads `Content-Disposition`.
  */
 export async function apiFetchFile(path: string, init: RequestInit = {}): Promise<FetchedFile> {
-  const { headers, body } = await request(path, init, "blob");
+  const { headers, body } = await request(path, init);
   return { blob: body as Blob, filename: filenameFrom(headers.get("Content-Disposition")) };
 }
 

@@ -95,3 +95,19 @@ layers = [
     "app.entitlement",
     "app.db",
 ]
+
+# E4 (009/PR-C, review finding): `app.services` is a real new top layer — the export renderer lives
+# there. This file's own convention says "contracts grow as real modules land", and Principle VIII
+# says architecture is never inferred, so the boundary is declared instead of left in a comment.
+# The direction that matters: a service must never reach back UP into a route. Without this, the
+# tempting `from app.api.history import owned_snapshot` inside a service would pass CI in silence
+# and close an api <-> services cycle. `quote_render` imports only `app.models` + reportlab, so it
+# holds today.
+[[tool.importlinter.contracts]]
+name = "E4 layering: api -> services -> models"
+type = "layers"
+layers = [
+    "app.api",
+    "app.services",
+    "app.models",
+]

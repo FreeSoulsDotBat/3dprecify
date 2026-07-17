@@ -667,3 +667,106 @@ class TestReviewBlockers:
         # ad-hoc test above, which does the same).
         assert quote.lines[0].name == "Peça única"
         assert quote.lines[0].name.strip() != ""
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# Review PR-C — the coverage the review PROVED was missing, each by executing the mutation.
+#
+# Every test below was written against a mutation the reviewer ran and watched pass: delete the
+# assertion's subject, and the old suite stayed green. That is the standard for "is this test worth
+# writing" — not "does it look covered".
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+
+class TestReviewCoverage:
+    def test_the_endpoint_HONOURS_the_opt_in_flag_in_the_ARTIFACT_it_returns(
+        self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+    ) -> None:
+        """MAJOR (mutation proven). Hard-code `include_cost_breakdown=True` in export.py and the old
+        suite still passed 30/30: every default quote would ship the seller's costs to their
+        customer with CI fully green. The endpoint tests stopped at `%PDF-`; `TestQuoteContent`
+        pinned the content MODEL, never the document the ROUTE builds. This asserts the bytes.
+
+        Same class as the CSV date defect (`TestHistoryCsv` asserted every column except the one
+        that was wrong) — fixed there, left standing one file over.
+        """
+        h = _premium(monkeypatch, migrated_db, "u-optin-art", name="Ana", email="ana@x.com")
+        sid = db_client.post("/api/v1/history", headers=h, json=_body(str(uuid.uuid4()))).json()[
+            "id"
+        ]
+
+        default = _pdf_text(db_client.get(f"/api/v1/history/{sid}/quote.pdf", headers=h).content)
+        opted_in = _pdf_text(
+            db_client.get(
+                f"/api/v1/history/{sid}/quote.pdf",
+                headers=h,
+                params={"includeCostBreakdown": "true"},
+            ).content
+        )
+
+        # SC-506 — the default artifact a CUSTOMER receives carries no cost line at all.
+        assert "Detalhamento de custos" not in default
+        assert "Material" not in default
+        # ...and the price they are quoted IS there (proving the extractor read a real page).
+        assert "R$ 21,90" in default
+        # The opt-in is the ONLY way the costs travel.
+        assert "Detalhamento de custos" in opted_in
+        assert "Material" in opted_in
+
+    def test_one_account_can_NEVER_export_another_account_row(
+        self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+    ) -> None:
+        """MAJOR (mutation proven). Remove `Snapshot.owner_uid == uid` from export.py and the old
+        suite passed 30/30 — any premium account could export ANY seller's quote by id, and pull
+        the whole platform's ledger as CSV. The existing 404 test used a random uuid, which is not
+        the same question: an id that exists for SOMEBODY is the one an attacker has. Nothing
+        proved the promise `owned_snapshot` makes in its own docstring (FR-511/SC-509).
+        """
+        victim = _premium(monkeypatch, migrated_db, "u-victim", name="Vic", email="v@x.com")
+        sid = db_client.post(
+            "/api/v1/history", headers=victim, json=_body(str(uuid.uuid4()), label="Segredo do Vic")
+        ).json()["id"]
+
+        # A DIFFERENT premium account, asking for the victim's row by its real id.
+        attacker = _premium(monkeypatch, migrated_db, "u-attacker", name="Mal", email="m@x.com")
+        resp = db_client.get(f"/api/v1/history/{sid}/quote.pdf", headers=attacker)
+
+        assert resp.status_code == 404  # indistinguishable from "does not exist" — never an oracle
+        assert b"%PDF-" not in resp.content  # and NOT one byte of the victim's artifact
+        # The attacker's own CSV carries their own (empty) ledger — never the victim's row.
+        csv_text = db_client.get("/api/v1/history/export.csv", headers=attacker).text
+        assert "Segredo do Vic" not in csv_text
+
+    def test_a_deleted_record_never_comes_back_in_the_csv(
+        self, db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+    ) -> None:
+        """MAJOR (mutation proven). Remove `deleted_at.is_(None)` from the CSV query and the old
+        suite passed 30/30 — records the seller deleted would reappear in their export. Deletion has
+        to mean deletion on every surface, or the ledger is not the seller's to curate."""
+        h = _premium(monkeypatch, migrated_db, "u-del-csv", name="Ana", email="ana@x.com")
+        keep = db_client.post(
+            "/api/v1/history", headers=h, json=_body(str(uuid.uuid4()), label="Fica")
+        ).json()["id"]
+        gone = db_client.post(
+            "/api/v1/history", headers=h, json=_body(str(uuid.uuid4()), label="Apagado")
+        ).json()["id"]
+        assert db_client.delete(f"/api/v1/history/{gone}", headers=h).status_code == 204
+
+        csv_text = db_client.get("/api/v1/history/export.csv", headers=h).text
+
+        assert "Fica" in csv_text
+        assert "Apagado" not in csv_text
+        # And the deleted row is not exportable as a quote either.
+        assert db_client.get(f"/api/v1/history/{gone}/quote.pdf", headers=h).status_code == 404
+        assert db_client.get(f"/api/v1/history/{keep}/quote.pdf", headers=h).status_code == 200
+
+    def test_a_kit_opt_in_actually_returns_the_kit_cost_line(self) -> None:
+        """MINOR (mutation proven). Replace the KIT branch of the opt-in with `pass` and the old
+        suite passed 30/30: the seller flips the switch on a kit quote and silently gets nothing.
+        The failure is conservative (it leaks nothing), but a control that does nothing without
+        saying so is still a promise the app does not keep."""
+        q = build_quote_view(
+            _snap(KIT_PAYLOAD), seller_name="Ana", seller_email=None, include_cost_breakdown=True
+        )
+        # The product decision, pinned: a kit shows its stored aggregate, not a per-piece breakdown.
+        assert [(c.label, c.value) for c in q.cost_breakdown] == [("Custo total", "28.00")]

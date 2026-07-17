@@ -83,7 +83,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
-        expose_headers=[CORRELATION_HEADER],
+        # `Content-Disposition` is NOT a CORS-safelisted response header, and web + API are separate
+        # origins in every deployed environment — so without this the browser hides it and the
+        # export's `filenameFrom()` was dead code that always fell back (review PR-C). Today the
+        # fallbacks happen to match; the moment the server names a file per snapshot, they would
+        # not.
+        expose_headers=[CORRELATION_HEADER, "Content-Disposition"],
     )
 
     # The error response declares the envelope so it (and ErrorCode) land in the OpenAPI schema,

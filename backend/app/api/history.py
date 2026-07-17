@@ -262,7 +262,14 @@ def _to_out(row: Snapshot) -> SnapshotOut:
     )
 
 
-async def _owned(session: AsyncSession, uid: str, snapshot_id: uuid.UUID) -> Snapshot:
+async def owned_snapshot(session: AsyncSession, uid: str, snapshot_id: uuid.UUID) -> Snapshot:
+    """Fetch a live snapshot the caller owns, or 404 — the cross-account isolation of FR-511/SC-509.
+
+    Public, unlike the `_owned` of every sibling router, because `export.py` shares it rather than
+    copying it (review PR-C). Two copies of an ownership predicate is exactly the shape where one
+    gets a `deleted_at` clause and the other silently does not — and the drift is a data leak, not
+    a bug report. One definition means a reader can only be wrong about it in one place.
+    """
     row = (
         await session.execute(
             select(Snapshot).where(
@@ -441,7 +448,7 @@ async def get_snapshot(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
     """Serves the STORED document. No recomputation, ever — that is the whole promise."""
-    return _to_out(await _owned(session, claims["uid"], snapshot_id))
+    return _to_out(await owned_snapshot(session, claims["uid"], snapshot_id))
 
 
 @router.patch(
@@ -461,7 +468,7 @@ async def relabel_snapshot(
     ``null`` clears it; a blank/whitespace string is a 422 (the DB ``ck_snapshots_label_not_blank``
     would otherwise surface as a 500), never a silent no-op.
     """
-    row = await _owned(session, claims["uid"], snapshot_id)
+    row = await owned_snapshot(session, claims["uid"], snapshot_id)
     if "label" not in body.model_fields_set:
         return _to_out(row)  # label omitted ⇒ untouched
     new_label = body.label
@@ -485,6 +492,6 @@ async def delete_snapshot(
 ) -> None:
     """Voluntary soft-delete. The tombstone is ALSO the idempotency guard: it lives inside the
     unique key, so a queued retry cannot bring the entry back (SC-513)."""
-    row = await _owned(session, claims["uid"], snapshot_id)
+    row = await owned_snapshot(session, claims["uid"], snapshot_id)
     row.deleted_at = datetime.datetime.now(datetime.UTC)
     await session.commit()

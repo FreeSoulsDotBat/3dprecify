@@ -18,6 +18,8 @@ import {
 //     `require_entitlement` gate runs, ReportLab renders, and a real file lands on the device. None
 //     of that is reachable from a unit test — the frontend mocks the transport, and the backend
 //     tests never involve a browser, a token, or a download.
+//   · (The PDF's CONTENT is now pinned server-side by `test_export.py`, which decodes the page
+//     streams and reads the printed text — see the note below on why THIS layer still does not.)
 //   · It DOES prove the WIRE: that the seller's cost-breakdown decision travels as the parameter the
 //     server actually reads. A camelCase/snake_case mismatch would make FastAPI silently default it,
 //     and the switch would become decorative — the failure mode with no error message.

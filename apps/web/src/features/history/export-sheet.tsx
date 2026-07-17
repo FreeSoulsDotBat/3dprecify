@@ -58,19 +58,17 @@ export function ExportButton({ item }: { item: HistoryItem }) {
   if (status !== "active" && status !== "lapsed") return null;
 
   // The server id exists iff the record reached the account — so it is exactly the "is there
-  // anything to render?" question, and it covers pending, blocked and failed alike.
+  // anything to render?" question for THIS record, and it covers pending, blocked and failed alike.
   const serverId = item.snapshot?.id ?? null;
-  // Order matters: offline is the ROOT cause when a record is also still queued (it is why it is
-  // queued), and reconnecting is the one action that unblocks both. The lapse outranks both because
-  // it is the only one the seller cannot fix by waiting.
-  const reason =
-    status === "lapsed"
-      ? t.exportLapsed
-      : !online
-        ? t.exportOffline
-        : serverId === null
-          ? t.exportPending
-          : null;
+  // What blocks BOTH artifacts. The lapse outranks offline because it is the one the seller cannot
+  // fix by waiting; offline outranks a pending record because it is WHY the record is pending, and
+  // reconnecting is the single action that unblocks both.
+  //
+  // A pending record is deliberately NOT here (review PR-C): it blocks this record's quote, but the
+  // CSV behind the same button is the whole ACCOUNT's ledger and does not depend on this record at
+  // all. Disabling the button for it showed a reason that was true of one artifact and false of the
+  // other — so the pending case is handled inside, on the option it actually applies to.
+  const reason = status === "lapsed" ? t.exportLapsed : !online ? t.exportOffline : null;
 
   const reasonId = "tf-export-reason";
 
@@ -93,9 +91,16 @@ export function ExportButton({ item }: { item: HistoryItem }) {
       )}
 
       <Sheet open={open} onOpenChange={setOpen}>
-        {open && serverId && (
+        {open && (
           <SheetContent>
-            <ExportForm serverId={serverId} onDone={() => setOpen(false)} />
+            {/* The kind drives the opt-in warning: a kit's artifact carries ONE stored cost line,
+                not the per-piece detail, so the single-piece wording would describe a document the
+                seller is not about to receive (review PR-C). */}
+            <ExportForm
+              serverId={serverId}
+              isKit={item.kind === "KIT"}
+              onDone={() => setOpen(false)}
+            />
           </SheetContent>
         )}
       </Sheet>
@@ -103,10 +108,21 @@ export function ExportButton({ item }: { item: HistoryItem }) {
   );
 }
 
-function ExportForm({ serverId, onDone }: { serverId: string; onDone: () => void }) {
+function ExportForm({
+  serverId,
+  isKit,
+  onDone,
+}: {
+  /** null ⇒ this record has never reached the account, so it has no quote. The CSV still does. */
+  serverId: string | null;
+  isKit: boolean;
+  onDone: () => void;
+}) {
   const quote = useExportQuote();
   const csv = useExportHistoryCsv();
-  const [format, setFormat] = useState<Format>("pdf");
+  // A pending record cannot be quoted, so the seller lands on the artifact that IS available rather
+  // than on a dead option they must first discover is dead.
+  const [format, setFormat] = useState<Format>(serverId ? "pdf" : "csv");
   // OFF, and it starts off every time the Sheet opens — the decision to show a customer the cost
   // lines is per-quote, and a remembered "on" would leak the margin on the next one silently.
   const [includeCosts, setIncludeCosts] = useState(false);
@@ -117,6 +133,7 @@ function ExportForm({ serverId, onDone }: { serverId: string; onDone: () => void
     event.preventDefault();
     try {
       if (format === "pdf") {
+        if (!serverId) return; // unreachable: the option is disabled without a server row
         await quote.mutateAsync({ snapshotId: serverId, includeCostBreakdown: includeCosts });
       } else {
         await csv.mutateAsync();
@@ -145,18 +162,34 @@ function ExportForm({ serverId, onDone }: { serverId: string; onDone: () => void
             ["pdf", t.exportQuotePdf],
             ["csv", t.exportHistoryCsv],
           ] as const
-        ).map(([value, label]) => (
-          <label key={value} className="tf-export__option">
-            <input
-              type="radio"
-              name="export-format"
-              value={value}
-              checked={format === value}
-              onChange={() => setFormat(value)}
-            />
-            <span>{label}</span>
-          </label>
-        ))}
+        ).map(([value, label]) => {
+          // Only the QUOTE needs this record on the server. Disabling the whole Sheet for a pending
+          // record denied the account-wide CSV with a reason that was false of it (review PR-C).
+          const blocked = value === "pdf" && serverId === null;
+          return (
+            <div key={value}>
+              <label className="tf-export__option">
+                <input
+                  type="radio"
+                  name="export-format"
+                  value={value}
+                  checked={format === value}
+                  disabled={blocked}
+                  aria-describedby={blocked ? "tf-export-pdf-reason" : undefined}
+                  onChange={() => setFormat(value)}
+                />
+                <span>{label}</span>
+              </label>
+              {/* Outside the <label> on purpose: inside, it would fold into the radio's accessible
+                  NAME and be announced twice (name + description). Here it is the description. */}
+              {blocked && (
+                <p id="tf-export-pdf-reason" className="tf-export__reason">
+                  {t.exportPending}
+                </p>
+              )}
+            </div>
+          );
+        })}
       </fieldset>
 
       {/* Quote-only. Rendering either of these over the CSV would offer a control with no effect —
@@ -173,8 +206,12 @@ function ExportForm({ serverId, onDone }: { serverId: string; onDone: () => void
               onCheckedChange={setIncludeCosts}
             />
           </div>
-          {/* The harm, said out loud, next to the switch that causes it. */}
-          <p className="tf-export__warn">{t.exportIncludeCostsWarn}</p>
+          {/* The harm, said out loud, next to the switch that causes it — and it must name the
+              lines THIS artifact would actually carry (review PR-C: the old wording named "margem",
+              which is never a printed line, and omitted acabamento/mão de obra/outros custos). */}
+          <p className="tf-export__warn">
+            {isKit ? t.exportIncludeCostsWarnKit : t.exportIncludeCostsWarn}
+          </p>
           {/* What travels — including the personal e-mail (Q13). No surprises after the fact. */}
           <SheetDescription>{t.exportContents}</SheetDescription>
         </>

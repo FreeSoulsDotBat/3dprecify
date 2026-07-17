@@ -352,6 +352,32 @@ here.** **Independent Test**: quickstart §2 + §7.
 - [ ] T031 [US4] **OWNER-GATED** PR-C: `pnpm gate:all` + `pnpm e2e` (SC-506/515 + lapse denial + **SC-512**) → PR
       to `develop` → CI green → owner squash-merge. **Owner accepts ADR-0020 at this gate** (incl. the accepted
       asymmetry: **recording works offline; exporting does not**). Graph refresh on merge.
+      **PR #20 aberto** (`feature/009-e4-pr-c-export`); 9/9 checks verdes no commit pré-revisão.
+      **Ciclo de revisão multi-agente (2026-07-16, ~2,13M tokens — ver `docs/token-ledger.md`):** 6 lentes
+      sobre o diff → 21 achados, **zero refutados**, **4 BLOCKERs reais**, todos corrigidos test-first:
+      (1) markup do ReportLab (`Paragraph` parseia o conteúdo — `label`/nome/e-mail crus sumiam, corrompiam
+      ou davam 500; achado por 3 lentes independentes), (2) dinheiro contado 2× (`admin` **É** Σ otherCosts,
+      pricing-core `index.ts:77/93`), (3) `int(0 or 1) == 1` (quantidade 0 é estado legal, Q1), (4) célula
+      "item" em branco numa peça sem nome. Commit `c8977da`.
+      **Depois, o restante dos achados** (MAJORs + os 5 sem veredicto + MINORs) — commit desta leva:
+      `Content-Disposition` exposto via CORS (não é safelisted ⇒ `filenameFrom()` era código morto), o
+      contrato passa a declarar os bytes (`format: "binary"` ⇒ Orval tipa `data: Blob`) e o `request()`
+      devolve Blob real num 2xx não-JSON (o `res.text()` corrompia o PDF — o tipo prometia o que o mutator
+      quebrava), `load_only` na query do CSV (a query puxava todo o JSONB para imprimir 6 escalares),
+      `owned_snapshot` **compartilhado** em vez de copiado (2 cópias de um predicado de posse derivam, e o
+      que deriva é o isolamento entre contas), contrato import-linter `api -> services -> models`, e a
+      correção de copy (o aviso do opt-in nomeava "margem" — que nunca é linha impressa — e omitia
+      acabamento/mão de obra/outros custos; kit tem aviso próprio; `exportContents` passa a nomear a
+      "Referência", que é a nota privada do vendedor viajando até o cliente).
+      **A lição, registrada:** as duas homologações **abriram o artefato** e passaram — com dados
+      **benignos**. Os 4 blockers são todos dependentes de dado. Olhar o artefato é necessário e **não é
+      suficiente**: é preciso olhar com dado **adversarial**. Os fixtures novos (`TestReviewBlockers`,
+      `TestReviewCoverage`) são esse dado, e cada teste de `TestReviewCoverage` foi escrito contra uma
+      mutação que o revisor rodou e viu passar verde.
+      **Achado de processo (segurança do próprio review):** um refutador com Bash+escrita **editou
+      `export.py` removendo o check de posse** para testar se algum teste pegava (nenhum pegava — esse era
+      o achado) e reverteu. A árvore foi verificada antes de seguir. Próxima revisão: refutadores em
+      `isolation: 'worktree'` ou sem ferramenta de escrita.
 
 ---
 
