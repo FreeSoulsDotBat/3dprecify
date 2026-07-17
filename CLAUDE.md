@@ -23,15 +23,24 @@ catalog-reference lifecycle — D3 live-reflect + D6 read-time degradation + the
 all owner-homologated + full CI green (gate:all + e2e 102/102 + contract drift-guard). Evidence:
 `specs/008-e3-multi-piece-bom/dod-evidence.md`. **ADR-0017** (atomic kit-save + materialization; §6 addendum:
 D6 kit-line degradation is read-time, not eager delete-capture) now Accepted + live.
-**E4 IN PROGRESS** — 009-e4-history-snapshots-export (immutable price snapshots / Histórico, premium); **2 of 3
-slices shipped to `develop`**: PR-A #18 (`b1fbd80`, the frozen shelf — record online+offline via a durable
-uid-keyed outbox + consult + honest US5 teaser; **ADR-0018** offline outbox + **ADR-0019** immutable snapshots,
-incl. the project's first PL/pgSQL immutability trigger; frozen-payload envelope Option A) + PR-B #19 (`bd9d95e`,
-the two-shelf rule made visible — US3 catalog-churn inertness + read-time origin + "Recalcular hoje" + US6
-manage/lapse over a keyset-paginated **unbounded** ledger; **A29 closed**); both owner-homologated after full
-multi-agent review-fix cycles, all CI green (gate:all + history e2e + contract drift-guard). Evidence:
-`specs/009-e4-history-snapshots-export/{tasks.md,dod-evidence.md}`. **Next increment: E4 PR-C — Export** (US4 quote
-render/**ADR-0020**, PDF lib to be pinned not assumed; droppable US7 compare; then the E4 close-out docs).
+**E4 COMPLETE and SHIPPED to `develop`** — 009-e4-history-snapshots-export (immutable price snapshots / Histórico,
+premium), three owner-authorized slices + a close-out: PR-A #18 (`b1fbd80`, the frozen shelf — record
+online+offline via a durable uid-keyed outbox + consult + honest US5 teaser; **ADR-0018** offline outbox +
+**ADR-0019** immutable snapshots, incl. the project's first PL/pgSQL immutability trigger; frozen-payload envelope
+Option A) + PR-B #19 (`bd9d95e`, the two-shelf rule made visible — US3 catalog-churn inertness + read-time origin +
+"Recalcular hoje" + US6 manage/lapse over a keyset-paginated **unbounded** ledger; **A29 closed**) + PR-C #20
+(`e10b49f`, US4 server-rendered PDF/CSV export behind an **active**-entitlement gate — `reportlab==5.0.0` pinned
+not assumed — + the built-not-dropped US7 then-vs-now compare; **ADR-0020**) + close-out PR #21 (`55f49b6`, the T034
+cross-slice homologation's one real find — a PDF quote whose long item-name overran the price columns, invisible to
+text assertions because glyphs collide on the page not in the string; fixed + geometry-guarded, recalc inherits the
+label, CSV formula-injection consciously accepted w/ 4 re-open triggers). All owner-homologated after multi-agent
+review-fix cycles; **ADR-0018/0019/0020 Accepted**, **A29 closed** (open since 2026-07-02). Evidence:
+`specs/009-e4-history-snapshots-export/{tasks.md,dod-evidence.md}`. **The lesson E4 paid for, twice: opening the
+artifact is necessary and not sufficient — do it with adversarial DATA, and for a rendered artifact adversarial
+SIZE, asserting geometry (text extraction is blind to a layout collision).**
+**Next increment: E5** (marketplace simulator — saved scenarios; the live multi-channel compute was pulled forward
+into E1/005). It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan +
+ADRs → tasks) before any code — do NOT infer it.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 

@@ -395,9 +395,15 @@ here.** **Independent Test**: quickstart §2 + §7.
       *Done 2026-07-17.* Written with **real** CI numbers (run `29548507245`): 253→**257** pytest (86.58%, floor
       82) after the T034 follow-up tests, 626 FE / 78 files, 120/120 e2e, import-linter 3 kept. Full SC-501..515
       map, all three homologation records, the review lesson, ADR-0018/0019/0020 statuses, and the T034 verdict.
-- [ ] T033 [P] Docs at close-out: the roadmap E4 row (`docs/product/business-rules.md`) → SHIPPED with the three
+- [x] T033 [P] Docs at close-out: the roadmap E4 row (`docs/product/business-rules.md`) → SHIPPED with the three
       PR SHAs; the `CLAUDE.md` ground line; **ADR-0018/0019/0020 → Accepted**; **A29 flipped to CLOSED** in
       `docs/decisions/audit-findings-r2.md` (open since 2026-07-02, closed by this epic).
+      *Done 2026-07-17 at the close-out merge (PR #21 `55f49b6`).* Roadmap E4 row → **SHIPPED** with all four SHAs
+      (#18 `b1fbd80` · #19 `bd9d95e` · #20 `e10b49f` · close-out #21 `55f49b6`); `CLAUDE.md` ground line → **E4
+      COMPLETE** + E5 named UNSTARTED (spec-kit flow required, do NOT infer); ADR-0018/0019/0020 all **Accepted** at
+      their gates; **A29 struck through** in `audit-findings-r2.md` with its actual answer (labeled + "Recalcular
+      hoje", not the diff candidate). Graph refreshed on the merge (post-merge hook, AST-only, 0 tokens).
+      **E4 CLOSED — all 34 tasks done.**
 - [x] T034 Run `quickstart.md` §1..§9 end-to-end as the final validation before E4 close-out.
       *Done 2026-07-17 — **PASS-WITH-NITS** (qa-produto, the only cross-slice walk: record offline → sync → churn
       → export). §1–§5, §7, §9 PASS; §6/§8 PASS-WITH-NITS. Real stack, adversarial data, DB trigger proven by
