@@ -241,9 +241,11 @@ rollback lines each have an "exercised on <date>" evidence pointer.
 **Independent Test**: quickstart §4 — a reader of the ledger alone can reproduce the verdict: baseline table,
 per-slice rows (estimate → actual + labeled rtk-gain), effective Δ% with caveats, controls never averaged in.
 
-- [ ] T031 [US4] Fix the baseline table in `docs/token-ledger.md` per data-model.md §5 (treatment vs control
+- [x] T031 [US4] Fix the baseline table in `docs/token-ledger.md` per data-model.md §5 (treatment vs control
       shapes; E4 comparables by shape; uncapped E4 PR-A 4.87M excluded) — **hard ordering: lands before E5's
-      first implementation slice starts** (it may land with PR-B if E5 is imminent)
+      first implementation slice starts** (it may land with PR-B if E5 is imminent) — **fixada 2026-07-19
+      na seção "Baseline do piloto 011" do ledger, incl. os limites de atribuição (rtk=Bash-only ·
+      tokenizer ~+30% · expiração do preço intro) e o resultado do R1-gate**
 - [ ] T032 [US4] Per E5 slice (PR-A/PR-B/PR-C of 010): estimate row before the slice, actual (harness tokens,
       never agent self-estimate) + `rtk gain` snapshot (labeled auxiliary) after — three rows total, written as
       the pilot runs

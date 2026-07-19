@@ -206,7 +206,14 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
 
 ## §4 Measurement (US4 / FR-009..010 / SC-006..007) — PR-C
 
-- Baseline table (T031): *(empty slot)*
+- Baseline table (T031): **FIXED (2026-07-19), before E5's first treatment operation.** Section
+  "Baseline do piloto 011" appended to `docs/token-ledger.md`: 5 operation shapes (3 treatment / 2 control),
+  each with its E4 comparable verified against the ledger's own rows (impl 687,153 w/ domain sub-lines ·
+  review capped 1,114,003 + 2,133,240 · qa-produto T030 168,094 w/ secondaries labeled by mandate style ·
+  architecture 283,969 · kickoff 91,786); uncapped E4 PR-A 4,867,561 explicitly excluded; E5's pre-011
+  kickoff (100,766) + architecture round (354,392) labeled CONTROL. Attribution bounds fixed with the
+  baseline: rtk covers Bash-tool traffic only (PowerShell bypass, measured 2026-07-19, owner decision
+  pending), Sonnet tokenizer ~+30%, intro-price expiry 2026-08-31, R1-gate PASSED (all levers active).
 - Per-slice rows (T032): *(empty slot)*
 - Pilot verdict (T033): *(empty slot)*
 
