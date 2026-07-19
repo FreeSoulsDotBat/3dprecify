@@ -9,3 +9,5 @@ apps/web/src/shared/api/**
 contracts/openapi.json
 # Markdown is hand-authored (SDD docs, specs, ADRs) — not auto-formatted.
 **/*.md
+# Browser-MCP session artifacts (tool output, like graphify-out/) — never format-checked.
+.playwright-mcp/**

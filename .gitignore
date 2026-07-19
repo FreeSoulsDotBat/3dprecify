@@ -34,6 +34,8 @@ playwright-report/
 test-results/
 blob-report/
 .playwright/
+# Browser-MCP session artifacts (page snapshots the playwright MCP writes during qa-produto runs)
+.playwright-mcp/
 apps/web/dev-dist/
 .import_linter_cache/
 
