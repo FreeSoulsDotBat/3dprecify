@@ -191,7 +191,11 @@ against the ratified decision, not a variant.** The exact `config.toml` keys, th
 the `exclude_commands` entries, and the `tee` store path/rotation are **devops' call, verified against installed
 rtk on Windows** — not decided here (spec §9.1; §Assumptions below).
 
-**Verified on this machine (rtk 0.43.0, Windows 11, 2026-07-18/19 — T013/T014/T019/T020):**
+**Verified on this machine (rtk 0.43.0, Windows 11, 2026-07-18/19 — T013/T014/T015/T019/T020):**
+- **R1 outcome (the epic's highest pre-identified risk): did NOT fire.** Filtering activated on the first
+  restarted session (2026-07-18) with no Windows auto-rewrite corruption and no contingency path needed —
+  proven behaviorally (plain `git status` intercepted and condensed; verbose pytest 23-pass run reduced to
+  one line; tee recovery pointer on failure). Detail: dod-evidence §2 (T015).
 - **Config** lives at `C:\Users\Jonatan\AppData\Roaming\rtk\config.toml` (the `%APPDATA%` prediction held);
   `[hooks] exclude_commands = ["graphify", "gh", "curl"]` (flat names, README form) + `[tee] enabled=true,
   mode="failures", max_files=20, max_file_size=1048576`.
@@ -254,6 +258,12 @@ silently supersede — Principle VIII) that clause. The new order of mechanisms,
    --update`), which the CLI `update` / the commit hook do **not** cover (code-only).
 3. **`pnpm graph:update` (MANUAL).** Unchanged; the owner-facing one-shot refresh.
 
+**Amendment status: EXECUTED 2026-07-19.** The devops verification the staging waited on ran on this
+machine: hook install T022, ~25s detached on-commit rebuild with `cost.json` untouched T023, byte-identical
+survival across `pnpm install`/`lefthook install` T024 — after which the `post-merge` block and
+`scripts/graph-refresh.sh` were removed together (T025) and ADR-0014 carries the dated Revision 2026-07-19.
+Evidence: `specs/011-token-optimization/dod-evidence.md` §3.
+
 **Retirement of the lefthook `post-merge` net — staged, and here is the justification.** Keeping *both* the
 graphify commit hook and the lefthook `post-merge` trigger means a `develop` merge fires **two** independent
 rebuilds of the same graph (~20s wasted + "which fired?" log noise), and the reason the `post-merge` net existed
@@ -273,9 +283,9 @@ procedure is the documented fallback.*
 
 | Layer | Trigger (the signal to roll back) | Reversal (one line / one command) |
 |-------|-----------------------------------|-----------------------------------|
-| **Model routing** | An E5 slice regresses quality traceably to a downgraded agent — homologation FAIL or `gate:all` red attributable to the model (not the code); or the `effort: medium` cap throttles a genuinely hard executor task. | Flip that agent's frontmatter: `model: sonnet` → `model: opus` (and/or remove the `effort:` line). One line, one agent, no code / migration / ADR rewrite. |
+| **Model routing** | An E5 slice regresses quality traceably to a downgraded agent — homologation FAIL or `gate:all` red attributable to the model (not the code); or the `effort: medium` cap throttles a genuinely hard executor task. | Flip that agent's frontmatter: `model: sonnet` → `model: opus` (and/or remove the `effort:` line). One line, one agent, no code / migration / ADR rewrite. **Exercised 2026-07-18** (qa-software: revert → `git diff` empty → re-apply, dod-evidence §1.4). |
 | **rtk filter** | A filtered command's reduced view hides an actionable signal on a *passing* command (the honesty guard fails for that command), or the filter is unhelpful for a specific command. | Add the command to `exclude_commands` (one line in `%APPDATA%\rtk\config.toml` — exercised 2026-07-19, add+revert clean). To remove the filter wholesale: delete the 12-line `PreToolUse`/`Bash` block from `.claude/settings.json` (the install was manual, so the teardown is the same edit in reverse; documented dry-run 2026-07-19 — exercising it live requires the owner present, the hook surface is permission-gated) → all Bash output passes through raw next session. |
-| **graphify hook** | The commit hook slows or blocks commits, or the rebuild corrupts / stales the graph. | `graphify hook uninstall` (single command) → falls back to the ADR-0014 AI/manual refresh procedure (which the staged retirement kept intact). |
+| **graphify hook** | The commit hook slows or blocks commits, or the rebuild corrupts / stales the graph. | `graphify hook uninstall` (single command) → falls back to the ADR-0014 AI/manual refresh procedure (which the staged retirement kept intact). **Exercised 2026-07-19** (uninstall → status clean → reinstall byte-identical, dod-evidence §3). |
 
 Each rollback line MUST be **exercised once** during the epic (FR-008/SC-008) so the playbook is proven, not
 theoretical.

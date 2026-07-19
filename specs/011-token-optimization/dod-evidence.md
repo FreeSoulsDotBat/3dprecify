@@ -167,11 +167,42 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
 
 ## §3 graphify hook (US3 / FR-007 / SC-005) — PR-B
 
-- Install (T022): *(empty slot)*
-- Rebuild timing (T023): *(empty slot)*
-- Survival proof (T024): *(empty slot)*
-- Staged retirement (T025): *(empty slot)*
-- Exercised rollback (T028): *(empty slot)*
+- Install (T022): **CONFIRMED (2026-07-19).** `graphify hook status` before: both `not installed` →
+  `graphify hook install` → `post-commit` + `post-checkout` written to `.git/hooks/` → status: both
+  `installed`. Contents inspected and recorded (research Q7 closed): POSIX sh scripts, `PYTHONHASHSEED=0`
+  pinned for deterministic louvain clustering; `GRAPHIFY_MAX_WORKERS=1` on Windows/MSYS; skip during
+  rebase/merge/cherry-pick; skip when only `graphify-out/` changed; escape hatch `GRAPHIFY_SKIP_HOOK=1`;
+  4-level Python-interpreter probe (pinned uv-tool path first); the rebuild launches **detached**
+  (DETACHED_PROCESS on Windows) so `git commit` returns immediately, logging to
+  `~/.cache/graphify-rebuild.log`. `post-checkout` runs a **full** rebuild but only on branch switches
+  (`$3 == 1`) and only if `graphify-out/` exists.
+- Rebuild timing (T023): **CONFIRMED (SC-005).** Trivial-but-real commit `75d368a` (11 files of 011
+  evidence, staged surgically per guardrail 4) at ~11:45:19 → hook fired, log shows `11 file(s) changed -
+  rebuilding graph...` → `graph.json` mtime 11:45:44 (**~25s, detached** — commit returned instantly);
+  rebuilt to 4749 nodes / 8055 edges / 385 communities (the growth over ~2877 is the 011 spec corpus +
+  curated-graph backup noted in the log). `cost.json` untouched: mtime still 2026-07-10 17:11:08, MD5
+  `ED2503E2F28DDEC4DA81C02F1EAA147B` before and after = **0 LLM tokens**, as designed.
+- Survival proof (T024): **CONFIRMED (research Q8 closed).** MD5 of both hooks captured
+  (`d267c13f…` / `cf77c1ac…`) → full `pnpm install` (fires `lefthook install` via the root `prepare`
+  script) → both hashes **byte-identical** after. Lefthook only manages the hooks it declares
+  (`pre-commit`/`pre-push`); it does not clobber foreign hooks it has no section for.
+- Staged retirement (T025): **EXECUTED (2026-07-19, only after T023+T024 passed on this machine).**
+  (1) `lefthook.yml`: the `post-merge` graph-refresh block **removed**, replaced by the standing
+  invariant comment — never declare `post-commit`/`post-checkout` in lefthook (Option C guard: a
+  `lefthook install` would overwrite graphify's hooks). (2) `scripts/graph-refresh.sh` deleted via
+  `git rm` after `grep -rn "graph-refresh"` confirmed the only executable reference was the lefthook
+  block itself (all other hits are docs/specs history). (3) ADR-0014 amended in place (dated Revision
+  2026-07-19) + the CLAUDE.md freshness paragraph rewritten to the new mechanism order (T026).
+- Query-log pilot (T027): **SET (2026-07-19).** `setx GRAPHIFY_QUERY_LOG_ENABLE 1` (User scope,
+  verified `=1` via `[Environment]::GetEnvironmentVariable`). New sessions inherit it; this session does
+  not — fine by design, the pilot is E5's sessions. **Teardown line**: `setx GRAPHIFY_QUERY_LOG_ENABLE ""`
+  (or remove the User env var via System Properties). **Decision point**: keep-or-drop resolved at the
+  PR-C pilot verdict (T033, spec Q5) from the pilot data — never left on by default.
+- Exercised rollback (T028): **CONFIRMED (SC-008).** `graphify hook uninstall` → both hook files gone
+  from `.git/hooks/` (verified by `ls`: No such file) + `hook status` both `not installed` → re-install →
+  both `installed`, MD5 **byte-identical** to the T024 hashes (`d267c13f…` / `cf77c1ac…`). Clean
+  round-trip; the fallback during the uninstalled window is exactly ADR-0014's retained AI/manual
+  procedure.
 
 ## §4 Measurement (US4 / FR-009..010 / SC-006..007) — PR-C
 
@@ -179,6 +210,25 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
 - Per-slice rows (T032): *(empty slot)*
 - Pilot verdict (T033): *(empty slot)*
 
+## §Secondary trims (US6 / FR-013) — T035
+
+- **PINNED (2026-07-19).** `.mcp.json`: `@playwright/mcp@latest` → `@playwright/mcp@0.0.78`,
+  `chrome-devtools-mcp@latest` → `chrome-devtools-mcp@1.6.0` (exact versions current on npm at pin time).
+  **Verification boundary (honest)**: MCP servers spawn at session start — this session's playwright server
+  is still the pre-pin `@latest` process, so "qa-produto still drives the browser" is only provable in a
+  session started after the pin. Same per-session-snapshot mechanism as T009/T014 (third occurrence).
+  Verification slot: E5's first qa-produto homologation run (the pilot's first browser use) — if the pinned
+  version breaks browsing, the rollback is the same one-line revert to `@latest`.
+
 ## §5 Boundary re-checks (FR-011 / SC-009..010)
 
-- `gate:all` / lefthook / CI literal, unchanged (T036): *(empty slot)*
+- `gate:all` / lefthook / CI literal, unchanged (T036): **LITERALS CONFIRMED (2026-07-19).**
+  `.github/workflows/ci.yml:32` still `run: pnpm gate:all` (the D4 literal); `lefthook.yml` `pre-push`
+  block untouched by 011 (the only lefthook edit was the `post-merge` retirement + invariant comment —
+  `pre-commit`/`pre-push` byte-identical); no file under `apps/`, `backend/`, `packages/` touched by 011
+  (guardrail 3 held; `git status` shows only config/docs/spec surfaces). Drift-guard: no backend route
+  change ⇒ silent by construction. **Full-gate-green caveat (honest)**: `pnpm gate:all` on this working
+  tree currently fails at `prettier --check` on `.playwright-mcp/page-*.yml` — pre-existing uncommitted
+  pollution from epic 010 (recorded at T016, out of 011's scope to clean). 011's own committed surfaces
+  introduce no gate failure; the green run is re-checked at PR time on the clean CI checkout, where the
+  010 artifacts don't exist.

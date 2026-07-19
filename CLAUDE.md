@@ -1,3 +1,18 @@
+### Cost / model delegation (Claude Code dev workflow — ADR-0022)
+- **Routing (per-agent, in `.claude/agents/*.md` frontmatter):** the 6 executors — `dev-backend`,
+  `dev-frontend`, `dev-estrutura-de-dados`, `devops`, `qa-software`, `scrum-master` — run `model: sonnet`
+  + `effort: medium`; `qa-produto` runs `model: haiku` + `effort: low`; the judgment roles
+  (`arquiteto`, `seguranca`, `product-owner`) **and `designer-ux`** stay on `model: opus`.
+- **Delegation:** routine, spec-driven reads & edits → a cheaper worker subagent; planning, architecture,
+  security review, and final pre-merge review → keep on the main / `opus` model.
+- **Escalation (pricing domain — NON-NEGOTIABLE):** any data-model / schema change that touches the pricing
+  domain — `packages/pricing-core`, the marketplace fee catalog, any money/rate/percent leaf, or the
+  snapshot/kit/scenario payloads — is escalated from `dev-estrutura-de-dados` (sonnet) **to `opus`**. A
+  pricing-domain schema change is the one place a cheap executor carries real financial risk.
+- **Effort:** prefer lower `effort` on mechanical tasks; the executor `medium` cap is the default — lift it
+  per-invocation ONLY for a genuinely hard task, and record the lift in that operation's ledger row.
+- **Rollback:** every routing choice is a one-line frontmatter revert (ADR-0022 §Rollback playbook).
+
 Current ground: **E1 COMPLETE and SHIPPED to `develop`** — 004-e1-pricing-model (corrected pricing model +
 005 US1/US2 multi-channel MVP, PR #6, 2026-07-08) + 005-marketplace-multichannel (fee catalog + offline cache
 + toggle + itemized outros custos, US3–US6 + polish, PR #7, 2026-07-08); both owner-homologated. Evidence:
@@ -40,7 +55,9 @@ artifact is necessary and not sufficient — do it with adversarial DATA, and fo
 SIZE, asserting geometry (text extraction is blind to a layout collision).**
 **Next increment: E5** (marketplace simulator — saved scenarios; the live multi-channel compute was pulled forward
 into E1/005). It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan +
-ADRs → tasks) before any code — do NOT infer it.
+ADRs → tasks) before any code — do NOT infer it. **011-token-optimization is in flight AHEAD of E5, by owner
+decision (2026-07-18)** — it ships no product code (dev-workflow cost governance only, ADR-0022); E5 remains
+queued next and serves as the pilot that measures 011's levers.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
@@ -57,11 +74,15 @@ Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-
 
 Knowledge graph — **graphify** (ADR-0014, amended 2026-07-10). A structural (AST) code graph lives in
 `graphify-out/` (gitignored; ~2877 nodes, built with **0 LLM tokens**). Standing rules:
-- **Freshness — every merge into `develop` refreshes the graph.** The refresh is `graphify update .`
-  (AST-only, ~20s, 0 tokens). The AI runs it as part of the `develop` close-out/bookkeeping step;
-  `pnpm graph:update` is the manual command; a best-effort lefthook `post-merge` hook is a safety net
-  (ff-pulls may skip it, so the AI procedure is load-bearing). Doc/paper/image changes need the skill
-  path (`/graphify --update` in-session) — the CLI `update` covers **code only**.
+- **Freshness (ADR-0022 amends ADR-0014, 2026-07-19) — the graphify commit hook is PRIMARY.**
+  `graphify hook install`'s `post-commit`/`post-checkout` hooks rebuild the graph deterministically on
+  every local commit/branch switch (AST-only, detached ~25s, 0 tokens; log `~/.cache/graphify-rebuild.log`,
+  escape `GRAPHIFY_SKIP_HOOK=1`). **Honest boundary: a remote squash-merge arriving via ff `git pull` on
+  `develop` fires NO hook** — that path stays with the AI close-out procedure `graphify update .`
+  (documented fallback, still load-bearing for merges); `pnpm graph:update` is the manual command. The old
+  lefthook `post-merge` net is retired; NEVER declare `post-commit`/`post-checkout` in `lefthook.yml`
+  (`lefthook install` would overwrite graphify's hooks). Doc/paper/image changes need the skill path
+  (`/graphify --update` in-session) — the CLI `update` covers **code only**.
 - **Graph-first for structural search.** For "where is X / what calls Y / how does subsystem Z
   connect / what's in this area" questions, consult `pnpm graph:query "…"` (or `graphify query/
   explain/path`) **before** blind Grep/Read sweeps — it's cheaper and answers navigation directly.
@@ -89,5 +110,5 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/009-e4-history-snapshots-export/plan.md
+at specs/011-token-optimization/plan.md
 <!-- SPECKIT END -->

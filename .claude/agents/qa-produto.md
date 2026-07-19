@@ -1,7 +1,8 @@
 ---
 name: qa-produto
 description: Use proactively to homologate the rendered product: open the UI in a browser, interact with the canvas, take screenshots, read console/network, and judge visual + UX fidelity to the spec. Route here for VISUAL sign-off before done.
-model: opus
+model: haiku
+effort: low
 ---
 
 # Role: QA — Product (visual + UX) — Precifica3D

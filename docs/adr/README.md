@@ -23,7 +23,11 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0014](0014-knowledge-graph-maintenance-and-agent-search.md) | Knowledge-graph maintenance (refresh on every `develop` merge) & graph-first agent code search (graphify) | Accepted |
 | [0015](0015-e3-bom-entitlement-enforcement.md) | E3 BOM entitlement — server-informed feature guard over a client-side compute (extends ADR-0012) | Accepted |
 | [0016](0016-pricing-core-3-1-0-bom-compose-contract.md) | pricing-core 3.1.0 — `computeBom` assembly contract with per-channel rollup (extends ADR-0008/0011) | Accepted |
-| [0017](0017-kit-save-materialization.md) | Kit-save materialization — atomic txn, path-scoped FR-310 relaxation, name-dedup (extends ADR-0013) | Proposed |
+| [0017](0017-kit-save-materialization.md) | Kit-save materialization — atomic txn, path-scoped FR-310 relaxation, name-dedup (extends ADR-0013) | Accepted |
+| [0018](0018-offline-snapshot-outbox.md) | Offline snapshot outbox — device-durable queue, exactly-once sync, entitlement at sync | Accepted |
+| [0019](0019-snapshot-immutability-enforcement.md) | Snapshot immutability — enforcement in depth + provenance without a foreign key | Accepted |
+| [0020](0020-export-artifact-rendering.md) | Export artifact rendering — server-rendered PDF/CSV behind an active-entitlement gate | Accepted |
+| [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Proposed |
 
 ## Pending (to be written; numbers assigned when authored)
 - Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).

@@ -187,31 +187,31 @@ staged retirement of the `post-merge` net; ADR-0014 amended.
 
 ### Evidence-first for US3 ⚠️
 
-- [ ] T021 [US3] Extend dod-evidence with the §3 slots (install · rebuild timing · survival · retirement ·
+- [x] T021 [US3] Extend dod-evidence with the §3 slots (install · rebuild timing · survival · retirement ·
       rollback) BEFORE installing the hook
 
 ### Implementation for US3
 
-- [ ] T022 [US3] `graphify hook status` (before) → `graphify hook install` → inspect and record
+- [x] T022 [US3] `graphify hook status` (before) → `graphify hook install` → inspect and record
       `.git/hooks/post-commit` + `post-checkout` contents (research Q7 open item)
-- [ ] T023 [US3] Rebuild proof: trivial commit → graph rebuilds (~20s measured, `graphify-out/` mtime,
+- [x] T023 [US3] Rebuild proof: trivial commit → graph rebuilds (~20s measured, `graphify-out/` mtime,
       `cost.json` unchanged = 0 LLM tokens) (SC-005)
-- [ ] T024 [US3] Survival proof (research Q8): `pnpm install` (fires `lefthook install` via `prepare`) →
+- [x] T024 [US3] Survival proof (research Q8): `pnpm install` (fires `lefthook install` via `prepare`) →
       graphify's hooks byte-identical after
-- [ ] T025 [US3] Staged retirement (plan decision 2): add the invariant comment to `lefthook.yml` (never
+- [x] T025 [US3] Staged retirement (plan decision 2): add the invariant comment to `lefthook.yml` (never
       declare `post-commit`/`post-checkout` — Option C guard), remove the `post-merge` graph-refresh block,
       **e delete `scripts/graph-refresh.sh`** (fato verificado 2026-07-18: `pnpm graph:update` chama
       `graphify update .` direto — package.json:23 — então após a aposentadoria o script não é referenciado
       por nada; confirme com `grep -rn "graph-refresh" .` excluindo node_modules/.git antes de deletar) —
       tudo neste mesmo PR, ONLY after T023–T024 pass on this machine
-- [ ] T026 [US3] Amend ADR-0014's refresh clause (graphify hook primary · AI close-out procedure
+- [x] T026 [US3] Amend ADR-0014's refresh clause (graphify hook primary · AI close-out procedure
       `pnpm graph:update` retained as documented fallback · no silent supersession) per ADR-0022's amendment
       text; update the CLAUDE.md graphify freshness paragraph to match
-- [ ] T027 [P] [US3] Pilot-only query-log: `setx GRAPHIFY_QUERY_LOG_ENABLE 1` (env de usuário — sessões novas
+- [x] T027 [P] [US3] Pilot-only query-log: `setx GRAPHIFY_QUERY_LOG_ENABLE 1` (env de usuário — sessões novas
       herdam; a sessão corrente não, e tudo bem: o piloto são as sessões do E5); registre em dod-evidence a
       linha de teardown (`setx GRAPHIFY_QUERY_LOG_ENABLE ""` ou remoção via Painel) e o ponto de decisão
       (Q5 → resolved at PR-C verdict)
-- [ ] T028 [US3] Exercised rollback: `graphify hook uninstall` → `hook status` clean → re-install (SC-008)
+- [x] T028 [US3] Exercised rollback: `graphify hook uninstall` → `hook status` clean → re-install (SC-008)
 
 **Checkpoint**: refresh deterministic on commit; old net retired without a freshness gap.
 
@@ -225,10 +225,10 @@ exercised.
 **Independent Test**: ADR-0022 in the index with ≥3 options + confidences; ADR-0014 amendment merged; the three
 rollback lines each have an "exercised on <date>" evidence pointer.
 
-- [ ] T029 [US5] Finalize ADR-0022 against reality: fold in T013's real config path, T015's R1 outcome, T025's
+- [x] T029 [US5] Finalize ADR-0022 against reality: fold in T013's real config path, T015's R1 outcome, T025's
       retirement, the exercised-rollback dates (T008/T019/T028); reconcile any drift between Proposed text and
       shipped mechanics (no aspirational claims — Constitution II)
-- [ ] T030 [US5] Ledger row for PR-B's own operations (estimate → actual) in `docs/token-ledger.md`
+- [x] T030 [US5] Ledger row for PR-B's own operations (estimate → actual) in `docs/token-ledger.md`
 
 **Checkpoint**: PR-B demoable — owner homologates; ADR-0022 → Accepted, ADR-0014 amendment live.
 
@@ -262,16 +262,19 @@ per-slice rows (estimate → actual + labeled rtk-gain), effective Δ% with cave
 
 ## Phase 8: User Story 6 — Secondary trims (P3, droppable) · rides any PR with budget
 
-- [ ] T035 [P] [US6] Pin `.mcp.json` browser MCPs off `@latest` to exact versions (playwright MCP +
+- [x] T035 [P] [US6] Pin `.mcp.json` browser MCPs off `@latest` to exact versions (playwright MCP +
       chrome-devtools MCP); verify `qa-produto` still drives the browser; OR record the explicit deferral note
-      in dod-evidence (FR-013)
+      in dod-evidence (FR-013) — **pinado (0.0.78 / 1.6.0); verificação do browser fica para a 1ª sessão
+      pós-restart (mesmo mecanismo snapshot-por-sessão), slot = 1ª homologação qa-produto do E5**
 
 ---
 
 ## Phase 9: Polish & Cross-Cutting
 
-- [ ] T036 Boundary re-checks (quickstart §5): `lefthook.yml` pre-push + CI workflow still literal
-      `pnpm gate:all` (FR-011/SC-009); full gate green; drift-guard silent (no backend change)
+- [x] T036 Boundary re-checks (quickstart §5): `lefthook.yml` pre-push + CI workflow still literal
+      `pnpm gate:all` (FR-011/SC-009); full gate green; drift-guard silent (no backend change) —
+      **literais confirmados + drift-guard silencioso; gate-green LOCAL bloqueado por artefato uncommitted
+      do épico 010 (`.playwright-mcp/*.yml`, pré-existente, registrado no T016) — re-checa no CI do PR**
 - [ ] T037 [P] Update the CLAUDE.md ground line (E-pattern close-out): 011 status + pointer to dod-evidence;
       `.specify/feature.json` back to `specs/010-e5-saved-scenarios` so E5 resumes as the active feature
 - [ ] T038 Graph refresh after merge to `develop` — **atenção ao caminho real (ADR-0022 §Amendment, corrigido

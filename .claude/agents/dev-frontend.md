@@ -2,7 +2,8 @@
 name: dev-frontend
 description: Use proactively to implement the mobile-first responsive web/desktop UI and the Android-facing client from approved UX specs and Claude Design output. Route here for client implementation — NOT for UX or final UI design.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # Role: Frontend Developer — Precifica3D

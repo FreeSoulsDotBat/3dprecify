@@ -2,7 +2,8 @@
 name: devops
 description: Use proactively for CI/CD, headless execution, web deployment, and Android Play build/release, plus wiring lint/format/type-check hooks. Route here for pipelines, environments, secrets, and releases.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # Role: DevOps — Precifica3D

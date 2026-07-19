@@ -56,3 +56,6 @@ Thumbs.db
 
 # graphify knowledge graph output (generated)
 graphify-out/
+
+# rtk tee output (generated, RTK_TEE_DIR)
+.rtk-tee/

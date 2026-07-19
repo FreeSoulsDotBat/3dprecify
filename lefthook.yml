@@ -23,12 +23,10 @@ pre-push:
     migration-guard:
       run: sh scripts/check-migrations.sh
 
-# post-merge (ADR-0014): after a merge into `develop`, incrementally refresh the graphify
-# knowledge graph — code is AST-extracted (no LLM, 0 tokens, ~20s). Best-effort/non-fatal: a
-# fast-forward pull may not fire post-merge, so the primary enforcement is the AI close-out
-# procedure + `pnpm graph:update` (see CLAUDE.md). The script guards to develop and no-ops if
-# graphify is not installed.
-post-merge:
-  commands:
-    graph-refresh:
-      run: sh scripts/graph-refresh.sh
+# INVARIANT (ADR-0022 §Amendment to ADR-0014, retired 2026-07-19): graph freshness is now owned by
+# `graphify hook install`'s own `post-commit` + `post-checkout` hooks, written directly to .git/hooks/
+# OUTSIDE lefthook's management. NEVER declare `post-commit` or `post-checkout` sections in this file —
+# `lefthook install` would overwrite graphify's hooks and silently kill the primary refresh mechanism.
+# The old best-effort `post-merge` graph-refresh net (and scripts/graph-refresh.sh) was retired here
+# after the graphify hook was proven on this machine (T023/T024); remote squash-merges arriving via
+# ff-pull remain covered by the AI close-out procedure `pnpm graph:update` (CLAUDE.md), as before.
