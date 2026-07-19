@@ -137,3 +137,43 @@ start at the E3 entities (BomResult, bom_lines, PieceInputs). Actual cost: 216,8
 subagent tokens — well above the ~10–15k naive word-count estimate, because subagent read+reason
 overhead dominates; recorded in `graphify-out/cost.json` (file created — it did not exist before).
 The semantic cache is now persisted for all 26 files, so a future full rebuild will not re-pay this.
+
+## Revision 2026-07-19 — refresh clause amended by ADR-0022 (011-token-optimization)
+
+ADR-0022 **amends** the Maintenance rule above (it does not supersede this ADR). The three-level
+enumeration in §Decision is replaced by the following order of mechanisms, strongest first —
+adopted after `graphify hook install` was proven on this machine (Windows 11, graphify 0.9.12:
+install T022, ~25s detached rebuild on commit T023, survival across `pnpm install`/`lefthook
+install` T024; evidence in `specs/011-token-optimization/dod-evidence.md` §3):
+
+1. **`graphify hook install` — deterministic on-commit rebuild (PRIMARY).** `post-commit` +
+   `post-checkout` written directly to `.git/hooks/` (outside lefthook's management), AST-only,
+   0 LLM tokens, detached (~25s measured; log: `~/.cache/graphify-rebuild.log`; escape hatch
+   `GRAPHIFY_SKIP_HOOK=1`). Covers every **local** commit and branch switch. **Honest boundary:**
+   a squash-merge created remotely arrives via fast-forward `git pull` on `develop`, which fires
+   *neither* hook — that path stays covered by mechanism 2, exactly as it was before.
+2. **AI close-out `graphify update .` (DOCUMENTED FALLBACK, still load-bearing).** The assistant's
+   post-merge bookkeeping step remains in `CLAUDE.md` — it is the net for the remote-merge path,
+   for a machine without the hook (or after a `graphify hook uninstall` rollback), and the **only**
+   path for doc/paper/image semantic ingestion (`/graphify --update`), which the commit hook does
+   not cover (code-only).
+3. **`pnpm graph:update` (MANUAL).** Unchanged; the owner-facing one-shot refresh.
+
+The lefthook `post-merge` net (`scripts/graph-refresh.sh`) is **retired** (block + script removed
+2026-07-19, same PR): its purpose is served by mechanism 1 for local paths, and the ff-pull gap it
+admittedly never covered stays with mechanism 2. `lefthook.yml` now carries the standing invariant:
+**never declare `post-commit`/`post-checkout` there** — `lefthook install` would overwrite
+graphify's hooks. The §Consequences line "the `post-merge` hook is best-effort … so the AI
+procedure is the load-bearing enforcement" is superseded by: *the graphify commit hook is the
+primary enforcement; the AI procedure is the documented fallback.* Rollback: `graphify hook
+uninstall` (one command) returns the repo to the pre-amendment mechanism set.
+
+**Correction, same day (2026-07-19, owner decision — ADR-0022 §Amendment addendum):** the "ff-pull
+gap it admittedly never covered" premise was **measured false** on this machine (git 2.45.1,
+`pull.rebase=false`): `post-merge` **does** fire on a fast-forward `git pull` (scratch-repo proof,
+`specs/011-token-optimization/dod-evidence.md` §3). The `post-merge` net therefore **returns** —
+`lefthook.yml` block + resurrected `scripts/graph-refresh.sh`, guarded to `develop`, non-fatal — as
+mechanism **1b**, the deterministic net for the remote squash-merge path; mechanism 2 stays as the
+fallback and the only doc/paper semantic route. Boundary: `git pull --rebase` fires no `post-merge`
+(the repo runs `pull.rebase=false`; adopting pull-rebase re-opens this). Rollback: remove the
+`post-merge` block + `lefthook install`.

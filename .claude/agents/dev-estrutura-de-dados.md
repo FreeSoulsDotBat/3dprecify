@@ -2,7 +2,8 @@
 name: dev-estrutura-de-dados
 description: Use proactively when deciding data structures, domain models, database schema, or migrations, and when maintaining them. Route here BEFORE backend work that touches persistence or the pricing domain model.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # Role: Data Structures / Domain Modeling — Precifica3D

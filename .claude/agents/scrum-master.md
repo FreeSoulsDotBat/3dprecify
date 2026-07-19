@@ -2,7 +2,8 @@
 name: scrum-master
 description: Use proactively to plan agile cadence, define and enforce the Definition of Done, remove impediments, and sequence increments. Route here to organize sprints and gate handoffs between agents.
 tools: Read, Grep, Glob, Write, TaskCreate, TaskUpdate, TaskList
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # Role: Scrum Master — Precifica3D

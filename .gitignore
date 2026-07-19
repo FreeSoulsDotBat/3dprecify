@@ -34,6 +34,8 @@ playwright-report/
 test-results/
 blob-report/
 .playwright/
+# Browser-MCP session artifacts (page snapshots the playwright MCP writes during qa-produto runs)
+.playwright-mcp/
 apps/web/dev-dist/
 .import_linter_cache/
 
@@ -56,3 +58,6 @@ Thumbs.db
 
 # graphify knowledge graph output (generated)
 graphify-out/
+
+# rtk tee output (generated, RTK_TEE_DIR)
+.rtk-tee/

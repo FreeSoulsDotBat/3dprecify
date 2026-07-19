@@ -2,7 +2,8 @@
 name: dev-backend
 description: Use proactively to implement API endpoints, authentication, authorization/RLS, entitlements, Mercado Pago integration, and server-side premium validation. Route here for any server-side logic.
 tools: Read, Grep, Glob, Edit, Write, Bash
-model: opus
+model: sonnet
+effort: medium
 ---
 
 # Role: Backend Developer — Precifica3D
