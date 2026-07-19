@@ -12,6 +12,8 @@ PR's dod-evidence. `pnpm gate:all` itself must stay byte-identical (FR-011) — 
 **Organization**: by user story, sequenced into the owner-authorized PR slices: **PR-A** = Phase 1–3 (US1 + US5
 draft), **PR-B** = Phase 4–6 (US2 + US3 + US5 final), **PR-C** = Phase 7 (US4 verdict; opens with the baseline
 BEFORE E5's first treatment op). US6 (P3) rides whichever PR has budget or is explicitly deferred.
+**Decisão do dono 2026-07-19: os slices consolidaram num único PR #22** (A + B + baseline do C); a homologação
+cobre o conjunto, T032–T034 fecham no E5 — ver `dod-evidence.md` §Processo.
 
 ## Format: `[ID] [P?] [Story] Description`
 
@@ -277,8 +279,12 @@ per-slice rows (estimate → actual + labeled rtk-gain), effective Δ% with cave
       `pnpm gate:all` (FR-011/SC-009); full gate green; drift-guard silent (no backend change) —
       **literais confirmados + drift-guard silencioso; gate-green LOCAL bloqueado por artefato uncommitted
       do épico 010 (`.playwright-mcp/*.yml`, pré-existente, registrado no T016) — re-checa no CI do PR**
-- [ ] T037 [P] Update the CLAUDE.md ground line (E-pattern close-out): 011 status + pointer to dod-evidence;
-      `.specify/feature.json` back to `specs/010-e5-saved-scenarios` so E5 resumes as the active feature
+- [x] T037 [P] Update the CLAUDE.md ground line (E-pattern close-out): 011 status + pointer to dod-evidence;
+      `.specify/feature.json` back to `specs/010-e5-saved-scenarios` so E5 resumes as the active feature —
+      **EXECUTADO 2026-07-19 no próprio PR #22** (ground line reescrita: alavancas landed + veredito pendente
+      no E5; feature.json → 010). O ponteiro SPECKIT do rodapé segue em `specs/011-token-optimization/plan.md`
+      até o fluxo speckit do E5 retomá-lo — apontar para `specs/010-**` agora referenciaria um caminho ainda
+      não commitado (os artefatos do 010 vivem uncommitted na árvore)
 - [ ] T038 Graph refresh after merge to `develop` — **atenção ao caminho real (ADR-0022 §Amendment, corrigido
       2026-07-18)**: o squash-merge do PR nasce REMOTO no GitHub; `git pull` fast-forward em develop NÃO
       dispara post-commit nem post-checkout. O caminho para merges de develop continua sendo o procedimento de

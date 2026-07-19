@@ -55,9 +55,13 @@ artifact is necessary and not sufficient — do it with adversarial DATA, and fo
 SIZE, asserting geometry (text extraction is blind to a layout collision).**
 **Next increment: E5** (marketplace simulator — saved scenarios; the live multi-channel compute was pulled forward
 into E1/005). It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan +
-ADRs → tasks) before any code — do NOT infer it. **011-token-optimization is in flight AHEAD of E5, by owner
-decision (2026-07-18)** — it ships no product code (dev-workflow cost governance only, ADR-0022); E5 remains
-queued next and serves as the pilot that measures 011's levers.
+ADRs → tasks) before any code — do NOT infer it. **011-token-optimization: levers LANDED via single PR #22**
+(owner-authorized consolidation of PR-A + PR-B + the PR-C baseline, decision 2026-07-19) — routing + rtk
+filter + graphify hook live, meter armed (T031 baseline fixed BEFORE E5's first treatment op); no product code
+(dev-workflow cost governance only, ADR-0022 — flips Proposed → Accepted at the owner's homologation of #22).
+**The pilot verdict (T032–T034, ≥30%-or-honest-shortfall) stays OPEN by design and closes during/at the end of
+E5**, which resumes as the active feature and measures 011's levers. Evidence:
+`specs/011-token-optimization/dod-evidence.md`.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 

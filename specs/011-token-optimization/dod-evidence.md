@@ -236,6 +236,28 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   Verification slot: E5's first qa-produto homologation run (the pilot's first browser use) — if the pinned
   version breaks browsing, the rollback is the same one-line revert to `@latest`.
 
+## §Processo — fatiamento e higiene (decisões datadas, registradas na revisão de conformidade)
+
+- **Consolidação dos slices num único PR (#22) — DECISÃO DO DONO, 2026-07-19.** O plan §Slicing previa
+  3 PRs owner-autorizados (PR-A routing · PR-B alavancas · PR-C medidor). Na prática PR-A + PR-B + a
+  abertura do PR-C (baseline T031) landaram consolidados no PR #22; a consolidação não tinha decisão
+  datada registrada — apontada como desvio na revisão de conformidade do PR (2026-07-19) e **ratificada
+  pelo dono na mesma data** ("pode corrigir os desvios"). Forma vinculante: a homologação do dono sobre
+  o PR #22 cobre o conjunto **A + B + baseline**; o veredito do piloto (T032–T034, SC-006/SC-007/FR-010)
+  permanece **aberto por design** e fecha durante/no encerramento do E5 — a homologação deste PR não o
+  antecipa. Os checkpoints internos de homologação por slice (routing · rtk/graphify) ficam absorvidos
+  na homologação única.
+- **ADR index catch-up além da letra do T001 (consciente).** `docs/adr/README.md` também flipa
+  0017 → Accepted e adiciona as linhas 0018–0020 — bookkeeping do E4 que faltava no `develop` (o
+  conteúdo confere com o ground truth do CLAUDE.md: ADR-0017..0020 Accepted no close-out do E4). Vai
+  além da instrução do T001 ("stage só a linha 0022"), mantido por decisão consciente: corrigir índice
+  defasado é higiene de documentação viva (Princípio VI), não risco de escopo. A linha 0021 (épico 010)
+  continua FORA, como mandado.
+- **`.playwright-mcp/` em `.gitignore` + `.prettierignore` — aprovado pelo dono (PR body).** Artefato de
+  sessão do browser-MCP (grava durante runs do qa-produto; classe `graphify-out/`). Não muda o literal
+  `pnpm gate:all` (FR-011 mantido) e o CI nunca vê o diretório (gitignored); o efeito é só destravar o
+  gate local numa árvore com artefatos presentes — exatamente a falha pré-existente registrada no T016.
+
 ## §5 Boundary re-checks (FR-011 / SC-009..010)
 
 - `gate:all` / lefthook / CI literal, unchanged (T036): **LITERALS CONFIRMED (2026-07-19).**

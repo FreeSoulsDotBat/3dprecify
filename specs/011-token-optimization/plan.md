@@ -169,6 +169,10 @@ commit (~20s), consciously accepted with `hook uninstall` as the rollback.
 
 ## Slicing (owner-authorized per PR, E-pattern)
 
+> **Nota datada (2026-07-19, decisão do dono):** os três slices abaixo foram **consolidados num único
+> PR (#22)** — PR-A + PR-B completos + a abertura do PR-C (baseline T031). A homologação do dono cobre o
+> conjunto; T032–T034 fecham no E5. Registro completo: `dod-evidence.md` §Processo.
+
 - **PR-A — Routing + governance skeleton (US1 + US5 partial)**: 7 agent frontmatter edits, CLAUDE.md rules,
   ADR-0022 (Proposed) + index row, routing rollback exercised. *Starts saving immediately; every later 011/E5
   operation already runs at the new price/token.*
