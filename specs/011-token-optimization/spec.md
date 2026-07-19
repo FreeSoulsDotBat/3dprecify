@@ -20,6 +20,17 @@ research: `C:\Users\Jonatan\Downloads\tokenoptimization.md` (fact-checked sweep,
 
 ## Clarifications
 
+### Session 2026-07-19
+
+- Q: US3's "honest boundary" premise — does a fast-forward `git pull` on `develop` really fire no local
+  hook? → A: **Measured FALSE on this machine** (git 2.45.1, `pull.rebase=false`): `post-merge` DOES fire
+  on a ff pull (scratch-repo proof with a marker hook, dod-evidence §3) — the "may not fire" line was a
+  never-tested hedge inherited from the old script. **Owner decision (2026-07-19): Option A** — re-declare
+  the lefthook `post-merge` net (block + resurrected `scripts/graph-refresh.sh`, guarded to `develop`,
+  non-fatal) as the deterministic merge-path complement to the graphify hooks; ADR-0022 §Amendment
+  addendum + ADR-0014 Revision correction carry it. Boundary: `git pull --rebase` fires no `post-merge`
+  (config today is `pull.rebase=false`; adopting pull-rebase is the re-open trigger).
+
 ### Session 2026-07-18
 
 - Q: Pilot acceptance threshold (SC-007) — ≥30%, ≥20%, or no fixed %? → A: **≥30% as the target, with the

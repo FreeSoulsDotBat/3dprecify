@@ -78,15 +78,18 @@ Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-
 
 Knowledge graph — **graphify** (ADR-0014, amended 2026-07-10). A structural (AST) code graph lives in
 `graphify-out/` (gitignored; ~2877 nodes, built with **0 LLM tokens**). Standing rules:
-- **Freshness (ADR-0022 amends ADR-0014, 2026-07-19) — the graphify commit hook is PRIMARY.**
-  `graphify hook install`'s `post-commit`/`post-checkout` hooks rebuild the graph deterministically on
-  every local commit/branch switch (AST-only, detached ~25s, 0 tokens; log `~/.cache/graphify-rebuild.log`,
-  escape `GRAPHIFY_SKIP_HOOK=1`). **Honest boundary: a remote squash-merge arriving via ff `git pull` on
-  `develop` fires NO hook** — that path stays with the AI close-out procedure `graphify update .`
-  (documented fallback, still load-bearing for merges); `pnpm graph:update` is the manual command. The old
-  lefthook `post-merge` net is retired; NEVER declare `post-commit`/`post-checkout` in `lefthook.yml`
-  (`lefthook install` would overwrite graphify's hooks). Doc/paper/image changes need the skill path
-  (`/graphify --update` in-session) — the CLI `update` covers **code only**.
+- **Freshness (ADR-0022 amends ADR-0014, 2026-07-19 + addendum same day) — the graphify commit hook is
+  PRIMARY; the lefthook `post-merge` net covers develop pulls.** `graphify hook install`'s
+  `post-commit`/`post-checkout` hooks rebuild the graph deterministically on every local commit/branch
+  switch (AST-only, detached ~25s, 0 tokens; log `~/.cache/graphify-rebuild.log`, escape
+  `GRAPHIFY_SKIP_HOOK=1`). **MEASURED FACT 2026-07-19 (corrected a never-tested hedge): a ff `git pull`
+  DOES fire `post-merge`** (git 2.45.1, `pull.rebase=false`) — so the remote squash-merge path is covered
+  deterministically by the lefthook `post-merge` block → `scripts/graph-refresh.sh` (guarded to develop,
+  non-fatal). The AI close-out `graphify update .` is the documented fallback; `pnpm graph:update` is the
+  manual command. Boundary: `git pull --rebase` fires no post-merge. NEVER declare
+  `post-commit`/`post-checkout` in `lefthook.yml` (`lefthook install` would overwrite graphify's hooks;
+  `post-merge` is not graphify's — declaring it is safe, proven). Doc/paper/image changes need the skill
+  path (`/graphify --update` in-session) — the CLI `update` covers **code only**.
 - **Graph-first for structural search.** For "where is X / what calls Y / how does subsystem Z
   connect / what's in this area" questions, consult `pnpm graph:query "…"` (or `graphify query/
   explain/path`) **before** blind Grep/Read sweeps — it's cheaper and answers navigation directly.

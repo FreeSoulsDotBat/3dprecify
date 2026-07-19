@@ -282,6 +282,26 @@ Rationale: never remove the only working net before its replacement is proven on
 is the load-bearing enforcement" is superseded by: *the graphify commit hook is the primary enforcement; the AI
 procedure is the documented fallback.*
 
+**Addendum 2026-07-19 (owner decision, same PR) — the ff-pull premise was measured FALSE; the
+`post-merge` net returns as the deterministic merge-path complement.** The retirement paragraph above
+(and mechanism 1's "honest boundary") rests on the claim that a fast-forward `git pull` fires no
+`post-merge` — inherited from the old script's own hedge ("may not fire") and **never tested**.
+Measured on this machine 2026-07-19 (git 2.45.1, `pull.rebase=false`, scratch-repo ff-pull with a
+marker hook — dod-evidence §3): **`post-merge` DOES fire on a fast-forward pull.** Per guardrail 8
+(a result contradicting the premise is a finding), the owner ratified **Option A** the same day:
+re-declare a lefthook `post-merge` block running `scripts/graph-refresh.sh` (resurrected) — guarded
+to `develop`, non-fatal, skip-if-no-graphify — as the **deterministic net for the remote squash-merge
+path**, complementing (not replacing) mechanism 1. The mechanism order becomes: **1.** graphify
+`post-commit`/`post-checkout` (local paths, PRIMARY) · **1b.** lefthook `post-merge` → graph refresh
+on `develop` pulls (remote-merge path) · **2.** AI close-out procedure (fallback net + the only
+doc/paper semantic route) · **3.** `pnpm graph:update` (manual). The double-rebuild waste the
+retirement feared does not occur: on a develop ff-pull only `post-merge` fires (no local commit is
+created); on local commits only graphify's hooks fire (no merge). The lefthook invariant is
+unchanged — `post-merge` is not a graphify-owned hook, so declaring it is safe (verified: graphify's
+hooks byte-identical across `lefthook install`, dod-evidence §3). **Known boundary:** `git pull
+--rebase` fires no `post-merge`; the repo runs `pull.rebase=false` — adopting pull-rebase is the
+dated re-open trigger for this addendum.
+
 ## Rollback playbook (per layer — each a one-line / single-command reversal, FR-008)
 
 | Layer | Trigger (the signal to roll back) | Reversal (one line / one command) |
@@ -289,6 +309,7 @@ procedure is the documented fallback.*
 | **Model routing** | An E5 slice regresses quality traceably to a downgraded agent — homologation FAIL or `gate:all` red attributable to the model (not the code); or the `effort: medium` cap throttles a genuinely hard executor task. | Flip that agent's frontmatter: `model: sonnet` → `model: opus` (and/or remove the `effort:` line). One line, one agent, no code / migration / ADR rewrite. **Exercised 2026-07-18** (qa-software: revert → `git diff` empty → re-apply, dod-evidence §1.4). |
 | **rtk filter** | A filtered command's reduced view hides an actionable signal on a *passing* command (the honesty guard fails for that command), or the filter is unhelpful for a specific command. | Add the command to `exclude_commands` (one line in `%APPDATA%\rtk\config.toml` — exercised 2026-07-19, add+revert clean). To remove the filter wholesale: delete the 12-line `PreToolUse`/`Bash` block from `.claude/settings.json` (the install was manual, so the teardown is the same edit in reverse; documented dry-run 2026-07-19 — exercising it live requires the owner present, the hook surface is permission-gated) → all Bash output passes through raw next session. |
 | **graphify hook** | The commit hook slows or blocks commits, or the rebuild corrupts / stales the graph. | `graphify hook uninstall` (single command) → falls back to the ADR-0014 AI/manual refresh procedure (which the staged retirement kept intact). **Exercised 2026-07-19** (uninstall → status clean → reinstall byte-identical, dod-evidence §3). |
+| **post-merge net (lefthook)** | The develop-pull refresh misbehaves (slow pull, wrong-branch fire, graph corruption on merge). | Remove the `post-merge` block from `lefthook.yml` + `lefthook install`; optionally `rm .git/hooks/post-merge` (measured 2026-07-19: `lefthook install` does NOT delete the now-undeclared runner — the orphan is **inert**, exit 0, runs nothing, so leaving it is harmless; the `rm` makes the teardown total). The AI close-out procedure resumes as the merge-path net. **Exercised 2026-07-19** (block removed → install → orphan-runner inertness measured → block re-added → reinstalled, lefthook.yml MD5 round-trip identical, dod-evidence §3). |
 
 Each rollback line MUST be **exercised once** during the epic (FR-008/SC-008) so the playbook is proven, not
 theoretical.

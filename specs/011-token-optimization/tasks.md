@@ -285,12 +285,13 @@ per-slice rows (estimate → actual + labeled rtk-gain), effective Δ% with cave
       no E5; feature.json → 010). O ponteiro SPECKIT do rodapé segue em `specs/011-token-optimization/plan.md`
       até o fluxo speckit do E5 retomá-lo — apontar para `specs/010-**` agora referenciaria um caminho ainda
       não commitado (os artefatos do 010 vivem uncommitted na árvore)
-- [ ] T038 Graph refresh after merge to `develop` — **atenção ao caminho real (ADR-0022 §Amendment, corrigido
-      2026-07-18)**: o squash-merge do PR nasce REMOTO no GitHub; `git pull` fast-forward em develop NÃO
-      dispara post-commit nem post-checkout. O caminho para merges de develop continua sendo o procedimento de
-      close-out do AI (`pnpm graph:update`) — rode-o, e registre em dod-evidence qual mecanismo disparou de
-      fato (hook local vs procedimento manual). O hook novo cobre commits LOCAIS; não espere que ele cubra o
-      pull do merge remoto
+- [ ] T038 Graph refresh after merge to `develop` — **premissa corrigida 2026-07-19 (ADR-0022 §Amendment
+      addendum)**: MEDIDO que `git pull` fast-forward DISPARA `post-merge` nesta máquina (git 2.45.1,
+      `pull.rebase=false`) — a rede lefthook `post-merge` → `graph-refresh.sh` foi re-adicionada e é o
+      caminho determinístico esperado para o pull do squash-merge em develop. No primeiro merge real:
+      observe se o `[graph-refresh]` disparou no pull e registre em dod-evidence qual mecanismo rodou de
+      fato (post-merge net vs procedimento manual `pnpm graph:update` como fallback); doc/spec ingestion
+      semântica continua com o caminho da skill
 
 ---
 

@@ -212,6 +212,28 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   both `installed`, MD5 **byte-identical** to the T024 hashes (`d267c13f…` / `cf77c1ac…`). Clean
   round-trip; the fallback during the uninstalled window is exactly ADR-0014's retained AI/manual
   procedure.
+- **Addendum 2026-07-19 — ff-pull premise measured FALSE; post-merge net re-added (owner Option A).**
+  (1) **The measurement that overturned the premise**: scratch-repo pair (origin + clone) in the
+  session scratchpad, marker `post-merge` hook in the clone, one commit in origin, `git pull` in the
+  clone resolving as **fast-forward** → marker file written, `POST-MERGE-FIRED squash=0`. Environment:
+  git 2.45.1.windows.1, `pull.rebase=false` (repo-effective). The "a fast-forward pull may not fire
+  post-merge" line — old script comment, repeated into ADR-0014 Revision / ADR-0022 / CLAUDE.md / spec
+  US3 — was a hedge never tested; guardrail 8 applied (a result contradicting the premise is a finding).
+  (2) **Owner decision same day**: Option A — lefthook `post-merge` block + resurrected
+  `scripts/graph-refresh.sh` (develop-guarded, non-fatal, skip-if-no-graphify) as the deterministic
+  remote-merge net; recorded as spec Clarification 2026-07-19 + ADR-0022 §Amendment addendum + ADR-0014
+  Revision correction. (3) **Install proof**: `lefthook install` → `sync hooks: ✔️(post-merge,
+  pre-commit, pre-push)`; graphify's `post-commit`/`post-checkout` MD5 **byte-identical** before/after
+  (`d267c13f…` / `cf77c1ac…`) — the lefthook invariant holds, `post-merge` is not a graphify-owned
+  surface. (4) **Guard proof**: `lefthook run post-merge` on the feature branch → script exits 0 in
+  ~0.09s with no update (branch guard: only `develop` refreshes). (5) **Exercised rollback (SC-008)**:
+  block removed → `lefthook install` re-syncs only `pre-commit`/`pre-push`; **measured nuance: the
+  now-undeclared `.git/hooks/post-merge` runner is NOT deleted by `lefthook install` — it stays as an
+  orphan, and the orphan is inert** (invoked directly: banner + hook re-sync, runs no commands, exit 0);
+  total teardown adds `rm .git/hooks/post-merge`. Block restored from backup → `lefthook.yml` MD5
+  round-trip **identical** (`6d5cc760…`) → reinstall re-syncs all three. (6) **Live develop-pull proof
+  pending by nature**: the first real squash-merge pull on `develop` is T038's slot — record there which
+  mechanism actually fired. Known boundary: `git pull --rebase` fires no `post-merge`.
 
 ## §4 Measurement (US4 / FR-009..010 / SC-006..007) — PR-C
 

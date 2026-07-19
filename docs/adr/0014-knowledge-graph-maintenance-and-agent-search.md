@@ -167,3 +167,13 @@ graphify's hooks. The §Consequences line "the `post-merge` hook is best-effort 
 procedure is the load-bearing enforcement" is superseded by: *the graphify commit hook is the
 primary enforcement; the AI procedure is the documented fallback.* Rollback: `graphify hook
 uninstall` (one command) returns the repo to the pre-amendment mechanism set.
+
+**Correction, same day (2026-07-19, owner decision — ADR-0022 §Amendment addendum):** the "ff-pull
+gap it admittedly never covered" premise was **measured false** on this machine (git 2.45.1,
+`pull.rebase=false`): `post-merge` **does** fire on a fast-forward `git pull` (scratch-repo proof,
+`specs/011-token-optimization/dod-evidence.md` §3). The `post-merge` net therefore **returns** —
+`lefthook.yml` block + resurrected `scripts/graph-refresh.sh`, guarded to `develop`, non-fatal — as
+mechanism **1b**, the deterministic net for the remote squash-merge path; mechanism 2 stays as the
+fallback and the only doc/paper semantic route. Boundary: `git pull --rebase` fires no `post-merge`
+(the repo runs `pull.rebase=false`; adopting pull-rebase re-opens this). Rollback: remove the
+`post-merge` block + `lefthook install`.
