@@ -5,6 +5,7 @@ import { BOM_QUERY_ROOT, purgeBomCache } from "@/entities/bom/bom-cache";
 import { CATALOG_QUERY_ROOT, purgeCatalogCache } from "@/entities/catalog/catalog-cache";
 import { purgeHistoryCache } from "@/entities/history/history-cache";
 import { HISTORY_QUERY_ROOT } from "@/entities/history/use-history";
+import { purgeScenarioCache, SCENARIO_QUERY_ROOT } from "@/entities/scenario/scenario-cache";
 import { purgeEntitlementCache } from "@/entities/user/entitlement-cache";
 import { ENTITLEMENT_QUERY_KEY } from "@/entities/user/use-entitlement";
 import { ME_QUERY_KEY } from "@/entities/user/use-identity";
@@ -38,6 +39,9 @@ export function AppProviders({ children }: { children: ReactNode }) {
         // The Histórico READ cache joins the same in-memory sweep (E4/T011) — it is rebuildable
         // from the server, so evicting it is free.
         queryClient.removeQueries({ queryKey: HISTORY_QUERY_ROOT });
+        // "Meus cenários" is the SAME kind of user data (010/T012, E5) — the same sweep, and the
+        // same reason it is safe: the server holds no queue state, so evicting it is free (VR-612).
+        queryClient.removeQueries({ queryKey: SCENARIO_QUERY_ROOT });
         // The persisted plan (009/T011b) is swept too: a device shared by two accounts must never
         // let one of them read — let alone act on — the other's premium.
         queryClient.removeQueries({ queryKey: ENTITLEMENT_QUERY_KEY });
@@ -45,6 +49,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
           void purgeCatalogCache(prev.user.uid);
           void purgeBomCache(prev.user.uid);
           void purgeHistoryCache(prev.user.uid);
+          void purgeScenarioCache(prev.user.uid);
           void purgeEntitlementCache(prev.user.uid);
           // NOTE (review PR-A, B3): the OUTBOX is deliberately NOT purged here. It is the ONLY copy
           // of a quote that never reached the account, and this subscription ALSO fires on

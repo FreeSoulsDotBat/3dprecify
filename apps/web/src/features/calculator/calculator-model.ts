@@ -50,6 +50,13 @@ export interface ChannelSlotOutcome {
   hasFee: boolean;
   seal: FeeSealState;
   freightIsEstimate: boolean;
+  /** 010/T010 (E5) — which fee fields the seller EXPLICITLY typed into, and the number they typed
+   *  (present regardless of whether the field currently validates). A field absent here was left
+   *  blank and, when a catalog entry covers the slot, was pre-filled/re-resolved — never something
+   *  the seller vouched for. This is the form-layer signal a scenario save maps 1:1 into
+   *  `ScenarioChannelSlotState.{field}.overridden` (`entities/scenario/config-document.ts`); the
+   *  feature layer never re-derives "did the user edit this" from the pt-BR strings itself. */
+  editedFields: Partial<Record<ChannelFieldName, number>>;
 }
 
 /** The resolved fee catalog + where it came from + the clock, for the honesty seal + pre-fill. */
@@ -95,6 +102,7 @@ function parseManualFees(slot: ChannelSlotForm): {
   nums: Record<ChannelFieldName, number>;
   errors: ChannelSlotErrors;
   hasManualInput: boolean;
+  editedFields: Partial<Record<ChannelFieldName, number>>;
 } {
   const errors: ChannelSlotErrors = {};
   const nums: Record<ChannelFieldName, number> = {
@@ -103,6 +111,7 @@ function parseManualFees(slot: ChannelSlotForm): {
     minPerItem: 0,
     freightCost: 0,
   };
+  const editedFields: Partial<Record<ChannelFieldName, number>> = {};
   let hasManualInput = false;
   for (const f of CHANNEL_NUM_FIELDS) {
     const raw = (slot[f] ?? "").trim();
@@ -115,13 +124,18 @@ function parseManualFees(slot: ChannelSlotForm): {
       errors[f] = t.validation.negative;
     } else {
       nums[f] = n;
+      // Edited-but-unparseable is not a value a scenario save could persist; every OTHER typed
+      // field still records the number the seller typed, even one that will go on to fail the
+      // commission-ceiling check below (a saved override may legitimately be an out-of-range one —
+      // FR-609's "same inline per-slot error on reopen" case, T014).
+      editedFields[f] = n;
     }
   }
   // Upper bound gets its own pt-BR message (the gross-up denominator 1 − c/100 must stay > 0).
   if (errors.commissionPct === undefined && nums.commissionPct >= 100) {
     errors.commissionPct = t.validation.commissionMax;
   }
-  return { nums, errors, hasManualInput };
+  return { nums, errors, hasManualInput, editedFields };
 }
 
 interface SlotProcessing {
@@ -130,6 +144,7 @@ interface SlotProcessing {
   hasFee: boolean;
   seal: FeeSealState;
   freightIsEstimate: boolean;
+  editedFields: Partial<Record<ChannelFieldName, number>>;
 }
 
 /**
@@ -148,6 +163,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       hasFee: false,
       seal: entry ? { kind: "adjusted" } : { kind: "none" },
       freightIsEstimate: false,
+      editedFields: manual.editedFields,
     };
   }
 
@@ -194,6 +210,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     hasFee,
     seal,
     freightIsEstimate: fees.freightIsEstimate,
+    editedFields: manual.editedFields,
   };
 }
 
@@ -284,6 +301,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             hasFee: p.hasFee,
             seal: p.seal,
             freightIsEstimate: false,
+            editedFields: p.editedFields,
           }
         : {
             errors: {},
@@ -291,6 +309,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             hasFee: p.hasFee,
             seal: p.seal,
             freightIsEstimate: p.freightIsEstimate,
+            editedFields: p.editedFields,
           },
     );
     return { ok: true, fieldErrors: {}, result, input, channels, otherCostErrors };

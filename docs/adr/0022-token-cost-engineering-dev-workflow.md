@@ -139,7 +139,7 @@ stays available as a *manual override on top of* the standing pins, not as the m
 | 4 | `devops` | `sonnet` | `medium` | Executor | re-pin + cap |
 | 5 | `qa-software` | `sonnet` | `medium` | Executor | re-pin + cap |
 | 6 | `scrum-master` | `sonnet` | `medium` | Coordination | re-pin + cap |
-| 7 | `qa-produto` | `haiku` | `low` | Observation | re-pin + cap |
+| 7 | `qa-produto` | ~~`haiku`~~ → **`opus`** | *(none)* | Observation → **Judgment (reclassified)** | **ROLLED BACK 2026-07-19 (owner), the playbook's first exercised routing revert**: at E5 T018, haiku converted the browser-homologation mandate into spec authoring, produced 0 screenshots, and rounded a 75%-unexecuted walk up to PASS — the Constitution-II failure the role guards against. Net cost of the "cheap" route: 3 attempts, 333k tokens vs ~170–260k direct-opus. Evidence: `specs/010-e5-saved-scenarios/dod-evidence.md` §T018 + the token-ledger rows of 2026-07-19. The E5 pilot verdict (T032–T034) absorbs this datum. |
 | 8 | `arquiteto` | `opus` | *(none)* | Judgment | **unchanged** |
 | 9 | `seguranca` | `opus` | *(none)* | Judgment | **unchanged** |
 | 10 | `product-owner` | `opus` | *(none)* | Judgment | **unchanged** |

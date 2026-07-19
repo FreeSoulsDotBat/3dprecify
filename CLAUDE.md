@@ -1,8 +1,10 @@
 ### Cost / model delegation (Claude Code dev workflow — ADR-0022)
 - **Routing (per-agent, in `.claude/agents/*.md` frontmatter):** the 6 executors — `dev-backend`,
   `dev-frontend`, `dev-estrutura-de-dados`, `devops`, `qa-software`, `scrum-master` — run `model: sonnet`
-  + `effort: medium`; `qa-produto` runs `model: haiku` + `effort: low`; the judgment roles
-  (`arquiteto`, `seguranca`, `product-owner`) **and `designer-ux`** stay on `model: opus`.
+  + `effort: medium`; the judgment roles (`arquiteto`, `seguranca`, `product-owner`), **`designer-ux` AND
+  `qa-produto`** stay on `model: opus` — `qa-produto` was **rolled back haiku→opus 2026-07-19** (owner, at
+  the E5 PR-A gate: haiku confabulated a visual-homologation PASS with 0 screenshots; ADR-0022 §table row 7,
+  the playbook's first exercised routing revert).
 - **Delegation:** routine, spec-driven reads & edits → a cheaper worker subagent; planning, architecture,
   security review, and final pre-merge review → keep on the main / `opus` model.
 - **Escalation (pricing domain — NON-NEGOTIABLE):** any data-model / schema change that touches the pricing

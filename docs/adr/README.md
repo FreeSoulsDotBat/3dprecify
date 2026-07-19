@@ -27,6 +27,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0018](0018-offline-snapshot-outbox.md) | Offline snapshot outbox — device-durable queue, exactly-once sync, entitlement at sync | Accepted |
 | [0019](0019-snapshot-immutability-enforcement.md) | Snapshot immutability — enforcement in depth + provenance without a foreign key | Accepted |
 | [0020](0020-export-artifact-rendering.md) | Export artifact rendering — server-rendered PDF/CSV behind an active-entitlement gate | Accepted |
+| [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Proposed |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
 
 ## Pending (to be written; numbers assigned when authored)
