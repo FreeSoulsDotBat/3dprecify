@@ -66,8 +66,9 @@ de toda comparação.
 Limites de atribuição, fixados junto com a baseline (para o veredito não absorvê-los em silêncio):
 
 - **rtk cobre só a ferramenta `Bash`** (medido 2026-07-19: a ferramenta PowerShell contorna o matcher
-  `PreToolUse`/`Bash` por inteiro). A economia do rtk se atribui só ao tráfego Bash — a menos que o dono
-  estenda o matcher antes do piloto (decisão em aberto).
+  `PreToolUse`/`Bash` por inteiro). **Decisão do dono (2026-07-19): matcher fica Bash-only + disciplina** —
+  nas sessões do E5 o agente prefere deliberadamente a ferramenta Bash para trabalho de shell; a economia
+  do rtk se atribui só ao tráfego Bash.
 - **Tokenizer do Sonnet conta ~+30%** de tokens que o opus para o mesmo texto; **preço introdutório expira
   2026-08-31** — ambos são ressalvas obrigatórias do veredito (T033), declaradas aqui para o Δ% ser lido
   como custo efetivo, não tokens crus.

@@ -151,19 +151,28 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   hook and is untouched. Q2's "project-scoped" means the latter, which is what the ratification intended.
   **Additional coverage finding (measured A/B, 2026-07-19)**: the hook matcher is the **`Bash` tool only** —
   the harness's **PowerShell tool bypasses the filter** (long-form `git status` via Bash → rtk-condensed
-  view; identical command via PowerShell → raw long form). Recorded in ADR-0022 §3 as a coverage boundary;
-  possible `Bash|PowerShell` matcher extension left as an owner-decision follow-up (needs a restart to test).
-- Exercised rollback (T019): **PARTIAL — config line exercised; hook teardown documented but blocked from
-  live exercise by the permission gate.** (a) `exclude_commands` one-liner: added `"ping"` →
-  `%APPDATA%\rtk\config.toml` shows `["graphify", "gh", "curl", "ping"]`, `ping -n 1 127.0.0.1` passed
-  through raw and never entered `rtk gain --history` → reverted → file byte-identical to the T013 state.
-  Clean add + clean revert, SC-008 satisfied for this line. (b) Full teardown: the documented path is the
-  reverse of T014's manual install — delete the 12-line `PreToolUse`/`Bash` block from
-  `.claude/settings.json` (config.toml and `RTK_TEE_DIR` may stay; they are inert without the hook). The
-  live remove+re-add exercise was **denied by the Claude Code auto-mode permission classifier** (hook-config
-  edits are a protected surface — a correct guard, and itself useful evidence: the filter cannot be silently
-  torn down or altered by an agent without the owner present). Exercising the teardown for SC-008 therefore
-  needs Jonatan to approve the edit in-session (or make it himself); flagged at the PR-B checkpoint.
+  view; identical command via PowerShell → raw long form). Recorded in ADR-0022 §3 as a coverage boundary.
+  **OWNER DECISION (2026-07-19): matcher stays Bash-only + Bash-preference discipline** — during the E5
+  pilot the agent deliberately prefers the Bash tool for shell work; no matcher extension (rtk is designed
+  for Bash syntax — PowerShell cmdlets/pipes risk a corrupting rewrite for a saving the discipline gets
+  free). The verdict attributes rtk savings to Bash-tool traffic only (bound fixed in the T031 baseline).
+- Exercised rollback (T019): **CONFIRMED IN FULL (SC-008), 2026-07-19 — live teardown exercised with the
+  owner present.** (a) `exclude_commands` one-liner: added `"ping"` → `%APPDATA%\rtk\config.toml` shows
+  `["graphify", "gh", "curl", "ping"]`, `ping -n 1 127.0.0.1` passed through raw and never entered
+  `rtk gain --history` → reverted → file byte-identical to the T013 state. (b) Full teardown, exercised
+  live — the documented path (delete the 12-line `PreToolUse`/`Bash` block; config.toml + `RTK_TEE_DIR`
+  stay, inert without the hook). The unattended agent had been denied this edit by the auto-mode permission
+  classifier (correct guard); with Jonatan approving the two `settings.json` edits in-session: block
+  removed → `rtk gain` reports the hook gone AND a marker (`git show` via Bash) ran **unfiltered, no
+  history entry** → block re-added → MD5 **byte-identical round-trip**
+  (`D88ED1B360AA63FE02A96CFE1DB79F64` before = after) → marker `git status` came back **rtk-condensed**
+  (`-57%`, history entry `12:10`). PostToolUse quality-gate block untouched throughout. **Mechanism nuance
+  (bounds a T014 generalization):** in a session that STARTED with the hook present, teardown and re-init
+  both took effect **immediately mid-session** — no restart; T014's measured restart-need was in a session
+  that started WITHOUT the block. Both facts stand: the restart applies to a hook surface the session has
+  never seen, not to edits of a known one. **Reading tip:** `rtk gain`'s `[warn] No hook installed — run
+  rtk init -g` checks the GLOBAL scope only; it prints even while the project hook is demonstrably
+  intercepting — not a failure signal.
 
 ## §3 graphify hook (US3 / FR-007 / SC-005) — PR-B
 

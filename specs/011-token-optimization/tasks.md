@@ -167,9 +167,9 @@ conclusion + actionable errors; tee recovery works; exclusions pass through; oth
 - [x] T018 [P] [US2] Scope proof (Q2): in a second repo without the hook, commands untouched + no rtk block in
       its `.claude/settings.json` (quickstart §2.8)
 - [x] T019 [US2] Exercised rollbacks: one-line `exclude_commands` add proven; full teardown dry-run
-      (documented uninstall path) + re-init (SC-008) — **PARCIAL: (a) exercitado limpo; (b) teardown
-      documentado, exercício vivo bloqueado pelo classifier de permissões (superfície de hooks) — precisa
-      do Jonatan presente; ver dod-evidence**
+      (documented uninstall path) + re-init (SC-008) — **COMPLETO 2026-07-19: (a) exercitado limpo; (b)
+      teardown vivo exercitado com o dono presente aprovando os edits — round-trip byte-idêntico (MD5),
+      passthrough provado no teardown, re-interceptação provada no re-init; ver dod-evidence §2**
 - [x] T020 [US2] Document the tee path + rollback lines in ADR-0022 (FR-004 "path documented"; R2 note: excludes
       live per-user but are inert outside this repo)
 

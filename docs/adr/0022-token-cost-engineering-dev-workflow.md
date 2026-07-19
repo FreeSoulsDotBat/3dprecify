@@ -214,9 +214,12 @@ rtk on Windows** — not decided here (spec §9.1; §Assumptions below).
   inert configuration, not behavior.
 - **Coverage boundary (measured 2026-07-19)**: the hook matcher is the **`Bash` tool**; commands run through
   the harness's **PowerShell tool bypass the filter entirely** (verified A/B: long-form `git status` via Bash
-  → rtk-condensed; via PowerShell → raw). The filter's saving therefore applies to Bash-tool traffic only;
-  extending the matcher to `Bash|PowerShell` is a possible follow-up that requires verifying `rtk hook
-  claude` parses the PowerShell tool's hook payload — not assumed here.
+  → rtk-condensed; via PowerShell → raw). The filter's saving therefore applies to Bash-tool traffic only.
+  **Owner decision (2026-07-19): the matcher stays Bash-only**, paired with a Bash-preference discipline —
+  during the E5 pilot the agent deliberately routes shell work through the Bash tool. The `Bash|PowerShell`
+  extension was considered and declined: rtk rewrites Bash syntax, and PowerShell cmdlets/pipes risk a
+  corrupting rewrite for a saving the discipline captures without config risk. Revisit trigger: pilot data
+  showing material unfiltered PowerShell traffic despite the discipline.
 
 ### 4. Graphify auto-rebuild — FR-007 (this is the ADR-0014 amendment, §Amendment below)
 `graphify hook install` becomes the **primary** freshness mechanism (deterministic AST rebuild on commit, ~20s,
