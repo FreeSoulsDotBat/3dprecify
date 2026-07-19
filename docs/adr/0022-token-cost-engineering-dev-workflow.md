@@ -1,6 +1,6 @@
 # ADR-0022: Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014)
 
-- **Status**: Proposed
+- **Status**: Accepted (2026-07-19 — owner homologation via squash-merge of PR #22, `bcbdfe2`)
 - **Date**: 2026-07-18
 - **Deciders**: Jonatan (owner) + arquiteto + Claude
 - **Amends**: ADR-0014 (knowledge-graph maintenance — the refresh-hook clause)

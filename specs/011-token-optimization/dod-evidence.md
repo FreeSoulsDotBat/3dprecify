@@ -234,6 +234,15 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   round-trip **identical** (`6d5cc760…`) → reinstall re-syncs all three. (6) **Live develop-pull proof
   pending by nature**: the first real squash-merge pull on `develop` is T038's slot — record there which
   mechanism actually fired. Known boundary: `git pull --rebase` fires no `post-merge`.
+  **RESOLVED 2026-07-19 — T038 live proof on PR #22's own merge.** Fast-forward pull
+  `149c36f..bcbdfe2` on `develop` → the lefthook `post-merge` net fired **on the real event**:
+  `[graph-refresh] develop pull/merge → knowledge-graph update` ran `graphify update .` synchronously
+  (~26s, AST re-extraction 222 files, 0 LLM tokens; rebuilt 4898 nodes / 8233 edges / 370 communities).
+  The mechanism that fired was the **post-merge net (1b)** — no manual `pnpm graph:update` needed.
+  Honest sequence nuance: the preceding `git checkout develop` had also fired graphify's own
+  `post-checkout` detached rebuild, so a checkout→pull sequence runs **two** rebuilds (~25s each, both
+  0 tokens) — per-event the ADR addendum's "no double-fire" claim holds (different events, different
+  hooks); the sequence cost is accepted as-is.
 
 ## §4 Measurement (US4 / FR-009..010 / SC-006..007) — PR-C
 
