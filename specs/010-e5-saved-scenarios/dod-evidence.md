@@ -113,7 +113,7 @@ was reset onto the merged `develop` and force-pushed (`--force-with-lease`) as t
 
 ## PR-B — The live contract · duplicate-to-tweak · lifecycle (US3 + US4 + US6)
 
-**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: *(pending — T033, owner-gated)*
+**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: **#25, squash-merged to `develop` 2026-07-20 (`c9c053b`)**
 
 ### The wave map (011 routing live)
 
@@ -164,4 +164,6 @@ Evidence: 15 PNGs in `evidence/t031/`. Nits: basisEcho 390px overflow (fixed sam
 
 ### T033 — owner gate
 
-*(pending: PR-B opened for owner homologation + squash-merge authorization)*
+**DONE 2026-07-20**: owner homologated and squash-merged PR #25 → `develop` (`c9c053b`, 46 files,
++4722/−166). Graph refreshed via the post-merge/post-checkout hooks; feature branch reset onto the merged
+`develop` (`--force-with-lease`) as the PR-C base.

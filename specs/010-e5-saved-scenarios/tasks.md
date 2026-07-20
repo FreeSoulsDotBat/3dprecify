@@ -277,7 +277,9 @@ writes denied, nothing auto-deleted.
 - [x] T032 `pnpm gate:all` + drift-guard idempotent + **SC-612**. Evidence in `dod-evidence.md`.
       **→ DONE 2026-07-20**: gate exit 0 (web 645 · be 321 · import-linter 3/0), regen 0-diff, full e2e
       chromium **70/70 0-flaky**.
-- [ ] T033 **Owner-gated PR-B → `develop`** (squash). On merge: `graphify update .`.
+- [x] T033 **Owner-gated PR-B → `develop`** (squash). On merge: `graphify update .`.
+      **→ DONE 2026-07-20**: owner homologated + squash-merged PR #25 → `develop` (`c9c053b`, 46 files,
+      +4722/−166); graph refreshed via hooks on the local ff-pull; branch reset onto develop as PR-C base.
 
 ---
 
