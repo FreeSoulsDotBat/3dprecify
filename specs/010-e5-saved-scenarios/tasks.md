@@ -192,12 +192,12 @@ after one online load; sign-out purges the cache.
 product → reopen reflects it (D3); delete it → reopen degrades to last-known honestly (D6, never "removido"); a
 fee-catalog refresh re-resolves non-overridden slots while overrides stick.
 
-- [ ] T021 [US3] Write FAILING pytest — `test_scenarios.py`: **VR-605** D3 live-reflect (referenced product edit →
+- [x] T021 [US3] Write FAILING pytest — `test_scenarios.py`: **VR-605** D3 live-reflect (referenced product edit →
       reopen resolves the **live** row) + **VR-606** D6 last-known (referenced product soft-deleted / cross-tenant /
       never-existed → degrade to `config.costBasis.lastKnown`, editable + re-saveable, honest caption, **0** breaks) +
       **VR-604** (a non-overridden slot re-resolves to a mutated catalog fee; an overridden slot keeps its value).
       Observe failing.
-- [ ] T022 [US3] Implement the **read-time resolver** in `scenarios.py` — resolve `costBasis.ref` **owner +
+- [x] T022 [US3] Implement the **read-time resolver** in `scenarios.py` — resolve `costBasis.ref` **owner +
       `deleted_at IS NULL`** (reuse the E3 `_resolve_views` seam) → D3 live / D6 last-known + a `degraded` flag;
       `GET /{id}` (and every write response) returns the resolved-or-degraded basis. Tests green.
 - [ ] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
@@ -210,15 +210,20 @@ fee-catalog refresh re-resolves non-overridden slots while overrides stick.
       uniformly to every kit line → `computeBom` → per-marketplace rollup. **No `pricing-core` change** (both engines
       exist). Tests green.
 
+> **BE wave DONE 2026-07-20** (commit `2e31b8d`, dev-backend sonnet + main-loop KIT redirect): T021/T022 +
+> T025/T026 + T027/T028 — resolver D3/D6 covers **PRODUCT + KIT** (contract §99–102; the KIT half was a
+> main-loop catch against the contract), 55/55 in-file + 319 full suite re-measured, regen idempotent 2×.
+> VR-604's live re-resolution is CLIENT-side (fees never resolved server-side) → pre-assigned to T023.
+
 ## Phase 8: User Story 4 — Duplicate-to-tweak (Priority: P1)
 
 **Goal**: clone a scenario, change one thing, compare — the headline value. **Independent test**: duplicate, tweak
 the copy, confirm the original is byte-for-byte unchanged and vice versa.
 
-- [ ] T025 [US4] Write FAILING pytest — **VR-608** duplicate independence: `POST /{id}/duplicate` **deep-copies**
+- [x] T025 [US4] Write FAILING pytest — **VR-608** duplicate independence: `POST /{id}/duplicate` **deep-copies**
       `config` into a new row (new `id`, own `name`); editing the copy changes **0%** of the original, and vice
       versa. Observe failing.
-- [ ] T026 [US4] Implement `POST /api/v1/scenarios/{id}/duplicate` (deep copy) + the "Duplicar" affordance in
+- [x] T026 [US4] Implement `POST /api/v1/scenarios/{id}/duplicate` (deep copy) + the "Duplicar" affordance in
       `features/scenarios`. Tests green.
 
 ## Phase 9: User Story 6 — Manage + lapse (Priority: P2)
@@ -226,11 +231,11 @@ the copy, confirm the original is byte-for-byte unchanged and vice versa.
 **Goal**: rename, edit-the-whole-config, search, delete; on lapse everything stays readable + recomputable, all
 writes denied, nothing auto-deleted.
 
-- [ ] T027 [US6] Write FAILING pytest — **PUT** full-config edit (VR-602/603 re-run on **UPDATE**) + **PATCH**
+- [x] T027 [US6] Write FAILING pytest — **PUT** full-config edit (VR-602/603 re-run on **UPDATE**) + **PATCH**
       rename (`name`/`note` only, `extra="forbid"` → smuggled field `422`) + **DELETE** soft + name search (owner-
       scoped `ILIKE`, VR-611-adjacent) + **VR-610** lapse (reads `200`, all writes `403`, **0** rows deleted/modified,
       re-grant restores writes with data intact). Observe failing.
-- [ ] T028 [US6] Implement `PUT /{id}` (full-config replace) · `PATCH /{id}` (rename) · `DELETE /{id}` (soft) + the
+- [x] T028 [US6] Implement `PUT /{id}` (full-config replace) · `PATCH /{id}` (rename) · `DELETE /{id}` (soft) + the
       `?q=` name search, per contract; `require_entitlement` (ACTIVE) on writes, reads survive lapse. Tests green.
 - [ ] T029 [US6] Frontend: rename, **edit-config** (reopen → edit → `PUT`), search, delete; the **lapse read-only**
       surface (reuse the E2/E3/E4 authorization-freeze pattern — readable/recomputable, writes disabled with reason).
