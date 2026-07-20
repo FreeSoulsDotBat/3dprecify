@@ -170,7 +170,7 @@ Evidence: 15 PNGs in `evidence/t031/`. Nits: basisEcho 390px overflow (fixed sam
 
 ## PR-C — The E4 bridge: record a snapshot from a scenario (US7)
 
-**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: *(pending — T038, owner-gated)*
+**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: **#26, squash-merged to `develop` 2026-07-20 (`fccc87e`)**
 
 ### The wave map
 
@@ -210,4 +210,17 @@ raised to the owner in the PR body): the origin line does not name the origin KI
 
 ### T038 — owner gate
 
-*(pending: PR-C opened for owner homologation + squash-merge authorization)*
+**DONE 2026-07-20**: owner homologated and squash-merged PR #26 → `develop` (`fccc87e`). CI 9/9 green — one
+real CI-only flake root-fixed first (grantPremium retries the JIT-account race, bounded 15s; the two other
+chromium timeouts were runner contention, green on re-run untouched).
+
+## Cross-slice close-out (T039)
+
+E5 shipped in three slices over two days, each owner-homologated from the rendered UI (T018 PASS-WITH-NITS 88%
+· T031 PASS-WITH-NITS 92% · T037 PASS 95% — rising as the surface stabilized). The cross-slice seams were
+exercised where they live: the T031 walk crossed PR-A+PR-B (save → reopen-live → degrade → manage → lapse) and
+the T037 walk crossed all three + E4 (scenario → record → frozen snapshot vs live scenario side by side, the
+two-shelf rule in one capture). Full-suite guards at every gate: e2e 70/70 chromium 0-flaky · web 654 · backend
+321 · every E1–E4 spec green unchanged · pricing-core untouched at 3.1.0. Consciously open, all owner-dated:
+KIT-basis scenario CREATION (unspecified kit-level channel UX → designer-ux), per-account live fee auth (out of
+scope, spec Q1), the E2 catalog-card 390px overflow (007 surface, found by T031's adversarial name).

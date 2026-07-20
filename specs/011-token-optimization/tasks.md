@@ -248,16 +248,16 @@ per-slice rows (estimate → actual + labeled rtk-gain), effective Δ% with cave
       first implementation slice starts** (it may land with PR-B if E5 is imminent) — **fixada 2026-07-19
       na seção "Baseline do piloto 011" do ledger, incl. os limites de atribuição (rtk=Bash-only ·
       tokenizer ~+30% · expiração do preço intro) e o resultado do R1-gate**
-- [ ] T032 [US4] Per E5 slice (PR-A/PR-B/PR-C of 010): estimate row before the slice, actual (harness tokens,
+- [x] T032 [US4] Per E5 slice (PR-A/PR-B/PR-C of 010): estimate row before the slice, actual (harness tokens,
       never agent self-estimate) + `rtk gain` snapshot (labeled auxiliary) after — three rows total, written as
       the pilot runs
-- [ ] T033 [US4] Pilot verdict at E5 close: measured effective Δ% per treatment shape vs comparable, quality
+- [x] T033 [US4] Pilot verdict at E5 close: measured effective Δ% per treatment shape vs comparable, quality
       outcome per slice (homologation verdict + gate), caveats disclosed (Sonnet tokenizer ~+30% · intro-rate
       expiry 2026-08-31), responsible lever named on any shortfall; controls reported separately (SC-006/SC-007);
       resolve Q5 (query-log keep-or-drop) from the pilot data. **Caso alavanca-ausente**: se a US2 parou no
       R1-gate (T015), o veredito mede SÓ routing (+graphify) e diz isso explicitamente — não atribua ao rtk
       economia que ele não produziu, e não trate o alvo ≥30% como se todas as alavancas estivessem ativas
-- [ ] T034 [US4] If any layer regressed: execute that layer's playbook line and record it; if none, state so
+- [x] T034 [US4] If any layer regressed: execute that layer's playbook line and record it; if none, state so
       explicitly (a null result is a result — Constitution II)
 
 **Checkpoint**: PR-C closes the epic with a measured, honest verdict.
