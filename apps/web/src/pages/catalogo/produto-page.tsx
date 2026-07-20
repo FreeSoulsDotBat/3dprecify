@@ -35,7 +35,9 @@ import {
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
+import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import { RecordSnapshotButton, type RecordSource } from "@/features/history/record-snapshot-sheet";
+import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -359,6 +361,28 @@ export function ProdutoPage({ productId }: { productId?: string }) {
         refreshing={refreshing}
         onRetryCatalog={retryCatalog}
       />
+
+      {/* 010/T021b (E5, PR-B) — save a scenario referencing THIS saved product (closes FR-606a on
+          the UI side): `buildScenarioConfig`'s `productRef` captures `costBasis.kind = "PRODUCT"`
+          instead of AD_HOC, so the D3/D6 lifecycle (T011 server re-snapshot, T022 read-time
+          resolve) applies on reopen. Offered only on a SAVED product with a valid live price — a
+          new/unsaved product has no id to reference yet (mirrors `recordSource` above). */}
+      {editing && result && input && (
+        <div className="flex justify-center">
+          <SaveScenarioSheet
+            source={{
+              buildConfig: () =>
+                buildScenarioConfig({
+                  values,
+                  channelOutcomes,
+                  parsedInput: input,
+                  productRef: { id: editing.id, name: editing.name },
+                }),
+              basisLabel: `${editing.name} (${messages.scenarios.basisKindProduct})`,
+            }}
+          />
+        </div>
+      )}
     </section>
   );
 }

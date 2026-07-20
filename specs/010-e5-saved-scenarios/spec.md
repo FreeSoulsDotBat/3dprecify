@@ -435,6 +435,16 @@ E1/E2/E3/E4 success criteria remain in force. New criteria (technology-agnostic,
   new external dependency and zero new security/LGPD domain; per-account fee auth is heavier, security-laden and
   dependency-blocked. *(FR-618, §Out of Scope.)*
 
+### Session 2026-07-20 (owner decision at the PR-B FE wave's Principle-VIII stop)
+
+- Q: T021b/FR-606a — how does a **KIT-basis scenario get created**, given the kit composer holds channels
+  per-LINE while Q12 decided a scenario applies ONE uniform channelSet, and `ux-scenarios.md` specifies no
+  kit-level channel picker? → A: **Defer KIT-basis creation.** PR-B ships PRODUCT + AD_HOC capture only; the
+  KIT **reopen/compute** side (T024 — uniform channelSet → `computeBom` rollup, server D3/D6 resolve) is
+  built and tested regardless (a KIT-basis row remains valid wire data). The KIT-creation UI goes to
+  designer-ux for a specified flow (PR-C candidate or post-E5). Zero invented UX; FR-606a's KIT half is
+  **consciously open**, not silently dropped.
+
 ### Session 2026-07-19 (owner decisions at the T002 checkpoint, post-`/speckit-analyze`)
 
 - Q: Default list ordering → A: **newest-saved (`created_at DESC`)** — stable keyset cursor; the data-model §5

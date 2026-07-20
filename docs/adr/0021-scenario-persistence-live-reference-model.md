@@ -1,6 +1,7 @@
 # ADR-0021: Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis
 
-- **Status**: Proposed
+- **Status**: Accepted (2026-07-20 — owner homologation = merge of PR #24, `8386972`; decisions recorded in
+  spec §Clarifications session 2026-07-19)
 - **Date**: 2026-07-17
 - **Deciders**: Jonatan (owner) + arquiteto + dev-estrutura-de-dados + Claude
 - **Extends**: ADR-0013 (persistence stack) · ADR-0017 (kit-save + §6 read-time reference degradation)

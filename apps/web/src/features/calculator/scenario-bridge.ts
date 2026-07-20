@@ -1,17 +1,20 @@
-import type { PriceInput } from "@3dprecify/pricing-core";
+import { computeBom, type BomResult, type PriceInput } from "@3dprecify/pricing-core";
 
 import {
   serializeAdHocBasis,
+  serializeProductBasis,
   serializeScenarioConfig,
+  type ScenarioBasisRef,
   type ScenarioChannelSlotState,
   type ScenarioConfig,
 } from "@/entities/scenario/config-document";
 
-import type { ChannelSlotOutcome } from "./calculator-model";
+import { type CatalogContext, type ChannelSlotOutcome, computeFromForm } from "./calculator-model";
 import {
   type CalcFieldName,
   CALC_FIELD_NAMES,
   type CalcFormValues,
+  defaultCalcValues,
   type ChannelFieldName,
   type ChannelSlotForm,
   type MarketplaceId,
@@ -47,6 +50,22 @@ function decimalStringToPtBr(raw: string): string {
   return raw.replace(".", ",");
 }
 
+/** An ABSENT `feeOverrides` leaf becomes a BLANK string (re-resolve live), a PRESENT one becomes its
+ *  pt-BR value (the seller's override, "ajustado por você") — shared by the scalar-form reopen (T014)
+ *  and the KIT-basis rollup (T024), the two places a `ScenarioChannelIntent[]` becomes form channels. */
+function channelIntentToForm(c: ScenarioConfig["channels"][number]): ChannelSlotForm {
+  const overrideOrBlank = (leaf: string | undefined): string =>
+    leaf === undefined ? "" : decimalStringToPtBr(leaf);
+  return {
+    marketplace: c.marketplace as MarketplaceId,
+    modality: (c.modality ?? "") as Modality,
+    commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
+    fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
+    minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
+    freightCost: overrideOrBlank(c.feeOverrides?.freightCost),
+  };
+}
+
 /** Everything AD-HOC-shaped a scenario save persists as the cost basis, stripped of the fields that
  *  live at the envelope's OWN root (`channels[]`, `otherCosts[]`) or are catalog provenance
  *  (`catalogVersion`) — those are never duplicated into `costBasis.lastKnown` (data-model §3). */
@@ -66,16 +85,21 @@ function stripBasisOnlyFields(input: PriceInput): PriceInput {
  * disable the save affordance rather than persist a broken intent.
  *
  * PR-A scope note (flagged, not inferred): the Calcular page has no persistent catalog-product
- * binding (unlike a BOM line), so every scenario saved from here is `AD_HOC` — a `PRODUCT`/`KIT`
- * cost basis is out of PR-A's Calcular-only save entry (the ux §2.1 wireframe); Q12 kit-basis
- * composition is explicitly PR-B/T024.
+ * binding (unlike a BOM line), so every scenario saved from Calcular itself is `AD_HOC`.
+ *
+ * 010/T021b (PR-B) — `productRef`: when the caller (`ProdutoPage`, which mounts this SAME form body
+ * over a SAVED product, T030) is editing a saved product, it hands its `{id, name}` here so the
+ * captured basis is `PRODUCT` instead of `AD_HOC` — closing FR-606a on the UI side (the backend
+ * D3/D6 lifecycle, T011/T022, was already live). A `KIT` basis is out of THIS function's scope
+ * (Calcular/ProdutoPage are single-piece surfaces); Q12 kit-basis composition is T024.
  */
 export function buildScenarioConfig(args: {
   values: CalcFormValues;
   channelOutcomes: readonly ChannelSlotOutcome[];
   parsedInput: PriceInput | null;
+  productRef?: ScenarioBasisRef;
 }): ScenarioConfig | null {
-  const { values, channelOutcomes, parsedInput } = args;
+  const { values, channelOutcomes, parsedInput, productRef } = args;
   if (parsedInput === null) return null;
 
   const channels: ScenarioChannelSlotState[] = values.channels.map((slot, i) => {
@@ -96,7 +120,9 @@ export function buildScenarioConfig(args: {
 
   return serializeScenarioConfig({
     includeMarketplace: values.includeMarketplace !== false,
-    costBasis: serializeAdHocBasis(stripBasisOnlyFields(parsedInput)),
+    costBasis: productRef
+      ? serializeProductBasis(productRef, stripBasisOnlyFields(parsedInput))
+      : serializeAdHocBasis(stripBasisOnlyFields(parsedInput)),
     channels,
     // `parsedInput.otherCosts` is `computeFromForm`'s ALREADY-VALID, already-parsed rows (a bad row
     // never reaches it) — re-parsing the raw pt-BR strings here would duplicate validation the model
@@ -133,17 +159,7 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     }
   }
 
-  const overrideOrBlank = (leaf: string | undefined): string =>
-    leaf === undefined ? "" : decimalStringToPtBr(leaf);
-
-  const channels: ChannelSlotForm[] = config.channels.map((c) => ({
-    marketplace: c.marketplace as MarketplaceId,
-    modality: (c.modality ?? "") as Modality,
-    commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
-    fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
-    minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
-    freightCost: overrideOrBlank(c.feeOverrides?.freightCost),
-  }));
+  const channels: ChannelSlotForm[] = config.channels.map(channelIntentToForm);
 
   const otherCosts: OtherCostForm[] = config.otherCosts.map((c) => ({
     name: c.name,
@@ -155,5 +171,68 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     includeMarketplace: config.includeMarketplace,
     channels,
     otherCosts,
+  };
+}
+
+/**
+ * 010/T024 (E5, PR-B US3, Q12 owner-decided) — the KIT-basis reopen. A single-piece scalar patch
+ * cannot hydrate a multi-piece basis, so a KIT-basis scenario gets its OWN read-only recompute
+ * instead of populating the calculator form: the scenario's ONE shared `channels[]` intent is
+ * applied UNIFORMLY to every kit line's `lastKnown` input (Q12), each line goes through the SAME
+ * `computeFromForm` path a scalar reopen uses (so the honesty cases — a non-overridden slot
+ * re-resolving live, an uncovered slot's "sem referência", a saved ≥100% commission override —
+ * fall out for free, FR-609), and the resulting `PriceInput`s are hard down `computeBom` for the
+ * per-marketplace rollup. **No `pricing-core` change** (both `computeCalculator`/`computeBom` are
+ * reused verbatim); this module orchestrates, it does not price.
+ *
+ * Returns `null` for a non-KIT basis (the caller's cue to render the ordinary scalar form instead).
+ */
+export interface ScenarioKitLineOutcome {
+  name: string | null;
+  quantity: number;
+  /** `false` ⇒ this line's channels/scalars failed to parse — excluded from `bom`, never silently
+   *  zeroed (mirrors the kit composer's own `excludedLineCount` convention). */
+  ok: boolean;
+}
+
+export interface ScenarioKitRollup {
+  lines: ScenarioKitLineOutcome[];
+  excludedLineCount: number;
+  /** `null` when EVERY line was excluded — never a fake all-zero rollup. */
+  bom: BomResult | null;
+}
+
+export function computeScenarioKitChannels(
+  config: ScenarioConfig,
+  ctx?: CatalogContext,
+): ScenarioKitRollup | null {
+  if (config.costBasis.kind !== "KIT") return null;
+  const channels = config.channels.map(channelIntentToForm);
+  const lineOutcomes: ScenarioKitLineOutcome[] = [];
+  const bomLines: { input: PriceInput; quantity: number }[] = [];
+
+  for (const line of config.costBasis.lastKnown.lines) {
+    const scalars: Partial<Record<CalcFieldName, string>> = {};
+    for (const name of CALC_FIELD_NAMES) {
+      const leaf = line.input[name];
+      if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
+    }
+    const formValues: CalcFormValues = {
+      ...defaultCalcValues,
+      ...scalars,
+      includeMarketplace: config.includeMarketplace,
+      channels,
+      otherCosts: [],
+    };
+    const outcome = computeFromForm(formValues, ctx);
+    const ok = outcome.ok && outcome.input !== null;
+    lineOutcomes.push({ name: line.name, quantity: line.quantity, ok });
+    if (ok) bomLines.push({ input: outcome.input!, quantity: line.quantity });
+  }
+
+  return {
+    lines: lineOutcomes,
+    excludedLineCount: lineOutcomes.filter((l) => !l.ok).length,
+    bom: bomLines.length > 0 ? computeBom(bomLines) : null,
   };
 }

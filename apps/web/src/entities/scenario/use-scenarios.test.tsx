@@ -4,10 +4,22 @@ import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { idbStore, listScenarios, createScenario } = vi.hoisted(() => ({
+const {
+  idbStore,
+  listScenarios,
+  createScenario,
+  updateScenario,
+  renameScenario,
+  deleteScenario,
+  duplicateScenario,
+} = vi.hoisted(() => ({
   idbStore: new Map<string, unknown>(),
   listScenarios: vi.fn(),
   createScenario: vi.fn(),
+  updateScenario: vi.fn(),
+  renameScenario: vi.fn(),
+  deleteScenario: vi.fn(),
+  duplicateScenario: vi.fn(),
 }));
 
 vi.mock("idb-keyval", () => ({
@@ -26,6 +38,10 @@ vi.mock("@/shared/api/generated", async (importOriginal) => {
     ...actual,
     listScenariosApiV1ScenariosGet: listScenarios,
     createScenarioApiV1ScenariosPost: createScenario,
+    updateScenarioApiV1ScenariosScenarioIdPut: updateScenario,
+    renameScenarioApiV1ScenariosScenarioIdPatch: renameScenario,
+    deleteScenarioApiV1ScenariosScenarioIdDelete: deleteScenario,
+    duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost: duplicateScenario,
   };
 });
 
@@ -33,7 +49,14 @@ import { ApiError } from "@/shared/api/transport";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { loadCachedScenarios, purgeScenarioCache, scenarioIdbKey } from "./scenario-cache";
-import { useCreateScenario, useScenarios } from "./use-scenarios";
+import {
+  useCreateScenario,
+  useDeleteScenario,
+  useDuplicateScenario,
+  useRenameScenario,
+  useScenarios,
+  useUpdateScenario,
+} from "./use-scenarios";
 
 // 010/T012 (E5, PR-A US2) — written FAILING-first (the module did not exist).
 //
@@ -64,6 +87,10 @@ beforeEach(() => {
   idbStore.clear();
   listScenarios.mockReset().mockResolvedValue({ status: 200, data: { items: [ROW] } });
   createScenario.mockReset();
+  updateScenario.mockReset();
+  renameScenario.mockReset();
+  deleteScenario.mockReset();
+  duplicateScenario.mockReset();
   onlineManager.setOnline(true);
   signInAs("uidA");
 });
@@ -160,5 +187,90 @@ describe("useCreateScenario — ONLINE-ONLY, no outbox (VR-612/FR-613)", () => {
     );
     const { result } = renderHook(() => useCreateScenario(), { wrapper });
     await expect(result.current.mutateAsync({ name: "x", config: {} })).rejects.toThrow();
+  });
+});
+
+// 010/T029 (E5, PR-B US6) — written FAILING-first (the hooks did not exist): manage (PUT/PATCH/
+// duplicate/DELETE) is the SAME online-only, no-outbox posture as create — a real 2xx only.
+
+describe("useUpdateScenario — PUT full-config replace, ONLINE-ONLY", () => {
+  it("a real 200 resolves with the server row", async () => {
+    updateScenario.mockResolvedValue({ status: 200, data: ROW });
+    const { result } = renderHook(() => useUpdateScenario(), { wrapper });
+    const saved = await result.current.mutateAsync({ id: "s1", body: { name: "x", config: {} } });
+    expect(saved).toEqual(ROW);
+  });
+
+  it("offline, the write fails honestly — no queue, nothing persisted", async () => {
+    onlineManager.setOnline(false);
+    updateScenario.mockRejectedValue(
+      new ApiError({ status: 0, code: "UNKNOWN", message: "offline", correlationId: null }),
+    );
+    const { result } = renderHook(() => useUpdateScenario(), { wrapper });
+    await expect(
+      result.current.mutateAsync({ id: "s1", body: { name: "x", config: {} } }),
+    ).rejects.toThrow();
+    expect(updateScenario).toHaveBeenCalledTimes(1); // ran and rejected, never sat pending
+  });
+});
+
+describe("useRenameScenario — PATCH name/note ONLY", () => {
+  it("a real 200 resolves with the renamed row", async () => {
+    renameScenario.mockResolvedValue({ status: 200, data: { ...ROW, name: "novo nome" } });
+    const { result } = renderHook(() => useRenameScenario(), { wrapper });
+    const saved = await result.current.mutateAsync({ id: "s1", body: { name: "novo nome" } });
+    expect(saved.name).toBe("novo nome");
+  });
+
+  it("a lapsed 403 surfaces honestly", async () => {
+    renameScenario.mockRejectedValue(
+      new ApiError({
+        status: 403,
+        code: "ENTITLEMENT_REQUIRED",
+        message: "denied",
+        correlationId: null,
+      }),
+    );
+    const { result } = renderHook(() => useRenameScenario(), { wrapper });
+    await expect(result.current.mutateAsync({ id: "s1", body: { name: "x" } })).rejects.toThrow();
+  });
+});
+
+describe("useDeleteScenario — DELETE soft, VOLUNTARY only", () => {
+  it("a real 204 resolves cleanly", async () => {
+    deleteScenario.mockResolvedValue({ status: 204, data: undefined });
+    const { result } = renderHook(() => useDeleteScenario(), { wrapper });
+    await expect(result.current.mutateAsync("s1")).resolves.toBeUndefined();
+  });
+
+  it("offline fails honestly", async () => {
+    onlineManager.setOnline(false);
+    deleteScenario.mockRejectedValue(
+      new ApiError({ status: 0, code: "UNKNOWN", message: "offline", correlationId: null }),
+    );
+    const { result } = renderHook(() => useDeleteScenario(), { wrapper });
+    await expect(result.current.mutateAsync("s1")).rejects.toThrow();
+  });
+});
+
+describe("useDuplicateScenario — POST /{id}/duplicate, VR-608 independence", () => {
+  it("a real 201 resolves with the independent copy", async () => {
+    duplicateScenario.mockResolvedValue({ status: 201, data: { ...ROW, id: "s2" } });
+    const { result } = renderHook(() => useDuplicateScenario(), { wrapper });
+    const copy = await result.current.mutateAsync("s1");
+    expect(copy.id).toBe("s2");
+  });
+
+  it("a lapsed 403 surfaces honestly, never a silent success", async () => {
+    duplicateScenario.mockRejectedValue(
+      new ApiError({
+        status: 403,
+        code: "ENTITLEMENT_REQUIRED",
+        message: "denied",
+        correlationId: null,
+      }),
+    );
+    const { result } = renderHook(() => useDuplicateScenario(), { wrapper });
+    await expect(result.current.mutateAsync("s1")).rejects.toThrow();
   });
 });

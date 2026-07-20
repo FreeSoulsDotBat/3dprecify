@@ -161,8 +161,9 @@ function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () =
       </Field>
 
       {/* Read-only echo of the current cost basis (ux §2.3) — no editing here; it comes from the
-          calculator state that was on screen when the Sheet opened. */}
-      <p className="text-sm text-[var(--text-muted)]">
+          calculator state that was on screen when the Sheet opened. `[overflow-wrap:anywhere]`: a
+          120-char spaceless product name must wrap, not overflow the 390px sheet (T031 nit). */}
+      <p className="text-sm break-words [overflow-wrap:anywhere] text-[var(--text-muted)]">
         {t.basisEcho.replace("{nome}", source.basisLabel)}
       </p>
 

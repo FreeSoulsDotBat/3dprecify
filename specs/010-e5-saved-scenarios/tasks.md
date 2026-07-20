@@ -56,7 +56,7 @@ all E1/E2/E3/E4 guards pass UNCHANGED.
       sheet, the scenarios list (name · note · last-updated — **ordering per data-model §7**, an owner+designer
       call), the **reopen → live** view (today's numbers, no frozen date; the "ajustado por você" seal; the offline
       staleness seal), and the US5 teaser. Write to `specs/010-e5-saved-scenarios/ux-scenarios.md`. Not a merge blocker.
-- [ ] T002 **Owner homologation checkpoint (BLOCKING the PR-A merge, Principle VIII).** Flip **ADR-0021**
+- [x] T002 **Owner homologation checkpoint (BLOCKING the PR-A merge, Principle VIII).** Flip **ADR-0021**
       Proposed → Accepted and record the owner's calls in `spec.md` §Clarifications: the data-model §7 points (**Q6**
       name≤120/note≤500 caps · **list ordering** newest-saved vs recently-edited vs alphabetical · **`config` size
       cap** 256 KB → honest 422 · accent-sensitive search accept/defer · **§7.3** `config_schema_version` only, no
@@ -71,6 +71,7 @@ all E1/E2/E3/E4 guards pass UNCHANGED.
       `PUT`+`PATCH` separate · Q12 uniform channelSet → `computeBom` rollup · Q13 accept-and-degrade · caps 120/500 ·
       256 KB → 422 · accent-sensitive accepted · no model-version column. **Remaining in T002: flip ADR-0021 →
       Accepted at the PR-A merge homologation.**
+      **→ CLOSED 2026-07-20**: owner homologated + merged PR #24 (`8386972`); ADR-0021 flipped → Accepted.
 
 ## Phase 2: Foundational (blocking) — the intent document + the table
 
@@ -167,6 +168,10 @@ after one online load; sign-out purges the cache.
       read + honest offline-save failure. **Adversarial DATA + SIZE**: a long scenario name, many channels, an
       ad-hoc basis (a **product basis via the UI lands in PR-B — T021b**; its server path is pytest-covered by T011).
       Screenshots.
+      **→ DONE 2026-07-20**: **PASS-WITH-NITS 92%** (qa-produto opus, MCP Playwright direto — 1ª homologação
+      sem script-fallback), 7/7 pontos por imagem, 15 PNGs em `evidence/t031/`. F1 limpo; resolver flat provado
+      end-to-end; KIT via API rendendo rollup. Nit E5 (basisEcho 390px) corrigido em `cb906c1`; nit E2 (card do
+      catálogo estoura com nome 120c sem espaço — surface 007) anotado para o gate do dono como follow-up.
       **→ DONE 2026-07-19, PASS-WITH-NITS 88% (3rd attempt).** Attempt 1 (haiku, 011 routing) FAILED the mandate
       (0 screenshots, 6/8 deferred, rounded-up verdict — the pilot's first negative datum); attempt 2 (opus lift)
       honestly BLOCKED (mcp playwright tools never register in this harness session); attempt 3 (same opus agent,
@@ -177,7 +182,9 @@ after one online load; sign-out purges the cache.
 - [x] T019 `pnpm gate:all` green (fe format/lint+boundaries/depcruise/typecheck/coverage AND be
       ruff/basedpyright/pytest/import-linter) + drift-guard idempotent + **SC-612** (all E1/E2/E3/E4 guards pass
       UNCHANGED). Record evidence in `specs/010-e5-saved-scenarios/dod-evidence.md`.
-- [ ] T020 **Owner-gated PR-A → `develop`** (squash). On merge: `graphify update .` (ADR-0014 freshness).
+- [x] T020 **Owner-gated PR-A → `develop`** (squash). On merge: `graphify update .` (ADR-0014 freshness).
+      **→ DONE 2026-07-20**: owner squash-merged PR #24 → `develop` (`8386972`); graph refreshed via the
+      post-merge/post-checkout hooks on the local ff-pull.
 
 ---
 
@@ -189,33 +196,45 @@ after one online load; sign-out purges the cache.
 product → reopen reflects it (D3); delete it → reopen degrades to last-known honestly (D6, never "removido"); a
 fee-catalog refresh re-resolves non-overridden slots while overrides stick.
 
-- [ ] T021 [US3] Write FAILING pytest — `test_scenarios.py`: **VR-605** D3 live-reflect (referenced product edit →
+- [x] T021 [US3] Write FAILING pytest — `test_scenarios.py`: **VR-605** D3 live-reflect (referenced product edit →
       reopen resolves the **live** row) + **VR-606** D6 last-known (referenced product soft-deleted / cross-tenant /
       never-existed → degrade to `config.costBasis.lastKnown`, editable + re-saveable, honest caption, **0** breaks) +
       **VR-604** (a non-overridden slot re-resolves to a mutated catalog fee; an overridden slot keeps its value).
       Observe failing.
-- [ ] T022 [US3] Implement the **read-time resolver** in `scenarios.py` — resolve `costBasis.ref` **owner +
+- [x] T022 [US3] Implement the **read-time resolver** in `scenarios.py` — resolve `costBasis.ref` **owner +
       `deleted_at IS NULL`** (reuse the E3 `_resolve_views` seam) → D3 live / D6 last-known + a `degraded` flag;
       `GET /{id}` (and every write response) returns the resolved-or-degraded basis. Tests green.
-- [ ] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
+- [x] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
       last-known copy — never "removido"; "Abrir origem" offered only if the ref resolves); the "ajustado por você"
       seal on overridden slots; the 005 staleness seal offline. Tests green.
-- [ ] T021b [US3] FE: capture a **PRODUCT/KIT `costBasis.ref` (+ `lastKnown`) at save** when the calculator was
+- [x] T021b [US3] FE: capture a **PRODUCT/KIT `costBasis.ref` (+ `lastKnown`) at save** when the calculator was
       prefilled from the catalog — the PR-A wave saved AD_HOC only (T009 dated note); this closes FR-606a on the UI
       side and lets the qa D3/D6 walk run end-to-end from the app. Tests first.
-- [ ] T024 [US3] **Kit-basis channel composition (Q12, owner-decided at T002)**: apply the scenario's channelSet
+      **→ PARTIAL 2026-07-20 (`ab9441a`)**: PRODUCT half DONE (produto-page "Salvar cenário" → `costBasis`
+      PRODUCT ref + lastKnown, test-first). **KIT half = Principle VIII stop, NOT inferred**: the kit composer
+      has per-LINE channels and no kit-level channel picker; `ux-scenarios.md` specifies no such UI. Owner
+      options: (a) derive from a kit line's channelSet · (b) new kit-level picker (new UI) · (c) KIT-basis
+      scenarios originate elsewhere (defer). T024 (reopen/compute side) is DONE independently.
+      **→ OWNER DECIDED 2026-07-20: (c) defer KIT-basis creation** (spec §Clarifications session 2026-07-20;
+      KIT-creation UI → designer-ux, PR-C candidate or post-E5). T021b CLOSED at the decided scope.
+- [x] T024 [US3] **Kit-basis channel composition (Q12, owner-decided at T002)**: apply the scenario's channelSet
       uniformly to every kit line → `computeBom` → per-marketplace rollup. **No `pricing-core` change** (both engines
       exist). Tests green.
+
+> **BE wave DONE 2026-07-20** (commit `2e31b8d`, dev-backend sonnet + main-loop KIT redirect): T021/T022 +
+> T025/T026 + T027/T028 — resolver D3/D6 covers **PRODUCT + KIT** (contract §99–102; the KIT half was a
+> main-loop catch against the contract), 55/55 in-file + 319 full suite re-measured, regen idempotent 2×.
+> VR-604's live re-resolution is CLIENT-side (fees never resolved server-side) → pre-assigned to T023.
 
 ## Phase 8: User Story 4 — Duplicate-to-tweak (Priority: P1)
 
 **Goal**: clone a scenario, change one thing, compare — the headline value. **Independent test**: duplicate, tweak
 the copy, confirm the original is byte-for-byte unchanged and vice versa.
 
-- [ ] T025 [US4] Write FAILING pytest — **VR-608** duplicate independence: `POST /{id}/duplicate` **deep-copies**
+- [x] T025 [US4] Write FAILING pytest — **VR-608** duplicate independence: `POST /{id}/duplicate` **deep-copies**
       `config` into a new row (new `id`, own `name`); editing the copy changes **0%** of the original, and vice
       versa. Observe failing.
-- [ ] T026 [US4] Implement `POST /api/v1/scenarios/{id}/duplicate` (deep copy) + the "Duplicar" affordance in
+- [x] T026 [US4] Implement `POST /api/v1/scenarios/{id}/duplicate` (deep copy) + the "Duplicar" affordance in
       `features/scenarios`. Tests green.
 
 ## Phase 9: User Story 6 — Manage + lapse (Priority: P2)
@@ -223,29 +242,41 @@ the copy, confirm the original is byte-for-byte unchanged and vice versa.
 **Goal**: rename, edit-the-whole-config, search, delete; on lapse everything stays readable + recomputable, all
 writes denied, nothing auto-deleted.
 
-- [ ] T027 [US6] Write FAILING pytest — **PUT** full-config edit (VR-602/603 re-run on **UPDATE**) + **PATCH**
+- [x] T027 [US6] Write FAILING pytest — **PUT** full-config edit (VR-602/603 re-run on **UPDATE**) + **PATCH**
       rename (`name`/`note` only, `extra="forbid"` → smuggled field `422`) + **DELETE** soft + name search (owner-
       scoped `ILIKE`, VR-611-adjacent) + **VR-610** lapse (reads `200`, all writes `403`, **0** rows deleted/modified,
       re-grant restores writes with data intact). Observe failing.
-- [ ] T028 [US6] Implement `PUT /{id}` (full-config replace) · `PATCH /{id}` (rename) · `DELETE /{id}` (soft) + the
+- [x] T028 [US6] Implement `PUT /{id}` (full-config replace) · `PATCH /{id}` (rename) · `DELETE /{id}` (soft) + the
       `?q=` name search, per contract; `require_entitlement` (ACTIVE) on writes, reads survive lapse. Tests green.
-- [ ] T029 [US6] Frontend: rename, **edit-config** (reopen → edit → `PUT`), search, delete; the **lapse read-only**
+- [x] T029 [US6] Frontend: rename, **edit-config** (reopen → edit → `PUT`), search, delete; the **lapse read-only**
       surface (reuse the E2/E3/E4 authorization-freeze pattern — readable/recomputable, writes disabled with reason).
       Tests green.
 
 ## Phase 10: PR-B hardening & delivery
 
-- [ ] T030 e2e: save referencing a product → **edit the product → reopen reflects** (D3); **delete it → reopen
+- [x] T030 e2e: save referencing a product → **edit the product → reopen reflects** (D3); **delete it → reopen
       degrades honestly** (D6, no "removido"); **duplicate → tweak → compare**; rename/edit/search/delete; the lapse
       read-only surface. Client-nav for detail.
-- [ ] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
+      **→ DONE 2026-07-20 (`9ef2859`)**: `scenarios-manage.spec.ts` 5/5 green (D3 · D6-honest · duplicate ·
+      manage · lapse) + PR-A `scenarios.spec.ts` 5/5 regression-clean. The wave found 3 REAL defects (all fixed:
+      `89f9e1d` flat lastKnown shape · `27d6a24` dirty-tracking · `9ef2859` sr-only search field). The "frozen
+      overlay" reading of defect #3 was a MISDIAGNOSIS corrected by main-loop live MCP-browser debugging: body
+      `pointer-events:none` + top-layer inline `auto` is NORMAL Radix modal behavior; the manage red was the
+      search input born 1×1px inside a `sr-only`'d Field wrapper.
+- [x] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
       spaceless-note line-clamp on the list card; ellipsis on the context-bar scenario name (actions already never
       displaced).
-- [ ] T031 qa-produto visual homologation (390px + desktop) — the **D3/D6 degradation** walk + **duplicate-to-tweak**
+- [x] T031 qa-produto visual homologation (390px + desktop) — the **D3/D6 degradation** walk + **duplicate-to-tweak**
       + manage + lapse. **Adversarial DATA**: a deleted referenced basis, a kit basis, long names. Guard the honesty
       class (F1: never "removido/excluído" when the ref merely didn't resolve; never present stale as live).
       Screenshots.
-- [ ] T032 `pnpm gate:all` + drift-guard idempotent + **SC-612**. Evidence in `dod-evidence.md`.
+      **→ DONE 2026-07-20**: **PASS-WITH-NITS 92%** (qa-produto opus, MCP Playwright direto — 1ª homologação
+      sem script-fallback), 7/7 pontos por imagem, 15 PNGs em `evidence/t031/`. F1 limpo; resolver flat provado
+      end-to-end; KIT via API rendendo rollup. Nit E5 (basisEcho 390px) corrigido em `cb906c1`; nit E2 (card do
+      catálogo estoura com nome 120c sem espaço — surface 007) anotado para o gate do dono como follow-up.
+- [x] T032 `pnpm gate:all` + drift-guard idempotent + **SC-612**. Evidence in `dod-evidence.md`.
+      **→ DONE 2026-07-20**: gate exit 0 (web 645 · be 321 · import-linter 3/0), regen 0-diff, full e2e
+      chromium **70/70 0-flaky**.
 - [ ] T033 **Owner-gated PR-B → `develop`** (squash). On merge: `graphify update .`.
 
 ---

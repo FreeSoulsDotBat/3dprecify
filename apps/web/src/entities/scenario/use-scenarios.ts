@@ -8,7 +8,12 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   createScenarioApiV1ScenariosPost,
+  deleteScenarioApiV1ScenariosScenarioIdDelete,
+  duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost,
   listScenariosApiV1ScenariosGet,
+  renameScenarioApiV1ScenariosScenarioIdPatch,
+  updateScenarioApiV1ScenariosScenarioIdPut,
+  type RenameIn,
   type ScenarioIn,
   type ScenarioOut,
 } from "@/shared/api/generated";
@@ -137,6 +142,91 @@ export function useCreateScenario(): UseMutationResult<ScenarioOut, ApiError, Sc
     networkMode: "always",
     mutationFn: async (body: ScenarioIn) => {
       const res = await createScenarioApiV1ScenariosPost(body);
+      if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+    },
+  });
+}
+
+// 010/T029 (E5, PR-B US6) — manage + lapse. Every write below is the SAME online-only, no-outbox
+// posture as `useCreateScenario` (`networkMode: "always"`, a real 2xx only invalidates the list —
+// never an optimistic write): a lapsed/offline/free-server denial surfaces as a rejected mutation
+// and the caller (the list Sheet / the context bar) turns it into the honest specific copy.
+
+/** `PUT` full-config replace — "Salvar alterações" on a loaded scenario (T029/§4.1). */
+export function useUpdateScenario(): UseMutationResult<
+  ScenarioOut,
+  ApiError,
+  { id: string; body: ScenarioIn }
+> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  return useMutation<ScenarioOut, ApiError, { id: string; body: ScenarioIn }>({
+    networkMode: "always",
+    mutationFn: async ({ id, body }) => {
+      const res = await updateScenarioApiV1ScenariosScenarioIdPut(id, body);
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+    },
+  });
+}
+
+/** `PATCH` rename — `name`/`note` ONLY (T029). */
+export function useRenameScenario(): UseMutationResult<
+  ScenarioOut,
+  ApiError,
+  { id: string; body: RenameIn }
+> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  return useMutation<ScenarioOut, ApiError, { id: string; body: RenameIn }>({
+    networkMode: "always",
+    mutationFn: async ({ id, body }) => {
+      const res = await renameScenarioApiV1ScenariosScenarioIdPatch(id, body);
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+    },
+  });
+}
+
+/** `DELETE` soft-delete (T029). */
+export function useDeleteScenario(): UseMutationResult<void, ApiError, string> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  return useMutation<void, ApiError, string>({
+    networkMode: "always",
+    mutationFn: async (id: string) => {
+      const res = await deleteScenarioApiV1ScenariosScenarioIdDelete(id);
+      if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+    },
+  });
+}
+
+/** `POST /{id}/duplicate` — VR-608 independence (T029, mirrors the E3/E4 "Duplicar" idiom the T026
+ *  checkbox claimed but never wired client-side; completed here as the shared overflow action). */
+export function useDuplicateScenario(): UseMutationResult<ScenarioOut, ApiError, string> {
+  const client = useQueryClient();
+  const uid = useSessionStore((s) => s.user?.uid);
+
+  return useMutation<ScenarioOut, ApiError, string>({
+    networkMode: "always",
+    mutationFn: async (id: string) => {
+      const res = await duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost(id);
       if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
       return res.data;
     },
