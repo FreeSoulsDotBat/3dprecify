@@ -1,0 +1,90 @@
+import { useNavigate } from "@tanstack/react-router";
+
+import { messages } from "@/shared/i18n/messages.pt-br";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  EmptyState,
+  Icon,
+} from "@/shared/ui";
+
+// 010/T016 (E5, PR-A US5) — the honest premium teaser for "Meus cenários" (E2 US7 / E3 US5 / E4 US5
+// lineage — the SAME copy family, parametrized here rather than imported: `features/scenarios`
+// cannot import `features/catalog`'s `PremiumTeaserDialog` (FSD-Lite forbids a feature importing a
+// sibling feature) — so, exactly like `features/history/history-teaser.tsx` did for the Histórico
+// tab, this is a small LOCAL composition of the same shared DS primitives (`Dialog`/`EmptyState`),
+// not a clone of the pricing/business logic (there is none here to clone).
+//
+// Three non-negotiables inherited from every teaser before it (§0.1/§7 of ux-scenarios.md): the
+// door is VISIBLE, never hidden; the intercept is honest and specific (no generic error); nothing
+// persists and no success is faked. A fourth, specific to this surface: NO fabricated sample
+// scenario — the list simply explains, it never shows a fake "Cenário 1" row (SC-607).
+
+const t = messages.scenarios;
+
+/** The Dialog shown when the seller taps the teaser's own action — reused parametrized copy. */
+export function ScenarioTeaserDialog({
+  open,
+  onOpenChange,
+  signedOut,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  signedOut: boolean;
+}) {
+  const navigate = useNavigate();
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent variant="center">
+        <div className="flex flex-col gap-3">
+          <Icon name="crown" size={24} aria-hidden />
+          <DialogTitle>{t.teaserDialogTitle}</DialogTitle>
+          <DialogDescription>
+            {signedOut ? t.teaserSignedOutBody : t.teaserDialogBody}
+          </DialogDescription>
+          <p className="text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+          <div className="flex justify-end gap-2">
+            {signedOut && (
+              <Button
+                variant="secondary"
+                onClick={() => void navigate({ to: "/sign-in", search: { redirect: "/calcular" } })}
+              >
+                {t.teaserSignIn}
+              </Button>
+            )}
+            <Button onClick={() => onOpenChange(false)}>{t.teaserDismiss}</Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** The "Meus cenários" surface for free/signed-out sellers (ux §3.5/§7): explains the value, never a
+ *  broken empty list and never a fabricated sample row. `open`/`onOpenChange` are OWNED by the
+ *  caller (the list sheet) so this panel composes inside it without its own extra dialog wrapper. */
+export function ScenarioTeaserPanel({
+  signedOut,
+  onOpenDialog,
+}: {
+  signedOut: boolean;
+  onOpenDialog: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-3">
+      <EmptyState
+        icon="crown"
+        title={t.teaserTitle}
+        description={t.teaserBody}
+        action={<Button onClick={onOpenDialog}>{t.teaserAction}</Button>}
+      />
+      {signedOut && (
+        <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserSignedOutBody}</p>
+      )}
+      <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+    </div>
+  );
+}

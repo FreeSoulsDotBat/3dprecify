@@ -1,0 +1,159 @@
+import type { PriceInput } from "@3dprecify/pricing-core";
+
+import {
+  serializeAdHocBasis,
+  serializeScenarioConfig,
+  type ScenarioChannelSlotState,
+  type ScenarioConfig,
+} from "@/entities/scenario/config-document";
+
+import type { ChannelSlotOutcome } from "./calculator-model";
+import {
+  type CalcFieldName,
+  CALC_FIELD_NAMES,
+  type CalcFormValues,
+  type ChannelFieldName,
+  type ChannelSlotForm,
+  type MarketplaceId,
+  type Modality,
+  type OtherCostForm,
+} from "./calculator-schema";
+
+// 010/T009+T010+T014 (E5, PR-A) — the ONE seam where the calculator's live form state meets the
+// scenario entity's parameter shapes, in BOTH directions (save + reopen).
+//
+// It lives HERE, in `features/calculator`, and NOT in `features/scenarios` for a structural reason
+// (FSD-Lite/ADR-0004, `eslint-boundaries`): a feature may import `entities/*` + `shared/*`, never a
+// SIBLING feature. `features/scenarios` cannot import `features/calculator`'s `CalcFormValues` /
+// `ChannelSlotOutcome` types — so the calculator feature (which already owns those types) is the one
+// that knows how to translate them into `entities/scenario/config-document`'s plain parameter shapes.
+// `features/scenarios` never sees a `CalcFormValues`; it only ever handles an already-built
+// `ScenarioConfig` (save direction) or an already-applied form patch (reopen direction), both of
+// which the PAGE wires by calling the functions below at the call site — exactly the seam
+// `config-document.ts`'s header comment describes.
+//
+// `pricing-core` is NOT touched: SAVE reuses whatever `computeFromForm` already resolved
+// (`ChannelSlotOutcome.editedFields`, T010's per-field tracking); REOPEN only produces pt-BR form
+// STRINGS that flow back through the exact same `computeFromForm` → `fee-prefill.ts` path a fresh
+// calculation takes — a non-overridden slot is left BLANK so it re-resolves live, an overridden slot
+// is set to its saved value so it reads "ajustado por você", and the 005 honesty cases (uncovered
+// slot → "sem referência"; commission ≥ 100% → the same inline error) fall out of the EXISTING code
+// with zero new pricing logic (FR-609, T014).
+
+/** A decimal-string leaf ("12.5", "0.1", "100") has AT MOST one '.', never a thousands separator (it
+ *  comes from `Decimal#toString`) — so swapping '.' → ',' is a lossless, unambiguous conversion into
+ *  the pt-BR string the calculator form's own parser (`parseDecimal`) expects. Never a re-round. */
+function decimalStringToPtBr(raw: string): string {
+  return raw.replace(".", ",");
+}
+
+/** Everything AD-HOC-shaped a scenario save persists as the cost basis, stripped of the fields that
+ *  live at the envelope's OWN root (`channels[]`, `otherCosts[]`) or are catalog provenance
+ *  (`catalogVersion`) — those are never duplicated into `costBasis.lastKnown` (data-model §3). */
+function stripBasisOnlyFields(input: PriceInput): PriceInput {
+  const rest: PriceInput = { ...input };
+  delete rest.channels;
+  delete rest.otherCosts;
+  delete rest.catalogVersion;
+  return rest;
+}
+
+/**
+ * SAVE direction (T009/T010). Builds the config document from the Calcular page's live state:
+ * `values`/`channelOutcomes` come straight off `computeFromForm` — nothing is re-derived, re-parsed
+ * or re-computed here. Returns `null` when there is nothing valid to save (an invalid form has no
+ * `parsedInput` — `computeFromForm` only returns one on a fully valid pass), so the caller can
+ * disable the save affordance rather than persist a broken intent.
+ *
+ * PR-A scope note (flagged, not inferred): the Calcular page has no persistent catalog-product
+ * binding (unlike a BOM line), so every scenario saved from here is `AD_HOC` — a `PRODUCT`/`KIT`
+ * cost basis is out of PR-A's Calcular-only save entry (the ux §2.1 wireframe); Q12 kit-basis
+ * composition is explicitly PR-B/T024.
+ */
+export function buildScenarioConfig(args: {
+  values: CalcFormValues;
+  channelOutcomes: readonly ChannelSlotOutcome[];
+  parsedInput: PriceInput | null;
+}): ScenarioConfig | null {
+  const { values, channelOutcomes, parsedInput } = args;
+  if (parsedInput === null) return null;
+
+  const channels: ScenarioChannelSlotState[] = values.channels.map((slot, i) => {
+    const edited = channelOutcomes[i]?.editedFields ?? {};
+    const field = (name: ChannelFieldName) => {
+      const v = edited[name];
+      return { value: v ?? 0, overridden: v !== undefined };
+    };
+    return {
+      marketplace: slot.marketplace,
+      modality: slot.modality,
+      commissionPct: field("commissionPct"),
+      fixedFee: field("fixedFee"),
+      minPerItem: field("minPerItem"),
+      freightCost: field("freightCost"),
+    };
+  });
+
+  return serializeScenarioConfig({
+    includeMarketplace: values.includeMarketplace !== false,
+    costBasis: serializeAdHocBasis(stripBasisOnlyFields(parsedInput)),
+    channels,
+    // `parsedInput.otherCosts` is `computeFromForm`'s ALREADY-VALID, already-parsed rows (a bad row
+    // never reaches it) — re-parsing the raw pt-BR strings here would duplicate validation the model
+    // already did and could disagree with it.
+    otherCosts: (parsedInput.otherCosts ?? []).map((c) => ({ name: c.name, value: c.value })),
+  });
+}
+
+/** REOPEN direction (T014). What the page hands to `setValue`/`replace` to restore a scenario into
+ *  the live calculator form — plain pt-BR strings, nothing computed. A non-overridden channel field
+ *  (`feeOverrides` leaf absent) becomes a BLANK string, not a zero: blank is what the existing
+ *  `computeFromForm`/`fee-prefill.ts` path reads as "re-resolve from today's catalog" — a zero would
+ *  instead look like a real manual override of R$ 0,00 (the exact bug this must not reintroduce). */
+export interface ScenarioFormPatch {
+  scalars: Partial<Record<CalcFieldName, string>>;
+  includeMarketplace: boolean;
+  channels: ChannelSlotForm[];
+  otherCosts: OtherCostForm[];
+}
+
+export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
+  // PR-A scope note: a KIT cost basis has no scalar `PriceInput` to hydrate the single-piece
+  // calculator with (its `lastKnown` is a per-line list, not one input) — the Calcular page never
+  // produces one to begin with (see `buildScenarioConfig`), so reopening one here is out of scope;
+  // the scalar patch is simply empty and the seller's current fields are left as they are. Q12 kit
+  // composition is PR-B/T024. A PRODUCT basis is treated exactly like AD_HOC: PR-A never re-resolves
+  // it live (D3/D6 is the read-time resolver added in PR-B/T022) — `lastKnown` is what both carry.
+  const lastKnown = config.costBasis.kind === "KIT" ? null : config.costBasis.lastKnown;
+  const scalars: Partial<Record<CalcFieldName, string>> = {};
+  if (lastKnown) {
+    for (const name of CALC_FIELD_NAMES) {
+      const leaf = lastKnown[name];
+      if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
+    }
+  }
+
+  const overrideOrBlank = (leaf: string | undefined): string =>
+    leaf === undefined ? "" : decimalStringToPtBr(leaf);
+
+  const channels: ChannelSlotForm[] = config.channels.map((c) => ({
+    marketplace: c.marketplace as MarketplaceId,
+    modality: (c.modality ?? "") as Modality,
+    commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
+    fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
+    minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
+    freightCost: overrideOrBlank(c.feeOverrides?.freightCost),
+  }));
+
+  const otherCosts: OtherCostForm[] = config.otherCosts.map((c) => ({
+    name: c.name,
+    value: decimalStringToPtBr(c.value),
+  }));
+
+  return {
+    scalars,
+    includeMarketplace: config.includeMarketplace,
+    channels,
+    otherCosts,
+  };
+}

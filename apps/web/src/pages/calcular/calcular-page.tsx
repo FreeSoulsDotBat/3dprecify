@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
+import { type ScenarioConfig } from "@/entities/scenario/config-document";
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
 import { freezePriceResult } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
@@ -17,7 +18,9 @@ import {
 import { PremiumTeaserDialog } from "@/features/catalog/premium-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
+import { applyScenarioConfig, buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import {
+  type CalcFieldName,
   type CalcFormValues,
   calculatorResolver,
   defaultCalcValues,
@@ -30,10 +33,12 @@ import {
   MODALITY_OPTIONS,
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
+import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
+import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Button, Card, Field, Select } from "@/shared/ui";
+import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 // E1 calculator screen. RHF (form state) + Zod (calculatorResolver) own the pt-BR inputs; the price +
@@ -55,12 +60,38 @@ export function CalcularPage() {
     resolver: calculatorResolver,
     mode: "onChange",
   });
-  const { fields, append, remove } = useFieldArray({ control, name: "channels" });
+  const {
+    fields,
+    append,
+    remove,
+    replace: replaceChannels,
+  } = useFieldArray({
+    control,
+    name: "channels",
+  });
   const {
     fields: otherCostFields,
     append: appendOtherCost,
     remove: removeOtherCost,
+    replace: replaceOtherCosts,
   } = useFieldArray({ control, name: "otherCosts" });
+
+  // 010/T014 (E5, PR-A US2) — reopening a scenario loads its config INTO this same form (the
+  // reopened scenario IS the calculator, populated — ux §4). `loadedScenario` only drives the
+  // minimal context bar (name + the live-recompute promise); PR-B (T023/T026/T029) adds
+  // "Duplicar"/"Salvar alterações"/rename/close-with-unsaved-changes on top of this seam.
+  const [loadedScenario, setLoadedScenario] = useState<{ id: string; name: string } | null>(null);
+  const [scenariosOpen, setScenariosOpen] = useState(false);
+  const openScenario = (config: ScenarioConfig, meta: { id: string; name: string }) => {
+    const patch = applyScenarioConfig(config);
+    for (const [field, value] of Object.entries(patch.scalars)) {
+      setValue(field as CalcFieldName, value);
+    }
+    setValue("includeMarketplace", patch.includeMarketplace);
+    replaceChannels(patch.channels);
+    replaceOtherCosts(patch.otherCosts);
+    setLoadedScenario(meta);
+  };
 
   // US5 (E2/T024) — the catalog pickers. Rendered ONLY for authenticated accounts WITH saved
   // items, so the free manual flow is untouched (SC-310); the read hooks are uid-gated and
@@ -136,6 +167,37 @@ export function CalcularPage() {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} className="tf-page-header--center" />
+
+      {/* 010/T013 (E5) — "Meus cenários" is a NAV-LIKE entry, not a save button: it sits with the
+          page title (never inside the results block) and is VISIBLE for everyone, incl. free/
+          signed-out (the SC-109-safe honest door, ux §0.1/§2.2/§11-F1/F2). */}
+      <div className="flex justify-end">
+        <Button variant="ghost" size="sm" onClick={() => setScenariosOpen(true)}>
+          <Icon name="boxes" size={16} aria-hidden /> {messages.scenarios.navEntry}
+        </Button>
+      </div>
+      <ScenariosListSheet
+        open={scenariosOpen}
+        onOpenChange={setScenariosOpen}
+        onOpenScenario={openScenario}
+      />
+
+      {/* The "cenário carregado" context bar (ux §4.1) — NO date anywhere, ever (§0.2): the
+          subtitle states the LIVE promise instead. PR-A minimal: name + "Fechar cenário" only;
+          "Duplicar"/"Salvar alterações" are PR-B (T023/T026/T029). */}
+      {loadedScenario && (
+        <Card padding="sm" className="flex items-center justify-between gap-3">
+          <div>
+            <p style={sectionLabel}>
+              {messages.scenarios.loadedLabel.replace("{nome}", loadedScenario.name)}
+            </p>
+            <p style={captionText}>{messages.scenarios.loadedLive}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setLoadedScenario(null)}>
+            {messages.scenarios.closeScenario}
+          </Button>
+        </Card>
+      )}
 
       {showTeaserSlot && (
         <Card padding="md" className="flex flex-col gap-2">
@@ -250,6 +312,20 @@ export function CalcularPage() {
         refreshing={catalogRefreshing}
         onRetryCatalog={retryCatalog}
       />
+
+      {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços
+          por canal" (ux §2.1), beside the existing freemium caption. `SaveScenarioSheet` mirrors
+          `RecordSnapshotButton` and returns null without an active entitlement — the free
+          calculator stays byte-untouched (SC-109), the honest door is "Meus cenários" above. */}
+      <div className="flex justify-center">
+        <SaveScenarioSheet
+          source={{
+            disabled: !result || !input,
+            buildConfig: () => buildScenarioConfig({ values, channelOutcomes, parsedInput: input }),
+            basisLabel: messages.scenarios.basisKindAdhoc,
+          }}
+        />
+      </div>
 
       {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium note:
           the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the button is

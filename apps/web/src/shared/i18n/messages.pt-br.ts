@@ -676,6 +676,68 @@ export const messages = {
     teaserFreeNote: "A calculadora continua grátis e sem limite.",
     teaserSignedOutBody: "Entre na sua conta para guardar suas cotações.",
   },
+  // 010 (E5, PR-A) — "Meus cenários": save/consult/reopen a saved multi-channel comparison.
+  // Copy = ux-scenarios.md §9 (owner-ratified 2026-07-19), trimmed to the PR-A subset (US1/US2/US5).
+  // A scenario is LIVE, never dated — no "salvo em"/"cotado em" anywhere here (§0.2); "Cancelar" is
+  // banned (FR-014) — every dismissive control is "Voltar".
+  scenarios: {
+    // entry / nav — visible for EVERYONE (free/signed-out too, §0.1); the honest free door.
+    navEntry: "Meus cenários",
+    listTitle: "Meus cenários",
+    listSubtitle: "Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre.",
+    // save (T010) — premium-only inline, absent on the free calculator (SC-109, §11-F2)
+    saveAction: "Salvar cenário",
+    saveSheetTitle: "Salvar cenário",
+    saveSheetIntro:
+      "Guardamos a estratégia desta tela — canais, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.",
+    nameField: "Nome",
+    nameRequired: "Dê um nome ao cenário.",
+    nameTooLong: "Máximo de 120 caracteres.",
+    noteField: "Nota (opcional)",
+    noteTooLong: "Máximo de 500 caracteres.",
+    basisEcho: "Base de custo: {nome}",
+    basisKindAdhoc: "avulsa",
+    basisKindProduct: "referência do catálogo",
+    basisKindKit: "kit do catálogo",
+    saved: "Cenário salvo.", // toast success — SÓ em 201 real
+    saveTooLarge:
+      "Este cenário ficou grande demais para salvar. Reduza o número de peças ou de custos e tente de novo.",
+    saveOffline: "Salvar um cenário precisa de conexão.",
+    saveInvalid: "Corrija os campos da calculadora antes de salvar.",
+    // list (T013)
+    updatedRelative: "Atualizado {quando}", // "há 2 dias" etc. — NUNCA uma data-alegação
+    emptyTitle: "Nenhum cenário salvo ainda",
+    emptyBody:
+      "Monte uma comparação de canais na calculadora e toque em “Salvar cenário” para guardá-la e reabrir quando quiser.",
+    emptyAction: "Voltar para a calculadora",
+    loadError: "Não foi possível carregar seus cenários.",
+    retry: "Tentar novamente",
+    loadMore: "Carregar mais",
+    offlineTitle: "Modo leitura offline",
+    offlineBody:
+      "Seus cenários continuam aqui e podem ser abertos. Salvar, renomear, duplicar ou excluir precisam de conexão.",
+    lapsedTitle: "Premium pausado",
+    lapsedBody:
+      "Seus cenários continuam aqui e podem ser abertos e recalculados. Para salvar, renomear, duplicar ou excluir, reative o Premium.",
+    // reopen — the loaded context bar (T014, PR-A minimal: name + live subtitle + Fechar only;
+    // Duplicar/Salvar alterações are PR-B, T023/T026/T029)
+    loadedLabel: "Cenário: {nome}",
+    loadedLive: "Recalculado com os preços de hoje", // NUNCA uma data
+    closeScenario: "Fechar cenário",
+    back: "Voltar", // NUNCA "Cancelar" (FR-014)
+    // teaser (US5, T016) — SEM preço, SEM data, SEM CTA de compra
+    teaserTitle: "Salve suas estratégias de venda",
+    teaserBody:
+      "No Premium, você guarda uma comparação de canais — Mercado Livre, Shopee, Amazon — e reabre quando quiser. Ela recalcula com os preços de hoje, e você pode duplicar para testar variações.",
+    teaserFreeNote: "A calculadora continua grátis.",
+    teaserAction: "Salvar um cenário",
+    teaserDialogTitle: "Cenários fazem parte do Premium",
+    teaserDialogBody:
+      "No Premium você salva sua comparação de canais e reabre depois com os preços de hoje — e duplica para comparar variações.",
+    teaserSignedOutBody: "Para salvar seus cenários, entre e ative o Premium.",
+    teaserSignIn: "Entrar",
+    teaserDismiss: "Entendi",
+  },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).
   state: {

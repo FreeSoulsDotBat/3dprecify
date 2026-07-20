@@ -430,6 +430,33 @@ export interface ProductOut {
   updatedAt: string;
 }
 
+export type ScenarioInConfig = { [key: string]: unknown };
+
+/**
+ * POST create body — `PUT` full-replace (PR-B, T028) reuses this shape.
+ */
+export interface ScenarioIn {
+  name: string;
+  note?: string | null;
+  config: ScenarioInConfig;
+}
+
+export type ScenarioOutConfig = { [key: string]: unknown };
+
+export interface ScenarioOut {
+  id: string;
+  name: string;
+  note: string | null;
+  config: ScenarioOutConfig;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScenarioList {
+  items: ScenarioOut[];
+  nextCursor?: string | null;
+}
+
 export type SnapshotInKind = typeof SnapshotInKind[keyof typeof SnapshotInKind];
 
 
@@ -513,6 +540,16 @@ q?: string | null;
 from?: string | null;
 to?: string | null;
 clientSnapshotId?: string | null;
+};
+
+export type ListScenariosApiV1ScenariosGetParams = {
+/**
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+cursor?: string | null;
+q?: string | null;
 };
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -4198,3 +4235,381 @@ export const useDeleteSnapshotApiV1HistorySnapshotIdDelete = <TError = ErrorEnve
       > => {
       return useMutation(getDeleteSnapshotApiV1HistorySnapshotIdDeleteMutationOptions(options), queryClient);
     }
+
+export type listScenariosApiV1ScenariosGetResponse200 = {
+  data: ScenarioList
+  status: 200
+}
+
+export type listScenariosApiV1ScenariosGetResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type listScenariosApiV1ScenariosGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listScenariosApiV1ScenariosGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listScenariosApiV1ScenariosGetResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type listScenariosApiV1ScenariosGetResponseSuccess = (listScenariosApiV1ScenariosGetResponse200) & {
+  headers: Headers;
+};
+export type listScenariosApiV1ScenariosGetResponseError = (listScenariosApiV1ScenariosGetResponse400 | listScenariosApiV1ScenariosGetResponse401 | listScenariosApiV1ScenariosGetResponse403 | listScenariosApiV1ScenariosGetResponse422) & {
+  headers: Headers;
+};
+
+export type listScenariosApiV1ScenariosGetResponse = (listScenariosApiV1ScenariosGetResponseSuccess | listScenariosApiV1ScenariosGetResponseError)
+
+export const getListScenariosApiV1ScenariosGetUrl = (params?: ListScenariosApiV1ScenariosGetParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : String(value))
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/v1/scenarios?${stringifiedParams}` : `/api/v1/scenarios`
+}
+
+/**
+ * Keyset pagination (never OFFSET — the per-account list is unbounded, data-model §5); `?q=`
+ * is an owner-scoped, case-insensitive, ACCENT-SENSITIVE substring `name ILIKE` (owner-decided
+ * 2026-07-19, the E4 D4 idiom). Readable on lapse (`require_catalog_read`, FR-612).
+ * @summary List Scenarios
+ */
+export const listScenariosApiV1ScenariosGet = async (params?: ListScenariosApiV1ScenariosGetParams, options?: RequestInit): Promise<listScenariosApiV1ScenariosGetResponse> => {
+
+  return orvalFetch<listScenariosApiV1ScenariosGetResponse>(getListScenariosApiV1ScenariosGetUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListScenariosApiV1ScenariosGetQueryKey = (params?: ListScenariosApiV1ScenariosGetParams,) => {
+    return [
+    `/api/v1/scenarios`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListScenariosApiV1ScenariosGetQueryOptions = <TData = Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError = ErrorEnvelope>(params?: ListScenariosApiV1ScenariosGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListScenariosApiV1ScenariosGetQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>> = ({ signal }) => listScenariosApiV1ScenariosGet(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListScenariosApiV1ScenariosGetQueryResult = NonNullable<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>>
+export type ListScenariosApiV1ScenariosGetQueryError = ErrorEnvelope
+
+
+export function useListScenariosApiV1ScenariosGet<TData = Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError = ErrorEnvelope>(
+ params: undefined |  ListScenariosApiV1ScenariosGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>,
+          TError,
+          Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListScenariosApiV1ScenariosGet<TData = Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError = ErrorEnvelope>(
+ params?: ListScenariosApiV1ScenariosGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>,
+          TError,
+          Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListScenariosApiV1ScenariosGet<TData = Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError = ErrorEnvelope>(
+ params?: ListScenariosApiV1ScenariosGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Scenarios
+ */
+
+export function useListScenariosApiV1ScenariosGet<TData = Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError = ErrorEnvelope>(
+ params?: ListScenariosApiV1ScenariosGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listScenariosApiV1ScenariosGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListScenariosApiV1ScenariosGetQueryOptions(params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type createScenarioApiV1ScenariosPostResponse201 = {
+  data: ScenarioOut
+  status: 201
+}
+
+export type createScenarioApiV1ScenariosPostResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createScenarioApiV1ScenariosPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createScenarioApiV1ScenariosPostResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type createScenarioApiV1ScenariosPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createScenarioApiV1ScenariosPostResponseSuccess = (createScenarioApiV1ScenariosPostResponse201) & {
+  headers: Headers;
+};
+export type createScenarioApiV1ScenariosPostResponseError = (createScenarioApiV1ScenariosPostResponse400 | createScenarioApiV1ScenariosPostResponse401 | createScenarioApiV1ScenariosPostResponse403 | createScenarioApiV1ScenariosPostResponse422) & {
+  headers: Headers;
+};
+
+export type createScenarioApiV1ScenariosPostResponse = (createScenarioApiV1ScenariosPostResponseSuccess | createScenarioApiV1ScenariosPostResponseError)
+
+export const getCreateScenarioApiV1ScenariosPostUrl = () => {
+
+
+
+
+  return `/api/v1/scenarios`
+}
+
+/**
+ * Create (VR-601 ACTIVE-only write gate). Materializes NOTHING (VR-607) — no catalog row is
+ * ever touched, the row only REFERENCES the catalog. `owner_uid` is injected from the verified
+ * token, never the body.
+ * @summary Create Scenario
+ */
+export const createScenarioApiV1ScenariosPost = async (scenarioIn: ScenarioIn, options?: RequestInit): Promise<createScenarioApiV1ScenariosPostResponse> => {
+
+  return orvalFetch<createScenarioApiV1ScenariosPostResponse>(getCreateScenarioApiV1ScenariosPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(scenarioIn)
+  }
+);}
+
+
+
+
+
+export const getCreateScenarioApiV1ScenariosPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>, TError,{data: ScenarioIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>, TError,{data: ScenarioIn}, TContext> => {
+
+const mutationKey = ['createScenarioApiV1ScenariosPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>, {data: ScenarioIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createScenarioApiV1ScenariosPost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateScenarioApiV1ScenariosPostMutationResult = NonNullable<Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>>
+    export type CreateScenarioApiV1ScenariosPostMutationBody = ScenarioIn
+    export type CreateScenarioApiV1ScenariosPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Create Scenario
+ */
+export const useCreateScenarioApiV1ScenariosPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>, TError,{data: ScenarioIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createScenarioApiV1ScenariosPost>>,
+        TError,
+        {data: ScenarioIn},
+        TContext
+      > => {
+      return useMutation(getCreateScenarioApiV1ScenariosPostMutationOptions(options), queryClient);
+    }
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponse200 = {
+  data: ScenarioOut
+  status: 200
+}
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponseSuccess = (getScenarioApiV1ScenariosScenarioIdGetResponse200) & {
+  headers: Headers;
+};
+export type getScenarioApiV1ScenariosScenarioIdGetResponseError = (getScenarioApiV1ScenariosScenarioIdGetResponse401 | getScenarioApiV1ScenariosScenarioIdGetResponse403 | getScenarioApiV1ScenariosScenarioIdGetResponse404) & {
+  headers: Headers;
+};
+
+export type getScenarioApiV1ScenariosScenarioIdGetResponse = (getScenarioApiV1ScenariosScenarioIdGetResponseSuccess | getScenarioApiV1ScenariosScenarioIdGetResponseError)
+
+export const getGetScenarioApiV1ScenariosScenarioIdGetUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/v1/scenarios/${scenarioId}`
+}
+
+/**
+ * Own + not-deleted only (VR-609); `config` served VERBATIM — the D3/D6 resolve is T022.
+ * @summary Get Scenario
+ */
+export const getScenarioApiV1ScenariosScenarioIdGet = async (scenarioId: string, options?: RequestInit): Promise<getScenarioApiV1ScenariosScenarioIdGetResponse> => {
+
+  return orvalFetch<getScenarioApiV1ScenariosScenarioIdGetResponse>(getGetScenarioApiV1ScenariosScenarioIdGetUrl(scenarioId),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetScenarioApiV1ScenariosScenarioIdGetQueryKey = (scenarioId: string,) => {
+    return [
+    `/api/v1/scenarios/${scenarioId}`
+    ] as const;
+    }
+
+
+export const getGetScenarioApiV1ScenariosScenarioIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError = ErrorEnvelope>(scenarioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetScenarioApiV1ScenariosScenarioIdGetQueryKey(scenarioId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>> = ({ signal }) => getScenarioApiV1ScenariosScenarioIdGet(scenarioId, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: scenarioId !== null && scenarioId !== undefined, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetScenarioApiV1ScenariosScenarioIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>>
+export type GetScenarioApiV1ScenariosScenarioIdGetQueryError = ErrorEnvelope
+
+
+export function useGetScenarioApiV1ScenariosScenarioIdGet<TData = Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError = ErrorEnvelope>(
+ scenarioId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetScenarioApiV1ScenariosScenarioIdGet<TData = Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError = ErrorEnvelope>(
+ scenarioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetScenarioApiV1ScenariosScenarioIdGet<TData = Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError = ErrorEnvelope>(
+ scenarioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Scenario
+ */
+
+export function useGetScenarioApiV1ScenariosScenarioIdGet<TData = Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError = ErrorEnvelope>(
+ scenarioId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getScenarioApiV1ScenariosScenarioIdGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetScenarioApiV1ScenariosScenarioIdGetQueryOptions(scenarioId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}

@@ -23,6 +23,7 @@ from .api.history import router as history_router
 from .api.me import router as me_router
 from .api.printers import router as printers_router
 from .api.products import router as products_router
+from .api.scenarios import router as scenarios_router
 from .auth import init_firebase
 from .errors import AppError, ErrorCode, ErrorEnvelope, register_exception_handlers
 from .observability import CORRELATION_HEADER, configure_observability
@@ -116,6 +117,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # so it never collides.
     api.include_router(export_router)
     api.include_router(history_router)
+    # E5 saved scenarios (premium persistence, PR-A subset — save · list · get; materializes
+    # nothing, VR-607). The same entitlement gates, no new ErrorCode.
+    api.include_router(scenarios_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 
