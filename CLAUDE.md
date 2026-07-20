@@ -55,15 +55,25 @@ review-fix cycles; **ADR-0018/0019/0020 Accepted**, **A29 closed** (open since 2
 `specs/009-e4-history-snapshots-export/{tasks.md,dod-evidence.md}`. **The lesson E4 paid for, twice: opening the
 artifact is necessary and not sufficient — do it with adversarial DATA, and for a rendered artifact adversarial
 SIZE, asserting geometry (text extraction is blind to a layout collision).**
-**Next increment: E5** (marketplace simulator — saved scenarios; the live multi-channel compute was pulled forward
-into E1/005). It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan +
-ADRs → tasks) before any code — do NOT infer it. **011-token-optimization: levers LANDED via single PR #22**
-(owner-authorized consolidation of PR-A + PR-B + the PR-C baseline, decision 2026-07-19) — routing + rtk
-filter + graphify hook live, meter armed (T031 baseline fixed BEFORE E5's first treatment op); no product code
-(dev-workflow cost governance only, ADR-0022 — flips Proposed → Accepted at the owner's homologation of #22).
-**The pilot verdict (T032–T034, ≥30%-or-honest-shortfall) stays OPEN by design and closes during/at the end of
-E5**, which resumes as the active feature and measures 011's levers. Evidence:
-`specs/011-token-optimization/dod-evidence.md`.
+**E5 COMPLETE and SHIPPED to `develop`** — 010-e5-saved-scenarios (saved marketplace scenarios, premium), three
+owner-authorized slices in two days: PR-A #24 (`8386972`, the saved shelf — save/consult/offline-read + honest
+teaser; **ADR-0021** hybrid-JSONB store-intent/resolve-live Accepted) + PR-B #25 (`c9c053b`, the live contract —
+read-time resolver D3/D6 for **PRODUCT+KIT** bases + duplicate-to-tweak + PUT/PATCH/DELETE/search/lapse + Q12 kit
+rollup; the e2e wave surfaced **3 real defects, all fixed in-slice** — flat `lastKnown` wire shape, dead
+dirty-tracking, an invisible search field whose "frozen overlay" reading was a misdiagnosis corrected by
+main-loop live MCP-browser debugging) + PR-C #26 (`fccc87e`, the E4 bridge — record a frozen snapshot from a
+scenario, `"SCENARIO"` provenance payload-side only, immutability untouched). All owner-homologated (T018 88% ·
+T031 92% · T037 **PASS 95%**) + full CI green. **KIT-basis scenario CREATION deferred** (owner 2026-07-20 — the
+kit composer holds per-line channels, kit-level channelSet UX unspecified → designer-ux). Evidence:
+`specs/010-e5-saved-scenarios/{tasks.md,dod-evidence.md}`. **E5's lesson: a layout/hit-testing symptom is
+diagnosed in a REAL browser with element geometry — two plausible remote hypotheses were both wrong; jsdom is
+blind to it (the third time this project paid that class).**
+**011-token-optimization: levers LANDED via PR #22** (ADR-0022 Accepted) — routing + rtk filter + graphify hook
+live; **the pilot verdict (T032–T034, ≥30%-or-honest-shortfall) is being closed now at E5 end** from the
+per-operation ledger rows. Evidence: `specs/011-token-optimization/dod-evidence.md`.
+**Next increment: E6** (billing — Mercado Pago recurring / Play Billing; PENDING the unnumbered payments ADR).
+It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan + ADRs → tasks)
+before any code — do NOT infer it.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 

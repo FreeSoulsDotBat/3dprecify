@@ -301,3 +301,63 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   pollution from epic 010 (recorded at T016, out of 011's scope to clean). 011's own committed surfaces
   introduce no gate failure; the green run is re-checked at PR time on the clean CI checkout, where the
   010 artifacts don't exist.
+
+## Veredito do piloto (T032–T034 — fechado 2026-07-20, no close do E5)
+
+Metodologia da baseline (T031) honrada: Δ% **por forma de operação**, tratamento vs comparável E4 justo;
+token do harness como medida; `rtk gain` auxiliar rotulado; controles reportados separados; comparável
+ausente ⇒ parcial rotulado. Ressalvas obrigatórias aplicadas: **tokenizer do Sonnet ~+30%** para o mesmo
+texto; **razão de preço publicada sonnet ≈ 1/5 do opus por token, introdutória até 2026-08-31** (o Δ%
+efetivo encolhe se o preço do sonnet subir).
+
+### Δ% efetivo por forma (T033)
+
+| Forma | Comparável E4 (opus) | Tratamento E5 | Δ tokens crus | **Δ custo efetivo** |
+|---|---|---|---|---|
+| Impl FE (onda multi-estória, like-for-like) | 327.993 | PR-A FE **363.843** (sonnet) | +10,9% | **−77,8%** |
+| Impl BE (onda de rotas, like-for-like) | 190.298 | PR-A BE **159.402** (sonnet) | −16,2% | **−83,2%** |
+| Impl FE+BE agregado (o par like-for-like) | 518.291 | 523.245 (sonnet) | +1,0% | **−79,8%** |
+| Schema/dados (escalado a OPUS — carve-out ADR-0022) | 168.862 | 164.157 (opus) | −2,8% | −2,8% (sem alavanca, por regra) |
+| Homologação visual (mandato enumerado, opus↔opus) | 168.094 (T030) | T037 **171.233** | +1,9% | **paridade** (routing não se aplica por design pós-T018) |
+| Review fan-out capado | PR-B 1.114.003 · PR-C 2.133.240 | **sem instância no E5** (o dono não pediu review multi-agente; a qualidade foi segurada pela onda e2e + T031/T037) | — | **parcial rotulado — sem número forçado (SC-006/SC-007)** |
+
+**O alvo ≥30%: ATINGIDO com folga nas formas roteadas de execução** (−78%/−83% efetivo; cru quase-neutro —
+o ganho do routing é PREÇO por token, o volume fica igual, exatamente a lição da onda FE do PR-A). **Não
+atingido, por design, nas formas de julgamento** (homologação em paridade — o papel ficou em opus após o
+rollback do T018). **Um shortfall real, alavanca nomeada: routing (haiku em qa-produto)** — T018 custou
+332.795 nas 3 tentativas vs ~170–260k direto em opus (~+30% e um dia de latência); revertido no mesmo dia
+(ADR-0022 §rollback, primeira linha exercida do playbook).
+
+### Controles (separados, sem alavanca — provam que o ganho não é "codebase menor")
+
+- Rodada de arquitetura: E5 354.392 vs E4 283.969 (**+24,8%**) · Kickoff PO: 100.766 vs 91.786 (**+9,8%**)
+  — ambos opus, deriva atribuível a escopo; a direção OPOSTA aos tratamentos reforça a atribuição às alavancas.
+
+### `rtk gain` (auxiliar, rotulado — escopo global, Bash-only por decisão do dono)
+
+812 comandos · 1,5M tokens de input processados · **1,3M poupados (86,3%)** do volume de output de comando.
+Ressalva mantida: a ferramenta PowerShell contorna o matcher; as sessões do E5 preferiram Bash deliberadamente.
+
+### Qualidade por slice (a economia não comprou regressão)
+
+PR-A #24: T018 PASS-WITH-NITS 88% · gates verdes. PR-B #25: T031 92% · **3 defeitos reais achados PRÉ-merge
+pela própria onda e2e do tratamento** (shape flat do lastKnown · dirty-tracking morto · busca invisível) —
+todos corrigidos in-slice. PR-C #26: T037 **PASS 95%** · CI 9/9 (1 flake real do CI root-fixado: corrida JIT
+do grant). Zero regressão E1–E4 em 3 merges (e2e 70/70 0-flaky em cada gate; pricing-core intocado 3.1.0).
+
+### T034 — regressões por camada (nulos declarados explicitamente)
+
+- **routing**: regrediu 1× (qa-produto/haiku confabulou) → linha do playbook executada (revert de frontmatter
+  → opus, dono 2026-07-19, ADR-0022 §tabela linha 7). Desde então: T031/T037 em opus, 92%/95%, sem reincidência.
+- **rtk**: **sem regressão** (R1-gate PASSOU; tee+truncation ativos no piloto inteiro; nota operacional do
+  PR-A mantida: sumário pytest sob tee pode engolir flush cp1252 — redirecionar a arquivo quando o sumário importa).
+- **graphify hooks**: **sem regressão** — post-commit/post-checkout/post-merge dispararam deterministicamente
+  o épico inteiro (incl. 3 merges remotos via ff-pull); zero `graph:update` manual necessário.
+
+### Q5 — query-log: **DROP (resolvido dos dados do piloto)**
+
+`GRAPHIFY_QUERY_LOG_ENABLE=1` esteve armado nas sessões do E5 e produziu **zero entradas**: a forma de
+trabalho do épico (ondas de executor + debugging e2e ao vivo) nunca alcançou `graphify query` — main-loop
+usou ferramentas diretas, agentes sem Bash leram `GRAPH_REPORT.md`. Um log que ninguém escreve não ganha
+env var permanente. **Teardown executado 2026-07-20** (`setx GRAPHIFY_QUERY_LOG_ENABLE ""`), conforme a
+linha documentada no T027.

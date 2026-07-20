@@ -329,15 +329,20 @@ writes denied, nothing auto-deleted.
       por API (0 updatedAt bump). Gates: gate:all exit 0 · regen 0-diff · e2e (abaixo). 2 nits informacionais
       anotados p/ o dono no corpo do PR (linha de origem não nomeia o TIPO; sem "Abrir origem" em KIT
       provenance — ambos deliberados).
-- [ ] T038 [US7] **Owner-gated PR-C → `develop`** (squash). On merge: `graphify update .`.
+- [x] T038 [US7] **Owner-gated PR-C → `develop`** (squash). On merge: `graphify update .`.
+      **→ DONE 2026-07-20**: owner homologated + squash-merged PR #26 (`fccc87e`); CI 9/9 green after the
+      grantPremium JIT-race hardening; graph refreshed via hooks.
 
 ---
 
 ## Phase 12: Polish & cross-cutting (at epic close-out)
 
-- [ ] T039 [P] Update `CLAUDE.md` ground line + `docs/product/business-rules.md:56` (E5 → BUILT/SHIPPED) + the E5
+- [x] T039 [P] Update `CLAUDE.md` ground line + `docs/product/business-rules.md:56` (E5 → BUILT/SHIPPED) + the E5
       `dod-evidence.md` cross-slice homologation; flip **ADR-0021** to Accepted if not already; final `graphify
       update .`.
+      **→ DONE 2026-07-20**: ground line → E5 COMPLETE/SHIPPED + next = E6; business-rules E5 row → BUILT with
+      the full scope + deferrals; dod-evidence cross-slice close-out appended; ADR-0021 was Accepted at T002;
+      graph refreshed deterministically on every merge pull (hooks).
 
 ---
 
