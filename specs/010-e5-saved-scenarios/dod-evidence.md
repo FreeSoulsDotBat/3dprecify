@@ -6,7 +6,8 @@ fact only when measured).
 
 ## PR-A — The saved shelf: save · consult · offline read · honest teaser (US1 + US2 + US5)
 
-**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-19 · **PR**: *(pending — T020, owner-gated)*
+**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-19 · **PR**: **#24, squash-merged to
+`develop` 2026-07-20 (`8386972`)**
 
 ### The wave map (011 routing live — first treatment epic of the pilot)
 
@@ -105,5 +106,7 @@ owner at this gate (ADR-0022 rollback playbook).**
 
 ### T020 — owner gate
 
-*(pending: owner homologation = ADR-0021 flips Proposed → Accepted; squash-merge to `develop`; graph refresh
-on merge via the lefthook post-merge net / `graphify update .` fallback)*
+**DONE 2026-07-20**: owner homologated and squash-merged PR #24 → `develop` (`8386972`, 63 files, +8152/−8).
+ADR-0021 flipped Proposed → **Accepted** (homologation = the merge, per the E3/E4 precedent). Graph refreshed
+deterministically via the post-merge/post-checkout hooks on the local ff-pull of `develop`. The feature branch
+was reset onto the merged `develop` and force-pushed (`--force-with-lease`) as the PR-B base.

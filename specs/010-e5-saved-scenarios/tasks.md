@@ -56,7 +56,7 @@ all E1/E2/E3/E4 guards pass UNCHANGED.
       sheet, the scenarios list (name · note · last-updated — **ordering per data-model §7**, an owner+designer
       call), the **reopen → live** view (today's numbers, no frozen date; the "ajustado por você" seal; the offline
       staleness seal), and the US5 teaser. Write to `specs/010-e5-saved-scenarios/ux-scenarios.md`. Not a merge blocker.
-- [ ] T002 **Owner homologation checkpoint (BLOCKING the PR-A merge, Principle VIII).** Flip **ADR-0021**
+- [x] T002 **Owner homologation checkpoint (BLOCKING the PR-A merge, Principle VIII).** Flip **ADR-0021**
       Proposed → Accepted and record the owner's calls in `spec.md` §Clarifications: the data-model §7 points (**Q6**
       name≤120/note≤500 caps · **list ordering** newest-saved vs recently-edited vs alphabetical · **`config` size
       cap** 256 KB → honest 422 · accent-sensitive search accept/defer · **§7.3** `config_schema_version` only, no
@@ -71,6 +71,7 @@ all E1/E2/E3/E4 guards pass UNCHANGED.
       `PUT`+`PATCH` separate · Q12 uniform channelSet → `computeBom` rollup · Q13 accept-and-degrade · caps 120/500 ·
       256 KB → 422 · accent-sensitive accepted · no model-version column. **Remaining in T002: flip ADR-0021 →
       Accepted at the PR-A merge homologation.**
+      **→ CLOSED 2026-07-20**: owner homologated + merged PR #24 (`8386972`); ADR-0021 flipped → Accepted.
 
 ## Phase 2: Foundational (blocking) — the intent document + the table
 
@@ -177,7 +178,9 @@ after one online load; sign-out purges the cache.
 - [x] T019 `pnpm gate:all` green (fe format/lint+boundaries/depcruise/typecheck/coverage AND be
       ruff/basedpyright/pytest/import-linter) + drift-guard idempotent + **SC-612** (all E1/E2/E3/E4 guards pass
       UNCHANGED). Record evidence in `specs/010-e5-saved-scenarios/dod-evidence.md`.
-- [ ] T020 **Owner-gated PR-A → `develop`** (squash). On merge: `graphify update .` (ADR-0014 freshness).
+- [x] T020 **Owner-gated PR-A → `develop`** (squash). On merge: `graphify update .` (ADR-0014 freshness).
+      **→ DONE 2026-07-20**: owner squash-merged PR #24 → `develop` (`8386972`); graph refreshed via the
+      post-merge/post-checkout hooks on the local ff-pull.
 
 ---
 
