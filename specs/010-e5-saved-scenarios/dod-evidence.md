@@ -110,3 +110,58 @@ owner at this gate (ADR-0022 rollback playbook).**
 ADR-0021 flipped Proposed → **Accepted** (homologation = the merge, per the E3/E4 precedent). Graph refreshed
 deterministically via the post-merge/post-checkout hooks on the local ff-pull of `develop`. The feature branch
 was reset onto the merged `develop` and force-pushed (`--force-with-lease`) as the PR-B base.
+
+## PR-B — The live contract · duplicate-to-tweak · lifecycle (US3 + US4 + US6)
+
+**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: *(pending — T033, owner-gated)*
+
+### The wave map (011 routing live)
+
+| Wave | Agent (model) | Tasks | Tokens (harness) | Verified by main loop |
+|---|---|---|---|---|
+| BE | dev-backend (sonnet) | T021/T022 · T025/T026 · T027/T028 | 370,218 (2 legs) | pytest 55→57/57 + 319→321 re-run locally |
+| FE | dev-frontend (sonnet) | T023 · T021b(PRODUCT) · T024 · T029 · T030b | 434,911 | vitest 637→645/645 re-run locally |
+| e2e | qa-software (sonnet, 3 legs incl. crash-resume) | T030 | ≥890k across legs (leg 1 usage lost to a session crash) | 5/5 manage + 5/5 PR-A re-run by main loop |
+| Fix wave | dev-backend + dev-frontend (parallel) | defects #1/#2 (+#3 guards) | 795,124 | both fixes re-measured |
+| Visual | qa-produto (**opus**, MCP Playwright direct) | T031 | 239,545 | 15 PNGs; 2 key PNGs spot-checked |
+
+### The three real defects (found by e2e, all fixed before the gate)
+
+1. **`lastKnown` wire shape** (`89f9e1d`): `_price_input_dict` emitted BOM-line-prefixed keys instead of the
+   flat `PriceInput` contract shape — corrupted D3 AND D6 from save time. The BE unit suite passed because it
+   asserted the same wrong shape (self-consistent-wrong); re-pinned on the literal contract key set.
+2. **Dead dirty-tracking** (`27d6a24`): the calcular-page signature missed the 17 scalars and memoized over
+   mutating references — "Salvar alterações" never enabled. Signature now covers exactly the
+   `applyScenarioConfig` subset, computed unmemoized.
+3. **Invisible search field** (`9ef2859`): `className="sr-only"` on the whole Field wrapper (not the label) —
+   the search box shipped 1×1px. **The "orphaned overlay / frozen app" reading was a misdiagnosis**, corrected
+   by main-loop live MCP-browser debugging: body `pointer-events:none` + top-layer inline `auto` is normal
+   Radix modal behavior; the probe that suggested a freeze sampled a zero-width rect. Lesson: layout/hit-test
+   symptoms are diagnosed in a real browser with element geometry — remote hypotheses went 0-for-2 first.
+
+### Owner decisions this slice
+
+- **2026-07-20 (spec §Clarifications): KIT-basis scenario CREATION deferred** — the kit composer holds
+  per-line channels; a kit-level channelSet picker is unspecified UX (Principle VIII stop by the FE wave,
+  ratified). T024's reopen/compute side + the server resolver cover KIT fully; a KIT row is valid wire data.
+
+### T031 — visual homologation (qa-produto, opus)
+
+**PASS-WITH-NITS, confidence 92%** — 7/7 points judged from rendered PNGs at 390px + desktop, MCP Playwright
+working in-subagent for the first time (no script fallback). D3 live-reflect · D6 honest (never "removido",
+"Abrir origem" withheld) · KIT rollup no-NaN (API-seeded) · duplicate independence + seals + dirty badge ·
+manage incl. visible search + T030b nits verified fixed · lapse honest freeze + re-grant · F1 sweep clean.
+Evidence: 15 PNGs in `evidence/t031/`. Nits: basisEcho 390px overflow (fixed same-day, `cb906c1`);
+**E2 catalog card overflows with a 120c spaceless name — OUT of E5 scope, follow-up for the 007 surface**.
+
+### T032 — gates (2026-07-20, main loop)
+
+- **`pnpm gate:all` → exit 0** (the literal command, D4 parity): web **645 tests** · backend **321 passed**,
+  import-linter 3 kept / 0 broken; coverage thresholds enforced by the gate itself.
+- **Drift-guard idempotence**: one more `export_openapi` + root `gen:api` → **0 diff** (proven post-fix-wave).
+- **SC-612**: full e2e chromium **70/70, 0 flaky** (up from 66/70 pre-fix-wave); every E1–E4 spec green
+  unchanged; pricing-core untouched (3.1.0).
+
+### T033 — owner gate
+
+*(pending: PR-B opened for owner homologation + squash-merge authorization)*

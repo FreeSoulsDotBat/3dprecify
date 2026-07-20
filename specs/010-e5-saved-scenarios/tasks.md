@@ -168,6 +168,10 @@ after one online load; sign-out purges the cache.
       read + honest offline-save failure. **Adversarial DATA + SIZE**: a long scenario name, many channels, an
       ad-hoc basis (a **product basis via the UI lands in PR-B — T021b**; its server path is pytest-covered by T011).
       Screenshots.
+      **→ DONE 2026-07-20**: **PASS-WITH-NITS 92%** (qa-produto opus, MCP Playwright direto — 1ª homologação
+      sem script-fallback), 7/7 pontos por imagem, 15 PNGs em `evidence/t031/`. F1 limpo; resolver flat provado
+      end-to-end; KIT via API rendendo rollup. Nit E5 (basisEcho 390px) corrigido em `cb906c1`; nit E2 (card do
+      catálogo estoura com nome 120c sem espaço — surface 007) anotado para o gate do dono como follow-up.
       **→ DONE 2026-07-19, PASS-WITH-NITS 88% (3rd attempt).** Attempt 1 (haiku, 011 routing) FAILED the mandate
       (0 screenshots, 6/8 deferred, rounded-up verdict — the pilot's first negative datum); attempt 2 (opus lift)
       honestly BLOCKED (mcp playwright tools never register in this harness session); attempt 3 (same opus agent,
@@ -262,11 +266,17 @@ writes denied, nothing auto-deleted.
 - [x] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
       spaceless-note line-clamp on the list card; ellipsis on the context-bar scenario name (actions already never
       displaced).
-- [ ] T031 qa-produto visual homologation (390px + desktop) — the **D3/D6 degradation** walk + **duplicate-to-tweak**
+- [x] T031 qa-produto visual homologation (390px + desktop) — the **D3/D6 degradation** walk + **duplicate-to-tweak**
       + manage + lapse. **Adversarial DATA**: a deleted referenced basis, a kit basis, long names. Guard the honesty
       class (F1: never "removido/excluído" when the ref merely didn't resolve; never present stale as live).
       Screenshots.
-- [ ] T032 `pnpm gate:all` + drift-guard idempotent + **SC-612**. Evidence in `dod-evidence.md`.
+      **→ DONE 2026-07-20**: **PASS-WITH-NITS 92%** (qa-produto opus, MCP Playwright direto — 1ª homologação
+      sem script-fallback), 7/7 pontos por imagem, 15 PNGs em `evidence/t031/`. F1 limpo; resolver flat provado
+      end-to-end; KIT via API rendendo rollup. Nit E5 (basisEcho 390px) corrigido em `cb906c1`; nit E2 (card do
+      catálogo estoura com nome 120c sem espaço — surface 007) anotado para o gate do dono como follow-up.
+- [x] T032 `pnpm gate:all` + drift-guard idempotent + **SC-612**. Evidence in `dod-evidence.md`.
+      **→ DONE 2026-07-20**: gate exit 0 (web 645 · be 321 · import-linter 3/0), regen 0-diff, full e2e
+      chromium **70/70 0-flaky**.
 - [ ] T033 **Owner-gated PR-B → `develop`** (squash). On merge: `graphify update .`.
 
 ---
