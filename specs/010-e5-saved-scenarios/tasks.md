@@ -290,9 +290,12 @@ writes denied, nothing auto-deleted.
 
 ## Phase 11: User Story 7 — Record a snapshot from a scenario (Priority: P3)
 
-- [ ] T034 [US7] **Checkpoint (owner + E4 owner)**: US7 adds `"SCENARIO"` to the E4 `snapshots.payload.provenance.kind`
+- [x] T034 [US7] **Checkpoint (owner + E4 owner)**: US7 adds `"SCENARIO"` to the E4 `snapshots.payload.provenance.kind`
       enum (data-model §7.6) — **a snapshot-payload change, NOT a `scenarios`-table change**; confirm it does not
       touch snapshot immutability (ADR-0019).
+      **→ CONFIRMED + AUTHORIZED 2026-07-20 (owner)**: proceed with PR-C. Main-loop homework: the kind union
+      lives in the CLIENT payload envelope (`frozen-payload.ts:130`); the backend stores the payload opaque
+      under the ADR-0019 trigger — adding `"SCENARIO"` touches neither the table nor immutability.
 - [ ] T035 [US7] Write FAILING pytest/vitest — recording from a scenario's live result = a frozen E4 snapshot
       **byte-identical** to the displayed computation; provenance ("originou-se do cenário X") **informational only**;
       the snapshot **never recomputes** and a later catalog/fee change alters **0%** of it; the scenario is unchanged
