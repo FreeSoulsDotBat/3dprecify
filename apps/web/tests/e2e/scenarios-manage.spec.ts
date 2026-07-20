@@ -15,25 +15,16 @@ import { grantPremium, revokePremium, signUpThrowaway } from "./history-helpers"
 // never firing) reported in an earlier QA pass are FIXED (`89f9e1d`, `27d6a24`) and reconfirmed
 // green here — D3, D6, and duplicate-to-tweak (which depends on the dirty gate) all pass.
 //
-// KNOWN APP DEFECT #3 — STILL PRESENT after the `b0f5c37` fix attempt (reconfirmed 2026-07-20 with
-// an isolated repro, NOT worked around): renaming a scenario from the LIST's pencil icon (a Sheet
-// nested INSIDE the already-open "Meus cenários" list Sheet — the `tf-*` DS Dialog primitive,
-// ADR-0007) still leaves an ORPHANED overlay `<div class="tf-dialog__overlay" data-state="open"
-// style="pointer-events:auto">` covering the full viewport after the nested rename Sheet closes —
-// `document.elementFromPoint` at the viewport center still resolves to this stray overlay div, not
-// the page; `page.getByRole("dialog")` correctly counts only 1 (the outer list, still legitimately
-// open). `b0f5c37` fixed the INNER rename Sheet in this same file (`scenarios-list-sheet.tsx`
-// ~L370) to stay unconditionally mounted (the correct Radix pattern: let `SheetContent`'s own
-// Presence handle animate-out, never gate the whole `<SheetContent>` on local state) — but the
-// OUTER `ScenariosListSheet` (~L451-452) still does `{open && (<SheetContent>...)}`, the SAME
-// anti-pattern the fix corrected one level down. The delete Dialog in this file (~L411) shows the
-// safe alternative: `<DialogContent>` itself is unconditional; only its CHILDREN
-// (`{deleteTarget && (...)}`) are gated — `ScenariosListSheet`'s outer Sheet is the one place in
-// this file that still gates the CONTENT wrapper itself on `open`, one level above where the fix
-// landed. Effect (reconfirmed unchanged): every further click/fill on the page — the list's own
-// search field, its cards, even the page's background "Meus cenários" nav button — is silently
-// swallowed; a real user would see a frozen, unusable app until reload. The "manage" test below is
-// left to fail at this exact step rather than routed around.
+// Defect #3 — RESOLVED (`9ef2859`), and the "orphaned overlay / frozen app" reading above it was a
+// MISDIAGNOSIS, corrected by main-loop live-browser debugging (2026-07-20): `body` carrying
+// `pointer-events:none` while the list Sheet is open, with inline `auto` on the top layer, is
+// NORMAL Radix modal behavior — clicks inside the sheet land fine after the nested rename closes
+// (proven via real clicks on both close paths). The actual "manage" red: the SEARCH FIELD shipped
+// invisible from birth — `<Field label={…} className="sr-only">` applied `sr-only` to the WHOLE
+// Field wrapper (1×1px), not the label (`scenarios-list-sheet.tsx` ~L285). The `elementFromPoint`
+// probe that suggested an overlay freeze was sampling a zero-width rect — an instrumentation
+// artifact. Lesson kept here on purpose: a layout/hit-testing symptom is diagnosed in a real
+// browser with element GEOMETRY, never inferred from a probe over an invisible target.
 
 const t = messages.calculator;
 const s = messages.scenarios;
@@ -107,30 +98,12 @@ async function createProductWithScenario(
   await expect(page.getByText(s.saved)).toBeVisible();
 }
 
-// KNOWN APP DEFECT (found writing this suite, T030, 2026-07-20 — reported, NOT worked around):
-// `backend/app/api/scenarios.py::_price_input_dict` (used by `_resolve_product_last_known`, which
-// backs BOTH `_resnapshot_cost_basis` at save-time AND `_resolve_cost_basis_for_read` at read-time)
-// emits the BOM-LINE-prefixed key shape (`filamentCostPerRoll`/`filamentRollWeightKg`/
-// `printerMachineValue`/`printerMachineLifetimeHours`/`printerAvgPowerKw`/
-// `printerMaintenanceReservePerHour`/`filamentMaterial`) instead of the FLAT `PriceInput`/
-// `CalcFieldName` shape (`costPerRoll`/`rollWeightKg`/`machineValue`/`machineLifetimeHours`/
-// `avgPowerKw`/`maintenanceReservePerHour`) a PRODUCT-basis scenario's `costBasis.lastKnown`
-// contractually carries — the function's OWN docstring claims "the leaf set matches data-model §3's
-// flat `PriceInput` shape exactly", which is false for the 6 filament/printer-linked leaves. The
-// frontend's `applyScenarioConfig` (`features/calculator/scenario-bridge.ts`) hydrates the reopen
-// form by looking up `lastKnown[name]` for each `CalcFieldName` — those 6 keys never match, so they
-// silently stay whatever the calculator form already had (typically `defaultCalcValues`), and the
-// reopened price is silently WRONG with no error surfaced. Because `_resnapshot_cost_basis` PERSISTS
-// this wrong shape into the DB row at save time (not just at read time), BOTH the D3 live-reflect
-// test and the D6 last-known/degraded test below are blocked by the SAME root cause — proven via a
-// direct network-log repro (POST /scenarios sent the correct flat shape; the server's OWN response,
-// both at create and later reads, already carried the wrong prefixed shape). `filamentMaterial` has
-// no `CalcFieldName` counterpart at all and is silently dropped. Piece-only leaves (printGrams,
-// wasteGrams, printTimeHours, failurePct, finishTimeHours, finishRatePerHour, laborHours,
-// laborRatePerHour, markupVarejoPct, markupAtacadoPct, tariffPerKwh) are unaffected — their key
-// names are identical in both shapes. These two tests are left RED on purpose (Constitution
-// Principle III/"truth over approval") — they encode the intended VR-605/606 contract and will pass
-// once `_price_input_dict` (or a PRODUCT-specific variant of it) is fixed to emit the flat shape.
+// Historical note (T030, 2026-07-20): these two tests were BORN RED against a real defect —
+// `_price_input_dict` emitted BOM-line-prefixed keys instead of the flat `PriceInput` shape
+// `costBasis.lastKnown` contractually carries, corrupting BOTH D3 and D6 from save time (proven via
+// network-log repro: the POST sent flat, the server's own create response was already prefixed).
+// FIXED in `89f9e1d` (flat contract keys, PRODUCT + KIT lines, pytest re-pinned on the literal
+// contract set) — both tests green since; they encode the VR-605/606 contract.
 test.describe("D3/D6 — a scenario referencing a saved product", () => {
   test("D3 live-reflect: editing the linked filament's cost changes the reopened scenario's price (SC-601/VR-605)", async ({
     page,
@@ -319,10 +292,9 @@ test("manage: rename (PATCH), edit-config (PUT), search narrows the list, delete
   await renameSheet.getByLabel(s.nameField).fill("Zebra Renamed");
   await renameSheet.getByRole("button", { name: s.saveChanges }).click();
   await expect(page.getByText(s.renamed)).toBeVisible();
-  // The rename correctly happened server-side and the list re-renders with the new name — visible
-  // via TEXT assertions, which don't require actionability — but KNOWN APP DEFECT #3 (above) means
-  // every further POINTER interaction on the page is now silently swallowed by an orphaned overlay.
-  // The rest of this test (search/edit-config/delete) is left to fail there, on purpose.
+  // After the nested rename Sheet closes, the list must stay fully interactive — the steps below
+  // (search fill, edit-config, delete) exercise real pointer actionability on purpose (the
+  // regression guard for the `9ef2859` invisible-search-field fix).
   await expect(page.getByRole("dialog")).toHaveCount(1);
   listDialog = page.getByRole("dialog");
   cards = listDialog.getByTestId("scenario-card");
