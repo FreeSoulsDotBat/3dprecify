@@ -167,3 +167,47 @@ Evidence: 15 PNGs in `evidence/t031/`. Nits: basisEcho 390px overflow (fixed sam
 **DONE 2026-07-20**: owner homologated and squash-merged PR #25 → `develop` (`c9c053b`, 46 files,
 +4722/−166). Graph refreshed via the post-merge/post-checkout hooks; feature branch reset onto the merged
 `develop` (`--force-with-lease`) as the PR-C base.
+
+## PR-C — The E4 bridge: record a snapshot from a scenario (US7)
+
+**Branch**: `feature/010-e5-saved-scenarios` · **Date**: 2026-07-20 · **PR**: *(pending — T038, owner-gated)*
+
+### The wave map
+
+| Wave | Agent (model) | Tasks | Tokens (harness) | Verified by main loop |
+|---|---|---|---|---|
+| Impl | dev-frontend (sonnet) | T035+T036 | 172,074 | vitest 654/654 re-run locally |
+| Visual | qa-produto (**opus**, MCP Playwright) | T037 | 171,233 | 13 PNGs in `evidence/t037/` |
+
+### T034 — checkpoint (owner, 2026-07-20)
+
+Authorized: `"SCENARIO"` provenance is a CLIENT payload-envelope change (`frozen-payload.ts:130`); the
+backend stores the payload opaque under the ADR-0019 trigger. **Re-verified by the impl agent reading
+`history.py`**: nothing server-side inspects `provenance.kind` — accepted with ZERO backend changes (no
+vacuous pytest added).
+
+### T035/T036 — test-first + the bug the wave caught
+
+9 failing-first vitest (provenance verbatim · origin never links · `frozenLines` twin · byte-identical
+totals · SC-611 · KIT rollup provenance · SINGLE-button suppression). **Real bug found in-wave**: the SINGLE
+record button froze the stale single-piece fields while a KIT scenario was loaded — violating US7's
+"byte-identical to the displayed computation"; suppressed + `KitScenarioRecordButton` reusing the existing
+`freezeBomResult` (no new snapshot machinery).
+
+### T037 — visual homologation (qa-produto, opus)
+
+**PASS, confidence 95%** — 6/6 points + desktop, 13 PNGs. AD_HOC/PRODUCT record byte-matches; KIT record
+freezes the ROLLUP (itemized) with the SINGLE button absent (DOM-confirmed); two-shelf rule side by side
+(scenario 25,65→42,15 live · snapshot 25,65 frozen); SC-611 API-proven (no updatedAt bump); deleted-scenario
+origin stays honest (captured name, no dead link); honesty sweep clean. Nits (informational, deliberate,
+raised to the owner in the PR body): the origin line does not name the origin KIND; KIT provenance offers no
+"Abrir origem" (avoids a danglable link).
+
+### Gates (2026-07-20, main loop)
+
+- `pnpm gate:all` → **exit 0** (web 654 · backend 321 unchanged) · regen **0-diff** idempotent.
+- SC-612: full e2e chromium **70/70, 0 flaky** · pricing-core untouched (3.1.0).
+
+### T038 — owner gate
+
+*(pending: PR-C opened for owner homologation + squash-merge authorization)*

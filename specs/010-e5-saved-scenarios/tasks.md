@@ -322,8 +322,13 @@ writes denied, nothing auto-deleted.
       snapshot machinery. `computeScenarioKitChannels` gained `frozenLines` (the freeze-ready twin of
       `bom.lines`) so the freeze needs no second pass over the config. Full web suite 654/654 (was 645);
       typecheck/lint/depcruise/format:check all clean. **No `pricing-core`, no backend, no new route.**
-- [ ] T037 [US7] qa-produto homologation of the record-from-scenario bridge + `pnpm gate:all` + drift-guard +
+- [x] T037 [US7] qa-produto homologation of the record-from-scenario bridge + `pnpm gate:all` + drift-guard +
       SC-612. Evidence.
+      **→ DONE 2026-07-20**: qa-produto (opus) **PASS 95%** — 6/6 pontos + desktop, 13 PNGs em
+      `evidence/t037/`; SINGLE-button suppression confirmada por DOM; duas prateleiras lado a lado; SC-611
+      por API (0 updatedAt bump). Gates: gate:all exit 0 · regen 0-diff · e2e (abaixo). 2 nits informacionais
+      anotados p/ o dono no corpo do PR (linha de origem não nomeia o TIPO; sem "Abrir origem" em KIT
+      provenance — ambos deliberados).
 - [ ] T038 [US7] **Owner-gated PR-C → `develop`** (squash). On merge: `graphify update .`.
 
 ---
