@@ -33,13 +33,27 @@ export async function signUpThrowaway(page: Page, tag: string): Promise<string> 
   return email;
 }
 
-/** Grant premium through the REAL operator path (the CLI writing the ledger — ADR-0012). */
+/** Grant premium through the REAL operator path (the CLI writing the ledger — ADR-0012).
+ *  Retries while the account doesn't exist yet: the backend creates it JIT on the FIRST
+ *  authenticated request after sign-up, and on a loaded CI runner the grant can race that
+ *  request ("no existing account matches …" — observed on the PR #26 run). Bounded retry,
+ *  any other error still throws immediately. */
 export function grantPremium(email: string): void {
-  execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
-    cwd: backendDir,
-    stdio: "pipe",
-    env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
-  });
+  const deadline = Date.now() + 15_000;
+  for (;;) {
+    try {
+      execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
+        cwd: backendDir,
+        stdio: "pipe",
+        env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
+      });
+      return;
+    } catch (err) {
+      const stderr = (err as { stderr?: Buffer }).stderr?.toString() ?? "";
+      if (!stderr.includes("no existing account matches") || Date.now() >= deadline) throw err;
+      Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1000); // sync 1s backoff
+    }
+  }
 }
 
 /** Revoke it through the same ledger CLI — used to force a 403-at-sync (a `blocked` entry). */

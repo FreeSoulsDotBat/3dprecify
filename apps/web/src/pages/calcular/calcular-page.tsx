@@ -7,7 +7,11 @@ import {
   type ResolvedCostBasisMeta,
 } from "@/entities/scenario/resolved-basis";
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
-import { freezePriceResult } from "@/entities/history/frozen-payload";
+import {
+  freezeBomResult,
+  freezePriceResult,
+  type FrozenProvenance,
+} from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import {
@@ -20,10 +24,14 @@ import {
   sectionLabel,
 } from "@/features/calculator/calculator-form";
 import { PremiumTeaserDialog } from "@/features/catalog/premium-teaser";
-import { computeFromForm } from "@/features/calculator/calculator-model";
+import { type CatalogContext, computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
-import { applyScenarioConfig, buildScenarioConfig } from "@/features/calculator/scenario-bridge";
+import {
+  applyScenarioConfig,
+  buildScenarioConfig,
+  computeScenarioKitChannels,
+} from "@/features/calculator/scenario-bridge";
 import {
   CALC_FIELD_NAMES,
   type CalcFieldName,
@@ -212,6 +220,14 @@ export function CalcularPage() {
   const dirty =
     loadedScenario !== null && cleanSignature !== null && cleanSignature !== formSignature;
 
+  // 010/T036 (E5, PR-C, US7) — the E4 bridge's provenance: informational ONLY (id + the name AS
+  // LOADED), never a value source, never re-read at freeze time (the record button's `freeze()`
+  // closure captures this same reference). `null` when nothing is loaded — an ad-hoc calculation
+  // outside a scenario keeps recording with no provenance at all, exactly as before US7.
+  const scenarioProvenance: FrozenProvenance | null = loadedScenario
+    ? { kind: "SCENARIO", id: loadedScenario.id, name: loadedScenario.name }
+    : null;
+
   // Switching a slot's marketplace resets its modality to that market's default (or none), so a
   // stale ML "Clássico" never lingers on a Shopee slot.
   const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
@@ -273,6 +289,16 @@ export function CalcularPage() {
           refName={loadedScenario.costBasis?.ref?.name ?? loadedScenario.name}
           ctx={catalogCtx}
         />
+      )}
+
+      {/* 010/T036 (E5, PR-C, US7) — the E4 bridge for a KIT-basis scenario: the displayed
+          computation here is `KitBasisSummary`'s OWN rollup, NOT the (stale, untouched) single-piece
+          calculator fields below — so this freezes `computeScenarioKitChannels`'s own `frozenLines`/
+          `bom` directly (the SAME rollup the seller is looking at), never the scalar form. The
+          ordinary SINGLE record button (below) is suppressed while a KIT scenario is loaded, so there
+          is never a second, wrong "Salvar no histórico" offering to freeze the untouched fields. */}
+      {loadedScenario && loadedScenario.config.costBasis.kind === "KIT" && (
+        <KitScenarioRecordButton loadedScenario={loadedScenario} ctx={catalogCtx} />
       )}
 
       {showTeaserSlot && (
@@ -407,16 +433,71 @@ export function CalcularPage() {
           the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the button is
           PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here (`RecordSnapshotButton`
           returns null), so the free calculator stays literally untouched (SC-109 / SC-507 / SC-512).
-          The honest door is the Histórico tab. */}
-      {result && input && (
+          The honest door is the Histórico tab.
+          010/T036 (E5, PR-C, US7) — suppressed while a KIT-basis scenario is loaded: these calculator
+          fields are NOT what is on screen then (`KitBasisSummary`'s own rollup is), so freezing them
+          would record numbers the seller never saw; its own record button lives with the rollup
+          above. An AD_HOC/PRODUCT-basis scenario reuses this SAME button — its provenance is simply
+          `scenarioProvenance` instead of `null` ("originou-se do cenário X"). */}
+      {result && input && loadedScenario?.config.costBasis.kind !== "KIT" && (
         <div className="flex justify-center">
           <RecordSnapshotButton
-            source={{ kind: "SINGLE", freeze: () => freezePriceResult(input, result, null) }}
+            source={{
+              kind: "SINGLE",
+              freeze: () => freezePriceResult(input, result, scenarioProvenance),
+            }}
           />
         </div>
       )}
 
       <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>
+  );
+}
+
+/**
+ * 010/T036 (E5, PR-C, US7) — the KIT-basis twin of the SINGLE record button above, freezing
+ * `computeScenarioKitChannels`'s OWN rollup (the exact numbers `KitBasisSummary` renders) via
+ * `freezeBomResult` — the SAME E4 freeze function `bom-page.tsx`'s kit composer already uses (US1,
+ * no new snapshot machinery). Renders nothing when the rollup has no priceable line yet (mirrors the
+ * kit composer's own `disabled={frozenKitLines.length === 0}`, but as an absence rather than a dead
+ * disabled state, since `RecordSnapshotButton` itself decides visibility on entitlement).
+ */
+function KitScenarioRecordButton({
+  loadedScenario,
+  ctx,
+}: {
+  loadedScenario: { id: string; name: string; config: ScenarioConfig };
+  ctx: CatalogContext;
+}) {
+  const rollup = computeScenarioKitChannels(loadedScenario.config, ctx);
+  if (!rollup?.bom) return null;
+  const bom = rollup.bom;
+
+  const provenance: FrozenProvenance = {
+    kind: "SCENARIO",
+    id: loadedScenario.id,
+    name: loadedScenario.name,
+  };
+
+  return (
+    <div className="flex justify-center">
+      <RecordSnapshotButton
+        source={{
+          kind: "KIT",
+          // catalogVersion mirrors the kit composer's own rule (I2/Option A): every line shares the
+          // same catalog, so the first non-null line version is the kit's; `null` when every line
+          // priced with manual fees only.
+          freeze: () =>
+            freezeBomResult(
+              rollup.frozenLines,
+              bom,
+              provenance,
+              rollup.frozenLines.find((l) => l.input.catalogVersion != null)?.input
+                .catalogVersion ?? null,
+            ),
+        }}
+      />
+    </div>
   );
 }

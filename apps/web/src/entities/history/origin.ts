@@ -23,6 +23,12 @@ export function resolveOrigin(
   kits: readonly { id: string }[],
 ): OriginTarget | null {
   if (!provenance) return null;
+  // 010/T035 (E5, PR-C, US7) — a SCENARIO origin has no editor route to offer (Calcular reopens a
+  // scenario from its OWN list, not a deep link by id) — it is informational-only by construction, so
+  // this never resolves to a target. The captured NAME still renders unconditionally wherever the
+  // caller prints `payload.provenance.name` (never through this resolver), so the origin line stays
+  // honest — never blank, never "removido" — without ever offering a link that could dangle.
+  if (provenance.kind === "SCENARIO") return null;
   const pool = provenance.kind === "PRODUCT" ? products : kits;
   const exists = pool.some((item) => item.id === provenance.id);
   return exists ? { kind: provenance.kind, id: provenance.id, name: provenance.name } : null;

@@ -229,6 +229,22 @@ describe("provenance is captured, never referenced (ADR-0019 §5)", () => {
   it("a snapshot with no origin (an ad-hoc calculation) has null provenance, never a fake one", () => {
     expect(freezePriceResult(priceInput(), priceResult(), null).provenance).toBeNull();
   });
+
+  // 010/T035 (E5, PR-C, US7) — the E4 bridge: a scenario is a THIRD, purely informational provenance
+  // kind, exactly like PRODUCT/KIT — captured id+name, never a value source, never a foreign key.
+  it("captures a SCENARIO origin the same honest way as PRODUCT/KIT (US7, the E4 bridge)", () => {
+    const payload = freezePriceResult(priceInput(), priceResult(), {
+      kind: "SCENARIO",
+      id: "s1",
+      name: "Comparativo ML x Shopee",
+    });
+
+    expect(payload.provenance).toEqual({
+      kind: "SCENARIO",
+      id: "s1",
+      name: "Comparativo ML x Shopee",
+    });
+  });
 });
 
 // 009 — review PR-A, finding I1. The ORIGINAL `freezeInput` only stringified TOP-LEVEL numbers and
