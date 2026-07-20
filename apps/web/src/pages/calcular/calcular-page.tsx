@@ -1,7 +1,11 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
+import {
+  readResolvedCostBasis,
+  type ResolvedCostBasisMeta,
+} from "@/entities/scenario/resolved-basis";
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
 import { freezePriceResult } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
@@ -18,6 +22,7 @@ import {
 import { PremiumTeaserDialog } from "@/features/catalog/premium-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
+import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
 import { applyScenarioConfig, buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import {
   type CalcFieldName,
@@ -34,6 +39,7 @@ import {
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
+import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
 import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -76,13 +82,27 @@ export function CalcularPage() {
     replace: replaceOtherCosts,
   } = useFieldArray({ control, name: "otherCosts" });
 
-  // 010/T014 (E5, PR-A US2) — reopening a scenario loads its config INTO this same form (the
-  // reopened scenario IS the calculator, populated — ux §4). `loadedScenario` only drives the
-  // minimal context bar (name + the live-recompute promise); PR-B (T023/T026/T029) adds
-  // "Duplicar"/"Salvar alterações"/rename/close-with-unsaved-changes on top of this seam.
-  const [loadedScenario, setLoadedScenario] = useState<{ id: string; name: string } | null>(null);
+  // 010/T014+T023+T029 (E5, PR-A US2 + PR-B US3/US6) — reopening a scenario loads its config INTO
+  // this same form (the reopened scenario IS the calculator, populated — ux §4). `costBasis` is the
+  // SERVER-resolved D3/D6 decision (`readResolvedBasis` off the fresh list-item config) — the same
+  // recompute path already re-resolves non-overridden fee slots live (VR-604, T014's suite). `note`
+  // rides along so "Salvar alterações" (PUT) never erases it. `KIT` basis has no scalar form to
+  // hydrate (T024 owns its own read-only rollup below); `dirty` compares against a signature taken
+  // right after load/save, so an edit AFTER that point — never a re-render — flips the badge.
+  const [loadedScenario, setLoadedScenario] = useState<{
+    id: string;
+    name: string;
+    note: string | null;
+    costBasis: ResolvedCostBasisMeta | null;
+    config: ScenarioConfig;
+  } | null>(null);
+  const [cleanSignature, setCleanSignature] = useState<string | null>(null);
   const [scenariosOpen, setScenariosOpen] = useState(false);
-  const openScenario = (config: ScenarioConfig, meta: { id: string; name: string }) => {
+
+  const openScenario = (
+    config: ScenarioConfig,
+    meta: { id: string; name: string; note: string | null },
+  ) => {
     const patch = applyScenarioConfig(config);
     for (const [field, value] of Object.entries(patch.scalars)) {
       setValue(field as CalcFieldName, value);
@@ -90,7 +110,16 @@ export function CalcularPage() {
     setValue("includeMarketplace", patch.includeMarketplace);
     replaceChannels(patch.channels);
     replaceOtherCosts(patch.otherCosts);
-    setLoadedScenario(meta);
+    setLoadedScenario({ ...meta, costBasis: readResolvedCostBasis(config), config });
+    // The SAME subset `formSignature` reads off `values` below — so the baseline compares equal to
+    // the live signature the instant the patch commits (no post-render effect needed).
+    setCleanSignature(
+      JSON.stringify({
+        includeMarketplace: patch.includeMarketplace,
+        channels: patch.channels,
+        otherCosts: patch.otherCosts,
+      }),
+    );
   };
 
   // US5 (E2/T024) — the catalog pickers. Rendered ONLY for authenticated accounts WITH saved
@@ -145,17 +174,31 @@ export function CalcularPage() {
     refetch: retryCatalog,
   } = useFeeCatalog();
 
+  const catalogCtx = { catalog, source, now: Date.now() };
   const values = watch();
   const {
     result,
     input,
     channels: channelOutcomes,
     otherCostErrors,
-  } = computeFromForm(values, {
-    catalog,
-    source,
-    now: Date.now(),
-  });
+  } = computeFromForm(values, catalogCtx);
+
+  // 010/T023/T029 — the loaded scenario's "unsaved changes" signal: a plain structural signature
+  // (scalars/includeMarketplace/channels/otherCosts — the SAME subset `applyScenarioConfig` patches)
+  // taken right after load/save is the baseline; any later edit changes the LIVE signature and flips
+  // the badge + enables "Salvar alterações". A KIT basis never sets a scalar patch (T024's own
+  // read-only surface), so its baseline/live signatures stay trivially equal — no false "dirty".
+  const formSignature = useMemo(
+    () =>
+      JSON.stringify({
+        includeMarketplace: values.includeMarketplace,
+        channels: values.channels,
+        otherCosts: values.otherCosts,
+      }),
+    [values.includeMarketplace, values.channels, values.otherCosts],
+  );
+  const dirty =
+    loadedScenario !== null && cleanSignature !== null && cleanSignature !== formSignature;
 
   // Switching a slot's marketplace resets its modality to that market's default (or none), so a
   // stale ML "Clássico" never lingers on a Shopee slot.
@@ -183,20 +226,41 @@ export function CalcularPage() {
       />
 
       {/* The "cenário carregado" context bar (ux §4.1) — NO date anywhere, ever (§0.2): the
-          subtitle states the LIVE promise instead. PR-A minimal: name + "Fechar cenário" only;
-          "Duplicar"/"Salvar alterações" are PR-B (T023/T026/T029). */}
+          subtitle states the LIVE promise instead. T023 adds the D3/D6 honest caption + "Abrir
+          origem"; T029 adds Renomear/Duplicar/"Salvar alterações"/the unsaved-changes badge. */}
       {loadedScenario && (
-        <Card padding="sm" className="flex items-center justify-between gap-3">
-          <div>
-            <p style={sectionLabel}>
-              {messages.scenarios.loadedLabel.replace("{nome}", loadedScenario.name)}
-            </p>
-            <p style={captionText}>{messages.scenarios.loadedLive}</p>
-          </div>
-          <Button variant="ghost" size="sm" onClick={() => setLoadedScenario(null)}>
-            {messages.scenarios.closeScenario}
-          </Button>
-        </Card>
+        <ScenarioContextBar
+          scenario={loadedScenario}
+          costBasis={loadedScenario.costBasis}
+          dirty={dirty}
+          lapsed={entitlement.data?.status === "lapsed"}
+          buildCurrentConfig={() => {
+            const built = buildScenarioConfig({ values, channelOutcomes, parsedInput: input });
+            if (!built) return null;
+            const storedBasis = loadedScenario.config.costBasis;
+            // A PRODUCT/KIT basis keeps its REFERENCE — Calcular has no scalar form for a KIT line
+            // (T024 owns the kit rollup, read-only here) and the server re-snapshots a PRODUCT's
+            // `lastKnown` from the live row on every save anyway (T011) — never overwritten with a
+            // client-derived guess. AD_HOC uses the freshly built ad-hoc basis (the edited inputs).
+            return storedBasis.kind === "AD_HOC" ? built : { ...built, costBasis: storedBasis };
+          }}
+          onClose={() => setLoadedScenario(null)}
+          onRenamed={(name) => setLoadedScenario((s) => (s ? { ...s, name } : s))}
+          onSavedChanges={() => setCleanSignature(formSignature)}
+          onDuplicated={(config, meta) => openScenario(config, meta)}
+        />
+      )}
+
+      {/* 010/T024 (Q12) — a KIT-basis scenario has no scalar form to hydrate (multi-piece); its
+          OWN read-only per-marketplace rollup renders here instead of populating the fields below
+          (which stay whatever they were before the reopen — the seller edits a kit's LINES via
+          "Abrir origem", never here). */}
+      {loadedScenario && loadedScenario.config.costBasis.kind === "KIT" && (
+        <KitBasisSummary
+          config={loadedScenario.config}
+          refName={loadedScenario.costBasis?.ref?.name ?? loadedScenario.name}
+          ctx={catalogCtx}
+        />
       )}
 
       {showTeaserSlot && (

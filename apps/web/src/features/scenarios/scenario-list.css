@@ -1,0 +1,8 @@
+/* 010/T030b — the T018 nit: `line-clamp-2` alone clips a SPACELESS long token (no space to break
+   on) without ever showing the ellipsis, because there is no line-break opportunity for the browser
+   to clamp at. `overflow-wrap: anywhere` gives it one, so a 500-char token note still truncates with
+   a visible "…" at the 2-line boundary (adversarial SIZE, ux §0.4). */
+.tf-scenario-note {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

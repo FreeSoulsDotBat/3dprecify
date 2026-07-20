@@ -3,8 +3,18 @@ import { describe, expect, it } from "vitest";
 import { type FeeCatalog, feeCatalogSchema } from "@/shared/fee-catalog";
 
 import { computeFromForm } from "./calculator-model";
-import { applyScenarioConfig, buildScenarioConfig } from "./scenario-bridge";
-import { type CalcFormValues, defaultCalcValues, defaultChannelSlot } from "./calculator-schema";
+import {
+  applyScenarioConfig,
+  buildScenarioConfig,
+  computeScenarioKitChannels,
+} from "./scenario-bridge";
+import {
+  CALC_FIELD_NAMES,
+  type CalcFormValues,
+  defaultCalcValues,
+  defaultChannelSlot,
+} from "./calculator-schema";
+import type { ScenarioConfig } from "@/entities/scenario/config-document";
 
 // 010/T009 (E5, PR-A US1) — the SAVE direction, written FAILING-first: the save action maps the
 // live calculator state into the config intent document. Non-negotiables pinned here:
@@ -101,6 +111,23 @@ describe("buildScenarioConfig — SAVE (T009)", () => {
     expect(config.costBasis.lastKnown).not.toHaveProperty("channels");
     expect(config.costBasis.lastKnown).not.toHaveProperty("otherCosts");
     expect(config.costBasis.lastKnown.costPerRoll).toBe("100");
+  });
+
+  it("010/T021b — a PRODUCT ref override captures a PRODUCT basis instead of AD_HOC", () => {
+    const form = values({ channels: [] });
+    const outcome = computeFromForm(form, ctx);
+    const config = buildScenarioConfig({
+      values: form,
+      channelOutcomes: outcome.channels,
+      parsedInput: outcome.input,
+      productRef: { id: "p1", name: "Vaso G" },
+    })!;
+
+    expect(config.costBasis.kind).toBe("PRODUCT");
+    if (config.costBasis.kind !== "PRODUCT") throw new Error("unreachable");
+    expect(config.costBasis.ref).toEqual({ id: "p1", name: "Vaso G" });
+    expect(config.costBasis.lastKnown.costPerRoll).toBe("100");
+    expect(config.costBasis.lastKnown).not.toHaveProperty("channels");
   });
 
   it("materializes nothing client-side — a pure mapping, no writer imported or called", () => {
@@ -225,5 +252,99 @@ describe("applyScenarioConfig → computeFromForm — REOPEN + live recompute (T
 
     const patch = applyScenarioConfig(config);
     expect(patch.scalars.avgPowerKw).toBe("0,1");
+  });
+});
+
+// 010/T024 (E5, PR-B US3, Q12) — the KIT-basis reopen: the ONE shared `channels[]` applied
+// UNIFORMLY to every kit line's `lastKnown` input → `computeBom` → the per-marketplace rollup.
+// No `pricing-core` change (reuses `computeFromForm`/`computeBom` verbatim).
+describe("computeScenarioKitChannels (T024)", () => {
+  const kitLastKnown = (over: Record<string, string> = {}): Record<string, string> => {
+    const scalars: Record<string, string> = {};
+    for (const name of CALC_FIELD_NAMES) scalars[name] = defaultCalcValues[name]!;
+    return { ...scalars, ...over };
+  };
+
+  const kitConfig = (
+    lines: { name: string | null; quantity: number; input: Record<string, string> }[],
+    channelOverrides: Record<string, string> = {},
+  ): ScenarioConfig => ({
+    schemaVersion: 1,
+    includeMarketplace: true,
+    costBasis: {
+      kind: "KIT",
+      ref: { id: "k1", name: "Kit sazonal" },
+      lastKnown: { lines },
+    },
+    channels: [
+      {
+        marketplace: "MERCADO_LIVRE",
+        modality: "CLASSICO",
+        ...(Object.keys(channelOverrides).length ? { feeOverrides: channelOverrides } : {}),
+      },
+    ],
+    otherCosts: [],
+  });
+
+  it("returns null for a non-KIT basis — the caller's cue to render the scalar form instead", () => {
+    const adhoc: ScenarioConfig = {
+      schemaVersion: 1,
+      includeMarketplace: true,
+      costBasis: { kind: "AD_HOC", ref: null, lastKnown: {} },
+      channels: [],
+      otherCosts: [],
+    };
+    expect(computeScenarioKitChannels(adhoc, ctx)).toBeNull();
+  });
+
+  it("applies the ONE shared channel set to EVERY line and rolls up per marketplace", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 2, input: kitLastKnown() },
+      { name: "Vaso P", quantity: 3, input: kitLastKnown() },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+
+    expect(rollup.lines).toEqual([
+      { name: "Vaso G", quantity: 2, ok: true },
+      { name: "Vaso P", quantity: 3, ok: true },
+    ]);
+    expect(rollup.excludedLineCount).toBe(0);
+    expect(rollup.bom).not.toBeNull();
+    const ml = rollup.bom!.channels.find((c) => c.marketplace === "MERCADO_LIVRE")!;
+    expect(ml.contributingLines).toBe(2); // BOTH lines fed the same channel — the uniform application
+  });
+
+  it("an invalid line (unparseable scalar) is EXCLUDED — never silently zeroed; siblings still compute", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 1, input: kitLastKnown({ costPerRoll: "not-a-number" }) },
+      { name: "Vaso P", quantity: 1, input: kitLastKnown() },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+
+    expect(rollup.lines[0]).toEqual({ name: "Vaso G", quantity: 1, ok: false });
+    expect(rollup.lines[1]).toEqual({ name: "Vaso P", quantity: 1, ok: true });
+    expect(rollup.excludedLineCount).toBe(1);
+    expect(rollup.bom!.channels[0]!.contributingLines).toBe(1); // only the valid line
+  });
+
+  it("EVERY line excluded ⇒ bom is null, never a fake all-zero rollup", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 1, input: kitLastKnown({ costPerRoll: "not-a-number" }) },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+    expect(rollup.bom).toBeNull();
+  });
+
+  it("an explicit fee override applies uniformly — 'ajustado por você' on every line, not just one", () => {
+    const config = kitConfig(
+      [
+        { name: "Vaso G", quantity: 1, input: kitLastKnown() },
+        { name: "Vaso P", quantity: 1, input: kitLastKnown() },
+      ],
+      { commissionPct: "20" },
+    );
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+    // Both lines priced (uniform override, not a per-line divergence) — proven by both contributing.
+    expect(rollup.bom!.channels[0]!.contributingLines).toBe(2);
   });
 });

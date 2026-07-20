@@ -719,12 +719,39 @@ export const messages = {
     lapsedTitle: "Premium pausado",
     lapsedBody:
       "Seus cenários continuam aqui e podem ser abertos e recalculados. Para salvar, renomear, duplicar ou excluir, reative o Premium.",
-    // reopen — the loaded context bar (T014, PR-A minimal: name + live subtitle + Fechar only;
-    // Duplicar/Salvar alterações are PR-B, T023/T026/T029)
+    // reopen — the loaded context bar (T014 PR-A minimal name+live+Fechar; T023/T029 add the
+    // degraded caption/"Abrir origem"/Duplicar/Salvar alterações/unsaved-changes)
     loadedLabel: "Cenário: {nome}",
     loadedLive: "Recalculado com os preços de hoje", // NUNCA uma data
     closeScenario: "Fechar cenário",
     back: "Voltar", // NUNCA "Cancelar" (FR-014)
+    openOrigin: "Abrir origem", // SÓ quando a referência ainda resolve (F1 — nunca um link quebrado)
+    unsavedBadge: "Alterações não salvas",
+    saveChanges: "Salvar alterações",
+    saveChangesDone: "Cenário atualizado.", // SÓ em 200 real
+    saveAsNew: "Salvar como novo",
+    discardChangesTitle: "Descartar as alterações não salvas deste cenário?",
+    discardChanges: "Descartar",
+    writeOffline: "Esta ação precisa de conexão.", // renomear/duplicar/editar/excluir offline
+    writeLapsed: "Premium pausado — reative para renomear, duplicar, editar ou excluir.",
+    // manage (T029) — list card actions + rename + delete + search
+    open: "Abrir",
+    duplicate: "Duplicar",
+    duplicated: "Cenário duplicado.", // SÓ em 201 real
+    rename: "Renomear",
+    renameSheetTitle: "Renomear cenário",
+    renamed: "Cenário renomeado.", // SÓ em 200 real
+    delete: "Excluir",
+    deleteTitle: "Excluir o cenário “{nome}”?",
+    deleteBody: "Esta ação não pode ser desfeita.",
+    deleteConfirm: "Excluir",
+    deleted: "Cenário excluído.", // SÓ em 204 real
+    searchPlaceholder: "Buscar por nome…",
+    searchEmpty: "Nenhum cenário encontrado para “{termo}”.",
+    searchClear: "Limpar busca",
+    // kit basis reopen (T024, Q12) — no scalar form to hydrate; a read-only per-channel rollup
+    kitBasisTitle: "Kit: {nome}",
+    kitBasisHint: "Preços por canal do kit, recalculados com os preços de hoje.",
     // teaser (US5, T016) — SEM preço, SEM data, SEM CTA de compra
     teaserTitle: "Salve suas estratégias de venda",
     teaserBody:

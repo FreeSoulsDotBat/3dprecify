@@ -1,30 +1,47 @@
 import { useState } from "react";
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
-import { useScenarios } from "@/entities/scenario/use-scenarios";
+import {
+  useDeleteScenario,
+  useDuplicateScenario,
+  useRenameScenario,
+  useScenarios,
+} from "@/entities/scenario/use-scenarios";
 import { useEntitlement } from "@/entities/user/use-entitlement";
+import { apiErrorMessage } from "@/shared/api/error-messages";
 import type { ScenarioOut } from "@/shared/api/generated";
+import { ApiError } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
+import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
 import {
   Alert,
   Button,
   Card,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
   EmptyState,
+  Field,
+  Icon,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetTitle,
   Spinner,
+  toast,
 } from "@/shared/ui";
 
 import { ScenarioTeaserDialog, ScenarioTeaserPanel } from "./scenario-teaser";
 
-// 010/T013 (E5, PR-A US2) — "Meus cenários": the door (§0.1) + the list (§3) + the honest teaser
-// (§3.5/§7, reusing T016). This is the "Meus cenários" Sheet reached from the Calcular page header
-// entry — VISIBLE for everyone (free/signed-out included, per the entitlement × connectivity ×
-// affordance matrix, §0.1). It renders the union `useScenarios()` already computed (server ∪
-// uid-keyed offline cache) — never re-derives it.
+import "./scenario-list.css";
+
+// 010/T013+T029 (E5, PR-A US2 + PR-B US6) — "Meus cenários": the door (§0.1) + the list (§3) + the
+// honest teaser (§3.5/§7) + manage (search · rename · duplicate · delete) + the lapse read-only
+// freeze (§0.1/§6). This is the "Meus cenários" Sheet reached from the Calcular page header entry —
+// VISIBLE for everyone (free/signed-out included).
 //
 // ROUTING NOTE (a measured repo fact, not a UX-doc default): a Sheet/overlay, never a
 // `/calcular/cenarios` sub-route — `base:'./'` blanks any 2-segment route on cold load/refresh
@@ -33,13 +50,25 @@ import { ScenarioTeaserDialog, ScenarioTeaserPanel } from "./scenario-teaser";
 // Reopening a card CLOSES the sheet and hands the raw `ScenarioConfig` + `{id, name}` to the caller
 // (the Calcular page), which owns `applyScenarioConfig` (`features/calculator/scenario-bridge.ts`) —
 // this feature never touches calculator form types (the FSD-Lite boundary, see scenario-bridge.ts).
+//
+// T029 dated deviation (noted, owner-visible): the ux wireframe's per-card "⋯" overflow menu is
+// composed here as inline icon buttons (pencil/copy/trash-2) instead — there is no DropdownMenu DS
+// primitive (ux §10.2 G3 flags this as a compose-first gap), and `features/catalog/catalog-panel.tsx`
+// already ships the identical inline-icon-row convention for filaments/printers/kits; reusing it
+// keeps one idiom instead of inventing a menu component for this slice. Functionally equivalent
+// (Abrir · Duplicar · Renomear · Excluir, each gated per §0.1) — a design nit, not a behavior change.
+// T026's checkbox claimed the "Duplicar" affordance was already wired client-side; it was not (only
+// the backend endpoint existed) — completed here as part of the shared action row.
 
 const t = messages.scenarios;
 
 export interface ScenariosListSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onOpenScenario: (config: ScenarioConfig, meta: { id: string; name: string }) => void;
+  onOpenScenario: (
+    config: ScenarioConfig,
+    meta: { id: string; name: string; note: string | null },
+  ) => void;
 }
 
 /** "há poucos minutos" / "há N min/h/dia(s)/semana(s)" — a MANAGEMENT convenience, never a
@@ -56,20 +85,90 @@ function relativeLabel(iso: string, now: number): string {
   return `há ${diffWeek} semana${diffWeek === 1 ? "" : "s"}`;
 }
 
-function ScenarioCard({ item, onOpen }: { item: ScenarioOut; onOpen: () => void }) {
+/** A failed write's honest, specific line — never a generic error, never a fake success (§0.1). */
+function honestWriteError(err: unknown): string {
+  if (err instanceof ApiError) {
+    return err.status === 0 ? t.writeOffline : apiErrorMessage(err);
+  }
+  return t.writeOffline;
+}
+
+function ScenarioCard({
+  item,
+  onOpen,
+  writesDisabled,
+  writesReason,
+  onRename,
+  onDuplicate,
+  onDeleteRequest,
+}: {
+  item: ScenarioOut;
+  onOpen: () => void;
+  writesDisabled: boolean;
+  writesReason: string | undefined;
+  onRename: (item: ScenarioOut) => void;
+  onDuplicate: (item: ScenarioOut) => void;
+  onDeleteRequest: (item: ScenarioOut) => void;
+}) {
+  const reasonId = `tf-scenario-reason-${item.id}`;
   return (
-    <Card
-      as="button"
-      padding="sm"
-      interactive
-      onClick={onOpen}
-      className="flex w-full flex-col gap-1 text-left"
-    >
-      <p className="truncate text-sm font-medium">{item.name}</p>
-      {item.note && <p className="line-clamp-2 text-sm text-[var(--text-muted)]">{item.note}</p>}
-      <p className="text-xs text-[var(--text-muted)]">
-        {t.updatedRelative.replace("{quando}", relativeLabel(item.updatedAt, Date.now()))}
-      </p>
+    <Card padding="sm" className="flex flex-col gap-1" data-testid="scenario-card">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="flex w-full flex-col gap-1 text-left"
+        aria-label={`${t.open} ${item.name}`}
+      >
+        {/* T030b: single-line ellipsis on the name (already truncate); the note gets an EXPLICIT
+            ellipsis marker layered on the 2-line clamp — `line-clamp-2` alone hides overflow but
+            leaves no visual cue that text was cut (the T018 nit). */}
+        <p className="truncate text-sm font-medium">{item.name}</p>
+        {item.note && (
+          <p className="tf-scenario-note line-clamp-2 text-sm text-[var(--text-muted)]">
+            {item.note}
+          </p>
+        )}
+        <p className="text-xs text-[var(--text-muted)]">
+          {t.updatedRelative.replace("{quando}", relativeLabel(item.updatedAt, Date.now()))}
+        </p>
+      </button>
+      <div className="flex items-center justify-end gap-1">
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={writesDisabled}
+          aria-describedby={writesDisabled && writesReason ? reasonId : undefined}
+          aria-label={`${t.rename} ${item.name}`}
+          onClick={() => onRename(item)}
+        >
+          <Icon name="pencil" size={18} aria-hidden />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={writesDisabled}
+          aria-describedby={writesDisabled && writesReason ? reasonId : undefined}
+          aria-label={`${t.duplicate} ${item.name}`}
+          onClick={() => onDuplicate(item)}
+        >
+          <Icon name="copy" size={18} aria-hidden />
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={writesDisabled}
+          aria-describedby={writesDisabled && writesReason ? reasonId : undefined}
+          aria-label={`${t.delete} ${item.name}`}
+          onClick={() => onDeleteRequest(item)}
+        >
+          <Icon name="trash-2" size={18} aria-hidden />
+        </Button>
+      </div>
+      {writesDisabled && writesReason && (
+        <p id={reasonId} className="text-right text-xs text-[var(--text-muted)]">
+          {writesReason}
+        </p>
+      )}
     </Card>
   );
 }
@@ -83,8 +182,81 @@ function ScenarioListBody({
   onClose: () => void;
   lapsed: boolean;
 }) {
+  const [query, setQuery] = useState("");
+  const debouncedQuery = useDebouncedValue(query, 250);
   const { items, isLoading, isError, stale, refetch, loadMore, hasMore, isFetchingMore } =
-    useScenarios();
+    useScenarios({ q: debouncedQuery });
+
+  const online = useOnline();
+  const writesDisabled = lapsed || !online;
+  const writesReason = lapsed ? t.writeLapsed : !online ? t.writeOffline : undefined;
+
+  const rename = useRenameScenario();
+  const duplicate = useDuplicateScenario();
+  const del = useDeleteScenario();
+
+  const [renameTarget, setRenameTarget] = useState<ScenarioOut | null>(null);
+  const [renameName, setRenameName] = useState("");
+  const [renameNote, setRenameNote] = useState("");
+  const [renameError, setRenameError] = useState<string | undefined>(undefined);
+
+  const [deleteTarget, setDeleteTarget] = useState<ScenarioOut | null>(null);
+  const [deleteError, setDeleteError] = useState<string | undefined>(undefined);
+  const [duplicateError, setDuplicateError] = useState<string | undefined>(undefined);
+
+  const openRename = (item: ScenarioOut) => {
+    setRenameError(undefined);
+    setRenameName(item.name);
+    setRenameNote(item.note ?? "");
+    setRenameTarget(item);
+  };
+
+  const submitRename = async () => {
+    if (!renameTarget) return;
+    const trimmed = renameName.trim();
+    if (trimmed === "") {
+      setRenameError(t.nameRequired);
+      return;
+    }
+    if (trimmed.length > 120) {
+      setRenameError(t.nameTooLong);
+      return;
+    }
+    try {
+      await rename.mutateAsync({
+        id: renameTarget.id,
+        body: { name: trimmed, note: renameNote.trim() || null },
+      });
+      toast(t.renamed, { tone: "success" }); // real 2xx only
+      setRenameTarget(null);
+    } catch (err) {
+      setRenameError(honestWriteError(err));
+    }
+  };
+
+  const handleDuplicate = async (item: ScenarioOut) => {
+    setDuplicateError(undefined);
+    try {
+      const copy = await duplicate.mutateAsync(item.id);
+      toast(t.duplicated, { tone: "success" }); // real 2xx only
+      // ux §5: the copy loads immediately so the seller can tweak-and-compare right away.
+      onOpenScenario(copy);
+    } catch (err) {
+      setDuplicateError(honestWriteError(err));
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleteError(undefined);
+    try {
+      await del.mutateAsync(deleteTarget.id);
+      toast(t.deleted, { tone: "success" }); // real 2xx only
+      setDeleteTarget(null);
+    } catch (err) {
+      setDeleteError(honestWriteError(err));
+    }
+  };
 
   if (isLoading) {
     return (
@@ -106,10 +278,26 @@ function ScenarioListBody({
     );
   }
 
+  const searching = debouncedQuery.trim() !== "";
+
   return (
     <div className="flex flex-col gap-3">
-      {/* Serving cached rows after a failed read — most commonly offline (§3.2). Calm, never a wall
-          over data the seller already holds; a retry is offered either way (§0.1). */}
+      <Field label={t.searchPlaceholder} className="sr-only" tightLabel>
+        {(p) => (
+          <div className="tf-inputwrap">
+            <input
+              {...p}
+              type="text"
+              className="tf-input"
+              placeholder={t.searchPlaceholder}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              aria-label={t.searchPlaceholder}
+            />
+          </div>
+        )}
+      </Field>
+
       {stale && (
         <Alert tone="info" title={t.offlineTitle}>
           {t.offlineBody}
@@ -123,23 +311,48 @@ function ScenarioListBody({
           {t.lapsedBody}
         </Alert>
       )}
+      {duplicateError && <Alert tone="danger">{duplicateError}</Alert>}
 
       {items.length === 0 ? (
-        <EmptyState
-          icon="boxes"
-          title={t.emptyTitle}
-          description={t.emptyBody}
-          action={
-            <Button variant="secondary" onClick={onClose}>
-              {t.emptyAction}
-            </Button>
-          }
-        />
+        searching ? (
+          <EmptyState
+            icon="boxes"
+            title={t.searchEmpty.replace("{termo}", debouncedQuery.trim())}
+            action={
+              <Button variant="secondary" onClick={() => setQuery("")}>
+                {t.searchClear}
+              </Button>
+            }
+          />
+        ) : (
+          <EmptyState
+            icon="boxes"
+            title={t.emptyTitle}
+            description={t.emptyBody}
+            action={
+              <Button variant="secondary" onClick={onClose}>
+                {t.emptyAction}
+              </Button>
+            }
+          />
+        )
       ) : (
         <>
           <div className="flex flex-col gap-2">
             {items.map((item) => (
-              <ScenarioCard key={item.id} item={item} onOpen={() => onOpenScenario(item)} />
+              <ScenarioCard
+                key={item.id}
+                item={item}
+                onOpen={() => onOpenScenario(item)}
+                writesDisabled={writesDisabled}
+                writesReason={writesReason}
+                onRename={openRename}
+                onDuplicate={(i) => void handleDuplicate(i)}
+                onDeleteRequest={(i) => {
+                  setDeleteError(undefined);
+                  setDeleteTarget(i);
+                }}
+              />
             ))}
           </div>
           {hasMore && (
@@ -149,6 +362,73 @@ function ScenarioListBody({
           )}
         </>
       )}
+
+      {/* Rename (PATCH) — name/note ONLY; never re-sends the whole config (ux §6). */}
+      <Sheet open={renameTarget !== null} onOpenChange={(o) => !o && setRenameTarget(null)}>
+        {renameTarget && (
+          <SheetContent>
+            <div className="flex flex-col gap-4">
+              <SheetTitle>{t.renameSheetTitle}</SheetTitle>
+              <Field label={t.nameField} required>
+                {(p) => (
+                  <div className="tf-inputwrap">
+                    <input
+                      {...p}
+                      type="text"
+                      className="tf-input"
+                      maxLength={121}
+                      value={renameName}
+                      onChange={(e) => setRenameName(e.target.value)}
+                    />
+                  </div>
+                )}
+              </Field>
+              <Field label={t.noteField} optional>
+                {(p) => (
+                  <div className="tf-inputwrap">
+                    <textarea
+                      {...p}
+                      className="tf-input"
+                      rows={3}
+                      value={renameNote}
+                      onChange={(e) => setRenameNote(e.target.value)}
+                    />
+                  </div>
+                )}
+              </Field>
+              {renameError && <p className="text-sm text-[var(--danger-text)]">{renameError}</p>}
+              <Button onClick={() => void submitRename()} loading={rename.isPending}>
+                {t.saveChanges}
+              </Button>
+            </div>
+          </SheetContent>
+        )}
+      </Sheet>
+
+      {/* Delete (soft) — always confirmed, never silent (ux §6). */}
+      <Dialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
+        <DialogContent variant="center">
+          {deleteTarget && (
+            <div className="flex flex-col gap-3">
+              <DialogTitle>{t.deleteTitle.replace("{nome}", deleteTarget.name)}</DialogTitle>
+              <DialogDescription>{t.deleteBody}</DialogDescription>
+              {deleteError && <Alert tone="danger">{deleteError}</Alert>}
+              <div className="flex justify-end gap-2">
+                <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
+                  {t.back}
+                </Button>
+                <Button
+                  variant="danger"
+                  loading={del.isPending}
+                  onClick={() => void handleDelete()}
+                >
+                  {t.deleteConfirm}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -193,6 +473,7 @@ export function ScenariosListSheet({
                 onOpenScenario(item.config as unknown as ScenarioConfig, {
                   id: item.id,
                   name: item.name,
+                  note: item.note,
                 });
                 onOpenChange(false);
               }}

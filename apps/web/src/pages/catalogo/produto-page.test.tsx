@@ -25,6 +25,7 @@ const {
   updateMock,
   recordMock,
   entitlement,
+  createScenarioMock,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   useProductsMock: vi.fn(),
@@ -34,6 +35,7 @@ const {
   updateMock: vi.fn(),
   recordMock: vi.fn(),
   entitlement: { data: undefined as { status: string } | undefined },
+  createScenarioMock: vi.fn(),
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
@@ -55,6 +57,12 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
 vi.mock("@/entities/user/use-entitlement", () => ({ useEntitlement: () => entitlement }));
 vi.mock("@/entities/history/use-history", () => ({
   useRecordSnapshot: () => ({ mutateAsync: recordMock, isPending: false }),
+}));
+// 010/T021b — the "Salvar cenário" affordance added to this page needs the same mutation hook the
+// scenarios feature already tests in isolation; mocked here so this suite only asserts the WIRING
+// (a PRODUCT ref captured, not AD_HOC), never re-tests the Sheet's own behavior.
+vi.mock("@/entities/scenario/use-scenarios", () => ({
+  useCreateScenario: () => ({ mutateAsync: createScenarioMock, isPending: false }),
 }));
 
 import { ProdutoPage } from "./produto-page";
@@ -286,5 +294,39 @@ describe("ProdutoPage — record a snapshot with PRODUCT provenance (US3/T019)",
     entitlement.data = { status: "none" };
     renderPage("prod-1");
     expect(screen.queryByRole("button", { name: h.saveAction })).not.toBeInTheDocument();
+  });
+});
+
+describe("ProdutoPage — save a scenario referencing THIS product (010/T021b)", () => {
+  const s = messages.scenarios;
+  const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
+
+  it("captures a PRODUCT costBasis (id + name), not AD_HOC — closes FR-606a on the UI side", async () => {
+    const user = setup();
+    createScenarioMock.mockResolvedValue({ id: "sc-1" });
+    renderPage("prod-1");
+
+    await user.click(screen.getByTestId("save-scenario-trigger"));
+    // Disambiguate from the page's OWN "Nome do produto" field (same "Nome…" prefix) — the Sheet's
+    // "Nome" field is the LAST match (its Dialog portal mounts after the page content).
+    const nameInputs = screen.getAllByLabelText(new RegExp("^" + s.nameField));
+    await user.type(nameInputs[nameInputs.length - 1]!, "Vaso G no ML");
+    await user.click(screen.getByTestId("save-scenario-submit"));
+
+    await waitFor(() => expect(createScenarioMock).toHaveBeenCalledTimes(1));
+    const body = createScenarioMock.mock.calls[0]![0];
+    expect(body.config.costBasis.kind).toBe("PRODUCT");
+    expect(body.config.costBasis.ref).toEqual({ id: "prod-1", name: "Vaso G" });
+  });
+
+  it("a NEW (unsaved) product offers no save-scenario action — there is no id to reference yet", () => {
+    renderPage(); // create mode, no productId
+    expect(screen.queryByTestId("save-scenario-trigger")).not.toBeInTheDocument();
+  });
+
+  it("without an active premium the action does not exist", () => {
+    entitlement.data = { status: "none" };
+    renderPage("prod-1");
+    expect(screen.queryByTestId("save-scenario-trigger")).not.toBeInTheDocument();
   });
 });
