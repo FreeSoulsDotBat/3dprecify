@@ -364,45 +364,46 @@ function ScenarioListBody({
       )}
 
       {/* Rename (PATCH) — name/note ONLY; never re-sends the whole config (ux §6). */}
+      {/* SheetContent stays MOUNTED (like the delete Dialog below): unmounting it in the same
+          commit that flips `open` false skips Radix's layered close path and strands the overlay/
+          body pointer-events (the T030 frozen-app defect — nested-dialog conditional-unmount). */}
       <Sheet open={renameTarget !== null} onOpenChange={(o) => !o && setRenameTarget(null)}>
-        {renameTarget && (
-          <SheetContent>
-            <div className="flex flex-col gap-4">
-              <SheetTitle>{t.renameSheetTitle}</SheetTitle>
-              <Field label={t.nameField} required>
-                {(p) => (
-                  <div className="tf-inputwrap">
-                    <input
-                      {...p}
-                      type="text"
-                      className="tf-input"
-                      maxLength={121}
-                      value={renameName}
-                      onChange={(e) => setRenameName(e.target.value)}
-                    />
-                  </div>
-                )}
-              </Field>
-              <Field label={t.noteField} optional>
-                {(p) => (
-                  <div className="tf-inputwrap">
-                    <textarea
-                      {...p}
-                      className="tf-input"
-                      rows={3}
-                      value={renameNote}
-                      onChange={(e) => setRenameNote(e.target.value)}
-                    />
-                  </div>
-                )}
-              </Field>
-              {renameError && <p className="text-sm text-[var(--danger-text)]">{renameError}</p>}
-              <Button onClick={() => void submitRename()} loading={rename.isPending}>
-                {t.saveChanges}
-              </Button>
-            </div>
-          </SheetContent>
-        )}
+        <SheetContent>
+          <div className="flex flex-col gap-4">
+            <SheetTitle>{t.renameSheetTitle}</SheetTitle>
+            <Field label={t.nameField} required>
+              {(p) => (
+                <div className="tf-inputwrap">
+                  <input
+                    {...p}
+                    type="text"
+                    className="tf-input"
+                    maxLength={121}
+                    value={renameName}
+                    onChange={(e) => setRenameName(e.target.value)}
+                  />
+                </div>
+              )}
+            </Field>
+            <Field label={t.noteField} optional>
+              {(p) => (
+                <div className="tf-inputwrap">
+                  <textarea
+                    {...p}
+                    className="tf-input"
+                    rows={3}
+                    value={renameNote}
+                    onChange={(e) => setRenameNote(e.target.value)}
+                  />
+                </div>
+              )}
+            </Field>
+            {renameError && <p className="text-sm text-[var(--danger-text)]">{renameError}</p>}
+            <Button onClick={() => void submitRename()} loading={rename.isPending}>
+              {t.saveChanges}
+            </Button>
+          </div>
+        </SheetContent>
       </Sheet>
 
       {/* Delete (soft) — always confirmed, never silent (ux §6). */}
