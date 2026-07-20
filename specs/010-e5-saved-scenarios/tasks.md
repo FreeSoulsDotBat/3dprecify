@@ -250,9 +250,15 @@ writes denied, nothing auto-deleted.
 
 ## Phase 10: PR-B hardening & delivery
 
-- [ ] T030 e2e: save referencing a product → **edit the product → reopen reflects** (D3); **delete it → reopen
+- [x] T030 e2e: save referencing a product → **edit the product → reopen reflects** (D3); **delete it → reopen
       degrades honestly** (D6, no "removido"); **duplicate → tweak → compare**; rename/edit/search/delete; the lapse
       read-only surface. Client-nav for detail.
+      **→ DONE 2026-07-20 (`9ef2859`)**: `scenarios-manage.spec.ts` 5/5 green (D3 · D6-honest · duplicate ·
+      manage · lapse) + PR-A `scenarios.spec.ts` 5/5 regression-clean. The wave found 3 REAL defects (all fixed:
+      `89f9e1d` flat lastKnown shape · `27d6a24` dirty-tracking · `9ef2859` sr-only search field). The "frozen
+      overlay" reading of defect #3 was a MISDIAGNOSIS corrected by main-loop live MCP-browser debugging: body
+      `pointer-events:none` + top-layer inline `auto` is NORMAL Radix modal behavior; the manage red was the
+      search input born 1×1px inside a `sr-only`'d Field wrapper.
 - [x] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
       spaceless-note line-clamp on the list card; ellipsis on the context-bar scenario name (actions already never
       displaced).
