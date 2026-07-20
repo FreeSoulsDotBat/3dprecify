@@ -200,13 +200,18 @@ fee-catalog refresh re-resolves non-overridden slots while overrides stick.
 - [x] T022 [US3] Implement the **read-time resolver** in `scenarios.py` — resolve `costBasis.ref` **owner +
       `deleted_at IS NULL`** (reuse the E3 `_resolve_views` seam) → D3 live / D6 last-known + a `degraded` flag;
       `GET /{id}` (and every write response) returns the resolved-or-degraded basis. Tests green.
-- [ ] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
+- [x] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
       last-known copy — never "removido"; "Abrir origem" offered only if the ref resolves); the "ajustado por você"
       seal on overridden slots; the 005 staleness seal offline. Tests green.
 - [ ] T021b [US3] FE: capture a **PRODUCT/KIT `costBasis.ref` (+ `lastKnown`) at save** when the calculator was
       prefilled from the catalog — the PR-A wave saved AD_HOC only (T009 dated note); this closes FR-606a on the UI
       side and lets the qa D3/D6 walk run end-to-end from the app. Tests first.
-- [ ] T024 [US3] **Kit-basis channel composition (Q12, owner-decided at T002)**: apply the scenario's channelSet
+      **→ PARTIAL 2026-07-20 (`ab9441a`)**: PRODUCT half DONE (produto-page "Salvar cenário" → `costBasis`
+      PRODUCT ref + lastKnown, test-first). **KIT half = Principle VIII stop, NOT inferred**: the kit composer
+      has per-LINE channels and no kit-level channel picker; `ux-scenarios.md` specifies no such UI. Owner
+      options: (a) derive from a kit line's channelSet · (b) new kit-level picker (new UI) · (c) KIT-basis
+      scenarios originate elsewhere (defer). T024 (reopen/compute side) is DONE independently.
+- [x] T024 [US3] **Kit-basis channel composition (Q12, owner-decided at T002)**: apply the scenario's channelSet
       uniformly to every kit line → `computeBom` → per-marketplace rollup. **No `pricing-core` change** (both engines
       exist). Tests green.
 
@@ -237,7 +242,7 @@ writes denied, nothing auto-deleted.
       re-grant restores writes with data intact). Observe failing.
 - [x] T028 [US6] Implement `PUT /{id}` (full-config replace) · `PATCH /{id}` (rename) · `DELETE /{id}` (soft) + the
       `?q=` name search, per contract; `require_entitlement` (ACTIVE) on writes, reads survive lapse. Tests green.
-- [ ] T029 [US6] Frontend: rename, **edit-config** (reopen → edit → `PUT`), search, delete; the **lapse read-only**
+- [x] T029 [US6] Frontend: rename, **edit-config** (reopen → edit → `PUT`), search, delete; the **lapse read-only**
       surface (reuse the E2/E3/E4 authorization-freeze pattern — readable/recomputable, writes disabled with reason).
       Tests green.
 
@@ -246,7 +251,7 @@ writes denied, nothing auto-deleted.
 - [ ] T030 e2e: save referencing a product → **edit the product → reopen reflects** (D3); **delete it → reopen
       degrades honestly** (D6, no "removido"); **duplicate → tweak → compare**; rename/edit/search/delete; the lapse
       read-only surface. Client-nav for detail.
-- [ ] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
+- [x] T030b [P] Cosmetic T018 nits (owner-decided 2026-07-19 → PR-B follow-up): ellipsis truncation for the
       spaceless-note line-clamp on the list card; ellipsis on the context-bar scenario name (actions already never
       displaced).
 - [ ] T031 qa-produto visual homologation (390px + desktop) — the **D3/D6 degradation** walk + **duplicate-to-tweak**
