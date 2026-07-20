@@ -127,7 +127,10 @@ export interface FrozenKitLine {
  * affordance is simply absent — no broken link, no "produto excluído" claim, no degraded caption.
  */
 export interface FrozenProvenance {
-  kind: "PRODUCT" | "KIT";
+  // 010/T035 (E5, PR-C, US7) — "SCENARIO" is the E4 bridge: recording from a saved scenario's live
+  // result captures the SAME informational triad as PRODUCT/KIT (id + the name AS CAPTURED), never a
+  // foreign key, never a value source. The scenario keeps changing after this; the snapshot does not.
+  kind: "PRODUCT" | "KIT" | "SCENARIO";
   id: string;
   name: string;
 }

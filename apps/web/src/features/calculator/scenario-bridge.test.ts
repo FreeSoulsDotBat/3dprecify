@@ -347,4 +347,29 @@ describe("computeScenarioKitChannels (T024)", () => {
     // Both lines priced (uniform override, not a per-line divergence) — proven by both contributing.
     expect(rollup.bom!.channels[0]!.contributingLines).toBe(2);
   });
+
+  // 010/T035+T036 (E5, PR-C, US7) — the E4 bridge needs the SAME resolved `PriceInput`s the rollup
+  // priced, so recording never re-derives anything: `frozenLines` is the freeze-ready twin of
+  // `bom.lines`, 1:1, name+quantity+input, excluded lines simply absent (mirrors bom-page's own
+  // `frozenKitLines` convention — no new pricing/serialization logic invented here).
+  it("frozenLines carries exactly the lines that reached bom, aligned 1:1, with their resolved input", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 2, input: kitLastKnown({ costPerRoll: "not-a-number" }) },
+      { name: "Vaso P", quantity: 3, input: kitLastKnown() },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+
+    expect(rollup.frozenLines).toHaveLength(1);
+    expect(rollup.frozenLines[0]!.name).toBe("Vaso P");
+    expect(rollup.frozenLines[0]!.quantity).toBe(3);
+    expect(rollup.frozenLines[0]!.input).toBeTruthy();
+  });
+
+  it("frozenLines is empty (never fabricated) when every line was excluded", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 1, input: kitLastKnown({ costPerRoll: "not-a-number" }) },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+    expect(rollup.frozenLines).toHaveLength(0);
+  });
 });

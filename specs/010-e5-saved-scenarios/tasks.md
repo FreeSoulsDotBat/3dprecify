@@ -296,12 +296,32 @@ writes denied, nothing auto-deleted.
       **→ CONFIRMED + AUTHORIZED 2026-07-20 (owner)**: proceed with PR-C. Main-loop homework: the kind union
       lives in the CLIENT payload envelope (`frozen-payload.ts:130`); the backend stores the payload opaque
       under the ADR-0019 trigger — adding `"SCENARIO"` touches neither the table nor immutability.
-- [ ] T035 [US7] Write FAILING pytest/vitest — recording from a scenario's live result = a frozen E4 snapshot
+- [x] T035 [US7] Write FAILING pytest/vitest — recording from a scenario's live result = a frozen E4 snapshot
       **byte-identical** to the displayed computation; provenance ("originou-se do cenário X") **informational only**;
       the snapshot **never recomputes** and a later catalog/fee change alters **0%** of it; the scenario is unchanged
       (SC-611). Observe failing.
-- [ ] T036 [US7] Implement the record-from-scenario path — **reuse the E4 US1 record path** (`features/history`) with
+      **→ DONE 2026-07-20 (dev-frontend)**: FE-only, vitest — no pytest needed (backend `SnapshotIn`
+      validates `payload` structurally/opaquely; `provenance.kind` is never inspected server-side, T034's
+      finding confirmed by reading `backend/app/api/history.py`). 9 new tests, all observed RED first:
+      `frozen-payload.test.ts` (SCENARIO provenance captured verbatim) · `origin.test.ts` (a SCENARIO origin
+      never resolves to an editor target — no route exists) · `scenario-bridge.test.ts` ×2 (`frozenLines`,
+      the freeze-ready twin of `bom.lines`) · `calcular-scenario-record.test.tsx` ×5 (new file — AD_HOC
+      provenance + byte-identical totals + scenario untouched; KIT rollup provenance + itemized lines + the
+      SINGLE button suppressed while a KIT scenario is loaded).
+- [x] T036 [US7] Implement the record-from-scenario path — **reuse the E4 US1 record path** (`features/history`) with
       the scenario added as an informational provenance source; no new snapshot machinery. Tests green.
+      **→ DONE 2026-07-20 (dev-frontend)**: `FrozenProvenance.kind` extended to `"SCENARIO"`
+      (`entities/history/frozen-payload.ts`); `resolveOrigin` answers `null` for it (informational-only, no
+      editor route — the captured name still renders unconditionally, honest per F1). `CalcularPage` wires
+      `scenarioProvenance` into the EXISTING `RecordSnapshotButton` for an AD_HOC/PRODUCT-basis reopened
+      scenario (zero new UI). A **real latent bug found+fixed in the same pass**: the SINGLE record button
+      was unconditionally freezing the (stale, untouched) calculator fields even while a KIT-basis scenario
+      was loaded — not what `KitBasisSummary` displays. Fixed by suppressing it for a KIT basis and adding
+      `KitScenarioRecordButton` (new, small), which freezes `computeScenarioKitChannels`'s own rollup via
+      `freezeBomResult` — the same E4 freeze function the kit composer (`bom-page.tsx`) already uses; no new
+      snapshot machinery. `computeScenarioKitChannels` gained `frozenLines` (the freeze-ready twin of
+      `bom.lines`) so the freeze needs no second pass over the config. Full web suite 654/654 (was 645);
+      typecheck/lint/depcruise/format:check all clean. **No `pricing-core`, no backend, no new route.**
 - [ ] T037 [US7] qa-produto homologation of the record-from-scenario bridge + `pnpm gate:all` + drift-guard +
       SC-612. Evidence.
 - [ ] T038 [US7] **Owner-gated PR-C → `develop`** (squash). On merge: `graphify update .`.

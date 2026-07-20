@@ -200,6 +200,11 @@ export interface ScenarioKitRollup {
   excludedLineCount: number;
   /** `null` when EVERY line was excluded — never a fake all-zero rollup. */
   bom: BomResult | null;
+  /** 010/T035+T036 (E5, PR-C, US7) — the freeze-ready twin of `bom.lines`, 1:1 (only the lines that
+   *  actually reached the rollup; an excluded line has no numbers to itemize, mirroring the kit
+   *  composer's own `frozenKitLines` convention). Lets the E4 bridge freeze EXACTLY what this rollup
+   *  priced — no re-derivation, no second pass over the config. */
+  frozenLines: readonly { input: PriceInput; quantity: number; name: string | null }[];
 }
 
 export function computeScenarioKitChannels(
@@ -209,7 +214,7 @@ export function computeScenarioKitChannels(
   if (config.costBasis.kind !== "KIT") return null;
   const channels = config.channels.map(channelIntentToForm);
   const lineOutcomes: ScenarioKitLineOutcome[] = [];
-  const bomLines: { input: PriceInput; quantity: number }[] = [];
+  const bomLines: { input: PriceInput; quantity: number; name: string | null }[] = [];
 
   for (const line of config.costBasis.lastKnown.lines) {
     const scalars: Partial<Record<CalcFieldName, string>> = {};
@@ -227,12 +232,13 @@ export function computeScenarioKitChannels(
     const outcome = computeFromForm(formValues, ctx);
     const ok = outcome.ok && outcome.input !== null;
     lineOutcomes.push({ name: line.name, quantity: line.quantity, ok });
-    if (ok) bomLines.push({ input: outcome.input!, quantity: line.quantity });
+    if (ok) bomLines.push({ input: outcome.input!, quantity: line.quantity, name: line.name });
   }
 
   return {
     lines: lineOutcomes,
     excludedLineCount: lineOutcomes.filter((l) => !l.ok).length,
     bom: bomLines.length > 0 ? computeBom(bomLines) : null,
+    frozenLines: bomLines,
   };
 }

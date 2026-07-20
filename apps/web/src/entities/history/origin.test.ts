@@ -11,6 +11,7 @@ import { resolveOrigin } from "./origin";
 
 const PRODUCT: FrozenProvenance = { kind: "PRODUCT", id: "p1", name: "Vaso G" };
 const KIT: FrozenProvenance = { kind: "KIT", id: "k1", name: "Kit Festa" };
+const SCENARIO: FrozenProvenance = { kind: "SCENARIO", id: "s1", name: "Comparativo canais" };
 
 describe("resolveOrigin — read-time, tolerant of a dangling id (US3, ADR-0019 §5)", () => {
   it("resolves a PRODUCT origin to its editor target while the product still exists", () => {
@@ -36,5 +37,14 @@ describe("resolveOrigin — read-time, tolerant of a dangling id (US3, ADR-0019 
     // Same id string in the other pool must NOT satisfy the origin — the kind is part of the identity.
     expect(resolveOrigin(PRODUCT, [], [{ id: "p1" }])).toBeNull();
     expect(resolveOrigin(KIT, [{ id: "k1" }], [])).toBeNull();
+  });
+
+  // 010/T035 (E5, PR-C, US7) — a SCENARIO origin never offers an editor link (no route exists to
+  // reopen one directly): resolveOrigin always answers null for it, regardless of pool contents. The
+  // captured NAME still renders — that read happens straight off the frozen payload, unconditionally,
+  // never through this resolver — so the origin line degrades honestly (never "removido") without any
+  // broken "abrir origem" affordance ever being offered.
+  it("a SCENARIO origin never resolves to an editor target (informational-only, no route)", () => {
+    expect(resolveOrigin(SCENARIO, [{ id: "s1" }], [{ id: "s1" }])).toBeNull();
   });
 });
