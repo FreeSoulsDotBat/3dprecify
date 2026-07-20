@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -210,5 +210,76 @@ describe("ScenariosListSheet — lapse read-only freeze (VR-610/§0.1)", () => {
     renderSheet();
     expect(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` })).toBeDisabled();
     expect(screen.getAllByText(t.writeOffline).length).toBeGreaterThan(0);
+  });
+});
+
+// Defect B (coordinator, 2026-07-20, T030 e2e finding) — written FAILING-first: opening the
+// nested rename Sheet from inside the open "Meus cenários" list Sheet, then closing the NESTED
+// one, orphaned a full-viewport `.tf-dialog__overlay` (`data-state="open"`) that swallowed every
+// later click (proven via `document.elementFromPoint` in the real browser; jsdom cannot do
+// pointer-events, but it CAN assert the DOM node itself is gone/inert after the nested close).
+describe("ScenariosListSheet — nested Sheet close never orphans an overlay (Defect B)", () => {
+  it("open list → open rename → close rename: exactly ONE open dialog, ONE live overlay left", async () => {
+    const user = setup();
+    renderSheet();
+
+    // The list Sheet itself renders via a Portal too — before opening anything nested, exactly one
+    // dialog (list) and one overlay exist.
+    expect(screen.getAllByRole("dialog")).toHaveLength(1);
+
+    await user.click(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` }));
+    // Radix correctly `aria-hidden`s the OUTER dialog while the nested one is active (the a11y-
+    // correct "only the topmost layer is in the tree" behavior) — `{ hidden: true }` includes it.
+    expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(2); // list + nested rename
+
+    // Close the NESTED rename Sheet via its own ✕ (never the outer list Sheet).
+    const renameDialog = screen.getAllByRole("dialog", { hidden: true })[1]!;
+    await user.click(within(renameDialog).getByRole("button", { name: /fechar/i }));
+
+    // Back to exactly ONE dialog (the list) — the nested Sheet is fully gone, not just hidden.
+    await waitFor(() => expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(1));
+
+    // No STRAY overlay left over from the closed nested Sheet: every remaining
+    // `.tf-dialog__overlay` node must belong to a still-open dialog (data-state="open" is fine ONLY
+    // paired with a live dialog); a leftover second overlay — or one with no dialog behind it — is
+    // exactly the orphan the e2e wave caught.
+    const overlays = document.querySelectorAll(".tf-dialog__overlay");
+    expect(overlays).toHaveLength(1);
+    expect(overlays[0]).toHaveAttribute("data-state", "open"); // the outer list Sheet's own overlay
+  });
+
+  it("closing the nested Sheet via Escape leaves no stray overlay either", async () => {
+    const user = setup();
+    renderSheet();
+    await user.click(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` }));
+    expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(2);
+
+    await user.keyboard("{Escape}");
+    await waitFor(() => expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(1));
+    expect(document.querySelectorAll(".tf-dialog__overlay")).toHaveLength(1);
+  });
+
+  it("closing the nested Sheet via a successful PATCH (programmatic close) leaves no stray overlay", async () => {
+    const user = setup();
+    renameMutateAsync.mockResolvedValue({ id: "s1", name: "ML Clássico × Shopee" });
+    renderSheet();
+    await user.click(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` }));
+    expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(2);
+
+    await user.click(screen.getByRole("button", { name: t.saveChanges }));
+    await waitFor(() => expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(1));
+    expect(document.querySelectorAll(".tf-dialog__overlay")).toHaveLength(1);
+  });
+
+  it("REPEATED open→close cycles of the nested Sheet never accumulate stray overlays", async () => {
+    const user = setup();
+    renderSheet();
+    for (let i = 0; i < 3; i++) {
+      await user.click(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` }));
+      const renameDialog = screen.getAllByRole("dialog", { hidden: true })[1]!;
+      await user.click(within(renameDialog).getByRole("button", { name: /fechar/i }));
+      await waitFor(() => expect(screen.getAllByRole("dialog", { hidden: true })).toHaveLength(1));
+    }
+    expect(document.querySelectorAll(".tf-dialog__overlay")).toHaveLength(1);
   });
 });

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
@@ -25,6 +25,7 @@ import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
 import { applyScenarioConfig, buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import {
+  CALC_FIELD_NAMES,
   type CalcFieldName,
   type CalcFormValues,
   calculatorResolver,
@@ -60,8 +61,30 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 const t = messages.calculator;
 
+/**
+ * Defect A fix (coordinator, 2026-07-20, T030 e2e finding) — the "unsaved changes" signature,
+ * EXACTLY the subset `applyScenarioConfig` patches: the 17 scalar `CalcFieldName`s (were MISSING
+ * entirely — a scalar edit never flipped `dirty`) + `includeMarketplace` + `channels` (incl.
+ * `feeOverrides`) + `otherCosts`. Computed FRESH on every call from the CURRENT values, never
+ * memoized against a `values.channels`/`values.otherCosts` array reference — RHF's `watch()` does
+ * not guarantee a new array reference on a nested array-ITEM edit (a `channels.0.commissionPct`
+ * change can mutate in place), so a `useMemo([values.channels])` silently never recomputed (the
+ * confirmed e2e repro: an override edit moved the price 34,33→61,80 on screen while `dirty` stayed
+ * false). `JSON.stringify` over ~20 short fields is cheap enough to run on every render.
+ */
+function computeFormSignature(values: CalcFormValues): string {
+  const scalars: Partial<Record<CalcFieldName, string>> = {};
+  for (const name of CALC_FIELD_NAMES) scalars[name] = values[name];
+  return JSON.stringify({
+    scalars,
+    includeMarketplace: values.includeMarketplace,
+    channels: values.channels,
+    otherCosts: values.otherCosts,
+  });
+}
+
 export function CalcularPage() {
-  const { control, watch, setValue } = useForm<CalcFormValues>({
+  const { control, watch, getValues, setValue } = useForm<CalcFormValues>({
     defaultValues: defaultCalcValues,
     resolver: calculatorResolver,
     mode: "onChange",
@@ -111,15 +134,12 @@ export function CalcularPage() {
     replaceChannels(patch.channels);
     replaceOtherCosts(patch.otherCosts);
     setLoadedScenario({ ...meta, costBasis: readResolvedCostBasis(config), config });
-    // The SAME subset `formSignature` reads off `values` below — so the baseline compares equal to
-    // the live signature the instant the patch commits (no post-render effect needed).
-    setCleanSignature(
-      JSON.stringify({
-        includeMarketplace: patch.includeMarketplace,
-        channels: patch.channels,
-        otherCosts: patch.otherCosts,
-      }),
-    );
+    // `getValues()` reads RHF's internal store SYNCHRONOUSLY — the `setValue`/`replace*` calls
+    // above already committed to it (React's render batching is irrelevant here), so this baseline
+    // is the exact same `computeFormSignature` shape the live comparison below uses. A KIT basis
+    // never sets a scalar patch (T024 owns its own read-only surface), so its scalars simply carry
+    // over whatever the form already held — self-consistent, never a false "dirty".
+    setCleanSignature(computeFormSignature(getValues()));
   };
 
   // US5 (E2/T024) — the catalog pickers. Rendered ONLY for authenticated accounts WITH saved
@@ -183,20 +203,12 @@ export function CalcularPage() {
     otherCostErrors,
   } = computeFromForm(values, catalogCtx);
 
-  // 010/T023/T029 — the loaded scenario's "unsaved changes" signal: a plain structural signature
-  // (scalars/includeMarketplace/channels/otherCosts — the SAME subset `applyScenarioConfig` patches)
-  // taken right after load/save is the baseline; any later edit changes the LIVE signature and flips
-  // the badge + enables "Salvar alterações". A KIT basis never sets a scalar patch (T024's own
-  // read-only surface), so its baseline/live signatures stay trivially equal — no false "dirty".
-  const formSignature = useMemo(
-    () =>
-      JSON.stringify({
-        includeMarketplace: values.includeMarketplace,
-        channels: values.channels,
-        otherCosts: values.otherCosts,
-      }),
-    [values.includeMarketplace, values.channels, values.otherCosts],
-  );
+  // 010/T023/T029 — the loaded scenario's "unsaved changes" signal: `computeFormSignature` taken
+  // right after load/save is the baseline; any later edit changes the LIVE signature and flips the
+  // badge + enables "Salvar alterações" (Defect A fix: recomputed FRESH every render from `values`
+  // — `watch()` already re-renders on any field change including a nested array-ITEM edit, so this
+  // needs no memoization; a `useMemo([values.channels])` was the bug, not a micro-opt worth keeping).
+  const formSignature = computeFormSignature(values);
   const dirty =
     loadedScenario !== null && cleanSignature !== null && cleanSignature !== formSignature;
 
