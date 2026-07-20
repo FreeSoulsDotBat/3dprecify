@@ -430,6 +430,15 @@ export interface ProductOut {
   updatedAt: string;
 }
 
+/**
+ * `PATCH` body — `name`/`note` ONLY. `extra="forbid"` (not `CamelModel`'s default) so a
+ * smuggled `config` (or any other) field is an honest 422, never a silent ignore.
+ */
+export interface RenameIn {
+  name?: string | null;
+  note?: string | null;
+}
+
 export type ScenarioInConfig = { [key: string]: unknown };
 
 /**
@@ -4527,7 +4536,8 @@ export const getGetScenarioApiV1ScenariosScenarioIdGetUrl = (scenarioId: string,
 }
 
 /**
- * Own + not-deleted only (VR-609); `config` served VERBATIM — the D3/D6 resolve is T022.
+ * Own + not-deleted only (VR-609); `config.costBasis` is resolved read-time (T022, D3/D6);
+ * every other leaf is served VERBATIM (the seller's intent).
  * @summary Get Scenario
  */
 export const getScenarioApiV1ScenariosScenarioIdGet = async (scenarioId: string, options?: RequestInit): Promise<getScenarioApiV1ScenariosScenarioIdGetResponse> => {
@@ -4613,3 +4623,440 @@ export function useGetScenarioApiV1ScenariosScenarioIdGet<TData = Awaited<Return
 
   return withQueryKey(query, queryOptions.queryKey);
 }
+
+
+
+
+
+
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse200 = {
+  data: ScenarioOut
+  status: 200
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponseSuccess = (updateScenarioApiV1ScenariosScenarioIdPutResponse200) & {
+  headers: Headers;
+};
+export type updateScenarioApiV1ScenariosScenarioIdPutResponseError = (updateScenarioApiV1ScenariosScenarioIdPutResponse400 | updateScenarioApiV1ScenariosScenarioIdPutResponse401 | updateScenarioApiV1ScenariosScenarioIdPutResponse403 | updateScenarioApiV1ScenariosScenarioIdPutResponse404 | updateScenarioApiV1ScenariosScenarioIdPutResponse422) & {
+  headers: Headers;
+};
+
+export type updateScenarioApiV1ScenariosScenarioIdPutResponse = (updateScenarioApiV1ScenariosScenarioIdPutResponseSuccess | updateScenarioApiV1ScenariosScenarioIdPutResponseError)
+
+export const getUpdateScenarioApiV1ScenariosScenarioIdPutUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/v1/scenarios/${scenarioId}`
+}
+
+/**
+ * T028 — the full-config-edit path (`PUT`, the four-object-map "whole config editable"). The
+ * submitted `config` REPLACES the stored one wholesale — VR-602/603 re-run on this UPDATE (the
+ * one operational difference from E4: the row is mutable, so the validators run on every write,
+ * not once), and the cost basis is re-snapshotted the same way a create is (T011).
+ * @summary Update Scenario
+ */
+export const updateScenarioApiV1ScenariosScenarioIdPut = async (scenarioId: string,
+    scenarioIn: ScenarioIn, options?: RequestInit): Promise<updateScenarioApiV1ScenariosScenarioIdPutResponse> => {
+
+  return orvalFetch<updateScenarioApiV1ScenariosScenarioIdPutResponse>(getUpdateScenarioApiV1ScenariosScenarioIdPutUrl(scenarioId),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(scenarioIn)
+  }
+);}
+
+
+
+
+
+export const getUpdateScenarioApiV1ScenariosScenarioIdPutMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>, TError,{scenarioId: string;data: ScenarioIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>, TError,{scenarioId: string;data: ScenarioIn}, TContext> => {
+
+const mutationKey = ['updateScenarioApiV1ScenariosScenarioIdPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>, {scenarioId: string;data: ScenarioIn}> = (props) => {
+          const {scenarioId,data} = props ?? {};
+
+          return  updateScenarioApiV1ScenariosScenarioIdPut(scenarioId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateScenarioApiV1ScenariosScenarioIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>>
+    export type UpdateScenarioApiV1ScenariosScenarioIdPutMutationBody = ScenarioIn
+    export type UpdateScenarioApiV1ScenariosScenarioIdPutMutationError = ErrorEnvelope
+
+    /**
+ * @summary Update Scenario
+ */
+export const useUpdateScenarioApiV1ScenariosScenarioIdPut = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>, TError,{scenarioId: string;data: ScenarioIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateScenarioApiV1ScenariosScenarioIdPut>>,
+        TError,
+        {scenarioId: string;data: ScenarioIn},
+        TContext
+      > => {
+      return useMutation(getUpdateScenarioApiV1ScenariosScenarioIdPutMutationOptions(options), queryClient);
+    }
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse200 = {
+  data: ScenarioOut
+  status: 200
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponseSuccess = (renameScenarioApiV1ScenariosScenarioIdPatchResponse200) & {
+  headers: Headers;
+};
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponseError = (renameScenarioApiV1ScenariosScenarioIdPatchResponse400 | renameScenarioApiV1ScenariosScenarioIdPatchResponse401 | renameScenarioApiV1ScenariosScenarioIdPatchResponse403 | renameScenarioApiV1ScenariosScenarioIdPatchResponse404 | renameScenarioApiV1ScenariosScenarioIdPatchResponse422) & {
+  headers: Headers;
+};
+
+export type renameScenarioApiV1ScenariosScenarioIdPatchResponse = (renameScenarioApiV1ScenariosScenarioIdPatchResponseSuccess | renameScenarioApiV1ScenariosScenarioIdPatchResponseError)
+
+export const getRenameScenarioApiV1ScenariosScenarioIdPatchUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/v1/scenarios/${scenarioId}`
+}
+
+/**
+ * T028 — rename only (`name`/`note`); `config` is never touched by this route.
+ * @summary Rename Scenario
+ */
+export const renameScenarioApiV1ScenariosScenarioIdPatch = async (scenarioId: string,
+    renameIn: RenameIn, options?: RequestInit): Promise<renameScenarioApiV1ScenariosScenarioIdPatchResponse> => {
+
+  return orvalFetch<renameScenarioApiV1ScenariosScenarioIdPatchResponse>(getRenameScenarioApiV1ScenariosScenarioIdPatchUrl(scenarioId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(renameIn)
+  }
+);}
+
+
+
+
+
+export const getRenameScenarioApiV1ScenariosScenarioIdPatchMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>, TError,{scenarioId: string;data: RenameIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>, TError,{scenarioId: string;data: RenameIn}, TContext> => {
+
+const mutationKey = ['renameScenarioApiV1ScenariosScenarioIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>, {scenarioId: string;data: RenameIn}> = (props) => {
+          const {scenarioId,data} = props ?? {};
+
+          return  renameScenarioApiV1ScenariosScenarioIdPatch(scenarioId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RenameScenarioApiV1ScenariosScenarioIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>>
+    export type RenameScenarioApiV1ScenariosScenarioIdPatchMutationBody = RenameIn
+    export type RenameScenarioApiV1ScenariosScenarioIdPatchMutationError = ErrorEnvelope
+
+    /**
+ * @summary Rename Scenario
+ */
+export const useRenameScenarioApiV1ScenariosScenarioIdPatch = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>, TError,{scenarioId: string;data: RenameIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof renameScenarioApiV1ScenariosScenarioIdPatch>>,
+        TError,
+        {scenarioId: string;data: RenameIn},
+        TContext
+      > => {
+      return useMutation(getRenameScenarioApiV1ScenariosScenarioIdPatchMutationOptions(options), queryClient);
+    }
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponse204 = {
+  data: void
+  status: 204
+}
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponseSuccess = (deleteScenarioApiV1ScenariosScenarioIdDeleteResponse204) & {
+  headers: Headers;
+};
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponseError = (deleteScenarioApiV1ScenariosScenarioIdDeleteResponse401 | deleteScenarioApiV1ScenariosScenarioIdDeleteResponse403 | deleteScenarioApiV1ScenariosScenarioIdDeleteResponse404) & {
+  headers: Headers;
+};
+
+export type deleteScenarioApiV1ScenariosScenarioIdDeleteResponse = (deleteScenarioApiV1ScenariosScenarioIdDeleteResponseSuccess | deleteScenarioApiV1ScenariosScenarioIdDeleteResponseError)
+
+export const getDeleteScenarioApiV1ScenariosScenarioIdDeleteUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/v1/scenarios/${scenarioId}`
+}
+
+/**
+ * Soft-delete — VOLUNTARY only (a lapse never deletes, VR-610/FR-612).
+ * @summary Delete Scenario
+ */
+export const deleteScenarioApiV1ScenariosScenarioIdDelete = async (scenarioId: string, options?: RequestInit): Promise<deleteScenarioApiV1ScenariosScenarioIdDeleteResponse> => {
+
+  return orvalFetch<deleteScenarioApiV1ScenariosScenarioIdDeleteResponse>(getDeleteScenarioApiV1ScenariosScenarioIdDeleteUrl(scenarioId),
+  {
+    ...options,
+    method: 'DELETE'
+
+
+  }
+);}
+
+
+
+
+
+export const getDeleteScenarioApiV1ScenariosScenarioIdDeleteMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>, TError,{scenarioId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>, TError,{scenarioId: string}, TContext> => {
+
+const mutationKey = ['deleteScenarioApiV1ScenariosScenarioIdDelete'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>, {scenarioId: string}> = (props) => {
+          const {scenarioId} = props ?? {};
+
+          return  deleteScenarioApiV1ScenariosScenarioIdDelete(scenarioId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteScenarioApiV1ScenariosScenarioIdDeleteMutationResult = NonNullable<Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>>
+
+    export type DeleteScenarioApiV1ScenariosScenarioIdDeleteMutationError = ErrorEnvelope
+
+    /**
+ * @summary Delete Scenario
+ */
+export const useDeleteScenarioApiV1ScenariosScenarioIdDelete = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>, TError,{scenarioId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteScenarioApiV1ScenariosScenarioIdDelete>>,
+        TError,
+        {scenarioId: string},
+        TContext
+      > => {
+      return useMutation(getDeleteScenarioApiV1ScenariosScenarioIdDeleteMutationOptions(options), queryClient);
+    }
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse201 = {
+  data: ScenarioOut
+  status: 201
+}
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponseSuccess = (duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse201) & {
+  headers: Headers;
+};
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponseError = (duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse401 | duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse403 | duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse404) & {
+  headers: Headers;
+};
+
+export type duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse = (duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponseSuccess | duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponseError)
+
+export const getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostUrl = (scenarioId: string,) => {
+
+
+
+
+  return `/api/v1/scenarios/${scenarioId}/duplicate`
+}
+
+/**
+ * T026 — VR-608 duplicate independence: a DEEP copy of `config` into a NEW row (new id, own
+ * name `"Cópia de {name}"`). A separate row BY CONSTRUCTION — editing one changes 0% of the
+ * other. Materializes nothing (VR-607's twin).
+ * @summary Duplicate Scenario
+ */
+export const duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost = async (scenarioId: string, options?: RequestInit): Promise<duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse> => {
+
+  return orvalFetch<duplicateScenarioApiV1ScenariosScenarioIdDuplicatePostResponse>(getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostUrl(scenarioId),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>, TError,{scenarioId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>, TError,{scenarioId: string}, TContext> => {
+
+const mutationKey = ['duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>, {scenarioId: string}> = (props) => {
+          const {scenarioId} = props ?? {};
+
+          return  duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost(scenarioId,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationResult = NonNullable<Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>>
+
+    export type DuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Duplicate Scenario
+ */
+export const useDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>, TError,{scenarioId: string}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost>>,
+        TError,
+        {scenarioId: string},
+        TContext
+      > => {
+      return useMutation(getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationOptions(options), queryClient);
+    }

@@ -661,3 +661,620 @@ def test_T011_save_with_a_ref_that_does_not_resolve_keeps_the_client_sent_lastKn
     assert r.status_code == 201, r.text
     stored = r.json()["config"]["costBasis"]["lastKnown"]
     assert stored["printGrams"] == "999.000", stored  # the client-sent value, kept as-is
+
+
+# ══ PR-B — US3 the LIVE contract (T021, FAILING-first): the read-time D3/D6 resolver (T022) ══════
+#
+# Scope note (dated 2026-07-20, backend wave): the brief for T021/T022 names "referenced product"
+# for both VR-605 and VR-606 explicitly; KIT-basis read-time resolution rides the same seam but is
+# deliberately left to T024 (Q12 kit-basis channel composition, a separate task) since it needs the
+# `boms.py` multi-line resolve machinery that task was scoped to touch. Flagging so the parent can
+# redirect if PRODUCT-only was not the intended cut.
+#
+# VR-604 here is deliberately re-scoped to what the BACKEND can honestly assert: per
+# `contracts/api-surface.md`, `channels`/`otherCosts`/`includeMarketplace` are echoed back
+# VERBATIM — the server never resolves or touches a fee (that is `fee-prefill.ts`, entirely
+# client-side, already shipped in T014). So the backend-testable half of VR-604 is that the
+# `feeOverrides` partial-map — an explicit override PRESENT, a non-overridden slot's key ABSENT —
+# round-trips byte-identical through save + reopen, proving the backend never silently populates or
+# strips a fee leaf (the precondition the client's live re-resolution depends on).
+
+
+def _update_product(
+    client: TestClient,
+    h: dict[str, str],
+    product_id: str,
+    fid: str,
+    pid: str,
+    *,
+    print_grams: str,
+    name: str = "Vaso G",
+) -> None:
+    body = {
+        "name": name,
+        "filamentId": fid,
+        "printerId": pid,
+        "pieceInputs": {
+            "printGrams": print_grams,
+            "wasteGrams": "0.000",
+            "printTimeHours": "5.000",
+            "failurePct": "0.000",
+            "finishTimeHours": "0.000",
+            "finishRatePerHour": "0.000000",
+            "laborHours": "0.000",
+            "laborRatePerHour": "0.000000",
+            "markupVarejoPct": "50.000",
+            "markupAtacadoPct": "30.000",
+        },
+        "tariffPerKwh": "1.000000",
+        "includeMarketplace": True,
+        "channels": [],
+        "otherCosts": [],
+    }
+    r = client.put(f"/api/v1/products/{product_id}", headers=h, json=body)
+    assert r.status_code == 200, r.text
+
+
+def test_VR605_reopen_reflects_a_LIVE_edit_to_the_referenced_product(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D3 live-reflect — a scenario whose `costBasis.ref` still resolves owned+live reads the
+    CURRENT product row on every GET, not the (possibly-stale) snapshot from the last save."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-d3")
+    fid, pid = _mk_refs(db_client, h)
+    product_id = _mk_product(db_client, h, fid, pid, "Vaso G")
+
+    config = _config_with_product_basis(product_id, "Vaso G")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+    # After the save-time re-snapshot (T011) the stored lastKnown is already 100.000 (the LIVE
+    # value at save time) — now edit the product AFTER the save so only a read-time resolve (not
+    # the stored snapshot) can produce the new value on reopen.
+    _update_product(db_client, h, product_id, fid, pid, print_grams="250.000")
+
+    fetched = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert fetched.status_code == 200, fetched.text
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is False
+    assert resolved["lastKnown"]["printGrams"] == "250.000", resolved
+
+
+def test_VR606_a_soft_deleted_referenced_product_degrades_honestly_no_break(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D6 last-known — a `costBasis.ref` that no longer resolves (soft-deleted here) degrades to
+    the LAST-SAVED snapshot, `degraded: true`, never a blank/500/"removido" claim."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-d6")
+    fid, pid = _mk_refs(db_client, h)
+    product_id = _mk_product(db_client, h, fid, pid, "Vaso G")
+
+    config = _config_with_product_basis(product_id, "Vaso G")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+
+    delete_resp = db_client.delete(f"/api/v1/products/{product_id}", headers=h)
+    assert delete_resp.status_code == 204
+
+    fetched = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is True
+    # The snapshot captured at save time (the LIVE value then, 100.000) — never blank.
+    assert resolved["lastKnown"]["printGrams"] == "100.000", resolved
+    assert resolved["ref"] == {"id": product_id, "name": "Vaso G"}  # the ref is kept, not erased
+
+
+def test_VR606_a_cross_tenant_referenced_product_degrades_honestly(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D6 — a `costBasis.ref` pointing at ANOTHER account's (live) product must not resolve: the
+    owner-scoping is the same as every other read in this file (VR-609's twin, at the basis)."""
+    ha = _premium(monkeypatch, migrated_db, "u-sc-d6-owner-a")
+    fid, pid = _mk_refs(db_client, ha)
+    others_product_id = _mk_product(db_client, ha, fid, pid, "Peça da Conta A")
+
+    hb = _premium(monkeypatch, migrated_db, "u-sc-d6-owner-b")
+    config = _config_with_product_basis(others_product_id, "Peça da Conta A")
+    created = db_client.post("/api/v1/scenarios", headers=hb, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    # T011 accept-and-degrade: the ref did not resolve (not B's product) at save time, so B's
+    # client-sent lastKnown (the stale 999.000 fixture value) was kept as-is.
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=hb)
+    assert fetched.status_code == 200, fetched.text
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is True
+    assert resolved["lastKnown"]["printGrams"] == "999.000", resolved
+
+
+def test_VR606_a_never_existed_referenced_product_degrades_honestly(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D6 — a `costBasis.ref` id that never existed at all degrades the SAME honest way (no
+    existence oracle at the basis either)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-d6-never")
+    guessed = "0192f0aa-0000-7000-8000-000000000abc"
+    config = _config_with_product_basis(guessed, "Peça sumida")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    assert fetched.status_code == 200, fetched.text
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is True
+    assert resolved["lastKnown"]["printGrams"] == "999.000"
+
+
+def test_VR605_an_AD_HOC_basis_never_degrades_and_echoes_lastKnown_verbatim(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """An AD_HOC basis has no ref to resolve — it is always `degraded: false`, `ref: null`, and
+    `lastKnown` is the seller's own authoritative input, echoed unchanged (data-model §1)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-adhoc-resolve")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body())
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved == {
+        "kind": "AD_HOC",
+        "ref": None,
+        "degraded": False,
+        "lastKnown": _piece_input(),
+    }
+
+
+# ══ Redirect (2026-07-20): a KIT `costBasis.ref` IS in T022 scope (api-surface.md lines 99-102 +
+# 137-139 — `{kind: "PRODUCT"|"KIT", ref, degraded, lastKnown}` names both kinds identically). The
+# CLIENT half (Q12 channelSet -> computeBom rollup) stays T024; this is the SERVER read-time
+# resolve/degrade for a KIT ref, reusing `boms.py`'s `_resolve_views`/`_lines_of` seam verbatim. ══
+
+
+def _mk_kit_with_ad_hoc_line(
+    client: TestClient, h: dict[str, str], *, piece_name: str, print_grams: str, kit_name: str
+) -> tuple[str, str, str]:
+    """A real, live kit (POST /api/v1/boms) with ONE ad-hoc line that MATERIALIZES a product
+    (ADR-0017) — returns (bomId, materialized productId, the line's live piece name)."""
+    body = {
+        "name": kit_name,
+        "lines": [
+            {
+                "quantity": 2,
+                "pieceName": piece_name,
+                "pieceInputs": {
+                    "printGrams": print_grams,
+                    "wasteGrams": "0.000",
+                    "printTimeHours": "5.000",
+                    "failurePct": "0.000",
+                    "finishTimeHours": "0.000",
+                    "finishRatePerHour": "0.000000",
+                    "laborHours": "0.000",
+                    "laborRatePerHour": "0.000000",
+                    "markupVarejoPct": "50.000",
+                    "markupAtacadoPct": "30.000",
+                },
+                "filamentValues": {
+                    "material": "PLA",
+                    "costPerRoll": "110.00",
+                    "rollWeightKg": "1.000",
+                },
+                "printerValues": {
+                    "machineValue": "1200.00",
+                    "machineLifetimeHours": "2000.000",
+                    "avgPowerKw": "0.1200",
+                    "maintenanceReservePerHour": "0.500000",
+                },
+                "tariffPerKwh": "1.000000",
+                "includeMarketplace": True,
+                "channels": [],
+                "otherCosts": [],
+            }
+        ],
+    }
+    r = client.post("/api/v1/boms", headers=h, json=body)
+    assert r.status_code == 201, r.text
+    kit = r.json()
+    return kit["id"], kit["materializations"][0]["productId"], kit["lines"][0]["pieceName"]
+
+
+def _config_with_kit_basis(bom_id: str, kit_name: str) -> dict[str, Any]:
+    """A config whose `costBasis` references a live Kit — `lastKnown` is deliberately a STALE
+    single-line placeholder (distinct from the live kit's line) so only a read-time resolve (D3)
+    or the stored value (D6) could ever appear on reopen — never a coincidence."""
+    config = json.loads(json.dumps(VALID_CONFIG))
+    config["costBasis"] = {
+        "kind": "KIT",
+        "ref": {"id": bom_id, "name": kit_name},
+        "lastKnown": {"lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]},
+    }
+    return config
+
+
+def test_KIT_D3_reopen_reflects_a_LIVE_edit_to_the_referenced_kits_line(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D3 live-reflect for a KIT basis: a scenario whose `costBasis.ref` still resolves owned+live
+    reads the kit's CURRENT line values (via the materialized product) on every GET — mirroring
+    `boms.py::_resolve_views`, never a stored/stale snapshot."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-kit-d3")
+    bom_id, product_id, piece_name = _mk_kit_with_ad_hoc_line(
+        db_client, h, piece_name="Perna", print_grams="100.000", kit_name="Kit Suporte"
+    )
+
+    config = _config_with_kit_basis(bom_id, "Kit Suporte")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+
+    # Edit the kit's underlying (materialized) product AFTER the save — only a read-time resolve
+    # can reflect this on reopen, never the client-sent stale `lastKnown`.
+    fid, pid = _mk_refs(db_client, h)
+    _update_product(db_client, h, product_id, fid, pid, print_grams="777.000", name=piece_name)
+
+    fetched = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert fetched.status_code == 200, fetched.text
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is False
+    live_input = resolved["lastKnown"]["lines"][0]["input"]
+    assert resolved["lastKnown"] == {
+        "lines": [{"name": piece_name, "quantity": 2, "input": live_input}]
+    }
+    assert live_input["printGrams"] == "777.000"
+
+
+def test_KIT_D6_a_soft_deleted_referenced_kit_degrades_honestly_no_break(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D6 last-known for a KIT basis: a `costBasis.ref` that no longer resolves (the kit itself
+    soft-deleted) degrades to the STORED `lastKnown`, `degraded: true`, never a blank/500/"removido"
+    claim — the exact F1 honesty-class guard (never present stale as live)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-kit-d6")
+    bom_id, _product_id, _piece_name = _mk_kit_with_ad_hoc_line(
+        db_client, h, piece_name="Braço", print_grams="50.000", kit_name="Kit Braço"
+    )
+
+    config = _config_with_kit_basis(bom_id, "Kit Braço")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+
+    delete_resp = db_client.delete(f"/api/v1/boms/{bom_id}", headers=h)
+    assert delete_resp.status_code == 204
+
+    fetched = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is True
+    # The STORED snapshot (the stale placeholder sent at save — never re-snapshotted server-side
+    # for KIT, T024's client half is what does that) — never blank, never fabricated as live.
+    assert resolved["lastKnown"] == {
+        "lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]
+    }
+    assert resolved["ref"] == {"id": bom_id, "name": "Kit Braço"}  # the ref is kept, not erased
+
+    # Still editable + re-saveable — a PUT with the degraded basis unchanged succeeds (US6).
+    resave = db_client.put(
+        f"/api/v1/scenarios/{scenario_id}",
+        headers=h,
+        json=_body(config=config),
+    )
+    assert resave.status_code == 200, resave.text
+
+
+def test_KIT_D6_a_never_existed_referenced_kit_degrades_honestly(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """D6 — a KIT `costBasis.ref` id that never existed degrades the SAME honest way (no existence
+    oracle at the basis, for a KIT ref exactly as for a PRODUCT ref)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-kit-d6-never")
+    guessed = "0192f0aa-0000-7000-8000-000000000abc"
+    config = _config_with_kit_basis(guessed, "Kit sumido")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    assert fetched.status_code == 200, fetched.text
+    resolved = fetched.json()["config"]["costBasis"]
+    assert resolved["degraded"] is True
+    assert resolved["lastKnown"] == {
+        "lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]
+    }
+
+
+def test_VR604_channel_feeOverrides_round_trip_verbatim_the_backend_never_touches_fees(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The backend-testable half of VR-604 (see the module-level scope note above): channels are
+    stored + echoed as INTENT — an explicit override PRESENT, a non-overridden leaf (here
+    `minPerItem`/`freightCost`) ABSENT — survive save + a later GET byte-identical. The live
+    re-resolution of the absent leaves against today's fee catalog is `fee-prefill.ts` (client-side,
+    T014); the backend's job is only to never silently add or drop a fee leaf."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-vr604")
+    config = json.loads(json.dumps(VALID_CONFIG))
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    channels = fetched.json()["config"]["channels"]
+    assert channels == config["channels"]
+    assert set(channels[0]["feeOverrides"].keys()) == {"commissionPct", "fixedFee"}
+    assert "minPerItem" not in channels[0]["feeOverrides"]
+    assert "freightCost" not in channels[0]["feeOverrides"]
+
+
+# ══ PR-B — US4 duplicate-to-tweak (T025, FAILING-first): VR-608 duplicate independence ═══════════
+
+
+def test_VR608_duplicate_creates_an_independent_copy_with_its_own_name(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """`POST /{id}/duplicate` deep-copies `config` into a NEW row — new id, own name (contract:
+    `"Cópia de {name}"`)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-dup-1")
+    original = db_client.post(
+        "/api/v1/scenarios", headers=h, json=_body(name="Cenário ML Clássico")
+    )
+    assert original.status_code == 201, original.text
+    original_id = original.json()["id"]
+
+    dup = db_client.post(f"/api/v1/scenarios/{original_id}/duplicate", headers=h)
+    assert dup.status_code == 201, dup.text
+    copy = dup.json()
+    assert copy["id"] != original_id
+    assert copy["name"] == "Cópia de Cenário ML Clássico"
+    assert copy["config"] == original.json()["config"]
+
+    assert len(db_client.get("/api/v1/scenarios", headers=h).json()["items"]) == 2
+
+
+def test_VR608_editing_the_copy_changes_ZERO_percent_of_the_original_and_vice_versa(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The headline value: a clone is a genuinely new object. Proven byte-level via SEPARATE
+    fetches after mutating each side (PATCH the copy's name; PUT the original's config)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-dup-2")
+    original = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Base")).json()
+    dup = db_client.post(f"/api/v1/scenarios/{original['id']}/duplicate", headers=h).json()
+
+    # Mutate the COPY's name — the original must be untouched.
+    renamed_copy = db_client.patch(
+        f"/api/v1/scenarios/{dup['id']}", headers=h, json={"name": "Copy Tweaked"}
+    )
+    assert renamed_copy.status_code == 200, renamed_copy.text
+
+    # Mutate the ORIGINAL's config (a full PUT with a different otherCosts) — the copy must be
+    # untouched.
+    other_config = json.loads(json.dumps(VALID_CONFIG))
+    other_config["otherCosts"] = [{"name": "Frete extra", "value": "9.99"}]
+    updated_original = db_client.put(
+        f"/api/v1/scenarios/{original['id']}",
+        headers=h,
+        json=_body(name="Base", config=other_config),
+    )
+    assert updated_original.status_code == 200, updated_original.text
+
+    refetched_original = db_client.get(f"/api/v1/scenarios/{original['id']}", headers=h).json()
+    refetched_copy = db_client.get(f"/api/v1/scenarios/{dup['id']}", headers=h).json()
+
+    assert refetched_original["name"] == "Base"  # untouched by the copy's rename
+    assert refetched_original["config"]["otherCosts"] == [{"name": "Frete extra", "value": "9.99"}]
+    assert refetched_copy["name"] == "Copy Tweaked"  # untouched by the original's config edit
+    assert refetched_copy["config"]["otherCosts"] == VALID_CONFIG["otherCosts"]  # the OLD value
+
+
+def test_VR608_duplicate_materializes_nothing(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    h = _premium(monkeypatch, migrated_db, "u-sc-dup-mat")
+    before = _catalog_counts(migrated_db, "u-sc-dup-mat")
+    original = db_client.post("/api/v1/scenarios", headers=h, json=_body()).json()
+    dup = db_client.post(f"/api/v1/scenarios/{original['id']}/duplicate", headers=h)
+    assert dup.status_code == 201, dup.text
+    after = _catalog_counts(migrated_db, "u-sc-dup-mat")
+    assert after == before
+
+
+def test_duplicate_is_isolated_and_entitlement_gated(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """VR-609's twin on duplicate: another owner's id → 404 (no existence oracle); a free/lapsed
+    caller is denied `ENTITLEMENT_REQUIRED` (duplicate is a WRITE)."""
+    ha = _premium(monkeypatch, migrated_db, "u-sc-dup-owner-a")
+    original_id = db_client.post("/api/v1/scenarios", headers=ha, json=_body()).json()["id"]
+
+    hb = _premium(monkeypatch, migrated_db, "u-sc-dup-owner-b")
+    dup_resp = db_client.post(f"/api/v1/scenarios/{original_id}/duplicate", headers=hb)
+    assert dup_resp.status_code == 404
+
+    h_free = _free(monkeypatch, "u-sc-dup-free")
+    r = db_client.post(f"/api/v1/scenarios/{original_id}/duplicate", headers=h_free)
+    assert r.status_code == 403
+    assert r.json()["error"]["code"] == "ENTITLEMENT_REQUIRED"
+
+
+# ══ PR-B — US6 manage + lapse (T027, FAILING-first) ═══════════════════════════════════════════
+
+
+def test_PUT_full_config_replace_re_runs_structural_validation_VR602_603(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """`PUT` is the full-config-edit path — VR-602/603 MUST re-run on UPDATE (a JSON float leaf is
+    422, and nothing is stored)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-put-validate")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body()).json()
+
+    bad_config = json.loads(json.dumps(VALID_CONFIG))
+    bad_config["otherCosts"][0]["value"] = 2.5  # a JSON float — VR-602
+    r = db_client.put(
+        f"/api/v1/scenarios/{created['id']}", headers=h, json=_body(config=bad_config)
+    )
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+
+    unchanged = db_client.get(f"/api/v1/scenarios/{created['id']}", headers=h).json()
+    assert unchanged["config"]["otherCosts"] == VALID_CONFIG["otherCosts"]
+
+
+def test_PUT_replaces_the_whole_config_and_can_rename(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    h = _premium(monkeypatch, migrated_db, "u-sc-put-ok")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Original")).json()
+
+    new_config = json.loads(json.dumps(VALID_CONFIG))
+    new_config["includeMarketplace"] = False
+    r = db_client.put(
+        f"/api/v1/scenarios/{created['id']}",
+        headers=h,
+        json=_body(name="Renomeado no PUT", note="nova nota", config=new_config),
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["name"] == "Renomeado no PUT"
+    assert body["note"] == "nova nota"
+    assert body["config"]["includeMarketplace"] is False
+
+
+def test_PATCH_renames_name_and_note_only(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    h = _premium(monkeypatch, migrated_db, "u-sc-patch-ok")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Antigo")).json()
+
+    r = db_client.patch(
+        f"/api/v1/scenarios/{created['id']}",
+        headers=h,
+        json={"name": "Novo Nome", "note": "uma nota"},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["name"] == "Novo Nome"
+    assert body["note"] == "uma nota"
+    assert body["config"] == created["config"]  # PATCH never touches config
+
+
+def test_PATCH_with_a_smuggled_config_field_is_422_extra_forbid(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    h = _premium(monkeypatch, migrated_db, "u-sc-patch-smuggle")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body()).json()
+
+    r = db_client.patch(
+        f"/api/v1/scenarios/{created['id']}",
+        headers=h,
+        json={"name": "Tentativa", "config": {"schemaVersion": 2}},
+    )
+    assert r.status_code == 422, r.text
+
+    unchanged = db_client.get(f"/api/v1/scenarios/{created['id']}", headers=h).json()
+    assert unchanged["name"] == created["name"]  # nothing applied — not even the honest field
+
+
+def test_DELETE_soft_deletes_and_the_scenario_stops_appearing(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    h = _premium(monkeypatch, migrated_db, "u-sc-delete")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body()).json()
+
+    r = db_client.delete(f"/api/v1/scenarios/{created['id']}", headers=h)
+    assert r.status_code == 204
+
+    assert db_client.get(f"/api/v1/scenarios/{created['id']}", headers=h).status_code == 404
+    assert db_client.get("/api/v1/scenarios", headers=h).json()["items"] == []
+
+
+def test_q_name_search_is_owner_scoped_case_insensitive_substring(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """`?q=` — owner-scoped, case-insensitive substring `name ILIKE`. If T007 already shipped this
+    (PR-A), this test DOCUMENTS the behavior rather than duplicating the implementation."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-search")
+    db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Cenário Mercado Livre"))
+    db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Cenário Shopee"))
+
+    hits = db_client.get("/api/v1/scenarios", headers=h, params={"q": "mercado"}).json()["items"]
+    assert [s["name"] for s in hits] == ["Cenário Mercado Livre"]
+
+    other = _premium(monkeypatch, migrated_db, "u-sc-search-other")
+    db_client.post("/api/v1/scenarios", headers=other, json=_body(name="Cenário Mercado Pago"))
+    # `_premium` monkeypatches the SAME global verify function — restore identity A before
+    # querying as A again (the bearer token's literal value is ignored by the test stub).
+    _premium(monkeypatch, migrated_db, "u-sc-search")
+    hits_a_only = db_client.get("/api/v1/scenarios", headers=h, params={"q": "mercado"}).json()[
+        "items"
+    ]
+    assert [s["name"] for s in hits_a_only] == ["Cenário Mercado Livre"]  # never account B's
+
+
+def _revoke_scenario_grant(db_url: str, uid: str) -> None:
+    import sqlalchemy as sa_
+
+    engine = sa_.create_engine(db_url)
+    with engine.begin() as conn:
+        conn.execute(
+            sa_.text(
+                "UPDATE entitlement_grants SET revoked_at = now(), revoked_by = 'op'"
+                " WHERE account_uid = :uid"
+            ),
+            {"uid": uid},
+        )
+    engine.dispose()
+
+
+def test_VR610_lapse_reads_everything_writes_nothing_deletes_nothing(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """VR-610 — a lapsed premium keeps READING (list, get, resolved basis) `200`; ALL writes
+    (save/PUT/PATCH/duplicate/delete) `403`; ZERO rows deleted or modified."""
+    uid = "u-sc-lapse"
+    h = _premium(monkeypatch, migrated_db, uid)
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Vivo")).json()
+    scenario_id = created["id"]
+
+    _revoke_scenario_grant(migrated_db, uid)
+
+    # Reads keep working, including the resolved cost basis.
+    listed = db_client.get("/api/v1/scenarios", headers=h)
+    assert listed.status_code == 200
+    assert [s["id"] for s in listed.json()["items"]] == [scenario_id]
+    got = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert got.status_code == 200
+    assert got.json()["config"]["costBasis"]["degraded"] is False
+
+    # Every write denies honestly.
+    for resp in (
+        db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Nova")),
+        db_client.put(f"/api/v1/scenarios/{scenario_id}", headers=h, json=_body(name="Vivo")),
+        db_client.patch(f"/api/v1/scenarios/{scenario_id}", headers=h, json={"name": "X"}),
+        db_client.post(f"/api/v1/scenarios/{scenario_id}/duplicate", headers=h),
+        db_client.delete(f"/api/v1/scenarios/{scenario_id}", headers=h),
+    ):
+        assert resp.status_code == 403, resp.text
+        assert resp.json()["error"]["code"] == "ENTITLEMENT_REQUIRED"
+
+    # ZERO rows deleted/modified.
+    assert _scenario_count(migrated_db, uid) == 1
+    still = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h).json()
+    assert still["name"] == "Vivo"
+
+
+def test_VR610_a_re_grant_restores_writes_with_data_intact(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    uid = "u-sc-regrant"
+    h = _premium(monkeypatch, migrated_db, uid)
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Vivo")).json()
+    scenario_id = created["id"]
+
+    _revoke_scenario_grant(migrated_db, uid)
+    assert db_client.delete(f"/api/v1/scenarios/{scenario_id}", headers=h).status_code == 403
+
+    seed_grant(migrated_db, uid)  # a NEW grant row (the ledger is append-only — ADR-0012)
+
+    renamed = db_client.patch(
+        f"/api/v1/scenarios/{scenario_id}", headers=h, json={"name": "De volta"}
+    )
+    assert renamed.status_code == 200, renamed.text
+    assert renamed.json()["name"] == "De volta"

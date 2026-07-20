@@ -32,16 +32,27 @@ from __future__ import annotations
 import base64
 import json
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from decimal import Decimal, InvalidOperation
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Query, status
-from pydantic import field_validator
+from pydantic import ConfigDict, field_validator
+from pydantic.alias_generators import to_camel
 from sqlalchemy import literal, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.boms import (
+    _degraded_or as _bom_degraded_or,  # pyright: ignore[reportPrivateUsage]
+)
+from app.api.boms import (
+    _lines_of as _bom_lines_of,  # pyright: ignore[reportPrivateUsage]
+)
+from app.api.boms import (
+    _resolve_views as _bom_resolve_views,  # pyright: ignore[reportPrivateUsage]
+)
 from app.api.products import (
+    ProductOut,
     _live_links,  # pyright: ignore[reportPrivateUsage]
 )
 from app.api.products import (
@@ -57,7 +68,7 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
-from app.models import Product, Scenario
+from app.models import Bom, BomLine, Product, Scenario
 
 router = APIRouter(tags=["scenarios"])
 
@@ -216,17 +227,6 @@ def _not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Scenario not found", status_code=404)
 
 
-def _to_out(row: Scenario) -> ScenarioOut:
-    return ScenarioOut(
-        id=row.id,
-        name=row.name,
-        note=row.note,
-        config=row.config,
-        created_at=row.created_at,
-        updated_at=row.updated_at,
-    )
-
-
 async def _owned(session: AsyncSession, uid: str, scenario_id: str) -> Scenario:
     """Owner-scoped fetch: wrong owner, soft-deleted or malformed id → 404 (VR-609)."""
     try:
@@ -266,36 +266,14 @@ def _decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
         ) from exc
 
 
-async def _resolve_product_last_known(
-    session: AsyncSession, uid: str, product_id: uuid.UUID
-) -> dict[str, Any] | None:
-    """T011 — resolve an OWNED, LIVE Product to the flat `lastKnown` PriceInput shape (data-model
-    §3), reusing the E3 `_snapshot_line` rule one level up: read the live row's RESOLVED values
-    (which already resolve ITS filament/printer link, D3) rather than the product's own columns.
-    `None` when the ref does not resolve — the caller keeps the client-sent `lastKnown` (Q13)."""
-    row = (
-        await session.execute(
-            select(Product).where(
-                Product.id == product_id,
-                Product.owner_uid == uid,
-                Product.deleted_at.is_(None),
-            )
-        )
-    ).scalar_one_or_none()
-    if row is None:
-        return None
-    filaments, printers = await _live_links(session, [row])
-    resolved = _product_to_out(
-        row,
-        filaments.get(row.filament_id) if row.filament_id else None,
-        printers.get(row.printer_id) if row.printer_id else None,
-    )
+def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
+    """Hand-built (not a pydantic model dump) so the leaf set matches data-model §3's flat
+    `PriceInput` shape exactly — money/rate/qty/percent as `str(Decimal)` (scale-preserving, the
+    same idiom `model_dump(mode="json")` uses under the hood). Shared by the PRODUCT and KIT-line
+    resolve paths (T022) — a KIT line's live value-set is a `ProductOut` one level down."""
     piece = resolved.piece_inputs
     filament = resolved.filament_values
     printer = resolved.printer_values
-    # Hand-built (not a pydantic model dump) so the leaf set matches data-model §3's flat
-    # PriceInput shape exactly — money/rate/qty/percent as `str(Decimal)` (scale-preserving,
-    # the same idiom `model_dump(mode="json")` uses under the hood).
     return {
         "printGrams": str(piece.print_grams),
         "wasteGrams": str(piece.waste_grams),
@@ -316,6 +294,171 @@ async def _resolve_product_last_known(
         "printerAvgPowerKw": str(printer.avg_power_kw),
         "printerMaintenanceReservePerHour": str(printer.maintenance_reserve_per_hour),
     }
+
+
+def _price_input_dict_from_bom_line(line: BomLine) -> dict[str, Any]:
+    """The same flat `PriceInput` shape, built from a `BomLine`'s OWN last-known snapshot columns
+    — the E3 read path's degraded-line branch (`boms.py::_to_out`), for a kit LINE whose own
+    product ref is gone even though the KIT itself still resolves (D6 one level down, mirrored
+    verbatim via `_degraded_or` so a stored zero is never corrupted to a dropped scale)."""
+    return {
+        "printGrams": str(_bom_degraded_or(line.print_grams, "0")),
+        "wasteGrams": str(_bom_degraded_or(line.waste_grams, "0")),
+        "printTimeHours": str(_bom_degraded_or(line.print_time_hours, "0")),
+        "tariffPerKwh": str(_bom_degraded_or(line.tariff_per_kwh, "0")),
+        "failurePct": str(_bom_degraded_or(line.failure_pct, "0")),
+        "finishTimeHours": str(_bom_degraded_or(line.finish_time_hours, "0")),
+        "finishRatePerHour": str(_bom_degraded_or(line.finish_rate_per_hour, "0")),
+        "laborHours": str(_bom_degraded_or(line.labor_hours, "0")),
+        "laborRatePerHour": str(_bom_degraded_or(line.labor_rate_per_hour, "0")),
+        "markupVarejoPct": str(_bom_degraded_or(line.markup_varejo_pct, "0")),
+        "markupAtacadoPct": str(_bom_degraded_or(line.markup_atacado_pct, "0")),
+        "filamentMaterial": line.filament_material,
+        "filamentCostPerRoll": str(_bom_degraded_or(line.filament_cost_per_roll, "0")),
+        "filamentRollWeightKg": str(_bom_degraded_or(line.filament_roll_weight_kg, "1")),
+        "printerMachineValue": str(_bom_degraded_or(line.printer_machine_value, "0")),
+        "printerMachineLifetimeHours": str(
+            _bom_degraded_or(line.printer_machine_lifetime_hours, "1")
+        ),
+        "printerAvgPowerKw": str(_bom_degraded_or(line.printer_avg_power_kw, "0")),
+        "printerMaintenanceReservePerHour": str(
+            _bom_degraded_or(line.printer_maintenance_reserve_per_hour, "0")
+        ),
+    }
+
+
+async def _resolve_product_last_known(
+    session: AsyncSession, uid: str, product_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """T011/T022 — resolve an OWNED, LIVE Product to the flat `lastKnown` PriceInput shape
+    (data-model §3), reusing the E3 `_snapshot_line` rule one level up: read the live row's
+    RESOLVED values (which already resolve ITS filament/printer link, D3) rather than the
+    product's own columns. `None` when the ref does not resolve (the T011 caller keeps the
+    client-sent `lastKnown`, Q13; the T022 caller reports `degraded: true`)."""
+    row = (
+        await session.execute(
+            select(Product).where(
+                Product.id == product_id,
+                Product.owner_uid == uid,
+                Product.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        return None
+    filaments, printers = await _live_links(session, [row])
+    resolved = _product_to_out(
+        row,
+        filaments.get(row.filament_id) if row.filament_id else None,
+        printers.get(row.printer_id) if row.printer_id else None,
+    )
+    return _price_input_dict(resolved)
+
+
+async def _resolve_kit_last_known(
+    session: AsyncSession, uid: str, bom_id: uuid.UUID
+) -> dict[str, Any] | None:
+    """T022 (redirect 2026-07-20) — resolve an OWNED, LIVE Kit to the `{lines: [...]}` `lastKnown`
+    shape (data-model §3/§8 VR-605/606, `api-surface.md` lines 74-80/99-102). REUSES the E3 seam
+    verbatim (`boms.py::_lines_of` + `_resolve_views`) rather than duplicating kit-line resolution
+    — a line whose OWN product ref is gone (even though the kit itself still resolves) degrades
+    the same way `boms.py`'s read path already does (D6 one level down), via
+    `_price_input_dict_from_bom_line`. `None` when the KIT itself does not resolve (soft-deleted /
+    cross-tenant / never-existed / malformed id) — the caller reports `degraded: true` and serves
+    the scenario's own STORED `lastKnown`."""
+    row = (
+        await session.execute(
+            select(Bom).where(Bom.id == bom_id, Bom.owner_uid == uid, Bom.deleted_at.is_(None))
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        return None
+    lines = await _bom_lines_of(session, bom_id)
+    product_ids = {line.product_id for line in lines if line.product_id is not None}
+    views = await _bom_resolve_views(session, uid, product_ids)
+    out_lines: list[dict[str, Any]] = []
+    for line in lines:
+        resolved = views.get(line.product_id) if line.product_id is not None else None
+        if resolved is not None:
+            out_lines.append(
+                {
+                    "name": resolved.name,
+                    "quantity": line.quantity,
+                    "input": _price_input_dict(resolved),
+                }
+            )
+        else:
+            # The kit resolves, but THIS line's own product ref is gone (D6 one level down) — no
+            # name to show honestly (mirrors `boms.py::BomLineOut.piece_name=None`), never a 500.
+            out_lines.append(
+                {
+                    "name": "",
+                    "quantity": line.quantity,
+                    "input": _price_input_dict_from_bom_line(line),
+                }
+            )
+    return {"lines": out_lines}
+
+
+async def _resolve_cost_basis_for_read(
+    session: AsyncSession, uid: str, cost_basis: dict[str, Any]
+) -> dict[str, Any]:
+    """T022 — the read-time D3/D6 resolver (VR-605/606), reusing the E3 `_resolve_views` seam
+    (owner + `deleted_at IS NULL`). Returns the `ResolvedCostBasis` shape (api-surface.md):
+    `{kind, ref, degraded, lastKnown}`. Called on EVERY read (`GET /{id}`, list, and every write
+    response) — never mutates the stored row (that is `_resnapshot_cost_basis`, save-time only).
+
+    * `AD_HOC` (or a null `ref`) never degrades — there is nothing to resolve (data-model §1).
+    * `PRODUCT`/`KIT` whose `ref` resolves to an OWNED, LIVE row ⇒ **D3 live-reflect**: the CURRENT
+      resolved values, `degraded: false` — a since-save edit is reflected on THIS read (redirect
+      2026-07-20: `api-surface.md` lines 99-102 name BOTH kinds identically — a KIT ref is IN this
+      resolver's scope, not T024's; T024 owns only the CLIENT `computeBom` rollup).
+    * `PRODUCT`/`KIT` whose `ref` does not resolve (soft-deleted / cross-tenant / never-existed /
+      malformed id) ⇒ **D6 last-known**: the STORED `lastKnown` (captured at the last save),
+      `degraded: true` — never blank, never "removido", never presented as live (the F1 class).
+    """
+    kind = cost_basis.get("kind")
+    ref = cost_basis.get("ref")
+    stored_last_known = cost_basis.get("lastKnown")
+    if kind not in ("PRODUCT", "KIT") or not isinstance(ref, dict):
+        return {"kind": kind, "ref": ref, "degraded": False, "lastKnown": stored_last_known}
+    ref_dict = cast("dict[str, Any]", ref)
+    try:
+        ref_id = uuid.UUID(str(ref_dict.get("id")))
+    except (ValueError, TypeError):
+        return {"kind": kind, "ref": ref, "degraded": True, "lastKnown": stored_last_known}
+    live = (
+        await _resolve_product_last_known(session, uid, ref_id)
+        if kind == "PRODUCT"
+        else await _resolve_kit_last_known(session, uid, ref_id)
+    )
+    if live is not None:
+        return {"kind": kind, "ref": ref, "degraded": False, "lastKnown": live}
+    return {"kind": kind, "ref": ref, "degraded": True, "lastKnown": stored_last_known}
+
+
+async def _render_out(session: AsyncSession, uid: str, row: Scenario) -> ScenarioOut:
+    """The single read-rendering seam (T022): the stored `config`, echoed verbatim EXCEPT
+    `costBasis`, which is resolved read-time (D3/D6). Used by every read AND write response
+    (`GET /{id}`, list, `POST`, and PR-B's `PUT`/`PATCH`/duplicate) — the contract's "GET /{id}
+    (and every write response) returns the resolved-or-degraded basis"."""
+    config: dict[str, Any] = dict(row.config)
+    cost_basis = config.get("costBasis")
+    if isinstance(cost_basis, dict):
+        config = {
+            **config,
+            "costBasis": await _resolve_cost_basis_for_read(
+                session, uid, cast("dict[str, Any]", cost_basis)
+            ),
+        }
+    return ScenarioOut(
+        id=row.id,
+        name=row.name,
+        note=row.note,
+        config=config,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
 
 
 async def _resnapshot_cost_basis(
@@ -379,7 +522,8 @@ async def list_scenarios(
     has_more = len(rows) > limit
     page = rows[:limit]
     next_cursor = _encode_cursor(page[-1]) if has_more and page else None
-    return ScenarioList(items=[_to_out(r) for r in page], next_cursor=next_cursor)
+    items = [await _render_out(session, uid, r) for r in page]
+    return ScenarioList(items=items, next_cursor=next_cursor)
 
 
 @router.post(
@@ -407,7 +551,7 @@ async def create_scenario(
     session.add(row)
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return await _render_out(session, uid, row)
 
 
 @router.get("/scenarios/{scenario_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -416,6 +560,139 @@ async def get_scenario(
     claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
-    """Own + not-deleted only (VR-609); `config` served VERBATIM — the D3/D6 resolve is T022."""
-    row = await _owned(session, claims["uid"], scenario_id)
-    return _to_out(row)
+    """Own + not-deleted only (VR-609); `config.costBasis` is resolved read-time (T022, D3/D6);
+    every other leaf is served VERBATIM (the seller's intent)."""
+    uid: str = claims["uid"]
+    row = await _owned(session, uid, scenario_id)
+    return await _render_out(session, uid, row)
+
+
+@router.put(
+    "/scenarios/{scenario_id}",
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS, **VALIDATION_ERRORS},
+)
+async def update_scenario(
+    scenario_id: str,
+    body: ScenarioIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ScenarioOut:
+    """T028 — the full-config-edit path (`PUT`, the four-object-map "whole config editable"). The
+    submitted `config` REPLACES the stored one wholesale — VR-602/603 re-run on this UPDATE (the
+    one operational difference from E4: the row is mutable, so the validators run on every write,
+    not once), and the cost basis is re-snapshotted the same way a create is (T011)."""
+    uid: str = claims["uid"]
+    row = await _owned(session, uid, scenario_id)
+    config = await _resnapshot_cost_basis(session, uid, dict(body.config))
+    row.name = body.name
+    row.note = body.note
+    row.config = config
+    row.config_schema_version = int(config["schemaVersion"])
+    await session.commit()
+    await session.refresh(row)
+    return await _render_out(session, uid, row)
+
+
+class RenameIn(CamelModel):
+    """`PATCH` body — `name`/`note` ONLY. `extra="forbid"` (not `CamelModel`'s default) so a
+    smuggled `config` (or any other) field is an honest 422, never a silent ignore."""
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid")
+
+    name: str | None = None
+    note: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _name(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("name must not be blank")
+        if len(trimmed) > 120:
+            raise ValueError("name exceeds the maximum length (120)")
+        return trimmed
+
+    @field_validator("note")
+    @classmethod
+    def _note(cls, v: str | None) -> str | None:
+        if v is None:
+            return v
+        trimmed = v.strip()
+        if not trimmed:
+            return None
+        if len(trimmed) > 500:
+            raise ValueError("note exceeds the maximum length (500)")
+        return trimmed
+
+
+@router.patch(
+    "/scenarios/{scenario_id}",
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS, **VALIDATION_ERRORS},
+)
+async def rename_scenario(
+    scenario_id: str,
+    body: RenameIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ScenarioOut:
+    """T028 — rename only (`name`/`note`); `config` is never touched by this route."""
+    uid: str = claims["uid"]
+    row = await _owned(session, uid, scenario_id)
+    fields_set = body.model_fields_set
+    if "name" in fields_set and body.name is not None:
+        row.name = body.name
+    if "note" in fields_set:
+        row.note = body.note
+    await session.commit()
+    await session.refresh(row)
+    return await _render_out(session, uid, row)
+
+
+@router.post(
+    "/scenarios/{scenario_id}/duplicate",
+    status_code=status.HTTP_201_CREATED,
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS},
+)
+async def duplicate_scenario(
+    scenario_id: str,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ScenarioOut:
+    """T026 — VR-608 duplicate independence: a DEEP copy of `config` into a NEW row (new id, own
+    name `"Cópia de {name}"`). A separate row BY CONSTRUCTION — editing one changes 0% of the
+    other. Materializes nothing (VR-607's twin)."""
+    uid: str = claims["uid"]
+    original = await _owned(session, uid, scenario_id)
+    copy_name = f"Cópia de {original.name}"
+    if len(copy_name) > 120:
+        copy_name = copy_name[:120]
+    copy = Scenario(
+        owner_uid=uid,
+        name=copy_name,
+        note=original.note,
+        config=json.loads(json.dumps(original.config)),  # a DEEP, independent copy
+        config_schema_version=original.config_schema_version,
+    )
+    session.add(copy)
+    await session.commit()
+    await session.refresh(copy)
+    return await _render_out(session, uid, copy)
+
+
+@router.delete(
+    "/scenarios/{scenario_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS},
+)
+async def delete_scenario(
+    scenario_id: str,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    """Soft-delete — VOLUNTARY only (a lapse never deletes, VR-610/FR-612)."""
+    uid: str = claims["uid"]
+    row = await _owned(session, uid, scenario_id)
+    row.deleted_at = datetime.now(UTC)
+    await session.commit()
