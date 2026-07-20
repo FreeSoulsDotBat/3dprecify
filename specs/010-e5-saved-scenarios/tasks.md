@@ -203,7 +203,7 @@ fee-catalog refresh re-resolves non-overridden slots while overrides stick.
 - [x] T023 [US3] Frontend: the reopen recompute reflects D3/D6; the honest **degraded caption** (reuse the E2/E3
       last-known copy — never "removido"; "Abrir origem" offered only if the ref resolves); the "ajustado por você"
       seal on overridden slots; the 005 staleness seal offline. Tests green.
-- [ ] T021b [US3] FE: capture a **PRODUCT/KIT `costBasis.ref` (+ `lastKnown`) at save** when the calculator was
+- [x] T021b [US3] FE: capture a **PRODUCT/KIT `costBasis.ref` (+ `lastKnown`) at save** when the calculator was
       prefilled from the catalog — the PR-A wave saved AD_HOC only (T009 dated note); this closes FR-606a on the UI
       side and lets the qa D3/D6 walk run end-to-end from the app. Tests first.
       **→ PARTIAL 2026-07-20 (`ab9441a`)**: PRODUCT half DONE (produto-page "Salvar cenário" → `costBasis`
@@ -211,6 +211,8 @@ fee-catalog refresh re-resolves non-overridden slots while overrides stick.
       has per-LINE channels and no kit-level channel picker; `ux-scenarios.md` specifies no such UI. Owner
       options: (a) derive from a kit line's channelSet · (b) new kit-level picker (new UI) · (c) KIT-basis
       scenarios originate elsewhere (defer). T024 (reopen/compute side) is DONE independently.
+      **→ OWNER DECIDED 2026-07-20: (c) defer KIT-basis creation** (spec §Clarifications session 2026-07-20;
+      KIT-creation UI → designer-ux, PR-C candidate or post-E5). T021b CLOSED at the decided scope.
 - [x] T024 [US3] **Kit-basis channel composition (Q12, owner-decided at T002)**: apply the scenario's channelSet
       uniformly to every kit line → `computeBom` → per-marketplace rollup. **No `pricing-core` change** (both engines
       exist). Tests green.
