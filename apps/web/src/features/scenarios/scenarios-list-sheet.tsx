@@ -282,7 +282,10 @@ function ScenarioListBody({
 
   return (
     <div className="flex flex-col gap-3">
-      <Field label={t.searchPlaceholder} className="sr-only" tightLabel>
+      {/* No visible label — the input carries placeholder + aria-label. (`className="sr-only"` on
+          the Field hid the WHOLE control, not the label: the search box shipped 1×1px invisible —
+          the real T030 "manage" red.) */}
+      <Field tightLabel>
         {(p) => (
           <div className="tf-inputwrap">
             <input
