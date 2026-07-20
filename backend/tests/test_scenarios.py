@@ -55,12 +55,21 @@ pytestmark = requires_db
 
 
 def _piece_input() -> dict[str, Any]:
-    """A single resolved PriceInput (the `products`/`bom_lines` resolved shape) — strings only."""
+    """A single resolved `PriceInput` — the FLAT contract shape (`contracts/api-surface.md` lines
+    69-79, data-model §3): `pricing-core`'s own `PriceInput` keys verbatim, no `filament`/`printer`
+    prefix, no material-name leaf (redirect 2026-07-20 — see `_CONTRACT_PRICE_INPUT_KEYS` below for
+    the literal-key regression guard this fixture must stay in sync with)."""
     return {
+        "costPerRoll": "110.00",
+        "rollWeightKg": "1.000",
         "printGrams": "100.000",
         "wasteGrams": "0.000",
         "printTimeHours": "5.000",
+        "avgPowerKw": "0.1200",
         "tariffPerKwh": "1.000000",
+        "machineValue": "1200.00",
+        "machineLifetimeHours": "2000.000",
+        "maintenanceReservePerHour": "0.000000",
         "failurePct": "0.000",
         "finishTimeHours": "0.000",
         "finishRatePerHour": "0.000000",
@@ -68,13 +77,6 @@ def _piece_input() -> dict[str, Any]:
         "laborRatePerHour": "0.000000",
         "markupVarejoPct": "50.000",
         "markupAtacadoPct": "30.000",
-        "filamentMaterial": "PLA",
-        "filamentCostPerRoll": "110.00",
-        "filamentRollWeightKg": "1.000",
-        "printerMachineValue": "1200.00",
-        "printerMachineLifetimeHours": "2000.000",
-        "printerAvgPowerKw": "0.1200",
-        "printerMaintenanceReservePerHour": "0.000000",
     }
 
 
@@ -981,6 +983,72 @@ def test_KIT_D6_a_never_existed_referenced_kit_degrades_honestly(
     assert resolved["lastKnown"] == {
         "lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]
     }
+
+
+# ══ Redirect (2026-07-20, T030 e2e finding): `costBasis.lastKnown` MUST be the FLAT `PriceInput`
+# contract shape (api-surface.md lines 69-79, data-model §3) — the exact `CalcFieldName` set
+# `apps/web/src/features/calculator/calculator-schema.ts::CALC_FIELD_NAMES` lists (READ, not
+# inferred) and `applyScenarioConfig` looks up by name. The PREVIOUS `_price_input_dict` emitted
+# `BomLine`'s OWN internal prefixed column names (`filamentCostPerRoll`, `printerMachineValue`, …)
+# — an implementation detail that leaked onto the wire and silently broke every reopen (6+ keys
+# never matched `CalcFieldName`, defaults silently applied instead). These two tests assert the
+# keys LITERALLY (copied from the contract/CALC_FIELD_NAMES, never derived from `_price_input_dict`
+# or `_piece_input()`) so they cannot share either helper's own mistake.
+_CONTRACT_PRICE_INPUT_KEYS = {
+    "costPerRoll",
+    "rollWeightKg",
+    "printGrams",
+    "wasteGrams",
+    "printTimeHours",
+    "avgPowerKw",
+    "tariffPerKwh",
+    "machineValue",
+    "machineLifetimeHours",
+    "maintenanceReservePerHour",
+    "failurePct",
+    "finishTimeHours",
+    "finishRatePerHour",
+    "laborHours",
+    "laborRatePerHour",
+    "markupVarejoPct",
+    "markupAtacadoPct",
+}
+
+
+def test_lastKnown_PRODUCT_shape_is_the_FLAT_PriceInput_contract_not_bom_line_columns(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """`pricing-core`'s `PriceInput` (and `CALC_FIELD_NAMES`) has NO material-name leaf either —
+    one must never be invented (`filamentMaterial` is exactly the kind of leak this guards)."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-shape-product")
+    fid, pid = _mk_refs(db_client, h)
+    product_id = _mk_product(db_client, h, fid, pid, "Vaso Shape")
+
+    config = _config_with_product_basis(product_id, "Vaso Shape")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    last_known = fetched.json()["config"]["costBasis"]["lastKnown"]
+    assert set(last_known.keys()) == _CONTRACT_PRICE_INPUT_KEYS, last_known.keys()
+
+
+def test_lastKnown_KIT_line_input_shape_is_the_FLAT_PriceInput_contract(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The KIT `lines[].input` twin — api-surface.md line 74: 'mirror the resolved shape the E3
+    read path already produces' means the WIRE `PriceInput` shape, not `BomLine`'s own columns."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-shape-kit")
+    bom_id, _product_id, _piece_name = _mk_kit_with_ad_hoc_line(
+        db_client, h, piece_name="Shape", print_grams="10.000", kit_name="Kit Shape"
+    )
+    config = _config_with_kit_basis(bom_id, "Kit Shape")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    input_dict = fetched.json()["config"]["costBasis"]["lastKnown"]["lines"][0]["input"]
+    assert set(input_dict.keys()) == _CONTRACT_PRICE_INPUT_KEYS, input_dict.keys()
 
 
 def test_VR604_channel_feeOverrides_round_trip_verbatim_the_backend_never_touches_fees(

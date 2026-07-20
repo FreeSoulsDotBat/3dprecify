@@ -267,18 +267,34 @@ def _decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
 
 
 def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
-    """Hand-built (not a pydantic model dump) so the leaf set matches data-model §3's flat
-    `PriceInput` shape exactly — money/rate/qty/percent as `str(Decimal)` (scale-preserving, the
-    same idiom `model_dump(mode="json")` uses under the hood). Shared by the PRODUCT and KIT-line
-    resolve paths (T022) — a KIT line's live value-set is a `ProductOut` one level down."""
+    """The FLAT `PriceInput`-shaped `lastKnown`/`lines[].input` contract (`contracts/api-surface.md`
+    lines 69-79, data-model §3) — the EXACT `CalcFieldName` set
+    `apps/web/src/features/calculator/calculator-schema.ts::CALC_FIELD_NAMES` lists and
+    `applyScenarioConfig` looks up by name (mirrors `pricing-core`'s own `PriceInput` keys verbatim
+    — no `filament`/`printer` prefix, no material-name leaf; `PriceInput` doesn't have one either).
+
+    Redirect (2026-07-20, T030 e2e finding): the PREVIOUS version of this function emitted
+    `BomLine`'s OWN internal prefixed column names (`filamentCostPerRoll`, `printerMachineValue`,
+    …) — an implementation-storage detail that leaked onto the wire and silently broke every
+    `applyScenarioConfig` reopen (6+ keys never matched, defaults silently applied instead). Hand-
+    built (not a pydantic model dump) so the leaf set matches the contract exactly — money/rate/qty/
+    percent as `str(Decimal)` (scale-preserving, the same idiom `model_dump(mode="json")` uses
+    under the hood). Shared by the PRODUCT and KIT-line resolve paths (T022) — a KIT line's live
+    value-set is a `ProductOut` one level down."""
     piece = resolved.piece_inputs
     filament = resolved.filament_values
     printer = resolved.printer_values
     return {
+        "costPerRoll": str(filament.cost_per_roll),
+        "rollWeightKg": str(filament.roll_weight_kg),
         "printGrams": str(piece.print_grams),
         "wasteGrams": str(piece.waste_grams),
         "printTimeHours": str(piece.print_time_hours),
+        "avgPowerKw": str(printer.avg_power_kw),
         "tariffPerKwh": str(resolved.tariff_per_kwh),
+        "machineValue": str(printer.machine_value),
+        "machineLifetimeHours": str(printer.machine_lifetime_hours),
+        "maintenanceReservePerHour": str(printer.maintenance_reserve_per_hour),
         "failurePct": str(piece.failure_pct),
         "finishTimeHours": str(piece.finish_time_hours),
         "finishRatePerHour": str(piece.finish_rate_per_hour),
@@ -286,26 +302,30 @@ def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
         "laborRatePerHour": str(piece.labor_rate_per_hour),
         "markupVarejoPct": str(piece.markup_varejo_pct),
         "markupAtacadoPct": str(piece.markup_atacado_pct),
-        "filamentMaterial": filament.material,
-        "filamentCostPerRoll": str(filament.cost_per_roll),
-        "filamentRollWeightKg": str(filament.roll_weight_kg),
-        "printerMachineValue": str(printer.machine_value),
-        "printerMachineLifetimeHours": str(printer.machine_lifetime_hours),
-        "printerAvgPowerKw": str(printer.avg_power_kw),
-        "printerMaintenanceReservePerHour": str(printer.maintenance_reserve_per_hour),
     }
 
 
 def _price_input_dict_from_bom_line(line: BomLine) -> dict[str, Any]:
-    """The same flat `PriceInput` shape, built from a `BomLine`'s OWN last-known snapshot columns
-    — the E3 read path's degraded-line branch (`boms.py::_to_out`), for a kit LINE whose own
-    product ref is gone even though the KIT itself still resolves (D6 one level down, mirrored
-    verbatim via `_degraded_or` so a stored zero is never corrupted to a dropped scale)."""
+    """The SAME flat `PriceInput` contract shape (see `_price_input_dict` above), built from a
+    `BomLine`'s OWN last-known snapshot COLUMNS — the E3 read path's degraded-line branch
+    (`boms.py::_to_out`), for a kit LINE whose own product ref is gone even though the KIT itself
+    still resolves (D6 one level down, mirrored verbatim via `_degraded_or` so a stored zero is
+    never corrupted to a dropped scale). The `BomLine` column NAMES stay prefixed (its own
+    internal storage idiom, unaffected by this fix); only the WIRE keys this function emits follow
+    the contract."""
     return {
+        "costPerRoll": str(_bom_degraded_or(line.filament_cost_per_roll, "0")),
+        "rollWeightKg": str(_bom_degraded_or(line.filament_roll_weight_kg, "1")),
         "printGrams": str(_bom_degraded_or(line.print_grams, "0")),
         "wasteGrams": str(_bom_degraded_or(line.waste_grams, "0")),
         "printTimeHours": str(_bom_degraded_or(line.print_time_hours, "0")),
+        "avgPowerKw": str(_bom_degraded_or(line.printer_avg_power_kw, "0")),
         "tariffPerKwh": str(_bom_degraded_or(line.tariff_per_kwh, "0")),
+        "machineValue": str(_bom_degraded_or(line.printer_machine_value, "0")),
+        "machineLifetimeHours": str(_bom_degraded_or(line.printer_machine_lifetime_hours, "1")),
+        "maintenanceReservePerHour": str(
+            _bom_degraded_or(line.printer_maintenance_reserve_per_hour, "0")
+        ),
         "failurePct": str(_bom_degraded_or(line.failure_pct, "0")),
         "finishTimeHours": str(_bom_degraded_or(line.finish_time_hours, "0")),
         "finishRatePerHour": str(_bom_degraded_or(line.finish_rate_per_hour, "0")),
@@ -313,17 +333,6 @@ def _price_input_dict_from_bom_line(line: BomLine) -> dict[str, Any]:
         "laborRatePerHour": str(_bom_degraded_or(line.labor_rate_per_hour, "0")),
         "markupVarejoPct": str(_bom_degraded_or(line.markup_varejo_pct, "0")),
         "markupAtacadoPct": str(_bom_degraded_or(line.markup_atacado_pct, "0")),
-        "filamentMaterial": line.filament_material,
-        "filamentCostPerRoll": str(_bom_degraded_or(line.filament_cost_per_roll, "0")),
-        "filamentRollWeightKg": str(_bom_degraded_or(line.filament_roll_weight_kg, "1")),
-        "printerMachineValue": str(_bom_degraded_or(line.printer_machine_value, "0")),
-        "printerMachineLifetimeHours": str(
-            _bom_degraded_or(line.printer_machine_lifetime_hours, "1")
-        ),
-        "printerAvgPowerKw": str(_bom_degraded_or(line.printer_avg_power_kw, "0")),
-        "printerMaintenanceReservePerHour": str(
-            _bom_degraded_or(line.printer_maintenance_reserve_per_hour, "0")
-        ),
     }
 
 
