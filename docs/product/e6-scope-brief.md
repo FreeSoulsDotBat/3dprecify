@@ -13,6 +13,23 @@ Play Billing — PENDING unnumbered payments ADR) | actual purchase flow"*.
 
 ## 0. Status of decisions (this is a kickoff — nothing is settled yet)
 
+> **→ OWNER DECISION SESSION 2026-07-20 (same-day, reacting to this brief) — Q1–Q11 ANSWERED:**
+> - **Q1 PRICES (option b — provisional anchor SET, adjust post-launch allowed):** **R$ 15,99/mês** on the
+>   monthly plan · **R$ 12,99/mês when billed annually** (= R$ 155,88/yr, ~19% discount). WTP caveat stands
+>   (~55%); the anchor is revisitable post-launch, never silently.
+> - **Q2 MP × PLAY (owner shape, decided after the sequencing consequence was made explicit):** "both in
+>   CODE" — **MP recurring ships end-to-end in E6**; the **Play Billing integration is BUILT and
+>   sandbox/internal-testing-validated behind a flag** in E6, and **turns ON at E7** when the packaged app
+>   publishes. E7 keeps its place (no roadmap re-sequence); packaging does NOT enter E6.
+> - **Q3 WEBHOOK × DEPLOY: (a)+(c)** — sandbox + dev tunnel for all E6 dev/test; the LIVE webhook is
+>   validated AT the v1 deploy; **polling reconciliation as a resilience layer** (protects against missed/
+>   duplicated deliveries). The 2026-07-09 deploy deferral stays INTACT.
+> - **Q4–Q11: the 8 PO recommendations accepted as working defaults** for `/speckit-clarify` (mechanical
+>   chargeback handling · grace aligned to MP retry cadence · no proration · no trial · no coupons · MP
+>   receipt suffices *provisionally* (Q9 stays FLAGGED for accountant/compliance verification) · cancel at
+>   period end · "Assinar" lives in Conta, reachable from every teaser; final IA → designer-ux).
+
+
 Unlike E5 (whose headline scope call was pre-settled at kickoff), **E6 opens with its owner-decision list OPEN by
 design**. This brief is the artifact the owner reacts to; the §10 questions — headed by **the R$ prices, MP-only
 vs. +Play Billing, and the webhook×deploy tension** — are **unanswered** and carry only the product-owner's
