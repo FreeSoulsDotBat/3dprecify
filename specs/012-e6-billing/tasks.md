@@ -1,0 +1,280 @@
+# Tasks: E6 — Billing: the purchase turnstile (MP recurring end-to-end + Play flag-ready)
+
+**Input**: Design documents from `specs/012-e6-billing/` (spec.md · plan.md · research.md · data-model.md ·
+contracts/api-surface.md · quickstart.md · arquiteto-round.md · seguranca-round.md) + **ADR-0023** (payments —
+Proposed) + ADR-0012/0018 (reused). Roadmap line: `docs/product/business-rules.md` E6 row.
+
+**Prerequisites**: plan.md ✅ (Constitution Check 8/8) · `/speckit-clarify` ✅ (3 Qs, 2026-07-20) · E5 (010)
+shipped. Docker required for DB-backed dev/tests; an **MP sandbox application** (owner-provisioned, T002) +
+a dev tunnel required for the webhook path.
+
+**Tests**: MANDATORY per Constitution III — every story starts with tests observed **FAILING**. The
+load-bearing suites that MUST precede their implementation: the **SEC-invariant suite**
+(`seguranca-round.md` SEC-1xx..7xx → pytest), **VR-701..710** (data-model §6), idempotency/exactly-once
+(VR-702/704), env isolation (VR-705), and the grace/lapse mechanics (VR-707). **SC-709 in every PR**: all
+E1–E5 guards pass UNCHANGED.
+
+**Organization**: by user story, grouped into the **3-PR delivery** (spec §8 via the brief). Every push/merge
+is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Ledger discipline per wave
+(estimate BEFORE, harness-actual AFTER).
+
+> **PR-A is the spine — a checkout without a verified-grant terminus is a security liability, not an MVP.**
+> `seguranca` review is **BLOCKING pre-merge on PR-A** (the webhook + writer + no-client-trust). ADR-0023
+> flips Proposed → **Accepted at the PR-A owner gate** (the ADR-0021 precedent).
+
+## Standing rules for every task in this feature
+
+- **The grant is the terminus.** The ADR-0012 ledger evaluation code (`entitlement/__init__.py`) does NOT
+  change; E6 adds ONE writer (`grant_writer`) fed only by server-verified events. The operator CLI is never
+  widened to `source=payment` (VR-710).
+- **Verify-then-lookup, never trust-the-body** (SEC-104): a webhook body is a trigger; only the
+  authoritative MP lookup writes state. Signature verification runs BEFORE any DB touch.
+- **Exactly-once via the inbox**: every grant-writing event goes through `billing_events.event_key` UNIQUE
+  (`ON CONFLICT DO NOTHING`), same key for webhook AND reconciliation (VR-702/704).
+- **Two independent sandbox↔prod guards** (VR-705): per-env HMAC secret/token AND `live_mode`↔`app_env`
+  assert. A sandbox event can never write a prod grant.
+- **No money column, no card data, ever** (VR-701/SC-706): the backend persists PSP references only; prices
+  live in the MP plans + ONE FE product constant (mismatch = release blocker, e2e-checked).
+- **Grace = an append-only grace grant** (`expires_at = period_end + max(MP cadence, 7 days)`) — never a
+  mutation, never a derivation change (VR-707/SC-709). Lapse is always expiry-driven or revoke-driven.
+- **Honest states everywhere** (Constitution II): real prices only (15,99 / 155,88 "equivalente a 12,99/mês");
+  "pagamento pendente" during grace, never "tudo certo"; no fake urgency; no client-inferred billing state.
+- **Play flag OFF is server-side and asserted** (VR-709/SC-711): flag-gated routes 404 in every E6 env.
+- **qa-produto visual homologation before done in every slice** with **adversarial DATA** (E4/E5 lesson):
+  spoofed webhooks, replayed events, abandoned checkouts, a beta-granted subscriber, sandbox rejection cards.
+- **ADR-0023 is homologated by the owner at the PR-A gate**; it stays Proposed until then.
+- **Pin-not-assume** (ADR-0020 lesson): the MP SDK-vs-httpx choice + exact version, and MP's real retry
+  cadence, are VERIFIED at T003 before any dependent code.
+
+## Format: `[ID] [P?] [Story] Description`
+
+---
+
+## ══ PR-A — The turnstile: price → checkout → verified grant (US1 + US2 + US3) ══
+
+## Phase 1: Setup
+
+- [ ] T001 [P] designer-ux → handoff (NON-BLOCKING, parallel with all PR-A work): the plan/price surface
+      (Q11: inside Conta + reachable from every teaser), the checkout hand-off states (pending/return/
+      abandoned), the Conta plan panel states (active/grace/pending/cancelled/lapsed — honest copy per
+      FR-708/709), and the teaser CTA. Write to `specs/012-e6-billing/ux-billing.md`. Not a merge blocker.
+- [ ] T002 **Owner setup checkpoint (BLOCKING T007+)**: provision the **MP sandbox application** (access
+      token + webhook secret), create the two `preapproval_plan`s (monthly R$ 15,99 · annual R$ 155,88/yr)
+      in the sandbox, choose the dev tunnel tool, and hand the values to `.env` (NEVER committed — the
+      `P3D_MP_*` SecretStr pattern). Record plan ids in the env, not in code.
+- [ ] T003 Verify-and-pin (Constitution II / ADR-0020 lesson): confirm MP server access shape (official SDK
+      vs httpx) + EXACT version pin in `backend/pyproject.toml`; fetch and record MP's REAL renewal retry
+      cadence (feeds the grace `max()`); record both in `research.md` §D10 as RESOLVED with sources. If the
+      cadence cannot be confirmed, STOP and surface — never default silently.
+
+## Phase 2: Foundational (blocking) — settings, schema, the SEC suite
+
+- [ ] T004 Write FAILING pytest first — `backend/tests/test_billing_schema.py`: migration `0005` shape per
+      `data-model.md` §1–§3 (tables exist, CHECKs named, `event_key` UNIQUE, `mp_preapproval_id` UNIQUE,
+      the one-active-subscription partial index, `entitlement_grants` source CHECK includes `payment` +
+      nullable `subscription_id` FK; NO money/card column anywhere — VR-701). Observe failing.
+- [ ] T005 **[ESCALATED → opus per ADR-0022 — money/entitlement domain]** Implement migration
+      `backend/alembic/versions/0005_e6_billing.py` (`down_revision="0004"`) + models `Subscription`,
+      `BillingEvent` + the additive `EntitlementGrant` extension in `backend/app/models/__init__.py`.
+      Upgrade→downgrade→upgrade proven on the compose DB. `ruff format` + `ruff check` both. Tests green.
+- [ ] T006 [P] Settings + env plumbing in `backend/app/settings.py`: `P3D_MP_ACCESS_TOKEN`,
+      `P3D_MP_WEBHOOK_SECRET`, `P3D_MP_PLAN_ID_MONTHLY`, `P3D_MP_PLAN_ID_ANNUAL` (SecretStr, per-env) +
+      `P3D_PLAY_BILLING_ENABLED: bool = False`. Fail-closed pytest: missing secret ⇒ the webhook route
+      refuses (SEC-403), flag default OFF (VR-709 half).
+- [ ] T007 Write FAILING pytest first — `backend/tests/test_billing_security.py`, the **SEC-invariant
+      suite** (seguranca-round SEC-1xx..7xx as the spec): bad/absent/garbage `x-signature` → 401 + zero DB
+      writes; stale `ts` outside freshness window → reject; constant-time compare; `live_mode`↔`app_env`
+      mismatch → reject (VR-705); unknown subscription → no grant; cross-account event isolation (VR-703);
+      old-event replay never extends entitlement (VR-704); operator CLI still rejects `payment` (VR-710);
+      Play routes 404 when flag OFF (VR-709). Observe ALL failing (routes absent).
+
+## Phase 3: User Story 3 — The verified terminus (Priority: P1, FOUNDATIONAL — build FIRST)
+
+**Goal**: a verified payment event → exactly one `source=payment` grant → premium live without re-login.
+**Independent test**: quickstart steps 3–5 (sandbox payment → flip; replay → one grant; spoof → reject).
+
+- [ ] T008 [US3] Write FAILING pytest — `backend/tests/test_billing_terminus.py`: verified payment event →
+      exactly one grant (`expires_at = current_period_end`, `subscription_id` set) + one inbox row in ONE
+      transaction (VR-702); N replays → still one (SC-703); webhook path and reconcile path converge on the
+      same `event_key` without double-grant; `GET /api/v1/entitlement` flips to active with `source=payment`
+      (SC-701). Observe failing.
+- [ ] T009 [US3] Implement `backend/app/billing/` core: `providers/mercadopago.py` (lookup: preapproval +
+      authorized_payments → the normalised verified event), `grant_writer.py` (the ONE shared terminus:
+      inbox insert + ledger grant, same transaction, on-conflict-no-op), per ADR-0023 §2–§3. Tests green.
+- [ ] T010 [US3] Implement the webhook route `POST /api/v1/billing/webhook/mercadopago` in
+      `backend/app/api/billing.py`: signature dependency (HMAC manifest per SEC-101..106, BEFORE any DB
+      touch) → lookup → `grant_writer`; 200-fast semantics; the SEC suite (T007) goes green here. Wire the
+      router in `main.py`; `app.billing` joins import-linter contracts.
+- [ ] T011 [US3] Implement the reconciliation runner `backend/app/billing/reconcile.py` +
+      `backend/app/scripts/reconcile_subscriptions.py` (CLI pattern of `grant_premium.py`): same processing
+      function as the webhook post-lookup; heals a missed webhook to the SAME single grant (T008 case).
+      Tests green.
+
+## Phase 4: User Story 2 — Checkout (Priority: P1)
+
+**Goal**: signed-in seller → MP hosted checkout; abandoned = never-started; client can't fake paid.
+**Independent test**: quickstart step 2.
+
+- [ ] T012 [US2] Write FAILING pytest — `backend/tests/test_billing_checkout.py`: `POST /billing/checkout`
+      requires auth (401 signed-out — FR-702); creates pending preapproval + `pending` subscription row,
+      returns `initPoint`; NO grant written; second checkout while one is active/grace/paused → 409
+      (SEC-604); abandoned checkout leaves no entitlement effect (US2.2); MP unreachable → honest 503
+      `BILLING_UNAVAILABLE`. Observe failing.
+- [ ] T013 [US2] Implement `backend/app/billing/checkout.py` + the route; contract ripple: regen OpenAPI +
+      Orval from the ROOT, idempotence proven 2×. Tests green.
+
+## Phase 5: User Story 1 — The offer surface (Priority: P1)
+
+**Goal**: real prices, honest discount, working Assinar; signed-out routes through sign-in.
+**Independent test**: quickstart step 1.
+
+- [ ] T014 [US1] Write FAILING vitest — `apps/web/src/features/billing/`: the plan surface renders EXACTLY
+      R$ 15,99/mês and R$ 155,88/ano ("equivalente a R$ 12,99/mês") from the ONE product constant; honest
+      delta copy (no "de/por" anchor); Assinar → checkout initiation for the chosen period; signed-out →
+      sign-in first. Observe failing.
+- [ ] T015 [US1] Implement `apps/web/src/features/billing/` (plan surface + Assinar CTA + checkout hand-off
+      via the generated client; design source `ux-billing.md` if T001 landed, else the shipped teaser/Conta
+      conventions). FSD-Lite boundaries hold. Tests green.
+
+## Phase 6: PR-A hardening & delivery
+
+- [ ] T016 e2e (sandbox + tunnel): the quickstart 1→5 walk — offer → hosted checkout (sandbox card) →
+      webhook flip without re-login → replay=one-grant → spoof=reject → abandoned=no-state. Client-nav
+      rules; kill orphan :4173 first. New spec `apps/web/tests/e2e/billing.spec.ts`.
+- [ ] T017 **`seguranca` review — BLOCKING pre-merge** (the spec mandates it): the SEC checklist from
+      `seguranca-round.md` §8 against the real diff (signature impl, no-client-trust, env isolation, secret
+      handling, LGPD data map — SC-706). Findings fixed before the gate.
+- [ ] T018 qa-produto visual homologation (390px + desktop, sandbox stack): the offer honesty (prices,
+      delta, no fake urgency), checkout hand-off states, the flip (premium on without re-login), adversarial
+      walks (spoofed webhook attempt visible as nothing, abandoned checkout leaves clean state). Screenshots.
+- [ ] T019 `pnpm gate:all` + drift-guard idempotent + **SC-709** (all E1–E5 guards UNCHANGED). Evidence in
+      `dod-evidence.md`.
+- [ ] T020 **Owner-gated PR-A → `develop`** (squash). At this gate: **ADR-0023 flips Proposed → Accepted**.
+      On merge: graph refresh (hooks).
+
+---
+
+## ══ PR-B — The reverse lifecycle: cancel · grace · Conta truth (US4 + US5 + US6) ══
+
+## Phase 7: User Story 4 — Cancel at period end (Priority: P1)
+
+- [ ] T021 [US4] Write FAILING pytest — cancel: MP preapproval cancelled, ledger NOT written, grant expiry
+      stands, natural lapse to the freeze at period end (VR-706/SC-704); cancel is idempotent; re-subscribe
+      restores writes with data intact (reuse the E2/E5 lapse-test fixtures). Observe failing.
+- [ ] T022 [US4] Implement `POST /billing/subscription/cancel` + status mirroring; `GET /billing/subscription`
+      returns `cancelAtPeriodEnd` truth. Tests green.
+
+## Phase 8: User Story 5 — Grace & dunning (Priority: P2)
+
+- [ ] T023 [US5] Write FAILING pytest — `payment_failed` verified event → ONE append-only grace grant
+      (`expires_at = period_end + max(cadence, 7d)` with T003's confirmed cadence) + status `grace`
+      (VR-707); recovery → real period grant, continuous active; exhaustion → expiry-driven lapse, nothing
+      deleted; grace grant replay-idempotent. Observe failing.
+- [ ] T024 [US5] Implement the grace path in `grant_writer.py` + reconcile coverage (a missed failure event
+      heals). Tests green.
+
+## Phase 9: User Story 6 — Conta: the billing home (Priority: P2)
+
+- [ ] T025 [US6] Write FAILING pytest + vitest — `GET /billing/subscription` per contract (null for
+      no-subscription accounts; grace shows `graceUntil`); the dual-grant display rule (subscription state
+      wins when present; courtesy grant otherwise; active while ANY valid grant — 2026-07-20 clarification);
+      FE Conta plan panel renders every state with the honest copy ("pagamento pendente — regularize até
+      {data}"; "ativo até {data}, não renova"), NO client-inferred state (SC-708). Observe failing.
+- [ ] T026 [US6] Implement the endpoint + `features/billing` Conta panel + cancel/manage affordances
+      routing to the MP-managed flow. Contract ripple regen idempotent 2×. Tests green.
+
+## Phase 10: PR-B hardening & delivery
+
+- [ ] T027 e2e: cancel → "não renova" → forced expiry → freeze → re-subscribe → data intact; failed renewal
+      (sandbox rejection card) → grace visible → recovery/exhaustion both paths; dual-grant walk (beta
+      account subscribes, cancels, stays active on courtesy).
+- [ ] T028 qa-produto homologation: every billing state's honest copy at 390px + desktop; the freeze
+      reached through REAL billing (first time in the product's life); adversarial: grace + courtesy
+      combinations, long period dates. Screenshots.
+- [ ] T029 `pnpm gate:all` + drift-guard + SC-709. Evidence.
+- [ ] T030 **Owner-gated PR-B → `develop`** (squash). Graph refresh on merge.
+
+---
+
+## ══ PR-C — Teaser light-up · refund mechanics · Play flag-readiness (US7 + US8 + Q2 cross-cut) ══
+
+> US8 is P3-droppable **to the mechanics floor only** (the silent-premium hole must not ship). The Play
+> flag-readiness is an OWNER Q2 DECISION — it is NOT droppable; if the epic runs long it slips to its own
+> follow-up PR, never silently cut.
+
+## Phase 11: User Story 7 — Teaser light-up (Priority: P2)
+
+- [ ] T031 [US7] Write FAILING vitest — the four teasers (`features/{catalog/premium-teaser,bom/bom-teaser,
+      history/history-teaser,scenarios/scenario-teaser}.tsx`) render the real price + the shared Assinar CTA
+      (FR-710); honesty regex (no fabricated number, no urgency copy); the price constant matches the plan
+      surface (one source). Observe failing.
+- [ ] T032 [US7] Implement: point the four teasers at the shared `features/billing` CTA. Tests green.
+
+## Phase 12: User Story 8 — Refund/chargeback mechanics (Priority: P3, mechanics-floor kept)
+
+- [ ] T033 [US8] Write FAILING pytest — verified refund/chargeback → `revoked_at` on the active payment
+      grant (append-only revoke) → immediate lapse; idempotent replay; `beta|comp` grants untouched
+      (VR-708/SC-710); post-lapse chargeback = audit-only no-op. Observe failing.
+- [ ] T034 [US8] Implement in `grant_writer.py` + the event kinds in the MP provider. Tests green.
+
+## Phase 13: Play Billing flag-readiness (owner Q2 — NOT droppable)
+
+- [ ] T035 Write FAILING pytest — with `P3D_PLAY_BILLING_ENABLED=False`: both Play routes 404 server-side
+      (VR-709/SC-711); with the flag ON in a test env: the Play provider's verified sandbox purchase event
+      reaches the SAME `grant_writer` and writes a `provider=google_play` subscription + `source=payment`
+      grant. Observe failing.
+- [ ] T036 Implement `backend/app/billing/providers/google_play.py` (purchase-token verify against the Play
+      Developer API → normalised event) + the two flag-gated routes; validate against **Play internal
+      testing**; record the sandbox-purchase evidence in `specs/012-e6-billing/evidence/play-flag/` — the
+      E7 turn-on gate artifact. Tests green; flag stays OFF everywhere.
+
+## Phase 14: PR-C hardening & delivery
+
+- [ ] T037 e2e: teaser walk (all four show price + working CTA); refund flow in sandbox; the two Play-route
+      404 asserts.
+- [ ] T038 qa-produto homologation: the four teasers' honesty at 390px, refund lapse copy, and the
+      quickstart step-10/11 sweep. Screenshots.
+- [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner
+      homologation script). Evidence.
+- [ ] T040 **Owner-gated PR-C → `develop`** (squash). Graph refresh on merge.
+
+---
+
+## Phase 15: Polish & cross-cutting (at epic close-out)
+
+- [ ] T041 [P] Update `CLAUDE.md` ground line + `docs/product/business-rules.md` E6 row (BUILT/SHIPPED, the
+      premium-gate line from the brief §10) + cross-slice dod-evidence; confirm ADR-0023 Accepted; final
+      graph refresh. **v1 = E1–E6 complete → surface the DEPLOY decision to the owner** (the standing
+      2026-07-09 rule's trigger has fired; the live-webhook validation from Q3 waits there).
+- [ ] T042 [P] Q9 fiscal check handoff: a dated note to the owner listing exactly what the accountant must
+      confirm (MP receipt sufficiency for the owner's tax regime) — LAUNCH blocker tracking, not code.
+
+---
+
+## Dependencies & execution order
+
+- **Setup (T001–T003)**: T002 (owner MP sandbox) BLOCKS T007+ (nothing that talks to MP runs without creds);
+  T003 (pin + cadence) BLOCKS T009/T023. T001 is non-blocking parallel.
+- **Foundational (T004–T007) block all stories.** T005 is the opus-escalated schema; T007 (SEC suite) is
+  the failing-first spine the webhook implementation turns green.
+- **US3 BEFORE US2/US1** (the terminus is foundational — a checkout that can't grant is a liability);
+  within PR-A: T008–T011 → T012–T013 → T014–T015 → hardening T016–T020.
+- **PR-B needs PR-A merged** (cancel/grace act on real subscriptions+grants). US4 ∥ US5 ∥ US6 once their
+  red tests exist.
+- **PR-C needs PR-A** (the CTA needs a working checkout); US7 ∥ US8 ∥ Play-flag phases are independent.
+- **`pricing-core` is never touched** by any task (~97% — any need to touch it STOPS the task, ADR-0016).
+
+## Parallel opportunities
+
+- T001 (designer-ux) runs beside everything. T004 ∥ T006 (different files). T007 ∥ T004 (different suites).
+- Within PR-B: T021/T023/T025 (three red suites, distinct endpoints) then T022 ∥ T024 ∥ T026.
+- Within PR-C: T031 ∥ T033 ∥ T035 (three red suites), then T032 ∥ T034 ∥ T036.
+
+## Implementation strategy (MVP first)
+
+- **MVP = PR-A**: a seller sees the real price, pays in sandbox, and premium turns on by itself — verified,
+  exactly-once, spoof-proof. That alone replaces the operator CLI as the door.
+- PR-B makes the reverse honest (the freeze reachable by real billing). PR-C converts every wall into a
+  door sign + refund mechanics + the Play evidence for E7.
+- Ledger rows per wave (estimate → harness actual); routing per ADR-0022 (executors sonnet; migration 0005
+  opus; qa-produto opus; seguranca opus).
