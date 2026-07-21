@@ -60,7 +60,9 @@ class MercadoPagoProvider:
         token = settings.mp_access_token.get_secret_value() if settings.mp_access_token else ""
         headers = {"Authorization": f"Bearer {token}"} if token else {}
         self._client = httpx.AsyncClient(
-            base_url=MP_API_BASE_URL,
+            # Overridable ONLY so the e2e stack can point at the uvicorn-served T011b stub
+            # (P3D_MP_BASE_URL); every deployed environment keeps the production default.
+            base_url=settings.mp_base_url,
             headers=headers,
             timeout=10.0,
             transport=_test_transport,

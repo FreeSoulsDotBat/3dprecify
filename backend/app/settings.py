@@ -48,6 +48,9 @@ class Settings(BaseSettings):
     mp_webhook_secret: SecretStr | None = None
     mp_plan_id_monthly: SecretStr | None = None
     mp_plan_id_annual: SecretStr | None = None
+    # Overridable ONLY for the e2e stack (uvicorn-served tests/mp_stub — the owner's build-first
+    # phase); every deployed environment keeps this production default.
+    mp_base_url: str = "https://api.mercadopago.com"
 
     # E6 Play Billing (ADR-0023 §6, owner Q2 / SEC-701/702). BUILT + sandbox-validated behind an OFF
     # flag in E6; turns ON at E7. Server-side config (never a client flag — Constitution IV). The
