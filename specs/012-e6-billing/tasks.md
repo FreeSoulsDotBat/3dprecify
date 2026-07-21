@@ -97,7 +97,8 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       exactly one grant (`expires_at = current_period_end`, `subscription_id` set) + one inbox row in ONE
       transaction (VR-702); N replays → still one (SC-703); webhook path and reconcile path converge on the
       same `event_key` without double-grant; `GET /api/v1/entitlement` flips to active with `source=payment`
-      (SC-701). Observe failing.
+      (SC-701); **clock-skew rule: the grant's `expires_at` is never earlier than MP's authoritative
+      `current_period_end`** (spec §Edge Cases — the boundary favors the paying seller). Observe failing.
 - [ ] T009 [US3] Implement `backend/app/billing/` core: `providers/mercadopago.py` (lookup: preapproval +
       authorized_payments → the normalised verified event), `grant_writer.py` (the ONE shared terminus:
       inbox insert + ledger grant, same transaction, on-conflict-no-op), per ADR-0023 §2–§3. Tests green.
@@ -169,7 +170,10 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 - [ ] T023 [US5] Write FAILING pytest — `payment_failed` verified event → ONE append-only grace grant
       (`expires_at = period_end + max(cadence, 7d)` with T003's confirmed cadence) + status `grace`
       (VR-707); recovery → real period grant, continuous active; exhaustion → expiry-driven lapse, nothing
-      deleted; grace grant replay-idempotent. Observe failing.
+      deleted; grace grant replay-idempotent; **late recovery AFTER lapse (MP retry succeeds post-grace) →
+      honest reactivation via a new period grant** (spec §Edge Cases; data-model §4 row); `graceUntil` in
+      the contract is DERIVED from the grace grant's `expires_at`, never a new column (analyze U1).
+      Observe failing.
 - [ ] T024 [US5] Implement the grace path in `grant_writer.py` + reconcile coverage (a missed failure event
       heals). Tests green.
 
@@ -235,7 +239,8 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 - [ ] T038 qa-produto homologation: the four teasers' honesty at 390px, refund lapse copy, and the
       quickstart step-10/11 sweep. Screenshots.
 - [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner
-      homologation script). Evidence.
+      homologation script) + the FR-713 absence sweep (no proration/trial/coupon/fiscal surface exists
+      anywhere — grep + UI walk). Evidence.
 - [ ] T040 **Owner-gated PR-C → `develop`** (squash). Graph refresh on merge.
 
 ---

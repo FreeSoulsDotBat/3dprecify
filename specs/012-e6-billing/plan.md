@@ -49,9 +49,10 @@ responds 2xx fast and defers processing to the idempotent path (MP retries non-2
 prod grant (two independent guards: per-env HMAC secret AND `live_mode`↔`app_env` assert); `pricing-core`
 untouched (stays 3.1.0, ~97%); ledger evaluation code (`entitlement/__init__.py`) unchanged.
 
-**Scale/Scope**: 8 user stories + the Play flag cross-cut; 3 owner-gated PR slices; 4 new API routes + 1
-public signature-authenticated webhook route (the codebase's first — an explicit ADR-0023 exception to the
-"every product route authenticates via Firebase" invariant, per the seguranca D1 flag).
+**Scale/Scope**: 8 user stories + the Play flag cross-cut; 3 owner-gated PR slices; 3 new authenticated
+routes + 2 flag-gated Play routes (404 in E6) + 1 public signature-authenticated webhook route (the
+codebase's first — an explicit ADR-0023 exception to the "every product route authenticates via Firebase"
+invariant, per the seguranca D1 flag).
 
 ## Constitution Check
 

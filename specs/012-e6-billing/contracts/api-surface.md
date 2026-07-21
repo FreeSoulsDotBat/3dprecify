@@ -19,6 +19,12 @@
   "currentPeriodEnd": iso8601|null, "cancelAtPeriodEnd": bool, "graceUntil": iso8601|null } | null`
 - `null` when the account has no subscription (courtesy/free accounts) — Conta then falls back to the
   entitlement answer (2026-07-20 dual-grant display rule).
+- `graceUntil` is **derived** server-side from the active grace grant's `expires_at` (data-model §4) —
+  never a stored column.
+- Display↔storage naming note (analyze T1): the spec's US6 display states "active/grace/pending/canceled/
+  lapsed" map to `status` + entitlement as: active↔`authorized`, canceled↔`cancelled` (period running),
+  lapsed↔(`paused`|`cancelled` past period with no valid grant). The FE maps; the wire uses the storage
+  vocabulary above.
 - Server + PSP truth only (SC-708); never a client-computed state.
 
 ### `POST /api/v1/billing/subscription/cancel`

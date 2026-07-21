@@ -59,6 +59,14 @@
 | Grace exhaustion | **no write** — the grace grant expires naturally → expiry-driven lapse (ADR-0012 verbatim) | status → `paused` (mirrored) |
 | Cancel | **no ledger write** — existing grant's `expires_at` stands; natural lapse at period end (FR-707/Q10) | status → `cancelled` (at MP), period preserved |
 | Refund / chargeback | `revoked_at` set on the active **payment** grant (append-only revoke) → immediate lapse | status mirrored; courtesy grants untouched |
+| Late recovery AFTER lapse (MP retry succeeds post-grace) | +1 real period grant (the normal payment rule — honest reactivation, spec §Edge Cases) | status → `authorized` |
+
+- **`graceUntil` (contracts) is DERIVED, never a column**: it is the `expires_at` of the account's active
+  grace grant (the U1 analyze remediation — no new schema field; a task adding a `grace_until` column is
+  out of contract).
+- **Clock-skew rule (spec §Edge Cases)**: a payment grant's `expires_at` is never earlier than MP's
+  authoritative `current_period_end` — the boundary always favors the paying seller (asserted in the
+  terminus suite).
 
 > **The grace mechanism is the D7 resolution** (seguranca round): FR-708's "active past period end" is an
 > append-only grace grant, never a mutation, never a derivation change — SC-709 holds by construction.
