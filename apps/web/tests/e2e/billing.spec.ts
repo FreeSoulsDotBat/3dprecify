@@ -116,9 +116,9 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     expect(res.status()).toBe(200);
     expect((await res.json()).status).toBe("ok");
 
-    // Land back in the app WITHOUT the `checkout=retorno` marker — see the dedicated, currently
-    // FAILING test below for why: this is a deliberate workaround for a found app defect, not the
-    // real `back_url` shape (a real MP return DOES carry that query string).
+    // Land back in the app WITHOUT the `checkout=retorno` marker — the dedicated test below covers
+    // that exact cold-return shape; this one stays a plain re-entry so it isolates the GRANT
+    // mechanics from the return-surface UI.
     await page.goto("/conta");
     await expect(page.getByText(tc.planPremium)).toBeVisible();
 
@@ -127,34 +127,20 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     await expect(page.getByRole("tab", { name: messages.catalogo.tabFilaments })).toBeVisible();
   });
 
-  // KNOWN APP DEFECT (found by this task, reported — NOT fixed here, app source is off-limits).
-  // Repro: sign in, then a HARD navigation (`page.goto`, matching a real MP browser redirect-back)
-  // to ANY guarded route — even plain `/conta`, no query needed — transiently renders
-  // unauthenticated and bounces through `/sign-in?redirect=%2Fconta` before the real session
-  // resolves and redirects back. `router.tsx`'s `safeRedirect` only remembers the PATHNAME from
-  // that bounce, never the full search — so a bounce off `/conta?checkout=retorno` lands back on
-  // plain `/conta`, silently skipping `CheckoutReturnPanel` (the honest "confirming with Mercado
-  // Pago…" → success surface, US2/US3's whole point) in favour of the ordinary plan row. Every
-  // OTHER e2e test that hard-navigates to a guarded route tolerates this because it only asserts
-  // on content that is IDENTICAL before/after the bounce (a heading, a button) — this is the first
-  // one asserting on a query-carrying URL, which is why nothing caught it earlier.
-  // Suspected root cause: `session-store.ts`'s `onIdTokenChanged` listener flips `status` to
-  // "anonymous" on an initial `null` callback that fires before Firebase Auth finishes restoring
-  // the persisted session (observed reproducibly against the Auth emulator); `main.tsx`'s
-  // loading-gate only covers the state BEFORE that first callback, not a possibly-transient one.
-  // Proposed minimal fix (dev-frontend): gate on `auth.authStateReady()` (firebase ^10+) instead
-  // of / in addition to the first `onIdTokenChanged` callback, so `status` never leaves "loading"
-  // until persistence has genuinely settled — OR have `safeRedirect`/`RETURN_TO_INTENT` carry the
-  // full `pathname + search`, not just `pathname`, so even a legitimate bounce loses nothing.
+  // Regression test for the cold-return defect this task found and `951d714` fixed: a HARD
+  // navigation (`page.goto`, exactly what MP's browser redirect-back does) to
+  // `/conta?checkout=retorno` used to transiently render unauthenticated and bounce through
+  // `/sign-in?redirect=%2Fconta` — `safeRedirect`/`RETURN_TO_INTENT` only remembered the PATHNAME,
+  // so the bounce-back silently dropped `checkout=retorno` and landed on the plain Conta panel
+  // instead of the honest `CheckoutReturnPanel` (confirming → success). The fix carries
+  // pathname+search through the redirect intent AND gates app boot on `auth.authStateReady()` so a
+  // persisted session never flashes anonymous on a cold navigation. This is the browser-level
+  // proof both land: a cold `/conta?checkout=retorno` now reaches the honest confirming state and
+  // settles to success on the entitlement flip, no bounce, no dropped query.
   test("US3/SC-701 (return-surface UI): back from checkout shows the honest confirming state, then success", async ({
     page,
     request,
   }) => {
-    test.fail(
-      true,
-      "app defect — see comment above; /conta?checkout=retorno loses its query on a cold reload",
-    );
-
     await signUpThrowaway(page, "flip-ui");
     await page.goto("/conta");
     await page.route("https://stub.mercadopago.local/**", (route) =>
@@ -164,11 +150,18 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
     await page.waitForURL(/stub\.mercadopago\.local/);
 
+    // Return from the hand-off BEFORE the payment is confirmed (MP's back_url — a 1-segment
+    // route, meant to be reachable on a cold navigation) — the honest "confirmando" state, never a
+    // premature "processando" that implies success.
+    await page.goto("/conta?checkout=retorno");
+    await expect(page.getByRole("heading", { name: t.returnPendingTitle })).toBeVisible();
+
+    // NOW the stub "confirms" the payment: a real signed webhook straight at the backend
+    // (SEC-101..107 verified, then resolved by the stub's cross-process DB fallback — file
+    // header). The already-mounted panel picks it up on its own poll — no reload, no re-login.
     const res = await fireStubWebhook(request, { paymentId: "e2e-flip-ui-payment" });
     expect((await res.json()).status).toBe("ok");
 
-    // Return from the hand-off (MP's back_url — a 1-segment route, meant to be reachable cold).
-    await page.goto("/conta?checkout=retorno");
     await expect(page.getByRole("heading", { name: t.returnSuccessTitle })).toBeVisible({
       timeout: 20_000,
     });
