@@ -216,8 +216,13 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > invisível · precedência assinatura>cortesia. Leg 1 bloqueou honesto em 2 sub-pontos (BD e2e poluído +
 > classificador); main loop limpou o BD e a leg 2 rendeu tudo. **Nit de PRODUTO pro dono no gate: conta
 > cortesia não tem porta na UI pra virar paga (Assinar some quando ativa) — ratificar ou abrir follow-up.**
-- [ ] T019 `pnpm gate:all` + drift-guard idempotent + **SC-709** (all E1–E5 guards UNCHANGED). Evidence in
+- [x] T019 `pnpm gate:all` + drift-guard idempotent + **SC-709** (all E1–E5 guards UNCHANGED). Evidence in
       `dod-evidence.md`.
+      **→ DONE 2026-07-21**: gate exit 0 (web 768 gate-mode/679 plain · be 378 · import-linter 4/0 incl. the
+      new E6 layering contract) · regen 0-diff · **full e2e 77/77 chromium, 0 flaky** (70 pre-E6 + 7
+      billing). Infra note: the 3-webServer boot can race two concurrent `uv run` alembic processes
+      (global-setup × run_e2e_server) — green under server reuse; CI arbitrates; fix if needed = single
+      migration owner in global-setup.
 - [ ] T020 **Owner-gated PR-A → `develop`** (squash). At this gate: **ADR-0023 flips Proposed → Accepted**.
       On merge: graph refresh (hooks).
 
