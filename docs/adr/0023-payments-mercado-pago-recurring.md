@@ -117,7 +117,7 @@ homologation, then Accepted). Sub-rules, all normative:
 
 ### 1. MP integration shape (FR-703)
 - Two `preapproval_plan`s (monthly · annual), provisioned once per environment; their ids live in **Settings**
-  (`P3D_MP_PLAN_MONTHLY_ID` / `P3D_MP_PLAN_ANNUAL_ID`, per-env). The R$ prices are product constants shown honestly
+  (`P3D_MP_PLAN_ID_MONTHLY` / `P3D_MP_PLAN_ID_ANNUAL` (naming reconciled 2026-07-21 to the implemented settings contract), per-env). The R$ prices are product constants shown honestly
   (15,99/mês · 155,88/ano ≡ "equivalente a R$ 12,99/mês"); no fabricated number, ever (FR-701, SC-707).
 - Checkout `POST /api/v1/billing/checkout {period}` → server creates a `preapproval` for the plan + the authenticated
   payer → returns `{ initPoint }`; the client redirects. **Authenticated but NOT entitlement-gated** (a free seller is
@@ -129,7 +129,7 @@ homologation, then Accepted). Sub-rules, all normative:
 ### 2. Subscription ↔ ledger schema — migration `0005`, `down_revision = "0004"` (money/entitlement domain → **ADR-0022 opus-escalation flag for the schema executor**)
 - **New `subscriptions` table** — the PSP mirror: `id` (uuid7 PK), `owner_uid` (FK → `accounts`, the only account
   link), `provider` (`mercadopago` | `google_play`), `mp_preapproval_id` (**UNIQUE**, nullable for the Play row),
-  `plan_period` (`monthly` | `annual`), `status` (`pending` | `authorized` | `paused` | `cancelled`), `payer_ref`,
+  `plan_period` (`monthly` | `annual`), `status` (`pending` | `authorized` | `grace` | `paused` | `cancelled` — `grace` added per data-model §1/§5, reconciled 2026-07-21), `payer_ref`,
   `current_period_end` (timestamptz), timestamps, `deleted_at`. CHECK-guard the enums; no money column (a subscription
   stores references, never a price — the E4/E5 "no money leaf" discipline).
 - **New `billing_events` inbox table** — the server-side idempotency ledger (§3): `id`, `subscription_id` (FK),
