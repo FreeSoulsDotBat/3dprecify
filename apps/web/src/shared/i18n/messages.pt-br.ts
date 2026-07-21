@@ -796,4 +796,46 @@ export const messages = {
     // final wording owner-ratified with the US7 teaser copy.
     entitlementRequired: "Salvar faz parte do Premium.",
   },
+  // E6/T014-T015 (US1/US2 — `ux-billing.md` §8). Tom honesto/calmo. Real prices only (15,99 /
+  // 155,88 "equivalente a 12,99/mês"). NO fake "de/por" anchor, no false urgency, no "processando"
+  // that implies success before the server confirms it (§0.1/§3.2). "Cancelar" stays a dismiss-ban
+  // (FR-014) here — nothing on this surface uses it; the action verb lands in PR-B (US4).
+  billing: {
+    // offer (US1)
+    offerTitle: "Assinar o Premium",
+    offerFreeLead: "A calculadora é grátis e continua grátis.",
+    offerBody: "O Premium guarda seu catálogo, kits, histórico e cenários — e libera exportar.",
+    planAnnualName: "Plano anual",
+    planAnnualBadge: "recomendado",
+    planAnnualPrice: "R$ 155,88/ano",
+    planAnnualEquiv: "equivalente a R$ 12,99/mês",
+    planAnnualSaving: "~19% de economia frente ao mensal", // o delta real — NUNCA um "de/por"
+    planMonthlyName: "Plano mensal",
+    planMonthlyPrice: "R$ 15,99/mês",
+    planMonthlyNote: "cobrança todo mês, cancele quando quiser",
+    subscribeAction: "Assinar Premium",
+    handoffNotice: "Você paga no Mercado Pago (Pix ou cartão).",
+    cardNeverTouches: "O cartão nunca passa pelo nosso app.",
+    alreadyPremium: "Você já é Premium.",
+    offerUnavailable:
+      "O Mercado Pago não respondeu agora. Tente de novo em instantes — nada foi cobrado.",
+    // checkout hand-off (US2)
+    openingCheckout: "Abrindo o Mercado Pago…", // verdade: criando a preapproval — NÃO "processando"
+    checkoutInProgress:
+      "Você já tem um pagamento em andamento. Conclua no Mercado Pago ou aguarde alguns minutos e tente de novo.", // 409, F6: nunca o status-code cru
+    // return states (US2) — server truth only, NUNCA um "processando" que promete sucesso
+    returnPendingTitle: "Confirmando seu pagamento…",
+    returnPendingBody:
+      "Estamos verificando com o Mercado Pago. Assim que confirmar, o Premium liga sozinho — você não precisa fazer mais nada.",
+    returnRefresh: "Atualizar",
+    returnBackToConta: "Voltar para a Conta",
+    returnSuccessTitle: "Premium ativo!",
+    returnSuccessBody:
+      "Seu catálogo, kits, histórico e cenários agora salvam e exportam. Bom trabalho.",
+    returnSuccessAction: "Ir para a calculadora",
+    returnUnconfirmedTitle: "Ainda não recebemos a confirmação",
+    returnUnconfirmedBody:
+      "Se você concluiu o pagamento, ele aparece aqui em instantes — o Premium liga sozinho. Se você não concluiu, nada foi cobrado.",
+    returnVerifyAgain: "Verificar de novo",
+  },
 } as const;

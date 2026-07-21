@@ -19,6 +19,14 @@ vi.mock("@/shared/session/sign-out-guard", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/session/sign-out-guard")>();
   return { ...actual, requestSignOut };
 });
+// E6/T015 — `renderConta()` below mounts ContaPage OUTSIDE a RouterProvider (it only needs the
+// QueryClient for this seam check); ContaPage now also reads the router (checkout=retorno
+// takeover). Stub it, same house pattern as bom-teaser.test.tsx — `renderTopBar()` keeps its OWN
+// real RouterProvider below, unaffected by this module-level mock.
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, useSearch: () => ({}) };
+});
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";

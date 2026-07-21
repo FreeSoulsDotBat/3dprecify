@@ -20,6 +20,13 @@ vi.mock("@/entities/user/use-identity", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/entities/user/use-identity")>();
   return { ...actual, useIdentity: () => useIdentityMock() };
 });
+// E6/T015 — ContaPage now reads the router (checkout=retorno takeover) and the offer Sheet's
+// Assinar CTA navigates on sign-out. Neither is exercised by this suite's plan-line assertions;
+// stub both hooks so the page renders outside a RouterProvider (the house pattern, bom-teaser.test).
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
+});
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 

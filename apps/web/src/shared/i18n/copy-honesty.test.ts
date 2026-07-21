@@ -13,7 +13,14 @@ function collectStrings(value: unknown, acc: string[] = []): string[] {
   return acc;
 }
 
-const HAYSTACK = collectStrings(messages).join("\n").toLowerCase();
+// E6/T014 dated exception (2026-07-21, ux-billing.md §0.2/§8, owner flags F1-F9): the `billing`
+// namespace is precisely where a real payment provider, a real price, and honest cancellation
+// copy ("cancele quando quiser" / "Cancelar assinatura") become the legitimate, owner-ratified
+// truth — this is the epic where that flow starts existing. Every OTHER surface (E1-E5, the
+// system shell) still carries none of that, which is what this invariant continues to guard.
+const { billing: _omittedBillingCopy, ...NON_BILLING_MESSAGES } = messages;
+void _omittedBillingCopy;
+const HAYSTACK = collectStrings(NON_BILLING_MESSAGES).join("\n").toLowerCase();
 
 describe("copy honesty (T051 / US4 — SS-4 / FR-014)", () => {
   it("names no payment provider", () => {

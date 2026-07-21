@@ -153,9 +153,15 @@ const snapshotDetailRoute = createRoute({
   component: SnapshotDetailRouteComponent,
 });
 
+// E6/T013/T015: MP's `back_url` targets `/conta?checkout=retorno` (a 1-segment route — the
+// measured `base:'./'` cold-load trap, ux-billing.md §0.4/§10-F5). ContaPage reads `checkout` to
+// swap in the honest return surface instead of the normal plan panel.
 const contaRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/conta",
+  validateSearch: (search: Record<string, unknown>): { checkout?: "retorno" } => ({
+    checkout: search.checkout === "retorno" ? "retorno" : undefined,
+  }),
   beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
   component: ContaPage,
 });
