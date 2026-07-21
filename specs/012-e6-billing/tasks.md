@@ -117,28 +117,34 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 **Goal**: a verified payment event → exactly one `source=payment` grant → premium live without re-login.
 **Independent test**: quickstart steps 3–5 (sandbox payment → flip; replay → one grant; spoof → reject).
 
-- [ ] T008 [US3] Write FAILING pytest — `backend/tests/test_billing_terminus.py`: verified payment event →
+- [x] T008 [US3] Write FAILING pytest — `backend/tests/test_billing_terminus.py`: verified payment event →
       exactly one grant (`expires_at = current_period_end`, `subscription_id` set) + one inbox row in ONE
       transaction (VR-702); N replays → still one (SC-703); webhook path and reconcile path converge on the
       same `event_key` without double-grant; `GET /api/v1/entitlement` flips to active with `source=payment`
       (SC-701); **clock-skew rule: the grant's `expires_at` is never earlier than MP's authoritative
       `current_period_end`** (spec §Edge Cases — the boundary favors the paying seller). Observe failing.
-- [ ] T009 [US3] Implement `backend/app/billing/` core: `providers/mercadopago.py` (lookup: preapproval +
+- [x] T009 [US3] Implement `backend/app/billing/` core: `providers/mercadopago.py` (lookup: preapproval +
       authorized_payments → the normalised verified event), `grant_writer.py` (the ONE shared terminus:
       inbox insert + ledger grant, same transaction, on-conflict-no-op), per ADR-0023 §2–§3. Tests green.
-- [ ] T010 [US3] Implement the webhook route `POST /api/v1/billing/webhook/mercadopago` in
+- [x] T010 [US3] Implement the webhook route `POST /api/v1/billing/webhook/mercadopago` in
       `backend/app/api/billing.py`: signature dependency (HMAC manifest per SEC-101..106, BEFORE any DB
       touch) → lookup → `grant_writer`; 200-fast semantics; the SEC suite (T007) goes green here. Wire the
       router in `main.py`; `app.billing` joins import-linter contracts.
-- [ ] T011 [US3] Implement the reconciliation runner `backend/app/billing/reconcile.py` +
+- [x] T011 [US3] Implement the reconciliation runner `backend/app/billing/reconcile.py` +
       `backend/app/scripts/reconcile_subscriptions.py` (CLI pattern of `grant_premium.py`): same processing
       function as the webhook post-lookup; heals a missed webhook to the SAME single grant (T008 case).
       Tests green.
-- [ ] T011b [US3] **Local MP stub** (the build-first enabler, owner 2026-07-21): a small dev-only fake MP
+- [x] T011b [US3] **Local MP stub** (the build-first enabler, owner 2026-07-21): a small dev-only fake MP
       server (preapproval create/get + authorized_payments + a webhook-firing trigger, signed with the LOCAL
       test secret) usable by e2e and the owner homologation stack — full purchase/renewal/failure/refund
       loops WITHOUT credentials. Lives outside the app (`backend/tests/mp_stub/` or e2e fixture), never
       ships. Tests: the stub round-trip drives the SAME grant_writer path as real MP.
+
+> **US3 spine DONE 2026-07-21 (`ca151a9`, dev-backend sonnet)**: terminus suite failing-first → 5/5; 12/14
+> SEC reds green (2 remain, T013-bound: checkout auth); full suite 366 passed re-measured; regen idempotent
+> by sha256. Deviations for T017/seguranca: freshness window 300s (MP publishes no default — one constant);
+> conftest billing-table isolation fixture; the stub's documented T007-compat fallback (never in the real
+> provider); a route-ordering bug self-caught in the stub (the export.csv house lesson re-paid).
 
 ## Phase 4: User Story 2 — Checkout (Priority: P1)
 
