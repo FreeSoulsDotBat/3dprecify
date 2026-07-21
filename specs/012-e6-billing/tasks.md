@@ -169,13 +169,19 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 **Goal**: real prices, honest discount, working Assinar; signed-out routes through sign-in.
 **Independent test**: quickstart step 1.
 
-- [ ] T014 [US1] Write FAILING vitest — `apps/web/src/features/billing/`: the plan surface renders EXACTLY
+- [x] T014 [US1] Write FAILING vitest — `apps/web/src/features/billing/`: the plan surface renders EXACTLY
       R$ 15,99/mês and R$ 155,88/ano ("equivalente a R$ 12,99/mês") from the ONE product constant; honest
       delta copy (no "de/por" anchor); Assinar → checkout initiation for the chosen period; signed-out →
       sign-in first. Observe failing.
-- [ ] T015 [US1] Implement `apps/web/src/features/billing/` (plan surface + Assinar CTA + checkout hand-off
+- [x] T015 [US1] Implement `apps/web/src/features/billing/` (plan surface + Assinar CTA + checkout hand-off
       via the generated client; design source `ux-billing.md` if T001 landed, else the shipped teaser/Conta
       conventions). FSD-Lite boundaries hold. Tests green.
+
+> **US1 FE wave DONE 2026-07-21 (`4e161bc`, dev-frontend sonnet)**: 19 failing-first tests → 673/673 vitest
+> + tsc clean (re-measured). Offer = Sheet in Conta (Q11 Option A); return takeover on `/conta?checkout=
+> retorno` polling entitlement (~45s patience) gated strictly on `active`+`source=payment`; F2/F3/F6/F8
+> applied; copy-honesty invariant scoped to non-billing (dated exception — E6 legitimizes price copy);
+> caught+fixed the backend wave's BILLING_UNAVAILABLE tsc gap.
 
 ## Phase 6: PR-A hardening & delivery
 
