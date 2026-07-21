@@ -20,6 +20,18 @@ read-only freeze (E2/E4/E5)."
 
 ## Clarifications
 
+### Session 2026-07-20 (`/speckit-clarify`)
+
+- Q: How does the ANNUAL plan charge ("R$ 12,99/mês if annual")? → A: **One MP annual subscription charging
+  R$ 155,88 once per year**; the surface presents it honestly as "equivalente a R$ 12,99/mês". Renewal,
+  grace and refund operate over the single yearly event.
+- Q: Grace-window FLOOR on a failed renewal? → A: **7 days** — lapse only after max(MP's retry cadence,
+  7 days); a legitimate payer with an expired card gets a humane window regardless of MP's schedule.
+- Q: Operator grant (beta/comp) coexisting with a PAID subscription on the same account? → A: **Any valid
+  grant activates (ledger semantics unchanged); Conta prioritizes showing the SUBSCRIPTION state when one
+  exists** (it is what the seller manages/pays), else the courtesy grant; lapse only when NO grant is valid.
+  Subscribing never revokes a courtesy grant; a courtesy account is never blocked from subscribing.
+
 ### Session 2026-07-20 (owner decisions at kickoff, reacting to the scope brief — pre-specify)
 
 - Q: Q1 — the R$ prices → A: **Provisional anchor SET (option b)**: **R$ 15,99/mês** monthly ·
@@ -252,8 +264,8 @@ No E6 seller ever sees a Play surface; the flag's OFF state is itself acceptance
   is never stranded (US3.5).
 - The same seller starts checkout twice (double-click, two tabs) → at most one active subscription; no double
   charge path the product creates.
-- A seller with an operator grant (`beta`/`comp`) subscribes → ledger semantics stay coherent (append-only;
-  the plan surface shows the truthful combined state — exact rule is a clarify/plan detail).
+- A seller with an operator grant (`beta`/`comp`) subscribes → both grants stand (append-only, nothing
+  revoked); Conta shows the subscription's state; active while any valid grant exists (clarified 2026-07-20).
 - Renewal event for an already-expired grace account (late MP retry succeeds after lapse) → account
   reactivates honestly (a new period grant), no data loss either way.
 - Clock skew between MP's period end and the ledger's `expires_at` → the seller never loses paid time; the
@@ -265,9 +277,10 @@ No E6 seller ever sees a Play surface; the flag's OFF state is itself acceptance
 
 ### Functional Requirements
 
-- **FR-701**: The plan surface MUST present the decided prices — R$ 15,99/mês monthly · R$ 12,99/mês billed
-  annually — with the discount stated truthfully; no other number may ever be shown (no placeholders, no fake
-  anchors). A price change is a dated owner decision reflected everywhere at once.
+- **FR-701**: The plan surface MUST present the decided prices — R$ 15,99/mês monthly · annual as **one
+  charge of R$ 155,88/ano**, presented honestly as "equivalente a R$ 12,99/mês" — with the discount stated
+  truthfully; no other number may ever be shown (no placeholders, no fake anchors). A price change is a dated
+  owner decision reflected everywhere at once.
 - **FR-702**: Subscribing MUST require an authenticated account before any payment initiates; entitlement is
   per-account (no anonymous or transferable subscription in v1).
 - **FR-703**: Checkout MUST create a Mercado Pago **recurring** subscription for the chosen period on MP's
@@ -285,12 +298,14 @@ No E6 seller ever sees a Play surface; the flag's OFF state is itself acceptance
 - **FR-707**: Cancellation MUST keep premium active until the paid-period end, then lapse the account into
   the existing read-only freeze (reads/recompute survive; writes denied; zero data deleted). Re-subscribing
   restores writes with all data intact. The freeze semantics themselves MUST NOT change.
-- **FR-708**: A failed renewal MUST enter a grace window aligned to MP's retry cadence (with a humane floor —
-  exact value confirmed at clarify with MP's real cadence in hand); the seller MUST see the honest pending
-  state; lapse happens only on grace exhaustion; recovery within grace is seamless.
+- **FR-708**: A failed renewal MUST enter a grace window of **max(MP's retry cadence, 7 days)**; the seller
+  MUST see the honest pending state; lapse happens only on grace exhaustion; recovery within grace is
+  seamless.
 - **FR-709**: The Conta surface MUST show the server-sourced billing truth for every state (active / grace /
   pending / canceled / lapsed): plan, period, renewal/expiry date, and manage/cancel entry routing to the
-  MP-managed flow. No client-inferred billing state may render.
+  MP-managed flow. No client-inferred billing state may render. When an operator grant and a paid
+  subscription coexist, Conta prioritizes the subscription's state; the account is active while ANY valid
+  grant exists (existing ledger semantics unchanged); subscribing never revokes a courtesy grant.
 - **FR-710**: Every pre-E6 premium teaser MUST become a real upgrade CTA (real price, working "Assinar" path,
   reachable from every teaser and from Conta); the CTA copy passes the honesty bar (no false urgency, no
   unverifiable claim).
@@ -355,8 +370,8 @@ No E6 seller ever sees a Play surface; the flag's OFF state is itself acceptance
   (Brief §2.1, inference ~90% — arquiteto confirms the source-enum extension + subscription↔ledger linkage.)
 - MP's hosted checkout carries the card-data burden (PCI stays with the PSP); Pix/card availability is MP's
   surface, not the product's promise.
-- The grace window's exact length is set at clarify with MP's real retry cadence in hand (owner default:
-  align to MP, humane floor, never 0).
+- The grace window is **max(MP's retry cadence, 7 days)** (clarified 2026-07-20); the plan round confirms
+  MP's actual cadence to implement the max().
 - Sandbox + dev tunnel suffices to prove every E6 flow except the live production webhook, which is validated
   at the v1 deploy (owner Q3); reconciliation covers the gap in both environments.
 - The payments ADR (webhook verification mechanism, idempotency machinery — possibly the E4 exactly-once
