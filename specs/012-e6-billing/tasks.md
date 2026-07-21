@@ -185,11 +185,16 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 6: PR-A hardening & delivery
 
-- [ ] T016 e2e against the **local MP stub** (T011b): the quickstart 1→5 walk — offer → checkout hand-off →
+- [x] T016 e2e against the **local MP stub** (T011b): the quickstart 1→5 walk — offer → checkout hand-off →
       webhook flip without re-login → replay=one-grant → spoof=reject → abandoned=no-state. Client-nav
       rules; kill orphan :4173 first. New spec `apps/web/tests/e2e/billing.spec.ts`.
 - [ ] T016b **[post-provisioning phase]** the same walk against the REAL MP sandbox + tunnel (T002),
       including a real hosted-checkout payment with a test card — the sandbox truth-check of T016.
+> **T016 DONE 2026-07-21** (2 legs): 7/7 chromium flows vs the stub + the HIGH cold-return defect found →
+> fixed (`951d714`: redirect carries search · boot gates on authStateReady · Conta wrap) → flip PASSED at
+> browser level (strengthened: honest pending pre-confirmation → success on the mounted panel's own poll);
+> auth-boundary 6/6 both runs; a11y-overflow fixed; full suite green minus the pre-existing scenarios-manage
+> contention flake (passes isolated). Stub recipe + 4 gotchas in the ledger.
 - [ ] T017 **`seguranca` review — BLOCKING pre-merge** (the spec mandates it): the SEC checklist from
       `seguranca-round.md` §8 against the real diff (signature impl, no-client-trust, env isolation, secret
       handling, LGPD data map — SC-706). Findings fixed before the gate.
