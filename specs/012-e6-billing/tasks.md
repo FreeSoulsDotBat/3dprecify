@@ -52,6 +52,16 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## ══ PR-A — The turnstile: price → checkout → verified grant (US1 + US2 + US3) ══
 
+> **OWNER RE-SEQUENCING 2026-07-21 (spec §Clarifications): build-first, provision-later.** All
+> provisioning-independent tasks run FIRST across all three PRs (MP mocked in pytest; a LOCAL MP STUB —
+> T011b — powers e2e + visual homologation); the owner then runs an intensive point-by-point homologation
+> of the whole platform; ONLY then: T002 (MP sandbox), real-sandbox e2e (T016b), payment homologation, and
+> GCP provisioning. T002 therefore moves to the post-homologation phase and no longer blocks the waves —
+> the ONLY tasks it still gates are T016b/T018b (real-sandbox validation) and beyond.
+> **UX decisions (F1–F9) recorded 2026-07-21**: F4 cancel = Conta-only + explicit label + confirm modal +
+> "vigente a partir da próxima cobrança"; F6 = no status-code jargon ever reaches the seller; the rest as
+> recommended (incl. F9: the DS gains an owner-ratified `caution` tone).
+
 ## Phase 1: Setup
 
 - [x] T001 [P] designer-ux → handoff (NON-BLOCKING, parallel with all PR-A work): the plan/price surface
@@ -62,7 +72,7 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       no `caution` tone for grace (flag F9) · the pending≠grace copy firewall (§0.3) · **the MP `back_url`
       must be a 1-SEGMENT route** (the measured `base:'./'` cold-load trap applied to the external return —
       a T013 constraint) · the courtesy-outlives-cancel honesty line (§4.3).
-- [ ] T002 **Owner setup checkpoint (BLOCKING T007+)**: provision the **MP sandbox application** (access
+- [ ] T002 **Owner setup checkpoint (RE-SEQUENCED 2026-07-21 → post-homologation phase; gates only T016b/T018b+)**: provision the **MP sandbox application** (access
       token + webhook secret), create the two `preapproval_plan`s (monthly R$ 15,99 · annual R$ 155,88/yr)
       in the sandbox, choose the dev tunnel tool, and hand the values to `.env` (NEVER committed — the
       `P3D_MP_*` SecretStr pattern). Record plan ids in the env, not in code.
@@ -114,6 +124,11 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       `backend/app/scripts/reconcile_subscriptions.py` (CLI pattern of `grant_premium.py`): same processing
       function as the webhook post-lookup; heals a missed webhook to the SAME single grant (T008 case).
       Tests green.
+- [ ] T011b [US3] **Local MP stub** (the build-first enabler, owner 2026-07-21): a small dev-only fake MP
+      server (preapproval create/get + authorized_payments + a webhook-firing trigger, signed with the LOCAL
+      test secret) usable by e2e and the owner homologation stack — full purchase/renewal/failure/refund
+      loops WITHOUT credentials. Lives outside the app (`backend/tests/mp_stub/` or e2e fixture), never
+      ships. Tests: the stub round-trip drives the SAME grant_writer path as real MP.
 
 ## Phase 4: User Story 2 — Checkout (Priority: P1)
 
@@ -143,13 +158,16 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 6: PR-A hardening & delivery
 
-- [ ] T016 e2e (sandbox + tunnel): the quickstart 1→5 walk — offer → hosted checkout (sandbox card) →
+- [ ] T016 e2e against the **local MP stub** (T011b): the quickstart 1→5 walk — offer → checkout hand-off →
       webhook flip without re-login → replay=one-grant → spoof=reject → abandoned=no-state. Client-nav
       rules; kill orphan :4173 first. New spec `apps/web/tests/e2e/billing.spec.ts`.
+- [ ] T016b **[post-provisioning phase]** the same walk against the REAL MP sandbox + tunnel (T002),
+      including a real hosted-checkout payment with a test card — the sandbox truth-check of T016.
 - [ ] T017 **`seguranca` review — BLOCKING pre-merge** (the spec mandates it): the SEC checklist from
       `seguranca-round.md` §8 against the real diff (signature impl, no-client-trust, env isolation, secret
       handling, LGPD data map — SC-706). Findings fixed before the gate.
-- [ ] T018 qa-produto visual homologation (390px + desktop, sandbox stack): the offer honesty (prices,
+- [ ] T018 qa-produto visual homologation (390px + desktop, **local-stub stack** — the owner's intensive
+      manual homologation follows this same stack; real-sandbox re-check rides T016b): the offer honesty (prices,
       delta, no fake urgency), checkout hand-off states, the flip (premium on without re-login), adversarial
       walks (spoofed webhook attempt visible as nothing, abandoned checkout leaves clean state). Screenshots.
 - [ ] T019 `pnpm gate:all` + drift-guard idempotent + **SC-709** (all E1–E5 guards UNCHANGED). Evidence in

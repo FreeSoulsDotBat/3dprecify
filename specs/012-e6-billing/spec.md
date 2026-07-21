@@ -20,6 +20,23 @@ read-only freeze (E2/E4/E5)."
 
 ## Clarifications
 
+### Session 2026-07-21 (owner decisions — the 9 UX flags + the delivery re-sequencing)
+
+- Q: ux-billing §10 flags F1–F9 → A: **F1/F2/F3/F5/F7/F8/F9 accepted as recommended.** Two owner-shaped:
+  - **F4 (cancel)**: the ONLY cancel affordance lives in the **Conta screen**; its label is EXPLICIT that
+    it cancels the subscription; clicking prompts a **confirm modal** asking if the seller is sure and
+    alerting that **the cancellation only takes effect from the next charge** (premium stays active until
+    the paid-period end — FR-707 unchanged).
+  - **F6 (abandoned-checkout linger)**: recommendation accepted WITH the constraint that **the seller never
+    sees "409" or any status-code/technical jargon** — the copy is plain honest language only.
+- Q: delivery sequencing vs provisioning → A: **Owner strategy 2026-07-21 — build-first, provision-later.**
+  ALL provisioning-independent work ships first (PR-A/PR-B/PR-C code, mobile 390px + desktop, with the MP
+  client mocked in unit tests and a **local MP stub** powering e2e + visual homologation); then the owner
+  runs an **intensive manual homologation of the whole platform** (code + UX/UI, point by point); ONLY
+  after it passes: MP sandbox provisioning (T002), real payment testing, and **infrastructure provisioning
+  on GCP** (the v1 deploy trigger of the 2026-07-09 rule — consistent, now owner-scheduled). The live
+  webhook validation stays at that phase (Q3 unchanged).
+
 ### Session 2026-07-20 (`/speckit-clarify`)
 
 - Q: How does the ANNUAL plan charge ("R$ 12,99/mês if annual")? → A: **One MP annual subscription charging
