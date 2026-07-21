@@ -41,7 +41,7 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import sqlalchemy as sa
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
 
@@ -52,6 +52,9 @@ class Preapproval:
     status: str
     plan_period: str
     payer_ref: str | None = None
+    #: T012/T013 — the checkout-time `back_url` the app sent (introspectable so the checkout
+    #: suite can assert the 1-segment-route contract, `ux-billing.md`'s `base:'./'` finding).
+    back_url: str | None = None
 
 
 @dataclass
@@ -72,12 +75,27 @@ class MPStub:
     # --- registration API -------------------------------------------------------------------
 
     def create_preapproval(
-        self, *, plan_period: str = "monthly", payer_ref: str | None = None
+        self,
+        *,
+        plan_period: str = "monthly",
+        payer_ref: str | None = None,
+        back_url: str | None = None,
     ) -> Preapproval:
         pid = f"pre-{uuid.uuid4().hex[:12]}"
-        pre = Preapproval(id=pid, status="pending", plan_period=plan_period, payer_ref=payer_ref)
+        pre = Preapproval(
+            id=pid,
+            status="pending",
+            plan_period=plan_period,
+            payer_ref=payer_ref,
+            back_url=back_url,
+        )
         self._preapprovals[pid] = pre
         return pre
+
+    def preapprovals(self) -> list[Preapproval]:
+        """T012 introspection — every preapproval registered so far (via either the Python API
+        above or the HTTP `POST /preapproval` route below), newest last."""
+        return list(self._preapprovals.values())
 
     def authorize_payment(self, preapproval_id: str, *, period_days: int = 30) -> Payment:
         """Registers an APPROVED authorized_payment against `preapproval_id` (the "successful
@@ -134,6 +152,29 @@ class MPStub:
 
     def _build_app(self) -> FastAPI:
         app = FastAPI()
+
+        # T012/T013 — the checkout-time create call. Registered BEFORE the `{preapproval_id}` GET
+        # below is unnecessary here (different HTTP method, same literal path is fine for
+        # Starlette's method-aware matching) but kept adjacent for readability.
+        @app.post("/preapproval")
+        async def create_preapproval_endpoint(request: Request) -> JSONResponse:
+            body: dict[str, Any] = await request.json()
+            plan_id = body.get("preapproval_plan_id")
+            if not plan_id:
+                return JSONResponse({"message": "preapproval_plan_id is required"}, status_code=400)
+            pre = self.create_preapproval(
+                plan_period=str(plan_id),
+                payer_ref=body.get("payer_email"),
+                back_url=body.get("back_url"),
+            )
+            return JSONResponse(
+                {
+                    "id": pre.id,
+                    "status": pre.status,
+                    "init_point": f"https://stub.mercadopago.local/checkout/{pre.id}",
+                },
+                status_code=201,
+            )
 
         @app.get("/preapproval/{preapproval_id}")
         async def get_preapproval(preapproval_id: str) -> JSONResponse:

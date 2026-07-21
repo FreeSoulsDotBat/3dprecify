@@ -3172,6 +3172,105 @@
           }
         }
       }
+    },
+    "/api/v1/billing/checkout": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Create Checkout",
+        "operationId": "create_checkout_api_v1_billing_checkout_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CheckoutOut"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing/invalid/expired bearer token",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed request body (unparseable)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Per-field validation failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "An open subscription already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Payment provider unreachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3538,6 +3637,36 @@
         "title": "ChannelSlot",
         "description": "One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).\n\nEvery fee is NULLABLE on purpose: in the calculator a BLANK fee means \"resolve from the\nlive fee catalog\", so persisting a fabricated 0 would dishonestly freeze today's fee.\nnull round-trips back to a blank field on reopen; a present value validates as before."
       },
+      "CheckoutIn": {
+        "properties": {
+          "period": {
+            "type": "string",
+            "enum": [
+              "monthly",
+              "annual"
+            ],
+            "title": "Period"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period"
+        ],
+        "title": "CheckoutIn"
+      },
+      "CheckoutOut": {
+        "properties": {
+          "initPoint": {
+            "type": "string",
+            "title": "Initpoint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "initPoint"
+        ],
+        "title": "CheckoutOut"
+      },
       "CurrentUser": {
         "properties": {
           "uid": {
@@ -3655,7 +3784,8 @@
           "FORBIDDEN",
           "NOT_FOUND",
           "INTERNAL",
-          "ENTITLEMENT_REQUIRED"
+          "ENTITLEMENT_REQUIRED",
+          "BILLING_UNAVAILABLE"
         ],
         "title": "ErrorCode",
         "description": "Single source of wire error codes. Mirrored to TS via Orval (A5)."

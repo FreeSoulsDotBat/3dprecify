@@ -96,9 +96,13 @@ def migrated_db(postgres_url: str) -> Iterator[str]:
     reset_engine_for_tests()
 
 
-# --- E6 billing test infra (T008/T010/T011b) --------------------------------------------------
-# Applies ONLY to the two billing test modules — everything else in the suite is unaffected.
-_BILLING_TEST_MODULES = {"tests.test_billing_security", "tests.test_billing_terminus"}
+# --- E6 billing test infra (T008/T010/T011b/T012) -----------------------------------------------
+# Applies ONLY to the billing test modules — everything else in the suite is unaffected.
+_BILLING_TEST_MODULES = {
+    "tests.test_billing_security",
+    "tests.test_billing_terminus",
+    "tests.test_billing_checkout",
+}
 
 
 @pytest.fixture(autouse=True)

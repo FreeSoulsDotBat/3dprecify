@@ -88,6 +88,30 @@ class MercadoPagoProvider:
     async def get_preapproval(self, preapproval_id: str) -> dict[str, Any] | None:
         return await self._get(f"/preapproval/{preapproval_id}")
 
+    async def create_preapproval(
+        self, *, plan_id: str, payer_email: str | None, back_url: str
+    ) -> dict[str, Any] | None:
+        """T013 — `POST /preapproval` (ADR-0023 §1/§7): a plan-linked, pending preapproval whose
+        `init_point` is the MP-hosted checkout URL the client redirects to. Deny-by-default on any
+        network/non-2xx/malformed-response failure — `None`, never a partial guess (mirrors `_get`,
+        seguranca-round §0); the caller (`app.billing.checkout`) maps `None` to an honest 503."""
+        body: dict[str, Any] = {"preapproval_plan_id": plan_id, "back_url": back_url}
+        if payer_email:
+            body["payer_email"] = payer_email
+        try:
+            resp = await self._client.post("/preapproval", json=body)
+        except httpx.HTTPError:
+            return None
+        if resp.status_code not in (200, 201):
+            return None
+        data: Any = resp.json()
+        if not isinstance(data, dict):
+            return None
+        typed = cast("dict[str, Any]", data)
+        if typed.get("id") and typed.get("init_point"):
+            return typed
+        return None
+
     async def get_authorized_payment(self, payment_id: str) -> dict[str, Any] | None:
         return await self._get(f"/authorized_payments/{payment_id}")
 
