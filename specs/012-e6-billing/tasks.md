@@ -206,6 +206,10 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       manual homologation follows this same stack; real-sandbox re-check rides T016b): the offer honesty (prices,
       delta, no fake urgency), checkout hand-off states, the flip (premium on without re-login), adversarial
       walks (spoofed webhook attempt visible as nothing, abandoned checkout leaves clean state). Screenshots.
+> **Final report reconciliation (main loop)**: the delivered verdict is **PASS, confidence 94%, 3 legs**
+> (leg 1 crashed with the session — stack survived, 8 PNGs re-anchored; legs 2–3 completed all 7 points).
+> Nits: N1 courtesy-active accounts have no in-UI paid-conversion door (by design — product flag) · N2
+> state surfaces desktop-checked only at the offer · N3 dev-console ApiError log on the 409 path.
 > **T018 DONE 2026-07-21 (2 legs): PASS-WITH-NITS 95%** — 7/7 pontos por imagem (12 PNGs em
 > `evidence/t018/`): oferta exata sem de/por · retorno frio honesto (o fix visto pelo olho) · flip no
 > próprio poll SEM reload · unlock sem re-login · abandono sem fantasma · 409 sem jargão (F6) · spoof
