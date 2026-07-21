@@ -19,7 +19,7 @@ initObservability({
   environment: import.meta.env.MODE,
 });
 applyInitialTheme();
-initSessionListener();
+void initSessionListener();
 
 function App() {
   const status = useSessionStore((s) => s.status);

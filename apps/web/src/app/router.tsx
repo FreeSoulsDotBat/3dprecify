@@ -33,20 +33,42 @@ export interface RouterContext {
 // 008/K1: /kits joins the whitelist — the kit teaser's "Entrar" promises a return there.
 const RETURN_TO_INTENT = ["/catalogo", "/kits", "/historico", "/conta"] as const;
 type ReturnToIntent = (typeof RETURN_TO_INTENT)[number];
-type SignInLanding = ReturnToIntent | "/calcular";
+
+// E6/T016 (coordinator-reported HIGH defect): the intent must carry `pathname + search`, not just
+// the pathname — a bounce off `/conta?checkout=retorno` (MP's real `back_url` shape) that loses
+// the query silently drops the seller into the ordinary Conta panel instead of the honest
+// `CheckoutReturnPanel`. The whitelist check still runs ONLY against the pathname (the
+// same-origin/open-redirect guard is unweakened — an unknown pathname is rejected regardless of
+// what query it carries); the query, once the pathname clears the whitelist, travels untouched.
+function splitPathAndSearch(target: string): { pathname: string; search: string } {
+  const qIdx = target.indexOf("?");
+  return qIdx === -1
+    ? { pathname: target, search: "" }
+    : { pathname: target.slice(0, qIdx), search: target.slice(qIdx + 1) };
+}
+
+interface SignInLanding {
+  to: ReturnToIntent | "/calcular";
+  search: Record<string, string>;
+}
 
 function safeRedirect(target: string | undefined): SignInLanding {
-  return RETURN_TO_INTENT.includes(target as ReturnToIntent)
-    ? (target as ReturnToIntent)
-    : "/calcular";
+  if (!target) return { to: "/calcular", search: {} };
+  const { pathname, search } = splitPathAndSearch(target);
+  if (!RETURN_TO_INTENT.includes(pathname as ReturnToIntent))
+    return { to: "/calcular", search: {} };
+  return {
+    to: pathname as ReturnToIntent,
+    search: Object.fromEntries(new URLSearchParams(search)),
+  };
 }
 
 // GC-2: guarded tabs require an authenticated session. Anything else (anonymous OR
-// not-configured) is bounced to /sign-in carrying the return-to-intent. Client guards
-// are UX only — the server stays the boundary (GC-5, Principle IV).
-function requireAuth(status: SessionStatus, pathname: string): void {
+// not-configured) is bounced to /sign-in carrying the return-to-intent (pathname + search,
+// T016). Client guards are UX only — the server stays the boundary (GC-5, Principle IV).
+function requireAuth(status: SessionStatus, href: string): void {
   if (status !== "authenticated") {
-    throw redirect({ to: "/sign-in", search: { redirect: pathname } });
+    throw redirect({ to: "/sign-in", search: { redirect: href } });
   }
 }
 
@@ -92,7 +114,7 @@ const catalogoRoute = createRoute({
 const produtoNovoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/novo",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: ProdutoPage,
 });
 
@@ -104,7 +126,7 @@ function ProdutoEditRouteComponent() {
 const produtoEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/$productId",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: ProdutoEditRouteComponent,
 });
 
@@ -149,7 +171,7 @@ function SnapshotDetailRouteComponent() {
 const snapshotDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico/$snapshotId",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: SnapshotDetailRouteComponent,
 });
 
@@ -162,7 +184,7 @@ const contaRoute = createRoute({
   validateSearch: (search: Record<string, unknown>): { checkout?: "retorno" } => ({
     checkout: search.checkout === "retorno" ? "retorno" : undefined,
   }),
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: ContaPage,
 });
 
@@ -177,7 +199,8 @@ const signInRoute = createRoute({
   }),
   beforeLoad: ({ context, search }) => {
     if (context.status === "authenticated") {
-      throw redirect({ to: safeRedirect(search.redirect) });
+      const landing = safeRedirect(search.redirect);
+      throw redirect({ to: landing.to, search: landing.search as never });
     }
   },
   component: SignInPage,
