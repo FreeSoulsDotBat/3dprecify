@@ -532,6 +532,10 @@ export interface SnapshotPage {
   nextCursor?: string | null;
 }
 
+export interface WebhookAck {
+  status: string;
+}
+
 export type HealthHealthGet200 = {[key: string]: string};
 
 export type ExportQuotePdfApiV1HistorySnapshotIdQuotePdfGetParams = {
@@ -5059,4 +5063,99 @@ export const useDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePost = <TError
         TContext
       > => {
       return useMutation(getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationOptions(options), queryClient);
+    }
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse200 = {
+  data: WebhookAck
+  status: 200
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseSuccess = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse200) & {
+  headers: Headers;
+};
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422) & {
+  headers: Headers;
+};
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseSuccess | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError)
+
+export const getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostUrl = () => {
+
+
+
+
+  return `/api/v1/billing/webhook/mercadopago`
+}
+
+/**
+ * @summary Mercadopago Webhook
+ */
+export const mercadopagoWebhookApiV1BillingWebhookMercadopagoPost = async ( options?: RequestInit): Promise<mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse> => {
+
+  return orvalFetch<mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse>(getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext> => {
+
+const mutationKey = ['mercadopagoWebhookApiV1BillingWebhookMercadopagoPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, void> = () => {
+
+
+          return  mercadopagoWebhookApiV1BillingWebhookMercadopagoPost(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationResult = NonNullable<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>>
+
+    export type MercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Mercadopago Webhook
+ */
+export const useMercadopagoWebhookApiV1BillingWebhookMercadopagoPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationOptions(options), queryClient);
     }

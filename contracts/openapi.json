@@ -3131,6 +3131,47 @@
           }
         }
       }
+    },
+    "/api/v1/billing/webhook/mercadopago": {
+      "post": {
+        "tags": [
+          "billing"
+        ],
+        "summary": "Mercadopago Webhook",
+        "operationId": "mercadopago_webhook_api_v1_billing_webhook_mercadopago_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookAck"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Signature verification failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Verified but malformed notification",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -5197,6 +5238,19 @@
           "voucherCeiling"
         ],
         "title": "VoucherBand"
+      },
+      "WebhookAck": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "WebhookAck"
       }
     }
   }
