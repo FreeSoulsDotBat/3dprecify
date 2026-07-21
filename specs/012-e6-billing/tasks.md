@@ -202,10 +202,16 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       contradictory-lookup test added (200 ack, zero writes) · C2 `raw` PRUNED to the audit whitelist +
       SEC-501 content sweep (ADR-0023 §Post-review) · L1 prod base-URL validator · L2 accepted-deferred
       (orphan preapproval hygiene → T016b). 300s window RATIFIED. 378/378 after closure (re-measured).
-- [ ] T018 qa-produto visual homologation (390px + desktop, **local-stub stack** — the owner's intensive
+- [x] T018 qa-produto visual homologation (390px + desktop, **local-stub stack** — the owner's intensive
       manual homologation follows this same stack; real-sandbox re-check rides T016b): the offer honesty (prices,
       delta, no fake urgency), checkout hand-off states, the flip (premium on without re-login), adversarial
       walks (spoofed webhook attempt visible as nothing, abandoned checkout leaves clean state). Screenshots.
+> **T018 DONE 2026-07-21 (2 legs): PASS-WITH-NITS 95%** — 7/7 pontos por imagem (12 PNGs em
+> `evidence/t018/`): oferta exata sem de/por · retorno frio honesto (o fix visto pelo olho) · flip no
+> próprio poll SEM reload · unlock sem re-login · abandono sem fantasma · 409 sem jargão (F6) · spoof
+> invisível · precedência assinatura>cortesia. Leg 1 bloqueou honesto em 2 sub-pontos (BD e2e poluído +
+> classificador); main loop limpou o BD e a leg 2 rendeu tudo. **Nit de PRODUTO pro dono no gate: conta
+> cortesia não tem porta na UI pra virar paga (Assinar some quando ativa) — ratificar ou abrir follow-up.**
 - [ ] T019 `pnpm gate:all` + drift-guard idempotent + **SC-709** (all E1–E5 guards UNCHANGED). Evidence in
       `dod-evidence.md`.
 - [ ] T020 **Owner-gated PR-A → `develop`** (squash). At this gate: **ADR-0023 flips Proposed → Accepted**.
