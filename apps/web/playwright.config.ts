@@ -20,6 +20,11 @@ const emulatorEnv = {
 // Single source for the e2e DB URL (global-setup.ts recreates this database every run).
 export const E2E_DATABASE_URL = "postgresql+psycopg://precifica3d@localhost:5433/precifica3d_e2e";
 
+// E6/T016 — the local MP stub's dedicated port (`backend/tests/mp_stub/run_standalone.py`).
+// Exported so `billing.spec.ts`/`billing-helpers.ts` never hardcode a second copy of this port.
+export const MP_STUB_URL = "http://localhost:8200";
+export const E2E_BACKEND_URL = "http://localhost:8100";
+
 // The preview port is an ENVIRONMENT concern, not a product constant. 4173 stays the default (CI
 // and every existing script are untouched), but a Windows host running Docker/Hyper-V periodically
 // reserves whole port ranges for dynamic use — 4126–4225 among them — and a reserved port fails to
@@ -63,6 +68,28 @@ export default defineConfig({
         // operator grant then fails with "no existing account matches …". The default allowlist
         // only knows 5173/4173, so an overridden port MUST carry its origin with it.
         P3D_CORS_ORIGINS: JSON.stringify([PREVIEW_URL, "http://localhost:4173"]),
+        // E6/T016 (billing.spec.ts) — points the backend's MercadoPagoProvider at the local MP
+        // stub (below) instead of the real network. No real MP credentials exist or are needed
+        // (the owner's build-first phase) — these are dev-only test values, never read outside
+        // this e2e run. MP_WEBHOOK_SECRET must match `billing-helpers.ts`' MP_STUB_SECRET.
+        P3D_MP_BASE_URL: MP_STUB_URL,
+        P3D_MP_WEBHOOK_SECRET: "e2e-mp-stub-webhook-secret",
+        P3D_MP_PLAN_ID_MONTHLY: "e2e-plan-monthly",
+        P3D_MP_PLAN_ID_ANNUAL: "e2e-plan-annual",
+      },
+    },
+    {
+      // E6/T016 — the local MP stub (`backend/tests/mp_stub/stub.py`) served standalone over real
+      // HTTP (see `run_standalone.py`'s docstring for the cross-process db-fallback rationale).
+      // Same e2e database as the backend above, so the fallback lookup sees the app's own writes.
+      command: "uv run python tests/mp_stub/run_standalone.py",
+      cwd: "../../backend",
+      url: `${MP_STUB_URL}/openapi.json`,
+      reuseExistingServer: !process.env.CI,
+      timeout: 60_000,
+      env: {
+        MP_STUB_PORT: "8200",
+        P3D_DATABASE_URL: E2E_DATABASE_URL,
       },
     },
   ],
