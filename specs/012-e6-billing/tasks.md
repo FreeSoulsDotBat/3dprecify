@@ -195,9 +195,13 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > browser level (strengthened: honest pending pre-confirmation → success on the mounted panel's own poll);
 > auth-boundary 6/6 both runs; a11y-overflow fixed; full suite green minus the pre-existing scenarios-manage
 > contention flake (passes isolated). Stub recipe + 4 gotchas in the ledger.
-- [ ] T017 **`seguranca` review — BLOCKING pre-merge** (the spec mandates it): the SEC checklist from
+- [x] T017 **`seguranca` review — BLOCKING pre-merge** (the spec mandates it): the SEC checklist from
       `seguranca-round.md` §8 against the real diff (signature impl, no-client-trust, env isolation, secret
       handling, LGPD data map — SC-706). Findings fixed before the gate.
+      **→ DONE 2026-07-21: APPROVED-WITH-CONDITIONS → conditions CLOSED same-day (main loop)**: C1 SEC-104
+      contradictory-lookup test added (200 ack, zero writes) · C2 `raw` PRUNED to the audit whitelist +
+      SEC-501 content sweep (ADR-0023 §Post-review) · L1 prod base-URL validator · L2 accepted-deferred
+      (orphan preapproval hygiene → T016b). 300s window RATIFIED. 378/378 after closure (re-measured).
 - [ ] T018 qa-produto visual homologation (390px + desktop, **local-stub stack** — the owner's intensive
       manual homologation follows this same stack; real-sandbox re-check rides T016b): the offer honesty (prices,
       delta, no fake urgency), checkout hand-off states, the flip (premium on without re-login), adversarial

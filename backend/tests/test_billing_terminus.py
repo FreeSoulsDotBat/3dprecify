@@ -227,3 +227,84 @@ def test_entitlement_flips_active_after_verified_payment_no_relogin(
     body = after.json()
     assert body["status"] == "active"
     assert body["source"] == "payment"
+
+
+def test_SEC104_a_signed_webhook_whose_lookup_says_rejected_grants_nothing(
+    billing_client: TestClient, migrated_db: str, mp_stub: MPStub
+) -> None:
+    """T017 condition C1 — "the single most important test in the epic": a VALIDLY-SIGNED webhook
+    whose looked-up resource is NOT approved acks 200 and writes NOTHING — the lookup, never the
+    body, is the writer's only input (SEC-104). In the CURRENT increment every non-`payment` kind
+    returns before the inbox (grant_writer docstring); PR-B's grace path (T023/T024) refines this:
+    a failed RENEWAL of a previously-active subscription will write a grace grant + an inbox row —
+    a failed FIRST charge like this one must still grant nothing."""
+    engine = sa.create_engine(migrated_db)
+    owner_uid = "u-terminus-sec104"
+    pre = mp_stub.create_preapproval(plan_period="monthly")
+    sub_id = _mk_subscription(engine, owner_uid=owner_uid, mp_preapproval_id=pre.id)
+    payment = mp_stub.fail_payment(pre.id)
+
+    resp = mp_stub.fire_webhook(billing_client, payment_id=payment.id, secret=WEBHOOK_SECRET)
+    assert resp.status_code == 200, resp.text
+
+    assert _grants(engine, owner_uid) == []
+    assert _events(engine, sub_id) == []
+
+
+def test_SEC501_prune_raw_strips_payer_pii_and_card_data() -> None:
+    """T017 condition C2 (SC-706/SEC-501): a realistic full MP `authorized_payments` resource —
+    payer email/CPF, card first6/last4, address — reduces to the audit whitelist + bare payer id."""
+    from app.billing.providers.mercadopago import _RAW_AUDIT_FIELDS, _prune_raw
+
+    fat_resource = {
+        "id": "pay-123",
+        "preapproval_id": "pre-123",
+        "status": "approved",
+        "period_end": "2026-08-21T00:00:00Z",
+        "live_mode": False,
+        "payer": {
+            "id": 991,
+            "email": "seller@example.com",
+            "identification": {"type": "CPF", "number": "12345678901"},
+            "address": {"zip_code": "01234-567"},
+        },
+        "card": {"first_six_digits": "503143", "last_four_digits": "6351"},
+        "transaction_amount": 15.99,
+        "payment_method_id": "master",
+    }
+    pruned = _prune_raw(fat_resource)
+
+    assert pruned["payer_id"] == 991
+    allowed = set(_RAW_AUDIT_FIELDS) | {"payer_id"}
+    assert set(pruned) <= allowed
+    flat = repr(pruned)
+    for forbidden in ("email", "CPF", "12345678901", "first_six", "6351", "zip_code", "card"):
+        assert forbidden not in flat
+
+
+def test_SEC501_stored_raw_keys_are_whitelist_only(
+    billing_client: TestClient, migrated_db: str, mp_stub: MPStub
+) -> None:
+    """The wire-level lock of C2: after real webhook processing, every key persisted in
+    `billing_events.raw` is inside the audit whitelist (+ `payer_id`) — no PAN-shaped value."""
+    import json
+    import re
+
+    from app.billing.providers.mercadopago import _RAW_AUDIT_FIELDS
+
+    engine = sa.create_engine(migrated_db)
+    owner_uid = "u-terminus-sec501"
+    pre = mp_stub.create_preapproval(plan_period="monthly")
+    _mk_subscription(engine, owner_uid=owner_uid, mp_preapproval_id=pre.id)
+    payment = mp_stub.authorize_payment(pre.id, period_days=30)
+    resp = mp_stub.fire_webhook(billing_client, payment_id=payment.id, secret=WEBHOOK_SECRET)
+    assert resp.status_code == 200, resp.text
+
+    with engine.connect() as conn:
+        rows = conn.execute(text("SELECT raw FROM billing_events")).scalars().all()
+    assert rows, "the webhook must have persisted exactly one inbox row"
+    allowed = set(_RAW_AUDIT_FIELDS) | {"payer_id"}
+    for raw in rows:
+        payload = raw if isinstance(raw, dict) else json.loads(str(raw))
+        assert set(payload) <= allowed
+        assert not re.search(r"\b\d{13,19}\b", json.dumps(payload))

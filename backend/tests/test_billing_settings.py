@@ -101,3 +101,20 @@ def test_play_billing_flag_loads_from_env(monkeypatch) -> None:  # type: ignore[
     assert Settings(_env_file=None).play_billing_enabled is True  # type: ignore[call-arg]
     monkeypatch.setenv("P3D_PLAY_BILLING_ENABLED", "false")
     assert Settings(_env_file=None).play_billing_enabled is False  # type: ignore[call-arg]
+
+
+def test_L1_prod_refuses_a_non_production_mp_base_url() -> None:
+    """T017 finding L1: under app_env=prod the MP base URL (the grant-truth source) must be the
+    real API — a stub-pointing override refuses to boot; dev keeps the e2e override working."""
+    import pytest
+    from pydantic import ValidationError
+
+    from app.settings import Settings
+
+    with pytest.raises(ValidationError, match="must be the production Mercado Pago API"):
+        Settings(app_env="prod", mp_base_url="http://localhost:8200")
+
+    assert Settings(app_env="prod").mp_base_url == "https://api.mercadopago.com"
+    assert Settings(app_env="dev", mp_base_url="http://localhost:8200").mp_base_url.endswith(
+        ":8200"
+    )

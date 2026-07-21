@@ -41,6 +41,37 @@ def _approved_kind(mp_status: str) -> EventKind:
     return "payment" if mp_status == "approved" else "payment_failed"
 
 
+#: SC-706/SEC-501 minimisation (T017 condition C2): the ONLY fields of a looked-up MP resource
+#: that `billing_events.raw` may retain. A real `authorized_payments` resource carries payer
+#: email/CPF (`payer.identification`) and card `first_six_digits`/`last_four_digits` — none of
+#: that is ours to keep; the audit trail needs identity + state, not PII.
+_RAW_AUDIT_FIELDS = (
+    "id",
+    "preapproval_id",
+    "status",
+    "period_end",
+    "next_payment_date",
+    "plan_period",
+    "reason",
+    "live_mode",
+    "date_created",
+    "last_modified",
+)
+
+
+def _prune_raw(resource: dict[str, Any]) -> dict[str, Any]:
+    """Whitelist-prune a looked-up MP resource before it is persisted as audit data. The payer
+    is reduced to its bare id (`payer_id`); every unlisted field — card data, emails, documents,
+    addresses — is dropped BEFORE the writer ever sees it."""
+    pruned = {k: resource[k] for k in _RAW_AUDIT_FIELDS if k in resource}
+    payer = resource.get("payer")
+    if isinstance(payer, dict) and "id" in payer:
+        pruned["payer_id"] = payer["id"]
+    elif "payer_id" in resource:
+        pruned["payer_id"] = resource["payer_id"]
+    return pruned
+
+
 def _parse_dt(value: object) -> datetime | None:
     if not value or not isinstance(value, str):
         return None
@@ -145,7 +176,7 @@ class MercadoPagoProvider:
             kind=_approved_kind(str(mp_status)),
             period_end=period_end,
             mp_status=str(mp_status),
-            raw=payment,
+            raw=_prune_raw(payment),
         )
 
     async def lookup_verified_event(self, event_type: str, data_id: str) -> VerifiedEvent | None:
@@ -172,7 +203,7 @@ class MercadoPagoProvider:
                     kind="cancel",
                     period_end=None,
                     mp_status=str(status),
-                    raw=preapproval,
+                    raw=_prune_raw(preapproval),
                 )
             return None
         return None

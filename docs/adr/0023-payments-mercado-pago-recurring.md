@@ -231,6 +231,20 @@ homologation, then Accepted). Sub-rules, all normative:
   checkout-creation failure (e.g. `BILLING_UNAVAILABLE`) — decided at the plan round only if a route can actually
   return it (no phantom codes — the ADR-0002/errors.py discipline).
 
+## Post-review amendments (T017, 2026-07-21 — seguranca APPROVED-WITH-CONDITIONS)
+
+- **C2 resolved as PRUNE (option a)**: `billing_events.raw` retains ONLY the audit whitelist
+  (`_RAW_AUDIT_FIELDS` + bare `payer_id`) — the full MP resource (payer email/CPF, card
+  first6/last4) is dropped in the provider before the writer sees it; SEC-501 content sweep locks it.
+- **C1 closed**: the SEC-104 contradictory-lookup test exists (signed webhook + rejected lookup →
+  200 ack, zero writes).
+- **L1 hardened**: a settings validator refuses a non-production `P3D_MP_BASE_URL` under
+  `app_env=prod` (the third env guard).
+- **L2 accepted-deferred**: a lost double-checkout race can orphan a `pending` preapproval at MP
+  (no local row, never grants, reconcile ignores it) — resource hygiene only; revisit at T016b
+  against the real sandbox.
+- Freshness window **300s RATIFIED** by the review (dev-chosen, documented, one constant).
+
 ## Consequences
 
 - **Positive:** the epic's centerpiece holds — a verified payment is a new *writer* of the ADR-0012 ledger, and every
