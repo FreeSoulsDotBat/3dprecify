@@ -254,7 +254,10 @@ def test_SEC104_a_signed_webhook_whose_lookup_says_rejected_grants_nothing(
 def test_SEC501_prune_raw_strips_payer_pii_and_card_data() -> None:
     """T017 condition C2 (SC-706/SEC-501): a realistic full MP `authorized_payments` resource —
     payer email/CPF, card first6/last4, address — reduces to the audit whitelist + bare payer id."""
-    from app.billing.providers.mercadopago import _RAW_AUDIT_FIELDS, _prune_raw
+    from app.billing.providers.mercadopago import (
+        _RAW_AUDIT_FIELDS,  # pyright: ignore[reportPrivateUsage]
+        _prune_raw,  # pyright: ignore[reportPrivateUsage]
+    )
 
     fat_resource = {
         "id": "pay-123",
@@ -290,7 +293,9 @@ def test_SEC501_stored_raw_keys_are_whitelist_only(
     import json
     import re
 
-    from app.billing.providers.mercadopago import _RAW_AUDIT_FIELDS
+    from app.billing.providers.mercadopago import (
+        _RAW_AUDIT_FIELDS,  # pyright: ignore[reportPrivateUsage]
+    )
 
     engine = sa.create_engine(migrated_db)
     owner_uid = "u-terminus-sec501"
