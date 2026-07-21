@@ -76,10 +76,14 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       token + webhook secret), create the two `preapproval_plan`s (monthly R$ 15,99 · annual R$ 155,88/yr)
       in the sandbox, choose the dev tunnel tool, and hand the values to `.env` (NEVER committed — the
       `P3D_MP_*` SecretStr pattern). Record plan ids in the env, not in code.
-- [ ] T003 Verify-and-pin (Constitution II / ADR-0020 lesson): confirm MP server access shape (official SDK
+- [x] T003 Verify-and-pin (Constitution II / ADR-0020 lesson): confirm MP server access shape (official SDK
       vs httpx) + EXACT version pin in `backend/pyproject.toml`; fetch and record MP's REAL renewal retry
       cadence (feeds the grace `max()`); record both in `research.md` §D10 as RESOLVED with sources. If the
       cadence cannot be confirmed, STOP and surface — never default silently.
+      **→ DONE 2026-07-21 (main loop, sources in research §D10)**: MP recycling = **4 reattempts / ~10-day
+      window / auto-cancel after 3 rejections** ⇒ grace covers `period_end + max(10d, 7d floor)`; access =
+      **httpx (house dep, async)**, SDK `mercadopago==3.3.0` rejected (sync/requests, thin surface);
+      reconciliation poll: 6 h.
 
 ## Phase 2: Foundational (blocking) — settings, schema, the SEC suite
 

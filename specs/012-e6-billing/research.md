@@ -79,11 +79,11 @@
   E6 (SC-711); a Play internal-testing purchase reaching the shared writer is the recorded E7-gate evidence.
 - E7 turn-on needs: flag flip + packaged app + live RTDN endpoint + Play's own seguranca review (its own ADR).
 
-## D10 — Unresolved-by-design (flagged, routed, never defaulted)
+## D10 — Formerly-unresolved items (T003 closed 2026-07-21 by the main loop, sources verified)
 
-| Item | Routed to | Nature |
-|---|---|---|
-| MP retry cadence (grace `max()` implementation) | implementation start (verify against MP docs/sandbox) | fact to fetch |
-| MP server SDK vs httpx + exact version PIN | implementation start (ADR-0020 pinned-not-assumed lesson) | fact to fetch |
-| Q9 fiscal-receipt sufficiency | owner + accountant/compliance | LAUNCH blocker, not code blocker |
-| Poll exact cadence | set with MP cadence in hand | tuning |
+| Item | Resolution |
+|---|---|
+| **MP retry cadence** | **RESOLVED (official MP docs, fetched 2026-07-21)**: failed subscription charges enter a recycling scheme of up to **4 reattempts within a ~10-day window**; the subscription is **auto-cancelled after 3 rejected installments**. ⇒ the grace grant covers `period_end + max(≈10d MP window, 7d floor)` — in practice **10 days**; the owner's 7-day floor is the guarantee if MP ever shrinks it. Source: developers docs "Subscriptions with authorized payment" (mercadopago.com.co/developers). |
+| **MP server access: SDK vs httpx** | **RESOLVED: `httpx` (already a house dependency, async-capable, uv-locked)** for the ~4 REST calls (create/GET preapproval, GET authorized_payments, cancel) + hand-rolled `x-signature` HMAC per SEC-101..106. Rejected: official `mercadopago==3.3.0` PyPI SDK (released 2026-06-30, Py≥3.10 — verified) — sync/requests-based (sync-in-async friction in FastAPI) and an extra dependency for a thin surface; revisit if the API surface grows. |
+| Q9 fiscal-receipt sufficiency | still routed: owner + accountant (LAUNCH blocker, not code) — T042. |
+| Poll exact cadence | with the 10-day MP window known: reconciliation every **6 h** (dev: manual runs) is comfortably inside every retry window; final tuning at T016b against the real sandbox. |
