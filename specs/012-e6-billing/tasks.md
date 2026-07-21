@@ -54,10 +54,14 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 1: Setup
 
-- [ ] T001 [P] designer-ux → handoff (NON-BLOCKING, parallel with all PR-A work): the plan/price surface
+- [x] T001 [P] designer-ux → handoff (NON-BLOCKING, parallel with all PR-A work): the plan/price surface
       (Q11: inside Conta + reachable from every teaser), the checkout hand-off states (pending/return/
       abandoned), the Conta plan panel states (active/grace/pending/cancelled/lapsed — honest copy per
       FR-708/709), and the teaser CTA. Write to `specs/012-e6-billing/ux-billing.md`. Not a merge blocker.
+      **→ DONE 2026-07-20**: `ux-billing.md` (6 areas + 9 owner flags §10). Load-bearing findings: DS gap —
+      no `caution` tone for grace (flag F9) · the pending≠grace copy firewall (§0.3) · **the MP `back_url`
+      must be a 1-SEGMENT route** (the measured `base:'./'` cold-load trap applied to the external return —
+      a T013 constraint) · the courtesy-outlives-cancel honesty line (§4.3).
 - [ ] T002 **Owner setup checkpoint (BLOCKING T007+)**: provision the **MP sandbox application** (access
       token + webhook secret), create the two `preapproval_plan`s (monthly R$ 15,99 · annual R$ 155,88/yr)
       in the sandbox, choose the dev tunnel tool, and hand the values to `.env` (NEVER committed — the
