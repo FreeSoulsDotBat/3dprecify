@@ -87,24 +87,30 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 2: Foundational (blocking) — settings, schema, the SEC suite
 
-- [ ] T004 Write FAILING pytest first — `backend/tests/test_billing_schema.py`: migration `0005` shape per
+- [x] T004 Write FAILING pytest first — `backend/tests/test_billing_schema.py`: migration `0005` shape per
       `data-model.md` §1–§3 (tables exist, CHECKs named, `event_key` UNIQUE, `mp_preapproval_id` UNIQUE,
       the one-active-subscription partial index, `entitlement_grants` source CHECK includes `payment` +
       nullable `subscription_id` FK; NO money/card column anywhere — VR-701). Observe failing.
-- [ ] T005 **[ESCALATED → opus per ADR-0022 — money/entitlement domain]** Implement migration
+- [x] T005 **[ESCALATED → opus per ADR-0022 — money/entitlement domain]** Implement migration
       `backend/alembic/versions/0005_e6_billing.py` (`down_revision="0004"`) + models `Subscription`,
       `BillingEvent` + the additive `EntitlementGrant` extension in `backend/app/models/__init__.py`.
       Upgrade→downgrade→upgrade proven on the compose DB. `ruff format` + `ruff check` both. Tests green.
-- [ ] T006 [P] Settings + env plumbing in `backend/app/settings.py`: `P3D_MP_ACCESS_TOKEN`,
+- [x] T006 [P] Settings + env plumbing in `backend/app/settings.py`: `P3D_MP_ACCESS_TOKEN`,
       `P3D_MP_WEBHOOK_SECRET`, `P3D_MP_PLAN_ID_MONTHLY`, `P3D_MP_PLAN_ID_ANNUAL` (SecretStr, per-env) +
       `P3D_PLAY_BILLING_ENABLED: bool = False`. Fail-closed pytest: missing secret ⇒ the webhook route
       refuses (SEC-403), flag default OFF (VR-709 half).
-- [ ] T007 Write FAILING pytest first — `backend/tests/test_billing_security.py`, the **SEC-invariant
+- [x] T007 Write FAILING pytest first — `backend/tests/test_billing_security.py`, the **SEC-invariant
       suite** (seguranca-round SEC-1xx..7xx as the spec): bad/absent/garbage `x-signature` → 401 + zero DB
       writes; stale `ts` outside freshness window → reject; constant-time compare; `live_mode`↔`app_env`
       mismatch → reject (VR-705); unknown subscription → no grant; cross-account event isolation (VR-703);
       old-event replay never extends entitlement (VR-704); operator CLI still rejects `payment` (VR-710);
       Play routes 404 when flag OFF (VR-709). Observe ALL failing (routes absent).
+
+> **Foundational wave DONE 2026-07-21 (`7885f1b`, dev-estrutura OPUS)**: 19/19 schema red→green · migration
+> `0005` up→down→up proven · settings fail-closed 6/6 · SEC suite authored: **14 red-by-design + 2
+> green-by-design (VR-709/VR-710 absence guards)** — 27 passed/14 failed re-measured by the main loop. ADR
+> prose reconciled to the implemented contract (plan-id env naming; `grace` in the status enum). Play route
+> path stays a placeholder until T036.
 
 ## Phase 3: User Story 3 — The verified terminus (Priority: P1, FOUNDATIONAL — build FIRST)
 
