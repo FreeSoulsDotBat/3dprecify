@@ -151,13 +151,18 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 **Goal**: signed-in seller → MP hosted checkout; abandoned = never-started; client can't fake paid.
 **Independent test**: quickstart step 2.
 
-- [ ] T012 [US2] Write FAILING pytest — `backend/tests/test_billing_checkout.py`: `POST /billing/checkout`
+- [x] T012 [US2] Write FAILING pytest — `backend/tests/test_billing_checkout.py`: `POST /billing/checkout`
       requires auth (401 signed-out — FR-702); creates pending preapproval + `pending` subscription row,
       returns `initPoint`; NO grant written; second checkout while one is active/grace/paused → 409
       (SEC-604); abandoned checkout leaves no entitlement effect (US2.2); MP unreachable → honest 503
       `BILLING_UNAVAILABLE`. Observe failing.
-- [ ] T013 [US2] Implement `backend/app/billing/checkout.py` + the route; contract ripple: regen OpenAPI +
+- [x] T013 [US2] Implement `backend/app/billing/checkout.py` + the route; contract ripple: regen OpenAPI +
       Orval from the ROOT, idempotence proven 2×. Tests green.
+
+> **Checkout wave DONE 2026-07-21 (`ed29a6d`, dev-backend sonnet)**: 5/5 failing-first → green; SEC-301/302
+> flipped — **the whole SEC suite (16/16) is now green**; full suite 374/0 re-measured; regen idempotent by
+> hash. Dated deviations: 409 double-subscribe = `VALIDATION_ERROR` + status 409 (FE branches on status —
+> the honest copy is the FE wave's job); stub extended additively with POST /preapproval.
 
 ## Phase 5: User Story 1 — The offer surface (Priority: P1)
 
