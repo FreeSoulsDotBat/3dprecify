@@ -153,22 +153,30 @@
 
 ## Phase 8: User Story 8 — Pré-fill de taxas ML e Amazon (P2)
 
+> **DEFERIDA — decisão do dono 2026-07-23 (gate T063).** Nenhuma entrada de ML/Amazon entra
+> nesta feature; `entries: []` permanece e o override manual + selo "sem referência" seguem como o
+> comportamento honesto. O destino é o incremento **014**: mapeamento COMPLETO categoria→taxa nos dois
+> marketplaces com atualização mensal automática, via fluxo spec-kit próprio (Princípio VIII).
+> Tudo que a curadoria já pagou (valores exatos ML 13%/18%, tabela Amazon integral, o bloqueio de wire
+> do `slotDeterminants`, as vias de automação por marketplace) está preservado em `us8-fee-proposal.md`
+> §8–§10 para o 014 não repetir o trabalho. Tasks marcadas `[~]` = deferidas, não feitas.
+
 **Goal**: curadoria D3=B com protocolo de fonte + gate do dono (research §6, data-model §2). Parte do FR-015.
 
 **Independent Test**: quickstart SC-008.
 
 ### Tests for User Story 8 ⚠️
 
-- [ ] T060 [P] [US8] Teste FAILING de paridade `apps/web/src/shared/fee-catalog/seed.test.ts`: `FEE_CATALOG_SEED` ≡ `backend/app/data/catalog.json` byte-a-byte (a paridade vira guarda executável para as entradas novas; a validação do seed pelo `parseFeeCatalog` — E1-06 — vive em US6/T075, desacoplada do gate do dono)
-- [ ] T061 [P] [US8] Teste FAILING de prefill em `apps/web/src/features/calculator/fee-prefill.test.ts`: slot ML ⇒ taxas pré-preenchidas + selo "referência"; slot Amazon ⇒ `minPerItem: 1.00` aplicado (SC-112)
+- [~] T060 [P] [US8] Teste FAILING de paridade `apps/web/src/shared/fee-catalog/seed.test.ts`: `FEE_CATALOG_SEED` ≡ `backend/app/data/catalog.json` byte-a-byte (a paridade vira guarda executável para as entradas novas; a validação do seed pelo `parseFeeCatalog` — E1-06 — vive em US6/T075, desacoplada do gate do dono)
+- [~] T061 [P] [US8] Teste FAILING de prefill em `apps/web/src/features/calculator/fee-prefill.test.ts`: slot ML ⇒ taxas pré-preenchidas + selo "referência"; slot Amazon ⇒ `minPerItem: 1.00` aplicado (SC-112)
 
 ### Implementation for User Story 8
 
-- [ ] T062 [US8] [opus] Levantar as tarifas oficiais (ML Clássico BR — comissão/faixas; Amazon BR — comissão padrão + piso R$ 1) com `sourceUrl` + `effectiveDate` + data de coleta, na ordem de sourcing registrada (fonte determinística/oficial; WebSearch fallback; API 403-bloqueada); entregar como TABELA-PROPOSTA no PR, sem tocar código ainda
-- [ ] T063 [US8] **GATE DO DONO (bloqueante)**: Jonatan valida cada valor da tabela-proposta — nenhum número entra sem aprovação explícita (FR-015, Truth Over Approval); granularidade por-categoria fica DECLARADA como fora do schema atual (research §6 — se o dono quiser, é evolução futura, flag no PR)
-- [ ] T064 [US8] Entradas aprovadas em `backend/app/data/catalog.json` + espelho em `apps/web/src/shared/fee-catalog/seed.ts` + bump do `catalogVersion` — T060/T061 verdes
-- [ ] T065 [US8] Homologação visual (qa-produto, [opus]): selecionar ML e Amazon no calculator, selo + valores visíveis, 390px — evidência PNG
-- [ ] T066 [US8] Gate verde; PR de US8; ledger; autorização do dono (o merge é a segunda assinatura sobre os valores)
+- [~] T062 [US8] [opus] Levantar as tarifas oficiais (ML Clássico BR — comissão/faixas; Amazon BR — comissão padrão + piso R$ 1) com `sourceUrl` + `effectiveDate` + data de coleta, na ordem de sourcing registrada (fonte determinística/oficial; WebSearch fallback; API 403-bloqueada); entregar como TABELA-PROPOSTA no PR, sem tocar código ainda
+- [~] T063 [US8] **GATE DO DONO (bloqueante)**: Jonatan valida cada valor da tabela-proposta — nenhum número entra sem aprovação explícita (FR-015, Truth Over Approval); granularidade por-categoria fica DECLARADA como fora do schema atual (research §6 — se o dono quiser, é evolução futura, flag no PR)
+- [~] T064 [US8] Entradas aprovadas em `backend/app/data/catalog.json` + espelho em `apps/web/src/shared/fee-catalog/seed.ts` + bump do `catalogVersion` — T060/T061 verdes
+- [~] T065 [US8] Homologação visual (qa-produto, [opus]): selecionar ML e Amazon no calculator, selo + valores visíveis, 390px — evidência PNG
+- [~] T066 [US8] Gate verde; PR de US8; ledger; autorização do dono (o merge é a segunda assinatura sobre os valores)
 
 **Checkpoint**: SC-008 provado; FR-105a da spec 005 finalmente verdadeiro no produto shipado.
 
