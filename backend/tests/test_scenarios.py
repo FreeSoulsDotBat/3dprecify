@@ -1517,3 +1517,77 @@ def test_E5_04_a_kit_scenario_with_one_line_soft_deleted_degrades_only_that_line
     assert dead_line["input"]["failurePct"] == "2.000"
     assert dead_line["input"]["machineValue"] == "2000.00"
     _ = live_product_id  # unused beyond materialization-shape proof above
+
+
+# ══ 013 US6 / T070 — audit findings E5-01 (KIT re-snapshot on save) + E5-02 (duplicate ellipsis) ══
+
+
+def test_E5_01_a_PUT_of_a_KIT_basis_scenario_recaptures_lastKnown_from_the_live_kit(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E5-01. `_resnapshot_cost_basis` covered `kind == "PRODUCT"` only and delegated
+    the KIT case to T024 — a mechanism that is pure READ and never writes. So a KIT basis kept
+    whatever `lastKnown` the client last sent, and a later D6 degradation served a value that was
+    never re-captured: the D6-lossless promise did not hold for kits.
+
+    Proven the only way it CAN be proven end-to-end: the stored snapshot is invisible while the ref
+    resolves (D3 live-reflect wins on read), so the kit is soft-deleted AFTER the save and the
+    degraded read is what exposes what was actually written."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-kit-resnap")
+    bom_id, product_id, piece_name = _mk_kit_with_ad_hoc_line(
+        db_client, h, piece_name="Perna", print_grams="100.000", kit_name="Kit Resnap"
+    )
+
+    config = _config_with_kit_basis(bom_id, "Kit Resnap")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+
+    # The live kit CHANGES after the create, and the seller re-saves (PUT) the same intent with the
+    # same stale client-sent `lastKnown`. The save must re-capture TODAY's kit.
+    fid, pid = _mk_refs(db_client, h)
+    _update_product(db_client, h, product_id, fid, pid, print_grams="777.000", name=piece_name)
+    resave = db_client.put(f"/api/v1/scenarios/{scenario_id}", headers=h, json=_body(config=config))
+    assert resave.status_code == 200, resave.text
+
+    db_client.delete(f"/api/v1/boms/{bom_id}", headers=h).raise_for_status()
+
+    degraded = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert degraded.status_code == 200, degraded.text
+    basis = degraded.json()["config"]["costBasis"]
+    assert basis["degraded"] is True
+    lines = basis["lastKnown"]["lines"]
+    # NOT the client's stale placeholder (`{name: "stale", quantity: 9}`) — the kit as it stood at
+    # the last save: the materialized line's live name/quantity and the edited 777.000.
+    assert [line["name"] for line in lines] == [piece_name], lines
+    assert [line["quantity"] for line in lines] == [2], lines
+    assert lines[0]["input"]["printGrams"] == "777.000", lines
+
+
+def test_E5_02_duplicating_a_118_char_name_truncates_the_BASE_with_an_ellipsis(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E5-02. `"Cópia de " + name` overflows the 120-char limit for any name longer
+    than 111 chars; the old guard hard-sliced the WHOLE string at [:120], silently amputating the
+    tail with no sign anything was cut. The copy must stay within 120 AND say so — the base is
+    truncated with an ellipsis, and the `"Cópia de "` prefix always survives intact."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-dup-ellipsis")
+    base = "N" * 118
+    original = db_client.post("/api/v1/scenarios", headers=h, json=_body(name=base))
+    assert original.status_code == 201, original.text
+
+    dup = db_client.post(f"/api/v1/scenarios/{original.json()['id']}/duplicate", headers=h)
+    assert dup.status_code == 201, dup.text
+    copy_name = dup.json()["name"]
+    assert len(copy_name) <= 120, len(copy_name)
+    assert copy_name.startswith("Cópia de "), copy_name
+    assert copy_name.endswith("…"), copy_name
+    assert copy_name == "Cópia de " + "N" * 110 + "…"
+
+    # A name that still FITS is never touched (no gratuitous ellipsis).
+    short = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="N" * 111))
+    short_copy = db_client.post(
+        f"/api/v1/scenarios/{short.json()['id']}/duplicate", headers=h
+    ).json()
+    assert short_copy["name"] == "Cópia de " + "N" * 111
+    assert len(short_copy["name"]) == 120
