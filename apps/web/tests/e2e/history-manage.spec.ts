@@ -22,9 +22,9 @@ import {
 // together against Postgres — the only place the two-shelf contrast is actually visible to a seller.
 //
 // A note on navigation: the detail is reached by OPENING it from the ledger (a card click), exactly
-// as a seller does — never by a cold deep-link. `/historico/$snapshotId` is an auth-guarded route, so
-// a full page-load of that URL races the session bootstrap; the list `/historico` is public and is
-// the real entry point to a record.
+// as a seller does — never by a cold deep-link (013/deep-links.spec.ts covers THAT class directly).
+// `?snapshot=<id>` requires an authenticated session, so a full page-load of that URL races the
+// session bootstrap; the list `/historico` is public and is the real entry point to a record.
 
 const t = messages;
 
@@ -33,7 +33,9 @@ const t = messages;
 async function openFromLedger(page: Page, cardTitle: string): Promise<void> {
   await page.goto("/historico");
   await page.getByText(cardTitle).first().click();
-  await expect(page).toHaveURL(/\/historico\/.+/);
+  // 013/F-02 (D1=A): the detail is `?snapshot=<id>` on `/historico`, not `/historico/<id>` — the
+  // old 2-segment shape `base:'./'` blanked on cold-load, which is exactly why it moved.
+  await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 }
 
 test("SC-502/US3: deleting the origin product never moves the snapshot's values — only its link goes", async ({

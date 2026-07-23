@@ -102,8 +102,8 @@ describe("ScenarioContextBar — 'Abrir origem' (F1: only when the ref actually 
     );
     await user.click(screen.getByRole("button", { name: t.openOrigin }));
     expect(navigateMock).toHaveBeenCalledWith({
-      to: "/catalogo/produtos/$productId",
-      params: { productId: "p1" },
+      to: "/catalogo",
+      search: { produto: "p1" },
     });
   });
 

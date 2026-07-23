@@ -35,8 +35,14 @@ function redirectParam(search: unknown): string | undefined {
 describe("router auth guards (T034 / US2)", () => {
   // 009/US5 (2026-07-13): /historico left the guarded set for the same reason /catalogo and /kits
   // did — a signed-out seller must SEE the honest teaser on the tab, never a bounce. The SNAPSHOT
-  // DETAIL route stays guarded: it addresses one specific record, and there is nothing to teach a
-  // signed-out visitor at that URL.
+  // DETAIL and the product create/edit routes stay guarded — there is nothing to teach a
+  // signed-out visitor at those URLs.
+  //
+  // 013/F-02 (D1=A): these three are the OLD 2-segment URLs (`base:'./'` blanks them on
+  // cold-load — the reason they're migrated at all, see router.tsx). They stay registered as
+  // CLIENT-SIDE REDIRECTS for ≥1 release: the auth gate they always had fires FIRST (so the
+  // GC-2 sign-in bounce below is completely unchanged — same old path in `redirect=`), and only
+  // an AUTHENTICATED visitor proceeds to the new `?produto=`/`?snapshot=` URL (T021, below).
   const guarded = ["/historico/csid-1", "/conta", "/catalogo/produtos/novo"] as const;
 
   it.each(guarded)(
@@ -57,9 +63,60 @@ describe("router auth guards (T034 / US2)", () => {
     },
   );
 
-  it.each(guarded)("an authenticated user reaches %s directly", async (path) => {
-    const router = await loadAt("authenticated", path);
-    expect(router.state.location.pathname).toBe(path);
+  // /conta has no new-URL migration — it stays a plain guarded route, reached directly.
+  it("an authenticated user reaches /conta directly", async () => {
+    const router = await loadAt("authenticated", "/conta");
+    expect(router.state.location.pathname).toBe("/conta");
+  });
+
+  // ---- 013/T021 — old→new redirect, id preserved (F-02 / D1=A) -----------------------------
+  // The old 2-segment routes remain reachable (a stale bookmark/shared link), but an
+  // authenticated visitor is now forwarded to the NEW query-param URL — never left on the old
+  // shape, which is exactly the one `base:'./'` blanks on a future cold-load/refresh of THAT url.
+  describe("old→new redirect preserves the id (T021)", () => {
+    it("/historico/:snapshotId → /historico?snapshot=:snapshotId", async () => {
+      const router = await loadAt("authenticated", "/historico/csid-1");
+      expect(router.state.location.pathname).toBe("/historico");
+      expect(router.state.location.search).toEqual({ snapshot: "csid-1" });
+    });
+
+    it("/catalogo/produtos/novo → /catalogo?produto=novo", async () => {
+      const router = await loadAt("authenticated", "/catalogo/produtos/novo");
+      expect(router.state.location.pathname).toBe("/catalogo");
+      expect(router.state.location.search).toEqual({ produto: "novo" });
+    });
+
+    it("/catalogo/produtos/:productId → /catalogo?produto=:productId", async () => {
+      const router = await loadAt("authenticated", "/catalogo/produtos/prod-1");
+      expect(router.state.location.pathname).toBe("/catalogo");
+      expect(router.state.location.search).toEqual({ produto: "prod-1" });
+    });
+  });
+
+  // ---- 013/F-02 — the NEW URLs carry the SAME auth gate the old 2-segment routes had, for a
+  // direct/cold hit (not just via the redirect above) -----------------------------------------
+  describe("the new query-param URLs carry the same gate directly (F-02)", () => {
+    it("GC-2: /catalogo?produto=novo (anonymous) is sent to /sign-in", async () => {
+      const router = await loadAt("anonymous", "/catalogo?produto=novo");
+      expect(router.state.location.pathname).toBe("/sign-in");
+    });
+
+    it("GC-2: /historico?snapshot=csid-1 (anonymous) is sent to /sign-in", async () => {
+      const router = await loadAt("anonymous", "/historico?snapshot=csid-1");
+      expect(router.state.location.pathname).toBe("/sign-in");
+    });
+
+    it("an authenticated user reaches /catalogo?produto=novo directly", async () => {
+      const router = await loadAt("authenticated", "/catalogo?produto=novo");
+      expect(router.state.location.pathname).toBe("/catalogo");
+      expect(router.state.location.search).toEqual({ produto: "novo" });
+    });
+
+    it("an authenticated user reaches /historico?snapshot=csid-1 directly", async () => {
+      const router = await loadAt("authenticated", "/historico?snapshot=csid-1");
+      expect(router.state.location.pathname).toBe("/historico");
+      expect(router.state.location.search).toEqual({ snapshot: "csid-1" });
+    });
   });
 
   it("GC-1: /calcular renders for an anonymous user (public)", async () => {
