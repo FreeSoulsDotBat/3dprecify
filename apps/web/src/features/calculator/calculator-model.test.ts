@@ -273,7 +273,47 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.seal.kind).toBe("reference"); // dated reference, not a manual entry
   });
 
-  it("typing a fee overrides the catalog → manual (no voucher, no feeSource, seal 'ajustado')", () => {
+  // 013 / E1-02 — the override seam. Typing ONE fee used to drop the catalog entry WHOLESALE
+  // (`priceBands: undefined, freightVoucherBands: undefined`), so the co-financed Shopee voucher
+  // vanished and the net received was overstated by exactly the voucher. The merge is now selective:
+  // only the scalars the seller actually typed (`editedFields`) are overwritten; the band structures
+  // survive. The seal stays "ajustado por você" and provenance stays cleared (unchanged semantics).
+  it("E1-02: typing ONE fee keeps priceBands + the co-financed voucher (selective merge)", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", freightCost: "5" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    const input = r.input?.channels?.[0];
+    expect(ch.errors).toEqual({});
+    // The band structures reach the engine — the whole point of the fix.
+    expect(input?.priceBands).toHaveLength(3);
+    expect(input?.freightVoucherBands).toHaveLength(3);
+    // Only the typed scalar was overwritten.
+    expect(input?.freightCost).toBe(5);
+    expect(ch.editedFields).toEqual({ freightCost: 5 });
+    // Announce still resolves through the band (20% + R$4 → 58,73) and the voucher (R$20) is STILL
+    // deducted on top of the seller's own R$5 freight — net 17,98, not the overstated 37,98.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(25, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(17.98, 2);
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(25, 2);
+    // Seal + provenance semantics are untouched by the fix.
+    expect(ch.seal.kind).toBe("adjusted");
+    expect(ch.result?.feeSource).toBeNull();
+    expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  // OPEN OWNER DECISION (013, surfaced by this slice — do NOT read this as an endorsement):
+  // `pricing-core/channels.ts:23,101-102` states that price bands, when present, OVERRIDE
+  // commission/fixedFee. So on a BAND-based entry (Shopee) the selective merge preserves the bands
+  // and the seller's typed commission has NO effect on the price. This test pins that measured
+  // consequence honestly rather than asserting a comfortable lie; the alternative semantics (drop
+  // priceBands when commissionPct/fixedFee is typed, keep the voucher always) is a one-line change.
+  it("a typed commission on a BAND entry is neutralized by the preserved bands (measured)", () => {
     const r = computeFromForm(
       {
         ...canonical,
@@ -282,12 +322,53 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
       ctx,
     );
     const ch = r.channels[0];
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2); // manual 10%, nets to base
-    expect(ch.result?.freightCostVarejo).toBe(0); // no voucher on a manual override
-    expect(ch.result?.feeSource).toBeNull(); // provenance cleared — not from the reference
+    expect(ch.editedFields).toEqual({ commissionPct: 10 });
+    // Identical to the blank slot: the band's 20% + R$4 govern, the voucher is deducted.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
     expect(ch.seal.kind).toBe("adjusted");
-    // catalogVersion is NOT stamped when no channel used the catalog (all-manual override).
+    expect(ch.result?.feeSource).toBeNull();
     expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  it("a typed fee on a NON-band entry overrides that scalar and leaves the rest of the entry", () => {
+    // ML-style entry: scalar commission + an ESTIMATE freight subsidy, no bands.
+    const mlCatalog = feeCatalogSchema.parse({
+      catalogVersion: "2026-07-07.ml",
+      schemaVersion: "1",
+      generatedAt: "2026-07-07T00:00:00.000Z",
+      marketplaces: [
+        {
+          marketplace: "MERCADO_LIVRE",
+          entries: [
+            {
+              determinants: { listingType: "CLASSICO" },
+              commissionPct: 12,
+              fixedFee: 6.75,
+              freight: { kind: "ESTIMATE", thresholdPrice: 79, defaultSubsidy: 10 },
+              source: "Central de Vendas Mercado Livre",
+              sourceUrl: "https://www.mercadolivre.com.br/ajuda/tarifas",
+              effectiveDate: "2026-03-01",
+              lastReviewed: "2026-07-07",
+            },
+          ],
+        },
+      ],
+    });
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [
+          slot({ marketplace: "MERCADO_LIVRE", modality: "CLASSICO", commissionPct: "15" }),
+        ],
+      },
+      { catalog: mlCatalog, source: "catalog", now: Date.parse("2026-07-10") },
+    );
+    const input = r.input?.channels?.[0];
+    expect(input?.commissionPct).toBe(15); // the typed scalar wins
+    expect(input?.fixedFee).toBeCloseTo(6.75, 2); // untyped → still the entry's
+    expect(input?.freightCost).toBeCloseTo(10, 2); // untyped → the entry's subsidy survives
+    expect(r.channels[0].seal.kind).toBe("adjusted");
   });
 
   it("stamps no catalogVersion when there is no catalog context (all-manual)", () => {
