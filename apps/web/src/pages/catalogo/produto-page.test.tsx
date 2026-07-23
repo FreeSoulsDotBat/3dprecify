@@ -330,3 +330,26 @@ describe("ProdutoPage — save a scenario referencing THIS product (010/T021b)",
     expect(screen.queryByTestId("save-scenario-trigger")).not.toBeInTheDocument();
   });
 });
+
+describe("ProdutoPage — lapsed premium, read-only up front (013/FB-02, ux-catalog §3)", () => {
+  it("disables the fields and swaps Salvar for the reactivation line — never a fail-at-save surprise", () => {
+    entitlement.data = { status: "lapsed" };
+    renderPage("prod-1");
+
+    expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeDisabled();
+    expect(screen.getByText(messages.catalogo.reactivateTitle)).toBeInTheDocument();
+    expect(screen.getByText(messages.catalogo.reactivateBody)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: pf.saveProduct })).not.toBeInTheDocument();
+    // FR-409 — reads/recompute still work while lapsed.
+    expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
+  });
+
+  it("active keeps the product form fully editable — regression guard", () => {
+    renderPage("prod-1");
+    expect(screen.getByRole("textbox", { name: pf.nameLabel })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: pf.saveProduct })).toBeInTheDocument();
+    expect(screen.queryByText(messages.catalogo.reactivateTitle)).not.toBeInTheDocument();
+  });
+});

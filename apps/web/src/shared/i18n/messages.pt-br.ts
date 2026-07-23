@@ -317,6 +317,10 @@ export const messages = {
     lapsedBody:
       "Seus itens continuam aqui e podem ser usados no cálculo. Para criar ou editar, reative o Premium.",
     readOnlyHint: "somente leitura",
+    // 013/FB-02 — the reactivation line a read-only form footer shows in place of Salvar
+    // (ux-catalog §3, owner-ratified copy). No price, no date — same honesty bar as the teaser.
+    reactivateTitle: "Reative o Premium",
+    reactivateBody: "Reative o Premium para voltar a criar e editar. Seus itens estão salvos.",
   },
   // Catálogo create/edit form (Sheet) + delete confirm (Dialog). Numeric field LABELS reuse
   // `calculator.fields.*`; per-field VALIDATION reuses `calculator.validation.*` verbatim (FR-306).
