@@ -8,6 +8,7 @@ import { KitsPanel } from "@/features/catalog/kits-panel";
 import { CatalogTeaser } from "@/features/catalog/premium-teaser";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
+import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Button } from "@/shared/ui";
@@ -84,19 +85,34 @@ function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId
 export function CatalogoPage() {
   // Landing tab: `?tab=products` (the product page returns here after a save) or `?tab=kits` (a
   // saved kit lands the seller on its list, E3/K2); otherwise Filamentos.
-  const search = useSearch({ strict: false }) as { tab?: string };
+  const search = useSearch({ strict: false }) as { tab?: string; produto?: string };
   const [active, setActive] = useState<TabId>(() => {
     if (search.tab === "products") return "products";
     if (search.tab === "kits") return "kits";
     return "filaments";
   });
 
+  // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route,
+  // now `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
+  // required auth for this param, mirroring the old routes' own guard exactly — no entitlement
+  // teaser check here either, matching the routes it replaces: ProdutoPage relies on the
+  // server's write-time gate, GC-5). 013/FB-02: `readOnly` is the same server-informed lapsed
+  // read here as everywhere else on this page — ProdutoPage does not re-derive it.
+  const entitlement = useEntitlement();
+  if (search.produto !== undefined) {
+    return (
+      <ProdutoPage
+        productId={search.produto === "novo" ? undefined : search.produto}
+        readOnly={entitlement.data?.status === "lapsed"}
+      />
+    );
+  }
+
   // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
   // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
   // (signed-out, or the server said "none"); while loading/unknown the real panels render and
   // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
   const sessionStatus = useSessionStore((s) => s.status);
-  const entitlement = useEntitlement();
   const signedOut = sessionStatus !== "authenticated";
   if (signedOut || entitlement.data?.status === "none") {
     return (

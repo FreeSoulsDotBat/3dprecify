@@ -25,6 +25,11 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useDeleteFilament: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
+// 013/FB-02 — FilamentsPanel now reads its own lapsed state; this suite is about the delete-warn
+// wiring only, so the plan is fixed at "active" (no QueryClientProvider needed for the real hook).
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+}));
 
 import { FilamentsPanel } from "./filaments-panel";
 

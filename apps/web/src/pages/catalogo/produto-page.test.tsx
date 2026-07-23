@@ -126,11 +126,11 @@ function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
 }
 
-function renderPage(productId?: string) {
+function renderPage(productId?: string, readOnly?: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ProdutoPage productId={productId} />
+      <ProdutoPage productId={productId} readOnly={readOnly} />
     </QueryClientProvider>,
   );
 }
@@ -333,8 +333,9 @@ describe("ProdutoPage — save a scenario referencing THIS product (010/T021b)",
 
 describe("ProdutoPage — lapsed premium, read-only up front (013/FB-02, ux-catalog §3)", () => {
   it("disables the fields and swaps Salvar for the reactivation line — never a fail-at-save surprise", () => {
-    entitlement.data = { status: "lapsed" };
-    renderPage("prod-1");
+    // `readOnly` comes from the PARENT (CatalogoPage) — the page's OWN entitlement mock stays
+    // "active" here, proving the fieldset freeze is driven by the prop, not a second gate.
+    renderPage("prod-1", true);
 
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeDisabled();

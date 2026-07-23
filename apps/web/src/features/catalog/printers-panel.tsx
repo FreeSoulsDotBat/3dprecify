@@ -5,6 +5,7 @@ import {
   useProducts,
   useUpdatePrinter,
 } from "@/entities/catalog/use-catalog";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { PrinterIn, PrinterOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -18,7 +19,8 @@ import {
 import { PrinterForm } from "./printer-form";
 
 // Printers tab wiring (T022) — the mirror of FilamentsPanel: the same generic premium panel with the
-// printer read cache + online-only write mutations + the printer form.
+// printer read cache + online-only write mutations + the printer form. 013/FB-02: same lapsed
+// presentation via the panel's own `useEntitlement()` read.
 
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
@@ -28,6 +30,7 @@ export function PrintersPanel() {
   const create = useCreatePrinter();
   const update = useUpdatePrinter();
   const remove = useDeletePrinter();
+  const entitlement = useEntitlement();
   // US6-4: deleting a referenced printer warns first (the server keeps last-known + unlinks).
   const { items: products } = useProducts();
   const deleteWarning = (p: PrinterOut) => {
@@ -38,6 +41,7 @@ export function PrintersPanel() {
   return (
     <CatalogPanel<PrinterOut, PrinterFormValues, PrinterIn>
       list={list}
+      lapsed={entitlement.data?.status === "lapsed"}
       copy={{
         addLabel: catalogo.addPrinter,
         emptyTitle: catalogo.emptyPrintersTitle,
