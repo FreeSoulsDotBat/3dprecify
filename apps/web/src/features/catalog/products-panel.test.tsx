@@ -112,6 +112,34 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
     expect(screen.getByText(`${catalogo.manualRef} · Ender 3`)).toBeInTheDocument();
   });
 
+  it("FB-04: shows a neutral loading placeholder while references are still loading — never 'manual'", () => {
+    useProductsMock.mockReturnValue(listState([product]));
+    useFilamentsMock.mockReturnValue({
+      items: [],
+      isLoading: true,
+      isError: false,
+      error: null,
+      stale: false,
+      refetch: vi.fn(),
+    });
+    usePrintersMock.mockReturnValue({
+      items: [],
+      isLoading: true,
+      isError: false,
+      error: null,
+      stale: false,
+      refetch: vi.fn(),
+    });
+    render(<ProductsPanel />);
+
+    expect(
+      screen.getByText(`${catalogo.resolvingRef} · ${catalogo.resolvingRef}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(`${catalogo.manualRef} · ${catalogo.manualRef}`),
+    ).not.toBeInTheDocument();
+  });
+
   it("row tap navigates to the full-page edit route", () => {
     useProductsMock.mockReturnValue(listState([product]));
     render(<ProductsPanel />);
