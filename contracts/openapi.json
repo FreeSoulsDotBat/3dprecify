@@ -3146,12 +3146,14 @@
               "$ref": "#/components/schemas/BomLineIn"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Lines"
           }
         },
         "type": "object",
         "required": [
-          "name"
+          "name",
+          "lines"
         ],
         "title": "BomIn"
       },

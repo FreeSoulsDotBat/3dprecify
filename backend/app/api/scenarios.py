@@ -33,7 +33,6 @@ import base64
 import json
 import uuid
 from datetime import UTC, datetime
-from decimal import Decimal, InvalidOperation
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Query, status
@@ -69,15 +68,9 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Bom, BomLine, Product, Scenario
+from app.validation import CEIL_CONFIG_LEAF, reject_bad_leaves
 
 router = APIRouter(tags=["scenarios"])
-
-# Generic magnitude ceiling for ANY decimal-string leaf inside `config`. Config is validated
-# STRUCTURALLY (VR-603) — we do not know per-field which NUMERIC domain a leaf belongs to, so we
-# apply the single widest house ceiling (mirrors `products.py::_CEIL_RATE`, Numeric(18,6)) as one
-# generic bound, exactly the way `history.py::_reject_bad_leaves` applies one ceiling to the whole
-# frozen document.
-_CEIL_CONFIG_LEAF = Decimal(10) ** 12
 
 # 256 KB (data-model §7 item 5, owner-decided 2026-07-19) — lower than E4's 512 KB because a
 # scenario stores INTENT, not a full frozen result document. An over-cap config is an HONEST 422,
@@ -85,39 +78,6 @@ _CEIL_CONFIG_LEAF = Decimal(10) ** 12
 _CONFIG_SIZE_CAP_BYTES = 256 * 1024
 
 _VALID_COST_BASIS_KINDS = {"AD_HOC", "PRODUCT", "KIT"}
-
-
-def _reject_bad_leaves(node: object) -> None:
-    """VR-602 — the recursive money guard over the whole `config` document.
-
-    Mirrors `history.py::_reject_bad_leaves` verbatim (the E4 precedent for a JSONB document that
-    must reject a float ANYWHERE without pinning its shape). Only int/bool/None/well-formed finite
-    decimal strings survive; a JSON float is rejected (precision already died at the serializer
-    boundary — `json.loads`/`JSON.parse` both decode a JSON number to binary64).
-    """
-    if isinstance(node, dict):
-        for value in cast("dict[str, object]", node).values():
-            _reject_bad_leaves(value)
-    elif isinstance(node, list):
-        for item in cast("list[object]", node):
-            _reject_bad_leaves(item)
-    elif isinstance(node, bool):
-        return  # a JSON true/false — never money
-    elif isinstance(node, float):
-        raise ValueError(
-            "config contains a JSON float; every money/rate/qty/percent leaf must be a decimal"
-            " STRING (VR-602)"
-        )
-    elif isinstance(node, str):
-        try:
-            parsed = Decimal(node)
-        except InvalidOperation:
-            return  # a non-numeric string (a name/label/marketplace id) — not a money leaf
-        if not parsed.is_finite() or abs(parsed) >= _CEIL_CONFIG_LEAF:
-            raise ValueError(
-                "config contains a non-finite (NaN/Infinity) or oversized decimal string (VR-602)"
-            )
-    # int / None fall through unchanged — the only legal JSON numbers (schemaVersion, quantity).
 
 
 def _validate_cost_basis(cost_basis: object) -> None:
@@ -165,7 +125,15 @@ def validate_scenario_config(config: dict[str, Any]) -> None:
     if len(json.dumps(config).encode("utf-8")) > _CONFIG_SIZE_CAP_BYTES:
         raise ValueError("config exceeds the maximum document size (256 KB)")
 
-    _reject_bad_leaves(config)
+    # VR-602 — the recursive leaf guard, with the ceiling passed EXPLICITLY. `config` is validated
+    # STRUCTURALLY (VR-603): a leaf's NUMERIC domain is unknowable here (it is pure INTENT, bound to
+    # no column), so it gets the single widest house bound, `CEIL_CONFIG_LEAF` (10**12) — which is
+    # DELIBERATELY wider than the `CEIL_MONEY` (10**10) that `history.py` passes to the same walker
+    # for a document whose leaves really do land in Numeric(12,2) columns. The two ceilings diverge
+    # on purpose; the divergence used to hide under a comment claiming the two walkers "mirror
+    # verbatim" (audit Q-04 — false, and dangerous to maintain by). Asserted by
+    # `test_VR602_the_config_ceiling_is_CEIL_CONFIG_LEAF_not_CEIL_MONEY`.
+    reject_bad_leaves(config, money_ceiling=CEIL_CONFIG_LEAF)
 
 
 class ScenarioIn(CamelModel):

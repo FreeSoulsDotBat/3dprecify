@@ -66,6 +66,7 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Bom, BomLine, Product
+from app.validation import CEIL_QUANTITY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["boms"])
 
@@ -92,18 +93,23 @@ class BomLineIn(CamelModel):
     @classmethod
     def _quantity(cls, v: int) -> int:
         # `>= 0`, not `> 0` (Q1): a zeroed line is an honest "not in this order", not an error.
+        # The upper bound is the int4 column limit (audit E3-02): without it, 2**31 reached the
+        # INSERT and Postgres answered `integer out of range` → an opaque 500. INCLUSIVE — the
+        # ceiling IS the largest storable count, not the first rejected one.
         if v < 0:
             raise ValueError("quantity must be an integer >= 0")
+        if v > CEIL_QUANTITY:
+            raise ValueError("quantity exceeds the maximum storable value")
         return v
 
     @field_validator("tariff_per_kwh")
     @classmethod
     def _tariff(cls, v: Decimal | None) -> Decimal | None:
+        # Audit E3-01: this used to check finiteness only, while `ProductIn.tariffPerKwh` — the very
+        # model an ad-hoc line materializes INTO — enforced CEIL_RATE. The two rules are now one.
         if v is None:
             return v
-        if not v.is_finite() or v < 0:
-            raise ValueError("tariffPerKwh must be a finite number >= 0")
-        return v
+        return finite_non_negative(v, "tariffPerKwh", CEIL_RATE)
 
     @field_validator("piece_name")
     @classmethod
@@ -168,7 +174,10 @@ class BomLineIn(CamelModel):
 
 class BomIn(CamelModel):
     name: str
-    lines: list[BomLineIn] = Field(default_factory=list)
+    #: `min_length=1` (owner decision D4, audit E3-04): an empty kit was refused by the client and
+    #: accepted by the server — the client's promise now holds at the boundary that enforces it.
+    #: This is a real OpenAPI delta (`minItems`), so the contract is regenerated with it.
+    lines: list[BomLineIn] = Field(min_length=1)
 
     @field_validator("name")
     @classmethod

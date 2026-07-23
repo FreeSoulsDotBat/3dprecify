@@ -56,15 +56,9 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Snapshot
+from app.validation import CEIL_MONEY, finite_non_negative, reject_bad_leaves
 
 router = APIRouter(tags=["history"])
-
-# Integer-digit budget for MONEY_SETTLED Numeric(12,2): a value AT/ABOVE this OVERFLOWS the column
-# at write time — Postgres raises `numeric field overflow` and FastAPI would surface an opaque 500.
-# We reject it here as a clean 422 (the outbox re-POSTs a 5xx forever, so a permanent 500 is an
-# infinite loop). Copied module-local, following the filaments/printers/products precedent — the
-# 4-way dedup of this constant is a separate janitorial task, NOT this fix.
-_CEIL_MONEY = decimal.Decimal(10) ** 10
 
 # One frozen document has a maximum size (abuse/DoS guard, data-model §7 item 6 — owner-confirmed
 # 512 KB). A document over the cap is an HONEST 422, never a silent truncation: truncating an
@@ -78,55 +72,6 @@ _BASIS_TOTAL_KEY: dict[str, str] = {
     "PRECO_VAREJO": "precoVarejo",
     "PRECO_ATACADO": "precoAtacado",
 }
-
-
-def _finite_non_negative(
-    value: decimal.Decimal, field: str, ceiling: decimal.Decimal = _CEIL_MONEY
-) -> decimal.Decimal:
-    if not value.is_finite() or value < 0:
-        raise ValueError(f"{field} must be a finite number >= 0")
-    if value >= ceiling:
-        raise ValueError(f"{field} exceeds the maximum storable magnitude")
-    return value
-
-
-def _reject_bad_leaves(node: object) -> None:
-    """VR-501 / VR-502 — the recursive money guard over the whole frozen document.
-
-    The payload is opaque JSONB, so this walks it GENERICALLY rather than pinning
-    `PriceResult`/`BomResult` field-by-field (pinning would make a pricing-core version bump reject
-    its own payloads — the exact property JSONB exists to avoid, data-model §9.6). Two rules:
-
-    * **VR-502 — no JSON float anywhere.** A float leaf means precision already died at the
-      serializer boundary (a JSON number decodes to binary64 in BOTH runtimes). This is the LAST
-      defence before a float freezes into the immutable table; the client (I1) also stops emitting
-      them. `bool`/`int` pass — the only legal JSON numbers are integer counts (`schemaVersion`,
-      `quantity`, `contributingLines`, `skippedLines`).
-    * **VR-501 — every string that PARSES as a Decimal must be finite** (rejects `"NaN"`/
-      `"Infinity"` — the in-JSON twin of the `<> 'NaN'::numeric` CHECK, which cannot reach inside
-      JSONB) and within magnitude. A non-numeric string (a name, a label, an id) is ignored —
-      generic leaf validation, no shape-pin.
-    """
-    if isinstance(node, dict):
-        for value in cast("dict[str, object]", node).values():
-            _reject_bad_leaves(value)
-    elif isinstance(node, list):
-        for item in cast("list[object]", node):
-            _reject_bad_leaves(item)
-    elif isinstance(node, bool):
-        return  # a JSON true/false — never money
-    elif isinstance(node, float):
-        raise ValueError(
-            "payload contains a JSON float; every money leaf must be a decimal STRING (FR-525)"
-        )
-    elif isinstance(node, str):
-        try:
-            parsed = decimal.Decimal(node)
-        except decimal.InvalidOperation:
-            return  # a non-numeric string (a name/label/id) — not a money leaf
-        if not parsed.is_finite() or abs(parsed) >= _CEIL_MONEY:
-            raise ValueError("payload money string is non-finite or exceeds the storable magnitude")
-    # int / None fall through unchanged.
 
 
 class SnapshotIn(CamelModel):
@@ -154,7 +99,7 @@ class SnapshotIn(CamelModel):
     def _headline_total_finite(cls, v: decimal.Decimal) -> decimal.Decimal:
         # Overflow of Numeric(12,2) would be a 500 at INSERT time; catch it here (and NaN/Infinity/
         # negatives) as a clean 422. The DB `ck_snapshots_headline_total_valid` is the backstop.
-        return _finite_non_negative(v, "headlineTotal", _CEIL_MONEY)
+        return finite_non_negative(v, "headlineTotal", CEIL_MONEY)
 
     @model_validator(mode="after")
     def _validate_frozen_document(self) -> SnapshotIn:
@@ -165,8 +110,11 @@ class SnapshotIn(CamelModel):
         generic handler → 500. The outbox re-POSTs a 5xx forever, so a permanent 500 on an invalid
         body is an infinite loop; every one of those cases is mirrored here as a terminal 422.
         """
-        # VR-501 / VR-502 — the recursive money guard (floats, NaN/Infinity, magnitude).
-        _reject_bad_leaves(self.payload)
+        # VR-501 / VR-502 — the recursive money guard (floats, ints in money positions, NaN/
+        # Infinity, magnitude). The ceiling is passed EXPLICITLY: this document's leaves land in
+        # MONEY_SETTLED Numeric(12,2) columns, so `CEIL_MONEY` — not the wider config bound that
+        # `scenarios.py` passes to the same walker (audit Q-04).
+        reject_bad_leaves(self.payload, money_ceiling=CEIL_MONEY)
 
         # The denormalised columns may never diverge from the document (immutability freezes both,
         # the DB `payload_kind_matches` / `payload_version_matches` CHECKs are the backstops).

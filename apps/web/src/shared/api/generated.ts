@@ -125,7 +125,8 @@ export interface BomLineIn {
 
 export interface BomIn {
   name: string;
-  lines?: BomLineIn[];
+  /** @minItems 1 */
+  lines: BomLineIn[];
 }
 
 export type BomLineOutChannelsItem = { [key: string]: unknown };
