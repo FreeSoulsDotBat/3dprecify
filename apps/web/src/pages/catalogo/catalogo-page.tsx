@@ -94,13 +94,24 @@ export function CatalogoPage() {
     return "filaments";
   });
 
-  // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route,
-  // now `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
+  // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
+  // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
+  // (signed-out, or the server said "none"); while loading/unknown the real panels render and
+  // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
+  //
+  // Both hooks are called UNCONDITIONALLY, above every early return (including the `?produto=`
+  // branch right below) — the Rules of Hooks: this component stays mounted across a `/catalogo`
+  // ⇄ `/catalogo?produto=…` transition (same route, different search), so a hook called on only
+  // ONE of those branches throws "Rendered fewer hooks than expected" on the very next render.
+  const sessionStatus = useSessionStore((s) => s.status);
+  const entitlement = useEntitlement();
+
+  // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route, now
+  // `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
   // required auth for this param, mirroring the old routes' own guard exactly — no entitlement
   // teaser check here either, matching the routes it replaces: ProdutoPage relies on the
   // server's write-time gate, GC-5). 013/FB-02: `readOnly` is the same server-informed lapsed
   // read here as everywhere else on this page — ProdutoPage does not re-derive it.
-  const entitlement = useEntitlement();
   if (search.produto !== undefined) {
     return (
       <ProdutoPage
@@ -110,11 +121,6 @@ export function CatalogoPage() {
     );
   }
 
-  // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
-  // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
-  // (signed-out, or the server said "none"); while loading/unknown the real panels render and
-  // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
-  const sessionStatus = useSessionStore((s) => s.status);
   const signedOut = sessionStatus !== "authenticated";
   if (signedOut || entitlement.data?.status === "none") {
     return (
