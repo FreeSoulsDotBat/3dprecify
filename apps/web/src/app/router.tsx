@@ -88,13 +88,21 @@ const calcularRoute = createRoute({
 const catalogoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo",
-  // `?tab=products` lets the product page land back on the Produtos tab after a save; `?tab=kits`
-  // is where a saved kit lands the seller (E3/K2). `?produto=<id>` opens the edit form for that
-  // product; `?produto=novo` opens the create form.
+  // `?tab=` selects the catalog tab: the product page lands back on `products` after a save, a saved
+  // kit lands the seller on `kits` (E3/K2). ALL FOUR tabs are valid here — the page derives its tab
+  // from this param (013/F-02 follow-up), so the two that used to be missing (`filaments`,
+  // `printers`) were silently unbookmarkable. `?produto=<id>` opens the edit form for that product;
+  // `?produto=novo` opens the create form.
   validateSearch: (
     search: Record<string, unknown>,
-  ): { tab?: "products" | "kits"; produto?: string } => ({
-    tab: search.tab === "products" || search.tab === "kits" ? search.tab : undefined,
+  ): { tab?: "filaments" | "printers" | "products" | "kits"; produto?: string } => ({
+    tab:
+      search.tab === "filaments" ||
+      search.tab === "printers" ||
+      search.tab === "products" ||
+      search.tab === "kits"
+        ? search.tab
+        : undefined,
     produto: typeof search.produto === "string" && search.produto ? search.produto : undefined,
   }),
   // `location.href` (not just `search.produto`/pathname) so the round-trip through /sign-in
