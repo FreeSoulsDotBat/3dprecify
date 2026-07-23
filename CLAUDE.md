@@ -129,5 +129,8 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/011-token-optimization/plan.md
+at specs/013-audit-remediation/plan.md
+(previous increment 012-e6-billing remains mid-flight on `feature/012-e6-billing`,
+31 commits ahead of `develop` — its plan lives at specs/012-e6-billing/plan.md;
+re-point here when resuming E6 speckit work)
 <!-- SPECKIT END -->
