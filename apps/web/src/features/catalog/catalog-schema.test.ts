@@ -89,3 +89,81 @@ describe("printer machineValue — the persisted machine cost (FB-01)", () => {
     expect(printerToWire({ ...validPrinter, avgPowerKw: "0.12" }).avgPowerKw).toBe("0.12");
   });
 });
+
+// 013 US4 (FB-05) — `numField` had NO upper bound, so an over-ceiling value traveled to the server
+// and came back as a generic 422 with no field attribution. The ceilings below MIRROR the ones in
+// `backend/app/validation.py` for the SAME wire field (filaments.py / printers.py), not a number
+// picked independently client-side.
+describe("magnitude ceilings (FB-05) — mirror backend/app/validation.py", () => {
+  it("filament costPerRoll at/over CEIL_MONEY (10**10) is rejected inline, never a bare 422", async () => {
+    const res = await filamentResolver(
+      { ...validFilament, costPerRoll: "10000000000" }, // 10**10 == CEIL_MONEY
+      undefined,
+      { shouldUseNativeValidation: false, fields: {}, criteriaMode: "firstError" },
+    );
+    expect(res.errors.costPerRoll?.message).toBe(v.tooHigh);
+  });
+
+  it("filament costPerRoll just under CEIL_MONEY passes", async () => {
+    const res = await filamentResolver({ ...validFilament, costPerRoll: "9999999999" }, undefined, {
+      shouldUseNativeValidation: false,
+      fields: {},
+      criteriaMode: "firstError",
+    });
+    expect(res.errors.costPerRoll).toBeUndefined();
+  });
+
+  it("filament rollWeightKg over CEIL_KG (10**6) is rejected inline", async () => {
+    const res = await filamentResolver({ ...validFilament, rollWeightKg: "1000000" }, undefined, {
+      shouldUseNativeValidation: false,
+      fields: {},
+      criteriaMode: "firstError",
+    });
+    expect(res.errors.rollWeightKg?.message).toBe(v.tooHigh);
+  });
+
+  it("filament defaultWasteGrams over CEIL_GRAMS (10**9) is rejected inline", async () => {
+    const res = await filamentResolver(
+      { ...validFilament, defaultWasteGrams: "1000000000" },
+      undefined,
+      { shouldUseNativeValidation: false, fields: {}, criteriaMode: "firstError" },
+    );
+    expect(res.errors.defaultWasteGrams?.message).toBe(v.tooHigh);
+  });
+
+  it("printer machineValue over CEIL_MONEY (10**10) is rejected inline", async () => {
+    const res = await printerResolver({ ...validPrinter, machineValue: "10000000000" }, undefined, {
+      shouldUseNativeValidation: false,
+      fields: {},
+      criteriaMode: "firstError",
+    });
+    expect(res.errors.machineValue?.message).toBe(v.tooHigh);
+  });
+
+  it("printer machineLifetimeHours over CEIL_HOURS (10**6) is rejected inline", async () => {
+    const res = await printerResolver(
+      { ...validPrinter, machineLifetimeHours: "1000000" },
+      undefined,
+      { shouldUseNativeValidation: false, fields: {}, criteriaMode: "firstError" },
+    );
+    expect(res.errors.machineLifetimeHours?.message).toBe(v.tooHigh);
+  });
+
+  it("printer avgPowerKw over CEIL_KW (10**5) is rejected inline", async () => {
+    const res = await printerResolver({ ...validPrinter, avgPowerKw: "100000" }, undefined, {
+      shouldUseNativeValidation: false,
+      fields: {},
+      criteriaMode: "firstError",
+    });
+    expect(res.errors.avgPowerKw?.message).toBe(v.tooHigh);
+  });
+
+  it("printer maintenanceReservePerHour over CEIL_RATE (10**12) is rejected inline", async () => {
+    const res = await printerResolver(
+      { ...validPrinter, maintenanceReservePerHour: "1000000000000" },
+      undefined,
+      { shouldUseNativeValidation: false, fields: {}, criteriaMode: "firstError" },
+    );
+    expect(res.errors.maintenanceReservePerHour?.message).toBe(v.tooHigh);
+  });
+});

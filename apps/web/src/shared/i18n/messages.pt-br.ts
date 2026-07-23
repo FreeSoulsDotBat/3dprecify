@@ -100,6 +100,7 @@ export const messages = {
       required: "Campo obrigatório.",
       machineLifetimePositive: "A vida útil deve ser maior que zero.",
       commissionMax: "A comissão deve ser menor que 100%.",
+      tooHigh: "Valor muito alto.",
     },
     results: {
       material: "Material",
