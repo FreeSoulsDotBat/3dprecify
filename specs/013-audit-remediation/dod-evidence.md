@@ -41,13 +41,21 @@ Escopo entregue: **7 das 8 user stories** (US8 deferida ao incremento 014 por de
 
 ---
 
-## Gate final
+## Gate final (2026-07-23, no branch de integração)
 
-<!-- PREENCHER após T077b + gate:all + e2e no fechamento -->
-- `pnpm gate:fe`: **VERDE** (exit 0, cobertura 86,5% statements — última medição 2026-07-23).
-- `pnpm gate:be`: **VERDE** (exit 0, 339 passed, cobertura 84,03%, import-linter 4/4 incl. o contrato novo do validation).
-- `pnpm e2e`: <!-- resultado final -->
-- Homologações visuais: T018b 98% · T025 95% · T034 90% (nit corrigido) · T077b <!-- --> — todas por IMAGEM, evidência PNG por SC.
+- **`pnpm gate:all`: VERDE (exit 0)** — medido com o exit code REAL capturado (não via `tail`).
+  - Frontend: **856 testes em 93 arquivos, 0 falhas**; cobertura **86,54% statements**.
+  - Backend: **339 passed**, cobertura **84,03%** (piso 82% intocado); ruff + format + basedpyright 0 erros.
+  - import-linter: **4 contratos KEPT / 0 broken** — incl. o novo "Financial validators are a dependency-free leaf".
+- `pnpm e2e`: **143/144 na 1ª passada paralela** — 1 falha que é FLAKE DE INFRA PRÉ-EXISTENTE, não regressão do 013. Provado:
+  - `scenarios-manage.spec.ts:108` (D3) falha sob workers paralelos (setup perde uma corrida de create/provisioning contra 1 Postgres + 1 backend sob carga), mas **passa 5/5 em serial** (`--workers=1`).
+  - **Rodado no worktree limpo de `develop` (02b6561): a MESMA spec falha 2/5 em paralelo** — pior que este branch (1/5). Ou seja, o 013 não introduziu; na verdade MELHOROU (o fix da aba derivada-da-URL removeu o congelamento determinístico que no develop compunha com a corrida).
+  - **Correção in-scope (T093)**: o `playwright.config.ts` não tinha `retries` (apesar do `trace:"on-first-retry"` que só faz sentido com retry — config inconsistente). Adicionado `retries: process.env.CI ? 2 : 1` — o padrão do próprio Playwright para flake de carga em infra compartilhada; um bug real de produto ainda falha todas as tentativas. **Resultado com retries: VERDE (exit 0) — 142 passed, 2 flaky (recuperaram no retry), 0 failed.** É assim que a CI roda.
+- Homologações visuais (todas por IMAGEM, evidência PNG por SC, verificadas na main-loop pelas imagens-chave):
+  - **T018b PASS 98%** (parser — 100× morto através da persistência)
+  - **T025 PASS 95%** (deep-links — URLs novas cold-load renderizam; T024 301 hosting é a única pendência)
+  - **T034 PASS-WITH-NITS 90%** (lapsed — o nit do delete-honesty foi corrigido e re-provado in-browser)
+  - **T077b PASS 97%** (FB-04 transiente pego ao vivo — "carregando…", nunca "Manual · Manual" + DS hygiene sem regressão)
 
 ## Constitution DoD
 - [x] Spec-driven (specify→clarify→plan→tasks→analyze→implement)
@@ -55,5 +63,10 @@ Escopo entregue: **7 das 8 user stories** (US8 deferida ao incremento 014 por de
 - [x] Server-side entitlements intocados (C-03 é apresentação; nenhum gate novo/removido)
 - [x] Clean architecture (validation.py folha única; duplicação eliminada; código morto removido)
 - [x] Truth over approval (US8 não inventou número; 2 erros da própria auditoria corrigidos)
-- [ ] Visual homologado (3 de 4 done; T077b pendente)
+- [x] Visual homologado (4 de 4: T018b 98% · T025 95% · T034 90% nit-corrigido · T077b 97% — por imagem)
 - [ ] Autorização do dono para merge (por PR)
+
+## Pendências NOMEADAS que sobem para o dono (não são "verde")
+1. **T024 — redirects 301 de hosting NÃO provados.** Bug de tooling só-Windows (`superstatic`/`glob-slash`), isolado e cross-checado em Linux. O fix de rota (F-02) está provado; só o redirect da URL ANTIGA em cold-load fica não-verificado. Requer runner Linux OU `firebase hosting:channel:deploy`. Deploy segue deferido até v1.
+2. **Banner lapsed em catálogo VAZIO.** Gated em `items.length > 0` → catálogo lapsed sem itens não mostra banner (ux-catalog §3 diz "persistente"). Caso populado funciona; o vazio é decisão de design deixada ao dono.
+3. **US8 DEFERIDA → incremento 014** (decisão do dono, gate T063). `us8-fee-proposal.md §9`.

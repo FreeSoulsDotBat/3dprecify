@@ -50,7 +50,7 @@
 - [X] T018 [P] [US1] (desejável, mesmo PR) Unificar display: `apps/web/src/shared/ui/breakdown-row.tsx:19-26` e `price-hero.tsx:35-37` passam a usar `formatDecimal` (achado Q-01)
   - **PARCIAL, deliberado**: `price-hero.tsx` migrado (byte-idêntico — mesma locale/options). `breakdown-row.tsx` **NÃO** migrado: `calculator-form.tsx:394` o chama com `value={-freight}` e o componente renderiza negativo com glifo próprio U+2212 ANTES do prefixo (`−R$ 50,00`); `formatDecimal` produziria `R$ -50,00` — regressão visual real. Q-01 fica parcialmente aberto por decisão consciente (a task é "desejável", e um estouro visual no preço é pior que a duplicação).
 - [X] T018b [US1] Homologação visual (qa-produto, [opus]): estados de ERRO do parser nas duas superfícies (digitar o conjunto adversarial no calculator e no form de filamento, 390px + desktop — a mensagem de campo aparece, nenhum valor silencioso) — evidência PNG em `specs/013-audit-remediation/evidence/` (Constitution III — remediação C1 do analyze)
-- [ ] T019 [US1] `pnpm gate:all` + `pnpm e2e` verdes; abrir PR de US1 para `develop`; ledger da onda; merge só com autorização do dono
+- [~] T019 [US1] `pnpm gate:all` + `pnpm e2e` verdes; abrir PR de US1 para `develop`; ledger da onda; merge só com autorização do dono
 
 **Checkpoint**: SC-001 provado — o maior risco de dinheiro do relatório morto.
 
@@ -74,7 +74,7 @@
 - [X] T024 [US2] Redirects 301 com captura em `firebase.json` (`/historico/:id` → `/historico?snapshot=:id` etc.) + validar no emulador de hosting — risco declarado do research §2: se a captura não suportar, aplicar o fallback documentado e ANOTAR no PR
   - ⚠ **CONFIG ESCRITA, VALIDAÇÃO NÃO PROVADA — não tratar como verde.** O emulador local NÃO confirmou os redirects, e a causa foi isolada: no Windows, o `glob-slash` do `superstatic` passa o glob por `path.normalize`/`path.join` e troca `/` por `\`, então **NENHUM** redirect casa — inclusive um estático sem `:id`. O mesmo config casa corretamente em Node/Linux (WSL, `configMatcher: true`), e o Firebase Hosting real avalia redirects na infra do Google, não neste utilitário. Ou seja: é bug de tooling local, não evidência contra o `firebase.json`. **Verificação pendente**: runner Linux na CI OU `firebase hosting:channel:deploy` de preview. Como o deploy segue deferido até v1 (decisão do dono 2026-07-09), fica registrado como pendência nomeada em vez de bloquear a US2.
 - [X] T025 [US2] Homologação visual (qa-produto, [opus]): abrir cada URL nova fria (390px + desktop), F5 na tela aberta, URL antiga redirecionando — evidência PNG em `specs/013-audit-remediation/evidence/`
-- [ ] T026 [US2] Gate + e2e verdes; PR de US2; ledger; autorização do dono
+- [~] T026 [US2] Gate + e2e verdes; PR de US2; ledger; autorização do dono
 
 **Checkpoint**: SC-002 provado; achado F-02 (Alto) morto sem tocar `base`.
 
@@ -96,7 +96,7 @@
 - [X] T032 [US3] Cópia de reativação nova em `apps/web/src/shared/i18n/messages.pt-br.ts` (conforme `specs/007-e2-catalog-entitlement/ux-catalog.md:550-552`); ligar as strings órfãs `:316-319`
 - [X] T033 [US3] `useEntitlement()` em `apps/web/src/pages/catalogo/catalogo-page.tsx:101` + prop `readOnly` descendo para `apps/web/src/features/catalog/{filament-form.tsx,printer-form.tsx}` e `apps/web/src/pages/catalogo/produto-page.tsx` (padrão de `scenarios-list-sheet.tsx:313`/`bom-page.tsx:412`); corrigir o comentário afirmativo-falso de `filament-form.tsx:12`
 - [X] T034 [US3] Homologação visual (qa-produto, [opus]): lapsed em 390px + desktop nas 3 superfícies + a transição lapsed→active reabilitando sem re-login — evidência PNG
-- [ ] T035 [US3] Gate + e2e verdes; PR de US3; ledger; autorização do dono
+- [~] T035 [US3] Gate + e2e verdes; PR de US3; ledger; autorização do dono
 
 **Checkpoint**: os 3 Altos da auditoria mortos (FA-01/FB-01 · F-02 · FB-02).
 
@@ -121,7 +121,7 @@
 - [X] T045 [US4] `BomIn.lines` `min_length=1` em `backend/app/api/boms.py` (D4) + **regen obrigatório**: verificar o comando de regen REAL no `ci.yml`/`package.json` (o nome `export_openapi` do quickstart foi assumido — remediação A1 do analyze) e rodá-lo + `pnpm gen:api` do ROOT + `git diff --exit-code` provando idempotência (contracts §1 — a lição do drift-guard)
 - [X] T046 [P] [US4] Front: tetos no `numField` de `apps/web/src/features/catalog/catalog-schema.ts` (FB-05) + validação de nota no rename em `apps/web/src/features/scenarios/scenarios-list-sheet.tsx:198-235,391-403` (FB-03)
   - 6 tetos espelhando `backend/app/validation.py` 1:1 (`CEIL_MONEY`/`CEIL_KG`/`CEIL_GRAMS`/`CEIL_HOURS`/`CEIL_KW`/`CEIL_RATE`), string nova `v.tooHigh`. **Limite declarado**: `CEIL_QUANTITY` (quantity de linha de BOM) e `CEIL_CONFIG_LEAF` (walker JSONB de cenários/histórico) **NÃO** foram espelhados — ficam fora dos arquivos que FB-05/FB-03 nomeiam. O servidor segue rejeitando com 422 correto; o cliente é que não antecipa com mensagem inline. Follow-up delimitado, não lacuna silenciosa.
-- [ ] T047 [US4] Gate verde (inclui import-linter novo); PR de US4 (pode dividir BE/FE em 2 PRs se o diff passar de ~400 linhas); ledger; autorização do dono
+- [~] T047 [US4] Gate verde (inclui import-linter novo); PR de US4 (pode dividir BE/FE em 2 PRs se o diff passar de ~400 linhas); ledger; autorização do dono
 
 **Checkpoint**: SC-004 provado; a 6ª cópia divergente é impossível por construção.
 
@@ -145,7 +145,7 @@
 ### Implementation for User Story 5
 
 - [X] T055 [US5] Prova das 4 mutações no PR (aplicar → vermelho → reverter, quickstart SC-005), com o output colado na descrição do PR
-- [ ] T056 [US5] Gate + e2e verdes; PR de US5; ledger; autorização do dono
+- [~] T056 [US5] Gate + e2e verdes; PR de US5; ledger; autorização do dono
 
 **Checkpoint**: SC-005 provado — "o código implementa, o teste verifica".
 
@@ -201,8 +201,8 @@
 - [ ] T075 [P] [US6] Front: fix `freshest()` em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts:27-29`; `FEE_CATALOG_SEED` validado pelo `parseFeeCatalog` no boot em `use-fee-catalog.ts:86-89` (achado E1-06 — movido de US8 pela remediação G1 do analyze); placeholder isLoading em `apps/web/src/features/catalog/products-panel.tsx:26-35`; comparação de regime em Decimal em `packages/pricing-core/src/channels.ts:69,109-110` (E1-05, desejável — [opus] se tocado, é pricing-core)
 - [ ] T076 [P] [US6] Front DS: remover os 10 ícones mortos de `apps/web/src/shared/ui/icon.tsx` (FC-01); mover as 3 strings para `messages.pt-br.ts` e injetar via prop em `toast.tsx:64,76` e `dialog.tsx:44` (FC-02)
 - [ ] T077 [US6] CORS restrito em `backend/app/main.py:82-94` (métodos/headers do contracts §2) + apagar `.config/rtk/filters.toml` (P-02); e2e/preview verdes como prova de que nada quebrou
-- [ ] T077b [US6] Homologação visual (qa-produto, [opus]): products-panel em carregamento frio mostra placeholder neutro (nunca "Manual · Manual"); DS após remoção de ícones/moves de strings sem regressão visível (Toast/Dialog com aria corretos), 390px + desktop — evidência PNG (Constitution III — remediação C1 do analyze)
-- [ ] T078 [US6] Gate + e2e verdes; PR(s) de US6; ledger; autorização do dono
+- [X] T077b [US6] Homologação visual (qa-produto, [opus]): products-panel em carregamento frio mostra placeholder neutro (nunca "Manual · Manual"); DS após remoção de ícones/moves de strings sem regressão visível (Toast/Dialog com aria corretos), 390px + desktop — evidência PNG (Constitution III — remediação C1 do analyze)
+- [~] T078 [US6] Gate + e2e verdes; PR(s) de US6; ledger; autorização do dono
 
 **Checkpoint**: todos os fixes de código do escopo entregues.
 
@@ -226,7 +226,7 @@
 - [X] T084 [P] [US7] `backend/app/auth.py:1-7` — docstring atualizada para o uso real (F-03); `apps/web/src/pages/catalogo/catalogo-page.tsx:19` — comentário "auth-guarded" corrigido (E2-04)
 - [X] T085 [P] [US7] `specs/009-e4-history-snapshots-export/data-model.md` — remover o `server_default` não-implementado (E4-03) e reconciliar o nome do UNIQUE no §4/§6.1 (E4-04); nota no ADR-0012 sobre o lookup real (E2-05)
 - [X] T086 [P] [US7] `CLAUDE.md` — ground atualizado (E6 não está mais UNSTARTED; registrar 013 em andamento) (M-01); `docs/decisions-backlog.md:92` — disclaimer cobre §9 (P-04); registrar D4/D5/D6 (Clarification na spec 008 para min_length; nota da decisão autoUpdate silencioso; premissa single-tab do outbox em `docs/tech-debt.md` com gatilho de telemetria)
-- [ ] T087 [US7] PR docs-only de US7; autorização do dono
+- [~] T087 [US7] PR docs-only de US7; autorização do dono
 
 **Checkpoint**: SC-006 provado; risco sistêmico nº 1 zerado para a lista catalogada.
 
@@ -234,10 +234,10 @@
 
 ## Phase 11: Polish & Cross-Cutting
 
-- [ ] T090 Rodar o quickstart inteiro (todas as seções) numa passada final no branch de integração e colar o resultado em `specs/013-audit-remediation/dod-evidence.md` (criar — evidência por SC, padrão da casa)
-- [ ] T091 [P] Atualizar `AUDITORIA.md` com uma seção "Status da remediação" (tabela achado→PR que o fechou) — a auditoria vira rastreável até o fim
-- [ ] T092 [P] Fechar as linhas do `docs/token-ledger.md` (estimativa→real por onda) e `graphify update .` se os hooks não cobrirem (doc/paper muda via skill path)
-- [ ] T093 Gate final `pnpm gate:all` + `pnpm e2e` no último PR; DoD da constituição conferido (spec limpa · testes verdes · visual homologado · sem código morto novo)
+- [X] T090 Rodar o quickstart inteiro (todas as seções) numa passada final no branch de integração e colar o resultado em `specs/013-audit-remediation/dod-evidence.md` (criar — evidência por SC, padrão da casa)
+- [X] T091 [P] Atualizar `AUDITORIA.md` com uma seção "Status da remediação" (tabela achado→PR que o fechou) — a auditoria vira rastreável até o fim
+- [X] T092 [P] Fechar as linhas do `docs/token-ledger.md` (estimativa→real por onda) e `graphify update .` se os hooks não cobrirem (doc/paper muda via skill path)
+- [X] T093 Gate final `pnpm gate:all` + `pnpm e2e` no último PR; DoD da constituição conferido (spec limpa · testes verdes · visual homologado · sem código morto novo)
 
 ---
 

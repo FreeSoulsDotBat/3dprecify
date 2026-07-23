@@ -33,6 +33,14 @@ export default defineConfig({
   fullyParallel: true,
   reporter: "list",
   globalSetup: "./tests/e2e/global-setup.ts",
+  // 013 audit remediation (T093): `fullyParallel` runs ~16 workers against ONE Postgres + ONE backend,
+  // and under that load a test's setup can lose a create/provisioning race — a flaky FAIL that passes
+  // on a serial (`--workers=1`) re-run. This is PRE-EXISTING (reproduced identically on `develop`,
+  // where it is in fact worse) and is infra flake, not a product bug — so retries are correct here:
+  // a genuine regression still fails all attempts, but a load race gets the re-run Playwright's own
+  // docs prescribe. This also makes the `trace: "on-first-retry"` below meaningful (it was dead with
+  // the prior implicit `retries: 0`). Local keeps 1 (fast, still absorbs a single flake); CI gets 2.
+  retries: process.env.CI ? 2 : 1,
   use: {
     baseURL: PREVIEW_URL,
     trace: "on-first-retry",
