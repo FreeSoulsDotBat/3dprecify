@@ -52,8 +52,18 @@ Com o catálogo curado servido: no calculator, selecionar canal Mercado Livre �
 
 ## Drift-guard (PR do min_length)
 
+**CORRIGIDO 2026-07-23 (T045).** Os dois comandos abaixo estavam ERRADOS nesta página — foram
+assumidos, não verificados (era exatamente a remediação A1 do analyze). Os reais, conferidos no job
+`contract-drift` do `.github/workflows/ci.yml:66-69`:
+
 ```bash
-cd backend && uv run python -m app.scripts.export_openapi   # (comando da casa para regenerar contracts/openapi.json)
-pnpm gen:api                                                # do ROOT (nunca de apps/web — lição registrada)
-git diff --exit-code contracts/ apps/web/src/shared/api/    # idempotência provada
+cd backend && PYTHONPATH=. uv run python scripts/export_openapi.py  # NÃO `-m app.scripts.export_openapi`
+pnpm --filter @3dprecify/web gen:api                                # NÃO existe `gen:api` na raiz
+git diff --exit-code -- contracts/ apps/web/src/shared/api/         # idempotência provada
 ```
+
+- `app.scripts.export_openapi` **não existe**: `backend/app/scripts/` só tem `__init__.py` e
+  `grant_premium.py`; o script real mora em `backend/scripts/export_openapi.py`.
+- `gen:api` é script do workspace `@3dprecify/web`, não da raiz — invocar via `--filter` a partir da
+  raiz preserva a lição registrada (nunca rodar prettier/geração com o CWD dentro de `apps/web`,
+  que fura o `.prettierignore` da raiz e quebra a CI com diff de zero semântica).

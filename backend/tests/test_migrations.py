@@ -26,9 +26,9 @@ from __future__ import annotations
 import os
 
 import sqlalchemy as sa
-from alembic import command
 from alembic.config import Config
 
+from alembic import command
 from app.db import reset_engine_for_tests
 from app.settings import get_settings
 from tests.conftest import requires_db

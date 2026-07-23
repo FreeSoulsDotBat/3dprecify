@@ -91,7 +91,8 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
 
     expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: catalogo.addProduct }));
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo/produtos/novo" });
+    // 013/F-02: the create form is a search param on /catalogo now, not a 2-segment route.
+    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo", search: { produto: "novo" } });
   });
 
   it("lists products with the REFERENCE names as summary — never a price", () => {
@@ -117,8 +118,8 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
 
     fireEvent.click(screen.getByText("Vaso G"));
     expect(navigateMock).toHaveBeenCalledWith({
-      to: "/catalogo/produtos/$productId",
-      params: { productId: "prod-1" },
+      to: "/catalogo",
+      search: { produto: "prod-1" },
     });
   });
 });
