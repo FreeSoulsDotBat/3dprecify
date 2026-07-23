@@ -23,8 +23,8 @@ const pf = messages.productForm;
 
 export function ProductsPanel() {
   const list = useProducts();
-  const { items: filaments } = useFilaments();
-  const { items: printers } = usePrinters();
+  const { items: filaments, isLoading: filamentsLoading } = useFilaments();
+  const { items: printers, isLoading: printersLoading } = usePrinters();
   const remove = useDeleteProduct();
   const navigate = useNavigate();
 
@@ -48,7 +48,10 @@ export function ProductsPanel() {
       }}
       rowName={(p) => p.name}
       rowSummary={(p) =>
-        productSummary(p, nameOf(p.filamentId, "filament"), nameOf(p.printerId, "printer"))
+        productSummary(p, nameOf(p.filamentId, "filament"), nameOf(p.printerId, "printer"), {
+          filaments: filamentsLoading,
+          printers: printersLoading,
+        })
       }
       // K3: one honest state for a product born manual (materialized by a kit save) and one
       // degraded by a deletion — same missing links, same remedy, so the same calm line.

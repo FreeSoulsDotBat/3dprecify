@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 import { create } from "zustand";
 
+import { messages } from "@/shared/i18n/messages.pt-br";
+
 import { Icon, type IconName } from "./icon";
 
 import "./toast.css";
@@ -43,7 +45,7 @@ const TONE_ICON: Record<ToastTone, IconName> = {
   danger: "circle-alert",
 };
 
-function ToastCard({ item }: { item: ToastItem }) {
+function ToastCard({ item, closeLabel }: { item: ToastItem; closeLabel: string }) {
   const dismiss = useToastStore((s) => s.dismiss);
   useEffect(() => {
     if (item.duration <= 0) return;
@@ -61,7 +63,7 @@ function ToastCard({ item }: { item: ToastItem }) {
         type="button"
         className="tf-toast__close"
         onClick={() => dismiss(item.id)}
-        aria-label="Fechar"
+        aria-label={closeLabel}
       >
         <Icon name="x" size={16} />
       </button>
@@ -69,13 +71,23 @@ function ToastCard({ item }: { item: ToastItem }) {
   );
 }
 
+export interface ToasterProps {
+  /** 013/FC-02 — the DS holds no copy; both labels default from `messages.pt-br` but a consumer
+   *  may override per mount. */
+  closeLabel?: string;
+  regionLabel?: string;
+}
+
 /** Mount once (in app/providers). Polite live region hosting the toast queue. */
-export function Toaster() {
+export function Toaster({
+  closeLabel = messages.ds.close,
+  regionLabel = messages.ds.notifications,
+}: ToasterProps = {}) {
   const toasts = useToastStore((s) => s.toasts);
   return (
-    <div className="tf-toaster" role="region" aria-label="Notificações" aria-live="polite">
+    <div className="tf-toaster" role="region" aria-label={regionLabel} aria-live="polite">
       {toasts.map((t) => (
-        <ToastCard key={t.id} item={t} />
+        <ToastCard key={t.id} item={t} closeLabel={closeLabel} />
       ))}
     </div>
   );
