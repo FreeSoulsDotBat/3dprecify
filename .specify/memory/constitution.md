@@ -1,16 +1,29 @@
 <!--
 SYNC IMPACT REPORT
-Version change: 1.0.0 → 1.1.0
-Bump rationale: MINOR — added Principle VIII (Architecture Decided Before Implementation — No Inference),
-  on the project owner's explicit directive (2026-06-28) recorded in ADR-0003.
-Modified principles: none redefined; one appended (VIII).
-Added sections: Core Principles now lists 8 principles.
-Removed sections: none.
+Version change: 1.1.0 → 1.1.1
+Bump rationale: PATCH — clarification only. §Development Workflow & Quality Gates ("Agent roles & handoffs")
+  said "scrum-master orchestrates cadence and DoD"; ADR-0001 (2026-06-26/27, §"Orchestration & human gates")
+  had already established the main thread as the sole orchestrator and scrum-master as an advisor — the
+  `.claude/agents/scrum-master.md` prompt was corrected to say "ADVISE... does not orchestrate" long ago, but
+  this document's own wording was never brought back in sync (013 audit remediation, finding F-01). No
+  principle, workflow, or gate is redefined — the sentence is corrected to match the standing ADR-0001
+  decision and the already-corrected agent file. "orchestrates cadence and DoD" → "advises on cadence and DoD".
+Modified principles: none. Modified section: "Development Workflow & Quality Gates" → "Agent roles & handoffs"
+  (one clause).
+Added sections: none. Removed sections: none.
 Templates requiring updates:
-  - .specify/templates/plan-template.md ........ ⚠ pending: add an 8th Constitution-Check gate for Principle VIII.
+  - .specify/templates/plan-template.md ........ ✅ compatible (no change needed).
   - .specify/templates/spec-template.md ......... ✅ compatible.
   - .specify/templates/tasks-template.md ........ ✅ compatible.
-Deferred TODOs: update plan-template Constitution Check to 8 gates at next plan run.
+Deferred TODOs: none.
+Authority: ADR-0001 (already Accepted, 2026-06-26/27) — this bump brings the constitution's text into
+  agreement with a decision already ratified there; no new ADR was required. Executed under 013 (audit
+  remediation, task T083), owner-authorized.
+
+Prior report (→ 1.1.0): MINOR — added Principle VIII (Architecture Decided Before Implementation — No
+  Inference), on the project owner's explicit directive (2026-06-28) recorded in ADR-0003. Modified principles:
+  none redefined; one appended (VIII). Added sections: Core Principles now lists 8 principles. Templates:
+  plan-template.md needed an 8th Constitution-Check gate (done at next plan run).
 
 Prior report (→ 1.0.0): initial ratification (7 principles + constraints + workflow + governance);
 plan-template updated to 7 gates; tasks-template made tests MANDATORY + visual.
@@ -97,7 +110,8 @@ the four areas named above MAY NOT.
   homologated by QA · server-side entitlement where applicable · Constitution Check clean ·
   lint/format/type-check green (PostToolUse hooks) · no dead/duplicated code.
 - **Agent roles & handoffs**: product-owner → arquiteto → dev-estrutura-de-dados → dev-backend /
-  dev-frontend → qa-software + qa-produto → devops; scrum-master orchestrates cadence and DoD;
+  dev-frontend → qa-software + qa-produto → devops; scrum-master advises on cadence and DoD (the main
+  thread orchestrates, per ADR-0001 — scrum-master is an advisor, not an executor);
   designer-ux bridges to Claude Design; seguranca reviews auth/RLS/entitlements. Each agent has a focused
   prompt and least-privilege tools.
 
@@ -109,4 +123,4 @@ principle/section; PATCH: clarification). Every quality gate MUST verify complia
 blocks the increment until resolved or formally waived by an approved ADR. Runtime agent guidance lives in
 `CLAUDE.md` and agent files under `.claude/agents/`, which MUST stay consistent with these principles.
 
-**Version**: 1.1.0 | **Ratified**: 2026-06-26 | **Last Amended**: 2026-06-28
+**Version**: 1.1.1 | **Ratified**: 2026-06-26 | **Last Amended**: 2026-07-23

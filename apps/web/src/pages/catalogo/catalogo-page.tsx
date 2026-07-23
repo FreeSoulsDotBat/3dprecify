@@ -17,8 +17,10 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 // Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022; US6 → T030). IA = segmented
 // tabs (ux §0.1-A, G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex
 // + `aria-selected` (no new DS primitive invented). Each tab owns one premium panel; Produtos
-// navigates to its full-page create/edit routes (§1.6b). The route is auth-guarded; the
-// free/lapsed teaser is US7.
+// navigates to its full-page create/edit routes (§1.6b). The route is PUBLIC — only the
+// `?produto=` sub-view within it requires auth (`router.tsx` `catalogoRoute`, 007/US7); the
+// free/lapsed teaser is US7. (013 audit remediation, E2-04: this comment previously said
+// "auth-guarded", contradicting the router.)
 
 const catalogo = messages.catalogo;
 
