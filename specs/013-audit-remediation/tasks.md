@@ -73,7 +73,7 @@
 - [X] T023 [US2] Rotas antigas viram redirect client-side (≥1 release) em `apps/web/src/app/router.tsx`
 - [X] T024 [US2] Redirects 301 com captura em `firebase.json` (`/historico/:id` → `/historico?snapshot=:id` etc.) + validar no emulador de hosting — risco declarado do research §2: se a captura não suportar, aplicar o fallback documentado e ANOTAR no PR
   - ⚠ **CONFIG ESCRITA, VALIDAÇÃO NÃO PROVADA — não tratar como verde.** O emulador local NÃO confirmou os redirects, e a causa foi isolada: no Windows, o `glob-slash` do `superstatic` passa o glob por `path.normalize`/`path.join` e troca `/` por `\`, então **NENHUM** redirect casa — inclusive um estático sem `:id`. O mesmo config casa corretamente em Node/Linux (WSL, `configMatcher: true`), e o Firebase Hosting real avalia redirects na infra do Google, não neste utilitário. Ou seja: é bug de tooling local, não evidência contra o `firebase.json`. **Verificação pendente**: runner Linux na CI OU `firebase hosting:channel:deploy` de preview. Como o deploy segue deferido até v1 (decisão do dono 2026-07-09), fica registrado como pendência nomeada em vez de bloquear a US2.
-- [ ] T025 [US2] Homologação visual (qa-produto, [opus]): abrir cada URL nova fria (390px + desktop), F5 na tela aberta, URL antiga redirecionando — evidência PNG em `specs/013-audit-remediation/evidence/`
+- [X] T025 [US2] Homologação visual (qa-produto, [opus]): abrir cada URL nova fria (390px + desktop), F5 na tela aberta, URL antiga redirecionando — evidência PNG em `specs/013-audit-remediation/evidence/`
 - [ ] T026 [US2] Gate + e2e verdes; PR de US2; ledger; autorização do dono
 
 **Checkpoint**: SC-002 provado; achado F-02 (Alto) morto sem tocar `base`.

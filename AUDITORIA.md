@@ -252,3 +252,68 @@ O código está **substancialmente conforme às specs** — as invariantes finan
 ---
 
 *Auditoria conduzida em 2026-07-23 (Sessões A e B). Achados [INFERIDO] devem ser confirmados antes de virar issue; os demais são acionáveis diretamente com as referências arquivo:linha citadas.*
+
+---
+
+## Status da remediação (incremento 013-audit-remediation, 2026-07-23)
+
+Rastreabilidade achado → resolução. Estados: **CORRIGIDO** (fix + teste) · **TESTE-GUARDA** (código já certo, suíte passa a provar) · **DOC** (passe documental C-15) · **DEFERIDO** (decisão datada) · **ACEITO** (§5 anti-scope-creep, não se mexe) · **PENDENTE** (nomeado, não bloqueia).
+
+### Os 3 Altos
+| Achado | Estado | Evidência |
+|---|---|---|
+| FA-01/FB-01 (parser ".") | **CORRIGIDO** | `3cdfcd6` gramática estrita + limpeza de afixo ancorada; T018b PASS 98% (100× morto através da persistência) |
+| F-02 (deep-link tela branca) | **CORRIGIDO** (rotas) + **PENDENTE** (301 hosting) | `6b36dd2` migração p/ query-param; T025 PASS 95%; T024 301 não-provável no Windows (só Linux/deploy) |
+| FB-02 (catálogo lapsed ausente) | **CORRIGIDO** | `c48f632` + `bbd7ae1` (nit do delete); T034 PASS-WITH-NITS 90% |
+
+### Médios
+| Achado | Issue | Estado | Evidência |
+|---|---|---|---|
+| E1-02 (override Shopee derruba voucher) | C-14 | **CORRIGIDO** | `6e08214`, decisão do dono: comissão digitada derruba bands, voucher preservado |
+| E1-03 (freshest string vs int) | C-12 | **CORRIGIDO** | `a669dc3` parse data+int |
+| E1-06 (seed sem validação no boot) | C-12 | **CORRIGIDO** | `a669dc3` `parseFeeCatalog` no module-load |
+| E2-02 ("RLS backstop" falso) | C-15 | **DOC** | `17ab172` linha corrigida |
+| E2-03 (`_live_links` sem owner_uid) | C-11 | **CORRIGIDO** | `516a113` — na verdade um VAZAMENTO cross-account, provado failing-first |
+| E3-01/E3-02 (BomLine sem tetos → 500) | C-06 | **CORRIGIDO** | `1c66e68` tetos em `validation.py`; 422 nunca 500 |
+| E4-01 (int em posição de dinheiro) | C-06 | **CORRIGIDO** | `1c66e68` `reject_bad_leaves` parametrizado |
+| E4-02 (cap depois da varredura) | C-11 | **CORRIGIDO** | `516a113` ordem depth→size→walk, iterativo |
+| E4-05 (from/to naïve) | C-11 | **CORRIGIDO** | `516a113` `AwareDatetime` |
+| E5-01 (re-snapshot KIT ausente) | C-11 | **CORRIGIDO** | `516a113` espelha `_resolve_kit_last_known` + 2 comentários enganosos |
+| E5-02 (ellipsis nome duplicado) | C-11 | **CORRIGIDO** | `516a113` |
+| E5-04 (linha de kit degradada sem teste) | C-10 | **TESTE-GUARDA** | `e5dc02e` |
+| F-04 (CORS `["*"]`) | C-13 | **CORRIGIDO** | `6cd7250` métodos/headers restritos ao que o cliente envia |
+| FA-02/FA-06 (parseFloat parcial) | C-01 | **CORRIGIDO** | `3cdfcd6` (mesmo fix raiz de FA-01) |
+| FA-03 (prefill sem shouldValidate) | C-12 | **CORRIGIDO** | `864c120` |
+| FA-04 (SC-105 divergência viva) | C-15 | **DOC** | `17ab172` Clarification datada na spec 005 (D2=A) |
+| FA-05 (`wireToPtBr` triplicado) | C-01 | **CORRIGIDO** | `3cdfcd6` export único + teste de premissa |
+| FB-03 (rename sem validação de nota) | C-07 | **CORRIGIDO** | `d6d3341` |
+| FB-04 ("Manual · Manual" em loading) | C-12 | **CORRIGIDO** | `a669dc3` placeholder "carregando…"; T077b |
+| FB-05 (front sem teto de magnitude) | C-07 | **CORRIGIDO** | `d6d3341` `v.tooHigh` |
+| T-01 (sem round-trip de migração) | C-09 | **TESTE-GUARDA** | `8a61458` upgrade→downgrade→upgrade |
+| T-02 (purge cross-account sem asserção) | C-08 | **TESTE-GUARDA** | `eaacd0a` por chave nomeada + branch uidChanged |
+| P-03 (sem guarda de head único) | C-09 | **TESTE-GUARDA** | `c9d7b73` `alembic heads`==1 (CI-only, D4 preservado) |
+| Q-03/Q-04 (validadores divergentes 5×) | C-06 | **CORRIGIDO** | `1c66e68` fonte única + comentário "verbatim" falso removido |
+
+### Baixos (amostra — lote completo em C-11/C-12/C-13/C-15)
+| Achado | Estado |
+|---|---|
+| FC-01 (10 ícones mortos) | **CORRIGIDO** `a669dc3` (cada um grep-verificado) |
+| FC-02 (3 strings no DS) | **CORRIGIDO** `a669dc3` movidas para i18n |
+| FC-03 (autoUpdate silencioso) | **DOC** TD-024 (decisão D5 registrada) |
+| F-01 (Constituição "orchestrates") | **DOC** `17ab172` + bump 1.1.1 |
+| F-03 (docstring auth.py) | **DOC** `17ab172` (auditoria dizia 14 arquivos, são 11) |
+| E1-07 / E2-04 / E2-05 / E4-03 / E4-04 / P-01 / P-04 / M-01 | **DOC** `17ab172` |
+| P-02 (`.config/rtk` debris) | **CORRIGIDO** `6cd7250` gitignore (rm bloqueado pelo classifier) |
+| T-06 (truncate autouse) | **DOC** TD-023 (consciente-não-feito, gatilho registrado) |
+| T-07 (exclusão de coverage larga) | **TESTE-GUARDA** `f82b96c` |
+| D4 / D5 / D6 (gates do dono) | **DOC** Clarification 008 / TD-024 / TD-025 |
+
+### Deferido / Aceito
+| Achado | Estado |
+|---|---|
+| E1-01 (ML/Amazon `entries: []`) | **DEFERIDO** → incremento 014 (mapeamento categoria→taxa; gate T063, `us8-fee-proposal.md §9`) |
+| E4-06 · E6-09 · Q-06 · F-06 · E4-07 · E6-03 · Q-09 · Q-14 · E2-06 | **ACEITO** (§5 anti-scope-creep — verificados corretos ou decisão datada) |
+| Onda 2 (E6-01/02/04/05, billing) | pré-cutover do E6 — entram no épico, não neste incremento |
+| Onda 7 (N+1, perf, estrutura) | backlog ordenado (C-16..C-23) — fora do escopo desta remediação |
+
+*Achados de performance (E5-03, E3-03) e os itens de billing permanecem como backlog nomeado; nada foi silenciosamente fechado.*
