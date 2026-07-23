@@ -185,8 +185,17 @@ function resolveSlotFees(
   const base = entryToChannelFees(entry);
   if (!manual.hasManualInput) return base; // blank slot → the pre-fill, untouched
   const edited = manual.editedFields;
+  // `priceBands` IS the commission schedule — `pricing-core/channels.ts:101-102` overwrites
+  // commissionPct/fixedFee from the band containing the announce. So keeping the bands while the user
+  // typed a commission would make that input silently inert (E1-02 would trade one silent wrong for
+  // another). Owner decision 2026-07-23: typing a commission/fixed fee means "my commission is X, not
+  // the catalog's" → the schedule drops. Typing only freight/minPerItem leaves the schedule intact.
+  // `freightVoucherBands` is a FREIGHT dimension, orthogonal to commission, and is the co-financed
+  // amount the audit found being silently dropped — it is preserved unconditionally.
+  const commissionOverridden = edited.commissionPct !== undefined || edited.fixedFee !== undefined;
   return {
     ...base,
+    priceBands: commissionOverridden ? undefined : base.priceBands,
     commissionPct: edited.commissionPct ?? base.commissionPct,
     fixedFee: edited.fixedFee ?? base.fixedFee,
     minPerItem: edited.minPerItem ?? base.minPerItem,

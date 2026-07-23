@@ -307,13 +307,14 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(r.result?.catalogVersion).toBeNull();
   });
 
-  // OPEN OWNER DECISION (013, surfaced by this slice — do NOT read this as an endorsement):
-  // `pricing-core/channels.ts:23,101-102` states that price bands, when present, OVERRIDE
-  // commission/fixedFee. So on a BAND-based entry (Shopee) the selective merge preserves the bands
-  // and the seller's typed commission has NO effect on the price. This test pins that measured
-  // consequence honestly rather than asserting a comfortable lie; the alternative semantics (drop
-  // priceBands when commissionPct/fixedFee is typed, keep the voucher always) is a one-line change.
-  it("a typed commission on a BAND entry is neutralized by the preserved bands (measured)", () => {
+  // OWNER DECISION 2026-07-23 (013, surfaced by this slice): `priceBands` IS the commission schedule
+  // (`pricing-core/channels.ts:101-102` overwrites commissionPct/fixedFee from the band containing the
+  // announce). Preserving the bands while the seller typed a commission would make that input silently
+  // inert — trading E1-02's silent wrong for a different one. So a typed commission/fixedFee DROPS the
+  // schedule ("my commission is X, not the catalog's"); the co-financed voucher, a freight dimension
+  // orthogonal to commission, is preserved unconditionally. Typing only freight keeps the bands (the
+  // test above). Net effect: no typed input is ever inert, and "ajustado por você" is always true.
+  it("a typed commission DROPS the bands (it governs the price) but keeps the voucher", () => {
     const r = computeFromForm(
       {
         ...canonical,
@@ -322,10 +323,20 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
       ctx,
     );
     const ch = r.channels[0];
+    const input = r.input?.channels?.[0];
     expect(ch.editedFields).toEqual({ commissionPct: 10 });
-    // Identical to the blank slot: the band's 20% + R$4 govern, the voucher is deducted.
-    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    // The commission schedule is gone; the voucher schedule survives.
+    expect(input?.priceBands).toBeUndefined();
+    expect(input?.freightVoucherBands).toHaveLength(3);
+    // The typed 10% now GOVERNS: varejo 42,98 / 0,9 = 47,76 — no longer the band's 20% + R$4 (58,73).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(47.76, 2);
+    // …and the co-financed voucher is still deducted (announce ∈ [0,80) → R$20), so the seller nets
+    // base − voucher, exactly as on the blank slot. This is the E1-02 truth that must never regress.
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
     expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    // atacado 37,25 / 0,9 = 41,39 → still ∈ [0,80) → R$20 voucher → líquido 17,25.
+    expect(ch.result?.precoAnuncioAtacado).toBeCloseTo(41.39, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
     expect(ch.seal.kind).toBe("adjusted");
     expect(ch.result?.feeSource).toBeNull();
     expect(r.result?.catalogVersion).toBeNull();
