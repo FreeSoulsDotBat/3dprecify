@@ -2,7 +2,7 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -83,8 +83,10 @@ describe("CalcularPage — stale validation error after a catalog prefill (FA-03
     });
 
     // The prefilled value (1,000) is valid — the stale error must be gone with NO further
-    // interaction on the field itself.
-    expect(screen.queryByText(t.rollWeightError)).not.toBeInTheDocument();
+    // interaction on the field itself (async resolver revalidation — await it).
+    await waitFor(() => {
+      expect(screen.queryByText(t.rollWeightError)).not.toBeInTheDocument();
+    });
     expect(screen.getByRole("textbox", { name: t.fields.rollWeight })).toHaveValue("1,000");
   });
 });
