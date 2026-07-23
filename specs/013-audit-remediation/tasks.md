@@ -190,17 +190,17 @@
 
 ### Tests for User Story 6 ⚠️
 
-- [ ] T070 [P] [US6] [opus] Teste FAILING em `backend/tests/test_scenarios.py`: PUT de cenário base-KIT com kit vivo alterado ⇒ `lastKnown` re-capturado (achado E5-01); e duplicate com nome de 118 chars ⇒ "Cópia de …" truncando a BASE com reticências ≤120 (achado E5-02)
-- [ ] T071 [P] [US6] Testes FAILING front: `freshest()` com `2026-07-07.10` vs `.2` escolhe a .10 em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts` (E1-03); products-panel com referências em loading mostra placeholder neutro, nunca "Manual · Manual", em `apps/web/src/features/catalog/products-panel.test.tsx` (FB-04)
-- [ ] T072 [P] [US6] Teste FAILING em `backend/tests/test_history.py`: payload profundo/grande rejeitado ANTES da varredura recursiva (E4-02); `from`/`to` naïve ⇒ 422 exigindo tz (E4-05)
+- [X] T070 [P] [US6] [opus] Teste FAILING em `backend/tests/test_scenarios.py`: PUT de cenário base-KIT com kit vivo alterado ⇒ `lastKnown` re-capturado (achado E5-01); e duplicate com nome de 118 chars ⇒ "Cópia de …" truncando a BASE com reticências ≤120 (achado E5-02)
+- [X] T071 [P] [US6] Testes FAILING front: `freshest()` com `2026-07-07.10` vs `.2` escolhe a .10 em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts` (E1-03); products-panel com referências em loading mostra placeholder neutro, nunca "Manual · Manual", em `apps/web/src/features/catalog/products-panel.test.tsx` (FB-04)
+- [X] T072 [P] [US6] Teste FAILING em `backend/tests/test_history.py`: payload profundo/grande rejeitado ANTES da varredura recursiva (E4-02); `from`/`to` naïve ⇒ 422 exigindo tz (E4-05)
 
 ### Implementation for User Story 6
 
-- [ ] T073 [US6] [opus] Backend: `_resnapshot_cost_basis` cobre `kind=="KIT"` via `_resolve_kit_last_known` em `backend/app/api/scenarios.py:473-501` + corrigir o comentário do docstring e o de `backend/tests/test_scenarios.py:952-953`; ellipsis F5 em `scenarios.py:677-679`
-- [ ] T074 [P] [US6] Backend: `owner_uid` no where de `_live_links` em `backend/app/api/products.py:421-438` (E2-03); size-cap antes de `_reject_bad_leaves` + limite de profundidade em `backend/app/api/history.py:159-205` (E4-02); tz-aware em `history.py:388-389` (E4-05)
-- [ ] T075 [P] [US6] Front: fix `freshest()` em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts:27-29`; `FEE_CATALOG_SEED` validado pelo `parseFeeCatalog` no boot em `use-fee-catalog.ts:86-89` (achado E1-06 — movido de US8 pela remediação G1 do analyze); placeholder isLoading em `apps/web/src/features/catalog/products-panel.tsx:26-35`; comparação de regime em Decimal em `packages/pricing-core/src/channels.ts:69,109-110` (E1-05, desejável — [opus] se tocado, é pricing-core)
-- [ ] T076 [P] [US6] Front DS: remover os 10 ícones mortos de `apps/web/src/shared/ui/icon.tsx` (FC-01); mover as 3 strings para `messages.pt-br.ts` e injetar via prop em `toast.tsx:64,76` e `dialog.tsx:44` (FC-02)
-- [ ] T077 [US6] CORS restrito em `backend/app/main.py:82-94` (métodos/headers do contracts §2) + apagar `.config/rtk/filters.toml` (P-02); e2e/preview verdes como prova de que nada quebrou
+- [X] T073 [US6] [opus] Backend: `_resnapshot_cost_basis` cobre `kind=="KIT"` via `_resolve_kit_last_known` em `backend/app/api/scenarios.py:473-501` + corrigir o comentário do docstring e o de `backend/tests/test_scenarios.py:952-953`; ellipsis F5 em `scenarios.py:677-679`
+- [X] T074 [P] [US6] Backend: `owner_uid` no where de `_live_links` em `backend/app/api/products.py:421-438` (E2-03); size-cap antes de `_reject_bad_leaves` + limite de profundidade em `backend/app/api/history.py:159-205` (E4-02); tz-aware em `history.py:388-389` (E4-05)
+- [X] T075 [P] [US6] Front: fix `freshest()` em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts:27-29`; `FEE_CATALOG_SEED` validado pelo `parseFeeCatalog` no boot em `use-fee-catalog.ts:86-89` (achado E1-06 — movido de US8 pela remediação G1 do analyze); placeholder isLoading em `apps/web/src/features/catalog/products-panel.tsx:26-35`; comparação de regime em Decimal em `packages/pricing-core/src/channels.ts:69,109-110` (E1-05, desejável — [opus] se tocado, é pricing-core)
+- [X] T076 [P] [US6] Front DS: remover os 10 ícones mortos de `apps/web/src/shared/ui/icon.tsx` (FC-01); mover as 3 strings para `messages.pt-br.ts` e injetar via prop em `toast.tsx:64,76` e `dialog.tsx:44` (FC-02)
+- [X] T077 [US6] CORS restrito em `backend/app/main.py:82-94` (métodos/headers do contracts §2) + apagar `.config/rtk/filters.toml` (P-02); e2e/preview verdes como prova de que nada quebrou
 - [X] T077b [US6] Homologação visual (qa-produto, [opus]): products-panel em carregamento frio mostra placeholder neutro (nunca "Manual · Manual"); DS após remoção de ícones/moves de strings sem regressão visível (Toast/Dialog com aria corretos), 390px + desktop — evidência PNG (Constitution III — remediação C1 do analyze)
 - [~] T078 [US6] Gate + e2e verdes; PR(s) de US6; ledger; autorização do dono
 
