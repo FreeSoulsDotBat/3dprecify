@@ -411,21 +411,34 @@ async def _resolve_links(
 
 
 async def _live_links(
-    session: AsyncSession, rows: list[Product]
+    session: AsyncSession, uid: str, rows: list[Product]
 ) -> tuple[dict[uuid.UUID, Filament], dict[uuid.UUID, Printer]]:
     """Load the live rows the products link to (deleted links degrade in the delete txn, so a
-    present link points at a live row; missing rows simply fall back to the columns)."""
+    present link points at a live row; missing rows simply fall back to the columns).
+
+    ``uid`` is REQUIRED (audit finding E2-03, 2026-07-23): this used to select by ID alone, the one
+    query in the read path without an ``owner_uid`` predicate. The write path never lets a product
+    point at another account's reference, so the hole was latent — but "unreachable by today's
+    writers" is not tenant isolation, and this is the function that decides which values a product
+    RENDERS. Scoped, an out-of-tenant link simply does not resolve and the product falls back to its
+    own snapshot columns, which is the same honest degradation a deleted link already gets."""
     fil_ids = {r.filament_id for r in rows if r.filament_id is not None}
     prn_ids = {r.printer_id for r in rows if r.printer_id is not None}
     filaments: dict[uuid.UUID, Filament] = {}
     printers: dict[uuid.UUID, Printer] = {}
     if fil_ids:
         for f in (
-            await session.execute(select(Filament).where(Filament.id.in_(fil_ids)))
+            await session.execute(
+                select(Filament).where(Filament.id.in_(fil_ids), Filament.owner_uid == uid)
+            )
         ).scalars():
             filaments[f.id] = f
     if prn_ids:
-        for p in (await session.execute(select(Printer).where(Printer.id.in_(prn_ids)))).scalars():
+        for p in (
+            await session.execute(
+                select(Printer).where(Printer.id.in_(prn_ids), Printer.owner_uid == uid)
+            )
+        ).scalars():
             printers[p.id] = p
     return filaments, printers
 
@@ -444,7 +457,7 @@ async def list_products(
             )
         ).scalars()
     )
-    filaments, printers = await _live_links(session, rows)
+    filaments, printers = await _live_links(session, claims["uid"], rows)
     return [
         _to_out(
             r,
@@ -487,7 +500,7 @@ async def get_product(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
     row = await _owned(session, claims["uid"], product_id)
-    filaments, printers = await _live_links(session, [row])
+    filaments, printers = await _live_links(session, claims["uid"], [row])
     return _to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,

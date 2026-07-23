@@ -914,7 +914,8 @@ def _mk_kit_with_ad_hoc_line(
 def _config_with_kit_basis(bom_id: str, kit_name: str) -> dict[str, Any]:
     """A config whose `costBasis` references a live Kit — `lastKnown` is deliberately a STALE
     single-line placeholder (distinct from the live kit's line) so only a read-time resolve (D3)
-    or the stored value (D6) could ever appear on reopen — never a coincidence."""
+    or the save-time re-snapshot (E5-01, read back through D6) could ever appear on reopen — never
+    a coincidence. It survives ONLY when the ref does not resolve at save time (Q13)."""
     config = json.loads(json.dumps(VALID_CONFIG))
     config["costBasis"] = {
         "kind": "KIT",
@@ -963,7 +964,7 @@ def test_KIT_D6_a_soft_deleted_referenced_kit_degrades_honestly_no_break(
     soft-deleted) degrades to the STORED `lastKnown`, `degraded: true`, never a blank/500/"removido"
     claim — the exact F1 honesty-class guard (never present stale as live)."""
     h = _premium(monkeypatch, migrated_db, "u-sc-kit-d6")
-    bom_id, _product_id, _piece_name = _mk_kit_with_ad_hoc_line(
+    bom_id, _product_id, piece_name = _mk_kit_with_ad_hoc_line(
         db_client, h, piece_name="Braço", print_grams="50.000", kit_name="Kit Braço"
     )
 
@@ -979,11 +980,15 @@ def test_KIT_D6_a_soft_deleted_referenced_kit_degrades_honestly_no_break(
     assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
     resolved = fetched.json()["config"]["costBasis"]
     assert resolved["degraded"] is True
-    # The STORED snapshot (the stale placeholder sent at save — never re-snapshotted server-side
-    # for KIT, T024's client half is what does that) — never blank, never fabricated as live.
-    assert resolved["lastKnown"] == {
-        "lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]
-    }
+    # The STORED snapshot — which, since 2026-07-23 (audit finding E5-01), is the one the SERVER
+    # re-captured from the live kit at save time, NOT the stale placeholder the client sent. The
+    # previous comment here claimed the KIT re-snapshot was T024's client half; T024 is a pure read
+    # (`computeBom` rollup) and writes no `lastKnown` anywhere, so that claim described a mechanism
+    # that did not exist. Never blank, never fabricated as live.
+    lines = resolved["lastKnown"]["lines"]
+    assert [line["name"] for line in lines] == [piece_name], lines
+    assert [line["quantity"] for line in lines] == [2], lines
+    assert lines[0]["input"]["printGrams"] == "50.000", lines
     assert resolved["ref"] == {"id": bom_id, "name": "Kit Braço"}  # the ref is kept, not erased
 
     # Still editable + re-saveable — a PUT with the degraded basis unchanged succeeds (US6).

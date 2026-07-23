@@ -354,7 +354,7 @@ async def _resolve_views(
             )
         ).scalars()
     )
-    filaments, printers = await _live_links(session, products)
+    filaments, printers = await _live_links(session, uid, products)
     return {
         p.id: _product_to_out(
             p,

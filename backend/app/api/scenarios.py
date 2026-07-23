@@ -21,10 +21,10 @@ decimal strings / an oversized document — never mirrored field-by-field agains
 on every write (POST now; PUT in PR-B) per data-model §1 N1.
 
 **T011 — the on-save re-snapshot (D6 groundwork, ADR-0017 §6 the ``_snapshot_line`` rule).** A
-``costBasis`` referencing a live, owned Product has its ``lastKnown`` REWRITTEN from the live row
-on every save — so a later degradation (T022, when the product is gone) is lossless. A ``ref``
-that does not resolve is **not** an error (Q13, accept-and-degrade): the client-sent ``lastKnown``
-is kept as-is.
+``costBasis`` referencing a live, owned Product **or Kit** (the second kind added 2026-07-23, audit
+finding E5-01) has its ``lastKnown`` REWRITTEN from the live row on every save — so a later
+degradation (T022, when the reference is gone) is lossless. A ``ref`` that does not resolve is
+**not** an error (Q13, accept-and-degrade): the client-sent ``lastKnown`` is kept as-is.
 """
 
 from __future__ import annotations
@@ -78,6 +78,11 @@ router = APIRouter(tags=["scenarios"])
 _CONFIG_SIZE_CAP_BYTES = 256 * 1024
 
 _VALID_COST_BASIS_KINDS = {"AD_HOC", "PRODUCT", "KIT"}
+
+#: `scenarios.name` is `VARCHAR(120)` with `ck_scenarios_name_len` behind it (data-model §2) — the
+#: bound the duplicate path has to fit its `"Cópia de …"` inside, not a display preference.
+_NAME_MAX_CHARS = 120
+_COPY_PREFIX = "Cópia de "
 
 
 def _validate_cost_basis(cost_basis: object) -> None:
@@ -149,7 +154,7 @@ class ScenarioIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             raise ValueError("name must not be blank")
-        if len(trimmed) > 120:
+        if len(trimmed) > _NAME_MAX_CHARS:
             raise ValueError("name exceeds the maximum length (120)")
         return trimmed
 
@@ -323,7 +328,7 @@ async def _resolve_product_last_known(
     ).scalar_one_or_none()
     if row is None:
         return None
-    filaments, printers = await _live_links(session, [row])
+    filaments, printers = await _live_links(session, uid, [row])
     resolved = _product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
@@ -442,16 +447,26 @@ async def _resnapshot_cost_basis(
     session: AsyncSession, uid: str, config: dict[str, Any]
 ) -> dict[str, Any]:
     """T011 — re-snapshot `costBasis.lastKnown` from the live reference on EVERY save, so a later
-    D6 degradation (T022) is lossless (ADR-0017 §6). A `PRODUCT` ref that resolves to an owned,
-    live Product OVERWRITES the submitted `lastKnown`; a `ref` that does not resolve (nonexistent,
-    soft-deleted, cross-tenant, or an ad-hoc/KIT basis) leaves the client-sent `lastKnown` as-is —
-    accept-and-degrade (Q13), never an error. KIT re-snapshot is T024 (PR-B, Q12 channel
-    composition) — out of scope here."""
+    D6 degradation (T022) is lossless (ADR-0017 §6). A `PRODUCT` **or `KIT`** ref that resolves to
+    an owned, live row OVERWRITES the submitted `lastKnown`; a `ref` that does not resolve
+    (nonexistent, soft-deleted, cross-tenant) or an `AD_HOC` basis leaves the client-sent
+    `lastKnown` as-is — accept-and-degrade (Q13), never an error.
+
+    **KIT coverage added 2026-07-23 (013 audit finding E5-01).** This function used to handle
+    `PRODUCT` only and delegate the KIT case to T024 — but T024 is the CLIENT-side `computeBom`
+    rollup, a pure READ that never writes a `lastKnown` anywhere. So the delegation described a
+    guarantee that did not exist: a KIT basis kept whatever `lastKnown` the client happened to
+    send, and the D6 degraded read (`_resolve_cost_basis_for_read`) then served a snapshot that was
+    never re-captured from the kit — stale by construction, and silently so, since a live ref hides
+    the stored value behind D3 live-reflect. Both kinds now re-capture through the SAME seam they
+    are read back through (`_resolve_product_last_known` / `_resolve_kit_last_known`), which is what
+    makes save-time and read-time impossible to drift apart."""
     cost_basis = config.get("costBasis")
     if not isinstance(cost_basis, dict):
         return config
     cb = cast("dict[str, Any]", cost_basis)
-    if cb.get("kind") != "PRODUCT":
+    kind = cb.get("kind")
+    if kind not in ("PRODUCT", "KIT"):
         return config
     ref = cb.get("ref")
     if not isinstance(ref, dict):
@@ -460,10 +475,14 @@ async def _resnapshot_cost_basis(
     if not ref_dict.get("id"):
         return config
     try:
-        product_id = uuid.UUID(str(ref_dict["id"]))
+        ref_id = uuid.UUID(str(ref_dict["id"]))
     except ValueError:
         return config
-    last_known = await _resolve_product_last_known(session, uid, product_id)
+    last_known = (
+        await _resolve_product_last_known(session, uid, ref_id)
+        if kind == "PRODUCT"
+        else await _resolve_kit_last_known(session, uid, ref_id)
+    )
     if last_known is not None:
         cb["lastKnown"] = last_known
     return config
@@ -587,7 +606,7 @@ class RenameIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             raise ValueError("name must not be blank")
-        if len(trimmed) > 120:
+        if len(trimmed) > _NAME_MAX_CHARS:
             raise ValueError("name exceeds the maximum length (120)")
         return trimmed
 
@@ -642,9 +661,16 @@ async def duplicate_scenario(
     other. Materializes nothing (VR-607's twin)."""
     uid: str = claims["uid"]
     original = await _owned(session, uid, scenario_id)
-    copy_name = f"Cópia de {original.name}"
-    if len(copy_name) > 120:
-        copy_name = copy_name[:120]
+    # The copy's name must fit `name`'s 120-char limit (VR-614). Truncating the WHOLE string at
+    # [:120] (the pre-2026-07-23 guard, audit finding E5-02) amputated the tail with no sign
+    # anything was cut, so two long scenarios could copy to the SAME name and the seller would see
+    # neither the loss nor the collision. The BASE is truncated with an ellipsis instead — the cut
+    # is visible, and the `"Cópia de "` prefix (the thing that says WHAT this row is) always
+    # survives intact.
+    copy_name = f"{_COPY_PREFIX}{original.name}"
+    if len(copy_name) > _NAME_MAX_CHARS:
+        budget = _NAME_MAX_CHARS - len(_COPY_PREFIX) - 1  # -1 for the ellipsis itself
+        copy_name = f"{_COPY_PREFIX}{original.name[:budget].rstrip()}…"
     copy = Scenario(
         owner_uid=uid,
         name=copy_name,

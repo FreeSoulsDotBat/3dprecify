@@ -40,7 +40,7 @@ import uuid
 from typing import Annotated, Any, Literal, cast
 
 from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import ConfigDict, field_validator, model_validator
+from pydantic import AwareDatetime, ConfigDict, field_validator, model_validator
 from sqlalchemy import literal, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -72,6 +72,33 @@ _BASIS_TOTAL_KEY: dict[str, str] = {
     "PRECO_VAREJO": "precoVarejo",
     "PRECO_ATACADO": "precoAtacado",
 }
+
+# A frozen quote's structure is SHALLOW by nature (root -> totals/breakdown/channels[] -> fees ->
+# leaf: 4-5 levels, and `provenance` adds one more). 64 is two orders of magnitude of headroom over
+# anything the product produces, and still far below the interpreter's ~1000-frame recursion limit,
+# which every recursive guard in this file (and `json.dumps` itself) is subject to. This bounds
+# ABUSE, not the product (audit finding E4-02): a small document can nest one level per byte.
+_PAYLOAD_MAX_DEPTH = 64
+
+
+def _reject_overly_nested(payload: dict[str, Any]) -> None:
+    """Depth guard — deliberately ITERATIVE (an explicit stack, not recursion).
+
+    A recursive depth check would be the very thing it is meant to prevent: it would blow the stack
+    on the document it exists to reject. It therefore runs BEFORE `json.dumps` (the size cap) and
+    before `reject_bad_leaves`, both of which recurse.
+    """
+    stack: list[tuple[object, int]] = [(payload, 1)]
+    while stack:
+        node, depth = stack.pop()
+        if depth > _PAYLOAD_MAX_DEPTH:
+            raise ValueError(
+                f"payload is nested deeper than the maximum of {_PAYLOAD_MAX_DEPTH} levels"
+            )
+        if isinstance(node, dict):
+            stack.extend((v, depth + 1) for v in cast("dict[str, object]", node).values())
+        elif isinstance(node, list):
+            stack.extend((item, depth + 1) for item in cast("list[object]", node))
 
 
 class SnapshotIn(CamelModel):
@@ -110,6 +137,19 @@ class SnapshotIn(CamelModel):
         generic handler → 500. The outbox re-POSTs a 5xx forever, so a permanent 500 on an invalid
         body is an infinite loop; every one of those cases is mirrored here as a terminal 422.
         """
+        # ORDER IS THE POINT (audit finding E4-02, 2026-07-23). The guards run cheapest-and-most-
+        # bounding FIRST; the recursive walk runs LAST, on a document already proven bounded in
+        # depth and size. Before this, `reject_bad_leaves` traversed an attacker-sized document in
+        # full before the size cap was ever consulted, and a pathologically NESTED document blew
+        # the interpreter's stack inside the walk (or inside `json.dumps`) — a `RecursionError`
+        # surfaces as a 500, and the offline outbox re-POSTs a 5xx FOREVER (ADR-0018 §3). Both
+        # abuse shapes are now terminal 422s, which is the only answer that stops the loop.
+        _reject_overly_nested(self.payload)
+
+        # Size cap — an HONEST 422, never a silent truncation of an immutable record.
+        if len(json.dumps(self.payload).encode("utf-8")) > _PAYLOAD_SIZE_CAP_BYTES:
+            raise ValueError("payload exceeds the maximum document size")
+
         # VR-501 / VR-502 — the recursive money guard (floats, ints in money positions, NaN/
         # Infinity, magnitude). The ceiling is passed EXPLICITLY: this document's leaves land in
         # MONEY_SETTLED Numeric(12,2) columns, so `CEIL_MONEY` — not the wider config bound that
@@ -146,10 +186,6 @@ class SnapshotIn(CamelModel):
             raise ValueError("deviceUtcOffsetMinutes must be within [-840, 840]")
         if self.label is not None and not self.label.strip():
             self.label = None  # blank is unrepresentable as '' (ck_snapshots_label_not_blank)
-
-        # Size cap — an HONEST 422, never a silent truncation of an immutable record.
-        if len(json.dumps(self.payload).encode("utf-8")) > _PAYLOAD_SIZE_CAP_BYTES:
-            raise ValueError("payload exceeds the maximum document size")
         return self
 
 
@@ -333,8 +369,8 @@ async def list_history(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     cursor: Annotated[str | None, Query()] = None,
     q: Annotated[str | None, Query(max_length=120)] = None,
-    from_: Annotated[datetime.datetime | None, Query(alias="from")] = None,
-    to: Annotated[datetime.datetime | None, Query()] = None,
+    from_: Annotated[AwareDatetime | None, Query(alias="from")] = None,
+    to: Annotated[AwareDatetime | None, Query()] = None,
     client_snapshot_id: Annotated[uuid.UUID | None, Query(alias="clientSnapshotId")] = None,
 ) -> SnapshotPage:
     """Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
@@ -352,7 +388,11 @@ async def list_history(
       escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
       label never matches (an unlabelled row is not a search hit).
     * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
-      ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
+      ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528). Both
+      bounds MUST carry a timezone offset (``AwareDatetime``, audit finding E4-05): the column is a
+      ``timestamptz``, so a NAIVE bound was silently read as UTC and a seller filtering "13 de
+      julho" from a UTC-3 device got a window shifted three hours — a filter that quietly hides
+      real quotes is worse than one that refuses. An honest 422 asks for the offset instead.
     * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
       may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
     """
