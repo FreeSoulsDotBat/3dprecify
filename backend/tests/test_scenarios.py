@@ -1346,3 +1346,144 @@ def test_VR610_a_re_grant_restores_writes_with_data_intact(
     )
     assert renamed.status_code == 200, renamed.text
     assert renamed.json()["name"] == "De volta"
+
+
+# --- E5-04 (013 audit remediation, T053) -----------------------------------------------------
+# `_price_input_dict_from_bom_line` (scenarios.py:308-336) is the ONE-LINE-DEGRADED branch of
+# `_resolve_kit_last_known` — a kit that ITSELF still resolves (owned + live), but whose line-level
+# `product_id` now points at a soft-deleted product. It was never exercised via the scenarios API:
+# every existing KIT fixture used exactly ONE ad-hoc line, so the branch at scenarios.py:399-408
+# (the `else` of `resolved is not None`) had zero live coverage. This mutates the BomLine's OWN
+# last-known columns into the flat contract shape — if its field mapping breaks (wrong column, wrong
+# default, wrong key name), this test is the one that goes red.
+
+
+def _mk_kit_with_two_ad_hoc_lines(
+    client: TestClient, h: dict[str, str], *, kit_name: str
+) -> tuple[str, str, str]:
+    """A live kit (POST /api/v1/boms) with TWO ad-hoc lines, each materializing its own product
+    (ADR-0017) — returns (bomId, productId of line 0, productId of line 1)."""
+    body = {
+        "name": kit_name,
+        "lines": [
+            {
+                "quantity": 1,
+                "pieceName": "Linha viva",
+                "pieceInputs": {
+                    "printGrams": "100.000",
+                    "wasteGrams": "0.000",
+                    "printTimeHours": "5.000",
+                    "failurePct": "0.000",
+                    "finishTimeHours": "0.000",
+                    "finishRatePerHour": "0.000000",
+                    "laborHours": "0.000",
+                    "laborRatePerHour": "0.000000",
+                    "markupVarejoPct": "50.000",
+                    "markupAtacadoPct": "30.000",
+                },
+                "filamentValues": {
+                    "material": "PLA",
+                    "costPerRoll": "110.00",
+                    "rollWeightKg": "1.000",
+                },
+                "printerValues": {
+                    "machineValue": "1200.00",
+                    "machineLifetimeHours": "2000.000",
+                    "avgPowerKw": "0.1200",
+                    "maintenanceReservePerHour": "0.500000",
+                },
+                "tariffPerKwh": "1.000000",
+                "includeMarketplace": True,
+                "channels": [],
+                "otherCosts": [],
+            },
+            {
+                "quantity": 3,
+                "pieceName": "Linha a apagar",
+                "pieceInputs": {
+                    "printGrams": "250.000",
+                    "wasteGrams": "5.000",
+                    "printTimeHours": "8.000",
+                    "failurePct": "2.000",
+                    "finishTimeHours": "1.000",
+                    "finishRatePerHour": "10.000000",
+                    "laborHours": "0.500",
+                    "laborRatePerHour": "20.000000",
+                    "markupVarejoPct": "60.000",
+                    "markupAtacadoPct": "40.000",
+                },
+                "filamentValues": {
+                    "material": "PETG",
+                    "costPerRoll": "150.00",
+                    "rollWeightKg": "1.000",
+                },
+                "printerValues": {
+                    "machineValue": "2000.00",
+                    "machineLifetimeHours": "3000.000",
+                    "avgPowerKw": "0.2000",
+                    "maintenanceReservePerHour": "1.000000",
+                },
+                "tariffPerKwh": "1.200000",
+                "includeMarketplace": True,
+                "channels": [],
+                "otherCosts": [],
+            },
+        ],
+    }
+    r = client.post("/api/v1/boms", headers=h, json=body)
+    assert r.status_code == 201, r.text
+    kit = r.json()
+    return (
+        kit["id"],
+        kit["materializations"][0]["productId"],
+        kit["materializations"][1]["productId"],
+    )
+
+
+def test_E5_04_a_kit_scenario_with_one_line_soft_deleted_degrades_only_that_line(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The KIT itself still resolves (owned + live), so the scenario is NOT globally degraded
+    (`costBasis.degraded` stays False) — but the ONE line whose product was soft-deleted must
+    surface via `_price_input_dict_from_bom_line`: an honest empty name (mirrors
+    `boms.py::BomLineOut.piece_name=None`) and the line's OWN stored last-known columns, never a
+    500 and never silently dropped from the `lines` array. The sibling (still-live) line keeps
+    resolving via the normal `_price_input_dict`/live-product path."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-e504-kit-line")
+    bom_id, live_product_id, dead_product_id = _mk_kit_with_two_ad_hoc_lines(
+        db_client, h, kit_name="Kit Duas Linhas"
+    )
+
+    delete_resp = db_client.delete(f"/api/v1/products/{dead_product_id}", headers=h)
+    assert delete_resp.status_code == 204, delete_resp.text
+
+    config = _config_with_kit_basis(bom_id, "Kit Duas Linhas")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
+    resolved = fetched.json()["config"]["costBasis"]
+
+    # The KIT reference itself still resolves — this is NOT the whole-basis D6 degradation.
+    assert resolved["degraded"] is False, resolved
+
+    lines = resolved["lastKnown"]["lines"]
+    assert len(lines) == 2, lines
+
+    live_line = next(line for line in lines if line["quantity"] == 1)
+    assert live_line["name"] == "Linha viva"
+    assert live_line["input"]["printGrams"] == "100.000"
+
+    dead_line = next(line for line in lines if line["quantity"] == 3)
+    # The honest empty name (D6 one level down) — never fabricated, never the pre-delete name.
+    assert dead_line["name"] == ""
+    # The BomLine's OWN last-known columns, in the FLAT contract shape — proves
+    # `_price_input_dict_from_bom_line`'s field mapping (not `_price_input_dict`'s Product path).
+    assert set(dead_line["input"].keys()) == _CONTRACT_PRICE_INPUT_KEYS, dead_line["input"].keys()
+    assert dead_line["input"]["printGrams"] == "250.000"
+    assert dead_line["input"]["wasteGrams"] == "5.000"
+    assert dead_line["input"]["costPerRoll"] == "150.00"
+    assert dead_line["input"]["failurePct"] == "2.000"
+    assert dead_line["input"]["machineValue"] == "2000.00"
+    _ = live_product_id  # unused beyond materialization-shape proof above
