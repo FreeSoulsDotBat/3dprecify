@@ -34,18 +34,21 @@ const validPrinter = {
 const ADVERSARIAL = ["1,234,56", "5x3", "10-5", "12,,5", "1.5000", "abc", "--"];
 
 describe("filament costPerRoll — the persisted money field (FB-01)", () => {
-  it.each(ADVERSARIAL)("rejects %s with a field error (never a saved wrong number)", (raw) => {
-    const res = filamentResolver({ ...validFilament, costPerRoll: raw }, undefined, {
-      shouldUseNativeValidation: false,
-      fields: {},
-      criteriaMode: "firstError",
-    });
-    expect(res.errors.costPerRoll?.message).toBe(v.invalid);
-  });
+  it.each(ADVERSARIAL)(
+    "rejects %s with a field error (never a saved wrong number)",
+    async (raw) => {
+      const res = await filamentResolver({ ...validFilament, costPerRoll: raw }, undefined, {
+        shouldUseNativeValidation: false,
+        fields: {},
+        criteriaMode: "firstError",
+      });
+      expect(res.errors.costPerRoll?.message).toBe(v.invalid);
+    },
+  );
 
-  it("FB-01: '1500.00' is R$ 1500 on the wire — NOT the 150000 the audit measured", () => {
+  it("FB-01: '1500.00' is R$ 1500 on the wire — NOT the 150000 the audit measured", async () => {
     const form = { ...validFilament, costPerRoll: "1500.00" };
-    const res = filamentResolver(form, undefined, {
+    const res = await filamentResolver(form, undefined, {
       shouldUseNativeValidation: false,
       fields: {},
       criteriaMode: "firstError",
@@ -62,8 +65,8 @@ describe("filament costPerRoll — the persisted money field (FB-01)", () => {
 });
 
 describe("printer machineValue — the persisted machine cost (FB-01)", () => {
-  it.each(ADVERSARIAL)("rejects %s with a field error", (raw) => {
-    const res = printerResolver({ ...validPrinter, machineValue: raw }, undefined, {
+  it.each(ADVERSARIAL)("rejects %s with a field error", async (raw) => {
+    const res = await printerResolver({ ...validPrinter, machineValue: raw }, undefined, {
       shouldUseNativeValidation: false,
       fields: {},
       criteriaMode: "firstError",
@@ -71,9 +74,9 @@ describe("printer machineValue — the persisted machine cost (FB-01)", () => {
     expect(res.errors.machineValue?.message).toBe(v.invalid);
   });
 
-  it("FB-01: '1500.00' persists as 1500", () => {
+  it("FB-01: '1500.00' persists as 1500", async () => {
     const form = { ...validPrinter, machineValue: "1500.00" };
-    const res = printerResolver(form, undefined, {
+    const res = await printerResolver(form, undefined, {
       shouldUseNativeValidation: false,
       fields: {},
       criteriaMode: "firstError",

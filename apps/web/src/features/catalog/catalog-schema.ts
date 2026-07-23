@@ -33,8 +33,9 @@ function numField(rule: NumRule) {
       ctx.addIssue({ code: "custom", message: v.required });
       return z.NEVER;
     }
-    const cleaned = trimmed.replace(/[^\d.,-]/g, "");
-    const n = parseDecimal(cleaned);
+    // Affix stripping lives in `parseDecimal` and is ANCHORED (013/FA-05) — never re-implement the
+    // local unanchored strip here: it concatenated across interior garbage ("5x3" → "53").
+    const n = parseDecimal(trimmed);
     if (!Number.isFinite(n)) {
       ctx.addIssue({ code: "custom", message: v.invalid });
       return z.NEVER;
@@ -52,14 +53,19 @@ function numField(rule: NumRule) {
   });
 }
 
-/** pt-BR string → canonical decimal string for the wire ("110,50" → "110.5"; blank/bad → "0"). */
+/** pt-BR string → canonical decimal string for the wire ("110,50" → "110.5"; blank/bad → "0").
+ *  NOTE: this NORMALIZES via the number (trailing zeros dropped) — deliberately different from
+ *  `ptBrToWireDecimal`, which preserves the leaf's precision byte-for-byte for the product
+ *  round-trip (SC-305). Both read the same grammar; only the rendering differs. */
 function toWireDecimal(ptbr: string): string {
-  const n = parseDecimal((ptbr ?? "").trim().replace(/[^\d.,-]/g, ""));
+  const n = parseDecimal(ptbr ?? "");
   return Number.isFinite(n) ? String(n) : "0";
 }
 
-/** Wire decimal string → editable pt-BR string ("135.00" → "135"; "110.5" → "110,5"). */
-function wireToPtBr(dec: string): string {
+/** Wire decimal string → editable pt-BR string, NORMALIZED ("135.00" → "135"; "110.5" → "110,5").
+ *  The catalog sheet shows the shortest faithful rendering; the raw separator swap is the shared
+ *  `wireToPtBr` (013/FA-05), used where precision must survive the round-trip. */
+function wireToPtBrNormalized(dec: string): string {
   const n = Number(dec);
   return Number.isFinite(n) ? String(n).replace(".", ",") : "";
 }
@@ -115,9 +121,9 @@ export function filamentToForm(f: FilamentOut): FilamentFormValues {
   return {
     name: f.name,
     material: f.material ?? "",
-    costPerRoll: wireToPtBr(f.costPerRoll),
-    rollWeightKg: wireToPtBr(f.rollWeightKg),
-    defaultWasteGrams: wireToPtBr(f.defaultWasteGrams),
+    costPerRoll: wireToPtBrNormalized(f.costPerRoll),
+    rollWeightKg: wireToPtBrNormalized(f.rollWeightKg),
+    defaultWasteGrams: wireToPtBrNormalized(f.defaultWasteGrams),
   };
 }
 
@@ -125,7 +131,7 @@ export function filamentToForm(f: FilamentOut): FilamentFormValues {
 export function filamentSummary(f: FilamentOut): string {
   const material = f.material?.trim();
   const head = material ? `${material} · ` : "";
-  return `${head}R$ ${formatDecimal(Number(f.costPerRoll))} / ${wireToPtBr(f.rollWeightKg)} kg`;
+  return `${head}R$ ${formatDecimal(Number(f.costPerRoll))} / ${wireToPtBrNormalized(f.rollWeightKg)} kg`;
 }
 
 // ── Printer ───────────────────────────────────────────────────────────────────────────────────
@@ -178,14 +184,14 @@ export function printerToWire(values: PrinterFormValues): PrinterIn {
 export function printerToForm(p: PrinterOut): PrinterFormValues {
   return {
     name: p.name,
-    machineValue: wireToPtBr(p.machineValue),
-    machineLifetimeHours: wireToPtBr(p.machineLifetimeHours),
-    avgPowerKw: wireToPtBr(p.avgPowerKw),
-    maintenanceReservePerHour: wireToPtBr(p.maintenanceReservePerHour),
+    machineValue: wireToPtBrNormalized(p.machineValue),
+    machineLifetimeHours: wireToPtBrNormalized(p.machineLifetimeHours),
+    avgPowerKw: wireToPtBrNormalized(p.avgPowerKw),
+    maintenanceReservePerHour: wireToPtBrNormalized(p.maintenanceReservePerHour),
   };
 }
 
 /** Muted second row for a printer list item: `R$ {value} · {life} h · {power} kW`. */
 export function printerSummary(p: PrinterOut): string {
-  return `R$ ${formatDecimal(Number(p.machineValue))} · ${wireToPtBr(p.machineLifetimeHours)} h · ${wireToPtBr(p.avgPowerKw)} kW`;
+  return `R$ ${formatDecimal(Number(p.machineValue))} · ${wireToPtBrNormalized(p.machineLifetimeHours)} h · ${wireToPtBrNormalized(p.avgPowerKw)} kW`;
 }
