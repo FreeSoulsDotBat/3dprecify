@@ -17,7 +17,11 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: ["packages/*/src/**", "apps/web/src/**"],
       // Generated Orval client, type decls, build output and the tests themselves never count.
-      exclude: ["**/dist/**", "**/*.d.ts", "**/*.test.*", "apps/web/src/shared/api/**"],
+      // T-07 (013 audit remediation): the exclusion used to be the whole `shared/api/**` folder,
+      // but only `generated.ts` is actually Orval-generated — `transport.ts`/`error-messages.ts`
+      // are hand-written (transport wrapper + ErrorCode->pt-BR mapping) and were silently exempted
+      // from the coverage floor despite already having their own `*.test.ts` files.
+      exclude: ["**/dist/**", "**/*.d.ts", "**/*.test.*", "apps/web/src/shared/api/generated.ts"],
       thresholds: {
         "packages/*/src/**": { statements: 100, branches: 100, functions: 100, lines: 100 },
         "apps/web/src/**": { statements: 77, branches: 73, functions: 74, lines: 78 },
