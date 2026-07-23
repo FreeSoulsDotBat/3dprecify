@@ -25,10 +25,11 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useDeleteFilament: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
-// 013/FB-02 — FilamentsPanel now reads its own lapsed state; this suite is about the delete-warn
-// wiring only, so the plan is fixed at "active" (no QueryClientProvider needed for the real hook).
+// 013/FB-02 — FilamentsPanel reads its own lapsed state. Mutable so the delete-honesty block below
+// can flip it to "lapsed" (no QueryClientProvider needed for the real hook).
+const { entitlementStatus } = vi.hoisted(() => ({ entitlementStatus: { current: "active" } }));
 vi.mock("@/entities/user/use-entitlement", () => ({
-  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+  useEntitlement: () => ({ data: { status: entitlementStatus.current }, isLoading: false }),
 }));
 
 import { FilamentsPanel } from "./filaments-panel";
@@ -60,6 +61,7 @@ function listState(items: unknown[]) {
 beforeEach(() => {
   useFilamentsMock.mockReturnValue(listState([filament]));
   useProductsMock.mockReturnValue(listState([]));
+  entitlementStatus.current = "active";
 });
 
 afterEach(() => {
@@ -86,5 +88,27 @@ describe("FilamentsPanel — referenced-item delete warn (US6-4)", () => {
 
     expect(screen.getByText(messages.catalogForm.deleteBody)).toBeInTheDocument();
     expect(screen.queryByText(pf.deleteWarnFilament.replace("{n}", "0"))).not.toBeInTheDocument();
+  });
+});
+
+// 013/FB-02 (T034 homologation nit) — REGRESSION GUARD. On lapsed, tapping delete must NOT open the
+// working destructive confirm and then 403 on submit (ux-catalog §3: "Never show a delete/edit as
+// *working* then fail — the intercept happens on tap, honestly"). It routes to the same read-only
+// reactivation surface Edit uses. Active still gets the real confirm dialog.
+describe("FilamentsPanel — lapsed delete honesty (T034)", () => {
+  it("active: tapping delete opens the destructive confirm dialog", () => {
+    render(<FilamentsPanel />);
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+    expect(screen.getByText(messages.catalogForm.deleteBody)).toBeInTheDocument();
+  });
+
+  it("lapsed: tapping delete shows the reactivation intercept, NEVER the destructive confirm", () => {
+    entitlementStatus.current = "lapsed";
+    render(<FilamentsPanel />);
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
+    // The read-only edit sheet with its reactivation footer — the same honest surface Edit uses.
+    expect(screen.getByText(catalogo.reactivateTitle)).toBeInTheDocument();
+    // And crucially NOT the working destructive confirm.
+    expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
   });
 });

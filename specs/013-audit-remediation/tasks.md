@@ -95,7 +95,7 @@
 
 - [X] T032 [US3] Cópia de reativação nova em `apps/web/src/shared/i18n/messages.pt-br.ts` (conforme `specs/007-e2-catalog-entitlement/ux-catalog.md:550-552`); ligar as strings órfãs `:316-319`
 - [X] T033 [US3] `useEntitlement()` em `apps/web/src/pages/catalogo/catalogo-page.tsx:101` + prop `readOnly` descendo para `apps/web/src/features/catalog/{filament-form.tsx,printer-form.tsx}` e `apps/web/src/pages/catalogo/produto-page.tsx` (padrão de `scenarios-list-sheet.tsx:313`/`bom-page.tsx:412`); corrigir o comentário afirmativo-falso de `filament-form.tsx:12`
-- [ ] T034 [US3] Homologação visual (qa-produto, [opus]): lapsed em 390px + desktop nas 3 superfícies + a transição lapsed→active reabilitando sem re-login — evidência PNG
+- [X] T034 [US3] Homologação visual (qa-produto, [opus]): lapsed em 390px + desktop nas 3 superfícies + a transição lapsed→active reabilitando sem re-login — evidência PNG
 - [ ] T035 [US3] Gate + e2e verdes; PR de US3; ledger; autorização do dono
 
 **Checkpoint**: os 3 Altos da auditoria mortos (FA-01/FB-01 · F-02 · FB-02).

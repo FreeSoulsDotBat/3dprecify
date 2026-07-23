@@ -243,7 +243,13 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   variant="ghost"
                   size="sm"
                   aria-label={`${catalogo.remove} ${nameOf(item)}`}
-                  onClick={() => setDeleteTarget(item)}
+                  // 013/FB-02 (T034 homologation nit): on lapsed, tapping delete must NOT open the
+                  // working destructive confirm and then 403 on submit — ux-catalog §3: "Never show a
+                  // delete/edit as *working* then fail — the intercept happens on tap, honestly." Edit
+                  // already routes lapsed to the read-only reactivation surface; delete now mirrors it,
+                  // so both write affordances land on the same honest intercept (the server's
+                  // ENTITLEMENT_REQUIRED 403 stays the real backstop — this is presentation only).
+                  onClick={() => (lapsed ? openEdit(item) : setDeleteTarget(item))}
                 >
                   <Icon name="trash-2" size={18} aria-hidden />
                 </Button>
