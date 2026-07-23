@@ -30,7 +30,7 @@ crash — which is why they are pinned at the DB, not merely in the service:
 
 import json
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -573,6 +573,57 @@ def test_M2_a_JSON_float_anywhere_in_the_payload_is_a_422_never_frozen(
     assert r.status_code == 422, r.text
     assert r.json()["error"]["code"] == "VALIDATION_ERROR"
     assert _count(migrated_db, "u-float") == 0
+
+
+def _int_in_totals(payload: dict[str, Any]) -> None:
+    payload["totals"]["custoTotal"] = 14  # a JSON integer where a decimal STRING belongs
+
+
+def _int_in_breakdown(payload: dict[str, Any]) -> None:
+    payload["breakdown"]["material"] = 11
+
+
+def _int_in_a_nested_breakdown_item(payload: dict[str, Any]) -> None:
+    payload["breakdown"]["otherCosts"] = [{"name": "Embalagem", "value": 2}]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(_int_in_totals, id="int-in-totals"),
+        pytest.param(_int_in_breakdown, id="int-in-breakdown"),
+        pytest.param(_int_in_a_nested_breakdown_item, id="int-in-breakdown-otherCosts"),
+    ],
+)
+def test_E4_01_a_JSON_integer_in_a_money_POSITION_is_a_422(
+    db_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_db: str,
+    mutate: Callable[[dict[str, Any]], None],
+) -> None:
+    """E4-01 — an int money leaf slipped past the float scan (int is a legal JSON number) and froze.
+    The PDF renderer only prints STRINGS (`quote_render._str_or_empty`), so the line rendered as an
+    EMPTY cell on a customer-facing quote: an immutable record that silently shows no price. Inside
+    `totals`/`breakdown` an int is never a count, so it is rejected there — and ONLY there."""
+    h = _premium(monkeypatch, migrated_db, "u-int-money")
+    payload = json.loads(json.dumps(PAYLOAD))  # a deep, independent copy
+    mutate(payload)
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=payload))
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert _count(migrated_db, "u-int-money") == 0
+
+
+def test_E4_01_an_integer_COUNT_outside_a_money_position_still_freezes(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The other half of E4-01: `schemaVersion`/`quantity`/`contributingLines` ARE legal JSON ints.
+    The guard is positional, not a blanket int ban — this is what keeps it from over-rejecting."""
+    h = _premium(monkeypatch, migrated_db, "u-int-count")
+    payload = {**json.loads(json.dumps(PAYLOAD)), "contributingLines": 3, "skippedLines": 0}
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=payload))
+    assert r.status_code == 201, r.text
+    assert r.json()["payload"]["schemaVersion"] == 1
 
 
 @pytest.mark.parametrize("bad", ["NaN", "Infinity", "-Infinity"])

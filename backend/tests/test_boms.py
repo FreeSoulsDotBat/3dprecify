@@ -329,6 +329,49 @@ def test_over_ceiling_line_input_is_422_never_a_500(
     assert db_client.get("/api/v1/products", headers=h).json() == []  # nothing materialized
 
 
+def test_over_ceiling_tariff_per_kwh_is_422_never_a_500(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """E3-01: the line's `tariffPerKwh` had NO ceiling while `ProductIn.tariffPerKwh` enforced
+    CEIL_RATE — so an over-ceiling ad-hoc line passed body validation and only blew up downstream
+    (materialization / the MONEY_RATE Numeric(18,6) column) as an opaque 500. `10**12` is the first
+    magnitude that overflows. Shared validator ⇒ a clean, terminal 422 and nothing written."""
+    h = _premium(monkeypatch, migrated_db, "bom-tariff-ceil-1")
+    r = _post(db_client, h, _bom_body([_ad_hoc_line(tariffPerKwh="1000000000000")]))
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert db_client.get("/api/v1/boms", headers=h).json() == []
+    assert db_client.get("/api/v1/products", headers=h).json() == []  # nothing materialized
+
+
+def test_over_int4_quantity_is_422_never_a_500(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """E3-02: `quantity` is an int4 column; the validator only asserted `>= 0`, so 2**31 reached the
+    INSERT and Postgres raised `integer out of range` → 500. CEIL_QUANTITY (2147483647) is the
+    physical column limit, enforced up front."""
+    h = _premium(monkeypatch, migrated_db, "bom-qty-ceil-1")
+    r = _post(db_client, h, _bom_body([_ad_hoc_line(quantity=2147483648)]))
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert db_client.get("/api/v1/boms", headers=h).json() == []
+    # The boundary itself is still legal — the ceiling is inclusive of the storable max.
+    ok = _post(db_client, h, _bom_body([_ad_hoc_line(quantity=2147483647)]))
+    assert ok.status_code == 201, ok.text
+
+
+def test_a_kit_with_no_lines_is_422(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """E3-04 / owner decision D4: an empty kit was blocked ONLY in the client. `BomIn.lines` now
+    carries `min_length=1`, so the server holds the same promise the UI already makes."""
+    h = _premium(monkeypatch, migrated_db, "bom-empty-1")
+    r = _post(db_client, h, _bom_body([]))
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert db_client.get("/api/v1/boms", headers=h).json() == []
+
+
 # --- Materialization (ADR-0017 / K3 / K4) ----------------------------------------------------
 
 

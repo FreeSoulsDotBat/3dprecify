@@ -41,6 +41,7 @@ from sqlalchemy.exc import DatabaseError
 
 from app.main import create_app
 from app.settings import Settings
+from app.validation import CEIL_CONFIG_LEAF, CEIL_MONEY
 from tests.conftest import requires_db
 from tests.helpers import patch_verify, seed_grant
 
@@ -427,6 +428,35 @@ def test_VR602_a_non_finite_money_string_in_config_is_422(
     r = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
     assert r.status_code == 422, r.text
     assert _scenario_count(migrated_db, "u-sc-nan") == 0
+
+
+def test_VR602_the_config_ceiling_is_CEIL_CONFIG_LEAF_not_CEIL_MONEY(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Q-04 — the two ceilings are DELIBERATELY different, and this test is what says so.
+
+    `history.py` walks a frozen document whose leaves land in MONEY_SETTLED Numeric(12,2) columns
+    (CEIL_MONEY = 10**10). `scenarios.py` walks pure JSONB INTENT with no per-leaf NUMERIC domain,
+    so it applies the single widest house bound (CEIL_CONFIG_LEAF = 10**12). Before this feature
+    that divergence lived under a comment claiming the two walkers "mirror verbatim" — false, and
+    maintenance guided by it would have propagated the wrong ceiling. Now each caller passes its
+    own `money_ceiling` and the gap between them is asserted, not folklore."""
+    assert CEIL_CONFIG_LEAF > CEIL_MONEY
+
+    h = _premium(monkeypatch, migrated_db, "u-sc-ceilparity")
+    # Over CEIL_MONEY, under CEIL_CONFIG_LEAF: a 422 in history, ACCEPTED here.
+    below = json.loads(json.dumps(VALID_CONFIG))
+    below["otherCosts"][0]["value"] = str(CEIL_MONEY)
+    ok = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=below))
+    assert ok.status_code == 201, ok.text
+
+    # At CEIL_CONFIG_LEAF: rejected — the scenario ceiling is higher, not absent.
+    over = json.loads(json.dumps(VALID_CONFIG))
+    over["otherCosts"][0]["value"] = str(CEIL_CONFIG_LEAF)
+    bad = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Teto", config=over))
+    assert bad.status_code == 422, bad.text
+    assert bad.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert _scenario_count(migrated_db, "u-sc-ceilparity") == 1  # only the accepted one
 
 
 def test_VR603_config_validation_is_STRUCTURAL_not_shape_pinning(
