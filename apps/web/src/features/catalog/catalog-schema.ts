@@ -14,6 +14,17 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 const v = messages.calculator.validation;
 const rollWeightError = messages.calculator.rollWeightError;
 
+// 013 US4 (FB-05) — the INTEGER-DIGIT ceilings, mirrored verbatim from `backend/app/validation.py`
+// (the authoritative table) for the SAME wire field. A value at/over its ceiling overflows the
+// column server-side and used to reach the API as a generic 422 with no field attribution; these
+// give the seller the specific "valor muito alto" message before the value ever leaves the browser.
+const CEIL_MONEY = 10 ** 10; // MONEY_SETTLED Numeric(12,2) — costPerRoll / machineValue
+const CEIL_RATE = 10 ** 12; // MONEY_RATE    Numeric(18,6) — maintenanceReservePerHour
+const CEIL_GRAMS = 10 ** 9; // QTY_G         Numeric(12,3) — defaultWasteGrams
+const CEIL_HOURS = 10 ** 6; // QTY_H         Numeric(9,3)  — machineLifetimeHours
+const CEIL_KG = 10 ** 6; // QTY_KG        Numeric(9,3)  — rollWeightKg
+const CEIL_KW = 10 ** 5; // QTY_KW        Numeric(9,4)  — avgPowerKw
+
 interface NumRule {
   /** Blank is allowed and contributes 0 (an optional field). */
   optional?: boolean;
@@ -21,6 +32,9 @@ interface NumRule {
   positive?: boolean;
   /** Field-specific "> 0" message (defaults to the roll-weight message). */
   positiveMessage?: string;
+  /** The column's magnitude ceiling (EXCLUSIVE, matching `finite_non_negative`'s `>= ceiling`
+   *  rejection) — REQUIRED so every call site names the NUMERIC domain it writes into (FB-05). */
+  ceiling: number;
 }
 
 /** One reusable pt-BR number parser+validator — the same shape the calculator asserts, so a bad
@@ -47,6 +61,10 @@ function numField(rule: NumRule) {
       }
     } else if (n < 0) {
       ctx.addIssue({ code: "custom", message: v.negative });
+      return z.NEVER;
+    }
+    if (n >= rule.ceiling) {
+      ctx.addIssue({ code: "custom", message: v.tooHigh });
       return z.NEVER;
     }
     return n;
@@ -83,9 +101,9 @@ export interface FilamentFormValues {
 const filamentSchema = z.object({
   name: z.string().trim().min(1, v.required),
   material: z.string(),
-  costPerRoll: numField({}),
-  rollWeightKg: numField({ positive: true, positiveMessage: rollWeightError }),
-  defaultWasteGrams: numField({ optional: true }),
+  costPerRoll: numField({ ceiling: CEIL_MONEY }),
+  rollWeightKg: numField({ positive: true, positiveMessage: rollWeightError, ceiling: CEIL_KG }),
+  defaultWasteGrams: numField({ optional: true, ceiling: CEIL_GRAMS }),
 });
 
 export const filamentResolver: Resolver<FilamentFormValues> = (values) => {
@@ -146,10 +164,14 @@ export interface PrinterFormValues {
 
 const printerSchema = z.object({
   name: z.string().trim().min(1, v.required),
-  machineValue: numField({}),
-  machineLifetimeHours: numField({ positive: true, positiveMessage: v.machineLifetimePositive }),
-  avgPowerKw: numField({}),
-  maintenanceReservePerHour: numField({ optional: true }),
+  machineValue: numField({ ceiling: CEIL_MONEY }),
+  machineLifetimeHours: numField({
+    positive: true,
+    positiveMessage: v.machineLifetimePositive,
+    ceiling: CEIL_HOURS,
+  }),
+  avgPowerKw: numField({ ceiling: CEIL_KW }),
+  maintenanceReservePerHour: numField({ optional: true, ceiling: CEIL_RATE }),
 });
 
 export const printerResolver: Resolver<PrinterFormValues> = (values) => {
