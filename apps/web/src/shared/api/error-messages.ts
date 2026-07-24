@@ -19,6 +19,12 @@ const MESSAGE_BY_CODE: Record<ApiErrorCode, string> = {
   [ErrorCode.NOT_FOUND]: messages.apiError.notFound,
   [ErrorCode.INTERNAL]: messages.apiError.internal,
   [ErrorCode.ENTITLEMENT_REQUIRED]: messages.apiError.entitlementRequired,
+  // E6/T014 (F6 — no status-code jargon ever reaches the seller). This is the GENERIC fallback
+  // for a code that a call site doesn't branch on specially; the checkout surface (409 conflict
+  // / 503 unavailable) reads `messages.billing.*` directly for the honest, specific phrasing —
+  // this entry only keeps the exhaustive `Record<ApiErrorCode, string>` a compile error away
+  // from ever silently shipping a raw wire token.
+  [ErrorCode.BILLING_UNAVAILABLE]: messages.billing.offerUnavailable,
   UNKNOWN: messages.apiError.unknown,
 };
 

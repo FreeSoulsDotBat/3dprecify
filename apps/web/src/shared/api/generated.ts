@@ -234,6 +234,22 @@ export interface BomOut {
   materializations?: Materialization[] | null;
 }
 
+export type CheckoutInPeriod = typeof CheckoutInPeriod[keyof typeof CheckoutInPeriod];
+
+
+export const CheckoutInPeriod = {
+  monthly: 'monthly',
+  annual: 'annual',
+} as const;
+
+export interface CheckoutIn {
+  period: CheckoutInPeriod;
+}
+
+export interface CheckoutOut {
+  initPoint: string;
+}
+
 export interface CurrentUser {
   uid: string;
   email?: string | null;
@@ -270,6 +286,7 @@ export const ErrorCode = {
   NOT_FOUND: 'NOT_FOUND',
   INTERNAL: 'INTERNAL',
   ENTITLEMENT_REQUIRED: 'ENTITLEMENT_REQUIRED',
+  BILLING_UNAVAILABLE: 'BILLING_UNAVAILABLE',
 } as const;
 
 export interface ErrorBody {
@@ -531,6 +548,10 @@ export interface SnapshotOut {
 export interface SnapshotPage {
   items: SnapshotOut[];
   nextCursor?: string | null;
+}
+
+export interface WebhookAck {
+  status: string;
 }
 
 export type HealthHealthGet200 = {[key: string]: string};
@@ -5064,4 +5085,209 @@ export const useDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePost = <TError
         TContext
       > => {
       return useMutation(getDuplicateScenarioApiV1ScenariosScenarioIdDuplicatePostMutationOptions(options), queryClient);
+    }
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse200 = {
+  data: WebhookAck
+  status: 200
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseSuccess = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse200) & {
+  headers: Headers;
+};
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422) & {
+  headers: Headers;
+};
+
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseSuccess | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError)
+
+export const getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostUrl = () => {
+
+
+
+
+  return `/api/v1/billing/webhook/mercadopago`
+}
+
+/**
+ * @summary Mercadopago Webhook
+ */
+export const mercadopagoWebhookApiV1BillingWebhookMercadopagoPost = async ( options?: RequestInit): Promise<mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse> => {
+
+  return orvalFetch<mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse>(getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext> => {
+
+const mutationKey = ['mercadopagoWebhookApiV1BillingWebhookMercadopagoPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, void> = () => {
+
+
+          return  mercadopagoWebhookApiV1BillingWebhookMercadopagoPost(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type MercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationResult = NonNullable<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>>
+
+    export type MercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Mercadopago Webhook
+ */
+export const useMercadopagoWebhookApiV1BillingWebhookMercadopagoPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof mercadopagoWebhookApiV1BillingWebhookMercadopagoPost>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getMercadopagoWebhookApiV1BillingWebhookMercadopagoPostMutationOptions(options), queryClient);
+    }
+
+export type createCheckoutApiV1BillingCheckoutPostResponse200 = {
+  data: CheckoutOut
+  status: 200
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponse409 = {
+  data: ErrorEnvelope
+  status: 409
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponse503 = {
+  data: ErrorEnvelope
+  status: 503
+}
+
+export type createCheckoutApiV1BillingCheckoutPostResponseSuccess = (createCheckoutApiV1BillingCheckoutPostResponse200) & {
+  headers: Headers;
+};
+export type createCheckoutApiV1BillingCheckoutPostResponseError = (createCheckoutApiV1BillingCheckoutPostResponse400 | createCheckoutApiV1BillingCheckoutPostResponse401 | createCheckoutApiV1BillingCheckoutPostResponse409 | createCheckoutApiV1BillingCheckoutPostResponse422 | createCheckoutApiV1BillingCheckoutPostResponse503) & {
+  headers: Headers;
+};
+
+export type createCheckoutApiV1BillingCheckoutPostResponse = (createCheckoutApiV1BillingCheckoutPostResponseSuccess | createCheckoutApiV1BillingCheckoutPostResponseError)
+
+export const getCreateCheckoutApiV1BillingCheckoutPostUrl = () => {
+
+
+
+
+  return `/api/v1/billing/checkout`
+}
+
+/**
+ * @summary Create Checkout
+ */
+export const createCheckoutApiV1BillingCheckoutPost = async (checkoutIn: CheckoutIn, options?: RequestInit): Promise<createCheckoutApiV1BillingCheckoutPostResponse> => {
+
+  return orvalFetch<createCheckoutApiV1BillingCheckoutPostResponse>(getCreateCheckoutApiV1BillingCheckoutPostUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(checkoutIn)
+  }
+);}
+
+
+
+
+
+export const getCreateCheckoutApiV1BillingCheckoutPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>, TError,{data: CheckoutIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>, TError,{data: CheckoutIn}, TContext> => {
+
+const mutationKey = ['createCheckoutApiV1BillingCheckoutPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>, {data: CheckoutIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  createCheckoutApiV1BillingCheckoutPost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateCheckoutApiV1BillingCheckoutPostMutationResult = NonNullable<Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>>
+    export type CreateCheckoutApiV1BillingCheckoutPostMutationBody = CheckoutIn
+    export type CreateCheckoutApiV1BillingCheckoutPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Create Checkout
+ */
+export const useCreateCheckoutApiV1BillingCheckoutPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>, TError,{data: CheckoutIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createCheckoutApiV1BillingCheckoutPost>>,
+        TError,
+        {data: CheckoutIn},
+        TContext
+      > => {
+      return useMutation(getCreateCheckoutApiV1BillingCheckoutPostMutationOptions(options), queryClient);
     }

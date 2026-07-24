@@ -184,6 +184,33 @@ describe("sign-in return-to-intent (T034 / US2)", () => {
     expect(router.state.location.pathname).toBe("/sign-in");
     expect(redirectParam(router.state.location.search)).toBe("/historico");
   });
+
+  // E6/T016 finding (coordinator-reported HIGH defect): a cold/transient bounce off a guarded
+  // route that carries its OWN query (`/conta?checkout=retorno`, MP's real `back_url` shape) must
+  // round-trip that query through sign-in — losing it silently skips `CheckoutReturnPanel`
+  // (US2/US3's whole honesty surface). Failing-first: before the fix, `safeRedirect`/
+  // `RETURN_TO_INTENT` only ever saw/restored the PATHNAME.
+  it("GC-2/GC-4 (E6/T016): a guarded route's OWN query round-trips through the sign-in bounce", async () => {
+    const guardedWithQuery = await loadAt("anonymous", "/conta?checkout=retorno");
+    expect(guardedWithQuery.state.location.pathname).toBe("/sign-in");
+    expect(redirectParam(guardedWithQuery.state.location.search)).toBe("/conta?checkout=retorno");
+
+    const backHome = await loadAt(
+      "authenticated",
+      `/sign-in?redirect=${encodeURIComponent("/conta?checkout=retorno")}`,
+    );
+    expect(backHome.state.location.pathname).toBe("/conta");
+    expect(backHome.state.location.search).toEqual({ checkout: "retorno" });
+  });
+
+  // The open-redirect guard still holds: an UNKNOWN pathname is never restored, query or not.
+  it("GC-2/GC-4 (E6/T016): an unknown pathname with a query still falls back to /calcular", async () => {
+    const router = await loadAt(
+      "authenticated",
+      `/sign-in?redirect=${encodeURIComponent("//evil.example?x=1")}`,
+    );
+    expect(router.state.location.pathname).toBe("/calcular");
+  });
 });
 
 // ---- T036 / US2 — GC-5: the server stays the boundary (regression of /me 401) ---

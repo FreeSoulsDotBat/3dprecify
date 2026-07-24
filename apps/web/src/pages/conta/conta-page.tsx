@@ -1,12 +1,27 @@
-import { type ReactNode } from "react";
+import { type ReactNode, useState } from "react";
+import { useSearch } from "@tanstack/react-router";
 
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
+import { CheckoutReturnPanel } from "@/features/billing/checkout-return";
+import { OfferPanel } from "@/features/billing/offer-panel";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { requestSignOut } from "@/shared/session/sign-out-guard";
-import { Alert, Badge, Button, Card, Icon, Spinner, Switch, useThemeStore } from "@/shared/ui";
+import {
+  Alert,
+  Badge,
+  Button,
+  Card,
+  Icon,
+  Sheet,
+  SheetContent,
+  SheetTitle,
+  Spinner,
+  Switch,
+  useThemeStore,
+} from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 import "./conta-page.css";
@@ -72,9 +87,15 @@ function IdentitySection() {
 function PlanSection() {
   const q = useEntitlement();
   const t = messages.conta;
+  const tb = messages.billing;
+  const [offerOpen, setOfferOpen] = useState(false);
 
   let badge: ReactNode;
   let caption: string | null = null;
+  // E6/T015 (US1 → Q11): "Assinar Premium" is the offer's door for a free or lapsed account
+  // (lapsed doubles as the re-subscribe path). Absent for active/courtesy/beta — they already
+  // have it, and the offer's own "já é Premium" guard (§2.3) would only repeat the badge.
+  let showSubscribe = false;
   if (q.isError) {
     badge = <Badge tone="neutral">{t.planUnknown}</Badge>;
   } else if (q.data?.status === "active") {
@@ -87,8 +108,10 @@ function PlanSection() {
   } else if (q.data?.status === "lapsed") {
     badge = <Badge tone="neutral">{t.planLapsed}</Badge>;
     caption = t.planLapsedHint;
+    showSubscribe = true;
   } else {
     badge = <Badge tone="neutral">{t.planFree}</Badge>;
+    showSubscribe = true;
   }
   // 009/T011b — the plan shown is the server's LAST answer, not a fresh one (offline). Saying so is
   // the price of using it: the badge is honest about the plan AND about how it knows.
@@ -97,28 +120,45 @@ function PlanSection() {
   }
 
   return (
-    <Card className="tf-conta__row tf-conta__row--plan">
-      <div className="flex flex-1 flex-col gap-1">
-        <span className="tf-conta__row-label">{t.planLabel}</span>
-        <div className="flex items-center gap-2">
-          {badge}
-          {caption && (
-            <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-              {caption}
-            </span>
-          )}
+    <>
+      <Card className="tf-conta__row tf-conta__row--plan">
+        <div className="flex flex-1 flex-col gap-1">
+          <span className="tf-conta__row-label">{t.planLabel}</span>
+          <div className="flex items-center gap-2">
+            {badge}
+            {caption && (
+              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
+                {caption}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => void q.refetch()}
-        loading={q.isFetching}
-        aria-label={t.planRefresh}
-      >
-        {t.planRefresh}
-      </Button>
-    </Card>
+        <div className="flex items-center gap-2">
+          {showSubscribe && (
+            <Button size="sm" onClick={() => setOfferOpen(true)}>
+              {tb.subscribeAction}
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => void q.refetch()}
+            loading={q.isFetching}
+            aria-label={t.planRefresh}
+          >
+            {t.planRefresh}
+          </Button>
+        </div>
+      </Card>
+      <Sheet open={offerOpen} onOpenChange={setOfferOpen}>
+        {offerOpen && (
+          <SheetContent>
+            <SheetTitle>{tb.offerTitle}</SheetTitle>
+            <OfferPanel />
+          </SheetContent>
+        )}
+      </Sheet>
+    </>
   );
 }
 
@@ -143,6 +183,21 @@ function ThemeSection() {
 }
 
 export function ContaPage() {
+  // E6/T013/T015: MP's `back_url` returns here as `/conta?checkout=retorno` (§0.4/§10-F5 — a
+  // 1-segment route, never `/conta/assinatura/retorno` under `base:'./'`). That state is a full
+  // takeover of the page — the return surface polls server truth on its own (checkout-return.tsx);
+  // it is NOT a Conta badge (§0.3, the pending-vs-grace firewall keeps `pending` off this panel).
+  const search = useSearch({ strict: false }) as { checkout?: string };
+
+  if (search.checkout === "retorno") {
+    return (
+      <section className="tf-conta mx-auto flex w-full max-w-md flex-col">
+        <PageHeader title={messages.conta.title} />
+        <CheckoutReturnPanel />
+      </section>
+    );
+  }
+
   return (
     <section className="tf-conta mx-auto flex w-full max-w-md flex-col">
       <PageHeader title={messages.conta.title} />

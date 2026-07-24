@@ -1,0 +1,78 @@
+/* E6/T014-T015 — the offer surface + the shared Assinar CTA + the checkout return states. Token-
+   only (tf-*), no utility skin (ADR-0007). Adversarial size (§0.4): long period dates wrap to
+   ≤2 lines and never horizontal-scroll at 390px. */
+
+.tf-billing-offer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.tf-billing-offer__lead {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.tf-billing-offer__plans {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  margin: 0;
+  padding: 0;
+}
+
+/* The whole card is the tap target (≥44px), not just the radio dot (INV-2). */
+.tf-billing-offer__plan {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-3, 0.75rem);
+}
+
+.tf-billing-offer__plan--selected {
+  border-color: var(--accent);
+}
+
+.tf-billing-offer__plan-head {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  justify-content: space-between;
+}
+
+.tf-billing-offer__plan-price {
+  color: var(--text-strong);
+  font-family: var(--font-title);
+  font-size: var(--fs-md);
+}
+
+.tf-billing-offer__plan-note {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.tf-billing-offer__notice {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.tf-billing-cta__alert {
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.tf-billing-return {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  text-align: center;
+}
+
+.tf-billing-return__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}

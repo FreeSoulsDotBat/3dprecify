@@ -20,6 +20,12 @@ vi.mock("@/shared/session/session-store", async (importOriginal) => {
     }),
   };
 });
+// E6/T015 — ContaPage now reads the router (checkout=retorno takeover); stub it so the page
+// renders outside a RouterProvider (the house pattern, bom-teaser.test).
+vi.mock("@tanstack/react-router", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
+});
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { signOutUser, useSessionStore } from "@/shared/session/session-store";

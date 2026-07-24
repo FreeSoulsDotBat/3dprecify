@@ -32,6 +32,13 @@ class ErrorCode(StrEnum):
     # The ONLY new E2 code — no quota (free=zero, premium=unlimited) and no conflict (writes are
     # online-only) codes exist; they would be phantoms (spec 007 Edge Cases).
     ENTITLEMENT_REQUIRED = "ENTITLEMENT_REQUIRED"
+    # E6 (T012/T013, ADR-0023 §8): the ONE new code, genuinely returnable — `POST
+    # /billing/checkout` 503s when Mercado Pago itself cannot be reached/rejects the create call
+    # (`contracts/api-surface.md`). The 409 double-subscribe case (SEC-604) is deliberately NOT a
+    # new code — `errors.py` had no conflict/duplicate code before E6 either, and minting one for
+    # a single caller would be the phantom-code drift the ADR warns against; it reuses
+    # VALIDATION_ERROR with `status_code=409` (a dated T013 deviation — see dod-evidence.md).
+    BILLING_UNAVAILABLE = "BILLING_UNAVAILABLE"
 
 
 class CamelModel(BaseModel):

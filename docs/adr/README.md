@@ -29,6 +29,8 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0020](0020-export-artifact-rendering.md) | Export artifact rendering — server-rendered PDF/CSV behind an active-entitlement gate | Accepted |
 | [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Accepted |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
+| [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Proposed |
 
 ## Pending (to be written; numbers assigned when authored)
-- Payments — Google Play Billing vs Mercado Pago recurring (blocking before any payment code; E6).
+- ~~Payments — Google Play Billing vs Mercado Pago recurring~~ → **resolved as ADR-0023** (2026-07-20;
+  Play Billing's own ADR is authored at E7 turn-on).

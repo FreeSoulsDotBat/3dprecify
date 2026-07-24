@@ -14,6 +14,7 @@ from typing import Any
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.billing import router as billing_router
 from .api.boms import router as boms_router
 from .api.entitlement import router as entitlement_router
 from .api.export import router as export_router
@@ -125,6 +126,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # E5 saved scenarios (premium persistence, PR-A subset — save · list · get; materializes
     # nothing, VR-607). The same entitlement gates, no new ErrorCode.
     api.include_router(scenarios_router)
+    # E6 billing (ADR-0023): the ONE public, signature-authenticated route (no current_claims — MP
+    # holds no Firebase token; the signature dependency inside is the auth boundary). Checkout/
+    # subscription routes land with T012/T013 (PR-A, not this wave).
+    api.include_router(billing_router)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 

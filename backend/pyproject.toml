@@ -16,6 +16,7 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "uuid6>=2025.0.1",
     "reportlab==5.0.0",
+    "httpx>=0.28.1",
 ]
 
 [dependency-groups]
@@ -23,7 +24,6 @@ dev = [
     "pytest",
     "pytest-asyncio",
     "pytest-cov",
-    "httpx",
     "schemathesis",
     "ruff",
     "basedpyright",
@@ -112,11 +112,25 @@ layers = [
     "app.models",
 ]
 
+# E6 (T010, ADR-0023): the billing package (webhook route -> providers/grant_writer -> models) is a
+# new top layer alongside app.services/app.entitlement — api may depend on it, it may depend on
+# models, and it must never reach back up into api (the same shape as the E4 contract above; app.db/
+# app.settings stay unconstrained leaves, imported directly like app.entitlement already does).
+[[tool.importlinter.contracts]]
+name = "E6 layering: api -> billing -> models"
+type = "layers"
+layers = [
+    "app.api",
+    "app.billing",
+    "app.models",
+]
+
 # 013 (audit Q-03/Q-04): the financial validators live in ONE place and are importable from every
 # router without creating a cycle — which is only true while `app.validation` depends on nothing in
 # `app.*`. Same shape as the settings contract above, for the same reason: a structural decision
 # that the gate can check beats one that only a comment asserts (the copies it replaced were
-# "consistent by luck", and E3-01 is where the luck ran out).
+# "consistent by luck", and E3-01 is where the luck ran out). `app.billing` is in the forbidden set:
+# a validator reaching into billing would be exactly the kind of cycle both contracts exist to stop.
 [[tool.importlinter.contracts]]
 name = "Financial validators are a dependency-free leaf"
 type = "forbidden"

@@ -2,12 +2,16 @@ import asyncio
 import sys
 from collections.abc import Iterator
 from functools import lru_cache
+from typing import TYPE_CHECKING
 
 import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
 from app.settings import Settings
+
+if TYPE_CHECKING:
+    from tests.mp_stub.stub import MPStub
 
 # psycopg async cannot run on Windows' default ProactorEventLoop — tests (and any Windows dev
 # server touching DB routes) need the selector loop. Linux (CI/Cloud Run) is unaffected.
@@ -90,3 +94,61 @@ def migrated_db(postgres_url: str) -> Iterator[str]:
         os.environ["P3D_DATABASE_URL"] = old
     get_settings.cache_clear()
     reset_engine_for_tests()
+
+
+# --- E6 billing test infra (T008/T010/T011b/T012) -----------------------------------------------
+# Applies ONLY to the billing test modules — everything else in the suite is unaffected.
+_BILLING_TEST_MODULES = {
+    "tests.test_billing_security",
+    "tests.test_billing_terminus",
+    "tests.test_billing_checkout",
+}
+
+
+@pytest.fixture(autouse=True)
+def mp_stub(request: pytest.FixtureRequest) -> Iterator["MPStub | None"]:
+    """Autouse for the two billing test modules (nothing elsewhere is affected):
+
+    1. Installs the LOCAL MP stub (T011b, `tests/mp_stub/stub.py`) as every `MercadoPagoProvider`'s
+       httpx transport for the test's duration — no billing test ever touches the real network
+       (`test_billing_security.py`, T007, is FROZEN and carries no such wiring itself; installing it
+       here, globally, is what makes its webhook posts resolve without real MP credentials).
+    2. Truncates `billing_events`/`subscriptions` and deletes `source='payment'` grants BEFORE each
+       test. `test_billing_security.py::test_SEC105_unknown_subscription_grants_nothing` asserts a
+       GLOBAL `entitlement_grants WHERE source='payment'` count of zero — unlike the rest of the
+       house's per-uid-scoped assertions — which only holds with per-test isolation on these three
+       billing tables (it runs, by file order, AFTER SEC201/203/204, which legitimately write
+       grants). Nothing else in either module depends on cross-test billing state.
+
+    Yields the `MPStub` instance so `test_billing_terminus.py` (T008) can use its registration API
+    directly (`mp_stub.create_preapproval(...)`, `.authorize_payment(...)`, `.fire_webhook(...)`);
+    the frozen SEC suite never references it by name, which is fine — autouse still applies.
+    """
+    module_name = request.node.module.__name__
+    if module_name not in _BILLING_TEST_MODULES or "migrated_db" not in request.fixturenames:
+        yield None
+        return
+
+    import sqlalchemy as sa
+    from sqlalchemy import text
+
+    from app.billing.providers import mercadopago as mp_provider
+
+    url = request.getfixturevalue("migrated_db")
+    engine = sa.create_engine(url)
+    with engine.begin() as conn:
+        conn.execute(text("DELETE FROM entitlement_grants WHERE source = 'payment'"))
+        conn.execute(text("DELETE FROM billing_events"))
+        conn.execute(text("DELETE FROM subscriptions"))
+    engine.dispose()
+
+    import httpx
+
+    from tests.mp_stub.stub import MPStub
+
+    stub = MPStub(db_url=url)
+    mp_provider.set_test_transport(httpx.ASGITransport(app=stub.asgi_app))
+    try:
+        yield stub
+    finally:
+        mp_provider.set_test_transport(None)

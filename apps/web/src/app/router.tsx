@@ -30,12 +30,16 @@ export interface RouterContext {
 // and an open-redirect guard (external / protocol-relative targets fall back to Calcular).
 // 008/K1: /kits joins the whitelist — the kit teaser's "Entrar" promises a return there.
 const RETURN_TO_INTENT = ["/catalogo", "/kits", "/historico", "/conta"] as const;
-
 // 013/F-02 (D1=A): `target` is now a full HREF (pathname + optional `?search`), not just a bare
 // pathname — `?produto=`/`?snapshot=` carry the id the return-to-intent must preserve, or a
 // sign-in round-trip would silently drop it (landing the seller back on a bare `/catalogo`
 // instead of the product they asked for). Still an exact-base-or-`base?...` match — the
 // open-redirect guard: an external/protocol-relative target never qualifies.
+//
+// This SUBSUMES the E6/T016 fix (checkout return preserving its query): `/conta?checkout=retorno`
+// (MP's real `back_url` shape) matches `"/conta?…"`, so the query travels untouched through
+// /sign-in into ContaPage's `CheckoutReturnPanel` — the same mechanism, one implementation. The
+// `{to, search}` split T016 introduced is no longer needed; `href` carries the whole internal URL.
 function safeRedirect(target: string | undefined): string {
   if (!target) return "/calcular";
   const known = RETURN_TO_INTENT.some((base) => target === base || target.startsWith(`${base}?`));
@@ -197,10 +201,16 @@ const snapshotDetailRoute = createRoute({
   },
 });
 
+// E6/T013/T015: MP's `back_url` targets `/conta?checkout=retorno` (a 1-segment route — the
+// measured `base:'./'` cold-load trap, ux-billing.md §0.4/§10-F5). ContaPage reads `checkout` to
+// swap in the honest return surface instead of the normal plan panel.
 const contaRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/conta",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.pathname),
+  validateSearch: (search: Record<string, unknown>): { checkout?: "retorno" } => ({
+    checkout: search.checkout === "retorno" ? "retorno" : undefined,
+  }),
+  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: ContaPage,
 });
 
@@ -215,8 +225,9 @@ const signInRoute = createRoute({
   }),
   beforeLoad: ({ context, search }) => {
     if (context.status === "authenticated") {
-      // `href` (not `to`): the target may carry a query string (`/catalogo?produto=…`), which
-      // `to` cannot express on its own (it names a ROUTE, not an arbitrary internal URL).
+      // `href` (not `to`): the target may carry a query string (`/catalogo?produto=…` or E6's
+      // `/conta?checkout=retorno`), which `to` cannot express on its own (it names a ROUTE, not an
+      // arbitrary internal URL).
       throw redirect({ href: safeRedirect(search.redirect) });
     }
   },
