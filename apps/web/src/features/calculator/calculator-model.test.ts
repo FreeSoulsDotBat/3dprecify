@@ -307,13 +307,12 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(r.result?.catalogVersion).toBeNull();
   });
 
-  // OWNER DECISION 2026-07-23 (013, surfaced by this slice): `priceBands` IS the commission schedule
-  // (`pricing-core/channels.ts:101-102` overwrites commissionPct/fixedFee from the band containing the
-  // announce). Preserving the bands while the seller typed a commission would make that input silently
-  // inert — trading E1-02's silent wrong for a different one. So a typed commission/fixedFee DROPS the
-  // schedule ("my commission is X, not the catalog's"); the co-financed voucher, a freight dimension
-  // orthogonal to commission, is preserved unconditionally. Typing only freight keeps the bands (the
-  // test above). Net effect: no typed input is ever inert, and "ajustado por você" is always true.
+  // OWNER DECISION 2026-07-23 (013), corrected by the confirmation audit (F1): `priceBands` IS the
+  // commission schedule (`pricing-core/channels.ts` overwrites commissionPct/fixedFee from the band
+  // containing the announce). Only a typed COMMISSION drops the schedule ("my commission is X, not the
+  // catalog's"). A typed fixedFee must NOT — Shopee has no top-level commissionPct (it lives in the
+  // bands), so dropping them on a fixedFee edit fell back to 0% commission and overstated the net (F1).
+  // The co-financed voucher (a freight dimension) is preserved unconditionally.
   it("a typed commission DROPS the bands (it governs the price) but keeps the voucher", () => {
     const r = computeFromForm(
       {
@@ -340,6 +339,32 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.seal.kind).toBe("adjusted");
     expect(ch.result?.feeSource).toBeNull();
     expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  // F1 (confirmation audit, ALTO regression guard): typing ONLY the fixed fee on a band-based Shopee
+  // slot must NOT drop the schedule. Before the fix, `fixedFee` was in the drop-trigger, and because
+  // Shopee's top-level commissionPct is null (→ 0), dropping the bands charged 0% commission instead
+  // of the band's 20% — the seller's net was silently overstated by the full commission (~R$9-12).
+  it("F1: typing ONLY fixedFee on a band slot keeps the schedule — charges the band's %, never 0", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", fixedFee: "4" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    const input = r.input?.channels?.[0];
+    expect(ch.editedFields).toEqual({ fixedFee: 4 });
+    // The commission schedule SURVIVES — a typed fixedFee does not drop it (fixedFee is inert here;
+    // the band governs it). The bug was this being `undefined` → 0% commission charged.
+    expect(input?.priceBands).toHaveLength(3);
+    expect(input?.freightVoucherBands).toHaveLength(3);
+    // The band's 20% + R$4 govern varejo (announce 58,73), NOT a collapsed 0% (which would announce
+    // 42,98 and overstate the net). This is the exact silent-money defect F1 named.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    expect(ch.seal.kind).toBe("adjusted");
   });
 
   it("a typed fee on a NON-band entry overrides that scalar and leaves the rest of the entry", () => {

@@ -48,18 +48,29 @@ const freightSchema = z.discriminatedUnion("kind", [
 ]);
 
 /** One resolved fee entry, keyed by its marketplace-specific `determinants` (null = single entry). */
-export const feeEntrySchema = z.object({
-  determinants: z.record(z.string(), z.string()).nullable(),
-  commissionPct: z.number().min(0).lt(100).nullable(),
-  fixedFee: z.number().nonnegative().nullable(),
-  minPerItem: z.number().nonnegative().nullable().optional(), // Amazon per-item commission floor
-  priceBands: z.array(priceBandSchema).nullable().optional(),
-  freight: freightSchema,
-  source: z.string().min(1),
-  sourceUrl: z.url(),
-  effectiveDate: z.string().min(1),
-  lastReviewed: z.string().min(1),
-});
+export const feeEntrySchema = z
+  .object({
+    determinants: z.record(z.string(), z.string()).nullable(),
+    commissionPct: z.number().min(0).lt(100).nullable(),
+    fixedFee: z.number().nonnegative().nullable(),
+    minPerItem: z.number().nonnegative().nullable().optional(), // Amazon per-item commission floor
+    priceBands: z.array(priceBandSchema).nullable().optional(),
+    freight: freightSchema,
+    source: z.string().min(1),
+    sourceUrl: z.url(),
+    effectiveDate: z.string().min(1),
+    lastReviewed: z.string().min(1),
+  })
+  // F3 (confirmation audit): a null top-level `commissionPct` is only legitimate when the commission
+  // lives in `priceBands` (Shopee's shape). Without bands, `entryToChannelFees` reads `null ?? 0` and
+  // the calculator prefills a 0% commission under a "referência" seal — a silent-money trap dormant
+  // in the current data but reachable the moment a future entry (increment 014's ML/Amazon curation)
+  // is curated with a null commission and no bands. Reject it at parse/boot, loudly, not at runtime.
+  .refine((e) => e.commissionPct !== null || (e.priceBands != null && e.priceBands.length > 0), {
+    message:
+      "an entry with a null commissionPct must carry priceBands (else it prefills 0% under a reference seal — F3)",
+    path: ["commissionPct"],
+  });
 export type FeeEntry = z.infer<typeof feeEntrySchema>;
 
 const marketplaceCatalogSchema = z.object({

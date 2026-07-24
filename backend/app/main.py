@@ -11,6 +11,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
+import structlog
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -30,10 +31,26 @@ from .errors import AppError, ErrorCode, ErrorEnvelope, register_exception_handl
 from .observability import CORRELATION_HEADER, configure_observability
 from .settings import Settings, get_settings
 
+_log = structlog.get_logger()
+
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
-    init_firebase(get_settings())
+    settings = get_settings()
+    init_firebase(settings)
+    # E6-05 (confirmation audit): a billing-unconfigured environment boots looking perfectly healthy
+    # — checkout honestly 503s and the webhook fail-closes, but nothing SIGNALS at startup that
+    # billing is dead. Emit one structured line so an operator sees it in the boot logs instead of
+    # discovering it when the first seller cannot subscribe. Not fatal: the build-first phase runs
+    # against the stub / with secrets absent by design (the owner deferred real MP to v1).
+    billing_configured = settings.mp_webhook_secret is not None and (
+        settings.mp_plan_id_monthly is not None or settings.mp_plan_id_annual is not None
+    )
+    _log.info(
+        "billing_config_status",
+        billing_configured=billing_configured,
+        app_env=settings.app_env,
+    )
     yield
 
 

@@ -59,6 +59,14 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
     # VERBATIM — never a server-side floor/recompute that could land earlier than MP's
     # authoritative boundary (the boundary always favors the paying seller).
     period_end = event.period_end
+    # L2-N1 (confirmation audit): a payment grant MUST carry a bounded expiry. A null `period_end`
+    # (MP omitted both `period_end` and `next_payment_date`, or they were unparseable) would write
+    # `expires_at=None`, which the entitlement resolver reads as PREMIUM FOREVER — and since
+    # refund/chargeback revocation is a later task, that perpetual grant has no path to expire. A
+    # payment we cannot bound is not a payment we grant: deny-by-default (matched, not granted), so
+    # reconciliation retries rather than the seller getting free lifetime premium.
+    if period_end is None:
+        return ProcessResult(matched=True, granted=False)
 
     stmt = (
         pg_insert(BillingEvent)
@@ -86,7 +94,6 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
             )
         )
         sub.status = "authorized"
-        if period_end is not None:
-            sub.current_period_end = period_end
+        sub.current_period_end = period_end  # guaranteed non-null by the L2-N1 guard above
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)

@@ -70,3 +70,23 @@ Diferidas pelo PLANO-CORRECAO ao gate MP-live, NÃO regressões:
 **Gate MP-live (cutover):** E6-01 (vetor real do MP — gate #1) + E6-02 + E6-04 + L2-N1 (`period_end` não-nulo). Já eram Onda 2.
 
 **Decisão do dono:** F2 (afiar a gramática do parser p/ `d.ddd` ou manter o tradeoff documentado) + F3 (o trap null-commission entra no 014).
+
+---
+
+## Status da remediação da confirmação (dono autorizou "corrigir todos" — 2026-07-23)
+
+| Achado | Sev | Estado | Evidência |
+|---|---|---|---|
+| **F1** | Alto | **CORRIGIDO** | `calculator-model.ts` — `commissionOverridden = edited.commissionPct !== undefined` (fixedFee não derruba mais bands) + docstring reescrito (fecha L1-01) + teste failing-guard "F1: typing ONLY fixedFee keeps the schedule" |
+| **F-lapsed** | Médio | **CORRIGIDO** | `products-panel.tsx` passa `lapsed` (espelha os irmãos) + 2 testes (active sem banner; lapsed com banner + delete→sem confirm destrutivo) |
+| **L1-01** | Baixo | **CORRIGIDO** | docstring de `resolveSlotFees` reescrito junto do F1 |
+| **F2** | Médio | **CORRIGIDO** | `decimal-ptbr.ts` — grupo de milhar exige `[1-9]` líder + `^0\.\d+$` aceito como fração; `0.125`→0.125, `1.125`→1125 preservado; 4 casos novos |
+| **F3** | Baixo | **CORRIGIDO** | `fee-catalog.ts` `.refine` — entry com `commissionPct` null exige `priceBands` (rejeita o trap 0%-under-reference); 2 testes; protege a curadoria 014 |
+| **L6-01** | Baixo | **CORRIGIDO** | `test_migrations.py` `_OWNED_TABLES` ganha `subscriptions`/`billing_events` (a nota T051 cumprida) |
+| **E6-02** | Médio (pré-cutover) | **CORRIGIDO** | `api/billing.py` lê `data.id` do query param (fallback body) + teste `test_E6_02` |
+| **E6-05** | Baixo (pré-cutover) | **CORRIGIDO** | `main.py` lifespan loga `billing_config_status` no boot |
+| **L2-N1** | Médio (pré-cutover) | **CORRIGIDO** | `grant_writer.py` nega grant sem `period_end` (sem mais grant perpétuo) + teste `test_L2_N1` |
+| **E6-01** | Médio (pré-cutover) | **PARCIAL + GATE** | `test_billing_security.py` — pin do formato `canonical_manifest` (exercita `.lower()` alfanumérico) + teste `@skip` marcando o **vetor real do MP** como gate de cutover. Fechamento total exige acesso ao sandbox MP (fora desta sessão). |
+| **E6-04** | Médio (pré-cutover) | **ABERTO (deploy-gated)** | precisa do `amount` do plano MP provisionado — smoke de deploy no cutover. Não fixável sem o plano. |
+
+Fechados agora: 10 de 11 (F1, F-lapsed, L1-01, F2, F3, L6-01, E6-02, E6-05, L2-N1 + E6-01 parcial). Resta E6-04 (deploy-gated) + o vetor real do E6-01 — ambos gates de cutover MP-live, não bloqueiam v1.

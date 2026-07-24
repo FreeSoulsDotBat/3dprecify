@@ -32,6 +32,11 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useDeleteProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
+// F-lapsed: ProductsPanel now reads its own entitlement; this suite is about the K3 attention
+// indicator, so the plan is simply "active" (no QueryClientProvider needed for the real hook).
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+}));
 
 import { ProductsPanel } from "./products-panel";
 

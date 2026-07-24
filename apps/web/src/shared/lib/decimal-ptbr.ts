@@ -11,13 +11,21 @@
 // Accepted forms (optional leading "-"):
 //   ^\d+$                          integer          "1500"      → 1500
 //   ^\d+,\d+$                      pt-BR decimal    "0,12"      → 0.12
-//   ^\d{1,3}(\.\d{3})+(,\d+)?$     pt-BR thousands  "1.500,00"  → 1500 · "1.500" → 1500
+//   ^[1-9]\d{0,2}(\.\d{3})+(,\d+)? pt-BR thousands  "1.500,00"  → 1500 · "1.500" → 1500
+//   ^0\.\d+$                       zero-decimal     "0.125"     → 0.125 · "0.5" → 0.5
 //   ^\d+\.\d{1,2}$                 dot-decimal      "0.12"      → 0.12 · "1500.00" → 1500
 //   anything else                  REJECTED         "1,234,56" · "10-5" · "5x3" · "12,,5" · "1.5000"
 //
 // Structural disambiguation: a dot followed by EXACTLY 3 digits in groups is a thousands mark
 // (pt-BR convention); a dot followed by 1–2 digits can only be an en-US decimal. The single
 // residually ambiguous form "1.500" resolves as pt-BR = 1500 (documented + pinned in the tests).
+//
+// 013 confirmation audit / F2 — the thousands group must NOT start with zero. "0.125" was matching
+// the thousands form (`\d{1,3}` accepted the leading "0") → "0125" → 125: a silent 1000× error for a
+// legitimate 3-decimal fraction. A pt-BR thousands number never leads with a zero group, and "0.xxx"
+// is unambiguously a fraction < 1 — so the thousands form now requires `[1-9]` first, and "0.\d+" is
+// accepted as an en-US decimal. The genuinely ambiguous non-zero case ("1.125") stays thousands, per
+// the documented "1.500"≡1500 rule.
 //
 // TWO DECISIONS, recorded so the next reader does not "fix" them:
 // 1. The rejection sentinel stays `Number.NaN`, NOT `null`. tasks.md's "→ null" is shorthand for
@@ -32,7 +40,12 @@
 
 const RE_INTEGER = /^\d+$/;
 const RE_PTBR_DECIMAL = /^\d+,\d+$/;
-const RE_PTBR_THOUSANDS = /^\d{1,3}(?:\.\d{3})+(?:,\d+)?$/;
+// F2: the leading group is [1-9] — a thousands number never starts with a zero group, so "0.125" is
+// NOT thousands (it was wrongly becoming 125).
+const RE_PTBR_THOUSANDS = /^[1-9]\d{0,2}(?:\.\d{3})+(?:,\d+)?$/;
+// F2: "0." followed by any digits is an unambiguous fraction < 1 (en-US decimal), whatever the
+// number of decimals — this is what makes "0.125" resolve to 0.125 instead of being rejected.
+const RE_ZERO_DECIMAL = /^0\.\d+$/;
 const RE_DOT_DECIMAL = /^\d+\.\d{1,2}$/;
 
 /** Numeric-ish characters: everything else is an affix when it sits at either END of the string. */
@@ -53,6 +66,7 @@ function isAcceptedForm(digits: string): boolean {
     RE_INTEGER.test(digits) ||
     RE_PTBR_DECIMAL.test(digits) ||
     RE_PTBR_THOUSANDS.test(digits) ||
+    RE_ZERO_DECIMAL.test(digits) ||
     RE_DOT_DECIMAL.test(digits)
   );
 }

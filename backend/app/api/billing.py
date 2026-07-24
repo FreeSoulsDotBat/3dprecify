@@ -75,8 +75,15 @@ async def mercadopago_webhook(
         raise _reject()
     body = cast("dict[str, Any]", raw_body)
 
+    # E6-02 (confirmation audit): MP computes the `x-signature` manifest over the `data.id` taken
+    # from the NOTIFICATION QUERY PARAM (`?data.id=…`), not the body. Read it from the query first
+    # so verification matches MP's real contract; fall back to the body's `data.id` (what the local
+    # stub sends) so nothing regresses. A body-only read silently 401'd every real webhook whose
+    # query id differed from (or was absent in) the body — an availability defect, not a bypass.
+    query_data_id = request.query_params.get("data.id") or request.query_params.get("id")
     data = body.get("data")
-    data_id: Any = cast("dict[str, Any]", data).get("id") if isinstance(data, dict) else None
+    body_data_id: Any = cast("dict[str, Any]", data).get("id") if isinstance(data, dict) else None
+    data_id: Any = query_data_id if query_data_id is not None else body_data_id
     data_id_str = str(data_id) if data_id is not None else None
 
     secret = settings.mp_webhook_secret.get_secret_value() if settings.mp_webhook_secret else None
