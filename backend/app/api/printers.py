@@ -27,24 +27,9 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Printer, Product
+from app.validation import CEIL_HOURS, CEIL_KW, CEIL_MONEY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["printers"])
-
-
-# NUMERIC integer-digit ceilings (precision minus scale, in lockstep with models.py). A value
-# at/above its ceiling overflows the column at write time (Postgres → 500); reject here as 422.
-_CEIL_MONEY = Decimal(10) ** 10  # MONEY_SETTLED Numeric(12,2)
-_CEIL_RATE = Decimal(10) ** 12  # MONEY_RATE   Numeric(18,6)
-_CEIL_HOURS = Decimal(10) ** 6  # QTY_H        Numeric(9,3)
-_CEIL_KW = Decimal(10) ** 5  # QTY_KW       Numeric(9,4)
-
-
-def _finite_non_negative(value: Decimal, field: str, ceiling: Decimal) -> Decimal:
-    if not value.is_finite() or value < 0:
-        raise ValueError(f"{field} must be a finite number >= 0")
-    if value >= ceiling:
-        raise ValueError(f"{field} exceeds the maximum storable magnitude")
-    return value
 
 
 class PrinterIn(CamelModel):
@@ -64,12 +49,12 @@ class PrinterIn(CamelModel):
     @field_validator("machine_value")
     @classmethod
     def _value(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "machineValue", _CEIL_MONEY)
+        return finite_non_negative(v, "machineValue", CEIL_MONEY)
 
     @field_validator("machine_lifetime_hours")
     @classmethod
     def _lifetime(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0 or v >= _CEIL_HOURS:
+        if not v.is_finite() or v <= 0 or v >= CEIL_HOURS:
             raise ValueError(
                 "machineLifetimeHours must be a finite number > 0 within the storable range"
             )
@@ -78,12 +63,12 @@ class PrinterIn(CamelModel):
     @field_validator("avg_power_kw")
     @classmethod
     def _power(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "avgPowerKw", _CEIL_KW)
+        return finite_non_negative(v, "avgPowerKw", CEIL_KW)
 
     @field_validator("maintenance_reserve_per_hour")
     @classmethod
     def _maintenance(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "maintenanceReservePerHour", _CEIL_RATE)
+        return finite_non_negative(v, "maintenanceReservePerHour", CEIL_RATE)
 
 
 class PrinterOut(CamelModel):

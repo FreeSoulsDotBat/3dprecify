@@ -403,11 +403,7 @@ function TechnicalSheet({
       {/* Resolved at read time: present iff the origin still exists. Its ABSENCE is silent — the
           two-shelf rule means a gone origin is not a problem the seller has (FR-503). */}
       {origin?.kind === "PRODUCT" && (
-        <Link
-          to="/catalogo/produtos/$productId"
-          params={{ productId: origin.id }}
-          className="tf-historico__origin-link"
-        >
+        <Link to="/catalogo" search={{ produto: origin.id }} className="tf-historico__origin-link">
           {t.openProduct}
         </Link>
       )}

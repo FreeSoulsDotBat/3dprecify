@@ -71,9 +71,13 @@ blind to it (the third time this project paid that class).**
 **011-token-optimization: levers LANDED via PR #22** (ADR-0022 Accepted) — routing + rtk filter + graphify hook
 live; **the pilot verdict (T032–T034, ≥30%-or-honest-shortfall) is being closed now at E5 end** from the
 per-operation ledger rows. Evidence: `specs/011-token-optimization/dod-evidence.md`.
-**Next increment: E6** (billing — Mercado Pago recurring / Play Billing; PENDING the unnumbered payments ADR).
-It is UNSTARTED and must go through the spec-kit flow (product-owner → specify → clarify → plan + ADRs → tasks)
-before any code — do NOT infer it.
+**E6 is no longer UNSTARTED (corrected 013 audit remediation, M-01)** — 012-e6-billing (billing — Mercado
+Pago recurring / Play Billing) is **mid-flight** on `feature/012-e6-billing`, 31 commits ahead of `develop`,
+with the PR-A close-out done (spec-kit flow followed: product-owner → specify → clarify → plan + ADRs →
+tasks, per Principle VIII — nothing was inferred). It has not yet shipped to `develop`.
+**013-audit-remediation is in progress** (branch `013-audit-remediation`) — the 10-specialist audit's
+remediation increment; this US7 docs-only pass is part of it. See `specs/013-audit-remediation/{spec.md,
+tasks.md}`.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
@@ -130,4 +134,7 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
 at specs/012-e6-billing/plan.md
+(013-audit-remediation SHIPPED to `develop` via PR #29 — its remediation of the
+81-finding audit is done; the deferred US8 ML/Amazon fee curation becomes increment
+014. This branch resumes the E6 billing work; when 012 lands, re-point as needed.)
 <!-- SPECKIT END -->

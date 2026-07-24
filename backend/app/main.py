@@ -83,8 +83,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         CORSMiddleware,
         allow_origins=settings.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        # 013 audit remediation (F-04): `["*"]` alongside `allow_credentials=True` was a gap of
+        # DECISION, not a live exploit — the origin allowlist already does the real gating. These
+        # are narrowed to exactly what the client sends, so a future endpoint cannot silently
+        # inherit a permission nobody chose. OPTIONS is not listed on purpose: CORSMiddleware
+        # answers preflight itself and never dispatches it to a route.
+        allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
         # `Content-Disposition` is NOT a CORS-safelisted response header, and web + API are separate
         # origins in every deployed environment — so without this the browser hides it and the
         # export's `filenameFrom()` was dead code that always fell back (review PR-C). Today the

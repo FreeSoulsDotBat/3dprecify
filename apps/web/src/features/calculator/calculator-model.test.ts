@@ -273,7 +273,48 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.seal.kind).toBe("reference"); // dated reference, not a manual entry
   });
 
-  it("typing a fee overrides the catalog → manual (no voucher, no feeSource, seal 'ajustado')", () => {
+  // 013 / E1-02 — the override seam. Typing ONE fee used to drop the catalog entry WHOLESALE
+  // (`priceBands: undefined, freightVoucherBands: undefined`), so the co-financed Shopee voucher
+  // vanished and the net received was overstated by exactly the voucher. The merge is now selective:
+  // only the scalars the seller actually typed (`editedFields`) are overwritten; the band structures
+  // survive. The seal stays "ajustado por você" and provenance stays cleared (unchanged semantics).
+  it("E1-02: typing ONE fee keeps priceBands + the co-financed voucher (selective merge)", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", freightCost: "5" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    const input = r.input?.channels?.[0];
+    expect(ch.errors).toEqual({});
+    // The band structures reach the engine — the whole point of the fix.
+    expect(input?.priceBands).toHaveLength(3);
+    expect(input?.freightVoucherBands).toHaveLength(3);
+    // Only the typed scalar was overwritten.
+    expect(input?.freightCost).toBe(5);
+    expect(ch.editedFields).toEqual({ freightCost: 5 });
+    // Announce still resolves through the band (20% + R$4 → 58,73) and the voucher (R$20) is STILL
+    // deducted on top of the seller's own R$5 freight — net 17,98, not the overstated 37,98.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(25, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(17.98, 2);
+    expect(ch.result?.freightCostAtacado).toBeCloseTo(25, 2);
+    // Seal + provenance semantics are untouched by the fix.
+    expect(ch.seal.kind).toBe("adjusted");
+    expect(ch.result?.feeSource).toBeNull();
+    expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  // OWNER DECISION 2026-07-23 (013, surfaced by this slice): `priceBands` IS the commission schedule
+  // (`pricing-core/channels.ts:101-102` overwrites commissionPct/fixedFee from the band containing the
+  // announce). Preserving the bands while the seller typed a commission would make that input silently
+  // inert — trading E1-02's silent wrong for a different one. So a typed commission/fixedFee DROPS the
+  // schedule ("my commission is X, not the catalog's"); the co-financed voucher, a freight dimension
+  // orthogonal to commission, is preserved unconditionally. Typing only freight keeps the bands (the
+  // test above). Net effect: no typed input is ever inert, and "ajustado por você" is always true.
+  it("a typed commission DROPS the bands (it governs the price) but keeps the voucher", () => {
     const r = computeFromForm(
       {
         ...canonical,
@@ -282,12 +323,63 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
       ctx,
     );
     const ch = r.channels[0];
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2); // manual 10%, nets to base
-    expect(ch.result?.freightCostVarejo).toBe(0); // no voucher on a manual override
-    expect(ch.result?.feeSource).toBeNull(); // provenance cleared — not from the reference
+    const input = r.input?.channels?.[0];
+    expect(ch.editedFields).toEqual({ commissionPct: 10 });
+    // The commission schedule is gone; the voucher schedule survives.
+    expect(input?.priceBands).toBeUndefined();
+    expect(input?.freightVoucherBands).toHaveLength(3);
+    // The typed 10% now GOVERNS: varejo 42,98 / 0,9 = 47,76 — no longer the band's 20% + R$4 (58,73).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(47.76, 2);
+    // …and the co-financed voucher is still deducted (announce ∈ [0,80) → R$20), so the seller nets
+    // base − voucher, exactly as on the blank slot. This is the E1-02 truth that must never regress.
+    expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    // atacado 37,25 / 0,9 = 41,39 → still ∈ [0,80) → R$20 voucher → líquido 17,25.
+    expect(ch.result?.precoAnuncioAtacado).toBeCloseTo(41.39, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
     expect(ch.seal.kind).toBe("adjusted");
-    // catalogVersion is NOT stamped when no channel used the catalog (all-manual override).
+    expect(ch.result?.feeSource).toBeNull();
     expect(r.result?.catalogVersion).toBeNull();
+  });
+
+  it("a typed fee on a NON-band entry overrides that scalar and leaves the rest of the entry", () => {
+    // ML-style entry: scalar commission + an ESTIMATE freight subsidy, no bands.
+    const mlCatalog = feeCatalogSchema.parse({
+      catalogVersion: "2026-07-07.ml",
+      schemaVersion: "1",
+      generatedAt: "2026-07-07T00:00:00.000Z",
+      marketplaces: [
+        {
+          marketplace: "MERCADO_LIVRE",
+          entries: [
+            {
+              determinants: { listingType: "CLASSICO" },
+              commissionPct: 12,
+              fixedFee: 6.75,
+              freight: { kind: "ESTIMATE", thresholdPrice: 79, defaultSubsidy: 10 },
+              source: "Central de Vendas Mercado Livre",
+              sourceUrl: "https://www.mercadolivre.com.br/ajuda/tarifas",
+              effectiveDate: "2026-03-01",
+              lastReviewed: "2026-07-07",
+            },
+          ],
+        },
+      ],
+    });
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [
+          slot({ marketplace: "MERCADO_LIVRE", modality: "CLASSICO", commissionPct: "15" }),
+        ],
+      },
+      { catalog: mlCatalog, source: "catalog", now: Date.parse("2026-07-10") },
+    );
+    const input = r.input?.channels?.[0];
+    expect(input?.commissionPct).toBe(15); // the typed scalar wins
+    expect(input?.fixedFee).toBeCloseTo(6.75, 2); // untyped → still the entry's
+    expect(input?.freightCost).toBeCloseTo(10, 2); // untyped → the entry's subsidy survives
+    expect(r.channels[0].seal.kind).toBe("adjusted");
   });
 
   it("stamps no catalogVersion when there is no catalog context (all-manual)", () => {

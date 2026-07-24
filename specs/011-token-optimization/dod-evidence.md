@@ -101,10 +101,13 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   collected` **plus a recovery pointer** `[full output: D:\...\.rtk-tee\<ts>_pytest.log]`; inspected that file
   directly — it holds the complete untruncated raw output (platform line, plugin list, deselection count,
   warnings section), proving the tee-on-failure path (FR-004) works even for a "no tests" outcome, not only a
-  hard failure. **Divergence noted, not blocking**: `rtk gain --history` prints `[warn] No hook installed — run
-  \`rtk init -g\`` on every call — this is a global-scope check unrelated to the project-scoped hook actually
-  firing (T014's owner-approved local install path); the warning is a false negative in rtk's own self-report
-  and should not be read as contradicting (a)/(b) above, both of which are direct behavioral proof. **Verdict:
+  hard failure. **Correction (013 audit remediation, P-01)**: an earlier draft of this note scoped the
+  `[warn] No hook installed — run \`rtk init -g\`` banner to `rtk gain --history` alone. That undersold the
+  actual frequency — the banner prints on **every single Bash command the hook wraps** (100% of the 1,401
+  commands it intercepted this session), not just on an explicit `rtk gain` invocation. It remains a
+  global-scope check unrelated to the project-scoped hook actually firing (T014's owner-approved local
+  install path); the warning is a false negative in rtk's own self-report and should not be read as
+  contradicting (a)/(b) above, both of which are direct behavioral proof. **Verdict:
   R1 did not fire — no Windows auto-rewrite corruption observed, filtering activated on the first restarted
   session with no contingency path needed. T016–T020 unblocked.**
 - Honesty guard (T016): **CONFIRMED, same conclusion raw vs filtered.** `pnpm gate:all` run filtered (this
@@ -170,8 +173,9 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   (bounds a T014 generalization):** in a session that STARTED with the hook present, teardown and re-init
   both took effect **immediately mid-session** — no restart; T014's measured restart-need was in a session
   that started WITHOUT the block. Both facts stand: the restart applies to a hook surface the session has
-  never seen, not to edits of a known one. **Reading tip:** `rtk gain`'s `[warn] No hook installed — run
-  rtk init -g` checks the GLOBAL scope only; it prints even while the project hook is demonstrably
+  never seen, not to edits of a known one. **Reading tip:** the `[warn] No hook installed — run
+  rtk init -g` banner checks the GLOBAL scope only; it prints on **every** intercepted Bash command (not
+  merely on `rtk gain` calls — see the P-01 correction above), even while the project hook is demonstrably
   intercepting — not a failure signal.
 
 ## §3 graphify hook (US3 / FR-007 / SC-005) — PR-B

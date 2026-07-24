@@ -24,6 +24,7 @@ vi.mock("@tanstack/react-router", () => ({
     <a {...(rest as object)}>{children as never}</a>
   ),
   useNavigate: () => vi.fn(),
+  useSearch: () => ({}),
 }));
 
 import type { HistoryItem } from "@/entities/history/outbox";

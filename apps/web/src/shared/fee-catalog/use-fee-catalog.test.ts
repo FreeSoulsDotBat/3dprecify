@@ -41,6 +41,13 @@ describe("freshest — resolution precedence", () => {
   it("keeps the incoming on a version tie (idempotent refresh)", () => {
     expect(freshest(FEE_CATALOG_SEED, FEE_CATALOG_SEED)).toBe(FEE_CATALOG_SEED);
   });
+
+  it("compares the sequence as an INTEGER, not a string — .10 beats .2 (E1-03)", () => {
+    const v10: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-07-07.10" };
+    const v2: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-07-07.2" };
+    expect(freshest(v10, v2)).toBe(v10);
+    expect(freshest(v2, v10)).toBe(v10);
+  });
 });
 
 describe("loadPersistedCatalog (R2 store)", () => {

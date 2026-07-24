@@ -100,10 +100,10 @@ function numField(rule: NumRule) {
       ctx.addIssue({ code: "custom", message: t.validation.required });
       return z.NEVER;
     }
-    // Tolerate visual affixes the user may type (R$, unit letters, spaces); keep only
-    // digits, comma, dot and sign, then apply the shared pt-BR decimal rule.
-    const cleaned = trimmed.replace(/[^\d.,-]/g, "");
-    const n = parseDecimal(cleaned);
+    // Visual affixes the user may type (R$, unit letters, spaces) are stripped by `parseDecimal`
+    // itself — ANCHORED to the ends only (013/FA-05: the local unanchored strip that used to live
+    // here concatenated across interior garbage, turning "5x3" into a valid "53").
+    const n = parseDecimal(trimmed);
     if (!Number.isFinite(n)) {
       ctx.addIssue({ code: "custom", message: t.validation.invalid });
       return z.NEVER;

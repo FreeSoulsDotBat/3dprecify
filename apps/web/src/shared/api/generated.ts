@@ -125,7 +125,8 @@ export interface BomLineIn {
 
 export interface BomIn {
   name: string;
-  lines?: BomLineIn[];
+  /** @minItems 1 */
+  lines: BomLineIn[];
 }
 
 export type BomLineOutChannelsItem = { [key: string]: unknown };
@@ -3821,7 +3822,11 @@ export const getListHistoryApiV1HistoryGetUrl = (params?: ListHistoryApiV1Histor
  *   escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
  *   label never matches (an unlabelled row is not a search hit).
  * * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
- *   ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
+ *   ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528). Both
+ *   bounds MUST carry a timezone offset (``AwareDatetime``, audit finding E4-05): the column is a
+ *   ``timestamptz``, so a NAIVE bound was silently read as UTC and a seller filtering "13 de
+ *   julho" from a UTC-3 device got a window shifted three hours — a filter that quietly hides
+ *   real quotes is worse than one that refuses. An honest 422 asks for the offset instead.
  * * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
  *   may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
  * @summary List History

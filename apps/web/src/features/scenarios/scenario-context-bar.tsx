@@ -93,8 +93,8 @@ export function ScenarioContextBar({
     if (!costBasis?.ref) return;
     if (costBasis.kind === "PRODUCT") {
       void navigate({
-        to: "/catalogo/produtos/$productId",
-        params: { productId: costBasis.ref.id },
+        to: "/catalogo",
+        search: { produto: costBasis.ref.id },
       });
     } else if (costBasis.kind === "KIT") {
       void navigate({ to: "/kits", search: { id: costBasis.ref.id } });

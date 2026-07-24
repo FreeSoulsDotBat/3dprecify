@@ -7,6 +7,12 @@ import { apiFetch } from "@/shared/api/transport";
 import { type FeeCatalog, parseFeeCatalog } from "./fee-catalog";
 import { FEE_CATALOG_SEED } from "./seed";
 
+// E1-06: the bundled seed is the SYNCHRONOUS floor every first render relies on (R1) — it must be
+// validated through the same schema as the served/persisted catalog. Validating at module load
+// (not lazily inside the hook) makes a malformed seed fail LOUDLY at boot instead of silently
+// feeding an invalid shape into pricing as if it were trustworthy data.
+const VALIDATED_SEED: FeeCatalog = parseFeeCatalog(FEE_CATALOG_SEED);
+
 // Fetch→persist→seed catalog store (ADR-0010 Part 2 / T009c). Resolution order: persisted store
 // (freshest cached) → bundled seed (first-run offline, R1) → refresh from GET /api/v1/fee-catalog
 // when online. The cache MUST be persisted (IndexedDB) so an offline reload keeps the catalog (R2). A
@@ -23,8 +29,26 @@ export const FEE_CATALOG_STORE_KEY = "fee-catalog";
 /** TanStack Query key for the served-catalog refresh. */
 export const FEE_CATALOG_QUERY_KEY = ["fee-catalog"] as const;
 
-/** Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n" sorts lexicographically). */
+/** Parse `catalogVersion` ("YYYY-MM-DD.n") into a date + integer sequence, or null when it doesn't
+ *  match that shape — the caller falls back to a lexicographic compare rather than crash. */
+function parseCatalogVersion(version: string): { time: number; seq: number } | null {
+  const match = /^(\d{4}-\d{2}-\d{2})\.(\d+)$/.exec(version);
+  if (!match) return null;
+  const time = Date.parse(match[1]);
+  if (Number.isNaN(time)) return null;
+  return { time, seq: Number(match[2]) };
+}
+
+/** Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n"). E1-03: the sequence is
+ *  compared as an INTEGER (not the raw string), so ".10" correctly outranks ".2". Falls back to a
+ *  lexicographic compare only when either version doesn't match the expected shape. */
 export function freshest(incoming: FeeCatalog, current: FeeCatalog): FeeCatalog {
+  const a = parseCatalogVersion(incoming.catalogVersion);
+  const b = parseCatalogVersion(current.catalogVersion);
+  if (a && b) {
+    if (a.time !== b.time) return a.time > b.time ? incoming : current;
+    return a.seq >= b.seq ? incoming : current;
+  }
   return incoming.catalogVersion >= current.catalogVersion ? incoming : current;
 }
 
@@ -84,7 +108,7 @@ function adopt(prev: ActiveCatalog, incoming: FeeCatalog): ActiveCatalog {
 export function useFeeCatalog(): UseFeeCatalog {
   // The seed is the synchronous floor — the very first render always has data (R1: no blank grid).
   const [active, setActive] = useState<ActiveCatalog>({
-    catalog: FEE_CATALOG_SEED,
+    catalog: VALIDATED_SEED,
     source: "seed",
   });
 

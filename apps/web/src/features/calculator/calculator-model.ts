@@ -18,10 +18,11 @@ import {
 import {
   entryToChannelFees,
   feeSealState,
+  type ResolvedChannelFees,
   resolveSlotEntry,
 } from "@/features/calculator/fee-prefill";
 import type { FeeSealState } from "@/features/calculator/fee-seal";
-import type { CatalogSource, FeeCatalog } from "@/shared/fee-catalog";
+import type { CatalogSource, FeeCatalog, FeeEntry } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 
@@ -117,7 +118,9 @@ function parseManualFees(slot: ChannelSlotForm): {
     const raw = (slot[f] ?? "").trim();
     if (raw === "") continue; // untouched optional → 0
     hasManualInput = true;
-    const n = parseDecimal(raw.replace(/[^\d.,-]/g, ""));
+    // Affixes are stripped INSIDE `parseDecimal`, anchored to the ends (013/FA-05) — the local
+    // unanchored strip that used to live here turned "5x3" into a valid "53".
+    const n = parseDecimal(raw);
     if (!Number.isFinite(n)) {
       errors[f] = t.validation.invalid;
     } else if (n < 0) {
@@ -148,6 +151,60 @@ interface SlotProcessing {
 }
 
 /**
+ * 013 / E1-02 — the override seam, as a SELECTIVE MERGE.
+ *
+ * Typing ONE fee on a covered slot used to drop the catalog entry WHOLESALE (`priceBands:
+ * undefined, freightVoucherBands: undefined`): the Shopee co-financed freight voucher and the
+ * price bands vanished from the calculation, so the recebido líquido was overstated by exactly the
+ * voucher — silently, under a seal that only claimed the fees had been adjusted.
+ *
+ * The override now overwrites ONLY the scalars the seller actually TYPED. The signal is
+ * `editedFields` (which fields were typed), NEVER truthiness — a typed `0` is a real override and
+ * must win over the entry's value. `freightIsEstimate` follows the same rule: the "estimativa"
+ * label belongs to the entry's subsidy, so it is dropped the moment the seller types their own
+ * freight.
+ *
+ * KNOWN CONSEQUENCE, measured, not hidden: `pricing-core/channels.ts` (`ChannelFees` doc + the band
+ * fixed-point) states that price bands, WHEN PRESENT, override commission/fixedFee. So on a
+ * band-based entry (Shopee) a typed commission is neutralized by the preserved bands. That trade —
+ * voucher truthfully deducted vs. typed-commission effective — is pinned by a test in
+ * `calculator-model.test.ts` and flagged for the owner gate; flipping it is a one-line change here.
+ */
+function resolveSlotFees(
+  entry: FeeEntry | null,
+  manual: ReturnType<typeof parseManualFees>,
+): ResolvedChannelFees {
+  if (entry === null) {
+    return {
+      ...manual.nums,
+      priceBands: undefined,
+      freightVoucherBands: undefined,
+      freightIsEstimate: false,
+    };
+  }
+  const base = entryToChannelFees(entry);
+  if (!manual.hasManualInput) return base; // blank slot → the pre-fill, untouched
+  const edited = manual.editedFields;
+  // `priceBands` IS the commission schedule — `pricing-core/channels.ts:101-102` overwrites
+  // commissionPct/fixedFee from the band containing the announce. So keeping the bands while the user
+  // typed a commission would make that input silently inert (E1-02 would trade one silent wrong for
+  // another). Owner decision 2026-07-23: typing a commission/fixed fee means "my commission is X, not
+  // the catalog's" → the schedule drops. Typing only freight/minPerItem leaves the schedule intact.
+  // `freightVoucherBands` is a FREIGHT dimension, orthogonal to commission, and is the co-financed
+  // amount the audit found being silently dropped — it is preserved unconditionally.
+  const commissionOverridden = edited.commissionPct !== undefined || edited.fixedFee !== undefined;
+  return {
+    ...base,
+    priceBands: commissionOverridden ? undefined : base.priceBands,
+    commissionPct: edited.commissionPct ?? base.commissionPct,
+    fixedFee: edited.fixedFee ?? base.fixedFee,
+    minPerItem: edited.minPerItem ?? base.minPerItem,
+    freightCost: edited.freightCost ?? base.freightCost,
+    freightIsEstimate: edited.freightCost === undefined && base.freightIsEstimate,
+  };
+}
+
+/**
  * Resolve ONE slot's effective fees + honesty seal. A covered marketplace+modality with NO typed
  * fees pre-fills from the catalog (reference seal); any typed fee is a manual override ("ajustado por
  * você" over a covered combo, else "sem referência"). A per-field error fails only this slot (SC-107).
@@ -167,16 +224,9 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     };
   }
 
-  // Use the catalog entry only when the user hasn't typed any fee (a blank slot accepts the pre-fill).
+  // A blank slot accepts the catalog pre-fill wholesale (reference seal).
   const useCatalog = entry !== null && !manual.hasManualInput;
-  const fees = useCatalog
-    ? entryToChannelFees(entry)
-    : {
-        ...manual.nums,
-        priceBands: undefined,
-        freightVoucherBands: undefined,
-        freightIsEstimate: false,
-      };
+  const fees = resolveSlotFees(entry, manual);
   const seal: FeeSealState = useCatalog
     ? feeSealState({ entry, source: ctx!.source, now: ctx!.now, edited: false })
     : entry
@@ -233,7 +283,9 @@ function parseOtherCosts(forms: readonly { name: string; value: string }[]): {
       errors.push(undefined); // untouched row → 0, no engine item
       continue;
     }
-    const n = parseDecimal(raw.replace(/[^\d.,-]/g, ""));
+    // Affixes are stripped INSIDE `parseDecimal`, anchored to the ends (013/FA-05) — the local
+    // unanchored strip that used to live here turned "5x3" into a valid "53".
+    const n = parseDecimal(raw);
     if (!Number.isFinite(n)) {
       errors.push(t.validation.invalid);
     } else if (n < 0) {

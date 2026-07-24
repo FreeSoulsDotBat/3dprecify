@@ -37,8 +37,8 @@ import {
 //     `test_export.py::TestQuoteContent` (the content model) and the T030 homologation (the rendered
 //     artifact, opened and read). What this spec checks is that the *request* asks for no costs.
 //
-// Navigation: the detail is opened from the ledger, as a seller does — never a cold deep-link.
-// `/historico/$id` is a 2-segment auth-guarded route and `base: "./"` blanks it on a full load.
+// Navigation: the detail is opened from the ledger, as a seller does — never a cold deep-link
+// (013/deep-links.spec.ts covers that class directly, against the now-migrated `?snapshot=` URL).
 
 const t = messages;
 
@@ -57,7 +57,8 @@ async function recordAndWaitSaved(page: Page): Promise<void> {
 async function openFirstRecord(page: Page): Promise<void> {
   await page.goto("/historico");
   await page.getByText(t.historico.quotedAt.split("{")[0]!.trim()).first().click();
-  await expect(page).toHaveURL(/\/historico\/.+/);
+  // 013/F-02 (D1=A): `?snapshot=<id>` on `/historico`, not `/historico/<id>` (the migrated shape).
+  await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 }
 
 test("US4: the export round trip — a real PDF, and the default asks for NO cost lines (SC-506)", async ({

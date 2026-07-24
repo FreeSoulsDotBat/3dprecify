@@ -21,10 +21,10 @@ decimal strings / an oversized document — never mirrored field-by-field agains
 on every write (POST now; PUT in PR-B) per data-model §1 N1.
 
 **T011 — the on-save re-snapshot (D6 groundwork, ADR-0017 §6 the ``_snapshot_line`` rule).** A
-``costBasis`` referencing a live, owned Product has its ``lastKnown`` REWRITTEN from the live row
-on every save — so a later degradation (T022, when the product is gone) is lossless. A ``ref``
-that does not resolve is **not** an error (Q13, accept-and-degrade): the client-sent ``lastKnown``
-is kept as-is.
+``costBasis`` referencing a live, owned Product **or Kit** (the second kind added 2026-07-23, audit
+finding E5-01) has its ``lastKnown`` REWRITTEN from the live row on every save — so a later
+degradation (T022, when the reference is gone) is lossless. A ``ref`` that does not resolve is
+**not** an error (Q13, accept-and-degrade): the client-sent ``lastKnown`` is kept as-is.
 """
 
 from __future__ import annotations
@@ -33,7 +33,6 @@ import base64
 import json
 import uuid
 from datetime import UTC, datetime
-from decimal import Decimal, InvalidOperation
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Query, status
@@ -69,15 +68,9 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Bom, BomLine, Product, Scenario
+from app.validation import CEIL_CONFIG_LEAF, reject_bad_leaves
 
 router = APIRouter(tags=["scenarios"])
-
-# Generic magnitude ceiling for ANY decimal-string leaf inside `config`. Config is validated
-# STRUCTURALLY (VR-603) — we do not know per-field which NUMERIC domain a leaf belongs to, so we
-# apply the single widest house ceiling (mirrors `products.py::_CEIL_RATE`, Numeric(18,6)) as one
-# generic bound, exactly the way `history.py::_reject_bad_leaves` applies one ceiling to the whole
-# frozen document.
-_CEIL_CONFIG_LEAF = Decimal(10) ** 12
 
 # 256 KB (data-model §7 item 5, owner-decided 2026-07-19) — lower than E4's 512 KB because a
 # scenario stores INTENT, not a full frozen result document. An over-cap config is an HONEST 422,
@@ -86,38 +79,10 @@ _CONFIG_SIZE_CAP_BYTES = 256 * 1024
 
 _VALID_COST_BASIS_KINDS = {"AD_HOC", "PRODUCT", "KIT"}
 
-
-def _reject_bad_leaves(node: object) -> None:
-    """VR-602 — the recursive money guard over the whole `config` document.
-
-    Mirrors `history.py::_reject_bad_leaves` verbatim (the E4 precedent for a JSONB document that
-    must reject a float ANYWHERE without pinning its shape). Only int/bool/None/well-formed finite
-    decimal strings survive; a JSON float is rejected (precision already died at the serializer
-    boundary — `json.loads`/`JSON.parse` both decode a JSON number to binary64).
-    """
-    if isinstance(node, dict):
-        for value in cast("dict[str, object]", node).values():
-            _reject_bad_leaves(value)
-    elif isinstance(node, list):
-        for item in cast("list[object]", node):
-            _reject_bad_leaves(item)
-    elif isinstance(node, bool):
-        return  # a JSON true/false — never money
-    elif isinstance(node, float):
-        raise ValueError(
-            "config contains a JSON float; every money/rate/qty/percent leaf must be a decimal"
-            " STRING (VR-602)"
-        )
-    elif isinstance(node, str):
-        try:
-            parsed = Decimal(node)
-        except InvalidOperation:
-            return  # a non-numeric string (a name/label/marketplace id) — not a money leaf
-        if not parsed.is_finite() or abs(parsed) >= _CEIL_CONFIG_LEAF:
-            raise ValueError(
-                "config contains a non-finite (NaN/Infinity) or oversized decimal string (VR-602)"
-            )
-    # int / None fall through unchanged — the only legal JSON numbers (schemaVersion, quantity).
+#: `scenarios.name` is `VARCHAR(120)` with `ck_scenarios_name_len` behind it (data-model §2) — the
+#: bound the duplicate path has to fit its `"Cópia de …"` inside, not a display preference.
+_NAME_MAX_CHARS = 120
+_COPY_PREFIX = "Cópia de "
 
 
 def _validate_cost_basis(cost_basis: object) -> None:
@@ -165,7 +130,15 @@ def validate_scenario_config(config: dict[str, Any]) -> None:
     if len(json.dumps(config).encode("utf-8")) > _CONFIG_SIZE_CAP_BYTES:
         raise ValueError("config exceeds the maximum document size (256 KB)")
 
-    _reject_bad_leaves(config)
+    # VR-602 — the recursive leaf guard, with the ceiling passed EXPLICITLY. `config` is validated
+    # STRUCTURALLY (VR-603): a leaf's NUMERIC domain is unknowable here (it is pure INTENT, bound to
+    # no column), so it gets the single widest house bound, `CEIL_CONFIG_LEAF` (10**12) — which is
+    # DELIBERATELY wider than the `CEIL_MONEY` (10**10) that `history.py` passes to the same walker
+    # for a document whose leaves really do land in Numeric(12,2) columns. The two ceilings diverge
+    # on purpose; the divergence used to hide under a comment claiming the two walkers "mirror
+    # verbatim" (audit Q-04 — false, and dangerous to maintain by). Asserted by
+    # `test_VR602_the_config_ceiling_is_CEIL_CONFIG_LEAF_not_CEIL_MONEY`.
+    reject_bad_leaves(config, money_ceiling=CEIL_CONFIG_LEAF)
 
 
 class ScenarioIn(CamelModel):
@@ -181,7 +154,7 @@ class ScenarioIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             raise ValueError("name must not be blank")
-        if len(trimmed) > 120:
+        if len(trimmed) > _NAME_MAX_CHARS:
             raise ValueError("name exceeds the maximum length (120)")
         return trimmed
 
@@ -355,7 +328,7 @@ async def _resolve_product_last_known(
     ).scalar_one_or_none()
     if row is None:
         return None
-    filaments, printers = await _live_links(session, [row])
+    filaments, printers = await _live_links(session, uid, [row])
     resolved = _product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
@@ -474,16 +447,26 @@ async def _resnapshot_cost_basis(
     session: AsyncSession, uid: str, config: dict[str, Any]
 ) -> dict[str, Any]:
     """T011 — re-snapshot `costBasis.lastKnown` from the live reference on EVERY save, so a later
-    D6 degradation (T022) is lossless (ADR-0017 §6). A `PRODUCT` ref that resolves to an owned,
-    live Product OVERWRITES the submitted `lastKnown`; a `ref` that does not resolve (nonexistent,
-    soft-deleted, cross-tenant, or an ad-hoc/KIT basis) leaves the client-sent `lastKnown` as-is —
-    accept-and-degrade (Q13), never an error. KIT re-snapshot is T024 (PR-B, Q12 channel
-    composition) — out of scope here."""
+    D6 degradation (T022) is lossless (ADR-0017 §6). A `PRODUCT` **or `KIT`** ref that resolves to
+    an owned, live row OVERWRITES the submitted `lastKnown`; a `ref` that does not resolve
+    (nonexistent, soft-deleted, cross-tenant) or an `AD_HOC` basis leaves the client-sent
+    `lastKnown` as-is — accept-and-degrade (Q13), never an error.
+
+    **KIT coverage added 2026-07-23 (013 audit finding E5-01).** This function used to handle
+    `PRODUCT` only and delegate the KIT case to T024 — but T024 is the CLIENT-side `computeBom`
+    rollup, a pure READ that never writes a `lastKnown` anywhere. So the delegation described a
+    guarantee that did not exist: a KIT basis kept whatever `lastKnown` the client happened to
+    send, and the D6 degraded read (`_resolve_cost_basis_for_read`) then served a snapshot that was
+    never re-captured from the kit — stale by construction, and silently so, since a live ref hides
+    the stored value behind D3 live-reflect. Both kinds now re-capture through the SAME seam they
+    are read back through (`_resolve_product_last_known` / `_resolve_kit_last_known`), which is what
+    makes save-time and read-time impossible to drift apart."""
     cost_basis = config.get("costBasis")
     if not isinstance(cost_basis, dict):
         return config
     cb = cast("dict[str, Any]", cost_basis)
-    if cb.get("kind") != "PRODUCT":
+    kind = cb.get("kind")
+    if kind not in ("PRODUCT", "KIT"):
         return config
     ref = cb.get("ref")
     if not isinstance(ref, dict):
@@ -492,10 +475,14 @@ async def _resnapshot_cost_basis(
     if not ref_dict.get("id"):
         return config
     try:
-        product_id = uuid.UUID(str(ref_dict["id"]))
+        ref_id = uuid.UUID(str(ref_dict["id"]))
     except ValueError:
         return config
-    last_known = await _resolve_product_last_known(session, uid, product_id)
+    last_known = (
+        await _resolve_product_last_known(session, uid, ref_id)
+        if kind == "PRODUCT"
+        else await _resolve_kit_last_known(session, uid, ref_id)
+    )
     if last_known is not None:
         cb["lastKnown"] = last_known
     return config
@@ -619,7 +606,7 @@ class RenameIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             raise ValueError("name must not be blank")
-        if len(trimmed) > 120:
+        if len(trimmed) > _NAME_MAX_CHARS:
             raise ValueError("name exceeds the maximum length (120)")
         return trimmed
 
@@ -674,9 +661,16 @@ async def duplicate_scenario(
     other. Materializes nothing (VR-607's twin)."""
     uid: str = claims["uid"]
     original = await _owned(session, uid, scenario_id)
-    copy_name = f"Cópia de {original.name}"
-    if len(copy_name) > 120:
-        copy_name = copy_name[:120]
+    # The copy's name must fit `name`'s 120-char limit (VR-614). Truncating the WHOLE string at
+    # [:120] (the pre-2026-07-23 guard, audit finding E5-02) amputated the tail with no sign
+    # anything was cut, so two long scenarios could copy to the SAME name and the seller would see
+    # neither the loss nor the collision. The BASE is truncated with an ellipsis instead — the cut
+    # is visible, and the `"Cópia de "` prefix (the thing that says WHAT this row is) always
+    # survives intact.
+    copy_name = f"{_COPY_PREFIX}{original.name}"
+    if len(copy_name) > _NAME_MAX_CHARS:
+        budget = _NAME_MAX_CHARS - len(_COPY_PREFIX) - 1  # -1 for the ellipsis itself
+        copy_name = f"{_COPY_PREFIX}{original.name[:budget].rstrip()}…"
     copy = Scenario(
         owner_uid=uid,
         name=copy_name,

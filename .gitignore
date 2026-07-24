@@ -61,3 +61,12 @@ graphify-out/
 
 # rtk tee output (generated, RTK_TEE_DIR)
 .rtk-tee/
+
+# 013 audit remediation (P-02): `.config/rtk/filters.toml` is a USER-GLOBAL rtk template that got
+# written into the project directory, where rtk never reads it (it reads ~/.config/rtk/). It is
+# inert debris — comments and `schema_version` only, no actual filters. Ignored rather than deleted;
+# delete it by hand if you want it gone.
+.config/
+
+# Playwright MCP scratch output (browser snapshots/screenshots from in-session debugging)
+.playwright-mcp/

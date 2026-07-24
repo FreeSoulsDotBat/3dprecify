@@ -14,6 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
+const catalogo = messages.catalogo;
 
 const field = (name: string) => screen.getByRole("textbox", { name });
 
@@ -89,5 +90,26 @@ describe("PrinterForm — E1 denominator rule + money-as-string wire", () => {
     renderForm({ mode: "edit", defaultValues: printerToForm(saved) });
     expect(field(cf.name)).toHaveValue("Bambu X1");
     expect(screen.getByRole("button", { name: cf.saveChanges })).toBeInTheDocument();
+  });
+});
+
+describe("PrinterForm — lapsed read-only (013/FB-02, ux-catalog §3)", () => {
+  it("readOnly disables every field up front and swaps Salvar for the reactivation line", () => {
+    renderForm({ readOnly: true });
+    expect(field(cf.name)).toBeDisabled();
+    expect(field(fields.machineValue)).toBeDisabled();
+    expect(field(fields.machineLifetime)).toBeDisabled();
+    expect(field(fields.avgPower)).toBeDisabled();
+    expect(screen.getByText(catalogo.reactivateTitle)).toBeInTheDocument();
+    expect(screen.getByText(catalogo.reactivateBody)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: cf.save })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: cf.cancel })).toBeInTheDocument();
+  });
+
+  it("active (readOnly=false, the default) stays fully editable — regression guard", () => {
+    renderForm();
+    expect(field(cf.name)).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: cf.save })).toBeInTheDocument();
+    expect(screen.queryByText(catalogo.reactivateTitle)).not.toBeInTheDocument();
   });
 });

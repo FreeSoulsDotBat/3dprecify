@@ -2,8 +2,13 @@
 
 The Admin SDK verify call is blocking, so it runs in a threadpool. In dev,
 ``P3D_FIREBASE_AUTH_EMULATOR_HOST`` points the SDK at the Auth emulator (no real
-credentials); in prod, Application Default Credentials are used. No product route consumes this
-yet — it exists so the server-side boundary (Principle IV) is ready to wire.
+credentials); in prod, Application Default Credentials are used. ``current_claims`` is the
+server-side boundary (Principle IV): every entitlement-gated route (filaments, printers,
+products, boms, history, export, scenarios) depends on it transitively through
+``app.entitlement.require_entitlement`` / ``require_catalog_read``, plus ``/api/v1/me`` and
+``/api/v1/fee-catalog`` consume it directly (013 audit remediation, finding F-03 — this
+docstring previously claimed "no product route consumes this yet", which stopped being true
+back at E2).
 """
 
 from __future__ import annotations

@@ -41,6 +41,7 @@ from sqlalchemy.exc import DatabaseError
 
 from app.main import create_app
 from app.settings import Settings
+from app.validation import CEIL_CONFIG_LEAF, CEIL_MONEY
 from tests.conftest import requires_db
 from tests.helpers import patch_verify, seed_grant
 
@@ -427,6 +428,35 @@ def test_VR602_a_non_finite_money_string_in_config_is_422(
     r = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
     assert r.status_code == 422, r.text
     assert _scenario_count(migrated_db, "u-sc-nan") == 0
+
+
+def test_VR602_the_config_ceiling_is_CEIL_CONFIG_LEAF_not_CEIL_MONEY(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Q-04 — the two ceilings are DELIBERATELY different, and this test is what says so.
+
+    `history.py` walks a frozen document whose leaves land in MONEY_SETTLED Numeric(12,2) columns
+    (CEIL_MONEY = 10**10). `scenarios.py` walks pure JSONB INTENT with no per-leaf NUMERIC domain,
+    so it applies the single widest house bound (CEIL_CONFIG_LEAF = 10**12). Before this feature
+    that divergence lived under a comment claiming the two walkers "mirror verbatim" — false, and
+    maintenance guided by it would have propagated the wrong ceiling. Now each caller passes its
+    own `money_ceiling` and the gap between them is asserted, not folklore."""
+    assert CEIL_CONFIG_LEAF > CEIL_MONEY
+
+    h = _premium(monkeypatch, migrated_db, "u-sc-ceilparity")
+    # Over CEIL_MONEY, under CEIL_CONFIG_LEAF: a 422 in history, ACCEPTED here.
+    below = json.loads(json.dumps(VALID_CONFIG))
+    below["otherCosts"][0]["value"] = str(CEIL_MONEY)
+    ok = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=below))
+    assert ok.status_code == 201, ok.text
+
+    # At CEIL_CONFIG_LEAF: rejected — the scenario ceiling is higher, not absent.
+    over = json.loads(json.dumps(VALID_CONFIG))
+    over["otherCosts"][0]["value"] = str(CEIL_CONFIG_LEAF)
+    bad = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="Teto", config=over))
+    assert bad.status_code == 422, bad.text
+    assert bad.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert _scenario_count(migrated_db, "u-sc-ceilparity") == 1  # only the accepted one
 
 
 def test_VR603_config_validation_is_STRUCTURAL_not_shape_pinning(
@@ -884,7 +914,8 @@ def _mk_kit_with_ad_hoc_line(
 def _config_with_kit_basis(bom_id: str, kit_name: str) -> dict[str, Any]:
     """A config whose `costBasis` references a live Kit — `lastKnown` is deliberately a STALE
     single-line placeholder (distinct from the live kit's line) so only a read-time resolve (D3)
-    or the stored value (D6) could ever appear on reopen — never a coincidence."""
+    or the save-time re-snapshot (E5-01, read back through D6) could ever appear on reopen — never
+    a coincidence. It survives ONLY when the ref does not resolve at save time (Q13)."""
     config = json.loads(json.dumps(VALID_CONFIG))
     config["costBasis"] = {
         "kind": "KIT",
@@ -933,7 +964,7 @@ def test_KIT_D6_a_soft_deleted_referenced_kit_degrades_honestly_no_break(
     soft-deleted) degrades to the STORED `lastKnown`, `degraded: true`, never a blank/500/"removido"
     claim — the exact F1 honesty-class guard (never present stale as live)."""
     h = _premium(monkeypatch, migrated_db, "u-sc-kit-d6")
-    bom_id, _product_id, _piece_name = _mk_kit_with_ad_hoc_line(
+    bom_id, _product_id, piece_name = _mk_kit_with_ad_hoc_line(
         db_client, h, piece_name="Braço", print_grams="50.000", kit_name="Kit Braço"
     )
 
@@ -949,11 +980,15 @@ def test_KIT_D6_a_soft_deleted_referenced_kit_degrades_honestly_no_break(
     assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
     resolved = fetched.json()["config"]["costBasis"]
     assert resolved["degraded"] is True
-    # The STORED snapshot (the stale placeholder sent at save — never re-snapshotted server-side
-    # for KIT, T024's client half is what does that) — never blank, never fabricated as live.
-    assert resolved["lastKnown"] == {
-        "lines": [{"name": "stale", "quantity": 9, "input": _piece_input()}]
-    }
+    # The STORED snapshot — which, since 2026-07-23 (audit finding E5-01), is the one the SERVER
+    # re-captured from the live kit at save time, NOT the stale placeholder the client sent. The
+    # previous comment here claimed the KIT re-snapshot was T024's client half; T024 is a pure read
+    # (`computeBom` rollup) and writes no `lastKnown` anywhere, so that claim described a mechanism
+    # that did not exist. Never blank, never fabricated as live.
+    lines = resolved["lastKnown"]["lines"]
+    assert [line["name"] for line in lines] == [piece_name], lines
+    assert [line["quantity"] for line in lines] == [2], lines
+    assert lines[0]["input"]["printGrams"] == "50.000", lines
     assert resolved["ref"] == {"id": bom_id, "name": "Kit Braço"}  # the ref is kept, not erased
 
     # Still editable + re-saveable — a PUT with the degraded basis unchanged succeeds (US6).
@@ -1346,3 +1381,218 @@ def test_VR610_a_re_grant_restores_writes_with_data_intact(
     )
     assert renamed.status_code == 200, renamed.text
     assert renamed.json()["name"] == "De volta"
+
+
+# --- E5-04 (013 audit remediation, T053) -----------------------------------------------------
+# `_price_input_dict_from_bom_line` (scenarios.py:308-336) is the ONE-LINE-DEGRADED branch of
+# `_resolve_kit_last_known` — a kit that ITSELF still resolves (owned + live), but whose line-level
+# `product_id` now points at a soft-deleted product. It was never exercised via the scenarios API:
+# every existing KIT fixture used exactly ONE ad-hoc line, so the branch at scenarios.py:399-408
+# (the `else` of `resolved is not None`) had zero live coverage. This mutates the BomLine's OWN
+# last-known columns into the flat contract shape — if its field mapping breaks (wrong column, wrong
+# default, wrong key name), this test is the one that goes red.
+
+
+def _mk_kit_with_two_ad_hoc_lines(
+    client: TestClient, h: dict[str, str], *, kit_name: str
+) -> tuple[str, str, str]:
+    """A live kit (POST /api/v1/boms) with TWO ad-hoc lines, each materializing its own product
+    (ADR-0017) — returns (bomId, productId of line 0, productId of line 1)."""
+    body = {
+        "name": kit_name,
+        "lines": [
+            {
+                "quantity": 1,
+                "pieceName": "Linha viva",
+                "pieceInputs": {
+                    "printGrams": "100.000",
+                    "wasteGrams": "0.000",
+                    "printTimeHours": "5.000",
+                    "failurePct": "0.000",
+                    "finishTimeHours": "0.000",
+                    "finishRatePerHour": "0.000000",
+                    "laborHours": "0.000",
+                    "laborRatePerHour": "0.000000",
+                    "markupVarejoPct": "50.000",
+                    "markupAtacadoPct": "30.000",
+                },
+                "filamentValues": {
+                    "material": "PLA",
+                    "costPerRoll": "110.00",
+                    "rollWeightKg": "1.000",
+                },
+                "printerValues": {
+                    "machineValue": "1200.00",
+                    "machineLifetimeHours": "2000.000",
+                    "avgPowerKw": "0.1200",
+                    "maintenanceReservePerHour": "0.500000",
+                },
+                "tariffPerKwh": "1.000000",
+                "includeMarketplace": True,
+                "channels": [],
+                "otherCosts": [],
+            },
+            {
+                "quantity": 3,
+                "pieceName": "Linha a apagar",
+                "pieceInputs": {
+                    "printGrams": "250.000",
+                    "wasteGrams": "5.000",
+                    "printTimeHours": "8.000",
+                    "failurePct": "2.000",
+                    "finishTimeHours": "1.000",
+                    "finishRatePerHour": "10.000000",
+                    "laborHours": "0.500",
+                    "laborRatePerHour": "20.000000",
+                    "markupVarejoPct": "60.000",
+                    "markupAtacadoPct": "40.000",
+                },
+                "filamentValues": {
+                    "material": "PETG",
+                    "costPerRoll": "150.00",
+                    "rollWeightKg": "1.000",
+                },
+                "printerValues": {
+                    "machineValue": "2000.00",
+                    "machineLifetimeHours": "3000.000",
+                    "avgPowerKw": "0.2000",
+                    "maintenanceReservePerHour": "1.000000",
+                },
+                "tariffPerKwh": "1.200000",
+                "includeMarketplace": True,
+                "channels": [],
+                "otherCosts": [],
+            },
+        ],
+    }
+    r = client.post("/api/v1/boms", headers=h, json=body)
+    assert r.status_code == 201, r.text
+    kit = r.json()
+    return (
+        kit["id"],
+        kit["materializations"][0]["productId"],
+        kit["materializations"][1]["productId"],
+    )
+
+
+def test_E5_04_a_kit_scenario_with_one_line_soft_deleted_degrades_only_that_line(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The KIT itself still resolves (owned + live), so the scenario is NOT globally degraded
+    (`costBasis.degraded` stays False) — but the ONE line whose product was soft-deleted must
+    surface via `_price_input_dict_from_bom_line`: an honest empty name (mirrors
+    `boms.py::BomLineOut.piece_name=None`) and the line's OWN stored last-known columns, never a
+    500 and never silently dropped from the `lines` array. The sibling (still-live) line keeps
+    resolving via the normal `_price_input_dict`/live-product path."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-e504-kit-line")
+    bom_id, live_product_id, dead_product_id = _mk_kit_with_two_ad_hoc_lines(
+        db_client, h, kit_name="Kit Duas Linhas"
+    )
+
+    delete_resp = db_client.delete(f"/api/v1/products/{dead_product_id}", headers=h)
+    assert delete_resp.status_code == 204, delete_resp.text
+
+    config = _config_with_kit_basis(bom_id, "Kit Duas Linhas")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+
+    fetched = db_client.get(f"/api/v1/scenarios/{created.json()['id']}", headers=h)
+    assert fetched.status_code == 200, fetched.text  # ZERO breaks — never a 500
+    resolved = fetched.json()["config"]["costBasis"]
+
+    # The KIT reference itself still resolves — this is NOT the whole-basis D6 degradation.
+    assert resolved["degraded"] is False, resolved
+
+    lines = resolved["lastKnown"]["lines"]
+    assert len(lines) == 2, lines
+
+    live_line = next(line for line in lines if line["quantity"] == 1)
+    assert live_line["name"] == "Linha viva"
+    assert live_line["input"]["printGrams"] == "100.000"
+
+    dead_line = next(line for line in lines if line["quantity"] == 3)
+    # The honest empty name (D6 one level down) — never fabricated, never the pre-delete name.
+    assert dead_line["name"] == ""
+    # The BomLine's OWN last-known columns, in the FLAT contract shape — proves
+    # `_price_input_dict_from_bom_line`'s field mapping (not `_price_input_dict`'s Product path).
+    assert set(dead_line["input"].keys()) == _CONTRACT_PRICE_INPUT_KEYS, dead_line["input"].keys()
+    assert dead_line["input"]["printGrams"] == "250.000"
+    assert dead_line["input"]["wasteGrams"] == "5.000"
+    assert dead_line["input"]["costPerRoll"] == "150.00"
+    assert dead_line["input"]["failurePct"] == "2.000"
+    assert dead_line["input"]["machineValue"] == "2000.00"
+    _ = live_product_id  # unused beyond materialization-shape proof above
+
+
+# ══ 013 US6 / T070 — audit findings E5-01 (KIT re-snapshot on save) + E5-02 (duplicate ellipsis) ══
+
+
+def test_E5_01_a_PUT_of_a_KIT_basis_scenario_recaptures_lastKnown_from_the_live_kit(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E5-01. `_resnapshot_cost_basis` covered `kind == "PRODUCT"` only and delegated
+    the KIT case to T024 — a mechanism that is pure READ and never writes. So a KIT basis kept
+    whatever `lastKnown` the client last sent, and a later D6 degradation served a value that was
+    never re-captured: the D6-lossless promise did not hold for kits.
+
+    Proven the only way it CAN be proven end-to-end: the stored snapshot is invisible while the ref
+    resolves (D3 live-reflect wins on read), so the kit is soft-deleted AFTER the save and the
+    degraded read is what exposes what was actually written."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-kit-resnap")
+    bom_id, product_id, piece_name = _mk_kit_with_ad_hoc_line(
+        db_client, h, piece_name="Perna", print_grams="100.000", kit_name="Kit Resnap"
+    )
+
+    config = _config_with_kit_basis(bom_id, "Kit Resnap")
+    created = db_client.post("/api/v1/scenarios", headers=h, json=_body(config=config))
+    assert created.status_code == 201, created.text
+    scenario_id = created.json()["id"]
+
+    # The live kit CHANGES after the create, and the seller re-saves (PUT) the same intent with the
+    # same stale client-sent `lastKnown`. The save must re-capture TODAY's kit.
+    fid, pid = _mk_refs(db_client, h)
+    _update_product(db_client, h, product_id, fid, pid, print_grams="777.000", name=piece_name)
+    resave = db_client.put(f"/api/v1/scenarios/{scenario_id}", headers=h, json=_body(config=config))
+    assert resave.status_code == 200, resave.text
+
+    db_client.delete(f"/api/v1/boms/{bom_id}", headers=h).raise_for_status()
+
+    degraded = db_client.get(f"/api/v1/scenarios/{scenario_id}", headers=h)
+    assert degraded.status_code == 200, degraded.text
+    basis = degraded.json()["config"]["costBasis"]
+    assert basis["degraded"] is True
+    lines = basis["lastKnown"]["lines"]
+    # NOT the client's stale placeholder (`{name: "stale", quantity: 9}`) — the kit as it stood at
+    # the last save: the materialized line's live name/quantity and the edited 777.000.
+    assert [line["name"] for line in lines] == [piece_name], lines
+    assert [line["quantity"] for line in lines] == [2], lines
+    assert lines[0]["input"]["printGrams"] == "777.000", lines
+
+
+def test_E5_02_duplicating_a_118_char_name_truncates_the_BASE_with_an_ellipsis(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E5-02. `"Cópia de " + name` overflows the 120-char limit for any name longer
+    than 111 chars; the old guard hard-sliced the WHOLE string at [:120], silently amputating the
+    tail with no sign anything was cut. The copy must stay within 120 AND say so — the base is
+    truncated with an ellipsis, and the `"Cópia de "` prefix always survives intact."""
+    h = _premium(monkeypatch, migrated_db, "u-sc-dup-ellipsis")
+    base = "N" * 118
+    original = db_client.post("/api/v1/scenarios", headers=h, json=_body(name=base))
+    assert original.status_code == 201, original.text
+
+    dup = db_client.post(f"/api/v1/scenarios/{original.json()['id']}/duplicate", headers=h)
+    assert dup.status_code == 201, dup.text
+    copy_name = dup.json()["name"]
+    assert len(copy_name) <= 120, len(copy_name)
+    assert copy_name.startswith("Cópia de "), copy_name
+    assert copy_name.endswith("…"), copy_name
+    assert copy_name == "Cópia de " + "N" * 110 + "…"
+
+    # A name that still FITS is never touched (no gratuitous ellipsis).
+    short = db_client.post("/api/v1/scenarios", headers=h, json=_body(name="N" * 111))
+    short_copy = db_client.post(
+        f"/api/v1/scenarios/{short.json()['id']}/duplicate", headers=h
+    ).json()
+    assert short_copy["name"] == "Cópia de " + "N" * 111
+    assert len(short_copy["name"]) == 120

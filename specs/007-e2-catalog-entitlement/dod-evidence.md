@@ -27,7 +27,7 @@ map; all ten success criteria are met and every slice is on `develop`.
 | **SC-305** — catalog-picked compute is **byte-identical** to manual | ✅ | `catalog-prefill` pure separator swap; the SC-305 byte-identity vitest (T023); **R$ 26,48 anchor** asserted in the calculator AND the product page (T030) + both homologation drives |
 | **SC-306** — free/signed-out persists nothing, no fake "salvo", every affordance honest | ✅ | US7 teaser (no price/date/purchase-CTA); `premium-teaser` + `calcular-teaser` component tests; e2e signed-out teaser; server 403 is the real boundary |
 | **SC-307** — a saved product reproduces inputs + recomputes with the current formula; ref edits reflect | ✅ | `test_products.py` (inputs-only, no stored price; `test_reopen_reflects_live_reference_edits`); product page reopen recomputes via `computeFromForm` |
-| **SC-308** — zero cross-account reads/writes | ✅ | `test_*::test_per_account_isolation` (another account's row → 404, no existence oracle); owner-scoped queries + RLS backstop |
+| **SC-308** — zero cross-account reads/writes | ✅ | `test_*::test_per_account_isolation` (another account's row → 404, no existence oracle); owner-scoped queries only — **no RLS is implemented in this backend** (grep confirms 0 occurrences of Postgres row-level-security in `backend/`; the isolation guarantee is app-layer, not a DB-enforced backstop) |
 | **SC-309** — on lapse, saved data stays readable/pre-fillable, 0% writable | ✅ | `require_catalog_read` allows active|lapsed; writes deny; `test_*_lapsed_reads_but_cannot_write` |
 | **SC-310** — the E1 free/offline/signed-out guarantees hold unchanged | ✅ | the full E1 e2e suite passes unchanged (92/92); `catalog.spec.ts` SC-310 assertions; seed R$ 30,90 intact behind the teaser |
 

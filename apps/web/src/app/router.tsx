@@ -9,11 +9,9 @@ import { AppShell } from "@/app/app-shell";
 import { BomPage } from "@/pages/bom/bom-page";
 import { CalcularPage } from "@/pages/calcular/calcular-page";
 import { CatalogoPage } from "@/pages/catalogo/catalogo-page";
-import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { ContaPage } from "@/pages/conta/conta-page";
 import { ErrorPage } from "@/pages/error/error-page";
 import { HistoricoPage } from "@/pages/historico/historico-page";
-import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
 import { NotFoundPage } from "@/pages/not-found/not-found-page";
 import { PrivacidadePage } from "@/pages/privacidade/privacidade-page";
 import { SignInPage } from "@/pages/sign-in/sign-in-page";
@@ -32,43 +30,28 @@ export interface RouterContext {
 // and an open-redirect guard (external / protocol-relative targets fall back to Calcular).
 // 008/K1: /kits joins the whitelist — the kit teaser's "Entrar" promises a return there.
 const RETURN_TO_INTENT = ["/catalogo", "/kits", "/historico", "/conta"] as const;
-type ReturnToIntent = (typeof RETURN_TO_INTENT)[number];
-
-// E6/T016 (coordinator-reported HIGH defect): the intent must carry `pathname + search`, not just
-// the pathname — a bounce off `/conta?checkout=retorno` (MP's real `back_url` shape) that loses
-// the query silently drops the seller into the ordinary Conta panel instead of the honest
-// `CheckoutReturnPanel`. The whitelist check still runs ONLY against the pathname (the
-// same-origin/open-redirect guard is unweakened — an unknown pathname is rejected regardless of
-// what query it carries); the query, once the pathname clears the whitelist, travels untouched.
-function splitPathAndSearch(target: string): { pathname: string; search: string } {
-  const qIdx = target.indexOf("?");
-  return qIdx === -1
-    ? { pathname: target, search: "" }
-    : { pathname: target.slice(0, qIdx), search: target.slice(qIdx + 1) };
-}
-
-interface SignInLanding {
-  to: ReturnToIntent | "/calcular";
-  search: Record<string, string>;
-}
-
-function safeRedirect(target: string | undefined): SignInLanding {
-  if (!target) return { to: "/calcular", search: {} };
-  const { pathname, search } = splitPathAndSearch(target);
-  if (!RETURN_TO_INTENT.includes(pathname as ReturnToIntent))
-    return { to: "/calcular", search: {} };
-  return {
-    to: pathname as ReturnToIntent,
-    search: Object.fromEntries(new URLSearchParams(search)),
-  };
+// 013/F-02 (D1=A): `target` is now a full HREF (pathname + optional `?search`), not just a bare
+// pathname — `?produto=`/`?snapshot=` carry the id the return-to-intent must preserve, or a
+// sign-in round-trip would silently drop it (landing the seller back on a bare `/catalogo`
+// instead of the product they asked for). Still an exact-base-or-`base?...` match — the
+// open-redirect guard: an external/protocol-relative target never qualifies.
+//
+// This SUBSUMES the E6/T016 fix (checkout return preserving its query): `/conta?checkout=retorno`
+// (MP's real `back_url` shape) matches `"/conta?…"`, so the query travels untouched through
+// /sign-in into ContaPage's `CheckoutReturnPanel` — the same mechanism, one implementation. The
+// `{to, search}` split T016 introduced is no longer needed; `href` carries the whole internal URL.
+function safeRedirect(target: string | undefined): string {
+  if (!target) return "/calcular";
+  const known = RETURN_TO_INTENT.some((base) => target === base || target.startsWith(`${base}?`));
+  return known ? target : "/calcular";
 }
 
 // GC-2: guarded tabs require an authenticated session. Anything else (anonymous OR
-// not-configured) is bounced to /sign-in carrying the return-to-intent (pathname + search,
-// T016). Client guards are UX only — the server stays the boundary (GC-5, Principle IV).
-function requireAuth(status: SessionStatus, href: string): void {
+// not-configured) is bounced to /sign-in carrying the return-to-intent. Client guards
+// are UX only — the server stays the boundary (GC-5, Principle IV).
+function requireAuth(status: SessionStatus, target: string): void {
   if (status !== "authenticated") {
-    throw redirect({ to: "/sign-in", search: { redirect: href } });
+    throw redirect({ to: "/sign-in", search: { redirect: target } });
   }
 }
 
@@ -97,37 +80,66 @@ const calcularRoute = createRoute({
 });
 
 // 007/US7 (2026-07-10): /catalogo is PUBLIC — a signed-out user must SEE the honest premium
-// teaser there (spec US7 scenario 2, ux §2.2), never a bounce. Writes stay server-gated (GC-5);
-// the product create/edit routes below remain auth-guarded.
+// teaser there (spec US7 scenario 2, ux §2.2), never a bounce. Writes stay server-gated (GC-5).
+//
+// 013/F-02 (D1=A): the product create/edit FULL PAGE routes used to be their OWN 2-segment
+// routes (`/catalogo/produtos/novo`, `/catalogo/produtos/$productId`) — a URL shape that
+// `base:'./'` blanks on cold-load/refresh/bookmark (the measured trap, see historicoRoute below).
+// They now live as a `?produto=` search param on THIS route (same pattern as `/kits?id=`):
+// CatalogoPage reads it and renders ProdutoPage inline instead of the tabs. The auth gate that
+// used to live on those routes' `beforeLoad` moves here, conditioned on the param being present —
+// plain `/catalogo` (no `produto`) stays public exactly as before.
 const catalogoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo",
-  // `?tab=products` lets the product page land back on the Produtos tab after a save; `?tab=kits`
-  // is where a saved kit lands the seller (E3/K2).
-  validateSearch: (search: Record<string, unknown>): { tab?: "products" | "kits" } => ({
-    tab: search.tab === "products" || search.tab === "kits" ? search.tab : undefined,
+  // `?tab=` selects the catalog tab: the product page lands back on `products` after a save, a saved
+  // kit lands the seller on `kits` (E3/K2). ALL FOUR tabs are valid here — the page derives its tab
+  // from this param (013/F-02 follow-up), so the two that used to be missing (`filaments`,
+  // `printers`) were silently unbookmarkable. `?produto=<id>` opens the edit form for that product;
+  // `?produto=novo` opens the create form.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { tab?: "filaments" | "printers" | "products" | "kits"; produto?: string } => ({
+    tab:
+      search.tab === "filaments" ||
+      search.tab === "printers" ||
+      search.tab === "products" ||
+      search.tab === "kits"
+        ? search.tab
+        : undefined,
+    produto: typeof search.produto === "string" && search.produto ? search.produto : undefined,
   }),
+  // `location.href` (not just `search.produto`/pathname) so the round-trip through /sign-in
+  // preserves the id — a bare pathname would drop it and land the seller back on `/catalogo`
+  // with no product open (013 fix: this WAS observed losing the id via `page.goto` e2e, T020).
+  beforeLoad: ({ context, search, location }) => {
+    if (search.produto) requireAuth(context.status, location.href);
+  },
   component: CatalogoPage,
 });
 
-// US6/T030 (ux §1.6b): the product create/edit FULL PAGE routes — guarded like /catalogo.
+// 013/F-02: the OLD 2-segment routes stay registered as CLIENT-SIDE REDIRECTS for ≥1 release
+// (research §2) — they preserve the auth gate they always had (so GC-2's sign-in bounce is
+// unchanged for a stale bookmark still carrying the old shape), then forward to the new
+// `?produto=` URL, preserving the id. This does NOT fix a cold-load/bookmark of the OLD URL by
+// itself (the app must boot before any client redirect can run) — that half is `firebase.json`'s
+// hosting-level 301 (T024).
 const produtoNovoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/novo",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
-  component: ProdutoPage,
+  beforeLoad: ({ context, location }) => {
+    requireAuth(context.status, location.pathname);
+    throw redirect({ to: "/catalogo", search: { produto: "novo" } });
+  },
 });
-
-function ProdutoEditRouteComponent() {
-  const { productId } = produtoEditRoute.useParams();
-  return <ProdutoPage productId={productId} />;
-}
 
 const produtoEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/$productId",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
-  component: ProdutoEditRouteComponent,
+  beforeLoad: ({ context, location, params }) => {
+    requireAuth(context.status, location.pathname);
+    throw redirect({ to: "/catalogo", search: { produto: params.productId } });
+  },
 });
 
 // 008/US5 (ADR-0015) + K1 (R8 D-K1): /kits is PUBLIC like /catalogo — a free/signed-out user
@@ -151,28 +163,42 @@ const bomRoute = createRoute({
 // 009/US5: /historico joins /catalogo and /kits as PUBLIC — a signed-out seller must SEE the honest
 // teaser on the tab, never a bounce to sign-in. The ledger itself gates IN-PAGE on the authoritative
 // entitlement (server-informed, never a local flag), and the server gates every read and write
-// regardless (GC-5, Principle IV). The DETAIL route below stays guarded: there is nothing to teach a
-// signed-out visitor at a snapshot's URL, and it addresses one specific record.
+// regardless (GC-5, Principle IV).
+//
+// 013/F-02 (D1=A): the frozen detail used to be its OWN 2-segment route
+// (`/historico/$snapshotId`) — blanked by `base:'./'` on cold-load/refresh/bookmark (the measured
+// trap this project already documented). It now lives as `?snapshot=<clientSnapshotId>` on THIS
+// route (same pattern as `/kits?id=`): HistoricoPage reads it and renders SnapshotDetailPage
+// inline instead of the ledger list. The auth gate the detail route used to carry moves here,
+// conditioned on the param being present — plain `/historico` (no `snapshot`) stays public.
 const historicoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico",
+  // 009/T013 — the URL key is the **clientSnapshotId**, not the server id: it is minted on the
+  // device at record time and is the only id a still-unsynced record HAS. Keying on the server id
+  // would make a pending quote unopenable — and it is stable across the sync, so a link taken
+  // while pending keeps working afterwards.
+  validateSearch: (search: Record<string, unknown>): { snapshot?: string } => ({
+    snapshot: typeof search.snapshot === "string" && search.snapshot ? search.snapshot : undefined,
+  }),
+  // Same `location.href` reasoning as `catalogoRoute` above — preserve the id through /sign-in.
+  beforeLoad: ({ context, search, location }) => {
+    if (search.snapshot) requireAuth(context.status, location.href);
+  },
   component: HistoricoPage,
 });
 
-// 009/T013 — the frozen detail. The URL key is the **clientSnapshotId**, not the server id: it is
-// minted on the device at record time and is the only id a still-unsynced record HAS. Keying on the
-// server id would make a pending quote unopenable — and it is stable across the sync, so a link
-// taken while pending keeps working afterwards.
-function SnapshotDetailRouteComponent() {
-  const { snapshotId } = snapshotDetailRoute.useParams();
-  return <SnapshotDetailPage snapshotId={snapshotId} />;
-}
-
+// 013/F-02: the OLD 2-segment route stays registered as a CLIENT-SIDE REDIRECT for ≥1 release
+// (research §2) — it preserves the auth gate it always had, then forwards to the new
+// `?snapshot=` URL, preserving the id. Same caveat as the catalogo redirects above: this does not
+// by itself fix a cold-load of the OLD URL (the hosting-level 301, T024, does).
 const snapshotDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico/$snapshotId",
-  beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
-  component: SnapshotDetailRouteComponent,
+  beforeLoad: ({ context, location, params }) => {
+    requireAuth(context.status, location.pathname);
+    throw redirect({ to: "/historico", search: { snapshot: params.snapshotId } });
+  },
 });
 
 // E6/T013/T015: MP's `back_url` targets `/conta?checkout=retorno` (a 1-segment route — the
@@ -199,8 +225,10 @@ const signInRoute = createRoute({
   }),
   beforeLoad: ({ context, search }) => {
     if (context.status === "authenticated") {
-      const landing = safeRedirect(search.redirect);
-      throw redirect({ to: landing.to, search: landing.search as never });
+      // `href` (not `to`): the target may carry a query string (`/catalogo?produto=…` or E6's
+      // `/conta?checkout=retorno`), which `to` cannot express on its own (it names a ROUTE, not an
+      // arbitrary internal URL).
+      throw redirect({ href: safeRedirect(search.redirect) });
     }
   },
   component: SignInPage,

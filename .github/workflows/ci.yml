@@ -116,6 +116,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      # T052 (013 audit remediation, finding P-03): the single-head check added to this script
+      # needs `uv run alembic heads` (metadata-only, no DB) — the backend venv, not frontend.
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --frozen
+        working-directory: backend
       - run: sh scripts/check-migrations.sh
 
   secret-scan:

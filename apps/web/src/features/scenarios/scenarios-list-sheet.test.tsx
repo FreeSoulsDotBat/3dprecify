@@ -146,6 +146,22 @@ describe("ScenariosListSheet — rename (PATCH, T029)", () => {
     await user.click(screen.getByRole("button", { name: t.saveChanges }));
     expect(renameMutateAsync).not.toHaveBeenCalled();
   });
+
+  // 013 US4 (FB-03) — the CREATE path (save-scenario-sheet.tsx) validates note <= 500 and the
+  // backend validates both symmetrically, but the RENAME path had no client-side check at all: an
+  // over-limit note traveled to the server for a generic 422. Reuses the SAME `t.noteTooLong`
+  // string as create — never a second message for the same rule.
+  it("a note over 500 chars blocks rename submit with the SAME t.noteTooLong as create", async () => {
+    const user = setup();
+    renderSheet();
+    await user.click(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` }));
+    const noteInput = screen.getByDisplayValue(ROW.note!);
+    await user.clear(noteInput);
+    fireEvent.change(noteInput, { target: { value: "a".repeat(501) } });
+    await user.click(screen.getByRole("button", { name: t.saveChanges }));
+    expect(screen.getByText(t.noteTooLong)).toBeInTheDocument();
+    expect(renameMutateAsync).not.toHaveBeenCalled();
+  });
 });
 
 describe("ScenariosListSheet — duplicate (T029, completes the T026 client gap)", () => {

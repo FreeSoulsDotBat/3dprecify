@@ -1,5 +1,7 @@
 import { type HTMLAttributes, type ReactNode } from "react";
 
+import { formatDecimal } from "@/shared/lib/decimal-ptbr";
+
 import "./price-hero.css";
 
 export type PriceHeroTone = "plain" | "accent" | "energy" | "inverse" | "success";
@@ -32,9 +34,7 @@ export function PriceHero({
   children,
   ...rest
 }: PriceHeroProps) {
-  const parts = Number(value || 0)
-    .toLocaleString("pt-BR", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
-    .split(",");
+  const parts = formatDecimal(Number(value || 0), decimals).split(",");
   const int = parts[0];
   const dec = parts[1];
   const cls = [

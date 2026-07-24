@@ -1,4 +1,5 @@
 import type { FilamentOut, PrinterOut } from "@/shared/api/generated";
+import { wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 import type { CalcFormValues } from "./calculator-schema";
 
@@ -8,11 +9,9 @@ import type { CalcFormValues } from "./calculator-schema";
 // `parseDecimal` sees the exact number a manual entry would produce and the computed prices are
 // byte-identical BY CONSTRUCTION (the engine is untouched). Pre-filled fields stay ordinary
 // editable text: picking never locks anything.
-
-/** en-US wire decimal string → pt-BR form string ("1200.00" → "1200,00"). Pure swap, no floats. */
-function wireToPtBr(value: string): string {
-  return value.replace(".", ",");
-}
+//
+// 013/FA-05: `wireToPtBr` was a private copy here, in `product-mapping` and in `scenario-bridge`;
+// it now has ONE home in `shared/lib/decimal-ptbr` with its "at most one dot" premise under test.
 
 /** The calculator fields a saved filament feeds (spec US5): cost, roll weight, default waste. */
 export function filamentToCalcFields(
