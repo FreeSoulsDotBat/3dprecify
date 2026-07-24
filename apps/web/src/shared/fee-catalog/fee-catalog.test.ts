@@ -80,6 +80,22 @@ describe("fee-catalog schema rejects fabricated / malformed entries", () => {
   it("rejects a commission >= 100", () => {
     expect(() => feeEntrySchema.parse({ ...base, commissionPct: 100 })).toThrow();
   });
+
+  // F3 (confirmation audit): a null commissionPct is only valid WITH price bands (Shopee's shape) —
+  // otherwise it prefills 0% under a "referência" seal. Guards the future 014 ML/Amazon curation.
+  it("rejects a null commissionPct entry that has NO price bands (the 0%-under-reference trap)", () => {
+    expect(() => feeEntrySchema.parse({ ...base, commissionPct: null })).toThrow();
+  });
+
+  it("accepts a null commissionPct entry when the commission lives in price bands", () => {
+    const banded = {
+      ...base,
+      commissionPct: null,
+      fixedFee: null,
+      priceBands: [{ minPrice: 0, maxPrice: null, commissionPct: 14, fixedFee: 4 }],
+    };
+    expect(() => feeEntrySchema.parse(banded)).not.toThrow();
+  });
 });
 
 describe("resolveEntry — keyed by determinants (A6)", () => {

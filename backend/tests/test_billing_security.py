@@ -31,6 +31,7 @@ nothing.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import hmac
 import time
@@ -190,6 +191,32 @@ def test_SEC102_absent_signature_rejected_401(webhook_client: TestClient, migrat
     assert resp.status_code == 401, resp.text
 
 
+def test_E6_02_data_id_read_from_query_param_not_only_body(
+    webhook_client: TestClient, migrated_db: str
+) -> None:
+    """E6-02 (confirmation audit): MP puts ``data.id`` in the notification QUERY PARAM and signs the
+    manifest over it. This posts the id ONLY in the query (body carries no ``data.id``); the webhook
+    must read the query, verify, and process — proving it no longer depends on the body. Before the
+    fix, a body-only read yielded ``data_id=None`` ⇒ signature verification failed ⇒ a real MP
+    webhook would 401 even with a perfectly valid signature (an availability defect)."""
+    engine = sa.create_engine(migrated_db)
+    _mk_subscription(engine, owner_uid="u-e602", mp_preapproval_id="pre-e602")
+    data_id = "8080802"
+    headers = _sign(data_id)  # signed over the id that lives in the QUERY, not the body
+    body_without_data_id = {
+        "type": "subscription_authorized_payment",
+        "action": "created",
+        "live_mode": False,
+    }
+    resp = webhook_client.post(
+        f"{WEBHOOK_PATH}?data.id={data_id}", json=body_without_data_id, headers=headers
+    )
+    # Signature verified via the query id (not 401) and the event processed to a grant — the same
+    # happy path SEC-201 proves, but with the id sourced from the query.
+    assert resp.status_code == 200, resp.text
+    assert _grant_counts(migrated_db, "u-e602") == (1, 1)
+
+
 def test_SEC102_absent_request_id_rejected_401(
     webhook_client: TestClient, migrated_db: str
 ) -> None:
@@ -243,6 +270,93 @@ def test_SEC107_signature_compare_is_constant_time() -> None:
     assert billing_dir.exists(), "app/billing does not exist yet (lands with T009/T010)"
     sources = "\n".join(p.read_text(encoding="utf-8") for p in billing_dir.rglob("*.py"))
     assert "compare_digest" in sources, "signature verify must use hmac.compare_digest (SEC-107)"
+
+
+# --- E6-01 (confirmation audit): the manifest-belief hardening ------------------------------------
+# The circularity the audit named: `_sign` above, the stub, and prod's `canonical_manifest` each
+# re-encode the SAME belief about MP's manifest, and every fixture id here is NUMERIC — so the
+# `.lower()` quirk is never actually exercised and a wrong shared belief cannot be caught. These two
+# tests narrow that gap: one PINS the canonicalization format + lowercasing as an explicit literal
+# (a format regression now fails, independent of round-tripping our own signer), and the other is
+# the tracked cutover gate for a captured real-MP vector (the only test binding belief to reality).
+
+
+def test_E6_01_canonical_manifest_pins_format_and_lowercases_id() -> None:
+    """The manifest is asserted as an EXACT literal, not round-tripped through our own signer — so a
+    change to the format string OR the removal of the `.lower()` quirk is caught here even though
+    the rest of the suite uses numeric ids where `.lower()` is a no-op. This is the alphanumeric
+    branch the audit found untested (`PreApp-XYZ` → lowercased)."""
+    from app.billing.signature import canonical_manifest
+
+    assert canonical_manifest("PreApp-XYZ", request_id="req-9", ts="1700000000") == (
+        "id:preapp-xyz;request-id:req-9;ts:1700000000;"
+    )
+    # And an uppercase id verifies iff the verifier lowercases consistently with the signer.
+    from app.billing.signature import verify_signature
+
+    ts = int(time.time())
+    manifest = canonical_manifest("PreApp-XYZ", request_id="req-9", ts=str(ts))
+    v1 = hmac.new(WEBHOOK_SECRET.encode(), manifest.encode(), hashlib.sha256).hexdigest()
+    assert verify_signature(
+        x_signature=f"ts={ts},v1={v1}",
+        x_request_id="req-9",
+        data_id="PreApp-XYZ",  # uppercase in → lowercased inside → must still verify
+        secret=WEBHOOK_SECRET,
+    )
+
+
+@pytest.mark.skip(
+    reason="E6-01 CUTOVER GATE: replace with a golden x-signature/body captured from the MP "
+    "sandbox before MP-live. It is the ONLY test that binds our manifest belief to MP's real "
+    "format; until then the signature path is internally consistent but unproven against reality."
+)
+def test_E6_01_golden_mp_sandbox_vector_verifies() -> None:  # pragma: no cover - cutover gate
+    """Paste a REAL captured (x-signature, x-request-id, body, secret) from the MP sandbox and
+    assert `verify_signature(...) is True`. If it fails, our `canonical_manifest` diverges from MP
+    and every live webhook would 401 — the finding E6-01 exists to prevent."""
+    raise AssertionError("capture a real MP sandbox vector before cutover")
+
+
+def test_L2_N1_payment_with_null_period_end_grants_nothing(migrated_db: str) -> None:
+    """L2-N1 (confirmation audit): a payment event whose `period_end` is None must NOT grant. A null
+    expiry would write `expires_at=None` = premium forever, no revocation path (refund is PR-B).
+    So the writer denies-by-default (matched, not granted) and leaves zero EntitlementGrant rows —
+    reconciliation retries rather than the seller getting free lifetime premium."""
+    from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+
+    from app.billing.events import VerifiedEvent
+    from app.billing.grant_writer import process_verified_event
+
+    engine = sa.create_engine(migrated_db)
+    _mk_subscription(engine, owner_uid="u-n1", mp_preapproval_id="pre-n1")
+    event = VerifiedEvent(
+        subscription_ref="pre-n1",
+        # A test event id (MP resource id used as the idempotency key), NOT a secret — gitleaks'
+        # generic-api-key rule false-positives on the `*_key="…"` shape; allowlist THIS line only.
+        event_key="evt-n1-null-period",  # gitleaks:allow
+        kind="payment",
+        period_end=None,  # the exact input that used to mint a perpetual grant
+        mp_status="approved",
+        raw={"id": "pay-n1"},
+    )
+
+    async def go() -> bool:
+        aengine = create_async_engine(migrated_db)
+        try:
+            async with async_sessionmaker(aengine)() as session:
+                result = await process_verified_event(session, event)
+                return result.granted
+        finally:
+            await aengine.dispose()
+
+    granted = asyncio.run(go())
+    assert granted is False, "a null-period_end payment must not grant"
+    # And nothing was written: zero grants for this account (contrast the SEC-201 happy path).
+    with engine.begin() as conn:
+        n = conn.execute(
+            text("SELECT count(*) FROM entitlement_grants WHERE account_uid = 'u-n1'")
+        ).scalar_one()
+    assert n == 0, f"expected zero grants, found {n}"
 
 
 def test_SEC403_missing_webhook_secret_rejects_all(

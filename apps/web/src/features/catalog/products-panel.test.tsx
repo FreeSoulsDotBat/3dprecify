@@ -11,12 +11,14 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 // the reference names ("filamento · impressora") — NEVER a stored price (FR-310: a row price
 // would imply a snapshot; prices recompute on open).
 
-const { navigateMock, useProductsMock, useFilamentsMock, usePrintersMock } = vi.hoisted(() => ({
-  navigateMock: vi.fn(),
-  useProductsMock: vi.fn(),
-  useFilamentsMock: vi.fn(),
-  usePrintersMock: vi.fn(),
-}));
+const { navigateMock, useProductsMock, useFilamentsMock, usePrintersMock, entitlementStatus } =
+  vi.hoisted(() => ({
+    navigateMock: vi.fn(),
+    useProductsMock: vi.fn(),
+    useFilamentsMock: vi.fn(),
+    usePrintersMock: vi.fn(),
+    entitlementStatus: { current: "active" as "active" | "lapsed" | "none" },
+  }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
   return { ...actual, useNavigate: () => navigateMock };
@@ -31,6 +33,10 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useDeleteProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
+// F-lapsed: the panel now reads its own lapsed state (mutable so a test can flip it).
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: entitlementStatus.current }, isLoading: false }),
+}));
 
 import { ProductsPanel } from "./products-panel";
 
@@ -78,6 +84,7 @@ beforeEach(() => {
     listState([{ id: "f-1", name: "PLA Azul", costPerRoll: "110.00", rollWeightKg: "1.000" }]),
   );
   usePrintersMock.mockReturnValue(listState([{ id: "p-1", name: "Ender 3" }]));
+  entitlementStatus.current = "active";
 });
 
 afterEach(() => {
@@ -149,5 +156,28 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
       to: "/catalogo",
       search: { produto: "prod-1" },
     });
+  });
+
+  // F-lapsed (confirmation audit) — the Produtos tab must honor the lapsed state like its siblings.
+  it("active: shows the products (no lapsed banner)", () => {
+    useProductsMock.mockReturnValue(listState([product]));
+    render(<ProductsPanel />);
+    expect(screen.getByText("Vaso G")).toBeInTheDocument();
+    expect(screen.queryByText(catalogo.lapsedTitle)).not.toBeInTheDocument();
+  });
+
+  it("lapsed: shows the 'Premium pausado' banner and tapping delete opens the reactivation intercept, NOT a working confirm", () => {
+    entitlementStatus.current = "lapsed";
+    useProductsMock.mockReturnValue(listState([product]));
+    render(<ProductsPanel />);
+
+    // Reads survive: the product is still listed with the calm banner (FR-409 + ux-catalog §3).
+    expect(screen.getByText("Vaso G")).toBeInTheDocument();
+    expect(screen.getByText(catalogo.lapsedTitle)).toBeInTheDocument();
+
+    // Tapping delete must reach the honest reactivation surface — for products (navigation mode)
+    // the row/delete affordance leads to the read-only page, NEVER the working destructive confirm.
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} Vaso G` }));
+    expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
   });
 });

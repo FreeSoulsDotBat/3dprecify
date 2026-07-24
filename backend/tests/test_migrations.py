@@ -35,8 +35,9 @@ from tests.conftest import requires_db
 
 pytestmark = requires_db
 
-# Every table owned by the 4 migrations on THIS branch (0001-0004). Follow-up above: add
-# "subscriptions" + "billing_events" once 0005_e6_billing merges from feature/012-e6-billing.
+# Every table owned by the migrations on `develop` (0001-0005). The 0005 tables were added once
+# 0005_e6_billing merged from feature/012-e6-billing (the T051 follow-up, fulfilled by the
+# confirmation audit L6-01) — so the downgrade round-trip now asserts they drop cleanly too.
 _OWNED_TABLES = [
     "accounts",
     "entitlement_grants",
@@ -47,6 +48,8 @@ _OWNED_TABLES = [
     "bom_lines",
     "snapshots",
     "scenarios",
+    "subscriptions",
+    "billing_events",
 ]
 
 

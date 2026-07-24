@@ -6,6 +6,7 @@ import {
   usePrinters,
   useProducts,
 } from "@/entities/catalog/use-catalog";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -27,6 +28,12 @@ export function ProductsPanel() {
   const { items: printers, isLoading: printersLoading } = usePrinters();
   const remove = useDeleteProduct();
   const navigate = useNavigate();
+  // 013/FB-02 (confirmation audit F-lapsed): the panel reads its own lapsed state, same as the
+  // filaments/printers siblings. Without this, a lapsed account's Produtos tab showed no "Premium
+  // pausado" banner AND its delete opened a working destructive confirm that only 403'd on submit —
+  // the exact "delete working then fail" ux-catalog §3 forbids (the T034 fix in catalog-panel was
+  // never reached because this flag was never passed). Presentation only; the server stays the gate.
+  const entitlement = useEntitlement();
 
   const nameOf = (id: string | null, kind: "filament" | "printer") => {
     if (!id) return undefined;
@@ -63,6 +70,7 @@ export function ProductsPanel() {
       onEditNavigate={(p) => void navigate({ to: "/catalogo", search: { produto: p.id } })}
       remove={(id) => remove.mutateAsync(id)}
       deleting={remove.isPending}
+      lapsed={entitlement.data?.status === "lapsed"}
     />
   );
 }

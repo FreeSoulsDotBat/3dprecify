@@ -164,11 +164,20 @@ interface SlotProcessing {
  * label belongs to the entry's subsidy, so it is dropped the moment the seller types their own
  * freight.
  *
- * KNOWN CONSEQUENCE, measured, not hidden: `pricing-core/channels.ts` (`ChannelFees` doc + the band
- * fixed-point) states that price bands, WHEN PRESENT, override commission/fixedFee. So on a
- * band-based entry (Shopee) a typed commission is neutralized by the preserved bands. That trade —
- * voucher truthfully deducted vs. typed-commission effective — is pinned by a test in
- * `calculator-model.test.ts` and flagged for the owner gate; flipping it is a one-line change here.
+ * OVERRIDE RULE (owner decision 2026-07-23, corrected by the confirmation audit F1): a typed
+ * `commissionPct` means "my commission is X, not the catalog's" → the price-band schedule DROPS and
+ * the typed commission governs. Everything else — freight, minPerItem, AND a typed `fixedFee` — does
+ * NOT drop the schedule: on a band entry `pricing-core/channels.ts` takes commissionPct+fixedFee from
+ * the band containing the announce, so a typed fixedFee is simply inert there (the price stays
+ * correct), and on a non-band entry (no schedule to drop) it overrides the scalar as expected.
+ * `freightVoucherBands` (a freight dimension, orthogonal to commission) is preserved unconditionally
+ * — it is the co-financed amount the original audit found being silently dropped.
+ *
+ * WHY fixedFee must NOT trigger the drop (the F1 bug): Shopee's entry has NO top-level commissionPct
+ * (`seed.ts` — it lives in the bands), so `entryToChannelFees` reads `null ?? 0`. Dropping the bands
+ * on a fixedFee-only edit therefore fell back to commissionPct 0 → the gross-up charged 0% instead of
+ * 14–20%, overstating the seller's net by the full commission. A silent-money defect: the exact class
+ * E1-02 exists to kill. So only `commissionPct` drops the schedule.
  */
 function resolveSlotFees(
   entry: FeeEntry | null,
@@ -185,14 +194,10 @@ function resolveSlotFees(
   const base = entryToChannelFees(entry);
   if (!manual.hasManualInput) return base; // blank slot → the pre-fill, untouched
   const edited = manual.editedFields;
-  // `priceBands` IS the commission schedule — `pricing-core/channels.ts:101-102` overwrites
-  // commissionPct/fixedFee from the band containing the announce. So keeping the bands while the user
-  // typed a commission would make that input silently inert (E1-02 would trade one silent wrong for
-  // another). Owner decision 2026-07-23: typing a commission/fixed fee means "my commission is X, not
-  // the catalog's" → the schedule drops. Typing only freight/minPerItem leaves the schedule intact.
-  // `freightVoucherBands` is a FREIGHT dimension, orthogonal to commission, and is the co-financed
-  // amount the audit found being silently dropped — it is preserved unconditionally.
-  const commissionOverridden = edited.commissionPct !== undefined || edited.fixedFee !== undefined;
+  // Only a typed commission drops the schedule (see the docstring's F1 note). A typed fixedFee must
+  // NOT — on a band entry the band still governs fixedFee (typed value inert, price correct); on a
+  // non-band entry there is no schedule, so the scalar override below applies normally.
+  const commissionOverridden = edited.commissionPct !== undefined;
   return {
     ...base,
     priceBands: commissionOverridden ? undefined : base.priceBands,

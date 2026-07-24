@@ -29,6 +29,22 @@ describe("parseDecimal — the accepted pt-BR grammar (013 §1)", () => {
     expect(parseDecimal("1.500")).toBe(1500);
   });
 
+  // F2 (confirmation audit): a leading-zero group is NEVER pt-BR thousands, and "0.xxx" is an
+  // unambiguous fraction < 1. "0.125" used to become 125 (the thousands regex swallowed it).
+  it.each([
+    ["0.125", 0.125],
+    ["0.5", 0.5],
+    ["0.999", 0.999],
+    ["0.0001", 0.0001],
+  ])("F2: a zero-leading dot form %s is the fraction %s, never thousands", (raw, expected) => {
+    expect(parseDecimal(raw)).toBeCloseTo(expected as number, 6);
+  });
+
+  it("F2: the genuinely ambiguous NON-zero case 1.125 stays pt-BR thousands (= 1125)", () => {
+    // Only the leading-ZERO ambiguity is resolved; the documented "1.500"≡1500 rule is untouched.
+    expect(parseDecimal("1.125")).toBe(1125);
+  });
+
   it("passes a number through unchanged", () => {
     expect(parseDecimal(5)).toBe(5);
   });
