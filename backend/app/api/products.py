@@ -35,42 +35,34 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Filament, Printer, Product
+from app.validation import (
+    CEIL_GRAMS,
+    CEIL_HOURS,
+    CEIL_KG,
+    CEIL_KW,
+    CEIL_MONEY,
+    CEIL_PERCENT,
+    CEIL_RATE,
+    finite_non_negative,
+)
 
 router = APIRouter(tags=["products"])
 
 
-# Integer-digit budget per NUMERIC domain (precision minus scale, in lockstep with the type domains
-# in models.py). A value AT/ABOVE the ceiling overflows its column at write time — Postgres raises
-# `numeric field overflow` and FastAPI surfaces an opaque 500. We reject it here as a clean 422.
-_CEIL_MONEY = Decimal(10) ** 10  # MONEY_SETTLED Numeric(12,2)
-_CEIL_RATE = Decimal(10) ** 12  # MONEY_RATE   Numeric(18,6)
-_CEIL_GRAMS = Decimal(10) ** 9  # QTY_G        Numeric(12,3)
-_CEIL_HOURS = Decimal(10) ** 6  # QTY_H        Numeric(9,3)
-_CEIL_KG = Decimal(10) ** 6  # QTY_KG       Numeric(9,3)
-_CEIL_KW = Decimal(10) ** 5  # QTY_KW       Numeric(9,4)
-_CEIL_PERCENT = Decimal(10) ** 3  # PERCENT      Numeric(6,3)
-
 # Piece-input fields fan out to different NUMERIC domains, so the "*" validator picks per field.
+# The ceilings themselves live in `app.validation` (the shared financial leaf, audit Q-03).
 _PIECE_CEILINGS: dict[str, Decimal] = {
-    "print_grams": _CEIL_GRAMS,
-    "waste_grams": _CEIL_GRAMS,
-    "print_time_hours": _CEIL_HOURS,
-    "failure_pct": _CEIL_PERCENT,
-    "finish_time_hours": _CEIL_HOURS,
-    "finish_rate_per_hour": _CEIL_RATE,
-    "labor_hours": _CEIL_HOURS,
-    "labor_rate_per_hour": _CEIL_RATE,
-    "markup_varejo_pct": _CEIL_PERCENT,
-    "markup_atacado_pct": _CEIL_PERCENT,
+    "print_grams": CEIL_GRAMS,
+    "waste_grams": CEIL_GRAMS,
+    "print_time_hours": CEIL_HOURS,
+    "failure_pct": CEIL_PERCENT,
+    "finish_time_hours": CEIL_HOURS,
+    "finish_rate_per_hour": CEIL_RATE,
+    "labor_hours": CEIL_HOURS,
+    "labor_rate_per_hour": CEIL_RATE,
+    "markup_varejo_pct": CEIL_PERCENT,
+    "markup_atacado_pct": CEIL_PERCENT,
 }
-
-
-def _finite_non_negative(value: Decimal, field: str, ceiling: Decimal = _CEIL_RATE) -> Decimal:
-    if not value.is_finite() or value < 0:
-        raise ValueError(f"{field} must be a finite number >= 0")
-    if value >= ceiling:
-        raise ValueError(f"{field} exceeds the maximum storable magnitude")
-    return value
 
 
 class ChannelSlot(CamelModel):
@@ -102,7 +94,7 @@ class ChannelSlot(CamelModel):
     def _money(cls, v: Decimal | None) -> Decimal | None:
         if v is None:
             return v
-        return _finite_non_negative(v, "channel money field", _CEIL_MONEY)
+        return finite_non_negative(v, "channel money field", CEIL_MONEY)
 
 
 class OtherCost(CamelModel):
@@ -114,7 +106,7 @@ class OtherCost(CamelModel):
     @field_validator("value")
     @classmethod
     def _value(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "value", _CEIL_MONEY)
+        return finite_non_negative(v, "value", CEIL_MONEY)
 
 
 class PieceInputs(CamelModel):
@@ -135,7 +127,7 @@ class PieceInputs(CamelModel):
     @classmethod
     def _all_finite_non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
         field = info.field_name or "piece input"
-        return _finite_non_negative(v, field, _PIECE_CEILINGS.get(field, _CEIL_RATE))
+        return finite_non_negative(v, field, _PIECE_CEILINGS.get(field, CEIL_RATE))
 
 
 class FilamentValues(CamelModel):
@@ -148,12 +140,12 @@ class FilamentValues(CamelModel):
     @field_validator("cost_per_roll")
     @classmethod
     def _cost(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "costPerRoll", _CEIL_MONEY)
+        return finite_non_negative(v, "costPerRoll", CEIL_MONEY)
 
     @field_validator("roll_weight_kg")
     @classmethod
     def _roll(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0 or v >= _CEIL_KG:
+        if not v.is_finite() or v <= 0 or v >= CEIL_KG:
             raise ValueError("rollWeightKg must be a finite number > 0 within the storable range")
         return v
 
@@ -170,17 +162,17 @@ class PrinterValues(CamelModel):
     @classmethod
     def _non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
         ceilings = {
-            "machine_value": _CEIL_MONEY,
-            "avg_power_kw": _CEIL_KW,
-            "maintenance_reserve_per_hour": _CEIL_RATE,
+            "machine_value": CEIL_MONEY,
+            "avg_power_kw": CEIL_KW,
+            "maintenance_reserve_per_hour": CEIL_RATE,
         }
         field = info.field_name or "printer value"
-        return _finite_non_negative(v, field, ceilings.get(field, _CEIL_RATE))
+        return finite_non_negative(v, field, ceilings.get(field, CEIL_RATE))
 
     @field_validator("machine_lifetime_hours")
     @classmethod
     def _lifetime(cls, v: Decimal) -> Decimal:
-        if not v.is_finite() or v <= 0 or v >= _CEIL_HOURS:
+        if not v.is_finite() or v <= 0 or v >= CEIL_HOURS:
             raise ValueError(
                 "machineLifetimeHours must be a finite number > 0 within the storable range"
             )
@@ -209,7 +201,7 @@ class ProductIn(CamelModel):
     @field_validator("tariff_per_kwh")
     @classmethod
     def _tariff(cls, v: Decimal) -> Decimal:
-        return _finite_non_negative(v, "tariffPerKwh", _CEIL_RATE)
+        return finite_non_negative(v, "tariffPerKwh", CEIL_RATE)
 
     @model_validator(mode="after")
     def _link_or_snapshot(self) -> ProductIn:
@@ -419,21 +411,34 @@ async def _resolve_links(
 
 
 async def _live_links(
-    session: AsyncSession, rows: list[Product]
+    session: AsyncSession, uid: str, rows: list[Product]
 ) -> tuple[dict[uuid.UUID, Filament], dict[uuid.UUID, Printer]]:
     """Load the live rows the products link to (deleted links degrade in the delete txn, so a
-    present link points at a live row; missing rows simply fall back to the columns)."""
+    present link points at a live row; missing rows simply fall back to the columns).
+
+    ``uid`` is REQUIRED (audit finding E2-03, 2026-07-23): this used to select by ID alone, the one
+    query in the read path without an ``owner_uid`` predicate. The write path never lets a product
+    point at another account's reference, so the hole was latent — but "unreachable by today's
+    writers" is not tenant isolation, and this is the function that decides which values a product
+    RENDERS. Scoped, an out-of-tenant link simply does not resolve and the product falls back to its
+    own snapshot columns, which is the same honest degradation a deleted link already gets."""
     fil_ids = {r.filament_id for r in rows if r.filament_id is not None}
     prn_ids = {r.printer_id for r in rows if r.printer_id is not None}
     filaments: dict[uuid.UUID, Filament] = {}
     printers: dict[uuid.UUID, Printer] = {}
     if fil_ids:
         for f in (
-            await session.execute(select(Filament).where(Filament.id.in_(fil_ids)))
+            await session.execute(
+                select(Filament).where(Filament.id.in_(fil_ids), Filament.owner_uid == uid)
+            )
         ).scalars():
             filaments[f.id] = f
     if prn_ids:
-        for p in (await session.execute(select(Printer).where(Printer.id.in_(prn_ids)))).scalars():
+        for p in (
+            await session.execute(
+                select(Printer).where(Printer.id.in_(prn_ids), Printer.owner_uid == uid)
+            )
+        ).scalars():
             printers[p.id] = p
     return filaments, printers
 
@@ -452,7 +457,7 @@ async def list_products(
             )
         ).scalars()
     )
-    filaments, printers = await _live_links(session, rows)
+    filaments, printers = await _live_links(session, claims["uid"], rows)
     return [
         _to_out(
             r,
@@ -495,7 +500,7 @@ async def get_product(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
     row = await _owned(session, claims["uid"], product_id)
-    filaments, printers = await _live_links(session, [row])
+    filaments, printers = await _live_links(session, claims["uid"], [row])
     return _to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,

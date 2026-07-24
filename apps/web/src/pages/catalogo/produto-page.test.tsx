@@ -126,11 +126,11 @@ function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
 }
 
-function renderPage(productId?: string) {
+function renderPage(productId?: string, readOnly?: boolean) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ProdutoPage productId={productId} />
+      <ProdutoPage productId={productId} readOnly={readOnly} />
     </QueryClientProvider>,
   );
 }
@@ -328,5 +328,29 @@ describe("ProdutoPage — save a scenario referencing THIS product (010/T021b)",
     entitlement.data = { status: "none" };
     renderPage("prod-1");
     expect(screen.queryByTestId("save-scenario-trigger")).not.toBeInTheDocument();
+  });
+});
+
+describe("ProdutoPage — lapsed premium, read-only up front (013/FB-02, ux-catalog §3)", () => {
+  it("disables the fields and swaps Salvar for the reactivation line — never a fail-at-save surprise", () => {
+    // `readOnly` comes from the PARENT (CatalogoPage) — the page's OWN entitlement mock stays
+    // "active" here, proving the fieldset freeze is driven by the prop, not a second gate.
+    renderPage("prod-1", true);
+
+    expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeDisabled();
+    expect(screen.getByText(messages.catalogo.reactivateTitle)).toBeInTheDocument();
+    expect(screen.getByText(messages.catalogo.reactivateBody)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: pf.saveProduct })).not.toBeInTheDocument();
+    // FR-409 — reads/recompute still work while lapsed.
+    expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
+  });
+
+  it("active keeps the product form fully editable — regression guard", () => {
+    renderPage("prod-1");
+    expect(screen.getByRole("textbox", { name: pf.nameLabel })).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: pf.saveProduct })).toBeInTheDocument();
+    expect(screen.queryByText(messages.catalogo.reactivateTitle)).not.toBeInTheDocument();
   });
 });

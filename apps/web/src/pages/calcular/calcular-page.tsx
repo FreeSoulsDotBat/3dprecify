@@ -136,9 +136,9 @@ export function CalcularPage() {
   ) => {
     const patch = applyScenarioConfig(config);
     for (const [field, value] of Object.entries(patch.scalars)) {
-      setValue(field as CalcFieldName, value);
+      setValue(field as CalcFieldName, value, { shouldValidate: true });
     }
-    setValue("includeMarketplace", patch.includeMarketplace);
+    setValue("includeMarketplace", patch.includeMarketplace, { shouldValidate: true });
     replaceChannels(patch.channels);
     replaceOtherCosts(patch.otherCosts);
     setLoadedScenario({ ...meta, costBasis: readResolvedCostBasis(config), config });
@@ -165,7 +165,9 @@ export function CalcularPage() {
     const picked = filaments.find((f) => f.id === id);
     if (!picked) return;
     for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
-      setValue(field as "costPerRoll" | "rollWeightKg" | "wasteGrams", value);
+      setValue(field as "costPerRoll" | "rollWeightKg" | "wasteGrams", value, {
+        shouldValidate: true,
+      });
     }
   };
   const applyPrinter = (id: string) => {
@@ -177,6 +179,7 @@ export function CalcularPage() {
         field as
           "machineValue" | "machineLifetimeHours" | "avgPowerKw" | "maintenanceReservePerHour",
         value,
+        { shouldValidate: true },
       );
     }
   };
@@ -232,7 +235,7 @@ export function CalcularPage() {
   // stale ML "Clássico" never lingers on a Shopee slot.
   const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
     const first = (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality;
-    setValue(`channels.${index}.modality`, first);
+    setValue(`channels.${index}.modality`, first, { shouldValidate: true });
   };
 
   return (

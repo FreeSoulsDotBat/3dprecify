@@ -14,6 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
+const catalogo = messages.catalogo;
 
 // Inputs are queried by their ACCESSIBLE NAME (getByRole), like the calculator tests — the required
 // "*" is aria-hidden so the name is the bare label, and the value inputs are role="textbox".
@@ -91,5 +92,27 @@ describe("FilamentForm — E1 validation reused verbatim + money-as-string wire"
     renderForm({ mode: "edit", defaultValues: filamentToForm(saved) });
     expect(field(cf.name)).toHaveValue("PETG Preto");
     expect(screen.getByRole("button", { name: cf.saveChanges })).toBeInTheDocument();
+  });
+});
+
+describe("FilamentForm — lapsed read-only (013/FB-02, ux-catalog §3)", () => {
+  it("readOnly disables every field up front and swaps Salvar for the reactivation line", () => {
+    renderForm({ readOnly: true });
+    expect(field(cf.name)).toBeDisabled();
+    expect(field(cf.material)).toBeDisabled();
+    expect(field(fields.costPerRoll)).toBeDisabled();
+    expect(field(fields.rollWeight)).toBeDisabled();
+    expect(screen.getByText(catalogo.reactivateTitle)).toBeInTheDocument();
+    expect(screen.getByText(catalogo.reactivateBody)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: cf.save })).not.toBeInTheDocument();
+    // Reading/exiting still works — never a dead end.
+    expect(screen.getByRole("button", { name: cf.cancel })).toBeInTheDocument();
+  });
+
+  it("active (readOnly=false, the default) stays fully editable — regression guard", () => {
+    renderForm();
+    expect(field(cf.name)).not.toBeDisabled();
+    expect(screen.getByRole("button", { name: cf.save })).toBeInTheDocument();
+    expect(screen.queryByText(catalogo.reactivateTitle)).not.toBeInTheDocument();
   });
 });

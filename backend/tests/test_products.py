@@ -419,3 +419,49 @@ def test_lapsed_reads_but_cannot_write(
     ):
         assert resp.status_code == 403
         assert resp.json()["error"]["code"] == "ENTITLEMENT_REQUIRED"
+
+
+# ══ 013 US6 / T074 — audit finding E2-03: `_live_links` was not owner-scoped ═════════════════════
+
+
+def test_E2_03_live_links_never_resolves_another_accounts_filament_or_printer(
+    db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Audit finding E2-03. `_live_links` loaded the linked filament/printer rows by ID ALONE — no
+    `owner_uid` predicate — while every sibling query in this module is owner-scoped. The write
+    path made a cross-tenant link unreachable, so the leak was latent; but "unreachable today" is
+    not an isolation guarantee, and this is the read path that renders a product's live values. A
+    row repointed at another account's reference (simulated here at the DB level, the only way to
+    reach the state) must fall back to the product's OWN snapshot columns, never render B's data.
+    """
+    import sqlalchemy as sa
+
+    h_b = _premium(monkeypatch, migrated_db, "prod-links-b")
+    fid_b = db_client.post(
+        "/api/v1/filaments", headers=h_b, json={**FILAMENT, "costPerRoll": "999.00"}
+    ).json()["id"]
+    pid_b = db_client.post(
+        "/api/v1/printers", headers=h_b, json={**PRINTER, "machineValue": "9999.00"}
+    ).json()["id"]
+
+    h_a = _premium(monkeypatch, migrated_db, "prod-links-a")
+    fid_a, pid_a = _mk_refs(db_client, h_a)
+    prod_id = _post(db_client, h_a, _product_body(fid_a, pid_a)).json()["id"]
+
+    engine = sa.create_engine(migrated_db)
+    with engine.begin() as conn:
+        conn.execute(
+            sa.text("UPDATE products SET filament_id = :f, printer_id = :p WHERE id = :i"),
+            {"f": fid_b, "p": pid_b, "i": prod_id},
+        )
+    engine.dispose()
+
+    detail = db_client.get(f"/api/v1/products/{prod_id}", headers=h_a)
+    assert detail.status_code == 200, detail.text
+    body = detail.json()
+    assert body["filamentValues"]["costPerRoll"] == "110.00", body["filamentValues"]
+    assert body["printerValues"]["machineValue"] == "1200.00", body["printerValues"]
+
+    listed = next(p for p in db_client.get("/api/v1/products", headers=h_a).json())
+    assert listed["filamentValues"]["costPerRoll"] == "110.00", listed["filamentValues"]
+    assert listed["printerValues"]["machineValue"] == "1200.00", listed["printerValues"]

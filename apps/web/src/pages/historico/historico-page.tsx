@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 
 import type { HistoryItem } from "@/entities/history/outbox";
@@ -6,6 +6,7 @@ import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/histo
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
 import { HistoryTeaserPanel } from "@/features/history/history-teaser";
+import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
@@ -56,6 +57,10 @@ const t = messages.historico;
 export function HistoricoPage() {
   const sessionStatus = useSessionStore((s) => s.status);
   const entitlement = useEntitlement();
+  // 013/F-02 (D1=A): `?snapshot=<clientSnapshotId>` — formerly its own 2-segment route
+  // (`/historico/$snapshotId`), now a search param on THIS route (route's `beforeLoad` already
+  // required auth for this param, mirroring the old route's own guard).
+  const search = useSearch({ strict: false }) as { snapshot?: string };
 
   // Session bootstrap is NOT "signed out" — a premium seller must never flash the teaser (the E3
   // lesson). Nor is "we have not heard from the server yet" the same as "free".
@@ -71,6 +76,7 @@ export function HistoricoPage() {
   // whose plan simply could not be checked. A calm "could not verify your plan" + retry, mirroring
   // the shipped E2/E3 gate (review PR-A, C5).
   if (!entitlement.data) return <GateError onRetry={entitlement.refetch} />;
+  if (search.snapshot) return <SnapshotDetailPage snapshotId={search.snapshot} />;
   return <HistoryLedger />;
 }
 
@@ -524,8 +530,8 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
 
   return (
     <Link
-      to="/historico/$snapshotId"
-      params={{ snapshotId: item.clientSnapshotId }}
+      to="/historico"
+      search={{ snapshot: item.clientSnapshotId }}
       className="tf-historico__link"
       id={`snap-${item.clientSnapshotId}`}
     >

@@ -217,7 +217,7 @@ soft-deletable by its owner. **No FK to any catalog table.**
 | `payload_schema_version` | `smallint` | `NOT NULL`, `server_default '1'`, `CHECK (>= 1)` | **our envelope** version — distinct from `model_version` |
 | `payload` | `jsonb` | `NOT NULL`, `CHECK (jsonb_typeof(payload) = 'object')` | the frozen document (§3) |
 | `headline_total` | `MONEY_SETTLED` `Numeric(12,2)` | `NOT NULL`, `CHECK (>= 0 AND <> 'NaN'::numeric)` | the number on the list card + the quote (FR-523/512) |
-| `headline_basis` | `text` | `NOT NULL`, `server_default 'PRECO_VAREJO'`, `CHECK (headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO'))` | **which** price that number is — an unlabelled total is an ambiguous claim. ⚠ owner (§7) |
+| `headline_basis` | `text` | `NOT NULL`, `CHECK (headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO'))` | **which** price that number is — an unlabelled total is an ambiguous claim. ⚠ owner (§7). *(Corrected 013 audit remediation, E4-03: no `server_default` was ever implemented — `app/models/__init__.py` and migration `0003` both declare it `NOT NULL` with no default; the app must always supply a value.)* |
 | `created_at` | `timestamptz` | `NOT NULL`, `server_default now()` | **row insert = sync landing.** NEVER on the wire, NEVER an order/filter key (D5) |
 | `updated_at` | `timestamptz` | `NOT NULL`, `server_default now()`, `onupdate now()` | moves **only** on a label edit or a soft-delete |
 | `deleted_at` | `timestamptz` | nullable | voluntary soft-delete by the owner; the **idempotency tombstone** (D2). A lapse never deletes (FR-517) |
@@ -370,7 +370,7 @@ line: per FR-504 *"only its label is editable"*, the validity period is **frozen
 |---|---|---|
 | `ix_snapshots_owner_uid` | `(owner_uid)` | the FK / tenant key (house symmetry with `boms`) |
 | `ix_snapshots_owner_active` | `(owner_uid, device_quoted_at, id) WHERE deleted_at IS NULL` | FR-511 isolation + FR-523 newest-first (backward scan) + FR-520 date range + the keyset cursor |
-| `uq_snapshots_owner_client_snapshot` | **UNIQUE** `(owner_uid, client_snapshot_id)` — **unconditional** (includes tombstones) | SC-513 exactly-once; delete-then-retry cannot resurrect (D2/D6) |
+| `uq_snapshots_client_snapshot_id` | **UNIQUE** `(owner_uid, client_snapshot_id)` — **unconditional** (includes tombstones) | SC-513 exactly-once; delete-then-retry cannot resurrect (D2/D6) |
 | *(none on `payload`)* | — | deliberate: the document is never queried (§3.3) |
 | *(future, additive)* | GIN `pg_trgm` on `lower(label)` | only if label search ever proves slow (D4) — needs the `pg_trgm` extension ⇒ owner call **then**, not now |
 
@@ -387,8 +387,10 @@ not alter the existing ones** (FR-526).
 1. `op.create_table("snapshots", …)` — the columns of §2, the `CHECK`s of §4, `ForeignKeyConstraint(["owner_uid"],
    ["accounts.account_uid"], name=op.f("fk_snapshots_owner_uid_accounts"))` (**the only FK**),
    `PrimaryKeyConstraint("id", name=op.f("pk_snapshots"))`, and
-   `UniqueConstraint("owner_uid", "client_snapshot_id", name="uq_snapshots_owner_client_snapshot")` (explicitly
-   named — the `uq_%(table_name)s_%(column_0_name)s` convention would yield the ambiguous `uq_snapshots_owner_uid`).
+   `UniqueConstraint("owner_uid", "client_snapshot_id", name="uq_snapshots_client_snapshot_id")` (explicitly
+   named — the `uq_%(table_name)s_%(column_0_name)s` convention would yield the ambiguous `uq_snapshots_owner_uid`;
+   this is the name as ACTUALLY shipped in migration `0003` and `app/models/__init__.py` — corrected 013 audit
+   remediation, E4-04, which had drifted to `uq_snapshots_owner_client_snapshot` in §5/§6 here).
 2. `op.create_index(op.f("ix_snapshots_owner_uid"), …)`.
 3. `op.create_index("ix_snapshots_owner_active", "snapshots", ["owner_uid", "device_quoted_at", "id"],
    postgresql_where=sa.text("deleted_at IS NULL"))`.

@@ -111,3 +111,14 @@ layers = [
     "app.services",
     "app.models",
 ]
+
+# 013 (audit Q-03/Q-04): the financial validators live in ONE place and are importable from every
+# router without creating a cycle — which is only true while `app.validation` depends on nothing in
+# `app.*`. Same shape as the settings contract above, for the same reason: a structural decision
+# that the gate can check beats one that only a comment asserts (the copies it replaced were
+# "consistent by luck", and E3-01 is where the luck ran out).
+[[tool.importlinter.contracts]]
+name = "Financial validators are a dependency-free leaf"
+type = "forbidden"
+source_modules = ["app.validation"]
+forbidden_modules = ["app.main", "app.auth", "app.errors", "app.observability", "app.db", "app.entitlement", "app.models", "app.api", "app.services", "app.settings", "app.billing"]

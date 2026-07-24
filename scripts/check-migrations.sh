@@ -34,3 +34,19 @@ if [ -n "$offenders" ]; then
   exit 1
 fi
 echo "[check-migrations] OK — no already-merged migration was amended."
+
+# --- Single-head guard (013 audit remediation, T052 — finding P-03) --------------------------
+# `alembic heads` is metadata-only (reads the versions/ directory's revision graph; no DB
+# connection — `Settings.database_url` has a default, so `get_settings()` never fails even with
+# no env configured). Two or more heads means a merge introduced a fork the app cannot resolve
+# (`alembic upgrade head` errors ambiguously) — an orphaned `down_revision` is the classic cause.
+# CI-only (this job's own step, per D4): backend/uv is not a frontend `gate:all` dependency, and
+# this script already only runs in the migration-guard CI job — never inside `gate:all` itself.
+head_count=$(cd backend && uv run alembic heads 2>/dev/null | grep -c .)
+if [ "$head_count" -ne 1 ]; then
+  echo "ERROR: expected exactly 1 alembic head, found $head_count."
+  echo "       A duplicated/orphaned down_revision forks the migration chain — fix before merging."
+  (cd backend && uv run alembic heads)
+  exit 1
+fi
+echo "[check-migrations] OK — exactly 1 alembic head."

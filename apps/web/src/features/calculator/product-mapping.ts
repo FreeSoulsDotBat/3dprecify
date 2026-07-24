@@ -6,6 +6,7 @@ import {
   type Modality,
 } from "@/features/calculator/calculator-schema";
 import type { ChannelSlot, OtherCost, ProductIn, ProductOut } from "@/shared/api/generated";
+import { ptBrToWireDecimal, wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 // US6/T030 — the wire⇄form mapping for products, same discipline as catalog-prefill (SC-305):
 // pure string separator swaps mirroring `parseDecimal`'s rules (dots = thousands, comma =
@@ -14,19 +15,10 @@ import type { ChannelSlot, OtherCost, ProductIn, ProductOut } from "@/shared/api
 // form "") — a blank fee means "resolve from the live fee catalog"; persisting a 0 would
 // dishonestly freeze today's fee (D4: channels[] = the same shapes the calculator form uses).
 
-/** en-US wire decimal string → pt-BR form string ("1200.00" → "1200,00"). Pure swap, no floats. */
-function wireToPtBr(value: string): string {
-  return value.replace(".", ",");
-}
-
-/** pt-BR form string → canonical wire decimal string, mirroring `parseDecimal` string-wise:
- *  strip visual affixes, drop thousands dots, swap the decimal comma ("1.234,56" → "1234.56"). */
-function ptBrToWire(value: string): string {
-  return value
-    .replace(/[^\d.,-]/g, "")
-    .replace(/\./g, "")
-    .replace(",", ".");
-}
+// 013/FA-05 + FA-01: both directions now live in `shared/lib/decimal-ptbr` — `wireToPtBr` was one of
+// three identical copies, and the local `ptBrToWire` implemented the OLD lenient rules (it dropped
+// EVERY dot), so after the grammar fix a typed "1500.00" would have been READ as 1500 and SAVED as
+// "150000". `ptBrToWireDecimal` is the string mirror of `parseDecimal`: same grammar, precision kept.
 
 /** Everything the product page edits: the calculator form values + the product identity bits. */
 export interface ProductFormBundle {
@@ -69,7 +61,7 @@ function feeToForm(fee: unknown): string {
 
 /** null when blank — the wire never carries a fabricated 0 for an unset fee. */
 function feeToWire(fee: string): string | null {
-  return fee.trim() === "" ? null : ptBrToWire(fee);
+  return fee.trim() === "" ? null : ptBrToWireDecimal(fee);
 }
 
 /** Reopen: wire → the pt-BR form bundle. Resolved values (live while linked, last-known when
@@ -122,7 +114,7 @@ export function productToForm(product: ProductOut): ProductFormBundle {
 export function formToProductIn(bundle: ProductFormBundle): ProductIn {
   const { values } = bundle;
   const pieceInputs = Object.fromEntries(
-    PIECE_KEYS.map((key) => [key, ptBrToWire(values[key])]),
+    PIECE_KEYS.map((key) => [key, ptBrToWireDecimal(values[key])]),
   ) as Record<(typeof PIECE_KEYS)[number], string>;
 
   const body: ProductIn = {
@@ -130,7 +122,7 @@ export function formToProductIn(bundle: ProductFormBundle): ProductIn {
     filamentId: bundle.filamentId || null,
     printerId: bundle.printerId || null,
     pieceInputs,
-    tariffPerKwh: ptBrToWire(values.tariffPerKwh),
+    tariffPerKwh: ptBrToWireDecimal(values.tariffPerKwh),
     includeMarketplace: values.includeMarketplace,
     channels: values.channels.map((c): ChannelSlot => ({
       marketplace: c.marketplace,
@@ -144,21 +136,24 @@ export function formToProductIn(bundle: ProductFormBundle): ProductIn {
     // blank value persists the 0 the calculator computes for it (FR-116 semantics).
     otherCosts: values.otherCosts
       .filter((c) => c.name.trim() !== "" || c.value.trim() !== "")
-      .map((c): OtherCost => ({ name: c.name, value: c.value.trim() ? ptBrToWire(c.value) : "0" })),
+      .map((c): OtherCost => ({
+        name: c.name,
+        value: c.value.trim() ? ptBrToWireDecimal(c.value) : "0",
+      })),
   };
   if (!body.filamentId) {
     body.filamentValues = {
       material: bundle.filamentMaterial,
-      costPerRoll: ptBrToWire(values.costPerRoll),
-      rollWeightKg: ptBrToWire(values.rollWeightKg),
+      costPerRoll: ptBrToWireDecimal(values.costPerRoll),
+      rollWeightKg: ptBrToWireDecimal(values.rollWeightKg),
     };
   }
   if (!body.printerId) {
     body.printerValues = {
-      machineValue: ptBrToWire(values.machineValue),
-      machineLifetimeHours: ptBrToWire(values.machineLifetimeHours),
-      avgPowerKw: ptBrToWire(values.avgPowerKw),
-      maintenanceReservePerHour: ptBrToWire(values.maintenanceReservePerHour),
+      machineValue: ptBrToWireDecimal(values.machineValue),
+      machineLifetimeHours: ptBrToWireDecimal(values.machineLifetimeHours),
+      avgPowerKw: ptBrToWireDecimal(values.avgPowerKw),
+      maintenanceReservePerHour: ptBrToWireDecimal(values.maintenanceReservePerHour),
     };
   }
   return body;

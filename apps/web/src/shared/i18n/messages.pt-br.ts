@@ -100,6 +100,7 @@ export const messages = {
       required: "Campo obrigatório.",
       machineLifetimePositive: "A vida útil deve ser maior que zero.",
       commissionMax: "A comissão deve ser menor que 100%.",
+      tooHigh: "Valor muito alto.",
     },
     results: {
       material: "Material",
@@ -289,6 +290,9 @@ export const messages = {
     needsAttention: "Vincule um filamento e uma impressora salvos",
     // Product row summary shows the reference names; a removed reference reads as manual (US6-4).
     manualRef: "manual",
+    // 013/FB-04 — neutral placeholder while filaments/printers are still loading: a loading
+    // reference must never render as "manual" (that's a claim about data provenance, not a spinner).
+    resolvingRef: "carregando…",
     edit: "Editar",
     remove: "Excluir",
     // Load / error (§1.4)
@@ -317,6 +321,10 @@ export const messages = {
     lapsedBody:
       "Seus itens continuam aqui e podem ser usados no cálculo. Para criar ou editar, reative o Premium.",
     readOnlyHint: "somente leitura",
+    // 013/FB-02 — the reactivation line a read-only form footer shows in place of Salvar
+    // (ux-catalog §3, owner-ratified copy). No price, no date — same honesty bar as the teaser.
+    reactivateTitle: "Reative o Premium",
+    reactivateBody: "Reative o Premium para voltar a criar e editar. Seus itens estão salvos.",
   },
   // Catálogo create/edit form (Sheet) + delete confirm (Dialog). Numeric field LABELS reuse
   // `calculator.fields.*`; per-field VALIDATION reuses `calculator.validation.*` verbatim (FR-306).
@@ -795,5 +803,12 @@ export const messages = {
     // E2 (ADR-0012): the server-side premium gate. Honest — no price, no date (FR-014/US7);
     // final wording owner-ratified with the US7 teaser copy.
     entitlementRequired: "Salvar faz parte do Premium.",
+  },
+  // 013/FC-02 — the `tf-*` design system must not hold copy; these are its default a11y labels,
+  // single-sourced here and injected via prop (dialog.tsx `closeLabel`, toast.tsx close button +
+  // toaster region label). A consumer can still override per call site.
+  ds: {
+    close: "Fechar",
+    notifications: "Notificações",
   },
 } as const;

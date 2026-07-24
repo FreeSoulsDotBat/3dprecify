@@ -59,8 +59,17 @@ binary; reads stay open on lapse). Sub-decisions, owner-aligned:
 
 - Positive: instant, auditable, single-source entitlement; Principle IV enforced at a single seam every
   persistence route must pass through; emulator-friendly; no client trust anywhere.
-- Negative / trade-offs accepted: one DB lookup per protected op (cache seam documented, deferred); the DB
-  must be reachable for premium surfaces (the catalog needs it anyway; the free calculator never touches it).
+- Negative / trade-offs accepted: **the real per-protected-op cost, corrected (013 audit remediation,
+  E2-05)** — this ADR originally said "one indexed PK lookup per protected operation"; as shipped
+  (`app/entitlement/__init__.py`), both `require_entitlement` and `require_catalog_read` run **two**
+  round trips every call: (1) `ensure_account` — an upsert (`INSERT ... ON CONFLICT DO UPDATE`) **plus a
+  `commit()`**, to JIT-provision/refresh the account row, and (2) `read_entitlement_state` — a `SELECT` of
+  **every** `entitlement_grants` row for the uid (not a single-row PK lookup; it scans the account's whole
+  grant history to find the newest active one). Acceptable at E2 scale (both are indexed on `account_uid`,
+  and grant counts per account are small), but it is not the one-lookup shape originally described. The
+  documented cache seam (below) remains the right future evolution if this cost ever matters.
+- The DB must be reachable for premium surfaces (the catalog needs it anyway; the free calculator never
+  touches it).
 - Follow-ups: `ENTITLEMENT_REQUIRED` joins the `ErrorCode` enum → Orval union → pt-BR message; the entitlement
   schema lands via the ADR-0013 stack; seguranca signs off deny-by-default + per-account isolation tests;
   revisit toward Option C only with measured latency pain. Retires **TD-005**.

@@ -30,7 +30,7 @@ crash — which is why they are pinned at the DB, not merely in the service:
 
 import json
 import uuid
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
@@ -575,6 +575,57 @@ def test_M2_a_JSON_float_anywhere_in_the_payload_is_a_422_never_frozen(
     assert _count(migrated_db, "u-float") == 0
 
 
+def _int_in_totals(payload: dict[str, Any]) -> None:
+    payload["totals"]["custoTotal"] = 14  # a JSON integer where a decimal STRING belongs
+
+
+def _int_in_breakdown(payload: dict[str, Any]) -> None:
+    payload["breakdown"]["material"] = 11
+
+
+def _int_in_a_nested_breakdown_item(payload: dict[str, Any]) -> None:
+    payload["breakdown"]["otherCosts"] = [{"name": "Embalagem", "value": 2}]
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        pytest.param(_int_in_totals, id="int-in-totals"),
+        pytest.param(_int_in_breakdown, id="int-in-breakdown"),
+        pytest.param(_int_in_a_nested_breakdown_item, id="int-in-breakdown-otherCosts"),
+    ],
+)
+def test_E4_01_a_JSON_integer_in_a_money_POSITION_is_a_422(
+    db_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_db: str,
+    mutate: Callable[[dict[str, Any]], None],
+) -> None:
+    """E4-01 — an int money leaf slipped past the float scan (int is a legal JSON number) and froze.
+    The PDF renderer only prints STRINGS (`quote_render._str_or_empty`), so the line rendered as an
+    EMPTY cell on a customer-facing quote: an immutable record that silently shows no price. Inside
+    `totals`/`breakdown` an int is never a count, so it is rejected there — and ONLY there."""
+    h = _premium(monkeypatch, migrated_db, "u-int-money")
+    payload = json.loads(json.dumps(PAYLOAD))  # a deep, independent copy
+    mutate(payload)
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=payload))
+    assert r.status_code == 422, r.text
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR"
+    assert _count(migrated_db, "u-int-money") == 0
+
+
+def test_E4_01_an_integer_COUNT_outside_a_money_position_still_freezes(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The other half of E4-01: `schemaVersion`/`quantity`/`contributingLines` ARE legal JSON ints.
+    The guard is positional, not a blanket int ban — this is what keeps it from over-rejecting."""
+    h = _premium(monkeypatch, migrated_db, "u-int-count")
+    payload = {**json.loads(json.dumps(PAYLOAD)), "contributingLines": 3, "skippedLines": 0}
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=payload))
+    assert r.status_code == 201, r.text
+    assert r.json()["payload"]["schemaVersion"] == 1
+
+
 @pytest.mark.parametrize("bad", ["NaN", "Infinity", "-Infinity"])
 def test_M2_a_non_finite_money_string_is_a_422(
     db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str, bad: str
@@ -1086,3 +1137,92 @@ def test_the_device_clock_is_stored_verbatim_and_created_at_never_reaches_the_wi
     assert out["deviceQuotedAt"].startswith("2020-01-01T10:00:00")  # stored as given, not "now"
     assert "createdAt" not in out
     assert "receivedAt" not in out
+
+
+# ══ 013 US6 / T072 — audit findings E4-02 (guard order + depth) and E4-05 (tz-aware bounds) ═══════
+
+
+def _constraints(response: Any) -> str:
+    return " | ".join(d["constraint"] for d in response.json()["error"]["details"])
+
+
+def test_E4_02_the_size_cap_runs_BEFORE_the_recursive_leaf_walk(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E4-02. `reject_bad_leaves` walked the WHOLE document before the size cap was
+    ever consulted, so an unbounded attacker-sized payload paid for a full recursive traversal
+    first. The cheap O(1)-ish guard must come first. Proven by ORDER, not by outcome: this payload
+    violates BOTH rules (over-cap AND a float leaf), so the reported constraint names which guard
+    fired first."""
+    h = _premium(monkeypatch, migrated_db, "u-order")
+    huge_and_floaty = {
+        **PAYLOAD,
+        "breakdown": {"material": 11.0},  # a float leaf — the walk would reject this
+        "provenance": {"kind": "PRODUCT", "id": "x", "name": "A" * (600 * 1024)},
+    }
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=huge_and_floaty))
+    assert r.status_code == 422, r.text
+    constraints = _constraints(r)
+    assert "maximum document size" in constraints, constraints
+    assert "JSON float" not in constraints, constraints
+    assert _count(migrated_db, "u-order") == 0
+
+
+def test_E4_02_a_pathologically_DEEP_payload_is_a_422_never_a_RecursionError_500(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """Audit finding E4-02, second half. A SMALL document can still be pathologically nested
+    (`[[[[…]]]]` costs one byte per level), and every guard here recurses — a deep enough document
+    raises `RecursionError` → 500, and the offline outbox re-POSTs a 5xx FOREVER. A terminal 422 is
+    the only non-looping answer."""
+    h = _premium(monkeypatch, migrated_db, "u-deep")
+    nested: Any = "1.00"
+    for _ in range(400):
+        nested = [nested]
+    deep = {**PAYLOAD, "provenance": nested}
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=deep))
+    assert r.status_code == 422, r.text
+    assert "nest" in _constraints(r).lower(), _constraints(r)
+    assert _count(migrated_db, "u-deep") == 0
+
+
+def test_E4_02_a_normally_shaped_document_is_unaffected_by_the_depth_guard(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """The guard bounds ABUSE, not the product: a real frozen quote (channels, breakdown, nested
+    provenance) records exactly as before."""
+    h = _premium(monkeypatch, migrated_db, "u-notdeep")
+    realistic = {
+        **PAYLOAD,
+        "channels": [
+            {
+                "marketplace": "ML_CLASSICO",
+                "fees": {"commissionPct": "12.000", "fixedFee": "6.00"},
+                "totals": {"precoVarejo": "21.90"},
+            }
+        ],
+        "provenance": {"kind": "PRODUCT", "ref": {"id": "x", "name": "Vaso"}},
+    }
+    r = db_client.post("/api/v1/history", headers=h, json=_body(CSID, payload=realistic))
+    assert r.status_code == 201, r.text
+
+
+@pytest.mark.parametrize("bound", ["from", "to"])
+def test_E4_05_a_naive_date_bound_is_a_422_demanding_a_timezone(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str, bound: str
+) -> None:
+    """Audit finding E4-05. `device_quoted_at` is a `timestamptz`; a NAIVE `from`/`to` bound was
+    accepted and silently interpreted as UTC, so a seller filtering "13 de julho" from a UTC-3
+    device got a window shifted by three hours — a filter that quietly hides real quotes. The
+    bound must carry its offset explicitly, or be an honest 422."""
+    h = _premium(monkeypatch, migrated_db, "u-naive")
+    db_client.post("/api/v1/history", headers=h, json=_body(CSID)).raise_for_status()
+
+    naive = db_client.get("/api/v1/history", headers=h, params={bound: "2026-07-13T00:00:00"})
+    assert naive.status_code == 422, naive.text
+    assert "timezone" in _constraints(naive).lower(), _constraints(naive)
+
+    # The same instant WITH an offset is accepted — both the `Z` and the `-03:00` spellings.
+    for aware in ("2026-07-13T00:00:00Z", "2026-07-13T00:00:00-03:00"):
+        ok = db_client.get("/api/v1/history", headers=h, params={bound: aware})
+        assert ok.status_code == 200, ok.text

@@ -51,11 +51,28 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 // deleted) shows a calm info alert, the picker at "— Manual —", and the last-known values as
 // ordinary editable inputs (US6-4) — never blank, never broken. Saving is honest: a real toast
 // only after a real 2xx; a failure keeps the page open with a specific pt-BR line.
+//
+// 013/FB-02 (ux-catalog §3): a lapsed premium keeps every read (FR-409) but freezes writes — a
+// native `<fieldset disabled>` inerts the name field, the pickers and the whole calculator body in
+// one place, with the reactivation line replacing Salvar. Visible and honest from first render,
+// never a fail-at-save surprise. `readOnly` is passed in by CatalogoPage (the same server-informed
+// `useEntitlement()` read it already makes for its other tabs) rather than re-derived here.
+// RecordSnapshotButton/SaveScenarioSheet already self-gate on `active` only, so they need no extra
+// handling.
 
 const t = messages.calculator;
 const pf = messages.productForm;
+const catalogo = messages.catalogo;
 
-export function ProdutoPage({ productId }: { productId?: string }) {
+export function ProdutoPage({
+  productId,
+  readOnly: lapsed = false,
+}: {
+  productId?: string;
+  /** Premium lapsed (013/FB-02): presentation only — the server's write-time gate is unchanged
+   *  (Constitution IV). */
+  readOnly?: boolean;
+}) {
   const navigate = useNavigate();
   const products = useProducts();
   const { items: filaments } = useFilaments();
@@ -253,89 +270,113 @@ export function ProdutoPage({ productId }: { productId?: string }) {
         </Alert>
       )}
 
-      {/* Name + save — the page's header action (ux §1.6b). */}
-      <Card padding="md" className="flex flex-col gap-3">
-        <Field label={pf.nameLabel} required error={nameError}>
-          {(p) => (
-            <div className="tf-inputwrap">
-              <input
-                {...p}
-                type="text"
-                className="tf-input"
-                placeholder={pf.namePlaceholder}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
+      {/* 013/FB-02 (ux-catalog §3): reads/recompute stay complete while lapsed (FR-409); only the
+          write below is frozen — visibly and up front, never discovered at "Salvar". */}
+      {lapsed && (
+        <Alert tone="info" title={catalogo.lapsedTitle}>
+          {catalogo.lapsedBody}
+        </Alert>
+      )}
+
+      {/* `display:contents` keeps every child a direct flex item of the section above (same gap
+          rhythm) while a NATIVE `disabled` fieldset inerts every input/select/button nested inside
+          — including ones several components deep (FieldGroup, MarketplaceSection) — with zero
+          per-field prop threading. */}
+      <fieldset disabled={lapsed} className="contents">
+        {/* Name + save — the page's header action (ux §1.6b). */}
+        <Card padding="md" className="flex flex-col gap-3">
+          <Field label={pf.nameLabel} required error={nameError}>
+            {(p) => (
+              <div className="tf-inputwrap">
+                <input
+                  {...p}
+                  type="text"
+                  className="tf-input"
+                  placeholder={pf.namePlaceholder}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+              </div>
+            )}
+          </Field>
+          {!lapsed && (
+            <Button
+              loading={create.isPending || update.isPending}
+              onClick={() => void handleSave()}
+            >
+              {pf.saveProduct}
+            </Button>
           )}
-        </Field>
-        <Button loading={create.isPending || update.isPending} onClick={() => void handleSave()}>
-          {pf.saveProduct}
-        </Button>
-        {submitError && <Alert tone="danger">{submitError}</Alert>}
-      </Card>
+          {submitError && <Alert tone="danger">{submitError}</Alert>}
+          {lapsed && (
+            <Alert tone="info" title={catalogo.reactivateTitle}>
+              {catalogo.reactivateBody}
+            </Alert>
+          )}
+        </Card>
 
-      {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
-      <Card padding="md" className="flex flex-col gap-3">
-        <p style={sectionLabel}>{t.catalogPicker.title}</p>
-        <p style={captionText}>{t.catalogPicker.hint}</p>
-        <div style={gridCard}>
-          <Field label={t.catalogPicker.filament} tightLabel>
-            {(p) => (
-              <Select
-                {...p}
-                options={filamentOptions}
-                value={filamentId}
-                onChange={(e) => applyFilament(e.target.value)}
-              />
-            )}
-          </Field>
-          <Field label={t.catalogPicker.printer} tightLabel>
-            {(p) => (
-              <Select
-                {...p}
-                options={printerOptions}
-                value={printerId}
-                onChange={(e) => applyPrinter(e.target.value)}
-              />
-            )}
-          </Field>
-        </div>
-      </Card>
+        {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
+        <Card padding="md" className="flex flex-col gap-3">
+          <p style={sectionLabel}>{t.catalogPicker.title}</p>
+          <p style={captionText}>{t.catalogPicker.hint}</p>
+          <div style={gridCard}>
+            <Field label={t.catalogPicker.filament} tightLabel>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={filamentOptions}
+                  value={filamentId}
+                  onChange={(e) => applyFilament(e.target.value)}
+                />
+              )}
+            </Field>
+            <Field label={t.catalogPicker.printer} tightLabel>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={printerOptions}
+                  value={printerId}
+                  onChange={(e) => applyPrinter(e.target.value)}
+                />
+              )}
+            </Field>
+          </div>
+        </Card>
 
-      {/* The calculator body — identical sections, identical engine (SC-305 on this surface too). */}
-      <FieldGroup
-        control={control}
-        title={t.sections.inputs}
-        info={t.sectionInfo.inputs}
-        fields={MANDATORY_FIELDS}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.optional}
-        info={t.sectionInfo.optional}
-        hint={t.sections.optionalHint}
-        fields={OPTIONAL_FIELDS}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.labor}
-        info={t.sectionInfo.labor}
-        fields={LABOR_FIELDS}
-      />
-      <OtherCostsSection
-        control={control}
-        fields={otherCostFields}
-        errors={otherCostErrors}
-        onAppend={() => appendOtherCost(defaultOtherCost())}
-        onRemove={removeOtherCost}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.markup}
-        info={t.sectionInfo.markup}
-        fields={MARKUP_FIELDS}
-      />
+        {/* The calculator body — identical sections, identical engine (SC-305 on this surface too). */}
+        <FieldGroup
+          control={control}
+          title={t.sections.inputs}
+          info={t.sectionInfo.inputs}
+          fields={MANDATORY_FIELDS}
+        />
+        <FieldGroup
+          control={control}
+          title={t.sections.optional}
+          info={t.sectionInfo.optional}
+          hint={t.sections.optionalHint}
+          fields={OPTIONAL_FIELDS}
+        />
+        <FieldGroup
+          control={control}
+          title={t.sections.labor}
+          info={t.sectionInfo.labor}
+          fields={LABOR_FIELDS}
+        />
+        <OtherCostsSection
+          control={control}
+          fields={otherCostFields}
+          errors={otherCostErrors}
+          onAppend={() => appendOtherCost(defaultOtherCost())}
+          onRemove={removeOtherCost}
+        />
+        <FieldGroup
+          control={control}
+          title={t.sections.markup}
+          info={t.sectionInfo.markup}
+          fields={MARKUP_FIELDS}
+        />
+      </fieldset>
 
       {result ? (
         <PriceResults result={result} values={values} />
@@ -347,20 +388,22 @@ export function ProdutoPage({ productId }: { productId?: string }) {
           (US3/T019). Present only for a premium seller on a saved product with a valid live price. */}
       {recordSource && <RecordSnapshotButton source={recordSource} />}
 
-      <MarketplaceSection
-        control={control}
-        values={values}
-        fields={fields}
-        channelOutcomes={channelOutcomes}
-        included={values.includeMarketplace !== false}
-        onToggleInclude={(next) => setValue("includeMarketplace", next)}
-        onAppend={append}
-        onRemove={remove}
-        onMarketplaceChange={handleMarketplaceChange}
-        refreshFailed={refreshFailed}
-        refreshing={refreshing}
-        onRetryCatalog={retryCatalog}
-      />
+      <fieldset disabled={lapsed} className="contents">
+        <MarketplaceSection
+          control={control}
+          values={values}
+          fields={fields}
+          channelOutcomes={channelOutcomes}
+          included={values.includeMarketplace !== false}
+          onToggleInclude={(next) => setValue("includeMarketplace", next)}
+          onAppend={append}
+          onRemove={remove}
+          onMarketplaceChange={handleMarketplaceChange}
+          refreshFailed={refreshFailed}
+          refreshing={refreshing}
+          onRetryCatalog={retryCatalog}
+        />
+      </fieldset>
 
       {/* 010/T021b (E5, PR-B) — save a scenario referencing THIS saved product (closes FR-606a on
           the UI side): `buildScenarioConfig`'s `productRef` captures `costBasis.kind = "PRODUCT"`

@@ -5,6 +5,7 @@ import {
   useProducts,
   useUpdateFilament,
 } from "@/entities/catalog/use-catalog";
+import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { FilamentIn, FilamentOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -19,6 +20,8 @@ import { FilamentForm } from "./filament-form";
 
 // Filaments tab wiring (T019): the uid-keyed read cache + the online-only write mutations plugged
 // into the generic premium panel. All honesty/state logic lives in `CatalogPanel`.
+// 013/FB-02: the panel's own `useEntitlement()` read decides `lapsed` — presentation only, the
+// server keeps the write-time gate (Constitution IV).
 
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
@@ -28,6 +31,7 @@ export function FilamentsPanel() {
   const create = useCreateFilament();
   const update = useUpdateFilament();
   const remove = useDeleteFilament();
+  const entitlement = useEntitlement();
   // US6-4: deleting a referenced filament warns first (the server keeps last-known + unlinks).
   const { items: products } = useProducts();
   const deleteWarning = (f: FilamentOut) => {
@@ -38,6 +42,7 @@ export function FilamentsPanel() {
   return (
     <CatalogPanel<FilamentOut, FilamentFormValues, FilamentIn>
       list={list}
+      lapsed={entitlement.data?.status === "lapsed"}
       copy={{
         addLabel: catalogo.addFilament,
         emptyTitle: catalogo.emptyFilamentsTitle,

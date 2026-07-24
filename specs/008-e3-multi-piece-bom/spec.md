@@ -71,6 +71,18 @@ amendments extend — never replace — the 2026-07-10 decisions above.
 - Materialization happens **only after save** (the free-standing composer persists nothing — unchanged), so
   the whole K2–K4 behavior belongs to the persistence slice (PR-B scope).
 
+### Session 2026-07-23 (013 audit remediation — D4, dated Clarification only, no code in this pass)
+
+- **D4 — Empty BOM (zero lines, E3-04 edge case above): server REJECTS, does not permit.** As shipped,
+  `BomIn.lines` (`backend/app/api/boms.py`) has **no** `min_length` guard — a zero-line kit is currently
+  accepted, which the E3 audit (013) flagged as unintentional permissiveness never decided one way or the
+  other. **Decision: option (a)** — the server SHOULD require `min_length=1`, mirroring what the composer UI
+  already promises (a kit is, by definition, at least one piece). This Clarification records the decision;
+  **the `min_length=1` change itself is tracked as separate implementation work** (audit remediation batch
+  C-11, not this docs-only US7 pass) — until that lands, the edge case above ("Empty BOM (zero lines)... how
+  is the total presented") is answered as *"currently accepted, honestly presented as an empty/zero total;
+  will become a 422 once C-11 lands"*.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Compose and price a multi-piece order (Premium) (Priority: P1) [FOUNDATIONAL]

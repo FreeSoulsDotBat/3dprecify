@@ -91,7 +91,8 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
 
     expect(screen.getByText(catalogo.emptyProductsTitle)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: catalogo.addProduct }));
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo/produtos/novo" });
+    // 013/F-02: the create form is a search param on /catalogo now, not a 2-segment route.
+    expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo", search: { produto: "novo" } });
   });
 
   it("lists products with the REFERENCE names as summary — never a price", () => {
@@ -111,14 +112,42 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
     expect(screen.getByText(`${catalogo.manualRef} · Ender 3`)).toBeInTheDocument();
   });
 
+  it("FB-04: shows a neutral loading placeholder while references are still loading — never 'manual'", () => {
+    useProductsMock.mockReturnValue(listState([product]));
+    useFilamentsMock.mockReturnValue({
+      items: [],
+      isLoading: true,
+      isError: false,
+      error: null,
+      stale: false,
+      refetch: vi.fn(),
+    });
+    usePrintersMock.mockReturnValue({
+      items: [],
+      isLoading: true,
+      isError: false,
+      error: null,
+      stale: false,
+      refetch: vi.fn(),
+    });
+    render(<ProductsPanel />);
+
+    expect(
+      screen.getByText(`${catalogo.resolvingRef} · ${catalogo.resolvingRef}`),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText(`${catalogo.manualRef} · ${catalogo.manualRef}`),
+    ).not.toBeInTheDocument();
+  });
+
   it("row tap navigates to the full-page edit route", () => {
     useProductsMock.mockReturnValue(listState([product]));
     render(<ProductsPanel />);
 
     fireEvent.click(screen.getByText("Vaso G"));
     expect(navigateMock).toHaveBeenCalledWith({
-      to: "/catalogo/produtos/$productId",
-      params: { productId: "prod-1" },
+      to: "/catalogo",
+      search: { produto: "prod-1" },
     });
   });
 });

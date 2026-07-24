@@ -40,7 +40,7 @@ import uuid
 from typing import Annotated, Any, Literal, cast
 
 from fastapi import APIRouter, Depends, Query, Response, status
-from pydantic import ConfigDict, field_validator, model_validator
+from pydantic import AwareDatetime, ConfigDict, field_validator, model_validator
 from sqlalchemy import literal, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -56,15 +56,9 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Snapshot
+from app.validation import CEIL_MONEY, finite_non_negative, reject_bad_leaves
 
 router = APIRouter(tags=["history"])
-
-# Integer-digit budget for MONEY_SETTLED Numeric(12,2): a value AT/ABOVE this OVERFLOWS the column
-# at write time — Postgres raises `numeric field overflow` and FastAPI would surface an opaque 500.
-# We reject it here as a clean 422 (the outbox re-POSTs a 5xx forever, so a permanent 500 is an
-# infinite loop). Copied module-local, following the filaments/printers/products precedent — the
-# 4-way dedup of this constant is a separate janitorial task, NOT this fix.
-_CEIL_MONEY = decimal.Decimal(10) ** 10
 
 # One frozen document has a maximum size (abuse/DoS guard, data-model §7 item 6 — owner-confirmed
 # 512 KB). A document over the cap is an HONEST 422, never a silent truncation: truncating an
@@ -79,54 +73,32 @@ _BASIS_TOTAL_KEY: dict[str, str] = {
     "PRECO_ATACADO": "precoAtacado",
 }
 
-
-def _finite_non_negative(
-    value: decimal.Decimal, field: str, ceiling: decimal.Decimal = _CEIL_MONEY
-) -> decimal.Decimal:
-    if not value.is_finite() or value < 0:
-        raise ValueError(f"{field} must be a finite number >= 0")
-    if value >= ceiling:
-        raise ValueError(f"{field} exceeds the maximum storable magnitude")
-    return value
+# A frozen quote's structure is SHALLOW by nature (root -> totals/breakdown/channels[] -> fees ->
+# leaf: 4-5 levels, and `provenance` adds one more). 64 is two orders of magnitude of headroom over
+# anything the product produces, and still far below the interpreter's ~1000-frame recursion limit,
+# which every recursive guard in this file (and `json.dumps` itself) is subject to. This bounds
+# ABUSE, not the product (audit finding E4-02): a small document can nest one level per byte.
+_PAYLOAD_MAX_DEPTH = 64
 
 
-def _reject_bad_leaves(node: object) -> None:
-    """VR-501 / VR-502 — the recursive money guard over the whole frozen document.
+def _reject_overly_nested(payload: dict[str, Any]) -> None:
+    """Depth guard — deliberately ITERATIVE (an explicit stack, not recursion).
 
-    The payload is opaque JSONB, so this walks it GENERICALLY rather than pinning
-    `PriceResult`/`BomResult` field-by-field (pinning would make a pricing-core version bump reject
-    its own payloads — the exact property JSONB exists to avoid, data-model §9.6). Two rules:
-
-    * **VR-502 — no JSON float anywhere.** A float leaf means precision already died at the
-      serializer boundary (a JSON number decodes to binary64 in BOTH runtimes). This is the LAST
-      defence before a float freezes into the immutable table; the client (I1) also stops emitting
-      them. `bool`/`int` pass — the only legal JSON numbers are integer counts (`schemaVersion`,
-      `quantity`, `contributingLines`, `skippedLines`).
-    * **VR-501 — every string that PARSES as a Decimal must be finite** (rejects `"NaN"`/
-      `"Infinity"` — the in-JSON twin of the `<> 'NaN'::numeric` CHECK, which cannot reach inside
-      JSONB) and within magnitude. A non-numeric string (a name, a label, an id) is ignored —
-      generic leaf validation, no shape-pin.
+    A recursive depth check would be the very thing it is meant to prevent: it would blow the stack
+    on the document it exists to reject. It therefore runs BEFORE `json.dumps` (the size cap) and
+    before `reject_bad_leaves`, both of which recurse.
     """
-    if isinstance(node, dict):
-        for value in cast("dict[str, object]", node).values():
-            _reject_bad_leaves(value)
-    elif isinstance(node, list):
-        for item in cast("list[object]", node):
-            _reject_bad_leaves(item)
-    elif isinstance(node, bool):
-        return  # a JSON true/false — never money
-    elif isinstance(node, float):
-        raise ValueError(
-            "payload contains a JSON float; every money leaf must be a decimal STRING (FR-525)"
-        )
-    elif isinstance(node, str):
-        try:
-            parsed = decimal.Decimal(node)
-        except decimal.InvalidOperation:
-            return  # a non-numeric string (a name/label/id) — not a money leaf
-        if not parsed.is_finite() or abs(parsed) >= _CEIL_MONEY:
-            raise ValueError("payload money string is non-finite or exceeds the storable magnitude")
-    # int / None fall through unchanged.
+    stack: list[tuple[object, int]] = [(payload, 1)]
+    while stack:
+        node, depth = stack.pop()
+        if depth > _PAYLOAD_MAX_DEPTH:
+            raise ValueError(
+                f"payload is nested deeper than the maximum of {_PAYLOAD_MAX_DEPTH} levels"
+            )
+        if isinstance(node, dict):
+            stack.extend((v, depth + 1) for v in cast("dict[str, object]", node).values())
+        elif isinstance(node, list):
+            stack.extend((item, depth + 1) for item in cast("list[object]", node))
 
 
 class SnapshotIn(CamelModel):
@@ -154,7 +126,7 @@ class SnapshotIn(CamelModel):
     def _headline_total_finite(cls, v: decimal.Decimal) -> decimal.Decimal:
         # Overflow of Numeric(12,2) would be a 500 at INSERT time; catch it here (and NaN/Infinity/
         # negatives) as a clean 422. The DB `ck_snapshots_headline_total_valid` is the backstop.
-        return _finite_non_negative(v, "headlineTotal", _CEIL_MONEY)
+        return finite_non_negative(v, "headlineTotal", CEIL_MONEY)
 
     @model_validator(mode="after")
     def _validate_frozen_document(self) -> SnapshotIn:
@@ -165,8 +137,24 @@ class SnapshotIn(CamelModel):
         generic handler → 500. The outbox re-POSTs a 5xx forever, so a permanent 500 on an invalid
         body is an infinite loop; every one of those cases is mirrored here as a terminal 422.
         """
-        # VR-501 / VR-502 — the recursive money guard (floats, NaN/Infinity, magnitude).
-        _reject_bad_leaves(self.payload)
+        # ORDER IS THE POINT (audit finding E4-02, 2026-07-23). The guards run cheapest-and-most-
+        # bounding FIRST; the recursive walk runs LAST, on a document already proven bounded in
+        # depth and size. Before this, `reject_bad_leaves` traversed an attacker-sized document in
+        # full before the size cap was ever consulted, and a pathologically NESTED document blew
+        # the interpreter's stack inside the walk (or inside `json.dumps`) — a `RecursionError`
+        # surfaces as a 500, and the offline outbox re-POSTs a 5xx FOREVER (ADR-0018 §3). Both
+        # abuse shapes are now terminal 422s, which is the only answer that stops the loop.
+        _reject_overly_nested(self.payload)
+
+        # Size cap — an HONEST 422, never a silent truncation of an immutable record.
+        if len(json.dumps(self.payload).encode("utf-8")) > _PAYLOAD_SIZE_CAP_BYTES:
+            raise ValueError("payload exceeds the maximum document size")
+
+        # VR-501 / VR-502 — the recursive money guard (floats, ints in money positions, NaN/
+        # Infinity, magnitude). The ceiling is passed EXPLICITLY: this document's leaves land in
+        # MONEY_SETTLED Numeric(12,2) columns, so `CEIL_MONEY` — not the wider config bound that
+        # `scenarios.py` passes to the same walker (audit Q-04).
+        reject_bad_leaves(self.payload, money_ceiling=CEIL_MONEY)
 
         # The denormalised columns may never diverge from the document (immutability freezes both,
         # the DB `payload_kind_matches` / `payload_version_matches` CHECKs are the backstops).
@@ -198,10 +186,6 @@ class SnapshotIn(CamelModel):
             raise ValueError("deviceUtcOffsetMinutes must be within [-840, 840]")
         if self.label is not None and not self.label.strip():
             self.label = None  # blank is unrepresentable as '' (ck_snapshots_label_not_blank)
-
-        # Size cap — an HONEST 422, never a silent truncation of an immutable record.
-        if len(json.dumps(self.payload).encode("utf-8")) > _PAYLOAD_SIZE_CAP_BYTES:
-            raise ValueError("payload exceeds the maximum document size")
         return self
 
 
@@ -385,8 +369,8 @@ async def list_history(
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     cursor: Annotated[str | None, Query()] = None,
     q: Annotated[str | None, Query(max_length=120)] = None,
-    from_: Annotated[datetime.datetime | None, Query(alias="from")] = None,
-    to: Annotated[datetime.datetime | None, Query()] = None,
+    from_: Annotated[AwareDatetime | None, Query(alias="from")] = None,
+    to: Annotated[AwareDatetime | None, Query()] = None,
     client_snapshot_id: Annotated[uuid.UUID | None, Query(alias="clientSnapshotId")] = None,
 ) -> SnapshotPage:
     """Newest-first by the DEVICE's date — the date that is the seller's claim (FR-523).
@@ -404,7 +388,11 @@ async def list_history(
       escaped, so a literal ``%``/``_`` in a label is matched, not treated as a wildcard. A NULL
       label never matches (an unlabelled row is not a search hit).
     * ``from``/``to`` — a range on the **DEVICE** date (the seller's claimed quote date), never
-      ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528).
+      ``created_at`` (which is unverifiable metadata and never ordered/filtered by, FR-528). Both
+      bounds MUST carry a timezone offset (``AwareDatetime``, audit finding E4-05): the column is a
+      ``timestamptz``, so a NAIVE bound was silently read as UTC and a seller filtering "13 de
+      julho" from a UTC-3 device got a window shifted three hours — a filter that quietly hides
+      real quotes is worse than one that refuses. An honest 422 asks for the offset instead.
     * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
       may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
     """

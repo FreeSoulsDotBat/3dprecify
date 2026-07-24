@@ -62,6 +62,11 @@ import "./scenario-list.css";
 
 const t = messages.scenarios;
 
+// 013 US4 (FB-03) — the create path (`save-scenario-sheet.tsx`) and the backend both validate note
+// <= 500; the rename path did not. Same limit, same message (`t.noteTooLong`) — never a second
+// string for the same rule.
+const NOTE_MAX = 500;
+
 export interface ScenariosListSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -220,6 +225,10 @@ function ScenarioListBody({
     }
     if (trimmed.length > 120) {
       setRenameError(t.nameTooLong);
+      return;
+    }
+    if (renameNote.length > NOTE_MAX) {
+      setRenameError(t.noteTooLong);
       return;
     }
     try {

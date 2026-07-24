@@ -68,6 +68,8 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
     defaultValues: TForm;
     submitting: boolean;
     submitError?: string;
+    /** 013/FB-02 — threaded straight from the panel's `lapsed` prop. */
+    readOnly?: boolean;
     onSubmit: (body: TWire) => void;
     onCancel: () => void;
   }) => ReactNode;
@@ -77,6 +79,10 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   onCreateNavigate?: () => void;
   onEditNavigate?: (item: TItem) => void;
   remove: (id: string) => Promise<unknown>;
+  /** 013/FB-02 — Premium lapsed (ux-catalog §3): reads stay complete, writes render inert (the
+   *  Sheet opens read-only with the reactivation line instead of Salvar). This only presents the
+   *  state `useEntitlement()` already returned — no new gate (Constitution IV untouched). */
+  lapsed?: boolean;
   /** A calm per-row note (E3/K3): the honest "needs attention" line on a product whose saved
    *  filament/printer references are missing. Absent → the row renders exactly as before. */
   rowNote?: (item: TItem) => string | undefined;
@@ -98,6 +104,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   rowName: nameOf,
   rowSummary: summaryOf,
   rowNote: noteOf,
+  lapsed = false,
   onDuplicate,
   emptyForm,
   toFormValues,
@@ -212,6 +219,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                     </span>
                   )}
                   {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                  {lapsed && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
                 </button>
                 <Button
                   variant="ghost"
@@ -235,7 +243,13 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   variant="ghost"
                   size="sm"
                   aria-label={`${catalogo.remove} ${nameOf(item)}`}
-                  onClick={() => setDeleteTarget(item)}
+                  // 013/FB-02 (T034 homologation nit): on lapsed, tapping delete must NOT open the
+                  // working destructive confirm and then 403 on submit — ux-catalog §3: "Never show a
+                  // delete/edit as *working* then fail — the intercept happens on tap, honestly." Edit
+                  // already routes lapsed to the read-only reactivation surface; delete now mirrors it,
+                  // so both write affordances land on the same honest intercept (the server's
+                  // ENTITLEMENT_REQUIRED 403 stays the real backstop — this is presentation only).
+                  onClick={() => (lapsed ? openEdit(item) : setDeleteTarget(item))}
                 >
                   <Icon name="trash-2" size={18} aria-hidden />
                 </Button>
@@ -253,6 +267,13 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
       {list.stale && (
         <Alert tone="info" title={catalogo.offlineTitle}>
           {catalogo.offlineBody}
+        </Alert>
+      )}
+
+      {/* 013/FB-02 — Premium lapsed (ux-catalog §3): calm, never punitive; reads stay complete. */}
+      {!list.stale && !list.isError && list.items.length > 0 && lapsed && (
+        <Alert tone="info" title={catalogo.lapsedTitle}>
+          {catalogo.lapsedBody}
         </Alert>
       )}
 
@@ -275,6 +296,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   sheet.mode === "edit" ? toFormValues!(sheet.item) : (emptyForm as TForm),
                 submitting: saving ?? false,
                 submitError,
+                readOnly: lapsed,
                 onSubmit: handleSubmit,
                 onCancel: closeSheet,
               })}

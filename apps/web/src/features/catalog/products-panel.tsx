@@ -23,8 +23,8 @@ const pf = messages.productForm;
 
 export function ProductsPanel() {
   const list = useProducts();
-  const { items: filaments } = useFilaments();
-  const { items: printers } = usePrinters();
+  const { items: filaments, isLoading: filamentsLoading } = useFilaments();
+  const { items: printers, isLoading: printersLoading } = usePrinters();
   const remove = useDeleteProduct();
   const navigate = useNavigate();
 
@@ -48,15 +48,19 @@ export function ProductsPanel() {
       }}
       rowName={(p) => p.name}
       rowSummary={(p) =>
-        productSummary(p, nameOf(p.filamentId, "filament"), nameOf(p.printerId, "printer"))
+        productSummary(p, nameOf(p.filamentId, "filament"), nameOf(p.printerId, "printer"), {
+          filaments: filamentsLoading,
+          printers: printersLoading,
+        })
       }
       // K3: one honest state for a product born manual (materialized by a kit save) and one
       // degraded by a deletion — same missing links, same remedy, so the same calm line.
       rowNote={(p) => (productNeedsAttention(p) ? catalogo.needsAttention : undefined)}
-      onCreateNavigate={() => void navigate({ to: "/catalogo/produtos/novo" })}
-      onEditNavigate={(p) =>
-        void navigate({ to: "/catalogo/produtos/$productId", params: { productId: p.id } })
-      }
+      // 013/F-02: the 2-segment routes are gone (they blanked on cold-load under `base:'./'`).
+      // Navigate straight to the `?produto=` shape — going through the deprecated redirect route
+      // would still work, but it costs an extra hop and keeps a dead URL alive in history.
+      onCreateNavigate={() => void navigate({ to: "/catalogo", search: { produto: "novo" } })}
+      onEditNavigate={(p) => void navigate({ to: "/catalogo", search: { produto: p.id } })}
       remove={(id) => remove.mutateAsync(id)}
       deleting={remove.isPending}
     />

@@ -17,6 +17,10 @@
 >   **Zustand v5** (not Context), format = **Prettier + prettier-plugin-tailwindcss** (A2), React **19** (A3).
 > - **§5/§10 — CORS:** decided = **per-env allowlist** via pydantic-settings (A7). **Local auth:** Firebase
 >   **emulator** (A6). **Region:** southamerica-east1 (A10).
+> - **§9 L92 — deploy target (added 013 audit remediation, P-04):** **DECIDED** = Cloud Run (backend) +
+>   Firebase Hosting (SPA), southamerica-east1, WIF keyless (ADR-0005, TD-003 resolved 2026-06-28) — NOT
+>   "Cloudflare per-PR preview + prod" as this stale line still reads. First release cut `develop`→`main`
+>   already shipped (006). See `CLAUDE.md` "Decided stack/standards" and `docs/runbooks/uat-deploy.md`.
 
 Working agenda of what is NOT yet defined. Priority: **NOW** (decide before more code) · **SOON** (this/next increment) · **LATER**.
 Items get decided in themed rounds with Jonatan; architectural ones become ADRs under `docs/adr/`.

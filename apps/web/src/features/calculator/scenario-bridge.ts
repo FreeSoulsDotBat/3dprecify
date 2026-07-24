@@ -8,6 +8,7 @@ import {
   type ScenarioChannelSlotState,
   type ScenarioConfig,
 } from "@/entities/scenario/config-document";
+import { wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 import { type CatalogContext, type ChannelSlotOutcome, computeFromForm } from "./calculator-model";
 import {
@@ -45,10 +46,10 @@ import {
 
 /** A decimal-string leaf ("12.5", "0.1", "100") has AT MOST one '.', never a thousands separator (it
  *  comes from `Decimal#toString`) — so swapping '.' → ',' is a lossless, unambiguous conversion into
- *  the pt-BR string the calculator form's own parser (`parseDecimal`) expects. Never a re-round. */
-function decimalStringToPtBr(raw: string): string {
-  return raw.replace(".", ",");
-}
+ *  the pt-BR string the calculator form's own parser (`parseDecimal`) expects. Never a re-round.
+ *  013/FA-05: the swap itself now lives in `shared/lib/decimal-ptbr` (one home, premise under test);
+ *  this local alias keeps the call sites reading in the scenario domain's own vocabulary. */
+const decimalStringToPtBr = wireToPtBr;
 
 /** An ABSENT `feeOverrides` leaf becomes a BLANK string (re-resolve live), a PRESENT one becomes its
  *  pt-BR value (the seller's override, "ajustado por você") — shared by the scalar-form reopen (T014)
