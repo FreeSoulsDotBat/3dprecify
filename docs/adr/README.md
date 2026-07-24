@@ -16,7 +16,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0007](0007-design-system-layer.md) | Design system layer — Radix behavior skinned with `tf-*` tokens | Accepted |
 | [0008](0008-pricing-core-versioning-rounding.md) | pricing-core version registry & rounding policy | Accepted |
 | [0009](0009-machine-hour-cost-recovery.md) | Machine-hour capital-recovery method | Accepted |
-| [0010](0010-marketplace-fee-catalog-architecture.md) | Marketplace fee-catalog architecture (served endpoint + persisted cache + bundled seed · ML PR-ingestion · freight model) | Accepted |
+| [0010](0010-marketplace-fee-catalog-architecture.md) | Marketplace fee-catalog architecture (served endpoint + persisted cache + bundled seed · ML PR-ingestion · freight model) | Accepted (Part 3 ingestion runtime amended 2026-07-24 → CI-first) |
 | [0011](0011-pricing-core-3-0-0-multichannel-result-contract.md) | pricing-core 3.0.0 — multi-channel result contract, band fixed-point & snapshot policy (extends ADR-0008) | Accepted |
 | [0012](0012-entitlement-flag-mechanism.md) | Entitlement flag mechanism — server-authoritative Postgres ledger, per-request check (TD-005) | Accepted |
 | [0013](0013-persistence-stack.md) | Persistence stack — SQLAlchemy 2.0 typed + Alembic + psycopg3 on PostgreSQL (TD-004) | Accepted |
