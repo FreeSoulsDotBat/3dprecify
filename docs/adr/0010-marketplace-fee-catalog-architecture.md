@@ -543,6 +543,72 @@ Credential custody (§A5) is **open pending `seguranca`**; the artifact-validati
 
 *(The 014 brief's Q7 — what a no-change run produces — is untouched by this amendment and remains open there.)*
 
+### A13. Gate results — measured 2026-07-27/28 (this section closes §A7)
+
+All four gates ran. **Every one of them changed something the ADR previously asserted or defaulted.**
+
+#### G1 — PASS (both arms). The geo-gate belief is retired.
+
+Two arms, same token, same session — the control arm is what made this readable:
+
+| | BR control (owner's machine, São Paulo, AS27699 Telefônica) | Hosted (`ubuntu-latest`, US, AS8075 Microsoft) |
+|---|---|---|
+| `listing_prices?price=100` | 200 · 7 listing types | 200 · 7 listing types |
+| `gold_pro` / `gold_special` | 16% / 11% | 16% / 11% |
+| `/sites/MLB/categories` | 200 · 32 top-level | 200 · 32 top-level |
+| `/categories/MLB5672` | 200 · 24 children | 200 · 24 children |
+| `…&category_id=MLB5672` | `gold_pro` **17%** | `gold_pro` **17%** |
+
+**Consequences:** ML takes **Option 3D** (GitHub-hosted). **The geo/IP-gate belief recorded since 2026-07-06 is
+formally retired** — it was never measured, and it is false. **QA4 is extinct** (no BR machine to own, so the
+"machine to own" negative in §A11 does not materialise). **QA3 narrows**: the self-hosted hazard — the specific
+thing that made a public repo dangerous — no longer exists; what remains for `seguranca` is only the refresh token
+in GitHub Secrets on a public repo, a strictly smaller question than the one §A9 was written against.
+
+**Correction recorded (this is why the gate exists).** The first BR run returned **403 `PA_UNAUTHORIZED_RESULT_FROM_POLICIES`
+across the whole `/sites/*` family — anonymously as well as authenticated** — while `/users/me` returned 200. The
+cause was **application permissions**, not location: the app had been created with every permission set to "Sem
+acesso" on a recommendation that turned out to be wrong. **Measured minimum sufficient permission: "Publicação e
+sincronização: Leitura"** — nothing else. Read against §A7's two enumerated outcomes, that first result would have
+read as "hosted blocked ⇒ Option 3E" and bought a self-hosted BR runner to solve a checkbox. **§A7 was missing a
+third outcome: the endpoint unavailable from *both* arms, where runner location is irrelevant.**
+
+#### G2 — PASS. Amazon stays on a hosted runner.
+
+The BR fee table renders identically from US egress: HTTP 200, **no geo-redirect** (final URL unchanged, `locale=pt-BR`
+honoured), **38 rows** with a percentage, catch-all "Outros 15%" present. The BR and hosted arms are **byte-identical**
+row for row (`Roupas e Acessórios 14% BRL 1,00`, `Calçados 14%`, `Relógios 13%`, …).
+
+Recorded honestly: this took **three runs, and only the third measured anything**. Runs 1–2 failed on probe
+infrastructure (the browser binary installed without the npm package; then `npm` refusing this pnpm workspace's
+`catalog:` protocol). Run 3 reported `FAIL` on a single assertion — Amazon writes the money cells with **U+00A0**, so
+`BRL 1,00` never matched a plain-space regex. **The BR control arm is what classified this as an assertion defect
+rather than a geo-difference**: it failed identically while its own extracted rows visibly contained the string. An
+infrastructure failure and a negative measurement are not the same artifact, and a G2 FAIL would have carried a real
+architectural consequence (Amazon needing a BR runner).
+
+#### G3 — PASS. ML rotates on use, **and the old refresh token survives**.
+
+Spending the refresh token returns a **different** one, and replaying the **old** one still returns 200. **QA2 option
+(c) — GitHub Secrets with no write-back — is viable**: a missed or failed write-back does not brick the monthly loop.
+This is the measurement §A5 and `seguranca-ci-first.md` §8.3 both required before custody could be decided.
+
+#### Owner decisions taken on the back of these results (2026-07-28)
+
+- **QA1 = (a)** — the fee-refresh PR targets **`develop`**, per ADR-0006.
+- **QA5 = (a)** — **monthly, day 1, 06:00 UTC (03:00 BRT)**: off-hour, ahead of business hours, and still overnight if
+  the queue delays it.
+- **QA2 = (c)**, now unblocked by G3, subject to `seguranca` ratifying secrets-on-a-public-repo (the narrowed §A9).
+- **QA3** — narrowed by G1 to the secrets question only; still `seguranca`'s call.
+
+#### Evidence
+
+`scripts/probes/{g1-ml-listing-prices,g2-amazon-fee-table,g3-ml-refresh-rotation}.mjs` +
+`.github/workflows/{g1-probe-ml,g2-probe-amazon}.yml`, branch `014-fee-category-mapping`. Per §A7 these are
+**disposable**: delete them once 014's ingestion owns the same paths. The ML OAuth helper
+(`scripts/probes/ml-oauth.mjs`) writes tokens only to a gitignored `.env.probe.local` and prints metadata, never
+secrets; the CI secret `ML_ACCESS_TOKEN` holds the **6-hour access token only** — never the refresh token.
+
 ### Sources verified (2026-07-24)
 
 - `schedule` event — default-branch execution, UTC/delay/drop, 5-minute floor, and the **public-repo** 60-day
