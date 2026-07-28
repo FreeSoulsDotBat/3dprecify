@@ -144,6 +144,14 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 **Objetivo**: o mapa continua verdadeiro no mês que vem sem ninguém lembrar dele.
 **Teste independente**: rodar contra fonte alterada → PR com diff; contra fonte quebrada → nenhum PR.
 
+> **Estado (parte 1 entregue)**: a **lógica pura** do laço existe e está testada em
+> `packages/fee-ingest/src/catalog-diff.ts` — o comparador old → new por categoria e o
+> classificador de dispensa (`mayAutoMerge`), que falha fechado. O **orquestrador**
+> (`refresh.mjs`) e o **workflow** ainda não existem, então **o laço mensal ainda não roda**.
+> T049a/T049b estão parcialmente cobertos ali (a decisão de dispensa e o dinheiro-nunca-dispensa);
+> o que falta neles é a metade que só existe dentro do job: "nenhum caminho escreve direto no
+> branch de integração". T049/T050 dependem das 8 condições do parecer (T069b).
+
 ### Testes ⚠️
 
 - [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
@@ -162,7 +170,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T048a Proteger o branch de integração com ruleset exigindo PR — hoje `develop` **não tem proteção nem ruleset** (medido: 404 + `[]`), então o único portão do artefato de dinheiro é código que o próprio job executa (FR-020c) — em configuração do repositório
 - [ ] T049a [US4] Classificador de **dispensa de revisão** (não de escrita): o job **sempre** abre PR; o classificador só decide se aquele PR pode auto-mergear, e apenas quando o diff for **exclusivamente** `lastReviewed`. Determinístico e, em dúvida ou erro, **nega a dispensa** (FR-020a) — em `packages/fee-ingest/refresh.mjs`
 - [ ] T049b [P] [US4] Teste: o classificador **nunca** dispensa revisão de um diff que toque dinheiro; classificador em erro nega a dispensa; e **nenhum caminho do job escreve direto** no branch de integração — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `packages/fee-ingest/src/catalog-diff.test.ts` (não em `refresh.test.ts`: a detecção é do comparador, não do orquestrador)
 - [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
