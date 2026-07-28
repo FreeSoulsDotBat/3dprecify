@@ -51,6 +51,7 @@ import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
 import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
 import { useFeeCatalog } from "@/shared/fee-catalog";
+import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
@@ -416,6 +417,7 @@ export function CalcularPage() {
         refreshFailed={catalogRefreshFailed}
         refreshing={catalogRefreshing}
         onRetryCatalog={retryCatalog}
+        spineFor={(m) => spineForMarketplace(catalog, m)}
       />
 
       {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços

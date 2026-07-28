@@ -112,7 +112,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T030b [US1] Catch-all como **ação**, não selo passivo: declara que é a maior alíquota da tabela e oferece escolher a categoria (FR-006b) — em `apps/web/src/features/calculator/fee-seal.tsx`
 - [ ] T030c [US1] Retorno da escolha em **reais sobre o preço**, não em pontos percentuais (FR-006c) — em `apps/web/src/features/calculator/category-picker.tsx`
 - [ ] T030d [US1] Memória local de **última categoria usada por marketplace** (pré-selecionada e editável) + recentes no topo do seletor — reduz o atrito de reescolha **sem** schema novo e sem tocar no domínio de catálogo — em `apps/web/src/features/calculator/category-picker.tsx`
-- [ ] T031 [US1] Ligar o seletor ao slot de canal, por slot, sem vazar entre canais — em `apps/web/src/features/calculator/calculator-form.tsx`
+- [x] T031 [US1] Ligar o seletor ao slot de canal, por slot, sem vazar entre canais — em `apps/web/src/features/calculator/calculator-form.tsx`
 - [ ] T032 [US1] Entregar a árvore ao cliente conforme D2 (semente / artefato sob demanda / podada) — em `apps/web/src/shared/fee-catalog/seed.ts`
 - [ ] T033 [US1] Homologação visual no navegador: passos 1–7 do [quickstart V6](./quickstart.md) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 

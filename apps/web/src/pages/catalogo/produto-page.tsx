@@ -40,6 +40,7 @@ import { RecordSnapshotButton, type RecordSource } from "@/features/history/reco
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { useFeeCatalog } from "@/shared/fee-catalog";
+import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Button, Card, Field, Select, Spinner, toast } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
@@ -402,6 +403,7 @@ export function ProdutoPage({
           refreshFailed={refreshFailed}
           refreshing={refreshing}
           onRetryCatalog={retryCatalog}
+          spineFor={(m) => spineForMarketplace(catalog, m)}
         />
       </fieldset>
 

@@ -23,6 +23,7 @@ import {
 } from "@/features/calculator/calculator-schema";
 import type { ProductOut } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
+import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Card, Field, Icon, Select } from "@/shared/ui";
 
@@ -188,6 +189,7 @@ export function BomLineEditor({
             refreshFailed={refreshFailed}
             refreshing={refreshing}
             onRetryCatalog={retryCatalog}
+            spineFor={(m) => spineForMarketplace(catalog, m)}
           />
         </div>
       )}

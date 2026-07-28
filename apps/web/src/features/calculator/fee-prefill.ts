@@ -2,6 +2,7 @@ import type { PriceBand, VoucherBand } from "@3dprecify/pricing-core";
 
 import {
   type CatalogSource,
+  type CategoryNode,
   type FeeCatalog,
   type FeeEntry,
   isStale,
@@ -185,4 +186,19 @@ export function feeSealState(args: {
   // The key is OMITTED rather than set to null when there is no category, so a slot on a
   // category-less marketplace keeps exactly the shape it had before 014.
   return { kind: "reference", ...dated, ...(originCategoryName ? { originCategoryName } : {}) };
+}
+
+/**
+ * The category spine a slot's picker should offer. Empty when the marketplace has no category axis
+ * (Shopee/Outro), or when the name index has not been fetched yet — the picker distinguishes those
+ * two cases in its own copy, because "no categories exist here" and "not downloaded yet" are very
+ * different things to tell a seller.
+ */
+export function spineForMarketplace(
+  catalog: FeeCatalog,
+  marketplace: MarketplaceId,
+): readonly CategoryNode[] {
+  const mk = toCatalogMarketplace(marketplace);
+  if (!mk) return [];
+  return catalog.marketplaces.find((m) => m.marketplace === mk)?.categorySpine ?? [];
 }

@@ -2,6 +2,7 @@ import { type CSSProperties } from "react";
 import { type Control, Controller } from "react-hook-form";
 
 import { type ChannelSlotOutcome } from "@/features/calculator/calculator-model";
+import { CategoryPicker } from "@/features/calculator/category-picker";
 import { FeeSeal } from "@/features/calculator/fee-seal";
 import {
   type CalcFieldMeta,
@@ -13,6 +14,7 @@ import {
   MARKETPLACE_OPTIONS,
   MODALITY_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import type { CategoryNode } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import type { PriceResult } from "@3dprecify/pricing-core";
 import {
@@ -279,6 +281,7 @@ function ChannelSlot({
   index,
   slot,
   outcome,
+  spine,
   onRemove,
   onMarketplaceChange,
 }: {
@@ -286,6 +289,8 @@ function ChannelSlot({
   index: number;
   slot: ChannelSlotForm;
   outcome?: ChannelSlotOutcome;
+  /** This marketplace's category spine (empty when it has no category axis, or not loaded yet). */
+  spine: readonly CategoryNode[];
   onRemove: (index: number) => void;
   onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
 }) {
@@ -342,6 +347,21 @@ function ChannelSlot({
                 />
               )}
             </Field>
+          )}
+        />
+      )}
+      {/* 014/US1 — only where the marketplace HAS a category axis. Shopee/Outro publish none, so
+          rendering an empty picker there would invent a choice that does not exist. */}
+      {modalityOptions.length > 0 && (
+        <Controller
+          control={control}
+          name={`channels.${index}.category` as const}
+          render={({ field }) => (
+            <CategoryPicker
+              spine={spine}
+              value={field.value}
+              onChange={(id) => field.onChange(id ?? "")}
+            />
           )}
         />
       )}
@@ -485,6 +505,7 @@ export function MarketplaceSection({
   refreshFailed,
   refreshing,
   onRetryCatalog,
+  spineFor,
 }: {
   control: Control<CalcFormValues>;
   values: CalcFormValues;
@@ -498,6 +519,8 @@ export function MarketplaceSection({
   refreshFailed: boolean;
   refreshing: boolean;
   onRetryCatalog: () => void;
+  /** Category spine per marketplace, from the catalog that already travels with the fees (D2). */
+  spineFor: (marketplace: MarketplaceId) => readonly CategoryNode[];
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -543,6 +566,7 @@ export function MarketplaceSection({
                 index={i}
                 slot={values.channels[i]}
                 outcome={channelOutcomes[i]}
+                spine={spineFor(values.channels[i].marketplace)}
                 onRemove={onRemove}
                 onMarketplaceChange={onMarketplaceChange}
               />
