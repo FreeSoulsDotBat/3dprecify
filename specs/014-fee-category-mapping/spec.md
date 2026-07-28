@@ -335,6 +335,21 @@ como os demais slots não sobrescritos.
 - **FR-017**: O sistema MUST NOT fazer merge automático e MUST NOT publicar por conta própria.
 - **FR-018**: Em falha de leitura, ou em parse vazio ou encolhido além de um limiar declarado, o sistema MUST abrir
   **nenhum** PR, MUST deixar o artefato intocado, e MUST alertar.
+- **FR-018a**: O sistema MUST tratar como **falha de forma da fonte** (mesmo desfecho do FR-018), e não como
+  mudança de tarifa: (i) valores-canário conhecidos que deixaram de bater, (ii) proporção de linhas alteradas acima
+  de um teto declarado, (iii) coluna localizada por posição em vez de por cabeçalho. **O fail-safe atual só detecta
+  parse vazio ou encolhido — não detecta um parser que leu a coluna errada e devolveu números plausíveis**, que é o
+  modo de falha mais perigoso porque passa despercebido na revisão do PR.
+- **FR-019a**: O sistema MUST comparar a **alíquota resolvida por nó** entre execuções, não apenas os campos das
+  entradas, e MUST expor em seção própria do PR todo nó cuja alíquota efetiva mudou porque o marketplace **moveu a
+  categoria de pai** — uma mudança de preço que não altera nenhum campo do artefato e por isso não apareceria no
+  diff.
+- **FR-026**: Dado inválido MUST NOT derrubar o aplicativo. A validação MUST ser fatal no gerador e no CI, e no
+  cliente MUST degradar por marketplace (descartar o marketplace inválido e selar "sem referência"). Um defeito
+  detectável no build **nunca** pode chegar ao vendedor como tela em branco.
+- **FR-027**: O sistema MUST NOT resolver por posição no artefato. Sem determinantes e sem entrada com
+  `determinants: null` explícita, o resultado MUST ser "sem referência" — o fallback posicional hoje existente
+  (`entries[0]`) é removido, não ajustado.
 - **FR-019**: O sistema MUST expor no PR, para decisão humana, toda categoria que desapareceu da fonte.
 - **FR-020**: `lastReviewed` MUST avançar **somente** mediante reverificação real contra a fonte.
 - **FR-020a**: Uma execução que confirma todos os valores inalterados MUST abrir um PR que altera **apenas**
@@ -407,8 +422,11 @@ como os demais slots não sobrescritos.
   embutir tudo no bundle.
 - **A Amazon não requer credencial alguma.** Sua tabela de comissões é pública, renderizada por JS, e o gate G2
   provou que renderiza idêntica de runner não-BR. A conta Amazon que o dono criou **não é usada** pelo pipeline.
-- **O catálogo permanece gratuito e público** — nenhum novo portão premium é introduzido (Q4 recomendado (a) com
-  ~85%, ainda a ratificar no clarify).
+- **O catálogo permanece gratuito e público** — **premissa CONDICIONAL, não afirmada**: Q4 segue aberta, e uma
+  spec não pode afirmar nas Premissas o que ela mesma lista como pergunta. Enquanto Q4 não fechar, todo o desenho
+  assume "gratuito". **Consequência escondida que a análise adversarial expôs: se Q4 virar "premium", o Princípio
+  IV (entitlement validado no servidor, NON-NEGOTIABLE) passa a valer e não existe uma única tarefa para isso** —
+  Q4 não é só uma pergunta de produto, ela carrega um princípio constitucional atrás.
 - **A cadência é mensal, dia 1, 06:00 UTC**, mirando `develop` (decisões QA5 e QA1 do dono, 2026-07-28).
 - **Custódia do refresh token = GitHub Secrets sem write-back**, viável porque o gate G3 mediu que o ML rotaciona o
   token no uso **mas o antigo continua válido**. Pendente de ratificação do `seguranca` quanto a segredo em

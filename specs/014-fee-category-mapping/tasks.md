@@ -24,7 +24,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 > **⛔BLOQUEADA** não começam até a decisão correspondente existir. T001 existe para que D2 seja decidido com
 > números — foi medindo que uma hipótese minha caiu na fase 0, e D2 é maior que aquela.
 
-- [ ] T001 Varrer a árvore de categorias ML **completa, uma vez**, e reportar três números: total de nós, nós cuja alíquota **diverge do pai**, e tamanho em bytes da árvore completa vs da forma comprimida — script descartável em `scripts/probes/t001-ml-tree-census.mjs`
+- [ ] T001 Varrer a árvore de categorias ML **completa, uma vez**, guardando a alíquota **de cada nó**, e reportar: total de nós, nós cuja alíquota **diverge do pai**, tamanho em bytes da árvore completa vs comprimida, e a **taxa de divergência por nível de profundidade** — a medição de fase 0 amostrou 96 filhos de **profundidade 1**; os níveis 2–4 têm n=3, então a direção se sustenta mas a magnitude **não está medida** — script descartável em `scripts/probes/t001-ml-tree-census.mjs`
 - [ ] T002 Decisão do dono **D1**: onde mora o código de ingestão (`plan.md` §Decisões estruturais pendentes) — registrar em `docs/decisions/tech-stack-decisions.md`
 - [ ] T003 Decisão do dono **D2**: como a árvore de nomes chega ao cliente, **à luz de T001** — inclui resolver a contradição declarada entre a opção (a) e a US1 AS5 ("o seletor nunca exige rede") — registrar em `docs/decisions/tech-stack-decisions.md`
 - [ ] T004 Ratificação **D3** do `seguranca` + dono: refresh token do ML em GitHub Secrets com o repositório público (QA2/QA3) — registrar como adendo em `specs/014-fee-category-mapping/seguranca-ci-first.md`
@@ -53,6 +53,9 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T011 [P] Teste: entrada com `commissionPct: null` cujas **bandas** também têm comissão nula é **rejeitada no parse** (SC-802, o furo herdado do 013) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
 - [ ] T012 [P] Teste: árvore com `parentId` órfão, e árvore com **ciclo**, são erro de parse (um ciclo travaria a resolução em laço infinito) — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`
 - [ ] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T013a [P] Teste: slot **sem determinantes** (modalidade vazia, como em cenários e kits salvos antes do 014) resolve para `null` + "sem referência", e **não** para `entries[0]` — o fallback posicional de `fee-catalog.ts:111` hoje entregaria a alíquota de uma categoria arbitrária sob selo "referência" (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T013b [P] Teste: semente embutida inválida **degrada por marketplace** e não derruba o boot — hoje `use-fee-catalog.ts:14` valida no module load com `.parse()` que lança, o que vira tela branca assim que a semente passar a ser gerada por robô (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
+- [ ] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 ### Implementação
 
@@ -60,6 +63,9 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T015 Estender o guard F3 ao **nível de banda**: uma entrada só é válida se a comissão existir no topo **ou** em todas as bandas (SC-802/FR-008) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
 - [ ] T016 Reescrever `resolveEntry` como caminhada pela cadeia de ancestrais, substituindo o `.find()` que hoje vence por ordem de array (R6) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
 - [ ] T017 Adicionar validação de determinantes duplicados e de `category` órfã ao parse do catálogo — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T017a Remover o fallback posicional `?? mk.entries[0]` — sem determinantes e sem entrada `determinants: null` explícita, o resultado é `null` (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T017b Política de validação **por camada**: fatal no gerador e no CI; no cliente, degradar por marketplace em vez de lançar no carregamento do módulo (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts`
+- [ ] T017c Registrar como **adendo ao ADR-0010** a mudança de semântica da resolução (casamento por subconjunto → por cadeia de ancestrais): store persistido e sementes escritos sob a regra antiga continuam válidos como forma e podem resolver diferente — em `docs/adr/0010-marketplace-fee-catalog-architecture.md`
 - [ ] T018 Exportar o módulo da árvore no barril do pacote — em `apps/web/src/shared/fee-catalog/index.ts`
 
 **Checkpoint**: catálogo resolve por categoria, de forma determinística, e recusa dados que mentiriam.
@@ -124,7 +130,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
 - [ ] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
 - [ ] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
-- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json`
+- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json` ⛔BLOQUEADA por T002 (consome a saída da T038)
 
 ---
 
@@ -145,8 +151,10 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 - [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
 - [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
-- [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge — em `.github/workflows/fee-refresh.yml`
-- [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml`
+- [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge. **Pré-condição a documentar no próprio workflow: o `schedule` do GitHub roda a partir da branch DEFAULT (`main`) — enquanto o arquivo não chegar em `main` por um corte de release, o laço mensal NÃO dispara sozinho** (ADR-0010 §A6.1) — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T002 (referencia caminhos `<D1>`)
+- [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T002
+- [ ] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
 - [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
@@ -175,7 +183,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 ### Testes ⚠️
 
 - [ ] T056 [P] [US6] Teste: entradas ML trazem a alíquota **exata** por categoria, nunca a faixa publicada 10–14% / 15–19% — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
-- [ ] T057 [P] [US6] Teste: a compressão por herança preserva a resolução — para uma amostra de nós, a alíquota resolvida pela forma comprimida é **idêntica** à da forma completa, incluindo os divergentes medidos (Smartphones 16% sob Celulares 18%, Consoles 16% sob Games 18%) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+- [ ] T057 [P] [US6] Teste: a compressão por herança preserva a resolução em **100% dos nós**, não numa amostra — o censo da T001 já busca a alíquota de cada nó, então a equivalência `resolve(comprimido) == alíquota bruta` sai **de graça** para a árvore inteira; pedir amostra aqui seria aceitar risco de dinheiro que já foi pago — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
 - [ ] T058 [P] [US6] Teste: faixas de custo fixo abaixo de R$ 79 usam as fronteiras publicadas literalmente, e a lacuna R$ 50,01–78,99 **permanece lacuna** (FR-014a) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
 - [ ] T059 [P] [US6] Teste: toda entrada ML **declara a premissa de logística** sob a qual o custo fixo vale (Q8) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
 
@@ -205,7 +213,10 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ## Phase 10: Polish & Cross-Cutting
 
-- [ ] T069 [P] Orçamento do SC-810: medir tamanho da semente e custo de validação no boot, comparar com o número do `arquiteto`, e provar que a primeira pintura offline da calculadora gratuita **não** regrediu — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [ ] T068a Fixar com o `arquiteto` os **números** do orçamento do SC-810 (bytes da semente e custo de parse no boot) — T069 hoje compara com um número que **não existe** — em `specs/014-fee-category-mapping/plan.md`
+- [ ] T069 [P] Orçamento do SC-810: medir tamanho da semente e custo de validação no boot, comparar com o número fixado em T068a, e provar que a primeira pintura offline da calculadora gratuita **não** regrediu — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [ ] T069a [P] Verificar o SC-813 (hoje sem nenhuma tarefa): o workflow roda **só** em runner hospedado, não há runner self-hosted, e o incremento não adiciona **nenhum** recurso de nuvem — o resultado que os gates compraram precisa de alguém que o verifique — em `.github/workflows/fee-refresh.yml`
+- [ ] T069b [P] Fechar os pré-requisitos de segurança que o parecer marcou e que nenhuma tarefa carregava: SEC-014-02/08/10 (`allowed_actions`, pinagem por SHA, `trufflehog@main`) e o §A6.5(iii) (CI independente sobre o PR mensal). O segredo do ML **nunca** num workflow disparado por `pull_request` — em `.github/workflows/` ⛔BLOQUEADA por T004
 - [ ] T070 [P] Regenerar o contrato OpenAPI e provar idempotência se **qualquer** rota do backend mudou, docstrings incluídas (o drift-guard só roda no CI e reprova **depois** do gate verde) — em `apps/web/src/shared/api/`
 - [ ] T071 [P] e2e do fluxo completo: escolher categoria → calcular → salvar cenário → reabrir — em `apps/web/e2e/category-fee.spec.ts`
 - [ ] T072 Decisão do dono sobre **Q11** e, com ela, o descarte formal da **US7** (o desbloqueio da US6 removeu a premissa dela) — registrar em `spec.md`
