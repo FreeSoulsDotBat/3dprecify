@@ -85,6 +85,21 @@ describe("parseAmazonTable — fails loudly rather than shrinking the map", () =
     ).toThrow(/unparseable/i);
   });
 
+  it("a row narrower than the table's three columns is skipped, not guessed at", () => {
+    // Layout rows (colspan notes, section separators) appear as short rows. Reading them as data
+    // would invent categories; throwing on them would make an ordinary page break the whole run.
+    expect(parseAmazonTable([["Nota de rodapé"], ["Categoria", "14%", "BRL 1,00"]])).toHaveLength(
+      1,
+    );
+  });
+
+  it("a minimum cell with no amount yields null, not zero", () => {
+    // Zero would silently mean "no floor applies", which is a different and cheaper claim than
+    // "this source does not state a floor".
+    const [row] = parseAmazonTable([["Categoria", "14%", "não aplicável"]]);
+    expect(row.minPerItem).toBeNull();
+  });
+
   it("throws on a commission with no category", () => {
     expect(() => parseAmazonTable([["", "14%", "BRL 1,00"]])).toThrow(/no category/i);
   });

@@ -15,6 +15,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
+import { checkParseSanity } from "./guardrails.ts";
 import { amazonEntries, amazonSpine } from "./amazon-to-catalog.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
@@ -52,20 +53,10 @@ const rows =
 
 const categories = parseAmazonTable(rows);
 
-if (categories.length < MIN_ROWS) {
-  console.error(
-    `ABORT: parsed ${categories.length} categories, below the ${MIN_ROWS} floor. Treating as a source-shape failure, not a fee change — the artifact is left untouched.`,
-  );
+const verdict = checkParseSanity(categories, { minRows: MIN_ROWS, canaries: CANARIES });
+if (!verdict.ok) {
+  console.error(`ABORT: ${verdict.reason}. The artifact is left untouched.`);
   process.exit(1);
-}
-for (const [name, pct] of CANARIES) {
-  const hit = categories.find((c) => c.name === name);
-  if (!hit || hit.commissionPct !== pct) {
-    console.error(
-      `ABORT: canary "${name}" expected ${pct}%, got ${hit ? hit.commissionPct : "MISSING"}. The parser is likely reading the wrong column.`,
-    );
-    process.exit(1);
-  }
 }
 
 const collectedAt = process.env.COLLECTED_AT ?? new Date().toISOString().slice(0, 10);
