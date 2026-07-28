@@ -32,13 +32,18 @@ jobs:
         with:
           node-version: 24
 
-      # Two separate things, and conflating them already cost one inconclusive run: the npm
-      # PACKAGE (which the probe imports) and the BROWSER BINARY (which the package drives).
-      # `playwright install` only does the second.
-      - name: Install Playwright package + chromium
+      # Everything happens OUTSIDE the repo tree, for two reasons this gate learned the hard way:
+      #   1. this is a pnpm workspace whose package.json uses the `catalog:` protocol — `npm install`
+      #      at the root dies with EUNSUPPORTEDPROTOCOL before it ever reaches Amazon;
+      #   2. the npm PACKAGE and the BROWSER BINARY are separate installs, and `playwright install`
+      #      only does the latter.
+      # The probe is copied next to its node_modules because ESM resolution walks up from the
+      # script's own directory (NODE_PATH would not help here).
+      - name: Run the G2 probe in an isolated install
         run: |
-          npm install --no-save --no-package-lock playwright
+          mkdir -p /tmp/g2 && cd /tmp/g2
+          npm init -y > /dev/null
+          npm install playwright
           npx playwright install --with-deps chromium
-
-      - name: Run the G2 probe
-        run: node scripts/probes/g2-amazon-fee-table.mjs
+          cp "$GITHUB_WORKSPACE/scripts/probes/g2-amazon-fee-table.mjs" .
+          node g2-amazon-fee-table.mjs
