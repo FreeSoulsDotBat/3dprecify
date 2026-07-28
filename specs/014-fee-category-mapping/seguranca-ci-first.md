@@ -474,3 +474,101 @@ Retifico o alcance, não o conteúdo:
 - **Independentemente de tudo acima**, os achados SEC-014-02 (`trufflehog@main` por branch mutável), SEC-014-08
   (`allowed_actions: all`), SEC-014-10 (`first_time_contributors`) e SEC-014-11 (PR sem CI) devem ser corrigidos —
   eles não dependem de nenhuma destas decisões.
+
+---
+
+# ADENDO — Parecer decisório T004/D3 (2026-07-28, pós-gates)
+
+**VEREDITO: LIBERA COM CONDIÇÕES — confiança 88%.**
+
+Os 12% restantes: o alcance real de escrita do token ML é indemonstrável sem uma chamada de escrita (proibida,
+§ameaça), e o classificador do FR-020a comitará dinheiro num `develop` que **hoje não tem proteção nenhuma**
+(medido 2026-07-28: `branches/develop/protection` → 404; `rulesets` → `[]`; ambos reconfirmados pelo main-loop).
+
+## As 8 condições (verificáveis; **nenhuma depende da visibilidade do repositório**)
+
+1. **O job que carrega o segredo instala ZERO dependências** — só `checkout` + `setup-node` + `node <arquivo>.mjs`
+   com built-ins, a forma que o G1 já provou viável. Nada de `pnpm install` no job com segredo; Playwright/Amazon
+   ficam em **job separado, sem segredo**.
+2. **Todas as actions de `fee-refresh.yml` pinadas por SHA de 40 caracteres** + `sha_pinning_required: true` no
+   repositório (hoje `false`). Fecha `trufflehog@main` e as outras 9 referências mutáveis de uma vez.
+3. **Segredo num GitHub Environment** (`ml-ingest`) com *deployment branch rule* restrita ao branch default; o job
+   declara `environment: ml-ingest`. Hoje há **0 environments**.
+4. **`::add-mask::` no token rotacionado antes de qualquer log**; proibido logar corpo de resposta de
+   `/oauth/token`; sem `set -x`; sem upload de artefato com resposta bruta. **Achado desta revisão**: logs de repo
+   público são mundialmente legíveis e **o token NOVO devolvido pela rotação não é mascarado** — só a string
+   cadastrada como secret é. Um `console.log(body)` publica um refresh token válido para sempre.
+5. **O segredo nunca em workflow disparado por `pull_request`, `pull_request_target` NEM `workflow_run`** —
+   completa a condição do `arquiteto`: `workflow_run` roda do branch default **com** segredos e é acionável
+   indiretamente por PR de fork.
+6. **Separação de privilégio em dois jobs**: coleta (tem o segredo, `permissions: contents: read`) → artefato →
+   publicação (`contents: write` + `pull-requests: write`, **sem** o segredo).
+7. **T069b deixa de ser bloqueada por T004 e vira pré-condição de T060/T063** — as correções de segurança estavam
+   bloqueadas pelo próprio parecer que as exige (dependência circular). Inclui §A6.5(iii) com dono nomeado.
+8. **Runbook de revogação testado uma vez e cronometrado** (≤15 min), **2FA** na conta da casa, e **rotação manual
+   anual** em calendário — sem write-back, o mesmo segredo é replayed 12×/ano.
+
+## O que do parecer original CAIU (por medição, não por opinião)
+
+| achado | estado |
+|---|---|
+| SEC-014-01 (RCE via fork PR em self-hosted) | **caiu inteira** — G1 extinguiu o self-hosted |
+| SEC-014-07 (raio de dano na máquina do dono) | **caiu** — QA4 extinta |
+| SEC-014-03 (PAT longevo para write-back) | **caiu** — G3 dispensa write-back |
+| SEC-014-05 (perda irreversível na rotação) | **caiu quase toda** — sobra o TTL desconhecido do token antigo |
+| SEC-014-04 (co-residência temporal) | **caiu** — dependia de runner persistente |
+| §5 opções A/B/C + Cloud NAT + "A+B" | **caíram por irrelevância** — sem geo-gate não há NAT a discutir |
+| QA2(b) Secret Manager via WIF | **recomendação retirada** — tecnicamente superior, mas cobra reverter o deferimento de provisionamento por um ativo de dano médio-baixo. **(c) passa a ser a escolha certa** |
+| §8.4/QA3 "esperar o repo ficar privado" | **caiu** — nenhuma das 8 condições depende de visibilidade |
+
+**Sobrevive e foi re-medido**: `allowed_actions: all`, `sha_pinning_required: false`,
+`approval_policy: first_time_contributors`, `trufflehog@main`, SEC-014-11 (PR do artefato de dinheiro sem CI).
+**Absolvição medida**: `default_workflow_permissions: read` + `can_approve_pull_request_reviews: false`.
+
+## Modelo de ameaça — o reenquadramento que importa
+
+Vetor **morto**: fork PR não recebe segredo e o runner é efêmero. Vetor **vivo**: mantenedor de action ou
+dependência comprometido — tag mutável ou `postinstall` dentro do job com o segredo exfiltra no mesmo run, e
+mascaramento protege o log, não a rede. Vetor **barato e esquecido**: leitor dos logs públicos.
+
+**Pior dano real: não é dinheiro.** É perda de controle da conta da casa e da app OAuth
+(`urn:global:admin:oauth:/read-write` alcança a própria app), anúncios ou mensagens fraudulentas sob identidade
+ligada ao documento do dono, e PII da conta. **A ausência de vendas derruba o dano de Alto para Médio-baixo, não a
+zero** — o ativo é a identidade e a app, não o saldo.
+
+**Sobre os escopos `write`/`admin` que a tela do ML não deixa remover** *(inferência ~65%)*: escopo no token não é
+autorização efetiva — o próprio G1 mediu 403 em toda a família `/sites/*` com permissões mínimas. Mas `/users/me`
+devolveu 200 no mesmo teste, provando que **alguns endpoints escapam do PolicyAgent**. Trate como potencialmente
+efetivos em endpoints legados e **NÃO teste escrita** — uma chamada de escrita bem-sucedida é dano auto-infligido.
+Mitigação compensatória: conta sem meio de pagamento, sem saldo, sem anúncios.
+
+**E o reenquadramento central**: quem exfiltra o token já tem execução de código num job com `contents: write` no
+branch default — e nesse mundo **envenena o `catalog.json`, o percentual que entra no preço do vendedor, sem
+precisar do token ML**. **O ativo mais valioso deste job é a permissão de escrita no repositório, não o segredo.**
+Por isso as condições 1, 2 e 6 valem mais do que qualquer coisa feita ao segredo em si.
+
+## Custódia (c) — CONFIRMADA, 90%
+
+G3 removeu a única objeção estrutural. Duas honestidades: G3 mediu que o antigo sobrevive **uma** rotação, num
+ponto no tempo — não mediu TTL nem número de rotações; e sem write-back o mesmo segredo é replayed indefinidamente.
+Se falhar, o desfecho é **parada silenciosa + selo de obsolescência**, nunca corrupção do artefato.
+
+## `ML_ACCESS_TOKEN` — nada a apagar
+
+Medido 2026-07-28: `actions/secrets` → `total_count: 0`; environments, dependabot e codespaces também 0.
+Residual: apagar `g1-probe-ml.yml` e `g2-probe-amazon.yml` junto com a fatia (o §A13 já os declara descartáveis, e
+o g1 ainda referencia o nome do segredo).
+
+## Se o repositório virar privado
+
+**Nenhuma condição é adicionada nem removida.** Muda o entorno: a condição 4 perde urgência, some o auto-disable de
+60 dias por inatividade, minutos passam a consumir cota (~0,25%), e o vetor fork-PR morre de vez. **A visibilidade
+não é dependência desta ratificação** — inversão explícita do que este mesmo documento recomendava em QA3.
+
+## ACHADO NOVO — decisão do dono (Princípio VIII, não decidido aqui)
+
+O FR-020a manda o job **comitar direto em `develop`** quando o diff é só `lastReviewed`. **`develop` não tem
+proteção nem ruleset** (medido). Então o portão que protege dinheiro é **exclusivamente o classificador dentro do
+job** — nenhum controle de plataforma o respalda. Opções: (i) ruleset em `develop` exigindo PR — mata o commit
+direto do FR-020a; (ii) manter o commit direto e compensar com CODEOWNERS + condição 6; (iii) commit direto só num
+branch dedicado que abre PR sempre.
