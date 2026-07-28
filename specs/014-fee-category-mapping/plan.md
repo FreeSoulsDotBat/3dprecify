@@ -68,6 +68,28 @@ incremento, não estimativa daqui) · Amazon com 38 linhas de comissão medidas 
 - [ ] **VIII. Architecture Decided Before Implementation** — **3 escolhas estruturais pendentes**, enumeradas
       abaixo com ≥3 opções e confiança. **O plano segue; as tarefas que dependem delas PARAM até o dono decidir.**
 
+## Decisões estruturais — DECIDIDAS pelo dono em 2026-07-28 (após revisão adversarial)
+
+**D1 = (b) `packages/fee-ingest`.** Pacote de workspace. O parser produz folhas de dinheiro e precisa satisfazer o
+**mesmo** `feeEntrySchema` do catálogo; fora do workspace duplicaria a validação (Princípio V) e ficaria fora do
+`gate:all` — e a ferramenta que ninguém observa é justamente a que mais precisa de portão. Playwright entra como
+`devDependency` **só** desse pacote, com a fronteira travada no `dependency-cruiser` (T007).
+
+**D2 = espinha no catálogo + nomes sob demanda.** Havia **dois consumidores** onde o plano tratava um artefato: o
+*resolvedor* precisa apenas de `id`+`parentId` dos nós **divergentes e seus ancestrais**; o *seletor* precisa dos
+**nomes** de todos. A espinha viaja dentro do próprio `catalog.json`; o índice de nomes é buscado e persistido sob
+demanda. **Consequências**: a alíquota fica offline desde o primeiro uso (a contradição FR-005/US1 AS5 se dissolve —
+offline o app é completo em **preço** e incompleto em **nome**) e o risco de skew árvore↔catálogo **desaparece por
+construção**, porque o dado que decide dinheiro anda num artefato só, com um `catalogVersion` só.
+
+**D3 — ainda aberta.** A fatia ML segue parada em T004.
+
+**Obsolescência = medida contra ENTREGA**, não contra leitura da fonte nem contra merge (FR-020b).
+
+**Escopo = 014 completo agora**, com artefato embutido de transição enquanto não há deploy. O contraponto do
+`product-owner` (80% de que o certo era reduzir e priorizar o E6) está registrado em `spec.md` §Clarifications — a
+decisão foi tomada com ele à vista, não por omissão.
+
 ## Decisões estruturais pendentes (Princípio VIII — não inferidas)
 
 ### D1 — Onde mora o código de ingestão

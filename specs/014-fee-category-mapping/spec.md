@@ -50,6 +50,24 @@ máquina" listado no ADR §A11 não se materializa.
   credencial); o **ML é fatia própria**, autorizada à parte — isola a única superfície de segredo e a única pendência
   do `seguranca` sem segurar o resto do incremento.
 
+### Session 2026-07-28 (segunda rodada — após a revisão adversarial de 3 especialistas)
+
+- Q: Construir o 014 completo agora, ou reduzir e priorizar o E6? → A: **014 completo agora**, com um **artefato
+  embutido de transição**: a ingestão implementada roda, sua saída **real** é commitada e serve o app em runtime
+  **sem depender de deploy**; quando a v1 subir, o endpoint servido e o laço mensal assumem e o embutido volta a ser
+  semente enxuta. **Registrado o contraponto do `product-owner` (80% de que o certo era reduzir)**: hoje o 014
+  entrega precisão para zero usuários em produção, o E6 segue mid-flight, e o laço mensal não dispara até o workflow
+  chegar em `main`. O dono decidiu com o contraponto à vista.
+- Q: A janela de obsolescência deve ser medida contra o quê? → A: **Contra a ENTREGA ao usuário**, não contra a
+  leitura da fonte nem contra o merge. Corrige a causa do falso positivo estrutural em vez do sintoma; exige que o
+  artefato carregue a data de entrega.
+- Q: Como a árvore chega ao cliente (D2)? → A: **Espinha de resolução dentro do próprio `catalog.json`** (nós
+  divergentes + seus ancestrais) + **índice de nomes sob demanda**. A alíquota fica offline desde o primeiro uso e o
+  risco de skew árvore↔catálogo **desaparece por construção**.
+- Q: Onde mora o código de ingestão (D1)? → A: **`packages/fee-ingest`**, pacote de workspace — o parser produz
+  folhas de dinheiro e precisa satisfazer o **mesmo** schema do catálogo; fora do workspace duplicaria validação e
+  ficaria fora do `gate:all`.
+
 ---
 
 ## User Scenarios & Testing *(mandatory)*
@@ -352,6 +370,10 @@ como os demais slots não sobrescritos.
   (`entries[0]`) é removido, não ajustado.
 - **FR-019**: O sistema MUST expor no PR, para decisão humana, toda categoria que desapareceu da fonte.
 - **FR-020**: `lastReviewed` MUST avançar **somente** mediante reverificação real contra a fonte.
+- **FR-020b**: A janela de obsolescência MUST ser medida contra a data em que o valor **chegou ao usuário**, não
+  contra a data em que o robô leu a fonte. Sem isso, o selo acusa "desatualizada" durante todo o intervalo entre a
+  leitura e a entrega (merge + corte de release + deploy) — **um falso positivo estrutural, todo mês, sobre valores
+  corretos e reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar.
 - **FR-020a**: Uma execução que confirma todos os valores inalterados MUST abrir um PR que altera **apenas**
   `lastReviewed`. Uma execução que **falhou** em ler a fonte MUST NOT avançar `lastReviewed` de valor algum.
 - **FR-021**: O laço mensal MUST consumir **0 tokens de LLM**.
