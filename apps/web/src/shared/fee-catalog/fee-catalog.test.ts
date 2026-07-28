@@ -9,6 +9,7 @@ import {
   feeEntrySchema,
   isStale,
   parseFeeCatalog,
+  parseSeedResilient,
   resolveEntry,
   SCHEMA_VERSION,
   STALENESS_DAYS,
@@ -163,5 +164,205 @@ describe("isStale — 30-day window vs lastReviewed (pure, injected now)", () =>
 
   it("never cries wolf on an unparseable date", () => {
     expect(isStale({ ...entry, lastReviewed: "not-a-date" }, reviewed + 999 * day)).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 014 — resolution by ancestor chain, and the two defects the adversarial review found in the
+// code that already ships. Numbers below are MEASURED against the live ML API on 2026-07-28.
+// ---------------------------------------------------------------------------------------------
+
+const provenance = {
+  freight: { kind: "NONE" as const },
+  source: "API Mercado Livre (listing_prices)",
+  sourceUrl: "https://api.mercadolibre.com/sites/MLB/listing_prices",
+  effectiveDate: "2026-07-28",
+  lastReviewed: "2026-07-28",
+};
+
+/** Sparse by design: an entry exists only where the rate DIVERGES from the parent (measured: ~87.5%
+ *  of nodes inherit). `MLB1055` is a real divergence — ML publishes 18% at the root and 16% here. */
+const mlCatalog = (entries: unknown[]) => ({
+  catalogVersion: "2026-07-28.t",
+  schemaVersion: SCHEMA_VERSION,
+  generatedAt: "2026-07-28T00:00:00.000Z",
+  marketplaces: [
+    {
+      marketplace: "MERCADO_LIVRE",
+      categorySpine: [
+        { id: "MLB1051", name: "Celulares e Telefones", parentId: null },
+        { id: "MLB1055", name: "Celulares e Smartphones", parentId: "MLB1051" },
+        { id: "MLB3813", name: "Acessórios para Celulares", parentId: "MLB1051" },
+        { id: "MLB439224", name: "Apoio para Celulares", parentId: "MLB3813" },
+      ],
+      entries,
+    },
+  ],
+});
+
+const ENTRY_ROOT_18 = {
+  determinants: { listingType: "gold_pro", category: "MLB1051" },
+  commissionPct: 18,
+  fixedFee: 0,
+  ...provenance,
+};
+const ENTRY_DIVERGENT_16 = {
+  determinants: { listingType: "gold_pro", category: "MLB1055" },
+  commissionPct: 16,
+  fixedFee: 0,
+  ...provenance,
+};
+const ENTRY_CATCH_ALL = {
+  determinants: { listingType: "gold_pro" },
+  commissionPct: 15,
+  fixedFee: 0,
+  ...provenance,
+};
+
+describe("resolveEntry — nearest ancestor wins (SC-801)", () => {
+  const catalog = feeCatalogSchema.parse(
+    mlCatalog([ENTRY_ROOT_18, ENTRY_DIVERGENT_16, ENTRY_CATCH_ALL]),
+  );
+  const at = (category?: string) =>
+    resolveEntry(catalog, "MERCADO_LIVRE", {
+      listingType: "gold_pro",
+      ...(category ? { category } : {}),
+    })?.commissionPct;
+
+  it("a category with its own entry uses it", () => {
+    expect(at("MLB1051")).toBe(18);
+  });
+
+  it("a DIVERGENT child uses its own rate, not the parent's", () => {
+    expect(at("MLB1055")).toBe(16);
+  });
+
+  it("a category with no entry inherits from the NEAREST ancestor that has one", () => {
+    // MLB439224 → MLB3813 (no entry) → MLB1051 (18%).
+    expect(at("MLB439224")).toBe(18);
+  });
+
+  it("no category falls through to the published catch-all", () => {
+    expect(at()).toBe(15);
+  });
+
+  // THE property. If this can fail, every other guarantee is luck.
+  it("is INDEPENDENT of the order entries appear in the artifact", () => {
+    const orders = [
+      [ENTRY_ROOT_18, ENTRY_DIVERGENT_16, ENTRY_CATCH_ALL],
+      [ENTRY_CATCH_ALL, ENTRY_ROOT_18, ENTRY_DIVERGENT_16],
+      [ENTRY_DIVERGENT_16, ENTRY_CATCH_ALL, ENTRY_ROOT_18],
+      [ENTRY_CATCH_ALL, ENTRY_DIVERGENT_16, ENTRY_ROOT_18],
+    ];
+    for (const entries of orders) {
+      const c = feeCatalogSchema.parse(mlCatalog(entries));
+      const rate = (cat: string) =>
+        resolveEntry(c, "MERCADO_LIVRE", { listingType: "gold_pro", category: cat })?.commissionPct;
+      expect(rate("MLB1055")).toBe(16);
+      expect(rate("MLB439224")).toBe(18);
+      expect(rate("MLB1051")).toBe(18);
+    }
+  });
+
+  it("a different listingType does NOT borrow another modality's rate", () => {
+    const e = resolveEntry(catalog, "MERCADO_LIVRE", {
+      listingType: "gold_special",
+      category: "MLB1055",
+    });
+    expect(e).toBeNull();
+  });
+});
+
+describe("resolveEntry — the positional fallback is gone (FR-027)", () => {
+  // fee-catalog.ts:111 used to end in `?? mk.entries[0]`. A slot with no determinants (modality
+  // empty — exactly what scenarios and kits saved before 014 carry) would get the FIRST entry in the
+  // array: an arbitrary category's commission, under a "referência" seal.
+  it("no determinants + no explicit null-keyed entry ⇒ null, never entries[0]", () => {
+    const catalog = feeCatalogSchema.parse(mlCatalog([ENTRY_ROOT_18, ENTRY_DIVERGENT_16]));
+    expect(resolveEntry(catalog, "MERCADO_LIVRE", null)).toBeNull();
+  });
+
+  it("still honours an EXPLICIT null-keyed entry (Shopee's shape)", () => {
+    const catalog = feeCatalogSchema.parse(
+      mlCatalog([ENTRY_ROOT_18, { ...ENTRY_CATCH_ALL, determinants: null, commissionPct: 11 }]),
+    );
+    expect(resolveEntry(catalog, "MERCADO_LIVRE", null)?.commissionPct).toBe(11);
+  });
+});
+
+describe("catalog parse rejects data that would resolve ambiguously or fabricate", () => {
+  it("rejects two entries with the SAME determinant set (ambiguity, not a tie-break)", () => {
+    expect(() =>
+      feeCatalogSchema.parse(mlCatalog([ENTRY_ROOT_18, { ...ENTRY_ROOT_18, commissionPct: 13 }])),
+    ).toThrow();
+  });
+
+  it("rejects an entry whose category is absent from the spine (a ghost category)", () => {
+    expect(() =>
+      feeCatalogSchema.parse(
+        mlCatalog([
+          { ...ENTRY_ROOT_18, determinants: { listingType: "gold_pro", category: "GHOST" } },
+        ]),
+      ),
+    ).toThrow();
+  });
+
+  // SC-802 / FR-008 — the F3 guard inherited from 013 checked only the TOP level: an entry whose
+  // bands ALSO carry a null commission passed validation and prefilled 0% under a "referência" seal.
+  it("rejects a banded entry whose BANDS carry a null commission (0% under reference)", () => {
+    const blind = {
+      ...provenance,
+      determinants: { listingType: "gold_pro", category: "MLB1051" },
+      commissionPct: null,
+      fixedFee: null,
+      priceBands: [
+        { minPrice: 0, maxPrice: 79, commissionPct: null, fixedFee: 6.25 },
+        { minPrice: 79, maxPrice: null, commissionPct: 18, fixedFee: 0 },
+      ],
+    };
+    expect(() => feeEntrySchema.parse(blind)).toThrow();
+  });
+
+  it("a valid seed still parses identically through the resilient path", () => {
+    const good = mlCatalog([ENTRY_ROOT_18]);
+    expect(parseSeedResilient(good)).toEqual(parseFeeCatalog(good));
+  });
+
+  // FR-026 — the seed is validated at module load. Throwing was right while it was hand-written with
+  // one entry; from 014 it is robot-generated, and one bad marketplace would white-screen every user
+  // at boot, online and offline, until a new bundle shipped.
+  it("an invalid marketplace in the seed is DROPPED, not fatal", () => {
+    const withGhost = {
+      ...mlCatalog([ENTRY_ROOT_18]),
+      marketplaces: [
+        ...mlCatalog([ENTRY_ROOT_18]).marketplaces,
+        // duplicate determinant sets — invalid, and exactly what a buggy generator emits
+        { marketplace: "AMAZON", entries: [ENTRY_CATCH_ALL, ENTRY_CATCH_ALL] },
+      ],
+    };
+    expect(() => parseFeeCatalog(withGhost)).toThrow(); // generator + CI: fatal
+    const salvaged = parseSeedResilient(withGhost); // client: degrade
+    expect(salvaged.marketplaces.map((m) => m.marketplace)).toEqual(["MERCADO_LIVRE"]);
+    // and the dropped channel resolves to nothing — "sem referência", never a fabricated price
+    expect(resolveEntry(salvaged, "AMAZON", { plan: "PROFISSIONAL" })).toBeNull();
+  });
+
+  it("a seed that is unsalvageable yields an empty catalog rather than crashing the app", () => {
+    const junk = { marketplaces: "not-an-array" };
+    expect(parseSeedResilient(junk).marketplaces).toEqual([]);
+  });
+
+  it("accepts a banded entry when EVERY band carries a commission", () => {
+    const sound = {
+      ...provenance,
+      determinants: { listingType: "gold_pro", category: "MLB1051" },
+      commissionPct: null,
+      fixedFee: null,
+      priceBands: [
+        { minPrice: 0, maxPrice: 79, commissionPct: 18, fixedFee: 6.25 },
+        { minPrice: 79, maxPrice: null, commissionPct: 18, fixedFee: 0 },
+      ],
+    };
+    expect(() => feeEntrySchema.parse(sound)).not.toThrow();
   });
 });

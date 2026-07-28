@@ -4,14 +4,20 @@ import { useEffect, useState } from "react";
 
 import { apiFetch } from "@/shared/api/transport";
 
-import { type FeeCatalog, parseFeeCatalog } from "./fee-catalog";
+import { type FeeCatalog, parseFeeCatalog, parseSeedResilient } from "./fee-catalog";
 import { FEE_CATALOG_SEED } from "./seed";
 
 // E1-06: the bundled seed is the SYNCHRONOUS floor every first render relies on (R1) — it must be
-// validated through the same schema as the served/persisted catalog. Validating at module load
-// (not lazily inside the hook) makes a malformed seed fail LOUDLY at boot instead of silently
-// feeding an invalid shape into pricing as if it were trustworthy data.
-const VALIDATED_SEED: FeeCatalog = parseFeeCatalog(FEE_CATALOG_SEED);
+// validated through the same schema as the served/persisted catalog, at module load rather than
+// lazily inside the hook, so a malformed seed is caught before it can feed pricing.
+//
+// 014 (FR-026) changed HOW it fails, not WHETHER it is validated. This used to be `parseFeeCatalog`,
+// which throws: correct while the seed was hand-written with one entry, but from 014 on the seed is
+// ROBOT-GENERATED, and one duplicate determinant set would have meant a white screen at boot for
+// every user until a new bundle shipped. `parseSeedResilient` drops the offending marketplace (its
+// slots read "sem referência") and logs loudly. An invalid value still never becomes a price — it
+// just stops taking the app down for a defect that CI and the generator should have caught first.
+const VALIDATED_SEED: FeeCatalog = parseSeedResilient(FEE_CATALOG_SEED);
 
 // Fetch→persist→seed catalog store (ADR-0010 Part 2 / T009c). Resolution order: persisted store
 // (freshest cached) → bundled seed (first-run offline, R1) → refresh from GET /api/v1/fee-catalog
