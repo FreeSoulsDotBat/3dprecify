@@ -89,6 +89,12 @@ máquina" listado no ADR §A11 não se materializa.
   token da conta da casa no caminho de requisição do usuário, a cada digitação**, em vez de 12 chamadas por ano num
   job de CI. O parecer do `seguranca` foi escrito sobre a segunda hipótese, não sobre a primeira — adotar exigiria
   parecer novo. O 014 entrega com busca local, offline e sem credencial.
+- Q: Quem tem a palavra final sobre o artefato de dinheiro — o classificador do job ou a plataforma? → A: **A
+  plataforma.** `develop` ganha proteção exigindo PR; o robô **nunca** escreve direto e sempre abre PR; o
+  classificador passa a decidir **apenas a dispensa de revisão**, e só quando provar que o diff é exclusivamente
+  `lastReviewed`. Classificador quebrado produz um PR esperando humano, nunca um commit de dinheiro. Preserva o
+  ganho do Q7 (ninguém revisa PR vazio) e responde ao achado do T004: `develop` não tinha proteção nenhuma
+  (medido — 404 + rulesets vazios), então o único portão era código que o próprio job executa.
 - Q: O mapa de categorias é gratuito ou premium? → A: **GRATUITO — fechada.** Reaberta e decidida com a colisão à
   vista: premium exigiria racharem-se artefato e entrega (categorias servidas sob entitlement, nunca embutidas),
   **matando o ganho do D2** (alíquota offline desde o primeiro uso), acionando o Princípio IV sem nenhuma tarefa
@@ -408,12 +414,22 @@ como os demais slots não sobrescritos.
   contra a data em que o robô leu a fonte. Sem isso, o selo acusa "desatualizada" durante todo o intervalo entre a
   leitura e a entrega (merge + corte de release + deploy) — **um falso positivo estrutural, todo mês, sobre valores
   corretos e reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar.
-- **FR-020a**: A política de publicação MUST ser dividida por classe de diff. Um diff que altera **exclusivamente**
-  `lastReviewed` MUST ser commitado pelo próprio job, sem PR. Um diff que toca **qualquer campo de dinheiro** MUST
-  abrir PR para revisão humana. O classificador MUST ser determinístico e, em qualquer dúvida ou erro, MUST falhar
-  **abrindo PR** — nunca commitando. Uma execução que **falhou** em ler a fonte MUST NOT avançar `lastReviewed` de
-  valor algum. *(Revisa a decisão anterior de "todo mês abre PR": um PR quase-vazio recorrente treina o revisor a
-  carimbar, corroendo justamente o portão que protege dinheiro.)*
+- **FR-020a**: O job MUST **sempre abrir PR** e MUST NOT escrever direto no branch de integração. A política
+  dividida por classe de diff decide **apenas a dispensa de revisão**: um PR cujo diff seja **exclusivamente**
+  `lastReviewed` MAY ser auto-mergeado; um PR que toque **qualquer campo de dinheiro** MUST aguardar revisão
+  humana. O classificador MUST ser determinístico e, em qualquer dúvida ou erro, MUST **negar a dispensa** — o
+  desfecho de falha é um PR esperando humano, nunca uma escrita. Uma execução que **falhou** em ler a fonte MUST
+  NOT avançar `lastReviewed` de valor algum.
+  *(Duas revisões acumuladas. A primeira trocou "todo mês abre PR" por commit direto de frescor, porque um PR
+  quase-vazio recorrente treina o revisor a carimbar. A segunda — após o parecer T004 — tirou do robô o poder de
+  **escrever**: com `develop` sem proteção, o classificador dentro do job era o único portão do artefato de
+  dinheiro. Agora o classificador decide **dispensa de revisão**, não escrita, e há controle de plataforma atrás
+  dele.)*
+- **FR-020c**: O branch de integração MUST ter proteção de plataforma exigindo PR — o portão que protege um
+  artefato de dinheiro MUST NOT depender exclusivamente de código que o próprio job executa. A dispensa de revisão
+  para diffs de puro frescor é uma **exceção declarada** ao "nunca auto-merge" do ADR-0010 Q-A, cuja proibição foi
+  escrita para o **artefato de dinheiro**; frescor não é dinheiro, e a exceção MUST ser registrada no ADR, não
+  presumida.
 - **FR-021**: O laço mensal MUST consumir **0 tokens de LLM**.
 - **FR-022**: A falha da metade ML MUST NOT impedir a metade Amazon de funcionar, e vice-versa.
 
