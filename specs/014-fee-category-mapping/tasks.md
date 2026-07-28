@@ -80,16 +80,16 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T019 [P] [US2] Teste: `slotDeterminants` emite `category` quando há categoria escolhida, e a omite quando não há — em `apps/web/src/features/calculator/fee-prefill.test.ts`
-- [ ] T020 [P] [US2] Teste: sem categoria escolhida em marketplace **com** catch-all publicado (Amazon "Outros" 15%) → pré-preenche o catch-all, selo "categoria não informada" (Q5) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
-- [ ] T021 [P] [US2] Teste: sem categoria escolhida em marketplace **sem** catch-all publicado (ML) → `null` + selo "sem referência"; o sistema **não** deriva catch-all de faixa (FR-011a) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
-- [ ] T022 [P] [US2] Teste: valor editado pelo vendedor vence sempre, selo "ajustado por você" — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T019 [P] [US2] Teste: `slotDeterminants` emite `category` quando há categoria escolhida, e a omite quando não há — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T020 [P] [US2] Teste: sem categoria escolhida em marketplace **com** catch-all publicado (Amazon "Outros" 15%) → pré-preenche o catch-all, selo "categoria não informada" (Q5) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T021 [P] [US2] Teste: sem categoria escolhida em marketplace **sem** catch-all publicado (ML) → `null` + selo "sem referência"; o sistema **não** deriva catch-all de faixa (FR-011a) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T022 [P] [US2] Teste: valor editado pelo vendedor vence sempre, selo "ajustado por você" — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 ### Implementação
 
-- [ ] T023 [US2] Estender `slotDeterminants` para emitir o eixo `category` por slot — em `apps/web/src/features/calculator/fee-prefill.ts`
-- [ ] T024 [US2] Passar a árvore para `resolveSlotEntry` e aplicar a política Q5 (catch-all publicado vs "sem referência") — em `apps/web/src/features/calculator/fee-prefill.ts`
-- [ ] T025 [US2] Selo passa a **nomear a categoria** do número, e a distinguir "categoria não informada" de "sem referência" — em `apps/web/src/features/calculator/fee-seal.tsx`
+- [x] T023 [US2] Estender `slotDeterminants` para emitir o eixo `category` por slot — em `apps/web/src/features/calculator/fee-prefill.ts`
+- [x] T024 [US2] Passar a árvore para `resolveSlotEntry` e aplicar a política Q5 (catch-all publicado vs "sem referência") — em `apps/web/src/features/calculator/fee-prefill.ts`
+- [x] T025 [US2] Selo passa a **nomear a categoria** do número, e a distinguir "categoria não informada" de "sem referência" — em `apps/web/src/features/calculator/fee-seal.tsx`
 
 ---
 

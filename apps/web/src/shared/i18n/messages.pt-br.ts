@@ -171,6 +171,11 @@ export const messages = {
       adjusted: "ajustado por você",
       none: "sem referência — informe as taxas",
       estimate: "estimativa de frete",
+      // 014/Q5 — o catch-all é uma afirmação DIFERENTE de "esta é a taxa da sua categoria", e
+      // juntar as duas é como o vendedor termina com o número errado achando que é o dele.
+      catchAll: "categoria não informada — usando",
+      catchAllHighest: "a maior alíquota da tabela",
+      forCategory: "para",
     },
     marketplaceNames: {
       MERCADO_LIVRE: "Mercado Livre",
