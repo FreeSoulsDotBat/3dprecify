@@ -32,10 +32,13 @@ jobs:
         with:
           node-version: 24
 
-      # Only chromium + its OS deps — the probe needs a real browser because the page is
-      # JS-rendered (curl returns an empty shell).
-      - name: Install Playwright chromium
-        run: npx --yes playwright@latest install --with-deps chromium
+      # Two separate things, and conflating them already cost one inconclusive run: the npm
+      # PACKAGE (which the probe imports) and the BROWSER BINARY (which the package drives).
+      # `playwright install` only does the second.
+      - name: Install Playwright package + chromium
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
 
       - name: Run the G2 probe
         run: node scripts/probes/g2-amazon-fee-table.mjs
