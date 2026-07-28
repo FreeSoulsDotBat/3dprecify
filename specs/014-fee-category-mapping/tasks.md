@@ -35,8 +35,8 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ## Phase 1: Setup
 
-- [ ] T005 Criar o pacote de workspace da ingestão, com `package.json`/tsconfig conforme o padrão do monorepo — em `packages/fee-ingest/`
-- [ ] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `packages/fee-ingest/package.json`
+- [x] T005 Criar o pacote de workspace da ingestão, com `package.json`/tsconfig conforme o padrão do monorepo — em `packages/fee-ingest/`
+- [x] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `packages/fee-ingest/package.json`
 - [ ] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
 
 ---
@@ -125,8 +125,8 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `packages/fee-ingest/amazon.test.ts`
-- [ ] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `packages/fee-ingest/amazon.test.ts`
+- [x] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `packages/fee-ingest/amazon.test.ts`
+- [x] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `packages/fee-ingest/amazon.test.ts`
 - [ ] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `packages/fee-ingest/amazon.test.ts`
 - [ ] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `packages/fee-ingest/amazon.test.ts`
 
