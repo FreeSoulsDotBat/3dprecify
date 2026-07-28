@@ -49,6 +49,10 @@ export type Modality = "CLASSICO" | "PREMIUM" | "PROFISSIONAL" | "INDIVIDUAL" | 
 export interface ChannelSlotForm {
   marketplace: MarketplaceId;
   modality: Modality;
+  /** 014/US1 — the marketplace category the piece is listed under. OPTIONAL as a gate (it never
+   *  blocks a calculation) and PER SLOT: a category chosen for ML must not become the Amazon one.
+   *  Empty string = not informed, which is a valid and permanent state (SC-809). */
+  category?: string;
   commissionPct: string;
   fixedFee: string;
   minPerItem: string;

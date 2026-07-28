@@ -19,7 +19,7 @@ import {
   entryToChannelFees,
   feeSealState,
   type ResolvedChannelFees,
-  resolveSlotEntry,
+  resolveSlot,
 } from "@/features/calculator/fee-prefill";
 import type { FeeSealState } from "@/features/calculator/fee-seal";
 import type { CatalogSource, FeeCatalog, FeeEntry } from "@/shared/fee-catalog";
@@ -216,7 +216,11 @@ function resolveSlotFees(
  */
 function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessing {
   const manual = parseManualFees(slot);
-  const entry = ctx ? resolveSlotEntry(ctx.catalog, slot.marketplace, slot.modality) : null;
+  // 014/US1: the category is a per-slot determinant, so it is read from THIS slot and never shared.
+  const resolution = ctx
+    ? resolveSlot(ctx.catalog, slot.marketplace, slot.modality, slot.category)
+    : { entry: null, originCategoryId: null, viaCatchAll: false };
+  const entry = resolution.entry;
 
   if (Object.keys(manual.errors).length > 0) {
     return {
@@ -232,8 +236,25 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
   // A blank slot accepts the catalog pre-fill wholesale (reference seal).
   const useCatalog = entry !== null && !manual.hasManualInput;
   const fees = resolveSlotFees(entry, manual);
+  // The seal names the category the number is FOR — which may be an ANCESTOR of the chosen one,
+  // because rates are piecewise-constant down the tree. Looked up from the spine that travels with
+  // the catalog (D2), so there is no second artifact to fall out of sync with.
+  const spine = ctx?.catalog.marketplaces.find(
+    (m) => m.marketplace === slot.marketplace,
+  )?.categorySpine;
+  const originCategoryName =
+    resolution.originCategoryId && spine
+      ? (spine.find((n) => n.id === resolution.originCategoryId)?.name ?? null)
+      : null;
   const seal: FeeSealState = useCatalog
-    ? feeSealState({ entry, source: ctx!.source, now: ctx!.now, edited: false })
+    ? feeSealState({
+        entry,
+        source: ctx!.source,
+        now: ctx!.now,
+        edited: false,
+        originCategoryName,
+        viaCatchAll: resolution.viaCatchAll,
+      })
     : entry
       ? { kind: "adjusted" }
       : { kind: "none" };

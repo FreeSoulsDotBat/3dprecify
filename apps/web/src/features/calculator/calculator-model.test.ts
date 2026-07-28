@@ -550,3 +550,86 @@ describe("computeFromForm — exposes the engine input it computed from (008 R7)
     expect(r.input).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// 014/US1 — the category reaches the model, the seal names its ORIGIN, and the choice is per slot.
+// ---------------------------------------------------------------------------------------------
+
+describe("014 — category as a per-slot determinant", () => {
+  const prov = {
+    freight: { kind: "NONE" as const },
+    source: "Tabela de comissões Amazon",
+    sourceUrl: "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+    effectiveDate: "2026-07-28",
+    lastReviewed: "2026-07-28",
+  };
+  const catalog = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-28.t",
+    schemaVersion: "1",
+    generatedAt: "2026-07-28T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "AMAZON",
+        categorySpine: [
+          { id: "casa", name: "Casa e Cozinha", parentId: null },
+          { id: "casa-vasos", name: "Vasos e Cachepôs", parentId: "casa" },
+        ],
+        entries: [
+          { ...prov, determinants: { plan: "PROFISSIONAL" }, commissionPct: 15, fixedFee: 0 },
+          {
+            ...prov,
+            determinants: { plan: "PROFISSIONAL", category: "casa" },
+            commissionPct: 12,
+            fixedFee: 0,
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = {
+    catalog,
+    source: "catalog",
+    now: Date.parse("2026-07-28"),
+  };
+  // Only the two fields these tests vary — `exactOptionalPropertyTypes` rejects spreading a Partial
+  // over required fields, and being explicit is clearer than casting around it.
+  const slot = (over: { category?: string; commissionPct?: string } = {}): ChannelSlotForm => ({
+    ...defaultChannelSlot("AMAZON"),
+    modality: "PROFISSIONAL",
+    ...(over.category !== undefined ? { category: over.category } : {}),
+    ...(over.commissionPct !== undefined ? { commissionPct: over.commissionPct } : {}),
+  });
+  const run = (slots: ChannelSlotForm[]) =>
+    computeFromForm({ ...defaultCalcValues, channels: slots }, ctx);
+
+  it("a chosen category changes the commission the model uses", () => {
+    expect(run([slot({ category: "casa" })]).channels[0].result?.feeSource).toBeDefined();
+    expect(run([slot({ category: "casa" })]).channels[0].seal).toMatchObject({
+      kind: "reference",
+      originCategoryName: "Casa e Cozinha",
+    });
+    // no category → the PUBLISHED catch-all, sealed as such and never as a plain reference
+    expect(run([slot()]).channels[0].seal.kind).toBe("catchAll");
+  });
+
+  // The number can come from an ANCESTOR (rates are piecewise-constant down the tree). The seller
+  // must be able to see that, or he reads a parent's rate as his own category's.
+  it("an inherited rate seals with the ANCESTOR's name, not the chosen category's", () => {
+    expect(run([slot({ category: "casa-vasos" })]).channels[0].seal).toMatchObject({
+      kind: "reference",
+      originCategoryName: "Casa e Cozinha",
+    });
+  });
+
+  it("the choice is PER SLOT — a category on one channel does not leak into another", () => {
+    const chs = run([slot({ category: "casa" }), slot()]).channels;
+    expect(chs[0].seal.kind).toBe("reference");
+    expect(chs[1].seal.kind).toBe("catchAll");
+  });
+
+  it("a typed commission still wins over the category (override always wins)", () => {
+    expect(run([slot({ category: "casa", commissionPct: "9" })]).channels[0].seal.kind).toBe(
+      "adjusted",
+    );
+  });
+});

@@ -76,12 +76,19 @@ export function resolveSlot(
   if (!entry) return { entry: null, originCategoryId: null, viaCatchAll: false };
 
   // The entry itself says which category it belongs to — an ancestor's id when the chosen category
-  // inherited. Absent means it is the modality-only entry, i.e. the published catch-all.
+  // inherited.
   const originCategoryId = entry.determinants?.category ?? null;
+
+  // "Catch-all" only means something where a category COULD have been chosen. Shopee has a single
+  // null-keyed entry and NO category axis at all: flagging that as "categoria não informada" would
+  // invent a choice the seller was never offered. The axis exists iff the marketplace ships a spine.
+  const hasCategoryAxis =
+    (catalog.marketplaces.find((m) => m.marketplace === mk)?.categorySpine?.length ?? 0) > 0;
+
   return {
     entry,
     originCategoryId,
-    viaCatchAll: originCategoryId === null && Boolean(category) === false,
+    viaCatchAll: hasCategoryAxis && !category && originCategoryId === null,
   };
 }
 
