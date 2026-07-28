@@ -79,6 +79,16 @@ máquina" listado no ADR §A11 não se materializa.
   expandido nos slots ML/Amazon ("sem categoria" vira exceção, não o caminho fácil); o catch-all deixa de ser selo
   passivo e vira **ação**; e o retorno após escolher é em **reais**, não em pontos percentuais. Escolher continua
   **opcional como gate** (nunca bloqueia o cálculo) e deixa de ser opcional como **afordância**.
+- Q: Como reduzir o atrito de reescolher categoria (Q10 revisada)? → A: **Memória local de "última usada" por
+  marketplace**, pré-selecionada e editável, mais os recentes no topo do seletor. Mata a maior parte da repetição
+  **sem** tornar categoria um atributo de produto, sem migração e sem tocar no domínio de catálogo (E2). O atrito
+  medido era 50 produtos × 2 canais ≈ 25–40 min de reescolha.
+- Q: Adotar o preditor `domain_discovery` do ML (título do anúncio → categoria)? → A: **Fora do 014**, registrado
+  como candidato futuro. Verificado ao vivo em 2026-07-28 e funciona bem para o nosso caso ("suporte de celular
+  impresso em 3d" → *Apoio para Celulares*), mas exige **token de usuário** ⇒ só via proxy no backend ⇒ **põe o
+  token da conta da casa no caminho de requisição do usuário, a cada digitação**, em vez de 12 chamadas por ano num
+  job de CI. O parecer do `seguranca` foi escrito sobre a segunda hipótese, não sobre a primeira — adotar exigiria
+  parecer novo. O 014 entrega com busca local, offline e sem credencial.
 - Q: O mapa de categorias é gratuito ou premium? → A: **GRATUITO — fechada.** Reaberta e decidida com a colisão à
   vista: premium exigiria racharem-se artefato e entrega (categorias servidas sob entitlement, nunca embutidas),
   **matando o ganho do D2** (alíquota offline desde o primeiro uso), acionando o Princípio IV sem nenhuma tarefa
