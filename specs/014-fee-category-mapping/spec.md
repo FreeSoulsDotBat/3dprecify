@@ -67,6 +67,23 @@ máquina" listado no ADR §A11 não se materializa.
 - Q: Onde mora o código de ingestão (D1)? → A: **`packages/fee-ingest`**, pacote de workspace — o parser produz
   folhas de dinheiro e precisa satisfazer o **mesmo** schema do catálogo; fora do workspace duplicaria validação e
   ficaria fora do `gate:all`.
+- Q: Tornar o repositório privado agora para destravar a fatia ML? → A: **Não.** Segue público, e a fatia ML espera
+  o **parecer do `seguranca`** (D3/T004), que já tem três condições concretas nomeadas pelo `arquiteto`:
+  `allowed_actions`, pinagem de actions por SHA e `trufflehog@main`. Runner hospedado protege contra persistência do
+  segredo, **não** contra exfiltração dentro do run.
+- Q: O PR mensal sem mudança de dinheiro deve mesmo existir? → A: **Política dividida por classe de diff**
+  (revisando a decisão anterior de Q7). Diff **exclusivamente** de `lastReviewed` → o job comita direto. Qualquer
+  campo de **dinheiro** → PR que um humano lê. O guard é determinístico e, **em dúvida, falha abrindo PR**.
+  Preserva a intenção do portão humano do ADR-0010 Q-A e remove o ritual mensal que o corroeria.
+- Q: O seletor de categoria é opcional e discreto? → A: **Não — campo de primeira classe.** Renderiza sempre e
+  expandido nos slots ML/Amazon ("sem categoria" vira exceção, não o caminho fácil); o catch-all deixa de ser selo
+  passivo e vira **ação**; e o retorno após escolher é em **reais**, não em pontos percentuais. Escolher continua
+  **opcional como gate** (nunca bloqueia o cálculo) e deixa de ser opcional como **afordância**.
+- Q: O mapa de categorias é gratuito ou premium? → A: **GRATUITO — fechada.** Reaberta e decidida com a colisão à
+  vista: premium exigiria racharem-se artefato e entrega (categorias servidas sob entitlement, nunca embutidas),
+  **matando o ganho do D2** (alíquota offline desde o primeiro uso), acionando o Princípio IV sem nenhuma tarefa
+  existente, e fazendo o vendedor gratuito ver 15% onde sua categoria é 12%. O catálogo é o **ativo de topo de
+  funil** que traz o não-pagante de volta todo mês; o premium continua no que já vende (E2–E5).
 
 ---
 
@@ -319,6 +336,13 @@ como os demais slots não sobrescritos.
 - **FR-004**: O sistema MUST permitir localizar uma categoria **por texto**, sem exigir navegação pela árvore.
 - **FR-005**: O seletor de categoria MUST funcionar **offline**, a partir do catálogo que o cliente já possui.
 - **FR-006**: O sistema MUST NOT exibir seletor de categoria para marketplaces sem eixo de categoria.
+- **FR-006a**: Nos slots ML e Amazon o seletor MUST renderizar **sempre e expandido**, em estado vazio ativo —
+  escolher permanece opcional como **gate** (nunca bloqueia o cálculo) e deixa de ser opcional como **afordância**.
+  Um campo colapsado somado a um número plausível já preenchido produz um vendedor que aceita a alíquota errada.
+- **FR-006b**: Quando o catch-all publicado for usado por falta de escolha, o sistema MUST apresentá-lo como
+  **ação** e não como selo passivo, declarando que é a maior alíquota da tabela quando for o caso.
+- **FR-006c**: Ao escolher ou trocar a categoria, o sistema MUST mostrar o efeito em **reais sobre o preço**, não
+  apenas em pontos percentuais — o vendedor decide em preço de etiqueta, não em p.p.
 
 **Honestidade dos números**
 
@@ -374,8 +398,12 @@ como os demais slots não sobrescritos.
   contra a data em que o robô leu a fonte. Sem isso, o selo acusa "desatualizada" durante todo o intervalo entre a
   leitura e a entrega (merge + corte de release + deploy) — **um falso positivo estrutural, todo mês, sobre valores
   corretos e reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar.
-- **FR-020a**: Uma execução que confirma todos os valores inalterados MUST abrir um PR que altera **apenas**
-  `lastReviewed`. Uma execução que **falhou** em ler a fonte MUST NOT avançar `lastReviewed` de valor algum.
+- **FR-020a**: A política de publicação MUST ser dividida por classe de diff. Um diff que altera **exclusivamente**
+  `lastReviewed` MUST ser commitado pelo próprio job, sem PR. Um diff que toca **qualquer campo de dinheiro** MUST
+  abrir PR para revisão humana. O classificador MUST ser determinístico e, em qualquer dúvida ou erro, MUST falhar
+  **abrindo PR** — nunca commitando. Uma execução que **falhou** em ler a fonte MUST NOT avançar `lastReviewed` de
+  valor algum. *(Revisa a decisão anterior de "todo mês abre PR": um PR quase-vazio recorrente treina o revisor a
+  carimbar, corroendo justamente o portão que protege dinheiro.)*
 - **FR-021**: O laço mensal MUST consumir **0 tokens de LLM**.
 - **FR-022**: A falha da metade ML MUST NOT impedir a metade Amazon de funcionar, e vice-versa.
 
@@ -444,11 +472,9 @@ como os demais slots não sobrescritos.
   embutir tudo no bundle.
 - **A Amazon não requer credencial alguma.** Sua tabela de comissões é pública, renderizada por JS, e o gate G2
   provou que renderiza idêntica de runner não-BR. A conta Amazon que o dono criou **não é usada** pelo pipeline.
-- **O catálogo permanece gratuito e público** — **premissa CONDICIONAL, não afirmada**: Q4 segue aberta, e uma
-  spec não pode afirmar nas Premissas o que ela mesma lista como pergunta. Enquanto Q4 não fechar, todo o desenho
-  assume "gratuito". **Consequência escondida que a análise adversarial expôs: se Q4 virar "premium", o Princípio
-  IV (entitlement validado no servidor, NON-NEGOTIABLE) passa a valer e não existe uma única tarefa para isso** —
-  Q4 não é só uma pergunta de produto, ela carrega um princípio constitucional atrás.
+- **O catálogo permanece gratuito e público** — **DECIDIDO em 2026-07-28** (Q4 fechada, ver §Clarifications).
+  Nenhum portão premium novo é introduzido, o Princípio IV não é acionado por este incremento, e o ADR-0010 R3
+  (catálogo servido sem autenticação) segue válido.
 - **A cadência é mensal, dia 1, 06:00 UTC**, mirando `develop` (decisões QA5 e QA1 do dono, 2026-07-28).
 - **Custódia do refresh token = GitHub Secrets sem write-back**, viável porque o gate G3 mediu que o ML rotaciona o
   token no uso **mas o antigo continua válido**. Pendente de ratificação do `seguranca` quanto a segredo em
@@ -466,15 +492,14 @@ como os demais slots não sobrescritos.
 Enumeradas por instrução explícita do dono (não resolver nesta etapa). As recomendações e confianças vêm do §10 do
 scope brief; **Q1, Q3 e Q6 saíram desta lista por já estarem decididos**.
 
-**Resolvidas na sessão de clarify de 2026-07-28**: Q2, Q5, Q7, Q8, Q10 (ver `## Clarifications`). **Já decididas
+**Resolvidas**: Q2, Q5, Q7 (revisada), Q8, Q10, **Q4** (ver `## Clarifications`). **Já decididas
 antes**: Q1, Q3, Q6.
 
-**Restam 4, todas deferidas conscientemente** — nenhuma bloqueia o `/speckit-plan`, e as três primeiras têm
+**Restam 3, todas deferidas conscientemente** — nenhuma bloqueia o `/speckit-plan`, e as três primeiras têm
 recomendação de alta confiança no brief:
 
 | # | Pergunta | Recomendação do brief | Por que pode esperar |
 |---|---|---|---|
-| **Q4** | O mapa de categorias é gratuito ou premium? | (a) gratuito (~85%) | O brief mostra que a escolha é quase teórica: o catálogo é embutido no cliente e servido sem autenticação, então "premium" não seria aplicável tecnicamente sem redesenhar a entrega. |
 | **Q9** | Base de comissão da Amazon inclui frete; a nossa não | (a) declarar, não modelar (~80%) | (b) seria mudança em `pricing-core`, que o escopo já marca como FORA. Decidir isto não altera o plano — altera só o texto da entrada. |
 | **Q12** | Vocabulário: taxonomia unificada ou a de cada marketplace? | (a) a de cada marketplace, literal | (b) exigiria inventar uma taxonomia interna, também já marcada como FORA. |
 | **Q11** | Entradas de conhecimento parcial / selos por campo (decide a US7) | (a) não — ou a entrada tem fonte completa, ou não entra | **A premissa caiu**: Q11 existia para salvar a US7, que só fazia sentido enquanto o ML estava bloqueado. Com a US6 desbloqueada, o caminho natural é descartar a US7 — mas o descarte é decisão do dono, não omissão. |

@@ -14,30 +14,30 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 ## Path Conventions
 
 `apps/web/src/…` (cliente) · `backend/app/…` (serve dados) · `.github/workflows/…` (laço mensal) ·
-`<D1>/` = local da ingestão, **indefinido até D1 ser decidido**.
+`packages/fee-ingest/` = a ingestão (pacote de workspace, D1 decidido em 2026-07-28).
 
 ---
 
 ## Phase 0: Decisões bloqueantes (Princípio VIII) ⛔
 
-> Estas **não são tarefas de código**. O Princípio VIII proíbe inferir estrutura; as tarefas marcadas
-> **⛔BLOQUEADA** não começam até a decisão correspondente existir. T001 existe para que D2 seja decidido com
-> números — foi medindo que uma hipótese minha caiu na fase 0, e D2 é maior que aquela.
+> **D1 e D2 foram decididos em 2026-07-28** (após a revisão adversarial) e 25 tarefas destravaram. **D3 segue
+> aberta** — a fatia ML (Fase 8) continua parada. T001 deixou de ser pré-condição de D2 e passa a ser a medição que
+> dimensiona a espinha e valida a compressão em 100% dos nós (T057).
 
 - [ ] T001 Varrer a árvore de categorias ML **completa, uma vez**, guardando a alíquota **de cada nó**, e reportar: total de nós, nós cuja alíquota **diverge do pai**, tamanho em bytes da árvore completa vs comprimida, e a **taxa de divergência por nível de profundidade** — a medição de fase 0 amostrou 96 filhos de **profundidade 1**; os níveis 2–4 têm n=3, então a direção se sustenta mas a magnitude **não está medida** — script descartável em `scripts/probes/t001-ml-tree-census.mjs`
-- [ ] T002 Decisão do dono **D1**: onde mora o código de ingestão (`plan.md` §Decisões estruturais pendentes) — registrar em `docs/decisions/tech-stack-decisions.md`
-- [ ] T003 Decisão do dono **D2**: como a árvore de nomes chega ao cliente, **à luz de T001** — inclui resolver a contradição declarada entre a opção (a) e a US1 AS5 ("o seletor nunca exige rede") — registrar em `docs/decisions/tech-stack-decisions.md`
+- [x] T002 ✅ DECIDIDO 2026-07-28 — **D1 = `packages/fee-ingest`**: onde mora o código de ingestão (`plan.md` §Decisões estruturais pendentes) — registrar em `docs/decisions/tech-stack-decisions.md`
+- [x] T003 ✅ DECIDIDO 2026-07-28 — **D2 = espinha no `catalog.json` + nomes sob demanda**: como a árvore de nomes chega ao cliente, **à luz de T001** — inclui resolver a contradição declarada entre a opção (a) e a US1 AS5 ("o seletor nunca exige rede") — registrar em `docs/decisions/tech-stack-decisions.md`
 - [ ] T004 Ratificação **D3** do `seguranca` + dono: refresh token do ML em GitHub Secrets com o repositório público (QA2/QA3) — registrar como adendo em `specs/014-fee-category-mapping/seguranca-ci-first.md`
 
-**Checkpoint**: T002+T003 liberam a Fase 2 em diante. T004 libera **apenas** a Fase 8 (ML).
+**Checkpoint**: T002+T003 ✅ liberaram da Fase 1 à Fase 7 e a Fase 9. **T004 continua bloqueando apenas a Fase 8 (ML)** + T069b.
 
 ---
 
 ## Phase 1: Setup
 
-- [ ] T005 Criar a estrutura da ingestão no local decidido em T002, com `package.json`/tsconfig conforme o padrão do monorepo — em `<D1>/` ⛔BLOQUEADA por T002
-- [ ] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `<D1>/package.json` ⛔BLOQUEADA por T002
-- [ ] T007 [P] Registrar a fronteira da ingestão no `dependency-cruiser` e no `import-linter` conforme o local de T002, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs` ⛔BLOQUEADA por T002
+- [ ] T005 Criar o pacote de workspace da ingestão, com `package.json`/tsconfig conforme o padrão do monorepo — em `packages/fee-ingest/`
+- [ ] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `packages/fee-ingest/package.json`
+- [ ] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
 
 ---
 
@@ -102,13 +102,16 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [ ] T026 [P] [US1] Teste: busca por parte do nome filtra a lista, com os nomes publicados pelo marketplace — em `apps/web/src/features/calculator/category-picker.test.tsx`
 - [ ] T027 [P] [US1] Teste: a escolha é **por slot** — categoria no ML não vira a categoria da Amazon (US1 AS4) — em `apps/web/src/features/calculator/category-picker.test.tsx`
 - [ ] T028 [P] [US1] Teste: marketplace sem eixo de categoria (Shopee, Outro) não renderiza seletor — em `apps/web/src/features/calculator/category-picker.test.tsx`
-- [ ] T029 [P] [US1] Teste: o seletor funciona **offline** a partir do que o cliente já tem (US1 AS5) — em `apps/web/src/features/calculator/category-picker.test.tsx` ⛔BLOQUEADA por T003 (o comportamento esperado depende de D2)
+- [ ] T029 [P] [US1] Teste: o seletor funciona **offline** a partir do que o cliente já tem (US1 AS5) — em `apps/web/src/features/calculator/category-picker.test.tsx`
 
 ### Implementação
 
 - [ ] T030 [US1] Implementar o comportamento do seletor: busca por texto, seleção opcional, limpeza — em `apps/web/src/features/calculator/category-picker.tsx`
+- [ ] T030a [US1] Seletor como **campo de primeira classe**: sempre visível e expandido nos slots ML/Amazon, em estado vazio ativo (FR-006a) — em `apps/web/src/features/calculator/calculator-form.tsx`
+- [ ] T030b [US1] Catch-all como **ação**, não selo passivo: declara que é a maior alíquota da tabela e oferece escolher a categoria (FR-006b) — em `apps/web/src/features/calculator/fee-seal.tsx`
+- [ ] T030c [US1] Retorno da escolha em **reais sobre o preço**, não em pontos percentuais (FR-006c) — em `apps/web/src/features/calculator/category-picker.tsx`
 - [ ] T031 [US1] Ligar o seletor ao slot de canal, por slot, sem vazar entre canais — em `apps/web/src/features/calculator/calculator-form.tsx`
-- [ ] T032 [US1] Entregar a árvore ao cliente conforme D2 (semente / artefato sob demanda / podada) — em `apps/web/src/shared/fee-catalog/seed.ts` ⛔BLOQUEADA por T003
+- [ ] T032 [US1] Entregar a árvore ao cliente conforme D2 (semente / artefato sob demanda / podada) — em `apps/web/src/shared/fee-catalog/seed.ts`
 - [ ] T033 [US1] Homologação visual no navegador: passos 1–7 do [quickstart V6](./quickstart.md) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
@@ -120,17 +123,17 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
-- [ ] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
-- [ ] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
-- [ ] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
+- [ ] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `packages/fee-ingest/amazon.test.ts`
+- [ ] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `packages/fee-ingest/amazon.test.ts`
+- [ ] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `packages/fee-ingest/amazon.test.ts`
+- [ ] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `packages/fee-ingest/amazon.test.ts`
 
 ### Implementação
 
-- [ ] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
-- [ ] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
-- [ ] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
-- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json` ⛔BLOQUEADA por T002 (consome a saída da T038)
+- [ ] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `packages/fee-ingest/amazon.mjs`
+- [ ] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `packages/fee-ingest/amazon.mjs`
+- [ ] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `packages/fee-ingest/amazon.mjs`
+- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json`
 
 ---
 
@@ -141,20 +144,22 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
-- [ ] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
-- [ ] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
-- [ ] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
-- [ ] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `packages/fee-ingest/refresh.test.ts`
 
 ### Implementação
 
-- [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
-- [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
-- [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge. **Pré-condição a documentar no próprio workflow: o `schedule` do GitHub roda a partir da branch DEFAULT (`main`) — enquanto o arquivo não chegar em `main` por um corte de release, o laço mensal NÃO dispara sozinho** (ADR-0010 §A6.1) — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T002 (referencia caminhos `<D1>`)
-- [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T002
-- [ ] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
-- [ ] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `packages/fee-ingest/refresh.mjs`
+- [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `packages/fee-ingest/refresh.mjs`
+- [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge. **Pré-condição a documentar no próprio workflow: o `schedule` do GitHub roda a partir da branch DEFAULT (`main`) — enquanto o arquivo não chegar em `main` por um corte de release, o laço mensal NÃO dispara sozinho** (ADR-0010 §A6.1) — em `.github/workflows/fee-refresh.yml`
+- [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml`
+- [ ] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T049a [US4] Classificador de diff por classe: diff **exclusivamente** de `lastReviewed` → o job comita direto; qualquer campo de **dinheiro** → abre PR. Determinístico e, em dúvida ou erro, **falha abrindo PR** (FR-020a revisada) — em `packages/fee-ingest/refresh.mjs`
+- [ ] T049b [P] [US4] Teste: o classificador **nunca** comita um diff que toque dinheiro, e um classificador em erro abre PR em vez de comitar — em `packages/fee-ingest/refresh.test.ts`
+- [ ] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `packages/fee-ingest/refresh.test.ts`
 - [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
@@ -166,8 +171,9 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T052 [P] [US5] Teste: valor além da janela de 30 dias exibe "desatualizada" — em `apps/web/src/features/calculator/fee-seal.test.tsx`
-- [ ] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T052 [P] [US5] Teste: a janela de obsolescência é medida contra a data de **ENTREGA ao usuário**, não contra a leitura da fonte — um valor lido no dia 1 e entregue no dia 20 **não** conta 19 dias de idade (FR-020b) — em `apps/web/src/features/calculator/fee-seal.test.tsx`
+- [ ] T052a [US5] Carregar a data de entrega no artefato e passar a derivar `isStale` dela — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `packages/fee-ingest/refresh.test.ts`
 - [ ] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
 
 ### Implementação
@@ -182,16 +188,16 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T056 [P] [US6] Teste: entradas ML trazem a alíquota **exata** por categoria, nunca a faixa publicada 10–14% / 15–19% — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
-- [ ] T057 [P] [US6] Teste: a compressão por herança preserva a resolução em **100% dos nós**, não numa amostra — o censo da T001 já busca a alíquota de cada nó, então a equivalência `resolve(comprimido) == alíquota bruta` sai **de graça** para a árvore inteira; pedir amostra aqui seria aceitar risco de dinheiro que já foi pago — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
-- [ ] T058 [P] [US6] Teste: faixas de custo fixo abaixo de R$ 79 usam as fronteiras publicadas literalmente, e a lacuna R$ 50,01–78,99 **permanece lacuna** (FR-014a) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
-- [ ] T059 [P] [US6] Teste: toda entrada ML **declara a premissa de logística** sob a qual o custo fixo vale (Q8) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+- [ ] T056 [P] [US6] Teste: entradas ML trazem a alíquota **exata** por categoria, nunca a faixa publicada 10–14% / 15–19% — em `packages/fee-ingest/ml.test.ts` ⛔BLOQUEADA por T004
+- [ ] T057 [P] [US6] Teste: a compressão por herança preserva a resolução em **100% dos nós**, não numa amostra — o censo da T001 já busca a alíquota de cada nó, então a equivalência `resolve(comprimido) == alíquota bruta` sai **de graça** para a árvore inteira; pedir amostra aqui seria aceitar risco de dinheiro que já foi pago — em `packages/fee-ingest/ml.test.ts` ⛔BLOQUEADA por T004
+- [ ] T058 [P] [US6] Teste: faixas de custo fixo abaixo de R$ 79 usam as fronteiras publicadas literalmente, e a lacuna R$ 50,01–78,99 **permanece lacuna** (FR-014a) — em `packages/fee-ingest/ml.test.ts` ⛔BLOQUEADA por T004
+- [ ] T059 [P] [US6] Teste: toda entrada ML **declara a premissa de logística** sob a qual o custo fixo vale (Q8) — em `packages/fee-ingest/ml.test.ts` ⛔BLOQUEADA por T004
 
 ### Implementação
 
-- [ ] T060 [US6] Coletor ML: percorrer a árvore + obter alíquota por categoria e tipo de anúncio, em runner hospedado (G1 mediu que **não há geo-gate**) — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
-- [ ] T061 [US6] Compressão por herança: emitir entrada **apenas** onde a alíquota difere do pai (R1) — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
-- [ ] T062 [US6] Custo fixo abaixo de R$ 79 com fronteiras literais e premissa declarada — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
+- [ ] T060 [US6] Coletor ML: percorrer a árvore + obter alíquota por categoria e tipo de anúncio, em runner hospedado (G1 mediu que **não há geo-gate**) — em `packages/fee-ingest/ml.mjs` ⛔BLOQUEADA por T004
+- [ ] T061 [US6] Compressão por herança: emitir entrada **apenas** onde a alíquota difere do pai (R1) — em `packages/fee-ingest/ml.mjs` ⛔BLOQUEADA por T004
+- [ ] T062 [US6] Custo fixo abaixo de R$ 79 com fronteiras literais e premissa declarada — em `packages/fee-ingest/ml.mjs` ⛔BLOQUEADA por T004
 - [ ] T063 [US6] Configurar o segredo `ML_REFRESH_TOKEN` **sem write-back** (viável porque o G3 mediu que o token antigo sobrevive à rotação) e conceder à app **apenas** "Publicação e sincronização: Leitura" — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T004
 - [ ] T064 [US6] Gerar as entradas ML no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json` ⛔BLOQUEADA por T004
 
@@ -271,6 +277,6 @@ categoria da Amazon, com procedência e selo honesto, **sem nenhuma credencial e
 | **PR-B** | 8 | ML — a única fatia com segredo, **para até T004** |
 | **PR-C** | 9, 10 | persistência em cenários + fechamento |
 
-**Nota de roteamento (ADR-0022)**: T014–T017 e todas as tarefas de `<D1>` que produzem **valores de dinheiro**
+**Nota de roteamento (ADR-0022)**: T014–T017 e todas as tarefas de `packages/fee-ingest` que produzem **valores de dinheiro**
 (T035, T038, T057, T058, T061, T062) tocam o domínio de precificação e são **escaladas para `opus`** — a regra de
 escalonamento do `CLAUDE.md` é não-negociável para leaf de dinheiro, catálogo de tarifas e faixas.
