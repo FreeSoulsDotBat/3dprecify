@@ -55,7 +55,12 @@ try {
   console.log(`ROWS WITH A PERCENTAGE: ${rows.length}`);
   for (const r of rows.slice(0, 6)) console.log(`  ${r[0]} | ${r[1]} | ${r[2]}`);
 
-  const text = await page.evaluate(() => document.body.innerText);
+  // Amazon renders the money cells with a NON-BREAKING space (U+00A0), so a plain-space regex
+  // misses "BRL 1,00" even though the extracted rows visibly contain it. That cost this gate a
+  // false FAIL; the BR control arm is what exposed it as an assertion defect rather than a
+  // geo-difference. Normalise before matching.
+  const NBSP = new RegExp(String.fromCharCode(0xa0), "g");
+  const text = (await page.evaluate(() => document.body.innerText)).replace(NBSP, " ");
   const hasCatchAll = /Outros/.test(text) && /15%/.test(text);
   const hasMinimum = /BRL 1,00|R\$ ?1,00/.test(text);
 
