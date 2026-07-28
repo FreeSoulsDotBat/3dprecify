@@ -100,15 +100,15 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T026 [P] [US1] Teste: busca por parte do nome filtra a lista, com os nomes publicados pelo marketplace — em `apps/web/src/features/calculator/category-picker.test.tsx`
-- [ ] T027 [P] [US1] Teste: a escolha é **por slot** — categoria no ML não vira a categoria da Amazon (US1 AS4) — em `apps/web/src/features/calculator/category-picker.test.tsx`
-- [ ] T028 [P] [US1] Teste: marketplace sem eixo de categoria (Shopee, Outro) não renderiza seletor — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [x] T026 [P] [US1] Teste: busca por parte do nome filtra a lista, com os nomes publicados pelo marketplace — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [x] T027 [P] [US1] Teste: a escolha é **por slot** — categoria no ML não vira a categoria da Amazon (US1 AS4) — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [x] T028 [P] [US1] Teste: marketplace sem eixo de categoria (Shopee, Outro) não renderiza seletor — em `apps/web/src/features/calculator/category-picker.test.tsx`
 - [ ] T029 [P] [US1] Teste: o seletor funciona **offline** a partir do que o cliente já tem (US1 AS5) — em `apps/web/src/features/calculator/category-picker.test.tsx`
 
 ### Implementação
 
-- [ ] T030 [US1] Implementar o comportamento do seletor: busca por texto, seleção opcional, limpeza — em `apps/web/src/features/calculator/category-picker.tsx`
-- [ ] T030a [US1] Seletor como **campo de primeira classe**: sempre visível e expandido nos slots ML/Amazon, em estado vazio ativo (FR-006a) — em `apps/web/src/features/calculator/calculator-form.tsx`
+- [x] T030 [US1] Implementar o comportamento do seletor: busca por texto, seleção opcional, limpeza — em `apps/web/src/features/calculator/category-picker.tsx`
+- [x] T030a [US1] Seletor como **campo de primeira classe**: sempre visível e expandido nos slots ML/Amazon, em estado vazio ativo (FR-006a) — em `apps/web/src/features/calculator/calculator-form.tsx`
 - [ ] T030b [US1] Catch-all como **ação**, não selo passivo: declara que é a maior alíquota da tabela e oferece escolher a categoria (FR-006b) — em `apps/web/src/features/calculator/fee-seal.tsx`
 - [ ] T030c [US1] Retorno da escolha em **reais sobre o preço**, não em pontos percentuais (FR-006c) — em `apps/web/src/features/calculator/category-picker.tsx`
 - [ ] T030d [US1] Memória local de **última categoria usada por marketplace** (pré-selecionada e editável) + recentes no topo do seletor — reduz o atrito de reescolha **sem** schema novo e sem tocar no domínio de catálogo — em `apps/web/src/features/calculator/category-picker.tsx`

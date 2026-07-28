@@ -163,6 +163,19 @@ export const messages = {
     // US2 — honesty seal (FR-107): where a slot's fee numbers came from and how fresh they are. The
     // reference/embedded states append the source + review date; the estimate marks the ML freight
     // subsidy as a labelled estimate (A4). Never asserts a fabricated number is exact.
+    // 014/US1 — o vendedor não sabe o nome que o marketplace usa: ele pensa "suporte de celular"
+    // e o ML publica "Acessórios para Celulares". A copy de busca vazia ensina isso em vez de
+    // apenas informar fracasso.
+    categoryPicker: {
+      label: "Categoria do anúncio (opcional)",
+      hint: "A comissão muda conforme a categoria.",
+      placeholder: "Busque pelo produto…",
+      clear: "Limpar",
+      noResults:
+        "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
+      unavailableOffline:
+        "A lista de categorias ainda não foi baixada. Conecte uma vez para carregá-la — a taxa exibida já é a correta.",
+    },
     seals: {
       reference: "Referência",
       updatedOn: "atualizada em",
