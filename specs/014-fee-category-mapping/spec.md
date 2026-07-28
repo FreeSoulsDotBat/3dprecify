@@ -1,0 +1,444 @@
+# Feature Specification: Mapeamento categoria→comissão (Mercado Livre + Amazon) com atualização mensal automática
+
+**Feature Branch**: `014-fee-category-mapping`
+
+**Created**: 2026-07-28
+
+**Status**: Draft
+
+**Input**: Mapeamento categoria→taxa de comissão para Amazon e Mercado Livre, com atualização mensal automática
+via GitHub Actions (CI-first), entregue aos usuários através do catálogo de tarifas existente.
+
+**Fontes autoritativas** (nada aqui é inferido — Princípio VIII): `docs/product/014-fee-category-mapping-scope-brief.md`
+(visão, análise de valor, US1–US8, SC-801…SC-812, fronteiras de escopo) · `docs/adr/0010-marketplace-fee-catalog-architecture.md`
+§A10 (decisão CI-first) e **§A13 (os quatro gates medidos em 2026-07-27/28)** · `specs/014-fee-category-mapping/seguranca-ci-first.md`
+(parecer bloqueante de segurança).
+
+---
+
+## O que mudou desde o brief — correções obrigatórias
+
+O brief foi escrito **antes** dos gates. Três de suas premissas foram medidas e **duas são falsas**. Esta spec
+governa; onde divergir do brief, o brief está desatualizado.
+
+| Premissa do brief | Estado medido (ADR-0010 §A13) |
+|---|---|
+| US6 (ML) está **BLOQUEADA** em Q-D (conta da casa) | **DESBLOQUEADA.** A conta da casa existe e o token funciona. Q3 = decidido pelo dono. |
+| US6 AS5: a ingestão ML "roda de egress BR porque a API tem geo-gate" | **FALSO.** G1 mediu as duas pontas com o mesmo token: runner hospedado nos EUA devolve números **idênticos** aos de egress BR. A crença de geo-gate registrada desde 2026-07-06 foi aposentada. |
+| Q6: Amazon em CI + ML no Cloud Run Job quando desbloquear | **RESOLVIDO: os dois em runner hospedado do GitHub.** Nenhum serviço de nuvem novo, nenhum custo recorrente, nenhuma máquina self-hosted. |
+
+Corolário que esta spec assume: **não existe runner BR, não existe máquina a possuir.** O risco "adquirir uma
+máquina" listado no ADR §A11 não se materializa.
+
+---
+
+## Clarifications
+
+### Session 2026-07-28
+
+- Q: O que acontece quando o vendedor não escolhe categoria? → A: **Híbrido** — usar o catch-all **publicado** quando
+  o marketplace tem um (Amazon "Outros" 15%), com selo dizendo "categoria não informada"; exibir **"sem referência"**
+  onde não há catch-all publicado (ML). Nunca inventar um catch-all.
+- Q: A categoria escolhida persiste em quais objetos salvos? → A: **Cenários sim, produtos de catálogo não**;
+  snapshots herdam apenas o que o payload já tinha (imutabilidade intocada).
+- Q: Custo fixo do ML abaixo de R$ 79, sem eixo de logística no app? → A: **Modelar com as fronteiras publicadas e
+  declarar a premissa de logística na própria entrada.** Não criar eixo de logística; a lacuna R$ 50,01–78,99 da
+  fonte permanece lacuna.
+- Q: O que produz uma execução que confirma tudo inalterado? → A: **Um PR que avança apenas `lastReviewed`** — houve
+  releitura real da fonte, então o selo permanece verdadeiro e o PR mensal é a evidência de que o laço está vivo.
+- Q: O 014 pode fechar sem o Mercado Livre? → A: **Sim.** O DoD fecha com a Amazon (US1+US2+US3+US4, zero
+  credencial); o **ML é fatia própria**, autorizada à parte — isola a única superfície de segredo e a única pendência
+  do `seguranca` sem segurar o resto do incremento.
+
+---
+
+## User Scenarios & Testing *(mandatory)*
+
+### User Story 1 — Escolher a categoria do anúncio, por canal (Priority: P1)
+
+O vendedor informa ao app sob qual categoria do marketplace a peça está anunciada, por slot de canal. **Escolher é
+opcional**; não escolher nunca é pior do que hoje.
+
+**Why this priority**: sem o eixo de categoria não existe incremento. É a porta de entrada de todo o resto.
+
+**Independent Test**: abrir um slot de canal ML ou Amazon, buscar a categoria por parte do nome, selecioná-la, e
+observar que a escolha é por slot. Entrega valor mesmo se nenhum mapa novo tivesse sido carregado.
+
+**Acceptance Scenarios**:
+
+1. **Given** um slot de canal ML ou Amazon, **When** o vendedor abre o seletor de categoria, **Then** ele encontra a
+   categoria **digitando parte do nome** (não apenas navegando uma árvore multinível), e os nomes exibidos são os
+   nomes publicados pelo próprio marketplace.
+2. **Given** que o vendedor **não** escolhe categoria num marketplace que **publica** um catch-all (Amazon
+   "Outros"), **When** as tarifas resolvem, **Then** o catch-all publicado pré-preenche e o selo diz
+   **"categoria não informada"**, nomeando o catch-all usado.
+2b. **Given** que o vendedor **não** escolhe categoria num marketplace **sem** catch-all publicado (ML), **When** as
+   tarifas resolvem, **Then** o selo lê **"sem referência"** e nada é pré-preenchido — o app **não** inventa um
+   catch-all a partir da faixa publicada.
+3. **Given** um marketplace sem eixo de categoria (Shopee, Outro), **When** o slot renderiza, **Then** nenhum seletor
+   de categoria aparece (espelha a regra de modalidade já existente).
+4. **Given** um vendedor que escolheu categoria, **When** ele adiciona um segundo slot de canal, **Then** a escolha é
+   **por slot** — uma categoria no ML não vira silenciosamente a categoria da Amazon.
+5. **Given** uma sessão offline, **When** o vendedor abre o seletor, **Then** ele funciona a partir do catálogo que o
+   cliente já tem — o seletor **nunca** exige rede.
+
+> Layout, a escolha entre busca e drill-down, e onde o seletor mora dentro do slot são do **`designer-ux`**. Esta
+> história fixa apenas o comportamento.
+
+---
+
+### User Story 2 — O pré-fill resolve pela categoria, com selo que a nomeia (Priority: P1) — FUNDACIONAL
+
+A busca de tarifa passa a **usar** a categoria. Hoje o `slotDeterminants` envia apenas `listingType` (ML) / `plan`
+(Amazon), então uma entrada chaveada por categoria nunca resolveria e o recurso pareceria quebrado.
+
+**Why this priority**: é o elo que faz US1 e US3/US6 significarem alguma coisa. Sem ela, o mapa existe e ninguém o
+alcança.
+
+**Independent Test**: com uma entrada de catálogo chaveada por categoria, resolver um slot e verificar que ela
+pré-preenche e que o selo nomeia a categoria.
+
+**Acceptance Scenarios**:
+
+1. **Given** que existe entrada chaveada para a (marketplace, categoria, modalidade) do vendedor, **When** o slot
+   resolve, **Then** essa entrada pré-preenche e o selo nomeia **a categoria a que o número pertence**.
+2. **Given** que uma entrada específica de categoria **e** um catch-all do marketplace casam, **When** resolve,
+   **Then** vence a **mais específica**, de forma determinística e **independente da ordem** em que aparecem no
+   artefato (SC-801).
+3. **Given** que o vendedor edita qualquer tarifa pré-preenchida, **When** o selo re-deriva, **Then** ele lê
+   **"ajustado por você"** exatamente como hoje — a sobrescrita sempre vence o mapa.
+4. **Given** uma categoria sem entrada com fonte, **When** resolve, **Then** o selo lê **"sem referência"** e nada é
+   pré-preenchido — nunca o número de uma categoria vizinha, nunca 0%.
+5. **Given** qualquer entrada resolvida, **When** ela pré-preenche, **Then** sua comissão é um número **com fonte**:
+   uma entrada que pré-preencheria 0% sob selo de "referência" é **impossível** (SC-802).
+
+---
+
+### User Story 3 — Amazon: o mapa completo de categorias, com procedência (Priority: P1)
+
+Toda categoria que a Amazon publica em sua tabela de comissões, com a alíquota, o mínimo de **BRL 1,00** por item, o
+eixo de plano, e as categorias com faixa de preço modeladas como `priceBands`.
+
+**Why this priority**: é a metade do valor que **não depende de credencial nenhuma** — mede-se de runner hospedado,
+sem conta, sem OAuth (G2). É o caminho mais curto entre a spec e valor entregue.
+
+**Independent Test**: comparar o mapa publicado com a tabela oficial e verificar cobertura total, zero itens
+inventados, e procedência em 100% das entradas.
+
+**Acceptance Scenarios**:
+
+1. **Given** a tabela oficial da Amazon, **When** o mapa entra, **Then** **toda** categoria ali publicada está
+   presente, e **nenhuma** categoria ausente da tabela existe no catálogo (nada interpolado, nada vindo de blog).
+2. **Given** uma categoria que a fonte publica com limiar de preço (Acessórios Eletrônicos em R$ 100; Móveis e
+   Colchões em R$ 200), **When** entra, **Then** é modelada como `priceBands` e a calculadora escolhe a faixa pelo
+   preço anunciado — não achatada em um percentual único.
+3. **Given** toda entrada Amazon, **When** inspecionada, **Then** ela carrega `sourceUrl` + `effectiveDate` +
+   `lastReviewed`, e o texto de `source` **nomeia a categoria**.
+4. **Given** que o vendedor escolhe um plano (Profissional / Individual), **When** as tarifas resolvem, **Then** a
+   cobrança por item do Individual e a ausência dela no Profissional aparecem com fonte, com a **assinatura mensal
+   explicitamente fora de escopo** (é custo mensal, não por venda).
+5. **Given** que a Amazon cobra comissão sobre uma base que inclui frete enquanto nosso motor cobra sobre o preço
+   anunciado, **When** uma entrada Amazon é exibida, **Then** essa limitação é **declarada ao vendedor** no texto da
+   própria entrada — subestimação declarada e limitada, nunca silenciosa (Q9).
+
+---
+
+### User Story 4 — Atualização mensal automática que abre um PR com o diff (Priority: P1)
+
+Uma vez por mês, um job relê as fontes, reconstrói o mapa e — se algo mudou — **abre um PR** com um diff que um
+humano consegue ler. **Nunca faz merge. Nunca adivinha.**
+
+**Why this priority**: é o que transforma uma curadoria pontual em um produto que continua verdadeiro no mês que vem.
+
+**Independent Test**: rodar o job manualmente contra uma fonte alterada e verificar que abre um PR com o diff
+old→new por categoria; rodar contra uma fonte quebrada e verificar que **não** abre PR.
+
+**Acceptance Scenarios**:
+
+1. **Given** uma execução agendada em que valores da fonte mudaram, **When** ela termina, **Then** abre **um** PR
+   cujo corpo lista **cada mudança como old → new, por categoria**, com URL da fonte e data de coleta — e o PR
+   **não** é auto-mergeado.
+2. **Given** uma execução em que a fonte não pode ser lida (formato da página mudou, render falhou, credencial
+   expirou, rede), **When** ela falha, **Then** **não** abre PR, deixa o artefato commitado **intocado**, e alerta.
+   **Um parse vazio ou drasticamente encolhido é tratado como falha, não como mudança de tarifa** (SC-806).
+3. **Given** uma execução que confirma todos os valores inalterados, **When** termina, **Then** abre um PR que
+   avança **apenas** `lastReviewed` — e em **nenhum** caso `lastReviewed` avança para um valor que não foi de fato
+   relido da fonte.
+4. **Given** uma categoria que **desapareceu** da fonte, **When** o diff é montado, **Then** sua remoção é
+   **exposta no PR para um humano** — nunca mantida viva silenciosamente sob data de revisão nova.
+5. **Given** a execução, **When** roda, **Then** consome **0 tokens de LLM** — o parsing é determinístico (SC-811).
+6. **Given** a execução mensal, **When** dispara, **Then** ocorre **no dia 1 às 06:00 UTC**, mira `develop`, e
+   também pode ser disparada manualmente sob demanda.
+
+---
+
+### User Story 5 — Quando o robô falha, o selo conta a verdade (Priority: P2)
+
+O selo de obsolescência de 30 dias é o *dead-man's switch* embutido do app. Se o laço mensal morrer, o usuário fica
+sabendo.
+
+**Why this priority**: sem isso, uma automação quebrada é indistinguível de uma automação funcionando — e o produto
+mentiria por omissão.
+
+**Independent Test**: envelhecer artificialmente o `lastReviewed` de um valor e verificar que o selo o marca como
+desatualizado sem nenhuma intervenção.
+
+**Acceptance Scenarios**:
+
+1. **Given** que o job mensal não atualiza um valor com sucesso há mais que a janela de obsolescência, **When** o
+   vendedor vê aquela tarifa, **Then** o selo a marca **desatualizada** — a falha do laço vira visível ao usuário
+   sem depender de alguém olhar um painel.
+2. **Given** um valor que uma execução verificou como inalterado, **When** `lastReviewed` avança, **Then** ele
+   avançou porque o valor foi **relido da fonte**, não porque o job rodou.
+3. **Given** um cliente offline cuja semente embutida é mais antiga que o catálogo servido, **When** renderiza,
+   **Then** o selo marca os valores como **embutida** exatamente como hoje, e a comparação de frescor **nunca reduz**
+   a cobertura que o cliente já tinha (SC-805).
+
+---
+
+### User Story 6 — Mercado Livre: o mapa completo de categorias (Priority: P2)
+
+O mesmo mapa para o ML, construído pelo **caminho sancionado por OAuth**: percorrer a árvore de categorias e obter a
+alíquota por categoria e tipo de anúncio.
+
+**Why this priority**: P2 e não P1 porque a Amazon entrega valor sozinha e sem credencial; o ML acrescenta o maior
+marketplace do país, mas carrega a única superfície de segredo do incremento. **É fatia própria: o DoD do 014 fecha
+sem ela**, e ela é autorizada à parte — não por estar bloqueada (não está), mas para que a pendência de ratificação
+do `seguranca` não segure o valor já pronto.
+
+**Independent Test**: com o token da conta da casa, extrair a árvore e as alíquotas e verificar que as entradas
+trazem as taxas exatas por categoria — nunca a faixa publicada 10–14% / 15–19%.
+
+**Acceptance Scenarios**:
+
+1. **Given** a conta da casa e sua aplicação OAuth, **When** a ingestão roda, **Then** as entradas ML carregam as
+   alíquotas **exatas** de Clássico e Premium por categoria — nunca a faixa publicada, nunca um blog.
+2. **Given** as faixas de custo fixo do ML abaixo de R$ 79 (R$ 6,25 / 6,50 / 6,75), **When** modeladas, **Then** as
+   fronteiras publicadas são usadas literalmente e **a lacuna de R$ 50,01–78,99 que a própria página do ML deixa
+   permanece uma lacuna** — nunca interpolada (Q8).
+3. **Given** um valor ML, **When** exibido, **Then** a entrada declara sob qual premissa de logística ele vale (Q8) —
+   o app não tem eixo de `logistic_type` e não deve fingir que tem.
+4. **Given** a ingestão ML, **When** roda, **Then** roda em **runner hospedado do GitHub** — o gate G1 mediu as duas
+   pontas com o mesmo token e provou que **não há geo-gate**; nenhum runner self-hosted é usado, e o caminho anônimo
+   continua morto e **não** é retentado disfarçado.
+5. **Given** a permissão da aplicação ML, **When** configurada, **Then** ela concede **exatamente** o mínimo medido
+   ("Publicação e sincronização: Leitura") — nenhuma permissão de escrita é habilitada para a ingestão.
+
+---
+
+### User Story 7 — ML sem a conta: a linha de base que já temos (Priority: P3 — candidata a descarte)
+
+As faixas de custo fixo do ML abaixo de R$ 79 são conhecidas sem API. Publicar **só** elas significaria uma entrada
+que conhece o custo fixo mas **não** a comissão — o que o vocabulário atual de selos (por entrada, não por campo)
+não consegue expressar honestamente.
+
+**Why this priority**: P3 e **recomendada para descarte**. Com a US6 desbloqueada, esta história perdeu sua razão de
+existir: ela era a mitigação para o ML estar bloqueado. Mantida enumerada para que o descarte seja **decisão** e não
+esquecimento — depende de Q11.
+
+**Independent Test**: n/a enquanto Q11 não decidir; se mantida, testa-se que uma entrada de conhecimento parcial ou
+é rejeitada na validação ou exibe selo por campo.
+
+---
+
+### User Story 8 — A categoria escolhida acompanha o que o vendedor salva (Priority: P3)
+
+Uma categoria escolhida num slot de canal é **intenção de canal**, então pertence junto da demais intenção de canal
+que a E5 já guarda. **Alcance decidido: cenários salvos sim; produtos de catálogo não; snapshots herdam apenas o que
+o payload já tinha.**
+
+**Why this priority**: valor real mas incremental — sem ela o vendedor reescolhe a categoria a cada cenário.
+
+**Independent Test**: salvar um cenário com categoria, reabrir, e verificar que ela re-resolve pelo catálogo de hoje
+como os demais slots não sobrescritos.
+
+**Acceptance Scenarios**:
+
+1. **Given** um cenário salvo criado depois do 014, **When** reaberto, **Then** sua categoria re-resolve pelo
+   catálogo de hoje exatamente como os demais slots não sobrescritos (o contrato do resolvedor de leitura da E5,
+   inalterado).
+2. **Given** um cenário, kit ou **snapshot imutável** criado **antes** do 014, **When** aberto, **Then** renderiza
+   inalterado e sem categoria — a ausência de categoria é um estado válido e permanente (SC-809).
+
+---
+
+### Edge Cases
+
+- **A fonte muda de formato sem avisar.** O parse encolhe ou vem vazio: tratado como **falha**, não como "as taxas
+  caíram para zero". Nenhum PR, artefato intocado, alerta.
+- **Uma categoria some da fonte.** Nunca é apagada silenciosamente nem mantida viva com data nova: a remoção vai
+  para o PR, para decisão humana.
+- **A credencial do ML expira ou é revogada.** A metade ML falha; a metade Amazon **continua funcionando** — as duas
+  não compartilham destino.
+- **O agendamento não dispara** (fila do GitHub, repositório inativo, workflow desabilitado). O selo de 30 dias
+  expõe isso ao usuário sem depender de ninguém observar a automação.
+- **Duas entradas casam com a mesma especificidade.** O desempate precisa ser determinístico e independente da ordem
+  do arquivo — nunca "a primeira que aparecer".
+- **Uma faixa de preço sem comissão.** Hoje passa na validação e pré-preenche 0% sob selo de referência (achado
+  herdado do 013). Precisa ser **rejeitada no parse/boot, ruidosamente** (SC-802).
+- **O vendedor escolhe uma categoria e depois troca de marketplace no slot.** A categoria do marketplace antigo não
+  pode sobreviver para o novo.
+- **Preço anunciado exatamente no limiar de uma faixa** (R$ 100,00; R$ 200,00). A fronteira precisa ser inequívoca e
+  testada nos dois lados.
+
+---
+
+## Requirements *(mandatory)*
+
+### Functional Requirements
+
+**Eixo de categoria e resolução**
+
+- **FR-001**: O sistema MUST aceitar `category` como determinante de busca de tarifa, por slot de canal, para os
+  marketplaces que publicam categorias (ML e Amazon).
+- **FR-002**: O sistema MUST resolver pela entrada **mais específica** entre as que casam, de forma determinística e
+  **independente da ordem** das entradas no artefato.
+- **FR-003**: O sistema MUST tratar a escolha de categoria como **opcional** e por slot; a ausência de categoria
+  MUST permanecer um estado válido, inclusive permanente, para objetos salvos antes deste incremento.
+- **FR-003a**: O sistema MUST persistir a categoria escolhida em **cenários salvos**, junto da demais intenção de
+  canal. O sistema MUST NOT adicionar categoria a produtos de catálogo. Snapshots MUST apenas herdar o que seu
+  payload já continha, sem alteração na imutabilidade.
+- **FR-004**: O sistema MUST permitir localizar uma categoria **por texto**, sem exigir navegação pela árvore.
+- **FR-005**: O seletor de categoria MUST funcionar **offline**, a partir do catálogo que o cliente já possui.
+- **FR-006**: O sistema MUST NOT exibir seletor de categoria para marketplaces sem eixo de categoria.
+
+**Honestidade dos números**
+
+- **FR-007**: Toda entrada MUST carregar `sourceUrl`, `effectiveDate` e `lastReviewed`, e seu texto de origem MUST
+  nomear a categoria a que o número pertence.
+- **FR-008**: O sistema MUST rejeitar, **no parse/boot e ruidosamente**, qualquer entrada que pré-preencheria
+  comissão 0% sob selo de "referência" — **incluindo o caso em que a comissão nula está dentro de uma faixa de
+  preço**, que a validação atual não detecta.
+- **FR-009**: O sistema MUST NOT interpolar valores: uma lacuna na fonte MUST permanecer lacuna no catálogo.
+- **FR-010**: O sistema MUST NOT aceitar valores derivados de faixas publicadas, agregadores ou blogs.
+- **FR-011**: Quando o vendedor não escolhe categoria e o marketplace **publica** um catch-all, o sistema MUST
+  pré-preencher esse catch-all publicado, com selo dizendo "categoria não informada" e nomeando-o. Quando o
+  marketplace **não** publica catch-all, ou quando nenhuma entrada com fonte casa, o sistema MUST exibir
+  "sem referência" e MUST NOT pré-preencher valor algum.
+- **FR-011a**: O sistema MUST NOT derivar um catch-all a partir de uma faixa publicada, média ou extremo — um
+  catch-all só existe se o marketplace o publicar como valor próprio.
+- **FR-012**: Uma tarifa editada pelo vendedor MUST sempre vencer o mapa, com o selo lendo "ajustado por você".
+- **FR-013**: Uma atualização de catálogo, em qualquer camada de entrega, MUST NOT reduzir cobertura: nenhum slot que
+  resolvia antes pode deixar de resolver depois.
+- **FR-014**: Quando o motor de cálculo e o marketplace usam bases de cobrança diferentes, a entrada MUST declarar
+  essa limitação ao vendedor em seu próprio texto.
+- **FR-014a**: O custo fixo do ML abaixo de R$ 79 MUST ser modelado com as fronteiras publicadas literalmente, e a
+  entrada MUST declarar sob qual premissa de logística ele vale. O sistema MUST NOT introduzir um eixo de logística
+  no modelo, e MUST NOT preencher a lacuna de R$ 50,01–78,99 que a fonte deixa.
+
+**Laço mensal**
+
+- **FR-015**: O sistema MUST reler as fontes **mensalmente, no dia 1 às 06:00 UTC**, e MUST também permitir disparo
+  manual sob demanda.
+- **FR-016**: Quando houver mudança, o sistema MUST abrir **um** PR mirando `develop`, cujo corpo lista cada mudança
+  como **old → new por categoria**, com URL da fonte e data de coleta.
+- **FR-017**: O sistema MUST NOT fazer merge automático e MUST NOT publicar por conta própria.
+- **FR-018**: Em falha de leitura, ou em parse vazio ou encolhido além de um limiar declarado, o sistema MUST abrir
+  **nenhum** PR, MUST deixar o artefato intocado, e MUST alertar.
+- **FR-019**: O sistema MUST expor no PR, para decisão humana, toda categoria que desapareceu da fonte.
+- **FR-020**: `lastReviewed` MUST avançar **somente** mediante reverificação real contra a fonte.
+- **FR-020a**: Uma execução que confirma todos os valores inalterados MUST abrir um PR que altera **apenas**
+  `lastReviewed`. Uma execução que **falhou** em ler a fonte MUST NOT avançar `lastReviewed` de valor algum.
+- **FR-021**: O laço mensal MUST consumir **0 tokens de LLM**.
+- **FR-022**: A falha da metade ML MUST NOT impedir a metade Amazon de funcionar, e vice-versa.
+
+**Credenciais**
+
+- **FR-023**: O refresh token do ML MUST NOT existir no repositório, no cliente, nem em variável de ambiente
+  versionada.
+- **FR-024**: A aplicação ML MUST operar com o mínimo de permissão medido, sem nenhuma permissão de escrita.
+- **FR-025**: A ingestão MUST rodar em runner hospedado; o incremento MUST NOT introduzir runner self-hosted nem
+  serviço de nuvem novo.
+
+### Key Entities
+
+- **Categoria de marketplace**: identidade publicada pelo próprio marketplace (identificador + nome + posição na
+  árvore de pais/filhos). Vocabulário de cada marketplace, sem taxonomia interna unificada (Q12).
+- **Entrada de tarifa**: a unidade de catálogo que casa com (marketplace, categoria, modalidade/plano) e carrega
+  comissão, custo fixo, mínimo por item, faixas de preço quando houver, e a procedência completa.
+- **Faixa de preço (`priceBands`)**: recorte por preço anunciado dentro de uma entrada, com fronteiras literais da
+  fonte; é onde mora o furo de validação herdado do 013.
+- **Selo de procedência/frescor**: o texto que diz ao vendedor de onde veio o número, a que categoria pertence, e se
+  está desatualizado ou embutido.
+- **Execução de atualização**: um ciclo do laço mensal, com seu resultado (mudou / inalterado / falhou), seu diff e
+  sua data de coleta.
+- **Intenção de canal salva**: a categoria escolhida, guardada junto do restante da intenção de canal (alcance
+  conforme Q10).
+
+---
+
+## Success Criteria *(mandatory)*
+
+- **SC-801**: Quando várias entradas casam com um slot, a **mais específica** vence, de forma determinística e
+  independente da ordem no artefato — um catch-all de marketplace **nunca** encobre uma entrada de categoria.
+- **SC-802**: **Nenhuma entrada pode pré-preencher comissão 0% sob selo de "referência"**, inclusive quando a
+  comissão nula está dentro de uma faixa de preço. A rejeição acontece no parse/boot, ruidosamente.
+- **SC-803**: 100% dos valores entregues carregam `sourceUrl` + `effectiveDate` + `lastReviewed`, e todo texto de
+  selo **nomeia a categoria** do número.
+- **SC-804**: Todo valor rastreia até uma fonte oficial lida neste incremento. **0** valores interpolados, **0** de
+  agregador ou blog, **0** derivados de faixa publicada. Uma lacuna na fonte permanece lacuna no catálogo.
+- **SC-805**: Uma atualização de catálogo, em qualquer camada, **nunca reduz cobertura**.
+- **SC-806**: O job mensal **nunca faz merge** e **nunca publica** sozinho; falha de leitura, ou parse vazio ou
+  encolhido além do limiar declarado, resulta em **nenhum** PR, artefato intocado e alerta.
+- **SC-807**: `lastReviewed` avança **somente** por reverificação real; quando o laço para de funcionar, o selo de
+  30 dias dispara e o vendedor lê "desatualizada".
+- **SC-808**: Um vendedor que **não** escolhe categoria não fica pior do que antes do 014 — sem regressão em
+  pré-fill, honestidade de selo ou comportamento offline.
+- **SC-809**: Todas as garantias de aceite de E1–E6 passam inalteradas — calculadora offline gratuita, recomputação
+  ao vivo do catálogo, kit D3/D6, **imutabilidade** de snapshot, cenário vivo/congelado, portão de entitlement,
+  congelamento no lapso. Objetos salvos antes do 014 renderizam inalterados e sem categoria.
+- **SC-810**: O orçamento de primeiro render se mantém: tamanho da semente embutida e custo de validação no boot
+  ficam dentro de um orçamento declarado (números definidos pelo `arquiteto`); a primeira pintura offline da
+  calculadora gratuita **não** regride.
+- **SC-811**: A atualização mensal consome **0 tokens de LLM**, e portanto **não** gera linha em
+  `docs/token-ledger.md`.
+- **SC-812**: 100% dos valores ML vêm do caminho sancionado por OAuth — **0** de raspagem anônima, **0** de bot com
+  sessão armazenada, **0** de agregador terceiro.
+- **SC-813**: O incremento adiciona **R$ 0,00** de custo recorrente de infraestrutura e **nenhum** runner
+  self-hosted.
+
+---
+
+## Assumptions
+
+- **A conta da casa do ML está provisionada** (`administrativo@truthsforge.com`) e sua aplicação OAuth existe com a
+  permissão mínima medida. Decisão Q3 do dono, 2026-07-24; verificada em execução 2026-07-28.
+- **Entrega dos dados = fetch-and-persist** (decisão Q1 do dono, rodada 1): o app busca e persiste, em vez de
+  embutir tudo no bundle.
+- **A Amazon não requer credencial alguma.** Sua tabela de comissões é pública, renderizada por JS, e o gate G2
+  provou que renderiza idêntica de runner não-BR. A conta Amazon que o dono criou **não é usada** pelo pipeline.
+- **O catálogo permanece gratuito e público** — nenhum novo portão premium é introduzido (Q4 recomendado (a) com
+  ~85%, ainda a ratificar no clarify).
+- **A cadência é mensal, dia 1, 06:00 UTC**, mirando `develop` (decisões QA5 e QA1 do dono, 2026-07-28).
+- **Custódia do refresh token = GitHub Secrets sem write-back**, viável porque o gate G3 mediu que o ML rotaciona o
+  token no uso **mas o antigo continua válido**. Pendente de ratificação do `seguranca` quanto a segredo em
+  repositório público (QA2/QA3).
+- **A fórmula canônica de precificação não muda.** `pricing-core` permanece a autoridade offline e o backend nunca
+  recalcula.
+- **`designer-ux` é dona da forma do seletor** (layout, busca vs drill-down, posição no slot); esta spec fixa apenas
+  comportamento.
+- **`arquiteto` define os números do orçamento de SC-810.**
+
+---
+
+## Perguntas em aberto → `/speckit-clarify`
+
+Enumeradas por instrução explícita do dono (não resolver nesta etapa). As recomendações e confianças vêm do §10 do
+scope brief; **Q1, Q3 e Q6 saíram desta lista por já estarem decididos**.
+
+**Resolvidas na sessão de clarify de 2026-07-28**: Q2, Q5, Q7, Q8, Q10 (ver `## Clarifications`). **Já decididas
+antes**: Q1, Q3, Q6.
+
+**Restam 4, todas deferidas conscientemente** — nenhuma bloqueia o `/speckit-plan`, e as três primeiras têm
+recomendação de alta confiança no brief:
+
+| # | Pergunta | Recomendação do brief | Por que pode esperar |
+|---|---|---|---|
+| **Q4** | O mapa de categorias é gratuito ou premium? | (a) gratuito (~85%) | O brief mostra que a escolha é quase teórica: o catálogo é embutido no cliente e servido sem autenticação, então "premium" não seria aplicável tecnicamente sem redesenhar a entrega. |
+| **Q9** | Base de comissão da Amazon inclui frete; a nossa não | (a) declarar, não modelar (~80%) | (b) seria mudança em `pricing-core`, que o escopo já marca como FORA. Decidir isto não altera o plano — altera só o texto da entrada. |
+| **Q12** | Vocabulário: taxonomia unificada ou a de cada marketplace? | (a) a de cada marketplace, literal | (b) exigiria inventar uma taxonomia interna, também já marcada como FORA. |
+| **Q11** | Entradas de conhecimento parcial / selos por campo (decide a US7) | (a) não — ou a entrada tem fonte completa, ou não entra | **A premissa caiu**: Q11 existia para salvar a US7, que só fazia sentido enquanto o ML estava bloqueado. Com a US6 desbloqueada, o caminho natural é descartar a US7 — mas o descarte é decisão do dono, não omissão. |
+
+Duas decisões **não** são de produto e ficam com o `seguranca` (já enumeradas no parecer bloqueante): a ratificação
+de segredo em repositório público (QA2/QA3). O G1 reduziu essa questão — o perigo específico era runner
+self-hosted, que deixou de existir.
