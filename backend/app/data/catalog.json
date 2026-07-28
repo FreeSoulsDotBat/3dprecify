@@ -1,17 +1,1592 @@
 {
-  "catalogVersion": "2026-07-07.0",
+  "catalogVersion": "2026-07-28.0",
   "schemaVersion": "1",
-  "generatedAt": "2026-07-07T00:00:00.000Z",
+  "generatedAt": "2026-07-28T00:00:00.000Z",
   "marketplaces": [
     {
       "marketplace": "MERCADO_LIVRE",
-      "determinantsSchema": { "listingType": ["CLASSICO", "PREMIUM"], "category": [] },
+      "determinantsSchema": {
+        "listingType": [
+          "CLASSICO",
+          "PREMIUM"
+        ],
+        "category": []
+      },
       "entries": []
     },
     {
       "marketplace": "AMAZON",
-      "determinantsSchema": { "category": [], "plan": ["INDIVIDUAL", "PROFISSIONAL"] },
-      "entries": []
+      "determinantsSchema": {
+        "category": [],
+        "plan": [
+          "INDIVIDUAL",
+          "PROFISSIONAL"
+        ]
+      },
+      "entries": [
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "roupas-e-acessorios"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Roupas e Acessórios (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "calcados"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "oculos"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Óculos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "mochilas-bolsas-bagagem-e-acessorios-de-viagem"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Mochilas, Bolsas, Bagagem e Acessórios de Viagem (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "relogios"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Relógios (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "joias"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Joias (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "midia-livros-dvd-musica-software-video"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Mídia: Livros, DVD, Música, Software, Vídeo (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "tv-audio-e-cinema-em-casa"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — TV, áudio e cinema em casa (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "eletronicos-portateis"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Eletrônicos portáteis (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "celulares"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Celulares (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "cameras-e-fotografia"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Câmeras e Fotografia (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "acessorios-eletronicos"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 100,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "consoles-de-videogame"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Consoles de Videogame (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "videogames-e-acessorios-para-jogos"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Videogames e Acessórios para Jogos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "casa-e-cozinha"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Casa e Cozinha (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "diy-e-ferramentas"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — DIY e ferramentas (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "ferramentas-eletricas-essenciais"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Ferramentas Elétricas Essenciais (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "computadores"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Computadores (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "papelaria-e-escritorio"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Papelaria e Escritório (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "esportes-aventura-e-lazer"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Esportes, Aventura e Lazer (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "eletrodomesticos-grandes"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Eletrodomésticos Grandes (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "moveis"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 200,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "brinquedos-e-jogos"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Brinquedos e Jogos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "produtos-para-bebes"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para bebês (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "saude-e-cuidado-pessoal"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Saúde e Cuidado Pessoal (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "beleza"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Beleza (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "produtos-de-beleza-de-luxo"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos de beleza de luxo (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "produtos-para-cuidados-pessoais"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para cuidados pessoais (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "gramado-e-jardim"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Gramado e Jardim (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "instrumentos-musicais-e-producao-audiovisual"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Instrumentos Musicais e Produção Audiovisual (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "automotivos-e-esportes-a-motor"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Automotivos e Esportes a Motor (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "pneus"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Pneus (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "produtos-para-animais-de-estimacao"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para Animais de Estimação (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "comidas-e-bebidas"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Comidas e Bebidas (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "cerveja-e-vinho"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Cerveja e Vinho (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "suprimentos-comerciais-industriais-e-cientificos"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Suprimentos Comerciais, Industriais e Científicos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "outros"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Outros (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL",
+            "category": "colchoes"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 200,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "roupas-e-acessorios"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Roupas e Acessórios (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "calcados"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "oculos"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Óculos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "mochilas-bolsas-bagagem-e-acessorios-de-viagem"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Mochilas, Bolsas, Bagagem e Acessórios de Viagem (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "relogios"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Relógios (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "joias"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Joias (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "midia-livros-dvd-musica-software-video"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Mídia: Livros, DVD, Música, Software, Vídeo (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "tv-audio-e-cinema-em-casa"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — TV, áudio e cinema em casa (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "eletronicos-portateis"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Eletrônicos portáteis (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "celulares"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Celulares (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "cameras-e-fotografia"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Câmeras e Fotografia (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "acessorios-eletronicos"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 100,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "consoles-de-videogame"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Consoles de Videogame (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "videogames-e-acessorios-para-jogos"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Videogames e Acessórios para Jogos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "casa-e-cozinha"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Casa e Cozinha (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "diy-e-ferramentas"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — DIY e ferramentas (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "ferramentas-eletricas-essenciais"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Ferramentas Elétricas Essenciais (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "computadores"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Computadores (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "papelaria-e-escritorio"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Papelaria e Escritório (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "esportes-aventura-e-lazer"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Esportes, Aventura e Lazer (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "eletrodomesticos-grandes"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Eletrodomésticos Grandes (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "moveis"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 200,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "brinquedos-e-jogos"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Brinquedos e Jogos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "produtos-para-bebes"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para bebês (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "saude-e-cuidado-pessoal"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Saúde e Cuidado Pessoal (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "beleza"
+          },
+          "commissionPct": 13,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Beleza (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "produtos-de-beleza-de-luxo"
+          },
+          "commissionPct": 14,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos de beleza de luxo (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "produtos-para-cuidados-pessoais"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para cuidados pessoais (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "gramado-e-jardim"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Gramado e Jardim (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "instrumentos-musicais-e-producao-audiovisual"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Instrumentos Musicais e Produção Audiovisual (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "automotivos-e-esportes-a-motor"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Automotivos e Esportes a Motor (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "pneus"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Pneus (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "produtos-para-animais-de-estimacao"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Produtos para Animais de Estimação (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "comidas-e-bebidas"
+          },
+          "commissionPct": 10,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Comidas e Bebidas (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "cerveja-e-vinho"
+          },
+          "commissionPct": 11,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Cerveja e Vinho (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "suprimentos-comerciais-industriais-e-cientificos"
+          },
+          "commissionPct": 12,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Suprimentos Comerciais, Industriais e Científicos (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "outros"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Outros (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL",
+            "category": "colchoes"
+          },
+          "commissionPct": null,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 200,
+              "commissionPct": 15,
+              "fixedFee": 0
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 10,
+              "fixedFee": 0
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        }
+      ],
+      "categorySpine": [
+        {
+          "id": "roupas-e-acessorios",
+          "name": "Roupas e Acessórios",
+          "parentId": null
+        },
+        {
+          "id": "calcados",
+          "name": "Calçados",
+          "parentId": null
+        },
+        {
+          "id": "oculos",
+          "name": "Óculos",
+          "parentId": null
+        },
+        {
+          "id": "mochilas-bolsas-bagagem-e-acessorios-de-viagem",
+          "name": "Mochilas, Bolsas, Bagagem e Acessórios de Viagem",
+          "parentId": null
+        },
+        {
+          "id": "relogios",
+          "name": "Relógios",
+          "parentId": null
+        },
+        {
+          "id": "joias",
+          "name": "Joias",
+          "parentId": null
+        },
+        {
+          "id": "midia-livros-dvd-musica-software-video",
+          "name": "Mídia: Livros, DVD, Música, Software, Vídeo",
+          "parentId": null
+        },
+        {
+          "id": "tv-audio-e-cinema-em-casa",
+          "name": "TV, áudio e cinema em casa",
+          "parentId": null
+        },
+        {
+          "id": "eletronicos-portateis",
+          "name": "Eletrônicos portáteis",
+          "parentId": null
+        },
+        {
+          "id": "celulares",
+          "name": "Celulares",
+          "parentId": null
+        },
+        {
+          "id": "cameras-e-fotografia",
+          "name": "Câmeras e Fotografia",
+          "parentId": null
+        },
+        {
+          "id": "acessorios-eletronicos",
+          "name": "Acessórios Eletrônicos",
+          "parentId": null
+        },
+        {
+          "id": "consoles-de-videogame",
+          "name": "Consoles de Videogame",
+          "parentId": null
+        },
+        {
+          "id": "videogames-e-acessorios-para-jogos",
+          "name": "Videogames e Acessórios para Jogos",
+          "parentId": null
+        },
+        {
+          "id": "casa-e-cozinha",
+          "name": "Casa e Cozinha",
+          "parentId": null
+        },
+        {
+          "id": "diy-e-ferramentas",
+          "name": "DIY e ferramentas",
+          "parentId": null
+        },
+        {
+          "id": "ferramentas-eletricas-essenciais",
+          "name": "Ferramentas Elétricas Essenciais",
+          "parentId": null
+        },
+        {
+          "id": "computadores",
+          "name": "Computadores",
+          "parentId": null
+        },
+        {
+          "id": "papelaria-e-escritorio",
+          "name": "Papelaria e Escritório",
+          "parentId": null
+        },
+        {
+          "id": "esportes-aventura-e-lazer",
+          "name": "Esportes, Aventura e Lazer",
+          "parentId": null
+        },
+        {
+          "id": "eletrodomesticos-grandes",
+          "name": "Eletrodomésticos Grandes",
+          "parentId": null
+        },
+        {
+          "id": "moveis",
+          "name": "Móveis",
+          "parentId": null
+        },
+        {
+          "id": "brinquedos-e-jogos",
+          "name": "Brinquedos e Jogos",
+          "parentId": null
+        },
+        {
+          "id": "produtos-para-bebes",
+          "name": "Produtos para bebês",
+          "parentId": null
+        },
+        {
+          "id": "saude-e-cuidado-pessoal",
+          "name": "Saúde e Cuidado Pessoal",
+          "parentId": null
+        },
+        {
+          "id": "beleza",
+          "name": "Beleza",
+          "parentId": null
+        },
+        {
+          "id": "produtos-de-beleza-de-luxo",
+          "name": "Produtos de beleza de luxo",
+          "parentId": null
+        },
+        {
+          "id": "produtos-para-cuidados-pessoais",
+          "name": "Produtos para cuidados pessoais",
+          "parentId": null
+        },
+        {
+          "id": "gramado-e-jardim",
+          "name": "Gramado e Jardim",
+          "parentId": null
+        },
+        {
+          "id": "instrumentos-musicais-e-producao-audiovisual",
+          "name": "Instrumentos Musicais e Produção Audiovisual",
+          "parentId": null
+        },
+        {
+          "id": "automotivos-e-esportes-a-motor",
+          "name": "Automotivos e Esportes a Motor",
+          "parentId": null
+        },
+        {
+          "id": "pneus",
+          "name": "Pneus",
+          "parentId": null
+        },
+        {
+          "id": "produtos-para-animais-de-estimacao",
+          "name": "Produtos para Animais de Estimação",
+          "parentId": null
+        },
+        {
+          "id": "comidas-e-bebidas",
+          "name": "Comidas e Bebidas",
+          "parentId": null
+        },
+        {
+          "id": "cerveja-e-vinho",
+          "name": "Cerveja e Vinho",
+          "parentId": null
+        },
+        {
+          "id": "suprimentos-comerciais-industriais-e-cientificos",
+          "name": "Suprimentos Comerciais, Industriais e Científicos",
+          "parentId": null
+        },
+        {
+          "id": "outros",
+          "name": "Outros",
+          "parentId": null
+        },
+        {
+          "id": "colchoes",
+          "name": "Colchões",
+          "parentId": null
+        }
+      ]
     },
     {
       "marketplace": "SHOPEE",
@@ -22,17 +1597,49 @@
           "commissionPct": null,
           "fixedFee": null,
           "priceBands": [
-            { "minPrice": 0, "maxPrice": 80, "commissionPct": 20, "fixedFee": 4 },
-            { "minPrice": 80, "maxPrice": 100, "commissionPct": 14, "fixedFee": 16 },
-            { "minPrice": 100, "maxPrice": 200, "commissionPct": 14, "fixedFee": 20 },
-            { "minPrice": 200, "maxPrice": null, "commissionPct": 14, "fixedFee": 26 }
+            {
+              "minPrice": 0,
+              "maxPrice": 80,
+              "commissionPct": 20,
+              "fixedFee": 4
+            },
+            {
+              "minPrice": 80,
+              "maxPrice": 100,
+              "commissionPct": 14,
+              "fixedFee": 16
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": 200,
+              "commissionPct": 14,
+              "fixedFee": 20
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 14,
+              "fixedFee": 26
+            }
           ],
           "freight": {
             "kind": "BAND_VOUCHER",
             "bands": [
-              { "minPrice": 0, "maxPrice": 80, "voucherCeiling": 20 },
-              { "minPrice": 80, "maxPrice": 200, "voucherCeiling": 30 },
-              { "minPrice": 200, "maxPrice": null, "voucherCeiling": 40 }
+              {
+                "minPrice": 0,
+                "maxPrice": 80,
+                "voucherCeiling": 20
+              },
+              {
+                "minPrice": 80,
+                "maxPrice": 200,
+                "voucherCeiling": 30
+              },
+              {
+                "minPrice": 200,
+                "maxPrice": null,
+                "voucherCeiling": 40
+              }
             ]
           },
           "source": "Central de Educação do Vendedor Shopee — Política de Comissão para vendedores CNPJ e CPF em 2026",

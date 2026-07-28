@@ -127,15 +127,15 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 - [x] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `packages/fee-ingest/amazon.test.ts`
 - [x] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `packages/fee-ingest/amazon.test.ts`
-- [ ] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `packages/fee-ingest/amazon.test.ts`
-- [ ] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `packages/fee-ingest/amazon.test.ts`
+- [x] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `packages/fee-ingest/amazon.test.ts`
+- [x] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `packages/fee-ingest/amazon.test.ts`
 
 ### Implementação
 
-- [ ] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `packages/fee-ingest/amazon.mjs`
-- [ ] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `packages/fee-ingest/amazon.mjs`
-- [ ] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `packages/fee-ingest/amazon.mjs`
-- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json`
+- [x] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `packages/fee-ingest/amazon.mjs`
+- [x] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `packages/fee-ingest/amazon.mjs`
+- [x] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `packages/fee-ingest/amazon.mjs`
+- [x] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json`
 
 ---
 
@@ -229,6 +229,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 - [ ] T068a Fixar com o `arquiteto` os **números** do orçamento do SC-810 (bytes da semente e custo de parse no boot) — T069 hoje compara com um número que **não existe** — em `specs/014-fee-category-mapping/plan.md`
 - [ ] T069 [P] Orçamento do SC-810: medir tamanho da semente e custo de validação no boot, comparar com o número fixado em T068a, e provar que a primeira pintura offline da calculadora gratuita **não** regrediu — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [ ] T041a [P] [US3] Superfície de detalhe "de onde vem este número" (o N3 do `designer-ux`): o selo é um `Badge` e a advertência completa da Amazon tem 250 caracteres — `AMAZON_CAVEATS_FULL` existe no código e ainda não tem onde ser mostrada. O `source` por entrada carrega a forma curta — em `apps/web/src/features/calculator/fee-seal.tsx`
 - [ ] T069a [P] Verificar o SC-813 (hoje sem nenhuma tarefa): o workflow roda **só** em runner hospedado, não há runner self-hosted, e o incremento não adiciona **nenhum** recurso de nuvem — o resultado que os gates compraram precisa de alguém que o verifique — em `.github/workflows/fee-refresh.yml`
 - [ ] T069b [P] Fechar SEC-014-02/08/10 (`allowed_actions`, `sha_pinning_required: true`, `trufflehog@main`) e o §A6.5(iii) (CI independente sobre o PR mensal). **Condição 7 do parecer: esta tarefa é PRÉ-CONDIÇÃO de T060/T063, não consequência** — as correções de segurança estavam bloqueadas pelo próprio parecer que as exige — em `.github/workflows/`
 - [ ] T070 [P] Regenerar o contrato OpenAPI e provar idempotência se **qualquer** rota do backend mudou, docstrings incluídas (o drift-guard só roda no CI e reprova **depois** do gate verde) — em `apps/web/src/shared/api/`
