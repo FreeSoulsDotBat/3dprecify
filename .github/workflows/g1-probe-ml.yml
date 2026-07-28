@@ -1,0 +1,55 @@
+# G1 PROBE — HOSTED ARM (014 / ADR-0010 §A7) — a MEASUREMENT workflow, not part of the product.
+#
+# The BR control arm already PASSED from the owner's machine (São Paulo egress, 2026-07-27):
+# listing_prices 200 with per-category fees, category tree 200. This is the other arm of the same
+# two-arm test — SAME script, SAME token — run from a GitHub-hosted runner with non-BR egress.
+#
+#   PASS => Option 3D for ML: hosted runner, no BR egress requirement, and ADR-0010's geo-gate
+#           belief (asserted 2026-07-06, never measured) is formally retired.
+#   FAIL => Option 3E: the ML job needs a BR runner, and QA3/QA4 come back into play.
+#
+# SECRET: ML_ACCESS_TOKEN is the 6-hour ACCESS token only — deliberately NOT the refresh token.
+# It expires on its own, so a leak has a hard 6h ceiling. The refresh token is the real asset and
+# its custody is QA2, decided after G3 (measured 2026-07-27: ML rotates on use but the OLD token
+# survives => GitHub Secrets without write-back is viable).
+#
+# Runs on `push` to the 014 branch so it does not need to land on the default branch first.
+# Delete once the gate result is recorded in the ADR amendment.
+name: G1 probe — ML listing_prices from a hosted (non-BR) runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [014-fee-category-mapping]
+    paths:
+      - ".github/workflows/g1-probe-ml.yml"
+      - "scripts/probes/g1-ml-listing-prices.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  g1:
+    name: G1 — hosted arm
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # No install step: the probe uses only Node built-ins (fetch), so there is nothing to
+      # resolve and nothing that could differ from the arm that ran on the owner's machine.
+      - name: Run the G1 probe (hosted arm)
+        env:
+          ML_ACCESS_TOKEN: ${{ secrets.ML_ACCESS_TOKEN }}
+          G1_ARM: hosted
+        run: |
+          if [ -z "$ML_ACCESS_TOKEN" ]; then
+            echo "ML_ACCESS_TOKEN secret is not set — the arm cannot run, and an unauthenticated"
+            echo "403 would prove nothing (that mistake already happened once in this project)."
+            exit 2
+          fi
+          node scripts/probes/g1-ml-listing-prices.mjs
