@@ -1,0 +1,265 @@
+# Tasks: Mapeamento categoria→comissão (ML + Amazon) com atualização mensal
+
+**Spec**: [spec.md](./spec.md) · **Plano**: [plan.md](./plan.md) · **Medições**: [research.md](./research.md)
+**Contratos**: [contracts/category-tree.md](./contracts/category-tree.md) · **Validação**: [quickstart.md](./quickstart.md)
+
+**Tests**: MANDATORY per Constitution Principle III (Test-First, NON-NEGOTIABLE) — lógicos **e** visuais. Cada teste
+é escrito e **observado falhando** antes da implementação. A alíquota por categoria é domínio de dinheiro: leva
+casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
+
+## Format: `[ID] [P?] [Story] Description`
+
+`[P]` = paralelizável (arquivo diferente, sem dependência pendente). `[US#]` só nas fases de história.
+
+## Path Conventions
+
+`apps/web/src/…` (cliente) · `backend/app/…` (serve dados) · `.github/workflows/…` (laço mensal) ·
+`<D1>/` = local da ingestão, **indefinido até D1 ser decidido**.
+
+---
+
+## Phase 0: Decisões bloqueantes (Princípio VIII) ⛔
+
+> Estas **não são tarefas de código**. O Princípio VIII proíbe inferir estrutura; as tarefas marcadas
+> **⛔BLOQUEADA** não começam até a decisão correspondente existir. T001 existe para que D2 seja decidido com
+> números — foi medindo que uma hipótese minha caiu na fase 0, e D2 é maior que aquela.
+
+- [ ] T001 Varrer a árvore de categorias ML **completa, uma vez**, e reportar três números: total de nós, nós cuja alíquota **diverge do pai**, e tamanho em bytes da árvore completa vs da forma comprimida — script descartável em `scripts/probes/t001-ml-tree-census.mjs`
+- [ ] T002 Decisão do dono **D1**: onde mora o código de ingestão (`plan.md` §Decisões estruturais pendentes) — registrar em `docs/decisions/tech-stack-decisions.md`
+- [ ] T003 Decisão do dono **D2**: como a árvore de nomes chega ao cliente, **à luz de T001** — inclui resolver a contradição declarada entre a opção (a) e a US1 AS5 ("o seletor nunca exige rede") — registrar em `docs/decisions/tech-stack-decisions.md`
+- [ ] T004 Ratificação **D3** do `seguranca` + dono: refresh token do ML em GitHub Secrets com o repositório público (QA2/QA3) — registrar como adendo em `specs/014-fee-category-mapping/seguranca-ci-first.md`
+
+**Checkpoint**: T002+T003 liberam a Fase 2 em diante. T004 libera **apenas** a Fase 8 (ML).
+
+---
+
+## Phase 1: Setup
+
+- [ ] T005 Criar a estrutura da ingestão no local decidido em T002, com `package.json`/tsconfig conforme o padrão do monorepo — em `<D1>/` ⛔BLOQUEADA por T002
+- [ ] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `<D1>/package.json` ⛔BLOQUEADA por T002
+- [ ] T007 [P] Registrar a fronteira da ingestão no `dependency-cruiser` e no `import-linter` conforme o local de T002, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs` ⛔BLOQUEADA por T002
+
+---
+
+## Phase 2: Foundational (bloqueia TODAS as histórias) ⚠️
+
+> Esta fase é o motor da US2 e a correção de dois defeitos que já existem. Nada nas histórias funciona antes dela.
+
+### Testes (escritos e observados falhando primeiro)
+
+- [ ] T008 [P] Teste: `resolveEntry` é **independente da ordem** — embaralhar `entries` não altera nenhuma resolução (SC-801) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T009 [P] Teste: resolução sobe a cadeia de ancestrais — categoria sem entrada própria herda do **ancestral mais próximo**, com os números medidos (Celulares e Telefones 18%, Celulares e Smartphones **16%**, neto sem entrada → 18%) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T010 [P] Teste: duas entradas com conjunto de determinantes **idêntico** são **erro de parse** — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T011 [P] Teste: entrada com `commissionPct: null` cujas **bandas** também têm comissão nula é **rejeitada no parse** (SC-802, o furo herdado do 013) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T012 [P] Teste: árvore com `parentId` órfão, e árvore com **ciclo**, são erro de parse (um ciclo travaria a resolução em laço infinito) — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`
+- [ ] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+
+### Implementação
+
+- [ ] T014 Criar o módulo da árvore: forma achatada (`id`/`name`/`parentId`), schema Zod com as invariantes de T012, cadeia de ancestrais e busca por texto — em `apps/web/src/shared/fee-catalog/category-tree.ts`
+- [ ] T015 Estender o guard F3 ao **nível de banda**: uma entrada só é válida se a comissão existir no topo **ou** em todas as bandas (SC-802/FR-008) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T016 Reescrever `resolveEntry` como caminhada pela cadeia de ancestrais, substituindo o `.find()` que hoje vence por ordem de array (R6) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T017 Adicionar validação de determinantes duplicados e de `category` órfã ao parse do catálogo — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T018 Exportar o módulo da árvore no barril do pacote — em `apps/web/src/shared/fee-catalog/index.ts`
+
+**Checkpoint**: catálogo resolve por categoria, de forma determinística, e recusa dados que mentiriam.
+
+---
+
+## Phase 3: User Story 2 — o pré-fill resolve pela categoria (P1, FUNDACIONAL) 🎯 MVP
+
+**Objetivo**: a busca de tarifa passa a **usar** a categoria; sem isso o mapa existe e ninguém o alcança.
+**Teste independente**: com uma entrada chaveada por categoria, resolver um slot e ver o selo nomear a categoria.
+
+### Testes ⚠️
+
+- [ ] T019 [P] [US2] Teste: `slotDeterminants` emite `category` quando há categoria escolhida, e a omite quando não há — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [ ] T020 [P] [US2] Teste: sem categoria escolhida em marketplace **com** catch-all publicado (Amazon "Outros" 15%) → pré-preenche o catch-all, selo "categoria não informada" (Q5) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [ ] T021 [P] [US2] Teste: sem categoria escolhida em marketplace **sem** catch-all publicado (ML) → `null` + selo "sem referência"; o sistema **não** deriva catch-all de faixa (FR-011a) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [ ] T022 [P] [US2] Teste: valor editado pelo vendedor vence sempre, selo "ajustado por você" — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+
+### Implementação
+
+- [ ] T023 [US2] Estender `slotDeterminants` para emitir o eixo `category` por slot — em `apps/web/src/features/calculator/fee-prefill.ts`
+- [ ] T024 [US2] Passar a árvore para `resolveSlotEntry` e aplicar a política Q5 (catch-all publicado vs "sem referência") — em `apps/web/src/features/calculator/fee-prefill.ts`
+- [ ] T025 [US2] Selo passa a **nomear a categoria** do número, e a distinguir "categoria não informada" de "sem referência" — em `apps/web/src/features/calculator/fee-seal.tsx`
+
+---
+
+## Phase 4: User Story 1 — escolher a categoria, por canal (P1)
+
+**Objetivo**: o vendedor informa a categoria por slot, buscando por texto; escolher é opcional.
+**Teste independente**: abrir um slot, achar a categoria digitando parte do nome, e ver que a escolha é por slot.
+
+### Testes ⚠️
+
+- [ ] T026 [P] [US1] Teste: busca por parte do nome filtra a lista, com os nomes publicados pelo marketplace — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [ ] T027 [P] [US1] Teste: a escolha é **por slot** — categoria no ML não vira a categoria da Amazon (US1 AS4) — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [ ] T028 [P] [US1] Teste: marketplace sem eixo de categoria (Shopee, Outro) não renderiza seletor — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [ ] T029 [P] [US1] Teste: o seletor funciona **offline** a partir do que o cliente já tem (US1 AS5) — em `apps/web/src/features/calculator/category-picker.test.tsx` ⛔BLOQUEADA por T003 (o comportamento esperado depende de D2)
+
+### Implementação
+
+- [ ] T030 [US1] Implementar o comportamento do seletor: busca por texto, seleção opcional, limpeza — em `apps/web/src/features/calculator/category-picker.tsx`
+- [ ] T031 [US1] Ligar o seletor ao slot de canal, por slot, sem vazar entre canais — em `apps/web/src/features/calculator/calculator-form.tsx`
+- [ ] T032 [US1] Entregar a árvore ao cliente conforme D2 (semente / artefato sob demanda / podada) — em `apps/web/src/shared/fee-catalog/seed.ts` ⛔BLOQUEADA por T003
+- [ ] T033 [US1] Homologação visual no navegador: passos 1–7 do [quickstart V6](./quickstart.md) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+
+---
+
+## Phase 5: User Story 3 — Amazon: o mapa completo, com procedência (P1)
+
+**Objetivo**: toda categoria publicada pela Amazon, com alíquota, mínimo BRL 1,00, eixo de plano e faixas de preço.
+**Teste independente**: comparar o mapa com a tabela oficial — cobertura total, zero itens inventados.
+
+### Testes ⚠️
+
+- [ ] T034 [P] [US3] Teste: o parser normaliza **U+00A0** antes de comparar — a fixture reproduz a célula real da Amazon, e sem a normalização o teste falha (foi o que reprovou o G2 — R3) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
+- [ ] T035 [P] [US3] Teste: categoria com limiar de preço (Acessórios Eletrônicos R$ 100; Móveis e Colchões R$ 200) vira `priceBands`, **não** um percentual achatado; fronteira testada **dos dois lados** — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
+- [ ] T036 [P] [US3] Teste: nenhuma categoria ausente da tabela oficial existe no resultado, e nenhuma publicada falta (US3 AS1) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
+- [ ] T037 [P] [US3] Teste: toda entrada gerada carrega `sourceUrl` + `effectiveDate` + `lastReviewed`, e o texto de origem **nomeia a categoria** (SC-803) — em `<D1>/amazon.test.ts` ⛔BLOQUEADA por T002
+
+### Implementação
+
+- [ ] T038 [US3] Implementar o coletor da tabela pública da Amazon com browser headless, sem credencial (medido no G2) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
+- [ ] T039 [US3] Modelar o eixo de plano (Profissional / Individual) com a cobrança por item, deixando a **assinatura mensal explicitamente fora** (é custo mensal, não por venda) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
+- [ ] T040 [US3] Declarar no texto da entrada que a base de comissão da Amazon inclui frete e a nossa não — subestimação **declarada** (Q9/FR-014) — em `<D1>/amazon.mjs` ⛔BLOQUEADA por T002
+- [ ] T041 [US3] Gerar as entradas Amazon no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json`
+
+---
+
+## Phase 6: User Story 4 — atualização mensal que abre PR com o diff (P1)
+
+**Objetivo**: o mapa continua verdadeiro no mês que vem sem ninguém lembrar dele.
+**Teste independente**: rodar contra fonte alterada → PR com diff; contra fonte quebrada → nenhum PR.
+
+### Testes ⚠️
+
+- [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+
+### Implementação
+
+- [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
+- [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `<D1>/refresh.mjs` ⛔BLOQUEADA por T002
+- [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge — em `.github/workflows/fee-refresh.yml`
+- [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml`
+- [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+
+---
+
+## Phase 7: User Story 5 — quando o robô falha, o selo conta a verdade (P2)
+
+**Objetivo**: a morte do laço mensal vira visível ao usuário sem depender de alguém olhar um painel.
+**Teste independente**: envelhecer `lastReviewed` e ver o selo marcar "desatualizada" sem intervenção.
+
+### Testes ⚠️
+
+- [ ] T052 [P] [US5] Teste: valor além da janela de 30 dias exibe "desatualizada" — em `apps/web/src/features/calculator/fee-seal.test.tsx`
+- [ ] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `<D1>/refresh.test.ts` ⛔BLOQUEADA por T002
+- [ ] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
+
+### Implementação
+
+- [ ] T055 [US5] Garantir que a origem do valor (embutida / persistida / servida) continue refletida no selo com o eixo novo — em `apps/web/src/features/calculator/fee-seal.tsx`
+
+---
+
+## Phase 8: User Story 6 — Mercado Livre: o mapa completo (P2) ⛔ fatia própria
+
+> **O DoD do 014 fecha sem esta fase** (Q2). Ela é autorizada à parte e **para** até T004.
+
+### Testes ⚠️
+
+- [ ] T056 [P] [US6] Teste: entradas ML trazem a alíquota **exata** por categoria, nunca a faixa publicada 10–14% / 15–19% — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+- [ ] T057 [P] [US6] Teste: a compressão por herança preserva a resolução — para uma amostra de nós, a alíquota resolvida pela forma comprimida é **idêntica** à da forma completa, incluindo os divergentes medidos (Smartphones 16% sob Celulares 18%, Consoles 16% sob Games 18%) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+- [ ] T058 [P] [US6] Teste: faixas de custo fixo abaixo de R$ 79 usam as fronteiras publicadas literalmente, e a lacuna R$ 50,01–78,99 **permanece lacuna** (FR-014a) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+- [ ] T059 [P] [US6] Teste: toda entrada ML **declara a premissa de logística** sob a qual o custo fixo vale (Q8) — em `<D1>/ml.test.ts` ⛔BLOQUEADA por T002+T004
+
+### Implementação
+
+- [ ] T060 [US6] Coletor ML: percorrer a árvore + obter alíquota por categoria e tipo de anúncio, em runner hospedado (G1 mediu que **não há geo-gate**) — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
+- [ ] T061 [US6] Compressão por herança: emitir entrada **apenas** onde a alíquota difere do pai (R1) — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
+- [ ] T062 [US6] Custo fixo abaixo de R$ 79 com fronteiras literais e premissa declarada — em `<D1>/ml.mjs` ⛔BLOQUEADA por T002+T004
+- [ ] T063 [US6] Configurar o segredo `ML_REFRESH_TOKEN` **sem write-back** (viável porque o G3 mediu que o token antigo sobrevive à rotação) e conceder à app **apenas** "Publicação e sincronização: Leitura" — em `.github/workflows/fee-refresh.yml` ⛔BLOQUEADA por T004
+- [ ] T064 [US6] Gerar as entradas ML no catálogo servido (hoje **0 entradas** — R5) — em `backend/app/data/catalog.json` ⛔BLOQUEADA por T004
+
+---
+
+## Phase 9: User Story 8 — a categoria acompanha o que o vendedor salva (P3)
+
+### Testes ⚠️
+
+- [ ] T065 [P] [US8] Teste: cenário salvo depois do 014 re-resolve a categoria pelo catálogo de hoje, como os demais slots não sobrescritos (contrato de leitura da E5, inalterado) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [ ] T066 [P] [US8] Teste: cenário, kit e **snapshot** criados **antes** do 014 abrem inalterados e sem categoria; imutabilidade intocada (SC-809) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [ ] T067 [P] [US8] Teste: produto de catálogo **não** ganha campo de categoria (FR-003a) — em `apps/web/src/features/catalog/products.test.ts`
+
+### Implementação
+
+- [ ] T068 [US8] Persistir a categoria na intenção de canal do cenário (JSONB existente do ADR-0021 — sem coluna nova) — em `apps/web/src/features/scenarios/scenario-model.ts`
+
+---
+
+## Phase 10: Polish & Cross-Cutting
+
+- [ ] T069 [P] Orçamento do SC-810: medir tamanho da semente e custo de validação no boot, comparar com o número do `arquiteto`, e provar que a primeira pintura offline da calculadora gratuita **não** regrediu — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [ ] T070 [P] Regenerar o contrato OpenAPI e provar idempotência se **qualquer** rota do backend mudou, docstrings incluídas (o drift-guard só roda no CI e reprova **depois** do gate verde) — em `apps/web/src/shared/api/`
+- [ ] T071 [P] e2e do fluxo completo: escolher categoria → calcular → salvar cenário → reabrir — em `apps/web/e2e/category-fee.spec.ts`
+- [ ] T072 Decisão do dono sobre **Q11** e, com ela, o descarte formal da **US7** (o desbloqueio da US6 removeu a premissa dela) — registrar em `spec.md`
+- [ ] T073 Fechar as três perguntas remanescentes (Q4, Q9, Q12) ou registrar por escrito que ficam como estão — em `spec.md`
+- [ ] T074 Apagar os probes descartáveis (`scripts/probes/g1-*`, `g2-*`, `g3-*`, `ml-oauth.mjs`, `t001-*`) e o workflow dos gates, agora que a ingestão do 014 é dona dos mesmos caminhos (ADR-0010 §A13 manda) — em `scripts/probes/`, `.github/workflows/`
+- [ ] T075 `pnpm gate:all` verde + e2e + homologação visual do dono — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+```
+Fase 0 (decisões) ──> Fase 1 (setup) ──> Fase 2 (foundational) ──┬──> Fase 3 (US2) ──> Fase 4 (US1)
+                                                                  ├──> Fase 5 (US3 Amazon) ──> Fase 6 (US4 laço)
+                                                                  ├──> Fase 7 (US5 selo)
+                                                                  ├──> Fase 8 (US6 ML) ⛔ só após T004
+                                                                  └──> Fase 9 (US8) ──> Fase 10 (polish)
+```
+
+### User Story Dependencies
+
+- **US2 é pré-requisito real de todas** — sem o eixo na busca, o mapa existe e ninguém o alcança.
+- **US1** depende de US2 (o seletor precisa de algo que resolva) e de **D2**.
+- **US3** (Amazon) e **US6** (ML) são **independentes entre si** — a falha de um marketplace não bloqueia o outro.
+- **US4** depende de existir pelo menos um mapa (US3 basta).
+- **US8** depende de US1+US2.
+
+### Within Each User Story
+
+- Testes MUST ser escritos e **observados falhando** antes da implementação (NON-NEGOTIABLE).
+
+### Parallel Opportunities
+
+- Fase 2: T008–T013 em paralelo (todos testes, arquivos distintos).
+- Fase 5 e Fase 6 podem correr em paralelo com a Fase 7.
+- **US3 (Amazon) e US6 (ML) em paralelo** assim que T004 sair — são jobs e arquivos separados por desenho.
+
+---
+
+## Implementation Strategy
+
+**MVP = Fase 2 + Fase 3 + Fase 5** (foundational + US2 + Amazon). Nesse ponto o vendedor já tem alíquota por
+categoria da Amazon, com procedência e selo honesto, **sem nenhuma credencial envolvida**.
+
+**Entrega incremental**, espelhando o fatiamento do plano:
+
+| PR | fases | destrava |
+|---|---|---|
+| **PR-A** | 1, 2, 3, 4, 5, 6 | valor completo da Amazon + laço mensal vivo |
+| **PR-B** | 8 | ML — a única fatia com segredo, **para até T004** |
+| **PR-C** | 9, 10 | persistência em cenários + fechamento |
+
+**Nota de roteamento (ADR-0022)**: T014–T017 e todas as tarefas de `<D1>` que produzem **valores de dinheiro**
+(T035, T038, T057, T058, T061, T062) tocam o domínio de precificação e são **escaladas para `opus`** — a regra de
+escalonamento do `CLAUDE.md` é não-negociável para leaf de dinheiro, catálogo de tarifas e faixas.
