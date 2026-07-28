@@ -47,27 +47,27 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes (escritos e observados falhando primeiro)
 
-- [ ] T008 [P] Teste: `resolveEntry` é **independente da ordem** — embaralhar `entries` não altera nenhuma resolução (SC-801) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T009 [P] Teste: resolução sobe a cadeia de ancestrais — categoria sem entrada própria herda do **ancestral mais próximo**, com os números medidos (Celulares e Telefones 18%, Celulares e Smartphones **16%**, neto sem entrada → 18%) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T010 [P] Teste: duas entradas com conjunto de determinantes **idêntico** são **erro de parse** — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T011 [P] Teste: entrada com `commissionPct: null` cujas **bandas** também têm comissão nula é **rejeitada no parse** (SC-802, o furo herdado do 013) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T012 [P] Teste: árvore com `parentId` órfão, e árvore com **ciclo**, são erro de parse (um ciclo travaria a resolução em laço infinito) — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`
-- [ ] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T013a [P] Teste: slot **sem determinantes** (modalidade vazia, como em cenários e kits salvos antes do 014) resolve para `null` + "sem referência", e **não** para `entries[0]` — o fallback posicional de `fee-catalog.ts:111` hoje entregaria a alíquota de uma categoria arbitrária sob selo "referência" (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T013b [P] Teste: semente embutida inválida **degrada por marketplace** e não derruba o boot — hoje `use-fee-catalog.ts:14` valida no module load com `.parse()` que lança, o que vira tela branca assim que a semente passar a ser gerada por robô (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
+- [x] T008 [P] Teste: `resolveEntry` é **independente da ordem** — embaralhar `entries` não altera nenhuma resolução (SC-801) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T009 [P] Teste: resolução sobe a cadeia de ancestrais — categoria sem entrada própria herda do **ancestral mais próximo**, com os números medidos (Celulares e Telefones 18%, Celulares e Smartphones **16%**, neto sem entrada → 18%) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T010 [P] Teste: duas entradas com conjunto de determinantes **idêntico** são **erro de parse** — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T011 [P] Teste: entrada com `commissionPct: null` cujas **bandas** também têm comissão nula é **rejeitada no parse** (SC-802, o furo herdado do 013) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T012 [P] Teste: árvore com `parentId` órfão, e árvore com **ciclo**, são erro de parse (um ciclo travaria a resolução em laço infinito) — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`
+- [x] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T013a [P] Teste: slot **sem determinantes** (modalidade vazia, como em cenários e kits salvos antes do 014) resolve para `null` + "sem referência", e **não** para `entries[0]` — o fallback posicional de `fee-catalog.ts:111` hoje entregaria a alíquota de uma categoria arbitrária sob selo "referência" (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T013b [P] Teste: semente embutida inválida **degrada por marketplace** e não derruba o boot — hoje `use-fee-catalog.ts:14` valida no module load com `.parse()` que lança, o que vira tela branca assim que a semente passar a ser gerada por robô (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
 - [ ] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 ### Implementação
 
-- [ ] T014 Criar o módulo da árvore: forma achatada (`id`/`name`/`parentId`), schema Zod com as invariantes de T012, cadeia de ancestrais e busca por texto — em `apps/web/src/shared/fee-catalog/category-tree.ts`
-- [ ] T015 Estender o guard F3 ao **nível de banda**: uma entrada só é válida se a comissão existir no topo **ou** em todas as bandas (SC-802/FR-008) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T016 Reescrever `resolveEntry` como caminhada pela cadeia de ancestrais, substituindo o `.find()` que hoje vence por ordem de array (R6) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T017 Adicionar validação de determinantes duplicados e de `category` órfã ao parse do catálogo — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T017a Remover o fallback posicional `?? mk.entries[0]` — sem determinantes e sem entrada `determinants: null` explícita, o resultado é `null` (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T017b Política de validação **por camada**: fatal no gerador e no CI; no cliente, degradar por marketplace em vez de lançar no carregamento do módulo (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts`
-- [ ] T017d Registrar no **ADR-0010** a exceção declarada ao Q-A ("nunca auto-merge"): a dispensa vale **apenas** para diffs de puro frescor, porque a proibição foi escrita para o artefato de dinheiro — em `docs/adr/0010-marketplace-fee-catalog-architecture.md`
-- [ ] T017c Registrar como **adendo ao ADR-0010** a mudança de semântica da resolução (casamento por subconjunto → por cadeia de ancestrais): store persistido e sementes escritos sob a regra antiga continuam válidos como forma e podem resolver diferente — em `docs/adr/0010-marketplace-fee-catalog-architecture.md`
-- [ ] T018 Exportar o módulo da árvore no barril do pacote — em `apps/web/src/shared/fee-catalog/index.ts`
+- [x] T014 Criar o módulo da árvore: forma achatada (`id`/`name`/`parentId`), schema Zod com as invariantes de T012, cadeia de ancestrais e busca por texto — em `apps/web/src/shared/fee-catalog/category-tree.ts`
+- [x] T015 Estender o guard F3 ao **nível de banda**: uma entrada só é válida se a comissão existir no topo **ou** em todas as bandas (SC-802/FR-008) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T016 Reescrever `resolveEntry` como caminhada pela cadeia de ancestrais, substituindo o `.find()` que hoje vence por ordem de array (R6) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T017 Adicionar validação de determinantes duplicados e de `category` órfã ao parse do catálogo — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T017a Remover o fallback posicional `?? mk.entries[0]` — sem determinantes e sem entrada `determinants: null` explícita, o resultado é `null` (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T017b Política de validação **por camada**: fatal no gerador e no CI; no cliente, degradar por marketplace em vez de lançar no carregamento do módulo (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.ts`
+- [x] T017d Registrar no **ADR-0010** a exceção declarada ao Q-A ("nunca auto-merge"): a dispensa vale **apenas** para diffs de puro frescor, porque a proibição foi escrita para o artefato de dinheiro — em `docs/adr/0010-marketplace-fee-catalog-architecture.md`
+- [x] T017c Registrar como **adendo ao ADR-0010** a mudança de semântica da resolução (casamento por subconjunto → por cadeia de ancestrais): store persistido e sementes escritos sob a regra antiga continuam válidos como forma e podem resolver diferente — em `docs/adr/0010-marketplace-fee-catalog-architecture.md`
+- [x] T018 Exportar o módulo da árvore no barril do pacote — em `apps/web/src/shared/fee-catalog/index.ts`
 
 **Checkpoint**: catálogo resolve por categoria, de forma determinística, e recusa dados que mentiriam.
 

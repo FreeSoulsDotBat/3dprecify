@@ -622,3 +622,51 @@ secrets; the CI secret `ML_ACCESS_TOKEN` holds the **6-hour access token only** 
 - In-repo evidence: `.github/workflows/auto-pr.yml` (PR-open from CI with `GITHUB_TOKEN`),
   `.github/workflows/deploy.yml` (`google-github-actions/auth@v2` — the OIDC→WIF path already wired),
   `.github/workflows/ci.yml` (the 8 jobs behind the ~16 billed-minute measurement).
+
+### A14. Resolution semantics changed — subset match → ancestor chain (014, 2026-07-28)
+
+**What changed.** `resolveEntry` matched determinants by **subset**: an entry `{listingType}` matched a slot that
+supplied `{listingType, category}`, and `Array.prototype.find` returned whichever entry appeared **first in the
+file**. From 014 the match is **exact per level**, and specificity is expressed by walking the **ancestor chain** of
+the chosen category — nearest ancestor with an entry wins, then the marketplace's published catch-all, then null.
+
+**Why this is an ADR item and not an implementation detail.** Store payloads persisted by clients running the
+**old** rule remain valid *as shape* and may **resolve differently** under the new one. Nothing needs migrating
+today — ML and Amazon ship **0 entries** as of `catalogVersion 2026-07-07.0`, so no persisted catalog can contain a
+category-keyed entry — but the rule change is real and is recorded here rather than discovered later from a
+behaviour difference.
+
+**Why the chain instead of sorting by specificity.** Sorting works and still admits a tie between two equally
+specific entries, resolved by order — the same defect, better hidden. The chain is **unique and ordered
+most-specific-first by construction**, and duplicate determinant sets are rejected at parse, so a tie cannot be
+represented at all.
+
+**Companion guard.** The F3 band-level widening (SC-802): an entry with a null top-level commission must carry
+price bands **and every band must carry its own commission**. The original guard checked only that bands existed —
+an entry whose bands were also null passed and prefilled 0% under a "referência" seal, which is precisely the shape
+014's ML curation produces (the sub-R$79 fixed-cost bands know the fixed fee, not the commission).
+
+**Failure policy is now per layer** (FR-026): fatal in the ingestion generator and in CI; **degrade per marketplace**
+in the client. Validating the bundled seed with a throwing parse at module load was correct while the seed was
+hand-written with one entry; with a robot-generated seed it would mean a white screen at boot, online and offline,
+for every user until a new bundle shipped. An invalid marketplace is now dropped and its slots read "sem
+referência" — it never becomes a price.
+
+### A15. Declared exception to Q-A ("the job never auto-merges") — freshness is not money (014, 2026-07-28)
+
+**Q-A stands for the money artifact.** This amendment records one narrow exception, decided by the owner on
+2026-07-28 after the T004 security review measured that `develop` carries **no branch protection and no rulesets**.
+
+**The mechanism.** The job **always opens a PR** and **never writes to the integration branch**. A deterministic
+classifier then decides only whether that PR may **skip human review**, and only when the diff touches
+**exclusively** `lastReviewed`. Any diff touching a money field waits for a human. The classifier fails **closed** —
+in doubt or on error it denies the exemption, so the worst case is a PR waiting for a human, never a commit.
+
+**Why the exception is bounded.** Q-A exists to keep a human between the robot and a value that enters a seller's
+price. `lastReviewed` does not enter any price; it drives the staleness seal. The alternative considered and
+rejected — a near-empty PR every month — was measured as a *worse* protection: a recurring rubber-stamp trains the
+reviewer to stop reading, corroding the gate on the months that actually matter.
+
+**Precondition, not an aspiration**: the integration branch MUST carry platform protection requiring a PR
+(FR-020c). Without it the exception would not be an exception — the classifier would be the *only* gate, which is
+the state the T004 review found and this amendment closes.
