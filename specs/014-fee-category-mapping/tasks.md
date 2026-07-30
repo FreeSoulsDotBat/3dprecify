@@ -190,15 +190,24 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 
 ### A1 — comissão por parcela (HIGH · dinheiro errado hoje) · ADR-0024
 
-- [ ] T076 [P] Teste (falhando primeiro, **SC-814/FR-014b**): `grossUp` com `bandMode: "PROGRESSIVE"` bate com a fonte nos **três** pontos de prova — abaixo do limiar, **no** limiar, e acima (Móveis R$ 300 ⇒ R$ 40,00) — em `packages/pricing-core/src/channels.test.ts`
-- [ ] T077 [P] Teste (falhando primeiro): a **ausência** de `bandMode` preserva bit-a-bit o comportamento de seleção — as bandas Shopee e o custo fixo ML existentes não mudam nenhum centavo — em `packages/pricing-core/src/channels.test.ts`
-- [ ] T078 [US3] **FR-014b** — `BandMode` + soma por parcela em `grossUp`, com gross-up **por segmento** (a função progressiva é contínua ⇒ não precisa do ponto fixo; o modo `SELECTION` mantém a iteração) — em `packages/pricing-core/src/channels.ts` ⚠️ **domínio de precificação: escalonado para `opus` (CLAUDE.md), cobertura ratchet 100%**
-- [ ] T079 [US3] `bandMode` atravessa o schema do catálogo como **opcional** (ausente = seleção) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T080 [US3] `bandMode` atravessa `entryToChannelFees` até `ChannelInput` sem se perder — em `apps/web/src/features/calculator/fee-prefill.ts`, `calculator-model.ts`
-- [ ] T081 [US3] O gerador emite `bandMode: "PROGRESSIVE"` para as categorias com limiar, e o parser passa a **distinguir** parcela de seleção na leitura da célula — em `packages/fee-ingest/src/amazon-parse.ts`, `amazon-to-catalog.ts`
-- [ ] T082 [US3] Regenerar `backend/app/data/catalog.json` e conferir Móveis · Colchões · Acessórios Eletrônicos — em `packages/fee-ingest/src/build-amazon.mjs`
+- [x] T076 [P] Teste (falhando primeiro, **SC-814/FR-014b**): `grossUp` com `bandMode: "PROGRESSIVE"` bate com a fonte nos **três** pontos de prova — abaixo do limiar, **no** limiar, e acima (Móveis R$ 300 ⇒ R$ 40,00) — em `packages/pricing-core/src/channels.test.ts`
+- [x] T077 [P] Teste (falhando primeiro): a **ausência** de `bandMode` preserva bit-a-bit o comportamento de seleção — as bandas Shopee e o custo fixo ML existentes não mudam nenhum centavo — em `packages/pricing-core/src/channels.test.ts`
+- [x] T078 [US3] **FR-014b** — `BandMode` + soma por parcela em `grossUp`, com gross-up **por segmento** (a função progressiva é contínua ⇒ não precisa do ponto fixo; o modo `SELECTION` mantém a iteração) — em `packages/pricing-core/src/channels.ts` ⚠️ **domínio de precificação: escalonado para `opus` (CLAUDE.md), cobertura ratchet 100%**
+- [x] T079 [US3] `bandMode` atravessa o schema do catálogo como **opcional** (ausente = seleção) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T080 [US3] `bandMode` atravessa `entryToChannelFees` até `ChannelInput` sem se perder — em `apps/web/src/features/calculator/fee-prefill.ts`, `calculator-model.ts`
+- [x] T081 [US3] O gerador emite `bandMode: "PROGRESSIVE"` para as categorias com limiar, e o parser passa a **distinguir** parcela de seleção na leitura da célula — em `packages/fee-ingest/src/amazon-parse.ts`, `amazon-to-catalog.ts`
+- [x] T082 [US3] Regenerar `backend/app/data/catalog.json` e conferir Móveis · Colchões · Acessórios Eletrônicos — em `packages/fee-ingest/src/build-amazon.mjs`
 - [ ] T083 [P] Teste **SC-815** de retrocompatibilidade com **payload congelado REAL de antes** da correção (não fixture escrito depois): mesmo preço, mesmo centavo — em `apps/web/src/entities/history/frozen-payload.test.ts`
-- [ ] T084 [P] Teste da travessia ponta-a-ponta: artefato → resolução → `ChannelInput` → preço, provando que `bandMode` **não** se perde no caminho. **É o risco real do ADR-0024 §5**: perder o modo degrada em silêncio para o bug atual, agora justificado pelo padrão — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T084 [P] Teste da travessia ponta-a-ponta: artefato → resolução → `ChannelInput` → preço, provando que `bandMode` **não** se perde no caminho. **É o risco real do ADR-0024 §5**: perder o modo degrada em silêncio para o bug atual, agora justificado pelo padrão — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+
+> **Contabilidade corrigida (2026-07-30)** — a A1 foi implementada nesta branch (ADR-0024 aceito,
+> `bandMode` no motor, no schema, no pré-fill e no gerador; `catalog.json` regenerado) e as caixas
+> ficaram sem marcar. Marcadas agora. **T083 continua ABERTA e não é formalidade**: o que existe é a
+> prova SC-815 em `pricing-core` (ausência do discriminador = seleção); falta a prova pedida — um
+> payload congelado REAL de ANTES da mudança reproduzindo o mesmo centavo DEPOIS. Fixture escrito
+> hoje prova a intenção de hoje; só o payload antigo prova que o passado não se moveu.
+> T076/T077 e T084 vivem em arquivos diferentes dos previstos (`tests/progressive-bands.test.ts` e
+> `features/calculator/progressive-traversal.test.ts`).
 
 ### A1b — o BACKEND comia dois campos do incremento 🔴 (achado 2026-07-29, ao levantar o app de verdade)
 
