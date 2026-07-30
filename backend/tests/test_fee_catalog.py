@@ -47,15 +47,16 @@ def test_fee_catalog_serves_the_committed_artifact(client: TestClient) -> None:
 def _subset(disk: object, served: object, path: str) -> None:
     """Every key/value on disk MUST survive serialization, identically.
 
-    The test above compares versions and marketplace NAMES; it passed for the whole of 014 while the
-    response model silently ate two fields the increment depends on — `categorySpine` (so the client
-    received category-keyed entries with no way to NAME them, making the picker impossible through the
-    served path) and `bandMode` (so a per-portion commission degraded to per-band and understated the
-    fee). Neither the frontend unit tests nor the truth-gate could see it: both read the FILE.
+    The test above compares versions and marketplace NAMES; it passed for the whole of
+    014 while the response model silently ate two fields the increment depends on —
+    `categorySpine` (so the client received category-keyed entries with no way to NAME
+    them, making the picker impossible through the served path) and `bandMode` (so a
+    per-portion commission degraded to per-band and understated the fee). Neither the
+    frontend unit tests nor the truth-gate could see it: both read the FILE.
 
-    A response model is an allowlist. Any field it does not know, it drops — and dropping is silent by
-    construction. So the assertion has to be "nothing on disk is missing from the wire", not "the
-    shape looks right".
+    A response model is an allowlist. Any field it does not know, it drops — and
+    dropping is silent by construction. So the assertion has to be "nothing on disk is
+    missing from the wire", not "the shape looks right".
     """
     if isinstance(disk, dict):
         assert isinstance(served, dict), f"{path}: disk has an object, wire has {type(served)}"
