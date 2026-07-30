@@ -224,11 +224,26 @@ export async function settleEntry(
     return "synced";
   } catch (error) {
     const status = (error as { status?: number }).status ?? 0;
+    const code = (error as { code?: string }).code;
 
     // Deleted elsewhere by the seller — drop quietly (§5). It is gone from the account AND the
-    // queue, so there is nothing left to report as unsent. (Unreachable on a first-time record: a
-    // just-minted id the server has never seen cannot 404.)
-    if (status === 404) {
+    // queue, so there is nothing left to report as unsent.
+    //
+    // But that reading requires PROOF, because 404 is the status infrastructure produces most: a
+    // misrouted proxy, an unmounted route or the hosting 404 page all reach us as
+    // `ApiError{status: 404, code: "UNKNOWN"}` (transport.ts falls back to `wire?.code ?? "UNKNOWN"`
+    // when the body is not the API's error envelope). Treating those as a deletion erases the entry
+    // and answers `synced` — a green "Salvo" over a record the server never received, the same class
+    // of lie M1 already closed on the re-read path.
+    //
+    // Two independent pieces of evidence, both required:
+    //   * `attempts > 0` — §5 describes a REPLAY. The file already stated the invariant in prose
+    //     ("a just-minted id the server has never seen cannot 404") without enforcing it.
+    //   * `code === "NOT_FOUND"` — the API said so, not a stranger holding the same status.
+    //
+    // Without both, the entry SURVIVES and is retried. The cost of being wrong here is asymmetric:
+    // a retained entry nags; an erased one is gone.
+    if (status === 404 && entry.attempts > 0 && code === "NOT_FOUND") {
       await removeEntry(uid, entry.clientSnapshotId);
       return "synced";
     }
