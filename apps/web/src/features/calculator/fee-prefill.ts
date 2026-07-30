@@ -162,7 +162,9 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
 /**
  * Derive a slot's honesty seal. `edited` wins — once the user changes a pre-filled value it reads
  * "ajustado por você". No entry → "sem referência". Otherwise a dated reference, marked "embutida"
- * when it came from the bundled seed (offline) and "desatualizada" past the 30-day window.
+ * when it came from the bundled seed (offline) and "desatualizada" past the 30-day window — the two
+ * marks COMPOSE, and until T098 they did not: `embedded` short-circuited the staleness clause, so
+ * the copy that ages most was the one that could never say it had aged (SC-807).
  */
 export function feeSealState(args: {
   entry: FeeEntry | null;
@@ -171,11 +173,9 @@ export function feeSealState(args: {
   edited: boolean;
   /** Name of the category the number is FOR — may be an ancestor of the chosen one (US2). */
   originCategoryName?: string | null;
-  /** Name of the marketplace's published catch-all, when that is what resolved. */
-  catchAllName?: string | null;
   viaCatchAll?: boolean;
 }): FeeSealState {
-  const { entry, source, now, edited, originCategoryName, catchAllName, viaCatchAll } = args;
+  const { entry, source, now, edited, originCategoryName, viaCatchAll } = args;
   if (edited) return { kind: "adjusted" };
   if (!entry) return { kind: "none" };
   const dated = {
@@ -187,7 +187,7 @@ export function feeSealState(args: {
   // A catch-all is a DIFFERENT claim from "this is your category's rate", and collapsing the two is
   // how a seller ends up with the wrong number believing it is his. Amazon's "Outros" is the highest
   // band of the table, so the error is systematically upward — the seal has to say which it is.
-  if (viaCatchAll) return { kind: "catchAll", ...dated, ...(catchAllName ? { catchAllName } : {}) };
+  if (viaCatchAll) return { kind: "catchAll", ...dated };
   // The key is OMITTED rather than set to null when there is no category, so a slot on a
   // category-less marketplace keeps exactly the shape it had before 014.
   return { kind: "reference", ...dated, ...(originCategoryName ? { originCategoryName } : {}) };

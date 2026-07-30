@@ -316,11 +316,9 @@ describe("feeSealState — names the category, and distinguishes catch-all from 
       source: "catalog",
       now,
       edited: false,
-      catchAllName: "Outros",
       viaCatchAll: r.viaCatchAll,
     });
     expect(s.kind).toBe("catchAll");
-    expect(s).toMatchObject({ catchAllName: "Outros" });
   });
 
   it("no entry at all still reads 'sem referência' — the two are never conflated", () => {

@@ -287,8 +287,17 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 > por isso passava. Agora o arquivo é saída literal do gerador.
 
 - [ ] T097 [US1] Trocar o marketplace do slot MUST limpar a `category` junto com a modalidade: hoje o id do marketplace antigo sobrevive **invisível** (o ramo de espinha vazia vem antes do ramo `value`), sem botão "Limpar", e **continua sendo enviado como determinante** — dois cliques (Amazon→ML), contra `spec.md` §Edge Cases — em `calcular-page.tsx:237`, `produto-page.tsx:169`, `bom-line-editor.tsx:86`
-- [ ] T098 [P] [US1] O `return` antecipado do ramo `embedded` (`fee-seal.tsx:49`) engole **DUAS** coisas, e são o mesmo conserto: (a) `originCategoryName` — alíquota herdada de ancestral aparece sem dizer que não é a da categoria escolhida; (b) o marcador **`stale`** — no caminho da semente o alarme de 30 dias **nunca dispara** (SC-807), e o docstring de `fee-prefill.ts:164-166` declara literalmente o contrato oposto. O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, então a assimetria é **acidental**. Tornar `embedded` um **modificador do texto-base**, não um early return. Teste `embedded + stale` — **hoje não existe nenhum** — em `apps/web/src/features/calculator/{fee-seal.tsx,fee-seal.test.tsx}`
-- [ ] T099 [P] Princípio V: `catchAllName` é parâmetro sem chamador de produção, e o teste vacuoso de `catalog-diff.test.ts:280` não exercita o ramo que nomeia — remover ou corrigir ambos
+- [x] T098 [P] [US1] O `return` antecipado do ramo `embedded` (`fee-seal.tsx:49`) engole **DUAS** coisas, e são o mesmo conserto: (a) `originCategoryName` — alíquota herdada de ancestral aparece sem dizer que não é a da categoria escolhida; (b) o marcador **`stale`** — no caminho da semente o alarme de 30 dias **nunca dispara** (SC-807), e o docstring de `fee-prefill.ts:164-166` declara literalmente o contrato oposto. O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, então a assimetria é **acidental**. Tornar `embedded` um **modificador do texto-base**, não um early return. Teste `embedded + stale` — **hoje não existe nenhum** — em `apps/web/src/features/calculator/{fee-seal.tsx,fee-seal.test.tsx}`
+- [x] T099 [P] Princípio V: `catchAllName` é parâmetro sem chamador de produção, e o teste vacuoso de `catalog-diff.test.ts:280` não exercita o ramo que nomeia — remover ou corrigir ambos
+
+> **Nota (T098/T099, 2026-07-30)** — o `embedded` virou modificador do texto-base, e com isso o selo
+> embutido passou a mostrar TAMBÉM a data de revisão (antes escondida). Esconder a data era o que
+> impedia a semente de dizer quão velha ela é — e é dessa mesma data que o alarme de 30 dias sai.
+> A semente é a cópia que mais envelhece: ela só muda quando um build novo sai.
+> Na T099 o `catchAllName` saiu por REMOÇÃO, não por ganhar chamador: o nome da linha publicada já
+> está dentro de `source` ("… — Outros (…)"), então a interpolação não acrescentava nada que o selo
+> não pudesse dizer. E o teste vacuoso do `catalog-diff` foi removido em vez de corrigido — o ramo
+> que ele nomeava já é exercido de verdade duas vezes acima; ele só fazia a cobertura parecer maior.
 
 **Pré-requisitos de regenerar `seed.ts` (T032)** — inertes hoje, nascem no dia da regeneração
 

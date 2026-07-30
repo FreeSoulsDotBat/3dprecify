@@ -31,7 +31,6 @@ export type FeeSealState =
       reviewedOn: string;
       embedded?: boolean;
       stale?: boolean;
-      catchAllName?: string | null;
     }
   | { kind: "adjusted" }
   | { kind: "estimate" }
@@ -46,21 +45,31 @@ function fmtDate(iso: string): string {
 function textAndTone(state: FeeSealState): { text: string; tone: BadgeTone } {
   switch (state.kind) {
     case "reference": {
-      if (state.embedded) return { text: t.embedded, tone: "neutral" };
+      // `embedded` is a MODIFIER of the head, never an early return. It used to be one, and that
+      // return swallowed both clauses below: on the seed path the 30-day alarm could not fire (SC-807
+      // — and the seed is the copy that ages MOST, since it only moves when a new bundle ships), and
+      // an ancestor-inherited rate lost the clause naming which category it actually belongs to. The
+      // neighbouring `catchAll` case applies `t.outdated` without consulting `embedded` at all, which
+      // is what gives the asymmetry away as an accident rather than a decision.
+      const head = state.embedded ? t.embedded : `${t.reference}: ${state.source}`;
       // Naming the ORIGIN category costs one clause and closes a real gap: with sparse entries the
       // number may come from an ANCESTOR of the chosen category, and "Referência: <fonte>" alone
       // would let the seller read it as his own category's rate.
       const forCat = state.originCategoryName
         ? ` (${t.forCategory} ${state.originCategoryName})`
         : "";
-      const base = `${t.reference}: ${state.source}${forCat} · ${t.updatedOn} ${fmtDate(state.reviewedOn)}`;
-      return state.stale
-        ? { text: `${base} · ${t.outdated}`, tone: "neutral" }
+      const base = `${head}${forCat} · ${t.updatedOn} ${fmtDate(state.reviewedOn)}`;
+      return state.stale || state.embedded
+        ? { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" }
         : { text: base, tone: "info" };
     }
     case "catchAll": {
-      const name = state.catchAllName ? ` "${state.catchAllName}"` : "";
-      const base = `${t.catchAll}${name} · ${t.catchAllHighest}`;
+      // 014/T099 — this used to interpolate a `catchAllName`, a field NO production path ever set:
+      // only a test did, so the seal shipped a decorative slot that could never fill. The published
+      // row's name is already inside `source` ("… — Outros (…)"), so nothing was lost by removing it,
+      // and one less always-empty branch is one less place where a seal can quietly say less than it
+      // appears to (Princípio V).
+      const base = `${t.catchAll} ${t.catchAllHighest}`;
       // Deliberately NOT "info": this is not a confirmed rate for the seller's category, and giving
       // it the same tone as one is what makes a plausible number stop the seller from choosing.
       return { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" };

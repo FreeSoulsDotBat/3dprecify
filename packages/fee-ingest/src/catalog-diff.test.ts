@@ -277,11 +277,12 @@ describe("a corrupted PREVIOUS artifact degrades, it does not crash the run", ()
     expect(mayAutoMerge(d)).toBe(false);
   });
 
-  it("compares two bare arrays without losing the path", () => {
-    // Exercises the array branch at the very root — the shape a future caller could hand in.
-    const d = diffCatalogs({ marketplaces: [] }, { marketplaces: [] });
-    expect(d.changedEntries).toEqual([]);
-  });
+  // 014/T099 — aqui vivia "compares two bare arrays without losing the path", que comparava dois
+  // arrays VAZIOS: iguais, então `leafChanges` retornava no primeiro `JSON.stringify` e o ramo de
+  // array que o nome prometia nunca era executado. O ramo já é exercido de verdade acima
+  // ("priceBands.0.commissionPct" e "priceBands.1"), então o teste não cobria nada que faltasse — só
+  // fazia a cobertura PARECER maior. Um teste vacuoso com nome de teste bom é pior que a ausência
+  // dele: ele responde "sim" a uma pergunta que ninguém chegou a fazer.
 });
 
 describe("the classifier fails CLOSED", () => {

@@ -33,7 +33,7 @@ describe("FeeSeal — honesty states (FR-107)", () => {
     expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.outdated);
   });
 
-  it("an embedded (seed) reference reads 'referência embutida' without a live date", () => {
+  it("an embedded (seed) reference says so — AND still carries its review date", () => {
     render(
       <FeeSeal
         state={{
@@ -46,7 +46,9 @@ describe("FeeSeal — honesty states (FR-107)", () => {
     );
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
-    expect(seal).not.toHaveTextContent("06/07/2026");
+    // The date used to be dropped here. Hiding it is what made the seed path unable to say how old
+    // its number is — and the 30-day alarm below is computed from exactly this date.
+    expect(seal).toHaveTextContent("06/07/2026");
   });
 
   it("an adjusted slot reads 'ajustado por você'", () => {
@@ -62,5 +64,72 @@ describe("FeeSeal — honesty states (FR-107)", () => {
   it("the ML freight subsidy is marked as an estimate (A4)", () => {
     render(<FeeSeal state={{ kind: "estimate" }} />);
     expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.estimate);
+  });
+});
+
+// 014/T098 (SC-807 / A5) — o `embedded` era um `return` ANTECIPADO, e engolia duas coisas de uma vez.
+//
+// (a) O alarme de 30 dias: no caminho da SEMENTE ele nunca disparava. A semente é justamente a cópia
+//     que mais envelhece — ela viaja no bundle e só muda quando um build novo sai —, então o único
+//     caminho onde "pode estar desatualizada" era impossível era o que mais precisava dela. O
+//     docstring do `feeSealState` declarava literalmente o contrato oposto ("marked 'embutida' ... e
+//     'desatualizada' passado da janela de 30 dias"): documentação certa, código não.
+// (b) O `originCategoryName`: uma alíquota herdada de ANCESTRAL aparecia sem dizer que não é a da
+//     categoria escolhida — a disclosure que existe para o vendedor não confundir as duas.
+//
+// O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, o que mostra que a assimetria
+// era acidental, não uma decisão. `embedded` virou MODIFICADOR do texto-base.
+describe("FeeSeal — `embedded` é modificador, não um desvio que engole o resto (T098)", () => {
+  it("embutida E vencida: o alarme de 30 dias dispara também na semente (SC-807)", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Ajuda Shopee",
+          reviewedOn: "2026-01-01",
+          embedded: true,
+          stale: true,
+        }}
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(t.outdated);
+  });
+
+  it("embutida E herdada de ancestral: continua dizendo de QUAL categoria é o número", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Tabela Amazon",
+          reviewedOn: "2026-07-06",
+          embedded: true,
+          originCategoryName: "Celulares e Telefones",
+        }}
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent("Celulares e Telefones");
+  });
+
+  it("embutida, vencida E herdada: as três coisas cabem no mesmo selo", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Tabela Amazon",
+          reviewedOn: "2026-01-01",
+          embedded: true,
+          stale: true,
+          originCategoryName: "Relógios",
+        }}
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(t.outdated);
+    expect(seal).toHaveTextContent("Relógios");
   });
 });
