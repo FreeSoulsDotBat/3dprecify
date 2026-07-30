@@ -423,6 +423,22 @@ function ChannelLevelRows({
   );
 }
 
+/** One markup level the engine REFUSED to price (SC-817 / FR-014a): the announce it would need
+ *  falls in a window the marketplace publishes no fee for, so there is no rate to charge and no
+ *  líquido to promise. Saying that costs one line; printing R$ 0,00 would cost the seller a sale. */
+function UnpricedLevel({ caption, marginTop }: { caption: string; marginTop?: boolean }) {
+  return (
+    <>
+      <p style={marginTop ? { ...captionText, marginTop: "var(--space-2)" } : captionText}>
+        {caption}
+      </p>
+      <p style={warnCaption} data-testid="unpriced-level">
+        {t.channels.unpricedBand}
+      </p>
+    </>
+  );
+}
+
 /** "Preços por canal": every slot's anúncio + líquido for varejo e atacado, shown together so the
  *  seller compares channels at a glance. A slot with an inline error shows a note, not stale prices. */
 function ChannelPrices({
@@ -458,19 +474,31 @@ function ChannelPrices({
               </p>
               {priced ? (
                 <>
-                  <ChannelLevelRows
-                    caption={t.captions.varejo}
-                    anuncio={r.precoAnuncioVarejo ?? 0}
-                    liquido={r.recebidoLiquidoVarejo ?? 0}
-                    freight={r.freightCostVarejo}
-                  />
-                  <ChannelLevelRows
-                    caption={t.captions.atacado}
-                    anuncio={r.precoAnuncioAtacado ?? 0}
-                    liquido={r.recebidoLiquidoAtacado ?? 0}
-                    freight={r.freightCostAtacado}
-                    marginTop
-                  />
+                  {/* SC-817 — a level whose announce falls outside every published band is NOT
+                      priced. `?? 0` would have printed R$ 0,00 under a "Referência" seal; the
+                      absence of a published fee is said in words, and only for the level it hits
+                      (varejo and atacado can land on different sides of a gap). */}
+                  {r.precoAnuncioVarejo === null || r.recebidoLiquidoVarejo === null ? (
+                    <UnpricedLevel caption={t.captions.varejo} />
+                  ) : (
+                    <ChannelLevelRows
+                      caption={t.captions.varejo}
+                      anuncio={r.precoAnuncioVarejo}
+                      liquido={r.recebidoLiquidoVarejo}
+                      freight={r.freightCostVarejo}
+                    />
+                  )}
+                  {r.precoAnuncioAtacado === null || r.recebidoLiquidoAtacado === null ? (
+                    <UnpricedLevel caption={t.captions.atacado} marginTop />
+                  ) : (
+                    <ChannelLevelRows
+                      caption={t.captions.atacado}
+                      anuncio={r.precoAnuncioAtacado}
+                      liquido={r.recebidoLiquidoAtacado}
+                      freight={r.freightCostAtacado}
+                      marginTop
+                    />
+                  )}
                   {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
                     <p style={captionText}>{t.channels.freightHint}</p>
                   )}

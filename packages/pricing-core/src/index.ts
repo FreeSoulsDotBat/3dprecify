@@ -431,14 +431,22 @@ export function computeBom(lines: BomLineInput[]): BomResult {
       }
       const flags = lineFlags.get(slot.marketplace) ?? { ok: false, err: false };
       lineFlags.set(slot.marketplace, flags);
-      if (slot.error !== null) {
+      // Two ways a slot cannot feed the rollup, and BOTH are skips, never silent drops: its own
+      // validation failed, or a level is UNPRICED — no published band covers that announce
+      // (SC-817). Summing an unpriced level as R$ 0,00 would understate the kit under a seal; a
+      // partial sum is exactly the lie the whole rollup exists to avoid.
+      if (
+        slot.error !== null ||
+        slot.precoAnuncioVarejo === null ||
+        slot.precoAnuncioAtacado === null
+      ) {
         flags.err = true; // honest: resolved to a skipped LINE below, never silently dropped
         continue;
       }
       flags.ok = true;
-      // Non-error slots ALWAYS carry the four prices (computeChannel's invariant): a `?? 0`
-      // here would add four dead branches the 100%-branch gate can never cover — the non-null
-      // assertion states the invariant instead of pretending null is reachable.
+      // Past that guard a slot carries the four prices together (computeChannel writes announce and
+      // líquido as one outcome per level): a `?? 0` here would add four dead branches the
+      // 100%-branch gate can never cover — the non-null assertion states the invariant instead.
       acc.anuncioVarejo = acc.anuncioVarejo.plus(
         new Decimal(slot.precoAnuncioVarejo!).times(quantity),
       );

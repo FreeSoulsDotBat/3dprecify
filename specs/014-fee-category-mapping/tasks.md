@@ -285,10 +285,24 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > entradas. **As tarefas T058/T062 testam a lacuna só do lado da INGESTÃO** — passariam verdes
 > enquanto o motor a preenche em silêncio. Fazer **antes** da T056.
 
-- [ ] T113a [P] Teste (falhando primeiro): **varredura** sobre as bandas ML de `band-floor.test.ts:71-75` provando que, para toda base, `bandContaining(bands, anuncio)` é **a banda aplicada** — hoje o caso da base 79,00 exibe líquido 64,52 contra 69,52 real (SC-108/SC-817). Incluir monotonicidade do anúncio — em `packages/pricing-core/tests/band-convergence.test.ts`
-- [ ] T113 [P] **SC-817/SC-108** — o laço de ponto fixo pode sair pelo cap `MAX_BAND_ITERS` **sem convergir**, e as linhas seguintes adotam a banda que sobrou como se fosse estável, cobrando alíquota/fixo de uma banda que **não contém** o anúncio (reproduzido ao centavo com as bandas ML de `band-floor.test.ts:71-75`: anúncio 79,00, líquido exibido 64,52, real 69,52; com 3+ bandas o erro pode ser **contra** o vendedor). Viola SC-108. Após o laço, verificar `bandContaining(bands, anuncio) === band`; sem auto-consistência, escolher o par determinístico de **maior taxa** (nunca superestimar o líquido) e **nunca** devolver `appliedBand` como estável — em `packages/pricing-core/src/channels.ts:209,215-217`
-- [ ] T114a [P] Teste (falhando primeiro): preço que cai **fora de toda banda publicada** (a lacuna ML R$ 50,01–78,99) produz nível **não precificado** + selo "sem referência", NUNCA a tarifa da banda vizinha; e a inversão medida (base 50 → 65,70 vs base 55 → 63,95) deixa de existir (SC-817/FR-014a) — em `packages/pricing-core/tests/band-convergence.test.ts`
-- [ ] T114 [P] **SC-817/FR-014a** — os fallbacks `bandContaining(...) ?? bands[last]` e `?? band` fazem o motor **emprestar** a tarifa de uma banda vizinha quando o preço cai fora de toda banda — preenchendo no CÁLCULO a lacuna que a FR-014a proíbe preencher no CATÁLOGO (ML R$ 50,01–78,99), e produzindo inversão (base 50 → anúncio 65,70; base 55 → 63,95). Dar estado próprio a "sem tarifa publicada para este preço" (nível não-precificado → selo "sem referência") e validar cobertura/contiguidade na ingestão — em `packages/pricing-core/src/channels.ts:208,211`
+- [x] T113a [P] Teste (falhando primeiro): **varredura** sobre as bandas ML de `band-floor.test.ts:71-75` provando que, para toda base, `bandContaining(bands, anuncio)` é **a banda aplicada** — hoje o caso da base 79,00 exibe líquido 64,52 contra 69,52 real (SC-108/SC-817). Incluir monotonicidade do anúncio — em `packages/pricing-core/tests/band-convergence.test.ts`
+- [x] T113 [P] **SC-817/SC-108** — o laço de ponto fixo pode sair pelo cap `MAX_BAND_ITERS` **sem convergir**, e as linhas seguintes adotam a banda que sobrou como se fosse estável, cobrando alíquota/fixo de uma banda que **não contém** o anúncio (reproduzido ao centavo com as bandas ML de `band-floor.test.ts:71-75`: anúncio 79,00, líquido exibido 64,52, real 69,52; com 3+ bandas o erro pode ser **contra** o vendedor). Viola SC-108. Após o laço, verificar `bandContaining(bands, anuncio) === band`; sem auto-consistência, escolher o par determinístico de **maior taxa** (nunca superestimar o líquido) e **nunca** devolver `appliedBand` como estável — em `packages/pricing-core/src/channels.ts:209,215-217`
+- [x] T114a [P] Teste (falhando primeiro): preço que cai **fora de toda banda publicada** (a lacuna ML R$ 50,01–78,99) produz nível **não precificado** + selo "sem referência", NUNCA a tarifa da banda vizinha; e a inversão medida (base 50 → 65,70 vs base 55 → 63,95) deixa de existir (SC-817/FR-014a) — em `packages/pricing-core/tests/band-convergence.test.ts`
+- [x] T114 [P] **SC-817/FR-014a** — os fallbacks `bandContaining(...) ?? bands[last]` e `?? band` fazem o motor **emprestar** a tarifa de uma banda vizinha quando o preço cai fora de toda banda — preenchendo no CÁLCULO a lacuna que a FR-014a proíbe preencher no CATÁLOGO (ML R$ 50,01–78,99), e produzindo inversão (base 50 → anúncio 65,70; base 55 → 63,95). Dar estado próprio a "sem tarifa publicada para este preço" (nível não-precificado → selo "sem referência") e validar cobertura/contiguidade na ingestão — em `packages/pricing-core/src/channels.ts:208,211`
+
+> **Nota de execução (T113/T114, 2026-07-30)** — feitas como UMA correção: são o mesmo reparo da
+> mesma função sob o mesmo SC-817, e separá-las obrigaria a escrever um comportamento para apagá-lo
+> no commit seguinte. Três desvios do que a tarefa previa, todos por medição:
+> 1. O laço de ponto fixo **saiu inteiro** (`MAX_BAND_ITERS` não existe mais). Em vez de detectar a
+>    não-convergência depois, o motor resolve TODA banda e ordena os resultados; a auto-consistência
+>    vira o topo de uma ordem total, sem caso especial e sem ramo morto.
+> 2. `appliedBand` passou a ser **sempre a banda que contém o anúncio** — mais forte que "não devolver
+>    como estável", e verificável por varredura (o invariante que o teste sweep guarda).
+> 3. A monotonicidade reprovou a primeira versão: no degrau o motor pulava para R$ 84,67 quando
+>    R$ 79,00 já entregava o líquido. Faltavam os candidatos das **próprias fronteiras**. Com eles o
+>    degrau vira um **platô** em R$ 79,00 para toda base de 64,52 a 69,52 — que é a verdade do custo
+>    fixo do ML, não um artefato. As fronteiras só entram quando alguma banda publicada já responde
+>    (senão elas "escapariam" da lacuna da FR-014a por outra porta, empurrando o vendedor R$ 29 acima).
 
 **UI do 014 — do batidão visual**
 

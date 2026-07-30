@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
-import { checkParseSanity } from "./guardrails.ts";
+import { checkBandCoverage, checkParseSanity } from "./guardrails.ts";
 import { amazonEntries, amazonSpine } from "./amazon-to-catalog.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
@@ -57,6 +57,20 @@ const verdict = checkParseSanity(categories, { minRows: MIN_ROWS, canaries: CANA
 if (!verdict.ok) {
   console.error(`ABORT: ${verdict.reason}. The artifact is left untouched.`);
   process.exit(1);
+}
+
+// 014/T114 (SC-817) — a banded cell must be publishable as bands. A published GAP is fine and stays
+// a gap (FR-014a); what aborts here is a set the engine could not read unambiguously — overlapping
+// bands (the applied rate would depend on the row order of a scraped table) or a bound that cannot
+// contain a price. Those are parse errors wearing the shape of data, and they reach the seller as a
+// commission under a "Referência" seal.
+for (const c of categories) {
+  if (!c.bands) continue;
+  const coverage = checkBandCoverage(c.bands);
+  if (!coverage.ok) {
+    console.error(`ABORT: "${c.name}" — ${coverage.reason}. The artifact is left untouched.`);
+    process.exit(1);
+  }
 }
 
 const collectedAt = process.env.COLLECTED_AT ?? new Date().toISOString().slice(0, 10);

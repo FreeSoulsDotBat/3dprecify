@@ -9,7 +9,7 @@ import {
   amazonSpine,
   categoryId,
 } from "./amazon-to-catalog";
-import { checkParseSanity } from "./guardrails";
+import { checkBandCoverage, checkParseSanity } from "./guardrails";
 
 const CATS: ParsedCategory[] = [
   { name: "Roupas e Acessórios", commissionPct: 14, bands: null, minPerItem: 1 },
@@ -126,5 +126,66 @@ describe("checkParseSanity — the fail-safe that catches a parser reading the w
     }));
     const v = checkParseSanity(shifted, { minRows: 3, canaries });
     expect(v.ok === false && v.reason).toMatch(/wrong column/i);
+  });
+});
+
+// 014/T114 (SC-817) — o que a cobertura de bandas aceita e o que ela recusa. A distinção é o ponto:
+// uma LACUNA publicada é dado legítimo (FR-014a manda preservá-la), então recusá-la seria recusar a
+// fonte. O que não pode passar é a forma que torna a lacuna indistinguível de erro de leitura.
+describe("checkBandCoverage — lacuna é dado; sobreposição é erro de leitura", () => {
+  it("aceita bandas contíguas terminadas no infinito", () => {
+    expect(
+      checkBandCoverage([
+        { minPrice: 0, maxPrice: 200 },
+        { minPrice: 200, maxPrice: null },
+      ]),
+    ).toEqual({ ok: true });
+  });
+
+  it("ACEITA a lacuna que a fonte deixa (ML R$ 50,01–78,99) — FR-014a", () => {
+    expect(
+      checkBandCoverage([
+        { minPrice: 0, maxPrice: 29.01 },
+        { minPrice: 29.01, maxPrice: 50.01 },
+        { minPrice: 79, maxPrice: null },
+      ]),
+    ).toEqual({ ok: true });
+  });
+
+  it("aceita fora de ordem — a ordem da tabela raspada não é dado", () => {
+    expect(
+      checkBandCoverage([
+        { minPrice: 200, maxPrice: null },
+        { minPrice: 0, maxPrice: 200 },
+      ]),
+    ).toEqual({ ok: true });
+  });
+
+  it("recusa sobreposição: a alíquota aplicada dependeria da ordem das linhas", () => {
+    const v = checkBandCoverage([
+      { minPrice: 0, maxPrice: 100 },
+      { minPrice: 50, maxPrice: null },
+    ]);
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toContain("overlap");
+  });
+
+  it("recusa uma banda que não pode conter preço nenhum", () => {
+    const v = checkBandCoverage([{ minPrice: 100, maxPrice: 100 }]);
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toContain("cannot contain a price");
+  });
+
+  it("recusa uma SEGUNDA banda aberta — só a terminal pode ser ilimitada", () => {
+    const v = checkBandCoverage([
+      { minPrice: 0, maxPrice: null },
+      { minPrice: 200, maxPrice: null },
+    ]);
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toContain("terminal");
+  });
+
+  it("um conjunto vazio não é violação — é ausência de bandas", () => {
+    expect(checkBandCoverage([])).toEqual({ ok: true });
   });
 });

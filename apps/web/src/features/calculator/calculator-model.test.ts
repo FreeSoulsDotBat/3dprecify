@@ -633,3 +633,73 @@ describe("014 — category as a per-slot determinant", () => {
     );
   });
 });
+
+// 014/T114a (SC-817 / FR-014a) — a recusa do motor tem de ATRAVESSAR o adaptador. Provar só em
+// `pricing-core` prova a aritmética e não prova o trajeto: o defeito que este teste guarda não é
+// "o motor calculou errado", é "o motor recusou e a tela mostrou R$ 0,00 sob selo de Referência".
+// É a mesma lição que o ADR-0024 §5 já tinha cobrado uma vez neste incremento.
+describe("SC-817 — nível não precificado atravessa até o selo (lacuna publicada)", () => {
+  /** Custo fixo do ML com a lacuna que a fonte deixa: nada publicado entre R$ 50,01 e R$ 78,99
+   *  (FR-014a — a lacuna permanece lacuna, nunca interpolada). */
+  const catalogComLacuna = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-28.ml",
+    schemaVersion: "1",
+    generatedAt: "2026-07-28T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "MERCADO_LIVRE",
+        entries: [
+          {
+            determinants: null,
+            commissionPct: null,
+            fixedFee: null,
+            priceBands: [
+              { minPrice: 0, maxPrice: 29.01, commissionPct: 14, fixedFee: 6.25 },
+              { minPrice: 29.01, maxPrice: 50.01, commissionPct: 14, fixedFee: 6.5 },
+              { minPrice: 79, maxPrice: null, commissionPct: 14, fixedFee: 0 },
+            ],
+            freight: { kind: "NONE" },
+            source: "Mercado Livre — custos de venda",
+            sourceUrl: "https://www.mercadolivre.com.br/ajuda/custos-de-venda_869",
+            effectiveDate: "2026-07-01",
+            lastReviewed: "2026-07-28",
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = {
+    catalog: catalogComLacuna,
+    source: "catalog",
+    now: Date.parse("2026-07-28"),
+  };
+  const mlSlot: ChannelSlotForm = {
+    ...defaultChannelSlot(),
+    marketplace: "MERCADO_LIVRE",
+    modality: "",
+  };
+
+  it("o varejo cai na lacuna → sem preço e SEM selo de referência", () => {
+    // O varejo canônico (R$ 42,98) precisa anunciar por ~R$ 57 para fechar — dentro da lacuna.
+    const r = computeFromForm({ ...canonical, channels: [mlSlot] }, ctx);
+    const ch = r.channels[0];
+    expect(ch.errors).toEqual({}); // o slot é VÁLIDO: quem não tem tarifa é o preço, não o vendedor
+    expect(ch.result?.precoAnuncioVarejo).toBeNull();
+    expect(ch.result?.recebidoLiquidoVarejo).toBeNull();
+    // O selo é a metade que faltava: sem ela a tela some com o número e mantém "Referência: Mercado
+    // Livre" ao lado, vouchando por um preço que ela mesma se recusou a mostrar.
+    expect(ch.seal.kind).toBe("none");
+  });
+
+  it("acima da lacuna a MESMA tabela volta a precificar, e o selo volta a valer", () => {
+    // markup alto empurra o varejo (e o anúncio) para cima da lacuna.
+    const r = computeFromForm(
+      { ...canonical, markupVarejoPct: "200", markupAtacadoPct: "180", channels: [mlSlot] },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.precoAnuncioVarejo).not.toBeNull();
+    expect(ch.result?.recebidoLiquidoVarejo).not.toBeNull();
+    expect(ch.seal.kind).toBe("reference");
+  });
+});

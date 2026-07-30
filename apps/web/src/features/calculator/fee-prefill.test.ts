@@ -169,7 +169,7 @@ describe("entryToChannelFees — map a resolved entry to the engine (SC-111)", (
     // SC-111: the subsidy lowers the líquido by exactly that amount vs. the no-freight gross-up.
     const withSubsidy = grossUp(42.98, { commissionPct: 12, fixedFee: 6.75, freightCost: 20 });
     const noFreight = grossUp(42.98, { commissionPct: 12, fixedFee: 6.75, freightCost: 0 });
-    expect(noFreight.liquido - withSubsidy.liquido).toBeCloseTo(20, 2);
+    expect(noFreight.liquido! - withSubsidy.liquido!).toBeCloseTo(20, 2);
     expect(withSubsidy.anuncio).toBe(noFreight.anuncio); // freight is a post-deduction, not grossed up
   });
 });

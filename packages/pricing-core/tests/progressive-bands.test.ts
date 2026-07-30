@@ -72,7 +72,7 @@ describe("SC-814 — comissão por parcela bate com a fonte nos três pontos de 
     // A Amazon cobraria 15%·200 + 10%·77,78 = R$ 37,78 nesse anúncio, deixando R$ 240,00 líquidos.
     // O erro é CONSTANTE acima do limiar: (15% − 10%) × 200 = R$ 10,00.
     expect(277.78 - (0.15 * 200 + 0.1 * 77.78)).toBeCloseTo(240.0, 2);
-    expect(grossUp(250, progressivo(MOVEIS)).anuncio - selecao.anuncio).toBeCloseTo(11.11, 2);
+    expect(grossUp(250, progressivo(MOVEIS)).anuncio! - selecao.anuncio!).toBeCloseTo(11.11, 2);
   });
 
   it("vale para o outro limiar publicado (Acessórios Eletrônicos, R$ 100) — erro de R$ 5,00", () => {
@@ -84,9 +84,9 @@ describe("SC-814 — comissão por parcela bate com a fonte nos três pontos de 
 
   it("a comissão cobrada é a soma por parcela, não a alíquota de uma banda só", () => {
     const r = grossUp(250, progressivo(MOVEIS));
-    const comissao = r.anuncio - r.liquido; // sem frete nem custo fixo neste caso
+    const comissao = r.anuncio! - r.liquido!; // sem frete nem custo fixo neste caso
     expect(comissao).toBeCloseTo(38.89, 2);
-    expect(comissao).not.toBeCloseTo(0.1 * r.anuncio, 2); // NÃO é 10% do anúncio inteiro
+    expect(comissao).not.toBeCloseTo(0.1 * r.anuncio!, 2); // NÃO é 10% do anúncio inteiro
   });
 
   it("o piso por item continua valendo sobre a comissão progressiva", () => {
@@ -96,26 +96,9 @@ describe("SC-814 — comissão por parcela bate com a fonte nos três pontos de 
     expect(r.liquido).toBe(2.0);
   });
 
-  // Um conjunto de bandas que PARA antes do infinito é dado representável — a fonte pode publicar
-  // faixas até um teto e não dizer nada acima dele. Nesse caso nenhum segmento contém sua própria
-  // solução, e a resposta tem de ser determinística em vez de estourar num preço que a fonte nunca
-  // tarifou.
-  it("bandas que param antes do infinito: responde pelo último segmento, sem estourar", () => {
-    const COM_TETO: PriceBand[] = [
-      { minPrice: 0, maxPrice: 100, commissionPct: 15, fixedFee: 0 },
-      { minPrice: 100, maxPrice: 200, commissionPct: 10, fixedFee: 0 },
-    ];
-    const r = grossUp(500, {
-      commissionPct: 0,
-      fixedFee: 0,
-      minPerItem: 1,
-      priceBands: COM_TETO,
-      bandMode: "PROGRESSIVE",
-    });
-    expect(r.appliedBand).toEqual([100, 200]);
-    expect(r.anuncio).toBeGreaterThan(500); // ainda cobre a comissão devida
-    expect(Number.isFinite(r.anuncio)).toBe(true);
-  });
+  // Bandas que PARAM antes do infinito: ver `band-convergence.test.ts` (SC-817). O que respondia pelo
+  // último segmento passou a ser NÃO PRECIFICADO — a alíquota do excedente acima do teto é justamente
+  // o que a fonte não publicou.
 
   it("`appliedBand` no modo progressivo reporta a banda que CONTÉM o anúncio", () => {
     expect(grossUp(100, progressivo(MOVEIS)).appliedBand).toEqual([0, 200]);

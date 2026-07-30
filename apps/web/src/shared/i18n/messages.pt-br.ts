@@ -147,6 +147,11 @@ export const messages = {
       freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
       freightLine: "Frete / cupom",
       negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
+      // 014/SC-817 — o anúncio necessário cai numa faixa de preço para a qual o marketplace não
+      // publica tarifa. Dizer isso é a única resposta honesta: a tarifa da faixa vizinha não vale
+      // aqui, e um R$ 0,00 sob selo de referência seria pior que nenhum número.
+      unpricedBand:
+        "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do canal para precificar.",
       // US4 — master toggle: show/hide the whole marketplace section (default on).
       includeToggle: "Incluir marketplaces no preço",
       pricesTitle: "Preços por canal",

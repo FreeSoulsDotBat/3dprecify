@@ -41,6 +41,20 @@ export { formatBRL } from "@/shared/lib/decimal-ptbr";
 export type CalcFieldErrors = Partial<Record<CalcFieldName, string>>;
 export type ChannelSlotErrors = Partial<Record<ChannelFieldName, string>>;
 
+/**
+ * SC-817 / FR-014a — the engine priced this slot but REFUSED at least one level: that level's
+ * announce falls outside every published band, so no rate covers it. `null` is the whole point —
+ * pricing it off the neighbouring band would fill in the arithmetic the gap the source itself
+ * leaves (the ML R$ 50,01–78,99 window), which FR-014a forbids filling in the catalog.
+ */
+export function isUnpriced(r: ChannelResult | null): boolean {
+  return (
+    r !== null &&
+    r.error === null &&
+    (r.precoAnuncioVarejo === null || r.precoAnuncioAtacado === null)
+  );
+}
+
 /** One channel slot's outcome, aligned to `form.channels[i]`: inline pt-BR errors (empty when the
  *  slot is valid) + the engine's gross-up result (null when the slot has an error). `hasFee` is
  *  false while every fee is blank/0 — the UI then shows a hint instead of base==anúncio rows. `seal`
@@ -386,14 +400,22 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             freightIsEstimate: false,
             editedFields: p.editedFields,
           }
-        : {
-            errors: {},
-            result: result.channels[ep++] ?? null,
-            hasFee: p.hasFee,
-            seal: p.seal,
-            freightIsEstimate: p.freightIsEstimate,
-            editedFields: p.editedFields,
-          },
+        : (() => {
+            const computed = result.channels[ep++] ?? null;
+            return {
+              errors: {},
+              result: computed,
+              hasFee: p.hasFee,
+              // SC-817 — a level the engine refused to price (its announce falls outside every
+              // published band) has no reference behind it, so the slot MUST NOT keep wearing the
+              // "Referência" seal: the seal would vouch for a number the screen is not showing.
+              // Degrading the whole slot to "sem referência" understates rather than overstates,
+              // which is the only safe direction here (Constitution II).
+              seal: isUnpriced(computed) ? ({ kind: "none" } as const) : p.seal,
+              freightIsEstimate: p.freightIsEstimate,
+              editedFields: p.editedFields,
+            };
+          })(),
     );
     return { ok: true, fieldErrors: {}, result, input, channels, otherCostErrors };
   } catch (err) {

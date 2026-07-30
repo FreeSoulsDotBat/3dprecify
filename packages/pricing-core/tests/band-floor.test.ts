@@ -12,7 +12,7 @@ describe("SC-112 — Amazon per-item commission floor", () => {
     expect(withFloor.anuncio).toBe(6.0); // base + minPerItem + fixedFee (floor regime)
     expect(withFloor.liquido).toBe(5.0); // still nets to base
     const noFloor = grossUp(5, { commissionPct: 15, fixedFee: 0, minPerItem: 0 });
-    expect(withFloor.anuncio).toBeGreaterThan(noFloor.anuncio); // strictly less optimistic
+    expect(withFloor.anuncio!).toBeGreaterThan(noFloor.anuncio!); // strictly less optimistic
   });
 
   it("floor does NOT bind at a high price: equals the plain %-gross-up", () => {
@@ -35,9 +35,11 @@ describe("SC-112 — Amazon per-item commission floor", () => {
   });
 });
 
-// SC-108 — price-band fixed-point: the fee depends on the band of the COMPUTED announce price, which
-// depends on the fee → a bounded, deterministic fixed-point (half-open [min,max), lower-inclusive).
-describe("SC-108 — price-band fixed-point determinism", () => {
+// SC-108 — price-band selection: the fee depends on the band of the COMPUTED announce price, which
+// depends on the fee. Every band's schedule is solved and the SELF-CONSISTENT answer wins — the one
+// whose announce lands in the very band that priced it (half-open [min,max), lower-inclusive). The
+// non-self-consistent cases live in `band-convergence.test.ts` (SC-817).
+describe("SC-108 — price-band selection determinism", () => {
   const shopeeBands: PriceBand[] = [
     { minPrice: 0, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
     { minPrice: 80, maxPrice: 200, commissionPct: 14, fixedFee: 18 },
@@ -52,7 +54,8 @@ describe("SC-108 — price-band fixed-point determinism", () => {
   });
 
   it("crosses into the middle band when the gross-up pushes the announce past R$80", () => {
-    // base 76 seeds band [0,80) → announce (76+4)/0,80 = 100 → band [80,200) → recompute → stable
+    // Band [0,80) would answer (76+4)/0,80 = 100, which is NOT in [0,80) — not self-consistent.
+    // Band [80,200) answers (76+18)/0,86 = 109,30, which IS in [80,200) — that is the answer.
     const r = grossUp(76, { commissionPct: 20, fixedFee: 4, priceBands: shopeeBands });
     expect(r.appliedBand).toEqual([80, 200]);
     expect(r.anuncio).toBe(109.3); // (76+18)/0,86
@@ -71,7 +74,8 @@ describe("SC-108 — price-band fixed-point determinism", () => {
       { minPrice: 12.5, maxPrice: 79, commissionPct: 12, fixedFee: 5 },
       { minPrice: 79, maxPrice: null, commissionPct: 12, fixedFee: 0 },
     ];
-    // base 6,25: seed [0,12.5) → announce 12,50 → lands in [12.5,79) → recompute → stable, no flip-flop
+    // Band [0;12,5) would answer 12,50 — the first price OUTSIDE itself. Band [12,5;79) answers
+    // 12,78, inside itself: self-consistent, and the only one. No oscillation to bound.
     const a = grossUp(6.25, { commissionPct: 50, fixedFee: 0, priceBands: mlBands });
     const b = grossUp(6.25, { commissionPct: 50, fixedFee: 0, priceBands: mlBands });
     expect(a).toEqual(b); // deterministic
@@ -113,7 +117,7 @@ describe("FR-111a / SC-111 — Shopee co-funded freight voucher", () => {
     const dropped = grossUp(42.98, { commissionPct: 20, fixedFee: 4, priceBands: shopeeBands });
     expect(dropped.freightCost).toBe(0);
     expect(dropped.liquido).toBe(42.98);
-    expect(dropped.liquido - withVoucher.liquido).toBeCloseTo(20, 2);
+    expect(dropped.liquido! - withVoucher.liquido!).toBeCloseTo(20, 2);
   });
 
   it("resolves the voucher by the ANNOUNCE band, not the base (base 76 → announce in [80,200))", () => {
@@ -181,18 +185,20 @@ describe("grossUp — omitted-field + no-band-match fallbacks", () => {
     expect(r.freightCost).toBe(0);
   });
 
-  it("a base below every price band seeds the last band and stays deterministic", () => {
-    // Bands start at R$50, so a base of R$10 matches NONE → seeds bands[last]; the resulting
-    // announce also lands below all bands → bandContaining(announce) null → keeps that band. Both
-    // `?? fallback` paths (base-seed and re-select) fire; the result still nets to base, no throw.
+  it("a base below every price band é NÃO PRECIFICADA — nunca a tarifa da banda vizinha (SC-817)", () => {
+    // Bands start at R$50, so a base of R$10 announces below every published band. This used to fall
+    // back to `bands[last]` and price it with the terminal band's 12% + R$5 — a rate the source never
+    // published for R$13. FR-014a forbids filling a published gap in the catalog; doing it in the
+    // ARITHMETIC is the same invention with fewer witnesses. The honest answer is "no fee for this
+    // price", and that is a state (null), not a number.
     const bands: PriceBand[] = [
       { minPrice: 50, maxPrice: 100, commissionPct: 10, fixedFee: 2 },
       { minPrice: 100, maxPrice: null, commissionPct: 12, fixedFee: 5 },
     ];
     const r = grossUp(10, { commissionPct: 99, fixedFee: 0, priceBands: bands });
-    expect(Number.isFinite(r.anuncio)).toBe(true);
-    expect(r.appliedBand).toEqual([100, null]); // fell back to the terminal band
-    expect(r.liquido).toBe(10.0);
+    expect(r.anuncio).toBeNull();
+    expect(r.liquido).toBeNull();
+    expect(r.appliedBand).toBeNull();
     const again = grossUp(10, { commissionPct: 99, fixedFee: 0, priceBands: bands });
     expect(again).toEqual(r); // deterministic
   });
