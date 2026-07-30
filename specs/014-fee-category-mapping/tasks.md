@@ -286,7 +286,17 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 > não em bytes ao que o gerador produz. O `toEqual` do teste de ponto fixo ignora ordem de chave e
 > por isso passava. Agora o arquivo é saída literal do gerador.
 
-- [ ] T097 [US1] Trocar o marketplace do slot MUST limpar a `category` junto com a modalidade: hoje o id do marketplace antigo sobrevive **invisível** (o ramo de espinha vazia vem antes do ramo `value`), sem botão "Limpar", e **continua sendo enviado como determinante** — dois cliques (Amazon→ML), contra `spec.md` §Edge Cases — em `calcular-page.tsx:237`, `produto-page.tsx:169`, `bom-line-editor.tsx:86`
+- [x] T097 [US1] Trocar o marketplace do slot MUST limpar a `category` junto com a modalidade: hoje o id do marketplace antigo sobrevive **invisível** (o ramo de espinha vazia vem antes do ramo `value`), sem botão "Limpar", e **continua sendo enviado como determinante** — dois cliques (Amazon→ML), contra `spec.md` §Edge Cases — em `calcular-page.tsx:237`, `produto-page.tsx:169`, `bom-line-editor.tsx:86`
+> **Nota (T097, 2026-07-30)** — a regra do que reseta saiu dos três handlers e virou UM lugar
+> (`slotResetOnMarketplaceChange`). Três cópias da mesma regra é como uma fica para trás — que é
+> literalmente o que aconteceu com a categoria nas três. Junto veio um conserto que a T095 **abriu**:
+> `viaCatchAll` perguntava "o vendedor escolheu categoria?" quando a pergunta certa é "a entrada que
+> vamos citar tem categoria?". As duas divergem sempre que uma categoria escolhida NÃO resolve (id de
+> cenário salvo, de catálogo que perdeu o nó, ou resíduo da própria troca) — a busca cai no catch-all
+> e o selo diria "Referência" para um 15% que não é da categoria escolhida.
+> Fica para a **T116** o chip em branco (`categoryPath` de id ausente) e a ordem dos ramos do seletor:
+> com a T097 a espinha vazia deixa de esconder um id vivo, mas um id persistido ainda pode.
+
 - [x] T098 [P] [US1] O `return` antecipado do ramo `embedded` (`fee-seal.tsx:49`) engole **DUAS** coisas, e são o mesmo conserto: (a) `originCategoryName` — alíquota herdada de ancestral aparece sem dizer que não é a da categoria escolhida; (b) o marcador **`stale`** — no caminho da semente o alarme de 30 dias **nunca dispara** (SC-807), e o docstring de `fee-prefill.ts:164-166` declara literalmente o contrato oposto. O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, então a assimetria é **acidental**. Tornar `embedded` um **modificador do texto-base**, não um early return. Teste `embedded + stale` — **hoje não existe nenhum** — em `apps/web/src/features/calculator/{fee-seal.tsx,fee-seal.test.tsx}`
 - [x] T099 [P] Princípio V: `catchAllName` é parâmetro sem chamador de produção, e o teste vacuoso de `catalog-diff.test.ts:280` não exercita o ramo que nomeia — remover ou corrigir ambos
 
