@@ -250,9 +250,23 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 
 ### A4/A5 — higiene do gerador (armadilhas plantadas para o laço mensal)
 
-- [ ] T089 [P] Teste (falhando primeiro): célula com estrutura não reconhecida (limiares divergentes, ordem invertida, redação alternativa) é **falha daquela categoria**, não 15% fixo (FR-014c) — em `packages/fee-ingest/src/amazon-parse.test.ts`
-- [ ] T090 [US3] A recusa da linha 72 deixa de ser desfeita a jusante: `parsePct` não vê célula que `parseBands` recusou — em `packages/fee-ingest/src/amazon-parse.ts`
-- [ ] T091 [P] Remover o fallback inalcançável `?? {AMAZON vazia}` (Princípio V) e garantir que **nada é escrito** antes do artefato estar montado — em `packages/fee-ingest/src/build-amazon.mjs`
+- [x] T089 [P] Teste (falhando primeiro): célula com estrutura não reconhecida (limiares divergentes, ordem invertida, redação alternativa) é **falha daquela categoria**, não 15% fixo (FR-014c) — em `packages/fee-ingest/src/amazon-parse.test.ts`
+- [x] T090 [US3] A recusa da linha 72 deixa de ser desfeita a jusante: `parsePct` não vê célula que `parseBands` recusou — em `packages/fee-ingest/src/amazon-parse.ts`
+- [x] T091 [P] Remover o fallback inalcançável `?? {AMAZON vazia}` (Princípio V) e garantir que **nada é escrito** antes do artefato estar montado — em `packages/fee-ingest/src/build-amazon.mjs`
+
+> **Nota (A4/A5, 2026-07-30)** — a raiz da A4 era o **tipo de retorno**, não a linha 96. `parseBands`
+> devolvia `null` para duas coisas incompatíveis ("isto não é banda" e "isto PARECE banda e eu me
+> recuso a ler"), então o chamador não tinha como respeitar a recusa. Virou `readCommissionCell` com
+> três respostas (`FLAT` / `BANDED` / `UNRECOGNISED`): a recusa deixou de ser representável como
+> "não é banda", e o `?? parsePct(...)` saiu junto. Cobre também três faixas e redação alternativa,
+> que hoje viravam a primeira alíquota da célula.
+> Na A5 o `??` não era só inalcançável: o `.map` só SUBSTITUI uma Amazon existente, então o objeto
+> fabricado nunca podia ser usado — ele apenas fazia o script **parecer** que tratava a ausência,
+> enquanto uma ausência real gravava o artefato inalterado e só depois morria no `console.log`.
+> **Incidente durante a execução**: rodei `node build-amazon.mjs --help` supondo que fosse flag; não
+> é, e o script buscou a página ao vivo e reescreveu `catalog.json` (só datas). Revertido com
+> `git checkout --` e conferido contra o HEAD antes de commitar. O script não tem modo seco — vale
+> anotar como candidato a `--dry-run` no laço da US4.
 
 ### Da varredura dos 27 restantes (2026-07-28) — **17 confirmados · 10 refutados**
 

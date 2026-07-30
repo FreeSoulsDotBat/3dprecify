@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { CANARIES, CATCH_ALL_NAME, parseAmazonTable, parseBands } from "./amazon-parse";
+import { CANARIES, CATCH_ALL_NAME, parseAmazonTable, readCommissionCell } from "./amazon-parse";
 
 // Fixtures are the REAL cells, captured from the live table on 2026-07-28 — including the
 // non-breaking spaces. Writing these from imagination would have missed all three traps below.
@@ -54,8 +54,9 @@ describe("parseAmazonTable — the real table's shape", () => {
   });
 });
 
-describe("parseBands — the boundary, tested from BOTH sides", () => {
-  const bands = parseBands(`15% até BRL${NB}100,00 10% acima de R$${NB}100,00`)!;
+describe("readCommissionCell — the boundary, tested from BOTH sides", () => {
+  const cell = readCommissionCell(`15% até BRL${NB}100,00 10% acima de R$${NB}100,00`);
+  const bands = cell.kind === "BANDED" ? cell.bands : [];
 
   it("is half-open [min,max) so the threshold itself falls in the UPPER band", () => {
     // R$ 99,99 → 15% ; R$ 100,00 → 10%. Getting this backwards is a silent 5-point money error.
@@ -68,13 +69,63 @@ describe("parseBands — the boundary, tested from BOTH sides", () => {
   });
 
   it("a plain percentage is not a band", () => {
-    expect(parseBands("14%")).toBeNull();
+    expect(readCommissionCell("14%")).toEqual({ kind: "FLAT", commissionPct: 14 });
   });
 
   // If the page ever states the two thresholds differently, the cell shape changed. Guessing which
   // one is right would be inventing money, so the parser refuses instead.
   it("refuses a cell whose two thresholds disagree", () => {
-    expect(parseBands(`15% até BRL${NB}100,00 10% acima de BRL${NB}200,00`)).toBeNull();
+    expect(readCommissionCell(`15% até BRL${NB}100,00 10% acima de BRL${NB}200,00`).kind).toBe(
+      "UNRECOGNISED",
+    );
+  });
+});
+
+// 014/T089 (A4, FR-014c) — a recusa tem de SOBREVIVER até a saída.
+//
+// O teste acima existia e passava, e o defeito estava vivo assim mesmo: `parseBands` devolvia `null`
+// tanto para "isto não é banda" quanto para "isto PARECE banda e eu me recuso a ler", e a linha
+// seguinte de `parseAmazonTable` chamava `parsePct` na mesma célula. A recusa era desfeita um passo
+// abaixo, e a categoria saía com a PRIMEIRA alíquota da célula como se fosse a única. Uma célula com
+// limiares divergentes virava "15% fixo" — publicado sob selo de "Referência", no laço mensal, sem
+// ninguém para notar.
+describe("FR-014c — célula não reconhecida é falha da categoria, nunca a primeira alíquota", () => {
+  const linha = (cell: string) => [["Alguma Categoria", cell, `BRL${NB}1,00`]];
+
+  it("limiares divergentes: FALHA — e o 15% da célula não vaza para o resultado", () => {
+    const cell = `15% até BRL${NB}100,00 10% acima de BRL${NB}200,00`;
+    expect(() => parseAmazonTable(linha(cell))).toThrow(/unparseable/i);
+  });
+
+  it("redação alternativa ('excedente'): FALHA, não 15% fixo", () => {
+    const cell = `15% para os primeiros R$${NB}200,00 e 10% para o excedente`;
+    expect(() => parseAmazonTable(linha(cell))).toThrow(/unparseable/i);
+  });
+
+  it("TRÊS faixas: FALHA — a estrutura publicada deixou de ser a que este parser conhece", () => {
+    const cell = `15% até BRL${NB}100,00 12% até BRL${NB}200,00 10% acima de BRL${NB}200,00`;
+    expect(() => parseAmazonTable(linha(cell))).toThrow(/unparseable/i);
+  });
+
+  it("um limiar sem o par ('até' sem 'acima de'): FALHA", () => {
+    expect(() => parseAmazonTable(linha(`15% até BRL${NB}100,00`))).toThrow(/unparseable/i);
+  });
+
+  it("ordem invertida é LIDA, não recusada — a célula continua sem ambiguidade", () => {
+    // Recusar aqui seria zelo sem causa: as duas metades estão presentes e concordam. O que não pode
+    // acontecer é virar 10% fixo (a primeira alíquota da célula nessa ordem).
+    const cell = `10% acima de R$${NB}100,00 15% até BRL${NB}100,00`;
+    const [row] = parseAmazonTable(linha(cell));
+    expect(row.commissionPct).toBeNull();
+    expect(row.bands).toEqual([
+      { minPrice: 0, maxPrice: 100, commissionPct: 15 },
+      { minPrice: 100, maxPrice: null, commissionPct: 10 },
+    ]);
+  });
+
+  it("a célula simples de sempre continua sendo lida como alíquota única", () => {
+    const [row] = parseAmazonTable(linha("14%"));
+    expect(row).toMatchObject({ commissionPct: 14, bands: null });
   });
 });
 

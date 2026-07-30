@@ -75,30 +75,33 @@ for (const c of categories) {
 
 const collectedAt = process.env.COLLECTED_AT ?? new Date().toISOString().slice(0, 10);
 const artifact = JSON.parse(readFileSync(ARTIFACT, "utf8"));
-const amazon = artifact.marketplaces.find((m) => m.marketplace === "AMAZON") ?? {
-  marketplace: "AMAZON",
-  determinantsSchema: { category: [], plan: ["INDIVIDUAL", "PROFISSIONAL"] },
-  entries: [],
-};
+const amazon = artifact.marketplaces.find((m) => m.marketplace === "AMAZON");
+// 014/T091 — this used to end in `?? { marketplace: "AMAZON", entries: [] }`, and that default was
+// worse than dead code: the map below only REPLACES an existing AMAZON marketplace, so the fabricated
+// object could never be used. It just made the script LOOK like it handled a missing Amazon, while a
+// real absence would have written the artifact unchanged and then died on the log line below.
+// Refusing is the honest answer: this script regenerates a marketplace, it does not create one.
+if (!amazon) {
+  console.error("ABORT: the artifact carries no AMAZON marketplace to regenerate. Left untouched.");
+  process.exit(1);
+}
 
 // Keep the original marketplace ORDER so the monthly diff stays readable, and carry every other
 // marketplace through untouched — regenerating Amazon must never quietly drop Shopee's curation.
+const entries = amazonEntries(categories, { collectedAt, effectiveDate: collectedAt });
 const next = {
   ...artifact,
   catalogVersion: `${collectedAt}.0`,
   generatedAt: `${collectedAt}T00:00:00.000Z`,
   marketplaces: artifact.marketplaces.map((m) =>
-    m.marketplace === "AMAZON"
-      ? {
-          ...amazon,
-          categorySpine: amazonSpine(categories),
-          entries: amazonEntries(categories, { collectedAt, effectiveDate: collectedAt }),
-        }
-      : m,
+    m.marketplace === "AMAZON" ? { ...amazon, categorySpine: amazonSpine(categories), entries } : m,
   ),
 };
 
+// The write is the LAST step, and everything it reports was computed BEFORE it. The old order wrote
+// the file and only then went looking for the marketplace it had just written — so a shape it could
+// not find produced a half-done run: artifact on disk, TypeError on stdout, exit code non-zero.
 writeFileSync(ARTIFACT, JSON.stringify(next, null, 2) + "\n");
 console.log(
-  `AMAZON: ${categories.length} categories → ${next.marketplaces.find((m) => m.marketplace === "AMAZON").entries.length} entries (2 plans). catalogVersion=${next.catalogVersion}`,
+  `AMAZON: ${categories.length} categories → ${entries.length} entries (2 plans). catalogVersion=${next.catalogVersion}`,
 );

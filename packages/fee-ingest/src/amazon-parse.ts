@@ -50,17 +50,61 @@ function parsePct(text: string): number | null {
 }
 
 /**
- * A banded commission cell, e.g. "15% até BRL 100,00 10% acima de R$ 100,00".
+ * What ONE commission cell says — as three distinct answers, deliberately.
  *
- * Returns null when the cell is a plain percentage. Bands are half-open `[min, max)` to match the
- * catalog contract's lower-inclusive tie-rule, so the threshold itself falls in the UPPER band —
- * which is what "acima de" and "até" mean read together, and is testable from both sides.
+ * The predecessor returned `ParsedBand[] | null`, and `null` carried two incompatible meanings:
+ * "this is a plain percentage" and "this LOOKS banded and I refuse to read it". The caller could not
+ * tell them apart, so it did the only thing it could — fell back to `parsePct`, which returns the
+ * FIRST percentage in the cell. A cell whose two thresholds disagreed came out as a flat 15%,
+ * published under a "Referência" seal by the monthly loop. FR-014c: a refusal MUST NOT be undone
+ * downstream, and the way to guarantee that is to make it unrepresentable as "not banded".
  */
-export function parseBands(cell: string): ParsedBand[] | null {
+export type CommissionCell =
+  | { kind: "FLAT"; commissionPct: number }
+  | { kind: "BANDED"; bands: ParsedBand[] }
+  | { kind: "UNRECOGNISED"; reason: string };
+
+/** Any wording that announces a threshold. Presence means the cell is NOT a single rate, whether or
+ *  not this parser knows how to read the rest of it — which is the distinction that matters. */
+const THRESHOLD_WORDING = /até|acima de|excedente|superior a|a partir de|primeiros/i;
+
+const RATE = /\d+(?:[.,]\d+)?\s*%/g;
+
+/**
+ * Read a commission cell, e.g. "15% até BRL 100,00 10% acima de R$ 100,00".
+ *
+ * Bands are half-open `[min, max)` to match the catalog contract's lower-inclusive tie-rule, so the
+ * threshold itself falls in the UPPER band — which is what "acima de" and "até" mean read together,
+ * and is testable from both sides.
+ *
+ * Everything that is neither a bare rate nor exactly this two-band shape is UNRECOGNISED. That
+ * includes shapes a human would find readable (three bands, "para o excedente"): the parser saying
+ * "I do not know this" is cheap, and the alternative — publishing a partial reading of a cell about
+ * money — is the failure this whole guard exists for.
+ */
+export function readCommissionCell(cell: string): CommissionCell {
   const text = normalise(cell);
+  const rates = text.match(RATE) ?? [];
+
+  if (!THRESHOLD_WORDING.test(text) && rates.length <= 1) {
+    const flat = parsePct(text);
+    return flat === null
+      ? { kind: "UNRECOGNISED", reason: "no percentage in the cell" }
+      : { kind: "FLAT", commissionPct: flat };
+  }
+
+  if (rates.length !== 2) {
+    return {
+      kind: "UNRECOGNISED",
+      reason: `${rates.length} rate(s) in a threshold cell — the published structure is not the two-band one this parser knows`,
+    };
+  }
+
   const upTo = /(\d+(?:[.,]\d+)?)\s*%\s*até\s*(?:BRL|R\$)\s*([\d.]+,\d{2})/i.exec(text);
   const above = /(\d+(?:[.,]\d+)?)\s*%\s*acima de\s*(?:BRL|R\$)\s*([\d.]+,\d{2})/i.exec(text);
-  if (!upTo || !above) return null;
+  if (!upTo || !above) {
+    return { kind: "UNRECOGNISED", reason: "threshold wording this parser does not know" };
+  }
 
   // The capture groups hold BARE amounts ("100,00") — the currency prefix was consumed by the
   // pattern. Feeding them to parseMoney (which REQUIRES a prefix) silently returned null and killed
@@ -69,12 +113,20 @@ export function parseBands(cell: string): ParsedBand[] | null {
   const thresholdAbove = parseBrNumber(above[2]);
   // The page states the same number twice, in two notations. If they ever disagree, the cell shape
   // changed and guessing which one is right would be inventing money.
-  if (threshold !== thresholdAbove) return null;
+  if (threshold !== thresholdAbove) {
+    return {
+      kind: "UNRECOGNISED",
+      reason: `the two thresholds disagree (${threshold} vs ${thresholdAbove})`,
+    };
+  }
 
-  return [
-    { minPrice: 0, maxPrice: threshold, commissionPct: Number(upTo[1].replace(",", ".")) },
-    { minPrice: threshold, maxPrice: null, commissionPct: Number(above[1].replace(",", ".")) },
-  ];
+  return {
+    kind: "BANDED",
+    bands: [
+      { minPrice: 0, maxPrice: threshold, commissionPct: Number(upTo[1].replace(",", ".")) },
+      { minPrice: threshold, maxPrice: null, commissionPct: Number(above[1].replace(",", ".")) },
+    ],
+  };
 }
 
 /**
@@ -92,13 +144,21 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
     const name = rawName.replace(FOOTNOTE, "").trim();
     if (!name) throw new Error(`row with a commission but no category: ${JSON.stringify(row)}`);
 
-    const bands = parseBands(rawPct);
-    const commissionPct = bands ? null : parsePct(rawPct);
-    if (bands === null && commissionPct === null) {
-      throw new Error(`unparseable commission cell for "${name}": ${JSON.stringify(rawPct)}`);
+    // ONE reading of the cell, and no second chance at it: there is no `?? parsePct(...)` here any
+    // more, because that fallback is exactly how the refusal used to be undone (FR-014c).
+    const cell = readCommissionCell(rawPct);
+    if (cell.kind === "UNRECOGNISED") {
+      throw new Error(
+        `unparseable commission cell for "${name}": ${cell.reason} — ${JSON.stringify(rawPct)}`,
+      );
     }
 
-    out.push({ name, commissionPct, bands, minPerItem: parseMoney(rawMin) });
+    out.push({
+      name,
+      commissionPct: cell.kind === "FLAT" ? cell.commissionPct : null,
+      bands: cell.kind === "BANDED" ? cell.bands : null,
+      minPerItem: parseMoney(rawMin),
+    });
   }
   return out;
 }
