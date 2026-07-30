@@ -222,21 +222,29 @@ describe("waitFor keeps the mutation state honest", () => {
 });
 
 describe("M1 — never a false 'salvo' when the send cannot be confirmed (review PR-A)", () => {
-  it("reports PENDING (not synced) when the queue read fails after enqueue — and never claims 'saved'", async () => {
-    // `listOutbox` swallows read errors and returns [] (its convenience contract). The old record
-    // path read "not in the queue ⇒ the server has it" and would toast "Registro salvo" for a
-    // record the server NEVER saw. The drain now reports each entry's ACTUAL settle result, so an
-    // entry it could not even re-read is `pending`, never a fabricated `synced`.
+  it("a read glitch FAILS the record instead of reporting a pendente that does not exist", async () => {
+    // EXPECTATION CHANGED BY 014/T109 (SC-816), and the change makes this guard stronger.
+    //
+    // Before: `enqueueSnapshot` read through `listOutbox`, which swallows a read error and answers
+    // `[]`. The write then went ahead on that empty base — so THIS entry really was stored (and
+    // every other pending snapshot was erased). "pending" was therefore true about this record and
+    // false about the queue, and the fixture had no siblings to reveal it.
+    //
+    // Now the read propagates, the write is aborted, and NOTHING is stored. "pending" would be the
+    // lie this time — there is nothing pending. The describe's guard ("never a false salvo") holds
+    // exactly as before and now covers a false *pendente* too: the record action reports failure,
+    // which is what `enqueueSnapshot` has always documented ("tell the seller it did NOT queue,
+    // rather than show 'pendente' over nothing").
     postSnapshot.mockResolvedValue({ status: 201, data: { id: "s1" } });
     vi.mocked(idbGet).mockRejectedValue(new Error("read glitch"));
     const { result } = renderHook(() => useRecordSnapshot(), { wrapper });
 
-    const outcome = await result.current.mutateAsync(BODY);
+    await expect(result.current.mutateAsync(BODY)).rejects.toThrow();
 
-    expect(outcome.syncState).toBe("pending");
-    expect(outcome.syncState).not.toBe("synced");
-    // The drain never reached the entry, so nothing was even sent — "salvo" would be a pure lie.
+    // Still the original assertion: nothing was sent, so "salvo" would be a pure lie.
     expect(postSnapshot).not.toHaveBeenCalled();
+    // And the new one: the queue was never rebased on an empty read.
+    expect(vi.mocked(idbSet)).not.toHaveBeenCalled();
   });
 });
 

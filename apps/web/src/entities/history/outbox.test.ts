@@ -376,3 +376,51 @@ describe("listOutbox", () => {
     await expect(listOutbox("u1")).resolves.toEqual([]);
   });
 });
+
+// 014/T110 — SC-816. A falha de LEITURA não pode virar base de ESCRITA.
+//
+// `listOutbox` é deliberadamente tolerante: um payload corrompido é descartado em vez de ser servido
+// à UI. Isso está certo para EXIBIR. Está errado para REESCREVER — e as três funções que reescrevem
+// a fila (`enqueueSnapshot`, `removeEntry`, `updateEntry`) liam por ali, dentro do lock.
+//
+// O modo de falha não é hipotético: a própria `idb-keyval` documenta que o `db.onclose` do Safari
+// zera a conexão em cache, de modo que o `get` seguinte REJEITA e o `set` posterior reabre o banco e
+// GRAVA. Leitura falha + escrita bem-sucedida = fila rebaseada em vazio. O outbox é a única cópia da
+// cotação gravada offline, então o que some não some de um cache: some do vendedor.
+//
+// O próprio arquivo já nomeava este perigo na docstring do `settleEntry` ("listOutbox returns [] on
+// ANY read error") — o conserto foi feito no caminho do settle e nunca no de reescrita.
+describe("SC-816 — uma leitura que falha ABORTA a reescrita, nunca a rebaseia em vazio", () => {
+  beforeEach(() => {
+    idbGet.mockReset();
+    idbSet.mockReset();
+  });
+
+  it("enqueue com leitura falhando NÃO grava, e propaga — o vendedor tem de saber que não enfileirou", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    await expect(enqueueSnapshot("u1", { ...BODY, clientSnapshotId: "novo" })).rejects.toThrow();
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("remoção com leitura falhando NÃO grava — a entrada sobrevive para o replay idempotente", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    // `settleEntry` chama `removeEntry` após um POST bem-sucedido; a remoção falha em silêncio por
+    // desenho (o registro já está no servidor), mas NÃO pode reescrever a fila a partir do vazio.
+    await settleEntry("u1", entry({ clientSnapshotId: "a" }), {
+      post: vi.fn().mockResolvedValue({}),
+    });
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("atualização com leitura falhando NÃO grava — a entrada mantém o estado anterior", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    const post = vi.fn().mockRejectedValue(Object.assign(new Error("offline"), { status: 0 }));
+    await settleEntry("u1", entry({ clientSnapshotId: "a" }), { post });
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("a leitura de EXIBIÇÃO continua tolerante — a lista da tela nunca estoura", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    await expect(listOutbox("u1")).resolves.toEqual([]);
+  });
+});

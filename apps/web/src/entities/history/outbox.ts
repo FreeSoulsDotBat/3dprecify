@@ -60,14 +60,39 @@ function isOutboxArray(raw: unknown): raw is OutboxEntry[] {
   );
 }
 
-/** Read the queue. A corrupt or foreign shape is discarded rather than fed to the UI. */
+/**
+ * Read the queue for DISPLAY. A corrupt or foreign shape is discarded rather than fed to the UI, and
+ * a read failure yields an empty list rather than throwing — the history screen must render.
+ *
+ * **Never use this as the base of a WRITE** — that is what `readOutboxStrict` is for (SC-816).
+ */
 export async function listOutbox(uid: string): Promise<OutboxEntry[]> {
   try {
-    const raw = await get(historyOutboxKey(uid));
-    return isOutboxArray(raw) ? raw : [];
+    return await readOutboxStrict(uid);
   } catch {
     return [];
   }
+}
+
+/**
+ * Read the queue for a READ-MODIFY-WRITE. Propagates a storage failure instead of pretending the
+ * queue is empty (SC-816).
+ *
+ * The distinction is load-bearing, not stylistic. `idb-keyval` documents that Safari's `db.onclose`
+ * clears the cached connection: the next `get` REJECTS while a later `set` reopens the database and
+ * SUCCEEDS. Rebasing a write on a swallowed read therefore erases every pending snapshot — and the
+ * outbox is the ONLY copy of a quote recorded offline, so what disappears does not disappear from a
+ * cache; it disappears from the seller. There is no error line either, because from the queue's
+ * point of view nothing failed.
+ *
+ * This file already named the hazard — see `settleEntry`'s docstring, "`listOutbox` returns `[]` on
+ * ANY read error" — and closed it on the settle path only. This closes it on the write path.
+ *
+ * A shape that READS FINE but is not ours is still discarded: that is knowledge, not ignorance.
+ */
+async function readOutboxStrict(uid: string): Promise<OutboxEntry[]> {
+  const raw = await get(historyOutboxKey(uid));
+  return isOutboxArray(raw) ? raw : [];
 }
 
 /** Persist the queue. Deliberately NOT wrapped in try/catch — a failure here MUST surface. */
@@ -113,7 +138,7 @@ export async function enqueueSnapshot(uid: string, body: SnapshotIn): Promise<Ou
     attempts: 0,
   };
   await withOutboxLock(uid, async () => {
-    const existing = await listOutbox(uid);
+    const existing = await readOutboxStrict(uid);
     await writeOutbox(uid, [
       ...existing.filter((e) => e.clientSnapshotId !== entry.clientSnapshotId),
       entry,
@@ -126,7 +151,7 @@ export async function enqueueSnapshot(uid: string, body: SnapshotIn): Promise<Ou
 async function removeEntry(uid: string, clientSnapshotId: string): Promise<void> {
   try {
     await withOutboxLock(uid, async () => {
-      const current = await listOutbox(uid);
+      const current = await readOutboxStrict(uid);
       await writeOutbox(
         uid,
         current.filter((e) => e.clientSnapshotId !== clientSnapshotId),
@@ -146,7 +171,7 @@ async function updateEntry(
 ): Promise<void> {
   try {
     await withOutboxLock(uid, async () => {
-      const current = await listOutbox(uid);
+      const current = await readOutboxStrict(uid);
       await writeOutbox(
         uid,
         current.map((e) => (e.clientSnapshotId === clientSnapshotId ? patch(e) : e)),
