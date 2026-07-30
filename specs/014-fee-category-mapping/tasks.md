@@ -175,6 +175,148 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ---
 
+## Phase 6C: Correções da revisão multi-agente do PR #31 🔴 BLOQUEIA O MERGE
+
+**Origem**: revisão de 6 dimensões + verificação adversarial sobre `develop...HEAD` (2026-07-28).
+34 achados brutos → 5 confirmados. A A1 é **dinheiro errado no artefato commitado hoje**.
+**Objetivo**: o número entregue bater com a fonte, e o que a tela afirma ser verdade.
+**Teste independente**: Móveis a R$ 300,00 ⇒ comissão R$ 40,00 (não R$ 30,00); e um payload congelado
+de ANTES reproduzir o mesmo preço DEPOIS.
+
+> **Nota de escopo honesta**: a **A2** não é requisito novo. A FR-008 e o SC-802 já exigiam rejeitar
+> comissão nula dentro de faixa de preço; o `.refine` implementado só fechou um dos dois lados.
+> É defeito de implementação contra requisito existente — registrado assim para a correção não se
+> disfarçar de escopo novo.
+
+### A1 — comissão por parcela (HIGH · dinheiro errado hoje) · ADR-0024
+
+- [ ] T076 [P] Teste (falhando primeiro, **SC-814/FR-014b**): `grossUp` com `bandMode: "PROGRESSIVE"` bate com a fonte nos **três** pontos de prova — abaixo do limiar, **no** limiar, e acima (Móveis R$ 300 ⇒ R$ 40,00) — em `packages/pricing-core/src/channels.test.ts`
+- [ ] T077 [P] Teste (falhando primeiro): a **ausência** de `bandMode` preserva bit-a-bit o comportamento de seleção — as bandas Shopee e o custo fixo ML existentes não mudam nenhum centavo — em `packages/pricing-core/src/channels.test.ts`
+- [ ] T078 [US3] **FR-014b** — `BandMode` + soma por parcela em `grossUp`, com gross-up **por segmento** (a função progressiva é contínua ⇒ não precisa do ponto fixo; o modo `SELECTION` mantém a iteração) — em `packages/pricing-core/src/channels.ts` ⚠️ **domínio de precificação: escalonado para `opus` (CLAUDE.md), cobertura ratchet 100%**
+- [ ] T079 [US3] `bandMode` atravessa o schema do catálogo como **opcional** (ausente = seleção) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [ ] T080 [US3] `bandMode` atravessa `entryToChannelFees` até `ChannelInput` sem se perder — em `apps/web/src/features/calculator/fee-prefill.ts`, `calculator-model.ts`
+- [ ] T081 [US3] O gerador emite `bandMode: "PROGRESSIVE"` para as categorias com limiar, e o parser passa a **distinguir** parcela de seleção na leitura da célula — em `packages/fee-ingest/src/amazon-parse.ts`, `amazon-to-catalog.ts`
+- [ ] T082 [US3] Regenerar `backend/app/data/catalog.json` e conferir Móveis · Colchões · Acessórios Eletrônicos — em `packages/fee-ingest/src/build-amazon.mjs`
+- [ ] T083 [P] Teste **SC-815** de retrocompatibilidade com **payload congelado REAL de antes** da correção (não fixture escrito depois): mesmo preço, mesmo centavo — em `apps/web/src/entities/history/frozen-payload.test.ts`
+- [ ] T084 [P] Teste da travessia ponta-a-ponta: artefato → resolução → `ChannelInput` → preço, provando que `bandMode` **não** se perde no caminho. **É o risco real do ADR-0024 §5**: perder o modo degrada em silêncio para o bug atual, agora justificado pelo padrão — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+
+### A1b — o BACKEND comia dois campos do incremento 🔴 (achado 2026-07-29, ao levantar o app de verdade)
+
+> **Nenhum teste podia ver isto, e nenhum viu**: o cliente lê o artefato do DISCO nos testes, e o
+> `truth-gate` chamado "serves the committed artifact" comparava só versão e nomes de marketplace.
+> O `response_model` do FastAPI é uma **allowlist**: campo que ele não conhece, ele descarta — em
+> silêncio, por construção. Descobriu-se rodando o app: `curl` no endpoint devolvia **0** nós de
+> espinha e **0** `bandMode`. Efeito real: pelo caminho servido o cliente recebia 76 entradas
+> chaveadas por categoria e **nenhuma forma de nomeá-las** ⇒ o seletor da US1 renderizava vazio e
+> escolher categoria era impossível com o backend saudável; e a comissão por parcela degradava para
+> seleção ⇒ o defeito A1 de volta, ao vivo, justificado pelo padrão.
+
+- [x] T075a ✅ `category_spine` + `band_mode` no `response_model` — em `backend/app/api/fee_catalog.py`
+- [x] T075b ✅ Teste de fidelidade `disk ⊆ wire`: **todo** campo do artefato sobrevive à serialização, para sempre — substitui o teste cujo nome prometia mais do que ele verificava — em `backend/tests/test_fee_catalog.py`
+- [x] T075c ✅ Schemas do cliente para `nullish` e não `optional`: o backend serializa ausência como `null` explícito, e um schema que só tolera `undefined` **reprovaria o payload servido** — silenciosamente, caindo na semente — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T075d ✅ Contrato OpenAPI + cliente Orval regenerados, idempotência provada (+59 / +21, estável na segunda rodada)
+
+### A2 — o guard F3 fecha só um lado (MEDIUM · latente, gatilho = curadoria ML)
+
+- [ ] T085 [P] Teste (falhando primeiro): entrada com `commissionPct` de topo **não-nulo** e banda com comissão **nula** é rejeitada no parse — a variante que os testes atuais não cobrem — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [ ] T086 [US2] Remover o curto-circuito do `.refine`: a exigência "toda banda carrega sua própria comissão" vale **independente** do topo (FR-008/SC-802) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+
+### A3 — o seletor afirma o que não é verdade (MEDIUM · Princípio II, estado padrão de 100% dos usuários)
+
+- [ ] T087 [P] Teste (falhando primeiro): o teste atual só verifica que existe um `role="status"` — passar a **verificar o texto**, que hoje faz afirmação falsa — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [ ] T088 [US1] Reescrever o estado vazio (FR-006d): não afirmar que há taxa exibida, não prometer carregamento que não acontece para o ML, e **concordar com o selo do mesmo slot** — em `apps/web/src/shared/i18n/messages.pt-br.ts`, `category-picker.tsx`
+
+### A4/A5 — higiene do gerador (armadilhas plantadas para o laço mensal)
+
+- [ ] T089 [P] Teste (falhando primeiro): célula com estrutura não reconhecida (limiares divergentes, ordem invertida, redação alternativa) é **falha daquela categoria**, não 15% fixo (FR-014c) — em `packages/fee-ingest/src/amazon-parse.test.ts`
+- [ ] T090 [US3] A recusa da linha 72 deixa de ser desfeita a jusante: `parsePct` não vê célula que `parseBands` recusou — em `packages/fee-ingest/src/amazon-parse.ts`
+- [ ] T091 [P] Remover o fallback inalcançável `?? {AMAZON vazia}` (Princípio V) e garantir que **nada é escrito** antes do artefato estar montado — em `packages/fee-ingest/src/build-amazon.mjs`
+
+### Da varredura dos 27 restantes (2026-07-28) — **17 confirmados · 10 refutados**
+
+**Consertar agora — dano ou requisito descumprido hoje**
+
+- [x] T094 ✅ **DECIDIDO 2026-07-28 — opção (a): EMITIR o catch-all.** A entrada apenas-modalidade sai de "Outros" 15%; quem não escolhe categoria recebe esse valor com selo "categoria não informada". Tensão registrada no `spec.md` (§Clarifications, terceira rodada): "Outros" é categoria para produtos que não se encaixam, não alíquota declarada para "categoria desconhecida" — é interpretação, sustentada por ser o **teto** da tabela (erro sempre a favor do vendedor)
+- [ ] T095 [US3] Executar a decisão da T094 em `packages/fee-ingest/src/amazon-to-catalog.ts` + `fee-prefill.ts` (`viaCatchAll`) **juntas** — consertar só uma metade acende o defeito da outra
+- [ ] T096 [P] [US3] Teste do truth-gate contra o artefato **REAL** (não fixture): `resolveSlot(servido, "AMAZON", "PROFISSIONAL")` sem categoria produz o desfecho decidido na T094. **Hoje falha** — e é a asserção que o fixture inventado escondeu — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [ ] T097 [US1] Trocar o marketplace do slot MUST limpar a `category` junto com a modalidade: hoje o id do marketplace antigo sobrevive **invisível** (o ramo de espinha vazia vem antes do ramo `value`), sem botão "Limpar", e **continua sendo enviado como determinante** — dois cliques (Amazon→ML), contra `spec.md` §Edge Cases — em `calcular-page.tsx:237`, `produto-page.tsx:169`, `bom-line-editor.tsx:86`
+- [ ] T098 [P] [US1] O `return` antecipado do ramo `embedded` (`fee-seal.tsx:49`) engole **DUAS** coisas, e são o mesmo conserto: (a) `originCategoryName` — alíquota herdada de ancestral aparece sem dizer que não é a da categoria escolhida; (b) o marcador **`stale`** — no caminho da semente o alarme de 30 dias **nunca dispara** (SC-807), e o docstring de `fee-prefill.ts:164-166` declara literalmente o contrato oposto. O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, então a assimetria é **acidental**. Tornar `embedded` um **modificador do texto-base**, não um early return. Teste `embedded + stale` — **hoje não existe nenhum** — em `apps/web/src/features/calculator/{fee-seal.tsx,fee-seal.test.tsx}`
+- [ ] T099 [P] Princípio V: `catchAllName` é parâmetro sem chamador de produção, e o teste vacuoso de `catalog-diff.test.ts:280` não exercita o ramo que nomeia — remover ou corrigir ambos
+
+**Pré-requisitos de regenerar `seed.ts` (T032)** — inertes hoje, nascem no dia da regeneração
+
+- [ ] T100 [P] `freshest`: versão não-parseável MUST ser considerada **menos** fresca. Hoje o sentinel `"invalid-seed"` vence a comparação lexicográfica e faria o app rejeitar **permanentemente** catálogo servido e persistido — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+
+**Pré-requisitos da US4 (o laço mensal)** — ✅ **DECIDIDO 2026-07-28: saem do PR #31 e entram no PR que constrói o laço.**
+Nenhum tem gatilho hoje (nenhum workflow invoca o gerador; `diffCatalogs` não tem consumidor), e é no PR do laço que
+ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US4**, não como bugs em aberto.
+
+- [ ] T101 [US4] `effectiveDate` recebe a **data da execução**, e não é inerte ⇒ duas execuções sobre a MESMA tabela produzem **76 entradas alteradas** e `mayAutoMerge` nunca retorna true. Preservar o `effectiveDate` anterior (ou o literal "não declarado pela fonte"). **Não** pôr em `INERT_PATHS` — isso tornaria auto-mergeável uma mudança real de vigência — em `build-amazon.mjs:81`
+- [ ] T102 [P] [US4] Canárias como par `(commissionPct, minPerItem)` **e** aridade exata de 3 colunas: uma coluna inserida na fonte desloca a posicional e zera todos os `minPerItem` com `ok: true` — em `packages/fee-ingest/src/guardrails.ts`, `amazon-parse.ts`
+- [ ] T103 [P] [US4] Campos de **nível marketplace** fora de `categorySpine`/`entries` nunca são comparados ⇒ furo no fail-closed que o próprio módulo promete — em `packages/fee-ingest/src/catalog-diff.ts`
+- [ ] T104 [P] [US4] Entrada sumida e marketplace adicionado/removido derrubam `freshnessOnly` mas não entram em **lista nenhuma**: o PR diz "algo mudou" sem descrever o quê — em `catalog-diff.ts`
+- [ ] T105 [P] [US4] `marketplacesOf()` no padrão de `spineOf`/`entriesOf`: hoje `?? []` só cobre null/undefined e um JSON válido não-array **estoura**, contra o contrato "degrada, não quebra" — em `catalog-diff.ts`
+- [ ] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
+
+**Dívida sem prazo**
+
+- [ ] T107 [P] a11y do estado escolhido do seletor: ao escolher, o foco cai em `document.body` e o chip não tem live region nem rótulo — enquanto os dois ramos vizinhos do mesmo arquivo usam `role="status"` — em `category-picker.tsx`
+
+### Do batidão de UI + regras (2026-07-29/30) — 6 lentes em browser real + 4 auditorias de regra
+
+> **Decisão do dono 2026-07-30**: todos os 36 achados confirmados das quatro operações entram **aqui**,
+> inclusive os que são defeito de código **já shipado** (E3/E4) e não do entregável do 014.
+> Registrada a ressalva que levantei e que o dono decidiu aceitar: o PR #31 fica grande e mistura
+> "consertar o que acabei de construir" com "consertar o que já está em `develop``". Por isso as
+> tarefas ficam **agrupadas por origem** — um revisor consegue percorrer em passadas separadas.
+
+**Dado do vendedor — perda ou corrupção · ALCANÇÁVEL HOJE · faça primeiro**
+
+- [ ] T109 [P] 🔴 **SC-816** — `listOutbox` engole erro de leitura e devolve `[]`, e as **três** funções que REESCREVEM a fila (`enqueueSnapshot`, `removeEntry`, `updateEntry`) usam essa leitura tolerante como base do write **dentro do lock**. Leitura falha + escrita bem-sucedida (o `db.onclose` do Safari que a própria `idb-keyval` documenta) ⇒ a fila é **rebaseada em vazio** e os pendentes somem sem uma linha de erro. O outbox é a **única** cópia da cotação gravada offline. Extrair `readOutboxStrict` (sem catch) para os reescritores — leitura falha **aborta** a reescrita; a tolerante fica só para exibição — em `apps/web/src/entities/history/outbox.ts:115`
+- [ ] T110 [P] Teste: `idbGet` rejeitando ⇒ `idbSet` **não** é chamado e a fila sobrevive. O teste atual (`use-history.test.tsx:225`) afirma só `syncState === "pending"` e **nunca olha se os pendentes sobreviveram** — em `apps/web/src/entities/history/outbox.test.ts`
+- [ ] T111a [P] Teste (falhando primeiro): um 404 **sem** evidência de replay (`attempts === 0`, ou `code !== "NOT_FOUND"`) **preserva** a entrada e NÃO relata `synced`; um 404 de replay legítimo continua apagando (SC-816) — em `apps/web/src/entities/history/outbox.test.ts`
+- [ ] T111 [P] 🔴 **SC-816** — `settleEntry` trata **qualquer** 404 como "o vendedor apagou em outro dispositivo": apaga a entrada e devolve `synced`, com toast verde "Salvo". Um 404 de proxy/hosting chega como `ApiError{status:404, code:"UNKNOWN"}` e é indistinguível. A ADR-0018 §5 escopa a regra a um **replay**, e o comentário do código enuncia o invariante que o código não impõe. Só apagar com evidência de replay: `entry.attempts > 0` **E** `code === "NOT_FOUND"` — em `apps/web/src/entities/history/outbox.ts:206`
+- [ ] T112a [P] Teste (falhando primeiro): recálculo com a origem ausente grava um registro **distinguível** de um repreçado de verdade, e a tela o declara (SC-818). ⚠️ **Este teste não é opcional em nenhuma hipótese**: pela ADR-0019 o registro é imutável, então um erro aqui não tem conserto pós-fato — a única chance de acertar é antes de gravar — em `apps/web/src/pages/historico/recalc-today.test.tsx`
+- [ ] T112 [P] 🔴 **SC-818** — "Recalcular hoje" com a origem sumida grava dado **permanentemente ambíguo**: o recálculo devolve `{payload: frozen, fromFrozen: true}`, o `onConfirm` **descarta** `fromFrozen`, e o documento antigo é gravado com `deviceQuotedAt = hoje`; o detalhe imprime "Valores congelados em <hoje>". Pela ADR-0019 o registro é **imutável** — não há conserto pós-fato. Campo **aditivo** `repricedFromFrozen?: true` (ausência = normal, o mesmo padrão do `bandMode`/ADR-0024) + legenda; ou não oferecer a gravação nesse caminho — em `apps/web/src/pages/historico/recalc-today.tsx:117,178-206`
+
+**`pricing-core` modo SELEÇÃO — inertes hoje, PRÉ-REQUISITO DA US6 (ML)**
+
+> Hoje inertes porque Shopee está limpa (medido), a Amazon virou toda `PROGRESSIVE` e o ML tem 0
+> entradas. **As tarefas T058/T062 testam a lacuna só do lado da INGESTÃO** — passariam verdes
+> enquanto o motor a preenche em silêncio. Fazer **antes** da T056.
+
+- [ ] T113a [P] Teste (falhando primeiro): **varredura** sobre as bandas ML de `band-floor.test.ts:71-75` provando que, para toda base, `bandContaining(bands, anuncio)` é **a banda aplicada** — hoje o caso da base 79,00 exibe líquido 64,52 contra 69,52 real (SC-108/SC-817). Incluir monotonicidade do anúncio — em `packages/pricing-core/tests/band-convergence.test.ts`
+- [ ] T113 [P] **SC-817/SC-108** — o laço de ponto fixo pode sair pelo cap `MAX_BAND_ITERS` **sem convergir**, e as linhas seguintes adotam a banda que sobrou como se fosse estável, cobrando alíquota/fixo de uma banda que **não contém** o anúncio (reproduzido ao centavo com as bandas ML de `band-floor.test.ts:71-75`: anúncio 79,00, líquido exibido 64,52, real 69,52; com 3+ bandas o erro pode ser **contra** o vendedor). Viola SC-108. Após o laço, verificar `bandContaining(bands, anuncio) === band`; sem auto-consistência, escolher o par determinístico de **maior taxa** (nunca superestimar o líquido) e **nunca** devolver `appliedBand` como estável — em `packages/pricing-core/src/channels.ts:209,215-217`
+- [ ] T114a [P] Teste (falhando primeiro): preço que cai **fora de toda banda publicada** (a lacuna ML R$ 50,01–78,99) produz nível **não precificado** + selo "sem referência", NUNCA a tarifa da banda vizinha; e a inversão medida (base 50 → 65,70 vs base 55 → 63,95) deixa de existir (SC-817/FR-014a) — em `packages/pricing-core/tests/band-convergence.test.ts`
+- [ ] T114 [P] **SC-817/FR-014a** — os fallbacks `bandContaining(...) ?? bands[last]` e `?? band` fazem o motor **emprestar** a tarifa de uma banda vizinha quando o preço cai fora de toda banda — preenchendo no CÁLCULO a lacuna que a FR-014a proíbe preencher no CATÁLOGO (ML R$ 50,01–78,99), e produzindo inversão (base 50 → anúncio 65,70; base 55 → 63,95). Dar estado próprio a "sem tarifa publicada para este preço" (nível não-precificado → selo "sem referência") e validar cobertura/contiguidade na ingestão — em `packages/pricing-core/src/channels.ts:208,211`
+
+**UI do 014 — do batidão visual**
+
+- [ ] T115a [P] [US1] Teste **visual/geométrico** (falhando primeiro): o campo do seletor tem altura ≥ 44px, borda e fundo distinguíveis do papel, e alvo de toque ≥ 44px em 390px — medido com `boundingBox()` e estilo computado, não por impressão (FR-006a) — em `apps/web/tests/e2e/calculator.spec.ts`
+- [ ] T115 [US1] O seletor de categoria **não tem uma única regra de CSS**: renderiza como `<input>` nativo cru de 24px, sem borda, sem fundo, sem padding — enquanto a **FR-006a** exige um campo "de primeira classe, sempre expandido" **exatamente** para que o vendedor não aceite a alíquota errada sem perceber. Achado por **duas lentes independentes**; é o mais caro do lote do batidão — em `apps/web/src/features/calculator/category-picker.tsx`
+- [ ] T116a [P] [US1] Teste (falhando primeiro): `categoryPath` com id fora da espinha NÃO devolve string vazia, e o chip do seletor nunca renderiza rótulo em branco ao lado do "Limpar" — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`, `category-picker.test.tsx`
+- [ ] T116 [P] [US1] `categoryPath` devolve string **vazia** para um id ausente da espinha, então o chip "categoria escolhida" renderiza **em branco** ao lado do "Limpar". Não é a T097 (aquela é espinha vazia); nenhum guard valida `slot.category` contra a espinha — em `apps/web/src/shared/fee-catalog/category-tree.ts:121-128`, `category-picker.tsx:52-61`
+- [ ] T117a [P] [US1] Teste (falhando primeiro): o contrato ARIA anunciado é o CUMPRIDO — `aria-expanded` reflete o estado real, `aria-controls` aponta para um `listbox` existente, e a opção ativa é anunciada; ou, se a decisão for deixar de anunciar, nenhum atributo de combobox permanece — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [ ] T117 [P] [US1] O campo anuncia o contrato ARIA de `combobox` (`aria-expanded` + `aria-controls` para um `role="listbox"`) sem cumpri-lo — leitor de tela recebe promessa que a implementação não honra. Cumprir o contrato **ou** deixar de anunciá-lo — em `apps/web/src/features/calculator/category-picker.tsx`
+
+**Geometria e honestidade em código já shipado (E3/E4)**
+
+- [ ] T118a [P] Teste **geométrico** (falhando primeiro): o retângulo da barra de total do kit NÃO intersecta o da navegação inferior, em 390px e 412px, com o kit em composição — asserção de caixas, porque texto extraído é cego para oclusão — em `apps/web/tests/e2e/bom.spec.ts`
+- [ ] T118 [P] A barra fixa "Total do kit" fica **atrás** da navegação inferior: os dois valores aparecem com os dígitos **cortados** durante toda a composição do kit — em `apps/web/src/pages/bom/` (barra de total) + o `z-index`/`padding-bottom` do shell
+- [ ] T119a [P] Teste **geométrico** (falhando primeiro): rótulo de palavra única de 120 caracteres — o limite do próprio campo — mantém `documentElement.scrollWidth === clientWidth` no detalhe do histórico em 390px e 412px — em `apps/web/tests/e2e/history-manage.spec.ts`
+- [ ] T119 [P] Um rótulo com palavra longa sem espaços — **digitado dentro do limite de 120 do próprio campo** — faz o detalhe do histórico transbordar para **1676px** num viewport de 412. Quebra de palavra + contenção com `overflow-x` próprio — em `apps/web/src/pages/historico/`
+- [ ] T120a [P] Teste (falhando primeiro): canal gravado **sem comissão resolvível** não exibe "Preço para anunciar" nem "Recebido líquido" no detalhe congelado — herda a mesma recusa que a Calcular aplica com `hasFee: false` (Princípio II) — em `apps/web/tests/e2e/history-manage.spec.ts`
+- [ ] T120 [P] O registro congelado exibe "Preço para anunciar" e "Recebido líquido" para um canal **sem comissão informada** — exatamente os números que a Calcular se **recusou** a exibir (`hasFee: false` esconde atrás de "Informe a comissão…"). O histórico precisa herdar a mesma recusa, ou o congelado afirma o que a origem negou (Princípio II) — em `apps/web/src/pages/historico/`
+
+**Fora desta branch — registrado, não executável aqui**
+
+- [ ] T121 📌 **HAND-OFF para `feature/012-e6-billing`** (NÃO fazer nesta branch): um checkout abandonado deixa `subscriptions.status='pending'` para sempre e todo re-Assinar vira **409 eterno**, enquanto a cópia da UI (`messages.pt-br.ts:851`, "aguarde alguns minutos e tente de novo") promete uma recuperação que **nenhum caminho de código oferece**. O reap de *stale pending* está **especificado** em `data-model.md` §5 e em `models/__init__.py:827` e **nunca virou tarefa** — a T011 está `[x]` sem a metade que a própria cópia ratificada pressupõe. Inerte hoje (épico adiado por decisão do dono 2026-07-09). Abrir a tarefa em `specs/012-e6-billing/tasks.md` **naquela branch**, antes do PR-B.
+
+### Fechamento
+- [ ] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+
+---
+
 ## Phase 7: User Story 5 — quando o robô falha, o selo conta a verdade (P2)
 
 **Objetivo**: a morte do laço mensal vira visível ao usuário sem depender de alguém olhar um painel.
@@ -256,6 +398,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 ```
 Fase 0 (decisões) ──> Fase 1 (setup) ──> Fase 2 (foundational) ──┬──> Fase 3 (US2) ──> Fase 4 (US1)
                                                                   ├──> Fase 5 (US3 Amazon) ──> Fase 6 (US4 laço)
+                                                                  │         └──> Fase 6C (correções PR #31) 🔴 bloqueia merge
                                                                   ├──> Fase 7 (US5 selo)
                                                                   ├──> Fase 8 (US6 ML) ⛔ só após T004
                                                                   └──> Fase 9 (US8) ──> Fase 10 (polish)

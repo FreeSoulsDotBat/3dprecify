@@ -103,6 +103,51 @@ máquina" listado no ADR §A11 não se materializa.
 
 ---
 
+### Session 2026-07-28 (terceira rodada — após a revisão multi-agente do PR #31)
+
+- Q: A Amazon cobra **15% até R$ 200,00 e 10% para o excedente** — comissão por **parcela** do preço. O artefato
+  modelou como faixa de **seleção** (uma alíquota aplicada ao preço inteiro), subestimando a comissão acima do
+  limiar em 3 de 38 categorias. Como representar? → A: **Banda progressiva em `pricing-core`**, com discriminador
+  **aditivo** cuja ausência significa seleção de faixa. Motivo do formato aditivo: `priceBands` atravessa
+  `frozen-payload.ts` e `config-document.ts` — trocar o sentido do campo **reinterpretaria snapshots já
+  congelados**, que são imutáveis por trigger (ADR-0019). Verificado na fonte oficial
+  (`venda.amazon.com.br/precos`, 2026-07-28): *"15% até R$ 200,00 e 10% para o **excedente** acima de R$ 200,00"*.
+- Q: O buraco no guard F3 (entrada com comissão de topo válida e bandas com comissão nula passa na validação, e as
+  bandas têm precedência ⇒ 0% sob selo "Referência") é requisito novo? → A: **Não.** A FR-008 e o SC-802 já
+  exigiam isso literalmente; o `.refine` implementado curto-circuita em `commissionPct !== null` e nunca inspeciona
+  as bandas. É **defeito de implementação contra requisito existente**, não lacuna de spec — registrado assim para
+  a correção não se disfarçar de escopo novo.
+- Q: O catch-all publicado da Amazon nunca é emitido — `amazonEntries` só produz `{plan, category}`, então
+  `viaCatchAll` é **sempre falso** contra o artefato real, a FR-011 **não se cumpre**, e o ramo `catchAll` do selo
+  mais sua cópia i18n são código morto (testados por um fixture que inventa uma forma que o gerador não produz;
+  T020/T024/T041 estavam `[x]` indevidamente). Emitir ou remover? → A: **Emitir** (opção *a*): a entrada
+  apenas-modalidade sai de "Outros" 15%, e quem não escolhe categoria recebe esse valor pré-preenchido com selo
+  "categoria não informada". **Tensão registrada**: "Outros" é a categoria da Amazon para produtos que não se
+  encaixam nas demais, **não** uma alíquota declarada para "categoria desconhecida" — tratá-la como catch-all é
+  interpretação, não leitura literal. O que a sustenta é que 15% é o **teto** da tabela, então o erro é sempre a
+  favor do vendedor; o que a incomoda é a FR-011a, que proíbe derivar catch-all de faixa publicada — aqui não há
+  derivação (o valor é publicado como valor próprio), mas há reinterpretação de escopo. Aceito conscientemente.
+- Q: O adiamento da **Q9** (base de comissão da Amazon inclui frete, a nossa não) estava justificado por
+  "seria mudança em `pricing-core`, que o escopo marca como FORA" — e o ADR-0024 **abre** `pricing-core`. A
+  justificativa registrada expirou; reconfirmar ou reabrir? → A: **Adiamento reconfirmado**, agora por um motivo
+  próprio e não por um escopo que deixou de valer: a limitação continua **declarada** no texto de cada entrada
+  (FR-014, `AMAZON_FEE_BASE_CAVEAT`), e modelar base-com-frete exigiria um eixo de logística que a FR-014a proíbe
+  explicitamente. O ADR-0024 abre `pricing-core` para a **combinação de bandas**, não para a base de cobrança.
+- Q: Quatro operações de auditoria (revisão do PR #31 · varredura dos 27 restantes · batidão visual + regras ·
+  verificação dos pendentes) produziram **36 achados confirmados**, e eles não pertencem todos ao 014: ~20 são do
+  entregável próprio, 5 são defeitos de código **já shipado** (outbox/recálculo do E4, geometria de kit e
+  histórico do E3/E4), 2 são do `pricing-core` no modo SELEÇÃO (bloqueiam a US6) e 1 é do E6 billing, em outra
+  branch. Separar por origem em incrementos distintos, ou concentrar? → A: **Tudo dentro do 014** (Fase 6C).
+  **Ressalva levantada e conscientemente aceita pelo dono**: o PR #31 fica grande e mistura "consertar o que
+  acabei de construir" com "consertar o que já está em `develop`" — o projeto tem precedente separado para o
+  segundo caso (`013-audit-remediation`). Mitigação acordada: as tarefas ficam **agrupadas por origem** dentro da
+  fase, para o revisor percorrer em passadas. O achado do billing NÃO é executável nesta branch e fica como
+  **hand-off explícito** (T121), não como tarefa que alguém possa marcar feita aqui.
+- Q: O estado vazio do seletor afirma "a taxa exibida já é a correta" e "conecte uma vez para carregá-la", no
+  estado padrão de 100% dos usuários (slot nasce em ML, que tem 0 entradas e 0 espinha), onde **nenhuma taxa é
+  exibida** e conectar **não carrega nada** enquanto a fatia ML estiver bloqueada. → A: o estado vazio **não pode
+  afirmar** que existe taxa exibida nem prometer ação que o sistema não cumpre para aquele marketplace (FR-006d).
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 — Escolher a categoria do anúncio, por canal (Priority: P1)
@@ -359,6 +404,10 @@ como os demais slots não sobrescritos.
   **ação** e não como selo passivo, declarando que é a maior alíquota da tabela quando for o caso.
 - **FR-006c**: Ao escolher ou trocar a categoria, o sistema MUST mostrar o efeito em **reais sobre o preço**, não
   apenas em pontos percentuais — o vendedor decide em preço de etiqueta, não em p.p.
+- **FR-006d**: O estado vazio do seletor MUST NOT afirmar que existe uma taxa exibida, nem que ela está correta, e
+  MUST NOT prometer uma ação de carregamento que o sistema não pode cumprir para aquele marketplace. O texto MUST
+  concordar com o selo do mesmo slot: onde o selo lê "sem referência", o seletor MUST orientar o vendedor a
+  informar a comissão, não a confiar em um número que não existe.
 
 **Honestidade dos números**
 
@@ -383,6 +432,16 @@ como os demais slots não sobrescritos.
 - **FR-014a**: O custo fixo do ML abaixo de R$ 79 MUST ser modelado com as fronteiras publicadas literalmente, e a
   entrada MUST declarar sob qual premissa de logística ele vale. O sistema MUST NOT introduzir um eixo de logística
   no modelo, e MUST NOT preencher a lacuna de R$ 50,01–78,99 que a fonte deixa.
+- **FR-014b**: Quando o marketplace cobra a comissão **por parcela do preço** (X% sobre a parcela até um limiar,
+  Y% sobre o excedente), o catálogo MUST representar essa estrutura como tal e o motor MUST **somar por parcela**.
+  O sistema MUST NOT modelá-la como seleção de faixa única, que aplica uma alíquota ao preço inteiro e subestima
+  a comissão acima do limiar. A representação MUST ser **aditiva**: a **ausência** do discriminador MUST significar
+  seleção de faixa, para que snapshot congelado e cenário salvo antes deste incremento continuem significando
+  exatamente o que significavam quando foram gravados.
+- **FR-014c**: Uma célula de fonte cuja estrutura de alíquotas o parser **não** reconhece MUST ser tratada como
+  falha de leitura daquela categoria. O sistema MUST NOT extrair dela um número parcial — em particular, MUST NOT
+  publicar a primeira alíquota encontrada como se fosse a alíquota única da categoria. A recusa de reconhecer
+  MUST NOT ser desfeita por um caminho a jusante.
 
 **Laço mensal**
 
@@ -487,6 +546,23 @@ como os demais slots não sobrescritos.
   sessão armazenada, **0** de agregador terceiro.
 - **SC-813**: O incremento adiciona **R$ 0,00** de custo recorrente de infraestrutura e **nenhum** runner
   self-hosted.
+- **SC-814**: Para toda categoria cuja fonte publica comissão **por parcela**, a comissão calculada pelo app
+  **iguala** a da fonte em pelo menos três pontos de prova: **abaixo** do limiar, **no** limiar, e **acima** dele.
+  Móveis a R$ 300,00 ⇒ R$ 40,00 (15%·200 + 10%·100), nunca R$ 30,00.
+- **SC-815**: Um snapshot congelado ou cenário salvo **antes** desta correção MUST reproduzir o **mesmo** preço
+  depois dela — a mudança é aditiva, e a ausência do discriminador preserva o significado gravado. Verificado com
+  payload real de antes, não com fixture escrito depois.
+- **SC-816**: A fila offline **nunca encolhe** exceto por sucesso confirmado ou remoção explícita do vendedor. Uma
+  falha de **leitura** do armazenamento local MUST abortar a reescrita, nunca servir de base para ela — e uma
+  resposta de erro que o cliente não consegue atribuir com certeza ao servidor MUST preservar a entrada. O
+  armazenamento local é a **única** cópia da cotação gravada offline (ADR-0018).
+- **SC-817**: Nenhum caminho de seleção de banda pode aplicar uma alíquota de banda que **não contém** o preço
+  anunciado (SC-108). Quando o preço cai fora de toda banda publicada, o sistema MUST tratar o nível como **não
+  precificado** — MUST NOT emprestar a tarifa da banda vizinha, que é preencher no cálculo a lacuna que a FR-014a
+  proíbe preencher no catálogo.
+- **SC-818**: Um valor gravado como resultado de recálculo MUST distinguir, no próprio registro, "repreçado hoje"
+  de "reaproveitado de um congelamento anterior". Registro imutável (ADR-0019) não admite conserto pós-fato: a
+  distinção existe no momento da gravação ou não existe nunca.
 
 ---
 

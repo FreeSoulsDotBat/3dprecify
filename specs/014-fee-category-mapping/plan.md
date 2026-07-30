@@ -19,6 +19,17 @@ A ingestão roda **CI-first** em runner hospedado do GitHub para os dois marketp
 sem credencial nenhuma, ML com token da conta da casa em GitHub Secrets sem write-back. Nenhum serviço de nuvem
 novo, R$ 0,00 recorrente.
 
+**Correção estrutural pós-PR #31 (2026-07-28) — ADR-0024, Bandas progressivas.** A revisão multi-agente do PR #31
+mediu que a Amazon cobra comissão **por parcela do preço** ("15% até R$ 200,00 e 10% para o **excedente**",
+verificado na fonte oficial), enquanto `priceBands` significa, em `pricing-core`, **seleção** de uma faixa aplicada
+ao preço inteiro. Três categorias (Móveis, Colchões, Acessórios Eletrônicos) subestimavam a comissão acima do
+limiar, sob selo "Referência". A correção introduz um discriminador **aditivo** (`bandMode`, ausente = seleção) —
+formato ditado por uma restrição dura: `priceBands` atravessa `frozen-payload.ts` (snapshots **imutáveis**,
+ADR-0019) e `config-document.ts` (cenários salvos, ADR-0021), então **trocar o sentido do campo reinterpretaria
+preços já congelados**. A compatibilidade vem do significado do padrão, não de migração. Tarefas na **Fase 6C**;
+o risco real está no ADR-0024 §5 — não é errar a aritmética progressiva, é **perder o `bandMode` no trajeto** e
+degradar em silêncio de volta ao bug atual, agora justificado pelo padrão.
+
 ## Technical Context
 
 **Language/Version**: TypeScript 5.x (Node 24) no cliente e na ingestão · Python 3.12 no backend (serve dados, não
