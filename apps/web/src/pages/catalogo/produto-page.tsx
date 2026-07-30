@@ -30,8 +30,7 @@ import {
   MANDATORY_FIELDS,
   type MarketplaceId,
   MARKUP_FIELDS,
-  type Modality,
-  MODALITY_OPTIONS,
+  slotResetOnMarketplaceChange,
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
@@ -167,8 +166,10 @@ export function ProdutoPage({
       : null;
 
   const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
-    const first = (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality;
-    setValue(`channels.${index}.modality`, first);
+    // 014/T097 — modality AND category: the category belongs to the OLD marketplace's taxonomy.
+    const next = slotResetOnMarketplaceChange(marketplace);
+    setValue(`channels.${index}.modality`, next.modality);
+    setValue(`channels.${index}.category`, next.category);
   };
 
   // An UNLINKED reference (US6-4 + K3): the product carries values with no live row behind them.

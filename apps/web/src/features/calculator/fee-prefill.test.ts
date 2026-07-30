@@ -395,6 +395,27 @@ describe("T094/T096 — quem não escolhe categoria recebe o catch-all PUBLICADO
     expect(r.entry?.commissionPct).toBe(13);
   });
 
+  // Exposição que a T095 abriu ao tornar o catch-all REAL, e que o `!category` do `viaCatchAll`
+  // deixaria passar: uma categoria que não resolve (id de um cenário salvo, de um catálogo que
+  // perdeu o nó, ou o resíduo da troca de marketplace da T097) cai no catch-all pela cadeia de
+  // ancestrais — e, com o `!category`, o selo diria "Referência" como se aquele 15% fosse a
+  // alíquota da categoria que o vendedor escolheu. A pergunta certa não é "escolheu categoria?",
+  // é "a entrada que estamos usando tem categoria?".
+  it("categoria que NÃO resolve cai no catch-all, e o selo diz isso — nunca 'Referência'", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL", "categoria-que-nao-existe");
+    expect(r.entry?.commissionPct).toBe(15); // caiu no "Outros"
+    expect(r.originCategoryId).toBeNull();
+    expect(r.viaCatchAll).toBe(true);
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now: Date.parse("2026-07-28"),
+      edited: false,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("catchAll");
+  });
+
   it("o ML NÃO ganha catch-all por tabela: sem categoria, sem referência (SC-804)", () => {
     // A assimetria cai do dado, não de um `if`: o ML publica uma FAIXA (14–19%) e nenhum catch-all,
     // e derivar um dela seria fabricar número.

@@ -89,7 +89,12 @@ export function resolveSlot(
   return {
     entry,
     originCategoryId,
-    viaCatchAll: hasCategoryAxis && !category && originCategoryId === null,
+    // The question is NOT "did the seller pick a category?" — it is "does the entry we are about to
+    // quote carry one?". Those differ whenever a chosen category fails to resolve (an id from a saved
+    // scenario, from a catalog that dropped the node, or left over from a marketplace switch): the
+    // ancestor walk misses, the lookup falls through to the modality-only entry, and asking the first
+    // question would have sealed Amazon's catch-all as "Referência" for a category it is not about.
+    viaCatchAll: hasCategoryAxis && originCategoryId === null,
   };
 }
 
