@@ -239,7 +239,8 @@
           "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         },
         {
           "determinants": {
@@ -422,7 +423,8 @@
           "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         },
         {
           "determinants": {
@@ -707,7 +709,8 @@
           "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         },
         {
           "determinants": {
@@ -924,7 +927,8 @@
           "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         },
         {
           "determinants": {
@@ -1107,7 +1111,8 @@
           "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         },
         {
           "determinants": {
@@ -1392,7 +1397,8 @@
           "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28"
+          "lastReviewed": "2026-07-28",
+          "bandMode": "PROGRESSIVE"
         }
       ],
       "categorySpine": [

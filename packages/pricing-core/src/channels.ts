@@ -12,6 +12,20 @@ export interface PriceBand {
   fixedFee: number;
 }
 
+/**
+ * How a band set combines into one commission (ADR-0024).
+ *
+ * - `SELECTION` — the band containing the price sets the rate for the WHOLE price (Shopee, ML fixed cost).
+ * - `PROGRESSIVE` — each band's rate applies only to its OWN slice of the price. Amazon publishes this
+ *   for some categories: "15% até R$ 200,00 e 10% para o **excedente** acima de R$ 200,00".
+ *
+ * **An ABSENT mode means `SELECTION`, and that is load-bearing, not a convenience.** `priceBands`
+ * travels inside frozen snapshot payloads (immutable by DB trigger, ADR-0019) and saved scenario
+ * documents (ADR-0021). If absence meant anything else, a snapshot the product promises immutable
+ * would silently start asserting a different price without one line of it changing.
+ */
+export type BandMode = "SELECTION" | "PROGRESSIVE";
+
 /** A co-funded free-shipping voucher band by listing price — half-open `[minPrice, maxPrice)`. Its
  *  `voucherCeiling` is the seller's contribution, deducted from líquido at the resulting announce (Shopee). */
 export interface VoucherBand {
@@ -28,6 +42,7 @@ export interface ChannelFees {
   freightCost?: number; // flat freight (manual / ML estimate) deducted from líquido (default 0)
   freightVoucherBands?: VoucherBand[]; // co-funded voucher, deducted by the announce band (Shopee, FR-111a)
   priceBands?: PriceBand[];
+  bandMode?: BandMode; // ABSENT = "SELECTION" — see BandMode; absence preserves every stored payload
 }
 
 /** One gross-up outcome for a single base price. `freightCost` is the total freight deducted at THIS
@@ -72,6 +87,65 @@ function grossUpOnce(
 }
 
 /**
+ * Commission owed on `price` when the bands combine PER PORTION (`PROGRESSIVE`, ADR-0024): each band's
+ * rate is charged only on the slice of the price that falls inside it. Bands below the price
+ * contribute their full width; the band containing it contributes only up to the price; bands above
+ * it contribute nothing.
+ *
+ * Continuous and monotonic in `price` — which is exactly why the progressive gross-up needs no fixed
+ * point (see `progressiveAnnounce`).
+ */
+function progressiveCommission(bands: PriceBand[], price: number): Decimal {
+  return bands.reduce((total, b) => {
+    const upper = b.maxPrice === null ? price : Math.min(price, b.maxPrice);
+    const slice = upper - b.minPrice;
+    if (slice <= 0) return total;
+    return total.plus(new Decimal(b.commissionPct).dividedBy(100).times(slice));
+  }, new Decimal(0));
+}
+
+/**
+ * Announce (full precision, %-regime) for `PROGRESSIVE` bands, plus the band the solution lands in.
+ *
+ * `SELECTION` needs an iterated fixed point because its fee function JUMPS at each threshold: the
+ * announce picks the band and the band picks the announce. The progressive fee function has no jump,
+ * so the solution is closed-form per segment. On segment `[min_k, max_k)`:
+ *
+ *   fee(L) = acc_k + pct_k·(L − min_k)         acc_k = Σ_{i<k} pct_i·(max_i − min_i)
+ *   L − fee(L) − fixedFee_k = base
+ *   ⇒ L = (base + fixedFee_k + acc_k − pct_k·min_k) / (1 − pct_k)
+ *
+ * Solve every segment, keep the one whose solution lands inside its OWN segment. Exactly one does
+ * when the bands cover the line; if none does — a band set that stops short of ∞, which is
+ * representable data, not an impossible state — fall back to the last segment so the result stays
+ * deterministic instead of throwing on a price nobody priced for.
+ */
+function progressiveAnnounce(base: number, bands: PriceBand[]): { list: Decimal; band: PriceBand } {
+  const solved: { list: Decimal; band: PriceBand }[] = [];
+  let acc = new Decimal(0);
+  for (const band of bands) {
+    const rate = new Decimal(band.commissionPct).dividedBy(100);
+    solved.push({
+      list: new Decimal(base)
+        .plus(band.fixedFee)
+        .plus(acc)
+        .minus(rate.times(band.minPrice))
+        .dividedBy(new Decimal(1).minus(rate)),
+      band,
+    });
+    if (band.maxPrice !== null) acc = acc.plus(rate.times(band.maxPrice - band.minPrice));
+  }
+  const inOwnSegment = solved.find(({ list, band }) => {
+    const n = list.toNumber();
+    return n >= band.minPrice && (band.maxPrice === null || n < band.maxPrice);
+  });
+  // No segment holds its own solution ⇒ the price sits above every band, i.e. a band set that stops
+  // short of ∞. Representable data, so answer deterministically with the last segment rather than
+  // throwing on a price the source never priced for.
+  return inOwnSegment ?? solved[solved.length - 1];
+}
+
+/**
  * Gross up ONE base price so the seller nets it (before freight) after the marketplace's commission +
  * fixed fee, honoring the Amazon per-item floor and a bounded price-band fixed-point. Freight is a
  * truthful post-deduction — it lowers the net below base by exactly that amount (FR-111a / SC-111),
@@ -87,10 +161,50 @@ export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
   let fixedFee = fees.fixedFee ?? 0;
   let appliedBand: [number, number | null] | null = null;
 
+  // Shared tail for BOTH band modes: the freight truth (flat + the co-funded voucher resolved for
+  // THIS announce, so varejo and atacado can land in different voucher bands) and the líquido.
+  const finish = (
+    anuncioFinal: number,
+    charged: Decimal,
+    fixed: number,
+    band: [number, number | null] | null,
+  ): ChannelLevel => {
+    const voucher =
+      fees.freightVoucherBands && fees.freightVoucherBands.length > 0
+        ? (bandContaining(fees.freightVoucherBands, anuncioFinal)?.voucherCeiling ?? 0)
+        : 0;
+    const freightCost = toMoney(new Decimal(flatFreight).plus(voucher));
+    const liquido = toMoney(
+      new Decimal(anuncioFinal).minus(charged).minus(fixed).minus(freightCost),
+    );
+    return { anuncio: anuncioFinal, liquido, appliedBand: band, freightCost };
+  };
+
   const bands = fees.priceBands;
-  if (bands && bands.length > 0) {
+  const first = bands?.[0];
+
+  // PROGRESSIVE (ADR-0024): the fee is a SUM over slices, so there is no single `commissionPct` that
+  // describes it — this branch owns both the announce and the charged commission, and returns early
+  // through the shared freight/líquido tail below.
+  if (fees.bandMode === "PROGRESSIVE" && bands && first) {
+    const solved = progressiveAnnounce(base, bands);
+    let anuncioProg = toMoney(solved.list);
+    // The per-item floor still applies, now measured against the PROGRESSIVE commission.
+    if (progressiveCommission(bands, anuncioProg).toNumber() < minPerItem) {
+      anuncioProg = toMoney(new Decimal(base).plus(minPerItem).plus(solved.band.fixedFee));
+    }
+    const owed = progressiveCommission(bands, anuncioProg);
+    const charged = owed.toNumber() >= minPerItem ? owed : new Decimal(minPerItem);
+    return finish(anuncioProg, charged, solved.band.fixedFee, [
+      solved.band.minPrice,
+      solved.band.maxPrice,
+    ]);
+  }
+
+  if (bands && first) {
     // Seed the band from the base, compute the announce, re-select the band for THAT announce;
-    // iterate until the band is stable (or the terminal cap — always deterministic).
+    // iterate until the band is stable (or the terminal cap — always deterministic). The iteration
+    // exists because SELECTION's fee function JUMPS at each threshold; PROGRESSIVE's does not.
     let band = bandContaining(bands, base) ?? bands[bands.length - 1];
     for (let i = 0; i < MAX_BAND_ITERS; i++) {
       const listRounded = toMoney(grossUpOnce(base, band.commissionPct, band.fixedFee, minPerItem));
@@ -108,15 +222,5 @@ export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
   const pctCommission = new Decimal(commissionPct).dividedBy(100).times(anuncio);
   const commissionCharged =
     pctCommission.toNumber() >= minPerItem ? pctCommission : new Decimal(minPerItem);
-  // The co-funded voucher (Shopee) is band-dependent on THIS announce — resolve it here so varejo and
-  // atacado each deduct the voucher for their own listing price (they can fall in different bands).
-  const voucher =
-    fees.freightVoucherBands && fees.freightVoucherBands.length > 0
-      ? (bandContaining(fees.freightVoucherBands, anuncio)?.voucherCeiling ?? 0)
-      : 0;
-  const freightCost = toMoney(new Decimal(flatFreight).plus(voucher));
-  const liquido = toMoney(
-    new Decimal(anuncio).minus(commissionCharged).minus(fixedFee).minus(freightCost),
-  );
-  return { anuncio, liquido, appliedBand, freightCost };
+  return finish(anuncio, commissionCharged, fixedFee, appliedBand);
 }

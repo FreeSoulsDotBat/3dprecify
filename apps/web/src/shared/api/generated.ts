@@ -234,6 +234,17 @@ export interface BomOut {
   materializations?: Materialization[] | null;
 }
 
+/**
+ * One node of a marketplace's category spine (014). Flat + `parent_id` — the client walks the
+ * ancestor chain, because commission is piecewise-constant down the tree and ~87.5% of nodes
+ * inherit (ADR-0010 §A13/§A14).
+ */
+export interface CategoryNode {
+  id: string;
+  name: string;
+  parentId?: string | null;
+}
+
 export type CheckoutInPeriod = typeof CheckoutInPeriod[keyof typeof CheckoutInPeriod];
 
 
@@ -316,6 +327,14 @@ export interface PriceBand {
   fixedFee: number | null;
 }
 
+export type FeeEntryBandMode = typeof FeeEntryBandMode[keyof typeof FeeEntryBandMode] | null;
+
+
+export const FeeEntryBandMode = {
+  SELECTION: 'SELECTION',
+  PROGRESSIVE: 'PROGRESSIVE',
+} as const;
+
 export const FreightNoneValue = {
   kind: 'NONE',
 } as const;
@@ -347,6 +366,7 @@ export interface FeeEntry {
   fixedFee: number | null;
   minPerItem?: number | null;
   priceBands?: PriceBand[] | null;
+  bandMode?: FeeEntryBandMode;
   freight: FreightNone | FreightEstimate | FreightBandVoucher;
   source: string;
   sourceUrl: string;
@@ -359,6 +379,7 @@ export type MarketplaceCatalogDeterminantsSchema = { [key: string]: unknown } | 
 export interface MarketplaceCatalog {
   marketplace: MarketplaceCatalogMarketplace;
   determinantsSchema?: MarketplaceCatalogDeterminantsSchema;
+  categorySpine?: CategoryNode[] | null;
   entries: FeeEntry[];
 }
 

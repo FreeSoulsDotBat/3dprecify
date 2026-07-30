@@ -1,4 +1,4 @@
-import type { PriceBand, VoucherBand } from "@3dprecify/pricing-core";
+import type { BandMode, PriceBand, VoucherBand } from "@3dprecify/pricing-core";
 
 import {
   type CatalogSource,
@@ -111,6 +111,10 @@ export interface ResolvedChannelFees {
   fixedFee: number;
   minPerItem: number;
   priceBands?: PriceBand[];
+  /** How the bands combine (ADR-0024). Carried through UNCHANGED — the engine owns the meaning, and
+   *  dropping it here would silently degrade a progressive entry back to selection, which is the very
+   *  defect ADR-0024 exists to fix (its §5 names losing this field as the real risk, not the math). */
+  bandMode?: BandMode;
   freightCost: number;
   freightVoucherBands?: VoucherBand[];
   freightIsEstimate: boolean;
@@ -148,6 +152,7 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
           fixedFee: b.fixedFee ?? 0,
         }))
       : undefined,
+    ...(entry.bandMode ? { bandMode: entry.bandMode } : {}),
     freightCost,
     freightVoucherBands,
     freightIsEstimate,

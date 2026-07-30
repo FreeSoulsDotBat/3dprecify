@@ -82,6 +82,12 @@ export function amazonEntries(categories: readonly ParsedCategory[], opts: Build
             fixedFee: 0,
           }))
         : null,
+      // ADR-0024 / FR-014b. EVERY banded cell this source publishes is charged per PORTION, not by
+      // selecting one rate for the whole price: "15% até R$ 200,00 e 10% para o EXCEDENTE acima de
+      // R$ 200,00" (venda.amazon.com.br/precos). Emitting the bands WITHOUT this discriminator is what
+      // made the app under-charge the commission above the threshold — R$ 10,00 constant on
+      // Móveis/Colchões and R$ 5,00 on Acessórios Eletrônicos — all under a "Referência" seal.
+      ...(c.bands ? { bandMode: "PROGRESSIVE" as const } : {}),
       freight: { kind: "NONE" as const },
       source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
       sourceUrl: AMAZON_SOURCE_URL,

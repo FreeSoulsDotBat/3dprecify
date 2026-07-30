@@ -44,6 +44,39 @@ def test_fee_catalog_serves_the_committed_artifact(client: TestClient) -> None:
     ]
 
 
+def _subset(disk: object, served: object, path: str) -> None:
+    """Every key/value on disk MUST survive serialization, identically.
+
+    The test above compares versions and marketplace NAMES; it passed for the whole of 014 while the
+    response model silently ate two fields the increment depends on — `categorySpine` (so the client
+    received category-keyed entries with no way to NAME them, making the picker impossible through the
+    served path) and `bandMode` (so a per-portion commission degraded to per-band and understated the
+    fee). Neither the frontend unit tests nor the truth-gate could see it: both read the FILE.
+
+    A response model is an allowlist. Any field it does not know, it drops — and dropping is silent by
+    construction. So the assertion has to be "nothing on disk is missing from the wire", not "the
+    shape looks right".
+    """
+    if isinstance(disk, dict):
+        assert isinstance(served, dict), f"{path}: disk has an object, wire has {type(served)}"
+        for key, value in disk.items():
+            assert key in served, f"{path}.{key} is on disk but DROPPED from the response"
+            _subset(value, served[key], f"{path}.{key}")
+    elif isinstance(disk, list):
+        assert isinstance(served, list), f"{path}: disk has a list, wire has {type(served)}"
+        assert len(disk) == len(served), f"{path}: {len(disk)} on disk, {len(served)} on the wire"
+        for i, value in enumerate(disk):
+            _subset(value, served[i], f"{path}[{i}]")
+    else:
+        assert disk == served, f"{path}: disk {disk!r} != wire {served!r}"
+
+
+def test_fee_catalog_drops_no_field_from_the_artifact(client: TestClient) -> None:
+    disk = json.loads(_CATALOG_PATH.read_text(encoding="utf-8"))
+    body = client.get("/api/v1/fee-catalog").json()
+    _subset(disk, body, "$")
+
+
 def test_fee_catalog_etag_and_304(client: TestClient) -> None:
     res = client.get("/api/v1/fee-catalog")
     etag = res.headers.get("ETag")

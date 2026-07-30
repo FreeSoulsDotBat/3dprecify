@@ -198,9 +198,13 @@ function resolveSlotFees(
   // NOT — on a band entry the band still governs fixedFee (typed value inert, price correct); on a
   // non-band entry there is no schedule, so the scalar override below applies normally.
   const commissionOverridden = edited.commissionPct !== undefined;
+  // `bandMode` describes how a SCHEDULE combines, so it leaves with the schedule. Left behind it would
+  // claim "progressive" over a flat typed commission — a label contradicting the number beside it.
+  const { bandMode, ...withoutMode } = base;
   return {
-    ...base,
+    ...withoutMode,
     priceBands: commissionOverridden ? undefined : base.priceBands,
+    ...(commissionOverridden || !bandMode ? {} : { bandMode }),
     commissionPct: edited.commissionPct ?? base.commissionPct,
     fixedFee: edited.fixedFee ?? base.fixedFee,
     minPerItem: edited.minPerItem ?? base.minPerItem,
@@ -279,6 +283,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       fixedFee: fees.fixedFee,
       minPerItem: fees.minPerItem,
       priceBands: fees.priceBands,
+      ...(fees.bandMode ? { bandMode: fees.bandMode } : {}),
       freightCost: fees.freightCost,
       freightVoucherBands: fees.freightVoucherBands,
     },
