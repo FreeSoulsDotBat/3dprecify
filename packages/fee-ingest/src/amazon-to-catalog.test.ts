@@ -59,16 +59,42 @@ describe("amazonSpine — flat, because Amazon publishes no hierarchy", () => {
 describe("amazonEntries — one per (plan, category)", () => {
   const entries = amazonEntries(CATS, OPTS);
 
+  /** Determinants are a union (`{plan}` for the catch-all, `{plan, category}` otherwise). */
+  const catOf = (e: (typeof entries)[number]) =>
+    "category" in e.determinants ? e.determinants.category : null;
+
   it("covers both plans with the same commission — the table does not vary by plan", () => {
-    expect(entries).toHaveLength(6);
+    // 3 categorias × 2 planos, MAIS a entrada só-de-modalidade de cada plano (T094).
+    expect(entries).toHaveLength(8);
     const forCat = (plan: string) =>
-      entries.find((e) => e.determinants.plan === plan && e.determinants.category === "outros");
+      entries.find((e) => e.determinants.plan === plan && catOf(e) === "outros");
     expect(forCat("PROFISSIONAL")?.commissionPct).toBe(15);
     expect(forCat("INDIVIDUAL")?.commissionPct).toBe(15);
   });
 
+  // 014/T094+T095 — o catch-all publicado, emitido como entrada PRÓPRIA sem eixo de categoria: é o
+  // que um slot sem categoria escolhida resolve. Cópia da linha "Outros", nunca média nem extremo
+  // derivado (FR-011a) — e a procedência nomeia a linha, porque usar isso é CITAR a Amazon.
+  it("emite a entrada só-de-modalidade a partir da linha publicada 'Outros'", () => {
+    const catchAll = entries.filter((e) => catOf(e) === null);
+    expect(catchAll).toHaveLength(2); // um por plano
+    for (const e of catchAll) {
+      expect(e.commissionPct).toBe(15);
+      expect(e.source).toContain("Outros");
+      expect(e.determinants).not.toHaveProperty("category");
+    }
+  });
+
+  it("sem a linha 'Outros' na fonte, NENHUM catch-all é emitido — nunca um substituto escolhido por nós", () => {
+    const semOutros = CATS.filter((c) => c.name !== "Outros");
+    const sem = amazonEntries(semOutros, OPTS);
+    expect(sem.every((e) => catOf(e) !== null)).toBe(true);
+    // A assimetria com o Mercado Livre (que publica uma FAIXA e nenhum catch-all) cai do dado.
+    expect(sem).toHaveLength(semOutros.length * 2);
+  });
+
   it("carries the banded category through as bands, never flattened", () => {
-    const banded = entries.find((e) => e.determinants.category === "acessorios-eletronicos");
+    const banded = entries.find((e) => catOf(e) === "acessorios-eletronicos");
     expect(banded?.commissionPct).toBeNull();
     expect(banded?.priceBands).toEqual([
       { minPrice: 0, maxPrice: 100, commissionPct: 15, fixedFee: 0 },

@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { grossUp } from "@3dprecify/pricing-core";
 import { describe, expect, it } from "vitest";
 
@@ -5,6 +7,7 @@ import {
   type FeeCatalog,
   feeCatalogSchema,
   feeEntrySchema,
+  parseFeeCatalog,
   STALENESS_DAYS,
 } from "@/shared/fee-catalog";
 
@@ -336,5 +339,69 @@ describe("feeSealState — names the category, and distinguishes catch-all from 
       viaCatchAll: r.viaCatchAll,
     });
     expect(s.kind).toBe("adjusted");
+  });
+});
+
+// 014/T096 (Q5/T094) — o truth-gate do catch-all, contra o ARTEFATO REAL.
+//
+// Os testes acima provam o comportamento sobre um `catalog014` escrito à mão, e por isso passavam
+// verdes enquanto o artefato publicado não tinha catch-all nenhum: o fixture inventou a entrada que
+// o gerador não emitia. A decisão T094 é sobre o que o VENDEDOR recebe, e quem entrega isso é o
+// arquivo commitado — então a asserção tem de ser feita nele.
+describe("T094/T096 — quem não escolhe categoria recebe o catch-all PUBLICADO da Amazon", () => {
+  const artefato = parseFeeCatalog(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  it("um slot Amazon sem categoria resolve — e resolve PELO catch-all, não por uma categoria", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    expect(r.entry).not.toBeNull();
+    expect(r.viaCatchAll).toBe(true);
+    expect(r.originCategoryId).toBeNull();
+  });
+
+  it("o valor é o da linha 'Outros' — 15%, o TETO da tabela (erro sempre a favor do vendedor)", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    expect(r.entry?.commissionPct).toBe(15);
+    // A procedência nomeia a linha que foi usada: o catch-all é citação, não invenção (FR-011a).
+    expect(r.entry?.source).toContain("Outros");
+  });
+
+  it("o selo diz que a categoria não foi informada — nunca 'Referência' seca", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now: Date.parse("2026-07-28"),
+      edited: false,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("catchAll");
+  });
+
+  it("vale para os dois planos — a tabela não varia por plano, e o catch-all também não", () => {
+    for (const plan of ["PROFISSIONAL", "INDIVIDUAL"]) {
+      expect(resolveSlot(artefato, "AMAZON", plan).entry?.commissionPct).toBe(15);
+    }
+  });
+
+  it("escolher categoria continua vencendo o catch-all", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL", "relogios");
+    expect(r.viaCatchAll).toBe(false);
+    expect(r.originCategoryId).toBe("relogios");
+    expect(r.entry?.commissionPct).toBe(13);
+  });
+
+  it("o ML NÃO ganha catch-all por tabela: sem categoria, sem referência (SC-804)", () => {
+    // A assimetria cai do dado, não de um `if`: o ML publica uma FAIXA (14–19%) e nenhum catch-all,
+    // e derivar um dela seria fabricar número.
+    const r = resolveSlot(artefato, "MERCADO_LIVRE", "gold_pro");
+    expect(r.entry).toBeNull();
+    expect(r.viaCatchAll).toBe(false);
   });
 });

@@ -1,4 +1,4 @@
-import type { ParsedCategory } from "./amazon-parse";
+import { CATCH_ALL_NAME, type ParsedCategory } from "./amazon-parse";
 
 // ParsedCategory[] → the catalog's shape (014/US3). Pure: no network, no clock — the caller injects
 // the collection date so the output is byte-reproducible for the monthly diff.
@@ -67,32 +67,50 @@ const PLANS = ["PROFISSIONAL", "INDIVIDUAL"] as const;
  * have to special-case, and special cases in a money lookup are where silent errors live.
  */
 export function amazonEntries(categories: readonly ParsedCategory[], opts: BuildOptions) {
-  return PLANS.flatMap((plan) =>
-    categories.map((c) => ({
-      determinants: { plan, category: categoryId(c.name) },
-      commissionPct: c.commissionPct,
-      fixedFee: 0,
-      minPerItem: c.minPerItem,
-      priceBands: c.bands
-        ? c.bands.map((b) => ({
-            minPrice: b.minPrice,
-            maxPrice: b.maxPrice,
-            commissionPct: b.commissionPct,
-            // The per-item minimum applies per product regardless of band.
-            fixedFee: 0,
-          }))
-        : null,
-      // ADR-0024 / FR-014b. EVERY banded cell this source publishes is charged per PORTION, not by
-      // selecting one rate for the whole price: "15% até R$ 200,00 e 10% para o EXCEDENTE acima de
-      // R$ 200,00" (venda.amazon.com.br/precos). Emitting the bands WITHOUT this discriminator is what
-      // made the app under-charge the commission above the threshold — R$ 10,00 constant on
-      // Móveis/Colchões and R$ 5,00 on Acessórios Eletrônicos — all under a "Referência" seal.
-      ...(c.bands ? { bandMode: "PROGRESSIVE" as const } : {}),
-      freight: { kind: "NONE" as const },
-      source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
-      sourceUrl: AMAZON_SOURCE_URL,
-      effectiveDate: opts.effectiveDate,
-      lastReviewed: opts.collectedAt,
-    })),
+  /** One entry. `category: null` makes it the modality-only entry — see below. */
+  const entry = (plan: (typeof PLANS)[number], c: ParsedCategory, category: string | null) => ({
+    determinants: category === null ? { plan } : { plan, category },
+    commissionPct: c.commissionPct,
+    fixedFee: 0,
+    minPerItem: c.minPerItem,
+    priceBands: c.bands
+      ? c.bands.map((b) => ({
+          minPrice: b.minPrice,
+          maxPrice: b.maxPrice,
+          commissionPct: b.commissionPct,
+          // The per-item minimum applies per product regardless of band.
+          fixedFee: 0,
+        }))
+      : null,
+    // ADR-0024 / FR-014b. EVERY banded cell this source publishes is charged per PORTION, not by
+    // selecting one rate for the whole price: "15% até R$ 200,00 e 10% para o EXCEDENTE acima de
+    // R$ 200,00" (venda.amazon.com.br/precos). Emitting the bands WITHOUT this discriminator is what
+    // made the app under-charge the commission above the threshold — R$ 10,00 constant on
+    // Móveis/Colchões and R$ 5,00 on Acessórios Eletrônicos — all under a "Referência" seal.
+    ...(c.bands ? { bandMode: "PROGRESSIVE" as const } : {}),
+    freight: { kind: "NONE" as const },
+    source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
+    sourceUrl: AMAZON_SOURCE_URL,
+    effectiveDate: opts.effectiveDate,
+    lastReviewed: opts.collectedAt,
+  });
+
+  const perCategory = PLANS.flatMap((plan) =>
+    categories.map((c) => entry(plan, c, categoryId(c.name))),
   );
+
+  // 014/Q5 · T094 — the MODALITY-ONLY entry: what a slot resolves to when the seller has not chosen a
+  // category. It is a straight COPY of the published "Outros" row, never an average, a range midpoint
+  // or an extreme of the table (FR-011a) — using it quotes Amazon instead of guessing, which is the
+  // only reason Q5 allows a pre-fill here at all. `resolveSlot` reports it as `viaCatchAll` so the
+  // seal says "categoria não informada" rather than passing it off as the seller's own rate.
+  //
+  // Conditional on the row EXISTING: if a future reading no longer publishes "Outros", the honest
+  // outcome is no catch-all and a "sem referência" seal — never a substitute picked by us. That is
+  // also what keeps Mercado Livre correctly without one: it publishes a range, and a range is not a
+  // catch-all. The asymmetry falls out of the data, not out of an `if` about marketplaces.
+  const published = categories.find((c) => c.name === CATCH_ALL_NAME);
+  const modalityOnly = published ? PLANS.map((plan) => entry(plan, published, null)) : [];
+
+  return [...perCategory, ...modalityOnly];
 }

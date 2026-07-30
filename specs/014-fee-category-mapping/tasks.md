@@ -273,8 +273,19 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 **Consertar agora — dano ou requisito descumprido hoje**
 
 - [x] T094 ✅ **DECIDIDO 2026-07-28 — opção (a): EMITIR o catch-all.** A entrada apenas-modalidade sai de "Outros" 15%; quem não escolhe categoria recebe esse valor com selo "categoria não informada". Tensão registrada no `spec.md` (§Clarifications, terceira rodada): "Outros" é categoria para produtos que não se encaixam, não alíquota declarada para "categoria desconhecida" — é interpretação, sustentada por ser o **teto** da tabela (erro sempre a favor do vendedor)
-- [ ] T095 [US3] Executar a decisão da T094 em `packages/fee-ingest/src/amazon-to-catalog.ts` + `fee-prefill.ts` (`viaCatchAll`) **juntas** — consertar só uma metade acende o defeito da outra
-- [ ] T096 [P] [US3] Teste do truth-gate contra o artefato **REAL** (não fixture): `resolveSlot(servido, "AMAZON", "PROFISSIONAL")` sem categoria produz o desfecho decidido na T094. **Hoje falha** — e é a asserção que o fixture inventado escondeu — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T095 [US3] Executar a decisão da T094 em `packages/fee-ingest/src/amazon-to-catalog.ts` + `fee-prefill.ts` (`viaCatchAll`) **juntas** — consertar só uma metade acende o defeito da outra
+- [x] T096 [P] [US3] Teste do truth-gate contra o artefato **REAL** (não fixture): `resolveSlot(servido, "AMAZON", "PROFISSIONAL")` sem categoria produz o desfecho decidido na T094. **Hoje falha** — e é a asserção que o fixture inventado escondeu — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+> **Nota (T095/T096, 2026-07-30)** — a metade do cliente (`viaCatchAll`) já existia; faltava a do
+> gerador. A entrada só-de-modalidade é **cópia da linha publicada "Outros"**, e é emitida apenas se
+> essa linha existir na leitura — sem ela, nenhum catch-all, jamais um substituto escolhido por nós
+> (FR-011a). A assimetria com o ML cai do dado, não de um `if` sobre marketplaces.
+> O artefato foi regenerado **sem nova leitura** (a partir da própria leitura registrada nele), então
+> `lastReviewed`/`effectiveDate` continuam sendo os de uma coleta real — avançá-los aqui seria
+> afirmar releitura que não houve. Efeito colateral revelado: o `bandMode` estava gravado **depois**
+> de `lastReviewed` e o gerador o emite antes — ou seja, o artefato commitado era igual em VALOR mas
+> não em bytes ao que o gerador produz. O `toEqual` do teste de ponto fixo ignora ordem de chave e
+> por isso passava. Agora o arquivo é saída literal do gerador.
+
 - [ ] T097 [US1] Trocar o marketplace do slot MUST limpar a `category` junto com a modalidade: hoje o id do marketplace antigo sobrevive **invisível** (o ramo de espinha vazia vem antes do ramo `value`), sem botão "Limpar", e **continua sendo enviado como determinante** — dois cliques (Amazon→ML), contra `spec.md` §Edge Cases — em `calcular-page.tsx:237`, `produto-page.tsx:169`, `bom-line-editor.tsx:86`
 - [ ] T098 [P] [US1] O `return` antecipado do ramo `embedded` (`fee-seal.tsx:49`) engole **DUAS** coisas, e são o mesmo conserto: (a) `originCategoryName` — alíquota herdada de ancestral aparece sem dizer que não é a da categoria escolhida; (b) o marcador **`stale`** — no caminho da semente o alarme de 30 dias **nunca dispara** (SC-807), e o docstring de `fee-prefill.ts:164-166` declara literalmente o contrato oposto. O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, então a assimetria é **acidental**. Tornar `embedded` um **modificador do texto-base**, não um early return. Teste `embedded + stale` — **hoje não existe nenhum** — em `apps/web/src/features/calculator/{fee-seal.tsx,fee-seal.test.tsx}`
 - [ ] T099 [P] Princípio V: `catchAllName` é parâmetro sem chamador de produção, e o teste vacuoso de `catalog-diff.test.ts:280` não exercita o ramo que nomeia — remover ou corrigir ambos

@@ -233,14 +233,14 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
         },
         {
           "determinants": {
@@ -417,14 +417,14 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
         },
         {
           "determinants": {
@@ -703,14 +703,14 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
         },
         {
           "determinants": {
@@ -921,14 +921,14 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Acessórios Eletrônicos (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
         },
         {
           "determinants": {
@@ -1105,14 +1105,14 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Móveis (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
         },
         {
           "determinants": {
@@ -1391,14 +1391,46 @@
               "fixedFee": 0
             }
           ],
+          "bandMode": "PROGRESSIVE",
           "freight": {
             "kind": "NONE"
           },
           "source": "Tabela de comissões da Amazon — Colchões (comissão sobre base que inclui frete)",
           "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
           "effectiveDate": "2026-07-28",
-          "lastReviewed": "2026-07-28",
-          "bandMode": "PROGRESSIVE"
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "PROFISSIONAL"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Outros (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
+        },
+        {
+          "determinants": {
+            "plan": "INDIVIDUAL"
+          },
+          "commissionPct": 15,
+          "fixedFee": 0,
+          "minPerItem": 1,
+          "priceBands": null,
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Tabela de comissões da Amazon — Outros (comissão sobre base que inclui frete)",
+          "sourceUrl": "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+          "effectiveDate": "2026-07-28",
+          "lastReviewed": "2026-07-28"
         }
       ],
       "categorySpine": [
