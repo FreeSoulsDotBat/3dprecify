@@ -218,8 +218,15 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 
 ### A2 — o guard F3 fecha só um lado (MEDIUM · latente, gatilho = curadoria ML)
 
-- [ ] T085 [P] Teste (falhando primeiro): entrada com `commissionPct` de topo **não-nulo** e banda com comissão **nula** é rejeitada no parse — a variante que os testes atuais não cobrem — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T086 [US2] Remover o curto-circuito do `.refine`: a exigência "toda banda carrega sua própria comissão" vale **independente** do topo (FR-008/SC-802) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T085 [P] Teste (falhando primeiro): entrada com `commissionPct` de topo **não-nulo** e banda com comissão **nula** é rejeitada no parse — a variante que os testes atuais não cobrem — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T086 [US2] Remover o curto-circuito do `.refine`: a exigência "toda banda carrega sua própria comissão" vale **independente** do topo (FR-008/SC-802) — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+
+> **Nota (A2, 2026-07-30)** — o `.refine` virou **dois** `.refine` em vez de um `||` alargado. O `||`
+> não era só incompleto, era enganoso: o número de topo funcionava como **chamariz**. As bandas
+> SUBSTITUEM o topo em `entryToChannelFees` (`b.commissionPct ?? 0`), então uma entrada com 12% no
+> topo e banda de comissão nula passava no guard, exibia 12% para quem lesse o JSON, e cobrava **0%**
+> naquela faixa sob selo de "Referência". Separar as duas exigências também dá mensagem e `path`
+> próprios a cada uma — quem regenerar o catálogo vê qual das duas quebrou.
 
 ### A3 — o seletor afirma o que não é verdade (MEDIUM · Princípio II, estado padrão de 100% dos usuários)
 

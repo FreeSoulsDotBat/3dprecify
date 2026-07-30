@@ -352,6 +352,53 @@ describe("catalog parse rejects data that would resolve ambiguously or fabricate
     expect(parseSeedResilient(junk).marketplaces).toEqual([]);
   });
 
+  // 014/T085 (A2) — a variante que o guard original NAO cobria: comissao de topo NAO-nula e banda com
+  // comissao nula. O `.refine` era um `||`, entao um topo nao-nulo aprovava a entrada inteira sem
+  // olhar as bandas. E o numero de topo e um CHAMARIZ: `entryToChannelFees` mapeia
+  // `b.commissionPct ?? 0` e as bandas SUBSTITUEM o topo, entao o 12% existe, passa no guard, e nunca
+  // e cobrado — o preco naquela faixa sai com 0% sob selo de "Referencia" (FR-008/SC-802).
+  it("rejects a null-commission band even when the TOP-LEVEL commission is present", () => {
+    const decoy = {
+      ...provenance,
+      determinants: { listingType: "gold_pro", category: "MLB1052" },
+      commissionPct: 12,
+      fixedFee: 0,
+      priceBands: [
+        { minPrice: 0, maxPrice: 79, commissionPct: null, fixedFee: 6.25 },
+        { minPrice: 79, maxPrice: null, commissionPct: 12, fixedFee: 0 },
+      ],
+    };
+    expect(() => feeEntrySchema.parse(decoy)).toThrow();
+  });
+
+  it("rejects it for EVERY band position — a null in the terminal band is the same trap", () => {
+    const decoy = {
+      ...provenance,
+      determinants: { listingType: "gold_pro", category: "MLB1053" },
+      commissionPct: 12,
+      fixedFee: 0,
+      priceBands: [
+        { minPrice: 0, maxPrice: 79, commissionPct: 12, fixedFee: 6.25 },
+        { minPrice: 79, maxPrice: null, commissionPct: null, fixedFee: 0 },
+      ],
+    };
+    expect(() => feeEntrySchema.parse(decoy)).toThrow();
+  });
+
+  it("a top-level commission WITH sound bands segue valida — o guard nao alarga demais", () => {
+    const sound = {
+      ...provenance,
+      determinants: { listingType: "gold_pro", category: "MLB1054" },
+      commissionPct: 12,
+      fixedFee: 0,
+      priceBands: [
+        { minPrice: 0, maxPrice: 79, commissionPct: 12, fixedFee: 6.25 },
+        { minPrice: 79, maxPrice: null, commissionPct: 12, fixedFee: 0 },
+      ],
+    };
+    expect(() => feeEntrySchema.parse(sound)).not.toThrow();
+  });
+
   it("accepts a banded entry when EVERY band carries a commission", () => {
     const sound = {
       ...provenance,
