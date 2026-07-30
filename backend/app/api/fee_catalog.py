@@ -80,8 +80,9 @@ class FeeEntry(CamelModel):
     price_bands: list[PriceBand] | None = None
     # How the bands combine (ADR-0024). ABSENT = "SELECTION". This field is DATA IN TRANSIT for this
     # service — it never computes with it (FR-118: the backend serves, pricing-core computes) — but
-    # dropping it silently degrades a per-portion commission into a per-price-band one and understates
-    # the seller's fee. A field this service does not understand is still a field it must not eat.
+    # dropping it silently degrades a per-portion commission into a per-price-band one and
+    # understates the seller's fee. A field this service does not understand is still a
+    # field it must not eat.
     band_mode: Literal["SELECTION", "PROGRESSIVE"] | None = None
     freight: Freight
     source: str
@@ -94,8 +95,9 @@ class MarketplaceCatalog(CamelModel):
     marketplace: Literal["MERCADO_LIVRE", "AMAZON", "SHOPEE"]
     determinants_schema: dict[str, Any] | None = None
     # 014: WITHOUT this the served payload carries category-keyed entries and no way to NAME them —
-    # the client's picker renders empty, and choosing a category becomes impossible through the served
-    # path even with the backend healthy. The offline seed hid it; only the live app showed it.
+    # the client's picker renders empty, and choosing a category becomes impossible through
+    # the served path even with the backend healthy. The offline seed hid it; only the live
+    # app showed it.
     category_spine: list[CategoryNode] | None = None
     entries: list[FeeEntry]
 
