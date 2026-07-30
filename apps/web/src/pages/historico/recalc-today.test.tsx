@@ -301,4 +301,43 @@ describe("RecalcTodayButton — a NEW record, the original untouched", () => {
     renderButton({}, productAt("110.00"));
     expect(screen.queryByRole("button", { name: t.recalcAction })).not.toBeInTheDocument();
   });
+
+  // 014/T112a — SC-818. A distinção "repreçado hoje" vs "reaproveitado de um congelamento" existe no
+  // momento da gravação ou não existe nunca.
+  //
+  // `recalcToday` já devolve `fromFrozen: true` quando a origem sumiu, e o DIÁLOGO já avisa (o teste
+  // "origin gone ⇒ the dialog says it does NOT reflect today's catalog" prova isso). Mas o `onConfirm`
+  // desestrutura só o `payload` e descarta o `fromFrozen`, então o REGISTRO gravado sai idêntico a um
+  // repreçado de verdade — com `deviceQuotedAt` de hoje. O aviso morre no diálogo; o artefato fica mudo.
+  //
+  // Por que isto não admite "a gente conserta depois": pela ADR-0019 o snapshot é IMUTÁVEL por trigger
+  // no banco. Um registro gravado ambíguo permanece ambíguo para sempre. É o único ponto deste
+  // incremento onde o teste-primeiro não é disciplina — é a única chance.
+  describe("SC-818 — o registro DIZ se foi repreçado ou reaproveitado", () => {
+    it("origem GONE ⇒ o payload gravado carrega a marca de reaproveitamento", async () => {
+      const user = setup();
+      renderButton({}, undefined); // sem origem resolvível ⇒ fromFrozen
+
+      await user.click(screen.getByRole("button", { name: t.recalcAction }));
+      await user.click(screen.getByRole("button", { name: t.recalcConfirm }));
+
+      await waitFor(() => expect(recordMock).toHaveBeenCalledTimes(1));
+      const body = recordMock.mock.calls[0][0];
+      expect(body.payload.repricedFromFrozen).toBe(true);
+    });
+
+    it("repreço de VERDADE não carrega a marca — a ausência é o caso normal (aditivo)", async () => {
+      const user = setup();
+      renderButton({}, productAt("220.00")); // a origem resolve ⇒ repreço real
+
+      await user.click(screen.getByRole("button", { name: t.recalcAction }));
+      await user.click(screen.getByRole("button", { name: t.recalcConfirm }));
+
+      await waitFor(() => expect(recordMock).toHaveBeenCalledTimes(1));
+      const body = recordMock.mock.calls[0][0];
+      // Ausente, não `false`: um payload gravado ANTES desta correção também não a tem, e tem de
+      // continuar significando exatamente o que significava (o mesmo padrão do `bandMode`/ADR-0024).
+      expect(body.payload.repricedFromFrozen).toBeUndefined();
+    });
+  });
 });

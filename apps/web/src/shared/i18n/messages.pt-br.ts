@@ -514,6 +514,11 @@ export const messages = {
     backToList: "Voltar",
     // detail
     frozenCaption: "Valores congelados em {data}",
+    // 014/SC-818 — o recálculo que NÃO conseguiu repreçar (a origem sumiu) reemite o documento
+    // congelado com a data de hoje. Sem esta linha, o registro é indistinguível de um repreço real, e
+    // a ADR-0019 o torna imutável: a distinção existe aqui ou não existe em lugar nenhum.
+    frozenReusedCaption:
+      "Estes valores foram reaproveitados de um congelamento anterior — a origem não estava disponível para repreçar.",
     validityLine: "Validade da proposta: {n} dias",
     kitPieces: "Peças do kit",
     // A COUNT ("3 un"), never "3×" glued to a total that is ALREADY quantity-scaled (review PR-A,

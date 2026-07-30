@@ -166,6 +166,12 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
       {payload && (
         <>
           <p className="tf-historico__meta">{t.frozenCaption.replace("{data}", date)}</p>
+          {/* SC-818 — a data acima é de HOJE mesmo quando o recálculo não conseguiu repreçar e
+              reemitiu o documento antigo. Sem esta linha o registro afirmaria, por omissão, um
+              preço de hoje que ninguém calculou hoje. */}
+          {payload.repricedFromFrozen && (
+            <p className="tf-historico__meta">{t.frozenReusedCaption}</p>
+          )}
           {payload.lines && payload.lines.length > 0 && (
             <KitLines payload={payload} basis={item.headlineBasis} />
           )}

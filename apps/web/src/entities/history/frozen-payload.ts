@@ -153,6 +153,18 @@ export interface FrozenSnapshotPayload {
   totals: FrozenTotals;
   channels?: FrozenChannel[];
   provenance: FrozenProvenance | null;
+  /**
+   * 014/SC-818 — set ONLY when "Recalcular hoje" could not reprice from the catalog and re-emitted
+   * the FROZEN document instead (the origin was deleted or unresolvable). ABSENT means an ordinary
+   * record: every payload written before this field existed keeps meaning exactly what it meant,
+   * which is why the flag is additive and one-sided (the same discipline as `bandMode`, ADR-0024).
+   *
+   * It has to be decided AT WRITE TIME. The dialog already warns before confirming, but that warning
+   * dies with the dialog: without this, the stored record is indistinguishable from a genuine reprice
+   * while carrying today's `deviceQuotedAt`. And a snapshot is IMMUTABLE by DB trigger (ADR-0019) —
+   * an ambiguous record stays ambiguous forever, so there is no later place to add the truth.
+   */
+  repricedFromFrozen?: true;
 }
 
 /** Read a recorded money line. An ABSENT line reads as `null` — never as "0.00" (FR-507). A line
