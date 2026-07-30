@@ -176,6 +176,11 @@ export const messages = {
       hint: "A comissão muda conforme a categoria.",
       placeholder: "Busque pelo produto…",
       clear: "Limpar",
+      // 014/T107 — o chip escolhido é uma live region como os dois ramos vizinhos do seletor, e
+      // precisa dizer O QUE ele é: um caminho de categoria solto, anunciado sem rótulo, chega ao
+      // leitor de tela como três nomes sem contexto no meio de um formulário de preço.
+      chosenLabel: "Categoria escolhida:",
+      clearAria: "Limpar categoria escolhida",
       noResults:
         "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
       // 014/FR-006d — o estado vazio do seletor. O texto anterior afirmava "a taxa exibida já é a

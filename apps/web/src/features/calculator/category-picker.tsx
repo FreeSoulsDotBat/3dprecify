@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import {
   type CategoryNode,
@@ -45,6 +45,18 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
   const [query, setQuery] = useState("");
   const listId = useId();
   const index = useMemo(() => indexSpine(spine), [spine]);
+  // Choosing UNMOUNTS the option button along with the whole list, so focus fell to `document.body`:
+  // a keyboard user lost their place in the form at the exact moment they had just decided the
+  // commission on their own sale. The flag distinguishes "the seller just chose" from "the component
+  // mounted already carrying a value" — only the first should steal focus.
+  const justChose = useRef(false);
+  const clearRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (value && justChose.current) {
+      justChose.current = false;
+      clearRef.current?.focus();
+    }
+  }, [value]);
 
   // The spine is sparse and the NAME index is fetched on demand (D2), so an empty one is a real
   // state, not an error — say so plainly instead of rendering a search box that can never match.
@@ -62,9 +74,20 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
 
   if (value) {
     return (
-      <div className="category-picker category-picker--chosen">
-        <span className="category-picker__chosen">{categoryPath(index, value)}</span>
-        <Button variant="ghost" size="sm" onClick={() => onChange(undefined)}>
+      // `role="status"` like the two sibling branches below — this was the only one of the three
+      // that announced nothing, and it is the one that reports a decision the seller just made.
+      <div role="status" className="category-picker category-picker--chosen">
+        <span className="category-picker__chosen">
+          <span className="sr-only">{t.chosenLabel} </span>
+          {categoryPath(index, value)}
+        </span>
+        <Button
+          ref={clearRef}
+          variant="ghost"
+          size="sm"
+          aria-label={t.clearAria}
+          onClick={() => onChange(undefined)}
+        >
           {t.clear}
         </Button>
       </div>
@@ -101,6 +124,7 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
                     aria-selected={false}
                     className="category-picker__option"
                     onClick={() => {
+                      justChose.current = true;
                       onChange(node.id);
                       setQuery("");
                     }}

@@ -1,10 +1,12 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
+import { useState } from "react";
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CategoryNode } from "@/shared/fee-catalog";
+import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { CategoryPicker } from "./category-picker";
 
@@ -116,5 +118,59 @@ describe("CategoryPicker — o estado vazio não afirma o que não é verdade (F
     expect(nota).toMatch(/categorias/i); // o que de fato está faltando
     expect(nota).not.toMatch(/correta/i); // quem fala da taxa é o selo, não o seletor
     expect(nota).not.toMatch(/conecte/i); // o seletor não sabe se conectar resolve
+  });
+});
+
+// 014/T107 (a11y) — o estado ESCOLHIDO era o único dos três ramos deste arquivo sem tratamento de
+// leitor de tela: os dois vizinhos (espinha vazia e busca sem resultado) usam `role="status"`, e o
+// chip da categoria escolhida não anunciava nada. Pior, o botão da opção clicada DESMONTA junto com
+// a lista, então o foco caía em `document.body` — quem navega por teclado perdia o lugar no
+// formulário exatamente no momento em que acabou de decidir a alíquota da própria venda.
+describe("CategoryPicker — o estado escolhido é anunciado e o foco não se perde (T107)", () => {
+  it("o chip escolhido vive numa live region, como os dois ramos vizinhos", async () => {
+    const { user } = setup();
+    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "smartphones");
+    await user.click(within(screen.getByRole("listbox")).getByRole("option"));
+    // O componente é controlado: re-renderiza no ramo escolhido quando `value` chega.
+    cleanup();
+    render(
+      <CategoryPicker spine={SPINE} value="MLB1055" onChange={vi.fn()} hasFeeReference={true} />,
+    );
+    const status = screen.getByRole("status");
+    expect(status).toHaveTextContent(/Celulares e Telefones › Celulares e Smartphones/);
+  });
+
+  it("o chip diz O QUE ele é — não um caminho solto ao lado de um botão", () => {
+    render(
+      <CategoryPicker spine={SPINE} value="MLB1055" onChange={vi.fn()} hasFeeReference={true} />,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(
+      messages.calculator.categoryPicker.chosenLabel,
+    );
+  });
+
+  /** O componente é CONTROLADO: quem guarda `value` é o formulário (um `Controller` do RHF na
+   *  aplicação). Um `onChange` mockado nunca devolve o valor, então o ramo escolhido jamais
+   *  renderiza — testar o foco com ele mediria o mock, não o componente. */
+  function Controlado() {
+    const [value, setValue] = useState<string | undefined>(undefined);
+    return (
+      <CategoryPicker spine={SPINE} value={value} onChange={setValue} hasFeeReference={false} />
+    );
+  }
+
+  it("escolher move o foco para o 'Limpar' — nunca para o body", async () => {
+    const user = userEvent.setup();
+    render(<Controlado />);
+    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "smartphones");
+    await user.click(within(screen.getByRole("listbox")).getByRole("option"));
+    expect(document.activeElement).toBe(screen.getByRole("button", { name: /limpar categoria/i }));
+  });
+
+  it("montar JÁ com uma categoria não rouba o foco — só a escolha do vendedor rouba", () => {
+    render(
+      <CategoryPicker spine={SPINE} value="MLB1055" onChange={vi.fn()} hasFeeReference={true} />,
+    );
+    expect(document.activeElement).toBe(document.body);
   });
 });

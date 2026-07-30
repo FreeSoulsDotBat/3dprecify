@@ -48,6 +48,35 @@ describe("freshest — resolution precedence", () => {
     expect(freshest(v10, v2)).toBe(v10);
     expect(freshest(v2, v10)).toBe(v10);
   });
+
+  // 014/T100 — uma versão que não parseia MUST valer MENOS, e o caso concreto é o sentinel
+  // `"invalid-seed"` que o `parseSeedResilient` grava quando a semente empacotada é insalvável.
+  //
+  // Pela comparação lexicográfica anterior, "invalid-seed" > "2026-07-28.0" (o "i" vence o "2"), e o
+  // sentinel é o PISO síncrono do estado. Ou seja: no dia em que a semente do bundle saísse quebrada,
+  // o app passaria a recusar PERMANENTEMENTE o catálogo servido e o persistido — os dois caminhos que
+  // existem justamente para consertar isso. Um erro de build viraria um app que não aceita conserto.
+  it("uma versão ILEGÍVEL nunca vence uma legível — em qualquer ordem", () => {
+    const quebrada: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "invalid-seed" };
+    const real: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-07-28.0" };
+    expect(freshest(real, quebrada)).toBe(real); // servido chegando por cima da semente quebrada
+    expect(freshest(quebrada, real)).toBe(real); // e a quebrada não desbanca a boa que já está lá
+  });
+
+  it("vale para qualquer formato irreconhecível, não só para o sentinel", () => {
+    const real: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-07-28.0" };
+    for (const lixo of ["zzz", "9999", "2026-13-45.0", ""]) {
+      const ilegivel: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: lixo };
+      expect(freshest(real, ilegivel)).toBe(real);
+      expect(freshest(ilegivel, real)).toBe(real);
+    }
+  });
+
+  it("duas ilegíveis: mantém a que chega, para o refresh continuar idempotente", () => {
+    const a: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "invalid-seed" };
+    const b: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "invalid-seed" };
+    expect(freshest(a, b)).toBe(a);
+  });
 });
 
 describe("loadPersistedCatalog (R2 store)", () => {

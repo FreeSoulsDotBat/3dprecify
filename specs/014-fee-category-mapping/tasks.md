@@ -311,7 +311,7 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 
 **Pré-requisitos de regenerar `seed.ts` (T032)** — inertes hoje, nascem no dia da regeneração
 
-- [ ] T100 [P] `freshest`: versão não-parseável MUST ser considerada **menos** fresca. Hoje o sentinel `"invalid-seed"` vence a comparação lexicográfica e faria o app rejeitar **permanentemente** catálogo servido e persistido — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
+- [x] T100 [P] `freshest`: versão não-parseável MUST ser considerada **menos** fresca. Hoje o sentinel `"invalid-seed"` vence a comparação lexicográfica e faria o app rejeitar **permanentemente** catálogo servido e persistido — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
 
 **Pré-requisitos da US4 (o laço mensal)** — ✅ **DECIDIDO 2026-07-28: saem do PR #31 e entram no PR que constrói o laço.**
 Nenhum tem gatilho hoje (nenhum workflow invoca o gerador; `diffCatalogs` não tem consumidor), e é no PR do laço que
@@ -324,9 +324,21 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] T105 [P] [US4] `marketplacesOf()` no padrão de `spineOf`/`entriesOf`: hoje `?? []` só cobre null/undefined e um JSON válido não-array **estoura**, contra o contrato "degrada, não quebra" — em `catalog-diff.ts`
 - [ ] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
 
+> **Nota (T100, 2026-07-30)** — o sentinel `"invalid-seed"` vence lexicograficamente qualquer
+> `"2026-…"` (o "i" vence o "2") **e** é o piso SÍNCRONO do estado. Ou seja: no dia em que a semente
+> empacotada saísse quebrada, o app recusaria permanentemente o catálogo servido E o persistido —
+> justamente os dois caminhos que existem para consertar isso. Um erro de build viraria um app que
+> não aceita conserto. A regra agora é explícita: versão ilegível perde para legível, sempre; duas
+> ilegíveis mantêm a que chega, para o refresh continuar idempotente.
+
 **Dívida sem prazo**
 
-- [ ] T107 [P] a11y do estado escolhido do seletor: ao escolher, o foco cai em `document.body` e o chip não tem live region nem rótulo — enquanto os dois ramos vizinhos do mesmo arquivo usam `role="status"` — em `category-picker.tsx`
+- [x] T107 [P] a11y do estado escolhido do seletor: ao escolher, o foco cai em `document.body` e o chip não tem live region nem rótulo — enquanto os dois ramos vizinhos do mesmo arquivo usam `role="status"` — em `category-picker.tsx`
+
+> **Nota (T107, 2026-07-30)** — o foco só é movido quando a escolha parte do VENDEDOR; montar já com
+> uma categoria (produto salvo, cenário reaberto) não rouba o foco de ninguém. O teste de foco exigiu
+> um invólucro controlado: com `onChange` mockado o ramo escolhido nunca renderiza, então a versão
+> ingênua do teste mediria o mock e não o componente.
 
 ### Do batidão de UI + regras (2026-07-29/30) — 6 lentes em browser real + 4 auditorias de regra
 

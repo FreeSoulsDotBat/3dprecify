@@ -45,9 +45,17 @@ function parseCatalogVersion(version: string): { time: number; seq: number } | n
   return { time, seq: Number(match[2]) };
 }
 
-/** Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n"). E1-03: the sequence is
- *  compared as an INTEGER (not the raw string), so ".10" correctly outranks ".2". Falls back to a
- *  lexicographic compare only when either version doesn't match the expected shape. */
+/**
+ * Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n"). E1-03: the sequence is
+ * compared as an INTEGER (not the raw string), so ".10" correctly outranks ".2".
+ *
+ * An UNREADABLE version always loses to a readable one (014/T100). It used to fall straight through
+ * to a lexicographic compare, and the concrete casualty was `parseSeedResilient`'s `"invalid-seed"`
+ * sentinel: `"invalid-seed" > "2026-07-28.0"` because "i" outranks "2". That sentinel is the
+ * SYNCHRONOUS FLOOR of the store, so a bundled seed that failed to parse would have made the app
+ * reject the served AND the persisted catalog — permanently, and precisely the two paths that exist
+ * to repair it. A build mistake would have shipped an app that refuses to be fixed.
+ */
 export function freshest(incoming: FeeCatalog, current: FeeCatalog): FeeCatalog {
   const a = parseCatalogVersion(incoming.catalogVersion);
   const b = parseCatalogVersion(current.catalogVersion);
@@ -55,7 +63,11 @@ export function freshest(incoming: FeeCatalog, current: FeeCatalog): FeeCatalog 
     if (a.time !== b.time) return a.time > b.time ? incoming : current;
     return a.seq >= b.seq ? incoming : current;
   }
-  return incoming.catalogVersion >= current.catalogVersion ? incoming : current;
+  if (a) return incoming;
+  if (b) return current;
+  // Neither is readable — neither can be trusted to be newer, so keep the incoming one and let the
+  // refresh stay idempotent rather than inventing an order between two unusable labels.
+  return incoming;
 }
 
 /** Load + validate the persisted catalog; null on empty/error/invalid (non-blocking — seed answers). */
