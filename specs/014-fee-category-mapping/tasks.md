@@ -230,8 +230,14 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 
 ### A3 — o seletor afirma o que não é verdade (MEDIUM · Princípio II, estado padrão de 100% dos usuários)
 
-- [ ] T087 [P] Teste (falhando primeiro): o teste atual só verifica que existe um `role="status"` — passar a **verificar o texto**, que hoje faz afirmação falsa — em `apps/web/src/features/calculator/category-picker.test.tsx`
-- [ ] T088 [US1] Reescrever o estado vazio (FR-006d): não afirmar que há taxa exibida, não prometer carregamento que não acontece para o ML, e **concordar com o selo do mesmo slot** — em `apps/web/src/shared/i18n/messages.pt-br.ts`, `category-picker.tsx`
+- [x] T087 [P] Teste (falhando primeiro): o teste atual só verifica que existe um `role="status"` — passar a **verificar o texto**, que hoje faz afirmação falsa — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [x] T088 [US1] Reescrever o estado vazio (FR-006d): não afirmar que há taxa exibida, não prometer carregamento que não acontece para o ML, e **concordar com o selo do mesmo slot** — em `apps/web/src/shared/i18n/messages.pt-br.ts`, `category-picker.tsx`
+
+> **Nota (A3, 2026-07-30)** — "concordar com o selo" virou **dependência de dados**, não coincidência
+> de redação: o seletor recebe `hasFeeReference`, derivado do selo do próprio slot, e passa a só falar
+> do que ele sabe (a lista de categorias). Antes ele afirmava sobre a taxa sem ter como saber dela —
+> que é a raiz do achado, não a escolha das palavras. Duas mensagens, ambas alcançáveis: selo `none`
+> (slot ML recém-criado) e selo `adjusted` (o vendedor digitou a própria comissão).
 
 ### A4/A5 — higiene do gerador (armadilhas plantadas para o laço mensal)
 

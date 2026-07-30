@@ -361,6 +361,11 @@ function ChannelSlot({
               spine={spine}
               value={field.value}
               onChange={(id) => field.onChange(id ?? "")}
+              // FR-006d — the picker's empty state must agree with THIS slot's seal. "none" is the
+              // seal for a slot standing on nothing; anything else (a reference, a catch-all, or a
+              // rate the seller typed himself) means the money is settled and only the name list is
+              // missing. Derived from the seal itself so the two can never drift apart.
+              hasFeeReference={outcome !== undefined && outcome.seal.kind !== "none"}
             />
           )}
         />

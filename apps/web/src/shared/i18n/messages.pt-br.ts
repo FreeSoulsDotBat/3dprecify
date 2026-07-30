@@ -178,8 +178,15 @@ export const messages = {
       clear: "Limpar",
       noResults:
         "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
-      unavailableOffline:
-        "A lista de categorias ainda não foi baixada. Conecte uma vez para carregá-la — a taxa exibida já é a correta.",
+      // 014/FR-006d — o estado vazio do seletor. O texto anterior afirmava "a taxa exibida já é a
+      // correta" e prometia "conecte uma vez para carregá-la", no estado padrão de 100% dos usuários
+      // (o slot nasce em Mercado Livre, sem entradas e sem espinha): nenhuma taxa estava exibida, e
+      // conectar não carregava nada. Duas afirmações, ambas falsas, exatamente onde o vendedor mais
+      // precisa desconfiar. Agora há duas mensagens, e o seletor só fala do que ele sabe — a lista de
+      // categorias. Quem fala da taxa é o selo do mesmo slot, e os dois passam a concordar.
+      unavailableNoReference:
+        "Este canal ainda não tem taxa de referência — informe a comissão nos campos abaixo.",
+      unavailableWithFee: "A lista de categorias ainda não está disponível para este canal.",
     },
     seals: {
       reference: "Referência",

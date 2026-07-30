@@ -24,7 +24,15 @@ const SPINE: CategoryNode[] = [
 
 const setup = (props: Partial<React.ComponentProps<typeof CategoryPicker>> = {}) => {
   const onChange = vi.fn();
-  render(<CategoryPicker spine={SPINE} value={undefined} onChange={onChange} {...props} />);
+  render(
+    <CategoryPicker
+      spine={SPINE}
+      value={undefined}
+      onChange={onChange}
+      hasFeeReference={false}
+      {...props}
+    />,
+  );
   return { onChange, user: userEvent.setup() };
 };
 
@@ -79,8 +87,34 @@ describe("CategoryPicker — finding the category (US1)", () => {
   // seller has the RATE but not the full name list — the picker must say that plainly instead of
   // pretending the category does not exist.
   it("an empty spine explains itself instead of rendering a dead field", () => {
-    setup({ spine: [] });
+    setup({ spine: [], hasFeeReference: true });
     expect(screen.getByRole("status")).toBeVisible();
     expect(screen.queryByRole("combobox")).toBeNull();
+  });
+});
+
+// 014/T087 (A3, FR-006d) — o teste antigo verificava que EXISTIA um `role="status"`, nunca o que ele
+// dizia. O texto dizia duas coisas falsas no estado padrão de 100% dos usuários (o slot nasce em ML,
+// que hoje tem 0 entradas e 0 espinha): "a taxa exibida já é a correta" — não há taxa exibida — e
+// "conecte uma vez para carregá-la" — conectar não carrega nada enquanto a fatia ML está bloqueada.
+// Um `getByRole` sem asserção de conteúdo é um teste que garante que a mentira está na tela.
+describe("CategoryPicker — o estado vazio não afirma o que não é verdade (FR-006d)", () => {
+  it("sem taxa de referência: manda informar a comissão, e não promete carregamento", () => {
+    setup({ spine: [], hasFeeReference: false });
+    const nota = screen.getByRole("status").textContent ?? "";
+    // Concorda com o selo do mesmo slot, que nesse estado lê "sem referência".
+    expect(nota).toMatch(/informe a comissão/i);
+    // As duas afirmações falsas, nomeadas: nenhuma pode voltar por reescrita de copy.
+    expect(nota).not.toMatch(/taxa exibida/i);
+    expect(nota).not.toMatch(/correta/i);
+    expect(nota).not.toMatch(/conecte/i);
+  });
+
+  it("com taxa de referência: diz o que falta e nada sobre a taxa", () => {
+    setup({ spine: [], hasFeeReference: true });
+    const nota = screen.getByRole("status").textContent ?? "";
+    expect(nota).toMatch(/categorias/i); // o que de fato está faltando
+    expect(nota).not.toMatch(/correta/i); // quem fala da taxa é o selo, não o seletor
+    expect(nota).not.toMatch(/conecte/i); // o seletor não sabe se conectar resolve
   });
 });

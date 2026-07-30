@@ -29,22 +29,33 @@ export interface CategoryPickerProps {
   value?: string | undefined;
   /** Reports the chosen id, or `undefined` when cleared. */
   onChange: (categoryId: string | undefined) => void;
+  /**
+   * Does this slot currently stand on a fee it did not have to invent? (FR-006d.)
+   *
+   * The picker knows the category spine and NOTHING about the money — which is why its empty state
+   * used to assert "a taxa exibida já é a correta" while the same slot's seal read "sem referência".
+   * The caller derives this from that seal, so the two surfaces can no longer disagree.
+   */
+  hasFeeReference: boolean;
 }
 
 const MAX_RESULTS = 8;
 
-export function CategoryPicker({ spine, value, onChange }: CategoryPickerProps) {
+export function CategoryPicker({ spine, value, onChange, hasFeeReference }: CategoryPickerProps) {
   const [query, setQuery] = useState("");
   const listId = useId();
   const index = useMemo(() => indexSpine(spine), [spine]);
 
-  // The spine is sparse and the NAME index is fetched on demand (D2). Offline on a first run the
-  // seller already has the correct RATE but not the name list — say so plainly instead of rendering
-  // a search box that can never match anything.
+  // The spine is sparse and the NAME index is fetched on demand (D2), so an empty one is a real
+  // state, not an error — say so plainly instead of rendering a search box that can never match.
+  // WHAT to say depends on whether the slot has a fee behind it (FR-006d): with one, the only thing
+  // missing is the name list; without one, the honest instruction is to type the commission, which
+  // is exactly what the "sem referência" seal beside it already implies. The picker never claims a
+  // rate is shown, never claims it is correct, and never promises a load it cannot guarantee.
   if (spine.length === 0) {
     return (
       <p role="status" className="category-picker__note">
-        {t.unavailableOffline}
+        {hasFeeReference ? t.unavailableWithFee : t.unavailableNoReference}
       </p>
     );
   }
