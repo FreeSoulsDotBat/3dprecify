@@ -38,6 +38,58 @@ async function openFromLedger(page: Page, cardTitle: string): Promise<void> {
   await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 }
 
+// 014/T119 — um rótulo de UMA palavra de 120 caracteres. Não é entrada hostil: 120 é o `maxLength`
+// do próprio campo, então o produto CONVIDA a digitar exatamente isto. Sem quebra de palavra a
+// largura mínima do título vira a largura da palavra, e o detalhe do histórico rola de lado — o
+// seller perde a coluna de valores para ler um rótulo que ele mesmo escreveu.
+//
+// Asserção geométrica pela mesma razão da T118: extrair texto é cego para transbordo.
+const PALAVRA_120 = "a".repeat(120);
+
+for (const vp of [
+  { width: 390, height: 844 },
+  { width: 412, height: 915 },
+]) {
+  test(`T119: rótulo de palavra única de 120 caracteres não faz o histórico rolar de lado (${vp.width}px)`, async ({
+    page,
+  }, info) => {
+    const email = await signUpThrowaway(page, `hist-wrap${vp.width}-${info.workerIndex}`);
+    grantPremium(email);
+    await page.setViewportSize(vp);
+
+    await page.goto("/calcular");
+    await page.reload(); // a concessão só é lida na próxima carga
+    await page.getByRole("button", { name: t.historico.saveAction }).click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet.getByText(t.historico.saveSheetIntro)).toBeVisible();
+    await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(PALAVRA_120);
+    await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+    // ASSENTAR antes de navegar (online ⇒ synced) — senão o `goto` aborta o enfileiramento+drenagem
+    // em voo e o registro se perde em silêncio. É a mesma espera que os dois testes abaixo já fazem,
+    // e omiti-la produziu uma falha só na PRIMEIRA tentativa (a repetição passava com a máquina
+    // quente), que é exatamente a forma como uma corrida real se disfarça de instabilidade.
+    await expect(page.getByText(t.historico.saved)).toBeVisible();
+
+    // A LISTA primeiro: o card do razão carrega o mesmo rótulo.
+    await page.goto("/historico");
+    await expect(page.getByText(PALAVRA_120).first()).toBeVisible();
+    const naLista = await page.evaluate(() => {
+      const el = document.scrollingElement ?? document.documentElement;
+      return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+    });
+    expect(naLista.scrollWidth, `razão em ${vp.width}px`).toBe(naLista.clientWidth);
+
+    // E o DETALHE, onde o rótulo vira o título da página.
+    await page.getByText(PALAVRA_120).first().click();
+    await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
+    const noDetalhe = await page.evaluate(() => {
+      const el = document.scrollingElement ?? document.documentElement;
+      return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+    });
+    expect(noDetalhe.scrollWidth, `detalhe em ${vp.width}px`).toBe(noDetalhe.clientWidth);
+  });
+}
+
 test("SC-502/US3: deleting the origin product never moves the snapshot's values — only its link goes", async ({
   page,
 }, info) => {

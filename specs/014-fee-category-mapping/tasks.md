@@ -467,8 +467,28 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 >    var(--space-3))` **incondicionalmente**, então no desktop o toast flutua 76px acima do chão sem
 >    TabBar nenhuma. É o mesmo problema pelo outro lado, e `--pinned-bottom` é o consumidor natural
 >    — mas mexer no toast é fora do escopo desta tarefa e tem e2e próprio.
-- [ ] T119a [P] Teste **geométrico** (falhando primeiro): rótulo de palavra única de 120 caracteres — o limite do próprio campo — mantém `documentElement.scrollWidth === clientWidth` no detalhe do histórico em 390px e 412px — em `apps/web/tests/e2e/history-manage.spec.ts`
-- [ ] T119 [P] Um rótulo com palavra longa sem espaços — **digitado dentro do limite de 120 do próprio campo** — faz o detalhe do histórico transbordar para **1676px** num viewport de 412. Quebra de palavra + contenção com `overflow-x` próprio — em `apps/web/src/pages/historico/`
+- [x] T119a [P] Teste **geométrico** (falhando primeiro): rótulo de palavra única de 120 caracteres — o limite do próprio campo — mantém `documentElement.scrollWidth === clientWidth` no detalhe do histórico em 390px e 412px — em `apps/web/tests/e2e/history-manage.spec.ts`
+- [x] T119 [P] Um rótulo com palavra longa sem espaços — **digitado dentro do limite de 120 do próprio campo** — faz o detalhe do histórico transbordar para **1676px** num viewport de 412. Quebra de palavra + contenção com `overflow-x` próprio — em `apps/web/src/pages/historico/`
+
+> **Nota de execução (T119, 2026-07-30)** — falha MEDIDA: **1798px** num viewport de 390. Três
+> desvios do que a tarefa previa, todos por medição e não por leitura:
+> 1. **A lista NUNCA transbordou** — só o detalhe. O card do razão já quebra o rótulo; a asserção da
+>    lista entrou no teste e passou de primeira, o que é evidência, não redundância.
+> 2. **O culpado é um só, e não fica em `pages/historico/`**: um diagnóstico em browser que lista
+>    todo elemento com `scrollWidth > clientWidth` termina em `h1.tf-page-header__title`
+>    (client=358, scroll=1782) — o widget COMPARTILHADO. Todos os ancestrais acima apenas herdavam a
+>    largura. O conserto é uma linha lá, e vale para toda página que dá nome a um registro.
+> 3. **Nada ganhou `overflow-x` próprio**, ao contrário do que a tarefa sugeria: com a palavra
+>    quebrando não sobra o que conter, e um contêiner de rolagem que nunca pode ser exercitado é
+>    defesa contra um estado que não ocorre (Princípio V). `anywhere` e não `break-word` — este
+>    último se recusa a quebrar justamente quando é a largura mínima do elemento que define o
+>    contêiner, que é este caso.
+>
+> **E o teste tinha uma corrida minha**: navegar logo após "Salvar no histórico" aborta o
+> enfileiramento+drenagem em voo e o registro se perde em silêncio. Falhava só na PRIMEIRA tentativa
+> (a repetição passava com a máquina quente) — a forma exata como uma corrida real se disfarça de
+> instabilidade. Os dois testes vizinhos do mesmo arquivo já documentavam a espera, com essas
+> palavras; o meu a omitiu. Quinta vez nesta sessão em que o repositório já descrevia a armadilha.
 - [ ] T120a [P] Teste (falhando primeiro): canal gravado **sem comissão resolvível** não exibe "Preço para anunciar" nem "Recebido líquido" no detalhe congelado — herda a mesma recusa que a Calcular aplica com `hasFee: false` (Princípio II) — em `apps/web/tests/e2e/history-manage.spec.ts`
 - [ ] T120 [P] O registro congelado exibe "Preço para anunciar" e "Recebido líquido" para um canal **sem comissão informada** — exatamente os números que a Calcular se **recusou** a exibir (`hasFee: false` esconde atrás de "Informe a comissão…"). O histórico precisa herdar a mesma recusa, ou o congelado afirma o que a origem negou (Princípio II) — em `apps/web/src/pages/historico/`
 
