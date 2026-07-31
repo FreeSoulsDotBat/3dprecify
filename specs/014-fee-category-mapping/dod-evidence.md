@@ -107,8 +107,44 @@ do E2 e confirmada em `develop`; coluna vazia no desktop) ficaram registrados co
 > mandato enumerado com os números de ANTES para comparar, e a stack subida pelo loop principal antes
 > do hand-off.
 
+## Revisão adversarial final (workflow, 2026-07-31)
+
+14 agentes: 5 lentes independentes → 18 achados → os 4 mais severos com **2 céticos cada, default =
+refutado**. Achou **um bloqueador**, corrigido em `6b2f267`.
+
+**O bloqueador — `catalogVersion` não bumpado.** Medido:
+
+| | `adf85ed` | `5e63047` |
+|---|---|---|
+| `catalogVersion` | `2026-07-28.0` | `2026-07-28.0` |
+| entradas | 77 | **79** |
+
+Duas entradas novas sob rótulo idêntico, porque o gerador cravava a sequência em `.0`. O rótulo é
+congelado dentro do payload que o **ADR-0019 torna imutável**: dois registros com o mesmo nome
+descreviam tabelas diferentes — numa, um slot Amazon sem categoria não tinha preço; na outra, ele
+precifica a 15% pelo catch-all. O campo existe para responder *qual tabela produziu este número*, e um
+registro irregravável não tem conserto depois. Corrigido com `nextCatalogVersion` em `guardrails.ts`
+(fora do `.mjs`, que é isento de cobertura) + artefato em `2026-07-28.1` **sem nova leitura**.
+
+**A evidência mais forte do lote veio de onde ninguém pediu:** o crítico de completude rodou um
+diferencial **velho-vs-novo** do `grossUp` — 9 tabelas do catálogo × 100.000 bases cada — e mediu
+**0 diferenças** em anúncio, líquido e banda aplicada. É a prova de que a reescrita T113/T114 não moveu
+nenhum centavo alcançável.
+
+**O que sobrou está em `tasks.md`** (A1-r, B, C, D, E), cada um com a sua medição — incluindo o `sort`
+de `chooseBand` (recomendação dominada numa tabela em "vale", **exposição hoje zero medida em três
+vias**), o teste de monotonicidade que afirma em geral e prova num fixture, e o byte NUL que faz o git
+tratar `fee-catalog.ts` como binário — cegando `diff` e `blame` num arquivo de schema de precificação.
+
+> **Custo** (`docs/token-ledger.md`): **1.476.942** contra estimativa de 400–700k — **2,1× errado**. A
+> estimativa ancorou em número de agentes; o custo veio de **profundidade de execução por lente** (473
+> usos de ferramenta para 14 agentes: as lentes copiaram fontes, rodaram `node` sobre o `pricing-core`
+> real e varreram 100k bases com oráculo próprio). Para revisão, capar céticos quase não move a conta.
+
 ## Pendente para o merge
 
 - [x] Homologação visual (`qa-produto`) do PR #31 — **PASS COM RESSALVAS**, as duas ressalvas
       acionáveis corrigidas.
+- [x] Revisão adversarial final (workflow) — o único bloqueador corrigido; o resto registrado.
+- [x] CI verde em `6b2f267` — **9/9**.
 - [ ] Autorização do dono para o squash-merge em `develop` (ADR-0006).
