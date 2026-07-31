@@ -78,6 +78,26 @@ tasks, per Principle VIII — nothing was inferred). It has not yet shipped to `
 **013-audit-remediation is in progress** (branch `013-audit-remediation`) — the 10-specialist audit's
 remediation increment; this US7 docs-only pass is part of it. See `specs/013-audit-remediation/{spec.md,
 tasks.md}`.
+**014-fee-category-mapping PR-A SHIPPED to `develop`** (PR #31, `461a367`, 2026-07-31, owner-merged) —
+the category→commission axis + the Amazon map (US1+US2+US3 + the monthly comparator), plus **Fase 6C**,
+the correction phase that gated the merge. **ADR-0024** (progressive price bands; additive `bandMode`,
+absence = `SELECTION`) Accepted + live. Owner-homologated (`qa-produto`, PASS COM RESSALVAS 92%, 41
+screenshots, geometry read from the DOM) after an adversarial workflow review whose ONE blocker —
+`catalogVersion` unbumped across a 77→79-entry change — was fixed before merge. Evidence:
+`specs/014-fee-category-mapping/{tasks.md,dod-evidence.md}`.
+**014's lesson, paid three times in one phase: a screenshot finds what a geometric assertion cannot,
+and a geometric assertion finds what text extraction cannot.** `toBeVisible`/`toContainText` pass on an
+element wholly occluded or overflowed — occlusion is not a property of text — so layout is asserted with
+BOXES; and the picker's result list read as a second filled field, plus a count that claimed "8 found"
+when 31 matched, were both invisible to every assertion and visible in the image. Corollary: a review
+that only reads code homologates nothing.
+STILL OPEN in 014 (NOT review debt): US4 monthly loop (14 tasks, T101–T106 moved there), **US6 ML slice**
+(blocked on the `seguranca` parecer's 8 conditions AND a separate owner authorization), US1 residual, US5,
+US8, Polish. Follow-ups with their measurements in `tasks.md`: **A1-r** (`chooseBand` sorts rank before
+price ⇒ a dominated announce on a "valley" table — reachable exposure TODAY is zero, measured three ways —
+paired with a monotonicity test that asserts generally and proves on one fixture), **B** (a literal NUL
+byte in `determinantKey` makes git treat `fee-catalog.ts` as BINARY, blinding `diff` and `blame` on a
+pricing-schema file), plus 14 lower-severity findings left **unverified, never confirmed**.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
@@ -134,12 +154,17 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
 at specs/014-fee-category-mapping/plan.md
-(014 = the category→fee mapping increment, spec + clarify + plan done 2026-07-28. Its four
+(014 = the category→fee mapping increment. **PR-A SHIPPED to `develop` 2026-07-31** (`461a367`);
+US4/US5/US6/US8 + Polish remain — see `specs/014-fee-category-mapping/tasks.md`. Its four
 gates are MEASURED and recorded in ADR-0010 §A13 — read that before touching the ingestion:
 ML has NO geo-gate (the belief held since 2026-07-06 is false), Amazon needs NO credential,
 and ML's commission is piecewise-constant down the category tree (~87.5% of nodes inherit),
 which is why resolution walks the ancestor chain. THREE structural choices are deliberately
 UNDECIDED under Principle VIII — see plan.md §Decisões estruturais pendentes; the tasks that
-depend on them stop until the owner decides. 012-e6-billing is still mid-flight on its own
-branch; re-point here when it lands.)
+depend on them stop until the owner decides. **The ML slice (US6) needs BOTH the `seguranca`
+parecer's 8 conditions AND a separate owner authorization — do not start it on a "continue".**
+`catalogVersion` is now sequenced by `nextCatalogVersion` in `packages/fee-ingest/src/guardrails.ts`:
+it moves only when the CONTENT changes, because that label is frozen into an ADR-0019-immutable
+snapshot and must keep answering WHICH table priced a record. 012-e6-billing is still mid-flight on
+its own branch; re-point here when it lands.)
 <!-- SPECKIT END -->
