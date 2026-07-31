@@ -56,6 +56,42 @@ export interface BuildOptions {
   collectedAt: string;
   /** ISO date the source itself declares as effective, when it publishes one. */
   effectiveDate: string;
+  /**
+   * 014/T101 — o `effectiveDate` que cada entrada JA tinha, por determinantes.
+   *
+   * Sem isto, a regeracao carimbava a data da EXECUCAO em toda entrada, e o campo passava a
+   * responder "quando o robo passou" em vez de "desde quando a tarifa vale". Como `effectiveDate`
+   * nao e inerte no comparador — e nao deve ser, uma mudanca real de vigencia e noticia de
+   * dinheiro — duas execucoes sobre a mesma tabela marcavam TODAS as entradas como alteradas e
+   * `mayAutoMerge` nunca dispensava nada: o laco mensal nascia incapaz de dizer "nada mudou".
+   *
+   * Ausente = primeira montagem (ou chamador que nao tem historico): toda entrada recebe
+   * `effectiveDate`, que e o comportamento anterior e continua correto para uma entrada nova.
+   */
+  previousEffectiveDates?: ReadonlyMap<string, string>;
+}
+
+/** Identidade de uma entrada Amazon: o par de determinantes que a resolve. */
+function entryKey(plan: string, category: string | null): string {
+  return `${plan}|${category ?? ""}`;
+}
+
+/**
+ * O mapa de `effectiveDate` por entrada, lido do artefato ANTERIOR — a memoria que a regeracao
+ * precisa para nao reescrever uma vigencia que a fonte nunca mudou (T101).
+ */
+export function effectiveDatesOf(
+  entries: readonly {
+    determinants: { plan: string; category?: string };
+    effectiveDate: string;
+  }[],
+): ReadonlyMap<string, string> {
+  return new Map(
+    entries.map((e) => [
+      entryKey(e.determinants.plan, e.determinants.category ?? null),
+      e.effectiveDate,
+    ]),
+  );
 }
 
 const PLANS = ["PROFISSIONAL", "INDIVIDUAL"] as const;
@@ -91,7 +127,9 @@ export function amazonEntries(categories: readonly ParsedCategory[], opts: Build
     freight: { kind: "NONE" as const },
     source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
     sourceUrl: AMAZON_SOURCE_URL,
-    effectiveDate: opts.effectiveDate,
+    // T101: a fonte manda; na ausencia de declaracao, o que a entrada JA tinha; so uma entrada
+    // nova estreia com a data desta coleta.
+    effectiveDate: opts.previousEffectiveDates?.get(entryKey(plan, category)) ?? opts.effectiveDate,
     lastReviewed: opts.collectedAt,
   });
 

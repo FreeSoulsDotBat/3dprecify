@@ -585,7 +585,7 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
   item acima: alargar a varredura reprova enquanto o `sort` não mudar
 - [ ] **B — `fee-catalog.ts` é BINÁRIO para o git** (`Bin 14402 → 14879`): há um byte NUL literal em
-  `determinantKey` (`return " null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
+  `determinantKey` (`return "\0null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
   **não viu nada** — inclusive a reescrita do guard A2 (T085/T086), mudança de validação no domínio de
   precificação, invisível ao diff E ao `blame`. Trocar por `"\0null"` ou `"__null__"`
 - [ ] **C — `PRICING_MODEL_VERSION` continua 3.1.0 sobre uma implementação reescrita.** O crítico de

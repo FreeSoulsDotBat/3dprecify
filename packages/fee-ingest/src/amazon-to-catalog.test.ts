@@ -7,8 +7,10 @@ import {
   AMAZON_SOURCE_URL,
   amazonEntries,
   amazonSpine,
+  effectiveDatesOf,
   categoryId,
 } from "./amazon-to-catalog";
+import { diffCatalogs, mayAutoMerge } from "./catalog-diff";
 import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails";
 
 const CATS: ParsedCategory[] = [
@@ -255,5 +257,88 @@ describe("nextCatalogVersion — o rótulo nomeia o DADO, não a execução", ()
   it("rótulo anterior ilegível: começa em .0 da data de hoje, sem inventar sequência", () => {
     expect(nextCatalogVersion("cru", "2026-08-01", true)).toBe("2026-08-01.0");
     expect(nextCatalogVersion("", "2026-08-01", true)).toBe("2026-08-01.0");
+  });
+});
+
+// 014/T101 [US4] — a PRE-CONDICAO do laco mensal, e a que decide se ele nasce util.
+//
+// MEDIDO no artefato de hoje: as 78 entradas Amazon carregam `effectiveDate: "2026-07-28"`, que e a
+// data em que EU RODEI o script; a unica entrada Shopee carrega "2026-03-01", que e uma data
+// DECLARADA PELA FONTE. O campo existe para dizer desde quando a tarifa vale — e a Amazon estava
+// recebendo quando o robo passou por la.
+//
+// A consequencia nao e cosmetica: `effectiveDate` NAO esta em `INERT_PATHS` (e nao deve estar — uma
+// mudanca real de vigencia e noticia de dinheiro). Entao regerar mes que vem sobre uma tabela
+// IDENTICA marcaria as 78 como alteradas, `freshnessOnly` cairia, e `mayAutoMerge` jamais
+// dispensaria revisao. O laco mensal nasceria incapaz de dizer "nada mudou".
+//
+// Decisao do dono (2026-07-31): PRESERVAR o valor anterior. Entrada nova recebe a data da sua
+// primeira coleta — que e verdade e e parseavel, ao contrario de um literal livre.
+describe("effectiveDate — o campo diz desde quando a tarifa vale, nao quando o robo passou (T101)", () => {
+  const CATS: ParsedCategory[] = [
+    { name: "Calcados", commissionPct: 14, minPerItem: 1, bands: null },
+    // Inclui o catch-all publicado, para exercitar TAMBEM a entrada modality-only (sem categoria).
+    { name: "Outros", commissionPct: 15, minPerItem: 1, bands: null },
+  ];
+
+  it("entrada que ja existia preserva o effectiveDate anterior, mesmo em outra data de coleta", () => {
+    const antes = amazonEntries(CATS, { collectedAt: "2026-07-28", effectiveDate: "2026-07-28" });
+    const depois = amazonEntries(CATS, {
+      collectedAt: "2026-08-01",
+      effectiveDate: "2026-08-01",
+      previousEffectiveDates: effectiveDatesOf(antes),
+    });
+    for (const e of depois) expect(e.effectiveDate).toBe("2026-07-28");
+    // …e `lastReviewed` AVANCA: ele diz quando conferimos, que e outra pergunta.
+    for (const e of depois) expect(e.lastReviewed).toBe("2026-08-01");
+  });
+
+  it("entrada NOVA recebe a data da sua primeira coleta", () => {
+    const antes = amazonEntries(CATS, { collectedAt: "2026-07-28", effectiveDate: "2026-07-28" });
+    const depois = amazonEntries(
+      [...CATS, { name: "Joias", commissionPct: 20, minPerItem: 1, bands: null }],
+      {
+        collectedAt: "2026-08-01",
+        effectiveDate: "2026-08-01",
+        previousEffectiveDates: effectiveDatesOf(antes),
+      },
+    );
+    const nova = depois.filter(
+      (e) => "category" in e.determinants && e.determinants.category === "joias",
+    );
+    expect(nova.length).toBeGreaterThan(0);
+    for (const e of nova) expect(e.effectiveDate).toBe("2026-08-01");
+  });
+
+  // A assercao que importa nao e sobre o campo: e sobre a CONSEQUENCIA. Sem isto o laco mensal
+  // existe e nao serve.
+  it("duas execucoes sobre a MESMA tabela produzem diff dispensavel — a razao de a tarefa existir", () => {
+    const cat = (entries: unknown[]) => ({
+      catalogVersion: "2026-07-28.1",
+      marketplaces: [{ marketplace: "AMAZON", categorySpine: [], entries }],
+    });
+    const antes = amazonEntries(CATS, { collectedAt: "2026-07-28", effectiveDate: "2026-07-28" });
+    const depois = amazonEntries(CATS, {
+      collectedAt: "2026-08-01",
+      effectiveDate: "2026-08-01",
+      previousEffectiveDates: effectiveDatesOf(antes),
+    });
+    const diff = diffCatalogs(cat(antes) as never, cat(depois) as never);
+    // `changedEntries` NAO fica vazio, e nao deveria: `lastReviewed` avanca de verdade — conferimos
+    // a tabela hoje. O que a tarefa exige e que TODA mudanca seja inerte, e so isso libera a
+    // dispensa. Asserir lista vazia teria sido asserir a coisa errada.
+    const caminhos = [...new Set(diff.changedEntries.flatMap((e) => e.changes.map((c) => c.path)))];
+    expect(caminhos).toEqual(["lastReviewed"]);
+    expect(mayAutoMerge(diff)).toBe(true);
+  });
+
+  it("SEM o mapa anterior o defeito reaparece — a guarda e o mapa, nao a sorte", () => {
+    const cat = (entries: unknown[]) => ({
+      catalogVersion: "2026-07-28.1",
+      marketplaces: [{ marketplace: "AMAZON", categorySpine: [], entries }],
+    });
+    const antes = amazonEntries(CATS, { collectedAt: "2026-07-28", effectiveDate: "2026-07-28" });
+    const depois = amazonEntries(CATS, { collectedAt: "2026-08-01", effectiveDate: "2026-08-01" });
+    expect(mayAutoMerge(diffCatalogs(cat(antes) as never, cat(depois) as never))).toBe(false);
   });
 });

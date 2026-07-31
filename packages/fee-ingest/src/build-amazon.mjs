@@ -16,7 +16,7 @@ import { fileURLToPath } from "node:url";
 
 import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
 import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails.ts";
-import { amazonEntries, amazonSpine } from "./amazon-to-catalog.ts";
+import { amazonEntries, amazonSpine, effectiveDatesOf } from "./amazon-to-catalog.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 const PAGE =
@@ -88,7 +88,16 @@ if (!amazon) {
 
 // Keep the original marketplace ORDER so the monthly diff stays readable, and carry every other
 // marketplace through untouched — regenerating Amazon must never quietly drop Shopee's curation.
-const entries = amazonEntries(categories, { collectedAt, effectiveDate: collectedAt });
+// T101 — a MEMÓRIA da vigência anterior. Sem ela a regeração carimbava a data da execução em toda
+// entrada, e como `effectiveDate` não é inerte no comparador, duas execuções sobre a mesma tabela
+// marcavam TODAS como alteradas: o laço mensal nascia incapaz de dizer "nada mudou". A fonte da
+// Amazon não publica vigência, então o valor honesto é o que a entrada já tinha — só uma entrada
+// nova estreia com a data desta coleta.
+const entries = amazonEntries(categories, {
+  collectedAt,
+  effectiveDate: collectedAt,
+  previousEffectiveDates: effectiveDatesOf(amazon.entries),
+});
 const marketplaces = artifact.marketplaces.map((m) =>
   m.marketplace === "AMAZON" ? { ...amazon, categorySpine: amazonSpine(categories), entries } : m,
 );
