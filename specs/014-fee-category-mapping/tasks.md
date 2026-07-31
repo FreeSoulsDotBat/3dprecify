@@ -489,8 +489,34 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > (a repetição passava com a máquina quente) — a forma exata como uma corrida real se disfarça de
 > instabilidade. Os dois testes vizinhos do mesmo arquivo já documentavam a espera, com essas
 > palavras; o meu a omitiu. Quinta vez nesta sessão em que o repositório já descrevia a armadilha.
-- [ ] T120a [P] Teste (falhando primeiro): canal gravado **sem comissão resolvível** não exibe "Preço para anunciar" nem "Recebido líquido" no detalhe congelado — herda a mesma recusa que a Calcular aplica com `hasFee: false` (Princípio II) — em `apps/web/tests/e2e/history-manage.spec.ts`
-- [ ] T120 [P] O registro congelado exibe "Preço para anunciar" e "Recebido líquido" para um canal **sem comissão informada** — exatamente os números que a Calcular se **recusou** a exibir (`hasFee: false` esconde atrás de "Informe a comissão…"). O histórico precisa herdar a mesma recusa, ou o congelado afirma o que a origem negou (Princípio II) — em `apps/web/src/pages/historico/`
+- [x] T120a [P] Teste (falhando primeiro): canal gravado **sem comissão resolvível** não exibe "Preço para anunciar" nem "Recebido líquido" no detalhe congelado — herda a mesma recusa que a Calcular aplica com `hasFee: false` (Princípio II) — em `apps/web/tests/e2e/history-manage.spec.ts`
+- [x] T120 [P] O registro congelado exibe "Preço para anunciar" e "Recebido líquido" para um canal **sem comissão informada** — exatamente os números que a Calcular se **recusou** a exibir (`hasFee: false` esconde atrás de "Informe a comissão…"). O histórico precisa herdar a mesma recusa, ou o congelado afirma o que a origem negou (Princípio II) — em `apps/web/src/pages/historico/`
+
+> **Nota de execução (T120, 2026-07-30)** — reproduzido literalmente antes do conserto, no estado
+> PADRÃO de 100% dos usuários (o slot nasce em Mercado Livre, que hoje não tem entrada no catálogo):
+> `"MERCADO_LIVRE · Preço para anunciar · Varejo R$ 30,90 · Recebido líquido · Varejo R$ 30,90 ·
+> Preço para anunciar · Atacado R$ 26,78 · Recebido líquido · Atacado R$ 26,78"` — anúncio igual ao
+> líquido igual ao preço direto, quatro linhas afirmando um preço de marketplace que nunca foi
+> calculado. A mesma asserção contra a tela da Calcular passou de primeira: a origem já recusava.
+>
+> **O conserto é de LEITURA, não de escrita, e essa é a decisão que importa.** As entradas de taxa já
+> viajam dentro do documento (`inputs.channels` no SINGLE, `lines[].input.channels` no KIT), então o
+> fato é recuperável de **todo registro já gravado** — que um gatilho de banco torna irregravável
+> (ADR-0019). Congelar `null` na escrita teria consertado só os registros futuros e deixado os
+> existentes afirmando a mesma coisa para sempre.
+>
+> 1. **Num KIT o canal é um ROLLUP**: casa por marketplace, nunca por índice. Se QUALQUER linha
+>    contribuinte pagou taxa naquele marketplace, o número somado significa alguma coisa.
+> 2. **`true` quando a ausência não é PROVÁVEL** — payload sem entradas de canal, índice fora da
+>    lista, rollup sem slot correspondente. Esconder uma linha por palpite é a mesma fabricação na
+>    direção contrária (SC-815). O teste M11 que já existia em `snapshot-detail.test.tsx` usa um
+>    payload sem `inputs`, e passou sem tocar — virou a guarda de regressão dessa regra.
+> 3. **`error` e `contributingLines` ficaram FORA do portão**: um erro não é um preço, e as contagens
+>    descrevem a composição, não o dinheiro.
+> 4. **Verificado e fora do escopo**: o export PDF/CSV (`quote_render.py`) não renderiza canais, então
+>    a mesma mentira não existe no documento que o vendedor manda ao cliente.
+> 5. O arquivo **já declarava a proibição** no seu cabeçalho — "uma linha ausente não é um zero"
+>    (FR-507) — e o bloco de canais era o único lugar que não a honrava. Sexta vez nesta sessão.
 
 **Fora desta branch — registrado, não executável aqui**
 

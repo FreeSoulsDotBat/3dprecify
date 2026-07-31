@@ -316,3 +316,64 @@ export function freezeBomResult(
     provenance,
   };
 }
+
+/** Is this frozen channel INPUT carrying a fee at all? The six fields are the same ones the live
+ *  calculator's `hasFee` reads (`calculator-model.ts`) — kept in sync by the shared meaning, not by
+ *  a shared call, because this side reads exact decimal STRINGS out of an immutable document. */
+function feeBearing(slot: FrozenInputValue | undefined): boolean {
+  if (slot === null || typeof slot !== "object" || Array.isArray(slot)) return false;
+  const positive = (key: string): boolean => Number(slot[key] ?? 0) > 0;
+  const filled = (key: string): boolean => Array.isArray(slot[key]) && slot[key].length > 0;
+  return (
+    positive("commissionPct") ||
+    positive("fixedFee") ||
+    positive("minPerItem") ||
+    positive("freightCost") ||
+    filled("priceBands") ||
+    filled("freightVoucherBands")
+  );
+}
+
+/**
+ * 014/T120 — did the channel at `index` of `payload.channels` stand on a fee?
+ *
+ * With a commission of 0 the engine returns anúncio == base and líquido == base: real numbers, but
+ * NOT a marketplace price. The calculator already refuses to show them ("Informe a comissão do canal
+ * para ver os preços"); the frozen detail printed all four lines and so asserted what its own origin
+ * had denied (Princípio II). This is the read-time half of that refusal.
+ *
+ * READ-time and not write-time on purpose. The fee inputs travel inside the document already
+ * (`inputs.channels` for a SINGLE, `lines[].input.channels` for a KIT), so the fact is recoverable
+ * from every record ever written — including the ones already frozen, which a DB trigger makes
+ * unrewritable anyway (ADR-0019). Freezing nulls instead would have fixed only future records and
+ * left the existing ones asserting the same thing forever.
+ *
+ * It answers `true` whenever the absence of a fee cannot be PROVEN from the document — a payload
+ * with no channel inputs at all, or a rollup with no matching slot. Suppressing a line on a guess
+ * would be the same fabrication in the other direction (SC-815).
+ */
+export function frozenChannelHasFee(payload: FrozenSnapshotPayload, index: number): boolean {
+  const rendered = payload.channels?.[index];
+  if (!rendered) return true;
+
+  if (payload.kind === "SINGLE") {
+    const slots = payload.inputs?.["channels"];
+    if (!Array.isArray(slots) || slots[index] === undefined) return true;
+    return feeBearing(slots[index]);
+  }
+
+  // A KIT channel is a ROLLUP over the lines, so it is matched by marketplace, never by index. If
+  // ANY contributing line carried a fee for that marketplace, the rolled-up number means something.
+  let matched = false;
+  for (const line of payload.lines ?? []) {
+    const slots = line.input["channels"];
+    if (!Array.isArray(slots)) continue;
+    for (const slot of slots) {
+      if (slot === null || typeof slot !== "object" || Array.isArray(slot)) continue;
+      if (slot["marketplace"] !== rendered.marketplace) continue;
+      matched = true;
+      if (feeBearing(slot)) return true;
+    }
+  }
+  return !matched;
+}

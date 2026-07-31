@@ -6,6 +6,8 @@ import {
   freezeBomResult,
   freezePriceResult,
   type FrozenBreakdown,
+  frozenChannelHasFee,
+  type FrozenSnapshotPayload,
   type MoneyString,
   readFrozenMoney,
   toMoneyString,
@@ -357,5 +359,115 @@ describe("I2 — catalogVersion is captured at the document root (fee provenance
     );
     expect(allManual.catalogVersion).toBeNull();
     expect("catalogVersion" in allManual).toBe(true);
+  });
+});
+
+// 014/T120 — a recusa que a Calcular já aplica, herdada em tempo de LEITURA. Com comissão 0 o motor
+// devolve anúncio == base: um número real que não é um preço de marketplace. O detalhe congelado
+// imprimia as quatro linhas e passava a afirmar o que a própria origem tinha negado (Princípio II).
+//
+// Leitura e não escrita de propósito: as entradas de taxa já viajam dentro do documento, então o
+// fato é recuperável de TODO registro já gravado — que um gatilho de banco torna irregravável.
+describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (T120)", () => {
+  const semTaxa = (marketplace: string) => ({
+    marketplace,
+    commissionPct: "0.00",
+    fixedFee: "0.00",
+    minPerItem: "0.00",
+    freightCost: "0.00",
+  });
+
+  function single(slots: unknown[]): FrozenSnapshotPayload {
+    return {
+      schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+      kind: "SINGLE",
+      modelVersion: "3.1.0",
+      catalogVersion: null,
+      inputs: { channels: slots } as never,
+      totals: { custoTotal: "10.00", precoVarejo: "15.00", precoAtacado: "13.00" },
+      channels: slots.map((s) => ({
+        marketplace: (s as { marketplace: string }).marketplace,
+        precoAnuncioVarejo: "15.00" as MoneyString,
+      })),
+      provenance: null,
+    };
+  }
+
+  it("um slot sem NENHUMA taxa não tem preço de canal", () => {
+    expect(frozenChannelHasFee(single([semTaxa("MERCADO_LIVRE")]), 0)).toBe(false);
+  });
+
+  it("basta UMA das seis entradas para o número significar alguma coisa", () => {
+    const casos = [
+      { commissionPct: "12.00" },
+      { fixedFee: "6.00" },
+      { minPerItem: "1.00" },
+      { freightCost: "19.90" },
+      { priceBands: [{ minPrice: "0.00", maxPrice: null, commissionPct: "14.00" }] },
+      { freightVoucherBands: [{ minPrice: "0.00", maxPrice: null, voucherCeiling: "10.00" }] },
+    ];
+    for (const extra of casos) {
+      const slot = { ...semTaxa("SHOPEE"), ...extra };
+      expect(frozenChannelHasFee(single([slot]), 0), JSON.stringify(extra)).toBe(true);
+    }
+  });
+
+  // SC-815: esconder uma linha por PALPITE é a mesma fabricação na direção contrária. Só se
+  // suprime o que o documento PROVA — um payload sem entradas de canal não prova nada.
+  it("sem entradas de canal no documento, o preço permanece — a ausência não é provável", () => {
+    const antigo = { ...single([semTaxa("MERCADO_LIVRE")]) };
+    delete antigo.inputs;
+    expect(frozenChannelHasFee(antigo, 0)).toBe(true);
+    expect(frozenChannelHasFee(single([]), 0)).toBe(true); // índice fora da lista
+  });
+
+  it("num KIT o canal é um ROLLUP: casa por marketplace, nunca por índice", () => {
+    const kit = (linhas: unknown[][]): FrozenSnapshotPayload => ({
+      schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+      kind: "KIT",
+      modelVersion: "3.1.0",
+      catalogVersion: null,
+      lines: linhas.map((slots) => ({
+        name: null,
+        quantity: 1,
+        input: { channels: slots } as never,
+        breakdown: {
+          material: "1.00",
+          energy: "0.00",
+          machine: "0.00",
+          falha: "0.00",
+          finishing: "0.00",
+          labor: "0.00",
+          admin: "0.00",
+          otherCosts: [],
+        } as FrozenBreakdown,
+        totals: { custoTotal: "1.00", precoVarejo: "2.00", precoAtacado: "2.00" },
+      })),
+      totals: { custoTotal: "2.00", precoVarejo: "4.00", precoAtacado: "4.00" },
+      channels: [{ marketplace: "MERCADO_LIVRE", precoAnuncioVarejo: "4.00" as MoneyString }],
+      provenance: null,
+    });
+
+    // Nenhuma linha pagou comissão no ML → o rollup não é um preço.
+    expect(
+      frozenChannelHasFee(kit([[semTaxa("MERCADO_LIVRE")], [semTaxa("MERCADO_LIVRE")]]), 0),
+    ).toBe(false);
+    // UMA linha pagou → o número somado significa alguma coisa, e fica.
+    expect(
+      frozenChannelHasFee(
+        kit([
+          [semTaxa("MERCADO_LIVRE")],
+          [{ ...semTaxa("MERCADO_LIVRE"), commissionPct: "14.00" }],
+        ]),
+        0,
+      ),
+    ).toBe(true);
+    // Uma taxa em OUTRO marketplace não empresta significado a este.
+    expect(
+      frozenChannelHasFee(
+        kit([[semTaxa("MERCADO_LIVRE"), { ...semTaxa("SHOPEE"), commissionPct: "20.00" }]]),
+        0,
+      ),
+    ).toBe(false);
   });
 });

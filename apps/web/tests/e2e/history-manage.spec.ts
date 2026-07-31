@@ -90,6 +90,48 @@ for (const vp of [
   });
 }
 
+// 014/T120 — o congelado exibia "Preço para anunciar" e "Recebido líquido" para um canal SEM
+// comissão informada: exatamente os números que a Calcular se recusa a mostrar (`hasFee: false`
+// esconde as linhas atrás de "Informe a comissão do canal para ver os preços"). Com comissão 0 o
+// motor devolve anúncio == base, então há um número — mas ele não é um preço de marketplace, e o
+// congelado passava a afirmar o que a origem tinha negado (Princípio II).
+//
+// Não é um caso de borda: o slot padrão de 100% dos usuários nasce em Mercado Livre, que hoje não
+// tem entrada no catálogo. Quem grava sem digitar comissão cai exatamente aqui.
+test("T120: um canal sem comissão informada não ganha preço no congelado que a Calcular recusou", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `hist-nofee-${info.workerIndex}`);
+  grantPremium(email);
+  const rotulo = `sem-comissao-${info.workerIndex}-${Date.now()}`;
+
+  await page.goto("/calcular");
+  await page.reload();
+
+  // A ORIGEM recusa: nenhuma linha de preço para o canal, e o motivo dito em palavras.
+  await expect(page.getByText(t.calculator.channels.noFeeHint)).toBeVisible();
+  const slotDaCalcular = page.getByTestId("channel-price").first();
+  await expect(slotDaCalcular).not.toContainText(t.calculator.results.precoAnuncio);
+  await expect(slotDaCalcular).not.toContainText(t.calculator.results.recebidoLiquido);
+
+  await page.getByRole("button", { name: t.historico.saveAction }).click();
+  const sheet = page.getByRole("dialog");
+  await expect(sheet.getByText(t.historico.saveSheetIntro)).toBeVisible();
+  await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(rotulo);
+  await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+  await expect(page.getByText(t.historico.saved)).toBeVisible(); // assentar antes de navegar
+
+  await openFromLedger(page, rotulo);
+
+  // O CONGELADO herda a recusa: o canal aparece (a escolha do vendedor não se apaga), sem os dois
+  // números, e dizendo por quê.
+  const canais = page.locator(".tf-historico__channel");
+  await expect(canais.first()).toBeVisible();
+  await expect(canais.first()).not.toContainText(t.calculator.results.precoAnuncio);
+  await expect(canais.first()).not.toContainText(t.calculator.results.recebidoLiquido);
+  await expect(canais.first()).toContainText(t.historico.channelNoFee);
+});
+
 test("SC-502/US3: deleting the origin product never moves the snapshot's values — only its link goes", async ({
   page,
 }, info) => {

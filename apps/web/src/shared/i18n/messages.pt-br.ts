@@ -558,6 +558,12 @@ export const messages = {
     kitPieceQty: "{n} un",
     breakdown: "Detalhamento",
     channels: "Preços por canal",
+    // 014/T120 — um canal gravado SEM comissão informada. Com comissão 0 o motor devolve anúncio ==
+    // base, então existe um número — mas ele não é um preço de marketplace, e a Calcular já se
+    // recusa a exibi-lo ("Informe a comissão do canal para ver os preços"). O congelado herda a
+    // recusa em vez de afirmar o que a origem negou. O tempo verbal é o do registro, não o do
+    // conserto: não há o que informar agora, o que houve foi um canal sem comissão naquele dia.
+    channelNoFee: "sem comissão informada — este canal não teve preço",
     // per-channel rollup captions (M11) — contributing/skipped kit lines, stated honestly
     channelContributing: "{n} de {total} peças",
     channelSkipped: "{n} sem este canal",

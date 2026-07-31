@@ -2,10 +2,11 @@ import { Link } from "@tanstack/react-router";
 
 import { useBoms } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
-import type {
-  FrozenBreakdown,
-  FrozenChannel,
-  FrozenSnapshotPayload,
+import {
+  type FrozenBreakdown,
+  type FrozenChannel,
+  frozenChannelHasFee,
+  type FrozenSnapshotPayload,
 } from "@/entities/history/frozen-payload";
 import { resolveOrigin, type OriginTarget } from "@/entities/history/origin";
 import type { HistoryItem } from "@/entities/history/outbox";
@@ -183,9 +184,7 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
               emphasis="total"
             />
           )}
-          {payload.channels && payload.channels.length > 0 && (
-            <ChannelsBlock channels={payload.channels} />
-          )}
+          {payload.channels && payload.channels.length > 0 && <ChannelsBlock payload={payload} />}
           <TechnicalSheet payload={payload} origin={origin} />
           {/* US7/T029 — "meu custo subiu desde que cotei?" answered on request, side by side. It
               records nothing; only "Recalcular hoje" below turns today's number into a record. */}
@@ -253,15 +252,38 @@ function SyncAlert({ item }: { item: HistoryItem }) {
  * price renders ABSENT, never `R$ 0,00` (FR-507). A kit rollup additionally states its honest line
  * counts (how many pieces contributed, how many had no such channel).
  */
-function ChannelsBlock({ channels }: { channels: FrozenChannel[] }) {
+function ChannelsBlock({ payload }: { payload: FrozenSnapshotPayload }) {
+  const channels = payload.channels ?? [];
   return (
     <div className="flex flex-col gap-2">
       <h2 className="tf-historico__section">{t.channels}</h2>
-      {channels.map((channel, i) => (
-        <div key={i} className="tf-historico__channel">
-          <span className="tf-historico__channel-name">
-            {channel.marketplace ?? messages.calculator.channels.channelFallback}
-          </span>
+      {channels.map((channel, i) => {
+        // 014/T120 — prohibition 2 above ("an absent line is not a zero") applied to the channel
+        // block, which was the one place that did not honour it. A slot recorded with NO commission
+        // priced at anúncio == base: four rows asserting a marketplace price that was never
+        // computed, and that the calculator itself refuses to show. The channel stays — the seller
+        // DID choose that marketplace — and says what actually happened instead.
+        const semComissao = !frozenChannelHasFee(payload, i);
+        return <FrozenChannelRow key={i} channel={channel} semComissao={semComissao} />;
+      })}
+    </div>
+  );
+}
+
+function FrozenChannelRow({
+  channel,
+  semComissao,
+}: {
+  channel: FrozenChannel;
+  semComissao: boolean;
+}) {
+  return (
+    <div className="tf-historico__channel">
+      <span className="tf-historico__channel-name">
+        {channel.marketplace ?? messages.calculator.channels.channelFallback}
+      </span>
+      {!semComissao && (
+        <>
           {channel.precoAnuncioVarejo != null && (
             <span className="tf-historico__piece">
               <span>
@@ -294,21 +316,26 @@ function ChannelsBlock({ channels }: { channels: FrozenChannel[] }) {
               <strong>{money(channel.recebidoLiquidoAtacado)}</strong>
             </span>
           )}
-          {/* An honestly recorded per-slot failure, echoed as recorded — never hidden. */}
-          {channel.error && <span className="tf-historico__meta">{channel.error}</span>}
-          {/* Kit rollup: how many lines contributed to this channel, how many had none. */}
-          {channel.contributingLines != null && (
-            <span className="tf-historico__meta">
-              {t.channelContributing
-                .replace("{n}", String(channel.contributingLines))
-                .replace(
-                  "{total}",
-                  String((channel.contributingLines ?? 0) + (channel.skippedLines ?? 0)),
-                )}
-            </span>
-          )}
-        </div>
-      ))}
+        </>
+      )}
+      {/* Said in words, in the tense of the RECORD: there is nothing to inform now — what happened
+          is that this channel carried no commission on the day it was quoted. */}
+      {semComissao && <span className="tf-historico__meta">{t.channelNoFee}</span>}
+      {/* An honestly recorded per-slot failure, echoed as recorded — never hidden. Outside the gate
+          above: an error is not a price, and a slot can fail for reasons unrelated to its fee. */}
+      {channel.error && <span className="tf-historico__meta">{channel.error}</span>}
+      {/* Kit rollup: how many lines contributed to this channel, how many had none. Also outside —
+          the counts describe the composition, not the money. */}
+      {channel.contributingLines != null && (
+        <span className="tf-historico__meta">
+          {t.channelContributing
+            .replace("{n}", String(channel.contributingLines))
+            .replace(
+              "{total}",
+              String((channel.contributingLines ?? 0) + (channel.skippedLines ?? 0)),
+            )}
+        </span>
+      )}
     </div>
   );
 }
