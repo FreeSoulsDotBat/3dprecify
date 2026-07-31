@@ -115,14 +115,33 @@ export function searchCategories(
   return out;
 }
 
-/** Human-readable path from root to node, for disambiguating near-homonyms in the picker. */
-export function categoryPath(index: Map<string, CategoryNode>, categoryId: string): string {
+/**
+ * Human-readable path from root to a node the spine DOES carry, for disambiguating near-homonyms in
+ * the picker. Taking the node (not an id) is what makes the empty result unrepresentable here: every
+ * ancestor resolves, because `categorySpineSchema` rejects orphans at parse.
+ */
+export function categoryPathOfNode(index: Map<string, CategoryNode>, node: CategoryNode): string {
   const names: string[] = [];
-  let cur = index.get(categoryId);
+  let cur: CategoryNode | undefined = node;
   let hops = 0;
   while (cur && hops++ <= index.size) {
     names.unshift(cur.name);
     cur = cur.parentId == null ? undefined : index.get(cur.parentId);
   }
   return names.join(" › ");
+}
+
+/**
+ * The path for an id, or `null` when the spine does not carry it — a saved product, a reopened
+ * scenario, or a node the marketplace has since dropped.
+ *
+ * 014/T116: this used to return the empty string there, which is not "no name" — it is a value the
+ * caller happily renders as a BLANK label next to the "Limpar" button, so the seller sees a category
+ * chip that names nothing. `ancestorChain`, the sibling walk, already documents and handles the
+ * unknown id; this one left the discovery to whoever called it. Returning null makes the caller
+ * decide what to say, which is the only honest option — the spine cannot name what it does not have.
+ */
+export function categoryPath(index: Map<string, CategoryNode>, categoryId: string): string | null {
+  const node = index.get(categoryId);
+  return node ? categoryPathOfNode(index, node) : null;
 }

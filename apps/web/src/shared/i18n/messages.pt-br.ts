@@ -181,6 +181,11 @@ export const messages = {
       // leitor de tela como três nomes sem contexto no meio de um formulário de preço.
       chosenLabel: "Categoria escolhida:",
       clearAria: "Limpar categoria escolhida",
+      // 014/T116 — o id escolhido não está na espinha deste catálogo. Antes o chip renderizava um
+      // rótulo EM BRANCO ao lado do "Limpar": nomeava nada e não explicava nada. A comissão desse
+      // slot já caiu no catch-all (ou em "sem referência") e quem diz isso é o selo — aqui só cabe
+      // dizer por que o nome sumiu, e o que fazer a respeito.
+      unknownChosen: "A categoria escolhida não está neste catálogo — limpe e escolha outra.",
       noResults:
         "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
       // 014/FR-006d — o estado vazio do seletor. O texto anterior afirmava "a taxa exibida já é a

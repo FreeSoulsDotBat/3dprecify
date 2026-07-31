@@ -3,11 +3,14 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   type CategoryNode,
   categoryPath,
+  categoryPathOfNode,
   indexSpine,
   searchCategories,
 } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, Field } from "@/shared/ui";
+
+import "./category-picker.css";
 
 const t = messages.calculator.categoryPicker;
 
@@ -73,23 +76,57 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
   }
 
   if (value) {
+    // T116 — the spine is SPARSE and this id may not be in it (a product saved before a catalog
+    // revision, a reopened scenario, a node the marketplace dropped). The path used to come back as
+    // the empty string and render a BLANK label next to "Limpar": a chip naming nothing, beside a
+    // button offering to clear it. Say what is true instead — the catalog does not carry this
+    // category — and keep the value VISIBLE rather than falling back to the search box, because a
+    // value the form still holds and the screen no longer shows is the drift T097 closed.
+    const path = categoryPath(index, value);
     return (
-      // `role="status"` like the two sibling branches below — this was the only one of the three
-      // that announced nothing, and it is the one that reports a decision the seller just made.
-      <div role="status" className="category-picker category-picker--chosen">
-        <span className="category-picker__chosen">
-          <span className="sr-only">{t.chosenLabel} </span>
-          {categoryPath(index, value)}
-        </span>
-        <Button
-          ref={clearRef}
-          variant="ghost"
-          size="sm"
-          aria-label={t.clearAria}
-          onClick={() => onChange(undefined)}
+      // T115 — the chosen state keeps the FIELD: same name above it, same frame around it. It used
+      // to return this bare, so choosing a category made the label, the hint and the whole frame
+      // vanish and left the word "Calçados" floating between "Modalidade" and "Comissão" — the
+      // seller's own choice reading as stray text. A field that stops looking like a field once it
+      // is filled is the same FR-006a failure as one that never looked like a field.
+      //
+      // Deliberately NOT `<Field>`: it renders `<label htmlFor>`, and there is no form control here
+      // to point at — a dangling `for` is a promise to the screen reader that nothing keeps. The
+      // name is plain text in the reading order, and `chosenLabel` below says it is a choice.
+      <div className="tf-field">
+        <span className="tf-field__label tf-field__label--tight">{t.label}</span>
+        {/* `role="status"` like the two sibling branches below — this was the only one of the three
+            that announced nothing, and it is the one that reports a decision the seller just made. */}
+        <div
+          role="status"
+          className="tf-inputwrap category-picker category-picker--chosen"
+          data-testid="category-chosen"
         >
-          {t.clear}
-        </Button>
+          <span
+            className={`category-picker__chosen${path === null ? " category-picker__chosen--unknown" : ""}`}
+            data-testid="category-chip"
+          >
+            {path === null ? (
+              // No `chosenLabel` prefix here: the copy already names itself, and "Categoria
+              // escolhida: a categoria escolhida não está neste catálogo" is what a reader would get.
+              t.unknownChosen
+            ) : (
+              <>
+                <span className="sr-only">{t.chosenLabel} </span>
+                {path}
+              </>
+            )}
+          </span>
+          <Button
+            ref={clearRef}
+            variant="ghost"
+            size="sm"
+            aria-label={t.clearAria}
+            onClick={() => onChange(undefined)}
+          >
+            {t.clear}
+          </Button>
+        </div>
       </div>
     );
   }
@@ -101,19 +138,25 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
     <Field label={t.label} hint={t.hint} tightLabel>
       {({ id, "aria-describedby": describedBy }) => (
         <div className="category-picker">
-          <input
-            id={id}
-            aria-describedby={describedBy}
-            type="text"
-            role="combobox"
-            aria-expanded={results.length > 0}
-            aria-controls={listId}
-            autoComplete="off"
-            className="category-picker__input"
-            placeholder={t.placeholder}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-          />
+          {/* The DS field frame, the same `.tf-inputwrap`/`.tf-input` pair NumberField uses — NOT a
+              look-alike rebuilt here. This field decides which commission the seller is charged and
+              it used to render as a raw 24px `<input>` with no border, background or padding
+              (T115). */}
+          <div className="tf-inputwrap">
+            <input
+              id={id}
+              aria-describedby={describedBy}
+              type="text"
+              role="combobox"
+              aria-expanded={results.length > 0}
+              aria-controls={listId}
+              autoComplete="off"
+              className="tf-input"
+              placeholder={t.placeholder}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          </div>
           {results.length > 0 && (
             <ul id={listId} role="listbox" className="category-picker__list">
               {results.map((node) => (
@@ -129,7 +172,12 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
                       setQuery("");
                     }}
                   >
-                    {categoryPath(index, node.id)}
+                    {/* By NODE, not by id: the node came out of this very spine, so there is no
+                        unknown case to handle — and none to invent a fallback for either. */}
+                    {categoryPathOfNode(index, node)}
+                    <span className="category-picker__go" aria-hidden="true">
+                      ›
+                    </span>
                   </button>
                 </li>
               ))}

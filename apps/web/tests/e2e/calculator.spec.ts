@@ -313,6 +313,94 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
   expect(scrollWidth).toBe(clientWidth);
 });
 
+// 014/T115 (FR-006a) — o seletor de categoria não tinha UMA regra de CSS: renderizava como `<input>`
+// nativo cru, ~24px de altura, sem borda, sem fundo e sem padding, dentro de um formulário onde todo
+// campo de dinheiro usa a moldura do DS. A FR-006a exige um campo "de primeira classe, sempre
+// expandido" EXATAMENTE para que o vendedor não aceite a alíquota errada sem perceber — um campo que
+// não parece campo é a mesma falha que um campo colapsado. A varredura de alvos de toque
+// (`a11y-targets-contrast.spec.ts`) não pegou: ela seleciona `a[data-nav-item]`, `.tf-topbar__theme`
+// e `button.tf-btn` — nenhum controle de formulário entra na conta.
+//
+// O limiar não é inventado: 44px é WCAG 2.2 AA, e o resto é comparado com um campo IRMÃO do mesmo
+// slot, porque a exigência real é que o seletor seja um campo como os outros, não que ele acerte
+// números que o DS nunca adotou.
+test("US1: o seletor de categoria é um campo de primeira classe, não um <input> cru (FR-006a, T115)", async ({
+  page,
+}) => {
+  const t = messages.calculator;
+  // A espinha de categorias viaja no catálogo SERVIDO (a semente empacotada não a carrega) e hoje só
+  // a Amazon publica uma — servir o catálogo committed é o que faz o seletor existir na tela.
+  await page.route("**/api/v1/fee-catalog", (route) =>
+    route.fulfill({ status: 200, contentType: "application/json", body: servedCatalogJson }),
+  );
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/calcular"); // public — no sign-in needed
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  const slot0 = page.getByTestId("channel-slot").nth(0);
+  await slot0.getByLabel(t.channels.marketplace).selectOption("AMAZON");
+
+  const seletor = slot0.getByLabel(t.categoryPicker.label);
+  await expect(seletor).toBeVisible();
+
+  // 1. Alvo de toque (WCAG 2.2 AA): 44px. Um <input> sem CSS nasce com ~24px.
+  const box = await seletor.boundingBox();
+  expect(box, "o seletor tem caixa").not.toBeNull();
+  expect(box!.height, "altura do alvo de toque do seletor").toBeGreaterThanOrEqual(44);
+
+  // 2. Moldura: mesma que a de um campo de dinheiro do MESMO slot — mesma altura, mesma borda, mesmo
+  //    raio, mesmo fundo. Lido do estilo COMPUTADO, que é o que o vendedor enxerga.
+  const moldura = (loc: import("@playwright/test").Locator) =>
+    loc.evaluate((el) => {
+      const frame = el.closest(".tf-inputwrap");
+      if (!frame) return null;
+      const s = getComputedStyle(frame);
+      return {
+        borderWidth: s.borderTopWidth,
+        borderStyle: s.borderTopStyle,
+        borderColor: s.borderTopColor,
+        radius: s.borderTopLeftRadius,
+        background: s.backgroundColor,
+      };
+    });
+
+  const doDinheiro = await moldura(slot0.getByLabel(/^Comissão(?! mínima)/));
+  const doSeletor = await moldura(seletor);
+  expect(doSeletor, "o seletor está dentro de uma moldura de campo do DS").not.toBeNull();
+  expect(doSeletor, "moldura do seletor == moldura do campo de dinheiro irmão").toEqual(doDinheiro);
+
+  // 3. E a lista de resultados não pode empurrar a página para fora dos 390px.
+  await seletor.fill("cal");
+  // Escopado pela `listbox` do seletor de propósito: os `<select>` de marketplace e modalidade do
+  // MESMO slot também carregam `role="option"` — nos seus `<option>` nativos, invisíveis — e um
+  // `getByRole("option")` solto casa com eles primeiro.
+  await expect(slot0.getByRole("listbox").getByRole("option").first()).toBeVisible();
+  const { scrollWidth, clientWidth } = await page.evaluate(() => {
+    const el = document.scrollingElement ?? document.documentElement;
+    return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
+  });
+  expect(scrollWidth).toBe(clientWidth);
+
+  // 4. E ESCOLHER não pode desmontar o campo. O estado escolhido devolvia só o chip: o rótulo, a
+  //    dica e a moldura sumiam, e a categoria do vendedor virava uma palavra solta entre
+  //    "Modalidade" e "Comissão". Um campo que deixa de parecer campo depois de preenchido falha a
+  //    FR-006a pela mesma porta que um campo que nunca pareceu.
+  await slot0.getByRole("listbox").getByRole("option").first().click();
+  const escolhido = slot0.getByTestId("category-chosen");
+  await expect(escolhido).toBeVisible();
+  await expect(slot0.getByText(t.categoryPicker.label)).toBeVisible();
+  const boxEscolhido = await escolhido.boundingBox();
+  expect(boxEscolhido!.height, "altura do campo já escolhido").toBeGreaterThanOrEqual(44);
+  // Escolher move o foco para o "Limpar", que vive DENTRO desta moldura: o `:focus-within` do DS
+  // repinta a borda com a cor do anel, por cima de uma transição. Medir sem tirar o foco compararia
+  // um campo focado com um campo em repouso — e o resultado dependeria do milissegundo. Tira-se o
+  // foco, e o `poll` espera a transição assentar em vez de apostar num `waitForTimeout`.
+  await escolhido.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+  await expect
+    .poll(() => moldura(escolhido), { message: "moldura do escolhido == moldura do campo irmão" })
+    .toEqual(doDinheiro);
+});
+
 test("US4: the 'Incluir marketplaces no preço' toggle shows/hides the whole marketplace section; the direct price stays (SC-105)", async ({
   page,
 }) => {

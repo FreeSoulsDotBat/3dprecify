@@ -90,4 +90,13 @@ describe("picker helpers", () => {
       "Celulares e Telefones › Acessórios para Celulares › Apoio para Celulares",
     );
   });
+
+  // 014/T116 — a espinha é ESPARSA e o id vem de fora dela (produto salvo, cenário reaberto, catálogo
+  // que deixou de carregar o nó). O caminho vazio não é "sem nome": é uma string que o chamador
+  // renderiza como rótulo em branco. `ancestorChain`, a função irmã, já documenta e trata o id
+  // desconhecido; esta devolvia "" e deixava o chamador descobrir sozinho.
+  it("um id fora da espinha devolve null, nunca uma string vazia (T116)", () => {
+    const index = indexSpine(ML);
+    expect(categoryPath(index, "MLB-que-nao-existe")).toBeNull();
+  });
 });

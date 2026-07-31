@@ -384,10 +384,36 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 **UI do 014 — do batidão visual**
 
-- [ ] T115a [P] [US1] Teste **visual/geométrico** (falhando primeiro): o campo do seletor tem altura ≥ 44px, borda e fundo distinguíveis do papel, e alvo de toque ≥ 44px em 390px — medido com `boundingBox()` e estilo computado, não por impressão (FR-006a) — em `apps/web/tests/e2e/calculator.spec.ts`
-- [ ] T115 [US1] O seletor de categoria **não tem uma única regra de CSS**: renderiza como `<input>` nativo cru de 24px, sem borda, sem fundo, sem padding — enquanto a **FR-006a** exige um campo "de primeira classe, sempre expandido" **exatamente** para que o vendedor não aceite a alíquota errada sem perceber. Achado por **duas lentes independentes**; é o mais caro do lote do batidão — em `apps/web/src/features/calculator/category-picker.tsx`
-- [ ] T116a [P] [US1] Teste (falhando primeiro): `categoryPath` com id fora da espinha NÃO devolve string vazia, e o chip do seletor nunca renderiza rótulo em branco ao lado do "Limpar" — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`, `category-picker.test.tsx`
-- [ ] T116 [P] [US1] `categoryPath` devolve string **vazia** para um id ausente da espinha, então o chip "categoria escolhida" renderiza **em branco** ao lado do "Limpar". Não é a T097 (aquela é espinha vazia); nenhum guard valida `slot.category` contra a espinha — em `apps/web/src/shared/fee-catalog/category-tree.ts:121-128`, `category-picker.tsx:52-61`
+- [x] T115a [P] [US1] Teste **visual/geométrico** (falhando primeiro): o campo do seletor tem altura ≥ 44px, borda e fundo distinguíveis do papel, e alvo de toque ≥ 44px em 390px — medido com `boundingBox()` e estilo computado, não por impressão (FR-006a) — em `apps/web/tests/e2e/calculator.spec.ts`
+- [x] T115 [US1] O seletor de categoria **não tem uma única regra de CSS**: renderiza como `<input>` nativo cru de 24px, sem borda, sem fundo, sem padding — enquanto a **FR-006a** exige um campo "de primeira classe, sempre expandido" **exatamente** para que o vendedor não aceite a alíquota errada sem perceber. Achado por **duas lentes independentes**; é o mais caro do lote do batidão — em `apps/web/src/features/calculator/category-picker.tsx`
+- [x] T116a [P] [US1] Teste (falhando primeiro): `categoryPath` com id fora da espinha NÃO devolve string vazia, e o chip do seletor nunca renderiza rótulo em branco ao lado do "Limpar" — em `apps/web/src/shared/fee-catalog/category-tree.test.ts`, `category-picker.test.tsx`
+- [x] T116 [P] [US1] `categoryPath` devolve string **vazia** para um id ausente da espinha, então o chip "categoria escolhida" renderiza **em branco** ao lado do "Limpar". Não é a T097 (aquela é espinha vazia); nenhum guard valida `slot.category` contra a espinha — em `apps/web/src/shared/fee-catalog/category-tree.ts:121-128`, `category-picker.tsx:52-61`
+
+> **Nota de execução (T115/T116, 2026-07-30)** — a falha da T115 foi MEDIDA em browser real antes do
+> conserto: `altura do alvo de toque do seletor · Expected >= 44 · Received 24`. O conserto não
+> reescreveu a moldura: o input entrou no par `.tf-inputwrap`/`.tf-input` do DS, o mesmo do
+> NumberField — refazer borda/altura/foco aqui teria criado um segundo campo com a mesma aparência e
+> destino próprio. Quatro coisas que a tarefa não previa:
+> 1. **Por que a varredura de alvos de toque não pegou**: `a11y-targets-contrast.spec.ts` seleciona
+>    `a[data-nav-item]`, `.tf-topbar__theme` e `button.tf-btn` — nenhum controle de formulário entra
+>    na conta. O seletor nunca esteve no escopo dela.
+> 2. **O screenshot achou o que a geometria não vê** (a lição da E4, de novo): com a moldura de campo,
+>    a lista de UM resultado lia como um SEGUNDO CAMPO preenchido com "Calçados". Virou superfície
+>    elevada, raio menor, divisórias e um chevron `aria-hidden` — elemento real, não `::after`, porque
+>    conteúdo gerado por CSS entra no nome acessível em alguns motores.
+> 3. **O estado ESCOLHIDO também falhava a FR-006a** e não estava na tarefa: ele retornava só o chip,
+>    então rótulo, dica e moldura sumiam e a categoria virava palavra solta entre "Modalidade" e
+>    "Comissão". Agora mantém nome e moldura — sem `<Field>`, que renderiza `<label htmlFor>` e aqui
+>    não há controle para apontar. O teste cobre esse estado.
+> 4. **O teste do estado escolhido pegou um `:focus-within` transitório**: o "Limpar" vive dentro da
+>    moldura, o foco vai para ele (T107) e o DS repinta a borda por cima de uma transição — medir sem
+>    tirar o foco comparava um campo focado com um em repouso. Blur + `expect.poll`.
+>
+> A T116 mudou o **tipo**, não o `if`: `categoryPath` devolve `string | null`, e a lista de opções
+> passou a chamar `categoryPathOfNode(index, node)` — por NÓ, onde o caso desconhecido deixa de ser
+> representável. A string vazia não era "sem nome": era um valor que o chamador renderizava como
+> rótulo em branco ao lado do "Limpar". `ancestorChain`, a função irmã, já documentava e tratava o id
+> ausente; esta deixava a descoberta para quem chamasse.
 - [ ] T117a [P] [US1] Teste (falhando primeiro): o contrato ARIA anunciado é o CUMPRIDO — `aria-expanded` reflete o estado real, `aria-controls` aponta para um `listbox` existente, e a opção ativa é anunciada; ou, se a decisão for deixar de anunciar, nenhum atributo de combobox permanece — em `apps/web/src/features/calculator/category-picker.test.tsx`
 - [ ] T117 [P] [US1] O campo anuncia o contrato ARIA de `combobox` (`aria-expanded` + `aria-controls` para um `role="listbox"`) sem cumpri-lo — leitor de tela recebe promessa que a implementação não honra. Cumprir o contrato **ou** deixar de anunciá-lo — em `apps/web/src/features/calculator/category-picker.tsx`
 

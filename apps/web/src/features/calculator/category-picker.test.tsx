@@ -174,3 +174,35 @@ describe("CategoryPicker — o estado escolhido é anunciado e o foco não se pe
     expect(document.activeElement).toBe(document.body);
   });
 });
+
+// 014/T116 — o chip escolhido nomeia o id pelo caminho na espinha. Quando o id NÃO está na espinha
+// (produto salvo antes de uma revisão do catálogo, cenário reaberto, nó que o marketplace removeu) o
+// caminho volta vazio e o chip renderiza um rótulo EM BRANCO ao lado do "Limpar". Não é a T097 —
+// aquela era a espinha inteira vazia, que nem chega neste ramo. Aqui a espinha existe e é o id que
+// não está nela, e nenhum guard confere `slot.category` contra a espinha.
+describe("CategoryPicker — id fora da espinha não vira rótulo em branco (T116)", () => {
+  const FORA = "MLB-que-o-catalogo-nao-carrega";
+
+  it("o chip nunca fica em branco — diz que a categoria não está neste catálogo", () => {
+    render(
+      <CategoryPicker spine={SPINE} value={FORA} onChange={vi.fn()} hasFeeReference={false} />,
+    );
+    // O defeito, nomeado pela geometria do texto e não pela cópia: o rótulo VISÍVEL do chip não pode
+    // ser vazio. Um `toHaveTextContent` na live region passaria mesmo em branco, porque o prefixo
+    // sr-only "Categoria escolhida:" já enche o `textContent` do contêiner.
+    expect(screen.getByTestId("category-chip").textContent?.trim()).not.toBe("");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      messages.calculator.categoryPicker.unknownChosen,
+    );
+  });
+
+  it("e continua limpável — o vendedor não fica preso a um id que o catálogo não carrega", async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <CategoryPicker spine={SPINE} value={FORA} onChange={onChange} hasFeeReference={false} />,
+    );
+    await user.click(screen.getByRole("button", { name: /limpar categoria/i }));
+    expect(onChange).toHaveBeenCalledWith(undefined);
+  });
+});
