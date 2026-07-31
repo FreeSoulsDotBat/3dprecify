@@ -188,6 +188,16 @@ export const messages = {
       unknownChosen: "A categoria escolhida não está neste catálogo — limpe e escolha outra.",
       noResults:
         "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
+      // 014/T117 — o que o contrato ARIA falso prometia e nunca entregou: saber que os resultados
+      // apareceram. Visível de propósito, não `sr-only` — também é o que distingue a lista de um
+      // segundo campo preenchido, que foi como ela leu no primeiro screenshot da T115.
+      resultsOne: "1 categoria encontrada",
+      resultsMany: "{n} categorias encontradas",
+      // A lista mostra no máximo 8. Dizer "8 categorias encontradas" quando existem 23 é afirmar um
+      // total que não é o total — o vendedor pararia de refinar acreditando ter visto tudo, e a
+      // categoria certa dele pode ser a nona. Achado no screenshot da T117: a busca por "a" na
+      // espinha da Amazon devolvia 8 de muitas mais.
+      resultsTruncated: "Mostrando {n} de {total} — refine a busca para ver as demais.",
       // 014/FR-006d — o estado vazio do seletor. O texto anterior afirmava "a taxa exibida já é a
       // correta" e prometia "conecte uma vez para carregá-la", no estado padrão de 100% dos usuários
       // (o slot nasce em Mercado Livre, sem entradas e sem espinha): nenhuma taxa estava exibida, e

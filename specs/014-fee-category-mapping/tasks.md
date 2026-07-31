@@ -414,8 +414,35 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > representável. A string vazia não era "sem nome": era um valor que o chamador renderizava como
 > rótulo em branco ao lado do "Limpar". `ancestorChain`, a função irmã, já documentava e tratava o id
 > ausente; esta deixava a descoberta para quem chamasse.
-- [ ] T117a [P] [US1] Teste (falhando primeiro): o contrato ARIA anunciado é o CUMPRIDO — `aria-expanded` reflete o estado real, `aria-controls` aponta para um `listbox` existente, e a opção ativa é anunciada; ou, se a decisão for deixar de anunciar, nenhum atributo de combobox permanece — em `apps/web/src/features/calculator/category-picker.test.tsx`
-- [ ] T117 [P] [US1] O campo anuncia o contrato ARIA de `combobox` (`aria-expanded` + `aria-controls` para um `role="listbox"`) sem cumpri-lo — leitor de tela recebe promessa que a implementação não honra. Cumprir o contrato **ou** deixar de anunciá-lo — em `apps/web/src/features/calculator/category-picker.tsx`
+- [x] T117a [P] [US1] Teste (falhando primeiro): o contrato ARIA anunciado é o CUMPRIDO — `aria-expanded` reflete o estado real, `aria-controls` aponta para um `listbox` existente, e a opção ativa é anunciada; ou, se a decisão for deixar de anunciar, nenhum atributo de combobox permanece — em `apps/web/src/features/calculator/category-picker.test.tsx`
+- [x] T117 [P] [US1] O campo anuncia o contrato ARIA de `combobox` (`aria-expanded` + `aria-controls` para um `role="listbox"`) sem cumpri-lo — leitor de tela recebe promessa que a implementação não honra. Cumprir o contrato **ou** deixar de anunciá-lo — em `apps/web/src/features/calculator/category-picker.tsx`
+
+> **Nota de execução (T117, 2026-07-30)** — a tarefa dava as duas saídas; escolhi **deixar de
+> anunciar**, e a razão não é economia: **o widget que está na tela não é um combobox**. A lista fica
+> em FLUXO abaixo do campo (decisão da T115, para não reabrir a classe de defeito de sobreposição que
+> este projeto pagou três vezes) e cada resultado é um `<button>` de verdade — Enter, Espaço e foco de
+> graça, em qualquer AT. Implementar o contrato exigiria virar popup + `aria-activedescendant` +
+> navegação por setas, ou seja, trocar o widget para caber no rótulo.
+>
+> Nada foi perdido: **nenhuma metade do que era anunciado funcionava**. `aria-controls` apontava para
+> uma `listbox` que só existe enquanto há resultados (referência morta na maior parte do tempo), não
+> havia `aria-activedescendant` nem tecla nenhuma, e `aria-selected={false}` era fixo em toda opção.
+>
+> O que faltava DE FATO — saber que os resultados apareceram — virou uma live region **única e sempre
+> montada**. As duas propriedades são deliberadas: uma região que aparece junto com o texto não é
+> anunciada de forma confiável (o leitor precisa já estar observando), e duas regiões concorrentes
+> sobre a mesma busca é como o leitor acaba não lendo nenhuma em ordem. A antiga `noResults` foi
+> absorvida por ela; `:empty { display: none }` esconde a caixa vazia sem tirar o elemento do DOM.
+>
+> **O screenshot achou um defeito de honestidade que eu mesmo tinha acabado de introduzir**: a lista
+> mostra no máximo 8, e o rótulo dizia "8 categorias encontradas" quando a busca por "a" na espinha
+> da Amazon casa **31**. O vendedor pararia de refinar acreditando ter visto tudo, e a categoria dele
+> pode ser a nona. Agora a contagem é do total real (`searchCategories` sem corte — o padrão do helper
+> é 50, que é só um corte maior) e o rótulo diz "Mostrando 8 de 31 — refine a busca". Segunda vez
+> nesta sessão em que abrir a imagem achou o que a asserção não vê.
+>
+> Os 7 testes que codificavam o contrato falso foram **reescritos, não apagados** (`combobox`→
+> `textbox`, `listbox`→`list`, `option`→`button`).
 
 **Geometria e honestidade em código já shipado (E3/E4)**
 

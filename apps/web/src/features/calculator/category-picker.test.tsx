@@ -10,6 +10,8 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { CategoryPicker } from "./category-picker";
 
+const t = messages.calculator.categoryPicker;
+
 // 014/US1. The seller does NOT know the marketplace's category name — he thinks "suporte de
 // celular" while ML publishes "Acessórios para Celulares". So: search by text, and show the PATH,
 // because ML really publishes two near-homonyms at DIFFERENT rates (Celulares e Telefones 18% vs
@@ -43,21 +45,21 @@ describe("CategoryPicker — finding the category (US1)", () => {
     setup();
     // Not behind a disclosure: a collapsed field plus a plausible pre-filled number is what makes a
     // seller accept the wrong rate. The search input must be there on first paint.
-    expect(screen.getByRole("combobox", { name: /categoria/i })).toBeVisible();
+    expect(screen.getByRole("textbox", { name: /categoria/i })).toBeVisible();
   });
 
   it("filters by part of the name, accent- and case-insensitively", async () => {
     const { user } = setup();
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "moveis");
-    const list = screen.getByRole("listbox");
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "moveis");
+    const list = screen.getByRole("list");
     expect(within(list).getByText(/Casa, Móveis e Decoração/)).toBeVisible();
     expect(within(list).queryByText(/Celulares/)).toBeNull();
   });
 
   it("shows the PATH so near-homonyms are distinguishable, not a coin flip", async () => {
     const { user } = setup();
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "celulares");
-    const list = screen.getByRole("listbox");
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "celulares");
+    const list = screen.getByRole("list");
     expect(within(list).getByText(/Celulares e Telefones › Celulares e Smartphones/)).toBeVisible();
     expect(
       within(list).getByText(/Celulares e Telefones › Acessórios para Celulares/),
@@ -66,16 +68,18 @@ describe("CategoryPicker — finding the category (US1)", () => {
 
   it("reports the chosen category id", async () => {
     const { user, onChange } = setup();
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "smartphones");
-    await user.click(within(screen.getByRole("listbox")).getByRole("option"));
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "smartphones");
+    await user.click(within(screen.getByRole("list")).getByRole("button"));
     expect(onChange).toHaveBeenCalledWith("MLB1055");
   });
 
   it("a query that matches nothing says so — and says how to search instead", async () => {
     const { user } = setup();
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "zzzzz");
-    expect(screen.getByRole("status")).toBeVisible();
-    expect(screen.queryByRole("listbox")).toBeNull();
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "zzzzz");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      messages.calculator.categoryPicker.noResults,
+    );
+    expect(screen.queryByRole("list")).toBeNull();
   });
 
   it("an already-chosen category shows its full path and can be cleared", async () => {
@@ -91,7 +95,7 @@ describe("CategoryPicker — finding the category (US1)", () => {
   it("an empty spine explains itself instead of rendering a dead field", () => {
     setup({ spine: [], hasFeeReference: true });
     expect(screen.getByRole("status")).toBeVisible();
-    expect(screen.queryByRole("combobox")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 });
 
@@ -129,8 +133,8 @@ describe("CategoryPicker — o estado vazio não afirma o que não é verdade (F
 describe("CategoryPicker — o estado escolhido é anunciado e o foco não se perde (T107)", () => {
   it("o chip escolhido vive numa live region, como os dois ramos vizinhos", async () => {
     const { user } = setup();
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "smartphones");
-    await user.click(within(screen.getByRole("listbox")).getByRole("option"));
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "smartphones");
+    await user.click(within(screen.getByRole("list")).getByRole("button"));
     // O componente é controlado: re-renderiza no ramo escolhido quando `value` chega.
     cleanup();
     render(
@@ -162,8 +166,8 @@ describe("CategoryPicker — o estado escolhido é anunciado e o foco não se pe
   it("escolher move o foco para o 'Limpar' — nunca para o body", async () => {
     const user = userEvent.setup();
     render(<Controlado />);
-    await user.type(screen.getByRole("combobox", { name: /categoria/i }), "smartphones");
-    await user.click(within(screen.getByRole("listbox")).getByRole("option"));
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "smartphones");
+    await user.click(within(screen.getByRole("list")).getByRole("button"));
     expect(document.activeElement).toBe(screen.getByRole("button", { name: /limpar categoria/i }));
   });
 
@@ -172,6 +176,63 @@ describe("CategoryPicker — o estado escolhido é anunciado e o foco não se pe
       <CategoryPicker spine={SPINE} value="MLB1055" onChange={vi.fn()} hasFeeReference={true} />,
     );
     expect(document.activeElement).toBe(document.body);
+  });
+});
+
+// 014/T117 — o campo anunciava o contrato ARIA de `combobox` sem cumprir nenhuma metade dele:
+// `aria-controls` apontava para uma `listbox` que só existe enquanto há resultados (referência morta
+// na maior parte do tempo), não havia `aria-activedescendant` nem navegação por setas, e cada opção
+// carregava `aria-selected={false}` fixo. O leitor de tela recebia a promessa de um widget de popup
+// navegável e encontrava uma lista em fluxo.
+//
+// A decisão foi DEIXAR DE ANUNCIAR, não implementar: o widget que está na tela não é um combobox.
+// A lista fica em FLUXO abaixo do campo (escolha da T115, para não reabrir a classe de defeito de
+// sobreposição que este projeto pagou três vezes) e cada resultado é um `<button>` de verdade, com
+// Enter, Espaço e foco de graça. O que faltava de fato — saber que os resultados apareceram — virou
+// uma live region com a contagem, que serve tanto ao leitor de tela quanto a quem enxerga a lista.
+describe("CategoryPicker — o contrato ARIA anunciado é o cumprido (T117)", () => {
+  it("não anuncia um combobox que não existe, e a lista não se diz uma listbox", async () => {
+    const { user } = setup();
+    const campo = screen.getByRole("textbox", { name: /categoria/i });
+    expect(campo).not.toHaveAttribute("role");
+    expect(campo).not.toHaveAttribute("aria-expanded");
+    // O pior dos três: apontava para um id ausente do DOM sempre que a lista estava fechada.
+    expect(campo).not.toHaveAttribute("aria-controls");
+
+    await user.type(campo, "celulares");
+    expect(screen.queryByRole("listbox")).toBeNull();
+    // O que sobra é o que existe: uma lista de botões ativáveis por teclado.
+    expect(within(screen.getByRole("list")).getAllByRole("button").length).toBeGreaterThan(0);
+  });
+
+  it("os resultados são ANUNCIADOS — a contagem vive numa live region", async () => {
+    const { user } = setup();
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "celulares");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      t.resultsMany.replace("{n}", "3"), // as 3 que contêm "celulares" na SPINE
+    );
+  });
+
+  it("um resultado só fala no singular — a contagem é lida, não decorativa", async () => {
+    const { user } = setup();
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "moveis");
+    expect(screen.getByRole("status")).toHaveTextContent(t.resultsOne);
+  });
+
+  // A lista mostra no máximo 8. Dizer "8 categorias encontradas" quando existem mais é afirmar um
+  // total falso — o vendedor para de refinar acreditando ter visto tudo, e a dele pode ser a nona.
+  it("com mais resultados do que cabem, a contagem diz que está CORTADA, não que achou 8", async () => {
+    const grande: CategoryNode[] = Array.from({ length: 12 }, (_, i) => ({
+      id: `X${i}`,
+      name: `Suporte ${i}`,
+      parentId: null,
+    }));
+    const { user } = setup({ spine: grande });
+    await user.type(screen.getByRole("textbox", { name: /categoria/i }), "suporte");
+    expect(screen.getByRole("status")).toHaveTextContent(
+      t.resultsTruncated.replace("{n}", "8").replace("{total}", "12"),
+    );
+    expect(within(screen.getByRole("list")).getAllByRole("button")).toHaveLength(8);
   });
 });
 

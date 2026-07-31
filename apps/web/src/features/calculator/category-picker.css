@@ -118,3 +118,13 @@
   line-height: var(--lh-normal);
   color: var(--text-muted);
 }
+/* A live region da T117 fica SEMPRE montada (uma que aparece junto com o texto não é anunciada de
+   forma confiável), então ela passa a maior parte do tempo vazia — e vazia não pode ocupar linha
+   nem `gap` do flex. `:empty` esconde a caixa sem tirar o elemento do DOM, que é exatamente a
+   distinção de que o leitor de tela depende. */
+.category-picker__note:empty {
+  display: none;
+}
+.category-picker__count {
+  font-weight: var(--fw-medium);
+}

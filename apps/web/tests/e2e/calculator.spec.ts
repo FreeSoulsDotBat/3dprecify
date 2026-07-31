@@ -371,10 +371,11 @@ test("US1: o seletor de categoria é um campo de primeira classe, não um <input
 
   // 3. E a lista de resultados não pode empurrar a página para fora dos 390px.
   await seletor.fill("cal");
-  // Escopado pela `listbox` do seletor de propósito: os `<select>` de marketplace e modalidade do
-  // MESMO slot também carregam `role="option"` — nos seus `<option>` nativos, invisíveis — e um
-  // `getByRole("option")` solto casa com eles primeiro.
-  await expect(slot0.getByRole("listbox").getByRole("option").first()).toBeVisible();
+  // T117 — a lista NÃO se diz uma `listbox` (o contrato de combobox que o campo anunciava sem
+  // cumprir saiu inteiro): é uma `<ul>` em fluxo com botões de verdade. Escopado por ela de
+  // propósito, porque `getByRole("button")` solto no slot casaria com o "×" de remover canal.
+  const resultados = slot0.getByRole("list").getByRole("button");
+  await expect(resultados.first()).toBeVisible();
   const { scrollWidth, clientWidth } = await page.evaluate(() => {
     const el = document.scrollingElement ?? document.documentElement;
     return { scrollWidth: el.scrollWidth, clientWidth: el.clientWidth };
@@ -385,7 +386,7 @@ test("US1: o seletor de categoria é um campo de primeira classe, não um <input
   //    dica e a moldura sumiam, e a categoria do vendedor virava uma palavra solta entre
   //    "Modalidade" e "Comissão". Um campo que deixa de parecer campo depois de preenchido falha a
   //    FR-006a pela mesma porta que um campo que nunca pareceu.
-  await slot0.getByRole("listbox").getByRole("option").first().click();
+  await resultados.first().click();
   const escolhido = slot0.getByTestId("category-chosen");
   await expect(escolhido).toBeVisible();
   await expect(slot0.getByText(t.categoryPicker.label)).toBeVisible();

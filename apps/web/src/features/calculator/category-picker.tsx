@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   type CategoryNode,
@@ -46,7 +46,6 @@ const MAX_RESULTS = 8;
 
 export function CategoryPicker({ spine, value, onChange, hasFeeReference }: CategoryPickerProps) {
   const [query, setQuery] = useState("");
-  const listId = useId();
   const index = useMemo(() => indexSpine(spine), [spine]);
   // Choosing UNMOUNTS the option button along with the whole list, so focus fell to `document.body`:
   // a keyboard user lost their place in the form at the exact moment they had just decided the
@@ -131,8 +130,23 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
     );
   }
 
-  const results = query.trim() ? searchCategories(spine, query, MAX_RESULTS) : [];
   const searched = query.trim().length > 0;
+  // Busca SEM corte e corta depois, de propósito: a contagem precisa do total real. Cortar dentro do
+  // `searchCategories` (via o seu `limit`) devolveria 8 e o rótulo diria "8 categorias encontradas"
+  // com 23 existindo — o vendedor pararia de refinar acreditando ter visto tudo, e a categoria dele
+  // pode ser a nona. O limite explícito é `spine.length` porque o padrão do próprio helper é 50, que
+  // é só um corte maior. A espinha é ESPARSA por construção (ver o docstring de category-tree), então
+  // varrê-la inteira a cada tecla é barato.
+  const matches = searched ? searchCategories(spine, query, spine.length) : [];
+  const results = matches.slice(0, MAX_RESULTS);
+  const countLabel =
+    matches.length > results.length
+      ? t.resultsTruncated
+          .replace("{n}", String(results.length))
+          .replace("{total}", String(matches.length))
+      : matches.length === 1
+        ? t.resultsOne
+        : t.resultsMany.replace("{n}", String(matches.length));
 
   return (
     <Field label={t.label} hint={t.hint} tightLabel>
@@ -147,9 +161,6 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
               id={id}
               aria-describedby={describedBy}
               type="text"
-              role="combobox"
-              aria-expanded={results.length > 0}
-              aria-controls={listId}
               autoComplete="off"
               className="tf-input"
               placeholder={t.placeholder}
@@ -157,14 +168,35 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
               onChange={(e) => setQuery(e.target.value)}
             />
           </div>
+          {/* T117 — ONE live region, always mounted. Both halves matter. "Always mounted" because a
+              region that appears together with its text is not reliably announced: the reader has to
+              be watching it before the content changes. "One" because the count and the no-results
+              advice are the same slot of information about the same search, and two competing status
+              regions is how a screen reader ends up reading neither in order.
+
+              It also replaces what the `combobox` contract was pretending to provide. This input used
+              to carry `role="combobox"` + `aria-expanded` + `aria-controls` pointing at a listbox that
+              only exists while there are results — a dangling reference most of the time — with no
+              `aria-activedescendant`, no arrow-key navigation, and `aria-selected={false}` nailed to
+              every option. The promise was a navigable popup widget; what is on screen is an in-flow
+              list of real buttons, which is what the markup now says. Not announcing it is not a
+              downgrade: nothing that was announced ever worked. */}
+          <p
+            className={`category-picker__note${results.length > 0 ? " category-picker__count" : ""}`}
+            role="status"
+          >
+            {/* `noResults` is deliberately NOT "nada encontrado": the likely reason is that the
+                seller searched for his OBJECT ("suporte de celular") while the marketplace names the
+                USE ("Acessórios para Celulares"). Telling him how to search again is worth more than
+                telling him he failed. */}
+            {searched ? (results.length > 0 ? countLabel : t.noResults) : ""}
+          </p>
           {results.length > 0 && (
-            <ul id={listId} role="listbox" className="category-picker__list">
+            <ul className="category-picker__list">
               {results.map((node) => (
                 <li key={node.id}>
                   <button
                     type="button"
-                    role="option"
-                    aria-selected={false}
                     className="category-picker__option"
                     onClick={() => {
                       justChose.current = true;
@@ -182,14 +214,6 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
                 </li>
               ))}
             </ul>
-          )}
-          {searched && results.length === 0 && (
-            // Not "nada encontrado": the likely reason is that the seller searched for his OBJECT
-            // ("suporte de celular") and the marketplace names the USE ("Acessórios para Celulares").
-            // Telling him how to search again is worth more than telling him he failed.
-            <p role="status" className="category-picker__note">
-              {t.noResults}
-            </p>
           )}
         </div>
       )}
