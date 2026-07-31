@@ -141,6 +141,37 @@ tratar `fee-catalog.ts` como binário — cegando `diff` e `blame` num arquivo d
 > usos de ferramenta para 14 agentes: as lentes copiaram fontes, rodaram `node` sobre o `pricing-core`
 > real e varreram 100k bases com oráculo próprio). Para revisão, capar céticos quase não move a conta.
 
+## US4 (fatia do orquestrador) — evidencia
+
+**Entregue** nesta fatia: as 6 pre-condicoes (T101-T106) + o orquestrador como decisao pura
+(T042-T048, T049a, T049b, T050a) + T051. **Fora dela, por decisao do dono (2026-07-31)**: o
+`fee-refresh.yml` (T049/T050, presos a T069b) e o ruleset do `develop` (T048a, configuracao).
+
+### T051 / SC-811 — a execucao mensal consome 0 tokens de LLM
+
+Verificado em tres vias independentes, nao afirmado:
+
+| # | Verificacao | Resultado |
+|---|---|---|
+| 1 | Dependencias de `packages/fee-ingest` | runtime: **so `zod`**; dev: `@playwright/test`, `@types/node`, `typescript`, `vitest`. **Nenhum SDK de modelo** |
+| 2 | Busca por `anthropic\|openai\|claude\|gemini\|llm\|gpt-\|completion\|embedding` em `src/` | **zero ocorrencias** |
+| 3 | Toda saida de rede do pacote | so a pagina da Amazon (`sellercentral.amazon.com.br/.../G200336920`). O unico outro host que aparece e `example.com` **dentro de um fixture de teste** (`catalog-diff.test.ts:332`) |
+
+**Consequencia, que e o que a SC-811 de fato pede**: o laco mensal **nao gera linha** em
+`docs/token-ledger.md`. Conferido — as duas ocorrencias de "ingest" no ledger sao da ingestao do
+**graphify**, de 2026-07-10, sem relacao com o `fee-ingest`.
+
+O parsing e deterministico por construcao: ler a tabela, comparar campo a campo, formatar markdown.
+Nada disso pede julgamento de modelo — e e por isso que a regra do ledger nao se aplica aqui, e nao
+por dispensa.
+
+### O que esta fatia NAO faz, dito em vez de subentendido
+
+O laco **nao dispara sozinho**. O `schedule` do GitHub roda a partir da branch **default** (`main`),
+e o corte de release esta adiado ate v1 — entao, mesmo depois do YAML existir, o gatilho pratico sera
+`workflow_dispatch`. Hoje, sem o YAML, o laco so roda por `node`. O que existe e a decisao inteira,
+testada e ligada ao gerador; o gatilho e que falta.
+
 ## Pendente para o merge
 
 - [x] Homologação visual (`qa-produto`) do PR #31 — **PASS COM RESSALVAS**, as duas ressalvas
