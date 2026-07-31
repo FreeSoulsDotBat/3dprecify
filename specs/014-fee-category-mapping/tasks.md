@@ -543,7 +543,7 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] T121 📌 **HAND-OFF para `feature/012-e6-billing`** (NÃO fazer nesta branch): um checkout abandonado deixa `subscriptions.status='pending'` para sempre e todo re-Assinar vira **409 eterno**, enquanto a cópia da UI (`messages.pt-br.ts:851`, "aguarde alguns minutos e tente de novo") promete uma recuperação que **nenhum caminho de código oferece**. O reap de *stale pending* está **especificado** em `data-model.md` §5 e em `models/__init__.py:827` e **nunca virou tarefa** — a T011 está `[x]` sem a metade que a própria cópia ratificada pressupõe. Inerte hoje (épico adiado por decisão do dono 2026-07-09). Abrir a tarefa em `specs/012-e6-billing/tasks.md` **naquela branch**, antes do PR-B.
 
 ### Fechamento
-- [ ] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
 
