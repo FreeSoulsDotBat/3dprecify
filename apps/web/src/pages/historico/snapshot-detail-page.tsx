@@ -270,6 +270,20 @@ function ChannelsBlock({ payload }: { payload: FrozenSnapshotPayload }) {
   );
 }
 
+/**
+ * 014/R3 — o nome do marketplace como a Calcular o escreve. O congelado exibia o enum CRU
+ * (`MERCADO_LIVRE`) enquanto a mesma sessão da Calcular mostrava "Mercado Livre · Clássico".
+ *
+ * O valor cru é FALLBACK, não alvo: um documento antigo pode trazer texto livre que este dicionário
+ * não conhece, e traduzir só o que ele conhece mantém a regra desta tela — o que está gravado é
+ * renderizado, nunca reescrito. `null` é o canal sem marketplace, que já tinha a sua própria cópia.
+ */
+function marketplaceLabel(raw: string | null): string {
+  if (raw === null) return messages.calculator.channels.channelFallback;
+  const known: Record<string, string> = messages.calculator.marketplaceNames;
+  return known[raw] ?? raw;
+}
+
 function FrozenChannelRow({
   channel,
   semComissao,
@@ -279,9 +293,7 @@ function FrozenChannelRow({
 }) {
   return (
     <div className="tf-historico__channel">
-      <span className="tf-historico__channel-name">
-        {channel.marketplace ?? messages.calculator.channels.channelFallback}
-      </span>
+      <span className="tf-historico__channel-name">{marketplaceLabel(channel.marketplace)}</span>
       {!semComissao && (
         <>
           {channel.precoAnuncioVarejo != null && (

@@ -133,3 +133,70 @@ describe("FeeSeal — `embedded` é modificador, não um desvio que engole o res
     expect(seal).toHaveTextContent("Relógios");
   });
 });
+
+// 014/R2 (homologação da Fase 6C, 2026-07-30) — MEDIDO na tela:
+//   "Referência: Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)
+//    (para Calçados) · atualizada em 28/07/2026"
+//
+// O nome sai duas vezes. A cláusula `(para X)` foi acrescentada por este incremento para revelar que
+// a alíquota pode vir de um ANCESTRAL da categoria escolhida — e continua necessária para isso. O que
+// faltava era notar que a fonte do catálogo da Amazon JÁ nomeia a categoria no próprio rótulo.
+//
+// A condição certa é sobre o que já foi IMPRESSO, não sobre qual marketplace é: no caminho da semente
+// o cabeçalho não cita fonte nenhuma ("referência embutida (offline)"), e ali a cláusula volta a ser
+// a única coisa que diz de qual categoria o número é.
+describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () => {
+  const AMAZON_SOURCE =
+    "Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)";
+
+  it("fonte que já nomeia a categoria não ganha a cláusula de novo", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: AMAZON_SOURCE,
+          reviewedOn: "2026-07-28",
+          originCategoryName: "Calçados",
+        }}
+      />,
+    );
+    const texto = screen.getByTestId("fee-seal").textContent ?? "";
+    expect(texto).toContain(AMAZON_SOURCE); // a fonte inteira continua lá
+    expect(texto).not.toContain(`(${t.forCategory} Calçados)`);
+    // E o nome aparece exatamente uma vez, que é a asserção que a redundância viola.
+    expect(texto.split("Calçados").length - 1).toBe(1);
+  });
+
+  it("fonte que NÃO nomeia a categoria continua ganhando a cláusula — é a disclosure do ancestral", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Central do Vendedor",
+          reviewedOn: "2026-07-28",
+          originCategoryName: "Celulares e Telefones",
+        }}
+      />,
+    );
+    expect(screen.getByTestId("fee-seal")).toHaveTextContent(
+      `(${t.forCategory} Celulares e Telefones)`,
+    );
+  });
+
+  it("na semente o cabeçalho não cita fonte, então a cláusula é a única disclosure e permanece", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: AMAZON_SOURCE,
+          reviewedOn: "2026-07-28",
+          embedded: true,
+          originCategoryName: "Calçados",
+        }}
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(`(${t.forCategory} Calçados)`);
+  });
+});

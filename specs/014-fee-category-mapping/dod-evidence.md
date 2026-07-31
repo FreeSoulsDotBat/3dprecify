@@ -72,7 +72,43 @@ O repositório **já descrevia o defeito e não o impunha**:
 | Export PDF/CSV | **verificado**: não renderiza canais, então a mentira da T120 não existe no documento que o vendedor manda ao cliente |
 | Estado SC-817 no histórico | um canal com taxa mas nível sem banda publicada aparece sem linhas e sem legenda. Pré-existente, distinto da T120, não tratado aqui |
 
+## Homologação visual (`qa-produto`, 2026-07-30) — **PASS COM RESSALVAS · 92%**
+
+Browser real, 41 screenshots, geometria lida do DOM. Os 6 grupos alcançáveis passaram nas asserções
+**medidas**; 2 estados são comprovadamente **não alcançáveis** e a homologação provou a
+inalcançabilidade em vez de fabricá-los — que era o risco pelo qual este papel voltou a `opus`.
+
+| Grupo | Medida de hoje | Medida de antes |
+|---|---|---|
+| T115 moldura | os 7 `.tf-inputwrap` do slot: `48px · 1px rgb(185,187,198) · radius 14px` **idênticos** | 24px, zero regra de CSS |
+| T117 contagem | `"Mostrando 8 de 31 — refine a busca"`; "de" → `8 categorias encontradas` (total real) | "8 encontradas" com 31 existindo |
+| T118 barra do kit | 412px: barra até **843**, nav a partir de **850** — `intersects = false` | 907 vs 850 |
+| T119 histórico | `scrollWidth === clientWidth` em 390/412/1440; **0** elementos com `right > 391` | 1798px |
+| T120 congelado | sem comissão: 0 linhas de preço + a frase; com 12%: os 4 números **voltam** | R$ 30,90 fabricado |
+| T097 + selos | catch-all em tom **neutro** (não `--info`); trocar de marketplace limpa a categoria e o selo | — |
+| Transversal | `NaN/Infinity/undefined/R$ 0,00` fabricado: `false` em 100% das medições; console e rede limpos | — |
+
+**Não verificado, com a razão provada:** T116 (a categoria nunca é persistida — os dois manipuladores
+de troca de marketplace a zeram) e SC-817 (as bandas Shopee servidas cobrem `0 → ∞` sem lacuna).
+
+**Ressalvas corrigidas em seguida** (`gate:all` verde depois de cada uma):
+
+| # | O que era | Origem |
+|---|---|---|
+| **R2** | `… — Calçados (…) **(para Calçados)** …` — o nome duas vezes: a `source` do catálogo da Amazon já o carrega e a cláusula deste incremento o repetia | **introduzida por 014** — a condição agora é sobre o que já foi impresso, e no caminho da semente (cabeçalho sem fonte) a cláusula permanece |
+| **R3** | o congelado exibia o enum cru `MERCADO_LIVRE` enquanto a Calcular escrevia "Mercado Livre" | **PRÉ-EXISTENTE** — linha idêntica em `develop` (lá 257, aqui 283), verificado com `git show`. Corrigida aqui porque a T120 reescreveu esse bloco; o valor cru continua sendo o fallback, para não reescrever documento antigo |
+
+**R1 e os dois achados fora do mandato** (nota de freemium exibida a assinante Premium — pré-existente
+do E2 e confirmada em `develop`; coluna vazia no desktop) ficaram registrados como follow-ups em
+`tasks.md`, sem bloquear o merge.
+
+> **Custo** (`docs/token-ledger.md`): **146.333** contra estimativa de 200–320k — abaixo da estimativa
+> **e** abaixo do comparável do E4 (168.094), com 8 grupos em vez de uma slice. As duas causas medidas:
+> mandato enumerado com os números de ANTES para comparar, e a stack subida pelo loop principal antes
+> do hand-off.
+
 ## Pendente para o merge
 
-- [ ] Homologação visual (`qa-produto`) do PR #31.
+- [x] Homologação visual (`qa-produto`) do PR #31 — **PASS COM RESSALVAS**, as duas ressalvas
+      acionáveis corrigidas.
 - [ ] Autorização do dono para o squash-merge em `develop` (ADR-0006).

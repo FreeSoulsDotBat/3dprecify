@@ -55,9 +55,16 @@ function textAndTone(state: FeeSealState): { text: string; tone: BadgeTone } {
       // Naming the ORIGIN category costs one clause and closes a real gap: with sparse entries the
       // number may come from an ANCESTOR of the chosen category, and "Referência: <fonte>" alone
       // would let the seller read it as his own category's rate.
-      const forCat = state.originCategoryName
-        ? ` (${t.forCategory} ${state.originCategoryName})`
-        : "";
+      //
+      // …unless the head ALREADY named it. Measured in the Fase 6C homologation: Amazon's catalog
+      // `source` embeds the category ("Tabela de comissões da Amazon — Calçados (…)"), so the seal
+      // read "… — Calçados (…) (para Calçados) …". The test is on what was actually PRINTED rather
+      // than on which marketplace it is — on the seed path the head cites no source at all
+      // ("referência embutida (offline)"), and there this clause is the only disclosure there is.
+      const forCat =
+        state.originCategoryName && !head.includes(state.originCategoryName)
+          ? ` (${t.forCategory} ${state.originCategoryName})`
+          : "";
       const base = `${head}${forCat} · ${t.updatedOn} ${fmtDate(state.reviewedOn)}`;
       return state.stale || state.embedded
         ? { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" }

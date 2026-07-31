@@ -542,6 +542,29 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 - [ ] T121 📌 **HAND-OFF para `feature/012-e6-billing`** (NÃO fazer nesta branch): um checkout abandonado deixa `subscriptions.status='pending'` para sempre e todo re-Assinar vira **409 eterno**, enquanto a cópia da UI (`messages.pt-br.ts:851`, "aguarde alguns minutos e tente de novo") promete uma recuperação que **nenhum caminho de código oferece**. O reap de *stale pending* está **especificado** em `data-model.md` §5 e em `models/__init__.py:827` e **nunca virou tarefa** — a T011 está `[x]` sem a metade que a própria cópia ratificada pressupõe. Inerte hoje (épico adiado por decisão do dono 2026-07-09). Abrir a tarefa em `specs/012-e6-billing/tasks.md` **naquela branch**, antes do PR-B.
 
+**Follow-ups da homologação visual (2026-07-30) — registrados, NÃO bloqueiam o merge**
+
+> A homologação deu **PASS COM RESSALVAS (92%)** com 41 screenshots e geometria lida do browser.
+> Duas ressalvas foram corrigidas na hora (**R2** — o selo nomeava a categoria duas vezes, porque a
+> `source` do catálogo da Amazon já a carrega e a cláusula `(para X)` deste incremento a repetia; e
+> **R3** — o congelado exibia o enum cru `MERCADO_LIVRE`, defeito PRÉ-EXISTENTE, confirmado idêntico
+> em `develop`, corrigido aqui porque a T120 reescreveu exatamente aquele bloco). O que sobrou:
+
+- [ ] **R1 [designer-ux]** — com UM único resultado, a lista do seletor ainda flerta com "campo
+  preenchido". A distinção é mensurável (borda `rgb(215,216,224)` vs `rgb(185,187,198)`, raio 10 vs
+  14, sombra vs nenhuma, chevron, contagem entre os dois), mas com um resultado o peso recai quase
+  todo no chevron. É o limite do conserto da T115, não uma falha dele — em `category-picker.css`
+- [ ] **F-01 (fora do mandato, PRÉ-EXISTENTE do E2)** — o rodapé da Calcular exibe "Salvar e exportar
+  fazem parte do Premium" para quem **é** Premium e está salvando sem impedimento. `calcular-page.tsx`
+  renderiza `t.freemiumNote` sem gate de entitlement, e `calcular.test.tsx` afirma que ele está
+  SEMPRE presente — o teste tranca a cópia errada. Confirmado idêntico em `develop`
+- [ ] **F-02 (fora do mandato)** — em 1440px o formulário fica encostado à direita com ~850px vazios
+  à esquerda. Sem rolagem horizontal, sem relação com este PR
+- [ ] **F-03** — **T116 e SC-817 não são alcançáveis pela UI** e a homologação PROVOU a
+  inalcançabilidade em vez de fabricar o estado: a categoria nunca é persistida (os dois manipuladores
+  de troca de marketplace a zeram) e as bandas Shopee do catálogo servido cobrem `0 → ∞` sem lacuna.
+  Ambos ficam cobertos só por teste de unidade até existir um caminho real
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 

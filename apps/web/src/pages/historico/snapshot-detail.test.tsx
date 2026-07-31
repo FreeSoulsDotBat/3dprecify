@@ -258,6 +258,31 @@ describe("M11 — the per-channel prices are rendered, not silently frozen (revi
     // Absent atacado prices render nothing — never a fabricated zero.
     expect(screen.queryByText("R$ 0,00")).not.toBeInTheDocument();
   });
+
+  // 014/R3 (homologação da Fase 6C) — o congelado exibia o enum CRU `MERCADO_LIVRE` enquanto a
+  // Calcular, na mesma sessão, escrevia "Mercado Livre · Clássico". Defeito PRÉ-EXISTENTE (a linha é
+  // idêntica em `develop`), corrigido aqui porque a T120 reescreveu exatamente este bloco.
+  //
+  // E é o teste acima que explica por que ninguém tinha visto: ele usa `marketplace: "Shopee"` —
+  // texto livre que por acaso já é o nome legível. Nenhum caso exercitava um enum.
+  it("nomeia o marketplace como a Calcular nomeia — nunca o enum cru (R3)", () => {
+    render1(
+      {},
+      { ...PAYLOAD, channels: [{ marketplace: "MERCADO_LIVRE", precoAnuncioVarejo: "56.51" }] },
+    );
+    expect(screen.getByText("Mercado Livre")).toBeInTheDocument();
+    expect(screen.queryByText("MERCADO_LIVRE")).not.toBeInTheDocument();
+  });
+
+  // O valor CRU é o fallback, não o alvo: um documento antigo pode trazer texto livre que o
+  // dicionário não conhece, e reescrevê-lo seria mexer no que o registro afirma.
+  it("um valor fora do dicionário passa intacto — o congelado não é reescrito", () => {
+    render1(
+      {},
+      { ...PAYLOAD, channels: [{ marketplace: "Loja própria", precoAnuncioVarejo: "10.00" }] },
+    );
+    expect(screen.getByText("Loja própria")).toBeInTheDocument();
+  });
 });
 
 describe("M8 — the sync-state Alert on the detail (review PR-A, §1.2)", () => {
