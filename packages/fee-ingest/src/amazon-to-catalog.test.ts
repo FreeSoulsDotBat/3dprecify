@@ -11,7 +11,12 @@ import {
   categoryId,
 } from "./amazon-to-catalog";
 import { diffCatalogs, mayAutoMerge } from "./catalog-diff";
-import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails";
+import {
+  checkBandCoverage,
+  checkCategoryIdCollisions,
+  checkParseSanity,
+  nextCatalogVersion,
+} from "./guardrails";
 
 const CATS: ParsedCategory[] = [
   { name: "Roupas e Acessórios", commissionPct: 14, bands: null, minPerItem: 1 },
@@ -129,7 +134,9 @@ describe("amazonEntries — one per (plan, category)", () => {
 });
 
 describe("checkParseSanity — the fail-safe that catches a parser reading the wrong column", () => {
-  const canaries = [["Outros", 15]] as const;
+  // T102 — a canária é o PAR `(comissão, mínimo por item)`: só o percentual deixava passar o
+  // deslocamento de coluna que zera todo `minPerItem`.
+  const canaries = [["Outros", 15, 1]] as const;
 
   it("passes a healthy parse", () => {
     expect(checkParseSanity(CATS, { minRows: 3, canaries })).toEqual({ ok: true });
@@ -340,5 +347,34 @@ describe("effectiveDate — o campo diz desde quando a tarifa vale, nao quando o
     const antes = amazonEntries(CATS, { collectedAt: "2026-07-28", effectiveDate: "2026-07-28" });
     const depois = amazonEntries(CATS, { collectedAt: "2026-08-01", effectiveDate: "2026-08-01" });
     expect(mayAutoMerge(diffCatalogs(cat(antes) as never, cat(depois) as never))).toBe(false);
+  });
+});
+
+// 014/T106 [US4] — o gerador nao validava o proprio output. `categoryId` DOBRA acentos e caixa, entao
+// dois nomes diferentes na fonte podem colapsar no mesmo id ("Óculos" e "Oculos", "Relogios" e
+// "Relógios"). Hoje isso sai com exit 0 e "sucesso" impresso, e o artefato com ids duplicados derruba
+// o marketplace INTEIRO no cliente — `categorySpineSchema` recusa id duplicado, e o
+// `parseSeedResilient` responde descartando o marketplace, entao um par de acentos apaga a Amazon.
+//
+// O truth-gate (`fee-catalog.test.ts`) pega o artefato invalido no `gate:all`, o que impede que ele
+// chegue ao usuario — mas nao impede o gerador de MENTIR na saida. Quem roda o script precisa saber
+// pelo proprio script.
+describe("colisao de categoryId nao sai como sucesso (T106)", () => {
+  it("dois nomes que dobram para o mesmo id sao recusados, NOMEANDO os colidentes", () => {
+    const v = checkCategoryIdCollisions([{ name: "Óculos" }, { name: "Oculos" }]);
+    expect(v.ok).toBe(false);
+    // Nomear os dois e o que torna o erro acionavel: sem isso, quem roda ve "colisao" e nao sabe onde.
+    expect(v.ok === false && v.reason).toContain("Óculos");
+    expect(v.ok === false && v.reason).toContain("Oculos");
+    expect(v.ok === false && v.reason).toContain("oculos");
+  });
+
+  it("uma tabela sa passa", () => {
+    expect(checkCategoryIdCollisions(CATS)).toEqual({ ok: true });
+  });
+
+  it("o mesmo nome repetido tambem e colisao — a fonte nao deveria repetir uma linha", () => {
+    const v = checkCategoryIdCollisions([{ name: "Calçados" }, { name: "Calçados" }]);
+    expect(v.ok).toBe(false);
   });
 });

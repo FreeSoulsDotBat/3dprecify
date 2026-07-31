@@ -15,7 +15,12 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
-import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails.ts";
+import {
+  checkBandCoverage,
+  checkCategoryIdCollisions,
+  checkParseSanity,
+  nextCatalogVersion,
+} from "./guardrails.ts";
 import { amazonEntries, amazonSpine, effectiveDatesOf } from "./amazon-to-catalog.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
@@ -71,6 +76,17 @@ for (const c of categories) {
     console.error(`ABORT: "${c.name}" — ${coverage.reason}. The artifact is left untouched.`);
     process.exit(1);
   }
+}
+
+// T106 — o gerador confere o PRÓPRIO output antes de escrever. Dois nomes que colapsam no mesmo
+// `categoryId` (acentos e caixa são dobrados) produziam um artefato com ids duplicados, e o cliente
+// responde descartando o marketplace INTEIRO — um par de acentos apaga a Amazon. Isso saía com exit
+// 0 e "sucesso" impresso. O truth-gate do `gate:all` pegaria o artefato, mas não fala com quem rodou
+// o script; esta guarda fala, e nomeia os colidentes.
+const collision = checkCategoryIdCollisions(categories);
+if (!collision.ok) {
+  console.error(`ABORT: ${collision.reason}. The artifact is left untouched.`);
+  process.exit(1);
 }
 
 const collectedAt = process.env.COLLECTED_AT ?? new Date().toISOString().slice(0, 10);

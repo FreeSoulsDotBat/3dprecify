@@ -175,6 +175,17 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ---
 
+> **Nota de execucao (T102/T106, 2026-07-31)** — a T106 tinha duas metades e so uma cabia aqui.
+> A colisao de `categoryId` virou `checkCategoryIdCollisions` e o gerador aborta NOMEANDO os
+> colidentes e o id disputado ("colisao" sem nomes nao e acionavel). Ja **validar o artefato montado
+> contra o schema Zod dentro do gerador** exigiria `packages/fee-ingest` importar
+> `apps/web/src/shared/fee-catalog` — um PACOTE dependendo de um APP —, ou duplicar o contrato em
+> outra copia. As duas saidas sao decisao estrutural (Principio VIII), nao escolha minha.
+> **Mitigacao ja existente, verificada**: `apps/web/src/shared/fee-catalog/fee-catalog.test.ts:31`
+> valida o artefato COMMITTED contra o schema e roda no `gate:all`, entao um artefato invalido nao
+> chega ao usuario. O que faltava — e que a T106 fecha — e o gerador parar de imprimir "sucesso"
+> para quem o roda.
+
 ## Phase 6C: Correções da revisão multi-agente do PR #31 🔴 BLOQUEIA O MERGE
 
 **Origem**: revisão de 6 dimensões + verificação adversarial sobre `develop...HEAD` (2026-07-28).
@@ -338,11 +349,11 @@ Nenhum tem gatilho hoje (nenhum workflow invoca o gerador; `diffCatalogs` não t
 ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US4**, não como bugs em aberto.
 
 - [x] T101 [US4] `effectiveDate` recebe a **data da execução**, e não é inerte ⇒ duas execuções sobre a MESMA tabela produzem **76 entradas alteradas** e `mayAutoMerge` nunca retorna true. Preservar o `effectiveDate` anterior (ou o literal "não declarado pela fonte"). **Não** pôr em `INERT_PATHS` — isso tornaria auto-mergeável uma mudança real de vigência — em `build-amazon.mjs:81`
-- [ ] T102 [P] [US4] Canárias como par `(commissionPct, minPerItem)` **e** aridade exata de 3 colunas: uma coluna inserida na fonte desloca a posicional e zera todos os `minPerItem` com `ok: true` — em `packages/fee-ingest/src/guardrails.ts`, `amazon-parse.ts`
+- [x] T102 [P] [US4] Canárias como par `(commissionPct, minPerItem)` **e** aridade exata de 3 colunas: uma coluna inserida na fonte desloca a posicional e zera todos os `minPerItem` com `ok: true` — em `packages/fee-ingest/src/guardrails.ts`, `amazon-parse.ts`
 - [x] T103 [P] [US4] Campos de **nível marketplace** fora de `categorySpine`/`entries` nunca são comparados ⇒ furo no fail-closed que o próprio módulo promete — em `packages/fee-ingest/src/catalog-diff.ts`
 - [x] T104 [P] [US4] Entrada sumida e marketplace adicionado/removido derrubam `freshnessOnly` mas não entram em **lista nenhuma**: o PR diz "algo mudou" sem descrever o quê — em `catalog-diff.ts`
 - [x] T105 [P] [US4] `marketplacesOf()` no padrão de `spineOf`/`entriesOf`: hoje `?? []` só cobre null/undefined e um JSON válido não-array **estoura**, contra o contrato "degrada, não quebra" — em `catalog-diff.ts`
-- [ ] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
+- [x] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
 
 > **Nota (T100, 2026-07-30)** — o sentinel `"invalid-seed"` vence lexicograficamente qualquer
 > `"2026-…"` (o "i" vence o "2") **e** é o piso SÍNCRONO do estado. Ou seja: no dia em que a semente

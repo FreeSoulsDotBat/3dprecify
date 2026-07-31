@@ -141,6 +141,18 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
     const [rawName, rawPct, rawMin] = row.map(normalise);
     if (!rawPct.includes("%")) continue; // header row
 
+    // 014/T102 — ARIDADE EXATA. A leitura acima é POSICIONAL, e `row.length >= 3` aceitava uma quarta
+    // coluna calada: se a Amazon inserir uma ("Taxa de fechamento", por exemplo), `rawMin` passa a
+    // vir da coluna errada e todo mínimo por item vira zero, com o percentual intacto. Isso é
+    // mudança de FORMA da fonte — a família de falha do SC-806 —, não uma mudança de tarifa, e a
+    // resposta honesta é recusar em voz alta em vez de publicar números plausíveis e errados.
+    if (row.length !== 3) {
+      throw new Error(
+        `row with ${row.length} columns — the published table has 3, so a column was inserted or ` +
+          `removed and the positional read would shift silently: ${JSON.stringify(row)}`,
+      );
+    }
+
     const name = rawName.replace(FOOTNOTE, "").trim();
     if (!name) throw new Error(`row with a commission but no category: ${JSON.stringify(row)}`);
 
@@ -165,11 +177,14 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
 
 /** Canary values fixed from the 2026-07-28 reading (FR-018a): if these stop matching, the parser is
  *  reading the wrong column — the failure mode that returns plausible numbers and passes review. */
-export const CANARIES: ReadonlyArray<readonly [string, number]> = [
-  ["Roupas e Acessórios", 14],
-  ["Calçados", 14],
-  ["Relógios", 13],
-  ["Outros", 15],
+/** 014/T102 — o PAR `(comissão, mínimo por item)`, medido no artefato de 2026-07-28. Só a comissão
+ *  não bastava: o deslocamento de coluna que a aridade agora recusa mantinha o percentual e zerava o
+ *  mínimo, e a canária dizia `ok`. */
+export const CANARIES: ReadonlyArray<readonly [string, number, number]> = [
+  ["Roupas e Acessórios", 14, 1],
+  ["Calçados", 14, 1],
+  ["Relógios", 13, 1],
+  ["Outros", 15, 1],
 ];
 
 /** The published catch-all. It is a REAL row of the table, not an invention of ours — which is the
