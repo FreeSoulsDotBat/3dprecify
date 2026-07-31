@@ -30,6 +30,9 @@ export default defineConfig({
         // covered. The fail-safe they used to inline now lives in `guardrails.ts` precisely so it
         // is testable instead of exempt (FR-018a).
         "packages/*/src/**/*.mjs",
+        // 014/T083: fixture DATA (a frozen document from before ADR-0024) plus the note that
+        // records where it came from. Not code — v8 tried to parse the .md and warned on every run.
+        "**/__fixtures__/**",
       ],
       thresholds: {
         "packages/*/src/**": { statements: 100, branches: 100, functions: 100, lines: 100 },

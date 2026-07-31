@@ -1,4 +1,11 @@
-import type { BomResult, PriceInput, PriceResult } from "@3dprecify/pricing-core";
+import {
+  type BomResult,
+  computeCalculator,
+  type PriceInput,
+  type PriceResult,
+} from "@3dprecify/pricing-core";
+
+import PRE_ADR_0024 from "./__fixtures__/frozen-payload-pre-adr-0024.json";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
@@ -469,5 +476,61 @@ describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (
         0,
       ),
     ).toBe(false);
+  });
+});
+
+// 014/T083 (SC-815) — RETROCOMPATIBILIDADE com o passado de verdade.
+//
+// O ADR-0024 acrescentou `bandMode` e definiu que a AUSÊNCIA dele significa seleção. `pricing-core`
+// já provava essa regra em si mesma; o que faltava é o que esta suíte faz: pegar documentos
+// congelados que ninguém escreveu à mão hoje — gerados pelo código de `1212a16`, a base desta branch,
+// ANTES do ADR-0024 — e mostrar que o motor de hoje os reproduz ao centavo.
+//
+// A diferença não é cerimônia. Um fixture escrito hoje prova a INTENÇÃO de hoje: eu escolheria os
+// números que o código atual produz, e o teste passaria por construção. Só o artefato antigo prova
+// que o passado não se moveu.
+//
+// E há um alvo preciso: `recalc-today.tsx` afirma no seu docstring que "sob uma fórmula inalterada,
+// reprecificar as entradas congeladas devolve exatamente os valores congelados". Nenhum caminho de
+// código exercita essa afirmação — o "Recalcular hoje" re-emite o documento quando a origem sumiu,
+// nunca reprecifica as entradas. Este teste é o que a torna verificada em vez de declarada.
+describe("SC-815 — um congelado de ANTES do ADR-0024 reprecifica no mesmo centavo (T083)", () => {
+  /** Descongela um valor de entrada: string numérica vira número, o resto passa intacto.
+   *  `null` PERMANECE null — `maxPrice: null` é a banda sem teto, não um campo ausente. */
+  function thaw(value: unknown): unknown {
+    if (value === null) return null;
+    if (Array.isArray(value)) return value.map(thaw);
+    if (typeof value === "object") {
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, thaw(v)]));
+    }
+    const n = Number(value);
+    return value !== "" && Number.isFinite(n) ? n : value;
+  }
+
+  const antigos = PRE_ADR_0024 as unknown as FrozenSnapshotPayload[];
+
+  it("os documentos do fixture são mesmo ANTERIORES: nenhum carrega `bandMode`", () => {
+    expect(antigos).toHaveLength(3);
+    expect(JSON.stringify(antigos)).not.toContain("bandMode");
+    // E são bandados — senão o teste não tocaria no caminho que o ADR-0024 mudou.
+    expect(JSON.stringify(antigos)).toContain("priceBands");
+  });
+
+  for (const [i, antigo] of antigos.entries()) {
+    it(`documento #${i + 1}: o motor de hoje reescreve o MESMO documento`, () => {
+      const input = thaw(antigo.inputs) as PriceInput;
+      const hoje = freezePriceResult(input, computeCalculator(input), null);
+      // Documento inteiro, não só os totais: breakdown, canais, provenance e a versão do modelo.
+      // Um único centavo diferente em qualquer folha reprova.
+      expect(hoje).toEqual(antigo);
+    });
+  }
+
+  // Os três anúncios Shopee caem em bandas publicadas DIFERENTES — é onde seleção e parcela
+  // divergem, e é por isso que um único documento não bastaria.
+  it("as três escalas atravessam bandas diferentes, não a mesma três vezes", () => {
+    const anuncios = antigos.map((p) => p.channels?.[0]?.precoAnuncioVarejo);
+    expect(anuncios).toEqual(["58.73", "97.36", "149.98"]);
+    expect(new Set(anuncios).size).toBe(3);
   });
 });

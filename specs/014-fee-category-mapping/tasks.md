@@ -197,7 +197,7 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 - [x] T080 [US3] `bandMode` atravessa `entryToChannelFees` até `ChannelInput` sem se perder — em `apps/web/src/features/calculator/fee-prefill.ts`, `calculator-model.ts`
 - [x] T081 [US3] O gerador emite `bandMode: "PROGRESSIVE"` para as categorias com limiar, e o parser passa a **distinguir** parcela de seleção na leitura da célula — em `packages/fee-ingest/src/amazon-parse.ts`, `amazon-to-catalog.ts`
 - [x] T082 [US3] Regenerar `backend/app/data/catalog.json` e conferir Móveis · Colchões · Acessórios Eletrônicos — em `packages/fee-ingest/src/build-amazon.mjs`
-- [ ] T083 [P] Teste **SC-815** de retrocompatibilidade com **payload congelado REAL de antes** da correção (não fixture escrito depois): mesmo preço, mesmo centavo — em `apps/web/src/entities/history/frozen-payload.test.ts`
+- [x] T083 [P] Teste **SC-815** de retrocompatibilidade com **payload congelado REAL de antes** da correção (não fixture escrito depois): mesmo preço, mesmo centavo — em `apps/web/src/entities/history/frozen-payload.test.ts`
 - [x] T084 [P] Teste da travessia ponta-a-ponta: artefato → resolução → `ChannelInput` → preço, provando que `bandMode` **não** se perde no caminho. **É o risco real do ADR-0024 §5**: perder o modo degrada em silêncio para o bug atual, agora justificado pelo padrão — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 > **Contabilidade corrigida (2026-07-30)** — a A1 foi implementada nesta branch (ADR-0024 aceito,
@@ -208,6 +208,26 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 > hoje prova a intenção de hoje; só o payload antigo prova que o passado não se moveu.
 > T076/T077 e T084 vivem em arquivos diferentes dos previstos (`tests/progressive-bands.test.ts` e
 > `features/calculator/progressive-traversal.test.ts`).
+
+> **Nota de execução (T083, 2026-07-30)** — o "payload REAL de antes" foi levado ao pé da letra: os
+> três documentos de `apps/web/src/entities/history/__fixtures__/frozen-payload-pre-adr-0024.json`
+> foram **gerados pelo código de `1212a16`** (a base desta branch, anterior ao ADR-0024), extraído
+> com `git show` e executado à parte. Proveniência e regra de manutenção em `__fixtures__/README.md`
+> — o arquivo **não se regenera** quando o teste reprova; reprovar é dizer que o passado se moveu.
+> 1. **A asserção é o DOCUMENTO INTEIRO**, não os totais: `freezePriceResult(computeCalculator(…))`
+>    de hoje contra o payload antigo, com `toEqual`. Um centavo em qualquer folha reprova.
+> 2. **Três escalas porque uma não bastaria**: os anúncios caem em `[0,80)`, `[80,100)` e `[100,200)`,
+>    e o voucher de frete (≥ 79) só entra nos dois últimos.
+> 3. **Falsificação MEDIDA** (o teste passou de primeira, então precisava provar que pode reprovar):
+>    inverter o padrão do `bandMode` para progressivo reprova **2 dos 3** — o primeiro sobrevive
+>    porque abaixo do primeiro limiar os dois modos coincidem, que é a matemática correta. O código
+>    foi restaurado com `git checkout` logo em seguida.
+> 4. **O alvo achado no caminho**: `recalc-today.tsx` afirma no docstring que "sob uma fórmula
+>    inalterada, reprecificar as entradas congeladas devolve exatamente os valores congelados" —
+>    e **nenhum caminho de código exercita isso** (o "Recalcular hoje" re-emite o documento quando a
+>    origem sumiu, nunca reprecifica as entradas). Este teste é o que torna a afirmação verificada em
+>    vez de declarada. Sétima vez nesta sessão em que a regra estava escrita e não imposta.
+> 5. `**/__fixtures__/**` saiu da cobertura: é dado, e o v8 tentava parsear o `.md` a cada rodada.
 
 ### A1b — o BACKEND comia dois campos do incremento 🔴 (achado 2026-07-29, ao levantar o app de verdade)
 

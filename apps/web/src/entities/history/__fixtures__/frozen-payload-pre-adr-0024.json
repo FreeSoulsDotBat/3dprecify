@@ -1,0 +1,341 @@
+[
+  {
+    "schemaVersion": 1,
+    "kind": "SINGLE",
+    "modelVersion": "3.1.0",
+    "catalogVersion": "2026-07-07.0",
+    "inputs": {
+      "costPerRoll": "100",
+      "rollWeightKg": "1",
+      "printGrams": "100",
+      "wasteGrams": "10",
+      "printTimeHours": "5",
+      "avgPowerKw": "0.1",
+      "tariffPerKwh": "1",
+      "machineValue": "4000",
+      "machineLifetimeHours": "2000",
+      "failurePct": "10",
+      "finishTimeHours": "0.5",
+      "finishRatePerHour": "10",
+      "markupVarejoPct": "50",
+      "markupAtacadoPct": "30",
+      "channels": [
+        {
+          "marketplace": "SHOPEE",
+          "commissionPct": "0",
+          "priceBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "80",
+              "commissionPct": "20",
+              "fixedFee": "4"
+            },
+            {
+              "minPrice": "80",
+              "maxPrice": "100",
+              "commissionPct": "14",
+              "fixedFee": "16"
+            },
+            {
+              "minPrice": "100",
+              "maxPrice": "200",
+              "commissionPct": "14",
+              "fixedFee": "20"
+            },
+            {
+              "minPrice": "200",
+              "maxPrice": null,
+              "commissionPct": "14",
+              "fixedFee": "26"
+            }
+          ],
+          "freightVoucherBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "79",
+              "voucherCeiling": "0"
+            },
+            {
+              "minPrice": "79",
+              "maxPrice": null,
+              "voucherCeiling": "10"
+            }
+          ]
+        },
+        {
+          "marketplace": "MERCADO_LIVRE",
+          "feeDeterminants": {
+            "modality": "CLASSICO"
+          },
+          "commissionPct": "12",
+          "fixedFee": "6.75"
+        }
+      ],
+      "catalogVersion": "2026-07-07.0"
+    },
+    "breakdown": {
+      "material": "11.00",
+      "energy": "0.50",
+      "machine": "10.00",
+      "falha": "2.15",
+      "finishing": "5.00",
+      "labor": "0.00",
+      "admin": "0.00",
+      "otherCosts": []
+    },
+    "totals": {
+      "custoTotal": "28.65",
+      "precoVarejo": "42.98",
+      "precoAtacado": "37.25"
+    },
+    "channels": [
+      {
+        "marketplace": "SHOPEE",
+        "precoAnuncioVarejo": "58.73",
+        "recebidoLiquidoVarejo": "42.98",
+        "precoAnuncioAtacado": "51.56",
+        "recebidoLiquidoAtacado": "37.25",
+        "freightCostVarejo": "0.00",
+        "freightCostAtacado": "0.00",
+        "error": null
+      },
+      {
+        "marketplace": "MERCADO_LIVRE",
+        "precoAnuncioVarejo": "56.51",
+        "recebidoLiquidoVarejo": "42.98",
+        "precoAnuncioAtacado": "50.00",
+        "recebidoLiquidoAtacado": "37.25",
+        "freightCostVarejo": "0.00",
+        "freightCostAtacado": "0.00",
+        "error": null
+      }
+    ],
+    "provenance": null
+  },
+  {
+    "schemaVersion": 1,
+    "kind": "SINGLE",
+    "modelVersion": "3.1.0",
+    "catalogVersion": "2026-07-07.0",
+    "inputs": {
+      "costPerRoll": "100",
+      "rollWeightKg": "1",
+      "printGrams": "250",
+      "wasteGrams": "10",
+      "printTimeHours": "5",
+      "avgPowerKw": "0.1",
+      "tariffPerKwh": "1",
+      "machineValue": "4000",
+      "machineLifetimeHours": "2000",
+      "failurePct": "10",
+      "finishTimeHours": "0.5",
+      "finishRatePerHour": "10",
+      "markupVarejoPct": "50",
+      "markupAtacadoPct": "30",
+      "channels": [
+        {
+          "marketplace": "SHOPEE",
+          "commissionPct": "0",
+          "priceBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "80",
+              "commissionPct": "20",
+              "fixedFee": "4"
+            },
+            {
+              "minPrice": "80",
+              "maxPrice": "100",
+              "commissionPct": "14",
+              "fixedFee": "16"
+            },
+            {
+              "minPrice": "100",
+              "maxPrice": "200",
+              "commissionPct": "14",
+              "fixedFee": "20"
+            },
+            {
+              "minPrice": "200",
+              "maxPrice": null,
+              "commissionPct": "14",
+              "fixedFee": "26"
+            }
+          ],
+          "freightVoucherBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "79",
+              "voucherCeiling": "0"
+            },
+            {
+              "minPrice": "79",
+              "maxPrice": null,
+              "voucherCeiling": "10"
+            }
+          ]
+        },
+        {
+          "marketplace": "MERCADO_LIVRE",
+          "feeDeterminants": {
+            "modality": "CLASSICO"
+          },
+          "commissionPct": "12",
+          "fixedFee": "6.75"
+        }
+      ],
+      "catalogVersion": "2026-07-07.0"
+    },
+    "breakdown": {
+      "material": "26.00",
+      "energy": "0.50",
+      "machine": "10.00",
+      "falha": "3.65",
+      "finishing": "5.00",
+      "labor": "0.00",
+      "admin": "0.00",
+      "otherCosts": []
+    },
+    "totals": {
+      "custoTotal": "45.15",
+      "precoVarejo": "67.73",
+      "precoAtacado": "58.70"
+    },
+    "channels": [
+      {
+        "marketplace": "SHOPEE",
+        "precoAnuncioVarejo": "97.36",
+        "recebidoLiquidoVarejo": "57.73",
+        "precoAnuncioAtacado": "78.38",
+        "recebidoLiquidoAtacado": "58.70",
+        "freightCostVarejo": "10.00",
+        "freightCostAtacado": "0.00",
+        "error": null
+      },
+      {
+        "marketplace": "MERCADO_LIVRE",
+        "precoAnuncioVarejo": "84.64",
+        "recebidoLiquidoVarejo": "67.73",
+        "precoAnuncioAtacado": "74.38",
+        "recebidoLiquidoAtacado": "58.70",
+        "freightCostVarejo": "0.00",
+        "freightCostAtacado": "0.00",
+        "error": null
+      }
+    ],
+    "provenance": null
+  },
+  {
+    "schemaVersion": 1,
+    "kind": "SINGLE",
+    "modelVersion": "3.1.0",
+    "catalogVersion": "2026-07-07.0",
+    "inputs": {
+      "costPerRoll": "100",
+      "rollWeightKg": "1",
+      "printGrams": "500",
+      "wasteGrams": "10",
+      "printTimeHours": "5",
+      "avgPowerKw": "0.1",
+      "tariffPerKwh": "1",
+      "machineValue": "4000",
+      "machineLifetimeHours": "2000",
+      "failurePct": "10",
+      "finishTimeHours": "0.5",
+      "finishRatePerHour": "10",
+      "markupVarejoPct": "50",
+      "markupAtacadoPct": "30",
+      "channels": [
+        {
+          "marketplace": "SHOPEE",
+          "commissionPct": "0",
+          "priceBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "80",
+              "commissionPct": "20",
+              "fixedFee": "4"
+            },
+            {
+              "minPrice": "80",
+              "maxPrice": "100",
+              "commissionPct": "14",
+              "fixedFee": "16"
+            },
+            {
+              "minPrice": "100",
+              "maxPrice": "200",
+              "commissionPct": "14",
+              "fixedFee": "20"
+            },
+            {
+              "minPrice": "200",
+              "maxPrice": null,
+              "commissionPct": "14",
+              "fixedFee": "26"
+            }
+          ],
+          "freightVoucherBands": [
+            {
+              "minPrice": "0",
+              "maxPrice": "79",
+              "voucherCeiling": "0"
+            },
+            {
+              "minPrice": "79",
+              "maxPrice": null,
+              "voucherCeiling": "10"
+            }
+          ]
+        },
+        {
+          "marketplace": "MERCADO_LIVRE",
+          "feeDeterminants": {
+            "modality": "CLASSICO"
+          },
+          "commissionPct": "12",
+          "fixedFee": "6.75"
+        }
+      ],
+      "catalogVersion": "2026-07-07.0"
+    },
+    "breakdown": {
+      "material": "51.00",
+      "energy": "0.50",
+      "machine": "10.00",
+      "falha": "6.15",
+      "finishing": "5.00",
+      "labor": "0.00",
+      "admin": "0.00",
+      "otherCosts": []
+    },
+    "totals": {
+      "custoTotal": "72.65",
+      "precoVarejo": "108.98",
+      "precoAtacado": "94.45"
+    },
+    "channels": [
+      {
+        "marketplace": "SHOPEE",
+        "precoAnuncioVarejo": "149.98",
+        "recebidoLiquidoVarejo": "98.98",
+        "precoAnuncioAtacado": "133.08",
+        "recebidoLiquidoAtacado": "84.45",
+        "freightCostVarejo": "10.00",
+        "freightCostAtacado": "10.00",
+        "error": null
+      },
+      {
+        "marketplace": "MERCADO_LIVRE",
+        "precoAnuncioVarejo": "131.51",
+        "recebidoLiquidoVarejo": "108.98",
+        "precoAnuncioAtacado": "115.00",
+        "recebidoLiquidoAtacado": "94.45",
+        "freightCostVarejo": "0.00",
+        "freightCostAtacado": "0.00",
+        "error": null
+      }
+    ],
+    "provenance": null
+  }
+]
