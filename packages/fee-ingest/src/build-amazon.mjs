@@ -21,7 +21,13 @@ import {
   checkParseSanity,
   nextCatalogVersion,
 } from "./guardrails.ts";
-import { amazonEntries, amazonSpine, effectiveDatesOf } from "./amazon-to-catalog.ts";
+import {
+  AMAZON_SOURCE_URL,
+  amazonEntries,
+  amazonSpine,
+  effectiveDatesOf,
+} from "./amazon-to-catalog.ts";
+import { decideRefresh } from "./refresh.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 const PAGE =
@@ -131,10 +137,41 @@ const next = {
   marketplaces,
 };
 
+// 014/T047+T048 — a DECISÃO do laço mensal, antes de qualquer escrita. Ela mora em `refresh.ts`
+// porque este arquivo é isento de cobertura, e a regra que decide se dinheiro vai para o artefato não
+// pode morar num lugar isento. Dois desfechos, e escrever não é um deles sem passar por aqui:
+//
+//   ABORT → o artefato fica INTOCADO e `lastReviewed` não avança para valor nenhum. Uma leitura que
+//           falhou não é "as taxas caíram" (SC-806), e publicar meia leitura é pior do que não
+//           publicar. É também onde o teto de linhas alteradas pega a mudança em bloco que as
+//           canárias deixariam passar.
+//   PR    → escreve o artefato e emite o corpo do PR. O job NUNCA mergeia (FR-020a): `mayAutoMerge`
+//           decide apenas se AQUELE PR pode dispensar revisão, e só quando o diff for exclusivamente
+//           `lastReviewed`.
+const outcome = decideRefresh({
+  marketplace: "AMAZON",
+  collectedAt,
+  sourceUrl: AMAZON_SOURCE_URL,
+  sanity: { ok: true },
+  before: artifact,
+  after: next,
+});
+if (outcome.kind === "ABORT") {
+  console.error(`ABORT: ${outcome.reason}. The artifact is left untouched.`);
+  process.exit(1);
+}
+
 // The write is the LAST step, and everything it reports was computed BEFORE it. The old order wrote
 // the file and only then went looking for the marketplace it had just written — so a shape it could
 // not find produced a half-done run: artifact on disk, TypeError on stdout, exit code non-zero.
 writeFileSync(ARTIFACT, JSON.stringify(next, null, 2) + "\n");
+// O corpo do PR ao lado do artefato, para o workflow (T049, ainda por vir) consumir sem recalcular
+// nada. `PR_BODY_OUT` deixa o destino explícito em vez de escondê-lo num caminho convencionado.
+const bodyOut = process.env.PR_BODY_OUT;
+if (bodyOut) writeFileSync(bodyOut, outcome.body);
+console.log(
+  `PR: ${outcome.title} — dispensa de revisão: ${outcome.mayAutoMerge ? "SIM (só lastReviewed)" : "NÃO"}`,
+);
 console.log(
   `AMAZON: ${categories.length} categories → ${entries.length} entries (2 plans). catalogVersion=${next.catalogVersion}`,
 );

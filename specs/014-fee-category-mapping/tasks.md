@@ -154,22 +154,22 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `packages/fee-ingest/refresh.test.ts`
+- [x] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
+- [x] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `packages/fee-ingest/refresh.test.ts`
+- [x] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `packages/fee-ingest/refresh.test.ts`
 
 ### Implementação
 
-- [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `packages/fee-ingest/refresh.mjs`
-- [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `packages/fee-ingest/refresh.mjs`
+- [x] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `packages/fee-ingest/refresh.mjs`
+- [x] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `packages/fee-ingest/refresh.mjs`
 - [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge. **Pré-condição a documentar no próprio workflow: o `schedule` do GitHub roda a partir da branch DEFAULT (`main`) — enquanto o arquivo não chegar em `main` por um corte de release, o laço mensal NÃO dispara sozinho** (ADR-0010 §A6.1) — em `.github/workflows/fee-refresh.yml`
 - [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml`
-- [ ] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `packages/fee-ingest/refresh.test.ts`
 - [ ] T048a Proteger o branch de integração com ruleset exigindo PR — hoje `develop` **não tem proteção nem ruleset** (medido: 404 + `[]`), então o único portão do artefato de dinheiro é código que o próprio job executa (FR-020c) — em configuração do repositório
-- [ ] T049a [US4] Classificador de **dispensa de revisão** (não de escrita): o job **sempre** abre PR; o classificador só decide se aquele PR pode auto-mergear, e apenas quando o diff for **exclusivamente** `lastReviewed`. Determinístico e, em dúvida ou erro, **nega a dispensa** (FR-020a) — em `packages/fee-ingest/refresh.mjs`
-- [ ] T049b [P] [US4] Teste: o classificador **nunca** dispensa revisão de um diff que toque dinheiro; classificador em erro nega a dispensa; e **nenhum caminho do job escreve direto** no branch de integração — em `packages/fee-ingest/refresh.test.ts`
+- [x] T049a [US4] Classificador de **dispensa de revisão** (não de escrita): o job **sempre** abre PR; o classificador só decide se aquele PR pode auto-mergear, e apenas quando o diff for **exclusivamente** `lastReviewed`. Determinístico e, em dúvida ou erro, **nega a dispensa** (FR-020a) — em `packages/fee-ingest/refresh.mjs`
+- [x] T049b [P] [US4] Teste: o classificador **nunca** dispensa revisão de um diff que toque dinheiro; classificador em erro nega a dispensa; e **nenhum caminho do job escreve direto** no branch de integração — em `packages/fee-ingest/refresh.test.ts`
 - [x] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `packages/fee-ingest/src/catalog-diff.test.ts` (não em `refresh.test.ts`: a detecção é do comparador, não do orquestrador)
 - [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 

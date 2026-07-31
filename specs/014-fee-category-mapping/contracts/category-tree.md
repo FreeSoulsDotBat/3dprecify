@@ -78,7 +78,11 @@ O PR **é** a interface do laço mensal. Formato do corpo:
 - Execução **que falhou ao ler a fonte** → **nenhum** PR, artefato intocado, alerta. `lastReviewed` **não** avança
   para valor nenhum (SC-806/FR-020a).
 - Parse **vazio ou encolhido** além do limiar declarado é **falha**, não "as taxas caíram" (SC-806).
-- **Nunca** auto-merge. Alvo: `develop`.
+- O job **nunca escreve direto** no branch de integracao e **sempre abre PR**. Alvo: `develop`.
+  A dispensa de REVISAO e outra coisa e tem regra propria (FR-020a): um PR cujo diff seja
+  **exclusivamente** `lastReviewed` MAY ser auto-mergeado; qualquer campo de dinheiro MUST
+  aguardar revisao humana. *(Corrigido 2026-07-31: esta linha dizia so "Nunca auto-merge", que
+  contradiz a FR-020a — quem implementasse pelo contrato construiria a coisa errada.)*
 
 ---
 
