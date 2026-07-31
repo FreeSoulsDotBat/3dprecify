@@ -126,6 +126,52 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
   await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
 });
 
+// 014/T118 — a barra "Total do kit" é `position: sticky` e a TabBar é `position: fixed; bottom: 0`.
+// A `padding-bottom` do shell reserva o espaço da TabBar para o conteúdo que ROLA, mas não move o
+// ponto onde um sticky para: ele para em relação ao viewport, ou seja, atrás da navegação. O
+// resultado é o custo total e os dois preços com os dígitos cortados durante toda a composição —
+// exatamente os números pelos quais o vendedor abriu a tela.
+//
+// Asserção de CAIXAS, não de texto: `toBeVisible` e `toContainText` passam com o elemento
+// inteiramente coberto, porque oclusão não é uma propriedade do texto.
+for (const vp of [
+  { width: 390, height: 844 },
+  { width: 412, height: 915 },
+]) {
+  test(`T118: a barra de total do kit não fica atrás da navegação (${vp.width}px)`, async ({
+    page,
+  }, info) => {
+    const email = await signUpThrowaway(page, `kitbar${vp.width}-${info.workerIndex}`);
+    grantPremium(email);
+    await page.setViewportSize(vp);
+    await page.goto("/kits");
+    await page.reload(); // a concessão só é lida na próxima carga
+
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+
+    const barra = page.getByTestId("kit-total-bar");
+    await expect(barra).toBeVisible();
+
+    // Sem rolagem o sticky nunca chega a FIXAR e o teste passaria sem medir nada.
+    await page.evaluate(() => window.scrollTo(0, 0));
+    const rola = await page.evaluate(
+      () => document.documentElement.scrollHeight > window.innerHeight,
+    );
+    expect(rola, "a página precisa rolar para a barra chegar a fixar").toBe(true);
+
+    const caixaBarra = await barra.boundingBox();
+    const caixaNav = await page.locator(".tf-nav--tabbar").boundingBox();
+    expect(caixaBarra, "a barra tem caixa").not.toBeNull();
+    expect(caixaNav, "a TabBar está na tela neste viewport").not.toBeNull();
+    expect(
+      caixaBarra!.y + caixaBarra!.height,
+      `base da barra (${vp.width}px) acima do topo da TabBar`,
+    ).toBeLessThanOrEqual(caixaNav!.y);
+  });
+}
+
 test("signed-out at /kits sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
   page,
 }) => {

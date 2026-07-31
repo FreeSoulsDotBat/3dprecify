@@ -446,8 +446,27 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 **Geometria e honestidade em código já shipado (E3/E4)**
 
-- [ ] T118a [P] Teste **geométrico** (falhando primeiro): o retângulo da barra de total do kit NÃO intersecta o da navegação inferior, em 390px e 412px, com o kit em composição — asserção de caixas, porque texto extraído é cego para oclusão — em `apps/web/tests/e2e/bom.spec.ts`
-- [ ] T118 [P] A barra fixa "Total do kit" fica **atrás** da navegação inferior: os dois valores aparecem com os dígitos **cortados** durante toda a composição do kit — em `apps/web/src/pages/bom/` (barra de total) + o `z-index`/`padding-bottom` do shell
+- [x] T118a [P] Teste **geométrico** (falhando primeiro): o retângulo da barra de total do kit NÃO intersecta o da navegação inferior, em 390px e 412px, com o kit em composição — asserção de caixas, porque texto extraído é cego para oclusão — em `apps/web/tests/e2e/bom.spec.ts`
+- [x] T118 [P] A barra fixa "Total do kit" fica **atrás** da navegação inferior: os dois valores aparecem com os dígitos **cortados** durante toda a composição do kit — em `apps/web/src/pages/bom/` (barra de total) + o `z-index`/`padding-bottom` do shell
+
+> **Nota de execução (T118, 2026-07-30)** — falha MEDIDA antes do conserto, em 412px: base da barra
+> em **907**, topo da TabBar em **850** — 57px do total enterrados. A barra fica em
+> `features/bom/assembly-summary.tsx`, não em `pages/bom/` como a tarefa supunha.
+> 1. **A causa não é o `z-index`.** É que `padding-bottom` e `position: sticky` não se encontram: a
+>    reserva do shell move o conteúdo que ROLA, e um sticky para em relação ao VIEWPORT. O
+>    `bottom-2` (8px) media do chão da tela, o que são 56px dentro de uma TabBar de 64. Subir o
+>    `z-index` teria pintado a barra por cima da navegação — trocaria qual dos dois fica cortado.
+> 2. **O recuo passou a ser do SHELL**, via `--pinned-bottom` declarado em `app-shell.css` (com o
+>    valor de mobile somando `--tabbar-h` + safe-area). A única camada que sabe qual cromo existe é
+>    a que o desenha; uma feature que escreve `bottom: 8px` está adivinhando, e esta adivinhou
+>    errado. O componente consome `var(--pinned-bottom, var(--space-2))` — o fallback é para quem
+>    renderiza fora do shell (testes de unidade), não para esconder um shell quebrado.
+> 3. **Os utilitários Tailwind viraram uma classe** (`.assembly-summary__pinned`): `bottom` agora
+>    depende de um token com dois valores, o que um utilitário não expressa.
+> 4. **Adjacente, NÃO corrigido aqui**: `shared/ui/toast.css` faz `bottom: calc(var(--tabbar-h) +
+>    var(--space-3))` **incondicionalmente**, então no desktop o toast flutua 76px acima do chão sem
+>    TabBar nenhuma. É o mesmo problema pelo outro lado, e `--pinned-bottom` é o consumidor natural
+>    — mas mexer no toast é fora do escopo desta tarefa e tem e2e próprio.
 - [ ] T119a [P] Teste **geométrico** (falhando primeiro): rótulo de palavra única de 120 caracteres — o limite do próprio campo — mantém `documentElement.scrollWidth === clientWidth` no detalhe do histórico em 390px e 412px — em `apps/web/tests/e2e/history-manage.spec.ts`
 - [ ] T119 [P] Um rótulo com palavra longa sem espaços — **digitado dentro do limite de 120 do próprio campo** — faz o detalhe do histórico transbordar para **1676px** num viewport de 412. Quebra de palavra + contenção com `overflow-x` próprio — em `apps/web/src/pages/historico/`
 - [ ] T120a [P] Teste (falhando primeiro): canal gravado **sem comissão resolvível** não exibe "Preço para anunciar" nem "Recebido líquido" no detalhe congelado — herda a mesma recusa que a Calcular aplica com `hasFee: false` (Princípio II) — em `apps/web/tests/e2e/history-manage.spec.ts`

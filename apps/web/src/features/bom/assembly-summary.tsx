@@ -6,6 +6,8 @@ import { BreakdownRow, Card, PriceHero } from "@/shared/ui";
 
 import { ChannelRollup, type UiSkippedChannel } from "./channel-rollup";
 
+import "./assembly-summary.css";
+
 // 008/T005 — the assembly summary (ux §1.1/§1.7): the headline the seller came for. Custo total
 // as a breakdown row, the varejo/atacado pair as PriceHeroes (mirroring Calcular's results), then
 // the per-channel rollup. Every number is read off `BomResult` — the view sums nothing (§0.2).
@@ -29,7 +31,7 @@ export function AssemblySummary({
   // stands in for. There is no channel rollup here (no line ⇒ no channels).
   if (bom.lines.length === 0) {
     return (
-      <div className="sticky bottom-2 z-10">
+      <div className="assembly-summary__pinned" data-testid="kit-total-bar">
         <Card padding="md" className="flex flex-col gap-1">
           <p className="text-sm font-semibold">{t.assemblyTitle}</p>
           <p className="text-sm text-[var(--text-muted)]">{t.assemblyNoPriceTitle}</p>
@@ -45,7 +47,7 @@ export function AssemblySummary({
   return (
     <>
       <ChannelRollup channels={bom.channels} uiSkipped={uiSkipped} />
-      <div className="sticky bottom-2 z-10">
+      <div className="assembly-summary__pinned" data-testid="kit-total-bar">
         <Card padding="md" className="flex flex-col gap-2">
           <p className="text-sm font-semibold">{t.assemblyTitle}</p>
           <BreakdownRow
