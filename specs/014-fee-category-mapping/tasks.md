@@ -565,6 +565,40 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   de troca de marketplace a zeram) e as bandas Shopee do catálogo servido cobrem `0 → ∞` sem lacuna.
   Ambos ficam cobertos só por teste de unidade até existir um caminho real
 
+**Revisão adversarial final (workflow, 2026-07-31) — o bloqueador foi corrigido; o resto fica**
+
+> 14 agentes, 18 achados brutos, 4 verificados por 2 céticos cada. **O único bloqueador era o
+> `catalogVersion`** (77 → 79 entradas sob rótulo idêntico `2026-07-28.0`, com a sequência cravada em
+> `.0` no gerador) — corrigido nesta mesma leva: `nextCatalogVersion` em `guardrails.ts` (fora do
+> `.mjs`, que é isento de cobertura) e o artefato em `2026-07-28.1` **sem nova leitura**.
+
+- [ ] **A1-r [pricing-core] — `chooseBand` ordena por rank ANTES de preço** (`channels.ts:235`).
+  Numa tabela em "vale" (comissão que cai e depois sobe) o motor escolhe um anúncio **dominado**:
+  reproduzido por mim, `113,54 → R$ 157,16` e `113,55 → R$ 130,34` — um centavo de base derruba o
+  anúncio em R$ 26,82, e o candidato de limiar 130,34 é mais barato **e** entrega líquido maior.
+  **Exposição hoje é ZERO, medida em três vias independentes**: a Shopee (única tabela `SELECTION`
+  viva) dá 0 inversões; a Amazon carimba `PROGRESSIVE` em toda célula com bandas e nem passa por
+  `chooseBand`; o ML não tem entrada nenhuma. `checkBandCoverage` não impede a forma em vale, então
+  o dado é representável — e viaja em snapshot congelado. Consertar antes de existir uma tabela assim
+- [ ] **A1-r/teste — a monotonicidade é afirmada em geral e provada num fixture.**
+  `band-convergence.test.ts:92` chama-se "o anúncio nunca cai quando a base sobe" e varre **apenas**
+  `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
+  item acima: alargar a varredura reprova enquanto o `sort` não mudar
+- [ ] **B — `fee-catalog.ts` é BINÁRIO para o git** (`Bin 14402 → 14879`): há um byte NUL literal em
+  `determinantKey` (`return " null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
+  **não viu nada** — inclusive a reescrita do guard A2 (T085/T086), mudança de validação no domínio de
+  precificação, invisível ao diff E ao `blame`. Trocar por `"\0null"` ou `"__null__"`
+- [ ] **C — `PRICING_MODEL_VERSION` continua 3.1.0 sobre uma implementação reescrita.** O crítico de
+  completude rodou o diferencial velho-vs-novo (9 tabelas × 100k bases): **0 diferenças** em anúncio,
+  líquido e banda aplicada. É higiene de versionamento, não defeito — registrado para não se perder
+- [ ] **D — 14 achados de severidade MÉDIA/BAIXA ficaram FORA do orçamento de céticos.** Estão
+  **não verificados**, nunca confirmados. Se alguém retomar, é por aí que se começa
+- [ ] **E — arquivos do diff que NENHUMA lente abriu**, nomeados pelo crítico de completude:
+  `entities/history/outbox.ts` (T109/T110/T111 — `readOutboxStrict`/SC-816, a única cópia de um
+  orçamento gravado offline), `pages/historico/recalc-today.tsx` (SC-818, grava dentro de um payload
+  que o ADR-0019 torna imutável, via cast cru), `fee-ingest/src/amazon-parse.ts` (o parser da fonte) e
+  os **229 linhas** de e2e novos. Nenhum revisor os leu
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 

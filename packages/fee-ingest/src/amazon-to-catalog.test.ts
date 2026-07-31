@@ -9,7 +9,7 @@ import {
   amazonSpine,
   categoryId,
 } from "./amazon-to-catalog";
-import { checkBandCoverage, checkParseSanity } from "./guardrails";
+import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails";
 
 const CATS: ParsedCategory[] = [
   { name: "Roupas e Acessórios", commissionPct: 14, bands: null, minPerItem: 1 },
@@ -213,5 +213,47 @@ describe("checkBandCoverage — lacuna é dado; sobreposição é erro de leitur
 
   it("um conjunto vazio não é violação — é ausência de bandas", () => {
     expect(checkBandCoverage([])).toEqual({ ok: true });
+  });
+});
+
+// 014/revisão final adversarial (2026-07-31) — MEDIDO no diff `adf85ed..5e63047`:
+//   adf85ed → catalogVersion 2026-07-28.0 | 77 entradas
+//   5e63047 → catalogVersion 2026-07-28.0 | 79 entradas
+// Duas entradas novas sob rótulo IDÊNTICO, porque `build-amazon.mjs` cravava a sequência em `.0`.
+//
+// Por que isso não é cosmético: esse rótulo é congelado dentro do payload que o ADR-0019 torna
+// IMUTÁVEL. Dois registros dizendo "2026-07-28.0" descrevem tabelas diferentes — num deles um slot
+// Amazon sem categoria não tinha preço, no outro ele precifica a 15% pelo catch-all. O rótulo existe
+// para responder QUAL tabela produziu aquele número, e um registro irregravável não tem conserto
+// depois. Regerar na mesma data de coleta reescrevia conteúdo diferente com o mesmo nome, por
+// construção — a armadilha voltaria em toda regeração mensal.
+describe("nextCatalogVersion — o rótulo nomeia o DADO, não a execução", () => {
+  it("conteúdo mudou na MESMA data de coleta: a sequência incrementa", () => {
+    expect(nextCatalogVersion("2026-07-28.0", "2026-07-28", true)).toBe("2026-07-28.1");
+    expect(nextCatalogVersion("2026-07-28.1", "2026-07-28", true)).toBe("2026-07-28.2");
+  });
+
+  // A mesma armadilha que a T100 pagou em `freshest`: comparar/incrementar a sequência como TEXTO
+  // faria ".9" virar ".91" ou perder para ".10". É inteiro.
+  it("a sequência é INTEIRA, não texto: .9 vira .10", () => {
+    expect(nextCatalogVersion("2026-07-28.9", "2026-07-28", true)).toBe("2026-07-28.10");
+    expect(nextCatalogVersion("2026-07-28.10", "2026-07-28", true)).toBe("2026-07-28.11");
+  });
+
+  it("leitura NOVA: a sequência reinicia em .0", () => {
+    expect(nextCatalogVersion("2026-07-28.3", "2026-08-01", true)).toBe("2026-08-01.0");
+  });
+
+  it("conteúdo IGUAL: o rótulo não se move — ele nomeia o dado, não a execução", () => {
+    expect(nextCatalogVersion("2026-07-28.1", "2026-07-28", false)).toBe("2026-07-28.1");
+    // Nem quando a data muda: reler a mesma tabela não a torna uma tabela nova.
+    expect(nextCatalogVersion("2026-07-28.1", "2026-08-01", false)).toBe("2026-07-28.1");
+  });
+
+  // Ilegível é representável (alguém edita o JSON à mão); AUSENTE não é — um artefato sem rótulo é
+  // falha de forma, e o gerador a recusa em voz alta em vez de inventar uma sequência.
+  it("rótulo anterior ilegível: começa em .0 da data de hoje, sem inventar sequência", () => {
+    expect(nextCatalogVersion("cru", "2026-08-01", true)).toBe("2026-08-01.0");
+    expect(nextCatalogVersion("", "2026-08-01", true)).toBe("2026-08-01.0");
   });
 });

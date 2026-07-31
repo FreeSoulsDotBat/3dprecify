@@ -15,7 +15,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
-import { checkBandCoverage, checkParseSanity } from "./guardrails.ts";
+import { checkBandCoverage, checkParseSanity, nextCatalogVersion } from "./guardrails.ts";
 import { amazonEntries, amazonSpine } from "./amazon-to-catalog.ts";
 
 const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
@@ -89,13 +89,21 @@ if (!amazon) {
 // Keep the original marketplace ORDER so the monthly diff stays readable, and carry every other
 // marketplace through untouched — regenerating Amazon must never quietly drop Shopee's curation.
 const entries = amazonEntries(categories, { collectedAt, effectiveDate: collectedAt });
+const marketplaces = artifact.marketplaces.map((m) =>
+  m.marketplace === "AMAZON" ? { ...amazon, categorySpine: amazonSpine(categories), entries } : m,
+);
+// A sequência de `catalogVersion` era `.0` CRAVADO, e regerar na mesma data de coleta reescrevia
+// conteúdo diferente sob rótulo idêntico. Foi o que aconteceu na 014: 77 → 79 entradas com
+// `2026-07-28.0` dos dois lados. O rótulo viaja congelado dentro de um snapshot que o ADR-0019
+// torna imutável, então um registro ambíguo fica ambíguo para sempre. `nextCatalogVersion` mora em
+// `guardrails.ts` e não aqui pelo mesmo motivo do fail-safe da FR-018a: este arquivo é isento de
+// cobertura, e a regra que decide o rótulo do dinheiro não pode morar num lugar isento.
+const changed = JSON.stringify(marketplaces) !== JSON.stringify(artifact.marketplaces);
 const next = {
   ...artifact,
-  catalogVersion: `${collectedAt}.0`,
+  catalogVersion: nextCatalogVersion(artifact.catalogVersion, collectedAt, changed),
   generatedAt: `${collectedAt}T00:00:00.000Z`,
-  marketplaces: artifact.marketplaces.map((m) =>
-    m.marketplace === "AMAZON" ? { ...amazon, categorySpine: amazonSpine(categories), entries } : m,
-  ),
+  marketplaces,
 };
 
 // The write is the LAST step, and everything it reports was computed BEFORE it. The old order wrote

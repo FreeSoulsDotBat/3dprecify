@@ -95,3 +95,36 @@ export function checkBandCoverage(bands: readonly CoverableBand[]): SanityVerdic
   }
   return { ok: true };
 }
+
+/**
+ * A próxima `catalogVersion` ("YYYY-MM-DD.n") — a data da LEITURA mais uma sequência dentro dela.
+ *
+ * 014 (revisão final adversarial, 2026-07-31): `build-amazon.mjs` cravava `${collectedAt}.0`, então
+ * regerar na mesma data de coleta reescrevia conteúdo DIFERENTE sob rótulo IDÊNTICO. Foi o que
+ * aconteceu nesta branch — o artefato foi de 77 para 79 entradas com `catalogVersion` parado em
+ * `2026-07-28.0`.
+ *
+ * Isso não é higiene de versionamento: o rótulo é congelado dentro do payload que o ADR-0019 torna
+ * IMUTÁVEL. Dois registros dizendo o mesmo nome descreviam tabelas diferentes, e a pergunta que o
+ * campo existe para responder — QUAL tabela produziu este número — deixava de ter resposta, sem
+ * conserto posterior possível, porque o registro não pode ser reescrito.
+ *
+ * Duas regras, e a segunda é a que evita o ruído: a sequência é INTEIRA (a mesma armadilha que
+ * `freshest` pagou — texto faria ".9" perder para ".10"), e o rótulo só se move quando o CONTEÚDO
+ * mudou. Ele nomeia o dado, não a execução: reler a mesma tabela não a torna uma tabela nova.
+ */
+export function nextCatalogVersion(
+  // Exigido, não `string | null`: o artefato SEMPRE carrega um rótulo, e um artefato sem ele é uma
+  // falha de forma que `build-amazon.mjs` deve recusar em voz alta — como já recusa um artefato sem
+  // o marketplace AMAZON (T091). Aceitar a ausência aqui criava um ramo que nenhum caminho alcança,
+  // e o ratchet de 100% o encontrou. Rótulo ILEGÍVEL continua tratado: esse é representável.
+  previous: string,
+  collectedAt: string,
+  changed: boolean,
+): string {
+  if (!changed) return previous;
+  const parsed = /^(\d{4}-\d{2}-\d{2})\.(\d+)$/.exec(previous);
+  return parsed && parsed[1] === collectedAt
+    ? `${collectedAt}.${Number(parsed[2]) + 1}`
+    : `${collectedAt}.0`;
+}
