@@ -163,8 +163,12 @@ describe("draining: exactly-once, and honest about every failure mode", () => {
     // This only happens when the original response was lost AND the seller then deleted the
     // snapshot from another device. Resurrecting it would undo a deliberate deletion; keeping it
     // queued would nag forever. Dropping it is the seller's own later intent winning (ADR-0018 §5).
-    idbGet.mockResolvedValue([entry()]);
-    const post = vi.fn().mockRejectedValue({ status: 404 });
+    // 014/T111: o fixture passou a EXIBIR o cenário que a prosa acima sempre descreveu. Ele dizia
+    // "a resposta original se perdeu E o vendedor apagou de outro dispositivo" — isto é, um REPLAY —
+    // mas montava `attempts: 0` e um 404 sem `code`, que é justamente a forma que a infraestrutura
+    // produz. O teste codificava o comportamento frouxo, não o caso que narrava.
+    idbGet.mockResolvedValue([entry({ attempts: 1 })]);
+    const post = vi.fn().mockRejectedValue({ status: 404, code: "NOT_FOUND" });
 
     await drainOutbox("u1", { post });
 
@@ -374,5 +378,105 @@ describe("listOutbox", () => {
   it("discards a corrupt payload instead of feeding it to the UI", async () => {
     idbGet.mockResolvedValue({ not: "an array" });
     await expect(listOutbox("u1")).resolves.toEqual([]);
+  });
+});
+
+// 014/T110 — SC-816. A falha de LEITURA não pode virar base de ESCRITA.
+//
+// `listOutbox` é deliberadamente tolerante: um payload corrompido é descartado em vez de ser servido
+// à UI. Isso está certo para EXIBIR. Está errado para REESCREVER — e as três funções que reescrevem
+// a fila (`enqueueSnapshot`, `removeEntry`, `updateEntry`) liam por ali, dentro do lock.
+//
+// O modo de falha não é hipotético: a própria `idb-keyval` documenta que o `db.onclose` do Safari
+// zera a conexão em cache, de modo que o `get` seguinte REJEITA e o `set` posterior reabre o banco e
+// GRAVA. Leitura falha + escrita bem-sucedida = fila rebaseada em vazio. O outbox é a única cópia da
+// cotação gravada offline, então o que some não some de um cache: some do vendedor.
+//
+// O próprio arquivo já nomeava este perigo na docstring do `settleEntry` ("listOutbox returns [] on
+// ANY read error") — o conserto foi feito no caminho do settle e nunca no de reescrita.
+describe("SC-816 — uma leitura que falha ABORTA a reescrita, nunca a rebaseia em vazio", () => {
+  beforeEach(() => {
+    idbGet.mockReset();
+    idbSet.mockReset();
+  });
+
+  it("enqueue com leitura falhando NÃO grava, e propaga — o vendedor tem de saber que não enfileirou", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    await expect(enqueueSnapshot("u1", { ...BODY, clientSnapshotId: "novo" })).rejects.toThrow();
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("remoção com leitura falhando NÃO grava — a entrada sobrevive para o replay idempotente", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    // `settleEntry` chama `removeEntry` após um POST bem-sucedido; a remoção falha em silêncio por
+    // desenho (o registro já está no servidor), mas NÃO pode reescrever a fila a partir do vazio.
+    await settleEntry("u1", entry({ clientSnapshotId: "a" }), {
+      post: vi.fn().mockResolvedValue({}),
+    });
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("atualização com leitura falhando NÃO grava — a entrada mantém o estado anterior", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    const post = vi.fn().mockRejectedValue(Object.assign(new Error("offline"), { status: 0 }));
+    await settleEntry("u1", entry({ clientSnapshotId: "a" }), { post });
+    expect(idbSet).not.toHaveBeenCalled();
+  });
+
+  it("a leitura de EXIBIÇÃO continua tolerante — a lista da tela nunca estoura", async () => {
+    idbGet.mockRejectedValue(new Error("IndexedDB connection closed"));
+    await expect(listOutbox("u1")).resolves.toEqual([]);
+  });
+});
+
+// 014/T111a — SC-816. Um 404 só significa "o vendedor apagou em outro lugar" quando HÁ PROVA disso.
+//
+// A regra do §5 da ADR-0018 vale para um REPLAY: a resposta original se perdeu, o vendedor apagou o
+// snapshot noutro dispositivo, e o reenvio encontra o vazio. O invariante que a torna segura já
+// estava escrito no próprio código — "a just-minted id the server has never seen cannot 404" — mas
+// só como comentário: o `if (status === 404)` não o impunha.
+//
+// E 404 é o status que a INFRAESTRUTURA mais produz. Um proxy mal configurado, uma rota não montada
+// ou a página 404 do hosting chegam ao cliente como `ApiError{status: 404, code: "UNKNOWN"}`
+// (transport.ts: `wire?.code ?? "UNKNOWN"`), indistinguíveis do NOT_FOUND da API se olharmos só o
+// status. Nesse caso apagar a entrada e devolver `synced` mostra um toast verde "Salvo" sobre um
+// registro que o servidor nunca recebeu — a pior mentira que este recurso pode contar, e a mesma
+// classe que o M1 já corrigiu no caminho do re-read.
+describe("SC-816 — 404 só apaga a entrada com PROVA de replay", () => {
+  beforeEach(() => {
+    idbGet.mockReset();
+    idbSet.mockReset();
+    idbGet.mockResolvedValue([entry({ attempts: 1 })]);
+  });
+
+  it("404 sem o code da API (proxy, hosting, rota ausente) PRESERVA a entrada", async () => {
+    const post = vi.fn().mockRejectedValue({ status: 404, code: "UNKNOWN" });
+
+    const state = await settleEntry("u1", entry({ attempts: 1 }), { post });
+
+    expect(state).not.toBe("synced");
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toHaveLength(1);
+  });
+
+  it("404 no PRIMEIRO envio preserva a entrada — um id recém-cunhado nao pode ter sido apagado", async () => {
+    idbGet.mockResolvedValue([entry({ attempts: 0 })]);
+    const post = vi.fn().mockRejectedValue({ status: 404, code: "NOT_FOUND" });
+
+    const state = await settleEntry("u1", entry({ attempts: 0 }), { post });
+
+    expect(state).not.toBe("synced");
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toHaveLength(1);
+  });
+
+  it("404 de replay legítimo (reenvio + code da API) continua apagando — a intenção do vendedor vence", async () => {
+    const post = vi.fn().mockRejectedValue({ status: 404, code: "NOT_FOUND" });
+
+    const state = await settleEntry("u1", entry({ attempts: 1 }), { post });
+
+    expect(state).toBe("synced");
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toEqual([]);
   });
 });

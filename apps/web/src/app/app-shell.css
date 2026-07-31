@@ -9,6 +9,12 @@
   /* Side-nav column width — single source, so the top-bar can centre the desktop
      logo over the exact menu width (consumed by app-nav + top-bar). */
   --sidebar-w: 240px;
+  /* 014/T118 — how far above the viewport floor a PINNED element must stop so the shell's own
+     chrome does not sit on top of it. The shell is the only layer that knows what chrome it has;
+     a feature that hard-codes `bottom: 8px` is guessing, and the kit total bar guessed wrong.
+     Desktop has no bottom bar, so the gap is just breathing room; the mobile value below adds the
+     TabBar. Consumers: `.assembly-summary__pinned`. */
+  --pinned-bottom: var(--space-2);
 }
 .tf-shell__body {
   display: flex;
@@ -24,6 +30,13 @@
 /* Mobile: reserve space under the content for the fixed bottom TabBar. */
 .tf-shell[data-layout="mobile"] .tf-shell__main {
   padding-bottom: calc(var(--tabbar-h) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+}
+/* …and the same reservation for anything PINNED. The `padding-bottom` above only moves content that
+   SCROLLS: a `position: sticky` element stops relative to the viewport, so padding never reaches it.
+   That gap is the whole T118 defect — the kit total bar stopped 8px off the floor, which is 56px
+   INSIDE the TabBar, and the seller read the total with its digits cut for the whole composition. */
+.tf-shell[data-layout="mobile"] {
+  --pinned-bottom: calc(var(--tabbar-h) + var(--space-2) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Desktop: roomier gutter next to the side nav. */

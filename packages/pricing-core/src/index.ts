@@ -3,7 +3,13 @@
 // of specs/004-e1-pricing-model). ADR-0008 (money) · ADR-0009 (machine) · ADR-0011 (3.0.0 result
 // contract). The backend never recomputes any price (FR-118); this module is the single source of
 // the formula.
-import { grossUp, type ChannelFees, type PriceBand, type VoucherBand } from "./channels";
+import {
+  grossUp,
+  type BandMode,
+  type ChannelFees,
+  type PriceBand,
+  type VoucherBand,
+} from "./channels";
 import { Decimal, toMoney, sumMoney } from "./rounding";
 
 // 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
@@ -36,6 +42,7 @@ export interface ChannelInput {
   freightCost?: number; // R$, ≥ 0, default 0 — deducted from líquido (never added to custo_total)
   freightVoucherBands?: VoucherBand[]; // Shopee co-funded voucher, deducted by the announce band (FR-111a)
   priceBands?: PriceBand[]; // fee by listing-price band (Shopee / ML custo fixo) — resolved by pricing-core
+  bandMode?: BandMode; // ABSENT = "SELECTION" (ADR-0024) — absence is what preserves every stored payload
 }
 
 /**
@@ -285,6 +292,10 @@ function computeChannel(
     freightCost,
     freightVoucherBands: voucherBands.length > 0 ? voucherBands : undefined,
     priceBands: ch.priceBands,
+    // Carried through, never re-derived. Dropping it here would silently degrade a progressive
+    // schedule back to selection — the exact defect ADR-0024 fixes, reintroduced where the default
+    // makes it invisible (ADR-0024 §5 names losing this field as the real risk, not the arithmetic).
+    ...(ch.bandMode ? { bandMode: ch.bandMode } : {}),
   };
   const varejo = grossUp(precoVarejo, fees);
   const atacado = grossUp(precoAtacado, fees);
@@ -420,14 +431,22 @@ export function computeBom(lines: BomLineInput[]): BomResult {
       }
       const flags = lineFlags.get(slot.marketplace) ?? { ok: false, err: false };
       lineFlags.set(slot.marketplace, flags);
-      if (slot.error !== null) {
+      // Two ways a slot cannot feed the rollup, and BOTH are skips, never silent drops: its own
+      // validation failed, or a level is UNPRICED — no published band covers that announce
+      // (SC-817). Summing an unpriced level as R$ 0,00 would understate the kit under a seal; a
+      // partial sum is exactly the lie the whole rollup exists to avoid.
+      if (
+        slot.error !== null ||
+        slot.precoAnuncioVarejo === null ||
+        slot.precoAnuncioAtacado === null
+      ) {
         flags.err = true; // honest: resolved to a skipped LINE below, never silently dropped
         continue;
       }
       flags.ok = true;
-      // Non-error slots ALWAYS carry the four prices (computeChannel's invariant): a `?? 0`
-      // here would add four dead branches the 100%-branch gate can never cover — the non-null
-      // assertion states the invariant instead of pretending null is reachable.
+      // Past that guard a slot carries the four prices together (computeChannel writes announce and
+      // líquido as one outcome per level): a `?? 0` here would add four dead branches the
+      // 100%-branch gate can never cover — the non-null assertion states the invariant instead.
       acc.anuncioVarejo = acc.anuncioVarejo.plus(
         new Decimal(slot.precoAnuncioVarejo!).times(quantity),
       );
@@ -483,7 +502,7 @@ export function computeBom(lines: BomLineInput[]): BomResult {
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
 export { grossUp } from "./channels";
-export type { ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
+export type { BandMode, ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
 // 3.1.0 public money primitives (ADR-0016): consumers (the BOM feature layer) format/verify with
 // these instead of ever doing native float arithmetic — pricing-core stays the only money home.
 export { Decimal, toMoney, sumMoney } from "./rounding";

@@ -3547,6 +3547,36 @@
         ],
         "title": "BomOut"
       },
+      "CategoryNode": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "parentId": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parentid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "CategoryNode",
+        "description": "One node of a marketplace's category spine (014). Flat + `parent_id` — the client walks the\nancestor chain, because commission is piecewise-constant down the tree and ~87.5% of nodes\ninherit (ADR-0010 §A13/§A14)."
+      },
       "ChannelSlot": {
         "properties": {
           "marketplace": {
@@ -3898,6 +3928,21 @@
             ],
             "title": "Pricebands"
           },
+          "bandMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "SELECTION",
+                  "PROGRESSIVE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bandmode"
+          },
           "freight": {
             "oneOf": [
               {
@@ -4247,6 +4292,20 @@
               }
             ],
             "title": "Determinantsschema"
+          },
+          "categorySpine": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/CategoryNode"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Categoryspine"
           },
           "entries": {
             "items": {

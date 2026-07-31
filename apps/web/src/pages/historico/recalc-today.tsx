@@ -179,7 +179,15 @@ function RecalcDialog({
     if (!recalced) return;
     setBusy(true);
     try {
-      const { payload } = recalced;
+      // `fromFrozen` used to be dropped here, and dropping it was the defect: the document written
+      // was the OLD one, stamped with today's `deviceQuotedAt`, so nothing in the record separated
+      // "repriced today" from "reused a previous freeze". The dialog warns, but a dialog is a moment
+      // and the snapshot is forever — ADR-0019 makes it immutable, so the distinction survives only
+      // if it is written now (SC-818). Additive and one-sided: absent = an ordinary reprice.
+      const { payload, fromFrozen } = recalced;
+      const storedPayload: FrozenSnapshotPayload = fromFrozen
+        ? { ...payload, repricedFromFrozen: true }
+        : payload;
       const basis = item.headlineBasis as SnapshotInHeadlineBasis;
       const total = payload.totals[BASIS_TOTAL[basis]];
       if (!total) {
@@ -202,7 +210,7 @@ function RecalcDialog({
         modelVersion: payload.modelVersion,
         headlineTotal: total,
         headlineBasis: basis, // the same basis the seller originally quoted
-        payload: payload as unknown as SnapshotIn["payload"],
+        payload: storedPayload as unknown as SnapshotIn["payload"],
       };
       let outcome;
       try {

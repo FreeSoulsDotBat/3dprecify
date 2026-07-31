@@ -133,8 +133,13 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/012-e6-billing/plan.md
-(013-audit-remediation SHIPPED to `develop` via PR #29 — its remediation of the
-81-finding audit is done; the deferred US8 ML/Amazon fee curation becomes increment
-014. This branch resumes the E6 billing work; when 012 lands, re-point as needed.)
+at specs/014-fee-category-mapping/plan.md
+(014 = the category→fee mapping increment, spec + clarify + plan done 2026-07-28. Its four
+gates are MEASURED and recorded in ADR-0010 §A13 — read that before touching the ingestion:
+ML has NO geo-gate (the belief held since 2026-07-06 is false), Amazon needs NO credential,
+and ML's commission is piecewise-constant down the category tree (~87.5% of nodes inherit),
+which is why resolution walks the ancestor chain. THREE structural choices are deliberately
+UNDECIDED under Principle VIII — see plan.md §Decisões estruturais pendentes; the tasks that
+depend on them stop until the owner decides. 012-e6-billing is still mid-flight on its own
+branch; re-point here when it lands.)
 <!-- SPECKIT END -->

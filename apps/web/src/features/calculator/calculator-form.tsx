@@ -2,6 +2,7 @@ import { type CSSProperties } from "react";
 import { type Control, Controller } from "react-hook-form";
 
 import { type ChannelSlotOutcome } from "@/features/calculator/calculator-model";
+import { CategoryPicker } from "@/features/calculator/category-picker";
 import { FeeSeal } from "@/features/calculator/fee-seal";
 import {
   type CalcFieldMeta,
@@ -13,6 +14,7 @@ import {
   MARKETPLACE_OPTIONS,
   MODALITY_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import type { CategoryNode } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import type { PriceResult } from "@3dprecify/pricing-core";
 import {
@@ -279,6 +281,7 @@ function ChannelSlot({
   index,
   slot,
   outcome,
+  spine,
   onRemove,
   onMarketplaceChange,
 }: {
@@ -286,6 +289,8 @@ function ChannelSlot({
   index: number;
   slot: ChannelSlotForm;
   outcome?: ChannelSlotOutcome;
+  /** This marketplace's category spine (empty when it has no category axis, or not loaded yet). */
+  spine: readonly CategoryNode[];
   onRemove: (index: number) => void;
   onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
 }) {
@@ -342,6 +347,26 @@ function ChannelSlot({
                 />
               )}
             </Field>
+          )}
+        />
+      )}
+      {/* 014/US1 — only where the marketplace HAS a category axis. Shopee/Outro publish none, so
+          rendering an empty picker there would invent a choice that does not exist. */}
+      {modalityOptions.length > 0 && (
+        <Controller
+          control={control}
+          name={`channels.${index}.category` as const}
+          render={({ field }) => (
+            <CategoryPicker
+              spine={spine}
+              value={field.value}
+              onChange={(id) => field.onChange(id ?? "")}
+              // FR-006d — the picker's empty state must agree with THIS slot's seal. "none" is the
+              // seal for a slot standing on nothing; anything else (a reference, a catch-all, or a
+              // rate the seller typed himself) means the money is settled and only the name list is
+              // missing. Derived from the seal itself so the two can never drift apart.
+              hasFeeReference={outcome !== undefined && outcome.seal.kind !== "none"}
+            />
           )}
         />
       )}
@@ -403,6 +428,22 @@ function ChannelLevelRows({
   );
 }
 
+/** One markup level the engine REFUSED to price (SC-817 / FR-014a): the announce it would need
+ *  falls in a window the marketplace publishes no fee for, so there is no rate to charge and no
+ *  líquido to promise. Saying that costs one line; printing R$ 0,00 would cost the seller a sale. */
+function UnpricedLevel({ caption, marginTop }: { caption: string; marginTop?: boolean }) {
+  return (
+    <>
+      <p style={marginTop ? { ...captionText, marginTop: "var(--space-2)" } : captionText}>
+        {caption}
+      </p>
+      <p style={warnCaption} data-testid="unpriced-level">
+        {t.channels.unpricedBand}
+      </p>
+    </>
+  );
+}
+
 /** "Preços por canal": every slot's anúncio + líquido for varejo e atacado, shown together so the
  *  seller compares channels at a glance. A slot with an inline error shows a note, not stale prices. */
 function ChannelPrices({
@@ -438,19 +479,31 @@ function ChannelPrices({
               </p>
               {priced ? (
                 <>
-                  <ChannelLevelRows
-                    caption={t.captions.varejo}
-                    anuncio={r.precoAnuncioVarejo ?? 0}
-                    liquido={r.recebidoLiquidoVarejo ?? 0}
-                    freight={r.freightCostVarejo}
-                  />
-                  <ChannelLevelRows
-                    caption={t.captions.atacado}
-                    anuncio={r.precoAnuncioAtacado ?? 0}
-                    liquido={r.recebidoLiquidoAtacado ?? 0}
-                    freight={r.freightCostAtacado}
-                    marginTop
-                  />
+                  {/* SC-817 — a level whose announce falls outside every published band is NOT
+                      priced. `?? 0` would have printed R$ 0,00 under a "Referência" seal; the
+                      absence of a published fee is said in words, and only for the level it hits
+                      (varejo and atacado can land on different sides of a gap). */}
+                  {r.precoAnuncioVarejo === null || r.recebidoLiquidoVarejo === null ? (
+                    <UnpricedLevel caption={t.captions.varejo} />
+                  ) : (
+                    <ChannelLevelRows
+                      caption={t.captions.varejo}
+                      anuncio={r.precoAnuncioVarejo}
+                      liquido={r.recebidoLiquidoVarejo}
+                      freight={r.freightCostVarejo}
+                    />
+                  )}
+                  {r.precoAnuncioAtacado === null || r.recebidoLiquidoAtacado === null ? (
+                    <UnpricedLevel caption={t.captions.atacado} marginTop />
+                  ) : (
+                    <ChannelLevelRows
+                      caption={t.captions.atacado}
+                      anuncio={r.precoAnuncioAtacado}
+                      liquido={r.recebidoLiquidoAtacado}
+                      freight={r.freightCostAtacado}
+                      marginTop
+                    />
+                  )}
                   {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
                     <p style={captionText}>{t.channels.freightHint}</p>
                   )}
@@ -485,6 +538,7 @@ export function MarketplaceSection({
   refreshFailed,
   refreshing,
   onRetryCatalog,
+  spineFor,
 }: {
   control: Control<CalcFormValues>;
   values: CalcFormValues;
@@ -498,6 +552,8 @@ export function MarketplaceSection({
   refreshFailed: boolean;
   refreshing: boolean;
   onRetryCatalog: () => void;
+  /** Category spine per marketplace, from the catalog that already travels with the fees (D2). */
+  spineFor: (marketplace: MarketplaceId) => readonly CategoryNode[];
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -543,6 +599,7 @@ export function MarketplaceSection({
                 index={i}
                 slot={values.channels[i]}
                 outcome={channelOutcomes[i]}
+                spine={spineFor(values.channels[i].marketplace)}
                 onRemove={onRemove}
                 onMarketplaceChange={onMarketplaceChange}
               />

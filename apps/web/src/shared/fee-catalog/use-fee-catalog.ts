@@ -4,14 +4,20 @@ import { useEffect, useState } from "react";
 
 import { apiFetch } from "@/shared/api/transport";
 
-import { type FeeCatalog, parseFeeCatalog } from "./fee-catalog";
+import { type FeeCatalog, parseFeeCatalog, parseSeedResilient } from "./fee-catalog";
 import { FEE_CATALOG_SEED } from "./seed";
 
 // E1-06: the bundled seed is the SYNCHRONOUS floor every first render relies on (R1) — it must be
-// validated through the same schema as the served/persisted catalog. Validating at module load
-// (not lazily inside the hook) makes a malformed seed fail LOUDLY at boot instead of silently
-// feeding an invalid shape into pricing as if it were trustworthy data.
-const VALIDATED_SEED: FeeCatalog = parseFeeCatalog(FEE_CATALOG_SEED);
+// validated through the same schema as the served/persisted catalog, at module load rather than
+// lazily inside the hook, so a malformed seed is caught before it can feed pricing.
+//
+// 014 (FR-026) changed HOW it fails, not WHETHER it is validated. This used to be `parseFeeCatalog`,
+// which throws: correct while the seed was hand-written with one entry, but from 014 on the seed is
+// ROBOT-GENERATED, and one duplicate determinant set would have meant a white screen at boot for
+// every user until a new bundle shipped. `parseSeedResilient` drops the offending marketplace (its
+// slots read "sem referência") and logs loudly. An invalid value still never becomes a price — it
+// just stops taking the app down for a defect that CI and the generator should have caught first.
+const VALIDATED_SEED: FeeCatalog = parseSeedResilient(FEE_CATALOG_SEED);
 
 // Fetch→persist→seed catalog store (ADR-0010 Part 2 / T009c). Resolution order: persisted store
 // (freshest cached) → bundled seed (first-run offline, R1) → refresh from GET /api/v1/fee-catalog
@@ -39,9 +45,17 @@ function parseCatalogVersion(version: string): { time: number; seq: number } | n
   return { time, seq: Number(match[2]) };
 }
 
-/** Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n"). E1-03: the sequence is
- *  compared as an INTEGER (not the raw string), so ".10" correctly outranks ".2". Falls back to a
- *  lexicographic compare only when either version doesn't match the expected shape. */
+/**
+ * Pick the fresher of two catalogs by `catalogVersion` ("YYYY-MM-DD.n"). E1-03: the sequence is
+ * compared as an INTEGER (not the raw string), so ".10" correctly outranks ".2".
+ *
+ * An UNREADABLE version always loses to a readable one (014/T100). It used to fall straight through
+ * to a lexicographic compare, and the concrete casualty was `parseSeedResilient`'s `"invalid-seed"`
+ * sentinel: `"invalid-seed" > "2026-07-28.0"` because "i" outranks "2". That sentinel is the
+ * SYNCHRONOUS FLOOR of the store, so a bundled seed that failed to parse would have made the app
+ * reject the served AND the persisted catalog — permanently, and precisely the two paths that exist
+ * to repair it. A build mistake would have shipped an app that refuses to be fixed.
+ */
 export function freshest(incoming: FeeCatalog, current: FeeCatalog): FeeCatalog {
   const a = parseCatalogVersion(incoming.catalogVersion);
   const b = parseCatalogVersion(current.catalogVersion);
@@ -49,7 +63,11 @@ export function freshest(incoming: FeeCatalog, current: FeeCatalog): FeeCatalog 
     if (a.time !== b.time) return a.time > b.time ? incoming : current;
     return a.seq >= b.seq ? incoming : current;
   }
-  return incoming.catalogVersion >= current.catalogVersion ? incoming : current;
+  if (a) return incoming;
+  if (b) return current;
+  // Neither is readable — neither can be trusted to be newer, so keep the incoming one and let the
+  // refresh stay idempotent rather than inventing an order between two unusable labels.
+  return incoming;
 }
 
 /** Load + validate the persisted catalog; null on empty/error/invalid (non-blocking — seed answers). */

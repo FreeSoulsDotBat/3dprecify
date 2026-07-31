@@ -49,6 +49,10 @@ export type Modality = "CLASSICO" | "PREMIUM" | "PROFISSIONAL" | "INDIVIDUAL" | 
 export interface ChannelSlotForm {
   marketplace: MarketplaceId;
   modality: Modality;
+  /** 014/US1 — the marketplace category the piece is listed under. OPTIONAL as a gate (it never
+   *  blocks a calculation) and PER SLOT: a category chosen for ML must not become the Amazon one.
+   *  Empty string = not informed, which is a valid and permanent state (SC-809). */
+  category?: string;
   commissionPct: string;
   fixedFee: string;
   minPerItem: string;
@@ -204,6 +208,25 @@ export function defaultChannelSlot(marketplace: MarketplaceId = "MERCADO_LIVRE")
     minPerItem: "",
     freightCost: "",
   };
+}
+
+/**
+ * What a slot's marketplace-dependent fields become when the seller changes its marketplace
+ * (014/T097).
+ *
+ * The category is PER MARKETPLACE — Amazon's "relogios" means nothing on Mercado Livre — so it must
+ * go with the modality, not survive it. It used to survive, and INVISIBLY: the picker renders its
+ * empty-spine branch before its chosen-value branch, so the stale id had no chip and no "Limpar" for
+ * the seller to undo something they could not see, while it kept being sent as a determinant.
+ *
+ * One place decides this, because three copies of the same rule is how one of them gets left
+ * behind — which is precisely what happened to the category in all three change handlers.
+ */
+export function slotResetOnMarketplaceChange(marketplace: MarketplaceId): {
+  modality: Modality;
+  category: string;
+} {
+  return { modality: (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality, category: "" };
 }
 
 /** A fresh, blank "Outros custos" row (US5). Blank name is accepted — the UI shows a neutral

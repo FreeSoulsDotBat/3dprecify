@@ -2,7 +2,15 @@ import { describe, expect, it } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { type CalcFieldName, calculatorSchema, defaultCalcValues } from "./calculator-schema";
+import {
+  type CalcFieldName,
+  calculatorSchema,
+  defaultCalcValues,
+  defaultChannelSlot,
+  MARKETPLACE_OPTIONS,
+  type MarketplaceId,
+  slotResetOnMarketplaceChange,
+} from "./calculator-schema";
 
 // 013 US1 (FA-01/FA-02) — the calculator surface of the strict pt-BR grammar. A malformed or
 // mixed-separator string must surface the EXISTING per-field pt-BR message; it must never be
@@ -54,5 +62,41 @@ describe("calculator numField — visual affixes stay tolerated (anchored strip)
     const { value, error } = parseField("costPerRoll", raw);
     expect(error).toBeUndefined();
     expect(value).toBeCloseTo(expected, 6);
+  });
+});
+
+// 014/T097 — trocar o marketplace do slot MUST limpar a categoria junto com a modalidade.
+//
+// A categoria é PER MARKETPLACE (o id "relogios" da Amazon não quer dizer nada no ML), e os três
+// handlers de troca — calcular, produto e a linha de kit — resetavam só a modalidade. O id antigo
+// sobrevivia INVISÍVEL: o seletor renderiza o ramo de espinha vazia ANTES do ramo `value`, então não
+// há chip nem botão "Limpar" para o vendedor desfazer o que ele não vê. E continuava sendo enviado
+// como determinante.
+//
+// Um único lugar decide o que reseta, porque três cópias da mesma regra é como uma delas fica para
+// trás — que é exatamente o que aconteceu com a categoria.
+describe("slotResetOnMarketplaceChange — a categoria não atravessa marketplaces (T097)", () => {
+  it("limpa a categoria e adota a primeira modalidade do novo marketplace", () => {
+    expect(slotResetOnMarketplaceChange("MERCADO_LIVRE")).toEqual({
+      modality: "CLASSICO",
+      category: "",
+    });
+  });
+
+  it("marketplace sem eixo de modalidade também limpa a categoria", () => {
+    expect(slotResetOnMarketplaceChange("SHOPEE")).toEqual({ modality: "", category: "" });
+  });
+
+  it("todo marketplace reseta a categoria — nenhum é exceção", () => {
+    for (const { value } of MARKETPLACE_OPTIONS) {
+      expect(slotResetOnMarketplaceChange(value as MarketplaceId).category).toBe("");
+    }
+  });
+
+  it("concorda com um slot recém-criado do mesmo marketplace", () => {
+    for (const { value } of MARKETPLACE_OPTIONS) {
+      const m = value as MarketplaceId;
+      expect(slotResetOnMarketplaceChange(m).modality).toBe(defaultChannelSlot(m).modality);
+    }
   });
 });

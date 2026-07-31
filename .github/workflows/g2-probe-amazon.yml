@@ -1,0 +1,49 @@
+# G2 PROBE (014 / ADR-0010 amendment 2026-07-24) — a MEASUREMENT workflow, not part of the product.
+#
+# Answers one question with evidence: does Amazon's BR referral-fee table render for a client with
+# NON-BR egress (a GitHub-hosted runner)? The amendment puts the Amazon monthly refresh on a hosted
+# runner; if this fails, that choice has to change. Deliberately runs on `push` to the 014 branch so
+# it does NOT need to land on the default branch first (a `schedule`/UI-dispatch workflow would).
+#
+# Reads nothing secret and writes nothing — it only fetches a public page and prints what it found.
+# Delete once the gate result is recorded in the ADR amendment.
+name: G2 probe — Amazon fee table from a non-BR runner
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [014-fee-category-mapping]
+    paths:
+      - ".github/workflows/g2-probe-amazon.yml"
+      - "scripts/probes/g2-amazon-fee-table.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  g2:
+    name: G2 — does the BR fee table render from a hosted runner?
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # Everything happens OUTSIDE the repo tree, for two reasons this gate learned the hard way:
+      #   1. this is a pnpm workspace whose package.json uses the `catalog:` protocol — `npm install`
+      #      at the root dies with EUNSUPPORTEDPROTOCOL before it ever reaches Amazon;
+      #   2. the npm PACKAGE and the BROWSER BINARY are separate installs, and `playwright install`
+      #      only does the latter.
+      # The probe is copied next to its node_modules because ESM resolution walks up from the
+      # script's own directory (NODE_PATH would not help here).
+      - name: Run the G2 probe in an isolated install
+        run: |
+          mkdir -p /tmp/g2 && cd /tmp/g2
+          npm init -y > /dev/null
+          npm install playwright
+          npx playwright install --with-deps chromium
+          cp "$GITHUB_WORKSPACE/scripts/probes/g2-amazon-fee-table.mjs" .
+          node g2-amazon-fee-table.mjs

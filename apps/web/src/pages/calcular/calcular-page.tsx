@@ -43,14 +43,14 @@ import {
   MANDATORY_FIELDS,
   type MarketplaceId,
   MARKUP_FIELDS,
-  type Modality,
-  MODALITY_OPTIONS,
+  slotResetOnMarketplaceChange,
   OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
 import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
 import { useFeeCatalog } from "@/shared/fee-catalog";
+import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
@@ -234,8 +234,10 @@ export function CalcularPage() {
   // Switching a slot's marketplace resets its modality to that market's default (or none), so a
   // stale ML "Clássico" never lingers on a Shopee slot.
   const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
-    const first = (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality;
-    setValue(`channels.${index}.modality`, first, { shouldValidate: true });
+    // 014/T097 — modality AND category: the category belongs to the OLD marketplace's taxonomy.
+    const next = slotResetOnMarketplaceChange(marketplace);
+    setValue(`channels.${index}.modality`, next.modality, { shouldValidate: true });
+    setValue(`channels.${index}.category`, next.category, { shouldValidate: true });
   };
 
   return (
@@ -416,6 +418,7 @@ export function CalcularPage() {
         refreshFailed={catalogRefreshFailed}
         refreshing={catalogRefreshing}
         onRetryCatalog={retryCatalog}
+        spineFor={(m) => spineForMarketplace(catalog, m)}
       />
 
       {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços

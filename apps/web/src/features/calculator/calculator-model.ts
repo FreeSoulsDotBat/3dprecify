@@ -19,7 +19,7 @@ import {
   entryToChannelFees,
   feeSealState,
   type ResolvedChannelFees,
-  resolveSlotEntry,
+  resolveSlot,
 } from "@/features/calculator/fee-prefill";
 import type { FeeSealState } from "@/features/calculator/fee-seal";
 import type { CatalogSource, FeeCatalog, FeeEntry } from "@/shared/fee-catalog";
@@ -40,6 +40,20 @@ export { formatBRL } from "@/shared/lib/decimal-ptbr";
 
 export type CalcFieldErrors = Partial<Record<CalcFieldName, string>>;
 export type ChannelSlotErrors = Partial<Record<ChannelFieldName, string>>;
+
+/**
+ * SC-817 / FR-014a — the engine priced this slot but REFUSED at least one level: that level's
+ * announce falls outside every published band, so no rate covers it. `null` is the whole point —
+ * pricing it off the neighbouring band would fill in the arithmetic the gap the source itself
+ * leaves (the ML R$ 50,01–78,99 window), which FR-014a forbids filling in the catalog.
+ */
+export function isUnpriced(r: ChannelResult | null): boolean {
+  return (
+    r !== null &&
+    r.error === null &&
+    (r.precoAnuncioVarejo === null || r.precoAnuncioAtacado === null)
+  );
+}
 
 /** One channel slot's outcome, aligned to `form.channels[i]`: inline pt-BR errors (empty when the
  *  slot is valid) + the engine's gross-up result (null when the slot has an error). `hasFee` is
@@ -198,9 +212,13 @@ function resolveSlotFees(
   // NOT — on a band entry the band still governs fixedFee (typed value inert, price correct); on a
   // non-band entry there is no schedule, so the scalar override below applies normally.
   const commissionOverridden = edited.commissionPct !== undefined;
+  // `bandMode` describes how a SCHEDULE combines, so it leaves with the schedule. Left behind it would
+  // claim "progressive" over a flat typed commission — a label contradicting the number beside it.
+  const { bandMode, ...withoutMode } = base;
   return {
-    ...base,
+    ...withoutMode,
     priceBands: commissionOverridden ? undefined : base.priceBands,
+    ...(commissionOverridden || !bandMode ? {} : { bandMode }),
     commissionPct: edited.commissionPct ?? base.commissionPct,
     fixedFee: edited.fixedFee ?? base.fixedFee,
     minPerItem: edited.minPerItem ?? base.minPerItem,
@@ -216,7 +234,11 @@ function resolveSlotFees(
  */
 function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessing {
   const manual = parseManualFees(slot);
-  const entry = ctx ? resolveSlotEntry(ctx.catalog, slot.marketplace, slot.modality) : null;
+  // 014/US1: the category is a per-slot determinant, so it is read from THIS slot and never shared.
+  const resolution = ctx
+    ? resolveSlot(ctx.catalog, slot.marketplace, slot.modality, slot.category)
+    : { entry: null, originCategoryId: null, viaCatchAll: false };
+  const entry = resolution.entry;
 
   if (Object.keys(manual.errors).length > 0) {
     return {
@@ -232,8 +254,25 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
   // A blank slot accepts the catalog pre-fill wholesale (reference seal).
   const useCatalog = entry !== null && !manual.hasManualInput;
   const fees = resolveSlotFees(entry, manual);
+  // The seal names the category the number is FOR — which may be an ANCESTOR of the chosen one,
+  // because rates are piecewise-constant down the tree. Looked up from the spine that travels with
+  // the catalog (D2), so there is no second artifact to fall out of sync with.
+  const spine = ctx?.catalog.marketplaces.find(
+    (m) => m.marketplace === slot.marketplace,
+  )?.categorySpine;
+  const originCategoryName =
+    resolution.originCategoryId && spine
+      ? (spine.find((n) => n.id === resolution.originCategoryId)?.name ?? null)
+      : null;
   const seal: FeeSealState = useCatalog
-    ? feeSealState({ entry, source: ctx!.source, now: ctx!.now, edited: false })
+    ? feeSealState({
+        entry,
+        source: ctx!.source,
+        now: ctx!.now,
+        edited: false,
+        originCategoryName,
+        viaCatchAll: resolution.viaCatchAll,
+      })
     : entry
       ? { kind: "adjusted" }
       : { kind: "none" };
@@ -258,6 +297,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       fixedFee: fees.fixedFee,
       minPerItem: fees.minPerItem,
       priceBands: fees.priceBands,
+      ...(fees.bandMode ? { bandMode: fees.bandMode } : {}),
       freightCost: fees.freightCost,
       freightVoucherBands: fees.freightVoucherBands,
     },
@@ -360,14 +400,22 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             freightIsEstimate: false,
             editedFields: p.editedFields,
           }
-        : {
-            errors: {},
-            result: result.channels[ep++] ?? null,
-            hasFee: p.hasFee,
-            seal: p.seal,
-            freightIsEstimate: p.freightIsEstimate,
-            editedFields: p.editedFields,
-          },
+        : (() => {
+            const computed = result.channels[ep++] ?? null;
+            return {
+              errors: {},
+              result: computed,
+              hasFee: p.hasFee,
+              // SC-817 — a level the engine refused to price (its announce falls outside every
+              // published band) has no reference behind it, so the slot MUST NOT keep wearing the
+              // "Referência" seal: the seal would vouch for a number the screen is not showing.
+              // Degrading the whole slot to "sem referência" understates rather than overstates,
+              // which is the only safe direction here (Constitution II).
+              seal: isUnpriced(computed) ? ({ kind: "none" } as const) : p.seal,
+              freightIsEstimate: p.freightIsEstimate,
+              editedFields: p.editedFields,
+            };
+          })(),
     );
     return { ok: true, fieldErrors: {}, result, input, channels, otherCostErrors };
   } catch (err) {

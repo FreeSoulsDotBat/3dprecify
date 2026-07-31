@@ -21,7 +21,19 @@ export default defineConfig({
       // but only `generated.ts` is actually Orval-generated — `transport.ts`/`error-messages.ts`
       // are hand-written (transport wrapper + ErrorCode->pt-BR mapping) and were silently exempted
       // from the coverage floor despite already having their own `*.test.ts` files.
-      exclude: ["**/dist/**", "**/*.d.ts", "**/*.test.*", "apps/web/src/shared/api/generated.ts"],
+      exclude: [
+        "**/dist/**",
+        "**/*.d.ts",
+        "**/*.test.*",
+        "apps/web/src/shared/api/generated.ts",
+        // 014: CLI entry points, not library logic — they wire fs/network around code that IS
+        // covered. The fail-safe they used to inline now lives in `guardrails.ts` precisely so it
+        // is testable instead of exempt (FR-018a).
+        "packages/*/src/**/*.mjs",
+        // 014/T083: fixture DATA (a frozen document from before ADR-0024) plus the note that
+        // records where it came from. Not code — v8 tried to parse the .md and warned on every run.
+        "**/__fixtures__/**",
+      ],
       thresholds: {
         "packages/*/src/**": { statements: 100, branches: 100, functions: 100, lines: 100 },
         "apps/web/src/**": { statements: 77, branches: 73, functions: 74, lines: 78 },

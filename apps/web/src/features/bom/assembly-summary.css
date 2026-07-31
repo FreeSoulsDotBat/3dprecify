@@ -1,0 +1,15 @@
+/* 014/T118 — a barra "Total do kit". Era `sticky bottom-2 z-10` em utilitários, e o `bottom-2`
+   (8px) media a partir do CHÃO DO VIEWPORT, não do fim do conteúdo: a TabBar tem 64px e é
+   `position: fixed`, então a barra parava 56px DENTRO dela, com `z-index` 10 contra os 30 da
+   navegação. Custo total e os dois preços ficavam com os dígitos cortados durante toda a composição
+   do kit — os números pelos quais o vendedor abriu a tela.
+
+   A `padding-bottom` do shell não protegia: ela move o conteúdo que ROLA, e um sticky para em
+   relação ao viewport. Por isso o recuo vem de `--pinned-bottom`, declarado pelo shell — a única
+   camada que sabe qual cromo ela mesma tem. O fallback existe para quem renderizar este componente
+   fora do shell (os testes de unidade), não para esconder um shell quebrado. */
+.assembly-summary__pinned {
+  position: sticky;
+  bottom: var(--pinned-bottom, var(--space-2));
+  z-index: 10;
+}

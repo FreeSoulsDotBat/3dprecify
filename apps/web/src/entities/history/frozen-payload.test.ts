@@ -1,4 +1,11 @@
-import type { BomResult, PriceInput, PriceResult } from "@3dprecify/pricing-core";
+import {
+  type BomResult,
+  computeCalculator,
+  type PriceInput,
+  type PriceResult,
+} from "@3dprecify/pricing-core";
+
+import PRE_ADR_0024 from "./__fixtures__/frozen-payload-pre-adr-0024.json";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
@@ -6,6 +13,8 @@ import {
   freezeBomResult,
   freezePriceResult,
   type FrozenBreakdown,
+  frozenChannelHasFee,
+  type FrozenSnapshotPayload,
   type MoneyString,
   readFrozenMoney,
   toMoneyString,
@@ -357,5 +366,171 @@ describe("I2 — catalogVersion is captured at the document root (fee provenance
     );
     expect(allManual.catalogVersion).toBeNull();
     expect("catalogVersion" in allManual).toBe(true);
+  });
+});
+
+// 014/T120 — a recusa que a Calcular já aplica, herdada em tempo de LEITURA. Com comissão 0 o motor
+// devolve anúncio == base: um número real que não é um preço de marketplace. O detalhe congelado
+// imprimia as quatro linhas e passava a afirmar o que a própria origem tinha negado (Princípio II).
+//
+// Leitura e não escrita de propósito: as entradas de taxa já viajam dentro do documento, então o
+// fato é recuperável de TODO registro já gravado — que um gatilho de banco torna irregravável.
+describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (T120)", () => {
+  const semTaxa = (marketplace: string) => ({
+    marketplace,
+    commissionPct: "0.00",
+    fixedFee: "0.00",
+    minPerItem: "0.00",
+    freightCost: "0.00",
+  });
+
+  function single(slots: unknown[]): FrozenSnapshotPayload {
+    return {
+      schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+      kind: "SINGLE",
+      modelVersion: "3.1.0",
+      catalogVersion: null,
+      inputs: { channels: slots } as never,
+      totals: { custoTotal: "10.00", precoVarejo: "15.00", precoAtacado: "13.00" },
+      channels: slots.map((s) => ({
+        marketplace: (s as { marketplace: string }).marketplace,
+        precoAnuncioVarejo: "15.00" as MoneyString,
+      })),
+      provenance: null,
+    };
+  }
+
+  it("um slot sem NENHUMA taxa não tem preço de canal", () => {
+    expect(frozenChannelHasFee(single([semTaxa("MERCADO_LIVRE")]), 0)).toBe(false);
+  });
+
+  it("basta UMA das seis entradas para o número significar alguma coisa", () => {
+    const casos = [
+      { commissionPct: "12.00" },
+      { fixedFee: "6.00" },
+      { minPerItem: "1.00" },
+      { freightCost: "19.90" },
+      { priceBands: [{ minPrice: "0.00", maxPrice: null, commissionPct: "14.00" }] },
+      { freightVoucherBands: [{ minPrice: "0.00", maxPrice: null, voucherCeiling: "10.00" }] },
+    ];
+    for (const extra of casos) {
+      const slot = { ...semTaxa("SHOPEE"), ...extra };
+      expect(frozenChannelHasFee(single([slot]), 0), JSON.stringify(extra)).toBe(true);
+    }
+  });
+
+  // SC-815: esconder uma linha por PALPITE é a mesma fabricação na direção contrária. Só se
+  // suprime o que o documento PROVA — um payload sem entradas de canal não prova nada.
+  it("sem entradas de canal no documento, o preço permanece — a ausência não é provável", () => {
+    const antigo = { ...single([semTaxa("MERCADO_LIVRE")]) };
+    delete antigo.inputs;
+    expect(frozenChannelHasFee(antigo, 0)).toBe(true);
+    expect(frozenChannelHasFee(single([]), 0)).toBe(true); // índice fora da lista
+  });
+
+  it("num KIT o canal é um ROLLUP: casa por marketplace, nunca por índice", () => {
+    const kit = (linhas: unknown[][]): FrozenSnapshotPayload => ({
+      schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+      kind: "KIT",
+      modelVersion: "3.1.0",
+      catalogVersion: null,
+      lines: linhas.map((slots) => ({
+        name: null,
+        quantity: 1,
+        input: { channels: slots } as never,
+        breakdown: {
+          material: "1.00",
+          energy: "0.00",
+          machine: "0.00",
+          falha: "0.00",
+          finishing: "0.00",
+          labor: "0.00",
+          admin: "0.00",
+          otherCosts: [],
+        } as FrozenBreakdown,
+        totals: { custoTotal: "1.00", precoVarejo: "2.00", precoAtacado: "2.00" },
+      })),
+      totals: { custoTotal: "2.00", precoVarejo: "4.00", precoAtacado: "4.00" },
+      channels: [{ marketplace: "MERCADO_LIVRE", precoAnuncioVarejo: "4.00" as MoneyString }],
+      provenance: null,
+    });
+
+    // Nenhuma linha pagou comissão no ML → o rollup não é um preço.
+    expect(
+      frozenChannelHasFee(kit([[semTaxa("MERCADO_LIVRE")], [semTaxa("MERCADO_LIVRE")]]), 0),
+    ).toBe(false);
+    // UMA linha pagou → o número somado significa alguma coisa, e fica.
+    expect(
+      frozenChannelHasFee(
+        kit([
+          [semTaxa("MERCADO_LIVRE")],
+          [{ ...semTaxa("MERCADO_LIVRE"), commissionPct: "14.00" }],
+        ]),
+        0,
+      ),
+    ).toBe(true);
+    // Uma taxa em OUTRO marketplace não empresta significado a este.
+    expect(
+      frozenChannelHasFee(
+        kit([[semTaxa("MERCADO_LIVRE"), { ...semTaxa("SHOPEE"), commissionPct: "20.00" }]]),
+        0,
+      ),
+    ).toBe(false);
+  });
+});
+
+// 014/T083 (SC-815) — RETROCOMPATIBILIDADE com o passado de verdade.
+//
+// O ADR-0024 acrescentou `bandMode` e definiu que a AUSÊNCIA dele significa seleção. `pricing-core`
+// já provava essa regra em si mesma; o que faltava é o que esta suíte faz: pegar documentos
+// congelados que ninguém escreveu à mão hoje — gerados pelo código de `1212a16`, a base desta branch,
+// ANTES do ADR-0024 — e mostrar que o motor de hoje os reproduz ao centavo.
+//
+// A diferença não é cerimônia. Um fixture escrito hoje prova a INTENÇÃO de hoje: eu escolheria os
+// números que o código atual produz, e o teste passaria por construção. Só o artefato antigo prova
+// que o passado não se moveu.
+//
+// E há um alvo preciso: `recalc-today.tsx` afirma no seu docstring que "sob uma fórmula inalterada,
+// reprecificar as entradas congeladas devolve exatamente os valores congelados". Nenhum caminho de
+// código exercita essa afirmação — o "Recalcular hoje" re-emite o documento quando a origem sumiu,
+// nunca reprecifica as entradas. Este teste é o que a torna verificada em vez de declarada.
+describe("SC-815 — um congelado de ANTES do ADR-0024 reprecifica no mesmo centavo (T083)", () => {
+  /** Descongela um valor de entrada: string numérica vira número, o resto passa intacto.
+   *  `null` PERMANECE null — `maxPrice: null` é a banda sem teto, não um campo ausente. */
+  function thaw(value: unknown): unknown {
+    if (value === null) return null;
+    if (Array.isArray(value)) return value.map(thaw);
+    if (typeof value === "object") {
+      return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, thaw(v)]));
+    }
+    const n = Number(value);
+    return value !== "" && Number.isFinite(n) ? n : value;
+  }
+
+  const antigos = PRE_ADR_0024 as unknown as FrozenSnapshotPayload[];
+
+  it("os documentos do fixture são mesmo ANTERIORES: nenhum carrega `bandMode`", () => {
+    expect(antigos).toHaveLength(3);
+    expect(JSON.stringify(antigos)).not.toContain("bandMode");
+    // E são bandados — senão o teste não tocaria no caminho que o ADR-0024 mudou.
+    expect(JSON.stringify(antigos)).toContain("priceBands");
+  });
+
+  for (const [i, antigo] of antigos.entries()) {
+    it(`documento #${i + 1}: o motor de hoje reescreve o MESMO documento`, () => {
+      const input = thaw(antigo.inputs) as PriceInput;
+      const hoje = freezePriceResult(input, computeCalculator(input), null);
+      // Documento inteiro, não só os totais: breakdown, canais, provenance e a versão do modelo.
+      // Um único centavo diferente em qualquer folha reprova.
+      expect(hoje).toEqual(antigo);
+    });
+  }
+
+  // Os três anúncios Shopee caem em bandas publicadas DIFERENTES — é onde seleção e parcela
+  // divergem, e é por isso que um único documento não bastaria.
+  it("as três escalas atravessam bandas diferentes, não a mesma três vezes", () => {
+    const anuncios = antigos.map((p) => p.channels?.[0]?.precoAnuncioVarejo);
+    expect(anuncios).toEqual(["58.73", "97.36", "149.98"]);
+    expect(new Set(anuncios).size).toBe(3);
   });
 });

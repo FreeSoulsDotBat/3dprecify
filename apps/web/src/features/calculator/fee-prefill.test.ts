@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { grossUp } from "@3dprecify/pricing-core";
 import { describe, expect, it } from "vitest";
 
@@ -5,12 +7,14 @@ import {
   type FeeCatalog,
   feeCatalogSchema,
   feeEntrySchema,
+  parseFeeCatalog,
   STALENESS_DAYS,
 } from "@/shared/fee-catalog";
 
 import {
   entryToChannelFees,
   feeSealState,
+  resolveSlot,
   resolveSlotEntry,
   slotDeterminants,
 } from "./fee-prefill";
@@ -168,7 +172,255 @@ describe("entryToChannelFees — map a resolved entry to the engine (SC-111)", (
     // SC-111: the subsidy lowers the líquido by exactly that amount vs. the no-freight gross-up.
     const withSubsidy = grossUp(42.98, { commissionPct: 12, fixedFee: 6.75, freightCost: 20 });
     const noFreight = grossUp(42.98, { commissionPct: 12, fixedFee: 6.75, freightCost: 0 });
-    expect(noFreight.liquido - withSubsidy.liquido).toBeCloseTo(20, 2);
+    expect(noFreight.liquido! - withSubsidy.liquido!).toBeCloseTo(20, 2);
     expect(withSubsidy.anuncio).toBe(noFreight.anuncio); // freight is a post-deduction, not grossed up
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 014 US2 — the lookup actually USES the category. Before this, `slotDeterminants` sent only
+// listingType/plan, so a category-keyed entry could never resolve and the whole feature would look
+// broken. Rates below are MEASURED on the live APIs 2026-07-28.
+// ---------------------------------------------------------------------------------------------
+
+const prov = {
+  freight: { kind: "NONE" as const },
+  source: "Tabela de comissões Amazon",
+  sourceUrl: "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+  effectiveDate: "2026-07-28",
+  lastReviewed: "2026-07-28",
+};
+
+const catalog014: FeeCatalog = feeCatalogSchema.parse({
+  catalogVersion: "2026-07-28.t",
+  schemaVersion: "1",
+  generatedAt: "2026-07-28T00:00:00.000Z",
+  marketplaces: [
+    {
+      // Amazon PUBLISHES a catch-all ("Outros", 15%) — so Q5 says use it when no category is chosen.
+      marketplace: "AMAZON",
+      categorySpine: [
+        { id: "casa", name: "Casa e Cozinha", parentId: null },
+        { id: "casa-vasos", name: "Vasos e Cachepôs", parentId: "casa" },
+      ],
+      entries: [
+        { ...prov, determinants: { plan: "PROFISSIONAL" }, commissionPct: 15, fixedFee: 0 },
+        {
+          ...prov,
+          determinants: { plan: "PROFISSIONAL", category: "casa" },
+          commissionPct: 12,
+          fixedFee: 0,
+        },
+      ],
+    },
+    {
+      // ML publishes NO catch-all — the rate varies 14–19% by category and there is no "Outros".
+      // Q5 therefore says "sem referência" here; deriving one from the published range is forbidden.
+      marketplace: "MERCADO_LIVRE",
+      categorySpine: [
+        { id: "MLB1051", name: "Celulares e Telefones", parentId: null },
+        { id: "MLB1055", name: "Celulares e Smartphones", parentId: "MLB1051" },
+        { id: "MLB439224", name: "Apoio para Celulares", parentId: "MLB1051" },
+      ],
+      entries: [
+        {
+          ...prov,
+          determinants: { listingType: "gold_pro", category: "MLB1051" },
+          commissionPct: 18,
+          fixedFee: 0,
+        },
+        {
+          ...prov,
+          determinants: { listingType: "gold_pro", category: "MLB1055" },
+          commissionPct: 16,
+          fixedFee: 0,
+        },
+      ],
+    },
+  ],
+});
+
+describe("slotDeterminants — the category axis (US2)", () => {
+  it("carries the category when the seller chose one", () => {
+    expect(slotDeterminants("MERCADO_LIVRE", "gold_pro", "MLB1055")).toEqual({
+      listingType: "gold_pro",
+      category: "MLB1055",
+    });
+    expect(slotDeterminants("AMAZON", "PROFISSIONAL", "casa")).toEqual({
+      plan: "PROFISSIONAL",
+      category: "casa",
+    });
+  });
+
+  it("omits it entirely when there is none — never an empty string", () => {
+    expect(slotDeterminants("MERCADO_LIVRE", "gold_pro")).toEqual({ listingType: "gold_pro" });
+    expect(slotDeterminants("MERCADO_LIVRE", "gold_pro", "")).toEqual({ listingType: "gold_pro" });
+  });
+
+  it("marketplaces with no category axis stay unaffected", () => {
+    expect(slotDeterminants("SHOPEE", "", "casa")).toBeNull();
+  });
+});
+
+describe("resolveSlot — Q5: catch-all only where the marketplace publishes one", () => {
+  it("a chosen category resolves its own rate", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL", "casa");
+    expect(r.entry?.commissionPct).toBe(12);
+    expect(r.viaCatchAll).toBe(false);
+    expect(r.originCategoryId).toBe("casa");
+  });
+
+  it("a category with no entry inherits, and the ORIGIN is the ancestor that had one", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL", "casa-vasos");
+    expect(r.entry?.commissionPct).toBe(12);
+    expect(r.originCategoryId).toBe("casa"); // the number is the PARENT's — the seal must say so
+    expect(r.viaCatchAll).toBe(false);
+  });
+
+  it("NO category on a marketplace WITH a published catch-all → uses it, flagged as catch-all", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL");
+    expect(r.entry?.commissionPct).toBe(15);
+    expect(r.viaCatchAll).toBe(true);
+    expect(r.originCategoryId).toBeNull();
+  });
+
+  // The other half of Q5, and the one that is easy to get wrong: ML publishes a RANGE (14–19%), not a
+  // catch-all. Deriving one would violate SC-804 — a hole in the source stays a hole.
+  it("NO category on a marketplace WITHOUT a catch-all → nothing, never a derived one", () => {
+    const r = resolveSlot(catalog014, "MERCADO_LIVRE", "gold_pro");
+    expect(r.entry).toBeNull();
+    expect(r.viaCatchAll).toBe(false);
+  });
+});
+
+describe("feeSealState — names the category, and distinguishes catch-all from no reference", () => {
+  const now = Date.parse("2026-07-28") + day;
+
+  it("a category-resolved slot names the category the number is FOR", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL", "casa-vasos");
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now,
+      edited: false,
+      originCategoryName: "Casa e Cozinha",
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s).toMatchObject({ kind: "reference", originCategoryName: "Casa e Cozinha" });
+  });
+
+  it("a catch-all slot reads as catch-all, NOT as a plain reference", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL");
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now,
+      edited: false,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("catchAll");
+  });
+
+  it("no entry at all still reads 'sem referência' — the two are never conflated", () => {
+    const r = resolveSlot(catalog014, "MERCADO_LIVRE", "gold_pro");
+    const s = feeSealState({ entry: r.entry, source: "catalog", now, edited: false });
+    expect(s.kind).toBe("none");
+  });
+
+  it("an edited value still wins over everything, catch-all included", () => {
+    const r = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL");
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now,
+      edited: true,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("adjusted");
+  });
+});
+
+// 014/T096 (Q5/T094) — o truth-gate do catch-all, contra o ARTEFATO REAL.
+//
+// Os testes acima provam o comportamento sobre um `catalog014` escrito à mão, e por isso passavam
+// verdes enquanto o artefato publicado não tinha catch-all nenhum: o fixture inventou a entrada que
+// o gerador não emitia. A decisão T094 é sobre o que o VENDEDOR recebe, e quem entrega isso é o
+// arquivo commitado — então a asserção tem de ser feita nele.
+describe("T094/T096 — quem não escolhe categoria recebe o catch-all PUBLICADO da Amazon", () => {
+  const artefato = parseFeeCatalog(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  it("um slot Amazon sem categoria resolve — e resolve PELO catch-all, não por uma categoria", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    expect(r.entry).not.toBeNull();
+    expect(r.viaCatchAll).toBe(true);
+    expect(r.originCategoryId).toBeNull();
+  });
+
+  it("o valor é o da linha 'Outros' — 15%, o TETO da tabela (erro sempre a favor do vendedor)", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    expect(r.entry?.commissionPct).toBe(15);
+    // A procedência nomeia a linha que foi usada: o catch-all é citação, não invenção (FR-011a).
+    expect(r.entry?.source).toContain("Outros");
+  });
+
+  it("o selo diz que a categoria não foi informada — nunca 'Referência' seca", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL");
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now: Date.parse("2026-07-28"),
+      edited: false,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("catchAll");
+  });
+
+  it("vale para os dois planos — a tabela não varia por plano, e o catch-all também não", () => {
+    for (const plan of ["PROFISSIONAL", "INDIVIDUAL"]) {
+      expect(resolveSlot(artefato, "AMAZON", plan).entry?.commissionPct).toBe(15);
+    }
+  });
+
+  it("escolher categoria continua vencendo o catch-all", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL", "relogios");
+    expect(r.viaCatchAll).toBe(false);
+    expect(r.originCategoryId).toBe("relogios");
+    expect(r.entry?.commissionPct).toBe(13);
+  });
+
+  // Exposição que a T095 abriu ao tornar o catch-all REAL, e que o `!category` do `viaCatchAll`
+  // deixaria passar: uma categoria que não resolve (id de um cenário salvo, de um catálogo que
+  // perdeu o nó, ou o resíduo da troca de marketplace da T097) cai no catch-all pela cadeia de
+  // ancestrais — e, com o `!category`, o selo diria "Referência" como se aquele 15% fosse a
+  // alíquota da categoria que o vendedor escolheu. A pergunta certa não é "escolheu categoria?",
+  // é "a entrada que estamos usando tem categoria?".
+  it("categoria que NÃO resolve cai no catch-all, e o selo diz isso — nunca 'Referência'", () => {
+    const r = resolveSlot(artefato, "AMAZON", "PROFISSIONAL", "categoria-que-nao-existe");
+    expect(r.entry?.commissionPct).toBe(15); // caiu no "Outros"
+    expect(r.originCategoryId).toBeNull();
+    expect(r.viaCatchAll).toBe(true);
+    const s = feeSealState({
+      entry: r.entry,
+      source: "catalog",
+      now: Date.parse("2026-07-28"),
+      edited: false,
+      viaCatchAll: r.viaCatchAll,
+    });
+    expect(s.kind).toBe("catchAll");
+  });
+
+  it("o ML NÃO ganha catch-all por tabela: sem categoria, sem referência (SC-804)", () => {
+    // A assimetria cai do dado, não de um `if`: o ML publica uma FAIXA (14–19%) e nenhum catch-all,
+    // e derivar um dela seria fabricar número.
+    const r = resolveSlot(artefato, "MERCADO_LIVRE", "gold_pro");
+    expect(r.entry).toBeNull();
+    expect(r.viaCatchAll).toBe(false);
   });
 });

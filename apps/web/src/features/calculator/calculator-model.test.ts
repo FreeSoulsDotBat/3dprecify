@@ -550,3 +550,156 @@ describe("computeFromForm — exposes the engine input it computed from (008 R7)
     expect(r.input).toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------------------------
+// 014/US1 — the category reaches the model, the seal names its ORIGIN, and the choice is per slot.
+// ---------------------------------------------------------------------------------------------
+
+describe("014 — category as a per-slot determinant", () => {
+  const prov = {
+    freight: { kind: "NONE" as const },
+    source: "Tabela de comissões Amazon",
+    sourceUrl: "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+    effectiveDate: "2026-07-28",
+    lastReviewed: "2026-07-28",
+  };
+  const catalog = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-28.t",
+    schemaVersion: "1",
+    generatedAt: "2026-07-28T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "AMAZON",
+        categorySpine: [
+          { id: "casa", name: "Casa e Cozinha", parentId: null },
+          { id: "casa-vasos", name: "Vasos e Cachepôs", parentId: "casa" },
+        ],
+        entries: [
+          { ...prov, determinants: { plan: "PROFISSIONAL" }, commissionPct: 15, fixedFee: 0 },
+          {
+            ...prov,
+            determinants: { plan: "PROFISSIONAL", category: "casa" },
+            commissionPct: 12,
+            fixedFee: 0,
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = {
+    catalog,
+    source: "catalog",
+    now: Date.parse("2026-07-28"),
+  };
+  // Only the two fields these tests vary — `exactOptionalPropertyTypes` rejects spreading a Partial
+  // over required fields, and being explicit is clearer than casting around it.
+  const slot = (over: { category?: string; commissionPct?: string } = {}): ChannelSlotForm => ({
+    ...defaultChannelSlot("AMAZON"),
+    modality: "PROFISSIONAL",
+    ...(over.category !== undefined ? { category: over.category } : {}),
+    ...(over.commissionPct !== undefined ? { commissionPct: over.commissionPct } : {}),
+  });
+  const run = (slots: ChannelSlotForm[]) =>
+    computeFromForm({ ...defaultCalcValues, channels: slots }, ctx);
+
+  it("a chosen category changes the commission the model uses", () => {
+    expect(run([slot({ category: "casa" })]).channels[0].result?.feeSource).toBeDefined();
+    expect(run([slot({ category: "casa" })]).channels[0].seal).toMatchObject({
+      kind: "reference",
+      originCategoryName: "Casa e Cozinha",
+    });
+    // no category → the PUBLISHED catch-all, sealed as such and never as a plain reference
+    expect(run([slot()]).channels[0].seal.kind).toBe("catchAll");
+  });
+
+  // The number can come from an ANCESTOR (rates are piecewise-constant down the tree). The seller
+  // must be able to see that, or he reads a parent's rate as his own category's.
+  it("an inherited rate seals with the ANCESTOR's name, not the chosen category's", () => {
+    expect(run([slot({ category: "casa-vasos" })]).channels[0].seal).toMatchObject({
+      kind: "reference",
+      originCategoryName: "Casa e Cozinha",
+    });
+  });
+
+  it("the choice is PER SLOT — a category on one channel does not leak into another", () => {
+    const chs = run([slot({ category: "casa" }), slot()]).channels;
+    expect(chs[0].seal.kind).toBe("reference");
+    expect(chs[1].seal.kind).toBe("catchAll");
+  });
+
+  it("a typed commission still wins over the category (override always wins)", () => {
+    expect(run([slot({ category: "casa", commissionPct: "9" })]).channels[0].seal.kind).toBe(
+      "adjusted",
+    );
+  });
+});
+
+// 014/T114a (SC-817 / FR-014a) — a recusa do motor tem de ATRAVESSAR o adaptador. Provar só em
+// `pricing-core` prova a aritmética e não prova o trajeto: o defeito que este teste guarda não é
+// "o motor calculou errado", é "o motor recusou e a tela mostrou R$ 0,00 sob selo de Referência".
+// É a mesma lição que o ADR-0024 §5 já tinha cobrado uma vez neste incremento.
+describe("SC-817 — nível não precificado atravessa até o selo (lacuna publicada)", () => {
+  /** Custo fixo do ML com a lacuna que a fonte deixa: nada publicado entre R$ 50,01 e R$ 78,99
+   *  (FR-014a — a lacuna permanece lacuna, nunca interpolada). */
+  const catalogComLacuna = feeCatalogSchema.parse({
+    catalogVersion: "2026-07-28.ml",
+    schemaVersion: "1",
+    generatedAt: "2026-07-28T00:00:00.000Z",
+    marketplaces: [
+      {
+        marketplace: "MERCADO_LIVRE",
+        entries: [
+          {
+            determinants: null,
+            commissionPct: null,
+            fixedFee: null,
+            priceBands: [
+              { minPrice: 0, maxPrice: 29.01, commissionPct: 14, fixedFee: 6.25 },
+              { minPrice: 29.01, maxPrice: 50.01, commissionPct: 14, fixedFee: 6.5 },
+              { minPrice: 79, maxPrice: null, commissionPct: 14, fixedFee: 0 },
+            ],
+            freight: { kind: "NONE" },
+            source: "Mercado Livre — custos de venda",
+            sourceUrl: "https://www.mercadolivre.com.br/ajuda/custos-de-venda_869",
+            effectiveDate: "2026-07-01",
+            lastReviewed: "2026-07-28",
+          },
+        ],
+      },
+    ],
+  });
+  const ctx: CatalogContext = {
+    catalog: catalogComLacuna,
+    source: "catalog",
+    now: Date.parse("2026-07-28"),
+  };
+  const mlSlot: ChannelSlotForm = {
+    ...defaultChannelSlot(),
+    marketplace: "MERCADO_LIVRE",
+    modality: "",
+  };
+
+  it("o varejo cai na lacuna → sem preço e SEM selo de referência", () => {
+    // O varejo canônico (R$ 42,98) precisa anunciar por ~R$ 57 para fechar — dentro da lacuna.
+    const r = computeFromForm({ ...canonical, channels: [mlSlot] }, ctx);
+    const ch = r.channels[0];
+    expect(ch.errors).toEqual({}); // o slot é VÁLIDO: quem não tem tarifa é o preço, não o vendedor
+    expect(ch.result?.precoAnuncioVarejo).toBeNull();
+    expect(ch.result?.recebidoLiquidoVarejo).toBeNull();
+    // O selo é a metade que faltava: sem ela a tela some com o número e mantém "Referência: Mercado
+    // Livre" ao lado, vouchando por um preço que ela mesma se recusou a mostrar.
+    expect(ch.seal.kind).toBe("none");
+  });
+
+  it("acima da lacuna a MESMA tabela volta a precificar, e o selo volta a valer", () => {
+    // markup alto empurra o varejo (e o anúncio) para cima da lacuna.
+    const r = computeFromForm(
+      { ...canonical, markupVarejoPct: "200", markupAtacadoPct: "180", channels: [mlSlot] },
+      ctx,
+    );
+    const ch = r.channels[0];
+    expect(ch.result?.precoAnuncioVarejo).not.toBeNull();
+    expect(ch.result?.recebidoLiquidoVarejo).not.toBeNull();
+    expect(ch.seal.kind).toBe("reference");
+  });
+});

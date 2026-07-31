@@ -147,6 +147,11 @@ export const messages = {
       freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
       freightLine: "Frete / cupom",
       negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
+      // 014/SC-817 — o anúncio necessário cai numa faixa de preço para a qual o marketplace não
+      // publica tarifa. Dizer isso é a única resposta honesta: a tarifa da faixa vizinha não vale
+      // aqui, e um R$ 0,00 sob selo de referência seria pior que nenhum número.
+      unpricedBand:
+        "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do canal para precificar.",
       // US4 — master toggle: show/hide the whole marketplace section (default on).
       includeToggle: "Incluir marketplaces no preço",
       pricesTitle: "Preços por canal",
@@ -163,6 +168,46 @@ export const messages = {
     // US2 — honesty seal (FR-107): where a slot's fee numbers came from and how fresh they are. The
     // reference/embedded states append the source + review date; the estimate marks the ML freight
     // subsidy as a labelled estimate (A4). Never asserts a fabricated number is exact.
+    // 014/US1 — o vendedor não sabe o nome que o marketplace usa: ele pensa "suporte de celular"
+    // e o ML publica "Acessórios para Celulares". A copy de busca vazia ensina isso em vez de
+    // apenas informar fracasso.
+    categoryPicker: {
+      label: "Categoria do anúncio (opcional)",
+      hint: "A comissão muda conforme a categoria.",
+      placeholder: "Busque pelo produto…",
+      clear: "Limpar",
+      // 014/T107 — o chip escolhido é uma live region como os dois ramos vizinhos do seletor, e
+      // precisa dizer O QUE ele é: um caminho de categoria solto, anunciado sem rótulo, chega ao
+      // leitor de tela como três nomes sem contexto no meio de um formulário de preço.
+      chosenLabel: "Categoria escolhida:",
+      clearAria: "Limpar categoria escolhida",
+      // 014/T116 — o id escolhido não está na espinha deste catálogo. Antes o chip renderizava um
+      // rótulo EM BRANCO ao lado do "Limpar": nomeava nada e não explicava nada. A comissão desse
+      // slot já caiu no catch-all (ou em "sem referência") e quem diz isso é o selo — aqui só cabe
+      // dizer por que o nome sumiu, e o que fazer a respeito.
+      unknownChosen: "A categoria escolhida não está neste catálogo — limpe e escolha outra.",
+      noResults:
+        "Não achou? Busque pelo produto, não pelo material — um suporte de celular fica em “Acessórios para Celulares”.",
+      // 014/T117 — o que o contrato ARIA falso prometia e nunca entregou: saber que os resultados
+      // apareceram. Visível de propósito, não `sr-only` — também é o que distingue a lista de um
+      // segundo campo preenchido, que foi como ela leu no primeiro screenshot da T115.
+      resultsOne: "1 categoria encontrada",
+      resultsMany: "{n} categorias encontradas",
+      // A lista mostra no máximo 8. Dizer "8 categorias encontradas" quando existem 23 é afirmar um
+      // total que não é o total — o vendedor pararia de refinar acreditando ter visto tudo, e a
+      // categoria certa dele pode ser a nona. Achado no screenshot da T117: a busca por "a" na
+      // espinha da Amazon devolvia 8 de muitas mais.
+      resultsTruncated: "Mostrando {n} de {total} — refine a busca para ver as demais.",
+      // 014/FR-006d — o estado vazio do seletor. O texto anterior afirmava "a taxa exibida já é a
+      // correta" e prometia "conecte uma vez para carregá-la", no estado padrão de 100% dos usuários
+      // (o slot nasce em Mercado Livre, sem entradas e sem espinha): nenhuma taxa estava exibida, e
+      // conectar não carregava nada. Duas afirmações, ambas falsas, exatamente onde o vendedor mais
+      // precisa desconfiar. Agora há duas mensagens, e o seletor só fala do que ele sabe — a lista de
+      // categorias. Quem fala da taxa é o selo do mesmo slot, e os dois passam a concordar.
+      unavailableNoReference:
+        "Este canal ainda não tem taxa de referência — informe a comissão nos campos abaixo.",
+      unavailableWithFee: "A lista de categorias ainda não está disponível para este canal.",
+    },
     seals: {
       reference: "Referência",
       updatedOn: "atualizada em",
@@ -171,6 +216,11 @@ export const messages = {
       adjusted: "ajustado por você",
       none: "sem referência — informe as taxas",
       estimate: "estimativa de frete",
+      // 014/Q5 — o catch-all é uma afirmação DIFERENTE de "esta é a taxa da sua categoria", e
+      // juntar as duas é como o vendedor termina com o número errado achando que é o dele.
+      catchAll: "categoria não informada — usando",
+      catchAllHighest: "a maior alíquota da tabela",
+      forCategory: "para",
     },
     marketplaceNames: {
       MERCADO_LIVRE: "Mercado Livre",
@@ -496,6 +546,11 @@ export const messages = {
     backToList: "Voltar",
     // detail
     frozenCaption: "Valores congelados em {data}",
+    // 014/SC-818 — o recálculo que NÃO conseguiu repreçar (a origem sumiu) reemite o documento
+    // congelado com a data de hoje. Sem esta linha, o registro é indistinguível de um repreço real, e
+    // a ADR-0019 o torna imutável: a distinção existe aqui ou não existe em lugar nenhum.
+    frozenReusedCaption:
+      "Estes valores foram reaproveitados de um congelamento anterior — a origem não estava disponível para repreçar.",
     validityLine: "Validade da proposta: {n} dias",
     kitPieces: "Peças do kit",
     // A COUNT ("3 un"), never "3×" glued to a total that is ALREADY quantity-scaled (review PR-A,
@@ -503,6 +558,12 @@ export const messages = {
     kitPieceQty: "{n} un",
     breakdown: "Detalhamento",
     channels: "Preços por canal",
+    // 014/T120 — um canal gravado SEM comissão informada. Com comissão 0 o motor devolve anúncio ==
+    // base, então existe um número — mas ele não é um preço de marketplace, e a Calcular já se
+    // recusa a exibi-lo ("Informe a comissão do canal para ver os preços"). O congelado herda a
+    // recusa em vez de afirmar o que a origem negou. O tempo verbal é o do registro, não o do
+    // conserto: não há o que informar agora, o que houve foi um canal sem comissão naquele dia.
+    channelNoFee: "sem comissão informada — este canal não teve preço",
     // per-channel rollup captions (M11) — contributing/skipped kit lines, stated honestly
     channelContributing: "{n} de {total} peças",
     channelSkipped: "{n} sem este canal",
