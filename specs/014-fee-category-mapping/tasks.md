@@ -735,15 +735,26 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 ### Testes ⚠️
 
-- [ ] T065 [P] [US8] Teste: cenário salvo depois do 014 re-resolve a categoria pelo catálogo de hoje, como os demais slots não sobrescritos (contrato de leitura da E5, inalterado) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
-- [ ] T066 [P] [US8] Teste: cenário, kit e **snapshot** criados **antes** do 014 abrem inalterados e sem categoria; imutabilidade intocada (SC-809) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
-- [ ] T067 [P] [US8] Teste: produto de catálogo **não** ganha campo de categoria (FR-003a) — em `apps/web/src/features/catalog/products.test.ts`
+- [x] T065 [P] [US8] Teste: cenário salvo depois do 014 re-resolve a categoria pelo catálogo de hoje, como os demais slots não sobrescritos (contrato de leitura da E5, inalterado) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [x] T066 [P] [US8] Teste: cenário, kit e **snapshot** criados **antes** do 014 abrem inalterados e sem categoria; imutabilidade intocada (SC-809) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [x] T067 [P] [US8] Teste: produto de catálogo **não** ganha campo de categoria (FR-003a) — em `apps/web/src/features/catalog/products.test.ts`
 
 ### Implementação
 
-- [ ] T068 [US8] Persistir a categoria na intenção de canal do cenário (JSONB existente do ADR-0021 — sem coluna nova) — em `apps/web/src/features/scenarios/scenario-model.ts`
+- [x] T068 [US8] Persistir a categoria na intenção de canal do cenário (JSONB existente do ADR-0021 — sem coluna nova) — em `apps/web/src/features/scenarios/scenario-model.ts`
 
 ---
+
+> **Nota de execucao (US8, madrugada de 2026-08-01)** — as tarefas previam
+> `features/scenarios/scenario-resolver.test.ts` e `features/catalog/products.test.ts`; nenhum dos
+> dois existe. O que existe e a ENTIDADE que de fato possui a forma persistida
+> (`entities/scenario/config-document.ts`) e o mapeamento produto<-formulario
+> (`features/calculator/product-mapping.ts`), e foi la que os testes foram. Mesmo desvio ja registrado
+> em T076/T077/T084: a tarefa aponta para onde o autor imaginou, e o teste mora onde a regra mora.
+>
+> A T065 ("re-resolve pelo catalogo de hoje") NAO virou teste novo: ela e o contrato de leitura da E5,
+> ja coberto, e o que a US8 acrescenta e uma INTENCAO — a categoria — que por construcao nao carrega
+> aliquota nenhuma. O teste que garante isso e o que verifica que so `feeOverrides` guarda valor.
 
 ## Phase 10: Polish & Cross-Cutting
 

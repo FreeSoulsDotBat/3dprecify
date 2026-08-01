@@ -61,6 +61,17 @@ export interface ScenarioChannelFeeOverrides {
 export interface ScenarioChannelIntent {
   marketplace: string;
   modality: string;
+  /**
+   * 014/T068 (US8, FR-003a) — a categoria escolhida, quando houve uma. ADITIVA e OPCIONAL: a
+   * AUSENCIA da chave e o que faz um cenario salvo ANTES do 014 reabrir exatamente como reabria
+   * (SC-809), sem migracao e sem coluna nova (o JSONB do ADR-0021 ja aceita).
+   *
+   * E uma INTENCAO, nao um valor: o que se guarda e "o vendedor escolheu esta categoria", e a
+   * ALIQUOTA continua sendo resolvida ao vivo contra o catalogo de hoje — o mesmo contrato de
+   * leitura da E5 que vale para os demais campos nao sobrescritos. Guardar a aliquota aqui a
+   * congelaria, que e o papel do snapshot (E4) e nao do cenario.
+   */
+  category?: string;
   /** Absent entirely when the seller edited NO leaf in this slot — the live-vs-frozen boundary. */
   feeOverrides?: ScenarioChannelFeeOverrides;
 }
@@ -174,6 +185,8 @@ export function serializeKitBasis(
 export interface ScenarioChannelSlotState {
   marketplace: string;
   modality: string;
+  /** Vazia ou ausente quando o vendedor nao escolheu categoria — vira ausencia no documento. */
+  category?: string;
   commissionPct: { value: number; overridden: boolean };
   fixedFee: { value: number; overridden: boolean };
   minPerItem: { value: number; overridden: boolean };
@@ -194,6 +207,10 @@ export function serializeChannelIntent(slot: ScenarioChannelSlotState): Scenario
   return {
     marketplace: slot.marketplace,
     modality: slot.modality,
+    // Categoria vazia OMITE a chave, nunca grava `""`. A distincao e a mesma de `feeOverrides`: o
+    // documento diz "nao houve escolha" pela ausencia, e um `""` gravado seria uma escolha vazia —
+    // que o resolvedor casaria contra nada e o selo leria como categoria perdida.
+    ...(slot.category ? { category: slot.category } : {}),
     ...(hasOverrides ? { feeOverrides } : {}),
   };
 }
