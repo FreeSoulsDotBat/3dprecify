@@ -91,7 +91,22 @@ element wholly occluded or overflowed — occlusion is not a property of text �
 BOXES; and the picker's result list read as a second filled field, plus a count that claimed "8 found"
 when 31 matched, were both invisible to every assertion and visible in the image. Corollary: a review
 that only reads code homologates nothing.
-STILL OPEN in 014 (NOT review debt): US4 monthly loop (14 tasks, T101–T106 moved there), **US6 ML slice**
+**014 US4 SHIPPED to `develop`** (PR #32, `0e3a951`, 2026-08-01, owner-merged) — the monthly loop's
+6 pre-conditions (T101–T106) + the orchestrator as PURE DECISION (`packages/fee-ingest/src/refresh.ts`,
+under the 100% ratchet and wired into the generator). **The loop does NOT fire on its own**: GitHub's
+`schedule` runs from the DEFAULT branch (`main`) and the release cut is deferred until v1, so the
+practical trigger will be `workflow_dispatch` even once the YAML exists. `fee-refresh.yml` (T049/T050,
+blocked on T069b) and the `develop` ruleset (T048a, repo config) are deliberately OUT — owner decision
+2026-07-31, not an omission. FR-020a is the property that governs the module and it is STRUCTURAL:
+`RefreshOutcome` is a two-case union, so no forgotten `if` can create a write path the type does not have.
+**US4's lesson, and it cost two CRITICAL blockers found only by a 3-lens review: a suite that passes
+proves nothing about a program that does not RUN, and a test that asserts PRESENCE proves nothing about
+a lie.** The package did not boot under plain `node` — three extensionless relative value imports, the
+first inherited from PR-A — and every test was blind to it because vitest is the tolerant resolver; and
+the PR body printed "Sem mudança de tarifa" directly above "Categorias removidas da fonte", because
+every test asserted a string was present and none asserted one was absent. Corollary for any future
+review mandate: **at least one lens must be allowed to EXECUTE the entry point.**
+STILL OPEN in 014 (NOT review debt): **US6 ML slice**
 (blocked on the `seguranca` parecer's 8 conditions AND a separate owner authorization), US1 residual, US5,
 US8, Polish. Follow-ups with their measurements in `tasks.md`: **A1-r** (`chooseBand` sorts rank before
 price ⇒ a dominated announce on a "valley" table — reachable exposure TODAY is zero, measured three ways —
@@ -154,8 +169,10 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
 at specs/014-fee-category-mapping/plan.md
-(014 = the category→fee mapping increment. **PR-A SHIPPED to `develop` 2026-07-31** (`461a367`);
-US4/US5/US6/US8 + Polish remain — see `specs/014-fee-category-mapping/tasks.md`. Its four
+(014 = the category→fee mapping increment. **PR-A SHIPPED 2026-07-31** (`461a367`) and **US4 SHIPPED
+2026-08-01** (`0e3a951`); US5/US6/US8 + Polish remain — see `specs/014-fee-category-mapping/tasks.md`.
+**The monthly loop exists but does NOT fire**: no `fee-refresh.yml` yet (blocked on T069b), and GitHub's
+`schedule` reads from `main`, which the deferred release cut has not reached. Its four
 gates are MEASURED and recorded in ADR-0010 §A13 — read that before touching the ingestion:
 ML has NO geo-gate (the belief held since 2026-07-06 is false), Amazon needs NO credential,
 and ML's commission is piecewise-constant down the category tree (~87.5% of nodes inherit),
