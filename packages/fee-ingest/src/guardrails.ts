@@ -174,3 +174,34 @@ export function checkCategoryIdCollisions(categories: readonly { name: string }[
       .join("; "),
   };
 }
+
+/** A data de coleta a usar, ou a recusa quando ela nao pode ser afirmada. */
+export type CollectedAtVerdict = { ok: true; date: string } | { ok: false; reason: string };
+
+/**
+ * 014/T053 (SC-807) — `lastReviewed` so avanca por RELEITURA REAL da fonte.
+ *
+ * `build-amazon.mjs --from <arquivo>` le uma tabela CAPTURADA, e o `collectedAt` caia no padrao
+ * `new Date()`. Reprocessar um arquivo de meses atras carimbava a data de HOJE em todas as entradas:
+ * o selo passaria a dizer "atualizada em <hoje>" sobre numeros que ninguem conferiu contra a Amazon.
+ * E o pior tipo de mentira que este selo pode contar, porque ela vem carimbada de fresca.
+ *
+ * Uma tabela capturada tem uma data de captura que SO QUEM CHAMA sabe — entao a resposta honesta e
+ * exigi-la e recusar sem ela, em vez de inventar a de hoje.
+ */
+export function collectedAtFor(opts: {
+  fromFixture: boolean;
+  envDate?: string | undefined;
+  today: string;
+}): CollectedAtVerdict {
+  if (opts.envDate) return { ok: true, date: opts.envDate };
+  if (opts.fromFixture) {
+    return {
+      ok: false,
+      reason:
+        "reading a CAPTURED table (--from) requires COLLECTED_AT: stamping today would advance " +
+        "lastReviewed without anyone having re-verified against the source (SC-807)",
+    };
+  }
+  return { ok: true, date: opts.today };
+}

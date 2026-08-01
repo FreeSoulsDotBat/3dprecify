@@ -254,3 +254,41 @@ describe("a janela de obsolescencia cobre o ciclo do laco (T052 / FR-020b emenda
     expect(STALENESS_DAYS).toBeGreaterThan(31);
   });
 });
+
+// 014/T055 (US5) — a ORIGEM do valor (embutida / do catálogo) tem de continuar refletida no selo
+// depois do eixo novo. A T098 corrigiu isso no ramo `reference`, e o ramo `catchAll` — que NASCEU
+// com o eixo de categoria — ficou com a assimetria intacta: ele aplica `t.outdated` sem nunca
+// consultar `embedded`.
+//
+// O efeito: um catch-all servido pela SEMENTE lê exatamente como um catch-all recém-buscado do
+// endpoint. O vendedor perde a única pista de que aquele número vem do bundle e não da rede — e no
+// catch-all essa pista importa mais, porque ali ele já está aceitando a MAIOR alíquota da tabela.
+describe("FeeSeal — o catch-all também diz de onde veio (T055)", () => {
+  const catchAll = (over: Record<string, unknown> = {}) =>
+    ({
+      kind: "catchAll" as const,
+      source: "Tabela Amazon",
+      reviewedOn: "2026-07-28",
+      ...over,
+    }) as never;
+
+  it("catch-all da semente diz que a referência é embutida", () => {
+    render(<FeeSeal state={catchAll({ embedded: true })} />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    // …e não perde o que já dizia: continua avisando que é o catch-all.
+    expect(seal).toHaveTextContent(t.catchAll);
+  });
+
+  it("catch-all do catálogo NÃO se diz embutido", () => {
+    render(<FeeSeal state={catchAll()} />);
+    expect(screen.getByTestId("fee-seal")).not.toHaveTextContent(t.embedded);
+  });
+
+  it("embutido E vencido: as duas coisas cabem, como já cabem no ramo `reference`", () => {
+    render(<FeeSeal state={catchAll({ embedded: true, stale: true })} />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(t.outdated);
+  });
+});

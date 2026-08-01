@@ -15,6 +15,7 @@ import {
   checkBandCoverage,
   checkCategoryIdCollisions,
   checkParseSanity,
+  collectedAtFor,
   nextCatalogVersion,
 } from "./guardrails";
 
@@ -376,5 +377,41 @@ describe("colisao de categoryId nao sai como sucesso (T106)", () => {
   it("o mesmo nome repetido tambem e colisao — a fonte nao deveria repetir uma linha", () => {
     const v = checkCategoryIdCollisions([{ name: "Calçados" }, { name: "Calçados" }]);
     expect(v.ok).toBe(false);
+  });
+});
+
+// 014/T053 (SC-807) — `lastReviewed` so avanca por RELEITURA REAL da fonte, nunca por "o job rodou".
+//
+// O buraco medido: `build-amazon.mjs --from <arquivo>` le uma tabela CAPTURADA (caminho offline/teste)
+// e o `collectedAt` cai no padrao `new Date()`. Ou seja, reprocessar um arquivo de meses atras
+// carimbava a data de HOJE em todas as entradas — o selo passaria a dizer "atualizada em <hoje>" sobre
+// numeros que ninguem conferiu contra a Amazon. E o pior tipo de mentira do selo, porque ela vem
+// carimbada de fresca.
+//
+// A recusa e a resposta honesta: uma tabela capturada tem uma data de captura que SO QUEM CHAMA sabe.
+describe("collectedAtFor — uma leitura capturada nao pode se carimbar de hoje (T053/SC-807)", () => {
+  it("leitura AO VIVO usa a data de hoje — o caso normal do laco mensal", () => {
+    expect(collectedAtFor({ fromFixture: false, today: "2026-08-01" })).toEqual({
+      ok: true,
+      date: "2026-08-01",
+    });
+  });
+
+  it("leitura CAPTURADA sem data declarada e RECUSADA, nomeando o que falta", () => {
+    const v = collectedAtFor({ fromFixture: true, today: "2026-08-01" });
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toMatch(/COLLECTED_AT/);
+  });
+
+  it("leitura CAPTURADA com a data da captura declarada passa, e usa ELA", () => {
+    expect(
+      collectedAtFor({ fromFixture: true, envDate: "2026-03-15", today: "2026-08-01" }),
+    ).toEqual({ ok: true, date: "2026-03-15" });
+  });
+
+  it("a data declarada tambem manda na leitura ao vivo — reproduzir uma execucao continua possivel", () => {
+    expect(
+      collectedAtFor({ fromFixture: false, envDate: "2026-03-15", today: "2026-08-01" }),
+    ).toEqual({ ok: true, date: "2026-03-15" });
   });
 });

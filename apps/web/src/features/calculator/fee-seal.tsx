@@ -76,7 +76,13 @@ function textAndTone(state: FeeSealState): { text: string; tone: BadgeTone } {
       // row's name is already inside `source` ("… — Outros (…)"), so nothing was lost by removing it,
       // and one less always-empty branch is one less place where a seal can quietly say less than it
       // appears to (Princípio V).
-      const base = `${t.catchAll} ${t.catchAllHighest}`;
+      // 014/T055 — `embedded` também vale aqui. Este ramo nasceu com o eixo de categoria e herdou a
+      // MESMA assimetria que a T098 corrigiu no ramo `reference`: ele aplicava `t.outdated` sem
+      // nunca consultar `embedded`, então um catch-all vindo da SEMENTE lia igual a um recém-buscado
+      // do endpoint. A pista importa mais aqui do que lá — no catch-all o vendedor já está aceitando
+      // a MAIOR alíquota da tabela, e merece saber que o número veio do bundle e não da rede.
+      const origem = state.embedded ? `${t.embedded} · ` : "";
+      const base = `${origem}${t.catchAll} ${t.catchAllHighest}`;
       // Deliberately NOT "info": this is not a confirmed rate for the seller's category, and giving
       // it the same tone as one is what makes a plausible number stop the seller from choosing.
       return { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" };

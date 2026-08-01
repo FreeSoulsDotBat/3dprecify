@@ -657,14 +657,14 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 ### Testes ⚠️
 
-- [ ] T052 [P] [US5] Teste **(premissa REESCRITA 2026-08-01, ver Clarification)**: a janela e dimensionada como **ciclo do laco + folga de entrega** e continua medida contra `lastReviewed`. Um valor lido no dia 1 e entregue no dia 20 **nao** alarma; um valor que passou de um ciclo inteiro **sem releitura** alarma. O alarme significa "algo falhou", nunca "o ciclo esta terminando" (FR-020b emendada) — em `apps/web/src/features/calculator/fee-seal.test.tsx`
+- [x] T052 [P] [US5] Teste **(premissa REESCRITA 2026-08-01, ver Clarification)**: a janela e dimensionada como **ciclo do laco + folga de entrega** e continua medida contra `lastReviewed`. Um valor lido no dia 1 e entregue no dia 20 **nao** alarma; um valor que passou de um ciclo inteiro **sem releitura** alarma. O alarme significa "algo falhou", nunca "o ciclo esta terminando" (FR-020b emendada) — em `apps/web/src/features/calculator/fee-seal.test.tsx`
 - [x] T052a ~~Carregar a data de entrega no artefato~~ **SUPERADA 2026-08-01 pela mesma Clarification**: nao ha campo novo. Mover o relogio para a entrega faria um numero nao-verificado ha meses parecer fresco ao chegar num aparelho novo — a mentira inversa, e maior. O artefato de dinheiro fica intocado
-- [ ] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
+- [x] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
 
 ### Implementação
 
-- [ ] T055 [US5] Garantir que a origem do valor (embutida / persistida / servida) continue refletida no selo com o eixo novo — em `apps/web/src/features/calculator/fee-seal.tsx`
+- [x] T055 [US5] Garantir que a origem do valor (embutida / persistida / servida) continue refletida no selo com o eixo novo — em `apps/web/src/features/calculator/fee-seal.tsx`
 
 ---
 
