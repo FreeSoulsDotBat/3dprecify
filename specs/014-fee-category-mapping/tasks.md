@@ -583,6 +583,19 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > `.0` no gerador) — corrigido nesta mesma leva: `nextCatalogVersion` em `guardrails.ts` (fora do
 > `.mjs`, que é isento de cobertura) e o artefato em `2026-07-28.1` **sem nova leitura**.
 
+> **Tentativa MEDIDA e revertida (madrugada de 2026-08-01)** — o conserto obvio da A1-r NAO funciona,
+> e isso muda o tamanho da tarefa. Troquei o criterio primario de "auto-consistencia" para "entrega a
+> base, e entre os que entregam vence o mais barato" — que e literalmente o que o comentario do
+> proprio `sort` diz querer. Resultado: **10 testes reprovaram**, incluindo os DOIS invariantes mais
+> fortes que a T113 estabeleceu — a varredura `bandContaining(anuncio) === appliedBand` (14 bases
+> quebradas) e a **monotonicidade em 1.892 pontos**. Revertido com `git checkout`; a suite voltou a
+> 111 verdes.
+>
+> Conclusao: a auto-consistencia nao e um privilegio arbitrario, e o que produz a monotonicidade e o
+> plato. A A1-r **nao e reordenar um `sort`** — e um problema de otimizacao com invariantes que
+> competem (menor preco que entrega a base VS monotonia VS banda aplicada contendo o anuncio), no
+> dominio de precificacao. Precisa de desenho, nao de patch, e nao se resolve sem o dono na mesa.
+
 - [ ] **A1-r [pricing-core] — `chooseBand` ordena por rank ANTES de preço** (`channels.ts:235`).
   Numa tabela em "vale" (comissão que cai e depois sobe) o motor escolhe um anúncio **dominado**:
   reproduzido por mim, `113,54 → R$ 157,16` e `113,55 → R$ 130,34` — um centavo de base derruba o
