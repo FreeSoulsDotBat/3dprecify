@@ -404,3 +404,59 @@ describe("todo import relativo de VALOR carrega extensão explícita (o pacote r
     expect(ofensores).toEqual([]);
   });
 });
+
+// U4-a (follow-up ALTO da analise em 3 lentes, 2026-07-31) — o denominador do teto CRUZA
+// marketplaces. `entryCount` soma as entradas de TODOS eles, enquanto o numerador so conta as
+// materialmente alteradas — que hoje vem so da Amazon, o unico marketplace regenerado.
+//
+// Hoje da no mesmo por acidente. No dia em que o ML entrar (US6, a outra metade desta mesma feature)
+// o denominador cresce e o teto MORRE CALADO: uma leitura da Amazon que mudasse a tabela inteira
+// passaria, porque as entradas do ML diluiriam a fracao. Um alarme que se desliga sozinho quando o
+// sistema cresce e pior que nenhum, porque ninguem nota o desligamento.
+describe("o teto mede o marketplace da EXECUCAO, nao o catalogo inteiro (U4-a)", () => {
+  const entryFor = (cat: string, over: Record<string, unknown> = {}) => ({
+    determinants: { plan: "PROFISSIONAL", category: cat },
+    commissionPct: 14,
+    lastReviewed: "2026-07-28",
+    ...over,
+  });
+  const cat = (amazon: unknown[], outros: unknown[]) => ({
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [
+      { marketplace: "AMAZON", categorySpine: [], entries: amazon },
+      { marketplace: "MERCADO_LIVRE", categorySpine: [], entries: outros },
+    ],
+  });
+
+  const ids = Array.from({ length: 12 }, (_, i) => `a-${i}`);
+  const mlIds = Array.from({ length: 40 }, (_, i) => `m-${i}`);
+  const ml = mlIds.map((c) => entryFor(c));
+
+  it("a Amazon inteira mudando ABORTA, mesmo com o ML enchendo o catalogo", () => {
+    const antes = cat(
+      ids.map((c) => entryFor(c)),
+      ml,
+    );
+    const depois = cat(
+      ids.map((c) => entryFor(c, { commissionPct: 9 })),
+      ml,
+    );
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    // 12 de 12 entradas da Amazon = 100%. Sobre o catalogo inteiro seriam 12/52 = 23% e passaria.
+    expect(out.kind).toBe("ABORT");
+  });
+
+  it("e uma mudanca pequena na Amazon continua passando", () => {
+    const antes = cat(
+      ids.map((c) => entryFor(c)),
+      ml,
+    );
+    const depois = cat(
+      ids.map((c, i) => (i === 0 ? entryFor(c, { commissionPct: 16 }) : entryFor(c))),
+      ml,
+    );
+    expect(decideRefresh({ ...base, before: antes as never, after: depois as never }).kind).toBe(
+      "PR",
+    );
+  });
+});

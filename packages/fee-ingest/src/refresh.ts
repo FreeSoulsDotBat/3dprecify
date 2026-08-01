@@ -160,8 +160,13 @@ export function decideRefresh(args: {
   if (!sanity.ok) return { kind: "ABORT", reason: sanity.reason };
 
   const diff = diffCatalogs(before, after);
-  const total = entryCount(before);
-  const changed = materialEntries(diff).length;
+  // U4-a — numerador e denominador do MESMO marketplace. `entryCount` somava TODOS eles enquanto o
+  // numerador so contava o que mudou no marketplace regenerado: hoje da no mesmo por acidente (so a
+  // Amazon e regerada), e no dia em que o ML entrar o denominador cresce e o teto MORRE CALADO. Uma
+  // leitura que mudasse a tabela inteira da Amazon passaria, diluida pelas entradas do ML. Um alarme
+  // que se desliga sozinho quando o sistema cresce e pior que nenhum: ninguem nota o desligamento.
+  const total = entryCount(before, marketplace);
+  const changed = materialEntries(diff).filter((e) => e.marketplace === marketplace).length;
   if (total >= CEILING_MIN_ENTRIES && changed / total > CHANGED_ROWS_CEILING) {
     const pct = Math.round((changed / total) * 100);
     return {
@@ -181,8 +186,10 @@ export function decideRefresh(args: {
   };
 }
 
-/** Quantas entradas o artefato ANTERIOR tinha — o denominador do teto. */
-function entryCount(cat: Json): number {
+/** Quantas entradas o artefato ANTERIOR tinha NESTE marketplace — o denominador do teto. */
+function entryCount(cat: Json, marketplace: string): number {
   const mks = Array.isArray(cat.marketplaces) ? (cat.marketplaces as Json[]) : [];
-  return mks.reduce((n, m) => n + (Array.isArray(m.entries) ? m.entries.length : 0), 0);
+  return mks
+    .filter((m) => m.marketplace === marketplace)
+    .reduce((n, m) => n + (Array.isArray(m.entries) ? m.entries.length : 0), 0);
 }

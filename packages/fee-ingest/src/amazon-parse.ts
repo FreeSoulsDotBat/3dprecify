@@ -137,7 +137,20 @@ export function readCommissionCell(cell: string): CommissionCell {
 export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
   const out: ParsedCategory[] = [];
   for (const row of rows) {
-    if (row.length < 3) continue;
+    // U4-b — uma linha CURTA que parece DADO e mudanca de forma, nao ruido. `row.length < 3` a
+    // descartava em silencio: uma coluna removida da fonte faz TODA linha de dado virar curta, o
+    // parse encolhe para zero e cai no MIN_ROWS — detectado, mas com o diagnostico ERRADO ("a fonte
+    // encolheu"), que manda o operador procurar categorias que a Amazon nunca apagou. Cabecalho e
+    // nota continuam sendo pulados, porque nao carregam percentual.
+    if (row.length < 3) {
+      if (row.some((c) => normalise(c).includes("%"))) {
+        throw new Error(
+          `row with ${row.length} columns carrying a percentage — the published table has 3, so a ` +
+            `column was REMOVED and the positional read would shift silently: ${JSON.stringify(row)}`,
+        );
+      }
+      continue;
+    }
     const [rawName, rawPct, rawMin] = row.map(normalise);
     if (!rawPct.includes("%")) continue; // header row
 
@@ -148,8 +161,8 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
     // resposta honesta é recusar em voz alta em vez de publicar números plausíveis e errados.
     if (row.length !== 3) {
       throw new Error(
-        `row with ${row.length} columns — the published table has 3, so a column was inserted or ` +
-          `removed and the positional read would shift silently: ${JSON.stringify(row)}`,
+        `row with ${row.length} columns — the published table has 3, so a column was INSERTED and ` +
+          `the positional read would shift silently: ${JSON.stringify(row)}`,
       );
     }
 
