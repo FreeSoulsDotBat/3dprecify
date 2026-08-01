@@ -29,5 +29,13 @@ export default function globalSetup(): void {
     repoRoot,
   );
   // 3. The real migrations ARE the provisioning (ADR-0013).
-  run("uv run alembic upgrade head", backendDir, { P3D_DATABASE_URL: E2E_DATABASE_URL });
+  // PYTHONIOENCODING: no Windows, o console herdado por este processo filho e cp1252, e a mensagem
+  // da revisao 0004 carrega um travessao — o alembic estoura ao IMPRIMIR o proprio log, entre a 0003
+  // e a 0004, com uma falha que nao diz nada sobre migracao. Medido 2026-08-01: o mesmo comando roda
+  // liso num shell UTF-8 e falha aqui, o que fazia o e2e local parecer quebrado por outro motivo.
+  // Na CI (ubuntu) nunca aconteceu; e um trap de ambiente, e forcar UTF-8 e a correcao portatil.
+  run("uv run alembic upgrade head", backendDir, {
+    P3D_DATABASE_URL: E2E_DATABASE_URL,
+    PYTHONIOENCODING: "utf-8",
+  });
 }

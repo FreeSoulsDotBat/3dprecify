@@ -118,6 +118,33 @@ describe("planView — sem assinatura, quem responde é o ledger", () => {
   });
 });
 
+describe("planView — o ledger decide se ha premium, e o espelho do PSP nao inventa", () => {
+  it("assinatura AUTORIZADA com o ledger caducado → congelado, nunca 'renova em'", () => {
+    // O defeito que a caminhada de navegador (T027) achou. Acontece de verdade: o webhook da
+    // renovacao pode se perder — e por isso existe a reconciliacao —, e nesse intervalo o espelho
+    // do MP diz `authorized` enquanto o grant ja expirou. Mostrar "Premium · renova em {data}"
+    // sobre uma conta congelada e o "fake-active" que a US5 proibe.
+    const v = planView({ entitlement: { status: "lapsed" }, subscription: assinatura() });
+    expect(v.kind).toBe("lapsed");
+  });
+
+  it("assinatura cancelada com o ledger ja caducado tambem congela", () => {
+    const v = planView({
+      entitlement: { status: "lapsed" },
+      subscription: assinatura({ status: "cancelled", cancelAtPeriodEnd: true }),
+    });
+    expect(v.kind).toBe("lapsed");
+  });
+
+  it("carencia com o ledger caducado congela — a janela esgotou", () => {
+    const v = planView({
+      entitlement: { status: "lapsed" },
+      subscription: assinatura({ status: "grace", graceUntil: "2020-01-01T00:00:00Z" }),
+    });
+    expect(v.kind).toBe("lapsed");
+  });
+});
+
 describe("planView — a borda do duplo-grant (ux-billing §4.3 / §10-F1)", () => {
   it("cortesia que SOBREVIVE à assinatura cancelada é sinalizada", () => {
     // "não renova até 31/12" implica um corte em 31/12. Se um grant de cortesia vai além, esse

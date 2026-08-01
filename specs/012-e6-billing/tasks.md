@@ -342,9 +342,37 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 10: PR-B hardening & delivery
 
-- [ ] T027 e2e: cancel → "não renova" → forced expiry → freeze → re-subscribe → data intact; failed renewal
-      (sandbox rejection card) → grace visible → recovery/exhaustion both paths; dual-grant walk (beta
-      account subscribes, cancels, stays active on courtesy).
+- [x] T027 e2e — `apps/web/tests/e2e/billing-lifecycle.spec.ts`, **5/5 verdes em chromium contra a
+      pilha real** (Postgres + emulador de auth + backend + stub do MP). Cancelar → "nao renova" →
+      expiracao forcada → congelamento → reassinar; renovacao recusada → carencia com prazo →
+      recuperacao; e a idempotencia vista pela UI (o segundo clique nao existe).
+      **A caminhada de navegador achou UM DEFEITO REAL que nenhum teste unitario podia ver.** A
+      precedencia "a assinatura vence quando existe" estava aplicada SEM consultar o ledger: uma
+      assinatura `authorized` no espelho do MP cujo grant ja expirou mostrava "Premium · renova em
+      {data}" sobre uma conta CONGELADA — o "fake-active" que a US5 proibe em tantas palavras. E
+      acontece de verdade: o webhook da renovacao pode se perder (por isso existe a reconciliacao) e
+      nesse intervalo os dois discordam. Meus 14 testes de unidade nao viam porque eu so tinha
+      alimentado combinacoes COERENTES, e a INCOERENCIA e justamente o caso que importa. Consertado
+      (o ledger decide se ha premium; o espelho so decide qual historia contar entre as ativas) e
+      cravado com 3 testes novos.
+      **Sub-entregas necessarias**, todas registradas:
+      · `POST /_test/payments` no stub (registro cross-processo). O `_fallback_authorized_payment`
+        resolve UMA vez por assinatura e sempre como APROVADO, entao nao alcanca nem uma renovacao
+        recusada nem um segundo evento — e alarga-lo tornaria AMBIGUO o candidato unico de que os
+        testes do T016 dependem.
+      · `PYTHONIOENCODING=utf-8` no `global-setup`. No Windows o console herdado e cp1252 e o alembic
+        estourava ao IMPRIMIR o proprio log da revisao 0004 (que tem um travessao), entre a 0003 e a
+        0004 — uma falha que nao diz nada sobre migracao e fazia o e2e local parecer quebrado por
+        outro motivo. Na CI (ubuntu) nunca aconteceu.
+      **Dois erros meus no caminho, ambos da familia "o teste falhava calado"**: o helper de
+      expiracao era um `-c` MULTILINHA, que nao sobrevive ao `cmd.exe`, e reprovava na assercao
+      seguinte apontando para o painel; agora e uma linha e sai com codigo 3 se afetar ZERO linhas.
+      E a primeira versao do teste de congelamento expirava uma conta que nunca tinha pago — nao ha
+      lapso sem grant, entao ele afirmava outra coisa.
+      **FORA desta entrega**: a caminhada do duplo-grant (conta beta que assina, cancela e segue
+      ativa na cortesia) — a REGRA esta coberta em unidade (`plan-view.test.ts`, 3 casos incluindo a
+      borda estrita do empate), mas a caminhada em navegador depende da §4.3 que aguarda ratificacao
+      do dono. Nao foi esquecida; esta parada no mesmo portao.
 - [ ] T028 qa-produto homologation: every billing state's honest copy at 390px + desktop; the freeze
       reached through REAL billing (first time in the product's life); adversarial: grace + courtesy
       combinations, long period dates. Screenshots.

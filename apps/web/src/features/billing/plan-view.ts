@@ -63,6 +63,19 @@ export function planView(args: {
   const { entitlement, subscription, failed } = args;
   if (failed || !entitlement) return { kind: "unknown" };
 
+  // O LEDGER decide se ha premium; o espelho do PSP so decide QUAL historia contar entre as ativas.
+  //
+  // Esta ordem foi trocada depois que a caminhada de navegador (T027) achou o defeito: com a
+  // verificacao do ledger DEPOIS do ramo da assinatura, uma assinatura `authorized` no MP cujo grant
+  // ja expirou mostrava "Premium · renova em {data}" sobre uma conta CONGELADA. E o "fake-active"
+  // que a US5 proibe em tantas palavras, e acontece de verdade: o webhook da renovacao pode se
+  // perder (por isso existe a reconciliacao), e nesse intervalo o espelho diz `authorized` enquanto
+  // o ledger ja caducou. Nenhum teste unitario meu via isso — eu so tinha alimentado combinacoes
+  // COERENTES, e a incoerencia e justamente o caso que importa (Constituicao IV).
+  if (entitlement.status !== "active") {
+    return entitlement.status === "lapsed" ? { kind: "lapsed" } : { kind: "free" };
+  }
+
   const sub = subscription ?? null;
   if (sub !== null && FALA_PELA_ASSINATURA.has(sub.status)) {
     if (sub.status === "grace") return { kind: "grace", graceUntil: sub.graceUntil ?? null };
@@ -76,17 +89,14 @@ export function planView(args: {
     return { kind: "subscription-active", plan: sub.plan, renewsAt: sub.currentPeriodEnd ?? null };
   }
 
-  // `pending` cai aqui de propósito: um checkout aberto e não concluído NÃO move o ledger
-  // (SEC-301), então quem responde é o ledger — e ele dirá "nenhum". Mostrar a assinatura pendente
-  // como plano seria prometer o que ainda não houve.
-  if (entitlement.status === "active") {
-    return {
-      kind: "courtesy",
-      source: entitlement.source ?? "comp",
-      expiresAt: entitlement.expiresAt ?? null,
-    };
-  }
-  return entitlement.status === "lapsed" ? { kind: "lapsed" } : { kind: "free" };
+  // Sobra o entitlement ATIVO sem assinatura que fale por ele — cortesia/beta. O `pending` cai
+  // aqui de propósito: um checkout aberto e não concluído NÃO move o ledger (SEC-301), então uma
+  // conta assim ja saiu pelo ramo de cima como "gratuito".
+  return {
+    kind: "courtesy",
+    source: entitlement.source ?? "comp",
+    expiresAt: entitlement.expiresAt ?? null,
+  };
 }
 
 /**
