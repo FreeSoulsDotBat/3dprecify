@@ -65,11 +65,11 @@ const rows =
 
 const categories = parseAmazonTable(rows);
 
+// U4-c — o veredito de sanidade e CALCULADO aqui e DECIDIDO em `decideRefresh`, um ponto so. Antes
+// ele abortava aqui e o `.mjs` passava `sanity: { ok: true }` CRAVADO para a decisao — o que tornava
+// morto em producao um parametro que dois testes (T043/T044) guardam. Um teste que protege um caminho
+// que ninguem percorre nao protege nada; era a mesma familia de defeito que esta feature vem achando.
 const verdict = checkParseSanity(categories, { minRows: MIN_ROWS, canaries: CANARIES });
-if (!verdict.ok) {
-  console.error(`ABORT: ${verdict.reason}. The artifact is left untouched.`);
-  process.exit(1);
-}
 
 // 014/T114 (SC-817) — a banded cell must be publishable as bands. A published GAP is fine and stays
 // a gap (FR-014a); what aborts here is a set the engine could not read unambiguously — overlapping
@@ -166,7 +166,7 @@ const outcome = decideRefresh({
   marketplace: "AMAZON",
   collectedAt,
   sourceUrl: AMAZON_SOURCE_URL,
-  sanity: { ok: true },
+  sanity: verdict,
   before: artifact,
   after: next,
 });
@@ -178,11 +178,16 @@ if (outcome.kind === "ABORT") {
 // The write is the LAST step, and everything it reports was computed BEFORE it. The old order wrote
 // the file and only then went looking for the marketplace it had just written — so a shape it could
 // not find produced a half-done run: artifact on disk, TypeError on stdout, exit code non-zero.
-writeFileSync(ARTIFACT, JSON.stringify(next, null, 2) + "\n");
-// O corpo do PR ao lado do artefato, para o workflow (T049, ainda por vir) consumir sem recalcular
-// nada. `PR_BODY_OUT` deixa o destino explícito em vez de escondê-lo num caminho convencionado.
+// U4-d — o corpo do PR vai ANTES do artefato, e a ordem é o conserto. Ele estava DEPOIS, e um
+// `PR_BODY_OUT` inválido deixava o artefato de DINHEIRO no disco com saída não-zero: exatamente o
+// meio-passo que o comentário acima diz ter eliminado, reintroduzido três linhas abaixo dele.
+// MEDIDO antes do conserto: com um destino inexistente, o artefato foi de `14366db8` para `71274a74`
+// e o processo morreu. Invertida a ordem, um destino ruim falha antes de qualquer escrita de dinheiro.
+// `PR_BODY_OUT` deixa o destino explícito em vez de escondê-lo num caminho convencionado; o workflow
+// (T049, ainda por vir) o consome sem recalcular nada.
 const bodyOut = process.env.PR_BODY_OUT;
 if (bodyOut) writeFileSync(bodyOut, outcome.body);
+writeFileSync(ARTIFACT, JSON.stringify(next, null, 2) + "\n");
 console.log(
   `PR: ${outcome.title} — dispensa de revisão: ${outcome.mayAutoMerge ? "SIM (só lastReviewed)" : "NÃO"}`,
 );

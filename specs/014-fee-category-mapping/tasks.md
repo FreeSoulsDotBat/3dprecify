@@ -625,21 +625,21 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 **Follow-ups da analise em 3 lentes (2026-07-31) — os 2 bloqueios foram corrigidos; estes ficam**
 
-- [ ] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
+- [x] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
   entradas de TODOS os marketplaces, mas o numerador so conta as materialmente alteradas. Hoje da no
   mesmo porque so a Amazon e regerada; **no dia em que o ML entrar** (US6, a outra metade desta mesma
   feature) o denominador cresce e o teto morre calado. Nao e risco hipotetico: e trabalho ja planejado.
   Falta tambem o teste — nenhum caso de teto usa artefato multi-marketplace
-- [ ] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
+- [x] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
   `amazon-parse.ts:140` (`if (row.length < 3) continue;`) descarta a linha CURTA **em silencio**,
   antes da guarda de aridade. E a mensagem de erro promete `"a column was inserted or removed"`
   quando o caso "removed" e inalcancavel — a copia afirma uma cobertura que o codigo nao tem. Mesma
   familia SC-806 que o commit da T102 afirma ter fechado
-- [ ] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
+- [x] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
   sanidade de `decideRefresh`, que os testes T043/T044 prendem, **e morto no unico chamador de
   producao** (a checagem real e o `checkParseSanity`, antes). Ou o parametro some, ou o chamador passa
   o verdadeiro — do jeito que esta, dois testes guardam um caminho que producao nao percorre
-- [ ] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
+- [x] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
   deixa artefato no disco com saida nao-zero: o meio-passo que o comentario da linha 164 do proprio
   arquivo diz ter eliminado. Sem consequencia hoje (nao ha workflow), e por isso nao bloqueia
 - [ ] **U4-e [MEDIO, fora da US4] — o cartao de canal colapsa a 430px**: coluna de ~140px com rotulos
@@ -672,9 +672,9 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] **U5-b [BAIXO] — o ramo do CACHE em `adoptCatalog`** passa pela mesma porta do servido
   (`use-fee-catalog.ts:149`) e a justificativa escrita so fala do endpoint; o bloco de teste da T054
   nao exercita essa porta. Latente: ativa no dia da **T032** (regenerar a semente)
-- [ ] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
+- [x] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
   justamente o unico arquivo que o `node` executa e um dos dois que a US5 alterou
-- [ ] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
+- [x] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
   reprova. A assercao prende a ORDEM de grandeza, nao a fronteira exata
 - [ ] **U5-e — o NUL em `determinantKey`** (`fee-catalog.ts`) continua la. O `.gitattributes` devolveu
   a visibilidade do diff, mas a causa raiz mexe em geracao de chave no dominio de preco e pede teste

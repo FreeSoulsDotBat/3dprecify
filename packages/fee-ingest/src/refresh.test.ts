@@ -395,7 +395,9 @@ describe("todo import relativo de VALOR carrega extensão explícita (o pacote r
     const dir = fileURLToPath(new URL(".", import.meta.url));
     const ofensores: string[] = [];
     for (const f of readdirSync(dir)) {
-      if (!f.endsWith(".ts") || f.endsWith(".test.ts")) continue;
+      // U5-c — os `.mjs` entram: e justamente o UNICO arquivo que o `node` executa, e o que a
+      // guarda existia para proteger. Ela olhava so os `.ts` e deixava de fora o ponto de entrada.
+      if (!/\.(ts|mjs)$/.test(f) || f.endsWith(".test.ts")) continue;
       for (const linha of readFileSync(`${dir}${f}`, "utf8").split("\n")) {
         const m = /from "(\.\/[^"]+)"/.exec(linha);
         if (m && !m[1].endsWith(".ts")) ofensores.push(`${f}: ${m[1]}`);
