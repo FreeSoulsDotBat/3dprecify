@@ -236,11 +236,38 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 7: User Story 4 — Cancel at period end (Priority: P1)
 
-- [ ] T021 [US4] Write FAILING pytest — cancel: MP preapproval cancelled, ledger NOT written, grant expiry
-      stands, natural lapse to the freeze at period end (VR-706/SC-704); cancel is idempotent; re-subscribe
-      restores writes with data intact (reuse the E2/E5 lapse-test fixtures). Observe failing.
-- [ ] T022 [US4] Implement `POST /billing/subscription/cancel` + status mirroring; `GET /billing/subscription`
-      returns `cancelAtPeriodEnd` truth. Tests green.
+- [x] T021 [US4] FAILING pytest observado — `backend/tests/test_billing_cancel.py`, 12 testes.
+      **Vermelho medido: `FFFFFFFFFFFF`.** Na primeira rodada foram `FFFFFF.FFFFF` — 11 vermelhos e UM
+      verde, e o verde era VACUO: com a rota ainda inexistente o FastAPI ja devolve `404 NOT_FOUND`,
+      que satisfazia exatamente o teste do caso "conta sem assinatura". Um verde que nao distingue "a
+      rota recusou" de "a rota nao existe" nao prova nada; o teste passou a exigir a mensagem do
+      DOMINIO, e so entao os 12 ficaram vermelhos pelo motivo certo.
+      Quase toda assercao e sobre AUSENCIA (o ledger nao cresce, o `expires_at` nao anda, o censo de
+      linhas nao muda) — a mentira possivel aqui e uma escrita a mais, e presenca nao a detecta.
+- [x] T022 [US4] `POST /billing/subscription/cancel` + `GET /billing/subscription` implementados;
+      12/12 verdes, suite de billing 74 passed / 1 skipped, contrato regerado 2x identico.
+      **Regra do dominio em `app/billing/subscription.py`**, fora da rota. O MP e chamado ANTES do
+      espelho local e o status so muda com um `True` dele: espelhar "cancelled" sem confirmacao
+      produziria "nao renova" na Conta enquanto o cartao segue sendo cobrado — o defeito mais caro
+      que esta rota pode ter, e invisivel para qualquer assercao que olhe so o nosso banco.
+
+> **TRES DECISOES tomadas aqui porque o contrato NAO as escreve** (Principio VIII — decidido e
+> registrado, nao inferido em silencio):
+> 1. **`cancelAtPeriodEnd` = `status == "cancelled"`**, e NAO "cancelado E o periodo ainda corre".
+>    Um booleano que olha o relogio vira falso sozinho na virada do periodo, e a Conta passaria a
+>    dizer "renova" sobre uma assinatura cancelada. Quem responde "o periodo ainda corre" e
+>    `currentPeriodEnd`, que viaja junto.
+> 2. **Cancelar sem assinatura = 404 com mensagem de DOMINIO** ("this account has no subscription to
+>    cancel"). Um 200 diria "cancelei" sobre coisa nenhuma; um 404 generico e indistinguivel de rota
+>    ausente — foi assim que o teste passou vacuo.
+> 3. **`graceUntil` = `null` ate a US5 existir.** Hoje nao ha janela de carencia, entao `null` e a
+>    verdade, nao um campo esquecido; quando entrar, e DERIVADO do `expires_at` do grant de carencia
+>    (analyze U1), nunca uma coluna nova.
+>
+> **Achado de infra, corrigido junto:** `mp_stub` (conftest) so se instala para os modulos de uma
+> LISTA, e um modulo de fora recebia `None` calado — o sintoma chega como `AttributeError` dentro do
+> teste, que nao aponta para a lista. Um teste que PEDE a fixture pelo nome e cujo modulo esta fora
+> agora falha com o conserto escrito na mensagem.
 
 ## Phase 8: User Story 5 — Grace & dunning (Priority: P2)
 

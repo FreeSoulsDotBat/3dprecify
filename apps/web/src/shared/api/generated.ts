@@ -571,6 +571,25 @@ export interface SnapshotPage {
   nextCursor?: string | null;
 }
 
+export type SubscriptionOutPlan = typeof SubscriptionOutPlan[keyof typeof SubscriptionOutPlan];
+
+
+export const SubscriptionOutPlan = {
+  monthly: 'monthly',
+  annual: 'annual',
+} as const;
+
+/**
+ * O espelho do PSP que a Conta lê. Sem folha de dinheiro — só referências e datas (VR-701).
+ */
+export interface SubscriptionOut {
+  plan: SubscriptionOutPlan;
+  status: string;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  graceUntil: string | null;
+}
+
 export interface WebhookAck {
   status: string;
 }
@@ -5311,4 +5330,230 @@ export const useCreateCheckoutApiV1BillingCheckoutPost = <TError = ErrorEnvelope
         TContext
       > => {
       return useMutation(getCreateCheckoutApiV1BillingCheckoutPostMutationOptions(options), queryClient);
+    }
+
+export type getSubscriptionApiV1BillingSubscriptionGetResponse200 = {
+  data: SubscriptionOut | null
+  status: 200
+}
+
+export type getSubscriptionApiV1BillingSubscriptionGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type getSubscriptionApiV1BillingSubscriptionGetResponseSuccess = (getSubscriptionApiV1BillingSubscriptionGetResponse200) & {
+  headers: Headers;
+};
+export type getSubscriptionApiV1BillingSubscriptionGetResponseError = (getSubscriptionApiV1BillingSubscriptionGetResponse401) & {
+  headers: Headers;
+};
+
+export type getSubscriptionApiV1BillingSubscriptionGetResponse = (getSubscriptionApiV1BillingSubscriptionGetResponseSuccess | getSubscriptionApiV1BillingSubscriptionGetResponseError)
+
+export const getGetSubscriptionApiV1BillingSubscriptionGetUrl = () => {
+
+
+
+
+  return `/api/v1/billing/subscription`
+}
+
+/**
+ * `null` quando a conta não tem assinatura (cortesia/gratuita) — a Conta cai para a superfície
+ * de entitlement, e NADA de estado de cobrança é inferido no cliente (SC-708).
+ * @summary Get Subscription
+ */
+export const getSubscriptionApiV1BillingSubscriptionGet = async ( options?: RequestInit): Promise<getSubscriptionApiV1BillingSubscriptionGetResponse> => {
+
+  return orvalFetch<getSubscriptionApiV1BillingSubscriptionGetResponse>(getGetSubscriptionApiV1BillingSubscriptionGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetSubscriptionApiV1BillingSubscriptionGetQueryKey = () => {
+    return [
+    `/api/v1/billing/subscription`
+    ] as const;
+    }
+
+
+export const getGetSubscriptionApiV1BillingSubscriptionGetQueryOptions = <TData = Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetSubscriptionApiV1BillingSubscriptionGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>> = ({ signal }) => getSubscriptionApiV1BillingSubscriptionGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetSubscriptionApiV1BillingSubscriptionGetQueryResult = NonNullable<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>>
+export type GetSubscriptionApiV1BillingSubscriptionGetQueryError = ErrorEnvelope
+
+
+export function useGetSubscriptionApiV1BillingSubscriptionGet<TData = Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionApiV1BillingSubscriptionGet<TData = Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>,
+          TError,
+          Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetSubscriptionApiV1BillingSubscriptionGet<TData = Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Subscription
+ */
+
+export function useGetSubscriptionApiV1BillingSubscriptionGet<TData = Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getSubscriptionApiV1BillingSubscriptionGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetSubscriptionApiV1BillingSubscriptionGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse200 = {
+  data: SubscriptionOut
+  status: 200
+}
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse503 = {
+  data: ErrorEnvelope
+  status: 503
+}
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponseSuccess = (cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse200) & {
+  headers: Headers;
+};
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponseError = (cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse401 | cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse404 | cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse503) & {
+  headers: Headers;
+};
+
+export type cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse = (cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponseSuccess | cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponseError)
+
+export const getCancelSubscriptionRouteApiV1BillingSubscriptionCancelPostUrl = () => {
+
+
+
+
+  return `/api/v1/billing/subscription/cancel`
+}
+
+/**
+ * Cancela no MP e espelha aqui. NÃO escreve no ledger e NÃO apaga nada (VR-706/SC-704).
+ *
+ * A rota não recebe corpo nem parâmetro: a assinatura é resolvida pelo `uid` do token, então não
+ * existe campo por onde apontar para a assinatura de outra conta (SEC-204/VR-703).
+ * @summary Cancel Subscription Route
+ */
+export const cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost = async ( options?: RequestInit): Promise<cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse> => {
+
+  return orvalFetch<cancelSubscriptionRouteApiV1BillingSubscriptionCancelPostResponse>(getCancelSubscriptionRouteApiV1BillingSubscriptionCancelPostUrl(),
+  {
+    ...options,
+    method: 'POST'
+
+
+  }
+);}
+
+
+
+
+
+export const getCancelSubscriptionRouteApiV1BillingSubscriptionCancelPostMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>, TError,void, TContext> => {
+
+const mutationKey = ['cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>, void> = () => {
+
+
+          return  cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost(requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CancelSubscriptionRouteApiV1BillingSubscriptionCancelPostMutationResult = NonNullable<Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>>
+
+    export type CancelSubscriptionRouteApiV1BillingSubscriptionCancelPostMutationError = ErrorEnvelope
+
+    /**
+ * @summary Cancel Subscription Route
+ */
+export const useCancelSubscriptionRouteApiV1BillingSubscriptionCancelPost = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>, TError,void, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost>>,
+        TError,
+        void,
+        TContext
+      > => {
+      return useMutation(getCancelSubscriptionRouteApiV1BillingSubscriptionCancelPostMutationOptions(options), queryClient);
     }

@@ -102,6 +102,7 @@ _BILLING_TEST_MODULES = {
     "tests.test_billing_security",
     "tests.test_billing_terminus",
     "tests.test_billing_checkout",
+    "tests.test_billing_cancel",
 }
 
 
@@ -126,6 +127,20 @@ def mp_stub(request: pytest.FixtureRequest) -> Iterator["MPStub | None"]:
     """
     module_name = request.node.module.__name__
     if module_name not in _BILLING_TEST_MODULES or "migrated_db" not in request.fixturenames:
+        # Um teste que PEDE `mp_stub` pelo nome e cujo modulo ficou de fora da lista recebia `None`
+        # em silencio, e o sintoma chegava como `AttributeError: 'NoneType' has no attribute
+        # 'create_preapproval'` la dentro do teste — que nao aponta para a lista, que e onde esta a
+        # causa. A lista e a aplicacao da regra, e uma lista que falha calada e a familia de defeito
+        # que este projeto vem pagando. Pedir explicitamente e um sinal claro de intencao, entao
+        # aqui ele vira erro com o conserto escrito. (Autouse continua entregando `None` calado para
+        # todo o resto da suite, que e o comportamento correto para quem nao pediu nada.)
+        code = getattr(request.function, "__code__", None)
+        declarados = code.co_varnames[: code.co_argcount] if code is not None else ()
+        if "mp_stub" in declarados:
+            pytest.fail(
+                f"{module_name} pede a fixture `mp_stub` mas nao esta em _BILLING_TEST_MODULES "
+                "(tests/conftest.py) — acrescente-o la, ou o stub do MP nao e instalado."
+            )
         yield None
         return
 

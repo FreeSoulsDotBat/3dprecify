@@ -176,6 +176,20 @@ class MPStub:
                 status_code=201,
             )
 
+        # T022/US4 — o cancelamento no provedor. Sem ele o stub aceitaria calado um cancelamento que
+        # nunca aconteceu no MP, e o teste que prova "o preapproval fica cancelado LÁ" seria vácuo.
+        @app.put("/preapproval/{preapproval_id}")
+        async def update_preapproval(preapproval_id: str, request: Request) -> JSONResponse:
+            pre = self._preapprovals.get(preapproval_id)
+            if pre is None:
+                return JSONResponse({"message": "not found"}, status_code=404)
+            body: dict[str, Any] = await request.json()
+            novo = body.get("status")
+            if novo not in ("cancelled", "paused", "authorized"):
+                return JSONResponse({"message": "unsupported status"}, status_code=400)
+            pre.status = str(novo)
+            return JSONResponse({"id": pre.id, "status": pre.status})
+
         @app.get("/preapproval/{preapproval_id}")
         async def get_preapproval(preapproval_id: str) -> JSONResponse:
             pre = self._preapprovals.get(preapproval_id)

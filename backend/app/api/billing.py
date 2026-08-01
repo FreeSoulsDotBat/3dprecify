@@ -15,6 +15,7 @@ above and ADR-0023 §5 for why that is a deliberate, ADR-recorded exception, not
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, Request, status
@@ -25,6 +26,13 @@ from app.billing.checkout import CheckoutConflict, CheckoutUnavailable, PlanPeri
 from app.billing.grant_writer import process_verified_event
 from app.billing.providers.mercadopago import MercadoPagoProvider
 from app.billing.signature import verify_signature
+from app.billing.subscription import (
+    CancelUnavailable,
+    NoSubscription,
+    SubscriptionView,
+    cancel_subscription,
+    read_subscription,
+)
 from app.db import get_session
 from app.errors import (
     AUTH_ERRORS,
@@ -197,3 +205,86 @@ async def create_checkout(
         await provider.aclose()
 
     return CheckoutOut(init_point=result.init_point)
+
+
+# ══ T022 (US4) — GET /billing/subscription · POST /billing/subscription/cancel ══════════════════
+#
+# A metade REVERSA do contrato: o vendedor sai sozinho, e sair não lhe custa nada do que ele já
+# pagou. A regra inteira mora em `app.billing.subscription`; aqui só há tradução para o wire.
+
+_SUBSCRIPTION_RESPONSES: dict[int | str, dict[str, Any]] = {**AUTH_ERRORS}
+
+_CANCEL_RESPONSES: dict[int | str, dict[str, Any]] = {
+    **AUTH_ERRORS,
+    404: {"model": ErrorEnvelope, "description": "The account has no subscription to cancel"},
+    503: {"model": ErrorEnvelope, "description": "Payment provider unreachable"},
+}
+
+
+class SubscriptionOut(CamelModel):
+    """O espelho do PSP que a Conta lê. Sem folha de dinheiro — só referências e datas (VR-701)."""
+
+    plan: PlanPeriod
+    status: str
+    current_period_end: datetime | None
+    cancel_at_period_end: bool
+    grace_until: datetime | None
+
+
+def _out(view: SubscriptionView) -> SubscriptionOut:
+    return SubscriptionOut(
+        plan=cast("PlanPeriod", view.plan_period),
+        status=view.status,
+        current_period_end=view.current_period_end,
+        cancel_at_period_end=view.cancel_at_period_end,
+        grace_until=view.grace_until,
+    )
+
+
+@router.get(
+    "/billing/subscription",
+    status_code=status.HTTP_200_OK,
+    responses=_SUBSCRIPTION_RESPONSES,
+)
+async def get_subscription(
+    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SubscriptionOut | None:
+    """`null` quando a conta não tem assinatura (cortesia/gratuita) — a Conta cai para a superfície
+    de entitlement, e NADA de estado de cobrança é inferido no cliente (SC-708)."""
+    view = await read_subscription(session, claims["uid"])
+    return _out(view) if view is not None else None
+
+
+@router.post(
+    "/billing/subscription/cancel",
+    status_code=status.HTTP_200_OK,
+    responses=_CANCEL_RESPONSES,
+)
+async def cancel_subscription_route(
+    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> SubscriptionOut:
+    """Cancela no MP e espelha aqui. NÃO escreve no ledger e NÃO apaga nada (VR-706/SC-704).
+
+    A rota não recebe corpo nem parâmetro: a assinatura é resolvida pelo `uid` do token, então não
+    existe campo por onde apontar para a assinatura de outra conta (SEC-204/VR-703).
+    """
+    provider = MercadoPagoProvider(get_settings())
+    try:
+        view = await cancel_subscription(session, provider, uid=claims["uid"])
+    except NoSubscription as exc:
+        # A mensagem nomeia o DOMÍNIO de propósito: um 404 genérico ("Not Found") é
+        # indistinguível de "esta rota não existe", e foi exatamente assim que o teste deste caso
+        # passou VÁCUO na rodada vermelha do T021, único verde entre doze.
+        raise AppError(
+            ErrorCode.NOT_FOUND, "this account has no subscription to cancel", 404
+        ) from exc
+    except CancelUnavailable as exc:
+        # Nada foi espelhado: o vendedor vê um erro honesto e tenta de novo, em vez de ler
+        # "não renova" numa tela enquanto o MP segue cobrando o cartão dele.
+        raise AppError(ErrorCode.BILLING_UNAVAILABLE, "payment provider unreachable", 503) from exc
+    finally:
+        await provider.aclose()
+
+    return _out(view)

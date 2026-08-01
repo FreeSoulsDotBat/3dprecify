@@ -145,6 +145,24 @@ class MercadoPagoProvider:
             return typed
         return None
 
+    async def cancel_preapproval(self, preapproval_id: str) -> bool:
+        """T022 (US4) — `PUT /preapproval/{id}` com `status: "cancelled"`: para a cobrança
+        recorrente NO PROVEDOR, que é onde ela de fato acontece.
+
+        Devolve `True` só quando o MP confirmou. O padrão deny-by-default dos irmãos acima vale
+        INVERTIDO aqui, e é a diferença que importa: numa leitura, a dúvida vira "não conceda
+        nada"; num cancelamento, a dúvida NÃO pode virar "considere cancelado", porque o efeito de
+        errar é o cartão do vendedor sendo cobrado no mês seguinte enquanto a nossa tela diz "não
+        renova". Por isso o chamador só espelha o status local depois de um `True`.
+        """
+        try:
+            resp = await self._client.put(
+                f"/preapproval/{preapproval_id}", json={"status": "cancelled"}
+            )
+        except httpx.HTTPError:
+            return False
+        return resp.status_code in (200, 201)
+
     async def get_authorized_payment(self, payment_id: str) -> dict[str, Any] | None:
         return await self._get(f"/authorized_payments/{payment_id}")
 
