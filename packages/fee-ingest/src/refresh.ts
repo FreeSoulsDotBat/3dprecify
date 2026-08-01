@@ -1,5 +1,5 @@
-import { type CatalogDiff, diffCatalogs, mayAutoMerge } from "./catalog-diff";
-import type { SanityVerdict } from "./guardrails";
+import { type CatalogDiff, diffCatalogs, mayAutoMerge } from "./catalog-diff.ts";
+import type { SanityVerdict } from "./guardrails.ts";
 
 // 014/US4 — o ORQUESTRADOR do laço mensal, como decisão pura. O `.mjs` que roda no CI junta rede e
 // disco em volta disto; tudo que DECIDE mora aqui, onde é testável e cai sob o ratchet de 100%.
@@ -47,6 +47,25 @@ function materialEntries(diff: CatalogDiff) {
     .filter((e) => e.changes.length > 0);
 }
 
+/**
+ * O diff não traz notícia NENHUMA — nem tabela, nem seção. É a condição da prova-de-vida.
+ *
+ * Enumerada campo a campo de propósito, e não derivada de `freshnessOnly`: os dois querem dizer
+ * coisas parecidas hoje, e no dia em que divergirem é o CORPO do PR que precisa estar certo, porque
+ * é ele que o humano lê. Um campo novo no `CatalogDiff` que ninguém acrescente aqui volta a produzir
+ * a contradição — por isso a lista está à vista, e não escondida atrás de uma flag.
+ */
+function semNoticia(diff: CatalogDiff): boolean {
+  return (
+    diff.addedCategories.length === 0 &&
+    diff.removedCategories.length === 0 &&
+    diff.removedEntries.length === 0 &&
+    diff.reparented.length === 0 &&
+    diff.addedMarketplaces.length === 0 &&
+    diff.removedMarketplaces.length === 0
+  );
+}
+
 const label = (e: { categoryName: string | null; categoryId: string | null }) =>
   e.categoryName ?? e.categoryId ?? "(sem categoria)";
 
@@ -78,9 +97,15 @@ export function prBody(args: {
       }
     }
     out.push("");
-  } else {
+  } else if (semNoticia(diff)) {
     // A execução sem novidade é a PROVA MENSAL de que o robô está vivo (Q7). Dizer isso em palavras
     // é o que a distingue de uma execução que falhou em silêncio.
+    //
+    // A condição olha o diff INTEIRO, e não só a tabela. Ela dependia apenas de `material.length`, e
+    // o resultado era um corpo que dizia "Sem mudança de tarifa nesta leitura" LOGO ACIMA da seção
+    // "Categorias removidas da fonte" — duas afirmações contraditórias no mesmo PR, uma delas a
+    // prova-de-vida do robô. Uma prova-de-vida que mente é pior do que nenhuma: ela é lida rápido,
+    // por definição, e é ela que autoriza o revisor a não olhar o resto.
     out.push("Sem mudança de tarifa nesta leitura — apenas `lastReviewed` avançou.", "");
   }
 

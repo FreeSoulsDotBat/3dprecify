@@ -169,8 +169,48 @@ por dispensa.
 
 O laco **nao dispara sozinho**. O `schedule` do GitHub roda a partir da branch **default** (`main`),
 e o corte de release esta adiado ate v1 — entao, mesmo depois do YAML existir, o gatilho pratico sera
-`workflow_dispatch`. Hoje, sem o YAML, o laco so roda por `node`. O que existe e a decisao inteira,
-testada e ligada ao gerador; o gatilho e que falta.
+`workflow_dispatch`. O que existe e a decisao inteira, testada e ligada ao gerador; o gatilho e que
+falta.
+
+> **Correcao (2026-07-31, achado pela analise em 3 lentes).** Este paragrafo dizia "o laco so roda por
+> `node`", e isso era **FALSO quando foi escrito**: o pacote nao bootava sob `node` puro. Tres imports
+> relativos de VALOR sem extensao (`amazon-to-catalog.ts` -> `./amazon-parse`, herdado do PR-A
+> `461a367`; e dois que esta fatia acrescentou, em `guardrails.ts` e `refresh.ts`) faziam o resolvedor
+> ESM do node estourar `ERR_MODULE_NOT_FOUND`. **Nenhum teste podia ver**: todos rodam sob o vitest,
+> que e justamente o resolvedor tolerante. A afirmacao so cai ao executar o gerador de verdade — e
+> nenhuma lente read-only o executou; ela quase escapou por isso.
+>
+> Corrigido, e **re-verificado depois do conserto, nao reescrito antes**: `node` importando
+> `refresh.ts` + `amazon-to-catalog.ts` + `guardrails.ts` responde `BOOT OK: true`. Uma guarda de
+> teste agora reprova qualquer import relativo de producao sem `.ts`, porque a suite sozinha nunca
+> veria isto.
+
+### Analise em 3 lentes (workflow, 2026-07-31) — 2 bloqueios CRITICOS, ambos corrigidos
+
+12 agentes: tecnica, negocio/produto e homologacao visual. **A US4 nao tem tela**, entao a lente
+visual homologou as duas coisas que o incremento de fato renderiza para um humano.
+
+**O que PASSOU, e e o acerto medido da fatia**: a pergunta central da lente visual — "num PR com 78
+entradas, a linha que mudou dinheiro e ACHAVEL?" — passa com folga. Uma comissao mudando em 1
+categoria produz um corpo de **299 caracteres / 7 linhas / 2 linhas de tabela**; os 78 avancos de
+`lastReviewed` somem, como o docstring promete. Nenhum caso realista chega perto de "load more".
+E o selo no app foi conferido em browser real: le `atualizada em 28/07/2026`, que bate com o
+`lastReviewed` da entrada servida. **Nenhuma das duas mudancas desta fatia alterou o que o vendedor
+le** — `effectiveDate` nao e renderizado por caminho nenhum do app (medido por grep), e
+`catalogVersion` tampouco.
+
+**Os dois bloqueios, confirmados por medicao propria e corrigidos:**
+
+| # | O defeito | Como foi confirmado |
+|---|---|---|
+| 1 | O pacote **nao bootava sob `node`** — 3 imports relativos de valor sem extensao. Quebra herdada do PR-A, ampliada por esta fatia | `node .boot.mjs` -> `ERR_MODULE_NOT_FOUND`; depois do conserto, `BOOT OK: true` |
+| 2 | O corpo do PR dizia **"Sem mudanca de tarifa nesta leitura"** logo acima da secao **"Categorias removidas da fonte"** — duas afirmacoes contraditorias no mesmo PR, e a mentirosa e a prova-de-vida do robo | corpo gerado de verdade: as duas frases presentes ao mesmo tempo |
+
+**Por que os dois passaram**: todo teste asseria PRESENCA, nenhum asseria AUSENCIA. Um corpo que diz A
+e mostra nao-A satisfaz os dois `toContain`. Os testes novos asserem a ausencia.
+
+**Sobre o bloqueio 2**: uma prova-de-vida que mente e pior do que nenhuma — ela e lida rapido, por
+definicao, e e ela que autoriza o revisor a nao olhar o resto.
 
 ## Pendente para o merge
 

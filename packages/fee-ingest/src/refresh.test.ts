@@ -325,3 +325,82 @@ describe("o teto degrada com um artefato anterior disforme", () => {
     expect(b).toContain("eletronicos → (raiz)");
   });
 });
+
+// Achados da análise em 3 lentes (2026-07-31), ambos confirmados por medição própria. Os dois
+// passaram por uma razão só: todo teste asseria PRESENÇA, e nenhum asseria AUSÊNCIA. Um corpo que
+// diz A e mostra não-A satisfaz os dois `toContain`.
+describe("a prova-de-vida não pode contradizer a seção logo abaixo dela", () => {
+  const comSecao = (over: Record<string, unknown>) =>
+    prBody({
+      marketplace: "AMAZON",
+      collectedAt: "2026-08-01",
+      sourceUrl: SOURCE,
+      diff: {
+        changedEntries: [],
+        addedCategories: [],
+        removedCategories: [],
+        reparented: [],
+        removedEntries: [],
+        addedMarketplaces: [],
+        removedMarketplaces: [],
+        freshnessOnly: false,
+        ...over,
+      },
+    });
+
+  const SEM_MUDANCA = /Sem mudança de tarifa/;
+
+  it("categoria removida: a frase 'sem mudança' NÃO aparece", () => {
+    const b = comSecao({
+      removedCategories: [{ marketplace: "AMAZON", categoryId: "joias", name: "Joias" }],
+    });
+    expect(b).toMatch(/removidas da fonte/i);
+    expect(b).not.toMatch(SEM_MUDANCA);
+  });
+
+  it("categoria nova, entrada sumida, mudança de pai e marketplace: nenhuma convive com a frase", () => {
+    const casos = [
+      { addedCategories: [{ marketplace: "AMAZON", categoryId: "j", name: "Joias" }] },
+      { removedEntries: [{ marketplace: "AMAZON", categoryId: "j", determinants: null }] },
+      {
+        reparented: [
+          {
+            marketplace: "AMAZON",
+            categoryId: "j",
+            name: "Joias",
+            parentBefore: null,
+            parentAfter: "x",
+          },
+        ],
+      },
+      { addedMarketplaces: ["SHOPEE"] },
+      { removedMarketplaces: ["SHOPEE"] },
+    ];
+    for (const c of casos) expect(comSecao(c)).not.toMatch(SEM_MUDANCA);
+  });
+
+  it("e o caso são continua dizendo — senão o conserto teria matado a prova-de-vida", () => {
+    expect(comSecao({ freshnessOnly: true })).toMatch(SEM_MUDANCA);
+  });
+});
+
+// O pacote precisa BOOTAR sob `node`, não só sob o vitest. O vitest resolve `./x` sem extensão; o
+// `node` que roda `build-amazon.mjs` não — e a cadeia estava quebrada desde o PR-A (`461a367`), o que
+// tornava falsa a frase "o laço roda por node" do dod-evidence. Nenhum teste podia ver isso porque
+// todos rodam sob o vitest, que é justamente o resolvedor tolerante.
+describe("todo import relativo de VALOR carrega extensão explícita (o pacote roda sob `node`)", () => {
+  it("nenhum arquivo de produção importa `./x` sem `.ts`", async () => {
+    const { readdirSync, readFileSync } = await import("node:fs");
+    const { fileURLToPath } = await import("node:url");
+    const dir = fileURLToPath(new URL(".", import.meta.url));
+    const ofensores: string[] = [];
+    for (const f of readdirSync(dir)) {
+      if (!f.endsWith(".ts") || f.endsWith(".test.ts")) continue;
+      for (const linha of readFileSync(`${dir}${f}`, "utf8").split("\n")) {
+        const m = /from "(\.\/[^"]+)"/.exec(linha);
+        if (m && !m[1].endsWith(".ts")) ofensores.push(`${f}: ${m[1]}`);
+      }
+    }
+    expect(ofensores).toEqual([]);
+  });
+});

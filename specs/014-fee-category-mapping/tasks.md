@@ -610,6 +610,41 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   que o ADR-0019 torna imutável, via cast cru), `fee-ingest/src/amazon-parse.ts` (o parser da fonte) e
   os **229 linhas** de e2e novos. Nenhum revisor os leu
 
+**Follow-ups da analise em 3 lentes (2026-07-31) — os 2 bloqueios foram corrigidos; estes ficam**
+
+- [ ] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
+  entradas de TODOS os marketplaces, mas o numerador so conta as materialmente alteradas. Hoje da no
+  mesmo porque so a Amazon e regerada; **no dia em que o ML entrar** (US6, a outra metade desta mesma
+  feature) o denominador cresce e o teto morre calado. Nao e risco hipotetico: e trabalho ja planejado.
+  Falta tambem o teste — nenhum caso de teto usa artefato multi-marketplace
+- [ ] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
+  `amazon-parse.ts:140` (`if (row.length < 3) continue;`) descarta a linha CURTA **em silencio**,
+  antes da guarda de aridade. E a mensagem de erro promete `"a column was inserted or removed"`
+  quando o caso "removed" e inalcancavel — a copia afirma uma cobertura que o codigo nao tem. Mesma
+  familia SC-806 que o commit da T102 afirma ter fechado
+- [ ] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
+  sanidade de `decideRefresh`, que os testes T043/T044 prendem, **e morto no unico chamador de
+  producao** (a checagem real e o `checkParseSanity`, antes). Ou o parametro some, ou o chamador passa
+  o verdadeiro — do jeito que esta, dois testes guardam um caminho que producao nao percorre
+- [ ] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
+  deixa artefato no disco com saida nao-zero: o meio-passo que o comentario da linha 164 do proprio
+  arquivo diz ter eliminado. Sem consequencia hoje (nao ha workflow), e por isso nao bloqueia
+- [ ] **U4-e [MEDIO, fora da US4] — o cartao de canal colapsa a 430px**: coluna de ~140px com rotulos
+  sobrepostos ("Comissao"/"Taxa fixa", "Comissao minima"/"Frete"). Medido pela lente visual em browser
+  real; **pre-existente**, nao regressao desta fatia — designer-ux
+- [ ] **U4-f — a lista `INERT` esta DUPLICADA** entre `refresh.ts:37` e `catalog-diff.ts:10`. Sao
+  identicas hoje, entao nao e defeito; o vetor registrado e acrescentar um caminho so em `refresh.ts`,
+  porque ai o campo some da TABELA do PR enquanto `mayAutoMerge` continua negando — o revisor recebe
+  um PR que exige revisao e nao mostra o que revisar
+- [ ] **U4-g — ~279 das 1067 linhas adicionadas sao TESTE que nenhuma lente abriu.** A fatia inteira
+  roda sobre a afirmacao "os testes prendem", e foi exatamente isso que ficou sem auditoria em
+  `catalog-diff.test.ts`, `amazon-to-catalog.test.ts` e `amazon-parse.test.ts`
+
+> **Licao de processo, para o proximo mandato de revisao**: pelo menos uma lente precisa ter permissao
+> de EXECUTAR o ponto de entrada. Todas foram read-only, e a quebra de boot (o bloqueio 1) so aparece
+> ao rodar — ela quase escapou por isso, e a suite inteira era cega a ela porque o vitest resolve o
+> que o `node` recusa.
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 

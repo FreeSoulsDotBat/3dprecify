@@ -1,5 +1,5 @@
-import type { ParsedCategory } from "./amazon-parse";
-import { categoryId } from "./amazon-to-catalog";
+import type { ParsedCategory } from "./amazon-parse.ts";
+import { categoryId } from "./amazon-to-catalog.ts";
 
 // The fail-safe, as testable logic rather than `if` statements buried in a CLI (FR-018a/SC-806).
 //

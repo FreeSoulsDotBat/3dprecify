@@ -1,4 +1,4 @@
-import { CATCH_ALL_NAME, type ParsedCategory } from "./amazon-parse";
+import { CATCH_ALL_NAME, type ParsedCategory } from "./amazon-parse.ts";
 
 // ParsedCategory[] → the catalog's shape (014/US3). Pure: no network, no clock — the caller injects
 // the collection date so the output is byte-reproducible for the monthly diff.
