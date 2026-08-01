@@ -154,26 +154,37 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 ### Testes ⚠️
 
-- [ ] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `packages/fee-ingest/refresh.test.ts`
+- [x] T042 [P] [US4] Teste: fonte alterada → **um** PR cujo corpo lista cada mudança como old → new **por categoria**, com URL e data — em `packages/fee-ingest/refresh.test.ts`
+- [x] T043 [P] [US4] Teste: falha de leitura → **nenhum** PR, artefato **byte a byte** inalterado, alerta, e `lastReviewed` **não** avança (SC-806/FR-020a) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T044 [P] [US4] Teste: parse **vazio ou encolhido** além do limiar produz o mesmo desfecho de erro de rede — "0 categorias" nunca é lido como "as taxas caíram" — em `packages/fee-ingest/refresh.test.ts`
+- [x] T045 [P] [US4] Teste: execução sem mudança → PR que altera **apenas** `lastReviewed` (Q7) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T046 [P] [US4] Teste: categoria que **desapareceu** da fonte aparece em seção própria do PR, e não é apagada nem revalidada em silêncio — em `packages/fee-ingest/refresh.test.ts`
 
 ### Implementação
 
-- [ ] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `packages/fee-ingest/refresh.mjs`
-- [ ] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `packages/fee-ingest/refresh.mjs`
+- [x] T047 [US4] Montador do diff old → new por categoria + corpo do PR conforme [contracts §C3](./contracts/category-tree.md) — em `packages/fee-ingest/refresh.mjs`
+- [x] T048 [US4] Fail-safe: limiar de encolhimento declarado, artefato intocado em falha, alerta — em `packages/fee-ingest/refresh.mjs`
 - [ ] T049 [US4] Workflow mensal: `schedule` **dia 1 às 06:00 UTC** + `workflow_dispatch`, PR mirando **`develop`**, **nunca** auto-merge. **Pré-condição a documentar no próprio workflow: o `schedule` do GitHub roda a partir da branch DEFAULT (`main`) — enquanto o arquivo não chegar em `main` por um corte de release, o laço mensal NÃO dispara sozinho** (ADR-0010 §A6.1) — em `.github/workflows/fee-refresh.yml`
 - [ ] T050 [US4] Jobs **independentes** por marketplace: a falha do ML não impede a Amazon (FR-022) — em `.github/workflows/fee-refresh.yml`
-- [ ] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T050a [P] [US4] Teste: parser que lê a **coluna errada** e devolve 38 linhas plausíveis é detectado como falha de forma — valores-canário (Roupas 14%, Calçados 14%, Relógios 13%), teto de % de linhas alteradas, e coluna localizada por **cabeçalho** e não por índice (FR-018a) — em `packages/fee-ingest/refresh.test.ts`
 - [ ] T048a Proteger o branch de integração com ruleset exigindo PR — hoje `develop` **não tem proteção nem ruleset** (medido: 404 + `[]`), então o único portão do artefato de dinheiro é código que o próprio job executa (FR-020c) — em configuração do repositório
-- [ ] T049a [US4] Classificador de **dispensa de revisão** (não de escrita): o job **sempre** abre PR; o classificador só decide se aquele PR pode auto-mergear, e apenas quando o diff for **exclusivamente** `lastReviewed`. Determinístico e, em dúvida ou erro, **nega a dispensa** (FR-020a) — em `packages/fee-ingest/refresh.mjs`
-- [ ] T049b [P] [US4] Teste: o classificador **nunca** dispensa revisão de um diff que toque dinheiro; classificador em erro nega a dispensa; e **nenhum caminho do job escreve direto** no branch de integração — em `packages/fee-ingest/refresh.test.ts`
+- [x] T049a [US4] Classificador de **dispensa de revisão** (não de escrita): o job **sempre** abre PR; o classificador só decide se aquele PR pode auto-mergear, e apenas quando o diff for **exclusivamente** `lastReviewed`. Determinístico e, em dúvida ou erro, **nega a dispensa** (FR-020a) — em `packages/fee-ingest/refresh.mjs`
+- [x] T049b [P] [US4] Teste: o classificador **nunca** dispensa revisão de um diff que toque dinheiro; classificador em erro nega a dispensa; e **nenhum caminho do job escreve direto** no branch de integração — em `packages/fee-ingest/refresh.test.ts`
 - [x] T050b [P] [US4] Teste: nó que mudou de **pai** entre execuções aparece em seção própria do PR com a alíquota efetiva old → new, mesmo sem nenhum campo do artefato ter mudado (FR-019a) — em `packages/fee-ingest/src/catalog-diff.test.ts` (não em `refresh.test.ts`: a detecção é do comparador, não do orquestrador)
-- [ ] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
+- [x] T051 [US4] Verificar que a execução consome **0 tokens de LLM** e portanto **não** gera linha em `docs/token-ledger.md` (SC-811) — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
 ---
+
+> **Nota de execucao (T102/T106, 2026-07-31)** — a T106 tinha duas metades e so uma cabia aqui.
+> A colisao de `categoryId` virou `checkCategoryIdCollisions` e o gerador aborta NOMEANDO os
+> colidentes e o id disputado ("colisao" sem nomes nao e acionavel). Ja **validar o artefato montado
+> contra o schema Zod dentro do gerador** exigiria `packages/fee-ingest` importar
+> `apps/web/src/shared/fee-catalog` — um PACOTE dependendo de um APP —, ou duplicar o contrato em
+> outra copia. As duas saidas sao decisao estrutural (Principio VIII), nao escolha minha.
+> **Mitigacao ja existente, verificada**: `apps/web/src/shared/fee-catalog/fee-catalog.test.ts:31`
+> valida o artefato COMMITTED contra o schema e roda no `gate:all`, entao um artefato invalido nao
+> chega ao usuario. O que faltava — e que a T106 fecha — e o gerador parar de imprimir "sucesso"
+> para quem o roda.
 
 ## Phase 6C: Correções da revisão multi-agente do PR #31 🔴 BLOQUEIA O MERGE
 
@@ -337,12 +348,12 @@ de ANTES reproduzir o mesmo preço DEPOIS.
 Nenhum tem gatilho hoje (nenhum workflow invoca o gerador; `diffCatalogs` não tem consumidor), e é no PR do laço que
 ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US4**, não como bugs em aberto.
 
-- [ ] T101 [US4] `effectiveDate` recebe a **data da execução**, e não é inerte ⇒ duas execuções sobre a MESMA tabela produzem **76 entradas alteradas** e `mayAutoMerge` nunca retorna true. Preservar o `effectiveDate` anterior (ou o literal "não declarado pela fonte"). **Não** pôr em `INERT_PATHS` — isso tornaria auto-mergeável uma mudança real de vigência — em `build-amazon.mjs:81`
-- [ ] T102 [P] [US4] Canárias como par `(commissionPct, minPerItem)` **e** aridade exata de 3 colunas: uma coluna inserida na fonte desloca a posicional e zera todos os `minPerItem` com `ok: true` — em `packages/fee-ingest/src/guardrails.ts`, `amazon-parse.ts`
-- [ ] T103 [P] [US4] Campos de **nível marketplace** fora de `categorySpine`/`entries` nunca são comparados ⇒ furo no fail-closed que o próprio módulo promete — em `packages/fee-ingest/src/catalog-diff.ts`
-- [ ] T104 [P] [US4] Entrada sumida e marketplace adicionado/removido derrubam `freshnessOnly` mas não entram em **lista nenhuma**: o PR diz "algo mudou" sem descrever o quê — em `catalog-diff.ts`
-- [ ] T105 [P] [US4] `marketplacesOf()` no padrão de `spineOf`/`entriesOf`: hoje `?? []` só cobre null/undefined e um JSON válido não-array **estoura**, contra o contrato "degrada, não quebra" — em `catalog-diff.ts`
-- [ ] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
+- [x] T101 [US4] `effectiveDate` recebe a **data da execução**, e não é inerte ⇒ duas execuções sobre a MESMA tabela produzem **76 entradas alteradas** e `mayAutoMerge` nunca retorna true. Preservar o `effectiveDate` anterior (ou o literal "não declarado pela fonte"). **Não** pôr em `INERT_PATHS` — isso tornaria auto-mergeável uma mudança real de vigência — em `build-amazon.mjs:81`
+- [x] T102 [P] [US4] Canárias como par `(commissionPct, minPerItem)` **e** aridade exata de 3 colunas: uma coluna inserida na fonte desloca a posicional e zera todos os `minPerItem` com `ok: true` — em `packages/fee-ingest/src/guardrails.ts`, `amazon-parse.ts`
+- [x] T103 [P] [US4] Campos de **nível marketplace** fora de `categorySpine`/`entries` nunca são comparados ⇒ furo no fail-closed que o próprio módulo promete — em `packages/fee-ingest/src/catalog-diff.ts`
+- [x] T104 [P] [US4] Entrada sumida e marketplace adicionado/removido derrubam `freshnessOnly` mas não entram em **lista nenhuma**: o PR diz "algo mudou" sem descrever o quê — em `catalog-diff.ts`
+- [x] T105 [P] [US4] `marketplacesOf()` no padrão de `spineOf`/`entriesOf`: hoje `?? []` só cobre null/undefined e um JSON válido não-array **estoura**, contra o contrato "degrada, não quebra" — em `catalog-diff.ts`
+- [x] T106 [P] [US4] O gerador não valida o próprio output: colisão de `categoryId` sai com **exit 0 e "sucesso" impresso**, e o artefato inválido derruba o marketplace inteiro no cliente — abortar nomeando os colidentes, e validar o artefato montado contra o schema antes de escrever — em `build-amazon.mjs`
 
 > **Nota (T100, 2026-07-30)** — o sentinel `"invalid-seed"` vence lexicograficamente qualquer
 > `"2026-…"` (o "i" vence o "2") **e** é o piso SÍNCRONO do estado. Ou seja: no dia em que a semente
@@ -585,7 +596,7 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
   item acima: alargar a varredura reprova enquanto o `sort` não mudar
 - [ ] **B — `fee-catalog.ts` é BINÁRIO para o git** (`Bin 14402 → 14879`): há um byte NUL literal em
-  `determinantKey` (`return " null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
+  `determinantKey` (`return "\0null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
   **não viu nada** — inclusive a reescrita do guard A2 (T085/T086), mudança de validação no domínio de
   precificação, invisível ao diff E ao `blame`. Trocar por `"\0null"` ou `"__null__"`
 - [ ] **C — `PRICING_MODEL_VERSION` continua 3.1.0 sobre uma implementação reescrita.** O crítico de
@@ -598,6 +609,41 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   orçamento gravado offline), `pages/historico/recalc-today.tsx` (SC-818, grava dentro de um payload
   que o ADR-0019 torna imutável, via cast cru), `fee-ingest/src/amazon-parse.ts` (o parser da fonte) e
   os **229 linhas** de e2e novos. Nenhum revisor os leu
+
+**Follow-ups da analise em 3 lentes (2026-07-31) — os 2 bloqueios foram corrigidos; estes ficam**
+
+- [ ] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
+  entradas de TODOS os marketplaces, mas o numerador so conta as materialmente alteradas. Hoje da no
+  mesmo porque so a Amazon e regerada; **no dia em que o ML entrar** (US6, a outra metade desta mesma
+  feature) o denominador cresce e o teto morre calado. Nao e risco hipotetico: e trabalho ja planejado.
+  Falta tambem o teste — nenhum caso de teto usa artefato multi-marketplace
+- [ ] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
+  `amazon-parse.ts:140` (`if (row.length < 3) continue;`) descarta a linha CURTA **em silencio**,
+  antes da guarda de aridade. E a mensagem de erro promete `"a column was inserted or removed"`
+  quando o caso "removed" e inalcancavel — a copia afirma uma cobertura que o codigo nao tem. Mesma
+  familia SC-806 que o commit da T102 afirma ter fechado
+- [ ] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
+  sanidade de `decideRefresh`, que os testes T043/T044 prendem, **e morto no unico chamador de
+  producao** (a checagem real e o `checkParseSanity`, antes). Ou o parametro some, ou o chamador passa
+  o verdadeiro — do jeito que esta, dois testes guardam um caminho que producao nao percorre
+- [ ] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
+  deixa artefato no disco com saida nao-zero: o meio-passo que o comentario da linha 164 do proprio
+  arquivo diz ter eliminado. Sem consequencia hoje (nao ha workflow), e por isso nao bloqueia
+- [ ] **U4-e [MEDIO, fora da US4] — o cartao de canal colapsa a 430px**: coluna de ~140px com rotulos
+  sobrepostos ("Comissao"/"Taxa fixa", "Comissao minima"/"Frete"). Medido pela lente visual em browser
+  real; **pre-existente**, nao regressao desta fatia — designer-ux
+- [ ] **U4-f — a lista `INERT` esta DUPLICADA** entre `refresh.ts:37` e `catalog-diff.ts:10`. Sao
+  identicas hoje, entao nao e defeito; o vetor registrado e acrescentar um caminho so em `refresh.ts`,
+  porque ai o campo some da TABELA do PR enquanto `mayAutoMerge` continua negando — o revisor recebe
+  um PR que exige revisao e nao mostra o que revisar
+- [ ] **U4-g — ~279 das 1067 linhas adicionadas sao TESTE que nenhuma lente abriu.** A fatia inteira
+  roda sobre a afirmacao "os testes prendem", e foi exatamente isso que ficou sem auditoria em
+  `catalog-diff.test.ts`, `amazon-to-catalog.test.ts` e `amazon-parse.test.ts`
+
+> **Licao de processo, para o proximo mandato de revisao**: pelo menos uma lente precisa ter permissao
+> de EXECUTAR o ponto de entrada. Todas foram read-only, e a quebra de boot (o bloqueio 1) so aparece
+> ao rodar — ela quase escapou por isso, e a suite inteira era cega a ela porque o vitest resolve o
+> que o `node` recusa.
 
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`

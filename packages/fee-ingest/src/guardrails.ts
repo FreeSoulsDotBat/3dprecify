@@ -1,4 +1,5 @@
-import type { ParsedCategory } from "./amazon-parse";
+import type { ParsedCategory } from "./amazon-parse.ts";
+import { categoryId } from "./amazon-to-catalog.ts";
 
 // The fail-safe, as testable logic rather than `if` statements buried in a CLI (FR-018a/SC-806).
 //
@@ -10,8 +11,14 @@ import type { ParsedCategory } from "./amazon-parse";
 export interface SanityOptions {
   /** Below this many parsed rows, treat the run as a source-shape failure. */
   minRows: number;
-  /** Values fixed from a known-good reading. */
-  canaries: ReadonlyArray<readonly [string, number]>;
+  /** Valores fixados de uma leitura sabidamente boa: `[categoria, comissão %, mínimo por item]`.
+   *
+   *  014/T102 — era só `[categoria, comissão]`, e a lacuna era exatamente do tamanho do defeito que
+   *  esta guarda existe para pegar: a leitura das colunas é POSICIONAL, então uma coluna inserida na
+   *  fonte desloca o `minPerItem` sem tocar no percentual — e a canária dizia `ok: true` sobre uma
+   *  tabela em que todo mínimo por item virou zero. Números plausíveis, todos errados, sob selo de
+   *  referência. O PAR é o que torna o deslocamento visível. */
+  canaries: ReadonlyArray<readonly [string, number, number]>;
 }
 
 export type SanityVerdict = { ok: true } | { ok: false; reason: string };
@@ -32,13 +39,19 @@ export function checkParseSanity(
       reason: `parsed ${categories.length} categories, below the ${opts.minRows} floor — source shape changed, not a fee change`,
     };
   }
-  for (const [name, expected] of opts.canaries) {
+  for (const [name, expectedPct, expectedMin] of opts.canaries) {
     const hit = categories.find((c) => c.name === name);
     if (!hit) return { ok: false, reason: `canary "${name}" is missing from the parse` };
-    if (hit.commissionPct !== expected) {
+    if (hit.commissionPct !== expectedPct) {
       return {
         ok: false,
-        reason: `canary "${name}" expected ${expected}%, got ${hit.commissionPct} — the parser is likely reading the wrong column`,
+        reason: `canary "${name}" expected ${expectedPct}%, got ${hit.commissionPct} — the parser is likely reading the wrong column`,
+      };
+    }
+    if (hit.minPerItem !== expectedMin) {
+      return {
+        ok: false,
+        reason: `canary "${name}" expected a per-item minimum of ${expectedMin}, got ${hit.minPerItem} — the parser is likely reading the wrong column`,
       };
     }
   }
@@ -127,4 +140,37 @@ export function nextCatalogVersion(
   return parsed && parsed[1] === collectedAt
     ? `${collectedAt}.${Number(parsed[2]) + 1}`
     : `${collectedAt}.0`;
+}
+
+/**
+ * 014/T106 — dois nomes da fonte que colapsam no MESMO `categoryId`.
+ *
+ * `categoryId` dobra acentos e caixa, o que é o que dá identidade estável a um marketplace que
+ * publica só nomes — e é também o que permite a colisão: "Óculos" e "Oculos" viram `oculos`. O
+ * gerador não conferia, então isso saía com exit 0 e "sucesso" impresso, enquanto o artefato com ids
+ * duplicados derruba o marketplace INTEIRO no cliente (`categorySpineSchema` recusa id duplicado, e
+ * `parseSeedResilient` responde descartando o marketplace — um par de acentos apaga a Amazon).
+ *
+ * O `gate:all` já pegaria o artefato inválido pelo truth-gate de `fee-catalog.test.ts`, então isto
+ * não é a última linha de defesa. É a primeira, e é a única que fala com quem rodou o script: a
+ * razão nomeia os dois colidentes e o id que eles disputam, porque "colisão" sem nomes não é
+ * acionável.
+ */
+export function checkCategoryIdCollisions(categories: readonly { name: string }[]): SanityVerdict {
+  const byId = new Map<string, string[]>();
+  for (const c of categories) {
+    const id = categoryId(c.name);
+    byId.set(id, [...(byId.get(id) ?? []), c.name]);
+  }
+  const colliding = [...byId].filter(([, names]) => names.length > 1);
+  if (colliding.length === 0) return { ok: true };
+  return {
+    ok: false,
+    reason: colliding
+      .map(
+        ([id, names]) =>
+          `category id "${id}" is claimed by ${names.map((n) => `"${n}"`).join(" and ")}`,
+      )
+      .join("; "),
+  };
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { CANARIES, CATCH_ALL_NAME, parseAmazonTable, readCommissionCell } from "./amazon-parse";
+import { checkParseSanity } from "./guardrails";
 
 // Fixtures are the REAL cells, captured from the live table on 2026-07-28 — including the
 // non-breaking spaces. Writing these from imagination would have missed all three traps below.
@@ -153,5 +154,56 @@ describe("parseAmazonTable — fails loudly rather than shrinking the map", () =
 
   it("throws on a commission with no category", () => {
     expect(() => parseAmazonTable([["", "14%", "BRL 1,00"]])).toThrow(/no category/i);
+  });
+});
+
+// 014/T102 [US4] — o fail-safe que a US4 precisa que seja verdade, e hoje nao e.
+//
+// A leitura das colunas e POSICIONAL (`[nome, pct, min]`) e a guarda aceita `row.length >= 3`. Basta
+// a Amazon inserir uma coluna — "Taxa de fechamento", por exemplo — para o `minPerItem` passar a ser
+// lido da coluna errada. E a canaria so confere a COMISSAO, entao o deslocamento que preserva o
+// percentual e zera todo `minPerItem` sai com `ok: true`: numeros plausiveis, todos errados, sob selo
+// de referencia. E a familia de falha que o SC-806 existe para pegar.
+describe("uma coluna inserida na fonte nao pode sair como sucesso (T102)", () => {
+  const TRES = [
+    ["Categoria", "Comissao", "Minimo"],
+    ["Roupas e Acessórios", "14%", "R$ 1,00"],
+    ["Calçados", "14%", "R$ 1,00"],
+  ];
+  const QUATRO = [
+    ["Categoria", "Comissao", "Taxa de fechamento", "Minimo"],
+    ["Roupas e Acessórios", "14%", "R$ 0,00", "R$ 1,00"],
+    ["Calçados", "14%", "R$ 0,00", "R$ 1,00"],
+  ];
+
+  it("a tabela de 3 colunas continua lendo o minimo por item", () => {
+    const cats = parseAmazonTable(TRES);
+    expect(cats.every((c) => c.minPerItem === 1)).toBe(true);
+  });
+
+  it("ARIDADE: uma quarta coluna e recusada como mudanca de FORMA, nao lida torto", () => {
+    expect(() => parseAmazonTable(QUATRO)).toThrow(/coluna|column|forma|shape/i);
+  });
+
+  // A segunda metade: mesmo que a aridade passasse, a canaria tem de olhar o PAR. Um deslocamento
+  // que preserva 14% e zera o minimo e exatamente o que a canaria so-de-comissao deixava passar.
+  it("CANARIA: comissao certa com minimo zerado NAO e sucesso", () => {
+    const deslocado = [
+      { name: "Roupas e Acessórios", commissionPct: 14, bands: null, minPerItem: 0 },
+      { name: "Calçados", commissionPct: 14, bands: null, minPerItem: 0 },
+    ];
+    const v = checkParseSanity(deslocado, {
+      minRows: 2,
+      canaries: [["Roupas e Acessórios", 14, 1]],
+    });
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toMatch(/wrong column|coluna/i);
+  });
+
+  it("e o par correto continua passando", () => {
+    const bom = [{ name: "Roupas e Acessórios", commissionPct: 14, bands: null, minPerItem: 1 }];
+    expect(
+      checkParseSanity(bom, { minRows: 1, canaries: [["Roupas e Acessórios", 14, 1]] }),
+    ).toEqual({ ok: true });
   });
 });

@@ -334,3 +334,105 @@ describe("the classifier fails CLOSED", () => {
     expect(mayAutoMerge(diffCatalogs(catalog(), after))).toBe(false);
   });
 });
+
+// 014/T103-T105 [US4] — tres buracos no fail-closed que o proprio modulo promete. Todos com o mesmo
+// desfecho pratico: o PR mensal diz "algo mudou" sem descrever o que, ou nao diz nada.
+describe("o comparador falha FECHADO — os tres buracos (T103/T104/T105)", () => {
+  const base = (over = {}) => ({
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [
+      {
+        marketplace: "AMAZON",
+        determinantsSchema: { plan: ["PROFISSIONAL"], category: [] },
+        categorySpine: [{ id: "calcados", name: "Calcados", parentId: null }],
+        entries: [
+          {
+            determinants: { plan: "PROFISSIONAL", category: "calcados" },
+            commissionPct: 14,
+            lastReviewed: "2026-07-28",
+          },
+        ],
+        ...over,
+      },
+    ],
+  });
+
+  // T103 — o laco compara espinha e entradas, e mais nada. Um campo de NIVEL MARKETPLACE muda e
+  // passa despercebido: `determinantsSchema` e o contrato de quais determinantes existem, entao
+  // perder um eixo ali muda o que resolve para o vendedor.
+  it("T103: campo de nivel marketplace que muda derruba a dispensa", () => {
+    const antes = base();
+    const depois = base({ determinantsSchema: { plan: ["PROFISSIONAL"] } }); // o eixo `category` sumiu
+    const diff = diffCatalogs(antes as never, depois as never);
+    expect(mayAutoMerge(diff)).toBe(false);
+  });
+
+  // T104 — hoje uma entrada que SUMIU derruba `freshnessOnly` e nao entra em lista nenhuma. O
+  // revisor recebe um PR que afirma haver mudanca e nao mostra qual: pior que nao avisar, porque
+  // gasta a atencao dele sem dirigi-la.
+  it("T104: entrada que sumiu aparece em lista PROPRIA, nao so como um sinal mudo", () => {
+    const antes = base();
+    const depois = base({ entries: [] });
+    const diff = diffCatalogs(antes as never, depois as never);
+    expect(mayAutoMerge(diff)).toBe(false);
+    expect(diff.removedEntries).toHaveLength(1);
+    expect(diff.removedEntries[0].determinants).toEqual({
+      plan: "PROFISSIONAL",
+      category: "calcados",
+    });
+  });
+
+  it("T104: marketplace adicionado e removido tambem sao NOMEADOS", () => {
+    const antes = base();
+    const semAmazon = { catalogVersion: "2026-07-28.1", marketplaces: [] };
+    expect(diffCatalogs(antes as never, semAmazon as never).removedMarketplaces).toEqual([
+      "AMAZON",
+    ]);
+    expect(diffCatalogs(semAmazon as never, antes as never).addedMarketplaces).toEqual(["AMAZON"]);
+  });
+
+  // T105 — `spineOf`/`entriesOf` usam `Array.isArray`; `marketplaces` usava `?? []`, que so cobre
+  // null/undefined. Um JSON VALIDO com `marketplaces` como objeto estoura — contra o contrato
+  // "degrada, nao quebra" que o modulo declara.
+  it("T105: `marketplaces` nao-array degrada em vez de estourar, e NEGA a dispensa", () => {
+    const torto = { catalogVersion: "2026-07-28.1", marketplaces: { AMAZON: {} } };
+    expect(() => diffCatalogs(base() as never, torto as never)).not.toThrow();
+    expect(mayAutoMerge(diffCatalogs(base() as never, torto as never))).toBe(false);
+  });
+
+  // As duas OUTRAS formas de entrada que o artefato de verdade carrega: a catch-all so-de-modalidade
+  // (sem `category`) e a Shopee, cujo `determinants` e literalmente `null`. Sumir com qualquer uma
+  // delas tem de ser NOMEADO igual — e nomear "undefined" seria pior do que nao nomear.
+  it("T104: entrada sem categoria e entrada de determinantes nulos tambem sao nomeadas", () => {
+    const antes = {
+      catalogVersion: "2026-07-28.1",
+      marketplaces: [
+        {
+          marketplace: "AMAZON",
+          entries: [{ determinants: { plan: "PROFISSIONAL" }, commissionPct: 15 }],
+        },
+        { marketplace: "SHOPEE", entries: [{ determinants: null, commissionPct: 20 }] },
+      ],
+    };
+    const depois = {
+      catalogVersion: "2026-07-28.1",
+      marketplaces: [
+        { marketplace: "AMAZON", entries: [] },
+        { marketplace: "SHOPEE", entries: [] },
+      ],
+    };
+    const diff = diffCatalogs(antes as never, depois as never);
+    expect(diff.removedEntries).toEqual([
+      { marketplace: "AMAZON", categoryId: null, determinants: { plan: "PROFISSIONAL" } },
+      { marketplace: "SHOPEE", categoryId: null, determinants: null },
+    ]);
+    expect(mayAutoMerge(diff)).toBe(false);
+  });
+
+  it("e o caso sao: nada mudou fora das datas ⇒ dispensa continua possivel", () => {
+    const antes = base();
+    const depois = JSON.parse(JSON.stringify(base()));
+    depois.marketplaces[0].entries[0].lastReviewed = "2026-08-01";
+    expect(mayAutoMerge(diffCatalogs(antes as never, depois as never))).toBe(true);
+  });
+});

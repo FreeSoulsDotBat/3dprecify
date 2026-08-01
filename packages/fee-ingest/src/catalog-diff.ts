@@ -37,6 +37,18 @@ export interface CatalogDiff {
     parentBefore: string | null;
     parentAfter: string | null;
   }[];
+  /** 014/T104 — uma entrada que SUMIU. Antes ela derrubava `freshnessOnly` e não entrava em lista
+   *  nenhuma: o PR afirmava haver mudança sem mostrar qual, o que é pior do que não avisar — gasta a
+   *  atenção do revisor sem dirigi-la. Uma entrada some quando a fonte para de publicar aquela
+   *  categoria, e isso é dinheiro: o slot correspondente deixa de resolver. */
+  removedEntries: {
+    marketplace: string;
+    categoryId: string | null;
+    determinants: Record<string, string> | null;
+  }[];
+  /** 014/T104 — marketplaces inteiros entrando ou saindo, também nomeados em vez de mudos. */
+  addedMarketplaces: string[];
+  removedMarketplaces: string[];
   /** True when nothing but re-verification dates moved. Fails CLOSED: any unrecognised field, any
    *  added/removed/reparented category, or any structural surprise makes this false. */
   freshnessOnly: boolean;
@@ -82,6 +94,12 @@ function leafChanges(before: unknown, after: unknown, prefix: string): FieldChan
 
 const spineOf = (mk: Json) => (Array.isArray(mk.categorySpine) ? (mk.categorySpine as Json[]) : []);
 const entriesOf = (mk: Json) => (Array.isArray(mk.entries) ? (mk.entries as Json[]) : []);
+/** 014/T105 — no padrão dos dois acima. `(cat.marketplaces ?? [])` cobria só null/undefined, então um
+ *  JSON VÁLIDO com `marketplaces` como objeto estourava um `TypeError` — contra o contrato "degrada,
+ *  não quebra" que este módulo declara. Degradar para `[]` faz o outro lado ler como "todo marketplace
+ *  sumiu", que derruba a dispensa: falhar fechado é o desfecho certo para um artefato disforme. */
+const marketplacesOf = (cat: Json) =>
+  Array.isArray(cat.marketplaces) ? (cat.marketplaces as Json[]) : [];
 
 /**
  * Compare two catalog artifacts.
@@ -96,15 +114,14 @@ export function diffCatalogs(before: Json, after: Json): CatalogDiff {
     addedCategories: [],
     removedCategories: [],
     reparented: [],
+    removedEntries: [],
+    addedMarketplaces: [],
+    removedMarketplaces: [],
     freshnessOnly: true,
   };
 
-  const mkBefore = new Map(
-    ((before.marketplaces as Json[]) ?? []).map((m) => [String(m.marketplace), m]),
-  );
-  const mkAfter = new Map(
-    ((after.marketplaces as Json[]) ?? []).map((m) => [String(m.marketplace), m]),
-  );
+  const mkBefore = new Map(marketplacesOf(before).map((m) => [String(m.marketplace), m]));
+  const mkAfter = new Map(marketplacesOf(after).map((m) => [String(m.marketplace), m]));
 
   // Top-level metadata (catalogVersion, generatedAt) — inert by definition, but an UNKNOWN top-level
   // field changing is not, so it is classified like anything else.
@@ -119,9 +136,22 @@ export function diffCatalogs(before: Json, after: Json): CatalogDiff {
   for (const [name, mkA] of mkAfter) {
     const mkB = mkBefore.get(name);
     if (!mkB) {
+      diff.addedMarketplaces.push(name);
       diff.freshnessOnly = false;
       continue;
     }
+
+    // 014/T103 — os campos de NÍVEL MARKETPLACE. O laço comparava espinha e entradas, e mais nada:
+    // `determinantsSchema` — o contrato de quais determinantes existem — podia perder um eixo e a
+    // execução seguia dispensável. Aqui nenhum campo é data de reverificação, então QUALQUER mudança
+    // é material por construção; e tratar um campo NOVO desconhecido como material é exatamente o que
+    // "falhar fechado" significa.
+    const mkFields = leafChanges(
+      { ...mkB, categorySpine: undefined, entries: undefined },
+      { ...mkA, categorySpine: undefined, entries: undefined },
+      name,
+    );
+    if (mkFields.length > 0) diff.freshnessOnly = false;
 
     const spineB = new Map(spineOf(mkB).map((n) => [String(n.id), n]));
     const spineA = new Map(spineOf(mkA).map((n) => [String(n.id), n]));
@@ -177,12 +207,26 @@ export function diffCatalogs(before: Json, after: Json): CatalogDiff {
         changes,
       });
     }
-    for (const key of byKeyB.keys()) {
-      if (!byKeyA.has(key)) diff.freshnessOnly = false; // an entry disappeared — never unattended
+    for (const [key, entryB] of byKeyB) {
+      if (byKeyA.has(key)) continue;
+      // T104 — nomeada, não apenas sinalizada. Uma entrada some quando a fonte para de publicar
+      // aquela categoria, e isso é dinheiro: o slot correspondente deixa de resolver.
+      const raw = (entryB.determinants as Json | null)?.category;
+      diff.removedEntries.push({
+        marketplace: name,
+        categoryId: raw === undefined ? null : String(raw),
+        determinants: (entryB.determinants as Record<string, string> | null) ?? null,
+      });
+      diff.freshnessOnly = false;
     }
   }
 
-  for (const name of mkBefore.keys()) if (!mkAfter.has(name)) diff.freshnessOnly = false;
+  for (const name of mkBefore.keys()) {
+    if (!mkAfter.has(name)) {
+      diff.removedMarketplaces.push(name);
+      diff.freshnessOnly = false;
+    }
+  }
 
   return diff;
 }
@@ -193,6 +237,12 @@ export function mayAutoMerge(diff: CatalogDiff): boolean {
     diff.freshnessOnly &&
     diff.addedCategories.length === 0 &&
     diff.removedCategories.length === 0 &&
-    diff.reparented.length === 0
+    diff.reparented.length === 0 &&
+    // T104 — as listas novas entram aqui também. Deixá-las de fora faria a dispensa depender só de
+    // `freshnessOnly`, e o dia em que alguém esquecesse de derrubá-lo num caminho novo, o portão
+    // abriria em silêncio. A redundância é deliberada: duas fechaduras na mesma porta.
+    diff.removedEntries.length === 0 &&
+    diff.addedMarketplaces.length === 0 &&
+    diff.removedMarketplaces.length === 0
   );
 }
