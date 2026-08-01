@@ -207,3 +207,61 @@ describe("uma coluna inserida na fonte nao pode sair como sucesso (T102)", () =>
     ).toEqual({ ok: true });
   });
 });
+
+// U4-b (follow-up ALTO) — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.
+// `row.length < 3` descarta a linha CURTA em SILENCIO, antes da guarda de aridade. E a mensagem de
+// erro da guarda promete `"a column was inserted or removed"` quando o caso "removed" e inalcancavel
+// — a copia afirmando uma cobertura que o codigo nao tem.
+//
+// Uma coluna removida faz TODA linha de dado virar curta: o parse encolhe para zero e cai no
+// MIN_ROWS. Detectado, sim — mas como "a fonte encolheu", que e o diagnostico errado e manda o
+// operador procurar categorias que a Amazon nao apagou.
+describe("a coluna A MENOS tambem e mudanca de FORMA, e nao encolhimento (U4-b)", () => {
+  it("linha que PARECE dado e tem menos de 3 colunas e recusada, nao pulada", () => {
+    const duasColunas = [
+      ["Categoria", "Comissao"],
+      ["Roupas e Acessórios", "14%"],
+      ["Calçados", "14%"],
+    ];
+    expect(() => parseAmazonTable(duasColunas)).toThrow(/coluna|column/i);
+  });
+
+  it("linha curta que NAO parece dado (cabecalho, nota) continua sendo pulada em silencio", () => {
+    const comNota = [
+      ["Tabela de comissoes"],
+      ["Categoria", "Comissao", "Minimo"],
+      ["Calçados", "14%", "R$ 1,00"],
+    ];
+    expect(parseAmazonTable(comNota)).toHaveLength(1);
+  });
+});
+
+// Regressao que a U4-b introduziu e a lente que EXECUTA achou (2026-08-01): a guarda olhava
+// "qualquer celula com %", entao uma NOTA DE RODAPE numa celula so — que a Amazon publica — matava o
+// laco mensal com a mensagem falsa "a column was REMOVED". Falha fechada, sim, mas com o diagnostico
+// errado, e o unico sintoma seria o robo parar de rodar mandando procurar a coisa errada.
+describe("nota de rodape com % nao e coluna faltando (regressao da U4-b)", () => {
+  const dados = [
+    ["Categoria", "Comissao", "Minimo"],
+    ["Calçados", "14%", "R$ 1,00"],
+  ];
+
+  it("uma linha de PROSA com percentual e pulada, nao mata o laco", () => {
+    const comNota = [
+      dados[0],
+      ["Comissao de 15% sobre o valor total do pedido, incluindo frete"],
+      dados[1],
+    ];
+    expect(() => parseAmazonTable(comNota)).not.toThrow();
+    expect(parseAmazonTable(comNota)).toHaveLength(1);
+  });
+
+  it("mas a linha de DADO com uma coluna a menos continua sendo recusada", () => {
+    expect(() =>
+      parseAmazonTable([
+        ["Categoria", "Comissao"],
+        ["Calçados", "14%"],
+      ]),
+    ).toThrow(/coluna|column/i);
+  });
+});

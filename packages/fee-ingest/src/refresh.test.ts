@@ -395,12 +395,115 @@ describe("todo import relativo de VALOR carrega extensão explícita (o pacote r
     const dir = fileURLToPath(new URL(".", import.meta.url));
     const ofensores: string[] = [];
     for (const f of readdirSync(dir)) {
-      if (!f.endsWith(".ts") || f.endsWith(".test.ts")) continue;
+      // U5-c — os `.mjs` entram: e justamente o UNICO arquivo que o `node` executa, e o que a
+      // guarda existia para proteger. Ela olhava so os `.ts` e deixava de fora o ponto de entrada.
+      if (!/\.(ts|mjs)$/.test(f) || f.endsWith(".test.ts")) continue;
       for (const linha of readFileSync(`${dir}${f}`, "utf8").split("\n")) {
         const m = /from "(\.\/[^"]+)"/.exec(linha);
         if (m && !m[1].endsWith(".ts")) ofensores.push(`${f}: ${m[1]}`);
       }
     }
     expect(ofensores).toEqual([]);
+  });
+});
+
+// U4-a (follow-up ALTO da analise em 3 lentes, 2026-07-31) — o denominador do teto CRUZA
+// marketplaces. `entryCount` soma as entradas de TODOS eles, enquanto o numerador so conta as
+// materialmente alteradas — que hoje vem so da Amazon, o unico marketplace regenerado.
+//
+// Hoje da no mesmo por acidente. No dia em que o ML entrar (US6, a outra metade desta mesma feature)
+// o denominador cresce e o teto MORRE CALADO: uma leitura da Amazon que mudasse a tabela inteira
+// passaria, porque as entradas do ML diluiriam a fracao. Um alarme que se desliga sozinho quando o
+// sistema cresce e pior que nenhum, porque ninguem nota o desligamento.
+describe("o teto mede o marketplace da EXECUCAO, nao o catalogo inteiro (U4-a)", () => {
+  const entryFor = (cat: string, over: Record<string, unknown> = {}) => ({
+    determinants: { plan: "PROFISSIONAL", category: cat },
+    commissionPct: 14,
+    lastReviewed: "2026-07-28",
+    ...over,
+  });
+  const cat = (amazon: unknown[], outros: unknown[]) => ({
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [
+      { marketplace: "AMAZON", categorySpine: [], entries: amazon },
+      { marketplace: "MERCADO_LIVRE", categorySpine: [], entries: outros },
+    ],
+  });
+
+  const ids = Array.from({ length: 12 }, (_, i) => `a-${i}`);
+  const mlIds = Array.from({ length: 40 }, (_, i) => `m-${i}`);
+  const ml = mlIds.map((c) => entryFor(c));
+
+  it("a Amazon inteira mudando ABORTA, mesmo com o ML enchendo o catalogo", () => {
+    const antes = cat(
+      ids.map((c) => entryFor(c)),
+      ml,
+    );
+    const depois = cat(
+      ids.map((c) => entryFor(c, { commissionPct: 9 })),
+      ml,
+    );
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    // 12 de 12 entradas da Amazon = 100%. Sobre o catalogo inteiro seriam 12/52 = 23% e passaria.
+    expect(out.kind).toBe("ABORT");
+  });
+
+  it("e uma mudanca pequena na Amazon continua passando", () => {
+    const antes = cat(
+      ids.map((c) => entryFor(c)),
+      ml,
+    );
+    const depois = cat(
+      ids.map((c, i) => (i === 0 ? entryFor(c, { commissionPct: 16 }) : entryFor(c))),
+      ml,
+    );
+    expect(decideRefresh({ ...base, before: antes as never, after: depois as never }).kind).toBe(
+      "PR",
+    );
+  });
+});
+
+// U34-a — o corpo do PR mostrava `[object Object]` onde deveria dizer QUAL banda mudou.
+//
+// `leafChanges` desce arrays por indice, entao uma banda que muda de valor sai como
+// `priceBands.0.commissionPct: 15 -> 12`, legivel. Mas quando uma categoria GANHA ou PERDE bandas
+// inteiras — plana viando faixa, ou o contrario —, um lado e `null` e o outro e o array inteiro: nao
+// ha par de objetos para descer, e `String(array)` devolve `[object Object]`.
+//
+// E dinheiro, e e a classe exata que o §C3 existe para impedir: "um diff que o revisor nao consegue
+// ler e um diff que ele aprova sem conferir". PRE-EXISTENTE da US4, achada abrindo o artefato gerado.
+describe("o corpo do PR nunca diz [object Object] sobre dinheiro (U34-a)", () => {
+  const comBandas = (bands: unknown) => ({
+    determinants: { plan: "PROFISSIONAL", category: "moveis" },
+    commissionPct: 15,
+    priceBands: bands,
+    lastReviewed: "2026-07-28",
+  });
+  const cat = (entries: unknown[]) => ({
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [{ marketplace: "AMAZON", categorySpine: [], entries }],
+  });
+
+  it("categoria que GANHA bandas mostra as bandas, nao [object Object]", () => {
+    const antes = cat([comBandas(null)]);
+    const depois = cat([
+      comBandas([{ minPrice: 0, maxPrice: 200, commissionPct: 15, fixedFee: 0 }]),
+    ]);
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    const body = out.kind === "PR" ? out.body : "";
+    expect(body).not.toContain("[object Object]");
+    expect(body).toContain("minPrice"); // o revisor precisa ver a fronteira
+    expect(body).toContain("200");
+  });
+
+  it("categoria que PERDE bandas tambem — a direcao contraria e a mesma mentira", () => {
+    const antes = cat([
+      comBandas([{ minPrice: 0, maxPrice: 200, commissionPct: 15, fixedFee: 0 }]),
+    ]);
+    const depois = cat([comBandas(null)]);
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    const body = out.kind === "PR" ? out.body : "";
+    expect(body).not.toContain("[object Object]");
+    expect(body).toContain("200");
   });
 });

@@ -583,6 +583,19 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > `.0` no gerador) — corrigido nesta mesma leva: `nextCatalogVersion` em `guardrails.ts` (fora do
 > `.mjs`, que é isento de cobertura) e o artefato em `2026-07-28.1` **sem nova leitura**.
 
+> **Tentativa MEDIDA e revertida (madrugada de 2026-08-01)** — o conserto obvio da A1-r NAO funciona,
+> e isso muda o tamanho da tarefa. Troquei o criterio primario de "auto-consistencia" para "entrega a
+> base, e entre os que entregam vence o mais barato" — que e literalmente o que o comentario do
+> proprio `sort` diz querer. Resultado: **10 testes reprovaram**, incluindo os DOIS invariantes mais
+> fortes que a T113 estabeleceu — a varredura `bandContaining(anuncio) === appliedBand` (14 bases
+> quebradas) e a **monotonicidade em 1.892 pontos**. Revertido com `git checkout`; a suite voltou a
+> 111 verdes.
+>
+> Conclusao: a auto-consistencia nao e um privilegio arbitrario, e o que produz a monotonicidade e o
+> plato. A A1-r **nao e reordenar um `sort`** — e um problema de otimizacao com invariantes que
+> competem (menor preco que entrega a base VS monotonia VS banda aplicada contendo o anuncio), no
+> dominio de precificacao. Precisa de desenho, nao de patch, e nao se resolve sem o dono na mesa.
+
 - [ ] **A1-r [pricing-core] — `chooseBand` ordena por rank ANTES de preço** (`channels.ts:235`).
   Numa tabela em "vale" (comissão que cai e depois sobe) o motor escolhe um anúncio **dominado**:
   reproduzido por mim, `113,54 → R$ 157,16` e `113,55 → R$ 130,34` — um centavo de base derruba o
@@ -591,14 +604,56 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   viva) dá 0 inversões; a Amazon carimba `PROGRESSIVE` em toda célula com bandas e nem passa por
   `chooseBand`; o ML não tem entrada nenhuma. `checkBandCoverage` não impede a forma em vale, então
   o dado é representável — e viaja em snapshot congelado. Consertar antes de existir uma tabela assim
+> **MEDIÇÃO 2026-08-01 (decisão do dono na mesa) — a teoria do "vale" é FALSA, e o guarda mudou de
+> lugar por causa disso.** A hipótese natural era que o gatilho da A1-r fosse a forma-vale (o líquido
+> cair ao subir de banda) e que bastasse recusá-la na ingestão. Medido em 6 tabelas × ~12k bases:
+>
+>     ML-contiguas             | vale=sim | dominados=0
+>     ML-com-lacuna            | vale=sim | dominados=0
+>     Amazon-15-para-10        | vale=nao | dominados=0
+>     VALE-banda-superior-pior | vale=sim | dominados=0   (construida para ser patologica)
+>     VALE-fixo-pula           | vale=sim | dominados=0   (idem)
+>     LACUNA-sem-vale          | vale=nao | dominados=0
+>
+> Cinco tabelas COM vale e zero pontos dominados. Pior: a tabela real do ML **já tem vale hoje**
+> (50% até 12,50 → 12% + R$ 5,00 fixo derruba o líquido de 6,245 para 6,00 na fronteira), então um
+> detector de vale alarmaria no primeiro mês do ML sobre uma tabela correta — o falso positivo
+> mensal que a US5 nomeia como o jeito de treinar quem revisa a ignorar o alarme.
+>
+> Erro meu na primeira rodada, registrado porque é a mesma família: a força-bruta que eu usava como
+> referência subia o vendedor até a próxima fronteira publicada para atravessar uma lacuna — o que
+> `channels.ts:219-224` proíbe **em palavras**. Ela produziu 8 "contraexemplos" em que o motor estava
+> certo e o comparador é que preenchia a lacuna pela porta dos fundos.
+>
+> Conclusão: **não se detecta uma forma que não se sabe nomear.** O guarda passou a testar a
+> PROPRIEDADE — `tests/band-dominance.test.ts`, "o anúncio publicado é o mais barato que entrega a
+> base" — sobre as 3 tabelas reais e 3 adversárias construídas. Ele não depende de adivinhar a forma
+> e dispara no dia em que qualquer tabela produzir o sintoma. Provado NÃO-VÁCUO por mutação: com o
+> `sort` invertido para preferir o anúncio caro, ele reprova com `base=64,56 anunciado=129,12
+> melhor=79,00`.
+
 - [ ] **A1-r/teste — a monotonicidade é afirmada em geral e provada num fixture.**
   `band-convergence.test.ts:92` chama-se "o anúncio nunca cai quando a base sobe" e varre **apenas**
-  `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
-  item acima: alargar a varredura reprova enquanto o `sort` não mudar
-- [ ] **B — `fee-catalog.ts` é BINÁRIO para o git** (`Bin 14402 → 14879`): há um byte NUL literal em
-  `determinantKey` (`return "\0null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
-  **não viu nada** — inclusive a reescrita do guard A2 (T085/T086), mudança de validação no domínio de
-  precificação, invisível ao diff E ao `blame`. Trocar por `"\0null"` ou `"__null__"`
+  `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Alargar a varredura
+  segue valendo. **Mas a segunda metade desta frase era errada e a medição acima a desmente**: eu
+  escrevi "reprova enquanto o `sort` não mudar", e o `sort` não precisa mudar — a dominância deu ZERO
+  em todas as 6 tabelas, inclusive nas adversárias. A varredura alargada é cobertura de
+  monotonicidade, não prova da A1-r
+- [x] **B — FECHADO 2026-08-01. O NUL saiu; era a única correção que fechava os dois lados.**
+  `determinantKey` devolvia `" null"` como sentinela do caso "sem determinantes". O sentinela
+  precisa ser INFORJÁVEL por um conjunto real, e toda chave real ou é vazia (`{}`) ou contém `=` —
+  então `"(null determinants)"` serve e não carrega byte nenhum. É de memória: nunca serializado,
+  nunca dentro de snapshot, usado só no `Set` de detecção de duplicata do parse. MEDIDO depois:
+  `git diff --stat` voltou a contar linhas (antes dizia "binary files differ") e a busca acha as duas
+  ocorrências. Os 64 testes de `fee-catalog` seguem verdes. **Histórico do meio-conserto:**
+  MEDIDO 2026-08-01: com `*.ts text diff` o `git diff`/`blame` voltaram a mostrar o arquivo como texto
+  (de `Bin` para `23 insertions(+)`), mas o **`Grep` continua pulando**: o ripgrep faz a própria
+  detecção de binário pelo byte NUL e não consulta o `.gitattributes`. Confirmado agora —
+  `Grep STALENESS_DAYS` em `fee-catalog.ts` responde `binary file matches`. Ou seja, o arquivo que
+  define `STALENESS_DAYS` e `isStale` — o schema do domínio de PRECIFICAÇÃO — segue invisível para
+  busca, e eu mesmo tropecei nisso duas vezes. **A causa raiz é a única correção que fecha os dois
+  lados**: trocar `return " null"` por um sentinela sem NUL. Mexe em geração de chave de mapa no
+  domínio de preço, então pede teste próprio — não é conserto de carona
 - [ ] **C — `PRICING_MODEL_VERSION` continua 3.1.0 sobre uma implementação reescrita.** O crítico de
   completude rodou o diferencial velho-vs-novo (9 tabelas × 100k bases): **0 diferenças** em anúncio,
   líquido e banda aplicada. É higiene de versionamento, não defeito — registrado para não se perder
@@ -612,21 +667,21 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 **Follow-ups da analise em 3 lentes (2026-07-31) — os 2 bloqueios foram corrigidos; estes ficam**
 
-- [ ] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
+- [x] **U4-a [ALTO] — o denominador do teto cruza marketplaces.** `refresh.ts::entryCount` soma as
   entradas de TODOS os marketplaces, mas o numerador so conta as materialmente alteradas. Hoje da no
   mesmo porque so a Amazon e regerada; **no dia em que o ML entrar** (US6, a outra metade desta mesma
   feature) o denominador cresce e o teto morre calado. Nao e risco hipotetico: e trabalho ja planejado.
   Falta tambem o teste — nenhum caso de teto usa artefato multi-marketplace
-- [ ] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
+- [x] **U4-b [ALTO] — a T102 fechou a coluna A MAIS e deixou aberta a coluna A MENOS.**
   `amazon-parse.ts:140` (`if (row.length < 3) continue;`) descarta a linha CURTA **em silencio**,
   antes da guarda de aridade. E a mensagem de erro promete `"a column was inserted or removed"`
   quando o caso "removed" e inalcancavel — a copia afirma uma cobertura que o codigo nao tem. Mesma
   familia SC-806 que o commit da T102 afirma ter fechado
-- [ ] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
+- [x] **U4-c [MEDIO] — `sanity: { ok: true }` cravado** em `build-amazon.mjs`: o parametro de
   sanidade de `decideRefresh`, que os testes T043/T044 prendem, **e morto no unico chamador de
   producao** (a checagem real e o `checkParseSanity`, antes). Ou o parametro some, ou o chamador passa
   o verdadeiro — do jeito que esta, dois testes guardam um caminho que producao nao percorre
-- [ ] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
+- [x] **U4-d [MEDIO] — `PR_BODY_OUT` escreve DEPOIS do artefato.** Um caminho invalido nessa variavel
   deixa artefato no disco com saida nao-zero: o meio-passo que o comentario da linha 164 do proprio
   arquivo diz ter eliminado. Sem consequencia hoje (nao ha workflow), e por isso nao bloqueia
 - [ ] **U4-e [MEDIO, fora da US4] — o cartao de canal colapsa a 430px**: coluna de ~140px com rotulos
@@ -659,15 +714,70 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] **U5-b [BAIXO] — o ramo do CACHE em `adoptCatalog`** passa pela mesma porta do servido
   (`use-fee-catalog.ts:149`) e a justificativa escrita so fala do endpoint; o bloco de teste da T054
   nao exercita essa porta. Latente: ativa no dia da **T032** (regenerar a semente)
-- [ ] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
+- [x] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
   justamente o unico arquivo que o `node` executa e um dos dois que a US5 alterou
-- [ ] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
+- [x] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
   reprova. A assercao prende a ORDEM de grandeza, nao a fronteira exata
 - [ ] **U5-e — o NUL em `determinantKey`** (`fee-catalog.ts`) continua la. O `.gitattributes` devolveu
   a visibilidade do diff, mas a causa raiz mexe em geracao de chave no dominio de preco e pede teste
   proprio — nao foi feita de carona
 - [ ] **U5-f — a fronteira do dia 45/46 nunca foi medida em NAVEGADOR**, so por unidade. A
   homologacao cobriu 35 e 50. Risco baixo, mas e nao-medido, nao "ok"
+
+**Da homologacao visual da US8 (2026-08-01) — PASS 94%, 45 screenshots**
+
+> A homologacao provou a afirmacao central **por MUTACAO**, nao por leitura: trocou a comissao de
+> `calcados` de 14% para 30% no catalogo servido e reabriu **o mesmo cenario salvo** — o preco andou
+> de **R$ 35,93 para R$ 44,14** com a categoria intacta. Um cenario que guardasse o VALOR nao teria se
+> mexido. E leu o JSONB no disco: com categoria grava `{"category":"calcados",…}`, sem categoria
+> grava `{"modality","marketplace"}` — **chave ausente, nao `""`**. A SC-809 verificada no disco.
+>
+> Fora do mandato, e util: dois slots com categorias DIFERENTES (uma troca de mapeamento seria
+> invisivel a "a categoria voltou"), editar, duplicar, e a degradacao — removendo `calcados` do
+> catalogo, o campo diz "A categoria escolhida nao esta neste catalogo" e o **rotulo em branco da T116
+> nao regrediu**.
+
+- [ ] **U8-a [MEDIO] — o congelado nao registra QUAL categoria produziu o numero, de forma
+  estruturada.** Verificado por mim: `calculator-model.ts:294` monta
+  `feeDeterminants: { modality }` **sem** a categoria, e nenhum caminho de `entities/history` a
+  menciona. **Nuance que impede chamar de perda**: o `feeSource` VIAJA no payload e, para a Amazon,
+  contem o nome da categoria em prosa (`"Tabela de comissoes da Amazon — Calcados (…)"`). Ou seja, um
+  humano lendo o registro consegue dizer; um programa nao. E a propriedade e ACIDENTAL — depende de o
+  marketplace por o nome na string da fonte, o que o ML pode nao fazer. Decidir se o congelado deve
+  responder "qual LINHA" alem de "qual TABELA" (`catalogVersion`) e do dono
+- [ ] **U8-b [MEDIO] — a SC-809 fala de cenario, kit E snapshot; a US8 testou o CENARIO.** O kit tem
+  canais? Se tiver, ele ganhou categoria ou nao — e deveria? A regra do dono ("cenarios sim, produtos
+  nao") nao menciona kit. Pode ser lacuna de spec, e a tarefa pode ter sido marcada larga demais
+- [ ] **U8-c [BAIXO] — a ponte E5→E4 nao foi exercitada**: gravar um snapshot A PARTIR de um cenario
+  com categoria. E a intersecao da US8 com a PR-C do E5, e a homologacao a nomeou como a lacuna que
+  investigaria em seguida
+- [ ] **U8-d [BAIXO, fora da US8] — o botao `Limpar` desalinha com nome de categoria longo** em 390px:
+  com 2 linhas de texto ele cai numa 3a linha indentada a esquerda em vez de ancorado a direita.
+  Cosmetico, medido, **e do seletor da PR-A** — nao regressao desta fatia
+
+**Da analise adversarial do PR #34 (2026-08-01) — a lente que EXECUTA conferiu as MINHAS afirmacoes**
+
+> As 8 afirmacoes que eu fiz sobre U4-a/b/c/d, U5-c/d, A1-r e US8 foram refeitas RODANDO, e as 8 se
+> sustentam. A A1-r foi **reproduzida com os quatro numeros batendo** (10 reprovacoes · varredura
+> quebrada em 14 bases · 1.892 pontos de monotonicidade · suite de 111) — e a lente foi alem: testou
+> tambem a variante MAIS CONSERVADORA possivel (trocar so a chave do `sort`, mantendo o portao
+> SC-817) e ela **ja quebra a monotonicidade nos mesmos 1.892 pontos**. A conclusao registrada — "nao
+> e reordenar um `sort`, sao invariantes que competem" — fica confirmada por medicao independente.
+> A lente tambem rodou o `gate:all` INTEIRO, incluindo o backend (400 passed, cobertura 83,57%), que
+> nenhuma revisao anterior tinha rodado.
+
+- [x] **REGRESSAO da U4-b, achada e corrigida no mesmo dia** — a guarda olhava "qualquer celula com
+  %", entao uma NOTA DE RODAPE numa celula so (que a Amazon publica) MATAVA o laco mensal com a
+  mensagem falsa `"a column was REMOVED"`. Falha fechada, mas com o diagnostico errado — o mesmo
+  defeito que a guarda conserta, virado do avesso. Agora ela olha a SEGUNDA celula, que e a forma
+  posicional de "linha de dado com uma coluna a menos". **Nenhum teste unitario podia ver**: so
+  aparece rodando o gerador contra uma fixture com prosa
+- [ ] **U34-a [MEDIO, PRE-EXISTENTE da US4] — o corpo do PR mensal mostra transicao de banda de preco
+  como `[object Object]`.** Achado abrindo o artefato gerado, nao lendo codigo. `prBody` formata cada
+  mudanca com `String(valor)`, e uma `priceBands` inteira e um objeto — entao a linha que deveria
+  dizer ao revisor QUAL banda mudou diz `[object Object]`. E dinheiro, e e exatamente a classe que o
+  §C3 existe para impedir ("um diff que o revisor nao consegue ler e um diff que ele aprova sem
+  conferir"). Nao bloqueia esta fatia porque e divida herdada, mas e o mais caro do lote
 
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
@@ -722,15 +832,26 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 ### Testes ⚠️
 
-- [ ] T065 [P] [US8] Teste: cenário salvo depois do 014 re-resolve a categoria pelo catálogo de hoje, como os demais slots não sobrescritos (contrato de leitura da E5, inalterado) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
-- [ ] T066 [P] [US8] Teste: cenário, kit e **snapshot** criados **antes** do 014 abrem inalterados e sem categoria; imutabilidade intocada (SC-809) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
-- [ ] T067 [P] [US8] Teste: produto de catálogo **não** ganha campo de categoria (FR-003a) — em `apps/web/src/features/catalog/products.test.ts`
+- [x] T065 [P] [US8] Teste: cenário salvo depois do 014 re-resolve a categoria pelo catálogo de hoje, como os demais slots não sobrescritos (contrato de leitura da E5, inalterado) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [x] T066 [P] [US8] Teste: cenário, kit e **snapshot** criados **antes** do 014 abrem inalterados e sem categoria; imutabilidade intocada (SC-809) — em `apps/web/src/features/scenarios/scenario-resolver.test.ts`
+- [x] T067 [P] [US8] Teste: produto de catálogo **não** ganha campo de categoria (FR-003a) — em `apps/web/src/features/catalog/products.test.ts`
 
 ### Implementação
 
-- [ ] T068 [US8] Persistir a categoria na intenção de canal do cenário (JSONB existente do ADR-0021 — sem coluna nova) — em `apps/web/src/features/scenarios/scenario-model.ts`
+- [x] T068 [US8] Persistir a categoria na intenção de canal do cenário (JSONB existente do ADR-0021 — sem coluna nova) — em `apps/web/src/features/scenarios/scenario-model.ts`
 
 ---
+
+> **Nota de execucao (US8, madrugada de 2026-08-01)** — as tarefas previam
+> `features/scenarios/scenario-resolver.test.ts` e `features/catalog/products.test.ts`; nenhum dos
+> dois existe. O que existe e a ENTIDADE que de fato possui a forma persistida
+> (`entities/scenario/config-document.ts`) e o mapeamento produto<-formulario
+> (`features/calculator/product-mapping.ts`), e foi la que os testes foram. Mesmo desvio ja registrado
+> em T076/T077/T084: a tarefa aponta para onde o autor imaginou, e o teste mora onde a regra mora.
+>
+> A T065 ("re-resolve pelo catalogo de hoje") NAO virou teste novo: ela e o contrato de leitura da E5,
+> ja coberto, e o que a US8 acrescenta e uma INTENCAO — a categoria — que por construcao nao carrega
+> aliquota nenhuma. O teste que garante isso e o que verifica que so `feeOverrides` guarda valor.
 
 ## Phase 10: Polish & Cross-Cutting
 

@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { cleanup, renderHook, waitFor } from "@testing-library/react";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -100,13 +100,37 @@ beforeEach(() => {
   signInAs("uidA");
 });
 
-afterEach(() => {
+// Todo `QueryClient` criado no arquivo passa por aqui, e o `afterEach` os encerra.
+//
+// Sem isso o arquivo VAZAVA trabalho assincrono para depois do teardown: nenhum cliente era
+// cancelado nem desmontado, entao uma consulta ainda em voo resolvia quando o vitest ja tinha
+// derrubado o jsdom — e o efeito do React ia procurar `window` num ambiente que nao existe mais.
+// Sintoma na CI: `ReferenceError: window is not defined` x3 (um por cliente vazado), com os 107
+// arquivos PASSANDO e o processo saindo 1 — o vitest reprova a execucao por erro nao tratado ainda
+// que nenhuma asserção tenha falhado. Nao reproduz isolado: o arquivo termina antes de a corrida
+// acontecer, e foi por isso que o gate local passou duas vezes.
+const clientes: QueryClient[] = [];
+function novoCliente() {
+  const c = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  clientes.push(c);
+  return c;
+}
+
+afterEach(async () => {
+  // Cancelar ANTES de limpar: `clear()` descarta o cache mas nao aborta o que esta em voo.
+  await Promise.all(clientes.map((c) => c.cancelQueries()));
+  for (const c of clientes) {
+    c.unmount();
+    c.clear();
+  }
+  clientes.length = 0;
+  cleanup();
   vi.clearAllMocks();
   useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 function wrapper() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const client = novoCliente();
   return function Wrapper({ children }: { children: ReactNode }) {
     return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
   };
@@ -198,7 +222,7 @@ describe("useFilaments — uid-keyed read cache + honest staleness", () => {
 
 describe("useCreateFilament — online-only write that invalidates the query", () => {
   it("posts through the generated client and invalidates the filament query on success", async () => {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = novoCliente();
     const invalidate = vi.spyOn(client, "invalidateQueries");
     createFilamentMock.mockResolvedValue({ data: filament(), status: 201 });
 
@@ -230,7 +254,7 @@ describe("useCreateFilament — online-only write that invalidates the query", (
 // BOTH invalidations against the SAME literal so the mirror can never drift.
 describe("product update/delete — invalidates the kits list too (D3/D6 freshness)", () => {
   function productWrapper() {
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const client = novoCliente();
     const invalidate = vi.spyOn(client, "invalidateQueries");
     const Wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>

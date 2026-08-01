@@ -137,7 +137,27 @@ export function readCommissionCell(cell: string): CommissionCell {
 export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
   const out: ParsedCategory[] = [];
   for (const row of rows) {
-    if (row.length < 3) continue;
+    // U4-b — uma linha CURTA que parece DADO e mudanca de forma, nao ruido. `row.length < 3` a
+    // descartava em silencio: uma coluna removida da fonte faz TODA linha de dado virar curta, o
+    // parse encolhe para zero e cai no MIN_ROWS — detectado, mas com o diagnostico ERRADO ("a fonte
+    // encolheu"), que manda o operador procurar categorias que a Amazon nunca apagou. Cabecalho e
+    // nota continuam sendo pulados, porque nao carregam percentual.
+    if (row.length < 3) {
+      // A guarda olha a SEGUNDA celula, nao "qualquer uma". A leitura e POSICIONAL — `[nome, pct,
+      // min]` —, entao a forma de "linha de dado com uma coluna a menos" e ter percentual em `[1]`.
+      // Olhar qualquer celula matava o laco numa NOTA DE RODAPE ("Comissao de 15% sobre o valor
+      // total..."), com a mensagem falsa "a column was REMOVED": o mesmo defeito que esta guarda
+      // conserta, virado do avesso, e num lugar onde o unico sintoma seria o laco mensal parar de
+      // rodar com um diagnostico que manda procurar a coisa errada. (Regressao introduzida junto com
+      // a propria U4-b e achada pela lente que EXECUTA — nenhum teste unitario podia ve-la.)
+      if (row.length >= 2 && normalise(row[1]).includes("%")) {
+        throw new Error(
+          `row with ${row.length} columns carrying a percentage — the published table has 3, so a ` +
+            `column was REMOVED and the positional read would shift silently: ${JSON.stringify(row)}`,
+        );
+      }
+      continue;
+    }
     const [rawName, rawPct, rawMin] = row.map(normalise);
     if (!rawPct.includes("%")) continue; // header row
 
@@ -148,8 +168,8 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
     // resposta honesta é recusar em voz alta em vez de publicar números plausíveis e errados.
     if (row.length !== 3) {
       throw new Error(
-        `row with ${row.length} columns — the published table has 3, so a column was inserted or ` +
-          `removed and the positional read would shift silently: ${JSON.stringify(row)}`,
+        `row with ${row.length} columns — the published table has 3, so a column was INSERTED and ` +
+          `the positional read would shift silently: ${JSON.stringify(row)}`,
       );
     }
 

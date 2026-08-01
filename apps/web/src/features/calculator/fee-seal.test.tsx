@@ -250,8 +250,14 @@ describe("a janela de obsolescencia cobre o ciclo do laco (T052 / FR-020b emenda
 
   // A propriedade, dita sobre a constante e nao sobre um numero magico: a janela nunca pode ser
   // menor que o ciclo, senao o alarme volta a disparar por construcao.
-  it("a janela e MAIOR que o ciclo do laco — a garantia, nao a coincidencia", () => {
-    expect(STALENESS_DAYS).toBeGreaterThan(31);
+  // U5-d — a assercao era `> 31`, e trocar `>` por `>=` na implementacao nao a fazia reprovar: ela
+  // prendia a ORDEM DE GRANDEZA, nao a fronteira. Agora prende as duas pontas do intervalo com o
+  // valor exato, e qualquer mexida na cadencia ou na folga tem de passar por aqui.
+  it("a janela e ciclo + folga, e as duas pontas sao exatas", () => {
+    expect(STALENESS_DAYS).toBe(45);
+    expect(STALENESS_DAYS).toBeGreaterThan(31); // nunca menor que o ciclo — a propriedade
+    expect(selo(45)).toMatchObject({ stale: false }); // no limite ainda confia
+    expect(selo(46)).toMatchObject({ stale: true }); // um dia depois, avisa
   });
 });
 

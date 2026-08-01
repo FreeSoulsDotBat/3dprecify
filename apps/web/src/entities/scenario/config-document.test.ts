@@ -247,3 +247,55 @@ describe("the envelope types are structurally independent of PriceInput/BomResul
     expectTypeOf<ScenarioLastKnownInput>().not.toEqualTypeOf<PriceInput>();
   });
 });
+
+// 014/T065+T066+T068 (US8, SC-809/FR-003a) — a categoria acompanha o que o vendedor salva.
+//
+// A regra que governa isto e a mesma do ADR-0021 e vale a pena dizer inteira: o cenario guarda
+// INTENCAO, nao valor. "O vendedor escolheu Calcados" e intencao; "Calcados custa 14%" e valor, e o
+// valor continua sendo resolvido AO VIVO contra o catalogo de hoje. Congelar a aliquota aqui seria
+// transformar o cenario num snapshot, que e outro produto (E4).
+//
+// E o campo e ADITIVO: a AUSENCIA da chave e o que faz um cenario de antes do 014 reabrir exatamente
+// como reabria. Nao ha migracao, nao ha coluna nova — o JSONB do ADR-0021 ja aceitava.
+describe("categoria no cenario — intencao, aditiva, e a ausencia preserva o passado (T068)", () => {
+  const slot = (over: Partial<ScenarioChannelSlotState> = {}): ScenarioChannelSlotState => ({
+    marketplace: "AMAZON",
+    modality: "PROFISSIONAL",
+    commissionPct: { value: 14, overridden: false },
+    fixedFee: { value: 0, overridden: false },
+    minPerItem: { value: 1, overridden: false },
+    freightCost: { value: 0, overridden: false },
+    ...over,
+  });
+
+  it("categoria escolhida e persistida", () => {
+    expect(serializeChannelIntent(slot({ category: "calcados" }))).toMatchObject({
+      category: "calcados",
+    });
+  });
+
+  // A distincao que importa: ausencia NAO e string vazia. Um `""` gravado seria uma escolha vazia —
+  // o resolvedor casaria contra nada e o selo leria como categoria perdida.
+  it("sem categoria, a chave e OMITIDA — nunca gravada vazia", () => {
+    for (const c of [undefined, ""]) {
+      const doc = serializeChannelIntent(slot({ category: c }));
+      expect(doc).not.toHaveProperty("category");
+    }
+  });
+
+  // T066/SC-809 — o documento de antes do 014 nao tem a chave, e isso continua sendo legal.
+  it("um cenario de ANTES do 014 continua valido e abre sem categoria", () => {
+    const antigo = { marketplace: "AMAZON", modality: "PROFISSIONAL" };
+    expect("category" in antigo).toBe(false);
+    // O mesmo slot, serializado hoje sem escolha, produz o MESMO documento — nao ha churn.
+    expect(serializeChannelIntent(slot())).toEqual(antigo);
+  });
+
+  it("categoria e override convivem: uma e intencao, o outro e valor", () => {
+    const doc = serializeChannelIntent(
+      slot({ category: "calcados", commissionPct: { value: 16, overridden: true } }),
+    );
+    expect(doc.category).toBe("calcados");
+    expect(doc.feeOverrides).toEqual({ commissionPct: "16" });
+  });
+});

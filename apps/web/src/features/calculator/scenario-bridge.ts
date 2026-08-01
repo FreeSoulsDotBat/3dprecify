@@ -60,6 +60,9 @@ function channelIntentToForm(c: ScenarioConfig["channels"][number]): ChannelSlot
   return {
     marketplace: c.marketplace as MarketplaceId,
     modality: (c.modality ?? "") as Modality,
+    // T068 — ausente vira "", que e o estado "sem categoria" do formulario. Um cenario de antes do
+    // 014 reabre identico ao que reabria (SC-809).
+    category: c.category ?? "",
     commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
     fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
     minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
@@ -112,6 +115,7 @@ export function buildScenarioConfig(args: {
     return {
       marketplace: slot.marketplace,
       modality: slot.modality,
+      category: slot.category,
       commissionPct: field("commissionPct"),
       fixedFee: field("fixedFee"),
       minPerItem: field("minPerItem"),

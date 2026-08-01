@@ -153,3 +153,22 @@ describe("productSummary — the row line (§1.1: refs, never a stored price)", 
     );
   });
 });
+
+// 014/T067 (US8, FR-003a) — a assimetria decidida pelo dono na Clarification de 2026-07-28:
+// **cenários sim, produtos de catálogo não**.
+//
+// A razão não é economia de campo, é o que cada objeto SIGNIFICA. Um produto de catálogo é uma peça
+// que o vendedor imprime — ela não tem canal, não tem marketplace e não tem categoria de anúncio; a
+// categoria pertence à decisão de ONDE anunciar, que é do cenário. Guardá-la no produto criaria uma
+// verdade duplicada, e no dia em que as duas divergissem ninguém saberia qual manda.
+//
+// O teste existe porque a ausência é fácil de "consertar" por engano: alguém vê `category` no
+// formulário, não a vê no produto, e a acrescenta achando que esqueceram.
+describe("produto de catálogo NÃO ganha campo de categoria (T067/FR-003a)", () => {
+  it("o mapeamento do formulário para o produto não carrega categoria", () => {
+    const bundle = productToForm(linked);
+    // Mesmo com a categoria preenchida no formulário — que é de onde ela viria —, o produto não a leva.
+    bundle.values.channels = bundle.values.channels.map((c) => ({ ...c, category: "calcados" }));
+    expect(JSON.stringify(formToProductIn(bundle))).not.toContain("calcados");
+  });
+});
