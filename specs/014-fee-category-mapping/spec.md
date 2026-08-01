@@ -285,8 +285,10 @@ old→new por categoria; rodar contra uma fonte quebrada e verificar que **não*
 
 ### User Story 5 — Quando o robô falha, o selo conta a verdade (Priority: P2)
 
-O selo de obsolescência de 30 dias é o *dead-man's switch* embutido do app. Se o laço mensal morrer, o usuário fica
-sabendo.
+O selo de obsolescência de **45 dias** (`ciclo 31 + folga de entrega 14`) é o *dead-man's switch* embutido do app.
+Se o laço mensal morrer, o usuário fica sabendo — 15 dias depois do que ficaria com 30, e essa é a troca declarada
+no **Adendo A14** do ADR-0010 (2026-08-01). O sinal voltado ao **dono** é outro e é imediato: a ausência do PR
+mensal.
 
 **Why this priority**: sem isso, uma automação quebrada é indistinguível de uma automação funcionando — e o produto
 mentiria por omissão.
@@ -381,8 +383,9 @@ como os demais slots não sobrescritos.
   para o PR, para decisão humana.
 - **A credencial do ML expira ou é revogada.** A metade ML falha; a metade Amazon **continua funcionando** — as duas
   não compartilham destino.
-- **O agendamento não dispara** (fila do GitHub, repositório inativo, workflow desabilitado). O selo de 30 dias
-  expõe isso ao usuário sem depender de ninguém observar a automação.
+- **O agendamento não dispara** (fila do GitHub, repositório inativo, workflow desabilitado). O selo de **45 dias**
+  expõe isso ao usuário sem depender de ninguém observar a automação — e a ausência do PR mensal expõe ao dono
+  imediatamente (Adendo A14 do ADR-0010).
 - **Duas entradas casam com a mesma especificidade.** O desempate precisa ser determinístico e independente da ordem
   do arquivo — nunca "a primeira que aparecer".
 - **Uma faixa de preço sem comissão.** Hoje passa na validação e pré-preenche 0% sob selo de referência (achado
@@ -551,8 +554,13 @@ como os demais slots não sobrescritos.
 - **SC-805**: Uma atualização de catálogo, em qualquer camada, **nunca reduz cobertura**.
 - **SC-806**: O job mensal **nunca faz merge** e **nunca publica** sozinho; falha de leitura, ou parse vazio ou
   encolhido além do limiar declarado, resulta em **nenhum** PR, artefato intocado e alerta.
-- **SC-807**: `lastReviewed` avança **somente** por reverificação real; quando o laço para de funcionar, o selo de
-  30 dias dispara e o vendedor lê "desatualizada".
+- **SC-807** *(atualizada 2026-08-01 — Clarification + **Adendo A14** do ADR-0010)*: `lastReviewed` avança
+  **somente** por reverificação real; quando o laço para de funcionar, o selo de **45 dias**
+  (`ciclo 31 + folga de entrega 14`) dispara e o vendedor lê "desatualizada". A metade que este critério de fato
+  garante — `lastReviewed` só avançar por releitura da fonte — foi **reforçada** no mesmo incremento (T053 + a
+  validação de formato e não-futuro de `COLLECTED_AT`), não enfraquecida: o que mudou foi o limiar em que o
+  detector fala com o vendedor, não a existência dele. O sinal de vida voltado ao **dono** é outro e é imediato —
+  a ausência do PR mensal (`contracts/category-tree.md` §C3).
 - **SC-808**: Um vendedor que **não** escolhe categoria não fica pior do que antes do 014 — sem regressão em
   pré-fill, honestidade de selo ou comportamento offline.
 - **SC-809**: Todas as garantias de aceite de E1–E6 passam inalteradas — calculadora offline gratuita, recomputação

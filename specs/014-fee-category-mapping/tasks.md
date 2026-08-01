@@ -645,6 +645,30 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > ao rodar — ela quase escapou por isso, e a suite inteira era cega a ela porque o vitest resolve o
 > que o `node` recusa.
 
+**Follow-ups da revisao adversarial da US5 (2026-08-01) — o bloqueio foi resolvido; estes ficam**
+
+> O bloqueio era de REGISTRO, nao de codigo: o ADR-0010 §442 proibia enfraquecer o selo de 30 dias, e a
+> fatia o levou a 45 sem tocar no ADR. Resolvido pelo **Adendo A14** datado e autorizado, com a
+> condicao escrita de que ele deve ser REABERTO se a T049 for abandonada — porque a premissa dele (o
+> PR mensal como sinal de vida do dono) so vale quando o laco existir.
+
+- [ ] **U5-a [MEDIO] — a T054 esta marcada contra a SC-805 sem que codigo ou teste compare COBERTURA
+  uma unica vez.** O teste rotulado "a premissa do teste, MEDIDA" mede um objeto que ele mesmo
+  fabrica. A regra implementada e `source === "seed"`, que e uma PROXY para cobertura, nao a cobertura.
+  Se alguem quiser a garantia literal da SC-805, ela ainda nao existe
+- [ ] **U5-b [BAIXO] — o ramo do CACHE em `adoptCatalog`** passa pela mesma porta do servido
+  (`use-fee-catalog.ts:149`) e a justificativa escrita so fala do endpoint; o bloco de teste da T054
+  nao exercita essa porta. Latente: ativa no dia da **T032** (regenerar a semente)
+- [ ] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
+  justamente o unico arquivo que o `node` executa e um dos dois que a US5 alterou
+- [ ] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
+  reprova. A assercao prende a ORDEM de grandeza, nao a fronteira exata
+- [ ] **U5-e — o NUL em `determinantKey`** (`fee-catalog.ts`) continua la. O `.gitattributes` devolveu
+  a visibilidade do diff, mas a causa raiz mexe em geracao de chave no dominio de preco e pede teste
+  proprio — nao foi feita de carona
+- [ ] **U5-f — a fronteira do dia 45/46 nunca foi medida em NAVEGADOR**, so por unidade. A
+  homologacao cobriu 35 e 50. Risco baixo, mas e nao-medido, nao "ok"
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
