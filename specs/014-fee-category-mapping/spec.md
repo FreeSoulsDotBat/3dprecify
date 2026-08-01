@@ -34,6 +34,21 @@ máquina" listado no ADR §A11 não se materializa.
 
 ## Clarifications
 
+### Session 2026-08-01
+
+- Q: A FR-020b manda medir a obsolescencia contra a data de ENTREGA. O catalogo chega por tres caminhos
+  com idades diferentes (semente empacotada, cache persistido, endpoint servido) — qual e a "entrega"?
+  -> A: **Nenhum dos tres. O relogio CONTINUA em `lastReviewed`, e o que muda e o TAMANHO da janela.**
+  O risco que o selo mede e a Amazon ter mudado a tarifa desde que **conferimos** — nao o tempo que o
+  valor levou para chegar. Mover o relogio para a entrega tornaria "fresco" um numero que ninguem
+  verifica ha meses (uma instalacao nova de um bundle velho, ou um app que ninguem atualizou), o que e
+  uma mentira MAIOR do que o falso positivo que a FR-020b queria corrigir.
+  O falso positivo era real, mas a causa nao era o relogio: era a **janela ter exatamente o tamanho do
+  ciclo**. Com o laco mensal e 30 dias, todo valor passa os ultimos dias do ciclo gritando
+  "desatualizada" mesmo com o robo funcionando. A janela passa a ser `ciclo do laco + folga de
+  entrega`, de modo que o alarme so dispare quando algo REALMENTE falhou — o robo nao releu, ou a
+  leitura nao foi entregue.
+
 ### Session 2026-07-28
 
 - Q: O que acontece quando o vendedor não escolhe categoria? → A: **Híbrido** — usar o catch-all **publicado** quando
@@ -469,10 +484,16 @@ como os demais slots não sobrescritos.
   (`entries[0]`) é removido, não ajustado.
 - **FR-019**: O sistema MUST expor no PR, para decisão humana, toda categoria que desapareceu da fonte.
 - **FR-020**: `lastReviewed` MUST avançar **somente** mediante reverificação real contra a fonte.
-- **FR-020b**: A janela de obsolescência MUST ser medida contra a data em que o valor **chegou ao usuário**, não
-  contra a data em que o robô leu a fonte. Sem isso, o selo acusa "desatualizada" durante todo o intervalo entre a
-  leitura e a entrega (merge + corte de release + deploy) — **um falso positivo estrutural, todo mês, sobre valores
-  corretos e reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar.
+- **FR-020b** *(emendada 2026-08-01 — ver Clarifications)*: A janela de obsolescência MUST ser dimensionada como
+  **ciclo do laço + folga de entrega**, e MUST continuar sendo medida contra `lastReviewed`. O alarme MUST significar
+  "algo falhou" — o robô não releu, ou a leitura não foi entregue —, nunca "o ciclo está terminando".
+  *Texto original, preservado porque o problema que ele nomeia é real e continua endereçado*: "a janela MUST ser
+  medida contra a data em que o valor chegou ao usuário… sem isso, o selo acusa 'desatualizada' durante todo o
+  intervalo entre a leitura e a entrega — **um falso positivo estrutural, todo mês, sobre valores corretos e
+  reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar."
+  *Por que a emenda*: mover o relógio para a entrega faria um número não-verificado há meses parecer fresco assim que
+  chegasse a um aparelho novo — a mentira inversa, e maior. A causa do falso positivo era a janela ter o tamanho exato
+  do ciclo, não o ponto de partida do relógio.
 - **FR-020a**: O job MUST **sempre abrir PR** e MUST NOT escrever direto no branch de integração. A política
   dividida por classe de diff decide **apenas a dispensa de revisão**: um PR cujo diff seja **exclusivamente**
   `lastReviewed` MAY ser auto-mergeado; um PR que toque **qualquer campo de dinheiro** MUST aguardar revisão
