@@ -6,6 +6,9 @@ import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
 import { CheckoutReturnPanel } from "@/features/billing/checkout-return";
 import { OfferPanel } from "@/features/billing/offer-panel";
+import { PlanActions, planCaption, planDetail, planNote } from "@/features/billing/plan-panel";
+import { planView } from "@/features/billing/plan-view";
+import { useSubscription } from "@/features/billing/use-subscription";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { requestSignOut } from "@/shared/session/sign-out-guard";
@@ -86,35 +89,26 @@ function IdentitySection() {
 // ≤1-refresh just-granted window (ADR-0012). Display-only: the SERVER gates everything (IV).
 function PlanSection() {
   const q = useEntitlement();
+  const sub = useSubscription();
   const t = messages.conta;
   const tb = messages.billing;
   const [offerOpen, setOfferOpen] = useState(false);
 
-  let badge: ReactNode;
-  let caption: string | null = null;
-  // E6/T015 (US1 → Q11): "Assinar Premium" is the offer's door for a free or lapsed account
-  // (lapsed doubles as the re-subscribe path). Absent for active/courtesy/beta — they already
-  // have it, and the offer's own "já é Premium" guard (§2.3) would only repeat the badge.
-  let showSubscribe = false;
-  if (q.isError) {
-    badge = <Badge tone="neutral">{t.planUnknown}</Badge>;
-  } else if (q.data?.status === "active") {
-    badge = <Badge tone="success">{t.planPremium}</Badge>;
-    const source = q.data.source ? t.planSources[q.data.source as "beta" | "comp"] : null;
-    const expires = q.data.expiresAt
-      ? `${t.planExpires} ${new Date(q.data.expiresAt).toLocaleDateString("pt-BR")}`
-      : null;
-    caption = [source, expires].filter(Boolean).join(" · ") || null;
-  } else if (q.data?.status === "lapsed") {
-    badge = <Badge tone="neutral">{t.planLapsed}</Badge>;
-    caption = t.planLapsedHint;
-    showSubscribe = true;
-  } else {
-    badge = <Badge tone="neutral">{t.planFree}</Badge>;
-    showSubscribe = true;
-  }
-  // 009/T011b — the plan shown is the server's LAST answer, not a fresh one (offline). Saying so is
-  // the price of using it: the badge is honest about the plan AND about how it knows.
+  // E6/US6 (T026) — o painel COMPOE duas verdades do servidor (ledger + espelho do PSP) e nao
+  // infere nenhuma (SC-708). A regra mora em `plan-view.ts`, pura e testada; aqui so ha
+  // renderizacao. Enquanto a assinatura ainda nao respondeu, `undefined` faz o painel cair para a
+  // superficie de entitlement — que e a resposta certa, e nao um estado de espera inventado.
+  const state = planView({
+    entitlement: q.data,
+    subscription: sub.data,
+    failed: q.isError,
+  });
+  const { badge: badgeText, tone } = planCaption(state);
+  const badge: ReactNode = <Badge tone={tone}>{badgeText}</Badge>;
+  let caption: string | null = planDetail(state);
+  const note = planNote(state);
+  // 009/T011b — o plano exibido e a ULTIMA resposta do servidor, nao uma fresca (offline). Dizer
+  // isso e o preco de usa-la: o selo e honesto sobre o plano E sobre como ele sabe.
   if (q.stale) {
     caption = [caption, t.planStale].filter(Boolean).join(" · ");
   }
@@ -132,13 +126,14 @@ function PlanSection() {
               </span>
             )}
           </div>
+          {note && (
+            <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
+              {note}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {showSubscribe && (
-            <Button size="sm" onClick={() => setOfferOpen(true)}>
-              {tb.subscribeAction}
-            </Button>
-          )}
+          <PlanActions state={state} onSubscribe={() => setOfferOpen(true)} />
           <Button
             variant="ghost"
             size="sm"

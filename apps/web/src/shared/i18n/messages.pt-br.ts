@@ -870,6 +870,40 @@ export const messages = {
   // that implies success before the server confirms it (§0.1/§3.2). "Cancelar" stays a dismiss-ban
   // (FR-014) here — nothing on this surface uses it; the action verb lands in PR-B (US4).
   billing: {
+    // E6/US6 (T026) — o painel do plano na Conta. Estas frases moram AQUI, e nao em `conta`, porque
+    // o guarda de honestidade (`copy-honesty.test.ts`) isenta exatamente UM namespace: `billing`. A
+    // tela e a Conta, o ASSUNTO e cobranca — e foi o guarda que apontou o erro quando as escrevi no
+    // lugar errado. Copy de `ux-billing` §4.1/§5: cada frase e verdade do SERVIDOR (ledger +
+    // espelho do PSP), nunca estado inferido no cliente (SC-708).
+    planRenews: "renova em",
+    planActiveUntil: "ativo até",
+    planWontRenew: "não renova",
+    planCanceledHint: "Seus itens salvos continuam disponíveis; nada é apagado.",
+    // §4.3/§10-F1 — pendente de ratificacao do dono. Sem esta linha, "nao renova ate {data}" implica
+    // um corte que a cortesia mais longa NAO vai causar.
+    planCourtesyOutlives: "Seu acesso de cortesia continua depois disso.",
+    planGrace: "pagamento pendente — regularize",
+    planGraceDeadline: "até {data}, senão o Premium pausa.",
+    planManage: "Gerenciar assinatura",
+    planUpdatePayment: "Atualizar forma de pagamento",
+    planCancel: "Cancelar assinatura",
+    planResubscribe: "Assinar novamente",
+    planPeriods: {
+      monthly: "Plano mensal",
+      annual: "Plano anual",
+    },
+    // O dialogo de cancelamento (§5): sem culpa, sem escassez falsa. Diz o que ele MANTEM, ate
+    // quando, que nada e apagado, e que da para voltar. "Voltar" e a saida segura (FR-014).
+    cancelTitle: "Cancelar a assinatura?",
+    cancelBody: "Seu Premium continua ativo até {data}.",
+    cancelBodyNoDate: "Seu Premium continua ativo até o fim do período já pago.",
+    cancelFreeze:
+      "Depois disso, seus itens salvos ficam disponíveis só para leitura — nada é apagado, e você pode reativar quando quiser.",
+    cancelBack: "Voltar",
+    cancelConfirm: "Cancelar assinatura",
+    cancelDone: "Assinatura cancelada. Premium ativo até {data}.",
+    cancelDoneNoDate: "Assinatura cancelada. Premium ativo até o fim do período já pago.",
+    cancelFailed: "Não foi possível cancelar agora. Nada mudou — tente de novo em instantes.",
     // offer (US1)
     offerTitle: "Assinar o Premium",
     offerFreeLead: "A calculadora é grátis e continua grátis.",

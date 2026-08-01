@@ -304,13 +304,41 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 9: User Story 6 — Conta: the billing home (Priority: P2)
 
-- [ ] T025 [US6] Write FAILING pytest + vitest — `GET /billing/subscription` per contract (null for
-      no-subscription accounts; grace shows `graceUntil`); the dual-grant display rule (subscription state
-      wins when present; courtesy grant otherwise; active while ANY valid grant — 2026-07-20 clarification);
-      FE Conta plan panel renders every state with the honest copy ("pagamento pendente — regularize até
-      {data}"; "ativo até {data}, não renova"), NO client-inferred state (SC-708). Observe failing.
-- [ ] T026 [US6] Implement the endpoint + `features/billing` Conta panel + cancel/manage affordances
-      routing to the MP-managed flow. Contract ripple regen idempotent 2×. Tests green.
+- [x] T025 [US6] Testes escritos primeiro — `plan-view.test.ts` (14, a REGRA) + `plan-panel.test.tsx`
+      (12, a RENDERIZACAO). O `GET /billing/subscription` ja existia do T022, entao a US6 e a
+      composicao das duas verdades do servidor mais a tela.
+      Varias assercoes sao sobre AUSENCIA de proposito: as frases do painel sao MUTUAMENTE
+      EXCLUDENTES — "Premium expirado" e "ativo ate {data}" descrevem realidades opostas —, e um
+      teste so de presenca passaria com as duas na tela ao mesmo tempo.
+- [x] T026 [US6] `plan-view.ts` (decisao pura) + `plan-panel.tsx` (so renderizacao) + `useSubscription`
+      + painel ligado na Conta. gate:all verde: 1205 front (eram 1179), 424 back.
+      **A SC-708 virou estrutural, nao disciplina**: `plan-panel.tsx` recebe um `PlanState` ja
+      resolvido e NAO tem acesso ao ledger nem ao espelho do PSP — ele nao CONSEGUE inferir estado de
+      cobranca. E `PlanState` e uniao discriminada, entao nenhum `if` esquecido produz painel sem
+      estado (mesma forma do `RefreshOutcome` da 014).
+      **Precedencia** (clarificacao 2026-07-20): a assinatura vence quando existe; a cortesia responde
+      quando nao ha assinatura; ativo enquanto QUALQUER grant valido existir. O erro do LEDGER vence
+      ate uma assinatura em maos — o espelho do PSP diz o que foi contratado, nao se o premium esta
+      ligado (Constituicao IV).
+      **`pending` nao vira premium**: um checkout aberto e nao concluido nao move o ledger (SEC-301).
+      **`useSubscription` NAO tem cache de aparelho**, ao contrario do `useEntitlement` — deliberado:
+      aquele e cacheado porque o premium precisa sobreviver a um boot offline (ADR-0018 §9); este nao
+      tem esse dever, e uma assinatura guardada so poderia dizer "nao renova" sobre estado ja mudado.
+
+> **DECISAO PENDENTE DO DONO — ux-billing §4.3 / §10-F1 (a recomendacao e ~70% e o proprio doc pede
+> ratificacao).** Um vendedor com assinatura CANCELADA que tambem carrega grant de cortesia mais
+> longo nao vai cair no fim do periodo. Dizer so "ativo ate 31/12 · nao renova" implica um corte que
+> nao vai acontecer. **Implementado como o doc recomenda**: quando o `expiresAt` do ledger passa do
+> fim do periodo da assinatura, o painel acrescenta "Seu acesso de cortesia continua depois disso."
+> A borda e ESTRITA (empate nao conta — os dois acabam juntos e a frase ja esta certa). Reverter e
+> uma linha (`planNote` em `plan-panel.tsx`); mantive porque a alternativa e renderizar uma frase
+> que se sabe enganosa, e a Constituicao II nao deixa escolher isso por omissao.
+
+> **O guarda de honestidade apanhou um erro meu de lugar.** Escrevi a copy de cancelamento no
+> namespace `conta`, e o `copy-honesty.test.ts` reprovou: ele isenta EXATAMENTE um namespace —
+> `billing` — porque e la que provedor real, preco real e politica de cancelamento sao a verdade
+> ratificada. A tela e a Conta; o ASSUNTO e cobranca. Copy movida, guarda intacto — nenhuma isencao
+> foi alargada para acomodar o meu erro.
 
 ## Phase 10: PR-B hardening & delivery
 
