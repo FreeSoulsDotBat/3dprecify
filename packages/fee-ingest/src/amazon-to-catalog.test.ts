@@ -415,3 +415,56 @@ describe("collectedAtFor — uma leitura capturada nao pode se carimbar de hoje 
     ).toEqual({ ok: true, date: "2026-03-15" });
   });
 });
+
+// Achado da revisao adversarial (2026-08-01), MEDIDO executando o gerador — a lente que RODA foi a
+// unica que podia ver isto, e a revisao anterior, 100% read-only, nao viu.
+//
+//   COLLECTED_AT=banana node src/build-amazon.mjs --from <fixture>   -> exit 0
+//   artefato: catalogVersion "banana.0" · generatedAt "bananaT00:00:00.000Z"
+//             lastReviewed "banana" nas 78 entradas
+//
+// O encadeamento e o que torna isso dinheiro e nao tipografia: o schema aceita
+// (`z.string().min(1)` nos tres campos), toda a suite passa sobre o artefato envenenado, e `isStale`
+// devolve FALSE numa data ilegivel ("never cry wolf"). Ou seja, o selo declara aqueles valores
+// frescos PARA SEMPRE — a mentira exata que o docstring da T053 chama de "o pior tipo que este selo
+// pode contar".
+//
+// ATRIBUICAO honesta: o vetor e HERDADO (o `develop` ja fazia `process.env.COLLECTED_AT ?? hoje` sem
+// validar). O que a T053 fez foi ALARGAR a exposicao, tornando a variavel obrigatoria no caminho
+// `--from` e assim promovendo uma string digitada a mao a fluxo normal. Por isso a validacao vale
+// para TODOS os caminhos, e nao so para o capturado.
+describe("collectedAtFor — uma data tem de ser uma data (revisao 2026-08-01)", () => {
+  it("recusa o que nao e uma data ISO, em QUALQUER caminho", () => {
+    for (const fromFixture of [true, false]) {
+      const v = collectedAtFor({ fromFixture, envDate: "banana", today: "2026-08-01" });
+      expect(v.ok, `fromFixture=${fromFixture}`).toBe(false);
+      expect(v.ok === false && v.reason).toMatch(/YYYY-MM-DD/);
+    }
+  });
+
+  it("recusa uma data ISO que nao existe no calendario", () => {
+    expect(
+      collectedAtFor({ fromFixture: true, envDate: "2026-02-31", today: "2026-08-01" }).ok,
+    ).toBe(false);
+  });
+
+  // Uma leitura nao pode ter acontecido amanha. Um `lastReviewed` no futuro nunca envelhece, entao o
+  // selo ficaria fresco por tempo indeterminado — o mesmo dano do `banana`, por outra porta.
+  it("recusa data no FUTURO — uma releitura nao acontece amanha", () => {
+    const v = collectedAtFor({ fromFixture: false, envDate: "2026-12-01", today: "2026-08-01" });
+    expect(v.ok).toBe(false);
+    expect(v.ok === false && v.reason).toMatch(/futuro|future/i);
+  });
+
+  it("aceita hoje e o passado — reprocessar uma captura antiga continua sendo o caso de uso", () => {
+    expect(
+      collectedAtFor({ fromFixture: true, envDate: "2026-03-15", today: "2026-08-01" }),
+    ).toEqual({
+      ok: true,
+      date: "2026-03-15",
+    });
+    expect(
+      collectedAtFor({ fromFixture: false, envDate: "2026-08-01", today: "2026-08-01" }),
+    ).toEqual({ ok: true, date: "2026-08-01" });
+  });
+});

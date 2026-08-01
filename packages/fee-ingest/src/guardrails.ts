@@ -194,7 +194,7 @@ export function collectedAtFor(opts: {
   envDate?: string | undefined;
   today: string;
 }): CollectedAtVerdict {
-  if (opts.envDate) return { ok: true, date: opts.envDate };
+  if (opts.envDate) return validarData(opts.envDate, opts.today);
   if (opts.fromFixture) {
     return {
       ok: false,
@@ -204,4 +204,37 @@ export function collectedAtFor(opts: {
     };
   }
   return { ok: true, date: opts.today };
+}
+
+/**
+ * Uma data de coleta tem de ser uma DATA — achado da revisao adversarial de 2026-08-01, medido
+ * executando o gerador: `COLLECTED_AT=banana` saia com exit 0 e escrevia `catalogVersion "banana.0"`,
+ * `generatedAt "bananaT00:00:00.000Z"` e `lastReviewed "banana"` nas 78 entradas.
+ *
+ * O que torna isso DINHEIRO e nao tipografia: o schema aceita (`z.string().min(1)` nos tres campos),
+ * a suite inteira passa sobre o artefato envenenado, e `isStale` devolve FALSE numa data ilegivel
+ * ("never cry wolf"). O selo declara aqueles valores frescos PARA SEMPRE.
+ *
+ * O vetor e HERDADO — o gerador ja fazia `process.env.COLLECTED_AT ?? hoje` sem validar. A T053 o
+ * ALARGOU ao tornar a variavel obrigatoria no caminho `--from`, promovendo uma string digitada a mao
+ * a fluxo normal. Por isso a validacao vale para TODOS os caminhos, e nao so para o capturado.
+ *
+ * O futuro tambem e recusado: um `lastReviewed` amanha nunca envelhece, entao o selo ficaria fresco
+ * por tempo indeterminado — o mesmo dano, por outra porta.
+ */
+function validarData(valor: string, today: string): CollectedAtVerdict {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+    return { ok: false, reason: `COLLECTED_AT="${valor}" is not a date in YYYY-MM-DD form` };
+  }
+  const t = Date.parse(`${valor}T00:00:00.000Z`);
+  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== valor) {
+    return { ok: false, reason: `COLLECTED_AT="${valor}" is not a real calendar date` };
+  }
+  if (valor > today) {
+    return {
+      ok: false,
+      reason: `COLLECTED_AT="${valor}" is in the future — a re-read cannot have happened tomorrow`,
+    };
+  }
+  return { ok: true, date: valor };
 }
