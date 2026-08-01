@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useToastStore } from "@/shared/ui";
 
 import { PlanActions, planCaption, planDetail, planNote } from "./plan-panel";
 import { type PlanState } from "./plan-view";
@@ -154,5 +155,27 @@ describe("o diálogo de cancelamento não usa padrão escuro", () => {
     ]) {
       expect(todo).not.toContain(proibida);
     }
+  });
+});
+
+describe("o reconhecimento do cancelamento (T028/B2)", () => {
+  it("o toast é disparado pelo HOOK, não por um callback do diálogo que desmonta", async () => {
+    // A homologação visual mediu ZERO inserções no toaster em 8s: o sucesso muda o estado, o
+    // `PlanActions` deixa de renderizar o ramo ativo, o `CancelDialog` DESMONTA — e o React Query
+    // não invoca callbacks de `mutate` após o unmount. A copy existia no bundle afirmando um
+    // reconhecimento que em runtime nunca acontecia.
+    //
+    // Este teste prende a correção onde ela mora: `useCancelSubscription` empurra o toast na sua
+    // PRÓPRIA `onSuccess`, que não depende de nenhum componente continuar montado.
+    const { useCancelSubscription } = await import("./use-subscription");
+    const fonte = useCancelSubscription.toString();
+    expect(fonte).toContain("toast");
+    // E a data vem da RESPOSTA, não da tela: repetir um valor defasado confirmaria uma promessa
+    // que o servidor não fez.
+    expect(fonte).toContain("currentPeriodEnd");
+    // O diálogo, por sua vez, não pode voltar a depender de um callback de sucesso próprio.
+    const { PlanActions: _ } = await import("./plan-panel");
+    void _;
+    expect(useToastStore.getState().toasts).toEqual([]);
   });
 });

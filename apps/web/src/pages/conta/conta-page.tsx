@@ -132,7 +132,14 @@ function PlanSection() {
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        {/* T028/B1 — `flex-wrap` NAO e cosmetico aqui. O `.tf-conta__row--plan` ja tem `flex-wrap`,
+            mas ele nao socorria: as acoes sao UM item flex, e um item mais largo que o container nao
+            quebra. MEDIDO a 390px: a linha media 453,5px contra 316px de conteudo do card, o
+            `scrollWidth` da PAGINA ia a 491 (100,5px de transbordo) e o botao "Atualizar" nascia
+            INTEIRAMENTE fora da viewport, em x=396,3. Com o modal aberto o overlay cobria so 390px e
+            sobrava uma faixa clara a direita com o botao solto a mostra. E a tela de quem esta
+            PAGANDO, e viola o invariante duro do ux-billing §0.4. */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <PlanActions state={state} onSubscribe={() => setOfferOpen(true)} />
           <Button
             variant="ghost"

@@ -373,9 +373,58 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       ativa na cortesia) — a REGRA esta coberta em unidade (`plan-view.test.ts`, 3 casos incluindo a
       borda estrita do empate), mas a caminhada em navegador depende da §4.3 que aguarda ratificacao
       do dono. Nao foi esquecida; esta parada no mesmo portao.
-- [ ] T028 qa-produto homologation: every billing state's honest copy at 390px + desktop; the freeze
-      reached through REAL billing (first time in the product's life); adversarial: grace + courtesy
-      combinations, long period dates. Screenshots.
+- [x] T028 homologacao visual (`qa-produto`, opus) — **FAIL 72%** na primeira rodada, **18
+      screenshots + 15 dumps de geometria**, todos os 6 estados alcancados por caminho REAL (o
+      congelado por cobranca aprovada + expiracao, primeira vez na vida do produto). Zero erros de
+      console. Dois bloqueadores, **ambos meus, ambos corrigidos e cravados**:
+
+      **B1 — 100,5px de transbordo a 390px, com o "Atualizar" nascendo FORA da viewport.**
+      `scrollWidth 491` contra `clientWidth 390`; o botao em x=396,3. A causa era estrutural e nao
+      dependia de dado: o `.tf-conta__row--plan` ja tinha `flex-wrap`, mas nao socorria — as acoes
+      sao UM item flex, e um item mais largo que o container nao quebra (453,5px contra 316px). Com
+      o modal aberto o overlay cobria so 390px e sobrava uma faixa clara com o botao solto a mostra.
+      Corrigido com `flex-wrap` no proprio container das acoes.
+      **O guarda que nasceu disso pegou o meu conserto INCOMPLETO** (467 ainda transbordava) antes de
+      eu declarar pronto, e foi provado nao-vacuo por mutacao: sem o `flex-wrap`, 747 contra 390.
+      Nenhuma assercao de texto veria nada disso — `toBeVisible` passa sobre um elemento
+      inteiramente fora da tela.
+
+      **B2 — o toast do §5 nunca renderizava.** MEDIDO com `MutationObserver` armado ANTES do clique
+      e observado por 8s: ZERO insercoes. A causa e o proprio sucesso — ele muda o estado, o
+      `PlanActions` deixa de renderizar o ramo ativo, o `CancelDialog` DESMONTA, e o React Query nao
+      invoca callbacks de `mutate` apos unmount. A copy estava no bundle afirmando um reconhecimento
+      que em runtime nunca acontecia. Movido para o `onSuccess` do HOOK, que nao depende de nenhum
+      componente continuar montado. Verificado em navegador (o toast aparece, com a data do
+      servidor) e preso por teste.
+
+> **A1 (a data que aparece "um dia antes") — MEDIDO CERTO, mas NAO e defeito, e nao vou "consertar".**
+> A homologacao mediu: servidor manda `2027-12-31T00:00:00Z`, a tela mostra 30/12/2027 em
+> `America/Sao_Paulo`. Esta correto: o valor e um INSTANTE, nao uma data — `2027-12-31T00:00:00Z` E
+> `2027-12-30 21:00` no fuso do vendedor, e o grant vale enquanto `now < expires_at`, entao o premium
+> de fato acaba na NOITE DO DIA 30 para ele. Renderizar 31/12 prometeria tres horas que nao existem,
+> e a casa ja tem regra para o sentido do erro: a fronteira favorece o vendedor que paga
+> (`grant_writer`, regra de clock-skew). O que a medicao revela de verdade e uma ambiguidade na
+> ENTRADA do operador (uma cortesia digitada como "31/12" vira 00:00Z), nao na exibicao. Registrado
+> aqui para ninguem "consertar" no sentido errado depois.
+
+> **A2 (MEDIO) — dois botoes vizinhos comecando com "Atualizar"** ("Atualizar forma de pagamento", que
+> vai para o MP, e "Atualizar", que refaz o fetch), a 8px de distancia, no momento em que o vendedor
+> esta ansioso com um cartao recusado. **As DUAS strings sao especificadas** (§4.1 e §4.2, que manda
+> o botao de refetch continuar), entao renomear qualquer uma e decisao de produto/designer, nao
+> minha. O `flex-wrap` do B1 os separa em linhas diferentes a 390px, o que ATENUA e nao elimina.
+
+> **A3 (MEDIO) — a cautela da carencia e so texto**, medido: o selo usa tom `success` (pixels
+> identicos ao estado ATIVA) e as duas frases saem em `var(--text-muted)`, a mesma cor da legenda
+> neutra. O selo verde esta CERTO (o premium segue ativo, §4.1) e a homologacao registrou isso como
+> evidencia A FAVOR da decisao F9 — mas o fallback que o proprio spec preve (tom `info` + prazo
+> explicito) tambem nao foi aplicado. **Decisao do dono/designer.**
+
+> **A4 — a apresentacao da §4.3 foi HOMOLOGADA** (quebra em 3 linhas a 390px, sem transbordo, le
+> bem). A DECISAO segue aguardando o dono.
+
+> **NAO julgado, e dito como tal**: se o deslocamento de fuso atinge as datas de assinatura REAIS
+> depende da hora-do-dia que o MP grava em `currentPeriodEnd`, e o stub nao a reproduz. A
+> homologacao se recusou a homologar ou reprovar esse recorte por inferencia — que e a resposta certa.
 - [ ] T029 `pnpm gate:all` + drift-guard + SC-709. Evidence.
 - [ ] T030 **Owner-gated PR-B → `develop`** (squash). Graph refresh on merge.
 

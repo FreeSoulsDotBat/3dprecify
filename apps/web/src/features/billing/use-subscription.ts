@@ -6,7 +6,9 @@ import {
   cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost,
   getSubscriptionApiV1BillingSubscriptionGet,
 } from "@/shared/api/generated";
+import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
+import { toast } from "@/shared/ui";
 
 // E6 PR-B (T026/US6) — o espelho do PSP que a Conta lê.
 //
@@ -62,7 +64,23 @@ export function useCancelSubscription() {
       }
       return res.data;
     },
-    onSuccess: async () => {
+    onSuccess: async (sub) => {
+      // T028/B2 — o toast e disparado AQUI, e nao num callback passado ao `mutate`.
+      //
+      // MEDIDO: um `MutationObserver` sobre o toaster, armado antes do clique e observado por 8s,
+      // registrou ZERO insercoes. A causa e o sucesso em si: ele muda o `planView` para
+      // `subscription-canceled`, o `PlanActions` deixa de renderizar o ramo ativo e o `CancelDialog`
+      // DESMONTA — e o React Query nao invoca callbacks de `mutate` apos o unmount. A copy existia
+      // no bundle afirmando um reconhecimento que em runtime nunca acontecia.
+      //
+      // O `onSuccess` do HOOK nao depende do componente que desmonta. E a data sai da resposta do
+      // servidor, nao da que estava na tela: se o painel estivesse defasado, repetir o valor antigo
+      // confirmaria uma promessa que o servidor nao fez.
+      const t = messages.billing;
+      const ate = sub?.currentPeriodEnd
+        ? new Date(sub.currentPeriodEnd).toLocaleDateString("pt-BR")
+        : null;
+      toast(ate ? t.cancelDone.replace("{data}", ate) : t.cancelDoneNoDate, { tone: "success" });
       await Promise.all([
         qc.invalidateQueries({ queryKey: SUBSCRIPTION_QUERY_KEY }),
         qc.invalidateQueries({ queryKey: ENTITLEMENT_QUERY_KEY }),

@@ -1,15 +1,7 @@
 import { type ReactNode, useState } from "react";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
-import {
-  Alert,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  toast,
-} from "@/shared/ui";
+import { Alert, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui";
 
 import { type PlanState } from "./plan-view";
 import { useCancelSubscription } from "./use-subscription";
@@ -208,19 +200,12 @@ function CancelDialog({
               loading={cancelar.isPending}
               onClick={() => {
                 setErro(null);
+                // O toast do sucesso vive no `onSuccess` do HOOK (T028/B2): este dialogo
+                // DESMONTA no flip do estado, e um callback preso a ele nunca roda. O `onError`
+                // fica, porque no erro o dialogo continua montado.
                 cancelar.mutate(undefined, {
-                  onSuccess: (sub) => {
-                    onOpenChange(false);
-                    // A data do TOAST vem da resposta do servidor, não da que estava na tela: se o
-                    // painel estivesse defasado, repetir o valor antigo confirmaria uma promessa que
-                    // o servidor não fez.
-                    const ate = data(sub?.currentPeriodEnd ?? null);
-                    toast(ate ? b.cancelDone.replace("{data}", ate) : b.cancelDoneNoDate, {
-                      tone: "success",
-                    });
-                  },
-                  // Nada foi espelhado no servidor quando isto falha (o serviço só espelha depois de
-                  // o MP confirmar), então dizer "nada mudou" é literalmente verdade.
+                  // Nada foi espelhado no servidor quando isto falha (o servico so espelha depois de
+                  // o MP confirmar), entao dizer "nada mudou" e literalmente verdade.
                   onError: () => setErro(b.cancelFailed),
                 });
               }}

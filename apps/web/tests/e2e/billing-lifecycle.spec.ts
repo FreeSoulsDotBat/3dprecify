@@ -106,6 +106,22 @@ test.describe("E6 PR-B — o ciclo reverso (cancelar · carência · congelament
     // O painel de uma assinatura ATIVA fala de renovação e oferece as duas ações.
     await expect(page.getByRole("button", { name: tb.planManage })).toBeVisible();
 
+    // T028/B1 — GEOMETRIA, e a 390px: o painel ativo ganhou três ações numa linha que antes tinha
+    // uma, e a homologação mediu 100,5px de transbordo com o "Atualizar" nascendo INTEIRAMENTE fora
+    // da viewport. Nenhuma asserção de texto veria isso: `toBeVisible` passa sobre um elemento
+    // completamente fora da tela. Este guarda mede a página, que é o único jeito.
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.getByRole("button", { name: tb.planCancel })).toBeVisible();
+    const transbordo = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+    }));
+    expect(
+      transbordo.scroll,
+      `a Conta transborda ${JSON.stringify(transbordo)}`,
+    ).toBeLessThanOrEqual(transbordo.client);
+    await page.setViewportSize({ width: 1280, height: 800 });
+
     await page.getByRole("button", { name: tb.planCancel }).click();
     const dialogo = page.getByRole("dialog");
     // §5 — o diálogo diz o que ele MANTÉM antes de perguntar qualquer coisa.
@@ -114,7 +130,11 @@ test.describe("E6 PR-B — o ciclo reverso (cancelar · carência · congelament
 
     // A tela vira "ativo até {data} · não renova" — e o selo Premium CONTINUA.
     await expect(page.getByText(tb.planWontRenew)).toBeVisible();
-    await expect(page.getByText(tc.planPremium)).toBeVisible();
+    // O toast do §5 aparece agora (T028/B2) e a mensagem dele contém "Premium", então o seletor
+    // precisa ser EXATO — senão o teste morre por ambiguidade e não por defeito.
+    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
+    // E ele é a prova em navegador do conserto: antes, ZERO inserções no toaster em 8 segundos.
+    await expect(page.getByText(new RegExp(tb.cancelDone.split("{data}")[0]))).toBeVisible();
     // A asserção que importa é a AUSÊNCIA: chamar de expirado quem pagou pelo período é a
     // hostilidade que a US4 existe para impedir, e nenhuma asserção de presença acima a veria.
     await expect(page.getByText(tc.planLapsed)).toHaveCount(0);
