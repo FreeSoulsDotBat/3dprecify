@@ -18,10 +18,10 @@ from __future__ import annotations
 import datetime
 from dataclasses import dataclass
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Subscription
+from app.models import EntitlementGrant, Subscription
 
 from .providers.mercadopago import MercadoPagoProvider
 from .reconcile import NON_TERMINAL_STATUSES
@@ -50,7 +50,7 @@ class SubscriptionView:
     grace_until: datetime.datetime | None
 
 
-def _view(sub: Subscription) -> SubscriptionView:
+def _view(sub: Subscription, grace_until: datetime.datetime | None = None) -> SubscriptionView:
     return SubscriptionView(
         plan_period=sub.plan_period,
         status=sub.status,
@@ -64,10 +64,11 @@ def _view(sub: Subscription) -> SubscriptionView:
         # dizer "renova" sobre uma assinatura cancelada. Quem responde "o período ainda corre" é
         # `currentPeriodEnd`, que viaja junto — o cliente compõe a frase com os dois campos.
         cancel_at_period_end=sub.status == "cancelled",
-        # US5 (T023/T024) ainda não existe, e enquanto não existir NÃO HÁ janela de carência: `None`
-        # aqui é a verdade de hoje, não um campo esquecido. Quando a carência entrar, este valor é
-        # DERIVADO do `expires_at` do grant de carência (analyze U1) — nunca uma coluna nova.
-        grace_until=None,
+        # analyze U1 — DERIVADO do `expires_at` do grant de carência, nunca uma coluna nova. É esta
+        # data que a Conta transforma em "regularize até {data}", então ela tem de ser exatamente a
+        # que segura o premium: uma coluna própria poderia divergir do ledger e a tela prometeria um
+        # prazo que o motor não honra. Fora do estado `grace` não há carência, e o campo diz isso.
+        grace_until=grace_until,
     )
 
 
@@ -87,11 +88,33 @@ async def _find(session: AsyncSession, uid: str) -> Subscription | None:
     ).scalar_one_or_none()
 
 
+async def _grace_until(session: AsyncSession, sub: Subscription) -> datetime.datetime | None:
+    """A data até quando a carência segura o premium — o `expires_at` MAIS LONGE entre os grants
+    desta assinatura, e só quando ela está de fato em `grace`.
+
+    O `max` e o certo e nao um detalhe: durante a carencia o grant mais distante E o de carencia
+    (ele nasce em `period_end + janela`, depois do grant do periodo que falhou). Quando o
+    pagamento se recupera, o status sai de `grace` e o campo volta a `None` sozinho.
+    """
+    if sub.status != "grace":
+        return None
+    return (
+        await session.execute(
+            select(func.max(EntitlementGrant.expires_at)).where(
+                EntitlementGrant.subscription_id == sub.id,
+                EntitlementGrant.revoked_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+
+
 async def read_subscription(session: AsyncSession, uid: str) -> SubscriptionView | None:
     """`GET /billing/subscription`. `None` quando a conta não tem assinatura — a Conta então cai
     para a superfície de entitlement em vez de fingir uma assinatura que não existe."""
     sub = await _find(session, uid)
-    return _view(sub) if sub is not None else None
+    if sub is None:
+        return None
+    return _view(sub, await _grace_until(session, sub))
 
 
 async def cancel_subscription(

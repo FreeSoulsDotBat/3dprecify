@@ -271,15 +271,36 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 8: User Story 5 — Grace & dunning (Priority: P2)
 
-- [ ] T023 [US5] Write FAILING pytest — `payment_failed` verified event → ONE append-only grace grant
-      (`expires_at = period_end + max(cadence, 7d)` with T003's confirmed cadence) + status `grace`
-      (VR-707); recovery → real period grant, continuous active; exhaustion → expiry-driven lapse, nothing
-      deleted; grace grant replay-idempotent; **late recovery AFTER lapse (MP retry succeeds post-grace) →
-      honest reactivation via a new period grant** (spec §Edge Cases; data-model §4 row); `graceUntil` in
-      the contract is DERIVED from the grace grant's `expires_at`, never a new column (analyze U1).
-      Observe failing.
-- [ ] T024 [US5] Implement the grace path in `grant_writer.py` + reconcile coverage (a missed failure event
-      heals). Tests green.
+- [x] T023 [US5] FAILING pytest observado — `backend/tests/test_billing_grace.py`, 10 testes.
+      **Vermelho medido: `FFFFFFFFFF`.** A primeira rodada deu `FFFFF...FF` — SETE vermelhos e TRES
+      VERDES, e os tres eram VACUOS pelo mesmo motivo: enquanto `payment_failed` era um no-op,
+      "nada foi escrito" era trivialmente verdade. O de "falha sem periodo pago" ganhou um CONTROLE
+      POSITIVO no mesmo teste (a mesma caminhada, numa assinatura COM periodo pago, TEM de abrir a
+      carencia) — e o contraste e o que prova que o silencio e recusa deliberada, nao ausencia da
+      funcionalidade. Os outros dois ganharam pre-condicao (`len(grants) == 2`): "esgotar" so quer
+      dizer alguma coisa se houver janela para esgotar. Segunda rodada: 10/10 vermelhos.
+      Um erro meu de referencia tambem apareceu aqui: o teste da recuperacao tardia fotografava os
+      grants ANTES de o proprio helper envelhece-los, e acusava `_expire_all` de "esticar grant".
+- [x] T024 [US5] Ramo de carencia em `grant_writer._open_grace` + `graceUntil` derivado. 10/10
+      verdes; com o cancelamento, 22/22.
+      **A janela e MEDIDA, nao chutada** — `MP_RETRY_WINDOW_DAYS = 10` (T003, doc oficial do MP: ate
+      4 retentativas em ~10 dias, auto-cancelamento apos 3 recusas) e `GRACE_FLOOR_DAYS = 7` (piso
+      humano, decisao do dono Q5), e a carencia e o `max` dos dois. O teste crava a REGRA, nao o
+      numero: afirmar "10" ficaria verde se alguem trocasse o piso por engano e vermelho no dia
+      legitimo em que o MP publicasse outra janela.
+      **Ancora em `current_period_end`, nunca em `hoje`**: o relogio do servidor daria carencias de
+      tamanhos diferentes para o MESMO evento conforme a hora em que ele chegasse, e daria 10 dias de
+      premium a quem nunca pagou. Sem periodo pago conhecido, nada e escrito — irmao do L2-N1.
+      **Zero mutacao, zero mudanca de derivacao** (SC-709, ADR-0012 verbatim): UM grant acrescentado
+      com `source="payment"` (o CHECK nao ganha valor novo), status a `grace`, e o lapso continua
+      sendo a expiracao fazendo o trabalho dela. Nada revogado, nada apagado.
+      **A cobertura da reconciliacao veio de graca**: `list_verified_payments` ja alimentava o
+      terminus com os pagamentos recusados — eram um no-op. Acrescentado o ramo, o webhook perdido
+      cicatriza pelo MESMO caminho, e a convergencia e o UNIQUE do inbox (VR-702/SC-703), nao
+      esperteza de aplicacao.
+      **`graceUntil` DERIVADO** (analyze U1) do `expires_at` mais distante entre os grants da
+      assinatura, e so no estado `grace`. Uma coluna propria poderia divergir do ledger, e a tela
+      prometeria um prazo que o motor nao honra.
 
 ## Phase 9: User Story 6 — Conta: the billing home (Priority: P2)
 
