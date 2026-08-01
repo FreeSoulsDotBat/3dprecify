@@ -37,7 +37,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 - [x] T005 Criar o pacote de workspace da ingestão, com `package.json`/tsconfig conforme o padrão do monorepo — em `packages/fee-ingest/`
 - [x] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `packages/fee-ingest/package.json`
-- [ ] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
+- [x] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
 
 ---
 
@@ -55,7 +55,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [x] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
 - [x] T013a [P] Teste: slot **sem determinantes** (modalidade vazia, como em cenários e kits salvos antes do 014) resolve para `null` + "sem referência", e **não** para `entries[0]` — o fallback posicional de `fee-catalog.ts:111` hoje entregaria a alíquota de uma categoria arbitrária sob selo "referência" (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
 - [x] T013b [P] Teste: semente embutida inválida **degrada por marketplace** e não derruba o boot — hoje `use-fee-catalog.ts:14` valida no module load com `.parse()` que lança, o que vira tela branca assim que a semente passar a ser gerada por robô (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
-- [ ] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 ### Implementação
 
