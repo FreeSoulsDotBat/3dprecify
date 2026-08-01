@@ -106,13 +106,28 @@ first inherited from PR-A — and every test was blind to it because vitest is t
 the PR body printed "Sem mudança de tarifa" directly above "Categorias removidas da fonte", because
 every test asserted a string was present and none asserted one was absent. Corollary for any future
 review mandate: **at least one lens must be allowed to EXECUTE the entry point.**
+**014 US5 + US8 + the three reviews' follow-ups SHIPPED to `develop`** (PR #34, `21399f5`, 2026-08-01,
+owner-merged) — the staleness seal (US5), the category as scenario INTENTION (US8, homologated by
+MUTATION: the commission was changed in the served catalog and the same saved scenario repriced
+R$ 35,93 → R$ 44,14 with the category intact), and the follow-ups the three review rounds left.
+**A1-r is NOT fixed and its theory was DISPROVED**: the "valley" shape is neither necessary nor
+sufficient — 5 valley tables (2 built adversarially) gave **0 dominated points in ~71k**, and ML's real
+table already has a valley today, so the ingestion detector the owner chose would have false-positived
+on the ML's first month. The guard shipped instead tests the PROPERTY (`packages/pricing-core/tests/
+band-dominance.test.ts` — "the published announce is the cheapest that delivers the base", 6 tables,
+mutation-proven non-vacuous), which needs no name for the shape. **Follow-up B is CLOSED at the root**
+(the NUL is gone; `.gitattributes` had fixed only `diff`/`blame`, never ripgrep).
+**US5/US8's lesson: a red gate that is INTERMITTENT is worse than one that is deterministic.** CI went
+red with all 107 files PASSING and exit 1 — three `window is not defined` from three `QueryClient`s that
+`use-catalog.test.tsx` never unmounted; the very next commit passed WITHOUT the fix. It reproduces in no
+isolated run, which is exactly why it teaches "just run it again".
 STILL OPEN in 014 (NOT review debt): **US6 ML slice**
-(blocked on the `seguranca` parecer's 8 conditions AND a separate owner authorization), US1 residual, US5,
-US8, Polish. Follow-ups with their measurements in `tasks.md`: **A1-r** (`chooseBand` sorts rank before
-price ⇒ a dominated announce on a "valley" table — reachable exposure TODAY is zero, measured three ways —
-paired with a monotonicity test that asserts generally and proves on one fixture), **B** (a literal NUL
-byte in `determinantKey` makes git treat `fee-catalog.ts` as BINARY, blinding `diff` and `blame` on a
-pricing-schema file), plus 14 lower-severity findings left **unverified, never confirmed**.
+(blocked on the `seguranca` parecer's 8 conditions AND a separate owner authorization), US1 residual,
+Polish. Follow-ups with their measurements in `tasks.md`: **A1-r** (above — needs design, not a patch;
+reachable exposure TODAY is zero, now measured four ways), the monotonicity sweep still to widen,
+**C** (`PRICING_MODEL_VERSION` unbumped over a rewritten implementation — 0 differences measured over
+9 tables × 100k bases), **U5-a/b/f · U8-a/b/c/d**, plus 14 lower-severity findings left **unverified,
+never confirmed**.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
@@ -169,8 +184,9 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
 at specs/014-fee-category-mapping/plan.md
-(014 = the category→fee mapping increment. **PR-A SHIPPED 2026-07-31** (`461a367`) and **US4 SHIPPED
-2026-08-01** (`0e3a951`); US5/US6/US8 + Polish remain — see `specs/014-fee-category-mapping/tasks.md`.
+(014 = the category→fee mapping increment. **PR-A SHIPPED 2026-07-31** (`461a367`), **US4 SHIPPED
+2026-08-01** (`0e3a951`) and **US5+US8+follow-ups SHIPPED 2026-08-01** (`21399f5`); **US6 + US1 residual
++ Polish remain** — see `specs/014-fee-category-mapping/tasks.md`.
 **The monthly loop exists but does NOT fire**: no `fee-refresh.yml` yet (blocked on T069b), and GitHub's
 `schedule` reads from `main`, which the deferred release cut has not reached. Its four
 gates are MEASURED and recorded in ADR-0010 §A13 — read that before touching the ingestion:
