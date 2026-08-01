@@ -462,3 +462,48 @@ describe("o teto mede o marketplace da EXECUCAO, nao o catalogo inteiro (U4-a)",
     );
   });
 });
+
+// U34-a — o corpo do PR mostrava `[object Object]` onde deveria dizer QUAL banda mudou.
+//
+// `leafChanges` desce arrays por indice, entao uma banda que muda de valor sai como
+// `priceBands.0.commissionPct: 15 -> 12`, legivel. Mas quando uma categoria GANHA ou PERDE bandas
+// inteiras — plana viando faixa, ou o contrario —, um lado e `null` e o outro e o array inteiro: nao
+// ha par de objetos para descer, e `String(array)` devolve `[object Object]`.
+//
+// E dinheiro, e e a classe exata que o §C3 existe para impedir: "um diff que o revisor nao consegue
+// ler e um diff que ele aprova sem conferir". PRE-EXISTENTE da US4, achada abrindo o artefato gerado.
+describe("o corpo do PR nunca diz [object Object] sobre dinheiro (U34-a)", () => {
+  const comBandas = (bands: unknown) => ({
+    determinants: { plan: "PROFISSIONAL", category: "moveis" },
+    commissionPct: 15,
+    priceBands: bands,
+    lastReviewed: "2026-07-28",
+  });
+  const cat = (entries: unknown[]) => ({
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [{ marketplace: "AMAZON", categorySpine: [], entries }],
+  });
+
+  it("categoria que GANHA bandas mostra as bandas, nao [object Object]", () => {
+    const antes = cat([comBandas(null)]);
+    const depois = cat([
+      comBandas([{ minPrice: 0, maxPrice: 200, commissionPct: 15, fixedFee: 0 }]),
+    ]);
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    const body = out.kind === "PR" ? out.body : "";
+    expect(body).not.toContain("[object Object]");
+    expect(body).toContain("minPrice"); // o revisor precisa ver a fronteira
+    expect(body).toContain("200");
+  });
+
+  it("categoria que PERDE bandas tambem — a direcao contraria e a mesma mentira", () => {
+    const antes = cat([
+      comBandas([{ minPrice: 0, maxPrice: 200, commissionPct: 15, fixedFee: 0 }]),
+    ]);
+    const depois = cat([comBandas(null)]);
+    const out = decideRefresh({ ...base, before: antes as never, after: depois as never });
+    const body = out.kind === "PR" ? out.body : "";
+    expect(body).not.toContain("[object Object]");
+    expect(body).toContain("200");
+  });
+});

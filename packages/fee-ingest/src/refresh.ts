@@ -69,8 +69,22 @@ function semNoticia(diff: CatalogDiff): boolean {
 const label = (e: { categoryName: string | null; categoryId: string | null }) =>
   e.categoryName ?? e.categoryId ?? "(sem categoria)";
 
-/** `undefined` vira vazio em vez da string "undefined" — um campo que não existia antes é ausência. */
-const cell = (v: unknown) => (v === undefined ? "—" : String(v));
+/**
+ * Uma celula da tabela do PR. `undefined` vira travessao em vez da string "undefined" — um campo que
+ * nao existia antes e ausencia.
+ *
+ * U34-a — e um valor ESTRUTURADO vira JSON compacto, nao `[object Object]`. `leafChanges` desce
+ * arrays por indice, entao uma banda que muda de valor ja saia legivel; o buraco era a categoria que
+ * GANHA ou PERDE bandas inteiras, onde um lado e `null` e o outro e o array — nao ha par de objetos
+ * para descer, e `String(array)` devolvia `[object Object]`. Sobre DINHEIRO, e a classe exata que o
+ * §C3 existe para impedir: um diff que o revisor nao consegue ler e um diff que ele aprova sem
+ * conferir. O pipe e escapado porque a tabela do markdown quebra nele.
+ */
+const cell = (v: unknown) => {
+  if (v === undefined) return "—";
+  if (v === null || typeof v !== "object") return String(v);
+  return `\`${JSON.stringify(v).replaceAll("|", "\\|")}\``;
+};
 
 /**
  * O corpo do PR mensal (§C3). É a INTERFACE do laço com o humano que revisa, e um diff que ele não
