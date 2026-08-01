@@ -604,11 +604,48 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   viva) dá 0 inversões; a Amazon carimba `PROGRESSIVE` em toda célula com bandas e nem passa por
   `chooseBand`; o ML não tem entrada nenhuma. `checkBandCoverage` não impede a forma em vale, então
   o dado é representável — e viaja em snapshot congelado. Consertar antes de existir uma tabela assim
+> **MEDIÇÃO 2026-08-01 (decisão do dono na mesa) — a teoria do "vale" é FALSA, e o guarda mudou de
+> lugar por causa disso.** A hipótese natural era que o gatilho da A1-r fosse a forma-vale (o líquido
+> cair ao subir de banda) e que bastasse recusá-la na ingestão. Medido em 6 tabelas × ~12k bases:
+>
+>     ML-contiguas             | vale=sim | dominados=0
+>     ML-com-lacuna            | vale=sim | dominados=0
+>     Amazon-15-para-10        | vale=nao | dominados=0
+>     VALE-banda-superior-pior | vale=sim | dominados=0   (construida para ser patologica)
+>     VALE-fixo-pula           | vale=sim | dominados=0   (idem)
+>     LACUNA-sem-vale          | vale=nao | dominados=0
+>
+> Cinco tabelas COM vale e zero pontos dominados. Pior: a tabela real do ML **já tem vale hoje**
+> (50% até 12,50 → 12% + R$ 5,00 fixo derruba o líquido de 6,245 para 6,00 na fronteira), então um
+> detector de vale alarmaria no primeiro mês do ML sobre uma tabela correta — o falso positivo
+> mensal que a US5 nomeia como o jeito de treinar quem revisa a ignorar o alarme.
+>
+> Erro meu na primeira rodada, registrado porque é a mesma família: a força-bruta que eu usava como
+> referência subia o vendedor até a próxima fronteira publicada para atravessar uma lacuna — o que
+> `channels.ts:219-224` proíbe **em palavras**. Ela produziu 8 "contraexemplos" em que o motor estava
+> certo e o comparador é que preenchia a lacuna pela porta dos fundos.
+>
+> Conclusão: **não se detecta uma forma que não se sabe nomear.** O guarda passou a testar a
+> PROPRIEDADE — `tests/band-dominance.test.ts`, "o anúncio publicado é o mais barato que entrega a
+> base" — sobre as 3 tabelas reais e 3 adversárias construídas. Ele não depende de adivinhar a forma
+> e dispara no dia em que qualquer tabela produzir o sintoma. Provado NÃO-VÁCUO por mutação: com o
+> `sort` invertido para preferir o anúncio caro, ele reprova com `base=64,56 anunciado=129,12
+> melhor=79,00`.
+
 - [ ] **A1-r/teste — a monotonicidade é afirmada em geral e provada num fixture.**
   `band-convergence.test.ts:92` chama-se "o anúncio nunca cai quando a base sobe" e varre **apenas**
-  `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
-  item acima: alargar a varredura reprova enquanto o `sort` não mudar
-- [ ] **B — o NUL em `determinantKey` continua lá, e o `.gitattributes` só resolveu METADE.**
+  `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Alargar a varredura
+  segue valendo. **Mas a segunda metade desta frase era errada e a medição acima a desmente**: eu
+  escrevi "reprova enquanto o `sort` não mudar", e o `sort` não precisa mudar — a dominância deu ZERO
+  em todas as 6 tabelas, inclusive nas adversárias. A varredura alargada é cobertura de
+  monotonicidade, não prova da A1-r
+- [x] **B — FECHADO 2026-08-01. O NUL saiu; era a única correção que fechava os dois lados.**
+  `determinantKey` devolvia `" null"` como sentinela do caso "sem determinantes". O sentinela
+  precisa ser INFORJÁVEL por um conjunto real, e toda chave real ou é vazia (`{}`) ou contém `=` —
+  então `"(null determinants)"` serve e não carrega byte nenhum. É de memória: nunca serializado,
+  nunca dentro de snapshot, usado só no `Set` de detecção de duplicata do parse. MEDIDO depois:
+  `git diff --stat` voltou a contar linhas (antes dizia "binary files differ") e a busca acha as duas
+  ocorrências. Os 64 testes de `fee-catalog` seguem verdes. **Histórico do meio-conserto:**
   MEDIDO 2026-08-01: com `*.ts text diff` o `git diff`/`blame` voltaram a mostrar o arquivo como texto
   (de `Bin` para `23 insertions(+)`), mas o **`Grep` continua pulando**: o ripgrep faz a própria
   detecção de binário pelo byte NUL e não consulta o `.gitattributes`. Confirmado agora —
