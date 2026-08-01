@@ -223,8 +223,12 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       billing). Infra note: the 3-webServer boot can race two concurrent `uv run` alembic processes
       (global-setup × run_e2e_server) — green under server reuse; CI arbitrates; fix if needed = single
       migration owner in global-setup.
-- [ ] T020 **Owner-gated PR-A → `develop`** (squash). At this gate: **ADR-0023 flips Proposed → Accepted**.
-      On merge: graph refresh (hooks).
+- [x] T020 **Owner-gated PR-A → `develop`** (squash) — **FEITO 2026-07-23**, PR #28, `0a3296b`.
+      **ADR-0023 so foi de Proposed para Accepted em 2026-08-01**: o portao passou e a flag ficou para tras
+      por lapso de registro, nao por decisao. Achado ao medir a branch `feature/012-e6-billing` — que esta
+      INTEIRAMENTE ABSORVIDA na `develop` (merge de prova: zero arquivos de diferenca) e NAO deve ser
+      retomada, porque o merge dela de 23/07 se chama "develop (013 audit remediation)" mas e ANTERIOR ao
+      `1212a16` (24/07): E6-02 e L2-N1 nunca estiveram la. O E6 continua a partir da `develop`.
 
 ---
 

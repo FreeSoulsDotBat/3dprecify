@@ -71,13 +71,26 @@ blind to it (the third time this project paid that class).**
 **011-token-optimization: levers LANDED via PR #22** (ADR-0022 Accepted) — routing + rtk filter + graphify hook
 live; **the pilot verdict (T032–T034, ≥30%-or-honest-shortfall) is being closed now at E5 end** from the
 per-operation ledger rows. Evidence: `specs/011-token-optimization/dod-evidence.md`.
-**E6 is no longer UNSTARTED (corrected 013 audit remediation, M-01)** — 012-e6-billing (billing — Mercado
-Pago recurring / Play Billing) is **mid-flight** on `feature/012-e6-billing`, 31 commits ahead of `develop`,
-with the PR-A close-out done (spec-kit flow followed: product-owner → specify → clarify → plan + ADRs →
-tasks, per Principle VIII — nothing was inferred). It has not yet shipped to `develop`.
-**013-audit-remediation is in progress** (branch `013-audit-remediation`) — the 10-specialist audit's
-remediation increment; this US7 docs-only pass is part of it. See `specs/013-audit-remediation/{spec.md,
-tasks.md}`.
+**E6 IN PROGRESS ON `develop` — 19/44 tasks. 012-e6-billing PR-A SHIPPED** (PR #28, `0a3296b`,
+2026-07-23, owner-merged) — the turnstile: price → checkout → verified grant (US1+US2+US3), spec-kit flow
+followed (product-owner → specify → clarify → plan + ADRs → tasks, Principle VIII). **ADR-0023** flipped
+Proposed → **Accepted** at that gate (T020). The 013 audit then hardened billing ON `develop` (`1212a16`,
+#30): **E6-02** (the `x-signature` manifest's `data.id` comes from the notification QUERY PARAM, MP's real
+contract — a body-only read 401'd every legitimate webhook) and **L2-N1** (a grant with no bounded expiry
+reads as PREMIUM FOREVER, so an unboundable payment is matched-not-granted).
+**`feature/012-e6-billing` is FULLY ABSORBED and must not be resumed** — verified 2026-08-01 by merging
+`develop` into it: the merged tree differed from `develop` in **zero** files (the whole `specs/012-e6-billing/`
+included). Worse, it is a TRAP: its 2026-07-23 merge commit is titled "develop (013 audit remediation)" but
+`1212a16` landed 2026-07-24, so **E6-02 and L2-N1 were never on that branch** — resuming from it would
+reintroduce both. Continue E6 from `develop`. (This ground line previously claimed 012 was "mid-flight,
+31 commits ahead, not yet shipped"; all three were false, and that false record is what made the 2026-08-01
+"sync the drifting branch" plan wrong.)
+**E6's next slice is PR-B** (T021–T030): US4 cancel-at-period-end · US5 grace & dunning · US6 the Conta
+billing home, then e2e + `qa-produto` + gate. **T002 is an OWNER task and is NOT a PR-B blocker**: it
+provisions the real MP sandbox (access token + webhook secret + the two `preapproval_plan`s) and gates only
+T016b/T018b+ — PR-B is built against the local stub, as PR-A was.
+**013-audit-remediation SHIPPED to `develop`** (PR #29, `42cc45c`) — the 10-specialist audit's remediation
+increment; its deferred US8 became increment 014. See `specs/013-audit-remediation/{spec.md,tasks.md}`.
 **014-fee-category-mapping PR-A SHIPPED to `develop`** (PR #31, `461a367`, 2026-07-31, owner-merged) —
 the category→commission axis + the Amazon map (US1+US2+US3 + the monthly comparator), plus **Fase 6C**,
 the correction phase that gated the merge. **ADR-0024** (progressive price bands; additive `bandMode`,

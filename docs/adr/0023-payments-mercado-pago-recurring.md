@@ -1,6 +1,7 @@
 # ADR-0023: Payments — Mercado Pago recurring subscription end-to-end (a new ledger writer), Play-Billing flag-ready
 
-- **Status**: Proposed
+- **Status**: Accepted (2026-07-23, no portao T020 — PR-A `0a3296b` / PR #28; a flag ficou
+  pendente ate 2026-08-01 por lapso de registro, nao por decisao)
 - **Date**: 2026-07-20
 - **Deciders**: Jonatan (owner) + arquiteto + seguranca (mandatory review on the checkout/confirmation PR) + dev-estrutura-de-dados (schema, **escalated to `opus`** — money/entitlement domain, CLAUDE.md ADR-0022)
 - **Extends**: ADR-0012 (entitlement ledger — the terminus) · ADR-0013 (persistence stack) · ADR-0018 (exactly-once precedent — the *principle*, not the client outbox)
