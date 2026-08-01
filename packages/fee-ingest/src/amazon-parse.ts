@@ -143,7 +143,14 @@ export function parseAmazonTable(rows: readonly RawRow[]): ParsedCategory[] {
     // encolheu"), que manda o operador procurar categorias que a Amazon nunca apagou. Cabecalho e
     // nota continuam sendo pulados, porque nao carregam percentual.
     if (row.length < 3) {
-      if (row.some((c) => normalise(c).includes("%"))) {
+      // A guarda olha a SEGUNDA celula, nao "qualquer uma". A leitura e POSICIONAL — `[nome, pct,
+      // min]` —, entao a forma de "linha de dado com uma coluna a menos" e ter percentual em `[1]`.
+      // Olhar qualquer celula matava o laco numa NOTA DE RODAPE ("Comissao de 15% sobre o valor
+      // total..."), com a mensagem falsa "a column was REMOVED": o mesmo defeito que esta guarda
+      // conserta, virado do avesso, e num lugar onde o unico sintoma seria o laco mensal parar de
+      // rodar com um diagnostico que manda procurar a coisa errada. (Regressao introduzida junto com
+      // a propria U4-b e achada pela lente que EXECUTA — nenhum teste unitario podia ve-la.)
+      if (row.length >= 2 && normalise(row[1]).includes("%")) {
         throw new Error(
           `row with ${row.length} columns carrying a percentage — the published table has 3, so a ` +
             `column was REMOVED and the positional read would shift silently: ${JSON.stringify(row)}`,

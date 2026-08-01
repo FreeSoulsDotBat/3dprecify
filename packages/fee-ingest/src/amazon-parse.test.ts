@@ -235,3 +235,33 @@ describe("a coluna A MENOS tambem e mudanca de FORMA, e nao encolhimento (U4-b)"
     expect(parseAmazonTable(comNota)).toHaveLength(1);
   });
 });
+
+// Regressao que a U4-b introduziu e a lente que EXECUTA achou (2026-08-01): a guarda olhava
+// "qualquer celula com %", entao uma NOTA DE RODAPE numa celula so — que a Amazon publica — matava o
+// laco mensal com a mensagem falsa "a column was REMOVED". Falha fechada, sim, mas com o diagnostico
+// errado, e o unico sintoma seria o robo parar de rodar mandando procurar a coisa errada.
+describe("nota de rodape com % nao e coluna faltando (regressao da U4-b)", () => {
+  const dados = [
+    ["Categoria", "Comissao", "Minimo"],
+    ["Calçados", "14%", "R$ 1,00"],
+  ];
+
+  it("uma linha de PROSA com percentual e pulada, nao mata o laco", () => {
+    const comNota = [
+      dados[0],
+      ["Comissao de 15% sobre o valor total do pedido, incluindo frete"],
+      dados[1],
+    ];
+    expect(() => parseAmazonTable(comNota)).not.toThrow();
+    expect(parseAmazonTable(comNota)).toHaveLength(1);
+  });
+
+  it("mas a linha de DADO com uma coluna a menos continua sendo recusada", () => {
+    expect(() =>
+      parseAmazonTable([
+        ["Categoria", "Comissao"],
+        ["Calçados", "14%"],
+      ]),
+    ).toThrow(/coluna|column/i);
+  });
+});

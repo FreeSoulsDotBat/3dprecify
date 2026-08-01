@@ -608,10 +608,15 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
   `band-convergence.test.ts:92` chama-se "o anúncio nunca cai quando a base sobe" e varre **apenas**
   `ML_CONTIGUAS`, cujas bandas superiores compartilham 12% e não disparam nada. Par obrigatório do
   item acima: alargar a varredura reprova enquanto o `sort` não mudar
-- [ ] **B — `fee-catalog.ts` é BINÁRIO para o git** (`Bin 14402 → 14879`): há um byte NUL literal em
-  `determinantKey` (`return "\0null"`). Consequência medida: toda lente que usou `git diff <arquivo>`
-  **não viu nada** — inclusive a reescrita do guard A2 (T085/T086), mudança de validação no domínio de
-  precificação, invisível ao diff E ao `blame`. Trocar por `"\0null"` ou `"__null__"`
+- [ ] **B — o NUL em `determinantKey` continua lá, e o `.gitattributes` só resolveu METADE.**
+  MEDIDO 2026-08-01: com `*.ts text diff` o `git diff`/`blame` voltaram a mostrar o arquivo como texto
+  (de `Bin` para `23 insertions(+)`), mas o **`Grep` continua pulando**: o ripgrep faz a própria
+  detecção de binário pelo byte NUL e não consulta o `.gitattributes`. Confirmado agora —
+  `Grep STALENESS_DAYS` em `fee-catalog.ts` responde `binary file matches`. Ou seja, o arquivo que
+  define `STALENESS_DAYS` e `isStale` — o schema do domínio de PRECIFICAÇÃO — segue invisível para
+  busca, e eu mesmo tropecei nisso duas vezes. **A causa raiz é a única correção que fecha os dois
+  lados**: trocar `return " null"` por um sentinela sem NUL. Mexe em geração de chave de mapa no
+  domínio de preço, então pede teste próprio — não é conserto de carona
 - [ ] **C — `PRICING_MODEL_VERSION` continua 3.1.0 sobre uma implementação reescrita.** O crítico de
   completude rodou o diferencial velho-vs-novo (9 tabelas × 100k bases): **0 diferenças** em anúncio,
   líquido e banda aplicada. É higiene de versionamento, não defeito — registrado para não se perder
@@ -712,6 +717,30 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] **U8-d [BAIXO, fora da US8] — o botao `Limpar` desalinha com nome de categoria longo** em 390px:
   com 2 linhas de texto ele cai numa 3a linha indentada a esquerda em vez de ancorado a direita.
   Cosmetico, medido, **e do seletor da PR-A** — nao regressao desta fatia
+
+**Da analise adversarial do PR #34 (2026-08-01) — a lente que EXECUTA conferiu as MINHAS afirmacoes**
+
+> As 8 afirmacoes que eu fiz sobre U4-a/b/c/d, U5-c/d, A1-r e US8 foram refeitas RODANDO, e as 8 se
+> sustentam. A A1-r foi **reproduzida com os quatro numeros batendo** (10 reprovacoes · varredura
+> quebrada em 14 bases · 1.892 pontos de monotonicidade · suite de 111) — e a lente foi alem: testou
+> tambem a variante MAIS CONSERVADORA possivel (trocar so a chave do `sort`, mantendo o portao
+> SC-817) e ela **ja quebra a monotonicidade nos mesmos 1.892 pontos**. A conclusao registrada — "nao
+> e reordenar um `sort`, sao invariantes que competem" — fica confirmada por medicao independente.
+> A lente tambem rodou o `gate:all` INTEIRO, incluindo o backend (400 passed, cobertura 83,57%), que
+> nenhuma revisao anterior tinha rodado.
+
+- [x] **REGRESSAO da U4-b, achada e corrigida no mesmo dia** — a guarda olhava "qualquer celula com
+  %", entao uma NOTA DE RODAPE numa celula so (que a Amazon publica) MATAVA o laco mensal com a
+  mensagem falsa `"a column was REMOVED"`. Falha fechada, mas com o diagnostico errado — o mesmo
+  defeito que a guarda conserta, virado do avesso. Agora ela olha a SEGUNDA celula, que e a forma
+  posicional de "linha de dado com uma coluna a menos". **Nenhum teste unitario podia ver**: so
+  aparece rodando o gerador contra uma fixture com prosa
+- [ ] **U34-a [MEDIO, PRE-EXISTENTE da US4] — o corpo do PR mensal mostra transicao de banda de preco
+  como `[object Object]`.** Achado abrindo o artefato gerado, nao lendo codigo. `prBody` formata cada
+  mudanca com `String(valor)`, e uma `priceBands` inteira e um objeto — entao a linha que deveria
+  dizer ao revisor QUAL banda mudou diz `[object Object]`. E dinheiro, e e exatamente a classe que o
+  §C3 existe para impedir ("um diff que o revisor nao consegue ler e um diff que ele aprova sem
+  conferir"). Nao bloqueia esta fatia porque e divida herdada, mas e o mais caro do lote
 
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
