@@ -13,6 +13,7 @@ vi.mock("@/shared/api/transport", () => ({ apiFetch: apiFetchMock }));
 import type { FeeCatalog } from "./fee-catalog";
 import { FEE_CATALOG_SEED } from "./seed";
 import {
+  adoptCatalog,
   FEE_CATALOG_STORE_KEY,
   fetchServedCatalog,
   freshest,
@@ -126,5 +127,69 @@ describe("fetchServedCatalog (schema-guarded refresh)", () => {
   it("rejects an invalid served payload (the wire is re-validated)", async () => {
     apiFetchMock.mockImplementationOnce(async () => ({ bogus: true }));
     await expect(fetchServedCatalog()).rejects.toThrow();
+  });
+});
+
+// 014/T054 (SC-805) — a comparação de frescor NUNCA pode reduzir cobertura.
+//
+// A semente e o catálogo servido não são competidores: a semente é o PISO SÍNCRONO que garante dado
+// na primeira pintura (R1), e por construção ela é uma cópia empacotada que só muda quando sai um
+// build. Hoje ela carrega 1 entrada (Shopee); o servido carrega 79.
+//
+// `adopt` comparava os dois por `catalogVersion`. Basta um bundle sair com a semente mais NOVA que o
+// endpoint — um deploy do app na frente do deploy do backend, ou o servido atrasado — para a semente
+// VENCER e o catálogo real ser recusado: o vendedor perderia o mapa inteiro da Amazon e o seletor
+// diria "este canal ainda não tem taxa de referência", com o mapa a um fetch de distância.
+describe("a semente é um PISO, não um competidor (T054/SC-805)", () => {
+  const semente: FeeCatalog = {
+    ...FEE_CATALOG_SEED,
+    catalogVersion: "2026-12-01.0", // mais NOVA que o servido, de propósito
+  };
+  const servido: FeeCatalog = {
+    ...FEE_CATALOG_SEED,
+    catalogVersion: "2026-07-28.1",
+    marketplaces: [
+      ...FEE_CATALOG_SEED.marketplaces.filter((m) => m.marketplace !== "AMAZON"),
+      {
+        marketplace: "AMAZON",
+        determinantsSchema: { plan: ["PROFISSIONAL"], category: [] },
+        categorySpine: [{ id: "calcados", name: "Calçados", parentId: null }],
+        entries: [
+          {
+            determinants: { plan: "PROFISSIONAL", category: "calcados" },
+            commissionPct: 14,
+            fixedFee: 0,
+            minPerItem: 1,
+            priceBands: null,
+            freight: { kind: "NONE" },
+            source: "Tabela Amazon",
+            sourceUrl: "https://x",
+            effectiveDate: "2026-07-28",
+            lastReviewed: "2026-07-28",
+          },
+        ],
+      },
+    ],
+  } as FeeCatalog;
+
+  const entradas = (c: FeeCatalog) => c.marketplaces.reduce((n, m) => n + m.entries.length, 0);
+
+  it("o servido tem mais cobertura que a semente — a premissa do teste, medida", () => {
+    expect(entradas(servido)).toBeGreaterThan(entradas(semente));
+  });
+
+  it("uma semente com versão mais nova NÃO recusa o catálogo real", () => {
+    // `freshest` sozinho diria que a semente vence; a adoção não pode obedecer só a isso.
+    expect(freshest(servido, semente)).toBe(semente);
+    expect(adoptCatalog({ catalog: semente, source: "seed" }, servido)).toMatchObject({
+      source: "catalog",
+    });
+  });
+
+  it("entre DOIS catálogos reais, a versão volta a mandar — a regra não vira 'o último vence'", () => {
+    const velho: FeeCatalog = { ...servido, catalogVersion: "2026-01-01.0" };
+    expect(adoptCatalog({ catalog: servido, source: "catalog" }, velho)).toMatchObject({
+      catalog: servido,
+    });
   });
 });

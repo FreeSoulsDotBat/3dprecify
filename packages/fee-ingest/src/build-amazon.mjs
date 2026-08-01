@@ -19,6 +19,7 @@ import {
   checkBandCoverage,
   checkCategoryIdCollisions,
   checkParseSanity,
+  collectedAtFor,
   nextCatalogVersion,
 } from "./guardrails.ts";
 import {
@@ -95,7 +96,20 @@ if (!collision.ok) {
   process.exit(1);
 }
 
-const collectedAt = process.env.COLLECTED_AT ?? new Date().toISOString().slice(0, 10);
+// T053 (SC-807) — `lastReviewed` so avanca por RELEITURA REAL. Uma tabela CAPTURADA (`--from`) tem
+// data de captura que so quem chama sabe; carimbar hoje faria o selo dizer "atualizada em <hoje>"
+// sobre numeros que ninguem conferiu contra a Amazon. A regra mora em `guardrails.ts` porque este
+// arquivo e isento de cobertura, e a que decide a data do selo nao pode morar num lugar isento.
+const quando = collectedAtFor({
+  fromFixture: fromArg > -1,
+  envDate: process.env.COLLECTED_AT,
+  today: new Date().toISOString().slice(0, 10),
+});
+if (!quando.ok) {
+  console.error(`ABORT: ${quando.reason}. The artifact is left untouched.`);
+  process.exit(1);
+}
+const collectedAt = quando.date;
 const artifact = JSON.parse(readFileSync(ARTIFACT, "utf8"));
 const amazon = artifact.marketplaces.find((m) => m.marketplace === "AMAZON");
 // 014/T091 — this used to end in `?? { marketplace: "AMAZON", entries: [] }`, and that default was

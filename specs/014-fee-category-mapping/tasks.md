@@ -37,7 +37,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 
 - [x] T005 Criar o pacote de workspace da ingestão, com `package.json`/tsconfig conforme o padrão do monorepo — em `packages/fee-ingest/`
 - [x] T006 [P] Adicionar `playwright` como dependência **apenas da ingestão** (a página da Amazon é JS-renderizada — R3), sem tocar nas dependências de `apps/web` — em `packages/fee-ingest/package.json`
-- [ ] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
+- [x] T007 [P] Registrar a fronteira do `packages/fee-ingest` no `dependency-cruiser` e no `import-linter`, para que ela **não** possa importar de `apps/web` nem do `backend` — em `.dependency-cruiser.cjs`
 
 ---
 
@@ -55,7 +55,7 @@ casos numéricos explícitos, com os valores reais medidos em 2026-07-28.
 - [x] T013 [P] Teste: `category` em `determinants` que não existe na árvore é erro de parse — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
 - [x] T013a [P] Teste: slot **sem determinantes** (modalidade vazia, como em cenários e kits salvos antes do 014) resolve para `null` + "sem referência", e **não** para `entries[0]` — o fallback posicional de `fee-catalog.ts:111` hoje entregaria a alíquota de uma categoria arbitrária sob selo "referência" (FR-027) — em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
 - [x] T013b [P] Teste: semente embutida inválida **degrada por marketplace** e não derruba o boot — hoje `use-fee-catalog.ts:14` valida no module load com `.parse()` que lança, o que vira tela branca assim que a semente passar a ser gerada por robô (FR-026) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
-- [ ] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
+- [x] T013c [P] Teste: **não-regressão** de quem NÃO escolhe categoria — o caminho sem categoria entrega o mesmo resultado de antes do 014 em pré-fill, selo e comportamento offline (SC-808, hoje sem nenhuma tarefa) — em `apps/web/src/features/calculator/fee-prefill.test.ts`
 
 ### Implementação
 
@@ -645,6 +645,30 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 > ao rodar — ela quase escapou por isso, e a suite inteira era cega a ela porque o vitest resolve o
 > que o `node` recusa.
 
+**Follow-ups da revisao adversarial da US5 (2026-08-01) — o bloqueio foi resolvido; estes ficam**
+
+> O bloqueio era de REGISTRO, nao de codigo: o ADR-0010 §442 proibia enfraquecer o selo de 30 dias, e a
+> fatia o levou a 45 sem tocar no ADR. Resolvido pelo **Adendo A14** datado e autorizado, com a
+> condicao escrita de que ele deve ser REABERTO se a T049 for abandonada — porque a premissa dele (o
+> PR mensal como sinal de vida do dono) so vale quando o laco existir.
+
+- [ ] **U5-a [MEDIO] — a T054 esta marcada contra a SC-805 sem que codigo ou teste compare COBERTURA
+  uma unica vez.** O teste rotulado "a premissa do teste, MEDIDA" mede um objeto que ele mesmo
+  fabrica. A regra implementada e `source === "seed"`, que e uma PROXY para cobertura, nao a cobertura.
+  Se alguem quiser a garantia literal da SC-805, ela ainda nao existe
+- [ ] **U5-b [BAIXO] — o ramo do CACHE em `adoptCatalog`** passa pela mesma porta do servido
+  (`use-fee-catalog.ts:149`) e a justificativa escrita so fala do endpoint; o bloco de teste da T054
+  nao exercita essa porta. Latente: ativa no dia da **T032** (regenerar a semente)
+- [ ] **U5-c [BAIXO] — a guarda "todo import relativo carrega extensao" pula os `.mjs`**, que e
+  justamente o unico arquivo que o `node` executa e um dos dois que a US5 alterou
+- [ ] **U5-d [BAIXO] — mutacao que passa**: trocar `>` por `>=` na assercao `STALENESS_DAYS > 31` nao
+  reprova. A assercao prende a ORDEM de grandeza, nao a fronteira exata
+- [ ] **U5-e — o NUL em `determinantKey`** (`fee-catalog.ts`) continua la. O `.gitattributes` devolveu
+  a visibilidade do diff, mas a causa raiz mexe em geracao de chave no dominio de preco e pede teste
+  proprio — nao foi feita de carona
+- [ ] **U5-f — a fronteira do dia 45/46 nunca foi medida em NAVEGADOR**, so por unidade. A
+  homologacao cobriu 35 e 50. Risco baixo, mas e nao-medido, nao "ok"
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
@@ -657,14 +681,14 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 
 ### Testes ⚠️
 
-- [ ] T052 [P] [US5] Teste: a janela de obsolescência é medida contra a data de **ENTREGA ao usuário**, não contra a leitura da fonte — um valor lido no dia 1 e entregue no dia 20 **não** conta 19 dias de idade (FR-020b) — em `apps/web/src/features/calculator/fee-seal.test.tsx`
-- [ ] T052a [US5] Carregar a data de entrega no artefato e passar a derivar `isStale` dela — em `apps/web/src/shared/fee-catalog/fee-catalog.ts`
-- [ ] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `packages/fee-ingest/refresh.test.ts`
-- [ ] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
+- [x] T052 [P] [US5] Teste **(premissa REESCRITA 2026-08-01, ver Clarification)**: a janela e dimensionada como **ciclo do laco + folga de entrega** e continua medida contra `lastReviewed`. Um valor lido no dia 1 e entregue no dia 20 **nao** alarma; um valor que passou de um ciclo inteiro **sem releitura** alarma. O alarme significa "algo falhou", nunca "o ciclo esta terminando" (FR-020b emendada) — em `apps/web/src/features/calculator/fee-seal.test.tsx`
+- [x] T052a ~~Carregar a data de entrega no artefato~~ **SUPERADA 2026-08-01 pela mesma Clarification**: nao ha campo novo. Mover o relogio para a entrega faria um numero nao-verificado ha meses parecer fresco ao chegar num aparelho novo — a mentira inversa, e maior. O artefato de dinheiro fica intocado
+- [x] T053 [P] [US5] Teste: `lastReviewed` só avança por releitura real da fonte, nunca por "o job rodou" (SC-807) — em `packages/fee-ingest/refresh.test.ts`
+- [x] T054 [P] [US5] Teste: comparação de frescor entre semente e catálogo servido **nunca reduz cobertura** (SC-805) — em `apps/web/src/shared/fee-catalog/use-fee-catalog.test.ts`
 
 ### Implementação
 
-- [ ] T055 [US5] Garantir que a origem do valor (embutida / persistida / servida) continue refletida no selo com o eixo novo — em `apps/web/src/features/calculator/fee-seal.tsx`
+- [x] T055 [US5] Garantir que a origem do valor (embutida / persistida / servida) continue refletida no selo com o eixo novo — em `apps/web/src/features/calculator/fee-seal.tsx`
 
 ---
 

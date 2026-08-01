@@ -111,8 +111,20 @@ export interface UseFeeCatalog extends ActiveCatalog {
   refetch: () => void;
 }
 
-/** Adopt `incoming` only if it is at least as fresh as the current active catalog. */
-function adopt(prev: ActiveCatalog, incoming: FeeCatalog): ActiveCatalog {
+/**
+ * Adota `incoming` quando ele deve substituir o catalogo ativo.
+ *
+ * 014/T054 (SC-805) — a SEMENTE e um piso, nao um competidor. Ela existe para a primeira pintura ter
+ * dado (R1) e e, por construcao, uma copia empacotada que so muda quando sai um build; hoje ela
+ * carrega 1 entrada enquanto o servido carrega 79. Comparar os dois por `catalogVersion` deixava um
+ * bundle com semente mais NOVA que o endpoint — app na frente do backend, ou servido atrasado —
+ * RECUSAR o catalogo real: o vendedor perderia o mapa inteiro da Amazon e leria "este canal ainda nao
+ * tem taxa de referencia", com o mapa a um fetch de distancia.
+ *
+ * Entre dois catalogos REAIS a versao continua mandando — a regra nao vira "o ultimo vence".
+ */
+export function adoptCatalog(prev: ActiveCatalog, incoming: FeeCatalog): ActiveCatalog {
+  if (prev.source === "seed") return { catalog: incoming, source: "catalog" };
   return freshest(incoming, prev.catalog) === incoming
     ? { catalog: incoming, source: "catalog" }
     : prev;
@@ -134,7 +146,7 @@ export function useFeeCatalog(): UseFeeCatalog {
   useEffect(() => {
     let cancelled = false;
     void loadPersistedCatalog().then((stored) => {
-      if (!cancelled && stored) setActive((prev) => adopt(prev, stored));
+      if (!cancelled && stored) setActive((prev) => adoptCatalog(prev, stored));
     });
     return () => {
       cancelled = true;
@@ -152,7 +164,7 @@ export function useFeeCatalog(): UseFeeCatalog {
   const fetched = query.data;
   useEffect(() => {
     if (fetched) {
-      setActive((prev) => adopt(prev, fetched));
+      setActive((prev) => adoptCatalog(prev, fetched));
       void persistCatalog(fetched);
     }
   }, [fetched]);

@@ -4,6 +4,8 @@ import "@testing-library/jest-dom/vitest";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { STALENESS_DAYS } from "@/shared/fee-catalog";
+import { feeSealState } from "./fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { FeeSeal } from "./fee-seal";
@@ -198,5 +200,95 @@ describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () 
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
     expect(seal).toHaveTextContent(`(${t.forCategory} Calçados)`);
+  });
+});
+
+// 014/T052 (US5, FR-020b emendada 2026-08-01) — o alarme de obsolescencia tem de SIGNIFICAR alguma
+// coisa. A janela era de 30 dias e o laco roda mensalmente, entao todo valor passava os ultimos dias
+// do ciclo gritando "pode estar desatualizada" MESMO COM O ROBO FUNCIONANDO. Um alarme que dispara
+// todo mes sobre valores corretos e reverificados nao avisa: ele treina o vendedor a ignorar
+// exatamente o aviso que a US5 existe para dar.
+//
+// A decisao do dono (Clarification 2026-08-01) foi manter o relogio em `lastReviewed` — que e onde o
+// RISCO mora, porque o perigo e a Amazon ter mudado a tarifa desde que conferimos — e dimensionar a
+// JANELA pelo ciclo real. Mover o relogio para a entrega faria um numero nao-verificado ha meses
+// parecer fresco ao chegar num aparelho novo: a mentira inversa, e maior.
+describe("a janela de obsolescencia cobre o ciclo do laco (T052 / FR-020b emendada)", () => {
+  const dia = 24 * 60 * 60 * 1000;
+  const lido = Date.parse("2026-08-01");
+  const selo = (diasDepois: number) =>
+    feeSealState({
+      entry: {
+        determinants: null,
+        commissionPct: 14,
+        fixedFee: 0,
+        minPerItem: 0,
+        priceBands: null,
+        freight: { kind: "NONE" },
+        source: "Tabela Amazon",
+        sourceUrl: "https://x",
+        effectiveDate: "2026-08-01",
+        lastReviewed: "2026-08-01",
+      } as never,
+      source: "catalog",
+      now: lido + diasDepois * dia,
+      edited: false,
+    });
+
+  it("um ciclo mensal INTEIRO nao alarma — era aqui que o falso positivo nascia", () => {
+    // O laco le no dia 1 e volta a ler no dia 1 do mes seguinte: ate 31 dias e operacao normal.
+    expect(selo(31)).toMatchObject({ stale: false });
+  });
+
+  it("a folga de entrega tambem nao alarma — revisao do PR + merge + corte + o cliente buscar", () => {
+    expect(selo(44)).toMatchObject({ stale: false });
+  });
+
+  it("passado o ciclo MAIS a folga, alarma — e ai significa que algo falhou de verdade", () => {
+    expect(selo(46)).toMatchObject({ stale: true });
+  });
+
+  // A propriedade, dita sobre a constante e nao sobre um numero magico: a janela nunca pode ser
+  // menor que o ciclo, senao o alarme volta a disparar por construcao.
+  it("a janela e MAIOR que o ciclo do laco — a garantia, nao a coincidencia", () => {
+    expect(STALENESS_DAYS).toBeGreaterThan(31);
+  });
+});
+
+// 014/T055 (US5) — a ORIGEM do valor (embutida / do catálogo) tem de continuar refletida no selo
+// depois do eixo novo. A T098 corrigiu isso no ramo `reference`, e o ramo `catchAll` — que NASCEU
+// com o eixo de categoria — ficou com a assimetria intacta: ele aplica `t.outdated` sem nunca
+// consultar `embedded`.
+//
+// O efeito: um catch-all servido pela SEMENTE lê exatamente como um catch-all recém-buscado do
+// endpoint. O vendedor perde a única pista de que aquele número vem do bundle e não da rede — e no
+// catch-all essa pista importa mais, porque ali ele já está aceitando a MAIOR alíquota da tabela.
+describe("FeeSeal — o catch-all também diz de onde veio (T055)", () => {
+  const catchAll = (over: Record<string, unknown> = {}) =>
+    ({
+      kind: "catchAll" as const,
+      source: "Tabela Amazon",
+      reviewedOn: "2026-07-28",
+      ...over,
+    }) as never;
+
+  it("catch-all da semente diz que a referência é embutida", () => {
+    render(<FeeSeal state={catchAll({ embedded: true })} />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    // …e não perde o que já dizia: continua avisando que é o catch-all.
+    expect(seal).toHaveTextContent(t.catchAll);
+  });
+
+  it("catch-all do catálogo NÃO se diz embutido", () => {
+    render(<FeeSeal state={catchAll()} />);
+    expect(screen.getByTestId("fee-seal")).not.toHaveTextContent(t.embedded);
+  });
+
+  it("embutido E vencido: as duas coisas cabem, como já cabem no ramo `reference`", () => {
+    render(<FeeSeal state={catchAll({ embedded: true, stale: true })} />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(t.outdated);
   });
 });

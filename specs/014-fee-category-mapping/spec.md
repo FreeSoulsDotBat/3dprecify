@@ -34,6 +34,21 @@ máquina" listado no ADR §A11 não se materializa.
 
 ## Clarifications
 
+### Session 2026-08-01
+
+- Q: A FR-020b manda medir a obsolescencia contra a data de ENTREGA. O catalogo chega por tres caminhos
+  com idades diferentes (semente empacotada, cache persistido, endpoint servido) — qual e a "entrega"?
+  -> A: **Nenhum dos tres. O relogio CONTINUA em `lastReviewed`, e o que muda e o TAMANHO da janela.**
+  O risco que o selo mede e a Amazon ter mudado a tarifa desde que **conferimos** — nao o tempo que o
+  valor levou para chegar. Mover o relogio para a entrega tornaria "fresco" um numero que ninguem
+  verifica ha meses (uma instalacao nova de um bundle velho, ou um app que ninguem atualizou), o que e
+  uma mentira MAIOR do que o falso positivo que a FR-020b queria corrigir.
+  O falso positivo era real, mas a causa nao era o relogio: era a **janela ter exatamente o tamanho do
+  ciclo**. Com o laco mensal e 30 dias, todo valor passa os ultimos dias do ciclo gritando
+  "desatualizada" mesmo com o robo funcionando. A janela passa a ser `ciclo do laco + folga de
+  entrega`, de modo que o alarme so dispare quando algo REALMENTE falhou — o robo nao releu, ou a
+  leitura nao foi entregue.
+
 ### Session 2026-07-28
 
 - Q: O que acontece quando o vendedor não escolhe categoria? → A: **Híbrido** — usar o catch-all **publicado** quando
@@ -270,8 +285,10 @@ old→new por categoria; rodar contra uma fonte quebrada e verificar que **não*
 
 ### User Story 5 — Quando o robô falha, o selo conta a verdade (Priority: P2)
 
-O selo de obsolescência de 30 dias é o *dead-man's switch* embutido do app. Se o laço mensal morrer, o usuário fica
-sabendo.
+O selo de obsolescência de **45 dias** (`ciclo 31 + folga de entrega 14`) é o *dead-man's switch* embutido do app.
+Se o laço mensal morrer, o usuário fica sabendo — 15 dias depois do que ficaria com 30, e essa é a troca declarada
+no **Adendo A14** do ADR-0010 (2026-08-01). O sinal voltado ao **dono** é outro e é imediato: a ausência do PR
+mensal.
 
 **Why this priority**: sem isso, uma automação quebrada é indistinguível de uma automação funcionando — e o produto
 mentiria por omissão.
@@ -366,8 +383,9 @@ como os demais slots não sobrescritos.
   para o PR, para decisão humana.
 - **A credencial do ML expira ou é revogada.** A metade ML falha; a metade Amazon **continua funcionando** — as duas
   não compartilham destino.
-- **O agendamento não dispara** (fila do GitHub, repositório inativo, workflow desabilitado). O selo de 30 dias
-  expõe isso ao usuário sem depender de ninguém observar a automação.
+- **O agendamento não dispara** (fila do GitHub, repositório inativo, workflow desabilitado). O selo de **45 dias**
+  expõe isso ao usuário sem depender de ninguém observar a automação — e a ausência do PR mensal expõe ao dono
+  imediatamente (Adendo A14 do ADR-0010).
 - **Duas entradas casam com a mesma especificidade.** O desempate precisa ser determinístico e independente da ordem
   do arquivo — nunca "a primeira que aparecer".
 - **Uma faixa de preço sem comissão.** Hoje passa na validação e pré-preenche 0% sob selo de referência (achado
@@ -469,10 +487,16 @@ como os demais slots não sobrescritos.
   (`entries[0]`) é removido, não ajustado.
 - **FR-019**: O sistema MUST expor no PR, para decisão humana, toda categoria que desapareceu da fonte.
 - **FR-020**: `lastReviewed` MUST avançar **somente** mediante reverificação real contra a fonte.
-- **FR-020b**: A janela de obsolescência MUST ser medida contra a data em que o valor **chegou ao usuário**, não
-  contra a data em que o robô leu a fonte. Sem isso, o selo acusa "desatualizada" durante todo o intervalo entre a
-  leitura e a entrega (merge + corte de release + deploy) — **um falso positivo estrutural, todo mês, sobre valores
-  corretos e reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar.
+- **FR-020b** *(emendada 2026-08-01 — ver Clarifications)*: A janela de obsolescência MUST ser dimensionada como
+  **ciclo do laço + folga de entrega**, e MUST continuar sendo medida contra `lastReviewed`. O alarme MUST significar
+  "algo falhou" — o robô não releu, ou a leitura não foi entregue —, nunca "o ciclo está terminando".
+  *Texto original, preservado porque o problema que ele nomeia é real e continua endereçado*: "a janela MUST ser
+  medida contra a data em que o valor chegou ao usuário… sem isso, o selo acusa 'desatualizada' durante todo o
+  intervalo entre a leitura e a entrega — **um falso positivo estrutural, todo mês, sobre valores corretos e
+  reverificados**, que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar."
+  *Por que a emenda*: mover o relógio para a entrega faria um número não-verificado há meses parecer fresco assim que
+  chegasse a um aparelho novo — a mentira inversa, e maior. A causa do falso positivo era a janela ter o tamanho exato
+  do ciclo, não o ponto de partida do relógio.
 - **FR-020a**: O job MUST **sempre abrir PR** e MUST NOT escrever direto no branch de integração. A política
   dividida por classe de diff decide **apenas a dispensa de revisão**: um PR cujo diff seja **exclusivamente**
   `lastReviewed` MAY ser auto-mergeado; um PR que toque **qualquer campo de dinheiro** MUST aguardar revisão
@@ -530,8 +554,13 @@ como os demais slots não sobrescritos.
 - **SC-805**: Uma atualização de catálogo, em qualquer camada, **nunca reduz cobertura**.
 - **SC-806**: O job mensal **nunca faz merge** e **nunca publica** sozinho; falha de leitura, ou parse vazio ou
   encolhido além do limiar declarado, resulta em **nenhum** PR, artefato intocado e alerta.
-- **SC-807**: `lastReviewed` avança **somente** por reverificação real; quando o laço para de funcionar, o selo de
-  30 dias dispara e o vendedor lê "desatualizada".
+- **SC-807** *(atualizada 2026-08-01 — Clarification + **Adendo A14** do ADR-0010)*: `lastReviewed` avança
+  **somente** por reverificação real; quando o laço para de funcionar, o selo de **45 dias**
+  (`ciclo 31 + folga de entrega 14`) dispara e o vendedor lê "desatualizada". A metade que este critério de fato
+  garante — `lastReviewed` só avançar por releitura da fonte — foi **reforçada** no mesmo incremento (T053 + a
+  validação de formato e não-futuro de `COLLECTED_AT`), não enfraquecida: o que mudou foi o limiar em que o
+  detector fala com o vendedor, não a existência dele. O sinal de vida voltado ao **dono** é outro e é imediato —
+  a ausência do PR mensal (`contracts/category-tree.md` §C3).
 - **SC-808**: Um vendedor que **não** escolhe categoria não fica pior do que antes do 014 — sem regressão em
   pré-fill, honestidade de selo ou comportamento offline.
 - **SC-809**: Todas as garantias de aceite de E1–E6 passam inalteradas — calculadora offline gratuita, recomputação

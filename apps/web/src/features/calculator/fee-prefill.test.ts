@@ -424,3 +424,83 @@ describe("T094/T096 — quem não escolhe categoria recebe o catch-all PUBLICADO
     expect(r.viaCatchAll).toBe(false);
   });
 });
+
+// 014/T013c (SC-808) — NÃO-REGRESSÃO de quem NÃO escolhe categoria.
+//
+// É o estado de 100% dos usuários no dia do merge, e continua sendo o de quem nunca tocar no seletor:
+// a categoria é OPCIONAL como portão (nada bloqueia um cálculo sem ela). O 014 acrescentou um eixo à
+// busca do catálogo, e o risco que este bloco existe para prender é o eixo novo mudar o caminho ANTIGO
+// — que ninguém pediu para mudar.
+//
+// A distinção que o bloco NÃO pode borrar: onde o marketplace NÃO tem eixo de categoria, o caminho sem
+// categoria tem de ser idêntico ao de antes do 014. Onde ele TEM eixo (Amazon), um slot sem categoria
+// passar a receber o catch-all publicado é mudança DELIBERADA (Q5/T094), não regressão — e por isso
+// ela é asserida como diferença esperada, não escondida.
+describe("T013c — quem não escolhe categoria não é afetado pelo eixo novo (SC-808)", () => {
+  it("a chave `category` é OMITIDA, nunca enviada vazia — o resolvedor casa conjuntos exatos", () => {
+    expect(slotDeterminants("MERCADO_LIVRE", "CLASSICO")).toEqual({ listingType: "CLASSICO" });
+    expect(slotDeterminants("MERCADO_LIVRE", "CLASSICO", "")).toEqual({ listingType: "CLASSICO" });
+    expect(slotDeterminants("AMAZON", "PROFISSIONAL")).toEqual({ plan: "PROFISSIONAL" });
+    // Uma chave `category: ""` casaria com NADA, e o slot cairia em "sem referência" sem motivo.
+    expect(slotDeterminants("AMAZON", "PROFISSIONAL")).not.toHaveProperty("category");
+  });
+
+  // Shopee: nenhum eixo de categoria, `determinants: null`. É o caso onde qualquer desvio seria
+  // regressão pura, porque não há decisão nova a tomar.
+  it("marketplace SEM eixo de categoria: mesma entrada, mesmo selo, sem sinal de catch-all", () => {
+    const semCat = resolveSlot(catalog, "SHOPEE", "PADRAO");
+    expect(semCat.entry?.source).toBe("Central do Vendedor Shopee");
+    expect(semCat.viaCatchAll).toBe(false);
+    expect(semCat.originCategoryId).toBeNull();
+
+    const selo = feeSealState({
+      entry: semCat.entry,
+      source: "catalog",
+      now: reviewedMs,
+      edited: false,
+      viaCatchAll: semCat.viaCatchAll,
+    });
+    expect(selo.kind).toBe("reference");
+    // "categoria não informada" aqui inventaria uma escolha que o vendedor nunca recebeu.
+    expect(selo).not.toHaveProperty("originCategoryName");
+  });
+
+  it("ML sem categoria continua resolvendo pela modalidade, exatamente como antes do 014", () => {
+    const antes = resolveSlot(catalog, "MERCADO_LIVRE", "CLASSICO");
+    expect(antes.entry?.commissionPct).toBe(12);
+    expect(antes.entry?.fixedFee).toBe(6.75);
+    expect(antes.viaCatchAll).toBe(false);
+    // E as taxas chegam ao motor iguais — o pré-fill é o que o vendedor vê no campo.
+    expect(entryToChannelFees(antes.entry!)).toMatchObject({ commissionPct: 12, fixedFee: 6.75 });
+  });
+
+  // O contraste, dito em vez de escondido: com eixo, o slot sem categoria MUDA — e a mudança é a
+  // decisão Q5, com selo próprio que se recusa a passar por "a taxa da sua categoria".
+  it("marketplace COM eixo: o slot sem categoria muda de propósito, e o selo diz que mudou", () => {
+    const semCat = resolveSlot(catalog014, "AMAZON", "PROFISSIONAL");
+    expect(semCat.viaCatchAll).toBe(true);
+    const selo = feeSealState({
+      entry: semCat.entry,
+      source: "catalog",
+      now: Date.parse("2026-07-28"),
+      edited: false,
+      viaCatchAll: semCat.viaCatchAll,
+    });
+    expect(selo.kind).toBe("catchAll");
+  });
+
+  // Offline é o mesmo caminho: a origem do valor muda o SELO, nunca a resolução.
+  it("offline (semente) sem categoria resolve a MESMA entrada — só a origem do selo muda", () => {
+    const online = resolveSlot(catalog, "SHOPEE", "PADRAO");
+    const selo = (source: "seed" | "catalog") =>
+      feeSealState({
+        entry: online.entry,
+        source,
+        now: reviewedMs,
+        edited: false,
+        viaCatchAll: online.viaCatchAll,
+      });
+    expect(selo("seed")).toMatchObject({ kind: "reference", embedded: true });
+    expect(selo("catalog")).toMatchObject({ kind: "reference", embedded: false });
+  });
+});

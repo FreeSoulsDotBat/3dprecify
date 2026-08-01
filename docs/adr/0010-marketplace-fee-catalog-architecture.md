@@ -226,7 +226,7 @@ is **unchanged**.
 
 **1B snapshot shape**, delivered by a **public `GET /api/v1/fee-catalog` endpoint that serves the committed,
 versioned repo artifact**, with the **client fetching on first `Calcular` load and persisting it (IndexedDB), a
-MANDATORY bundled seed for first-run offline**, a **30-day staleness seal** · **3A Cloud Run Job + Scheduler with
+MANDATORY bundled seed for first-run offline**, a **30-day staleness seal** *(EMENDADO pelo Adendo A14, 2026-08-01: a janela passou para 45 dias — leia o adendo antes de usar este número.)* · **3A Cloud Run Job + Scheduler with
 static BR egress + Secret-Manager house-account OAuth**, writing via a **PR the owner reviews/merges** (R6=a; job
 never touches a datastore) · **4A freight discriminated union** deducting from líquido only. Open questions resolved:
 **Q-A** = human PR review gate; **Q-B** = 30 days; **Q-C/R6** = committed repo artifact **served** by the endpoint;
@@ -330,7 +330,7 @@ marketplaces, plus the **custody** question that move creates (§A5).
 - **1B uniform schema** and **per-value provenance** (`source`/`sourceUrl`/`effectiveDate`/`lastReviewed`),
   Constitution II. *(014's owner round-1 decision to move provenance to the marketplace level is a **separate**
   schema question for the 014 plan — it is not decided by this amendment.)*
-- **Part 1, Part 2, Part 4** in full; the **30-day staleness seal**; the "backend never computes a price" invariant.
+- **Part 1, Part 2, Part 4** in full; the **30-day staleness seal**; *(EMENDADO pelo Adendo A14, 2026-08-01: a janela passou para 45 dias — leia o adendo antes de usar este número.)* the "backend never computes a price" invariant.
 - **The house ML account (Q-D)** stays a hard precondition for any ML ingestion. This amendment changes **where the
   job runs**, never **whether the credential is needed**.
 
@@ -440,7 +440,7 @@ flight in parallel — this section states the tension, it does not resolve it.*
    loads… If the load is sufficiently high enough, some queued jobs may be dropped."* A monthly cadence absorbs
    delay; **"dropped" means a month can silently vanish**. Design response: schedule **off the top of the hour**, and
    treat the **30-day staleness seal (014 US5/SC-807) as the dead-man's switch it already is** — it must not be
-   weakened to accommodate a flaky scheduler.
+   weakened to accommodate a flaky scheduler. *(EMENDADO pelo Adendo A14, 2026-08-01: a janela passou para 45 dias — leia o adendo antes de usar este número.)*
 3. **Inactivity auto-disable.** Verbatim: *"**In a public repository**, scheduled workflows are automatically
    disabled when no repository activity has occurred in 60 days."* **Correction to the 014 brief's framing:** the
    documented rule is scoped to **public** repositories. It therefore **applies to this repo today** and, per the
@@ -670,3 +670,45 @@ reviewer to stop reading, corroding the gate on the months that actually matter.
 **Precondition, not an aspiration**: the integration branch MUST carry platform protection requiring a PR
 (FR-020c). Without it the exception would not be an exception — the classifier would be the *only* gate, which is
 the state the T004 review found and this amendment closes.
+
+
+---
+
+## Adendo A14 — a janela de obsolescência passa de 30 para 45 dias (2026-08-01, autorizado pelo dono)
+
+Este adendo **emenda** a §A13 acima, na cláusula que trata o selo de 30 dias como *dead-man's switch* e diz que
+ele **"must not be weakened to accommodate a flaky scheduler"**. A janela passa a ser
+`LOOP_CYCLE_DAYS (31) + DELIVERY_SLACK_DAYS (14) = 45`, e o relógio **continua** em `lastReviewed`.
+
+**Por que a cláusula original estava certa quando foi escrita, e por que ela mudou de premissa.**
+
+1. **Uma das duas razões dela já morreu.** A §A9 justificava o selo como detector de liveness de um **runner
+   self-hosted** — "se a máquina é a estação do dono, a execução mensal só acontece quando ela está ligada". O gate
+   **G1 aposentou o runner self-hosted** (não há máquina; é runner hospedado). Essa metade da justificativa deixou
+   de existir com a medição, não com esta decisão.
+2. **Quando o ADR foi escrito, o selo era o ÚNICO sinal de vida.** A US4 entregou outro: o **PR mensal**, cujo caso
+   "sem novidade" o `contracts/category-tree.md` §C3 chama literalmente de *"a prova mensal de que o robô está
+   vivo"*. São sinais com **públicos diferentes** — o PR avisa o **dono** (imediatamente, pela ausência dele no
+   repositório); o selo avisa o **vendedor**. O ADR os confundia porque na época só havia um.
+3. **A causa do falso positivo não era o relógio, era a janela ter o tamanho exato do ciclo.** Com laço mensal e
+   janela de 30 dias, todo valor passa os últimos dias do ciclo dizendo "desatualizada" **com o robô funcionando** —
+   o que treina o vendedor a ignorar exatamente o alarme que a US5 existe para dar (a mesma spec já nomeava isso
+   como "falso positivo estrutural").
+
+**O custo, declarado e não escondido**: um mês descartado pelo agendador chega ao **vendedor** 15 dias mais tarde
+do que chegaria com 30. O dono continua vendo na hora.
+
+**Condição que ainda não está satisfeita — e por isso este adendo é datado.** Hoje **nenhum dos dois sinais
+existe**: o `fee-refresh.yml` (T049/T050) ainda não foi escrito, está preso à T069b, e o `schedule` do GitHub roda
+a partir de `main`, onde o corte de release está adiado até v1. Enquanto isso for verdade, o argumento (2) acima é
+uma promessa, não um fato — e a proteção real do vendedor é só a janela de 45 dias. **Se a T049 for abandonada ou
+adiada indefinidamente, este adendo deve ser reaberto**, porque a sua premissa central terá deixado de valer.
+
+**O que NÃO mudou, e é o que a SC-807 de fato garante**: `lastReviewed` avança **somente** por reverificação real
+da fonte. Essa metade foi **reforçada** no mesmo incremento (T053 + a validação de formato/não-futuro de
+`COLLECTED_AT`), não enfraquecida. O detector continua existindo; o que mudou foi o limiar em que ele fala com o
+vendedor.
+
+**Rastro**: Clarification datada 2026-08-01 em `specs/014-fee-category-mapping/spec.md` · **FR-020b emendada** ·
+**SC-807 atualizada para 45** · constante em `apps/web/src/shared/fee-catalog/fee-catalog.ts`, somada
+(`31 + 14`) em vez de cravada, para que a razão continue legível se a cadência do laço mudar.

@@ -45,6 +45,24 @@ module.exports = {
       from: { path: "^packages/pricing-core" },
       to: { path: "^apps/" },
     },
+    {
+      // 014/T007 — a fronteira do pacote de ingestão, que até aqui era só disciplina minha.
+      //
+      // Ela foi EXERCITADA de verdade na T106: validar o artefato montado contra o schema Zod exigiria
+      // `packages/fee-ingest` importar `apps/web/src/shared/fee-catalog`, e a alternativa seria
+      // duplicar o contrato. Parei ali por decisão estrutural (Princípio VIII) — mas nada no
+      // repositório me impedia. Agora impede, e a próxima pessoa recebe a recusa em vez de precisar
+      // conhecer a conversa.
+      //
+      // O pacote roda em CI, sem app e sem banco: importar de `apps/` o acoplaria a um bundle de
+      // browser, e de `backend/` a um runtime Python que ele nunca terá.
+      name: "fee-ingest-is-standalone",
+      severity: "error",
+      comment:
+        "packages/fee-ingest runs in CI with no app and no database; it must not import apps/ or backend/.",
+      from: { path: "^packages/fee-ingest" },
+      to: { path: "^(apps|backend)/" },
+    },
     ...upwardRules,
   ],
   options: {
