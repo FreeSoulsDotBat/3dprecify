@@ -682,6 +682,37 @@ ficam testáveis de verdade. Ficam aqui como **pré-condições declaradas da US
 - [ ] **U5-f — a fronteira do dia 45/46 nunca foi medida em NAVEGADOR**, so por unidade. A
   homologacao cobriu 35 e 50. Risco baixo, mas e nao-medido, nao "ok"
 
+**Da homologacao visual da US8 (2026-08-01) — PASS 94%, 45 screenshots**
+
+> A homologacao provou a afirmacao central **por MUTACAO**, nao por leitura: trocou a comissao de
+> `calcados` de 14% para 30% no catalogo servido e reabriu **o mesmo cenario salvo** — o preco andou
+> de **R$ 35,93 para R$ 44,14** com a categoria intacta. Um cenario que guardasse o VALOR nao teria se
+> mexido. E leu o JSONB no disco: com categoria grava `{"category":"calcados",…}`, sem categoria
+> grava `{"modality","marketplace"}` — **chave ausente, nao `""`**. A SC-809 verificada no disco.
+>
+> Fora do mandato, e util: dois slots com categorias DIFERENTES (uma troca de mapeamento seria
+> invisivel a "a categoria voltou"), editar, duplicar, e a degradacao — removendo `calcados` do
+> catalogo, o campo diz "A categoria escolhida nao esta neste catalogo" e o **rotulo em branco da T116
+> nao regrediu**.
+
+- [ ] **U8-a [MEDIO] — o congelado nao registra QUAL categoria produziu o numero, de forma
+  estruturada.** Verificado por mim: `calculator-model.ts:294` monta
+  `feeDeterminants: { modality }` **sem** a categoria, e nenhum caminho de `entities/history` a
+  menciona. **Nuance que impede chamar de perda**: o `feeSource` VIAJA no payload e, para a Amazon,
+  contem o nome da categoria em prosa (`"Tabela de comissoes da Amazon — Calcados (…)"`). Ou seja, um
+  humano lendo o registro consegue dizer; um programa nao. E a propriedade e ACIDENTAL — depende de o
+  marketplace por o nome na string da fonte, o que o ML pode nao fazer. Decidir se o congelado deve
+  responder "qual LINHA" alem de "qual TABELA" (`catalogVersion`) e do dono
+- [ ] **U8-b [MEDIO] — a SC-809 fala de cenario, kit E snapshot; a US8 testou o CENARIO.** O kit tem
+  canais? Se tiver, ele ganhou categoria ou nao — e deveria? A regra do dono ("cenarios sim, produtos
+  nao") nao menciona kit. Pode ser lacuna de spec, e a tarefa pode ter sido marcada larga demais
+- [ ] **U8-c [BAIXO] — a ponte E5→E4 nao foi exercitada**: gravar um snapshot A PARTIR de um cenario
+  com categoria. E a intersecao da US8 com a PR-C do E5, e a homologacao a nomeou como a lacuna que
+  investigaria em seguida
+- [ ] **U8-d [BAIXO, fora da US8] — o botao `Limpar` desalinha com nome de categoria longo** em 390px:
+  com 2 linhas de texto ele cai numa 3a linha indentada a esquerda em vez de ancorado a direita.
+  Cosmetico, medido, **e do seletor da PR-A** — nao regressao desta fatia
+
 ### Fechamento
 - [x] T122 `pnpm gate:all` verde + CI verde no PR #31 + regenerar contrato se alguma rota mudou — evidência em `specs/014-fee-category-mapping/dod-evidence.md`
 
