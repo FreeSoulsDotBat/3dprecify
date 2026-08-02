@@ -425,7 +425,10 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > **NAO julgado, e dito como tal**: se o deslocamento de fuso atinge as datas de assinatura REAIS
 > depende da hora-do-dia que o MP grava em `currentPeriodEnd`, e o stub nao a reproduz. A
 > homologacao se recusou a homologar ou reprovar esse recorte por inferencia — que e a resposta certa.
-- [ ] T029 `pnpm gate:all` + drift-guard + SC-709. Evidence.
+- [x] T029 `gate:all` exit 0 (1209 front / 424 back / 5 contratos) · drift-guard **0 diff nas DUAS
+      passadas** · e2e 5/5 chromium · **SC-709 provado pela FORMA**: `git diff develop` sobre
+      `app/entitlement/`, `entities/user/` e `packages/` da ZERO — a derivacao nao mudou porque o
+      codigo dela nao foi tocado. Evidencia em `dod-evidence.md`.
 - [ ] T030 **Owner-gated PR-B → `develop`** (squash). Graph refresh on merge.
 
 ---
