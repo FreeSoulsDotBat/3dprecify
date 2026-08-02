@@ -112,14 +112,21 @@ test.describe("E6 PR-B — o ciclo reverso (cancelar · carência · congelament
     // completamente fora da tela. Este guarda mede a página, que é o único jeito.
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(page.getByRole("button", { name: tb.planCancel })).toBeVisible();
-    const transbordo = await page.evaluate(() => ({
-      scroll: document.documentElement.scrollWidth,
-      client: document.documentElement.clientWidth,
-    }));
-    expect(
-      transbordo.scroll,
-      `a Conta transborda ${JSON.stringify(transbordo)}`,
-    ).toBeLessThanOrEqual(transbordo.client);
+    // `expect.poll`, e nao uma leitura unica: `setViewportSize` NAO espera o reflow, entao uma
+    // medicao instantanea as vezes pega o quadro ANTERIOR a quebra de linha. Foi o que produziu um
+    // `467 contra 390` INTERMITENTE — o guarda estava certo, o MOMENTO da leitura e que estava
+    // errado. (Mesma familia do `:focus-within` que ja fez uma comparacao de frame depender do tempo
+    // neste projeto.) O que se afirma e o estado ASSENTADO, que e o que o vendedor ve — e um guarda
+    // que reprova so as vezes ensina a mandar rodar de novo, que e pior do que nao ter guarda.
+    await expect
+      .poll(
+        async () =>
+          await page.evaluate(
+            () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          ),
+        { message: "a Conta transborda horizontalmente a 390px" },
+      )
+      .toBeLessThanOrEqual(0);
     await page.setViewportSize({ width: 1280, height: 800 });
 
     await page.getByRole("button", { name: tb.planCancel }).click();
