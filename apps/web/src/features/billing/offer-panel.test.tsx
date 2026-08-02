@@ -34,6 +34,9 @@ import { useSessionStore } from "@/shared/session/session-store";
 
 import { OfferPanel } from "./offer-panel";
 
+/** O NBSP do dado vira espaco comum, como o normalizador do RTL ja faz com o texto do DOM. */
+const semNbsp = (v: string) => v.replaceAll(String.fromCharCode(160), " ");
+
 const t = messages.billing;
 
 function renderOffer() {
@@ -50,9 +53,12 @@ afterEach(() => {
 describe("OfferPanel — real prices, honest discount (US1, ux §2/§0.2)", () => {
   it("renders EXACTLY the monthly and annual prices from the one product constant", () => {
     renderOffer();
-    expect(screen.getByText(t.planMonthlyPrice)).toBeInTheDocument(); // R$ 15,99/mês
-    expect(screen.getByText(t.planAnnualPrice)).toBeInTheDocument(); // R$ 155,88/ano
-    expect(screen.getByText(t.planAnnualEquiv)).toBeInTheDocument(); // equivalente a R$ 12,99/mês
+    // T038/D1 — os precos carregam NBSP entre o simbolo e o valor (para a linha NUNCA quebrar
+    // entre `R$` e o numero), e o normalizador do RTL converte o NBSP do DOM mas nao o do matcher.
+    // A comparacao segue partindo da MESMA constante — so o separador e normalizado dos dois lados.
+    expect(screen.getByText(semNbsp(t.planMonthlyPrice))).toBeInTheDocument();
+    expect(screen.getByText(semNbsp(t.planAnnualPrice))).toBeInTheDocument();
+    expect(screen.getByText(semNbsp(t.planAnnualEquiv))).toBeInTheDocument();
     expect(screen.getByText(t.planAnnualSaving)).toBeInTheDocument(); // ~19% de economia
   });
 
@@ -148,7 +154,7 @@ describe("OfferPanel — real prices, honest discount (US1, ux §2/§0.2)", () =
     useEntitlementMock.mockReturnValue({ data: { status: "active" }, isError: false });
     render(<OfferPanel />);
     expect(screen.getByText(t.alreadyPremium)).toBeInTheDocument();
-    expect(screen.queryByText(t.planAnnualPrice)).not.toBeInTheDocument();
+    expect(screen.queryByText(semNbsp(t.planAnnualPrice))).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: t.subscribeAction })).not.toBeInTheDocument();
   });
 });

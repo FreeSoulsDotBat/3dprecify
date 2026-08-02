@@ -33,7 +33,9 @@ test.describe("E6 PR-C — os quatro teasers acesos", () => {
 
       // A LINHA inteira, verbatim da mesma funcao que a UI usa — se as duas divergirem, este
       // teste cai, e divergir e exatamente o bloqueador de release que a FR-710 nomeia.
-      await expect(page.getByText(teaserPriceLine())).toBeVisible();
+      await expect(
+        page.getByText(teaserPriceLine().replaceAll(String.fromCharCode(160), " ")),
+      ).toBeVisible();
 
       const cta = page.getByRole("link", { name: tb.subscribeAction });
       await expect(cta).toBeVisible();

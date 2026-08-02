@@ -6,6 +6,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { BILLING_PLANS } from "./plans";
+
+/** O NBSP do dado vira espaco comum, como o normalizador do RTL ja faz com o texto do DOM. */
+const semNbsp = (v: string) => v.replaceAll(String.fromCharCode(160), " ");
 import { teaserPriceLine } from "./price-line";
 import { TEASER_UPGRADE_TARGET, TeaserUpgrade } from "./teaser-upgrade";
 
@@ -66,7 +69,7 @@ describe("o CTA leva à OFERTA, e não a um checkout que escolheu por ele", () =
   it("assinado: um botão Assinar e a linha de preço", () => {
     render(<TeaserUpgrade signedOut={false} />);
     expect(screen.getByRole("link", { name: t.subscribeAction })).toBeInTheDocument();
-    expect(screen.getByText(teaserPriceLine())).toBeInTheDocument();
+    expect(screen.getByText(semNbsp(teaserPriceLine()))).toBeInTheDocument();
   });
 
   it("deslogado: o caminho passa pelo sign-in E PRESERVA a intenção", () => {
@@ -80,6 +83,6 @@ describe("o CTA leva à OFERTA, e não a um checkout que escolheu por ele", () =
 
   it("a linha de preço aparece nos DOIS estados — o preço não é segredo de quem tem conta", () => {
     render(<TeaserUpgrade signedOut />);
-    expect(screen.getByText(teaserPriceLine())).toBeInTheDocument();
+    expect(screen.getByText(semNbsp(teaserPriceLine()))).toBeInTheDocument();
   });
 });

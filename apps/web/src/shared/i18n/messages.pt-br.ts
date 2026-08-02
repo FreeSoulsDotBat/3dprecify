@@ -913,13 +913,19 @@ export const messages = {
     offerTitle: "Assinar o Premium",
     offerFreeLead: "A calculadora é grátis e continua grátis.",
     offerBody: "O Premium guarda seu catálogo, kits, histórico e cenários — e libera exportar.",
+    // T038/D1 — o espaco entre `R$` e o valor e NBSP (U+00A0), nao espaco comum.
+    //
+    // MEDIDO na homologacao: a 390px a linha do teaser quebrava ENTRE o simbolo e o numero — a
+    // primeira linha terminava em "equivalente a R$" e a segunda comecava em "12,99/mes". Nenhuma
+    // assercao geometrica ou de texto ve isso (nao ha corte, nao ha transbordo: `clip = 0px`); so a
+    // imagem. Numa linha de PRECO, separar o simbolo do valor e a unica quebra que nao se permite.
     planAnnualName: "Plano anual",
     planAnnualBadge: "recomendado",
-    planAnnualPrice: "R$ 155,88/ano",
-    planAnnualEquiv: "equivalente a R$ 12,99/mês",
+    planAnnualPrice: "R$ 155,88/ano",
+    planAnnualEquiv: "equivalente a R$ 12,99/mês",
     planAnnualSaving: "~19% de economia frente ao mensal", // o delta real — NUNCA um "de/por"
     planMonthlyName: "Plano mensal",
-    planMonthlyPrice: "R$ 15,99/mês",
+    planMonthlyPrice: "R$ 15,99/mês",
     planMonthlyNote: "cobrança todo mês, cancele quando quiser",
     subscribeAction: "Assinar Premium",
     // E6/US7 (T032) — a linha de preco dos teasers. So conectivos: os NUMEROS vem de

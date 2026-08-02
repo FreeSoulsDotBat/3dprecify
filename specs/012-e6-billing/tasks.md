@@ -565,8 +565,52 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > fontes, que e exatamente o que a FR-710 proibe. Agora a UI e o e2e importam a MESMA funcao, e um
 > teste de unidade afirma que a linha contem os valores de `BILLING_PLANS` — e esse teste e o que
 > mantem as duas leituras amarradas em vez de apenas parecerem iguais.
-- [ ] T038 qa-produto homologation: the four teasers' honesty at 390px, refund lapse copy, and the
-      quickstart step-10/11 sweep. Screenshots.
+- [x] T038 homologacao visual (`qa-produto`, opus) — **PASS COM RESSALVAS 88%**, **37 screenshots**,
+      geometria lida do DOM em 12 estados. **A classe do T028 NAO se repetiu**: `scrollWidth -
+      clientWidth = 0` em todos; a promessa "continua gratis" segue LIDERANDO (12px de folga, zero
+      sobreposicao); alvo de toque 44px minimo. **FR-713 limpa por varredura DUPLA** — 22 capturas
+      de `innerText` x 34 termos + o namespace `billing` inteiro lido (nao so grep). Ela ate
+      registrou o falso positivo que um grep ingenuo pegaria: `freightLine` cita cupom de FRETE de
+      marketplace (dominio E1), nao de assinatura.
+      **Cinco defeitos, TODOS corrigidos:**
+      · **D5 — REQUISITO NOMEADO E NAO CONSTRUIDO**: o §7.2 pede a faixa no Dialog *e no PAINEL* do
+        catalogo, e o painel ficou sem. Zero ocorrencias em `/catalogo` nos 4 estados: o vendedor via
+        "Salvar faz parte do Premium" e NENHUM preco, e so descobria o valor tocando em "+ Adicionar
+        filamento". Tres superficies acendiam onde ele aterrissa, uma exigia um toque a mais. Custou
+        uma linha.
+      · **D4 — regressao que a faixa CRIOU**: com o dialog de cenarios aberto, 31,8px (390) / 39,1px
+        (1280) da faixa do PAINEL ficavam visiveis por baixo, com opacidade efetiva 1 — um SEGUNDO
+        "Assinar Premium" identico. E a 1280 o card CORTAVA a linha de preco, deixando um fragmento
+        de centavos na tela ao lado do CTA duplicado. **Dinheiro mutilado.** Antes da US7 o painel
+        nao tinha preco nem botao.
+      · **D1 — o simbolo se separava do valor**: a 390px a linha quebrava entre `R$` e o numero.
+        Sem corte e sem transbordo — nenhuma assercao geometrica ou de texto ve; so a imagem.
+      · **D2 — a faixa era a UNICA coisa desalinhada** em 3 dos 4 teasers: todo irmao com desvio
+        0,0px do centro e o botao orfao a ate **149,6px** a esquerda. Nos Dialogs (conteudo a
+        esquerda) estava coerente — por isso o alinhamento virou ESCOLHA de quem monta (`align`).
+      · **D3 — o botao de SAIR pesava mais que o de comprar**: CTA 44px contra dispensar 48px, os
+        dois em roxo primario. Num paywall, o maior e o unico centrado era o de sair.
+
+> **O lapso por estorno — a leitura da homologacao, e eu concordo.** Nao mencionar o estorno esta
+> CERTO: quem pediu o dinheiro de volta sabe que pediu, repetir e reprimenda, e num chargeback em
+> disputa seria acusacao que o produto nao sustenta. **Mas "expirado" afirma uma causa que nao
+> aconteceu** — expirar e o tempo acabar, e o periodo foi CORTADO; a tela dizia "renova em
+> 01/09/2026" e no mesmo dia diz "expirado". E `/kits` chama o MESMO estado de "Premium pausado":
+> dois nomes para um estado, um deles com causa falsa embutida. O conserto honesto nao e confessar o
+> estorno, e parar de afirmar a causa. **NAO consertado aqui**: `plan-view.ts` so recebe
+> `none|active|lapsed`, a causa nao trafega, e unificar o rotulo e decisao de produto.
+> **FOLLOW-UP PARA O DONO.**
+
+> **Ressalvas menores registradas**: o LAPSED nao acende faixa (fora do escopo literal da US7 —
+> teasers sao free/deslogado —, mas e o estado em que o vendedor mais quer comprar); o
+> `space-between` da faixa e CSS morto (ela quebra em TODO tamanho); o §7.2 garantiu o certo pelo
+> motivo errado ("price line is short, it cannot overflow" — quem salvou foi o `flex-wrap`); e a URL
+> fica com o parametro serializado em JSON depois do round-trip do deslogado (cosmetico).
+
+> **Tres comentarios de FONTE caducados foram corrigidos** — eles diziam "sem preco, sem CTA de
+> compra (billing e E6)" IMEDIATAMENTE ACIMA de um preco e de um botao de compra. O commit da US7
+> estreitou as quatro proibicoes dos TESTES e deixou os comentarios para tras: o repositorio
+> descrevendo o que nao garante, de novo.
 - [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner
       homologation script) + the FR-713 absence sweep (no proration/trial/coupon/fiscal surface exists
       anywhere — grep + UI walk). Evidence.

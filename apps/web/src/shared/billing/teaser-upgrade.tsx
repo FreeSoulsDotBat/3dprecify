@@ -36,6 +36,15 @@ export const TEASER_UPGRADE_TARGET = "/conta?assinar=1";
 export interface TeaserUpgradeProps {
   /** Deslogado: o caminho passa pelo sign-in preservando a intenção. */
   signedOut: boolean;
+  /**
+   * T038/D2 — `"center"` nos painéis inline, cujo conteúdo é centrado.
+   *
+   * MEDIDO: nos três painéis, título, descrição, nota e o botão de dispensa tinham desvio **0,0px**
+   * do centro, e só a faixa saía — o "Assinar" ficava órfão a até **149,6px** à esquerda. Nos dois
+   * Dialogs o conteúdo já é alinhado à esquerda, e lá a faixa está coerente; por isso o alinhamento
+   * é ESCOLHA de quem monta, e não um palpite do componente.
+   */
+  align?: "start" | "center";
   className?: string;
 }
 
@@ -45,7 +54,7 @@ export interface TeaserUpgradeProps {
  * roteador, e um componente que só funciona sob um provider é um componente que ninguém consegue
  * testar isolado.
  */
-export function TeaserUpgrade({ signedOut, className }: TeaserUpgradeProps): ReactNode {
+export function TeaserUpgrade({ signedOut, align, className }: TeaserUpgradeProps): ReactNode {
   // Sem o `redirect`, quem entra pela oferta cai na home e perde o que veio fazer — o defeito de
   // retorno frio que o `951d714` já consertou uma vez nesta mesma jornada.
   const href = signedOut
@@ -53,9 +62,11 @@ export function TeaserUpgrade({ signedOut, className }: TeaserUpgradeProps): Rea
     : TEASER_UPGRADE_TARGET;
 
   return (
-    <div className={`tf-teaser-upgrade${className ? ` ${className}` : ""}`}>
+    <div
+      className={`tf-teaser-upgrade${align === "center" ? " tf-teaser-upgrade--center" : ""}${className ? ` ${className}` : ""}`}
+    >
       <span className="tf-teaser-upgrade__price">{teaserPriceLine()}</span>
-      <a className="tf-btn tf-btn--primary tf-btn--sm" href={href}>
+      <a className="tf-btn tf-btn--primary" href={href}>
         {t.subscribeAction}
       </a>
     </div>

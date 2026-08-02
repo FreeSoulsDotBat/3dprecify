@@ -11,7 +11,9 @@ import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 // so the record button does not exist without an active Premium (SC-109 of spec 005 stays literally
 // true). The offer belongs where someone is actually asking about history.
 //
-// Three prohibitions, inherited: no price, no availability date, no pre-E6 purchase CTA (billing is
+// T038 — ESTE COMENTARIO CADUCOU na US7 e foi corrigido: ele dizia "sem preco, sem CTA de
+// compra (billing e E6)" ACIMA de um preco e de um botao de compra. A premissa caiu quando o E6
+// chegou; a garantia que sobra e outra — so os tres precos praticados, sem urgencia e sem de/por.
 // E6 — a buy button would promise a flow that does not exist, Principle II). And one that is new
 // and specific to THIS surface:
 //
@@ -28,7 +30,7 @@ export function HistoryTeaserPanel({ signedOut }: { signedOut: boolean }) {
       {signedOut && <p className="text-center text-sm">{t.teaserSignedOutBody}</p>}
       {/* What the seller is actually worried about when they meet a paywall. */}
       <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
-      <TeaserUpgrade signedOut={signedOut} />
+      <TeaserUpgrade signedOut={signedOut} align="center" />
       <div className="flex justify-center gap-2">
         {signedOut && (
           <Button

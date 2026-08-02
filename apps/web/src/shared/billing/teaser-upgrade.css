@@ -15,3 +15,9 @@
   font-size: var(--fs-caption);
   color: var(--text-muted);
 }
+/* T038/D2 — os paineis inline centram todo o resto; a faixa acompanha. Nos Dialogs o conteudo e
+   alinhado a esquerda, e la o padrao (`space-between`) e o certo. */
+.tf-teaser-upgrade--center {
+  justify-content: center;
+  text-align: center;
+}
