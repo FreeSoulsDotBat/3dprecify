@@ -1,6 +1,11 @@
 import { CheckoutInPeriod } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
+// MOVIDO de `features/billing` para `shared/` na US7 (T032), pelo caminho que o ux-billing §9-G2 ja
+// previa: os quatro teasers sao FEATURES irmas, e `feature -> feature` e proibido por desenho
+// (eslint-boundaries). Elevar foi a saida escrita no proprio spec — e e a mais correta: uma
+// constante de PRODUTO e transversal, como `messages`, nao propriedade de uma feature.
+//
 // E6/T014-T015 (US1 — ux-billing.md §0.2/§8). THE ONE product constant: every billing surface
 // (the offer, the shared Assinar CTA, and — in a later wave — the four teasers) reads prices
 // from here, never a locally-typed number. A mismatch between two rendered prices would be a

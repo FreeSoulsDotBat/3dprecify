@@ -77,7 +77,13 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     expect(screen.getByText(t.teaserBody)).toBeInTheDocument();
     // A demo row here would be a FAKE RECEIPT — the one thing this epic exists to make impossible.
     expect(screen.queryByText(t.quotedValue)).not.toBeInTheDocument();
-    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+    // O `/R\$/` cru era um PROXY para "nenhum recibo inventado", e ele funcionava enquanto o teaser
+    // não tinha preço nenhum. Com a US7 ele passou a ter o do PLANO, e o proxy pegaria justamente o
+    // dinheiro legítimo. A garantia real é mais estreita e continua inteira: todo valor na tela é um
+    // dos três preços praticados — qualquer outro seria um registro fabricado.
+    for (const n of (document.body.textContent ?? "").match(/\d+[.,]\d{2}/g) ?? []) {
+      expect(["15,99", "12,99", "155,88"]).toContain(n);
+    }
   });
 
   it("signed out: the same honest door, plus a way in", () => {
@@ -89,12 +95,23 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     expect(screen.getByRole("button", { name: messages.signIn.title })).toBeInTheDocument();
   });
 
-  it("no price, no availability date, no purchase CTA (billing is E6 — FR-014)", () => {
+  it("o preço é HONESTO (E6/US7) e nada é prometido antes de existir", () => {
     useEntitlementMock.mockReturnValue(entitlement("none"));
     const { container } = render(<HistoricoPage />);
     const text = container.textContent ?? "";
 
-    expect(text).not.toMatch(/R\$|\bassinar\b|\bcomprar\b|\bpagar\b|\bmês\b|\bplano por\b/i);
+    // A proibição de PREÇO caiu porque a premissa dela caiu: ela dizia "billing is E6", e o E6
+    // chegou (PR-A + PR-B na `develop`). O teaser agora mostra o preço REAL e um caminho para
+    // assinar — o que era desonesto era prometer uma compra que não existia.
+    //
+    // O que NÃO caiu, e é o que sobra aqui: só os três números que o produto de fato pratica,
+    // nenhuma urgência, nenhum "de/por" riscado (fabricaria um desconto que nunca existiu), e
+    // nenhuma promessa de coisa não construída — esta última nunca dependeu de cobrança.
+    for (const n of text.match(/\d+[.,]\d{2}/g) ?? []) {
+      expect(["15,99", "12,99", "155,88"]).toContain(n);
+    }
+    expect(text).not.toMatch(/\b(últimas|só hoje|última chance|aproveite)\b/i);
+    expect(text).not.toMatch(/191,88/);
     expect(text).not.toMatch(/\b(em breve|a partir de|lançamento)\b/i);
   });
 

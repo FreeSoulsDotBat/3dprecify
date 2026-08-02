@@ -922,6 +922,10 @@ export const messages = {
     planMonthlyPrice: "R$ 15,99/mês",
     planMonthlyNote: "cobrança todo mês, cancele quando quiser",
     subscribeAction: "Assinar Premium",
+    // E6/US7 (T032) — a linha de preco dos teasers. So conectivos: os NUMEROS vem de
+    // `BILLING_PLANS`, nunca daqui, porque duas fontes de preco sao duas verdades (FR-710/SC-707).
+    teaserPriceLead: "Premium:",
+    teaserAnnualLead: "no plano anual,",
     handoffNotice: "Você paga no Mercado Pago (Pix ou cartão).",
     cardNeverTouches: "O cartão nunca passa pelo nosso app.",
     alreadyPremium: "Você já é Premium.",

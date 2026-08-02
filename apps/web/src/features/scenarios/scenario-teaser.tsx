@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import {
   Button,
   Dialog,
@@ -46,6 +47,7 @@ export function ScenarioTeaserDialog({
             {signedOut ? t.teaserSignedOutBody : t.teaserDialogBody}
           </DialogDescription>
           <p className="text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+          <TeaserUpgrade signedOut={signedOut} />
           <div className="flex justify-end gap-2">
             {signedOut && (
               <Button
@@ -85,6 +87,7 @@ export function ScenarioTeaserPanel({
         <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserSignedOutBody}</p>
       )}
       <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+      <TeaserUpgrade signedOut={signedOut} />
     </div>
   );
 }

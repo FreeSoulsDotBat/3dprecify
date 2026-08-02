@@ -451,11 +451,39 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 11: User Story 7 — Teaser light-up (Priority: P2)
 
-- [ ] T031 [US7] Write FAILING vitest — the four teasers (`features/{catalog/premium-teaser,bom/bom-teaser,
-      history/history-teaser,scenarios/scenario-teaser}.tsx`) render the real price + the shared Assinar CTA
-      (FR-710); honesty regex (no fabricated number, no urgency copy); the price constant matches the plan
-      surface (one source). Observe failing.
-- [ ] T032 [US7] Implement: point the four teasers at the shared `features/billing` CTA. Tests green.
+- [x] T031 [US7] Vermelho observado — `shared/billing/teaser-upgrade.test.tsx` (8 testes). O modulo
+      nao existia, entao zero testes coletados: e o vermelho certo, e o mesmo formato do `plan-view`.
+- [x] T032 [US7] Os quatro teasers acesos. gate:all verde: **1219 front** (eram 1211), 424 back.
+
+> **FR-710/SC-707 — uma so fonte de preco, e agora ela e ESTRUTURAL.** A linha de preco e montada a
+> partir de `BILLING_PLANS`, nunca de numeros redigitados; o anual entra pelo EQUIVALENTE mensal
+> (155,88/12 ≈ 12,99), que e o numero que o vendedor usa para comparar. O R$ 191,88 nunca aparece
+> riscado — um "de/por" fabricaria um desconto que nunca existiu.
+
+> **O CTA leva a OFERTA, nao a um checkout.** Mensal e anual tem precos diferentes; disparar a compra
+> de um periodo que o vendedor nao escolheu e escolher por ele.
+
+> **DESALINHAMENTO DE SPEC, registrado em vez de resolvido em silencio**: o §7.1 manda rotear para
+> `/assinatura`, e **essa rota nunca foi construida** — o PR-A entregou a oferta como um `Sheet`
+> dentro de `/conta`. O alvo e `/conta?assinar=1`, que e o que EXISTE. Nao criei uma rota que
+> ninguem pediu, nem fingi que o §7.1 ja estava satisfeito. O `assinar` passa pelo `validateSearch`
+> como o `checkout`: qualquer outro valor vira `undefined`.
+
+> **O §9-G2 previu o problema E a saida, e as duas se confirmaram.** O `TeaserUpgrade` nasceu em
+> `features/billing` para os quatro teasers consumirem — e o eslint-boundaries reprovou com QUATRO
+> erros, um por teaser: `feature -> feature` e proibido por desenho. O spec ja dizia "be lifted to a
+> shared layer if the boundary linter objects". Elevado para `shared/billing/` junto com a constante
+> de preco, que e transversal de verdade — como `messages`, e nao propriedade de uma feature.
+
+> **QUATRO proibicoes pre-E6 caducaram, e NENHUMA foi apagada.** Os teasers de catalogo, kits,
+> historico e cenarios afirmavam "sem preco, sem CTA de compra (billing is E6)". O E6 chegou, entao a
+> PREMISSA caiu — mas a garantia nao. Cada uma foi CONVERTIDA no que ainda protege: so os tres
+> numeros que o produto pratica, nenhuma urgencia, nenhum "de/por", e nenhuma promessa de coisa nao
+> construida (esta ultima nunca dependeu de cobranca).
+> O caso mais delicado foi o do Historico, que usava `/R\$/` cru como PROXY de "nenhum recibo
+> inventado" — um proxy que funcionava enquanto nao havia preco nenhum na tela e que passaria a pegar
+> justamente o dinheiro legitimo. Estreitado para a garantia real: todo valor exibido e um dos tres
+> precos praticados; qualquer outro seria um registro fabricado.
 
 ## Phase 12: User Story 8 — Refund/chargeback mechanics (Priority: P3, mechanics-floor kept)
 

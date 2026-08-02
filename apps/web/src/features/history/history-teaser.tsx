@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, EmptyState } from "@/shared/ui";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 
 // 009/T015 (E4, PR-A) — the honest door (US5; E2 US7 / E3 US5 lineage).
 //
@@ -27,6 +28,7 @@ export function HistoryTeaserPanel({ signedOut }: { signedOut: boolean }) {
       {signedOut && <p className="text-center text-sm">{t.teaserSignedOutBody}</p>}
       {/* What the seller is actually worried about when they meet a paywall. */}
       <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+      <TeaserUpgrade signedOut={signedOut} />
       <div className="flex justify-center gap-2">
         {signedOut && (
           <Button

@@ -98,7 +98,11 @@ function PlanSection() {
   const sub = useSubscription();
   const t = messages.conta;
   const tb = messages.billing;
-  const [offerOpen, setOfferOpen] = useState(false);
+  // US7/T032 — os teasers chegam com `?assinar=1`, e a oferta abre ja montada. O estado inicial le
+  // a intencao UMA vez: depois disso quem manda e o usuario (fechar tem de fechar, e um efeito
+  // preso a URL reabriria o Sheet no proximo render).
+  const intencao = (useSearch({ strict: false }) as { assinar?: string }).assinar === "1";
+  const [offerOpen, setOfferOpen] = useState(intencao);
 
   // E6/US6 (T026) — o painel COMPOE duas verdades do servidor (ledger + espelho do PSP) e nao
   // infere nenhuma (SC-708). A regra mora em `plan-view.ts`, pura e testada; aqui so ha
