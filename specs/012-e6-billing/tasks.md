@@ -487,10 +487,31 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 12: User Story 8 — Refund/chargeback mechanics (Priority: P3, mechanics-floor kept)
 
-- [ ] T033 [US8] Write FAILING pytest — verified refund/chargeback → `revoked_at` on the active payment
-      grant (append-only revoke) → immediate lapse; idempotent replay; `beta|comp` grants untouched
-      (VR-708/SC-710); post-lapse chargeback = audit-only no-op. Observe failing.
-- [ ] T034 [US8] Implement in `grant_writer.py` + the event kinds in the MP provider. Tests green.
+- [x] T033 [US8] Vermelho observado — `backend/tests/test_billing_refund.py`, 6 testes, `FFFFFF`.
+- [x] T034 [US8] Revogacao implementada em `grant_writer._revoke_for_refund` + os tipos de evento no
+      provider. 6/6 verdes; gate:all verde com **430 no backend** (eram 424).
+
+> **O buraco que esta fatia fecha tem nome: PREMIUM SILENCIOSO.** Um estorno que ninguem processa
+> deixa o vendedor premium de graca e ninguem descobre — nao ha erro, nao ha log, so uma conta ativa
+> que nao devia estar. Por isso a US8 e P3 mas o piso de mecanica nao e descartavel.
+
+> **`refunded`/`charged_back` sairam de `payment_failed`, e a separacao E o conserto.** O
+> `_approved_kind` mapeava tudo que nao fosse `approved` para "falhou", o que daria **CARENCIA a quem
+> pediu o dinheiro de volta** — dez dias de premium de presente, pelo caminho que existe para ajudar
+> quem quer pagar. Um teste crava o tipo gravado no inbox, nao so a presenca do evento.
+
+> **DUAS coisas que a revogacao deliberadamente NAO faz, e as duas foram provadas por MUTACAO:**
+> · **nao toca em `beta`/`comp`** — sao decisoes de OPERADOR, sem relacao com o cartao do vendedor;
+>   um estorno que as apagasse tiraria o acesso de quem nunca pagou por ele, e o defeito seria
+>   INVISIVEL, porque "o premium do pagamento caiu" e exatamente o que se espera ver. Mutacao
+>   (revogar por conta em vez de por assinatura): `..F...`
+> · **nao revoga um grant JA expirado** — chargebacks chegam semanas depois e o comum e a conta ja ter
+>   caido sozinha; revogar ali nao mudaria nada para o vendedor, mas SOBRESCREVERIA o motivo da queda.
+>   Mutacao (remover o filtro de expiracao): `....F.`
+
+> **Uma assercao MORTA que eu escrevi, achada relendo:** `assert [...].count(...) >= 0` e SEMPRE
+> verdade. Nenhum linter pega, o teste ficava verde, e ela nao guardava absolutamente nada. Trocada
+> por uma que compara a sequencia exata de tipos no inbox.
 
 ## Phase 13: Play Billing flag-readiness (owner Q2 — NOT droppable)
 

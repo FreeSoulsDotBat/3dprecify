@@ -37,8 +37,21 @@ def set_test_transport(transport: httpx.AsyncBaseTransport | None) -> None:
     _test_transport = transport
 
 
+#: T034 (US8) — os status que significam DINHEIRO DE VOLTA. Separados de `payment_failed` porque o
+#: efeito e oposto: uma recusa abre carencia (o vendedor continua premium enquanto o MP tenta), um
+#: estorno revoga (o pagamento deixou de existir). Tratar os dois como "nao aprovado" daria carencia
+#: a quem pediu o dinheiro de volta — premium de graca, e silencioso.
+_REEMBOLSO: dict[str, EventKind] = {
+    "refunded": "refund",
+    "charged_back": "chargeback",
+    "cancelled": "refund",
+}
+
+
 def _approved_kind(mp_status: str) -> EventKind:
-    return "payment" if mp_status == "approved" else "payment_failed"
+    if mp_status == "approved":
+        return "payment"
+    return _REEMBOLSO.get(mp_status, "payment_failed")
 
 
 #: SC-706/SEC-501 minimisation (T017 condition C2): the ONLY fields of a looked-up MP resource
