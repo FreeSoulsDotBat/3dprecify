@@ -611,9 +611,13 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > compra (billing e E6)" IMEDIATAMENTE ACIMA de um preco e de um botao de compra. O commit da US7
 > estreitou as quatro proibicoes dos TESTES e deixou os comentarios para tras: o repositorio
 > descrevendo o que nao garante, de novo.
-- [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner
-      homologation script) + the FR-713 absence sweep (no proration/trial/coupon/fiscal surface exists
-      anywhere — grep + UI walk). Evidence.
+- [x] T039 `gate:all` exit 0 (1219 front / 444 back / 5 contratos) · e2e **17/17** nos tres arquivos
+      de billing · drift-guard 0 diff · **SC-709 provada pela FORMA** (diff ZERO nos modulos de
+      derivacao: a revogacao da US8 e um `UPDATE` que a derivacao ja sabia ler).
+      **FR-713 varrida DUAS vezes, por codigo e por tela**: 12 termos em `apps/web/src` +
+      `backend/app` + `packages` — NOVE deram zero, e os quatro hits sao falsos positivos
+      verificados um a um (o mais eloquente: `imposto` aparece num teste AFIRMANDO que nao existe
+      campo de imposto). Escopo declarado e tabela em `dod-evidence.md`.
 - [ ] T040 **Owner-gated PR-C → `develop`** (squash). Graph refresh on merge.
 
 ---
@@ -624,8 +628,9 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       premium-gate line from the brief §10) + cross-slice dod-evidence; confirm ADR-0023 Accepted; final
       graph refresh. **v1 = E1–E6 complete → surface the DEPLOY decision to the owner** (the standing
       2026-07-09 rule's trigger has fired; the live-webhook validation from Q3 waits there).
-- [ ] T042 [P] Q9 fiscal check handoff: a dated note to the owner listing exactly what the accountant must
-      confirm (MP receipt sufficiency for the owner's tax regime) — LAUNCH blocker tracking, not code.
+- [x] T042 handoff fiscal (Q9) — `docs/product/e6-fiscal-handoff.md`, datado. Quatro perguntas para o
+      contador e o inventario do que o E6 ja registra e que ele pode usar. **Bloqueia o LANCAMENTO**
+      (cobrar do primeiro cliente real), nao o merge nem o E7.
 
 ---
 

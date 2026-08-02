@@ -287,7 +287,17 @@ export const messages = {
     // expired + read-only reassurance, query error→honest unknown. "Atualizar" covers the
     // ≤1-refresh just-granted window. No price, no date promises, no billing (FR-014).
     planPremium: "Premium",
-    planLapsed: "Premium expirado",
+    // T038 (homologacao) — era "Premium expirado", e EXPIRAR AFIRMA UMA CAUSA. Expirar e o tempo
+    // acabar; num estorno o periodo foi CORTADO. A tela dizia "renova em 01/09/2026" e no mesmo dia
+    // passava a dizer "expirado", sem nada reconciliar as duas frases — um vendedor honesto le isso
+    // como bug ("paguei ate setembro, por que expirou?").
+    //
+    // "pausado" nao afirma causa nenhuma, e nao e palavra nova: e o que `/kits`, `/catalogo` e o
+    // congelamento do historico JA dizem. O mesmo estado tinha DOIS nomes, e um deles trazia uma
+    // causa falsa embutida. A causa nao trafega no wire (`plan-view.ts` recebe none|active|lapsed),
+    // entao um rotulo ciente da causa exigiria mudanca de contrato — o rotulo NEUTRO nao exige nada
+    // e resolve os dois casos.
+    planLapsed: "Premium pausado",
     planLapsedHint: "Seus itens salvos continuam disponíveis para leitura.",
     // 009/T011b: o plano exibido é a ÚLTIMA resposta do servidor, guardada no aparelho (offline).
     planStale: "última informação do servidor",
