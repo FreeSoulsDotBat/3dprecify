@@ -515,14 +515,40 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 13: Play Billing flag-readiness (owner Q2 — NOT droppable)
 
-- [ ] T035 Write FAILING pytest — with `P3D_PLAY_BILLING_ENABLED=False`: both Play routes 404 server-side
-      (VR-709/SC-711); with the flag ON in a test env: the Play provider's verified sandbox purchase event
-      reaches the SAME `grant_writer` and writes a `provider=google_play` subscription + `source=payment`
-      grant. Observe failing.
-- [ ] T036 Implement `backend/app/billing/providers/google_play.py` (purchase-token verify against the Play
-      Developer API → normalised event) + the two flag-gated routes; validate against **Play internal
-      testing**; record the sandbox-purchase evidence in `specs/012-e6-billing/evidence/play-flag/` — the
-      E7 turn-on gate artifact. Tests green; flag stays OFF everywhere.
+- [x] T035 Prontidao do Play atras da flag DESLIGADA — `backend/tests/test_billing_play_flag.py`,
+      **14 testes**. gate:all verde com **444 no backend** (eram 430).
+      Gating por **REGISTRO**, nao por `if` no handler: com a flag desligada as rotas nao entram no
+      roteador, entao nao ha handler que possa vazar por engano. 404 e nao 401/403 de proposito — um
+      401 diria "existe, mas voce nao esta autenticado", confirmando a superficie para quem sonda.
+
+> **DEFEITO REAL achado pelo teste de valor-lixo: `P3D_PLAY_BILLING_ENABLED=yes` e `=ON` LIGAVAM a
+> flag.** O parser de bool do pydantic aceita `yes`/`on`/`y`/`t`/`1`, e a ADR-0023 §6 diz o oposto:
+> "the default AND any unset/unknown value is OFF". Um erro de digitacao num `.env` acenderia uma
+> superficie de PAGAMENTO, e ninguem notaria — nada falha quando uma rota passa a existir. Agora so
+> o literal `true` liga; todo o resto e OFF, e OFF em silencio de proposito (levantar excecao
+> derrubaria o app por um typo, e ficar desligado E o estado seguro).
+
+> **DEFEITO MEU, na primeira versao do gating:** eu acrescentava as rotas ao `router` de MODULO, o
+> que faz a flag virar estado GLOBAL do processo — duas `create_app` com flags diferentes (o que a
+> suite faz o tempo todo) vazariam uma na outra, e na direcao perigosa: quem liga primeiro contamina
+> quem vem depois. Os testes so passavam pela ORDEM em que rodam. Agora `play_router()` devolve um
+> router NOVO, e ha um teste que faz exatamente a ordem que quebrava (ligar, depois desligar).
+
+> **Os 404 eram VACUOS ate ganharem controle positivo.** Enquanto as rotas nao existiam em lugar
+> nenhum, "404 com a flag desligada" era trivialmente verdade — o mesmo 404 apareceria com a flag
+> ligada. O contraste (com a flag ON a rota responde 401 ou 503, nunca 404) e o que mostra que o 404
+> vem do GATING e nao da ausencia de codigo. Terceira vez neste PR-C que um verde nao provava nada.
+
+- [ ] T036 **BLOQUEADO NO DONO** — o provider do Play verificando `purchaseToken` de verdade contra a
+      Play Developer API, mais a validacao no **Play internal testing** e a evidencia em
+      `evidence/play-flag/` (o artefato do portao de ligar do E7).
+      **O que EXISTE hoje**: as duas rotas, flag-gated, recusando com 503 honesto em vez de conceder
+      premium a partir de um token que ninguem conferiu (Constituicao IV); e a prova de que uma
+      compra do Play chega ao MESMO `grant_writer`, com `source="payment"` e
+      `provider="google_play"` — nenhuma regra de entitlement nova nasce para o Play (ADR-0023 §6).
+      **O que FALTA e so seu**: conta Play + credencial de service account + uma compra no internal
+      testing. Nao da para inventar nem stubbar isso de forma honesta: um stub provaria que o meu
+      stub concorda comigo.
 
 ## Phase 14: PR-C hardening & delivery
 
