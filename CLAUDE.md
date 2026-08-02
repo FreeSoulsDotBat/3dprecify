@@ -85,10 +85,34 @@ included). Worse, it is a TRAP: its 2026-07-23 merge commit is titled "develop (
 reintroduce both. Continue E6 from `develop`. (This ground line previously claimed 012 was "mid-flight,
 31 commits ahead, not yet shipped"; all three were false, and that false record is what made the 2026-08-01
 "sync the drifting branch" plan wrong.)
-**E6's next slice is PR-B** (T021–T030): US4 cancel-at-period-end · US5 grace & dunning · US6 the Conta
-billing home, then e2e + `qa-produto` + gate. **T002 is an OWNER task and is NOT a PR-B blocker**: it
-provisions the real MP sandbox (access token + webhook secret + the two `preapproval_plan`s) and gates only
-T016b/T018b+ — PR-B is built against the local stub, as PR-A was.
+**012-e6-billing PR-B SHIPPED** (PR #35, `26397a5`, 2026-08-02, owner-merged, CI 8/8 first try) — the
+REVERSE half: US4 cancel-at-period-end · US5 grace & dunning · US6 the Conta billing home. **E6 is now
+29/44.** Grace window is MEASURED, not guessed: `MP_RETRY_WINDOW_DAYS=10` (T003, MP's official docs) +
+`GRACE_FLOOR_DAYS=7` (owner Q5), and the test pins the `max` RULE, not the number. Anchored on
+`current_period_end`, never `now` — the server clock would hand different grace lengths to the same event.
+SC-708 is now STRUCTURAL: `plan-panel.tsx` receives a resolved `PlanState` and has no access to the ledger
+or the PSP mirror, so it CANNOT infer billing state; `PlanState` is a discriminated union, so no forgotten
+`if` yields a stateless panel. SC-709 proved by FORM: `git diff develop` over `app/entitlement/`,
+`entities/user/` and `packages/` is **zero** — a green suite proves nothing BROKE; an empty diff proves
+nothing CHANGED, which is what SC-709 asks. Owner ratified three calls at the gate (ux-billing §4.3 line
+KEPT · our refetch renamed "Recarregar" so it stops colliding with the MP button · grace caption gains the
+`info` tone the spec's §9-G1 already provided, **badge stays green** — the premium IS active, and degrading
+it is the opposite lie).
+**PR-B's lesson, and it cost three real defects: more than a thousand automated tests found none of them —
+each one needed something to EXECUTE the product.** The browser walk (T027) found a **fake-active**: the
+"subscription wins" precedence was applied WITHOUT consulting the ledger, so an `authorized` subscription
+whose grant had expired rendered "Premium · renova em {data}" over a FROZEN account (it happens for real —
+a renewal webhook can be lost, which is why reconciliation exists). 14 unit tests missed it because they
+only ever fed CONSISTENT combinations, and the inconsistency is the case that matters. Then the visual
+homologation (T028, FAIL 72%, 18 screenshots) found **100.5px of overflow with a button born outside the
+viewport** and a **toast that never rendered** (MutationObserver: 0 insertions in 8s — the dialog unmounts
+before React Query calls a `mutate` callback, so the copy sat in the bundle asserting an acknowledgement
+that never happened). **And the geometry guard born from that caught my own INCOMPLETE fix** (467 still
+overflowed) before I called it done; proven non-vacuous by mutation (747 vs 390).
+**E6's remaining slice is PR-C** (T031–T040 + Polish): US7 teaser light-up · US8 refund/chargeback
+mechanics · Play Billing flag-readiness (owner Q2, NOT droppable). **T002 is an OWNER task**: it provisions
+the real MP sandbox (access token + webhook secret + the two `preapproval_plan`s) and gates only
+T016b/T018b+ — PR-B was built against the local stub, as PR-A was.
 **013-audit-remediation SHIPPED to `develop`** (PR #29, `42cc45c`) — the 10-specialist audit's remediation
 increment; its deferred US8 became increment 014. See `specs/013-audit-remediation/{spec.md,tasks.md}`.
 **014-fee-category-mapping PR-A SHIPPED to `develop`** (PR #31, `461a367`, 2026-07-31, owner-merged) —
