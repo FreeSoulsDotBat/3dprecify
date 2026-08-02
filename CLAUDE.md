@@ -71,7 +71,7 @@ blind to it (the third time this project paid that class).**
 **011-token-optimization: levers LANDED via PR #22** (ADR-0022 Accepted) — routing + rtk filter + graphify hook
 live; **the pilot verdict (T032–T034, ≥30%-or-honest-shortfall) is being closed now at E5 end** from the
 per-operation ledger rows. Evidence: `specs/011-token-optimization/dod-evidence.md`.
-**E6 IN PROGRESS ON `develop` — 19/44 tasks. 012-e6-billing PR-A SHIPPED** (PR #28, `0a3296b`,
+**E6 IN PROGRESS ON `develop` — 29/44 tasks (PR-A + PR-B shipped). 012-e6-billing PR-A SHIPPED** (PR #28, `0a3296b`,
 2026-07-23, owner-merged) — the turnstile: price → checkout → verified grant (US1+US2+US3), spec-kit flow
 followed (product-owner → specify → clarify → plan + ADRs → tasks, Principle VIII). **ADR-0023** flipped
 Proposed → **Accepted** at that gate (T020). The 013 audit then hardened billing ON `develop` (`1212a16`,
