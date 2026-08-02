@@ -4,18 +4,18 @@ reconciliation runner (T011) both call `process_verified_event` AFTER their own 
 — convergence is structural (VR-702/SC-703), never application-level dedup cleverness (the
 ADR-0018 §3 lesson, restated server-side).
 
-**Scope of this file today (T009): the `payment` kind only.** `payment_failed` (grace, T023/T024),
-`refund`/`chargeback` (revoke, T033/T034) and `cancel` (status mirror, T021/T022) are PR-B/PR-C
-territory — their `entitlement_grants`/`subscriptions` effects are NOT invented here (Principle
-VIII: no inferred entitlement rule). A non-`payment` event still resolves its subscription (so
-cross-account isolation and "unknown subscription" behave identically for every kind) but writes
-nothing yet; the follow-on tasks extend the branch below, they do not replace this function's shape.
+**Escopo hoje: `payment` (T009) e `payment_failed` (carência, T023/T024).** `refund`/`chargeback`
+(revogar, T033/T034) seguem território da PR-C e NÃO são inventados aqui (Princípio VIII: nenhuma
+regra de entitlement inferida). `cancel` não passa por aqui de propósito — ele é ação do vendedor,
+não evento do PSP, e mora em `app.billing.subscription` (T022). Um evento de tipo ainda não tratado
+resolve a assinatura (para que isolamento entre contas e "assinatura desconhecida" se comportem
+igual para todo tipo) e não escreve nada.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -24,6 +24,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import BillingEvent, EntitlementGrant, Subscription
 
 from .events import VerifiedEvent
+
+#: T003 — MEDIDO na doc oficial do MP (2026-07-21, fonte em `research.md` §D10): uma cobrança
+#: recusada entra num esquema de reciclagem de até 4 retentativas numa janela de ~10 dias, com
+#: auto-cancelamento após 3 recusas.
+MP_RETRY_WINDOW_DAYS = 10
+#: Piso humano — decisão do dono (Q5). Não deriva do MP: é a garantia de que a carência não encolhe
+#: junto se o MP um dia publicar uma janela menor.
+GRACE_FLOOR_DAYS = 7
+#: A janela de carência é o `max` dos dois, e é a REGRA que importa, não o número de hoje.
+GRACE_WINDOW_DAYS = max(MP_RETRY_WINDOW_DAYS, GRACE_FLOOR_DAYS)
 
 
 @dataclass(frozen=True)
@@ -50,8 +60,11 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
     if sub is None:
         return ProcessResult(matched=False, granted=False)
 
+    if event.kind == "payment_failed":
+        return await _open_grace(session, sub, event)
+
     if event.kind != "payment":
-        # See module docstring — payment_failed/refund/chargeback/cancel are PR-B/PR-C tasks.
+        # Ver docstring do módulo — refund/chargeback são tarefas da PR-C.
         return ProcessResult(matched=True, granted=False)
 
     now = datetime.now(UTC)
@@ -95,5 +108,58 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
         )
         sub.status = "authorized"
         sub.current_period_end = period_end  # guaranteed non-null by the L2-N1 guard above
+    await session.commit()
+    return ProcessResult(matched=True, granted=inserted)
+
+
+async def _open_grace(
+    session: AsyncSession, sub: Subscription, event: VerifiedEvent
+) -> ProcessResult:
+    """T023/T024 (US5/FR-708/VR-707) — a renovação falhou: abre a janela de carência.
+
+    UM grant acrescentado ao ledger append-only (`source="payment"` — o CHECK não ganha valor novo)
+    e o status vai a `grace`. **Zero mutação e zero mudança de derivação**: a derivacao
+    `active` do ADR-0012 continua exatamente como esta (SC-709), e e a expiracao que faz o lapso
+    quando a janela esgotar. Nada e revogado e nada e apagado.
+
+    A ancora e `current_period_end` — o fim do periodo que o vendedor PAGOU —, nunca `hoje`.
+    Ancorar no relogio do servidor daria carencias de tamanhos diferentes para o MESMO evento
+    conforme a hora em que ele chegasse, e daria 10 dias de premium a quem nunca pagou.
+    """
+    period_end = sub.current_period_end
+    # Irmão do L2-N1: sem período pago conhecido não há de que medir a carência, e um `expires_at`
+    # ancorado em `hoje` seria premium de graça. Deny-by-default — a reconciliação tenta de novo
+    # depois que um pagamento aprovado tiver estabelecido o período.
+    if period_end is None:
+        return ProcessResult(matched=True, granted=False)
+
+    stmt = (
+        pg_insert(BillingEvent)
+        .values(
+            subscription_id=sub.id,
+            event_key=event.event_key,
+            kind=event.kind,
+            mp_status=event.mp_status,
+            raw=event.raw,
+            processed_at=datetime.now(UTC),
+        )
+        .on_conflict_do_nothing(index_elements=[BillingEvent.event_key])
+        .returning(BillingEvent.id)
+    )
+    # A mesma convergência estrutural do caminho de pagamento (VR-702/SC-703): o webhook e a
+    # reconciliação veem o MESMO evento recusado, e duas carências empilhadas prorrogariam o premium
+    # de graça. Quem decide é o UNIQUE do inbox, não esperteza de aplicação.
+    inserted = (await session.execute(stmt)).first() is not None
+    if inserted:
+        session.add(
+            EntitlementGrant(
+                account_uid=sub.owner_uid,
+                source="payment",
+                granted_by="mercadopago",
+                expires_at=period_end + timedelta(days=GRACE_WINDOW_DAYS),
+                subscription_id=sub.id,
+            )
+        )
+        sub.status = "grace"
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)

@@ -149,3 +149,4 @@ Limites de atribuição, fixados junto com a baseline (para o veredito não abso
   como custo efetivo, não tokens crus.
 - O R1-gate da US2 **PASSOU** (2026-07-19) — todas as alavancas estão ativas no piloto; se tivesse parado,
   o veredito mediria só routing+graphify e diria isso explicitamente.
+| 2026-08-01 | T028 — homologacao visual do E6 PR-B (`qa-produto`, opus): 6 estados x 2 tamanhos | ~150k | **141.502** | Quarta estimativa seguida dentro da faixa. Achou DOIS bloqueadores que 1209 testes automatizados nao viam: 100,5px de transbordo com um botao fora da viewport, e um toast que nunca renderizava (medido com MutationObserver, 0 insercoes em 8s). A regra da casa se confirma de novo — a imagem acha o que a geometria nao acha, e a geometria acha o que o texto nao acha. |

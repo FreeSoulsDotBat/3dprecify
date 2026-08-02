@@ -176,6 +176,20 @@ class MPStub:
                 status_code=201,
             )
 
+        # T022/US4 — o cancelamento no provedor. Sem ele o stub aceitaria calado um cancelamento que
+        # nunca aconteceu no MP, e o teste que prova "o preapproval fica cancelado LÁ" seria vácuo.
+        @app.put("/preapproval/{preapproval_id}")
+        async def update_preapproval(preapproval_id: str, request: Request) -> JSONResponse:
+            pre = self._preapprovals.get(preapproval_id)
+            if pre is None:
+                return JSONResponse({"message": "not found"}, status_code=404)
+            body: dict[str, Any] = await request.json()
+            novo = body.get("status")
+            if novo not in ("cancelled", "paused", "authorized"):
+                return JSONResponse({"message": "unsupported status"}, status_code=400)
+            pre.status = str(novo)
+            return JSONResponse({"id": pre.id, "status": pre.status})
+
         @app.get("/preapproval/{preapproval_id}")
         async def get_preapproval(preapproval_id: str) -> JSONResponse:
             pre = self._preapprovals.get(preapproval_id)
@@ -187,6 +201,27 @@ class MPStub:
         # `/authorized_payments/search` path MUST be registered BEFORE the `{payment_id}` path
         # param route below — Starlette matches in registration order, so a param route registered
         # first would swallow "search" as a payment id and this endpoint would never be reached.
+        # T027 (e2e/US4+US5) — a API de REGISTRO cross-processo, sob `/_test/`.
+        #
+        # O `_fallback_authorized_payment` resolve UMA vez por assinatura (a que ainda nao recebeu
+        # evento nenhum) e sempre como APROVADO — entao ele nao alcanca nem uma renovacao recusada
+        # nem um segundo evento na mesma assinatura, que e exatamente o que a carencia e a
+        # recuperacao precisam. Estas duas rotas dao ao Playwright o mesmo poder que
+        # `test_billing_terminus.py` tem em processo, sem alargar o fallback (alargá-lo tornaria
+        # AMBIGUO o candidato unico de que os testes do T016 dependem).
+        #
+        # Vivem sob `/_test/` e neste arquivo, que ja e test-only e nunca e importado por `app/*`.
+        @app.post("/_test/payments")
+        async def register_payment(request: Request) -> JSONResponse:
+            body: dict[str, Any] = await request.json()
+            pre_id = str(body.get("preapprovalId") or "")
+            if pre_id not in self._preapprovals:
+                return JSONResponse({"message": "unknown preapproval"}, status_code=404)
+            if body.get("status") == "rejected":
+                return JSONResponse({"id": self.fail_payment(pre_id).id})
+            dias = int(body.get("periodDays") or 30)
+            return JSONResponse({"id": self.authorize_payment(pre_id, period_days=dias).id})
+
         @app.get("/authorized_payments/search")
         async def search_authorized_payments(preapproval_id: str) -> JSONResponse:
             results = [

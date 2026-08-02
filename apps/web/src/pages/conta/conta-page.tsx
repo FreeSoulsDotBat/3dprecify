@@ -6,6 +6,15 @@ import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
 import { CheckoutReturnPanel } from "@/features/billing/checkout-return";
 import { OfferPanel } from "@/features/billing/offer-panel";
+import {
+  PlanActions,
+  planCaption,
+  planDetail,
+  planNote,
+  planToneVar,
+} from "@/features/billing/plan-panel";
+import { planView } from "@/features/billing/plan-view";
+import { useSubscription } from "@/features/billing/use-subscription";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { requestSignOut } from "@/shared/session/sign-out-guard";
@@ -86,35 +95,28 @@ function IdentitySection() {
 // ≤1-refresh just-granted window (ADR-0012). Display-only: the SERVER gates everything (IV).
 function PlanSection() {
   const q = useEntitlement();
+  const sub = useSubscription();
   const t = messages.conta;
   const tb = messages.billing;
   const [offerOpen, setOfferOpen] = useState(false);
 
-  let badge: ReactNode;
-  let caption: string | null = null;
-  // E6/T015 (US1 → Q11): "Assinar Premium" is the offer's door for a free or lapsed account
-  // (lapsed doubles as the re-subscribe path). Absent for active/courtesy/beta — they already
-  // have it, and the offer's own "já é Premium" guard (§2.3) would only repeat the badge.
-  let showSubscribe = false;
-  if (q.isError) {
-    badge = <Badge tone="neutral">{t.planUnknown}</Badge>;
-  } else if (q.data?.status === "active") {
-    badge = <Badge tone="success">{t.planPremium}</Badge>;
-    const source = q.data.source ? t.planSources[q.data.source as "beta" | "comp"] : null;
-    const expires = q.data.expiresAt
-      ? `${t.planExpires} ${new Date(q.data.expiresAt).toLocaleDateString("pt-BR")}`
-      : null;
-    caption = [source, expires].filter(Boolean).join(" · ") || null;
-  } else if (q.data?.status === "lapsed") {
-    badge = <Badge tone="neutral">{t.planLapsed}</Badge>;
-    caption = t.planLapsedHint;
-    showSubscribe = true;
-  } else {
-    badge = <Badge tone="neutral">{t.planFree}</Badge>;
-    showSubscribe = true;
-  }
-  // 009/T011b — the plan shown is the server's LAST answer, not a fresh one (offline). Saying so is
-  // the price of using it: the badge is honest about the plan AND about how it knows.
+  // E6/US6 (T026) — o painel COMPOE duas verdades do servidor (ledger + espelho do PSP) e nao
+  // infere nenhuma (SC-708). A regra mora em `plan-view.ts`, pura e testada; aqui so ha
+  // renderizacao. Enquanto a assinatura ainda nao respondeu, `undefined` faz o painel cair para a
+  // superficie de entitlement — que e a resposta certa, e nao um estado de espera inventado.
+  const state = planView({
+    entitlement: q.data,
+    subscription: sub.data,
+    failed: q.isError,
+  });
+  const { badge: badgeText, tone } = planCaption(state);
+  const badge: ReactNode = <Badge tone={tone}>{badgeText}</Badge>;
+  let caption: string | null = planDetail(state);
+  const note = planNote(state);
+  // T028/A3 — a carência fala em tom de cautela; todo o resto segue no cinza neutro.
+  const tom = planToneVar(state);
+  // 009/T011b — o plano exibido e a ULTIMA resposta do servidor, nao uma fresca (offline). Dizer
+  // isso e o preco de usa-la: o selo e honesto sobre o plano E sobre como ele sabe.
   if (q.stale) {
     caption = [caption, t.planStale].filter(Boolean).join(" · ");
   }
@@ -127,18 +129,20 @@ function PlanSection() {
           <div className="flex items-center gap-2">
             {badge}
             {caption && (
-              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-                {caption}
-              </span>
+              <span style={{ fontSize: "var(--fs-caption)", color: tom }}>{caption}</span>
             )}
           </div>
+          {note && <span style={{ fontSize: "var(--fs-caption)", color: tom }}>{note}</span>}
         </div>
-        <div className="flex items-center gap-2">
-          {showSubscribe && (
-            <Button size="sm" onClick={() => setOfferOpen(true)}>
-              {tb.subscribeAction}
-            </Button>
-          )}
+        {/* T028/B1 — `flex-wrap` NAO e cosmetico aqui. O `.tf-conta__row--plan` ja tem `flex-wrap`,
+            mas ele nao socorria: as acoes sao UM item flex, e um item mais largo que o container nao
+            quebra. MEDIDO a 390px: a linha media 453,5px contra 316px de conteudo do card, o
+            `scrollWidth` da PAGINA ia a 491 (100,5px de transbordo) e o botao "Atualizar" nascia
+            INTEIRAMENTE fora da viewport, em x=396,3. Com o modal aberto o overlay cobria so 390px e
+            sobrava uma faixa clara a direita com o botao solto a mostra. E a tela de quem esta
+            PAGANDO, e viola o invariante duro do ux-billing §0.4. */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <PlanActions state={state} onSubscribe={() => setOfferOpen(true)} />
           <Button
             variant="ghost"
             size="sm"

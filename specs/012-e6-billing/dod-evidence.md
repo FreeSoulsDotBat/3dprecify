@@ -62,4 +62,50 @@ the offer · N3 dev-console ApiError log on the 409 path.
 
 ### T020 — owner gate
 
-*(pending: PR-A opened for owner homologation + squash-merge authorization; ADR-0023 flips Accepted here)*
+**FEITO 2026-07-23** — PR #28, `0a3296b`, squash-merge autorizado pelo dono. A ADR-0023 so foi de
+Proposed para **Accepted em 2026-08-01**: o portao passou e a flag ficou para tras por lapso de
+registro, nao por decisao. Achado ao medir a branch `feature/012-e6-billing`, que esta INTEIRAMENTE
+absorvida na `develop` (merge de prova: ZERO arquivos de diferenca) e **nao deve ser retomada** — o
+merge dela de 23/07 se chama "develop (013 audit remediation)" mas e ANTERIOR ao `1212a16` (24/07),
+entao E6-02 e L2-N1 nunca estiveram la. O E6 continua a partir da `develop`.
+
+---
+
+## PR-B — o ciclo reverso: cancelar · carencia · a Conta como casa da cobranca (US4+US5+US6)
+
+Branch `012-e6-billing-pr-b`. Quatro commits: `eeb1346` (US4) · `42544fd` (US5) · `a99deeb` (US6) ·
+`ed27cc3` (T027 e2e) · `629473e` (T028 correcoes).
+
+### T029 — gates (2026-08-01)
+
+- **`pnpm gate:all` → exit 0** (o comando LITERAL, o mesmo da CI): **1209 front** (eram 1179 antes da
+  fatia) · **424 back** (eram 400) · cobertura back 83,25% sobre piso 82 · import-linter **5 kept /
+  0 broken**.
+- **Drift-guard**: par de regeracao (`export_openapi` + `gen:api` da raiz) → **0 diff nas DUAS
+  passadas**. Duas rotas novas no contrato: `GET /billing/subscription` e
+  `POST /billing/subscription/cancel`.
+- **e2e**: `billing-lifecycle.spec.ts` **5/5 chromium** contra a pilha real (Postgres + emulador de
+  auth + backend + stub do MP). Inclui um guarda de GEOMETRIA a 390px, provado nao-vacuo por mutacao
+  (sem o `flex-wrap`: 747 contra 390).
+- **SC-709 — provado pela FORMA, nao por suite verde**: `git diff develop` sobre
+  `backend/app/entitlement/`, `apps/web/src/entities/user/` e `packages/` da **ZERO**. A derivacao
+  `active` do ADR-0012 nao mudou porque o codigo que a implementa nao foi tocado; a carencia e um
+  grant ACRESCENTADO ao ledger append-only, e o lapso segue sendo a expiracao fazendo o trabalho
+  dela. Nenhuma regra de gate de E1-E5 alterada.
+
+### T028 — homologacao visual (`qa-produto`, opus)
+
+**FAIL 72%** na primeira rodada · **18 screenshots + 15 dumps de geometria** · 6 estados alcancados
+por caminho REAL (o congelado por cobranca aprovada + expiracao — primeira vez na vida do produto) ·
+zero erros de console. **Dois bloqueadores, ambos do dev, ambos corrigidos e cravados** (B1 transbordo
+de 100,5px com botao fora da viewport; B2 toast que nunca renderizava, medido com MutationObserver:
+0 insercoes em 8s). Detalhe completo, mais o A1 que foi medido certo mas NAO e defeito, em
+`tasks.md` §T028. Custo: 141.502 tokens (estimado ~150k).
+
+### T030 — portao do dono
+
+*(pendente: PR-B aberto. **Tres decisoes esperam voce**: a §4.3/§10-F1 — a linha da cortesia que
+sobrevive a uma assinatura cancelada, implementada e revertivel numa linha; o **A2** — dois botoes
+vizinhos comecando com "Atualizar", ambas as strings ESPECIFICADAS, entao renomear e decisao de
+produto; e o **A3** — a cautela da carencia e so texto, com o selo verde CERTO e o fallback `info`
+do proprio spec nao aplicado.)*

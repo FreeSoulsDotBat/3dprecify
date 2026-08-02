@@ -236,43 +236,209 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 7: User Story 4 — Cancel at period end (Priority: P1)
 
-- [ ] T021 [US4] Write FAILING pytest — cancel: MP preapproval cancelled, ledger NOT written, grant expiry
-      stands, natural lapse to the freeze at period end (VR-706/SC-704); cancel is idempotent; re-subscribe
-      restores writes with data intact (reuse the E2/E5 lapse-test fixtures). Observe failing.
-- [ ] T022 [US4] Implement `POST /billing/subscription/cancel` + status mirroring; `GET /billing/subscription`
-      returns `cancelAtPeriodEnd` truth. Tests green.
+- [x] T021 [US4] FAILING pytest observado — `backend/tests/test_billing_cancel.py`, 12 testes.
+      **Vermelho medido: `FFFFFFFFFFFF`.** Na primeira rodada foram `FFFFFF.FFFFF` — 11 vermelhos e UM
+      verde, e o verde era VACUO: com a rota ainda inexistente o FastAPI ja devolve `404 NOT_FOUND`,
+      que satisfazia exatamente o teste do caso "conta sem assinatura". Um verde que nao distingue "a
+      rota recusou" de "a rota nao existe" nao prova nada; o teste passou a exigir a mensagem do
+      DOMINIO, e so entao os 12 ficaram vermelhos pelo motivo certo.
+      Quase toda assercao e sobre AUSENCIA (o ledger nao cresce, o `expires_at` nao anda, o censo de
+      linhas nao muda) — a mentira possivel aqui e uma escrita a mais, e presenca nao a detecta.
+- [x] T022 [US4] `POST /billing/subscription/cancel` + `GET /billing/subscription` implementados;
+      12/12 verdes, suite de billing 74 passed / 1 skipped, contrato regerado 2x identico.
+      **Regra do dominio em `app/billing/subscription.py`**, fora da rota. O MP e chamado ANTES do
+      espelho local e o status so muda com um `True` dele: espelhar "cancelled" sem confirmacao
+      produziria "nao renova" na Conta enquanto o cartao segue sendo cobrado — o defeito mais caro
+      que esta rota pode ter, e invisivel para qualquer assercao que olhe so o nosso banco.
+
+> **TRES DECISOES tomadas aqui porque o contrato NAO as escreve** (Principio VIII — decidido e
+> registrado, nao inferido em silencio):
+> 1. **`cancelAtPeriodEnd` = `status == "cancelled"`**, e NAO "cancelado E o periodo ainda corre".
+>    Um booleano que olha o relogio vira falso sozinho na virada do periodo, e a Conta passaria a
+>    dizer "renova" sobre uma assinatura cancelada. Quem responde "o periodo ainda corre" e
+>    `currentPeriodEnd`, que viaja junto.
+> 2. **Cancelar sem assinatura = 404 com mensagem de DOMINIO** ("this account has no subscription to
+>    cancel"). Um 200 diria "cancelei" sobre coisa nenhuma; um 404 generico e indistinguivel de rota
+>    ausente — foi assim que o teste passou vacuo.
+> 3. **`graceUntil` = `null` ate a US5 existir.** Hoje nao ha janela de carencia, entao `null` e a
+>    verdade, nao um campo esquecido; quando entrar, e DERIVADO do `expires_at` do grant de carencia
+>    (analyze U1), nunca uma coluna nova.
+>
+> **Achado de infra, corrigido junto:** `mp_stub` (conftest) so se instala para os modulos de uma
+> LISTA, e um modulo de fora recebia `None` calado — o sintoma chega como `AttributeError` dentro do
+> teste, que nao aponta para a lista. Um teste que PEDE a fixture pelo nome e cujo modulo esta fora
+> agora falha com o conserto escrito na mensagem.
 
 ## Phase 8: User Story 5 — Grace & dunning (Priority: P2)
 
-- [ ] T023 [US5] Write FAILING pytest — `payment_failed` verified event → ONE append-only grace grant
-      (`expires_at = period_end + max(cadence, 7d)` with T003's confirmed cadence) + status `grace`
-      (VR-707); recovery → real period grant, continuous active; exhaustion → expiry-driven lapse, nothing
-      deleted; grace grant replay-idempotent; **late recovery AFTER lapse (MP retry succeeds post-grace) →
-      honest reactivation via a new period grant** (spec §Edge Cases; data-model §4 row); `graceUntil` in
-      the contract is DERIVED from the grace grant's `expires_at`, never a new column (analyze U1).
-      Observe failing.
-- [ ] T024 [US5] Implement the grace path in `grant_writer.py` + reconcile coverage (a missed failure event
-      heals). Tests green.
+- [x] T023 [US5] FAILING pytest observado — `backend/tests/test_billing_grace.py`, 10 testes.
+      **Vermelho medido: `FFFFFFFFFF`.** A primeira rodada deu `FFFFF...FF` — SETE vermelhos e TRES
+      VERDES, e os tres eram VACUOS pelo mesmo motivo: enquanto `payment_failed` era um no-op,
+      "nada foi escrito" era trivialmente verdade. O de "falha sem periodo pago" ganhou um CONTROLE
+      POSITIVO no mesmo teste (a mesma caminhada, numa assinatura COM periodo pago, TEM de abrir a
+      carencia) — e o contraste e o que prova que o silencio e recusa deliberada, nao ausencia da
+      funcionalidade. Os outros dois ganharam pre-condicao (`len(grants) == 2`): "esgotar" so quer
+      dizer alguma coisa se houver janela para esgotar. Segunda rodada: 10/10 vermelhos.
+      Um erro meu de referencia tambem apareceu aqui: o teste da recuperacao tardia fotografava os
+      grants ANTES de o proprio helper envelhece-los, e acusava `_expire_all` de "esticar grant".
+- [x] T024 [US5] Ramo de carencia em `grant_writer._open_grace` + `graceUntil` derivado. 10/10
+      verdes; com o cancelamento, 22/22.
+      **A janela e MEDIDA, nao chutada** — `MP_RETRY_WINDOW_DAYS = 10` (T003, doc oficial do MP: ate
+      4 retentativas em ~10 dias, auto-cancelamento apos 3 recusas) e `GRACE_FLOOR_DAYS = 7` (piso
+      humano, decisao do dono Q5), e a carencia e o `max` dos dois. O teste crava a REGRA, nao o
+      numero: afirmar "10" ficaria verde se alguem trocasse o piso por engano e vermelho no dia
+      legitimo em que o MP publicasse outra janela.
+      **Ancora em `current_period_end`, nunca em `hoje`**: o relogio do servidor daria carencias de
+      tamanhos diferentes para o MESMO evento conforme a hora em que ele chegasse, e daria 10 dias de
+      premium a quem nunca pagou. Sem periodo pago conhecido, nada e escrito — irmao do L2-N1.
+      **Zero mutacao, zero mudanca de derivacao** (SC-709, ADR-0012 verbatim): UM grant acrescentado
+      com `source="payment"` (o CHECK nao ganha valor novo), status a `grace`, e o lapso continua
+      sendo a expiracao fazendo o trabalho dela. Nada revogado, nada apagado.
+      **A cobertura da reconciliacao veio de graca**: `list_verified_payments` ja alimentava o
+      terminus com os pagamentos recusados — eram um no-op. Acrescentado o ramo, o webhook perdido
+      cicatriza pelo MESMO caminho, e a convergencia e o UNIQUE do inbox (VR-702/SC-703), nao
+      esperteza de aplicacao.
+      **`graceUntil` DERIVADO** (analyze U1) do `expires_at` mais distante entre os grants da
+      assinatura, e so no estado `grace`. Uma coluna propria poderia divergir do ledger, e a tela
+      prometeria um prazo que o motor nao honra.
 
 ## Phase 9: User Story 6 — Conta: the billing home (Priority: P2)
 
-- [ ] T025 [US6] Write FAILING pytest + vitest — `GET /billing/subscription` per contract (null for
-      no-subscription accounts; grace shows `graceUntil`); the dual-grant display rule (subscription state
-      wins when present; courtesy grant otherwise; active while ANY valid grant — 2026-07-20 clarification);
-      FE Conta plan panel renders every state with the honest copy ("pagamento pendente — regularize até
-      {data}"; "ativo até {data}, não renova"), NO client-inferred state (SC-708). Observe failing.
-- [ ] T026 [US6] Implement the endpoint + `features/billing` Conta panel + cancel/manage affordances
-      routing to the MP-managed flow. Contract ripple regen idempotent 2×. Tests green.
+- [x] T025 [US6] Testes escritos primeiro — `plan-view.test.ts` (14, a REGRA) + `plan-panel.test.tsx`
+      (12, a RENDERIZACAO). O `GET /billing/subscription` ja existia do T022, entao a US6 e a
+      composicao das duas verdades do servidor mais a tela.
+      Varias assercoes sao sobre AUSENCIA de proposito: as frases do painel sao MUTUAMENTE
+      EXCLUDENTES — "Premium expirado" e "ativo ate {data}" descrevem realidades opostas —, e um
+      teste so de presenca passaria com as duas na tela ao mesmo tempo.
+- [x] T026 [US6] `plan-view.ts` (decisao pura) + `plan-panel.tsx` (so renderizacao) + `useSubscription`
+      + painel ligado na Conta. gate:all verde: 1205 front (eram 1179), 424 back.
+      **A SC-708 virou estrutural, nao disciplina**: `plan-panel.tsx` recebe um `PlanState` ja
+      resolvido e NAO tem acesso ao ledger nem ao espelho do PSP — ele nao CONSEGUE inferir estado de
+      cobranca. E `PlanState` e uniao discriminada, entao nenhum `if` esquecido produz painel sem
+      estado (mesma forma do `RefreshOutcome` da 014).
+      **Precedencia** (clarificacao 2026-07-20): a assinatura vence quando existe; a cortesia responde
+      quando nao ha assinatura; ativo enquanto QUALQUER grant valido existir. O erro do LEDGER vence
+      ate uma assinatura em maos — o espelho do PSP diz o que foi contratado, nao se o premium esta
+      ligado (Constituicao IV).
+      **`pending` nao vira premium**: um checkout aberto e nao concluido nao move o ledger (SEC-301).
+      **`useSubscription` NAO tem cache de aparelho**, ao contrario do `useEntitlement` — deliberado:
+      aquele e cacheado porque o premium precisa sobreviver a um boot offline (ADR-0018 §9); este nao
+      tem esse dever, e uma assinatura guardada so poderia dizer "nao renova" sobre estado ja mudado.
+
+> **DECISAO PENDENTE DO DONO — ux-billing §4.3 / §10-F1 (a recomendacao e ~70% e o proprio doc pede
+> ratificacao).** Um vendedor com assinatura CANCELADA que tambem carrega grant de cortesia mais
+> longo nao vai cair no fim do periodo. Dizer so "ativo ate 31/12 · nao renova" implica um corte que
+> nao vai acontecer. **Implementado como o doc recomenda**: quando o `expiresAt` do ledger passa do
+> fim do periodo da assinatura, o painel acrescenta "Seu acesso de cortesia continua depois disso."
+> A borda e ESTRITA (empate nao conta — os dois acabam juntos e a frase ja esta certa). Reverter e
+> uma linha (`planNote` em `plan-panel.tsx`); mantive porque a alternativa e renderizar uma frase
+> que se sabe enganosa, e a Constituicao II nao deixa escolher isso por omissao.
+
+> **O guarda de honestidade apanhou um erro meu de lugar.** Escrevi a copy de cancelamento no
+> namespace `conta`, e o `copy-honesty.test.ts` reprovou: ele isenta EXATAMENTE um namespace —
+> `billing` — porque e la que provedor real, preco real e politica de cancelamento sao a verdade
+> ratificada. A tela e a Conta; o ASSUNTO e cobranca. Copy movida, guarda intacto — nenhuma isencao
+> foi alargada para acomodar o meu erro.
 
 ## Phase 10: PR-B hardening & delivery
 
-- [ ] T027 e2e: cancel → "não renova" → forced expiry → freeze → re-subscribe → data intact; failed renewal
-      (sandbox rejection card) → grace visible → recovery/exhaustion both paths; dual-grant walk (beta
-      account subscribes, cancels, stays active on courtesy).
-- [ ] T028 qa-produto homologation: every billing state's honest copy at 390px + desktop; the freeze
-      reached through REAL billing (first time in the product's life); adversarial: grace + courtesy
-      combinations, long period dates. Screenshots.
-- [ ] T029 `pnpm gate:all` + drift-guard + SC-709. Evidence.
+- [x] T027 e2e — `apps/web/tests/e2e/billing-lifecycle.spec.ts`, **5/5 verdes em chromium contra a
+      pilha real** (Postgres + emulador de auth + backend + stub do MP). Cancelar → "nao renova" →
+      expiracao forcada → congelamento → reassinar; renovacao recusada → carencia com prazo →
+      recuperacao; e a idempotencia vista pela UI (o segundo clique nao existe).
+      **A caminhada de navegador achou UM DEFEITO REAL que nenhum teste unitario podia ver.** A
+      precedencia "a assinatura vence quando existe" estava aplicada SEM consultar o ledger: uma
+      assinatura `authorized` no espelho do MP cujo grant ja expirou mostrava "Premium · renova em
+      {data}" sobre uma conta CONGELADA — o "fake-active" que a US5 proibe em tantas palavras. E
+      acontece de verdade: o webhook da renovacao pode se perder (por isso existe a reconciliacao) e
+      nesse intervalo os dois discordam. Meus 14 testes de unidade nao viam porque eu so tinha
+      alimentado combinacoes COERENTES, e a INCOERENCIA e justamente o caso que importa. Consertado
+      (o ledger decide se ha premium; o espelho so decide qual historia contar entre as ativas) e
+      cravado com 3 testes novos.
+      **Sub-entregas necessarias**, todas registradas:
+      · `POST /_test/payments` no stub (registro cross-processo). O `_fallback_authorized_payment`
+        resolve UMA vez por assinatura e sempre como APROVADO, entao nao alcanca nem uma renovacao
+        recusada nem um segundo evento — e alarga-lo tornaria AMBIGUO o candidato unico de que os
+        testes do T016 dependem.
+      · `PYTHONIOENCODING=utf-8` no `global-setup`. No Windows o console herdado e cp1252 e o alembic
+        estourava ao IMPRIMIR o proprio log da revisao 0004 (que tem um travessao), entre a 0003 e a
+        0004 — uma falha que nao diz nada sobre migracao e fazia o e2e local parecer quebrado por
+        outro motivo. Na CI (ubuntu) nunca aconteceu.
+      **Dois erros meus no caminho, ambos da familia "o teste falhava calado"**: o helper de
+      expiracao era um `-c` MULTILINHA, que nao sobrevive ao `cmd.exe`, e reprovava na assercao
+      seguinte apontando para o painel; agora e uma linha e sai com codigo 3 se afetar ZERO linhas.
+      E a primeira versao do teste de congelamento expirava uma conta que nunca tinha pago — nao ha
+      lapso sem grant, entao ele afirmava outra coisa.
+      **FORA desta entrega**: a caminhada do duplo-grant (conta beta que assina, cancela e segue
+      ativa na cortesia) — a REGRA esta coberta em unidade (`plan-view.test.ts`, 3 casos incluindo a
+      borda estrita do empate), mas a caminhada em navegador depende da §4.3 que aguarda ratificacao
+      do dono. Nao foi esquecida; esta parada no mesmo portao.
+- [x] T028 homologacao visual (`qa-produto`, opus) — **FAIL 72%** na primeira rodada, **18
+      screenshots + 15 dumps de geometria**, todos os 6 estados alcancados por caminho REAL (o
+      congelado por cobranca aprovada + expiracao, primeira vez na vida do produto). Zero erros de
+      console. Dois bloqueadores, **ambos meus, ambos corrigidos e cravados**:
+
+      **B1 — 100,5px de transbordo a 390px, com o "Atualizar" nascendo FORA da viewport.**
+      `scrollWidth 491` contra `clientWidth 390`; o botao em x=396,3. A causa era estrutural e nao
+      dependia de dado: o `.tf-conta__row--plan` ja tinha `flex-wrap`, mas nao socorria — as acoes
+      sao UM item flex, e um item mais largo que o container nao quebra (453,5px contra 316px). Com
+      o modal aberto o overlay cobria so 390px e sobrava uma faixa clara com o botao solto a mostra.
+      Corrigido com `flex-wrap` no proprio container das acoes.
+      **O guarda que nasceu disso pegou o meu conserto INCOMPLETO** (467 ainda transbordava) antes de
+      eu declarar pronto, e foi provado nao-vacuo por mutacao: sem o `flex-wrap`, 747 contra 390.
+      Nenhuma assercao de texto veria nada disso — `toBeVisible` passa sobre um elemento
+      inteiramente fora da tela.
+
+      **B2 — o toast do §5 nunca renderizava.** MEDIDO com `MutationObserver` armado ANTES do clique
+      e observado por 8s: ZERO insercoes. A causa e o proprio sucesso — ele muda o estado, o
+      `PlanActions` deixa de renderizar o ramo ativo, o `CancelDialog` DESMONTA, e o React Query nao
+      invoca callbacks de `mutate` apos unmount. A copy estava no bundle afirmando um reconhecimento
+      que em runtime nunca acontecia. Movido para o `onSuccess` do HOOK, que nao depende de nenhum
+      componente continuar montado. Verificado em navegador (o toast aparece, com a data do
+      servidor) e preso por teste.
+
+> **A1 (a data que aparece "um dia antes") — MEDIDO CERTO, mas NAO e defeito, e nao vou "consertar".**
+> A homologacao mediu: servidor manda `2027-12-31T00:00:00Z`, a tela mostra 30/12/2027 em
+> `America/Sao_Paulo`. Esta correto: o valor e um INSTANTE, nao uma data — `2027-12-31T00:00:00Z` E
+> `2027-12-30 21:00` no fuso do vendedor, e o grant vale enquanto `now < expires_at`, entao o premium
+> de fato acaba na NOITE DO DIA 30 para ele. Renderizar 31/12 prometeria tres horas que nao existem,
+> e a casa ja tem regra para o sentido do erro: a fronteira favorece o vendedor que paga
+> (`grant_writer`, regra de clock-skew). O que a medicao revela de verdade e uma ambiguidade na
+> ENTRADA do operador (uma cortesia digitada como "31/12" vira 00:00Z), nao na exibicao. Registrado
+> aqui para ninguem "consertar" no sentido errado depois.
+
+> **A2 — DECIDIDO PELO DONO 2026-08-01: o nosso refetch virou "Recarregar".** A copy de cobranca do
+> §4.1 e ESPECIFICADA e ficou intacta; `messages.conta.planRefresh` e nossa e generica — a palavra
+> "Atualizar" ali nao carregava significado nenhum —, entao foi ela que cedeu. Alcance: so a linha do
+> plano. Registro original: dois botoes vizinhos comecando com "Atualizar"** ("Atualizar forma de pagamento", que
+> vai para o MP, e "Atualizar", que refaz o fetch), a 8px de distancia, no momento em que o vendedor
+> esta ansioso com um cartao recusado. **As DUAS strings sao especificadas** (§4.1 e §4.2, que manda
+> o botao de refetch continuar), entao renomear qualquer uma e decisao de produto/designer, nao
+> minha. O `flex-wrap` do B1 os separa em linhas diferentes a 390px, o que ATENUA e nao elimina.
+
+> **A3 — DECIDIDO PELO DONO 2026-08-01: aplicado o fallback `info` que o §9-G1 previa.** So a
+> LEGENDA e a nota mudam de `--text-muted` para `--info-text`. **O selo continua VERDE**, e isso e
+> deliberado: o premium segue ativo durante toda a carencia, e degrada-lo diria ao vendedor que ele
+> ja perdeu algo — a mentira na direcao oposta, e mais cara, porque pode faze-lo parar de usar o que
+> ainda pagou. Preso por dois testes (o tom da carencia difere; o selo NAO difere do estado ativo).
+> Registro original: a cautela da carencia e so texto, medido: o selo usa tom `success` (pixels
+> identicos ao estado ATIVA) e as duas frases saem em `var(--text-muted)`, a mesma cor da legenda
+> neutra. O selo verde esta CERTO (o premium segue ativo, §4.1) e a homologacao registrou isso como
+> evidencia A FAVOR da decisao F9 — mas o fallback que o proprio spec preve (tom `info` + prazo
+> explicito) tambem nao foi aplicado. **Decisao do dono/designer.**
+
+> **A4 — §4.3 RATIFICADA PELO DONO 2026-08-01: a linha FICA.** A apresentacao ja estava homologada
+> (quebra em 3 linhas a 390px, sem transbordo, le bem) e agora a decisao acompanha: sem ela, "nao
+> renova ate 31/12" implica um corte que a cortesia mais longa nao vai causar, e o vendedor descobre
+> isso sozinho no dia. A borda continua ESTRITA — empate nao conta.
+
+> **NAO julgado, e dito como tal**: se o deslocamento de fuso atinge as datas de assinatura REAIS
+> depende da hora-do-dia que o MP grava em `currentPeriodEnd`, e o stub nao a reproduz. A
+> homologacao se recusou a homologar ou reprovar esse recorte por inferencia — que e a resposta certa.
+- [x] T029 `gate:all` exit 0 (1209 front / 424 back / 5 contratos) · drift-guard **0 diff nas DUAS
+      passadas** · e2e 5/5 chromium · **SC-709 provado pela FORMA**: `git diff develop` sobre
+      `app/entitlement/`, `entities/user/` e `packages/` da ZERO — a derivacao nao mudou porque o
+      codigo dela nao foi tocado. Evidencia em `dod-evidence.md`.
 - [ ] T030 **Owner-gated PR-B → `develop`** (squash). Graph refresh on merge.
 
 ---
