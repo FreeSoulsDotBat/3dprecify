@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useToastStore } from "@/shared/ui";
 
-import { PlanActions, planCaption, planDetail, planNote } from "./plan-panel";
+import { PlanActions, planCaption, planDetail, planNote, planToneVar } from "./plan-panel";
 import { type PlanState } from "./plan-view";
 
 // E6 PR-B (T025/US6) — a metade de RENDERIZAÇÃO. A regra tem o seu próprio teste (`plan-view`).
@@ -177,5 +177,24 @@ describe("o reconhecimento do cancelamento (T028/B2)", () => {
     const { PlanActions: _ } = await import("./plan-panel");
     void _;
     expect(useToastStore.getState().toasts).toEqual([]);
+  });
+});
+
+describe("a temperatura visual da carência (T028/A3)", () => {
+  it("a carência fala em tom de cautela; todo o resto fica no cinza neutro", () => {
+    // A homologação MEDIU que CARÊNCIA e ATIVA saíam idênticas: selo com os mesmos pixels e as duas
+    // frases no mesmo `--text-muted` da legenda neutra. Um cartão falhando lia como uma assinatura
+    // saudável.
+    expect(planToneVar(carencia)).toBe("var(--info-text)");
+    for (const outro of [ativa, cancelada(false), { kind: "lapsed" } as const]) {
+      expect(planToneVar(outro)).toBe("var(--text-muted)");
+    }
+  });
+
+  it("o selo da carência CONTINUA verde — degradá-lo seria mentir na direção oposta", () => {
+    // O premium segue ativo durante toda a janela. Um selo degradado diria ao vendedor que ele já
+    // perdeu algo, e pode fazê-lo parar de usar o que ainda pagou. A cautela mora no texto.
+    expect(planCaption(carencia).tone).toBe("success");
+    expect(planCaption(carencia).tone).toBe(planCaption(ativa).tone);
   });
 });

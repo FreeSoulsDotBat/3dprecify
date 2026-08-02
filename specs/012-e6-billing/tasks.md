@@ -407,20 +407,30 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 > ENTRADA do operador (uma cortesia digitada como "31/12" vira 00:00Z), nao na exibicao. Registrado
 > aqui para ninguem "consertar" no sentido errado depois.
 
-> **A2 (MEDIO) — dois botoes vizinhos comecando com "Atualizar"** ("Atualizar forma de pagamento", que
+> **A2 — DECIDIDO PELO DONO 2026-08-01: o nosso refetch virou "Recarregar".** A copy de cobranca do
+> §4.1 e ESPECIFICADA e ficou intacta; `messages.conta.planRefresh` e nossa e generica — a palavra
+> "Atualizar" ali nao carregava significado nenhum —, entao foi ela que cedeu. Alcance: so a linha do
+> plano. Registro original: dois botoes vizinhos comecando com "Atualizar"** ("Atualizar forma de pagamento", que
 > vai para o MP, e "Atualizar", que refaz o fetch), a 8px de distancia, no momento em que o vendedor
 > esta ansioso com um cartao recusado. **As DUAS strings sao especificadas** (§4.1 e §4.2, que manda
 > o botao de refetch continuar), entao renomear qualquer uma e decisao de produto/designer, nao
 > minha. O `flex-wrap` do B1 os separa em linhas diferentes a 390px, o que ATENUA e nao elimina.
 
-> **A3 (MEDIO) — a cautela da carencia e so texto**, medido: o selo usa tom `success` (pixels
+> **A3 — DECIDIDO PELO DONO 2026-08-01: aplicado o fallback `info` que o §9-G1 previa.** So a
+> LEGENDA e a nota mudam de `--text-muted` para `--info-text`. **O selo continua VERDE**, e isso e
+> deliberado: o premium segue ativo durante toda a carencia, e degrada-lo diria ao vendedor que ele
+> ja perdeu algo — a mentira na direcao oposta, e mais cara, porque pode faze-lo parar de usar o que
+> ainda pagou. Preso por dois testes (o tom da carencia difere; o selo NAO difere do estado ativo).
+> Registro original: a cautela da carencia e so texto, medido: o selo usa tom `success` (pixels
 > identicos ao estado ATIVA) e as duas frases saem em `var(--text-muted)`, a mesma cor da legenda
 > neutra. O selo verde esta CERTO (o premium segue ativo, §4.1) e a homologacao registrou isso como
 > evidencia A FAVOR da decisao F9 — mas o fallback que o proprio spec preve (tom `info` + prazo
 > explicito) tambem nao foi aplicado. **Decisao do dono/designer.**
 
-> **A4 — a apresentacao da §4.3 foi HOMOLOGADA** (quebra em 3 linhas a 390px, sem transbordo, le
-> bem). A DECISAO segue aguardando o dono.
+> **A4 — §4.3 RATIFICADA PELO DONO 2026-08-01: a linha FICA.** A apresentacao ja estava homologada
+> (quebra em 3 linhas a 390px, sem transbordo, le bem) e agora a decisao acompanha: sem ela, "nao
+> renova ate 31/12" implica um corte que a cortesia mais longa nao vai causar, e o vendedor descobre
+> isso sozinho no dia. A borda continua ESTRITA — empate nao conta.
 
 > **NAO julgado, e dito como tal**: se o deslocamento de fuso atinge as datas de assinatura REAIS
 > depende da hora-do-dia que o MP grava em `currentPeriodEnd`, e o stub nao a reproduz. A

@@ -40,6 +40,22 @@ export function planCaption(state: PlanState): { badge: string; tone: "success" 
   }
 }
 
+/**
+ * O TOM da legenda e da nota.
+ *
+ * T028/A3 (dono, 2026-08-01): a homologação mediu que CARÊNCIA e ATIVA tinham temperatura visual
+ * idêntica — selo com os mesmos pixels e as duas frases no mesmo `--text-muted` da legenda neutra.
+ * Um cartão falhando lia igual a uma assinatura saudável.
+ *
+ * O selo continua VERDE de propósito: o premium segue ativo durante toda a carência, e degradá-lo
+ * diria ao vendedor que ele já perdeu algo — a mentira na direção oposta, e mais cara, porque pode
+ * fazê-lo parar de usar o que ainda pagou. Quem carrega a cautela é o TEXTO, que é o fallback que o
+ * `ux-billing` §9-G1 previa e que não tinha sido aplicado.
+ */
+export function planToneVar(state: PlanState): string {
+  return state.kind === "grace" ? "var(--info-text)" : "var(--text-muted)";
+}
+
 /** A frase sob o badge — a verdade do servidor em pt-BR. `null` quando não há o que acrescentar. */
 export function planDetail(state: PlanState): string | null {
   const t = messages.conta;

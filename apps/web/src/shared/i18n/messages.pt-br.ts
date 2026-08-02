@@ -296,7 +296,12 @@ export const messages = {
       comp: "cortesia",
     },
     planExpires: "expira em",
-    planRefresh: "Atualizar",
+    // T028/A2 (dono, 2026-08-01) — era "Atualizar", e na CARENCIA ele fica a 8px de "Atualizar
+    // forma de pagamento", que vai para o Mercado Pago. Mesma primeira palavra, lado a lado, no
+    // momento em que o vendedor esta ansioso com um cartao recusado. A copy de cobranca do
+    // ux-billing §4.1 e ESPECIFICADA e fica intacta; esta aqui e nossa e generica, entao e ela que
+    // cede. Alcance: so a linha do plano.
+    planRefresh: "Recarregar",
     planRefreshHint: "Mudou de plano agora?",
     planUnknown: "Não foi possível confirmar seu plano.",
     themeLabel: "Tema",

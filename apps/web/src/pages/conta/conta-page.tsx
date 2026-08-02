@@ -6,7 +6,13 @@ import { useIdentity } from "@/entities/user/use-identity";
 import { identityLabel } from "@/entities/user/user";
 import { CheckoutReturnPanel } from "@/features/billing/checkout-return";
 import { OfferPanel } from "@/features/billing/offer-panel";
-import { PlanActions, planCaption, planDetail, planNote } from "@/features/billing/plan-panel";
+import {
+  PlanActions,
+  planCaption,
+  planDetail,
+  planNote,
+  planToneVar,
+} from "@/features/billing/plan-panel";
 import { planView } from "@/features/billing/plan-view";
 import { useSubscription } from "@/features/billing/use-subscription";
 import { apiErrorMessage } from "@/shared/api/error-messages";
@@ -107,6 +113,8 @@ function PlanSection() {
   const badge: ReactNode = <Badge tone={tone}>{badgeText}</Badge>;
   let caption: string | null = planDetail(state);
   const note = planNote(state);
+  // T028/A3 — a carência fala em tom de cautela; todo o resto segue no cinza neutro.
+  const tom = planToneVar(state);
   // 009/T011b — o plano exibido e a ULTIMA resposta do servidor, nao uma fresca (offline). Dizer
   // isso e o preco de usa-la: o selo e honesto sobre o plano E sobre como ele sabe.
   if (q.stale) {
@@ -121,16 +129,10 @@ function PlanSection() {
           <div className="flex items-center gap-2">
             {badge}
             {caption && (
-              <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-                {caption}
-              </span>
+              <span style={{ fontSize: "var(--fs-caption)", color: tom }}>{caption}</span>
             )}
           </div>
-          {note && (
-            <span style={{ fontSize: "var(--fs-caption)", color: "var(--text-muted)" }}>
-              {note}
-            </span>
-          )}
+          {note && <span style={{ fontSize: "var(--fs-caption)", color: tom }}>{note}</span>}
         </div>
         {/* T028/B1 — `flex-wrap` NAO e cosmetico aqui. O `.tf-conta__row--plan` ja tem `flex-wrap`,
             mas ele nao socorria: as acoes sao UM item flex, e um item mais largo que o container nao
