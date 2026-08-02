@@ -5,8 +5,9 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { BILLING_PLANS } from "@/shared/billing/plans";
-import { TEASER_UPGRADE_TARGET, TeaserUpgrade, teaserPriceLine } from "./teaser-upgrade";
+import { BILLING_PLANS } from "./plans";
+import { teaserPriceLine } from "./price-line";
+import { TEASER_UPGRADE_TARGET, TeaserUpgrade } from "./teaser-upgrade";
 
 // E6 PR-C (T031/US7) — o acender dos teasers.
 //

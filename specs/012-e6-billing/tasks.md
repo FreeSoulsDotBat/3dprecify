@@ -552,8 +552,19 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 14: PR-C hardening & delivery
 
-- [ ] T037 e2e: teaser walk (all four show price + working CTA); refund flow in sandbox; the two Play-route
-      404 asserts.
+- [x] T037 e2e — `apps/web/tests/e2e/billing-teasers.spec.ts`, **6/6 chromium** contra a pilha real:
+      os teasers com o preco na tela e o CTA levando a oferta com os DOIS planos; o estorno visto
+      pelo VENDEDOR (a Conta deixa de dizer Premium na hora); e as duas rotas do Play em 404 no
+      servidor REAL — o pytest ja provava isso com uma app em memoria, e aqui a pergunta e outra: o
+      servidor que o e2e sobe, com a configuracao de verdade, tambem nao tem a rota.
+
+> **A linha de preco virou um modulo SEM dependencia nenhuma alem das mensagens**, e o caminho ate
+> ai foi por dois erros meus. Ela morava no componente (que importa CSS — o carregador do Playwright
+> nao parseia) e depois em `plans.ts` (que importa o cliente gerado, que valida env fora do
+> navegador: `ZodError` na carga). A saida NAO foi recompor o texto no spec: recompor e ter duas
+> fontes, que e exatamente o que a FR-710 proibe. Agora a UI e o e2e importam a MESMA funcao, e um
+> teste de unidade afirma que a linha contem os valores de `BILLING_PLANS` — e esse teste e o que
+> mantem as duas leituras amarradas em vez de apenas parecerem iguais.
 - [ ] T038 qa-produto homologation: the four teasers' honesty at 390px, refund lapse copy, and the
       quickstart step-10/11 sweep. Screenshots.
 - [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner

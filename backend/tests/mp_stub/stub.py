@@ -230,8 +230,11 @@ class MPStub:
             pre_id = str(body.get("preapprovalId") or "")
             if pre_id not in self._preapprovals:
                 return JSONResponse({"message": "unknown preapproval"}, status_code=404)
-            if body.get("status") == "rejected":
+            estado = str(body.get("status") or "approved")
+            if estado == "rejected":
                 return JSONResponse({"id": self.fail_payment(pre_id).id})
+            if estado in ("refunded", "charged_back"):
+                return JSONResponse({"id": self.refund_payment(pre_id, kind=estado).id})
             dias = int(body.get("periodDays") or 30)
             return JSONResponse({"id": self.authorize_payment(pre_id, period_days=dias).id})
 
