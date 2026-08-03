@@ -187,6 +187,18 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
         </Card>
       </div>
 
+      {/* 015/A8 ([F03a-003], decisão do dono 2026-08-03) — atacado acima do varejo é ENTRADA
+          VÁLIDA: o motor calcula, nada é recusado, e a UI avisa. A comparação é sobre os PREÇOS
+          resultantes, não sobre as strings de markup: é a consequência que o vendedor vê na tela,
+          e ela sobrevive a qualquer mudança na forma como o markup é digitado.
+
+          O tom é `info`, deliberadamente, e não `danger`: um aviso escrito como erro faz o
+          vendedor concluir que o produto RECUSOU — e o produto não recusou. Isto também é o que o
+          separa visualmente de `.tf-field__error`, que é onde uma validação de verdade aparece. */}
+      {result.precoAtacado > result.precoVarejo && (
+        <Alert tone="info">{t.avisoAtacadoAcimaDoVarejo}</Alert>
+      )}
+
       {/* (5) The suggested prices — the user's final takeaway, so they close the screen.
           Both retail + wholesale are always shown together (SC-010). */}
       {/* 015/A6 ([F11a-002]) — was a hardcoded `1fr 1fr` at EVERY width. At 360px that left each
@@ -259,12 +271,32 @@ function ChannelFeeField({
   index,
   meta,
   error,
+  applied,
 }: {
   control: Control<CalcFormValues>;
   index: number;
   meta: (typeof CHANNEL_FEE_FIELDS)[number];
   error?: string;
+  /** 015/A8 ([F11a-007]) — o valor que o CATÁLOGO está aplicando neste campo, quando ele é único. */
+  applied?: number;
 }) {
+  // 015/A8 ([F11a-007], decisão do dono 2026-08-03) — o placeholder passa a dizer a VERDADE.
+  //
+  // A homologação mediu: com Amazon e sem categoria os quatro campos ficavam vazios com o
+  // placeholder padrão "0,00" — a tela lia `Comissão 0,00 %` — enquanto "Preços por canal" mostrava
+  // um preço com 15% já descontados. O número que o vendedor procura primeiro estava em branco, e o
+  // selo que o explicava era o elemento de menor peso visual do painel. Campo vazio ao lado de um
+  // preço descontado é a única leitura errada possível.
+  //
+  // O placeholder é o registro visual certo para isto, e não um valor preenchido: ele JÁ significa
+  // "não digitado" em toda a interface. Um valor real no campo faria o vendedor achar que vouchou
+  // por ele — e o `editedFields` (que o cenário salva como `overridden`) passaria a mentir.
+  const placeholder =
+    applied === undefined
+      ? undefined
+      : meta.currency
+        ? applied.toFixed(2).replace(".", ",")
+        : String(applied).replace(".", ",");
   return (
     <Controller
       control={control}
@@ -282,6 +314,7 @@ function ChannelFeeField({
               onBlur={field.onBlur}
               ref={field.ref}
               error={Boolean(error)}
+              {...(placeholder ? { placeholder } : {})}
             />
           )}
         </Field>
@@ -394,6 +427,7 @@ function ChannelSlot({
             index={index}
             meta={meta}
             error={outcome?.errors[meta.name]}
+            applied={outcome?.appliedFees[meta.name]}
           />
         ))}
       </div>

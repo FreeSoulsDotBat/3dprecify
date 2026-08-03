@@ -60,9 +60,13 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   await page.getByLabel(f.markupVarejo).fill("50");
   await page.getByLabel(f.markupAtacado).fill("30");
 
+  // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
+  // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
+  // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
+  // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
   await expect(page.getByText("R$ 28,65")).toBeVisible(); // custo_total breakdown row
-  await expect(page.getByText("R$ 42,98")).toBeVisible(); // varejo derivation row
-  await expect(page.getByText("R$ 37,25")).toBeVisible(); // atacado derivation row
+  await expect(page.getByText("R$ 42,98").first()).toBeVisible(); // varejo derivation row
+  await expect(page.getByText("R$ 37,25").first()).toBeVisible(); // atacado derivation row
 
   // FR-021 / analyze A1: the corrected model carries NO tax/imposto input.
   await expect(page.getByText(/imposto/i)).toHaveCount(0);
@@ -95,7 +99,7 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
   await page.getByLabel(messages.calculator.fields.grams).fill("100");
   // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/2000 h)
   // this yields custo_total R$ 20,60 → varejo R$ 30,90.
-  await expect(page.getByText("R$ 30,90")).toBeVisible();
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   await context.setOffline(false);
 });
@@ -120,8 +124,12 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByLabel(t.fields.grams).fill("100");
+  // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
+  // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
+  // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
+  // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
   await expect(page.getByText("R$ 20,60")).toBeVisible(); // custo_total breakdown row (seed)
-  await expect(page.getByText("R$ 30,90")).toBeVisible(); // varejo for the seed
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo for the seed
 
   // SC-009: nothing is saved/exported and there is no upgrade/paywall CTA. The free-tier
   // note is an honest statement (not a call to action) and stays visible.
@@ -152,7 +160,7 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByLabel(t.fields.grams).fill("100");
-  await expect(page.getByText("R$ 30,90")).toBeVisible(); // varejo from the seed — never a blank grid
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   // Retry now succeeds → the notice clears (the served catalog is adopted).
   failFetch = false;
@@ -582,4 +590,33 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
   ).toHaveCount(0);
 
   await context.setOffline(false);
+});
+
+// 015/A8 ([F11a-003]) — a promessa esta na PRIMEIRA DOBRA, e isto e uma assercao de POSICAO.
+//
+// A auditoria mediu a frase a 3.413px de uma pagina de 3.529 — 97% da altura, 4,6 telas de rolagem
+// a 360px — e observou que o teste que a cobria usava `toBeInTheDocument()`: PRESENCA, nao posicao.
+// E a licao da US4 outra vez: uma assercao de presenca nao sabe nada sobre onde a coisa esta, e
+// "onde" era exatamente o defeito. Um `toBeVisible()` tambem nao bastaria — o Playwright considera
+// visivel o que esta abaixo da dobra.
+test("a promessa 'é grátis' está na primeira dobra, não no rodapé (360px)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto("/calcular");
+  const promessa = page.getByText(messages.calculator.freemiumNote);
+  await expect(promessa).toBeVisible();
+
+  const y = await promessa.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { topo: r.top + window.scrollY, altura: document.documentElement.scrollHeight };
+  });
+
+  // Guarda de nao-vacuidade: se a pagina encolher a ponto de caber numa dobra, este teste passaria
+  // sem provar nada sobre POSICAO.
+  expect(y.altura, "a pagina precisa ser rolavel para a assercao significar algo").toBeGreaterThan(
+    800 * 2,
+  );
+  expect(
+    y.topo,
+    `a promessa esta a ${Math.round(y.topo)}px de ${y.altura}px — fora da primeira dobra`,
+  ).toBeLessThan(800);
 });

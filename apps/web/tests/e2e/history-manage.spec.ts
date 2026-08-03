@@ -108,6 +108,17 @@ test("T120: um canal sem comissão informada não ganha preço no congelado que 
   await page.goto("/calcular");
   await page.reload();
 
+  // 015/A11 — o canal SEM tarifa passa a ser escolhido EXPLICITAMENTE. Este teste dependia de o
+  // slot padrao nao ter cobertura no catalogo, o que era verdade enquanto o padrao era MERCADO_LIVRE
+  // (`entries: []` ate a fatia US6). Com o padrao AMAZON, que TEM tabela, o canal ganha tarifa e a
+  // premissa do teste evapora — mas a INVARIANTE que ele protege ("canal sem comissao informada nao
+  // ganha preco") continua valendo e continua importando. Escolher o ML aqui e dizer em voz alta o
+  // que o teste sempre precisou, em vez de herda-lo de um padrao que pode mudar de novo.
+  await page
+    .getByRole("combobox", { name: new RegExp(t.calculator.channels.marketplace) })
+    .first()
+    .selectOption("MERCADO_LIVRE");
+
   // A ORIGEM recusa: nenhuma linha de preço para o canal, e o motivo dito em palavras.
   await expect(page.getByText(t.calculator.channels.noFeeHint)).toBeVisible();
   const slotDaCalcular = page.getByTestId("channel-price").first();

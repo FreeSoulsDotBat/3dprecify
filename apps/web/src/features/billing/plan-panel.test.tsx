@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -108,6 +108,42 @@ describe("as ações separam o que é do MP do que é nosso", () => {
     render(wrap(<PlanActions state={carencia} onSubscribe={() => {}} />));
     expect(screen.getByRole("button", { name: b.planUpdatePayment })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: b.planCancel })).not.toBeInTheDocument();
+  });
+
+  // 015/A8 ([F11b-002], Alto — decisao do dono 2026-08-03). A homologacao visual mediu os estilos
+  // computados nos 6 estados e achou uma inversao: na CARENCIA, "Atualizar forma de pagamento" e a
+  // unica acao que recupera o Premium, e era a UNICA sem preenchimento — mesma cor, mesmo peso e
+  // zero fundo do botao "Recarregar" ao lado. A diferenca entre salvar a assinatura e recarregar a
+  // tela eram as palavras. Nas mesmas telas o "Sair" logo abaixo tinha borda e fundo: a pagina
+  // provava saber desenhar afordancia e nao a usava no caminho do dinheiro.
+  //
+  // A assercao e sobre a VARIANTE, nao sobre a cor: `tf-btn--ghost` e o que a medicao encontrou, e
+  // e o que nao pode voltar. O estado ATIVO segue fantasma DE PROPOSITO — la nao ha risco a
+  // recuperar, e mexer nele nao foi o que o dono decidiu.
+  it("carência: a ação que salva a assinatura é PRIMÁRIA, não fantasma", () => {
+    render(wrap(<PlanActions state={carencia} onSubscribe={() => {}} />));
+    const acao = screen.getByRole("button", { name: b.planUpdatePayment });
+    expect(acao.className).not.toMatch(/tf-btn--ghost/);
+  });
+
+  it("ativa: gerenciar continua fantasma — não há assinatura em risco para recuperar", () => {
+    render(wrap(<PlanActions state={ativa} onSubscribe={() => {}} />));
+    expect(screen.getByRole("button", { name: b.planManage }).className).toMatch(/tf-btn--ghost/);
+  });
+
+  // 015/A8 ([F11b-004]) — num dialogo de perda, quem tem preenchimento e a saida SEGURA.
+  it("diálogo de cancelar: a saída segura é a preenchida; a irreversível não", async () => {
+    render(wrap(<PlanActions state={ativa} onSubscribe={() => {}} />));
+    fireEvent.click(screen.getByRole("button", { name: b.planCancel }));
+    const voltar = await screen.findByRole("button", { name: b.cancelBack });
+    const cancelar = screen.getByRole("button", { name: b.cancelConfirm });
+    // Comparacao EXATA por classe, e nao regex: a primeira versao usava a fronteira de palavra
+    // para dizer "a variante cheia, nao a fantasma", e o escape escrito por heredoc virou um
+    // caractere de BACKSPACE dentro da regex. O eslint pegou; nenhuma assercao teria pego.
+    const classes = (el: HTMLElement) => el.className.split(/\s+/);
+    expect(classes(voltar)).not.toContain("tf-btn--ghost");
+    expect(classes(cancelar)).not.toContain("tf-btn--danger");
+    expect(classes(cancelar)).toContain("tf-btn--danger-ghost");
   });
 
   it("cancelada: reassinar, e NENHUM botão de cancelar de novo", () => {

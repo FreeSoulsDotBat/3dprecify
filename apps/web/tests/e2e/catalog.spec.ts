@@ -138,7 +138,11 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   await expect(
     page.getByRole("combobox", { name: t.calculator.catalogPicker.filament }),
   ).toHaveCount(0);
-  await expect(page.getByText("R$ 30,90")).toBeVisible(); // seed varejo — the free math lives
+  // 015/A11 — `.first()` porque o valor agora aparece DUAS vezes, e a segunda e aritmetica do
+  // modelo, nao duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no
+  // canal e por construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao
+  // vem antes no DOM (o proprio componente diz "shown BEFORE the suggested prices").
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // seed varejo — the free math lives
 });
 
 test("signed-out: Catálogo tab + calculator slot show the honest teaser — no price, no fake save (US7/T031)", async ({
@@ -164,5 +168,5 @@ test("signed-out: Catálogo tab + calculator slot show the honest teaser — no 
   await page.getByRole("button", { name: t.calculator.catalogPicker.title }).click();
   await expect(page.getByRole("dialog").getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
   await page.getByRole("dialog").getByRole("button", { name: t.catalogo.teaserDismiss }).click();
-  await expect(page.getByText("R$ 30,90")).toBeVisible();
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // ver nota do A11 acima
 });

@@ -244,6 +244,15 @@ export function CalcularPage() {
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
       <PageHeader title={t.title} className="tf-page-header--center" />
 
+      {/* 015/A8 ([F11a-003], decisão do dono 2026-08-03) — a promessa SOBE para a primeira dobra.
+          Medido na homologação: a frase vivia como último elemento da página, a 3.413px de 3.529 —
+          **97% da altura**, 4,6 telas de rolagem a 360px. A primeira dobra continha exatamente uma
+          afirmação de valor, e era a oposta: "Salvar faz parte do Premium." Quem abria e desistia
+          antes de rolar levava a mensagem contrária à que o produto quer dar.
+          A menção a Premium NÃO foi removida — ela é a outra metade da verdade, e a frase abaixo diz
+          as duas coisas na mesma linha. O que mudou foi só QUANDO ela é lida. */}
+      <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
+
       {/* 010/T013 (E5) — "Meus cenários" is a NAV-LIKE entry, not a save button: it sits with the
           page title (never inside the results block) and is VISIBLE for everyone, incl. free/
           signed-out (the SC-109-safe honest door, ux §0.1/§2.2/§11-F1/F2). */}
@@ -455,8 +464,6 @@ export function CalcularPage() {
           />
         </div>
       )}
-
-      <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
     </section>
   );
 }

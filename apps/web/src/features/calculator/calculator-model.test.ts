@@ -431,6 +431,34 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.result?.freightCostVarejo).toBeCloseTo(30, 2);
     expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
   });
+
+  // 015/A8 ([F11a-007], decisao do dono 2026-08-03) — o campo mostra a aliquota APLICADA, e SO
+  // quando ela e unica. A homologacao mediu: com AMAZON e sem categoria os quatro campos ficam com
+  // placeholder "0,00" (a tela le `Comissão 0,00 %`) enquanto "Precos por canal" mostra um preco
+  // com 15% ja embutidos. O numero que o vendedor procura primeiro estava em branco.
+  //
+  // A ARMADILHA, e ela quase me fez trocar uma mentira por outra: com `priceBands` a comissao VARIA
+  // por faixa, e `entryToChannelFees` devolve `commissionPct: entry.commissionPct ?? 0` — ZERO para
+  // uma entrada bandada. Publicar isso no campo diria "Comissão 0,00%" com ar de verdade.
+  it("[F11a-007] taxa por FAIXA nao publica aliquota unica — um numero so aqui seria falso", () => {
+    const r = computeFromForm(
+      { ...canonical, channels: [slot({ marketplace: "SHOPEE", modality: "" })] },
+      ctx,
+    );
+    expect(r.channels[0]?.appliedFees.commissionPct).toBeUndefined();
+    expect(r.channels[0]?.appliedFees.fixedFee).toBeUndefined();
+  });
+
+  it("[F11a-007] o que o vendedor DIGITOU nao vira referencia — ele ja ve o proprio numero", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", freightCost: "12,00" })],
+      },
+      ctx,
+    );
+    expect(r.channels[0]?.appliedFees.freightCost).toBeUndefined();
+  });
 });
 
 describe("US4 — 'Incluir marketplaces no preço' master toggle (SC-105)", () => {
@@ -701,5 +729,34 @@ describe("SC-817 — nível não precificado atravessa até o selo (lacuna publi
     expect(ch.result?.precoAnuncioVarejo).not.toBeNull();
     expect(ch.result?.recebidoLiquidoVarejo).not.toBeNull();
     expect(ch.seal.kind).toBe("reference");
+  });
+});
+
+describe("015/A8 — [F03a-003] atacado acima do varejo e VALIDO (decisao do dono 2026-08-03)", () => {
+  // O motor nao recusa, e essa e a metade que importa: um teste que so verificasse "aparece o
+  // aviso" passaria com uma implementacao que BLOQUEASSE a conta — que e o oposto do decidido.
+  it("o motor calcula normalmente, sem erro de campo", () => {
+    const r = computeFromForm({
+      ...canonical,
+      markupVarejoPct: "50",
+      markupAtacadoPct: "200",
+    });
+    expect(r.ok).toBe(true);
+    expect(r.fieldErrors).toEqual({});
+    expect(r.result).not.toBeNull();
+  });
+
+  it("e o preco de atacado fica MESMO acima do varejo — o gatilho do aviso e observavel", () => {
+    const r = computeFromForm({
+      ...canonical,
+      markupVarejoPct: "50",
+      markupAtacadoPct: "200",
+    });
+    expect(r.result!.precoAtacado).toBeGreaterThan(r.result!.precoVarejo);
+  });
+
+  it("no caso normal o gatilho NAO dispara — senao o aviso apareceria sempre", () => {
+    const r = computeFromForm({ ...canonical, markupVarejoPct: "120", markupAtacadoPct: "60" });
+    expect(r.result!.precoAtacado).toBeLessThan(r.result!.precoVarejo);
   });
 });

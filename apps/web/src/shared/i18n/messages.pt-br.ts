@@ -120,6 +120,12 @@ export const messages = {
       atacado: "Atacado",
       markup: "markup",
     },
+    // 015/A8 ([F03a-003], decisao do dono 2026-08-03) — atacado acima do varejo e ENTRADA VALIDA:
+    // o numero e do vendedor e o motor calcula sem reclamar. O que faltava era dizer que aconteceu.
+    // A frase e deliberadamente descritiva ("ficou acima"), nunca corretiva ("corrija"): quem le um
+    // aviso escrito como erro conclui que o produto recusou, e o produto nao recusou.
+    avisoAtacadoAcimaDoVarejo:
+      "O preco de atacado ficou acima do varejo. Nada foi recusado — so confira se e isso mesmo.",
     // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Frete até a transportadora…);
     // each value soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria
     // linha no detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).

@@ -76,7 +76,16 @@ export interface PriceInput {
   machineValue: number; // R$, ≥ 0
   machineLifetimeHours: number; // h, > 0
   maintenanceReservePerHour?: number; // R$/h, ≥ 0, default 0
-  failurePct?: number; // %, ≥ 0, default 0
+  /**
+   * %, ≥ 0, default 0 — e **sem teto, deliberadamente** (015/A8, `[F03a-002]`, decisão do dono
+   * 2026-08-03). A auditoria pré-provisionamento perguntou se `failurePct = 1000` deveria ser
+   * recusado, já que produz uma falha de 10× o subtotal de produção. Não deve: **300% representa
+   * legitimamente uma peça que falha três vezes antes de sair**, e um teto arbitrário recusaria um
+   * caso real. O número é do vendedor.
+   *
+   * Este comentário existe para impedir que o próximo leitor "conserte" o que foi decidido.
+   */
+  failurePct?: number;
   finishTimeHours?: number; // h, ≥ 0, default 0
   finishRatePerHour?: number; // R$/h, ≥ 0, default 0
   laborHours?: number; // h, ≥ 0, default 0
