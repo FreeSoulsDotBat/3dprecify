@@ -23,7 +23,7 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import { orvalFetch } from './transport';
+import { orvalFetch } from './transport.ts';
 /**
  * The product-owned E1 piece fields (data-model §2.5).
  */
