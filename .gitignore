@@ -70,3 +70,10 @@ graphify-out/
 
 # Playwright MCP scratch output (browser snapshots/screenshots from in-session debugging)
 .playwright-mcp/
+
+# 015 — screenshots da homologacao pre-provisionamento (31 MB, 208 imagens).
+# Os achados em docs/homologacao/achados/ ja citam a geometria medida de cada um; as imagens
+# sao regeneraveis re-rodando a homologacao visual e nao valem o peso permanente no historico
+# (decisao do dono, 2026-08-03).
+docs/homologacao/evidencias/f11a/
+docs/homologacao/evidencias/f11b/
