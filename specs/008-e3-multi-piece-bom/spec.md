@@ -23,6 +23,18 @@ inputs, with a quantity. E3 adds (a) multi-piece composition and (b) a combined 
 
 ## Clarifications
 
+### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
+
+- **`[F02B-005]` — FR-410/SC-408 "sem CTA de compra antes do E6".** Caducou pelo motivo mais simples
+  possível: o E6 chegou. `apps/web/src/shared/billing/teaser-upgrade.tsx` renderiza o CTA. A
+  condição da frase era temporal e foi cumprida, não violada.
+- **`[F02B-006]` — a Clarification D4 diz que o 422 para BOM vazio "ficaria para depois".** Já está
+  implementado: `backend/app/api/boms.py:180` (`Field(min_length=1)`). O texto descreve um futuro
+  que virou passado.
+- **`[F02B-007]` — SC-410, overflow do nav de 5 abas.** O teste cobre `/catalogo`, `/historico` e
+  `/conta`, **não `/kits`** especificamente. Continua sem cobertura própria; registrado, não
+  consertado.
+
 ### Session 2026-07-10 (owner decisions — Principle VIII)
 
 - **Q1 — BOM pricing model (how N pieces combine): INDEPENDENT PER-PIECE SUM.** Each piece is priced in

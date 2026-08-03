@@ -259,7 +259,7 @@ Each slot is written empty BEFORE the corresponding change, then filled with the
   baseline: rtk covers Bash-tool traffic only (PowerShell bypass, measured 2026-07-19, owner decision
   pending), Sonnet tokenizer ~+30%, intro-price expiry 2026-08-31, R1-gate PASSED (all levers active).
 - Per-slice rows (T032): *(empty slot)*
-- Pilot verdict (T033): *(empty slot)*
+- Pilot verdict (T033): **PREENCHIDO — ver a seção do veredito 47 linhas abaixo.** (015/A7, `[F02C-001]`: este slot ficou com o placeholder de template ao lado do veredito ja escrito, e um documento que se contradiz e pior que um incompleto — quem le o §4 primeiro conclui que a medicao nunca aconteceu.)
 
 ## §Secondary trims (US6 / FR-013) — T035
 
