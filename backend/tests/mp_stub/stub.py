@@ -121,6 +121,19 @@ class MPStub:
         self._payments[payment_id] = payment
         return payment
 
+    def refund_payment(self, preapproval_id: str, *, kind: str = "refunded") -> Payment:
+        """Registra um pagamento ESTORNADO ou com chargeback (fixtures da US8/T033).
+
+        `period_end` fica nulo de proposito: um estorno nao carrega periodo — o que ele diz e que o
+        dinheiro voltou, nao ate quando ele valia.
+        """
+        payment_id = f"pay-{uuid.uuid4().hex[:12]}"
+        payment = Payment(
+            id=payment_id, preapproval_id=preapproval_id, status=kind, period_end=None
+        )
+        self._payments[payment_id] = payment
+        return payment
+
     # --- the signed-webhook firing trigger ----------------------------------------------------
 
     def fire_webhook(
@@ -217,8 +230,11 @@ class MPStub:
             pre_id = str(body.get("preapprovalId") or "")
             if pre_id not in self._preapprovals:
                 return JSONResponse({"message": "unknown preapproval"}, status_code=404)
-            if body.get("status") == "rejected":
+            estado = str(body.get("status") or "approved")
+            if estado == "rejected":
                 return JSONResponse({"id": self.fail_payment(pre_id).id})
+            if estado in ("refunded", "charged_back"):
+                return JSONResponse({"id": self.refund_payment(pre_id, kind=estado).id})
             dias = int(body.get("periodDays") or 30)
             return JSONResponse({"id": self.authorize_payment(pre_id, period_days=dias).id})
 

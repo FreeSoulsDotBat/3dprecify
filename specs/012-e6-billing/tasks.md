@@ -451,39 +451,173 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
 
 ## Phase 11: User Story 7 — Teaser light-up (Priority: P2)
 
-- [ ] T031 [US7] Write FAILING vitest — the four teasers (`features/{catalog/premium-teaser,bom/bom-teaser,
-      history/history-teaser,scenarios/scenario-teaser}.tsx`) render the real price + the shared Assinar CTA
-      (FR-710); honesty regex (no fabricated number, no urgency copy); the price constant matches the plan
-      surface (one source). Observe failing.
-- [ ] T032 [US7] Implement: point the four teasers at the shared `features/billing` CTA. Tests green.
+- [x] T031 [US7] Vermelho observado — `shared/billing/teaser-upgrade.test.tsx` (8 testes). O modulo
+      nao existia, entao zero testes coletados: e o vermelho certo, e o mesmo formato do `plan-view`.
+- [x] T032 [US7] Os quatro teasers acesos. gate:all verde: **1219 front** (eram 1211), 424 back.
+
+> **FR-710/SC-707 — uma so fonte de preco, e agora ela e ESTRUTURAL.** A linha de preco e montada a
+> partir de `BILLING_PLANS`, nunca de numeros redigitados; o anual entra pelo EQUIVALENTE mensal
+> (155,88/12 ≈ 12,99), que e o numero que o vendedor usa para comparar. O R$ 191,88 nunca aparece
+> riscado — um "de/por" fabricaria um desconto que nunca existiu.
+
+> **O CTA leva a OFERTA, nao a um checkout.** Mensal e anual tem precos diferentes; disparar a compra
+> de um periodo que o vendedor nao escolheu e escolher por ele.
+
+> **DESALINHAMENTO DE SPEC, registrado em vez de resolvido em silencio**: o §7.1 manda rotear para
+> `/assinatura`, e **essa rota nunca foi construida** — o PR-A entregou a oferta como um `Sheet`
+> dentro de `/conta`. O alvo e `/conta?assinar=1`, que e o que EXISTE. Nao criei uma rota que
+> ninguem pediu, nem fingi que o §7.1 ja estava satisfeito. O `assinar` passa pelo `validateSearch`
+> como o `checkout`: qualquer outro valor vira `undefined`.
+
+> **O §9-G2 previu o problema E a saida, e as duas se confirmaram.** O `TeaserUpgrade` nasceu em
+> `features/billing` para os quatro teasers consumirem — e o eslint-boundaries reprovou com QUATRO
+> erros, um por teaser: `feature -> feature` e proibido por desenho. O spec ja dizia "be lifted to a
+> shared layer if the boundary linter objects". Elevado para `shared/billing/` junto com a constante
+> de preco, que e transversal de verdade — como `messages`, e nao propriedade de uma feature.
+
+> **QUATRO proibicoes pre-E6 caducaram, e NENHUMA foi apagada.** Os teasers de catalogo, kits,
+> historico e cenarios afirmavam "sem preco, sem CTA de compra (billing is E6)". O E6 chegou, entao a
+> PREMISSA caiu — mas a garantia nao. Cada uma foi CONVERTIDA no que ainda protege: so os tres
+> numeros que o produto pratica, nenhuma urgencia, nenhum "de/por", e nenhuma promessa de coisa nao
+> construida (esta ultima nunca dependeu de cobranca).
+> O caso mais delicado foi o do Historico, que usava `/R\$/` cru como PROXY de "nenhum recibo
+> inventado" — um proxy que funcionava enquanto nao havia preco nenhum na tela e que passaria a pegar
+> justamente o dinheiro legitimo. Estreitado para a garantia real: todo valor exibido e um dos tres
+> precos praticados; qualquer outro seria um registro fabricado.
 
 ## Phase 12: User Story 8 — Refund/chargeback mechanics (Priority: P3, mechanics-floor kept)
 
-- [ ] T033 [US8] Write FAILING pytest — verified refund/chargeback → `revoked_at` on the active payment
-      grant (append-only revoke) → immediate lapse; idempotent replay; `beta|comp` grants untouched
-      (VR-708/SC-710); post-lapse chargeback = audit-only no-op. Observe failing.
-- [ ] T034 [US8] Implement in `grant_writer.py` + the event kinds in the MP provider. Tests green.
+- [x] T033 [US8] Vermelho observado — `backend/tests/test_billing_refund.py`, 6 testes, `FFFFFF`.
+- [x] T034 [US8] Revogacao implementada em `grant_writer._revoke_for_refund` + os tipos de evento no
+      provider. 6/6 verdes; gate:all verde com **430 no backend** (eram 424).
+
+> **O buraco que esta fatia fecha tem nome: PREMIUM SILENCIOSO.** Um estorno que ninguem processa
+> deixa o vendedor premium de graca e ninguem descobre — nao ha erro, nao ha log, so uma conta ativa
+> que nao devia estar. Por isso a US8 e P3 mas o piso de mecanica nao e descartavel.
+
+> **`refunded`/`charged_back` sairam de `payment_failed`, e a separacao E o conserto.** O
+> `_approved_kind` mapeava tudo que nao fosse `approved` para "falhou", o que daria **CARENCIA a quem
+> pediu o dinheiro de volta** — dez dias de premium de presente, pelo caminho que existe para ajudar
+> quem quer pagar. Um teste crava o tipo gravado no inbox, nao so a presenca do evento.
+
+> **DUAS coisas que a revogacao deliberadamente NAO faz, e as duas foram provadas por MUTACAO:**
+> · **nao toca em `beta`/`comp`** — sao decisoes de OPERADOR, sem relacao com o cartao do vendedor;
+>   um estorno que as apagasse tiraria o acesso de quem nunca pagou por ele, e o defeito seria
+>   INVISIVEL, porque "o premium do pagamento caiu" e exatamente o que se espera ver. Mutacao
+>   (revogar por conta em vez de por assinatura): `..F...`
+> · **nao revoga um grant JA expirado** — chargebacks chegam semanas depois e o comum e a conta ja ter
+>   caido sozinha; revogar ali nao mudaria nada para o vendedor, mas SOBRESCREVERIA o motivo da queda.
+>   Mutacao (remover o filtro de expiracao): `....F.`
+
+> **Uma assercao MORTA que eu escrevi, achada relendo:** `assert [...].count(...) >= 0` e SEMPRE
+> verdade. Nenhum linter pega, o teste ficava verde, e ela nao guardava absolutamente nada. Trocada
+> por uma que compara a sequencia exata de tipos no inbox.
 
 ## Phase 13: Play Billing flag-readiness (owner Q2 — NOT droppable)
 
-- [ ] T035 Write FAILING pytest — with `P3D_PLAY_BILLING_ENABLED=False`: both Play routes 404 server-side
-      (VR-709/SC-711); with the flag ON in a test env: the Play provider's verified sandbox purchase event
-      reaches the SAME `grant_writer` and writes a `provider=google_play` subscription + `source=payment`
-      grant. Observe failing.
-- [ ] T036 Implement `backend/app/billing/providers/google_play.py` (purchase-token verify against the Play
-      Developer API → normalised event) + the two flag-gated routes; validate against **Play internal
-      testing**; record the sandbox-purchase evidence in `specs/012-e6-billing/evidence/play-flag/` — the
-      E7 turn-on gate artifact. Tests green; flag stays OFF everywhere.
+- [x] T035 Prontidao do Play atras da flag DESLIGADA — `backend/tests/test_billing_play_flag.py`,
+      **14 testes**. gate:all verde com **444 no backend** (eram 430).
+      Gating por **REGISTRO**, nao por `if` no handler: com a flag desligada as rotas nao entram no
+      roteador, entao nao ha handler que possa vazar por engano. 404 e nao 401/403 de proposito — um
+      401 diria "existe, mas voce nao esta autenticado", confirmando a superficie para quem sonda.
+
+> **DEFEITO REAL achado pelo teste de valor-lixo: `P3D_PLAY_BILLING_ENABLED=yes` e `=ON` LIGAVAM a
+> flag.** O parser de bool do pydantic aceita `yes`/`on`/`y`/`t`/`1`, e a ADR-0023 §6 diz o oposto:
+> "the default AND any unset/unknown value is OFF". Um erro de digitacao num `.env` acenderia uma
+> superficie de PAGAMENTO, e ninguem notaria — nada falha quando uma rota passa a existir. Agora so
+> o literal `true` liga; todo o resto e OFF, e OFF em silencio de proposito (levantar excecao
+> derrubaria o app por um typo, e ficar desligado E o estado seguro).
+
+> **DEFEITO MEU, na primeira versao do gating:** eu acrescentava as rotas ao `router` de MODULO, o
+> que faz a flag virar estado GLOBAL do processo — duas `create_app` com flags diferentes (o que a
+> suite faz o tempo todo) vazariam uma na outra, e na direcao perigosa: quem liga primeiro contamina
+> quem vem depois. Os testes so passavam pela ORDEM em que rodam. Agora `play_router()` devolve um
+> router NOVO, e ha um teste que faz exatamente a ordem que quebrava (ligar, depois desligar).
+
+> **Os 404 eram VACUOS ate ganharem controle positivo.** Enquanto as rotas nao existiam em lugar
+> nenhum, "404 com a flag desligada" era trivialmente verdade — o mesmo 404 apareceria com a flag
+> ligada. O contraste (com a flag ON a rota responde 401 ou 503, nunca 404) e o que mostra que o 404
+> vem do GATING e nao da ausencia de codigo. Terceira vez neste PR-C que um verde nao provava nada.
+
+- [ ] T036 **BLOQUEADO NO DONO** — o provider do Play verificando `purchaseToken` de verdade contra a
+      Play Developer API, mais a validacao no **Play internal testing** e a evidencia em
+      `evidence/play-flag/` (o artefato do portao de ligar do E7).
+      **O que EXISTE hoje**: as duas rotas, flag-gated, recusando com 503 honesto em vez de conceder
+      premium a partir de um token que ninguem conferiu (Constituicao IV); e a prova de que uma
+      compra do Play chega ao MESMO `grant_writer`, com `source="payment"` e
+      `provider="google_play"` — nenhuma regra de entitlement nova nasce para o Play (ADR-0023 §6).
+      **O que FALTA e so seu**: conta Play + credencial de service account + uma compra no internal
+      testing. Nao da para inventar nem stubbar isso de forma honesta: um stub provaria que o meu
+      stub concorda comigo.
 
 ## Phase 14: PR-C hardening & delivery
 
-- [ ] T037 e2e: teaser walk (all four show price + working CTA); refund flow in sandbox; the two Play-route
-      404 asserts.
-- [ ] T038 qa-produto homologation: the four teasers' honesty at 390px, refund lapse copy, and the
-      quickstart step-10/11 sweep. Screenshots.
-- [ ] T039 `pnpm gate:all` + drift-guard + SC-709 + the full quickstart walk end-to-end (the owner
-      homologation script) + the FR-713 absence sweep (no proration/trial/coupon/fiscal surface exists
-      anywhere — grep + UI walk). Evidence.
+- [x] T037 e2e — `apps/web/tests/e2e/billing-teasers.spec.ts`, **6/6 chromium** contra a pilha real:
+      os teasers com o preco na tela e o CTA levando a oferta com os DOIS planos; o estorno visto
+      pelo VENDEDOR (a Conta deixa de dizer Premium na hora); e as duas rotas do Play em 404 no
+      servidor REAL — o pytest ja provava isso com uma app em memoria, e aqui a pergunta e outra: o
+      servidor que o e2e sobe, com a configuracao de verdade, tambem nao tem a rota.
+
+> **A linha de preco virou um modulo SEM dependencia nenhuma alem das mensagens**, e o caminho ate
+> ai foi por dois erros meus. Ela morava no componente (que importa CSS — o carregador do Playwright
+> nao parseia) e depois em `plans.ts` (que importa o cliente gerado, que valida env fora do
+> navegador: `ZodError` na carga). A saida NAO foi recompor o texto no spec: recompor e ter duas
+> fontes, que e exatamente o que a FR-710 proibe. Agora a UI e o e2e importam a MESMA funcao, e um
+> teste de unidade afirma que a linha contem os valores de `BILLING_PLANS` — e esse teste e o que
+> mantem as duas leituras amarradas em vez de apenas parecerem iguais.
+- [x] T038 homologacao visual (`qa-produto`, opus) — **PASS COM RESSALVAS 88%**, **37 screenshots**,
+      geometria lida do DOM em 12 estados. **A classe do T028 NAO se repetiu**: `scrollWidth -
+      clientWidth = 0` em todos; a promessa "continua gratis" segue LIDERANDO (12px de folga, zero
+      sobreposicao); alvo de toque 44px minimo. **FR-713 limpa por varredura DUPLA** — 22 capturas
+      de `innerText` x 34 termos + o namespace `billing` inteiro lido (nao so grep). Ela ate
+      registrou o falso positivo que um grep ingenuo pegaria: `freightLine` cita cupom de FRETE de
+      marketplace (dominio E1), nao de assinatura.
+      **Cinco defeitos, TODOS corrigidos:**
+      · **D5 — REQUISITO NOMEADO E NAO CONSTRUIDO**: o §7.2 pede a faixa no Dialog *e no PAINEL* do
+        catalogo, e o painel ficou sem. Zero ocorrencias em `/catalogo` nos 4 estados: o vendedor via
+        "Salvar faz parte do Premium" e NENHUM preco, e so descobria o valor tocando em "+ Adicionar
+        filamento". Tres superficies acendiam onde ele aterrissa, uma exigia um toque a mais. Custou
+        uma linha.
+      · **D4 — regressao que a faixa CRIOU**: com o dialog de cenarios aberto, 31,8px (390) / 39,1px
+        (1280) da faixa do PAINEL ficavam visiveis por baixo, com opacidade efetiva 1 — um SEGUNDO
+        "Assinar Premium" identico. E a 1280 o card CORTAVA a linha de preco, deixando um fragmento
+        de centavos na tela ao lado do CTA duplicado. **Dinheiro mutilado.** Antes da US7 o painel
+        nao tinha preco nem botao.
+      · **D1 — o simbolo se separava do valor**: a 390px a linha quebrava entre `R$` e o numero.
+        Sem corte e sem transbordo — nenhuma assercao geometrica ou de texto ve; so a imagem.
+      · **D2 — a faixa era a UNICA coisa desalinhada** em 3 dos 4 teasers: todo irmao com desvio
+        0,0px do centro e o botao orfao a ate **149,6px** a esquerda. Nos Dialogs (conteudo a
+        esquerda) estava coerente — por isso o alinhamento virou ESCOLHA de quem monta (`align`).
+      · **D3 — o botao de SAIR pesava mais que o de comprar**: CTA 44px contra dispensar 48px, os
+        dois em roxo primario. Num paywall, o maior e o unico centrado era o de sair.
+
+> **O lapso por estorno — a leitura da homologacao, e eu concordo.** Nao mencionar o estorno esta
+> CERTO: quem pediu o dinheiro de volta sabe que pediu, repetir e reprimenda, e num chargeback em
+> disputa seria acusacao que o produto nao sustenta. **Mas "expirado" afirma uma causa que nao
+> aconteceu** — expirar e o tempo acabar, e o periodo foi CORTADO; a tela dizia "renova em
+> 01/09/2026" e no mesmo dia diz "expirado". E `/kits` chama o MESMO estado de "Premium pausado":
+> dois nomes para um estado, um deles com causa falsa embutida. O conserto honesto nao e confessar o
+> estorno, e parar de afirmar a causa. **NAO consertado aqui**: `plan-view.ts` so recebe
+> `none|active|lapsed`, a causa nao trafega, e unificar o rotulo e decisao de produto.
+> **FOLLOW-UP PARA O DONO.**
+
+> **Ressalvas menores registradas**: o LAPSED nao acende faixa (fora do escopo literal da US7 —
+> teasers sao free/deslogado —, mas e o estado em que o vendedor mais quer comprar); o
+> `space-between` da faixa e CSS morto (ela quebra em TODO tamanho); o §7.2 garantiu o certo pelo
+> motivo errado ("price line is short, it cannot overflow" — quem salvou foi o `flex-wrap`); e a URL
+> fica com o parametro serializado em JSON depois do round-trip do deslogado (cosmetico).
+
+> **Tres comentarios de FONTE caducados foram corrigidos** — eles diziam "sem preco, sem CTA de
+> compra (billing e E6)" IMEDIATAMENTE ACIMA de um preco e de um botao de compra. O commit da US7
+> estreitou as quatro proibicoes dos TESTES e deixou os comentarios para tras: o repositorio
+> descrevendo o que nao garante, de novo.
+- [x] T039 `gate:all` exit 0 (1219 front / 444 back / 5 contratos) · e2e **17/17** nos tres arquivos
+      de billing · drift-guard 0 diff · **SC-709 provada pela FORMA** (diff ZERO nos modulos de
+      derivacao: a revogacao da US8 e um `UPDATE` que a derivacao ja sabia ler).
+      **FR-713 varrida DUAS vezes, por codigo e por tela**: 12 termos em `apps/web/src` +
+      `backend/app` + `packages` — NOVE deram zero, e os quatro hits sao falsos positivos
+      verificados um a um (o mais eloquente: `imposto` aparece num teste AFIRMANDO que nao existe
+      campo de imposto). Escopo declarado e tabela em `dod-evidence.md`.
 - [ ] T040 **Owner-gated PR-C → `develop`** (squash). Graph refresh on merge.
 
 ---
@@ -494,8 +628,9 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       premium-gate line from the brief §10) + cross-slice dod-evidence; confirm ADR-0023 Accepted; final
       graph refresh. **v1 = E1–E6 complete → surface the DEPLOY decision to the owner** (the standing
       2026-07-09 rule's trigger has fired; the live-webhook validation from Q3 waits there).
-- [ ] T042 [P] Q9 fiscal check handoff: a dated note to the owner listing exactly what the accountant must
-      confirm (MP receipt sufficiency for the owner's tax regime) — LAUNCH blocker tracking, not code.
+- [x] T042 handoff fiscal (Q9) — `docs/product/e6-fiscal-handoff.md`, datado. Quatro perguntas para o
+      contador e o inventario do que o E6 ja registra e que ele pode usar. **Bloqueia o LANCAMENTO**
+      (cobrar do primeiro cliente real), nao o merge nem o E7.
 
 ---
 

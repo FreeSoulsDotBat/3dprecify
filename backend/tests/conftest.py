@@ -104,6 +104,7 @@ _BILLING_TEST_MODULES = {
     "tests.test_billing_checkout",
     "tests.test_billing_cancel",
     "tests.test_billing_grace",
+    "tests.test_billing_refund",
 }
 
 

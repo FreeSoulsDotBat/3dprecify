@@ -74,7 +74,10 @@ test("premium saves online, the list shows it with no price, and reopening recom
   await expect(listDialog.getByText(LONG_NAME)).toBeVisible();
   await expect(listDialog.getByText("Comparação ML ajustado x Shopee catálogo")).toBeVisible();
   await expect(listDialog.getByText(/Atualizado/)).toBeVisible();
-  await expect(listDialog.getByText(/R\$/)).toHaveCount(0);
+  // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia.
+  for (const n of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(n);
+  }
 
   // Adversarial SIZE homologation, in passing (§8 of quickstart): the long name must not blow the
   // 390px layout — assert GEOMETRY, not just that the text is present (the E4 lesson, twice).
@@ -247,13 +250,21 @@ test("free/signed-out meets the honest teaser — NO inline 'Salvar cenário' an
   const listDialog = await openScenariosList(page);
   await expect(listDialog.getByText(s.teaserTitle)).toBeVisible();
   // No price, no availability date, no fabricated sample scenario, no purchase CTA.
-  await expect(listDialog.getByText(/R\$/)).toHaveCount(0);
-  await expect(listDialog.getByRole("button", { name: /assinar|comprar|upgrade/i })).toHaveCount(0);
+  // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
+  // sobra e a honestidade do numero: so os tres precos praticados.
+  for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(v);
+  }
+  // O CTA de assinar agora EXISTE e e desejado (US7). O que continua proibido e a compra fingida:
+  // nada aqui pode virar premium sozinho — o salvar inline segue ausente, afirmado acima.
 
   await listDialog.getByText(s.teaserAction).click();
   const teaserDialog = page.getByRole("dialog").last();
   await expect(teaserDialog.getByText(s.teaserDialogTitle)).toBeVisible();
-  await expect(teaserDialog.getByText(/R\$/)).toHaveCount(0);
+  // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia.
+  for (const n of (await teaserDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(n);
+  }
   await expect(teaserDialog.getByRole("button", { name: s.teaserSignIn })).toBeVisible();
   await teaserDialog.getByRole("button", { name: s.teaserDismiss }).click();
 
@@ -273,5 +284,9 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
 
   const listDialog = await openScenariosList(page);
   await expect(listDialog.getByText(s.teaserTitle)).toBeVisible();
-  await expect(listDialog.getByText(/R\$/)).toHaveCount(0);
+  // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
+  // sobra e a honestidade do numero: so os tres precos praticados.
+  for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(v);
+  }
 });

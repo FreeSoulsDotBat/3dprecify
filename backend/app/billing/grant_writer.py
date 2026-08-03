@@ -17,7 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,8 +63,12 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
     if event.kind == "payment_failed":
         return await _open_grace(session, sub, event)
 
+    if event.kind in ("refund", "chargeback"):
+        return await _revoke_for_refund(session, sub, event)
+
     if event.kind != "payment":
-        # Ver docstring do módulo — refund/chargeback são tarefas da PR-C.
+        # Sobra `cancel`, que NAO passa por aqui: cancelar e acao do vendedor, nao evento do PSP, e
+        # mora em `app.billing.subscription` (T022).
         return ProcessResult(matched=True, granted=False)
 
     now = datetime.now(UTC)
@@ -163,3 +167,73 @@ async def _open_grace(
         sub.status = "grace"
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)
+
+
+async def _revoke_for_refund(
+    session: AsyncSession, sub: Subscription, event: VerifiedEvent
+) -> ProcessResult:
+    """T033/T034 (US8/D7/VR-708/SC-710) — o dinheiro voltou: revoga o grant de pagamento ATIVO.
+
+    O buraco que isto fecha tem nome: **premium silencioso**. Um estorno que ninguem processa deixa
+    o vendedor premium de graca e ninguem descobre — nao ha erro, nao ha log, so uma conta ativa
+    que nao devia estar.
+
+    A revogacao e append-only no sentido do ADR-0012: carimba `revoked_at`/`revoked_by` na linha
+    que ja existe, sem `DELETE` e sem linha nova, e o premium cai NA HORA pela derivacao `active`
+    que ja esta la. Nenhuma regra nova de entitlement.
+
+    DUAS coisas que ele deliberadamente NAO faz:
+
+    1. **Nao toca em `beta`/`comp`.** Sao decisoes de OPERADOR, sem relacao nenhuma com o cartao do
+       vendedor; um estorno que as apagasse tiraria o acesso de quem nunca pagou por ele. E o
+       defeito seria invisivel, porque "o premium do pagamento caiu" e exatamente o que se espera.
+    2. **Nao revoga um grant JA expirado.** Chargebacks chegam semanas depois, e o comum e a conta
+       ja ter caido sozinha. Revogar ali nao mudaria nada para o vendedor, mas SOBRESCREVERIA o
+       motivo da queda: o registro passaria a dizer "revogado por estorno" sobre quem apenas deixou
+       de renovar. O evento entra no inbox mesmo assim: auditavel, e sem efeito.
+    """
+    now = datetime.now(UTC)
+    stmt = (
+        pg_insert(BillingEvent)
+        .values(
+            subscription_id=sub.id,
+            event_key=event.event_key,
+            kind=event.kind,
+            mp_status=event.mp_status,
+            raw=event.raw,
+            processed_at=now,
+        )
+        .on_conflict_do_nothing(index_elements=[BillingEvent.event_key])
+        .returning(BillingEvent.id)
+    )
+    # A idempotencia e o UNIQUE do inbox, como nos outros dois caminhos. Importa mais aqui do que
+    # parece: um `revoked_at` que se reescrevesse a cada reentrega apagaria QUANDO a revogacao
+    # aconteceu, e essa data e o registro auditavel.
+    inserted = (await session.execute(stmt)).first() is not None
+    if not inserted:
+        await session.commit()
+        return ProcessResult(matched=True, granted=False)
+
+    alvo = (
+        (
+            await session.execute(
+                select(EntitlementGrant).where(
+                    EntitlementGrant.subscription_id == sub.id,
+                    EntitlementGrant.source == "payment",
+                    EntitlementGrant.revoked_at.is_(None),
+                    or_(
+                        EntitlementGrant.expires_at.is_(None),
+                        EntitlementGrant.expires_at > now,
+                    ),
+                )
+            )
+        )
+        .scalars()
+        .all()
+    )
+
+    for grant in alvo:
+        grant.revoked_at = now
+        grant.revoked_by = "mercadopago"
+    await session.commit()
+    return ProcessResult(matched=True, granted=len(alvo) > 0)

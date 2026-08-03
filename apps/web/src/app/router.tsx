@@ -207,8 +207,13 @@ const snapshotDetailRoute = createRoute({
 const contaRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/conta",
-  validateSearch: (search: Record<string, unknown>): { checkout?: "retorno" } => ({
+  // `assinar=1` e a intencao que os quatro teasers carregam (US7/T032): a oferta nao tem rota
+  // propria — o §7.1 nomeia `/assinatura`, que nunca foi construida —, entao ela abre como Sheet
+  // aqui. Validado como a `checkout`: qualquer outro valor vira `undefined`, e nada da URL entra na
+  // pagina sem passar por esta porta.
+  validateSearch: (search: Record<string, unknown>): { checkout?: "retorno"; assinar?: "1" } => ({
     checkout: search.checkout === "retorno" ? "retorno" : undefined,
+    assinar: search.assinar === "1" || search.assinar === 1 ? "1" : undefined,
   }),
   beforeLoad: ({ context, location }) => requireAuth(context.status, location.href),
   component: ContaPage,

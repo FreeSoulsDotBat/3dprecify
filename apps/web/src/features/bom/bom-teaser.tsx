@@ -2,10 +2,13 @@ import { useNavigate } from "@tanstack/react-router";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, EmptyState } from "@/shared/ui";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 
 // 008/T008 — the honest BOM teaser (US5, ux §2): the E2 US7 teaser lineage with BOM copy. The
 // whole feature is Premium (Q3, first paywalled compute — ADR-0015), so free/lapsed/signed-out
-// meet this panel instead of the composer. Three non-negotiables: NO price, NO date, NO pre-E6
+// T038 — ESTE COMENTARIO CADUCOU na US7 e foi corrigido: ele dizia "sem preco, sem CTA de
+// compra (billing e E6)" ACIMA de um preco e de um botao de compra. A premissa caiu quando o E6
+// chegou; a garantia que sobra e outra — so os tres precos praticados, sem urgencia e sem de/por.
 // purchase CTA (billing is E6 — a buy button would promise a flow that does not exist,
 // Principle II); the free single-piece calculator promise is reaffirmed in plain words (FR-411).
 
@@ -20,6 +23,7 @@ export function BomTeaser({ signedOut }: { signedOut: boolean }) {
         {signedOut ? t.teaserSignedOutBody : t.teaserDialogBody}
       </p>
       <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+      <TeaserUpgrade signedOut={signedOut} align="center" />
       <div className="flex justify-center gap-2">
         {signedOut && (
           <Button
