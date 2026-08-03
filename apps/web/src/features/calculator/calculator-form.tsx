@@ -189,7 +189,23 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
 
       {/* (5) The suggested prices — the user's final takeaway, so they close the screen.
           Both retail + wholesale are always shown together (SC-010). */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-3)" }}>
+      {/* 015/A6 ([F11a-002]) — was a hardcoded `1fr 1fr` at EVERY width. At 360px that left each
+          price card ~108px of content for a value needing 124px, and the number was the thing that
+          gave: it broke mid-digit (`950.096` on two lines) so the page would not overflow. The
+          constraint was never the font size — it was the two-column grid. `auto-fit` + a 160px
+          floor keeps both prices side by side wherever they fit and stacks them at 360, where a
+          six-figure price then has room to spare. SC-010 is untouched: both are still always
+          shown together, now one above the other instead of one beside the other. */}
+      <div
+        style={{
+          display: "grid",
+          // 210px = the 147px a six-figure price needs at 36px + the card's 48px of padding,
+          // plus headroom for font fallback. Measured, not guessed: a 160px floor fixed 360px
+          // and left 390px still scrolling 24px, because two columns still fit there.
+          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
+          gap: "var(--space-3)",
+        }}
+      >
         <PriceHero
           label={t.results.varejo}
           value={result.precoVarejo}
