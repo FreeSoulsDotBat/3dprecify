@@ -60,9 +60,13 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   await page.getByLabel(f.markupVarejo).fill("50");
   await page.getByLabel(f.markupAtacado).fill("30");
 
+  // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
+  // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
+  // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
+  // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
   await expect(page.getByText("R$ 28,65")).toBeVisible(); // custo_total breakdown row
-  await expect(page.getByText("R$ 42,98")).toBeVisible(); // varejo derivation row
-  await expect(page.getByText("R$ 37,25")).toBeVisible(); // atacado derivation row
+  await expect(page.getByText("R$ 42,98").first()).toBeVisible(); // varejo derivation row
+  await expect(page.getByText("R$ 37,25").first()).toBeVisible(); // atacado derivation row
 
   // FR-021 / analyze A1: the corrected model carries NO tax/imposto input.
   await expect(page.getByText(/imposto/i)).toHaveCount(0);
@@ -95,7 +99,7 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
   await page.getByLabel(messages.calculator.fields.grams).fill("100");
   // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/2000 h)
   // this yields custo_total R$ 20,60 → varejo R$ 30,90.
-  await expect(page.getByText("R$ 30,90")).toBeVisible();
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   await context.setOffline(false);
 });
@@ -120,8 +124,12 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByLabel(t.fields.grams).fill("100");
+  // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
+  // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
+  // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
+  // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
   await expect(page.getByText("R$ 20,60")).toBeVisible(); // custo_total breakdown row (seed)
-  await expect(page.getByText("R$ 30,90")).toBeVisible(); // varejo for the seed
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo for the seed
 
   // SC-009: nothing is saved/exported and there is no upgrade/paywall CTA. The free-tier
   // note is an honest statement (not a call to action) and stays visible.
@@ -152,7 +160,7 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByLabel(t.fields.grams).fill("100");
-  await expect(page.getByText("R$ 30,90")).toBeVisible(); // varejo from the seed — never a blank grid
+  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   // Retry now succeeds → the notice clears (the served catalog is adopted).
   failFetch = false;

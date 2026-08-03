@@ -431,6 +431,34 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     expect(ch.result?.freightCostVarejo).toBeCloseTo(30, 2);
     expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
   });
+
+  // 015/A8 ([F11a-007], decisao do dono 2026-08-03) — o campo mostra a aliquota APLICADA, e SO
+  // quando ela e unica. A homologacao mediu: com AMAZON e sem categoria os quatro campos ficam com
+  // placeholder "0,00" (a tela le `Comissão 0,00 %`) enquanto "Precos por canal" mostra um preco
+  // com 15% ja embutidos. O numero que o vendedor procura primeiro estava em branco.
+  //
+  // A ARMADILHA, e ela quase me fez trocar uma mentira por outra: com `priceBands` a comissao VARIA
+  // por faixa, e `entryToChannelFees` devolve `commissionPct: entry.commissionPct ?? 0` — ZERO para
+  // uma entrada bandada. Publicar isso no campo diria "Comissão 0,00%" com ar de verdade.
+  it("[F11a-007] taxa por FAIXA nao publica aliquota unica — um numero so aqui seria falso", () => {
+    const r = computeFromForm(
+      { ...canonical, channels: [slot({ marketplace: "SHOPEE", modality: "" })] },
+      ctx,
+    );
+    expect(r.channels[0]?.appliedFees.commissionPct).toBeUndefined();
+    expect(r.channels[0]?.appliedFees.fixedFee).toBeUndefined();
+  });
+
+  it("[F11a-007] o que o vendedor DIGITOU nao vira referencia — ele ja ve o proprio numero", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", freightCost: "12,00" })],
+      },
+      ctx,
+    );
+    expect(r.channels[0]?.appliedFees.freightCost).toBeUndefined();
+  });
 });
 
 describe("US4 — 'Incluir marketplaces no preço' master toggle (SC-105)", () => {

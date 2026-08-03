@@ -140,12 +140,15 @@ describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () 
     ).toBeInTheDocument();
   });
 
-  it("starts with one Mercado Livre channel slot and its fee inputs (US1)", () => {
+  it("starts with one Amazon channel slot and its fee inputs (US1)", () => {
     renderPage();
 
-    // The default slot: a Marketplace selector defaulting to Mercado Livre + a Comissão fee input.
+    // 015/A11 ([F11a-006]) — o padrao era MERCADO_LIVRE, e o catalogo servido devolve `entries: []`
+    // para ele ate a fatia ML existir: a primeira tela do recurso nao mostrava preco NENHUM. Passou
+    // a ser AMAZON, que tem tabela — junto com o [F11a-007], que faz o campo "Comissao" mostrar a
+    // aliquota aplicada em vez de um "0,00" que implica zero. Quando o ML tiver tarifas, isto volta.
     expect(screen.getByRole("combobox", { name: new RegExp(t.channels.marketplace) })).toHaveValue(
-      "MERCADO_LIVRE",
+      "AMAZON",
     );
     expect(
       screen.getByRole("textbox", {

@@ -42,8 +42,13 @@ test("premium saves online, the list shows it with no price, and reopening recom
 
   // Configure a real multi-channel comparison: slot 0 is a CURATED marketplace (Shopee) whose
   // pre-filled fee gets EXPLICITLY overridden (→ "ajustado por você"), slot 1 is left on the
-  // uncovered Mercado Livre default (→ the honest "sem referência", no fabricated pre-fill) —
-  // exactly the mix the reopen must restore verbatim.
+  // uncovered Mercado Livre (→ the honest "sem referência", no fabricated pre-fill) — exactly the
+  // mix the reopen must restore verbatim.
+  //
+  // 015/A11 — o ML e ESCOLHIDO, e nao mais herdado do padrao. Este teste dizia "left on the
+  // uncovered Mercado Livre DEFAULT", e o padrao virou AMAZON (que tem tabela). A intencao —
+  // "um canal sem cobertura mostra o selo honesto" — nao mudou; o que mudou e que ela agora esta
+  // escrita em vez de depender de um padrao.
   const slot0 = page.getByTestId("channel-slot").nth(0);
   await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
   // Curated → some catalog reference seal (embedded seed or a live served reference, whichever the
@@ -55,6 +60,7 @@ test("premium saves online, the list shows it with no price, and reopening recom
 
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const slot1 = page.getByTestId("channel-slot").nth(1);
+  await slot1.getByLabel(t.channels.marketplace).selectOption("MERCADO_LIVRE");
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.none);
   await expect(page.getByTestId("channel-price")).toHaveCount(2);
 

@@ -72,6 +72,10 @@ export interface ChannelSlotOutcome {
    *  `ScenarioChannelSlotState.{field}.overridden` (`entities/scenario/config-document.ts`); the
    *  feature layer never re-derives "did the user edit this" from the pt-BR strings itself. */
   editedFields: Partial<Record<ChannelFieldName, number>>;
+  /** 015/A8 (`[F11a-007]`) — a alíquota/valor que o CATÁLOGO está aplicando num campo que o vendedor
+   *  deixou em branco, para a UI mostrá-la como REFERÊNCIA em vez de um "0,00" que implica zero.
+   *  Um campo ausente aqui NÃO tem valor único a mostrar (foi digitado, ou é governado por banda). */
+  appliedFees: Partial<Record<ChannelFieldName, number>>;
 }
 
 /** The resolved fee catalog + where it came from + the clock, for the honesty seal + pre-fill. */
@@ -162,6 +166,8 @@ interface SlotProcessing {
   seal: FeeSealState;
   freightIsEstimate: boolean;
   editedFields: Partial<Record<ChannelFieldName, number>>;
+  /** 015/A8 ([F11a-007]) — as taxas do catálogo aplicadas a campos em branco, quando únicas. */
+  appliedFees: Partial<Record<ChannelFieldName, number>>;
 }
 
 /**
@@ -248,6 +254,8 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       seal: entry ? { kind: "adjusted" } : { kind: "none" },
       freightIsEstimate: false,
       editedFields: manual.editedFields,
+      // slot com erro: nao ha taxa aplicada a exibir — o campo mostra o erro, nao referencia
+      appliedFees: {},
     };
   }
 
@@ -280,6 +288,36 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
   // a manual override is not "from" the reference, so it carries no feeSource.
   const feeSource = useCatalog && entry ? entry.source : undefined;
 
+  /**
+   * 015/A8 (`[F11a-007]`, decisão do dono 2026-08-03) — a alíquota que ESTÁ sendo aplicada, para o
+   * campo em branco mostrá-la como REFERÊNCIA em vez de "0,00".
+   *
+   * A tela media: com Amazon e sem categoria os quatro campos ficavam vazios com placeholder
+   * "0,00" — lendo-se `Comissão 0,00 %` — enquanto "Preços por canal" mostrava um preço com 15%
+   * já embutidos. O número que o vendedor procura primeiro estava em branco, e o selo que o
+   * explicava era o elemento de menor peso visual do painel.
+   *
+   * TRÊS condições, e cada uma existe para não trocar uma mentira por outra:
+   *   1. só quando as taxas vieram do CATÁLOGO (`useCatalog`) — o que o vendedor digitou ele já vê;
+   *   2. só o campo que o vendedor NÃO digitou — senão a referência competiria com o número dele;
+   *   3. só quando o valor é ÚNICO. Com `priceBands` a comissão varia por faixa e
+   *      `entryToChannelFees` devolve `commissionPct ?? 0` — ou seja ZERO para uma entrada bandada.
+   *      Publicar esse zero diria "Comissão 0,00%" com ar de verdade, que é exatamente o defeito.
+   */
+  const bandada = (fees.priceBands?.length ?? 0) > 0;
+  const appliedFees: Partial<Record<ChannelFieldName, number>> = {};
+  if (useCatalog) {
+    const naoDigitou = (f: ChannelFieldName) => manual.editedFields[f] === undefined;
+    // comissão e taxa fixa são governadas pela banda quando ela existe → sem valor único a mostrar
+    if (!bandada && naoDigitou("commissionPct")) appliedFees.commissionPct = fees.commissionPct;
+    if (!bandada && naoDigitou("fixedFee")) appliedFees.fixedFee = fees.fixedFee;
+    if (naoDigitou("minPerItem")) appliedFees.minPerItem = fees.minPerItem;
+    // o frete só tem valor único quando não há voucher por faixa (Shopee) governando
+    if ((fees.freightVoucherBands?.length ?? 0) === 0 && naoDigitou("freightCost")) {
+      appliedFees.freightCost = fees.freightCost;
+    }
+  }
+
   const hasFee =
     fees.commissionPct > 0 ||
     fees.fixedFee > 0 ||
@@ -306,6 +344,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     seal,
     freightIsEstimate: fees.freightIsEstimate,
     editedFields: manual.editedFields,
+    appliedFees,
   };
 }
 
@@ -399,6 +438,7 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             seal: p.seal,
             freightIsEstimate: false,
             editedFields: p.editedFields,
+            appliedFees: p.appliedFees,
           }
         : (() => {
             const computed = result.channels[ep++] ?? null;
@@ -414,6 +454,10 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
               seal: isUnpriced(computed) ? ({ kind: "none" } as const) : p.seal,
               freightIsEstimate: p.freightIsEstimate,
               editedFields: p.editedFields,
+              // 015/A8 — a referencia acompanha o SELO: quando a fatia deixa de ser precificada o
+              // selo cai para "sem referencia", e publicar uma aliquota "aplicada" ali vouchearia
+              // um numero que a tela nao esta mostrando (mesma razao do SC-817 acima).
+              appliedFees: isUnpriced(computed) ? {} : p.appliedFees,
             };
           })(),
     );
