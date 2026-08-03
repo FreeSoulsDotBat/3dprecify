@@ -47,7 +47,7 @@ export const FEE_CATALOG_SEED: FeeCatalog = {
             "Central de Educação do Vendedor Shopee — Política de Comissão para vendedores CNPJ e CPF em 2026",
           sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
           effectiveDate: "2026-03-01",
-          lastReviewed: "2026-07-07",
+          lastReviewed: "2026-08-03",
         },
       ],
     },
