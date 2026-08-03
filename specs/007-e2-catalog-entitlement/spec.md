@@ -306,6 +306,25 @@ nothing persists; nothing reports success; no price/date appears anywhere.
 
 ## Clarifications
 
+### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
+
+A homologação pré-provisionamento (`docs/homologacao/`) achou afirmações desta spec que o E6 tornou
+falsas e que ninguém emendou. A spec original **não é reescrita** — ela é emendada, porque a decisão
+de então era certa para então, e apagá-la apagaria o motivo.
+
+- **`[F02B-002]` — FR-303 "grant só via CLI de operador, sem self-service".** Deixou de ser toda a
+  verdade quando o E6 entrou: `backend/app/billing/grant_writer.py` escreve grants automáticos com
+  `source="payment"` a partir de um webhook verificado do Mercado Pago. O CLI continua existindo e
+  continua sendo o único caminho HUMANO; o que mudou é que agora existe um caminho de MÁQUINA, e ele
+  é o normal. A frase valia até 2026-07-23 (PR #28).
+- **`[F02B-003]` — FR-312/SC-306 "teasers honestos, sem preço".** O teaser mostra preço desde o E6
+  PR-C (`apps/web/src/shared/billing/price-line.ts` → "Premium: R$ 15,99/mês"). A intenção original
+  ("não prometer o que não se pode cobrar") foi ATENDIDA de outro jeito: agora é possível cobrar,
+  então mostrar o preço passou a ser a opção honesta, e omiti-lo é que seria evasivo.
+- **`[F02B-004]` — as contagens do `dod-evidence.md`.** Elas são um retrato de 2026-07-10, não uma
+  contagem viva ("89 pytest", "295 web tests" contra ~460 e ~1.228 hoje). Não é drift: é a natureza
+  do documento. Fica escrito para que ninguém os leia como estado atual.
+
 ### Session 2026-07-09 (owner decisions taken pre-spec, via product-owner scope draft)
 
 - Q1 — Products depth in E2 → **(c) minimal live-recompute product** (named inputs + refs; recomputed with

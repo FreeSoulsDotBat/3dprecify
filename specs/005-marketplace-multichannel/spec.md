@@ -16,6 +16,22 @@
 
 ---
 
+
+## Clarifications
+
+### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
+
+- **`[F02A-007]` — FR-118/SC-109 fixam `PRICING_MODEL_VERSION = "3.0.0"`, e o código está em
+  `"3.1.0"`** (`packages/pricing-core/src/index.ts:20`). O bump foi legítimo e está documentado no
+  próprio arquivo: a **3.1.0 (ADR-0016)** acrescentou `computeBom` e exportou `toMoney`/`sumMoney`/
+  `Decimal` — superfície pública **aditiva**, portanto MINOR. O que não aconteceu foi emendar esta
+  spec, que continua citando o número antigo em duas FRs.
+
+  **A spec não é reescrita**: o `3.0.0` era correto quando ela foi escrita, e o requisito real nunca
+  foi "seja exatamente 3.0.0" — foi "carimbe a versão do modelo no resultado, para que um cálculo
+  salvo saiba qual fórmula o produziu". Esse requisito está cumprido. Leia as duas FRs como
+  "`PRICING_MODEL_VERSION` corrente", que hoje é `3.1.0`.
+
 ## The E1 v3 model delta (only what changes from 004)
 
 004's cost pipeline (`material · energy · machine · producao · falha · finishing · labor · custo_total · preco_varejo · preco_atacado`) is **unchanged**. `packages/pricing-core` takes a **MAJOR bump → `3.0.0`** for the two structural changes below. All amounts BRL; rounding stays ADR-0008 (2-dp HALF_UP per line, sums reconcile).
