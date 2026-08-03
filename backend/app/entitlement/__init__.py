@@ -66,8 +66,19 @@ async def read_entitlement_state(session: AsyncSession, uid: str) -> Entitlement
     ]
     if not active:
         return EntitlementState(status="lapsed")
+    # 015/A3 ([F04a-001]) — a ORIGEM vem do grant mais recente (é ela que diz POR QUE o premium
+    # está ativo agora), mas a DATA é a mais DISTANTE entre os ativos. Antes as duas saíam do mesmo
+    # grant, e uma cortesia curta concedida por cima de uma assinatura anual fazia a tela anunciar
+    # o fim do premium para uma data em que ele ainda estaria valendo.
     newest = max(active, key=lambda g: g.granted_at)
-    return EntitlementState(status="active", source=newest.source, expires_at=newest.expires_at)
+    # `expires_at IS NULL` é "sem prazo" — e sem prazo é mais distante que qualquer data, então
+    # basta UM grant ilimitado ativo para que não haja data de fim a anunciar.
+    expires_at = (
+        None
+        if any(g.expires_at is None for g in active)
+        else max(g.expires_at for g in active if g.expires_at is not None)
+    )
+    return EntitlementState(status="active", source=newest.source, expires_at=expires_at)
 
 
 def _deny() -> AppError:

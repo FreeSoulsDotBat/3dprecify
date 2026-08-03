@@ -25,6 +25,17 @@ from ..events import EventKind, VerifiedEvent
 
 MP_API_BASE_URL = "https://api.mercadopago.com"
 
+
+class ProviderUnavailable(Exception):
+    """015/A2 — não conseguimos OBTER uma resposta do MP (rede, timeout, 5xx, corpo ilegível).
+
+    É deliberadamente uma exceção e não um terceiro valor de retorno: um `None` extra seria fácil
+    de ignorar por acidente, exatamente como o `None` original foi. Uma exceção obriga cada
+    chamador a decidir o que fazer — e quem não decidir devolve 5xx, que é a conduta certa aqui.
+    Nunca significa "o recurso não existe"; para isso o retorno continua sendo `None`.
+    """
+
+
 #: TEST-ONLY seam — see module docstring. Never set outside `tests/conftest.py`. `httpx.AsyncClient`
 #: only accepts an ASYNC transport; `httpx.ASGITransport` (T011b's stub carrier) is one.
 _test_transport: httpx.AsyncBaseTransport | None = None
@@ -118,18 +129,37 @@ class MercadoPagoProvider:
     async def _get(
         self, path: str, *, params: dict[str, Any] | None = None
     ) -> dict[str, Any] | None:
-        """A failed/unreachable/non-200 lookup is DENY-BY-DEFAULT: `None`, never a partial guess
-        (seguranca-round §0 — "on any doubt the outcome is grant nothing")."""
+        """Deny-by-default continua valendo — mas "não achei" e "não consegui perguntar" deixam de
+        ser a mesma coisa (015/A2, `[F04b-001]`).
+
+        Antes, todo caminho de falha devolvia `None`, e a rota do webhook lê `None` como
+        "assinatura desconhecida": acka 200 e não escreve nada. Uma queda transitória do MP durante
+        um webhook de renovação virava perda PERMANENTE e SILENCIOSA de um grant pago — e pior,
+        respondendo 200 o código DESARMAVA o reenvio automático do MP (P-009: ele reenvia a cada 15
+        minutos até receber 200/201).
+
+        Agora:
+          * `None`  — o MP RESPONDEU e não há recurso (404, ou um 4xx que dizemos malformado).
+                      Insistir não muda a resposta; o chamador acka e segue.
+          * raise   — NÃO obtivemos resposta útil (rede, timeout, 5xx, corpo que não é objeto).
+                      O chamador não pode concluir nada, e quem pergunta de novo é o MP.
+
+        Nenhum dos dois escreve. A diferença é só se o evento fica ou não dado como resolvido.
+        """
         try:
             resp = await self._client.get(path, params=params)
-        except httpx.HTTPError:
-            return None
+        except httpx.HTTPError as exc:
+            raise ProviderUnavailable(f"GET {path}: {type(exc).__name__}") from exc
+        if resp.status_code >= 500:
+            raise ProviderUnavailable(f"GET {path}: upstream {resp.status_code}")
         if resp.status_code != 200:
             return None
         data: Any = resp.json()
         if isinstance(data, dict):
             return cast("dict[str, Any]", data)
-        return None
+        # 200 com corpo que não é um objeto: o MP respondeu, mas não com o recurso. Tratar como
+        # "não existe" seria concluir a partir de uma resposta que não entendemos.
+        raise ProviderUnavailable(f"GET {path}: 200 com corpo {type(data).__name__}")
 
     async def get_preapproval(self, preapproval_id: str) -> dict[str, Any] | None:
         return await self._get(f"/preapproval/{preapproval_id}")

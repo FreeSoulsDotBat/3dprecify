@@ -257,11 +257,20 @@ async def _owned(session: AsyncSession, uid: str, bom_id: str) -> Bom:
     return row
 
 
-async def _lines_of(session: AsyncSession, bom_id: uuid.UUID) -> list[BomLine]:
+async def _lines_of(session: AsyncSession, uid: str, bom_id: uuid.UUID) -> list[BomLine]:
+    """015/A5 ([F05-002]) — o `uid` entra na CONSULTA, nao so na cabeca de quem chama.
+
+    Antes o filtro era so `bom_id`, e o isolamento vinha HERDADO: todo chamador buscava o kit por
+    `(id, owner_uid)` antes, entao na pratica nada vazava. Nao havia defeito — havia dependencia de
+    uma disciplina que o proximo chamador nao tem obrigacao de conhecer. O `join` custa nada e move
+    a garantia de "todo mundo lembrou" para "a consulta nao devolve linha de outro dono"."""
     return list(
         (
             await session.execute(
-                select(BomLine).where(BomLine.bom_id == bom_id).order_by(BomLine.position)
+                select(BomLine)
+                .join(Bom, Bom.id == BomLine.bom_id)
+                .where(BomLine.bom_id == bom_id, Bom.owner_uid == uid)
+                .order_by(BomLine.position)
             )
         ).scalars()
     )
@@ -366,17 +375,18 @@ async def _resolve_views(
 
 
 async def _lines_by_bom(
-    session: AsyncSession, bom_ids: list[uuid.UUID]
+    session: AsyncSession, uid: str, bom_ids: list[uuid.UUID]
 ) -> dict[uuid.UUID, list[BomLine]]:
     """All lines for many kits in ONE ordered query — keeps ``list_boms`` at a flat query count
-    instead of one SELECT per kit."""
+    instead of one SELECT per kit. O `uid` entra na consulta por [F05-002] (ver `_lines_of`)."""
     if not bom_ids:
         return {}
     out: dict[uuid.UUID, list[BomLine]] = {bid: [] for bid in bom_ids}
     rows = (
         await session.execute(
             select(BomLine)
-            .where(BomLine.bom_id.in_(bom_ids))
+            .join(Bom, Bom.id == BomLine.bom_id)
+            .where(BomLine.bom_id.in_(bom_ids), Bom.owner_uid == uid)
             .order_by(BomLine.bom_id, BomLine.position)
         )
     ).scalars()
@@ -560,7 +570,7 @@ async def list_boms(
     # Flat query count regardless of how many kits: 1 (boms) + 1 (all lines) + 3 (products +
     # filaments + printers), never one round-trip per line — the old shape scaled AGAINST the
     # premium seller (more kits ⇒ slower list).
-    lines_by_bom = await _lines_by_bom(session, [b.id for b in rows])
+    lines_by_bom = await _lines_by_bom(session, uid, [b.id for b in rows])
     product_ids = {
         line.product_id
         for lines in lines_by_bom.values()
@@ -601,7 +611,7 @@ async def _rendered(
     materializations: list[Materialization] | None = None,
 ) -> BomOut:
     """Load a single kit's lines + resolve their products (batched), then serialize."""
-    lines = await _lines_of(session, bom.id)
+    lines = await _lines_of(session, bom.owner_uid, bom.id)
     views = await _resolve_views(
         session, uid, {line.product_id for line in lines if line.product_id is not None}
     )
@@ -633,7 +643,7 @@ async def update_bom(
     products, materializations = await _materialize(session, uid, body)
     bom.name = body.name
     # Replace semantics: the submitted lines ARE the kit (positions are re-derived from order).
-    for line in await _lines_of(session, bom.id):
+    for line in await _lines_of(session, bom.owner_uid, bom.id):
         await session.delete(line)
     await session.flush()
     await _write_lines(session, bom, body, products)

@@ -29,6 +29,22 @@ export type SanityVerdict = { ok: true } | { ok: false; reason: string };
  * Deliberately returns a verdict instead of throwing: the caller must be able to react by leaving
  * the artifact untouched and alerting — never by writing a partial map (SC-806).
  */
+/** 015/A5 ([F10-001]) — o piso de linhas que ACEITA ou REJEITA um parse do catalogo de tarifas.
+ *
+ * Morava em `build-amazon.mjs`, que e o UNICO arquivo isento do ratchet de cobertura
+ * (o `vitest.config.ts` isenta todo `.mjs` sob `packages`). `checkParseSanity` e testada com o
+ * piso vindo por PARAMETRO: a funcao estava coberta, o VALOR nao. Trocar 28 por 2 nao derrubava
+ * nenhum teste, e o guarda que existe para pegar "a fonte encolheu" aceitaria um parse de 2 linhas.
+ *
+ * A equipe ja tinha movido `nextCatalogVersion`, `collectedAtFor` e `decideRefresh` para ca por
+ * esta mesma razao, escrita nos proprios comentarios: a regra que decide o rotulo do dinheiro nao
+ * pode morar num lugar isento. A migracao ficou incompleta em um ponto — este.
+ *
+ * O numero: a leitura de 2026-07-28 tinha 38 linhas. Uma tabela que perde um quarto das linhas e
+ * mudanca de FORMA, nao a Amazon apagando dez categorias de um dia para o outro.
+ */
+export const MIN_PARSE_ROWS = 28;
+
 export function checkParseSanity(
   categories: readonly ParsedCategory[],
   opts: SanityOptions,

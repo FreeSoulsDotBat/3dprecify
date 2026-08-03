@@ -355,7 +355,9 @@ async def _resolve_kit_last_known(
     ).scalar_one_or_none()
     if row is None:
         return None
-    lines = await _bom_lines_of(session, bom_id)
+    # 015/A5 ([F05-002]) — o `uid` agora entra na consulta das linhas, e nao so na busca do kit
+    # logo acima. O isolamento deixa de ser herdado da disciplina do chamador.
+    lines = await _bom_lines_of(session, uid, bom_id)
     product_ids = {line.product_id for line in lines if line.product_id is not None}
     views = await _bom_resolve_views(session, uid, product_ids)
     out_lines: list[dict[str, Any]] = []

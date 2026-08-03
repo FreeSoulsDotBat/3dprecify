@@ -9,8 +9,8 @@ import {
   type ChannelFees,
   type PriceBand,
   type VoucherBand,
-} from "./channels";
-import { Decimal, toMoney, sumMoney } from "./rounding";
+} from "./channels.ts";
+import { Decimal, toMoney, sumMoney } from "./rounding.ts";
 
 // 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
 // breaking to the 2.0.0 result contract ⇒ MAJOR bump. The constant tracks the package.json major so
@@ -501,8 +501,8 @@ export function computeBom(lines: BomLineInput[]): BomResult {
 
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
-export { grossUp } from "./channels";
-export type { BandMode, ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
+export { grossUp } from "./channels.ts";
+export type { BandMode, ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels.ts";
 // 3.1.0 public money primitives (ADR-0016): consumers (the BOM feature layer) format/verify with
 // these instead of ever doing native float arithmetic — pricing-core stays the only money home.
-export { Decimal, toMoney, sumMoney } from "./rounding";
+export { Decimal, toMoney, sumMoney } from "./rounding.ts";

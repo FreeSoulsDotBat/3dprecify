@@ -6,7 +6,13 @@
     "types": ["vite/client", "vite-plugin-pwa/client"],
     "baseUrl": ".",
     "paths": { "@/*": ["src/*"] },
-    "noEmit": true
+    "noEmit": true,
+    // 015/A5 ([F03a-001]) — o `pricing-core` e consumido POR CODIGO-FONTE (`main: src/index.ts`),
+    // entao os imports dele sao typechecked aqui tambem. Ele passou a usar extensao `.ts` explicita
+    // porque precisa CARREGAR sob `node` puro (o resolvedor ESM do node exige a extensao; o vitest
+    // e o vite sao tolerantes, e essa tolerancia escondeu um pacote que nao bootava). A flag e
+    // legal sob `noEmit`, e o Vite continua fazendo a emissao — nada muda no bundle.
+    "allowImportingTsExtensions": true
   },
   "include": ["src", "vite.config.ts"]
 }

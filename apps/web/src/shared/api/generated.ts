@@ -23,7 +23,7 @@ import type {
   UseQueryResult
 } from '@tanstack/react-query';
 
-import { orvalFetch } from './transport';
+import { orvalFetch } from './transport.ts';
 /**
  * The product-owned E1 piece fields (data-model §2.5).
  */
@@ -5142,10 +5142,15 @@ export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422 = {
   status: 422
 }
 
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse503 = {
+  data: ErrorEnvelope
+  status: 503
+}
+
 export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseSuccess = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse200) & {
   headers: Headers;
 };
-export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422) & {
+export type mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponseError = (mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse401 | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse422 | mercadopagoWebhookApiV1BillingWebhookMercadopagoPostResponse503) & {
   headers: Headers;
 };
 
