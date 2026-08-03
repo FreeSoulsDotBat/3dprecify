@@ -81,6 +81,19 @@
 .tf-btn--danger:hover:not(:disabled) {
   background: var(--danger-deep);
 }
+/* 015/A8 ([F11b-004], decisao do dono 2026-08-03) — o destrutivo QUE NAO E A ACAO PADRAO.
+   Num dialogo de perda, quem tem preenchimento e a saida SEGURA; a acao irreversivel fica
+   legivel e vermelha, mas sem o peso visual de um botao cheio. A borda mantem o alvo de toque
+   e a afordancia de "isto e clicavel" — o que ela nao da e o convite. */
+.tf-btn--danger-ghost {
+  background: transparent;
+  color: var(--danger-text);
+  border-color: var(--danger);
+}
+.tf-btn--danger-ghost:hover:not(:disabled) {
+  background: var(--danger-soft, transparent);
+  border-color: var(--danger-deep);
+}
 
 .tf-btn--glow {
   box-shadow: var(--glow-purple);

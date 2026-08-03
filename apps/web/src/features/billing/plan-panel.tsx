@@ -134,7 +134,12 @@ export function PlanActions({ state, onSubscribe }: PlanActionsProps): ReactNode
     );
   }
   if (state.kind === "grace") {
-    return <ManageAtProvider label={b.planUpdatePayment} />;
+    // 015/A8 ([F11b-002], decisão do dono 2026-08-03) — PRIMÁRIO. É a única ação que recupera o
+    // Premium, e ela era a única sem preenchimento: mesma cor, mesmo peso e zero fundo do
+    // "Recarregar" ao lado, num estado em que o vendedor tem um prazo correndo. A hierarquia
+    // visual estava invertida em relação ao risco. O selo de carência mantém o tom `info` e o
+    // badge continua VERDE — o Premium ESTÁ ativo, e degradá-lo seria a mentira oposta.
+    return <ManageAtProvider label={b.planUpdatePayment} variant="primary" />;
   }
   if (state.kind === "subscription-active") {
     return (
@@ -154,12 +159,25 @@ export function PlanActions({ state, onSubscribe }: PlanActionsProps): ReactNode
   return null;
 }
 
-/** O caminho gerenciado do MP. Atualizar cartão é superfície DELE — o cartão nunca passa por aqui. */
-function ManageAtProvider({ label }: { label: string }): ReactNode {
+/**
+ * O caminho gerenciado do MP. Atualizar cartão é superfície DELE — o cartão nunca passa por aqui.
+ *
+ * 015/A8 — a variante é parâmetro porque os dois usos têm RISCOS diferentes: em carência há uma
+ * assinatura a recuperar e um prazo correndo (primário); em ativo não há nada em risco, e "Gerenciar"
+ * ao lado de "Cancelar" com o mesmo peso é honesto. `ghost` continua sendo o padrão para que o uso
+ * que não pediu ênfase não a ganhe por descuido.
+ */
+function ManageAtProvider({
+  label,
+  variant = "ghost",
+}: {
+  label: string;
+  variant?: "primary" | "ghost";
+}): ReactNode {
   return (
     <Button
       size="sm"
-      variant="ghost"
+      variant={variant}
       onClick={() => window.open("https://www.mercadopago.com.br/subscriptions", "_blank")}
     >
       {label}
@@ -207,12 +225,20 @@ function CancelDialog({
             {b.cancelFreeze}
           </p>
           {erro && <Alert tone="danger">{erro}</Alert>}
+          {/* 015/A8 ([F11b-004], decisão do dono 2026-08-03) — hierarquia INVERTIDA. A medição
+              anterior: "Voltar" fantasma 85,6×48px, "Cancelar assinatura" vermelho preenchido
+              187,6×48px — o destrutivo era 2,2× mais largo E o único com fundo. A cópia acima é
+              exemplar (diz o que se mantém, até quando, que nada é apagado) e o DESENHO a
+              contradizia: a saída segura, que a própria mensagem chama de saída segura (FR-014),
+              tinha a afordância mais fraca da caixa.
+              A largura continua desigual — ela vem do tamanho dos rótulos, e igualá-la era a outra
+              opção, que não foi a escolhida. O que muda é o peso: preenchimento na saída segura. */}
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            <Button variant="secondary" onClick={() => onOpenChange(false)}>
               {b.cancelBack}
             </Button>
             <Button
-              variant="danger"
+              variant="danger-ghost"
               loading={cancelar.isPending}
               onClick={() => {
                 setErro(null);
