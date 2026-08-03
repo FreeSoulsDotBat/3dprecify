@@ -62,20 +62,16 @@ const EMPTY_FEES = {
   marketplaces: [],
 };
 /** ML Clássico 10% / no fixed fee: anúncio varejo do default line = 30,90 / 0,9 = 34,33. */
-const CATALOG_FEES = {
+const ML_FEES = {
   catalogVersion: "test-1",
   schemaVersion: "1",
   generatedAt: "2026-01-01T00:00:00Z",
   marketplaces: [
     {
-      // 015/A11 ([F11a-006]) — o slot em branco agora nasce AMAZON, nao MERCADO_LIVRE, porque o
-      // catalogo servido nao tem tarifa de ML ate a fatia US6 existir. A fixture acompanha o
-      // padrao: o assunto deste teste e "o slot em branco e pre-preenchido PELO CATALOGO", e ele
-      // so prova isso se a entrada cobrir o marketplace que o slot realmente traz.
-      marketplace: "AMAZON",
+      marketplace: "MERCADO_LIVRE",
       entries: [
         {
-          determinants: { plan: "PROFISSIONAL" }, // Amazon's determinant key (fee-prefill slotDeterminants)
+          determinants: { listingType: "CLASSICO" }, // ML's determinant key (fee-prefill slotDeterminants)
           commissionPct: 10,
           fixedFee: 0,
           priceBands: null,
@@ -159,7 +155,7 @@ function renderPremiumPage(products: ProductOut[] = []) {
 }
 
 beforeEach(() => {
-  mockFees(); // empty catalog default; a test overrides with mockFees(CATALOG_FEES)
+  mockFees(); // empty catalog default; a test overrides with mockFees(ML_FEES)
   useSearchMock.mockReturnValue({}); // no ?id → fresh composer; a reopen test overrides with { id }
   useBomsMock.mockReturnValue(emptyBoms); // no saved kits by default
 });
@@ -427,9 +423,9 @@ describe("BomPage — line density (ux §1.3 secondary disclosure)", () => {
 
 describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", () => {
   // Review major (2026-07-11): pins the page's fee-catalog ctx threading — this number can ONLY
-  // come from the catalog entry pre-filling the default blank slot (34,33 = 30,90 / 0,9).
+  // come from the catalog entry pre-filling the default blank ML slot (34,33 = 30,90 / 0,9).
   it("a catalog-covered blank slot pre-fills and rolls up from the CATALOG fees", () => {
-    mockFees(CATALOG_FEES);
+    mockFees(ML_FEES);
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     const rollup = screen.getByText(t.channelsTitle).closest("section, div");
