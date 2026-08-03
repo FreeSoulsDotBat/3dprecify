@@ -2,7 +2,7 @@
 // (ADR-0011 Part 3). Pure, deterministic, offline. Consumes ALREADY-RESOLVED fees (the client
 // resolves the catalog entry by determinants; this owns only the price-keyed math — A6). Money via
 // ADR-0008 (2-dp HALF_UP). Used by computeCalculator per channel; `grossUp` is exported for tests.
-import { Decimal, toMoney } from "./rounding";
+import { Decimal, toMoney } from "./rounding.ts";
 
 /** A listing-price fee band — half-open `[minPrice, maxPrice)` (`maxPrice: null` = ∞). */
 export interface PriceBand {

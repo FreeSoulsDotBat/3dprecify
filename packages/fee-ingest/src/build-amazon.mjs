@@ -20,6 +20,7 @@ import {
   checkCategoryIdCollisions,
   checkParseSanity,
   collectedAtFor,
+  MIN_PARSE_ROWS,
   nextCatalogVersion,
 } from "./guardrails.ts";
 import {
@@ -34,9 +35,9 @@ const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json",
 const PAGE =
   "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920?locale=pt-BR";
 
-/** Minimum plausible row count. The 2026-07-28 reading had 38; a table that lost a quarter of its
- *  rows is a shape change, not Amazon deleting ten categories overnight. */
-const MIN_ROWS = 28;
+/** 015/A5 ([F10-001]) — o piso vive em `guardrails.ts`, sob o ratchet de 100%. Este arquivo e
+ *  isento de cobertura, e uma decisao de dinheiro nao pode morar num lugar isento. */
+const MIN_ROWS = MIN_PARSE_ROWS;
 
 async function fetchRows() {
   // The page is JS-rendered — curl returns an empty shell (measured, gate G2), so a real browser is
