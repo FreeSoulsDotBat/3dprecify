@@ -591,3 +591,32 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
 
   await context.setOffline(false);
 });
+
+// 015/A8 ([F11a-003]) — a promessa esta na PRIMEIRA DOBRA, e isto e uma assercao de POSICAO.
+//
+// A auditoria mediu a frase a 3.413px de uma pagina de 3.529 — 97% da altura, 4,6 telas de rolagem
+// a 360px — e observou que o teste que a cobria usava `toBeInTheDocument()`: PRESENCA, nao posicao.
+// E a licao da US4 outra vez: uma assercao de presenca nao sabe nada sobre onde a coisa esta, e
+// "onde" era exatamente o defeito. Um `toBeVisible()` tambem nao bastaria — o Playwright considera
+// visivel o que esta abaixo da dobra.
+test("a promessa 'é grátis' está na primeira dobra, não no rodapé (360px)", async ({ page }) => {
+  await page.setViewportSize({ width: 360, height: 800 });
+  await page.goto("/calcular");
+  const promessa = page.getByText(messages.calculator.freemiumNote);
+  await expect(promessa).toBeVisible();
+
+  const y = await promessa.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    return { topo: r.top + window.scrollY, altura: document.documentElement.scrollHeight };
+  });
+
+  // Guarda de nao-vacuidade: se a pagina encolher a ponto de caber numa dobra, este teste passaria
+  // sem provar nada sobre POSICAO.
+  expect(y.altura, "a pagina precisa ser rolavel para a assercao significar algo").toBeGreaterThan(
+    800 * 2,
+  );
+  expect(
+    y.topo,
+    `a promessa esta a ${Math.round(y.topo)}px de ${y.altura}px — fora da primeira dobra`,
+  ).toBeLessThan(800);
+});

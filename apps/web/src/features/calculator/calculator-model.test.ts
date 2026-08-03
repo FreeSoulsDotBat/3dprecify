@@ -731,3 +731,32 @@ describe("SC-817 — nível não precificado atravessa até o selo (lacuna publi
     expect(ch.seal.kind).toBe("reference");
   });
 });
+
+describe("015/A8 — [F03a-003] atacado acima do varejo e VALIDO (decisao do dono 2026-08-03)", () => {
+  // O motor nao recusa, e essa e a metade que importa: um teste que so verificasse "aparece o
+  // aviso" passaria com uma implementacao que BLOQUEASSE a conta — que e o oposto do decidido.
+  it("o motor calcula normalmente, sem erro de campo", () => {
+    const r = computeFromForm({
+      ...canonical,
+      markupVarejoPct: "50",
+      markupAtacadoPct: "200",
+    });
+    expect(r.ok).toBe(true);
+    expect(r.fieldErrors).toEqual({});
+    expect(r.result).not.toBeNull();
+  });
+
+  it("e o preco de atacado fica MESMO acima do varejo — o gatilho do aviso e observavel", () => {
+    const r = computeFromForm({
+      ...canonical,
+      markupVarejoPct: "50",
+      markupAtacadoPct: "200",
+    });
+    expect(r.result!.precoAtacado).toBeGreaterThan(r.result!.precoVarejo);
+  });
+
+  it("no caso normal o gatilho NAO dispara — senao o aviso apareceria sempre", () => {
+    const r = computeFromForm({ ...canonical, markupVarejoPct: "120", markupAtacadoPct: "60" });
+    expect(r.result!.precoAtacado).toBeLessThan(r.result!.precoVarejo);
+  });
+});

@@ -187,6 +187,18 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
         </Card>
       </div>
 
+      {/* 015/A8 ([F03a-003], decisão do dono 2026-08-03) — atacado acima do varejo é ENTRADA
+          VÁLIDA: o motor calcula, nada é recusado, e a UI avisa. A comparação é sobre os PREÇOS
+          resultantes, não sobre as strings de markup: é a consequência que o vendedor vê na tela,
+          e ela sobrevive a qualquer mudança na forma como o markup é digitado.
+
+          O tom é `info`, deliberadamente, e não `danger`: um aviso escrito como erro faz o
+          vendedor concluir que o produto RECUSOU — e o produto não recusou. Isto também é o que o
+          separa visualmente de `.tf-field__error`, que é onde uma validação de verdade aparece. */}
+      {result.precoAtacado > result.precoVarejo && (
+        <Alert tone="info">{t.avisoAtacadoAcimaDoVarejo}</Alert>
+      )}
+
       {/* (5) The suggested prices — the user's final takeaway, so they close the screen.
           Both retail + wholesale are always shown together (SC-010). */}
       {/* 015/A6 ([F11a-002]) — was a hardcoded `1fr 1fr` at EVERY width. At 360px that left each
