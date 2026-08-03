@@ -6,8 +6,10 @@ HMAC manifest → **(b)** verify `x-signature` (`app.billing.signature`, SEC-101
 **(c)** assert `live_mode` matches the running `app_env` (SEC-402/VR-705) → **(d)** ONLY THEN look
 the resource up against the provider → **(e)** `grant_writer.process_verified_event`. A failure at
 (b)/(c) is a plain 401, before any DB touch. Response semantics (contracts/api-surface.md): 200 fast
-on accepted-or-duplicate/unresolved (MP retries on non-2xx — never bounce a benign "nothing to do"
-as an error), 401 on failed verification, 422 on a verified-but-malformed notification.
+on accepted-or-duplicate/unresolved (never bounce a benign "nothing to do" as an error), 401 on
+failed verification, 422 on a verified-but-malformed notification, and **503 when the provider could
+not be reached at all** (015/A2 — MP reenvia a cada 15 minutos ate receber 200/201, entao um 5xx
+PEDE reenvio; um 200 dado a um evento nao processado desarma essa recuperacao).
 
 This module is NOT gated by `require_entitlement`/`current_claims` on purpose — see the docstring
 above and ADR-0023 §5 for why that is a deliberate, ADR-recorded exception, not drift.
@@ -18,13 +20,14 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Annotated, Any, cast
 
+import structlog
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.auth import current_claims
 from app.billing.checkout import CheckoutConflict, CheckoutUnavailable, PlanPeriod, start_checkout
 from app.billing.grant_writer import process_verified_event
-from app.billing.providers.mercadopago import MercadoPagoProvider
+from app.billing.providers.mercadopago import MercadoPagoProvider, ProviderUnavailable
 from app.billing.signature import verify_signature
 from app.billing.subscription import (
     CancelUnavailable,
@@ -44,11 +47,17 @@ from app.errors import (
 )
 from app.settings import Settings, get_settings
 
+log = structlog.get_logger(__name__)
+
 router = APIRouter(tags=["billing"])
 
 _WEBHOOK_RESPONSES: dict[int | str, dict[str, Any]] = {
     401: {"model": ErrorEnvelope, "description": "Signature verification failed"},
     422: {"model": ErrorEnvelope, "description": "Verified but malformed notification"},
+    503: {
+        "model": ErrorEnvelope,
+        "description": "Provider unreachable - ask Mercado Pago to retry",
+    },
 }
 
 
@@ -118,12 +127,25 @@ async def mercadopago_webhook(
     provider = MercadoPagoProvider(settings)
     try:
         event = await provider.lookup_verified_event(event_type, data_id_str)
+    except ProviderUnavailable as exc:
+        # 015/A2 ([F04b-001]) — NÃO conseguimos consultar o MP. Antes isto virava `None` e caía no
+        # `ignored` abaixo: 200 para um evento jogado fora, e um grant pago sumindo em silêncio.
+        # Um 503 é a resposta honesta E a útil: por P-009 o MP reenvia a cada 15 minutos até
+        # receber 200/201, então a recuperação já existe — o que faltava era não desarmá-la.
+        # Nada é escrito: pedir reenvio não é adivinhar o resultado.
+        log.warning(
+            "billing_webhook_provider_unavailable",
+            event_type=event_type,
+            data_id=data_id_str,
+            reason=str(exc),
+        )
+        raise AppError(ErrorCode.BILLING_UNAVAILABLE, "payment provider unreachable", 503) from exc
     finally:
         await provider.aclose()
 
     if event is None:
-        # SEC-105: verified but unresolvable (unknown subscription / unknown type) — ack fast, write
-        # nothing (deny-by-default).
+        # SEC-105: o MP RESPONDEU e o recurso não resolve (assinatura desconhecida / tipo que não
+        # tratamos) — ack rápido, nada escrito (deny-by-default). Insistir não mudaria a resposta.
         return WebhookAck(status="ignored")
 
     result = await process_verified_event(session, event)

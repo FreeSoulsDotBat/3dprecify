@@ -3169,6 +3169,16 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "Provider unreachable - ask Mercado Pago to retry",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
