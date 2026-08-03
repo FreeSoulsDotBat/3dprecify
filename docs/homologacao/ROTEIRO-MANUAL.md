@@ -13,19 +13,41 @@ tem de aparecer. Onde eu não tenho o número, digo que não tenho.
 ### Como subir o produto
 
 ```bash
-# terminal 1 — banco + backend
+# terminal 1 — banco (o container ja pode estar de pe; o compose mapeia 5433:5432)
 docker compose up -d postgres
-cd backend && uv run alembic upgrade head
-uv run uvicorn app.main:app --port 8100 --reload
+docker ps --filter name=precifica3d-postgres   # confirme "healthy" antes de seguir
 
-# terminal 2 — emulador de autenticação + cliente
+# terminal 2 — backend na 8000, que e a porta que o cliente procura
+cd backend
+uv run alembic upgrade head
+uv run uvicorn app.main:app --port 8000 --reload
+
+# terminal 3 — emulador de autenticacao (pode ja estar rodando na 9099)
 npx firebase emulators:start --only auth --project=demo-precifica3d
+
+# terminal 4 — cliente
 cd apps/web && pnpm dev
 ```
 
-> **Armadilha medida**: outro projeto squata as portas 5173/8000/5432 nesta máquina. Se algo parecer
-> "de outro app", confirme a porta. E se um `vite preview` antigo ficou vivo em :4173, ele serve um
-> build **congelado** — mate antes de investigar qualquer coisa.
+### Confira antes de abrir o navegador
+
+```bash
+curl -s -o /dev/null -w "backend: %{http_code}
+" http://localhost:8000/health   # espera 200
+```
+
+> **A porta importa, e eu errei isto na primeira versao deste roteiro.** O cliente le
+> `VITE_API_BASE_URL`, que em `apps/web/.env.development` aponta para **`http://localhost:8000`**.
+> Se voce subir o backend noutra porta sem mudar essa variavel, o app abre, a calculadora funciona
+> (ela e offline), e **toda tela premium falha em silencio** — voce concluiria que o produto esta
+> quebrado quando o problema e so o endereco.
+>
+> **Postgres**: o banco do projeto vive na **5433** (o `docker-compose.yml` mapeia `5433:5432`, e o
+> `settings.py` ja aponta para la). Se voce ver um postgres na 5432 nesta maquina, **nao e o deste
+> projeto** — ignore.
+>
+> **Armadilha do preview**: se um `vite preview` antigo ficou vivo em :4173, ele serve um build
+> **congelado**. Mate antes de investigar qualquer coisa que "nao funcionou".
 
 ### Como ficar premium para testar
 
@@ -53,22 +75,30 @@ O coração do produto. Se este bloco falhar, nada mais importa.
 
 Abra `/calcular` **deslogado**. Digite:
 
-| campo | valor |
+Os rótulos abaixo são **exatamente** os que aparecem na tela (conferidos contra
+`messages.pt-br.ts` e contra o app rodando — a primeira versão deste roteiro trazia nomes
+inventados como "Gramas impressas", que não existem):
+
+| campo (rótulo na tela) | valor |
 | --- | --- |
 | Custo do rolo | `100` |
-| Peso do rolo (kg) | `1` |
-| Gramas impressas | `100` |
-| Gramas de desperdício | `10` |
-| Tempo de impressão (h) | `5` |
-| Potência média (kW) | `0,10` |
+| Peso do rolo | `1` |
+| **Gramas usadas** | `100` |
+| **Desperdício** | `10` |
+| Tempo de impressão | `5` |
+| **Consumo médio** | `0,10` |
 | Tarifa de energia | `1` |
 | Valor da máquina | `4000` |
-| Vida útil (h) | `2000` |
-| Taxa de falha (%) | `10` |
-| Tempo de acabamento (h) | `0,5` |
-| Valor/hora do acabamento | `10` |
-| Markup varejo (%) | `50` |
-| Markup atacado (%) | `30` |
+| **Vida útil da máquina** | `2000` |
+| Taxa de falha | `10` |
+| Tempo de acabamento | `0,5` |
+| **Valor do acabamento** | `10` |
+| Markup varejo | `50` |
+| Markup atacado | `30` |
+
+> Alguns campos vêm **pré-preenchidos** com valores semente. Substitua o conteúdo — não digite por
+> cima. Com os valores semente intactos a tela mostra R$ 20,60 / R$ 30,90 / R$ 26,78, que são
+> números legítimos e **não** os deste exercício.
 
 **Tem de aparecer, exatamente:**
 
