@@ -15,6 +15,7 @@ import structlog
 from fastapi import APIRouter, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from .api.billing import play_router
 from .api.billing import router as billing_router
 from .api.boms import router as boms_router
 from .api.entitlement import router as entitlement_router
@@ -146,7 +147,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # E6 billing (ADR-0023): the ONE public, signature-authenticated route (no current_claims — MP
     # holds no Firebase token; the signature dependency inside is the auth boundary). Checkout/
     # subscription routes land with T012/T013 (PR-A, not this wave).
+    # T035 — as rotas do Play so entram no roteador com a flag LIGADA (VR-709/SC-711). O gating e
+    # por REGISTRO e nao por `if` dentro do handler: um `if` esquecido e um vazamento; uma rota que
+    # nunca foi registrada nao tem como responder.
     api.include_router(billing_router)
+    play = play_router(settings)
+    if play is not None:
+        api.include_router(play)
 
     if settings.app_env == "dev":  # debug route only in local dev (not UAT/prod)
 

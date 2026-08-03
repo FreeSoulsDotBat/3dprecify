@@ -4,7 +4,7 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Badge } from "@/shared/ui";
 
-import { BILLING_PLANS, type BillingPlanKey } from "./billing-plans";
+import { BILLING_PLANS, type BillingPlanKey } from "@/shared/billing/plans";
 import { BillingCta } from "./billing-cta";
 
 import "./billing.css";

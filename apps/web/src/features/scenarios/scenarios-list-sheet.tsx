@@ -471,6 +471,7 @@ export function ScenariosListSheet({
               <ScenarioTeaserPanel
                 signedOut={signedOut}
                 onOpenDialog={() => setTeaserDialogOpen(true)}
+                dialogOpen={teaserDialogOpen}
               />
               <ScenarioTeaserDialog
                 open={teaserDialogOpen}

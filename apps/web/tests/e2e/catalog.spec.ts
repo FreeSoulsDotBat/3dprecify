@@ -151,7 +151,11 @@ test("signed-out: Catálogo tab + calculator slot show the honest teaser — no 
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
   await expect(dialog.getByText(t.catalogo.teaserSignedOutBody)).toBeVisible();
-  await expect(dialog).not.toContainText("R$"); // no price, ever (Q5/FR-312)
+  // E6/US7 — o Dialog agora MOSTRA o preco real e um caminho para assinar; a proibicao valia
+  // enquanto a cobranca nao existia. Sobra a honestidade: so os tres precos praticados.
+  for (const n of (await dialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(n);
+  }
   await dialog.getByRole("button", { name: t.catalogo.teaserDismiss }).click();
 
   // The calculator's "usar do catálogo" slot is a visible affordance → the same teaser; the

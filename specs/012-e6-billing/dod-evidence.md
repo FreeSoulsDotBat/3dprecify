@@ -109,3 +109,57 @@ sobrevive a uma assinatura cancelada, implementada e revertivel numa linha; o **
 vizinhos comecando com "Atualizar", ambas as strings ESPECIFICADAS, entao renomear e decisao de
 produto; e o **A3** — a cautela da carencia e so texto, com o selo verde CERTO e o fallback `info`
 do proprio spec nao aplicado.)*
+
+---
+
+## PR-C — teaser aceso · estorno · prontidao do Play (US7 + US8 + Q2)
+
+Branch `012-e6-billing-pr-c`. Commits: `6dd4888` (US7) · `0645ab8` (US8) · `8389bc5` (T035 Play) ·
+`f690b74` (T037 e2e) · `f5de7ed` (T038 correcoes).
+
+### T039 — gates (2026-08-02)
+
+- **`pnpm gate:all` → exit 0** (o comando LITERAL da CI): **1219 front** · **444 back** (eram 400 no
+  inicio do E6 PR-B) · import-linter **5 kept / 0 broken**.
+- **e2e**: **17/17 chromium** contra a pilha real, nos tres arquivos de billing
+  (`billing.spec.ts` do PR-A + `billing-lifecycle` do PR-B + `billing-teasers` do PR-C).
+- **Drift-guard**: par de regeracao → 0 diff. O PR-C nao acrescenta rota ao contrato com a flag
+  desligada — que e a garantia da SC-711, e ela aparece no proprio contrato.
+- **SC-709**: `git diff develop` sobre `backend/app/entitlement/`, `apps/web/src/entities/user/` e
+  `packages/` da **ZERO**. A revogacao da US8 e um `UPDATE` em `revoked_at` — uma escrita que a
+  derivacao do ADR-0012 ja sabia ler. Nenhuma regra nova.
+
+### FR-713 — a varredura de AUSENCIA, com escopo declarado
+
+Procurei 12 termos em `apps/web/src` + `backend/app` + `packages`: `proration`, `rateio`,
+`periodo de teste`, `trial`, `cupom`, `desconto`, `nota fiscal`, `NF-e`, `CNPJ`, `imposto`, `ICMS`.
+**Nove deram ZERO.** Os quatro hits sao falsos positivos, cada um verificado:
+
+| termo | onde | por que nao e violacao |
+|---|---|---|
+| `cupom` | `messages.pt-br.ts` — `freightLine: "Frete / cupom"` | cupom de FRETE de marketplace (dominio E1), nao de assinatura |
+| `desconto` | comentarios em `plans.ts`/`price-line.ts` e nos testes | os comentarios explicam por que um desconto NAO e fabricado |
+| `CNPJ` | `seed.ts` / `catalog.json` | titulo da fonte da politica de comissao da Shopee |
+| `imposto` | `calcular.test.tsx` | um teste AFIRMANDO que nao existe campo de imposto (FR-021) |
+
+A homologacao (T038) fez a mesma varredura pela UI — 22 capturas de `innerText` contra 34 termos —
+e chegou ao mesmo lugar. **Duas varreduras independentes, uma por codigo e outra por tela.**
+
+### T038 — homologacao visual
+
+**PASS COM RESSALVAS 88%**, 37 screenshots, geometria do DOM em 12 estados. Cinco defeitos, todos
+corrigidos; detalhe em `tasks.md` §T038. Custo: 144.280 tokens (estimado ~150k).
+
+### T041/T042 — o que fica para o portao do dono
+
+- **T041** (ground line + `business-rules.md` + a decisao de DEPLOY) e de fechamento de EPICO, e o
+  E6 so fecha quando o T036 tiver a provisao do Play. O gatilho da regra de 2026-07-09 (**v1 = E1-E6
+  completo**) dispara ali, nao aqui.
+- **T042** — o handoff fiscal (Q9) esta escrito em `docs/product/e6-fiscal-handoff.md`: e rastreio de
+  bloqueador de LANCAMENTO, nao codigo.
+
+### T036 e T040 — bloqueados
+
+- **T036** espera conta Play + service account + uma compra no internal testing. Nao da para stubbar
+  com honestidade: um stub provaria que o meu stub concorda comigo.
+- **T040** e o portao do dono.

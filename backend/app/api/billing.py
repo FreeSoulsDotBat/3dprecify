@@ -288,3 +288,70 @@ async def cancel_subscription_route(
         await provider.aclose()
 
     return _out(view)
+
+
+# ══ T035/T036 — Play Billing atras de uma flag DESLIGADA (ADR-0023 §6, owner Q2) ══════════════
+#
+# As duas rotas existem no CODIGO e NAO existem em nenhum ambiente do E6: elas so sao registradas
+# quando `P3D_PLAY_BILLING_ENABLED` e verdadeira, entao com a flag desligada o proprio roteador
+# responde 404 — nao ha handler que possa vazar por engano (VR-709/SC-711).
+#
+# 404 e nao 401/403 de proposito: um 401 diria "existe, mas voce nao esta autenticado", confirmando
+# a superficie para quem estiver sondando. 404 diz o que e verdade — nao ha rota aqui.
+#
+# Gating por REGISTRO e nao por `if` dentro do handler: um `if` esquecido e um vazamento; uma rota
+# que nunca foi registrada nao tem como responder.
+
+
+class PlayCheckoutIn(CamelModel):
+    """O token de compra que o cliente Play devolve. A verificacao e SERVIDOR contra o Play (T036)
+    — este campo e uma alegacao do cliente ate ser conferida, nunca uma concessao."""
+
+    purchase_token: str
+
+
+def play_router(settings: Settings) -> APIRouter | None:
+    """As rotas do Play, ou `None` quando a flag esta desligada. Chamado por `create_app`.
+
+    Devolve um router NOVO a cada chamada, e nao muta o `router` de modulo. A primeira versao
+    recebia o router compartilhado e acrescentava nele — o que faz a flag virar um estado GLOBAL do
+    processo: duas `create_app` com flags diferentes (o que a suite de testes faz o tempo todo)
+    vazariam uma na outra, e o vazamento seria na direcao perigosa, porque quem ligou primeiro
+    deixaria as rotas ligadas para quem veio depois. Os testes so passavam pela ORDEM em que rodam.
+    """
+    if not settings.play_billing_enabled:
+        return None
+
+    novo = APIRouter(tags=["billing"])
+
+    @novo.post("/billing/checkout/play", status_code=status.HTTP_200_OK)
+    async def play_checkout(
+        body: PlayCheckoutIn,
+        claims: Annotated[dict[str, Any], Depends(current_claims)],
+        session: Annotated[AsyncSession, Depends(get_session)],
+    ) -> WebhookAck:
+        # T036 (BLOQUEADO no dono): a verificacao do `purchase_token` contra a Play Developer API
+        # exige conta, credencial de service account e uma compra no internal testing. Ate la esta
+        # rota so existe com a flag ligada — que e nenhum ambiente — e recusa em voz alta, em vez de
+        # conceder premium a partir de um token que ninguem conferiu (Constituicao IV).
+        raise AppError(
+            ErrorCode.BILLING_UNAVAILABLE,
+            "play billing is not provisioned in this environment",
+            503,
+        )
+
+    @novo.post("/billing/webhook/play-rtdn", status_code=status.HTTP_200_OK)
+    async def play_rtdn(
+        request: Request,
+        session: Annotated[AsyncSession, Depends(get_session)],
+    ) -> WebhookAck:
+        # Idem: a RTDN chega assinada pelo Pub/Sub do Google, e verificar essa assinatura precisa da
+        # chave do projeto. Sem ela, deny-by-default — ack sem escrever nada seria pior, porque o
+        # Google pararia de reentregar um evento que nunca foi processado.
+        raise AppError(
+            ErrorCode.BILLING_UNAVAILABLE,
+            "play billing is not provisioned in this environment",
+            503,
+        )
+
+    return novo

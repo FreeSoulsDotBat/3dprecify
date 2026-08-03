@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -66,6 +66,24 @@ class Settings(BaseSettings):
     # flag in E6; turns ON at E7. Server-side config (never a client flag — Constitution IV). The
     # default AND any unset/unknown value is OFF — no configuration reads ON.
     play_billing_enabled: bool = False
+
+    @field_validator("play_billing_enabled", mode="before")
+    @classmethod
+    def _play_flag_is_strict(cls, v: object) -> bool:
+        """A ADR-0023 §6 diz: "the default AND any unset/unknown value is OFF". O parser de bool do
+        pydantic NAO faz isso — ele aceita `yes`, `on`, `y`, `t`, `1`.
+
+        MEDIDO 2026-08-02 pelo T035: `P3D_PLAY_BILLING_ENABLED=yes` e `=ON` LIGAVAM a flag. Um erro
+        de digitacao num `.env` acenderia uma superficie de PAGAMENTO — e ninguem notaria, porque
+        nada falha quando uma rota passa a existir.
+
+        Aqui so o literal `true` (em qualquer caixa) liga. Todo o resto e OFF, e OFF em silencio de
+        proposito: levantar excecao derrubaria o app inteiro por causa de um typo, o que e pior do
+        que ficar desligado — e ficar desligado e justamente o estado seguro.
+        """
+        if isinstance(v, bool):
+            return v
+        return isinstance(v, str) and v.strip().lower() == "true"
 
 
 @lru_cache

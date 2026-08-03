@@ -85,10 +85,15 @@ describe("BOM teaser — free account (US5, SC-408)", () => {
     expect(screen.queryByRole("button", { name: new RegExp(t.addLine) })).not.toBeInTheDocument();
   });
 
-  it("carries NO price, NO date, NO purchase CTA (FR-410 — billing is E6)", () => {
+  it("o preço é HONESTO (E6/US7); nenhuma data prometida, nenhuma compra fingida", () => {
     renderAt("authenticated", "none");
-    expect(screen.queryByText(/R\$\s?\d/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/assinar|comprar|contratar/i)).not.toBeInTheDocument();
+    // A proibição de PREÇO e de CTA caiu com a premissa dela ("billing is E6", e o E6 chegou). O
+    // teaser mostra o preço real e leva à oferta; o que era desonesto era prometer uma compra
+    // inexistente. Sobra a honestidade do número: só os três praticados, sem "de/por".
+    for (const n of (document.body.textContent ?? "").match(/\d+[.,]\d{2}/g) ?? []) {
+      expect(["15,99", "12,99", "155,88"]).toContain(n);
+    }
+    expect(document.body.textContent).not.toMatch(/191,88/);
     // Signed-in free: the only action is the dismiss — no Entrar (already signed in).
     expect(screen.getByRole("button", { name: t.teaserDismiss })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: t.teaserSignIn })).not.toBeInTheDocument();

@@ -1,6 +1,7 @@
 import { useNavigate } from "@tanstack/react-router";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import {
   Button,
   Dialog,
@@ -46,6 +47,7 @@ export function ScenarioTeaserDialog({
             {signedOut ? t.teaserSignedOutBody : t.teaserDialogBody}
           </DialogDescription>
           <p className="text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+          <TeaserUpgrade signedOut={signedOut} />
           <div className="flex justify-end gap-2">
             {signedOut && (
               <Button
@@ -69,9 +71,22 @@ export function ScenarioTeaserDialog({
 export function ScenarioTeaserPanel({
   signedOut,
   onOpenDialog,
+  dialogOpen = false,
 }: {
   signedOut: boolean;
   onOpenDialog: () => void;
+  /**
+   * T038/D4 — o dialog deste painel esta aberto.
+   *
+   * MEDIDO: com ele aberto, 31,8px (390px) / 39,1px (1280px) da faixa do PAINEL ficavam visiveis
+   * abaixo da borda do modal, com opacidade efetiva 1 — um SEGUNDO "Assinar Premium" identico. E a
+   * 1280px o card do dialog CORTAVA a linha de preco do painel, deixando o fragmento ",99/mes" na
+   * tela ao lado do CTA duplicado. Dinheiro mutilado. Nao era armadilha de clique (o overlay pega
+   * o toque), mas nenhuma assercao de texto ve nada disso — so a imagem.
+   *
+   * A duplicata NASCEU desta faixa: antes da US7 o painel nao tinha preco nem botao.
+   */
+  dialogOpen?: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -85,6 +100,7 @@ export function ScenarioTeaserPanel({
         <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserSignedOutBody}</p>
       )}
       <p className="text-center text-sm text-[var(--text-muted)]">{t.teaserFreeNote}</p>
+      {!dialogOpen && <TeaserUpgrade signedOut={signedOut} align="center" />}
     </div>
   );
 }

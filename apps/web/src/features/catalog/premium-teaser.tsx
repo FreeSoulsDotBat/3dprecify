@@ -2,6 +2,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import {
   Button,
   Dialog,
@@ -15,7 +16,9 @@ import {
 // US7/T032 — the honest free-tier teaser (ux §2), extending the shipped Catálogo empty-state.
 // Three non-negotiables (§0.3): the affordance is VISIBLE (hiding it would lie about the
 // product); the intercept is honest and specific; nothing persists and no success is faked.
-// NO price, NO date, NO purchase CTA — billing is E6; a buy button would promise a flow that
+// T038 — ESTE COMENTARIO CADUCOU na US7 e foi corrigido: ele dizia "sem preco, sem CTA de
+// compra (billing e E6)" ACIMA de um preco e de um botao de compra. A premissa caiu quando o E6
+// chegou; a garantia que sobra e outra — so os tres precos praticados, sem urgencia e sem de/por.
 // does not exist (Principle II). When E6 lands, the dismiss becomes the upgrade entry.
 
 const catalogo = messages.catalogo;
@@ -41,6 +44,7 @@ export function PremiumTeaserDialog({
             {signedOut ? catalogo.teaserSignedOutBody : catalogo.teaserDialogBody}
           </DialogDescription>
           <p className="text-sm text-[var(--text-muted)]">{catalogo.teaserFreeNote}</p>
+          <TeaserUpgrade signedOut={signedOut} />
           <div className="flex justify-end gap-2">
             {signedOut && (
               <Button
@@ -77,6 +81,11 @@ export function CatalogTeaser({ signedOut }: { signedOut: boolean }) {
       <p className="text-center text-sm text-[var(--text-muted)]">
         {messages.apiError.entitlementRequired}
       </p>
+      {/* T038/D5 — o §7.2 pede a faixa no Dialog E no PAINEL, e o painel tinha ficado sem: o
+          vendedor que abria a aba Catalogo via "Salvar faz parte do Premium" e NENHUM preco, e so
+          descobria o valor tocando em "+ Adicionar filamento". Das quatro superficies, tres
+          acendiam onde ele aterrissa e uma exigia um toque a mais. */}
+      {!open && <TeaserUpgrade signedOut={signedOut} align="center" />}
       <PremiumTeaserDialog open={open} onOpenChange={setOpen} signedOut={signedOut} />
     </div>
   );

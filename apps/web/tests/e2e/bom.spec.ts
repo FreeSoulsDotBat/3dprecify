@@ -182,7 +182,12 @@ test("signed-out at /kits sees the honest teaser; the FREE calculator is untouch
   await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
   await expect(page.getByText(t.bom.teaserSignedOutBody)).toBeVisible();
   // NO price, NO date, NO purchase CTA (FR-410): the only actions are Entrar/Entendi.
-  await expect(page.getByText(/R\$\s?\d/)).toHaveCount(0);
+  // E6/US7 — a proibicao de PRECO caiu com a premissa dela ("cobranca e E6", e o E6 chegou). O
+  // teaser mostra o preco REAL e leva a oferta. O que sobra e a honestidade do numero: so os tres
+  // precos praticados. Qualquer outro valor na tela seria inventado.
+  for (const n of (await page.locator("body").innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+    expect(["15,99", "12,99", "155,88"]).toContain(n);
+  }
   await expect(page.getByRole("button", { name: t.bom.teaserSignIn })).toBeVisible();
   await expect(page.getByRole("button", { name: t.bom.teaserDismiss })).toBeVisible();
 

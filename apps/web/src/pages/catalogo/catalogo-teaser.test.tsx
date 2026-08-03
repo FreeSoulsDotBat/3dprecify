@@ -83,9 +83,18 @@ describe("Catálogo tab — FREE signed-in teaser (US7 scenario 2)", () => {
     const dialog = screen.getByRole("dialog");
     expect(dialog).toHaveTextContent(catalogo.teaserDialogTitle);
     expect(dialog).toHaveTextContent(catalogo.teaserFreeNote); // "continuam grátis" reaffirmed
-    expect(dialog.textContent).not.toMatch(/R\$/); // no price
+    // E6/US7 — a proibição de PREÇO caiu com a premissa dela ("billing is E6", e o E6 chegou). O
+    // que sobra é a honestidade do preço: só os três números praticados, sem urgência e sem "de/por".
+    const texto = dialog.textContent ?? "";
+    for (const n of texto.match(/\d+[.,]\d{2}/g) ?? []) {
+      expect(["15,99", "12,99", "155,88"]).toContain(n);
+    }
+    expect(texto).not.toMatch(/\b(últimas|só hoje|última chance|aproveite)\b/i);
+    expect(texto).not.toMatch(/191,88/);
     expect(dialog.textContent).not.toMatch(/\d{2}\/\d{2}|\bem breve\b/i); // no date promise
-    expect(dialog.textContent).not.toMatch(/assinar/i); // billing is E6 — no purchase CTA
+    // O CTA de compra agora EXISTE e leva à oferta — não a um checkout com um período que ninguém
+    // escolheu. O que continua proibido é a compra fingida: nada aqui pode virar premium sozinho.
+    expect(dialog.querySelector('a[href*="/conta?assinar=1"], a[href*="/sign-in"]')).not.toBeNull();
   });
 
   it("dismissing the teaser persists NOTHING and fakes NO success", () => {
