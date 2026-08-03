@@ -687,6 +687,12 @@ class Snapshot(Base):
     #: Voluntary soft-delete — AND the idempotency tombstone that stops a delete-then-retry from
     #: resurrecting the row.
     deleted_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
+    #: 015/A9 — a marca da anonimização LGPD (migração 0006), e ela é de MÃO ÚNICA no BANCO: o
+    #: gatilho recusa limpá-la ou movê-la. Enquanto NULL, `owner_uid` e `payload` estão congelados
+    #: como sempre estiveram; preenchê-la é a ÚNICA transição em que esses dois podem mudar — e
+    #: nem nela os fatos contábeis cedem. Existe aqui para manter a paridade modelo↔schema; quem
+    #: escreve é o CLI de operador, nunca uma rota.
+    anonymized_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class Scenario(Base):
