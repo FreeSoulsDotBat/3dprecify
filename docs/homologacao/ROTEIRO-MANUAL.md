@@ -20,7 +20,7 @@ docker ps --filter name=precifica3d-postgres   # confirme "healthy" antes de seg
 # terminal 2 — backend na 8000, que e a porta que o cliente procura
 cd backend
 uv run alembic upgrade head
-uv run uvicorn app.main:app --port 8000 --reload
+PORT=8000 P3D_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 uv run python scripts/run_e2e_server.py
 
 # terminal 3 — emulador de autenticacao (pode ja estar rodando na 9099)
 npx firebase emulators:start --only auth --project=demo-precifica3d
@@ -32,10 +32,27 @@ cd apps/web && pnpm dev
 ### Confira antes de abrir o navegador
 
 ```bash
-curl -s -o /dev/null -w "backend: %{http_code}
-" http://localhost:8000/health   # espera 200
+curl -s -o /dev/null -w 'health:      %{http_code}\n' http://localhost:8000/health
+curl -s -o /dev/null -w 'entitlement: %{http_code}\n' http://localhost:8000/api/v1/entitlement
 ```
 
+Espera-se **200** e **401**, nessa ordem. O 401 e a resposta CERTA sem token — o que importa e que
+nao seja **500**.
+
+> **Por que a conferencia nao pode ser so o `/health`, e eu aprendi isto errando:** o `/health` nao
+> toca o banco nem a autenticacao. Com o backend subido do jeito errado, ele responde 200 alegremente
+> enquanto **toda rota premium da 500**. Conferir so o `/health` e conferir o unico caminho que nao
+> quebra.
+
+> **O COMANDO do backend nao e `uvicorn` direto, e isto vale mais que a porta.** No Windows o
+> uvicorn serve num `ProactorEventLoop`, e o driver async do psycopg **nao funciona nele**: o
+> `/health` responde 200 (nao usa banco) e **toda rota que toca o banco da 500** — ou seja, toda
+> tela premium. O projeto ja resolveu isso em `scripts/run_e2e_server.py`, que serve num
+> `SelectorEventLoop`; o docstring dele explica por que a politica de event-loop sozinha nao basta.
+>
+> **E o `P3D_FIREBASE_AUTH_EMULATOR_HOST` nao e opcional**: sem ele o backend recusa todo token do
+> emulador com **401**, e o app parece "sem premium" quando o problema e o token nao ser aceito.
+>
 > **A porta importa, e eu errei isto na primeira versao deste roteiro.** O cliente le
 > `VITE_API_BASE_URL`, que em `apps/web/.env.development` aponta para **`http://localhost:8000`**.
 > Se voce subir o backend noutra porta sem mudar essa variavel, o app abre, a calculadora funciona
