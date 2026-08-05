@@ -155,15 +155,48 @@ Cada item abaixo é um **potencial defeito de preço em produção**. Só a Amaz
 
 ---
 
-## Decisões que ficam para o dono
+## Decisões do dono — TOMADAS em 2026-08-05
+
+As 7 decisões abaixo foram apresentadas uma a uma ao dono, com recomendação e trade-offs, e
+decididas na mesma data. O texto original das opções foi mantido como registro; a linha
+**DECIDIDO** de cada item é a que vale.
 
 1. **Amazon `minPerItem`: 1,00 uniforme ou por categoria (2,00 em ~11)?**
+   **DECIDIDO: (i) manter R$ 1,00 + vigia** — segue a fonte vigente (Seller Central, medida 2×);
+   o parser mensal passa a capturar também a comissão mínima por categoria da `/precos` e alerta
+   se as duas fontes oficiais convergirem para 2,00 (ou se a G200336920 mudar).
    - *(i) Manter R$ 1,00* (fonte vigente do Seller Central, medida em dupla data): custo zero agora; risco de **subestimar** até R$ 1,00/item nas categorias onde peças 3D baratas vendem, se a /precos refletir a prática real.
    - *(ii) Adotar R$ 2,00 nas 11 categorias da /precos*: conservador (nunca subestima); risco de **superestimar** R$ 1,00/item se a /precos for mesmo vintage jan/2025 — e exige `minPerItem` por categoria no schema (mudança no domínio de pricing → escalação obrigatória por ADR-0022).
    - *(iii) Resolver empiricamente* (extrato de uma venda real barata em categoria disputada, via conta de vendedor): resposta definitiva; custo de ter/operar uma conta e uma venda de teste.
 2. **Modelar a tarifa R$ 2,00/item do plano Individual como `fixedFee`?** Modelar = preço mais fiel para quem é Individual (e muda resultados exibidos hoje); não modelar = manter a subestimação conhecida e documentada. Se modelar: é mudança de dado no domínio de pricing.
+   **DECIDIDO: sim, modelar** — `fixedFee` 0 → 2.00 nas entradas INDIVIDUAL + bump de
+   `catalogVersion`. O plano Profissional (R$ 19/mês) continua fora: é custo mensal do vendedor
+   (lacuna E1), não custo por item.
 3. **Habilitar o token ML da casa no loop mensal do CI?** É a **única via** para comissão por categoria e valores de custo fixo do ML. Custo: secret no GitHub + rotina de refresh (mitigada: refresh antigo sobrevive à rotação — MEDIDO) + o teste único de suficiência da permissão. Alternativa: seguir sem os números do ML (curadoria manual mensal, com risco de defasagem entre reajustes).
+   **DECIDIDO: sim, o plano assume o token da casa no CI.** A decisão é de DIREÇÃO: a
+   implementação (US6) continua gateada pelas 8 condições do parecer do `seguranca` E por
+   autorização separada do dono — nada disso foi destravado aqui. Pendência técnica registrada:
+   o teste único de suficiência da permissão "Publicação e sincronização: Leitura" contra
+   `listing_prices` (e `users/{id}/shipping_options/free`).
 4. **Estender o schema para o custo fixo ML pós-reforma?** O modelo real é `logística × faixa de preço × peso`. Opções: *(i)* estender o schema (fiel; mudança estrutural no pricing-domain → opus, ADR-0022); *(ii)* aproximar usando as tabelas de frete já medidas (as colunas <R$ 79 são numericamente o custo operacional ME2) e reservar custo fixo só para Flex/ME1; *(iii)* manter como está com aviso de imprecisão. Cada opção tem custo de exatidão vs custo de schema.
+   **DECIDIDO: (i) estender o schema completo** — logística × faixa de preço × peso como eixo
+   próprio do custo fixo, separado do frete (o dono escolheu CONTRA a recomendação (ii); a
+   fidelidade estrutural venceu a economia de schema). Mudança estrutural no domínio de pricing
+   → desenho via fluxo de spec com escalação opus (ADR-0022). As tabelas de frete medidas seguem
+   como insumo do E3 (frete), cada coisa no seu eixo.
 5. **Shopee: OCR no loop ou alert-then-curate?** OCR (tesseract) automatiza a extração dos PNGs mas não é determinístico e pode errar silenciosamente números de tarifa; alert-then-curate mantém 0 tokens/determinismo na detecção e põe um humano só quando a URL da imagem muda (raro — ~1×/ano). Recomendação implícita dos dados: alert-then-curate; a escolha é do dono porque define quem faz a curadoria.
+   **DECIDIDO: OCR no loop** (o dono escolheu CONTRA a recomendação — automação total venceu a
+   curadoria manual). Condições que a escolha carrega, para o número mal lido falhar ALTO em vez
+   de entrar calado: asserções de forma (nº de faixas e valores parseáveis), faixas de sanidade
+   (percentual fora de 5–25% → falha), e conferência obrigatória contra as âncoras que existem
+   em TEXTO no art. 26839 (os dois pontos oficiais + a regra CNPJ <R$ 8). O detector
+   content-addressed (URL nova = tabela nova) continua como gatilho.
 6. **Shopee CPF <R$ 12: como modelar?** *(i)* Só os 2 pontos oficiais (exato onde documentado, lacuna no resto); *(ii)* a hipótese linear R$ 4 + 0,25×preço (cobre a faixa toda, mas é **hipótese não publicada** — se errada, erra o preço de itens baratos); *(iii)* não modelar e exibir aviso "taxa regressiva não publicada pela Shopee" abaixo de R$ 12. Honestidade vs cobertura.
+   **DECIDIDO: (iii) aviso honesto** — não modelar; abaixo de R$ 12 (CPF) a calculadora exibe o
+   aviso com os dois exemplos oficiais (R$ 10 → R$ 6,50; R$ 8 → R$ 6,00). Nenhum número não
+   publicado entra sob selo de referência.
 7. **Expor custos condicionais não-determinísticos (Shopee R$ 50 volumoso; ajuste de frete aferido)?** Não são tarifas de precificação, mas são custos reais. Opções: aviso informativo na UI (custo baixo, sem tocar o cálculo) vs campo opcional no cenário (mais fiel, mais schema) vs ignorar (usuário descobre na prática).
+   **DECIDIDO: (b) campo opcional** (o dono escolheu CONTRA a recomendação (a) — fidelidade de
+   cálculo venceu a economia de schema). "Item volumoso" vira campo opcional do cenário Shopee e
+   soma os R$ 50,00/pedido (art. 3305) no cálculo quando marcado. O ajuste de frete aferido
+   (art. 4478) permanece SÓ como aviso — é incalculável por natureza (recálculo caso a caso).
