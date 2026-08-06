@@ -20,6 +20,35 @@ decisões de dados tomadas em 2026-08-05 sobre Amazon/ML/Shopee."
 
 ---
 
+## Clarifications
+
+### Session 2026-08-05
+
+- Q: A US15 (custo fixo ML: logística × faixa × peso) entra no 016? → A: **Entra como schema
+  honesto SEM números** — o schema completo entra agora com os fatos públicos oficiais (ME2
+  Coleta/Agências/Full = R$ 0; ≥ R$ 79 = R$ 0 para todos), corrigindo o custo fixo cobrado
+  indevidamente de vendedores ME2 hoje; combinações Flex/ME1 abaixo de R$ 79 resolvem para
+  "sem referência — informe" até o token da casa entrar (US6-ML, fora deste incremento).
+- Q: Como a tela trata o tipo de logística do ML? → A: **Comparação + escolha** (proposta do dono):
+  o canal ML mostra o preço de cada GRUPO de logística (a logística só muda o custo fixo, então os
+  grupos colapsam — ME2 completo · Flex/ME1 "sem referência" abaixo de R$ 79 · todas iguais acima),
+  e o vendedor marca a que ele usa — essa vira o número do cartão final e o que a simulação salva.
+  Nenhum default é assumido; a visão completa ensina o spread entre logísticas.
+- Q: Perfil CPF/CNPJ da Shopee vira pergunta? O +R$ 3/item entra? → A: **Perfil + volume; o R$ 3
+  entra.** Duas perguntas visíveis só no canal Shopee (campos dirigidos): "CPF ou CNPJ?" e, se CPF,
+  "mais de 450 pedidos nos últimos 90 dias?". O +R$ 3,00/item soma ao cálculo quando se aplica
+  (CPF + volume, fonte oficial art. 26839); o aviso da US17 usa o perfil como gatilho.
+- Q: Shopee < R$ 8 (CNPJ, adicional = metade do preço): modelar, avisar ou ficar fora? → A:
+  **Modelar agora.** A regra é oficial, publicada e determinística — entra no cálculo (adicional =
+  preço/2 abaixo de R$ 8 para CNPJ; a faixa "20% + R$ 4" passa a valer a partir de R$ 8). Abre a
+  lacuna E2 pelo caso mínimo; escalação opus. Vira a US18.
+- Q: Volumoso Shopee — os R$ 50 são por PEDIDO e precificamos por UNIDADE; como entram? → A:
+  **Somar inteiro + legenda.** Os R$ 50,00 somam à unidade com a legenda dizendo que a taxa é por
+  pedido. Nunca subestima; zero campo novo; o multi-item superestima e isso fica dito. Promover
+  para rateio depois, se os usuários de peça grande pedirem, é pequeno e reversível.
+
+---
+
 ## Verificação inicial V0 *(pré-condição — NÃO é user story)*
 
 **Medição do Grupo 0 (itens 15–19 do relatório do dono): logado sem premium.** O sintoma relatado —
@@ -357,8 +386,9 @@ Profissional intocado.
 ### User Story 15 - O custo fixo do Mercado Livre vira logística × faixa de preço × peso (Priority: P3)
 
 > **⚠ Escalação opus obrigatória (ADR-0022)** — mudança estrutural no domínio de pricing.
-> **Condicionada à Q2 do clarify**: entra como *schema honesto sem números* ou sai do incremento
-> (os VALORES só existem via API autenticada, e o token está fora — Fora de escopo 1).
+> **Clarify 2026-08-05 (Q2): ENTRA, como schema honesto sem números** — os fatos públicos oficiais
+> entram como valor (ME2 = R$ 0; ≥ R$ 79 = R$ 0); Flex/ME1 < R$ 79 resolve para "sem referência —
+> informe" até o token da casa (US6-ML, fora deste incremento).
 
 Decisão dada (D10): estender o schema completo, eixo próprio, SEPARADO do frete.
 
@@ -371,8 +401,9 @@ valor público exibe número — resolve para "sem referência — informe".
    resolve, **Then** depende de **tipo de logística** (Flex/`self_service`, ME1, `custom`,
    `not_specified` pagam; ME2 Coleta/Agências/Full NÃO pagam), **faixa de preço** (limiar R$ 79 —
    acima, ninguém paga) e **peso**; NÃO varia por categoria.
-2. **Given** o canal ML na tela, **When** renderiza, **Then** o tipo de logística é perguntado ao
-   vendedor (hoje ninguém pergunta — forma exata conforme Q4).
+2. **Given** o canal ML na tela, **When** renderiza, **Then** exibe o preço por GRUPO de logística
+   (comparação — os grupos colapsam onde o valor é igual) e o vendedor **marca a que ele usa**, que
+   vira o número do cartão final e o que a simulação salva; nenhum default é assumido (clarify Q4).
 3. **Given** uma combinação cujo valor a fonte oficial não publica, **When** resolve, **Then** exibe
    **"sem referência — informe"** com campo manual — NUNCA um número de blog (REPORTADO não sobe a
    fato); a regra dos 50% abaixo de R$ 12,50 não é gravada como número sem prova autenticada; o piso
@@ -393,8 +424,9 @@ Decisão dada (D13): campo opcional que soma no cálculo (não aviso).
 **Acceptance Scenarios**:
 
 1. **Given** o canal Shopee, **When** o vendedor marca "Item volumoso", **Then** o cálculo soma
-   **R$ 50,00** (taxa oficial de manuseio, art. 3305, vigência 02/02/2026) — com rateio conforme Q5 —
-   e o campo diz de onde vem o valor e desde quando vale.
+   **R$ 50,00 inteiros à unidade**, com legenda dizendo que a taxa é **por pedido** (clarify Q5 —
+   multi-item superestima e isso fica dito); o campo diz de onde vem o valor (art. 3305) e desde
+   quando vale (02/02/2026).
 2. **Given** o campo desmarcado (ou uma simulação salva anterior ao campo), **When** recalcula,
    **Then** o resultado é **byte-idêntico** ao de hoje (ausência = falso).
 3. **Given** o ajuste de frete aferido (art. 4478), **When** esta story entra, **Then** ele NÃO vira
@@ -409,7 +441,7 @@ nenhuma fórmula não publicada é aplicada em lugar nenhum.
 
 **Acceptance Scenarios**:
 
-1. **Given** canal Shopee de perfil **CPF** (condicionado à Q6) com preço abaixo de R$ 12, **When**
+1. **Given** canal Shopee de perfil **CPF** (perguntado na tela — clarify Q6) com preço abaixo de R$ 12, **When**
    renderiza, **Then** a tela avisa que a taxa regressiva **não é publicada pela Shopee** e mostra os
    dois pontos oficiais — R$ 10 → R$ 6,50 e R$ 8 → R$ 6,00 (verbatim, art. 26839) — com o contexto em
    que valem (CPF acima de 450 pedidos/90 dias).
@@ -417,6 +449,27 @@ nenhuma fórmula não publicada é aplicada em lugar nenhum.
    NÃO é aplicada em lugar nenhum — é colinear com os dois pontos, mas não é fato.
 3. **Given** o aviso do ajuste de frete aferido, **When** exibido, **Then** é informativo: não
    bloqueia o cálculo, não fabrica número e não some quando o campo é editado.
+
+---
+
+### User Story 18 - Item barato CNPJ na Shopee: a regra publicada entra na conta (Priority: P3)
+
+> **⚠ Escalação opus obrigatória (ADR-0022)** — regra de preço no domínio de pricing.
+> **Nasceu no clarify (Q8, 2026-08-05)** — diferente da regressiva CPF (US17, não publicada), esta
+> regra É oficial e determinística; hoje superestimamos o item barato CNPJ.
+
+**Independent Test**: canal Shopee CNPJ com preço < R$ 8 → adicional = metade do preço; ≥ R$ 8 →
+byte-idêntico ao de hoje.
+
+**Acceptance Scenarios**:
+
+1. **Given** canal Shopee, perfil CNPJ (perguntado — Q6) e preço abaixo de R$ 8, **When** calcula,
+   **Then** o adicional fixo é **metade do preço do produto** (regra oficial, art. 26839) em vez de
+   R$ 4; a faixa "20% + R$ 4" passa a valer a partir de R$ 8.
+2. **Given** preço ≥ R$ 8 (qualquer perfil), **When** calcula, **Then** o resultado é byte-idêntico
+   ao de hoje.
+3. **Given** perfil CPF, **When** o preço está abaixo de R$ 12, **Then** esta regra NÃO se aplica —
+   a regressiva CPF permanece aviso honesto (US17), porque a fórmula dela não é publicada.
 
 ---
 
@@ -513,16 +566,26 @@ nenhuma fórmula não publicada é aplicada em lugar nenhum.
 
 - **FR-921**: As entradas Amazon `plan = INDIVIDUAL` MUST somar R$ 2,00/item (taxa fixa);
   `catalogVersion` MUST ser bumpado; `minPerItem` permanece R$ 1,00 uniforme; plano Profissional fora.
-- **FR-922** *(condicionado à Q2)*: O custo fixo ML MUST resolver por logística × faixa de preço ×
-  peso conforme US15; combinações sem valor público MUST resolver para "sem referência — informe";
-  nenhum valor REPORTADO (blog) MUST subir a fato; a regra dos 50% e o piso permanecem não gravados.
-- **FR-923**: O canal Shopee MUST ter o campo opcional "Item volumoso" que soma R$ 50,00 quando
-  marcado (rateio conforme Q5); ausência/desmarcado = resultado byte-idêntico.
+- **FR-922**: O custo fixo ML MUST resolver por logística × faixa de preço × peso conforme US15,
+  com os fatos públicos oficiais como valor (ME2 = R$ 0; ≥ R$ 79 = R$ 0); combinações sem valor
+  público (Flex/ME1 < R$ 79) MUST resolver para "sem referência — informe"; nenhum valor REPORTADO
+  (blog) MUST subir a fato; a regra dos 50% e o piso permanecem não gravados.
+- **FR-923**: O canal Shopee MUST ter o campo opcional "Item volumoso" que soma R$ 50,00 inteiros à
+  unidade quando marcado, com legenda declarando que a taxa é por pedido (clarify Q5);
+  ausência/desmarcado = resultado byte-idêntico.
 - **FR-924**: Canal Shopee CPF com preço < R$ 12 MUST exibir o aviso da taxa regressiva não publicada
   com os dois pontos oficiais e seu contexto; a hipótese linear MUST NOT ser aplicada; o aviso do
   ajuste de frete aferido MUST ser informativo, sem tocar o cálculo.
 - **FR-925**: Nenhum número de tarifa MUST aparecer sob selo de referência sem fonte oficial datada
   (Constituição II).
+- **FR-926** *(clarify Q6)*: O canal Shopee MUST perguntar o perfil do vendedor (CPF/CNPJ) e, se
+  CPF, o volume (> 450 pedidos/90 dias); quando CPF + volume, o cálculo MUST somar R$ 3,00/item
+  (fonte oficial art. 26839); as perguntas aparecem SÓ no canal Shopee (campos dirigidos); perfil
+  ausente em documento salvo antigo = comportamento de hoje (byte-idêntico).
+- **FR-927** *(clarify Q8)*: Para canal Shopee com perfil CNPJ e preço abaixo de R$ 8, o adicional
+  fixo MUST ser metade do preço do produto (regra oficial publicada, art. 26839); a partir de R$ 8 o
+  comportamento atual permanece byte-idêntico; a regra NÃO se aplica a CPF (US17 cobre esse caso
+  como aviso).
 
 ### Key Entities
 
@@ -601,8 +664,9 @@ nenhuma fórmula não publicada é aplicada em lugar nenhum.
 3. **Frete real (lacuna E3)** — as 3 tabelas medidas ficam prontas como insumo; não é a vez.
 4. **Lacuna E1 completa** (perfil do vendedor): Amazon Profissional R$ 19/mês, Campanhas de Destaque
    Shopee, bloco de perfil próprio — o 016 só toca o mínimo que US14/US17 exigem.
-5. **Lacuna E2** — Shopee < R$ 8 CNPJ (adicional = metade do preço) não modelada; consequência
-   registrada: superestimamos item muito barato (salvo Q8).
+5. **Lacuna E2 geral** (`fixedFee` como função arbitrária do preço) — permanece fora, EXCETO o caso
+   Shopee < R$ 8 CNPJ, que o clarify Q8 trouxe para dentro (US18): a regra é oficial e
+   determinística. A regressiva CPF continua aviso (US17) — não é publicada.
 6. **Isenção promocional Amazon**; **pisos de comissão** ML/Shopee ("não determinado"); **closing fee
    de mídia**.
 7. **Sidebar colapsável** (US3 só prepara o terreno) e **homologação da parte premium** (o dono
@@ -610,13 +674,16 @@ nenhuma fórmula não publicada é aplicada em lugar nenhum.
 
 ## Perguntas abertas — para o `/speckit-clarify` (não resolver aqui)
 
+**Sessão de 2026-08-05: 5 resolvidas (Q2·Q4·Q5·Q6·Q8 — ver Clarifications); 3 DEFERIDAS por teto
+de 5 perguntas/sessão (Q1·Q3·Q7)** — resolvê-las numa segunda sessão de clarify antes do plan.
+
 | # | pergunta | o que muda |
 | --- | --- | --- |
 | Q1 | O selo "sem referência — informe as taxas" fica, muda de texto ou sai? | aceitação da US12 e toda combinação não coberta |
-| Q2 | US15 entra em 016 como schema honesto SEM números, ou sai do incremento? | inclui/exclui PR-G |
+| ~~Q2~~ | ~~US15 entra?~~ **RESOLVIDA (clarify 2026-08-05): entra, schema honesto sem números** | ver Clarifications |
 | Q3 | De onde vem o PESO do custo fixo ML novo (derivado das gramas · peso embalado · dimensões p/ cubagem)? | escopo da US15 e nº de campos novos |
-| Q4 | Tipo de logística ML: obrigatório, opcional com default declarado, ou derivado? | US12/US15; default errado inverte quem paga |
-| Q5 | R$ 50 do volumoso é por PEDIDO e precificamos por UNIDADE: somar inteiro ou ratear por "itens por pedido"? | aceitação da US16 |
-| Q6 | Perfil CPF/CNPJ Shopee vira determinante perguntado? E o +R$ 3/item (>450 pedidos/90d) entra? | viabiliza US17-AC1; fatia mínima da E1 |
+| ~~Q4~~ | ~~Tipo de logística ML na tela?~~ **RESOLVIDA (clarify 2026-08-05): comparação por grupo + escolha do vendedor, sem default** | ver Clarifications |
+| ~~Q5~~ | ~~Volumoso: somar ou ratear?~~ **RESOLVIDA (clarify 2026-08-05): somar R$ 50 inteiros + legenda "por pedido"** | ver Clarifications |
+| ~~Q6~~ | ~~Perfil CPF/CNPJ Shopee?~~ **RESOLVIDA (clarify 2026-08-05): perfil + volume perguntados; +R$ 3/item entra** | ver Clarifications + FR-926 |
 | Q7 | Como comunicamos que os preços exibidos MUDAM (desperdício ↓, Individual ↑)? O "Recalcular hoje" explica o motivo novo? | US10/US14; risco R1 |
-| Q8 | Shopee < R$ 8 CNPJ (metade do preço): modelar agora, virar aviso, ou ficar fora com desvio registrado? | pode acrescentar story ao Grupo F/G |
+| ~~Q8~~ | ~~Shopee < R$ 8 CNPJ?~~ **RESOLVIDA (clarify 2026-08-05): modelar agora — virou a US18** | ver Clarifications + FR-927 |
