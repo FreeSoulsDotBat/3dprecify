@@ -46,6 +46,20 @@ decisões de dados tomadas em 2026-08-05 sobre Amazon/ML/Shopee."
   **Somar inteiro + legenda.** Os R$ 50,00 somam à unidade com a legenda dizendo que a taxa é por
   pedido. Nunca subestima; zero campo novo; o multi-item superestima e isso fica dito. Promover
   para rateio depois, se os usuários de peça grande pedirem, é pequeno e reversível.
+- Q: De onde vem o PESO do custo fixo ML? → A: **Derivado das gramas usadas, com ajuste.** O peso
+  default é o que o formulário já sabe (gramas da peça); um campo opcional "peso com embalagem"
+  ajusta; um aviso curto diz que o ML pode cobrar pelo peso cubado (dimensões/cubagem ficam para o
+  frete, lacuna E3). Zero campo obrigatório novo.
+- Q: O selo "sem referência — informe as taxas" fica, muda ou sai? → A: **Fica, com texto
+  reescrito para leigo**: *"Sem taxa de referência para esta combinação — informe as taxas do seu
+  anúncio"*, com `?` explicando por que o número não existe no catálogo (a fonte oficial não
+  publica) e onde o vendedor encontra o dele (central de vendas do marketplace).
+- Q: Como comunicamos que os preços exibidos mudam? → A: **Só nos documentos, sem banner.** O
+  recálculo de documento antigo declara o descarte e explica a divergência (US10-AC3/AC4); os
+  rótulos de versão congelados dizem qual modelo/tabela precificou cada registro. Não há usuário em
+  produção pré-v1 para ler um banner, e a v1 nasce no modelo novo. Se uma mudança estrutural futura
+  acontecer COM usuários em produção, o aviso de versão será decidido naquele momento, sobre o
+  mecanismo de divergência já pronto.
 
 ---
 
@@ -379,7 +393,8 @@ Profissional intocado.
    R$ 1,00 uniforme (D7 não é reaberto) e o plano Profissional (R$ 19/mês) fica FORA — é custo mensal
    do vendedor, não custo por item.
 3. **Given** um usuário no plano Individual, **When** recalcula, **Then** o preço exibido SOBE — é
-   consequência aceita, e comunicada conforme Q7 (clarify).
+   consequência aceita; a comunicação vive nos documentos (clarify Q7): a divergência de um
+   documento antigo é explicada onde aparece, sem banner.
 
 ---
 
@@ -408,7 +423,10 @@ valor público exibe número — resolve para "sem referência — informe".
    **"sem referência — informe"** com campo manual — NUNCA um número de blog (REPORTADO não sobe a
    fato); a regra dos 50% abaixo de R$ 12,50 não é gravada como número sem prova autenticada; o piso
    de comissão permanece "não determinado".
-4. **Given** as tabelas de frete medidas (3 × 29 × 8), **When** esta story entra, **Then** elas NÃO
+4. **Given** o eixo de peso, **When** o canal ML precisa dele, **Then** o peso default deriva das
+   gramas usadas que o formulário já tem, com campo opcional "peso com embalagem" para ajustar e
+   aviso de que o ML pode cobrar pelo peso cubado (clarify Q3) — zero campo obrigatório novo.
+5. **Given** as tabelas de frete medidas (3 × 29 × 8), **When** esta story entra, **Then** elas NÃO
    entram aqui — são insumo da lacuna E3 (frete real), fora de escopo.
 
 ---
@@ -672,18 +690,18 @@ byte-idêntico ao de hoje.
 7. **Sidebar colapsável** (US3 só prepara o terreno) e **homologação da parte premium** (o dono
    homologa depois).
 
-## Perguntas abertas — para o `/speckit-clarify` (não resolver aqui)
+## Perguntas do clarify — TODAS RESOLVIDAS (8/8)
 
-**Sessão de 2026-08-05: 5 resolvidas (Q2·Q4·Q5·Q6·Q8 — ver Clarifications); 3 DEFERIDAS por teto
-de 5 perguntas/sessão (Q1·Q3·Q7)** — resolvê-las numa segunda sessão de clarify antes do plan.
+**Sessão 1 (2026-08-05): Q2·Q4·Q5·Q6·Q8 · Sessão 2 (2026-08-05): Q1·Q3·Q7.** Respostas
+integradas na seção Clarifications e nos FR/US afetados. A tabela fica como registro.
 
 | # | pergunta | o que muda |
 | --- | --- | --- |
-| Q1 | O selo "sem referência — informe as taxas" fica, muda de texto ou sai? | aceitação da US12 e toda combinação não coberta |
+| ~~Q1~~ | ~~Selo "sem referência"?~~ **RESOLVIDA (clarify 2026-08-05, sessão 2): fica, texto reescrito para leigo + ? explicativo** | ver Clarifications |
 | ~~Q2~~ | ~~US15 entra?~~ **RESOLVIDA (clarify 2026-08-05): entra, schema honesto sem números** | ver Clarifications |
-| Q3 | De onde vem o PESO do custo fixo ML novo (derivado das gramas · peso embalado · dimensões p/ cubagem)? | escopo da US15 e nº de campos novos |
+| ~~Q3~~ | ~~Origem do peso ML?~~ **RESOLVIDA (clarify 2026-08-05, sessão 2): derivado das gramas + ajuste opcional "peso com embalagem" + aviso de cubagem** | ver Clarifications |
 | ~~Q4~~ | ~~Tipo de logística ML na tela?~~ **RESOLVIDA (clarify 2026-08-05): comparação por grupo + escolha do vendedor, sem default** | ver Clarifications |
 | ~~Q5~~ | ~~Volumoso: somar ou ratear?~~ **RESOLVIDA (clarify 2026-08-05): somar R$ 50 inteiros + legenda "por pedido"** | ver Clarifications |
 | ~~Q6~~ | ~~Perfil CPF/CNPJ Shopee?~~ **RESOLVIDA (clarify 2026-08-05): perfil + volume perguntados; +R$ 3/item entra** | ver Clarifications + FR-926 |
-| Q7 | Como comunicamos que os preços exibidos MUDAM (desperdício ↓, Individual ↑)? O "Recalcular hoje" explica o motivo novo? | US10/US14; risco R1 |
+| ~~Q7~~ | ~~Comunicação da mudança de preços?~~ **RESOLVIDA (clarify 2026-08-05, sessão 2): só nos documentos — divergência explicada onde aparece, sem banner (pré-v1, sem usuário em produção)** | ver Clarifications |
 | ~~Q8~~ | ~~Shopee < R$ 8 CNPJ?~~ **RESOLVIDA (clarify 2026-08-05): modelar agora — virou a US18** | ver Clarifications + FR-927 |
