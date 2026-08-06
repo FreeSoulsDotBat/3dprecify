@@ -93,20 +93,20 @@ migração, nada persistido muda (research R8: derivação de borda nunca entra 
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T020 [P] [US7] Testes da conversão h+min: bijetiva em minutos inteiros, 60min transborda, `5.33`→`5h 20min`, `5.5`→`5h 30min`, 0 ok, em `apps/web/src/features/calculator/time-input.test.ts`
-- [ ] T021 [P] [US8] Testes da derivação da máquina: `RITMOS=[260,1200,3300]` h/ano × payback 3 = 780/3.600/9.900; R$ 4.000 → ≈5,13/1,11/0,40 por hora (SC-906); valor salvo fora de ritmo×payback inteiro ⇒ modo "ajustar", em `apps/web/src/features/calculator/machine-cost.test.ts`
-- [ ] T022 [P] [US9] Prova de reorganização: resultado byte-idêntico no vetor canônico antes/depois das fusões de seção, em `apps/web/src/features/calculator/calculator-model.test.ts`
+- [x] T020 [P] [US7] Testes da conversão h+min: bijetiva em minutos inteiros, 60min transborda, `5.33`→`5h 20min`, `5.5`→`5h 30min`, 0 ok, em `apps/web/src/features/calculator/time-input.test.ts`
+- [x] T021 [P] [US8] Testes da derivação da máquina: `RITMOS=[260,1200,3300]` h/ano × payback 3 = 780/3.600/9.900; R$ 4.000 → ≈5,13/1,11/0,40 por hora (SC-906); valor salvo fora de ritmo×payback inteiro ⇒ modo "ajustar", em `apps/web/src/features/calculator/machine-cost.test.ts`
+- [x] T022 [P] [US9] Prova de reorganização: resultado byte-idêntico no vetor canônico antes/depois das fusões de seção, em `apps/web/src/features/calculator/calculator-model.test.ts`
 
 ### Implementation
 
-- [ ] T023 [US6] Pesquisar as 11 explicações didáticas (público leigo, pt-BR: por que entra na conta + como descobrir o valor) com PROCEDÊNCIA por explicação, registradas em `specs/016-correcao-homologacao/conteudo-tooltips.md` (autorizado pelo dono; nenhum número vira recomendação sem fonte)
-- [ ] T024 [US6] Garantir que `InfoTip` funciona por hover, TECLADO e TOQUE (mobile não tem hover) — estender se preciso, sem trocar biblioteca, em `apps/web/src/shared/ui/` (componente InfoTip)
-- [ ] T025 [US6] Ligar os 11 tooltips (`?` à direita do rótulo) em `apps/web/src/features/calculator/calculator-form.tsx` + textos no i18n; nenhum altera cálculo/validação
-- [ ] T026 [US7] Implementar h+min na borda (2 campos → decimal; reabertura decimal → h+min) em `apps/web/src/features/calculator/calculator-form.tsx` (+ helper puro `time-input.ts`); o motor continua recebendo decimal
-- [ ] T027 [US8] Implementar a pergunta nova da máquina: valor pago (currency) · ritmo (3 opções sem digitar) · payback em anos; derivado "≈ R$ X por hora de impressão" em voz alta + modo "ajustar"; documento salvo fora dos ritmos reabre em "ajustar" com o número intacto, em `apps/web/src/features/calculator/calculator-form.tsx` (+ helper `machine-cost.ts`); motor intocado
-- [ ] T028 [P] [US9] Máscara monetária no "Valor da máquina" (modo `currency` do NumberField existente) em `apps/web/src/features/calculator/calculator-form.tsx`
-- [ ] T029 [US9] Fusões de seção: "Ajustes opcionais" → "Custos da peça"; acabamento → "Mão de obra e custos", em `apps/web/src/features/calculator/calculator-form.tsx`
-- [ ] T030 [US6] Homologação visual (qa-produto): tooltips nos 3 modos de acionamento + formulário reorganizado, 2 temas, mobile+desktop (SC-904)
+- [x] T023 [US6] Pesquisar as 11 explicações didáticas (público leigo, pt-BR: por que entra na conta + como descobrir o valor) com PROCEDÊNCIA por explicação, registradas em `specs/016-correcao-homologacao/conteudo-tooltips.md` (autorizado pelo dono; nenhum número vira recomendação sem fonte)
+- [x] T024 [US6] Garantir que `InfoTip` funciona por hover, TECLADO e TOQUE (mobile não tem hover) — estender se preciso, sem trocar biblioteca, em `apps/web/src/shared/ui/` (componente InfoTip)
+- [x] T025 [US6] Ligar os 11 tooltips (`?` à direita do rótulo) em `apps/web/src/features/calculator/calculator-form.tsx` + textos no i18n; nenhum altera cálculo/validação
+- [x] T026 [US7] Implementar h+min na borda (2 campos → decimal; reabertura decimal → h+min) em `apps/web/src/features/calculator/calculator-form.tsx` (+ helper puro `time-input.ts`); o motor continua recebendo decimal
+- [x] T027 [US8] Implementar a pergunta nova da máquina: valor pago (currency) · ritmo (3 opções sem digitar) · payback em anos; derivado "≈ R$ X por hora de impressão" em voz alta + modo "ajustar"; documento salvo fora dos ritmos reabre em "ajustar" com o número intacto, em `apps/web/src/features/calculator/calculator-form.tsx` (+ helper `machine-cost.ts`); motor intocado
+- [x] T028 [P] [US9] Máscara monetária no "Valor da máquina" (modo `currency` do NumberField existente) em `apps/web/src/features/calculator/calculator-form.tsx`
+- [x] T029 [US9] Fusões de seção: "Ajustes opcionais" → "Custos da peça"; acabamento → "Mão de obra e custos", em `apps/web/src/features/calculator/calculator-form.tsx`
+- [x] T030 [US6] Homologação visual (qa-produto): tooltips nos 3 modos de acionamento + formulário reorganizado, 2 temas, mobile+desktop (SC-904)
 - [ ] T031 [US6] Gate da fatia + PR-C
 
 **Checkpoint**: todo o valor didático entregue sem tocar fórmula, versão ou banco.

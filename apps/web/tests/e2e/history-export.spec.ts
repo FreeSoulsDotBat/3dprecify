@@ -68,7 +68,7 @@ test("US4: the export round trip — a real PDF, and the default asks for NO cos
   grantPremium(email);
 
   await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
   await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
@@ -103,7 +103,7 @@ test("US4: the opt-in is the ONLY way the breakdown travels (Q4/FR-512)", async 
   grantPremium(email);
 
   await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
   await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
@@ -140,7 +140,7 @@ test("SC-508: a lapse pauses the export and says so — the record itself stays 
   grantPremium(email);
 
   await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
   await recordAndWaitSaved(page);
   await openFirstRecord(page);
 
@@ -154,7 +154,7 @@ test("SC-508: a lapse pauses the export and says so — the record itself stays 
   await expect(button).toBeDisabled();
   await expect(page.getByText(t.historico.exportLapsed)).toBeVisible();
   // The record is NOT gone and NOT degraded: a lapse pauses writes, it deletes nothing (FR-517).
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
 });
 
 test("US4: offline, the affordance is disabled WITH ITS REASON — never a spinner into nothing", async ({
@@ -165,7 +165,7 @@ test("US4: offline, the affordance is disabled WITH ITS REASON — never a spinn
   grantPremium(email);
 
   await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
   await recordAndWaitSaved(page);
   await openFirstRecord(page);
 

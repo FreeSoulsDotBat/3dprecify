@@ -100,3 +100,41 @@ guarda precisa dos DOIS eixos.**
 
 **Não coberto**: `/catalogo/produtos/$id` (mesmo corpo, exige premium); contraste numérico do
 tema claro em 360/390 (fotografado e lido, sem número).
+
+## PR-C — US6 tooltips · US7 h+min · US8 máquina · US9 máscara/fusões · 2026-08-06
+
+**Conteúdo (designer-ux, T023)**: `conteudo-tooltips.md` — 9 textos finais com procedência por
+afirmação; resolução do B1 do analyze (11 = 9 campos + os 2 controles da US8, cujo texto é a
+própria tela); "Gramas usadas"/falha×desperdício deferidos ao PR-D (escrever agora publicaria
+afirmação falsa); premissa minha corrigida (medidor de tomada não custa R$ 40–70 → nenhum preço
+na tela); R$ 0,85/kWh e R$ 7,37/h em chaves i18n anuais nomeadas.
+
+**Implementação (dev-frontend, T020–T029)**: vermelho observado nos 3 grupos de teste; helpers
+puros `time-input.ts`/`machine-cost.ts`; 3 superfícies que montam o mesmo corpo atualizadas
+juntas (SC-305); dois achados de a11y reais corrigidos no caminho (InfoTip dentro de `<label>`
+funde o nome acessível; `getByLabel` sem role colide com o trigger). gate:fe verde · 112/112 e2e.
+
+**Homologação (qa-produto, T030): FAIL 74% → correções → re-verificação PASS 96%.** 55+20
+screenshots + 9 JSONs em `evidencias/pr-c/`. O que passou de primeira, medido: 9/9 tooltips
+VERBATIM lidos do popover renderizado; vetor canônico R$ 28,65/42,98/37,25 sobrevivendo a tudo;
+derivação ≈5,13/1,11/0,40 exata (SC-906); teclado/toque/hover.
+
+| # | bloqueador do 1º passe | correção (cada uma com vermelho próprio) |
+| --- | --- | --- |
+| B1 | A tela NOVA da máquina não aparecia na 1ª visita (semente 2000h ∉ ritmo×payback ⇒ modo ajustar vencia, mostrando o campo aposentado) | semente 3600 (= "Quase todo dia" × 3 anos); **o preço-semente muda: custo R$ 20,60 → R$ 16,16, varejo 30,90 → 24,24, atacado 26,78 → 21,01 — CALCULADO pelo motor, decisão reportada ao dono no gate do PR**; vetor canônico digitado intacto |
+| B2 | Máscara de milhar NÃO existia (o `currency` só desenhava o R$ — a premissa da spec era falsa) | agrupamento pt-BR no blur em todo campo currency, roundtrip provado; semente já agrupada ("4.000,00", residual do reverify) |
+| B3 | Ritmo ilegível no mobile (87px úteis a 360 vs 197px da opção) | selects empilham <1024px (minmax 240px); guarda nova por `measureText` vermelha-antes |
+| B4 | "Tarifa de energia" com 1px de campo a 360 (e o corte a 390 era NOVO, do gatilho ⓘ) | gatilho vira `labelAddon` irmão do `<label>` (também cumpre a posição da US6-AC1/R5) + costs-grid minmax(170px); guarda `clientWidth ≥ scrollWidth` vermelha-antes |
+
+Ressalvas corrigidas: R1 (botões de modo com afordância real) · R2 (alinhamento dos seletores) ·
+R3 (Escape vence o hover do tooltip, teste próprio) · R6 (chaves i18n mortas removidas).
+
+**Re-verificação (mesmo qa, 20 screenshots)**: os 4 pontos caíram medidos ("Vida útil" com count
+0 no DOM; 12.345,67 agrupado com ida-e-volta exata; `cortadas: []` nas duas larguras;
+Escape/supressão correta) + o vetor canônico re-confirmado NA UI nova (entrando pelo "ajustar").
+Residual de 1 linha aplicado depois (semente exibida já agrupada).
+
+**Achado de fixture no fechamento (a classe "coerente por construção")**: dois fixtures de teste
+semeavam folhas de WIRE com strings de FORMULÁRIO — funcionava por coincidência de gramática até
+a semente ganhar milhar. Corrigidos para atravessar `ptBrToWireDecimal`, a mesma fronteira que o
+produto atravessa (`scenario-bridge.test.ts`, `kit-basis-summary.test.tsx`).

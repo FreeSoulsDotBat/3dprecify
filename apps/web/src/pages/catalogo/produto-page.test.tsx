@@ -12,7 +12,8 @@ import { useSessionStore } from "@/shared/session/session-store";
 // US6/T030 — the product full-page route (ux §1.6b): the calculator layout + a name + the two
 // catalog pickers. NO stored price is ever shown — the page recomputes live via the EXISTING
 // `computeFromForm` at the current PRICING_MODEL_VERSION (FR-310/FR-313); the SC-305 anchor
-// numbers (seed R$ 30,90 / picked catalog R$ 26,48) must hold here exactly as in Calcular.
+// numbers (016/PR-C homologação B1: seed R$ 24,24 / picked catalog R$ 26,48) must hold here
+// exactly as in Calcular.
 // Reopening a DEGRADED product (deleted reference) shows the calm info alert and the last-known
 // values as ordinary editable fields (US6-4) — never blank, never broken.
 
@@ -156,14 +157,15 @@ afterEach(() => {
 });
 
 describe("ProdutoPage — create (US6/T030)", () => {
-  it("renders name + pickers + the calculator sections, recomputing live (seed R$ 30,90)", () => {
+  it("renders name + pickers + the calculator sections, recomputing live (seed R$ 24,24)", () => {
     renderPage();
 
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeInTheDocument();
     expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeInTheDocument();
-    // Live recompute of the untouched defaults — same seed number as Calcular (FR-310).
-    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+    // Live recompute of the untouched defaults — same seed number as Calcular (FR-310). 016/PR-C
+    // homologação B1 — the seed's varejo is now R$ 24,24 (machine 4000/3600h).
+    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
   });
 
   it("picking the saved refs pre-fills editable fields and recomputes the SC-305 number", () => {

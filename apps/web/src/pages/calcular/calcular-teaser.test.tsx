@@ -71,8 +71,9 @@ describe("CalcularPage — free/signed-out teaser slot (US7/T031, rewritten 016/
     const button = screen.getByRole("button", { name: t.catalogPicker.title });
     expect(button).toBeVisible();
     expect(button).toBeDisabled();
-    // The manual free calculator is untouched behind it (SC-310).
-    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+    // The manual free calculator is untouched behind it (SC-310). 016/PR-C homologação B1 — the
+    // seed's varejo is now R$ 24,24 (machine 4000/3600h).
+    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
   });
 
   it("free signed-in (none): same disabled-and-visible affordance → same honest teaser", () => {

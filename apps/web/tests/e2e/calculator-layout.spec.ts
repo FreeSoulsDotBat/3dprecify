@@ -144,3 +144,95 @@ test.describe("calculator desktop layout — geometry (016/US4, SC-903)", () => 
     });
   }
 });
+
+// 016/PR-C homologação (B3) — the machine-cost ritmo/payback select pair. The seed
+// (machineLifetimeHours=3600) nasce em modo RITMO, so both selects render without interaction.
+// The floor is the SELECT's own rendered width against what its currently-selected OPTION text
+// needs — a native <select>'s visible box (not the popup list) truncates when narrower than its
+// own selected text, which is exactly what the qa screenshot showed ("Quase todo ▾").
+test.describe("calculator desktop layout — o bloco da máquina (016/PR-C homologação B3)", () => {
+  for (const width of [360, 390, 1440]) {
+    test(`at ${width}px nenhum select do bloco da máquina fica mais estreito que sua opção`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/calcular");
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+      const ritmo = page.getByRole("combobox", { name: t.machineCost.ritmoLabel });
+      const payback = page.getByRole("combobox", { name: t.machineCost.paybackLabel });
+      await expect(ritmo).toBeVisible();
+      await expect(payback).toBeVisible();
+
+      for (const [name, select] of [
+        ["ritmo", ritmo],
+        ["payback", payback],
+      ] as const) {
+        const geo = await select.evaluate((el: HTMLSelectElement) => {
+          const selected = el.options[el.selectedIndex]?.text ?? "";
+          // A canvas 2D context measures the SAME text the <select> itself renders (font
+          // inherited from `.tf-input`), independent of the native OS chrome the box draws
+          // around it — the measured floor a real screenshot can't give a headless run.
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d")!;
+          const cs = getComputedStyle(el);
+          ctx.font = `${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+          const textWidth = ctx.measureText(selected).width;
+          return { clientWidth: el.clientWidth, textWidth, selected };
+        });
+        // The box must fit the text plus the caret + padding this DS always reserves
+        // (select.css: `--space-5` right padding for the caret, `--space-4` left — ~40px total).
+        const CARET_AND_PADDING = 40;
+        expect(
+          geo.clientWidth,
+          `${width}px ${name} select "${geo.selected}" needs ≈${Math.ceil(geo.textWidth + CARET_AND_PADDING)}px, has ${geo.clientWidth}px`,
+        ).toBeGreaterThanOrEqual(geo.textWidth + CARET_AND_PADDING);
+      }
+    });
+  }
+});
+
+// 016/PR-C homologação (B4) — every REQUIRED, pre-filled numeric input in "Custos da peça" (incl.
+// the machine-cost value + the h/min printTime pair) must show its whole value — never scrolled/
+// clipped, the "R$ 1px" the qa found on Tarifa de energia at 360px (and a pre-existing 3px cut at
+// 360px even without the ⓘ, per the qa's own counterfactual).
+test.describe("calculator desktop layout — os inputs obrigatórios pré-preenchidos (016/PR-C homologação B4)", () => {
+  const REQUIRED_PREFILLED_LABELS = [
+    t.fields.costPerRoll,
+    t.fields.rollWeight,
+    t.fields.grams,
+    t.fields.avgPower,
+    t.fields.tariff,
+    t.fields.machineValue,
+    t.timeInput.hoursAria,
+    t.timeInput.minutesAria,
+  ];
+
+  for (const width of [360, 390, 1440]) {
+    test(`at ${width}px nenhum valor pré-preenchido é cortado (clientWidth ≥ scrollWidth)`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/calcular");
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+      for (const label of REQUIRED_PREFILLED_LABELS) {
+        const input = page.getByRole("textbox", { name: label, exact: true }).first();
+        await expect(input).toBeVisible();
+        const geo = await input.evaluate((el: HTMLInputElement) => ({
+          clientWidth: el.clientWidth,
+          scrollWidth: el.scrollWidth,
+          value: el.value,
+        }));
+        // A 1px deficit here is flex sub-pixel rounding (clientWidth truncates, scrollWidth's
+        // content box does not) — measured on boxes 143–213px wide holding a 4-char value; a REAL
+        // clip (the bug: 1px of TOTAL box width) is nowhere near this margin, so a ≤1px tolerance
+        // cannot hide it while still absorbing the rounding artefact.
+        expect(
+          geo.clientWidth,
+          `${width}px "${label}" = "${geo.value}" is clipped: clientWidth ${geo.clientWidth}px < scrollWidth ${geo.scrollWidth}px`,
+        ).toBeGreaterThanOrEqual(geo.scrollWidth - 1);
+      }
+    });
+  }
+});

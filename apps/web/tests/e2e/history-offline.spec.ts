@@ -31,7 +31,7 @@ test("a record made offline is pending, survives a reload, then drains to synced
   // Reload so the entitlement query resolves `active` and the record button appears (premium-only).
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible(); // the E1 seed computes a result
+  await expect(page.getByText("R$ 16,16")).toBeVisible(); // the E1 seed computes a result
   await expect(page.getByRole("button", { name: t.saveAction })).toBeVisible();
 
   // Lose the network in a way that reaches the onlineManager (event, not just navigator.onLine).

@@ -102,7 +102,8 @@ describe("CalcularPage — the free 005 calculator is byte-untouched by E5 (SC-1
   it("the free calculator still renders the untouched price (SC-310 lineage)", () => {
     setupFreeOrSignedOut(undefined);
     renderPage();
-    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+    // 016/PR-C homologação B1 — the seed's varejo is now R$ 24,24 (machine 4000/3600h).
+    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
   });
 });
 

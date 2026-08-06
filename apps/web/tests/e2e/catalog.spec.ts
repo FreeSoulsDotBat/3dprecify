@@ -142,7 +142,7 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   // modelo, nao duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no
   // canal e por construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao
   // vem antes no DOM (o proprio componente diz "shown BEFORE the suggested prices").
-  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // seed varejo — the free math lives
+  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C B1 seed varejo — the free math lives
 });
 
 test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser — no price surprises, no fake save (US7/T031, rewritten 016/US1)", async ({
@@ -169,5 +169,5 @@ test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser
   const ptPicker = t.premiumTeaser.CATALOG_PICKER;
   await expect(page.getByText(ptPicker.title)).toBeVisible();
   await expect(page.getByRole("button", { name: t.calculator.catalogPicker.title })).toBeDisabled();
-  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // ver nota do A11 acima
+  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C B1 seed — ver nota do A11 acima
 });

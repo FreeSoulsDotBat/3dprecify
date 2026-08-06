@@ -5,10 +5,13 @@ import { feeCatalogSchema } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import {
+  CALC_FIELD_NAMES,
   type CalcFormValues,
   type ChannelSlotForm,
+  COST_FIELDS,
   defaultCalcValues,
   defaultChannelSlot,
+  LABOR_AND_FINISH_FIELDS,
 } from "./calculator-schema";
 import { type CatalogContext, computeFromForm, formatBRL } from "./calculator-model";
 
@@ -61,10 +64,57 @@ describe("computeFromForm — canonical vector flows through the engine (SC-001)
   it("the default (seed) form is valid and produces a coherent price", () => {
     const { ok, result } = computeFromForm(defaultCalcValues);
     expect(ok).toBe(true);
-    // seed: 100/1kg/100g, printTime 5h, avgPower 0,12kW, tariff 1, machine 4000/2000h, no optionals.
-    expect(result?.custoTotal).toBeCloseTo(20.6, 2);
-    expect(result?.precoVarejo).toBeCloseTo(30.9, 2);
-    expect(result?.precoAtacado).toBeCloseTo(26.78, 2);
+    // 016/PR-C homologação (B1) — seed: 100/1kg/100g, printTime 5h, avgPower 0,12kW, tariff 1,
+    // machine 4000/3600h (1200h/ano "quase todo dia" × 3 anos payback — the ritmo mode default),
+    // no optionals. Confirmed by RUNNING computeCalculator with this seed (not guessed):
+    // material 10,00 + energy 0,60 + machine 5,56 = custo_total 16,16 → varejo 24,24 (×1,5) ·
+    // atacado 21,01 (×1,3, 16,16×1,3=21,008 rounds ROUND_HALF_UP).
+    expect(result?.material).toBeCloseTo(10.0, 2);
+    expect(result?.energy).toBeCloseTo(0.6, 2);
+    expect(result?.machine).toBeCloseTo(5.56, 2);
+    expect(result?.custoTotal).toBeCloseTo(16.16, 2);
+    expect(result?.precoVarejo).toBeCloseTo(24.24, 2);
+    expect(result?.precoAtacado).toBeCloseTo(21.01, 2);
+  });
+});
+
+// 016/US9 (T022, FR-911, arquitetura-016.md §7) — PR-C reorganizes sections ("Ajustes opcionais"
+// folds into "Custos da peça"; Tempo/Valor do acabamento migram para "Mão de obra e custos") and
+// wires h+min + the machine-cost question at the BORDER only. None of that touches
+// `computeFromForm`/`calculatorSchema`/the engine — this is the byte-identity proof: the same
+// canonical vector, the same `CalcFormValues` shape, before and after the fatia.
+describe("US9 (T022) — a reorganização de seção não muda NENHUM resultado (prova byte-idêntica)", () => {
+  it("o vetor canônico R$ 28,65 / 42,98 / 37,25 permanece intacto após a fusão de seções", () => {
+    const { result } = computeFromForm(canonical);
+    expect(result?.custoTotal).toBeCloseTo(28.65, 2);
+    expect(result?.precoVarejo).toBeCloseTo(42.98, 2);
+    expect(result?.precoAtacado).toBeCloseTo(37.25, 2);
+  });
+
+  it("a fusão é PURA UI — CalcFormValues continua com as mesmas 17 chaves escalares do motor", () => {
+    expect(CALC_FIELD_NAMES).toHaveLength(17);
+    expect(CALC_FIELD_NAMES).toContain("printTimeHours");
+    expect(CALC_FIELD_NAMES).toContain("machineValue");
+    expect(CALC_FIELD_NAMES).toContain("machineLifetimeHours");
+  });
+
+  it("os campos fundidos migram de array, nunca de nome (o motor lê o MESMO CalcFieldName)", () => {
+    // "Ajustes opcionais" funde em "Custos da peça": wasteGrams/maintenanceReservePerHour/failurePct
+    // agora vivem em COST_FIELDS.
+    const costNames = COST_FIELDS.map((f) => f.name);
+    expect(costNames).toEqual(
+      expect.arrayContaining(["wasteGrams", "maintenanceReservePerHour", "failurePct"]),
+    );
+    // Tempo/Valor do acabamento migram para "Mão de obra e custos", junto com laborHours/laborRate.
+    const laborNames = LABOR_AND_FINISH_FIELDS.map((f) => f.name);
+    expect(laborNames).toEqual(
+      expect.arrayContaining([
+        "finishTimeHours",
+        "finishRatePerHour",
+        "laborHours",
+        "laborRatePerHour",
+      ]),
+    );
   });
 });
 

@@ -12,6 +12,7 @@ import {
 import { freezePriceResult } from "@/entities/history/frozen-payload";
 import {
   captionText,
+  CostsSection,
   FieldGroup,
   gridCard,
   MarketplaceSection,
@@ -24,14 +25,13 @@ import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator
 import {
   type CalcFormValues,
   calculatorResolver,
+  COST_FIELDS,
   defaultCalcValues,
   defaultOtherCost,
-  LABOR_FIELDS,
-  MANDATORY_FIELDS,
+  LABOR_AND_FINISH_FIELDS,
   type MarketplaceId,
   MARKUP_FIELDS,
   slotResetOnMarketplaceChange,
-  OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
@@ -353,24 +353,14 @@ export function ProdutoPage({
       <div className="tf-calc-grid">
         <div className="tf-calc-grid__col">
           <fieldset disabled={lapsed} className="contents">
-            <FieldGroup
-              control={control}
-              title={t.sections.inputs}
-              info={t.sectionInfo.inputs}
-              fields={MANDATORY_FIELDS}
-            />
-            <FieldGroup
-              control={control}
-              title={t.sections.optional}
-              info={t.sectionInfo.optional}
-              hint={t.sections.optionalHint}
-              fields={OPTIONAL_FIELDS}
-            />
+            {/* 016/PR-C (US6/US7/US8/US9) — see calcular-page.tsx: SAME body, SAME components,
+                so this route stays byte-identical to Calcular (SC-305). */}
+            <CostsSection control={control} fields={COST_FIELDS} />
             <FieldGroup
               control={control}
               title={t.sections.labor}
               info={t.sectionInfo.labor}
-              fields={LABOR_FIELDS}
+              fields={LABOR_AND_FINISH_FIELDS}
             />
             <OtherCostsSection
               control={control}

@@ -61,7 +61,9 @@ const EMPTY_FEES = {
   generatedAt: "2026-01-01T00:00:00Z",
   marketplaces: [],
 };
-/** ML Clássico 10% / no fixed fee: anúncio varejo do default line = 30,90 / 0,9 = 34,33. */
+/** ML Clássico 10% / no fixed fee: anúncio varejo do default line = 24,24 / 0,9 = 26,93 (016/PR-C
+ *  homologação B1 — o seed mudou de 20,60/30,90/26,78 para 16,16/24,24/21,01, conferido rodando
+ *  computeCalculator/grossUp com o novo seed, não chutado). */
 const CATALOG_FEES = {
   catalogVersion: "test-1",
   schemaVersion: "1",
@@ -297,20 +299,21 @@ describe("BomPage — compose ad-hoc lines (US1-1/US1-2)", () => {
   it("adding a line shows it (Peça 1, avulsa) with the default per-unit price live", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
-    // Line header: "Peça 1" + "(avulsa)"; defaults compute custo 20,60 (seed values).
+    // Line header: "Peça 1" + "(avulsa)"; defaults compute custo 16,16 (016/PR-C homologação B1
+    // seed: machine 4000/3600h → machine 5,56, custo_total 16,16).
     expect(screen.getByText(new RegExp(t.lineLabel.replace("{n}", "1")))).toBeInTheDocument();
     expect(screen.getByText(new RegExp("\\(avulsa\\)"))).toBeInTheDocument();
-    expect(screen.getAllByText(/R\$\s?20,60/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\$\s?16,16/).length).toBeGreaterThan(0);
     // The assembly summary is present with the same honest total.
     expect(screen.getByText(t.assemblyTitle)).toBeInTheDocument();
   });
 
-  it("changing the quantity recomputes the line total and the assembly live (×3 → 61,80)", () => {
+  it("changing the quantity recomputes the line total and the assembly live (×3 → 48,48)", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     const qty = screen.getByRole("textbox", { name: new RegExp(t.quantity) });
     fireEvent.change(qty, { target: { value: "3" } });
-    expect(screen.getAllByText(/R\$\s?61,80/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\$\s?48,48/).length).toBeGreaterThan(0);
   });
 
   it("a blank quantity marks the line invalid honestly (captioned, excluded) — never a crash", () => {
@@ -337,13 +340,13 @@ describe("BomPage — compose ad-hoc lines (US1-1/US1-2)", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
-    // 2 × default line (20,60) = 41,20 — read from the engine, never summed in JSX.
-    expect(screen.getAllByText(/R\$\s?41,20/).length).toBeGreaterThan(0);
+    // 2 × default line (16,16) = 32,32 — read from the engine, never summed in JSX.
+    expect(screen.getAllByText(/R\$\s?32,32/).length).toBeGreaterThan(0);
     const removeButtons = screen.getAllByRole("button", { name: new RegExp(t.removeLine) });
     expect(removeButtons).toHaveLength(2);
     fireEvent.click(removeButtons[1]);
-    expect(screen.queryByText(/R\$\s?41,20/)).not.toBeInTheDocument();
-    expect(screen.getAllByText(/R\$\s?20,60/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/R\$\s?32,32/)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/R\$\s?16,16/).length).toBeGreaterThan(0);
   });
 });
 
@@ -377,8 +380,9 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
 
 // The §1.3 secondary disclosure keeps a line short: optional/labor/outros/marketplace collapse
 // under one affordance; its accessible label is composed from the existing section titles.
+// 016/US9 — "Ajustes opcionais" retired (its fields joined this SAME disclosure instead of their
+// own title — bom-line-editor.tsx), so the composed label drops that name too.
 const advancedLabel = [
-  messages.calculator.sections.optional,
   messages.calculator.sections.labor,
   messages.calculator.outrosCustos.title,
   messages.calculator.sections.marketplace,
@@ -427,25 +431,27 @@ describe("BomPage — line density (ux §1.3 secondary disclosure)", () => {
 
 describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", () => {
   // Review major (2026-07-11): pins the page's fee-catalog ctx threading — this number can ONLY
-  // come from the catalog entry pre-filling the default blank slot (34,33 = 30,90 / 0,9).
+  // come from the catalog entry pre-filling the default blank slot (016/PR-C homologação B1:
+  // 24,24 / 0,9 = 26,93 — the new seed's varejo).
   it("a catalog-covered blank slot pre-fills and rolls up from the CATALOG fees", () => {
     mockFees(CATALOG_FEES);
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     const rollup = screen.getByText(t.channelsTitle).closest("section, div");
     expect(rollup).not.toBeNull();
-    expect(within(rollup as HTMLElement).getAllByText(/34,33/).length).toBeGreaterThan(0);
+    expect(within(rollup as HTMLElement).getAllByText(/26,93/).length).toBeGreaterThan(0);
   });
 
   it("a line with a manual channel fee rolls up under the kit channels card", () => {
     renderPremiumPage();
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     // The default line ships one Mercado Livre slot with blank fees; over the EMPTY test catalog
-    // nothing pre-fills, so type a manual 20% commission: anúncio varejo = 30,90 / 0,8 = 38,63.
+    // nothing pre-fills, so type a manual 20% commission: anúncio varejo = 24,24 / 0,8 = 30,30
+    // (016/PR-C homologação B1 — the new seed).
     typeCommission("20");
     const rollup = screen.getByText(t.channelsTitle).closest("section, div");
     expect(rollup).not.toBeNull();
-    expect(within(rollup as HTMLElement).getAllByText(/38,63/).length).toBeGreaterThan(0);
+    expect(within(rollup as HTMLElement).getAllByText(/30,30/).length).toBeGreaterThan(0);
   });
 
   // T006b top nit: a FORM-invalid channel slot (commission ≥ 100) never reaches the engine, so
@@ -501,7 +507,7 @@ describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", 
     const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
     expect(within(rollup).getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
     expect(within(rollup).queryByText(/sem preço neste canal/)).not.toBeInTheDocument();
-    expect(within(rollup).getAllByText(/38,63/).length).toBeGreaterThan(0); // valid slot's money
+    expect(within(rollup).getAllByText(/30,30/).length).toBeGreaterThan(0); // valid slot's money (016/PR-C B1 seed)
   });
 });
 

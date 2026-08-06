@@ -7,6 +7,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
 import { type FeeCatalog, feeCatalogSchema } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { ptBrToWireDecimal } from "@/shared/lib/decimal-ptbr";
 
 import { CALC_FIELD_NAMES, defaultCalcValues } from "./calculator-schema";
 import { KitBasisSummary } from "./kit-basis-summary";
@@ -41,9 +42,12 @@ const catalog: FeeCatalog = feeCatalogSchema.parse({
 });
 const ctx = { catalog, source: "catalog" as const, now: Date.parse("2026-07-19T12:00:00Z") };
 
+// 016/T030-reverify — mesma correção de fixture do scenario-bridge.test: as folhas de documento
+// salvo são WIRE; semear com a string de formulário funcionava por coincidência de gramática até a
+// semente ganhar milhar ("4.000,00"). `ptBrToWireDecimal` é o espelho real do caminho de gravação.
 function scalarLine(): Record<string, string> {
   const scalars: Record<string, string> = {};
-  for (const name of CALC_FIELD_NAMES) scalars[name] = defaultCalcValues[name]!;
+  for (const name of CALC_FIELD_NAMES) scalars[name] = ptBrToWireDecimal(defaultCalcValues[name]!);
   return scalars;
 }
 

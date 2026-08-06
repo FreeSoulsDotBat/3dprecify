@@ -40,7 +40,7 @@ test("premium saves online, the list shows it with no price, and reopening recom
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/calcular");
   await page.reload(); // entitlement resolves `active` → the save affordance appears
-  await expect(page.getByText("R$ 20,60")).toBeVisible(); // the E1 seed computes a result
+  await expect(page.getByText("R$ 16,16")).toBeVisible(); // the E1 seed computes a result
 
   // Configure a real multi-channel comparison: slot 0 is a CURATED marketplace (Shopee) whose
   // pre-filled fee gets EXPLICITLY overridden (→ "ajustado por você"), slot 1 is left on the
@@ -106,7 +106,7 @@ test("premium saves online, the list shows it with no price, and reopening recom
     t.seals.adjusted,
   );
   await expect(page.getByTestId("channel-price")).toHaveCount(2);
-  await expect(page.getByText("R$ 20,60")).toBeVisible(); // the base cost recomputed, not stored
+  await expect(page.getByText("R$ 16,16")).toBeVisible(); // the base cost recomputed, not stored
 });
 
 test("offline read survives a reload from cache; an offline save fails honestly, then succeeds back online (US2, SC-610)", async ({
@@ -118,7 +118,7 @@ test("offline read survives a reload from cache; an offline save fails honestly,
 
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
   await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, {
     timeout: 20_000,
   });
@@ -138,7 +138,7 @@ test("offline read survives a reload from cache; an offline save fails honestly,
   // the same B1 idiom the E4 offline spec proved necessary).
   await goOffline(page, context);
   await page.reload(); // a fresh mount, offline: forces the uid-keyed IndexedDB cache fallback
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   // The list is STILL readable and re-openable from the cache — never an error wall over data
   // already held on the device.
@@ -173,7 +173,7 @@ test("sign-out purges the scenarios cache — a fresh account never sees the pre
 
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   await page.getByTestId("save-scenario-trigger").click();
   const saveSheet = page.getByRole("dialog");
@@ -241,7 +241,7 @@ test("sign-out purges the scenarios cache — a fresh account never sees the pre
   const email2 = await signUpThrowaway(page, `scn-signout-b-${info.workerIndex}`);
   grantPremium(email2);
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
   const secondList = await openScenariosList(page);
   await expect(secondList.getByText(s.emptyTitle)).toBeVisible();
   await expect(secondList.getByText("Cenário da conta A")).toHaveCount(0);
@@ -280,7 +280,7 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
 }, info) => {
   await signUpThrowaway(page, `scn-free-${info.workerIndex}`); // never granted
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   await expect(page.getByRole("button", { name: s.saveAction })).toHaveCount(0);
 
