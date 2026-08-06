@@ -3,9 +3,24 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+
+// 016/US11 (T048, FR-915) — marketplace pricing is Premium now; this file's intent has always been
+// the CHANNEL MECHANICS (gross-up, the toggle, the fee grid), not proving free-tier access — that
+// proof lives in `apps/web/tests/e2e/marketplace-premium.spec.ts`. Mocked `active` so those mechanics
+// stay reachable; no test below asserts anything about the teaser/gate itself.
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({
+    data: { status: "active" },
+    isError: false,
+    isLoading: false,
+    stale: false,
+    isFetching: false,
+    refetch: () => {},
+  }),
+}));
 
 import { CalcularPage } from "./calcular-page";
 

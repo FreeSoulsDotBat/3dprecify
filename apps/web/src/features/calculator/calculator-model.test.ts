@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
 import { computeCalculator } from "@3dprecify/pricing-core";
 import { describe, expect, it } from "vitest";
 
@@ -807,5 +810,77 @@ describe("015/A8 — [F03a-003] atacado acima do varejo e VALIDO (decisao do don
   it("no caso normal o gatilho NAO dispara — senao o aviso apareceria sempre", () => {
     const r = computeFromForm({ ...canonical, markupVarejoPct: "120", markupAtacadoPct: "60" });
     expect(r.result!.precoAtacado).toBeLessThan(r.result!.precoVarejo);
+  });
+});
+
+// 016/US12 (T046, FR-919) — the byte-identical proof: for every combination the calculator supports
+// TODAY (3 marketplaces × today's determinants), `channelFieldPlan` (T045/T051) + the derived-render
+// path (T052) must not move a single digit. The SERVED catalog (not the seed) is used because it is
+// the one carrying real Amazon/Shopee data — the same fixture `calculator.spec.ts`'s e2e suite pins
+// against. Numbers below were produced by RUNNING this exact test, not guessed (RA5/FR-919).
+describe("016/US12 (T046) — byte-identical fixture: today's 3 marketplaces × determinants", () => {
+  const servedCatalog: unknown = JSON.parse(
+    readFileSync(
+      fileURLToPath(new URL("../../../../../backend/app/data/catalog.json", import.meta.url)),
+      "utf-8",
+    ),
+  );
+  const catalog = feeCatalogSchema.parse(servedCatalog);
+  const ctx: CatalogContext = { catalog, source: "catalog", now: Date.parse("2026-08-06") };
+
+  const mercadoLivreManual: ChannelSlotForm = {
+    ...defaultChannelSlot("MERCADO_LIVRE"),
+    modality: "CLASSICO",
+    commissionPct: "12",
+    fixedFee: "6",
+  };
+  const amazonProfissionalCatchAll: ChannelSlotForm = {
+    ...defaultChannelSlot("AMAZON"),
+    modality: "PROFISSIONAL",
+  };
+  const amazonIndividualCatchAll: ChannelSlotForm = {
+    ...defaultChannelSlot("AMAZON"),
+    modality: "INDIVIDUAL",
+  };
+  const amazonCategoria: ChannelSlotForm = {
+    ...defaultChannelSlot("AMAZON"),
+    modality: "PROFISSIONAL",
+    category: "roupas-e-acessorios",
+  };
+  const shopeeCatalogPrefill: ChannelSlotForm = {
+    ...defaultChannelSlot("SHOPEE"),
+    modality: "",
+  };
+
+  it("pins the exact anúncio/líquido for every supported combination", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [
+          mercadoLivreManual,
+          amazonProfissionalCatchAll,
+          amazonIndividualCatchAll,
+          amazonCategoria,
+          shopeeCatalogPrefill,
+        ],
+      },
+      ctx,
+    );
+    expect(r.ok).toBe(true);
+    const pin = r.channels.map((ch) => ({
+      seal: ch.seal.kind,
+      anuncioVarejo: ch.result?.precoAnuncioVarejo ?? null,
+      liquidoVarejo: ch.result?.recebidoLiquidoVarejo ?? null,
+    }));
+    // Pinned by RUNNING this exact fixture against the SERVED catalog (not guessed). ML has no
+    // reference (empty entries today) → a typed value stands on its own (seal "none", not
+    // "adjusted" — there is nothing to have adjusted AWAY from).
+    expect(pin).toEqual([
+      { seal: "none", anuncioVarejo: 53.78, liquidoVarejo: 41.33 }, // ML manual (12% + R$6)
+      { seal: "catchAll", anuncioVarejo: 48.62, liquidoVarejo: 41.33 }, // Amazon PROFISSIONAL catch-all
+      { seal: "catchAll", anuncioVarejo: 48.62, liquidoVarejo: 41.33 }, // Amazon INDIVIDUAL catch-all
+      { seal: "reference", anuncioVarejo: 48.06, liquidoVarejo: 41.33 }, // Amazon + categoria
+      { seal: "reference", anuncioVarejo: 56.66, liquidoVarejo: 21.33 }, // Shopee catalog pre-fill
+    ]);
   });
 });

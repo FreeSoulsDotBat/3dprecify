@@ -18,12 +18,13 @@ import {
   defaultChannelSlot,
   type MarketplaceId,
   MARKETPLACE_OPTIONS,
-  MODALITY_OPTIONS,
   PAYBACK_YEAR_OPTIONS,
   RITMO_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
 import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
-import type { CategoryNode } from "@/shared/fee-catalog";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
+import type { CategoryNode, FeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 import type { PriceResult } from "@3dprecify/pricing-core";
@@ -580,14 +581,20 @@ function ChannelFeeField({
   );
 }
 
-/** One editable channel slot: marketplace + (conditional) modality selectors, the manual fee grid,
- *  and a remove control. Changing the marketplace resets the modality to that market's default. */
+/** One editable channel slot: marketplace + the determinants `channelFieldPlan` says this
+ *  marketplace has (a modality SELECT, a category picker — both, one, or neither), the manual fee
+ *  grid restricted to the axes the catalog declares, and a remove control. Changing the marketplace
+ *  resets the modality to that market's default. 016/US12 (T052, FR-918) — this used to infer BOTH
+ *  the modality select AND the category picker from `modalityOptions.length > 0` (the F1 defect):
+ *  the plan now decides each independently from the catalog, and RA5 means `slotDeterminants`
+ *  (fee-prefill.ts) reads the exact same shape when it decides what is SENT. */
 function ChannelSlot({
   control,
   index,
   slot,
   outcome,
   spine,
+  catalog,
   onRemove,
   onMarketplaceChange,
 }: {
@@ -597,10 +604,23 @@ function ChannelSlot({
   outcome?: ChannelSlotOutcome;
   /** This marketplace's category spine (empty when it has no category axis, or not loaded yet). */
   spine: readonly CategoryNode[];
+  catalog: FeeCatalog;
   onRemove: (index: number) => void;
   onMarketplaceChange: (index: number, marketplace: MarketplaceId) => void;
 }) {
-  const modalityOptions = MODALITY_OPTIONS[slot.marketplace] ?? [];
+  const plan = channelFieldPlan(catalog, slot.marketplace);
+  const modalityDeterminant = plan.determinants.find((d) => d.kind === "SELECT");
+  const hasCategoryDeterminant = plan.determinants.some((d) => d.kind === "CATEGORY_PICKER");
+  // 016/US11 (T044 homologação PR-E, bloqueador) — the render-side half of the fix: a field renders
+  // if the PLAN shows it OR it already carries a value. The second clause is what makes a saved
+  // scenario safe — reopening one saved BEFORE this marketplace's plan dropped a field (e.g. a
+  // Shopee "Frete" typed before an Amazon switch that never fires `onMarketplaceChange`, since a
+  // reopen replaces the whole channel array directly) shows the field, editable/erasable, instead
+  // of hiding a number that keeps charging. Never changes the CALCULATION (FR-919): a present value
+  // still computes exactly as before — only its visibility is guaranteed.
+  const feeFieldMetas = CHANNEL_FEE_FIELDS.filter(
+    (meta) => plan.feeFields.includes(meta.name) || slot[meta.name].trim() !== "",
+  );
   return (
     <Card padding="md" className="flex flex-col gap-3" data-testid="channel-slot">
       <div className="flex items-end gap-2">
@@ -635,16 +655,16 @@ function ChannelSlot({
           ✕
         </Button>
       </div>
-      {modalityOptions.length > 0 && (
+      {modalityDeterminant && (
         <Controller
           control={control}
           name={`channels.${index}.modality` as const}
           render={({ field }) => (
-            <Field label={t.channels.modality} tightLabel>
+            <Field label={modalityDeterminant.label} tightLabel>
               {(p) => (
                 <Select
                   {...p}
-                  options={modalityOptions}
+                  options={modalityDeterminant.options ?? []}
                   name={field.name}
                   value={field.value}
                   onChange={field.onChange}
@@ -656,9 +676,10 @@ function ChannelSlot({
           )}
         />
       )}
-      {/* 014/US1 — only where the marketplace HAS a category axis. Shopee/Outro publish none, so
-          rendering an empty picker there would invent a choice that does not exist. */}
-      {modalityOptions.length > 0 && (
+      {/* 016/US12 — only where the PLAN says this marketplace publishes a category spine, never
+          inferred from the modality axis (the F1 defect: Shopee has neither today, which is exactly
+          why the old inference worked by coincidence). */}
+      {hasCategoryDeterminant && (
         <Controller
           control={control}
           name={`channels.${index}.category` as const}
@@ -677,7 +698,7 @@ function ChannelSlot({
         />
       )}
       <div style={gridCard}>
-        {CHANNEL_FEE_FIELDS.map((meta) => (
+        {feeFieldMetas.map((meta) => (
           <ChannelFeeField
             key={meta.name}
             control={control}
@@ -848,6 +869,9 @@ export function MarketplaceSection({
   refreshing,
   onRetryCatalog,
   spineFor,
+  catalog,
+  entitled,
+  signedOut,
 }: {
   control: Control<CalcFormValues>;
   values: CalcFormValues;
@@ -863,6 +887,19 @@ export function MarketplaceSection({
   onRetryCatalog: () => void;
   /** Category spine per marketplace, from the catalog that already travels with the fees (D2). */
   spineFor: (marketplace: MarketplaceId) => readonly CategoryNode[];
+  /** 016/US12 — feeds `channelFieldPlan` (RA5: the same plan that decides what renders here also
+   *  decides what is SENT as a determinant, in `fee-prefill.ts:slotDeterminants`). */
+  catalog: FeeCatalog;
+  /**
+   * 016/US11 (T048, FR-915) — is THIS account entitled to price a channel? `true` on the two
+   * always-premium surfaces (kit lines, the product page — both mount only behind their own
+   * page-level entitlement gate already); on the free calculator it is the server-derived
+   * `entitlement.data?.status === "active"` (ADR-0012 — the UI gate is convenience, never the
+   * authority; a checking/error state degrades to "not entitled", never a guessed "yes").
+   */
+  entitled: boolean;
+  /** Where `TeaserUpgrade` sends a signed-out visitor (through sign-in, preserving intent). */
+  signedOut: boolean;
 }) {
   return (
     <div className="flex flex-col gap-3">
@@ -874,53 +911,73 @@ export function MarketplaceSection({
       <SectionTitle title={t.sections.marketplace} info={t.sectionInfo.marketplace} />
       <label className="flex cursor-pointer items-center justify-between gap-3 text-sm text-[var(--text-muted)]">
         <span>{t.channels.includeToggle}</span>
+        {/* 016/US11 (T048, FR-915) — for a non-entitled account the switch is DISABLED and FALSE,
+            unconditionally: never the form's own `included` value, which would let a stale
+            `includeMarketplace: true` (the default) read as "on" the instant entitlement resolves
+            momentarily false (checking/error). Nenhum número de canal, parcial ou fake. */}
         <Switch
-          checked={included}
+          checked={entitled && included}
+          disabled={!entitled}
           onCheckedChange={onToggleInclude}
           aria-label={t.channels.includeToggle}
         />
       </label>
-      {included && (
-        <>
-          {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
-              and every price computes; this only offers a retry (tone "info", role="status" — no alarm).
-              `refreshFailed` is STICKY (see the hook) so the notice doesn't blink out during a retry's
-              transient pending window; `refreshing` then drives the button's in-flight spinner. */}
-          {refreshFailed && (
-            <Alert tone="info" title={t.channels.refreshErrorTitle}>
-              <p>{t.channels.refreshErrorBody}</p>
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={onRetryCatalog}
-                loading={refreshing}
-                className="mt-2"
-              >
-                {t.channels.refreshRetry}
-              </Button>
-            </Alert>
-          )}
-          <div className="flex flex-col gap-3">
-            {fields.map((f, i) => (
-              <ChannelSlot
-                key={f.id}
-                control={control}
-                index={i}
-                slot={values.channels[i]}
-                outcome={channelOutcomes[i]}
-                spine={spineFor(values.channels[i].marketplace)}
-                onRemove={onRemove}
-                onMarketplaceChange={onMarketplaceChange}
-              />
-            ))}
-          </div>
-          <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
-            {t.channels.addChannel}
-          </Button>
-          {/* 016/US5 — "Preços por canal" no longer renders here: it folded into `PriceResults`'
-              "Como chegamos no preço" Card (FR-907), so this section stays purely the channel
-              INPUT editing UI (marketplace/modality/category/fees + the honesty seal). */}
-        </>
+      {!entitled ? (
+        // 016/T055-reverify — na faixa full-width do grátis, o "Assinar" sem align ficava a
+        // ~950px da legenda que o motiva (o MESMO órfão de 149,6px que fez a prop `align`
+        // nascer no E6/T038-D2). Centrado, texto e CTA leem como uma unidade.
+        <div
+          className="flex flex-col gap-2"
+          style={{ textAlign: "center" }}
+          data-testid="marketplace-premium-gate"
+        >
+          <p style={captionText}>{t.channels.premiumOnly}</p>
+          <TeaserUpgrade signedOut={signedOut} align="center" />
+        </div>
+      ) : (
+        included && (
+          <>
+            {/* US3: a failed online fee refresh is NON-BLOCKING — the saved/seed reference still pre-fills
+                and every price computes; this only offers a retry (tone "info", role="status" — no alarm).
+                `refreshFailed` is STICKY (see the hook) so the notice doesn't blink out during a retry's
+                transient pending window; `refreshing` then drives the button's in-flight spinner. */}
+            {refreshFailed && (
+              <Alert tone="info" title={t.channels.refreshErrorTitle}>
+                <p>{t.channels.refreshErrorBody}</p>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={onRetryCatalog}
+                  loading={refreshing}
+                  className="mt-2"
+                >
+                  {t.channels.refreshRetry}
+                </Button>
+              </Alert>
+            )}
+            <div className="flex flex-col gap-3">
+              {fields.map((f, i) => (
+                <ChannelSlot
+                  key={f.id}
+                  control={control}
+                  index={i}
+                  slot={values.channels[i]}
+                  outcome={channelOutcomes[i]}
+                  spine={spineFor(values.channels[i].marketplace)}
+                  catalog={catalog}
+                  onRemove={onRemove}
+                  onMarketplaceChange={onMarketplaceChange}
+                />
+              ))}
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
+              {t.channels.addChannel}
+            </Button>
+            {/* 016/US5 — "Preços por canal" no longer renders here: it folded into `PriceResults`'
+                "Como chegamos no preço" Card (FR-907), so this section stays purely the channel
+                INPUT editing UI (marketplace/modality/category/fees + the honesty seal). */}
+          </>
+        )
       )}
     </div>
   );

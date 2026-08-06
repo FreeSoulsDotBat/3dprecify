@@ -64,6 +64,25 @@ export function indexSpine(nodes: readonly CategoryNode[]): Map<string, Category
 }
 
 /**
+ * 016/US13 (T054, FR-920) — the picker's HIERARCHICAL browse, alongside search. The top-level nodes
+ * (`parentId === null`), in the spine's own order. Amazon's spine is flat (38 nodes, one level, no
+ * child anywhere) — this returns all 38 and `childrenOf` returns `[]` for every one of them, so the
+ * tree degrades to a plain list with no special-casing (the same principle the picker's empty state
+ * already follows: the honest answer falls out of the data, never a marketplace `if`).
+ */
+export function rootNodes(nodes: readonly CategoryNode[]): readonly CategoryNode[] {
+  return nodes.filter((n) => n.parentId === null);
+}
+
+/** The direct children of `parentId`, in the spine's own order — `[]` for a leaf (or an unknown id). */
+export function childrenOf(
+  nodes: readonly CategoryNode[],
+  parentId: string,
+): readonly CategoryNode[] {
+  return nodes.filter((n) => n.parentId === parentId);
+}
+
+/**
  * The chain from `categoryId` up to its root, INCLUSIVE of the starting node and ordered
  * most-specific-first. This ordering IS the SC-801 rule: the nearest ancestor is by definition the
  * most specific match, and the chain is unique — so resolution needs no sorting, no tie-break, and no

@@ -125,6 +125,18 @@ export interface ResolvedChannelFees {
   freightIsEstimate: boolean;
 }
 
+/** 016/US12 (FR-928) — the invariant `entryToChannelFees` leans on: `feeEntrySchema`'s band refine
+ *  already rejects a null band `fixedFee` before any catalog ships. Throwing here (rather than
+ *  `?? 0`) turns a violated invariant into a loud failure instead of a silent R$ 0,00 under seal. */
+function nonNullBandFixedFee(fixedFee: number | null): number {
+  if (fixedFee === null) {
+    throw new Error(
+      "band fixedFee is null — feeEntrySchema should have refused this catalog (FR-928)",
+    );
+  }
+  return fixedFee;
+}
+
 /**
  * Map a resolved catalog entry → the pure engine's channel fees (SC-111 / FR-111a). A price-band entry
  * (Shopee) carries its `priceBands` through (the engine's fixed-point owns the price-keyed selection); a
@@ -154,7 +166,13 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
           minPrice: b.minPrice,
           maxPrice: b.maxPrice,
           commissionPct: b.commissionPct ?? 0,
-          fixedFee: b.fixedFee ?? 0,
+          // 016/US12 (FR-928) — NO `?? 0`. `feeEntrySchema`'s band refine already refuses to publish
+          // a band with a null `fixedFee` (the schema is the real guard: such a catalog never ships),
+          // so this is an invariant, not a live branch — and an invariant that silently defaulted to
+          // 0 is exactly the F3/014-A2 defect class this refuses instead. A catalog that somehow
+          // slipped past the schema throws LOUD here rather than pricing R$ 0,00 under a reference
+          // seal.
+          fixedFee: nonNullBandFixedFee(b.fixedFee),
         }))
       : undefined,
     ...(entry.bandMode ? { bandMode: entry.bandMode } : {}),

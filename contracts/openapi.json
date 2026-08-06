@@ -4427,6 +4427,26 @@
             ],
             "title": "Categoryspine"
           },
+          "feeAxes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "commissionPct",
+                    "fixedFee",
+                    "minPerItem",
+                    "freightCost"
+                  ]
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feeaxes"
+          },
           "entries": {
             "items": {
               "$ref": "#/components/schemas/FeeEntry"

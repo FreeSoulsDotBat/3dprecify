@@ -56,6 +56,18 @@
   min-width: 0;
 }
 
+/* 016/US11 (T044 homologação PR-E, R3) — the free-tier marketplace GATE: a direct grid child
+   spanning BOTH columns, never confined to one column's short track. Measured: with the gate
+   nested inside the right column (205px tall) beside a 2.521px-tall left column, 1.671px sat
+   empty at 1440px — a whole column-width hole where a section used to be. At <1024px the grid is
+   a single flex column already, so `grid-column` has nothing to span; the rule only matters from
+   the desktop breakpoint up, same as `.tf-calc-grid` itself. */
+@media (min-width: 1024px) {
+  .tf-calc-grid__full {
+    grid-column: 1 / -1;
+  }
+}
+
 /* T015 — "o total centralizado ao final, atravessando as colunas": the breakdown/"Como chegamos
    no preço" + the final price cards + the save/record actions are the LAST thing on the page,
    spanning the full width (never confined to one grid column). */

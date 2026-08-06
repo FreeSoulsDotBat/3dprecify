@@ -21,7 +21,7 @@ import {
   persistCatalog,
 } from "./use-fee-catalog";
 
-const newer: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-08-01.0" };
+const newer: FeeCatalog = { ...FEE_CATALOG_SEED, catalogVersion: "2026-08-20.0" };
 const store = new Map<string, unknown>();
 
 beforeEach(() => {
@@ -88,7 +88,7 @@ describe("loadPersistedCatalog (R2 store)", () => {
   it("returns the validated catalog when one is stored", async () => {
     await persistCatalog(newer);
     const loaded = await loadPersistedCatalog();
-    expect(loaded?.catalogVersion).toBe("2026-08-01.0");
+    expect(loaded?.catalogVersion).toBe("2026-08-20.0");
   });
 
   it("returns null (non-blocking) when the store read throws", async () => {

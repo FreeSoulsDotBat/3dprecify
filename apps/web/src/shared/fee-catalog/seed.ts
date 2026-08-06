@@ -6,24 +6,30 @@ import type { FeeCatalog } from "./fee-catalog";
 // US2 curation (T022): Shopee is curated (price-band based, category-independent — sourced from the
 // official 2026 commission policy). ML + Amazon stay empty pending their category-specific rates
 // (fabricating them would violate Constitution II; uncovered → manual + "sem referência").
+// 016/US12 (T051, FR-918) — `feeAxes` curation (arquitetura-016 §F.2 rule 2): which of the 4
+// numeric fee fields each marketplace's channel section shows. Bumps `catalogVersion` (content
+// changed, I5) alongside the mirrored `backend/app/data/catalog.json`.
 export const FEE_CATALOG_SEED: FeeCatalog = {
-  catalogVersion: "2026-07-07.0",
+  catalogVersion: "2026-08-06.0",
   schemaVersion: "1",
-  generatedAt: "2026-07-07T00:00:00.000Z",
+  generatedAt: "2026-08-06T00:00:00.000Z",
   marketplaces: [
     {
       marketplace: "MERCADO_LIVRE",
       determinantsSchema: { listingType: ["CLASSICO", "PREMIUM"], category: [] },
+      feeAxes: ["commissionPct", "fixedFee", "freightCost"],
       entries: [],
     },
     {
       marketplace: "AMAZON",
       determinantsSchema: { category: [], plan: ["INDIVIDUAL", "PROFISSIONAL"] },
+      feeAxes: ["commissionPct", "fixedFee", "minPerItem"],
       entries: [],
     },
     {
       marketplace: "SHOPEE",
       determinantsSchema: null,
+      feeAxes: ["commissionPct", "fixedFee", "freightCost"],
       entries: [
         {
           determinants: null,

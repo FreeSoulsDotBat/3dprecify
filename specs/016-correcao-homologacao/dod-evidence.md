@@ -181,3 +181,38 @@ acha o que a caixa não acha, mas imagem REDUZIDA inventa: julgar no 1:1.**
 
 **Não verificado (fronteira honesta)**: caminho KIT-basis da declaração (criação KIT adiada pelo
 dono 2026-07-20 — sem caminho de UI); emulação de toque real no projeto mobile.
+
+## PR-E — US11 marketplace→Premium · US12 campos dirigidos · US13 picker · 2026-08-06
+
+**Implementação (dev-frontend, T044–T054)**: gate do grátis (switch desabilitado + TeaserUpgrade;
+estados de erro/pendência degradam para "não", nunca para "sim"); promessa da 1ª dobra reescrita;
+Clarifications datadas nas specs **005 E 007** com a frase de enforcement verbatim (T050);
+`channelFieldPlan` puro + `feeAxes` aditivo com curadoria (bump próprio de `catalogVersion` →
+`2026-08-06.0`, regra "um bump por fatia"); FR-928 (banda com fixedFee nulo recusada; `?? 0`
+morto); picker com contador verdadeiro. **Bug real de wire pego de brinde**: o Pydantic dropava
+`feeAxes` em silêncio — a mesma classe do 014 (`categorySpine`/`bandMode`), pega pelo teste
+drops-no-field. Vermelhos observados; byte-idêntico premium pinado por fixture.
+
+**Homologação (qa-produto, T055): FAIL 80% → correções → re-verificação PASS 93%.** 45+19
+screenshots + 2 JSONs em `evidencias/pr-e/`.
+
+| # | achado do 1º passe | destino |
+| --- | --- | --- |
+| BLOQ | **Dinheiro invisível**: Frete digitado no ML seguia descontando na Amazon (líquido −R$ 25,76) SEM campo na tela — o RA5 que o desvio "não religar o reset ao plano" deixou aberto; o plano filtrava RENDER, nunca VALOR | **CORRIGIDO nos dois sentidos**: reset na troca dirigido pelo plano + regra de render "declarado OU com valor". Re-verificado pelo número (líquido volta a R$ 24,24; selo volta ao honesto) e pelo caminho legado FORJADO via API real: documento salvo com frete na Amazon reabre MOSTRANDO o campo, editável — nada invisível cobra |
+| R2 | Árvore de 38 nascia ABERTA (1.795px; o preço a y=4.800 no mobile) | **CORRIGIDO**: nasce recolhida ("Ver todas as categorias (38)", contagem real), scroll próprio 40vh; seção fechada 606px (−1.778px); hint a 61px do campo |
+| R3 | Buraco na coluna direita do grátis a 1440 | **PARCIAL**: gate virou faixa full-width + Outros custos migrou; o desbalanço real era ~875px (o qa corrigiu o próprio número — a heurística antiga engolia um cartão) e ficou 838px. Ressalva BAIXA aberta para o dono |
+| R4 | Legenda do teaser ficara IMPRECISA com a virada | **CORRIGIDO**: "O cálculo de custo e markup continua grátis." — o qa julgou: trocou imprecisão por eco aceitável |
+| — | CTA "Assinar" órfão a ~950px da legenda na faixa full-width | **CORRIGIDO no fechamento** (`align="center"` — a prop que nasceu do mesmo órfão no E6/T038-D2) |
+| ML | ML sem seletor de categoria e sem "Comissão mínima/item" — tensão entre US12-AC2 ("permanece como está") e a curadoria | **DECISÃO DO DONO no gate do PR** — leitura registrada: a curadoria É a do research R6/data-model mergeados no #43; "permanece como está" refere-se às adições da US15. Reverter é dado, não código |
+
+**Rodada extra que o fechamento pagou**: o executor declarou o e2e "listado sem erro de parse" —
+**listar não é rodar**. Rodado de verdade: 4 falhas reais, todas de TESTE (3 = `signUpThrowaway`
+navegando ANTES do `page.route`, persistindo o catálogo servido no cache IDB — o abort só bloqueava
+o refetch; 1 = locator frouxo com dois CTAs legítimos). Causa raiz diagnosticada antes de patch;
+suíte completa re-rodada: **244 passed / 0 failed**. **Lição (variante e2e da do 014): "a suíte
+passa" só conta como evidência se a suíte RODOU.**
+
+**O que o 1º passe já tinha aprovado, medido**: gate em 4 combinações (zero número de canal, zero
+vazamento por deep-link); promessa nova aprovada com julgamento próprio; contador do picker morto
+("Mostrando 8 de 31" com contagem independente batendo); eixos por marketplace exatos
+(Shopee sem categoria/mínimo; Amazon sem frete); Clarifications conferidas texto a texto.

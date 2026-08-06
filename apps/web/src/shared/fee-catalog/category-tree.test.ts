@@ -4,7 +4,9 @@ import {
   ancestorChain,
   categoryPath,
   categorySpineSchema,
+  childrenOf,
   indexSpine,
+  rootNodes,
   searchCategories,
 } from "./category-tree";
 
@@ -65,6 +67,36 @@ describe("ancestorChain — ordered most-specific-first", () => {
   // exact-match attempt and then falls through to the marketplace catch-all.
   it("an unknown category yields itself alone, not an empty chain nor a throw", () => {
     expect(ancestorChain(index, "MLB999999")).toEqual(["MLB999999"]);
+  });
+});
+
+describe("rootNodes / childrenOf — the hierarchical browse (016/US13, T054)", () => {
+  it("rootNodes returns only parentId === null nodes", () => {
+    expect(rootNodes(ML).map((n) => n.id)).toEqual(["MLB1051", "MLB1574"]);
+  });
+
+  it("childrenOf returns direct children only, not grandchildren", () => {
+    expect(childrenOf(ML, "MLB1051").map((n) => n.id)).toEqual(["MLB1055", "MLB3813"]);
+    expect(childrenOf(ML, "MLB3813").map((n) => n.id)).toEqual(["MLB439224"]);
+  });
+
+  it("a leaf has no children", () => {
+    expect(childrenOf(ML, "MLB439224")).toEqual([]);
+  });
+
+  it("an unknown id has no children", () => {
+    expect(childrenOf(ML, "GHOST")).toEqual([]);
+  });
+
+  // Amazon's real spine: 38 nodes, one level, no parent anywhere. The hierarchy DEGRADES to a plain
+  // list with no special-casing — every node is a root and every root is a leaf.
+  it("a flat spine (Amazon's real shape) degrades to a plain list", () => {
+    const flat = [
+      { id: "a", name: "A", parentId: null },
+      { id: "b", name: "B", parentId: null },
+    ];
+    expect(rootNodes(flat)).toHaveLength(2);
+    for (const n of rootNodes(flat)) expect(childrenOf(flat, n.id)).toEqual([]);
   });
 });
 

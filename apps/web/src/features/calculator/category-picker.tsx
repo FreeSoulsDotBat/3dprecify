@@ -4,7 +4,9 @@ import {
   type CategoryNode,
   categoryPath,
   categoryPathOfNode,
+  childrenOf,
   indexSpine,
+  rootNodes,
   searchCategories,
 } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -47,6 +49,23 @@ const MAX_RESULTS = 8;
 export function CategoryPicker({ spine, value, onChange, hasFeeReference }: CategoryPickerProps) {
   const [query, setQuery] = useState("");
   const index = useMemo(() => indexSpine(spine), [spine]);
+  // 016/US13 (T054) — which browse-tree nodes are expanded. Plain ids, not a per-marketplace reset:
+  // a marketplace switch replaces `spine` entirely (a stale expanded id simply never matches a node
+  // again, same as an unmounted picker).
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  // 016/US13 (T044 homologação PR-E, R2) — the browse tree nasce RECOLHIDA. Measured: a spine of 38
+  // (Amazon) rendered inline pushed the page to 1.795px BEFORE any input, and the final price fell
+  // to y≈4.800 at 360px — every premium account paid that cost on every slot, whether or not it
+  // ever opens the tree. Search stays the primary, always-visible path; the tree is now a
+  // deliberate opt-in behind a button naming the REAL count.
+  const [browseOpen, setBrowseOpen] = useState(false);
+  const toggleExpand = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   // Choosing UNMOUNTS the option button along with the whole list, so focus fell to `document.body`:
   // a keyboard user lost their place in the form at the exact moment they had just decided the
   // commission on their own sale. The flag distinguishes "the seller just chose" from "the component
@@ -130,6 +149,12 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
     );
   }
 
+  const choose = (id: string) => {
+    justChose.current = true;
+    onChange(id);
+    setQuery("");
+  };
+
   const searched = query.trim().length > 0;
   // Busca SEM corte e corta depois, de propósito: a contagem precisa do total real. Cortar dentro do
   // `searchCategories` (via o seu `limit`) devolveria 8 e o rótulo diria "8 categorias encontradas"
@@ -198,11 +223,7 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
                   <button
                     type="button"
                     className="category-picker__option"
-                    onClick={() => {
-                      justChose.current = true;
-                      onChange(node.id);
-                      setQuery("");
-                    }}
+                    onClick={() => choose(node.id)}
                   >
                     {/* By NODE, not by id: the node came out of this very spine, so there is no
                         unknown case to handle — and none to invent a fallback for either. */}
@@ -215,8 +236,116 @@ export function CategoryPicker({ spine, value, onChange, hasFeeReference }: Cate
               ))}
             </ul>
           )}
+          {/* 016/US13 (T054, FR-920) — hierarchical browse, ALONGSIDE search (not instead of it):
+              reachable whenever the seller has not typed anything yet. 016/US11 (T044 homologação
+              PR-E, R2) — it now nasce RECOLHIDA behind a button naming the REAL count (never "8" —
+              `resultsTruncated`'s own lesson, applied here too); opened, it gets its OWN scroll
+              (~40vh) so a 38-node spine never pushes the whole page. A flat spine (Amazon) degrades
+              to a plain list with no code branch for it: every node IS a root, `childrenOf` returns
+              `[]` for each — no expand affordance ever renders. */}
+          {!searched && (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="self-start"
+                aria-expanded={browseOpen}
+                data-testid="category-browse-toggle"
+                onClick={() => setBrowseOpen((v) => !v)}
+              >
+                {browseOpen
+                  ? t.browseCollapse
+                  : t.browseToggle.replace("{n}", String(spine.length))}
+              </Button>
+              {browseOpen && (
+                <div className="category-picker__browse-scroll">
+                  <p className="category-picker__note category-picker__count" role="status">
+                    {t.browseCount.replace("{n}", String(spine.length))}
+                  </p>
+                  <CategoryTreeList
+                    nodes={rootNodes(spine)}
+                    allNodes={spine}
+                    index={index}
+                    expanded={expanded}
+                    onToggleExpand={toggleExpand}
+                    onSelect={choose}
+                  />
+                </div>
+              )}
+            </>
+          )}
         </div>
       )}
     </Field>
+  );
+}
+
+/** One level of the hierarchical browse tree (016/US13, T054) — recursive, and each recursive call
+ *  owns its own `<ul>` so nesting never double-wraps. A node is ALWAYS directly selectable (an
+ *  intermediate category is a valid choice, not just a leaf); the "▸"/"▾" disclosure only ever
+ *  controls whether its children are visible, and renders at all only when there ARE children — a
+ *  leaf gets no dead-end toggle. */
+function CategoryTreeList({
+  nodes,
+  allNodes,
+  index,
+  expanded,
+  onToggleExpand,
+  onSelect,
+}: {
+  nodes: readonly CategoryNode[];
+  allNodes: readonly CategoryNode[];
+  index: Map<string, CategoryNode>;
+  expanded: Set<string>;
+  onToggleExpand: (id: string) => void;
+  onSelect: (id: string) => void;
+}) {
+  return (
+    <ul className="category-picker__list category-picker__tree" data-testid="category-tree">
+      {nodes.map((node) => {
+        const kids = childrenOf(allNodes, node.id);
+        const isExpanded = expanded.has(node.id);
+        return (
+          <li key={node.id}>
+            <div className="category-picker__tree-row">
+              {kids.length > 0 && (
+                <button
+                  type="button"
+                  className="category-picker__expand"
+                  aria-expanded={isExpanded}
+                  aria-label={(isExpanded ? t.collapseAria : t.expandAria).replace(
+                    "{name}",
+                    node.name,
+                  )}
+                  onClick={() => onToggleExpand(node.id)}
+                >
+                  {isExpanded ? "▾" : "▸"}
+                </button>
+              )}
+              <button
+                type="button"
+                className="category-picker__option"
+                onClick={() => onSelect(node.id)}
+              >
+                {node.name}
+                <span className="category-picker__go" aria-hidden="true">
+                  ›
+                </span>
+              </button>
+            </div>
+            {kids.length > 0 && isExpanded && (
+              <CategoryTreeList
+                nodes={kids}
+                allNodes={allNodes}
+                index={index}
+                expanded={expanded}
+                onToggleExpand={onToggleExpand}
+                onSelect={onSelect}
+              />
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

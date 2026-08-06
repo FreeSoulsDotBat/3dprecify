@@ -18,6 +18,19 @@ vi.mock("@/shared/fee-catalog", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
   return { ...actual, useFeeCatalog: () => useFeeCatalogMock() };
 });
+// 016/US11 (T048, FR-915) — marketplace pricing is Premium now; this file's retry notice lives
+// INSIDE the entitled branch of `MarketplaceSection`, so the mechanics it tests need an entitled
+// account. Free-tier proof lives in `apps/web/tests/e2e/marketplace-premium.spec.ts`.
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({
+    data: { status: "active" },
+    isError: false,
+    isLoading: false,
+    stale: false,
+    isFetching: false,
+    refetch: () => {},
+  }),
+}));
 
 afterEach(() => cleanup());
 const t = messages.calculator;

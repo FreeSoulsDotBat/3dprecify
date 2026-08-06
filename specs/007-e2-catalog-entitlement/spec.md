@@ -306,6 +306,33 @@ nothing persists; nothing reports success; no price/date appears anywhere.
 
 ## Clarifications
 
+### Session 2026-08-06 (016/US11 — a virada de freemium do marketplace de venda)
+
+A FR-313/SC-310 continuam verdadeiras para o núcleo do E1 (custo + markup): **nenhuma** superfície de
+catálogo/persistência/entitlement gateia, bloqueia ou altera o caminho de cálculo do custo e do
+markup — a calculadora "básica" segue livre, offline e sem login. O que a decisão do dono em
+2026-08-05 (registrada em `specs/016-correcao-homologacao/spec.md` US11, FR-915/916/917) muda é o
+ESCOPO do que "o E1 calculator" cobre: o bloco de **canal de venda de marketplace** (005) deixou de
+ser grátis — ele agora exige entitlement ativo, com o mesmo gate de UI que já protege catálogo/
+histórico/cenários/kits (ADR-0012).
+
+- **A FR-313/SC-310 não são reescritas.** Elas continuam descrevendo o compromisso correto para o
+  que sempre foi "o E1": o pipeline de custo (`material · energia · máquina · falha · acabamento ·
+  mão de obra · outros custos · custo_total · markup`). Ler as duas à luz desta Clarification: "o
+  cálculo" nelas é este pipeline, não o bloco de marketplace da spec irmã 005 — cuja própria
+  Clarification datada (`specs/005-marketplace-multichannel/spec.md`, sessão 2026-08-06) registra a
+  virada do lado de lá.
+- **A frase de enforcement (achado D1 do analyze, exigida verbatim)**: o enforcement da virada é de
+  UI porque o cálculo é offline por design e as tarifas são dado público semeado no bundle; o valor
+  premium é a conveniência — decisão consciente, não drift do Princípio IV.
+- **Por que isto não quebra o Princípio IV (nenhum dado premium sem entitlement do servidor)**: o
+  Princípio IV protege DADOS que o servidor guarda por conta do usuário (catálogo salvo, histórico,
+  cenários, kits) — o catálogo de tarifas de marketplace não é um desses; é dado público, semeado no
+  bundle do cliente e servido sem autenticação (`GET /api/v1/fee-catalog`, ADR-0010). Um usuário
+  técnico sempre pôde ler o bundle e calcular o gross-up manualmente offline; o gate de UI não some
+  esse fato, e a decisão do dono é explícita sobre isso: o valor vendido é a conveniência da tela
+  pronta, não o segredo de uma fórmula ou de uma tarifa que já é pública.
+
 ### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
 
 A homologação pré-provisionamento (`docs/homologacao/`) achou afirmações desta spec que o E6 tornou
