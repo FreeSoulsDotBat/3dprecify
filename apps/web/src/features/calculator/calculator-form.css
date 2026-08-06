@@ -77,3 +77,30 @@
     max-width: 720px;
   }
 }
+
+/* 016/PR-C homologação (B3, US8) — the ritmo/payback select pair. `auto-fit, minmax(240px, 1fr)`
+   stacks the two at full width the instant the card is narrower than ~2×240px + gap (measured:
+   87px useful at 360px / 102px at 390px under the OLD hard `1fr 1fr` — the widest option,
+   "Poucas horas por semana", needed up to 197px and had 0px to spare), and sits them side by side
+   with real breathing room once the card is wide enough (desktop, ~1024px+) — 1fr distributes
+   whatever is left over the 240px floor, so "folga real" grows WITH the viewport instead of
+   staying pinned at zero. */
+.tf-machine-ritmo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+
+/* 016/PR-C homologação (B4, US9) — "Custos da peça"'s own field grid. The old hard `1fr 1fr`
+   (`gridCard`, still used elsewhere) forced EVERY field into a 2-col track regardless of how
+   narrow the card got — fine for a short field, but "Tarifa de energia" carries BOTH a currency
+   prefix ("R$") and an unusually wide unit suffix ("/kWh"), and at 360/390px that track left the
+   NUMBER itself 1px of visible width (the pre-existing cut the qa's counterfactual found even
+   without the ⓘ). `auto-fit, minmax(170px, 1fr)` is the same reflow-not-squeeze fix as
+   `.tf-machine-ritmo-grid` above, sized to clear that one outlier's affix pair with real margin
+   while still packing 2 (mobile, most fields) or up to 4 short fields (desktop) per row. */
+.tf-costs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: var(--space-3);
+}

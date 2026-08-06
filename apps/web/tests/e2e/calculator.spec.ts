@@ -44,19 +44,33 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   await signInThrowaway(page, `base-${info.workerIndex}`);
 
   const f = messages.calculator.fields;
+  const ti = messages.calculator.timeInput;
   // The SC-001 worked example → custo_total R$ 28,65, varejo R$ 42,98, atacado R$ 37,25.
+  // 016/US6 (FR-908) — 8 of these fields now carry an InfoTip whose trigger aria-label is a
+  // SUPERSTRING of the plain field label ("Sobre o consumo médio" ⊇ "Consumo médio"); `getByLabel`
+  // matches by substring across EVERY role, so it also catches the tip's `button`. Constraining to
+  // `getByRole("textbox", …)` excludes the button by role alone — the fix already used elsewhere
+  // in this file — so the tipped fields below use that instead of a bare `getByLabel`.
   await page.getByLabel(f.costPerRoll).fill("100");
   await page.getByLabel(f.rollWeight).fill("1");
   await page.getByLabel(f.grams).fill("100");
   await page.getByLabel(f.wasteGrams).fill("10");
-  await page.getByLabel(f.printTime).fill("5");
-  await page.getByLabel(f.avgPower).fill("0,10");
-  await page.getByLabel(f.tariff).fill("1");
+  // 016/US7 — printTime is now two fields (h + min); the engine still receives the same decimal.
+  await page.getByLabel(ti.hoursAria).fill("5");
+  await page.getByLabel(ti.minutesAria).fill("0");
+  await page.getByRole("textbox", { name: f.avgPower, exact: true }).fill("0,10");
+  await page.getByRole("textbox", { name: f.tariff, exact: true }).fill("1");
   await page.getByLabel(f.machineValue).fill("4000");
-  await page.getByLabel(f.machineLifetime).fill("2000");
-  await page.getByLabel(f.failure).fill("10");
-  await page.getByLabel(f.finishTime).fill("0,5");
-  await page.getByLabel(f.finishRate).fill("10");
+  // 016/US8 — machineLifetime only renders (in "ajustar" mode). The seed (3600h) IS a ritmo ×
+  // payback product now (016/PR-C homologação B1), so the form opens in RITMO mode — "Ajustar
+  // horas direto" reveals the raw hours field this canonical vector needs to type 2000 into.
+  await page.getByRole("button", { name: messages.calculator.machineCost.adjustButton }).click();
+  await page.getByRole("textbox", { name: f.machineLifetime, exact: true }).fill("2000");
+  // failure/finishTime/finishRate are OPTIONAL fields — their accessible name carries the "opcional"
+  // suffix (field.tsx), so `exact` would miss them; role alone already excludes the tip's button.
+  await page.getByRole("textbox", { name: f.failure }).fill("10");
+  await page.getByRole("textbox", { name: f.finishTime }).fill("0,5");
+  await page.getByRole("textbox", { name: f.finishRate }).fill("10");
   await page.getByLabel(f.markupVarejo).fill("50");
   await page.getByLabel(f.markupAtacado).fill("30");
 
@@ -97,9 +111,9 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
   await page.getByLabel(messages.calculator.fields.costPerRoll).fill("100");
   await page.getByLabel(messages.calculator.fields.rollWeight).fill("1");
   await page.getByLabel(messages.calculator.fields.grams).fill("100");
-  // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/2000 h)
-  // this yields custo_total R$ 20,60 → varejo R$ 30,90.
-  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
+  // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/3600 h —
+  // 016/PR-C homologação B1) this yields custo_total R$ 16,16 → varejo R$ 24,24.
+  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   await context.setOffline(false);
 });
@@ -128,8 +142,9 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
   // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
   // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
-  await expect(page.getByText("R$ 20,60")).toBeVisible(); // custo_total breakdown row (seed)
-  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo for the seed
+  // 016/PR-C homologação B1 — seed custo_total R$ 16,16 / varejo R$ 24,24 (machine 4000/3600h).
+  await expect(page.getByText("R$ 16,16")).toBeVisible(); // custo_total breakdown row (seed)
+  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // varejo for the seed
 
   // SC-009: nothing is saved/exported and there is no upgrade/paywall CTA. The free-tier
   // note is an honest statement (not a call to action) and stays visible.
@@ -160,7 +175,8 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByLabel(t.fields.grams).fill("100");
-  await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
+  // 016/PR-C homologação B1 — seed varejo R$ 24,24.
+  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 
   // Retry now succeeds → the notice clears (the served catalog is adopted).
   failFetch = false;
@@ -180,8 +196,10 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
   // Build the COMPLETE 005 surface: labor (US4-004), several long-named sub-costs incl. an inline
   // error (US5), a manual-fee channel + a Shopee catalog-prefilled channel with its long seal and
   // voucher line (US1/US2), and every gross-up row rendered — then assert no h-scrollbar anywhere.
-  await page.getByLabel(t.fields.laborHours).fill("2");
-  await page.getByLabel(t.fields.laborRate).fill("30");
+  // 016/US6 — both are tipped + OPTIONAL (see the canonical-vector test above): role alone
+  // disambiguates from the tip's button, and non-exact absorbs the "opcional" suffix.
+  await page.getByRole("textbox", { name: t.fields.laborHours }).fill("2");
+  await page.getByRole("textbox", { name: t.fields.laborRate }).fill("30");
 
   await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
   await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
@@ -560,10 +578,10 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
   // The catalog refresh fails offline → the US3 notice appears but blocks NOTHING.
   await expect(page.getByText(t.channels.refreshErrorTitle)).toBeVisible();
 
-  // Manual channel fee → gross-up computes locally (seed varejo 30,90 @20% + R$0 → 38,63).
+  // Manual channel fee → gross-up computes locally (016/PR-C B1 seed varejo 24,24 @20% + R$0 → 30,30).
   const slot0 = page.getByTestId("channel-slot").nth(0);
   await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
-  await expect(page.getByText("R$ 38,63")).toBeVisible();
+  await expect(page.getByText("R$ 30,30")).toBeVisible();
 
   // Shopee pre-fills from the BUNDLED SEED while offline (the honesty seal says so).
   await page.getByRole("button", { name: t.channels.addChannel }).click();
@@ -571,12 +589,12 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
   await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded);
 
-  // Sub-cost folds into custo_total offline (seed 20,60 + 3,00 = 23,60).
+  // Sub-cost folds into custo_total offline (016/PR-C B1 seed 16,16 + 3,00 = 19,16).
   await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
   const costRow = page.getByTestId("other-cost-row").first();
   await costRow.getByLabel(t.outrosCustos.name).fill("Embalagem");
   await costRow.getByLabel(t.outrosCustos.value).fill("3,00");
-  await expect(page.getByText("R$ 23,60")).toBeVisible();
+  await expect(page.getByText("R$ 19,16")).toBeVisible();
 
   // The toggle works offline too: off → channels gone, direct headline intact.
   await page.getByRole("switch", { name: t.channels.includeToggle }).click();

@@ -20,7 +20,28 @@ function collectStrings(value: unknown, acc: string[] = []): string[] {
 // system shell) still carries none of that, which is what this invariant continues to guard.
 const { billing: _omittedBillingCopy, ...NON_BILLING_MESSAGES } = messages;
 void _omittedBillingCopy;
-const HAYSTACK = collectStrings(NON_BILLING_MESSAGES).join("\n").toLowerCase();
+
+// 016/US6 dated exception (2026-08-06, conteudo-tooltips.md, FR-908/Constitution II): the price
+// literal this guard forbids is OUR product's undecided commercial price (SS-4/FR-014's actual
+// target — see the `billing` carve-out above). `fieldTips` and `tooltipRefs` quote THIRD-PARTY
+// public figures instead — the national average electricity tariff (ANEEL), the legal minimum
+// wage, and dono-approved worked examples ("R$ 3.000 ÷ 160 h") — sourced + dated in
+// `specs/016-correcao-homologacao/conteudo-tooltips.md`, never a price this app is charging.
+// Rendered as plain body text (not through the number-formatting pipeline) precisely because it
+// is prose quoting an external fact, not a computed result.
+const {
+  fieldTips: _omittedFieldTips,
+  tooltipRefs: _omittedTooltipRefs,
+  ...NON_TOOLTIP_CALCULATOR
+} = messages.calculator;
+void _omittedFieldTips;
+void _omittedTooltipRefs;
+const HAYSTACK = collectStrings({
+  ...NON_BILLING_MESSAGES,
+  calculator: NON_TOOLTIP_CALCULATOR,
+})
+  .join("\n")
+  .toLowerCase();
 
 describe("copy honesty (T051 / US4 — SS-4 / FR-014)", () => {
   it("names no payment provider", () => {

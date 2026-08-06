@@ -16,6 +16,7 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import {
   captionText,
+  CostsSection,
   FieldGroup,
   gridCard,
   MarketplaceSection,
@@ -36,14 +37,13 @@ import {
   type CalcFieldName,
   type CalcFormValues,
   calculatorResolver,
+  COST_FIELDS,
   defaultCalcValues,
   defaultOtherCost,
-  LABOR_FIELDS,
-  MANDATORY_FIELDS,
+  LABOR_AND_FINISH_FIELDS,
   type MarketplaceId,
   MARKUP_FIELDS,
   slotResetOnMarketplaceChange,
-  OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
@@ -380,24 +380,15 @@ export function CalcularPage() {
           channels included. */}
       <div className="tf-calc-grid">
         <div className="tf-calc-grid__col">
-          <FieldGroup
-            control={control}
-            title={t.sections.inputs}
-            info={t.sectionInfo.inputs}
-            fields={MANDATORY_FIELDS}
-          />
-          <FieldGroup
-            control={control}
-            title={t.sections.optional}
-            info={t.sectionInfo.optional}
-            hint={t.sections.optionalHint}
-            fields={OPTIONAL_FIELDS}
-          />
+          {/* 016/PR-C (US6/US7/US8/US9) — "Custos da peça" now carries the fused
+              MANDATORY+OPTIONAL fields, the h+min time input and the machine-cost question; the
+              old separate "Ajustes opcionais" section is gone (US9-AC2). */}
+          <CostsSection control={control} fields={COST_FIELDS} />
           <FieldGroup
             control={control}
             title={t.sections.labor}
             info={t.sectionInfo.labor}
-            fields={LABOR_FIELDS}
+            fields={LABOR_AND_FINISH_FIELDS}
           />
           <OtherCostsSection
             control={control}

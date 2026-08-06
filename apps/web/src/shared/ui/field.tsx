@@ -10,6 +10,14 @@ export interface FieldRenderProps {
 
 export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "children"> {
   label?: ReactNode;
+  /** 016/PR-C homologação (B4) — content rendered on the SAME row as the label (e.g. an
+   *  `InfoTip` trigger), but a SIBLING of the `<label>`, never nested inside it: a `<label>`'s
+   *  accessible-name computation folds in ALL descendant text, including a nested button's own
+   *  name — a "Vida útil da máquina Sobre a vida útil da máquina" accessible name, confirmed the
+   *  hard way (e2e `getByRole("textbox", …)` stopped resolving). It also frees the CONTROL row
+   *  for the input alone, so a wide unit affix (e.g. "/kWh") no longer competes with the tip
+   *  trigger for the same cramped row at 360/390px. */
+  labelAddon?: ReactNode;
   htmlFor?: string;
   required?: boolean;
   /** Shows a muted "opcional" tag on the right of the label. */
@@ -30,6 +38,7 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, "childr
  */
 export function Field({
   label,
+  labelAddon,
   htmlFor,
   required = false,
   optional = false,
@@ -51,19 +60,24 @@ export function Field({
       : children;
   return (
     <div className={`tf-field ${className}`.trim()} {...rest}>
-      {label && (
-        <label
-          className={`tf-field__label${tightLabel ? " tf-field__label--tight" : ""}`}
-          htmlFor={id}
-        >
-          {label}
-          {required && (
-            <span className="tf-field__req" aria-hidden="true">
-              *
-            </span>
+      {(label || labelAddon) && (
+        <div className="tf-field__label-row">
+          {label && (
+            <label
+              className={`tf-field__label${tightLabel ? " tf-field__label--tight" : ""}`}
+              htmlFor={id}
+            >
+              {label}
+              {required && (
+                <span className="tf-field__req" aria-hidden="true">
+                  *
+                </span>
+              )}
+              {optional && !required && <span className="tf-field__optional">opcional</span>}
+            </label>
           )}
-          {optional && !required && <span className="tf-field__optional">opcional</span>}
-        </label>
+          {labelAddon}
+        </div>
       )}
       {control}
       {hint && !error && (

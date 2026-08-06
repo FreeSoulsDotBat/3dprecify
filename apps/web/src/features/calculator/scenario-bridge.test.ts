@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { type FeeCatalog, feeCatalogSchema } from "@/shared/fee-catalog";
 
 import { computeFromForm } from "./calculator-model";
+import { ptBrToWireDecimal } from "@/shared/lib/decimal-ptbr";
 import {
   applyScenarioConfig,
   buildScenarioConfig,
@@ -259,9 +260,15 @@ describe("applyScenarioConfig → computeFromForm — REOPEN + live recompute (T
 // UNIFORMLY to every kit line's `lastKnown` input → `computeBom` → the per-marketplace rollup.
 // No `pricing-core` change (reuses `computeFromForm`/`computeBom` verbatim).
 describe("computeScenarioKitChannels (T024)", () => {
+  // 016/T030-reverify — as folhas de um documento salvo são WIRE ("4000.00"), nunca a string de
+  // formulário. Este helper semeava o wire com `defaultCalcValues` cru e funcionava por
+  // coincidência de gramática — a semente agrupada ("4.000,00") expôs o abuso quando
+  // `decimalStringToPtBr` (que só conhece wire) a recebeu. `ptBrToWireDecimal` é o espelho REAL do
+  // caminho de gravação; o fixture agora atravessa a mesma fronteira que o produto atravessa.
   const kitLastKnown = (over: Record<string, string> = {}): Record<string, string> => {
     const scalars: Record<string, string> = {};
-    for (const name of CALC_FIELD_NAMES) scalars[name] = defaultCalcValues[name]!;
+    for (const name of CALC_FIELD_NAMES)
+      scalars[name] = ptBrToWireDecimal(defaultCalcValues[name]!);
     return { ...scalars, ...over };
   };
 

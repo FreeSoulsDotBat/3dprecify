@@ -52,9 +52,9 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
   await page.goto("/kits");
   await page.reload();
 
-  // One ad-hoc line at the default values — the composer prices it live (custo R$ 20,60).
+  // One ad-hoc line at the default values — the composer prices it live (custo R$ 16,16, 016/PR-C B1 seed).
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
 
   await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Suporte");
   await page.getByRole("button", { name: t.bom.save, exact: true }).click();
@@ -79,7 +79,7 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
 
   // Reopen it: the inputs come back and the SAME money is RECOMPUTED from them (no stored price).
   await page.getByText("Kit Suporte").click();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
   await expect(page.getByRole("textbox", { name: new RegExp(t.bom.kitName) })).toHaveValue(
     "Kit Suporte",
   );
@@ -114,7 +114,7 @@ test("deleting a referenced product degrades the kit line on reopen — never a 
 
   // Save a kit with one ad-hoc line → it materializes a manual product the kit line references.
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
   await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Degrada");
   await page.getByRole("button", { name: t.bom.save, exact: true }).click();
   await expect(page.getByText(t.bom.saved)).toBeVisible();
@@ -144,7 +144,7 @@ test("deleting a referenced product degrades the kit line on reopen — never a 
   // NEVER presents the deleted product as a live reference, and NEVER claims a removal.
   await expect(page.getByText(t.productForm.manualValuesKept)).toBeVisible({ timeout: 15_000 });
   await expect(page.getByText(/\(avulsa\)/).first()).toBeVisible();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible(); // still priceable
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible(); // still priceable
   await expect(page.getByText(piece)).toHaveCount(0); // the deleted product is NOT shown as live
   // F1/K3 honesty guard: no removal/deletion claim anywhere on the degraded surface.
   await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);

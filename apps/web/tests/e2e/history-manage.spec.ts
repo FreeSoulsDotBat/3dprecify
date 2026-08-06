@@ -153,7 +153,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
   await page.goto("/kits");
   await page.reload();
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
   await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Origem");
   await page.getByRole("button", { name: t.bom.save, exact: true }).click();
   await expect(page.getByText(t.bom.saved)).toBeVisible();
@@ -164,7 +164,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
   // binds a filament/printer, never a product) cannot itself set.
   await page.goto("/catalogo?tab=products");
   await page.getByText(piece).click();
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible(); // varejo of custo 20,60
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible(); // varejo of custo 16,16 (016/PR-C B1 seed)
   await recordFromCalculator(page); // the SAME RecordSnapshotButton + sheet as the calculator
   // Wait for the record to SETTLE (online ⇒ synced) before navigating — else the goto aborts the
   // in-flight enqueue+drain and the snapshot is silently lost.
@@ -173,7 +173,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
   // In the ledger the snapshot carries the frozen value AND a live "Abrir produto" origin link. (The
   // card is titled by the frozen origin name, since the record has no manual label.)
   await openFromLedger(page, piece);
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
   await expect(page.getByRole("link", { name: t.historico.openProduct })).toBeVisible();
 
   // CHURN: delete the origin product through the catalog — the seller's own action (T023). The
@@ -190,7 +190,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
   // is INERT: the frozen value is unchanged, and the origin link is simply GONE — never a broken
   // link, never a "produto removido" claim on a document that records no such thing.
   await openFromLedger(page, piece);
-  await expect(page.getByText(/R\$\s?30,90/).first()).toBeVisible(); // byte-identical claim
+  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible(); // byte-identical claim
   await expect(page.getByRole("link", { name: t.historico.openProduct })).toHaveCount(0);
   await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);
 });

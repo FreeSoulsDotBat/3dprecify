@@ -189,7 +189,7 @@ test("duplicate-to-tweak: the copy is independent — tweaking it never moves th
   grantPremium(email);
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   // A real multi-channel comparison worth duplicating: SHOPEE with an explicit commission override.
   const slot0 = page.getByTestId("channel-slot").nth(0);
@@ -266,7 +266,7 @@ test("manage: rename (PATCH), edit-config (PUT), search narrows the list, delete
   grantPremium(email);
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   async function saveNamed(name: string) {
     await page.getByTestId("save-scenario-trigger").click();
@@ -339,7 +339,7 @@ test("lapse read-only: reads survive, every write affordance is honestly gated, 
   grantPremium(email);
   await page.goto("/calcular");
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
 
   await page.getByTestId("save-scenario-trigger").click();
   const saveSheet = page.getByRole("dialog");
@@ -381,7 +381,7 @@ test("lapse read-only: reads survive, every write affordance is honestly gated, 
   // Re-grant → writes come back to life, data intact the whole time.
   grantPremium(email);
   await page.reload();
-  await expect(page.getByText("R$ 20,60")).toBeVisible();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
   listDialog = await openScenariosList(page);
   await expect(listDialog.getByText(s.lapsedTitle)).toHaveCount(0);
   await expect(listDialog.getByRole("button", { name: `${s.rename} Cenário Lapso` })).toBeEnabled();

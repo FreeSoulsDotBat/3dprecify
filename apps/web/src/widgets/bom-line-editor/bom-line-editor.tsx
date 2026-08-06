@@ -3,22 +3,26 @@ import { useFieldArray, useForm } from "react-hook-form";
 
 import {
   captionText,
+  ControlledField,
   FieldGroup,
+  MachineCostFields,
   MarketplaceSection,
   OtherCostsSection,
   PriceResults,
+  SectionTitle,
+  TimeHmField,
 } from "@/features/calculator/calculator-form";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import {
   type CalcFormValues,
   calculatorResolver,
+  COST_OPTIONAL_FIELDS,
+  COST_REQUIRED_FIELDS,
   defaultOtherCost,
-  LABOR_FIELDS,
-  MANDATORY_FIELDS,
+  LABOR_AND_FINISH_FIELDS,
   type MarketplaceId,
   MARKUP_FIELDS,
   slotResetOnMarketplaceChange,
-  OPTIONAL_FIELDS,
 } from "@/features/calculator/calculator-schema";
 import type { ProductOut } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
@@ -97,13 +101,12 @@ export function BomLineEditor({
   ];
 
   // ux §1.3 secondary disclosure — label composed from the existing section titles (no new copy).
+  // 016/US9 — "Ajustes opcionais" retired everywhere (its fields moved under this SAME
+  // disclosure, alongside labor/outros/marketplace, so the composed label drops that name too).
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const advancedLabel = [
-    t.sections.optional,
-    t.sections.labor,
-    t.outrosCustos.title,
-    t.sections.marketplace,
-  ].join(" · ");
+  const advancedLabel = [t.sections.labor, t.outrosCustos.title, t.sections.marketplace].join(
+    " · ",
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -131,13 +134,23 @@ export function BomLineEditor({
           mandatory costs + markup stay visible; the secondary sections collapse under ONE
           disclosure (ux §1.3, T006b nit #2) so only the line being tuned pays the height.
           Collapsing UNMOUNTS the sections but RHF keeps their VALUES, and both the resolver and
-          computeFromForm run over values — a collapsed bad fee still errors/rolls up honestly. */}
-      <FieldGroup
-        control={control}
-        title={t.sections.inputs}
-        info={t.sectionInfo.inputs}
-        fields={MANDATORY_FIELDS}
-      />
+          computeFromForm run over values — a collapsed bad fee still errors/rolls up honestly.
+          016/US6-US9 — the REQUIRED costs + printTime (h+min) + the machine-cost question stay
+          always visible (COST_REQUIRED_FIELDS); the optional remainder joins the disclosure below
+          instead of its own retired "Ajustes opcionais" title (US9-AC2). */}
+      <div className="flex flex-col gap-2">
+        <SectionTitle title={t.sections.inputs} info={t.sectionInfo.inputs} />
+        <Card padding="md" className="flex flex-col gap-4">
+          {/* 016/PR-C homologação (B4) — `.tf-costs-grid`, not `gridCard` (see calculator-form.css). */}
+          <div className="tf-costs-grid">
+            {COST_REQUIRED_FIELDS.map((meta) => (
+              <ControlledField key={meta.name} control={control} meta={meta} />
+            ))}
+          </div>
+          <TimeHmField control={control} />
+          <MachineCostFields control={control} />
+        </Card>
+      </div>
       <FieldGroup
         control={control}
         title={t.sections.markup}
@@ -157,18 +170,19 @@ export function BomLineEditor({
 
       {advancedOpen && (
         <div className="flex flex-col gap-3">
-          <FieldGroup
-            control={control}
-            title={t.sections.optional}
-            info={t.sectionInfo.optional}
-            hint={t.sections.optionalHint}
-            fields={OPTIONAL_FIELDS}
-          />
+          {/* The optional remainder of "Custos da peça" (wasteGrams/manutenção/falha) — no
+              titled section of its own; the disclosure button above already names it.
+              016/PR-C homologação (B4) — `.tf-costs-grid`, not `gridCard`. */}
+          <Card padding="md" className="tf-costs-grid">
+            {COST_OPTIONAL_FIELDS.map((meta) => (
+              <ControlledField key={meta.name} control={control} meta={meta} />
+            ))}
+          </Card>
           <FieldGroup
             control={control}
             title={t.sections.labor}
             info={t.sectionInfo.labor}
-            fields={LABOR_FIELDS}
+            fields={LABOR_AND_FINISH_FIELDS}
           />
           <OtherCostsSection
             control={control}

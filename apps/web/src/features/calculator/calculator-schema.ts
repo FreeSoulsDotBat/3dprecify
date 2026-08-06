@@ -274,8 +274,19 @@ export const defaultCalcValues: CalcFormValues = {
   printTimeHours: "5",
   avgPowerKw: "0,12",
   tariffPerKwh: "1,00",
-  machineValue: "4000,00",
-  machineLifetimeHours: "2000",
+  // 016/T030-reverify — semente já agrupada: a máscara de milhar (B2) formata no BLUR, então uma
+  // semente crua exibia "R$ 4000,00" até o primeiro toque. parseDecimal lê as duas formas igual
+  // (provado na re-verificação: pós-blur o campo vira "4.000,00" e o custo segue R$ 16,16). É o
+  // único campo currency da semente com 4+ dígitos.
+  machineValue: "4.000,00",
+  // 016/PR-C homologação (B1) — 2000h não é produto de RITMO × payback nenhum, então a primeira
+  // visita nascia no modo "ajustar" mostrando o campo que o dono aposentou (US8). 3600 = 1200
+  // h/ano ("quase todo dia") × 3 anos — o próprio exemplo da spec/tooltip — nasce no modo ritmo,
+  // com "Quase todo dia" + 3 anos selecionados e "≈ R$ 1,11 por hora" dito em voz alta.
+  // CONSEQUÊNCIA ASSUMIDA: o preço-semente muda (máquina R$ 2,00/h → R$ 1,11/h; custo total
+  // R$ 20,60 → R$ 16,16; varejo R$ 30,90 → R$ 24,24; atacado R$ 26,78 → R$ 21,01 — conferido
+  // rodando computeCalculator com este seed, não chutado).
+  machineLifetimeHours: "3600",
   maintenanceReservePerHour: "0",
   failurePct: "0",
   finishTimeHours: "0",
@@ -300,46 +311,69 @@ export interface CalcFieldMeta {
   unit?: string;
   /** Always-visible clarifying hint (e.g. the avgPower tooltip). */
   hint?: string;
+  /** 016/US6 (FR-908) — the didactic ⓘ tooltip (label for the trigger + explanatory body). Never
+   *  present for a field outside the 9 researched in `conteudo-tooltips.md`. */
+  tip?: { label: string; body: string };
   /** True for the mandatory + pre-filled inputs (marked required); false for optional-core. */
   required: boolean;
 }
 
-export const MANDATORY_FIELDS: readonly CalcFieldMeta[] = [
+/**
+ * 016/US9 (FR-911, US9-AC2) — "Custos da peça": the old MANDATORY_FIELDS + OPTIONAL_FIELDS fused
+ * into ONE section (the "Ajustes opcionais" title is retired). `printTimeHours` (US7 h+min) and
+ * `machineValue`/`machineLifetimeHours` (US8 machine-cost question) are NOT here — they render
+ * through their own dedicated controls (`TimeHmField`/`MachineCostFields` in calculator-form.tsx)
+ * inside the SAME "Custos da peça" card, since neither fits the plain label+NumberField grid.
+ */
+export const COST_FIELDS: readonly CalcFieldMeta[] = [
   { name: "costPerRoll", label: t.fields.costPerRoll, currency: true, required: true },
   { name: "rollWeightKg", label: t.fields.rollWeight, unit: "kg", required: true },
   { name: "printGrams", label: t.fields.grams, unit: "g", required: true },
-  { name: "printTimeHours", label: t.fields.printTime, unit: "h", required: true },
   {
     name: "avgPowerKw",
     label: t.fields.avgPower,
     unit: "kW",
     hint: t.hints.avgPower,
+    tip: t.fieldTips.avgPower,
     required: true,
   },
-  { name: "tariffPerKwh", label: t.fields.tariff, currency: true, unit: "/kWh", required: true },
-  { name: "machineValue", label: t.fields.machineValue, currency: true, required: true },
-  { name: "machineLifetimeHours", label: t.fields.machineLifetime, unit: "h", required: true },
-] as const;
-
-export const OPTIONAL_FIELDS: readonly CalcFieldMeta[] = [
+  {
+    name: "tariffPerKwh",
+    label: t.fields.tariff,
+    currency: true,
+    unit: "/kWh",
+    tip: t.fieldTips.tariff,
+    required: true,
+  },
   { name: "wasteGrams", label: t.fields.wasteGrams, unit: "g", required: false },
   {
     name: "maintenanceReservePerHour",
     label: t.fields.maintenance,
     currency: true,
     unit: "/h",
+    tip: t.fieldTips.maintenance,
     required: false,
   },
-  { name: "failurePct", label: t.fields.failure, unit: "%", required: false },
-  { name: "finishTimeHours", label: t.fields.finishTime, unit: "h", required: false },
   {
-    name: "finishRatePerHour",
-    label: t.fields.finishRate,
-    currency: true,
-    unit: "/h",
+    name: "failurePct",
+    label: t.fields.failure,
+    unit: "%",
+    tip: t.fieldTips.failure,
     required: false,
   },
 ] as const;
+
+/** The subset of `COST_FIELDS` that is always required — `widgets/bom-line-editor` keeps only
+ *  these (+ TimeHmField + MachineCostFields) ALWAYS visible, and folds the rest (below) under its
+ *  own secondary disclosure (ux §1.3) alongside the labor/finish fields — the line-density UX
+ *  US9 does not touch, only the field TAXONOMY it draws from. */
+export const COST_REQUIRED_FIELDS: readonly CalcFieldMeta[] = COST_FIELDS.filter((f) => f.required);
+
+/** The optional remainder of `COST_FIELDS` (wasteGrams/maintenance/failure) — bom-line-editor's
+ *  own secondary-disclosure grouping (see `COST_REQUIRED_FIELDS`). */
+export const COST_OPTIONAL_FIELDS: readonly CalcFieldMeta[] = COST_FIELDS.filter(
+  (f) => !f.required,
+);
 
 export const MARKUP_FIELDS: readonly CalcFieldMeta[] = [
   {
@@ -352,15 +386,58 @@ export const MARKUP_FIELDS: readonly CalcFieldMeta[] = [
   { name: "markupAtacadoPct", label: t.fields.markupAtacado, unit: "%", required: true },
 ] as const;
 
-// Optional labor cost that sums into custo_total (default 0 → no effect). The "Outros custos" slot
-// (US5) lives alongside these fields on the page but is a named-sub-cost array, not a scalar field.
-export const LABOR_FIELDS: readonly CalcFieldMeta[] = [
-  { name: "laborHours", label: t.fields.laborHours, unit: "h", required: false },
+/**
+ * 016/US9 (FR-911, US9-AC2) — "Mão de obra e custos": labor (unchanged) + Tempo/Valor do
+ * acabamento, migrated in from the old OPTIONAL_FIELDS. The "Outros custos" slot (US5) lives
+ * alongside these fields on the page but is a named-sub-cost array, not a scalar field.
+ */
+export const LABOR_AND_FINISH_FIELDS: readonly CalcFieldMeta[] = [
+  {
+    name: "finishTimeHours",
+    label: t.fields.finishTime,
+    unit: "h",
+    tip: t.fieldTips.finishTime,
+    required: false,
+  },
+  {
+    name: "finishRatePerHour",
+    label: t.fields.finishRate,
+    currency: true,
+    unit: "/h",
+    tip: t.fieldTips.finishRate,
+    required: false,
+  },
+  {
+    name: "laborHours",
+    label: t.fields.laborHours,
+    unit: "h",
+    tip: t.fieldTips.laborHours,
+    required: false,
+  },
   {
     name: "laborRatePerHour",
     label: t.fields.laborRate,
     currency: true,
     unit: "/h",
+    tip: t.fieldTips.laborRate,
     required: false,
   },
 ] as const;
+
+/** The plain labor-only subset — bom-line-editor's secondary-disclosure grouping keeps the same
+ *  member fields as `LABOR_AND_FINISH_FIELDS` (it renders the whole array; kept as a named alias
+ *  so a future split does not have to touch three call sites at once). */
+export const LABOR_FIELDS: readonly CalcFieldMeta[] = LABOR_AND_FINISH_FIELDS;
+
+/** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */
+export const RITMO_OPTIONS: readonly SelectOption[] = [
+  { value: "0", label: t.machineCost.ritmoOptions.few },
+  { value: "1", label: t.machineCost.ritmoOptions.daily },
+  { value: "2", label: t.machineCost.ritmoOptions.always },
+];
+
+/** 016/US8 (FR-910) — "em quantos anos quer que ela se pague": 1–5 anos, sem digitar. */
+export const PAYBACK_YEAR_OPTIONS: readonly SelectOption[] = [1, 2, 3, 4, 5].map((years) => ({
+  value: String(years),
+  label: t.machineCost.paybackYearsLabel.replace("{n}", String(years)),
+}));

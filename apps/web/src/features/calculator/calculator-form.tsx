@@ -1,9 +1,15 @@
-import { type CSSProperties } from "react";
-import { type Control, Controller } from "react-hook-form";
+import { type CSSProperties, useState } from "react";
+import { type Control, Controller, useController } from "react-hook-form";
 
-import { type ChannelSlotOutcome } from "@/features/calculator/calculator-model";
+import { type ChannelSlotOutcome, formatBRL } from "@/features/calculator/calculator-model";
 import { CategoryPicker } from "@/features/calculator/category-picker";
 import { FeeSeal } from "@/features/calculator/fee-seal";
+import {
+  costPerHour,
+  deriveMachineLifetimeHours,
+  detectRitmoMode,
+  type RitmoIndex,
+} from "@/features/calculator/machine-cost";
 import {
   type CalcFieldMeta,
   type CalcFormValues,
@@ -13,9 +19,13 @@ import {
   type MarketplaceId,
   MARKETPLACE_OPTIONS,
   MODALITY_OPTIONS,
+  PAYBACK_YEAR_OPTIONS,
+  RITMO_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
 import type { CategoryNode } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 import type { PriceResult } from "@3dprecify/pricing-core";
 import {
   Alert,
@@ -94,7 +104,12 @@ export function SectionTitle({
   );
 }
 
-/** One controlled numeric input wired to RHF + the DS Field/NumberField. */
+/** One controlled numeric input wired to RHF + the DS Field/NumberField. 016/US6 (FR-908,
+ *  homologação B4) — when `meta.tip` is set, an InfoTip `?` renders on the LABEL ROW, à direita do
+ *  rótulo (US6-AC1) — a `labelAddon`, never sharing the control row with the input (that was the
+ *  B4 finding: the tip competed with a wide unit affix like "/kWh" for the same cramped row at
+ *  360/390px, and shrank "Tarifa de energia" to 1px of visible input). It never touches
+ *  `field.value`/`onChange` (US6-AC3). */
 export function ControlledField({
   control,
   meta,
@@ -109,6 +124,7 @@ export function ControlledField({
       render={({ field, fieldState }) => (
         <Field
           label={meta.label}
+          labelAddon={meta.tip && <InfoTip label={meta.tip.label}>{meta.tip.body}</InfoTip>}
           required={meta.required}
           optional={!meta.required}
           hint={meta.hint}
@@ -130,6 +146,216 @@ export function ControlledField({
         </Field>
       )}
     />
+  );
+}
+
+/** 016/US7 (FR-909) — the printTime border: two number inputs (h + min), converted to/from the
+ *  SAME decimal the engine has always received (`time-input.ts` owns the pure conversion; the RHF
+ *  field value never changes shape). A document saved with a decimal (`5.5`) reopens showing the
+ *  derived h+min (`5h 30min`) — the read path is the same helper, not a second rule. */
+export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
+  return (
+    <Controller
+      control={control}
+      name="printTimeHours"
+      render={({ field, fieldState }) => {
+        const { h, min } = decimalHoursToHm(field.value);
+        const commit = (nextH: number, nextMin: number) => {
+          field.onChange(hmToDecimalString(nextH, nextMin));
+        };
+        return (
+          <Field label={t.fields.printTime} required error={fieldState.error?.message}>
+            {() => (
+              <div className="flex items-center gap-2">
+                <NumberField
+                  aria-label={t.timeInput.hoursAria}
+                  unit={t.timeInput.hoursUnit}
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={String(h)}
+                  onChange={(e) => commit(Number.parseInt(e.target.value, 10) || 0, min)}
+                  onBlur={field.onBlur}
+                />
+                <NumberField
+                  aria-label={t.timeInput.minutesAria}
+                  unit={t.timeInput.minutesUnit}
+                  inputMode="numeric"
+                  placeholder="0"
+                  value={String(min)}
+                  onChange={(e) => commit(h, Number.parseInt(e.target.value, 10) || 0)}
+                  onBlur={field.onBlur}
+                />
+              </div>
+            )}
+          </Field>
+        );
+      }}
+    />
+  );
+}
+
+/**
+ * 016/US8 (FR-910, SC-906) — the machine-cost question rewrite. The seller answers (1) quanto
+ * custou (`machineValue`, unchanged) · (2) com que frequência ela roda (3 opções, sem digitar) ·
+ * (3) em quantos anos quer que se pague, and the derived `machineLifetimeHours` is said OUT LOUD
+ * as a cost/hour caption. "Ajustar" reveals the raw hours field directly (with its own tooltip).
+ *
+ * Reactivity is derived, not duplicated: `detectRitmoMode(currentHours)` re-runs on every render
+ * off the LIVE `machineLifetimeHours` field value, so a scenario/catalog load that calls
+ * `setValue("machineLifetimeHours", …)` from OUTSIDE this component is picked up automatically —
+ * no stale local copy of ritmo/payback to resync. `manualOverride` only forces "ajustar" open when
+ * the seller explicitly asked for it; a lifetime outside every ritmo×payback ALWAYS shows
+ * "ajustar" regardless (US8-AC4 — the value the document holds is never silently coerced).
+ */
+export function MachineCostFields({ control }: { control: Control<CalcFormValues> }) {
+  const valueField = useController({ control, name: "machineValue" });
+  const lifetimeField = useController({ control, name: "machineLifetimeHours" });
+  const [manualOverride, setManualOverride] = useState(false);
+
+  const currentHours = parseDecimal(lifetimeField.field.value);
+  const detected = detectRitmoMode(currentHours);
+  const adjustMode = manualOverride || detected === null;
+  const ritmoIndex: RitmoIndex = detected?.ritmoIndex ?? 1;
+  const paybackYears = detected?.paybackYears ?? 3;
+
+  const applyRitmo = (idx: RitmoIndex, years: number) => {
+    lifetimeField.field.onChange(String(deriveMachineLifetimeHours(idx, years)));
+  };
+
+  const machineValueNum = parseDecimal(valueField.field.value);
+  const perHour = costPerHour(machineValueNum, currentHours);
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Field label={t.fields.machineValue} required>
+        {(p) => (
+          <NumberField
+            {...p}
+            currency
+            name={valueField.field.name}
+            value={valueField.field.value}
+            onChange={valueField.field.onChange}
+            onBlur={valueField.field.onBlur}
+            ref={valueField.field.ref}
+          />
+        )}
+      </Field>
+
+      {!adjustMode ? (
+        <>
+          {/* 016/PR-C homologação (B3) — `auto-fit, minmax(240px, 1fr)`: the two selects stack
+              at full width the instant the card is too narrow for a real 240px each (360/390px,
+              where the widest option — "Poucas horas por semana" — measured up to 197px of its
+              own text and had ZERO room to spare), and sit side by side with genuine breathing
+              room from ~1024px up, where 1fr distributes whatever is left over the 240px floor.
+              (R2) Neither `Field` uses `tightLabel` anymore — both reserve the SAME 2-line label
+              height (field.css), so a wrapped "Em quantos anos…" label no longer pushes its
+              Select 15-16px below the sibling's. */}
+          <div className="tf-machine-ritmo-grid">
+            <Field label={t.machineCost.ritmoLabel}>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={RITMO_OPTIONS}
+                  value={String(ritmoIndex)}
+                  onChange={(e) => applyRitmo(Number(e.target.value) as RitmoIndex, paybackYears)}
+                />
+              )}
+            </Field>
+            <Field label={t.machineCost.paybackLabel}>
+              {(p) => (
+                <Select
+                  {...p}
+                  options={PAYBACK_YEAR_OPTIONS}
+                  value={String(paybackYears)}
+                  onChange={(e) => applyRitmo(ritmoIndex, Number(e.target.value))}
+                />
+              )}
+            </Field>
+          </div>
+          <p style={captionText}>
+            {t.machineCost.derivedCaption.replace("{value}", formatBRL(perHour))}
+          </p>
+          {/* 016/PR-C homologação (R1) — plain text read with no clickable affordance; `secondary`
+              draws the real border+surface a button needs to look tappable (`ghost` reads as
+              text until hovered/focused, which a touch device never does before the tap itself). */}
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => setManualOverride(true)}
+            className="self-start"
+          >
+            {t.machineCost.adjustButton}
+          </Button>
+        </>
+      ) : (
+        <>
+          {/* 016/PR-C homologação (B4) — the InfoTip trigger is a `labelAddon`: a FLEX SIBLING of
+              the `<label>`, on the label row, never nested inside it (see field.tsx's doc — a
+              nested button folds its own name into the control's accessible name). */}
+          <Field
+            label={t.fields.machineLifetime}
+            labelAddon={
+              <InfoTip label={t.fieldTips.machineLifetime.label}>
+                {t.fieldTips.machineLifetime.body}
+              </InfoTip>
+            }
+            required
+          >
+            {(p) => (
+              <NumberField
+                {...p}
+                unit="h"
+                name={lifetimeField.field.name}
+                value={lifetimeField.field.value}
+                onChange={lifetimeField.field.onChange}
+                onBlur={lifetimeField.field.onBlur}
+                ref={lifetimeField.field.ref}
+              />
+            )}
+          </Field>
+          <Button
+            variant="secondary"
+            size="sm"
+            className="self-start"
+            onClick={() => {
+              setManualOverride(false);
+              applyRitmo(ritmoIndex, paybackYears);
+            }}
+          >
+            {t.machineCost.backToEstimateButton}
+          </Button>
+        </>
+      )}
+    </div>
+  );
+}
+
+/** 016/US9 (FR-911) — "Custos da peça": COST_FIELDS (the fused mandatory + optional grid) +
+ *  TimeHmField (US7) + MachineCostFields (US8), all inside the SAME card — "Ajustes opcionais" no
+ *  longer exists as its own titled section. */
+export function CostsSection({
+  control,
+  fields,
+}: {
+  control: Control<CalcFormValues>;
+  fields: readonly CalcFieldMeta[];
+}) {
+  return (
+    <div className="flex flex-col gap-2">
+      <SectionTitle title={t.sections.inputs} info={t.sectionInfo.inputs} />
+      <Card padding="md" className="flex flex-col gap-4">
+        {/* 016/PR-C homologação (B4) — `.tf-costs-grid`, not the hard `gridCard` 1fr-1fr: see
+            calculator-form.css for why (the "Tarifa de energia" 1px clip). */}
+        <div className="tf-costs-grid">
+          {fields.map((meta) => (
+            <ControlledField key={meta.name} control={control} meta={meta} />
+          ))}
+        </div>
+        <TimeHmField control={control} />
+        <MachineCostFields control={control} />
+      </Card>
+    </div>
   );
 }
 

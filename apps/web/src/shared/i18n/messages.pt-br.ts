@@ -1,4 +1,11 @@
 // Typed pt-BR message source (full i18n library is TD-001). Keys are the single source of UI copy.
+//
+// 016/US6 (FR-908, conteudo-tooltips.md §Notas de escopo #5) — two tooltip numbers carry an
+// EXPIRY DATE (ANEEL's projected national average tariff, the legal minimum wage per hour) and
+// live in their OWN named keys so the annual refresh is a VALUE edit, not a hunt through prose.
+const TOOLTIP_REF_TARIFA_MEDIA_NACIONAL = "R$ 0,85"; // projeção ANEEL dez/2026 — revisar 1º/jan
+const TOOLTIP_REF_SALARIO_MINIMO_HORA = "R$ 7,37"; // salário mínimo 2026 ÷ 220h — revisar 1º/jan
+
 export const messages = {
   appName: "Precifica3D",
   theme: { toggle: "Alternar tema" },
@@ -51,8 +58,8 @@ export const messages = {
     },
     sections: {
       inputs: "Custos da peça",
-      optional: "Ajustes opcionais",
-      optionalHint: "Comece em 0 — preencha só o que se aplica ao seu caso.",
+      // 016/PR-C homologação (R6) — "Ajustes opcionais" retired (US9-AC2, fused into "Custos da
+      // peça"); the two keys that named it are dead now, removed rather than left unreferenced.
       labor: "Mão de obra e custos",
       markup: "Markup",
       breakdown: "Como chegamos no preço",
@@ -65,10 +72,6 @@ export const messages = {
       inputs: {
         label: "Sobre os custos da peça",
         body: "O custo de produção da peça. Material = (custo do rolo ÷ peso do rolo) × (gramas usadas + desperdício). Energia = tempo de impressão × consumo médio × tarifa. Máquina = (valor da máquina ÷ vida útil em horas) × tempo de impressão.",
-      },
-      optional: {
-        label: "Sobre os ajustes opcionais",
-        body: "Custos que somam ao total quando preenchidos (0 = ignorado). Falha = % aplicada sobre material + energia + máquina (um print que falha desperdiça os três). Acabamento = tempo × valor por hora. Desperdício = gramas extras (purga/suporte/refugo). Reserva de manutenção = reais por hora de desgaste.",
       },
       labor: {
         label: "Sobre mão de obra e custos",
@@ -251,6 +254,80 @@ export const messages = {
       printer: "Impressora salva",
       placeholder: "Escolher…",
       hint: "Preenche os campos com o item salvo — você ainda pode editar tudo.",
+    },
+    // 016/US6 (FR-908) — the two numbers with an expiry date, named so the annual refresh is a
+    // value edit (see the module-level consts + conteudo-tooltips.md §Notas de escopo #5).
+    tooltipRefs: {
+      tarifaMediaNacional: TOOLTIP_REF_TARIFA_MEDIA_NACIONAL,
+      salarioMinimoHora: TOOLTIP_REF_SALARIO_MINIMO_HORA,
+    },
+    // 016/US6 (FR-908, T023/T025) — the 9 field explanations researched + sourced in
+    // conteudo-tooltips.md (verbatim text; procedência lives there, NOT here). `label` names the
+    // ⓘ trigger for assistive tech; `body` answers, in this order, "por que entra na conta" and
+    // "como você descobre o seu". Nenhum tooltip altera cálculo/validação (US6-AC3).
+    fieldTips: {
+      avgPower: {
+        label: "Sobre o consumo médio",
+        body: "A luz que a máquina gasta enquanto imprime entra no custo de cada peça — sem ela, você cobra menos do que gasta. Cuidado: o número da fonte (ex.: 350 W) é o máximo, não o gasto real. Meça com uma tomada medidora de consumo. Sem medidor, estime entre 0,07 e 0,15 kW.",
+      },
+      tariff: {
+        label: "Sobre a tarifa de energia",
+        body: `É o preço de cada unidade de luz — multiplicado pelas horas de impressão, vira o custo de energia da peça. Pegue sua conta de luz e divida o valor total pelos kWh consumidos no mês: esse é o preço real que você paga, já com impostos e bandeira. Sem a conta em mãos, a média do país fica perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL}.`,
+      },
+      // Serve o modo "ajustar" da US8 — o número bruto ainda é digitado ali.
+      machineLifetime: {
+        label: "Sobre a vida útil da máquina",
+        body: "A impressora se gasta imprimindo. Espalhar o preço dela pelas horas faz cada peça devolver um pedaço da máquina — assim a próxima sai do negócio, não do seu bolso. Fabricante não publica esse número: estime. Horas que você imprime por ano × anos até querer trocar. Ex.: 1.200 h/ano × 3 anos = 3.600 h.",
+      },
+      maintenance: {
+        label: "Sobre a reserva de manutenção",
+        body: "Bico, correia, mesa e lubrificação acabam com o uso. Guardar centavos por hora faz a troca sair do preço das peças, e não do seu prejuízo. Some o que gastou em peças no último ano e divida pelas horas que imprimiu. Sem histórico, olhe o preço de um bico e de uma correia na sua loja.",
+      },
+      failure: {
+        label: "Sobre a taxa de falha",
+        body: "Uma impressão que dá errado por completo já consumiu material, luz e horas — e quem paga essa conta é o preço das que dão certo. Descubra a sua contando: impressões perdidas ÷ impressões começadas × 100. Ex.: 4 perdidas em 40 = 10%. Quem está começando costuma ficar mais alto.",
+      },
+      finishTime: {
+        label: "Sobre o tempo de acabamento",
+        body: "Lixar, colar, pintar e montar é trabalho seu depois que a impressora parou. Fora da conta, ele vira trabalho de graça. Cronometre uma peça parecida, do fim da impressão até ela ficar pronta para entregar. Poucos minutos viram fração de hora: 15 min = 0,25 h.",
+      },
+      finishRate: {
+        label: "Sobre o valor do acabamento",
+        body: "Diz quanto vale uma hora do seu acabamento — é o que transforma esse tempo em dinheiro no preço final. Use o que você cobraria de alguém para fazer o mesmo trabalho manual. Se não tem referência, comece com o mesmo valor da sua hora de trabalho.",
+      },
+      laborHours: {
+        label: "Sobre a mão de obra (horas)",
+        body: "É o seu tempo fora da impressora: preparar o arquivo, tirar da mesa, limpar, embalar e postar. Sem contar, esse tempo sai do seu lucro. Cronometre um pedido inteiro uma vez e anote. Se varia muito, tire a média de 3 pedidos. 20 min = 0,33 h.",
+      },
+      laborRate: {
+        label: "Sobre o valor da hora",
+        body: `É quanto vale uma hora do seu trabalho. Sem esse número, você entrega horas de graça no preço. Descubra o seu assim: quanto quer ganhar por mês ÷ horas que pretende trabalhar no mês. Ex.: R$ 3.000 ÷ 160 h = R$ 18,75. Só para comparar, o salário mínimo dá ${TOOLTIP_REF_SALARIO_MINIMO_HORA} a hora.`,
+      },
+    },
+    // 016/US7 (FR-909) — the printTime border: two fields (h + min), the engine keeps receiving
+    // the SAME decimal (time-input.ts owns the pure conversion).
+    timeInput: {
+      hoursAria: "Horas de impressão",
+      hoursUnit: "h",
+      minutesAria: "Minutos de impressão",
+      minutesUnit: "min",
+    },
+    // 016/US8 (FR-910, SC-906) — the machine cost question rewrite: valor pago (machineValue,
+    // unchanged) · ritmo de uso (3 opções, sem digitar) · payback em anos deriva
+    // `machineLifetimeHours` (machine-cost.ts owns the pure derivation); the engine keeps
+    // receiving the SAME two fields it always has.
+    machineCost: {
+      ritmoLabel: "Com que frequência ela roda?",
+      ritmoOptions: {
+        few: "Poucas horas por semana",
+        daily: "Quase todo dia",
+        always: "Praticamente o dia todo",
+      },
+      paybackLabel: "Em quantos anos quer que ela se pague?",
+      paybackYearsLabel: "{n} anos",
+      derivedCaption: "≈ {value} por hora de impressão",
+      adjustButton: "Ajustar horas direto",
+      backToEstimateButton: "Usar estimativa por ritmo",
     },
   },
   account: {

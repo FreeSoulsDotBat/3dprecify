@@ -88,7 +88,12 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     .getByRole("combobox", { name: t.calculator.catalogPicker.printer })
     .selectOption({ label: "Ender 3" });
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.grams) }).fill("100");
-  await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.printTime) }).fill("5");
+  // 016/US7 — printTime is now two fields (h + min); the default is already 5h/0min (the seed),
+  // filled explicitly for clarity/robustness against a future default change.
+  await page.getByRole("textbox", { name: new RegExp(t.calculator.timeInput.hoursAria) }).fill("5");
+  await page
+    .getByRole("textbox", { name: new RegExp(t.calculator.timeInput.minutesAria) })
+    .fill("0");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.tariff) }).fill("1");
   await page.getByRole("button", { name: t.productForm.saveProduct, exact: true }).click();
   await expect(page.getByText(t.productForm.savedProduct)).toBeVisible();
@@ -97,25 +102,30 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
   await page.goto("/kits");
   await expect(page.getByText(t.bom.emptyTitle)).toBeVisible();
 
+  // 016/PR-C homologação (B1) — an ad-hoc line uses the CALCULATOR's own seed
+  // (`defaultCalcValues`), now machine 4000/3600h → custo 16,16 (was 20,60 @ 2000h). The Vaso G
+  // product line below binds a PRINTER whose machineValue/machineLifetime were typed explicitly
+  // (4000/2000, unaffected by this seed change) — only the ad-hoc lines move.
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?20,60/).first()).toBeVisible(); // default line, live
+  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible(); // default line, live
 
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
   await page
     .getByRole("textbox", { name: new RegExp(t.bom.quantity) })
     .last()
     .fill("3");
-  // Assembly = 20,60 + 61,80 = 82,40 — read from computeBom, live.
-  await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
+  // Assembly = 16,16 + 48,48 (16,16×3) = 64,64 — read from computeBom, live.
+  await expect(page.getByText(/R\$\s?64,64/).first()).toBeVisible();
 
   await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
   await page
     .getByRole("combobox", { name: new RegExp(t.bom.useProduct) })
     .last()
     .selectOption({ label: "Vaso G" });
-  // Product line: 100g of 100/1kg + 5h×0,10kW×1 + 4000/2000×5 = 10 + 0,50 + 10 = custo 20,50.
-  // Assembly total: 20,60 + 61,80 + 20,50 = 102,90.
-  await expect(page.getByText(/R\$\s?102,90/).first()).toBeVisible();
+  // Product line: 100g of 100/1kg + 5h×0,10kW×1 + 4000/2000×5 = 10 + 0,50 + 10 = custo 20,50
+  // (the printer's OWN explicit machine values, untouched by the calculator seed change).
+  // Assembly total: 16,16 + 48,48 + 20,50 = 85,14.
+  await expect(page.getByText(/R\$\s?85,14/).first()).toBeVisible();
   await expect(page.getByText(new RegExp("do catálogo: Vaso G")).first()).toBeVisible();
 
   // Remove the catalog line → total updates live (US1 acceptance 2).
@@ -123,7 +133,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     .getByRole("button", { name: new RegExp(t.bom.removeLine) })
     .last()
     .click();
-  await expect(page.getByText(/R\$\s?82,40/).first()).toBeVisible();
+  await expect(page.getByText(/R\$\s?64,64/).first()).toBeVisible();
 });
 
 // 014/T118 — a barra "Total do kit" é `position: sticky` e a TabBar é `position: fixed; bottom: 0`.
