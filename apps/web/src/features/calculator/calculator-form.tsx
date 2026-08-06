@@ -30,6 +30,8 @@ import {
   Switch,
 } from "@/shared/ui";
 
+import "./calculator-form.css";
+
 // The calculator FORM BODY, extracted verbatim from calcular-page (T030). Both Calcular and the
 // product full-page route (ux §1.6b — "a product form is essentially the calculator + a name +
 // two catalog refs") mount these sections over the SAME RHF control + the SAME computeFromForm,
@@ -131,8 +133,21 @@ export function ControlledField({
   );
 }
 
-/** US1 hero prices + US2 transparent breakdown. Rendered only for a fully valid form. */
-export function PriceResults({ result, values }: { result: PriceResult; values: CalcFormValues }) {
+/** US1 hero prices + US2 transparent breakdown. Rendered only for a fully valid form.
+ *  US5 (FR-907) — the per-channel descriptives ("Preços por canal") fold in here, inside the
+ *  SAME "Como chegamos no preço" Card, instead of living as their own titled section: pass
+ *  `channelOutcomes` from the page (already computed regardless of where `MarketplaceSection`
+ *  itself renders) and they render right after the cost breakdown, before the final price
+ *  cards — one section describes every price the seller reads. */
+export function PriceResults({
+  result,
+  values,
+  channelOutcomes = [],
+}: {
+  result: PriceResult;
+  values: CalcFormValues;
+  channelOutcomes?: ChannelSlotOutcome[];
+}) {
   const line = (value: number, optional: boolean) =>
     optional && value === 0 ? ("muted" as const) : ("default" as const);
 
@@ -144,8 +159,11 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
       <div className="flex flex-col gap-2">
         <SectionTitle title={t.sections.breakdown} info={t.sectionInfo.breakdown} />
         <Card padding="md">
-          <BreakdownRow label={t.results.material} value={result.material} color="var(--accent)" />
-          <BreakdownRow label={t.results.energy} value={result.energy} color="var(--energy)" />
+          {/* 016/US5 — the colour key dots beside Material/Energia were removed (FR-907-AC2);
+              the rows are already legible by label + tabular value, and the dots read as
+              chart-legend chrome the breakdown never needed. */}
+          <BreakdownRow label={t.results.material} value={result.material} />
+          <BreakdownRow label={t.results.energy} value={result.energy} />
           <BreakdownRow label={t.results.machine} value={result.machine} />
           <BreakdownRow
             label={t.results.failure}
@@ -184,6 +202,16 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
             sublabel={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
             value={result.precoAtacado}
           />
+          {/* US5 (FR-907) — "Preços por canal" folded into the SAME Card: no second titled
+              section, no duplicated total/markup lines above, nothing lost (every channel still
+              shows anúncio + líquido for varejo e atacado). Absent entirely with no active
+              channel (toggle OFF / no slots), exactly as the standalone section was before. */}
+          {channelOutcomes.length > 0 && (
+            <div className="flex flex-col gap-4" style={channelDivider}>
+              <p style={sectionLabel}>{t.channels.pricesTitle}</p>
+              <ChannelPriceBlocks values={values} channelOutcomes={channelOutcomes} />
+            </div>
+          )}
         </Card>
       </div>
 
@@ -218,12 +246,14 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
           gap: "var(--space-3)",
         }}
       >
+        {/* T016 — final price cards read centered (label/amount/caption), not left-aligned. */}
         <PriceHero
           label={t.results.varejo}
           value={result.precoVarejo}
           caption={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
           tone="accent"
           size="md"
+          center
         />
         <PriceHero
           label={t.results.atacado}
@@ -231,6 +261,7 @@ export function PriceResults({ result, values }: { result: PriceResult; values: 
           caption={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
           tone="energy"
           size="md"
+          center
         />
       </div>
     </>
@@ -494,9 +525,14 @@ function UnpricedLevel({ caption, marginTop }: { caption: string; marginTop?: bo
   );
 }
 
-/** "Preços por canal": every slot's anúncio + líquido for varejo e atacado, shown together so the
- *  seller compares channels at a glance. A slot with an inline error shows a note, not stale prices. */
-function ChannelPrices({
+/** "Preços por canal" ROWS: every slot's anúncio + líquido for varejo e atacado, shown together
+ *  so the seller compares channels at a glance. A slot with an inline error shows a note, not
+ *  stale prices. 016/US5 (FR-907) — this used to own its own titled Card; it is now the tail of
+ *  `PriceResults`' single "Como chegamos no preço" Card (the caller supplies the heading), so the
+ *  descriptives live in ONE section instead of two. Returns `null` with no active channel — same
+ *  visibility rule as before (toggle OFF / no slots ⇒ nothing renders, t.channels.pricesTitle
+ *  included, since the caller only renders its wrapping heading when this has content). */
+function ChannelPriceBlocks({
   values,
   channelOutcomes,
 }: {
@@ -505,67 +541,64 @@ function ChannelPrices({
 }) {
   if (channelOutcomes.length === 0) return null;
   return (
-    <div className="flex flex-col gap-2">
-      <p style={sectionLabel}>{t.channels.pricesTitle}</p>
-      <Card padding="md" className="flex flex-col gap-4">
-        {channelOutcomes.map((oc, i) => {
-          const slot = values.channels[i];
-          const name = t.marketplaceNames[slot.marketplace] ?? t.channels.channelFallback;
-          const modName = slot.modality ? t.modalityNames[slot.modality] : "";
-          const r = oc.result;
-          // Three states: a valid priced channel shows its rows; a valid slot with no fee yet shows
-          // a hint (base==anúncio rows would just echo the headline); a bad slot shows its note.
-          const priced = r && r.error === null && oc.hasFee;
-          return (
-            <div
-              key={i}
-              className="flex flex-col gap-1"
-              data-testid="channel-price"
-              style={i > 0 ? channelDivider : undefined}
-            >
-              <p style={sectionLabel}>
-                {name}
-                {modName && <span style={channelModality}> · {modName}</span>}
-              </p>
-              {priced ? (
-                <>
-                  {/* SC-817 — a level whose announce falls outside every published band is NOT
+    <>
+      {channelOutcomes.map((oc, i) => {
+        const slot = values.channels[i];
+        const name = t.marketplaceNames[slot.marketplace] ?? t.channels.channelFallback;
+        const modName = slot.modality ? t.modalityNames[slot.modality] : "";
+        const r = oc.result;
+        // Three states: a valid priced channel shows its rows; a valid slot with no fee yet shows
+        // a hint (base==anúncio rows would just echo the headline); a bad slot shows its note.
+        const priced = r && r.error === null && oc.hasFee;
+        return (
+          <div
+            key={i}
+            className="flex flex-col gap-1"
+            data-testid="channel-price"
+            style={i > 0 ? channelDivider : undefined}
+          >
+            <p style={sectionLabel}>
+              {name}
+              {modName && <span style={channelModality}> · {modName}</span>}
+            </p>
+            {priced ? (
+              <>
+                {/* SC-817 — a level whose announce falls outside every published band is NOT
                       priced. `?? 0` would have printed R$ 0,00 under a "Referência" seal; the
                       absence of a published fee is said in words, and only for the level it hits
                       (varejo and atacado can land on different sides of a gap). */}
-                  {r.precoAnuncioVarejo === null || r.recebidoLiquidoVarejo === null ? (
-                    <UnpricedLevel caption={t.captions.varejo} />
-                  ) : (
-                    <ChannelLevelRows
-                      caption={t.captions.varejo}
-                      anuncio={r.precoAnuncioVarejo}
-                      liquido={r.recebidoLiquidoVarejo}
-                      freight={r.freightCostVarejo}
-                    />
-                  )}
-                  {r.precoAnuncioAtacado === null || r.recebidoLiquidoAtacado === null ? (
-                    <UnpricedLevel caption={t.captions.atacado} marginTop />
-                  ) : (
-                    <ChannelLevelRows
-                      caption={t.captions.atacado}
-                      anuncio={r.precoAnuncioAtacado}
-                      liquido={r.recebidoLiquidoAtacado}
-                      freight={r.freightCostAtacado}
-                      marginTop
-                    />
-                  )}
-                  {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
-                    <p style={captionText}>{t.channels.freightHint}</p>
-                  )}
-                </>
-              ) : (
-                <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>
-              )}
-            </div>
-          );
-        })}
-      </Card>
-    </div>
+                {r.precoAnuncioVarejo === null || r.recebidoLiquidoVarejo === null ? (
+                  <UnpricedLevel caption={t.captions.varejo} />
+                ) : (
+                  <ChannelLevelRows
+                    caption={t.captions.varejo}
+                    anuncio={r.precoAnuncioVarejo}
+                    liquido={r.recebidoLiquidoVarejo}
+                    freight={r.freightCostVarejo}
+                  />
+                )}
+                {r.precoAnuncioAtacado === null || r.recebidoLiquidoAtacado === null ? (
+                  <UnpricedLevel caption={t.captions.atacado} marginTop />
+                ) : (
+                  <ChannelLevelRows
+                    caption={t.captions.atacado}
+                    anuncio={r.precoAnuncioAtacado}
+                    liquido={r.recebidoLiquidoAtacado}
+                    freight={r.freightCostAtacado}
+                    marginTop
+                  />
+                )}
+                {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
+                  <p style={captionText}>{t.channels.freightHint}</p>
+                )}
+              </>
+            ) : (
+              <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>
+            )}
+          </div>
+        );
+      })}
+    </>
   );
 }
 
@@ -658,7 +691,9 @@ export function MarketplaceSection({
           <Button variant="secondary" size="sm" onClick={() => onAppend(defaultChannelSlot())}>
             {t.channels.addChannel}
           </Button>
-          <ChannelPrices values={values} channelOutcomes={channelOutcomes} />
+          {/* 016/US5 — "Preços por canal" no longer renders here: it folded into `PriceResults`'
+              "Como chegamos no preço" Card (FR-907), so this section stays purely the channel
+              INPUT editing UI (marketplace/modality/category/fees + the honesty seal). */}
         </>
       )}
     </div>

@@ -21,6 +21,18 @@
   flex: 1;
   min-height: 0;
 }
+/* 016/US3 (T014) — the desktop right-hand column: the sidebar's sibling in `.tf-shell__body`,
+   stacking the top-bar above `<main>` so the sidebar alone spans the full body height (the
+   sidebar's `align-items: stretch` default already does that — this column just keeps its OWN
+   two children from doing the same). Mobile never renders this wrapper (the top-bar stays a
+   direct child of `.tf-shell` there, unchanged). */
+.tf-shell__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
 .tf-shell__main {
   flex: 1;
   min-width: 0;

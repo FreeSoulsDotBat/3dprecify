@@ -49,7 +49,8 @@ describe("TopBar logo (E1 items 6 / 7b / 4)", () => {
     await screen.findByText("page /calcular");
 
     const logo = screen.getByRole("img", { name: messages.appName });
-    expect(logo.getAttribute("src")).toContain("tf-lockup");
+    // 016/US3 — the full lockup is the owner's PNG artwork now, not the `tf-lockup` SVG.
+    expect(logo.getAttribute("src")).toContain("logo-inteira");
   });
 
   it("renders the compact mark on mobile (≤425px)", async () => {

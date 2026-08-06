@@ -65,3 +65,38 @@ pagou de novo.
 **Não verificado (fronteira honesta do T010)**: PDF/CSV renderizados (o grep no fonte não achou o
 par antigo — INFERIDO, não medido; o `label-sweep.spec.ts` cobre superfícies vivas); o ramo
 deslogado do `TeaserUpgrade` (`/sign-in?redirect=`).
+
+## PR-B — US3 header/logo · US4 colunas · US5 fusão · 2026-08-06
+
+**Implementação (dev-frontend, T012–T017)**: o vermelho do T012 provado por `git stash` contra o
+baseline — **37,3% medido** (= o 37% da auditoria `[F11a-005]`); depois: **93,3%** de largura útil
+a 1440px. Logo REAL do dono (os SVGs antigos desenhavam o wordmark com `<text>` de fonte de
+sistema — não eram a arte; os PNGs foram aparados de 3375² para 403×160 e servem por tema).
+Sidebar em altura cheia à esquerda, header depois dela; fusão US5 dentro de "Como chegamos no
+preço"; marcadores laranja/roxo removidos. A seção de canal foi movida para ANTES do bloco de
+preço — antecipando a posição que o FR-918 (PR-E) pede, pela leitura da fusão. O executor quebrou
+e consertou a contenção do `[F11a-002]` no caminho (273px de transbordo pegos pela suíte
+existente — o valor de nunca deletar a guarda). gate:fe verde · 112/112 e2e.
+
+**Homologação visual (qa-produto, T018): FAIL 82% → correções aplicadas → re-verificado.**
+31 screenshots em `evidencias/pr-b/`. 4 dos 5 itens do dono resolvidos e confirmados por caixas +
+imagem (93,3% re-medido de forma independente; logo nítida por tema, ratio exato; foco
+SIDEBAR→TOPBAR→MAIN; fusão sem duplicata; 0 marcadores; 0 transbordo em 20 varreduras).
+
+**O achado que derrubou o veredito — A1 (BLOQUEADOR), e a lição é nova para a casa**: o scroll da
+foto do dono (item 9) era **VERTICAL**, não horizontal. `line-height: 1` deixava o conteúdo 4px
+mais alto que a caixa; `overflow-x: auto` faz o overflow-y computar `auto`; e o Chromium **headed**
+(o ambiente do dono) renderiza a barra clássica de 15px — **invisível em headless**, que desenha
+overlay. Por isso 112/112 e2e verdes com o defeito na tela: a guarda só media o eixo X (A2).
+**Lição: headless não vê barra de rolagem clássica — o eixo Y se afere por `scrollHeight`, e a
+guarda precisa dos DOIS eixos.**
+
+| # | achado | destino |
+| --- | --- | --- |
+| A1 | Barra vertical de 15px nos cartões (headed), valor 7,5px fora do centro — com valores DEFAULT | **CORRIGIDO**: `line-height: 1.2` remove a CAUSA (a alternativa `overflow-y: hidden` esconderia a barra sem remover o overflow, e headless não conseguiria prová-la) |
+| A2 | A guarda T012 era cega ao eixo Y | **CORRIGIDO**: `amountOverflowY` na guarda; vermelho observado (3 falhas) ANTES da correção; verde depois (18/18 headless + 4/4 **headed** com valor adversarial) |
+| A3 | A narrativa "o scroll sumiu pelo ganho de largura" não se sustentava: não havia scroll horizontal nem antes (mutação para 448px medida) | registrado — o ganho de largura é real (93,3%) mas o item 9 era o eixo Y |
+| A4 | Rodapé clampado em 720px = 60,0% na faixa dele (o piso exato do SC-903); ritmo Varejo/Atacado levemente irregular | registrado como decisão consciente a confirmar no gate do PR ("total centralizado" foi o pedido do dono) |
+
+**Não coberto**: `/catalogo/produtos/$id` (mesmo corpo, exige premium); contraste numérico do
+tema claro em 360/390 (fotografado e lido, sem número).

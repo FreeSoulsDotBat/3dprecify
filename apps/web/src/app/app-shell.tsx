@@ -53,14 +53,35 @@ export function AppShell() {
       {/* slot: offline-banner (US4/T052) */}
       <OfflineBanner />
 
-      <TopBar isMobile={isMobile} />
-
-      <div className="tf-shell__body">
-        {!isMobile && <AppNav variant="sidebar" />}
-        <main className="tf-shell__main">
-          <Outlet />
-        </main>
-      </div>
+      {/* 016/US3 (T014) — "a sidebar fica à frente do header": on desktop the side nav is now a
+          full-height column to the LEFT of everything (banner landmark included), preparing the
+          terrain for a future collapsible rail (the collapse itself is out of scope). The
+          top-bar no longer spans the sidebar's width — it starts where the sidebar ends, over a
+          right-hand column it shares with `<main>`. Mobile is UNCHANGED: the top-bar still spans
+          the full width above the body, and the TabBar sits fixed at the bottom (no side nav is
+          ever mounted there). DOM order now reads sidebar → top-bar → main, which is also the new
+          tab order — coherent with the new visual left-to-right layout, not a regression of it
+          (AC2: focus/tab-order/screen-reader do not get WORSE, they now match what is on screen). */}
+      {isMobile ? (
+        <>
+          <TopBar isMobile />
+          <div className="tf-shell__body">
+            <main className="tf-shell__main">
+              <Outlet />
+            </main>
+          </div>
+        </>
+      ) : (
+        <div className="tf-shell__body">
+          <AppNav variant="sidebar" />
+          <div className="tf-shell__content">
+            <TopBar isMobile={false} />
+            <main className="tf-shell__main">
+              <Outlet />
+            </main>
+          </div>
+        </div>
+      )}
 
       {isMobile && <AppNav variant="tabbar" />}
 
