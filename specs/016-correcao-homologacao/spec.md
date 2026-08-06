@@ -139,8 +139,10 @@ teasers, PDF/CSV exportados) sem NENHUMA ocorrência do par antigo; rotas e payl
 1. **Given** qualquer superfície visível ao usuário (incluindo artefatos exportados PDF/CSV),
    **When** renderizada após a mudança, **Then** exibe "Orçamentos"/"Simulações" e nenhuma ocorrência
    de "Histórico"/"Cenários" resta.
-2. **Given** as rotas `/historico` e `/cenarios` e os payloads persistidos, **When** a mudança entra,
-   **Then** nada neles muda — a troca é SÓ de rótulo, via chaves de tradução (não hard-coded).
+2. **Given** a rota `/historico` e os payloads persistidos, **When** a mudança entra, **Then** nada
+   neles muda — a troca é SÓ de rótulo, via chaves de tradução (não hard-coded). *(Correção V0
+   2026-08-05: `/cenarios` nunca existiu como rota — Simulações é o painel "Meus cenários" dentro
+   de `/calcular`.)*
 3. **Given** as duas telas, **When** o usuário as lê, **Then** o texto de cada uma diz o que a
    diferencia da outra (congelado × recalculado hoje); o Histórico NÃO é removido.
 
@@ -533,8 +535,9 @@ byte-idêntico ao de hoje.
 - **FR-903**: Os elementos divergentes listados em US1-AC2 MUST ser removidos, incluindo o modal
   "Cenários fazem parte do Premium".
 - **FR-904**: Todas as superfícies visíveis (incl. PDF/CSV exportados) MUST usar os rótulos
-  "Orçamentos" e "Simulações" via chaves de tradução; rotas, chaves de API e payloads persistidos
-  MUST NOT mudar; o Histórico MUST NOT ser removido.
+  "Orçamentos" e "Simulações" via chaves de tradução; rotas (`/historico` — a única do par que
+  existe; correção V0), chaves de API e payloads persistidos MUST NOT mudar; o Histórico MUST NOT
+  ser removido.
 
 **Layout**
 

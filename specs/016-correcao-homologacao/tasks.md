@@ -24,7 +24,7 @@ obrigatório (US10, US14, US16, US18). As demais seguem o roteamento padrão (ex
 
 **Purpose**: medir o Grupo 0 ANTES de planejar qualquer conserto dele (spec §V0).
 
-- [ ] T001 Medir o Grupo 0: subir o backend com `PORT=8000 P3D_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 uv run python scripts/run_e2e_server.py` (conferir `/health`→200 E `/api/v1/entitlement`→200/401, nunca 500), logar com conta SEM premium, abrir Catálogo · Kits · Orçamentos · Simulações · "Usar do catálogo", registrar screenshot + status HTTP por tela em `specs/016-correcao-homologacao/dod-evidence.md`. Se o teaser aparecer → V0 fecha sem código. Se o erro vermelho persistir → PARAR e reportar ao dono (vira a primeira fatia e reordena o plano).
+- [x] T001 Medir o Grupo 0: subir o backend com `PORT=8000 P3D_FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 uv run python scripts/run_e2e_server.py` (conferir `/health`→200 E `/api/v1/entitlement`→200/401, nunca 500), logar com conta SEM premium, abrir Catálogo · Kits · Orçamentos · Simulações · "Usar do catálogo", registrar screenshot + status HTTP por tela em `specs/016-correcao-homologacao/dod-evidence.md`. Se o teaser aparecer → V0 fecha sem código. Se o erro vermelho persistir → PARAR e reportar ao dono (vira a primeira fatia e reordena o plano).
 
 **Checkpoint**: V0 registrado. PR-A pode começar (V0 só bloqueia consertos do Grupo 0).
 
