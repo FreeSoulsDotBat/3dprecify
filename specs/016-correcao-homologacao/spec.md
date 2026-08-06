@@ -685,6 +685,11 @@ byte-idêntico ao de hoje.
   (dono, 2026-08-05).
 - O E6 (billing) segue em voo (PR-C pendente); o bump MAJOR de PR-D é coordenado com o fechamento do
   E6 ou explicitamente com o arquiteto (risco R8 do brief).
+- **Enforcement da virada marketplace-premium (registrado 2026-08-05, achado D1 do analyze)**: é de
+  **UI** — o cálculo é offline por design e o catálogo de tarifas é dado público semeado no bundle,
+  então o servidor não tem como gatear a conta em si; o valor premium é a conveniência. Decisão
+  consciente, não drift do Princípio IV (a autoridade de entitlement sobre dados premium servidos
+  permanece no servidor, ADR-0012). A Clarification da 007 (T050) carrega esta frase.
 - A matriz de homologação do §9 do brief (offline, erro de rede real, sessão expirada, /conta no
   grátis, tema claro, 404, mobile 360px) é executada como MEDIÇÃO deste incremento; defeito achado
   vira follow-up priorizado, não escopo automático.

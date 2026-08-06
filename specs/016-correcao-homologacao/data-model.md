@@ -52,7 +52,7 @@ fixoEfetivo(banda, L) = bandFixedFee(banda, L) + Σ surcharges.value   // atrave
 | `optionalSurcharges?` | marketplace | `{ id: "MANUSEIO_VOLUMOSO", label, value: 50, appliesPer: "ORDER", procedência }[]` | PR-F |
 | `fixedFeeSource?` | entrada | procedência própria da taxa fixa (Amazon INDIVIDUAL: `/precos`, data própria); metadado — não chega ao motor | PR-F |
 | Amazon INDIVIDUAL | dado | `fixedFee: 0 → 2` nas 38 entradas; `minPerItem` fica 1,00 (D7) | PR-F |
-| `catalogVersion` | catálogo | bump único via `nextCatalogVersion` no fechamento de PR-F | PR-F |
+| `catalogVersion` | catálogo | UM bump por FATIA que muda conteúdo, via `nextCatalogVersion`: PR-E (curadoria `feeAxes`) e PR-F (dado — T068), cada uma o seu | PR-E, PR-F |
 | ~~`fixedCostMatrix?`~~ | marketplace | **ADIADO** (ADR-0025 Proposed — volta com US6-ML/017) | — |
 
 **Refine novo (FR-928)**: banda com `fixedFee` nulo e sem `fixedFeeRule` ⇒ inválida no schema;
