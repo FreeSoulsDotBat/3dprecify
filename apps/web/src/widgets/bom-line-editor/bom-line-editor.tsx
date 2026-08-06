@@ -13,6 +13,7 @@ import {
   TimeHmField,
 } from "@/features/calculator/calculator-form";
 import { computeFromForm } from "@/features/calculator/calculator-model";
+import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/channel-field-plan";
 import {
   type CalcFormValues,
   calculatorResolver,
@@ -20,6 +21,7 @@ import {
   COST_REQUIRED_FIELDS,
   defaultOtherCost,
   LABOR_AND_FINISH_FIELDS,
+  type ChannelFieldName,
   type MarketplaceId,
   MARKUP_FIELDS,
   slotResetOnMarketplaceChange,
@@ -91,6 +93,12 @@ export function BomLineEditor({
     const next = slotResetOnMarketplaceChange(marketplace);
     setValue(`channels.${index}.modality`, next.modality);
     setValue(`channels.${index}.category`, next.category);
+    // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank the fee fields the new plan hides.
+    for (const [field, value] of Object.entries(
+      feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),
+    )) {
+      setValue(`channels.${index}.${field as ChannelFieldName}` as const, value);
+    }
   };
 
   const boundProduct = products.find((p) => p.id === productId);
@@ -205,6 +213,12 @@ export function BomLineEditor({
             refreshing={refreshing}
             onRetryCatalog={retryCatalog}
             spineFor={(m) => spineForMarketplace(catalog, m)}
+            catalog={catalog}
+            // 016/US11 (T048) — the kit composer mounts only behind its OWN page-level entitlement
+            // gate (`bom-page.tsx`: `entitlement.data.status === "none"` → `BomGatePanel`, before
+            // this component is ever reached), so a channel slot here is always premium already.
+            entitled
+            signedOut={false}
           />
         </div>
       )}

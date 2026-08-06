@@ -128,3 +128,51 @@
 .category-picker__count {
   font-weight: var(--fw-medium);
 }
+
+/* 016/US13 (T054) — the hierarchical browse tree: the disclosure "▸"/"▾" sits BESIDE the option
+   button, its own real touch target (44px, same floor as `.category-picker__option`), never nested
+   INSIDE it — a button inside a button is invalid HTML and would fold both names into one. Nested
+   `.category-picker__list` (a subtree) indents so the level reads visually, without a second
+   surface/shadow per level (that would look like N separate cards, not one tree). */
+.category-picker__tree-row {
+  display: flex;
+  align-items: stretch;
+}
+.category-picker__expand {
+  flex: 0 0 auto;
+  width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  cursor: pointer;
+}
+.category-picker__expand:hover,
+.category-picker__expand:focus-visible {
+  color: var(--text-strong);
+}
+.category-picker__tree .category-picker__tree {
+  margin-left: var(--space-4);
+  box-shadow: none;
+  border-left: 1px solid var(--border-subtle);
+  border-radius: 0;
+}
+
+/* 016/US11 (T044 homologação PR-E, R2) — the OPENED browse tree gets its own scroll instead of
+   growing the page: measured, an inline 38-node spine put the page at 1.795px and dropped the
+   final price to y≈4.800 at 360px. `40vh` is a viewport-relative cap (never a fixed px that reads
+   differently on a 360px phone vs a 1440px desktop), and the count line stays OUTSIDE the scroll
+   frame — the seller reads "38 categorias" before deciding whether to scroll for one. */
+.category-picker__browse-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.category-picker__browse-scroll .category-picker__list {
+  max-height: 40vh;
+  overflow-y: auto;
+}

@@ -114,6 +114,16 @@ export const feeEntrySchema = z
       "every price band must carry its own commission — a null band commission prefills 0% under a reference seal regardless of the top-level rate (FR-008/SC-802)",
     path: ["priceBands"],
   })
+  // 016/US12 (FR-928, arquitetura-016 §9.4) — the F3 guard's mirror on `fixedFee`: the exact same
+  // defect class, on the other numeric leaf. `entryToChannelFees` maps `b.fixedFee ?? 0`, so a band
+  // with a null fixedFee prices R$ 0,00 under a "Referência" seal — never a fact anyone published.
+  // No `fixedFeeRule` escape hatch exists yet (PR-F/ADR-0027 introduces it in `pricing-core`); until
+  // then every published band MUST carry its own numeric fixedFee.
+  .refine((e) => e.priceBands == null || e.priceBands.every((b) => b.fixedFee !== null), {
+    message:
+      "every price band must carry its own fixedFee — a null band fixedFee prices R$ 0,00 under a reference seal (FR-928)",
+    path: ["priceBands"],
+  })
   // A band mode with no bands to combine is a generator bug, not a harmless no-op: it reads as
   // "this entry is progressive" while the engine charges a flat rate. Reject rather than ignore.
   .refine((e) => e.bandMode == null || (e.priceBands != null && e.priceBands.length > 0), {
@@ -139,12 +149,21 @@ function determinantKey(d: Record<string, string> | null): string {
     .join("&");
 }
 
+/** The 4 fee fields the channel form has always shown, by their WIRE name (016/US12, FR-918). */
+const feeAxisSchema = z.enum(["commissionPct", "fixedFee", "minPerItem", "freightCost"]);
+
 const marketplaceCatalogSchema = z
   .object({
     marketplace: z.enum(MARKETPLACES),
     determinantsSchema: z.record(z.string(), z.unknown()).nullish(),
     /** The resolution spine (014/D2) — only the nodes whose rate diverges, plus their ancestors. */
     categorySpine: categorySpineSchema.nullish(),
+    // 016/US12 (FR-918, arquitetura-016 §F.2 rule 2) — ADITIVO. Which of the 4 numeric fee fields
+    // this marketplace's channel section shows. ABSENT = the four fields = the form every catalog
+    // shipped before this axis existed already rendered (I4) — a cached catalog from before 016
+    // reads identically. Curated 016: Shopee [commissionPct, fixedFee, freightCost] · Amazon
+    // [commissionPct, fixedFee, minPerItem] · Mercado Livre [commissionPct, fixedFee, freightCost].
+    feeAxes: z.array(feeAxisSchema).nullish(),
     entries: z.array(feeEntrySchema),
   })
   .superRefine((mk, ctx) => {

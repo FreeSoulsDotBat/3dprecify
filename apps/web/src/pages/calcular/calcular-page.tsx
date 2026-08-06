@@ -26,6 +26,7 @@ import {
 } from "@/features/calculator/calculator-form";
 import { type CatalogContext, computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
+import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/channel-field-plan";
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
 import {
   applyScenarioConfig,
@@ -42,6 +43,7 @@ import {
   defaultCalcValues,
   defaultOtherCost,
   LABOR_AND_FINISH_FIELDS,
+  type ChannelFieldName,
   type MarketplaceId,
   MARKUP_FIELDS,
   slotResetOnMarketplaceChange,
@@ -204,6 +206,13 @@ export function CalcularPage() {
   const signedOut = sessionStatus !== "authenticated";
   const showTeaserSlot = signedOut || entitlement.data?.status === "none";
 
+  // 016/US11 (T048, FR-915) — the free calculator's marketplace switch. `active` ONLY — a
+  // checking/error read (`entitlement.data` undefined, or `stale`) degrades to "not entitled", the
+  // same honest guard every other premium surface already uses (`use-entitlement.ts`'s own
+  // docstring: never assume premium). Server remains the authority (ADR-0012); this only decides
+  // what the UI OFFERS.
+  const marketplaceEntitled = entitlement.data?.status === "active";
+
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
   // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
   // failed online refresh is surfaced as a non-blocking retry (US3), never an error wall.
@@ -248,6 +257,17 @@ export function CalcularPage() {
     const next = slotResetOnMarketplaceChange(marketplace);
     setValue(`channels.${index}.modality`, next.modality, { shouldValidate: true });
     setValue(`channels.${index}.category`, next.category, { shouldValidate: true });
+    // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank exactly the fee fields the NEW
+    // marketplace's plan does not show; a field the new plan still shows keeps its value. Closes
+    // the render/value pair: a hidden field can no longer keep charging (measured: R$50 "Frete" on
+    // ML → Amazon left freightCost invisible but still discounting the líquido by −R$50).
+    for (const [field, value] of Object.entries(
+      feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),
+    )) {
+      setValue(`channels.${index}.${field as ChannelFieldName}` as const, value, {
+        shouldValidate: true,
+      });
+    }
   };
 
   return (
@@ -407,6 +427,14 @@ export function CalcularPage() {
           fused with "Preços por canal" (US5) — stays a single footer spanning both, always LAST
           (T015 — "o total centralizado ao final"), so it reads after every input that feeds it,
           channels included. */}
+      {/* 016/US11 (T044 homologação PR-E, R3) — a coluna direita não fica mais confinada ao
+          tamanho do GATE quando a conta é grátis. Medido: 850px de coluna direita (o gate, 205px
+          de altura, mais o markup) contra 2.521px de coluna esquerda a 1440px — 1.671px de buraco,
+          o gate substituiu um bloco de coluna inteira sem redistribuir nada. `otherCosts` migra
+          para a direita (ao lado de markup) quando não-entitulado, e o gate ocupa a largura TOTAL
+          da grade (span 2) na posição da seção — nunca confinado a uma coluna curta. O caminho
+          PREMIUM é byte-idêntico ao de antes (mesmo JSX, mesma ordem, `tf-calc-grid__full` nunca
+          renderiza) — sem regressão nas guardas de geometria existentes. */}
       <div className="tf-calc-grid">
         <div className="tf-calc-grid__col">
           {/* 016/PR-C (US6/US7/US8/US9) — "Custos da peça" now carries the fused
@@ -419,13 +447,15 @@ export function CalcularPage() {
             info={t.sectionInfo.labor}
             fields={LABOR_AND_FINISH_FIELDS}
           />
-          <OtherCostsSection
-            control={control}
-            fields={otherCostFields}
-            errors={otherCostErrors}
-            onAppend={() => appendOtherCost(defaultOtherCost())}
-            onRemove={removeOtherCost}
-          />
+          {marketplaceEntitled && (
+            <OtherCostsSection
+              control={control}
+              fields={otherCostFields}
+              errors={otherCostErrors}
+              onAppend={() => appendOtherCost(defaultOtherCost())}
+              onRemove={removeOtherCost}
+            />
+          )}
         </div>
         <div className="tf-calc-grid__col">
           <FieldGroup
@@ -434,30 +464,71 @@ export function CalcularPage() {
             info={t.sectionInfo.markup}
             fields={MARKUP_FIELDS}
           />
+          {!marketplaceEntitled && (
+            <OtherCostsSection
+              control={control}
+              fields={otherCostFields}
+              errors={otherCostErrors}
+              onAppend={() => appendOtherCost(defaultOtherCost())}
+              onRemove={removeOtherCost}
+            />
+          )}
           {/* (6) Marketplace — one slot per channel (add/remove); each channel's grossed-up
               anúncio + líquido for varejo e atacado are read together in the footer's "Como
-              chegamos no preço" (US1, fused per US5). */}
-          <MarketplaceSection
-            control={control}
-            values={values}
-            fields={fields}
-            channelOutcomes={channelOutcomes}
-            included={values.includeMarketplace !== false}
-            onToggleInclude={(next) => setValue("includeMarketplace", next)}
-            onAppend={append}
-            onRemove={remove}
-            onMarketplaceChange={handleMarketplaceChange}
-            refreshFailed={catalogRefreshFailed}
-            refreshing={catalogRefreshing}
-            onRetryCatalog={retryCatalog}
-            spineFor={(m) => spineForMarketplace(catalog, m)}
-          />
+              chegamos no preço" (US1, fused per US5). PREMIUM keeps this nested here, exactly
+              where it always was — the free GATE moves out below instead (R3). */}
+          {marketplaceEntitled && (
+            <MarketplaceSection
+              control={control}
+              values={values}
+              fields={fields}
+              channelOutcomes={channelOutcomes}
+              included={values.includeMarketplace !== false}
+              onToggleInclude={(next) => setValue("includeMarketplace", next)}
+              onAppend={append}
+              onRemove={remove}
+              onMarketplaceChange={handleMarketplaceChange}
+              refreshFailed={catalogRefreshFailed}
+              refreshing={catalogRefreshing}
+              onRetryCatalog={retryCatalog}
+              spineFor={(m) => spineForMarketplace(catalog, m)}
+              catalog={catalog}
+              entitled={marketplaceEntitled}
+              signedOut={signedOut}
+            />
+          )}
         </div>
+        {!marketplaceEntitled && (
+          <div className="tf-calc-grid__full">
+            <MarketplaceSection
+              control={control}
+              values={values}
+              fields={fields}
+              channelOutcomes={[]}
+              included={values.includeMarketplace !== false}
+              onToggleInclude={(next) => setValue("includeMarketplace", next)}
+              onAppend={append}
+              onRemove={remove}
+              onMarketplaceChange={handleMarketplaceChange}
+              refreshFailed={catalogRefreshFailed}
+              refreshing={catalogRefreshing}
+              onRetryCatalog={retryCatalog}
+              spineFor={(m) => spineForMarketplace(catalog, m)}
+              catalog={catalog}
+              entitled={marketplaceEntitled}
+              signedOut={signedOut}
+            />
+          </div>
+        )}
       </div>
 
       <div className="tf-calc-footer">
         {result ? (
-          <PriceResults result={result} values={values} channelOutcomes={channelOutcomes} />
+          <PriceResults
+            result={result}
+            values={values}
+            channelOutcomes={marketplaceEntitled ? channelOutcomes : []}
+          />
         ) : (
           <Alert tone="danger">{t.invalidNote}</Alert>
         )}

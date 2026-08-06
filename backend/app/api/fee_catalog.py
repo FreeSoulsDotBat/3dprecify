@@ -99,6 +99,11 @@ class MarketplaceCatalog(CamelModel):
     # the served path even with the backend healthy. The offline seed hid it; only the live
     # app showed it.
     category_spine: list[CategoryNode] | None = None
+    # 016/US12 (T051, FR-918) — which of the 4 fee fields this marketplace's channel section shows.
+    # ABSENT = all four (I4). Same lesson as `category_spine`/`band_mode` above: a response model is
+    # an allowlist, and a field it does not know is a field it silently drops — this one was caught
+    # by `test_fee_catalog_drops_no_field_from_the_artifact` (the guard those two fixes wrote).
+    fee_axes: list[Literal["commissionPct", "fixedFee", "minPerItem", "freightCost"]] | None = None
     entries: list[FeeEntry]
 
 

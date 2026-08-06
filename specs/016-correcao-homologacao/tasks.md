@@ -154,21 +154,21 @@ Shopee sem categoria / Amazon lista 38 / ML idêntico a hoje.
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T044 [P] [US11] Teste e2e do gate: grátis → switch desabilitado+falso, assinar visível, zero número de canal (5 telas + calculadora + deep-link com canal ativo), em `apps/web/e2e/marketplace-premium.spec.ts`
-- [ ] T045 [P] [US12] Testes do plano puro `channelFieldPlan` em `apps/web/src/features/calculator/channel-field-plan.test.ts`: regras 1–5 do desenho §F.2; `feeAxes` AUSENTE = 4 campos; categoria sse `categorySpine` não-vazio (mata a inferência categoria←modalidade); ML = comportamento de hoje
-- [ ] T046 [P] [US12] Prova byte-idêntica (FR-919): fixture de combinações suportadas hoje (3 marketplaces × determinantes atuais) reproduz resultado bit a bit, em `apps/web/src/features/calculator/calculator-model.test.ts`
-- [ ] T047 [P] [US13] Teste geométrico do picker: lista de resultados NÃO parece campo preenchido (boxes) + contador = N real (o 014 registrou "8" com 31), em `apps/web/e2e/category-picker.spec.ts`
+- [x] T044 [P] [US11] Teste e2e do gate: grátis → switch desabilitado+falso, assinar visível, zero número de canal (5 telas + calculadora + deep-link com canal ativo), em `apps/web/e2e/marketplace-premium.spec.ts`
+- [x] T045 [P] [US12] Testes do plano puro `channelFieldPlan` em `apps/web/src/features/calculator/channel-field-plan.test.ts`: regras 1–5 do desenho §F.2; `feeAxes` AUSENTE = 4 campos; categoria sse `categorySpine` não-vazio (mata a inferência categoria←modalidade); ML = comportamento de hoje
+- [x] T046 [P] [US12] Prova byte-idêntica (FR-919): fixture de combinações suportadas hoje (3 marketplaces × determinantes atuais) reproduz resultado bit a bit, em `apps/web/src/features/calculator/calculator-model.test.ts`
+- [x] T047 [P] [US13] Teste geométrico do picker: lista de resultados NÃO parece campo preenchido (boxes) + contador = N real (o 014 registrou "8" com 31), em `apps/web/e2e/category-picker.spec.ts`
 
 ### Implementation
 
-- [ ] T048 [US11] Switch premium: desabilitado e falso no grátis com `TeaserUpgrade` logo abaixo (visível, nunca escondido; sem número parcial/fake) em `apps/web/src/features/calculator/calculator-form.tsx` — autoridade de entitlement continua no servidor (ADR-0012)
-- [ ] T049 [US11] Reescrever a promessa da primeira dobra (o que é grátis: custo e markup, sem canal de venda) em `apps/web/src/pages/` (landing/calculadora) + i18n
-- [ ] T050 [US11] Clarifications datadas da virada em `specs/005-marketplace-multichannel/spec.md` (SC-109) E `specs/007-e2-catalog-entitlement/spec.md` (FR-313/SC-310) — NESTA fatia, nunca antes nem depois. A da 007 inclui a frase de enforcement (achado D1 do analyze): "o enforcement da virada é de UI porque o cálculo é offline por design e as tarifas são dado público semeado no bundle; o valor premium é a conveniência — decisão consciente, não drift do Princípio IV"
-- [ ] T051 [US12] Criar `apps/web/src/features/calculator/channel-field-plan.ts` (puro; alimenta render E `slotDeterminants` — RA5) + `feeAxes` no schema `apps/web/src/shared/fee-catalog/fee-catalog.ts` (aditivo) + curadoria em `seed.ts` e `backend/app/data/catalog.json` (Shopee/Amazon/ML conforme research R6; a curadoria muda CONTEÚDO ⇒ PR-E faz o SEU bump de `catalogVersion` via `nextCatalogVersion` — a regra é UM bump por fatia que muda conteúdo; o de PR-F é o T068 — achado F1 do analyze)
-- [ ] T052 [US12] Render dirigido da seção de canal + mover para depois de "Markup" e antes de "Como chegamos no preço" + remover "frete até a transportadora" dos exemplos de "Outros custos" + `MODALITY_OPTIONS` derivado do `determinantsSchema`, em `apps/web/src/features/calculator/{calculator-form.tsx,calculator-schema.ts}`
-- [ ] T053 [US12] FR-928: refine no schema (banda com `fixedFee` nulo sem `fixedFeeRule` = inválida) + `entryToChannelFees` sem `?? 0` (nível cai no estado I9), em `apps/web/src/shared/fee-catalog/fee-catalog.ts` + `apps/web/src/features/calculator/fee-prefill.ts` + teste
-- [ ] T054 [US13] Picker: navegação hierárquica (lista com subitens) + busca + contador verdadeiro + estado "não informada", em `apps/web/src/features/calculator/` (CategoryPicker)
-- [ ] T055 [US11] Homologação visual (qa-produto): grátis vs premium; screenshots dos 3 marketplaces (SC-908/909); geometria + imagem
+- [x] T048 [US11] Switch premium: desabilitado e falso no grátis com `TeaserUpgrade` logo abaixo (visível, nunca escondido; sem número parcial/fake) em `apps/web/src/features/calculator/calculator-form.tsx` — autoridade de entitlement continua no servidor (ADR-0012)
+- [x] T049 [US11] Reescrever a promessa da primeira dobra (o que é grátis: custo e markup, sem canal de venda) em `apps/web/src/pages/` (landing/calculadora) + i18n
+- [x] T050 [US11] Clarifications datadas da virada em `specs/005-marketplace-multichannel/spec.md` (SC-109) E `specs/007-e2-catalog-entitlement/spec.md` (FR-313/SC-310) — NESTA fatia, nunca antes nem depois. A da 007 inclui a frase de enforcement (achado D1 do analyze): "o enforcement da virada é de UI porque o cálculo é offline por design e as tarifas são dado público semeado no bundle; o valor premium é a conveniência — decisão consciente, não drift do Princípio IV"
+- [x] T051 [US12] Criar `apps/web/src/features/calculator/channel-field-plan.ts` (puro; alimenta render E `slotDeterminants` — RA5) + `feeAxes` no schema `apps/web/src/shared/fee-catalog/fee-catalog.ts` (aditivo) + curadoria em `seed.ts` e `backend/app/data/catalog.json` (Shopee/Amazon/ML conforme research R6; a curadoria muda CONTEÚDO ⇒ PR-E faz o SEU bump de `catalogVersion` via `nextCatalogVersion` — a regra é UM bump por fatia que muda conteúdo; o de PR-F é o T068 — achado F1 do analyze)
+- [x] T052 [US12] Render dirigido da seção de canal + mover para depois de "Markup" e antes de "Como chegamos no preço" + remover "frete até a transportadora" dos exemplos de "Outros custos" + `MODALITY_OPTIONS` derivado do `determinantsSchema`, em `apps/web/src/features/calculator/{calculator-form.tsx,calculator-schema.ts}`
+- [x] T053 [US12] FR-928: refine no schema (banda com `fixedFee` nulo sem `fixedFeeRule` = inválida) + `entryToChannelFees` sem `?? 0` (nível cai no estado I9), em `apps/web/src/shared/fee-catalog/fee-catalog.ts` + `apps/web/src/features/calculator/fee-prefill.ts` + teste
+- [x] T054 [US13] Picker: navegação hierárquica (lista com subitens) + busca + contador verdadeiro + estado "não informada", em `apps/web/src/features/calculator/` (CategoryPicker)
+- [x] T055 [US11] Homologação visual (qa-produto): grátis vs premium; screenshots dos 3 marketplaces (SC-908/909); geometria + imagem
 - [ ] T056 [US11] Gate da fatia + PR-E
 
 **Checkpoint**: a fronteira do freemium fechada SEM contradição silenciosa (promessa + 2

@@ -174,7 +174,7 @@ export const calculatorResolver: Resolver<CalcFormValues> = (values) => {
 // US1: the marketplace channel slot — a marketplace picker, its modality (when it has one) and
 // the manual fees fed into the per-channel gross-up. The determinant selectors key the catalog
 // pre-fill in US2; here they identify the channel and choose the modality-specific fee. Defined
-// before `defaultCalcValues` so its `defaultChannelSlot()` reads a fully-initialized MODALITY_OPTIONS.
+// before `defaultCalcValues` so its `defaultChannelSlot()` reads a fully-initialized DEFAULT_MODALITY_ORDER.
 export const MARKETPLACE_OPTIONS: readonly SelectOption[] = [
   { value: "MERCADO_LIVRE", label: t.marketplaceNames.MERCADO_LIVRE },
   { value: "SHOPEE", label: t.marketplaceNames.SHOPEE },
@@ -182,8 +182,23 @@ export const MARKETPLACE_OPTIONS: readonly SelectOption[] = [
   { value: "OUTRO", label: t.marketplaceNames.OUTRO },
 ];
 
-/** Modalities by marketplace — Shopee/Outro have none (empty ⇒ the modality select is hidden). */
-export const MODALITY_OPTIONS: Record<MarketplaceId, readonly SelectOption[]> = {
+/**
+ * 016/US12 (T052, FR-918, arquitetura-016 §F.2) — the RENDER-facing modality options are no longer a
+ * table here: `channel-field-plan.ts:channelFieldPlan` derives them live from the catalog's
+ * `determinantsSchema`, which is what "dirigido pelo schema" means (a marketplace that changes its
+ * declared axes changes the form with no code edit).
+ *
+ * This table SURVIVES, privately, for exactly one job: which modality a BRAND NEW slot starts on
+ * (`defaultChannelSlot`/`slotResetOnMarketplaceChange`, below) — a UX default, not a rendered choice
+ * list. Measured, deliberate deviation from deriving it too: the catalog's own `determinantsSchema`
+ * order for Amazon is `["INDIVIDUAL", "PROFISSIONAL"]` (`seed.ts`/`catalog.json`), and Amazon's ONLY
+ * catch-all fee entry is keyed to `plan: "PROFISSIONAL"` — deriving the default from catalog order
+ * would flip the seed's default modality to INDIVIDUAL, for which no catch-all entry exists, and
+ * silently change the seed price every test in this codebase pins (015/A11's own comment names this
+ * exact dependency). FR-919 asks for byte-identical results on today's supported combinations; this
+ * table is what keeps the DEFAULT one of them from moving.
+ */
+const DEFAULT_MODALITY_ORDER: Record<MarketplaceId, readonly SelectOption[]> = {
   MERCADO_LIVRE: [
     { value: "CLASSICO", label: t.modalityNames.CLASSICO },
     { value: "PREMIUM", label: t.modalityNames.PREMIUM },
@@ -215,7 +230,7 @@ export const MODALITY_OPTIONS: Record<MarketplaceId, readonly SelectOption[]> = 
 export function defaultChannelSlot(marketplace: MarketplaceId = "AMAZON"): ChannelSlotForm {
   return {
     marketplace,
-    modality: (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality,
+    modality: (DEFAULT_MODALITY_ORDER[marketplace][0]?.value ?? "") as Modality,
     commissionPct: "",
     fixedFee: "",
     minPerItem: "",
@@ -239,7 +254,10 @@ export function slotResetOnMarketplaceChange(marketplace: MarketplaceId): {
   modality: Modality;
   category: string;
 } {
-  return { modality: (MODALITY_OPTIONS[marketplace][0]?.value ?? "") as Modality, category: "" };
+  return {
+    modality: (DEFAULT_MODALITY_ORDER[marketplace][0]?.value ?? "") as Modality,
+    category: "",
+  };
 }
 
 /** A fresh, blank "Outros custos" row (US5). Blank name is accepted — the UI shows a neutral

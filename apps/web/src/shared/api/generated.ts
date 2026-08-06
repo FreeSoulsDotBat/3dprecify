@@ -383,6 +383,7 @@ export interface MarketplaceCatalog {
   marketplace: MarketplaceCatalogMarketplace;
   determinantsSchema?: MarketplaceCatalogDeterminantsSchema;
   categorySpine?: CategoryNode[] | null;
+  feeAxes?: ('commissionPct' | 'fixedFee' | 'minPerItem' | 'freightCost')[] | null;
   entries: FeeEntry[];
 }
 

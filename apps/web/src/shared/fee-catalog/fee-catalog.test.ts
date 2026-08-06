@@ -97,6 +97,21 @@ describe("fee-catalog schema rejects fabricated / malformed entries", () => {
     };
     expect(() => feeEntrySchema.parse(banded)).not.toThrow();
   });
+
+  // 016/US12 (T053, FR-928, arquitetura §9.4) — the F3 guard mirrored onto `fixedFee`: a band whose
+  // fixedFee is null resolves to R$ 0,00 under a "Referência" seal (`entryToChannelFees`'s old
+  // `b.fixedFee ?? 0`), which is the exact same class of defect the commissionPct guard exists to
+  // catch. No `fixedFeeRule` escape hatch exists yet (that is PR-F) — every band published TODAY
+  // must carry its own numeric fixedFee.
+  it("rejects a banded entry whose BAND carries a null fixedFee (R$ 0,00 under a reference seal)", () => {
+    const nullFixedFeeBand = {
+      ...base,
+      commissionPct: null,
+      fixedFee: null,
+      priceBands: [{ minPrice: 0, maxPrice: null, commissionPct: 14, fixedFee: null }],
+    };
+    expect(() => feeEntrySchema.parse(nullFixedFeeBand)).toThrow();
+  });
 });
 
 describe("resolveEntry — keyed by determinants (A6)", () => {

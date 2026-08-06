@@ -78,7 +78,10 @@ export const messages = {
       },
       outrosCustos: {
         label: "Sobre outros custos",
-        body: "Itens nomeados que somam ao custo total: embalagem, frete até a transportadora, taxas, overhead. A soma entra no custo total exatamente como um valor único faria, e cada item aparece na sua própria linha do detalhamento.",
+        // 016/US12 (FR-918) — "frete até a transportadora" saiu dos exemplos: com o canal de
+        // marketplace dirigido pelo catálogo, o frete já tem campo próprio dentro do canal — citá-lo
+        // aqui também sugeria dois lugares para o mesmo custo.
+        body: "Itens nomeados que somam ao custo total: embalagem, etiqueta, taxas, overhead. A soma entra no custo total exatamente como um valor único faria, e cada item aparece na sua própria linha do detalhamento.",
       },
       markup: {
         label: "Sobre o markup",
@@ -128,12 +131,13 @@ export const messages = {
     // aviso escrito como erro conclui que o produto recusou, e o produto nao recusou.
     avisoAtacadoAcimaDoVarejo:
       "O preco de atacado ficou acima do varejo. Nada foi recusado — so confira se e isso mesmo.",
-    // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Frete até a transportadora…);
-    // each value soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria
-    // linha no detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
+    // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Etiqueta…); each value
+    // soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria linha no
+    // detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
+    // 016/US12 (FR-918) — "frete até a transportadora" saiu do exemplo (ver `sectionInfo.outrosCustos`).
     outrosCustos: {
       title: "Outros custos",
-      hint: "Embalagem, frete até a transportadora, etc. Cada item soma ao custo total.",
+      hint: "Embalagem, etiqueta, taxas, etc. Cada item soma ao custo total.",
       addCost: "Adicionar custo",
       removeCost: "Remover custo",
       name: "Nome do custo",
@@ -162,6 +166,9 @@ export const messages = {
         "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do canal para precificar.",
       // US4 — master toggle: show/hide the whole marketplace section (default on).
       includeToggle: "Incluir marketplaces no preço",
+      // 016/US11 (T048, FR-915) — the switch's disabled state needs a legible reason: a disabled
+      // control with no text beside it reads as broken, not as "assine para usar".
+      premiumOnly: "Vender em marketplaces faz parte do Premium.",
       pricesTitle: "Preços por canal",
       channelFallback: "Canal",
       errorRow: "Corrija os campos deste canal para ver os preços.",
@@ -215,6 +222,19 @@ export const messages = {
       unavailableNoReference:
         "Este canal ainda não tem taxa de referência — informe a comissão nos campos abaixo.",
       unavailableWithFee: "A lista de categorias ainda não está disponível para este canal.",
+      // 016/US13 (T054, FR-920) — a navegação hierárquica, ao lado da busca. `browseCount` é o
+      // contador HONESTO do modo de navegação (o total real de categorias do catálogo — nunca "8"
+      // quando existem mais, o mesmo princípio de `resultsTruncated`). Um marketplace de espinha
+      // PLANA (Amazon: 38, um nível) degrada sozinho a uma lista simples — nenhum nó tem filhos, e
+      // nenhum "▸" aparece.
+      browseCount: "{n} categorias no catálogo",
+      expandAria: "Expandir {name}",
+      collapseAria: "Recolher {name}",
+      // 016/US11 (T044 homologação PR-E, R2) — o botão que abre a árvore, com a contagem REAL
+      // (nunca "8"). Recolhido por padrão: 38 nós inline empurravam a página inteira antes de
+      // qualquer interação (medido: 1.795px, preço final a y≈4.800 a 360px).
+      browseToggle: "Ver todas as categorias ({n})",
+      browseCollapse: "Ocultar categorias",
     },
     seals: {
       reference: "Referência",
@@ -243,7 +263,13 @@ export const messages = {
       INDIVIDUAL: "Individual",
     },
     invalidNote: "Confira os campos destacados para ver o preço.",
-    freemiumNote: "Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium.",
+    // 016/US11 (T049, FR-916, decisão do dono 2026-08-05) — a promessa reescrita: marketplaces
+    // virou Premium (T048), então "grátis" precisa dizer exatamente o que continua sendo — custo e
+    // markup — sem sugerir que canal de venda entra nisso. A frase antiga ("Calcular e ver a conta é
+    // grátis. Salvar e exportar fazem parte do Premium.") ficou FALSA no dia em que o switch de
+    // marketplace passou a exigir assinatura: ela seguia prometendo algo que deixou de ser grátis.
+    freemiumNote:
+      "Calcular custo e markup é grátis, sem limite. Vender em marketplaces, salvar e exportar fazem parte do Premium.",
     // US5 (E2/T024) — the catalog pickers: pre-fill the fields from a saved filament/printer.
     // Picked values stay editable (pre-fill, never lock). Rendered only for signed-in accounts
     // WITH saved items — the free manual flow is untouched (SC-310).
@@ -1072,13 +1098,19 @@ export const messages = {
       title: "Salve e reutilize seu catálogo",
       subtitle:
         "Guarde filamentos, impressoras e produtos uma vez e preencha o cálculo com um toque.",
-      caption: "Calcular e ver a conta continuam grátis.",
+      // 016/US11 (T049, achado A2 do PR-A) — encurtada: com `freemiumNote` já dizendo "custo e
+      // markup são grátis" na primeira dobra da MESMA tela, repetir a frase quase inteira aqui era
+      // a mesma afirmação colada duas vezes.
+      caption: "A calculadora continua grátis.",
     },
     CATALOG_PICKER: {
       title: "Preencha o cálculo com um toque",
       subtitle:
         "O catálogo guarda seus filamentos e impressoras salvos: no Premium, eles preenchem os campos abaixo sozinhos — e continuam editáveis.",
-      caption: "Calcular e ver a conta continuam grátis.",
+      // 016/US11 (T044 homologação PR-E, R4) — "A calculadora continua grátis." ficou IMPRECISA
+      // com a virada: o bloco de marketplace deixou de ser grátis, e esta legenda vive na MESMA
+      // tela do gate de canal. Precisão sobre o que exatamente permanece grátis.
+      caption: "O cálculo de custo e markup continua grátis.",
     },
     KITS: {
       title: "Monte e precifique kits com várias peças",

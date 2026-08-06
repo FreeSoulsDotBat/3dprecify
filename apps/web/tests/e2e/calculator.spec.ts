@@ -5,6 +5,13 @@ import { expect, test } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
+import { grantPremium, signUpThrowaway } from "./history-helpers";
+
+// 016/US11 (T044/PR-E sweep, FR-915) — marketplace channel pricing is Premium now. Tests below whose
+// INTENT is the channel MECHANICS (gross-up, pre-fill, the toggle, the category picker) now sign in
+// + `grantPremium` first — the free-tier gate itself is proven exclusively in
+// `apps/web/tests/e2e/marketplace-premium.spec.ts`, so it is not re-asserted here.
+
 // The committed fee-catalog served by GET /api/v1/fee-catalog — used to force the ONLINE reference
 // seal (source ≠ seed) in the overflow regression below, matching what the deployed endpoint returns.
 const servedCatalogJson = readFileSync(
@@ -160,9 +167,12 @@ test("signed-out user computes offline with a full breakdown — no save/export,
 
 test("US3: a failed fee refresh shows a non-blocking retry; the calculator still computes (SC-104)", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
-  // Force the online catalog refresh to fail; a later retry succeeds. /calcular is public (no sign-in).
+  // 016/US11 — the retry notice lives inside the entitled branch of MarketplaceSection now.
+  const email = await signUpThrowaway(page, `calc-refresh-${info.workerIndex}`);
+  grantPremium(email);
+  // Force the online catalog refresh to fail; a later retry succeeds.
   let failFetch = true;
   await page.route("**/api/v1/fee-catalog", async (route) => {
     if (failFetch) return route.abort();
@@ -186,13 +196,23 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await expect(page.getByText(t.channels.refreshErrorTitle)).toHaveCount(0);
 });
 
-test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", async ({ page }) => {
+test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", async ({
+  page,
+}, info) => {
   const t = messages.calculator;
-  // This test's premise is the SEED fee reference (embedded seal). Since E2 the e2e stack runs a
-  // real backend, so the catalog fetch is aborted to keep the seed path under test.
+  // 016/US11 (T044 homologação, correção) — the abort has to be registered BEFORE
+  // `signUpThrowaway`, not after: that helper's OWN navigation (to /sign-in, then the auto-redirect
+  // to "/" once signed up) already mounts the calculator and fetches the fee-catalog. Registering
+  // the route AFTER it left that first fetch unintercepted, so the SERVED catalog got fetched and
+  // PERSISTED to the client store (ADR-0010's cache) before this test's own goto ever ran — the
+  // subsequent abort then only blocked a re-fetch, while the persisted store (now holding real
+  // Shopee/Amazon data, newer than the seed) kept answering every render. This test's premise is
+  // the SEED reference (embedded seal); the route must be live from the very first navigation.
   await page.route("**/api/v1/fee-catalog", (route) => route.abort());
+  const email = await signUpThrowaway(page, `calc-overflow-${info.workerIndex}`);
+  grantPremium(email);
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/calcular"); // public — no sign-in needed
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   // Build the COMPLETE 005 surface: labor (US4-004), several long-named sub-costs incl. an inline
@@ -230,9 +250,11 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
 
 test("US1: prices several channels at once; add/remove isolates rows; commission 100% errors one slot", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
-  await page.goto("/calcular"); // public — no sign-in needed
+  const email = await signUpThrowaway(page, `calc-multi-${info.workerIndex}`);
+  grantPremium(email);
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   // The default channel (Mercado Livre) — give it a fee so its "Preços por canal" rows render.
@@ -275,19 +297,25 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
 
 test("US2: a covered marketplace pre-fills fees with an honesty seal; editing flips to 'ajustado'; uncovered reads 'sem referência'", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
   const seals = t.seals;
+  // 016/US11 (T044 homologação, correção) — same ordering defect as the overflow test above: the
+  // abort MUST be live before `signUpThrowaway`'s own first navigation, or that navigation fetches
+  // and PERSISTS the served catalog before this test's premise (the bundled seed) ever applies.
   // Premise: no served catalog → bundled-seed fallback (the embedded seal). Abort the fetch since
   // the E2 e2e stack now runs a real backend.
   await page.route("**/api/v1/fee-catalog", (route) => route.abort());
-  await page.goto("/calcular"); // public — no sign-in needed
+  const email = await signUpThrowaway(page, `calc-seal-${info.workerIndex}`);
+  grantPremium(email);
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").nth(0);
 
-  // The default channel is Mercado Livre, which is NOT curated in the seed (its per-category rates
-  // are unverifiable) → the slot honestly reads "sem referência", never a fabricated number.
+  // 015/A11 — the default channel is AMAZON (not Mercado Livre; the comment below predates that
+  // change), which is likewise NOT curated in the SEED (only Shopee is) → the slot honestly reads
+  // "sem referência", never a fabricated number.
   await expect(slot0.getByTestId("fee-seal")).toContainText(seals.none);
 
   // Switch it to Shopee (price-band curated). With the fee fields left BLANK the model pre-fills
@@ -312,8 +340,10 @@ test("US2: a covered marketplace pre-fills fees with an honesty seal; editing fl
 
 test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T026b nit #2)", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
+  const email = await signUpThrowaway(page, `calc-longseal-${info.workerIndex}`);
+  grantPremium(email);
   // Serve the committed catalog so the store's active source becomes "catalog" (not the seed) → the
   // slot shows the FULL online reference seal ("Referência: <long source> · atualizada em …"), the
   // ~850px string the homologation caught overflowing. Intercept before load (the fetch is on mount).
@@ -321,7 +351,7 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
     route.fulfill({ status: 200, contentType: "application/json", body: servedCatalogJson }),
   );
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/calcular"); // public — no sign-in needed
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").nth(0);
@@ -354,15 +384,17 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
 // números que o DS nunca adotou.
 test("US1: o seletor de categoria é um campo de primeira classe, não um <input> cru (FR-006a, T115)", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
+  const email = await signUpThrowaway(page, `calc-picker-frame-${info.workerIndex}`);
+  grantPremium(email);
   // A espinha de categorias viaja no catálogo SERVIDO (a semente empacotada não a carrega) e hoje só
   // a Amazon publica uma — servir o catálogo committed é o que faz o seletor existir na tela.
   await page.route("**/api/v1/fee-catalog", (route) =>
     route.fulfill({ status: 200, contentType: "application/json", body: servedCatalogJson }),
   );
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("/calcular"); // public — no sign-in needed
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").nth(0);
@@ -432,9 +464,11 @@ test("US1: o seletor de categoria é um campo de primeira classe, não um <input
 
 test("US4: the 'Incluir marketplaces no preço' toggle shows/hides the whole marketplace section; the direct price stays (SC-105)", async ({
   page,
-}) => {
+}, info) => {
   const t = messages.calculator;
-  await page.goto("/calcular"); // public — no sign-in needed
+  const email = await signUpThrowaway(page, `calc-toggle-${info.workerIndex}`);
+  grantPremium(email);
+  await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   // Default ON: the switch is checked and the marketplace machinery is visible.
@@ -495,20 +529,59 @@ test("US5: itemized 'Outros custos' — named sub-costs each show as a breakdown
   await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
 });
 
-// US6 (T037, SC-109): the FULL 005 surface — several channels (manual + catalog-prefilled), the
-// visibility toggle exercised, itemized sub-costs — never renders a bad number and never grows a
-// save/export/history/paywall affordance. Signed-out throughout (/calcular is public). The
+// 016/US11 (T044/PR-E sweep) — SC-109's "never a bad number, no paywall" claim SPLIT in two, because
+// marketplace pricing itself became the paywalled surface (FR-915): what free still gets is the
+// sub-costs slot with no bad numbers and the marketplace GATE (never partial channel machinery);
+// what premium gets is the full multi-channel mechanics SC-109 originally exercised together. The
 // `PRICING_MODEL_VERSION === "3.0.0"` half of SC-109 is pinned at the source in pricing-core's
-// version.test.ts (single source — the e2e asserts the user-visible behaviors); "backend does no
-// price compute" is proven behaviorally by the offline test below (prices render with NO backend).
-test("US6: full multi-channel + sub-costs surface — no bad numbers, no save/export/paywall, signed-out (SC-109)", async ({
+// version.test.ts; "backend does no price compute" is proven behaviorally by the offline test below.
+test("US6 (free/signed-out): sub-costs surface has no bad numbers; the marketplace GATE closes, never a partial channel (SC-109)", async ({
   page,
 }) => {
   const t = messages.calculator;
   await page.goto("/calcular"); // public — no sign-in, no wall
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
-  // Channel 1 (default Mercado Livre): manual fees, including a HIGH commission (95% — a valid but
+  // Itemized sub-costs: a named one and a BLANK-named one (falls back to the neutral label).
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+  const costRows = page.getByTestId("other-cost-row");
+  await costRows.nth(0).getByLabel(t.outrosCustos.name).fill("Embalagem");
+  await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("3,00");
+  await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("1,005"); // rounds HALF_UP → 1,01
+
+  await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
+  await expect(page.getByText("R$ 1,01")).toBeVisible(); // the HALF_UP-rounded blank-named line
+  await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+  await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
+
+  // The marketplace section is the GATE, never a partial/collapsed channel surface: disabled+off
+  // switch, zero channel slots, zero "Preços por canal", the subscribe path visible.
+  await expect(page.getByRole("switch", { name: t.channels.includeToggle })).toBeDisabled();
+  await expect(page.getByRole("switch", { name: t.channels.includeToggle })).not.toBeChecked();
+  await expect(page.getByTestId("channel-slot")).toHaveCount(0);
+  await expect(page.getByText(t.channels.pricesTitle)).toHaveCount(0);
+  await expect(page.getByText(t.channels.premiumOnly)).toBeVisible();
+
+  // No save/export/history affordance appears on the free calculator; the freemium note is an
+  // honest statement, not a CTA. (016/US2: the bottom-nav "Orçamentos" LINK — was "Histórico" — is
+  // the app shell placeholder, not a calculator affordance — the assertion targets buttons.)
+  await expect(
+    page.getByRole("button", { name: /salvar|exportar|histórico|desbloquear/i }),
+  ).toHaveCount(0);
+  await expect(page.getByText(t.freemiumNote)).toBeVisible();
+});
+
+test("US6 (premium): full multi-channel + sub-costs surface — no bad numbers, toggle exercised", async ({
+  page,
+}, info) => {
+  const t = messages.calculator;
+  const email = await signUpThrowaway(page, `calc-full-premium-${info.workerIndex}`);
+  grantPremium(email);
+  await page.goto("/calcular");
+  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+  // Channel 1 (default Amazon slot): manual fees, including a HIGH commission (95% — a valid but
   // extreme gross-up whose denominator 0,05 amplifies any float slip into a visible bad number).
   const slot0 = page.getByTestId("channel-slot").nth(0);
   await slot0.getByLabel(/^Comissão(?! mínima)/).fill("95");
@@ -542,40 +615,46 @@ test("US6: full multi-channel + sub-costs surface — no bad numbers, no save/ex
   await expect(page.getByTestId("channel-slot")).toHaveCount(2);
   await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
 
-  // SC-109: never a NaN/Infinity/#DIV! anywhere on this full surface…
+  // SC-109's numeric half still holds for the full premium surface: never a NaN/Infinity/#DIV!.
   await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
-  // …and no save/export/history/paywall affordance ever appears; the freemium note is an honest
-  // statement, not a CTA. (016/US2: the bottom-nav "Orçamentos" LINK — was "Histórico" — is the
-  // app shell placeholder, not a calculator affordance — the assertion targets buttons.)
-  await expect(
-    page.getByRole("button", {
-      name: /salvar|exportar|histórico|assinar|premium|upgrade|desbloquear/i,
-    }),
-  ).toHaveCount(0);
-  await expect(page.getByText(t.freemiumNote)).toBeVisible();
 });
 
-// US6 (T038): the FULL 005 surface computes OFFLINE and signed-out from the bundled seed — channels
-// (manual fees + Shopee catalog pre-fill), the toggle, and sub-costs — with the failed catalog
-// refresh staying non-blocking and nothing gating on the network or a sign-in.
-test("US6: offline + signed-out — channels, toggle and sub-costs all compute from the seed (SC-109)", async ({
+// US6 (T038): the FULL 005 surface computes OFFLINE from the bundled seed — channels (manual fees +
+// Shopee catalog pre-fill), the toggle, and sub-costs — with the failed catalog refresh staying
+// non-blocking and nothing gating on the network. 016/US11 — marketplace pricing is Premium now, and
+// the entitlement gate itself has to survive offline: the account signs in + is granted premium
+// ONLINE first, which lets the entitlement query's answer persist to the uid-keyed device cache
+// (009/T011b) — that persisted `active` is what the offline gate reads, never a guessed default.
+test("US6: offline + premium — channels, toggle and sub-costs all compute from the seed (SC-109)", async ({
   page,
   context,
-}) => {
+}, info) => {
   const t = messages.calculator;
+  // 016/US11 (T044 homologação, correção) — the abort must be live BEFORE `signUpThrowaway`'s own
+  // first navigation (to /sign-in, then the auto-redirect to "/"): that redirect already mounts the
+  // calculator and fetches fee-catalog, and registering the route only after it left that first
+  // fetch unintercepted — the SERVED catalog got persisted to the client store before this test's
+  // seed premise ever applied, which is exactly what surfaced as "the wrong seal" downstream.
   // Premise: the BUNDLED SEED answers offline (embedded seal). Abort the served-catalog fetch so
   // the online pre-load never persists a fresher store (the E2 e2e stack runs a real backend).
   await page.route("**/api/v1/fee-catalog", (route) => route.abort());
-  // Load online once so the SW precaches, then go fully offline.
+  const email = await signUpThrowaway(page, `calc-offline-${info.workerIndex}`);
+  grantPremium(email);
+  // Load online once so the SW precaches AND the entitlement query persists `active` to the device
+  // cache, then go fully offline.
   await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+  await expect(page.getByRole("switch", { name: t.channels.includeToggle })).toBeEnabled();
   await page.waitForFunction(() => navigator.serviceWorker?.controller != null, null, {
     timeout: 20_000,
   });
   await context.setOffline(true);
-  await page.reload(); // served from the SW precache; no user, no network
+  await page.reload(); // served from the SW precache; entitlement answers from the persisted cache
 
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+  // The gate itself survives offline — the switch is still enabled (the persisted `active` answer,
+  // not a network-dependent guess).
+  await expect(page.getByRole("switch", { name: t.channels.includeToggle })).toBeEnabled();
 
   // The catalog refresh fails offline → the US3 notice appears but blocks NOTHING.
   await expect(page.getByText(t.channels.refreshErrorTitle)).toBeVisible();
@@ -603,11 +682,8 @@ test("US6: offline + signed-out — channels, toggle and sub-costs all compute f
   await expect(page.getByTestId("channel-slot")).toHaveCount(0);
   await expect(page.getByText(t.results.varejo).first()).toBeVisible();
 
-  // Signed-out + offline the whole way: no sign-in wall, nothing offered to save, no bad numbers.
+  // Offline the whole way: no bad numbers.
   await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
-  await expect(
-    page.getByRole("button", { name: /salvar|exportar|assinar|premium|upgrade|desbloquear/i }),
-  ).toHaveCount(0);
 
   await context.setOffline(false);
 });

@@ -267,3 +267,28 @@ describe("CategoryPicker — id fora da espinha não vira rótulo em branco (T11
     expect(onChange).toHaveBeenCalledWith(undefined);
   });
 });
+
+// 016/US11 (T044 homologação PR-E, R2) — the browse tree nasce RECOLHIDA. Measured: an inline
+// 38-node spine pushed the page to 1.795px before any interaction and dropped the final price to
+// y≈4.800 at 360px — a cost every premium account paid on every slot regardless of use.
+describe("hierarchical browse — nasce recolhida (016/US11, T044 homologação PR-E, R2)", () => {
+  it("the tree is NOT in the document until the toggle button is pressed", () => {
+    setup();
+    expect(screen.queryByTestId("category-tree")).not.toBeInTheDocument();
+    const toggle = screen.getByTestId("category-browse-toggle");
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveTextContent(String(SPINE.length));
+  });
+
+  it("pressing the toggle reveals the tree with the honest count; pressing again hides it", async () => {
+    const { user } = setup();
+    const toggle = screen.getByTestId("category-browse-toggle");
+    await user.click(toggle);
+    expect(screen.getByTestId("category-tree")).toBeInTheDocument();
+    expect(toggle).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByText(t.browseCount.replace("{n}", String(SPINE.length)))).toBeVisible();
+
+    await user.click(toggle);
+    expect(screen.queryByTestId("category-tree")).not.toBeInTheDocument();
+  });
+});

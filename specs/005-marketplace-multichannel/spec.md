@@ -32,6 +32,29 @@
   salvo saiba qual fórmula o produziu". Esse requisito está cumprido. Leia as duas FRs como
   "`PRICING_MODEL_VERSION` corrente", que hoje é `3.1.0`.
 
+### Session 2026-08-06 (016/US11 — a virada de freemium do marketplace)
+
+- **A precificação por canal de marketplace deixou de ser grátis.** Decisão do dono, 2026-08-05
+  (registrada em `specs/016-correcao-homologacao/spec.md` US11, FR-915/916/917) e implementada na
+  fatia PR-E do 016: para uma conta NÃO-ENTITULADA, o switch "Incluir marketplaces no preço" nasce
+  **desabilitado e desligado**, com o caminho de assinatura ("Assinar Premium") visível logo abaixo
+  — nenhum número de canal, parcial ou fabricado, chega à tela por caminho nenhum (nem calculadora,
+  nem deep-link). Uma conta com entitlement ativo continua **byte-idêntica** ao que esta spec sempre
+  descreveu (FR-919).
+- **SC-109 é emendada por esta cláusula**: "nunca mostra… paywall" continua verdadeiro para o custo
+  e o markup (a calculadora em si, US1–US5 do 004, segue livre e sem gate); o que passou a existir é
+  o gate ESPECIFICAMENTE em cima do bloco de canal de marketplace desta spec (005), não do cálculo
+  base. O texto de SC-109 não é reescrito — como na sessão anterior, ele continua sendo lido à luz
+  desta decisão datada, e não da leitura literal de "nunca paywall" que valia até 2026-08-05.
+- **A promessa da primeira dobra foi reescrita** (`messages.calculator.freemiumNote`) para declarar
+  com precisão o que continua grátis — custo e markup, sem canal de venda — em vez da frase antiga
+  ("Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium."), que ficou FALSA no
+  dia em que o switch de marketplace passou a exigir assinatura.
+- **Por que isto é uma Clarification e não uma nova FR**: a decisão do dono altera o que "grátis"
+  significa NESTA spec — o comportamento de 004 (calcular custo+markup) continua intocado; o que
+  mudou é o escopo do que 005 (marketplace) entrega sem assinatura. Ver a Clarification irmã em
+  `specs/007-e2-catalog-entitlement/spec.md` (FR-313/SC-310) para a frase de enforcement.
+
 ## The E1 v3 model delta (only what changes from 004)
 
 004's cost pipeline (`material · energy · machine · producao · falha · finishing · labor · custo_total · preco_varejo · preco_atacado`) is **unchanged**. `packages/pricing-core` takes a **MAJOR bump → `3.0.0`** for the two structural changes below. All amounts BRL; rounding stays ADR-0008 (2-dp HALF_UP per line, sums reconcile).
