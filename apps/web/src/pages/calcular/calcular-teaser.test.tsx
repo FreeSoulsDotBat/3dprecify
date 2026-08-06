@@ -2,16 +2,16 @@
 import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-// US7/T031 — the calculator's "usar do catálogo" slot for free/signed-out users: a VISIBLE
-// honest affordance whose tap opens the SAME teaser panel (never a broken picker, never a
-// fake save). Premium/lapsed accounts keep the real pickers (US5); the free manual calculator
-// itself stays untouched (SC-310).
+// US7/T031 — the calculator's "usar do catálogo" slot for free/signed-out users. 016/US1
+// (T006/T007): rewritten for the unified `PremiumTeaser` (feature=CATALOG_PICKER) — the old
+// dialog is gone; the affordance itself now renders DISABLED and VISIBLE in place (US1-AC3),
+// with the explanation of what the catalog is standing where "Salvar faz parte do Premium." did.
 
 const { useEntitlementMock, useFilamentsMock, usePrintersMock } = vi.hoisted(() => ({
   useEntitlementMock: vi.fn(),
@@ -37,7 +37,7 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
 import { CalcularPage } from "./calcular-page";
 
 const t = messages.calculator;
-const catalogo = messages.catalogo;
+const pt = messages.premiumTeaser.CATALOG_PICKER;
 
 function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
@@ -58,21 +58,24 @@ afterEach(() => {
   useSessionStore.setState({ status: "anonymous", user: null });
 });
 
-describe("CalcularPage — free/signed-out teaser slot (US7/T031)", () => {
-  it("signed-out: the catalog slot shows the honest affordance; tapping opens the teaser", () => {
+describe("CalcularPage — free/signed-out teaser slot (US7/T031, rewritten 016/US1)", () => {
+  it("signed-out: shows the honest teaser AND the disabled-but-visible 'Usar do catálogo' button", () => {
     useSessionStore.setState({ status: "anonymous", user: null });
     useEntitlementMock.mockReturnValue({ data: undefined, isLoading: false });
     useFilamentsMock.mockReturnValue(listState([]));
     usePrintersMock.mockReturnValue(listState([]));
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: t.catalogPicker.title }));
-    expect(screen.getByRole("dialog")).toHaveTextContent(catalogo.teaserDialogTitle);
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: t.catalogPicker.title });
+    expect(button).toBeVisible();
+    expect(button).toBeDisabled();
     // The manual free calculator is untouched behind it (SC-310).
     expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
   });
 
-  it("free signed-in (none): same visible affordance → same honest teaser", () => {
+  it("free signed-in (none): same disabled-and-visible affordance → same honest teaser", () => {
     useSessionStore.setState({
       status: "authenticated",
       user: { uid: "u-1", email: "u@x.dev" } as never,
@@ -82,11 +85,11 @@ describe("CalcularPage — free/signed-out teaser slot (US7/T031)", () => {
     usePrintersMock.mockReturnValue(listState([]));
     renderPage();
 
-    fireEvent.click(screen.getByRole("button", { name: t.catalogPicker.title }));
-    expect(screen.getByRole("dialog")).toHaveTextContent(catalogo.teaserDialogTitle);
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: t.catalogPicker.title })).toBeDisabled();
   });
 
-  it("premium keeps the REAL pickers — no teaser affordance", () => {
+  it("premium keeps the REAL pickers — no teaser, no disabled affordance", () => {
     useSessionStore.setState({
       status: "authenticated",
       user: { uid: "u-1", email: "u@x.dev" } as never,
@@ -108,5 +111,6 @@ describe("CalcularPage — free/signed-out teaser slot (US7/T031)", () => {
 
     expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: t.catalogPicker.title })).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
   });
 });

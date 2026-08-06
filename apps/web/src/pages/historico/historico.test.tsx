@@ -48,6 +48,7 @@ import { HistoricoPage } from "./historico-page";
 // query alone, because that is not what `useHistory()` returns.
 
 const t = messages.historico;
+const pt = messages.premiumTeaser.QUOTES;
 
 function item(over: Partial<HistoryItem> = {}): HistoryItem {
   return {
@@ -225,7 +226,7 @@ describe("C5 — the gate has a branch for 'the server never answered about the 
     expect(screen.getByText(t.guardError)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.guardRetry })).toBeInTheDocument();
     // It must NOT presume "free" (no teaser) and must NOT hit the cold history error wall.
-    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
     expect(screen.queryByText(t.loadError)).not.toBeInTheDocument();
   });
 });

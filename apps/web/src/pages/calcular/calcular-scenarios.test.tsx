@@ -39,6 +39,8 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
 import { CalcularPage } from "./calcular-page";
 
 const s = messages.scenarios;
+const tb = messages.billing;
+const pt = messages.premiumTeaser.SCENARIOS;
 
 function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
@@ -104,8 +106,8 @@ describe("CalcularPage — the free 005 calculator is byte-untouched by E5 (SC-1
   });
 });
 
-describe('CalcularPage — "Meus cenários" is the honest door (visible for EVERYONE)', () => {
-  it("signed-out: the nav entry is visible; tapping it opens the honest teaser (no price, no date, no fake save)", () => {
+describe('CalcularPage — "Minhas simulações" is the honest door (visible for EVERYONE)', () => {
+  it("signed-out: the nav entry is visible; tapping it shows the honest unified teaser (016/US1)", () => {
     useSessionStore.setState({ status: "anonymous", user: null });
     setupFreeOrSignedOut(undefined);
     renderPage();
@@ -113,8 +115,8 @@ describe('CalcularPage — "Meus cenários" is the honest door (visible for EVER
     const entry = screen.getByRole("button", { name: new RegExp(s.navEntry) });
     fireEvent.click(entry);
 
-    expect(screen.getByText(s.teaserTitle)).toBeInTheDocument();
-    expect(screen.getByText(s.teaserAction)).toBeInTheDocument();
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
     // Never a fabricated sample scenario row on the teaser surface (SC-607) — no card/list item.
     expect(screen.queryByText(s.emptyTitle)).not.toBeInTheDocument();
   });
@@ -128,20 +130,17 @@ describe('CalcularPage — "Meus cenários" is the honest door (visible for EVER
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp(s.navEntry) }));
-    expect(screen.getByText(s.teaserTitle)).toBeInTheDocument();
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
   });
 
-  it("teaser Dialog: signed-out adds the honest 'entrar' copy, still no price/date/purchase CTA", () => {
+  it("signed-out: the CTA's own href carries the sign-in + redirect intent, no separate 'Entrar'", () => {
     useSessionStore.setState({ status: "anonymous", user: null });
     setupFreeOrSignedOut(undefined);
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp(s.navEntry) }));
-    fireEvent.click(screen.getByText(s.teaserAction));
-
-    // Both the panel AND the Dialog state it (§7) — assert presence, not uniqueness.
-    expect(screen.getAllByText(s.teaserSignedOutBody).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: s.teaserSignIn })).toBeInTheDocument();
+    const cta = screen.getByRole("link", { name: tb.subscribeAction });
+    expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
   });
 });
 

@@ -525,8 +525,8 @@ test("US6: full multi-channel + sub-costs surface — no bad numbers, no save/ex
   // SC-109: never a NaN/Infinity/#DIV! anywhere on this full surface…
   await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
   // …and no save/export/history/paywall affordance ever appears; the freemium note is an honest
-  // statement, not a CTA. (The bottom-nav "Histórico" LINK is the app shell placeholder, not a
-  // calculator affordance — the assertion targets buttons.)
+  // statement, not a CTA. (016/US2: the bottom-nav "Orçamentos" LINK — was "Histórico" — is the
+  // app shell placeholder, not a calculator affordance — the assertion targets buttons.)
   await expect(
     page.getByRole("button", {
       name: /salvar|exportar|histórico|assinar|premium|upgrade|desbloquear/i,

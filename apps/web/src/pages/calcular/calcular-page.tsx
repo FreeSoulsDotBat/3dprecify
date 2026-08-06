@@ -23,7 +23,6 @@ import {
   PriceResults,
   sectionLabel,
 } from "@/features/calculator/calculator-form";
-import { PremiumTeaserDialog } from "@/features/catalog/premium-teaser";
 import { type CatalogContext, computeFromForm } from "@/features/calculator/calculator-model";
 import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
@@ -49,6 +48,7 @@ import {
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
 import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
+import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -186,13 +186,13 @@ export function CalcularPage() {
   const showFilamentPicker = sessionStatus === "authenticated" && filaments.length > 0;
   const showPrinterPicker = sessionStatus === "authenticated" && printers.length > 0;
 
-  // US7 (T032): free/signed-out users meet a VISIBLE "usar do catálogo" affordance whose tap
-  // opens the honest teaser — never a broken picker, never a fake save. Rendered only on a
-  // POSITIVELY known non-premium state; the manual calculator is untouched either way (SC-310).
+  // 016/US1 (T005/T007): free/signed-out users meet the unified premium teaser — the affordance
+  // itself renders DISABLED and VISIBLE (US1-AC3, the one named exception), never hidden and
+  // never a fake save. Rendered only on a POSITIVELY known non-premium state; the manual
+  // calculator is untouched either way (SC-310).
   const entitlement = useEntitlement();
   const signedOut = sessionStatus !== "authenticated";
   const showTeaserSlot = signedOut || entitlement.data?.status === "none";
-  const [teaserOpen, setTeaserOpen] = useState(false);
 
   // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
   // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
@@ -315,18 +315,20 @@ export function CalcularPage() {
         <KitScenarioRecordButton loadedScenario={loadedScenario} ctx={catalogCtx} />
       )}
 
-      {showTeaserSlot && (
+      {/* 016/T010-A3 — com a folha de Simulações aberta, o teaser do picker ficava visível atrás
+          do overlay com a SUA linha de preço e o SEU "Assinar": dois CTAs de compra na mesma tela,
+          a classe que o E6/T038-D4 já consertou uma vez (a guarda antiga morreu junto com o
+          componente deletado nesta fatia — esta é a reposição dela). */}
+      {showTeaserSlot && !scenariosOpen && (
         <Card padding="md" className="flex flex-col gap-2">
-          <Button variant="secondary" onClick={() => setTeaserOpen(true)}>
-            {t.catalogPicker.title}
-          </Button>
-          <p style={{ ...captionText, textAlign: "center" }}>
-            {messages.apiError.entitlementRequired}
-          </p>
-          <PremiumTeaserDialog
-            open={teaserOpen}
-            onOpenChange={setTeaserOpen}
+          <PremiumTeaser
+            feature="CATALOG_PICKER"
             signedOut={signedOut}
+            disabledAffordance={
+              <Button variant="secondary" disabled>
+                {t.catalogPicker.title}
+              </Button>
+            }
           />
         </Card>
       )}

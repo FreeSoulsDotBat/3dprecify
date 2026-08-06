@@ -8,7 +8,7 @@ export const messages = {
   signIn: {
     title: "Entrar",
     // Calcular é público (US2/T038): o login dá acesso às áreas guardadas, não ao cálculo.
-    subtitle: "Entre para acessar seu catálogo, histórico e conta.",
+    subtitle: "Entre para acessar seu catálogo, orçamentos e conta.",
     google: "Entrar com Google",
     error: "Não foi possível entrar. Tente novamente.",
     // A33 Fase 1: erro Firebase `auth/network-request-failed` → mensagem específica de
@@ -279,7 +279,9 @@ export const messages = {
     calcular: "Calcular",
     catalogo: "Catálogo",
     kits: "Kits", // 008/K1 — the 5th section (owner-approved IA change)
-    historico: "Histórico",
+    // 016/US2 (T008) — a MESMA rota `/historico`, o rótulo visível vira "Orçamentos": o par
+    // Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje).
+    historico: "Orçamentos",
     conta: "Conta",
   },
   // Conta page. Plan indicator is a static, honest "Gratuito" (display-only,
@@ -375,18 +377,10 @@ export const messages = {
       "Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.",
     offlineWriteBlocked: "Criar e editar precisam de conexão.",
     staleHint: "pode estar desatualizada",
-    // US7/T032 — the honest free-tier teaser (ux §2; final wording owner-ratified at T033).
-    // NO price, NO date, NO purchase CTA (billing is E6 — the panel informs, it does not sell).
-    teaserTitle: "Salve e reutilize seu catálogo",
-    teaserBody:
-      "Guarde filamentos, impressoras e produtos uma vez e preencha o cálculo com um toque.",
-    teaserDialogTitle: "Salvar faz parte do Premium",
-    teaserDialogBody:
-      "No Premium você salva filamentos, impressoras e produtos e preenche o cálculo com um toque.",
-    teaserFreeNote: "Calcular e ver a conta continuam grátis.",
-    teaserSignedOutBody: "Para salvar seu catálogo, entre e ative o Premium.",
-    teaserDismiss: "Entendi",
-    teaserSignIn: "Entrar",
+    // 016/US1 (T004/T006) — o teaser do Catálogo passou a ser o padrão único
+    // (`shared/billing/premium-teaser.tsx`, registro `premiumTeaser.CATALOG`); as chaves antigas
+    // (título/corpo/modal/CTA próprios) saíram daqui — eram exatamente a divergência que a US1
+    // existe para eliminar.
     // Lapsed (Q3 · §3) — calmo, não punitivo
     lapsedTitle: "Premium pausado",
     lapsedBody:
@@ -497,16 +491,8 @@ export const messages = {
     channelContributing: "{n} peça(s) somaram neste canal",
     channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
     channelNoContrib: "Nenhuma peça com preço neste canal.",
-    // Teaser (US5 / §2) — NO price, NO date, NO purchase CTA
-    teaserTitle: "Monte e precifique kits com várias peças",
-    teaserBody:
-      "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.",
-    teaserDialogBody:
-      "No Premium você monta kits com várias peças e vê o preço do kit inteiro, por canal.",
-    teaserFreeNote: "A calculadora de peça única continua grátis.",
-    teaserSignedOutBody: "Para montar kits, entre e ative o Premium.",
-    teaserSignIn: "Entrar",
-    teaserDismiss: "Entendi",
+    // 016/US1 (T004/T006) — o teaser de Kits passou a ser o padrão único (`premiumTeaser.KITS`);
+    // as chaves antigas (título/corpo/CTA próprios) saíram daqui pela mesma razão do Catálogo.
     // Guard states (§0.1) — honest, specific; a network failure is NOT "not premium"
     guardChecking: "Verificando seu plano…",
     guardError: "Não foi possível verificar seu plano.",
@@ -546,12 +532,13 @@ export const messages = {
   // "salvo" só é dito quando o servidor confirmou; um envio ainda não sincronizado é "pendente
   // neste dispositivo" — nunca "falhou" (resposta perdida ≠ não gravado) e nunca "salvo".
   historico: {
-    // list + detail (T013)
-    title: "Histórico",
-    subtitle: "O que você cotou, com a data. Os valores ficam como estavam no dia.",
+    // list + detail (T013). 016/US2 (T008/T009): "Orçamentos" — o documento CONGELADO (o que foi
+    // cotado, imutável); a diferença com Simulações (recalculada hoje) fica dita na própria frase.
+    title: "Orçamentos",
+    subtitle: "O que você cotou, com a data. Os valores ficam congelados como estavam no dia.",
     emptyTitle: "Nenhum registro ainda",
     emptyBody:
-      "Calcule uma peça ou um kit e toque em “Salvar no histórico” para guardar o preço com a data.",
+      "Calcule uma peça ou um kit e toque em “Salvar em Orçamentos” para guardar o preço com a data.",
     emptyAction: "Ir para a calculadora",
     quotedAtCard: "Cotado em {data}",
     quotedAtTime: "Cotado em {data} às {hora}",
@@ -561,7 +548,7 @@ export const messages = {
     kindSingle: "Peça única",
     kindKit: "Kit · {n} peças",
     adhocFallback: "Cálculo avulso",
-    loadError: "Não foi possível carregar seu histórico.",
+    loadError: "Não foi possível carregar seus orçamentos.",
     retry: "Tentar novamente",
     notFound: "Registro não encontrado.",
     backToList: "Voltar",
@@ -617,7 +604,7 @@ export const messages = {
     exportAction: "Exportar",
     exportFormatField: "O que exportar", // ux draws the radios unlabelled; this names the group
     exportQuotePdf: "Orçamento para o cliente (PDF)",
-    exportHistoryCsv: "Meu histórico (CSV)",
+    exportHistoryCsv: "Meus orçamentos (CSV)",
     exportIncludeCosts: "Incluir detalhamento de custos",
     // Corrigido pela revisão PR-C. A copy do ux §8 errava nos DOIS sentidos: nomeava "margem" (que
     // NUNCA é uma linha impressa) e omitia acabamento, mão de obra e os nomes que o vendedor deu aos
@@ -702,11 +689,11 @@ export const messages = {
     lapsedBanner:
       "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
     // record (T010)
-    saveAction: "Salvar no histórico",
-    saveSheetTitle: "Salvar no histórico",
+    saveAction: "Salvar em Orçamentos",
+    saveSheetTitle: "Salvar em Orçamentos",
     saveSheetIntro:
       "Vamos guardar os valores exatamente como estão nesta tela, com a data de hoje.",
-    saveSheetSubmit: "Salvar no histórico",
+    saveSheetSubmit: "Salvar em Orçamentos",
     labelField: "Rótulo (opcional)",
     labelHint: "Cliente, pedido…",
     validityField: "Validade da proposta",
@@ -715,7 +702,7 @@ export const messages = {
     basisRetail: "Varejo",
     basisWholesale: "Atacado",
     quotedAt: "Cotado em {data}",
-    saved: "Registro salvo no histórico.",
+    saved: "Registro salvo em Orçamentos.",
     saveDeviceFailed: "Não foi possível guardar o registro neste aparelho. Ele não foi salvo.",
     // sync states (ADR-0018) — o vocabulário honesto
     syncPendingToast: "Pendente neste dispositivo. Sincroniza sozinho quando houver conexão.",
@@ -759,29 +746,30 @@ export const messages = {
     signOutDiscardConfirm: "Descartar e sair",
     signOutPartial: "{n} registro(s) não puderam ser enviados. Eles continuam neste aparelho.",
     back: "Voltar",
-    // teaser (US5 lineage — E2 US7 / E3 US5). Honest: no price, no date (FR-014).
-    teaserTitle: "O histórico faz parte do Premium",
-    teaserBody:
-      "Com o Premium, cada cotação fica guardada com a data e a versão da fórmula — para você provar depois o que cobrou, mesmo que o catálogo mude.",
-    teaserFreeNote: "A calculadora continua grátis e sem limite.",
-    teaserSignedOutBody: "Entre na sua conta para guardar suas cotações.",
+    // 016/US1 (T004/T006) — o teaser de Orçamentos passou a ser o padrão único
+    // (`premiumTeaser.QUOTES`); as chaves antigas saíram daqui pela mesma razão do Catálogo/Kits.
   },
-  // 010 (E5, PR-A) — "Meus cenários": save/consult/reopen a saved multi-channel comparison.
+  // 010 (E5, PR-A) — "Minhas simulações": save/consult/reopen a saved multi-channel comparison.
   // Copy = ux-scenarios.md §9 (owner-ratified 2026-07-19), trimmed to the PR-A subset (US1/US2/US5).
   // A scenario is LIVE, never dated — no "salvo em"/"cotado em" anywhere here (§0.2); "Cancelar" is
   // banned (FR-014) — every dismissive control is "Voltar".
+  // 016/US2 (T008/T009): "cenário" virou "simulação" em toda superfície visível — o par
+  // Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje). A CHAVE do
+  // namespace (`scenarios`) e as chaves internas NÃO mudam — só os VALORES pt-BR.
   scenarios: {
     // entry / nav — visible for EVERYONE (free/signed-out too, §0.1); the honest free door.
-    navEntry: "Meus cenários",
-    listTitle: "Meus cenários",
+    navEntry: "Minhas simulações",
+    listTitle: "Minhas simulações",
+    // 016/US2-AC3 (T009): a frase que diferencia Simulações (recalcula hoje) de Orçamentos
+    // (congelado no dia) — texto já dizia isso; mantido verbatim.
     listSubtitle: "Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre.",
     // save (T010) — premium-only inline, absent on the free calculator (SC-109, §11-F2)
-    saveAction: "Salvar cenário",
-    saveSheetTitle: "Salvar cenário",
+    saveAction: "Salvar simulação",
+    saveSheetTitle: "Salvar simulação",
     saveSheetIntro:
       "Guardamos a estratégia desta tela — canais, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.",
     nameField: "Nome",
-    nameRequired: "Dê um nome ao cenário.",
+    nameRequired: "Dê um nome à simulação.",
     nameTooLong: "Máximo de 120 caracteres.",
     noteField: "Nota (opcional)",
     noteTooLong: "Máximo de 500 caracteres.",
@@ -789,71 +777,61 @@ export const messages = {
     basisKindAdhoc: "avulsa",
     basisKindProduct: "referência do catálogo",
     basisKindKit: "kit do catálogo",
-    saved: "Cenário salvo.", // toast success — SÓ em 201 real
+    saved: "Simulação salva.", // toast success — SÓ em 201 real
     saveTooLarge:
-      "Este cenário ficou grande demais para salvar. Reduza o número de peças ou de custos e tente de novo.",
-    saveOffline: "Salvar um cenário precisa de conexão.",
+      "Esta simulação ficou grande demais para salvar. Reduza o número de peças ou de custos e tente de novo.",
+    saveOffline: "Salvar uma simulação precisa de conexão.",
     saveInvalid: "Corrija os campos da calculadora antes de salvar.",
     // list (T013)
     updatedRelative: "Atualizado {quando}", // "há 2 dias" etc. — NUNCA uma data-alegação
-    emptyTitle: "Nenhum cenário salvo ainda",
+    emptyTitle: "Nenhuma simulação salva ainda",
     emptyBody:
-      "Monte uma comparação de canais na calculadora e toque em “Salvar cenário” para guardá-la e reabrir quando quiser.",
+      "Monte uma comparação de canais na calculadora e toque em “Salvar simulação” para guardá-la e reabrir quando quiser.",
     emptyAction: "Voltar para a calculadora",
-    loadError: "Não foi possível carregar seus cenários.",
+    loadError: "Não foi possível carregar suas simulações.",
     retry: "Tentar novamente",
     loadMore: "Carregar mais",
     offlineTitle: "Modo leitura offline",
     offlineBody:
-      "Seus cenários continuam aqui e podem ser abertos. Salvar, renomear, duplicar ou excluir precisam de conexão.",
+      "Suas simulações continuam aqui e podem ser abertas. Salvar, renomear, duplicar ou excluir precisam de conexão.",
     lapsedTitle: "Premium pausado",
     lapsedBody:
-      "Seus cenários continuam aqui e podem ser abertos e recalculados. Para salvar, renomear, duplicar ou excluir, reative o Premium.",
+      "Suas simulações continuam aqui e podem ser abertas e recalculadas. Para salvar, renomear, duplicar ou excluir, reative o Premium.",
     // reopen — the loaded context bar (T014 PR-A minimal name+live+Fechar; T023/T029 add the
     // degraded caption/"Abrir origem"/Duplicar/Salvar alterações/unsaved-changes)
-    loadedLabel: "Cenário: {nome}",
+    loadedLabel: "Simulação: {nome}",
     loadedLive: "Recalculado com os preços de hoje", // NUNCA uma data
-    closeScenario: "Fechar cenário",
+    closeScenario: "Fechar simulação",
     back: "Voltar", // NUNCA "Cancelar" (FR-014)
     openOrigin: "Abrir origem", // SÓ quando a referência ainda resolve (F1 — nunca um link quebrado)
     unsavedBadge: "Alterações não salvas",
     saveChanges: "Salvar alterações",
-    saveChangesDone: "Cenário atualizado.", // SÓ em 200 real
+    saveChangesDone: "Simulação atualizada.", // SÓ em 200 real
     saveAsNew: "Salvar como novo",
-    discardChangesTitle: "Descartar as alterações não salvas deste cenário?",
+    discardChangesTitle: "Descartar as alterações não salvas desta simulação?",
     discardChanges: "Descartar",
     writeOffline: "Esta ação precisa de conexão.", // renomear/duplicar/editar/excluir offline
     writeLapsed: "Premium pausado — reative para renomear, duplicar, editar ou excluir.",
     // manage (T029) — list card actions + rename + delete + search
     open: "Abrir",
     duplicate: "Duplicar",
-    duplicated: "Cenário duplicado.", // SÓ em 201 real
+    duplicated: "Simulação duplicada.", // SÓ em 201 real
     rename: "Renomear",
-    renameSheetTitle: "Renomear cenário",
-    renamed: "Cenário renomeado.", // SÓ em 200 real
+    renameSheetTitle: "Renomear simulação",
+    renamed: "Simulação renomeada.", // SÓ em 200 real
     delete: "Excluir",
-    deleteTitle: "Excluir o cenário “{nome}”?",
+    deleteTitle: "Excluir a simulação “{nome}”?",
     deleteBody: "Esta ação não pode ser desfeita.",
     deleteConfirm: "Excluir",
-    deleted: "Cenário excluído.", // SÓ em 204 real
+    deleted: "Simulação excluída.", // SÓ em 204 real
     searchPlaceholder: "Buscar por nome…",
-    searchEmpty: "Nenhum cenário encontrado para “{termo}”.",
+    searchEmpty: "Nenhuma simulação encontrada para “{termo}”.",
     searchClear: "Limpar busca",
     // kit basis reopen (T024, Q12) — no scalar form to hydrate; a read-only per-channel rollup
     kitBasisTitle: "Kit: {nome}",
     kitBasisHint: "Preços por canal do kit, recalculados com os preços de hoje.",
-    // teaser (US5, T016) — SEM preço, SEM data, SEM CTA de compra
-    teaserTitle: "Salve suas estratégias de venda",
-    teaserBody:
-      "No Premium, você guarda uma comparação de canais — Mercado Livre, Shopee, Amazon — e reabre quando quiser. Ela recalcula com os preços de hoje, e você pode duplicar para testar variações.",
-    teaserFreeNote: "A calculadora continua grátis.",
-    teaserAction: "Salvar um cenário",
-    teaserDialogTitle: "Cenários fazem parte do Premium",
-    teaserDialogBody:
-      "No Premium você salva sua comparação de canais e reabre depois com os preços de hoje — e duplica para comparar variações.",
-    teaserSignedOutBody: "Para salvar seus cenários, entre e ative o Premium.",
-    teaserSignIn: "Entrar",
-    teaserDismiss: "Entendi",
+    // 016/US1 (T004/T006) — o teaser de Simulações passou a ser o padrão único
+    // (`premiumTeaser.SCENARIOS`); as chaves antigas saíram daqui pela mesma razão do Catálogo/Kits.
   },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).
@@ -928,7 +906,7 @@ export const messages = {
     // offer (US1)
     offerTitle: "Assinar o Premium",
     offerFreeLead: "A calculadora é grátis e continua grátis.",
-    offerBody: "O Premium guarda seu catálogo, kits, histórico e cenários — e libera exportar.",
+    offerBody: "O Premium guarda seu catálogo, kits, orçamentos e simulações — e libera exportar.",
     // T038/D1 — o espaco entre `R$` e o valor e NBSP (U+00A0), nao espaco comum.
     //
     // MEDIDO na homologacao: a 390px a linha do teaser quebrava ENTRE o simbolo e o numero — a
@@ -965,12 +943,51 @@ export const messages = {
     returnBackToConta: "Voltar para a Conta",
     returnSuccessTitle: "Premium ativo!",
     returnSuccessBody:
-      "Seu catálogo, kits, histórico e cenários agora salvam e exportam. Bom trabalho.",
+      "Seu catálogo, kits, orçamentos e simulações agora salvam e exportam. Bom trabalho.",
     returnSuccessAction: "Ir para a calculadora",
     returnUnconfirmedTitle: "Ainda não recebemos a confirmação",
     returnUnconfirmedBody:
       "Se você concluiu o pagamento, ele aparece aqui em instantes — o Premium liga sozinho. Se você não concluiu, nada foi cobrado.",
     returnVerifyAgain: "Verificar de novo",
+  },
+  // 016/US1 (T004) — o registro FECHADO de conteúdo do teaser único (`shared/billing/
+  // premium-teaser.tsx`, arquitetura-016 §E): título + subtítulo da feature + legenda, por
+  // `PremiumFeatureId`. Nenhum componente recebe texto por prop — só a chave da feature; é isso
+  // que torna "mesma estrutura nas cinco telas" uma propriedade de TIPO, não de disciplina.
+  // Nenhum item explica a mecânica do Premium (isso é da oferta, `billing`); o preço/CTA vêm do
+  // `TeaserUpgrade` (E6), absorvido — nunca bifurcado (plan §H).
+  premiumTeaser: {
+    SCENARIOS: {
+      title: "Salve suas simulações",
+      // Texto EXATO aprovado pelo dono (spec 016 US1-AC5) — não parafrasear.
+      subtitle:
+        "Salve uma combinação de marketplaces, taxas e markup para reabrir e comparar quando quiser — sempre com os preços de hoje.",
+      caption: "A calculadora continua grátis.",
+    },
+    CATALOG: {
+      title: "Salve e reutilize seu catálogo",
+      subtitle:
+        "Guarde filamentos, impressoras e produtos uma vez e preencha o cálculo com um toque.",
+      caption: "Calcular e ver a conta continuam grátis.",
+    },
+    CATALOG_PICKER: {
+      title: "Preencha o cálculo com um toque",
+      subtitle:
+        "O catálogo guarda seus filamentos e impressoras salvos: no Premium, eles preenchem os campos abaixo sozinhos — e continuam editáveis.",
+      caption: "Calcular e ver a conta continuam grátis.",
+    },
+    KITS: {
+      title: "Monte e precifique kits com várias peças",
+      subtitle:
+        "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro, por canal.",
+      caption: "A calculadora de peça única continua grátis.",
+    },
+    QUOTES: {
+      title: "Guarde seus orçamentos com a data",
+      subtitle:
+        "Cada cotação fica guardada com a data e a versão da fórmula — para você provar depois o que cobrou, mesmo que o catálogo mude.",
+      caption: "A calculadora continua grátis e sem limite.",
+    },
   },
   // 013/FC-02 — the `tf-*` design system must not hold copy; these are its default a11y labels,
   // single-sourced here and injected via prop (dialog.tsx `closeLabel`, toast.tsx close button +

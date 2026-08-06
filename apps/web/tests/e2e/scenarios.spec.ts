@@ -18,6 +18,8 @@ import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-he
 
 const t = messages.calculator;
 const s = messages.scenarios;
+const tb = messages.billing;
+const pt = messages.premiumTeaser.SCENARIOS;
 
 /** A 120-char adversarial name (the T002-decided cap) — no spaces, so CSS truncation is the ONLY
  *  thing standing between this and a horizontal overflow (the E4 "homologate size" lesson). */
@@ -245,7 +247,7 @@ test("sign-out purges the scenarios cache — a fresh account never sees the pre
   await expect(secondList.getByText("Cenário da conta A")).toHaveCount(0);
 });
 
-test("free/signed-out meets the honest teaser — NO inline 'Salvar cenário' anywhere (US5, SC-109/SC-607)", async ({
+test("free/signed-out meets the honest UNIFIED teaser — NO inline 'Salvar simulação' anywhere (US5, SC-109/SC-607, rewritten 016/US1)", async ({
   page,
 }) => {
   // Signed-out: /calcular is public.
@@ -254,25 +256,19 @@ test("free/signed-out meets the honest teaser — NO inline 'Salvar cenário' an
   await expect(page.getByRole("button", { name: s.saveAction })).toHaveCount(0);
 
   const listDialog = await openScenariosList(page);
-  await expect(listDialog.getByText(s.teaserTitle)).toBeVisible();
-  // No price, no availability date, no fabricated sample scenario, no purchase CTA.
+  await expect(listDialog.getByText(pt.title)).toBeVisible();
+  await expect(listDialog.getByText(pt.subtitle)).toBeVisible();
+  // No price surprise, no availability date, no fabricated sample scenario.
   // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
   // sobra e a honestidade do numero: so os tres precos praticados.
   for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
     expect(["15,99", "12,99", "155,88"]).toContain(v);
   }
-  // O CTA de assinar agora EXISTE e e desejado (US7). O que continua proibido e a compra fingida:
-  // nada aqui pode virar premium sozinho — o salvar inline segue ausente, afirmado acima.
-
-  await listDialog.getByText(s.teaserAction).click();
-  const teaserDialog = page.getByRole("dialog").last();
-  await expect(teaserDialog.getByText(s.teaserDialogTitle)).toBeVisible();
-  // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia.
-  for (const n of (await teaserDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
-    expect(["15,99", "12,99", "155,88"]).toContain(n);
-  }
-  await expect(teaserDialog.getByRole("button", { name: s.teaserSignIn })).toBeVisible();
-  await teaserDialog.getByRole("button", { name: s.teaserDismiss }).click();
+  // 016/US1 — UM CTA só: TeaserUpgrade's own "Assinar Premium" link, cujo href já carrega o
+  // sign-in + redirect. Nada de "Entrar"/"Entendi" separados (US1-AC2).
+  const cta = listDialog.getByRole("link", { name: tb.subscribeAction });
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAttribute("href", /\/sign-in\?redirect=/);
 
   // Nothing persisted anywhere along the way — a fresh load shows the exact same honest door.
   await page.reload();
@@ -289,7 +285,7 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
   await expect(page.getByRole("button", { name: s.saveAction })).toHaveCount(0);
 
   const listDialog = await openScenariosList(page);
-  await expect(listDialog.getByText(s.teaserTitle)).toBeVisible();
+  await expect(listDialog.getByText(pt.title)).toBeVisible();
   // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
   // sobra e a honestidade do numero: so os tres precos praticados.
   for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {

@@ -85,8 +85,8 @@ test("signing out with a non-empty queue is guarded — never a silent purge (B3
 
   // Signed out. The app keeps the seller on the (public) calculator as ANONYMOUS — the soft paywall
   // (ADR-0015), NOT a forced /sign-in redirect (the calculator is usable signed-out). So the premium
-  // "Salvar" affordance is gone, replaced by the honest teaser. Discard + sign-out completed; the
-  // queue was explicitly purged, never leaked into the next session.
-  await expect(page.getByText("Salvar faz parte do Premium.")).toBeVisible();
+  // "Salvar" affordance is gone, replaced by the honest UNIFIED teaser (016/US1). Discard +
+  // sign-out completed; the queue was explicitly purged, never leaked into the next session.
+  await expect(page.getByText(messages.premiumTeaser.CATALOG_PICKER.title)).toBeVisible();
   await expect(page.getByRole("button", { name: t.saveAction })).toHaveCount(0);
 });

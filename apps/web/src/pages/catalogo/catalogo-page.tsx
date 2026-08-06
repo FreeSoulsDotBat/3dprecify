@@ -5,10 +5,10 @@ import { useNavigate, useSearch } from "@tanstack/react-router";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
 import { KitsPanel } from "@/features/catalog/kits-panel";
-import { CatalogTeaser } from "@/features/catalog/premium-teaser";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 import { ProdutoPage } from "@/pages/catalogo/produto-page";
+import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Button } from "@/shared/ui";
@@ -141,7 +141,7 @@ export function CatalogoPage() {
     return (
       <section className="mx-auto flex w-full max-w-md flex-col gap-4">
         <PageHeader title={messages.nav.catalogo} />
-        <CatalogTeaser signedOut={signedOut} />
+        <PremiumTeaser feature="CATALOG" signedOut={signedOut} />
       </section>
     );
   }

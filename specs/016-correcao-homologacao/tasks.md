@@ -39,18 +39,18 @@ superfície visível (incl. PDF/CSV); rotas/payloads byte-idênticos.
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T002 [P] [US1] Teste estrutural do teaser: montar os 5 `PremiumFeatureId` e comparar a ÁRVORE renderizada (ordem de papéis/elementos, não presença de texto) em `apps/web/src/shared/billing/premium-teaser.test.tsx` — observar o vermelho (componente não existe)
-- [ ] T003 [P] [US2] Varredura de rótulos: teste que falha se "Histórico"/"Cenários" aparecer em superfície visível (nav, títulos, botões, toasts, vazios, teasers) e nos artefatos exportados (PDF/CSV) em `apps/web/e2e/label-sweep.spec.ts` — observar o vermelho
+- [x] T002 [P] [US1] Teste estrutural do teaser: montar os 5 `PremiumFeatureId` e comparar a ÁRVORE renderizada (ordem de papéis/elementos, não presença de texto) em `apps/web/src/shared/billing/premium-teaser.test.tsx` — observar o vermelho (componente não existe)
+- [x] T003 [P] [US2] Varredura de rótulos: teste que falha se "Histórico"/"Cenários" aparecer em superfície visível (nav, títulos, botões, toasts, vazios, teasers) e nos artefatos exportados (PDF/CSV) em `apps/web/e2e/label-sweep.spec.ts` — observar o vermelho
 
 ### Implementation
 
-- [ ] T004 [US1] Registro i18n fechado dos teasers (título·subtítulo·legenda por `PremiumFeatureId`; subtítulo de Simulações = o texto aprovado pelo dono) em `apps/web/src/shared/i18n/messages.pt-br.ts`
-- [ ] T005 [US1] Criar `apps/web/src/shared/billing/premium-teaser.tsx`: 4 elementos em ordem fixa, sem props de texto, exceção única `disabledAffordance`; ABSORVE `shared/billing/teaser-upgrade.tsx` (E6) como o elemento "Assinar" — NUNCA bifurcar (plan §H)
-- [ ] T006 [US1] Substituir as 5 superfícies pelo componente único e DELETAR os 4 teasers antigos + `PremiumTeaserDialog` (localizar por grep: `premium-teaser`, `history-teaser`, `scenario-teaser`, `bom-teaser` em `apps/web/src/features/*/`) — remover o modal "Cenários fazem parte do Premium"
-- [ ] T007 [US1] "Usar do catálogo": botão desabilitado E visível + explicação do que é o catálogo no lugar do texto removido, em `apps/web/src/features/catalog/` (componente do picker)
-- [ ] T008 [US2] Trocar os rótulos via chaves i18n (nunca hard-coded): navegação, títulos, cabeçalhos, botões, toasts, vazios, teasers em `apps/web/src/**` + rótulos dos artefatos exportados em `backend/app/services/quote_render.py` (se contiver o par antigo); rotas `/historico`/`/cenarios` e payloads INTOCADOS
-- [ ] T009 [US2] Texto de diferenciação nas duas telas (congelado × recalculado hoje) em `apps/web/src/pages/{historico,cenarios}/`
-- [ ] T010 [US1] Homologação visual (qa-produto): screenshot das 5 telas no grátis + comparação estrutural; tema claro E escuro (SC-901)
+- [x] T004 [US1] Registro i18n fechado dos teasers (título·subtítulo·legenda por `PremiumFeatureId`; subtítulo de Simulações = o texto aprovado pelo dono) em `apps/web/src/shared/i18n/messages.pt-br.ts`
+- [x] T005 [US1] Criar `apps/web/src/shared/billing/premium-teaser.tsx`: 4 elementos em ordem fixa, sem props de texto, exceção única `disabledAffordance`; ABSORVE `shared/billing/teaser-upgrade.tsx` (E6) como o elemento "Assinar" — NUNCA bifurcar (plan §H)
+- [x] T006 [US1] Substituir as 5 superfícies pelo componente único e DELETAR os 4 teasers antigos + `PremiumTeaserDialog` (localizar por grep: `premium-teaser`, `history-teaser`, `scenario-teaser`, `bom-teaser` em `apps/web/src/features/*/`) — remover o modal "Cenários fazem parte do Premium"
+- [x] T007 [US1] "Usar do catálogo": botão desabilitado E visível + explicação do que é o catálogo no lugar do texto removido, em `apps/web/src/features/catalog/` (componente do picker)
+- [x] T008 [US2] Trocar os rótulos via chaves i18n (nunca hard-coded): navegação, títulos, cabeçalhos, botões, toasts, vazios, teasers em `apps/web/src/**` + rótulos dos artefatos exportados em `backend/app/services/quote_render.py` (se contiver o par antigo); rotas `/historico`/`/cenarios` e payloads INTOCADOS
+- [x] T009 [US2] Texto de diferenciação nas duas telas (congelado × recalculado hoje) em `apps/web/src/pages/{historico,cenarios}/`
+- [x] T010 [US1] Homologação visual (qa-produto): screenshot das 5 telas no grátis + comparação estrutural; tema claro E escuro (SC-901)
 - [ ] T011 [US1] Gate da fatia: `pnpm gate:all` + e2e verdes; abrir PR-A (dono autoriza merge)
 
 **Checkpoint**: PR-A entregável sozinha — maior clareza pelo menor custo.

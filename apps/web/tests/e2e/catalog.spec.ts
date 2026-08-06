@@ -46,10 +46,10 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
 }, info) => {
   const email = await signUpThrowaway(page, `cat-${info.workerIndex}`);
 
-  // Never-granted: Catálogo shows the honest server deny (403 ENTITLEMENT_REQUIRED placeholder)
-  // — and this authenticated request JIT-provisions the account the CLI grants below.
+  // Never-granted: Catálogo shows the honest UNIFIED teaser (016/US1) — and this authenticated
+  // request JIT-provisions the account the CLI grants below.
   await page.goto("/catalogo");
-  await expect(page.getByText(t.apiError.entitlementRequired).first()).toBeVisible();
+  await expect(page.getByText(t.premiumTeaser.CATALOG.title).first()).toBeVisible();
 
   grantPremium(email);
   await page.reload();
@@ -131,7 +131,7 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   await signUpThrowaway(page, `free-${info.workerIndex}`);
 
   await page.goto("/catalogo");
-  await expect(page.getByText(t.apiError.entitlementRequired).first()).toBeVisible();
+  await expect(page.getByText(t.premiumTeaser.CATALOG.title).first()).toBeVisible();
 
   // No picker renders for a never-granted account; the manual calculator is untouched.
   await page.goto("/calcular");
@@ -145,28 +145,29 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // seed varejo — the free math lives
 });
 
-test("signed-out: Catálogo tab + calculator slot show the honest teaser — no price, no fake save (US7/T031)", async ({
+test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser — no price surprises, no fake save (US7/T031, rewritten 016/US1)", async ({
   page,
 }) => {
-  // The Catálogo tab explains the premium value honestly — never a bounce, never broken CRUD.
+  // 016/US1 — the four diverging teasers (incl. this Dialog) were replaced by ONE shared
+  // component (`shared/billing/premium-teaser.tsx`); the Catálogo tab now renders it DIRECTLY,
+  // never behind a dialog the seller has to open first.
+  const pt = t.premiumTeaser.CATALOG;
   await page.goto("/catalogo");
-  await expect(page.getByText(t.catalogo.teaserTitle)).toBeVisible();
-  await page.getByRole("button", { name: t.catalogo.addFilament }).click();
-  const dialog = page.getByRole("dialog");
-  await expect(dialog.getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
-  await expect(dialog.getByText(t.catalogo.teaserSignedOutBody)).toBeVisible();
-  // E6/US7 — o Dialog agora MOSTRA o preco real e um caminho para assinar; a proibicao valia
-  // enquanto a cobranca nao existia. Sobra a honestidade: so os tres precos praticados.
-  for (const n of (await dialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
+  await expect(page.getByText(pt.title)).toBeVisible();
+  await expect(page.getByText(pt.subtitle)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  // E6/US7 — o preco real esta na tela e um caminho para assinar; a proibicao valia enquanto a
+  // cobranca nao existia. Sobra a honestidade: so os tres precos praticados.
+  for (const n of (await page.locator("body").innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
     expect(["15,99", "12,99", "155,88"]).toContain(n);
   }
-  await dialog.getByRole("button", { name: t.catalogo.teaserDismiss }).click();
 
-  // The calculator's "usar do catálogo" slot is a visible affordance → the same teaser; the
-  // free manual calculator keeps computing behind it (SC-310).
+  // The calculator's "usar do catálogo" slot is a visible, DISABLED affordance (US1-AC3) → the
+  // SAME teaser explains it right there; the free manual calculator keeps computing behind it
+  // (SC-310).
   await page.goto("/calcular");
-  await page.getByRole("button", { name: t.calculator.catalogPicker.title }).click();
-  await expect(page.getByRole("dialog").getByText(t.catalogo.teaserDialogTitle)).toBeVisible();
-  await page.getByRole("dialog").getByRole("button", { name: t.catalogo.teaserDismiss }).click();
+  const ptPicker = t.premiumTeaser.CATALOG_PICKER;
+  await expect(page.getByText(ptPicker.title)).toBeVisible();
+  await expect(page.getByRole("button", { name: t.calculator.catalogPicker.title })).toBeDisabled();
   await expect(page.getByText("R$ 30,90").first()).toBeVisible(); // ver nota do A11 acima
 });

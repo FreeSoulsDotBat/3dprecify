@@ -46,9 +46,9 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
 }, info) => {
   const email = await signUpThrowaway(page, `bom-${info.workerIndex}`);
 
-  // Free (never granted): /kits shows the honest teaser, never the composer (ADR-0015).
+  // Free (never granted): /kits shows the honest UNIFIED teaser, never the composer (ADR-0015).
   await page.goto("/kits");
-  await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
+  await expect(page.getByText(t.premiumTeaser.KITS.title)).toBeVisible();
 
   grantPremium(email);
 
@@ -172,28 +172,29 @@ for (const vp of [
   });
 }
 
-test("signed-out at /kits sees the honest teaser; the FREE calculator is untouched (US5, SC-408/409)", async ({
+test("signed-out at /kits sees the honest UNIFIED teaser; the FREE calculator is untouched (US5, SC-408/409, rewritten 016/US1)", async ({
   page,
 }) => {
-  // Signed-out: /kits renders the teaser (no bounce), with the honest sign-in path. The 5th
-  // nav tab "Kits" is the entry point (K1/SC-410) and must be present on every surface.
+  // Signed-out: /kits renders the teaser directly (no bounce, no dialog). The 5th nav tab
+  // "Kits" is the entry point (K1/SC-410) and must be present on every surface.
+  const pt = t.premiumTeaser.KITS;
   await page.goto("/kits");
   await expect(page.getByRole("link", { name: t.nav.kits })).toBeVisible();
-  await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
-  await expect(page.getByText(t.bom.teaserSignedOutBody)).toBeVisible();
-  // NO price, NO date, NO purchase CTA (FR-410): the only actions are Entrar/Entendi.
+  await expect(page.getByText(pt.title)).toBeVisible();
+  await expect(page.getByText(pt.subtitle)).toBeVisible();
+  // NO price surprise, NO date, NO separate "Entrar"/"Entendi" (US1-AC2): the ONE CTA is
+  // TeaserUpgrade's own "Assinar Premium" link, whose href already carries sign-in + redirect.
   // E6/US7 — a proibicao de PRECO caiu com a premissa dela ("cobranca e E6", e o E6 chegou). O
   // teaser mostra o preco REAL e leva a oferta. O que sobra e a honestidade do numero: so os tres
   // precos praticados. Qualquer outro valor na tela seria inventado.
   for (const n of (await page.locator("body").innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
     expect(["15,99", "12,99", "155,88"]).toContain(n);
   }
-  await expect(page.getByRole("button", { name: t.bom.teaserSignIn })).toBeVisible();
-  await expect(page.getByRole("button", { name: t.bom.teaserDismiss })).toBeVisible();
-
-  // Entrar carries the return-to-intent to /kits.
-  await page.getByRole("button", { name: t.bom.teaserSignIn }).click();
-  await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fkits/);
+  const cta = page.getByRole("link", { name: t.billing.subscribeAction });
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAttribute("href", /\/sign-in\?redirect=/);
+  await cta.click();
+  await expect(page).toHaveURL(/\/sign-in\?.*redirect=%2Fconta/);
 
   // The free single-piece calculator stays fully usable, signed-out (SC-409 spot check).
   await page.goto("/calcular");
@@ -202,5 +203,5 @@ test("signed-out at /kits sees the honest teaser; the FREE calculator is untouch
   // Recomputes live: a REAL price renders (review nit — assert it, don't just claim it) and no
   // premium wall appears anywhere on this page.
   await expect(page.getByText(/R\$\s?\d/).first()).toBeVisible();
-  await expect(page.getByText(t.bom.teaserTitle)).toHaveCount(0);
+  await expect(page.getByText(pt.title)).toHaveCount(0);
 });

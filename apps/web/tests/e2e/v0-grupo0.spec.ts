@@ -2,6 +2,7 @@ import { mkdirSync } from "node:fs";
 
 import { test, expect, type Page } from "@playwright/test";
 
+import { messages } from "../../src/shared/i18n/messages.pt-br";
 import { signUpThrowaway } from "./history-helpers";
 
 // 016/T001 (V0) — MEDIÇÃO do Grupo 0 (itens 15–19 do relatório da homologação humana), não conserto.
@@ -62,7 +63,7 @@ test("V0 — logado sem premium: o que as quatro telas premium mostram (mediçã
   statuses.length = 0;
   await page.goto("/calcular");
   await page.waitForLoadState("networkidle").catch(() => undefined);
-  await page.getByRole("button", { name: /Meus cenários/ }).click();
+  await page.getByRole("button", { name: new RegExp(messages.scenarios.navEntry) }).click();
   await medir(page, "15-simulacoes", statuses);
   expect(
     statuses.filter((l) => /^5\d\d /.test(l)),
