@@ -60,6 +60,15 @@ decisões de dados tomadas em 2026-08-05 sobre Amazon/ML/Shopee."
   produção pré-v1 para ler um banner, e a v1 nasce no modelo novo. Se uma mudança estrutural futura
   acontecer COM usuários em produção, o aviso de versão será decidido naquele momento, sobre o
   mecanismo de divergência já pronto.
+- **REVERSÃO (mesma data, pós-arquiteto)** — Q: o arquiteto verificou que o catálogo ML está
+  **VAZIO** (zero entradas no servido e no seed): a premissa da Q2 ("corrige o custo fixo cobrado
+  indevidamente de ME2 hoje") era FALSA — ninguém é cobrado de nada — e o "seletor de categoria
+  vazio" da homologação é sintoma disso; a categoria funcional exige o token (US6-ML, fora de
+  escopo). O que o canal ML mostra em 016? → A: **ADIAR A PARTE ML TODA.** A US15 sai do
+  incremento e volta junto com o token (US6-ML/017); o canal ML permanece como está, com o defeito
+  do seletor vazio documentado como conhecido e adiado. As decisões Q4 (comparação por logística +
+  escolha) e Q3 (peso das gramas + ajuste) **permanecem válidas como desenho** para quando o ML
+  voltar — não são reabertas, só adiadas com a story. O ADR-0025 fica Proposed para esse momento.
 
 ---
 
@@ -348,8 +357,9 @@ para combinações já suportadas, resultado byte-idêntico ao de hoje.
    a categoria é só mais um eixo.
 2. **Given** os casos concretos medidos, **When** cada canal renderiza, **Then**: **Shopee** — sem
    seletor de categoria (não varia por categoria); **Amazon** — lista plana de 38 categorias (não
-   árvore); **Mercado Livre** — o campo de taxa fixa FICA (confirmado 2026-08-05) e o seletor de
-   categoria deixa de vir vazio.
+   árvore); **Mercado Livre** — permanece como está neste incremento (catálogo ML vazio; o defeito
+   do seletor vazio está documentado e adiado com a US15 — ausência de eixos declarados renderiza o
+   comportamento de hoje).
 3. **Given** a página da calculadora, **When** renderiza, **Then** a seção de canal fica **depois de
    "Markup" e antes de "Como chegamos no preço"**, e "frete até a transportadora" saiu dos exemplos
    de "Outros custos" (o campo Frete já existe na seção do canal — citar nos dois convida contagem
@@ -398,12 +408,12 @@ Profissional intocado.
 
 ---
 
-### User Story 15 - O custo fixo do Mercado Livre vira logística × faixa de preço × peso (Priority: P3)
+### User Story 15 - O custo fixo do Mercado Livre vira logística × faixa de preço × peso — **ADIADA, FORA DO 016**
 
-> **⚠ Escalação opus obrigatória (ADR-0022)** — mudança estrutural no domínio de pricing.
-> **Clarify 2026-08-05 (Q2): ENTRA, como schema honesto sem números** — os fatos públicos oficiais
-> entram como valor (ME2 = R$ 0; ≥ R$ 79 = R$ 0); Flex/ME1 < R$ 79 resolve para "sem referência —
-> informe" até o token da casa (US6-ML, fora deste incremento).
+> **⚠ ADIADA (dono, 2026-08-05, pós-arquiteto)**: o catálogo ML está VAZIO (verificado no servido
+> e no seed) — a story volta junto com o token da casa (US6-ML/017). O texto fica como registro do
+> desenho decidido (D10 + clarify Q2/Q3/Q4, que permanecem válidos); **nenhuma tarefa do 016 nasce
+> daqui**. ADR-0025 fica Proposed para esse momento.
 
 Decisão dada (D10): estender o schema completo, eixo próprio, SEPARADO do frete.
 
@@ -501,7 +511,7 @@ byte-idêntico ao de hoje.
   não tem mais → a legenda do documento antigo explica (US10-AC2/AC4, risco R3 do brief).
 - Simulação salva com `wasteGrams` reaberta → recomputa descartando e DIZ que descartou (US10-AC3).
 - Simulação salva ANTES do campo volumoso existir → ausência = falso, byte-idêntico (US16-AC2).
-- Combinação ML sem valor público → "sem referência — informe", nunca número de blog (US15-AC3).
+- Faixa de preço com `fixedFee` nulo → "sem referência — informe", nunca R$ 0,00 sob selo (FR-928).
 - Busca de categoria com 31 correspondências → contador diz 31 (US13-AC3).
 - Usuário grátis chega por deep-link a um estado com canal ativo → o switch está desabilitado/falso e
   nenhum número de canal aparece (US11-AC1).
@@ -584,10 +594,9 @@ byte-idêntico ao de hoje.
 
 - **FR-921**: As entradas Amazon `plan = INDIVIDUAL` MUST somar R$ 2,00/item (taxa fixa);
   `catalogVersion` MUST ser bumpado; `minPerItem` permanece R$ 1,00 uniforme; plano Profissional fora.
-- **FR-922**: O custo fixo ML MUST resolver por logística × faixa de preço × peso conforme US15,
-  com os fatos públicos oficiais como valor (ME2 = R$ 0; ≥ R$ 79 = R$ 0); combinações sem valor
-  público (Flex/ME1 < R$ 79) MUST resolver para "sem referência — informe"; nenhum valor REPORTADO
-  (blog) MUST subir a fato; a regra dos 50% e o piso permanecem não gravados.
+- **FR-922** *(ADIADO com a US15 — dono, 2026-08-05)*: o custo fixo ML por logística × faixa ×
+  peso sai do 016 e volta com o token (US6-ML/017). Permanece válido como desenho: fatos oficiais
+  como valor, "sem referência — informe" onde não há valor público, nenhum REPORTADO sobe a fato.
 - **FR-923**: O canal Shopee MUST ter o campo opcional "Item volumoso" que soma R$ 50,00 inteiros à
   unidade quando marcado, com legenda declarando que a taxa é por pedido (clarify Q5);
   ausência/desmarcado = resultado byte-idêntico.
@@ -603,7 +612,12 @@ byte-idêntico ao de hoje.
 - **FR-927** *(clarify Q8)*: Para canal Shopee com perfil CNPJ e preço abaixo de R$ 8, o adicional
   fixo MUST ser metade do preço do produto (regra oficial publicada, art. 26839); a partir de R$ 8 o
   comportamento atual permanece byte-idêntico; a regra NÃO se aplica a CPF (US17 cobre esse caso
-  como aviso).
+  como aviso). **Pré-condição de implementação (achado do arquiteto)**: a forma exata da regra
+  (o percentual incide junto? o fixo some?) MUST ser conferida verbatim no art. 26839 ANTES de
+  gravar qualquer número — as duas fontes internas divergem na leitura.
+- **FR-928** *(achado do arquiteto, defeito latente)*: Uma faixa de preço cujo `fixedFee` é nulo
+  MUST NOT resolver para R$ 0,00 sob selo de referência — resolve para "sem referência — informe"
+  (mesma classe do guard F3/014-A2; entra com a fatia de campos dirigidos).
 
 ### Key Entities
 
@@ -646,9 +660,11 @@ byte-idêntico ao de hoje.
   telas + calculadora + deep-links testados); a promessa nova está na primeira dobra e as
   Clarifications datadas existem nas specs 005 e 007.
 - **SC-909**: Por marketplace, a seção de canal exibe exatamente os eixos do schema daquele
-  marketplace (Shopee sem categoria; Amazon lista de 38; ML com taxa fixa) — verificado por
-  screenshot dos três; para toda combinação já suportada, resultado byte-idêntico (exceto US14/US16,
-  cujas diferenças são exatamente R$ 2,00/item e R$ 50,00 condicionais).
+  marketplace (Shopee sem categoria; Amazon lista de 38; ML permanece o comportamento de hoje —
+  parte ML adiada) — verificado por screenshot dos três; para toda combinação já suportada,
+  resultado byte-idêntico (exceto US14/US16/US18 e FR-926, cujas diferenças são exatamente as
+  decididas: R$ 2,00/item, R$ 50,00 condicional, metade-do-preço < R$ 8 CNPJ, +R$ 3/item CPF de
+  volume).
 - **SC-910**: Nenhum número de tarifa sem fonte oficial datada aparece sob selo de referência —
   auditado sobre o catálogo servido e sobre a UI (avisos Shopee, "sem referência — informe" ML).
 - **SC-911**: V0 está medido e registrado com evidência ANTES de qualquer conserto do Grupo 0.
@@ -663,9 +679,10 @@ byte-idêntico ao de hoje.
 - O schema de determinantes do catálogo é capaz de dirigir a tela sem dado novo (medido em
   `ESTRUTURA-DADOS-MARKETPLACES.md`) — exceto o eixo novo do custo fixo ML (US15), que é a extensão
   decidida em D10.
-- O fatiamento segue o corte do brief (V0 · PR-A teasers+rótulos · PR-B layout · PR-C campos · PR-D
-  Desperdício ISOLADA · PR-E premium+dirigidos · PR-F dado · PR-G ML custo fixo), autorizado fatia a
-  fatia pelo dono (ADR-0006); PR-D não entra junto com PR-C.
+- O fatiamento segue o corte do brief SEM a PR-G (V0 · PR-A teasers+rótulos · PR-B layout · PR-C
+  campos · PR-D Desperdício ISOLADA · PR-E premium+dirigidos · PR-F dado Shopee/Amazon), autorizado
+  fatia a fatia pelo dono (ADR-0006); PR-D não entra junto com PR-C; a PR-G (ML) saiu com a US15
+  (dono, 2026-08-05).
 - O E6 (billing) segue em voo (PR-C pendente); o bump MAJOR de PR-D é coordenado com o fechamento do
   E6 ou explicitamente com o arquiteto (risco R8 do brief).
 - A matriz de homologação do §9 do brief (offline, erro de rede real, sessão expirada, /conta no
@@ -677,6 +694,10 @@ byte-idêntico ao de hoje.
 1. **US6-ML — token da casa no CI** (D9 foi só direção): gateado pelas 8 condições do parecer do
    `seguranca` + autorização separada do dono. Não iniciar em um "continue". Inclui o teste único de
    suficiência da permissão e a coleta de comissão por categoria do ML.
+   **E, por decisão do dono (2026-08-05, pós-arquiteto): TODA a parte ML do canal** — US15/FR-922
+   (custo fixo logística × faixa × peso), a comparação por logística (Q4), o peso (Q3) e o conserto
+   do seletor de categoria vazio — volta junto com o token. O catálogo ML está vazio; sem dados,
+   nada disso resolve valor.
 2. **Pipeline de ingestão mensal** (vigia da `/precos`, OCR Shopee com guardas, ingestão das tabelas
    de frete ML, `fee-refresh.yml`) → proposta: incremento 017.
 3. **Frete real (lacuna E3)** — as 3 tabelas medidas ficam prontas como insumo; não é a vez.
@@ -698,7 +719,7 @@ integradas na seção Clarifications e nos FR/US afetados. A tabela fica como re
 | # | pergunta | o que muda |
 | --- | --- | --- |
 | ~~Q1~~ | ~~Selo "sem referência"?~~ **RESOLVIDA (clarify 2026-08-05, sessão 2): fica, texto reescrito para leigo + ? explicativo** | ver Clarifications |
-| ~~Q2~~ | ~~US15 entra?~~ **RESOLVIDA (clarify 2026-08-05): entra, schema honesto sem números** | ver Clarifications |
+| ~~Q2~~ | ~~US15 entra?~~ **REVERTIDA (mesma data, pós-arquiteto): catálogo ML vazio → a parte ML toda ADIADA para o token (US6-ML/017)** | ver Clarifications §REVERSÃO |
 | ~~Q3~~ | ~~Origem do peso ML?~~ **RESOLVIDA (clarify 2026-08-05, sessão 2): derivado das gramas + ajuste opcional "peso com embalagem" + aviso de cubagem** | ver Clarifications |
 | ~~Q4~~ | ~~Tipo de logística ML na tela?~~ **RESOLVIDA (clarify 2026-08-05): comparação por grupo + escolha do vendedor, sem default** | ver Clarifications |
 | ~~Q5~~ | ~~Volumoso: somar ou ratear?~~ **RESOLVIDA (clarify 2026-08-05): somar R$ 50 inteiros + legenda "por pedido"** | ver Clarifications |
