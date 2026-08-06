@@ -38,9 +38,21 @@
   border: none;
   padding: 0;
 }
+/* 016/T016 — centers the card's TEXT, not the boxes' cross-size. `align-items: center` (the
+   obvious first reach) switches `.tf-price`'s flex column from the default `stretch` to
+   content-sized items — which lets `.tf-price__amount` grow to its own intrinsic width instead
+   of staying clamped to the card, and an astronomical value's un-breakable integer (word-break:
+   keep-all, [F11a-002]) then pushes the card, and the PAGE, wide open: `overflow-x: auto` on
+   `.tf-price__amount` only has anything to scroll WITHIN once something upstream hands it a
+   definite (narrower-than-content) width, and stretch is that something. `text-align` alone
+   centers each item's own text inside its still-stretched (full-width) box; the amount row's
+   three inline tokens (currency/integer/decimal) get their own `justify-content: center` below,
+   since flex items don't obey the parent's `text-align`. */
 .tf-price--center {
-  align-items: center;
   text-align: center;
+}
+.tf-price--center .tf-price__amount {
+  justify-content: center;
 }
 .tf-price__label {
   font-size: var(--fs-sm);
@@ -56,7 +68,13 @@
   font-family: var(--font-numeric);
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: var(--num-features);
-  line-height: 1;
+  /* 016/T018-A1 — o scroll da foto do dono (item 9) era VERTICAL: com `line-height: 1` o
+     conteúdo fica 4px mais alto que a caixa, `overflow-x: auto` (abaixo) faz o overflow-y
+     computar `auto`, e o Chromium headed renderiza a barra clássica de 15px — que ainda
+     empurra o valor 7,5px do centro. 1.2 remove a CAUSA (altura), preservando o scroll-X de
+     último recurso do 015/A6; `overflow-y: hidden` esconderia a barra sem remover o overflow,
+     e nenhuma asserção headless conseguiria prová-lo. */
+  line-height: 1.2;
   font-weight: var(--fw-bold);
   letter-spacing: var(--tracking-tight);
   /* D2: wrap BETWEEN the currency / integer / decimal tokens so an oversized value never

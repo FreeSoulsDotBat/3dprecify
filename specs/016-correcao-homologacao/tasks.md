@@ -67,16 +67,16 @@ dois temas.
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T012 [P] [US4] Teste geométrico: largura útil ≥60% a 1440px + cartões de preço SEM scroll interno/quebra/transbordo a 360/390/1440 com R$ 95.057, em `apps/web/e2e/calculator-layout.spec.ts` (a guarda [F11a-002] FICA; asserção por boxes, não texto) — observar o vermelho a 1440
+- [x] T012 [P] [US4] Teste geométrico: largura útil ≥60% a 1440px + cartões de preço SEM scroll interno/quebra/transbordo a 360/390/1440 com R$ 95.057, em `apps/web/e2e/calculator-layout.spec.ts` (a guarda [F11a-002] FICA; asserção por boxes, não texto) — observar o vermelho a 1440
 
 ### Implementation
 
-- [ ] T013 [P] [US3] Logo completa: copiar os 2 PNGs do dono (`homologação/`) para `apps/web/src/app/assets/`, exibir variante por tema no header em `apps/web/src/app/` (componente do header)
-- [ ] T014 [US3] Sidebar à frente do header (preparação p/ colapso futuro; o colapso NÃO entra) sem regressão de foco/tab-order/leitor de tela, em `apps/web/src/app/` (layout)
-- [ ] T015 [US4] Layout desktop em colunas: título+subtítulo no topo, total centralizado ao final, em `apps/web/src/features/calculator/calculator-form.tsx` (+ CSS/Tailwind)
-- [ ] T016 [P] [US4] Centralizar textos dos cartões de preço final em `apps/web/src/features/calculator/` (componente dos cartões)
-- [ ] T017 [US5] Fundir "Preços por canal" em "Como chegamos no preço" (sem duplicar linha, sem perder informação) + remover marcadores laranja/roxo de Material/Energia, em `apps/web/src/features/calculator/calculator-form.tsx`
-- [ ] T018 [US4] Homologação visual (qa-produto): screenshots 360/390/1440 × claro/escuro, com valor adversarial (SC-903)
+- [x] T013 [P] [US3] Logo completa: copiar os 2 PNGs do dono (`homologação/`) para `apps/web/src/app/assets/`, exibir variante por tema no header em `apps/web/src/app/` (componente do header)
+- [x] T014 [US3] Sidebar à frente do header (preparação p/ colapso futuro; o colapso NÃO entra) sem regressão de foco/tab-order/leitor de tela, em `apps/web/src/app/` (layout)
+- [x] T015 [US4] Layout desktop em colunas: título+subtítulo no topo, total centralizado ao final, em `apps/web/src/features/calculator/calculator-form.tsx` (+ CSS/Tailwind)
+- [x] T016 [P] [US4] Centralizar textos dos cartões de preço final em `apps/web/src/features/calculator/` (componente dos cartões)
+- [x] T017 [US5] Fundir "Preços por canal" em "Como chegamos no preço" (sem duplicar linha, sem perder informação) + remover marcadores laranja/roxo de Material/Energia, em `apps/web/src/features/calculator/calculator-form.tsx`
+- [x] T018 [US4] Homologação visual (qa-produto): screenshots 360/390/1440 × claro/escuro, com valor adversarial (SC-903)
 - [ ] T019 [US4] Gate da fatia + PR-B
 
 **Checkpoint**: o item 9 do relatório (scroll) resolvido pelo item 2 (largura), com a guarda intacta.

@@ -259,7 +259,7 @@ export function ProdutoPage({
   ];
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="tf-calc-page" data-testid="calc-content">
       <PageHeader title={title} />
 
       {/* K3: ONE calm, actionable state — the product has no live filament/printer behind it,
@@ -282,8 +282,8 @@ export function ProdutoPage({
 
       {/* `display:contents` keeps every child a direct flex item of the section above (same gap
           rhythm) while a NATIVE `disabled` fieldset inerts every input/select/button nested inside
-          — including ones several components deep (FieldGroup, MarketplaceSection) — with zero
-          per-field prop threading. */}
+          — with zero per-field prop threading. Name/save + the catalog-ref pickers stay full width,
+          above the two-column grid (they identify the product, not price it). */}
       <fieldset disabled={lapsed} className="contents">
         {/* Name + save — the page's header action (ux §1.6b). */}
         <Card padding="md" className="flex flex-col gap-3">
@@ -344,91 +344,105 @@ export function ProdutoPage({
             </Field>
           </div>
         </Card>
-
-        {/* The calculator body — identical sections, identical engine (SC-305 on this surface too). */}
-        <FieldGroup
-          control={control}
-          title={t.sections.inputs}
-          info={t.sectionInfo.inputs}
-          fields={MANDATORY_FIELDS}
-        />
-        <FieldGroup
-          control={control}
-          title={t.sections.optional}
-          info={t.sectionInfo.optional}
-          hint={t.sections.optionalHint}
-          fields={OPTIONAL_FIELDS}
-        />
-        <FieldGroup
-          control={control}
-          title={t.sections.labor}
-          info={t.sectionInfo.labor}
-          fields={LABOR_FIELDS}
-        />
-        <OtherCostsSection
-          control={control}
-          fields={otherCostFields}
-          errors={otherCostErrors}
-          onAppend={() => appendOtherCost(defaultOtherCost())}
-          onRemove={removeOtherCost}
-        />
-        <FieldGroup
-          control={control}
-          title={t.sections.markup}
-          info={t.sectionInfo.markup}
-          fields={MARKUP_FIELDS}
-        />
       </fieldset>
 
-      {result ? (
-        <PriceResults result={result} values={values} />
-      ) : (
-        <Alert tone="danger">{t.invalidNote}</Alert>
-      )}
-
-      {/* Record the on-screen price as a frozen snapshot, tagged with this product as its origin
-          (US3/T019). Present only for a premium seller on a saved product with a valid live price. */}
-      {recordSource && <RecordSnapshotButton source={recordSource} />}
-
-      <fieldset disabled={lapsed} className="contents">
-        <MarketplaceSection
-          control={control}
-          values={values}
-          fields={fields}
-          channelOutcomes={channelOutcomes}
-          included={values.includeMarketplace !== false}
-          onToggleInclude={(next) => setValue("includeMarketplace", next)}
-          onAppend={append}
-          onRemove={remove}
-          onMarketplaceChange={handleMarketplaceChange}
-          refreshFailed={refreshFailed}
-          refreshing={refreshing}
-          onRetryCatalog={retryCatalog}
-          spineFor={(m) => spineForMarketplace(catalog, m)}
-        />
-      </fieldset>
-
-      {/* 010/T021b (E5, PR-B) — save a scenario referencing THIS saved product (closes FR-606a on
-          the UI side): `buildScenarioConfig`'s `productRef` captures `costBasis.kind = "PRODUCT"`
-          instead of AD_HOC, so the D3/D6 lifecycle (T011 server re-snapshot, T022 read-time
-          resolve) applies on reopen. Offered only on a SAVED product with a valid live price — a
-          new/unsaved product has no id to reference yet (mirrors `recordSource` above). */}
-      {editing && result && input && (
-        <div className="flex justify-center">
-          <SaveScenarioSheet
-            source={{
-              buildConfig: () =>
-                buildScenarioConfig({
-                  values,
-                  channelOutcomes,
-                  parsedInput: input,
-                  productRef: { id: editing.id, name: editing.name },
-                }),
-              basisLabel: `${editing.name} (${messages.scenarios.basisKindProduct})`,
-            }}
-          />
+      {/* 016/PR-B (US4/T015) — same two-column split as Calcular (SC-305: identical body,
+          identical layout). Costs on the left, markup + marketplace channel editing on the
+          right; each column's own `disabled` fieldset preserves the lapsed-premium freeze
+          exactly as before (FB-02), just scoped per column instead of one big wrapper. */}
+      <div className="tf-calc-grid">
+        <div className="tf-calc-grid__col">
+          <fieldset disabled={lapsed} className="contents">
+            <FieldGroup
+              control={control}
+              title={t.sections.inputs}
+              info={t.sectionInfo.inputs}
+              fields={MANDATORY_FIELDS}
+            />
+            <FieldGroup
+              control={control}
+              title={t.sections.optional}
+              info={t.sectionInfo.optional}
+              hint={t.sections.optionalHint}
+              fields={OPTIONAL_FIELDS}
+            />
+            <FieldGroup
+              control={control}
+              title={t.sections.labor}
+              info={t.sectionInfo.labor}
+              fields={LABOR_FIELDS}
+            />
+            <OtherCostsSection
+              control={control}
+              fields={otherCostFields}
+              errors={otherCostErrors}
+              onAppend={() => appendOtherCost(defaultOtherCost())}
+              onRemove={removeOtherCost}
+            />
+          </fieldset>
         </div>
-      )}
+        <div className="tf-calc-grid__col">
+          <fieldset disabled={lapsed} className="contents">
+            <FieldGroup
+              control={control}
+              title={t.sections.markup}
+              info={t.sectionInfo.markup}
+              fields={MARKUP_FIELDS}
+            />
+            <MarketplaceSection
+              control={control}
+              values={values}
+              fields={fields}
+              channelOutcomes={channelOutcomes}
+              included={values.includeMarketplace !== false}
+              onToggleInclude={(next) => setValue("includeMarketplace", next)}
+              onAppend={append}
+              onRemove={remove}
+              onMarketplaceChange={handleMarketplaceChange}
+              refreshFailed={refreshFailed}
+              refreshing={refreshing}
+              onRetryCatalog={retryCatalog}
+              spineFor={(m) => spineForMarketplace(catalog, m)}
+            />
+          </fieldset>
+        </div>
+      </div>
+
+      <div className="tf-calc-footer">
+        {result ? (
+          <PriceResults result={result} values={values} channelOutcomes={channelOutcomes} />
+        ) : (
+          <Alert tone="danger">{t.invalidNote}</Alert>
+        )}
+
+        {/* Record the on-screen price as a frozen snapshot, tagged with this product as its
+            origin (US3/T019). Present only for a premium seller on a saved product with a valid
+            live price. */}
+        {recordSource && <RecordSnapshotButton source={recordSource} />}
+
+        {/* 010/T021b (E5, PR-B) — save a scenario referencing THIS saved product (closes FR-606a
+            on the UI side): `buildScenarioConfig`'s `productRef` captures `costBasis.kind =
+            "PRODUCT"` instead of AD_HOC, so the D3/D6 lifecycle (T011 server re-snapshot, T022
+            read-time resolve) applies on reopen. Offered only on a SAVED product with a valid
+            live price — a new/unsaved product has no id to reference yet (mirrors `recordSource`
+            above). */}
+        {editing && result && input && (
+          <div className="flex justify-center">
+            <SaveScenarioSheet
+              source={{
+                buildConfig: () =>
+                  buildScenarioConfig({
+                    values,
+                    channelOutcomes,
+                    parsedInput: input,
+                    productRef: { id: editing.id, name: editing.name },
+                  }),
+                basisLabel: `${editing.name} (${messages.scenarios.basisKindProduct})`,
+              }}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }

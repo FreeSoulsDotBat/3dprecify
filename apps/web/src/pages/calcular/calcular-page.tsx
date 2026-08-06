@@ -241,7 +241,7 @@ export function CalcularPage() {
   };
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="tf-calc-page" data-testid="calc-content">
       <PageHeader title={t.title} className="tf-page-header--center" />
 
       {/* 015/A8 ([F11a-003], decisão do dono 2026-08-03) — a promessa SOBE para a primeira dobra.
@@ -372,100 +372,113 @@ export function CalcularPage() {
         </Card>
       )}
 
-      {/* Top→bottom: (1) mandatory costs → (2) optional adjustments → (3) markup →
-          (4) breakdown → (5) suggested prices. The user enters costs and sees how the
-          number is built before the final retail/wholesale takeaway closes the screen. */}
-      <FieldGroup
-        control={control}
-        title={t.sections.inputs}
-        info={t.sectionInfo.inputs}
-        fields={MANDATORY_FIELDS}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.optional}
-        info={t.sectionInfo.optional}
-        hint={t.sections.optionalHint}
-        fields={OPTIONAL_FIELDS}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.labor}
-        info={t.sectionInfo.labor}
-        fields={LABOR_FIELDS}
-      />
-      <OtherCostsSection
-        control={control}
-        fields={otherCostFields}
-        errors={otherCostErrors}
-        onAppend={() => appendOtherCost(defaultOtherCost())}
-        onRemove={removeOtherCost}
-      />
-      <FieldGroup
-        control={control}
-        title={t.sections.markup}
-        info={t.sectionInfo.markup}
-        fields={MARKUP_FIELDS}
-      />
-
-      {result ? (
-        <PriceResults result={result} values={values} />
-      ) : (
-        <Alert tone="danger">{t.invalidNote}</Alert>
-      )}
-
-      {/* (6) Marketplace — one slot per channel (add/remove); each channel's grossed-up anúncio +
-          líquido for varejo e atacado are read together below in "Preços por canal" (US1). */}
-      <MarketplaceSection
-        control={control}
-        values={values}
-        fields={fields}
-        channelOutcomes={channelOutcomes}
-        included={values.includeMarketplace !== false}
-        onToggleInclude={(next) => setValue("includeMarketplace", next)}
-        onAppend={append}
-        onRemove={remove}
-        onMarketplaceChange={handleMarketplaceChange}
-        refreshFailed={catalogRefreshFailed}
-        refreshing={catalogRefreshing}
-        onRetryCatalog={retryCatalog}
-        spineFor={(m) => spineForMarketplace(catalog, m)}
-      />
-
-      {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços
-          por canal" (ux §2.1), beside the existing freemium caption. `SaveScenarioSheet` mirrors
-          `RecordSnapshotButton` and returns null without an active entitlement — the free
-          calculator stays byte-untouched (SC-109), the honest door is "Meus cenários" above. */}
-      <div className="flex justify-center">
-        <SaveScenarioSheet
-          source={{
-            disabled: !result || !input,
-            buildConfig: () => buildScenarioConfig({ values, channelOutcomes, parsedInput: input }),
-            basisLabel: messages.scenarios.basisKindAdhoc,
-          }}
-        />
+      {/* 016/PR-B (US4/T015) — the input sections split into two columns from the desktop
+          breakpoint up (single column, today's order, at 360/390): costs on the left, markup +
+          marketplace channel editing on the right. The total/"Como chegamos no preço" — now
+          fused with "Preços por canal" (US5) — stays a single footer spanning both, always LAST
+          (T015 — "o total centralizado ao final"), so it reads after every input that feeds it,
+          channels included. */}
+      <div className="tf-calc-grid">
+        <div className="tf-calc-grid__col">
+          <FieldGroup
+            control={control}
+            title={t.sections.inputs}
+            info={t.sectionInfo.inputs}
+            fields={MANDATORY_FIELDS}
+          />
+          <FieldGroup
+            control={control}
+            title={t.sections.optional}
+            info={t.sectionInfo.optional}
+            hint={t.sections.optionalHint}
+            fields={OPTIONAL_FIELDS}
+          />
+          <FieldGroup
+            control={control}
+            title={t.sections.labor}
+            info={t.sectionInfo.labor}
+            fields={LABOR_FIELDS}
+          />
+          <OtherCostsSection
+            control={control}
+            fields={otherCostFields}
+            errors={otherCostErrors}
+            onAppend={() => appendOtherCost(defaultOtherCost())}
+            onRemove={removeOtherCost}
+          />
+        </div>
+        <div className="tf-calc-grid__col">
+          <FieldGroup
+            control={control}
+            title={t.sections.markup}
+            info={t.sectionInfo.markup}
+            fields={MARKUP_FIELDS}
+          />
+          {/* (6) Marketplace — one slot per channel (add/remove); each channel's grossed-up
+              anúncio + líquido for varejo e atacado are read together in the footer's "Como
+              chegamos no preço" (US1, fused per US5). */}
+          <MarketplaceSection
+            control={control}
+            values={values}
+            fields={fields}
+            channelOutcomes={channelOutcomes}
+            included={values.includeMarketplace !== false}
+            onToggleInclude={(next) => setValue("includeMarketplace", next)}
+            onAppend={append}
+            onRemove={remove}
+            onMarketplaceChange={handleMarketplaceChange}
+            refreshFailed={catalogRefreshFailed}
+            refreshing={catalogRefreshing}
+            onRetryCatalog={retryCatalog}
+            spineFor={(m) => spineForMarketplace(catalog, m)}
+          />
+        </div>
       </div>
 
-      {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium note:
-          the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the button is
-          PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here (`RecordSnapshotButton`
-          returns null), so the free calculator stays literally untouched (SC-109 / SC-507 / SC-512).
-          The honest door is the Histórico tab.
-          010/T036 (E5, PR-C, US7) — suppressed while a KIT-basis scenario is loaded: these calculator
-          fields are NOT what is on screen then (`KitBasisSummary`'s own rollup is), so freezing them
-          would record numbers the seller never saw; its own record button lives with the rollup
-          above. An AD_HOC/PRODUCT-basis scenario reuses this SAME button — its provenance is simply
-          `scenarioProvenance` instead of `null` ("originou-se do cenário X"). */}
-      {result && input && loadedScenario?.config.costBasis.kind !== "KIT" && (
+      <div className="tf-calc-footer">
+        {result ? (
+          <PriceResults result={result} values={values} channelOutcomes={channelOutcomes} />
+        ) : (
+          <Alert tone="danger">{t.invalidNote}</Alert>
+        )}
+
+        {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços
+            por canal" (ux §2.1), beside the existing freemium caption. `SaveScenarioSheet` mirrors
+            `RecordSnapshotButton` and returns null without an active entitlement — the free
+            calculator stays byte-untouched (SC-109), the honest door is "Meus cenários" above. */}
         <div className="flex justify-center">
-          <RecordSnapshotButton
+          <SaveScenarioSheet
             source={{
-              kind: "SINGLE",
-              freeze: () => freezePriceResult(input, result, scenarioProvenance),
+              disabled: !result || !input,
+              buildConfig: () =>
+                buildScenarioConfig({ values, channelOutcomes, parsedInput: input }),
+              basisLabel: messages.scenarios.basisKindAdhoc,
             }}
           />
         </div>
-      )}
+
+        {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium
+            note: the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the
+            button is PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here
+            (`RecordSnapshotButton` returns null), so the free calculator stays literally untouched
+            (SC-109 / SC-507 / SC-512). The honest door is the Histórico tab.
+            010/T036 (E5, PR-C, US7) — suppressed while a KIT-basis scenario is loaded: these
+            calculator fields are NOT what is on screen then (`KitBasisSummary`'s own rollup is),
+            so freezing them would record numbers the seller never saw; its own record button
+            lives with the rollup above. An AD_HOC/PRODUCT-basis scenario reuses this SAME button
+            — its provenance is simply `scenarioProvenance` instead of `null` ("originou-se do
+            cenário X"). */}
+        {result && input && loadedScenario?.config.costBasis.kind !== "KIT" && (
+          <div className="flex justify-center">
+            <RecordSnapshotButton
+              source={{
+                kind: "SINGLE",
+                freeze: () => freezePriceResult(input, result, scenarioProvenance),
+              }}
+            />
+          </div>
+        )}
+      </div>
     </section>
   );
 }
