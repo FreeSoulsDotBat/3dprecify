@@ -26,7 +26,6 @@ const canonical: CalcFormValues = {
   costPerRoll: "100,00",
   rollWeightKg: "1",
   printGrams: "100",
-  wasteGrams: "10",
   printTimeHours: "5",
   avgPowerKw: "0,10",
   tariffPerKwh: "1,00",
@@ -51,14 +50,16 @@ describe("computeFromForm — canonical vector flows through the engine (SC-001)
     expect(ok).toBe(true);
     expect(fieldErrors).toEqual({});
     expect(result).not.toBeNull();
-    expect(result?.material).toBeCloseTo(11.0, 2);
+    // 016/US10 — re-baseline SEM wasteGrams (pricing-core 4.0.0, ADR-0026): material = gramas ×
+    // custo/kg, sem soma de desperdício. Confirmado RODANDO computeCalculator com este vetor.
+    expect(result?.material).toBeCloseTo(10.0, 2);
     expect(result?.energy).toBeCloseTo(0.5, 2);
     expect(result?.machine).toBeCloseTo(10.0, 2);
-    expect(result?.falha).toBeCloseTo(2.15, 2);
+    expect(result?.falha).toBeCloseTo(2.05, 2);
     expect(result?.finishing).toBeCloseTo(5.0, 2);
-    expect(result?.custoTotal).toBeCloseTo(28.65, 2);
-    expect(result?.precoVarejo).toBeCloseTo(42.98, 2);
-    expect(result?.precoAtacado).toBeCloseTo(37.25, 2);
+    expect(result?.custoTotal).toBeCloseTo(27.55, 2);
+    expect(result?.precoVarejo).toBeCloseTo(41.33, 2);
+    expect(result?.precoAtacado).toBeCloseTo(35.82, 2);
   });
 
   it("the default (seed) form is valid and produces a coherent price", () => {
@@ -84,27 +85,26 @@ describe("computeFromForm — canonical vector flows through the engine (SC-001)
 // `computeFromForm`/`calculatorSchema`/the engine — this is the byte-identity proof: the same
 // canonical vector, the same `CalcFormValues` shape, before and after the fatia.
 describe("US9 (T022) — a reorganização de seção não muda NENHUM resultado (prova byte-idêntica)", () => {
-  it("o vetor canônico R$ 28,65 / 42,98 / 37,25 permanece intacto após a fusão de seções", () => {
+  it("o vetor canônico R$ 27,55 / 41,33 / 35,82 permanece intacto após a fusão de seções", () => {
     const { result } = computeFromForm(canonical);
-    expect(result?.custoTotal).toBeCloseTo(28.65, 2);
-    expect(result?.precoVarejo).toBeCloseTo(42.98, 2);
-    expect(result?.precoAtacado).toBeCloseTo(37.25, 2);
+    expect(result?.custoTotal).toBeCloseTo(27.55, 2);
+    expect(result?.precoVarejo).toBeCloseTo(41.33, 2);
+    expect(result?.precoAtacado).toBeCloseTo(35.82, 2);
   });
 
-  it("a fusão é PURA UI — CalcFormValues continua com as mesmas 17 chaves escalares do motor", () => {
-    expect(CALC_FIELD_NAMES).toHaveLength(17);
+  it("a fusão é PURA UI — CalcFormValues continua com as mesmas 16 chaves escalares do motor", () => {
+    // 016/US10 — 17 → 16: wasteGrams saiu (o motor recusa a chave desde pricing-core 4.0.0).
+    expect(CALC_FIELD_NAMES).toHaveLength(16);
     expect(CALC_FIELD_NAMES).toContain("printTimeHours");
     expect(CALC_FIELD_NAMES).toContain("machineValue");
     expect(CALC_FIELD_NAMES).toContain("machineLifetimeHours");
   });
 
   it("os campos fundidos migram de array, nunca de nome (o motor lê o MESMO CalcFieldName)", () => {
-    // "Ajustes opcionais" funde em "Custos da peça": wasteGrams/maintenanceReservePerHour/failurePct
-    // agora vivem em COST_FIELDS.
+    // "Ajustes opcionais" funde em "Custos da peça": maintenanceReservePerHour/failurePct
+    // agora vivem em COST_FIELDS (wasteGrams saiu em PR-D/US10).
     const costNames = COST_FIELDS.map((f) => f.name);
-    expect(costNames).toEqual(
-      expect.arrayContaining(["wasteGrams", "maintenanceReservePerHour", "failurePct"]),
-    );
+    expect(costNames).toEqual(expect.arrayContaining(["maintenanceReservePerHour", "failurePct"]));
     // Tempo/Valor do acabamento migram para "Mão de obra e custos", junto com laborHours/laborRate.
     const laborNames = LABOR_AND_FINISH_FIELDS.map((f) => f.name);
     expect(laborNames).toEqual(
@@ -125,7 +125,6 @@ describe("computeFromForm — pt-BR/BRL parsing", () => {
       costPerRoll: "1.000,00",
       rollWeightKg: "1",
       printGrams: "10",
-      wasteGrams: "0",
     });
     expect(r.ok).toBe(true);
     // (1000 / 1000g) * 10g = 10,00
@@ -135,18 +134,16 @@ describe("computeFromForm — pt-BR/BRL parsing", () => {
   it("tolerates typed R$ / unit affixes around the number", () => {
     const r = computeFromForm({ ...canonical, costPerRoll: "R$ 100,00", avgPowerKw: "0,10 kW" });
     expect(r.ok).toBe(true);
-    expect(r.result?.material).toBeCloseTo(11.0, 2);
+    expect(r.result?.material).toBeCloseTo(10.0, 2);
   });
 
   it("treats a blank optional field as 0 (does not error)", () => {
     const r = computeFromForm({
       ...canonical,
-      wasteGrams: "",
       finishTimeHours: "",
       failurePct: "",
     });
     expect(r.ok).toBe(true);
-    // waste 0 → material = (100/1000)*100 = 10,00; falha/finishing 0
     expect(r.result?.material).toBeCloseTo(10.0, 2);
     expect(r.result?.falha).toBeCloseTo(0, 2);
     expect(r.result?.finishing).toBeCloseTo(0, 2);
@@ -162,9 +159,9 @@ describe("computeFromForm — per-field validation (never coerce a bad string to
   });
 
   it("rejects a non-numeric OPTIONAL string too (only blank means 0)", () => {
-    const r = computeFromForm({ ...canonical, wasteGrams: "xx" });
+    const r = computeFromForm({ ...canonical, failurePct: "xx" });
     expect(r.ok).toBe(false);
-    expect(r.fieldErrors.wasteGrams).toBeTruthy();
+    expect(r.fieldErrors.failurePct).toBeTruthy();
   });
 
   it("flags a blank required field as obrigatório", () => {
@@ -216,12 +213,12 @@ describe("computeFromForm — channels adapter (US1, per-slot isolation)", () =>
     });
     expect(r.ok).toBe(true);
     expect(r.channels).toHaveLength(2);
-    // ML Clássico 12% + R$6,75 on varejo 42,98 → 56,51; nets back to 42,98.
+    // 016/US10 — re-baseline (base varejo 41,33): ML Clássico 12% + R$6,75 → 54,64; nets back to 41,33.
     expect(r.channels[0].errors).toEqual({});
-    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
-    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
-    // Shopee 20% + R$4 → 58,73.
-    expect(r.channels[1].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(54.64, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(41.33, 2);
+    // Shopee 20% + R$4 → 56,66.
+    expect(r.channels[1].result?.precoAnuncioVarejo).toBeCloseTo(56.66, 2);
   });
 
   it("a commission ≥ 100% errors ONLY its slot; the siblings still compute (SC-107)", () => {
@@ -236,8 +233,8 @@ describe("computeFromForm — channels adapter (US1, per-slot isolation)", () =>
     expect(r.ok).toBe(true); // the main price is unaffected by a bad channel
     expect(r.channels[1].errors.commissionPct).toMatch(/100%/);
     expect(r.channels[1].result).toBeNull();
-    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(56.51, 2);
-    expect(r.channels[2].result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(54.64, 2);
+    expect(r.channels[2].result?.precoAnuncioVarejo).toBeCloseTo(56.66, 2);
   });
 
   it("a non-numeric channel fee errors its slot without a NaN", () => {
@@ -252,9 +249,9 @@ describe("computeFromForm — channels adapter (US1, per-slot isolation)", () =>
   it("blank channel fees are a valid zero-fee channel (anúncio == base)", () => {
     const r = computeFromForm({ ...canonical, channels: [slot({ modality: "" })] });
     expect(r.channels[0].errors).toEqual({});
-    // commission 0 + fixed 0 → announce equals the base varejo price 42,98.
-    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(42.98, 2);
-    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(42.98, 2);
+    // commission 0 + fixed 0 → announce equals the base varejo price 41,33.
+    expect(r.channels[0].result?.precoAnuncioVarejo).toBeCloseTo(41.33, 2);
+    expect(r.channels[0].result?.recebidoLiquidoVarejo).toBeCloseTo(41.33, 2);
   });
 });
 
@@ -309,14 +306,14 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     );
     const ch = r.channels[0];
     expect(ch.errors).toEqual({});
-    // varejo 42,98 → Shopee 20% + R$4 announce 58,73 (∈ [0,80) → R$20 voucher).
-    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
-    // The co-funded voucher lowers the net below base — NOT 42,98 (the old truth gap).
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    // 016/US10 — re-baseline (varejo 41,33): Shopee 20% + R$4 announce 56,66 (∈ [0,80) → R$20 voucher).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(56.66, 2);
+    // The co-funded voucher lowers the net below base — NOT 41,33 (the old truth gap).
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(21.33, 2);
     expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
-    // atacado 37,25 → announce 51,56 (still ∈ [0,80) → R$20 voucher) → líquido 17,25.
+    // atacado 35,82 → announce 49,78 (still ∈ [0,80) → R$20 voucher) → líquido 15,82.
     expect(ch.result?.freightCostAtacado).toBeCloseTo(20, 2);
-    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(15.82, 2);
     // Provenance echoed onto the result (ADR-0011).
     expect(ch.result?.feeSource).toBe("Central do Vendedor Shopee");
     expect(r.result?.catalogVersion).toBe("2026-07-07.x");
@@ -345,11 +342,11 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     // Only the typed scalar was overwritten.
     expect(input?.freightCost).toBe(5);
     expect(ch.editedFields).toEqual({ freightCost: 5 });
-    // Announce still resolves through the band (20% + R$4 → 58,73) and the voucher (R$20) is STILL
-    // deducted on top of the seller's own R$5 freight — net 17,98, not the overstated 37,98.
-    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
+    // 016/US10 — re-baseline: announce still resolves through the band (20% + R$4 → 56,66) and the
+    // voucher (R$20) is STILL deducted on top of the seller's own R$5 freight — net 16,33.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(56.66, 2);
     expect(ch.result?.freightCostVarejo).toBeCloseTo(25, 2);
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(17.98, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(16.33, 2);
     expect(ch.result?.freightCostAtacado).toBeCloseTo(25, 2);
     // Seal + provenance semantics are untouched by the fix.
     expect(ch.seal.kind).toBe("adjusted");
@@ -377,15 +374,16 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     // The commission schedule is gone; the voucher schedule survives.
     expect(input?.priceBands).toBeUndefined();
     expect(input?.freightVoucherBands).toHaveLength(3);
-    // The typed 10% now GOVERNS: varejo 42,98 / 0,9 = 47,76 — no longer the band's 20% + R$4 (58,73).
-    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(47.76, 2);
+    // 016/US10 — re-baseline (varejo 41,33): the typed 10% now GOVERNS — 41,33 / 0,9 = 45,92 — no
+    // longer the band's 20% + R$4 (56,66).
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(45.92, 2);
     // …and the co-financed voucher is still deducted (announce ∈ [0,80) → R$20), so the seller nets
     // base − voucher, exactly as on the blank slot. This is the E1-02 truth that must never regress.
     expect(ch.result?.freightCostVarejo).toBeCloseTo(20, 2);
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
-    // atacado 37,25 / 0,9 = 41,39 → still ∈ [0,80) → R$20 voucher → líquido 17,25.
-    expect(ch.result?.precoAnuncioAtacado).toBeCloseTo(41.39, 2);
-    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(17.25, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(21.33, 2);
+    // atacado 35,82 / 0,9 = 39,80 → still ∈ [0,80) → R$20 voucher → líquido 15,82.
+    expect(ch.result?.precoAnuncioAtacado).toBeCloseTo(39.8, 2);
+    expect(ch.result?.recebidoLiquidoAtacado).toBeCloseTo(15.82, 2);
     expect(ch.seal.kind).toBe("adjusted");
     expect(ch.result?.feeSource).toBeNull();
     expect(r.result?.catalogVersion).toBeNull();
@@ -410,10 +408,10 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
     // the band governs it). The bug was this being `undefined` → 0% commission charged.
     expect(input?.priceBands).toHaveLength(3);
     expect(input?.freightVoucherBands).toHaveLength(3);
-    // The band's 20% + R$4 govern varejo (announce 58,73), NOT a collapsed 0% (which would announce
-    // 42,98 and overstate the net). This is the exact silent-money defect F1 named.
-    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(58.73, 2);
-    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(22.98, 2);
+    // 016/US10 — re-baseline: the band's 20% + R$4 govern varejo (announce 56,66), NOT a collapsed
+    // 0% (which would announce 41,33 and overstate the net). The exact silent-money defect F1 named.
+    expect(ch.result?.precoAnuncioVarejo).toBeCloseTo(56.66, 2);
+    expect(ch.result?.recebidoLiquidoVarejo).toBeCloseTo(21.33, 2);
     expect(ch.seal.kind).toBe("adjusted");
   });
 
@@ -467,8 +465,9 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
   });
 
   it("deducts DIFFERENT vouchers for varejo vs atacado when they fall in different bands", () => {
-    // markup varejo 180% → precoVarejo 80,22 → Shopee announce ∈ [80,200) → R$30 voucher; atacado 30%
-    // → precoAtacado 37,25 → announce ∈ [0,80) → R$20 voucher. Proves the per-level resolution end-to-end.
+    // 016/US10 — re-baseline: markup varejo 180% → precoVarejo 77,14 → Shopee announce 110,63 ∈
+    // [80,200) → R$30 voucher; atacado 30% → precoAtacado 35,82 → announce ∈ [0,80) → R$20 voucher.
+    // Proves the per-level resolution end-to-end.
     const r = computeFromForm(
       {
         ...canonical,

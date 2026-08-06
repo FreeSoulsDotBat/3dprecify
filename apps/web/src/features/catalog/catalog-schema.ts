@@ -20,7 +20,6 @@ const rollWeightError = messages.calculator.rollWeightError;
 // give the seller the specific "valor muito alto" message before the value ever leaves the browser.
 const CEIL_MONEY = 10 ** 10; // MONEY_SETTLED Numeric(12,2) — costPerRoll / machineValue
 const CEIL_RATE = 10 ** 12; // MONEY_RATE    Numeric(18,6) — maintenanceReservePerHour
-const CEIL_GRAMS = 10 ** 9; // QTY_G         Numeric(12,3) — defaultWasteGrams
 const CEIL_HOURS = 10 ** 6; // QTY_H         Numeric(9,3)  — machineLifetimeHours
 const CEIL_KG = 10 ** 6; // QTY_KG        Numeric(9,3)  — rollWeightKg
 const CEIL_KW = 10 ** 5; // QTY_KW        Numeric(9,4)  — avgPowerKw
@@ -95,7 +94,6 @@ export interface FilamentFormValues {
   material: string;
   costPerRoll: string;
   rollWeightKg: string;
-  defaultWasteGrams: string;
 }
 
 const filamentSchema = z.object({
@@ -103,7 +101,6 @@ const filamentSchema = z.object({
   material: z.string(),
   costPerRoll: numField({ ceiling: CEIL_MONEY }),
   rollWeightKg: numField({ positive: true, positiveMessage: rollWeightError, ceiling: CEIL_KG }),
-  defaultWasteGrams: numField({ optional: true, ceiling: CEIL_GRAMS }),
 });
 
 export const filamentResolver: Resolver<FilamentFormValues> = (values) => {
@@ -122,7 +119,6 @@ export const emptyFilamentForm: FilamentFormValues = {
   material: "",
   costPerRoll: "",
   rollWeightKg: "",
-  defaultWasteGrams: "",
 };
 
 export function filamentToWire(values: FilamentFormValues): FilamentIn {
@@ -131,7 +127,6 @@ export function filamentToWire(values: FilamentFormValues): FilamentIn {
     material: values.material.trim() || null,
     costPerRoll: toWireDecimal(values.costPerRoll),
     rollWeightKg: toWireDecimal(values.rollWeightKg),
-    defaultWasteGrams: toWireDecimal(values.defaultWasteGrams || "0"),
   };
 }
 
@@ -141,7 +136,6 @@ export function filamentToForm(f: FilamentOut): FilamentFormValues {
     material: f.material ?? "",
     costPerRoll: wireToPtBrNormalized(f.costPerRoll),
     rollWeightKg: wireToPtBrNormalized(f.rollWeightKg),
-    defaultWasteGrams: wireToPtBrNormalized(f.defaultWasteGrams),
   };
 }
 

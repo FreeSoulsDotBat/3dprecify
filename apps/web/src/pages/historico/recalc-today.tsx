@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { type PriceInput } from "@3dprecify/pricing-core";
+import { isPreRemovalModel, type PriceInput } from "@3dprecify/pricing-core";
 
 import {
   freezeBomResult,
@@ -22,7 +22,15 @@ import type {
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useOnline } from "@/shared/lib/use-online";
-import { Button, Dialog, DialogContent, DialogDescription, DialogTitle, toast } from "@/shared/ui";
+import {
+  Alert,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  toast,
+} from "@/shared/ui";
 
 import { frozenPayloadOf } from "@/entities/history/history-format";
 
@@ -46,6 +54,17 @@ export const BASIS_TOTAL: Record<SnapshotInHeadlineBasis, "precoVarejo" | "preco
   PRECO_VAREJO: "precoVarejo",
   PRECO_ATACADO: "precoAtacado",
 };
+
+/** 016/T037 (US10, FR-913, arquitetura-016.md §D.2) — the structural note both "Recalcular hoje"
+ *  and "comparar hoje" (`compare-today.tsx`) need whenever a repriced number sits next to a
+ *  congelado priced by a RETIRED model: dirigida por VERSÃO (the frozen document carries
+ *  `modelVersion`, unlike a scenario's `lastKnown`, arquitetura-016.md §D.2's second row). `null`
+ *  when the frozen model is not pre-removal — no field is ever added to the payload for this (I3).
+ *  Pure; exported so `compare-today.tsx` reuses the SAME rule rather than re-deriving it. */
+export function structuralModelNote(modelVersion: string): string | null {
+  if (!isPreRemovalModel(modelVersion)) return null;
+  return t.recalcStructuralNote.replace("{versao}", modelVersion);
+}
 
 export interface RecalcedPayload {
   payload: FrozenSnapshotPayload;
@@ -242,6 +261,11 @@ function RecalcDialog({
           </DialogDescription>
           {/* F3 — offline, "today's catalog" is the cached catalog; say it may be stale. */}
           {!online && <p className="tf-historico__meta">{t.recalcOfflineNote}</p>}
+          {/* 016/T037 — the structural note: ONLY when we actually repriced (a NEW number is on
+              screen) against a congelado priced by a model that no longer exists. */}
+          {repriced && structuralModelNote(frozen.modelVersion) && (
+            <Alert tone="info">{structuralModelNote(frozen.modelVersion)}</Alert>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="secondary" onClick={() => setOpen(false)}>
               {t.back}

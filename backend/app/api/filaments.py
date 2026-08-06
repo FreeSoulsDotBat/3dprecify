@@ -17,7 +17,7 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
-from pydantic import field_validator
+from pydantic import ConfigDict, field_validator, model_validator
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -32,17 +32,38 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Filament, Product
-from app.validation import CEIL_GRAMS, CEIL_KG, CEIL_MONEY, finite_non_negative
+from app.validation import CEIL_KG, CEIL_MONEY, finite_non_negative
 
 router = APIRouter(tags=["filaments"])
 
+# 016/US10 (ADR-0026): `defaultWasteGrams` was REMOVED from pricing-core in 4.0.0 — a client that
+# still sends it is NOT silently ignored (Pydantic's default `extra="ignore"` would let a seller
+# save believing the discard entered the price and see a different number, the exact silent lie
+# this increment exists to kill). `extra="forbid"` below is the blanket safety net for ANY unknown
+# field; this pre-validator exists so the retired field gets a message that NAMES it and the model
+# change, rather than Pydantic's generic "Extra inputs are not permitted".
+_RETIRED_WASTE_FIELD = "defaultWasteGrams"
+
 
 class FilamentIn(CamelModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
     material: str | None = None
     cost_per_roll: Decimal
     roll_weight_kg: Decimal
-    default_waste_grams: Decimal = Decimal("0")
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_retired_waste_field(cls, data: Any) -> Any:
+        raw = data
+        if isinstance(raw, dict) and _RETIRED_WASTE_FIELD in raw:
+            raise ValueError(
+                f"{_RETIRED_WASTE_FIELD} was removed by pricing-core 4.0.0 (US10/ADR-0026): "
+                "wasted material now folds into the printed grams, so this field is REJECTED, "
+                "never silently ignored"
+            )
+        return data
 
     @field_validator("name")
     @classmethod
@@ -63,11 +84,6 @@ class FilamentIn(CamelModel):
             raise ValueError("rollWeightKg must be a finite number > 0 within the storable range")
         return v
 
-    @field_validator("default_waste_grams")
-    @classmethod
-    def _waste(cls, v: Decimal) -> Decimal:
-        return finite_non_negative(v, "defaultWasteGrams", CEIL_GRAMS)
-
 
 class FilamentOut(CamelModel):
     id: uuid.UUID
@@ -75,7 +91,6 @@ class FilamentOut(CamelModel):
     material: str | None = None
     cost_per_roll: Decimal
     roll_weight_kg: Decimal
-    default_waste_grams: Decimal
     created_at: datetime
     updated_at: datetime
 
@@ -87,7 +102,6 @@ def _to_out(row: Filament) -> FilamentOut:
         material=row.material,
         cost_per_roll=row.cost_per_roll,
         roll_weight_kg=row.roll_weight_kg,
-        default_waste_grams=row.default_waste_grams,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -148,7 +162,6 @@ async def create_filament(
         material=body.material,
         cost_per_roll=body.cost_per_roll,
         roll_weight_kg=body.roll_weight_kg,
-        default_waste_grams=body.default_waste_grams,
     )
     session.add(row)
     await session.commit()
@@ -180,7 +193,6 @@ async def update_filament(
     row.material = body.material
     row.cost_per_roll = body.cost_per_roll
     row.roll_weight_kg = body.roll_weight_kg
-    row.default_waste_grams = body.default_waste_grams
     await session.commit()
     await session.refresh(row)
     return _to_out(row)

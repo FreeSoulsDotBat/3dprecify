@@ -13,14 +13,13 @@ import type { CalcFormValues } from "./calculator-schema";
 // 013/FA-05: `wireToPtBr` was a private copy here, in `product-mapping` and in `scenario-bridge`;
 // it now has ONE home in `shared/lib/decimal-ptbr` with its "at most one dot" premise under test.
 
-/** The calculator fields a saved filament feeds (spec US5): cost, roll weight, default waste. */
+/** The calculator fields a saved filament feeds (spec US5): cost, roll weight. */
 export function filamentToCalcFields(
   filament: FilamentOut,
-): Pick<CalcFormValues, "costPerRoll" | "rollWeightKg" | "wasteGrams"> {
+): Pick<CalcFormValues, "costPerRoll" | "rollWeightKg"> {
   return {
     costPerRoll: wireToPtBr(filament.costPerRoll),
     rollWeightKg: wireToPtBr(filament.rollWeightKg),
-    wasteGrams: wireToPtBr(filament.defaultWasteGrams ?? "0"),
   };
 }
 

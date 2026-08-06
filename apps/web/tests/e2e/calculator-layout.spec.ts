@@ -16,7 +16,11 @@ async function fillNumeric(page: Page, label: RegExp | string, value: string): P
   // Playwright's `.fill()` drives the input through real DOM input events (unlike a raw
   // `el.value = x` from `page.evaluate`, which React's controlled inputs never observe) — the
   // same pattern already proven across this suite (a11y-overflow.spec.ts et al.).
-  await page.getByLabel(label).fill(value);
+  // 016/US6 (FR-908) — `getByLabel` matches by SUBSTRING across every role, so a tipped field's
+  // "Sobre …" InfoTip trigger (an aria-labelled button) collides with the plain field label. All
+  // three call sites here are REQUIRED fields (no "opcional" suffix), so `exact` on the textbox
+  // role is safe and excludes the tip's button (the same fix `calculator.spec.ts` already needed).
+  await page.getByRole("textbox", { name: label, exact: true }).fill(value);
 }
 
 /** Drives an adversarial six-figure price (the "R$ 95.057-classe" input the brief names): a

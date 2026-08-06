@@ -60,7 +60,6 @@ const product = {
   },
   pieceInputs: {
     printGrams: "100.000",
-    wasteGrams: "0.000",
     printTimeHours: "5.000",
     failurePct: "0.000",
     finishTimeHours: "0.000",

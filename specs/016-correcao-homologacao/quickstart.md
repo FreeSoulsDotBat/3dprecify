@@ -54,7 +54,7 @@ pnpm test:e2e        # Playwright
   chave presente com `undefined` TAMBÉM recusa.
 - Matriz de documentos: orçamento congelado pré-4.0.0 abre e exporta o que foi cotado; simulação
   pré-4.0.0 reabre recomputando COM declaração de descarte visível; documento novo abre limpo.
-- Banco: migração `0003` aplica e reverte (schema); wire: POST com `wasteGrams` → 422 nomeado.
+- Banco: migração `0007` aplica e reverte (schema); wire: POST com `wasteGrams` → 422 nomeado.
 - Regen de contrato idempotente; drift-guard verde.
 
 ## PR-E — premium + campos dirigidos

@@ -5,7 +5,7 @@ import type { BomOut, ProductOut, SnapshotInHeadlineBasis } from "@/shared/api/g
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useOnline } from "@/shared/lib/use-online";
-import { Button, Card } from "@/shared/ui";
+import { Alert, Button, Card } from "@/shared/ui";
 
 import {
   basisCaption,
@@ -15,7 +15,7 @@ import {
   quotedDate,
 } from "@/entities/history/history-format";
 
-import { BASIS_TOTAL, recalcToday } from "./recalc-today";
+import { BASIS_TOTAL, recalcToday, structuralModelNote } from "./recalc-today";
 
 // 009/T029 (E4, PR-C, US7) — *"meu custo subiu desde que cotei?"*, answered by putting the two
 // numbers next to each other. Purely informational: recording today's number is still the explicit
@@ -108,6 +108,11 @@ function CompareBody({
           </span>
           {/* F3 — offline, "hoje" means the catalog cached on this device, which may be stale. */}
           {!online && <p className="tf-historico__meta">{t.recalcOfflineNote}</p>}
+          {/* 016/T037 — the same structural note "Recalcular hoje" shows: part of the gap between
+              the two numbers above may come purely from the model change, not a real cost move. */}
+          {structuralModelNote(frozen.modelVersion) && (
+            <Alert tone="info">{structuralModelNote(frozen.modelVersion)}</Alert>
+          )}
           {/* Two totals side by side look exactly like something that just changed the record. */}
           <p className="tf-historico__meta">{t.compareNote}</p>
         </>

@@ -79,7 +79,6 @@ const AD_HOC_LASTKNOWN = {
   costPerRoll: "100",
   rollWeightKg: "1",
   printGrams: "100",
-  wasteGrams: "0",
   printTimeHours: "5",
   avgPowerKw: "0.12",
   tariffPerKwh: "1",

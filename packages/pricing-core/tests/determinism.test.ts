@@ -11,7 +11,6 @@ const INPUT: PriceInput = {
   costPerRoll: 137.5,
   rollWeightKg: 1,
   printGrams: 83,
-  wasteGrams: 7,
   printTimeHours: 6.25,
   avgPowerKw: 0.14,
   tariffPerKwh: 0.92,

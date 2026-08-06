@@ -103,7 +103,6 @@ describe("CalcularPage — free/signed-out teaser slot (US7/T031, rewritten 016/
           name: "PLA Azul",
           costPerRoll: "110.00",
           rollWeightKg: "1.000",
-          defaultWasteGrams: "5.000",
         },
       ]),
     );

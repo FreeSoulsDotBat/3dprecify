@@ -122,7 +122,12 @@ class EntitlementGrant(Base):
 
 
 class Filament(Base):
-    """FR-305 — feeds costPerRoll / rollWeightKg / material / default waste."""
+    """FR-305 — feeds costPerRoll / rollWeightKg / material.
+
+    ``default_waste_grams`` was REMOVED in pricing-core 4.0.0 (ADR-0026, 016/US10): the motor
+    now recuses the field by key rather than silently ignoring it, so there is no default to
+    carry here anymore. Migration 0007 drops the column + its CHECK; it never returns.
+    """
 
     __tablename__ = "filaments"
     __table_args__ = (
@@ -131,10 +136,6 @@ class Filament(Base):
             "cost_per_roll >= 0 AND cost_per_roll <> 'NaN'::numeric", name="cost_per_roll_valid"
         ),
         CheckConstraint("roll_weight_kg > 0", name="roll_weight_positive"),
-        CheckConstraint(
-            "default_waste_grams >= 0 AND default_waste_grams <> 'NaN'::numeric",
-            name="default_waste_valid",
-        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
@@ -145,9 +146,6 @@ class Filament(Base):
     material: Mapped[str | None] = mapped_column(Text)
     cost_per_roll: Mapped[decimal.Decimal] = mapped_column(MONEY_SETTLED, nullable=False)
     roll_weight_kg: Mapped[decimal.Decimal] = mapped_column(QTY_KG, nullable=False)
-    default_waste_grams: Mapped[decimal.Decimal] = mapped_column(
-        QTY_G, nullable=False, server_default="0"
-    )
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -210,9 +208,6 @@ class Product(Base):
         CheckConstraint("length(btrim(name)) > 0", name="name_not_blank"),
         CheckConstraint(
             "print_grams >= 0 AND print_grams <> 'NaN'::numeric", name="print_grams_valid"
-        ),
-        CheckConstraint(
-            "waste_grams >= 0 AND waste_grams <> 'NaN'::numeric", name="waste_grams_valid"
         ),
         CheckConstraint(
             "print_time_hours >= 0 AND print_time_hours <> 'NaN'::numeric", name="print_time_valid"
@@ -299,8 +294,8 @@ class Product(Base):
     name: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Piece inputs (product-owned; tariff lives here — spec assumption, data-model §11).
+    # ``waste_grams`` was REMOVED in pricing-core 4.0.0 (ADR-0026, 016/US10) — migration 0007.
     print_grams: Mapped[decimal.Decimal] = mapped_column(QTY_G, nullable=False)
-    waste_grams: Mapped[decimal.Decimal] = mapped_column(QTY_G, nullable=False, server_default="0")
     print_time_hours: Mapped[decimal.Decimal] = mapped_column(QTY_H, nullable=False)
     tariff_per_kwh: Mapped[decimal.Decimal] = mapped_column(MONEY_RATE, nullable=False)
     failure_pct: Mapped[decimal.Decimal] = mapped_column(
@@ -415,10 +410,6 @@ class BomLine(Base):
             name="print_grams_valid",
         ),
         CheckConstraint(
-            "waste_grams IS NULL OR (waste_grams >= 0 AND waste_grams <> 'NaN'::numeric)",
-            name="waste_grams_valid",
-        ),
-        CheckConstraint(
             "print_time_hours IS NULL"
             " OR (print_time_hours >= 0 AND print_time_hours <> 'NaN'::numeric)",
             name="print_time_valid",
@@ -516,8 +507,8 @@ class BomLine(Base):
     )
 
     # Last-known snapshot — the resolved PriceInput, refreshed from the live product on each write.
+    # ``waste_grams`` was REMOVED in pricing-core 4.0.0 (ADR-0026, 016/US10) — migration 0007.
     print_grams: Mapped[decimal.Decimal | None] = mapped_column(QTY_G)
-    waste_grams: Mapped[decimal.Decimal | None] = mapped_column(QTY_G)
     print_time_hours: Mapped[decimal.Decimal | None] = mapped_column(QTY_H)
     tariff_per_kwh: Mapped[decimal.Decimal | None] = mapped_column(MONEY_RATE)
     failure_pct: Mapped[decimal.Decimal | None] = mapped_column(PERCENT)

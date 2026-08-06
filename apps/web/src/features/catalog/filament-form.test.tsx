@@ -74,7 +74,6 @@ describe("FilamentForm — E1 validation reused verbatim + money-as-string wire"
       material: "PLA",
       costPerRoll: "110.5",
       rollWeightKg: "1",
-      defaultWasteGrams: "0",
     });
   });
 
@@ -85,7 +84,6 @@ describe("FilamentForm — E1 validation reused verbatim + money-as-string wire"
       material: "PETG",
       costPerRoll: "135.00",
       rollWeightKg: "1",
-      defaultWasteGrams: "0",
       createdAt: "2026-07-09T00:00:00Z",
       updatedAt: "2026-07-09T00:00:00Z",
     };

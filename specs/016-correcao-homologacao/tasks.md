@@ -107,7 +107,7 @@ migração, nada persistido muda (research R8: derivação de borda nunca entra 
 - [x] T028 [P] [US9] Máscara monetária no "Valor da máquina" (modo `currency` do NumberField existente) em `apps/web/src/features/calculator/calculator-form.tsx`
 - [x] T029 [US9] Fusões de seção: "Ajustes opcionais" → "Custos da peça"; acabamento → "Mão de obra e custos", em `apps/web/src/features/calculator/calculator-form.tsx`
 - [x] T030 [US6] Homologação visual (qa-produto): tooltips nos 3 modos de acionamento + formulário reorganizado, 2 temas, mobile+desktop (SC-904)
-- [ ] T031 [US6] Gate da fatia + PR-C
+- [x] T031 [US6] Gate da fatia + PR-C (PR #46, `ca98217`, 2026-08-06, owner-merged; homologação visual T030 veio FAIL 74% com 4 bloqueadores + ressalvas — B1 seed não-ritmo, B2 sem máscara de milhar, B3 selects ilegíveis a 360/390, B4 corte de 1px em "Tarifa de energia" — e R1/R2/R3/R6; todos corrigidos na mesma branch, vermelho-antes/verde-depois nas guardas novas, `pnpm gate:fe` + e2e 118/118 verdes antes do merge)
 
 **Checkpoint**: todo o valor didático entregue sem tocar fórmula, versão ou banco.
 
@@ -123,21 +123,21 @@ quebrar; recusa nominal dispara por chave presente mesmo com valor `undefined`.
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T032 [P] [US10] ⚠opus Testes do 4.0.0 em `packages/pricing-core/tests/retired-fields.test.ts`: (a) `computeCalculator({...input, wasteGrams: 10})` → `ValidationError` nomeando o campo; (b) chave presente com `undefined` TAMBÉM recusa; (c) `computeBom` herda por linha; (d) `stripRetiredFields` remove por `delete` e devolve `discarded`; (e) `isPreRemovalModel("3.1.0")=true`/`("4.0.0")=false`; (f) `version.test.ts` amarra 4.0.0 ao major do package.json — observar o vermelho
-- [ ] T033 [P] [US10] ⚠opus Re-baseline dos casos numéricos canônicos SEM desperdício (material = gramas × custo/kg) em `packages/pricing-core/tests/` — observar o vermelho dos baselines novos antes de mudar o motor
-- [ ] T034 [P] [US10] Teste de postura do wire: POST filamento/produto com o campo removido → 422 nomeando a mudança, em `backend/tests/` (contract)
+- [x] T032 [P] [US10] ⚠opus Testes do 4.0.0 em `packages/pricing-core/tests/retired-fields.test.ts`: (a) `computeCalculator({...input, wasteGrams: 10})` → `ValidationError` nomeando o campo; (b) chave presente com `undefined` TAMBÉM recusa; (c) `computeBom` herda por linha; (d) `stripRetiredFields` remove por `delete` e devolve `discarded`; (e) `isPreRemovalModel("3.1.0")=true`/`("4.0.0")=false`; (f) `version.test.ts` amarra 4.0.0 ao major do package.json — observar o vermelho
+- [x] T033 [P] [US10] ⚠opus Re-baseline dos casos numéricos canônicos SEM desperdício (material = gramas × custo/kg) em `packages/pricing-core/tests/` — observar o vermelho dos baselines novos antes de mudar o motor
+- [x] T034 [P] [US10] Teste de postura do wire: POST filamento/produto com o campo removido → 422 nomeando a mudança, em `backend/tests/` (contract)
 
 ### Implementation
 
-- [ ] T035 [US10] ⚠opus pricing-core 4.0.0 em `packages/pricing-core/src/index.ts`: `RETIRED_INPUT_FIELDS`, recusa por chave ANTES de validar, `stripRetiredFields()`, `isPreRemovalModel()`, `PRICING_MODEL_VERSION="4.0.0"` + package.json major 4; remover `wasteGrams` da entrada e da fórmula (ratchet 100% mantido)
-- [ ] T036 [US10] Costurado 1 — `apps/web/src/features/calculator/scenario-bridge.ts`: hidratar via `stripRetiredFields`, subir `discarded` no `ScenarioFormPatch`, e a tela DECLARAR o descarte (FR-913)
-- [ ] T037 [US10] Costurado 2 — `apps/web/src/pages/historico/recalc-today.tsx`: declaração dirigida por `isPreRemovalModel(frozen.modelVersion)` onde o recálculo diverge por motivo estrutural
-- [ ] T038 [US10] Remover o campo da tela e dos fluxos: calculadora, filamentos (default), produtos, linhas de BOM em `apps/web/src/features/{calculator,catalog,bom}/` — motor rejeita, então TODO caminho precisa parar de enviar
-- [ ] T038b [US10] FR-914 — atualizar NESTA fatia o material de apoio de "Taxa de falha" e de "Gramas usadas" para dizer o que cada um cobre (purga/suporte/brim entram nas GRAMAS; falha é a impressão inteira perdida), em `apps/web/src/shared/i18n/messages.pt-br.ts` + tooltip correspondente — a frase só vira VERDADE quando o Desperdício morre, por isso é PR-D e não PR-C (achado C1 do analyze)
-- [ ] T039 [US10] Migração `backend/alembic/versions/0003_remove_waste.py`: DROP das 3 colunas + CHECKs (`filaments.default_waste_grams`, `products.waste_grams`, `bom_lines.waste_grams`); downgrade recria schema com default '0' e a nota "valores não são recuperáveis" ESCRITA na migração
-- [ ] T040 [US10] Wire: remover `defaultWasteGrams`/`wasteGrams` dos schemas + `extra="forbid"` em `FilamentIn`/`PieceInputs`; `scenarios.py` para de emitir em `lastKnown`; `boms.py` para de sincronizar; regen da RAIZ (`export_openapi` + `gen:api`) + prova de idempotência (drift-guard) em `backend/app/`
-- [ ] T041 [US10] Teste e2e da matriz de documentos em `apps/web/e2e/waste-removal.spec.ts`: congelado pré-4.0.0 abre/exporta o que foi cotado; simulação pré-4.0.0 reabre COM declaração visível; documento novo limpo; fixture irmão de `frozen-payload-pre-adr-0024.json` criado ANTES da mudança (RA1)
-- [ ] T042 [US10] Homologação visual (qa-produto): a declaração de descarte visível nos dois costurados + export do congelado antigo
+- [x] T035 [US10] ⚠opus pricing-core 4.0.0 em `packages/pricing-core/src/index.ts`: `RETIRED_INPUT_FIELDS`, recusa por chave ANTES de validar, `stripRetiredFields()`, `isPreRemovalModel()`, `PRICING_MODEL_VERSION="4.0.0"` + package.json major 4; remover `wasteGrams` da entrada e da fórmula (ratchet 100% mantido)
+- [x] T036 [US10] Costurado 1 — `apps/web/src/features/calculator/scenario-bridge.ts`: hidratar via `stripRetiredFields`, subir `discarded` no `ScenarioFormPatch`, e a tela DECLARAR o descarte (FR-913)
+- [x] T037 [US10] Costurado 2 — `apps/web/src/pages/historico/recalc-today.tsx`: declaração dirigida por `isPreRemovalModel(frozen.modelVersion)` onde o recálculo diverge por motivo estrutural
+- [x] T038 [US10] Remover o campo da tela e dos fluxos: calculadora, filamentos (default), produtos, linhas de BOM em `apps/web/src/features/{calculator,catalog,bom}/` — motor rejeita, então TODO caminho precisa parar de enviar
+- [x] T038b [US10] FR-914 — atualizar NESTA fatia o material de apoio de "Taxa de falha" e de "Gramas usadas" para dizer o que cada um cobre (purga/suporte/brim entram nas GRAMAS; falha é a impressão inteira perdida), em `apps/web/src/shared/i18n/messages.pt-br.ts` + tooltip correspondente — a frase só vira VERDADE quando o Desperdício morre, por isso é PR-D e não PR-C (achado C1 do analyze)
+- [x] T039 [US10] Migração `backend/alembic/versions/0003_remove_waste.py`: DROP das 3 colunas + CHECKs (`filaments.default_waste_grams`, `products.waste_grams`, `bom_lines.waste_grams`); downgrade recria schema com default '0' e a nota "valores não são recuperáveis" ESCRITA na migração
+- [x] T040 [US10] Wire: remover `defaultWasteGrams`/`wasteGrams` dos schemas + `extra="forbid"` em `FilamentIn`/`PieceInputs`; `scenarios.py` para de emitir em `lastKnown`; `boms.py` para de sincronizar; regen da RAIZ (`export_openapi` + `gen:api`) + prova de idempotência (drift-guard) em `backend/app/`
+- [x] T041 [US10] Teste e2e da matriz de documentos em `apps/web/tests/e2e/waste-removal.spec.ts` (caminho real do repo — `apps/web/e2e/` não existe): congelado pré-4.0.0 abre/exporta o que foi cotado; simulação pré-4.0.0 reabre COM declaração visível; documento novo limpo; fixture irmão `frozen-payload-pre-016.json` criado ANTES da mudança de UI (RA1)
+- [x] T042 [US10] Homologação visual (qa-produto): a declaração de descarte visível nos dois costurados + export do congelado antigo
 - [ ] T043 [US10] Gate da fatia + drift-guard + PR-D
 
 **Checkpoint**: 4.0.0 no ar; nenhum documento salvo quebra; nenhuma mentira silenciosa.

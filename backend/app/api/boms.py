@@ -315,7 +315,6 @@ def _snapshot_line(line: BomLine, resolved: ProductOut) -> None:
     line.product_id = resolved.id
     piece = resolved.piece_inputs
     line.print_grams = piece.print_grams
-    line.waste_grams = piece.waste_grams
     line.print_time_hours = piece.print_time_hours
     line.failure_pct = piece.failure_pct
     line.finish_time_hours = piece.finish_time_hours
@@ -512,7 +511,6 @@ def _to_out(
                 degraded=True,
                 piece_inputs=PieceInputs(
                     print_grams=_degraded_or(line.print_grams, "0"),
-                    waste_grams=_degraded_or(line.waste_grams, "0"),
                     print_time_hours=_degraded_or(line.print_time_hours, "0"),
                     failure_pct=_degraded_or(line.failure_pct, "0"),
                     finish_time_hours=_degraded_or(line.finish_time_hours, "0"),

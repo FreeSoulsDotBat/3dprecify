@@ -30,7 +30,6 @@ const filA: FilamentOut = {
   material: "PLA",
   costPerRoll: "110.00",
   rollWeightKg: "1",
-  defaultWasteGrams: "0",
   createdAt: "2026-07-09T00:00:00Z",
   updatedAt: "2026-07-09T00:00:00Z",
 };

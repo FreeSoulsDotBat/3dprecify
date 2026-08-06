@@ -17,7 +17,6 @@ const filament: FilamentOut = {
   material: "PLA",
   costPerRoll: "110.00",
   rollWeightKg: "1.000",
-  defaultWasteGrams: "5.000",
   createdAt: "2026-07-09T00:00:00Z",
   updatedAt: "2026-07-09T00:00:00Z",
 };
@@ -44,7 +43,6 @@ describe("US5 — catalog pre-fill byte-identity (SC-305)", () => {
       ...defaultCalcValues,
       costPerRoll: "110",
       rollWeightKg: "1",
-      wasteGrams: "5",
       machineValue: "1200",
       machineLifetimeHours: "2000",
       avgPowerKw: "0,12",
@@ -62,14 +60,8 @@ describe("US5 — catalog pre-fill byte-identity (SC-305)", () => {
     const fields = filamentToCalcFields(filament);
     expect(fields.costPerRoll).toBe("110,00");
     expect(fields.rollWeightKg).toBe("1,000");
-    expect(fields.wasteGrams).toBe("5,000");
     const machine = printerToCalcFields(printer);
     expect(machine.machineValue).toBe("1200,00");
     expect(machine.avgPowerKw).toBe("0,1200");
-  });
-
-  it("a zero default waste maps but never overrides with garbage", () => {
-    const zeroWaste = filamentToCalcFields({ ...filament, defaultWasteGrams: "0.000" });
-    expect(zeroWaste.wasteGrams).toBe("0,000");
   });
 });

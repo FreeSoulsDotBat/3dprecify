@@ -57,7 +57,6 @@ function product(over: Partial<ProductOut> = {}): ProductOut {
     },
     pieceInputs: {
       printGrams: "100",
-      wasteGrams: "0",
       printTimeHours: "5",
       failurePct: "0",
       finishTimeHours: "0",

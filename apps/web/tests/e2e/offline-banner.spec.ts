@@ -40,7 +40,10 @@ test("Calcular keeps computing while offline (SS-1)", async ({ page, context }) 
   await expect(offlineBanner(page)).toBeVisible({ timeout: 1000 });
 
   // Set gramas → 40; the material line recomputes to R$ 4,00 (100/1000 × 40) with no network.
-  await page.getByLabel(messages.calculator.fields.grams).fill("40");
+  // 016/US6 (FR-908) — `getByLabel` also matches the field's InfoTip trigger by substring.
+  await page
+    .getByRole("textbox", { name: messages.calculator.fields.grams, exact: true })
+    .fill("40");
   await expect(page.getByText("R$ 4,00")).toBeVisible();
 
   await context.setOffline(false);

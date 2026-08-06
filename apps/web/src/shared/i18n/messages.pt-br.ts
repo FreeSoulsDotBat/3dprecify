@@ -35,7 +35,6 @@ export const messages = {
       rollWeight: "Peso do rolo",
       grams: "Gramas usadas",
       markup: "Markup",
-      wasteGrams: "Desperdício",
       printTime: "Tempo de impressão",
       avgPower: "Consumo médio",
       tariff: "Tarifa de energia",
@@ -71,7 +70,7 @@ export const messages = {
     sectionInfo: {
       inputs: {
         label: "Sobre os custos da peça",
-        body: "O custo de produção da peça. Material = (custo do rolo ÷ peso do rolo) × (gramas usadas + desperdício). Energia = tempo de impressão × consumo médio × tarifa. Máquina = (valor da máquina ÷ vida útil em horas) × tempo de impressão.",
+        body: "O custo de produção da peça. Material = (custo do rolo ÷ peso do rolo) × gramas usadas. Energia = tempo de impressão × consumo médio × tarifa. Máquina = (valor da máquina ÷ vida útil em horas) × tempo de impressão.",
       },
       labor: {
         label: "Sobre mão de obra e custos",
@@ -266,6 +265,14 @@ export const messages = {
     // ⓘ trigger for assistive tech; `body` answers, in this order, "por que entra na conta" and
     // "como você descobre o seu". Nenhum tooltip altera cálculo/validação (US6-AC3).
     fieldTips: {
+      // 016/US10/T038b (FR-914) — escrito só depois que o campo Desperdício morreu (016/PR-D): a
+      // frase "purga/suporte/brim entram nas gramas" só vira verdade quando não há mais um campo
+      // separado para eles. Ver conteudo-tooltips.md §2026-08-06 (procedência: nenhuma externa —
+      // é definição do próprio produto, não fato de terceiro).
+      grams: {
+        label: "Sobre as gramas usadas",
+        body: "É o peso total que a peça consome no fatiador — a peça em si, mais a purga, o suporte e o brim que ele descarta ao final. Pese a peça pronta numa balança, ou use o peso total que o próprio fatiador estima antes de imprimir.",
+      },
       avgPower: {
         label: "Sobre o consumo médio",
         body: "A luz que a máquina gasta enquanto imprime entra no custo de cada peça — sem ela, você cobra menos do que gasta. Cuidado: o número da fonte (ex.: 350 W) é o máximo, não o gasto real. Meça com uma tomada medidora de consumo. Sem medidor, estime entre 0,07 e 0,15 kW.",
@@ -283,9 +290,12 @@ export const messages = {
         label: "Sobre a reserva de manutenção",
         body: "Bico, correia, mesa e lubrificação acabam com o uso. Guardar centavos por hora faz a troca sair do preço das peças, e não do seu prejuízo. Some o que gastou em peças no último ano e divida pelas horas que imprimiu. Sem histórico, olhe o preço de um bico e de uma correia na sua loja.",
       },
+      // 016/US10/T038b (FR-914) — reescrito com a distinção que só passou a existir com a morte do
+      // campo Desperdício: falha é a impressão INTEIRA perdida; purga/suporte/brim de uma impressão
+      // que deu certo já estão nas "Gramas usadas", não aqui.
       failure: {
         label: "Sobre a taxa de falha",
-        body: "Uma impressão que dá errado por completo já consumiu material, luz e horas — e quem paga essa conta é o preço das que dão certo. Descubra a sua contando: impressões perdidas ÷ impressões começadas × 100. Ex.: 4 perdidas em 40 = 10%. Quem está começando costuma ficar mais alto.",
+        body: "É a impressão que dá errado por completo e vai para o lixo — não a purga, o suporte ou o brim de uma que deu certo (isso já está nas gramas usadas). Descubra a sua: impressões perdidas ÷ impressões começadas × 100. Ex.: 4 perdidas em 40 = 10%.",
       },
       finishTime: {
         label: "Sobre o tempo de acabamento",
@@ -480,7 +490,6 @@ export const messages = {
     namePlaceholderPrinter: "Ex.: Ender 3",
     material: "Material",
     materialPlaceholder: "Ex.: PLA",
-    defaultWaste: "Desperdício padrão",
     // "Voltar" (not "Cancelar"): the copy-honesty guard (FR-014) bans "cancelar" anywhere in the
     // message module to keep any billing-cancellation policy out of the copy. Owner ratifies at T033.
     cancel: "Voltar",
@@ -673,6 +682,11 @@ export const messages = {
     recalcOfflineNote:
       "Sem conexão: usando os valores do catálogo salvos neste aparelho, que podem estar desatualizados.",
     recalcConfirm: "Recalcular",
+    // 016/T037 (US10, FR-913, ADR-0026 §D.2) — the structural note: dirigida por VERSÃO (o
+    // congelado guarda `modelVersion`, ao contrário do documento de cenário). `isPreRemovalModel`
+    // decide; nenhum campo novo em payload (I3 — um campo em congelado imutável é para sempre).
+    recalcStructuralNote:
+      "O valor congelado foi calculado pelo modelo {versao}, que incluía o campo Desperdício. O modelo atual não tem mais esse campo — parte da diferença acima pode vir daí.",
     // US4/T028 — export (FR-512..516). Copy = ux §8, verbatim except where marked. The artifact is
     // SERVER-rendered (ADR-0020), and that is why three of these strings exist at all: no connection
     // and no server row mean no document, and each unavailable case must say WHICH, in place. The
@@ -909,6 +923,19 @@ export const messages = {
     kitBasisHint: "Preços por canal do kit, recalculados com os preços de hoje.",
     // 016/US1 (T004/T006) — o teaser de Simulações passou a ser o padrão único
     // (`premiumTeaser.SCENARIOS`); as chaves antigas saíram daqui pela mesma razão do Catálogo/Kits.
+    // 016/T036 (US10, FR-913) — a declaração de descarte: uma simulação salva ANTES do
+    // pricing-core 4.0.0 ainda carrega campos aposentados (hoje só `wasteGrams`/"Desperdício").
+    // O recálculo abaixo já os exclui (o motor recusa a chave); esta é a frase que diz por quê,
+    // persistente (não um toast) — a divergência de preço tem de continuar visível enquanto a
+    // simulação estiver aberta, não piscar e sumir. `{campo}` já vem em pt-BR ("Desperdício (g)"),
+    // nunca a chave técnica — ver `discardedFieldLabel` no motor de tela.
+    discardedFieldNotice:
+      "O documento salvo continha {campo}. O modelo de preço atual não usa mais esse campo — o recálculo abaixo não o inclui.",
+    // 016/T036 — o NOME em pt-BR do campo aposentado, nunca a chave técnica (`wasteGrams`) na tela.
+    // Chaveado por `DiscardedField["field"]` (pricing-core `RETIRED_INPUT_FIELDS`) — hoje só um.
+    discardedFieldLabels: {
+      wasteGrams: "Desperdício (g)",
+    } as Record<string, string>,
   },
   // System states (offline / 404 / generic error). Honest pt-BR: no provider,
   // no price, no cancellation policy (FR-014).

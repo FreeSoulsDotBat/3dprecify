@@ -31,6 +31,7 @@ import {
   applyScenarioConfig,
   buildScenarioConfig,
   computeScenarioKitChannels,
+  discardedFieldNotice,
 } from "@/features/calculator/scenario-bridge";
 import {
   CALC_FIELD_NAMES,
@@ -126,6 +127,10 @@ export function CalcularPage() {
     note: string | null;
     costBasis: ResolvedCostBasisMeta | null;
     config: ScenarioConfig;
+    /** 016/T036 (US10, FR-913) — the retired-field declaration for a SCALAR reopen (AD_HOC/PRODUCT).
+     *  `null` on a document with nothing retired (the common case) or on a KIT basis (its own
+     *  declaration is derived at render time from `computeScenarioKitChannels`, below). */
+    discardedNotice: string | null;
   } | null>(null);
   const [cleanSignature, setCleanSignature] = useState<string | null>(null);
   const [scenariosOpen, setScenariosOpen] = useState(false);
@@ -141,7 +146,12 @@ export function CalcularPage() {
     setValue("includeMarketplace", patch.includeMarketplace, { shouldValidate: true });
     replaceChannels(patch.channels);
     replaceOtherCosts(patch.otherCosts);
-    setLoadedScenario({ ...meta, costBasis: readResolvedCostBasis(config), config });
+    setLoadedScenario({
+      ...meta,
+      costBasis: readResolvedCostBasis(config),
+      config,
+      discardedNotice: discardedFieldNotice(patch.discarded),
+    });
     // `getValues()` reads RHF's internal store SYNCHRONOUSLY — the `setValue`/`replace*` calls
     // above already committed to it (React's render batching is irrelevant here), so this baseline
     // is the exact same `computeFormSignature` shape the live comparison below uses. A KIT basis
@@ -165,7 +175,7 @@ export function CalcularPage() {
     const picked = filaments.find((f) => f.id === id);
     if (!picked) return;
     for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
-      setValue(field as "costPerRoll" | "rollWeightKg" | "wasteGrams", value, {
+      setValue(field as "costPerRoll" | "rollWeightKg", value, {
         shouldValidate: true,
       });
     }
@@ -293,16 +303,35 @@ export function CalcularPage() {
         />
       )}
 
+      {/* 016/T036 (US10, FR-913) — a scalar (AD_HOC/PRODUCT) simulation saved before pricing-core
+          4.0.0 still carries a retired leaf (today only `wasteGrams`). The recompute below already
+          excludes it (the engine refuses the key); this PERSISTENT info notice — not a toast — says
+          why, for as long as the simulation stays open (role=status via Alert tone="info"). */}
+      {loadedScenario?.discardedNotice && (
+        <Alert tone="info">{loadedScenario.discardedNotice}</Alert>
+      )}
+
       {/* 010/T024 (Q12) — a KIT-basis scenario has no scalar form to hydrate (multi-piece); its
           OWN read-only per-marketplace rollup renders here instead of populating the fields below
           (which stay whatever they were before the reopen — the seller edits a kit's LINES via
           "Abrir origem", never here). */}
       {loadedScenario && loadedScenario.config.costBasis.kind === "KIT" && (
-        <KitBasisSummary
-          config={loadedScenario.config}
-          refName={loadedScenario.costBasis?.ref?.name ?? loadedScenario.name}
-          ctx={catalogCtx}
-        />
+        <>
+          {/* 016/T036 — the KIT twin of the notice above: `computeScenarioKitChannels` already
+              strips any retired leaf line-by-line (never `ok:false` for that reason alone) and
+              rolls the discard up ONCE, deduped, across every line. */}
+          {(() => {
+            const notice = discardedFieldNotice(
+              computeScenarioKitChannels(loadedScenario.config, catalogCtx)?.discarded ?? [],
+            );
+            return notice ? <Alert tone="info">{notice}</Alert> : null;
+          })()}
+          <KitBasisSummary
+            config={loadedScenario.config}
+            refName={loadedScenario.costBasis?.ref?.name ?? loadedScenario.name}
+            ctx={catalogCtx}
+          />
+        </>
       )}
 
       {/* 010/T036 (E5, PR-C, US7) — the E4 bridge for a KIT-basis scenario: the displayed

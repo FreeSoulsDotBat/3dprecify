@@ -106,7 +106,8 @@ import { BomPage } from "./bom-page";
 const t = messages.bom;
 const pt = messages.premiumTeaser.KITS;
 
-/** SC-001-shaped saved product (wire decimal strings): custo 28,65 · varejo 42,98 (per unit). */
+/** SC-001-shaped saved product (wire decimal strings), re-baseline SEM wasteGrams (016/US10):
+ *  custo 27,55 · varejo 41,33 (per unit). */
 const productP: ProductOut = {
   id: "p1",
   name: "Vaso G",
@@ -121,7 +122,6 @@ const productP: ProductOut = {
   },
   pieceInputs: {
     printGrams: "100",
-    wasteGrams: "10",
     printTimeHours: "5",
     failurePct: "10",
     finishTimeHours: "0.5",
@@ -356,8 +356,8 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     const picker = screen.getByRole("combobox", { name: new RegExp(t.useProduct) });
     fireEvent.change(picker, { target: { value: "p1" } });
-    // SC-001 numbers from the product's wire values: custo 28,65 /un.
-    expect(screen.getAllByText(/R\$\s?28,65/).length).toBeGreaterThan(0);
+    // 016/US10 — re-baseline: custo 27,55 /un from the product's wire values.
+    expect(screen.getAllByText(/R\$\s?27,55/).length).toBeGreaterThan(0);
     // The line header now carries the product name; provenance is sealed honestly.
     expect(screen.getAllByText(/Vaso G/).length).toBeGreaterThan(0);
     expect(
@@ -365,7 +365,7 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
     ).toBeInTheDocument();
   });
 
-  it("a catalog-bound line ×qty scales through the engine (3 × 28,65 = 85,95)", () => {
+  it("a catalog-bound line ×qty scales through the engine (3 × 27,55 = 82,65)", () => {
     renderPremiumPage([productP]);
     fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
     fireEvent.change(screen.getByRole("combobox", { name: new RegExp(t.useProduct) }), {
@@ -374,7 +374,7 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
     fireEvent.change(screen.getByRole("textbox", { name: new RegExp(t.quantity) }), {
       target: { value: "3" },
     });
-    expect(screen.getAllByText(/R\$\s?85,95/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\$\s?82,65/).length).toBeGreaterThan(0);
   });
 });
 

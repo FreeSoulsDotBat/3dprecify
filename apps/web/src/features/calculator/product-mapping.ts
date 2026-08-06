@@ -35,7 +35,6 @@ export interface ProductFormBundle {
  *  pricing-core's PriceInput), so the mapping is mechanical. */
 const PIECE_KEYS = [
   "printGrams",
-  "wasteGrams",
   "printTimeHours",
   "failurePct",
   "finishTimeHours",
@@ -76,7 +75,6 @@ export function productToForm(product: ProductOut): ProductFormBundle {
     avgPowerKw: wireToPtBr(product.printerValues.avgPowerKw),
     maintenanceReservePerHour: wireToPtBr(product.printerValues.maintenanceReservePerHour ?? "0"),
     printGrams: wireToPtBr(product.pieceInputs.printGrams),
-    wasteGrams: wireToPtBr(product.pieceInputs.wasteGrams ?? "0"),
     printTimeHours: wireToPtBr(product.pieceInputs.printTimeHours),
     failurePct: wireToPtBr(product.pieceInputs.failurePct ?? "0"),
     finishTimeHours: wireToPtBr(product.pieceInputs.finishTimeHours ?? "0"),

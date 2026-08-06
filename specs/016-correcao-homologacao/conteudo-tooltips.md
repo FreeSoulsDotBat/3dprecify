@@ -267,3 +267,41 @@ Acelera3D (correia) — mais os resumos de busca de eixos/InfoMoney (tarifa méd
 salario.com.br/Exame/Contabilidade.com (salário mínimo), estes dois **rotulados acima como não
 conferidos em fonte primária**. Bloqueadas por HTTP 403 (não usadas): calc3dpro, 3dlab, Leroy Merlin,
 Mercado Livre.
+
+---
+
+## 2026-08-06 — PR-D / T038b (FR-914): Gramas usadas + Taxa de falha reescrita
+
+**Incremento**: 016-correcao-homologacao · **Fatia**: PR-D · **Autorização**: FR-914 (dono, spec.md).
+
+**Por que só agora.** A Nota de escopo #2 acima já dizia: a frase "purga, suporte e brim entram nas
+GRAMAS; falha é a impressão inteira perdida" só vira **verdade** quando o campo Desperdício deixa de
+existir — publicá-la em PR-C, com o campo ainda na tela, seria uma afirmação falsa (a purga não
+"entrava nas gramas": tinha campo próprio). PR-D remove o campo (US10); esta seção escreve o tooltip
+que a remoção libera.
+
+**Procedência**: nenhuma fonte externa — é definição do próprio produto (o que a fatiadora inclui no
+peso total do arquivo de impressão vs. o que o vendedor conta como "perdido"), não um fato de
+terceiro que precise de citação.
+
+### Gramas usadas (g)
+
+**Tooltip (texto final, pt-BR leigo, 47 palavras — contagem corrigida na homologação T042/R2):**
+É o peso total que a peça consome no fatiador — a peça em si, mais a purga, o suporte e o brim que
+ele descarta ao final. Pese a peça pronta numa balança, ou use o peso total que o próprio fatiador
+estima antes de imprimir.
+
+**Nota**: antes desta fatia, "purga/suporte/brim" tinham um campo próprio (Desperdício, aposentado
+pelo US10). Este texto assume o campo morto — é o que o torna verdadeiro.
+
+### Taxa de falha (%) — substitui o texto de PR-C
+
+**Tooltip (texto final, pt-BR leigo, 50 palavras — NO limite, não dentro; contagem corrigida na homologação T042/R2):**
+É a impressão que dá errado por completo e vai para o lixo — não a purga, o suporte ou o brim de uma
+que deu certo (isso já está nas gramas usadas). Descubra a sua: impressões perdidas ÷ impressões
+começadas × 100. Ex.: 4 perdidas em 40 = 10%.
+
+**O que mudou do texto de PR-C**: a frase "quem está começando costuma ficar mais alto" saiu para
+abrir espaço à distinção com "gramas usadas" dentro do limite de ~50 palavras — a tabela de faixas
+(15–25% / 8–15% / 3–8% / 2–5%) já não entrava no texto de PR-C pelo mesmo motivo (ver acima) e
+continua fora aqui.

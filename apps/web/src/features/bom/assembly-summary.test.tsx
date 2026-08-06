@@ -20,7 +20,6 @@ const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -32,7 +31,7 @@ const SC001: PriceInput = {
   markupVarejoPct: 50,
   markupAtacadoPct: 30,
   channels: [],
-}; // custo 28,65 · varejo 42,98 · atacado 37,25
+}; // 016/US10 — re-baseline SEM wasteGrams: custo 27,55 · varejo 41,33 · atacado 35,82
 
 afterEach(cleanup);
 
@@ -53,7 +52,7 @@ describe("AssemblySummary — honest headline states", () => {
     );
 
     expect(screen.getByText(t.assemblyCusto)).toBeInTheDocument();
-    expect(screen.getAllByText(/R\$\s?28,65/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/R\$\s?27,55/).length).toBeGreaterThan(0);
     expect(screen.getByText(t.assemblyExcluded.replace("{n}", "2"))).toBeInTheDocument();
   });
 

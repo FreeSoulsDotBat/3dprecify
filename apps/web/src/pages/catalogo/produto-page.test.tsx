@@ -12,7 +12,7 @@ import { useSessionStore } from "@/shared/session/session-store";
 // US6/T030 — the product full-page route (ux §1.6b): the calculator layout + a name + the two
 // catalog pickers. NO stored price is ever shown — the page recomputes live via the EXISTING
 // `computeFromForm` at the current PRICING_MODEL_VERSION (FR-310/FR-313); the SC-305 anchor
-// numbers (016/PR-C homologação B1: seed R$ 24,24 / picked catalog R$ 26,48) must hold here
+// numbers (016/PR-C homologação B1: seed R$ 24,24 / picked catalog R$ 25,65) must hold here
 // exactly as in Calcular.
 // Reopening a DEGRADED product (deleted reference) shows the calm info alert and the last-known
 // values as ordinary editable fields (US6-4) — never blank, never broken.
@@ -77,7 +77,6 @@ const filament = {
   material: "PLA",
   costPerRoll: "110.00",
   rollWeightKg: "1.000",
-  defaultWasteGrams: "5.000",
   createdAt: "2026-07-09T00:00:00Z",
   updatedAt: "2026-07-09T00:00:00Z",
 };
@@ -105,7 +104,6 @@ const savedProduct = {
   },
   pieceInputs: {
     printGrams: "100.000",
-    wasteGrams: "5.000",
     printTimeHours: "5.000",
     failurePct: "0.000",
     finishTimeHours: "0.000",
@@ -180,7 +178,7 @@ describe("ProdutoPage — create (US6/T030)", () => {
 
     expect(screen.getByDisplayValue("110,00")).toBeInTheDocument();
     expect(screen.getByDisplayValue("1200,00")).toBeInTheDocument();
-    expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
   });
 
   it("saves through the wire mapping and navigates back to the catalog", async () => {
@@ -233,8 +231,8 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
 
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).toHaveValue("Vaso G");
     expect(screen.getByDisplayValue("110,00")).toBeInTheDocument();
-    // R$ 26,48 comes from computeFromForm NOW, not from any persisted price (FR-310/FR-313).
-    expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
+    // R$ 25,65 comes from computeFromForm NOW, not from any persisted price (FR-310/FR-313).
+    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
   });
 
   it("an UNLINKED product shows the calm state + manual picker + editable last-known values", () => {
@@ -346,7 +344,7 @@ describe("ProdutoPage — lapsed premium, read-only up front (013/FB-02, ux-cata
     expect(screen.getByText(messages.catalogo.reactivateBody)).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: pf.saveProduct })).not.toBeInTheDocument();
     // FR-409 — reads/recompute still work while lapsed.
-    expect(screen.getAllByText("R$ 26,48").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
   });
 
   it("active keeps the product form fully editable — regression guard", () => {

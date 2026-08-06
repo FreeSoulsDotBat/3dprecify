@@ -45,7 +45,8 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
 
   const f = messages.calculator.fields;
   const ti = messages.calculator.timeInput;
-  // The SC-001 worked example → custo_total R$ 28,65, varejo R$ 42,98, atacado R$ 37,25.
+  // 016/US10 — re-baseline SEM Desperdício (o campo saiu, pricing-core 4.0.0): custo_total
+  // R$ 27,55, varejo R$ 41,33, atacado R$ 35,82.
   // 016/US6 (FR-908) — 8 of these fields now carry an InfoTip whose trigger aria-label is a
   // SUPERSTRING of the plain field label ("Sobre o consumo médio" ⊇ "Consumo médio"); `getByLabel`
   // matches by substring across EVERY role, so it also catches the tip's `button`. Constraining to
@@ -53,8 +54,7 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   // in this file — so the tipped fields below use that instead of a bare `getByLabel`.
   await page.getByLabel(f.costPerRoll).fill("100");
   await page.getByLabel(f.rollWeight).fill("1");
-  await page.getByLabel(f.grams).fill("100");
-  await page.getByLabel(f.wasteGrams).fill("10");
+  await page.getByRole("textbox", { name: f.grams, exact: true }).fill("100");
   // 016/US7 — printTime is now two fields (h + min); the engine still receives the same decimal.
   await page.getByLabel(ti.hoursAria).fill("5");
   await page.getByLabel(ti.minutesAria).fill("0");
@@ -78,9 +78,9 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
   // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
   // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
-  await expect(page.getByText("R$ 28,65")).toBeVisible(); // custo_total breakdown row
-  await expect(page.getByText("R$ 42,98").first()).toBeVisible(); // varejo derivation row
-  await expect(page.getByText("R$ 37,25").first()).toBeVisible(); // atacado derivation row
+  await expect(page.getByText("R$ 27,55")).toBeVisible(); // custo_total breakdown row
+  await expect(page.getByText("R$ 41,33").first()).toBeVisible(); // varejo derivation row
+  await expect(page.getByText("R$ 35,82").first()).toBeVisible(); // atacado derivation row
 
   // FR-021 / analyze A1: the corrected model carries NO tax/imposto input.
   await expect(page.getByText(/imposto/i)).toHaveCount(0);
@@ -110,7 +110,9 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
   // The pricing calc is client-side, so it still works with no network.
   await page.getByLabel(messages.calculator.fields.costPerRoll).fill("100");
   await page.getByLabel(messages.calculator.fields.rollWeight).fill("1");
-  await page.getByLabel(messages.calculator.fields.grams).fill("100");
+  await page
+    .getByRole("textbox", { name: messages.calculator.fields.grams, exact: true })
+    .fill("100");
   // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/3600 h —
   // 016/PR-C homologação B1) this yields custo_total R$ 16,16 → varejo R$ 24,24.
   await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
@@ -137,7 +139,7 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   // Full client-side compute + transparent breakdown, offline AND signed-out.
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
-  await page.getByLabel(t.fields.grams).fill("100");
+  await page.getByRole("textbox", { name: t.fields.grams, exact: true }).fill("100");
   // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
   // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
   // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
@@ -174,7 +176,7 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await expect(page.getByText(t.channels.refreshErrorTitle)).toBeVisible();
   await page.getByLabel(t.fields.costPerRoll).fill("100");
   await page.getByLabel(t.fields.rollWeight).fill("1");
-  await page.getByLabel(t.fields.grams).fill("100");
+  await page.getByRole("textbox", { name: t.fields.grams, exact: true }).fill("100");
   // 016/PR-C homologação B1 — seed varejo R$ 24,24.
   await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
 

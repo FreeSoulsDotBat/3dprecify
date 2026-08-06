@@ -242,6 +242,44 @@ describe("applyScenarioConfig → computeFromForm — REOPEN + live recompute (T
     expect(reopenedOutcome.ok).toBe(true); // one bad slot never fails the whole form
   });
 
+  // 016/T036 (US10, FR-913) — a pre-4.0.0 AD_HOC/PRODUCT document still carries `wasteGrams` in
+  // `lastKnown` (a `4.0.0` engine never wrote it, but nothing purges the OLD row). The reopen must
+  // hydrate WITHOUT it (never crash the schema-driven `for (name of CALC_FIELD_NAMES)` loop) and
+  // DECLARE the discard so the page can tell the reader the recompute below excludes it.
+  it("a lastKnown carrying wasteGrams patches WITHOUT the key and declares the discard", () => {
+    const saveForm = values({ channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+    // Simulate a document saved BEFORE 4.0.0 (its lastKnown still has the retired leaf).
+    if (config.costBasis.kind === "AD_HOC") {
+      (config.costBasis.lastKnown as Record<string, string>).wasteGrams = "10.000";
+    }
+
+    const patch = applyScenarioConfig(config);
+
+    expect("wasteGrams" in patch.scalars).toBe(false);
+    expect(patch.discarded).toEqual([{ field: "wasteGrams", value: "10.000" }]);
+    // The recompute below excludes it: reopening still resolves to a valid form.
+    const reopened = values({ ...patch.scalars, channels: patch.channels });
+    expect(computeFromForm(reopened, ctx).ok).toBe(true);
+  });
+
+  it("a lastKnown WITHOUT the retired leaf declares nothing (ausência = nada a declarar)", () => {
+    const saveForm = values({ channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    expect(applyScenarioConfig(config).discarded).toEqual([]);
+  });
+
   it("scalars round-trip through the pt-BR conversion without corruption (e.g. 0.1 stays 0.1, never 1)", () => {
     const saveForm = values({ avgPowerKw: "0,1", channels: [] });
     const saveOutcome = computeFromForm(saveForm, ctx);
@@ -378,5 +416,29 @@ describe("computeScenarioKitChannels (T024)", () => {
     ]);
     const rollup = computeScenarioKitChannels(config, ctx)!;
     expect(rollup.frozenLines).toHaveLength(0);
+  });
+
+  // 016/T036 (US10, FR-913) — a pre-4.0.0 kit line still carries `wasteGrams` in `lastKnown`. The
+  // line must recompute WITHOUT it (never `ok:false` for that reason alone) and the rollup must
+  // DECLARE the discard once, deduped, instead of dropping it silently.
+  it("a line carrying wasteGrams recomputes OK and the rollup declares the discard exactly once", () => {
+    const config = kitConfig([
+      { name: "Vaso G", quantity: 1, input: kitLastKnown({ wasteGrams: "10.000" }) },
+      { name: "Vaso P", quantity: 1, input: kitLastKnown({ wasteGrams: "7.000" }) },
+    ]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+
+    expect(rollup.lines).toEqual([
+      { name: "Vaso G", quantity: 1, ok: true },
+      { name: "Vaso P", quantity: 1, ok: true },
+    ]);
+    expect(rollup.excludedLineCount).toBe(0);
+    expect(rollup.discarded).toEqual([{ field: "wasteGrams", value: "10.000" }]); // once, from line 1
+  });
+
+  it("no retired leaf anywhere ⇒ discarded is empty (ausência = nada a declarar)", () => {
+    const config = kitConfig([{ name: "Vaso G", quantity: 1, input: kitLastKnown() }]);
+    const rollup = computeScenarioKitChannels(config, ctx)!;
+    expect(rollup.discarded).toEqual([]);
   });
 });

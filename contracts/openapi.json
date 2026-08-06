@@ -4173,21 +4173,9 @@
               }
             ],
             "title": "Rollweightkg"
-          },
-          "defaultWasteGrams": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              }
-            ],
-            "title": "Defaultwastegrams",
-            "default": "0"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "name",
@@ -4228,11 +4216,6 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Rollweightkg"
           },
-          "defaultWasteGrams": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Defaultwastegrams"
-          },
           "createdAt": {
             "type": "string",
             "format": "date-time",
@@ -4250,7 +4233,6 @@
           "name",
           "costPerRoll",
           "rollWeightKg",
-          "defaultWasteGrams",
           "createdAt",
           "updatedAt"
         ],
@@ -4530,19 +4512,6 @@
             ],
             "title": "Printgrams"
           },
-          "wasteGrams": {
-            "anyOf": [
-              {
-                "type": "number"
-              },
-              {
-                "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
-              }
-            ],
-            "title": "Wastegrams",
-            "default": "0"
-          },
           "printTimeHours": {
             "anyOf": [
               {
@@ -4645,6 +4614,7 @@
             "title": "Markupatacadopct"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "printGrams",
@@ -4653,7 +4623,7 @@
           "markupAtacadoPct"
         ],
         "title": "PieceInputs",
-        "description": "The product-owned E1 piece fields (data-model §2.5)."
+        "description": "The product-owned E1 piece fields (data-model §2.5).\n\n``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra=\"forbid\"``\nrejects it explicitly (never silently ignores it) with a message naming the change."
       },
       "PieceInputs-Output": {
         "properties": {
@@ -4662,12 +4632,6 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Printgrams"
           },
-          "wasteGrams": {
-            "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Wastegrams",
-            "default": "0"
-          },
           "printTimeHours": {
             "type": "string",
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
@@ -4714,6 +4678,7 @@
             "title": "Markupatacadopct"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "printGrams",
@@ -4722,7 +4687,7 @@
           "markupAtacadoPct"
         ],
         "title": "PieceInputs",
-        "description": "The product-owned E1 piece fields (data-model §2.5)."
+        "description": "The product-owned E1 piece fields (data-model §2.5).\n\n``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra=\"forbid\"``\nrejects it explicitly (never silently ignores it) with a message naming the change."
       },
       "PriceBand": {
         "properties": {

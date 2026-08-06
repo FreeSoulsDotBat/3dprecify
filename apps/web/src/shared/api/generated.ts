@@ -26,10 +26,12 @@ import type {
 import { orvalFetch } from './transport.ts';
 /**
  * The product-owned E1 piece fields (data-model §2.5).
+ *
+ * ``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra="forbid"``
+ * rejects it explicitly (never silently ignores it) with a message naming the change.
  */
 export interface PieceInputsInput {
   printGrams: number | string;
-  wasteGrams?: number | string;
   printTimeHours: number | string;
   failurePct?: number | string;
   finishTimeHours?: number | string;
@@ -135,12 +137,13 @@ export type BomLineOutOtherCostsItem = { [key: string]: unknown };
 
 /**
  * The product-owned E1 piece fields (data-model §2.5).
+ *
+ * ``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra="forbid"``
+ * rejects it explicitly (never silently ignores it) with a message naming the change.
  */
 export interface PieceInputsOutput {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   printGrams: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  wasteGrams?: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   printTimeHours: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
@@ -395,7 +398,6 @@ export interface FilamentIn {
   material?: string | null;
   costPerRoll: number | string;
   rollWeightKg: number | string;
-  defaultWasteGrams?: number | string;
 }
 
 export interface FilamentOut {
@@ -406,8 +408,6 @@ export interface FilamentOut {
   costPerRoll: string;
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   rollWeightKg: string;
-  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
-  defaultWasteGrams: string;
   createdAt: string;
   updatedAt: string;
 }

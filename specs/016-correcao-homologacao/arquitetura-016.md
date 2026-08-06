@@ -390,7 +390,7 @@ a evidência honesta ali é a própria folha; o snapshot guarda `modelVersion`, 
 versão. Nenhum campo novo é criado — e isso importa porque um campo em payload congelado é **para
 sempre** (I3).
 
-### D.3 Migração de banco — `0003`, **DROP**
+### D.3 Migração de banco — **DROP** *(numerada `0007` na execução — o head real já ia além; T042/R3)*
 
 | objeto | hoje | depois |
 | --- | --- | --- |
@@ -611,7 +611,7 @@ congelado é permanente (I3).
 | PR-A | US1, US2 | **E** | `shared/billing/premium-teaser`, i18n | — |
 | PR-B | US3–US5 | — | CSS/layout | — |
 | PR-C | US6–US9 | **§7** | só borda | — |
-| **PR-D** | US10 | **D** | `pricing-core` (MAJOR), Alembic `0003`, OpenAPI/Orval, dois costurados | **4.0.0** |
+| **PR-D** | US10 | **D** | `pricing-core` (MAJOR), Alembic `0007`, OpenAPI/Orval, dois costurados | **4.0.0** |
 | PR-E | US11–US13 | **F**, **C.1** | `channel-field-plan`, `determinantsSchema`, `slotDeterminants` | — |
 | PR-F | US14, US16–US18 | **B**, **C.2/C.3**, **G** | `PriceBand.fixedFeeRule`, `ChannelInput.surcharges`, `optionalSurcharges`, `fixedFeeSource`, dado | **4.1.0** + `catalogVersion` |
 | PR-G | US15 | **A** | `fixedCostMatrix`, `resolveFixedCost`, `ChannelSlotOutcome.logistics` | só `catalogVersion` |

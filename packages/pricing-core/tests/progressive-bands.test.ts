@@ -115,7 +115,6 @@ describe("SC-814 — o modo sobrevive ao ponto de entrada público (`computeCalc
     costPerRoll: 100,
     rollWeightKg: 1,
     printGrams: 100,
-    wasteGrams: 10,
     printTimeHours: 5,
     avgPowerKw: 0.1,
     tariffPerKwh: 1,
