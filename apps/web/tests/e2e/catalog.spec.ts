@@ -54,7 +54,7 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
   grantPremium(email);
   await page.reload();
 
-  // Filaments tab (default): create "PLA Azul" 110.00 / 1.000 kg / waste 5.
+  // Filaments tab (default): create "PLA Azul" 110.00 / 1.000 kg.
   await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
   await page.getByRole("button", { name: t.catalogo.addFilament }).click();
   await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
@@ -63,7 +63,6 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
     .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
     .fill("110");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) }).fill("1");
-  await page.getByRole("textbox", { name: new RegExp(t.catalogForm.defaultWaste) }).fill("5");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
   await expect(page.getByText("PLA Azul")).toBeVisible();
 
@@ -99,9 +98,10 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
   await expect(
     page.getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) }),
   ).toHaveValue("1200,00");
-  // material 110×(100+5)/1000=11,55 · energy 5×0,12×1=0,60 · machine (1200/2000+0,5)×5=5,50
-  // → custo 17,65 → varejo ×1,5 = 26,48 (HALF_UP). The catalog changed convenience, not math.
-  await expect(page.getByText("R$ 26,48").first()).toBeVisible();
+  // 016/US10 — sem Desperdício: material 110×100/1000=11,00 · energy 5×0,12×1=0,60 ·
+  // machine (1200/2000+0,5)×5=5,50 → custo 17,10 → varejo ×1,5 = 25,65 (HALF_UP). The catalog
+  // changed convenience, not math.
+  await expect(page.getByText("R$ 25,65").first()).toBeVisible();
 
   // Conta reflects the plan honestly (T025b) — served by the real /entitlement.
   await page.goto("/conta");

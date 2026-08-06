@@ -121,7 +121,7 @@ export function ProdutoPage({
     if (!picked) return;
     setFilamentMaterial(picked.material ?? null);
     for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
-      setValue(field as "costPerRoll" | "rollWeightKg" | "wasteGrams", value);
+      setValue(field as "costPerRoll" | "rollWeightKg", value);
     }
   };
   const applyPrinter = (id: string) => {

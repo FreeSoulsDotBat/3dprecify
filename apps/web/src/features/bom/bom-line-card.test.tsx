@@ -24,7 +24,6 @@ const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -83,8 +82,8 @@ describe("BomLineCard — degraded-line caption (F1/K3, ux §1.2-D)", () => {
   it("degraded: the line stays priced — the caption sits ALONGSIDE the money, not instead of it", () => {
     renderCard({ degraded: true });
     expect(screen.getByText(kept)).toBeInTheDocument();
-    // custo 28,65 × qty 2 = 57,30 — the degraded line is still a real, priceable line.
-    expect(screen.getAllByText(/R\$\s?57,30/).length).toBeGreaterThan(0);
+    // 016/US10 — custo 27,55 × qty 2 = 55,10 (re-baseline SEM wasteGrams) — a real, priceable line.
+    expect(screen.getAllByText(/R\$\s?55,10/).length).toBeGreaterThan(0);
   });
 
   it("NOT degraded: no caption (negative control — the caption is degrade-only)", () => {

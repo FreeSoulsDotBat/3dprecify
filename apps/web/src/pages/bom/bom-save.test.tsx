@@ -80,7 +80,6 @@ const productP: ProductOut = {
   },
   pieceInputs: {
     printGrams: "100",
-    wasteGrams: "10",
     printTimeHours: "5",
     failurePct: "10",
     finishTimeHours: "0.5",

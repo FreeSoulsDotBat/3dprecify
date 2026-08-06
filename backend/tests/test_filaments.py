@@ -25,7 +25,6 @@ VALID = {
     "material": "PLA",
     "costPerRoll": "110.00",
     "rollWeightKg": "1.000",
-    "defaultWasteGrams": "5.000",
 }
 
 

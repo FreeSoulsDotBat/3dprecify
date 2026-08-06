@@ -30,7 +30,6 @@ FILAMENT = {
     "material": "PLA",
     "costPerRoll": "110.00",
     "rollWeightKg": "1.000",
-    "defaultWasteGrams": "5.000",
 }
 PRINTER = {
     "name": "Ender 3",
@@ -43,7 +42,6 @@ PRINTER = {
 # round-trips the exact same string — the SC-305 lossless invariant, asserted literally.
 PIECE = {
     "printGrams": "100.000",
-    "wasteGrams": "5.000",
     "printTimeHours": "5.000",
     "failurePct": "0.000",
     "finishTimeHours": "0.000",

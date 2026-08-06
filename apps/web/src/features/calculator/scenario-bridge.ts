@@ -1,4 +1,10 @@
-import { computeBom, type BomResult, type PriceInput } from "@3dprecify/pricing-core";
+import {
+  computeBom,
+  stripRetiredFields,
+  type BomResult,
+  type DiscardedField,
+  type PriceInput,
+} from "@3dprecify/pricing-core";
 
 import {
   serializeAdHocBasis,
@@ -8,6 +14,7 @@ import {
   type ScenarioChannelSlotState,
   type ScenarioConfig,
 } from "@/entities/scenario/config-document";
+import { messages } from "@/shared/i18n/messages.pt-br";
 import { wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 import { type CatalogContext, type ChannelSlotOutcome, computeFromForm } from "./calculator-model";
@@ -146,6 +153,12 @@ export interface ScenarioFormPatch {
   includeMarketplace: boolean;
   channels: ChannelSlotForm[];
   otherCosts: OtherCostForm[];
+  /** 016/T036 (US10, FR-913) — retired leaves (`wasteGrams`) a pre-4.0.0 document still carries in
+   *  `lastKnown`. Hydrated via `stripRetiredFields` (pricing-core, the ONE place that knows the
+   *  field existed) instead of quietly dropping the key: the page reads this to DECLARE the
+   *  discard where the simulation reopens, so the reader knows the recompute below excludes it
+   *  instead of guessing why the price moved. Empty for a document that never carried it. */
+  discarded: DiscardedField[];
 }
 
 export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
@@ -157,9 +170,12 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
   // it live (D3/D6 is the read-time resolver added in PR-B/T022) — `lastKnown` is what both carry.
   const lastKnown = config.costBasis.kind === "KIT" ? null : config.costBasis.lastKnown;
   const scalars: Partial<Record<CalcFieldName, string>> = {};
+  let discarded: DiscardedField[] = [];
   if (lastKnown) {
+    const stripped = stripRetiredFields(lastKnown);
+    discarded = stripped.discarded;
     for (const name of CALC_FIELD_NAMES) {
-      const leaf = lastKnown[name];
+      const leaf = stripped.kept[name];
       if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
     }
   }
@@ -176,6 +192,7 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     includeMarketplace: config.includeMarketplace,
     channels,
     otherCosts,
+    discarded,
   };
 }
 
@@ -210,6 +227,11 @@ export interface ScenarioKitRollup {
    *  composer's own `frozenKitLines` convention). Lets the E4 bridge freeze EXACTLY what this rollup
    *  priced — no re-derivation, no second pass over the config. */
   frozenLines: readonly { input: PriceInput; quantity: number; name: string | null }[];
+  /** 016/T036 (US10, FR-913) — retired leaves found across ANY line's `lastKnown`, deduped by
+   *  field. A line that carries `wasteGrams` recomputes WITHOUT it (never `ok:false` for that
+   *  reason alone — `stripRetiredFields` removes the leaf before the scalar form is built) and the
+   *  discard is declared HERE instead, once, for the whole kit rollup. */
+  discarded: DiscardedField[];
 }
 
 export function computeScenarioKitChannels(
@@ -220,11 +242,20 @@ export function computeScenarioKitChannels(
   const channels = config.channels.map(channelIntentToForm);
   const lineOutcomes: ScenarioKitLineOutcome[] = [];
   const bomLines: { input: PriceInput; quantity: number; name: string | null }[] = [];
+  const discardedFields = new Set<DiscardedField["field"]>();
+  const discarded: DiscardedField[] = [];
 
   for (const line of config.costBasis.lastKnown.lines) {
+    const stripped = stripRetiredFields(line.input);
+    for (const d of stripped.discarded) {
+      if (!discardedFields.has(d.field)) {
+        discardedFields.add(d.field);
+        discarded.push(d);
+      }
+    }
     const scalars: Partial<Record<CalcFieldName, string>> = {};
     for (const name of CALC_FIELD_NAMES) {
-      const leaf = line.input[name];
+      const leaf = stripped.kept[name];
       if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
     }
     const formValues: CalcFormValues = {
@@ -245,5 +276,17 @@ export function computeScenarioKitChannels(
     excludedLineCount: lineOutcomes.filter((l) => !l.ok).length,
     bom: bomLines.length > 0 ? computeBom(bomLines) : null,
     frozenLines: bomLines,
+    discarded,
   };
+}
+
+/** 016/T036 (US10, FR-913) — the DECLARATION the page renders where a scenario reopens: names the
+ *  pt-BR field ("Desperdício (g)"), never the wire key (`wasteGrams`). `null` when there is
+ *  nothing to declare (the common case — a document saved under 4.0.0 never carries a retired
+ *  leaf) so the caller can render nothing rather than an empty banner. Pure, no side effect. */
+export function discardedFieldNotice(discarded: readonly DiscardedField[]): string | null {
+  if (discarded.length === 0) return null;
+  const labels = messages.scenarios.discardedFieldLabels;
+  const names = discarded.map((d) => labels[d.field] ?? d.field).join(", ");
+  return messages.scenarios.discardedFieldNotice.replace("{campo}", names);
 }

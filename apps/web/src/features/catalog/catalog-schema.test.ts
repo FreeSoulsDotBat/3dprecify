@@ -122,15 +122,6 @@ describe("magnitude ceilings (FB-05) — mirror backend/app/validation.py", () =
     expect(res.errors.rollWeightKg?.message).toBe(v.tooHigh);
   });
 
-  it("filament defaultWasteGrams over CEIL_GRAMS (10**9) is rejected inline", async () => {
-    const res = await filamentResolver(
-      { ...validFilament, defaultWasteGrams: "1000000000" },
-      undefined,
-      { shouldUseNativeValidation: false, fields: {}, criteriaMode: "firstError" },
-    );
-    expect(res.errors.defaultWasteGrams?.message).toBe(v.tooHigh);
-  });
-
   it("printer machineValue over CEIL_MONEY (10**10) is rejected inline", async () => {
     const res = await printerResolver({ ...validPrinter, machineValue: "10000000000" }, undefined, {
       shouldUseNativeValidation: false,

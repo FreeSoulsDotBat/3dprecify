@@ -22,7 +22,6 @@ export const CALC_FIELD_NAMES = [
   "costPerRoll",
   "rollWeightKg",
   "printGrams",
-  "wasteGrams",
   "printTimeHours",
   "avgPowerKw",
   "tariffPerKwh",
@@ -134,7 +133,6 @@ export const calculatorSchema = z.object({
   costPerRoll: numField({ kind: "required" }),
   rollWeightKg: numField({ kind: "required", positive: true, positiveMessage: t.rollWeightError }),
   printGrams: numField({ kind: "required" }),
-  wasteGrams: numField({ kind: "optional" }),
   printTimeHours: numField({ kind: "required" }),
   avgPowerKw: numField({ kind: "prefilled" }),
   tariffPerKwh: numField({ kind: "required" }),
@@ -270,7 +268,6 @@ export const defaultCalcValues: CalcFormValues = {
   costPerRoll: "100,00",
   rollWeightKg: "1",
   printGrams: "100",
-  wasteGrams: "0",
   printTimeHours: "5",
   avgPowerKw: "0,12",
   tariffPerKwh: "1,00",
@@ -328,7 +325,13 @@ export interface CalcFieldMeta {
 export const COST_FIELDS: readonly CalcFieldMeta[] = [
   { name: "costPerRoll", label: t.fields.costPerRoll, currency: true, required: true },
   { name: "rollWeightKg", label: t.fields.rollWeight, unit: "kg", required: true },
-  { name: "printGrams", label: t.fields.grams, unit: "g", required: true },
+  {
+    name: "printGrams",
+    label: t.fields.grams,
+    unit: "g",
+    tip: t.fieldTips.grams,
+    required: true,
+  },
   {
     name: "avgPowerKw",
     label: t.fields.avgPower,
@@ -345,7 +348,6 @@ export const COST_FIELDS: readonly CalcFieldMeta[] = [
     tip: t.fieldTips.tariff,
     required: true,
   },
-  { name: "wasteGrams", label: t.fields.wasteGrams, unit: "g", required: false },
   {
     name: "maintenanceReservePerHour",
     label: t.fields.maintenance,
@@ -369,7 +371,7 @@ export const COST_FIELDS: readonly CalcFieldMeta[] = [
  *  US9 does not touch, only the field TAXONOMY it draws from. */
 export const COST_REQUIRED_FIELDS: readonly CalcFieldMeta[] = COST_FIELDS.filter((f) => f.required);
 
-/** The optional remainder of `COST_FIELDS` (wasteGrams/maintenance/failure) — bom-line-editor's
+/** The optional remainder of `COST_FIELDS` (maintenance/failure) — bom-line-editor's
  *  own secondary-disclosure grouping (see `COST_REQUIRED_FIELDS`). */
 export const COST_OPTIONAL_FIELDS: readonly CalcFieldMeta[] = COST_FIELDS.filter(
   (f) => !f.required,

@@ -20,7 +20,7 @@ from decimal import Decimal
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, status
-from pydantic import Field, ValidationInfo, field_validator, model_validator
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -48,12 +48,15 @@ from app.validation import (
 
 router = APIRouter(tags=["products"])
 
+# 016/US10 (ADR-0026): `wasteGrams` was REMOVED from pricing-core in 4.0.0 — see the identical
+# rationale in `app/api/filaments.py::_RETIRED_WASTE_FIELD`.
+_RETIRED_WASTE_FIELD = "wasteGrams"
+
 
 # Piece-input fields fan out to different NUMERIC domains, so the "*" validator picks per field.
 # The ceilings themselves live in `app.validation` (the shared financial leaf, audit Q-03).
 _PIECE_CEILINGS: dict[str, Decimal] = {
     "print_grams": CEIL_GRAMS,
-    "waste_grams": CEIL_GRAMS,
     "print_time_hours": CEIL_HOURS,
     "failure_pct": CEIL_PERCENT,
     "finish_time_hours": CEIL_HOURS,
@@ -110,10 +113,15 @@ class OtherCost(CamelModel):
 
 
 class PieceInputs(CamelModel):
-    """The product-owned E1 piece fields (data-model §2.5)."""
+    """The product-owned E1 piece fields (data-model §2.5).
+
+    ``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra="forbid"``
+    rejects it explicitly (never silently ignores it) with a message naming the change.
+    """
+
+    model_config = ConfigDict(extra="forbid")
 
     print_grams: Decimal
-    waste_grams: Decimal = Decimal("0")
     print_time_hours: Decimal
     failure_pct: Decimal = Decimal("0")
     finish_time_hours: Decimal = Decimal("0")
@@ -122,6 +130,18 @@ class PieceInputs(CamelModel):
     labor_rate_per_hour: Decimal = Decimal("0")
     markup_varejo_pct: Decimal
     markup_atacado_pct: Decimal
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_retired_waste_field(cls, data: Any) -> Any:
+        raw = data
+        if isinstance(raw, dict) and _RETIRED_WASTE_FIELD in raw:
+            raise ValueError(
+                f"{_RETIRED_WASTE_FIELD} was removed by pricing-core 4.0.0 (US10/ADR-0026): "
+                "wasted material now folds into printGrams, so this field is REJECTED, never "
+                "silently ignored"
+            )
+        return data
 
     @field_validator("*")
     @classmethod
@@ -266,7 +286,6 @@ def _to_out(row: Product, filament: Filament | None, printer: Printer | None) ->
         printer_values=printer_values,
         piece_inputs=PieceInputs(
             print_grams=row.print_grams,
-            waste_grams=row.waste_grams,
             print_time_hours=row.print_time_hours,
             failure_pct=row.failure_pct,
             finish_time_hours=row.finish_time_hours,
@@ -356,7 +375,6 @@ def _apply(
     row.name = body.name
     piece = body.piece_inputs
     row.print_grams = piece.print_grams
-    row.waste_grams = piece.waste_grams
     row.print_time_hours = piece.print_time_hours
     row.failure_pct = piece.failure_pct
     row.finish_time_hours = piece.finish_time_hours

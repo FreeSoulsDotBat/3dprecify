@@ -43,7 +43,6 @@ const filament = {
   material: "PLA",
   costPerRoll: "110.00",
   rollWeightKg: "1.000",
-  defaultWasteGrams: "5.000",
   createdAt: "2026-07-09T00:00:00Z",
   updatedAt: "2026-07-09T00:00:00Z",
 };

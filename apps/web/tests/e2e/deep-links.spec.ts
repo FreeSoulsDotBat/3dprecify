@@ -21,7 +21,7 @@ import { grantPremium, recordFromCalculator, signUpThrowaway } from "./history-h
 const t = messages;
 
 /** Create one filament + one printer (the same numbers `catalog.spec.ts`/E2-T025 already prove
- *  compute "R$ 26,48") — the minimum a product needs to save (FR-310). */
+ *  compute "R$ 25,65", 016/US10 — sem Desperdício) — the minimum a product needs to save (FR-310). */
 async function createFilamentAndPrinter(page: Page): Promise<void> {
   await page.goto("/catalogo");
   await page.getByRole("button", { name: t.catalogo.addFilament }).click();
@@ -31,7 +31,6 @@ async function createFilamentAndPrinter(page: Page): Promise<void> {
     .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
     .fill("110");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) }).fill("1");
-  await page.getByRole("textbox", { name: new RegExp(t.catalogForm.defaultWaste) }).fill("5");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
   await expect(page.getByText("PLA Azul")).toBeVisible();
 
@@ -97,7 +96,7 @@ test("T020: /catalogo?produto=<id> renders on a COLD page.goto AND survives a re
   await page
     .getByRole("combobox", { name: t.calculator.catalogPicker.printer })
     .selectOption({ label: "Ender 3" });
-  await expect(page.getByText("R$ 26,48").first()).toBeVisible();
+  await expect(page.getByText("R$ 25,65").first()).toBeVisible();
   await page.getByRole("button", { name: t.productForm.saveProduct }).click();
   await expect(page.getByText(t.productForm.savedProduct)).toBeVisible();
 
@@ -111,7 +110,7 @@ test("T020: /catalogo?produto=<id> renders on a COLD page.goto AND survives a re
   await expect(page.getByRole("textbox", { name: t.productForm.nameLabel })).toHaveValue(
     "Vaso Cold-Load",
   );
-  await expect(page.getByText("R$ 26,48").first()).toBeVisible();
+  await expect(page.getByText("R$ 25,65").first()).toBeVisible();
 
   // Reload of the already-open screen.
   await page.reload();

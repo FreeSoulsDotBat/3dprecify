@@ -18,13 +18,13 @@ import type { PriceInput } from "../src/index";
 // aggregate equals the displayed numbers, no double-rounding); per-marketplace rollup with
 // per-slot isolation (extends SC-107).
 
-// Canonical SC-001 vector (unchanged from computeCalculator.test.ts): custo_total 28,65 ·
-// varejo 42,98 · atacado 37,25.
+// Canonical SC-001 vector (unchanged from computeCalculator.test.ts), RE-BASELINADO em 4.0.0
+// (ADR-0026 — o `wasteGrams: 10` saiu; material = gramas × custo/kg): custo_total **27,55** ·
+// varejo **41,33** · atacado **35,82**. A conta completa está em computeCalculator.test.ts.
 const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -66,9 +66,9 @@ describe("computeBom — SC-402 single line ×1 is byte-identical to computeCalc
   const bom = computeBom([{ input, quantity: 1 }]);
 
   it("headline money equals the single-piece result exactly", () => {
-    expect(bom.custoTotal).toBe(calc.custoTotal); // 28,65
-    expect(bom.precoVarejo).toBe(calc.precoVarejo); // 42,98
-    expect(bom.precoAtacado).toBe(calc.precoAtacado); // 37,25
+    expect(bom.custoTotal).toBe(calc.custoTotal); // 27,55
+    expect(bom.precoVarejo).toBe(calc.precoVarejo); // 41,33
+    expect(bom.precoAtacado).toBe(calc.precoAtacado); // 35,82
   });
 
   it("the embedded per-unit line IS the computeCalculator result, byte-for-byte", () => {
@@ -85,10 +85,10 @@ describe("computeBom — SC-402 single line ×1 is byte-identical to computeCalc
     expect(bom.channels).toHaveLength(1);
     const c = bom.channels[0];
     expect(c.marketplace).toBe("GENERIC");
-    expect(c.precoAnuncioVarejo).toBe(calc.channels[0].precoAnuncioVarejo); // 59,98
-    expect(c.recebidoLiquidoVarejo).toBe(calc.channels[0].recebidoLiquidoVarejo); // 42,98
-    expect(c.precoAnuncioAtacado).toBe(calc.channels[0].precoAnuncioAtacado); // 52,81
-    expect(c.recebidoLiquidoAtacado).toBe(calc.channels[0].recebidoLiquidoAtacado); // 37,25
+    expect(c.precoAnuncioVarejo).toBe(calc.channels[0].precoAnuncioVarejo); // 57,91
+    expect(c.recebidoLiquidoVarejo).toBe(calc.channels[0].recebidoLiquidoVarejo); // 41,33
+    expect(c.precoAnuncioAtacado).toBe(calc.channels[0].precoAnuncioAtacado); // 51,03
+    expect(c.recebidoLiquidoAtacado).toBe(calc.channels[0].recebidoLiquidoAtacado); // 35,82
     expect(c.freightCostVarejo).toBe(0);
     expect(c.freightCostAtacado).toBe(0);
     expect(c.contributingLines).toBe(1);
@@ -97,25 +97,26 @@ describe("computeBom — SC-402 single line ×1 is byte-identical to computeCalc
 });
 
 describe("computeBom — FR-412 aggregate = sumMoney(perLine × qty), anchored", () => {
-  // A: SC001 ×3 → 85,95 / 128,94 / 111,75 · B: MINIMAL ×2 → 41,00 / 61,50 / 53,30
+  // A: SC001 ×3 → 82,65 / 123,99 / 107,46 · B: MINIMAL ×2 → 41,00 / 61,50 / 53,30
+  // (27,55×3 = 82,65 · 41,33×3 = 123,99 · 35,82×3 = 107,46 — o MINIMAL nunca teve desperdício)
   const bom = computeBom([
     { input: SC001, quantity: 3 },
     { input: MINIMAL, quantity: 2 },
   ]);
 
   it("per-line money is the rounded per-unit value × qty (Decimal, never float ×)", () => {
-    expect(bom.lines[0].custoTotal).toBe(85.95);
-    expect(bom.lines[0].precoVarejo).toBe(128.94);
-    expect(bom.lines[0].precoAtacado).toBe(111.75);
+    expect(bom.lines[0].custoTotal).toBe(82.65);
+    expect(bom.lines[0].precoVarejo).toBe(123.99);
+    expect(bom.lines[0].precoAtacado).toBe(107.46);
     expect(bom.lines[1].custoTotal).toBe(41.0);
     expect(bom.lines[1].precoVarejo).toBe(61.5);
     expect(bom.lines[1].precoAtacado).toBe(53.3);
   });
 
   it("assembly totals equal the sum of the DISPLAYED per-line numbers (no double-rounding)", () => {
-    expect(bom.custoTotal).toBe(126.95); // 85,95 + 41,00
-    expect(bom.precoVarejo).toBe(190.44); // 128,94 + 61,50
-    expect(bom.precoAtacado).toBe(165.05); // 111,75 + 53,30
+    expect(bom.custoTotal).toBe(123.65); // 82,65 + 41,00
+    expect(bom.precoVarejo).toBe(185.49); // 123,99 + 61,50
+    expect(bom.precoAtacado).toBe(160.76); // 107,46 + 53,30
     // The receipt property one level up: aggregate === sumMoney of the shown per-line values.
     expect(bom.custoTotal).toBe(sumMoney(bom.lines.map((l) => l.custoTotal)));
     expect(bom.precoVarejo).toBe(sumMoney(bom.lines.map((l) => l.precoVarejo)));
@@ -147,7 +148,7 @@ describe("computeBom — quantity semantics (honest empty, validation)", () => {
       },
     ]);
     const without = computeBom([{ input: SC001, quantity: 2 }]);
-    expect(withZero.custoTotal).toBe(without.custoTotal); // 57,30
+    expect(withZero.custoTotal).toBe(without.custoTotal); // 55,10 (27,55 × 2)
     expect(withZero.precoVarejo).toBe(without.precoVarejo);
     expect(withZero.precoAtacado).toBe(without.precoAtacado);
     // The zero line is still listed honestly, with zero money.
@@ -200,8 +201,9 @@ describe("computeBom — quantity semantics (honest empty, validation)", () => {
 });
 
 describe("computeBom — per-channel rollup (FR-403, grouped by marketplace)", () => {
-  // A ×2: SHOPEE {20%, +5} → 59,98/42,98/52,81/37,25 · ML {10%} → 47,76/42,98/41,39/37,25
-  // B ×1: SHOPEE {0%, +2} over 30,75/26,65 → 32,75/30,75/28,65/26,65
+  // A ×2: SHOPEE {20%, +5} → 57,91/41,33/51,03/35,82 · ML {10%} → 45,92/41,33/39,80/35,82
+  //   (ML varejo = 41,33/0,9 = 45,9222… → 45,92 · ML atacado = 35,82/0,9 = 39,80 exato)
+  // B ×1: SHOPEE {0%, +2} over 30,75/26,65 → 32,75/30,75/28,65/26,65 (MINIMAL, inalterado)
   const bom = computeBom([
     {
       input: {
@@ -225,20 +227,20 @@ describe("computeBom — per-channel rollup (FR-403, grouped by marketplace)", (
 
   it("sums each money field × qty across the contributing lines (anchored)", () => {
     const shopee = bom.channels[0];
-    expect(shopee.precoAnuncioVarejo).toBe(152.71); // 59,98×2 + 32,75
-    expect(shopee.recebidoLiquidoVarejo).toBe(116.71); // 42,98×2 + 30,75
-    expect(shopee.precoAnuncioAtacado).toBe(134.27); // 52,81×2 + 28,65
-    expect(shopee.recebidoLiquidoAtacado).toBe(101.15); // 37,25×2 + 26,65
+    expect(shopee.precoAnuncioVarejo).toBe(148.57); // 57,91×2 + 32,75
+    expect(shopee.recebidoLiquidoVarejo).toBe(113.41); // 41,33×2 + 30,75
+    expect(shopee.precoAnuncioAtacado).toBe(130.71); // 51,03×2 + 28,65
+    expect(shopee.recebidoLiquidoAtacado).toBe(98.29); // 35,82×2 + 26,65
     expect(shopee.contributingLines).toBe(2);
     expect(shopee.skippedLines).toBe(0);
   });
 
   it("a marketplace configured on only some lines rolls up those lines alone (not skipped)", () => {
     const ml = bom.channels[1];
-    expect(ml.precoAnuncioVarejo).toBe(95.52); // 47,76×2
-    expect(ml.recebidoLiquidoVarejo).toBe(85.96); // 42,98×2
-    expect(ml.precoAnuncioAtacado).toBe(82.78); // 41,39×2
-    expect(ml.recebidoLiquidoAtacado).toBe(74.5); // 37,25×2
+    expect(ml.precoAnuncioVarejo).toBe(91.84); // 45,92×2
+    expect(ml.recebidoLiquidoVarejo).toBe(82.66); // 41,33×2
+    expect(ml.precoAnuncioAtacado).toBe(79.6); // 39,80×2
+    expect(ml.recebidoLiquidoAtacado).toBe(71.64); // 35,82×2
     expect(ml.contributingLines).toBe(1);
     expect(ml.skippedLines).toBe(0); // absent ≠ error — line B simply has no ML slot
   });
@@ -256,8 +258,8 @@ describe("computeBom — per-channel rollup (FR-403, grouped by marketplace)", (
     const f = withFreight.channels[0];
     expect(f.freightCostVarejo).toBe(6); // 3×2
     expect(f.freightCostAtacado).toBe(6);
-    expect(f.precoAnuncioVarejo).toBe(85.96); // 42,98×2 (0% commission ⇒ anúncio = base)
-    expect(f.recebidoLiquidoVarejo).toBe(79.96); // (42,98 − 3)×2
+    expect(f.precoAnuncioVarejo).toBe(82.66); // 41,33×2 (0% commission ⇒ anúncio = base)
+    expect(f.recebidoLiquidoVarejo).toBe(76.66); // (41,33 − 3)×2
   });
 
   it("manual channels (no marketplace) group together under null", () => {
@@ -268,8 +270,8 @@ describe("computeBom — per-channel rollup (FR-403, grouped by marketplace)", (
     expect(bom2.channels).toHaveLength(1);
     const manual = bom2.channels[0];
     expect(manual.marketplace).toBeNull();
-    expect(manual.precoAnuncioVarejo).toBe(77.73); // 44,98 + 32,75
-    expect(manual.recebidoLiquidoVarejo).toBe(73.73); // 42,98 + 30,75
+    expect(manual.precoAnuncioVarejo).toBe(76.08); // 43,33 + 32,75
+    expect(manual.recebidoLiquidoVarejo).toBe(72.08); // 41,33 + 30,75
     expect(manual.contributingLines).toBe(2);
   });
 });
@@ -289,15 +291,15 @@ describe("computeBom — per-slot isolation (extends SC-107)", () => {
     const shopee = bom.channels[0];
     expect(shopee.marketplace).toBe("SHOPEE");
     // Money = line A only — the errored slot never NaNs/corrupts the sibling sum.
-    expect(shopee.precoAnuncioVarejo).toBe(59.98);
-    expect(shopee.recebidoLiquidoVarejo).toBe(42.98);
-    expect(shopee.precoAnuncioAtacado).toBe(52.81);
-    expect(shopee.recebidoLiquidoAtacado).toBe(37.25);
+    expect(shopee.precoAnuncioVarejo).toBe(57.91);
+    expect(shopee.recebidoLiquidoVarejo).toBe(41.33);
+    expect(shopee.precoAnuncioAtacado).toBe(51.03);
+    expect(shopee.recebidoLiquidoAtacado).toBe(35.82);
     expect(shopee.contributingLines).toBe(1);
     expect(shopee.skippedLines).toBe(1); // honest, not silent
     // The headline totals still include BOTH lines' costs — a channel error is channel-local.
-    expect(bom.custoTotal).toBe(171.9); // 28,65 × (1+5)
-    expect(bom.precoVarejo).toBe(257.88); // 42,98 × 6
+    expect(bom.custoTotal).toBe(165.3); // 27,55 × (1+5)
+    expect(bom.precoVarejo).toBe(247.98); // 41,33 × 6
   });
 
   it("a rollup with zero contributing lines reports null prices honestly (never 0,00)", () => {
@@ -316,7 +318,7 @@ describe("computeBom — per-slot isolation (extends SC-107)", () => {
     expect(x.contributingLines).toBe(0);
     expect(x.skippedLines).toBe(1);
     // Nothing NaN'd, nothing thrown — the headline is intact.
-    expect(bom.custoTotal).toBe(57.3);
+    expect(bom.custoTotal).toBe(55.1); // 27,55 × 2
   });
 });
 
@@ -341,7 +343,7 @@ describe("computeBom — rollup counts are LINES, not slots", () => {
     const s = bom.channels[0];
     expect(s.contributingLines).toBe(1); // one PIECE fed the rollup, via two slots
     expect(s.skippedLines).toBe(0);
-    expect(s.precoAnuncioVarejo).toBe(104.96); // 59,98 + (42,98+2)
+    expect(s.precoAnuncioVarejo).toBe(101.24); // 57,91 + (41,33+2)
   });
 
   it("one valid + one errored slot of the SAME marketplace on a line: contributes once, not skipped", () => {
@@ -360,7 +362,7 @@ describe("computeBom — rollup counts are LINES, not slots", () => {
     const s = bom.channels[0];
     expect(s.contributingLines).toBe(1);
     expect(s.skippedLines).toBe(0); // the piece DID sum — only its extra slot failed
-    expect(s.precoAnuncioVarejo).toBe(59.98); // valid slot only
+    expect(s.precoAnuncioVarejo).toBe(57.91); // valid slot only
   });
 
   it("a line whose EVERY slot for a marketplace errors counts skipped exactly once", () => {
@@ -383,7 +385,7 @@ describe("computeBom — rollup counts are LINES, not slots", () => {
   });
 });
 
-describe("computeBom — versioning (3.1.0 MINOR, ADR-0016)", () => {
+describe("computeBom — versioning (4.0.0 MAJOR, ADR-0026; computeBom entrou na 3.1.0/ADR-0016)", () => {
   it("stamps modelVersion (= PRICING_MODEL_VERSION — the literal pin lives in version.test.ts)", () => {
     const bom = computeBom([{ input: SC001, quantity: 1 }]);
     expect(bom.modelVersion).toBe(PRICING_MODEL_VERSION);

@@ -3,6 +3,8 @@ import {
   computeCalculator,
   type PriceInput,
   type PriceResult,
+  stripRetiredFields,
+  ValidationError,
 } from "@3dprecify/pricing-core";
 
 import PRE_ADR_0024 from "./__fixtures__/frozen-payload-pre-adr-0024.json";
@@ -490,11 +492,17 @@ describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (
 // números que o código atual produz, e o teste passaria por construção. Só o artefato antigo prova
 // que o passado não se moveu.
 //
-// E há um alvo preciso: `recalc-today.tsx` afirma no seu docstring que "sob uma fórmula inalterada,
-// reprecificar as entradas congeladas devolve exatamente os valores congelados". Nenhum caminho de
-// código exercita essa afirmação — o "Recalcular hoje" re-emite o documento quando a origem sumiu,
-// nunca reprecifica as entradas. Este teste é o que a torna verificada em vez de declarada.
-describe("SC-815 — um congelado de ANTES do ADR-0024 reprecifica no mesmo centavo (T083)", () => {
+// 016/US10 (FR-912/913, ADR-0026) — o fixture é TAMBÉM pré-4.0.0 (carrega `wasteGrams` DE
+// PROPÓSITO — não muda; §3.3 da arquitetura). A premissa original desta suíte ("sob uma fórmula
+// inalterada, reprecificar as entradas congeladas devolve exatamente os valores congelados")
+// deixou de valer: a fórmula MUDOU (o desperdício saiu). O motor de hoje agora RECUSA a entrada
+// crua — a recusa nominal é o mecanismo estrutural que impede a mentira silenciosa (T035) — e
+// `recalc-today.tsx` nunca a alimenta bruta: ele re-resolve da ORIGEM viva, ou, sem origem,
+// reemite o documento congelado intacto (nunca recomputa as entradas congeladas puras). O que
+// esta suíte prova agora é exatamente essa fronteira: recusa nominal por padrão, e a porta
+// documentada (`stripRetiredFields`) produz um resultado HONESTAMENTE diferente, não o mesmo
+// centavo — porque o material não soma mais o desperdício.
+describe("SC-815 — um congelado de ANTES do ADR-0024/4.0.0 (T083 + 016/US10)", () => {
   /** Descongela um valor de entrada: string numérica vira número, o resto passa intacto.
    *  `null` PERMANECE null — `maxPrice: null` é a banda sem teto, não um campo ausente. */
   function thaw(value: unknown): unknown {
@@ -517,12 +525,27 @@ describe("SC-815 — um congelado de ANTES do ADR-0024 reprecifica no mesmo cent
   });
 
   for (const [i, antigo] of antigos.entries()) {
-    it(`documento #${i + 1}: o motor de hoje reescreve o MESMO documento`, () => {
+    it(`documento #${i + 1}: o motor de hoje RECUSA a entrada crua (FR-912) — nomeia o campo`, () => {
       const input = thaw(antigo.inputs) as PriceInput;
-      const hoje = freezePriceResult(input, computeCalculator(input), null);
-      // Documento inteiro, não só os totais: breakdown, canais, provenance e a versão do modelo.
-      // Um único centavo diferente em qualquer folha reprova.
-      expect(hoje).toEqual(antigo);
+      expect(() => computeCalculator(input)).toThrow(ValidationError);
+      try {
+        computeCalculator(input);
+      } catch (e) {
+        expect((e as ValidationError).field).toBe("wasteGrams");
+      }
+    });
+
+    it(`documento #${i + 1}: pela porta documentada, o resultado diverge HONESTAMENTE (nunca o mesmo centavo)`, () => {
+      const input = thaw(antigo.inputs) as Record<string, unknown>;
+      const { kept, discarded } = stripRetiredFields(input);
+      expect(discarded).toEqual([{ field: "wasteGrams", value: String(input.wasteGrams) }]);
+      const keptInput = kept as unknown as PriceInput;
+      const hoje = freezePriceResult(keptInput, computeCalculator(keptInput), null);
+      // A divergência é o PONTO — sem desperdício, o material sai menor. `recalc-today.tsx` nunca
+      // apresenta este resultado como se fosse o congelado: ou reprecifica da origem viva, ou
+      // reemite `antigo` intacto (fromFrozen), nunca este recompute cru.
+      expect(hoje.totals.custoTotal).not.toBe(antigo.totals.custoTotal);
+      expect(hoje.modelVersion).toBe("4.0.0");
     });
   }
 

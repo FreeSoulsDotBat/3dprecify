@@ -138,3 +138,46 @@ Residual de 1 linha aplicado depois (semente exibida já agrupada).
 semeavam folhas de WIRE com strings de FORMULÁRIO — funcionava por coincidência de gramática até
 a semente ganhar milhar. Corrigidos para atravessar `ptBrToWireDecimal`, a mesma fronteira que o
 produto atravessa (`scenario-bridge.test.ts`, `kit-basis-summary.test.tsx`).
+
+## PR-D — US10 remoção do Desperdício · pricing-core 4.0.0 · 2026-08-06
+
+**Três executores, cada um com seus vermelhos:**
+- **Núcleo (dev-estrutura-de-dados ELEVADO A OPUS, ADR-0022)**: 4.0.0 com recusa nominal por
+  CHAVE (mesmo `undefined`), `stripRetiredFields`/`isPreRemovalModel` no próprio pacote, 136
+  testes, cobertura **100%**, **7 mutações todas matando teste** (incl. a de ordem: recusa ANTES
+  de validar). Correção honesta da instrução: o vermelho do re-baseline é baselines ANTIGOS ×
+  entrada nova (a 3.1.0 tratava ausência como 0). Três decisões pinadas em teste: `discarded.value`
+  vazio → `""`; `isPreRemovalModel("")` → `false`; `in` também na porta (chave herdada não pode
+  passar no motor e ser declarada na porta).
+- **Backend (dev-backend)**: postura do wire vermelha por stash (9× 200/201 → 422 nomeando o campo
+  e o 4.0.0); migração **`0007`** (o head real — tasks.md contava 0003; o executor conferiu com
+  `alembic heads` em vez de obedecer) com round-trip provado em DB descartável e o comentário
+  literal "schema reversível, valores não"; regen idempotente (2ª rodada diff vazio); gate:be 469
+  passed, cobertura 82,37%.
+- **Frontend (dev-frontend)**: os DOIS costurados declarando (Alert info role=status com o nome
+  pt-BR "Desperdício (g)"; nota estrutural por `isPreRemovalModel` no recalc/compare); campo
+  removido das 4 superfícies; FR-914 (T038b) — tooltips de Gramas/Falha reescritos com seção
+  datada; fixture `frozen-payload-pre-016.json` + matriz e2e; grep final com 16 sobras todas
+  classificadas; SC-815 REESCRITO (não deletado) para provar a recusa nominal + a porta.
+
+**Homologação visual (qa-produto, T042): PASS COM RESSALVAS 93%** — 42 screenshots + **1 PDF
+aberto e decodificado** (lição E4: o congelado imprime Material R$ 11,00 com o desperdício dentro,
+Total R$ 42,98 — para sempre). Medido: campo com `visible=0 E markup=0` em 20 medições; declaração
+de descarte SEM canal vermelho dominante, 328px em viewport de 360; o recálculo declarado é o SEM
+desperdício provado por número (R$ 30,75 na tela; o preço COM desperdício, R$ 32,25, com 0
+ocorrências); compare Cotado 42,98 / Hoje 41,33 com a nota estrutural.
+
+| # | achado | destino |
+| --- | --- | --- |
+| R1 | Grade "Custos da peça" a 1440 ficou `[2,2,2,1]` — "Taxa de falha" órfã com meia-linha vazia | cosmético, **decisão do dono no gate** (span-2 ou reordenar é 1 linha) |
+| R2 | Contagens de palavras declaradas no `conteudo-tooltips.md` erradas (41→47; 48→50) | **corrigido** (docs) |
+| R3 | `arquitetura-016.md`/`quickstart.md` chamavam a migração de 0003; a real é **0007** | **corrigido** (docs) |
+| OBS | Produto salvo exibe escala decimal crua do servidor (`100,000 g`, `markup 50,000%`) — PRÉ-EXISTENTE (diff da fatia é só deleção nesses caminhos) | follow-up fora da fatia |
+
+**Lição nova da homologação (do próprio qa, autocorrigido 2×)**: um seletor de disclosure errado
+fez a primeira medição passar VAZIA (asserção de ausência sobre bloco não montado prova zero), e
+duas leituras de thumbnail reduzido inventaram defeitos que o recorte 1:1 desmentiu — **a imagem
+acha o que a caixa não acha, mas imagem REDUZIDA inventa: julgar no 1:1.**
+
+**Não verificado (fronteira honesta)**: caminho KIT-basis da declaração (criação KIT adiada pelo
+dono 2026-07-20 — sem caminho de UI); emulação de toque real no projeto mobile.

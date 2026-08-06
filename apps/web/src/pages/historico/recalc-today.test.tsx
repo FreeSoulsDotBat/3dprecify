@@ -68,7 +68,6 @@ function productAt(costPerRoll: string): ProductOut {
     },
     pieceInputs: {
       printGrams: "100.000",
-      wasteGrams: "5.000",
       printTimeHours: "5.000",
       failurePct: "0.000",
       finishTimeHours: "0.000",
@@ -338,6 +337,39 @@ describe("RecalcTodayButton — a NEW record, the original untouched", () => {
       // Ausente, não `false`: um payload gravado ANTES desta correção também não a tem, e tem de
       // continuar significando exatamente o que significava (o mesmo padrão do `bandMode`/ADR-0024).
       expect(body.payload.repricedFromFrozen).toBeUndefined();
+    });
+  });
+
+  // 016/T037 (US10, FR-913, arquitetura-016.md §D.2) — the structural note. `recalcToday` NEVER
+  // feeds a pre-4.0.0 frozen input raw into today's engine (it re-resolves the LIVE origin, or —
+  // origin gone — re-emits the frozen document untouched); the note explains WHY the numbers can
+  // differ when a recompute against a DIFFERENT model happened. Dirigida por VERSÃO (the frozen
+  // document carries `modelVersion`), never by a new payload field (I3).
+  describe("016/T037 — a nota estrutural (isPreRemovalModel) quando o recálculo diverge por versão", () => {
+    it("congelado pré-4.0.0 (3.1.0) + origem viva ⇒ a nota aparece, nomeando a versão", async () => {
+      const user = setup();
+      renderButton({}, productAt("220.00")); // origin resolves ⇒ repriced
+
+      await user.click(screen.getByRole("button", { name: t.recalcAction }));
+      expect(await screen.findByText(/calculado pelo modelo 3\.1\.0/)).toBeInTheDocument();
+    });
+
+    it("congelado já em 4.0.0 ⇒ NENHUMA nota estrutural (nada mudou de modelo)", async () => {
+      const user = setup();
+      // modelVersion drives the note — the item shape is otherwise the same fixture.
+      const item = makeItem();
+      item.snapshot!.modelVersion = "4.0.0";
+      (item.snapshot!.payload as unknown as { modelVersion: string }).modelVersion = "4.0.0";
+      render(
+        <>
+          <RecalcTodayButton item={item} product={productAt("220.00")} />
+          <Toaster />
+        </>,
+      );
+
+      await user.click(screen.getByRole("button", { name: t.recalcAction }));
+      await screen.findByText(/Isso cria um NOVO registro/); // the dialog did open
+      expect(screen.queryByText(/O modelo atual não tem mais esse campo/)).not.toBeInTheDocument();
     });
   });
 });

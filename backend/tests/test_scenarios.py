@@ -596,7 +596,6 @@ def _mk_refs(client: TestClient, h: dict[str, str]) -> tuple[str, str]:
             "material": "PLA",
             "costPerRoll": "110.00",
             "rollWeightKg": "1.000",
-            "defaultWasteGrams": "5.000",
         },
     ).json()["id"]
     pid = client.post(
@@ -623,7 +622,6 @@ def _mk_product(client: TestClient, h: dict[str, str], fid: str, pid: str, name:
         "printerId": pid,
         "pieceInputs": {
             "printGrams": "100.000",
-            "wasteGrams": "0.000",
             "printTimeHours": "5.000",
             "failurePct": "0.000",
             "finishTimeHours": "0.000",
@@ -728,7 +726,6 @@ def _update_product(
         "printerId": pid,
         "pieceInputs": {
             "printGrams": print_grams,
-            "wasteGrams": "0.000",
             "printTimeHours": "5.000",
             "failurePct": "0.000",
             "finishTimeHours": "0.000",
@@ -877,7 +874,6 @@ def _mk_kit_with_ad_hoc_line(
                 "pieceName": piece_name,
                 "pieceInputs": {
                     "printGrams": print_grams,
-                    "wasteGrams": "0.000",
                     "printTimeHours": "5.000",
                     "failurePct": "0.000",
                     "finishTimeHours": "0.000",
@@ -1029,11 +1025,16 @@ def test_KIT_D6_a_never_existed_referenced_kit_degrades_honestly(
 # never matched `CalcFieldName`, defaults silently applied instead). These two tests assert the
 # keys LITERALLY (copied from the contract/CALC_FIELD_NAMES, never derived from `_price_input_dict`
 # or `_piece_input()`) so they cannot share either helper's own mistake.
+#
+# 016/US10 (ADR-0026): `wasteGrams` is NOT in this set anymore — pricing-core 4.0.0 retired it and
+# the server (`_price_input_dict`/`_price_input_dict_from_bom_line`) stopped emitting it into a
+# resolved `lastKnown`. `CALC_FIELD_NAMES` on the frontend still lists it as of this writing (its
+# own removal is a SEPARATE, frontend-owned task) — this backend-owned set follows what the SERVER
+# actually emits, not the frontend's not-yet-updated list.
 _CONTRACT_PRICE_INPUT_KEYS = {
     "costPerRoll",
     "rollWeightKg",
     "printGrams",
-    "wasteGrams",
     "printTimeHours",
     "avgPowerKw",
     "tariffPerKwh",
@@ -1406,7 +1407,6 @@ def _mk_kit_with_two_ad_hoc_lines(
                 "pieceName": "Linha viva",
                 "pieceInputs": {
                     "printGrams": "100.000",
-                    "wasteGrams": "0.000",
                     "printTimeHours": "5.000",
                     "failurePct": "0.000",
                     "finishTimeHours": "0.000",
@@ -1437,7 +1437,6 @@ def _mk_kit_with_two_ad_hoc_lines(
                 "pieceName": "Linha a apagar",
                 "pieceInputs": {
                     "printGrams": "250.000",
-                    "wasteGrams": "5.000",
                     "printTimeHours": "8.000",
                     "failurePct": "2.000",
                     "finishTimeHours": "1.000",
@@ -1517,7 +1516,6 @@ def test_E5_04_a_kit_scenario_with_one_line_soft_deleted_degrades_only_that_line
     # `_price_input_dict_from_bom_line`'s field mapping (not `_price_input_dict`'s Product path).
     assert set(dead_line["input"].keys()) == _CONTRACT_PRICE_INPUT_KEYS, dead_line["input"].keys()
     assert dead_line["input"]["printGrams"] == "250.000"
-    assert dead_line["input"]["wasteGrams"] == "5.000"
     assert dead_line["input"]["costPerRoll"] == "150.00"
     assert dead_line["input"]["failurePct"] == "2.000"
     assert dead_line["input"]["machineValue"] == "2000.00"

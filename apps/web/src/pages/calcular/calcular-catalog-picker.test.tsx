@@ -36,7 +36,6 @@ const filament = {
   material: "PLA",
   costPerRoll: "110.00",
   rollWeightKg: "1.000",
-  defaultWasteGrams: "5.000",
   createdAt: "2026-07-09T00:00:00Z",
   updatedAt: "2026-07-09T00:00:00Z",
 };
@@ -99,9 +98,6 @@ describe("CalcularPage — US5 catalog pickers (T024)", () => {
     const cost = screen.getByRole("textbox", { name: t.fields.costPerRoll });
     expect(cost).toHaveValue("110,00");
     expect(screen.getByRole("textbox", { name: t.fields.rollWeight })).toHaveValue("1,000");
-    expect(screen.getByRole("textbox", { name: new RegExp(t.fields.wasteGrams) })).toHaveValue(
-      "5,000",
-    );
 
     // Pre-fill, never lock: the field stays an ordinary editable input.
     fireEvent.change(cost, { target: { value: "99" } });

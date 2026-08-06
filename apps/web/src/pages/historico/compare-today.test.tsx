@@ -65,7 +65,6 @@ function productAt(costPerRoll: string): ProductOut {
     },
     pieceInputs: {
       printGrams: "100.000",
-      wasteGrams: "5.000",
       printTimeHours: "5.000",
       failurePct: "0.000",
       finishTimeHours: "0.000",
@@ -291,5 +290,32 @@ describe("offline, 'hoje' is the cached catalog — and it says so (F3)", () => 
     await user.click(screen.getByRole("button", { name: t.compareAction }));
 
     expect(screen.getByText(t.recalcOfflineNote)).toBeInTheDocument();
+  });
+});
+
+// 016/T037 (US10, FR-913) — the SAME structural note "Recalcular hoje" shows, here too: the compare
+// puts a congelado (priced by a RETIRED model) next to a live number, and part of the difference may
+// come purely from the model change, not from any real cost movement.
+describe("016/T037 — a nota estrutural quando o congelado é de um modelo aposentado", () => {
+  it("congelado pré-4.0.0 (3.1.0) + comparação bem-sucedida ⇒ a nota aparece", async () => {
+    const user = setup();
+    renderBlock({}, { product: productAt("220.00") });
+
+    await user.click(screen.getByRole("button", { name: t.compareAction }));
+
+    expect(await screen.findByText(/calculado pelo modelo 3\.1\.0/)).toBeInTheDocument();
+  });
+
+  it("congelado já em 4.0.0 ⇒ nenhuma nota estrutural", async () => {
+    const user = setup();
+    const item = makeItem();
+    item.snapshot!.modelVersion = "4.0.0";
+    (item.snapshot!.payload as unknown as { modelVersion: string }).modelVersion = "4.0.0";
+    render(<CompareTodayBlock item={item} product={productAt("220.00")} />);
+
+    await user.click(screen.getByRole("button", { name: t.compareAction }));
+
+    await screen.findByText(t.compareToday); // the comparison DID render
+    expect(screen.queryByText(/O modelo atual não tem mais esse campo/)).not.toBeInTheDocument();
   });
 });

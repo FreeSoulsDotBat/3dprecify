@@ -170,7 +170,7 @@ export function BomLineEditor({
 
       {advancedOpen && (
         <div className="flex flex-col gap-3">
-          {/* The optional remainder of "Custos da peça" (wasteGrams/manutenção/falha) — no
+          {/* The optional remainder of "Custos da peça" (manutenção/falha) — no
               titled section of its own; the disclosure button above already names it.
               016/PR-C homologação (B4) — `.tf-costs-grid`, not `gridCard`. */}
           <Card padding="md" className="tf-costs-grid">

@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "kind": "SINGLE",
+  "modelVersion": "3.1.0",
+  "catalogVersion": null,
+  "inputs": {
+    "costPerRoll": "100",
+    "rollWeightKg": "1",
+    "printGrams": "100",
+    "wasteGrams": "10",
+    "printTimeHours": "5",
+    "avgPowerKw": "0.1",
+    "tariffPerKwh": "1",
+    "machineValue": "4000",
+    "machineLifetimeHours": "2000",
+    "failurePct": "10",
+    "finishTimeHours": "0.5",
+    "finishRatePerHour": "10",
+    "markupVarejoPct": "50",
+    "markupAtacadoPct": "30",
+    "channels": []
+  },
+  "breakdown": {
+    "material": "11.00",
+    "energy": "0.50",
+    "machine": "10.00",
+    "falha": "2.15",
+    "finishing": "5.00",
+    "labor": "0.00",
+    "admin": "0.00",
+    "otherCosts": []
+  },
+  "totals": {
+    "custoTotal": "28.65",
+    "precoVarejo": "42.98",
+    "precoAtacado": "37.25"
+  },
+  "channels": [],
+  "provenance": null
+}

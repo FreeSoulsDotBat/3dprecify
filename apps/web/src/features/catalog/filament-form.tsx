@@ -81,13 +81,6 @@ export function FilamentForm({
           unit="kg"
           required
         />
-        <ControlledNumber
-          control={control}
-          name="defaultWasteGrams"
-          label={cf.defaultWaste}
-          unit="g"
-          optional
-        />
       </fieldset>
 
       {submitError && <Alert tone="danger">{submitError}</Alert>}

@@ -13,7 +13,6 @@ const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -25,7 +24,7 @@ const SC001: PriceInput = {
   markupVarejoPct: 50,
   markupAtacadoPct: 30,
   channels: [],
-}; // custo 28,65 · varejo 42,98 · atacado 37,25
+}; // 016/US10 — re-baseline SEM wasteGrams (pricing-core 4.0.0): custo 27,55 · varejo 41,33 · atacado 35,82
 
 const MINIMAL: PriceInput = {
   costPerRoll: 100,
@@ -49,7 +48,7 @@ describe("composeBom — pure delegation to the canonical engine (ADR-0016)", ()
     const { bom } = composeBom(lines);
     const canonical = computeBom(lines.map((l) => ({ input: l.input, quantity: l.quantity })));
     expect(JSON.stringify(bom)).toBe(JSON.stringify(canonical));
-    expect(bom.custoTotal).toBe(126.95); // 28,65×3 + 20,50×2 — anchored, from the core
+    expect(bom.custoTotal).toBe(123.65); // 27,55×3 + 20,50×2 — anchored, from the core
   });
 
   it("a single line ×1 reproduces the single-piece calculator (SC-402 at the adapter)", () => {
@@ -73,7 +72,7 @@ describe("composeBom — invalid lines are excluded honestly, aligned to the com
     expect(lineResults[1]).toBeNull();
     // The compute ran over the two valid lines only.
     expect(bom.lines).toHaveLength(2);
-    expect(bom.custoTotal).toBe(77.8); // 28,65×2 + 20,50
+    expect(bom.custoTotal).toBe(75.6); // 27,55×2 + 20,50
     // Alignment: each non-null slot IS the corresponding engine line result.
     expect(lineResults[0]).toBe(bom.lines[0]);
     expect(lineResults[2]).toBe(bom.lines[1]);

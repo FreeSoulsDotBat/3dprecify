@@ -17,7 +17,68 @@ import { Decimal, toMoney, sumMoney } from "./rounding.ts";
 // a saved calc records which formula produced it.
 // 3.1.0 (ADR-0016): E3 adds `computeBom` (assembly = independent per-piece sum + per-marketplace
 // rollup) and exports `toMoney`/`sumMoney`/`Decimal` — additive public surface ⇒ MINOR bump.
-export const PRICING_MODEL_VERSION = "3.1.0";
+// 4.0.0 (ADR-0026, 016/US10): `wasteGrams` SAI da entrada — o material passa de
+// `custo/kg × (gramas + desperdício)` para `custo/kg × gramas`. Remoção de campo de entrada é
+// quebra ⇒ MAJOR, e o rótulo é congelado dentro de um snapshot imutável (ADR-0019): ele precisa
+// continuar respondendo QUAL fórmula produziu aquele número.
+export const PRICING_MODEL_VERSION = "4.0.0";
+
+/**
+ * Campos que já foram entrada do motor e **não são mais aceitos** (ADR-0026 §3.1).
+ *
+ * A recusa é NOMINAL e por CHAVE PRESENTE, não por valor: um `{...documentoAntigo}` carrega a chave,
+ * e é assim que o campo voltaria na prática. Ignorar em silêncio era a alternativa rejeitada — é a
+ * definição do defeito que a US10 existe para matar: um preço diferente sem nenhum sinal.
+ */
+export const RETIRED_INPUT_FIELDS = ["wasteGrams"] as const;
+
+/** Um campo aposentado encontrado num documento gravado, com o valor que a tela vai declarar. */
+export interface DiscardedField {
+  field: (typeof RETIRED_INPUT_FIELDS)[number];
+  /** Sempre texto: a folha é número numa entrada viva e string num documento gravado. Vazio quando
+   *  a chave existia sem valor — a CHAVE é o fato a declarar, o valor é só o que dá para mostrar. */
+  value: string;
+}
+
+/**
+ * A porta documentada da recusa (ADR-0026 §3.2): tira os campos aposentados de um documento gravado
+ * e devolve, junto, o que foi descartado — para que a tela possa DIZER (FR-913).
+ *
+ * Pura, determinística, offline e **genérica na folha**: o mesmo mapeamento serve ao documento de
+ * cenário (folha string) e a uma entrada viva (folha número).
+ *
+ * Ela mora aqui, e não em `entities/`/`shared/`, porque "o `wasteGrams` existiu até a 3.x" é a mesma
+ * informação que `PRICING_MODEL_VERSION` data. Dois lugares que precisam concordar viram um lugar
+ * que fica para trás.
+ */
+export function stripRetiredFields<T extends Record<string, unknown>>(
+  stored: T,
+): { kept: Omit<T, (typeof RETIRED_INPUT_FIELDS)[number]>; discarded: DiscardedField[] } {
+  // O espalhamento copia só as chaves PRÓPRIAS enumeráveis; o `delete` abaixo garante que nem uma
+  // chave com `undefined` sobrevive. Atribuir `undefined` no lugar do `delete` devolveria um
+  // documento que o próprio motor recusa — a porta cuspindo o que a porta existe para consertar.
+  const kept: Record<string, unknown> = { ...stored };
+  const discarded: DiscardedField[] = [];
+  for (const field of RETIRED_INPUT_FIELDS) {
+    if (!(field in stored)) continue;
+    const value = stored[field];
+    discarded.push({ field, value: value == null ? "" : String(value) });
+    delete kept[field];
+  }
+  return { kept: kept as Omit<T, (typeof RETIRED_INPUT_FIELDS)[number]>, discarded };
+}
+
+/**
+ * `major(modelVersion) < 4` — o sinal para um documento CONGELADO, que não tem a folha para
+ * inspecionar (o desperdício já vem somado dentro de `material`, ADR-0026 §3.3).
+ *
+ * O 4 é literal de propósito: é o major em que a remoção aconteceu, um fato permanente. Derivá-lo de
+ * `PRICING_MODEL_VERSION` faria a resposta mudar sozinha no dia de uma 5.0.0 que nada tem a ver com
+ * o desperdício.
+ */
+export function isPreRemovalModel(modelVersion: string): boolean {
+  return Number.parseInt(modelVersion.split(".")[0], 10) < 4;
+}
 
 /** One named "outros custos" sub-cost; its value folds into custo_total exactly as 004's adminTotal. */
 export interface OtherCostItem {
@@ -68,8 +129,9 @@ export interface ChannelResult {
 export interface PriceInput {
   costPerRoll: number; // R$, ≥ 0
   rollWeightKg: number; // kg, > 0
-  printGrams: number; // g, ≥ 0
-  wasteGrams?: number; // g, ≥ 0, default 0
+  /** g, ≥ 0 — **todo** o filamento que a peça consome: purga, suporte e brim entram aqui (4.0.0 /
+   *  FR-914). O antigo `wasteGrams` foi removido em 4.0.0 e é RECUSADO (ADR-0026). */
+  printGrams: number;
   printTimeHours: number; // h, ≥ 0
   avgPowerKw: number; // kW, ≥ 0 (effective average draw)
   tariffPerKwh: number; // R$/kWh, ≥ 0
@@ -140,8 +202,20 @@ function assertPositive(value: number, field: string): void {
 }
 
 export function computeCalculator(input: PriceInput): PriceResult {
+  // A PRIMEIRA coisa que acontece aqui, antes de qualquer validação (ADR-0026 §3.1): um campo
+  // aposentado é recusado pelo NOME, e a mensagem diz a saída. Se esta recusa viesse depois, uma
+  // entrada que também fosse inválida por outro motivo culparia o outro campo — e o chamador
+  // consertaria a coisa errada, deixando o descarte silencioso de pé.
+  for (const field of RETIRED_INPUT_FIELDS) {
+    if (field in input) {
+      throw new ValidationError(
+        `${field} foi removido do modelo de preço em 4.0.0 — use stripRetiredFields() antes de recomputar`,
+        field,
+      );
+    }
+  }
+
   // Normalize optionals to their 0 default (FR-023).
-  const wasteGrams = input.wasteGrams ?? 0;
   const maintenanceReservePerHour = input.maintenanceReservePerHour ?? 0;
   const failurePct = input.failurePct ?? 0;
   const finishTimeHours = input.finishTimeHours ?? 0;
@@ -156,7 +230,6 @@ export function computeCalculator(input: PriceInput): PriceResult {
   assertNonNegative(input.costPerRoll, "costPerRoll");
   assertPositive(input.rollWeightKg, "rollWeightKg");
   assertNonNegative(input.printGrams, "printGrams");
-  assertNonNegative(wasteGrams, "wasteGrams");
   assertNonNegative(input.printTimeHours, "printTimeHours");
   assertNonNegative(input.avgPowerKw, "avgPowerKw");
   assertNonNegative(input.tariffPerKwh, "tariffPerKwh");
@@ -174,9 +247,12 @@ export function computeCalculator(input: PriceInput): PriceResult {
 
   // Full-precision intermediates (Decimal); quantize only at emit (ADR-0008).
   // Production inputs — the three lines the failure factor covers (A16.4).
+  // 4.0.0 (FR-024 / ADR-0026): material = gramas × custo por grama. O somando de desperdício saiu —
+  // purga/suporte/brim entram nas GRAMAS USADAS, e o que se perde por impressão inteira perdida é a
+  // taxa de falha. Eram dois campos que o vendedor lia como a mesma coisa (homologação do dono, D2).
   const material = new Decimal(input.costPerRoll)
     .dividedBy(new Decimal(input.rollWeightKg).times(1000))
-    .times(new Decimal(input.printGrams).plus(wasteGrams)); // FR-024
+    .times(input.printGrams);
   // A16.2 (SC-005): energy = the effective average draw (avgPowerKw) × time × tariff.
   // There is deliberately NO nameplate-power × duty-cycle path — the corrected model takes the
   // real average kW directly, so only this line moves when avgPowerKw changes.

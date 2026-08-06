@@ -168,6 +168,24 @@ never confirmed**.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
+**016-correcao-homologacao IN PROGRESS on `develop` — V0 + PR-A + PR-B + PR-C SHIPPED.** PR-A #44
+(`d59c1b8`, US1+US2, the single teaser + Histórico→Orçamentos/Cenários→Simulações) + PR-B #45
+(`abf185b`, US3-US5, real logo + desktop columns + the item-9 scroll killed on the WIDTH axis, not
+by loosening the guard) + **PR-C #46 (`ca98217`, 2026-08-06, US6-US9 — tooltips, h+min, the
+machine-cost question, currency mask + section fusion)**, all owner-merged. **PR-C's own
+homologation (T030) came back FAIL 74%, 4 blockers + ressalvas — B1 the seed (2000h) wasn't a
+ritmo×payback product so the new US8 screen never showed on first visit (seed moved to 3600h =
+"quase todo dia"×3, custo_total 20,60→16,16/varejo 24,24/atacado 21,01, RE-VERIFIED by RUNNING
+`computeCalculator`, every downstream test updated) · B2 no thousands mask on currency fields
+(added, on blur only, semantic value untouched) · B3 the ritmo/payback selects unreadable at
+360/390px (87-102px useful, needed up to 197px) · B4 "Tarifa de energia" clipped to 1px (a
+`labelAddon` a <label> SIBLING, never nested — nesting folds a tooltip button's own name into the
+control's accessible name, confirmed the hard way) — all four fixed same-branch, red-before/
+green-after on two NEW calculator-layout.spec.ts guards, plus R1-R3/R6 (button affordance, Escape
+losing to a lingering hover, dead i18n keys). `pnpm gate:fe` + e2e 118/118 green before merge.**
+PR-D (US10, `wasteGrams` removal, pricing-core 4.0.0 MAJOR, ISOLATED) is next — see
+`specs/016-correcao-homologacao/tasks.md`.
+
 Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-stack-decisions,audit-findings,audit-findings-r2}.md`.
 - pnpm workspaces (Node 24) · React 19 + Vite 8 PWA + Tailwind v4 + Radix-wired `tf-*` DS (ADR-0007 — NOT the
   shadcn utility skin) · TanStack Router/Query · Zustand · RHF+Zod · FSD-Lite (+eslint-boundaries, dependency-cruiser).

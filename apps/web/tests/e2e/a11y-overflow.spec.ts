@@ -71,7 +71,12 @@ test.describe("no horizontal overflow at 360px — public surfaces", () => {
       await page.goto("/calcular");
       await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
       await page.getByLabel(messages.calculator.fields.costPerRoll).fill("999999999999999,99");
-      await page.getByLabel(messages.calculator.fields.grams).fill("999999999999999");
+      // 016/US6 (FR-908) — "Gramas usadas" now carries an InfoTip whose trigger aria-label is a
+      // superstring of the plain field label; `getByLabel` matches by substring across every
+      // role, so it also catches the tip's button. `getByRole("textbox", exact)` excludes it.
+      await page
+        .getByRole("textbox", { name: messages.calculator.fields.grams, exact: true })
+        .fill("999999999999999");
       // markupVarejo (not the ambiguous "Markup" substring, which now matches both
       // "Markup varejo" and "Markup atacado" — E1 split the single markup into two).
       await page.getByLabel(messages.calculator.fields.markupVarejo).fill("999999999");
@@ -106,7 +111,9 @@ test.describe("no horizontal overflow at 360px — public surfaces", () => {
         // in the tens of thousands, and a 900% markup carries it to six figures. The inputs are
         // plausible; what matters is that the OUTPUT is a price a seller could really charge.
         await page.getByLabel(messages.calculator.fields.costPerRoll).fill("99999");
-        await page.getByLabel(messages.calculator.fields.grams).fill("950");
+        await page
+          .getByRole("textbox", { name: messages.calculator.fields.grams, exact: true })
+          .fill("950");
         await page.getByLabel(messages.calculator.fields.markupVarejo).fill("900");
         await setTheme(page, theme);
 

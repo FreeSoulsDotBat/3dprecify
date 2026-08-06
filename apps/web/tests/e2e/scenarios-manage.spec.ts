@@ -38,16 +38,15 @@ async function openScenariosList(page: Page) {
   return page.getByRole("dialog");
 }
 
-/** Create one filament ("PLA Azul" 110/1kg/waste 5) + one printer ("Ender 3" 1200/2000h/0,12kW/0,5)
- *  — the SAME fixture `catalog.spec.ts` (E2/T025) already proved computes "R$ 26,48" with the
- *  calculator's default remaining fields. */
+/** Create one filament ("PLA Azul" 110/1kg) + one printer ("Ender 3" 1200/2000h/0,12kW/0,5) — the
+ *  SAME fixture `catalog.spec.ts` (E2/T025) already proved computes "R$ 25,65" with the
+ *  calculator's default remaining fields (016/US10 — re-baseline SEM Desperdício, campo removido). */
 async function createFilamentAndPrinter(page: Page): Promise<void> {
   await page.getByRole("button", { name: catalogo.addFilament }).click();
   await page.getByRole("textbox", { name: cf.name }).fill("PLA Azul");
   await page.getByRole("textbox", { name: new RegExp(cf.material) }).fill("PLA");
   await page.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) }).fill("110");
   await page.getByRole("textbox", { name: new RegExp(t.fields.rollWeight) }).fill("1");
-  await page.getByRole("textbox", { name: new RegExp(cf.defaultWaste) }).fill("5");
   await page.getByRole("button", { name: cf.save, exact: true }).click();
   await expect(page.getByText("PLA Azul")).toBeVisible();
 
@@ -82,14 +81,14 @@ async function createProductWithScenario(
   await page
     .getByRole("combobox", { name: t.catalogPicker.printer })
     .selectOption({ label: "Ender 3" });
-  await expect(page.getByText("R$ 26,48").first()).toBeVisible();
+  await expect(page.getByText("R$ 25,65").first()).toBeVisible();
   await page.getByRole("button", { name: pf.saveProduct }).click();
   await expect(page.getByText(pf.savedProduct)).toBeVisible();
 
   // Back on /catalogo?tab=products (the page's own post-save navigation) — open the product
   // (client-nav row click) to reach the "Salvar cenário" affordance (T021b).
   await page.getByText(productName).click();
-  await expect(page.getByText("R$ 26,48").first()).toBeVisible();
+  await expect(page.getByText("R$ 25,65").first()).toBeVisible();
 
   await page.getByTestId("save-scenario-trigger").click();
   const sheet = page.getByRole("dialog");
@@ -126,9 +125,9 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
     await editSheet.getByRole("button", { name: cf.saveChanges, exact: true }).click();
     await expect(page.getByText(cf.savedFilament)).toBeVisible();
 
-    // Reopen the scenario from /calcular — the price reflects TODAY's product values (material
-    // 220×105/1000=23,10 + energy 0,60 + machine 5,50 = 29,20 → varejo ×1,5 = 43,80), never the
-    // R$ 26,48 captured at save time.
+    // Reopen the scenario from /calcular — the price reflects TODAY's product values (016/US10 —
+    // sem Desperdício: material 220×100/1000=22,00 + energy 0,60 + machine 5,50 = 28,10 →
+    // varejo ×1,5 = 42,15), never the R$ 25,65 captured at save time.
     await page.getByRole("link", { name: nav.calcular }).click();
     await page.reload();
     const listDialog = await openScenariosList(page);
@@ -136,8 +135,8 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0); // the list sheet closed
     await expect(page.getByText(s.loadedLive)).toBeVisible();
     await expect(page.getByTestId("scenario-context-bar")).not.toContainText(pf.manualValuesKept); // never degraded — the ref still resolves
-    await expect(page.getByText("R$ 43,80").first()).toBeVisible();
-    await expect(page.getByText("R$ 26,48")).toHaveCount(0); // the stale save-time price is gone
+    await expect(page.getByText("R$ 42,15").first()).toBeVisible();
+    await expect(page.getByText("R$ 25,65")).toHaveCount(0); // the stale save-time price is gone
   });
 
   test("D6 honest degradation: deleting the referenced product degrades to last-known, never claims a removal, stays editable (VR-606)", async ({
@@ -159,7 +158,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
       .click();
     await expect(page.getByText("Vaso Cenário D6")).toHaveCount(0);
 
-    // Reopen the scenario — it degrades to last-known: the SAVE-TIME price (R$ 26,48), a calm
+    // Reopen the scenario — it degrades to last-known: the SAVE-TIME price (R$ 25,65), a calm
     // caption, and NEVER a claim of removal (F1 — the honesty class the E4 lineage guards).
     await page.getByRole("link", { name: nav.calcular }).click();
     await page.reload();
@@ -168,7 +167,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
     await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.getByText(s.loadedLive)).toBeVisible();
     await expect(page.getByText(pf.manualValuesKept)).toBeVisible(); // the honest degraded caption
-    await expect(page.getByText("R$ 26,48").first()).toBeVisible(); // last-known, not blank
+    await expect(page.getByText("R$ 25,65").first()).toBeVisible(); // last-known, not blank
     await expect(page.getByRole("button", { name: s.openOrigin })).toHaveCount(0); // no broken link
     await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0); // F1, never inferred
 
