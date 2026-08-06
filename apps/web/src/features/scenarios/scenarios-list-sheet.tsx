@@ -11,6 +11,7 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import type { ScenarioOut } from "@/shared/api/generated";
 import { ApiError } from "@/shared/api/transport";
+import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
@@ -33,8 +34,6 @@ import {
   Spinner,
   toast,
 } from "@/shared/ui";
-
-import { ScenarioTeaserDialog, ScenarioTeaserPanel } from "./scenario-teaser";
 
 import "./scenario-list.css";
 
@@ -457,28 +456,20 @@ export function ScenariosListSheet({
   // Never/free (a session that exists but never bought Premium) meets the SAME honest door as
   // signed-out (§0.1 matrix, "none" row) — never a broken empty list pretending the feature is on.
   const showTeaser = signedOut || entitlement.data?.status === "none";
-  const [teaserDialogOpen, setTeaserDialogOpen] = useState(false);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {open && (
         <SheetContent>
           <SheetTitle>{t.listTitle}</SheetTitle>
-          <SheetDescription>{t.listSubtitle}</SheetDescription>
+          {/* 016/T010-A1 — no grátis, a descrição da lista dizia a MESMA promessa que o subtítulo
+              do teaser logo abaixo ("…preços de hoje", duas vezes, coladas) — o "subtítulo
+              duplicado" que a US1-AC2 manda remover. A descrição pertence à LISTA, então ela só
+              renderiza quando a lista renderiza. */}
+          {!showTeaser && <SheetDescription>{t.listSubtitle}</SheetDescription>}
 
           {showTeaser ? (
-            <>
-              <ScenarioTeaserPanel
-                signedOut={signedOut}
-                onOpenDialog={() => setTeaserDialogOpen(true)}
-                dialogOpen={teaserDialogOpen}
-              />
-              <ScenarioTeaserDialog
-                open={teaserDialogOpen}
-                onOpenChange={setTeaserDialogOpen}
-                signedOut={signedOut}
-              />
-            </>
+            <PremiumTeaser feature="SCENARIOS" signedOut={signedOut} />
           ) : (
             <ScenarioListBody
               lapsed={entitlement.data?.status === "lapsed"}

@@ -5,8 +5,8 @@ import type { HistoryItem } from "@/entities/history/outbox";
 import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
-import { HistoryTeaserPanel } from "@/features/history/history-teaser";
 import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
+import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
@@ -115,7 +115,7 @@ function GateChecking() {
 function TeaserShell({ signedOut }: { signedOut: boolean }) {
   return (
     <GateShell>
-      <HistoryTeaserPanel signedOut={signedOut} />
+      <PremiumTeaser feature="QUOTES" signedOut={signedOut} />
     </GateShell>
   );
 }

@@ -13,6 +13,8 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
 
+import { messages } from "@/shared/i18n/messages.pt-br";
+
 import { AppNav, type AppNavVariant } from "./app-nav";
 
 afterEach(() => cleanup());
@@ -61,7 +63,7 @@ describe("AppNav (T025 / US1 — NAV-1)", () => {
     expect(within(nav).getByRole("link", { name: "Calcular" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Catálogo" })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Kits" })).toBeInTheDocument();
-    expect(within(nav).getByRole("link", { name: "Histórico" })).toBeInTheDocument();
+    expect(within(nav).getByRole("link", { name: messages.nav.historico })).toBeInTheDocument();
     expect(within(nav).getByRole("link", { name: "Conta" })).toBeInTheDocument();
 
     const active = activeLinks(nav);

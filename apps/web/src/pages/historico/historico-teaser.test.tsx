@@ -27,18 +27,15 @@ import { useSessionStore } from "@/shared/session/session-store";
 
 import { HistoricoPage } from "./historico-page";
 
-// 009/T014 (E4, PR-A) — the honest door, written FAILING-first (US5; E2 US7 / E3 US5 lineage).
+// 009/T014 (E4, PR-A) — the honest door. 016/US1+US2 (T006/T008): rewritten for the unified
+// `PremiumTeaser` (feature=QUOTES) and the "Orçamentos" label (renamed from "Histórico").
 //
-// A signed-out or free seller opening the Histórico tab must find an EXPLANATION, not a broken
-// list — and above all not a FABRICATED SAMPLE ENTRY. A demo row on this particular surface would
-// be a fake receipt: the one thing the whole epic exists to make impossible.
-//
-// The three prohibitions inherited from E2/E3 hold: no price, no availability date, no purchase CTA
-// (billing is E6 — a buy button would promise a flow that does not exist, Principle II). And the
-// free calculator promise is restated in plain words, because that is what the seller is actually
-// worried about when they hit a paywall.
+// The three prohibitions inherited from E2/E3 hold: no fabricated sample entry, and the free
+// calculator promise is restated (via the shared teaser's caption).
 
 const t = messages.historico;
+const tb = messages.billing;
+const pt = messages.premiumTeaser.QUOTES;
 
 const emptyList = {
   items: [],
@@ -69,12 +66,12 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("free and signed-out meet an explanation, never a broken list", () => {
-  it("free: explains what the Histórico is for — and fabricates NO sample entry", () => {
+  it("free: explains what Orçamentos is for — and fabricates NO sample entry", () => {
     useEntitlementMock.mockReturnValue(entitlement("none"));
     render(<HistoricoPage />);
 
-    expect(screen.getByText(t.teaserTitle)).toBeInTheDocument();
-    expect(screen.getByText(t.teaserBody)).toBeInTheDocument();
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
     // A demo row here would be a FAKE RECEIPT — the one thing this epic exists to make impossible.
     expect(screen.queryByText(t.quotedValue)).not.toBeInTheDocument();
     // O `/R\$/` cru era um PROXY para "nenhum recibo inventado", e ele funcionava enquanto o teaser
@@ -86,13 +83,14 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     }
   });
 
-  it("signed out: the same honest door, plus a way in", () => {
+  it("signed out: the same honest door, plus a way in via the CTA's own href", () => {
     useSessionStore.setState({ status: "anonymous", user: null });
     useEntitlementMock.mockReturnValue(entitlement(null));
     render(<HistoricoPage />);
 
-    expect(screen.getByText(t.teaserTitle)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: messages.signIn.title })).toBeInTheDocument();
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    const cta = screen.getByRole("link", { name: tb.subscribeAction });
+    expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
   });
 
   it("o preço é HONESTO (E6/US7) e nada é prometido antes de existir", () => {
@@ -100,13 +98,6 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     const { container } = render(<HistoricoPage />);
     const text = container.textContent ?? "";
 
-    // A proibição de PREÇO caiu porque a premissa dela caiu: ela dizia "billing is E6", e o E6
-    // chegou (PR-A + PR-B na `develop`). O teaser agora mostra o preço REAL e um caminho para
-    // assinar — o que era desonesto era prometer uma compra que não existia.
-    //
-    // O que NÃO caiu, e é o que sobra aqui: só os três números que o produto de fato pratica,
-    // nenhuma urgência, nenhum "de/por" riscado (fabricaria um desconto que nunca existiu), e
-    // nenhuma promessa de coisa não construída — esta última nunca dependeu de cobrança.
     for (const n of text.match(/\d+[.,]\d{2}/g) ?? []) {
       expect(["15,99", "12,99", "155,88"]).toContain(n);
     }
@@ -115,18 +106,18 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     expect(text).not.toMatch(/\b(em breve|a partir de|lançamento)\b/i);
   });
 
-  it("the free calculator promise is restated in plain words (SC-507/512)", () => {
+  it("the free calculator promise is restated (SC-507/512, via the shared teaser's caption)", () => {
     useEntitlementMock.mockReturnValue(entitlement("none"));
     render(<HistoricoPage />);
 
-    expect(screen.getByText(t.teaserFreeNote)).toBeInTheDocument();
+    expect(screen.getByText(pt.caption)).toBeInTheDocument();
   });
 
   it("LAPSED is NOT teased — a lapsed seller's records are their own data (FR-517)", () => {
     useEntitlementMock.mockReturnValue(entitlement("lapsed"));
     render(<HistoricoPage />);
 
-    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
     expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
   });
 });

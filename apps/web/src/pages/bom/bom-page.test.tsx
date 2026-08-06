@@ -102,6 +102,7 @@ function mockFees(catalog: unknown = EMPTY_FEES) {
 import { BomPage } from "./bom-page";
 
 const t = messages.bom;
+const pt = messages.premiumTeaser.KITS;
 
 /** SC-001-shaped saved product (wire decimal strings): custo 28,65 · varejo 42,98 (per unit). */
 const productP: ProductOut = {
@@ -247,8 +248,8 @@ describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
       </QueryClientProvider>,
     );
     expect(screen.getByText(t.guardChecking)).toBeInTheDocument();
-    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
-    expect(screen.queryByText(t.teaserSignedOutBody)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("premium-teaser")).not.toBeInTheDocument();
   });
 
   it("while the entitlement check is in flight, neither composer nor teaser renders (honest wait)", () => {
@@ -267,7 +268,7 @@ describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
       </QueryClientProvider>,
     );
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
-    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
   });
 
   it("an entitlement FETCH ERROR is an honest retry state — never the composer, never the teaser", () => {
@@ -288,7 +289,7 @@ describe("BomPage — server-informed gate (ADR-0015, US1-4)", () => {
     expect(screen.getByText(t.guardError)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.guardRetry })).toBeInTheDocument();
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
-    expect(screen.queryByText(t.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
   });
 });
 

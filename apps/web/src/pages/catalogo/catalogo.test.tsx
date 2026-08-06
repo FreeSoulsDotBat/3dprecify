@@ -70,6 +70,7 @@ afterEach(() => {
   useSessionStore.setState({ status: "anonymous", user: null });
 });
 const catalogo = messages.catalogo;
+const pt = messages.premiumTeaser.CATALOG;
 
 // 013/F-02 follow-up — REGRESSION GUARD. The tab used to live in `useState`, re-derived only on
 // MOUNT. That was invisible while the product form was its own route (`/catalogo/produtos/*`):
@@ -186,14 +187,14 @@ describe("CatalogoPage — lapsed premium variant (013/FB-02, ux-catalog §3)", 
     expect(screen.getByText(catalogo.lapsedBody)).toBeInTheDocument();
     // The full item still renders — a lapse freezes writes, never reads (FR-409).
     expect(screen.getByText("PLA Azul")).toBeInTheDocument();
-    expect(screen.queryByText(catalogo.teaserTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
   });
 
   it("'none' (never subscribed) still sees the honest teaser, NOT the lapsed banner — different states, different copy", () => {
     entitlement.data = { status: "none" };
     render(<CatalogoPage />);
 
-    expect(screen.getByText(catalogo.teaserTitle)).toBeInTheDocument();
+    expect(screen.getByText(pt.title)).toBeInTheDocument();
     expect(screen.queryByText(catalogo.lapsedTitle)).not.toBeInTheDocument();
   });
 });

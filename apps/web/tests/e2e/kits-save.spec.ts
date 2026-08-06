@@ -158,6 +158,6 @@ test("a FREE account cannot save a kit — and nothing is materialized (SC-411)"
   // The free account meets the honest teaser at /kits — the composer never mounts (ADR-0015),
   // so there is no save affordance to fake. The server is the boundary either way.
   await page.goto("/kits");
-  await expect(page.getByText(t.bom.teaserTitle)).toBeVisible();
+  await expect(page.getByText(t.premiumTeaser.KITS.title)).toBeVisible();
   await expect(page.getByRole("button", { name: t.bom.save, exact: true })).toHaveCount(0);
 });

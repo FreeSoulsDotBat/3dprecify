@@ -8,13 +8,13 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import { AssemblySummary } from "@/features/bom/assembly-summary";
 import { composeBom, type ComposerLine } from "@/features/bom/bom-compute";
 import { BomLineCard } from "@/features/bom/bom-line-card";
-import { BomTeaser } from "@/features/bom/bom-teaser";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import { type CalcFormValues, defaultCalcValues } from "@/features/calculator/calculator-schema";
 import { productToForm } from "@/features/calculator/product-mapping";
 import { honestWriteError } from "@/shared/api/error-messages";
 import type { BomOut, Materialization } from "@/shared/api/generated";
+import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -165,7 +165,7 @@ function GateChecking() {
 function BomGatePanel({ signedOut }: { signedOut: boolean }) {
   return (
     <GateShell>
-      <BomTeaser signedOut={signedOut} />
+      <PremiumTeaser feature="KITS" signedOut={signedOut} />
     </GateShell>
   );
 }
