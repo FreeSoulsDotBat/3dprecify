@@ -19,6 +19,58 @@
 
 ## Clarifications
 
+### Session 2026-08-07 (hotfix A2 — desenho em `docs/homologacao/hotfix-a2-a3-desenho.md`)
+
+### Clarification 2026-08-07 — o frete Shopee do FR-111a estava invertido (achado A2, 016/T072)
+
+**O que se mediu.** Canal Shopee, semente varejo R$ 24,24: anúncio R$ 35,30, linha "Frete / cupom
+−R$ 20,00", **líquido R$ 4,24**, com o campo "Frete (opcional)" exibindo **R$ 0,00**; com o
+manuseio de item volumoso ligado, o líquido fica **negativo (−R$ 5,76)**.
+
+**O que a fonte diz.** Art. 26839 (a MESMA fonte que o catálogo já cita), verbatim:
+"*A Shopee **oferece subsídios de frete para todos os vendedores** nos valores de R$20 … R$30 …
+R$40*" e "*Cupons de frete grátis **válidos para fretes de até** R$20*". O R$ 20/30/40 é o valor
+que **a Shopee oferece** e é um **teto de validade do cupom** — não uma cobrança do vendedor.
+A palavra "coparticipação" aparece uma única vez no artigo e vem escopada a "*vendedores que
+utilizam o modelo logístico Intelipost ou outras ferramentas através da API de Frete*", sem os
+números, que ficam em artigo linkado.
+
+**Correção da FR-111a.** A cláusula "**Shopee** — the seller-co-funded free-shipping **voucher
+ceiling** by price band (curatable from the official source)" **é revogada**: ela atribuía ao
+vendedor um custo que a fonte atribui à Shopee, e cobrava um **teto** como **certo e integral**.
+Passa a valer: **Shopee — `freightCost = 0` por padrão**; o único frete descontado do líquido é o
+que o vendedor **declara** no campo de frete do canal. O subsídio da Shopee é publicado como
+**informação não-computante** (com procedência e data), nunca como parcela da conta.
+
+**NÃO-DETERMINADO, e deliberadamente não preenchido.** Se existe custo para o vendedor quando o
+frete real excede o teto — e, se existe, se ele é o excedente, um percentual ou uma coparticipação —
+**as fontes lidas não respondem**. Fecha-se com o verbatim de: art. 23431 ("Programa de Frete
+Grátis"), o artigo de coparticipação linkado na seção Intelipost/API de Frete do 26839, e art. 7749.
+Até lá o produto não desconta nada que o vendedor não tenha digitado. (Art. 4478, "cobrança
+adicional de frete", é outra cobrança — divergência de peso/dimensão — e já está coberta pelo aviso
+permanente da US17.)
+
+**FR-111b passa a ser verificável, não só declarada.** "O vendedor DEVE ver e poder sobrescrever o
+`freightCost` resultante" estava sendo violado pela Shopee desde E1: o valor descontado não tinha
+controle na tela. Regra reafirmada e sob guarda automática: **nenhum valor entra na conta sem um
+controle que o nomeie** — para toda entrada de todo marketplace do catálogo servido,
+`grossUp(base, fees).freightCost === (fees.freightCost ?? 0)`.
+
+**Compatibilidade.** Correção **de dado** (`freight: {kind:"NONE"}` nas duas entradas Shopee +
+bump de `catalogVersion`). O motor **não muda**: `freightVoucherBands` continua sendo honrado
+exatamente como antes para payloads já gravados (fica **DEPRECATED**, sem novos emissores), porque
+ele viaja dentro de snapshot congelado (ADR-0019) e de documento de cenário (ADR-0021).
+`pricing-core` permanece **4.1.0** e `PRICING_MODEL_VERSION` **não é bumpado**. Orçamentos
+congelados **não mudam** (registram o que foi cotado); cenários salvos com base Shopee
+**reprecificam para cima**, e isso é a correção chegando.
+
+*(Implementação: `catalogVersion` `2026-08-06.1` → `2026-08-07.0`, decidido por `nextCatalogVersion`
+e não à mão; o subsídio migrou para `freightSubsidyInfo` no nível do marketplace SHOPEE — aditivo,
+`nullish`, não-computante, deliberadamente NÃO um `kind` novo do `discriminatedUnion` `freight`,
+que faria um cliente PWA já instalado recusar o catálogo inteiro em silêncio. A guarda vive em
+`apps/web/src/features/calculator/freight-declared.test.ts` — em `features` e não em `shared`
+porque `entryToChannelFees` mora ali e o eslint-boundaries proíbe `shared → feature`.)*
+
 ### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
 
 - **`[F02A-007]` — FR-118/SC-109 fixam `PRICING_MODEL_VERSION = "3.0.0"`, e o código está em
@@ -232,7 +284,7 @@ The entire expansion stays inside the **free, offline, signed-out** calculator: 
 
 - **FR-110**: For **each** channel and for **each** base ∈ {`preco_varejo`, `preco_atacado`}, the calculator MUST compute `preço para anunciar` and `recebido líquido = anúncio − max(commissionPct/100 × anúncio, minPerItem) − fixedFee − freightCost`, where `(commissionPct, fixedFee, minPerItem)` come from `resolveFee(marketplace, feeDeterminants, listingPrice)` (catalog or override; `minPerItem` defaults 0) and `freightCost` from FR-111a. The commission is a **floor** (`max(% , minPerItem)` — Amazon's per-item minimum); `preço para anunciar` MUST be grossed up so `recebido líquido == base`, which is piecewise (the minimum binds only at low prices). This is 004 FR-031 generalized to N channels with a commission floor.
 - **FR-111**: When a marketplace prices its **fixed fee by price band** (Shopee; Mercado Livre custo fixo) **or its commission by a per-item minimum** (Amazon), the calculator MUST resolve the fee for the **computed listing price** via one **deterministic bounded fixed-point** — no oscillation at a band or floor boundary; identical inputs yield the identical listing price, fee, and regime (see Assumptions).
-- **FR-111a** (Q2 — generic freight / free-shipping component): The calculator MUST subtract a per-channel `freightCost` from `recebido líquido` where the channel imposes one: **Mercado Livre** — for listings at/above the free-shipping threshold, an **editable shipping-subsidy estimate** (research 2026-07-06: reputation/weight/volume/region-dependent, therefore **not curatable as an exact catalog value** — seeded by a rough default at most, always seller-overridable, seal MUST mark it an **estimate**); **Shopee** — the seller-co-funded free-shipping **voucher ceiling** by price band (curatable from the official source); **Amazon** — `freightCost = 0` (own/FBA shipping is out of this model). Where none applies, `freightCost = 0` and `recebido líquido` equals the base as in 004. No `freightCost` value may be shown as authoritative when it is an estimate.
+- **FR-111a** (Q2 — generic freight / free-shipping component): The calculator MUST subtract a per-channel `freightCost` from `recebido líquido` where the channel imposes one: **Mercado Livre** — for listings at/above the free-shipping threshold, an **editable shipping-subsidy estimate** (research 2026-07-06: reputation/weight/volume/region-dependent, therefore **not curatable as an exact catalog value** — seeded by a rough default at most, always seller-overridable, seal MUST mark it an **estimate**); ~~**Shopee** — the seller-co-funded free-shipping **voucher ceiling** by price band (curatable from the official source)~~ **REVOGADA em 2026-08-07** (achado A2 — ver a Clarification 2026-08-07 acima): **Shopee — `freightCost = 0` por padrão**, e o único frete descontado é o que o vendedor declara no campo do canal; o subsídio da Shopee é informação não-computante; **Amazon** — `freightCost = 0` (own/FBA shipping is out of this model). Where none applies, `freightCost = 0` and `recebido líquido` equals the base as in 004. No `freightCost` value may be shown as authoritative when it is an estimate.
 - **FR-111b**: Any inputs a freight component needs (e.g. ML peso/categoria) MUST be presented with sensible editable defaults; the seller MUST see and be able to override the resulting `freightCost`. Missing/unknown inputs MUST degrade to a clearly-labelled estimate or zero — never to a bad number or a blocked calculation.
 - **FR-112**: All channels MUST be computed and presented **together** ("Preços por canal"), each showing announce + net for varejo and atacado. No marketplace fee is EVER added into `custo_total`.
 - **FR-113**: A master **"Incluir marketplaces no preço"** toggle (default **on**) MUST govern framing: **on** → the per-channel announce prices are the presented pricing result; **off** → the headline is the direct `preco_varejo`/`preco_atacado` (equal to 004 exactly) and the channel section is hidden entirely — pure UI show/hide (Clarification 2026-07-23, D2=A; officializes the 2026-07-08 dod-evidence owner-clarification that this living spec had never been amended to reflect — audit finding FA-04). **Descope note**: `PriceResult.includeInHeadline` was never added to the pricing-core result contract — that descope decision was made and recorded in ADR-0011 (§"Field-name/shape reconciliation"), not in this spec; the toggle is client-only UI state, never carried on the computed result.

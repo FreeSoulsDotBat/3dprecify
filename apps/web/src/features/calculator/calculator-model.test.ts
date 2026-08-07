@@ -908,7 +908,11 @@ describe("016/US12 (T046) — byte-identical fixture: today's 3 marketplaces × 
       // parado, e é ELE que prova que o fixo é do plano e não da tabela de comissão.
       { seal: "catchAll", anuncioVarejo: 50.98, liquidoVarejo: 41.33 }, // Amazon INDIVIDUAL catch-all
       { seal: "reference", anuncioVarejo: 48.06, liquidoVarejo: 41.33 }, // Amazon + categoria
-      { seal: "reference", anuncioVarejo: 56.66, liquidoVarejo: 21.33 }, // Shopee catalog pre-fill
+      // hotfix 016/A2 (2026-08-07) — o líquido era 21,33 = 41,33 − R$ 20,00 de "voucher
+      // co-financiado". A fonte atribui o subsídio à SHOPEE (art. 26839/23431), não ao vendedor, e
+      // o catálogo passou a `freight: {kind:"NONE"}`. O ANÚNCIO não se move (o frete nunca foi
+      // gross-upado): o que volta é a margem que nunca deveria ter saído. Re-baseline RODADO.
+      { seal: "reference", anuncioVarejo: 56.66, liquidoVarejo: 41.33 }, // Shopee catalog pre-fill
     ]);
   });
 });

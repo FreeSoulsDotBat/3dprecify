@@ -9,6 +9,7 @@ import {
 import { create } from "zustand";
 
 import { auth } from "@/shared/lib/firebase";
+import { clearSessionExpired } from "@/shared/session/session-expiry";
 
 // Cross-cutting auth session (FR-C5.4). Lives in `shared` because the router guard, the sign-in
 // feature, and the app shell all read it; feature screens depend on it via shared, never via each
@@ -50,6 +51,9 @@ export async function bootFromAuth(authInstance: Auth): Promise<void> {
   });
   onIdTokenChanged(authInstance, (user) => {
     useSessionStore.setState({ user, status: user ? "authenticated" : "anonymous" });
+    // hotfix 016/A3 (H5) — the seller signing back in (even through a different tab/flow) is the
+    // OTHER way the session-expired marker clears, mirroring `transport.ts`'s "first success" clear.
+    if (user) clearSessionExpired();
   });
 }
 

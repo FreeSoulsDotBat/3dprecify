@@ -11,6 +11,7 @@ import {
   parseFeeCatalog,
   parseSeedResilient,
   resolveEntry,
+  resolveFreightSubsidyCeiling,
   SCHEMA_VERSION,
   STALENESS_DAYS,
 } from "./fee-catalog";
@@ -62,7 +63,10 @@ describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
   it("catalogVersion bumpou UMA vez, e o seed carrega o mesmo rótulo", () => {
     // O rótulo viaja congelado dentro de um snapshot imutável (ADR-0019): dois conteúdos sob o
     // mesmo rótulo ficam ambíguos para sempre. Foi o defeito medido em 014.
-    expect(served.catalogVersion).toBe("2026-08-06.1");
+    // hotfix 016/A2 (2026-08-07): re-baseline de "2026-08-06.1" — as duas entradas Shopee perderam
+    // o `BAND_VOUCHER` e o marketplace ganhou `freightSubsidyInfo`. UM bump pelo hotfix inteiro,
+    // decidido por `nextCatalogVersion("2026-08-06.1", "2026-08-07", true)`.
+    expect(served.catalogVersion).toBe("2026-08-07.0");
     expect(FEE_CATALOG_SEED.catalogVersion).toBe(served.catalogVersion);
   });
 
@@ -115,6 +119,77 @@ describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
       expect(cpf.priceBands?.[0]?.minPrice).toBe(12);
       expect(cpf.priceBands?.some((b) => b.fixedFeeRule != null)).toBe(false);
       expect(cpf.priceBands?.some((b) => b.minPrice < 12)).toBe(false);
+    });
+
+    // hotfix 016/A2 (2026-08-07) — o subsídio migrou de ARITMÉTICA para INFORMAÇÃO.
+    describe("o subsídio de frete é informação, não parcela da conta", () => {
+      it("as duas entradas declaram `freight: {kind:'NONE'}` — nenhum voucher emitido", () => {
+        for (const e of shopee.entries) expect(e.freight).toEqual({ kind: "NONE" });
+      });
+
+      it("o marketplace publica `freightSubsidyInfo` com os tetos e a procedência do art. 23431", () => {
+        // Os números vivem no DADO e nunca no código (Constituição II): a legenda da tela lê daqui.
+        expect(shopee.freightSubsidyInfo).toEqual({
+          bands: [
+            { minPrice: 0, maxPrice: 80, ceiling: 20 },
+            { minPrice: 80, maxPrice: 200, ceiling: 30 },
+            { minPrice: 200, maxPrice: null, ceiling: 40 },
+          ],
+          source: expect.stringContaining("Shopee") as unknown as string,
+          sourceUrl: "https://seller.shopee.com.br/edu/article/23431",
+          effectiveDate: "2026-03-01",
+          lastReviewed: "2026-08-07",
+        });
+      });
+
+      it("um catálogo SEM o campo parseia idêntico (compatibilidade retroativa)", () => {
+        // A propriedade que fez do subsídio um CAMPO NOVO e não um `kind` do union `freight`: um
+        // cliente antigo descarta a propriedade extra e continua lendo o catálogo inteiro. Aqui a
+        // simetria: um catálogo antigo (sem o campo) continua válido para o cliente novo.
+        const semCampo = structuredClone(servedCatalog) as {
+          marketplaces: Record<string, unknown>[];
+        };
+        for (const m of semCampo.marketplaces) delete m.freightSubsidyInfo;
+        const parsed = parseFeeCatalog(semCampo);
+        const shopeeSemCampo = parsed.marketplaces.find((m) => m.marketplace === "SHOPEE")!;
+        expect(shopeeSemCampo.freightSubsidyInfo ?? null).toBeNull();
+        // E o resto do documento é IGUAL — o campo não carrega nada de que outra folha dependa.
+        expect({ ...shopeeSemCampo, freightSubsidyInfo: undefined }).toEqual({
+          ...shopee,
+          freightSubsidyInfo: undefined,
+        });
+      });
+
+      it("`null` explícito é aceito (é como o backend serializa a ausência)", () => {
+        // `nullish` e não `optional`: um schema que só tolera `undefined` RECUSARIA o payload
+        // servido, e a recusa aqui é SILENCIOSA (cai no seed embutido e ninguém vê erro).
+        const comNull = structuredClone(servedCatalog) as {
+          marketplaces: Record<string, unknown>[];
+        };
+        for (const m of comNull.marketplaces) m.freightSubsidyInfo = null;
+        expect(() => parseFeeCatalog(comNull)).not.toThrow();
+      });
+    });
+
+    // hotfix 016/A2 (H2c) — a leitura, PURA, que a legenda usa: qual teto vale para o preço da tela.
+    describe("resolveFreightSubsidyCeiling — a faixa do anúncio decide o teto exibido", () => {
+      it("resolve o teto certo em cada faixa publicada (half-open, lower-inclusive)", () => {
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 0)).toBe(20);
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 79.99)).toBe(20);
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 80)).toBe(30); // a virada
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 199.99)).toBe(30);
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 200)).toBe(40);
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, 5000)).toBe(40); // faixa aberta
+      });
+
+      it("null quando o campo não existe — a legenda não inventa um teto", () => {
+        expect(resolveFreightSubsidyCeiling(null, 50)).toBeNull();
+        expect(resolveFreightSubsidyCeiling(undefined, 50)).toBeNull();
+      });
+
+      it("null para um preço fora de qualquer faixa publicada (ex.: negativo)", () => {
+        expect(resolveFreightSubsidyCeiling(shopee.freightSubsidyInfo, -1)).toBeNull();
+      });
     });
 
     it("o volumoso é R$ 50,00 POR PEDIDO, com fonte própria (art. 3305)", () => {

@@ -156,7 +156,11 @@ function RecordForm({ source, onDone }: { source: RecordSource; onDone: () => vo
     else if (outcome.syncState === "pending") toast(t.syncPendingToast, { tone: "info" });
     // Paused, not failed: the retry resumes by itself once the entitlement returns (ADR-0018 §9).
     else if (outcome.syncState === "blocked") toast(t.syncBlockedToast, { tone: "info" });
-    else toast(t.syncFailedToast, { tone: "danger" });
+    // hotfix 016/A3 (H4) — its own branch, never the generic "failed" danger toast: a dead session
+    // is not a server rejection, and "conexão" never appears in its copy.
+    else if (outcome.syncState === "unauthenticated") {
+      toast(t.syncUnauthenticatedToast, { tone: "info" });
+    } else toast(t.syncFailedToast, { tone: "danger" });
   }
 
   return (

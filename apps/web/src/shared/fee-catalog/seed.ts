@@ -16,9 +16,12 @@ export const FEE_CATALOG_SEED: FeeCatalog = {
   // data de coleta sob rótulo idêntico foi o defeito de 014 (77 → 79 entradas, `2026-07-28.0` dos
   // dois lados), e o rótulo viaja congelado dentro de um snapshot que o ADR-0019 torna imutável —
   // um registro ambíguo fica ambíguo para sempre.
-  catalogVersion: "2026-08-06.1",
+  // hotfix 016/A2 (2026-08-07) — UM bump pelo hotfix inteiro (as duas entradas Shopee perdem o
+  // `BAND_VOUCHER` e o marketplace ganha o `freightSubsidyInfo` não-computante). Decidido por
+  // `nextCatalogVersion("2026-08-06.1", "2026-08-07", true)` = "2026-08-07.0", não à mão.
+  catalogVersion: "2026-08-07.0",
   schemaVersion: "1",
-  generatedAt: "2026-08-06T00:00:00.000Z",
+  generatedAt: "2026-08-07T00:00:00.000Z",
   marketplaces: [
     {
       marketplace: "MERCADO_LIVRE",
@@ -46,6 +49,27 @@ export const FEE_CATALOG_SEED: FeeCatalog = {
       // criariam um espaço cartesiano com buracos irrepresentáveis.
       determinantsSchema: { sellerProfile: ["CPF_ALTO_VOLUME"] },
       feeAxes: ["commissionPct", "fixedFee", "freightCost"],
+      // hotfix 016/A2 (2026-08-07) — o subsídio como INFORMAÇÃO, com os números vindo DAQUI e
+      // nunca do código (Constituição II). Ele NÃO entra em nenhuma conta: `entryToChannelFees`
+      // não o lê, e a guarda `freight-declared.test.ts` prova que nenhum frete é descontado sem um
+      // campo que o declare. Era `freight: {kind:"BAND_VOUCHER"}` nas duas entradas abaixo, e o
+      // motor descontava estes mesmos R$ 20/30/40 do líquido do vendedor — o achado A2 (T072).
+      freightSubsidyInfo: {
+        bands: [
+          { minPrice: 0, maxPrice: 80, ceiling: 20 },
+          { minPrice: 80, maxPrice: 200, ceiling: 30 },
+          { minPrice: 200, maxPrice: null, ceiling: 40 },
+        ],
+        // Verbatim (art. 23431, relido em 2026-08-07): "Todos os vendedores têm os benefícios do
+        // Programa de Frete Grátis. A Shopee também oferece subsídios de frete. … Para itens de
+        // até R$79,99: Cupons de frete grátis válidos para fretes de até R$20; … R$30; … R$40."
+        // O sujeito que OFERECE é a Shopee, e o valor é o TETO DE VALIDADE do cupom.
+        source:
+          "Central de Educação do Vendedor Shopee — Programa de Frete Grátis (subsídio oferecido pela Shopee a todos os vendedores)",
+        sourceUrl: "https://seller.shopee.com.br/edu/article/23431",
+        effectiveDate: "2026-03-01",
+        lastReviewed: "2026-08-07",
+      },
       // 016/US16 (FR-923, ADR-0027 §3.2) — o número vem DAQUI, nunca do código.
       optionalSurcharges: [
         {
@@ -91,14 +115,12 @@ export const FEE_CATALOG_SEED: FeeCatalog = {
             { minPrice: 100, maxPrice: 200, commissionPct: 14, fixedFee: 20 },
             { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
           ],
-          freight: {
-            kind: "BAND_VOUCHER",
-            bands: [
-              { minPrice: 0, maxPrice: 80, voucherCeiling: 20 },
-              { minPrice: 80, maxPrice: 200, voucherCeiling: 30 },
-              { minPrice: 200, maxPrice: null, voucherCeiling: 40 },
-            ],
-          },
+          // hotfix 016/A2 (2026-08-07) — era `BAND_VOUCHER` com os tetos R$ 20/30/40, e o motor
+          // descontava o teto INTEIRO do líquido a cada anúncio: varejo 24,24 → anúncio 35,30 →
+          // líquido R$ 4,24 (−82,5% da margem), negativo com o volumoso ligado. A fonte atribui o
+          // subsídio à SHOPEE, não ao vendedor. `NONE` afirma exatamente o que sabemos: não há
+          // custo de frete publicado aqui. O único frete descontado é o que o vendedor DIGITA.
+          freight: { kind: "NONE" },
           // O `source` NOMEIA o regime que a entrada representa — senão o selo esconde a premissa
           // de que este é o vendedor CNPJ (ou CPF abaixo de 450 pedidos/90 dias).
           source:
@@ -128,14 +150,10 @@ export const FEE_CATALOG_SEED: FeeCatalog = {
             { minPrice: 100, maxPrice: 200, commissionPct: 14, fixedFee: 23 },
             { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 29 },
           ],
-          freight: {
-            kind: "BAND_VOUCHER",
-            bands: [
-              { minPrice: 0, maxPrice: 80, voucherCeiling: 20 },
-              { minPrice: 80, maxPrice: 200, voucherCeiling: 30 },
-              { minPrice: 200, maxPrice: null, voucherCeiling: 40 },
-            ],
-          },
+          // hotfix 016/A2 — idem à entrada acima. O subsídio é do marketplace inteiro (é o mesmo
+          // Programa para os dois perfis), e por isso vive UMA vez em `freightSubsidyInfo`, no
+          // nível do marketplace, em vez de repetido dentro de cada entrada.
+          freight: { kind: "NONE" },
           source:
             "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CPF com mais de 450 pedidos em 90 dias (taxa adicional de R$ 3,00 por item)",
           sourceUrl: "https://seller.shopee.com.br/edu/article/26839",

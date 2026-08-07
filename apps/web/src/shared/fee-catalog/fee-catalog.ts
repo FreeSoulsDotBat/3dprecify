@@ -85,17 +85,79 @@ const freightSchema = z.discriminatedUnion("kind", [
     inputs: z.array(z.string()).optional(),
   }),
   z.object({
-    // Shopee: a seller-co-funded voucher ceiling by price band (curatable from the official source).
+    /**
+     * **DEPRECATED em 2026-08-07 (hotfix 016/A2) — sem emissores, NUNCA removido.**
+     *
+     * Era: "Shopee — o teto de cupom co-financiado pelo vendedor, por faixa de preço". A releitura
+     * VERBATIM das fontes (art. 26839 + art. 23431) diz o contrário do que esta forma assume: *"A
+     * Shopee **oferece** subsídios de frete para todos os vendedores"* e *"Cupons de frete grátis
+     * **válidos para fretes de até** R$20"* — o R$ 20/30/40 é o valor que a SHOPEE oferece e é um
+     * TETO DE VALIDADE do cupom, não uma cobrança do vendedor. O catálogo deixou de emitir esta
+     * forma (as duas entradas Shopee passaram a `{kind: "NONE"}`); o subsídio virou informação
+     * NÃO-COMPUTANTE em `freightSubsidyInfo`.
+     *
+     * **Por que o schema continua sabendo lê-la, e por que removê-la seria errado:** este `kind`
+     * viaja DENTRO de payload de snapshot congelado (ADR-0019, imutável por trigger de banco) e de
+     * documento de cenário (ADR-0021). Um schema que passasse a recusá-la faria um documento que o
+     * produto promete imutável parar de abrir — ou, pior, abrir afirmando outro número sem uma
+     * linha dele mudar. Mesma disciplina do `bandMode` (ADR-0024) e do `fixedFeeRule` (ADR-0027).
+     * O motor (`pricing-core`) também mantém a capacidade INTACTA, e por isso `PRICING_MODEL_VERSION`
+     * não foi bumpado: nada do que já foi gravado muda de valor.
+     *
+     * Reabre-se com o verbatim que falta (o artigo de coparticipação linkado no 26839 e o art. 7749)
+     * — e aí a decisão é do dono, não uma inferência sobre dinheiro (Princípio VIII).
+     */
     kind: z.literal("BAND_VOUCHER"),
     bands: z.array(
       z.object({
         minPrice: z.number().nonnegative(),
         maxPrice: z.number().positive().nullable(),
+        /** DEPRECATED — ver o `kind` acima. Honrado para payloads já gravados, nunca mais emitido. */
         voucherCeiling: z.number().nonnegative(),
       }),
     ),
   }),
 ]);
+
+/**
+ * O subsídio de frete da Shopee como **INFORMAÇÃO**, nunca como parcela da conta
+ * (hotfix 016/A2, 2026-08-07).
+ *
+ * Mora no nível do MARKETPLACE — precedente exato de `optionalSurcharges`: não é tarifa por perfil
+ * nem por faixa de tarifa; é uma política que vale para todos os vendedores ("*Todos os vendedores
+ * têm os benefícios do Programa de Frete Grátis*", art. 23431 e 26839, duas vezes literais — não há
+ * adesão a modelar).
+ *
+ * **NÃO-COMPUTANTE, e isso é a decisão inteira.** Nenhum consumidor multiplica, soma ou desconta
+ * nada daqui: `entryToChannelFees` não o lê. Ele existe para o vendedor SABER que a Shopee subsidia
+ * — a informação é boa notícia e apagá-la em silêncio perderia o que ele usa para decidir — sem que
+ * um teto de validade de cupom volte a virar aritmética.
+ *
+ * **Por que um campo novo e NÃO um `kind: "SUBSIDY_INFO"` no union `freight`:** `freightSchema` é
+ * um `z.discriminatedUnion`. Um `kind` novo no artefato SERVIDO faria o cliente PWA já instalado
+ * RECUSAR o catálogo inteiro — e a recusa aqui é SILENCIOSA (cai no seed embutido e ninguém vê
+ * erro; `parseSeedResilient` e os comentários de `bandMode`/`fixedFeeRule` documentam a armadilha).
+ * Uma propriedade extra num `z.object` não-strict é simplesmente DESCARTADA pelo cliente antigo,
+ * que então lê exatamente `freight: {kind: "NONE"}` — a verdade nova. Compatibilidade por
+ * construção, não por sorte.
+ *
+ * `nullish` e não `optional` pela mesma razão de sempre: o backend serializa ausente como `null`.
+ */
+const freightSubsidyInfoSchema = z.object({
+  /** Faixas `[minPrice, maxPrice)` do ANÚNCIO; `ceiling` = até quanto o cupom da Shopee vale. */
+  bands: z.array(
+    z.object({
+      minPrice: z.number().nonnegative(),
+      maxPrice: z.number().positive().nullable(),
+      ceiling: z.number().nonnegative(),
+    }),
+  ),
+  source: z.string().min(1),
+  sourceUrl: z.url(),
+  effectiveDate: z.string().min(1),
+  lastReviewed: z.string().min(1),
+});
+export type FreightSubsidyInfo = z.infer<typeof freightSubsidyInfoSchema>;
 
 /** One resolved fee entry, keyed by its marketplace-specific `determinants` (null = single entry). */
 export const feeEntrySchema = z
@@ -259,6 +321,11 @@ const marketplaceCatalogSchema = z
     // 016/US16 (FR-923, ADR-0027 §3.2) — ADITIVO. Ausente/null = nenhuma sobretaxa opcional, que é
     // o que todo catálogo de antes desta fatia significa, e o resultado continua byte-idêntico.
     optionalSurcharges: z.array(optionalSurchargeSchema).nullish(),
+    // hotfix 016/A2 (2026-08-07) — ADITIVO e NÃO-COMPUTANTE. Ausente/null = nenhum subsídio a
+    // informar, que é o que todo catálogo de antes deste hotfix significa, e o resultado computado
+    // continua byte-idêntico (é a propriedade que `fee-catalog.test.ts` prova). Ver
+    // `freightSubsidyInfoSchema` para por que ele é um campo novo e não um `kind` do union `freight`.
+    freightSubsidyInfo: freightSubsidyInfoSchema.nullish(),
     entries: z.array(feeEntrySchema),
   })
   .superRefine((mk, ctx) => {
@@ -380,6 +447,29 @@ export function parseSeedResilient(data: unknown): FeeCatalog {
       marketplaces: [],
     };
   }
+}
+
+/**
+ * Resolve o teto do cupom de frete da Shopee para o ANÚNCIO desta faixa — leitura pura, informativa
+ * (hotfix 016/A2, H2c). Mesma seleção half-open, lower-inclusive de `bandContaining`
+ * (`pricing-core/src/channels.ts`), reescrita aqui em vez de importada: é uma leitura de
+ * `freightSubsidyInfo`, um campo NÃO-COMPUTANTE que `pricing-core` nunca vê (ele mora no nível do
+ * marketplace, fora de `ChannelFees`) — não há função exportada do motor para isto, e não deveria
+ * haver: o motor não sabe deste campo.
+ *
+ * `null` quando o anúncio não cai em nenhuma faixa publicada (ex.: um preço negativo, impossível na
+ * prática) ou quando o marketplace não publica `freightSubsidyInfo` — em ambos os casos a legenda
+ * simplesmente não renderiza, nunca inventa um teto.
+ */
+export function resolveFreightSubsidyCeiling(
+  info: FreightSubsidyInfo | null | undefined,
+  anuncio: number,
+): number | null {
+  if (!info) return null;
+  const band = info.bands.find(
+    (b) => anuncio >= b.minPrice && (b.maxPrice === null || anuncio < b.maxPrice),
+  );
+  return band?.ceiling ?? null;
 }
 
 /** Exact determinant equality — same keys, same values. NOT the old subset match (see below). */

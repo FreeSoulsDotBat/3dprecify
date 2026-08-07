@@ -14,10 +14,16 @@
 import { env } from "@/shared/lib/env";
 import { auth } from "@/shared/lib/firebase";
 import { reportError } from "@/shared/observability/sentry";
+import { clearSessionExpired, markSessionExpired } from "@/shared/session/session-expiry";
 
 import { type ErrorCode, type ErrorEnvelope } from "./generated";
 
 export type ApiErrorCode = ErrorCode | "UNKNOWN";
+
+// hotfix 016/A3 (H5) — the two wire codes that mean "the SESSION died", not "you may not do this".
+// A 401 with neither code (or any other status) never touches the marker — a genuinely bad request
+// or a 403 lapse must not paint a session banner over an account that is still signed in.
+const SESSION_EXPIRED_CODES: ReadonlySet<ApiErrorCode> = new Set(["UNAUTHENTICATED", "TOKEN_EXPIRED"]);
 
 export interface ApiErrorInit {
   status: number;
@@ -168,9 +174,16 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
       correlationId: wire?.correlationId ?? headerCorrelationId ?? null,
     });
     captureApiError(error);
+    // hotfix 016/A3 (H5) — the SERVER just refused a live client session: mark it so the app-shell
+    // can offer the way back. This ONLY sets a boolean; see `session-expiry.ts` for why it structurally
+    // cannot sign the seller out or touch the outbox from here.
+    if (res.status === 401 && SESSION_EXPIRED_CODES.has(error.code)) markSessionExpired();
     throw error;
   }
 
+  // Any successful response is proof the session is fine again — clears a marker a PRIOR request may
+  // have set (016/A3 H5). A no-op when nothing was marked.
+  clearSessionExpired();
   return { status: res.status, headers: res.headers, body };
 }
 

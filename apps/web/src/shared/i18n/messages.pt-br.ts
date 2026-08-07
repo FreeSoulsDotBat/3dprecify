@@ -157,7 +157,11 @@ export const messages = {
       minPerItem: "Comissão mínima/item",
       freight: "Frete",
       freightHint: "Descontado do valor recebido (não é embutido no anúncio).",
-      freightLine: "Frete / cupom",
+      // hotfix 016/A2 (2026-08-07, FR-111b) — era "Frete / cupom". Nenhuma linha desconta um cupom
+      // que ninguém digitou: o único desconto possível é o que o campo "Frete" carrega (a guarda
+      // estrutural mora em `freight-declared.test.ts`), então a linha nomeia o controle, não uma
+      // forma de desconto que não existe mais no catálogo.
+      freightLine: "Frete",
       negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
       // 014/SC-817 — o anúncio necessário cai numa faixa de preço para a qual o marketplace não
       // publica tarifa. Dizer isso é a única resposta honesta: a tarifa da faixa vizinha não vale
@@ -212,6 +216,19 @@ export const messages = {
       surcharges: {
         perOrderCaption:
           "{value} por pedido, somado como custo do canal — o preço do anúncio sobe MAIS que isso, porque a comissão incide sobre ele também. Somado inteiro nesta unidade (não é dividido entre os itens do pedido).",
+        provenance: "Fonte: {source}, vigente desde {date}.",
+      },
+      // hotfix 016/A2 (H2c, 2026-08-07) — o subsídio de frete da Shopee como INFORMAÇÃO, nunca como
+      // desconto: `{ceiling}` vem de `freightSubsidyInfo` (Constituição II, zero número aqui). A
+      // frase é deliberada em separar os dois bolsos: quem paga o cupom é a Shopee (art. 23431/26839
+      // — "todos os vendedores têm os benefícios"), e o campo "Frete" abaixo é só o que sobra para o
+      // vendedor declarar, se houver.
+      freightSubsidy: {
+        // `{ceiling}` chega já formatado (`formatBRL`, "R$ 20,00") — o literal "R$" não mora aqui de
+        // propósito: o guarda de honestidade (`copy-honesty.test.ts`) varre a STRING estática em
+        // busca de um preço hard-coded, e o valor sempre vem do dado, nunca do texto.
+        caption:
+          "A Shopee oferece cupons de frete grátis (até {ceiling} nesta faixa de preço) — o custo é da Shopee, não seu. Informe no campo Frete só o que sobrar para você, se houver.",
         provenance: "Fonte: {source}, vigente desde {date}.",
       },
     },
@@ -847,11 +864,17 @@ export const messages = {
     queuePendingOffline:
       "Sem conexão. {n} registro(s) pendente(s) neste dispositivo — sincronizam sozinhos quando você voltar a ficar online.",
     queueBlocked: "{n} registro(s) não foram enviados: o Premium não está ativo.",
+    // hotfix 016/A3 (H4b, 2026-08-07) — a verdade DIFERENTE de "pendente": a sessão morreu, não a
+    // conexão. "conexão"/"online" NUNCA aparecem aqui de propósito (o achado A3: a cópia antiga
+    // prometia "sincroniza sozinho quando houver conexão" com a conexão intacta).
+    queueUnauthenticated: "{n} registro(s) não foram enviados: sua sessão expirou.",
     queueFailed: "{n} registro(s) não puderam ser registrados.",
     syncNow: "Sincronizar agora",
+    signInAction: "Entrar de novo",
     // per-card sync badges (§1)
     syncPendingBadge: "Pendente neste dispositivo",
     syncBlockedBadge: "Envio pausado · precisa de Premium",
+    syncUnauthenticatedBadge: "Envio pausado · sessão expirada",
     syncFailedBadge: "Não foi possível registrar",
     // offline / lapsed (same family as E2/E3)
     offlineTitle: "Modo leitura offline",
@@ -879,6 +902,10 @@ export const messages = {
     syncPendingToast: "Pendente neste dispositivo. Sincroniza sozinho quando houver conexão.",
     syncBlockedToast:
       "Envio pausado — o Premium não está ativo. O registro continua neste aparelho.",
+    // hotfix 016/A3 (H4) — a mesma disciplina do blocked-toast, para a causa VERDADEIRA: sessão, não
+    // rede. "conexão" nunca aparece.
+    syncUnauthenticatedToast:
+      "Envio pausado — sua sessão expirou. O registro continua neste aparelho.",
     syncFailedToast: "Não foi possível registrar. O servidor não aceitou este registro.",
     // detail sync alerts (§1.2) — the copy verbatim, one calm reading per state
     syncPendingTitle: "Ainda não sincronizado",
@@ -889,6 +916,10 @@ export const messages = {
     syncBlockedTitle: "Envio pausado",
     syncBlockedBody:
       "Este registro não foi enviado para a sua conta: o Premium não está ativo. Ele continua aqui, neste dispositivo. Assim que o Premium voltar a ficar ativo, ele é enviado automaticamente.",
+    // hotfix 016/A3 (H4b) — mesma forma do blocked, causa verdadeira: sessão expirada.
+    syncUnauthenticatedTitle: "Sessão expirada",
+    syncUnauthenticatedBody:
+      "Este registro não foi enviado para a sua conta: sua sessão expirou. Ele continua aqui, neste dispositivo. Entre de novo para enviá-lo.",
     syncFailedTitle: "Não foi possível registrar",
     syncFailedBody:
       "O servidor não aceitou este registro. Ele não será reenviado sozinho. Você pode tentar de novo ou descartar.",
@@ -1021,6 +1052,14 @@ export const messages = {
   // no price, no cancellation policy (FR-014).
   state: {
     offline: "Você está offline. O cálculo continua funcionando.",
+  },
+  // hotfix 016/A3 (H5, 2026-08-07) — the way BACK, when the SERVER refuses a live client session
+  // (a 401 the client itself never expected). Rendered by `SessionExpiryBanner` in `app-shell`.
+  // Never says "conexão"/"online" — the connection is fine; the token is not.
+  session: {
+    expiredTitle: "Sua sessão expirou",
+    expiredBody: "Entre de novo para continuar de onde parou.",
+    expiredAction: "Entrar de novo",
   },
   notFound: {
     title: "Página não encontrada",

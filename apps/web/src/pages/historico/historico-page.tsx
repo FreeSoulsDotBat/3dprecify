@@ -8,6 +8,7 @@ import { EntryActions } from "@/features/history/entry-actions";
 import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionExpired } from "@/shared/session/session-expiry";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -144,10 +145,15 @@ function HistoryLedger() {
 
   const history = useHistory(filters);
   const entitled = entitlement.data?.status === "active";
-  const { sync, syncing } = useSyncOutbox({ retryBlocked: entitled });
+  // hotfix 016/A3 (H4) — `HistoryLedger` only mounts past `HistoricoPage`'s own
+  // `sessionStatus === "authenticated"` gate, so a mount here already means the session IS back:
+  // an `unauthenticated` entry may always be retried from this screen (the mirror of `retryBlocked`,
+  // driven by the session instead of the entitlement).
+  const { sync, syncing } = useSyncOutbox({ retryBlocked: entitled, retryUnauthenticated: true });
 
   // One connectivity truth that REACTS to reconnection (review PR-A, C6) — not a one-time read.
   const online = useOnline();
+  const sessionExpired = useSessionExpired();
   const queued = history.items.filter((i) => i.syncState !== "synced");
 
   // Two different questions, two different truths. The BAR (and its [Limpar]) keys off the RAW input
@@ -183,8 +189,11 @@ function HistoryLedger() {
           : "";
   const searchEmptyTerm = (filters.q ?? "") || periodLabel;
 
-  // [Ver] jumps to the first entry that needs a human decision (a failed/blocked card).
-  const firstProblem = queued.find((i) => i.syncState === "failed" || i.syncState === "blocked");
+  // [Ver] jumps to the first entry that needs a human decision (a failed/blocked/unauthenticated card).
+  const firstProblem = queued.find(
+    (i) =>
+      i.syncState === "failed" || i.syncState === "blocked" || i.syncState === "unauthenticated",
+  );
   const seeFirstProblem = () => {
     if (!firstProblem) return;
     const el = document.getElementById(`snap-${firstProblem.clientSnapshotId}`);
@@ -205,7 +214,11 @@ function HistoryLedger() {
           "Modo leitura offline" to someone who is plainly online would be a small, needless lie
           (T016 nit). Either way the rows below still render — never an error wall over data the
           seller already holds. */}
+      {/* hotfix/R2 da homologação — com a SESSÃO expirada, este alerta genérico de carga virava a
+          terceira voz para o mesmo fato (banner do shell + banner da fila já dizem a causa), e o
+          "Tentar novamente" dele só pode render outro 401. A causa conhecida cala a genérica. */}
       {history.stale &&
+        !sessionExpired &&
         (online ? (
           <Alert tone="danger">
             <span className="tf-historico__banner">
@@ -254,7 +267,7 @@ function HistoryLedger() {
 
       {/* The full-panel error is ONLY for a cold failure — nothing cached, nothing queued. There is
           never an error wall over data the seller already holds. */}
-      {history.isError && (
+      {history.isError && !sessionExpired && (
         <div className="flex flex-col items-center gap-3 py-8">
           <Alert tone="danger">{t.loadError}</Alert>
           <Button variant="secondary" onClick={history.refetch}>
@@ -456,12 +469,18 @@ function HistoryFilterBar({
 }
 
 /**
- * The aggregate banner. Its TITLE follows the precedence failed > blocked > pending — the state that
- * needs a human decision wins the wording. But the DRAINAGE action is no longer held hostage by it
- * (review PR-A, C6): a single failed/blocked entry used to hide [Sincronizar agora] entirely,
- * trapping every healthy pending behind it — the app's only manual drain, gone. Now the banner
- * ALWAYS offers to sync when there is a healthy pending online, and a [Ver] jump when something needs
- * a decision. The per-card badges tell the full truth regardless of what the banner says.
+ * The aggregate banner. Its TITLE follows the precedence failed > blocked > unauthenticated >
+ * pending — the state that needs a human decision wins the wording. But the DRAINAGE action is no
+ * longer held hostage by it (review PR-A, C6): a single failed/blocked entry used to hide
+ * [Sincronizar agora] entirely, trapping every healthy pending behind it — the app's only manual
+ * drain, gone. Now the banner ALWAYS offers to sync when there is a healthy pending online, and a
+ * [Ver] jump when something needs a decision. The per-card badges tell the full truth regardless of
+ * what the banner says.
+ *
+ * hotfix 016/A3 (H4b) — `unauthenticated` is its OWN branch, never folded into `blocked`: the copy
+ * must never say "conexão"/"online" (the achado A3: the old `pending` copy promised exactly that
+ * with the connection intact), and it offers a real way back — [Entrar de novo] to `/sign-in`,
+ * preserving `/historico` as the return-to-intent (`router.tsx`'s own whitelist).
  */
 function QueueBanner({
   queued,
@@ -478,9 +497,10 @@ function QueueBanner({
 }) {
   const failed = queued.filter((i) => i.syncState === "failed").length;
   const blocked = queued.filter((i) => i.syncState === "blocked").length;
+  const unauthenticated = queued.filter((i) => i.syncState === "unauthenticated").length;
   const pending = queued.filter((i) => i.syncState === "pending").length;
 
-  const hasProblem = failed > 0 || blocked > 0;
+  const hasProblem = failed > 0 || blocked > 0 || unauthenticated > 0;
   // A healthy pending can be sent by hand — but only online, where the button can actually work.
   const canDrain = pending > 0 && online;
 
@@ -491,6 +511,8 @@ function QueueBanner({
     text = t.queueFailed.replace("{n}", String(failed));
   } else if (blocked > 0) {
     text = t.queueBlocked.replace("{n}", String(blocked));
+  } else if (unauthenticated > 0) {
+    text = t.queueUnauthenticated.replace("{n}", String(unauthenticated));
   } else if (!online) {
     text = t.queuePendingOffline.replace("{n}", String(pending));
   } else {
@@ -508,6 +530,16 @@ function QueueBanner({
               {t.queueSee}
             </Button>
           )}
+          {/* The way back (016/A3 H5 pattern): a plain `<a>`, like `TeaserUpgrade` — never fires a
+              client-side sign-out, only navigates through the existing safe-redirect sign-in flow. */}
+          {unauthenticated > 0 && (
+            <a
+              className="tf-btn tf-btn--secondary tf-btn--sm"
+              href={`/sign-in?redirect=${encodeURIComponent("/historico")}`}
+            >
+              {t.signInAction}
+            </a>
+          )}
           {/* Never a button that cannot work: sync is offered only for a healthy pending, online. */}
           {canDrain && (
             <Button size="sm" variant="secondary" onClick={onSync} loading={syncing}>
@@ -524,9 +556,15 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
   const pieces = frozenPayloadOf(item)?.lines?.length ?? 0;
   const kind = item.kind === "KIT" ? t.kindKit.replace("{n}", String(pieces)) : t.kindSingle;
 
-  // A blocked/failed entry needs an escape hatch right where the seller sees it, or it is a dead end
-  // that poisons every future sign-out (review PR-A, B2). Pending is drained by the banner instead.
-  const stuck = item.syncState === "blocked" || item.syncState === "failed";
+  // A blocked/failed/unauthenticated entry needs an escape hatch right where the seller sees it, or
+  // it is a dead end that poisons every future sign-out (review PR-A, B2). Pending is drained by the
+  // banner instead. hotfix 016/A3 (H4b): [Tentar novamente] on an `unauthenticated` entry is a safe
+  // no-op when the session is still dead (it just reclassifies to `unauthenticated` again) and
+  // genuinely succeeds once the seller has signed back in — never a dead button.
+  const stuck =
+    item.syncState === "blocked" ||
+    item.syncState === "failed" ||
+    item.syncState === "unauthenticated";
 
   return (
     <Link
