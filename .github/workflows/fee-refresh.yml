@@ -28,6 +28,15 @@ on:
         type: string
         required: false
         default: "false"
+  # BOOTSTRAP (2026-08-07, o padrão das sondas G1/G2 do 014): o GitHub só resolve
+  # `workflow_dispatch` por nome quando o arquivo existe no branch DEFAULT — que é `main`, atrás
+  # do corte de release adiado. Este gatilho, escopado à branch da fatia E a este arquivo,
+  # registra o workflow e produz a EXECUÇÃO REAL do T017. Ele morre com a branch no squash-merge;
+  # em `develop`/`main` só valem schedule + dispatch.
+  push:
+    branches: [017-ingestao-mensal]
+    paths:
+      - ".github/workflows/fee-refresh.yml"
 
 concurrency:
   group: fee-refresh
