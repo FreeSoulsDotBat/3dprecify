@@ -168,23 +168,33 @@ never confirmed**.
 Still open elsewhere: 005 T042 (design reconciliation, non-blocking) + D1–D4 ML ingestion
 (blocked on the house ML account, Q-D).
 
-**016-correcao-homologacao IN PROGRESS on `develop` — V0 + PR-A + PR-B + PR-C SHIPPED.** PR-A #44
-(`d59c1b8`, US1+US2, the single teaser + Histórico→Orçamentos/Cenários→Simulações) + PR-B #45
-(`abf185b`, US3-US5, real logo + desktop columns + the item-9 scroll killed on the WIDTH axis, not
-by loosening the guard) + **PR-C #46 (`ca98217`, 2026-08-06, US6-US9 — tooltips, h+min, the
-machine-cost question, currency mask + section fusion)**, all owner-merged. **PR-C's own
-homologation (T030) came back FAIL 74%, 4 blockers + ressalvas — B1 the seed (2000h) wasn't a
-ritmo×payback product so the new US8 screen never showed on first visit (seed moved to 3600h =
-"quase todo dia"×3, custo_total 20,60→16,16/varejo 24,24/atacado 21,01, RE-VERIFIED by RUNNING
-`computeCalculator`, every downstream test updated) · B2 no thousands mask on currency fields
-(added, on blur only, semantic value untouched) · B3 the ritmo/payback selects unreadable at
-360/390px (87-102px useful, needed up to 197px) · B4 "Tarifa de energia" clipped to 1px (a
-`labelAddon` a <label> SIBLING, never nested — nesting folds a tooltip button's own name into the
-control's accessible name, confirmed the hard way) — all four fixed same-branch, red-before/
-green-after on two NEW calculator-layout.spec.ts guards, plus R1-R3/R6 (button affordance, Escape
-losing to a lingering hover, dead i18n keys). `pnpm gate:fe` + e2e 118/118 green before merge.**
-PR-D (US10, `wasteGrams` removal, pricing-core 4.0.0 MAJOR, ISOLATED) is next — see
-`specs/016-correcao-homologacao/tasks.md`.
+**016-correcao-homologacao CODE-COMPLETE on `develop` (2026-08-07)** — V0 + all 6 slices
+owner-merged: PR-A #44 (`d59c1b8`, single teaser + Orçamentos/Simulações labels) · PR-B #45
+(`abf185b`, real logo + desktop 37→93% + item-9 scroll killed on the VERTICAL axis — headless
+never sees a classic scrollbar; the guard now measures BOTH axes) · PR-C #46 (`ca98217`, tooltips
++ h/min + the machine QUESTION + thousands mask; homologation FAIL 74%→fixed; seed price moved to
+16,16/24,24/21,01 with the ritmo-mode first visit) · PR-D #47 (`ef7d9d9`, **pricing-core 4.0.0**:
+wasteGrams removed with NOMINAL refusal by key + `stripRetiredFields`/`isPreRemovalModel` in the
+package itself, Alembic `0007` DROP, wire `extra="forbid"`, the two costurados DECLARING the
+discard) · PR-E #48 (`176ba15`, marketplace→Premium with the rewritten promise + dated
+Clarifications in specs 005 AND 007 in the SAME slice; `channelFieldPlan`+`feeAxes`; the
+invisible-money blocker killed BOTH ways: plan-driven reset + "declared OR non-empty" render) ·
+PR-F #49 (`62a0960`/`a612050`, **pricing-core 4.1.0**: `fixedFeeRule PCT_OF_PRICE` + surcharges;
+the T057 VERBATIMs decided every number — comissão continua abaixo de R$8, CPF sem volume = tabela
+catch-all ⇒ DUAS entradas; a latent published-floor guard defect found and killed; Amazon
+INDIVIDUAL R$2,00 in 39 entries incl. INSIDE the 3 banded ones — 013/F1 inertness would have
+silently eaten them; `catalogVersion 2026-08-06.1`; homologation 88→92% with the clipped
+placeholder-suffix lesson: honesty phrases live in full-width elements, placeholders carry only
+numbers). Polish (T072–T074) closed the increment: the 7 never-homologated scenarios measured
+(84%, 57 screenshots — core holds: real offline calc, honest outbox, NO network failure sold as
+"not premium", 360px journey with zero overflow), the 016's OWN regression fixed (PR-B's logo
+PNGs missing from the PWA precache glob — the 009/T016-N5 class reintroduced, proven fixed in the
+sw.js manifest), SC-910 sweep 80 entries/0 problems, **ADRs 0026/0027 flipped Accepted at the
+close-PR merge gate; 0025 stays Proposed (deferred with ML/US6-ML/017)**. Priority follow-ups
+recorded in dod-evidence §Polish: **A2 (ALTA — Shopee freight field shows R$0,00 while
+BAND_VOUCHER deducts R$20, pre-existing 005 model, same class as the PR-E blocker)** · A3 (expired
+session has no way back; outbox blames the network) · A4 (2-segment blank-page trap swallows the
+404) · A5–A11 (design/backlog). See `specs/016-correcao-homologacao/dod-evidence.md`.
 
 Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-stack-decisions,audit-findings,audit-findings-r2}.md`.
 - pnpm workspaces (Node 24) · React 19 + Vite 8 PWA + Tailwind v4 + Radix-wired `tf-*` DS (ADR-0007 — NOT the

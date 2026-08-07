@@ -1,6 +1,6 @@
 # ADR-0027 — Taxa fixa como **função do preço** e sobretaxas por item (pricing-core 4.1.0)
 
-- **Status**: Proposto
+- **Status**: Aceito (2026-08-07 — ratificado pelo dono no merge do PR de fechamento do 016; implementado e homologado nas fatias PR-D e PR-F, evidência em specs/016-correcao-homologacao/dod-evidence.md)
 - **Data**: 2026-08-05
 - **Contexto**: 016-correcao-homologacao (US16 · US18 · FR-923/927; clarify Q5 e Q8) — escalação opus
   do ADR-0022 (regra de preço no domínio de pricing)

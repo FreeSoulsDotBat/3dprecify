@@ -302,3 +302,44 @@ CPF/CNPJ/sem-resposta byte-idênticos por texto renderizado).
 atributo carrega o texto inteiro (leitor de tela recebe tudo, asserção de texto passa) enquanto o
 render corta onde a caixa acaba. Frase explicativa vive em elemento de largura total; placeholder
 carrega só o número.
+
+## Polish — T072 matriz transversal · T073 SC-910 + ADRs · 2026-08-07
+
+**T072 (qa-produto): os 7 cenários nunca homologados — PASSA COM RESSALVAS 84%, 57 screenshots**
+(`evidencias/transversal/`). O núcleo se sustenta: o cálculo é offline de verdade (boot frio
+reproduz o preço idêntico), a tarifa sai do cache, o outbox não mente ("Pendente neste
+dispositivo", nunca "salvo"), **nenhuma falha de rede é vendida como "você não é premium"** (0
+ocorrências), o 404 de 1 segmento tem cópia própria e volta funcionando, e a jornada mobile a
+360px roda sem um pixel de transbordo com todos os controles novos do 016 ≥ 44px.
+
+**Regressão do PRÓPRIO 016, corrigida na fase (A1)**: a PR-B trocou a logo para PNG e o
+`includeAssets` do PWA só cobria `brand/logo/*.svg` — offline, a primeira dobra mostrava o ícone
+de imagem quebrada (naturalWidth 0 medido). É a MESMA classe do 009/T016-N5, reintroduzida; o
+comentário do config já contava a história. Corrigido (`*.png` no glob) e provado por build: os
+dois PNGs presentes no manifest do `dist/sw.js`.
+
+**Follow-ups priorizados (medidos, NÃO consertados — a regra do T072):**
+
+| # | achado | sev | nota |
+| --- | --- | --- | --- |
+| A2 | Shopee: campo "Frete" exibe R$ 0,00 e a conta desconta R$ 20,00 (o `voucherCeiling` do BAND_VOUCHER de 005/E1 não alimenta o placeholder do eixo, e "teto" é cobrado como certo); com volumoso o líquido fica negativo | **ALTA** | PRÉ-EXISTENTE (modelo 005), mas é a mesma classe do bloqueador da PR-E — dinheiro sem controle que o nomeie. Primeiro da fila |
+| A3 | Sessão expirada: nenhuma tela oferece caminho de volta ao sign-in; o outbox culpa a rede ("quando houver conexão") com a conexão intacta; registro não se perde | MÉDIA/ALTA | pré-existente; o caminho real de refresh do Firebase não foi exercido (o seam e2e não expira sessão) |
+| A4 | Rota de 2 segmentos inexistente (`/catalogo/produtos/{id-fantasma}`) abre tela BRANCA — o trap conhecido do `base: './'` engole até o 404 | MÉDIA | a memória do projeto já o registra; a medição confirma vivo |
+| A5 | O preço-herói exibe "R$" a 6,72px e os centavos a 8px — num produto de preço, centavos não são decoração | MÉDIA | design (Claude Design/designer-ux) |
+| A6 | Os 16 gatilhos ⓘ da US6 medem 28×28 no toque (WCAG AA ok; abaixo do piso da casa INV-2 ≥44); o guarda de alvos não cobre a superfície nova | MÉDIA | superfície do 016; mexer no InfoTip é global — designer decide |
+| A7 | O radio do plano na oferta de compra nasce esticado (292×13px) e descolado do texto; foco vira barra | MÉDIA | superfície E6 |
+| A8–A11 | catálogo vazio+leitura falhando sem selo de idade · "precisa de conexão" nomeando a causa errada · /kits com aviso e compositor convivendo · desktop estreito fora da calculadora (~70% vazio) | BAIXA | backlog |
+
+**Fronteira honesta do T072**: tema escuro não varrido (headless resolve light), tap real dos
+tooltips não exercido, expiração REAL de sessão não exercida (401 simulado no transporte),
+timeout de servidor (vs abort na borda) não exercido.
+
+**T073 — varredura SC-910 (determinística, script sobre o catálogo servido)**: `catalogVersion
+2026-08-06.1` · 3 marketplaces · **80 entradas · 0 problemas** — toda folha de dinheiro com
+`source`/`sourceUrl`/`effectiveDate`/`lastReviewed`; todo `fixedFeeSource` datado; nenhuma banda
+com `fixedFee` nulo sem regra (FR-928); sobretaxas com procedência. A metade de UI foi coberta
+pelas homologações das fatias (selos conferidos texto a texto em T055/T070).
+
+**ADRs**: **0026 e 0027 flipados Proposto→Aceito** com a ratificação do dono no merge do PR de
+fechamento (o mesmo mecanismo do ADR-0023/T020); **0025 permanece Proposto** — adiado com a parte
+ML (US6-ML/017), por decisão do dono de 2026-08-05.
