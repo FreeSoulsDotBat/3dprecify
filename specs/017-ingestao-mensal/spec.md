@@ -387,11 +387,11 @@ foi lido" é indistinguível de "avança sempre") — por isso viaja na fatia do
 
 ## Assumptions
 
-- **A recomendação do PO sobre o A2 do 016** (frete BAND_VOUCHER R$ 20 num campo R$ 0,00, ALTA):
-  hotfix SEPARADO cortado de develop ANTES da PR-A (78% — defeito de dinheiro no produto, não de
-  ingestão; o A3 viaja junto; Clarification datada na spec 005). Registrada; a decisão é do dono.
-- **Ressalva de sequenciamento do PO (70%)**: o 017 não entrega tela e o E6 PR-C ainda é v1 —
-  recomendação de rodar E6 PR-C antes/em paralelo; decisão de ordem é do dono.
+- **DECIDIDO pelo dono (2026-08-07)**: o A2 do 016 (frete BAND_VOUCHER R$ 20 num campo R$ 0,00,
+  ALTA) é **hotfix separado cortado de develop ANTES da PR-A**, com o A3 (sessão expirada) viajando
+  junto e Clarification datada na spec 005 — conforme a recomendação do PO.
+- **DECIDIDO pelo dono (2026-08-07)**: o E6 PR-C roda **EM PARALELO** ao 017 (domínios disjuntos:
+  billing vs fee-ingest/CI), cada PR gateado pelo dono como sempre.
 - O orquestrador puro do 014 (`RefreshOutcome` de 2 casos, FR-020a) e o coletor Amazon são a base;
   o 017 não os reescreve, os aciona do CI.
 - Resíduos do 014 absorvidos: T049/T050 (o YAML), T048a (P0-b, tarefa do dono), T069b (P0-c),
