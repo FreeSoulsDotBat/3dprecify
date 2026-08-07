@@ -49,7 +49,10 @@ test.describe("016/T041 — a matriz de documentos (congelado antigo · simulaç
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 
     // The technical sheet names the CURRENT model — never a declaration surface for a clean doc.
-    await expect(page.getByText("4.0.0")).toBeVisible();
+    // 016/PR-F bumped pricing-core 4.0.0 → 4.1.0 MINOR (`fixedFeeRule` + `ChannelInput.surcharges`,
+    // both additive/absent-preserving) — `PRICING_MODEL_VERSION` moved, so the pinned literal here
+    // moves with it (never guessed: `packages/pricing-core/src/index.ts`'s own exported constant).
+    await expect(page.getByText("4.1.0")).toBeVisible();
     await expect(page.getByText(/O documento salvo continha/)).toHaveCount(0);
     await expect(page.getByText(/Desperdício \(g\)/)).toHaveCount(0);
   });

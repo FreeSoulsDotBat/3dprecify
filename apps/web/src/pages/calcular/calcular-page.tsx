@@ -257,6 +257,10 @@ export function CalcularPage() {
     const next = slotResetOnMarketplaceChange(marketplace);
     setValue(`channels.${index}.modality`, next.modality, { shouldValidate: true });
     setValue(`channels.${index}.category`, next.category, { shouldValidate: true });
+    // 016/PR-F (US17, FR-926) — sellerProfile/volumoso são PER MARKETPLACE, mesma razão da categoria.
+    setValue(`channels.${index}.sellerType`, next.sellerType, { shouldValidate: true });
+    setValue(`channels.${index}.highVolume`, next.highVolume, { shouldValidate: true });
+    setValue(`channels.${index}.surcharges`, next.surcharges, { shouldValidate: true });
     // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank exactly the fee fields the NEW
     // marketplace's plan does not show; a field the new plan still shows keeps its value. Closes
     // the render/value pair: a hidden field can no longer keep charging (measured: R$50 "Frete" on

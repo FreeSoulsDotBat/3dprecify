@@ -27,11 +27,24 @@ router = APIRouter(tags=["fee-catalog"])
 _CATALOG_PATH = Path(__file__).resolve().parents[1] / "data" / "catalog.json"
 
 
+class FixedFeeRule(CamelModel):
+    """How a band's FIXED fee forms (016/PR-F, ADR-0027 §3.1). ABSENT = the ``fixed_fee`` constant.
+
+    Data in transit, like ``band_mode``: this service never computes with it (FR-118). Dropping it
+    would silently turn "half the price below R$ 8" back into a R$ 4,00 constant — a fee the source
+    does not charge there, under a "Referência" seal.
+    """
+
+    kind: Literal["PCT_OF_PRICE"]
+    pct: float
+
+
 class PriceBand(CamelModel):
     min_price: float
     max_price: float | None
     commission_pct: float | None
     fixed_fee: float | None
+    fixed_fee_rule: FixedFeeRule | None = None
 
 
 class FreightNone(CamelModel):
@@ -72,10 +85,38 @@ class CategoryNode(CamelModel):
     parent_id: str | None = None
 
 
+class FixedFeeSource(CamelModel):
+    """016/US14 — provenance of the FIXED fee when it does not come from the entry's own page.
+
+    Amazon publishes the referral commission on Seller Central and the Individual plan's per-item
+    charge on venda.amazon.com.br/precos. One ``source_url`` would point the seller at a page that
+    does not contain the number they are looking at.
+    """
+
+    source: str
+    source_url: str
+    effective_date: str
+
+
+class OptionalSurcharge(CamelModel):
+    """016/US16 — a seller-DECLARED optional cost the marketplace publishes (Shopee: bulky-item
+    handling, R$ 50,00 per ORDER). Marketplace-level: it is not keyed by profile or price band."""
+
+    id: str
+    label: str
+    value: float
+    applies_per: Literal["ORDER", "ITEM"]
+    source: str
+    source_url: str
+    effective_date: str
+    last_reviewed: str
+
+
 class FeeEntry(CamelModel):
     determinants: dict[str, str] | None
     commission_pct: float | None
     fixed_fee: float | None
+    fixed_fee_source: FixedFeeSource | None = None
     min_per_item: float | None = None
     price_bands: list[PriceBand] | None = None
     # How the bands combine (ADR-0024). ABSENT = "SELECTION". This field is DATA IN TRANSIT for this
@@ -104,6 +145,10 @@ class MarketplaceCatalog(CamelModel):
     # an allowlist, and a field it does not know is a field it silently drops — this one was caught
     # by `test_fee_catalog_drops_no_field_from_the_artifact` (the guard those two fixes wrote).
     fee_axes: list[Literal["commissionPct", "fixedFee", "minPerItem", "freightCost"]] | None = None
+    # 016/US16 (FR-923) — ABSENT/null = none. Same allowlist lesson as the three fields above, and
+    # this one carries R$ 50,00: a response model that does not know a field EATS it, and the
+    # checkbox would render with nothing behind it.
+    optional_surcharges: list[OptionalSurcharge] | None = None
     entries: list[FeeEntry]
 
 

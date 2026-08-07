@@ -1,5 +1,5 @@
 {
-  "catalogVersion": "2026-08-06.0",
+  "catalogVersion": "2026-08-06.1",
   "schemaVersion": "1",
   "generatedAt": "2026-08-06T00:00:00.000Z",
   "marketplaces": [
@@ -723,9 +723,14 @@
             "category": "roupas-e-acessorios"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -740,9 +745,14 @@
             "category": "calcados"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -757,9 +767,14 @@
             "category": "oculos"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -774,9 +789,14 @@
             "category": "mochilas-bolsas-bagagem-e-acessorios-de-viagem"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -791,9 +811,14 @@
             "category": "relogios"
           },
           "commissionPct": 13,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -808,9 +833,14 @@
             "category": "joias"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -825,9 +855,14 @@
             "category": "midia-livros-dvd-musica-software-video"
           },
           "commissionPct": 15,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -842,9 +877,14 @@
             "category": "tv-audio-e-cinema-em-casa"
           },
           "commissionPct": 10,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -859,9 +899,14 @@
             "category": "eletronicos-portateis"
           },
           "commissionPct": 13,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -876,9 +921,14 @@
             "category": "celulares"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -893,9 +943,14 @@
             "category": "cameras-e-fotografia"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -910,23 +965,28 @@
             "category": "acessorios-eletronicos"
           },
           "commissionPct": null,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": [
             {
               "minPrice": 0,
               "maxPrice": 100,
               "commissionPct": 15,
-              "fixedFee": 0
+              "fixedFee": 2
             },
             {
               "minPrice": 100,
               "maxPrice": null,
               "commissionPct": 10,
-              "fixedFee": 0
+              "fixedFee": 2
             }
           ],
           "bandMode": "PROGRESSIVE",
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -941,9 +1001,14 @@
             "category": "consoles-de-videogame"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -958,9 +1023,14 @@
             "category": "videogames-e-acessorios-para-jogos"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -975,9 +1045,14 @@
             "category": "casa-e-cozinha"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -992,9 +1067,14 @@
             "category": "diy-e-ferramentas"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1009,9 +1089,14 @@
             "category": "ferramentas-eletricas-essenciais"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1026,9 +1111,14 @@
             "category": "computadores"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1043,9 +1133,14 @@
             "category": "papelaria-e-escritorio"
           },
           "commissionPct": 13,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1060,9 +1155,14 @@
             "category": "esportes-aventura-e-lazer"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1077,9 +1177,14 @@
             "category": "eletrodomesticos-grandes"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1094,23 +1199,28 @@
             "category": "moveis"
           },
           "commissionPct": null,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": [
             {
               "minPrice": 0,
               "maxPrice": 200,
               "commissionPct": 15,
-              "fixedFee": 0
+              "fixedFee": 2
             },
             {
               "minPrice": 200,
               "maxPrice": null,
               "commissionPct": 10,
-              "fixedFee": 0
+              "fixedFee": 2
             }
           ],
           "bandMode": "PROGRESSIVE",
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1125,9 +1235,14 @@
             "category": "brinquedos-e-jogos"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1142,9 +1257,14 @@
             "category": "produtos-para-bebes"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1159,9 +1279,14 @@
             "category": "saude-e-cuidado-pessoal"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1176,9 +1301,14 @@
             "category": "beleza"
           },
           "commissionPct": 13,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1193,9 +1323,14 @@
             "category": "produtos-de-beleza-de-luxo"
           },
           "commissionPct": 14,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1210,9 +1345,14 @@
             "category": "produtos-para-cuidados-pessoais"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1227,9 +1367,14 @@
             "category": "gramado-e-jardim"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1244,9 +1389,14 @@
             "category": "instrumentos-musicais-e-producao-audiovisual"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1261,9 +1411,14 @@
             "category": "automotivos-e-esportes-a-motor"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1278,9 +1433,14 @@
             "category": "pneus"
           },
           "commissionPct": 10,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1295,9 +1455,14 @@
             "category": "produtos-para-animais-de-estimacao"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1312,9 +1477,14 @@
             "category": "comidas-e-bebidas"
           },
           "commissionPct": 10,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1329,9 +1499,14 @@
             "category": "cerveja-e-vinho"
           },
           "commissionPct": 11,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1346,9 +1521,14 @@
             "category": "suprimentos-comerciais-industriais-e-cientificos"
           },
           "commissionPct": 12,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1363,9 +1543,14 @@
             "category": "outros"
           },
           "commissionPct": 15,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1380,23 +1565,28 @@
             "category": "colchoes"
           },
           "commissionPct": null,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": [
             {
               "minPrice": 0,
               "maxPrice": 200,
               "commissionPct": 15,
-              "fixedFee": 0
+              "fixedFee": 2
             },
             {
               "minPrice": 200,
               "maxPrice": null,
               "commissionPct": 10,
-              "fixedFee": 0
+              "fixedFee": 2
             }
           ],
           "bandMode": "PROGRESSIVE",
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1426,9 +1616,14 @@
             "plan": "INDIVIDUAL"
           },
           "commissionPct": 15,
-          "fixedFee": 0,
+          "fixedFee": 2,
           "minPerItem": 1,
           "priceBands": null,
+          "fixedFeeSource": {
+            "source": "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+            "sourceUrl": "https://venda.amazon.com.br/precos",
+            "effectiveDate": "2020-12-01"
+          },
           "freight": {
             "kind": "NONE"
           },
@@ -1638,7 +1833,28 @@
     },
     {
       "marketplace": "SHOPEE",
-      "determinantsSchema": null,
+      "determinantsSchema": {
+        "sellerProfile": [
+          "CPF_ALTO_VOLUME"
+        ]
+      },
+      "feeAxes": [
+        "commissionPct",
+        "fixedFee",
+        "freightCost"
+      ],
+      "optionalSurcharges": [
+        {
+          "id": "MANUSEIO_VOLUMOSO",
+          "label": "Manuseio de item volumoso",
+          "value": 50,
+          "appliesPer": "ORDER",
+          "source": "Central de Educação do Vendedor Shopee — Taxa de manuseio de itens volumosos",
+          "sourceUrl": "https://seller.shopee.com.br/edu/article/3305",
+          "effectiveDate": "2026-02-02",
+          "lastReviewed": "2026-08-06"
+        }
+      ],
       "entries": [
         {
           "determinants": null,
@@ -1647,6 +1863,16 @@
           "priceBands": [
             {
               "minPrice": 0,
+              "maxPrice": 8,
+              "commissionPct": 20,
+              "fixedFee": 0,
+              "fixedFeeRule": {
+                "kind": "PCT_OF_PRICE",
+                "pct": 50
+              }
+            },
+            {
+              "minPrice": 8,
               "maxPrice": 80,
               "commissionPct": 20,
               "fixedFee": 4
@@ -1690,16 +1916,68 @@
               }
             ]
           },
-          "source": "Central de Educação do Vendedor Shopee — Política de Comissão para vendedores CNPJ e CPF em 2026",
+          "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)",
           "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",
           "effectiveDate": "2026-03-01",
-          "lastReviewed": "2026-08-03"
+          "lastReviewed": "2026-08-06"
+        },
+        {
+          "determinants": {
+            "sellerProfile": "CPF_ALTO_VOLUME"
+          },
+          "commissionPct": null,
+          "fixedFee": null,
+          "priceBands": [
+            {
+              "minPrice": 12,
+              "maxPrice": 80,
+              "commissionPct": 20,
+              "fixedFee": 7
+            },
+            {
+              "minPrice": 80,
+              "maxPrice": 100,
+              "commissionPct": 14,
+              "fixedFee": 19
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": 200,
+              "commissionPct": 14,
+              "fixedFee": 23
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 14,
+              "fixedFee": 29
+            }
+          ],
+          "freight": {
+            "kind": "BAND_VOUCHER",
+            "bands": [
+              {
+                "minPrice": 0,
+                "maxPrice": 80,
+                "voucherCeiling": 20
+              },
+              {
+                "minPrice": 80,
+                "maxPrice": 200,
+                "voucherCeiling": 30
+              },
+              {
+                "minPrice": 200,
+                "maxPrice": null,
+                "voucherCeiling": 40
+              }
+            ]
+          },
+          "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CPF com mais de 450 pedidos em 90 dias (taxa adicional de R$ 3,00 por item)",
+          "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",
+          "effectiveDate": "2026-03-01",
+          "lastReviewed": "2026-08-06"
         }
-      ],
-      "feeAxes": [
-        "commissionPct",
-        "fixedFee",
-        "freightCost"
       ]
     }
   ]

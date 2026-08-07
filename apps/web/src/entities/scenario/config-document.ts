@@ -72,6 +72,22 @@ export interface ScenarioChannelIntent {
    * congelaria, que e o papel do snapshot (E4) e nao do cenario.
    */
   category?: string;
+  /**
+   * 016/PR-F (US17, FR-926) — o perfil do vendedor Shopee ("Você vende como" + "mais de 450
+   * pedidos?"). ADITIVO e OPCIONAL, mesma disciplina da categoria: AUSENTE é o que faz um cenário
+   * salvo ANTES deste eixo existir reabrir exatamente como reabria (byte-idêntico, FR-926 última
+   * cláusula) — nunca uma escolha vazia gravada.
+   */
+  sellerType?: string;
+  /** 016/PR-F (US17, FR-926) — só significa algo quando `sellerType === "CPF"`. */
+  highVolume?: string;
+  /**
+   * 016/PR-F (US16, FR-923, ADR-0027 §3.2) — ids dos custos opcionais marcados (Shopee
+   * `MANUSEIO_VOLUMOSO`). Resolvem AO VIVO contra o catálogo (ADR-0021) — o que se guarda é a
+   * INTENÇÃO ("o vendedor marcou"), nunca o valor: um valor gravado congelaria a sobretaxa fora do
+   * snapshot (papel do E4, não do cenário). Ausente/vazio = nenhum marcado, byte-idêntico.
+   */
+  surcharges?: string[];
   /** Absent entirely when the seller edited NO leaf in this slot — the live-vs-frozen boundary. */
   feeOverrides?: ScenarioChannelFeeOverrides;
 }
@@ -187,6 +203,11 @@ export interface ScenarioChannelSlotState {
   modality: string;
   /** Vazia ou ausente quando o vendedor nao escolheu categoria — vira ausencia no documento. */
   category?: string;
+  /** 016/PR-F (US17) — vazia/ausente vira ausencia no documento, mesma regra da categoria. */
+  sellerType?: string;
+  highVolume?: string;
+  /** 016/PR-F (US16) — ids marcados; vazio/ausente vira ausencia no documento. */
+  surcharges?: string[];
   commissionPct: { value: number; overridden: boolean };
   fixedFee: { value: number; overridden: boolean };
   minPerItem: { value: number; overridden: boolean };
@@ -211,6 +232,11 @@ export function serializeChannelIntent(slot: ScenarioChannelSlotState): Scenario
     // documento diz "nao houve escolha" pela ausencia, e um `""` gravado seria uma escolha vazia —
     // que o resolvedor casaria contra nada e o selo leria como categoria perdida.
     ...(slot.category ? { category: slot.category } : {}),
+    // 016/PR-F (US17) — mesma regra: vazio OMITE a chave.
+    ...(slot.sellerType ? { sellerType: slot.sellerType } : {}),
+    ...(slot.highVolume ? { highVolume: slot.highVolume } : {}),
+    // 016/PR-F (US16) — mesma regra: lista vazia OMITE a chave.
+    ...(slot.surcharges && slot.surcharges.length > 0 ? { surcharges: slot.surcharges } : {}),
     ...(hasOverrides ? { feeOverrides } : {}),
   };
 }

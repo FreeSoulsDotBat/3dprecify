@@ -492,13 +492,37 @@ describe("computeFromForm — catalog context (US2 pre-fill + provenance + vouch
   // A ARMADILHA, e ela quase me fez trocar uma mentira por outra: com `priceBands` a comissao VARIA
   // por faixa, e `entryToChannelFees` devolve `commissionPct: entry.commissionPct ?? 0` — ZERO para
   // uma entrada bandada. Publicar isso no campo diria "Comissão 0,00%" com ar de verdade.
-  it("[F11a-007] taxa por FAIXA nao publica aliquota unica — um numero so aqui seria falso", () => {
+  // 016/PR-F homologação (A1) — superou o [F11a-007] acima: o campo NÃO fica mais em branco só
+  // porque a entrada é bandada. Uma vez que o motor precificou o nível, a banda que ele REALMENTE
+  // aplicou é conhecida (`appliedBand`), e o placeholder passa a mostrar ESSA banda — nunca uma
+  // "Comissão 0,00%" fabricada, e nunca uma banda diferente da que o preço na tela usa.
+  it("[A1] taxa por FAIXA mostra a banda REALMENTE aplicada — nunca 'Comissão 0,00%'", () => {
     const r = computeFromForm(
       { ...canonical, channels: [slot({ marketplace: "SHOPEE", modality: "" })] },
       ctx,
     );
-    expect(r.channels[0]?.appliedFees.commissionPct).toBeUndefined();
-    expect(r.channels[0]?.appliedFees.fixedFee).toBeUndefined();
+    const ch = r.channels[0];
+    // base 41,33 (canonical) → anúncio 56,66 (comentado na linha 416 acima) ∈ banda [0,80): 20% / R$4,00.
+    expect(ch.appliedFees.commissionPct).toBe(20);
+    expect(ch.appliedFees.fixedFee).toBe(4);
+    expect(ch.appliedFeesFromBand).toBe(true);
+    // Esta banda não carrega `fixedFeeRule` — o fixo é a constante, não um % resolvido.
+    expect(ch.appliedFixedFeeRulePct).toBeNull();
+  });
+
+  it("[A1] um campo DIGITADO na entrada bandada não vira referência — o vendedor já vê o próprio número", () => {
+    const r = computeFromForm(
+      {
+        ...canonical,
+        channels: [slot({ marketplace: "SHOPEE", modality: "", commissionPct: "25" })],
+      },
+      ctx,
+    );
+    const ch = r.channels[0];
+    // Comissão digitada dropa o schedule (regra 013/F1) — nada de bandada aqui, e o placeholder
+    // continua sem valor porque o campo já tem o número do vendedor.
+    expect(ch.appliedFees.commissionPct).toBeUndefined();
+    expect(ch.appliedFeesFromBand).toBeFalsy();
   });
 
   it("[F11a-007] o que o vendedor DIGITOU nao vira referencia — ele ja ve o proprio numero", () => {
@@ -878,7 +902,11 @@ describe("016/US12 (T046) — byte-identical fixture: today's 3 marketplaces × 
     expect(pin).toEqual([
       { seal: "none", anuncioVarejo: 53.78, liquidoVarejo: 41.33 }, // ML manual (12% + R$6)
       { seal: "catchAll", anuncioVarejo: 48.62, liquidoVarejo: 41.33 }, // Amazon PROFISSIONAL catch-all
-      { seal: "catchAll", anuncioVarejo: 48.62, liquidoVarejo: 41.33 }, // Amazon INDIVIDUAL catch-all
+      // 016/US14 (FR-921) — era 48,62, IDÊNTICO ao Profissional, e essa igualdade era o defeito:
+      // o plano Individual cobra R$ 2,00 por item que o app não cobrava. (41,33 + 2,00) / 0,85 =
+      // 50,98. O preço SOBE, e subir é a consequência aceita (US14-AC3). O Profissional acima fica
+      // parado, e é ELE que prova que o fixo é do plano e não da tabela de comissão.
+      { seal: "catchAll", anuncioVarejo: 50.98, liquidoVarejo: 41.33 }, // Amazon INDIVIDUAL catch-all
       { seal: "reference", anuncioVarejo: 48.06, liquidoVarejo: 41.33 }, // Amazon + categoria
       { seal: "reference", anuncioVarejo: 56.66, liquidoVarejo: 21.33 }, // Shopee catalog pre-fill
     ]);

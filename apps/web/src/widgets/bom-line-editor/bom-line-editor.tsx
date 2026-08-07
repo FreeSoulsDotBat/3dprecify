@@ -93,6 +93,9 @@ export function BomLineEditor({
     const next = slotResetOnMarketplaceChange(marketplace);
     setValue(`channels.${index}.modality`, next.modality);
     setValue(`channels.${index}.category`, next.category);
+    setValue(`channels.${index}.sellerType`, next.sellerType);
+    setValue(`channels.${index}.highVolume`, next.highVolume);
+    setValue(`channels.${index}.surcharges`, next.surcharges);
     // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank the fee fields the new plan hides.
     for (const [field, value] of Object.entries(
       feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),

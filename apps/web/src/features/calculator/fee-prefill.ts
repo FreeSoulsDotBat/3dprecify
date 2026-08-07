@@ -1,4 +1,13 @@
-import type { BandMode, PriceBand, VoucherBand } from "@3dprecify/pricing-core";
+import {
+  type BandMode,
+  type ChannelFees,
+  type ChannelSurcharge,
+  Decimal,
+  grossUp,
+  type PriceBand,
+  toMoney,
+  type VoucherBand,
+} from "@3dprecify/pricing-core";
 
 import {
   type CatalogSource,
@@ -24,8 +33,25 @@ function toCatalogMarketplace(id: MarketplaceId): Marketplace | null {
   return (MARKETPLACES as readonly string[]).includes(id) ? (id as Marketplace) : null;
 }
 
+/**
+ * 016/PR-F (US17, FR-926, T057) — maps the TWO Shopee questions ("Você vende como" + "mais de 450
+ * pedidos?") onto the ONE determinant the catalog publishes. Verbatim art. 26839 (T057, dod-evidence
+ * §PR-F): a CPF seller who does NOT clear 450 orders/90 days pays the EXACT SAME table as CNPJ ("a
+ * taxa adicional de R$3 … não será aplicada, ficando vigente apenas a taxa por item vendido") — so
+ * every other combination (CNPJ of any volume; CPF not-high-volume; either question unanswered)
+ * resolves to the catch-all, byte-identical to a slot that never answered at all (FR-926 last clause).
+ */
+export function resolveShopeeSellerProfile(
+  sellerType: string | undefined,
+  highVolume: string | undefined,
+): string | null {
+  return sellerType === "CPF" && highVolume === "SIM" ? "CPF_ALTO_VOLUME" : null;
+}
+
 /** The determinants a slot contributes to the catalog lookup. Modality maps to the marketplace's
- *  determinant key (ML → listingType, Amazon → plan); Shopee/Outro contribute none (null).
+ *  determinant key (ML → listingType, Amazon → plan); Shopee contributes its seller-profile axis
+ *  (RA5 — resolved by `resolveShopeeSellerProfile`, the SAME mapping `channelFieldPlan` gates the
+ *  render on) when it resolves to something; Outro contributes none (null).
  *
  *  US2 added the `category` axis. Until 014 this function sent ONLY the modality, so a
  *  category-keyed entry could never resolve — the map would exist and nothing would reach it. An
@@ -35,7 +61,14 @@ export function slotDeterminants(
   marketplace: MarketplaceId,
   modality: string,
   category?: string,
+  sellerProfile?: string | null,
 ): Record<string, string> | null {
+  // Shopee has no modality axis — gating on `!modality` below (every other marketplace) would always
+  // return null for it, which is exactly what the seller-profile-less slot of today means (FR-926
+  // last clause: unanswered = catch-all = byte-identical).
+  if (marketplace === "SHOPEE") {
+    return sellerProfile ? { sellerProfile } : null;
+  }
   if (!modality) return null;
   const cat: Record<string, string> = category ? { category } : {};
   if (marketplace === "MERCADO_LIVRE") return { listingType: modality, ...cat };
@@ -69,11 +102,20 @@ export function resolveSlot(
   marketplace: MarketplaceId,
   modality: string,
   category?: string,
+  /** 016/PR-F (US17, FR-926) — the Shopee seller-profile answers (RA5: mapped by the SAME
+   *  `resolveShopeeSellerProfile` `slotDeterminants` uses, so render and lookup never drift). */
+  sellerType?: string,
+  highVolume?: string,
 ): SlotResolution {
   const mk = toCatalogMarketplace(marketplace);
   if (!mk) return { entry: null, originCategoryId: null, viaCatchAll: false };
 
-  const entry = resolveEntry(catalog, mk, slotDeterminants(marketplace, modality, category));
+  const sellerProfile = resolveShopeeSellerProfile(sellerType, highVolume);
+  const entry = resolveEntry(
+    catalog,
+    mk,
+    slotDeterminants(marketplace, modality, category, sellerProfile),
+  );
   if (!entry) return { entry: null, originCategoryId: null, viaCatchAll: false };
 
   // The entry itself says which category it belongs to — an ancestor's id when the chosen category
@@ -104,8 +146,37 @@ export function resolveSlotEntry(
   marketplace: MarketplaceId,
   modality: string,
   category?: string,
+  sellerType?: string,
+  highVolume?: string,
 ): FeeEntry | null {
-  return resolveSlot(catalog, marketplace, modality, category).entry;
+  return resolveSlot(catalog, marketplace, modality, category, sellerType, highVolume).entry;
+}
+
+/**
+ * 016/PR-F (US16, FR-923, ADR-0027 §3.2) — resolve the seller-checked surcharge IDS against the
+ * marketplace's published `optionalSurcharges`, mapping into the engine's `{label, value}` shape.
+ * An id the catalog no longer publishes (a curation change, or a stale saved scenario) is DROPPED,
+ * never invented — the checkbox itself degrades the same way any other catalog-driven control does
+ * (`channelFieldPlan.surcharges` simply stops offering it). Empty/absent ids → empty list, which is
+ * byte-identical to every calculation before this axis existed (US16-AC2).
+ */
+export function resolveSurcharges(
+  catalog: FeeCatalog,
+  marketplace: MarketplaceId,
+  ids: readonly string[] | undefined,
+): ChannelSurcharge[] {
+  if (!ids || ids.length === 0) return [];
+  const mk = toCatalogMarketplace(marketplace);
+  if (!mk) return [];
+  const published = catalog.marketplaces.find((m) => m.marketplace === mk)?.optionalSurcharges;
+  if (!published || published.length === 0) return [];
+  const byId = new Map(published.map((s) => [s.id, s]));
+  const out: ChannelSurcharge[] = [];
+  for (const id of ids) {
+    const s = byId.get(id);
+    if (s) out.push({ label: s.label, value: s.value });
+  }
+  return out;
 }
 
 /** A resolved entry mapped into the pure engine's channel fee inputs. `freightIsEstimate` marks the
@@ -173,6 +244,12 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
           // slipped past the schema throws LOUD here rather than pricing R$ 0,00 under a reference
           // seal.
           fixedFee: nonNullBandFixedFee(b.fixedFee),
+          // 016/PR-F (ADR-0027 §3.1) — carregada INTACTA, pelo mesmo motivo do `bandMode` logo
+          // abaixo, e ADR-0027 §5 nomeia ESTE como o risco real da mudança: não é errar a
+          // aritmética (linear, testada em três regimes), é um trajeto PERDER o campo e degradar
+          // em silêncio para a constante antiga. Aqui isso trocaria "metade do preço abaixo de
+          // R$ 8" pelo R$ 4,00 da faixa de cima — e o padrão justificaria o número errado.
+          ...(b.fixedFeeRule ? { fixedFeeRule: b.fixedFeeRule } : {}),
         }))
       : undefined,
     ...(entry.bandMode ? { bandMode: entry.bandMode } : {}),
@@ -180,6 +257,47 @@ export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
     freightVoucherBands,
     freightIsEstimate,
   };
+}
+
+/** What one price BAND is charging, resolved for a specific announce (016/PR-F homologação, A1). */
+export interface AppliedBandFees {
+  commissionPct: number;
+  /** The R$ value to SHOW — a plain band `fixedFee`, or a `fixedFeeRule` already resolved for
+   *  THIS announce (never the raw rule: a placeholder can only show a number). */
+  fixedFee: number;
+  /** The `fixedFeeRule.pct` `fixedFee` was resolved from, or `null` for a plain constant fee — the
+   *  caller adds an honest "(= {pct}% do preço)" suffix so the number is never read as a flat
+   *  constant that happens not to move. */
+  fixedFeeRulePct: number | null;
+}
+
+/**
+ * 016/PR-F homologação (A1) — the placeholder gap the 015/A8 mechanism left open: a BANDED entry's
+ * flat `commissionPct`/`fixedFee` read `entry.commissionPct ?? 0` / `entry.fixedFee ?? 0` (they live
+ * per-band, not at the entry's top level), so `processSlot` deliberately skips them (`bandada` guard,
+ * `calculator-model.ts`) rather than publish a false "Comissão 0,00%" under a reference seal. That
+ * left the field BLANK instead — honest, but silent about a real charge (Shopee: 20% + R$ 4,00, or
+ * +R$ 3,00, or half the listing price below R$ 8).
+ *
+ * Once the engine has priced the level, `grossUp`'s own `appliedBand` [F11a-007-esque] already knows
+ * which band answered — this looks that SAME band back up in `fees.priceBands` (byte-identical to
+ * the entry the engine used) and reads its commission/fixed fee. No second price is computed here:
+ * only which band the engine's own answer belongs to.
+ */
+export function appliedBandFees(fees: ChannelFees, base: number): AppliedBandFees | null {
+  if (!fees.priceBands || fees.priceBands.length === 0) return null;
+  const level = grossUp(base, fees);
+  if (level.appliedBand === null || level.anuncio === null) return null;
+  const [minPrice, maxPrice] = level.appliedBand;
+  const band = fees.priceBands.find((b) => b.minPrice === minPrice && b.maxPrice === maxPrice);
+  if (!band) return null;
+  if (band.fixedFeeRule) {
+    const fixedFee = toMoney(
+      new Decimal(level.anuncio).times(band.fixedFeeRule.pct).dividedBy(100),
+    );
+    return { commissionPct: band.commissionPct, fixedFee, fixedFeeRulePct: band.fixedFeeRule.pct };
+  }
+  return { commissionPct: band.commissionPct, fixedFee: band.fixedFee, fixedFeeRulePct: null };
 }
 
 /**

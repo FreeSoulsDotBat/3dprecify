@@ -70,6 +70,12 @@ function channelIntentToForm(c: ScenarioConfig["channels"][number]): ChannelSlot
     // T068 — ausente vira "", que e o estado "sem categoria" do formulario. Um cenario de antes do
     // 014 reabre identico ao que reabria (SC-809).
     category: c.category ?? "",
+    // 016/PR-F (US17/US16) — mesma regra: ausente vira "" / [], o estado "nao respondido" do
+    // formulario. Um cenario de antes deste eixo reabre identico ao que reabria (FR-926 ultima
+    // clausula, US16-AC2).
+    sellerType: (c.sellerType ?? "") as ChannelSlotForm["sellerType"],
+    highVolume: (c.highVolume ?? "") as ChannelSlotForm["highVolume"],
+    surcharges: c.surcharges ?? [],
     commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
     fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
     minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
@@ -123,6 +129,9 @@ export function buildScenarioConfig(args: {
       marketplace: slot.marketplace,
       modality: slot.modality,
       category: slot.category,
+      sellerType: slot.sellerType,
+      highVolume: slot.highVolume,
+      surcharges: slot.surcharges,
       commissionPct: field("commissionPct"),
       fixedFee: field("fixedFee"),
       minPerItem: field("minPerItem"),

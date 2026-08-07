@@ -299,3 +299,49 @@ describe("categoria no cenario — intencao, aditiva, e a ausencia preserva o pa
     expect(doc.feeOverrides).toEqual({ commissionPct: "16" });
   });
 });
+
+// 016/PR-F (US17, FR-926 / US16, FR-923) — sellerType/highVolume/surcharges seguem A MESMA regra
+// que a categoria acima: aditivos, e a ausencia (nunca uma string/lista vazia gravada) e o que
+// preserva byte-idêntico um cenário salvo antes destes eixos existirem.
+describe("perfil Shopee + volumoso no cenário — a MESMA regra de ausência da categoria (US16/US17)", () => {
+  const slot = (over: Partial<ScenarioChannelSlotState> = {}): ScenarioChannelSlotState => ({
+    marketplace: "SHOPEE",
+    modality: "",
+    commissionPct: { value: 0, overridden: false },
+    fixedFee: { value: 0, overridden: false },
+    minPerItem: { value: 0, overridden: false },
+    freightCost: { value: 0, overridden: false },
+    ...over,
+  });
+
+  it("sellerType/highVolume/surcharges respondidos são persistidos", () => {
+    expect(
+      serializeChannelIntent(
+        slot({ sellerType: "CPF", highVolume: "SIM", surcharges: ["MANUSEIO_VOLUMOSO"] }),
+      ),
+    ).toMatchObject({
+      sellerType: "CPF",
+      highVolume: "SIM",
+      surcharges: ["MANUSEIO_VOLUMOSO"],
+    });
+  });
+
+  it("sem resposta, as chaves são OMITIDAS — nunca gravadas vazias", () => {
+    for (const v of [undefined, ""]) {
+      const doc = serializeChannelIntent(slot({ sellerType: v, highVolume: v }));
+      expect(doc).not.toHaveProperty("sellerType");
+      expect(doc).not.toHaveProperty("highVolume");
+    }
+    for (const s of [undefined, []]) {
+      const doc = serializeChannelIntent(slot({ surcharges: s }));
+      expect(doc).not.toHaveProperty("surcharges");
+    }
+  });
+
+  it("um cenário salvo ANTES deste eixo existir continua válido e reabre sem ele (byte-idêntico)", () => {
+    const antigo = { marketplace: "SHOPEE", modality: "" };
+    expect("sellerType" in antigo).toBe(false);
+    expect("surcharges" in antigo).toBe(false);
+    expect(serializeChannelIntent(slot())).toEqual(antigo);
+  });
+});

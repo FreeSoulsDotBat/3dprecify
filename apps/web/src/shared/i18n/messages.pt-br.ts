@@ -164,6 +164,17 @@ export const messages = {
       // aqui, e um R$ 0,00 sob selo de referência seria pior que nenhum número.
       unpricedBand:
         "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do canal para precificar.",
+      // 016/PR-F homologação (A1) — quando a entrada é bandada, os placeholders de Comissão/Taxa
+      // fixa mostram a banda REALMENTE aplicada ao preço da tela (nunca a mesma banda para todo
+      // preço) — esta legenda avisa que o número muda se o preço mudar de faixa.
+      bandedFeesCaption: "Tabela por faixa de preço — valores da faixa do seu anúncio.",
+      // O fixo de algumas faixas é uma REGRA (% do preço, ex.: Shopee abaixo de R$ 8 — 50% do
+      // anúncio, ou seja metade), não uma constante — o placeholder mostra o valor JÁ RESOLVIDO
+      // para este anúncio, com este sufixo para nunca ser lido como um valor fixo que por acaso não
+      // mudou. Genérico em `{pct}` (não hardcoded em "metade") porque a regra publicada é um
+      // percentual — hoje só existe o caso 50%, mas a próxima curadoria pode publicar outro.
+      fixedFeeRuleCaption:
+        "Nesta faixa, a taxa fixa é {pct}% do preço do anúncio — o placeholder mostra o valor já calculado.",
       // US4 — master toggle: show/hide the whole marketplace section (default on).
       includeToggle: "Incluir marketplaces no preço",
       // 016/US11 (T048, FR-915) — the switch's disabled state needs a legible reason: a disabled
@@ -179,6 +190,43 @@ export const messages = {
       refreshErrorBody:
         "Usando a referência salva no dispositivo — o cálculo continua funcionando. Você também pode informar as taxas manualmente.",
       refreshRetry: "Tentar novamente",
+      // 016/PR-F (US17, FR-926, clarify Q6) — as DUAS perguntas do perfil do vendedor, só na Shopee.
+      // Sem resposta = catch-all (T057 verbatim art. 26839), então o placeholder é um estado VAZIO
+      // explícito e nunca um default escolhido pelo código.
+      sellerProfile: {
+        sellerTypeLabel: "Você vende como",
+        sellerTypePlaceholder: "Selecione",
+        sellerTypeOptions: { CPF: "Pessoa física (CPF)", CNPJ: "Pessoa jurídica (CNPJ)" },
+        highVolumeLabel: "Mais de 450 pedidos nos últimos 90 dias?",
+        highVolumeOptions: { SIM: "Sim", NAO: "Não" },
+      },
+      // 016/US16 (FR-923, ADR-0027 §3.2, clarify Q5) — o toggle dirigido pelo catálogo (rótulo,
+      // valor e procedência vêm de `optionalSurcharges` — zero número/string aqui). A legenda diz a
+      // honestidade da Q5: a taxa é por PEDIDO, e um pedido de vários itens desta peça superestimaria
+      // se fosse somada por unidade — então ela é somada UMA vez e a legenda avisa isso.
+      //
+      // 016/PR-F homologação (A3) — a legenda antiga prometia só "+R$ 50" e o anúncio sobe R$ 74,28
+      // (o gross-up incide SOBRE a sobretaxa, e a banda pode trocar) — uma promessa que a própria
+      // tela contradiz. A frase agora diz a verdade completa: o valor entra como CUSTO do canal, e o
+      // ANÚNCIO sobe mais do que ele porque a comissão incide sobre ele também.
+      surcharges: {
+        perOrderCaption:
+          "{value} por pedido, somado como custo do canal — o preço do anúncio sobe MAIS que isso, porque a comissão incide sobre ele também. Somado inteiro nesta unidade (não é dividido entre os itens do pedido).",
+        provenance: "Fonte: {source}, vigente desde {date}.",
+      },
+    },
+    // 016/US17 (FR-924, T057) — onde a Shopee não publica a regra, a tela diz isso — nunca aplica
+    // uma hipótese. Os dois pontos são VERBATIM do art. 26839 (T057, dod-evidence §PR-F).
+    shopeeWarnings: {
+      regressiveTitle: "A Shopee não publica a fórmula completa desta taxa",
+      regressiveBody:
+        "Para vendedores CPF com mais de 450 pedidos nos últimos 90 dias, a Shopee cobra uma taxa adicional regressiva abaixo de R$ 12,00 — mas só divulga dois pontos: “um produto de R$10 tem uma taxa de R$6,50, enquanto um de R$8 terá taxa de R$6”. Sem a fórmula completa, não aplicamos nenhuma estimativa — informe a taxa manualmente se precisar calcular este preço.",
+      measuredFreightTitle: "Frete aferido pode gerar cobrança retroativa",
+      measuredFreightBody:
+        "Se o peso ou as dimensões cadastrados forem menores que os aferidos pela transportadora, a Shopee pode recobrar a diferença depois da entrega. Isso não entra no cálculo — é um risco a considerar ao cadastrar o anúncio.",
+      // 016/PR-F homologação (A5) — nome do gatilho do InfoTip que agora carrega o corpo completo
+      // (o aviso colapsou para uma linha compacta; ver `ShopeeMeasuredFreightWarning`).
+      measuredFreightTipLabel: "Sobre o frete aferido",
     },
     // US2 — honesty seal (FR-107): where a slot's fee numbers came from and how fresh they are. The
     // reference/embedded states append the source + review date; the estimate marks the ML freight
@@ -249,6 +297,12 @@ export const messages = {
       catchAll: "categoria não informada — usando",
       catchAllHighest: "a maior alíquota da tabela",
       forCategory: "para",
+      // 016/PR-F (T057) — a procedência PRÓPRIA da taxa fixa, quando ela não vem da mesma página que
+      // a comissão (Amazon Individual: a comissão sai da tabela de categorias, a tarifa por item sai
+      // de venda.amazon.com.br/precos). Um selo SEPARADO — nunca dentro do texto do selo principal —
+      // porque o selo principal já nomeia a procedência da comissão, e as duas não são a mesma fonte.
+      fixedFeeSource: "Taxa fixa",
+      fixedFeeSourceSince: "vigente desde",
     },
     marketplaceNames: {
       MERCADO_LIVRE: "Mercado Livre",

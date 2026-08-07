@@ -29,13 +29,21 @@ void _omittedBillingCopy;
 // `specs/016-correcao-homologacao/conteudo-tooltips.md`, never a price this app is charging.
 // Rendered as plain body text (not through the number-formatting pipeline) precisely because it
 // is prose quoting an external fact, not a computed result.
+// 016/PR-F dated exception (2026-08-06, US17/FR-924, T057): `shopeeWarnings.regressiveBody` quotes
+// the Shopee official page VERBATIM — "um produto de R$10 tem uma taxa de R$6,50, enquanto um de
+// R$8 terá taxa de R$6" (art. 26839) — precisely because the point of US17 is that this app
+// computes NO price there; changing the digits to satisfy this guard would make the quote no
+// longer match the source, which is worse than the literal it forbids. Same class as the
+// `fieldTips` carve-out above: prose quoting a THIRD-PARTY fact, never a price this app charges.
 const {
   fieldTips: _omittedFieldTips,
   tooltipRefs: _omittedTooltipRefs,
+  shopeeWarnings: _omittedShopeeWarnings,
   ...NON_TOOLTIP_CALCULATOR
 } = messages.calculator;
 void _omittedFieldTips;
 void _omittedTooltipRefs;
+void _omittedShopeeWarnings;
 const HAYSTACK = collectStrings({
   ...NON_BILLING_MESSAGES,
   calculator: NON_TOOLTIP_CALCULATOR,

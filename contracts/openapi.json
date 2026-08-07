@@ -4041,6 +4041,16 @@
             ],
             "title": "Fixedfee"
           },
+          "fixedFeeSource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FixedFeeSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "minPerItem": {
             "anyOf": [
               {
@@ -4316,6 +4326,50 @@
         "title": "FilamentValues",
         "description": "Resolved filament fields — live cache while linked, editable override when degraded."
       },
+      "FixedFeeRule": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "const": "PCT_OF_PRICE",
+            "title": "Kind"
+          },
+          "pct": {
+            "type": "number",
+            "title": "Pct"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "pct"
+        ],
+        "title": "FixedFeeRule",
+        "description": "How a band's FIXED fee forms (016/PR-F, ADR-0027 §3.1). ABSENT = the ``fixed_fee`` constant.\n\nData in transit, like ``band_mode``: this service never computes with it (FR-118). Dropping it\nwould silently turn \"half the price below R$ 8\" back into a R$ 4,00 constant — a fee the source\ndoes not charge there, under a \"Referência\" seal."
+      },
+      "FixedFeeSource": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "title": "Effectivedate"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "sourceUrl",
+          "effectiveDate"
+        ],
+        "title": "FixedFeeSource",
+        "description": "016/US14 — provenance of the FIXED fee when it does not come from the entry's own page.\n\nAmazon publishes the referral commission on Seller Central and the Individual plan's per-item\ncharge on venda.amazon.com.br/precos. One ``source_url`` would point the seller at a page that\ndoes not contain the number they are looking at."
+      },
       "FreightBandVoucher": {
         "properties": {
           "kind": {
@@ -4447,6 +4501,20 @@
             ],
             "title": "Feeaxes"
           },
+          "optionalSurcharges": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/OptionalSurcharge"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Optionalsurcharges"
+          },
           "entries": {
             "items": {
               "$ref": "#/components/schemas/FeeEntry"
@@ -4490,6 +4558,59 @@
         ],
         "title": "Materialization",
         "description": "What the save DID to a line's catalog product — so the client can say it out loud (K4)."
+      },
+      "OptionalSurcharge": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "appliesPer": {
+            "type": "string",
+            "enum": [
+              "ORDER",
+              "ITEM"
+            ],
+            "title": "Appliesper"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "title": "Effectivedate"
+          },
+          "lastReviewed": {
+            "type": "string",
+            "title": "Lastreviewed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "value",
+          "appliesPer",
+          "source",
+          "sourceUrl",
+          "effectiveDate",
+          "lastReviewed"
+        ],
+        "title": "OptionalSurcharge",
+        "description": "016/US16 — a seller-DECLARED optional cost the marketplace publishes (Shopee: bulky-item\nhandling, R$ 50,00 per ORDER). Marketplace-level: it is not keyed by profile or price band."
       },
       "OtherCost": {
         "properties": {
@@ -4747,6 +4868,16 @@
               }
             ],
             "title": "Fixedfee"
+          },
+          "fixedFeeRule": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FixedFeeRule"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

@@ -105,3 +105,24 @@ export function FeeSeal({ state }: { state: FeeSealState }) {
     </Badge>
   );
 }
+
+/**
+ * 016/PR-F (T057) — the fixed fee's OWN provenance, when the catalog entry carries one (Amazon
+ * Individual: the commission comes from the category table, the R$ 2,00 per-item charge comes from a
+ * DIFFERENT official page — `venda.amazon.com.br/precos`). A SEPARATE badge, never folded into the
+ * main `FeeSeal`'s text: the main seal already names the commission's source, and citing a second
+ * source inside the same sentence would blur which number it backs (Constitution II — a provenance
+ * that does not name what it is FOR is not really a provenance).
+ */
+export function FixedFeeSourceBadge({
+  source,
+}: {
+  source: { source: string; sourceUrl: string; effectiveDate: string };
+}) {
+  const text = `${t.fixedFeeSource}: ${source.source} · ${t.fixedFeeSourceSince} ${fmtDate(source.effectiveDate)}`;
+  return (
+    <Badge tone="neutral" className="fee-seal" data-testid="fixed-fee-source-seal">
+      {text}
+    </Badge>
+  );
+}

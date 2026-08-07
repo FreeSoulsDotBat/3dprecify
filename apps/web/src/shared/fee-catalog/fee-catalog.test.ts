@@ -52,6 +52,137 @@ describe("fee-catalog truth-gate (served artifact + seed)", () => {
   });
 });
 
+// 016/PR-F — o DADO servido, lido do artefato commitado. Estas asserções são sobre o CATÁLOGO
+// (valores e forma); o efeito no PREÇO é provado em `features/calculator/fee-prefill.test.ts`, onde
+// o mapeamento para o motor mora.
+describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
+  const served = parseFeeCatalog(servedCatalog);
+  const mk = (id: string) => served.marketplaces.find((m) => m.marketplace === id)!;
+
+  it("catalogVersion bumpou UMA vez, e o seed carrega o mesmo rótulo", () => {
+    // O rótulo viaja congelado dentro de um snapshot imutável (ADR-0019): dois conteúdos sob o
+    // mesmo rótulo ficam ambíguos para sempre. Foi o defeito medido em 014.
+    expect(served.catalogVersion).toBe("2026-08-06.1");
+    expect(FEE_CATALOG_SEED.catalogVersion).toBe(served.catalogVersion);
+  });
+
+  describe("Shopee — a banda partida em R$ 8 (US18) e o perfil (US17)", () => {
+    const shopee = mk("SHOPEE");
+    const catchAll = shopee.entries.find((e) => e.determinants === null)!;
+    const cpf = shopee.entries.find((e) => e.determinants?.sellerProfile === "CPF_ALTO_VOLUME")!;
+
+    it("DUAS entradas, não três — o CPF de baixo volume paga a tabela do catch-all (T057)", () => {
+      expect(shopee.entries).toHaveLength(2);
+      expect(shopee.determinantsSchema).toEqual({ sellerProfile: ["CPF_ALTO_VOLUME"] });
+    });
+
+    it("a banda [0,80) virou [0,8) com a regra + [8,80) com os R$ 4 constantes", () => {
+      expect(catchAll.priceBands?.slice(0, 2)).toEqual([
+        {
+          minPrice: 0,
+          maxPrice: 8,
+          commissionPct: 20,
+          fixedFee: 0,
+          fixedFeeRule: { kind: "PCT_OF_PRICE", pct: 50 },
+        },
+        { minPrice: 8, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
+      ]);
+      // A comissão de 20% CONTINUA incidindo abaixo de R$ 8 — é a leitura verbatim do art. 26839
+      // (T057) e o oposto do que o OBTENCAO-DINAMICA §8 dizia ("50% sem fixo"), que estava errado.
+      expect(catchAll.priceBands?.[0]?.commissionPct).toBe(20);
+    });
+
+    it("as bandas de cima ficaram INTOCADAS (a partição não é uma recuradoria)", () => {
+      expect(catchAll.priceBands?.slice(2)).toEqual([
+        { minPrice: 80, maxPrice: 100, commissionPct: 14, fixedFee: 16 },
+        { minPrice: 100, maxPrice: 200, commissionPct: 14, fixedFee: 20 },
+        { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
+      ]);
+    });
+
+    it("CPF alto volume = a tabela do catch-all com +R$ 3,00 no fixo de CADA banda", () => {
+      const acima8 = catchAll.priceBands!.filter((b) => b.minPrice >= 8);
+      expect(cpf.priceBands).toHaveLength(acima8.length);
+      cpf.priceBands!.forEach((b, i) => {
+        expect(b.commissionPct).toBe(acima8[i]!.commissionPct);
+        expect(b.fixedFee).toBe(acima8[i]!.fixedFee! + 3);
+      });
+    });
+
+    it("as bandas do CPF começam em R$ 12 e NÃO herdam a partição de R$ 8 (§9.5)", () => {
+      // A tabela + R$ 3 daria R$ 7,00 de taxa num item de R$ 9, e a fonte publica R$ 6,00 num de
+      // R$ 8 — a regressiva existe e a fórmula NÃO é publicada. Precificar ali mentiria sob selo.
+      expect(cpf.priceBands?.[0]?.minPrice).toBe(12);
+      expect(cpf.priceBands?.some((b) => b.fixedFeeRule != null)).toBe(false);
+      expect(cpf.priceBands?.some((b) => b.minPrice < 12)).toBe(false);
+    });
+
+    it("o volumoso é R$ 50,00 POR PEDIDO, com fonte própria (art. 3305)", () => {
+      expect(shopee.optionalSurcharges).toEqual([
+        {
+          id: "MANUSEIO_VOLUMOSO",
+          label: "Manuseio de item volumoso",
+          value: 50,
+          appliesPer: "ORDER",
+          source: expect.stringContaining("Shopee") as unknown as string,
+          sourceUrl: "https://seller.shopee.com.br/edu/article/3305",
+          effectiveDate: "2026-02-02",
+          lastReviewed: "2026-08-06",
+        },
+      ]);
+    });
+  });
+
+  describe("Amazon — a cobrança por item do plano Individual (US14)", () => {
+    const amazon = mk("AMAZON");
+    const individual = amazon.entries.filter((e) => e.determinants?.plan === "INDIVIDUAL");
+    const profissional = amazon.entries.filter((e) => e.determinants?.plan === "PROFISSIONAL");
+
+    it("toda entrada INDIVIDUAL cobra R$ 2,00 de fixo, com procedência própria", () => {
+      expect(individual.length).toBeGreaterThan(0);
+      for (const e of individual) {
+        expect(e.fixedFee).toBe(2);
+        expect(e.fixedFeeSource?.sourceUrl).toBe("https://venda.amazon.com.br/precos");
+        // A procedência é OUTRA que a da entrada de propósito: o R$ 2,00 não está na página de
+        // comissões, e apontar para ela seria mandar o vendedor a um lugar sem o número dele.
+        expect(e.fixedFeeSource?.sourceUrl).not.toBe(e.sourceUrl);
+      }
+    });
+
+    it("a banda também carrega os R$ 2,00 — senão o fixo do topo seria INERTE (013/F1)", () => {
+      const bandadas = individual.filter((e) => (e.priceBands?.length ?? 0) > 0);
+      expect(bandadas.length).toBeGreaterThan(0);
+      for (const e of bandadas) {
+        for (const b of e.priceBands!) expect(b.fixedFee).toBe(2);
+      }
+    });
+
+    it("o plano Profissional fica INTOCADO — os R$ 19/mês não são custo por item", () => {
+      expect(profissional.length).toBe(individual.length);
+      for (const e of profissional) {
+        expect(e.fixedFee).toBe(0);
+        expect(e.fixedFeeSource ?? null).toBeNull();
+        for (const b of e.priceBands ?? []) expect(b.fixedFee).toBe(0);
+      }
+    });
+
+    it("`minPerItem` continua R$ 1,00 uniforme (D7 não foi reaberto)", () => {
+      for (const e of amazon.entries) expect(e.minPerItem).toBe(1);
+    });
+
+    // 016/PR-F homologação (A4) — o texto de `fixedFeeSource.source` não repete a vigência: o
+    // `FixedFeeSourceBadge` já imprime `effectiveDate` estruturado como "vigente desde dd/mm/aaaa",
+    // então um parêntese com "vigente desde…" DENTRO da string vira "vigente desde X · vigente desde
+    // X" no selo — a mesma informação dita duas vezes. A data continua medida e citada, só que uma
+    // vez só, no campo estruturado que já existe para isso.
+    it("`fixedFeeSource.source` não repete a vigência (o campo estruturado já a diz)", () => {
+      for (const e of individual) {
+        expect(e.fixedFeeSource?.source ?? "").not.toMatch(/vigente desde/i);
+      }
+    });
+  });
+});
+
 describe("fee-catalog schema rejects fabricated / malformed entries", () => {
   const base = {
     determinants: null,
@@ -111,6 +242,168 @@ describe("fee-catalog schema rejects fabricated / malformed entries", () => {
       priceBands: [{ minPrice: 0, maxPrice: null, commissionPct: 14, fixedFee: null }],
     };
     expect(() => feeEntrySchema.parse(nullFixedFeeBand)).toThrow();
+  });
+
+  // 016/PR-F (US18, FR-927, ADR-0027 §3.1) — a taxa fixa como FUNÇÃO do preço.
+  describe("fixedFeeRule (ADR-0027 §3.1)", () => {
+    const banded = (band: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+      ...base,
+      commissionPct: null,
+      fixedFee: null,
+      priceBands: [band],
+      ...extra,
+    });
+    const rule = { kind: "PCT_OF_PRICE", pct: 50 };
+
+    it("aceita a forma que a Shopee publica: 20% + metade do preço abaixo de R$ 8", () => {
+      expect(() =>
+        feeEntrySchema.parse(
+          banded({ minPrice: 0, maxPrice: 8, commissionPct: 20, fixedFee: 0, fixedFeeRule: rule }),
+        ),
+      ).not.toThrow();
+    });
+
+    it("aceita a AUSÊNCIA e o null explícito (o backend serializa ausente como null)", () => {
+      const plain = { minPrice: 0, maxPrice: null, commissionPct: 20, fixedFee: 4 };
+      expect(() => feeEntrySchema.parse(banded(plain))).not.toThrow();
+      expect(() => feeEntrySchema.parse(banded({ ...plain, fixedFeeRule: null }))).not.toThrow();
+    });
+
+    it("recusa um pct fora de (0, 100) — 0 e 100 inclusive", () => {
+      for (const pct of [0, 100, -1, 120]) {
+        expect(() =>
+          feeEntrySchema.parse(
+            banded({
+              minPrice: 0,
+              maxPrice: 8,
+              commissionPct: 20,
+              fixedFee: 0,
+              fixedFeeRule: { kind: "PCT_OF_PRICE", pct },
+            }),
+          ),
+        ).toThrow();
+      }
+    });
+
+    it("recusa commissionPct + pct >= 100 (o gross-up não teria solução)", () => {
+      expect(() =>
+        feeEntrySchema.parse(
+          banded({
+            minPrice: 0,
+            maxPrice: 8,
+            commissionPct: 60,
+            fixedFee: 0,
+            fixedFeeRule: { kind: "PCT_OF_PRICE", pct: 40 },
+          }),
+        ),
+      ).toThrow();
+    });
+
+    it("recusa a regra numa entrada PROGRESSIVE — 'metade do preço' não é uma fatia", () => {
+      expect(() =>
+        feeEntrySchema.parse(
+          banded(
+            { minPrice: 0, maxPrice: 8, commissionPct: 20, fixedFee: 0, fixedFeeRule: rule },
+            { bandMode: "PROGRESSIVE" },
+          ),
+        ),
+      ).toThrow();
+      // E a MESMA entrada em SELECTION passa: a recusa é sobre o modo, não sobre a forma da banda.
+      expect(() =>
+        feeEntrySchema.parse(
+          banded(
+            { minPrice: 0, maxPrice: 8, commissionPct: 20, fixedFee: 0, fixedFeeRule: rule },
+            { bandMode: "SELECTION" },
+          ),
+        ),
+      ).not.toThrow();
+    });
+
+    it("um `kind` desconhecido é recusado — não existe regra que o motor não saiba cobrar", () => {
+      expect(() =>
+        feeEntrySchema.parse(
+          banded({
+            minPrice: 0,
+            maxPrice: 8,
+            commissionPct: 20,
+            fixedFee: 0,
+            fixedFeeRule: { kind: "PCT_OF_COST", pct: 50 },
+          }),
+        ),
+      ).toThrow();
+    });
+  });
+
+  // 016/US14 — procedência própria do fixo.
+  describe("fixedFeeSource (US14)", () => {
+    it("aceita a procedência própria do fixo, e a ausência dela", () => {
+      expect(() => feeEntrySchema.parse(base)).not.toThrow();
+      expect(() =>
+        feeEntrySchema.parse({
+          ...base,
+          fixedFeeSource: {
+            source: "Amazon — Preços e planos",
+            sourceUrl: "https://venda.amazon.com.br/precos",
+            effectiveDate: "2020-12-01",
+          },
+        }),
+      ).not.toThrow();
+    });
+
+    it("recusa uma procedência sem URL — uma procedência que não procede é pior que nenhuma", () => {
+      expect(() =>
+        feeEntrySchema.parse({
+          ...base,
+          fixedFeeSource: { source: "de algum lugar", sourceUrl: "", effectiveDate: "2020-12-01" },
+        }),
+      ).toThrow();
+    });
+  });
+});
+
+// 016/US16 (FR-923, ADR-0027 §3.2) — a sobretaxa opcional vive no MARKETPLACE.
+describe("optionalSurcharges (US16)", () => {
+  const doc = (optionalSurcharges: unknown) => ({
+    catalogVersion: "2026-08-06.t",
+    schemaVersion: SCHEMA_VERSION,
+    generatedAt: "2026-08-06T00:00:00.000Z",
+    marketplaces: [{ marketplace: "SHOPEE", optionalSurcharges, entries: [] }],
+  });
+  const volumoso = {
+    id: "MANUSEIO_VOLUMOSO",
+    label: "Manuseio de item volumoso",
+    value: 50,
+    appliesPer: "ORDER",
+    source: "Shopee art. 3305",
+    sourceUrl: "https://seller.shopee.com.br/edu/article/3305",
+    effectiveDate: "2026-02-02",
+    lastReviewed: "2026-08-06",
+  };
+
+  it("aceita a sobretaxa publicada, e aceita ausente/null (= nenhuma, byte-idêntico)", () => {
+    expect(() => feeCatalogSchema.parse(doc([volumoso]))).not.toThrow();
+    expect(() => feeCatalogSchema.parse(doc(null))).not.toThrow();
+    expect(() => feeCatalogSchema.parse(doc(undefined))).not.toThrow();
+  });
+
+  it("exige procedência — o valor é dinheiro e não pode existir sem fonte (Constituição II)", () => {
+    for (const campo of ["sourceUrl", "source", "effectiveDate", "lastReviewed"]) {
+      const semCampo: Record<string, unknown> = { ...volumoso };
+      delete semCampo[campo];
+      expect(() => feeCatalogSchema.parse(doc([semCampo]))).toThrow();
+    }
+  });
+
+  it("recusa um `appliesPer` fora do par publicado (a legenda não pode ser inventada)", () => {
+    expect(() => feeCatalogSchema.parse(doc([{ ...volumoso, appliesPer: "MES" }]))).toThrow();
+  });
+
+  it("recusa dois `id` iguais — o valor resolvido dependeria da ordem do arquivo", () => {
+    expect(() => feeCatalogSchema.parse(doc([volumoso, { ...volumoso, value: 80 }]))).toThrow();
+  });
+
+  it("recusa um valor negativo", () => {
+    expect(() => feeCatalogSchema.parse(doc([{ ...volumoso, value: -1 }]))).toThrow();
   });
 });
 

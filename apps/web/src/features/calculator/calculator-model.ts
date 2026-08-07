@@ -16,10 +16,12 @@ import {
   calculatorSchema,
 } from "@/features/calculator/calculator-schema";
 import {
+  appliedBandFees,
   entryToChannelFees,
   feeSealState,
   type ResolvedChannelFees,
   resolveSlot,
+  resolveSurcharges,
 } from "@/features/calculator/fee-prefill";
 import type { FeeSealState } from "@/features/calculator/fee-seal";
 import type { CatalogSource, FeeCatalog, FeeEntry } from "@/shared/fee-catalog";
@@ -76,6 +78,21 @@ export interface ChannelSlotOutcome {
    *  deixou em branco, para a UI mostrá-la como REFERÊNCIA em vez de um "0,00" que implica zero.
    *  Um campo ausente aqui NÃO tem valor único a mostrar (foi digitado, ou é governado por banda). */
   appliedFees: Partial<Record<ChannelFieldName, number>>;
+  /** 016/PR-F homologação (A1) — true when `appliedFees.commissionPct`/`fixedFee` came from the price
+   *  BAND that actually applied to this level (`appliedBandFees`, `fee-prefill.ts`) rather than a
+   *  flat entry value. The UI adds a one-line disclosure ("tabela por faixa de preço…") only then —
+   *  a flat reference needs no such caveat, and showing it there would be noise, not honesty. */
+  appliedFeesFromBand: boolean;
+  /** 016/PR-F homologação (A1) — the `fixedFeeRule.pct` `appliedFees.fixedFee` was RESOLVED from
+   *  (Shopee "50% do preço" abaixo de R$ 8), or `null` for a plain constant fee. The UI appends an
+   *  honest "(= {pct}% do preço)" suffix so the number is never read as a flat fee that happens not
+   *  to move. */
+  appliedFixedFeeRulePct: number | null;
+  /** 016/PR-F (T057, FR-928 area) — a procedência PRÓPRIA da taxa fixa, quando a entrada carrega uma
+   *  (Amazon INDIVIDUAL — a comissão sai de uma página, a tarifa por item de outra). `null` quando a
+   *  entrada não carrega uma, ou quando as taxas não vieram do catálogo (manual/sem referência) — a
+   *  procedência é do NÚMERO do catálogo, nunca do que o vendedor digitou. */
+  fixedFeeSource: { source: string; sourceUrl: string; effectiveDate: string } | null;
 }
 
 /** The resolved fee catalog + where it came from + the clock, for the honesty seal + pre-fill. */
@@ -168,6 +185,8 @@ interface SlotProcessing {
   editedFields: Partial<Record<ChannelFieldName, number>>;
   /** 015/A8 ([F11a-007]) — as taxas do catálogo aplicadas a campos em branco, quando únicas. */
   appliedFees: Partial<Record<ChannelFieldName, number>>;
+  /** 016/PR-F (T057) — a procedência própria da taxa fixa, quando ela veio do catálogo. */
+  fixedFeeSource: { source: string; sourceUrl: string; effectiveDate: string } | null;
 }
 
 /**
@@ -241,8 +260,17 @@ function resolveSlotFees(
 function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessing {
   const manual = parseManualFees(slot);
   // 014/US1: the category is a per-slot determinant, so it is read from THIS slot and never shared.
+  // 016/PR-F (US17): sellerType/highVolume idem — per-slot, and only Shopee's plan asks them at all
+  // (fee-prefill.ts:resolveShopeeSellerProfile ignores them on any other marketplace).
   const resolution = ctx
-    ? resolveSlot(ctx.catalog, slot.marketplace, slot.modality, slot.category)
+    ? resolveSlot(
+        ctx.catalog,
+        slot.marketplace,
+        slot.modality,
+        slot.category,
+        slot.sellerType,
+        slot.highVolume,
+      )
     : { entry: null, originCategoryId: null, viaCatchAll: false };
   const entry = resolution.entry;
 
@@ -256,6 +284,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       editedFields: manual.editedFields,
       // slot com erro: nao ha taxa aplicada a exibir — o campo mostra o erro, nao referencia
       appliedFees: {},
+      fixedFeeSource: null,
     };
   }
 
@@ -318,13 +347,20 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     }
   }
 
+  // 016/PR-F (US16, FR-923, ADR-0027 §3.2) — the surcharges the seller CHECKED for this slot,
+  // resolved against the live catalog (RA5: not a value the form carries — the id is the intent, the
+  // catalog owns the money, same contract as every other fee). Independent of `manual`/override
+  // state: a checkbox is neither a typed fee nor a catalog pre-fill, so it survives both.
+  const surcharges = ctx ? resolveSurcharges(ctx.catalog, slot.marketplace, slot.surcharges) : [];
+
   const hasFee =
     fees.commissionPct > 0 ||
     fees.fixedFee > 0 ||
     fees.minPerItem > 0 ||
     fees.freightCost > 0 ||
     (fees.priceBands?.length ?? 0) > 0 ||
-    (fees.freightVoucherBands?.length ?? 0) > 0;
+    (fees.freightVoucherBands?.length ?? 0) > 0 ||
+    surcharges.length > 0;
 
   return {
     input: {
@@ -338,6 +374,7 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
       ...(fees.bandMode ? { bandMode: fees.bandMode } : {}),
       freightCost: fees.freightCost,
       freightVoucherBands: fees.freightVoucherBands,
+      ...(surcharges.length > 0 ? { surcharges } : {}),
     },
     errors: {},
     hasFee,
@@ -345,6 +382,9 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     freightIsEstimate: fees.freightIsEstimate,
     editedFields: manual.editedFields,
     appliedFees,
+    // 016/PR-F (T057) — a procedência PRÓPRIA do fixo, só quando ela veio do CATÁLOGO (o mesmo
+    // portão de `feeSource` acima) — um valor digitado não tem procedência de catálogo a mostrar.
+    fixedFeeSource: useCatalog ? (entry?.fixedFeeSource ?? null) : null,
   };
 }
 
@@ -439,9 +479,43 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             freightIsEstimate: false,
             editedFields: p.editedFields,
             appliedFees: p.appliedFees,
+            appliedFeesFromBand: false,
+            appliedFixedFeeRulePct: null,
+            fixedFeeSource: p.fixedFeeSource,
           }
         : (() => {
+            const slotInput = p.input;
             const computed = result.channels[ep++] ?? null;
+            const priced = !isUnpriced(computed);
+
+            // 016/PR-F homologação (A1) — once the level is priced, back-fill `commissionPct`/
+            // `fixedFee` FROM THE BAND THE ENGINE ACTUALLY APPLIED (never a second price computed
+            // here — `appliedBandFees` re-derives only WHICH band, from the same `grossUp`). Only
+            // for a field the seller did NOT type (same discipline as every other applied-fee field,
+            // 015/A8) and only while the slot is priced (unpriced already clears `appliedFees`
+            // below — a band nobody can see behind is not a reference to vouch for).
+            let appliedFees = p.appliedFees;
+            let appliedFeesFromBand = false;
+            let appliedFixedFeeRulePct: number | null = null;
+            const wantsCommission = p.editedFields.commissionPct === undefined;
+            const wantsFixedFee = p.editedFields.fixedFee === undefined;
+            if (
+              priced &&
+              (slotInput.priceBands?.length ?? 0) > 0 &&
+              (wantsCommission || wantsFixedFee)
+            ) {
+              const band = appliedBandFees(slotInput, result.precoVarejo);
+              if (band) {
+                appliedFeesFromBand = true;
+                appliedFixedFeeRulePct = wantsFixedFee ? band.fixedFeeRulePct : null;
+                appliedFees = {
+                  ...appliedFees,
+                  ...(wantsCommission ? { commissionPct: band.commissionPct } : {}),
+                  ...(wantsFixedFee ? { fixedFee: band.fixedFee } : {}),
+                };
+              }
+            }
+
             return {
               errors: {},
               result: computed,
@@ -451,13 +525,18 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
               // "Referência" seal: the seal would vouch for a number the screen is not showing.
               // Degrading the whole slot to "sem referência" understates rather than overstates,
               // which is the only safe direction here (Constitution II).
-              seal: isUnpriced(computed) ? ({ kind: "none" } as const) : p.seal,
+              seal: priced ? p.seal : ({ kind: "none" } as const),
               freightIsEstimate: p.freightIsEstimate,
               editedFields: p.editedFields,
               // 015/A8 — a referencia acompanha o SELO: quando a fatia deixa de ser precificada o
               // selo cai para "sem referencia", e publicar uma aliquota "aplicada" ali vouchearia
               // um numero que a tela nao esta mostrando (mesma razao do SC-817 acima).
-              appliedFees: isUnpriced(computed) ? {} : p.appliedFees,
+              appliedFees: priced ? appliedFees : {},
+              appliedFeesFromBand: priced && appliedFeesFromBand,
+              appliedFixedFeeRulePct: priced ? appliedFixedFeeRulePct : null,
+              // 016/PR-F — o mesmo argumento: um nível não precificado não tem procedência de fixo a
+              // mostrar (o selo principal já caiu para "sem referência").
+              fixedFeeSource: priced ? p.fixedFeeSource : null,
             };
           })(),
     );

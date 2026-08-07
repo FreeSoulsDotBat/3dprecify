@@ -80,11 +80,31 @@ describe("slotResetOnMarketplaceChange — a categoria não atravessa marketplac
     expect(slotResetOnMarketplaceChange("MERCADO_LIVRE")).toEqual({
       modality: "CLASSICO",
       category: "",
+      sellerType: "",
+      highVolume: "",
+      surcharges: [],
     });
   });
 
   it("marketplace sem eixo de modalidade também limpa a categoria", () => {
-    expect(slotResetOnMarketplaceChange("SHOPEE")).toEqual({ modality: "", category: "" });
+    expect(slotResetOnMarketplaceChange("SHOPEE")).toEqual({
+      modality: "",
+      category: "",
+      sellerType: "",
+      highVolume: "",
+      surcharges: [],
+    });
+  });
+
+  // 016/PR-F (US17, FR-926) — o perfil do vendedor (sellerProfile) e o volumoso (surcharges) sao
+  // PER MARKETPLACE pela mesma razao da categoria: "CPF_ALTO_VOLUME" so quer dizer algo na Shopee.
+  it("todo marketplace reseta sellerType/highVolume/surcharges — nenhum e excecao", () => {
+    for (const { value } of MARKETPLACE_OPTIONS) {
+      const next = slotResetOnMarketplaceChange(value as MarketplaceId);
+      expect(next.sellerType).toBe("");
+      expect(next.highVolume).toBe("");
+      expect(next.surcharges).toEqual([]);
+    }
   });
 
   it("todo marketplace reseta a categoria — nenhum é exceção", () => {

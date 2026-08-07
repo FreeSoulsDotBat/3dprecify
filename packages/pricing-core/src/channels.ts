@@ -4,12 +4,44 @@
 // ADR-0008 (2-dp HALF_UP). Used by computeCalculator per channel; `grossUp` is exported for tests.
 import { Decimal, toMoney } from "./rounding.ts";
 
+/**
+ * How the FIXED fee of a band forms (ADR-0027 §3.1, pricing-core 4.1.0).
+ *
+ * **AUSENTE = a constante `fixedFee`** — o significado que todo payload gravado antes desta mudança
+ * já tem (a mesma disciplina do `bandMode`, ADR-0024). `priceBands` viaja dentro de snapshot
+ * congelado (imutável por trigger, ADR-0019) e de documento de cenário (ADR-0021): se a ausência
+ * significasse outra coisa, um congelado que o produto promete imutável passaria a afirmar outro
+ * preço sem uma linha dele mudar.
+ *
+ * `PCT_OF_PRICE` é o caso MÍNIMO que a fonte publica (Shopee art. 26839: abaixo de R$ 8 o adicional
+ * por item é metade do preço do produto). Qualquer outra forma é decisão nova, não um `kind` a mais
+ * por conveniência.
+ */
+export interface FixedFeeRule {
+  kind: "PCT_OF_PRICE";
+  /** % do ANÚNCIO, em (0, 100) — e `commissionPct + pct < 100` na mesma banda (denominador). */
+  pct: number;
+}
+
 /** A listing-price fee band — half-open `[minPrice, maxPrice)` (`maxPrice: null` = ∞). */
 export interface PriceBand {
   minPrice: number;
   maxPrice: number | null;
   commissionPct: number;
+  /** R$ — o valor do fixo QUANDO NÃO HÁ regra. Com `fixedFeeRule` presente ele nunca é lido. */
   fixedFee: number;
+  fixedFeeRule?: FixedFeeRule; // ADITIVO (ADR-0027) — ausência = a constante acima
+}
+
+/**
+ * Um custo opcional POR ITEM que o vendedor declara (ADR-0027 §3.2) — Shopee: manuseio de item
+ * volumoso, R$ 50,00 por PEDIDO (art. 3305). Rotulado, e não escalar, porque o breakdown e o PDF
+ * imprimem linhas que se nomeiam: o rótulo é o que impede a superestimação multi-item de virar
+ * surpresa no extrato.
+ */
+export interface ChannelSurcharge {
+  label: string;
+  value: number; // R$, ≥ 0
 }
 
 /**
@@ -43,6 +75,8 @@ export interface ChannelFees {
   freightVoucherBands?: VoucherBand[]; // co-funded voucher, deducted by the announce band (Shopee, FR-111a)
   priceBands?: PriceBand[];
   bandMode?: BandMode; // ABSENT = "SELECTION" — see BandMode; absence preserves every stored payload
+  /** Custos opcionais declarados pelo vendedor (ADR-0027 §3.2). ABSENTE/vazio = byte-idêntico. */
+  surcharges?: ChannelSurcharge[];
 }
 
 /**
@@ -75,22 +109,94 @@ function bandContaining<T extends { minPrice: number; maxPrice: number | null }>
 }
 
 /**
- * Announce (full precision) that nets `base` (before freight) after commission + fixed fee, choosing
- * whichever regime is self-consistent:
- *   % regime:  list = (base + fixedFee) / (1 − commissionPct/100)   when commissionPct/100·list ≥ minPerItem
- *   floor:     list = base + minPerItem + fixedFee                  when the per-item floor binds
+ * **A leitura ÚNICA do fixo de uma banda** (ADR-0027 §3.1) — e é aqui que um esquecimento vira
+ * dinheiro errado, por isso ela existe como uma função só, usada nas TRÊS chamadas
+ * (`grossUpOnce`, `chooseBand.at`, `grossUp.finish`):
+ *
+ *     bandFixedFee(banda, anuncio) = banda.fixedFeeRule ? anuncio × pct/100 : banda.fixedFee
+ *
+ * Sempre sobre o anúncio JÁ arredondado nas chamadas de cobrança (WYSIWYG, como a comissão).
+ */
+function bandFixedFee(band: PriceBand, anuncio: number): Decimal {
+  return band.fixedFeeRule
+    ? new Decimal(anuncio).times(band.fixedFeeRule.pct).dividedBy(100)
+    : new Decimal(band.fixedFee);
+}
+
+/** A banda decomposta nas duas parcelas que o gross-up fechado consome: constante + % do preço. */
+function fixedShapeOf(band: PriceBand): { constant: number; pct: number } {
+  return band.fixedFeeRule
+    ? { constant: 0, pct: band.fixedFeeRule.pct }
+    : { constant: band.fixedFee, pct: 0 };
+}
+
+/** Σ das sobretaxas declaradas — atravessa TODOS os regimes (ADR-0027 §3.2 / regra 013/F1). */
+function surchargeTotal(surcharges: ChannelSurcharge[] | undefined): Decimal {
+  return (surcharges ?? []).reduce((t, s) => t.plus(s.value), new Decimal(0));
+}
+
+/**
+ * As recusas DECLARADAS de ADR-0027 §3.1 — forma inválida é erro nomeado, nunca tolerada em
+ * silêncio e nunca um `Infinity` sob selo:
+ *
+ * - `fixedFeeRule` só tem significado em `bandMode: "SELECTION"`. Numa entrada `PROGRESSIVE` a
+ *   tarifa é cobrada por FATIA do preço, e "metade do preço" não é uma fatia — carregar a regra ali
+ *   é erro de forma, não um caso a interpretar.
+ * - `commissionPct/100 + pct/100 < 1` por banda: senão o denominador do gross-up zera ou inverte, e
+ *   o motor devolveria `Infinity` (ou um preço NEGATIVO) com cara de resposta.
+ *
+ * Devolve a mensagem NOMEANDO a banda (`priceBands[i]`), ou `null` quando está tudo de pé.
+ */
+export function validateBandRules(
+  bands: PriceBand[] | undefined,
+  bandMode: BandMode | undefined,
+): string | null {
+  if (!bands) return null;
+  for (const [i, band] of bands.entries()) {
+    const rule = band.fixedFeeRule;
+    if (!rule) continue;
+    if (bandMode === "PROGRESSIVE") {
+      return `priceBands[${i}].fixedFeeRule só tem significado em bandMode SELECTION (ADR-0027)`;
+    }
+    if (!Number.isFinite(rule.pct) || rule.pct <= 0 || rule.pct >= 100) {
+      return `priceBands[${i}].fixedFeeRule.pct must be a finite number in (0, 100)`;
+    }
+    if (band.commissionPct + rule.pct >= 100) {
+      return `priceBands[${i}]: commissionPct + fixedFeeRule.pct must be < 100 (o gross-up não teria solução)`;
+    }
+  }
+  return null;
+}
+
+/**
+ * Announce (full precision) that nets `base` (before freight) after commission + fixed fee + the
+ * declared surcharges, choosing whichever regime is self-consistent. Com a taxa fixa podendo ser
+ * uma FUNÇÃO do preço (ADR-0027), a álgebra continua **fechada e linear** — nenhuma iteração nova:
+ *
+ *   L − (c/100)·L − (p/100)·L − F − S = base  ⇒  L = (base + F + S) / (1 − c/100 − p/100)
+ *   piso:  L − minPerItem − (p/100)·L − F − S = base  ⇒  L = (base + minPerItem + F + S) / (1 − p/100)
+ *
+ * onde `F` é a parcela CONSTANTE do fixo e `p` a parcela percentual (uma das duas é sempre zero).
+ * Com `p = 0` e `S = 0` — todo payload de antes de 4.1.0 — as duas linhas voltam a ser exatamente
+ * as de 4.0.0.
  */
 function grossUpOnce(
   base: number,
   commissionPct: number,
-  fixedFee: number,
+  fixed: { constant: number; pct: number },
   minPerItem: number,
+  surcharge: Decimal,
 ): Decimal {
-  const keep = new Decimal(1).minus(new Decimal(commissionPct).dividedBy(100));
-  const listPct = new Decimal(base).plus(fixedFee).dividedBy(keep);
+  const keepFixedPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
+  const keep = keepFixedPct.minus(new Decimal(commissionPct).dividedBy(100));
+  const listPct = new Decimal(base).plus(fixed.constant).plus(surcharge).dividedBy(keep);
   const commissionAtListPct = (commissionPct / 100) * listPct.toNumber();
   if (commissionAtListPct >= minPerItem) return listPct;
-  return new Decimal(base).plus(minPerItem).plus(fixedFee);
+  return new Decimal(base)
+    .plus(minPerItem)
+    .plus(fixed.constant)
+    .plus(surcharge)
+    .dividedBy(keepFixedPct);
 }
 
 /**
@@ -119,8 +225,8 @@ function progressiveCommission(bands: PriceBand[], price: number): Decimal {
  * so the solution is closed-form per segment. On segment `[min_k, max_k)`:
  *
  *   fee(L) = acc_k + pct_k·(L − min_k)         acc_k = Σ_{i<k} pct_i·(max_i − min_i)
- *   L − fee(L) − fixedFee_k = base
- *   ⇒ L = (base + fixedFee_k + acc_k − pct_k·min_k) / (1 − pct_k)
+ *   L − fee(L) − fixedFee_k − S = base         S = Σ surcharges (ADR-0027 §3.2)
+ *   ⇒ L = (base + fixedFee_k + S + acc_k − pct_k·min_k) / (1 − pct_k)
  *
  * Solve every segment, keep the one whose solution lands inside its OWN segment. Exactly one does
  * when the bands cover the line; if none does — a band set that stops short of ∞, or one with a
@@ -131,6 +237,7 @@ function progressiveCommission(bands: PriceBand[], price: number): Decimal {
 function progressiveAnnounce(
   base: number,
   bands: PriceBand[],
+  surcharge: Decimal,
 ): { list: Decimal; band: PriceBand } | null {
   const solved: { list: Decimal; band: PriceBand }[] = [];
   let acc = new Decimal(0);
@@ -139,6 +246,7 @@ function progressiveAnnounce(
     solved.push({
       list: new Decimal(base)
         .plus(band.fixedFee)
+        .plus(surcharge)
         .plus(acc)
         .minus(rate.times(band.minPrice))
         .dividedBy(new Decimal(1).minus(rate)),
@@ -197,7 +305,12 @@ function rankCandidate(c: BandCandidate, base: number): number {
  * R$ 5,00 below the R$ 69,52 the seller really receives. Solving every band directly and ranking the
  * results removes the cap, the oscillation and the silent mislabel in one move.
  */
-function chooseBand(base: number, bands: PriceBand[], minPerItem: number): BandCandidate | null {
+function chooseBand(
+  base: number,
+  bands: PriceBand[],
+  minPerItem: number,
+  surcharge: Decimal,
+): BandCandidate | null {
   /** Score one announce against the band that really contains it — `null` when none does. */
   const at = (anuncio: number, assumed: PriceBand | null): BandCandidate | null => {
     const applied = bandContaining(bands, anuncio);
@@ -209,12 +322,19 @@ function chooseBand(base: number, bands: PriceBand[], minPerItem: number): BandC
       applied,
       anuncio,
       charged,
-      net: new Decimal(anuncio).minus(charged).minus(applied.fixedFee),
+      // O que o vendedor leva PARA CASA: fixo da banda que CONTÉM o anúncio — pela regra dela,
+      // quando ela tem uma — menos as sobretaxas que ele declarou (elas atravessam a banda).
+      net: new Decimal(anuncio)
+        .minus(charged)
+        .minus(bandFixedFee(applied, anuncio))
+        .minus(surcharge),
     };
   };
 
   const fromSchedules = bands
-    .map((b) => at(toMoney(grossUpOnce(base, b.commissionPct, b.fixedFee, minPerItem)), b))
+    .map((b) =>
+      at(toMoney(grossUpOnce(base, b.commissionPct, fixedShapeOf(b), minPerItem, surcharge)), b),
+    )
     .filter((c): c is BandCandidate => c !== null);
   // The level is priceable only if some PUBLISHED schedule answers it: an announce that both lands
   // inside a published band and actually delivers `base` (rank 0 or 1). Otherwise the price the
@@ -235,7 +355,31 @@ function chooseBand(base: number, bands: PriceBand[], minPerItem: number): BandC
   const ordered = [...fromSchedules, ...fromThresholds].sort(
     (a, b) => rankCandidate(a, base) - rankCandidate(b, base) || a.anuncio - b.anuncio,
   );
-  return ordered[0]!;
+  const best = ordered[0]!;
+
+  // FORA DA TABELA ≠ lacuna DENTRO da tabela (arquitetura-016 §9.5, SC-817). Uma lacuna entre duas
+  // janelas publicadas é uma faixa que a fonte deliberadamente não tarifa, e subir até a próxima
+  // janela é honesto: todo preço no meio ESTÁ publicado e nenhum entrega a base (o platô do ML em
+  // R$ 79,00). Abaixo do PISO da tabela não é isso: a fonte declara ali outra regra e não a publica
+  // por inteiro (Shopee CPF alto volume — art. 26839 cita R$ 6,00 num item de R$ 8, mas não a
+  // fórmula). Andar com o vendedor até o piso afirmaria "este é o preço mais barato que dá", e a
+  // própria fonte desmente. Então: sem referência (I9) + o aviso da US17, nunca um preço.
+  //
+  // O teste é sobre a banda ESCOLHIDA: se a conta dela para esta base fecha abaixo do piso, o
+  // vendedor está fora da tabela e o anúncio devolvido seria um empurrão até a borda. Com piso
+  // ZERO — toda tabela publicada até 016 — o ramo é inalcançável, e é por isso que a regra é
+  // byte-idêntica por construção em tudo que já existia.
+  const publishedFloor = Math.min(...bands.map((b) => b.minPrice));
+  const ownSchedule = toMoney(
+    grossUpOnce(
+      base,
+      best.applied.commissionPct,
+      fixedShapeOf(best.applied),
+      minPerItem,
+      surcharge,
+    ),
+  );
+  return ownSchedule < publishedFloor ? null : best;
 }
 
 /**
@@ -250,13 +394,15 @@ function chooseBand(base: number, bands: PriceBand[], minPerItem: number): BandC
 export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
   const minPerItem = fees.minPerItem ?? 0;
   const flatFreight = fees.freightCost ?? 0;
+  const surcharge = surchargeTotal(fees.surcharges);
 
   // Shared tail for BOTH band modes: the freight truth (flat + the co-funded voucher resolved for
   // THIS announce, so varejo and atacado can land in different voucher bands) and the líquido.
+  // `fixed` já chega como o fixo EFETIVO — `bandFixedFee(banda, L) + Σ surcharges` (ADR-0027).
   const finish = (
     anuncioFinal: number,
     charged: Decimal,
-    fixed: number,
+    fixed: Decimal,
     band: [number, number | null] | null,
   ): ChannelLevel => {
     const voucher =
@@ -279,6 +425,11 @@ export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
     freightCost: 0,
   };
 
+  // Forma inválida NÃO vira número (ADR-0027 §3.1). `computeChannel` recusa ANTES, com erro por
+  // slot nomeado; este ramo existe para o primitivo exportado, que qualquer teste ou consumidor
+  // pode chamar direto — e a resposta honesta ali é "sem referência", jamais um `Infinity`.
+  if (validateBandRules(fees.priceBands, fees.bandMode) !== null) return unpriced;
+
   const bands = fees.priceBands;
   const first = bands?.[0];
 
@@ -286,12 +437,14 @@ export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
   // describes it — this branch owns both the announce and the charged commission, and returns early
   // through the shared freight/líquido tail below.
   if (fees.bandMode === "PROGRESSIVE" && bands && first) {
-    const solved = progressiveAnnounce(base, bands);
+    const solved = progressiveAnnounce(base, bands, surcharge);
     if (!solved) return unpriced;
     let anuncioProg = toMoney(solved.list);
     // The per-item floor still applies, now measured against the PROGRESSIVE commission.
     if (progressiveCommission(bands, anuncioProg).toNumber() < minPerItem) {
-      anuncioProg = toMoney(new Decimal(base).plus(minPerItem).plus(solved.band.fixedFee));
+      anuncioProg = toMoney(
+        new Decimal(base).plus(minPerItem).plus(solved.band.fixedFee).plus(surcharge),
+      );
     }
     // The floor regime moves the announce, so re-check that it still sits inside a published band:
     // a slice of the price outside the schedule has no rate, and summing over it would invent one.
@@ -299,24 +452,31 @@ export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
     if (!held) return unpriced;
     const owed = progressiveCommission(bands, anuncioProg);
     const charged = owed.toNumber() >= minPerItem ? owed : new Decimal(minPerItem);
-    return finish(anuncioProg, charged, held.fixedFee, [held.minPrice, held.maxPrice]);
-  }
-
-  if (bands && first) {
-    const chosen = chooseBand(base, bands, minPerItem);
-    if (!chosen) return unpriced;
-    // Charged by the band that CONTAINS the announce — never by the one that merely produced it.
-    return finish(chosen.anuncio, chosen.charged, chosen.applied.fixedFee, [
-      chosen.applied.minPrice,
-      chosen.applied.maxPrice,
+    return finish(anuncioProg, charged, bandFixedFee(held, anuncioProg).plus(surcharge), [
+      held.minPrice,
+      held.maxPrice,
     ]);
   }
 
+  if (bands && first) {
+    const chosen = chooseBand(base, bands, minPerItem, surcharge);
+    if (!chosen) return unpriced;
+    // Charged by the band that CONTAINS the announce — never by the one that merely produced it.
+    return finish(
+      chosen.anuncio,
+      chosen.charged,
+      bandFixedFee(chosen.applied, chosen.anuncio).plus(surcharge),
+      [chosen.applied.minPrice, chosen.applied.maxPrice],
+    );
+  }
+
   const fixedFee = fees.fixedFee ?? 0;
-  const anuncio = toMoney(grossUpOnce(base, fees.commissionPct, fixedFee, minPerItem));
+  const anuncio = toMoney(
+    grossUpOnce(base, fees.commissionPct, { constant: fixedFee, pct: 0 }, minPerItem, surcharge),
+  );
   // Commission actually charged on the ROUNDED announce (WYSIWYG) — the floor may bind here too.
   const pctCommission = new Decimal(fees.commissionPct).dividedBy(100).times(anuncio);
   const commissionCharged =
     pctCommission.toNumber() >= minPerItem ? pctCommission : new Decimal(minPerItem);
-  return finish(anuncio, commissionCharged, fixedFee, null);
+  return finish(anuncio, commissionCharged, new Decimal(fixedFee).plus(surcharge), null);
 }

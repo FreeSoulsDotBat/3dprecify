@@ -51,7 +51,7 @@ superfície visível (incl. PDF/CSV); rotas/payloads byte-idênticos.
 - [x] T008 [US2] Trocar os rótulos via chaves i18n (nunca hard-coded): navegação, títulos, cabeçalhos, botões, toasts, vazios, teasers em `apps/web/src/**` + rótulos dos artefatos exportados em `backend/app/services/quote_render.py` (se contiver o par antigo); rotas `/historico`/`/cenarios` e payloads INTOCADOS
 - [x] T009 [US2] Texto de diferenciação nas duas telas (congelado × recalculado hoje) em `apps/web/src/pages/{historico,cenarios}/`
 - [x] T010 [US1] Homologação visual (qa-produto): screenshot das 5 telas no grátis + comparação estrutural; tema claro E escuro (SC-901)
-- [ ] T011 [US1] Gate da fatia: `pnpm gate:all` + e2e verdes; abrir PR-A (dono autoriza merge)
+- [x] T011 [US1] Gate da fatia: `pnpm gate:all` + e2e verdes; abrir PR-A (dono autoriza merge)
 
 **Checkpoint**: PR-A entregável sozinha — maior clareza pelo menor custo.
 
@@ -77,7 +77,7 @@ dois temas.
 - [x] T016 [P] [US4] Centralizar textos dos cartões de preço final em `apps/web/src/features/calculator/` (componente dos cartões)
 - [x] T017 [US5] Fundir "Preços por canal" em "Como chegamos no preço" (sem duplicar linha, sem perder informação) + remover marcadores laranja/roxo de Material/Energia, em `apps/web/src/features/calculator/calculator-form.tsx`
 - [x] T018 [US4] Homologação visual (qa-produto): screenshots 360/390/1440 × claro/escuro, com valor adversarial (SC-903)
-- [ ] T019 [US4] Gate da fatia + PR-B
+- [x] T019 [US4] Gate da fatia + PR-B
 
 **Checkpoint**: o item 9 do relatório (scroll) resolvido pelo item 2 (largura), com a guarda intacta.
 
@@ -138,7 +138,7 @@ quebrar; recusa nominal dispara por chave presente mesmo com valor `undefined`.
 - [x] T040 [US10] Wire: remover `defaultWasteGrams`/`wasteGrams` dos schemas + `extra="forbid"` em `FilamentIn`/`PieceInputs`; `scenarios.py` para de emitir em `lastKnown`; `boms.py` para de sincronizar; regen da RAIZ (`export_openapi` + `gen:api`) + prova de idempotência (drift-guard) em `backend/app/`
 - [x] T041 [US10] Teste e2e da matriz de documentos em `apps/web/tests/e2e/waste-removal.spec.ts` (caminho real do repo — `apps/web/e2e/` não existe): congelado pré-4.0.0 abre/exporta o que foi cotado; simulação pré-4.0.0 reabre COM declaração visível; documento novo limpo; fixture irmão `frozen-payload-pre-016.json` criado ANTES da mudança de UI (RA1)
 - [x] T042 [US10] Homologação visual (qa-produto): a declaração de descarte visível nos dois costurados + export do congelado antigo
-- [ ] T043 [US10] Gate da fatia + drift-guard + PR-D
+- [x] T043 [US10] Gate da fatia + drift-guard + PR-D
 
 **Checkpoint**: 4.0.0 no ar; nenhum documento salvo quebra; nenhuma mentira silenciosa.
 
@@ -169,7 +169,7 @@ Shopee sem categoria / Amazon lista 38 / ML idêntico a hoje.
 - [x] T053 [US12] FR-928: refine no schema (banda com `fixedFee` nulo sem `fixedFeeRule` = inválida) + `entryToChannelFees` sem `?? 0` (nível cai no estado I9), em `apps/web/src/shared/fee-catalog/fee-catalog.ts` + `apps/web/src/features/calculator/fee-prefill.ts` + teste
 - [x] T054 [US13] Picker: navegação hierárquica (lista com subitens) + busca + contador verdadeiro + estado "não informada", em `apps/web/src/features/calculator/` (CategoryPicker)
 - [x] T055 [US11] Homologação visual (qa-produto): grátis vs premium; screenshots dos 3 marketplaces (SC-908/909); geometria + imagem
-- [ ] T056 [US11] Gate da fatia + PR-E
+- [x] T056 [US11] Gate da fatia + PR-E
 
 **Checkpoint**: a fronteira do freemium fechada SEM contradição silenciosa (promessa + 2
 Clarifications viajaram juntas).
@@ -186,26 +186,26 @@ volumoso soma R$ 50 com legenda; sem resposta de perfil → byte-idêntico.
 
 ### Pré-condição (bloqueia T059+)
 
-- [ ] T057 [US18] Releitura VERBATIM do art. 26839 (seller.shopee.com.br/edu/article/26839, página JS — usar navegador headless como no workflow de 2026-08-05): registrar o trecho LITERAL do regime < R$ 8 CNPJ (a comissão de 20% incide junto? o fixo some?) e a condição exata do +R$ 3/item CPF, em `specs/016-correcao-homologacao/dod-evidence.md` — as fontes internas divergem em 20 p.p. (§9.3/§9.8); NENHUM número é gravado antes disto
+- [x] T057 [US18] Releitura VERBATIM do art. 26839 (seller.shopee.com.br/edu/article/26839, página JS — usar navegador headless como no workflow de 2026-08-05): registrar o trecho LITERAL do regime < R$ 8 CNPJ (a comissão de 20% incide junto? o fixo some?) e a condição exata do +R$ 3/item CPF, em `specs/016-correcao-homologacao/dod-evidence.md` — as fontes internas divergem em 20 p.p. (§9.3/§9.8); NENHUM número é gravado antes disto
 
 ### Tests (vermelho primeiro) ⚠️
 
-- [ ] T058 [P] [US18] ⚠opus Testes do `fixedFeeRule` em `packages/pricing-core/tests/fixed-fee-rule.test.ts`: gross-up fechado com PCT_OF_PRICE; VARREDURA de bases cujo anúncio cruza R$ 8 (par anúncio/líquido contínuo, sem banda emprestada — I9); ≥ R$ 8 byte-idêntico; recusas (fora de SELECTION; c+p ≥ 100); não-vacuidade por mutação do `pct`
-- [ ] T059 [P] [US16] ⚠opus Testes de `surcharges` em `packages/pricing-core/tests/surcharges.test.ts`: soma POR CIMA do fixo em regime constante E bandado (a armadilha 013/F1 — somar no fixedFee seria inerte); ausência = byte-idêntico; ecoado em `ChannelResult`; mutação do `value`
-- [ ] T060 [P] [US14] ⚠opus Teste do dado Amazon: entradas INDIVIDUAL sobem exatamente R$ 2,00/item antes do markup; Profissional intocado; `minPerItem` segue 1,00, em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
-- [ ] T061 [P] [US17] Testes dos avisos: CPF < R$ 12 exibe os DOIS pontos oficiais e a hipótese linear NÃO é aplicada em cálculo nenhum; frete aferido é informativo (não bloqueia, não fabrica número, não some ao editar), em `apps/web/src/features/calculator/shopee-warnings.test.tsx`
+- [x] T058 [P] [US18] ⚠opus Testes do `fixedFeeRule` em `packages/pricing-core/tests/fixed-fee-rule.test.ts`: gross-up fechado com PCT_OF_PRICE; VARREDURA de bases cujo anúncio cruza R$ 8 (par anúncio/líquido contínuo, sem banda emprestada — I9); ≥ R$ 8 byte-idêntico; recusas (fora de SELECTION; c+p ≥ 100); não-vacuidade por mutação do `pct`
+- [x] T059 [P] [US16] ⚠opus Testes de `surcharges` em `packages/pricing-core/tests/surcharges.test.ts`: soma POR CIMA do fixo em regime constante E bandado (a armadilha 013/F1 — somar no fixedFee seria inerte); ausência = byte-idêntico; ecoado em `ChannelResult`; mutação do `value`
+- [x] T060 [P] [US14] ⚠opus Teste do dado Amazon: entradas INDIVIDUAL sobem exatamente R$ 2,00/item antes do markup; Profissional intocado; `minPerItem` segue 1,00, em `apps/web/src/shared/fee-catalog/fee-catalog.test.ts`
+- [x] T061 [P] [US17] Testes dos avisos: CPF < R$ 12 exibe os DOIS pontos oficiais e a hipótese linear NÃO é aplicada em cálculo nenhum; frete aferido é informativo (não bloqueia, não fabrica número, não some ao editar), em `apps/web/src/features/calculator/shopee-warnings.test.tsx`
 
 ### Implementation
 
-- [ ] T062 [US18] ⚠opus pricing-core 4.1.0 em `packages/pricing-core/src/channels.ts`: `PriceBand.fixedFeeRule` + `bandFixedFee()` usada nas TRÊS chamadas (grossUpOnce · chooseBand.at · finish) + `ChannelInput/ChannelResult.surcharges` + versão 4.1.0 (contrato `contracts/pricing-core-4x.md`)
-- [ ] T063 [US18] ⚠opus Dado Shopee CNPJ: partir a banda `[0,80)` em `[0,8)` (fixedFeeRule conforme T057) + `[8,80)` (fixedFee 4) em `apps/web/src/shared/fee-catalog/seed.ts` + `backend/app/data/catalog.json` + espelho do schema com `superRefine` (SELECTION only)
-- [ ] T064 [US16] ⚠opus Volumoso: `optionalSurcharges` no catálogo (MANUSEIO_VOLUMOSO 50.00/ORDER, procedência art. 3305) + checkbox dirigido pelo catálogo com legenda "por pedido" + `ScenarioChannelIntent.surcharges` (ids, resolvem ao vivo — ADR-0021) + congelado via `freezeInput` existente, em `fee-catalog.ts`/`calculator-form.tsx`/`calculator-model.ts`/entidade de cenário
-- [ ] T065 [US17] Perfil do vendedor: `determinantsSchema.SHOPEE.sellerProfile` + entradas CPF/CPF_ALTO_VOLUME (bandas começam em R$ 12 — §9.5; alto volume = CPF + R$ 3 já somado, conforme T057) + `slotDeterminants` (CNPJ/sem resposta → `null`, byte-idêntico) + as 2 perguntas só no canal Shopee, em `fee-catalog.ts`/`seed.ts`/`catalog.json`/`calculator-form.tsx`
-- [ ] T066 [US17] Avisos honestos: CPF < R$ 12 (dois pontos oficiais + contexto) e frete aferido (informativo), em `apps/web/src/features/calculator/` + i18n
-- [ ] T067 [US14] ⚠opus Amazon INDIVIDUAL: `fixedFee 0 → 2.00` nas 38 entradas (gerador em `packages/fee-ingest/` + `seed.ts` + `catalog.json`) + `FeeEntry.fixedFeeSource` (procedência `/precos`) + exibição no `FeeSeal`
-- [ ] T068 [US14] Bump ÚNICO de `catalogVersion` via `nextCatalogVersion` (`packages/fee-ingest/src/guardrails.ts`) no fechamento da fatia + teste de sequenciamento
-- [ ] T069 [US16] Export/PDF: linha nomeada da sobretaxa no breakdown impresso (via `ChannelResult.surcharges` ecoado) + asserção com DADO adversarial e geometria (lição E4), em `backend/app/services/quote_render.py` + teste
-- [ ] T070 [US14] Homologação visual (qa-produto): Amazon Individual (preço subiu R$ 2 + selo com procedência própria) · Shopee CNPJ < R$ 8 · CPF < R$ 12 (aviso) · volumoso marcado/desmarcado — screenshots + geometria
+- [x] T062 [US18] ⚠opus pricing-core 4.1.0 em `packages/pricing-core/src/channels.ts`: `PriceBand.fixedFeeRule` + `bandFixedFee()` usada nas TRÊS chamadas (grossUpOnce · chooseBand.at · finish) + `ChannelInput/ChannelResult.surcharges` + versão 4.1.0 (contrato `contracts/pricing-core-4x.md`)
+- [x] T063 [US18] ⚠opus Dado Shopee CNPJ: partir a banda `[0,80)` em `[0,8)` (fixedFeeRule conforme T057) + `[8,80)` (fixedFee 4) em `apps/web/src/shared/fee-catalog/seed.ts` + `backend/app/data/catalog.json` + espelho do schema com `superRefine` (SELECTION only)
+- [x] T064 [US16] ⚠opus Volumoso: `optionalSurcharges` no catálogo (MANUSEIO_VOLUMOSO 50.00/ORDER, procedência art. 3305) + checkbox dirigido pelo catálogo com legenda "por pedido" + `ScenarioChannelIntent.surcharges` (ids, resolvem ao vivo — ADR-0021) + congelado via `freezeInput` existente, em `fee-catalog.ts`/`calculator-form.tsx`/`calculator-model.ts`/entidade de cenário
+- [x] T065 [US17] Perfil do vendedor: `determinantsSchema.SHOPEE.sellerProfile` + entradas CPF/CPF_ALTO_VOLUME (bandas começam em R$ 12 — §9.5; alto volume = CPF + R$ 3 já somado, conforme T057) + `slotDeterminants` (CNPJ/sem resposta → `null`, byte-idêntico) + as 2 perguntas só no canal Shopee, em `fee-catalog.ts`/`seed.ts`/`catalog.json`/`calculator-form.tsx`
+- [x] T066 [US17] Avisos honestos: CPF < R$ 12 (dois pontos oficiais + contexto) e frete aferido (informativo), em `apps/web/src/features/calculator/` + i18n
+- [x] T067 [US14] ⚠opus Amazon INDIVIDUAL: `fixedFee 0 → 2.00` nas 38 entradas (gerador em `packages/fee-ingest/` + `seed.ts` + `catalog.json`) + `FeeEntry.fixedFeeSource` (procedência `/precos`) + exibição no `FeeSeal`
+- [x] T068 [US14] Bump ÚNICO de `catalogVersion` via `nextCatalogVersion` (`packages/fee-ingest/src/guardrails.ts`) no fechamento da fatia + teste de sequenciamento
+- [x] T069 [US16] Export/PDF: linha nomeada da sobretaxa no breakdown impresso (via `ChannelResult.surcharges` ecoado) + asserção com DADO adversarial e geometria (lição E4), em `backend/app/services/quote_render.py` + teste
+- [x] T070 [US14] Homologação visual (qa-produto): Amazon Individual (preço subiu R$ 2 + selo com procedência própria) · Shopee CNPJ < R$ 8 · CPF < R$ 12 (aviso) · volumoso marcado/desmarcado — screenshots + geometria
 - [ ] T071 [US14] Gate da fatia + PR-F
 
 **Checkpoint**: todas as mudanças de preço decididas pelo dono no ar, cada uma com sua prova.
