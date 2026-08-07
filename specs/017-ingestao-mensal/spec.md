@@ -26,6 +26,27 @@ o loop **pronto e disparável**, provado por execução real — não "rodando s
 
 ---
 
+## Clarifications
+
+### Session 2026-08-07
+
+- Q: Mês em que um coletor aborta e o outro tem mudança real — o que sai? → A: **PR PARCIAL,
+  nomeando o abortado.** O marketplace abortado fica byte a byte intocado (fail-safe C6), seu
+  `lastReviewed` envelhece até o selo de 45 dias (comportamento desejado), e o corpo o declara
+  ABORTADO com o motivo. Um OCR frágil nunca congela o coletor sólido (é o corolário do FR-022
+  que faltava escrever).
+- Q: Convergência das duas fontes da Amazon — o robô pode propor a mudança? → A: **PR de DECISÃO,
+  sem tocar dado.** O robô nunca propõe dinheiro lido da fonte vintage (/precos); se a fonte
+  AUTORITATIVA (G200336920) mudar de verdade, o coletor normal já propõe o diff pelo caminho
+  revisado. O vigia entrega o fato e a caneta; o dado só muda pela mão do dono.
+- Q: OCR com guardas verdes mas divergência GRANDE contra o servido? → A: **PR normal com a
+  divergência DESTACADA** (banner "divergência acima do limiar declarado — confira a imagem" +
+  lido × anterior × link). Abortar suprimiria os dois casos de uma vez — o erro plausível E a
+  mudança real grande, que é a que o dono mais precisa ver; sem PR, ninguém olha imagem nenhuma.
+  O portão continua sendo o humano (D11).
+
+---
+
 ## Pré-condições P0 *(medidas — quebram a primeira execução real se não vierem antes)*
 
 - **P0-a** — O guarda do catálogo crava `catalogVersion` em STRING LITERAL
@@ -150,7 +171,8 @@ da /precos.
    como vintage, e o revisor precisa dela na mesma tela.
 4. **Given** as duas fontes convergindo (ambas 2,00, ou a tabela vigente mudando), **When** o
    vigia detecta, **Then** o PR é marcado como PEDIDO DE DECISÃO DO DONO e não altera dado nenhum
-   (desfecho exato: Q2 do clarify).
+   (clarify Q2 — resolvido: o robô nunca propõe dinheiro da fonte vintage; a mudança da fonte
+   autoritativa chega pelo coletor normal, revisado).
 5. **Given** a tarifa do plano Individual (fixedFee 2,00 nas 39 entradas, verbatim de 2026-08-06),
    **When** ela mudar na fonte, **Then** a mesma seção de divergência dispara.
 
@@ -184,7 +206,10 @@ um PNG deliberadamente corrompido é pego por pelo menos uma guarda — PROVADO 
 5. **Given** todas as guardas verdes e um diff que toca dinheiro, **When** o PR abre, **Then**
    NUNCA dispensa revisão, e o corpo imprime os valores lidos AO LADO dos anteriores E do link da
    imagem — sem isso, a revisão humana de um OCR é teatro (a quantificação honesta do brief: as
-   guardas pegam ~35% do erro plausível de célula única; o portão real é o humano).
+   guardas pegam ~35% do erro plausível de célula única; o portão real é o humano). E quando a
+   divergência ultrapassa um limiar declarado, o corpo ganha um BANNER destacado mandando conferir
+   a imagem — nunca um abort silencioso (clarify Q8: abortar suprimiria também a mudança real
+   grande, a que o dono mais precisa ver).
 6. **Given** a regressiva CPF < R$ 12 (D12 — aviso honesto do 016), **When** o vigia lê o artigo,
    **Then** ela continua NÃO modelada; o vigia apenas avisa se a Shopee publicar a fórmula.
 
@@ -233,9 +258,9 @@ foi lido" é indistinguível de "avança sempre") — por isso viaja na fatia do
 2. **Given** o P0-a, **When** a paridade semente↔artefato é guardada, **Then** o guarda afirma a
    RELAÇÃO entre os dois documentos (nunca uma string de versão fixada à mão); `catalogVersion`
    continua decidido pelo sequenciador, nunca à mão.
-3. **Given** a decisão da Q3 (o loop regenera a semente?), **When** sim, **Then** o ramo de cache
-   latente de adoção (014/U5-b) entra em uso e ganha teste; **When** não, **Then** o relatório
-   declara que a semente segue podada.
+3. **Given** a decisão da Q3 (resolvida: o loop REGENERA a semente junto do artefato), **When**
+   uma execução muda o catálogo, **Then** as duas cópias saem no mesmo PR em paridade estrita, e o
+   ramo de cache latente de adoção (014/U5-b) entra em uso COM teste.
 4. **Given** o loop inteiro, **When** roda, **Then** NENHUM caminho grava `lastReviewed` sem
    releitura real, e a execução NÃO gera linha no token-ledger (SC-811, verificado).
 
@@ -396,10 +421,10 @@ foi lido" é indistinguível de "avança sempre") — por isso viaja na fatia do
 | # | pergunta | o que muda |
 | --- | --- | --- |
 | Q1 | Onde mora o baseline do frete/textos do ML: arquivo datado versionado (o E3 herda o insumo) · só hash (barato, não herda) · não vigiar frete? | US6; cria ou não artefato versionado |
-| Q2 | Quando as duas fontes da Amazon convergirem para R$ 2,00: PR de decisão sem tocar dado · PR propondo a mudança (humano decide no merge) · só alerta no resumo? | US4; se o robô pode PROPOR dinheiro |
-| Q3 | O loop regenera a semente junto do artefato? | US7; acorda o U5-b e decide se a PR-A toca apps/web |
-| Q4 | Mês em que a Shopee aborta e a Amazon muda: PR parcial nomeando o abortado · nenhum PR até todos passarem? | US1/US2; um coletor frágil pode congelar o outro |
-| Q5 | P0-b (ruleset): o dono configura antes da PR-A · a dispensa nasce desligada até o ruleset existir · as duas? | FR-1006; sem ruleset a dispensa é o único portão |
+| ~~Q2~~ | ~~Convergência?~~ **RESOLVIDA (clarify 2026-08-07): PR de decisão, sem tocar dado — o robô nunca propõe dinheiro da fonte vintage** | ver Clarifications |
+| ~~Q3~~ | ~~Semente?~~ **RESOLVIDA (clarify 2026-08-07): regenera AS DUAS no mesmo PR — paridade estrita, U5-b acorda com teste** | ver Clarifications |
+| ~~Q4~~ | ~~Aborto parcial?~~ **RESOLVIDA (clarify 2026-08-07): PR PARCIAL nomeando o abortado** | ver Clarifications |
+| ~~Q5~~ | ~~Ruleset/dispensa?~~ **RESOLVIDA (clarify 2026-08-07): AS DUAS — ruleset (tarefa do dono, paralela) + dispensa nascendo desligada** | ver Clarifications |
 | Q6 | O job valida o subconjunto do artefato ou o gate:all inteiro (~6 min — a validação que o PR não terá, porque o token padrão não dispara CI)? | US1; custo/tempo mensal e o que o revisor recebe |
 | Q7 | Sinal de mês perdido: silêncio até o corte (runbook diz) · issue-lembrete mensal · checagem no CI avisando execução velha? | US8; a premissa dos 45 dias apoia-se no PR mensal como sinal de vida |
-| Q8 | OCR com guardas verdes mas divergência GRANDE contra o servido: PR normal (humano decide) · ABORT acima de limiar declarado? | US5; D11 decidiu falha para guarda reprovada — guarda verde com número muito diferente não foi decidido |
+| ~~Q8~~ | ~~OCR verde divergente?~~ **RESOLVIDA (clarify 2026-08-07): PR normal com banner de divergência destacado — nunca abort silencioso** | ver Clarifications |
