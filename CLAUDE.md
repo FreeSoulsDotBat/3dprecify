@@ -71,7 +71,7 @@ blind to it (the third time this project paid that class).**
 **011-token-optimization: levers LANDED via PR #22** (ADR-0022 Accepted) — routing + rtk filter + graphify hook
 live; **the pilot verdict (T032–T034, ≥30%-or-honest-shortfall) is being closed now at E5 end** from the
 per-operation ledger rows. Evidence: `specs/011-token-optimization/dod-evidence.md`.
-**E6 IN PROGRESS ON `develop` — 29/44 tasks (PR-A + PR-B shipped). 012-e6-billing PR-A SHIPPED** (PR #28, `0a3296b`,
+**E6 CODE-COMPLETE ON `develop` — PR-A + PR-B + PR-C shipped. 012-e6-billing PR-A SHIPPED** (PR #28, `0a3296b`,
 2026-07-23, owner-merged) — the turnstile: price → checkout → verified grant (US1+US2+US3), spec-kit flow
 followed (product-owner → specify → clarify → plan + ADRs → tasks, Principle VIII). **ADR-0023** flipped
 Proposed → **Accepted** at that gate (T020). The 013 audit then hardened billing ON `develop` (`1212a16`,
@@ -86,8 +86,8 @@ reintroduce both. Continue E6 from `develop`. (This ground line previously claim
 31 commits ahead, not yet shipped"; all three were false, and that false record is what made the 2026-08-01
 "sync the drifting branch" plan wrong.)
 **012-e6-billing PR-B SHIPPED** (PR #35, `26397a5`, 2026-08-02, owner-merged, CI 8/8 first try) — the
-REVERSE half: US4 cancel-at-period-end · US5 grace & dunning · US6 the Conta billing home. **E6 is now
-29/44.** Grace window is MEASURED, not guessed: `MP_RETRY_WINDOW_DAYS=10` (T003, MP's official docs) +
+REVERSE half: US4 cancel-at-period-end · US5 grace & dunning · US6 the Conta billing home. Grace
+window is MEASURED, not guessed: `MP_RETRY_WINDOW_DAYS=10` (T003, MP's official docs) +
 `GRACE_FLOOR_DAYS=7` (owner Q5), and the test pins the `max` RULE, not the number. Anchored on
 `current_period_end`, never `now` — the server clock would hand different grace lengths to the same event.
 SC-708 is now STRUCTURAL: `plan-panel.tsx` receives a resolved `PlanState` and has no access to the ledger
@@ -109,10 +109,24 @@ viewport** and a **toast that never rendered** (MutationObserver: 0 insertions i
 before React Query calls a `mutate` callback, so the copy sat in the bundle asserting an acknowledgement
 that never happened). **And the geometry guard born from that caught my own INCOMPLETE fix** (467 still
 overflowed) before I called it done; proven non-vacuous by mutation (747 vs 390).
-**E6's remaining slice is PR-C** (T031–T040 + Polish): US7 teaser light-up · US8 refund/chargeback
-mechanics · Play Billing flag-readiness (owner Q2, NOT droppable). **T002 is an OWNER task**: it provisions
-the real MP sandbox (access token + webhook secret + the two `preapproval_plan`s) and gates only
-T016b/T018b+ — PR-B was built against the local stub, as PR-A was.
+**012-e6-billing PR-C SHIPPED** (PR #36, `2d3e538`, 2026-08-03, owner-merged) — US7 the four teasers lit
+(front 1211→1219) · US8 refund/chargeback revocation (`grant_writer._revoke_for_refund`, red-first) ·
+Play Billing readiness behind a flag that is OFF and ASSERTED server-side (T035) · e2e billing-teasers
+6/6 against the real stack · visual homologation PASS COM RESSALVAS 88% (37 screenshots). (This ground
+line previously still called PR-C "the remaining slice" FOUR DAYS after the owner merged it — the same
+false-record class as 2026-08-01, caught 2026-08-07 while planning a redundant "PR-C spin-up".)
+**E6 remaining = owner-side only**: T002 (MP sandbox provisioning — gates T016b/T018b+ real-sandbox
+validation; all three PRs were built against the local stub) and T036 (Play `purchaseToken` provider,
+BLOQUEADO NO DONO). No implementable E6 work is open.
+**Hotfix A2/A3 SHIPPED to `develop`** (PR #51, `3accd38`, 2026-08-07, owner-merged) — A2: art. 23431
+VERBATIM attributes the R$ 20/30/40 freight coupon to SHOPEE; the 005 `BAND_VOUCHER` charged it to the
+seller in a field showing 0,00. Data fix: Shopee freight → `NONE` + additive `freightSubsidyInfo`,
+`catalogVersion 2026-08-07.0`; seed liquid 4,24→24,24, negative-liquid dies, no ANNOUNCE changes, frozen
+docs SHA-256-identical; FR-111a revoked in spec 005 (dated Clarification), FR-111b finally honored. A3:
+outbox `unauthenticated` state (401 NEVER purges — property-proven) + sticky "Entrar de novo" banner.
+Homologation PASS 93%, 0 blockers; new qa trap: the SEED answers first paint — a served-catalog mutation
+is only real after waiting for the MUTATED value. R5 follow-up: thousands mask lost on programmatic
+scenario reopen (PR-C/016 B2 class). Receipt: `docs/homologacao/hotfix-a2-a3-desenho.md`.
 **013-audit-remediation SHIPPED to `develop`** (PR #29, `42cc45c`) — the 10-specialist audit's remediation
 increment; its deferred US8 became increment 014. See `specs/013-audit-remediation/{spec.md,tasks.md}`.
 **014-fee-category-mapping PR-A SHIPPED to `develop`** (PR #31, `461a367`, 2026-07-31, owner-merged) —
