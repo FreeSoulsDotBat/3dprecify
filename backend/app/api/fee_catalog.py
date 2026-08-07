@@ -59,12 +59,27 @@ class FreightEstimate(CamelModel):
 
 
 class VoucherBand(CamelModel):
+    """DEPRECATED 2026-08-07 (hotfix 016/A2). See ``FreightBandVoucher``."""
+
     min_price: float
     max_price: float | None
     voucher_ceiling: float
 
 
 class FreightBandVoucher(CamelModel):
+    """DEPRECATED 2026-08-07 (hotfix 016/A2) — no emitters left, never removed.
+
+    The served catalog no longer carries this shape: the verbatim sources (art. 26839 + art. 23431)
+    attribute the R$ 20/30/40 free-shipping coupon to SHOPEE ("A Shopee oferece subsidios de frete
+    para todos os vendedores"), and the value is the coupon's validity CEILING, not a seller charge.
+    Both Shopee entries are ``{"kind": "NONE"}`` now, and the subsidy is published as
+    ``FreightSubsidyInfo`` (non-computing information).
+
+    Kept readable because the shape travels inside frozen snapshot payloads (ADR-0019, immutable by
+    DB trigger) and saved scenario documents (ADR-0021). A model that stopped accepting it would
+    make a document the product promises immutable fail to open.
+    """
+
     kind: Literal["BAND_VOUCHER"]
     bands: list[VoucherBand]
 
@@ -112,6 +127,38 @@ class OptionalSurcharge(CamelModel):
     last_reviewed: str
 
 
+class FreightSubsidyBand(CamelModel):
+    min_price: float
+    max_price: float | None
+    ceiling: float
+
+
+class FreightSubsidyInfo(CamelModel):
+    """hotfix 016/A2 — the Shopee free-shipping subsidy as INFORMATION, never as a charge.
+
+    Marketplace-level (same precedent as ``optional_surcharges``): the Programa de Frete Gratis is
+    universal ("Todos os vendedores tem os beneficios"), not keyed by profile or price band.
+
+    NON-COMPUTING by construction on both sides: this service never computes (FR-118) and no client
+    consumer feeds it into the engine. It is a NEW FIELD rather than a new ``Freight`` union member
+    on purpose — a new ``kind`` on the wire would make an already-installed PWA client reject the
+    WHOLE catalog, silently (it falls back to the bundled seed and nobody sees an error), while an
+    extra object property is simply dropped by the old client, which then reads
+    ``freight: {"kind": "NONE"}`` — the new truth.
+
+    And, the lesson this file has now learned four times (``category_spine``, ``band_mode``,
+    ``fee_axes``, ``optional_surcharges``): a response model is an allowlist, so a field it does not
+    know is a field it EATS. ``test_fee_catalog_drops_no_field_from_the_artifact`` caught this one
+    red before the model existed.
+    """
+
+    bands: list[FreightSubsidyBand]
+    source: str
+    source_url: str
+    effective_date: str
+    last_reviewed: str
+
+
 class FeeEntry(CamelModel):
     determinants: dict[str, str] | None
     commission_pct: float | None
@@ -149,6 +196,10 @@ class MarketplaceCatalog(CamelModel):
     # this one carries R$ 50,00: a response model that does not know a field EATS it, and the
     # checkbox would render with nothing behind it.
     optional_surcharges: list[OptionalSurcharge] | None = None
+    # hotfix 016/A2 (2026-08-07) — ABSENT/null = no subsidy to inform, which is what every catalog
+    # from before this hotfix means. Non-computing: it exists so the seller KNOWS Shopee subsidises
+    # freight, without a coupon validity ceiling ever becoming arithmetic again.
+    freight_subsidy_info: FreightSubsidyInfo | None = None
     entries: list[FeeEntry]
 
 

@@ -48,10 +48,15 @@ test.describe("Shopee seller profile + volumoso (premium)", () => {
 
     const price = page.getByTestId("channel-price").first();
     // catch-all 35,30 → CPF_ALTO_VOLUME 39,05 (o fixo sobe R$ 3,00 e o gross-up multiplica por
-    // 1/(1-20%) = 1,25 ⇒ +R$ 3,75 no anúncio); líquido 4,24 continua igual (a fonte publica o
-    // adicional já somado — o seller RECEBE o mesmo, o COMPRADOR paga a diferença).
+    // 1/(1-20%) = 1,25 ⇒ +R$ 3,75 no anúncio); o líquido continua IGUAL entre os dois perfis (a
+    // fonte publica o adicional já somado — o seller RECEBE o mesmo, o COMPRADOR paga a diferença).
+    //
+    // hotfix 016/A2 (2026-08-07): o líquido era R$ 4,24 e virou R$ 24,24 — os R$ 20,00 do
+    // "voucher co-financiado" saíam do bolso do vendedor por uma conta que a fonte não publica
+    // (o subsídio é da Shopee). O ANÚNCIO não se move: frete nunca foi gross-upado. Re-baseline
+    // RODADO com `grossUp` sobre o catálogo commitado, não estimado.
     await expect(price).toContainText("R$ 39,05");
-    await expect(price).toContainText("R$ 4,24");
+    await expect(price).toContainText("R$ 24,24");
   });
 
   test("CNPJ (o eixo não existe) resolve o catch-all — byte-idêntico a não responder", async ({
@@ -137,10 +142,17 @@ test.describe("Shopee seller profile + volumoso (premium)", () => {
     await expect(slot.getByText(/o preço do anúncio sobe MAIS que isso/)).toBeVisible();
     await expect(slot.getByText(/somado inteiro nesta unidade/i)).toBeVisible();
 
-    // catch-all 35,30 → +volumoso 109,58 (o R$ 50 some ao gross-up E é deduzido do líquido, e o
-    // anúncio troca de banda de voucher — a conta é do motor, não desta tela).
+    // catch-all 35,30 → +volumoso 109,58 (o R$ 50 soma ao gross-up E é deduzido do líquido — a
+    // conta é do motor, não desta tela). O anúncio é o MESMO de antes do hotfix 016/A2: o frete
+    // nunca foi gross-upado, então tirar o voucher não moveu um dígito aqui. O que mudou é o
+    // líquido, que era NEGATIVO (−R$ 5,76) e voltou a ser R$ 24,24 — era esse o achado A2.
     const price = page.getByTestId("channel-price").first();
     await expect(price).toContainText("R$ 109,58");
+    await expect(price).toContainText("R$ 24,24");
+    // E o aviso de "não-lucrativo" NÃO aparece: o líquido negativo que o T072 mediu era o voucher,
+    // não a sobretaxa. Um vendedor que confiasse naquela tela recusaria a Shopee por uma conta que
+    // não existe.
+    await expect(page.getByText(t.channels.negativeLiquido)).toHaveCount(0);
 
     await toggle.click();
     await expect(toggle).toHaveAttribute("aria-checked", "false");

@@ -346,6 +346,38 @@ export interface OptionalSurcharge {
   lastReviewed: string;
 }
 
+export interface FreightSubsidyBand {
+  minPrice: number;
+  maxPrice: number | null;
+  ceiling: number;
+}
+
+/**
+ * hotfix 016/A2 — the Shopee free-shipping subsidy as INFORMATION, never as a charge.
+ *
+ * Marketplace-level (same precedent as ``optional_surcharges``): the Programa de Frete Gratis is
+ * universal ("Todos os vendedores tem os beneficios"), not keyed by profile or price band.
+ *
+ * NON-COMPUTING by construction on both sides: this service never computes (FR-118) and no client
+ * consumer feeds it into the engine. It is a NEW FIELD rather than a new ``Freight`` union member
+ * on purpose — a new ``kind`` on the wire would make an already-installed PWA client reject the
+ * WHOLE catalog, silently (it falls back to the bundled seed and nobody sees an error), while an
+ * extra object property is simply dropped by the old client, which then reads
+ * ``freight: {"kind": "NONE"}`` — the new truth.
+ *
+ * And, the lesson this file has now learned four times (``category_spine``, ``band_mode``,
+ * ``fee_axes``, ``optional_surcharges``): a response model is an allowlist, so a field it does not
+ * know is a field it EATS. ``test_fee_catalog_drops_no_field_from_the_artifact`` caught this one
+ * red before the model existed.
+ */
+export interface FreightSubsidyInfo {
+  bands: FreightSubsidyBand[];
+  source: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  lastReviewed: string;
+}
+
 /**
  * 016/US14 — provenance of the FIXED fee when it does not come from the entry's own page.
  *
@@ -399,12 +431,28 @@ export interface FreightEstimate {
   inputs?: string[] | null;
 }
 
+/**
+ * DEPRECATED 2026-08-07 (hotfix 016/A2). See ``FreightBandVoucher``.
+ */
 export interface VoucherBand {
   minPrice: number;
   maxPrice: number | null;
   voucherCeiling: number;
 }
 
+/**
+ * DEPRECATED 2026-08-07 (hotfix 016/A2) — no emitters left, never removed.
+ *
+ * The served catalog no longer carries this shape: the verbatim sources (art. 26839 + art. 23431)
+ * attribute the R$ 20/30/40 free-shipping coupon to SHOPEE ("A Shopee oferece subsidios de frete
+ * para todos os vendedores"), and the value is the coupon's validity CEILING, not a seller charge.
+ * Both Shopee entries are ``{"kind": "NONE"}`` now, and the subsidy is published as
+ * ``FreightSubsidyInfo`` (non-computing information).
+ *
+ * Kept readable because the shape travels inside frozen snapshot payloads (ADR-0019, immutable by
+ * DB trigger) and saved scenario documents (ADR-0021). A model that stopped accepting it would
+ * make a document the product promises immutable fail to open.
+ */
 export interface FreightBandVoucher {
   kind: 'BAND_VOUCHER';
   bands: VoucherBand[];
@@ -435,6 +483,7 @@ export interface MarketplaceCatalog {
   categorySpine?: CategoryNode[] | null;
   feeAxes?: ('commissionPct' | 'fixedFee' | 'minPerItem' | 'freightCost')[] | null;
   optionalSurcharges?: OptionalSurcharge[] | null;
+  freightSubsidyInfo?: FreightSubsidyInfo | null;
   entries: FeeEntry[];
 }
 

@@ -391,13 +391,18 @@ export function useDeleteSnapshot(): UseMutationResult<void, Error, string> {
 }
 
 /** Drain the queue on demand (the "Sincronizar agora" action, and the app's reconnect sweep). */
-export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
+export function useSyncOutbox(
+  opts: { retryBlocked?: boolean; retryUnauthenticated?: boolean } = {},
+): {
   sync: () => void;
   syncing: boolean;
 } {
   const client = useQueryClient();
   const uid = useSessionStore((s) => s.user?.uid);
   const retryBlocked = opts.retryBlocked ?? false;
+  // hotfix 016/A3 (H4) — the mirror of `retryBlocked`: an `unauthenticated` entry is retried once the
+  // SESSION comes back, driven by the caller's own signal (never inferred here).
+  const retryUnauthenticated = opts.retryUnauthenticated ?? false;
 
   const mutation = useMutation({
     // Same reason as the record mutation: the drain reads and rewrites the DEVICE's queue, and it
@@ -408,7 +413,7 @@ export function useSyncOutbox(opts: { retryBlocked?: boolean } = {}): {
       if (!uid) return;
       // Correctness does not rest on avoiding a concurrent drain: the DB's unique key is what makes
       // a replay idempotent. A second drain can only waste a request, never duplicate a record.
-      await drainOutbox(uid, { post: postSnapshot, retryBlocked });
+      await drainOutbox(uid, { post: postSnapshot, retryBlocked, retryUnauthenticated });
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });

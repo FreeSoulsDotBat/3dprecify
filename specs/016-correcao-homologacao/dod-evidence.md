@@ -343,3 +343,21 @@ pelas homologações das fatias (selos conferidos texto a texto em T055/T070).
 **ADRs**: **0026 e 0027 flipados Proposto→Aceito** com a ratificação do dono no merge do PR de
 fechamento (o mesmo mecanismo do ADR-0023/T020); **0025 permanece Proposto** — adiado com a parte
 ML (US6-ML/017), por decisão do dono de 2026-08-05.
+
+---
+
+## HOTFIX A2/A3 pós-016 (2026-08-07, branch `hotfix-016-a2-a3`)
+
+O achado A2 do T072 era um defeito de DINHEIRO herdado do 005, não do 016: o modelo BAND_VOUCHER
+cobrava do vendedor os R$ 20/30/40 que o art. 23431 (lido VERBATIM, padrão T057) atribui à
+SHOPEE — cupom de frete universal, custeado pela plataforma, zero linguagem de "vendedor paga".
+Correção de DADO (frete Shopee → `NONE` + `freightSubsidyInfo` aditivo, `catalogVersion
+2026-08-07.0`): o líquido da semente foi de R$ 4,24 → R$ 24,24 e o líquido negativo com volumoso
+morreu; nenhum ANÚNCIO mudou; congelados SHA-256-idênticos. A3 junto: estado `unauthenticated` no
+outbox (401 NUNCA purga — propriedade provada), banner sticky "Entrar de novo". FR-111a revogada
+na spec 005 com Clarification datada; FR-111b finalmente cumprida. Homologação **PASS 93%, 43
+screenshots, 0 bloqueadores**, mutação de catálogo provada (armadilha nova: a SEMENTE responde a
+primeira pintura — esperar o valor MUTADO). Ressalvas R1–R4 corrigidas no fechamento; **R5 vira
+follow-up** (máscara de milhar se perde na reabertura programática de cenário — classe B2 da
+PR-C, o caminho de restauração pula o blur). Desenho + verbatims + recibo completo:
+`docs/homologacao/hotfix-a2-a3-desenho.md`.

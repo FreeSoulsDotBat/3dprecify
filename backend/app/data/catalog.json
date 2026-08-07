@@ -1,7 +1,7 @@
 {
-  "catalogVersion": "2026-08-06.1",
+  "catalogVersion": "2026-08-07.0",
   "schemaVersion": "1",
-  "generatedAt": "2026-08-06T00:00:00.000Z",
+  "generatedAt": "2026-08-07T00:00:00.000Z",
   "marketplaces": [
     {
       "marketplace": "MERCADO_LIVRE",
@@ -1855,6 +1855,29 @@
           "lastReviewed": "2026-08-06"
         }
       ],
+      "freightSubsidyInfo": {
+        "bands": [
+          {
+            "minPrice": 0,
+            "maxPrice": 80,
+            "ceiling": 20
+          },
+          {
+            "minPrice": 80,
+            "maxPrice": 200,
+            "ceiling": 30
+          },
+          {
+            "minPrice": 200,
+            "maxPrice": null,
+            "ceiling": 40
+          }
+        ],
+        "source": "Central de Educação do Vendedor Shopee — Programa de Frete Grátis (subsídio oferecido pela Shopee a todos os vendedores)",
+        "sourceUrl": "https://seller.shopee.com.br/edu/article/23431",
+        "effectiveDate": "2026-03-01",
+        "lastReviewed": "2026-08-07"
+      },
       "entries": [
         {
           "determinants": null,
@@ -1897,24 +1920,7 @@
             }
           ],
           "freight": {
-            "kind": "BAND_VOUCHER",
-            "bands": [
-              {
-                "minPrice": 0,
-                "maxPrice": 80,
-                "voucherCeiling": 20
-              },
-              {
-                "minPrice": 80,
-                "maxPrice": 200,
-                "voucherCeiling": 30
-              },
-              {
-                "minPrice": 200,
-                "maxPrice": null,
-                "voucherCeiling": 40
-              }
-            ]
+            "kind": "NONE"
           },
           "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)",
           "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",
@@ -1954,24 +1960,7 @@
             }
           ],
           "freight": {
-            "kind": "BAND_VOUCHER",
-            "bands": [
-              {
-                "minPrice": 0,
-                "maxPrice": 80,
-                "voucherCeiling": 20
-              },
-              {
-                "minPrice": 80,
-                "maxPrice": 200,
-                "voucherCeiling": 30
-              },
-              {
-                "minPrice": 200,
-                "maxPrice": null,
-                "voucherCeiling": 40
-              }
-            ]
+            "kind": "NONE"
           },
           "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CPF com mais de 450 pedidos em 90 dias (taxa adicional de R$ 3,00 por item)",
           "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",

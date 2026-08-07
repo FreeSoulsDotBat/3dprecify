@@ -193,9 +193,22 @@ interface SlotProcessing {
  * 013 / E1-02 — the override seam, as a SELECTIVE MERGE.
  *
  * Typing ONE fee on a covered slot used to drop the catalog entry WHOLESALE (`priceBands:
- * undefined, freightVoucherBands: undefined`): the Shopee co-financed freight voucher and the
- * price bands vanished from the calculation, so the recebido líquido was overstated by exactly the
- * voucher — silently, under a seal that only claimed the fees had been adjusted.
+ * undefined, freightVoucherBands: undefined`): the price bands vanished from the calculation, so
+ * the price was computed at 0% commission — silently, under a seal that only claimed the fees had
+ * been adjusted. That defect (the F1 note at the bottom) is the reason the merge is selective.
+ *
+ * **CORREÇÃO 2026-08-07 (hotfix 016/A2).** This docstring used to justify preserving
+ * `freightVoucherBands` by saying that losing it "overstated the recebido líquido by exactly the
+ * voucher". That justification is now FALSE, and a false comment in a money seam is the debt the
+ * next dev believes: the verbatim sources attribute the R$ 20/30/40 to SHOPEE, not to the seller
+ * ("*A Shopee oferece subsídios de frete para todos os vendedores*", art. 26839/23431), so
+ * deducting it was the defect, not preserving it the fix. The catalog no longer emits the voucher
+ * (`freight: {kind: "NONE"}` on both Shopee entries), and the field is DEPRECATED in the engine.
+ *
+ * The selective-merge RULE is unchanged and still right — it exists for `priceBands`. The
+ * unconditional carry-through of `freightVoucherBands` also stays, for a different and still valid
+ * reason: a scenario document saved BEFORE the hotfix (ADR-0021) may carry the field, and dropping
+ * it on an edit would change that document's number for a reason the seller never asked for.
  *
  * The override now overwrites ONLY the scalars the seller actually TYPED. The signal is
  * `editedFields` (which fields were typed), NEVER truthiness — a typed `0` is a real override and
@@ -210,7 +223,7 @@ interface SlotProcessing {
  * the band containing the announce, so a typed fixedFee is simply inert there (the price stays
  * correct), and on a non-band entry (no schedule to drop) it overrides the scalar as expected.
  * `freightVoucherBands` (a freight dimension, orthogonal to commission) is preserved unconditionally
- * — it is the co-financed amount the original audit found being silently dropped.
+ * — DEPRECATED since the 016/A2 hotfix, carried only for documents saved before it (see above).
  *
  * WHY fixedFee must NOT trigger the drop (the F1 bug): Shopee's entry has NO top-level commissionPct
  * (`seed.ts` — it lives in the bands), so `entryToChannelFees` reads `null ?? 0`. Dropping the bands

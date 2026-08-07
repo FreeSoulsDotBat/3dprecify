@@ -64,5 +64,8 @@ export function cardTitle(item: HistoryItem): string {
 export const SYNC_BADGE: Record<Exclude<SyncState, "synced">, string> = {
   pending: t.syncPendingBadge,
   blocked: t.syncBlockedBadge,
+  // hotfix 016/A3 (H4b) — its own badge, never the pending/blocked text: the reason is a dead
+  // session, and the card must say that, not "pendente" or "precisa de Premium".
+  unauthenticated: t.syncUnauthenticatedBadge,
   failed: t.syncFailedBadge,
 };

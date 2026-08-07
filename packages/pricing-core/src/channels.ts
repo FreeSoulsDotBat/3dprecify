@@ -58,8 +58,29 @@ export interface ChannelSurcharge {
  */
 export type BandMode = "SELECTION" | "PROGRESSIVE";
 
-/** A co-funded free-shipping voucher band by listing price — half-open `[minPrice, maxPrice)`. Its
- *  `voucherCeiling` is the seller's contribution, deducted from líquido at the resulting announce (Shopee). */
+/**
+ * A free-shipping voucher band by listing price — half-open `[minPrice, maxPrice)`. Its
+ * `voucherCeiling` is deducted from líquido at the resulting announce.
+ *
+ * **DEPRECATED 2026-08-07 (hotfix 016/A2) — no emitters left, and NEVER to be removed.**
+ *
+ * It used to be described as "the seller's contribution". The verbatim sources (Shopee art. 26839 +
+ * art. 23431) say the opposite: *"A Shopee **oferece** subsídios de frete para todos os
+ * vendedores"*, and *"Cupons de frete grátis **válidos para fretes de até** R$20"* — the
+ * R$ 20/30/40 is what SHOPEE offers, and it is the coupon's validity CEILING, not a seller charge.
+ * Deducting it whole from the seller's net turned a R$ 24,24 margin into R$ 4,24 (T072, achado A2).
+ * The catalog stopped emitting it (both Shopee entries are `freight: {kind: "NONE"}`); the subsidy
+ * is published as non-computing information (`freightSubsidyInfo`).
+ *
+ * The engine keeps honouring it EXACTLY as before, and that is the point: this field travels inside
+ * frozen snapshot payloads (ADR-0019, immutable by DB trigger) and saved scenario documents
+ * (ADR-0021). Redefining or dropping the reading would make a document the product promises
+ * immutable start asserting a different number without one line of it changing — the same argument
+ * `BandMode` (ADR-0024) and `fixedFeeRule` (ADR-0027) already carry. Because nothing computes
+ * differently, `PRICING_MODEL_VERSION` was NOT bumped by that hotfix, deliberately.
+ *
+ * Guarded by `tests/voucher-legacy-payload.test.ts`.
+ */
 export interface VoucherBand {
   minPrice: number;
   maxPrice: number | null;
@@ -72,7 +93,8 @@ export interface ChannelFees {
   fixedFee?: number;
   minPerItem?: number; // Amazon per-item commission floor (default 0)
   freightCost?: number; // flat freight (manual / ML estimate) deducted from líquido (default 0)
-  freightVoucherBands?: VoucherBand[]; // co-funded voucher, deducted by the announce band (Shopee, FR-111a)
+  /** @deprecated 2026-08-07 (hotfix 016/A2) — honoured for STORED payloads only; see `VoucherBand`. */
+  freightVoucherBands?: VoucherBand[];
   priceBands?: PriceBand[];
   bandMode?: BandMode; // ABSENT = "SELECTION" — see BandMode; absence preserves every stored payload
   /** Custos opcionais declarados pelo vendedor (ADR-0027 §3.2). ABSENTE/vazio = byte-idêntico. */

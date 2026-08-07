@@ -4390,7 +4390,8 @@
           "kind",
           "bands"
         ],
-        "title": "FreightBandVoucher"
+        "title": "FreightBandVoucher",
+        "description": "DEPRECATED 2026-08-07 (hotfix 016/A2) — no emitters left, never removed.\n\nThe served catalog no longer carries this shape: the verbatim sources (art. 26839 + art. 23431)\nattribute the R$ 20/30/40 free-shipping coupon to SHOPEE (\"A Shopee oferece subsidios de frete\npara todos os vendedores\"), and the value is the coupon's validity CEILING, not a seller charge.\nBoth Shopee entries are ``{\"kind\": \"NONE\"}`` now, and the subsidy is published as\n``FreightSubsidyInfo`` (non-computing information).\n\nKept readable because the shape travels inside frozen snapshot payloads (ADR-0019, immutable by\nDB trigger) and saved scenario documents (ADR-0021). A model that stopped accepting it would\nmake a document the product promises immutable fail to open."
       },
       "FreightEstimate": {
         "properties": {
@@ -4443,6 +4444,73 @@
           "kind"
         ],
         "title": "FreightNone"
+      },
+      "FreightSubsidyBand": {
+        "properties": {
+          "minPrice": {
+            "type": "number",
+            "title": "Minprice"
+          },
+          "maxPrice": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maxprice"
+          },
+          "ceiling": {
+            "type": "number",
+            "title": "Ceiling"
+          }
+        },
+        "type": "object",
+        "required": [
+          "minPrice",
+          "maxPrice",
+          "ceiling"
+        ],
+        "title": "FreightSubsidyBand"
+      },
+      "FreightSubsidyInfo": {
+        "properties": {
+          "bands": {
+            "items": {
+              "$ref": "#/components/schemas/FreightSubsidyBand"
+            },
+            "type": "array",
+            "title": "Bands"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "sourceUrl": {
+            "type": "string",
+            "title": "Sourceurl"
+          },
+          "effectiveDate": {
+            "type": "string",
+            "title": "Effectivedate"
+          },
+          "lastReviewed": {
+            "type": "string",
+            "title": "Lastreviewed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bands",
+          "source",
+          "sourceUrl",
+          "effectiveDate",
+          "lastReviewed"
+        ],
+        "title": "FreightSubsidyInfo",
+        "description": "hotfix 016/A2 — the Shopee free-shipping subsidy as INFORMATION, never as a charge.\n\nMarketplace-level (same precedent as ``optional_surcharges``): the Programa de Frete Gratis is\nuniversal (\"Todos os vendedores tem os beneficios\"), not keyed by profile or price band.\n\nNON-COMPUTING by construction on both sides: this service never computes (FR-118) and no client\nconsumer feeds it into the engine. It is a NEW FIELD rather than a new ``Freight`` union member\non purpose — a new ``kind`` on the wire would make an already-installed PWA client reject the\nWHOLE catalog, silently (it falls back to the bundled seed and nobody sees an error), while an\nextra object property is simply dropped by the old client, which then reads\n``freight: {\"kind\": \"NONE\"}`` — the new truth.\n\nAnd, the lesson this file has now learned four times (``category_spine``, ``band_mode``,\n``fee_axes``, ``optional_surcharges``): a response model is an allowlist, so a field it does not\nknow is a field it EATS. ``test_fee_catalog_drops_no_field_from_the_artifact`` caught this one\nred before the model existed."
       },
       "MarketplaceCatalog": {
         "properties": {
@@ -4514,6 +4582,16 @@
               }
             ],
             "title": "Optionalsurcharges"
+          },
+          "freightSubsidyInfo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FreightSubsidyInfo"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "entries": {
             "items": {
@@ -5736,7 +5814,8 @@
           "maxPrice",
           "voucherCeiling"
         ],
-        "title": "VoucherBand"
+        "title": "VoucherBand",
+        "description": "DEPRECATED 2026-08-07 (hotfix 016/A2). See ``FreightBandVoucher``."
       },
       "WebhookAck": {
         "properties": {
