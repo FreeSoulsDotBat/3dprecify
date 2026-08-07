@@ -439,7 +439,7 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       passadas** · e2e 5/5 chromium · **SC-709 provado pela FORMA**: `git diff develop` sobre
       `app/entitlement/`, `entities/user/` e `packages/` da ZERO — a derivacao nao mudou porque o
       codigo dela nao foi tocado. Evidencia em `dod-evidence.md`.
-- [ ] T030 **Owner-gated PR-B → `develop`** (squash). Graph refresh on merge.
+- [x] T030 **Owner-gated PR-B → `develop`** (squash, PR #35, `26397a5`, 2026-08-02). Graph refresh on merge.
 
 ---
 
@@ -618,16 +618,23 @@ is **OWNER-GATED** (ADR-0006); the graph refreshes on each merge (ADR-0014). Led
       `backend/app` + `packages` — NOVE deram zero, e os quatro hits sao falsos positivos
       verificados um a um (o mais eloquente: `imposto` aparece num teste AFIRMANDO que nao existe
       campo de imposto). Escopo declarado e tabela em `dod-evidence.md`.
-- [ ] T040 **Owner-gated PR-C → `develop`** (squash). Graph refresh on merge.
+- [x] T040 **Owner-gated PR-C → `develop`** (squash, PR #36, `2d3e538`, 2026-08-03). Graph refresh on merge.
+      (Registrado só em 2026-08-07, junto com T030 — os merges aconteceram nos dias 02/03 e os
+      checkboxes ficaram para trás; foi essa defasagem que manteve o CLAUDE.md dizendo "PR-C é a
+      fatia restante" por quatro dias.)
 
 ---
 
 ## Phase 15: Polish & cross-cutting (at epic close-out)
 
-- [ ] T041 [P] Update `CLAUDE.md` ground line + `docs/product/business-rules.md` E6 row (BUILT/SHIPPED, the
+- [x] T041 [P] Update `CLAUDE.md` ground line + `docs/product/business-rules.md` E6 row (BUILT/SHIPPED, the
       premium-gate line from the brief §10) + cross-slice dod-evidence; confirm ADR-0023 Accepted; final
       graph refresh. **v1 = E1–E6 complete → surface the DEPLOY decision to the owner** (the standing
       2026-07-09 rule's trigger has fired; the live-webhook validation from Q3 waits there).
+      **FEITO 2026-08-07** (branch `docs/012-t041-registro-e6`): ground line corrigida (dizia "PR-C
+      restante" 4 dias após o merge do #36), linha E6 do business-rules atualizada, ADR-0023
+      confirmado Accepted. **O gatilho do deploy DISPAROU** — código v1 = E1–E6 completo (resta
+      T002/T036, ambos do dono) — e a decisão foi apresentada ao dono nesta data.
 - [x] T042 handoff fiscal (Q9) — `docs/product/e6-fiscal-handoff.md`, datado. Quatro perguntas para o
       contador e o inventario do que o E6 ja registra e que ele pode usar. **Bloqueia o LANCAMENTO**
       (cobrar do primeiro cliente real), nao o merge nem o E7.
