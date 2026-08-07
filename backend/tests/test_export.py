@@ -86,6 +86,27 @@ KIT_PAYLOAD: dict[str, Any] = {
     "provenance": {"kind": "KIT", "id": "k1", "name": "Kit Festa"},
 }
 
+# 016/PR-F (T069, US16, ADR-0027 §3.2) — a channel slot that declared an optional surcharge (the
+# Shopee "Manuseio de item volumoso", R$ 50/pedido). `FrozenChannel` (the result side) stays
+# price-only by decision I3 — the {label, value} pair travels inside `inputs.channels[].surcharges`
+# only, frozen VERBATIM by the existing generic `freezeInput` (no schema change). Value is an exact
+# decimal STRING, unrounded (`toExactString`, not `toMoneyString`) — "50", not "50.00" — so the
+# renderer must not assume two decimal places are already there.
+SINGLE_PAYLOAD_WITH_SURCHARGE: dict[str, Any] = {
+    **SINGLE_PAYLOAD,
+    "inputs": {
+        **SINGLE_PAYLOAD["inputs"],
+        "channels": [
+            {
+                "marketplace": "SHOPEE",
+                "commissionPct": "20",
+                "fixedFee": "4",
+                "surcharges": [{"label": "Manuseio de item volumoso", "value": "50"}],
+            }
+        ],
+    },
+}
+
 _QUOTED_AT = datetime.datetime(2026, 7, 13, 19, 30, tzinfo=datetime.UTC)
 
 
@@ -191,6 +212,42 @@ class TestQuoteContent:
         assert q.quoted_at == _QUOTED_AT
         assert q.utc_offset_minutes == -180
         assert q.validity_days == 15
+
+    def test_a_declared_surcharge_prints_a_NAMED_line_only_on_opt_in(self) -> None:
+        """016/PR-F (T069) — a channel surcharge the seller declared (the Shopee "Manuseio de item
+        volumoso") is a cost, so it obeys the SAME opt-in rule as material/energy/machine (SC-506):
+        absent from the default customer artifact, present ONLY when the seller opts in — and named
+        from the frozen document's own label, never hardcoded."""
+        hidden = build_quote_view(
+            _snap(SINGLE_PAYLOAD_WITH_SURCHARGE),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=False,
+        )
+        assert hidden.cost_breakdown == []
+
+        shown = build_quote_view(
+            _snap(SINGLE_PAYLOAD_WITH_SURCHARGE),
+            seller_name="Ana",
+            seller_email="ana@x.com",
+            include_cost_breakdown=True,
+        )
+        surcharge_lines = [
+            c for c in shown.cost_breakdown if c.label == "Manuseio de item volumoso"
+        ]
+        assert len(surcharge_lines) == 1
+        assert surcharge_lines[0].value == "50"  # the stored string, verbatim (unrounded)
+        # ...and the ordinary breakdown lines are still there beside it — none lost, none doubled.
+        assert {"11.00", "0.60", "3.00", "50"} <= {c.value for c in shown.cost_breakdown}
+
+    def test_no_surcharges_declared_prints_NO_surcharge_line(self) -> None:
+        """The regression guard: the ordinary SINGLE_PAYLOAD has no `inputs.channels` key at all —
+        reading it must not fabricate a line, and the ORIGINAL three-line breakdown must survive
+        byte-for-byte (the same set `test_opting_in_reveals_the_stored_breakdown_verbatim` pins)."""
+        q = build_quote_view(
+            _snap(), seller_name="Ana", seller_email="ana@x.com", include_cost_breakdown=True
+        )
+        assert {c.value for c in q.cost_breakdown} == {"11.00", "0.60", "3.00"}
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════
@@ -888,6 +945,55 @@ class TestQuoteLayout:
             assert word in text, f"{word!r} was dropped from the wrapped name: {text!r}"
         assert "<premium>" in text, "the markup guarantee regressed — `_xml` left the name path"
         assert "&" in text
+
+    # 016/PR-F (T069) — the E4 lesson applied to the NEW line: a surcharge label is free catalog
+    # text (curated, but no length constraint enforced here), rendered in the SAME fixed-width
+    # `costs` Table as `otherCosts` (colWidths=[120mm, 40mm]) — the exact geometry that overprinted
+    # before. A long surcharge label must wrap, never overprint its own value.
+    LONG_SURCHARGE_LABEL = (
+        "Manuseio de item volumoso (embalagem fora do padrão, coleta especial) art. 3305 Shopee"
+    )
+
+    def test_a_long_surcharge_label_never_overprints_its_value(self) -> None:
+        payload = {
+            **SINGLE_PAYLOAD,
+            "inputs": {
+                **SINGLE_PAYLOAD["inputs"],
+                "channels": [
+                    {
+                        "marketplace": "SHOPEE",
+                        "commissionPct": "20",
+                        "surcharges": [{"label": self.LONG_SURCHARGE_LABEL, "value": "50"}],
+                    }
+                ],
+            },
+        }
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
+        )
+        runs = _pdf_runs(render_quote_pdf(quote))
+        self._assert_no_overprint(runs, "R$ 50,00")
+
+    def test_the_long_surcharge_label_WRAPS_rather_than_being_dropped(self) -> None:
+        payload = {
+            **SINGLE_PAYLOAD,
+            "inputs": {
+                **SINGLE_PAYLOAD["inputs"],
+                "channels": [
+                    {
+                        "marketplace": "SHOPEE",
+                        "commissionPct": "20",
+                        "surcharges": [{"label": self.LONG_SURCHARGE_LABEL, "value": "50"}],
+                    }
+                ],
+            },
+        }
+        quote = build_quote_view(
+            _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
+        )
+        text = _pdf_text(render_quote_pdf(quote))
+        for word in self.LONG_SURCHARGE_LABEL.split():
+            assert word in text, f"{word!r} was dropped from the wrapped surcharge label: {text!r}"
 
 
 # ════════════════════════════════════════════════════════════════════════════════════════════════

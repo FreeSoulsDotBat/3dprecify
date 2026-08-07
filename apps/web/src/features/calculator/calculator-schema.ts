@@ -45,6 +45,12 @@ export type CalcFieldName = (typeof CALC_FIELD_NAMES)[number];
 export type MarketplaceId = "MERCADO_LIVRE" | "SHOPEE" | "AMAZON" | "OUTRO";
 export type Modality = "CLASSICO" | "PREMIUM" | "PROFISSIONAL" | "INDIVIDUAL" | "";
 
+/** 016/PR-F (US17, FR-926) — the Shopee seller-profile axis, asked as TWO questions (clarify Q6). Empty
+ *  string = "not answered", which is the catch-all — the SAME behaviour every slot has today (byte-
+ *  identical, FR-926's last clause). `highVolume` only means something when `sellerType === "CPF"`. */
+export type SellerType = "CPF" | "CNPJ" | "";
+export type HighVolume = "SIM" | "NAO" | "";
+
 export interface ChannelSlotForm {
   marketplace: MarketplaceId;
   modality: Modality;
@@ -52,6 +58,15 @@ export interface ChannelSlotForm {
    *  blocks a calculation) and PER SLOT: a category chosen for ML must not become the Amazon one.
    *  Empty string = not informed, which is a valid and permanent state (SC-809). */
   category?: string;
+  /** 016/PR-F (US17, FR-926) — "Você vende como" (CPF/CNPJ). Absent/"" = not answered → catch-all. */
+  sellerType?: SellerType;
+  /** 016/PR-F (US17, FR-926) — "mais de 450 pedidos nos últimos 90 dias?", only asked when
+   *  `sellerType === "CPF"`. Absent/"" = not answered → catch-all. */
+  highVolume?: HighVolume;
+  /** 016/PR-F (US16, FR-923, ADR-0027 §3.2) — ids of the catalog's `optionalSurcharges` the seller
+   *  checked for THIS slot (e.g. Shopee `MANUSEIO_VOLUMOSO`). Empty/absent = none checked, which is
+   *  byte-identical to every slot before this axis existed (US16-AC2). */
+  surcharges?: string[];
   commissionPct: string;
   fixedFee: string;
   minPerItem: string;
@@ -231,6 +246,9 @@ export function defaultChannelSlot(marketplace: MarketplaceId = "AMAZON"): Chann
   return {
     marketplace,
     modality: (DEFAULT_MODALITY_ORDER[marketplace][0]?.value ?? "") as Modality,
+    sellerType: "",
+    highVolume: "",
+    surcharges: [],
     commissionPct: "",
     fixedFee: "",
     minPerItem: "",
@@ -253,10 +271,18 @@ export function defaultChannelSlot(marketplace: MarketplaceId = "AMAZON"): Chann
 export function slotResetOnMarketplaceChange(marketplace: MarketplaceId): {
   modality: Modality;
   category: string;
+  sellerType: SellerType;
+  highVolume: HighVolume;
+  surcharges: string[];
 } {
   return {
     modality: (DEFAULT_MODALITY_ORDER[marketplace][0]?.value ?? "") as Modality,
     category: "",
+    // 016/PR-F — the same argument as `category`: "CPF_ALTO_VOLUME" means nothing outside Shopee, and
+    // a catalog id checked on Shopee (`MANUSEIO_VOLUMOSO`) means nothing on another marketplace either.
+    sellerType: "",
+    highVolume: "",
+    surcharges: [],
   };
 }
 

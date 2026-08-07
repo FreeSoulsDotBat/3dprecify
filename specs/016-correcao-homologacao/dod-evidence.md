@@ -216,3 +216,89 @@ passa" só conta como evidência se a suíte RODOU.**
 vazamento por deep-link); promessa nova aprovada com julgamento próprio; contador do picker morto
 ("Mostrando 8 de 31" com contagem independente batendo); eixos por marketplace exatos
 (Shopee sem categoria/mínimo; Amazon sem frete); Clarifications conferidas texto a texto.
+
+## PR-F · T057 — releitura VERBATIM do art. 26839 · 2026-08-06 (pré-condição dos números)
+
+MEDIDO com navegador headless (a página é SPA; `networkidle` nunca chega — espera por conteúdo).
+Texto integral: 7.452 chars; screenshot + txt no scratchpad da sessão. Os trechos LITERAIS:
+
+1. **CNPJ < R$ 8** — *"Para produtos com preço abaixo de R$8, o adicional por item é a metade do
+   preço do produto. Produtos acima de R$8 mantêm a comissão conforme a variação de valor do
+   item;"* → **resolve o conflito §9.3 do arquiteto**: a comissão (20%) CONTINUA incidindo; o que
+   vira função do preço é o ADICIONAL fixo (R$ 4 → preço/2). A leitura do FR-927 estava certa; a
+   do OBTENCAO-DINAMICA §8 ("50% sem fixo") estava errada. Banda `[0,8)`: `commissionPct 20` +
+   `fixedFeeRule {PCT_OF_PRICE, 50}`.
+2. **CPF + R$ 3** — *"operam na modalidade CPF e ultrapassam 450 pedidos em um período de 90 dias,
+   além do valor da comissão* é aplicada uma taxa adicional de R$3 por item vendido"* E *"Política
+   diferenciada para vendedores com menos de 450 pedidos…: a taxa adicional de R$3 … não será
+   aplicada…, ficando vigente apenas a taxa por item vendido (R$4, R$16, R$20 ou R$26)"* →
+   **resolve o §9.8**: CPF SEM volume paga a MESMA tabela do catch-all — a correção-como-dado que
+   o arquiteto previu: **duas entradas** (catch-all + `CPF_ALTO_VOLUME` = tabela + R$ 3), não
+   três. As duas perguntas da tela permanecem; só o mapeamento muda (CPF sem volume → catch-all).
+3. **Regressiva < R$ 12** — *"um produto de R$10 tem uma taxa de R$6,50, enquanto um de R$8 terá
+   taxa de R$6"* — verbatim, DENTRO da seção do CPF alto volume; fórmula completa segue não
+   publicada. Bandas da entrada `CPF_ALTO_VOLUME` começam em R$ 12 (§9.5 do arquiteto); abaixo:
+   estado I9 + aviso US17 (gatilho: CPF_ALTO_VOLUME + preço < 12).
+4. **Piso de comissão**: 0 ocorrências de "mínim"/"piso" — permanece **não determinado**.
+
+**Complemento (mesma data) — `/precos` da Amazon relida verbatim** (fetch simples, HTTP 200,
+647KB): *"O Plano Individual é isento de mensalidade; O custo é de R$ 2,00 por produto vendido."*
+e *"Tarifa R$ 2,00 por item + comissão"* — fecha a pendência de 70% do executor do dado (a
+vigência do `fixedFeeSource`). A página segue se auto-datando "comissões atualizadas em
+20/01/2025" e segue imprimindo o bloco "Comissão mínima R$ 2,00" (~11 categorias) — o conflito
+do D7 permanece como estava (decisão: manter 1,00 + vigia; o vigia é do 017).
+
+## PR-F — US14/US16/US17/US18 · pricing-core 4.1.0 · 2026-08-06
+
+**A fatia atravessou uma queda de energia no meio** (o executor do motor foi interrompido com 2
+testes vermelhos e o relatório perdido) e foi retomada por auditoria: nada revertido, tudo
+diagnosticado.
+
+**Motor 4.1.0 (opus, ADR-0022)**: das 2 falhas herdadas, UMA era o teste errado (comparava o
+rótulo da banda; o contrato manda asserir o par anúncio/líquido — corrigido, e um teste novo crava
+que o rótulo é a ÚNICA diferença nas 30k bases) e a OUTRA era **defeito latente real**: a guarda
+do piso publicado não existia (toda tabela pré-016 começava em R$ 0; `CPF_ALTO_VOLUME` é a
+primeira com piso, e sem a guarda o motor respondia R$ 12,00 onde a fonte publica R$ 6,00 num item
+de R$ 8). Fronteira cravada: base 2,59 ⇒ I9 · 2,60 ⇒ R$ 12,00; o platô do ML preservado (lacuna
+interna ≠ fora da tabela). 7 mutações, todas matando teste — a M3 SOBREVIVEU na 1ª rodada (buraco
+real no teste do `net`) e virou tabela discriminante. Cobertura 100/100/100/100.
+
+**Dado (dos verbatims do T057)**: Shopee `[0,8)` = 20% + regra 50% (a comissão CONTINUA — a
+leitura refutada do OBTENCAO §8 nunca virou número) · `CPF_ALTO_VOLUME` = catch-all +R$ 3 com piso
+R$ 12 (DUAS entradas, não três — o verbatim resolveu) · volumoso R$ 50/ORDER art. 3305 · Amazon
+INDIVIDUAL `fixedFee 2,00` em **39** entradas (pela REGRA, não pelo número — a 39ª é a
+modality-only; e as 3 bandadas com o valor DENTRO da banda, senão a inércia 013/F1 os engoliria) +
+`fixedFeeSource` próprio (/precos, verbatim relido) · `catalogVersion 2026-08-06.1` (um bump).
+Pydantic do backend com RED provado antes do fix (a classe do drops-no-field, de novo).
+
+**T069 (PDF)**: linha nomeada da sobretaxa lida de `inputs.channels[].surcharges` (o congelado não
+ganhou folha — I3), sob o mesmo gate de honestidade do breakdown; geometria adversarial com rótulo
+de 60+ chars pelo padrão do E4 (page stream decodificado); regressão zero pinada por conteúdo.
+
+**Frontend** (chegou pronto na árvore — possivelmente conduzido pelo dono; verificado seam a seam
+em vez de refeito): avisos com os dois pontos VERBATIM e zero fórmula; mapeamento
+`CPF && >450 → CPF_ALTO_VOLUME`; RA5 fechado (o plano alimenta o `slotDeterminants`). Dois
+consertos no fechamento: timeout explícito na varredura de monotonicidade (estourava os 5s default
+SÓ sob o gate instrumentado — a classe "vermelho intermitente" da lição 014/US5, morta na causa) e
+o locator `exact` do spec novo (30s por zero matches: o nome acessível carrega o marcador de
+obrigatório — padrão da casa é `getByRole("textbox")`).
+
+**Homologação (qa-produto, T070): PASS 88% → correções A1–A5 → re-verificação PASS 92%.** 79
+screenshots em `evidencias/pr-f/`. Os 5 itens de dado conferidos ATÉ O CENTAVO com expectativas
+derivadas da identidade do motor ANTES de olhar a tela (+R$ 3,00 exatos; +R$ 50 inteiro uma vez;
++R$ 2,00 exatos; metade do preço com fronteira do R$ 8 varrida em 6 bases, contínua e monótona;
+CPF/CNPJ/sem-resposta byte-idênticos por texto renderizado).
+
+| # | achado T070 | destino |
+| --- | --- | --- |
+| A1 | Entrada BANDADA exibia "0,00" enquanto o motor cobrava (o +R$ 3 e a metade-do-preço sem número na tela) — classe pré-existente que a fatia tornou mais cara | **CORRIGIDO**: placeholders da banda APLICADA (mudam sozinhos quando o anúncio troca de faixa — provado) + legenda por slot. No reverify a imagem pegou o sufixo do placeholder CORTADO ("2,50 (= 50" a 360px — leitura errada nova); a frase da regra migrou para a legenda de largura total |
+| A2 | Checkbox cru 13×13px violando o INV-2 num controle de R$ 50 | **CORRIGIDO**: Switch do DS (44×44, role=switch, temas) |
+| A3 | Legenda prometia "+R$ 50" e o anúncio sobe +74,28 (gross-up + troca de banda) | **CORRIGIDO**: a legenda diz as duas metades da verdade |
+| A4 | Vigência dita duas vezes no selo do fixo | **CORRIGIDO** (source enxuto; effectiveDate estruturado imprime) |
+| A5 | Seção Shopee 1248px a 360 (48% avisos; o do frete permanente) | **CORRIGIDO**: frete aferido em 1 linha + ⓘ (248→60px); contabilidade honesta: −188px do aviso, +92px das legendas novas ⇒ líquido −96px |
+| RES | Varejo e atacado em faixas diferentes → placeholder mostra só a do varejo (janela estreita) | registrado como limite conhecido (BAIXA) — muito melhor que o 0,00 de antes |
+
+**Lição nova (do reverify)**: a frase-de-honestidade no PLACEHOLDER é inasserível e cortável — o
+atributo carrega o texto inteiro (leitor de tela recebe tudo, asserção de texto passa) enquanto o
+render corta onde a caixa acaba. Frase explicativa vive em elemento de largura total; placeholder
+carrega só o número.

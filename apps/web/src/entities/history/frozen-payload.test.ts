@@ -2,6 +2,7 @@ import {
   type BomResult,
   computeCalculator,
   type PriceInput,
+  PRICING_MODEL_VERSION,
   type PriceResult,
   stripRetiredFields,
   ValidationError,
@@ -116,6 +117,11 @@ describe("the frozen payload carries NO JSON numbers for money (the serializer t
             recebidoLiquidoAtacado: 33.09,
             freightCostVarejo: 0,
             freightCostAtacado: 0,
+            // 016/PR-F (ADR-0027 §3.2) — o eco é OBRIGATÓRIO e lista vazia quando não há nenhuma:
+            // uma forma só para o consumidor, em vez de um `undefined` que cada tela trataria à sua
+            // maneira. O congelado NÃO ganha folha nova por isso (I3): a sobretaxa resolvida viaja
+            // em `inputs.channels[].surcharges`, e `FrozenChannel` continua sendo só preço.
+            surcharges: [],
             error: null,
           },
         ],
@@ -545,7 +551,12 @@ describe("SC-815 — um congelado de ANTES do ADR-0024/4.0.0 (T083 + 016/US10)",
       // apresenta este resultado como se fosse o congelado: ou reprecifica da origem viva, ou
       // reemite `antigo` intacto (fromFrozen), nunca este recompute cru.
       expect(hoje.totals.custoTotal).not.toBe(antigo.totals.custoTotal);
-      expect(hoje.modelVersion).toBe("4.0.0");
+      // O que esta linha afirma é "o recompute carimba a versão de HOJE, não a do documento".
+      // Era o literal "4.0.0", e a MINOR de PR-F (4.1.0) o reprovou — provando que o literal
+      // respondia "qual versão era" em vez da pergunta. Contra a constante ela sobrevive a cada
+      // bump; a comparação com `antigo` abaixo é o que a mantém não-vacuosa.
+      expect(hoje.modelVersion).toBe(PRICING_MODEL_VERSION);
+      expect(hoje.modelVersion).not.toBe(antigo.modelVersion);
     });
   }
 
@@ -555,5 +566,47 @@ describe("SC-815 — um congelado de ANTES do ADR-0024/4.0.0 (T083 + 016/US10)",
     const anuncios = antigos.map((p) => p.channels?.[0]?.precoAnuncioVarejo);
     expect(anuncios).toEqual(["58.73", "97.36", "149.98"]);
     expect(new Set(anuncios).size).toBe(3);
+  });
+});
+
+// 016/PR-F (US16, ADR-0027 §3.2) — o congelado existente (`freezeInput`) já é genérico o bastante
+// para carregar `ChannelInput.surcharges` sem NENHUMA mudança: o comentário do executor do dado
+// pediu exatamente este teste de snapshot — gravar com volumoso marcado congela o valor DENTRO de
+// `inputs`, não como um campo à parte que alguém teria de lembrar de adicionar aqui.
+describe("congelado — o volumoso (surcharges) viaja dentro de inputs.channels (US16, RA5)", () => {
+  it("um cenário salvo com o volumoso marcado congela {label, value} dentro de inputs.channels[0].surcharges", () => {
+    const input = priceInput({
+      channels: [
+        {
+          marketplace: "SHOPEE",
+          commissionPct: 20,
+          fixedFee: 4,
+          surcharges: [{ label: "Manuseio de item volumoso", value: 50 }],
+        },
+      ],
+    });
+    const result = computeCalculator(input);
+    const frozen = freezePriceResult(input, result, null);
+
+    const frozenChannels = frozen.inputs?.channels as unknown as Array<{
+      surcharges: Array<{ label: string; value: string }>;
+    }>;
+    expect(frozenChannels[0]?.surcharges).toEqual([
+      { label: "Manuseio de item volumoso", value: "50" },
+    ]);
+    // E o resultado ECOADO (não só a entrada) também carrega — o motor devolve `surcharges` em
+    // `ChannelResult`, e o congelamento dos canais preserva o que foi realmente cobrado.
+    expect(result.channels[0]?.surcharges).toEqual([
+      { label: "Manuseio de item volumoso", value: 50 },
+    ]);
+  });
+
+  it("sem surcharges (o caso de hoje), a chave nem aparece no congelado — byte-idêntico", () => {
+    const input = priceInput({
+      channels: [{ marketplace: "SHOPEE", commissionPct: 20, fixedFee: 4 }],
+    });
+    const frozen = freezePriceResult(input, computeCalculator(input), null);
+    const frozenChannels = frozen.inputs?.channels as unknown as Array<Record<string, unknown>>;
+    expect("surcharges" in frozenChannels[0]!).toBe(false);
   });
 });

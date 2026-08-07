@@ -161,12 +161,90 @@ describe("channelFieldPlan — ML stays today's behaviour (US15 reversion)", () 
   });
 });
 
+// 016/PR-F (US17, FR-926) — sellerProfile composes ONE determinant from TWO form answers, so it is
+// EXCLUDED from the generic SELECT loop above (rule 1) and surfaced as its own boolean instead.
+describe("channelFieldPlan — sellerProfile (US17, RA5)", () => {
+  it("determinantsSchema.sellerProfile with a non-empty option list turns the flag on, and does NOT become a SELECT determinant", () => {
+    const catalog = catalogWith([
+      {
+        marketplace: "SHOPEE",
+        determinantsSchema: { sellerProfile: ["CPF_ALTO_VOLUME"] },
+        categorySpine: null,
+        entries: [],
+      },
+    ]);
+    const plan = channelFieldPlan(catalog, "SHOPEE");
+    expect(plan.sellerProfile).toBe(true);
+    expect(plan.determinants.map((d) => d.key)).not.toContain("sellerProfile");
+  });
+
+  it("no sellerProfile axis in the schema (any other marketplace) leaves the flag off", () => {
+    const catalog = catalogWith([
+      {
+        marketplace: "AMAZON",
+        determinantsSchema: { plan: ["INDIVIDUAL", "PROFISSIONAL"] },
+        categorySpine: null,
+        entries: [],
+      },
+    ]);
+    expect(channelFieldPlan(catalog, "AMAZON").sellerProfile).toBe(false);
+  });
+
+  it("an EMPTY sellerProfile option list behaves like absent (same rule as every other axis)", () => {
+    const catalog = catalogWith([
+      {
+        marketplace: "SHOPEE",
+        determinantsSchema: { sellerProfile: [] },
+        categorySpine: null,
+        entries: [],
+      },
+    ]);
+    expect(channelFieldPlan(catalog, "SHOPEE").sellerProfile).toBe(false);
+  });
+});
+
+// 016/PR-F (US16, FR-923, ADR-0027 §3.2) — the marketplace's optional per-item costs, verbatim.
+describe("channelFieldPlan — surcharges (US16)", () => {
+  const surcharge = {
+    id: "MANUSEIO_VOLUMOSO",
+    label: "Manuseio de item volumoso",
+    value: 50,
+    appliesPer: "ORDER" as const,
+    source: "Central de Educação do Vendedor Shopee",
+    sourceUrl: "https://seller.shopee.com.br/edu/article/3305",
+    effectiveDate: "2026-02-02",
+    lastReviewed: "2026-08-06",
+  };
+
+  it("echoes optionalSurcharges verbatim when the catalog declares them", () => {
+    const catalog = catalogWith([
+      {
+        marketplace: "SHOPEE",
+        determinantsSchema: null,
+        categorySpine: null,
+        optionalSurcharges: [surcharge],
+        entries: [],
+      },
+    ]);
+    expect(channelFieldPlan(catalog, "SHOPEE").surcharges).toEqual([surcharge]);
+  });
+
+  it("absent/null optionalSurcharges yields an empty list — zero string/number invented", () => {
+    const catalog = catalogWith([
+      { marketplace: "AMAZON", determinantsSchema: null, categorySpine: null, entries: [] },
+    ]);
+    expect(channelFieldPlan(catalog, "AMAZON").surcharges).toEqual([]);
+  });
+});
+
 describe("channelFieldPlan — marketplaces the catalog does not carry", () => {
   it("OUTRO (never in the catalog) yields zero determinants and all four fields", () => {
     const catalog = catalogWith([]);
     expect(channelFieldPlan(catalog, "OUTRO")).toEqual({
       determinants: [],
       feeFields: ["commissionPct", "fixedFee", "minPerItem", "freightCost"],
+      sellerProfile: false,
+      surcharges: [],
     });
   });
 

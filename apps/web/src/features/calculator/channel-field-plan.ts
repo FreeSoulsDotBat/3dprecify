@@ -1,4 +1,4 @@
-import type { FeeCatalog, Marketplace } from "@/shared/fee-catalog";
+import type { FeeCatalog, Marketplace, OptionalSurcharge } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import type { ChannelFieldName, MarketplaceId } from "./calculator-schema";
@@ -27,6 +27,16 @@ export interface ChannelFieldPlan {
   /** Which of the 4 numeric fee fields render, IN THE CANONICAL ORDER (calculator-schema's
    *  CHANNEL_FEE_FIELDS order) — never the catalog's own array order, which is curation detail. */
   feeFields: readonly ChannelFieldName[];
+  /** 016/PR-F (US17, FR-926) — `true` sse the catalog declares a non-empty `determinantsSchema.
+   *  sellerProfile` for this marketplace (Shopee today). Drives the TWO-question seller-profile UI
+   *  ("Você vende como" +, se CPF, "mais de 450 pedidos?") — `sellerProfile` is excluded from the
+   *  generic SELECT loop below (like `category`) because it composes into ONE determinant from TWO
+   *  form answers, never a single closed-list select. */
+  sellerProfile: boolean;
+  /** 016/PR-F (US16, FR-923, ADR-0027 §3.2) — the marketplace's published optional per-item costs
+   *  (Shopee `MANUSEIO_VOLUMOSO`), verbatim from the catalog. Empty when the marketplace publishes
+   *  none — zero string/number invented here, only what `optionalSurcharges` declares. */
+  surcharges: readonly OptionalSurcharge[];
 }
 
 /** The 4 fee fields, in the fixed display order — the plan filters this list, never reorders it. */
@@ -72,19 +82,28 @@ export function channelFieldPlan(
   marketplace: MarketplaceId,
 ): ChannelFieldPlan {
   if (!CATALOG_MARKETPLACES.includes(marketplace)) {
-    return { determinants: [], feeFields: ALL_FEE_FIELDS };
+    return { determinants: [], feeFields: ALL_FEE_FIELDS, sellerProfile: false, surcharges: [] };
   }
   const mk = catalog.marketplaces.find((m) => m.marketplace === (marketplace as Marketplace));
-  if (!mk) return { determinants: [], feeFields: ALL_FEE_FIELDS };
+  if (!mk)
+    return { determinants: [], feeFields: ALL_FEE_FIELDS, sellerProfile: false, surcharges: [] };
 
   // Rule 1: a determinant key appears sse `determinantsSchema` declares it with a NON-EMPTY option
   // list. `category` is excluded here even when the schema echoes it (the seed ships
   // `category: []`) — it is governed entirely by rule below, not by this generic loop.
+  // `sellerProfile` is excluded the SAME way (below): it composes ONE determinant from TWO form
+  // answers, not a single closed-list select — a generic SELECT would ask "CPF_ALTO_VOLUME? sim/não"
+  // verbatim, which is not the question FR-926 asks.
   const determinants: ChannelFieldPlanDeterminant[] = [];
   const schema = mk.determinantsSchema as Record<string, unknown> | null | undefined;
+  let sellerProfile = false;
   if (schema) {
     for (const [key, raw] of Object.entries(schema)) {
       if (key === "category") continue;
+      if (key === "sellerProfile") {
+        if (Array.isArray(raw) && raw.length > 0) sellerProfile = true;
+        continue;
+      }
       if (!Array.isArray(raw) || raw.length === 0) continue;
       const options = raw.filter((v): v is string => typeof v === "string");
       if (options.length === 0) continue;
@@ -109,7 +128,10 @@ export function channelFieldPlan(
   const feeFields =
     feeAxes == null ? ALL_FEE_FIELDS : ALL_FEE_FIELDS.filter((f) => feeAxes.includes(f));
 
-  return { determinants, feeFields };
+  const surcharges =
+    (mk as { optionalSurcharges?: readonly OptionalSurcharge[] | null }).optionalSurcharges ?? [];
+
+  return { determinants, feeFields, sellerProfile, surcharges };
 }
 
 /**

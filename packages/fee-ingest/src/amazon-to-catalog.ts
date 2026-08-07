@@ -34,8 +34,12 @@ export function amazonSpine(categories: readonly ParsedCategory[]) {
  *    modelled — modelling it is a `pricing-core` change and explicitly out of scope (Q9).
  * 2. The referral table does NOT vary by plan (measured 2026-07-28: zero mentions of plan across all
  *    38 rows), so both plans carry the same commission. The Individual plan's separate PER-ITEM
- *    charge is not published on this page — so it is NOT included, and saying so is the only honest
- *    option. Inventing a number for it would violate Constitution II.
+ *    charge is not published on this page — and until 016 it was therefore NOT included, which was
+ *    the honest answer while the number had no source.
+ *
+ *    **016/US14 closed it**: the R$ 2,00 comes from `venda.amazon.com.br/precos` and now ships WITH
+ *    that page as its own provenance (`fixedFeeSource`). The declaration stays, but it declares the
+ *    right thing: the number is not on THIS page, and the entry says where it is.
  */
 export const AMAZON_FEE_BASE_CAVEAT = "comissão sobre base que inclui frete";
 
@@ -49,7 +53,7 @@ export const AMAZON_FEE_BASE_CAVEAT = "comissão sobre base que inclui frete";
  * this increment has not built yet. Recorded as a gap, not shipped as a wall of text.
  */
 export const AMAZON_CAVEATS_FULL =
-  "A Amazon cobra a comissão sobre uma base que inclui o frete; este app calcula sobre o preço anunciado, então a taxa real pode ser maior. A tabela não varia por plano; a cobrança por item do plano Individual não é publicada nesta fonte e não está incluída.";
+  "A Amazon cobra a comissão sobre uma base que inclui o frete; este app calcula sobre o preço anunciado, então a taxa real pode ser maior. A tabela de comissões não varia por plano. A cobrança de R$ 2,00 por item do plano Individual não é publicada nesta fonte: ela vem da página de preços e planos da Amazon, declarada em cada entrada do plano Individual.";
 
 export interface BuildOptions {
   /** ISO date the source was read. Injected so the output is reproducible. */
@@ -97,6 +101,30 @@ export function effectiveDatesOf(
 const PLANS = ["PROFISSIONAL", "INDIVIDUAL"] as const;
 
 /**
+ * 016/US14 (FR-921) — a cobrança POR ITEM do plano Individual, R$ 2,00.
+ *
+ * Ela NÃO sai da tabela de comissões: a G200336920 não a publica (é a limitação 2 do caveat acima,
+ * que esta fatia deixa de apenas declarar e passa a corrigir). Sai de `venda.amazon.com.br/precos`,
+ * e por isso viaja com procedência PRÓPRIA (`fixedFeeSource`) — apontar o vendedor para uma página
+ * que não contém o número que ele está vendo é uma procedência que não procede.
+ *
+ * O plano Profissional fica FORA de propósito: os R$ 19/mês são custo MENSAL do vendedor, não custo
+ * por item, e somá-los aqui os cobraria uma vez por unidade vendida.
+ */
+export const AMAZON_INDIVIDUAL_PER_ITEM_FEE = 2.0;
+
+// 016/PR-F homologação (A4) — a string NÃO repete a vigência: `effectiveDate` abaixo já a carrega
+// estruturada, e `FixedFeeSourceBadge` (calculator/fee-seal.tsx) já a imprime como "vigente desde
+// dd/mm/aaaa" — um parêntese aqui virava "vigente desde X · vigente desde X" no selo, a mesma data
+// dita duas vezes. A medição (vigente desde pelo menos dez/2020) continua verdadeira; só não repete
+// na string livre o que o campo estruturado já diz.
+export const AMAZON_INDIVIDUAL_FEE_SOURCE = {
+  source: "Amazon — Preços e planos de venda: tarifa por item do plano Individual",
+  sourceUrl: "https://venda.amazon.com.br/precos",
+  effectiveDate: "2020-12-01",
+} as const;
+
+/**
  * One entry per (plan, category). The commission is plan-independent (see caveat 2), but the
  * catalog is keyed by the determinants the slot supplies — `{plan, category}` — so both plans get a
  * row. Duplicating the number is deliberate: the alternative is a determinant-set the resolver would
@@ -104,34 +132,47 @@ const PLANS = ["PROFISSIONAL", "INDIVIDUAL"] as const;
  */
 export function amazonEntries(categories: readonly ParsedCategory[], opts: BuildOptions) {
   /** One entry. `category: null` makes it the modality-only entry — see below. */
-  const entry = (plan: (typeof PLANS)[number], c: ParsedCategory, category: string | null) => ({
-    determinants: category === null ? { plan } : { plan, category },
-    commissionPct: c.commissionPct,
-    fixedFee: 0,
-    minPerItem: c.minPerItem,
-    priceBands: c.bands
-      ? c.bands.map((b) => ({
-          minPrice: b.minPrice,
-          maxPrice: b.maxPrice,
-          commissionPct: b.commissionPct,
-          // The per-item minimum applies per product regardless of band.
-          fixedFee: 0,
-        }))
-      : null,
-    // ADR-0024 / FR-014b. EVERY banded cell this source publishes is charged per PORTION, not by
-    // selecting one rate for the whole price: "15% até R$ 200,00 e 10% para o EXCEDENTE acima de
-    // R$ 200,00" (venda.amazon.com.br/precos). Emitting the bands WITHOUT this discriminator is what
-    // made the app under-charge the commission above the threshold — R$ 10,00 constant on
-    // Móveis/Colchões and R$ 5,00 on Acessórios Eletrônicos — all under a "Referência" seal.
-    ...(c.bands ? { bandMode: "PROGRESSIVE" as const } : {}),
-    freight: { kind: "NONE" as const },
-    source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
-    sourceUrl: AMAZON_SOURCE_URL,
-    // T101: a fonte manda; na ausencia de declaracao, o que a entrada JA tinha; so uma entrada
-    // nova estreia com a data desta coleta.
-    effectiveDate: opts.previousEffectiveDates?.get(entryKey(plan, category)) ?? opts.effectiveDate,
-    lastReviewed: opts.collectedAt,
-  });
+  const entry = (plan: (typeof PLANS)[number], c: ParsedCategory, category: string | null) => {
+    // 016/US14 (FR-921) — o fixo é do PLANO, nunca da categoria. Profissional continua em 0: os
+    // R$ 19/mês dele são custo MENSAL do vendedor e somá-los aqui os cobraria por unidade vendida.
+    const perItem = plan === "INDIVIDUAL" ? AMAZON_INDIVIDUAL_PER_ITEM_FEE : 0;
+    return {
+      determinants: category === null ? { plan } : { plan, category },
+      commissionPct: c.commissionPct,
+      fixedFee: perItem,
+      minPerItem: c.minPerItem,
+      priceBands: c.bands
+        ? c.bands.map((b) => ({
+            minPrice: b.minPrice,
+            maxPrice: b.maxPrice,
+            commissionPct: b.commissionPct,
+            // O MESMO valor DENTRO da banda, e não é redundância: sobre uma entrada bandada o
+            // `fixedFee` do topo é INERTE (regra 013/F1) — o motor cobra o fixo da banda que
+            // CONTÉM o anúncio. Deixar 0 aqui faria os R$ 2,00 sumirem em silêncio exatamente nas
+            // categorias com faixa, que são as menos conferidas. Cobrado UMA vez: o regime
+            // progressivo lê o fixo da banda que contém o anúncio, não a soma das bandas.
+            fixedFee: perItem,
+          }))
+        : null,
+      // ADR-0024 / FR-014b. EVERY banded cell this source publishes is charged per PORTION, not by
+      // selecting one rate for the whole price: "15% até R$ 200,00 e 10% para o EXCEDENTE acima de
+      // R$ 200,00" (venda.amazon.com.br/precos). Emitting the bands WITHOUT this discriminator is
+      // what made the app under-charge the commission above the threshold — R$ 10,00 constant on
+      // Móveis/Colchões and R$ 5,00 on Acessórios Eletrônicos — all under a "Referência" seal.
+      ...(c.bands ? { bandMode: "PROGRESSIVE" as const } : {}),
+      // A procedência PRÓPRIA do fixo, só onde existe fixo (016/US14). A entrada do Profissional
+      // não a carrega: apontar uma fonte para um R$ 0,00 seria citar uma página para dizer nada.
+      ...(perItem > 0 ? { fixedFeeSource: AMAZON_INDIVIDUAL_FEE_SOURCE } : {}),
+      freight: { kind: "NONE" as const },
+      source: `Tabela de comissões da Amazon — ${c.name} (${AMAZON_FEE_BASE_CAVEAT})`,
+      sourceUrl: AMAZON_SOURCE_URL,
+      // T101: a fonte manda; na ausencia de declaracao, o que a entrada JA tinha; so uma entrada
+      // nova estreia com a data desta coleta.
+      effectiveDate:
+        opts.previousEffectiveDates?.get(entryKey(plan, category)) ?? opts.effectiveDate,
+      lastReviewed: opts.collectedAt,
+    };
+  };
 
   const perCategory = PLANS.flatMap((plan) =>
     categories.map((c) => entry(plan, c, categoryId(c.name))),

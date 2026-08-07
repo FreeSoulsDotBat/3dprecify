@@ -8,7 +8,7 @@ import { STALENESS_DAYS } from "@/shared/fee-catalog";
 import { feeSealState } from "./fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { FeeSeal } from "./fee-seal";
+import { FeeSeal, FixedFeeSourceBadge } from "./fee-seal";
 
 afterEach(() => cleanup());
 
@@ -296,5 +296,27 @@ describe("FeeSeal — o catch-all também diz de onde veio (T055)", () => {
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
     expect(seal).toHaveTextContent(t.outdated);
+  });
+});
+
+// 016/PR-F (T057) — a procedência PRÓPRIA da taxa fixa (Amazon Individual: comissão e tarifa por
+// item vêm de páginas oficiais DIFERENTES) é um selo SEPARADO do `FeeSeal` principal.
+describe("FixedFeeSourceBadge — a procedência da taxa fixa, num selo à parte (T057)", () => {
+  it("mostra a fonte e a data (pt-BR), sem poluir o selo principal", () => {
+    render(
+      <FixedFeeSourceBadge
+        source={{
+          source: "Amazon — Preços e planos de venda",
+          sourceUrl: "https://venda.amazon.com.br/precos",
+          effectiveDate: "2020-12-01",
+        }}
+      />,
+    );
+    const badge = screen.getByTestId("fixed-fee-source-seal");
+    expect(badge).toHaveTextContent(t.fixedFeeSource);
+    expect(badge).toHaveTextContent("Amazon — Preços e planos de venda");
+    expect(badge).toHaveTextContent("01/12/2020"); // ISO → pt-BR dd/mm/yyyy
+    // É um elemento SEPARADO do selo principal — nunca o mesmo nó.
+    expect(screen.queryByTestId("fee-seal")).not.toBeInTheDocument();
   });
 });

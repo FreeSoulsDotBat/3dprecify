@@ -8,16 +8,21 @@ import {
   feeCatalogSchema,
   feeEntrySchema,
   parseFeeCatalog,
+  resolveEntry,
   STALENESS_DAYS,
 } from "@/shared/fee-catalog";
 
 import {
+  appliedBandFees,
   entryToChannelFees,
   feeSealState,
+  resolveShopeeSellerProfile,
   resolveSlot,
   resolveSlotEntry,
+  resolveSurcharges,
   slotDeterminants,
 } from "./fee-prefill";
+import type { MarketplaceId } from "./calculator-schema";
 
 // SC-103 (US2, test-first): selecting a covered marketplace+modality pre-fills from the catalog with
 // a dated seal; overriding flips it to "ajustado por você"; an uncovered combo resolves to nothing →
@@ -502,5 +507,273 @@ describe("T013c — quem não escolhe categoria não é afetado pelo eixo novo (
       });
     expect(selo("seed")).toMatchObject({ kind: "reference", embedded: true });
     expect(selo("catalog")).toMatchObject({ kind: "reference", embedded: false });
+  });
+});
+
+// 016/PR-F (T060/T063/T065/T067) — o efeito no PREÇO da curadoria desta fatia, medido contra o
+// ARTEFATO REAL e passando pelo mapeamento que o app usa (`entryToChannelFees` → `grossUp`).
+//
+// Por que aqui e não no `fee-catalog.test.ts`: aquele prova o DADO (valores e forma). Este prova que
+// o dado ATRAVESSA — e ADR-0027 §5 nomeia o trajeto perder um campo como O risco da mudança, não a
+// aritmética. Um teste que só lê o JSON seria cego a um `entryToChannelFees` que descarta a regra.
+describe("016/PR-F — a curadoria chega ao PREÇO (artefato real → motor)", () => {
+  const artefato = parseFeeCatalog(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+  const feesDe = (marketplace: MarketplaceId, modality: string, category?: string) =>
+    entryToChannelFees(resolveSlot(artefato, marketplace, modality, category).entry!);
+
+  describe("Amazon US14 — o plano Individual sobe EXATAMENTE R$ 2,00 antes do markup", () => {
+    it("catch-all: a diferença entre os planos é o gross-up de R$ 2,00, e nada mais", () => {
+      const prof = feesDe("AMAZON", "PROFISSIONAL");
+      const ind = feesDe("AMAZON", "INDIVIDUAL");
+      // Mesma comissão (a tabela não varia por plano) — é isso que isola a variável.
+      expect(ind.commissionPct).toBe(prof.commissionPct);
+      expect(ind.fixedFee - prof.fixedFee).toBe(2);
+      // base 41,33 · 15% · o fixo entra ANTES do gross-up: (41,33 + 2) / 0,85 − 41,33 / 0,85.
+      const a = grossUp(41.33, prof);
+      const b = grossUp(41.33, ind);
+      expect(a.anuncio).toBe(48.62);
+      expect(b.anuncio).toBe(50.98);
+      // O líquido continua entregando a base: o R$ 2,00 é custo, não margem.
+      expect(b.liquido).toBe(41.33);
+      // A subida é o valor grossed-up, não os R$ 2,00 crus — e é por isso que o teste crava a
+      // divisão e não a subtração: 2,00 / 0,85 = 2,3529… → o par 48,62 → 50,98 acima.
+      expect(Number((b.anuncio! - a.anuncio!).toFixed(2))).toBe(2.36);
+    });
+
+    it("categoria BANDADA (progressiva): os R$ 2,00 cobram UMA vez, não uma por banda", () => {
+      const ind = feesDe("AMAZON", "INDIVIDUAL", "acessorios-eletronicos");
+      const prof = feesDe("AMAZON", "PROFISSIONAL", "acessorios-eletronicos");
+      expect(ind.bandMode).toBe("PROGRESSIVE");
+      expect(ind.priceBands?.every((b) => b.fixedFee === 2)).toBe(true);
+      const semFixo = grossUp(300, prof);
+      const comFixo = grossUp(300, ind);
+      // Uma cobrança só: a diferença é 2,00 grossed-up pela alíquota da banda que contém o anúncio
+      // (10% no excedente ⇒ 2 / 0,90 = 2,22), NÃO 4,00 nem 2 × nº de bandas.
+      expect(Number((comFixo.anuncio! - semFixo.anuncio!).toFixed(2))).toBe(2.22);
+      expect(comFixo.liquido).toBe(300);
+    });
+
+    it("o Profissional não se mexeu — nenhum fixo, em entrada plana ou bandada", () => {
+      expect(feesDe("AMAZON", "PROFISSIONAL").fixedFee).toBe(0);
+      expect(
+        feesDe("AMAZON", "PROFISSIONAL", "acessorios-eletronicos").priceBands?.every(
+          (b) => b.fixedFee === 0,
+        ),
+      ).toBe(true);
+    });
+  });
+
+  describe("Shopee US18 — a partição em R$ 8 atravessa o catálogo servido", () => {
+    const shopee = feesDe("SHOPEE", "PADRAO");
+
+    it("a REGRA sobreviveu ao mapeamento (o campo não se perdeu no trajeto)", () => {
+      expect(shopee.priceBands?.[0]?.fixedFeeRule).toEqual({ kind: "PCT_OF_PRICE", pct: 50 });
+    });
+
+    it("abaixo de R$ 8 o adicional é metade do anúncio: base 1,50 → 5,00 (frete à parte)", () => {
+      // L = 1,50 / (1 − 0,20 − 0,50) = 5,00. O voucher de frete co-financiado é deduzido DEPOIS,
+      // então o líquido aqui vem abaixo da base — de propósito, e é o comportamento de hoje.
+      const r = grossUp(1.5, shopee);
+      expect(r.anuncio).toBe(5);
+      expect(r.appliedBand).toEqual([0, 8]);
+    });
+
+    it("varredura do limiar: o anúncio é contínuo e a banda SEMPRE contém o anúncio", () => {
+      let anterior = 0;
+      const fora: number[] = [];
+      for (let c = 30; c <= 2000; c += 1) {
+        const base = c / 100;
+        const r = grossUp(base, shopee);
+        expect(r.anuncio).not.toBeNull();
+        if (r.anuncio! < anterior) fora.push(base);
+        anterior = r.anuncio!;
+        const [min, max] = r.appliedBand!;
+        expect(r.anuncio!).toBeGreaterThanOrEqual(min);
+        if (max !== null) expect(r.anuncio!).toBeLessThan(max);
+      }
+      expect(fora).toEqual([]);
+    });
+
+    it("acima do limiar nada mudou: base 41,33 continua em R$ 56,66 na banda [8,80)", () => {
+      const r = grossUp(41.33, shopee);
+      expect(r.anuncio).toBe(56.66);
+      expect(r.appliedBand).toEqual([8, 80]);
+    });
+  });
+
+  describe("Shopee US17 — o perfil CPF de alto volume, e o I9 abaixo de R$ 12", () => {
+    // O slot de HOJE: sem perfil respondido ele resolve o catch-all, e é isso que a US17 preserva.
+    const semPerfil = feesDe("SHOPEE", "PADRAO");
+
+    it("o determinante do perfil resolve a OUTRA entrada, com os R$ 3,00 somados", () => {
+      const entrada = resolveEntry(artefato, "SHOPEE", { sellerProfile: "CPF_ALTO_VOLUME" })!;
+      expect(entrada.priceBands?.[0]?.fixedFee).toBe(7);
+      // E a entrada de hoje (sem perfil respondido) segue sendo a catch-all, intocada: é isso que
+      // mantém byte-idêntico todo documento salvo (FR-926, última cláusula).
+      expect(semPerfil.priceBands?.[0]?.fixedFee).toBe(0);
+      expect(resolveEntry(artefato, "SHOPEE", null)?.determinants).toBeNull();
+    });
+
+    it("uma base que não alcança R$ 12 fica SEM referência — nunca empurrada até o piso", () => {
+      const fees = entryToChannelFees(
+        resolveEntry(artefato, "SHOPEE", { sellerProfile: "CPF_ALTO_VOLUME" })!,
+      );
+      const r = grossUp(1.5, fees);
+      expect(r.anuncio).toBeNull();
+      expect(r.liquido).toBeNull();
+      expect(r.appliedBand).toBeNull();
+      // E uma base que alcança precifica normalmente: (10 + 7) / 0,80 = 21,25.
+      expect(grossUp(10, fees).anuncio).toBe(21.25);
+    });
+  });
+
+  // 016/PR-F homologação (A1) — a entrada BANDADA passa a ter um placeholder que diz a verdade: a
+  // banda que o motor REALMENTE aplicou, lida de volta do MESMO array `priceBands` (nunca um segundo
+  // preço calculado aqui).
+  describe("appliedBandFees — a banda aplicada por trás do placeholder (A1)", () => {
+    it("Shopee catch-all: banda [8,80) → 20% e R$ 4,00 (base 41,33 → anúncio 56,66)", () => {
+      const fees = feesDe("SHOPEE", "PADRAO");
+      const applied = appliedBandFees(fees, 41.33);
+      expect(applied).toEqual({ commissionPct: 20, fixedFee: 4, fixedFeeRulePct: null });
+    });
+
+    it("Shopee CPF_ALTO_VOLUME: banda [12,80) → 20% e R$ 7,00 (base 10 → anúncio 21,25)", () => {
+      const fees = entryToChannelFees(
+        resolveEntry(artefato, "SHOPEE", { sellerProfile: "CPF_ALTO_VOLUME" })!,
+      );
+      const applied = appliedBandFees(fees, 10);
+      expect(applied).toEqual({ commissionPct: 20, fixedFee: 7, fixedFeeRulePct: null });
+    });
+
+    it("abaixo de R$ 8: o fixo RESOLVIDO é metade do anúncio, não a regra crua (base 1,50 → anúncio 5,00 → fixo 2,50)", () => {
+      const fees = feesDe("SHOPEE", "PADRAO");
+      const applied = appliedBandFees(fees, 1.5);
+      expect(applied).toEqual({ commissionPct: 20, fixedFee: 2.5, fixedFeeRulePct: 50 });
+    });
+
+    it("Amazon INDIVIDUAL sem categoria (entrada de valor único, não bandada) → null, o caminho antigo continua", () => {
+      const fees = feesDe("AMAZON", "INDIVIDUAL");
+      expect(fees.priceBands).toBeUndefined();
+      expect(appliedBandFees(fees, 41.33)).toBeNull();
+      // O caminho de hoje (015/A8) continua respondendo por este caso: 15% / R$ 2,00 / R$ 1,00.
+      expect(fees.commissionPct).toBe(15);
+      expect(fees.fixedFee).toBe(2);
+      expect(fees.minPerItem).toBe(1);
+    });
+
+    it("uma base SEM referência (fora da tabela) devolve null — nunca um preço inventado", () => {
+      const fees = entryToChannelFees(
+        resolveEntry(artefato, "SHOPEE", { sellerProfile: "CPF_ALTO_VOLUME" })!,
+      );
+      expect(appliedBandFees(fees, 1.5)).toBeNull();
+    });
+  });
+});
+
+// 016/PR-F (T061/T064-UI/T065-UI) — o SEAM do formulário: as DUAS perguntas da tela viram o
+// determinante ÚNICO que a fee-prefill.ts:slotDeterminants já sabia ler (RA5 — um mapeamento só).
+describe("resolveShopeeSellerProfile — o mapeamento das DUAS perguntas (US17, FR-926, T057)", () => {
+  it("CPF + mais de 450 pedidos/90 dias → CPF_ALTO_VOLUME", () => {
+    expect(resolveShopeeSellerProfile("CPF", "SIM")).toBe("CPF_ALTO_VOLUME");
+  });
+
+  it.each([
+    ["CNPJ", "SIM"],
+    ["CNPJ", "NAO"],
+    ["CNPJ", ""],
+    ["CPF", "NAO"],
+    ["CPF", ""],
+    ["", "SIM"],
+    ["", ""],
+    [undefined, undefined],
+  ] as const)("%s + %s → catch-all (null), byte-idêntico", (sellerType, highVolume) => {
+    expect(resolveShopeeSellerProfile(sellerType, highVolume)).toBeNull();
+  });
+});
+
+describe("slotDeterminants — o perfil Shopee (US17, RA5)", () => {
+  it("Shopee sem perfil respondido continua null — o slot de hoje, intocado", () => {
+    expect(slotDeterminants("SHOPEE", "", undefined, null)).toBeNull();
+    expect(slotDeterminants("SHOPEE", "")).toBeNull();
+  });
+
+  it("Shopee com sellerProfile resolvido vira o determinante — e SÓ ele (Shopee não tem modalidade)", () => {
+    expect(slotDeterminants("SHOPEE", "", undefined, "CPF_ALTO_VOLUME")).toEqual({
+      sellerProfile: "CPF_ALTO_VOLUME",
+    });
+  });
+
+  it("um sellerProfile passado para outro marketplace é ignorado — o eixo é da Shopee", () => {
+    expect(slotDeterminants("MERCADO_LIVRE", "CLASSICO", undefined, "CPF_ALTO_VOLUME")).toEqual({
+      listingType: "CLASSICO",
+    });
+  });
+});
+
+describe("resolveSlot — sellerType/highVolume chegam ao resolvedor (US17)", () => {
+  const artefato = parseFeeCatalog(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  it("CPF + SIM resolve a entrada CPF_ALTO_VOLUME (bandas em R$ 7 de fixo)", () => {
+    const r = resolveSlot(artefato, "SHOPEE", "", undefined, "CPF", "SIM");
+    expect(r.entry?.determinants).toEqual({ sellerProfile: "CPF_ALTO_VOLUME" });
+    expect(r.entry?.priceBands?.[0]?.fixedFee).toBe(7);
+  });
+
+  it("CNPJ + SIM (o eixo não existe para CNPJ) resolve o catch-all — byte-idêntico", () => {
+    const r = resolveSlot(artefato, "SHOPEE", "", undefined, "CNPJ", "SIM");
+    expect(r.entry?.determinants).toBeNull();
+  });
+
+  it("CPF + NAO resolve o catch-all — a fonte publica que o adicional NÃO se aplica sem volume", () => {
+    const r = resolveSlot(artefato, "SHOPEE", "", undefined, "CPF", "NAO");
+    expect(r.entry?.determinants).toBeNull();
+  });
+
+  it("nenhuma resposta (documento salvo antes do campo existir) resolve o catch-all", () => {
+    const r = resolveSlot(artefato, "SHOPEE", "");
+    expect(r.entry?.determinants).toBeNull();
+  });
+});
+
+describe("resolveSurcharges — os ids marcados viram {label, value} do catálogo (US16, FR-923)", () => {
+  const artefato = parseFeeCatalog(
+    JSON.parse(
+      readFileSync(
+        new URL("../../../../../backend/app/data/catalog.json", import.meta.url),
+        "utf8",
+      ),
+    ),
+  );
+
+  it("MANUSEIO_VOLUMOSO marcado resolve R$ 50,00, com o rótulo do catálogo", () => {
+    const out = resolveSurcharges(artefato, "SHOPEE", ["MANUSEIO_VOLUMOSO"]);
+    expect(out).toEqual([{ label: "Manuseio de item volumoso", value: 50 }]);
+  });
+
+  it("ids vazios/ausentes resolvem lista vazia — byte-idêntico (US16-AC2)", () => {
+    expect(resolveSurcharges(artefato, "SHOPEE", [])).toEqual([]);
+    expect(resolveSurcharges(artefato, "SHOPEE", undefined)).toEqual([]);
+  });
+
+  it("um id que o catálogo não publica (mais) é DROPADO, nunca inventado", () => {
+    expect(resolveSurcharges(artefato, "SHOPEE", ["ID_QUE_NAO_EXISTE"])).toEqual([]);
+  });
+
+  it("um marketplace sem optionalSurcharges (Amazon) resolve lista vazia para qualquer id", () => {
+    expect(resolveSurcharges(artefato, "AMAZON", ["MANUSEIO_VOLUMOSO"])).toEqual([]);
   });
 });

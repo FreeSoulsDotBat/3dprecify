@@ -5,8 +5,10 @@
 // the formula.
 import {
   grossUp,
+  validateBandRules,
   type BandMode,
   type ChannelFees,
+  type ChannelSurcharge,
   type PriceBand,
   type VoucherBand,
 } from "./channels.ts";
@@ -21,7 +23,10 @@ import { Decimal, toMoney, sumMoney } from "./rounding.ts";
 // `custo/kg × (gramas + desperdício)` para `custo/kg × gramas`. Remoção de campo de entrada é
 // quebra ⇒ MAJOR, e o rótulo é congelado dentro de um snapshot imutável (ADR-0019): ele precisa
 // continuar respondendo QUAL fórmula produziu aquele número.
-export const PRICING_MODEL_VERSION = "4.0.0";
+// 4.1.0 (ADR-0027, 016/PR-F): `PriceBand.fixedFeeRule` (a taxa fixa como FUNÇÃO do preço — Shopee
+// abaixo de R$ 8) e `ChannelInput.surcharges` (custo opcional declarado pelo vendedor). As duas
+// adições são OPCIONAIS e a ausência preserva o comportamento bit a bit ⇒ MINOR.
+export const PRICING_MODEL_VERSION = "4.1.0";
 
 /**
  * Campos que já foram entrada do motor e **não são mais aceitos** (ADR-0026 §3.1).
@@ -104,6 +109,13 @@ export interface ChannelInput {
   freightVoucherBands?: VoucherBand[]; // Shopee co-funded voucher, deducted by the announce band (FR-111a)
   priceBands?: PriceBand[]; // fee by listing-price band (Shopee / ML custo fixo) — resolved by pricing-core
   bandMode?: BandMode; // ABSENT = "SELECTION" (ADR-0024) — absence is what preserves every stored payload
+  /**
+   * Custos opcionais que o VENDEDOR declara (ADR-0027 §3.2) — o valor vem do catálogo, nunca do
+   * código. Somados por cima do fixo em TODOS os regimes, e é aí que está a razão de existirem:
+   * um `fixedFee` digitado é INERTE sobre uma entrada bandada (regra 013/F1), então os R$ 50 do
+   * volumoso da Shopee somados ali desapareceriam em silêncio. ABSENTE = nenhum = byte-idêntico.
+   */
+  surcharges?: ChannelSurcharge[];
 }
 
 /**
@@ -123,6 +135,9 @@ export interface ChannelResult {
   // resolved by that level's announce band (varejo/atacado can differ). 0 when the slot has no freight.
   freightCostVarejo: number;
   freightCostAtacado: number;
+  /** As sobretaxas declaradas, ECOADAS (ADR-0027 §3.2) — a legenda e a linha do PDF se nomeiam a
+   *  partir daqui. Lista VAZIA quando não há nenhuma: uma forma só para o consumidor. */
+  surcharges: ChannelSurcharge[];
   error: string | null;
 }
 
@@ -340,6 +355,7 @@ function computeChannel(
   const minPerItem = ch.minPerItem ?? 0;
   const freightCost = ch.freightCost ?? 0;
   const voucherBands = ch.freightVoucherBands ?? [];
+  const surcharges = ch.surcharges ?? [];
 
   const shell: ChannelResult = {
     marketplace: ch.marketplace ?? null,
@@ -351,6 +367,9 @@ function computeChannel(
     recebidoLiquidoAtacado: null,
     freightCostVarejo: 0,
     freightCostAtacado: 0,
+    // Ecoadas mesmo no slot que FALHA: o vendedor declarou o custo, e sumir com a declaração junto
+    // com o preço esconderia metade do motivo do erro.
+    surcharges,
     error: null,
   };
   const fail = (error: string): ChannelResult => ({ ...shell, error });
@@ -369,6 +388,19 @@ function computeChannel(
   if (voucherBands.some((b) => !Number.isFinite(b.voucherCeiling) || b.voucherCeiling < 0)) {
     return fail("freightVoucherBands.voucherCeiling must be a finite number >= 0");
   }
+  // ADR-0027 §3.2 — uma sobretaxa malformada não vira preço. O rótulo entra na conta porque é ele
+  // que a legenda e a linha do PDF imprimem: uma linha de dinheiro sem nome é uma taxa sem
+  // procedência, exatamente o que o array rotulado existe para impedir.
+  if (surcharges.some((s) => !Number.isFinite(s.value) || s.value < 0)) {
+    return fail("surcharges[].value must be a finite number >= 0");
+  }
+  if (surcharges.some((s) => s.label.trim().length === 0)) {
+    return fail("surcharges[].label must name the charge (a fee line with no name has no origin)");
+  }
+  // A recusa de forma das bandas (fixedFeeRule fora de SELECTION, c + pct >= 100) chega ao vendedor
+  // como ERRO POR SLOT NOMEADO — nunca um Infinity sob selo, nunca um slot vizinho derrubado.
+  const bandRuleError = validateBandRules(ch.priceBands, ch.bandMode);
+  if (bandRuleError !== null) return fail(bandRuleError);
 
   const fees: ChannelFees = {
     commissionPct,
@@ -381,6 +413,11 @@ function computeChannel(
     // schedule back to selection — the exact defect ADR-0024 fixes, reintroduced where the default
     // makes it invisible (ADR-0024 §5 names losing this field as the real risk, not the arithmetic).
     ...(ch.bandMode ? { bandMode: ch.bandMode } : {}),
+    // Mesmo raciocínio do `bandMode` acima, e o ADR-0027 §5 nomeia este como O risco da mudança:
+    // o perigo não é errar a aritmética (é linear e testada em três regimes), é um trajeto PERDER
+    // o campo e degradar em silêncio para a constante antiga — invisível, porque o padrão o
+    // justifica. Ausente vira lista vazia lá dentro, que é byte-idêntico.
+    ...(surcharges.length > 0 ? { surcharges } : {}),
   };
   const varejo = grossUp(precoVarejo, fees);
   const atacado = grossUp(precoAtacado, fees);
@@ -587,7 +624,15 @@ export function computeBom(lines: BomLineInput[]): BomResult {
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
 export { grossUp } from "./channels.ts";
-export type { BandMode, ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels.ts";
+export type {
+  BandMode,
+  ChannelFees,
+  ChannelLevel,
+  ChannelSurcharge,
+  FixedFeeRule,
+  PriceBand,
+  VoucherBand,
+} from "./channels.ts";
 // 3.1.0 public money primitives (ADR-0016): consumers (the BOM feature layer) format/verify with
 // these instead of ever doing native float arithmetic — pricing-core stays the only money home.
 export { Decimal, toMoney, sumMoney } from "./rounding.ts";

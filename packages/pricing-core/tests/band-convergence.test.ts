@@ -89,7 +89,12 @@ describe("SC-817/SC-108 (T113) — a banda aplicada é sempre a banda que CONTÉ
     expect(em(69.53).liquido).toBe(69.53);
   });
 
-  it("monotonicidade: o anúncio nunca cai quando a base sobe", () => {
+  // 016/PR-F — timeout EXPLÍCITO: a varredura de 14.900 bases levava ~1,7s isolada e ~5,2s sob o
+  // gate completo (instrumentação de coverage + workers paralelos), estourando os 5s default do
+  // vitest de forma INTERMITENTE — a pior classe de vermelho (lição 014/US5). O 4.1.0 adicionou
+  // trabalho legítimo por chamada (bandFixedFee/guarda de piso/surcharges); a varredura merece o
+  // tempo dela, não um encolhimento da amostra.
+  it("monotonicidade: o anúncio nunca cai quando a base sobe", { timeout: 30_000 }, () => {
     let anterior = 0;
     const quedas: { base: number; de: number; para: number }[] = [];
     for (let cents = 100; cents <= 15000; cents++) {

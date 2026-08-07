@@ -152,6 +152,30 @@ def _cost_lines(breakdown: dict[str, Any]) -> list[CostLineView]:
     return lines
 
 
+def _channel_surcharge_lines(channels: Any) -> list[CostLineView]:
+    """016/PR-F (T069, US16, ADR-0027 §3.2) — the named surcharge lines a seller declared on a
+    channel (e.g. the Shopee "Manuseio de item volumoso", R$ 50/pedido).
+
+    `FrozenChannel` (the result side) stays PRICE-ONLY by decision I3: the {label, value} pair
+    the engine echoes on `ChannelResult.surcharges` is never re-frozen there — it already travels,
+    verbatim, inside `inputs.channels[].surcharges`, frozen by the existing generic `freezeInput`
+    with NO schema change. This reads it back from exactly that one place.
+
+    A surcharge is a COST, so it follows the SAME opt-in rule as material/energy/machine (SC-506) —
+    the caller gates this behind `include_cost_breakdown`, not this function. Absent/malformed
+    entries print nothing: a label with no value, or a value with no label, is not a line (FR-507's
+    rule — an absent key is an absent line, never a fabrication)."""
+    lines: list[CostLineView] = []
+    for slot in _seq(channels):
+        for item in _seq(_obj(slot).get("surcharges")):
+            item_obj = _obj(item)
+            label = item_obj.get("label")
+            value = item_obj.get("value")
+            if isinstance(label, str) and label and isinstance(value, str):
+                lines.append(CostLineView(label=label, value=value))
+    return lines
+
+
 def build_quote_view(
     snapshot: Snapshot,
     *,
@@ -196,8 +220,15 @@ def build_quote_view(
             custo = totals.get("custoTotal")
             if isinstance(custo, str):
                 cost_breakdown = [CostLineView(label="Custo total", value=custo)]
+            # Each piece carries its OWN channel inputs (`line.input.channels`) — a surcharge
+            # declared on one piece's channel is real money for THAT piece, so every line's
+            # surcharges are read, not just the rollup's.
+            for line in _seq(payload.get("lines")):
+                line_channels = _obj(_obj(line).get("input")).get("channels")
+                cost_breakdown += _channel_surcharge_lines(line_channels)
         else:
             cost_breakdown = _cost_lines(_obj(payload.get("breakdown")))
+            cost_breakdown += _channel_surcharge_lines(_obj(payload.get("inputs")).get("channels"))
 
     return QuoteView(
         seller_name=seller_name,

@@ -323,11 +323,60 @@ export const MarketplaceCatalogMarketplace = {
   SHOPEE: 'SHOPEE',
 } as const;
 
+export type OptionalSurchargeAppliesPer = typeof OptionalSurchargeAppliesPer[keyof typeof OptionalSurchargeAppliesPer];
+
+
+export const OptionalSurchargeAppliesPer = {
+  ORDER: 'ORDER',
+  ITEM: 'ITEM',
+} as const;
+
+/**
+ * 016/US16 — a seller-DECLARED optional cost the marketplace publishes (Shopee: bulky-item
+ * handling, R$ 50,00 per ORDER). Marketplace-level: it is not keyed by profile or price band.
+ */
+export interface OptionalSurcharge {
+  id: string;
+  label: string;
+  value: number;
+  appliesPer: OptionalSurchargeAppliesPer;
+  source: string;
+  sourceUrl: string;
+  effectiveDate: string;
+  lastReviewed: string;
+}
+
+/**
+ * 016/US14 — provenance of the FIXED fee when it does not come from the entry's own page.
+ *
+ * Amazon publishes the referral commission on Seller Central and the Individual plan's per-item
+ * charge on venda.amazon.com.br/precos. One ``source_url`` would point the seller at a page that
+ * does not contain the number they are looking at.
+ */
+export interface FixedFeeSource {
+  source: string;
+  sourceUrl: string;
+  effectiveDate: string;
+}
+
+/**
+ * How a band's FIXED fee forms (016/PR-F, ADR-0027 §3.1). ABSENT = the ``fixed_fee`` constant.
+ *
+ * Data in transit, like ``band_mode``: this service never computes with it (FR-118). Dropping it
+ * would silently turn "half the price below R$ 8" back into a R$ 4,00 constant — a fee the source
+ * does not charge there, under a "Referência" seal.
+ */
+export interface FixedFeeRule {
+  kind: 'PCT_OF_PRICE';
+  pct: number;
+}
+
 export interface PriceBand {
   minPrice: number;
   maxPrice: number | null;
   commissionPct: number | null;
   fixedFee: number | null;
+  fixedFeeRule?: FixedFeeRule | null;
 }
 
 export type FeeEntryBandMode = typeof FeeEntryBandMode[keyof typeof FeeEntryBandMode] | null;
@@ -367,6 +416,7 @@ export interface FeeEntry {
   determinants: FeeEntryDeterminants;
   commissionPct: number | null;
   fixedFee: number | null;
+  fixedFeeSource?: FixedFeeSource | null;
   minPerItem?: number | null;
   priceBands?: PriceBand[] | null;
   bandMode?: FeeEntryBandMode;
@@ -384,6 +434,7 @@ export interface MarketplaceCatalog {
   determinantsSchema?: MarketplaceCatalogDeterminantsSchema;
   categorySpine?: CategoryNode[] | null;
   feeAxes?: ('commissionPct' | 'fixedFee' | 'minPerItem' | 'freightCost')[] | null;
+  optionalSurcharges?: OptionalSurcharge[] | null;
   entries: FeeEntry[];
 }
 

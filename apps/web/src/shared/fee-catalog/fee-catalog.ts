@@ -38,13 +38,40 @@ const DELIVERY_SLACK_DAYS = 14;
  */
 export const STALENESS_DAYS = LOOP_CYCLE_DAYS + DELIVERY_SLACK_DAYS;
 
-/** Half-open price band `[minPrice, maxPrice)` (`maxPrice: null` = ∞) — lower-inclusive tie-rule. */
-const priceBandSchema = z.object({
-  minPrice: z.number().nonnegative(),
-  maxPrice: z.number().positive().nullable(),
-  commissionPct: z.number().min(0).lt(100).nullable(),
-  fixedFee: z.number().nonnegative().nullable(),
+/**
+ * Como a taxa FIXA de uma banda se forma (016/PR-F, ADR-0027 §3.1, pricing-core 4.1.0).
+ *
+ * ADITIVO, e a AUSÊNCIA significa a constante `fixedFee` — o significado que todo catálogo já
+ * persistido tem hoje, e que todo `priceBands` gravado dentro de um congelado (ADR-0019) ou de um
+ * cenário (ADR-0021) já carrega. Mesma disciplina do `bandMode` (ADR-0024).
+ *
+ * `nullish` e não `optional`: o backend serializa ausente como `null` explícito, e um schema que só
+ * tolera `undefined` RECUSARIA o payload servido — recusa que aqui é SILENCIOSA (o app cai no seed
+ * embutido e ninguém vê erro). A mesma armadilha que o `bandMode` documenta logo abaixo.
+ */
+const fixedFeeRuleSchema = z.object({
+  kind: z.literal("PCT_OF_PRICE"),
+  /** % do ANÚNCIO, em (0, 100) aberto nas duas pontas. */
+  pct: z.number().gt(0).lt(100),
 });
+
+/** Half-open price band `[minPrice, maxPrice)` (`maxPrice: null` = ∞) — lower-inclusive tie-rule. */
+const priceBandSchema = z
+  .object({
+    minPrice: z.number().nonnegative(),
+    maxPrice: z.number().positive().nullable(),
+    commissionPct: z.number().min(0).lt(100).nullable(),
+    fixedFee: z.number().nonnegative().nullable(),
+    fixedFeeRule: fixedFeeRuleSchema.nullish(),
+  })
+  // O denominador do gross-up fechado é `1 − c/100 − pct/100`. Zerado ele devolve `Infinity`;
+  // invertido, um preço NEGATIVO — os dois com cara de resposta, os dois sob selo de referência.
+  // A recusa mora no schema E no motor (`validateBandRules`) porque as duas portas são reais: esta
+  // impede o dado de existir, aquela impede um consumidor de tropeçar num payload antigo.
+  .refine(
+    (b) => b.fixedFeeRule == null || (b.commissionPct ?? 0) + b.fixedFeeRule.pct < 100,
+    "commissionPct + fixedFeeRule.pct must be < 100 (o gross-up não teria solução) — ADR-0027",
+  );
 
 /** Freight / free-shipping descriptor (ADR-0010 Part 4) — a discriminated union on `kind`. */
 const freightSchema = z.discriminatedUnion("kind", [
@@ -76,6 +103,27 @@ export const feeEntrySchema = z
     determinants: z.record(z.string(), z.string()).nullable(),
     commissionPct: z.number().min(0).lt(100).nullable(),
     fixedFee: z.number().nonnegative().nullable(),
+    /**
+     * 016/PR-F (US14) — procedência PRÓPRIA do `fixedFee`, quando ele não vem da mesma página que a
+     * comissão. ADITIVO; ausente = o `source`/`sourceUrl`/`effectiveDate` da entrada respondem
+     * pelos dois números, que é o caso de toda entrada de antes desta fatia.
+     *
+     * Existe porque a Amazon publica as duas coisas em páginas DIFERENTES: a comissão sai da
+     * G200336920 (Seller Central) e a cobrança por item do plano Individual sai de
+     * venda.amazon.com.br/precos. Um `sourceUrl` só apontaria o vendedor para uma página que não
+     * contém o número que ele está vendo — uma procedência que não procede é pior que nenhuma.
+     *
+     * Sem `lastReviewed` próprio de propósito: a releitura mensal abre as duas páginas na MESMA
+     * passada, então a data de conferência da entrada responde pelas duas folhas. Um segundo
+     * relógio aqui envelheceria sozinho e o selo de obsolescência (`isStale`) não o leria.
+     */
+    fixedFeeSource: z
+      .object({
+        source: z.string().min(1),
+        sourceUrl: z.url(),
+        effectiveDate: z.string().min(1),
+      })
+      .nullish(),
     minPerItem: z.number().nonnegative().nullable().optional(), // Amazon per-item commission floor
     priceBands: z.array(priceBandSchema).nullable().optional(),
     // How the bands combine (ADR-0024 / FR-014b). ABSENT = "SELECTION", and that default is what keeps
@@ -117,13 +165,33 @@ export const feeEntrySchema = z
   // 016/US12 (FR-928, arquitetura-016 §9.4) — the F3 guard's mirror on `fixedFee`: the exact same
   // defect class, on the other numeric leaf. `entryToChannelFees` maps `b.fixedFee ?? 0`, so a band
   // with a null fixedFee prices R$ 0,00 under a "Referência" seal — never a fact anyone published.
-  // No `fixedFeeRule` escape hatch exists yet (PR-F/ADR-0027 introduces it in `pricing-core`); until
-  // then every published band MUST carry its own numeric fixedFee.
+  //
+  // 016/PR-F: `fixedFeeRule` já existe (ADR-0027) e ainda assim NÃO abre exceção aqui. A regra é o
+  // que o motor cobra; a constante continua sendo obrigatória porque ela é o que a banda vale
+  // quando a regra sai — e uma banda com os dois lados vazios é uma banda sem número nenhum sob um
+  // selo que diz "Referência". A dispensa que a §9.4 sugere é decisão de PR-G, não uma folga que
+  // esta fatia toma sozinha.
   .refine((e) => e.priceBands == null || e.priceBands.every((b) => b.fixedFee !== null), {
     message:
       "every price band must carry its own fixedFee — a null band fixedFee prices R$ 0,00 under a reference seal (FR-928)",
     path: ["priceBands"],
   })
+  // 016/PR-F (ADR-0027 §3.1) — `fixedFeeRule` só tem significado em `bandMode: "SELECTION"`
+  // (ausente = SELECTION). Numa entrada PROGRESSIVE a tarifa é cobrada por FATIA do preço, e
+  // "metade do preço" não é uma fatia: carregar a regra ali é erro de FORMA, não um caso a
+  // interpretar. Recusado aqui e no motor pelo mesmo motivo dos refines acima — o dado não deve
+  // existir, e um payload antigo que o tenha não deve virar preço.
+  .refine(
+    (e) =>
+      e.bandMode !== "PROGRESSIVE" ||
+      e.priceBands == null ||
+      e.priceBands.every((b) => b.fixedFeeRule == null),
+    {
+      message:
+        "fixedFeeRule only means something in bandMode SELECTION — a progressive band charges per slice (ADR-0027)",
+      path: ["priceBands"],
+    },
+  )
   // A band mode with no bands to combine is a generator bug, not a harmless no-op: it reads as
   // "this entry is progressive" while the engine charges a flat rate. Reject rather than ignore.
   .refine((e) => e.bandMode == null || (e.priceBands != null && e.priceBands.length > 0), {
@@ -152,6 +220,30 @@ function determinantKey(d: Record<string, string> | null): string {
 /** The 4 fee fields the channel form has always shown, by their WIRE name (016/US12, FR-918). */
 const feeAxisSchema = z.enum(["commissionPct", "fixedFee", "minPerItem", "freightCost"]);
 
+/**
+ * Um custo OPCIONAL que o vendedor declara, publicado pelo marketplace (016/US16, FR-923,
+ * ADR-0027 §3.2) — Shopee: manuseio de item volumoso, R$ 50,00 por PEDIDO (art. 3305).
+ *
+ * Mora no nível do MARKETPLACE e não na entrada: não é tarifa por perfil nem por faixa de preço —
+ * vale para quem despachar um item volumoso, qualquer que seja a tabela que o resolve.
+ *
+ * O `value` vem daqui e NUNCA do código (Constituição II), e o `label` idem: a próxima sobretaxa
+ * publicada é DADO, não uma tela nova. `appliesPer` dirige a LEGENDA (clarify Q5) e não a
+ * aritmética — o motor soma o valor uma vez, e é a legenda que diz ao vendedor se aquilo se repete
+ * por item num pedido de vários.
+ */
+const optionalSurchargeSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  value: z.number().nonnegative(),
+  appliesPer: z.enum(["ORDER", "ITEM"]),
+  source: z.string().min(1),
+  sourceUrl: z.url(),
+  effectiveDate: z.string().min(1),
+  lastReviewed: z.string().min(1),
+});
+export type OptionalSurcharge = z.infer<typeof optionalSurchargeSchema>;
+
 const marketplaceCatalogSchema = z
   .object({
     marketplace: z.enum(MARKETPLACES),
@@ -164,6 +256,9 @@ const marketplaceCatalogSchema = z
     // reads identically. Curated 016: Shopee [commissionPct, fixedFee, freightCost] · Amazon
     // [commissionPct, fixedFee, minPerItem] · Mercado Livre [commissionPct, fixedFee, freightCost].
     feeAxes: z.array(feeAxisSchema).nullish(),
+    // 016/US16 (FR-923, ADR-0027 §3.2) — ADITIVO. Ausente/null = nenhuma sobretaxa opcional, que é
+    // o que todo catálogo de antes desta fatia significa, e o resultado continua byte-idêntico.
+    optionalSurcharges: z.array(optionalSurchargeSchema).nullish(),
     entries: z.array(feeEntrySchema),
   })
   .superRefine((mk, ctx) => {
@@ -183,6 +278,23 @@ const marketplaceCatalogSchema = z
         return;
       }
       seen.add(key);
+    }
+
+    // 016/US16 — o mesmo argumento da guarda acima, na outra lista. O `id` é o que o cenário
+    // persiste (`ScenarioChannelIntent.surcharges: string[]`, ADR-0021) e o que o checkbox liga:
+    // dois `id` iguais fariam o VALOR resolvido depender da ordem do arquivo. Um empate num número
+    // de dinheiro não pode sobreviver ao parse.
+    const ids = new Set<string>();
+    for (const s of mk.optionalSurcharges ?? []) {
+      if (ids.has(s.id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `duplicate optionalSurcharge id in ${mk.marketplace}: ${s.id} — the resolved value would depend on array order`,
+          path: ["optionalSurcharges"],
+        });
+        return;
+      }
+      ids.add(s.id);
     }
 
     // When a spine IS shipped, every category-keyed entry must appear in it: a category the spine

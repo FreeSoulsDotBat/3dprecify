@@ -1,9 +1,17 @@
 import { type CSSProperties, useState } from "react";
 import { type Control, Controller, useController } from "react-hook-form";
 
-import { type ChannelSlotOutcome, formatBRL } from "@/features/calculator/calculator-model";
+import {
+  type ChannelSlotOutcome,
+  formatBRL,
+  isUnpriced,
+} from "@/features/calculator/calculator-model";
 import { CategoryPicker } from "@/features/calculator/category-picker";
-import { FeeSeal } from "@/features/calculator/fee-seal";
+import { FeeSeal, FixedFeeSourceBadge } from "@/features/calculator/fee-seal";
+import {
+  ShopeeMeasuredFreightWarning,
+  ShopeeRegressiveFeeWarning,
+} from "@/features/calculator/shopee-warnings";
 import {
   costPerHour,
   deriveMachineLifetimeHours,
@@ -24,7 +32,7 @@ import {
 import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
 import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
 import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
-import type { CategoryNode, FeeCatalog } from "@/shared/fee-catalog";
+import type { CategoryNode, FeeCatalog, OptionalSurcharge } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 import type { PriceResult } from "@3dprecify/pricing-core";
@@ -535,7 +543,10 @@ function ChannelFeeField({
   index: number;
   meta: (typeof CHANNEL_FEE_FIELDS)[number];
   error?: string;
-  /** 015/A8 ([F11a-007]) — o valor que o CATÁLOGO está aplicando neste campo, quando ele é único. */
+  /** 015/A8 ([F11a-007]) — o valor que o CATÁLOGO está aplicando neste campo, quando ele é único
+   *  OU o valor RESOLVIDO da banda aplicada (016/A1). Quando o valor vem de um `fixedFeeRule`, a
+   *  frase da regra vive na legenda de largura total do slot — nunca como sufixo aqui (reverify:
+   *  o sufixo cortava em todos os viewports e produzia a leitura errada que existia para evitar). */
   applied?: number;
 }) {
   // 015/A8 ([F11a-007], decisão do dono 2026-08-03) — o placeholder passa a dizer a VERDADE.
@@ -577,6 +588,71 @@ function ChannelFeeField({
           )}
         </Field>
       )}
+    />
+  );
+}
+
+/** ISO date ("2026-02-02") → pt-BR "02/02/2026" (mirrors `fee-seal.tsx`'s `fmtDate`; kept local —
+ *  the surcharge caption is the only consumer in this file). */
+function fmtDatePtBr(iso: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
+}
+
+/** One catalog-driven optional surcharge toggle (016/US16, FR-923, ADR-0027 §3.2) — Shopee
+ *  "Item volumoso" today, but nothing here names it: label, value and provenance all come from
+ *  `surcharge` (the catalog entry `channelFieldPlan.surcharges` carries). Checked → the id joins
+ *  `channels.{index}.surcharges`; unchecked/never checked → the array never gets the id, which is
+ *  byte-identical to every calculation before this axis existed (US16-AC2).
+ *
+ *  016/PR-F homologação (A2) — was a raw `<input type="checkbox">`, the ONLY native checkbox in the
+ *  codebase and 13×13px, well under the ≥44×44px touch target INV-2 guarantees for every other
+ *  control. The DS `Switch` (`shared/ui/switch.tsx`) already carries that contract by construction
+ *  (a larger hit area around a smaller visible track) plus the correct dark-theme skin for free — so
+ *  this becomes the same on/off semantics on the DS primitive instead of a bespoke small checkbox. */
+function SurchargeCheckbox({
+  control,
+  index,
+  surcharge,
+}: {
+  control: Control<CalcFormValues>;
+  index: number;
+  surcharge: OptionalSurcharge;
+}) {
+  const t2 = t.channels.surcharges;
+  return (
+    <Controller
+      control={control}
+      name={`channels.${index}.surcharges` as const}
+      render={({ field }) => {
+        const checked = (field.value ?? []).includes(surcharge.id);
+        const inputId = `surcharge-${index}-${surcharge.id}`;
+        return (
+          <div className="flex flex-col gap-1">
+            <label className="flex items-center gap-2" htmlFor={inputId}>
+              <Switch
+                id={inputId}
+                checked={checked}
+                onCheckedChange={(next) => {
+                  const current: string[] = field.value ?? [];
+                  field.onChange(
+                    next ? [...current, surcharge.id] : current.filter((id) => id !== surcharge.id),
+                  );
+                }}
+                onBlur={field.onBlur}
+              />
+              <span>{surcharge.label}</span>
+            </label>
+            <p style={captionText}>
+              {t2.perOrderCaption.replace("{value}", formatBRL(surcharge.value))}
+              {" · "}
+              {t2.provenance
+                .replace("{source}", surcharge.source)
+                .replace("{date}", fmtDatePtBr(surcharge.effectiveDate))}
+            </p>
+          </div>
+        );
+      }}
     />
   );
 }
@@ -697,6 +773,66 @@ function ChannelSlot({
           )}
         />
       )}
+      {/* 016/PR-F (US17, FR-926, RA5) — the seller-profile axis, driven by the SAME plan that gates
+          `slotDeterminants`. TWO questions, not one generic SELECT: "Você vende como" (empty = not
+          answered → catch-all, T057) and, ONLY when CPF, "mais de 450 pedidos?". */}
+      {plan.sellerProfile && (
+        <>
+          <Controller
+            control={control}
+            name={`channels.${index}.sellerType` as const}
+            render={({ field }) => (
+              <Field label={t.channels.sellerProfile.sellerTypeLabel} tightLabel>
+                {(p) => (
+                  <Select
+                    {...p}
+                    options={[
+                      { value: "CPF", label: t.channels.sellerProfile.sellerTypeOptions.CPF },
+                      { value: "CNPJ", label: t.channels.sellerProfile.sellerTypeOptions.CNPJ },
+                    ]}
+                    placeholder={t.channels.sellerProfile.sellerTypePlaceholder}
+                    name={field.name}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    ref={field.ref}
+                  />
+                )}
+              </Field>
+            )}
+          />
+          {/* 016/PR-F — só perguntado quando CPF (a segunda pergunta de Q6). Um `highVolume`
+              respondido antes e deixado para trás ao trocar para CNPJ não é um risco de dinheiro: o
+              mapeamento (`resolveShopeeSellerProfile`) só forma o determinante com AMBAS as
+              respostas === CPF+SIM, então um valor órfão sob CNPJ nunca é lido (RA5 — a decisão
+              mora numa função só, e essa função nunca vê `highVolume` sem `sellerType === "CPF"`). */}
+          {slot.sellerType === "CPF" && (
+            <Controller
+              control={control}
+              name={`channels.${index}.highVolume` as const}
+              render={({ field }) => (
+                <Field label={t.channels.sellerProfile.highVolumeLabel} tightLabel>
+                  {(p) => (
+                    <Select
+                      {...p}
+                      options={[
+                        { value: "SIM", label: t.channels.sellerProfile.highVolumeOptions.SIM },
+                        { value: "NAO", label: t.channels.sellerProfile.highVolumeOptions.NAO },
+                      ]}
+                      placeholder={t.channels.sellerProfile.sellerTypePlaceholder}
+                      name={field.name}
+                      value={field.value ?? ""}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      ref={field.ref}
+                    />
+                  )}
+                </Field>
+              )}
+            />
+          )}
+        </>
+      )}
       <div style={gridCard}>
         {feeFieldMetas.map((meta) => (
           <ChannelFeeField
@@ -709,12 +845,53 @@ function ChannelSlot({
           />
         ))}
       </div>
+      {/* 016/PR-F homologação (A1 + reverify) — entrada bandada: os placeholders de Comissão/Taxa
+          fixa acima mostram a banda que REALMENTE se aplica ao preço da tela, e ela muda se o preço
+          mudar de faixa — esta legenda diz isso uma vez, para o slot inteiro. A frase da REGRA
+          ("taxa fixa = {pct}% do preço") vive AQUI, em largura total, e não como sufixo do
+          placeholder: com 77–187px úteis o sufixo cortava para "2,50 (= 50" — parêntese aberto e um
+          número solto, a leitura errada que a frase existia para impedir. O placeholder mostra só o
+          valor resolvido; a legenda quebra linha à vontade (medido no reverify, r5-*). */}
+      {outcome?.appliedFeesFromBand && (
+        <p style={captionText}>
+          {t.channels.bandedFeesCaption}
+          {outcome.appliedFixedFeeRulePct != null &&
+            " " +
+              t.channels.fixedFeeRuleCaption.replace(
+                "{pct}",
+                String(outcome.appliedFixedFeeRulePct),
+              )}
+        </p>
+      )}
+      {/* 016/US16 (FR-923, ADR-0027 §3.2) — catalog-driven optional surcharges (Shopee
+          MANUSEIO_VOLUMOSO). Zero string/number here — label, value and provenance all come from
+          `plan.surcharges` (the catalog). */}
+      {plan.surcharges.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {plan.surcharges.map((s) => (
+            <SurchargeCheckbox key={s.id} control={control} index={index} surcharge={s} />
+          ))}
+        </div>
+      )}
       {/* Honesty seal (FR-107): where this slot's fees came from + how fresh they are; the ML
-          free-shipping subsidy carries its own "estimativa" seal (A4). */}
+          free-shipping subsidy carries its own "estimativa" seal (A4); the fixed fee's OWN
+          provenance (016/PR-F, T057) is a SEPARATE badge when the entry carries one. */}
       {outcome && (
         <div className="flex flex-wrap items-center gap-2">
           <FeeSeal state={outcome.seal} />
           {outcome.freightIsEstimate && <FeeSeal state={{ kind: "estimate" }} />}
+          {outcome.fixedFeeSource && <FixedFeeSourceBadge source={outcome.fixedFeeSource} />}
+        </div>
+      )}
+      {/* 016/US17 (FR-924) — the two honest Shopee warnings. The regressive-fee one fires only where
+          the money is real (CPF de alto volume, a base que o motor recusou — I9); the measured-
+          freight one is a static, always-visible risk note for any Shopee slot. */}
+      {slot.marketplace === "SHOPEE" && (
+        <div className="flex flex-col gap-2">
+          {slot.sellerType === "CPF" &&
+            slot.highVolume === "SIM" &&
+            isUnpriced(outcome?.result ?? null) && <ShopeeRegressiveFeeWarning />}
+          <ShopeeMeasuredFreightWarning />
         </div>
       )}
     </Card>
