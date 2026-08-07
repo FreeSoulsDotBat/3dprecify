@@ -1,6 +1,7 @@
 # Arquitetura do incremento 017 — desenho estrutural para o `/speckit-plan`
 
-**Autor**: `arquiteto` · **Data**: 2026-08-07
+**Autor**: `arquiteto` · **Data**: 2026-08-07 · **Emendado**: 2026-08-07 (§C.2-bis — exaustividade
+declarada, bloqueio do T014; §D.3 e RA4 corrigidos por medição do executor)
 **Entrada**: `specs/017-ingestao-mensal/spec.md` (pós-clarify 8/8) ·
 `docs/product/017-ingestao-mensal-scope-brief.md` · `docs/homologacao/OBTENCAO-DINAMICA-DADOS.md`
 (7 decisões do dono de 2026-08-05) · `docs/adr/0010-marketplace-fee-catalog-architecture.md`
@@ -8,15 +9,14 @@
 o código real de `packages/fee-ingest/`, `apps/web/src/shared/fee-catalog/` e `.github/workflows/`.
 
 **ADRs que este documento PROPÕE** (o `/speckit-plan` os escreve; aqui só o número e a tese):
-**ADR-0028** (o laço mensal: coletor emite FATIA, a composição publica) · **ADR-0029** (a semente como
-PROJEÇÃO GERADA do artefato servido) · **ADR-0030** (OCR admissível: motor fixado por lockfile,
-endereço por bytes, guardas conjuntivas e o portão humano).
+**ADR-0028** (o laço mensal: coletor emite FATIA, a composição publica — **incluindo a exaustividade
+declarada**) · **ADR-0029** (a semente como PROJEÇÃO GERADA do artefato servido) · **ADR-0030** (OCR
+admissível: motor fixado por lockfile, endereço por bytes, guardas conjuntivas e o portão humano).
 
 > Este documento decide **forma**, não comportamento. Nenhuma decisão do dono é reaberta — nem a
 > clarify (8/8), nem as 7 de 2026-08-05, nem QA1/QA5. Onde o **código medido hoje contradiz** uma
 > fonte escrita, o conflito está na **§Conflitos**, apontado e não escondido (Constituição II).
-> Toda medição abaixo foi feita nesta sessão, sobre a árvore de `016-pr-f-dados` (que já contém o
-> hotfix A2/A3).
+> Toda medição abaixo foi feita sobre a árvore de `016-pr-f-dados` (que já contém o hotfix A2/A3).
 
 ---
 
@@ -98,7 +98,7 @@ gate executa — e a lição do 014/US4 é que suíte verde não prova programa 
 
 ## B. P0-a — a paridade `semente ↔ artefato` vira **relacional**, e a versão tem **uma** fonte
 
-### B.1 Contexto (MEDIDO hoje, e o número já mudou desde o brief)
+### B.1 Contexto (MEDIDO, e o número já mudou desde o brief)
 
 `apps/web/src/shared/fee-catalog/fee-catalog.test.ts:69-70` afirma
 `served.catalogVersion === "2026-08-07.0"` e `FEE_CATALOG_SEED.catalogVersion === served.catalogVersion`.
@@ -157,15 +157,16 @@ apaga toda folha que ele não sabe produzir. A Shopee de hoje carrega `freight: 
 ingênuo **reverteria o hotfix A2 na primeira execução real**, devolvendo o desconto de R$ 20 que
 acabou de ser removido do líquido do vendedor.
 
-### C.2 Decisão — quatro regras estruturais
+### C.2 Decisão — cinco regras estruturais
 
 1. **Coletor NÃO escreve o artefato.** Ele emite `CatalogSlice` = { marketplace, folhas lidas,
-   `collectedAt`, `sourceUrl` }. O tipo não tem caminho para o disco.
+   exaustividade declarada, `collectedAt`, `sourceUrl` }. O tipo não tem caminho para o disco.
 2. **Regra da folha lida** (a que mata o C.1): `aplicarFatia(base, slice)` escreve **apenas as folhas
    que o coletor declarou ter lido**; toda outra folha vem da BASE. Provado por teste: rodar o
    coletor Shopee sobre a tabela vigente com PNG inalterado produz artefato **byte-idêntico** — a
    extensão natural do I9 (`artifact-fixed-point`) para cada fonte nova.
-3. **A composição é pura e ordenada**: `compor(base, slices[])` aplica em ordem alfabética de
+3. **Exaustividade DECLARADA** (§C.2-bis) — o contrapeso obrigatório da regra 2.
+4. **A composição é pura e ordenada**: `compor(base, slices[])` aplica em ordem alfabética de
    marketplace, chama `decideRefresh` **por marketplace** (o teto de linhas alteradas já é
    per-marketplace desde o U4-a) e produz:
    - fatia admitida ⇒ entra;
@@ -176,8 +177,96 @@ acabou de ser removido do líquido do vendedor.
    `RunOutcome = {kind:"SEM_PR"; motivo} | {kind:"PR"; titulo; corpo; dispensa}`. Não existe terceiro
    caso que escreva, e um `if` esquecido não cria um que o tipo não tem (FR-020a preservada em dois
    níveis).
-4. **A semente é GERADA junto** (clarify Q3): `projetarSemente(artefato)` →
+5. **A semente é GERADA junto** (clarify Q3): `projetarSemente(artefato)` →
    `apps/web/src/shared/fee-catalog/seed.data.json`; `seed.ts` encolhe para política + parse + export.
+
+### C.2-bis — **Exaustividade declarada** (decisão de 2026-08-07; desbloqueia o T014)
+
+**O buraco, medido pelo executor.** A regra da folha lida só sabe **acrescentar e atualizar**: sob
+ela, silêncio significa "não li", nunca "não existe mais". Mas o coletor Amazon de hoje **remove** por
+regenerar a seção inteira — e a remoção é um fato REAL da fonte que o 014 já pagou para tratar
+("Categorias removidas da fonte (decisão humana necessária)"). Sem contrapeso, o artefato acumularia
+fantasmas para sempre — e, pior que acumular, ele **carimbaria `lastReviewed` fresco numa entrada que
+a fonte deixou de publicar**: o selo diria "reverificado hoje" sobre uma categoria que não existe mais.
+Isso é I3 e I5 quebradas, não um detalhe de limpeza.
+
+**Opções**
+
+| # | opção | prós | contras | conf. |
+| --- | --- | --- | --- | --- |
+| (b) | `slice.removals: EntryRef[]` — remoção como evento por entrada | máxima explicitude por item | o coletor teria de **diffar contra a base** para produzi-la; isso reintroduz exatamente o acoplamento que a §C.1 elimina (coletor emite, composição compara) e devolve a base para dentro de um job paralelo | 40% |
+| (c) | **Nenhuma remoção automática, nunca**; o corpo lista "presentes no catálogo, ausentes na fonte" e um humano remove à mão | o mais conservador; zero risco de remoção indevida | curadoria manual mensal para um caso que a fonte resolve sozinha; e, enquanto o humano não age, a entrada fantasma **continua sendo servida com `lastReviewed` avançado** — o selo mente sob referência. É o custo que mata a opção | 45% |
+| (a) | **`CatalogSlice.exhaustive: SectionKey[]`** — **ESCOLHIDA** | o coletor declara o que **leu por inteiro**; a composição deriva a remoção sem que o coletor conheça a base; a Shopee declara `[]` e nunca remove nada; casa com as guardas que já existem (canárias + piso de linhas abortam ANTES de virar fatia) | um campo a mais em todo coletor; exige que a declaração seja **conferida**, não confiada | **87%** |
+
+**A forma exata do campo** — `exhaustive` é **obrigatório**, não opcional, e a razão é a lição
+recorrente deste projeto (016/PR-E "declarado OU não-vazio", ADR-0026 recusa NOMINAL): uma declaração
+por silêncio é justamente a que ninguém percebe faltando. Um coletor novo tem de **escrever
+`exhaustive: []`**, e isso é uma frase, não um esquecimento.
+
+```ts
+// packages/fee-ingest/src/slice.ts
+/** As seções de um marketplace que um coletor pode ter lido POR INTEIRO.
+ *  O tipo NÃO admite bloco de nível de marketplace (`freightSubsidyInfo`, `optionalSurcharges`,
+ *  `determinantsSchema`, `feeAxes`): exaustividade nunca pode apagar curadoria que nenhuma fonte
+ *  publica — é o hotfix A2 protegido por TIPO, e não por lembrança. */
+export type SectionKey = "entries" | "categorySpine";
+
+export interface CatalogSlice {
+  marketplace: Mk;
+  collectedAt: string;   // valida por `collectedAtFor` — I3 intocada
+  sourceUrl: string;
+  /** As folhas efetivamente LIDAS, chaveadas por determinantes (regra da folha lida). */
+  leaves: LeafWrite[];
+  /** Seções lidas por INTEIRO nesta coleta. `[]` = "não afirmo completude de nada".
+   *  Presença de "entries" = "este é o conjunto COMPLETO que a fonte publica em `collectedAt`;
+   *  entrada da base ausente daqui foi REMOVIDA pela fonte". */
+  exhaustive: SectionKey[];
+}
+```
+
+**O que a composição faz com ele** — quatro regras, e as duas últimas são as que impedem que a
+declaração vire uma faca:
+
+1. Seção **não** declarada ⇒ nada é removido dali. A base vence. (Shopee: `exhaustive: []`, sempre.)
+2. Seção declarada ⇒ `aplicarFatia` remove da base, **naquele marketplace e naquela seção**, toda
+   chave ausente da fatia; as folhas das entradas remanescentes continuam sob a regra da folha lida.
+   A Amazon declara `["entries", "categorySpine"]` (a espinha é o que faz `reparented` e
+   `removedCategories` funcionarem).
+3. **A declaração não é confiada, é condicionada.** Uma fatia só existe se as guardas da fonte
+   passaram — `checkParseSanity` (canárias Roupas 14% / Calçados 14% / Relógios 13% **+ o piso
+   `MIN_PARSE_ROWS = 28`**), `checkBandCoverage` e `checkCategoryIdCollisions`. Página quebrada, casca
+   de SPA ou 403 **abortam antes**, e uma fatia que não existe não remove nada (I2/SC-806).
+4. **O teto de mudança em bloco passa a contar remoção.** `decideRefresh` hoje calcula
+   `changed = materialEntries(mk).length`; remoções vivem em `diff.removedEntries` e **não entram no
+   numerador** — então uma leitura encolhida que passasse o piso removeria entradas sem que o teto
+   sequer olhasse. Emenda: `changed = materiais(mk) + removidas(mk)`. **Exposição medida com a regra
+   nova**: com `MIN_PARSE_ROWS = 28` sobre 38 categorias, no máximo **10 categorias (20 entradas de
+   78 ≈ 26%)** podem sumir numa leitura que passe o piso — abaixo do teto de 50%, portanto ainda
+   admissível como fatia, e é **por isso** que a remoção é sempre NOMEADA no corpo e **nunca**
+   dispensável (item seguinte).
+
+**O que o corpo do PR imprime numa remoção — e por que "Sem mudança" fica impossível.** Nada de novo
+precisa ser inventado: `diffCatalogs` já produz `removedCategories`/`removedEntries`, `semNoticia()`
+já retorna `false` quando qualquer uma delas é não-vazia (é literalmente o conserto do 014/US4, com o
+comentário no código), e `mayAutoMerge` já **nega a dispensa** nas duas listas. O 017 acrescenta
+**uma linha de procedência** a cada item removido, porque sem ela o revisor não consegue distinguir
+"a fonte deixou de publicar" de "o coletor não leu":
+
+```
+### Categorias removidas da fonte (decisão humana necessária)
+- Colchões — ausente na leitura EXAUSTIVA de `entries`+`categorySpine`
+  em 2026-09-01 (https://sellercentral.amazon.com.br/…/G200336920)
+```
+
+E o teste da US2 afirma a **ausência** do texto "Sem mudança de tarifa nesta leitura" em toda execução
+com remoção — afirmado por ausência, não por presença.
+
+**Emenda ao ADR-0028: SIM, e antes do flip.** A exaustividade declarada não é detalhe de
+implementação — é a **outra metade** da regra da folha lida (uma só acrescenta; a outra só remove sob
+declaração conferida). Um ADR que registre apenas a primeira descreve um sistema que não fecha. O
+ADR-0028, ainda **Proposto**, ganha a seção "Exaustividade declarada" com: o tipo acima, as 4 regras
+de composição, a exposição medida (≤10 categorias) e a proibição estrutural de exaustividade sobre
+bloco de nível de marketplace.
 
 ### C.3 Quem executa a regeneração, e por que **JSON** e não TS
 
@@ -187,9 +276,7 @@ compor → validar → escrever artefato → escrever semente.
 
 A semente sai como **JSON** e não como TS porque um gerador que reescreve `seed.ts` **destrói os
 comentários curatoriais** que hoje são o único lugar em código onde vivem os verbatims da Shopee
-(art. 26839, art. 23431, art. 3305). Esses verbatims **não se perdem: eles migram para
-`packages/fee-ingest/data/` como âncoras EXECUTÁVEIS** (§E/§F) — que é onde a US5/AC2 já os quer, e
-onde deixam de ser prosa num espelho para virar guarda que dispara.
+(art. 26839, art. 23431, art. 3305). Ver **RA4** para o que o fatiamento fez com essa migração.
 
 ### C.4 Como o job prova idempotência (a armadilha do drift-guard)
 
@@ -212,7 +299,11 @@ US2 inteira existe para impedir.
 - Proíbe um coletor com acesso de escrita ao artefato (a migração de `build-amazon.mjs` de *writer*
   para *emissor de fatia* é tarefa da PR-A, não opcional).
 - Proíbe editar `seed.data.json` à mão.
-- Proíbe uma fatia que declare folha que o coletor não leu (é como `lastReviewed` mentiria).
+- Proíbe uma fatia que declare folha que o coletor não leu.
+- **Proíbe remoção sem declaração de exaustividade**, e proíbe declarar exaustividade sobre bloco de
+  nível de marketplace (o tipo `SectionKey` não a representa).
+- **Proíbe uma fatia exaustiva nascida de uma leitura que não passou canária e piso** — a guarda é
+  pré-condição da fatia, não pós-condição do PR.
 
 ---
 
@@ -236,20 +327,21 @@ esquece de acrescentá-lo à lista.
 ### D.3 Decisão
 
 - Todo teste que **lê `backend/app/data/catalog.json`** passa a se chamar `*.artifact.test.ts`.
-  Hoje são três, medidos: o truth-gate de `fee-catalog.test.ts`, `artifact-fixed-point.test.ts` e a
-  propriedade de dominância (`packages/pricing-core/tests/band-dominance.test.ts`, que a US1/AC4 cita
-  nominalmente). A eles somam-se os novos: paridade de projeção (§B), cobertura de bandas e colisão de
-  `categoryId` sobre o artefato composto.
+  **Correção por medição do executor (2026-08-07): eram 6 arquivos, não os 3 que eu estimei** — e a
+  diferença não foi contagem, foi um defeito. `band-dominance.test.ts` **não lia o artefato** (rodava
+  sobre tabelas fabricadas); ao passar a lê-lo, achou e matou um defeito real do comparador, que
+  **ignorava `fixedFeeRule`** — a regra `PCT_OF_PRICE` da Shopee entrava na dominância como se o fixo
+  fosse constante. É a confirmação prática da tese desta decisão: **membresia derivada de "quem lê o
+  artefato" encontra guarda que uma lista curada nunca teria convocado.**
 - `pnpm gate:artifact` roda **esse conjunto**, e é **o mesmo script** que o job invoca — paridade por
   invocação idêntica, nunca por meta-teste (SC-206, o mesmo princípio do `gate:all`).
 - **Meta-guarda anti-divergência**: um teste afirma que *todo* arquivo que menciona
   `backend/app/data/catalog.json` casa a convenção `*.artifact.test.ts` (ou está numa lista de
-  exceções datada). Assim a membresia é uma **propriedade do arquivo**, não uma curadoria que alguém
-  precise lembrar de atualizar.
-- **Prova de não-vacuidade por MUTAÇÃO** (critério da tarefa, não estilo): envenenar o artefato
-  (uma comissão fora de faixa, uma banda sobreposta, um `catalogVersion` desalinhado do `generatedAt`)
-  tem de **reprovar nos dois** — `gate:artifact` e `gate:all`. Um subconjunto que passa onde o todo
-  reprova é o defeito que esta decisão existe para impedir.
+  exceções datada). A membresia é **propriedade do arquivo**, não curadoria que alguém precise lembrar.
+- **Prova de não-vacuidade por MUTAÇÃO**: envenenar o artefato (comissão fora de faixa, banda
+  sobreposta, `catalogVersion` desalinhado do `generatedAt`) tem de **reprovar nos dois** —
+  `gate:artifact` e `gate:all`. Subconjunto que passa onde o todo reprova é o defeito que esta
+  decisão existe para impedir.
 - A mecânica exata do filtro do vitest (`--include` vs `--project` vs diretório) é **verificada na
   implementação** — a configuração de raiz usa `projects: ["packages/*","apps/web"]` e a composição
   dos dois flags não está medida. A propriedade acima é o critério; o flag é detalhe.
@@ -336,7 +428,7 @@ E o dado **não muda**: o único arquivo tocado pelo desfecho "converge" é o ba
 | # | opção | prós | contras | conf. |
 | --- | --- | --- | --- | --- |
 | F1 | `sudo apt-get install tesseract-ocr` no job | trivial de escrever | **a versão vira função da imagem do runner** (as imagens são atualizadas semanalmente e `tesseract-ocr` **não está na lista documentada de pré-instalados** — verificado 2026-08-07). O número lido passa a depender de quando o mês rodou, e as guardas não conseguem distinguir "a Shopee mudou o PNG" de "o runner mudou o OCR" | 25% |
-| F2 | container/action de terceiro com o binário | pinável por SHA | mais uma dependência de terceiro no caminho do dinheiro; §A6 do parecer manda o mínimo | 45% |
+| F2 | container/action de terceiro com o binário | pinável por SHA | mais uma dependência de terceiro no caminho do dinheiro | 45% |
 | F3 | **`tesseract.js` (WASM) como devDependency de `packages/fee-ingest`** — **ESCOLHIDA** | a versão do motor cai sob o **mesmo lockfile** de todo o resto; roda no Node 24 do job sem `apt`; nenhum passo privilegiado | mais lento que o binário nativo (irrelevante a 1×/mês); os dados de idioma são um insumo à parte (abaixo) | **80%** |
 
 **Verificado 2026-08-07** (não assumido): `tesseract.js` está em **7.0.0**, é WASM puro e exige Node ≥ 16
@@ -397,7 +489,8 @@ justamente no único marketplace cujo extrator não é determinístico. As guard
 - Proíbe OCR sem sinal do detector (custo e ruído, e some a propriedade "0 tokens no caminho comum").
 - Proíbe dispensa de revisão em qualquer PR que carregue folha vinda de OCR.
 - Proíbe o coletor Shopee tocar `freight`, `freightSubsidyInfo` ou `optionalSurcharges` — regra da
-  folha lida (§C.2), e é o que impede a reversão do hotfix A2.
+  folha lida (§C.2) **e** o tipo `SectionKey` (§C.2-bis), que nem representa exaustividade sobre eles.
+  É o que impede a reversão do hotfix A2, por duas fechaduras.
 
 ---
 
@@ -407,13 +500,13 @@ justamente no único marketplace cujo extrator não é determinístico. As guard
 
 | # | opção | contras | conf. |
 | --- | --- | --- | --- |
-| G1 | job que consulta o histórico de runs (`gh run list -w fee-refresh.yml`) | precisa de token (mesmo que só o padrão) e de rede; **e mente no caso que mais importa**: um mês em que o laço rodou e **abortou** aparece como "rodou há 2 dias" e o alarme dorme | 45% |
+| G1 | job que consulta o histórico de runs (`gh run list -w fee-refresh.yml`) | precisa de token e de rede; **e mente no caso que mais importa**: um mês em que o laço rodou e **abortou** aparece como "rodou há 2 dias" e o alarme dorme | 45% |
 | G2 | issue mensal automática | cria um segundo ritual e outro lugar para ignorar | 35% |
 | G3 | **job não-bloqueante lendo o artefato commitado** — **ESCOLHIDA** | não distingue "laço parado" de "laço rodando e abortando" — mas isso é uma VIRTUDE aqui: os dois são o mesmo dano | **83%** |
 
 ### G.2 Decisão
 
-Job `loop-liveness` no `ci.yml`, `runs-on: ubuntu-latest`, **sem segredo, sem rede, sem API**: lê
+Job `loop-liveness` no `ci.yml`, **sem segredo, sem rede, sem API**: lê
 `backend/app/data/catalog.json`, calcula `hoje − max(lastReviewed)` **restrito aos marketplaces que a
 tabela `MARKETPLACE_COVERAGE` declara cobertos** (a mesma tabela do §A — uma lista, um lugar, o
 espírito do U4-f), e:
@@ -448,9 +541,7 @@ incremento" é verdade sobre um arquivo, não sobre o repositório, e o teste do
 uma exceção. Apagando, a afirmação vira **repo-wide**.
 
 O `import-linter` do backend fica intocado (o 017 não escreve Python). O artefato continua morando em
-`backend/app/data/` por decisão de contexto de build do ADR-0010 (Adendo 2026-07-07) — o laço escreve
-um arquivo dentro do pacote do backend sem tocar em código Python, e o teste de contrato que guarda o
-caminho continua valendo.
+`backend/app/data/` por decisão de contexto de build do ADR-0010 (Adendo 2026-07-07).
 
 ---
 
@@ -464,7 +555,8 @@ carrega **baselines de vigia**. Um mês em que só um baseline mude produz diff 
 
 **Decisão**: a dispensa passa a exigir **as duas condições**: (a) diff do catálogo exclusivamente
 inerte **E** (b) conjunto de arquivos do PR ⊆ `{backend/app/data/catalog.json,
-apps/web/src/shared/fee-catalog/seed.data.json}`. Falha fechado nos dois eixos.
+apps/web/src/shared/fee-catalog/seed.data.json}`. Falha fechado nos dois eixos. (Remoção nunca é
+inerte — `mayAutoMerge` já a nega pelas listas `removedEntries`/`removedCategories`.)
 
 ### I.2 O resto
 
@@ -490,36 +582,36 @@ Herdadas de defeitos que este projeto já pagou, e são requisitos de tarefa, n�
 1. **Todo `.mjs` novo é BOOTADO sob `node` puro** dentro do próprio job (o `vitest` é o resolvedor
    tolerante que escondeu três imports sem extensão no 014/US4).
 2. **Toda fatia fecha com execução real**, com URL da run (US1/AC6 · SC-1001).
-3. **O corpo do PR é testado por AUSÊNCIA** — execução sem mudança ⇒ zero seções de mudança, afirmado
-   com `not.toContain` (o defeito literal do 014/US4).
+3. **O corpo do PR é testado por AUSÊNCIA** — execução sem mudança ⇒ zero seções de mudança; execução
+   **com remoção** ⇒ ausência de "Sem mudança de tarifa nesta leitura" (§C.2-bis).
 4. **Cada canária nova é provada por mutação** (R2 do brief).
-5. **Tempo e minutos faturados medidos** na evidência (US3/AC5 — a premissa de ~5 min/mês do ADR-0010
-   §A4 é do dono e é barata de conferir).
+5. **Tempo e minutos faturados medidos** na evidência (US3/AC5).
 6. **`scripts/check-action-pins.sh` imprime "os 5 workflows parseiam"** — número **cravado**, medido
-   hoje. Com `fee-refresh.yml` serão 6 e a linha passará a mentir. Corrigir para contagem calculada na
-   mesma fatia (defeito cosmético, classe conhecida: afirmação que não acompanha o sistema).
+   hoje. Com `fee-refresh.yml` serão 6 (e menos, se as sondas forem apagadas) e a linha passará a
+   mentir. Corrigir para contagem calculada na mesma fatia.
 
 ---
 
 ## O que este desenho PROÍBE
 
 1. **Coletor que escreve o artefato.** Só a composição escreve, e só depois de validar.
-2. **Coletor que reescreve folha que não leu.** É o que reverteria o hotfix A2 na primeira execução da
-   Shopee.
-3. **Mais de um bump de `catalogVersion` por execução**, e qualquer bump fora de `nextCatalogVersion`.
-4. **Literal de `catalogVersion` em teste** — a paridade é relacional ou não é guarda.
-5. **Semente editada à mão** a partir do 017; e semente que divirja da projeção declarada.
-6. **Lógica em YAML**: nada que decida dinheiro ou texto de relatório mora fora de TypeScript testado.
-7. **`secrets.` além de `GITHUB_TOKEN`** em `fee-refresh.yml`, e `secrets.ML_*` em qualquer workflow.
-8. **Runner self-hosted**, provisionamento GCP, escrita em datastore, auto-merge de dinheiro.
-9. **Qualquer função que leve leitura de vigia a folha de catálogo** (o D7 vira impossível, não
-   proibido).
-10. **`apt-get install` de motor de OCR**, e OCR com dicionário não fixado/não conferido.
-11. **Dispensa de revisão** sobre um PR que toque qualquer arquivo fora do par artefato+semente, ou
-    qualquer folha vinda de OCR — e ela nasce desligada enquanto não houver ruleset.
-12. **Vigia sem canária de forma**, e canária que ninguém provou por mutação.
-13. **Marketplace calado no relatório**: sem veredito ⇒ NÃO LIDO com motivo, nunca omissão.
-14. **`continue-on-error` como mecanismo de independência entre coletores.**
+2. **Coletor que reescreve folha que não leu.** É o que reverteria o hotfix A2.
+3. **Remoção sem exaustividade declarada** — e **exaustividade sobre bloco de nível de marketplace**,
+   que o tipo `SectionKey` nem representa.
+4. **Fatia exaustiva vinda de leitura que não passou canária + piso de linhas.**
+5. **Mais de um bump de `catalogVersion` por execução**, e qualquer bump fora de `nextCatalogVersion`.
+6. **Literal de `catalogVersion` em teste** — a paridade é relacional ou não é guarda.
+7. **Semente editada à mão**; e semente que divirja da projeção declarada.
+8. **Lógica em YAML**: nada que decida dinheiro ou texto de relatório mora fora de TypeScript testado.
+9. **`secrets.` além de `GITHUB_TOKEN`** em `fee-refresh.yml`, e `secrets.ML_*` em qualquer workflow.
+10. **Runner self-hosted**, provisionamento GCP, escrita em datastore, auto-merge de dinheiro.
+11. **Qualquer função que leve leitura de vigia a folha de catálogo.**
+12. **`apt-get install` de motor de OCR**, e OCR com dicionário não fixado/não conferido.
+13. **Dispensa de revisão** sobre PR que toque arquivo fora do par artefato+semente, sobre folha vinda
+    de OCR, ou sobre qualquer remoção — e ela nasce desligada enquanto não houver ruleset.
+14. **Vigia sem canária de forma**, e canária que ninguém provou por mutação.
+15. **Marketplace calado no relatório**: sem veredito ⇒ NÃO LIDO com motivo, nunca omissão.
+16. **`continue-on-error` como mecanismo de independência entre coletores.**
 
 ---
 
@@ -527,21 +619,23 @@ Herdadas de defeitos que este projeto já pagou, e são requisitos de tarefa, n�
 
 | # | risco | medição | por que é aceito | onde é reaberto |
 | --- | --- | --- | --- | --- |
-| **RA1** | **O laço não dispara sozinho** | `schedule` roda do branch DEFAULT (`main`); o corte de release está adiado até a v1 (decisão 2026-07-09) | é o teto honesto do incremento e está declarado no cabeçalho do YAML, no runbook e na spec; o gatilho real é `workflow_dispatch` | no corte de release; e o §G avisa o dono a cada 35 dias |
-| **RA2** | **OCR plausível e errado** | quantificação do PO: guardas pegam ~85% de deslocamento de coluna, ~60% de dígito aleatório, **~35% de erro plausível de célula única** | D11 é decisão do dono; o portão real é o humano, e a AC5 (lido × anterior × link) é o que o torna possível | se um PR mensal passar um número errado, o D11 volta à mesa |
-| **RA3** | **O teto de mudança em bloco é INERTE na Shopee** | `CEILING_MIN_ENTRIES = 10` × 2 entradas Shopee — medido no código | o teto existe para tabela grande (Amazon, 78 entradas); ali a defesa é §F.3 + §F.4 | quando a Shopee passar de 10 entradas, ou se um erro em bloco escapar |
-| **RA4** | **Perda dos comentários curatoriais da semente** | `seed.ts` é hoje o único lugar em código com os verbatims Shopee | os verbatims **migram** para `data/` como âncoras executáveis (§C.3/§F.3) — deixam de ser prosa num espelho e viram guarda | se a migração não acontecer na mesma fatia, a decisão C é revertida |
-| **RA5** | **Bloqueio de bot / mudança de layout** | G2 PASS medido 2× (28/07 e 05/08); é decisão de terceiro e pode mudar em qualquer mês | consequência é **parada**, nunca corrupção (I2): ABORT com status + DOM/linhas como artefato da run | a cada ABORT; o runbook ensina o diagnóstico |
-| **RA6** | **Falso positivo do vigia de texto** (copyedit sem mudança de valor) | as âncoras são strings verbatim | ABORT ruidoso é melhor que vigia mudo; re-pinar é editar um arquivo de dado | se a frequência incomodar, as âncoras viram regex mais frouxas — com o custo declarado |
-| **RA7** | **`gate:artifact` divergir do `gate:all`** | é o risco D4 de sempre | membresia derivada + meta-guarda + prova por mutação nos dois | se a meta-guarda ganhar exceção, ela é datada |
+| **RA1** | **O laço não dispara sozinho** | `schedule` roda do branch DEFAULT (`main`); corte de release adiado até a v1 | teto honesto do incremento, declarado no cabeçalho do YAML, no runbook e na spec | no corte de release; o §G avisa a cada 35 dias |
+| **RA2** | **OCR plausível e errado** | guardas pegam ~85% de deslocamento de coluna, ~60% de dígito aleatório, **~35% de erro plausível de célula única** (PO) | D11 é decisão do dono; o portão real é o humano, e a AC5 é o que o torna possível | se um PR mensal passar um número errado |
+| **RA3** | **Teto de bloco INERTE na Shopee** | `CEILING_MIN_ENTRIES = 10` × 2 entradas Shopee | o teto existe para tabela grande; ali a defesa é §F.3 + §F.4 | quando a Shopee passar de 10 entradas |
+| **RA4** | **Verbatins curatoriais na migração da semente** | **corrigido pelo fatiamento**: os verbatins ficam como **prosa datada em `seed.ts`** na PR-A, e as **âncoras executáveis** só nascem na **PR-C/T026** | há uma janela (PR-A→PR-C) em que o verbatim é prosa e não guarda — aceitável porque a Shopee ainda não está no laço nessas fatias | se a PR-C for adiada, a migração para `data/` vira dívida nomeada, não silêncio |
+| **RA5** | **Bloqueio de bot / mudança de layout** | G2 PASS medido 2× (28/07 e 05/08) | consequência é **parada**, nunca corrupção (I2): ABORT com status + DOM como artefato | a cada ABORT |
+| **RA6** | **Falso positivo do vigia de texto** | âncoras são strings verbatim | ABORT ruidoso > vigia mudo; re-pinar é editar um dado | se a frequência incomodar |
+| **RA7** | **`gate:artifact` divergir do `gate:all`** | risco D4 de sempre | membresia derivada + meta-guarda + mutação nos dois | se a meta-guarda ganhar exceção, ela é datada |
+| **RA8** | **Remoção legítima que na verdade era leitura encolhida** | com `MIN_PARSE_ROWS = 28` sobre 38 categorias: no máximo **10 categorias / 20 entradas (≈26%)** podem sumir passando o piso — abaixo do teto de 50% | toda remoção é NOMEADA no corpo, nunca dispensável, e o merge é do dono; um mês de fonte encolhida custa uma revisão atenta, não um valor errado | se uma remoção indevida chegar ao merge, o piso sobe (28 é folgado) ou a remoção vira opção (c) |
 
 ---
 
 ## ADRs propostos (o `/speckit-plan` escreve; aqui só a tese)
 
 - **ADR-0028 — O laço mensal de tarifas: coletor emite fatia, a composição publica.** Topologia A3,
-  regra da folha lida, `RunOutcome` de 2 casos, um bump por execução, PR parcial como consequência de
-  tipo. *Proposto.*
+  regra da folha lida, **exaustividade declarada (§C.2-bis, emenda de 2026-08-07)**, `RunOutcome` de
+  2 casos, um bump por execução, PR parcial como consequência de tipo. *Proposto — emendar antes do
+  flip no gate.*
 - **ADR-0029 — A semente como projeção gerada do artefato servido.** Fecha o P0-a com guarda
   relacional, torna a poda uma política declarada, acorda o ramo de cache do U5-b com teste, e traz o
   drift-guard de idempotência para o dado de dinheiro. *Proposto.*
@@ -555,30 +649,22 @@ Herdadas de defeitos que este projeto já pagou, e são requisitos de tarefa, n�
 ## Conflitos entre as fontes (apontados, não resolvidos por mim)
 
 1. **P0-a: as coordenadas do brief e da spec estão vencidas.** Ambos citam
-   `fee-catalog.test.ts:62-66` e `"2026-08-06.1"`; **medido hoje**: linhas **63-71** e
-   `"2026-08-07.0"` — o hotfix A2/A3 reeditou a literal. O defeito é o mesmo e ficou **mais forte**
-   (é a segunda edição manual em dois dias). Nenhuma decisão muda; a tarefa não deve procurar a linha
-   pelo número.
-2. **"Paridade estrita semente↔artefato" (clarify Q3) × a semente medida.** A semente **não** espelha o
-   servido: Amazon tem 78 entradas no artefato e **0** na semente (poda deliberada, orçamento SC-810).
-   "Paridade estrita" só pode significar **paridade da PROJEÇÃO** (§B.3). Se o dono quis igualdade de
-   documento, isso muda o orçamento de boot e precisa de decisão própria.
-3. **Q7: "falha" × "não-bloqueante".** O enunciado da tarefa diz "job que **falha** se o último run
-   >35 dias"; a spec (Clarifications/Q7) diz **checagem não-bloqueante**. Segui a **spec**:
-   `::warning::` + step summary, `exit 0`, fora do `ci-pass`. Se o dono quiser vermelho, é uma linha —
-   mas aí ele bloqueia o merge de terceiros por um mês perdido do robô.
-4. **Q7: "último run do laço" × o que é mensurável sem mentira.** Medir o histórico de runs deixa
-   passar o mês que rodou e **abortou** — o caso mais provável. Medi a **idade do dado** (§G), que
-   cobre os dois. É uma reinterpretação do MEIO, não do fim.
-5. **"Nenhuma credencial ML neste incremento" × o repositório de hoje.** `g1-probe-ml.yml:47` já
-   consome `secrets.ML_ACCESS_TOKEN`. A restrição só vira verdade repo-wide **apagando as sondas
-   descartáveis** (autorizado pelo ADR-0010 §A13/§A7) — proposto na PR-A (§H).
-6. **P0-c está parcialmente FECHADO e o registro não diz.** `sha_pinning_required` **já existe** e roda
-   (`action-pins` + `scripts/check-action-pins.sh`), e o `trufflehog` **já está pinado por SHA**
-   (`ci.yml:153`). Do T069b restam, de fato: `allowed_actions` (configuração de repositório, do dono) e
-   o **§A6.5(iii)** (CI independente sobre o PR mensal) — que este desenho atende pelo §D
-   (`gate:artifact` dentro do job) + `workflow_dispatch` manual do CI sobre a branch do PR.
-7. **`OBTENCAO-DINAMICA-DADOS.md` §8 está desatualizado sobre a Shopee** ("<R$ 8 = 50% sem fixo"): a
-   releitura verbatim do T057 provou que a comissão de **20% continua incidindo** abaixo de R$ 8, e o
-   catálogo servido já reflete isso (`fixedFeeRule: PCT_OF_PRICE 50`). As âncoras do vigia devem ser
-   pinadas a partir do **T057**, nunca a partir daquele parágrafo.
+   `fee-catalog.test.ts:62-66` e `"2026-08-06.1"`; **medido**: linhas **63-71** e `"2026-08-07.0"` —
+   o hotfix A2/A3 reeditou a literal. O defeito é o mesmo e ficou **mais forte**.
+2. **"Paridade estrita semente↔artefato" (clarify Q3) × a semente medida.** Amazon tem 78 entradas no
+   artefato e **0** na semente (poda deliberada, orçamento SC-810). "Paridade estrita" só pode
+   significar **paridade da PROJEÇÃO** (§B.3).
+3. **Q7: "falha" × "não-bloqueante".** O enunciado da tarefa diz "job que **falha**"; a spec diz
+   **não-bloqueante**. Segui a spec (`::warning::`, `exit 0`, fora do `ci-pass`).
+4. **Q7: "último run do laço" × o que é mensurável sem mentira.** Histórico de runs não vê o mês que
+   rodou e abortou. Medi a **idade do dado** (§G) — reinterpretação do MEIO, não do fim.
+5. **"Nenhuma credencial ML neste incremento" × o repositório de hoje.** `g1-probe-ml.yml:47` consome
+   `secrets.ML_ACCESS_TOKEN`; a restrição só vira repo-wide apagando as sondas descartáveis (§H).
+6. **P0-c está parcialmente FECHADO e o registro não diz.** `sha_pinning_required` já existe e roda; o
+   `trufflehog` já está pinado (`ci.yml:153`). Restam `allowed_actions` (config do dono) e o §A6.5(iii),
+   atendido pelo §D.
+7. **`OBTENCAO-DINAMICA-DADOS.md` §8 está desatualizado sobre a Shopee** ("<R$ 8 = 50% sem fixo"): o
+   T057 provou que os 20% continuam incidindo. As âncoras vêm do **T057**, nunca daquele parágrafo.
+8. **`decideRefresh` não conta remoções no teto de bloco** (medido: `changed = materialEntries`,
+   enquanto `removedEntries` vive fora do numerador). Emendado no §C.2-bis regra 4 — é pré-requisito
+   do T014, não melhoria opcional.

@@ -43,3 +43,32 @@
 - Um job sequencial (a falha de um mata os outros — viola FR-022).
 - Matriz por marketplace (degenera em `if: matrix.x` com pior legibilidade; T062a impossível).
 - `continue-on-error` (esconde exatamente o estado que a US2 exige declarar).
+
+## Emenda 2026-08-07 (pré-flip) — exaustividade DECLARADA: a outra metade da regra da folha lida
+
+A implementação da PR-A parou onde devia (Princípio VIII): uma fatia que só ESCREVE não tem como
+dizer "esta entrada SUMIU da fonte" — e o coletor Amazon remove entradas por regenerar a seção
+inteira (o caso 014/US4 "Categorias removidas da fonte"). Decisão do arquiteto, registrada em
+`arquitetura-017.md` §C.2-bis:
+
+```ts
+export type SectionKey = "entries" | "categorySpine"; // NUNCA blocos de nível de marketplace
+export interface CatalogSlice {
+  marketplace: Mk; collectedAt: string; sourceUrl: string;
+  leaves: LeafWrite[];
+  exhaustive: SectionKey[]; // OBRIGATÓRIO — `[]` é uma frase, não um esquecimento
+}
+```
+
+As 4 regras da composição: (1) seção NÃO declarada ⇒ nada removido, base vence; (2) declarada ⇒
+remove as chaves ausentes naquele marketplace/seção; folhas remanescentes seguem a regra da folha
+lida; (3) a declaração é CONDICIONADA, não confiada — a fatia só existe se canárias + piso
+(`MIN_PARSE_ROWS`) + cobertura + colisões passaram, e fatia inexistente não remove nada; (4) o
+teto de mudança passa a contar `materiais + removidas` (medido: sem isso, uma leitura encolhida
+removeria fora do numerador; exposição residual ≤10 categorias/20 entradas — RA8).
+
+Duas fechaduras para o hotfix A2: `SectionKey` NÃO representa `freightSubsidyInfo`/
+`optionalSurcharges`/`determinantsSchema`/`feeAxes` (proteção por TIPO), além da regra da folha
+lida. Shopee declara sempre `[]`; Amazon declara `["entries","categorySpine"]`. O corpo do PR
+ganha a linha de procedência da remoção ("ausente na leitura EXAUSTIVA de … em <data> (<url>)")
+e a US2 assere a AUSÊNCIA de "Sem mudança" em execução com remoção.

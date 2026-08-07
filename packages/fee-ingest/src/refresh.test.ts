@@ -507,3 +507,40 @@ describe("o corpo do PR nunca diz [object Object] sobre dinheiro (U34-a)", () =>
     expect(body).toContain("200");
   });
 });
+
+// 017/§C.2-bis regra 4 — O TETO PASSA A CONTAR REMOÇÃO.
+//
+// Medição do arquiteto: `changed` contava só `materialEntries`, e remoções vivem em
+// `diff.removedEntries` — fora do numerador. Com a exaustividade declarada isso vira um buraco REAL:
+// uma leitura encolhida que passe o piso de linhas removeria entradas em bloco sem que o teto
+// sequer olhasse. O teto existe exatamente para a mudança em bloco, e uma tabela que perde metade
+// das linhas é a mudança em bloco mais óbvia que existe.
+describe("teto de mudança em bloco — a remoção entra no numerador (§C.2-bis regra 4)", () => {
+  const muitas = (n: number, de = 0) => Array.from({ length: n }, (_, i) => entry(`cat-${i + de}`));
+
+  it("uma leitura ENCOLHIDA (30 de 40 entradas somem) estoura o teto e ABORTA", () => {
+    const out = decideRefresh({
+      ...base,
+      before: artifact(muitas(40)),
+      after: artifact(muitas(10)),
+    });
+    expect(out.kind).toBe("ABORT");
+    expect(out.kind === "ABORT" && out.reason).toMatch(/acima do teto/);
+  });
+
+  it("uma remoção PEQUENA continua passando — o alarme é para bloco, não para faxina da fonte", () => {
+    const out = decideRefresh({
+      ...base,
+      before: artifact(muitas(40)),
+      after: artifact(muitas(38)),
+    });
+    expect(out.kind).toBe("PR");
+  });
+
+  it("materiais e removidas SOMAM: 15 mudadas + 10 removidas de 40 estoura (nenhuma sozinha estouraria)", () => {
+    const antes = muitas(40);
+    const depois = [...muitas(15).map((e) => ({ ...e, commissionPct: 19 })), ...muitas(15, 15)];
+    const out = decideRefresh({ ...base, before: artifact(antes), after: artifact(depois) });
+    expect(out.kind).toBe("ABORT");
+  });
+});

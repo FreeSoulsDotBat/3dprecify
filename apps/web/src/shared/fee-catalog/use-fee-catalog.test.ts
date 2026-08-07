@@ -192,4 +192,37 @@ describe("a semente é um PISO, não um competidor (T054/SC-805)", () => {
       catalog: servido,
     });
   });
+
+  // 017/T009 (014/U5-b, US7/AC3) — O RAMO DE CACHE, agora sobre o caso que o laço mensal TORNA
+  // COMUM, e que antes deste incremento não existia no mundo real.
+  //
+  // A partir do 017 a `catalogVersion` só se move quando o CONTEÚDO muda (`nextCatalogVersion` +
+  // um bump por execução). Logo, num mês em que o robô releu tudo e nada mudou — o caso de 11 meses
+  // por ano —, o servido chega ao cliente com EXATAMENTE o mesmo rótulo do que já está persistido.
+  // Não é um erro nem um empate a desempatar: é o estado normal, e a única coisa proibida é o
+  // cliente ficar oscilando entre dois documentos que dizem a mesma coisa.
+  describe("017 — o mês SEM bump: o servido chega com o rótulo IGUAL ao persistido", () => {
+    const persistido: FeeCatalog = { ...servido, catalogVersion: "2026-09-01.3" };
+    const mesmoRotulo: FeeCatalog = { ...servido, catalogVersion: "2026-09-01.3" };
+
+    it("o catálogo ativo continua vindo do endpoint, sem cair para a semente", () => {
+      expect(adoptCatalog({ catalog: persistido, source: "catalog" }, mesmoRotulo)).toMatchObject({
+        source: "catalog",
+      });
+    });
+
+    it("e a adoção é ESTÁVEL: reaplicá-la não muda mais nada (nenhum ping-pong mensal)", () => {
+      const uma = adoptCatalog({ catalog: persistido, source: "catalog" }, mesmoRotulo);
+      const duas = adoptCatalog(uma, mesmoRotulo);
+      expect(duas.catalog.catalogVersion).toBe(uma.catalog.catalogVersion);
+      expect(duas.source).toBe(uma.source);
+    });
+
+    it("a semente empacotada continua PISO: ela perde do servido de rótulo igual", () => {
+      // O ramo `prev.source === "seed"`, exercido com o dado que o laço produz de verdade.
+      expect(
+        adoptCatalog({ catalog: FEE_CATALOG_SEED, source: "seed" }, mesmoRotulo),
+      ).toMatchObject({ source: "catalog", catalog: mesmoRotulo });
+    });
+  });
 });

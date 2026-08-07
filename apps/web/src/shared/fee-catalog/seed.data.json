@@ -1,0 +1,177 @@
+{
+  "catalogVersion": "2026-08-07.0",
+  "schemaVersion": "1",
+  "generatedAt": "2026-08-07T00:00:00.000Z",
+  "marketplaces": [
+    {
+      "marketplace": "MERCADO_LIVRE",
+      "determinantsSchema": {
+        "listingType": [
+          "CLASSICO",
+          "PREMIUM"
+        ],
+        "category": []
+      },
+      "entries": [],
+      "feeAxes": [
+        "commissionPct",
+        "fixedFee",
+        "freightCost"
+      ]
+    },
+    {
+      "marketplace": "AMAZON",
+      "determinantsSchema": {
+        "category": [],
+        "plan": [
+          "INDIVIDUAL",
+          "PROFISSIONAL"
+        ]
+      },
+      "entries": [],
+      "feeAxes": [
+        "commissionPct",
+        "fixedFee",
+        "minPerItem"
+      ]
+    },
+    {
+      "marketplace": "SHOPEE",
+      "determinantsSchema": {
+        "sellerProfile": [
+          "CPF_ALTO_VOLUME"
+        ]
+      },
+      "feeAxes": [
+        "commissionPct",
+        "fixedFee",
+        "freightCost"
+      ],
+      "optionalSurcharges": [
+        {
+          "id": "MANUSEIO_VOLUMOSO",
+          "label": "Manuseio de item volumoso",
+          "value": 50,
+          "appliesPer": "ORDER",
+          "source": "Central de Educação do Vendedor Shopee — Taxa de manuseio de itens volumosos",
+          "sourceUrl": "https://seller.shopee.com.br/edu/article/3305",
+          "effectiveDate": "2026-02-02",
+          "lastReviewed": "2026-08-06"
+        }
+      ],
+      "freightSubsidyInfo": {
+        "bands": [
+          {
+            "minPrice": 0,
+            "maxPrice": 80,
+            "ceiling": 20
+          },
+          {
+            "minPrice": 80,
+            "maxPrice": 200,
+            "ceiling": 30
+          },
+          {
+            "minPrice": 200,
+            "maxPrice": null,
+            "ceiling": 40
+          }
+        ],
+        "source": "Central de Educação do Vendedor Shopee — Programa de Frete Grátis (subsídio oferecido pela Shopee a todos os vendedores)",
+        "sourceUrl": "https://seller.shopee.com.br/edu/article/23431",
+        "effectiveDate": "2026-03-01",
+        "lastReviewed": "2026-08-07"
+      },
+      "entries": [
+        {
+          "determinants": null,
+          "commissionPct": null,
+          "fixedFee": null,
+          "priceBands": [
+            {
+              "minPrice": 0,
+              "maxPrice": 8,
+              "commissionPct": 20,
+              "fixedFee": 0,
+              "fixedFeeRule": {
+                "kind": "PCT_OF_PRICE",
+                "pct": 50
+              }
+            },
+            {
+              "minPrice": 8,
+              "maxPrice": 80,
+              "commissionPct": 20,
+              "fixedFee": 4
+            },
+            {
+              "minPrice": 80,
+              "maxPrice": 100,
+              "commissionPct": 14,
+              "fixedFee": 16
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": 200,
+              "commissionPct": 14,
+              "fixedFee": 20
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 14,
+              "fixedFee": 26
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)",
+          "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",
+          "effectiveDate": "2026-03-01",
+          "lastReviewed": "2026-08-06"
+        },
+        {
+          "determinants": {
+            "sellerProfile": "CPF_ALTO_VOLUME"
+          },
+          "commissionPct": null,
+          "fixedFee": null,
+          "priceBands": [
+            {
+              "minPrice": 12,
+              "maxPrice": 80,
+              "commissionPct": 20,
+              "fixedFee": 7
+            },
+            {
+              "minPrice": 80,
+              "maxPrice": 100,
+              "commissionPct": 14,
+              "fixedFee": 19
+            },
+            {
+              "minPrice": 100,
+              "maxPrice": 200,
+              "commissionPct": 14,
+              "fixedFee": 23
+            },
+            {
+              "minPrice": 200,
+              "maxPrice": null,
+              "commissionPct": 14,
+              "fixedFee": 29
+            }
+          ],
+          "freight": {
+            "kind": "NONE"
+          },
+          "source": "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CPF com mais de 450 pedidos em 90 dias (taxa adicional de R$ 3,00 por item)",
+          "sourceUrl": "https://seller.shopee.com.br/edu/article/26839",
+          "effectiveDate": "2026-03-01",
+          "lastReviewed": "2026-08-06"
+        }
+      ]
+    }
+  ]
+}
