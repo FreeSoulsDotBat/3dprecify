@@ -130,13 +130,20 @@ jobs:
       # C.4 do desenho — o ponto fixo, a mesma armadilha que o `contract-drift` já ensinou: um
       # gerador sem ponto fixo abriria PR novo todo mês sobre a mesma tabela, e o revisor aprenderia
       # a não olhar. A 2ª passada roda sobre a SAÍDA da 1ª, e o diff dela TEM de ser vazio.
+      # T017 ensinou na primeira run real: o ponto fixo compara a 2ª passada com a 1ª, NUNCA com
+      # o HEAD — contra o HEAD, qualquer mudança LEGÍTIMA de fonte (ex.: lastReviewed avançando
+      # numa releitura real) reprovaria o gerador por estar certo.
+      - name: snapshot da 1ª passada
+        run: |
+          mkdir -p /tmp/fixpoint
+          cp backend/app/data/catalog.json /tmp/fixpoint/catalog.json
+          cp apps/web/src/shared/fee-catalog/seed.data.json /tmp/fixpoint/seed.data.json
       - name: pnpm fee:build (2ª passada — prova de ponto fixo)
         run: pnpm fee:build
-      - name: git diff --exit-code (ponto fixo — tem de ser vazio)
+      - name: ponto fixo (2ª passada byte-idêntica à 1ª)
         run: |
-          git diff --exit-code -- \
-            backend/app/data/catalog.json \
-            apps/web/src/shared/fee-catalog/seed.data.json
+          cmp /tmp/fixpoint/catalog.json backend/app/data/catalog.json
+          cmp /tmp/fixpoint/seed.data.json apps/web/src/shared/fee-catalog/seed.data.json
 
       # Q6 — o MESMO comando que um humano roda (`gate:artifact`), sobre o artefato que a run acabou
       # de compor. Membresia derivada de `*.artifact.test.ts` (desenho §D), nunca uma lista curada.
