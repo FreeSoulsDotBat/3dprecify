@@ -169,6 +169,12 @@ jobs:
         if: steps.desfecho.outputs.tem_pr == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # T017 run 4 ensinou: o `pnpm install` do job instala o lefthook, e o push do bot
+          # disparava o pre-push COMPLETO dentro do runner (gate de workstation, sem Docker/DB,
+          # `no merge base` no clone raso) — 123s para falhar por ambiente. O runner não é uma
+          # workstation: a validação DELE é o `pnpm gate:artifact` acima (clarify Q6) + o CI
+          # humano sobre o PR. LEFTHOOK=0 é a via sancionada do próprio lefthook.
+          LEFTHOOK: "0"
         run: |
           set -eu
           DATA="$(date -u +%F)"
