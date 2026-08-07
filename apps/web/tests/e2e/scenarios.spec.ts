@@ -292,3 +292,38 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
     expect(["15,99", "12,99", "155,88"]).toContain(v);
   }
 });
+
+// 016/T072-R5 (2026-08-07) — `NumberField`'s pt-BR thousands mask fires on BLUR for currency
+// fields; the REOPEN path used to write the raw wire string straight in, so a value ≥1000 lost
+// its separator ON REOPEN even though the SAME field masks correctly right after typing it.
+test("T072-R5: a saved value ≥1000 reopens WITH the thousands separator, like the live blur mask", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `scn-mask-${info.workerIndex}`);
+  grantPremium(email);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("/calcular");
+  await page.reload();
+  await expect(page.getByText("R$ 16,16")).toBeVisible();
+
+  const machineValue = page.getByRole("textbox", { name: t.fields.machineValue, exact: true });
+  await machineValue.fill("12345");
+  await machineValue.blur();
+  await expect(machineValue).toHaveValue("12.345,00"); // the live blur mask, proven first
+
+  await page.getByTestId("save-scenario-trigger").click();
+  const saveSheet = page.getByRole("dialog");
+  await saveSheet.getByLabel(s.nameField).fill("Máquina cara");
+  await saveSheet.getByTestId("save-scenario-submit").click();
+  await expect(page.getByText(s.saved)).toBeVisible();
+
+  const listDialog = await openScenariosList(page);
+  await listDialog.getByText("Máquina cara").click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText(s.loadedLive)).toBeVisible();
+  // THE ACTUAL R5 REGRESSION GUARD: the reopened field carries the SAME grouped string, not the
+  // raw "12345,00" the un-masked reopen used to write.
+  await expect(page.getByRole("textbox", { name: t.fields.machineValue, exact: true })).toHaveValue(
+    "12.345,00",
+  );
+});

@@ -192,6 +192,17 @@ describe("ScenariosListSheet — duplicate (T029, completes the T026 client gap)
     await user.click(screen.getByRole("button", { name: `${t.duplicate} ${ROW.name}` }));
     await waitFor(() => expect(screen.getByText(t.writeOffline)).toBeInTheDocument());
   });
+
+  // 016/T072-A9: an unexpected failure that isn't a typed `ApiError` must not be relabelled
+  // "precisa de conexão" — an unmeasured cause.
+  it("an unexpected non-ApiError failure gets the generic honest phrase, never the conexão copy", async () => {
+    const user = setup();
+    duplicateMutateAsync.mockRejectedValue(new Error("boom — not an ApiError"));
+    renderSheet();
+    await user.click(screen.getByRole("button", { name: `${t.duplicate} ${ROW.name}` }));
+    await waitFor(() => expect(screen.getByText(messages.apiError.unknown)).toBeInTheDocument());
+    expect(screen.queryByText(t.writeOffline)).not.toBeInTheDocument();
+  });
 });
 
 describe("ScenariosListSheet — delete (soft, always confirmed, T029)", () => {

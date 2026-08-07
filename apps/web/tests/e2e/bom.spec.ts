@@ -1,45 +1,15 @@
-import { execSync } from "node:child_process";
-import { fileURLToPath } from "node:url";
-
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
-import { E2E_DATABASE_URL } from "../../playwright.config";
+
+import { grantPremium, signUpThrowaway } from "./history-helpers";
 
 // 008/T004+T007 e2e — the E3 PR-A loop against the REAL stack: a premium account composes a
 // 3-line BOM (ad-hoc + catalog-referenced) free-standing (nothing persisted, quickstart §2);
 // free/signed-out at /kits meet the honest teaser while the FREE single-piece calculator stays
 // fully usable (SC-408/SC-409). Persistence e2e lands in PR-B.
 
-const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
 const t = messages;
-
-async function signUpThrowaway(page: Page, tag: string): Promise<string> {
-  await page.goto("/sign-in");
-  await page.waitForFunction(() => "__e2eAuth" in window);
-  const email = `e2e-${tag}-${Date.now()}@e2e.local`;
-  await page.evaluate(
-    ({ em, pw }) => {
-      const w = window as unknown as {
-        __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
-      };
-      if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      void w.__e2eAuth.signUp(em, pw); // fire-and-forget (redirect destroys the eval context)
-    },
-    { em: email, pw: "test-passw0rd" },
-  );
-  await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
-  return email;
-}
-
-/** Grant premium through the REAL operator path (the CLI writing the ledger — ADR-0012). */
-function grantPremium(email: string): void {
-  execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
-    cwd: backendDir,
-    stdio: "pipe",
-    env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
-  });
-}
 
 test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1, quickstart §2)", async ({
   page,

@@ -158,6 +158,17 @@ describe("ScenarioContextBar — unsaved changes + 'Salvar alterações' (PUT, T
     await user.click(screen.getByRole("button", { name: t.saveChanges }));
     await waitFor(() => expect(screen.getByText(t.writeOffline)).toBeInTheDocument());
   });
+
+  // 016/T072-A9: an unexpected failure that isn't a typed `ApiError` must not be relabelled
+  // "precisa de conexão" — an unmeasured cause.
+  it("an unexpected non-ApiError failure gets the generic honest phrase, never the conexão copy", async () => {
+    const user = setup();
+    updateMutateAsync.mockRejectedValue(new Error("boom — not an ApiError"));
+    render(<ScenarioContextBar {...baseProps({ dirty: true })} />);
+    await user.click(screen.getByRole("button", { name: t.saveChanges }));
+    await waitFor(() => expect(screen.getByText(messages.apiError.unknown)).toBeInTheDocument());
+    expect(screen.queryByText(t.writeOffline)).not.toBeInTheDocument();
+  });
 });
 
 describe("ScenarioContextBar — Duplicar (T029)", () => {

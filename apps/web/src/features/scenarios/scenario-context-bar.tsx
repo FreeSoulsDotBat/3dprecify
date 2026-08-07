@@ -40,11 +40,15 @@ import {
 const t = messages.scenarios;
 const pf = messages.productForm;
 
-function honestWriteError(err: unknown): string {
+// 016/T072-A9 (2026-08-07): the non-`ApiError` fallback used to ALSO claim "precisa de conexão" —
+// an unmeasured cause (see `shared/api/error-messages.ts:honestWriteError`, the canonical version
+// of this same rule). `transport.ts` normalises every real request failure into a typed
+// `ApiError`, so anything else is unexpected and gets the generic honest phrase instead.
+export function honestWriteError(err: unknown): string {
   if (err instanceof ApiError) {
     return err.status === 0 ? t.writeOffline : apiErrorMessage(err);
   }
-  return t.writeOffline;
+  return messages.apiError.unknown;
 }
 
 export interface ScenarioContextBarProps {

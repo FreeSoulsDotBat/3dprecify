@@ -350,6 +350,12 @@ export const messages = {
       printer: "Impressora salva",
       placeholder: "Escolher…",
       hint: "Preenche os campos com o item salvo — você ainda pode editar tudo.",
+      // 016/T072-A8 (2026-08-07) — sem cache local E a leitura online falhando, o seletor não tinha
+      // NENHUM item para mostrar e o cartão inteiro desaparecia, em silêncio: a tela não dizia por
+      // que o catálogo salvo sumiu. Distinta de "você ainda não salvou nada" (esse caso segue mudo,
+      // de propósito — não é um erro). Retry chama o refetch dos dois recursos.
+      loadError: "Não foi possível carregar seus itens salvos agora.",
+      retry: "Tentar novamente",
     },
     // 016/US6 (FR-908) — the two numbers with an expiry date, named so the annual refresh is a
     // value edit (see the module-level consts + conteudo-tooltips.md §Notas de escopo #5).
@@ -647,6 +653,14 @@ export const messages = {
     lineAdhoc: "(avulsa)",
     quantity: "Quantidade",
     quantityUnit: "un",
+    // A5-d (a5-a6-decisoes.md) — rótulos do READOUT FIXADO do kit, chave por PAPEL, nunca
+    // reuso de captions: esta superfície tem ORÇAMENTO DE LARGURA (~85px a --fs-caption 12px
+    // — "Preço atacado" mede 111px e trunca; estas duas medem ~55/63px). O contexto ("Total
+    // do kit" + o R$ na mesma linha) é o que nomeia o número; "Preço" ali é redundância.
+    pinned: {
+      varejo: "Varejo",
+      atacado: "Atacado",
+    },
     removeLine: "Remover peça",
     qtyZero: "Quantidade 0 — não entra no total.",
     expand: "Editar esta peça",

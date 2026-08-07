@@ -81,6 +81,11 @@
      forces horizontal overflow on the page. */
   flex-wrap: wrap;
   min-width: 0;
+  /* A5 (T072) — a BASE do em mora aqui, não no __int: `cur`/`dec` são irmãos do inteiro, e
+     com o contêiner herdando 16px do body os 0,4/0,5em fotografavam 6,72px/8px — centavos
+     como decoração num produto cujo objeto é preço. As proporções sempre estiveram certas;
+     a base estava no lugar errado. */
+  font-size: var(--fs-price);
   /* 015/A6 — last resort for a value that fits nowhere even at the clamp floor (the D2
      regression case: a 15-digit cost times a 9-digit markup, ~10^24). `clamp()` responds to
      the VIEWPORT, not to how long the number is, so no font size can rescue every input.
@@ -90,13 +95,13 @@
   overflow-x: auto;
 }
 .tf-price__cur {
-  font-size: 0.42em;
+  font-size: 0.4em;
   font-weight: var(--fw-bold);
   opacity: 0.85;
   transform: translateY(-0.55em);
 }
 .tf-price__int {
-  font-size: var(--fs-price);
+  font-size: 1em;
   min-width: 0;
   /* 015/A6 ([F11a-002]) — the integer part NEVER breaks inside itself. D2 originally set
      `overflow-wrap: anywhere; word-break: break-word` here to kill horizontal overflow, and it
@@ -108,10 +113,12 @@
   overflow-wrap: normal;
   word-break: keep-all;
 }
-.tf-price--lg .tf-price__int {
+/* A5 — os modificadores migram do __int para o __amount: se ficassem no filho, cur/dec
+   seriam calculados sobre a base default dentro de um cartão md (erro invisível a olho nu). */
+.tf-price--lg .tf-price__amount {
   font-size: clamp(3rem, 12vw, 4.75rem);
 }
-.tf-price--md .tf-price__int {
+.tf-price--md .tf-price__amount {
   font-size: var(--fs-2xl);
 }
 .tf-price__dec {

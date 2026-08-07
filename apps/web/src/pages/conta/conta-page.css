@@ -12,6 +12,12 @@
 .tf-conta__identity--loading {
   justify-content: center;
 }
+/* qa pós-016 (N01) — no erro os filhos são Alert + botão, não avatar + texto: a linha vira
+   coluna (o mesmo tratamento que o --loading já dava ao Spinner). */
+.tf-conta__identity--error {
+  align-items: stretch;
+  flex-direction: column;
+}
 
 .tf-conta__avatar {
   flex-shrink: 0;

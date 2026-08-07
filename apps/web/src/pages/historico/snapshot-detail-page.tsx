@@ -371,7 +371,7 @@ function FrozenChannelRow({
 
 function Shell({ title, children }: { title?: string; children: React.ReactNode }) {
   return (
-    <section className="tf-historico mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
       <Link to="/historico" className="tf-historico__back">
         <Icon name="arrow-left" size={18} aria-hidden /> {t.backToList}
       </Link>

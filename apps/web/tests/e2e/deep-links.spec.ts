@@ -5,18 +5,20 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 import { grantPremium, recordFromCalculator, signUpThrowaway } from "./history-helpers";
 
 // 013/T020 (F-02, D1=A) — the class of test THIS project deliberately avoided until now: a REAL
-// cold `page.goto()` straight at a 2-segment URL, against the BUILT app (`base: "./"`, vite
-// preview — see playwright.config.ts). Every other e2e spec reaches a detail screen by CLIENT-NAV
-// (a card/row click) specifically to dodge this trap; these two specs walk straight into it, on
-// the NEW one-segment-plus-query URLs the migration produces (`/historico?snapshot=`,
-// `/catalogo?produto=`) — the ones the migration promises now survive it.
+// cold `page.goto()` straight at a 2-segment URL, against the BUILT app (vite preview — see
+// playwright.config.ts). Every other e2e spec reaches a detail screen by CLIENT-NAV (a card/row
+// click) specifically to dodge this trap; these two specs walk straight into it, on the NEW
+// one-segment-plus-query URLs the migration produces (`/historico?snapshot=`, `/catalogo?produto=`)
+// — the ones the migration promises now survive it.
 //
-// What this does NOT prove: the OLD 2-segment URLs (`/historico/:id`, `/catalogo/produtos/:id`)
-// redirecting on a COLD hit. That half is the `firebase.json` hosting-level 301 (T024), which only
-// exists at the real Firebase Hosting layer — vite preview has no such rewrite, so a cold hit on
-// the OLD shape would still blank here exactly as it did before the migration (the client-side
-// redirect route in router.tsx cannot run before the app boots, and the app cannot boot on that
-// URL — the whole reason the hosting-level redirect is a SEPARATE, required layer).
+// 016/T072-A4 (2026-08-07): the root cause of "the OLD 2-segment URLs blank on a cold hit" was
+// `vite.config.ts`'s unconditional `base: "./"` — a RELATIVE base makes index.html's
+// `<script src="./assets/…">` resolve against the CURRENT PATH, so a cold hit on
+// `/catalogo/produtos/xxx` 404s its own JS bundle and never mounts React (measured directly on
+// the built index.html before the fix: `src="./assets/index-*.js"`). `base` is now env-driven
+// (`"/"` unless `CAPACITOR=1`), so `vite preview`'s own SPA html-fallback serves a working shell
+// at ANY path depth — the tests below now exercise the OLD 2-segment shapes directly, cold, and
+// prove the honest not-found screen (never blank) for an id that doesn't exist.
 
 const t = messages;
 
@@ -117,4 +119,35 @@ test("T020: /catalogo?produto=<id> renders on a COLD page.goto AND survives a re
   await expect(page.getByRole("textbox", { name: t.productForm.nameLabel })).toHaveValue(
     "Vaso Cold-Load",
   );
+});
+
+// 016/T072-A4 — the OLD 2-segment shapes (`/catalogo/produtos/:id`, `/historico/:id`), cold, on a
+// GHOST id: proves the fix is the ASSET LOADING (base), not the app's not-found copy (which
+// already existed — `produto-page.tsx`/`snapshot-detail-page.tsx` both had an honest not-found
+// state that a blank page never let anyone see). Before the base fix this was a blank page: the
+// browser's own JS bundle 404'd, so no React ever mounted to show ANY screen, honest or not.
+test("T072-A4: cold GET on the OLD /catalogo/produtos/:id (ghost id) renders honest not-found, never blank", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `deep-cat-ghost-${info.workerIndex}`);
+  void email;
+
+  await page.goto("/catalogo/produtos/id-fantasma");
+  await expect(page.getByText(t.productForm.notFound)).toBeVisible();
+  await expect(page.getByRole("button", { name: t.productForm.backToCatalog })).toBeVisible();
+});
+
+test("T072-A4: cold GET on the OLD /historico/:id (ghost id) renders honest not-found, never blank", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `deep-hist-ghost-${info.workerIndex}`);
+  grantPremium(email); // Orçamentos is premium-gated (US5) — a free account sees the honest teaser
+  // for `?snapshot=`, never a not-found; that is correct behaviour, not this guard's target.
+
+  // A real, well-formed UUID that doesn't exist (`clientSnapshotId` is minted with
+  // `crypto.randomUUID()`, T013) — a malformed id like a literal "id-fantasma" 422s the backend's
+  // validation, which is a DIFFERENT, correct "could not load" branch, not the not-found one.
+  await page.goto("/historico/00000000-0000-4000-8000-000000000000");
+  await expect(page.getByText(t.historico.notFound)).toBeVisible();
+  await expect(page.getByRole("link", { name: t.historico.backToList })).toBeVisible();
 });
