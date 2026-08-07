@@ -59,6 +59,9 @@ o loop **pronto e disparável**, provado por execução real — não "rodando s
 - **P0-c** — As condições do parecer de segurança que valem SEM credencial (014/T069b):
   `allowed_actions`, `sha_pinning_required`, scanner de segredos pinado, e CI independente sobre o
   PR mensal (um PR aberto com o token padrão do CI **não dispara** os checks — o loop valida antes).
+  *Correção medida (2026-08-07, research R6)*: `sha_pinning_required` e o trufflehog pinado **JÁ
+  existem e rodam**; resta de fato `allowed_actions` (configuração de repositório — dono) e o CI
+  independente, atendido pelo `gate:artifact` dentro do job (arquitetura decisão D).
 
 ---
 

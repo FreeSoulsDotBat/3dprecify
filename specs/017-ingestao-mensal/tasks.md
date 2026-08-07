@@ -152,7 +152,9 @@ localmente; nenhuma literal de versão viva.
       execução em que só a /precos é relida ⇒ `lastReviewed` do catálogo INTACTO (vigia não
       carimba catálogo) e baseline atualizado; execução com Amazon abortada ⇒ entradas Amazon
       envelhecem (SC-1007). Job `amazon-precos` entra no `fee-refresh.yml`.
-- [ ] T024 [US4] Fechamento: execução real com URL · gate:all · ledger · **owner-gated PR-B**.
+- [ ] T024 [US4] Fechamento: execução real com URL — **esta é a run que prova a independência
+      da US1/AC2** (agora há dois caminhos de coleta: um job abortado NÃO impede o outro de
+      concluir LIDO; emenda C1 do analyze) · gate:all · ledger · **owner-gated PR-B**.
 
 ---
 
