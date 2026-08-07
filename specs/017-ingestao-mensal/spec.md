@@ -231,8 +231,9 @@ baseline datado; NENHUM caminho escreve no catálogo servido.
    R$ 12,50 · (c) a sentinela da cubagem (divisor 6000, sobre o texto oficial).
 2. **Given** as três tabelas de frete por reputação (medidas em 2026-08-05: 3 × 29 × 8 = 696
    células, 0 divergências), **When** relidas, **Then** o parser determinístico compara com um
-   BASELINE DATADO, com a guarda de forma 29 × 8 e o limiar de R$ 79 nos cabeçalhos obrigatórios
-   (onde o baseline mora: Q1 do clarify).
+   BASELINE DATADO E VERSIONADO em `packages/fee-ingest/data/` (clarify Q1 — o alerta diz quais
+   células mudaram e o E3 herda o insumo), com a guarda de forma 29 × 8 e o limiar de R$ 79 nos
+   cabeçalhos obrigatórios.
 3. **Given** qualquer vigia do ML, **When** detecta mudança, **Then** a saída é ALERTA + baseline
    atualizado — NENHUM escreve no catálogo servido (o ML tem 0 entradas; o eixo de frete é do E3;
    o custo fixo pós-reforma depende do token).
@@ -416,15 +417,18 @@ foi lido" é indistinguível de "avança sempre") — por isso viaja na fatia do
 7. **A2/A3 do 016** — não são ingestão; recomendação do PO nas Assumptions (hotfix separado).
 8. **OCR de qualquer coisa além dos PNGs da Shopee.**
 
-## Perguntas abertas — para o `/speckit-clarify` (não resolver aqui)
+## Perguntas do clarify — TODAS RESOLVIDAS (8/8)
+
+**Sessão 1 (2026-08-07): Q2·Q3·Q4·Q5·Q8 · Sessão 2 (mesma data): Q1·Q6·Q7.** Respostas na seção
+Clarifications e nos FR/US afetados. A tabela fica como registro.
 
 | # | pergunta | o que muda |
 | --- | --- | --- |
-| Q1 | Onde mora o baseline do frete/textos do ML: arquivo datado versionado (o E3 herda o insumo) · só hash (barato, não herda) · não vigiar frete? | US6; cria ou não artefato versionado |
+| ~~Q1~~ | ~~Baseline ML?~~ **RESOLVIDA (clarify 2026-08-07, sessão 2): arquivo datado versionado em packages/fee-ingest/data/ — o E3 herda o insumo** | ver Clarifications |
 | ~~Q2~~ | ~~Convergência?~~ **RESOLVIDA (clarify 2026-08-07): PR de decisão, sem tocar dado — o robô nunca propõe dinheiro da fonte vintage** | ver Clarifications |
 | ~~Q3~~ | ~~Semente?~~ **RESOLVIDA (clarify 2026-08-07): regenera AS DUAS no mesmo PR — paridade estrita, U5-b acorda com teste** | ver Clarifications |
 | ~~Q4~~ | ~~Aborto parcial?~~ **RESOLVIDA (clarify 2026-08-07): PR PARCIAL nomeando o abortado** | ver Clarifications |
 | ~~Q5~~ | ~~Ruleset/dispensa?~~ **RESOLVIDA (clarify 2026-08-07): AS DUAS — ruleset (tarefa do dono, paralela) + dispensa nascendo desligada** | ver Clarifications |
-| Q6 | O job valida o subconjunto do artefato ou o gate:all inteiro (~6 min — a validação que o PR não terá, porque o token padrão não dispara CI)? | US1; custo/tempo mensal e o que o revisor recebe |
-| Q7 | Sinal de mês perdido: silêncio até o corte (runbook diz) · issue-lembrete mensal · checagem no CI avisando execução velha? | US8; a premissa dos 45 dias apoia-se no PR mensal como sinal de vida |
+| ~~Q6~~ | ~~Validação do job?~~ **RESOLVIDA (clarify 2026-08-07, sessão 2): subconjunto do artefato no job; o gate:all vem do CI independente do P0-c** | ver Clarifications |
+| ~~Q7~~ | ~~Mês perdido?~~ **RESOLVIDA (clarify 2026-08-07, sessão 2): checagem não-bloqueante no ci.yml (>35 dias) — carona na atividade real, sem depender do schedule** | ver Clarifications |
 | ~~Q8~~ | ~~OCR verde divergente?~~ **RESOLVIDA (clarify 2026-08-07): PR normal com banner de divergência destacado — nunca abort silencioso** | ver Clarifications |
