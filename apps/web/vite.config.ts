@@ -5,9 +5,20 @@ import react from "@vitejs/plugin-react";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
 
-// base: "./" for Capacitor/relative hosting. Single React (dedupe) per ADR-0004.
+// 016/T072-A4 (2026-08-07) — `base: "./"` unconditional was the ROOT CAUSE of the "2-segment
+// cold-load blank page" trap (013/F-02, deep-links.spec.ts's documented gap): with a RELATIVE
+// base, index.html's `<script src="./assets/…">` resolves against the CURRENT PATH, so a cold
+// hit on `/catalogo/produtos/xxx` requests `/catalogo/produtos/assets/…` — a 404, and a blank
+// page with no React ever mounted to show even a 404 screen. Measured directly on the built
+// index.html before this fix: `src="./assets/index-*.js"` (relative), confirmed 404 by path
+// arithmetic. `base: "/"` (absolute) is correct for THIS app's actual hosting (Firebase Hosting
+// SPA rewrites `**` → index.html, `firebase.json`'s redirects handle the old 2-segment URLs
+// BEFORE the app boots) and for `vite preview`'s own SPA html-fallback (same absolute-path
+// reasoning). `"./"` is kept ONLY for the future Capacitor/Android packaging (E7), which serves
+// from a `file://`/`capacitor://` root where a relative base is the one that resolves — opted in
+// via `CAPACITOR=1` at build time, never the default.
 export default defineConfig({
-  base: "./",
+  base: process.env.CAPACITOR === "1" ? "./" : "/",
   plugins: [
     react(),
     tailwindcss(),

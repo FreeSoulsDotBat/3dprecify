@@ -55,15 +55,20 @@ export function OfferPanel() {
                 .filter(Boolean)
                 .join(" ")}
             >
-              <input
-                type="radio"
-                name="tf-billing-period"
-                value={key}
-                checked={isSelected}
-                onChange={() => setSelected(key)}
-              />
               <div className="tf-billing-offer__plan-head">
-                <span>{p.name}</span>
+                {/* qa pós-016, ressalva A7 — o radio mora NA LINHA do nome do plano (a "cabeça"
+                    já é flex row): `align-self:start` sozinho matava a barra de 292px mas
+                    deixava o controle 22px ACIMA de "Plano mensal", órfão do rótulo. */}
+                <span className="tf-billing-offer__plan-name">
+                  <input
+                    type="radio"
+                    name="tf-billing-period"
+                    value={key}
+                    checked={isSelected}
+                    onChange={() => setSelected(key)}
+                  />
+                  {p.name}
+                </span>
                 {"badge" in p && <Badge tone="success">{p.badge}</Badge>}
               </div>
               <span className="tf-billing-offer__plan-price">{p.price}</span>

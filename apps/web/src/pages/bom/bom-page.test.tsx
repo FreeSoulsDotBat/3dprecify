@@ -604,3 +604,43 @@ describe("BomPage — reopen re-hydrates on fresh server truth (D6 degrade, PR-C
     expect(screen.getAllByText(/Vaso G/).length).toBeGreaterThan(0);
   });
 });
+
+// 016/T072-A10 — a LAPSED seller reopening a saved kit (`?id=…`) must reach the composer (FR-409:
+// reads/recompute survive a lapse). `openedKit` is a `find()` over the kits list, which starts
+// EMPTY while still loading — before this fix that transiently satisfied `!openedKit`, flashing
+// the CREATE-only reactivation panel over a valid reopen.
+describe("BomPage — T072-A10: lapsed reopen never flashes the reactivation panel", () => {
+  function reopenLapsed(boms: typeof emptyBoms) {
+    useSessionStore.setState({ status: "authenticated" });
+    useEntitlementMock.mockReturnValue({
+      data: { status: "lapsed" },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn(),
+    });
+    useProductsMock.mockReturnValue(listState([productP]));
+    useSearchMock.mockReturnValue({ id: "k1" });
+    useBomsMock.mockReturnValue(boms);
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(bomTree(client));
+  }
+
+  it("kits list still LOADING: shows a neutral checking state, never the reactivation panel", () => {
+    reopenLapsed({ ...emptyBoms, items: [], isLoading: true });
+    expect(screen.queryByText(t.lapsedTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.lapsedBody)).not.toBeInTheDocument();
+  });
+
+  it("kits list LOADED with the kit found: reaches the composer, honest lapsed banner alongside it", () => {
+    reopenLapsed({ ...emptyBoms, items: [liveKit], isLoading: false });
+    // The CREATE-only reactivation copy must be absent — this is a reopen, not a create.
+    expect(screen.queryByText(t.lapsedTitle)).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Vaso G/).length).toBeGreaterThan(0);
+    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
+  });
+
+  it("kits list LOADED, id genuinely not found: the reactivation panel (honest — nothing to reopen)", () => {
+    reopenLapsed({ ...emptyBoms, items: [], isLoading: false });
+    expect(screen.getByText(t.lapsedTitle)).toBeInTheDocument();
+  });
+});

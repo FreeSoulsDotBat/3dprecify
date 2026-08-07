@@ -15,6 +15,17 @@
   border-radius: var(--radius-pill);
   cursor: pointer;
   flex-shrink: 0;
+  position: relative; /* A6 — âncora do ::after de área de toque */
+}
+/* A6 (T072) — piso de alvo da casa (INV-2 ≥44px) sem inflar o visual: a área CLICÁVEL é
+   estendida por um pseudo-elemento FORA DO FLUXO; o botão segue ocupando e pintando 28×28.
+   Assimétrico de propósito: abaixo do gatilho há só 8px até o `.tf-inputwrap` (alvo real
+   concorrente) — com −4px sobra folga; acima há o --field-gap e texto não interativo.
+   Conta: 8+28+8 = 44 de largura · 12+28+4 = 44 de altura. */
+.tf-infotip__trigger::after {
+  content: "";
+  position: absolute;
+  inset: -12px -8px -4px;
 }
 .tf-infotip__trigger:hover,
 .tf-infotip__trigger[data-state="open"] {

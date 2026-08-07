@@ -361,3 +361,46 @@ primeira pintura — esperar o valor MUTADO). Ressalvas R1–R4 corrigidas no fe
 follow-up** (máscara de milhar se perde na reabertura programática de cenário — classe B2 da
 PR-C, o caminho de restauração pula o blur). Desenho + verbatims + recibo completo:
 `docs/homologacao/hotfix-a2-a3-desenho.md`.
+
+---
+
+## CORREÇÕES PÓS-016 — todos os follow-ups da homologação (2026-08-07, branch `correcoes-homologacao-pos-016`)
+
+O dono mandou fechar TUDO que as homologações deixaram (T072 A4–A11 + R5 do hotfix). Três frentes:
+designer-ux (4 rodadas: A5 → A5-b → A5-c → A5-d + A6), dev-frontend (onda mecânica) e o próprio
+main loop (A5/A6 CSS + guardas + fechamentos de qa).
+
+**Estado final por item**: A4 ✅ (base do vite dirigida por ambiente — `"/"` no web, `"./"` só
+Capacitor; not-found honesto nas rotas de 2 segmentos; + o defeito EXTRA achado: a corrida do
+`requireAuth` nas rotas de compat que perdia o id do vendedor autenticado) · A5 ✅ (a causa era
+BASE de `em` errada, não escala — 6,72/8px viraram 14,4/18px na variante md) · A5-b/c/d ✅ (o
+readout FIXADO do kit: 1 coluna, rótulos curtos por PAPEL `bom.pinned.*`, válvula estrutural
+"quem cede é sempre o rótulo", altura invariante 243,4px provada em 3 valores) · A6 ✅ (44×44 por
+`::after` fora do fluxo, glifo 28×28 intacto, provado por hit-testing + clique real + mutação) ·
+A7 ✅ (radio 18×18 NA LINHA do nome — a ressalva do órfão −22px fechada na re-verificação) ·
+A8/A9 ✅ (o bloqueador do qa: cache `[]` suprimia o erro honesto NOS DOIS estados — `isError` E
+`isLoading` largam o `cached === null`; estados exaustivos: buscando sem nada = loading · erro
+sem nada = erro · erro com algo = stale · sucesso com zero = vazio; sobre-disparo free/lapsed
+testado) · A10 ⚠️ **não-reproduzido 2×** (dev por leitura+testes, qa por 5 estados com amostragem
+— 0 conflitos; o adjacente real achado — flash de reativação no lapsado com `?id=` — corrigido) ·
+A11 ✅ (93,3% nas 4 páginas a 1440; ressalva de leitura interna registrada p/ design) · R5 ✅
+(máscara de milhar no caminho de restauração de cenário).
+
+**Homologação (qa-produto): FAIL 88% → correções → re-verificação PASS 97%**, 55 screenshots
+1:1. O bloqueador (13-B/13-D) virou guarda permanente (`catalog-honest-error.spec.ts`) junto com
+o anti-sobre-disparo (13-C) e o **N01** — o achado NOVO da re-verificação (o ramo de erro do
+`/conta` paria o "Tentar novamente" FORA da viewport a 360px, classe E6/T028-B1; corrigido +
+guarda com mutação viva).
+
+**Follow-ups que ficam (registrados, não corrigidos)**: layout interno das páginas desktop
+(A11-r: 93,3% é número, não leitura — par Premium⟷Recarregar separado por ~800px; design) ·
+`0` → `"0,00"` cosmético na reabertura de cenário · assimetria vertical do hit do ⓘ (deliberada)
+· **a máscara ao vivo corta R$/kWh a 2 casas** (`formatDecimal(n,2)` — pré-existente, mas é
+ENTRADA DE PRECIFICAÇÃO com 4 casas reais na conta de luz; o qa recomendou não deixar dormir).
+
+**As DUAS lições pagas nesta rodada**: (1) o preview órfão agora é TRIO — 4173 congelado + 8100
+com banco NUNCA resetado (SC-703 exactly-once vermelho por poluição de eventos do run anterior)
++ 8200; matar os três antes de diagnosticar QUALQUER e2e, principalmente depois de um subagente
+rodar a pilha. (2) Detector de wrap por `offsetTop` MENTE com `align-items: baseline` (tokens de
+fontes diferentes têm tops diferentes NA MESMA linha) — wrap real é caixa que começa abaixo de
+onde outra termina.

@@ -13,7 +13,6 @@ import "./assembly-summary.css";
 // the per-channel rollup. Every number is read off `BomResult` — the view sums nothing (§0.2).
 
 const t = messages.bom;
-const tc = messages.calculator;
 
 export function AssemblySummary({
   bom,
@@ -55,9 +54,18 @@ export function AssemblySummary({
             value={formatBRL(bom.custoTotal)}
             emphasis="total"
           />
-          <div className="grid grid-cols-2 gap-2">
-            <PriceHero label={tc.results.varejo} value={bom.precoVarejo} prefix="R$" />
-            <PriceHero label={tc.results.atacado} value={bom.precoAtacado} prefix="R$" />
+          {/* A5-b (a5-a6-decisoes.md, emenda 2026-08-07) — na barra FIXADA o par vira duas
+              LINHAS DE LEITURA, nunca dois cartões: a 360px duas colunas deixam 89px por valor,
+              e 89px não comportam "R$ 1.234,56" nem em texto corrido — não existe saída
+              tipográfica. Uma coluna devolve ~216px ao número E encolhe a barra ~13px. O guard
+              do a5-a6-geometry.spec.ts mede com valor de 5 dígitos (foi um valor curto que
+              deixou este aperto dormir até aqui). */}
+          <div className="assembly-summary__pinned-prices">
+            {/* A5-d — rótulos curtos PRÓPRIOS do readout (t.pinned), nunca tc.results: o rótulo
+                longo ("Preço atacado", 111px) tranca no orçamento de ~101px da linha e a
+                reticência apareceria no caso NORMAL de 5 dígitos. */}
+            <PriceHero label={t.pinned.varejo} value={bom.precoVarejo} prefix="R$" size="md" />
+            <PriceHero label={t.pinned.atacado} value={bom.precoAtacado} prefix="R$" size="md" />
           </div>
           {excludedLineCount > 0 ? (
             <p className="text-xs text-[var(--text-muted)]">

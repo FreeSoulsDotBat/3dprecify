@@ -96,7 +96,7 @@ function GateError({ onRetry }: { onRetry: () => void }) {
 
 function GateShell({ children }: { children: React.ReactNode }) {
   return (
-    <section className="tf-historico mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
       <PageHeader title={t.title} />
       {children}
     </section>
@@ -201,7 +201,7 @@ function HistoryLedger() {
   };
 
   return (
-    <section className="tf-historico mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
       <PageHeader title={t.title} />
       <p className="text-sm text-[var(--text-muted)]">{t.subtitle}</p>
 

@@ -55,3 +55,22 @@
 .tf-shell[data-layout="desktop"] .tf-shell__main {
   padding: var(--gutter-lg);
 }
+
+/* 016/T072-A11 (2026-08-07) — the SAME pattern `.tf-calc-page` (calculator-form.css, PR-B/US4)
+   already ratified for the calculator: mobile/tablet keeps the existing `--app-max` column, and
+   at the desktop breakpoint the page widens into the room the sidebar-fronted shell actually
+   gives it (`--content-max`). PR-B only reached the calculator; every OTHER main page
+   (/catalogo, /historico, /kits, /conta) kept a flat `max-w-md` (28rem/448px) — MEASURED at
+   1440px: main content area ~1160px, page capped at 448px ⇒ ~39% used, matching PR-B's own
+   pre-fix "~37%" finding on a DIFFERENT page. `.tf-page-wide` REPLACES `max-w-md` on those pages
+   (never both — Tailwind's own `max-w-md` utility and this custom class would otherwise race on
+   specificity); it does not touch the calculator's own `.tf-calc-page`, which already has this. */
+.tf-page-wide {
+  max-width: var(--app-max, 460px);
+}
+
+@media (min-width: 1024px) {
+  .tf-page-wide {
+    max-width: var(--content-max, 1120px);
+  }
+}

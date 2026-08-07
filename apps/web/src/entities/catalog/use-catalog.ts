@@ -115,8 +115,15 @@ function useCatalogList<T extends CatalogItem>(
   const items = (query.data ?? cached ?? []) as T[];
   return {
     items,
-    isLoading: query.isFetching && items.length === 0 && cached === null,
-    isError: query.isError && cached === null,
+    // qa pós-016 (13-B/13-D) — `cached === null` era um portão FURADO nos DOIS estados: uma
+    // leitura bem-sucedida de catálogo VAZIO persiste `[]`, e na visita seguinte `[]` !== null
+    // (a) silenciava o erro para SEMPRE e (b) pulava o loading durante a janela de RETRY do
+    // React Query — o painel afirmava "Nenhum salvo ainda" enquanto a leitura ainda tentava.
+    // A forma certa já morava em use-history.ts: os quatro estados ficam exaustivos —
+    // buscando sem nada = loading · erro sem nada = erro · erro com algo = stale ·
+    // sucesso com zero = vazio.
+    isLoading: query.isFetching && items.length === 0,
+    isError: query.isError && items.length === 0,
     error: (query.error as ApiError | null) ?? null,
     // Honest staleness: the online read errored but the device cache still answers.
     stale: query.isError && query.data === undefined && items.length > 0,

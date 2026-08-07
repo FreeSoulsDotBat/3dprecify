@@ -13,3 +13,47 @@
   bottom: var(--pinned-bottom, var(--space-2));
   z-index: 10;
 }
+
+/* A5-b — a barra fixada é um READOUT compacto, não uma grade de cartões: a 360px duas colunas
+   deixam 89px por valor, largura que não comporta "R$ 1.234,56" nem em texto corrido. Uma coluna
+   com rótulo à esquerda e valor à direita devolve ~216px ao número E deixa a barra MAIS BAIXA que
+   a grade de dois cartões — o oposto do custo de altura que se temia ao empilhar. */
+.assembly-summary__pinned-prices {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+}
+.assembly-summary__pinned-prices .tf-price {
+  flex-direction: row;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  /* o tom accent pinta `color: var(--accent-contrast)` (claro, para fundo roxo); sem o fundo isso
+     vira texto claro sobre superfície clara. `--accent-text` é o token de texto accent SOBRE
+     superfície — mantém a ênfase e o contraste. */
+  color: var(--accent-text);
+}
+.assembly-summary__pinned-prices .tf-price__label {
+  white-space: nowrap;
+}
+
+/* A5-c — quem CEDE é sempre o rótulo, nunca o número. O rótulo em caps+tracking engorda ~70%
+   sobre a estimativa de texto corrido (medido: ~101-109px em --fs-sm); em --fs-caption ele cabe
+   com folga no caso de 5 dígitos. E a válvula estrutural: o amount não encolhe (flex: 0 0 auto)
+   — um rótulo futuro mais longo TRUNCA (ellipsis) e o preço fica inteiro; o max-width: 100% é
+   obrigatório junto, senão um valor absurdo empurra overflow de página em vez de acionar o
+   overflow-x que o amount já tem. */
+.assembly-summary__pinned-prices .tf-price__label {
+  font-size: var(--fs-caption);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.assembly-summary__pinned-prices .tf-price__amount {
+  flex: 0 0 auto;
+  max-width: 100%;
+}

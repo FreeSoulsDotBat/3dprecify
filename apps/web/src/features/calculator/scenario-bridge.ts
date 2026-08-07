@@ -15,13 +15,15 @@ import {
   type ScenarioConfig,
 } from "@/entities/scenario/config-document";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { wireToPtBr } from "@/shared/lib/decimal-ptbr";
+import { formatDecimal, parseDecimal, wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 import { type CatalogContext, type ChannelSlotOutcome, computeFromForm } from "./calculator-model";
 import {
   type CalcFieldName,
   CALC_FIELD_NAMES,
   type CalcFormValues,
+  CHANNEL_CURRENCY_FIELD_NAMES,
+  CURRENCY_FIELD_NAMES,
   defaultCalcValues,
   type ChannelFieldName,
   type ChannelSlotForm,
@@ -58,12 +60,31 @@ import {
  *  this local alias keeps the call sites reading in the scenario domain's own vocabulary. */
 const decimalStringToPtBr = wireToPtBr;
 
+// 016/T072-R5 (2026-08-07) — a CURRENCY leaf gets the SAME pt-BR thousands-grouping
+// `NumberField`'s on-blur mask applies ("12345.00" → "12.345,00"), instead of the plain dot→comma
+// swap above. MEASURED: reopening a saved scenario used to write the raw un-grouped string
+// straight into the form (`decimalStringToPtBr` alone), so a value ≥1000 rendered "12345,00" on
+// reopen — masked everywhere else, unmasked here. `formatDecimal(parseDecimal(x))` is a true
+// round-trip through the exact functions the mask itself uses (never a re-round: the wire string
+// already carries the field's real precision, and `formatDecimal`'s 2dp matches every money
+// field's own scale).
+function moneyLeafToPtBr(leaf: string): string {
+  const n = parseDecimal(wireToPtBr(leaf));
+  return Number.isFinite(n) ? formatDecimal(n, 2) : decimalStringToPtBr(leaf);
+}
+
 /** An ABSENT `feeOverrides` leaf becomes a BLANK string (re-resolve live), a PRESENT one becomes its
  *  pt-BR value (the seller's override, "ajustado por você") — shared by the scalar-form reopen (T014)
  *  and the KIT-basis rollup (T024), the two places a `ScenarioChannelIntent[]` becomes form channels. */
 function channelIntentToForm(c: ScenarioConfig["channels"][number]): ChannelSlotForm {
-  const overrideOrBlank = (leaf: string | undefined): string =>
-    leaf === undefined ? "" : decimalStringToPtBr(leaf);
+  // R5: the three CURRENCY channel overrides (fixedFee/minPerItem/freightCost) get the thousands
+  // mask; commissionPct is a percent, never grouped (matches `CHANNEL_FEE_FIELDS`/the live form).
+  const overrideOrBlank = (leaf: string | undefined, field: ChannelFieldName): string => {
+    if (leaf === undefined) return "";
+    return CHANNEL_CURRENCY_FIELD_NAMES.has(field)
+      ? moneyLeafToPtBr(leaf)
+      : decimalStringToPtBr(leaf);
+  };
   return {
     marketplace: c.marketplace as MarketplaceId,
     modality: (c.modality ?? "") as Modality,
@@ -76,10 +97,10 @@ function channelIntentToForm(c: ScenarioConfig["channels"][number]): ChannelSlot
     sellerType: (c.sellerType ?? "") as ChannelSlotForm["sellerType"],
     highVolume: (c.highVolume ?? "") as ChannelSlotForm["highVolume"],
     surcharges: c.surcharges ?? [],
-    commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct),
-    fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee),
-    minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem),
-    freightCost: overrideOrBlank(c.feeOverrides?.freightCost),
+    commissionPct: overrideOrBlank(c.feeOverrides?.commissionPct, "commissionPct"),
+    fixedFee: overrideOrBlank(c.feeOverrides?.fixedFee, "fixedFee"),
+    minPerItem: overrideOrBlank(c.feeOverrides?.minPerItem, "minPerItem"),
+    freightCost: overrideOrBlank(c.feeOverrides?.freightCost, "freightCost"),
   };
 }
 
@@ -185,15 +206,20 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
     discarded = stripped.discarded;
     for (const name of CALC_FIELD_NAMES) {
       const leaf = stripped.kept[name];
-      if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
+      if (typeof leaf === "string") {
+        scalars[name] = CURRENCY_FIELD_NAMES.has(name)
+          ? moneyLeafToPtBr(leaf)
+          : decimalStringToPtBr(leaf);
+      }
     }
   }
 
   const channels: ChannelSlotForm[] = config.channels.map(channelIntentToForm);
 
+  // "Outros custos" is always money — same mask as its own live NumberField (`currency`, T072-R5).
   const otherCosts: OtherCostForm[] = config.otherCosts.map((c) => ({
     name: c.name,
-    value: decimalStringToPtBr(c.value),
+    value: moneyLeafToPtBr(c.value),
   }));
 
   return {
@@ -265,7 +291,11 @@ export function computeScenarioKitChannels(
     const scalars: Partial<Record<CalcFieldName, string>> = {};
     for (const name of CALC_FIELD_NAMES) {
       const leaf = stripped.kept[name];
-      if (typeof leaf === "string") scalars[name] = decimalStringToPtBr(leaf);
+      if (typeof leaf === "string") {
+        scalars[name] = CURRENCY_FIELD_NAMES.has(name)
+          ? moneyLeafToPtBr(leaf)
+          : decimalStringToPtBr(leaf);
+      }
     }
     const formValues: CalcFormValues = {
       ...defaultCalcValues,

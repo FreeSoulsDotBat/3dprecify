@@ -142,7 +142,7 @@ export function BomPage() {
 /** Shared page shell for every gate state (one PageHeader, no drift between branches). */
 function GateShell({ children }: { children: ReactNode }) {
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
       <PageHeader title={t.title} />
       {children}
     </section>
@@ -406,6 +406,16 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   // none of it can be kept is a fake affordance — so the create door is a calm reactivation panel
   // that points at the kits they still have (ux §3, the reconciliation the plan asked PR-B to
   // settle). Reopening a saved kit (`?id=`) still lands in the composer below and recomputes.
+  //
+  // 016/T072-A10 (2026-08-07): `openedKit` is a `find()` over `savedKits.items`, which starts
+  // EMPTY while the list is still loading. That made `!openedKit` transiently TRUE for a LAPSED
+  // seller reopening a saved kit (`?id=…`) — flashing this reactivation panel (meant for the
+  // CREATE case only) over what is actually a valid reopen, before swapping to the composer a
+  // moment later. Held on `savedKits.isLoading` the same way the top-level `BomPage` bootstrap
+  // guard above holds on the entitlement query — a state that WILL resolve differently must not
+  // render as if it already had. Scoped to lapsed only: the active path already hydrates the
+  // composer cleanly once the kit arrives (existing behaviour, untouched).
+  if (lapsed && Boolean(search.id) && savedKits.isLoading && !openedKit) return <GateChecking />;
   if (lapsed && !openedKit) {
     return (
       <GateShell>
@@ -423,7 +433,7 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
       <PageHeader title={t.title} description={t.subtitle} />
 
       {/* The plan re-check failed but the last server answer said active — say so calmly and

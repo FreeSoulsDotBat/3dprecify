@@ -119,16 +119,34 @@ const catalogoRoute = createRoute({
 });
 
 // 013/F-02: the OLD 2-segment routes stay registered as CLIENT-SIDE REDIRECTS for ≥1 release
-// (research §2) — they preserve the auth gate they always had (so GC-2's sign-in bounce is
-// unchanged for a stale bookmark still carrying the old shape), then forward to the new
-// `?produto=` URL, preserving the id. This does NOT fix a cold-load/bookmark of the OLD URL by
-// itself (the app must boot before any client redirect can run) — that half is `firebase.json`'s
-// hosting-level 301 (T024).
+// (research §2) — they forward to the new `?produto=` URL, preserving the id. This does NOT fix
+// a cold-load/bookmark of the OLD URL by itself (the app must boot before any client redirect can
+// run) — that half is `firebase.json`'s hosting-level 301 (T024).
+//
+// 016/T072-A4 (2026-08-07): these used to call `requireAuth` HERE, with `location.pathname` (the
+// OLD shape, e.g. `/catalogo/produtos/xxx`) as the sign-in return target. Two real bugs, both
+// MEASURED: (1) `requireAuth` runs inside `beforeLoad`, which can fire on a cold full navigation
+// BEFORE Firebase's `authStateReady()` resolves — `context.status` is transiently `"loading"`,
+// which `requireAuth` treats as unauthenticated and bounces to `/sign-in` even for an already
+// signed-in seller (measured: `requireAuth` invoked with status `"loading"` on a cold hit). That
+// race self-heals on `catalogoRoute`/`historicoRoute` below because their target is the NEW
+// `?produto=`/`?snapshot=` shape, which IS in `safeRedirect`'s whitelist — the seller bounces
+// through `/sign-in` invisibly and lands back exactly where they meant to go. (2) But THIS
+// route's target was a bare pathname in the OLD shape (`/catalogo/produtos/xxx`), which
+// `safeRedirect` never recognises (the whitelist only knows `/catalogo` and `/catalogo?…`) — so
+// even a genuinely signed-out seller opening an old bookmark, after signing in, landed on
+// `/calcular` instead of back on their product. Measured directly: a cold hit on
+// `/catalogo/produtos/id-fantasma` ended on `/calcular`, silently swallowing the id.
+//
+// The fix: these routes carry NO auth check of their own — they only translate the URL shape.
+// The unconditional redirect lands on `catalogoRoute`/`historicoRoute`, whose OWN `beforeLoad`
+// re-runs (TanStack re-evaluates `beforeLoad` down the new match) and gates auth correctly, with
+// a target that already round-trips safely — the exact mechanism `deep-links.spec.ts`'s T020
+// tests already prove cold-load-safe.
 const produtoNovoRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/novo",
-  beforeLoad: ({ context, location }) => {
-    requireAuth(context.status, location.pathname);
+  beforeLoad: () => {
     throw redirect({ to: "/catalogo", search: { produto: "novo" } });
   },
 });
@@ -136,8 +154,7 @@ const produtoNovoRoute = createRoute({
 const produtoEditRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/catalogo/produtos/$productId",
-  beforeLoad: ({ context, location, params }) => {
-    requireAuth(context.status, location.pathname);
+  beforeLoad: ({ params }) => {
     throw redirect({ to: "/catalogo", search: { produto: params.productId } });
   },
 });
@@ -189,14 +206,15 @@ const historicoRoute = createRoute({
 });
 
 // 013/F-02: the OLD 2-segment route stays registered as a CLIENT-SIDE REDIRECT for ≥1 release
-// (research §2) — it preserves the auth gate it always had, then forwards to the new
-// `?snapshot=` URL, preserving the id. Same caveat as the catalogo redirects above: this does not
-// by itself fix a cold-load of the OLD URL (the hosting-level 301, T024, does).
+// (research §2) — it forwards to the new `?snapshot=` URL, preserving the id. Same caveat as the
+// catalogo redirects above: this does not by itself fix a cold-load of the OLD URL (the
+// hosting-level 301, T024, does). No auth check of its own — same 016/T072-A4 reasoning as
+// `produtoEditRoute` above: `historicoRoute`'s own `beforeLoad` gates auth on the NEW shape,
+// which is the one `safeRedirect` can actually round-trip.
 const snapshotDetailRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/historico/$snapshotId",
-  beforeLoad: ({ context, location, params }) => {
-    requireAuth(context.status, location.pathname);
+  beforeLoad: ({ params }) => {
     throw redirect({ to: "/historico", search: { snapshot: params.snapshotId } });
   },
 });

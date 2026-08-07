@@ -292,6 +292,72 @@ describe("applyScenarioConfig → computeFromForm — REOPEN + live recompute (T
     const patch = applyScenarioConfig(config);
     expect(patch.scalars.avgPowerKw).toBe("0,1");
   });
+
+  // 016/T072-R5 — the thousands mask `NumberField` applies on blur (currency fields only) must
+  // survive a REOPEN too. MEASURED before the fix: `machineValue` "4000,00" saved, then reopened
+  // as the un-grouped "4000,00" — wait, worse: any currency field ≥1000 reopened WITHOUT its
+  // thousands separator (e.g. "12345,00" instead of "12.345,00"), because the reopen path used the
+  // plain dot→comma swap, never the grouping formatter the live field's own blur uses.
+  it("a currency scalar ≥1000 reopens WITH the thousands separator, exactly like the live blur mask", () => {
+    const saveForm = values({ machineValue: "12345,00", channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.scalars.machineValue).toBe("12.345,00");
+  });
+
+  it("a non-currency scalar ≥1000 (grams) is NEVER grouped — matches the live field's own behaviour", () => {
+    const saveForm = values({ printGrams: "5000", channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.scalars.printGrams).toBe("5000");
+  });
+
+  it("a currency CHANNEL override (fixedFee) ≥1000 reopens grouped; commissionPct (percent) never is", () => {
+    const slot = {
+      ...defaultChannelSlot("MERCADO_LIVRE"),
+      fixedFee: "1234,50",
+      commissionPct: "1500",
+    };
+    const saveForm = values({ channels: [slot] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.channels[0]!.fixedFee).toBe("1.234,50");
+    expect(patch.channels[0]!.commissionPct).toBe("1500"); // percent — never grouped
+  });
+
+  it('"Outros custos" (always money) reopens grouped at ≥1000', () => {
+    const saveForm = values({
+      channels: [],
+      otherCosts: [{ name: "Frete extra", value: "2500,00" }],
+    });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.otherCosts[0]!.value).toBe("2.500,00");
+  });
 });
 
 // 010/T024 (E5, PR-B US3, Q12) — the KIT-basis reopen: the ONE shared `channels[]` applied

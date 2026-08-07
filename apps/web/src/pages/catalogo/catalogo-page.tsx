@@ -139,7 +139,7 @@ export function CatalogoPage() {
   const signedOut = sessionStatus !== "authenticated";
   if (signedOut || entitlement.data?.status === "none") {
     return (
-      <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+      <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
         <PageHeader title={messages.nav.catalogo} />
         <PremiumTeaser feature="CATALOG" signedOut={signedOut} />
       </section>
@@ -147,7 +147,7 @@ export function CatalogoPage() {
   }
 
   return (
-    <section className="mx-auto flex w-full max-w-md flex-col gap-4">
+    <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
       <PageHeader title={messages.nav.catalogo} />
       <CatalogTabs active={active} onChange={setActive} />
       <div role="tabpanel" id={`catalog-panel-${active}`} aria-labelledby={`catalog-tab-${active}`}>
