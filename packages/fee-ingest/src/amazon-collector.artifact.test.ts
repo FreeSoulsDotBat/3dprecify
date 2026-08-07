@@ -10,6 +10,7 @@ import {
   veredictoAmazon,
   vigenciasAnteriores,
 } from "./amazon-collector.ts";
+import { AMAZON_INDIVIDUAL_FEE_SOURCE } from "./amazon-to-catalog.ts";
 import { collectedAtFor } from "./guardrails.ts";
 import { aplicarFatia } from "./slice.ts";
 
@@ -113,9 +114,20 @@ describe("PONTO FIXO da migração — a fatia reproduz o artefato byte a byte (
     const b = fatiaAmazon(coleta);
     expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     expect(a.collectedAt).toBe(DATA);
-    // A função não conhece "hoje": não há como ela inventar uma data, e é por isso que a regra do
-    // SC-807 continua inteira depois da migração.
-    expect(JSON.stringify(a)).not.toContain(new Date().toISOString().slice(0, 10));
+    // A função não conhece "hoje": TODA data na fatia veio dos INSUMOS (o collectedAt declarado
+    // e as vigências das linhas), nunca do relógio. A forma anterior — `not.toContain(hoje)` —
+    // era dependente de coincidência e a run 2 do T017 a derrubou: dentro do job, a 1ª passada
+    // do fee:build move lastReviewed para hoje e DATA passa a SER hoje LEGITIMAMENTE.
+    // Os insumos são a coleta E as constantes de DOMÍNIO declaradas do coletor (a vigência do
+    // plano Individual, "2020-12-01", é dado da fonte com procedência — não relógio).
+    const datasDosInsumos = new Set([
+      ...(JSON.stringify(coleta).match(/\d{4}-\d{2}-\d{2}/g) ?? []),
+      AMAZON_INDIVIDUAL_FEE_SOURCE.effectiveDate,
+    ]);
+    const datasNaFatia = new Set(JSON.stringify(a).match(/\d{4}-\d{2}-\d{2}/g) ?? []);
+    for (const d of datasNaFatia) {
+      expect(datasDosInsumos.has(d), `data "${d}" na fatia não veio de nenhum insumo`).toBe(true);
+    }
   });
 
   it("e o portão da data continua sendo `collectedAtFor`: fixture SEM `COLLECTED_AT` é recusada", () => {
