@@ -81,12 +81,17 @@ export function SaveScenarioSheet({ source }: { source: SaveScenarioSource }) {
 const NAME_MAX = 120;
 const NOTE_MAX = 500;
 
-/** A failed write's honest, specific line — never a generic error, never a fake "salvo!" (§0.1). */
-function honestSaveError(err: unknown): string {
+/** A failed write's honest, specific line — never a generic error, never a fake "salvo!" (§0.1).
+ *
+ *  016/T072-A9 (2026-08-07): the non-`ApiError` fallback used to ALSO claim "precisa de conexão"
+ *  — an unmeasured cause (see `shared/api/error-messages.ts:honestWriteError`, the canonical
+ *  version of this same rule). `transport.ts` normalises every real request failure into a typed
+ *  `ApiError`, so anything else is unexpected and gets the generic honest phrase instead. */
+export function honestSaveError(err: unknown): string {
   if (err instanceof ApiError) {
     return err.status === 0 ? t.saveOffline : apiErrorMessage(err);
   }
-  return t.saveOffline;
+  return messages.apiError.unknown;
 }
 
 function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () => void }) {

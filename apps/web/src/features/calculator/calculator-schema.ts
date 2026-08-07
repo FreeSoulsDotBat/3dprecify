@@ -475,6 +475,23 @@ export const LABOR_AND_FINISH_FIELDS: readonly CalcFieldMeta[] = [
  *  so a future split does not have to touch three call sites at once). */
 export const LABOR_FIELDS: readonly CalcFieldMeta[] = LABOR_AND_FINISH_FIELDS;
 
+// 016/T072-R5 (2026-08-07) — the SAME "which scalar/channel field is currency" knowledge
+// `NumberField`'s on-blur thousands mask reads via `meta.currency`/`CHANNEL_FEE_FIELDS[].currency`,
+// re-exposed as plain name sets so `scenario-bridge.ts` can apply the identical formatter at
+// RESTORE time (a reopened scenario used to write the raw wire string straight in — no mask, so a
+// value ≥1000 lost its thousands separator on reopen even though the SAME field masks correctly on
+// a normal blur). `machineValue` renders through its own dedicated control (`MachineCostFields`,
+// not `COST_FIELDS`), so it is added explicitly — the one currency scalar with no `CalcFieldMeta`
+// entry anywhere.
+export const CURRENCY_FIELD_NAMES: ReadonlySet<CalcFieldName> = new Set([
+  ...[...COST_FIELDS, ...LABOR_AND_FINISH_FIELDS].filter((f) => f.currency).map((f) => f.name),
+  "machineValue",
+]);
+
+export const CHANNEL_CURRENCY_FIELD_NAMES: ReadonlySet<ChannelFieldName> = new Set(
+  CHANNEL_FEE_FIELDS.filter((f) => f.currency).map((f) => f.name),
+);
+
 /** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */
 export const RITMO_OPTIONS: readonly SelectOption[] = [
   { value: "0", label: t.machineCost.ritmoOptions.few },

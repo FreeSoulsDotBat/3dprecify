@@ -132,4 +132,66 @@ describe("CalcularPage — US5 catalog pickers (T024)", () => {
       screen.queryByRole("combobox", { name: t.catalogPicker.filament }),
     ).not.toBeInTheDocument();
   });
+
+  // 016/T072-A8 — empty cache AND a real read failure used to render NOTHING at all: the picker
+  // card just vanished, indistinguishable from "you have none yet". This is a DIFFERENT state and
+  // must say so.
+  describe("T072-A8: a real read failure with no cache is honest, not silent", () => {
+    it("authenticated, catalog read genuinely failed (no cache): an honest error, not silence", () => {
+      const refetchFilaments = vi.fn();
+      const refetchPrinters = vi.fn();
+      useFilamentsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isError: true,
+        error: { code: "INTERNAL" },
+        stale: false,
+        refetch: refetchFilaments,
+      });
+      usePrintersMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isError: true,
+        error: { code: "INTERNAL" },
+        stale: false,
+        refetch: refetchPrinters,
+      });
+      useSessionStore.setState({
+        status: "authenticated",
+        user: { uid: "u-1", email: "a@b.dev" } as never,
+      });
+      renderPage();
+
+      expect(screen.getByText(t.catalogPicker.loadError)).toBeInTheDocument();
+      fireEvent.click(screen.getByRole("button", { name: t.catalogPicker.retry }));
+      expect(refetchFilaments).toHaveBeenCalled();
+      expect(refetchPrinters).toHaveBeenCalled();
+    });
+
+    it("authenticated, zero items because of the ENTITLEMENT gate (free/lapsed): stays silent", () => {
+      useFilamentsMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isError: true,
+        error: { code: "ENTITLEMENT_REQUIRED" },
+        stale: false,
+        refetch: vi.fn(),
+      });
+      usePrintersMock.mockReturnValue({
+        items: [],
+        isLoading: false,
+        isError: true,
+        error: { code: "ENTITLEMENT_REQUIRED" },
+        stale: false,
+        refetch: vi.fn(),
+      });
+      useSessionStore.setState({
+        status: "authenticated",
+        user: { uid: "u-1", email: "a@b.dev" } as never,
+      });
+      renderPage();
+
+      expect(screen.queryByText(t.catalogPicker.loadError)).not.toBeInTheDocument();
+    });
+  });
 });

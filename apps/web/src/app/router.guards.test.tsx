@@ -38,12 +38,8 @@ describe("router auth guards (T034 / US2)", () => {
   // DETAIL and the product create/edit routes stay guarded — there is nothing to teach a
   // signed-out visitor at those URLs.
   //
-  // 013/F-02 (D1=A): these three are the OLD 2-segment URLs (`base:'./'` blanks them on
-  // cold-load — the reason they're migrated at all, see router.tsx). They stay registered as
-  // CLIENT-SIDE REDIRECTS for ≥1 release: the auth gate they always had fires FIRST (so the
-  // GC-2 sign-in bounce below is completely unchanged — same old path in `redirect=`), and only
-  // an AUTHENTICATED visitor proceeds to the new `?produto=`/`?snapshot=` URL (T021, below).
-  const guarded = ["/historico/csid-1", "/conta", "/catalogo/produtos/novo"] as const;
+  // /conta is a plain guarded route (no old→new migration) — the redirect target is itself.
+  const guarded = ["/conta"] as const;
 
   it.each(guarded)(
     "GC-2: an unauthenticated user hitting %s is sent to /sign-in?redirect=<path>",
@@ -62,6 +58,29 @@ describe("router auth guards (T034 / US2)", () => {
       expect(redirectParam(router.state.location.search)).toBe(path);
     },
   );
+
+  // 013/F-02 (D1=A) — REVISED 016/T072-A4 (2026-08-07): these are the OLD 2-segment URLs
+  // (`base:'./'` blanked them on cold-load — the reason they're migrated at all, see
+  // router.tsx). They no longer carry their OWN auth check: they translate the URL shape
+  // unconditionally, and the NEW `?produto=`/`?snapshot=` route they land on gates auth itself.
+  // A signed-out visitor is still sent to `/sign-in` — but with the NEW shape as the return
+  // target, not the old pathname. This is a DELIBERATE behavior change, not a relaxed guard: the
+  // old pathname was never in `safeRedirect`'s whitelist, so a genuinely signed-out visitor
+  // opening an old bookmarked 2-segment URL used to sign in and land on `/calcular`, silently
+  // losing the id — MEASURED (T072-A4). The new target round-trips correctly (T020/T072-A4 e2e).
+  describe("old 2-segment URLs still gate auth, via the NEW shape's target (T072-A4)", () => {
+    it("GC-2: /historico/csid-1 (anonymous) is sent to /sign-in?redirect=/historico?snapshot=csid-1", async () => {
+      const router = await loadAt("anonymous", "/historico/csid-1");
+      expect(router.state.location.pathname).toBe("/sign-in");
+      expect(redirectParam(router.state.location.search)).toBe("/historico?snapshot=csid-1");
+    });
+
+    it("GC-2: /catalogo/produtos/novo (anonymous) is sent to /sign-in?redirect=/catalogo?produto=novo", async () => {
+      const router = await loadAt("anonymous", "/catalogo/produtos/novo");
+      expect(router.state.location.pathname).toBe("/sign-in");
+      expect(redirectParam(router.state.location.search)).toBe("/catalogo?produto=novo");
+    });
+  });
 
   // /conta has no new-URL migration — it stays a plain guarded route, reached directly.
   it("an authenticated user reaches /conta directly", async () => {

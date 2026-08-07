@@ -152,4 +152,19 @@ describe("SaveScenarioSheet — honest, specific failure (FR-613: no queue, no f
       expect(screen.getByText(messages.apiError.entitlementRequired)).toBeInTheDocument(),
     );
   });
+
+  // 016/T072-A9: an unexpected failure that ISN'T even a typed `ApiError` (transport.ts normalises
+  // every real request failure into one) must not be relabelled "precisa de conexão" — an
+  // unmeasured cause. It gets the generic honest phrase instead.
+  it("an unexpected non-ApiError failure gets the generic honest phrase, never the conexão copy", async () => {
+    mutateAsync.mockRejectedValue(new Error("boom — not an ApiError"));
+    const user = setup();
+    renderSheet();
+    await user.click(screen.getByTestId("save-scenario-trigger"));
+    await user.type(screen.getByLabelText(new RegExp("^" + t.nameField)), "x");
+    await user.click(screen.getByTestId("save-scenario-submit"));
+
+    await waitFor(() => expect(screen.getByText(messages.apiError.unknown)).toBeInTheDocument());
+    expect(screen.queryByText(t.saveOffline)).not.toBeInTheDocument();
+  });
 });

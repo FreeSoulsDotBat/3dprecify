@@ -59,7 +59,11 @@ function IdentitySection() {
     const isSession =
       err.status === 401 || err.code === "UNAUTHENTICATED" || err.code === "TOKEN_EXPIRED";
     return (
-      <Card className="tf-conta__identity">
+      // qa pós-016 (N01) — o ramo de ERRO empilha: a linha flex do identity (feita para
+      // avatar+texto) espremia o Alert a uma palavra por coluna e paria o "Tentar novamente"
+      // fora do cartão E da viewport a 360px (right 378,5 > 360) — a classe E6/T028-B1, que o
+      // comentário do __row--plan já citava e este cartão não tinha herdado.
+      <Card className="tf-conta__identity tf-conta__identity--error">
         <Alert tone="danger" title={messages.conta.identityErrorTitle}>
           {isSession ? messages.apiError.tokenExpired : apiErrorMessage(err)}
         </Alert>
@@ -199,7 +203,7 @@ export function ContaPage() {
 
   if (search.checkout === "retorno") {
     return (
-      <section className="tf-conta mx-auto flex w-full max-w-md flex-col">
+      <section className="tf-conta mx-auto flex w-full tf-page-wide flex-col">
         <PageHeader title={messages.conta.title} />
         <CheckoutReturnPanel />
       </section>
@@ -207,7 +211,7 @@ export function ContaPage() {
   }
 
   return (
-    <section className="tf-conta mx-auto flex w-full max-w-md flex-col">
+    <section className="tf-conta mx-auto flex w-full tf-page-wide flex-col">
       <PageHeader title={messages.conta.title} />
       <IdentitySection />
       <PlanSection />

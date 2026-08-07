@@ -99,8 +99,10 @@ export function useBoms(): BomListState {
   const items = query.data ?? cached ?? [];
   return {
     items,
-    isLoading: query.isFetching && items.length === 0 && cached === null,
-    isError: query.isError && cached === null,
+    // qa pós-016 (13-B/13-D) — as linhas idênticas ao use-catalog, com o mesmo furo do cache
+    // `[]` nos dois estados; mesma correção (precedente use-history.ts, estados exaustivos).
+    isLoading: query.isFetching && items.length === 0,
+    isError: query.isError && items.length === 0,
     error: (query.error as ApiError | null) ?? null,
     stale: query.isError && query.data === undefined && items.length > 0,
     refetch: () => void query.refetch(),
