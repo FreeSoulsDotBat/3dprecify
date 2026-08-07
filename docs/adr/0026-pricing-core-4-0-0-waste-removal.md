@@ -1,6 +1,6 @@
 # ADR-0026 — pricing-core **4.0.0**: remoção do `wasteGrams`, recusa explícita e a regra de leitura de documento gravado
 
-- **Status**: Proposto
+- **Status**: Aceito (2026-08-07 — ratificado pelo dono no merge do PR de fechamento do 016; implementado e homologado nas fatias PR-D e PR-F, evidência em specs/016-correcao-homologacao/dod-evidence.md)
 - **Data**: 2026-08-05
 - **Contexto**: 016-correcao-homologacao (US10 · FR-912/913/914; decisão do dono D2, opção A) —
   escalação opus do ADR-0022 (altera a superfície do motor de preço)

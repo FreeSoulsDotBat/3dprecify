@@ -206,7 +206,7 @@ volumoso soma R$ 50 com legenda; sem resposta de perfil → byte-idêntico.
 - [x] T068 [US14] Bump ÚNICO de `catalogVersion` via `nextCatalogVersion` (`packages/fee-ingest/src/guardrails.ts`) no fechamento da fatia + teste de sequenciamento
 - [x] T069 [US16] Export/PDF: linha nomeada da sobretaxa no breakdown impresso (via `ChannelResult.surcharges` ecoado) + asserção com DADO adversarial e geometria (lição E4), em `backend/app/services/quote_render.py` + teste
 - [x] T070 [US14] Homologação visual (qa-produto): Amazon Individual (preço subiu R$ 2 + selo com procedência própria) · Shopee CNPJ < R$ 8 · CPF < R$ 12 (aviso) · volumoso marcado/desmarcado — screenshots + geometria
-- [ ] T071 [US14] Gate da fatia + PR-F
+- [x] T071 [US14] Gate da fatia + PR-F
 
 **Checkpoint**: todas as mudanças de preço decididas pelo dono no ar, cada uma com sua prova.
 
@@ -214,9 +214,9 @@ volumoso soma R$ 50 com legenda; sem resposta de perfil → byte-idêntico.
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T072 Matriz de homologação transversal (spec §Assumptions): offline (PWA) · erro de rede real · sessão expirada · `/conta` no grátis · tema claro · 404/tela de erro · mobile 360px — MEDIR e registrar em `specs/016-correcao-homologacao/dod-evidence.md`; defeito achado vira follow-up priorizado, não escopo automático
-- [ ] T073 [P] Consolidar `specs/016-correcao-homologacao/dod-evidence.md` (V0 + evidências por fatia + T057 verbatim) + a VARREDURA do SC-910 (achado C2 do analyze): toda folha de dinheiro do catálogo servido com `source` + data, e nenhuma superfície da UI exibindo número de tarifa sem procedência — resultado registrado; e propor ao dono o flip Proposed→Accepted dos ADRs 0026/0027 no gate final (0025 fica Proposed — adiado com o ML)
-- [ ] T074 [P] Atualizar a linha de terreno (`CLAUDE.md`) e o marker SPECKIT ao fechar o incremento; registrar no `docs/token-ledger.md` toda operação multi-agente da implementação (estimar ANTES, real DEPOIS)
+- [x] T072 Matriz de homologação transversal (spec §Assumptions): offline (PWA) · erro de rede real · sessão expirada · `/conta` no grátis · tema claro · 404/tela de erro · mobile 360px — MEDIR e registrar em `specs/016-correcao-homologacao/dod-evidence.md`; defeito achado vira follow-up priorizado, não escopo automático
+- [x] T073 [P] Consolidar `specs/016-correcao-homologacao/dod-evidence.md` (V0 + evidências por fatia + T057 verbatim) + a VARREDURA do SC-910 (achado C2 do analyze): toda folha de dinheiro do catálogo servido com `source` + data, e nenhuma superfície da UI exibindo número de tarifa sem procedência — resultado registrado; e propor ao dono o flip Proposed→Accepted dos ADRs 0026/0027 no gate final (0025 fica Proposed — adiado com o ML)
+- [x] T074 [P] Atualizar a linha de terreno (`CLAUDE.md`) e o marker SPECKIT ao fechar o incremento; registrar no `docs/token-ledger.md` toda operação multi-agente da implementação (estimar ANTES, real DEPOIS)
 
 ---
 
