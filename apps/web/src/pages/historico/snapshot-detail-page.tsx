@@ -217,18 +217,25 @@ function SyncAlert({ item }: { item: HistoryItem }) {
   if (item.syncState === "synced") return null;
 
   const state = item.syncState;
+  // hotfix 016/A3 (H4b) — `unauthenticated` is its OWN branch, never falling into the `failed`
+  // default: falling through there would print "Não foi possível registrar" under a danger tone
+  // over a record that is not rejected — its session just died.
   const title =
     state === "pending"
       ? t.syncPendingTitle
       : state === "blocked"
         ? t.syncBlockedTitle
-        : t.syncFailedTitle;
+        : state === "unauthenticated"
+          ? t.syncUnauthenticatedTitle
+          : t.syncFailedTitle;
   const body =
     state === "pending"
       ? t.syncPendingBody
       : state === "blocked"
         ? t.syncBlockedBody
-        : t.syncFailedBody;
+        : state === "unauthenticated"
+          ? t.syncUnauthenticatedBody
+          : t.syncFailedBody;
   const supportCode = item.entry?.lastStatus;
 
   return (
@@ -241,6 +248,16 @@ function SyncAlert({ item }: { item: HistoryItem }) {
         <p className="tf-historico__meta">
           {messages.error.supportCode} {supportCode}
         </p>
+      )}
+      {/* hotfix 016/A3 (H5) — the way back lives right beside the actions: a dead session is only
+          ONE tap from being fixed. */}
+      {state === "unauthenticated" && (
+        <a
+          className="tf-btn tf-btn--secondary tf-btn--sm mt-2"
+          href={`/sign-in?redirect=${encodeURIComponent("/historico")}`}
+        >
+          {t.signInAction}
+        </a>
       )}
       <EntryActions item={item} />
     </Alert>

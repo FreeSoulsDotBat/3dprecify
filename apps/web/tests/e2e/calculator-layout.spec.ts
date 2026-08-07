@@ -2,6 +2,8 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
+import { grantPremium, signUpThrowaway } from "./history-helpers";
+
 // 016/PR-B (US4/T012) — the desktop layout geometry: A6 measured the calculator's own content
 // at ~37% of the shell's main content area at 1440px ([F11a-005]); SC-903 sets the floor at
 // ≥60%. This spec was RED before any CSS existed here — no `.tf-calc-grid`, so `.tf-calc-page`
@@ -237,6 +239,39 @@ test.describe("calculator desktop layout — os inputs obrigatórios pré-preenc
           `${width}px "${label}" = "${geo.value}" is clipped: clientWidth ${geo.clientWidth}px < scrollWidth ${geo.scrollWidth}px`,
         ).toBeGreaterThanOrEqual(geo.scrollWidth - 1);
       }
+    });
+  }
+});
+
+// hotfix 016/A2 (H2c, 2026-08-07) — the freight-subsidy legend under the Shopee "Frete" field is
+// a NEW paragraph on the channel slot, dirigido pelo dado (`freightSubsidyInfo`) — the exact class
+// of addition 015/A6/016 keep catching mid-viewport: prose that wraps fine at 1440px and forces
+// horizontal scroll at 360px. "Dois temas, sem transbordo a 360" (o desenho, §3).
+test.describe("calculator — a legenda do subsídio de frete Shopee não transborda (016/A2 H2c)", () => {
+  const t2 = messages.calculator.channels;
+
+  for (const width of [360, 390]) {
+    test(`at ${width}px a legenda aparece e o documento não tem overflow horizontal`, async ({
+      page,
+    }, info) => {
+      const email = await signUpThrowaway(page, `calc-layout-freight-${width}-${info.workerIndex}`);
+      grantPremium(email);
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/calcular");
+      await page.reload();
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+
+      const slot0 = page.getByTestId("channel-slot").first();
+      await slot0.getByLabel(t2.marketplace).selectOption("SHOPEE");
+
+      const legend = page.getByTestId("freight-subsidy-info");
+      await expect(legend).toBeVisible();
+
+      const overflow = await page.evaluate(() => {
+        const el = document.scrollingElement ?? document.documentElement;
+        return el.scrollWidth - el.clientWidth;
+      });
+      expect(overflow, `document horizontal overflow at ${width}px: ${overflow}px`).toBe(0);
     });
   }
 });

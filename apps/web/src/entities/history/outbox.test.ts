@@ -159,6 +159,42 @@ describe("draining: exactly-once, and honest about every failure mode", () => {
     expect(post).toHaveBeenCalledTimes(1);
   });
 
+  // hotfix 016/A3 (H4, 2026-08-07) — a 401 tells a DIFFERENT truth than "no answer": the session
+  // died, the connection did not. Before this it fell into `pending`, whose copy falsely promises
+  // "sincroniza sozinho quando houver conexão" while the connection is fine.
+  it("um 401 no envio NÃO vira `pending` — vira `unauthenticated`", async () => {
+    idbGet.mockResolvedValue([entry()]);
+    const post = vi.fn().mockRejectedValue({ status: 401, code: "TOKEN_EXPIRED" });
+
+    await drainOutbox("u1", { post });
+
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value[0]?.syncState).toBe("unauthenticated");
+    expect(value[0]?.syncState).not.toBe("pending");
+  });
+
+  it("um 401 NUNCA remove a entrada — é a única cópia da cotação não sincronizada", async () => {
+    idbGet.mockResolvedValue([entry()]);
+    const post = vi.fn().mockRejectedValue({ status: 401, code: "UNAUTHENTICATED" });
+
+    await drainOutbox("u1", { post });
+
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toHaveLength(1);
+    expect(value[0]?.clientSnapshotId).toBe(entry().clientSnapshotId);
+  });
+
+  it("uma entrada `unauthenticated` NÃO é re-tentada sozinha, e É re-tentada quando a sessão volta", async () => {
+    idbGet.mockResolvedValue([entry({ syncState: "unauthenticated" })]);
+    const post = vi.fn().mockResolvedValue({ id: "s1" });
+
+    await drainOutbox("u1", { post });
+    expect(post).not.toHaveBeenCalled(); // auto-retry is stopped while unauthenticated
+
+    await drainOutbox("u1", { post, retryUnauthenticated: true });
+    expect(post).toHaveBeenCalledTimes(1); // the session came back — mirror of retryBlocked
+  });
+
   it("a 404 (the seller DELETED it elsewhere) drops the entry quietly — not a silent data loss", async () => {
     // This only happens when the original response was lost AND the seller then deleted the
     // snapshot from another device. Resurrecting it would undo a deliberate deletion; keeping it

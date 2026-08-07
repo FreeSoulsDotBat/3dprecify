@@ -30,7 +30,12 @@ import type { SnapshotIn, SnapshotOut } from "@/shared/api/generated";
 //     (minting at send time would regenerate after an app restart and DUPLICATE) and the unique
 //     constraint does the rest. This module never has to be clever about it.
 
-export type SyncState = "synced" | "pending" | "blocked" | "failed";
+// hotfix 016/A3 (H4, 2026-08-07) — "unauthenticated" tells the TRUE reason a 401 could not sync: the
+// SESSÃO expirou, not the network. Before this it fell into `pending`, whose copy promises "sincroniza
+// sozinho quando houver conexão" — false when the connection is fine and the server refuses the token.
+// It behaves like `blocked` (never auto-retried — retrying without a session can never succeed) but is
+// its own state so the UI can name the RIGHT cause and never suggest "check your connection".
+export type SyncState = "synced" | "pending" | "blocked" | "failed" | "unauthenticated";
 
 /** A queued record: the COMPLETE POST body, frozen at record time. Never re-derived, never
  *  recomputed, never patched at send time — the device clock and the idempotency key are part of
@@ -196,6 +201,10 @@ export interface DrainDeps {
   post: (body: SnapshotIn) => Promise<SnapshotOut>;
   /** Set when the entitlement just became `active` again: blocked entries are retried. */
   retryBlocked?: boolean;
+  /** hotfix 016/A3 (H4) — set when the SESSION just became `authenticated` again (the mirror of
+   *  `retryBlocked`, driven by a different signal): `unauthenticated` entries are retried. Retrying
+   *  a session-dead entry without this would just mint another 401 and another wasted attempt. */
+  retryUnauthenticated?: boolean;
 }
 
 /**
@@ -248,13 +257,22 @@ export async function settleEntry(
       return "synced";
     }
 
+    // hotfix 016/A3 (H4) — a 401 is NOT "no answer": the server actively refused the token. It must
+    // never fall into `pending` (whose copy promises "sincroniza sozinho quando houver conexão" —
+    // false with a dead connection and a live one alike) nor auto-retry blindly (retrying without a
+    // session can only mint the same 401 again). It NEVER purges or signs the seller out here — this
+    // function does not know about auth state at all, and that absence is the guarantee: the ONLY
+    // copy of an unsynced quote survives a dead session (see `session-expiry.ts` for the non-negotiable
+    // property, enforced where sign-out actually lives).
     const syncState: OutboxEntry["syncState"] =
-      status === 403
-        ? "blocked"
-        : status === 422
-          ? "failed"
-          : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
-            "pending";
+      status === 401
+        ? "unauthenticated"
+        : status === 403
+          ? "blocked"
+          : status === 422
+            ? "failed"
+            : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
+              "pending";
 
     await updateEntry(uid, entry.clientSnapshotId, (current) => ({
       ...current,
@@ -291,9 +309,14 @@ export async function drainOutbox(
 
   for (const entry of entries) {
     // A permanent rejection is never auto-retried; a blocked entry waits for the seller (or for
-    // premium to come back). Untouched — not rewritten, not reordered — but its existing state is
-    // still recorded so the caller can read the target's outcome.
-    if (entry.syncState === "failed" || (entry.syncState === "blocked" && !deps.retryBlocked)) {
+    // premium to come back); an unauthenticated one waits for the seller (or for the session to come
+    // back — 016/A3 H4). Untouched — not rewritten, not reordered — but its existing state is still
+    // recorded so the caller can read the target's outcome.
+    if (
+      entry.syncState === "failed" ||
+      (entry.syncState === "blocked" && !deps.retryBlocked) ||
+      (entry.syncState === "unauthenticated" && !deps.retryUnauthenticated)
+    ) {
       results[entry.clientSnapshotId] = entry.syncState;
       continue;
     }

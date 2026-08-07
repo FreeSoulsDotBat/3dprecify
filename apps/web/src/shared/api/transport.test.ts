@@ -18,6 +18,8 @@ vi.mock("@sentry/react", () => ({
 
 import * as Sentry from "@sentry/react";
 
+import { clearSessionExpired, isSessionExpired } from "@/shared/session/session-expiry";
+
 import { ApiError, apiFetch, apiFetchFile } from "./transport";
 
 type FetchInit = RequestInit & { signal: AbortSignal };
@@ -28,11 +30,105 @@ const REQUEST_TIMEOUT_TEST_MS = 15_000;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSessionExpired();
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  clearSessionExpired();
+});
+
+// ---- hotfix 016/A3 (H5) — the session-expired marker ------------------------------------
+describe("transport — session-expiry marker (016/A3 H5)", () => {
+  it("um 401 UNAUTHENTICATED marca a sessão expirada", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(
+            JSON.stringify({ error: { code: "UNAUTHENTICATED", message: "no session" } }),
+            { status: 401, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+    expect(isSessionExpired()).toBe(false);
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+  });
+
+  it("um 401 TOKEN_EXPIRED marca a sessão expirada", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "TOKEN_EXPIRED", message: "expired" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+  });
+
+  it("um 403 (ENTITLEMENT_REQUIRED) NÃO marca a sessão expirada — não é a mesma história", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(
+            JSON.stringify({ error: { code: "ENTITLEMENT_REQUIRED", message: "premium" } }),
+            { status: 403, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(false);
+  });
+
+  it("um 401 sem um dos dois códigos NÃO marca (nunca inventa uma causa)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "INTERNAL", message: "oops" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(false);
+  });
+
+  it("uma resposta bem-sucedida LIMPA um marcador que uma requisição anterior deixou", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "UNAUTHENTICATED", message: "x" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history");
+    expect(isSessionExpired()).toBe(false);
+  });
 });
 
 // ---- (a) malformed body → ApiError with the REAL status ---------------------------------

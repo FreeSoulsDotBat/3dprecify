@@ -5,6 +5,7 @@ import { OutboxSyncer } from "@/features/history/outbox-syncer";
 import { SignOutOutboxGuard } from "@/features/history/sign-out-outbox-guard";
 import { AppNav } from "@/widgets/app-nav/app-nav";
 import { OfflineBanner } from "@/widgets/offline-banner/offline-banner";
+import { SessionExpiryBanner } from "@/widgets/session-expiry-banner/session-expiry-banner";
 import { TopBar } from "@/widgets/top-bar/top-bar";
 
 import "./app-shell.css";
@@ -52,6 +53,9 @@ export function AppShell() {
     <div className="tf-shell" data-layout={isMobile ? "mobile" : "desktop"}>
       {/* slot: offline-banner (US4/T052) */}
       <OfflineBanner />
+      {/* hotfix 016/A3 (H5) — the way back when the SERVER refuses a live client session. Renders
+          nothing while nothing is expired. */}
+      <SessionExpiryBanner />
 
       {/* 016/US3 (T014) — "a sidebar fica à frente do header": on desktop the side nav is now a
           full-height column to the LEFT of everything (banner landmark included), preparing the

@@ -32,7 +32,12 @@ import {
 import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
 import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
 import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
-import type { CategoryNode, FeeCatalog, OptionalSurcharge } from "@/shared/fee-catalog";
+import {
+  type CategoryNode,
+  type FeeCatalog,
+  type OptionalSurcharge,
+  resolveFreightSubsidyCeiling,
+} from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 import type { PriceResult } from "@3dprecify/pricing-core";
@@ -697,6 +702,17 @@ function ChannelSlot({
   const feeFieldMetas = CHANNEL_FEE_FIELDS.filter(
     (meta) => plan.feeFields.includes(meta.name) || slot[meta.name].trim() !== "",
   );
+  // hotfix 016/A2 (H2c) — o subsídio de frete da Shopee como INFORMAÇÃO sob o campo "Frete".
+  // Dirigido por dado (como o volumoso): renderiza sse o catálogo publica `freightSubsidyInfo` E o
+  // slot já tem um anúncio (varejo) para resolver a faixa — nunca um teto genérico sem preço.
+  const shopeeSubsidy =
+    slot.marketplace === "SHOPEE"
+      ? catalog.marketplaces.find((m) => m.marketplace === "SHOPEE")?.freightSubsidyInfo
+      : undefined;
+  const subsidyCeiling =
+    shopeeSubsidy && outcome?.result?.precoAnuncioVarejo != null
+      ? resolveFreightSubsidyCeiling(shopeeSubsidy, outcome.result.precoAnuncioVarejo)
+      : null;
   return (
     <Card padding="md" className="flex flex-col gap-3" data-testid="channel-slot">
       <div className="flex items-end gap-2">
@@ -863,6 +879,19 @@ function ChannelSlot({
               )}
         </p>
       )}
+      {/* hotfix 016/A2 (H2c) — o subsídio de frete da Shopee como INFORMAÇÃO, nunca como desconto:
+          zero número no código (Constituição II), tudo lido de `freightSubsidyInfo` via
+          `resolveFreightSubsidyCeiling`. Fica ao lado da grade de taxas, junto das outras legendas
+          do slot — nunca dentro do campo "Frete", que continua sendo a ÚNICA origem de desconto
+          (H2/FR-111b). */}
+      {shopeeSubsidy && subsidyCeiling !== null && (
+        <p style={captionText} data-testid="freight-subsidy-info">
+          {t.channels.freightSubsidy.caption.replace("{ceiling}", formatBRL(subsidyCeiling))}{" "}
+          {t.channels.freightSubsidy.provenance
+            .replace("{source}", shopeeSubsidy.source)
+            .replace("{date}", fmtDatePtBr(shopeeSubsidy.effectiveDate))}
+        </p>
+      )}
       {/* 016/US16 (FR-923, ADR-0027 §3.2) — catalog-driven optional surcharges (Shopee
           MANUSEIO_VOLUMOSO). Zero string/number here — label, value and provenance all come from
           `plan.surcharges` (the catalog). */}
@@ -898,9 +927,11 @@ function ChannelSlot({
   );
 }
 
-/** One markup level's rows for a priced channel: anúncio, an optional freight/voucher deduction line
- *  (Shopee co-funded voucher / manual freight), and líquido — flagged when negative, since a voucher
- *  can exceed the margin (FR-111a). The deduction is shown, never hidden, so the líquido drop is honest. */
+/** One markup level's rows for a priced channel: anúncio, an optional freight deduction line, and
+ *  líquido — flagged when negative when a typed freight exceeds the margin. hotfix-016-a2 (R4): a
+ *  freight line exists ONLY when the seller typed `freightCost` (FR-111b — "declarado OU com
+ *  valor"); the old "Shopee co-funded voucher" wording described the 005 model the sources refuted
+ *  (art. 23431: the coupon subsidy is Shopee's cost, universal — never the seller's). */
 function ChannelLevelRows({
   caption,
   anuncio,

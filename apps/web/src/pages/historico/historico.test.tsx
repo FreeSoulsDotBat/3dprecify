@@ -173,6 +173,59 @@ describe("the queue banner — the state that needs a decision wins", () => {
     expect(screen.queryByRole("button", { name: t.syncNow })).not.toBeInTheDocument();
   });
 
+  // hotfix 016/A3 (H4b, 2026-08-07) — a `401` on sync is NOT the same lie as `pending`: the copy
+  // must never say "conexão"/"online" (that was the achado A3), and it offers a real way back.
+  it('uma entrada `unauthenticated` NUNCA fala em "conexão"/"online" — e oferece caminho para /sign-in', () => {
+    useHistoryMock.mockReturnValue(
+      listState({ items: [item({ id: null, syncState: "unauthenticated" })] }),
+    );
+    render(<HistoricoPage />);
+
+    const banner = screen.getByText(t.queueUnauthenticated.replace("{n}", "1"));
+    expect(banner).toBeInTheDocument();
+    expect(banner.textContent).not.toMatch(/conexão|online/i);
+
+    const signIn = screen.getByRole("link", { name: t.signInAction });
+    expect(signIn).toHaveAttribute("href", expect.stringContaining("/sign-in?redirect="));
+    expect(decodeURIComponent(signIn.getAttribute("href") ?? "")).toContain("/historico");
+  });
+
+  it("unauthenticated beats pending, mas failed ainda vence unauthenticated — a decisão mais urgente fala", () => {
+    useHistoryMock.mockReturnValue(
+      listState({
+        items: [
+          item({ clientSnapshotId: "a", id: null, syncState: "pending" }),
+          item({ clientSnapshotId: "b", id: null, syncState: "unauthenticated" }),
+        ],
+      }),
+    );
+    render(<HistoricoPage />);
+    expect(screen.getByText(t.queueUnauthenticated.replace("{n}", "1"))).toBeInTheDocument();
+
+    cleanup();
+    useHistoryMock.mockReturnValue(
+      listState({
+        items: [
+          item({ clientSnapshotId: "b", id: null, syncState: "unauthenticated" }),
+          item({ clientSnapshotId: "c", id: null, syncState: "failed" }),
+        ],
+      }),
+    );
+    render(<HistoricoPage />);
+    expect(screen.getByText(t.queueFailed.replace("{n}", "1"))).toBeInTheDocument();
+    expect(screen.queryByText(t.queueUnauthenticated.replace("{n}", "1"))).not.toBeInTheDocument();
+  });
+
+  it("o card individual mostra o selo de sessão expirada — nunca 'pendente' nem 'precisa de Premium'", () => {
+    useHistoryMock.mockReturnValue(
+      listState({ items: [item({ id: null, syncState: "unauthenticated" })] }),
+    );
+    render(<HistoricoPage />);
+    expect(screen.getByText(t.syncUnauthenticatedBadge)).toBeInTheDocument();
+    expect(screen.queryByText(t.syncPendingBadge)).not.toBeInTheDocument();
+    expect(screen.queryByText(t.syncBlockedBadge)).not.toBeInTheDocument();
+  });
+
   it("failed beats blocked beats pending — the banner shows what needs a human", () => {
     useHistoryMock.mockReturnValue(
       listState({
