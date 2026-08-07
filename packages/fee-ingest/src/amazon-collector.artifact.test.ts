@@ -119,9 +119,13 @@ describe("PONTO FIXO da migração — a fatia reproduz o artefato byte a byte (
     // era dependente de coincidência e a run 2 do T017 a derrubou: dentro do job, a 1ª passada
     // do fee:build move lastReviewed para hoje e DATA passa a SER hoje LEGITIMAMENTE.
     // Os insumos são a coleta E as constantes de DOMÍNIO declaradas do coletor (a vigência do
-    // plano Individual, "2020-12-01", é dado da fonte com procedência — não relógio).
+    // plano Individual, "2020-12-01", é dado da fonte com procedência — não relógio). As
+    // vigências entram EXPLICITAMENTE: `previousEffectiveDates` é um Map, e a run 3 do T017
+    // ensinou que `JSON.stringify(Map)` = "{}" — a primeira forma deste conjunto as perdia e
+    // só passava localmente por coincidência (DATA == vigência).
     const datasDosInsumos = new Set([
       ...(JSON.stringify(coleta).match(/\d{4}-\d{2}-\d{2}/g) ?? []),
+      ...coleta.previousEffectiveDates.values(),
       AMAZON_INDIVIDUAL_FEE_SOURCE.effectiveDate,
     ]);
     const datasNaFatia = new Set(JSON.stringify(a).match(/\d{4}-\d{2}-\d{2}/g) ?? []);
