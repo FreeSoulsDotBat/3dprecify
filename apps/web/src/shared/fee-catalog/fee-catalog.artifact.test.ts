@@ -83,8 +83,16 @@ describe("016/PR-F — a curadoria desta fatia no artefato servido", () => {
       expect(FEE_CATALOG_SEED.catalogVersion).toMatch(forma);
     });
 
-    it("(ii) a DATA do rótulo é a data de `generatedAt` — pega a edição à mão de um lado só", () => {
-      expect(served.catalogVersion.split(".")[0]).toBe(served.generatedAt.slice(0, 10));
+    it("(ii) a DATA do rótulo nunca é POSTERIOR à de `generatedAt` — pega a edição à mão", () => {
+      // A forma original exigia IGUALDADE e a run da PR-B (2026-08-08) a derrubou — a mesma
+      // classe de coincidência de calendário da run 2: num mês de SÓ-FRESCOR o rótulo
+      // legitimamente NÃO bumpa (lastReviewed é inerte) enquanto `generatedAt` avança. A
+      // relação verdadeira é de ORDEM (rótulo ≤ geração); a de IDENTIDADE do rótulo é a (iv),
+      // provada no ponto de geração, onde o sequenciador mora.
+      expect(
+        served.catalogVersion.split(".")[0]! <= served.generatedAt.slice(0, 10),
+        `rótulo ${served.catalogVersion} posterior a generatedAt ${served.generatedAt}`,
+      ).toBe(true);
     });
 
     it("o seed carrega o MESMO rótulo do servido, sem ninguém digitá-lo", () => {
