@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { describe, expect, it } from "vitest";
 
 import { grossUp } from "../src/index";
@@ -36,11 +38,24 @@ import type { PriceBand } from "../src/index";
 const bandOf = (bands: PriceBand[], p: number): PriceBand | null =>
   bands.find((b) => p >= b.minPrice && (b.maxPrice === null || p < b.maxPrice)) ?? null;
 
-/** Líquido de um anúncio — `null` quando ele cai numa LACUNA, que não é resposta publicável. */
+/** Líquido de um anúncio — `null` quando ele cai numa LACUNA, que não é resposta publicável.
+ *
+ *  017/T013 — O `fixedFeeRule` ENTRA NA CONTA, e a ausência dele aqui era um DEFEITO REAL deste
+ *  guarda, encontrado no instante em que a tabela publicada da Shopee entrou na varredura: 5
+ *  contraexemplos, todos FALSOS. A regra chegou com o ADR-0027 (016/PR-F) e o comparador ficou para
+ *  trás, porque nenhuma das tabelas transcritas aqui dentro a usava.
+ *
+ *  O dano de um comparador desatualizado não é "um teste vermelho": ele calcula um líquido que
+ *  NINGUÉM consegue receber (na banda [0, 8) da Shopee o fixo é metade do preço, e o comparador o
+ *  lia como zero), conclui que existe anúncio melhor, e acusaria o motor de publicar preço
+ *  dominado. É exatamente o erro que a primeira versão desta medição já cometeu uma vez — e a lição
+ *  se repete: um comparador reimplementado tem de acompanhar TODA regra de dinheiro, ou ele deixa de
+ *  ser o segundo par de olhos e vira uma segunda fonte de erro. */
 function net(bands: PriceBand[], a: number, minPerItem: number): number | null {
   const b = bandOf(bands, a);
   if (!b) return null;
-  return a - Math.max((b.commissionPct / 100) * a, minPerItem) - b.fixedFee;
+  const fixo = b.fixedFeeRule ? (a * b.fixedFeeRule.pct) / 100 : b.fixedFee;
+  return a - Math.max((b.commissionPct / 100) * a, minPerItem) - fixo;
 }
 
 /**
@@ -132,8 +147,44 @@ const TABELAS: { nome: string; bands: PriceBand[]; minPerItem: number }[] = [
 
 const ATE_CENTAVOS = 15000;
 
+// 017/T013 — este arquivo passou a se chamar `*.artifact.test.ts`, e o nome só é honesto porque a
+// varredura passou a incluir as tabelas PUBLICADAS de verdade.
+//
+// Antes ele varria só tabelas escritas aqui dentro (as reais de então, mais quatro adversárias
+// construídas). Isso provava a propriedade sobre o que alguém lembrou de transcrever — e a US1/AC4
+// cita este guarda nominalmente como parte do subconjunto que roda DENTRO do job mensal, onde o que
+// importa é a tabela que o robô acabou de escrever. Uma varredura que não lê o artefato não pode
+// dizer nada sobre ela. As bandas vêm do `catalog.json` commitado, com o `minPerItem` da própria
+// entrada (0 quando o marketplace não publica piso por item).
+const servido = JSON.parse(
+  readFileSync(new URL("../../../backend/app/data/catalog.json", import.meta.url), "utf8"),
+) as {
+  marketplaces: {
+    marketplace: string;
+    entries: {
+      determinants: Record<string, string> | null;
+      priceBands: PriceBand[] | null;
+      minPerItem: number | null;
+    }[];
+  }[];
+};
+
+const TABELAS_PUBLICADAS = servido.marketplaces.flatMap((m) =>
+  m.entries
+    .filter((e) => (e.priceBands?.length ?? 0) > 0)
+    .map((e, i) => ({
+      nome: `PUBLICADA ${m.marketplace} #${i} ${JSON.stringify(e.determinants)}`,
+      bands: e.priceBands!,
+      minPerItem: e.minPerItem ?? 0,
+    })),
+);
+
 describe("A1-r — o anúncio publicado é o mais barato que entrega a base", () => {
-  for (const t of TABELAS) {
+  it("há tabela publicada COM bandas para varrer — a premissa, medida (não-vacuidade)", () => {
+    expect(TABELAS_PUBLICADAS.length).toBeGreaterThan(0);
+  });
+
+  for (const t of [...TABELAS, ...TABELAS_PUBLICADAS]) {
     it(`varredura: "${t.nome}"`, () => {
       const cummax = cumulativeMax(t.bands, t.minPerItem, ATE_CENTAVOS);
       const dominados: string[] = [];

@@ -78,3 +78,6 @@ graphify-out/
 docs/homologacao/evidencias/f11a/
 docs/homologacao/evidencias/f11b/
 specs/016-correcao-homologacao/evidencias/
+
+# 017 — os vereditos que os jobs de coleta deixam para o `publicar` sao artefatos de RUN, nunca commit.
+packages/fee-ingest/artifacts/

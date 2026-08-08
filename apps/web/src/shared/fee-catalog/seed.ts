@@ -1,166 +1,68 @@
 import type { FeeCatalog } from "./fee-catalog";
+import seedData from "./seed.data.json";
 
-// Bundled seed (ADR-0010 R1) — guarantees first-ever OFFLINE pre-fills before any fetch persists to
-// the store. It MIRRORS the committed backend/app/data/catalog.json (the source of truth the backend
-// serves); the truth-gate test asserts both parse under the same schemaVersion and carry provenance.
-// US2 curation (T022): Shopee is curated (price-band based, category-independent — sourced from the
-// official 2026 commission policy). ML + Amazon stay empty pending their category-specific rates
-// (fabricating them would violate Constitution II; uncovered → manual + "sem referência").
-// 016/US12 (T051, FR-918) — `feeAxes` curation (arquitetura-016 §F.2 rule 2): which of the 4
-// numeric fee fields each marketplace's channel section shows. Bumps `catalogVersion` (content
-// changed, I5) alongside the mirrored `backend/app/data/catalog.json`.
-export const FEE_CATALOG_SEED: FeeCatalog = {
-  // 016/PR-F (I5) — bumpa UMA vez pelo conjunto todo desta fatia (Shopee partida em R$ 8 + entrada
-  // CPF_ALTO_VOLUME + volumoso + os R$ 2,00 do Individual da Amazon). Decidido por
-  // `nextCatalogVersion` (`packages/fee-ingest/src/guardrails.ts`) e não à mão: regerar na mesma
-  // data de coleta sob rótulo idêntico foi o defeito de 014 (77 → 79 entradas, `2026-07-28.0` dos
-  // dois lados), e o rótulo viaja congelado dentro de um snapshot que o ADR-0019 torna imutável —
-  // um registro ambíguo fica ambíguo para sempre.
-  // hotfix 016/A2 (2026-08-07) — UM bump pelo hotfix inteiro (as duas entradas Shopee perdem o
-  // `BAND_VOUCHER` e o marketplace ganha o `freightSubsidyInfo` não-computante). Decidido por
-  // `nextCatalogVersion("2026-08-06.1", "2026-08-07", true)` = "2026-08-07.0", não à mão.
-  catalogVersion: "2026-08-07.0",
-  schemaVersion: "1",
-  generatedAt: "2026-08-07T00:00:00.000Z",
-  marketplaces: [
-    {
-      marketplace: "MERCADO_LIVRE",
-      determinantsSchema: { listingType: ["CLASSICO", "PREMIUM"], category: [] },
-      feeAxes: ["commissionPct", "fixedFee", "freightCost"],
-      entries: [],
-    },
-    {
-      marketplace: "AMAZON",
-      determinantsSchema: { category: [], plan: ["INDIVIDUAL", "PROFISSIONAL"] },
-      feeAxes: ["commissionPct", "fixedFee", "minPerItem"],
-      entries: [],
-    },
-    {
-      marketplace: "SHOPEE",
-      // 016/US17 (FR-926, arquitetura-016 §C.1) — UM eixo, e ele seleciona QUAL TABELA PUBLICADA
-      // vale. Um único valor de entrada nova, e é o que a releitura verbatim do art. 26839
-      // determinou (T057, item 2): o CPF que NÃO passa de 450 pedidos/90 dias paga exatamente a
-      // tabela do catch-all — "a taxa adicional de R$3 … não será aplicada, ficando vigente apenas
-      // a taxa por item vendido (R$4, R$16, R$20 ou R$26)". Logo DUAS entradas, não três; a
-      // terceira ("CPF") que o arquiteto previu como possível é a correção-como-DADO que ele
-      // deixou em aberto, e a fonte a dispensou.
-      //
-      // Um eixo composto e não dois: "CNPJ + alto volume" não existe publicado, e dois eixos
-      // criariam um espaço cartesiano com buracos irrepresentáveis.
-      determinantsSchema: { sellerProfile: ["CPF_ALTO_VOLUME"] },
-      feeAxes: ["commissionPct", "fixedFee", "freightCost"],
-      // hotfix 016/A2 (2026-08-07) — o subsídio como INFORMAÇÃO, com os números vindo DAQUI e
-      // nunca do código (Constituição II). Ele NÃO entra em nenhuma conta: `entryToChannelFees`
-      // não o lê, e a guarda `freight-declared.test.ts` prova que nenhum frete é descontado sem um
-      // campo que o declare. Era `freight: {kind:"BAND_VOUCHER"}` nas duas entradas abaixo, e o
-      // motor descontava estes mesmos R$ 20/30/40 do líquido do vendedor — o achado A2 (T072).
-      freightSubsidyInfo: {
-        bands: [
-          { minPrice: 0, maxPrice: 80, ceiling: 20 },
-          { minPrice: 80, maxPrice: 200, ceiling: 30 },
-          { minPrice: 200, maxPrice: null, ceiling: 40 },
-        ],
-        // Verbatim (art. 23431, relido em 2026-08-07): "Todos os vendedores têm os benefícios do
-        // Programa de Frete Grátis. A Shopee também oferece subsídios de frete. … Para itens de
-        // até R$79,99: Cupons de frete grátis válidos para fretes de até R$20; … R$30; … R$40."
-        // O sujeito que OFERECE é a Shopee, e o valor é o TETO DE VALIDADE do cupom.
-        source:
-          "Central de Educação do Vendedor Shopee — Programa de Frete Grátis (subsídio oferecido pela Shopee a todos os vendedores)",
-        sourceUrl: "https://seller.shopee.com.br/edu/article/23431",
-        effectiveDate: "2026-03-01",
-        lastReviewed: "2026-08-07",
-      },
-      // 016/US16 (FR-923, ADR-0027 §3.2) — o número vem DAQUI, nunca do código.
-      optionalSurcharges: [
-        {
-          id: "MANUSEIO_VOLUMOSO",
-          label: "Manuseio de item volumoso",
-          value: 50.0,
-          // POR PEDIDO: num pedido de vários itens ela é cobrada UMA vez. A legenda existe porque
-          // o motor soma o valor uma vez e o vendedor precisa saber que não é por unidade.
-          appliesPer: "ORDER",
-          source: "Central de Educação do Vendedor Shopee — Taxa de manuseio de itens volumosos",
-          sourceUrl: "https://seller.shopee.com.br/edu/article/3305",
-          effectiveDate: "2026-02-02",
-          lastReviewed: "2026-08-06",
-        },
-      ],
-      entries: [
-        {
-          // A entrada CATCH-ALL = o regime CNPJ (e o CPF de baixo volume, que paga a mesma tabela).
-          // Ela continua sendo a de `determinants: null` e não ganha chave própria: é isso que
-          // mantém byte-idêntico todo documento salvo e todo slot em que o vendedor não respondeu
-          // o perfil (FR-926, última cláusula), e evita a MESMA tabela de dinheiro em dois lugares.
-          determinants: null,
-          commissionPct: null,
-          fixedFee: null,
-          priceBands: [
-            // 016/US18 (FR-927) — a banda [0,80) PARTE EM DUAS. Verbatim do art. 26839 (T057):
-            // "Para produtos com preço abaixo de R$8, o adicional por item é a metade do preço do
-            // produto. Produtos acima de R$8 mantêm a comissão conforme a variação de valor do
-            // item" ⇒ a comissão de 20% CONTINUA incidindo; o que vira função do preço é o
-            // ADICIONAL. `fixedFee: 0` é marcador inerte — com a regra presente o motor nunca lê a
-            // constante — e continua obrigatório pelo refine FR-928.
-            {
-              minPrice: 0,
-              maxPrice: 8,
-              commissionPct: 20,
-              fixedFee: 0,
-              fixedFeeRule: { kind: "PCT_OF_PRICE", pct: 50 },
-            },
-            // Em L = R$ 8,00 as duas linhas cobram o mesmo (metade de 8 = os R$ 4 constantes): a
-            // fonte é contínua no limiar e a partição não inventa degrau nenhum.
-            { minPrice: 8, maxPrice: 80, commissionPct: 20, fixedFee: 4 },
-            { minPrice: 80, maxPrice: 100, commissionPct: 14, fixedFee: 16 },
-            { minPrice: 100, maxPrice: 200, commissionPct: 14, fixedFee: 20 },
-            { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 26 },
-          ],
-          // hotfix 016/A2 (2026-08-07) — era `BAND_VOUCHER` com os tetos R$ 20/30/40, e o motor
-          // descontava o teto INTEIRO do líquido a cada anúncio: varejo 24,24 → anúncio 35,30 →
-          // líquido R$ 4,24 (−82,5% da margem), negativo com o volumoso ligado. A fonte atribui o
-          // subsídio à SHOPEE, não ao vendedor. `NONE` afirma exatamente o que sabemos: não há
-          // custo de frete publicado aqui. O único frete descontado é o que o vendedor DIGITA.
-          freight: { kind: "NONE" },
-          // O `source` NOMEIA o regime que a entrada representa — senão o selo esconde a premissa
-          // de que este é o vendedor CNPJ (ou CPF abaixo de 450 pedidos/90 dias).
-          source:
-            "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)",
-          sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
-          effectiveDate: "2026-03-01",
-          lastReviewed: "2026-08-06",
-        },
-        {
-          // 016/US17 — CPF que ultrapassa 450 pedidos em 90 dias: a MESMA tabela com +R$ 3 no fixo
-          // de cada banda. Verbatim (T057): "além do valor da comissão é aplicada uma taxa
-          // adicional de R$3 por item vendido". Está DENTRO da tabela e não como sobretaxa
-          // separada, porque a fonte publica o número já somado — modelá-lo à parte duplicaria um
-          // valor e faria o selo apontar para duas procedências onde há uma.
-          determinants: { sellerProfile: "CPF_ALTO_VOLUME" },
-          commissionPct: null,
-          fixedFee: null,
-          // As bandas começam em R$ 12 (arquiteto §9.5) e NÃO há banda abaixo disso — nem a
-          // partição de R$ 8, que é do catch-all. Motivo: a tabela + R$ 3 daria 20% + R$ 7,00 num
-          // item de R$ 9, enquanto a fonte publica, verbatim, "um produto de R$10 tem uma taxa de
-          // R$6,50, enquanto um de R$8 terá taxa de R$6" — a regressiva existe e a fórmula dela
-          // NÃO é publicada. Precificar ali mentiria sob selo; abaixo de R$ 12 o nível fica sem
-          // referência (I9) + o aviso da US17 com os dois pontos + campo manual.
-          priceBands: [
-            { minPrice: 12, maxPrice: 80, commissionPct: 20, fixedFee: 7 },
-            { minPrice: 80, maxPrice: 100, commissionPct: 14, fixedFee: 19 },
-            { minPrice: 100, maxPrice: 200, commissionPct: 14, fixedFee: 23 },
-            { minPrice: 200, maxPrice: null, commissionPct: 14, fixedFee: 29 },
-          ],
-          // hotfix 016/A2 — idem à entrada acima. O subsídio é do marketplace inteiro (é o mesmo
-          // Programa para os dois perfis), e por isso vive UMA vez em `freightSubsidyInfo`, no
-          // nível do marketplace, em vez de repetido dentro de cada entrada.
-          freight: { kind: "NONE" },
-          source:
-            "Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CPF com mais de 450 pedidos em 90 dias (taxa adicional de R$ 3,00 por item)",
-          sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
-          effectiveDate: "2026-03-01",
-          lastReviewed: "2026-08-06",
-        },
-      ],
-    },
-  ],
-};
+// Bundled seed (ADR-0010 R1) — a semente que garante o PRIMEIRO pré-preenchimento OFFLINE, antes de
+// qualquer fetch chegar ao store.
+//
+// 017/T009 · P0-a (ADR-0029): ela deixou de ser DOCUMENTO e virou SAÍDA. O conteúdo agora mora em
+// `seed.data.json`, gerado por `pnpm fee:build` a partir de `projetarSemente(servido)`
+// (`packages/fee-ingest/src/seed-projection.ts`) — NUNCA editado à mão. O que mudou e por quê:
+//
+//   · Antes: um literal TS mantido à mão, cuja `catalogVersion` era reeditada a cada bump. Ela foi
+//     reescrita DUAS VEZES EM DOIS DIAS (016/PR-F e o hotfix A2/A3), e um teste cravava a string —
+//     então o primeiro PR mensal do robô nasceria vermelho com o dado CERTO.
+//   · Agora: a paridade é RELACIONAL. `seed.data.json == projetarSemente(catalog.json)` é afirmado em
+//     `packages/fee-ingest/src/seed-projection.artifact.test.ts` (byte a byte), e as relações de
+//     rótulo/schema ficam no truth-gate ao lado deste arquivo. Nenhuma literal de versão sobrou.
+//   · JSON e não TS porque um gerador que reescrevesse este arquivo destruiria os comentários
+//     curatoriais — que são o único lugar em CÓDIGO onde vivem os verbatims da Shopee.
+//
+// A POLÍTICA da poda (medida, não inventada): uma seção cujo `determinantsSchema` declara o eixo
+// `category` viaja SEM `categorySpine` e com `entries: []` — o mapa por categoria da Amazon são 78
+// entradas + 38 nós, 94% do documento (45.858 → 2.720 bytes), e ele não cabe no orçamento de boot do
+// SC-810. Marketplace category-INDEPENDENTE (Shopee) viaja inteiro.
+//
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+// VERBATIMS CURATORIAIS PRESERVADOS (RA4) — nota datada 2026-08-07.
+//
+// Estes textos eram os comentários deste arquivo e são a PROCEDÊNCIA dos números da Shopee. Eles
+// ficam aqui porque a fatia que os transforma em ÂNCORAS EXECUTÁVEIS é a PR-C do 017 (T026:
+// `packages/fee-ingest/data/shopee-art26839.baseline.json`, onde deixam de ser prosa num espelho e
+// viram guarda que dispara). Enquanto essa migração não acontece, eles não podem simplesmente sumir
+// junto com o literal — nenhum outro lugar do repositório os carrega.
+//
+//  1. Art. 26839 (T057, US18/FR-927) — a banda [0, 80) PARTE EM DUAS: "Para produtos com preço
+//     abaixo de R$8, o adicional por item é a metade do preço do produto. Produtos acima de R$8
+//     mantêm a comissão conforme a variação de valor do item" ⇒ a comissão de 20% CONTINUA
+//     incidindo; o que vira função do preço é o ADICIONAL. Em L = R$ 8,00 as duas linhas cobram o
+//     mesmo (metade de 8 = os R$ 4 constantes): a fonte é contínua no limiar e a partição não
+//     inventa degrau nenhum.
+//  2. Art. 26839 (T057, US17/FR-926) — o CPF que NÃO passa de 450 pedidos/90 dias paga exatamente a
+//     tabela do catch-all: "a taxa adicional de R$3 … não será aplicada, ficando vigente apenas a
+//     taxa por item vendido (R$4, R$16, R$20 ou R$26)". Logo DUAS entradas, não três. Um eixo
+//     COMPOSTO e não dois: "CNPJ + alto volume" não existe publicado, e dois eixos criariam um
+//     espaço cartesiano com buracos irrepresentáveis. A entrada CATCH-ALL (`determinants: null`) é o
+//     regime CNPJ — e é isso que mantém byte-idêntico todo documento salvo antes do campo existir.
+//  3. Art. 26839 (T057) — a REGRESSIVA que o app NÃO precifica: "um produto de R$10 tem uma taxa de
+//     R$6,50, enquanto um de R$8 terá taxa de R$6". A fórmula não é publicada, então abaixo de
+//     R$ 12 o nível fica sem referência (I9) em vez de mentir sob selo.
+//  4. Art. 23431 (relido 2026-08-07, hotfix 016/A2) — o subsídio de frete é da SHOPEE, não do
+//     vendedor: "Todos os vendedores têm os benefícios do Programa de Frete Grátis. A Shopee também
+//     oferece subsídios de frete. … Para itens de até R$79,99: Cupons de frete grátis válidos para
+//     fretes de até R$20; … R$30; … R$40." O valor é o TETO DE VALIDADE do cupom, e por isso
+//     `freightSubsidyInfo` é INFORMAÇÃO que não entra em conta nenhuma (era `freight: BAND_VOUCHER`,
+//     e o motor descontava os R$ 20 do líquido do vendedor — o achado A2).
+//  5. Art. 3305 (016/US16, FR-923) — a taxa de manuseio de item volumoso é POR PEDIDO: num pedido de
+//     vários itens ela é cobrada UMA vez.
+// ─────────────────────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * O `as unknown as FeeCatalog` é deliberado, e a garantia NÃO se perdeu no caminho.
+ *
+ * Um `feeCatalogSchema.parse()` aqui devolveria a checagem em tempo de módulo — e derrubaria o app no
+ * boot com tela branca se a semente viesse malformada, que é exatamente o que 014/FR-026 decidiu não
+ * fazer. A validação continua onde ela sabe DEGRADAR em vez de morrer: `parseSeedResilient` em
+ * `use-fee-catalog.ts`, que descarta o marketplace ofensor e loga alto. E o truth-gate ao lado prova,
+ * a cada gate, que este documento parseia sob o mesmo schema do servido.
+ */
+export const FEE_CATALOG_SEED = seedData as unknown as FeeCatalog;

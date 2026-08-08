@@ -1,3 +1,5 @@
+import { isInerte } from "./inert-fields.ts";
+
 // The monthly diff (014/US4). Pure: two artifacts in, a reviewable description out.
 //
 // This module carries the increment's sharpest safety property, so it is worth stating plainly:
@@ -6,8 +8,10 @@
 // date (FR-020a). `develop` carries platform protection behind this (FR-020c); the classifier is the
 // convenience, not the gate.
 
-/** Field paths that carry NO money and no coverage — the only things a run may change unattended. */
-const INERT_PATHS = new Set(["lastReviewed", "catalogVersion", "generatedAt"]);
+// 017/T007 — a lista de campos inertes agora mora em `inert-fields.ts`, uma vez só (fecha 014/U4-f).
+// Ela era declarada aqui E em `refresh.ts`, com os mesmos três nomes e nada obrigando as duas a
+// andarem juntas: uma decidia `freshnessOnly` (a dispensa de revisão), a outra decidia o que o
+// revisor lê na tabela do PR.
 
 export interface FieldChange {
   path: string;
@@ -130,7 +134,7 @@ export function diffCatalogs(before: Json, after: Json): CatalogDiff {
     { ...after, marketplaces: undefined },
     "",
   )) {
-    if (!INERT_PATHS.has(c.path)) diff.freshnessOnly = false;
+    if (!isInerte(c.path)) diff.freshnessOnly = false;
   }
 
   for (const [name, mkA] of mkAfter) {
@@ -192,7 +196,7 @@ export function diffCatalogs(before: Json, after: Json): CatalogDiff {
         ? leafChanges(entryB, entryA, "")
         : [{ path: "(new entry)", before: undefined, after: key }];
       if (changes.length === 0) continue;
-      if (changes.some((c) => !INERT_PATHS.has(c.path))) diff.freshnessOnly = false;
+      if (changes.some((c) => !isInerte(c.path))) diff.freshnessOnly = false;
       const rawCategory = (entryA.determinants as Json | null)?.category;
       const categoryId = rawCategory === undefined ? null : String(rawCategory);
       // `String(undefined)` is the string "undefined", so a `?? null` AFTER it never fires — an
