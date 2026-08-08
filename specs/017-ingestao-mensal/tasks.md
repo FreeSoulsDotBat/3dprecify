@@ -132,27 +132,27 @@ localmente; nenhuma literal de versão viva.
 
 ## ══ PR-B — O vigia da /precos + liveness (US4 + US7) ══
 
-- [ ] T020 [US4] Vermelho observado — `packages/fee-ingest/src/watch/amazon-precos.test.ts`:
+- [x] T020 [US4] Vermelho observado — `packages/fee-ingest/src/watch/amazon-precos.test.ts`:
       parser determinístico sobre fixture da /precos (fetch simples — G medido, 200/647 KB) ·
       captura mínimos por categoria + planos (Individual R$ 2,00/item · Profissional R$ 19/mês)
       + AUTO-DATAÇÃO da página · **estrutural: o módulo não exporta NENHUMA função
       `WatchReading → FeeEntry | CatalogSlice`** (decisão E.2).
-- [ ] T021 [US4] `watch/amazon-precos.ts` + `data/amazon-precos.baseline.json` (forma comum §3
+- [x] T021 [US4] `watch/amazon-precos.ts` + `data/amazon-precos.baseline.json` (forma comum §3
       com `absentAnchors`): divergência vs baseline E vs a constante
       `AMAZON_INDIVIDUAL_PER_ITEM_FEE` (o número mora num lugar só) ⇒ seção de vigia no MESMO
       PR; convergência das fontes ⇒ **PR de DECISÃO** (título `DECISÃO — ` + label
       `decisao-do-dono` + seção no TOPO + dispensa forçada NÃO — Q2); NUNCA escreve `minPerItem`
       (D7). Canária de forma provada por mutação.
-- [ ] T022 [P] [US7] `ci.yml` job `loop-liveness` (decisão G): idade do DADO
+- [x] T022 [P] [US7] `ci.yml` job `loop-liveness` (decisão G): idade do DADO
       (`hoje − max(lastReviewed)` restrito à `MARKETPLACE_COVERAGE`) · >35d ⇒ `::warning::` +
       step summary + `exit 0` · fora do `needs` do `ci-pass` · mensagem própria para
       nunca-coletado. A constante soma `LOOP_CYCLE_DAYS(31) + 4` com o comentário do porquê
       (35 < 45 — avisar ANTES do selo falar com o vendedor).
-- [ ] T023 [US7] Com DOIS caminhos de coleta no laço, provar o que era não-testável com um:
+- [x] T023 [US7] Com DOIS caminhos de coleta no laço, provar o que era não-testável com um:
       execução em que só a /precos é relida ⇒ `lastReviewed` do catálogo INTACTO (vigia não
       carimba catálogo) e baseline atualizado; execução com Amazon abortada ⇒ entradas Amazon
       envelhecem (SC-1007). Job `amazon-precos` entra no `fee-refresh.yml`.
-- [ ] T024 [US4] Fechamento: execução real com URL — **esta é a run que prova a independência
+- [x] T024 [US4] Fechamento: execução real com URL — **esta é a run que prova a independência
       da US1/AC2** (agora há dois caminhos de coleta: um job abortado NÃO impede o outro de
       concluir LIDO; emenda C1 do analyze) · gate:all · ledger · **owner-gated PR-B**.
 

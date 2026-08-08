@@ -169,6 +169,12 @@ da /precos.
 2. **Given** a decisão D7, **When** o vigia encontra divergência, **Then** REPORTA (as ~11
    categorias em que a /precos imprime R$ 2,00 contra o R$ 1,00 uniforme da tabela vigente, e
    qualquer mudança de qualquer lado contra o mês anterior) e NUNCA escreve `minPerItem`.
+   *Nota datada (2026-08-08, medição da PR-B)*: a /precos REAL de hoje declara mínimo UNIFORME
+   de R$ 1,00 — as "~11 categorias a R$ 2,00" do brief não existem mais na página (a fonte
+   vintage moveu-se entre a medição de 2026-08-05 e a implementação). O baseline nasceu seedado
+   dos valores MEDIDOS; o vigia segue vigiando exatamente como o D7 manda, e o primeiro alerta
+   dele será qualquer regressão a esse quadro. Os planos (Individual R$ 2,00/item ·
+   Profissional R$ 19/mês) e a auto-datação ("20/01/2025") bateram com o brief.
 3. **Given** o relatório de divergência, **When** impresso, **Then** carrega a AUTO-DATAÇÃO da
    página ("comissões atualizadas em 20/01/2025") junto do valor — é ela que classifica a fonte
    como vintage, e o revisor precisa dela na mesma tela.

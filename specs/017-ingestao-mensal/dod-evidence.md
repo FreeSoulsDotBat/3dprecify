@@ -59,3 +59,29 @@ CANÁRIA aborta (fixado em teste) · P0-a fechado: a literal morreu com um guard
 - O gatilho de bootstrap (`push` escopado à branch + ao YAML) morre com a branch no squash.
 - **O PR #54 do bot fica ABERTO para você decidir** — mergear (a releitura é legítima) ou fechar;
   é o primeiro exemplar do ritual mensal.
+
+## PR-B — o vigia da /precos + liveness + a independência provada (T020–T024, 2026-08-08)
+
+**Execuções reais**: [31240364306](https://github.com/FreeSoulsDotBat/3dprecify/actions/runs/31240364306)
+VERDE com os 3 jobs → **[PR #56 do bot](https://github.com/FreeSoulsDotBat/3dprecify/pull/56)**
+(o segundo ritual mensal, agora com os dois caminhos). Antes dela, a run 31240108931 pagou a
+lição nova da casa: **a relação (ii) era de IDENTIDADE por coincidência** — num mês de
+só-frescor o rótulo não bumpa e `generatedAt` avança; virou relação de ORDEM (rótulo ≤ geração),
+com a identidade provada no ponto de geração (iv).
+
+**A prova de independência (emenda C1 do analyze)**: run
+[31240442248](https://github.com/FreeSoulsDotBat/3dprecify/actions/runs/31240442248), branch
+DESCARTÁVEL `prova-independencia-c1` (URL da tabela quebrada de propósito; commit/push com
+LEFTHOOK=0 — declarado: a branch é quebrada POR DESENHO, jamais mergeável, e morreu ao fim):
+**vigia da /precos LIDO com a tabela MORTA na mesma run** (US1/AC2 ✓). Bônus não planejado: o
+`publicar` recusou a constante envenenada no `gate:artifact` — a prova de mutação do T013
+disparando em condição de produção.
+
+**O achado da PR-B que muda a spec (nota datada aplicada no US4/AC2)**: a /precos REAL de
+2026-08-08 declara mínimo UNIFORME R$ 1,00 — as "~11 categorias a R$ 2,00" do brief sumiram da
+página entre a medição de 2026-08-05 e a implementação. O vigia nasceu já pegando a fonte em
+movimento; baseline seedado do MEDIDO, nunca do hipotético.
+
+**Guardas**: gate:fe verde · gate:artifact 124+ · pins 46 refs/4 workflows · liveness bootado
+contra o catálogo real ("2 dias, OK") · SC-1007 nos dois sentidos em compose.test · prova
+estrutural do D7 (exports sem caminho para FeeEntry) · canárias do vigia por mutação.
