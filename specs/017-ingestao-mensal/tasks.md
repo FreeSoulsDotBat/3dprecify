@@ -37,12 +37,12 @@ remodela) — se alguma tarefa precisar tocar schema de folha, ESCALA para opus 
 
 ## Phase 1: Setup
 
-- [ ] T001 Apagar as sondas descartáveis (decisão H — estrutural, não faxina):
+- [x] T001 Apagar as sondas descartáveis (decisão H — estrutural, não faxina):
       `.github/workflows/g1-probe-ml.yml` · `.github/workflows/g2-probe-amazon.yml` ·
       `scripts/probes/` inteiro. A medição delas está preservada no ADR-0010 §A13; enquanto
       `g1-probe-ml.yml:47` referenciar `secrets.ML_ACCESS_TOKEN`, "nenhuma credencial ML" é
       verdade sobre um arquivo, não sobre o repositório.
-- [ ] T002 [P] `scripts/check-action-pins.sh`: a linha "os 5 workflows parseiam" vira contagem
+- [x] T002 [P] `scripts/check-action-pins.sh`: a linha "os 5 workflows parseiam" vira contagem
       CALCULADA (J.6 — com `fee-refresh.yml` o número cravado passaria a mentir).
 - [ ] T003 **TAREFA DO DONO (paralela, não bloqueia PR-A)** — P0-b: ruleset de `develop`
       (revisão obrigatória) + o que resta do P0-c: `allowed_actions` na configuração do
@@ -52,44 +52,44 @@ remodela) — se alguma tarefa precisar tocar schema de folha, ESCALA para opus 
 
 ## Phase 2: Foundational — a espinha estrutural (bloqueia todas as US)
 
-- [ ] T004 Vermelho observado — `packages/fee-ingest/src/workflow-audit.test.ts` (lendo
+- [x] T004 Vermelho observado — `packages/fee-ingest/src/workflow-audit.test.ts` (lendo
       `.github/workflows/` por `fs`): zero `secrets.` em `fee-refresh.yml` além de
       `GITHUB_TOKEN` · zero `secrets.ML_*` em QUALQUER workflow · `fee-refresh.yml` declara
       `schedule` + `workflow_dispatch` e o cabeçalho RA1 (a frase da manualidade). Falha hoje:
       o arquivo não existe e as sondas ainda existem (T001 o deixa meio-verde; todo-verde só
       com T015).
-- [ ] T005 `packages/fee-ingest/src/verdict.ts` — `CollectorVerdict` (3 casos) +
+- [x] T005 `packages/fee-ingest/src/verdict.ts` — `CollectorVerdict` (3 casos) +
       `MARKETPLACE_COVERAGE` + a função TOTAL `resolverVereditos(disco) → Record<Mk, Verdict>`
       (sem veredito ⇒ `NAO_LIDO "o job não produziu veredito"`). Teste vermelho antes: cobertura
       total, nenhum marketplace calado.
-- [ ] T006 `packages/fee-ingest/src/slice.ts` — `CatalogSlice` + `aplicarFatia` (regra da folha
+- [x] T006 `packages/fee-ingest/src/slice.ts` — `CatalogSlice` + `aplicarFatia` (regra da folha
       lida). **O teste anti-reversão do hotfix A2 é o caso numérico central** (data-model §7):
       base Shopee com `freightSubsidyInfo` + fatia só-comissão ⇒ subsídio byte-idêntico.
-- [ ] T007 [P] `packages/fee-ingest/src/inert-fields.ts` — funde `refresh.ts:INERT` +
+- [x] T007 [P] `packages/fee-ingest/src/inert-fields.ts` — funde `refresh.ts:INERT` +
       `catalog-diff.ts:INERT_PATHS` numa lista só; os dois consumidores migram no mesmo commit
       (fecha 014/U4-f). Teste: as listas antigas deixam de existir (grep asserido).
-- [ ] T008 `packages/fee-ingest/src/compose.ts` — `compor(base, slices[])`: ordem alfabética ·
+- [x] T008 `packages/fee-ingest/src/compose.ts` — `compor(base, slices[])`: ordem alfabética ·
       `decideRefresh` POR marketplace · fatia reprovada ⇒ veredito ABORTADO (o PR parcial da Q4
       por tipo) · UM `nextCatalogVersion` + UM `generatedAt` · `RunOutcome` de 2 casos. Casos
       numéricos do data-model §7 vermelhos antes (incl. bump único com 2 fatias admitidas).
-- [ ] T009 `packages/fee-ingest/src/seed-projection.ts` + **P0-a** (ADR-0029):
+- [x] T009 `packages/fee-ingest/src/seed-projection.ts` + **P0-a** (ADR-0029):
       `projetarSemente(servido)` com a política de poda DECLARADA (Amazon 78→0 vira regra
       testável) → gera `apps/web/src/shared/fee-catalog/seed.data.json`; `seed.ts` encolhe para
       política+parse+export; o ramo de cache de adoção (014/U5-b) acorda COM teste.
       `fee-catalog.test.ts`: a literal `"2026-08-07.0"` MORRE, entram as 4 relações da decisão B.
       NÃO procurar a linha pelo número (conflito 1 — as coordenadas do brief estão vencidas).
-- [ ] T010 [P] `packages/fee-ingest/src/pr-body.ts` — função pura conforme
+- [x] T010 [P] `packages/fee-ingest/src/pr-body.ts` — função pura conforme
       `contracts/pr-mensal.md`, com TODAS as asserções mínimas do contrato vermelhas antes
       (ausência via `not.toContain` · 3 estados sempre · AC5 em folha de OCR · seção de vigias ·
       rodapé de dispensa · seção DECISÃO no topo).
-- [ ] T011 [P] `packages/fee-ingest/src/exemption.ts` — classificador falha-fechado nos DOIS
+- [x] T011 [P] `packages/fee-ingest/src/exemption.ts` — classificador falha-fechado nos DOIS
       eixos (diff inerte E arquivos ⊆ par artefato+semente); `ALLOW_FRESHNESS_EXEMPTION` padrão
       `false`; o corpo imprime o estado e o porquê. Caso do data-model §7: baseline extra no PR
       ⇒ NEGADA pelo eixo (b).
-- [ ] T012 `packages/fee-ingest/src/build.mjs` + script raiz `pnpm fee:build` (compor → validar
+- [x] T012 `packages/fee-ingest/src/build.mjs` + script raiz `pnpm fee:build` (compor → validar
       → artefato + semente). **Bootado sob `node` puro** no gate local E no job (J.1);
       idempotência: 2ª passada + `git diff --exit-code` (decisão C.4).
-- [ ] T013 `pnpm gate:artifact` (decisão D): renomear os 3 existentes para a convenção
+- [x] T013 `pnpm gate:artifact` (decisão D): renomear os 3 existentes para a convenção
       `*.artifact.test.ts` (truth-gate de `fee-catalog` · `artifact-fixed-point` ·
       `band-dominance`) + os novos (paridade de projeção · cobertura · colisão de categoria) ·
       meta-guarda (todo arquivo que menciona `backend/app/data/catalog.json` casa a convenção ou
@@ -105,24 +105,24 @@ localmente; nenhuma literal de versão viva.
 
 ## ══ PR-A — P0-a + espinha + Amazon no runner + a execução real (US1 + US2 + US3) ══
 
-- [ ] T014 [US3] `packages/fee-ingest/scripts/build-amazon.mjs` migra de WRITER para EMISSOR DE
+- [x] T014 [US3] `packages/fee-ingest/scripts/build-amazon.mjs` migra de WRITER para EMISSOR DE
       FATIA (ADR-0028 — não opcional): lê a fonte, emite `CatalogSlice` + veredito; NUNCA mais
       toca `catalog.json`. Canárias preservadas (Roupas 14% · Calçados 14% · Relógios 13% · piso
       de linhas · coluna POR CABEÇALHO). Ponto fixo: fixture inalterada ⇒ fatia idêntica e
       `collectedAt` NÃO avança (FR-1011).
-- [ ] T015 [US1] `.github/workflows/fee-refresh.yml` conforme `contracts/workflow-yaml.md`:
+- [x] T015 [US1] `.github/workflows/fee-refresh.yml` conforme `contracts/workflow-yaml.md`:
       nesta fatia os jobs `amazon-tabela` + `publicar` (os demais entram nas suas fatias) ·
       cabeçalho RA1 obrigatório · actions pinadas por SHA (I8) · branch `bot/fee-refresh-<data>`
       + `gh pr list` antes de criar · `pnpm gate:artifact` dentro do job · upload de vereditos e
       linhas capturadas como artefato da run. T004 fica TODO-verde aqui.
-- [ ] T016 [US2] Integração corpo-do-PR no `publicar`: `pr-body.ts` consome os vereditos reais;
+- [x] T016 [US2] Integração corpo-do-PR no `publicar`: `pr-body.ts` consome os vereditos reais;
       estados dos marketplaces ainda-sem-coletor saem como NÃO LIDO com motivo honesto
       ("Shopee: coletor entra na PR-C" · "ML: sem credencial, fora do escopo do 017").
-- [ ] T017 [US1] **EXECUÇÃO REAL disparada à mão** (SC-1001 — portão da fatia): URL da run ·
+- [x] T017 [US1] **EXECUÇÃO REAL disparada à mão** (SC-1001 — portão da fatia): URL da run ·
       termina em PR ou ABORT nomeado · artefatos baixáveis · tempo/minutos faturados MEDIDOS
       (US3/AC5, premissa ~5 min/mês do ADR-0010 conferida) · numa segunda execução no mesmo dia,
       nenhum PR duplicado. Evidência em `dod-evidence.md`.
-- [ ] T018 [US1] Fechamento da fatia: `pnpm gate:all` exit 0 · e2e intocados (o 017 não tem
+- [x] T018 [US1] Fechamento da fatia: `pnpm gate:all` exit 0 · e2e intocados (o 017 não tem
       tela — diff de `apps/web` restrito a `shared/fee-catalog/`) · ausências asseridas no corpo
       do PR da fatia (lição 014/US4) · linha do ledger da onda.
 - [ ] T019 [US1] **Owner-gated PR-A → `develop`** (squash). No gate: **ADR-0028 e ADR-0029
