@@ -196,11 +196,35 @@ jobs:
             echo "tem_pr=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # O PR mensal SÓ nasce de um ref de integração — achado da run 31240364306 (o PR #56 do bot,
+      # fechado sem merge): o bot ramifica do ref em que RODA, então uma run despachada de uma
+      # branch de fatia produziu um "PR de tarifas" carregando 78 arquivos — a pilha inteira em
+      # revisão — sob um título de rotina. Um ritual mensal que o revisor aprende a aprovar rápido
+      # não pode ser o caminho por onde código não-revisado entra. Fora da integração, a run
+      # continua VALENDO (coleta, valida, sobe artefatos) e DIZ que não abriu PR.
+      - name: Ref de integração? (o PR mensal só nasce de develop/main)
+        id: ref_ok
+        run: |
+          set -eu
+          case "${GITHUB_REF_NAME}" in
+            develop|main) echo "ok=true" >> "$GITHUB_OUTPUT" ;;
+            *)
+              echo "ok=false" >> "$GITHUB_OUTPUT"
+              {
+                echo "### PR mensal NÃO aberto — run fora do branch de integração"
+                echo ""
+                echo "Ref desta run: \`${GITHUB_REF_NAME}\`. O bot ramifica do ref em que roda, então"
+                echo "aqui o PR carregaria a árvore desta branch inteira, não só o dado do catálogo."
+                echo "A coleta e a validação VALERAM — os artefatos estão anexados à run."
+              } >> "$GITHUB_STEP_SUMMARY"
+              ;;
+          esac
+
       # Idempotência (desenho §I.2, contrato): branch determinística por DATA, e `gh pr list` antes
       # de criar — a mesma técnica que `auto-pr.yml` já roda. Mesmo artefato ⇒ mesmo diff ⇒ nenhum
       # PR duplicado numa segunda execução no mesmo dia.
       - name: Abrir (ou reaproveitar) o PR mensal
-        if: steps.desfecho.outputs.tem_pr == 'true'
+        if: steps.desfecho.outputs.tem_pr == 'true' && steps.ref_ok.outputs.ok == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # T017 run 4 ensinou: o `pnpm install` do job instala o lefthook, e o push do bot
