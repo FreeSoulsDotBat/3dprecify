@@ -19,12 +19,14 @@ import { lerPermissaoDeDispensa } from "./exemption.ts";
 import { collectedAtFor } from "./guardrails.ts";
 import { escreverArtefatosDePr } from "./pr-artifacts.ts";
 import { projetarSemente, serializarSemente } from "./seed-projection.ts";
+import { paraComposicao } from "./watch/vigia-artifacts.ts";
 
 const ARTEFATO = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 const SEMENTE = fileURLToPath(
   new URL("../../../apps/web/src/shared/fee-catalog/seed.data.json", import.meta.url),
 );
 const VEREDITOS = fileURLToPath(new URL("../artifacts/", import.meta.url));
+const BASELINES = fileURLToPath(new URL("../data/", import.meta.url));
 
 const morrer = (mensagem) => {
   console.error(`fee:build — ${mensagem}`);
@@ -54,14 +56,32 @@ const vereditos = existsSync(VEREDITOS)
       .map((f) => JSON.parse(readFileSync(`${VEREDITOS}${f}`, "utf8")))
   : [];
 
+// 017/T023 — os artefatos que os VIGIAS deixaram (`<fonte>.vigia.json`). `paraComposicao` (testada,
+// TS) é a única coisa que decide o que vira relato/decisão/baseline a reescrever; este arquivo só lê
+// disco e repassa.
+const artefatosDeVigia = existsSync(VEREDITOS)
+  ? readdirSync(VEREDITOS)
+      .filter((f) => f.endsWith(".vigia.json"))
+      .sort()
+      .map((f) => JSON.parse(readFileSync(`${VEREDITOS}${f}`, "utf8")))
+  : [];
+const { vigias, decisao, baselinesParaEscrever } = paraComposicao(artefatosDeVigia);
+
+const arquivosDoPr = [
+  "backend/app/data/catalog.json",
+  "apps/web/src/shared/fee-catalog/seed.data.json",
+  ...Object.keys(baselinesParaEscrever).map((f) => `packages/fee-ingest/data/${f}`),
+];
+
 const desfecho = compor({
   base,
   vereditos,
   collectedAt: data.date,
   generatedAt: `${data.date}T00:00:00.000Z`,
-  vigias: [],
+  vigias,
+  ...(decisao ? { decisao } : {}),
   dispensaPermitida: lerPermissaoDeDispensa(process.env.ALLOW_FRESHNESS_EXEMPTION),
-  arquivosDoPr: ["backend/app/data/catalog.json", "apps/web/src/shared/fee-catalog/seed.data.json"],
+  arquivosDoPr,
 });
 
 // O artefato só é reescrito quando há PR — e o catálogo composto SÓ EXISTE dentro do caso PR
@@ -70,6 +90,11 @@ const desfecho = compor({
 const publicado = desfecho.kind === "PR" ? desfecho.catalogo : base;
 if (desfecho.kind === "PR") {
   writeFileSync(ARTEFATO, `${JSON.stringify(publicado, null, 2)}\n`);
+  // Os baselines de vigia viajam NO MESMO PR (decisão E.3/E.4) — nunca fora dele: um run SEM_PR não
+  // move nem o catálogo nem o baseline, e o único arquivo que o desfecho "converge" toca é este.
+  for (const [nome, conteudo] of Object.entries(baselinesParaEscrever)) {
+    writeFileSync(`${BASELINES}${nome}`, `${JSON.stringify(conteudo, null, 2)}\n`);
+  }
 }
 // 017/T016 — o corpo/título saem como ARQUIVOS (`artifacts/pr-body.md` + `artifacts/pr-title.txt`),
 // nunca montados em shell dentro do job `publicar` (contrato `workflow-yaml.md`: "proíbe heredoc de

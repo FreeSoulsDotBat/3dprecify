@@ -85,12 +85,46 @@ jobs:
             packages/fee-ingest/artifacts/amazon-rows.json
           if-no-files-found: warn # um crash ANTES de emitir veredito não pode derrubar o run inteiro
 
+  # 017/T023 (US4/US7 · PR-B) — o vigia da `/precos`. Fetch SIMPLES (medido: HTTP 200, sem SPA — G
+  # do brief), sem Playwright: a diferença com `amazon-tabela` acima é que esta página NÃO é
+  # renderizada por JS. NUNCA toca `backend/app/data/catalog.json` (D7/decisão E.2 — o módulo que ele
+  # chama não tem função `WatchReading -> FeeEntry/CatalogSlice`); o baseline (`packages/fee-ingest/
+  # data/amazon-precos.baseline.json`) só é reescrito pelo `publicar`, no MESMO PR (E.3/E.4), nunca
+  # aqui. `contents: read` — este job só lê.
+  amazon-precos:
+    name: Amazon — vigia da /precos (fetch simples, D7)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Boot honesto (014/US4 · J.1): `node` puro sobre o `.mjs`, não `vitest`.
+      - name: node packages/fee-ingest/src/watch-amazon-precos.mjs (boot puro + leitura real)
+        run: node packages/fee-ingest/src/watch-amazon-precos.mjs
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: amazon-precos-vigia
+          path: packages/fee-ingest/artifacts/amazon-precos.vigia.json
+          if-no-files-found: warn # um crash ANTES de emitir resultado não pode derrubar o run inteiro
+
   # A composição. Único job com `contents: write`/`pull-requests: write` (desenho §A.3). Roda
-  # SEMPRE (`if: always()`) mesmo se `amazon-tabela` falhar — um coletor que falhou vira NÃO LIDO
-  # (motivo honesto), nunca faz o PR mensal inteiro sumir (US2/AC3, o "PR parcial" da clarify Q4).
+  # SEMPRE (`if: always()`) mesmo se `amazon-tabela`/`amazon-precos` falharem — um coletor que
+  # falhou vira NÃO LIDO/ABORT (motivo honesto), nunca faz o PR mensal inteiro sumir (US2/AC3, o "PR
+  # parcial" da clarify Q4 — e agora a prova de que os DOIS caminhos são independentes, T023/SC-1007).
   publicar:
     name: Compor + validar + (talvez) abrir PR
-    needs: [amazon-tabela]
+    needs: [amazon-tabela, amazon-precos]
     if: always()
     runs-on: ubuntu-latest
     permissions:

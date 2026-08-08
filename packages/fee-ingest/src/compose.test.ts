@@ -319,3 +319,66 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
     expect(r.kind === "PR" && r.catalogo.catalogVersion).toBe("2026-08-07.0");
   });
 });
+
+// 017/T023 (US7 · SC-1007) — com DOIS caminhos de coleta no mesmo laço, prova o que era
+// NÃO-TESTÁVEL com um: um caminho abortando não impede o outro de concluir, e o vigia NUNCA
+// carimba o catálogo (emenda C1 do analyze).
+describe("compor — independência entre o vigia e o coletor de marketplace (SC-1007)", () => {
+  it("SÓ o vigia relê (nenhum veredito de marketplace) ⇒ `lastReviewed` do catálogo INTACTO, e o PR sai mesmo assim", () => {
+    const base = baseSintetica();
+    const r = compor({
+      ...padrao,
+      base,
+      vereditos: [],
+      vigias: [
+        {
+          fonte: "Amazon /precos",
+          sourceUrl: "https://venda.amazon.com.br/precos",
+          resumo: "auto-datação mudou",
+        },
+      ],
+    });
+    expect(r.kind).toBe("PR");
+    if (r.kind !== "PR") return;
+    const mks = r.catalogo.marketplaces as Record<string, unknown>[];
+    const amazon = mks.find((m) => m.marketplace === "AMAZON")!;
+    // O vigia não tem função WatchReading -> CatalogSlice (D7/E.2): a seção AMAZON sai byte-idêntica.
+    expect(JSON.stringify(amazon)).toBe(
+      JSON.stringify(
+        (base.marketplaces as Record<string, unknown>[]).find((m) => m.marketplace === "AMAZON"),
+      ),
+    );
+    expect((amazon.entries as Record<string, unknown>[])[0]!.lastReviewed).toBe("2026-07-28");
+  });
+
+  it("a tabela Amazon ABORTA (canária/piso) E o vigia tem notícia, na MESMA execução ⇒ Amazon envelhece, o vigia publica assim mesmo", () => {
+    const r = compor({
+      ...padrao,
+      base: baseSintetica(),
+      vereditos: [
+        {
+          kind: "ABORTADO",
+          marketplace: "AMAZON",
+          reason: "canária Roupas e Acessórios",
+          sourceUrl: "https://fonte/AMAZON",
+        },
+      ],
+      vigias: [
+        {
+          fonte: "Amazon /precos",
+          sourceUrl: "https://venda.amazon.com.br/precos",
+          resumo: "tarifa do plano Individual publicada como R$ 2,50 (constante: R$ 2,00)",
+        },
+      ],
+    });
+    expect(r.kind).toBe("PR");
+    if (r.kind !== "PR") return;
+    // A entrada Amazon não avançou — ela "envelheceu" (a data de reverificação continua a de antes).
+    const mks = r.catalogo.marketplaces as Record<string, unknown>[];
+    const amazon = mks.find((m) => m.marketplace === "AMAZON")!;
+    expect((amazon.entries as Record<string, unknown>[])[0]!.lastReviewed).toBe("2026-07-28");
+    // E o desfecho não vira SEM_PR por causa do abort: o vigia sozinho já justifica o PR.
+    expect(r.corpo).toContain("ABORTADO");
+    expect(r.corpo).toContain("## Vigias (nenhum dado alterado)");
+  });
+});

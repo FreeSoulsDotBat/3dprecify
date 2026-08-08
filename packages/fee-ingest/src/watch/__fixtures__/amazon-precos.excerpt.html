@@ -1,0 +1,30 @@
+<!--
+  017/T020 — RECORTE MÍNIMO da /precos real, baixada por `curl -s https://venda.amazon.com.br/precos`
+  em 2026-08-08 (medido: HTTP 200, 647813 bytes, sem navegador — G do brief). Este arquivo NÃO é a
+  página bruta (os 647KB não entram no repositório): é o recorte com as três seções que o vigia lê,
+  bytes verbatim das seções relevantes, do jeito que o `curl` real devolveu (sem reformatação).
+
+  Se a página real divergir destes valores num mês futuro, é EXATAMENTE isso que o vigia existe para
+  reportar — os valores aqui são os medidos em 2026-08-08, não um exemplo inventado.
+-->
+<html>
+  <body>
+    <div class="text align-start color-squid-ink font-size-default ember font-normal">
+      As comissões são pagas por cada item vendido e variam de acordo com a categoria, conforme
+      listado abaixo. A porcentagem da comissão é calculada em relação ao preço total de venda do
+      produto (preço final do comprador). Caso o valor referente seja menor que a comissão mínima, a
+      Amazon desconta o valor da comissão mínima, equivalente a R$ 1,00 (um real).<br /><br />Importante:
+      Alguns produtos em determinadas categorias podem exigir aprovação prévia.
+    </div>
+    <div class="text align-start color-storm font-size-small ember font-normal">
+      O 1° ano do Plano profissional é GRÁTIS para novos vendedores da Amazon. A partir do 13° mês o
+      preço do plano é de R$ 19,00 mensais. <br /><br />O Plano Individual é isento de mensalidade;
+      O custo é de R$ 2,00 por produto vendido. <br /><br />Compare os planos aqui
+    </div>
+    <a
+      href="https://sellercentral.amazon.com.br/help/hub/reference/external/200336920?initialSessionID=132-5944554-5647930&amp;ld=ASBRSOADirect"
+      class="link button button-type-secondary-light font-size-regular button-focus-default"
+      >Consulte comissões atualizadas em 20/01/2025</a
+    >
+  </body>
+</html>

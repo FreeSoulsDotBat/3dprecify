@@ -1,0 +1,17 @@
+{
+  "sourceUrl": "https://venda.amazon.com.br/precos",
+  "collectedAt": "2026-08-08",
+  "selfDatedAs": "20/01/2025",
+  "shape": {
+    "rows": 3,
+    "cols": 1
+  },
+  "anchors": ["a comissão mínima, equivalente a R$", "por produto vendido", "mensais"],
+  "absentAnchors": ["mínimo por categoria", "mínima por categoria", "comissão mínima varia"],
+  "values": {
+    "comissaoMinima": 1,
+    "individualPerItem": 2,
+    "profissionalMensal": 19
+  },
+  "contentHash": "sha256:3f370366e81bc5e880bf562615acc83bab8214cb50fd3f23f5054c57d92e052a"
+}
