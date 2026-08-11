@@ -1,7 +1,7 @@
 # DoD evidence — 018 Abas desktop
 
 **Branch**: `018-abas-desktop` (a partir de `develop`) · **Data**: 2026-08-11
-**Estado**: código completo, **não homologado**. Ver §7.
+**Estado**: código completo · **homologado pelo assistente** (PASS COM RESSALVAS 88%, 2 defeitos achados e corrigidos) · **NÃO homologado pelo dono**. Registro: [evidencias/homologacao-2026-08-11.md](./evidencias/homologacao-2026-08-11.md). Ver §7.
 
 ---
 
@@ -105,10 +105,10 @@ a cada tecla e o debounce nunca chegava ao servidor. Dois testes do US6 falharam
   não tem quem a pegue no CI. É a pendência mais séria deste PR.
 - **A caminhada e2e (Playwright) não rodou** neste ciclo; a verificação de navegador foi feita por
   script próprio contra o servidor de desenvolvimento, com conta premium real e catálogo semeado.
-- **Orçamentos e Kits foram medidos sem dados densos**: o Kits estava com o compositor vazio e o
+- ~~Orçamentos e Kits medidos sem dados densos~~ — **corrigido** na homologação de 2026-08-11, com dados adversariais semeados. Texto original: Orçamentos e Kits foram medidos sem dados densos: o Kits estava com o compositor vazio e o
   Orçamentos sem registros gravados, então o mestre-detalhe do Orçamentos e a coluna de resumo do
   Kits foram exercitados por teste e por composição, **não por uma tela cheia de dados reais**.
-- **Não foi medido em tema claro** nem com leitor de tela real.
+- ~~Não foi medido em tema claro~~ — **corrigido**: os dois temas foram medidos na homologação de 2026-08-11 (e a frase original estava invertida: o que faltava era o ESCURO). Segue sem **leitor de tela real**.
 
 ## 8. Desvios conscientes do arquivo de design
 

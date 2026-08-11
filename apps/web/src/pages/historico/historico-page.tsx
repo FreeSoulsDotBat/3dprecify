@@ -624,6 +624,13 @@ function QueueBanner({
 function SnapshotCard({ item }: { item: HistoryItem }) {
   const pieces = frozenPayloadOf(item)?.lines?.length ?? 0;
   const kind = item.kind === "KIT" ? t.kindKit.replace("{n}", String(pieces)) : t.kindSingle;
+  // 018 — achado A1 da minha própria homologação: no mestre-detalhe o registro abria à direita e
+  // NENHUM card da lista ficava marcado. O vendedor perdia o vínculo entre o que escolheu e o que
+  // está lendo — e a spec pede a marcação (FR-021). O Catálogo já marcava; aqui faltava.
+  // Fora do mestre-detalhe (mobile) `?snapshot=` toma a tela inteira, então nada fica marcado —
+  // que é o certo: não há lista para marcar.
+  const aberto = (useSearch({ strict: false }) as { snapshot?: string }).snapshot;
+  const selecionado = aberto === item.clientSnapshotId;
 
   // A blocked/failed/unauthenticated entry needs an escape hatch right where the seller sees it, or
   // it is a dead end that poisons every future sign-out (review PR-A, B2). Pending is drained by the
@@ -641,8 +648,12 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
       search={{ snapshot: item.clientSnapshotId }}
       className="tf-historico__link"
       id={`snap-${item.clientSnapshotId}`}
+      aria-current={selecionado ? "true" : undefined}
     >
-      <Card padding="sm" className="tf-historico__card">
+      <Card
+        padding="sm"
+        className={`tf-historico__card${selecionado ? " tf-historico__card--aberto" : ""}`}
+      >
         <span className="tf-historico__label">{cardTitle(item)}</span>
 
         {item.syncState !== "synced" && (
