@@ -6,6 +6,10 @@ os blocos são independentes e podem ser feitos em sessões separadas.
 Este roteiro **não pede que você confie em mim**. Cada passo diz o que digitar e o número exato que
 tem de aparecer. Onde eu não tenho o número, digo que não tenho.
 
+**O processo em volta deste roteiro está em [`PROCESSO-HOMOLOGACAO.md`](PROCESSO-HOMOLOGACAO.md)** — em
+particular a regra de que caminhar por todos os cenários é metade do trabalho: a outra metade é **repassar
+pelos pontos já apontados**, depois da correção, antes de abrir cenários novos.
+
 ---
 
 ## Antes de começar

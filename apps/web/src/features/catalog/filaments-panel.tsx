@@ -42,6 +42,7 @@ export function FilamentsPanel() {
   return (
     <CatalogPanel<FilamentOut, FilamentFormValues, FilamentIn>
       list={list}
+      detailKicker={catalogo.detailFilament}
       lapsed={entitlement.data?.status === "lapsed"}
       copy={{
         addLabel: catalogo.addFilament,

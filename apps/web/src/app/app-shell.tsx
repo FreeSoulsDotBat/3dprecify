@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 
 import { OutboxSyncer } from "@/features/history/outbox-syncer";
 import { SignOutOutboxGuard } from "@/features/history/sign-out-outbox-guard";
+import { useIsWide } from "@/shared/lib/use-is-wide";
+import { useNavRailStore } from "@/shared/ui";
 import { AppNav } from "@/widgets/app-nav/app-nav";
 import { OfflineBanner } from "@/widgets/offline-banner/offline-banner";
 import { SessionExpiryBanner } from "@/widgets/session-expiry-banner/session-expiry-banner";
@@ -49,8 +51,19 @@ function useIsMobile(): boolean {
  */
 export function AppShell() {
   const isMobile = useIsMobile();
+  // 018/US5 — o rail. O estado é preferência do APARELHO (nav-rail-store), e só vale acima do corte
+  // de 1280px: entre 426px e 1279px a sidebar continua a de sempre, sem botão de recolher, porque
+  // ali a largura já é apertada e recolher não devolve nada útil.
+  const isWide = useIsWide();
+  const collapsed = useNavRailStore((s) => s.collapsed);
+  const toggleRail = useNavRailStore((s) => s.toggle);
+  const railCollapsed = isWide && collapsed;
   return (
-    <div className="tf-shell" data-layout={isMobile ? "mobile" : "desktop"}>
+    <div
+      className="tf-shell"
+      data-layout={isMobile ? "mobile" : "desktop"}
+      data-rail={!isMobile && isWide ? (collapsed ? "collapsed" : "expanded") : undefined}
+    >
       {/* slot: offline-banner (US4/T052) */}
       <OfflineBanner />
       {/* hotfix 016/A3 (H5) — the way back when the SERVER refuses a live client session. Renders
@@ -77,7 +90,11 @@ export function AppShell() {
         </>
       ) : (
         <div className="tf-shell__body">
-          <AppNav variant="sidebar" />
+          <AppNav
+            variant="sidebar"
+            collapsed={railCollapsed}
+            onToggleCollapsed={isWide ? toggleRail : undefined}
+          />
           <div className="tf-shell__content">
             <TopBar isMobile={false} />
             <main className="tf-shell__main">

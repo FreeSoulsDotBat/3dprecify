@@ -1,0 +1,40 @@
+/* 018/US3 — Kits em duas colunas no desktop: peças à esquerda, resumo à direita.
+
+   `display: contents` abaixo do corte NÃO é um truque estético: ele apaga os dois invólucros do
+   layout, e os filhos voltam a ser filhos diretos da `<section>`, herdando o mesmo `gap` de antes.
+   O mobile não fica "equivalente" — ele fica IDÊNTICO, porque a caixa que o desenhava é a mesma.
+   Reagrupar o DOM de outra forma teria custado uma comparação pixel a pixel para provar o que aqui
+   é consequência da regra. */
+
+.tf-kits-grid,
+.tf-kits-grid__lines,
+.tf-kits-grid__aside {
+  display: contents;
+}
+
+@media (min-width: 1280px) {
+  .tf-kits-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 480px;
+    gap: var(--space-6);
+    align-items: start;
+  }
+  .tf-kits-grid__lines {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+  }
+  .tf-kits-grid__aside {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+    /* A coluna inteira acompanha a rolagem — e é a ÚNICA camada `sticky` daqui: o resumo dentro
+       dela usa a variante `column`, que não gruda por conta própria. */
+    position: sticky;
+    top: var(--space-4);
+    max-height: calc(100dvh - var(--space-8));
+    overflow-y: auto;
+  }
+}

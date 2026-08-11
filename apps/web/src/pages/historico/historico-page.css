@@ -163,3 +163,24 @@
   margin-inline-start: auto;
   font-variant-numeric: tabular-nums;
 }
+
+/* ---- 018/US2 — Orçamentos mestre-detalhe (≥1280px) ----
+   Só existe acima do corte: `HistoricoPage` nem monta esta árvore abaixo dele. */
+.tf-historico-md {
+  display: grid;
+  /* A lista tem largura FIXA (o desenho pede 520px) e o registro fica com o resto — o inverso do
+     Catálogo, e de propósito: aqui o que precisa de espaço é o DOCUMENTO, não a lista. */
+  grid-template-columns: 520px minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+.tf-historico-md__master,
+.tf-historico-md__detail {
+  min-width: 0;
+}
+.tf-historico-md__detail {
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+}

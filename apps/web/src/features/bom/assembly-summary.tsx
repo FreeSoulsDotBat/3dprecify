@@ -14,23 +14,38 @@ import "./assembly-summary.css";
 
 const t = messages.bom;
 
+/**
+ * 018/US3 — como o resumo se apresenta.
+ * - `pinned` (padrão): a barra colada no rodapé. É o comportamento de hoje, e é o do MOBILE.
+ * - `column`: o resumo mora numa coluna fixa à direita (desktop ≥1280px), e nada fica no rodapé.
+ *
+ * O padrão é `pinned` de propósito: quem montar este componente sem saber do 018 recebe o
+ * comportamento antigo, não o novo.
+ */
+export type AssemblySummaryVariant = "pinned" | "column";
+
 export function AssemblySummary({
   bom,
   uiSkipped,
   excludedLineCount = 0,
+  variant = "pinned",
 }: {
   bom: BomResult;
   uiSkipped?: UiSkippedChannel[];
   /** Composer lines that did NOT reach the total (invalid field or quantity). A truthful zero
    *  (every line quantity 0) is NOT excluded — those lines still contributed to `bom.lines`. */
   excludedLineCount?: number;
+  variant?: AssemblySummaryVariant;
 }) {
+  // Na coluna, o "fixado" é a coluna inteira (CSS da página), não este bloco: manter
+  // `.assembly-summary__pinned` aqui somaria um segundo sticky dentro de um sticky.
+  const pinnedClass = variant === "pinned" ? "assembly-summary__pinned" : "assembly-summary__col";
   // No line contributed: the total is not "R$ 0,00", it does not exist yet. Show the honest
   // waiting state instead of three fake zeros (review 2026-07-12), pinned like the total it
   // stands in for. There is no channel rollup here (no line ⇒ no channels).
   if (bom.lines.length === 0) {
     return (
-      <div className="assembly-summary__pinned" data-testid="kit-total-bar">
+      <div className={pinnedClass} data-testid="kit-total-bar">
         <Card padding="md" className="flex flex-col gap-1">
           <p className="text-sm font-semibold">{t.assemblyTitle}</p>
           <p className="text-sm text-[var(--text-muted)]">{t.assemblyNoPriceTitle}</p>
@@ -46,7 +61,7 @@ export function AssemblySummary({
   return (
     <>
       <ChannelRollup channels={bom.channels} uiSkipped={uiSkipped} />
-      <div className="assembly-summary__pinned" data-testid="kit-total-bar">
+      <div className={pinnedClass} data-testid="kit-total-bar">
         <Card padding="md" className="flex flex-col gap-2">
           <p className="text-sm font-semibold">{t.assemblyTitle}</p>
           <BreakdownRow

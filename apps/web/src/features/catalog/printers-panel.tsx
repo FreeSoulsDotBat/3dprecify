@@ -41,6 +41,7 @@ export function PrintersPanel() {
   return (
     <CatalogPanel<PrinterOut, PrinterFormValues, PrinterIn>
       list={list}
+      detailKicker={catalogo.detailPrinter}
       lapsed={entitlement.data?.status === "lapsed"}
       copy={{
         addLabel: catalogo.addPrinter,

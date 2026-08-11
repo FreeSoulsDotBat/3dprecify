@@ -11,3 +11,6 @@ contracts/openapi.json
 **/*.md
 # Browser-MCP session artifacts (tool output, like graphify-out/) — never format-checked.
 .playwright-mcp/**
+# Arquivos de design importados do Claude Design (018+): são ARTEFATO, cópia verbatim do que o dono
+# desenhou. Reformatá-los faria o repositório divergir da fonte e destruiria a comparação byte a byte.
+specs/*/design/**

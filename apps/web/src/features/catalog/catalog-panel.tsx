@@ -3,6 +3,7 @@ import { type CSSProperties, type ReactNode, useState } from "react";
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useIsWide } from "@/shared/lib/use-is-wide";
 import {
   Alert,
   Button,
@@ -19,6 +20,8 @@ import {
   Spinner,
   toast,
 } from "@/shared/ui";
+
+import "./catalog-master-detail.css";
 
 // Generic premium catalog panel (T019, reused by T022). It owns the list/empty/loading/error/offline
 // presentation plus the create/edit Sheet and the delete confirm Dialog; the entity-specific bits
@@ -94,6 +97,8 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   deleting: boolean;
   /** US6-4: an honest info line added to the delete confirm when products reference this item. */
   deleteWarning?: (item: TItem) => string | undefined;
+  /** 018/US1 — rótulo do bloco de detalhe no desktop ("Filamento salvo", "Produto salvo"…). */
+  detailKicker?: string;
 }
 
 type SheetState<TItem> = { mode: "create" } | { mode: "edit"; item: TItem };
@@ -117,11 +122,22 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   saving,
   deleting,
   deleteWarning,
+  detailKicker,
 }: CatalogPanelProps<TItem, TForm, TWire>) {
   const [sheet, setSheet] = useState<SheetState<TItem> | null>(null);
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<TItem | null>(null);
   const [deleteError, setDeleteError] = useState<string | undefined>(undefined);
+
+  // 018/US1 — mestre-detalhe do desktop. Estado local, NUNCA na URL: a aba continua vindo de
+  // `?tab=` (013/F-02 segue valendo), mas a seleção dentro de uma lista é efêmera e escrevê-la na
+  // URL faria cada clique mexer no roteador sem que ninguém queira aquele link (ADR-0031/C).
+  const isWide = useIsWide();
+  const [query, setQuery] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  // A seleção "vaza" de seção sozinha? Não: a página monta um componente DIFERENTE por seção, então
+  // trocar de aba desmonta este painel e o estado nasce limpo.
+  const [inlineError, setInlineError] = useState<string | undefined>(undefined);
 
   const openCreate = () => {
     if (onCreateNavigate) return onCreateNavigate(); // full-page route (products, §1.6b)
@@ -161,10 +177,45 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
     }
   };
 
+  // 018/US1 — salvar PELA FICHA: mesma mutation do Sheet, mesmo toast só depois de um 2xx real, e o
+  // erro fica ao lado do formulário em vez de dentro de uma gaveta que nem está aberta.
+  const handleInlineSubmit = async (item: TItem, wire: TWire) => {
+    setInlineError(undefined);
+    try {
+      await update?.(item.id, wire);
+      toast(copy.savedToast, { tone: "success" });
+    } catch (err) {
+      setInlineError(honestWriteError(err));
+    }
+  };
+
   const addButton = (block = false) => (
     <Button size="sm" onClick={openCreate} className={block ? undefined : "shrink-0"}>
       <Icon name="plus" size={16} aria-hidden /> {copy.addLabel}
     </Button>
+  );
+
+  const rowActions = (item: TItem) => (
+    <>
+      {onDuplicate && (
+        <Button
+          variant="ghost"
+          size="sm"
+          aria-label={`${catalogo.duplicate} ${nameOf(item)}`}
+          onClick={() => onDuplicate(item)}
+        >
+          <Icon name="copy" size={18} aria-hidden />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        aria-label={`${catalogo.remove} ${nameOf(item)}`}
+        onClick={() => (lapsed ? openEdit(item) : setDeleteTarget(item))}
+      >
+        <Icon name="trash-2" size={18} aria-hidden />
+      </Button>
+    </>
   );
 
   let body: ReactNode;
@@ -194,6 +245,125 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         description={copy.emptyBody}
         action={addButton(true)}
       />
+    );
+  } else if (isWide) {
+    // ---- 018/US1 — mestre-detalhe (≥1280px). Lista à esquerda, ficha do item à direita. ----
+    const term = query.trim().toLowerCase();
+    const visible = term
+      ? list.items.filter((item) =>
+          `${nameOf(item)} ${summaryOf(item)}`.toLowerCase().includes(term),
+        )
+      : list.items;
+    // Derivada contra a lista ATUAL a cada render: item excluído, filtrado ou vindo de outro
+    // aparelho cai para um item válido — nunca para uma ficha órfã.
+    const selected = visible.find((item) => item.id === selectedId) ?? visible[0] ?? null;
+
+    body = (
+      <div className="tf-catalog-md">
+        <div className="tf-catalog-md__master">
+          <div className="tf-catalog-md__toolbar">
+            <label className="tf-inputwrap tf-catalog-md__search">
+              <span className="sr-only">{catalogo.searchLabel}</span>
+              <Icon name="search" size={18} aria-hidden />
+              <input
+                className="tf-input"
+                type="search"
+                value={query}
+                placeholder={catalogo.searchPlaceholder}
+                aria-label={catalogo.searchLabel}
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
+            <p style={captionText}>{copy.count(visible.length)}</p>
+            {addButton()}
+          </div>
+
+          {visible.length === 0 ? (
+            // O vazio da BUSCA não é o vazio do catálogo: aqui existem itens salvos, o filtro é que
+            // não achou. Dizer "nenhum filamento salvo" seria mentira sobre os dados do vendedor.
+            <EmptyState
+              icon="package"
+              title={catalogo.searchEmptyTitle}
+              description={catalogo.searchEmptyBody}
+              action={
+                <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
+                  {catalogo.searchClear}
+                </Button>
+              }
+            />
+          ) : (
+            <ul className="tf-catalog-md__list" data-testid="master-list">
+              {visible.map((item) => {
+                const isSelected = selected?.id === item.id;
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      data-testid="master-item"
+                      aria-current={isSelected ? "true" : undefined}
+                      className={`tf-card tf-card--interactive tf-catalog-md__card${
+                        isSelected ? " tf-catalog-md__card--selected" : ""
+                      }`}
+                      onClick={() => setSelectedId(item.id)}
+                    >
+                      <span style={rowName}>{nameOf(item)}</span>
+                      <span style={rowSummary}>{summaryOf(item)}</span>
+                      {noteOf?.(item) && (
+                        <span style={rowSummary} data-testid="row-note">
+                          {noteOf(item)}
+                        </span>
+                      )}
+                      {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                      {lapsed && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+
+        {selected && (
+          <aside className="tf-card tf-catalog-md__detail" data-testid="detail-panel">
+            <header className="tf-catalog-md__detail-head">
+              <div className="tf-catalog-md__detail-title">
+                {detailKicker && <span className="tf-catalog-md__kicker">{detailKicker}</span>}
+                <h2>{nameOf(selected)}</h2>
+              </div>
+              <div className="flex items-center gap-1">{rowActions(selected)}</div>
+            </header>
+
+            {noteOf?.(selected) && <Alert tone="info">{noteOf(selected)}</Alert>}
+            {inlineError && <Alert tone="danger">{inlineError}</Alert>}
+
+            {renderForm && toFormValues ? (
+              // Filamento e impressora: a ficha É o editor. O MESMO formulário do Sheet, montado
+              // aqui — não uma segunda cópia (decisão do dono no clarify; research §E).
+              // `key` pelo id: sem ele o RHF manteria os defaultValues do item anterior, porque
+              // `defaultValues` só valem na montagem.
+              <div key={selected.id}>
+                {renderForm({
+                  mode: "edit",
+                  defaultValues: toFormValues(selected),
+                  submitting: saving ?? false,
+                  submitError: inlineError,
+                  readOnly: lapsed,
+                  onSubmit: (wire) => void handleInlineSubmit(selected, wire),
+                  onCancel: () => setInlineError(undefined),
+                })}
+              </div>
+            ) : (
+              // Produto e kit: a ficha RESUME e manda para o editor de página cheia que já existe.
+              <div className="flex flex-col gap-3">
+                <p style={rowSummary}>{summaryOf(selected)}</p>
+                <Button variant="secondary" onClick={() => openEdit(selected)}>
+                  <Icon name="pencil" size={18} aria-hidden /> {catalogo.detailOpenEditor}
+                </Button>
+              </div>
+            )}
+          </aside>
+        )}
+      </div>
     );
   } else {
     body = (

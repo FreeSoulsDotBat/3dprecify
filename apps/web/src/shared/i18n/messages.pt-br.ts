@@ -473,6 +473,10 @@ export const messages = {
     // Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje).
     historico: "Orçamentos",
     conta: "Conta",
+    // 018/US5 — o rail colapsável. O botão diz o que VAI acontecer, não o estado atual: quem lê
+    // "Recolher" sabe o que o clique faz; quem lê "Recolhido" fica adivinhando.
+    collapse: "Recolher",
+    expand: "Expandir",
   },
   // Conta page. Plan indicator is a static, honest "Gratuito" (display-only,
   // gates nothing — no entitlement field exists yet; Principle IV).
@@ -513,6 +517,10 @@ export const messages = {
     planRefreshHint: "Mudou de plano agora?",
     planUnknown: "Não foi possível confirmar seu plano.",
     themeLabel: "Tema",
+    // 018/US4 — no desktop o tema vira um controle que NOMEIA as duas opções. O interruptor do
+    // mobile continua como está: ele foi homologado, e "o mobile não se mexe".
+    themeLight: "Claro",
+    themeDark: "Escuro",
     // Identity comes from GET /api/v1/me (A23). On failure the section shows an error,
     // never a fabricated fallback identity. Honest copy (no provider/price/cancellation).
     identityErrorTitle: "Não foi possível carregar sua conta",
@@ -558,6 +566,20 @@ export const messages = {
     resolvingRef: "carregando…",
     edit: "Editar",
     remove: "Excluir",
+    // 018/US1 — o mestre-detalhe do desktop. A busca filtra a lista JÁ carregada (nenhuma
+    // requisição nova), e por isso o vazio dela fala de busca, não de catálogo vazio.
+    searchLabel: "Buscar no catálogo",
+    searchPlaceholder: "Buscar no catálogo…",
+    searchEmptyTitle: "Nada encontrado para essa busca",
+    searchEmptyBody: "Tente outro termo, ou limpe a busca para ver tudo de novo.",
+    searchClear: "Limpar busca",
+    detailFilament: "Filamento salvo",
+    detailPrinter: "Impressora salva",
+    detailProduct: "Produto salvo",
+    detailKit: "Kit salvo",
+    // A ficha de produto/kit RESUME e manda para o editor de página cheia — o formulário completo
+    // não é recomposto dentro de 560px (decisão do dono, clarify 2026-08-10).
+    detailOpenEditor: "Abrir para editar",
     // Load / error (§1.4)
     loadError: "Não foi possível carregar seu catálogo.",
     retry: "Tentar novamente",

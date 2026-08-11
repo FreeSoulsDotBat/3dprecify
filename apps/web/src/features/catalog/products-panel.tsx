@@ -44,6 +44,7 @@ export function ProductsPanel() {
   return (
     <CatalogPanel<ProductOut, never>
       list={list}
+      detailKicker={catalogo.detailProduct}
       copy={{
         addLabel: catalogo.addProduct,
         emptyTitle: catalogo.emptyProductsTitle,

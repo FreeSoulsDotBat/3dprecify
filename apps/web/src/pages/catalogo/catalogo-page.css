@@ -1,0 +1,21 @@
+/* 018/US1 — a faixa de cabeçalho do Catálogo: título à esquerda, seções à direita.
+
+   Sem media query de propósito. `flex-wrap` resolve as duas larguras com a MESMA regra: onde couber
+   (desktop), título e pílulas dividem a linha; onde não couber (mobile), as pílulas caem para a
+   linha de baixo — que é exatamente o empilhamento de hoje. Uma media query aqui seria uma segunda
+   fonte de verdade sobre "o que é largo", competindo com o `useIsWide`. */
+
+.tf-catalogo-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+/* O PageHeader traz sua própria margem inferior, pensada para quando ele é a única coisa da linha.
+   Dentro da faixa, quem manda no espaçamento é o `gap`. */
+.tf-catalogo-head > .tf-page-header {
+  margin-bottom: 0;
+  min-width: 0;
+}

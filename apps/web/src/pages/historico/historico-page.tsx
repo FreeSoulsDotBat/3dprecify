@@ -1,15 +1,19 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import type { HistoryItem } from "@/entities/history/outbox";
 import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
-import { SnapshotDetailPage } from "@/pages/historico/snapshot-detail-page";
+import {
+  SnapshotDetailPage,
+  SnapshotEmbeddedContext,
+} from "@/pages/historico/snapshot-detail-page";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionExpired } from "@/shared/session/session-expiry";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
+import { useIsWide } from "@/shared/lib/use-is-wide";
 import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
 import {
@@ -62,6 +66,8 @@ export function HistoricoPage() {
   // (`/historico/$snapshotId`), now a search param on THIS route (route's `beforeLoad` already
   // required auth for this param, mirroring the old route's own guard).
   const search = useSearch({ strict: false }) as { snapshot?: string };
+  // 018/US2 — o corte de 1280px decide entre mestre-detalhe e a tela de hoje.
+  const isWide = useIsWide();
 
   // Session bootstrap is NOT "signed out" — a premium seller must never flash the teaser (the E3
   // lesson). Nor is "we have not heard from the server yet" the same as "free".
@@ -77,8 +83,43 @@ export function HistoricoPage() {
   // whose plan simply could not be checked. A calm "could not verify your plan" + retry, mirroring
   // the shipped E2/E3 gate (review PR-A, C5).
   if (!entitlement.data) return <GateError onRetry={entitlement.refetch} />;
+  // 018/US2 — no desktop, lista e registro na MESMA tela. Abaixo do corte nada muda: `?snapshot=`
+  // continua sendo uma tomada de página inteira, que é o caminho do mobile e do link compartilhado.
+  if (isWide) return <HistoryMasterDetail snapshotId={search.snapshot} />;
   if (search.snapshot) return <SnapshotDetailPage snapshotId={search.snapshot} />;
   return <HistoryLedger />;
+}
+
+/**
+ * 018/US2 — o mestre-detalhe: filtros + lista à esquerda, registro congelado à direita.
+ *
+ * Os dois lados são os componentes de sempre em modo `embedded` — nada foi recomposto, nada foi
+ * duplicado. Consequência disso: as ações do registro (exportar, recalcular, comparar, excluir,
+ * renomear) chegam aqui com as MESMAS regras de gate, porque são literalmente o mesmo código.
+ */
+function HistoryMasterDetail({ snapshotId }: { snapshotId?: string }) {
+  return (
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
+      <PageHeader title={t.title} />
+      <p className="text-sm text-[var(--text-muted)]">{t.subtitle}</p>
+      <div className="tf-historico-md">
+        <div className="tf-historico-md__master">
+          <HistoryLedger embedded />
+        </div>
+        <aside className="tf-historico-md__detail">
+          {snapshotId ? (
+            <SnapshotEmbeddedContext.Provider value={true}>
+              <SnapshotDetailPage snapshotId={snapshotId} />
+            </SnapshotEmbeddedContext.Provider>
+          ) : (
+            // Sem registro escolhido (lista vazia, ou filtro que não achou nada): a coluna diz o
+            // que falta em vez de ficar em branco — e NÃO inventa um registro para preencher.
+            <EmptyState icon="history" title={t.emptyTitle} description={t.emptyBody} />
+          )}
+        </aside>
+      </div>
+    </section>
+  );
 }
 
 function GateError({ onRetry }: { onRetry: () => void }) {
@@ -121,9 +162,12 @@ function TeaserShell({ signedOut }: { signedOut: boolean }) {
   );
 }
 
-function HistoryLedger() {
+function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
   const entitlement = useEntitlement();
   const navigate = useNavigate();
+  // 018/US2 — `embedded` = a lista é a coluna ESQUERDA do mestre-detalhe: sem `<section>` própria,
+  // sem PageHeader (a página já os tem). O conteúdo é o mesmo, byte por byte.
+  const selecionado = (useSearch({ strict: false }) as { snapshot?: string }).snapshot;
 
   // The filter state (US6). The search DEBOUNCES into the query key — the input stays responsive
   // while at most one server read fires per settled term. The período is a preset (or a custom
@@ -200,11 +244,27 @@ function HistoryLedger() {
     el?.scrollIntoView?.({ behavior: "smooth", block: "center" });
   };
 
-  return (
-    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
-      <PageHeader title={t.title} />
-      <p className="text-sm text-[var(--text-muted)]">{t.subtitle}</p>
+  // 018/US2 — na coluna, o primeiro registro abre sozinho (é o que o desenho mostra) e a escolha
+  // continua morando em `?snapshot=`, onde ela JÁ morava desde o 013/F-02. Inventar um estado
+  // local aqui criaria uma segunda verdade sobre "qual registro está aberto".
+  // `replace` — abrir o primeiro não é um passo que o Voltar deva ter de desfazer.
+  useEffect(() => {
+    if (!embedded || selecionado || history.items.length === 0) return;
+    void navigate({
+      to: "/historico",
+      search: { snapshot: history.items[0].clientSnapshotId },
+      replace: true,
+    });
+  }, [embedded, selecionado, history.items, navigate]);
 
+  // A moldura muda; o conteúdo, não.
+  //
+  // Cuidado que ISTO custou um bug real: a primeira versão declarava `Wrapper` como um COMPONENTE
+  // aqui dentro. Cada render criava uma função nova, o React via um TIPO novo, e desmontava a
+  // subárvore inteira — o campo de busca perdia o que estava digitado a cada tecla e o debounce
+  // nunca chegava ao servidor. Dois testes do US6 pegaram na hora. Elemento, nunca componente.
+  const conteudo = (
+    <>
       {/* A lapse deletes NOTHING: the ledger stays readable, and only writing needs an active
           Premium (FR-517). */}
       {entitlement.data?.status === "lapsed" && <Alert tone="info">{t.lapsedBanner}</Alert>}
@@ -309,6 +369,15 @@ function HistoryLedger() {
           </Button>
         </div>
       )}
+    </>
+  );
+
+  if (embedded) return <div className="flex flex-col gap-4">{conteudo}</div>;
+  return (
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
+      <PageHeader title={t.title} />
+      <p className="text-sm text-[var(--text-muted)]">{t.subtitle}</p>
+      {conteudo}
     </section>
   );
 }
