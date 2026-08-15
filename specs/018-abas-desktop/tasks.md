@@ -209,4 +209,10 @@ que o que foi feito (`docs/homologacao/automatizada/PLANO-CORRECAO.md` §DoD).
 
 - [ ] **T212** — Resumo fixo com o preço no mobile (o custo total só aparece após ~4 telas a 390px).
       Contradiz a propriedade "o mobile não se mexe" que ESTE incremento promete.
-- [ ] **T213** — A faixa de 426–600px: o conserto real é a barra lateral colapsar abaixo de ~600px.
+- [x] **T213** — A faixa de 426–600px: **FEITO** (2026-08-15, autorizado pelo dono). A barra lateral
+      recolhe sozinha abaixo de 600px. Implementado como o ADR-0031 §Follow-ups manda — estendendo
+      `use-is-wide.ts` com um limiar NOMEADO (`RAIL_FORCADO_QUERY`), não abrindo um segundo
+      `matchMedia`. Sem interruptor nessa faixa, de propósito: expandir devolveria o transbordo, é
+      restrição de espaço e não preferência. `isRail` deixou de exigir o botão (antes, um
+      `collapsed` forçado encolhia a coluna e mantinha os rótulos — o pior dos dois mundos).
+      Provado pela guarda, que agora testa o corte pelos DOIS lados (599 e 600).

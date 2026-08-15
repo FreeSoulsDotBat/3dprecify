@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 
 import { OutboxSyncer } from "@/features/history/outbox-syncer";
 import { SignOutOutboxGuard } from "@/features/history/sign-out-outbox-guard";
-import { useIsWide } from "@/shared/lib/use-is-wide";
+import { useIsWide, useRailForcado } from "@/shared/lib/use-is-wide";
 import { useNavRailStore } from "@/shared/ui";
 import { AppNav } from "@/widgets/app-nav/app-nav";
 import { OfflineBanner } from "@/widgets/offline-banner/offline-banner";
@@ -51,18 +51,32 @@ function useIsMobile(): boolean {
  */
 export function AppShell() {
   const isMobile = useIsMobile();
-  // 018/US5 — o rail. O estado é preferência do APARELHO (nav-rail-store), e só vale acima do corte
-  // de 1280px: entre 426px e 1279px a sidebar continua a de sempre, sem botão de recolher, porque
-  // ali a largura já é apertada e recolher não devolve nada útil.
+  // 018/US5 — o rail POR ESCOLHA. O estado é preferência do aparelho (nav-rail-store) e só vale
+  // acima de 1280px, que é onde recolher é uma decisão do vendedor e não uma necessidade.
+  //
+  // (Este comentário dizia "entre 426px e 1279px a sidebar continua a de sempre". Deixou de ser
+  //  verdade em 2026-08-15: abaixo de 600px ela recolhe sozinha — ver `railForcado`, logo abaixo.
+  //  De 600 a 1279 a frase continua valendo.)
   const isWide = useIsWide();
+  // 2026-08-15 (review do PR #58) — abaixo de 600px o menu recolhe por NECESSIDADE. A 426px, o
+  // primeiro pixel em que a barra lateral monta, os 240px dela deixam ~150px de conteúdo e nada do
+  // produto cabe: a medição acusava a página inteira como culpada de 131px de transbordo. Com o
+  // rail de 76px sobram ~318px, que é onde o conteúdo volta a caber.
+  //
+  // Sem interruptor nessa faixa, de propósito: expandir devolveria o transbordo. É restrição de
+  // espaço, não preferência do vendedor — por isso o `toggle` continua exclusivo do ≥1280px, onde
+  // recolher é uma escolha e o estado é preferência do aparelho.
+  const railForcado = useRailForcado();
   const collapsed = useNavRailStore((s) => s.collapsed);
   const toggleRail = useNavRailStore((s) => s.toggle);
-  const railCollapsed = isWide && collapsed;
+  const railCollapsed = railForcado || (isWide && collapsed);
   return (
     <div
       className="tf-shell"
       data-layout={isMobile ? "mobile" : "desktop"}
-      data-rail={!isMobile && isWide ? (collapsed ? "collapsed" : "expanded") : undefined}
+      /* `data-rail` vale em TODO desktop, não só no wide: é ele que troca `--sidebar-w` para 76px,
+         e a faixa 426–599 precisa disso tanto quanto o rail escolhido a ≥1280px. */
+      data-rail={!isMobile ? (railCollapsed ? "collapsed" : "expanded") : undefined}
     >
       {/* slot: offline-banner (US4/T052) */}
       <OfflineBanner />

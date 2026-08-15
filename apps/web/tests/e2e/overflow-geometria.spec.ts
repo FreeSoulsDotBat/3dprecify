@@ -27,26 +27,14 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 const t = messages.calculator;
 
 /** As larguras que importam, e por quê:
- *  360/390 mobile · **426 o primeiro pixel do desktop** · 1024 a faixa do meio · 1279 o último
- *  pixel antes do corte do 018 · 1440 o wide. */
-const LARGURAS = [360, 390, 1024, 1279, 1440] as const;
-
-/**
- * 426px sai da lista acima e ganha um teste PRÓPRIO, marcado como falha esperada — e a distinção
- * importa, porque as duas coisas dizem verdades diferentes.
+ *  360/390 mobile · **426 o primeiro pixel do desktop** · **599/600 os dois lados do corte do rail
+ *  forçado** (abaixo de 600 a barra lateral recolhe sozinha para 76px — sem isso, os 240px dela
+ *  deixavam ~150px de conteúdo e a página inteira transbordava) · 1024 a faixa do meio · 1279 o
+ *  último pixel antes do corte do 018 · 1440 o wide.
  *
- * A 426px (o primeiro pixel do layout desktop) a barra lateral reserva 240px e sobram ~154px de
- * conteúdo. Nenhum campo, botão ou preço do produto cabe nisso: a medição acusa a página INTEIRA
- * como culpada, não um elemento. Não é regressão desta correção — o conserto de verdade é a barra
- * lateral colapsar abaixo de ~600px, o que é mudança de comportamento do shell e depende de decisão
- * do dono (o corte 425/426 é decisão registrada, 2026-07-03).
- *
- * `test.fail()` faz este teste PASSAR enquanto o defeito existe e FALHAR no dia em que ele for
- * consertado — momento em que esta anotação deve cair e 426 voltar para `LARGURAS`. É a forma
- * honesta de deixar um defeito conhecido no CI: ele fica registrado, executando, e avisa quando
- * mudar. Um `skip` só o esconderia.
- */
-const LARGURA_DEFEITO_CONHECIDO = 426;
+ *  O par 599/600 existe para provar o corte dos DOIS lados: um limiar testado só por dentro passa
+ *  igual se alguém trocar o `max-width` por outro número. */
+const LARGURAS = [360, 390, 426, 599, 600, 1024, 1279, 1440] as const;
 
 /** Um nome que um vendedor cola de verdade: código de produto sem espaço nenhum. */
 const NOME_SEM_ESPACO = "A".repeat(300);
@@ -133,23 +121,4 @@ test("as abas públicas não rolam na horizontal em nenhuma largura suportada", 
       ).toBeLessThanOrEqual(1);
     }
   }
-});
-
-test("426px — DEFEITO CONHECIDO: o layout desktop não cabe na primeira largura em que ele monta", async ({
-  page,
-}) => {
-  test.fail(
-    true,
-    "Aguardando decisão do dono: a barra lateral precisa colapsar abaixo de ~600px. Ver " +
-      "specs/018-abas-desktop/tasks.md T213.",
-  );
-  await page.goto("/calcular");
-  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
-  await page.setViewportSize({ width: LARGURA_DEFEITO_CONHECIDO, height: 900 });
-  await page.waitForTimeout(150);
-  const { eixoX, culpados } = await medir(page);
-  expect(
-    eixoX,
-    `${LARGURA_DEFEITO_CONHECIDO}px: rolagem horizontal — culpados: ${culpados.slice(0, 5).join(" ;; ")}`,
-  ).toBeLessThanOrEqual(1);
 });

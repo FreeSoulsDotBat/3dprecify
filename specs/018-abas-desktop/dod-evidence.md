@@ -194,9 +194,11 @@ desligada com o motivo escrito ao lado (`estresse-leigo.spec.ts`, `RETRATADO_VER
    promete, estruturalmente, que **o ramo mobile é o mesmo código, intocado** — é a propriedade que
    `useIsWide()` garante e que a suíte inteira exercita. Uma barra fixa nova no mobile contradiz
    exatamente isso. Precisa da decisão do dono e de um incremento próprio.
-2. **A faixa de 426px** (131px de rolagem). O teaser foi corrigido e outro elemento assumiu: a
-   240px de sidebar sobram ~150px de conteúdo, e o conserto real é a barra lateral colapsar abaixo
-   de ~600px — de novo, comportamento do shell, de novo decisão de desenho.
+2. ~~**A faixa de 426px**~~ — **CORRIGIDO em 2026-08-15**, autorizado pelo dono. A barra lateral
+   recolhe sozinha abaixo de 600px (76px em vez de 240px), o que devolve ~318px de conteúdo a
+   426px. Feito como o ADR-0031 §Follow-ups manda: um limiar NOMEADO dentro de `use-is-wide.ts`,
+   nunca um segundo `matchMedia`. A guarda de geometria testa o corte pelos dois lados (599/600) —
+   um limiar testado só por dentro passa igual se alguém trocar o número.
 
 ### Os 9 restantes
 

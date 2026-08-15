@@ -70,9 +70,14 @@ export function AppNav({ variant, collapsed = false, onToggleCollapsed }: AppNav
     listRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-nav-item]")[next]?.focus();
   }
 
-  // 018/US5 — o rail só existe na sidebar, e só quando alguém entrega o interruptor.
+  // 018/US5 — o BOTÃO de recolher só existe quando alguém entrega o interruptor.
   const railable = variant === "sidebar" && onToggleCollapsed !== undefined;
-  const isRail = railable && collapsed;
+  // 2026-08-15 — "ser rail" deixou de depender do botão existir. Abaixo de 600px o menu é recolhido
+  // por NECESSIDADE de espaço (`useRailForcado`), e ali não há interruptor: expandir devolveria o
+  // transbordo de 131px que a homologação mediu. Antes, `isRail` exigia o botão, então um
+  // `collapsed` forçado encolhia a coluna para 76px e os rótulos continuavam renderizados — o pior
+  // dos dois mundos.
+  const isRail = variant === "sidebar" && collapsed;
 
   return (
     <nav

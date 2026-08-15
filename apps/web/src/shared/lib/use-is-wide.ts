@@ -26,20 +26,50 @@ import { useEffect, useState } from "react";
  */
 export const WIDE_QUERY = "(min-width: 1280px)";
 
-export function useIsWide(): boolean {
+/**
+ * O limiar do rail FORÇADO (2026-08-15) — e ele entra aqui, e não num arquivo novo, porque o
+ * ADR-0031 §Follow-ups decidiu exatamente este caso: *"se um dia uma quinta tela quiser um limiar
+ * diferente, ela **não** abre um segundo `matchMedia` — estende este hook com um limiar nomeado"*.
+ *
+ * Por que 600px: entre 426px (o primeiro pixel em que a barra lateral monta) e ~600px, os 240px de
+ * menu deixam ~150px de conteúdo, e nada do produto cabe nisso — a homologação mediu a PÁGINA
+ * INTEIRA como culpada de 131px de transbordo, não um elemento. Abaixo de 600px o rail de 76px é a
+ * única largura de menu que sobra espaço utilizável (426 − 76 − 32 de goteira ≈ 318px).
+ *
+ * Não conflita com o corte mobile de 425px (`useIsMobile`): abaixo dele não existe barra lateral
+ * nenhuma, então na prática esta faixa é 426–599.
+ */
+export const RAIL_FORCADO_QUERY = "(max-width: 599px)";
+
+/** A leitura defensiva compartilhada: sem `window`/`matchMedia` (o ambiente do jsdom) a resposta é
+ *  `false`, que é a propriedade que mantém toda a suíte existente no ramo de hoje (ADR-0031). */
+function useMediaQuery(query: string): boolean {
   const read = () =>
     typeof window !== "undefined" && typeof window.matchMedia === "function"
-      ? window.matchMedia(WIDE_QUERY).matches
+      ? window.matchMedia(query).matches
       : false;
-  const [isWide, setIsWide] = useState<boolean>(read);
+  const [matches, setMatches] = useState<boolean>(read);
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-    const mql = window.matchMedia(WIDE_QUERY);
-    const onChange = () => setIsWide(mql.matches);
+    const mql = window.matchMedia(query);
+    const onChange = () => setMatches(mql.matches);
     // Lê uma vez no efeito: entre o primeiro render e o commit a janela pode ter mudado.
     onChange();
     mql.addEventListener("change", onChange);
     return () => mql.removeEventListener("change", onChange);
-  }, []);
-  return isWide;
+  }, [query]);
+  return matches;
+}
+
+export function useIsWide(): boolean {
+  return useMediaQuery(WIDE_QUERY);
+}
+
+/**
+ * A faixa em que o menu é recolhido POR NECESSIDADE, não por escolha do vendedor: abaixo de 600px
+ * a barra lateral expandida não deixa espaço para o conteúdo. Sem botão de expandir, porque
+ * expandir ali devolveria o transbordo — é uma restrição de espaço, não uma preferência.
+ */
+export function useRailForcado(): boolean {
+  return useMediaQuery(RAIL_FORCADO_QUERY);
 }
