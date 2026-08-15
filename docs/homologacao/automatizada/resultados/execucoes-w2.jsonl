@@ -1,0 +1,88 @@
+{"subcenario":"CF-001-UI-02","categoria":"calculo","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T13:44:23.732Z"}
+{"subcenario":"CF-001-UI-02","categoria":"tema","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T13:44:23.749Z"}
+{"subcenario":"CF-001-UI-02","categoria":"layout","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T13:44:23.754Z"}
+{"subcenario":"CF-001-UI-02","categoria":"acessibilidade","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T13:44:23.777Z"}
+{"subcenario":"CF-001-UI-02","categoria":"acessibilidade","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T13:44:33.805Z"}
+{"subcenario":"CF-025-UI-03","categoria":"rede","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T13:44:38.572Z"}
+{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T13:44:44.142Z"}
+{"subcenario":"CF-025-UI-03","categoria":"acolhimento","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T13:44:44.151Z"}
+{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T13:44:44.159Z"}
+{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:54.732Z"}
+{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:55.211Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:55.692Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:56.233Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:56.762Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:57.289Z"}
+{"subcenario":"CF-010-UI-02","categoria":"layout","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:57.295Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:57.738Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:57.971Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:58.217Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:58.668Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:59.324Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T13:44:59.990Z"}
+{"subcenario":"CF-010-UI-03","categoria":"fluxo","titulo":"CF-010-C — um canal com comissão inválida não pode apagar o preço do outro","ts":"2026-08-15T13:45:04.768Z"}
+{"subcenario":"CF-010-UI-03","categoria":"calculo","titulo":"CF-010-C — um canal com comissão inválida não pode apagar o preço do outro","ts":"2026-08-15T13:45:05.300Z"}
+{"subcenario":"CF-010-UI-03","categoria":"calculo","titulo":"CF-010-C — um canal com comissão inválida não pode apagar o preço do outro","ts":"2026-08-15T13:45:05.304Z"}
+{"subcenario":"CF-010-UI-03","categoria":"fluxo","titulo":"CF-010-C — um canal com comissão inválida não pode apagar o preço do outro","ts":"2026-08-15T13:45:05.832Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:06.875Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:06.894Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:07.523Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:07.534Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:08.142Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:08.154Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:08.778Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:08.789Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:09.396Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:09.407Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:10.033Z"}
+{"subcenario":"CF-043-UI-V1-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/dark","ts":"2026-08-15T13:45:10.664Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:11.692Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:11.705Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:12.319Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:12.329Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:12.955Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:12.965Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:13.576Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:13.585Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:14.198Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:14.209Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:14.837Z"}
+{"subcenario":"CF-043-UI-V2-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/dark","ts":"2026-08-15T13:45:15.456Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:16.501Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:16.513Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:17.137Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:17.151Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:17.782Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:17.791Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:18.418Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:18.430Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:19.037Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:19.046Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:19.661Z"}
+{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T13:45:20.300Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:21.404Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:22.309Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:22.492Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:22.697Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:22.899Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:23.100Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:23.319Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:23.522Z"}
+{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T13:45:23.755Z"}
+{"subcenario":"CF-015-UI-02","categoria":"gate_premium","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:26.452Z"}
+{"subcenario":"CF-015-UI-02","categoria":"acolhimento","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:26.455Z"}
+{"subcenario":"CF-015-UI-02","categoria":"crud","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:26.656Z"}
+{"subcenario":"CF-015-UI-02","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:27.354Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:27.968Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:28.582Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:29.203Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:29.827Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:30.451Z"}
+{"subcenario":"CF-015-UI-02","categoria":"seguranca","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:30.457Z"}
+{"subcenario":"CF-015-UI-02","categoria":"layout","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:30.459Z"}
+{"subcenario":"CF-018-UI-01","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:31.095Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:31.467Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:31.842Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:32.216Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:32.576Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T13:45:32.951Z"}

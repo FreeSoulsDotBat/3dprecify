@@ -1,0 +1,1103 @@
+{
+  "meta": {
+    "fase": 2,
+    "data": "2026-08-12",
+    "regra_de_cruzamento": "CRUZAMENTO DIRIGIDO (autorizado pelo dono, 2026-08-12). Uma dimensão só é cruzada por inteiro onde o CÓDIGO tem ramo distinto naquela dimensão. Cruzar cegamente as 4 dimensões daria ~380 subcenários e ~7.600 testes, dos quais a maioria exercitaria literalmente a mesma linha de código duas vezes — `useIsWide()` só bifurca nas 4 abas do 018 e no rail; `useIsMobile()` só bifurca no shell; o entitlement só bifurca no que é Premium.",
+    "criterios_por_dimensao": {
+      "viewport": "Cruzado nos 3 valores (V1/V2/V3) apenas onde há ramo real: shell/navegação, as 4 abas do 018 (Catálogo, Kits, Orçamentos, Conta) e o layout da calculadora. Nos demais: V1 + V3 (as duas pontas), porque a faixa do meio compartilha o mesmo ramo de render do V3.",
+      "tema": "Cruzado (dark+light) onde a asserção é VISUAL — contraste, overflow, geometria, legibilidade. Nos cenários de cálculo/persistência: só dark (o padrão), porque nenhuma decisão de código lê o tema.",
+      "estado_usuario": "Cruzado onde o código bifurca por entitlement (Premium-gated) ou por PlanState. `not-configured` só onde muda o render (sign-in/guardas).",
+      "estado_dados": "Cruzado (vazio/poucos/muitos) onde há LISTA paginada ou filtrável. 'muitos' é definido por cenário e sempre acima da primeira página."
+    },
+    "valores": {
+      "V1": "mobile 390x844",
+      "V2": "desktop 1024x768 (faixa do meio — sidebar fixa, sem rail)",
+      "V3": "wide 1440x900 (composição 018 + rail colapsável)",
+      "temas": ["dark", "light"],
+      "usuarios": [
+        "anon",
+        "notconfig",
+        "free",
+        "lapsed",
+        "premium",
+        "cortesia",
+        "unknown",
+        "stale"
+      ],
+      "dados": ["vazio", "poucos", "muitos"]
+    },
+    "totais": { "subcenarios": 112, "testes_minimos": 2240 }
+  },
+
+  "subcenarios": [
+    {
+      "id": "CF-001-UI-01",
+      "cf": "CF-001",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Primeira visita: o preço-semente correto (custo 16,16 / varejo 24,24 / atacado 21,01) e a resistência dos 16 campos a lixo"
+    },
+    {
+      "id": "CF-001-UI-02",
+      "cf": "CF-001",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Mesma aritmética no wide + legibilidade da hero de preço no tema claro"
+    },
+    {
+      "id": "CF-001-UI-03",
+      "cf": "CF-001",
+      "viewport": "V2",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Faixa do meio com dados pré-preenchidos do catálogo"
+    },
+
+    {
+      "id": "CF-002-UI-01",
+      "cf": "CF-002",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "h+min: minutos >=60, negativos, decimais, vazio, colagem"
+    },
+    {
+      "id": "CF-002-UI-02",
+      "cf": "CF-002",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Mesma conversão no wide; rótulos não truncam"
+    },
+
+    {
+      "id": "CF-003-UI-01",
+      "cf": "CF-003",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Modo ritmo: as 3 frequências x 5 anos, e a troca ritmo<->ajuste sem perder o valor"
+    },
+    {
+      "id": "CF-003-UI-02",
+      "cf": "CF-003",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "A frase '≈ R$ X por hora' bate com machineValue/lifetime"
+    },
+
+    {
+      "id": "CF-004-UI-01",
+      "cf": "CF-004",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Zero sub-custos = admin 0; primeira linha adicionada"
+    },
+    {
+      "id": "CF-004-UI-02",
+      "cf": "CF-004",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "muitos",
+      "foco": "20 sub-custos: soma, nomes gigantes, nomes duplicados, remoção do meio"
+    },
+
+    {
+      "id": "CF-005-UI-01",
+      "cf": "CF-005",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "As linhas exibidas somam o total exibido (WYSIWYG)"
+    },
+    {
+      "id": "CF-005-UI-02",
+      "cf": "CF-005",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Alinhamento e contraste das linhas no claro"
+    },
+
+    {
+      "id": "CF-006-UI-01",
+      "cf": "CF-006",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Adicionar/remover slots; troca de marketplace reseta categoria/perfil/sobretaxa"
+    },
+    {
+      "id": "CF-006-UI-02",
+      "cf": "CF-006",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mesmo fluxo no mobile, sem overflow horizontal"
+    },
+
+    {
+      "id": "CF-007-UI-01",
+      "cf": "CF-007",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Selo declara a fonte servida; campo digitado nunca é sobrescrito"
+    },
+    {
+      "id": "CF-007-UI-02",
+      "cf": "CF-007",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Offline: selo declara cache/semente, nunca finge dado fresco"
+    },
+
+    {
+      "id": "CF-008-UI-01",
+      "cf": "CF-008",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "vazio",
+      "foco": "Busca sem resultado; contagem honesta; lista não parece um segundo campo preenchido"
+    },
+    {
+      "id": "CF-008-UI-02",
+      "cf": "CF-008",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "Árvore inteira no mobile: navegação, limpar, teclado"
+    },
+
+    {
+      "id": "CF-009-UI-01",
+      "cf": "CF-009",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "CPF/CNPJ x alto volume x sobretaxas: as 6 combinações e o catch-all"
+    },
+
+    {
+      "id": "CF-010-UI-01",
+      "cf": "CF-010",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Gross-up conferido contra recálculo independente; recusa honesta fora das bandas"
+    },
+
+    {
+      "id": "CF-011-UI-01",
+      "cf": "CF-011",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "semente",
+      "foco": "Switch falso e desabilitado + CTA; nenhum erro de verificação de premium"
+    },
+    {
+      "id": "CF-011-UI-02",
+      "cf": "CF-011",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "free",
+      "dados": "semente",
+      "foco": "Mesmo gate no wide claro; geometria do CTA"
+    },
+    {
+      "id": "CF-011-UI-03",
+      "cf": "CF-011",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Premium: seção operante de ponta a ponta"
+    },
+    {
+      "id": "CF-011-UI-04",
+      "cf": "CF-011",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Anônimo vê o MESMO que o free (round 1, ponto 15)"
+    },
+
+    {
+      "id": "CF-012-UI-01",
+      "cf": "CF-012",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Prefill byte-idêntico ao item escolhido (SC-305)"
+    },
+    {
+      "id": "CF-012-UI-02",
+      "cf": "CF-012",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Botão desabilitado + explicação do que é catálogo + CTA"
+    },
+    {
+      "id": "CF-012-UI-03",
+      "cf": "CF-012",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "vazio",
+      "foco": "Premium sem itens: estado vazio acolhedor, não um beco"
+    },
+
+    {
+      "id": "CF-013-UI-01",
+      "cf": "CF-013",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Salvar cenário: nome vazio/gigante/duplicado; nenhum preço gravado"
+    },
+    {
+      "id": "CF-013-UI-02",
+      "cf": "CF-013",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mesma folha no mobile"
+    },
+    {
+      "id": "CF-013-UI-03",
+      "cf": "CF-013",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Free: teaser honesto sem modal morto (round 1, ponto 3)"
+    },
+
+    {
+      "id": "CF-014-UI-01",
+      "cf": "CF-014",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Registrar online; rótulo vazio/gigante/emoji"
+    },
+    {
+      "id": "CF-014-UI-02",
+      "cf": "CF-014",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Registrar offline entra na fila e DIZ que está pendente"
+    },
+
+    {
+      "id": "CF-015-UI-01",
+      "cf": "CF-015",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "vazio",
+      "foco": "Primeiro filamento: estado vazio + criação"
+    },
+    {
+      "id": "CF-015-UI-02",
+      "cf": "CF-015",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mestre-detalhe do 018: clicar SELECIONA, ficha EDITA"
+    },
+    {
+      "id": "CF-015-UI-03",
+      "cf": "CF-015",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "60 filamentos: rolagem, performance percebida, nomes duplicados"
+    },
+    {
+      "id": "CF-015-UI-04",
+      "cf": "CF-015",
+      "viewport": "V2",
+      "tema": "light",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Faixa do meio no claro: sem mestre-detalhe, navegação clássica"
+    },
+
+    {
+      "id": "CF-016-UI-01",
+      "cf": "CF-016",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "vazio",
+      "foco": "Primeira impressora"
+    },
+    {
+      "id": "CF-016-UI-02",
+      "cf": "CF-016",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Edição na ficha + tetos numéricos do backend"
+    },
+
+    {
+      "id": "CF-017-UI-01",
+      "cf": "CF-017",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Produto com referência viva: ficha SUMARIZA, editor é página cheia"
+    },
+    {
+      "id": "CF-017-UI-02",
+      "cf": "CF-017",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mesmo produto no mobile"
+    },
+    {
+      "id": "CF-017-UI-03",
+      "cf": "CF-017",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "degradado",
+      "foco": "Referência apagada: '(avulsa)' honesto, nunca sumiço nem quebra"
+    },
+
+    {
+      "id": "CF-018-UI-01",
+      "cf": "CF-018",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "Contagem exibida = itens realmente exibidos (classe do defeito 014)"
+    },
+    {
+      "id": "CF-018-UI-02",
+      "cf": "CF-018",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "Busca com acento, emoji, string gigante, regex"
+    },
+
+    {
+      "id": "CF-019-UI-01",
+      "cf": "CF-019",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Offline serve cache COM procedência declarada"
+    },
+    {
+      "id": "CF-019-UI-02",
+      "cf": "CF-019",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Troca de conta: B nunca vê dados de A"
+    },
+
+    {
+      "id": "CF-020-UI-01",
+      "cf": "CF-020",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Teaser anônimo: UM teaser, sem Entrar/Entendi"
+    },
+    {
+      "id": "CF-020-UI-02",
+      "cf": "CF-020",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Free vê o MESMO que o anônimo, nunca erro (round 1, ponto 15)"
+    },
+    {
+      "id": "CF-020-UI-03",
+      "cf": "CF-020",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Geometria do teaser no wide claro"
+    },
+    {
+      "id": "CF-020-UI-04",
+      "cf": "CF-020",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Wide anônimo: o mestre-detalhe não pode montar dois teasers"
+    },
+
+    {
+      "id": "CF-021-UI-01",
+      "cf": "CF-021",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Compor kit: soma independente por peça"
+    },
+    {
+      "id": "CF-021-UI-02",
+      "cf": "CF-021",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Editor de linha no mobile"
+    },
+    {
+      "id": "CF-021-UI-03",
+      "cf": "CF-021",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "30 linhas + quantidade no teto int4"
+    },
+
+    {
+      "id": "CF-022-UI-01",
+      "cf": "CF-022",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Salvar/reabrir recalcula; duplicar não salva sozinho"
+    },
+    {
+      "id": "CF-022-UI-02",
+      "cf": "CF-022",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mesmo ciclo no mobile"
+    },
+
+    {
+      "id": "CF-023-UI-01",
+      "cf": "CF-023",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Rollup por canal coerente com a soma das linhas"
+    },
+
+    {
+      "id": "CF-024-UI-01",
+      "cf": "CF-024",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "degradado",
+      "foco": "Linha degradada em tempo de leitura"
+    },
+
+    {
+      "id": "CF-025-UI-01",
+      "cf": "CF-025",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Registro online confirmado pelo servidor"
+    },
+    {
+      "id": "CF-025-UI-02",
+      "cf": "CF-025",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Fila: pending -> synced na volta da rede"
+    },
+    {
+      "id": "CF-025-UI-03",
+      "cf": "CF-025",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "401 no meio: vira 'unauthenticated', NUNCA purga"
+    },
+
+    {
+      "id": "CF-026-UI-01",
+      "cf": "CF-026",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "vazio",
+      "foco": "Ledger vazio acolhedor"
+    },
+    {
+      "id": "CF-026-UI-02",
+      "cf": "CF-026",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "40 registros: paginação sem duplicar nem pular"
+    },
+    {
+      "id": "CF-026-UI-03",
+      "cf": "CF-026",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Filtros de período no mobile"
+    },
+
+    {
+      "id": "CF-027-UI-01",
+      "cf": "CF-027",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Detalhe inerte a churn de catálogo"
+    },
+    {
+      "id": "CF-027-UI-02",
+      "cf": "CF-027",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Registro ainda pendente ABRE pelo clientSnapshotId"
+    },
+
+    {
+      "id": "CF-028-UI-01",
+      "cf": "CF-028",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Recalcular hoje não toca o congelado"
+    },
+    {
+      "id": "CF-028-UI-02",
+      "cf": "CF-028",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Comparativo então-vs-agora legível no mobile"
+    },
+
+    {
+      "id": "CF-029-UI-01",
+      "cf": "CF-029",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "adversarial",
+      "foco": "PDF com nome gigante: colisão de colunas medida por GEOMETRIA"
+    },
+    {
+      "id": "CF-029-UI-02",
+      "cf": "CF-029",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "CSV no mobile + injeção de fórmula (risco aceito, verificar gatilhos)"
+    },
+    {
+      "id": "CF-029-UI-03",
+      "cf": "CF-029",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "lapsed",
+      "foco": "Gate de entitlement ATIVO: lapsed não exporta",
+      "dados": "poucos"
+    },
+
+    {
+      "id": "CF-030-UI-01",
+      "cf": "CF-030",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Renomear/encerrar/excluir sem violar imutabilidade"
+    },
+
+    {
+      "id": "CF-031-UI-01",
+      "cf": "CF-031",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Sair com fila cheia avisa nos DOIS pontos de saída"
+    },
+
+    {
+      "id": "CF-032-UI-01",
+      "cf": "CF-032",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "muitos",
+      "foco": "Lista de cenários: busca, duplicar, excluir"
+    },
+    {
+      "id": "CF-032-UI-02",
+      "cf": "CF-032",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Folha de cenários no mobile"
+    },
+    {
+      "id": "CF-032-UI-03",
+      "cf": "CF-032",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Free: título + subtítulo + Assinar Premium (round 1, ponto 3)"
+    },
+
+    {
+      "id": "CF-033-UI-01",
+      "cf": "CF-033",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Mutação da comissão servida reprecifica o MESMO cenário"
+    },
+    {
+      "id": "CF-033-UI-02",
+      "cf": "CF-033",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "degradado",
+      "foco": "Base apagada: lastKnown honesto"
+    },
+
+    {
+      "id": "CF-034-UI-01",
+      "cf": "CF-034",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Snapshot com provenance SCENARIO"
+    },
+
+    {
+      "id": "CF-035-UI-01",
+      "cf": "CF-035",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Identidade real do servidor"
+    },
+    {
+      "id": "CF-035-UI-02",
+      "cf": "CF-035",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "unknown",
+      "dados": "vazio",
+      "foco": "Erro em /me: honesto + tentar de novo, nunca fallback inventado"
+    },
+
+    {
+      "id": "CF-036-UI-01",
+      "cf": "CF-036",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "PlanState free"
+    },
+    {
+      "id": "CF-036-UI-02",
+      "cf": "CF-036",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "PlanState ativo com data de renovação"
+    },
+    {
+      "id": "CF-036-UI-03",
+      "cf": "CF-036",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "lapsed",
+      "dados": "poucos",
+      "foco": "PlanState lapsed — jamais premium"
+    },
+    {
+      "id": "CF-036-UI-04",
+      "cf": "CF-036",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "unknown",
+      "dados": "vazio",
+      "foco": "PlanState unknown: honesto, nunca assume premium"
+    },
+    {
+      "id": "CF-036-UI-05",
+      "cf": "CF-036",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "cortesia",
+      "dados": "poucos",
+      "foco": "Cortesia com expiração; grant sem expiry não pode virar premium eterno"
+    },
+
+    {
+      "id": "CF-037-UI-01",
+      "cf": "CF-037",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Oferta no mobile: overflow e botão dentro da viewport"
+    },
+    {
+      "id": "CF-037-UI-02",
+      "cf": "CF-037",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Oferta no wide claro"
+    },
+    {
+      "id": "CF-037-UI-03",
+      "cf": "CF-037",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Premium abrindo a oferta: não pode vender o que já tem"
+    },
+
+    {
+      "id": "CF-038-UI-01",
+      "cf": "CF-038",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "?checkout=retorno não afirma premium antes da confirmação"
+    },
+    {
+      "id": "CF-038-UI-02",
+      "cf": "CF-038",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "vazio",
+      "foco": "Mesma superfície no wide + round-trip pelo sign-in"
+    },
+
+    {
+      "id": "CF-039-UI-01",
+      "cf": "CF-039",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Sair purga caches do uid"
+    },
+    {
+      "id": "CF-039-UI-02",
+      "cf": "CF-039",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Segundo ponto de saída no wide"
+    },
+
+    {
+      "id": "CF-040-UI-01",
+      "cf": "CF-040",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Entrar com Google (emulador)"
+    },
+    {
+      "id": "CF-040-UI-02",
+      "cf": "CF-040",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "notconfig",
+      "dados": "vazio",
+      "foco": "Firebase ausente: mensagem honesta, nunca tela branca"
+    },
+
+    {
+      "id": "CF-041-UI-01",
+      "cf": "CF-041",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Rotas privadas bounce e voltam ao destino com query intacta"
+    },
+    {
+      "id": "CF-041-UI-02",
+      "cf": "CF-041",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Open-redirect: alvo externo cai em /calcular"
+    },
+
+    {
+      "id": "CF-042-UI-01",
+      "cf": "CF-042",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "401 no meio do fluxo: faixa fixa com caminho de volta"
+    },
+    {
+      "id": "CF-042-UI-02",
+      "cf": "CF-042",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "401 + fila: nada é destruído"
+    },
+
+    {
+      "id": "CF-043-UI-01",
+      "cf": "CF-043",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "TabBar: alvos de toque, área segura, sem sobrepor conteúdo"
+    },
+    {
+      "id": "CF-043-UI-02",
+      "cf": "CF-043",
+      "viewport": "V2",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Sidebar fixa SEM botão de recolher entre 426 e 1279"
+    },
+    {
+      "id": "CF-043-UI-03",
+      "cf": "CF-043",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Rail colapsável: colapso persiste no aparelho"
+    },
+    {
+      "id": "CF-043-UI-04",
+      "cf": "CF-043",
+      "viewport": "V1->V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Redimensionar atravessando os dois cortes sem quebrar estado"
+    },
+
+    {
+      "id": "CF-044-UI-01",
+      "cf": "CF-044",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Troca de tema + reload sem flash"
+    },
+    {
+      "id": "CF-044-UI-02",
+      "cf": "CF-044",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "anon",
+      "dados": "semente",
+      "foco": "Controle segmentado desktop-only"
+    },
+    {
+      "id": "CF-044-UI-03",
+      "cf": "CF-044",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "axe-core contraste no escuro, todas as páginas"
+    },
+    {
+      "id": "CF-044-UI-04",
+      "cf": "CF-044",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "axe-core contraste no claro, todas as páginas"
+    },
+
+    {
+      "id": "CF-045-UI-01",
+      "cf": "CF-045",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "offline",
+      "foco": "Faixa offline + cálculo continua local"
+    },
+    {
+      "id": "CF-045-UI-02",
+      "cf": "CF-045",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "free",
+      "dados": "offline",
+      "foco": "Falha de rede NUNCA é vendida como 'não é premium'"
+    },
+
+    {
+      "id": "CF-046-UI-01",
+      "cf": "CF-046",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Privacidade legível sem sessão"
+    },
+    {
+      "id": "CF-046-UI-02",
+      "cf": "CF-046",
+      "viewport": "V3",
+      "tema": "light",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "Mesma página no wide claro"
+    },
+
+    {
+      "id": "CF-047-UI-01",
+      "cf": "CF-047",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "404 amigável; nunca tela branca/stack/JSON"
+    },
+    {
+      "id": "CF-047-UI-02",
+      "cf": "CF-047",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "URL de 2 segmentos inexistente (classe A4)"
+    },
+
+    {
+      "id": "CF-048-UI-01",
+      "cf": "CF-048",
+      "viewport": "V1",
+      "tema": "dark",
+      "usuario": "anon",
+      "dados": "vazio",
+      "foco": "URLs legadas redirecionam preservando o id"
+    },
+    {
+      "id": "CF-048-UI-02",
+      "cf": "CF-048",
+      "viewport": "V3",
+      "tema": "dark",
+      "usuario": "premium",
+      "dados": "poucos",
+      "foco": "Cold load das formas novas não branqueia"
+    }
+  ],
+
+  "bateria_de_testes": {
+    "explicacao": "Cada subcenário recebe a MESMA bateria de 8 categorias, instanciada com os dados daquele subcenário. São 20+ execuções reais por subcenário, não 20 nomes.",
+    "categorias": {
+      "C1_input_invalido": "negativos, zero, 1e308, decimal com ponto vs vírgula, texto em campo numérico, emoji, string de 10k, campo vazio, só espaços, colagem de valor formatado, notação científica, sinal duplicado",
+      "C2_usuario_burro": "clique frenético no botão de salvar, pular etapas, preencher fora de ordem, voltar do navegador no meio, refresh no meio, duas abas, submeter sem preencher, fechar folha no meio da gravação",
+      "C3_estresse_de_dados": "listas grandes, nomes duplicados, nomes no limite, valores no teto NUMERIC do backend, quantidade no teto int4",
+      "C4_rede": "throttling 3G, offline no meio da operação, 500 do servidor, 422, timeout, resposta malformada",
+      "C5_sessao": "sessão expirada no meio, logout em outra aba, token inválido, entitlement que muda durante o uso",
+      "C6_acolhimento": "mensagem compreensível por leigo, ausência de jargão técnico, ausência de stack/JSON cru, feedback de loading, estado vazio que ensina, unidade visível ao lado do número",
+      "C7_acessibilidade": "axe-core (sem violações críticas), navegação por teclado, foco visível, rótulo associado, alvo de toque >= 44px",
+      "C8_concorrencia": "duas abas editando o mesmo registro, duas operações simultâneas, salvar duas vezes em paralelo"
+    }
+  }
+}
