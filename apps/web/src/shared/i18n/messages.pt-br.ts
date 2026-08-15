@@ -107,6 +107,42 @@ export const messages = {
       commissionMax: "A comissão deve ser menor que 100%.",
       tooHigh: "Valor muito alto.",
     },
+    // Homologação automatizada (2026-08-13) — os avisos de PLAUSIBILIDADE, para os nove achados
+    // ALTA em que o número digitado é válido e significa outra coisa.
+    //
+    // Três regras de escrita, e as três vêm de decisões já tomadas neste produto:
+    // 1. DESCRITIVO, nunca corretivo — o precedente é `avisoAtacadoAcimaDoVarejo`: "quem lê um
+    //    aviso escrito como erro conclui que o produto recusou, e o produto não recusou".
+    // 2. Toda frase termina em "Nada foi recusado." — é a promessa do §AVISO NUNCA VIRA VALIDAÇÃO
+    //    dita ao usuário, e não só ao programador que lê `plausibilidade.ts`.
+    // 3. Toda frase ENSINA a converter. O vendedor não errou por desatenção; ele errou porque a
+    //    etiqueta da impressora fala em W e o campo pede kW. Dizer "valor alto" não resolve isso.
+    plausibilidade: {
+      avgPower:
+        "Confira o consumo: {v} kW é o de um chuveiro elétrico. A etiqueta da impressora costuma trazer watts — 120 W são 0,12 kW. Nada foi recusado.",
+      tariff:
+        "Confira a tarifa: R$ {v} por kWh está bem acima do que se paga no Brasil (perto de R$ 0,95). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.",
+      machineLifetime:
+        "Confira a vida útil: {v} horas é menos de uma semana ligada. Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Nada foi recusado.",
+      rollWeight:
+        "Confira o peso do rolo: {v} kg. O rolo comum tem 1 kg — se você informou gramas, 1.000 g são 1 kg. Nada foi recusado.",
+      laborRate:
+        "Confira o valor da hora: R$ {v}. Se você informou quanto quer ganhar por mês, divida pelas horas do mês — R$ 3.000 ÷ 160 h = R$ 18,75. Nada foi recusado.",
+      maintenance:
+        "Confira a reserva de manutenção: R$ {v} por HORA. Se você informou o gasto do ano inteiro, divida pelas horas que imprime no ano. Nada foi recusado.",
+      printTime:
+        "Confira o tempo: {v} horas são mais de {d} dias imprimindo sem parar. Se você quis dizer minutos, use o campo de minutos ao lado. Nada foi recusado.",
+      grams:
+        "Confira as gramas: {v} g são mais de 50 kg de filamento numa peça só. Se você informou o peso do ROLO, o campo pede o que a PEÇA consome. Nada foi recusado.",
+      custoAbsurdo:
+        "Confira os custos: R$ {v} para uma peça é muito acima do que costuma acontecer. Normalmente é uma casa decimal a mais em algum campo. Nada foi recusado.",
+      precoZero:
+        "O custo total ficou em R$ 0,00 e o preço de venda também — por esse preço não dá para vender. Confira os campos de custo que ficaram zerados. Nada foi recusado.",
+      comissaoBaixa:
+        "Confira a comissão: {v}%. Marketplaces costumam cobrar entre 10% e 20% — se você quis dizer 12%, escreva 12 e não 0,12. Nada foi recusado.",
+      quantidade:
+        "Confira a quantidade: {v}. O máximo por peça é {max}. Acima disso o kit não consegue ser salvo. Nada foi recusado.",
+    },
     results: {
       material: "Material",
       energy: "Energia",

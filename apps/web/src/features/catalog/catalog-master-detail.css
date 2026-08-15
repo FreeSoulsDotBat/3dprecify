@@ -48,11 +48,17 @@
   }
 }
 
+/* Homologação automatizada (CF-015-UI-02) — a ficha à direita já quebrava o nome longo
+   (`__detail-title h2`); o CARTÃO da lista à esquerda não. Um filamento com 500 caracteres sem
+   espaço gerou 4.948px de rolagem horizontal a 1440px. Mesma regra, mesma razão: o nome é do
+   vendedor e ele pode colar um código sem espaço nenhum. */
 .tf-catalog-md__card {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   width: 100%;
+  min-width: 0;
+  overflow-wrap: anywhere;
   text-align: left;
   font: inherit;
   cursor: pointer;

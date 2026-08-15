@@ -159,3 +159,17 @@
   font-feature-settings: var(--num-features);
   text-align: right;
 }
+
+/* Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE dentro do hint.
+   Tom `info`, deliberadamente distinto do `--danger` do erro: o número não foi recusado, e uma
+   frase pintada de vermelho diria o contrário do que ela está escrita para dizer.
+   Ver `features/calculator/plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO". */
+.tf-field__hint-line {
+  display: block;
+}
+.tf-field__aviso {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--info-text);
+  overflow-wrap: anywhere;
+}

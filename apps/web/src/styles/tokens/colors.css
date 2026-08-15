@@ -190,10 +190,15 @@
   --tf-warning-soft: rgba(247, 147, 30, 0.16);
 
   /* Status AS TEXT (INV-3/4) — the brighter base hues read for status text on
-     the dark plane. Contrast vs #14151a card: danger ~5.9:1, success ~5.5:1,
-     info ~8.0:1 (all ≥4.5:1 AA). */
+     the dark plane.
+     Homologação automatizada (CF-036/CF-037): a medida deste bloco era contra o CARD (#14151a) —
+     mas o texto de status vive dentro do `.tf-badge--*`, cujo fundo é o `*-soft` (16% da cor) JÁ
+     COMPOSTO sobre o card. Esse fundo é mais claro, e o `success` caía para **4,46:1** — reprova
+     por 0,04. A palavra "Premium" do plano ativo é exatamente esse caso.
+     Os números abaixo são contra o FUNDO REAL (o soft sobre o card), que é o pior caso e o que o
+     olho vê: danger ~5,3:1 · success ~5,7:1 · info ~7,2:1. */
   --danger-text: var(--tf-danger);
-  --success-text: var(--tf-success);
+  --success-text: #25b57e;
   --info-text: var(--tf-cyan);
 }
 

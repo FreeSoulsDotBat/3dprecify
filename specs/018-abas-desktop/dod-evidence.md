@@ -126,3 +126,68 @@ a invariância mobile estrutural, onde mora a seleção e a persistência do rai
 Accepted no gate — com uma correção a registrar: o ADR diz que a seleção é estado do componente nos
 dois mestre-detalhes; no **Orçamentos** ela mora em `?snapshot=`, onde já morava desde o 013/F-02.
 Usar o que existia foi mais fiel ao código do que aplicar a regra ao pé da letra.
+
+---
+
+## Homologação automatizada — correções absorvidas neste incremento (2026-08-13)
+
+O PR #58 foi reaproveitado, por decisão do dono, para carregar também as correções da homologação
+automatizada (`docs/homologacao/automatizada/RELATORIO.md`). O escopo do incremento deixou de ser
+só "abas desktop": ele passa a carregar 26 dos 35 achados daquela homologação.
+
+**Prova, medida rodando a mesma bateria antes e depois:** 35 → **9** defeitos; severidade ALTA
+11 → **1** (e essa é uma corrida de ambiente do próprio teste, não do produto — ver abaixo).
+
+### O que foi corrigido
+
+| Bloco | Achados | Arquivos |
+|---|---|---|
+| Aviso de plausibilidade | 10 ALTA | `shared/lib/plausibilidade.ts` (novo, puro) + `messages.pt-br.ts` + `calculator-form.tsx` + `bom-line-card.tsx` |
+| Texto longo estourando a página | 2 | `breakdown-row.css` (`__label`/`__sub`) · `catalog-master-detail.css` (`__card`) |
+| Teaser estourando a 426px | 1 | `premium-teaser.css` (`max-width: min(28rem, 100%)`) |
+| Foco invisível no item de navegação ATIVO | 1 | `app-nav.css` — anel INTERNO, que não colide com o realce de "ativo" |
+| Contraste do "Premium" no badge | 3 | `tokens/colors.css` — `--success-text` medido contra o fundo REAL (o soft), não contra o card |
+| Alvo de toque na tela de entrada | 1 | `sign-in-screen.tsx` |
+| Salvar simulação sem nome não fazia NADA | 1 | `save-scenario-sheet.tsx` — a mensagem já existia escrita; faltava mostrá-la após a tentativa |
+| Tempo colado do fatiador (`2:30`, `2h30`) | 2 | `time-input.ts` (`parseRelogio`) + `calculator-form.tsx` |
+| Recarregar apagava tudo sem aviso | 1 | `features/calculator/aviso-de-saida.ts` (novo) |
+
+**`PRICING_MODEL_VERSION` inalterado, e não é esquecimento:** nenhum dos 35 achados era erro de
+cálculo. A fórmula da peça, o gross-up por canal, a soma do kit e a geometria do PDF passaram na
+homologação. O que mudou é o que o produto **diz** e como ele **desenha**.
+
+### A regra que governa o módulo novo
+
+**AVISO NUNCA VIRA VALIDAÇÃO.** A decisão do dono de 2026-08-03 — `failurePct` sem teto, porque
+"300% representa legitimamente uma peça que falha três vezes antes de sair" — fica a um passo destes
+limiares. Um campo com aviso continua calculando e continua salvando, e há um teste estrutural que
+cai se alguém transformar um aviso em recusa (`plausibilidade.test.ts`, último describe).
+
+### Um achado RETRATADO, e ele quase virou um defeito grave
+
+A bateria acusava `1,000` lido como 1 ("ele copiou mil de um site em inglês") como ALTA. A correção
+foi escrita e **o gate do projeto a derrubou**: `"1,000" → "1.000"` está pinado em
+`decimal-ptbr.test.ts` porque neste produto `1,000` é um rolo de 1 kg gravado com TRÊS CASAS, e essa
+identidade byte a byte é o SC-305. Um fixture virou `'100000'` onde esperava `'100.000'`.
+
+Ou seja: "consertar" o achado transformaria todo rolo de 1 kg em 1000 kg — o mesmo defeito que a
+homologação existe para achar, ao contrário e pior. Revertido por inteiro; a verificação ficou
+desligada com o motivo escrito ao lado (`estresse-leigo.spec.ts`, `RETRATADO_VER_SC305`).
+
+### O que NÃO entrou, e por quê
+
+1. **Resumo fixo com o preço no mobile** (o custo total só aparece após 3,9 telas a 390px). O 018
+   promete, estruturalmente, que **o ramo mobile é o mesmo código, intocado** — é a propriedade que
+   `useIsWide()` garante e que a suíte inteira exercita. Uma barra fixa nova no mobile contradiz
+   exatamente isso. Precisa da decisão do dono e de um incremento próprio.
+2. **A faixa de 426px** (131px de rolagem). O teaser foi corrigido e outro elemento assumiu: a
+   240px de sidebar sobram ~150px de conteúdo, e o conserto real é a barra lateral colapsar abaixo
+   de ~600px — de novo, comportamento do shell, de novo decisão de desenho.
+
+### Os 9 restantes
+
+1 ALTA: `CF-025` — corrida entre a concessão de Premium e o refetch do entitlement no PRÓPRIO teste
+(passa na maioria das rodadas). 6 média: os dois acima + foco de um input + gramas absurdas (agora
+avisadas, o registro é anterior) + "vida útil" fora do modo ritmo (consequência desejada do 016/US8)
++ recarga (o aviso nativo do navegador não é observável pelo Playwright). 2 baixa: confirmações, não
+defeitos.

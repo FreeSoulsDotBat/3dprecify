@@ -29,10 +29,17 @@
 /* Keyboard focus: a subtle lightened surface, NOT the global a/button outline box
    (which would repaint the reported "purple box" on a nav link). The nav is a
    composite widget; its own indicator is the accent-soft wash. */
+/* Homologação automatizada (CF-001-UI-02) — o indicador de foco era `background: var(--accent-soft)`,
+   que é EXATAMENTE o realce que `.tf-nav--sidebar .tf-nav__item[aria-current="page"]` já aplica.
+   Consequência medida comparando o elemento focado com ele mesmo sem foco: no item ATIVO, receber
+   foco não mudava NADA (reprova WCAG 2.4.7). Duas decisões boas se anulando — a de não repintar a
+   "caixa roxa" no menu, e a de ler o ativo por fundo suave.
+   O anel INTERNO preserva as duas: ele abraça a forma arredondada do próprio item (não é a caixa
+   externa que foi reclamada) e difere do estado ativo mesmo quando o item JÁ está ativo. */
 .tf-nav__item:focus-visible {
   outline: none;
-  box-shadow: none;
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 var(--ring-width) var(--focus-ring);
 }
 @media (forced-colors: active) {
   .tf-nav__item:focus-visible {

@@ -58,3 +58,30 @@ export function hmToDecimalString(h: number, min: number): string {
   const fixed = decimal.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
   return fixed.replace(".", ",");
 }
+
+/**
+ * Homologação automatizada (CF-002-LEIGO-C) — o vendedor cola o tempo do fatiador.
+ *
+ * O achado não foi "o formato não é aceito"; foi que ele **não é aceito NEM explicado**: digitar
+ * `2:30` ou `2h30` no campo de horas não movia o preço e não dizia nada. Um campo que engole a
+ * entrada em silêncio é pior que um que recusa, porque o vendedor segue achando que informou.
+ *
+ * Aceitar é melhor que explicar aqui, e por um motivo concreto: `2:30` e `2h30` são EXATAMENTE como
+ * PrusaSlicer, Cura e Bambu Studio imprimem o tempo estimado — é de lá que o número vem. Isto não
+ * contradiz a decisão do 016/US7 (h e min separados, para tirar o decimal do caminho do leigo): o
+ * destino continua sendo h+min, só ganhou uma porta de entrada a mais.
+ *
+ * Deliberadamente ESTREITO: só as duas formas acima, com minutos de 1–2 dígitos. Qualquer outra
+ * coisa devolve `null` e o campo segue exatamente como antes — nada de heurística generosa num
+ * campo que multiplica o custo.
+ */
+const RE_RELOGIO = /^(\d{1,4})\s*[:hH]\s*(\d{1,2})$/;
+
+export function parseRelogio(bruto: string): HoursMinutes | null {
+  const m = RE_RELOGIO.exec((bruto ?? "").trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (!Number.isFinite(h) || !Number.isFinite(min) || min > 59) return null;
+  return { h, min };
+}

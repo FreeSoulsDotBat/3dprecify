@@ -1,7 +1,8 @@
 import type { BomLineResult } from "@3dprecify/pricing-core";
 import type { ReactNode } from "react";
 
-import { formatBRL } from "@/shared/lib/decimal-ptbr";
+import { avisoDeQuantidade } from "@/shared/lib/plausibilidade";
+import { formatBRL, parseDecimal } from "@/shared/lib/decimal-ptbr";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, Card, Icon, NumberField } from "@/shared/ui";
 
@@ -95,6 +96,15 @@ export function BomLineCard({
         </p>
       )}
       {qtyZero && <p className="text-sm text-[var(--text-muted)]">{t.qtyZero}</p>}
+      {/* Homologação automatizada (CF-021-UI-03) — quantidades acima do teto `int4` da coluna
+          (2.147.483.647) eram aceitas na digitação sem qualquer sinal. Ao SALVAR o produto se
+          comporta bem, mas o vendedor só descobre lá. Aviso, nunca recusa: a peça continua no kit
+          e o campo continua editável (ver `plausibilidade.ts`). */}
+      {avisoDeQuantidade(parseDecimal(quantityRaw)) !== null && (
+        <p className="tf-field__aviso text-sm" data-testid="aviso-quantity">
+          {avisoDeQuantidade(parseDecimal(quantityRaw))}
+        </p>
+      )}
       {invalid && <p className="text-sm text-[var(--text-muted)]">{t.lineInvalid}</p>}
       {/* Degraded (product deleted after save): a calm legenda reusing the E2 manual-product copy —
           the line kept its last-known values and stays editable. NEVER says "removido/excluído"

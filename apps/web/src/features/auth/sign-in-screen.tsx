@@ -71,7 +71,19 @@ export function SignInScreen() {
 
       {/* FR-214 (006): the honest privacy notice is one tap away from the screen that collects
           the e-mail — a quiet footer link, not a consent gate. */}
-      <Link to="/privacidade" className="text-sm underline" style={{ color: "var(--text-muted)" }}>
+      {/* Homologação automatizada (CF-040-UI-01): media 181×20px. A isenção de alvo "inline" da
+          WCAG 2.2 (2.5.8) vale para link DENTRO de uma frase; este é um rodapé solto, então o
+          mínimo de 24px se aplica a ele. O `inline-flex` dá a altura sem mudar o desenho. */}
+      <Link
+        to="/privacidade"
+        className="text-sm underline"
+        style={{
+          color: "var(--text-muted)",
+          display: "inline-flex",
+          alignItems: "center",
+          minHeight: "24px",
+        }}
+      >
         {messages.privacy.title}
       </Link>
     </section>

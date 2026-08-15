@@ -54,6 +54,7 @@ import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
+import { useAvisoDeSaida } from "@/features/calculator/aviso-de-saida";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
@@ -95,11 +96,21 @@ function computeFormSignature(values: CalcFormValues): string {
 }
 
 export function CalcularPage() {
-  const { control, watch, getValues, setValue } = useForm<CalcFormValues>({
+  const {
+    control,
+    watch,
+    getValues,
+    setValue,
+    formState: { isDirty },
+  } = useForm<CalcFormValues>({
     defaultValues: defaultCalcValues,
     resolver: calculatorResolver,
     mode: "onChange",
   });
+  // Homologação automatizada (CF-001-LEIGO-E) — recarregar apagava o que o vendedor digitou sem
+  // dizer nada, e recarregar é o reflexo de quem acha que a tela travou. `isDirty` é o gatilho
+  // certo: quem não mexeu em nada não tem o que perder e não vê diálogo nenhum.
+  useAvisoDeSaida(isDirty);
   const {
     fields,
     append,

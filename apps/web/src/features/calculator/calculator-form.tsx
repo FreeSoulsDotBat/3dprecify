@@ -29,8 +29,13 @@ import {
   PAYBACK_YEAR_OPTIONS,
   RITMO_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import { avisoDeCampo, avisoDeComissao, avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
 import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
-import { decimalHoursToHm, hmToDecimalString } from "@/features/calculator/time-input";
+import {
+  decimalHoursToHm,
+  hmToDecimalString,
+  parseRelogio,
+} from "@/features/calculator/time-input";
 import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import {
   type CategoryNode,
@@ -102,6 +107,31 @@ const warnCaption: CSSProperties = {
   color: "var(--danger-text)",
 };
 
+/**
+ * Homologação automatizada — os dois avisos que NÃO têm campo culpado, porque só o RESULTADO os
+ * denuncia:
+ *
+ * - **preço zero** (CF-001-LEIGO-D-P5): a persona que zera o que não entende chega a custo R$ 0,00
+ *   e preço de venda R$ 0,00. Cada campo em 0 é perfeitamente válido isolado.
+ * - **custo absurdo** (CF-001-LEIGO-D-P6): erros de casa decimal em vários campos ao mesmo tempo
+ *   compõem R$ 6.000.061,60 sem que nenhum limiar POR CAMPO seja atingido.
+ *
+ * `printGrams: 1` declara ao módulo puro que a peça existe — a tela só chega aqui com um resultado
+ * calculado, então a guarda "formulário recém-aberto" já foi satisfeita pelo próprio render.
+ */
+function AvisoDeResultado({ result }: { result: PriceResult }) {
+  const avisos = avisosDePlausibilidade(
+    { printGrams: 1 },
+    { custoTotal: result.custoTotal, precoVarejo: result.precoVarejo },
+  );
+  if (avisos.length === 0) return null;
+  return (
+    <Alert tone="info">
+      <span data-testid="aviso-resultado">{avisos.map((a) => a.texto).join(" ")}</span>
+    </Alert>
+  );
+}
+
 /** A section title with an inline ⓘ info tip explaining what/how the section calculates. */
 export function SectionTitle({
   title,
@@ -135,30 +165,54 @@ export function ControlledField({
     <Controller
       control={control}
       name={meta.name}
-      render={({ field, fieldState }) => (
-        <Field
-          label={meta.label}
-          labelAddon={meta.tip && <InfoTip label={meta.tip.label}>{meta.tip.body}</InfoTip>}
-          required={meta.required}
-          optional={!meta.required}
-          hint={meta.hint}
-          error={fieldState.error?.message}
-        >
-          {(p) => (
-            <NumberField
-              {...p}
-              currency={meta.currency}
-              unit={meta.unit}
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              ref={field.ref}
-              error={Boolean(fieldState.error)}
-            />
-          )}
-        </Field>
-      )}
+      render={({ field, fieldState }) => {
+        // Homologação automatizada — o aviso de plausibilidade nasce AQUI, do próprio valor do
+        // campo, sem prop nenhuma atravessando a árvore. Consequência desejada: o
+        // `widgets/bom-line-editor`, que renderiza os MESMOS `CalcFieldMeta`, ganha os mesmos
+        // avisos sem uma linha a mais.
+        //
+        // Ele entra como HINT, nunca como `error`: o `Field` substitui o hint pelo erro, então um
+        // campo genuinamente inválido continua mostrando a recusa (que é o que importa), e o aviso
+        // some — que é o comportamento certo, porque avisar sobre a plausibilidade de um número que
+        // o produto nem aceitou seria ruído. E, sobretudo: aviso não é erro. Ver o cabeçalho de
+        // `plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
+        const aviso = avisoDeCampo(meta.name, String(field.value ?? ""));
+        return (
+          <Field
+            label={meta.label}
+            labelAddon={meta.tip && <InfoTip label={meta.tip.label}>{meta.tip.body}</InfoTip>}
+            required={meta.required}
+            optional={!meta.required}
+            hint={
+              aviso ? (
+                <>
+                  {meta.hint && <span className="tf-field__hint-line">{meta.hint}</span>}
+                  <span className="tf-field__aviso" data-testid={`aviso-${meta.name}`}>
+                    {aviso}
+                  </span>
+                </>
+              ) : (
+                meta.hint
+              )
+            }
+            error={fieldState.error?.message}
+          >
+            {(p) => (
+              <NumberField
+                {...p}
+                currency={meta.currency}
+                unit={meta.unit}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+                error={Boolean(fieldState.error)}
+              />
+            )}
+          </Field>
+        );
+      }}
     />
   );
 }
@@ -177,8 +231,23 @@ export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
         const commit = (nextH: number, nextMin: number) => {
           field.onChange(hmToDecimalString(nextH, nextMin));
         };
+        // Este campo NÃO passa pelo `ControlledField` (tem controle próprio de h+min), então o
+        // aviso precisa ser pedido aqui — e é justamente o caso do achado CF-002-LEIGO-C: 150 no
+        // campo de HORAS, quando o vendedor queria dizer 150 minutos, multiplica o custo por 15.
+        const aviso = avisoDeCampo("printTimeHours", String(field.value ?? ""));
         return (
-          <Field label={t.fields.printTime} required error={fieldState.error?.message}>
+          <Field
+            label={t.fields.printTime}
+            required
+            hint={
+              aviso ? (
+                <span className="tf-field__aviso" data-testid="aviso-printTimeHours">
+                  {aviso}
+                </span>
+              ) : undefined
+            }
+            error={fieldState.error?.message}
+          >
             {() => (
               <div className="flex items-center gap-2">
                 <NumberField
@@ -187,7 +256,17 @@ export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
                   inputMode="numeric"
                   placeholder="0"
                   value={String(h)}
-                  onChange={(e) => commit(Number.parseInt(e.target.value, 10) || 0, min)}
+                  onChange={(e) => {
+                    // Homologação automatizada (CF-002-LEIGO-C) — `2:30` e `2h30` são como o
+                    // fatiador imprime o tempo estimado, e é de lá que o vendedor copia. Antes o
+                    // campo engolia a colagem em silêncio: nem número, nem mensagem.
+                    const relogio = parseRelogio(e.target.value);
+                    if (relogio) {
+                      commit(relogio.h, relogio.min);
+                      return;
+                    }
+                    commit(Number.parseInt(e.target.value, 10) || 0, min);
+                  }}
                   onBlur={field.onBlur}
                 />
                 <NumberField
@@ -398,6 +477,11 @@ export function PriceResults({
           number is built before the takeaway. */}
       <div className="flex flex-col gap-2">
         <SectionTitle title={t.sections.breakdown} info={t.sectionInfo.breakdown} />
+        {/* Homologação automatizada (CF-001-LEIGO-D-P5) — a persona que "zera o que não entende"
+            chega a custo R$ 0,00 e preço de venda R$ 0,00, e o produto entregava isso calado. Cada
+            campo em 0 é perfeitamente válido isolado: só o RESULTADO denuncia. Por isso este aviso
+            é o único que não mora num campo — não há um campo culpado. */}
+        <AvisoDeResultado result={result} />
         <Card padding="md">
           {/* 016/US5 — the colour key dots beside Material/Energia were removed (FR-907-AC2);
               the rows are already legible by label + tabular value, and the dots read as
@@ -575,24 +659,44 @@ function ChannelFeeField({
     <Controller
       control={control}
       name={`channels.${index}.${meta.name}` as const}
-      render={({ field }) => (
-        <Field label={meta.label} optional error={error}>
-          {(p) => (
-            <NumberField
-              {...p}
-              currency={meta.currency}
-              unit={meta.unit}
-              name={field.name}
-              value={field.value}
-              onChange={field.onChange}
-              onBlur={field.onBlur}
-              ref={field.ref}
-              error={Boolean(error)}
-              {...(placeholder ? { placeholder } : {})}
-            />
-          )}
-        </Field>
-      )}
+      render={({ field }) => {
+        // Homologação automatizada (CF-010-UI-02) — o vendedor escreve `0,12` querendo dizer 12%.
+        // Ninguém recusa: 0,12% é uma comissão válida. Medido: o anúncio cai de R$ 27,55 para
+        // R$ 25,24 e ele anuncia abaixo do necessário, descobrindo no extrato do marketplace.
+        const aviso =
+          meta.name === "commissionPct"
+            ? avisoDeComissao(parseDecimal(String(field.value ?? "")))
+            : null;
+        return (
+          <Field
+            label={meta.label}
+            optional
+            hint={
+              aviso ? (
+                <span className="tf-field__aviso" data-testid="aviso-commissionPct">
+                  {aviso}
+                </span>
+              ) : undefined
+            }
+            error={error}
+          >
+            {(p) => (
+              <NumberField
+                {...p}
+                currency={meta.currency}
+                unit={meta.unit}
+                name={field.name}
+                value={field.value}
+                onChange={field.onChange}
+                onBlur={field.onBlur}
+                ref={field.ref}
+                error={Boolean(error)}
+                {...(placeholder ? { placeholder } : {})}
+              />
+            )}
+          </Field>
+        );
+      }}
     />
   );
 }
