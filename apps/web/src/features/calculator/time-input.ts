@@ -75,7 +75,12 @@ export function hmToDecimalString(h: number, min: number): string {
  * coisa devolve `null` e o campo segue exatamente como antes — nada de heurística generosa num
  * campo que multiplica o custo.
  */
-const RE_RELOGIO = /^(\d{1,4})\s*[:hH]\s*(\d{1,2})$/;
+// Review do PR #58 (2026-08-15) — o sufixo `m`/`min` entrou. A regex ancorada em `$` recusava
+// "2h30m" e "2h 30m", que é como Cura e Bambu Studio escrevem, e aí o FALLBACK do onChange lia
+// `parseInt("2h30m") = 2` e **preservava os minutos anteriores em silêncio**: o vendedor colava
+// 2h30m e ficava com 2h00 sem nenhum sinal. Recusar é aceitável; recusar e ficar com outro número
+// não é.
+const RE_RELOGIO = /^(\d{1,4})\s*[:hH]\s*(\d{1,2})\s*(?:m|min)?$/i;
 
 export function parseRelogio(bruto: string): HoursMinutes | null {
   const m = RE_RELOGIO.exec((bruto ?? "").trim());

@@ -135,8 +135,22 @@ O PR #58 foi reaproveitado, por decisão do dono, para carregar também as corre
 automatizada (`docs/homologacao/automatizada/RELATORIO.md`). O escopo do incremento deixou de ser
 só "abas desktop": ele passa a carregar 26 dos 35 achados daquela homologação.
 
-**Prova, medida rodando a mesma bateria antes e depois:** 35 → **9** defeitos; severidade ALTA
-11 → **1** (e essa é uma corrida de ambiente do próprio teste, não do produto — ver abaixo).
+**Prova — e a régua MUDOU entre as duas medições, o que precisa estar dito aqui e não implícito.**
+
+A leitura é 35 → **9** defeitos, ALTA 11 → **1**. Mas a bateria da segunda execução não é a mesma da
+primeira, e o review do PR #58 (2026-08-15) pegou essa afirmação sendo feita como se fosse. Três
+mudanças de MEDIÇÃO, todas justificadas, todas com efeito no número:
+
+1. `RETRATADO_VER_SC305 = false` desliga a verificação do `1,000` — o achado era falso (é um rolo de
+   1 kg com três casas, SC-305) e sai da conta por retratação, não por conserto.
+2. A ordem de preenchimento do campo de tempo foi corrigida: o teste apagava os minutos que ele
+   mesmo tinha acabado de escrever. Dois achados saíram por erro meu de medição.
+3. O alvo de toque passou a contar o `::after` que o projeto usa de propósito — quatro achados
+   "28×28" eram falso positivo do medidor.
+
+**Descontando as retratações, o conserto real cobre 26 achados.** O número honesto é esse; "35 → 9"
+mede duas coisas ao mesmo tempo (o que foi consertado e o que era falso) e não deve ser lido como
+prova isolada de correção.
 
 ### O que foi corrigido
 

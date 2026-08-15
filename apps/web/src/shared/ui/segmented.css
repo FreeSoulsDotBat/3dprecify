@@ -52,9 +52,21 @@
   color: var(--text-body);
 }
 
+/* Review do PR #58 (2026-08-15) — a pílula selecionada era `--surface-card`, que no tema ESCURO é
+   o MESMO valor da bandeja `--bg-muted` (os dois são `--tf-neutral-900`, #14151a): contraste
+   1,00:1, ou seja, não existia pílula na tela. Como todos os itens têm `font-weight: 600` e nenhum
+   tem borda, o único sinal do item ativo virava a COR DO TEXTO — reprova WCAG 1.4.1 (cor como
+   único meio) e 1.4.11 (indicador de estado abaixo de 3:1). Na Conta era pior: o Segmented vive
+   dentro de um `<Card>`, então card, bandeja e pílula eram os três o mesmo #14151a.
+
+   `--surface-raised` é o token que o próprio cabeçalho deste arquivo já prometia ("a selecionada
+   em relevo"): no escuro é `--tf-neutral-800`, distinto da bandeja; no claro segue branco, como
+   era. A sombra dá o relevo em AMBOS os temas, para a seleção não depender só de matiz — que é o
+   que a 1.4.1 pede. */
 .tf-segmented__item--selected {
-  background: var(--surface-card);
+  background: var(--surface-raised);
   color: var(--accent-text);
+  box-shadow: var(--shadow-xs);
 }
 
 /* O foco tem de aparecer SOBRE a pílula selecionada também — por isso o outline, e não uma troca

@@ -1,1 +1,0 @@
-{"subcenario":"CF-001-UI-01","categoria":"input_invalido","descricao":"T12: \"999999999999\" (gramas absurdas) em \"Gramas usadas\" foi aceito sem nenhuma mensagem visível","resultado_esperado":"Mensagem inline em pt-BR explicando o que fazer","resultado_obtido":"nenhuma mensagem de validação visível","severidade":"media","id":"D-w3-001","ts":"2026-08-15T13:44:23.935Z"}

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { messages } from "@/shared/i18n/messages.pt-br";
+
 import {
   avisoDeCampo,
   avisoDeComissao,
@@ -14,6 +16,24 @@ import {
 // Cada caso abaixo é um vendedor real do relatório, com o número que ele realmente digitou. Um
 // teste que só verificasse "existe uma função" não provaria nada: o defeito nunca foi a ausência
 // de código, foi o silêncio diante de um número específico.
+
+describe("as frases são factualmente verdadeiras (review do PR #58)", () => {
+  it("120 h dão EXATAMENTE 5 dias, e a frase não diz 'mais de 5'", () => {
+    const [aviso] = avisosDePlausibilidade({ printTimeHours: 120 });
+    expect(aviso?.texto).toContain("5 dias");
+    expect(aviso?.texto).not.toContain("mais de");
+  });
+  it("o aviso de consumo não afirma que o valor digitado É um chuveiro", () => {
+    const [aviso] = avisosDePlausibilidade({ avgPowerKw: 120 });
+    expect(aviso?.texto).not.toMatch(/120 kW é o de um chuveiro/);
+  });
+  it("a média nacional de tarifa é a MESMA do tooltip do campo — um fato, um lugar", () => {
+    const [aviso] = avisosDePlausibilidade({ tariffPerKwh: 6 });
+    const doTooltip = /R\$ \d+,\d{2}/.exec(messages.calculator.fieldTips.tariff.body)?.[0];
+    expect(doTooltip).toBeTruthy();
+    expect(aviso?.texto).toContain(doTooltip!);
+  });
+});
 
 describe("erro de unidade — o número plausível que significa outra coisa", () => {
   it("avisa sobre 120 em Consumo médio (a etiqueta diz 120 W, o campo pede kW)", () => {
@@ -58,7 +78,7 @@ describe("erro de unidade — o número plausível que significa outra coisa", (
   it("avisa sobre 150 horas de impressão (ele quis dizer 150 MINUTOS)", () => {
     const [aviso] = avisosDePlausibilidade({ printTimeHours: 150 });
     expect(aviso?.campo).toBe("printTimeHours");
-    expect(aviso?.texto).toContain("6"); // 150h = mais de 6 dias
+    expect(aviso?.texto).toContain("6,3"); // 150h = 6,3 dias — verdade, e não "mais de 6"
   });
 });
 

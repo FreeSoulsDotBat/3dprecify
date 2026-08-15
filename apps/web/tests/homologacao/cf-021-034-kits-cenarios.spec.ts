@@ -147,7 +147,21 @@ test("CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no tet
   const SUB = "CF-021-UI-03";
   await aplicarSubcenario(page, { viewport: "V3", tema: "dark" });
   await premium(page, `kit-b-${info.workerIndex}`);
-  if (!(await abrirKits(page))) return;
+  if (!(await abrirKits(page))) {
+    // Review do PR #58 — antes isto era um `return` mudo: nem defeito, nem execução. O relatório
+    // não conseguia distinguir "passou" de "nunca rodou", e a pré-condição que falha aqui é
+    // justamente a corrida de entitlement que já produziu três falsos positivos.
+    defeito(info, {
+      subcenario: SUB,
+      categoria: "precondicao",
+      descricao:
+        "Subcenário NÃO EXECUTADO: o compositor de kits não abriu (pré-condição de Premium)",
+      resultado_esperado: "Compositor disponível para conta com entitlement ativo",
+      resultado_obtido: "pré-condição não satisfeita — nada foi medido neste subcenário",
+      severidade: "baixa",
+    });
+    return;
+  }
 
   await page
     .getByRole("button", { name: rotulo(b.addLine) })
@@ -303,7 +317,21 @@ test("CF-022-UI-01 — salvar o kit: nome vazio, nome gigante, e reabrir recalcu
   const SUB = "CF-022-UI-01";
   await aplicarSubcenario(page, { viewport: "V3", tema: "dark" });
   await premium(page, `kit-c-${info.workerIndex}`);
-  if (!(await abrirKits(page))) return;
+  if (!(await abrirKits(page))) {
+    // Review do PR #58 — antes isto era um `return` mudo: nem defeito, nem execução. O relatório
+    // não conseguia distinguir "passou" de "nunca rodou", e a pré-condição que falha aqui é
+    // justamente a corrida de entitlement que já produziu três falsos positivos.
+    defeito(info, {
+      subcenario: SUB,
+      categoria: "precondicao",
+      descricao:
+        "Subcenário NÃO EXECUTADO: o compositor de kits não abriu (pré-condição de Premium)",
+      resultado_esperado: "Compositor disponível para conta com entitlement ativo",
+      resultado_obtido: "pré-condição não satisfeita — nada foi medido neste subcenário",
+      severidade: "baixa",
+    });
+    return;
+  }
 
   await page
     .getByRole("button", { name: rotulo(b.addLine) })

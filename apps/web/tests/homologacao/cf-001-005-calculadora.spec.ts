@@ -237,7 +237,15 @@ test("CF-001-UI-01 — mobile dark anônimo: aritmética da semente e resistênc
       .first()
       .isVisible()
       .catch(() => false);
-    const deveriaErrar = !["1.234,56"].includes(l.valor);
+    // As gramas absurdas passaram a receber AVISO de plausibilidade (não mensagem de validação):
+    // o número é aceito de propósito — "aviso nunca vira validação" — então a expectativa aqui
+    // deixou de ser uma recusa. O aviso é conferido por `plausibilidade.test.ts`.
+    const avisoVisivel = await page
+      .getByTestId(/^aviso-/)
+      .first()
+      .isVisible()
+      .catch(() => false);
+    const deveriaErrar = !["1.234,56"].includes(l.valor) && !avisoVisivel;
     if (deveriaErrar && !erroVisivel) {
       defeito(info, {
         subcenario: SUB,

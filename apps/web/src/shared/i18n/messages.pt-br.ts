@@ -118,10 +118,17 @@ export const messages = {
     // 3. Toda frase ENSINA a converter. O vendedor não errou por desatenção; ele errou porque a
     //    etiqueta da impressora fala em W e o campo pede kW. Dizer "valor alto" não resolve isso.
     plausibilidade: {
+      // Review do PR #58 — a frase dizia "{v} kW é o de um chuveiro elétrico", e isso era FALSO
+      // justamente nos dois valores para os quais o aviso foi escrito: 120 e 220 kW não são
+      // chuveiro nenhum (um chuveiro fica em 4,5–7,5 kW, e é por isso que o limiar é 5). A frase
+      // agora nomeia o LIMIAR, que é verdade, em vez de descrever o valor digitado.
       avgPower:
-        "Confira o consumo: {v} kW é o de um chuveiro elétrico. A etiqueta da impressora costuma trazer watts — 120 W são 0,12 kW. Nada foi recusado.",
-      tariff:
-        "Confira a tarifa: R$ {v} por kWh está bem acima do que se paga no Brasil (perto de R$ 0,95). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.",
+        "Confira o consumo: {v} kW. Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Nada foi recusado.",
+      // Review do PR #58 — esta frase citava "perto de R$ 0,95" enquanto o tooltip do MESMO campo
+      // dizia R$ 0,85: duas médias nacionais diferentes para o mesmo fato, a uma tecla de
+      // distância. Passa a ler a MESMA constante datada que o tooltip lê, então a revisão anual
+      // move os dois juntos.
+      tariff: `Confira a tarifa: R$ {v} por kWh está bem acima do que se paga no Brasil (perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL}). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.`,
       machineLifetime:
         "Confira a vida útil: {v} horas é menos de uma semana ligada. Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Nada foi recusado.",
       rollWeight:
@@ -130,8 +137,11 @@ export const messages = {
         "Confira o valor da hora: R$ {v}. Se você informou quanto quer ganhar por mês, divida pelas horas do mês — R$ 3.000 ÷ 160 h = R$ 18,75. Nada foi recusado.",
       maintenance:
         "Confira a reserva de manutenção: R$ {v} por HORA. Se você informou o gasto do ano inteiro, divida pelas horas que imprime no ano. Nada foi recusado.",
+      // Review do PR #58 — "são mais de {d} dias" era falso em todo múltiplo exato de 24, incluindo
+      // 120 h (exatamente 5 dias), que é uma entrada plausível do próprio erro que o aviso caça.
+      // "equivalem a" com uma casa decimal é verdade em qualquer valor.
       printTime:
-        "Confira o tempo: {v} horas são mais de {d} dias imprimindo sem parar. Se você quis dizer minutos, use o campo de minutos ao lado. Nada foi recusado.",
+        "Confira o tempo: {v} horas equivalem a {d} dias imprimindo sem parar. Se você quis dizer minutos, use o campo de minutos ao lado. Nada foi recusado.",
       grams:
         "Confira as gramas: {v} g são mais de 50 kg de filamento numa peça só. Se você informou o peso do ROLO, o campo pede o que a PEÇA consome. Nada foi recusado.",
       custoAbsurdo:

@@ -1,97 +1,70 @@
-{"subcenario":"CF-008-UI-01","categoria":"gate_premium","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:37.226Z"}
-{"subcenario":"CF-008-UI-01","categoria":"fluxo","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:38.066Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:38.805Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:39.524Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:40.256Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:40.984Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:41.717Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:42.448Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:43.162Z"}
-{"subcenario":"CF-008-UI-01","categoria":"layout","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T13:44:43.691Z"}
-{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T13:44:50.968Z"}
-{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T13:44:53.018Z"}
-{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T13:44:55.690Z"}
-{"subcenario":"CF-024-UI-01","categoria":"calculo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T13:45:00.299Z"}
-{"subcenario":"CF-024-UI-01","categoria":"acolhimento","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T13:45:00.303Z"}
-{"subcenario":"CF-010-UI-04","categoria":"gate_premium","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T13:45:05.207Z"}
-{"subcenario":"CF-010-UI-04","categoria":"acolhimento","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T13:45:05.212Z"}
-{"subcenario":"CF-010-UI-04","categoria":"calculo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T13:45:05.215Z"}
-{"subcenario":"CF-010-UI-04","categoria":"fluxo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T13:45:06.143Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:07.217Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:07.236Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:07.850Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:07.861Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:08.483Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:08.494Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:09.121Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:09.132Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:09.739Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:09.756Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:10.388Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T13:45:11.023Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:12.067Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:12.086Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:12.709Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:12.718Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:13.327Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:13.338Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:13.946Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:13.955Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:14.571Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:14.593Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:15.207Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T13:45:15.844Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:16.563Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:16.585Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:16.587Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:16.589Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.215Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.228Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.231Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.233Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.844Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.855Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.857Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T13:45:17.859Z"}
-{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T13:45:18.943Z"}
-{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T13:45:19.598Z"}
-{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T13:45:20.238Z"}
-{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T13:45:21.327Z"}
-{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T13:45:21.567Z"}
-{"subcenario":"CF-044-UI-01","categoria":"layout","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T13:45:21.579Z"}
-{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T13:45:23.069Z"}
-{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T13:45:23.368Z"}
-{"subcenario":"CF-040-UI-01","categoria":"acolhimento","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T13:45:24.083Z"}
-{"subcenario":"CF-040-UI-01","categoria":"acessibilidade","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T13:45:28.247Z"}
-{"subcenario":"CF-035-UI-02","categoria":"rede","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T13:45:33.218Z"}
-{"subcenario":"CF-035-UI-02","categoria":"acolhimento","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T13:45:33.237Z"}
-{"subcenario":"CF-021-UI-01","categoria":"gate_premium","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:36.180Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:37.347Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:37.845Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:38.324Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:38.776Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:39.255Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:39.721Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:40.190Z"}
-{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:40.661Z"}
-{"subcenario":"CF-021-UI-01","categoria":"calculo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:41.273Z"}
-{"subcenario":"CF-021-UI-01","categoria":"layout","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T13:45:41.276Z"}
-{"subcenario":"CF-013-UI-01","categoria":"gate_premium","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:45.127Z"}
-{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:46.372Z"}
-{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:47.595Z"}
-{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:48.815Z"}
-{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:50.011Z"}
-{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:52.517Z"}
-{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:55.349Z"}
-{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:57.417Z"}
-{"subcenario":"CF-013-UI-01","categoria":"acolhimento","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T13:45:57.427Z"}
-{"subcenario":"CF-013-UI-03","categoria":"gate_premium","titulo":"CF-013-UI-03 — free: sem ação de salvar, com oferta honesta e sem modal morto","ts":"2026-08-15T13:45:59.404Z"}
-{"subcenario":"CF-013-UI-03","categoria":"gate_premium","titulo":"CF-013-UI-03 — free: sem ação de salvar, com oferta honesta e sem modal morto","ts":"2026-08-15T13:46:00.667Z"}
-{"subcenario":"CF-032-UI-02","categoria":"rede","titulo":"CF-032-UI-02 — offline: a recusa de salvar é honesta e a leitura continua","ts":"2026-08-15T13:46:06.601Z"}
-{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T13:46:12.208Z"}
-{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T13:46:15.222Z"}
-{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T13:46:15.273Z"}
-{"subcenario":"CF-029-UI-01","categoria":"estresse_de_dados","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T13:46:15.478Z"}
-{"subcenario":"CF-029-UI-02","categoria":"fluxo","titulo":"CF-029-UI-02 — exportar CSV: o conteúdo é o registro, e o que acontece com uma fórmula","ts":"2026-08-15T13:46:20.240Z"}
-{"subcenario":"CF-029-UI-03","categoria":"fluxo","titulo":"CF-029-UI-03 — entitlement revogado: exportar é negado, sem arquivo parcial","ts":"2026-08-15T13:46:26.993Z"}
-{"subcenario":"CF-029-UI-03","categoria":"gate_premium","titulo":"CF-029-UI-03 — entitlement revogado: exportar é negado, sem arquivo parcial","ts":"2026-08-15T13:46:32.883Z"}
+{"subcenario":"CF-008-UI-01","categoria":"gate_premium","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:36.905Z"}
+{"subcenario":"CF-008-UI-01","categoria":"fluxo","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:37.746Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:38.475Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:39.190Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:39.916Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:40.646Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:41.375Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:42.102Z"}
+{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:42.813Z"}
+{"subcenario":"CF-008-UI-01","categoria":"layout","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T15:03:43.345Z"}
+{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T15:03:50.666Z"}
+{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T15:03:52.726Z"}
+{"subcenario":"CF-024-UI-01","categoria":"fluxo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T15:03:55.412Z"}
+{"subcenario":"CF-024-UI-01","categoria":"calculo","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T15:04:00.017Z"}
+{"subcenario":"CF-024-UI-01","categoria":"acolhimento","titulo":"CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degrada de forma honesta","ts":"2026-08-15T15:04:00.020Z"}
+{"subcenario":"CF-010-UI-04","categoria":"gate_premium","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T15:04:04.253Z"}
+{"subcenario":"CF-010-UI-04","categoria":"acolhimento","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T15:04:04.256Z"}
+{"subcenario":"CF-010-UI-04","categoria":"calculo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T15:04:04.259Z"}
+{"subcenario":"CF-010-UI-04","categoria":"fluxo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T15:04:05.187Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:06.232Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:06.249Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:06.855Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:06.869Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:07.492Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:07.510Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:08.117Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:08.130Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:08.739Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:08.757Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:09.373Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T15:04:10.010Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:11.051Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:11.066Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:11.687Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:11.707Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:12.323Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:12.337Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:12.961Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:12.971Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:13.583Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:13.596Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:14.206Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T15:04:14.856Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:15.572Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:15.589Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:15.591Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:15.593Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.209Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.219Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.221Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.223Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.833Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.843Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.845Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T15:04:16.847Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:17.940Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:17.952Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:18.578Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:18.587Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:19.203Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T15:04:19.212Z"}
+{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T15:04:20.243Z"}
+{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T15:04:20.473Z"}
+{"subcenario":"CF-044-UI-01","categoria":"layout","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T15:04:20.482Z"}
+{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T15:04:21.951Z"}
+{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T15:04:22.245Z"}
+{"subcenario":"CF-040-UI-01","categoria":"acolhimento","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T15:04:22.944Z"}
+{"subcenario":"CF-040-UI-01","categoria":"acessibilidade","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T15:04:27.097Z"}
+{"subcenario":"CF-035-UI-02","categoria":"rede","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T15:04:31.349Z"}
+{"subcenario":"CF-035-UI-02","categoria":"acolhimento","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T15:04:31.361Z"}

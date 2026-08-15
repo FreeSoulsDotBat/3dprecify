@@ -12,6 +12,7 @@ import baseConfig from "./playwright.config";
 export default defineConfig({
   ...baseConfig,
   testDir: "./tests/homologacao",
+  globalSetup: "./tests/homologacao/global-setup.ts",
   fullyParallel: true,
   // Um defeito real precisa ser reprodutível: sem retry, um vermelho é um vermelho.
   retries: 0,

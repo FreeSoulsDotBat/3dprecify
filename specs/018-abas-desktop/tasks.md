@@ -175,3 +175,38 @@ reusam. Se o incremento parasse aí, o produto ficaria coerente.
 
 Todas as 60 tarefas seguem `- [ ] T### [P?] [US#?] descrição com caminho de arquivo`. Fases de
 Setup, Foundational e Polish não levam rótulo de história, por definição.
+
+---
+
+## Correções da homologação automatizada (absorvidas no mesmo PR — 2026-08-13/15)
+
+O PR #58 foi reaproveitado para carregar também as correções da homologação automatizada. Estas
+tarefas foram executadas; ficam registradas aqui porque o plano exige que o registro não seja menor
+que o que foi feito (`docs/homologacao/automatizada/PLANO-CORRECAO.md` §DoD).
+
+- [x] **T200** — Aviso de plausibilidade: módulo puro `shared/lib/plausibilidade.ts` + mensagens +
+      fiação no `ControlledField`, no `TimeHmField`, no slot de canal e no card de linha do kit.
+      Regra estrutural: AVISO NUNCA VIRA VALIDAÇÃO (teste no último `describe` do módulo).
+- [x] **T201** — Transbordo de texto sem espaços: `breakdown-row.css` (`__label`/`__sub`) e
+      `catalog-master-detail.css` (`__card`).
+- [x] **T202** — Teaser premium a 426px: `premium-teaser.css` (`max-width: min(28rem, 100%)`).
+- [x] **T203** — Foco invisível no item de navegação ATIVO: anel interno em `app-nav.css`.
+- [x] **T204** — Contraste do texto de status: `--success-text` remedido contra o fundo REAL do
+      badge (o `*-soft` composto), não contra o card.
+- [x] **T205** — Alvo de toque do link de privacidade na tela de entrada.
+- [x] **T206** — Salvar simulação sem nome passou a mostrar a mensagem que já existia escrita.
+- [x] **T207** — Tempo do fatiador (`2:30`, `2h30`, `2h30m`) aceito, com rascunho local no campo de
+      horas para a digitação caractere a caractere não virar horas×60.
+- [x] **T208** — Aviso de saída com alterações não salvas (`aviso-de-saida.ts`).
+- [x] **T209** — **Guarda permanente de geometria** em `tests/e2e/overflow-geometria.spec.ts`:
+      mede nós de TEXTO por `Range` e inclui 426px. Era exigida pelo plano e faltava.
+- [x] **T210** — Pílula selecionada do Segmented em relevo (`--surface-raised` + sombra): no escuro
+      ela tinha a mesma cor da bandeja e a seleção era comunicada só pela cor do texto.
+- [x] **T211** — Saída da homologação truncada por rodada (`tests/homologacao/global-setup.ts`) e
+      relatório bruto do Playwright fora do versionamento.
+
+### Aberto, e depende de decisão do dono
+
+- [ ] **T212** — Resumo fixo com o preço no mobile (o custo total só aparece após ~4 telas a 390px).
+      Contradiz a propriedade "o mobile não se mexe" que ESTE incremento promete.
+- [ ] **T213** — A faixa de 426–600px: o conserto real é a barra lateral colapsar abaixo de ~600px.

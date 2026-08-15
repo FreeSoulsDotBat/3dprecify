@@ -217,6 +217,71 @@ export function ControlledField({
   );
 }
 
+/**
+ * Review do PR #58 (2026-08-15) — o campo de HORAS com rascunho local.
+ *
+ * O achado: `2:30` funcionava COLADO e não funcionava DIGITADO. A causa é o campo ser controlado
+ * por `String(h)`: ao teclar `0`, depois `:`, o texto `"0:"` não casa como relógio, cai no
+ * `parseInt` que devolve 0, o React re-renderiza com `"0"` e o `:` que a pessoa acabou de digitar
+ * some. Continuando, `"30"` vira **30 horas** — 60× o que ela quis dizer, calado.
+ *
+ * O conserto é dar um rascunho local ao campo enquanto o texto contém um separador: nesse estado
+ * ele NÃO commita nada e deixa a pessoa terminar de escrever. Assim que o relógio fecha (`0:30`),
+ * commita e devolve o controle ao valor derivado. No blur, um rascunho que nunca fechou cai no
+ * `parseInt` de sempre — nada fica preso num estado que o motor não conhece.
+ *
+ * Esta é a única parte do campo com estado próprio, e ela existe só para os caracteres
+ * intermediários — o valor que chega ao motor continua sendo o mesmo decimal de sempre.
+ */
+function CampoDeHoras({
+  h,
+  min,
+  onCommit,
+  onBlurField,
+}: {
+  h: number;
+  min: number;
+  onCommit: (h: number, min: number) => void;
+  onBlurField: () => void;
+}) {
+  const [rascunho, setRascunho] = useState<string | null>(null);
+  const temSeparador = (v: string) => /[:hH]/.test(v);
+  return (
+    <NumberField
+      aria-label={t.timeInput.hoursAria}
+      unit={t.timeInput.hoursUnit}
+      inputMode="text"
+      placeholder="0"
+      value={rascunho ?? String(h)}
+      onChange={(e) => {
+        const bruto = e.target.value;
+        const relogio = parseRelogio(bruto);
+        if (relogio) {
+          setRascunho(null);
+          onCommit(relogio.h, relogio.min);
+          return;
+        }
+        if (temSeparador(bruto)) {
+          // Meio de digitação ("0:", "2h"): segura o texto e NÃO mexe no número ainda.
+          setRascunho(bruto);
+          return;
+        }
+        setRascunho(null);
+        onCommit(Number.parseInt(bruto, 10) || 0, min);
+      }}
+      onBlur={() => {
+        if (rascunho !== null) {
+          const relogio = parseRelogio(rascunho);
+          if (relogio) onCommit(relogio.h, relogio.min);
+          else onCommit(Number.parseInt(rascunho, 10) || 0, min);
+          setRascunho(null);
+        }
+        onBlurField();
+      }}
+    />
+  );
+}
+
 /** 016/US7 (FR-909) — the printTime border: two number inputs (h + min), converted to/from the
  *  SAME decimal the engine has always received (`time-input.ts` owns the pure conversion; the RHF
  *  field value never changes shape). A document saved with a decimal (`5.5`) reopens showing the
@@ -250,25 +315,7 @@ export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
           >
             {() => (
               <div className="flex items-center gap-2">
-                <NumberField
-                  aria-label={t.timeInput.hoursAria}
-                  unit={t.timeInput.hoursUnit}
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={String(h)}
-                  onChange={(e) => {
-                    // Homologação automatizada (CF-002-LEIGO-C) — `2:30` e `2h30` são como o
-                    // fatiador imprime o tempo estimado, e é de lá que o vendedor copia. Antes o
-                    // campo engolia a colagem em silêncio: nem número, nem mensagem.
-                    const relogio = parseRelogio(e.target.value);
-                    if (relogio) {
-                      commit(relogio.h, relogio.min);
-                      return;
-                    }
-                    commit(Number.parseInt(e.target.value, 10) || 0, min);
-                  }}
-                  onBlur={field.onBlur}
-                />
+                <CampoDeHoras h={h} min={min} onCommit={commit} onBlurField={field.onBlur} />
                 <NumberField
                   aria-label={t.timeInput.minutesAria}
                   unit={t.timeInput.minutesUnit}
@@ -386,6 +433,16 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
           {/* 016/PR-C homologação (B4) — the InfoTip trigger is a `labelAddon`: a FLEX SIBLING of
               the `<label>`, on the label row, never nested inside it (see field.tsx's doc — a
               nested button folds its own name into the control's accessible name). */}
+          {/* Review do PR #58 (2026-08-15) — este aviso EXISTIA sem caminho de render, e é o achado
+              mais caro que o review pegou. O limiar (`plausibilidade.ts`), a frase
+              (`messages.pt-br.ts`) e o teste unitário estavam verdes; nenhuma tela chamava
+              `avisoDeCampo("machineLifetimeHours", …)`, porque este campo NÃO é um `CalcFieldMeta`
+              — ele renderiza aqui, no seu controle dedicado, e não pelo `ControlledField`. O
+              próprio `calculator-schema.ts:365` diz isso por escrito.
+              Consequência real: quem pensa a vida útil em ANOS e digita 3 leva o custo/hora de
+              R$ 1,11 para R$ 1.333,33, calado — um dos nove ALTA declarados corrigidos.
+              E a medição da homologação era CEGA a isto: a bateria faz `continue` quando o campo
+              não está visível, e a semente 3600h abre em modo ritmo, onde ele nem é montado. */}
           <Field
             label={t.fields.machineLifetime}
             labelAddon={
@@ -394,6 +451,17 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
               </InfoTip>
             }
             required
+            hint={(() => {
+              const aviso = avisoDeCampo(
+                "machineLifetimeHours",
+                String(lifetimeField.field.value ?? ""),
+              );
+              return aviso ? (
+                <span className="tf-field__aviso" data-testid="aviso-machineLifetimeHours">
+                  {aviso}
+                </span>
+              ) : undefined;
+            })()}
           >
             {(p) => (
               <NumberField

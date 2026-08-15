@@ -150,7 +150,7 @@ export function avisosDePlausibilidade(
       campo: "printTimeHours",
       texto: t.printTime
         .replace("{v}", fmt(entrada.printTimeHours))
-        .replace("{d}", fmt(Math.floor(entrada.printTimeHours / 24))),
+        .replace("{d}", fmt(Math.round((entrada.printTimeHours / 24) * 10) / 10)),
     });
   }
 

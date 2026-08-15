@@ -535,6 +535,28 @@ export async function varreduraDeSaude(
       severidade: "media",
     });
   }
+  // Review do PR #58 (2026-08-15) — o eixo Y era CALCULADO e DESCARTADO aqui, com a docstring do
+  // `overflow()` citando, uma tela acima, a lição do 016/PR-B: "headless não desenha a barra
+  // clássica, então medir só um eixo deixa passar metade dos casos". A bateria inteira era cega
+  // para rolagem vertical — inclusive para o defeito de scroll que o 016 já tinha pago uma vez.
+  //
+  // O limiar não é 1px como no eixo X: uma página LONGA rola na vertical por natureza, e isso não é
+  // defeito. Calibrado em 6 telas depois da primeira rodada com o eixo ligado: a 3 telas ele
+  // acusava 22 vezes que "a calculadora é um formulário comprido" (4,6 telas), o que é verdade e
+  // não é defeito — e 22 registros quase idênticos afogam o sinal que o eixo existe para dar.
+  // A leitura útil sobre o resultado abaixo da dobra continua sendo feita, uma vez, pela jornada do
+  // leigo (CF-001-LEIGO-E), que mede a POSIÇÃO do custo total e não a altura da página.
+  const alturaJanela = await page.evaluate(() => window.innerHeight);
+  if (ov.y > alturaJanela * 6) {
+    defeito(info, {
+      subcenario,
+      categoria: "layout",
+      descricao: `A página tem ${(ov.y / alturaJanela + 1).toFixed(1)} telas de rolagem vertical em ${contexto}`,
+      resultado_esperado: "Conteúdo alcançável em poucas telas, ou um resumo que não exige rolar",
+      resultado_obtido: `${ov.y}px além da janela de ${alturaJanela}px`,
+      severidade: "baixa",
+    });
+  }
   const vaz = await vazamentoTecnico(page);
   if (vaz.length > 0) {
     defeito(info, {
