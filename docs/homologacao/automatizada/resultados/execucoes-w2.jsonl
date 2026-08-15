@@ -1,98 +1,84 @@
-{"subcenario":"CF-001-UI-02","categoria":"calculo","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T17:16:14.071Z"}
-{"subcenario":"CF-001-UI-02","categoria":"tema","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T17:16:14.081Z"}
-{"subcenario":"CF-001-UI-02","categoria":"layout","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T17:16:14.085Z"}
-{"subcenario":"CF-001-UI-02","categoria":"acessibilidade","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T17:16:14.116Z"}
-{"subcenario":"CF-001-UI-02","categoria":"acessibilidade","titulo":"CF-001-UI-02 — wide light anônimo: mesma aritmética, contraste e geometria no tema claro","ts":"2026-08-15T17:16:24.084Z"}
-{"subcenario":"CF-025-UI-03","categoria":"rede","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T17:16:28.569Z"}
-{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T17:16:34.135Z"}
-{"subcenario":"CF-025-UI-03","categoria":"acolhimento","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T17:16:34.145Z"}
-{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T17:16:34.152Z"}
-{"subcenario":"CF-010-UI-01","categoria":"gate_premium","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:40.094Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:40.974Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:41.846Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:42.696Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:43.551Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:44.405Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:45.262Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:46.133Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:47.005Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:47.888Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:48.771Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:49.625Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:50.492Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:51.348Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:52.201Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:53.058Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:53.914Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:54.753Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:55.609Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:56.478Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:57.359Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:58.206Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:59.060Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:16:59.932Z"}
-{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:17:00.790Z"}
-{"subcenario":"CF-010-UI-01","categoria":"fluxo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T17:17:00.798Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:01.863Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:01.883Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:02.504Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:02.514Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:03.133Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:03.143Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:03.754Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:03.765Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:04.392Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:04.402Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:05.017Z"}
-{"subcenario":"CF-043-UI-V3-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/light","ts":"2026-08-15T17:17:05.655Z"}
-{"subcenario":"CF-041-UI-01","categoria":"sessao","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:06.371Z"}
-{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:06.883Z"}
-{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:07.395Z"}
-{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:07.920Z"}
-{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:08.461Z"}
-{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:09.100Z"}
-{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:09.751Z"}
-{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T17:17:10.387Z"}
-{"subcenario":"CF-015-UI-02","categoria":"gate_premium","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:13.096Z"}
-{"subcenario":"CF-015-UI-02","categoria":"acolhimento","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:13.098Z"}
-{"subcenario":"CF-015-UI-02","categoria":"crud","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:13.288Z"}
-{"subcenario":"CF-015-UI-02","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:13.988Z"}
-{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:14.579Z"}
-{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:15.206Z"}
-{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:15.818Z"}
-{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:16.441Z"}
-{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:17.061Z"}
-{"subcenario":"CF-015-UI-02","categoria":"seguranca","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:17.068Z"}
-{"subcenario":"CF-015-UI-02","categoria":"layout","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:17.069Z"}
-{"subcenario":"CF-018-UI-01","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:17.699Z"}
-{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:18.069Z"}
-{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:18.444Z"}
-{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:18.816Z"}
-{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:19.189Z"}
-{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T17:17:19.561Z"}
-{"subcenario":"CF-035-UI-02","categoria":"rede","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T17:17:23.631Z"}
-{"subcenario":"CF-035-UI-02","categoria":"acolhimento","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T17:17:23.643Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:29.312Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:29.622Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:29.933Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:30.245Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:30.552Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:30.862Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:31.174Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:31.484Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:31.794Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:32.106Z"}
-{"subcenario":"CF-021-UI-03","categoria":"input_invalido","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:32.418Z"}
-{"subcenario":"CF-021-UI-03","categoria":"estresse_de_dados","titulo":"CF-021-UI-03 — quantidade: zero, negativa, decimal, com unidade e no teto do int4","ts":"2026-08-15T17:17:35.320Z"}
-{"subcenario":"CF-032-UI-01","categoria":"estresse_de_dados","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:40.411Z"}
-{"subcenario":"CF-032-UI-01","categoria":"estresse_de_dados","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:41.705Z"}
-{"subcenario":"CF-032-UI-01","categoria":"estresse_de_dados","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:42.995Z"}
-{"subcenario":"CF-032-UI-01","categoria":"estresse_de_dados","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:44.288Z"}
-{"subcenario":"CF-032-UI-01","categoria":"estresse_de_dados","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:45.581Z"}
-{"subcenario":"CF-032-UI-01","categoria":"fluxo","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:47.132Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:47.754Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:48.371Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:48.993Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:49.603Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:50.227Z"}
-{"subcenario":"CF-032-UI-01","categoria":"input_invalido","titulo":"CF-032-UI-01 — lista de simulações: busca adversarial, duplicar e excluir","ts":"2026-08-15T17:17:50.850Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.043Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.096Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.160Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.209Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.273Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.316Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.351Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.394Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.433Z"}
+{"subcenario":"CF-002-UI-01","categoria":"input_invalido","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.482Z"}
+{"subcenario":"CF-002-UI-01","categoria":"usuario_burro","titulo":"CF-002-UI-01 — h+min: conversão correta e defesa contra entradas absurdas","ts":"2026-08-15T18:13:51.568Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.925Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.943Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.943Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.944Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.945Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.945Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.946Z"}
+{"subcenario":"CF-005-UI-01","categoria":"acolhimento","titulo":"CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fecha","ts":"2026-08-15T18:13:51.952Z"}
+{"subcenario":"CF-001-UI-03","categoria":"calculo","titulo":"CF-001-UI-03 — 1024px premium: a faixa do meio não regride o cálculo nem o layout","ts":"2026-08-15T18:13:55.268Z"}
+{"subcenario":"CF-001-UI-03","categoria":"layout","titulo":"CF-001-UI-03 — 1024px premium: a faixa do meio não regride o cálculo nem o layout","ts":"2026-08-15T18:13:55.290Z"}
+{"subcenario":"CF-010-UI-05","categoria":"calculo","titulo":"CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a legenda e a conta","ts":"2026-08-15T18:14:02.478Z"}
+{"subcenario":"CF-010-UI-05","categoria":"acolhimento","titulo":"CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a legenda e a conta","ts":"2026-08-15T18:14:02.488Z"}
+{"subcenario":"CF-010-UI-05","categoria":"calculo","titulo":"CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a legenda e a conta","ts":"2026-08-15T18:14:02.488Z"}
+{"subcenario":"CF-010-UI-05","categoria":"calculo","titulo":"CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a legenda e a conta","ts":"2026-08-15T18:14:03.534Z"}
+{"subcenario":"CF-042-UI-02","categoria":"rede","titulo":"CF-042-UI-02 — 403 na sincronização: o registro fica BLOQUEADO e visível, nunca apagado","ts":"2026-08-15T18:14:09.272Z"}
+{"subcenario":"CF-042-UI-02","categoria":"gate_premium","titulo":"CF-042-UI-02 — 403 na sincronização: o registro fica BLOQUEADO e visível, nunca apagado","ts":"2026-08-15T18:14:14.855Z"}
+{"subcenario":"CF-042-UI-02","categoria":"acolhimento","titulo":"CF-042-UI-02 — 403 na sincronização: o registro fica BLOQUEADO e visível, nunca apagado","ts":"2026-08-15T18:14:14.867Z"}
+{"subcenario":"CF-010-UI-01","categoria":"gate_premium","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:19.579Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:20.483Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:21.359Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:22.258Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:23.155Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:24.044Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:24.944Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:25.826Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:26.714Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:27.579Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:28.447Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:29.341Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:30.209Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:31.111Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:32.003Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:32.899Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:33.782Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:34.667Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:35.549Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:36.436Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:37.320Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:38.190Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:39.056Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:39.919Z"}
+{"subcenario":"CF-010-UI-01","categoria":"calculo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:40.784Z"}
+{"subcenario":"CF-010-UI-01","categoria":"fluxo","titulo":"CF-010-A — a conta do canal fecha com o que está na tela, em 24 combinações de tarifa","ts":"2026-08-15T18:14:40.796Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:41.886Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:41.900Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:42.541Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:42.555Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:43.192Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:43.203Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:43.841Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:43.851Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:44.477Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:44.488Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:45.115Z"}
+{"subcenario":"CF-043-UI-V3-dark","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V3/dark","ts":"2026-08-15T18:14:45.770Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:46.902Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:46.916Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:47.556Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:47.572Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:48.211Z"}
+{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T18:14:48.221Z"}
+{"subcenario":"CF-041-UI-01","categoria":"sessao","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:48.938Z"}
+{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:49.452Z"}
+{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:49.977Z"}
+{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:50.490Z"}
+{"subcenario":"CF-041-UI-01","categoria":"seguranca","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:51.017Z"}
+{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:51.665Z"}
+{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:52.364Z"}
+{"subcenario":"CF-041-UI-01","categoria":"rota","titulo":"CF-041/CF-048 — guardas de rota, retorno ao destino e proteção contra open-redirect","ts":"2026-08-15T18:14:53.019Z"}
+{"subcenario":"CF-040-UI-01","categoria":"acolhimento","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T18:14:53.752Z"}
+{"subcenario":"CF-040-UI-01","categoria":"acessibilidade","titulo":"CF-040 — tela de entrada: acolhedora, acessível e sem jargão","ts":"2026-08-15T18:14:57.663Z"}
+{"subcenario":"CF-035-UI-02","categoria":"rede","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T18:15:02.487Z"}
+{"subcenario":"CF-035-UI-02","categoria":"acolhimento","titulo":"CF-035-UI-02 — com /me e /entitlement falhando, a Conta é honesta e oferece retentativa","ts":"2026-08-15T18:15:02.498Z"}

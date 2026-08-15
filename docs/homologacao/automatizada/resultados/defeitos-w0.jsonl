@@ -1,1 +1,0 @@
-{"subcenario":"CF-040-UI-01","categoria":"acessibilidade","descricao":"1 alvo(s) entre 24 e 43px em tela de entrada — passa na AA, abaixo do conforto de 44px","resultado_esperado":"Alvos de toque com 44x44 CSS px no mobile (recomendação)","resultado_obtido":"A[Como tratamos seus dados] 181x24","severidade":"baixa","id":"D-w0-001","ts":"2026-08-15T17:17:14.293Z"}

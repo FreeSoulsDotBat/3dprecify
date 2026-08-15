@@ -384,17 +384,21 @@ export async function contrasteInsuficiente(page: Page): Promise<string[]> {
 export async function focoInvisivel(page: Page, paradas = 20): Promise<string[]> {
   const semIndicacao: string[] = [];
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
-  const ler = () =>
-    page.evaluate(() => {
-      const el =
-        (window as unknown as { __alvo?: HTMLElement }).__alvo ??
-        (document.activeElement as HTMLElement | null);
+
+  for (let i = 0; i < paradas; i += 1) {
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(200);
+
+    // 1) Carimba o elemento focado e lê a cadeia de estilos DELE, ainda focado.
+    const comFoco = await page.evaluate(() => {
+      const el = document.activeElement as HTMLElement | null;
       if (!el || el === document.body) return null;
-      (window as unknown as { __alvo?: HTMLElement }).__alvo = el;
-      const cs = getComputedStyle(el);
       const caixa = el.getBoundingClientRect();
-      return {
-        estilo: [
+      if (caixa.width === 0 && caixa.height === 0) return null;
+      el.setAttribute("data-foco-alvo", "1");
+      const estiloDe = (n: Element): string => {
+        const cs = getComputedStyle(n);
+        return [
           cs.outlineStyle,
           cs.outlineWidth,
           cs.outlineColor,
@@ -402,26 +406,68 @@ export async function focoInvisivel(page: Page, paradas = 20): Promise<string[]>
           cs.backgroundColor,
           cs.borderColor,
           cs.color,
-        ].join("|"),
-        visivel: caixa.width > 0 || caixa.height > 0,
-        rotulo: `${el.tagName}[${(el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 24)}]`,
+        ].join("|");
+      };
+      const cadeia = [
+        el,
+        el.parentElement,
+        el.parentElement?.parentElement ?? null,
+        ...Array.from(el.querySelectorAll("*")).slice(0, 6),
+      ];
+      return {
+        estilo: cadeia.map((n) => (n ? estiloDe(n) : "—")).join("//"),
+        rotulo:
+          `${el.tagName}.${String(el.className).slice(0, 30)}` +
+          `[${(el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 24)}]`,
       };
     });
-  for (let i = 0; i < paradas; i += 1) {
-    await page.evaluate(() => delete (window as unknown as { __alvo?: HTMLElement }).__alvo);
+    if (!comFoco) continue;
+
+    // 2) Tira o foco COM TECLADO (nunca `blur()` programático) e reconsulta o elemento pelo carimbo.
+    //
+    //    Esta é a terceira versão deste medidor, e as duas anteriores acusaram foco invisível em
+    //    controles que TÊM anel. A última usava `blur()` + uma referência ao nó guardada em
+    //    `window`: se o React recria aquele nó entre as duas leituras, a referência fica órfã, e
+    //    `getComputedStyle` de um nó fora do documento devolve valores padrão — IDÊNTICOS nas duas
+    //    medições, ou seja, "não mudou nada" por construção. Foi assim que TODO campo numérico da
+    //    calculadora virou defeito num relatório, com o anel funcionando (medido: borda roxa +
+    //    2px com foco, cinza sem foco).
+    //
+    //    Reconsultar pelo atributo garante que a segunda leitura é do nó que está no documento
+    //    AGORA, e sair por Tab reproduz o que a pessoa faz de verdade.
     await page.keyboard.press("Tab");
-    // As duas esperas existem por medida, nao por precaucao: `.tf-btn` anima `box-shadow`, e ler
-    // logo apos o Tab (ou logo apos o blur) captura a animacao no quadro 0 — o que fez a primeira
-    // versao acusar 4 elementos "sem foco" que tinham anel. Uma medicao instantanea de um estilo
-    // com transicao mede a transicao, nao o estilo.
-    await page.waitForTimeout(260);
-    const comFoco = await ler();
-    if (!comFoco || !comFoco.visivel) continue;
-    await page.evaluate(() => (window as unknown as { __alvo?: HTMLElement }).__alvo?.blur());
-    await page.waitForTimeout(260);
-    const semFoco = await ler();
-    await page.evaluate(() => (window as unknown as { __alvo?: HTMLElement }).__alvo?.focus());
-    if (semFoco && comFoco.estilo === semFoco.estilo) semIndicacao.push(comFoco.rotulo);
+    await page.waitForTimeout(200);
+    const semFoco = await page.evaluate(() => {
+      const el = document.querySelector("[data-foco-alvo]");
+      if (!el) return null;
+      const estiloDe = (n: Element): string => {
+        const cs = getComputedStyle(n);
+        return [
+          cs.outlineStyle,
+          cs.outlineWidth,
+          cs.outlineColor,
+          cs.boxShadow,
+          cs.backgroundColor,
+          cs.borderColor,
+          cs.color,
+        ].join("|");
+      };
+      const cadeia = [
+        el,
+        el.parentElement,
+        el.parentElement?.parentElement ?? null,
+        ...Array.from(el.querySelectorAll("*")).slice(0, 6),
+      ];
+      const estilo = cadeia.map((n) => (n ? estiloDe(n) : "—")).join("//");
+      el.removeAttribute("data-foco-alvo");
+      return estilo;
+    });
+
+    if (semFoco !== null && comFoco.estilo === semFoco) semIndicacao.push(comFoco.rotulo);
+
+    // 3) Volta o foco para onde estava, para a próxima parada ser a seguinte e não a de depois.
+    await page.keyboard.press("Shift+Tab");
+    await page.waitForTimeout(80);
   }
   return Array.from(new Set(semIndicacao));
 }

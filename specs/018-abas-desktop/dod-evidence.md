@@ -207,3 +207,27 @@ desligada com o motivo escrito ao lado (`estresse-leigo.spec.ts`, `RETRATADO_VER
 avisadas, o registro é anterior) + "vida útil" fora do modo ritmo (consequência desejada do 016/US8)
 + recarga (o aviso nativo do navegador não é observável pelo Playwright). 2 baixa: confirmações, não
 defeitos.
+
+### Um achado RETRATADO por medição errada (2026-08-15) — o foco dos campos numéricos
+
+A bateria acusava "1 elemento sem nenhuma mudança visual ao receber foco". Com o rótulo do achado
+enriquecido, virou **todo campo numérico da calculadora** — Custo do rolo, Peso do rolo, Gramas
+usadas, Consumo médio… (o rótulo genérico "INPUT[]" estava colapsando todos num só).
+
+**Não era defeito.** Medido diretamente, sem o truque do detector: com foco, o invólucro fica
+`border: rgb(120,0,255)` + `box-shadow: 0 0 0 2px`; sem foco, `rgb(185,187,198)` e sem sombra. O
+anel funciona.
+
+O erro era do medidor, e foi a TERCEIRA vez que ele errou sobre foco nesta homologação. A versão
+anterior guardava uma referência ao nó em `window` e tirava o foco com `blur()` programático: se o
+React recria aquele nó entre as duas leituras, a referência fica órfã, e `getComputedStyle` de um nó
+fora do documento devolve valores padrão — **idênticos nas duas medições, ou seja "não mudou nada"
+por construção**.
+
+A versão atual carimba o elemento, sai do foco **com Tab** (nunca `blur()`) e reconsulta o nó pelo
+carimbo, garantindo que a segunda leitura é do nó que está no documento agora. É a mesma medição que
+eu fiz à mão para provar que o anel existe.
+
+Fica registrado porque a lição vale mais que o achado: **um medidor que erra na mesma direção três
+vezes precisa ser reescrito, não ajustado** — e cada ajuste anterior deixou a impressão de que o
+produto tinha um defeito que ele não tinha.

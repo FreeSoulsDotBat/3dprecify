@@ -1,86 +1,255 @@
-{"subcenario":"CF-008-UI-01","categoria":"gate_premium","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:26.306Z"}
-{"subcenario":"CF-008-UI-01","categoria":"fluxo","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:27.146Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:27.872Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:28.584Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:29.305Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:30.034Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:30.767Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:31.489Z"}
-{"subcenario":"CF-008-UI-01","categoria":"input_invalido","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:32.202Z"}
-{"subcenario":"CF-008-UI-01","categoria":"layout","titulo":"CF-008-UI-01 — categoria: contagem honesta, busca adversarial e limpar","ts":"2026-08-15T17:16:32.719Z"}
-{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:41.444Z"}
-{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:41.910Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:42.389Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:42.916Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:43.443Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:43.972Z"}
-{"subcenario":"CF-010-UI-02","categoria":"layout","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:43.977Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:44.421Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:44.670Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:44.904Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:45.354Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:46.037Z"}
-{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T17:16:46.709Z"}
-{"subcenario":"CF-010-UI-04","categoria":"gate_premium","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T17:16:51.146Z"}
-{"subcenario":"CF-010-UI-04","categoria":"acolhimento","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T17:16:51.150Z"}
-{"subcenario":"CF-010-UI-04","categoria":"calculo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T17:16:51.153Z"}
-{"subcenario":"CF-010-UI-04","categoria":"fluxo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T17:16:52.093Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:53.134Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:53.149Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:53.758Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:53.769Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:54.381Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:54.392Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:55.003Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:55.019Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:55.640Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:55.651Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:56.275Z"}
-{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T17:16:56.899Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:57.944Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:57.959Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:58.578Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:58.591Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:59.200Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:59.211Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:59.824Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:16:59.837Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:17:00.446Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:17:00.456Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:17:01.070Z"}
-{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T17:17:01.707Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:02.426Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:02.443Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:02.445Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:02.447Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.054Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.064Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.065Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.073Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.691Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.701Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.702Z"}
-{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T17:17:03.704Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:04.783Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:04.793Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:05.421Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:05.430Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:06.061Z"}
-{"subcenario":"CF-020-UI-02","categoria":"gate_premium","titulo":"CF-020-UI-02 — logado FREE vê o mesmo que o anônimo, jamais um erro (rodada 1, ponto 15)","ts":"2026-08-15T17:17:06.071Z"}
-{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T17:17:07.100Z"}
-{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T17:17:07.342Z"}
-{"subcenario":"CF-044-UI-01","categoria":"layout","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T17:17:07.350Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:08.380Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:09.257Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:09.439Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:09.658Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:09.857Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:10.059Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:10.246Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:10.448Z"}
-{"subcenario":"CF-043-UI-03","categoria":"layout","titulo":"CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebra a navegação","ts":"2026-08-15T17:17:10.665Z"}
-{"subcenario":"CF-025-UI-01","categoria":"fluxo","titulo":"CF-025/CF-026 — orçamento: registra online, registra offline e a fila é honesta","ts":"2026-08-15T17:17:13.777Z"}
-{"subcenario":"CF-025-UI-01","categoria":"fluxo","titulo":"CF-025/CF-026 — orçamento: registra online, registra offline e a fila é honesta","ts":"2026-08-15T17:17:15.096Z"}
-{"subcenario":"CF-026-UI-03","categoria":"fluxo","titulo":"CF-025/CF-026 — orçamento: registra online, registra offline e a fila é honesta","ts":"2026-08-15T17:17:16.355Z"}
-{"subcenario":"CF-025-UI-02","categoria":"rede","titulo":"CF-025/CF-026 — orçamento: registra online, registra offline e a fila é honesta","ts":"2026-08-15T17:17:17.901Z"}
-{"subcenario":"CF-025-UI-02","categoria":"rede","titulo":"CF-025/CF-026 — orçamento: registra online, registra offline e a fila é honesta","ts":"2026-08-15T17:17:21.976Z"}
+{"subcenario":"CF-025-UI-03","categoria":"rede","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T18:14:08.481Z"}
+{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T18:14:14.064Z"}
+{"subcenario":"CF-025-UI-03","categoria":"acolhimento","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T18:14:14.076Z"}
+{"subcenario":"CF-025-UI-03","categoria":"sessao","titulo":"CF-025-UI-03 — sessão expira com a fila cheia: o registro FICA e a tela diz a causa certa","ts":"2026-08-15T18:14:14.085Z"}
+{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:24.017Z"}
+{"subcenario":"CF-010-UI-02","categoria":"usuario_leigo","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:24.496Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:24.994Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:25.579Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:26.124Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:26.652Z"}
+{"subcenario":"CF-010-UI-02","categoria":"layout","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:26.658Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:27.103Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:27.348Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:27.595Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:28.059Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:28.738Z"}
+{"subcenario":"CF-010-UI-02","categoria":"input_invalido","titulo":"CF-010-B — comissão digitada como fração, com símbolo, no limite e acima dele","ts":"2026-08-15T18:14:29.404Z"}
+{"subcenario":"CF-010-UI-04","categoria":"gate_premium","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T18:14:34.683Z"}
+{"subcenario":"CF-010-UI-04","categoria":"acolhimento","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T18:14:34.688Z"}
+{"subcenario":"CF-010-UI-04","categoria":"calculo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T18:14:34.691Z"}
+{"subcenario":"CF-010-UI-04","categoria":"fluxo","titulo":"CF-010-D — tarifas vindas do catálogo: procedência declarada e conta coerente","ts":"2026-08-15T18:14:35.626Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:36.717Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:36.749Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:37.368Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:37.383Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:38.004Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:38.016Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:38.639Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:38.655Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:39.290Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:39.301Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:39.935Z"}
+{"subcenario":"CF-043-UI-V1-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V1/light","ts":"2026-08-15T18:14:40.586Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:41.669Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:41.692Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:42.324Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:42.336Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:42.960Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:42.973Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:43.591Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:43.605Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:44.215Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"layout","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:44.228Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:44.853Z"}
+{"subcenario":"CF-043-UI-V2-light","categoria":"acolhimento","titulo":"CF-043/046/047-UI — varredura de todas as rotas públicas em V2/light","ts":"2026-08-15T18:14:45.504Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.264Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.285Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.287Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.289Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.918Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.935Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.938Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:46.940Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:47.572Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:47.589Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:47.592Z"}
+{"subcenario":"CF-020-UI-01","categoria":"gate_premium","titulo":"CF-020/CF-011 — anônimo: um teaser por aba, sem erro e sem botão morto","ts":"2026-08-15T18:14:47.594Z"}
+{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T18:14:48.708Z"}
+{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T18:14:49.358Z"}
+{"subcenario":"CF-045-UI-02","categoria":"rede","titulo":"CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é premium'","ts":"2026-08-15T18:14:50.008Z"}
+{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T18:14:51.130Z"}
+{"subcenario":"CF-044-UI-01","categoria":"tema","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T18:14:51.371Z"}
+{"subcenario":"CF-044-UI-01","categoria":"layout","titulo":"CF-044 — tema persiste, não pisca e o controle segmentado é só do desktop","ts":"2026-08-15T18:14:51.383Z"}
+{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T18:14:52.864Z"}
+{"subcenario":"CF-045-UI-01","categoria":"rede","titulo":"CF-045-UI-01 — offline: a calculadora continua funcionando e o aviso aparece","ts":"2026-08-15T18:14:53.162Z"}
+{"subcenario":"CF-015-UI-02","categoria":"gate_premium","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:56.271Z"}
+{"subcenario":"CF-015-UI-02","categoria":"acolhimento","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:56.274Z"}
+{"subcenario":"CF-015-UI-02","categoria":"crud","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:56.518Z"}
+{"subcenario":"CF-015-UI-02","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:57.250Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:57.882Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:58.552Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:59.189Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:14:59.855Z"}
+{"subcenario":"CF-015-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:00.508Z"}
+{"subcenario":"CF-015-UI-02","categoria":"seguranca","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:00.516Z"}
+{"subcenario":"CF-015-UI-02","categoria":"layout","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:00.519Z"}
+{"subcenario":"CF-018-UI-01","categoria":"estresse_de_dados","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:01.154Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:01.528Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:01.916Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:02.287Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:02.656Z"}
+{"subcenario":"CF-018-UI-02","categoria":"input_invalido","titulo":"CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absurdas e 30 itens","ts":"2026-08-15T18:15:03.025Z"}
+{"subcenario":"CF-021-UI-01","categoria":"gate_premium","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:06.266Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:07.482Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:08.006Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:08.474Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:08.972Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:09.439Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:09.903Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:10.397Z"}
+{"subcenario":"CF-021-UI-01","categoria":"fluxo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:10.908Z"}
+{"subcenario":"CF-021-UI-01","categoria":"calculo","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:11.515Z"}
+{"subcenario":"CF-021-UI-01","categoria":"layout","titulo":"CF-021-UI-01 — o total do kit é a soma das linhas, com 8 peças e quantidades variadas","ts":"2026-08-15T18:15:11.518Z"}
+{"subcenario":"CF-013-UI-01","categoria":"gate_premium","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:15.703Z"}
+{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:16.958Z"}
+{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:18.187Z"}
+{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:19.382Z"}
+{"subcenario":"CF-013-UI-01","categoria":"input_invalido","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:20.604Z"}
+{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:23.123Z"}
+{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:25.949Z"}
+{"subcenario":"CF-013-UI-01","categoria":"fluxo","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:27.998Z"}
+{"subcenario":"CF-013-UI-01","categoria":"acolhimento","titulo":"CF-013/CF-032 — simulação: nome vazio, 121 caracteres, nota longa e ida e volta completa","ts":"2026-08-15T18:15:28.004Z"}
+{"subcenario":"CF-013-UI-03","categoria":"gate_premium","titulo":"CF-013-UI-03 — free: sem ação de salvar, com oferta honesta e sem modal morto","ts":"2026-08-15T18:15:29.970Z"}
+{"subcenario":"CF-013-UI-03","categoria":"gate_premium","titulo":"CF-013-UI-03 — free: sem ação de salvar, com oferta honesta e sem modal morto","ts":"2026-08-15T18:15:31.225Z"}
+{"subcenario":"CF-032-UI-02","categoria":"rede","titulo":"CF-032-UI-02 — offline: a recusa de salvar é honesta e a leitura continua","ts":"2026-08-15T18:15:37.474Z"}
+{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T18:15:43.303Z"}
+{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T18:15:46.311Z"}
+{"subcenario":"CF-029-UI-01","categoria":"fluxo","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T18:15:46.363Z"}
+{"subcenario":"CF-029-UI-01","categoria":"estresse_de_dados","titulo":"CF-029-UI-01 — exportar PDF com rótulo adversarial: o arquivo chega e é um PDF real","ts":"2026-08-15T18:15:46.593Z"}
+{"subcenario":"CF-029-UI-02","categoria":"fluxo","titulo":"CF-029-UI-02 — exportar CSV: o conteúdo é o registro, e o que acontece com uma fórmula","ts":"2026-08-15T18:15:51.624Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:04.383Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:04.631Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:05.127Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:05.375Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:05.885Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:06.137Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:07.244Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:07.509Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:08.018Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:08.272Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:08.780Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:09.049Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:09.572Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:09.821Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:10.344Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:10.611Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:11.146Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:11.411Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:11.935Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:12.186Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:12.699Z"}
+{"subcenario":"CF-001-LEIGO-A","categoria":"usuario_leigo","titulo":"LEIGO-A — erro de unidade: o produto avisa quando o preço muda de ordem de grandeza?","ts":"2026-08-15T18:16:12.964Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:13.781Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:14.249Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:14.729Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:15.192Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:15.658Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:16.124Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:16.592Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:17.056Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:17.506Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:18.001Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:18.470Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:18.936Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:19.400Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:19.878Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:20.360Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:20.839Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:21.319Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:21.786Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:22.269Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:22.734Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:23.213Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:23.683Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:24.161Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:24.625Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:25.152Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:25.621Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:26.101Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:26.568Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:27.033Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:27.499Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:27.981Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:28.446Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:28.943Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:29.423Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:29.904Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:30.385Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:30.865Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:31.331Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:31.795Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:32.263Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:32.713Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:33.192Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:33.655Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:34.119Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:34.583Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:35.048Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:35.512Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:35.978Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:36.430Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:36.896Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:37.346Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:37.829Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:38.292Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:38.743Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:39.211Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:39.679Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:40.173Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:40.638Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:41.132Z"}
+{"subcenario":"CF-001-LEIGO-B","categoria":"input_invalido","titulo":"LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor. E para o produto?","ts":"2026-08-15T18:16:41.630Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:42.458Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:42.688Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:42.936Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:43.183Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:43.414Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:43.651Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:43.898Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:44.131Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:44.380Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:44.611Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:44.845Z"}
+{"subcenario":"CF-002-LEIGO-C","categoria":"usuario_leigo","titulo":"LEIGO-C — tempo de impressão: relógio, decimal e minutos no campo de horas","ts":"2026-08-15T18:16:45.078Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:45.674Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:45.791Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:45.905Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.022Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.138Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.261Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.370Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"usuario_leigo","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.773Z"}
+{"subcenario":"CF-001-LEIGO-D-P1","categoria":"layout","titulo":"LEIGO-D/P1 — \"Acerta tudo\" preenche a calculadora inteira","ts":"2026-08-15T18:16:46.775Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:47.372Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:47.488Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:47.613Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:47.737Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:47.862Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"usuario_leigo","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:48.280Z"}
+{"subcenario":"CF-001-LEIGO-D-P2","categoria":"layout","titulo":"LEIGO-D/P2 — \"Copia da etiqueta\" preenche a calculadora inteira","ts":"2026-08-15T18:16:48.283Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:48.877Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:48.976Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:49.105Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:49.227Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:49.348Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"usuario_leigo","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:49.756Z"}
+{"subcenario":"CF-001-LEIGO-D-P3","categoria":"layout","titulo":"LEIGO-D/P3 — \"Pensa em anos e meses\" preenche a calculadora inteira","ts":"2026-08-15T18:16:49.761Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:50.381Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:50.496Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:50.611Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:50.732Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:50.853Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"usuario_leigo","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:51.269Z"}
+{"subcenario":"CF-001-LEIGO-D-P4","categoria":"layout","titulo":"LEIGO-D/P4 — \"Teclado do celular\" preenche a calculadora inteira","ts":"2026-08-15T18:16:51.275Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:51.879Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:51.989Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.104Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.229Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.359Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.488Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.598Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:52.708Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"usuario_leigo","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:53.111Z"}
+{"subcenario":"CF-001-LEIGO-D-P5","categoria":"layout","titulo":"LEIGO-D/P5 — \"Zera o que não entende\" preenche a calculadora inteira","ts":"2026-08-15T18:16:53.114Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"usuario_leigo","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:53.718Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"usuario_leigo","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:53.837Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"usuario_leigo","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:53.964Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"usuario_leigo","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:54.088Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"usuario_leigo","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:54.504Z"}
+{"subcenario":"CF-001-LEIGO-D-P6","categoria":"layout","titulo":"LEIGO-D/P6 — \"Exagera sem perceber\" preenche a calculadora inteira","ts":"2026-08-15T18:16:54.507Z"}
+{"subcenario":"CF-001-LEIGO-E","categoria":"usuario_burro","titulo":"LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e retoma","ts":"2026-08-15T18:16:55.870Z"}
+{"subcenario":"CF-001-LEIGO-E","categoria":"usuario_burro","titulo":"LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e retoma","ts":"2026-08-15T18:16:57.452Z"}
+{"subcenario":"CF-001-LEIGO-E","categoria":"concorrencia","titulo":"LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e retoma","ts":"2026-08-15T18:16:58.325Z"}
+{"subcenario":"CF-001-LEIGO-E","categoria":"acolhimento","titulo":"LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e retoma","ts":"2026-08-15T18:16:58.884Z"}
+{"subcenario":"CF-001-LEIGO-E","categoria":"usuario_burro","titulo":"LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e retoma","ts":"2026-08-15T18:17:00.813Z"}
