@@ -18,3 +18,8 @@ specs/*/design/**
 # Saída bruta da homologação automatizada — artefato de execução (relatórios do Playwright e os
 # JSONL incrementais por worker). É evidência, não código: formatá-lo só produziria diff a cada rodada.
 docs/homologacao/automatizada/resultados/
+# 017/T009 — a semente é GERADA (`pnpm fee:build` → `projetarSemente` + `serializarSemente`) e seus
+# bytes são asseridos contra o gerador. Se o prettier a reformatasse, o arquivo commitado divergiria
+# da saída do gerador e o guarda de paridade nasceria vermelho — a mesma classe de defeito que o
+# artefato servido já evita por `backend/**` estar aqui.
+apps/web/src/shared/fee-catalog/seed.data.json

@@ -85,3 +85,5 @@ specs/016-correcao-homologacao/evidencias/
 # relatório cita); o dump bruto, não.
 docs/homologacao/automatizada/resultados/playwright-raw.json
 firebase.e2e-local.json
+# 017 — os vereditos que os jobs de coleta deixam para o `publicar` sao artefatos de RUN, nunca commit.
+packages/fee-ingest/artifacts/

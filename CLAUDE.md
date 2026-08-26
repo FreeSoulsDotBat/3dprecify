@@ -286,5 +286,5 @@ disciplinary. Slices land as owner-authorized PRs; nothing closes without the ow
 (`docs/homologacao/PROCESSO-HOMOLOGACAO.md` — round 1 is OPEN).
 **014's US6-ML remains gated** (seguranca's 8 conditions + separate owner authorization — never on
 a "continue"); 014 US1 residual + Polish also remain, see `specs/014-fee-category-mapping/tasks.md`.
-017 (monthly fee ingestion) continues on `017-pr-b-precos`, untouched by this branch.)
+017 (monthly fee ingestion): **PR-A SHIPPED to develop** (`daade76` — spine + Amazon collector, first real run) + tarifas 2026-08-07 lidas (`09f5a4f`, PR #54); continues on `017-pr-b-precos`, untouched by this branch.)
 <!-- SPECKIT END -->

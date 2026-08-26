@@ -73,7 +73,8 @@ except ImportError:
     print("AVISO: PyYAML ausente - validacao de sintaxe YAML NAO rodou.", file=sys.stderr)
     sys.exit(0)
 falhou = False
-for f in sorted(glob.glob(".github/workflows/*.yml")):
+arquivos = sorted(glob.glob(".github/workflows/*.yml"))
+for f in arquivos:
     try:
         d = yaml.safe_load(open(f, encoding="utf-8"))
     except yaml.YAMLError as exc:
@@ -83,6 +84,15 @@ for f in sorted(glob.glob(".github/workflows/*.yml")):
     if not isinstance(d, dict) or not d.get("jobs"):
         print(f"{f}: parseia, mas nao declara `jobs` - workflow vazio?", file=sys.stderr)
         falhou = True
+if not falhou:
+    # 017/T002 (J.6) — a contagem e CALCULADA, e o print sai de dentro do proprio laco que validou.
+    #
+    # Ela era a literal "os 5 workflows parseiam". Com a PR-A o repositorio passa de 5 para 3
+    # (as sondas descartaveis morrem, decisao H) e com a T015 volta para 4 — a linha diria "5" nos
+    # tres estados. E a mesma classe de defeito que o proprio guarda existe para pegar: uma
+    # AFIRMACAO QUE NAO ACOMPANHA O SISTEMA. Aqui o dano e so cosmetico; a licao de 014/US4 e que
+    # ninguem descobre pela prosa qual das duas afirmacoes do relatorio e a que envelheceu.
+    plural = "workflow parseia" if len(arquivos) == 1 else "workflows parseiam"
+    print(f"ok - os {len(arquivos)} {plural} e declaram jobs")
 sys.exit(1 if falhou else 0)
 PYEOF
-echo "ok — os 5 workflows parseiam e declaram jobs"

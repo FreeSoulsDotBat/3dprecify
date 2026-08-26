@@ -1,47 +1,45 @@
-// Regenerate the AMAZON half of the committed catalog artifact (014/US3 · T041).
+// O coletor da tabela de comissões da Amazon (014/US3 · 017/T014).
 //
-//   node src/build-amazon.mjs                 # read the live page
-//   node src/build-amazon.mjs --from <file>   # read a captured table (offline / test)
+//   node src/build-amazon.mjs                 # lê a página ao vivo
+//   node src/build-amazon.mjs --from <file>   # lê uma tabela CAPTURADA (offline / teste)
 //
-// Writes ONLY the AMAZON marketplace; every other marketplace in the artifact is carried through
-// untouched, so regenerating Amazon can never quietly drop Shopee's curation.
+// 017/T014 — este arquivo era um WRITER: ele lia e escrevia `backend/app/data/catalog.json`
+// diretamente, carregando os outros marketplaces intocados. Isso funciona com UM coletor serial;
+// com jobs independentes em VMs isoladas (ADR-0028, decisão A) o último a escrever vence e a
+// curadoria do outro some — em silêncio, sobre dinheiro.
 //
-// FAIL-SAFE (SC-806/FR-018a): the artifact is written only if the parse yields a plausible table.
-// An empty parse, a shrunk one, or a canary that stopped matching means the SOURCE SHAPE CHANGED —
-// which is a failure, not a fee change. That is the dangerous case: a parser reading the wrong
-// column returns plausible numbers and sails through review.
+// Agora ele é um EMISSOR DE FATIA e não conhece o caminho do artefato. Ele produz
+// `artifacts/amazon.verdict.json`; quem compõe e escreve é o `publicar`, via `pnpm fee:build`.
+//
+// O que este arquivo NÃO contém, e é deliberado: nenhuma decisão de dinheiro. Canárias, piso de
+// linhas, cobertura de bandas, colisão de id, a montagem da fatia e a declaração de exaustividade
+// moram em `amazon-collector.ts`, sob o ratchet de 100%. Os `.mjs` são isentos de cobertura DE
+// PROPÓSITO — e a lição de 015/A5 é que a regra que decide o selo do dinheiro não pode morar num
+// lugar isento.
+//
+// FAIL-SAFE (SC-806/FR-018a/I2): uma leitura que falhou NUNCA vira "as taxas caíram". Ela vira um
+// veredito ABORTADO com motivo nomeado, o artefato não é tocado por ninguém, e o corpo do PR declara
+// o estado. Uma fatia que não existe também não REMOVE nada (§C.2-bis regra 3).
 
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { CANARIES, parseAmazonTable } from "./amazon-parse.ts";
-import {
-  checkBandCoverage,
-  checkCategoryIdCollisions,
-  checkParseSanity,
-  collectedAtFor,
-  MIN_PARSE_ROWS,
-  nextCatalogVersion,
-} from "./guardrails.ts";
-import {
-  AMAZON_SOURCE_URL,
-  amazonEntries,
-  amazonSpine,
-  effectiveDatesOf,
-} from "./amazon-to-catalog.ts";
-import { decideRefresh } from "./refresh.ts";
+import { veredictoAmazon, vigenciasAnteriores } from "./amazon-collector.ts";
+import { parseAmazonTable } from "./amazon-parse.ts";
+import { AMAZON_SOURCE_URL } from "./amazon-to-catalog.ts";
+import { collectedAtFor } from "./guardrails.ts";
 
-const ARTIFACT = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
-const PAGE =
-  "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920?locale=pt-BR";
+const PAGE = `${AMAZON_SOURCE_URL}?locale=pt-BR`;
+const VEREDITO = fileURLToPath(new URL("../artifacts/amazon.verdict.json", import.meta.url));
+const LINHAS = fileURLToPath(new URL("../artifacts/amazon-rows.json", import.meta.url));
 
-/** 015/A5 ([F10-001]) — o piso vive em `guardrails.ts`, sob o ratchet de 100%. Este arquivo e
- *  isento de cobertura, e uma decisao de dinheiro nao pode morar num lugar isento. */
-const MIN_ROWS = MIN_PARSE_ROWS;
+/** As vigências anteriores são o único motivo de este coletor LER o artefato — e ele o lê apenas
+ *  para não carimbar `effectiveDate` de hoje em toda entrada (T101). Leitura, nunca escrita. */
+const ARTEFATO = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 
 async function fetchRows() {
-  // The page is JS-rendered — curl returns an empty shell (measured, gate G2), so a real browser is
-  // required. Imported lazily so `--from` needs no browser at all.
+  // A página é renderizada por JS — `curl` devolve casca (medido, gate G2), então um navegador de
+  // verdade é obrigatório. Importado preguiçosamente para que `--from` não precise de browser algum.
   const { chromium } = await import("@playwright/test");
   const browser = await chromium.launch();
   try {
@@ -58,140 +56,72 @@ async function fetchRows() {
   }
 }
 
-const fromArg = process.argv.indexOf("--from");
-const rows =
-  fromArg > -1
-    ? JSON.parse(readFileSync(process.argv[fromArg + 1], "utf8"))[0].rows
-    : await fetchRows();
-
-const categories = parseAmazonTable(rows);
-
-// U4-c — o veredito de sanidade e CALCULADO aqui e DECIDIDO em `decideRefresh`, um ponto so. Antes
-// ele abortava aqui e o `.mjs` passava `sanity: { ok: true }` CRAVADO para a decisao — o que tornava
-// morto em producao um parametro que dois testes (T043/T044) guardam. Um teste que protege um caminho
-// que ninguem percorre nao protege nada; era a mesma familia de defeito que esta feature vem achando.
-const verdict = checkParseSanity(categories, { minRows: MIN_ROWS, canaries: CANARIES });
-
-// 014/T114 (SC-817) — a banded cell must be publishable as bands. A published GAP is fine and stays
-// a gap (FR-014a); what aborts here is a set the engine could not read unambiguously — overlapping
-// bands (the applied rate would depend on the row order of a scraped table) or a bound that cannot
-// contain a price. Those are parse errors wearing the shape of data, and they reach the seller as a
-// commission under a "Referência" seal.
-for (const c of categories) {
-  if (!c.bands) continue;
-  const coverage = checkBandCoverage(c.bands);
-  if (!coverage.ok) {
-    console.error(`ABORT: "${c.name}" — ${coverage.reason}. The artifact is left untouched.`);
-    process.exit(1);
+/** Escreve o veredito e sai. É o ÚNICO efeito de disco deste arquivo — e ele nunca toca dinheiro. */
+function emitir(veredito) {
+  mkdirSync(fileURLToPath(new URL("../artifacts/", import.meta.url)), { recursive: true });
+  writeFileSync(VEREDITO, `${JSON.stringify(veredito, null, 2)}\n`);
+  if (veredito.kind === "ABORTADO") {
+    // Um coletor que conclui SEM veredito é proibido (§A.4): o silêncio no disco é indistinguível de
+    // um job que nunca começou. Por isso o abortado também é escrito — e o exit é 0, porque o job
+    // FEZ o que devia; quem decide o desfecho do run é a composição.
+    console.error(`ABORTADO: ${veredito.reason}. O artefato fica intocado.`);
+    return;
   }
+  const entradas = veredito.slice.leaves.filter((l) => l.level === "ENTRY").length;
+  console.log(
+    `LIDO: fatia da AMAZON com ${entradas} folhas de entrada, exaustiva em ` +
+      `${veredito.slice.exhaustive.join("+")} — coletado em ${veredito.collectedAt}`,
+  );
 }
 
-// T106 — o gerador confere o PRÓPRIO output antes de escrever. Dois nomes que colapsam no mesmo
-// `categoryId` (acentos e caixa são dobrados) produziam um artefato com ids duplicados, e o cliente
-// responde descartando o marketplace INTEIRO — um par de acentos apaga a Amazon. Isso saía com exit
-// 0 e "sucesso" impresso. O truth-gate do `gate:all` pegaria o artefato, mas não fala com quem rodou
-// o script; esta guarda fala, e nomeia os colidentes.
-const collision = checkCategoryIdCollisions(categories);
-if (!collision.ok) {
-  console.error(`ABORT: ${collision.reason}. The artifact is left untouched.`);
-  process.exit(1);
-}
+const fromArg = process.argv.indexOf("--from");
 
-// T053 (SC-807) — `lastReviewed` so avanca por RELEITURA REAL. Uma tabela CAPTURADA (`--from`) tem
-// data de captura que so quem chama sabe; carimbar hoje faria o selo dizer "atualizada em <hoje>"
-// sobre numeros que ninguem conferiu contra a Amazon. A regra mora em `guardrails.ts` porque este
-// arquivo e isento de cobertura, e a que decide a data do selo nao pode morar num lugar isento.
+// T053 (SC-807) — `lastReviewed` só avança por RELEITURA REAL. Uma tabela capturada (`--from`) tem
+// uma data de captura que só quem chama sabe; carimbar hoje faria o selo dizer "atualizada em
+// <hoje>" sobre números que ninguém conferiu contra a Amazon. A regra mora em `guardrails.ts`.
 const quando = collectedAtFor({
   fromFixture: fromArg > -1,
   envDate: process.env.COLLECTED_AT,
   today: new Date().toISOString().slice(0, 10),
 });
 if (!quando.ok) {
-  console.error(`ABORT: ${quando.reason}. The artifact is left untouched.`);
-  process.exit(1);
+  // Sem data honesta não há coleta: o veredito é ABORTADO, e ele é ESCRITO (nunca omitido).
+  emitir({
+    kind: "ABORTADO",
+    marketplace: "AMAZON",
+    reason: quando.reason,
+    sourceUrl: AMAZON_SOURCE_URL,
+  });
+  process.exit(0);
 }
-const collectedAt = quando.date;
-const artifact = JSON.parse(readFileSync(ARTIFACT, "utf8"));
-const amazon = artifact.marketplaces.find((m) => m.marketplace === "AMAZON");
-// 014/T091 — this used to end in `?? { marketplace: "AMAZON", entries: [] }`, and that default was
-// worse than dead code: the map below only REPLACES an existing AMAZON marketplace, so the fabricated
-// object could never be used. It just made the script LOOK like it handled a missing Amazon, while a
-// real absence would have written the artifact unchanged and then died on the log line below.
-// Refusing is the honest answer: this script regenerates a marketplace, it does not create one.
+
+const rows =
+  fromArg > -1
+    ? JSON.parse(readFileSync(process.argv[fromArg + 1], "utf8"))[0].rows
+    : await fetchRows();
+
+// As linhas capturadas sobem como artefato da run — inclusive quando a leitura for ABORTADA
+// (RA5): "consequência é parada, nunca corrupção", e a evidência do que a página devolveu é o
+// que permite ao humano distinguir bloqueio de bot de mudança de layout sem reler a página.
+mkdirSync(fileURLToPath(new URL("../artifacts/", import.meta.url)), { recursive: true });
+writeFileSync(LINHAS, `${JSON.stringify(rows, null, 2)}\n`);
+
+const artefato = JSON.parse(readFileSync(ARTEFATO, "utf8"));
+const amazon = artefato.marketplaces.find((m) => m.marketplace === "AMAZON");
 if (!amazon) {
-  console.error("ABORT: the artifact carries no AMAZON marketplace to regenerate. Left untouched.");
-  process.exit(1);
+  emitir({
+    kind: "ABORTADO",
+    marketplace: "AMAZON",
+    reason: "o artefato não carrega a seção AMAZON — este coletor relê um marketplace, não cria um",
+    sourceUrl: AMAZON_SOURCE_URL,
+  });
+  process.exit(0);
 }
 
-// Keep the original marketplace ORDER so the monthly diff stays readable, and carry every other
-// marketplace through untouched — regenerating Amazon must never quietly drop Shopee's curation.
-// T101 — a MEMÓRIA da vigência anterior. Sem ela a regeração carimbava a data da execução em toda
-// entrada, e como `effectiveDate` não é inerte no comparador, duas execuções sobre a mesma tabela
-// marcavam TODAS como alteradas: o laço mensal nascia incapaz de dizer "nada mudou". A fonte da
-// Amazon não publica vigência, então o valor honesto é o que a entrada já tinha — só uma entrada
-// nova estreia com a data desta coleta.
-const entries = amazonEntries(categories, {
-  collectedAt,
-  effectiveDate: collectedAt,
-  previousEffectiveDates: effectiveDatesOf(amazon.entries),
-});
-const marketplaces = artifact.marketplaces.map((m) =>
-  m.marketplace === "AMAZON" ? { ...amazon, categorySpine: amazonSpine(categories), entries } : m,
-);
-// A sequência de `catalogVersion` era `.0` CRAVADO, e regerar na mesma data de coleta reescrevia
-// conteúdo diferente sob rótulo idêntico. Foi o que aconteceu na 014: 77 → 79 entradas com
-// `2026-07-28.0` dos dois lados. O rótulo viaja congelado dentro de um snapshot que o ADR-0019
-// torna imutável, então um registro ambíguo fica ambíguo para sempre. `nextCatalogVersion` mora em
-// `guardrails.ts` e não aqui pelo mesmo motivo do fail-safe da FR-018a: este arquivo é isento de
-// cobertura, e a regra que decide o rótulo do dinheiro não pode morar num lugar isento.
-const changed = JSON.stringify(marketplaces) !== JSON.stringify(artifact.marketplaces);
-const next = {
-  ...artifact,
-  catalogVersion: nextCatalogVersion(artifact.catalogVersion, collectedAt, changed),
-  generatedAt: `${collectedAt}T00:00:00.000Z`,
-  marketplaces,
-};
-
-// 014/T047+T048 — a DECISÃO do laço mensal, antes de qualquer escrita. Ela mora em `refresh.ts`
-// porque este arquivo é isento de cobertura, e a regra que decide se dinheiro vai para o artefato não
-// pode morar num lugar isento. Dois desfechos, e escrever não é um deles sem passar por aqui:
-//
-//   ABORT → o artefato fica INTOCADO e `lastReviewed` não avança para valor nenhum. Uma leitura que
-//           falhou não é "as taxas caíram" (SC-806), e publicar meia leitura é pior do que não
-//           publicar. É também onde o teto de linhas alteradas pega a mudança em bloco que as
-//           canárias deixariam passar.
-//   PR    → escreve o artefato e emite o corpo do PR. O job NUNCA mergeia (FR-020a): `mayAutoMerge`
-//           decide apenas se AQUELE PR pode dispensar revisão, e só quando o diff for exclusivamente
-//           `lastReviewed`.
-const outcome = decideRefresh({
-  marketplace: "AMAZON",
-  collectedAt,
-  sourceUrl: AMAZON_SOURCE_URL,
-  sanity: verdict,
-  before: artifact,
-  after: next,
-});
-if (outcome.kind === "ABORT") {
-  console.error(`ABORT: ${outcome.reason}. The artifact is left untouched.`);
-  process.exit(1);
-}
-
-// The write is the LAST step, and everything it reports was computed BEFORE it. The old order wrote
-// the file and only then went looking for the marketplace it had just written — so a shape it could
-// not find produced a half-done run: artifact on disk, TypeError on stdout, exit code non-zero.
-// U4-d — o corpo do PR vai ANTES do artefato, e a ordem é o conserto. Ele estava DEPOIS, e um
-// `PR_BODY_OUT` inválido deixava o artefato de DINHEIRO no disco com saída não-zero: exatamente o
-// meio-passo que o comentário acima diz ter eliminado, reintroduzido três linhas abaixo dele.
-// MEDIDO antes do conserto: com um destino inexistente, o artefato foi de `14366db8` para `71274a74`
-// e o processo morreu. Invertida a ordem, um destino ruim falha antes de qualquer escrita de dinheiro.
-// `PR_BODY_OUT` deixa o destino explícito em vez de escondê-lo num caminho convencionado; o workflow
-// (T049, ainda por vir) o consome sem recalcular nada.
-const bodyOut = process.env.PR_BODY_OUT;
-if (bodyOut) writeFileSync(bodyOut, outcome.body);
-writeFileSync(ARTIFACT, JSON.stringify(next, null, 2) + "\n");
-console.log(
-  `PR: ${outcome.title} — dispensa de revisão: ${outcome.mayAutoMerge ? "SIM (só lastReviewed)" : "NÃO"}`,
-);
-console.log(
-  `AMAZON: ${categories.length} categories → ${entries.length} entries (2 plans). catalogVersion=${next.catalogVersion}`,
+emitir(
+  veredictoAmazon({
+    categorias: parseAmazonTable(rows),
+    collectedAt: quando.date,
+    previousEffectiveDates: vigenciasAnteriores(amazon),
+  }),
 );

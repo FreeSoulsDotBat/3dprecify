@@ -1,5 +1,6 @@
 import { type CatalogDiff, diffCatalogs, mayAutoMerge } from "./catalog-diff.ts";
 import type { SanityVerdict } from "./guardrails.ts";
+import { isInerte } from "./inert-fields.ts";
 
 // 014/US4 — o ORQUESTRADOR do laço mensal, como decisão pura. O `.mjs` que roda no CI junta rede e
 // disco em volta disto; tudo que DECIDE mora aqui, onde é testável e cai sob o ratchet de 100%.
@@ -33,9 +34,6 @@ export const CHANGED_ROWS_CEILING = 0.5;
  */
 export const CEILING_MIN_ENTRIES = 10;
 
-/** Campos que não carregam dinheiro nem cobertura — os únicos que uma execução pode mexer sozinha. */
-const INERT = new Set(["lastReviewed", "catalogVersion", "generatedAt"]);
-
 export type RefreshOutcome =
   | { kind: "ABORT"; reason: string }
   | { kind: "PR"; title: string; body: string; mayAutoMerge: boolean };
@@ -43,7 +41,7 @@ export type RefreshOutcome =
 /** As entradas cuja mudança NÃO é só data de reverificação. É o que o revisor precisa ler. */
 function materialEntries(diff: CatalogDiff) {
   return diff.changedEntries
-    .map((e) => ({ ...e, changes: e.changes.filter((c) => !INERT.has(c.path)) }))
+    .map((e) => ({ ...e, changes: e.changes.filter((c) => !isInerte(c.path)) }))
     .filter((e) => e.changes.length > 0);
 }
 
@@ -180,13 +178,27 @@ export function decideRefresh(args: {
   // leitura que mudasse a tabela inteira da Amazon passaria, diluida pelas entradas do ML. Um alarme
   // que se desliga sozinho quando o sistema cresce e pior que nenhum: ninguem nota o desligamento.
   const total = entryCount(before, marketplace);
-  const changed = materialEntries(diff).filter((e) => e.marketplace === marketplace).length;
+  const materiais = materialEntries(diff).filter((e) => e.marketplace === marketplace).length;
+  // 017/§C.2-bis regra 4 — a REMOÇÃO entra no numerador.
+  //
+  // Até aqui `changed` contava só as entradas MATERIALMENTE alteradas, e uma entrada que SOME não é
+  // uma entrada alterada: ela sai do `changedEntries` e vai para `removedEntries`. Enquanto nenhum
+  // coletor podia remover, o buraco era teórico. Com a exaustividade declarada ele vira real e é o
+  // pior caso possível: uma leitura ENCOLHIDA que passe o piso de linhas apagaria entradas em bloco
+  // sem que o teto sequer olhasse — e o teto existe precisamente para a mudança em bloco.
+  //
+  // Sem esta soma, "mudou 40%" e "sumiu 40%" recebiam tratamentos opostos, sendo que a segunda é a
+  // mais destrutiva das duas: o dado alterado ainda é revisável no diff; o dado apagado leva junto o
+  // slot que o vendedor usava.
+  const removidas = diff.removedEntries.filter((e) => e.marketplace === marketplace).length;
+  const changed = materiais + removidas;
   if (total >= CEILING_MIN_ENTRIES && changed / total > CHANGED_ROWS_CEILING) {
     const pct = Math.round((changed / total) * 100);
     return {
       kind: "ABORT",
       reason:
-        `${changed} de ${total} linhas mudaram (${pct}%), acima do teto de ` +
+        `${changed} de ${total} linhas mudaram ou sumiram (${materiais} alteradas + ` +
+        `${removidas} removidas = ${pct}%), acima do teto de ` +
         `${Math.round(CHANGED_ROWS_CEILING * 100)}% — mudança em bloco é falha de forma da fonte, ` +
         `não notícia de tarifa`,
     };
