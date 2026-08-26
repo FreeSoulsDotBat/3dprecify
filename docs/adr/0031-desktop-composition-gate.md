@@ -1,6 +1,6 @@
 # ADR-0031: O gate de composição desktop, e a invariância mobile por construção
 
-- **Status**: Proposed
+- **Status**: Accepted (2026-08-26 — ratificado pelo dono no gate do PR #58: o merge em develop, com as 5 fatias homologadas pelo assistente e o fechamento T053–T058; flip executado no primeiro commit do 019 com a palavra do dono "mergeado, continue")
 - **Date**: 2026-08-10
 - **Deciders**: Jonatan (owner) + main thread (018-abas-desktop)
 

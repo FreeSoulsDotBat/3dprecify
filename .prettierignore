@@ -14,6 +14,7 @@ contracts/openapi.json
 # Arquivos de design importados do Claude Design (018+): são ARTEFATO, cópia verbatim do que o dono
 # desenhou. Reformatá-los faria o repositório divergir da fonte e destruiria a comparação byte a byte.
 specs/*/design/**
+docs/design/handoff-019/tf-components.css
 
 # Saída bruta da homologação automatizada — artefato de execução (relatórios do Playwright e os
 # JSONL incrementais por worker). É evidência, não código: formatá-lo só produziria diff a cada rodada.
