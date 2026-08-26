@@ -77,3 +77,42 @@
   display: flex;
   justify-content: flex-start;
 }
+
+/* ---- 018/US4 — a grade de três colunas do desktop ----
+   Uma coluna abaixo do corte (o empilhamento de hoje, na mesma ordem de DOM) e três a partir de
+   1280px. Media query aqui é legítimo: isto é APENAS arranjo visual — nenhum comportamento muda
+   com a largura nesta tela, então não há nada para o `useIsWide` decidir. Onde o comportamento
+   muda (o controle de tema, a oferta inline) quem decide é o hook, nunca o CSS. */
+.tf-conta__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+.tf-conta__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .tf-conta__grid {
+    /* A coluna do plano é a mais larga: é ela que hospeda a oferta com os dois planos. */
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: var(--space-6);
+  }
+}
+
+.tf-conta__offer-title {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  letter-spacing: 0.02em;
+}
+.tf-conta__privacy-line {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+  line-height: 1.5;
+}

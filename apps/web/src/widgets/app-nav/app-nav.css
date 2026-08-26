@@ -29,10 +29,17 @@
 /* Keyboard focus: a subtle lightened surface, NOT the global a/button outline box
    (which would repaint the reported "purple box" on a nav link). The nav is a
    composite widget; its own indicator is the accent-soft wash. */
+/* Homologação automatizada (CF-001-UI-02) — o indicador de foco era `background: var(--accent-soft)`,
+   que é EXATAMENTE o realce que `.tf-nav--sidebar .tf-nav__item[aria-current="page"]` já aplica.
+   Consequência medida comparando o elemento focado com ele mesmo sem foco: no item ATIVO, receber
+   foco não mudava NADA (reprova WCAG 2.4.7). Duas decisões boas se anulando — a de não repintar a
+   "caixa roxa" no menu, e a de ler o ativo por fundo suave.
+   O anel INTERNO preserva as duas: ele abraça a forma arredondada do próprio item (não é a caixa
+   externa que foi reclamada) e difere do estado ativo mesmo quando o item JÁ está ativo. */
 .tf-nav__item:focus-visible {
   outline: none;
-  box-shadow: none;
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 var(--ring-width) var(--focus-ring);
 }
 @media (forced-colors: active) {
   .tf-nav__item:focus-visible {
@@ -90,11 +97,27 @@
   background: var(--surface-card);
   border-right: 1px solid var(--border-subtle);
   padding: var(--space-4) var(--space-3);
+  /* 018/US5 — coluna: a lista ocupa o alto e o botão de recolher fica no rodapé do menu. */
+  display: flex;
+  flex-direction: column;
+  transition: width 0.18s ease-out;
+  /* …e o menu passa a viver na ALTURA DA JANELA, grudado no topo.
+     Sem isto, a coluna do menu estica junto com o conteúdo (é irmã flex do `<main>`) e o botão de
+     recolher nasce no fim da PÁGINA — medido em 2 803px numa `/calcular` cheia, ou seja, fora de
+     alcance sem rolar tudo. O desenho mostra o botão no rodapé do menu, não no rodapé do documento.
+     `align-self: flex-start` é o que impede o esticão; `height: 100dvh` dá a régua certa. */
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 .tf-nav--sidebar .tf-nav__list {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  flex: 1;
 }
 .tf-nav--sidebar .tf-nav__item {
   justify-content: flex-start;
@@ -104,4 +127,30 @@
 }
 .tf-nav--sidebar .tf-nav__item[aria-current="page"] {
   background: var(--accent-soft);
+}
+
+/* O botão de recolher: mesma pele dos itens, mas é <button> — precisa zerar o que o navegador
+   pinta sozinho e herdar a tipografia do menu. */
+.tf-nav__collapse {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--fw-medium);
+  margin-top: var(--space-2);
+}
+.tf-nav__collapse:hover {
+  color: var(--text-body);
+}
+
+/* ---- Desktop recolhido: o rail de ícones (018/US5) ----
+   Só a largura e o alinhamento mudam. O rótulo continua no DOM, escondido com `sr-only` pelo
+   componente — nunca `display: none`, que o apagaria para leitor de tela (ADR-0031). */
+.tf-nav--rail {
+  padding-inline: var(--space-2);
+}
+.tf-nav--rail .tf-nav__item {
+  justify-content: center;
+  gap: 0;
+  padding-inline: var(--space-2);
 }

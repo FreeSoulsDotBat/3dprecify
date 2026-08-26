@@ -7,7 +7,13 @@
   text-align: center;
   gap: var(--space-3);
   padding: var(--space-6) var(--space-5);
-  max-width: 28rem;
+  /* Homologação automatizada (CF-043-UI-03) — `max-width: 28rem` (448px) NÃO encolhe um item de
+     flex/grid abaixo do seu conteúdo: a 426px, o primeiro pixel do layout desktop, a sidebar come
+     240px e o teaser continuava reivindicando ~506px — 131px fora da viewport. `min()` + o
+     `min-width: 0` que libera o encolhimento resolvem sem mexer no desenho acima de 600px.
+     A faixa 426–600px é estreita e é exatamente onde ninguém olha. */
+  max-width: min(28rem, 100%);
+  min-width: 0;
   margin-inline: auto;
 }
 .tf-premium-teaser__title {

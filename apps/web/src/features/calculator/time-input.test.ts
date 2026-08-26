@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { decimalHoursToHm, hmToDecimalHours, hmToDecimalString } from "./time-input";
+import { decimalHoursToHm, hmToDecimalHours, hmToDecimalString, parseRelogio } from "./time-input";
 
 // 016/US7 (T020, FR-909, SC-905) — the h+min ↔ decimal border, red first: this module does not
 // exist yet at the time this test is written.
@@ -57,5 +57,32 @@ describe("time-input — h+min ↔ decimal (US7, arquitetura-016.md §7)", () =>
   it("entradas negativas/não-finitas nos campos h/min são tratadas como 0, nunca NaN", () => {
     expect(hmToDecimalHours(-1, 10)).toBe(10 / 60);
     expect(hmToDecimalHours(5, Number.NaN)).toBe(5);
+  });
+});
+
+// Guarda da correção CF-002-LEIGO-C — o tempo colado do fatiador.
+describe("parseRelogio — as formas que PrusaSlicer/Cura/Bambu imprimem", () => {
+  it.each([
+    ["2:30", 2, 30],
+    ["2h30", 2, 30],
+    ["2H30", 2, 30],
+    ["2 : 30", 2, 30],
+    ["12:05", 12, 5],
+    ["0:45", 0, 45],
+    ["48:00", 48, 0],
+  ])("%s → %sh %smin", (bruto, h, min) => {
+    expect(parseRelogio(bruto)).toEqual({ h, min });
+  });
+
+  it.each(["2:60", "2:99", "2:", ":30", "2h", "abc", "", "2,5", "150"])(
+    "%s NÃO é relógio — o campo segue como antes",
+    (bruto) => {
+      expect(parseRelogio(bruto)).toBeNull();
+    },
+  );
+
+  it("o resultado alimenta a MESMA conversão de sempre — nenhuma segunda regra de tempo", () => {
+    const r = parseRelogio("2:30");
+    expect(hmToDecimalString(r!.h, r!.min)).toBe(hmToDecimalString(2, 30));
   });
 });

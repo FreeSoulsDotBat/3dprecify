@@ -21,6 +21,7 @@ export function KitsPanel() {
   return (
     <CatalogPanel<BomOut, never>
       list={list}
+      detailKicker={catalogo.detailKit}
       copy={{
         addLabel: catalogo.addKit,
         emptyTitle: catalogo.emptyKitsTitle,

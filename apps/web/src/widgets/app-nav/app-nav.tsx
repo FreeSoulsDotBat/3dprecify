@@ -11,6 +11,14 @@ export type AppNavVariant = "tabbar" | "sidebar";
 export interface AppNavProps {
   /** `tabbar` = mobile bottom bar (≤425px); `sidebar` = desktop side nav (>425px). */
   variant: AppNavVariant;
+  /**
+   * 018/US5 — sidebar recolhida (rail de ícones). Só faz sentido na variante `sidebar`; o TabBar
+   * ignora. `undefined` = a sidebar de sempre, sem botão de recolher: é o que mantém intacto
+   * qualquer lugar que monte o menu sem saber do rail.
+   */
+  collapsed?: boolean;
+  /** Presente ⇒ o rodapé do menu ganha o botão Recolher/Expandir. */
+  onToggleCollapsed?: () => void;
 }
 
 // The five-section IA (routes.md; 008/K1 added Kits — owner-approved amendment of the
@@ -34,7 +42,7 @@ const NAV_ITEMS = [
  * every item stays a genuine link. Renders as a bottom TabBar (mobile) or a side
  * nav (desktop) from the same markup; the app-shell picks the variant by viewport.
  */
-export function AppNav({ variant }: AppNavProps) {
+export function AppNav({ variant, collapsed = false, onToggleCollapsed }: AppNavProps) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const activeIndex = Math.max(
     0,
@@ -62,8 +70,20 @@ export function AppNav({ variant }: AppNavProps) {
     listRef.current?.querySelectorAll<HTMLAnchorElement>("a[data-nav-item]")[next]?.focus();
   }
 
+  // 018/US5 — o BOTÃO de recolher só existe quando alguém entrega o interruptor.
+  const railable = variant === "sidebar" && onToggleCollapsed !== undefined;
+  // 2026-08-15 — "ser rail" deixou de depender do botão existir. Abaixo de 600px o menu é recolhido
+  // por NECESSIDADE de espaço (`useRailForcado`), e ali não há interruptor: expandir devolveria o
+  // transbordo de 131px que a homologação mediu. Antes, `isRail` exigia o botão, então um
+  // `collapsed` forçado encolhia a coluna para 76px e os rótulos continuavam renderizados — o pior
+  // dos dois mundos.
+  const isRail = variant === "sidebar" && collapsed;
+
   return (
-    <nav className={`tf-nav tf-nav--${variant}`} aria-label={messages.nav.ariaLabel}>
+    <nav
+      className={`tf-nav tf-nav--${variant}${isRail ? " tf-nav--rail" : ""}`}
+      aria-label={messages.nav.ariaLabel}
+    >
       <ul ref={listRef} className="tf-nav__list" onKeyDown={onKeyDown}>
         {NAV_ITEMS.map((item, index) => (
           <li key={item.to} className="tf-nav__cell">
@@ -74,13 +94,38 @@ export function AppNav({ variant }: AppNavProps) {
               className="tf-nav__item"
               activeProps={{ "aria-current": "page" }}
               activeOptions={{ exact: true }}
+              // Recolhido, o rótulo sai da TELA: a dica devolve o nome ao mouse.
+              title={isRail ? item.label : undefined}
             >
               <Icon name={item.icon} size={22} className="tf-nav__icon" />
-              <span className="tf-nav__label">{item.label}</span>
+              {/* 018/ADR-0031 — recolhido, o rótulo é escondido VISUALMENTE (`sr-only`), nunca com
+                  `display: none`. O arquivo de design usa `display:none`, o que tiraria o rótulo da
+                  árvore de acessibilidade e deixaria cada item do menu sem nome para quem usa
+                  leitor de tela. O que se vê é o desenho; o que se ouve continua sendo "Catálogo". */}
+              <span className={isRail ? "tf-nav__label sr-only" : "tf-nav__label"}>
+                {item.label}
+              </span>
             </Link>
           </li>
         ))}
       </ul>
+
+      {/* FORA da <ul>: o botão não é uma seção, e não pode entrar na travessia por setas que o
+          roving tabindex acima governa. */}
+      {railable && (
+        <button
+          type="button"
+          className="tf-nav__item tf-nav__collapse"
+          onClick={onToggleCollapsed}
+          aria-expanded={!collapsed}
+          title={collapsed ? messages.nav.expand : messages.nav.collapse}
+        >
+          <Icon name="panel-left" size={22} className="tf-nav__icon" />
+          <span className={isRail ? "tf-nav__label sr-only" : "tf-nav__label"}>
+            {collapsed ? messages.nav.expand : messages.nav.collapse}
+          </span>
+        </button>
+      )}
     </nav>
   );
 }

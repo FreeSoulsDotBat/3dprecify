@@ -233,3 +233,38 @@ test("SC-508/US6: a lapse freezes rename+delete but never the reading — a re-g
   await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
   await expect(page.getByText(/R\$/).first()).toBeVisible();
 });
+
+// 018/US2 (T035) — o mestre-detalhe de Orçamentos no desktop: lista e registro congelado na MESMA
+// tela (SC-002), a seleção morando em `?snapshot=` (013/F-02 — a MESMA chave do mobile), e o
+// endereço selecionado sobrevivendo a um reload (a forma honesta de "o link direto continua
+// respondendo" depois que a rota de 2 segmentos morreu).
+test("T035: mestre-detalhe de Orçamentos a 1440px — lista + registro juntos, seleção em ?snapshot=, reload mantém (018/US2)", async ({
+  page,
+}, info) => {
+  const email = await signUpThrowaway(page, `hist-md-${info.workerIndex}`);
+  grantPremium(email);
+  const rotulo = `md-${info.workerIndex}-${Date.now()}`;
+
+  await page.goto("/calcular");
+  await page.reload(); // a concessão só é lida na próxima carga
+  await page.getByRole("button", { name: t.historico.saveAction }).click();
+  const sheet = page.getByRole("dialog");
+  await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(rotulo);
+  await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+  await expect(page.getByText(t.historico.saved)).toBeVisible(); // assentar antes de navegar (T119)
+
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/historico");
+
+  // No corte largo o registro abre AO LADO da lista: o card continua visível quando o detalhe
+  // abre — é isso que distingue o mestre-detalhe da navegação empilhada do mobile.
+  await page.getByText(rotulo).first().click();
+  await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
+  await expect(page.getByText(rotulo).first()).toBeVisible(); // o card da lista não saiu da tela
+  await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible(); // o detalhe abriu
+
+  // O endereço com a seleção continua respondendo — um reload no MESMO URL reabre o registro.
+  await page.reload();
+  await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
+  await expect(page.getByText(rotulo).first()).toBeVisible();
+});

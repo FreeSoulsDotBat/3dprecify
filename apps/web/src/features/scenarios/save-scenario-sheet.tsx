@@ -100,6 +100,12 @@ function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () =
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [error, setError] = useState<string | null>(null);
+  // Homologação automatizada (CF-013-UI-01) — o campo vazio escondia o erro de propósito ("não
+  // gritar antes de a pessoa digitar", e isso está certo), MAS o submit também retornava calado:
+  // o vendedor clicava em "Salvar simulação" e não acontecia absolutamente nada. Medido: botão
+  // habilitado, clique registrado, folha aberta, nenhuma mensagem. Depois de TENTAR salvar, o
+  // campo deixa de ser intocado — é aí que a frase que já existe escrita precisa aparecer.
+  const [tentouSalvar, setTentouSalvar] = useState(false);
 
   const nameError =
     name.trim() === "" ? t.nameRequired : name.length > NAME_MAX ? t.nameTooLong : undefined;
@@ -108,6 +114,7 @@ function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () =
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+    setTentouSalvar(true);
     if (!config) {
       setError(t.saveInvalid);
       return;
@@ -136,7 +143,11 @@ function SaveForm({ source, onDone }: { source: SaveScenarioSource; onDone: () =
       <SheetTitle>{t.saveSheetTitle}</SheetTitle>
       <SheetDescription>{t.saveSheetIntro}</SheetDescription>
 
-      <Field label={t.nameField} required error={nameError && name !== "" ? nameError : undefined}>
+      <Field
+        label={t.nameField}
+        required
+        error={nameError && (name !== "" || tentouSalvar) ? nameError : undefined}
+      >
         {(p) => (
           <div className="tf-inputwrap">
             <input

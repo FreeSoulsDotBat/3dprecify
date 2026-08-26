@@ -1,5 +1,3 @@
-import { type CSSProperties, type KeyboardEvent, useRef } from "react";
-
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
 import { useEntitlement } from "@/entities/user/use-entitlement";
@@ -11,8 +9,10 @@ import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Button } from "@/shared/ui";
+import { Segmented } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
+
+import "./catalogo-page.css";
 
 // Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022; US6 → T030). IA = segmented
 // tabs (ux §0.1-A, G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex
@@ -33,54 +33,20 @@ const TABS: readonly { id: TabId; label: string }[] = [
   { id: "kits", label: catalogo.tabKits },
 ];
 
-const tablistStyle: CSSProperties = {
-  display: "flex",
-  gap: "var(--space-2)",
-};
-
+// 018/T010 — o `CatalogTabs` local virou `Segmented` em `shared/ui`: o MESMO comportamento de
+// teclado (um ponto de tabulação + setas) que vivia aqui, agora com um dono só, porque a Conta
+// passou a precisar do mesmo padrão e duas cópias é como uma delas fica para trás numa correção.
 function CatalogTabs({ active, onChange }: { active: TabId; onChange: (id: TabId) => void }) {
-  const refs = useRef<Partial<Record<TabId, HTMLButtonElement | null>>>({});
-
-  const onKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    const last = TABS.length - 1;
-    let next: number;
-    if (event.key === "ArrowRight") next = index === last ? 0 : index + 1;
-    else if (event.key === "ArrowLeft") next = index === 0 ? last : index - 1;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = last;
-    else return;
-    event.preventDefault();
-    const id = TABS[next].id;
-    onChange(id);
-    refs.current[id]?.focus();
-  };
-
   return (
-    <div role="tablist" aria-label={catalogo.tabsLabel} style={tablistStyle}>
-      {TABS.map((tab, index) => {
-        const selected = active === tab.id;
-        return (
-          <Button
-            key={tab.id}
-            ref={(el) => {
-              refs.current[tab.id] = el;
-            }}
-            role="tab"
-            id={`catalog-tab-${tab.id}`}
-            aria-selected={selected}
-            aria-controls={`catalog-panel-${tab.id}`}
-            tabIndex={selected ? 0 : -1}
-            variant={selected ? "primary" : "ghost"}
-            size="sm"
-            className="flex-1"
-            onClick={() => onChange(tab.id)}
-            onKeyDown={(event) => onKeyDown(event, index)}
-          >
-            {tab.label}
-          </Button>
-        );
-      })}
-    </div>
+    <Segmented
+      options={TABS}
+      value={active}
+      onChange={onChange}
+      ariaLabel={catalogo.tabsLabel}
+      idPrefix="catalog-tab"
+      controlsPrefix="catalog-panel"
+      size="sm"
+    />
   );
 }
 
@@ -148,8 +114,13 @@ export function CatalogoPage() {
 
   return (
     <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
-      <PageHeader title={messages.nav.catalogo} />
-      <CatalogTabs active={active} onChange={setActive} />
+      {/* 018/US1 — no desktop o título e as seções dividem UMA faixa de cabeçalho (o desenho põe as
+          pílulas à direita do título). Abaixo do corte a faixa quebra em duas linhas sozinha, sem
+          media query: é `flex-wrap` fazendo o trabalho, e o mobile continua exatamente como estava. */}
+      <div className="tf-catalogo-head">
+        <PageHeader title={messages.nav.catalogo} />
+        <CatalogTabs active={active} onChange={setActive} />
+      </div>
       <div role="tabpanel" id={`catalog-panel-${active}`} aria-labelledby={`catalog-tab-${active}`}>
         {active === "filaments" && <FilamentsPanel />}
         {active === "printers" && <PrintersPanel />}

@@ -57,3 +57,11 @@
   flex: 0 0 auto;
   max-width: 100%;
 }
+
+/* 018/US3 — a variante COLUNA (desktop ≥1280px). Aqui o resumo não gruda em nada por conta
+   própria: quem gruda é a coluna inteira, na página (`.tf-kits-grid__aside`). Duas camadas
+   `sticky` aninhadas competiriam pelo mesmo eixo e a de dentro pareceria "solta".
+   `--pinned-bottom` e toda a regra do 014/T118 continuam valendo para o mobile, intocadas. */
+.assembly-summary__col {
+  display: block;
+}

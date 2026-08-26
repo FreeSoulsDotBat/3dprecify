@@ -254,6 +254,11 @@ extraction, subagent fan-outs, multi-agent workflows — appends a row to `docs/
 (date · operation · estimate → actual · lesson). Estimate BEFORE running, record the actual AFTER;
 graphify runs also mirror into local `graphify-out/cost.json`.
 
+Homologation process (authoritative): `docs/homologacao/PROCESSO-HOMOLOGACAO.md` — walking every scenario is
+HALF the process; the other half is the owner **re-walking each reported point after the fix**. A dev/agent
+"corrigido" is `CORREÇÃO DECLARADA`, never homologated; only the owner's second pass closes a point, and while
+a round has points awaiting re-verification, **untouched scenarios do not open** (owner, 2026-08-10). Round 1
+(2026-08-03/04 report → increment 016, 15 points) is OPEN, in re-verification since 2026-08-10.
 Constitution: `.specify/memory/constitution.md` (incl. **Principle VIII** — no inferring architecture/standards).
 Pricing domain reference: `docs/pricing-model-from-spreadsheet.md` (original model — third-party sheet NOT copied).
 Integration branch is **`develop`** (slices land via owner-authorized squash-merged PRs; `main` = release, per
@@ -262,20 +267,24 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/017-ingestao-mensal/plan.md
-(017 = the monthly CI-first fee-ingestion loop: Amazon + Shopee collectors on the HOSTED runner,
-watchers for /precos (D7) and the four ML public sources, ONE honest monthly PR to develop —
-manual-trigger until the release cut (the schedule reads from `main`; RA1 is declared in the YAML
-header). Spec is post-clarify 8/8; design authority is `specs/017-ingestao-mensal/
-arquitetura-017.md` (decisions A–J: collectors EMIT SLICES and never write · read-leaf rule —
-a naive Shopee collector would silently REVERT the A2 hotfix · seed becomes a GENERATED
-projection (P0-a relational parity) · gate:artifact with DERIVED membership · tesseract.js 7.0.0
-under the lockfile, PNG identity = sha256(bytes), conjunctive guards + human gate · loop-liveness
-measures DATA age >35d). ADRs 0028/0029/0030 Proposed — owner flips at slice gates. Slices:
-PR-A P0-a + spine + Amazon + real run w/ URL · PR-B /precos watcher + liveness · PR-C Shopee
-OCR (banner threshold ratified at gate) · PR-D ML watchers + runbook. NON-NEGOTIABLE: zero
-`secrets.` beyond GITHUB_TOKEN (repo-wide after deleting the probes), 0 LLM tokens in the loop
-(SC-811), collectors NEVER auto-merge money, PR bodies assert ABSENCE (014/US4 lesson).
+at specs/018-abas-desktop/plan.md
+(018 = the owner's DESKTOP redesign of the four remaining tabs — Catálogo · Kits · Orçamentos ·
+Conta — plus the collapsible nav rail. It exists because the owner, re-walking the 016 corrections,
+judged the desktop pages still wrong and redrew them at 1920px in Claude Design. Layout authority:
+`specs/018-abas-desktop/design/Abas-Desktop.dc.html`; technical authority:
+`specs/018-abas-desktop/research.md` (decisions **A–H** — there is deliberately NO
+`arquitetura-018.md`). **ADR-0031 Proposed** covers A/B/C/G; owner flips at the first slice gate.
+It is a COMPOSITION increment: zero formula, contract, schema or DS-primitive change — verified
+before planning (all 16 design classes already exist; kit channel prices and the quote-detail blocks
+already exist; `CatalogPanel` already has sheet-mode vs navigation-mode). Post-clarify, 3 owner
+decisions: the right-hand ficha EDITS filament/printer (sheet-mode moves house) but only SUMMARIZES
+product/kit (full-page editor stays) · the cut is **1280px** (measured: at 1024px a 560px ficha
+would leave ~140px of list) · the segmented theme control is desktop-only. The key property:
+`useIsWide()` returns false without `matchMedia`, so **the mobile branch is the same code, untouched,
+and the whole existing suite keeps exercising it** — "o mobile não se mexe" is structural, not
+disciplinary. Slices land as owner-authorized PRs; nothing closes without the owner's SECOND walk
+(`docs/homologacao/PROCESSO-HOMOLOGACAO.md` — round 1 is OPEN).
 **014's US6-ML remains gated** (seguranca's 8 conditions + separate owner authorization — never on
-a "continue"); 014 US1 residual + Polish also remain, see `specs/014-fee-category-mapping/tasks.md`.)
+a "continue"); 014 US1 residual + Polish also remain, see `specs/014-fee-category-mapping/tasks.md`.
+017 (monthly fee ingestion): **PR-A SHIPPED to develop** (`daade76` — spine + Amazon collector, first real run) + tarifas 2026-08-07 lidas (`09f5a4f`, PR #54); continues on `017-pr-b-precos`, untouched by this branch.)
 <!-- SPECKIT END -->

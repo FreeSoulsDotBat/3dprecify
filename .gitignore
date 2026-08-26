@@ -79,5 +79,11 @@ docs/homologacao/evidencias/f11a/
 docs/homologacao/evidencias/f11b/
 specs/016-correcao-homologacao/evidencias/
 
+# Review do PR #58 — o relatório BRUTO do Playwright da homologação é artefato de máquina, e uma
+# cópia dele chegou a ser versionada num estado que dizia "No tests found": evidência falsa dentro
+# do repositório. Os JSONL de defeitos/execuções continuam versionados (são a evidência que o
+# relatório cita); o dump bruto, não.
+docs/homologacao/automatizada/resultados/playwright-raw.json
+firebase.e2e-local.json
 # 017 — os vereditos que os jobs de coleta deixam para o `publicar` sao artefatos de RUN, nunca commit.
 packages/fee-ingest/artifacts/

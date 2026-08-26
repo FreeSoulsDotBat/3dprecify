@@ -16,6 +16,14 @@
      TabBar. Consumers: `.assembly-summary__pinned`. */
   --pinned-bottom: var(--space-2);
 }
+
+/* 018/US5 — o rail recolhido. A largura da coluna do menu é UMA variável, e por isso recolher o
+   menu devolve a diferença ao conteúdo sem que nenhuma página precise saber que isso aconteceu.
+   O atributo só existe acima de 1280px (o shell não o escreve abaixo), então nada disso alcança
+   o mobile nem a faixa intermediária. */
+.tf-shell[data-rail="collapsed"] {
+  --sidebar-w: 76px;
+}
 .tf-shell__body {
   display: flex;
   flex: 1;
@@ -72,5 +80,17 @@
 @media (min-width: 1024px) {
   .tf-page-wide {
     max-width: var(--content-max, 1120px);
+  }
+}
+
+/* 018 — a partir do corte de 1280px as quatro telas redesenhadas usam a largura que a tela dá.
+   O teto de 1120px foi a resposta certa do 016 para um layout de coluna única; para mestre-detalhe
+   ele DESPERDIÇA o que a composição existe para usar — a 1920px sobravam 560px de margem morta de
+   cada lado. `--content-max-wide` é um teto, não uma largura: telas ultrawide não viram uma linha
+   de texto de dois metros. Os únicos consumidores de `.tf-page-wide` são exatamente as quatro
+   telas do 018 (+ o detalhe do orçamento, que é a mesma família). */
+@media (min-width: 1280px) {
+  .tf-page-wide {
+    max-width: var(--content-max-wide, 1720px);
   }
 }

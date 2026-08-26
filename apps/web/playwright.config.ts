@@ -6,9 +6,16 @@ import { defineConfig, devices } from "@playwright/test";
 // mode; the backend verifies the same emulator's tokens (P3D_FIREBASE_AUTH_EMULATOR_HOST), so a
 // throwaway sign-up drives the FULL premium loop: JIT account → operator CLI grant → catalog
 // CRUD → calculator pre-fill (E2 T025).
+// Same Windows trap as E2E_PREVIEW_PORT below, other port: the OS reserves whole ranges for
+// dynamic use and 9099 has already fallen inside one (9011–9110, 2026-08-26) — the emulator dies
+// with EACCES before anything starts, and freeing the range needs an elevated winnat restart.
+// The override keeps 9099 as the only checked-in port (CI and firebase.json untouched); a local
+// run passes `E2E_AUTH_EMULATOR_PORT` + a `--config` copy of firebase.json with the same port.
+const AUTH_EMULATOR_PORT = process.env.E2E_AUTH_EMULATOR_PORT ?? "9099";
+
 const emulatorEnv = {
   VITE_USE_AUTH_EMULATOR: "true",
-  VITE_AUTH_EMULATOR_URL: "http://127.0.0.1:9099",
+  VITE_AUTH_EMULATOR_URL: `http://127.0.0.1:${AUTH_EMULATOR_PORT}`,
   VITE_FIREBASE_API_KEY: "demo-key",
   VITE_FIREBASE_PROJECT_ID: "demo-precifica3d",
   VITE_FIREBASE_AUTH_DOMAIN: "demo-precifica3d.firebaseapp.com",
@@ -68,7 +75,7 @@ export default defineConfig({
       env: {
         PORT: "8100",
         P3D_DATABASE_URL: E2E_DATABASE_URL,
-        P3D_FIREBASE_AUTH_EMULATOR_HOST: "127.0.0.1:9099",
+        P3D_FIREBASE_AUTH_EMULATOR_HOST: `127.0.0.1:${AUTH_EMULATOR_PORT}`,
         P3D_FIREBASE_PROJECT_ID: "demo-precifica3d",
         // The preview's origin must be in the CORS allowlist, or EVERY API call from the app is
         // blocked by the browser — and the failure is deeply indirect: the account is created

@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { createContext, useContext } from "react";
 
 import { useBoms } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
@@ -369,7 +370,21 @@ function FrozenChannelRow({
   );
 }
 
+/**
+ * 018/US2 — quando o detalhe é a COLUNA DIREITA do mestre-detalhe, ele perde a moldura de página:
+ * sem `<section>` própria, sem "Voltar para a lista" (a lista está ali, à esquerda) e sem um
+ * segundo `<h1>` na mesma tela — dois `<h1>` seriam uma regressão de acessibilidade vestida de
+ * layout. O CONTEÚDO do registro é exatamente o mesmo nos dois modos, e é isso que faz a rota
+ * `/historico?snapshot=` continuar respondendo igual no mobile e no link compartilhado.
+ *
+ * Context em vez de prop: `Shell` é usado em todos os ramos de estado deste arquivo (carregando,
+ * erro, ausente, pronto), e enfiar a mesma prop em cada um seria quatro chances de esquecer uma.
+ */
+export const SnapshotEmbeddedContext = createContext(false);
+
 function Shell({ title, children }: { title?: string; children: React.ReactNode }) {
+  const embedded = useContext(SnapshotEmbeddedContext);
+  if (embedded) return <div className="flex flex-col gap-4">{children}</div>;
   return (
     <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
       <Link to="/historico" className="tf-historico__back">

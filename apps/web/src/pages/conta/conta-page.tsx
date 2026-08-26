@@ -17,6 +17,7 @@ import { planView } from "@/features/billing/plan-view";
 import { useSubscription } from "@/features/billing/use-subscription";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useIsWide } from "@/shared/lib/use-is-wide";
 import { requestSignOut } from "@/shared/session/sign-out-guard";
 import {
   Alert,
@@ -24,6 +25,7 @@ import {
   Button,
   Card,
   Icon,
+  Segmented,
   Sheet,
   SheetContent,
   SheetTitle,
@@ -102,6 +104,11 @@ function PlanSection() {
   const sub = useSubscription();
   const t = messages.conta;
   const tb = messages.billing;
+  // 018/US4 — no desktop a oferta abre INLINE na coluna do plano (o desenho a mostra aberta), em vez
+  // de dentro da gaveta. A gaveta continua existindo e continua sendo o caminho do mobile e do
+  // `?assinar=1`. O que NÃO muda: `plan-panel.tsx` não é tocado — ele continua recebendo o estado já
+  // resolvido e sem acesso ao ledger nem ao espelho do PSP (SC-708 é estrutural, não uma promessa).
+  const isWide = useIsWide();
   // US7/T032 — os teasers chegam com `?assinar=1`, e a oferta abre ja montada. O estado inicial le
   // a intencao UMA vez: depois disso quem manda e o usuario (fechar tem de fechar, e um efeito
   // preso a URL reabriria o Sheet no proximo render).
@@ -129,6 +136,12 @@ function PlanSection() {
     caption = [caption, t.planStale].filter(Boolean).join(" · ");
   }
 
+  // A oferta inline vale para os mesmos estados em que o painel oferece assinar — a regra é do
+  // `PlanState`, não uma segunda leitura de entitlement.
+  const ofereceAssinar =
+    state.kind === "free" || state.kind === "lapsed" || state.kind === "subscription-canceled";
+  const ofertaInline = isWide && ofereceAssinar;
+
   return (
     <>
       <Card className="tf-conta__row tf-conta__row--plan">
@@ -150,7 +163,20 @@ function PlanSection() {
             sobrava uma faixa clara a direita com o botao solto a mostra. E a tela de quem esta
             PAGANDO, e viola o invariante duro do ux-billing §0.4. */}
         <div className="flex flex-wrap items-center justify-end gap-2">
-          <PlanActions state={state} onSubscribe={() => setOfferOpen(true)} />
+          <PlanActions
+            state={state}
+            onSubscribe={() => {
+              // Com a oferta já aberta na coluna, abrir a gaveta por cima dela seria mostrar a
+              // mesma oferta duas vezes. Aqui o botão LEVA até ela.
+              if (ofertaInline) {
+                document
+                  .getElementById("tf-conta-oferta")
+                  ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                return;
+              }
+              setOfferOpen(true);
+            }}
+          />
           <Button
             variant="ghost"
             size="sm"
@@ -162,6 +188,14 @@ function PlanSection() {
           </Button>
         </div>
       </Card>
+
+      {ofertaInline && (
+        <Card id="tf-conta-oferta" className="flex flex-col gap-3">
+          <h2 className="tf-conta__offer-title">{tb.offerTitle}</h2>
+          <OfferPanel />
+        </Card>
+      )}
+
       <Sheet open={offerOpen} onOpenChange={setOfferOpen}>
         {offerOpen && (
           <SheetContent>
@@ -175,21 +209,60 @@ function PlanSection() {
 }
 
 // Theme Switch (T059). Labelled by the row text; checked = dark (the v1 default).
+//
+// 018/US4 — no desktop o interruptor vira um controle segmentado que NOMEIA as opções ("Claro" /
+// "Escuro"): um interruptor diz ligado/desligado, e ligado não é um tema. Os dois escrevem no MESMO
+// `useThemeStore` — dois controles, uma verdade. O mobile mantém o interruptor de hoje (clarify).
 function ThemeSection() {
   const theme = useThemeStore((s) => s.theme);
   const toggle = useThemeStore((s) => s.toggle);
+  const isWide = useIsWide();
+  const t = messages.conta;
+
   return (
     <Card className="tf-conta__row">
       <span id="tf-conta-theme-label" className="tf-conta__row-label">
-        {messages.conta.themeLabel}
+        {t.themeLabel}
       </span>
-      <Switch
-        aria-labelledby="tf-conta-theme-label"
-        checked={theme === "dark"}
-        onCheckedChange={() => {
-          toggle();
-        }}
-      />
+      {isWide ? (
+        <Segmented
+          options={[
+            { id: "light", label: t.themeLight, icon: <Icon name="sun" size={16} aria-hidden /> },
+            { id: "dark", label: t.themeDark, icon: <Icon name="moon" size={16} aria-hidden /> },
+          ]}
+          value={theme}
+          onChange={(next) => {
+            if (next !== theme) toggle();
+          }}
+          ariaLabel={t.themeLabel}
+          role="radiogroup"
+          size="sm"
+        />
+      ) : (
+        <Switch
+          aria-labelledby="tf-conta-theme-label"
+          checked={theme === "dark"}
+          onCheckedChange={() => {
+            toggle();
+          }}
+        />
+      )}
+    </Card>
+  );
+}
+
+// 018/US4 — o aviso de privacidade na terceira coluna, como no desenho: título + as duas frases
+// que importam, reaproveitando a redação já ratificada em `messages.privacy` (FR-214).
+//
+// Sem link para `/privacidade` — o desenho não tem um, e a versão que eu tinha escrito com `Link`
+// exigia contexto de roteador dentro da Conta, quebrando 7 testes que hoje montam a página sozinha.
+// A página inteira da política continua existindo e continua acessível pelo mesmo caminho de antes.
+function PrivacySection() {
+  return (
+    <Card className="flex flex-col gap-2">
+      <h2 className="tf-conta__offer-title">{messages.privacy.title}</h2>
+      <p className="tf-conta__privacy-line">{messages.privacy.google}</p>
+      <p className="tf-conta__privacy-line">{messages.privacy.noSale}</p>
     </Card>
   );
 }
@@ -210,17 +283,29 @@ export function ContaPage() {
     );
   }
 
+  // 018/US4 — no desktop as três colunas do desenho: identidade+plano · tema · privacidade+sair.
+  // A grade é CSS pura (`tf-conta__grid`), e abaixo do corte ela colapsa numa coluna só — que é
+  // exatamente o empilhamento de hoje, na mesma ordem de DOM. Nenhuma seção muda de conteúdo.
   return (
     <section className="tf-conta mx-auto flex w-full tf-page-wide flex-col">
       <PageHeader title={messages.conta.title} />
-      <IdentitySection />
-      <PlanSection />
-      <ThemeSection />
-      <div className="tf-conta__signout">
-        <Button variant="secondary" onClick={() => void requestSignOut()}>
-          <Icon name="log-out" size={18} />
-          {messages.account.signOut}
-        </Button>
+      <div className="tf-conta__grid">
+        <div className="tf-conta__col">
+          <IdentitySection />
+          <PlanSection />
+        </div>
+        <div className="tf-conta__col">
+          <ThemeSection />
+        </div>
+        <div className="tf-conta__col">
+          <PrivacySection />
+          <div className="tf-conta__signout">
+            <Button variant="secondary" onClick={() => void requestSignOut()}>
+              <Icon name="log-out" size={18} />
+              {messages.account.signOut}
+            </Button>
+          </div>
+        </div>
       </div>
     </section>
   );

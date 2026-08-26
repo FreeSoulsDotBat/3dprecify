@@ -171,3 +171,48 @@ test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser
   await expect(page.getByRole("button", { name: t.calculator.catalogPicker.title })).toBeDisabled();
   await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C B1 seed — ver nota do A11 acima
 });
+
+// 018/US1 (T027) — o mestre-detalhe do Catálogo no desktop: lista e ficha na MESMA tela, e trocar
+// o item selecionado troca a ficha SEM navegação de rota (SC-002). Verificado nas duas larguras
+// que a spec nomeia: 1920px (o desenho) e 1280px (o primeiro pixel do corte — a largura onde uma
+// ficha de 560px mais aperta a lista).
+for (const vp of [
+  { width: 1920, height: 1080 },
+  { width: 1280, height: 800 },
+]) {
+  test(`T027: mestre-detalhe do Catálogo a ${vp.width}px — trocar a seleção troca a ficha sem rota (018/US1)`, async ({
+    page,
+  }, info) => {
+    const email = await signUpThrowaway(page, `md${vp.width}-${info.workerIndex}`);
+    await page.goto("/catalogo"); // JIT-provisiona a conta antes do grant (mesmo motivo do T025)
+    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
+    grantPremium(email);
+    await page.setViewportSize(vp);
+    await page.reload(); // a concessão só é lida na próxima carga
+
+    // Dois filamentos, para a troca de seleção ter o que trocar.
+    for (const nome of ["PLA Mestre", "PETG Detalhe"]) {
+      await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+      await page.getByRole("textbox", { name: t.catalogForm.name }).fill(nome);
+      await page
+        .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
+        .fill("100");
+      await page
+        .getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) })
+        .fill("1");
+      await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
+      await expect(page.getByText(nome).first()).toBeVisible();
+    }
+
+    // Mestre e detalhe convivem na MESMA tela.
+    await expect(page.getByTestId("master-list")).toBeVisible();
+    await expect(page.getByTestId("detail-panel")).toBeVisible();
+
+    // Trocar a seleção troca a ficha — e a rota NÃO muda (SC-002: nenhuma navegação).
+    await page.getByTestId("master-item").filter({ hasText: "PETG Detalhe" }).click();
+    await expect(page.getByTestId("detail-panel")).toContainText("PETG Detalhe");
+    await page.getByTestId("master-item").filter({ hasText: "PLA Mestre" }).click();
+    await expect(page.getByTestId("detail-panel")).toContainText("PLA Mestre");
+    expect(new URL(page.url()).pathname).toBe("/catalogo");
+  });
+}

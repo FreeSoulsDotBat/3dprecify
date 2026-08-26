@@ -35,15 +35,25 @@ void _omittedBillingCopy;
 // computes NO price there; changing the digits to satisfy this guard would make the quote no
 // longer match the source, which is worse than the literal it forbids. Same class as the
 // `fieldTips` carve-out above: prose quoting a THIRD-PARTY fact, never a price this app charges.
+// Homologação automatizada, exceção datada (2026-08-13): `plausibilidade` é a MESMA classe do
+// `fieldTips` acima, e pelo mesmo motivo — é prosa didática que ensina uma CONVERSÃO usando o
+// dinheiro DO VENDEDOR ("R$ 3.000 ÷ 160 h = R$ 18,75", o mesmo exemplo aprovado que já vive no
+// `fieldTips.laborRate`), nunca um preço que este app cobra. O alvo real desta guarda continua
+// sendo o preço comercial indeciso do produto, que segue coberto pelo carve-out de `billing`.
+//
+// A exceção é estreita de propósito: se algum dia uma frase de plausibilidade citar o preço da
+// ASSINATURA, ela terá saído desta classe e a guarda deve voltar a cobri-la.
 const {
   fieldTips: _omittedFieldTips,
   tooltipRefs: _omittedTooltipRefs,
   shopeeWarnings: _omittedShopeeWarnings,
+  plausibilidade: _omittedPlausibilidade,
   ...NON_TOOLTIP_CALCULATOR
 } = messages.calculator;
 void _omittedFieldTips;
 void _omittedTooltipRefs;
 void _omittedShopeeWarnings;
+void _omittedPlausibilidade;
 const HAYSTACK = collectStrings({
   ...NON_BILLING_MESSAGES,
   calculator: NON_TOOLTIP_CALCULATOR,
