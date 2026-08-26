@@ -30,11 +30,13 @@ const t = messages.calculator;
  *  360/390 mobile · **426 o primeiro pixel do desktop** · **599/600 os dois lados do corte do rail
  *  forçado** (abaixo de 600 a barra lateral recolhe sozinha para 76px — sem isso, os 240px dela
  *  deixavam ~150px de conteúdo e a página inteira transbordava) · 1024 a faixa do meio · 1279 o
- *  último pixel antes do corte do 018 · 1440 o wide.
+ *  último pixel antes do corte do 018 · 1440 o wide · **1600/1920 o desktop cheio** (SC-003 do 018
+ *  nomeia as duas e a lista parava em 1440 — o desenho de autoridade é a 1920px, e era exatamente a
+ *  largura que a guarda não media; fechamento do 018, 2026-08-26).
  *
  *  O par 599/600 existe para provar o corte dos DOIS lados: um limiar testado só por dentro passa
  *  igual se alguém trocar o `max-width` por outro número. */
-const LARGURAS = [360, 390, 426, 599, 600, 1024, 1279, 1440] as const;
+const LARGURAS = [360, 390, 426, 599, 600, 1024, 1279, 1440, 1600, 1920] as const;
 
 /** Um nome que um vendedor cola de verdade: código de produto sem espaço nenhum. */
 const NOME_SEM_ESPACO = "A".repeat(300);

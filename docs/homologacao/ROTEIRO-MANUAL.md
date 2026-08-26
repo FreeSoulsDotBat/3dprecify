@@ -100,17 +100,23 @@ Os rótulos abaixo são **exatamente** os que aparecem na tela (conferidos contr
 `messages.pt-br.ts` e contra o app rodando — a primeira versão deste roteiro trazia nomes
 inventados como "Gramas impressas", que não existem):
 
+> **Re-baseline 2026-08-26 (fechamento do 018/T053).** A versão anterior desta seção pedia o campo
+> **Desperdício** e prometia R$ 28,65 / 42,98 / 37,25 — números do modelo **3.1.0**. O campo morreu
+> no 016/PR-D (pricing-core 4.0.0, ADR-0026) e o vetor abaixo é o do modelo **4.1.0**, derivado
+> executando o próprio motor (`computeCalculator`) com estas entradas e conferido contra a UI real
+> pelo e2e `calculator.spec.ts` ("SC-001 canonical vector"). Se um número daqui divergir da tela,
+> o defeito é real — não é este roteiro que está velho.
+
 | campo (rótulo na tela) | valor |
 | --- | --- |
 | Custo do rolo | `100` |
 | Peso do rolo | `1` |
 | **Gramas usadas** | `100` |
-| **Desperdício** | `10` |
-| Tempo de impressão | `5` |
+| Tempo de impressão | `5` h `0` min |
 | **Consumo médio** | `0,10` |
 | Tarifa de energia | `1` |
 | Valor da máquina | `4000` |
-| **Vida útil da máquina** | `2000` |
+| **Vida útil da máquina** | `2000` — toque **"Ajustar horas direto"** antes: o formulário nasce no modo ritmo (016/US8) e este campo só aparece no modo ajustar |
 | Taxa de falha | `10` |
 | Tempo de acabamento | `0,5` |
 | **Valor do acabamento** | `10` |
@@ -118,14 +124,14 @@ inventados como "Gramas impressas", que não existem):
 | Markup atacado | `30` |
 
 > Alguns campos vêm **pré-preenchidos** com valores semente. Substitua o conteúdo — não digite por
-> cima. Com os valores semente intactos a tela mostra R$ 20,60 / R$ 30,90 / R$ 26,78, que são
+> cima. Com os valores semente intactos a tela mostra R$ 16,16 / R$ 24,24 / R$ 21,01, que são
 > números legítimos e **não** os deste exercício.
 
 **Tem de aparecer, exatamente:**
 
-- Custo total → **R$ 28,65**
-- Preço varejo → **R$ 42,98**
-- Preço atacado → **R$ 37,25**
+- Custo total → **R$ 27,55**
+- Preço varejo → **R$ 41,33**
+- Preço atacado → **R$ 35,82**
 
 ☐ bate ☐ não bate → anote o que apareceu
 

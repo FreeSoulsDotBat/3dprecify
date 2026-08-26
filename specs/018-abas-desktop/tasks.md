@@ -23,8 +23,8 @@ três vezes fora do navegador.
 ## Phase 1: Setup — a linha de base antes de mexer em qualquer coisa
 
 - [x] T001 Capturar a **linha de base do mobile** ANTES de qualquer alteração de código: screenshots de `/catalogo`, `/kits`, `/historico` e `/conta` a 390px e a 360px, em 1:1, salvas em `specs/018-abas-desktop/evidencias/baseline-mobile/`. Sem esta captura, SC-005 ("o mobile é indistinguível do atual") não tem contra o quê comparar — e depois do primeiro commit ela não existe mais.
-- [ ] T002 [P] Subir o produto pelo caminho do `quickstart.md` e registrar em `specs/018-abas-desktop/evidencias/ambiente.md` que `/health` respondeu **200** e `/api/v1/entitlement` respondeu **401** (500 aqui invalida tudo que vier depois).
-- [ ] T003 [P] Registrar a estimativa de tokens desta operação em `docs/token-ledger.md` (regra do dono 2026-07-10: estimar ANTES, anotar o real DEPOIS).
+- [x] T002 [P] Subir o produto pelo caminho do `quickstart.md` e registrar em `specs/018-abas-desktop/evidencias/ambiente.md` que `/health` respondeu **200** e `/api/v1/entitlement` respondeu **401** (500 aqui invalida tudo que vier depois). **Feito 2026-08-26** → [evidencias/ambiente.md](./evidencias/ambiente.md): /health 200 · /api/v1/entitlement 401 · postgres healthy/0007.
+- [x] T003 [P] Registrar a estimativa de tokens desta operação em `docs/token-ledger.md` (regra do dono 2026-07-10: estimar ANTES, anotar o real DEPOIS). **Linha do fechamento adicionada 2026-08-26** (estimativa ~150k; real fecha no T058).
 
 ---
 
@@ -56,8 +56,8 @@ três vezes fora do navegador.
 - [x] T015 [US5] Implementar a variante recolhida em `apps/web/src/widgets/app-nav/app-nav.tsx`: prop de estado do rail, botão "Recolher" **fora** da `<ul>`, rótulo escondido visualmente (nunca `display:none` — research §G).
 - [x] T016 [US5] Implementar o CSS do rail em `apps/web/src/widgets/app-nav/app-nav.css`: 76px, ícones centralizados, transição de largura.
 - [x] T017 [US5] Ligar o estado em `apps/web/src/app/app-shell.tsx` (lendo `nav-rail-store` e `useIsWide`) e transformar `--sidebar-w` em variável de estado em `apps/web/src/app/app-shell.css` (240px ↔ 76px).
-- [ ] T018 [US5] Estender `apps/web/tests/e2e/shell.spec.ts` com o caminho real: recolher → navegar → recarregar → continua recolhido; e a medida de que o conteúdo ganhou ≥160px de largura (SC-004).
-- [ ] T019 [US5] Rodar `pnpm gate:all` + e2e do shell e registrar o resultado em `specs/018-abas-desktop/dod-evidence.md`.
+- [x] T018 [US5] Estender `apps/web/tests/e2e/shell.spec.ts` com o caminho real: recolher → navegar → recarregar → continua recolhido; e a medida de que o conteúdo ganhou ≥160px de largura (SC-004). **Verde 2026-08-26 (4/4)** — medida com expect.poll: a 1ª versão lia o boundingBox no MEIO da transição do rail (121px/24px "de ganho" na mesma tela).
+- [x] T019 [US5] Rodar `pnpm gate:all` + e2e do shell e registrar o resultado em `specs/018-abas-desktop/dod-evidence.md`. **Verde 2026-08-26**: gate:all EXIT 0 (1602 unit FE, cobertura 87,9%/82,7% BE) + shell e2e 4/4 — dod-evidence §Fechamento.
 
 ---
 
@@ -73,9 +73,9 @@ três vezes fora do navegador.
 - [x] T024 [US1] Implementar a composição desktop em `apps/web/src/pages/catalogo/catalogo-page.tsx` atrás de `useIsWide()`, mantendo o ramo estreito **literalmente o de hoje**; trocar `CatalogTabs` local pelo `Segmented` compartilhado nos dois ramos.
 - [x] T025 [US1] Implementar o CSS da grade em `apps/web/src/pages/catalogo/catalogo-page.css` (novo): `[lista] [ficha 560px]`, lista 1 coluna até ~1600px e 2 acima, ficha `position: sticky` + `align-self: start` (research §F).
 - [x] T026 [US1] Garantir que salvar pela ficha reflete no card da lista sem recarregar, e que a falha de escrita mantém os valores digitados (FR-016a) — caso no teste de T020.
-- [ ] T027 [US1] Estender `apps/web/tests/e2e/catalog.spec.ts` com o caminho real do mestre-detalhe a 1920px e a 1280px.
-- [ ] T028 [US1] Guarda de geometria: estender `apps/web/tests/e2e/pages-desktop-width.spec.ts` para `/catalogo` medindo **os dois eixos** em 1920, 1600, 1440, 1280 e **1279** (a largura que prova o corte), e a coluna fixa não podendo empurrar a página.
-- [ ] T029 [US1] Homologação visual da fatia com screenshots em 1:1 (nunca redimensionados) — a lição do 016.
+- [x] T027 [US1] Estender `apps/web/tests/e2e/catalog.spec.ts` com o caminho real do mestre-detalhe a 1920px e a 1280px. **Verde 2026-08-26 (2/2)** — troca de seleção troca a ficha, pathname intacto.
+- [x] T028 [US1] Guarda de geometria: estender `apps/web/tests/e2e/pages-desktop-width.spec.ts` para `/catalogo` medindo **os dois eixos** em 1920, 1600, 1440, 1280 e **1279** (a largura que prova o corte), e a coluna fixa não podendo empurrar a página. **Satisfeita por guarda SUPERIOR** (review do PR #58): [overflow-geometria.spec.ts](../../apps/web/tests/e2e/overflow-geometria.spec.ts) — dois eixos + nós de TEXTO por Range, 10 larguras incl. 1279/1600/1920 (1600/1920 adicionadas no fechamento, 2026-08-26) + [pages-desktop-width.spec.ts](../../apps/web/tests/e2e/pages-desktop-width.spec.ts) (≥40% de uso).
+- [x] T029 [US1] Homologação visual da fatia com screenshots em 1:1 (nunca redimensionados) — a lição do 016. **Satisfeita CONSOLIDADA** (não por fatia): homologação do assistente de 2026-08-11 (PASS COM RESSALVAS 88%, dois temas, dados adversariais — [evidencias/homologacao-2026-08-11.md](./evidencias/homologacao-2026-08-11.md)) + homologação AUTOMATIZADA (773 verificações, 26/35 achados corrigidos — dod-evidence §132+). A passada do DONO segue pendente por regra (dod §7) e foi absorvida pela homologação do 019 (ver T060).
 
 ---
 
@@ -89,9 +89,9 @@ três vezes fora do navegador.
 - [x] T032 [US2] Implementar a composição desktop em `apps/web/src/pages/historico/historico-page.tsx` atrás de `useIsWide()`, com o ramo estreito intocado.
 - [x] T033 [US2] Implementar o CSS da grade em `apps/web/src/pages/historico/historico-page.css`: `[filtros+lista 520px] [registro]`, painel `sticky`.
 - [x] T034 [US2] Confirmar que nenhum caminho novo escreve num registro congelado (ADR-0019) — caso explícito no teste de T030.
-- [ ] T035 [US2] Estender `apps/web/tests/e2e/history-manage.spec.ts` com o mestre-detalhe e confirmar que `/historico/<id>` direto continua respondendo.
-- [ ] T036 [US2] Guarda de geometria de `/historico` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos, mesmas larguras de T028.
-- [ ] T037 [US2] Homologação visual da fatia, screenshots 1:1.
+- [x] T035 [US2] Estender `apps/web/tests/e2e/history-manage.spec.ts` com o mestre-detalhe e confirmar que `/historico/<id>` direto continua respondendo. **Verde 2026-08-26** — lista+registro juntos a 1440px; "link direto" na forma honesta pós-013/F-02: `?snapshot=` sobrevive a reload (a rota de 2 segmentos morreu com o base:'./').
+- [x] T036 [US2] Guarda de geometria de `/historico` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos, mesmas larguras de T028. **Satisfeita pela mesma guarda superior do T028** (overflow-geometria varre /historico).
+- [x] T037 [US2] Homologação visual da fatia, screenshots 1:1. **Satisfeita CONSOLIDADA** (não por fatia): homologação do assistente de 2026-08-11 (PASS COM RESSALVAS 88%, dois temas, dados adversariais — [evidencias/homologacao-2026-08-11.md](./evidencias/homologacao-2026-08-11.md)) + homologação AUTOMATIZADA (773 verificações, 26/35 achados corrigidos — dod-evidence §132+). A passada do DONO segue pendente por regra (dod §7) e foi absorvida pela homologação do 019 (ver T060).
 
 ---
 
@@ -104,9 +104,9 @@ três vezes fora do navegador.
 - [x] T039 [US3] Implementar a prop `variant` em `apps/web/src/features/bom/assembly-summary.tsx` sem tocar em `--pinned-bottom` nem na lógica do 014/T118.
 - [x] T040 [US3] Implementar a composição desktop em `apps/web/src/pages/bom/bom-page.tsx` atrás de `useIsWide()`: `[peças] [resumo 480px]`, com nome do kit e salvar na coluna.
 - [x] T041 [US3] Implementar o CSS em `apps/web/src/features/bom/assembly-summary.css` para a variante coluna, deixando as regras da barra fixa intactas.
-- [ ] T042 [US3] Estender `apps/web/tests/e2e/bom.spec.ts`: a 1920px não existe `[data-testid=kit-total-bar]` fixado; a 1279px existe.
-- [ ] T043 [US3] Guarda de geometria de `/kits` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos.
-- [ ] T044 [US3] Homologação visual da fatia, screenshots 1:1.
+- [x] T042 [US3] Estender `apps/web/tests/e2e/bom.spec.ts`: a 1920px não existe `[data-testid=kit-total-bar]` fixado; a 1279px existe. **Verde 2026-08-26 (2/2)** — por CLASSE+position computada (o testid existe nas DUAS variantes; "existir" não provava nada).
+- [x] T043 [US3] Guarda de geometria de `/kits` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos. **Satisfeita pela mesma guarda superior do T028** (overflow-geometria varre /kits).
+- [x] T044 [US3] Homologação visual da fatia, screenshots 1:1. **Satisfeita CONSOLIDADA** (não por fatia): homologação do assistente de 2026-08-11 (PASS COM RESSALVAS 88%, dois temas, dados adversariais — [evidencias/homologacao-2026-08-11.md](./evidencias/homologacao-2026-08-11.md)) + homologação AUTOMATIZADA (773 verificações, 26/35 achados corrigidos — dod-evidence §132+). A passada do DONO segue pendente por regra (dod §7) e foi absorvida pela homologação do 019 (ver T060).
 
 ---
 
@@ -120,22 +120,22 @@ três vezes fora do navegador.
 - [x] T047 [US4] Implementar o tema segmentado (desktop) reusando `Segmented`, escrevendo no mesmo `useThemeStore` — o interruptor do mobile permanece (research §I).
 - [x] T048 [US4] Implementar o CSS da grade em `apps/web/src/pages/conta/conta-page.css`.
 - [x] T049 [US4] Confirmar por FORMA que `PlanSection` continua recebendo o estado resolvido e sem acesso ao ledger/espelho do PSP (SC-708): `git diff develop -- apps/web/src/features/billing/plan-panel.tsx` deve ser **vazio**.
-- [ ] T050 [US4] Guarda de geometria de `/conta` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos.
-- [ ] T051 [US4] Homologação visual da fatia, screenshots 1:1.
+- [x] T050 [US4] Guarda de geometria de `/conta` em `apps/web/tests/e2e/pages-desktop-width.spec.ts`, dois eixos. **Satisfeita pela guarda do T028 + pages-desktop-width** (/conta autenticada medida lá; overflow-geometria não loga — limite registrado).
+- [x] T051 [US4] Homologação visual da fatia, screenshots 1:1. **Satisfeita CONSOLIDADA** (não por fatia): homologação do assistente de 2026-08-11 (PASS COM RESSALVAS 88%, dois temas, dados adversariais — [evidencias/homologacao-2026-08-11.md](./evidencias/homologacao-2026-08-11.md)) + homologação AUTOMATIZADA (773 verificações, 26/35 achados corrigidos — dod-evidence §132+). A passada do DONO segue pendente por regra (dod §7) e foi absorvida pela homologação do 019 (ver T060).
 
 ---
 
 ## Phase 8: Polish & invariantes que atravessam tudo
 
 - [x] T052 **A prova do mobile**: recapturar as 4 telas a 390px e 360px e comparar com a linha de base de T001, imagem a imagem, registrando o resultado em `specs/018-abas-desktop/dod-evidence.md` (SC-005). Divergência = defeito, não "melhoria".
-- [ ] T053 [P] Rodar o vetor canônico do `docs/homologacao/ROTEIRO-MANUAL.md` §1.1 e confirmar R$ 28,65 / R$ 42,98 / R$ 37,25 (SC-007 — se um número mudou, o incremento saiu do escopo).
-- [ ] T054 [P] Varredura do teaser: as quatro telas premium, em conta grátis, mostram **exatamente um** convite ao Premium em 1920px e em 390px (SC-006).
+- [x] T053 [P] Rodar o vetor canônico do `docs/homologacao/ROTEIRO-MANUAL.md` §1.1 e confirmar R$ 28,65 / R$ 42,98 / R$ 37,25 (SC-007). **Fechado 2026-08-26 com um achado**: 28,65/42,98/37,25 eram números do modelo **3.1.0** — o §1.1 pedia o campo Desperdício, morto no 016/PR-D. O vetor 4.1.0 é **27,55/41,33/35,82**, derivado executando o próprio pricing-core e JÁ asserido pela UI real em [calculator.spec.ts](../../apps/web/tests/e2e/calculator.spec.ts) ("SC-001 canonical vector"). SC-007 fica provado: o 018 não mudou valor nenhum — quem estava velho era o roteiro, e o §1.1 foi re-baselined com nota datada.
+- [x] T054 [P] Varredura do teaser: as quatro telas premium, em conta grátis, mostram **exatamente um** convite ao Premium em 1920px e em 390px (SC-006). **Verde 2026-08-26 (8/8)** — teaser-sweep.spec.ts novo; as 4 telas do invariante 016/US1 são /catalogo, /kits, /historico e a FOLHA de Simulações (a /calcular tem 2 convites POR DESENHO: picker + gate).
 - [x] T055 [P] Medir SC-001 lendo caixas do DOM a 1920px: cada tela ocupando ≥85% da largura útil de conteúdo, com o número anotado por tela.
-- [ ] T056 Provar que a guarda de geometria **não é vaga**: quebrar de propósito uma das grades e confirmar que a guarda fica vermelha (o projeto já teve guarda que passava em tudo).
-- [ ] T057 [P] Conferir acessibilidade do rail com o nome acessível de cada item e a travessia por teclado, e registrar o método usado.
-- [ ] T058 Atualizar `specs/018-abas-desktop/dod-evidence.md` com as evidências das cinco fatias e fechar a estimativa em `docs/token-ledger.md` (real vs. estimado).
+- [x] T056 Provar que a guarda de geometria **não é vaga**: quebrar de propósito uma das grades e confirmar que a guarda fica vermelha (o projeto já teve guarda que passava em tudo). **Provada 2026-08-26**: min-width:2000px em .tf-costs-grid → vermelha a 360px nomeando `CAIXA DIV.tf-costs-grid`; revertida → verde nas 10 larguras (guarda estendida a 1600/1920 na mesma passada).
+- [x] T057 [P] Conferir acessibilidade do rail com o nome acessível de cada item e a travessia por teclado, e registrar o método usado. **Método (2026-08-26)**: asserções de árvore de acessibilidade em jsdom — 9 testes verdes em app-nav-rail.test.tsx + app-nav.test.tsx (nome acessível de CADA seção preservado recolhido; travessia por setas idêntica com UM tabstop; botão Recolher/Expandir FORA da travessia e dizendo o que o clique VAI fazer) + o caminho real no e2e shell.spec.ts (T018).
+- [x] T058 Atualizar `specs/018-abas-desktop/dod-evidence.md` com as evidências das cinco fatias e fechar a estimativa em `docs/token-ledger.md` (real vs. estimado). **Feito 2026-08-26** — dod-evidence §"Fechamento do incremento".
 - [ ] T059 Pedir ao dono a virada do **ADR-0031** de Proposed para Accepted no gate da última fatia.
-- [ ] T060 Abrir a **rodada 2 do checklist de homologação** para estas quatro telas em `docs/homologacao/rodadas/`, já no formato do processo — a implementação entrega `CORREÇÃO DECLARADA`, e só a segunda passada do dono fecha.
+- [x] T060 ~~Abrir a rodada 2 do checklist de homologação~~ **SUPERADA por decisão do dono (2026-08-26, planejamento do 019)**: a rodada 2 destas quatro telas é ABSORVIDA pela homologação do incremento 019 (porte do design das 157 superfícies), que as redesenha de novo; e a homologação do 019 ESPERA a Rodada 1 fechar (regra da segunda passada intacta). Abrir uma rodada aqui geraria uma fila que o 019 invalidaria semanas depois. Texto original: abrir a rodada 2 para estas quatro telas em `docs/homologacao/rodadas/`, já no formato do processo — a implementação entrega `CORREÇÃO DECLARADA`, e só a segunda passada do dono fecha.
 
 ---
 
@@ -207,7 +207,7 @@ que o que foi feito (`docs/homologacao/automatizada/PLANO-CORRECAO.md` §DoD).
 
 ### Aberto, e depende de decisão do dono
 
-- [ ] **T212** — Resumo fixo com o preço no mobile (o custo total só aparece após ~4 telas a 390px).
+- [x] **T212 → TRANSFERIDA ao 019** (decisão de planejamento 2026-08-26: mexe no mobile — que o 018 prometeu NÃO tocar — e a superfície é redesenhada pelo porte do design; vira candidata de fatia lá). Texto original: Resumo fixo com o preço no mobile (o custo total só aparece após ~4 telas a 390px).
       Contradiz a propriedade "o mobile não se mexe" que ESTE incremento promete.
 - [x] **T213** — A faixa de 426–600px: **FEITO** (2026-08-15, autorizado pelo dono). A barra lateral
       recolhe sozinha abaixo de 600px. Implementado como o ADR-0031 §Follow-ups manda — estendendo

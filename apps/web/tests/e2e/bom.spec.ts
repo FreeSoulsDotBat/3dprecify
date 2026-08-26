@@ -185,3 +185,36 @@ test("signed-out at /kits sees the honest UNIFIED teaser; the FREE calculator is
   await expect(page.getByText(/R\$\s?\d/).first()).toBeVisible();
   await expect(page.getByText(pt.title)).toHaveCount(0);
 });
+
+// 018/US3 (T042) — no desktop a barra "Total do kit" deixa de ser fixada: o resumo vira COLUNA
+// (variant="column", classe .assembly-summary__col) rolando com a página; a 1279px — o último
+// pixel antes do corte — a composição mobile continua, com a barra pinada (.assembly-summary__pinned).
+// Asserção de CLASSE + posição computada, não de testid: `kit-total-bar` existe nas DUAS variantes,
+// e é exatamente por isso que "o testid existe" não prova nada aqui.
+for (const caso of [
+  { width: 1920, height: 1080, pinada: false },
+  { width: 1279, height: 900, pinada: true },
+] as const) {
+  test(`T042: a ${caso.width}px a barra do total ${caso.pinada ? "continua pinada" : "vira coluna (não pinada)"} (018/US3)`, async ({
+    page,
+  }, info) => {
+    const email = await signUpThrowaway(page, `kitcol${caso.width}-${info.workerIndex}`);
+    grantPremium(email);
+    await page.setViewportSize({ width: caso.width, height: caso.height });
+    await page.goto("/kits");
+    await page.reload(); // a concessão só é lida na próxima carga
+
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    const barra = page.getByTestId("kit-total-bar");
+    await expect(barra).toBeVisible();
+
+    if (caso.pinada) {
+      await expect(barra).toHaveClass(/assembly-summary__pinned/);
+      const pos = await barra.evaluate((el) => getComputedStyle(el).position);
+      expect(pos, "pinada = sticky no rodapé").toBe("sticky");
+    } else {
+      await expect(barra).toHaveClass(/assembly-summary__col/);
+      await expect(barra).not.toHaveClass(/assembly-summary__pinned/);
+    }
+  });
+}

@@ -84,3 +84,4 @@ specs/016-correcao-homologacao/evidencias/
 # do repositório. Os JSONL de defeitos/execuções continuam versionados (são a evidência que o
 # relatório cita); o dump bruto, não.
 docs/homologacao/automatizada/resultados/playwright-raw.json
+firebase.e2e-local.json

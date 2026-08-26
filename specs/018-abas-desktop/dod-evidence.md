@@ -231,3 +231,74 @@ eu fiz à mão para provar que o anel existe.
 Fica registrado porque a lição vale mais que o achado: **um medidor que erra na mesma direção três
 vezes precisa ser reescrito, não ajustado** — e cada ajuste anterior deixou a impressão de que o
 produto tinha um defeito que ele não tinha.
+
+## Fechamento do incremento (Fase 8 / Polish) — 2026-08-26
+
+Executado como Fase 0 do plano do 019 (decisão do dono: fechar e mergear o 018 antes do porte do
+design). Cada item abaixo tem a evidência ao lado; o `tasks.md` foi reconciliado linha a linha na
+mesma passada.
+
+### T053 — o vetor canônico, com um achado
+
+O §1.1 do `ROTEIRO-MANUAL.md` estava **defasado dois modelos**: pedia o campo Desperdício (morto no
+016/PR-D) e prometia R$ 28,65/42,98/37,25 — números do 3.1.0, hoje inatingíveis pela UI. O vetor do
+modelo vigente (4.1.0), derivado executando o próprio `computeCalculator` com as mesmas entradas
+menos o campo morto, é **R$ 27,55 / R$ 41,33 / R$ 35,82** — e a UI real já era asserida contra
+exatamente esses números pelo e2e `calculator.spec.ts` ("SC-001 canonical vector"), digitando campo
+a campo inclusive o modo ajustar da máquina. SC-007 fica provado pelo par motor⇄UI; o roteiro foi
+re-baselined com nota datada (a semente também estava velha: 20,60/30,90/26,78 → 16,16/24,24/21,01,
+confirmada pelo motor).
+
+### T054 — a varredura do teaser (SC-006)
+
+Novo e2e `teaser-sweep.spec.ts`: **exatamente um** convite ("Assinar Premium", contado pelo CTA e
+não pelo título — a classe de regressão do E6 era um segundo CTA fora do card) em cada uma das
+quatro telas do invariante 016/US1 — /catalogo, /kits, /historico e a **folha de Simulações** — em
+1920px e 390px. **8/8 verdes.** Registrado no próprio teste: /calcular NÃO entra porque tem DUAS
+superfícies premium por desenho (teaser do picker + gate do marketplace), cada uma com o próprio
+convite — a primeira versão do teste tropeçou exatamente nisso.
+
+### T018/T019 + T027/T035/T042 — os caminhos reais no e2e
+
+- `shell.spec.ts` (T018): recolher → navegar → recarregar → continua recolhido; conteúdo ganha
+  ≥160px **medido com `expect.poll`** — a primeira versão lia o `boundingBox` no meio da transição
+  de largura e "provou" ganhos de 121px e 24px na mesma tela. **4/4 verdes.**
+- `catalog.spec.ts` (T027): mestre-detalhe a 1920 e 1280px — dois itens, trocar a seleção troca a
+  ficha, `pathname` continua `/catalogo`. **2/2 verdes.**
+- `history-manage.spec.ts` (T035): lista + registro congelado juntos a 1440px, seleção em
+  `?snapshot=` (a MESMA chave do mobile, 013/F-02), reload no mesmo URL reabre o registro. **Verde.**
+- `bom.spec.ts` (T042): a 1920px a barra do total é `.assembly-summary__col` (não pinada); a 1279px
+  é `.assembly-summary__pinned` com `position: sticky` computado — asserção de CLASSE porque o
+  testid existe nas duas variantes. **2/2 verdes.**
+- `gate:all` (T019): registrado abaixo no fecho.
+
+### T056 — a guarda provada não-vácua, por mutação
+
+Mutação: `min-width: 2000px` em `.tf-costs-grid`. A guarda (`overflow-geometria.spec.ts`) ficou
+**vermelha em 360px nomeando o culpado exato** — `CAIXA DIV.tf-costs-grid` — e voltou ao verde com
+a mutação revertida (diff vazio confirmado). Na mesma passada a guarda foi **estendida a 1600 e
+1920px**: SC-003 nomeia as duas larguras e a lista parava em 1440 — o desenho de autoridade é a
+1920px e era exatamente a largura que ninguém media. Verde nas 10 larguras após a extensão.
+
+### T057 — a11y do rail, método registrado
+
+Árvore de acessibilidade em jsdom (9 testes verdes em `app-nav-rail.test.tsx` + `app-nav.test.tsx`):
+recolhido, cada seção CONTINUA com o nome acessível (o que sai é a tela, nunca a árvore); travessia
+por setas idêntica com UM tabstop; botão Recolher/Expandir FORA da travessia, dizendo o que o clique
+VAI fazer. O caminho com navegador real é o T018 acima.
+
+### T002 — ambiente
+
+`evidencias/ambiente.md`: /health **200** · /api/v1/entitlement **401** · postgres healthy em
+`0007 (head)`. Registrada também a armadilha da máquina: a faixa reservada do Windows engoliu a
+porta 9099 do emulador (9011–9110 neste boot) — destravada SEM admin estendendo o padrão
+`E2E_PREVIEW_PORT` já existente para `E2E_AUTH_EMULATOR_PORT` (default 9099 intacto; CI e
+firebase.json não mudam).
+
+### O que fica para o DONO (gate do PR #58)
+
+- **T059**: flip do ADR-0031 Proposed → Accepted.
+- Merge do PR #58 (squash em `develop`).
+- **T060 superada por decisão do dono (2026-08-26)**: a rodada 2 destas telas foi absorvida pela
+  homologação do incremento 019, que espera a Rodada 1 fechar. Nada aqui abre cenário novo.
+- **T212 transferida ao 019** (mexe no mobile; a superfície é redesenhada pelo porte).
