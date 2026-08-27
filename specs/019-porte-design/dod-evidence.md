@@ -247,3 +247,12 @@ a A5/016 o tinha levado de 248px a **60px**. Diferença **+15px**, acima dos ~8p
 360px: 968px (a A5 media 1248 antes e 1152 depois). Consequência honesta: a PR-A devolve 15 dos 188px que
 a A5 economizou; a linha continua UMA (título + ⓘ inline). Screenshots 1:1 em `evidencias/pr-a/`
 (10 arquivos: TabBar 390, 404, selo compact, seção Shopee, Frozen × 2 temas); a tela de ERRO não tem rota.
+
+### T022 · T034 · T035 — o gate e o PR (2026-08-27)
+
+`pnpm gate:all` no pre-push (o MESMO comando do CI, D4): **verde** — frontend 161 arquivos / **1808** testes,
+cobertura 88,82% (statements), depcruise/boundaries/typecheck ok; backend **474 passed**, 1 skipped;
+`migration-guard` ok. Push confirmado por `ls-remote` (= HEAD `29dafec`). PR aberto contra `develop`
+assertando as AUSÊNCIAS (zero classe duplicada · zero dispositivo de prancheta · zero `tf-lockup` · zero anel ·
+zero "canal" visível · zero "canal" no PDF · `price-hero.css` intocado) e pedindo o flip do **ADR-0032**.
+Estado da fatia: **CORREÇÃO DECLARADA** — nada homologado até a Rodada 1 fechar.
