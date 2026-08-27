@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-26
 
-**Status**: Draft (pós-specify; aguarda `/speckit-clarify` — Q1–Q10 do brief)
+**Status**: Draft — clarify 2026-08-26 concluído (5/5: Q3, Q4, Q5, Q6, Q8); Q1/Q2 (gosto) e Q7/Q9/Q10 (defaults do brief) deferidas ao plan
 
 **Input**: "Portar para o produto o design das 157 superfícies desenhadas pelo dono no Claude Design
 (projeto `a90ed7d4`), aplicando os deltas do handoff versionado em `docs/design/handoff-019/`
@@ -30,6 +30,16 @@ desenhadas) + as pranchetas remotas, transcritas por fatia.
 | D5 | Homologação do 019 ESPERA a Rodada 1; entregas ficam em CORREÇÃO DECLARADA | 2026-08-26 |
 | D6 | "Montar e Enviar" ENTRA (era proposta marcada no índice do design) | 2026-08-25 |
 | D7 | Premium sem parede: bloqueia SÓ no salvar; o servidor continua recusando toda escrita | 2026-08-25 |
+
+## Clarifications
+
+### Session 2026-08-26
+
+- Q: Onde mora o "preço anterior" e a marca de "última visita" do recálculo do Catálogo (Q3 do brief)? → A: **B — no servidor.** Nasce a primeira tabela com preço guardado (observação de preço por produto, com data); a frase "desde a sua última visita" vale em qualquer aparelho. Consequências assumidas pelo dono: migração de schema na PR-D, escalação opus (ADR-0022), e Clarification datada na spec 007 (FR-310/FR-313 passam a admitir preço OBSERVADO, nunca preço-fonte).
+- Q: "Preço fixado por você" fixa o quê, e o que acontece quando o custo ultrapassa o fixado (Q4 do brief)? → A: **A — fixa o NÚMERO FINAL** (o preço do anúncio, literal, guardado no produto como leaf de dinheiro → revisão opus). Custo acima do fixado gera **aviso em tom ATENÇÃO** e NÃO mexe no preço nem desfixa sozinho — a decisão continua do vendedor; desfixar volta ao recomputado de hoje.
+- Q: Unicidade de nome — escopo, sensibilidade e o conflito offline entre dois aparelhos (Q5 do brief)? → A: **A, sem aviso**: por conta + por tipo (filamento vs. produto podem coincidir), comparação IGNORANDO maiúsculas e acentos; conflito offline → o servidor **aceita e renomeia** a segunda ("Gancho (2)") **silenciosamente** — nada é descartado, a fila drena, e o nome renomeado simplesmente aparece na lista.
+- Q: Desconto do construtor "Montar e Enviar" — forma, incidência e ordem em relação à comissão (Q6 do brief)? → A: **A — venda direta ao cliente**: o desconto (percentual OU valor em R$) incide **no total**, sobre o preço de venda direta (custo + markup); o marketplace fica FORA da conta do construtor (quem vende via marketplace usa Calculadora/Simulações); o piso de custo compara o total descontado com o custo somado dos itens × quantidades.
+- Q: O que "Enviar" faz além de congelar o preço (Q8 do brief)? → A: **A — congela + gera o PDF**; o vendedor manda por fora (WhatsApp/e-mail), como já faz com os Orçamentos. Zero superfície pública nova (sem link/e-mail pelo app); reaproveita o export do E4 (ADR-0020) com o rodapé não-fiscal.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -173,17 +183,11 @@ recusado antes de gravar, incluindo o caminho offline.
 3. **Given** um item fixado, **When** o custo passa do preço fixado, **Then** aviso em tom
    ATENÇÃO (nunca erro) — vender no prejuízo sem saber é o pior desfecho de um app de precificação.
 
-**[NEEDS CLARIFICATION: Q3 — onde mora o preço anterior e o marcador de "última visita"?
-Servidor (a frase vale em qualquer aparelho; QUEBRA o invariante "sem coluna de preço"; escalação
-opus + Clarification na 007) ou dispositivo (não sincroniza; "sua última visita" = "neste
-aparelho")? Decide se a PR-D tem migração.]**
+**Q3 decidida (B, servidor)**: o preço anterior e a marca de última visita moram no servidor, como OBSERVAÇÃO de preço (valor + data) por produto e por conta — nunca como fonte do preço exibido. A PR-D carrega migração e escalação opus.
 
-**[NEEDS CLARIFICATION: Q4 — "fixar" fixa o quê? O número final (products ganha leaf de dinheiro
-→ opus) ou o markup (o preço segue o custo com margem travada)? E ao ser ultrapassado pelo custo:
-só avisa, ou desfixa sozinho?]**
+**Q4 decidida (A)**: fixa o NÚMERO FINAL (preço do anúncio), guardado no produto; ultrapassado pelo custo, só AVISA (ATENÇÃO) — nunca desfixa sozinho.
 
-*(Q5 — escopo/sensibilidade da unicidade de nome e o conflito offline entre dois aparelhos — vai
-ao clarify junto; registrada no brief §10 e no R6: a resposta NÃO pode ser "o outbox descarta".)*
+**Q5 decidida (A, sem aviso)**: unicidade por conta + tipo, insensível a maiúscula/acento; conflito offline → aceita e renomeia "Gancho (2)" sem aviso — nada descartado (R6 respeitado).
 
 ---
 
@@ -213,13 +217,14 @@ PDF com nome adversarialmente longo não colide com a coluna de preço (geometri
 3. **Given** um item degradado (referência de catálogo perdida), **When** entra no construtor,
    **Then** segue o caminho de degradação de leitura do E3 com "(avulsa)" — não vira erro.
 
-**[NEEDS CLARIFICATION: Q6 — o desconto é percentual ou valor? por item ou no total? e incide
-ANTES ou DEPOIS da comissão do marketplace? Cada combinação dá um número diferente e todas parecem
-certas na tela — é a AC que põe a PR-E dentro do pricing-core.]**
+**Q6 decidida (A)**: desconto % ou R$, no TOTAL, sobre o preço de venda direta; marketplace fora do construtor; piso = custo somado (itens × quantidades). Entra no pricing-core como regra de total com desconto e piso (escalação opus mantida).
 
-*(Q7 validade texto-ou-estado · Q8 o que "Enviar" faz além de congelar — link público exige
-`seguranca` · Q9 origem da não-monotonicidade · Q10 piso avisa-ou-bloqueia: todas registradas no
-brief §10, todas bloqueantes da PR-E, todas vão ao clarify.)*
+**Q8 decidida (A)**: "Enviar" = congelar (ADR-0019) + gerar o PDF (export do E4, rodapé
+não-fiscal); a entrega é por fora — sem link público nem e-mail pelo app (zero superfície nova).
+
+*(Q7 validade texto-ou-estado · Q9 origem da não-monotonicidade · Q10 piso avisa-ou-bloqueia:
+DEFERIDAS ao plan com os defaults do brief — Q7 = texto no documento; Q9 = derivado das faixas
+progressivas (band-dominance já provada); Q10 = avisa, não bloqueia — salvo objeção do dono.)*
 
 ---
 
@@ -254,8 +259,7 @@ muda.
 
 - Formulário inerte + offline: nenhuma escrita do grátis pode entrar no outbox (classe A3 do
   hotfix — fila que o servidor recusaria depois).
-- Dois aparelhos criam "Gancho" offline: o conflito de unicidade é resolvido SEM descartar escrita
-  em silêncio (Q5/R6).
+- Dois aparelhos criam "Gancho" offline: o segundo vira "Gancho (2)" na sincronização — sem descarte, sem aviso (Q5).
 - Item degradado duplicado: a cópia continua degradada, sem inventar referência.
 - Orçamento congelado ANTIGO com "canal" no payload: abre idêntico após a troca de vocabulário.
 - Preço fixado ultrapassado pelo custo: aviso ATENÇÃO, nunca erro, nunca desfixa em silêncio
@@ -302,17 +306,16 @@ muda.
   mobile autorizada); R$/kWh com 3+ casas chega íntegra ao motor; "0" reabre "0,00" (US12).
 - **FR-1913**: Recálculo: contagem de preços mudados desde a última visita + "era R$ X" +
   "Salvo em DD/MM" (verbatim); preço exibido SEMPRE recomputado; sem histórico, nada é exibido
-  (US13; Q3 decide onde o anterior mora).
+  (US13; **Q3 = servidor**: observação de preço por produto/conta, com data — migração + opus + Clarification na 007).
 - **FR-1914**: Fixar preço: "Preço fixado por você"/"Voltar a acompanhar o custo"; custo acima do
-  fixado gera aviso ATENÇÃO; fixar não toca Orçamentos; desfixar volta ao recomputado (US14; Q4
-  decide o que se fixa).
+  fixado gera aviso ATENÇÃO; fixar não toca Orçamentos; desfixar volta ao recomputado (US14; **Q4 = número final**, leaf de dinheiro em products → opus; nunca desfixa sozinho).
 - **FR-1915**: Duplicar: "Gancho (cópia)", independente; nome repetido recusado ANTES de gravar
   ("Este nome já está no catálogo"); regra de unicidade é NOVA (não existe no schema — medido);
-  cópia de degradado continua degradada (US15; Q5 decide escopo+offline).
+  cópia de degradado continua degradada (US15; **Q5**: por conta+tipo, case/acento-insensível; conflito offline → aceita e renomeia "(2)" sem aviso).
 - **FR-1916**: Construtor: N itens × quantidade, total pelo motor, degradado entra por D6/E3,
   nada congela antes de enviar (US16).
-- **FR-1917**: Desconto (forma/incidência = Q6) com piso de custo ("Abaixo do custo"; bloqueia ou
-  avisa = Q10); "Válido até" (texto ou estado = Q7); "Enviar congela este preço" via ADR-0019;
+- **FR-1917**: Desconto (**Q6 = % ou R$, no total, sobre venda direta; sem comissão de marketplace no construtor**) com piso de custo ("Abaixo do custo"; bloqueia ou
+  avisa = Q10); "Válido até" (texto ou estado = Q7); "Enviar congela este preço" via ADR-0019 **e gera o PDF (Q8 = A; sem link/e-mail pelo app)**;
   "Voltar a acompanhar não vale para orçamentos enviados"; rodapé não-fiscal mantido (US17).
 - **FR-1918**: Aviso de não-monotonicidade ("10 un. sai mais barato que 9"), descritivo, derivado
   da propriedade band-dominance já provada (origem = Q9) (US18).
@@ -323,15 +326,13 @@ muda.
 
 ### Key Entities
 
-- **Preço anterior / marca de última visita** (NOVA — forma decidida pela Q3): o contexto que
-  permite "era R$ 38,90"; NUNCA fonte do preço exibido.
-- **Fixação de preço** (NOVA — natureza decidida pela Q4): estado por item do catálogo; convive
+- **Observação de preço** (NOVA — Q3 = servidor): por produto e por conta, o último valor recomputado que o vendedor VIU e a data ("Salvo em 12/05"); permite "era R$ 38,90" e a contagem de mudados; NUNCA fonte do preço exibido — o preço continua recomputado ao vivo, e uma observação ausente significa "nada a dizer", não "R$ 0,00".
+- **Fixação de preço** (NOVA — Q4 = número final): o preço do anúncio guardado no produto como valor monetário + o estado "fixado"; o custo continua recomputado ao lado para o aviso de prejuízo; convive
   nomeadamente com as duas prateleiras existentes (congelado ADR-0019 / recalculado ADR-0021) —
   a Ressalva 4 do PO exige as três noções legíveis juntas.
-- **Orçamento em montagem** (NOVA): N itens × quantidade + desconto + validade; vira snapshot
+- **Orçamento em montagem** (NOVA): N itens × quantidade (preço de VENDA DIRETA por item) + desconto no total (% ou R$) + validade; custo somado como piso; vira snapshot
   imutável AO ENVIAR (mesma maquinaria E4); antes disso acompanha o preço de hoje.
-- **Regra de unicidade de nome** (NOVA — escopo pela Q5): inclui resolução de conflito offline
-  sem descarte silencioso.
+- **Regra de unicidade de nome** (NOVA — Q5): por conta + tipo, comparação normalizada (sem maiúscula/acento); no formulário online recusa antes de gravar; no conflito de sincronização o servidor renomeia com sufixo "(2)", "(3)"… sem descartar e sem avisar.
 - **Dispensa de selo** (NOVA): par (fonte da tarifa: citação+data) → dispensado; invalidada pela
   mudança da fonte.
 
@@ -359,8 +360,7 @@ muda.
 
 ## Assumptions
 
-- Sem usuário pagante nem dado em produção (deploy adiado até v1): migrações de schema, se a Q3/Q4
-  as trouxerem, não precisam de plano de migração com cliente em cima.
+- Sem usuário pagante nem dado em produção (deploy adiado até v1): a migração da PR-D (observação de preço, Q3=B) não precisa de plano de migração com cliente em cima.
 - As pranchetas remotas (projeto `a90ed7d4`) permanecem acessíveis via DesignSync para transcrição
   de copy por fatia; o handoff versionado é o contrato quando divergirem.
 - O 017 segue em paralelo em `017-pr-b-precos`; o 019 não toca `packages/fee-ingest` nem tarifas

@@ -15,7 +15,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain — **3 marcadores DELIBERADOS (Q3, Q4, Q6)**, os de
+- [x] No [NEEDS CLARIFICATION] markers remain — **3 marcadores DELIBERADOS (Q3, Q4, Q6)**, os de
       maior impacto de escopo; Q1/Q2/Q5/Q7–Q10 registradas no brief §10 e referenciadas nas FR.
       **Resolução é o próximo passo (`/speckit-clarify` com o dono)** — não são lacunas de
       autoria, são decisões de produto que o brief provou não terem default razoável.
