@@ -89,7 +89,10 @@ for (const vp of VIEWPORTS) {
       else test.info().annotations.push({ type: "skip", description: "sem role=tab em /calcular" });
 
       // 4. switch
-      const sw = page.getByRole("switch").first();
+      // um switch HABILITADO (o de sobretaxa nasce disabled sem marketplace escolhido)
+      const sw = page
+        .locator('[role="switch"]:not([disabled]):not([aria-disabled="true"])')
+        .first();
       if ((await sw.count()) > 0) expectNoRing("switch", await focusStyles(sw));
       else
         test.info().annotations.push({ type: "skip", description: "sem role=switch em /calcular" });
@@ -114,7 +117,7 @@ for (const vp of VIEWPORTS) {
       const s = await focusStyles(input);
       expectNoRing("campo (input)", s);
 
-      const wrap = page.locator(".tf-inputwrap").filter({ has: input }).first();
+      const wrap = input.locator(".."); // a moldura é o pai imediato do input (field.tsx)
       const wrapStyles = await wrap.evaluate((el) => {
         const cs = getComputedStyle(el);
         return {
@@ -125,9 +128,12 @@ for (const vp of VIEWPORTS) {
       });
       expect(wrapStyles.boxShadow, "moldura: sem sombra de foco").toBe("none");
       expect(wrapStyles.outline, "moldura: sem outline").toBe("none");
-      expect(wrapStyles.borderColor, "moldura: borda de acento em :focus-within").toBe(
-        await accentAsRgb(page),
-      );
+      // a borda TRANSICIONA (field.css): ler logo após o focus() pega a interpolação — poll até o fim
+      await expect
+        .poll(() => wrap.evaluate((el) => getComputedStyle(el).borderTopColor), {
+          message: "moldura: borda de acento em :focus-within",
+        })
+        .toBe(await accentAsRgb(page));
     });
   });
 }

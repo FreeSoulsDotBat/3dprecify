@@ -680,6 +680,24 @@ class TestQuoteContentAdversarialData:
         # The e-mail is a SECOND Paragraph, so the name passing proves nothing about it.
         assert "ana<b>@m&m.com.br" in text
 
+    def test_the_quote_never_says_canal(self) -> None:
+        """019/T028 (US2) — the seller's word is "marketplace" now (owner, 2026-08-25); the frozen
+        document is immutable (ADR-0019) and this renderer has ZERO vocabulary strings of its own —
+        so the word can only enter through a heading someone adds later. Measured on the FULL
+        artifact (opt-in breakdown, surcharge line, kit lines): what the page says, not the code."""
+        import re
+
+        for payload in (SINGLE_PAYLOAD, SINGLE_PAYLOAD_WITH_SURCHARGE, KIT_PAYLOAD):
+            quote = build_quote_view(
+                _snap(payload),
+                seller_name="Ana",
+                seller_email="ana@x.com",
+                include_cost_breakdown=True,
+            )
+            text = _pdf_text(render_quote_pdf(quote))
+            assert len(text) > 100  # a rendered quote — the negative below is not vacuous
+            assert re.search(r"(?i)\bcana(l|is)\b", text) is None, text
+
     def test_the_breakdown_never_counts_the_same_money_twice(self) -> None:
         """`pricing-core` (index.ts:77/93): "Σ otherCosts === admin" — it IS their sum.
         The renderer printed `admin` AND every otherCosts line, so a customer allowed to see the

@@ -163,3 +163,43 @@ round-trip existente de `history-export.spec.ts` na T034.
   de engenharia com "canal" ficam. T033: **1 asserção** (`bom-page.test.tsx:509`) — os demais 94 achados
   da T003 já assertavam via `messages` ou são nomes de teste/identificadores/metadados de relatório.
   977/977 verdes; `tsc` 0.
+**Adendo T028**: a asserção negativa NÃO foi ao e2e — `history-export.spec.ts` explica que os streams do
+ReportLab são deflatados e um grep nos bytes "passa quer a linha esteja no documento quer não". Foi para
+`backend/tests/test_export.py::TestQuoteContentAdversarialData::test_the_quote_never_says_canal`, que lê o
+texto decodificado do PDF completo (opt-in do detalhamento + sobretaxa + kit) e exige `len(text) > 100`
+antes do negativo. 2/2 verdes, ruff limpo.
+
+### T016 · T025 · T024 — a primeira rodada no browser (2026-08-27)
+
+Stack real (build + emulador 9500 + backend via `run_e2e_server.py` + Postgres compose — o Docker daemon
+tinha caído desde a T005; subido de novo). `porte-medidas.spec.ts` **8/8** (chromium + mobile): Frozen —
+dica e rótulo ≥4,5:1 nos dois temas contra o fundo real pintado e opacidade 1 no contêiner; Plist — 12
+itens a 390px com ≥9 inteiros em 844px; TabBar — os 5 rótulos a 10px, sem transbordo, ≥7px de respiro
+por lado.
+
+**Achado colateral do vocabulário (classe T033 que o grep por "canal" NÃO vê):** com "Remover canal" →
+"Remover marketplace", `getByLabel("Marketplace")` passou a casar DOIS controles por substring (o select
+e o botão de remover) — `calculator-layout.spec.ts` quebrou por *strict mode violation*. Correção: `{ exact:
+true }` em **19 locators / 8 specs** (calculator 8, marketplace-premium 3, scenarios 2, scenarios-manage 2,
+calculator-layout/category-picker/shopee-profile-volumoso/porte-screenshots 1 cada). Lição: uma troca de
+vocabulário muda o NOME ACESSÍVEL, e locators por substring são asserções implícitas.
+
+`focus-none.spec.ts` (T024) falhou por dois bugs MEUS, não do produto: `getByRole("switch").first()` pegava
+o switch de sobretaxa, que nasce `disabled` (foco não chega — correto do produto); e `filter({ has })` com
+`.first()` dentro não é relativo. Corrigidos (switch habilitado; a moldura é `input.locator("..")`).
+Rerun na rodada completa (T034).
+
+### T034 — a rodada completa achou uma dívida do 018 (2026-08-27)
+
+E2E completo local: **318 passaram · 24 falharam · 30 skipped · 8 não rodaram** (3,8 min). Das 24, **20 são
+IDÊNTICAS às do job E2E do CI no merge do 018** (`6a1a55a`, run 33016384802: 20 failed / 304 passed) —
+o 018 entrou em `develop` com o E2E do CI VERMELHO, e o ground line/dod-evidence do 018 não registrou isso.
+Classe única: *strict mode violation* — o mestre-detalhe do 018 (chromium ≥1280) renderiza a lista E a
+ficha, e `getByText("PLA Azul")`/`getByText("Valor cotado")`/`getByText("R$ 15,99/mês")` passaram a
+resolver 2 elementos (span da lista + h2 da ficha; oferta inline + diálogo). As outras 4 eram o `focus-none`
+campo (transição de `border-color` lida a meio caminho — `expect.poll`, lição do rail do 018). O CI tinha
+ainda 1 flaky mobile (`catalog.spec.ts:183`) que aqui passou.
+
+Decisão: os 20 são dívida do 018 e a PR-A NÃO pode chamar "e2e verde" sem pagá-la — corrigidos em commit
+SEPARADO (`test(018): …`), delegado com a regra "escopar o locator ao painel pretendido; se a duplicação for
+defeito de produto (ex.: dois convites numa tela), reportar, não mascarar".
