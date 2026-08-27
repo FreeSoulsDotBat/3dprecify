@@ -45,10 +45,10 @@ Alembic · psycopg. Motor: `packages/pricing-core` (4.1.0 → **4.2.0** na PR-E,
 
 **Storage**: PostgreSQL 17. **Duas migrações aditivas**, ambas em fatias próprias: **0008** (PR-D:
 `price_observations` + `products.seller_fixed_price/seller_fixed_at` + `name_norm` e índice único
-parcial em `filaments/printers/products/boms`) e **0009** (PR-E: enums `kind='QUOTE'` /
+parcial em `filaments/printers/products/boms`) e **0009** (PR-E: CHECKs — não há enum Postgres — `kind='QUOTE'` /
 `headline_basis='PRECO_ORCAMENTO'` em `snapshots` **com o `CASE` do `CHECK headline_matches_totals`
-estendido no mesmo ato** — ADR-0034 §2). Duas chaves novas de `localStorage`: dispensa do selo
-(chave = identidade da fonte, research §G) e nada mais; o "Entendi" da plausibilidade é memória de
+estendido no mesmo ato** — ADR-0034 §2). Uma FAMÍLIA nova de chaves de `localStorage`: a dispensa do selo
+(chave = identidade da fonte, research §G; 50 mais recentes) e nada mais; o "Entendi" da plausibilidade é memória de
 sessão (§H). **Nenhuma escrita nova no outbox** (research §E-3/K).
 
 **Testing**: Vitest + Testing Library (lógica/composição) · Playwright e2e contra stack real (auth
@@ -57,8 +57,8 @@ pytest (backend, incl. corrida de concorrência para unicidade) · contract drif
 · duas guardas de folha novas (research §A: "uma classe `tf-*`, um arquivo" e "zero
 `tf-phone-scroll`/`tf-price--rola`"), ambas provadas por mutação.
 
-**Target Platform**: PWA web mobile-first (390px) + desktop ≥1280px (corte do 018, reafirmado pela
-emenda do 0031). O ramo mobile é o mesmo código, intocado, exceto a T212 (research §I, `sticky`).
+**Target Platform**: PWA web mobile-first (390px) + desktop ≥1280px (corte do 018) + o limiar NOMEADO 1024 para a densidade da
+lista do Catálogo (emenda 2 do 0031, decisão 1 do dono, 27/08). O ramo mobile é o mesmo código, intocado, exceto a T212 (research §I, `sticky`).
 
 **Project Type**: monorepo web (pnpm workspaces) — `apps/web` + `backend` + `packages/pricing-core`.
 
@@ -107,9 +107,8 @@ Ressalva 5) — decisão do dono, disponível até ela começar.
       `/speckit-analyze` roda antes do tasks; a homologação segue o processo da casa (D5).
 - [x] **VIII. Architecture Decided Before Implementation** — cada escolha estrutural traça a um ADR
       (0032/0033/0034, emenda 0031) ou a uma decisão registrada do dono (spec §Clarifications: Q3, Q4,
-      Q5, Q6, Q8, foco, US18). **Um ponto ainda aberto, roteado ao gate da PR-B (não bloqueia o plan)**:
-      research §E-5 — o visitante DESLOGADO no lote 32 (default recomendado (a): a superfície de entrada
-      de hoje continua; o lote 32 vale para o logado sem premium).
+      Q5, Q6, Q8, foco, US18). **Nenhum ponto aberto** (atualizado 2026-08-27): a E-5 foi decidida (deslogado no mesmo caminho) e as 5
+      decisões da auditoria de implementabilidade estão em spec §Clarifications 2026-08-27.
 
 **Pós-design (re-check)**: sem violação nova. O único gate condicional é o de contraste do
 `--warning-text` (ADR-0032 §4: a PR-A **mede**; reprovando, o tom claro é escurecido e **isso é decisão
@@ -158,7 +157,7 @@ backend/
 ├── alembic/versions/0009_*.py   # PR-E: enums QUOTE/PRECO_ORCAMENTO + CASE do CHECK estendido
 ├── app/models/__init__.py       # PR-D/E: modelos + comentário FR-310/313 reescrito (ADR-0033 §1)
 ├── app/api/price_observations.py   # PR-D: GET/PUT
-├── app/api/catalog*.py          # PR-D: seller_fixed_price no PATCH; normalização + sufixo "(2)"
+├── app/api/{filaments,printers,products,boms}.py  # PR-D: PATCH novo em products; normalização + sufixo "(2)" nos 7 sítios (não existe catalog*.py)
 ├── app/api/history.py           # PR-E: _BASIS_TOTAL_KEY + Literal (guarda de igualdade de conjuntos)
 └── app/entitlement/             # INTOCADO (diff vazio — SC-1903)
 

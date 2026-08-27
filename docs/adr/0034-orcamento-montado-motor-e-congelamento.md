@@ -186,3 +186,22 @@ fica bloqueada.
   divergente ⇒ recusa) e a revisão do payload existem para pegar isso.
 - **Follow-ups**: se um dia o construtor precisar de marketplace, ele **não** ganha um segundo caminho —
   `computeQuote` passa a aceitar canais e o documento ganha o bloco de canal que o E4 já congela.
+
+## Adendo 2026-08-27 (pré-flip — auditoria de implementabilidade + decisões do dono)
+
+- **§3 RESOLVIDO**: a US18 ("10 un. sai mais barato que 9") foi **retirada** pelo dono em 27/08 (spec FR-1918, research §D-3);
+  a Q9 morre com ela e a T087 não transcreve a frase.
+- **`lines[]` NÃO é "a forma que o PDF já lê"** (medido: `quote_render.py:202` lê `line.totals[key]`). A forma do documento é
+  `FrozenQuoteLine {name, quantity, unitPrice, subtotal, origin}` (data-model §4), lida por um **ramo `QUOTE` novo** em
+  `build_quote_view` (hoje só ramifica KIT, `:195`), que também imprime bruto → desconto → total.
+- **Fronteira número/string**: `computeQuote` recebe `discount.value: number` e devolve NÚMEROS (o regime de `toMoney` do
+  pacote); **no documento congelado todo dinheiro — inclusive `discount.value` — é STRING decimal** (`validation.py:106-110`
+  rejeita float); a conversão mora em `entities/history/frozen-payload.ts`. `_MONEY_POSITION_KEYS` ganha as FOLHAS
+  (`unitPrice`, `subtotal`, `costFloor`, `amount`, `grossTotal`), nunca `lines`/`discount` (marca de subárvore quebraria
+  `quantity` de todo KIT).
+- **"Enviar" exige conexão** (decisão 4 do dono): o construtor funciona offline; o botão fica desabilitado com o motivo; nada
+  novo entra no outbox (research §K mantida). Online, o registro passa transitoriamente pelo outbox (durable-first, ADR-0018)
+  e o PDF só existe com o id do servidor.
+- `quoteValidityDays` NÃO vai no payload (é coluna, já impressa pelo PDF); o payload traz `modelVersion`/`schemaVersion`.
+- Não há enum Postgres: a 0009 é DROP+ADD de três CHECKs em TEXT no mesmo ato; o gatilho de imutabilidade vigente é a V2 da
+  0006 e cobre `QUOTE` por construção; o downgrade falha por desenho na presença de um QUOTE (`trg_snapshots_forbid_delete`).

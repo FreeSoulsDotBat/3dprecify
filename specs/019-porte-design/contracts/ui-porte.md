@@ -22,7 +22,7 @@ primitivo novo               →  shared/ui/<nome>.tsx + shared/ui/<nome>.css (c
 | `tf-aviso` | `shared/ui/aviso.{tsx,css}` (NOVO) | — | 3ª categoria: válido-mas-provavelmente-não |
 | `tf-plist` | `shared/ui/plist.{tsx,css}` (NOVO) | — | ≥9 itens a 390px (hoje 4) |
 | `tf-table` | `shared/ui/table.{tsx,css}` (NOVO) | — | Catálogo ≥1024px, leitura de coluna |
-| `tf-frozen` | `shared/ui/frozen.{tsx,css}` (NOVO) | **É** `<fieldset disabled>` — sem prop para desligar | esmaecimento nos CONTROLES; `background: var(--bg-muted)` obrigatório; dica ≥5,67:1, rótulo ≥18,23:1 |
+| `tf-frozen` | `shared/ui/frozen.{tsx,css}` (NOVO) | **É** `<fieldset disabled>` — sem prop para desligar | esmaecimento nos CONTROLES; `background: var(--border-subtle)` (a folha manda — `--bg-muted` empatava com o cartão no escuro; entregue na PR-A, `frozen.css:3-10`); contraste AA 4,5:1 MEDIDO nos 2 temas (T016) — os 5,67/18,23 eram medidas de um tema da prancheta |
 
 **Guardas (provadas por mutação)**: (1) uma classe `tf-*`, um arquivo — varre `apps/web/src/**/*.css`;
 vermelha antes de promover `--compact` (hoje duplicada em `shopee-warnings.css`), verde depois; (2)
@@ -48,22 +48,24 @@ mutação.
 ## C2 — Premium sem parede (PR-B)
 
 ```
-premiumGate({status}, session) → "active" | "lapsed-com-itens" | "free-nunca-teve" | "unknown"
+premiumGate({status}, session) → "active" | "lapsed" | "free-nunca-teve" | "signed-out" | "unknown"   // 5 estados (27/08); "-com-itens" é composição da tela
    (função PURA em shared/billing; decidida pelo LEDGER via GET /api/v1/entitlement; unknown nunca presume)
 ```
 
 | estado | lista | formulário | ação primária | mensagem (verbatim da prancheta) |
 | --- | --- | --- | --- | --- |
 | `free-nunca-teve` | vazio didático (6 frases, D4) — ocupa também o ramo `ENTITLEMENT_REQUIRED` | `<Frozen>`, campos VAZIOS c/ placeholder, **sem `onSubmit`** | "Assinar Premium" secundário; "Salvar" desabilitado e visível | "Salvar faz parte do Premium." acima da linha de botões |
-| `lapsed-com-itens` | os itens do vendedor | `<Frozen>`, campos PREENCHIDOS | "Reativar Premium" secundário | "Reative o Premium… Seus itens estão salvos." (32e); a faixa de topo SAI |
+| `lapsed` (+ itens, composto pela tela) | os itens do vendedor | `<Frozen>`, campos PREENCHIDOS | "Reativar Premium" secundário | "Reative o Premium… Seus itens estão salvos." (32e); a faixa de topo SAI |
 | `active` | como hoje | vivo | — | — |
+| `signed-out` | o MESMO vazio didático (E-5) | `<Frozen>`, campos VAZIOS | "Assinar Premium" → `/sign-in?redirect=/conta?assinar=1` (intenção preservada) | "Salvar faz parte do Premium." |
 | `unknown` | como hoje (verificando / não foi possível) | — | — | nunca presume grátis nem premium |
 
 **Invariantes**: diff **vazio** em `app/entitlement/` · **zero** chamada de rede de escrita no estado
 grátis (teste prova por ausência) · **zero** item no outbox (o outbox é do Histórico; catálogo é
 online-only) · **um teaser, nunca dois** (016/US1) · vazios de Orçamentos/Simulações levam à
-**calculadora** ("Fazer um cálculo"). **Aberto ao gate da PR-B**: visitante DESLOGADO (research §E-5;
-default (a): superfície de entrada de hoje continua).
+**calculadora** ("Fazer um cálculo"). **Decidido 2026-08-27 (E-5)**: o visitante DESLOGADO vê o MESMO caminho sem parede; "Assinar Premium"
+visível; no clique é convidado a entrar/criar conta e volta à oferta. **Um convite por ESTADO renderizado**: com
+o formulário inerte aberto, o `TeaserUpgrade` do vazio não é renderizado e o rodapé é o único.
 
 ## C3 — Calculadora (PR-C)
 
@@ -71,8 +73,9 @@ default (a): superfície de entrada de hoje continua).
   `campo:valor` em memória de sessão; erro de validação **não** apaga o aviso; dinheiro no formato do
   produto; **nunca** bloqueia nem altera número.
 - **Máquina**: custo/hora é **readout** com a divisão escrita ("de R$ 4.000,00 ÷ 3.600 h"), presente nos
-  DOIS modos; zero ⇒ ressalva verbatim; troca de modo ⇒ confirmação (3 frases verbatim) antes de
-  descartar; "Estimar"/"Ajustar". **`PriceInput` inalterado; sem bump.**
+  DOIS modos; zero ⇒ ressalva verbatim; confirmação (3 frases verbatim) SÓ em "Usar estimativa por ritmo" quando
+  `detectRitmoMode(currentHours) === null` (é o único clique que descarta dado — `calculator-form.tsx:482-485`);
+  "Ajustar" nunca pergunta; "Estimar"/"Ajustar". **`PriceInput` inalterado; sem bump.**
 - **Selo de procedência**: `<Alert compact action onDismiss tone>`; dispensa persiste por chave
   `(marketplace, source, effectiveDate)` em `localStorage` sem uid; fonte mudou ⇒ chave nova ⇒ reaparece.
 - **T212**: `position: sticky` no topo da coluna, 390px; guarda de geometria **nos dois eixos** durante
@@ -98,8 +101,10 @@ nome) ou **payload congelado** (orçamento antigo com "canal" abre idêntico). O
 
 ## C6 — Simulações desktop (PR-F, emenda 0031)
 
-Mesmo limiar (1280px), mesmo hook (`useIsWide`), mesma regra de seleção (estado, nunca URL); a gaveta
+Mesmo limiar (1280px), mesmo hook (`useIsWide`), mesma regra de seleção (estado, nunca URL); hospedeiro = a coluna
+larga de `/calcular` (decisão 2, 27/08 — convive com o corte 1024 de layout da Calculadora, ambos nomeados na
+emenda 2 do ADR-0031); a gaveta
 de simulações **muda de hospedeiro, não de identidade** (o mesmo componente montado na composição
 larga — nunca uma segunda cópia). Layout ≥1280px = prancheta 20g, transcrita. Largura útil **medida**
-antes/depois a 1280/1440/1920. D1: teste que falha se **um só** dos três textos de "Premium pausado"
-mudar. D2: as duas folhas de renomear leem a **mesma chave**. Q1/Q2 (gosto) ao dono no gate.
+antes/depois a 1280/1440/1920. D1: teste que falha se **uma só** das SETE chaves com "Premium pausado" mudar (T090 as nomeia;
+corrigido 27/08). D2: as duas folhas de renomear leem a **mesma chave**. Q1/Q2 (gosto) ao dono no gate.

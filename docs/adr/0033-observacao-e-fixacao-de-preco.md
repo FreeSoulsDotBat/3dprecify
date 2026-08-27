@@ -215,3 +215,16 @@ FR-310/FR-313 continuam valendo com esta redação. Todo teste desta fatia mede 
 - **Follow-ups**: kits entram em `price_observations` pelo discriminador que já existe, sem migração; se
   algum dia alguém precisar do histórico de observações (e não só da última), isso é uma tabela nova de
   **evidência**, com dono e razão próprios — não um `INSERT` a mais nesta.
+
+## Adendo 2026-08-27 (pré-flip — decisões aplicadas pela auditoria de implementabilidade, `specs/019-porte-design/analise-implementabilidade.md` §3)
+
+1. **`observed_at` é carimbado pelo SERVIDOR** (`now()`); o corpo do `PUT` não o envia — coerente com o precedente `device_*`
+   (o que o servidor não verifica leva prefixo; aqui ele verifica). "Salvo em DD/MM" formata no fuso do aparelho na leitura.
+2. **Teto do lote do `PUT /price-observations`: 500 itens** (⇒ 422 acima); `(subjectKind, subjectId)` único no lote (⇒ 422);
+   `observedPrice` com mais de 2 casas ⇒ 422 por validador de escala (o servidor nunca arredonda o número do vendedor).
+3. **Teto de nome: 120** (pydantic, escritas novas; precedente `scenarios.py:84`) — sem CHECK de comprimento no banco (o legado
+   ficaria inválido); `name_norm` é sempre `left(norm, 200)` (backfill e escritor), o que mantém o índice btree dentro do limite.
+   O backfill da 0008 desempata colisões legadas com "(2)", "(3)"… entre VIVOS, sem descartar nada.
+4. **`_dedup_match` da materialização de kit passa a casar por `name_norm`** (emenda datada ao ADR-0017 §3, registrada na PR-D):
+   com a unicidade nova, o match exato por `btrim(name)` viraria armadilha ("gancho" ad-hoc × "Gancho" salvo ⇒ IntegrityError
+   dentro da transação atômica do kit). O retry de sufixo roda em SAVEPOINT.

@@ -82,10 +82,24 @@ E três descobertas que ENCOLHEM trabalho: **D2 já está feito** (`scenarios-li
 
 ## 7. O que esta análise NÃO cobre
 
-(As 5 decisões da §4 foram respondidas pelo dono em 27/08 — nenhuma task fica bloqueada.)
-
 ### 7.1 Escopo
 
 A copy e a geometria das pranchetas B–F (não congeladas ainda) — a transcrição (agora a 1ª task de cada fase) e a
-homologação do dono continuam sendo o único juiz disso. E as 5 decisões acima: as tasks bloqueadas por elas estão
-marcadas `⛔ DONO` no `tasks.md` e não abrem até a resposta.
+homologação do dono continuam sendo o único juiz disso. As 5 decisões da §4 foram tomadas em 27/08 — nenhuma task
+está bloqueada.
+
+## 8. Verificação pós-auditoria (27/08, quatro verificadores frescos + `speckit-analyze`)
+
+- **Citações** (`auditoria/08a`): 155 conferidas, 150 certas; as 5 erradas eram de LOCALIZAÇÃO (linha/intervalo) — corrigidas.
+- **Frontend** (`08b`): PR-B/D-front/F prontas; PR-C com 1 correção (`ControlledNumber` × `ControlledField`/`CalcFieldMeta`) — aplicada.
+- **Coerência** (`07`): 24 correções — 14 artefatos-autoridade que ainda diziam o contrário das decisões (research, ui-porte, api-019,
+  data-model, plan, quickstart, ADRs 0032/0033/0034, spec US1-AC2), a ordem T130→T076, 3 `[P]` falsos, 11 ambiguidades fechadas
+  com a frase e a fonte, e a lacuna ALTA dos testes existentes que a PR-B vira vermelhos (nova T110) — todas aplicadas.
+- **Dados** (`09`): PR-D/PR-E tinham 2 erros MEUS que seriam regressão (`_MONEY_POSITION_KEYS` com `lines` recusaria `quantity`
+  de todo KIT; "`useRecordSnapshot` não enfileira" é falso — é durable-first) + `migrated_db` já no head, T062×T071 (nome de 5.000
+  chars: `name_norm = left(norm, 200)`, sem CHECK de comprimento no banco), nomes CURTOS de CHECK no modelo, U+2028/2029 crus
+  na regex, `computeQuote` devolve números, 7 sítios e não 8, validador de escala novo, gatilho V2 da 0006 — todas aplicadas.
+- **speckit-analyze**: 0 críticas; 1 MEDIUM (FR-1902 cita `--tf-warning-deep`, que não existe — corrigir ao ratificar `#9a570a`).
+
+**Veredito final: PRONTO PARA IMPLEMENTAR** (PR-B abre pela T042). O que ainda é do dono: ratificar `#9a570a` no gate do PR-A e
+os flips dos ADRs por fatia.

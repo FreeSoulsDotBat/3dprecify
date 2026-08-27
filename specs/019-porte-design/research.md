@@ -97,7 +97,7 @@ dois incrementos, a mesma estimativa da Option B).
 (`features/scenarios/scenarios-list-sheet.tsx`) **muda de hospedeiro, não de identidade** — o mesmo
 componente montado na composição larga, nunca uma segunda cópia (a regra §E do research do 018).
 
-**Proíbe**: segundo `matchMedia`, limiar diferente, seleção na URL, qualquer toque no ramo mobile — e
+**Proíbe**: limiar SEM NOME fora de `shared/lib/use-is-wide.ts` (corrigido 2026-08-27 — a emenda 2 do ADR-0031, decisões 1 e 2 do dono, nomeia `LIST_DENSE_QUERY` 1024 para a densidade da lista do Catálogo e o corte 1024 da Calculadora, ao lado de `WIDE_QUERY` 1280), seleção na URL, qualquer toque no ramo mobile — e
 inferir a composição: o layout ≥1280px é o da prancheta 20g, transcrito por fatia.
 
 ---
@@ -246,8 +246,9 @@ peças de `shared/ui`/`shared/billing` consumidas por quatro páginas). Rejeitad
 mundo pode importá-la. **Confiança: 75%.**
 
 Estados (nomes finais no plano; a copy é transcrita da prancheta, nunca escrita aqui): `active` ·
-`lapsed-com-itens` · `free-nunca-teve` · `unknown` (sem resposta do servidor — nunca "presume grátis"
-nem "presume premium", o precedente `PlanState` do E6).
+`lapsed` · `free-nunca-teve` · `signed-out` · `unknown` (sem resposta do servidor — nunca "presume grátis"
+nem "presume premium", o precedente `PlanState` do E6). *(Corrigido 2026-08-27: CINCO estados — o 5º nasceu da
+E-5; "-com-itens" é composição da TELA a partir da lista, não valor da função pura.)*
 
 **Decisão E-2 — a barreira de escrita é a AUSÊNCIA do handler, não um `disabled`**: no estado grátis o
 formulário é montado **sem** `onSubmit` de rede. Não existe "existe mas está desabilitado": a função que
@@ -315,7 +316,7 @@ crescer sem fim. Molde do `theme-store`/`precifica3d-nav-rail` (ADR-0031).
 
 ## H — "Entendi" da plausibilidade vive na SESSÃO, em memória, chaveado por campo+valor
 
-**Decisão**: um store leve em `features/calculator` (módulo/Zustand, **em memória**), chave
+**Decisão**: um store leve em `shared/lib/plausibility-dismiss-store.ts` (módulo/Zustand, **em memória**; corrigido 2026-08-27: mora em `shared/lib` ao lado de `plausibilidade.ts` porque `widgets/bom-line-editor` renderiza os mesmos `CalcFieldMeta` e `features/bom` não importa `features/calculator` — `plausibilidade.ts:26-29`), chave
 `${campo}:${valorNormalizado}`. Sobrevive à navegação entre abas dentro do app (o que "pela sessão"
 significa para quem usa) e morre ao recarregar. Dispensado `850 g`, o aviso **volta** em `2.400 g`,
 porque a chave é outra — a mesma ideia do §G aplicada a outro dado. **Confiança: 80%.**

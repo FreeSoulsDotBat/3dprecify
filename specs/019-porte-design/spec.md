@@ -84,7 +84,10 @@ classificados ANTES pela V0 (já existe? existe local e sobe? não existe?).
    foi APAGADA na mesma fatia.
 2. **Given** um formulário congelado com `tf-frozen`, **When** o contraste é MEDIDO nos dois temas,
    **Then** dica ≥5,67:1 e rótulo ≥18,23:1 — e o `background: var(--bg-muted)` está presente
-   (no claro, #ededf1 sobre #ffffff).
+   (no claro, #ededf1 sobre #ffffff). *(Correção datada 2026-08-27, medida na PR-A: a folha do design
+   manda `--border-subtle` — `--bg-muted` empatava com o cartão no escuro — e a guarda T016 mede AA
+   ≥4,5:1 nos dois temas; os números 5,67/18,23 eram de um tema da prancheta. Reverificar na segunda passada
+   contra ESTES valores.)*
 3. **Given** o bundle final, **When** se procura `tf-phone-scroll` ou `tf-price--rola`, **Then**
    zero ocorrência (dispositivos de prancheta), e os consertos 015/A6 + 016/T018-A1 NÃO foram
    revertidos.

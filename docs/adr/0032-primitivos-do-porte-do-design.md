@@ -191,6 +191,9 @@ Opções, sem recomendação de implementação até a palavra do dono:
 **Nenhuma das três entra em código antes da resposta.** Até lá, a PR-A porta os primitivos **sem tocar
 em `:focus-visible`** (F-1 como estado de repouso, que é ausência de mudança, não escolha).
 
+> **Superado (2026-08-27)**: a resposta chegou antes da PR-A (§7, F-2 — remover todo indicador de foco, decisão do
+> dono 25/08 reafirmada 27/08) e a T029 a executou em 11 arquivos; a guarda é `tests/e2e/focus-none.spec.ts`.
+
 ## Consequences
 
 - **Positivo**: o DS continua com uma classe por arquivo e um dono por classe, com **teste**; a cópia
