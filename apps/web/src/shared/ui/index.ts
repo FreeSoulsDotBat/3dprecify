@@ -23,7 +23,7 @@ export type { BreakdownRowProps, BreakdownEmphasis } from "./breakdown-row";
 
 // ---- Added batch-1 primitives (pure tf-*) ----
 export { Button } from "./button";
-export type { ButtonProps, ButtonVariant, ButtonSize } from "./button";
+export type { ButtonProps, ButtonVariant, ButtonSize, ButtonWidth } from "./button";
 
 export { Icon } from "./icon";
 export type { IconProps, IconName } from "./icon";
@@ -83,3 +83,16 @@ export type { Theme } from "./theme-store";
 
 // ---- 018 — preferência do menu recolhido (por aparelho, molde do theme-store) ----
 export { useNavRailStore, NAV_RAIL_STORAGE_KEY } from "./nav-rail-store";
+
+// 019/PR-A (ADR-0032) — os primitivos do porte do design.
+export { Frozen } from "./frozen";
+export type { FrozenProps } from "./frozen";
+
+export { Plist } from "./plist";
+export type { PlistProps, PlistItemData, PlistFlag, PlistFlagTone } from "./plist";
+
+export { Table } from "./table";
+export type { TableProps } from "./table";
+
+export { Aviso } from "./aviso";
+export type { AvisoProps } from "./aviso";

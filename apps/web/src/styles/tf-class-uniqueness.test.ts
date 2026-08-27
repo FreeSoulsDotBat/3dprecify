@@ -63,10 +63,7 @@ function definedTfClasses(css: string): Set<string> {
  *  permanente até a T021 derrubaria o `gate:all` no pre-push e no CI, e vermelho permanente ensina "roda
  *  de novo" (lição 014/US5); a lista mantém a guarda VIVA para qualquer duplicata nova desde já. */
 const DIVIDA_CONHECIDA: ReadonlyMap<string, string> = new Map([
-  [
-    "tf-grafismo",
-    "019/T021 — juntar os 4 declarativos de styles/base.css em shared/ui/grafismo.css",
-  ],
+  // vazia desde 019/T021 (tf-grafismo juntado em shared/ui/grafismo.css) — mantenha vazia.
 ]);
 
 function duplicatasDeSrc(): Map<string, string[]> {

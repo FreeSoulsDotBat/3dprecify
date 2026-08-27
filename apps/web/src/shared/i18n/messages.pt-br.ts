@@ -176,7 +176,7 @@ export const messages = {
     // A frase e deliberadamente descritiva ("ficou acima"), nunca corretiva ("corrija"): quem le um
     // aviso escrito como erro conclui que o produto recusou, e o produto nao recusou.
     avisoAtacadoAcimaDoVarejo:
-      "O preco de atacado ficou acima do varejo. Nada foi recusado — so confira se e isso mesmo.",
+      "O preço de atacado ficou acima do varejo. Nada foi recusado — só confira se é isso mesmo.",
     // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Etiqueta…); each value
     // soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria linha no
     // detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
@@ -483,6 +483,8 @@ export const messages = {
         always: "Praticamente o dia todo",
       },
       paybackLabel: "Em quantos anos quer que ela se pague?",
+      // 019/T031 — o singular é do texto ("1 anos" era a única frase do produto que não era português).
+      paybackYearLabel: "{n} ano",
       paybackYearsLabel: "{n} anos",
       derivedCaption: "≈ {value} por hora de impressão",
       adjustButton: "Ajustar horas direto",
@@ -1306,5 +1308,8 @@ export const messages = {
   ds: {
     close: "Fechar",
     notifications: "Notificações",
+    // 019/PR-A (contracts/ui-porte.md §C0) — o nome acessível da dispensa do selo de procedência
+    // (`tf-alert__close`), verbatim da prancheta "A camada de baixo" 23b.
+    dismiss: "Dispensar",
   },
 } as const;

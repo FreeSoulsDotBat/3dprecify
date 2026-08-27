@@ -113,3 +113,28 @@ e um SEGUNDO teste que exige que cada entrada da lista **ainda esteja duplicada*
 da lista fica vermelho. Efeito: a guarda está viva desde já para qualquer duplicata NOVA (a promoção da
 T021 que esquecer de apagar `shopee-warnings.css` acende), e a T021 é obrigada a esvaziar a lista. Prova de
 não-vacuidade continua sendo o vermelho medido acima (o run sem a lista).
+
+### T030 (parcial, 2026-08-27) — 404/erro sem grafismo · TabBar 10px
+
+O item 13 da V0 (confiança 70%: "estender Grafismo a outras telas?") está resolvido pela **prancheta
+24c**, que é explícita: *"As duas telas de borda ficam sem grafismo. O produto põe o arco no 404 e a
+espada no erro, acima do título — … um ornamento acima dela só empurra a saída para baixo."* Leitura
+correta do README ("grafismos fora das telas 404/erro") = **tirar** das duas. Feito: `Grafismo` removido
+de `not-found-page.tsx` e `error-page.tsx` (o componente continua no DS, exportado; hoje sem consumidor no
+app), `.tf-notfound` ganha `justify-content: center; text-align: center` (folha l.905, verbatim),
+`.tf-error` já era idêntico à folha. TabBar: `.tf-nav--tabbar .tf-nav__label { font-size: 10px }`
+(folha l.864); o respiro ≥7px por lado é medido na T025. Testes das três áreas: 17/17 verdes.
+
+### T011/T017/T015/T020 — `Frozen` + `--warning-text` (dev-frontend, 2026-08-27)
+
+- `shared/ui/frozen.{tsx,css,test.tsx}`: `<fieldset disabled class="tf-frozen">` sem prop que desligue o
+  `disabled` (o vermelho achou um bug real antes do verde: `{...rest}` depois de `disabled` deixava um
+  `disabled={false}` vencer — ordem invertida). 5/5.
+- **Divergência README × folha, decidida pela folha**: o README §1 diz "`background: var(--bg-muted)`
+  obrigatório"; o comentário da própria folha (`tf-components.css:674-679`) diz que `--bg-muted` empatava
+  com o cartão no escuro e a regra real usa `background: var(--border-subtle)`. A regra 1 (folha
+  verbatim) venceu; está no comentário de abertura de `frozen.css`. A T016 mede o contraste real
+  (≥5,67:1 / ≥18,23:1) contra ESSE fundo.
+- `colors.css`: `--warning-text` claro `#9a570a` · escuro `var(--tf-orange)` (números da §T002 no
+  comentário); `token-parity` baseline 87→88, 3/3. `--warning-soft` NÃO criado (levaria a baseline a 89
+  contra o número da T015; o CSS usa `--tf-warning-soft`, que existe nos dois temas).

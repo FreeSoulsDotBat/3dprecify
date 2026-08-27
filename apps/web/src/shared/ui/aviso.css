@@ -1,0 +1,39 @@
+/* `tf-aviso` (019/T018, ADR-0032) — 3ª categoria de mensagem: nem dica, nem erro. O fundo compõe
+   o tom `info` soft (que é translúcido) sobre `--surface-card`: sem a base fixa, o mesmo aviso
+   mudaria de cor conforme o que estiver atrás (mais escuro solto na página, mais claro dentro de
+   um cartão) — a cor de uma categoria não pode depender do vizinho. Transcrito verbatim de
+   `docs/design/handoff-019/tf-components.css` (bloco `tf-aviso`, ~l.320); adaptação #3 do §3 do
+   handoff desfeita: o ícone é o componente `Icon` do produto, não uma classe `tf-ico`/`tf-ico-*`
+   com máscara por URL. */
+.tf-aviso {
+  display: flex;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: linear-gradient(var(--tf-info-soft), var(--tf-info-soft)), var(--surface-card);
+}
+.tf-aviso__icon {
+  flex: 0 0 auto;
+  margin-top: 0.125rem;
+  color: var(--info-text);
+}
+.tf-aviso__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.tf-aviso__text {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--info-text);
+  overflow-wrap: anywhere;
+}
+/* Dispensa. Ausente quando o aviso acompanha uma recusa. */
+.tf-aviso__action {
+  align-self: flex-start;
+  margin-left: calc(var(--space-3) * -1);
+  color: var(--info-text);
+}

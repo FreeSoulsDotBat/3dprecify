@@ -43,6 +43,10 @@ export interface SegmentedProps<T extends string> {
   /** Prefixo do painel controlado, no modo tablist. */
   controlsPrefix?: string;
   size?: "sm" | "md";
+  /** 019/PR-A — a bandeja ocupa a linha e divide em partes iguais (contracts/ui-porte.md §C0).
+   *  Só onde a largura é escassa (celular, par varejo/atacado); no desktop a bandeja volta a se
+   *  ajustar ao texto. */
+  split?: boolean;
   className?: string;
 }
 
@@ -55,6 +59,7 @@ export function Segmented<T extends string>({
   idPrefix,
   controlsPrefix,
   size = "md",
+  split = false,
   className = "",
 }: SegmentedProps<T>) {
   const refs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
@@ -80,7 +85,14 @@ export function Segmented<T extends string>({
     <div
       role={role}
       aria-label={ariaLabel}
-      className={["tf-segmented", `tf-segmented--${size}`, className].filter(Boolean).join(" ")}
+      className={[
+        "tf-segmented",
+        `tf-segmented--${size}`,
+        split && "tf-segmented--split",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")}
     >
       {options.map((option, index) => {
         const selected = option.id === value;

@@ -78,6 +78,12 @@
   padding: var(--space-1);
   font-size: var(--fs-caption);
 }
+/* 019/T030 (folha l.864, prancheta 22b): a 390px a célula tem 71px e "Orçamentos" media 71,0px a 12px —
+   encostado nas duas bordas; nenhuma medição de transbordo via, porque a caixa cabia. 10px é o tamanho
+   que barras de abas usam há uma década; o respiro (≥7px por lado) é medido na T025. */
+.tf-nav--tabbar .tf-nav__label {
+  font-size: 10px;
+}
 .tf-nav--tabbar .tf-nav__item[aria-current="page"]::before {
   content: "";
   position: absolute;

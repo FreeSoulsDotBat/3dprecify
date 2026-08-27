@@ -169,14 +169,6 @@ body {
   border: 0;
 }
 
-/* Decorative grafismo (recolour via `color`; keep ONE per screen) */
-.tf-grafismo {
-  display: inline-block;
-  color: var(--accent);
-  pointer-events: none;
-  user-select: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

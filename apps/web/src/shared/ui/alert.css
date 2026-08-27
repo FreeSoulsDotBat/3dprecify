@@ -57,3 +57,119 @@
 .tf-alert--danger .tf-alert__title {
   color: var(--danger-text);
 }
+/* 019/PR-A (handoff §2) — o tom de ATENÇÃO que faltava: nem dica, nem erro. Valor via
+   `--warning-text` (colors.css), não literal aqui. */
+.tf-alert--warning {
+  background: var(--tf-warning-soft);
+}
+.tf-alert--warning .tf-alert__icon,
+.tf-alert--warning .tf-alert__title {
+  color: var(--warning-text);
+}
+
+/* 019/PR-A (handoff §1, tf-components.css:733-745) — o selo de procedência. O `tf-alert` acima é
+   alerta de PÁGINA: 16px de padding, ação de 44px. O selo é um bloco denso de 3-4 linhas num
+   cartão de 390px e herdava as duas medidas — só "Ver fonte" já valia 44px, um quarto do selo.
+   Aqui: 12px de padding, 8px de gap, e as duas âncoras (ícone e dispensa) na MESMA caixa de 20px
+   à MESMA distância das bordas — a simetria é o que lê como selo, não como aviso amassado. */
+.tf-alert--compact {
+  padding: var(--space-3);
+  gap: var(--space-2);
+  align-items: flex-start;
+}
+/* O corpo TEM que crescer: sem isso a dispensa gruda no fim do texto em vez de ancorar no canto,
+   e o selo fica assimétrico só nas linhas curtas. */
+.tf-alert--compact .tf-alert__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.tf-alert--compact .tf-alert__icon {
+  margin-top: 0;
+}
+
+/* tf-components.css:749-764 — ação interna do selo: link, não botão de formulário. Altura
+   desenhada de 20px e alvo de 44px pelo MESMO tipo de pseudo-elemento da dispensa — uma caixa de
+   44px aqui empurraria o selo inteiro. */
+.tf-alert__action {
+  position: relative;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--space-1);
+  padding: 0;
+  border: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  color: inherit;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.tf-alert__action::after {
+  content: "";
+  position: absolute;
+  inset: -13px -8px;
+}
+.tf-alert__action:hover {
+  text-decoration: underline;
+}
+.tf-alert__action:focus-visible {
+  /* C1 (decisão do dono 25/08, reafirmada 27/08) — nenhum controle mostra anel de foco. */
+  outline: none;
+  box-shadow: none;
+}
+/* A cor da ação segue o tom, como o ícone: sem isso o selo neutro herda a cor do corpo e a ação
+   deixa de se distinguir do texto. */
+.tf-alert__action {
+  color: var(--text-strong);
+}
+.tf-alert--info .tf-alert__action {
+  color: var(--info-text);
+}
+.tf-alert--success .tf-alert__action {
+  color: var(--success-text);
+}
+.tf-alert--warning .tf-alert__action {
+  color: var(--warning-text);
+}
+.tf-alert--danger .tf-alert__action {
+  color: var(--danger-text);
+}
+
+/* tf-components.css:770-779 — dispensa do selo de procedência. Alinha ao TOPO; o alvo de 44px é
+   um PSEUDO-ELEMENTO, não a caixa: com 44px de caixa o botão fica mais alto que um selo de uma
+   linha e passa a ditar a altura do alerta, abrindo um vão sob o texto. O desenho é o ícone; o
+   toque é a norma. Decisão do dono (2026-08-26): a dispensa vale até a fonte mudar. */
+.tf-alert__close {
+  position: relative;
+  flex: 0 0 auto;
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-inline-start: var(--space-1);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.tf-alert__close::after {
+  content: "";
+  position: absolute;
+  inset: calc((var(--touch-min) - 20px) / -2);
+}
+.tf-alert__close:hover {
+  color: var(--text-strong);
+}
+.tf-alert__close:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

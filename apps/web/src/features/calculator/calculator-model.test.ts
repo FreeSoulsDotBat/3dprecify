@@ -15,6 +15,7 @@ import {
   defaultCalcValues,
   defaultChannelSlot,
   LABOR_AND_FINISH_FIELDS,
+  PAYBACK_YEAR_OPTIONS,
 } from "./calculator-schema";
 import { type CatalogContext, computeFromForm, formatBRL } from "./calculator-model";
 
@@ -914,5 +915,16 @@ describe("016/US12 (T046) — byte-identical fixture: today's 3 marketplaces × 
       // gross-upado): o que volta é a margem que nunca deveria ter saído. Re-baseline RODADO.
       { seal: "reference", anuncioVarejo: 56.66, liquidoVarejo: 41.33 }, // Shopee catalog pre-fill
     ]);
+  });
+});
+
+// 019/T026 (US2 — handoff "Vocabulário e marca": "1 anos" → "1 ano"). O rótulo nasce em
+// `PAYBACK_YEAR_OPTIONS` (calculator-schema.ts) a partir de `messages.machineCost.paybackYearsLabel`;
+// o singular é do TEXTO, e o teste lê a opção pronta — que é o que a pessoa vê no select.
+describe("019/T026 — o payback no singular", () => {
+  it('n=1 → "1 ano"; n=3 → "3 anos"', () => {
+    const porValor = new Map(PAYBACK_YEAR_OPTIONS.map((o) => [o.value, o.label]));
+    expect(porValor.get("1")).toBe("1 ano");
+    expect(porValor.get("3")).toBe("3 anos");
   });
 });

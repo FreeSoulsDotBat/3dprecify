@@ -3,7 +3,7 @@ import { useEffect, useMemo } from "react";
 import { ApiError } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { reportError } from "@/shared/observability/sentry";
-import { Button, Grafismo } from "@/shared/ui";
+import { Button } from "@/shared/ui";
 
 import "./error-page.css";
 
@@ -27,7 +27,8 @@ function resolveSupportCode(error: unknown): string {
 
 // Router error boundary (T054 / SS-3). On-brand generic error screen with a reload action and a
 // discreet "Código de suporte: <id>" line for the user to quote. Honest, no blame, no commercial
-// copy. (Sentry logging of code+correlationId is the T069/D2 follow-up.)
+// copy. (Sentry logging of code+correlationId is the T069/D2 follow-up.) 019/T030: the decorative
+// Grafismo LEFT (prancheta 24c) — the exit and the support code are what the page is for.
 export function ErrorPage({ error }: ErrorPageProps) {
   const supportCode = useMemo(() => resolveSupportCode(error), [error]);
 
@@ -45,7 +46,6 @@ export function ErrorPage({ error }: ErrorPageProps) {
 
   return (
     <section className="tf-error">
-      <Grafismo name="espada" className="tf-error__grafismo" />
       <h1 className="tf-error__title">{messages.error.title}</h1>
       <p className="tf-error__body">{messages.error.body}</p>
       <div className="tf-error__actions">

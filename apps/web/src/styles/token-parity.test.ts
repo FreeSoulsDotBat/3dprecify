@@ -14,8 +14,11 @@ import { describe, expect, it } from "vitest";
  * `--info-text` (T004) — exist in BOTH themes.
  *
  * `EXPECTED_COLOR_TOKENS` = the homologated DS color graph (84 custom props)
- * + the 3 status-text tokens = 87. It is the in-repo parity baseline (the DS
- * reference itself lives outside the repo, so it cannot be read at test time).
+ * + the 3 status-text tokens = 87, **+ `--warning-text` (019/T015/T020) = 88** — a
+ * REVISED baseline, not a number that auto-adjusts: `--warning-text` is the 4th tone
+ * (the app had neutral/info/success/danger and none for "the number is valid, and you
+ * probably don't want it"). It is the in-repo parity baseline (the DS reference itself
+ * lives outside the repo, so it cannot be read at test time).
  */
 
 const colorsCssPath = fileURLToPath(new URL("./tokens/colors.css", import.meta.url));
@@ -108,6 +111,7 @@ const EXPECTED_COLOR_TOKENS: readonly string[] = [
   "--tf-warning-soft",
   "--tf-white",
   "--warning",
+  "--warning-text",
 ];
 
 function block(css: string, selector: string): string {
@@ -140,7 +144,7 @@ describe("design-system color token parity (T010 / ADR-0007)", () => {
     expect(union).toEqual([...EXPECTED_COLOR_TOKENS].sort());
   });
 
-  it.each(["--danger-text", "--success-text", "--info-text"])(
+  it.each(["--danger-text", "--success-text", "--info-text", "--warning-text"])(
     "defines the semantic status-text token %s in BOTH themes",
     (token) => {
       expect(rootTokens.has(token)).toBe(true);

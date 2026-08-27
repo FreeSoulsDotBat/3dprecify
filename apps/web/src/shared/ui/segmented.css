@@ -52,6 +52,21 @@
   color: var(--text-body);
 }
 
+/* 019/PR-A (tf-components.css:703-712) — bandeja que ocupa a linha e divide em partes iguais, com
+   dois itens ou com quatro: as opções são do mesmo tipo, e larguras tiradas de quantas letras cada
+   palavra tem fariam "Impressoras" parecer mais importante que "Kits". Usar SÓ onde a largura é
+   escassa (celular; par varejo/atacado ao lado de uma coluna de conteúdo) — numa coluna de 1138px
+   isto daria abas de 280px, o oposto da compacta que o desktop usa; lá a bandeja volta a se
+   ajustar ao texto. */
+.tf-segmented--split {
+  display: flex;
+  width: 100%;
+}
+.tf-segmented--split .tf-segmented__item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
 /* Review do PR #58 (2026-08-15) — a pílula selecionada era `--surface-card`, que no tema ESCURO é
    o MESMO valor da bandeja `--bg-muted` (os dois são `--tf-neutral-900`, #14151a): contraste
    1,00:1, ou seja, não existia pílula na tela. Como todos os itens têm `font-weight: 600` e nenhum
