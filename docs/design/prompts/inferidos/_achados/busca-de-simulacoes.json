@@ -1,0 +1,13 @@
+{
+  "id": "busca-de-simulacoes",
+  "nome": "Campo de busca por nome + estado \"nada encontrado\"",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
+  "oQueFoiInferido": "Um input SEM rótulo visível (`Field tightLabel` + `tf-inputwrap` + `tf-input`, placeholder \"Buscar por nome…\", `aria-label` igual ao placeholder), com debounce de 250ms, no topo da lista — e SEM o ícone de lupa que o mesmo padrão tem em toda tela desenhada deste produto. Mais um `EmptyState icon=\"boxes\"` com título \"Nenhuma simulação encontrada para \"{termo}\"\" e botão \"Limpar busca\". Inferido: esconder o rótulo, omitir a lupa e o \"x\" de limpar inline, a ausência de contador de resultados, e reciclar o MESMO ícone do vazio geral no vazio de busca. Falta desenhar: o feedback durante o debounce e um \"nenhum resultado\" que não seja o mesmo desenho do \"você não tem nenhuma\".",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "Com muitas simulações salvas, o único jeito de achar uma é um campo cinza sem rótulo e sem lupa que não parece uma busca — e o vazio de busca é indistinguível do vazio de \"você nunca salvou nada\".",
+  "prioridade": "MEDIA",
+  "refutacao": "Tentei derrubar pelo canvas, e ele quase serve — mas fecha contra o achado, não a favor. O dono DESENHOU o campo de busca duas vezes, e nas duas com lupa dentro do `tf-inputwrap`: Catálogo (linha 88, svg de lupa + `placeholder=\"Buscar no catálogo…\"` + `aria-label`) e Orçamentos (linha 269, mesma lupa + \"Cliente, pedido…\"). São artboards de OUTRAS abas, em 1920px, e o canvas exclui Calcular — onde a folha de simulações vive — por escrito. Então: o COMPONENTE de busca está desenhado, a busca DESTE painel não está, e a versão construída larga justamente a lupa que o desenho do dono tem. No protótipo não há busca nenhuma (nem Catálogo nem Histórico têm campo de busca no JSX). Registro corroborante de que ninguém desenhou: o campo chegou a ser publicado 1×1px invisível e só foi descoberto depurando no navegador real (comentário no próprio arquivo). Sobrevive.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

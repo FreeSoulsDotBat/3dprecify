@@ -1,0 +1,16 @@
+{
+  "id": "linha-degradada-produto-removido",
+  "nome": "Peça degradada (produto referenciado apagado depois do salvamento)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/bom/bom-line-card.tsx",
+    "apps/web/src/pages/bom/bom-page.tsx"
+  ],
+  "oQueFoiInferido": "O que acontece ao reabrir um kit cujo produto referenciado foi excluído: a linha volta a se chamar '(avulsa)', o seletor mostra '— Manual —' e aparece uma legenda calma REAPROVEITADA do formulário de produto (`messages.productForm.manualValuesKept`) dizendo que os valores conhecidos foram mantidos — legenda que se retira sozinha se o vendedor revincular (`degraded && productId === \"\"`). Não foi desenhado: como uma linha que mudou de natureza SEM ação do vendedor se sinaliza sem alarmar — hoje é um `<p>` cinza de 14px idêntico às outras quatro legendas possíveis no mesmo card — nem se a mudança merece marcador no card ou no resumo do kit.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "Um estado silencioso em que os números da peça deixam de acompanhar o catálogo. Se a legenda emprestada não for lida — e ela não tem nada que a distinga das outras quatro —, o vendedor segue achando que a peça continua vinculada.",
+  "prioridade": "MEDIA",
+  "refutacao": "Corrijo a evidência do mapeador e mantenho o achado. Ele afirmou que 'Manual' e 'avulsa' estão ausentes do `.dc.html`; estão presentes (linhas 517: `titulo: \"Peça 2 (avulsa)\"`, `origem: \"— Manual —\"`). Mas o que o canvas desenha é a peça NASCIDA avulsa, não a peça que DEGRADOU: não há dado, `sc-if`, marcador ou legenda de 'valores mantidos' em nenhum dos artboards (grep 'mantid'/'degrad' no arquivo: zero), e a transição — o mesmo card mudando de 'do catálogo: X' para '— Manual —' sozinho entre duas visitas — não é representável num quadro estático que ninguém desenhou. Nas demais autoridades não há nada: §E do protótipo não tem kits nem qualquer noção de referência quebrada; auditoria e `.design-import/` não mencionam. A única autoridade continua sendo `ux-bom.md` §1.2-D ('decisão T021'), texto do designer-ux deste projeto. Os PNGs `specs/008-e3-multi-piece-bom/homolog-t021-degraded-*.png` são registro do construído e, pela regra, não contam.",
+  "sobreviveu": true,
+  "area": "kits"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "pilha-de-faixas-do-topo",
+  "nome": "Empilhamento das faixas de aviso no topo do shell",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/app/app-shell.tsx",
+    "apps/web/src/widgets/offline-banner/offline-banner.tsx",
+    "apps/web/src/widgets/offline-banner/offline-banner.css",
+    "apps/web/src/widgets/session-expiry-banner/session-expiry-banner.tsx"
+  ],
+  "oQueFoiInferido": "O `AppShell` monta `<OfflineBanner/>` e `<SessionExpiryBanner/>` como irmãos diretos, ACIMA de `.tf-shell__body` — logo, no desktop as duas atravessam a largura inteira, inclusive por cima da coluna do menu lateral, que é `position: sticky; top: 0; height: 100dvh` (app-nav.css). Inferidos: o que acontece quando as DUAS aparecem juntas (offline + sessão expirada é combinação real: o 401 pode chegar e a rede cair em seguida); a ordem entre elas; o fato de uma ser sticky (z-index 40) e a outra rolar embora; e como um menu de altura de janela convive com faixas que empurram o topo do documento.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Duas faixas somadas podem consumir ~120px do alto da tela sem que ninguém tenha decidido o que fica visível; no desktop elas cortam o topo de um menu que o canvas desenhou começando no pixel 0 do artboard.",
+  "prioridade": "MEDIA",
+  "refutacao": "Uma das duas faixas é coberta; a REGIÃO não é. COBERTO: a faixa de offline sozinha tem autoridade forte — §D.2 (\"Offline banner — faixa discreta em **ciano de info**, texto 'Offline — o cálculo continua funcionando'\"), §E3 (\"Offline banner discreto em ciano quando sem rede; ações de rede ficam desabilitadas\"), §E9 e a matriz §G (coluna offline em quase toda superfície); e as rodadas de correção mexeram nela duas vezes (fixes item 24 `role=status`/`aria-live`; r2 itens 1 e 13, contraste no dark), com a auditoria medindo 11,96:1 no V3. O código honra isso (`role=\"status\" aria-live=\"polite\"`, `--tf-info-soft` + `--info-text`). NÃO COBERTO: onde as faixas moram quando são DUAS. O protótipo é mobile-first e mostra a faixa sobre um shell de barra inferior, não sobre uma coluna lateral de altura total; a segunda faixa nem existia. No canvas 018, busca por \"offline\" = 0 ocorrências, e o `<nav class=\"tf-nav tf-nav--sidebar\">` nasce como primeiro filho de `.tf-shell__body`, sem nada acima dele — ou seja, o desenho do desktop nem prevê faixa alguma sobre o menu. Nenhuma autoridade mostra as duas juntas.",
+  "sobreviveu": true,
+  "area": "shell"
+}

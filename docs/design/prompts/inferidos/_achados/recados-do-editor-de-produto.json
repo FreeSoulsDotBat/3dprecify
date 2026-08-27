@@ -1,0 +1,13 @@
+{
+  "id": "recados-do-editor-de-produto",
+  "nome": "Telas de recado do editor de produto (pré-requisito e produto não encontrado)",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
+  "oQueFoiInferido": "Duas telas curtas em `max-w-md` centralizado, montadas à mão antes de qualquer render do formulário: (a) linhas 230-240 — ao criar sem ter filamento OU impressora salvos: `PageHeader` + `Alert tone=\"info\"` (\"Para criar um produto, salve antes um filamento e uma impressora no catálogo.\") + Button secundário \"Voltar ao catálogo\", SEM nenhum atalho para criar o item que falta; (b) linhas 243-261 — ao abrir um id inexistente: `Spinner` enquanto `products.isLoading`, e depois `Alert tone=\"info\"` \"Não encontramos este produto.\" + o mesmo botão. Inferido: se isso é um estado vazio de marca ou um alerta; a largura `max-w-md` que difere de todo o resto da tela; e o pré-requisito não oferecer a ação que resolveria o problema.",
+  "autoridade": "NENHUMA",
+  "impacto": "O vendedor que tenta criar seu primeiro produto bate num aviso que explica o problema e o manda embora, sem oferecer o caminho para resolvê-lo — e é justamente o primeiro passo do Catálogo Premium.",
+  "prioridade": "MEDIA",
+  "refutacao": "Procurei nas 4 e confirmo NENHUMA. (1) §E9 (linhas 288-289) cobre \"Erro global — envelope ADR-0002\" e \"404 — página de rota inexistente, on-brand (um grafismo, link de volta ao shell)\": são recados de ROTA e de erro de sistema, não um recado DENTRO de um editor sobre o estado dos dados do vendedor. §E5 não prevê pré-requisito entre entidades — no protótipo qualquer segmento cria livremente. A matriz §G não tem linha para isso. (2) A auditoria trata da 404 e da tela genérica de 500 (itens 19/29, V2 FIXED com \"Código de suporte:\"), nunca destes. (3) `.design-import` não tem nada: `CatalogScreen.jsx` cria produto pelo mesmo sheet, sem verificar nada. (4) O canvas não desenha o editor de produto (research §E o mantém fora) e, portanto, nada dos seus recados.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "plano-estado-pausado",
+  "nome": "Linha do plano na Conta — \"Premium pausado\" (grant caducado, leitura congelada)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/billing/plan-panel.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Badge NEUTRO com o rótulo \"Premium pausado\" — o MESMO `tone: \"neutral\"` do \"Gratuito\", só o texto muda — + legenda \"Seus itens salvos continuam disponíveis para leitura.\" + botão \"Assinar novamente\" (`size=\"sm\"`). Inferido: que a comunicação de uma PERDA de acesso pago usa o mesmo selo de quem nunca pagou, que a tranquilização sobre os dados salvos cabe numa legenda de `--fs-caption`, e que a reassinatura é um botão pequeno na mesma linha. O rótulo já teve de ser trocado em homologação (T038: \"Premium expirado\" → \"pausado\", porque \"expirar\" afirmava uma causa falsa num estorno). Falta desenhar: como o produto comunica perda de acesso sem parecer punição e sem parecer igual a nunca ter assinado.",
+  "autoridade": "NENHUMA",
+  "impacto": "O estado em que um ex-pagante perde escrita é visualmente indistinguível de nunca ter pago — só o texto do selo muda.",
+  "prioridade": "ALTA",
+  "refutacao": "Grep por `pausado|expirado|lapsed|leitura` no `Abas-Desktop.dc.html` = 0; a prop do canvas é o enum binário `premium|free` e o script não tem terceiro ramo. §E7 lista só Free/Premium. `AccountScreen.jsx`: `isPremium ? 'Premium' : 'Grátis'`. `PremiumScreen.jsx` não tem estado de reassinatura (só `Assinar Premium` de primeira compra). Procurei a hipótese mais generosa: o protótipo desenhou um estado de \"congelamento de leitura\" em ALGUM lugar? §E6 (Histórico) tem \"Empty-state gated para free — vitrine de upsell honesta\", que é o *nunca teve*, não o *perdeu*; e a auditoria V2 registra o empty do histórico como alcançável só por toggle de demo. Nenhuma autoridade desenha a degradação de um pagante. Sobrevive.",
+  "sobreviveu": true,
+  "area": "billing"
+}

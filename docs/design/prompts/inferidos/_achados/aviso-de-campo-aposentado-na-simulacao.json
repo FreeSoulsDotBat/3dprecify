@@ -1,0 +1,16 @@
+{
+  "id": "aviso-de-campo-aposentado-na-simulacao",
+  "nome": "Aviso de campo aposentado numa simulação antiga",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/pages/calcular/calcular-page.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Um `Alert tone=\"info\"` PERSISTENTE (role=status), inserido entre a barra de contexto e o resto da página, dizendo que o documento salvo continha Desperdício (g), que o modelo atual não usa mais o campo e que o recálculo abaixo não o inclui — e um SEGUNDO alerta irmão, deduplicado por `discardedFieldNotice`, para o caso de kit (renderizado logo antes do `KitBasisSummary`). Inferido: que a explicação de uma divergência de PREÇO (a simulação vai recalcular diferente do dia em que foi salva) é uma faixa de texto informativa acima de tudo, sem mostrar a diferença, sem antes/depois, sem relacionar o aviso ao número que mudou; e o empilhamento de dois alertas quando é kit.",
+  "autoridade": "NENHUMA",
+  "impacto": "A única explicação para \"esta simulação agora dá outro preço\" é um parágrafo cinza no topo, longe do número que mudou.",
+  "prioridade": "MEDIA",
+  "refutacao": "Tentei achar até uma spec textual para poder rebaixar de NENHUMA, e não existe: `ls specs/016-correcao-homologacao/` devolve arquitetura-016.md, conteudo-tooltips.md, data-model.md, plan/quickstart/research/spec/tasks + checklists/contracts/evidencias — nenhum `ux-*.md`; confirmei por `ls specs/*/ux-*.md`, que lista exatamente cinco (007, 008, 009, 010, 012) e nenhum 016. Os arquivos que citam FR-913 são spec.md, tasks.md, data-model.md e arquitetura-016.md — requisito e decisão técnica. E ux-scenarios.md (010) é anterior à aposentadoria do campo (pricing-core 4.0.0, PR-D do 016), então não conhece o tema. Nas 4 autoridades de desenho: 0 ocorrências de cenário/simulação nos três prompts, na auditoria, no `.design-import/**` e no canvas — e o protótipo é de 2026-07-02, quase um ano antes de o campo existir para ser aposentado. Autoridade NENHUMA confirmada. Sobrevive.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

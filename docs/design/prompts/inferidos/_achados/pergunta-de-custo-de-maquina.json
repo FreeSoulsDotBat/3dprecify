@@ -1,0 +1,16 @@
+{
+  "id": "pergunta-de-custo-de-maquina",
+  "nome": "Bloco “quanto custa a máquina” — ritmo + payback + custo/hora derivado + modo ajustar",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/features/calculator/machine-cost.ts"
+  ],
+  "oQueFoiInferido": "Dentro do Card 'Custos da peça': o campo 'Valor da máquina' e, abaixo, DOIS modos exclusivos. Modo estimativa = dois Selects em `repeat(auto-fit,minmax(240px,1fr))` ('com que frequência ela roda', 3 opções · 'em quantos anos quer que se pague', 1..5) que derivam `machineLifetimeHours`, uma legenda '≈ R$ X por hora de impressão' e um Button secondary 'Ajustar horas direto'. Modo ajuste = o campo cru de horas com InfoTip + aviso de plausibilidade + Button 'voltar'. `detectRitmoMode` decide qual modo abre; um valor fora de toda combinação ritmo×payback força o modo ajuste. Inferido: que a pergunta vira dois Selects (e não campos numéricos nem chips), o texto e a ordem das opções, que o derivado é legenda e não campo, a existência e o peso visual de um MODO alternativo dentro do card, e a transição entre os dois.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É a tradução de um conceito contábil para a linguagem de quem só quer saber o preço — a parte da tela onde o desenho vale mais. Hoje existe em duas versões cuja hierarquia e transição foram escolhidas por um agente, e o campo cru só ganhou aviso de plausibilidade depois que um review mostrou que digitar '3' (anos) jogava o custo/hora de R$ 1,11 para R$ 1.333,33 — calado, e invisível para a bateria automatizada (que faz `continue` quando o campo não está montado).",
+  "prioridade": "ALTA",
+  "refutacao": "Tentei derrubar com força aqui, porque existe um ancestral real. §E4 (241) desenha a colapsável 'Máquina/Depreciação: valor da máquina, h/dia, dias/mês, payback (meses), nível de uso → desgaste'; §E5 e `-fixes.md` item 34 / `-fixes-r2.md` item 17 desenham o MESMO conjunto no formulário de Impressora do Catálogo, com o enum 'Básico 10% / Médio 20% / Profissional 30% / Intenso 45%'. Ou seja: a ideia de responder o desgaste por uma ESCOLHA nomeada, em vez de digitar, ESTÁ desenhada — mas (i) mora na aba Catálogo, não na Calcular, (ii) mapeia para um percentual de desgaste, não para `machineLifetimeHours`, (iii) tem 4 níveis, não 3 ritmos × 5 paybacks, e (iv) o audit V2/V3 registra esse formulário como NÃO CORRIGIDO nas duas rodadas. O `CalculatorScreen.jsx` (88-93) implementa máquina como dois campos crus (Custo/hora × Horas). Nada em nenhuma autoridade desenha a pergunta em linguagem natural, a legenda derivada, nem o segundo MODO dentro do card. Sobrevive; PROTOTIPO_PARCIAL confirmado, com o ancestral nomeado.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

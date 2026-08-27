@@ -1,0 +1,16 @@
+{
+  "id": "calcular-desktop-duas-colunas",
+  "nome": "Calcular no desktop — grade de duas colunas + rodapé centralizado",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.css",
+    "apps/web/src/pages/calcular/calcular-page.tsx"
+  ],
+  "oQueFoiInferido": "O layout desktop da tela central: a partir de 1024px (`@media (min-width:1024px)`) `.tf-calc-page` sobe de `--app-max` 460px para `--content-max` 1120px e `.tf-calc-grid` vira `grid-template-columns: 1fr 1fr` — coluna esquerda = Custos da peça + Mão de obra e custos + Outros custos; direita = Markup + Marketplace — com `.tf-calc-footer` de largura total, `align-items:center` e filhos capados em `max-width:720px` (breakdown + Preços por canal + os dois cartões + Salvar cenário + Salvar no histórico). Inferido: qual seção mora em qual coluna e em que ordem, o que fazer quando uma coluna fica 1.671px mais alta (daí o remendo `.tf-calc-grid__full`), se existe painel de resultado fixo/sticky, o cap de 720px, e a densidade entre 1024 e 1920px.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A tela mais usada do produto é a única sem desenho desktop próprio, e o dono já reprovou o desktop das outras quatro abas exatamente por isso. Hoje o desktop é o mobile esticado com um corte de colunas escolhido por um agente, e as correções de geometria (buraco de 1.671px, `grid-column: 1/-1`) são remendos sobre uma decisão que ninguém desenhou. Agrava: a ÚNICA instrução desktop que a autoridade dá para esta tela (§F.3 'desktop 2 colunas' para Varejo × Atacado) não é a que o código implementa — os dois cartões hoje são `auto-fit minmax(210px,1fr)`, e o corte em duas colunas foi aplicado às SEÇÕES DE ENTRADA, que é outra coisa.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei prova de desenho desktop em tudo. ACHEI PARCIAL, mais do que o mapeador registrou: (a) §H exige explicitamente 'Todas as telas (E1–E9) em mobile (~390px) e desktop', e o `prototype-audit-2026-07-02.md` linha 6 diz que foram renderizadas '19 screens, mobile+desktop, dark+light' — ou seja, uma Calcular desktop FOI prototipada em 2026-07-02; (b) `-fixes.md` item 31 e `-fixes-r2.md` item 15 fixam a largura de conteúdo desktop em `--content-max` 1120px (o código usa exatamente esse token). O que NÃO existe: o artefato. `docs/design/` só tem `prompts/`, `a5-a6-decisoes.md`, `claude-design-brief.md` e o audit — `design-render/shots/` era scratchpad de sessão e nunca entrou no repo; `.design-import` só trouxe DS + esqueletos. E o que foi prototipado era a Calcular E1 (4 campos básicos + 3 colapsáveis + 2 PriceHero + 1 card de breakdown), não esta tela. No `Abas-Desktop.dc.html` (linhas 450-455) o artboard 'CALCULAR (ponteiro)' é literalmente um empty-state que se declara ausente: 'A tela Calcular está no outro arquivo… em \"Calcular Desktop\"'. Rodei `find` por `*.dc.html` no repo inteiro: só existe `Abas-Desktop.dc.html`. Logo: existiu desenho desktop de uma versão MUITO anterior e mais simples, não recuperável, e nada do corte em colunas/rodapé de hoje. Rebaixo para PROTOTIPO_PARCIAL; o achado sobrevive.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

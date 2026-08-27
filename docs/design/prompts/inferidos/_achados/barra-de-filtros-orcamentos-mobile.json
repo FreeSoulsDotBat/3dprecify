@@ -1,0 +1,16 @@
+{
+  "id": "barra-de-filtros-orcamentos-mobile",
+  "nome": "Barra de filtros da lista no celular (busca + chips de período + chip ativo)",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/pages/historico/historico-page.tsx",
+    "apps/web/src/pages/historico/historico-page.css"
+  ],
+  "oQueFoiInferido": "A forma construída, que diverge do único desenho existente: campo de busca com `Field` de LABEL VISÍVEL ('Buscar por rótulo') empilhado sobre uma fileira de 4 `Button` size=sm que embrulham (`.tf-historico__chips` com flex-wrap), usando primary/secondary como se fossem chips — e, com período customizado, uma quarta linha `.tf-historico__filterchip` com 'Período: {de} – {até}' + um Button ghost 'Limpar filtro'. Inferido: que os chips são Buttons e não um segmented control (que existe no DS desde o protótipo); a ordem dos presets (Tudo · 30 · 90 · Período…); a quebra dessa fileira em 390px; e a existência de DUAS formas de limpar (o chip 'Tudo' e o botão 'Limpar filtro'), que fazem coisas diferentes — 'Limpar filtro' só chama `onPeriod('all')` e não zera a busca, enquanto o `clearFilters` do estado vazio zera os três.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Com histórico ilimitado e paginação keyset, o filtro é o único jeito de achar o orçamento de um cliente. Chips que embrulham mal em 390px e duas formas divergentes de limpar deixam o vendedor preso num resultado vazio que ele não sabe desfazer.",
+  "prioridade": "MEDIA",
+  "refutacao": "O único desenho da barra é desktop e NÃO bate com o construído. `Abas-Desktop.dc.html` linhas 269-278: um `tf-inputwrap` com ícone de lupa DENTRO e `aria-label` (sem label visível), placeholder 'Cliente, pedido…', seguido de quatro `tf-badge tf-badge--neutral` clicáveis (min-height 32px) na ordem 30 dias / 90 dias / Tudo / Período…, com o ativo pintado em `accent-soft`. O código usa `Field` com label visível, `Button` primary/secondary e a ordem Tudo / 30 / 90 / Período… — forma e ordem diferentes, e nenhum artboard mobile no arquivo. No protótipo não há busca nem filtro em lugar nenhum: §E6 não os menciona, a matriz §G não os lista, os fixes não os tocam e `HistoryScreen.jsx` não os tem (a busca é do PR-B, 2026-07). `ux-history.md` §2.6 e a recomendação §9.2/G4 são texto. Sobrevive como PROTOTIPO_PARCIAL.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

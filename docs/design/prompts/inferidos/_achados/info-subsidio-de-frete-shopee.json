@@ -1,0 +1,13 @@
+{
+  "id": "info-subsidio-de-frete-shopee",
+  "nome": "Informação do subsídio de frete da Shopee sob a grade de taxas",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+  "oQueFoiInferido": "Uma legenda (`captionText`, `data-testid=freight-subsidy-info`) que renderiza só quando o catálogo publica `freightSubsidyInfo` E já existe `precoAnuncioVarejo` para resolver a faixa, dizendo o teto do cupom + fonte + data — deliberadamente FORA do campo 'Frete', que continua sendo a única origem de desconto. Inferido: que esta informação é legenda e não valor de campo, sua vizinhança com as outras legendas do slot (fica logo abaixo da legenda de faixa/regra, antes das chaves de taxa opcional), e como o vendedor entende que o número citado NÃO entra na conta dele.",
+  "autoridade": "NENHUMA",
+  "impacto": "É a correção de um erro de R$ 20-40 por venda que passou meses no produto (art. 23431: o cupom é custo da Shopee, não do vendedor). A forma como a verdade nova é dita — legenda ao lado do campo que ANTES mentia — foi escolhida em código, e o risco de o vendedor ler o teto como desconto continua sendo uma questão de desenho em aberto.",
+  "prioridade": "MEDIA",
+  "refutacao": "Grep por 'frete' e 'subsíd' nas 4 autoridades: ZERO ocorrências (o protótipo não modela frete em canal nenhum — só 'taxa fixa + comissão'). Veio do hotfix 016/A2 (H2c, 2026-08-07), posterior a todas elas. Canvas 018 não cobre Calcular. O receipt `docs/homologacao/hotfix-a2-a3-desenho.md` é homologação, que por regra não é protótipo. Sobrevive, NENHUMA.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

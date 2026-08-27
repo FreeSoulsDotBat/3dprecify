@@ -1,0 +1,13 @@
+{
+  "id": "seletor-produto-salvo-na-linha",
+  "nome": "Seletor 'Usar produto salvo' e o selo de origem da peça",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/widgets/bom-line-editor/bom-line-editor.tsx"],
+  "oQueFoiInferido": "O mecanismo de vínculo como ele está no ar: um `Card` no topo da peça JÁ EXPANDIDA, com um `Select` cuja primeira opção é '— Manual —' seguida de todos os produtos salvos sem busca e sem teto, e abaixo dele uma legenda que muda de 'do catálogo: {nome}' para 'do catálogo: {nome} · ajustado por você' assim que o vendedor edita depois de vincular. Não foi desenhado: que o vínculo seja um `Select` (a lista cresce sem limite e não tem busca), o estado 'ajustado por você' em qualquer largura, e o caso sem nenhum produto salvo — em que o card simplesmente NÃO renderiza (`products.length > 0`), sem pista de que a opção existiria.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o mecanismo que faz um kit referenciar o catálogo em vez de duplicá-lo (ADR-0017), e o vendedor decide por ele numa lista sem busca; e o selo 'ajustado por você' — que anuncia que a peça mudou de destino — é a única parte do vínculo que nenhum artboard mostra.",
+  "prioridade": "ALTA",
+  "refutacao": "Aqui o desenho cobre MAIS do que o mapeador viu, e por isso subo a autoridade de SPEC_TEXTUAL para PROTOTIPO_PARCIAL. O canvas 018 desenha, no rodapé do card da peça (linha 198), o botão 'Usar produto salvo' — e com uma regra de estado real: `pickDisp: l.bound ? \"none\" : \"inline-flex\"`, isto é, ele só aparece na peça NÃO vinculada. E desenha o selo de origem no cabeçalho da linha: 'do catálogo: Vaso G' para as vinculadas e '— Manual —' para a avulsa (linhas 187 e 516-518). O que continua sem desenho: o que o botão abre (não existe artboard de picker), o estado 'ajustado por você' (grep 'ajustado' no `.dc.html`: zero), o caso de zero produtos salvos, e tudo abaixo de 1280px. E o que está no ar diverge do desenhado: o código não tem botão nenhum — tem um `Select` dentro do editor expandido, e coloca a legenda de origem lá dentro, não no cabeçalho. Nas outras autoridades: §E4 tem 'Seletor catalog-driven: dropdowns Filamento ▾ e Impressora ▾ + link inserir manualmente', que é nível FILAMENTO/IMPRESSORA na calculadora, sem vínculo de PRODUTO e sem selo de origem; auditoria e `.design-import/` não mencionam.",
+  "sobreviveu": true,
+  "area": "kits"
+}

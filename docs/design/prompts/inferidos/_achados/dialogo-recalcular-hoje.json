@@ -1,0 +1,13 @@
+{
+  "id": "dialogo-recalcular-hoje",
+  "nome": "Diálogo de confirmação \"Recalcular hoje\"",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/pages/historico/recalc-today.tsx"],
+  "oQueFoiInferido": "O diálogo com duas descrições alternativas (repreçou de verdade × não achou a origem e vai reaproveitar o congelado), mais dois avisos empilháveis abaixo delas — a nota de catálogo offline como `<p>` mudo e a nota estrutural do modelo aposentado como `Alert tone=info` — e o par [Voltar]/[Recalcular]. Inferido: dois pesos visuais diferentes para dois avisos igualmente decisivos, e o fato de o resultado do recálculo NÃO ser mostrado antes de gravar — o vendedor confirma sem ver o número novo e só descobre por um toast, num fluxo que cria um registro permanente.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "É uma ação que CRIA um registro novo e permanente. Confirmar sem ver o valor resultante é pedir assinatura em branco — e o caso 'origem sumiu' produz um registro que parece de hoje mas carrega números de meses atrás (é exatamente por isso que existe a legenda de reaproveitamento, achado separado).",
+  "prioridade": "MEDIA",
+  "refutacao": "O diálogo não existe em nenhuma autoridade. O protótipo é de 2026-07-02 e 'Recalcular hoje' nasceu no PR-B de 2026-07-15: §E6 não tem recálculo, a matriz §G não tem, os dois fixes não têm, e `HistoryScreen.jsx` não tem a ação (o detalhe dele oferece só [Duplicar]/[Exportar]). `Abas-Desktop.dc.html` desenha o gatilho (linha 314, `tf-btn--secondary` 'Recalcular hoje') e nenhum diálogo — coerente com o arquivo inteiro, que não tem um único diálogo ou folha em nenhuma das quatro abas. A única fonte é `ux-history.md` §4.4 (ASCII) e a decisão §10-F3 sobre offline, ambas texto do `designer-ux`. Mantenho SPEC_TEXTUAL: um gatilho desenhado não é o diálogo desenhado.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "entrar-dentro-do-shell",
+  "nome": "Tela Entrar emoldurada pelo shell (e sua versão desktop)",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/pages/sign-in/sign-in-page.tsx",
+    "apps/web/src/features/auth/sign-in-screen.tsx",
+    "apps/web/src/app/router.tsx",
+    "apps/web/src/widgets/top-bar/top-bar.tsx"
+  ],
+  "oQueFoiInferido": "`signInRoute` é filha da `rootRoute`, cujo `component` é o `AppShell` — confirmado no `routeTree`: `/sign-in` entra na mesma árvore de `/calcular`, então a tela de entrada renderiza DENTRO do shell (barra de abas ou menu lateral visíveis, top-bar presente). Na rota `/sign-in` a top-bar suprime o logo e o troca por `<span className=\"tf-topbar__logo-spacer\" aria-hidden>` — um buraco onde a marca deveria estar. O cartão é `max-w-sm` (384px) centrado no `<main>`. Inferidos: a moldura inteira (o protótipo pediu login FULLSCREEN), o que fazer com a top-bar esvaziada nessa rota, a composição em desktop (a ≥1280px o cartão de 384px flutua num `<main>` de até 1720px ao lado de uma sidebar de 240px que navega para telas que devolvem o usuário para cá) e o rodapé com o LINK \"Como tratamos seus dados\".",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A porta de entrada aparece com o menu do app já montado atrás dela e a barra superior com um vazio no lugar da marca. No desktop, um cartão de 384px sozinho num campo de 1720px é a mesma classe de desperdício que a homologação do 016 mediu como \"~37/39% de aproveitamento\" em outras telas.",
+  "prioridade": "ALTA",
+  "refutacao": "O CARTÃO cai como achado; a MOLDURA sobrevive. COBERTO e bem coberto: §E2 (proposta de valor em 1 linha, botão \"Entrar com Google\" primary 56px, e os quatro estados idle/erro/offline/notConfigured com as frases) — e o código implementa exatamente esses quatro (`SignInState = \"idle\" | \"submitting\" | \"error\" | \"offline\"` + `!configured`); e `.design-import/ui_kits/precifica3d/LoginScreen.jsx` desenha o grafismo onda, a headline \"Forje o preço certo\", o G colorido e o rodapé legal. NÃO COBERTO, e é o que o achado alega: §F item 7 diz \"Login/logout **fullscreen** (Login E2 ↔ shell)\", isto é, login FORA do shell — e o LoginScreen.jsx confirma pela forma: é um `div` com `minHeight:'100%'`, `background: var(--bg-base)`, ocupando a tela toda, sem TopBar e sem nav (é a ÚNICA das 6 telas do ui_kit que não monta `<TopBar>` — as outras cinco montam). Busquei artboard de login no canvas 018: as únicas ocorrências de \"entrar\"/\"login\" no `.dc.html` são a frase do cartão de privacidade da Conta (\"Para entrar, usamos o Login com Google…\"), nenhum artboard. E o link para `/privacidade` no rodapé não vem de desenho: no LoginScreen.jsx a menção é uma FRASE estática (\"Ao continuar você concorda com os Termos e a Política de Privacidade\"), sem destino.",
+  "sobreviveu": true,
+  "area": "shell"
+}

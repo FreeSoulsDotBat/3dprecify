@@ -1,0 +1,16 @@
+{
+  "id": "cartao-da-lista-desktop-avisos",
+  "nome": "Cartão do item no desktop e seus avisos empilhados (somente leitura · desatualizada · precisa de atenção)",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/catalog/catalog-master-detail.css"
+  ],
+  "oQueFoiInferido": "O cartão implementado (linhas 300-318) empilha até quatro spans com o MESMO estilo `rowSummary` sob o nome: resumo, `rowNote`, `staleHint` e `readOnlyHint` — sem hierarquia, sem limite de coexistência, e sem NENHUM badge. Este é um caso de \"desenhado e não executado\", não de \"nunca desenhado\": o desenho resolve os mesmos avisos com um `tf-badge` no canto superior direito do cartão (tom neutro ou danger) mais uma linha própria de dinheiro em `tf-tnum`. O badge não foi construído, e a linha de dinheiro do cartão não foi construída — no caso de produtos, deliberadamente.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "O aviso mais importante (item degradado, catálogo desatualizado, premium pausado) desce para a quarta linha em cinza com o mesmo peso do resumo — a informação honesta existe e não se vê. E o remédio já está desenhado, o que torna a lacuna mais barata e mais injustificada.",
+  "prioridade": "ALTA",
+  "refutacao": "Este quase caiu, e o que sobrou inverte o sinal do achado. (4) O canvas, no MESMO viewport, desenha o cartão completo: linhas 104-114 trazem `<strong>` + `tf-badge` (`it.badge`/`it.badgeBg`/`it.badgeCol`/`it.badgeDisp`) + `meta` + `tf-tnum` de dinheiro, e o `catalog()` prova os dois rótulos — `badge:\"somente leitura\", tone:\"neutral\"` no TPU Flex (linha ~487) e `badge:\"precisa de atenção\", tone:\"danger\"` na Base hexagonal (linha ~501). Logo o CARTÃO tem desenho; o que não tem desenho é a versão implementada (captions empilhadas, zero badge). O achado sobrevive porque a superfície construída não corresponde ao desenho, mas o remédio muda: não é \"desenhar\", é \"executar o que já está desenhado\" — e continua sem desenho a coexistência de DOIS avisos no mesmo cartão (o canvas só mostra um badge por vez). ATENÇÃO ao executar: a linha de dinheiro que o canvas desenha para PRODUTOS (`money: \"custo R$ 21,84 · varejo R$ 65,52\"`) contradiz FR-310, honrado de propósito em `product-summary.ts` (\"never a price in a row — a row price would imply a stored snapshot\"). Aqui o desenho é que está errado. (1)/(3) `ListItem` só tem title+subtitle; nenhum destes estados existe no protótipo. (2) Sem menção.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

@@ -1,0 +1,16 @@
+{
+  "id": "linha-de-detalhamento",
+  "nome": "Linha do detalhamento (BreakdownRow) — a ênfase negativa e o nome que o vendedor digita",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/shared/ui/breakdown-row.tsx",
+    "apps/web/src/shared/ui/breakdown-row.css"
+  ],
+  "oQueFoiInferido": "Sem desenho, sobra: a ênfase `negative` — que pinta só o VALOR de vermelho e usa um MENOS TIPOGRÁFICO '−' (U+2212) colado no prefixo —, a bolinha de legenda como quadrado de 10px com radius 3, e o comportamento com dado real: rótulo e valor ganharam `overflow-wrap: anywhere` porque o 'Outros custos' imprime o nome que o VENDEDOR digitou (300 caracteres sem espaço geraram 2.100px de rolagem horizontal a 1440px, medido na homologação — e o culpado é um nó de TEXTO, invisível a qualquer `getBoundingClientRect()`).",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A peça que cumpre a promessa da marca ('a conta inteira à mostra') está desenhada no essencial; o que não está é justamente a linha de taxa negativa e o pior caso de dado real.",
+  "prioridade": "BAIXA",
+  "refutacao": "DERRUBA quase tudo. A pilha completa COM total está desenhada duas vezes. (a) `CalculatorScreen.jsx:107-116`: nove `BreakdownRow` empilhadas exercitando quatro das cinco ênfases — padrão (Material, com `color=\"var(--accent)\"`, isto é, a bolinha), `muted` (Falha, Custo total, Taxa marketplace), `accent` (Markup varejo, Atacado) e `total` (Preço varejo). (b) O canvas do dono monta o Detalhamento dos Orçamentos COM as classes do app — `tf-brow`, `tf-brow__main`, `tf-brow__label`, `tf-brow__sub`, `tf-brow__val` e `tf-brow--total` (l.324-331: 8 linhas + total, incluindo 'Embalagem' com sublabel 'Outros custos') — mais três `tf-brow` no resumo do kit (l.213, 226-227). A afirmação do mapeador de que o canvas 'monta as linhas do kit com estilos próprios, não com tf-brow' é FALSA. Sobra sem desenho: a ênfase `negative` com o U+2212 (nem o kit a usa — pintou a taxa de marketplace como `muted`, contrariando o próprio §D.1) e o rótulo longo. A auditoria item 4 é contexto útil: no protótipo o breakdown nem FECHAVA a conta (9,35+4,68=14,03 vs total 14,02). Rebaixo MEDIA → BAIXA.",
+  "sobreviveu": true,
+  "area": "design-system"
+}
