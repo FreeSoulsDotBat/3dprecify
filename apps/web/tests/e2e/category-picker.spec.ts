@@ -36,7 +36,7 @@ async function openAmazonSlot(page: import("@playwright/test").Page) {
   await page.goto("/calcular");
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
   const slot0 = page.getByTestId("channel-slot").first();
-  await slot0.getByLabel(t.channels.marketplace).selectOption("AMAZON");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("AMAZON");
   return slot0;
 }
 

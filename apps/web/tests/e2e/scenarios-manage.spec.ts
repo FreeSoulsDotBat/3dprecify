@@ -38,6 +38,30 @@ async function openScenariosList(page: Page) {
   return page.getByRole("dialog");
 }
 
+// 018 mestre-detalhe: a ≥1280px a lista e a ficha do item convivem na MESMA tela, então o nome
+// aparece duas vezes (a linha `master-item` + o `<h2>` da ficha). Abaixo do corte a lista segue
+// sendo a única leitura — daí o locator trocar por viewport, nunca `.first()` às cegas.
+function itemVisible(page: Page, text: string) {
+  return (page.viewportSize()?.width ?? 0) >= 1280
+    ? page.getByTestId("master-item").filter({ hasText: text })
+    : page.getByText(text);
+}
+
+/** Abre um produto salvo do Catálogo: no mestre-detalhe (≥1280) o clique na lista só SELECIONA —
+ *  quem navega para a rota cheia (com o "Salvar cenário") é o botão "Abrir para editar" da ficha.
+ *  Abaixo do corte o clique na linha já navega. */
+async function openCatalogItem(page: Page, text: string): Promise<void> {
+  if ((page.viewportSize()?.width ?? 0) >= 1280) {
+    await page.getByTestId("master-item").filter({ hasText: text }).click();
+    await page
+      .getByTestId("detail-panel")
+      .getByRole("button", { name: catalogo.detailOpenEditor })
+      .click();
+  } else {
+    await page.getByText(text).click();
+  }
+}
+
 /** Create one filament ("PLA Azul" 110/1kg) + one printer ("Ender 3" 1200/2000h/0,12kW/0,5) — the
  *  SAME fixture `catalog.spec.ts` (E2/T025) already proved computes "R$ 25,65" with the
  *  calculator's default remaining fields (016/US10 — re-baseline SEM Desperdício, campo removido). */
@@ -48,7 +72,7 @@ async function createFilamentAndPrinter(page: Page): Promise<void> {
   await page.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) }).fill("110");
   await page.getByRole("textbox", { name: new RegExp(t.fields.rollWeight) }).fill("1");
   await page.getByRole("button", { name: cf.save, exact: true }).click();
-  await expect(page.getByText("PLA Azul")).toBeVisible();
+  await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
   await page.getByRole("tab", { name: catalogo.tabPrinters }).click();
   await page.getByRole("button", { name: catalogo.addPrinter }).click();
@@ -58,7 +82,7 @@ async function createFilamentAndPrinter(page: Page): Promise<void> {
   await page.getByRole("textbox", { name: new RegExp(t.fields.avgPower) }).fill("0,12");
   await page.getByRole("textbox", { name: new RegExp(t.fields.maintenance) }).fill("0,5");
   await page.getByRole("button", { name: cf.save, exact: true }).click();
-  await expect(page.getByText("Ender 3")).toBeVisible();
+  await expect(itemVisible(page, "Ender 3")).toBeVisible();
 }
 
 /** Creates a product referencing the filament+printer fixture, opens it (client-nav), and saves a
@@ -87,7 +111,7 @@ async function createProductWithScenario(
 
   // Back on /catalogo?tab=products (the page's own post-save navigation) — open the product
   // (client-nav row click) to reach the "Salvar cenário" affordance (T021b).
-  await page.getByText(productName).click();
+  await openCatalogItem(page, productName);
   await expect(page.getByText("R$ 25,65").first()).toBeVisible();
 
   await page.getByTestId("save-scenario-trigger").click();
@@ -119,10 +143,19 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
     // edit is genuinely a two-hop live recompute, not a stub.
     await page.getByRole("link", { name: nav.catalogo }).click();
     await expect(page.getByRole("tab", { name: catalogo.tabFilaments })).toBeVisible();
-    await page.getByText("PLA Azul").click();
-    const editSheet = page.getByRole("dialog");
-    await editSheet.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) }).fill("220");
-    await editSheet.getByRole("button", { name: cf.saveChanges, exact: true }).click();
+    // 018 mestre-detalhe: a ≥1280px filamento/impressora editam INLINE na ficha (sem gaveta —
+    // "a ficha É o editor", catalog-panel.tsx); abaixo do corte o clique ainda abre a gaveta.
+    if ((page.viewportSize()?.width ?? 0) >= 1280) {
+      await page.getByTestId("master-item").filter({ hasText: "PLA Azul" }).click();
+      const editPanel = page.getByTestId("detail-panel");
+      await editPanel.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) }).fill("220");
+      await editPanel.getByRole("button", { name: cf.saveChanges, exact: true }).click();
+    } else {
+      await page.getByText("PLA Azul").click();
+      const editSheet = page.getByRole("dialog");
+      await editSheet.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) }).fill("220");
+      await editSheet.getByRole("button", { name: cf.saveChanges, exact: true }).click();
+    }
     await expect(page.getByText(cf.savedFilament)).toBeVisible();
 
     // Reopen the scenario from /calcular — the price reflects TODAY's product values (016/US10 —
@@ -192,7 +225,7 @@ test("duplicate-to-tweak: the copy is independent — tweaking it never moves th
 
   // A real multi-channel comparison worth duplicating: SHOPEE with an explicit commission override.
   const slot0 = page.getByTestId("channel-slot").nth(0);
-  await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await slot0.getByLabel(/^Comissão(?! mínima)/).fill("10");
 
   await page.getByTestId("save-scenario-trigger").click();
@@ -312,7 +345,7 @@ test("manage: rename (PATCH), edit-config (PUT), search narrows the list, delete
   await listDialog.getByText("Alpha").click();
   await expect(page.getByText(s.loadedLabel.replace("{nome}", "Alpha"))).toBeVisible();
   const slot0 = page.getByTestId("channel-slot").nth(0);
-  await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await expect(page.getByText(s.unsavedBadge)).toBeVisible();
   await page.getByRole("button", { name: s.saveChanges }).click();
   await expect(page.getByText(s.saveChangesDone)).toBeVisible();

@@ -59,8 +59,15 @@ async function assinar(page: import("@playwright/test").Page): Promise<string> {
     route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
   );
   await page.goto("/conta");
-  await page.getByRole("button", { name: tb.subscribeAction }).click();
-  await page.getByRole("dialog").getByRole("button", { name: tb.subscribeAction }).click();
+  // 019: a ≥1280px (isWide) a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` —
+  // o botão da linha do plano só rola até ela (nunca abre diálogo, ver onSubscribe em
+  // conta-page.tsx: "abrir a gaveta por cima dela seria mostrar a mesma oferta duas vezes"), então
+  // quem completa a assinatura é o botão de dentro do card inline.
+  await page
+    .locator(".tf-conta__row--plan")
+    .getByRole("button", { name: tb.subscribeAction })
+    .click();
+  await page.locator("#tf-conta-oferta").getByRole("button", { name: tb.subscribeAction }).click();
   await page.waitForURL(/stub\.mercadopago\.local/);
   return preapprovalFromCheckoutUrl(page.url());
 }
@@ -102,7 +109,10 @@ test.describe("E6 PR-B — o ciclo reverso (cancelar · carência · congelament
     await eventoDoMp(request, pre, "approved");
 
     await page.goto("/conta");
-    await expect(page.getByText(tc.planPremium)).toBeVisible();
+    // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
+    // rótulos ("Assinar Premium", "O Premium guarda seu catálogo…"); só o selo do plano É
+    // exatamente "Premium".
+    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
     // O painel de uma assinatura ATIVA fala de renovação e oferece as duas ações.
     await expect(page.getByRole("button", { name: tb.planManage })).toBeVisible();
 
@@ -158,7 +168,10 @@ test.describe("E6 PR-B — o ciclo reverso (cancelar · carência · congelament
     const pre = await assinar(page);
     await eventoDoMp(request, pre, "approved");
     await page.goto("/conta");
-    await expect(page.getByText(tc.planPremium)).toBeVisible();
+    // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
+    // rótulos ("Assinar Premium", "O Premium guarda seu catálogo…"); só o selo do plano É
+    // exatamente "Premium".
+    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
 
     await forcarExpiracao(email);
 
@@ -229,7 +242,10 @@ test.describe("E6 PR-B — o backend concorda com a tela", () => {
     const pre = await assinar(page);
     await eventoDoMp(request, pre, "approved");
     await page.goto("/conta");
-    await expect(page.getByText(tc.planPremium)).toBeVisible();
+    // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
+    // rótulos ("Assinar Premium", "O Premium guarda seu catálogo…"); só o selo do plano É
+    // exatamente "Premium".
+    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: tb.planCancel }).click();
     await page.getByRole("dialog").getByRole("button", { name: tb.cancelConfirm }).click();

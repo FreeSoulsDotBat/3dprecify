@@ -1,8 +1,15 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
 import { grantPremium, recordFromCalculator, signUpThrowaway } from "./history-helpers";
+
+// 018 mestre-detalhe: a ≥1280px o primeiro registro abre sozinho ao lado da lista (SC-002), então
+// o badge do card aparece duas vezes (o card `.tf-historico__link` da lista + a coluna
+// `complementary` do detalhe). O badge da fila é a leitura da LISTA.
+function ledgerCard(page: Page) {
+  return page.locator(".tf-historico__link").first();
+}
 
 // hotfix 016/A3 (H4/H5, 2026-08-07) e2e — the achado A3 against the REAL stack: a 401 SIMULATED at
 // the transport (T072's own method — "expiração REAL do refresh do Firebase não foi exercida"; the
@@ -59,7 +66,7 @@ test("um 401 no /history: o outbox fala em sessão (nunca conexão), o banner of
   // Nothing was purged: the Histórico still shows the ONE queued entry, badged with the session
   // message — never "pendente", never "precisa de Premium".
   await page.goto("/historico");
-  await expect(page.getByText(t.syncUnauthenticatedBadge)).toBeVisible();
+  await expect(ledgerCard(page).getByText(t.syncUnauthenticatedBadge)).toBeVisible();
   await expect(page.getByText(t.syncPendingBadge)).toHaveCount(0);
   await expect(page.getByText(t.syncBlockedBadge)).toHaveCount(0);
   await expect(page.locator(".tf-historico__money strong").first()).toBeVisible();
@@ -74,5 +81,5 @@ test("um 401 no /history: o outbox fala em sessão (nunca conexão), o banner of
   // Still routed to 401 — a reload proves the entry SURVIVES (a 401 never removes it, H4's own
   // non-negotiable property, from the outside).
   await page.reload();
-  await expect(page.getByText(t.syncUnauthenticatedBadge)).toBeVisible();
+  await expect(ledgerCard(page).getByText(t.syncUnauthenticatedBadge)).toBeVisible();
 });

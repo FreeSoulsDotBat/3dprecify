@@ -66,29 +66,31 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     await signUpThrowaway(page, `offer-${info.workerIndex}`);
     await page.goto("/conta");
 
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    const dialog = page.getByRole("dialog");
-    await expect(dialog.getByText(t.offerFreeLead)).toBeVisible();
+    // 019: a ≥1280px (isWide) a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` —
+    // nenhum diálogo abre a partir do botão da linha do plano (ele só rola até o card, ver
+    // conta-page.tsx onSubscribe). A ficha que este teste inspeciona É esse card, sem diálogo.
+    const oferta = page.locator("#tf-conta-oferta");
+    await expect(oferta.getByText(t.offerFreeLead)).toBeVisible();
 
     // Exact prices — the one product constant, byte-for-byte.
-    await expect(dialog.getByText(t.planMonthlyPrice, { exact: true })).toBeVisible(); // R$ 15,99/mês
-    await expect(dialog.getByText(t.planAnnualPrice, { exact: true })).toBeVisible(); // R$ 155,88/ano
-    await expect(dialog.getByText(t.planAnnualEquiv, { exact: true })).toBeVisible(); // equiv. 12,99/mês
+    await expect(oferta.getByText(t.planMonthlyPrice, { exact: true })).toBeVisible(); // R$ 15,99/mês
+    await expect(oferta.getByText(t.planAnnualPrice, { exact: true })).toBeVisible(); // R$ 155,88/ano
+    await expect(oferta.getByText(t.planAnnualEquiv, { exact: true })).toBeVisible(); // equiv. 12,99/mês
 
     // No de/por anchor, ever (§0.2).
-    await expect(dialog.getByText(/191,88/)).toHaveCount(0);
-    await expect(dialog.locator("s, del")).toHaveCount(0);
+    await expect(oferta.getByText(/191,88/)).toHaveCount(0);
+    await expect(oferta.locator("s, del")).toHaveCount(0);
 
     // Annual pre-highlighted "recomendado"; monthly is one tap away.
-    await expect(dialog.getByText(t.planAnnualBadge)).toBeVisible();
-    await expect(dialog.locator('input[value="annual"]')).toBeChecked();
-    await expect(dialog.locator('input[value="monthly"]')).not.toBeChecked();
-    await dialog.locator('input[value="monthly"]').click();
-    await expect(dialog.locator('input[value="monthly"]')).toBeChecked();
+    await expect(oferta.getByText(t.planAnnualBadge)).toBeVisible();
+    await expect(oferta.locator('input[value="annual"]')).toBeChecked();
+    await expect(oferta.locator('input[value="monthly"]')).not.toBeChecked();
+    await oferta.locator('input[value="monthly"]').click();
+    await expect(oferta.locator('input[value="monthly"]')).toBeChecked();
 
     // Hand-off honesty notices.
-    await expect(dialog.getByText(t.handoffNotice)).toBeVisible();
-    await expect(dialog.getByText(t.cardNeverTouches)).toBeVisible();
+    await expect(oferta.getByText(t.handoffNotice)).toBeVisible();
+    await expect(oferta.getByText(t.cardNeverTouches)).toBeVisible();
   });
 
   // ── US3/SC-701 — the flip ────────────────────────────────────────────────────────────────
@@ -106,8 +108,13 @@ test.describe("E6 billing turnstile (MP stub)", () => {
       route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
     );
 
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: t.subscribeAction })
+      .click();
+    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
     await page.waitForURL(/stub\.mercadopago\.local/);
 
     // The stub "confirms" the payment: a real signed webhook straight at the backend (SEC-101..
@@ -120,7 +127,9 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     // that exact cold-return shape; this one stays a plain re-entry so it isolates the GRANT
     // mechanics from the return-surface UI.
     await page.goto("/conta");
-    await expect(page.getByText(tc.planPremium)).toBeVisible();
+    // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
+    // rótulos; só o selo do plano É exatamente "Premium".
+    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
 
     // Spot-check: a premium surface unlocks WITHOUT re-login (same session, no new sign-in).
     await page.getByRole("link", { name: tn.catalogo }).click();
@@ -146,8 +155,13 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     await page.route("https://stub.mercadopago.local/**", (route) =>
       route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
     );
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: t.subscribeAction })
+      .click();
+    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
     await page.waitForURL(/stub\.mercadopago\.local/);
 
     // Return from the hand-off BEFORE the payment is confirmed (MP's back_url — a 1-segment
@@ -181,8 +195,13 @@ test.describe("E6 billing turnstile (MP stub)", () => {
     await page.route("https://stub.mercadopago.local/**", (route) =>
       route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
     );
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: t.subscribeAction })
+      .click();
+    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
     await page.waitForURL(/stub\.mercadopago\.local/);
 
     const paymentId = "e2e-once-payment";
@@ -220,8 +239,13 @@ test.describe("E6 billing turnstile (MP stub)", () => {
       route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
     );
 
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: t.subscribeAction })
+      .click();
+    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
     await page.waitForURL(/stub\.mercadopago\.local/);
 
     // The abandoner: never completes the payment, just comes back to the app on their own.
@@ -235,8 +259,13 @@ test.describe("E6 billing turnstile (MP stub)", () => {
 
     // A second Assinar attempt hits SEC-604 (an open subscription already exists) — honest copy,
     // never the raw status code.
-    await page.getByRole("button", { name: t.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: t.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: t.subscribeAction })
+      .click();
+    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
     await expect(page.getByRole("alert").getByText(t.checkoutInProgress)).toBeVisible();
     await expect(page.getByText(/\b409\b/)).toHaveCount(0);
   });

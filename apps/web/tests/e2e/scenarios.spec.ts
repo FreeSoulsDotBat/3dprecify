@@ -52,7 +52,7 @@ test("premium saves online, the list shows it with no price, and reopening recom
   // "um canal sem cobertura mostra o selo honesto" — nao mudou; o que mudou e que ela agora esta
   // escrita em vez de depender de um padrao.
   const slot0 = page.getByTestId("channel-slot").nth(0);
-  await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   // Curated → some catalog reference seal (embedded seed or a live served reference, whichever the
   // e2e stack resolves); either way it must NOT be the uncovered "sem referência" reading.
   await expect(slot0.getByTestId("fee-seal")).not.toContainText(t.seals.none);
@@ -62,7 +62,7 @@ test("premium saves online, the list shows it with no price, and reopening recom
 
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const slot1 = page.getByTestId("channel-slot").nth(1);
-  await slot1.getByLabel(t.channels.marketplace).selectOption("MERCADO_LIVRE");
+  await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("MERCADO_LIVRE");
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.none);
   await expect(page.getByTestId("channel-price")).toHaveCount(2);
 

@@ -28,6 +28,21 @@ import {
 
 const t = messages;
 
+/** Abre um produto salvo do Catálogo: no mestre-detalhe (≥1280) o clique na lista só SELECIONA —
+ *  quem navega para a ficha de página cheia (onde vive o `RecordSnapshotButton`) é o botão "Abrir
+ *  para editar" da ficha. Abaixo do corte o clique na linha já navega (018 mestre-detalhe). */
+async function openCatalogItem(page: Page, text: string): Promise<void> {
+  if ((page.viewportSize()?.width ?? 0) >= 1280) {
+    await page.getByTestId("master-item").filter({ hasText: text }).click();
+    await page
+      .getByTestId("detail-panel")
+      .getByRole("button", { name: t.catalogo.detailOpenEditor })
+      .click();
+  } else {
+    await page.getByText(text).click();
+  }
+}
+
 /** Open a snapshot's detail the way a seller does — from the ledger. The card TITLE is stable across
  *  churn/lapse (a frozen label or the frozen origin name), so it identifies the record throughout. */
 async function openFromLedger(page: Page, cardTitle: string): Promise<void> {
@@ -163,7 +178,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
   // Record a snapshot FROM the product page — provenance = PRODUCT, the origin the calculator (which
   // binds a filament/printer, never a product) cannot itself set.
   await page.goto("/catalogo?tab=products");
-  await page.getByText(piece).click();
+  await openCatalogItem(page, piece);
   await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible(); // varejo of custo 16,16 (016/PR-C B1 seed)
   await recordFromCalculator(page); // the SAME RecordSnapshotButton + sheet as the calculator
   // Wait for the record to SETTLE (online ⇒ synced) before navigating — else the goto aborts the

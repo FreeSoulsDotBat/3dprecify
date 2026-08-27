@@ -16,6 +16,30 @@ import { E2E_DATABASE_URL } from "../../playwright.config";
 const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
 const t = messages;
 
+// 018 mestre-detalhe: a ≥1280px a lista e a ficha do item convivem na MESMA tela, então o nome
+// aparece duas vezes (a linha `master-item` + o `<h2>` da ficha). Abaixo do corte a lista segue
+// sendo a única leitura — daí o locator trocar por viewport, nunca `.first()` às cegas.
+function itemVisible(page: Page, text: string) {
+  return (page.viewportSize()?.width ?? 0) >= 1280
+    ? page.getByTestId("master-item").filter({ hasText: text })
+    : page.getByText(text);
+}
+
+/** Abre um produto/kit salvo do Catálogo: no mestre-detalhe (≥1280) o clique na lista só
+ *  SELECIONA — quem navega para a rota cheia é o botão "Abrir para editar" da ficha. Abaixo do
+ *  corte o clique na linha já navega. */
+async function openCatalogItem(page: Page, text: string): Promise<void> {
+  if ((page.viewportSize()?.width ?? 0) >= 1280) {
+    await page.getByTestId("master-item").filter({ hasText: text }).click();
+    await page
+      .getByTestId("detail-panel")
+      .getByRole("button", { name: t.catalogo.detailOpenEditor })
+      .click();
+  } else {
+    await page.getByText(text).click();
+  }
+}
+
 async function signUpThrowaway(page: Page, tag: string): Promise<string> {
   await page.goto("/sign-in");
   await page.waitForFunction(() => "__e2eAuth" in window);
@@ -69,16 +93,18 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
   // The piece really is in the catalog now — as a MANUAL product, flagged for attention (K3),
   // because it has no saved filament/printer behind it yet.
   await page.goto("/catalogo?tab=products");
-  await expect(page.getByText("Peça 1 · Kit Suporte")).toBeVisible();
+  await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toBeVisible();
   await expect(page.getByText(t.catalogo.needsAttention).first()).toBeVisible();
 
   // The kit is in the Kits tab, described by STRUCTURE — never a price (FR-407).
   await page.goto("/catalogo?tab=kits");
-  await expect(page.getByText("Kit Suporte")).toBeVisible();
-  await expect(page.getByText(t.catalogo.countKitPieces.replace("{n}", "1"))).toBeVisible();
+  await expect(itemVisible(page, "Kit Suporte")).toBeVisible();
+  // 018 mestre-detalhe: a ≥1280px o resumo "1 peça(s)" também aparece na ficha (mesmo texto do
+  // card) — escopado à linha da lista, nunca `.first()` às cegas.
+  await expect(itemVisible(page, t.catalogo.countKitPieces.replace("{n}", "1"))).toBeVisible();
 
   // Reopen it: the inputs come back and the SAME money is RECOMPUTED from them (no stored price).
-  await page.getByText("Kit Suporte").click();
+  await openCatalogItem(page, "Kit Suporte");
   await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
   await expect(page.getByRole("textbox", { name: new RegExp(t.bom.kitName) })).toHaveValue(
     "Kit Suporte",
@@ -100,7 +126,9 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
   await expect(page.getByText(t.bom.savedSuperseded)).toBeVisible();
 
   await page.goto("/catalogo?tab=products");
-  await expect(page.getByText("Peça 1 · Kit Suporte")).toHaveCount(1); // no duplicate, ever
+  // 018 mestre-detalhe: a ≥1280px o nome também aparece no `<h2>` da ficha aberta — a contagem
+  // que prova "nenhum duplicado" é a das LINHAS da lista, não a de todo texto na tela.
+  await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toHaveCount(1); // no duplicate, ever
 });
 
 test("deleting a referenced product degrades the kit line on reopen — never a live-reference lie (D6/SC-405)", async ({
@@ -126,7 +154,7 @@ test("deleting a referenced product degrades the kit line on reopen — never a 
 
   // Delete the materialized product the kit line references.
   await page.goto("/catalogo?tab=products");
-  await expect(page.getByText(piece)).toBeVisible();
+  await expect(itemVisible(page, piece)).toBeVisible();
   await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
   await page
     .getByRole("dialog")

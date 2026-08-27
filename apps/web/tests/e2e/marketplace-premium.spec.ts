@@ -121,12 +121,12 @@ test("premium: a hidden fee field never keeps charging — ML+Frete → Amazon b
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").first();
-  await slot0.getByLabel(t.channels.marketplace).selectOption("MERCADO_LIVRE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("MERCADO_LIVRE");
   await slot0.getByLabel(t.channels.freight).fill("50");
   await expect(slot0.getByLabel(t.channels.freight)).toHaveValue("50");
 
   // Switch to Amazon — freightCost is outside Amazon's feeAxes.
-  await slot0.getByLabel(t.channels.marketplace).selectOption("AMAZON");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("AMAZON");
 
   // (a) The field is gone...
   await expect(slot0.getByLabel(t.channels.freight)).toHaveCount(0);
@@ -138,7 +138,7 @@ test("premium: a hidden fee field never keeps charging — ML+Frete → Amazon b
 
   // (c) Switching BACK to ML proves the value itself was blanked, not merely hidden — a hidden but
   // still-populated field would silently resurrect the R$ 50 the instant it renders again.
-  await slot0.getByLabel(t.channels.marketplace).selectOption("MERCADO_LIVRE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("MERCADO_LIVRE");
   await expect(slot0.getByLabel(t.channels.freight)).toHaveValue("");
 });
 

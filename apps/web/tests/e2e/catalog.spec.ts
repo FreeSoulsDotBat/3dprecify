@@ -14,6 +14,15 @@ import { E2E_DATABASE_URL } from "../../playwright.config";
 const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
 const t = messages;
 
+// 018 mestre-detalhe: a ≥1280px a lista e a ficha do item convivem na MESMA tela, então o nome
+// aparece duas vezes (a linha `master-item` + o `<h2>` da ficha). Abaixo do corte a lista segue
+// sendo a única leitura — daí o locator trocar por viewport, nunca `.first()` às cegas.
+function itemVisible(page: Page, text: string) {
+  return (page.viewportSize()?.width ?? 0) >= 1280
+    ? page.getByTestId("master-item").filter({ hasText: text })
+    : page.getByText(text);
+}
+
 async function signUpThrowaway(page: Page, tag: string): Promise<string> {
   await page.goto("/sign-in");
   await page.waitForFunction(() => "__e2eAuth" in window);
@@ -64,7 +73,7 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
     .fill("110");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) }).fill("1");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
-  await expect(page.getByText("PLA Azul")).toBeVisible();
+  await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
   // Printers tab: create "Ender 3" 1200 / 2000 h / 0,12 kW / reserve 0,5.
   await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
@@ -81,7 +90,7 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
     .getByRole("textbox", { name: new RegExp(t.calculator.fields.maintenance) })
     .fill("0,5");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
-  await expect(page.getByText("Ender 3")).toBeVisible();
+  await expect(itemVisible(page, "Ender 3")).toBeVisible();
 
   // Calculator: pick both → fields pre-fill (editable) and the price is the SC-305 number.
   await page.goto("/calcular");

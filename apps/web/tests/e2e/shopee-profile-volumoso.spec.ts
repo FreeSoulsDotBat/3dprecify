@@ -25,7 +25,7 @@ test.describe("Shopee seller profile + volumoso (premium)", () => {
     await page.goto("/calcular");
     await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
     const slot = page.getByTestId("channel-slot").first();
-    await slot.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+    await slot.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   });
 
   test("sem resposta ao perfil: preço é o catch-all de hoje (R$ 35,30 varejo)", async ({

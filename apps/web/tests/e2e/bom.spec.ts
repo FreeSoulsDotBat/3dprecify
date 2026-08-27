@@ -1,8 +1,17 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
 import { grantPremium, signUpThrowaway } from "./history-helpers";
+
+// 018 mestre-detalhe: a ≥1280px a lista e a ficha do item convivem na MESMA tela, então o nome
+// aparece duas vezes (a linha `master-item` + o `<h2>` da ficha). Abaixo do corte a lista segue
+// sendo a única leitura — daí o locator trocar por viewport, nunca `.first()` às cegas.
+function itemVisible(page: Page, text: string) {
+  return (page.viewportSize()?.width ?? 0) >= 1280
+    ? page.getByTestId("master-item").filter({ hasText: text })
+    : page.getByText(text);
+}
 
 // 008/T004+T007 e2e — the E3 PR-A loop against the REAL stack: a premium account composes a
 // 3-line BOM (ad-hoc + catalog-referenced) free-standing (nothing persisted, quickstart §2);
@@ -33,7 +42,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     .fill("100");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.rollWeight) }).fill("1");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
-  await expect(page.getByText("PLA Azul")).toBeVisible();
+  await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
   await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
   await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
@@ -46,7 +55,7 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     .fill("2000");
   await page.getByRole("textbox", { name: new RegExp(t.calculator.fields.avgPower) }).fill("0,10");
   await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
-  await expect(page.getByText("Ender 3")).toBeVisible();
+  await expect(itemVisible(page, "Ender 3")).toBeVisible();
 
   await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
   await page.getByRole("button", { name: t.catalogo.addProduct }).click();
