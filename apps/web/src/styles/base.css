@@ -100,17 +100,16 @@ body {
   font: inherit;
 }
 
-/* Visible keyboard focus (WCAG 2.4.7). The purple ring is reserved for form INPUTS
-   (single, clean — see --ring). Links/buttons get a LIGHT keyboard outline, not the
-   heavy input box. Components may override (e.g. app-nav, DS controls). */
+/* 019/T029 — decisão do dono (25/08, reafirmada 27/08; spec §Clarificações), exceção
+   explícita ao WCAG 2.4.7: nenhum controle mostra indicador de foco. */
 :where(input, select, textarea):focus-visible {
   outline: none;
-  box-shadow: var(--ring);
+  box-shadow: none;
   border-radius: var(--radius-xs);
 }
 :where(a, button):focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  outline: none;
+  outline-offset: 0;
   box-shadow: none;
   border-radius: var(--radius-xs);
 }
@@ -122,15 +121,6 @@ body {
 :where([tabindex="-1"]):focus-visible {
   outline: none;
   box-shadow: none;
-}
-
-/* Windows High Contrast / forced-colors: box-shadow rings are dropped, so provide a
-   real system-coloured outline for genuinely interactive elements. */
-@media (forced-colors: active) {
-  :where(a, button, input, select, textarea):focus-visible {
-    outline: 2px solid Highlight;
-    outline-offset: 2px;
-  }
 }
 
 /* ---- Brand utilities ---- */

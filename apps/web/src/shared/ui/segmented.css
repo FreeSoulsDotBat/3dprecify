@@ -84,11 +84,10 @@
   box-shadow: var(--shadow-xs);
 }
 
-/* O foco tem de aparecer SOBRE a pílula selecionada também — por isso o outline, e não uma troca
-   de fundo (que sumiria justamente no item já destacado). */
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-segmented__item:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: none;
+  outline-offset: 0;
 }
 
 .tf-segmented__item > svg {

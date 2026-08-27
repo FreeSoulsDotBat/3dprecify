@@ -27,9 +27,10 @@
 .tf-btn:active:not(:disabled) {
   transform: scale(var(--press-scale));
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-btn:focus-visible {
   outline: none;
-  box-shadow: var(--ring);
+  box-shadow: none;
 }
 .tf-btn:disabled {
   cursor: not-allowed;

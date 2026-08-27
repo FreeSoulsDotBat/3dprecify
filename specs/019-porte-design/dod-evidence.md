@@ -138,3 +138,28 @@ app), `.tf-notfound` ganha `justify-content: center; text-align: center` (folha 
 - `colors.css`: `--warning-text` claro `#9a570a` · escuro `var(--tf-orange)` (números da §T002 no
   comentário); `token-parity` baseline 87→88, 3/3. `--warning-soft` NÃO criado (levaria a baseline a 89
   contra o número da T015; o CSS usa `--tf-warning-soft`, que existe nos dois temas).
+
+### T028 — o export e o vocabulário (2026-08-27, medido antes da T032)
+
+`grep -rin "canal" backend/app` = **0** (confirma a T003) e `grep -in "canal|marketplace" backend/app/services/
+quote_render.py backend/app/api/export.py` = **0**: o PDF escreve só `Preço de varejo`/`Preço de atacado`
+(`_BASIS_CAPTION`) + o conteúdo do payload congelado; o CSV são "rows equal the stored snapshots exactly"
+(FR-513). Consequência: a palavra "canal"/"marketplace" NUNCA nasce no servidor — o export de um snapshot
+antigo não pode mudar com a fatia (imutabilidade ADR-0019 + zero string) e o de um snapshot novo só diz o
+que o payload diz (nomes de marketplace — Shopee/Amazon/ML — não a palavra). A T028 fica satisfeita por
+ESTRUTURA; a asserção e2e que sobra é a negativa (o PDF/CSV baixados não contêm "canal"), acrescentada ao
+round-trip existente de `history-export.spec.ts` na T034.
+
+### T029 · T032 · T033 (dev-frontend ×2, 2026-08-27)
+
+- **Foco zerado** em 11 arquivos, cada um pelo mecanismo próprio: `button`, `card --interactive`, `app-nav`
+  (+ o fallback `forced-colors`), `segmented`, `switch`, `field` (`.tf-inputwrap:focus-within` fica SÓ com
+  `border-color: var(--accent)`; o anel de ERRO `--error:focus-within` é validação, não foco — fica),
+  `dialog__x`, `toast__close`, `category-picker__option`, e o **reset global** de `styles/base.css` (não
+  estava no inventário da V0 — o grep achou). `_diag-foco.spec.ts` (018) apagado. Órfãos: `--ring`,
+  `--focus-ring` (mantidos; `token-parity` 88). 81/81.
+- **Vocabulário**: 17 folhas trocadas em `messages.pt-br.ts` (a guarda T027 listava 22 entradas — 5 eram
+  a mesma folha em linha dupla); zero hard-code fora de `messages`; gênero "o marketplace"; comentários
+  de engenharia com "canal" ficam. T033: **1 asserção** (`bom-page.test.tsx:509`) — os demais 94 achados
+  da T003 já assertavam via `messages` ou são nomes de teste/identificadores/metadados de relatório.
+  977/977 verdes; `tsc` 0.

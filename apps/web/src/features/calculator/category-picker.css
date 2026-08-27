@@ -73,10 +73,11 @@
 .category-picker__option:hover {
   background: var(--bg-muted);
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .category-picker__option:focus-visible {
   outline: none;
-  background: var(--bg-muted);
-  box-shadow: var(--ring);
+  background: none;
+  box-shadow: none;
 }
 
 /* O estado escolhido usa a MESMA moldura `.tf-inputwrap` do campo de busca — mas o caminho completo
