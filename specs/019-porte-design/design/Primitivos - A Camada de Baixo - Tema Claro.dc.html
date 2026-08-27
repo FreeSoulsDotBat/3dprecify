@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">A camada de baixo — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Trinta e dois lotes de tela desenhados contra o código, e todos eles apoiados na mesma folha de primitivos. Esta prancheta é a <strong style="color:var(--sheet-ink)">prestação de contas dessa folha</strong>: o que foi copiado do design system, o que foi copiado do produto, o que foi inventado, e o que foi adaptado — com o motivo de cada troca escrito ao lado dela. As contagens acompanham o último lote.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A regra que a folha seguiu do primeiro lote ao último: <strong style="color:var(--sheet-ink)">nada de aparência nova sem procedência</strong>. Um primitivo copiado carrega o nome da origem; um primitivo novo carrega a justificativa. Onde os dois lados discordam — o DS e o produto — a folha segue o produto, porque é ele que a pessoa usa.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#23a">23a</a> as três procedências · <a href="#23b">23b</a> os nove primitivos novos · <a href="#23c">23c</a> as adaptações declaradas · <a href="#23d">23d</a> o desabilitado que não compilava · <a href="#23e">23e</a> o espaço inquebrável · <a href="#23f">23f</a> as lacunas que o produto preencheu · <a href="#23g">23g</a> o inventário.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="23a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As três procedências</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Todo primitivo da folha cai em um destes três grupos, e o grupo determina o que se pode fazer com ele.</p>
+<div data-theme="light" data-screen-label="23a Tres procedencias" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">DS</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Cópia do design system</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)"><code>tf-card</code>, <code>tf-brow</code>, <code>tf-empty</code>, <code>tf-badge</code>, <code>tf-field</code> e a família de formulário. Vieram dos componentes React do kit, transcritos para classe porque a prancheta é marcação estática — o mesmo desenho, sem o React.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">produto</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Cópia do código do app</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)"><code>tf-btn</code>, <code>tf-price</code>, <code>tf-alert</code>, <code>tf-dialog</code>, <code>tf-switch</code>, <code>tf-segmented</code>, <code>tf-toast</code>, <code>tf-spinner</code>, <code>tf-infotip</code>, <code>tf-export</code>, <code>tf-catalog-md</code>, <code>tf-costs-grid</code>, o seletor com busca e o cromo do shell. O produto já divergiu do kit em alguns deles, e a folha segue o produto.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--warning">novo</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Não existe em lugar nenhum</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Nove: <code>tf-aviso</code>, <code>tf-plist</code>, <code>tf-table</code>, <code>tf-alert__close</code>, <code>tf-alert--compact</code>, <code>tf-frozen</code>, <code>tf-segmented--split</code>, <code>tf-btn--full</code>/<code>--half</code> e <code>tf-phone-scroll</code>. Cada um respondeu a uma pergunta que nem o kit nem o produto tinham respondido ainda — e cada um está na prancheta seguinte, com o motivo. Some o token <code>--warning-text</code> e são dez invenções ao todo.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--neutral">variante</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Não é primitivo, é tom que faltava</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Dois casos, os dois do lote 18: <code>tf-badge--success</code> e <code>--danger</code> (um orçamento aceito não é aviso e um recusado não é laranja) e <code>tf-plist__flag--neutral</code> (a marca da linha herdava o laranja de "fixado", mas três dos cinco estados não avisam nada). A construção é a das irmãs; só os tokens mudam. Ficam fora da contagem de invenções, e marcados na folha do mesmo jeito.</span>
+</div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">O nome do primitivo é o nome da origem, mesmo quando fica estranho: o seletor com busca ainda se chama <code>category-picker</code> em telas onde não há categoria nenhuma. É o mesmo componente, e renomear esconderia isso.</p></div></div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os ícones são o caso mais literal: máscara CSS sobre <code>currentColor</code>, Lucide 0.487.0, traço de 2px, os mesmos arquivos SVG do produto copiados para <code>assets/icons/lucide/</code>. Nenhum foi redesenhado, e nenhum vem de CDN.</p>
+</div>
+
+<div id="23b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os nove primitivos novos</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nove em trinta e dois lotes. Cada um nasceu de uma pergunta que a folha não sabia responder, não de uma vontade de variar.</p>
+<div data-theme="light" data-screen-label="23b Primitivos novos" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-aviso · a terceira categoria de mensagem</span>
+<div class="tf-field">
+<label class="tf-field__label" for="p-23b">Peso da peça</label>
+<div class="tf-inputwrap"><input id="p-23b" class="tf-input tf-input--num" type="text" value="850" readOnly="true"><span class="tf-inputwrap__affix">g</span></div>
+</div>
+<div class="tf-aviso"><span class="tf-ico tf-ico--16 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body"><p class="tf-aviso__text">850 g é bem acima do comum para uma peça só. Se o valor está certo, siga.</p></div></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Nem dica, nem erro. O número é válido, a conta sai, e a pessoa não é impedida de nada — o aviso só diz que aquele valor provavelmente significa outra coisa. Um erro travaria; uma dica não seria lida.</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O fundo é o tom de informação <em>empilhado sobre a superfície do cartão</em>, não solto: um tom translúcido mudaria de cor conforme o que estiver atrás — mais escuro na página, mais claro dentro de um cartão. A cor de uma categoria de mensagem não pode depender do vizinho.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-plist · a lista densa do Catálogo</span>
+<ul class="tf-plist">
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Vaso hexagonal grande</span><span class="tf-plist__meta">14/03</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;89,90</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Suporte de fone articulado</span><span class="tf-plist__meta"><span class="tf-plist__flag">recalcular</span></span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;34,50</span><span class="tf-plist__was">era R$&nbsp;31,00</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Organizador de bancada</span><span class="tf-plist__meta">02/03</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;128,00</span></span></span></li>
+</ul>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O card salvo deixou de ser card. Com dois dados por item, a moldura gastava 24px de preenchimento e uma borda para separar duas linhas de texto — e a 390px isso é a diferença entre ver quatro itens e ver nove.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-alert--compact e tf-alert__close · a geometria do selo</span>
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__title">Comissão</p><p class="tf-alert__text">Tabela de comissões da Amazon — Casa e Cozinha</p></div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O <code>tf-alert</code> do produto é alerta de <em>página</em>: 16px de preenchimento e ação de 44px. O selo é um bloco denso de três a quatro linhas num cartão de 390px, e herdava as duas medidas — o "Ver fonte" sozinho valia 44px, um quarto do selo. A variante compacta dá 12px de preenchimento e ação de 18px.</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">E o produto não dispensa nada: os avisos dele são estados, e estado não se fecha. O selo é a exceção — quem já conferiu a fonte não reconfere a cada visita. Os dois alvos de 44px são <strong style="color:var(--text-strong)">pseudo-elementos</strong>, não caixas: com caixa de 44px a dispensa fica mais alta que um selo de uma linha e passa a ditar a altura do alerta, abrindo um vão sob o texto.</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A simetria é o que faz ler como selo: ícone e dispensa com a mesma caixa de 20px, a 13px das quatro bordas. Ela depende de o corpo <em>crescer</em> — sem isso a dispensa gruda no fim do texto, e o defeito só aparece nas linhas curtas.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-frozen · o congelamento com o dim nos controles</span>
+<div class="tf-frozen" aria-disabled="true">
+<div class="tf-field">
+<label class="tf-field__label" for="fz23">Consumo médio <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="fz23" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"><span class="tf-inputwrap__affix">kW</span></div>
+<span class="tf-field__hint">Consumo médio real da impressora, não a potência de placa (~0,12 kW).</span>
+</div>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O produto congela com um <code>fieldset</code> desabilitado, cujo estilo de navegador esmaece <em>controles</em> e deixa rótulo e dica em cor cheia. Esmaecer o contêiner com opacidade não é o mesmo: ela cria contexto de composição e arrasta todo descendente — a dica caía para 2,58:1 e reprovava AA. Aqui o dim vive no campo, e a dica fica legível: é ela que corrige o erro mais comum do formulário.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-segmented--split · a bandeja em partes iguais</span>
+<div class="tf-segmented tf-segmented--split" role="tablist" aria-label="Nível de preço"><button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Varejo</button><button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Atacado</button></div>
+<div class="tf-segmented tf-segmented--sm tf-segmented--split" role="tablist" aria-label="Seções do catálogo">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Filamentos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Impressoras</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Produtos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O <code>segmented.css</code> do produto só declara <code>inline-flex</code> com <code>max-width: 100%</code>: a bandeja se ajusta ao texto e sobra espaço ao lado. Aqui ela ocupa a linha e divide em partes iguais — com dois itens ou com quatro. As opções são do mesmo tipo, e larguras que saem de quantas letras cada palavra tem fazem "Impressoras" parecer mais importante que "Kits". Vale <strong style="color:var(--text-strong)">onde a largura é escassa</strong>: numa coluna de desktop de 1138px isso daria abas de 280px, o oposto da densidade compacta que o próprio conjunto documenta — lá a bandeja volta a se ajustar ao texto.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-btn--full e tf-btn--half · as duas larguras do botão solto</span>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<button type="button" class="tf-btn tf-btn--primary tf-btn--full">Salvar kit</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--half">Usar estimativa por ritmo</button>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O <code>button.css</code> do produto só declara o alvo mínimo (<code>min-width: var(--touch-min)</code>) — nenhuma variante de largura. Um botão solto numa coluna tem duas larguras legítimas, inteira ou metade; a que sai da contagem de letras do rótulo não é uma delas. Na metade, um rótulo maior que 50% quebra em duas linhas centradas — o botão nunca cresce nem corta.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-phone-scroll · a rolagem sem barra clássica</span>
+<div class="tf-phone-scroll" style="height:120px;display:flex;flex-direction:column;gap:8px;border:1px solid var(--border-subtle);border-radius:var(--radius-md);padding:8px">
+<div class="tf-card tf-card--pad-sm" style="flex-shrink:0;font-size:var(--fs-body-sm)">Peça 1 · Vaso hexagonal</div>
+<div class="tf-card tf-card--pad-sm" style="flex-shrink:0;font-size:var(--fs-body-sm)">Peça 2 · Suporte de fone</div>
+<div class="tf-card tf-card--pad-sm" style="flex-shrink:0;font-size:var(--fs-body-sm)">Peça 3 · Base articulada</div>
+<div class="tf-card tf-card--pad-sm" style="flex-shrink:0;font-size:var(--fs-body-sm)">Peça 4 · Tampa rosqueada</div>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A barra clássica do Chromium tira 15px do conteúdo — medido: bandeja de 299px onde a irmã de 390px dá 314. Aparelho real usa barra em overlay, que não ocupa espaço; aqui a barra some e a rolagem fica.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">tf-table · o Catálogo a partir de 1024px</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Nem grade de cartões, nem mestre-detalhe: tabela densa. Com dois dados por item, cartões espalham ar, e o que a largura tem para dar é <em>linhas</em> — comparar preços de doze produtos é uma leitura de coluna.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os nove têm a mesma forma de justificativa: uma medida, não um gosto. Quatro itens contra nove; um número válido que trava a conta; uma coluna de preços que não existe em cartões; um vão sob o texto quando o alvo de toque vira caixa; 44px de altura para um "Ver fonte" que vale 18; uma dica de campo a 2,58:1 porque o esmaecimento morava no contêiner; e uma aba parecendo mais importante que a outra só porque "Impressoras" tem mais letras que "Kits"; um rótulo de 211px vazando de um botão de 157; e uma barra de rolagem clássica de 15px encolhendo um espécime inteiro.</p>
+</div>
+
+<div id="23c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As adaptações declaradas</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Uma cópia verbatim que não roda não é uma cópia fiel. Oito trocas foram necessárias, e todas as oito estão escritas em comentário na própria folha, ao lado da linha que mudou.</p>
+<div data-theme="light" data-screen-label="23c Adaptacoes" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Um token que não existe nesta folha</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A folha de exportar escreve <code>var(--border)</code>. Aqui é <code>--border-default</code>, que resolve para o mesmo valor no kit. A troca é de nome, não de cor.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Fixo virou absoluto</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O toaster e a TabBar são <code>position: fixed</code> no produto, ancorados na janela. Na prancheta a moldura do telefone não é a janela, então eles ancoram nela. Todo o resto — altura, borda, empilhamento — é o do produto.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Ícones locais</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">As URLs de máscara apontam para a cópia em <code>assets/icons/lucide/</code>. É exatamente o que o produto faz ao apontar sua própria base de ícones — o app é offline-first e não busca ícone em CDN.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">O sinal que só a prancheta precisa</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Um valor que transborda rola, e no app a barra do navegador basta — rolagem ali é raríssima. Na prancheta o espécime existe para ser lido <em>parado</em>, e sem sinal "R$ 184.467.44" se lê como 184 milhões em vez de 184 quintilhões. Daí a máscara de esmaecimento na borda, aplicada <strong style="color:var(--text-strong)">por classe</strong> a um bloco só: CSS não detecta transbordo, e incondicional ela apagava os centavos dos 29 preços do conjunto.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">O inteiro que não pode encolher</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O produto deixa o inteiro do preço encolher (<code>min-width: 0</code>). Num valor de vinte dígitos isso fazia o texto vazar da própria caixa — 638px de glifos numa caixa de 238px — e os centavos, posicionados a partir da caixa encolhida, eram pintados por cima do inteiro. Aqui ele não encolhe. Sobrepor é a mesma falha que quebrar: o número lido deixa de ser o número escrito.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">A janela que não é a janela</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O preço grande do produto encolhe conforme a largura da <em>janela</em> (<code>12vw</code>). Numa prancheta a moldura de 390px não é a janela — é o canvas inteiro —, então o preço ficava no teto do clamp e a rolagem entrava onde o app apenas encolheria. Aqui o clamp mede o próprio bloco (<code>11cqw</code>), com o mesmo piso e o mesmo teto. É medida de contexto, não de valor.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">O reset de âncora que o produto herda</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O produto carrega o preflight do Tailwind antes da base da marca, e é ele quem zera o sublinhado de <code>a</code>. Esta folha não carrega Tailwind, então <code>a.tf-btn</code> nascia sublinhado — e o produto usa a classe em âncora de propósito, no 404 e no banner de sessão. A regra existe aqui e não lá porque lá já existia.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Classe onde o produto tem componente</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Os primitivos do kit são componentes React. Uma prancheta é marcação estática, então cada um virou classe com o desenho intacto. O que se perde é o comportamento; o que se vê é o mesmo.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Uma adaptação silenciosa é uma divergência que ninguém vai encontrar depois. As oito estão em comentário porque quem for portar isso de volta ao código precisa saber o que desfazer.</p>
+<div style="display:flex;align-items:center;gap:8px;margin-top:6px"><span class="tf-badge tf-badge--info">23c·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">E dois que não são adaptação: a folha estava atrasada</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Estes dois vão na direção oposta das oito de cima. Não são divergências deliberadas — são consertos que o produto já tinha feito e a folha não havia copiado. <strong style="color:var(--sheet-ink)">Não há nada a desfazer neles:</strong> depois da correção a folha é idêntica ao produto, e reverter reintroduziria bugs que o produto já pagou para consertar.</p>
+<div data-theme="light" data-screen-label="23c2 Folha atrasada" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">O conserto que a folha não tinha copiado</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O <code>tf-price</code> daqui foi copiado antes de o produto consertar dois defeitos seus, e por isso os herdou: o tamanho vivia no inteiro em vez de no valor — então <code>R$</code> e centavos, definidos em proporção, se calculavam sobre a base herdada e saíam a ~7px — e faltava a rolagem de último recurso. Copiado de novo, com os dois consertos — e isso <strong style="color:var(--text-strong)">mudou a procedência do primitivo</strong>: o <code>tf-price</code> desta folha não vem mais do kit, vem de <code>shared/ui/price-hero.css</code>. O inventário da 23g já aponta para lá, porque é a linha que alguém segue ao portar.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">E o eixo que ninguém mede</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A rolagem horizontal traz uma consequência: com entrelinha 1 o conteúdo fica 4px mais alto que a caixa, e declarar rolagem em X faz o Y virar automático — uma barra vertical clássica de 15px que só aparece no navegador <em>com janela</em>. A entrelinha 1,2 remove a causa; esconder o transbordo esconderia a prova. <strong style="color:var(--text-strong)">Transbordo se afere nos dois eixos</strong>, e o Y por altura de rolagem, nunca pela imagem.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O primeiro foi achado no lote 31; o segundo, depois de o conjunto fechar, ao ler o <code>dod-evidence.md</code> do 016 — consertar um trouxe o outro, porque foi a rolagem em X do primeiro que criou a condição do segundo. As duas edições estão registradas em 23/08/2026. Cópia envelhece: a folha não é um retrato, é uma dívida que precisa ser paga de novo cada vez que a fonte se move.</p>
+</div>
+
+<div id="23d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O desabilitado que não compilava</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O defeito transversal do trabalho, achado no lote 17: <code>disabled</code> escrito na marcação da prancheta não chegava ao elemento. Trinta e dois controles em lotes anteriores <em>pareciam</em> ativos.</p>
+<div data-theme="light" data-screen-label="23d Desabilitado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Antes — indistinguível de um botão que funciona</span>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--full">Exportar orçamento</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--success-text);font-weight:var(--fw-semibold)">Depois — anunciado e visivelmente inerte</span>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--full" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Exportar orçamento</button>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Por que <code>aria-disabled</code> e não o atributo</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Um botão com <code>disabled</code> sai da ordem de Tab e some para quem navega por teclado — num inventário de estados, o estado desapareceria da leitura. Com <code>aria-disabled</code> ele continua alcançável, anuncia que está indisponível, e o esmaecimento diz o mesmo aos olhos.</span>
+</div>
+<div class="tf-alert tf-alert--warning"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Nenhuma medida de geometria acusaria isso: o botão tinha o tamanho certo, a cor certa e a posição certa. Só a imagem, comparada com a intenção, mostra um controle que mente sobre estar disponível.</p></div></div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A correção foi aplicada em todos os trinta e dois de uma vez, em passada retroativa. Um defeito de primitivo achado no lote 17 é um defeito de dezesseis lotes, não do lote 17.</p>
+</div>
+
+<div id="23e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O espaço inquebrável</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A menor correção do trabalho inteiro, e a que mais se repete: um caractere entre <code>R$</code> e o número.</p>
+<div data-theme="light" data-screen-label="23e Espaco inquebravel" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;gap:12px;align-items:flex-start">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Espaço comum</span>
+<div class="tf-card tf-card--pad-sm" style="width:150px">
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:1.5;color:var(--text-body)">Sugerido para varejo: <span class="tf-tnum" style="font-family:var(--font-numeric);font-weight:var(--fw-bold);color:var(--text-strong)">R$ 1.249,90</span></p>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--success-text);font-weight:var(--fw-semibold)">Inquebrável</span>
+<div class="tf-card tf-card--pad-sm" style="width:150px">
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:1.5;color:var(--text-body)">Sugerido para varejo: <span class="tf-tnum" style="font-family:var(--font-numeric);font-weight:var(--fw-bold);color:var(--text-strong)">R$&nbsp;1.249,90</span></p>
+</div>
+</div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Um símbolo sozinho numa linha não é um preço</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Do lado esquerdo o <code>R$</code> fica pendurado no fim de uma linha e o número começa na seguinte. Nenhuma medida de transbordo vê isso — a caixa cabe, o texto cabe, nada estoura. O que quebra é a leitura, e só a imagem mostra.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Aplicado em todos os preços de todos os lotes. Junto com ele vem a família tabular: os dígitos alinham em coluna, que é a única forma de comparar dois preços sem contá-los.</p>
+</div>
+
+<div id="23f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As lacunas que o produto preencheu</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Onde o kit e o produto discordam, a folha segue o produto — e as discordâncias são todas do mesmo tipo: estados que o kit não previu porque não tinha produto para exercitar.</p>
+<div data-theme="light" data-screen-label="23f Lacunas" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Os tokens de status como texto</span>
+<div style="display:flex;flex-direction:column;gap:3px">
+<span style="font-size:var(--fs-body-sm);color:var(--info-text)">informação — cyan puro não passa como texto</span>
+<span style="font-size:var(--fs-body-sm);color:var(--success-text)">confirmado</span>
+<span style="font-size:var(--fs-body-sm);color:var(--warning-text)">atenção</span>
+<span style="font-size:var(--fs-body-sm);color:var(--danger-text)">erro</span>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Ciano e laranja são cores de bloco, não de texto: reprovam contraste sobre branco. O produto tem um par escuro de cada, e é ele que a folha usa quando a cor precisa <em>ser lida</em>.</span>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">O aviso de atenção, que faltava dos dois lados</span>
+<div class="tf-alert tf-alert--warning"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">O preço sugerido ficou abaixo do custo declarado.</p></div></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O produto tem quatro tons de aviso — neutro, informação, confirmado e erro — e nenhum de atenção. Faltava exatamente o tom de que um app de precificação mais precisa: o número saiu, e você provavelmente não quer esse número. O valor não foi inventado; é o mesmo laranja profundo que o selo de atenção já usa.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">São as duas únicas adições de <em>token</em> em vinte e dois lotes, e as duas seguem a mesma disciplina dos primitivos novos: valor já existente no sistema, nome no padrão do sistema, motivo escrito.</p>
+</div>
+
+<div id="23g" style="display:flex;flex-direction:column;gap:10px;width:820px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">23g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O inventário</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Trinta e seis primitivos, uma linha cada: o nome, de onde veio, e o arquivo. É a lista que alguém lê ao portar isto de volta ao código.</p>
+<div data-theme="light" data-screen-label="23g Inventario" style="width:820px;padding:20px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<table class="tf-table">
+<thead><tr><th>Primitivo</th><th>Procedência</th><th>Arquivo de origem</th></tr></thead>
+<tbody>
+<tr><td>tf-btn</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/button.css</td></tr>
+<tr><td>tf-card</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/data/Card.jsx</td></tr>
+<tr><td>tf-price</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/price-hero.css</td></tr>
+<tr><td>tf-brow</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/data/BreakdownRow.jsx</td></tr>
+<tr><td>tf-empty</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/feedback/EmptyState.jsx</td></tr>
+<tr><td>tf-badge</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/feedback/Badge.jsx</td></tr>
+<tr><td>tf-field · tf-input · tf-select</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/forms/{Field,Select}.jsx</td></tr>
+<tr><td>tf-field__aviso</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/field.css</td></tr>
+<tr><td>tf-alert</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/alert.css</td></tr>
+<tr><td>tf-dialog</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/dialog.css</td></tr>
+<tr><td>tf-switch</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/switch.css</td></tr>
+<tr><td>tf-segmented</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/segmented.css</td></tr>
+<tr><td>tf-toast · tf-toaster</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/toast.css</td></tr>
+<tr><td>tf-spinner</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/spinner.css</td></tr>
+<tr><td>tf-infotip</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>shared/ui/info-tip.css</td></tr>
+<tr><td>tf-ico</td><td><span class="tf-badge tf-badge--accent tf-badge--sm">DS</span></td><td>components/media/Icon.jsx · Lucide 0.487.0</td></tr>
+<tr><td>tf-costs-grid</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>features/calculator/calculator-form.css</td></tr>
+<tr><td>category-picker</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>features/calculator/category-picker.css</td></tr>
+<tr><td>tf-catalog-md</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>features/catalog/catalog-master-detail.css</td></tr>
+<tr><td>tf-export</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>features/history/export-sheet.css</td></tr>
+<tr><td>tf-scenario-name · tf-scenario-note</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>features/scenarios/scenario-list.css</td></tr>
+<tr><td>tf-page-header</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>widgets/page-header/page-header.css</td></tr>
+<tr><td>tf-topbar</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>widgets/top-bar/top-bar.css</td></tr>
+<tr><td>tf-nav (tabbar · sidebar · rail)</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>widgets/app-nav/app-nav.css</td></tr>
+<tr><td>tf-offline-banner</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>widgets/offline-banner/offline-banner.css</td></tr>
+<tr><td>tokens *-text</td><td><span class="tf-badge tf-badge--info tf-badge--sm">produto</span></td><td>styles/tokens/colors.css</td></tr>
+<tr><td>--warning-text · tf-alert--warning</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>valor do DS, par que faltava</td></tr>
+<tr><td>tf-aviso</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>o aviso de plausibilidade</td></tr>
+<tr><td>tf-plist</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>a lista densa a 390px</td></tr>
+<tr><td>tf-table</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>o Catálogo a partir de 1024px</td></tr>
+<tr><td>tf-alert__close</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>a dispensa do selo de procedência</td></tr>
+<tr><td>tf-alert--compact · __action</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>a geometria do selo de procedência</td></tr>
+<tr><td>tf-frozen</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>o congelamento com dim nos controles</td></tr>
+<tr><td>tf-segmented--split</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>a bandeja em partes iguais</td></tr>
+<tr><td>tf-btn--full · tf-btn--half</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>as duas larguras do botão solto</td></tr>
+<tr><td>tf-phone-scroll</td><td><span class="tf-badge tf-badge--warning tf-badge--sm">novo</span></td><td>a rolagem sem barra clássica na moldura</td></tr>
+</tbody>
+</table>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Vinte e seis cópias e dez invenções. A proporção é a resposta à pergunta que abriu o trabalho: quanto disto é o produto e quanto é meu. Quase tudo é o produto — e as quatro exceções têm nome, arquivo e motivo.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

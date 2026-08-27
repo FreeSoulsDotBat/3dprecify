@@ -1,0 +1,23 @@
+{
+  "$comment": "019/PR-D (ADR-0033 §4) — o vetor COMPARTILHADO de normalização de nome. Lido por pytest (backend/app/lib/name_norm.py) E por vitest (apps/web/src/shared/lib/name-norm.ts); as duas implementações têm de concordar caso a caso. Regra: NFD → remover marcas combinantes (Mn) → minúsculas (lower/toLowerCase, NÃO casefold) → trim → colapsar espaços internos em um.",
+  "cases": [
+    { "in": "Gancho", "out": "gancho", "why": "maiúscula" },
+    { "in": "gancho", "out": "gancho", "why": "identidade" },
+    { "in": "GANCHO", "out": "gancho", "why": "caixa alta" },
+    { "in": "Gânçho", "out": "gancho", "why": "acentos removidos" },
+    { "in": "Suporte de fone articulado", "out": "suporte de fone articulado", "why": "frase" },
+    { "in": "  Gancho  ", "out": "gancho", "why": "trim" },
+    { "in": "Gancho   duplo", "out": "gancho duplo", "why": "espaços internos colapsados" },
+    { "in": "Gancho\tduplo", "out": "gancho duplo", "why": "tab vira um espaço" },
+    { "in": "Gancho (cópia)", "out": "gancho (copia)", "why": "parênteses ficam; acento sai" },
+    { "in": "PLA Azul 1kg", "out": "pla azul 1kg", "why": "dígitos ficam" },
+    { "in": "Straße", "out": "straße", "why": "ß NÃO vira ss (lower, não casefold)" },
+    { "in": "É", "out": "e", "why": "NFD: E + agudo → E → e" },
+    { "in": "É", "out": "e", "why": "já decomposto (NFD) dá o mesmo resultado" },
+    { "in": "Ñandu", "out": "nandu", "why": "til removido" },
+    { "in": "Ç", "out": "c", "why": "cedilha removida" },
+    { "in": "R$ 10,00", "out": "r$ 10,00", "why": "símbolos e pontuação ficam" },
+    { "in": "", "out": "", "why": "vazio continua vazio (o formulário recusa antes)" },
+    { "in": "Ⅳ", "out": "ⅳ", "why": "numeral romano: lower muda, NFD não decompõe" }
+  ]
+}

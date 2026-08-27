@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">A entrada e as bordas — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">As quatro telas que ninguém desenha primeiro: entrar, o endereço que não existe, o erro que ninguém previu, e a nota de privacidade. Todas as quatro têm a mesma obrigação — <strong style="color:var(--sheet-ink)">oferecer uma saída</strong> — e nenhuma delas pode vender nada.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A decisão que organiza o lote: <strong style="color:var(--sheet-ink)">quase nada é guardado por rota</strong>. Quatro das cinco seções abrem sem conta, e o login serve para abrir um registro seu — não para usar o app. Isso muda o que a tela de entrar pode prometer: ela não diz "entre para usar", diz o que existe atrás dela.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#24a">24a</a> a entrada e seus quatro estados · <a href="#24b">24b</a> onde o login é exigido (quase em lugar nenhum) · <a href="#24c">24c</a> o endereço que não existe · <a href="#24d">24d</a> o erro e o código de suporte · <a href="#24e">24e</a> a nota de privacidade · <a href="#24f">24f</a> o alvo de 24px · <a href="#24g">24g</a> 1280px.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Primitivos novos:</strong> <code>tf-notfound</code> e <code>tf-error</code>, espelhados de <code>pages/{not-found,error}/*.css</code> — sem o <code>tf-grafismo</code> que o produto usa nas duas (ver 24c). Copy literal de <code>messages.pt-br.ts</code> §§ <code>signIn</code>, <code>notFound</code>, <code>error</code>, <code>privacy</code>.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="24a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A entrada e seus quatro estados · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um botão. Sem senha, sem cadastro, sem campo. O subtítulo diz o que há atrás do login em vez de insistir para entrar.</p>
+<div data-theme="light" data-screen-label="24a Entrar" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;align-items:center;gap:24px;padding-block:16px">
+<img src="assets/logo/logo-inteira-black.png" alt="Truth's Forge — Precifica3D" style="height:56px;width:auto">
+<div class="tf-card tf-card--pad-lg" style="width:100%;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<h1 class="tf-title" style="margin:0;font-size:var(--fs-lg);color:var(--text-strong)">Entrar</h1>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted)">Entre para acessar seu catálogo, orçamentos e conta.</p>
+</div>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--lg tf-btn--full">Entrar com Google</button>
+</div>
+<a href="#24a" style="display:inline-flex;align-items:center;min-height:24px;font-size:var(--fs-body-sm);color:var(--text-muted);text-decoration:underline">Como tratamos seus dados</a>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">24a·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Os outros três estados</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<button type="button" class="tf-btn tf-btn--primary tf-btn--lg tf-btn--full" aria-disabled="true" style="opacity:.55;cursor:not-allowed"><span class="tf-spinner"><span class="tf-spinner__ring"></span></span>Entrar com Google</button>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">Você está offline. O login precisa de internet — o cálculo continua funcionando.</p></div></div>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Não foi possível entrar. Tente novamente.</p></div></div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">Login indisponível: Firebase não configurado neste ambiente.</p></div></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O erro de rede tem frase própria, separada do erro genérico, e a frase termina com a garantia: <strong style="color:var(--sheet-ink)">o cálculo continua funcionando</strong>. Sem ela a pessoa offline conclui que o app parou, quando parou só o que precisa de internet.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O último estado é honestidade com o ambiente: quando o provedor de login não está configurado, a tela diz isso em vez de oferecer um botão que nunca vai funcionar. É um aviso de informação, não de erro — ninguém errou nada.</p>
+</div>
+
+<div id="24b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Onde o login é exigido</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Quatro das cinco seções abrem sem conta. O roteador não guarda <em>seções</em> — guarda <strong style="color:var(--sheet-ink)">endereços</strong>, e o que dispara a guarda é um registro nomeado na URL.</p>
+<div data-theme="light" data-screen-label="24b Fronteira do login" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<ul class="tf-plist">
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/calcular</span><span class="tf-plist__meta">nenhuma verificação de sessão</span></span><span class="tf-badge tf-badge--success tf-badge--sm">pública</span></span></li>
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/catalogo</span><span class="tf-plist__meta">guarda só com <code>?produto=</code></span></span><span class="tf-badge tf-badge--success tf-badge--sm">pública</span></span></li>
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/kits</span><span class="tf-plist__meta">nenhuma guarda de rota</span></span><span class="tf-badge tf-badge--success tf-badge--sm">pública</span></span></li>
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/historico</span><span class="tf-plist__meta">guarda só com <code>?snapshot=</code></span></span><span class="tf-badge tf-badge--success tf-badge--sm">pública</span></span></li>
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/conta</span><span class="tf-plist__meta">guarda no caminho nu</span></span><span class="tf-badge tf-badge--accent tf-badge--sm">guardada</span></span></li>
+<li><span class="tf-plist__row" style="cursor:default"><span class="tf-plist__main"><span class="tf-plist__name">/privacidade</span><span class="tf-plist__meta">nenhuma guarda de rota</span></span><span class="tf-badge tf-badge--success tf-badge--sm">pública</span></span></li>
+</ul>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Por que quase nada é guardado</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Quem chega sem conta precisa <em>ver</em> o teaser honesto na aba, nunca ser expulso para o login. Uma guarda de rota transforma a proposta comercial num muro antes da frase — e a frase é o produto inteiro.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">A guarda de Kits é outra coisa</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O compositor de kits não é guardado por rota: ele consulta o direito no <em>servidor</em>, dentro da página. Nunca uma marca local — um sinalizador no aparelho é uma verdade que a pessoa pode editar.</span>
+</div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">Três fronteiras, três textos: a rota exige sessão para abrir <em>um registro</em>; a página exige Premium para <em>guardar</em>; o servidor recusa toda leitura e escrita de qualquer jeito.</p></div></div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A guarda leva a URL <strong style="color:var(--sheet-ink)">inteira</strong>, com a busca, e não só o caminho. Um alvo sem a busca perde o identificador e devolve a pessoa a uma lista vazia depois de entrar — foi medido: um endereço antigo de produto acabava em /calcular, engolindo o id em silêncio.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">As rotas antigas de dois segmentos continuam registradas, e não carregam guarda nenhuma: só traduzem a forma da URL. A guarda corre no destino, cujo alvo de volta já é uma forma que a lista de endereços permitidos reconhece.</p>
+</div>
+
+<div id="24c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O endereço que não existe · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um 404 sem porta de saída é um beco. Este tem uma, e ela vai para a única seção que funciona sem conta.</p>
+<div data-theme="light" data-screen-label="24c Nao encontrada" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<section class="tf-notfound">
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-triangle-alert"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Página não encontrada</h2>
+<p class="tf-empty__desc" style="margin:0">O endereço que você abriu não existe.</p>
+<div class="tf-empty__actions"><a href="#24c" class="tf-btn tf-btn--primary">Voltar para Calcular</a></div>
+</div>
+</section>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A frase não culpa e não adivinha: "o endereço que você abriu não existe". Não sugere que a pessoa digitou errado, porque na maioria das vezes foi um link nosso que envelheceu.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">As duas telas de borda ficam <strong style="color:var(--sheet-ink)">sem grafismo</strong>. O produto põe o arco no 404 e a espada no erro, acima do título — mas nas duas o ornamento é mais um elemento centrado numa coluna que já tem ícone ou título, frase, ação e, no erro, o código de suporte. Num beco, o que a pessoa procura é a saída; um ornamento acima dela só empurra a saída para baixo.</p>
+</div>
+
+<div id="24d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O erro e o código de suporte · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A tela do erro que ninguém previu. Diz o que aconteceu, oferece a ação, e entrega um código — para que a conversa com o suporte comece num identificador e não numa descrição.</p>
+<div data-theme="light" data-screen-label="24d Erro generico" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<section class="tf-error">
+<h1 class="tf-error__title tf-title">Algo deu errado</h1>
+<p class="tf-error__body">Tente novamente. Se persistir, informe o código de suporte.</p>
+<div class="tf-error__actions"><button type="button" class="tf-btn tf-btn--primary">Recarregar</button></div>
+<p class="tf-error__support">Código de suporte: <span class="tf-error__code">c3f9a1d4-7b02-4e88-9a51-6d0e2f8b4c17</span></p>
+</section>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O código é o mesmo identificador de correlação que a chamada de rede carregou, quando houve uma; quando não houve, é um identificador local com prefixo <code>local-</code>. Nos dois casos é resolvido <strong style="color:var(--sheet-ink)">uma vez por erro</strong>: um código que muda a cada redesenho da tela é um código que ninguém consegue ditar por telefone.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O código quebra em qualquer ponto e usa figuras tabulares. Um identificador de 36 caracteres a 390px transborda a linha se não puder quebrar no meio — e aqui quebrar no meio não custa nada, porque ninguém lê isso como palavra.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A mesma etiqueta vai para o monitoramento junto com o evento, então quem atende já chega no erro certo. A pessoa dita seis caracteres; o suporte não pede print.</p>
+</div>
+
+<div id="24e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A nota de privacidade · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Cinco frases, um cartão, sem banner e sem botão de aceitar. É um <em>aviso</em>, não um portão de consentimento — e é público, alcançável sem conta.</p>
+<div data-theme="light" data-screen-label="24e Privacidade" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<h1 class="tf-title" style="margin:0;font-size:var(--fs-lg);color:var(--text-strong)">Como tratamos seus dados</h1>
+<div class="tf-card tf-card--pad-lg" style="display:flex;flex-direction:column;gap:12px">
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal)">Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.</p>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal)">Registramos erros técnicos (Sentry) para corrigir falhas.</p>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal)">Não vendemos seus dados nem fazemos rastreamento para publicidade.</p>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal)">A calculadora funciona sem login e não coleta nada.</p>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal)">Se você usar o Premium, salvamos seu catálogo (filamentos, impressoras e produtos) na sua conta para você reutilizar nos cálculos.</p>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A quarta frase é a mesma promessa da 24b, dita do lado dos dados: a calculadora não coleta nada. As duas telas repetem porque as duas precisam ser verdadeiras sozinhas.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nenhum cartão de cookies, nenhuma biblioteca de consentimento. A conformidade completa está declaradamente adiada — e o que está aqui é o que dá para afirmar hoje sem inventar.</p>
+</div>
+
+<div id="24f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O alvo de 24px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O link do rodapé da entrada media 181×20px, e a isenção que parecia cobri-lo não cobria.</p>
+<div data-theme="light" data-screen-label="24f Alvo de 24px" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Antes · 20px de altura</span>
+<a href="#24f" style="align-self:flex-start;display:inline-block;font-size:var(--fs-body-sm);line-height:20px;color:var(--text-muted);text-decoration:underline;outline:1px dashed var(--danger-text);outline-offset:0">Como tratamos seus dados</a>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<span style="font-size:var(--fs-caption);color:var(--success-text);font-weight:var(--fw-semibold)">Depois · 24px, mesmo desenho</span>
+<a href="#24f" style="align-self:flex-start;display:inline-flex;align-items:center;min-height:24px;font-size:var(--fs-body-sm);color:var(--text-muted);text-decoration:underline;outline:1px dashed var(--success-text);outline-offset:0">Como tratamos seus dados</a>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">A isenção era de link <em>dentro de uma frase</em></span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Um link no meio de um parágrafo não pode ter altura própria — ela vem da linha de texto. Este é um rodapé solto, uma linha inteira sozinha, então o mínimo de 24px se aplica a ele. A troca para caixa flexível dá a altura sem mover um pixel do desenho.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Quatro pixels, e o tipo de correção que só aparece quando alguém mede em vez de olhar. O contorno tracejado existe só nesta prancheta, para mostrar a caixa do alvo — na tela não há contorno nenhum. A largura aqui é a deste cartão, não a dos 181px medidos no produto; o que a prancheta compara é a <strong style="color:var(--sheet-ink)">altura</strong>.</p>
+</div>
+
+<div id="24g" style="display:flex;flex-direction:column;gap:10px;width:1120px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">24g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · a entrada sem menu</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A única tela do app onde a barra de topo não mostra a marca: o cartão já mostra. E a única sem barra lateral — não há seção para navegar antes de entrar.</p>
+<div data-theme="light" data-screen-label="24g Desktop entrar" style="display:flex;flex-direction:column;width:1120px;height:600px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<header class="tf-topbar">
+<span class="tf-topbar__logo-spacer" aria-hidden="true"></span>
+<div class="tf-topbar__actions">
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</header>
+<main style="flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;padding:32px">
+<img src="assets/logo/logo-inteira-black.png" alt="Truth's Forge — Precifica3D" style="height:68px;width:auto">
+<div class="tf-card tf-card--pad-lg" style="width:384px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<h1 class="tf-title" style="margin:0;font-size:var(--fs-lg);color:var(--text-strong)">Entrar</h1>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted)">Entre para acessar seu catálogo, orçamentos e conta.</p>
+</div>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--lg tf-btn--full">Entrar com Google</button>
+</div>
+<a href="#24g" style="display:inline-flex;align-items:center;min-height:24px;font-size:var(--fs-body-sm);color:var(--text-muted);text-decoration:underline">Como tratamos seus dados</a>
+</main>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O cartão não cresce com a tela. Um botão único num cartão de 900px de largura não fica mais fácil de tocar, fica mais difícil de encontrar — a largura sobrando vira ar em volta, e a coluna estreita continua sendo a leitura certa.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nenhuma imagem de fundo, nenhum degradê, nenhuma ilustração de vendas: um campo de cor plana e a marca — a arte real, com a tipografia da marca, não o lockup reconstruído em fonte substituta. É a mesma disciplina que atravessa os vinte e quatro lotes, e é aqui que ela é mais tentador quebrar.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>
