@@ -40,6 +40,8 @@ desenhadas) + as pranchetas remotas, transcritas por fatia.
 - Q: Unicidade de nome — escopo, sensibilidade e o conflito offline entre dois aparelhos (Q5 do brief)? → A: **A, sem aviso**: por conta + por tipo (filamento vs. produto podem coincidir), comparação IGNORANDO maiúsculas e acentos; conflito offline → o servidor **aceita e renomeia** a segunda ("Gancho (2)") **silenciosamente** — nada é descartado, a fila drena, e o nome renomeado simplesmente aparece na lista.
 - Q: Desconto do construtor "Montar e Enviar" — forma, incidência e ordem em relação à comissão (Q6 do brief)? → A: **A — venda direta ao cliente**: o desconto (percentual OU valor em R$) incide **no total**, sobre o preço de venda direta (custo + markup); o marketplace fica FORA da conta do construtor (quem vende via marketplace usa Calculadora/Simulações); o piso de custo compara o total descontado com o custo somado dos itens × quantidades.
 - Q: O que "Enviar" faz além de congelar o preço (Q8 do brief)? → A: **A — congela + gera o PDF**; o vendedor manda por fora (WhatsApp/e-mail), como já faz com os Orçamentos. Zero superfície pública nova (sem link/e-mail pelo app); reaproveita o export do E4 (ADR-0020) com o rodapé não-fiscal.
+- Q (pós-arquiteto, 2026-08-27): a folha do design registra a decisão do dono de 25/08 de REMOVER todo indicador de foco, contradizendo a FR-1903 (anel 2px). Qual vale? → A: **Remover, como decidido em 25/08.** Nenhum controle mostra indicador de foco (campos mantêm só a borda de acento). Consequência aceita pelo dono e registrada aqui como EXCEÇÃO explícita de produto: WCAG 2.4.7 (nível A) deixa de ser atendido — quem navega por teclado perde a referência de posição. A asserção geométrica de foco do 018 é substituída por uma guarda do INVERSO (nenhum anel renderizado em :focus-visible).
+- Q (pós-arquiteto, 2026-08-27): a Q6 (venda direta, marketplace fora) torna o total do construtor monotônico por construção — o aviso "10 un. sai mais barato que 9" (US18) nunca dispararia. → A: **Retirar a US18 do construtor.** Registrada como "não aplicável à venda direta"; a propriedade band-dominance continua provada no motor para o preço de anúncio (marketplace), onde ela vive.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -77,7 +79,7 @@ classificados ANTES pela V0 (já existe? existe local e sobe? não existe?).
 ### User Story 2 — Marca, foco, texto e vocabulário (Priority: P1 · PR-A · US3+US4+US5 do brief)
 
 Guardas de marca (wordmark PNG real — já correto, medido; `tf-lockup` não pode voltar), TabBar
-12→10px com 7px de respiro, anel de foco 2px + anel do menu em `--accent`, grafismos fora de
+12→10px com 7px de respiro, **remoção de todo indicador de foco** (decisão do dono 25/08 — exceção ao WCAG 2.4.7, registrada), grafismos fora de
 404/erro; acentos em `messages.pt-br.ts:179`; "1 anos"→"1 ano" (`:486`); e a troca
 "canal"→"marketplace" em TODO texto visível (medido: 153 ocorrências sob `apps/`, 31 em messages —
 não as 374 da prancheta), com os testes que assertam a string revisados como mudança de asserção.
@@ -279,8 +281,7 @@ muda.
 - **FR-1902**: O produto DEVE ganhar o tom ATENÇÃO (`--warning-text` = `--tf-warning-deep` +
   `tf-alert--warning`), descritivo e nunca corretivo; nenhum aviso existente muda de tom sem
   estar listado (US2).
-- **FR-1903**: Marca/foco: wordmark PNG real como guarda anti-regressão; TabBar 10px c/ respiro;
-  anel 2px; anel do menu `--accent`; grafismos fora de 404/erro; asserção de foco GEOMÉTRICA (US3).
+- **FR-1903**: Marca/foco: wordmark PNG real como guarda anti-regressão; TabBar 10px c/ respiro; **SEM indicador de foco em nenhum controle** (decisão do dono 25/08, reafirmada 27/08 — exceção explícita ao WCAG 2.4.7; campos mantêm só a borda de acento); grafismos fora de 404/erro; guarda geométrica do INVERSO (zero anel em :focus-visible) (US3).
 - **FR-1904**: Texto: acentos em `avisoAtacadoAcimaDoVarejo`; "1 ano" singular; nada mais muda de
   sentido (US4).
 - **FR-1905**: "canal"→"marketplace" em todo texto visível incluindo PDF/CSV, pelas chaves de
@@ -308,17 +309,16 @@ muda.
   "Salvo em DD/MM" (verbatim); preço exibido SEMPRE recomputado; sem histórico, nada é exibido
   (US13; **Q3 = servidor**: observação de preço por produto/conta, com data — migração + opus + Clarification na 007).
 - **FR-1914**: Fixar preço: "Preço fixado por você"/"Voltar a acompanhar o custo"; custo acima do
-  fixado gera aviso ATENÇÃO; fixar não toca Orçamentos; desfixar volta ao recomputado (US14; **Q4 = número final**, leaf de dinheiro em products → opus; nunca desfixa sozinho).
+  fixado gera aviso ATENÇÃO; fixar não toca Orçamentos; desfixar volta ao recomputado (US14; **Q4 = número final**, leaf de dinheiro em products → opus; nunca desfixa sozinho). **Regra do arquiteto (27/08)**: o preço fixado NÃO entra em kit, orçamento congelado nem simulação — ele embute uma decisão de venda direta que a comissão do marketplace não reconhece; essas superfícies continuam lendo o recomputado.
 - **FR-1915**: Duplicar: "Gancho (cópia)", independente; nome repetido recusado ANTES de gravar
   ("Este nome já está no catálogo"); regra de unicidade é NOVA (não existe no schema — medido);
-  cópia de degradado continua degradada (US15; **Q5**: por conta+tipo, case/acento-insensível; conflito offline → aceita e renomeia "(2)" sem aviso).
+  cópia de degradado continua degradada (US15; **Q5**: por conta+tipo, case/acento-insensível; conflito → aceita e renomeia "(2)" sem aviso). **Achado do arquiteto (27/08)**: o Catálogo é online-only (sem outbox), então o "conflito offline entre dois aparelhos" não é alcançável — a regra vira um teste de CORRIDA no servidor (duas criações simultâneas do mesmo nome), com o mesmo desfecho: a segunda vira "(2)".
 - **FR-1916**: Construtor: N itens × quantidade, total pelo motor, degradado entra por D6/E3,
   nada congela antes de enviar (US16).
 - **FR-1917**: Desconto (**Q6 = % ou R$, no total, sobre venda direta; sem comissão de marketplace no construtor**) com piso de custo ("Abaixo do custo"; bloqueia ou
   avisa = Q10); "Válido até" (texto ou estado = Q7); "Enviar congela este preço" via ADR-0019 **e gera o PDF (Q8 = A; sem link/e-mail pelo app)**;
   "Voltar a acompanhar não vale para orçamentos enviados"; rodapé não-fiscal mantido (US17).
-- **FR-1918**: Aviso de não-monotonicidade ("10 un. sai mais barato que 9"), descritivo, derivado
-  da propriedade band-dominance já provada (origem = Q9) (US18).
+- **FR-1918**: ~~Aviso de não-monotonicidade ("10 un. sai mais barato que 9")~~ — **RETIRADA (2026-08-27)**: não aplicável à venda direta (Q6 torna o total monotônico); a propriedade band-dominance segue provada no motor para o preço de anúncio. A copy da prancheta fica como registro, não como requisito (US18).
 - **FR-1919**: Simulações ≥1280px pela prancheta 20g; mobile intocado estruturalmente; geometria
   nos dois eixos (US19; ADR-0031 emendado ou novo — plan/R8).
 - **FR-1920**: D1 teste de mudança conjunta (não-vacuoso por mutação); D2 chave única vigiada;

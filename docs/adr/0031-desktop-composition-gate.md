@@ -103,3 +103,44 @@ ADR-0025–0030.
   clássica, e o olho não vê o que não é desenhado).
 - **Follow-ups**: se um dia uma quinta tela quiser um limiar diferente, ela **não** abre um segundo
   `matchMedia` — estende este hook com um limiar nomeado, ou este ADR é superseded.
+
+---
+
+## Emenda 2026-08-26 — a quinta aba (Simulações, 019/US19)
+
+- **Status da emenda**: Proposed (o dono flipa junto com o gate da fatia que a executa — a PR-F do 019)
+- **Autor**: arquiteto (019-porte-design) · **Motivo**: 019 R8 / FR-1919 — este ADR foi escrito para
+  **quatro** abas (Catálogo, Kits, Orçamentos, Conta) e a US19 traz **Simulações**. Implementar sem
+  registro seria inferir arquitetura (Princípio VIII).
+
+**Decisão: emenda datada, não ADR novo.** O corpo deste ADR previu exatamente este caso no seu próprio
+follow-up — *"se um dia uma quinta tela quiser um limiar diferente…"*. Simulações **não** quer: usa o
+**mesmo limiar (1280px)**, o **mesmo hook** (`useIsWide`), a **mesma propriedade estrutural** (`false`
+sem `matchMedia` ⇒ o ramo mobile é o mesmo código e a suíte existente continua exercitando-o) e a
+**mesma regra de seleção** (estado do componente com clamp derivado, nunca a URL). Um ADR novo
+repetiria a decisão inteira para não decidir nada — e criaria duas fontes para um limiar só, que é
+precisamente o que a Option B acima rejeitou.
+
+Alternativas pesadas: **ADR novo próprio** (prós: a quinta tela ganha registro autônomo; contras: dois
+documentos governando um limiar, e o segundo nasce dizendo "igual ao 0031" — confiança de que
+divergiriam em dois incrementos: 70%, a mesma da Option B); **nada** (proibido pelo Princípio VIII).
+**Confiança na emenda: 90%.**
+
+Vale, sem mudar uma vírgula do corpo acima:
+
+1. **O gate é o mesmo objeto.** Simulações consome `useIsWide()`. Nenhum `matchMedia` novo, nenhum
+   limiar novo, nenhuma media query decidindo comportamento.
+2. **A composição ≥1280px é a da prancheta 20g** (projeto Claude Design `a90ed7d4`, handoff versionado
+   em `docs/design/handoff-019/`) — a autoridade do LAYOUT é o desenho, transcrito por fatia; este ADR
+   governa o **gate**, não o desenho.
+3. **Abaixo do corte, nada muda.** O mobile de Simulações é o código de hoje, intocado — a suíte
+   existente continua verde **sem tocar num teste**.
+4. **A folha lateral vira hospedeiro, não uma segunda tela.** Onde hoje a lista de simulações mora numa
+   gaveta (`apps/web/src/features/scenarios/scenarios-list-sheet.tsx`), o desktop monta **o mesmo
+   componente** em outro lugar — a regra §E do `specs/018-abas-desktop/research.md` ("o formulário muda
+   de hospedeiro, não de identidade"). Duplicar a superfície é proibido: um defeito corrigido numa
+   cópia não chega na outra.
+5. **Geometria nos dois eixos, nos quatro cortes** (360/1280/1440/1920px), com a largura útil **medida
+   antes e depois** — o risco declarado do `position: sticky` acima vale igual aqui.
+6. **O que esta emenda NÃO autoriza**: mudar o limiar, abrir um segundo gate, mover a seleção para a
+   URL, ou tocar no ramo mobile. Qualquer um dos quatro exige nova emenda datada.

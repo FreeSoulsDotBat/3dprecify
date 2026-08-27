@@ -406,3 +406,25 @@ de então era certa para então, e apagá-la apagaria o motivo.
 - **Public deploy of E2** → the first deploy waits for v1 = E1–E6 (owner rule, revisitable); E2 ships to
   `develop` and is homologated locally.
 - **Additional auth providers** → owed before E6 (A28), not E2.
+
+### Clarification 2026-08-26 (019 / PR-D — Q3/Q4 do clarify de 019, ADR-0033)
+
+**FR-310 e FR-313 passam a admitir dois valores monetários guardados no catálogo, e continuam
+proibindo um terceiro.** O invariante do E2 — *"o preço exibido é sempre o recomputado de hoje"* —
+vale sem exceção e ganha a redação que o torna verificável: **o app nunca exibe um preço que ele mesmo
+calculou no passado; exibe o cálculo de hoje ou o número que o vendedor declarou.**
+
+Passam a existir, e são **nomeadamente** distintos de "preço":
+1. **Observação de preço** (tabela `price_observations`, uma linha por conta+item): o último valor
+   recomputado que o vendedor **viu**, com a data. Serve à frase "era R$ …" e à contagem de preços
+   mudados desde a última visita. **É escrita pelo cliente** (o backend continua sem recomputar,
+   ADR-0008) e **nunca** alimenta o valor exibido; ausência significa "nada a dizer", nunca "R$ 0,00".
+2. **Preço fixado pelo vendedor** (`products.seller_fixed_price`, nullable): o número do anúncio,
+   declarado por ele. Enquanto existir, é ele que a tela mostra — como **declaração**, não como
+   cálculo —, e o custo continua sendo recomputado ao lado para avisar (tom ATENÇÃO) quando o
+   ultrapassar. Nunca desfixa sozinho; desfixar volta ao recomputado de hoje. **Não participa de kit,
+   orçamento ou cenário**: composição é sempre pelo motor.
+
+Continua **proibido**: guardar preço calculado como fonte de exibição, o backend recomputar qualquer
+preço, e `ProductOut` carregar campo de dinheiro derivado de cálculo. Migração `0008` (aditiva);
+escalação **opus** registrada (ADR-0022).

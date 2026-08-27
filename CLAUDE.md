@@ -267,23 +267,26 @@ ADR-0006). Shipped so far: 001+003 (PRs #3/#4), 004+005 (PRs #6/#7). Jonatan aut
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/018-abas-desktop/plan.md
-(018 = the owner's DESKTOP redesign of the four remaining tabs — Catálogo · Kits · Orçamentos ·
-Conta — plus the collapsible nav rail. It exists because the owner, re-walking the 016 corrections,
-judged the desktop pages still wrong and redrew them at 1920px in Claude Design. Layout authority:
-`specs/018-abas-desktop/design/Abas-Desktop.dc.html`; technical authority:
-`specs/018-abas-desktop/research.md` (decisions **A–H** — there is deliberately NO
-`arquitetura-018.md`). **ADR-0031 Proposed** covers A/B/C/G; owner flips at the first slice gate.
-It is a COMPOSITION increment: zero formula, contract, schema or DS-primitive change — verified
-before planning (all 16 design classes already exist; kit channel prices and the quote-detail blocks
-already exist; `CatalogPanel` already has sheet-mode vs navigation-mode). Post-clarify, 3 owner
-decisions: the right-hand ficha EDITS filament/printer (sheet-mode moves house) but only SUMMARIZES
-product/kit (full-page editor stays) · the cut is **1280px** (measured: at 1024px a 560px ficha
-would leave ~140px of list) · the segmented theme control is desktop-only. The key property:
-`useIsWide()` returns false without `matchMedia`, so **the mobile branch is the same code, untouched,
-and the whole existing suite keeps exercising it** — "o mobile não se mexe" is structural, not
-disciplinary. Slices land as owner-authorized PRs; nothing closes without the owner's SECOND walk
-(`docs/homologacao/PROCESSO-HOMOLOGACAO.md` — round 1 is OPEN).
+at specs/019-porte-design/plan.md
+(019 = o PORTE DO DESIGN: as 157 superfícies que a auditoria de 2026-08-20 achou sem protótipo foram
+TODAS desenhadas pelo dono no Claude Design (projeto a90ed7d4, 33 pranchetas × 2 temas) CONTRA o
+código; o handoff versionado em docs/design/handoff-019/ (README = punch-list; tf-components.css
+byte-a-byte) diz que a maior parte já existe e está correta — o 019 aplica os DELTAS + as features que
+o dono incluiu. Escopo (brief docs/product/019-porte-design-scope-brief.md, 20 US, 6 fatias):
+PR-A fundação DS (8 primitivos, --warning-text c/ gate de contraste, SEM anel de foco — decisão do
+dono 25/08 reafirmada 27/08, exceção explícita ao WCAG 2.4.7; canal→marketplace no texto visível) ·
+PR-B Premium sem parede (bloqueia SÓ no salvar; premiumGate puro em shared/billing; <Frozen> = fieldset
+disabled; barreira = AUSÊNCIA do handler; diff VAZIO em app/entitlement) · PR-C Calculadora
+(plausibilidade no blur + Entendi por sessão; máquina readout + confirmação; selo compact c/ dispensa
+até-a-fonte-mudar; T212 sticky; SEM bump) · PR-D recálculo do Catálogo (price_observations escrita
+pelo CLIENTE pós-render, products.seller_fixed_price que NÃO compõe, name_norm + índice parcial +
+sufixo "(2)" em silêncio; migração 0008; OPUS; Clarification na 007 aplicada) · PR-E Montar-e-Enviar
+(computeQuote 4.2.0 MINOR c/ varredura de igualdade; venda direta, desconto no total, piso avisa;
+Enviar = snapshot kind=QUOTE + PDF; migração 0009 estende o CASE do CHECK; OPUS; US18 RETIRADA) ·
+PR-F Simulações ≥1280px (emenda datada no ADR-0031) + D1/D2 guardas. Autoridade técnica:
+specs/019-porte-design/research.md (A–K); ADRs 0032/0033/0034 Proposed (dono flipa por fatia).
+Homologação do 019 ESPERA a Rodada 1 — cada fatia sai em CORREÇÃO DECLARADA. Copy SEMPRE verbatim
+da prancheta (DesignSync). 018 mergeado (#58, 6a1a55a; ADR-0031 Accepted).
 **014's US6-ML remains gated** (seguranca's 8 conditions + separate owner authorization — never on
 a "continue"); 014 US1 residual + Polish also remain, see `specs/014-fee-category-mapping/tasks.md`.
 017 (monthly fee ingestion): **PR-A SHIPPED to develop** (`daade76` — spine + Amazon collector, first real run) + tarifas 2026-08-07 lidas (`09f5a4f`, PR #54); continues on `017-pr-b-precos`, untouched by this branch.)
