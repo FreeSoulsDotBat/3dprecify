@@ -24,14 +24,14 @@ ESPERA a Rodada 1 — cada fatia entrega em **CORREÇÃO DECLARADA**):
 | **PR-F** | 9 | Simulações desktop + D1/D2 (US7) | PR-A | — |
 | Polish | 10 | evidência, ledger, ADRs | todas | — |
 
-B, C, D, F são independentes entre si depois de A. E é a única tudo-ou-nada e sai por último.
+B, C, D, F são independentes entre si depois de A. **Ordem decidida pelo dono (27/08): B → C → D → F → E.** E é a única tudo-ou-nada e sai por último.
 
 ---
 
 ## Phase 1: Setup — V0, a medição que dimensiona a PR-A (não vira PR)
 
 - [ ] T001 Classificar cada item do handoff §1 (8 primitivos) e §3 (8 adaptações) + itens de marca em **(a) já correto · (b) existe local e sobe · (c) não existe**, com arquivo:linha ou screenshot por item, em `specs/019-porte-design/dod-evidence.md` §V0. Partir das 5 correções já medidas pelo arquiteto (research §"Correções de escopo") — NÃO reconferir o que já tem arquivo:linha; conferir o resto.
-- [ ] T002 [P] Medir o contraste de `--tf-amber-deep` (`#bd6c0e`) como TEXTO sobre `#ffffff` e sobre `--tf-warning-soft` nos dois temas (WCAG sRGB, com o mesmo método do `a11y-targets-contrast.spec.ts`) e registrar em dod-evidence §V0. **Se < 4,5:1, abrir pergunta ao dono ANTES da T020** (cor de marca — ADR-0032 §4).
+- [ ] T002 [P] Medir o contraste de `--tf-amber-deep` (`#bd6c0e`) como TEXTO sobre `#ffffff` e sobre `--tf-warning-soft` nos dois temas (WCAG sRGB, com o mesmo método do `a11y-targets-contrast.spec.ts`) e registrar em dod-evidence §V0. **Se < 4,5:1: decisão do dono JÁ TOMADA (27/08) — escurecer só o TEXTO até ≥4,5:1** (ícone/badge/botões seguem no laranja da marca; ADR-0032 §4).
 - [ ] T003 [P] Contar as ocorrências de `canal|canais|Canal|Canais` em `apps/web/src/**` (produto) e `apps/web/tests/**` (teste) separadamente e registrar os dois números em dod-evidence §V0 — substituem os "374" da prancheta e são o tamanho real da US2/T033.
 - [ ] T004 [P] Registrar a estimativa de tokens do incremento em `docs/token-ledger.md` (uma linha por fatia; real fecha no Polish).
 - [ ] T005 Subir a stack pelo `quickstart.md` e registrar em `specs/019-porte-design/evidencias/ambiente.md`: /health 200 · /api/v1/entitlement 401 · alembic em `0007 (head)` · porta do emulador usada (a armadilha 9099 está documentada).
@@ -126,7 +126,7 @@ venceu) exercitados com ledger.
 - [ ] T037 [P] [US3] `apps/web/src/features/catalog/catalog-panel.test.tsx` (casos novos): no estado `free-nunca-teve` o painel renderiza o vazio didático (título "Nenhum filamento cadastrado" — verbatim) no ramo `ENTITLEMENT_REQUIRED`; NÃO renderiza `PremiumTeaser` na lista; "Adicionar filamento" abre o formulário; o formulário está dentro de `<Frozen>`; **o `onSubmit` de rede não é passado** (mock de `fetch`/mutação com **zero** chamadas ao clicar em tudo); "Salvar" existe, está `disabled` e visível; "Assinar Premium" é `secondary`; a frase "Salvar faz parte do Premium." está ANTES da linha de botões no DOM.
 - [ ] T038 [P] [US3] `catalog-panel.test.tsx` (caso lapsed): com `lapsed` e itens no cache, os itens aparecem, o formulário abre PREENCHIDO dentro de `<Frozen>`, a mensagem é "Reative o Premium… Seus itens estão salvos." (verbatim 32e), a faixa de topo antiga (`lapsedTitle`) NÃO renderiza.
 - [ ] T039 [P] [US3] `apps/web/src/pages/historico/historico-page.test.tsx` + `features/scenarios/scenarios-list-sheet.test.tsx` (casos novos): no grátis, o vazio mostra a frase verbatim de Orçamentos/Simulações (32c) e o botão "Fazer um cálculo" navega para `/calcular`; exatamente UM `TeaserUpgrade` por tela (invariante 016/US1).
-- [ ] T040 [US3] `apps/web/tests/e2e/premium-sem-parede.spec.ts` (NOVO): conta grátis real → Catálogo → vazio didático → "Adicionar filamento" → formulário inerte visível com dica legível → "Salvar" desabilitado; tentar escrever via UI não gera requisição (`page.route` contando POST/PATCH = 0); `outbox` em IDB = 0 itens. Conta com grant expirado (CLI `grant` + expiração) → itens listados + formulário preenchido inerte + "Reative". Deslogado: comportamento conforme decisão E-5 (default (a): entrada de hoje).
+- [ ] T040 [US3] `apps/web/tests/e2e/premium-sem-parede.spec.ts` (NOVO): conta grátis real → Catálogo → vazio didático → "Adicionar filamento" → formulário inerte visível com dica legível → "Salvar" desabilitado; tentar escrever via UI não gera requisição (`page.route` contando POST/PATCH = 0); `outbox` em IDB = 0 itens. Conta com grant expirado (CLI `grant` + expiração) → itens listados + formulário preenchido inerte + "Reative". Deslogado (E-5 decidida): o MESMO vazio + formulário inerte; "Assinar Premium" visível; clique → tela de entrada-com-intenção (copy da prancheta 32h quando existir) → após login, cai na oferta (`redirect` preservado) — zero escrita, zero outbox.
 - [ ] T041 [US3] `apps/web/tests/e2e/teaser-sweep.spec.ts` (atualizar): SC-006 continua valendo — exatamente um convite por tela grátis, 1920 e 390px, agora com o vazio didático no lugar da parede.
 
 ### Implementation
@@ -137,7 +137,7 @@ venceu) exercitados com ledger.
 - [ ] T045 [US3] `filament-form.tsx` / `printer-form.tsx` / `produto-page.tsx`: no estado `free-nunca-teve` montar em `<Frozen>` com campos vazios e SEM `onSubmit` de rede; no `lapsed-com-itens` montar em `<Frozen>` com os valores e a linha "Reative"; remover o aviso de reativação para quem nunca teve (`catalogo.reactivate*` só no lapsed).
 - [ ] T046 [P] [US3] `pages/bom/bom-page.tsx`: "Montar kit" deixa de ser `disabled` por plano (bloqueio no salvar); `historico-page.tsx` e `scenarios-list-sheet.tsx`: vazio com "Fazer um cálculo" → `/calcular`.
 - [ ] T047 [US3] Provar SC-1903: `git diff develop -- backend/app/entitlement` = vazio (registrar o comando e a saída em dod-evidence §PR-B); rodar gate:all + e2e; screenshots 1:1 dos 4 estados × 2 temas em `evidencias/pr-b/`.
-- [ ] T048 [US3] Decisão E-5 (deslogado) registrada com o dono no gate; abrir o PR-B.
+- [ ] T048 [US3] E-5 decidida: implementar o deslogado no mesmo caminho (T044/T045 cobrem os dois estados via `premiumGate`: `free-nunca-teve` e `signed-out`); a tela de entrada-com-intenção usa a copy da prancheta 32h (`docs/design/prompts/019-lote32h-deslogado.md` → o dono desenha ANTES do PR-B; se a prancheta não existir ao abrir a fatia, o deslogado usa a tela de entrada de hoje com o `redirect` e a copy nova fica como follow-up declarado). Abrir o PR-B.
 
 ---
 
@@ -154,7 +154,7 @@ tarifa 3+ casas == motor; selo dispensado reaparece ao mudar `effectiveDate`; re
 - [ ] T049 [P] [US4] `apps/web/src/features/calculator/plausibility.test.tsx` (NOVO): digitar "85"→"850" sem blur ⇒ zero `Aviso`; blur ⇒ `Aviso` com `role="status"` (anunciado); "Entendi" ⇒ some; mudar para 2.400 + blur ⇒ volta; erro de validação no campo ⇒ o aviso PERMANECE; valor em R$ formatado `R$ 6.000.061,60`.
 - [ ] T050 [P] [US4] `apps/web/src/features/calculator/plausibility-store.test.ts` (NOVO): chave `${campo}:${valor}`; sobrevive a unmount/remount; não usa `localStorage`.
 - [ ] T051 [P] [US4] `apps/web/src/features/calculator/machine-cost.test.tsx` (casos novos): readout "de R$ 4.000,00 ÷ 3.600 h" nos modos estimar E ajustar; valor 0 ⇒ ressalva verbatim (não "R$ 0,00/h"); troca de modo com valor digitado ⇒ diálogo de confirmação (3 frases verbatim) e NADA é descartado antes do "sim"; rótulos "Estimar"/"Ajustar". `calculator-model.test.ts`: `PRICING_MODEL_VERSION` continua `4.1.0` e o vetor canônico 27,55/41,33/35,82 intacto.
-- [ ] T052 [P] [US4] `apps/web/src/features/calculator/fee-seal.test.tsx` (casos novos): renderiza `<Alert compact action onDismiss>`; dispensar grava a chave `(marketplace, source, effectiveDate)` em `localStorage` (sem uid); mesma fonte ⇒ oculto após reload; `effectiveDate` diferente ⇒ VISÍVEL; lista limitada a N chaves.
+- [ ] T052 [P] [US4] `apps/web/src/features/calculator/fee-seal.test.tsx` (casos novos): renderiza `<Alert compact action onDismiss>`; dispensar grava a chave `(marketplace, source, effectiveDate)` em `localStorage` (sem uid); mesma fonte ⇒ oculto após reload; `effectiveDate` diferente ⇒ VISÍVEL; lista limitada a **50** chaves (as mais recentes).
 - [ ] T053 [P] [US4] `apps/web/src/shared/ui/number-field.test.tsx` (casos novos): `currency` com `precision=4` para tarifa não trunca "0,8734" no blur; valor "0" salvo reabre como "0,00"; `calculator-model.test.ts`: energia = 0,8734 × kW × h com igualdade numérica.
 - [ ] T054 [US4] `apps/web/tests/e2e/calculator-layout.spec.ts` (caso T212): a 390px, com o formulário rolado ao meio e ao fim, a caixa do resumo fixo (`data-testid="price-summary-sticky"`) está dentro do viewport nos DOIS eixos e NÃO sobrepõe o toaster nem a TabBar; ancestral com `overflow` ≠ `visible` faz o teste falhar (prova por mutação).
 
@@ -164,7 +164,7 @@ tarifa 3+ casas == motor; selo dispensado reaparece ao mudar `effectiveDate`; re
 - [ ] T056 [US4] `features/calculator/plausibility-store.ts` (Zustand em memória) + refatorar `calculator-form.tsx`: gatilho `onBlur`, `<Aviso role="status">` com "Entendi", erro não desmonta o aviso, `formatBRL` no texto.
 - [ ] T057 [P] [US4] `features/calculator/machine-cost.ts` + o bloco em `calculator-form.tsx`: readout com a divisão nos dois modos; ressalva no zero; diálogo de confirmação (`shared/ui/dialog`) na troca de modo; rótulos. `PriceInput` intocado.
 - [ ] T058 [P] [US4] `features/calculator/fee-seal.tsx` + `fee-seal-dismiss-store.ts` (`localStorage`, chave de fonte, N recentes): `<Alert compact action="Ver fonte" onDismiss>`; apagar o CSS local do selo que o `--compact` promovido substituiu.
-- [ ] T059 [P] [US4] T212: `pages/calcular/calcular-page.tsx` + `calcular-page.css`: resumo `position: sticky; top` no topo da coluna do formulário a <1280px, com `data-testid`; conferir que nenhum ancestral tem `overflow` que mate o sticky.
+- [ ] T059 [P] [US4] T212 (prancheta: `Calculadora - A Conta e os Precos`, o bloco de preços; conferir no índice remoto se `Kits Mobile` traz variante): `pages/calcular/calcular-page.tsx` + `calcular-page.css`: resumo `position: sticky; top` no topo da coluna do formulário a <1280px, com `data-testid`; conferir que nenhum ancestral tem `overflow` que mate o sticky.
 - [ ] T060 [P] [US4] `shared/ui/number-field.tsx`: precisão por campo (tarifa 4 casas na máscara ao vivo); `"0"` → `"0,00"` na hidratação de simulação (`features/scenarios/scenario-bridge.ts`).
 - [ ] T061 [US4] gate:all + e2e; screenshots 1:1 (aviso, readout nos dois modos, confirmação, selo compact aberto/dispensado, T212 no meio da rolagem) em `evidencias/pr-c/`; abrir o PR-C (sem ADR para flipar; registrar "sem bump" no corpo).
 
@@ -250,7 +250,7 @@ vermelho sob mutação de UM texto; mobile idêntico.
 - [ ] T095 [US7] `apps/web/src/pages/calcular/calcular-page.tsx` (ou o hospedeiro que a prancheta 20g define): composição ≥1280px montando `ScenariosList` (extraído de `scenarios-list-sheet.tsx` sem duplicar) na coluna larga; abaixo do corte, a gaveta inalterada. Emenda do ADR-0031 é a autoridade.
 - [ ] T096 [P] [US7] D2: unificar as chaves de renomear em `messages.pt-br.ts` e apontar as duas folhas para elas.
 - [ ] T097 [US7] A11-r: aplicar `tf-table` na lista do Catálogo ≥1024px se a PR-D ainda não aplicou (senão só medir); registrar itens visíveis sem rolar a 1280/1920 antes/depois.
-- [ ] T098 [US7] Levar Q1 (vazio de busca cita o termo?) e Q2 (ressalva por linha vs faixa) ao dono no gate; implementar a resposta (copy verbatim da prancheta correspondente) OU registrar como deferido.
+- [ ] T098 [US7] Q1/Q2 DECIDIDAS (27/08): o vazio de busca do Catálogo passa a citar o termo (mesmo molde de `historico.searchEmpty`); a ressalva "pode estar desatualizada" por linha SAI de `catalog-panel.tsx` (fica só a faixa "Modo leitura offline"). Teste: vazio com termo em `catalog-panel.test.tsx`; zero `staleHint` por linha.
 - [ ] T099 [US7] gate:all + e2e; screenshots 1:1 (Simulações 1280/1920 dois temas; mobile idêntico) em `evidencias/pr-f/`; abrir o PR-F e pedir o flip da **emenda do ADR-0031**.
 
 ---

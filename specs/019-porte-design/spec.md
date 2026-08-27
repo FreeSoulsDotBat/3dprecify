@@ -42,6 +42,12 @@ desenhadas) + as pranchetas remotas, transcritas por fatia.
 - Q: O que "Enviar" faz além de congelar o preço (Q8 do brief)? → A: **A — congela + gera o PDF**; o vendedor manda por fora (WhatsApp/e-mail), como já faz com os Orçamentos. Zero superfície pública nova (sem link/e-mail pelo app); reaproveita o export do E4 (ADR-0020) com o rodapé não-fiscal.
 - Q (pós-arquiteto, 2026-08-27): a folha do design registra a decisão do dono de 25/08 de REMOVER todo indicador de foco, contradizendo a FR-1903 (anel 2px). Qual vale? → A: **Remover, como decidido em 25/08.** Nenhum controle mostra indicador de foco (campos mantêm só a borda de acento). Consequência aceita pelo dono e registrada aqui como EXCEÇÃO explícita de produto: WCAG 2.4.7 (nível A) deixa de ser atendido — quem navega por teclado perde a referência de posição. A asserção geométrica de foco do 018 é substituída por uma guarda do INVERSO (nenhum anel renderizado em :focus-visible).
 - Q (pós-arquiteto, 2026-08-27): a Q6 (venda direta, marketplace fora) torna o total do construtor monotônico por construção — o aviso "10 un. sai mais barato que 9" (US18) nunca dispararia. → A: **Retirar a US18 do construtor.** Registrada como "não aplicável à venda direta"; a propriedade band-dominance continua provada no motor para o preço de anúncio (marketplace), onde ela vive.
+- Q (Q1/D3, 2026-08-27): vazio de busca — Catálogo não cita o termo; Orçamentos/Simulações citam. → A: **Uniformizar: todas citam o termo.** O Catálogo passa a dizer o termo buscado, no molde já existente dos outros dois.
+- Q (Q2/D4, 2026-08-27): ressalva "pode estar desatualizada" na leitura offline do Catálogo. → A: **Só a faixa no topo** — as linhas ficam limpas; a lista não mistura origens.
+- Q (E-5, 2026-08-27): o visitante DESLOGADO no lote 32. → A: **o mesmo caminho sem parede, com "Assinar Premium" visível para todos** — logado ou não. A diferença é no CLIQUE: logado → vai pagar (checkout); deslogado → é **promptado a criar conta ou entrar**, e depois segue para pagar (a intenção é preservada). **Esse fluxo não está prototipado** → prompt gerado para o Claude Design (`docs/design/prompts/019-lote32h-deslogado.md`); a copy do prompt/tela de entrada-com-intenção é transcrita da prancheta quando ela existir.
+- Q (contraste do tom ATENÇÃO, 2026-08-27): se o laranja profundo reprovar o AA como TEXTO no claro → A: **escurecer só o texto até passar**; ícone, badge e botões continuam no laranja da marca.
+- Q (Q7/Q10, 2026-08-27): → A: **confirmadas** — "Válido até" é texto no documento (não vence); abaixo do custo AVISA, não bloqueia.
+- Q (ordem das fatias após a PR-A, 2026-08-27): → A: **B → C → D → F → E**.
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -287,7 +293,7 @@ muda.
 - **FR-1905**: "canal"→"marketplace" em todo texto visível incluindo PDF/CSV, pelas chaves de
   i18n; símbolos/chaves/rotas/arquivos intactos; payloads congelados intocados; testes de string
   atualizados como mudança revisada (US5, D2).
-- **FR-1906**: Premium bloqueia SÓ no salvar: vazio didático (6 frases verbatim, D4) + formulário
+- **FR-1906**: Premium bloqueia SÓ no salvar — **para logado sem Premium E para deslogado** (E-5): o mesmo vazio didático + formulário inerte; "Assinar Premium" visível nos dois casos; no clique, logado → checkout, deslogado → criar conta/entrar com intenção preservada → checkout: vazio didático (6 frases verbatim, D4) + formulário
   inerte (`tf-frozen`, campos vazios, "Salvar" desabilitado e visível, "Assinar Premium"
   secundário); vazios de Orçamentos/Simulações levam à calculadora; invariante um-teaser mantido
   (US6/US7, D7).
@@ -322,7 +328,7 @@ muda.
 - **FR-1919**: Simulações ≥1280px pela prancheta 20g; mobile intocado estruturalmente; geometria
   nos dois eixos (US19; ADR-0031 emendado ou novo — plan/R8).
 - **FR-1920**: D1 teste de mudança conjunta (não-vacuoso por mutação); D2 chave única vigiada;
-  D3/D4 só após Q1/Q2; A11-r fecha com `tf-table` e densidade medida (US20).
+  **D3 = todas as buscas citam o termo (Q1)**; **D4 = só a faixa no topo, sem ressalva por linha (Q2)**; A11-r fecha com `tf-table` e densidade medida (US20).
 
 ### Key Entities
 

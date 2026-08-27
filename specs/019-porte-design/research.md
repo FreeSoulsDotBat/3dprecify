@@ -266,7 +266,7 @@ preço é online-only, §C-1).
 (`catalog-panel.tsx:228-231`): para quem nunca teve, a lista **é** um 403, então é ali que o vazio nasce
 — não numa lista vazia que nunca chega. Invariante do 016/US1 mantido: **um teaser, nunca dois**.
 
-**Ponto ABERTO, roteado ao dono (E-5): o visitante DESLOGADO.** O lote 32 desenha o visitante **grátis**;
+**E-5 — RESOLVIDO pelo dono (2026-08-27): o deslogado vê o MESMO caminho sem parede, com "Assinar Premium" visível; no clique é promptado a criar conta/entrar (intenção preservada via o `redirect` que o `TeaserUpgrade` já usa — `/sign-in?redirect=/conta?assinar=1`) e segue ao checkout. A tela/prompt de entrada-com-intenção NÃO está prototipada → prompt gerado para o Claude Design (`docs/design/prompts/019-lote32h-deslogado.md`). Registro histórico das opções:** O lote 32 desenha o visitante **grátis**;
 `signedOut` é outro caso (não há conta, não há ledger, e "Assinar Premium" precisa de conta). Opções:
 **(a)** deslogado continua vendo a superfície de entrada de hoje e o lote 32 vale só para o logado sem
 premium — é a única que não inventa copy nem fluxo (**80%**); **(b)** deslogado vê o mesmo vazio + o
