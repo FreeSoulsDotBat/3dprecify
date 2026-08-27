@@ -203,3 +203,22 @@ ainda 1 flaky mobile (`catalog.spec.ts:183`) que aqui passou.
 Decisão: os 20 são dívida do 018 e a PR-A NÃO pode chamar "e2e verde" sem pagá-la — corrigidos em commit
 SEPARADO (`test(018): …`), delegado com a regra "escopar o locator ao painel pretendido; se a duplicação for
 defeito de produto (ex.: dois convites numa tela), reportar, não mascarar".
+
+**Adendo T034 — a dívida paga e os dois defeitos que ela escondia (qa-software, 381k tokens · 61 min).**
+Os 20 strict-mode do 018 foram escopados ao painel certo em 13 specs (helpers `itemVisible`,
+`historicoDetail`, `openCatalogItem`, `ledgerCard`; a oferta inline `#tf-conta-oferta` substitui o diálogo
+para vendedor livre no desktop; 4 `getByText(planPremium)` exatos). Achados extras: no mestre-detalhe o
+clique na lista SELECIONA (precisa de "Abrir para editar" para navegar); em ≥1280 filamento/impressora
+editam inline na ficha; o "Voltar" do 404 do histórico não existe de propósito em ≥1280 (a lista é o
+caminho). Dois testes ficaram vermelhos de propósito porque a duplicação era **defeito de produto**:
+1. **Oferta duplicada via `?assinar=1`** (`conta-page.tsx`): a intenção da URL abria a gaveta por cima da
+   oferta inline — 2 preços, 4 rádios de período — a violação de "um convite por tela" (016/US1) que o botão
+   da linha já evitava. **Corrigido** (`e99a334`): a gaveta só existe sem coluna; `?assinar=1` leva à coluna.
+   Teste jsdom (`conta-desktop.test.tsx`): 2 rádios e nenhum `dialog`; sem a correção → 4 (vermelho visto).
+2. **Ficha offline presa em erro no mestre-detalhe** (`history-offline.spec.ts:35`): registro gravado
+   offline, sincronizado, reaberto por clique → a coluna mostra "Não foi possível carregar" enquanto a lista
+   mostra o valor certo; nunca em mobile. Em diagnóstico no browser real (dev-frontend) — hipótese: o
+   auto-abrir do mestre-detalhe monta `useSnapshot` (`retry: false`) ainda offline e o erro fica travado.
+Flakies observadas (não tocadas): `catalog.spec.ts:192` mobile (o item 21 do CI); `billing.spec.ts`
+SC-701/703 só quando corre na MESMA invocação que `billing-teasers` (o cabeçalho do arquivo já avisa —
+banco compartilhado).
