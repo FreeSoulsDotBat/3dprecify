@@ -57,7 +57,7 @@ E três descobertas que ENCOLHEM trabalho: **D2 já está feito** (`scenarios-li
 | `FixedFeeSourceBadge` | também vira `Alert compact` dispensável pela MESMA chave (é ele quem carrega `effectiveDate`, research §G) | só o `FeeSeal` |
 | `name_norm` no backend | `backend/app/lib/name_norm.py` + contrato `import-linter` "dependency-free leaf" (`pyproject.toml:134-138`) | dentro de `app/validation.py` |
 
-## 4. Decisões que SÓ o dono responde (bloqueiam a task indicada; a task já carrega as opções)
+## 4. Decisões do dono — TOMADAS em 27/08 (todas na recomendação; aplicadas no `tasks.md` e em spec §Clarifications)
 
 1. **`tf-table` no Catálogo** — (a) substitui a coluna-mestre a 1280 (redesenha o 018 recém-mergeado); (b) emenda datada no ADR-0031 com limiar nomeado 1024 só para densidade de lista; (c) `tf-table` fica sem consumidor no 019. *Bloqueia T076/T097.* Recomendação do arquiteto: (b) — é o que o handoff mediu ("≥1024, leitura de coluna").
 2. **Hospedeiro de Simulações ≥1280** — coluna de `/calcular` (que já tem corte de 1024 ⇒ dois limiares na mesma tela, emenda) ou destino de navegação novo (rota de 1 segmento + 6º item no nav — hoje 5). *Bloqueia T092/T095.* A prancheta 20g decide o layout; o dono decide o hospedeiro.
@@ -81,6 +81,10 @@ E três descobertas que ENCOLHEM trabalho: **D2 já está feito** (`scenarios-li
 - `data-model.md` §4: `quoteValidityDays` sai do payload (é coluna); o payload QUOTE traz `modelVersion`/`schemaVersion` (CHECKs `:606/:627`); `discount.value` como string decimal; `lines[]` = `FrozenQuoteLine`.
 
 ## 7. O que esta análise NÃO cobre
+
+(As 5 decisões da §4 foram respondidas pelo dono em 27/08 — nenhuma task fica bloqueada.)
+
+### 7.1 Escopo
 
 A copy e a geometria das pranchetas B–F (não congeladas ainda) — a transcrição (agora a 1ª task de cada fase) e a
 homologação do dono continuam sendo o único juiz disso. E as 5 decisões acima: as tasks bloqueadas por elas estão

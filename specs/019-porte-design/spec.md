@@ -33,6 +33,15 @@ desenhadas) + as pranchetas remotas, transcritas por fatia.
 
 ## Clarifications
 
+### Sessão 2026-08-27 (auditoria de implementabilidade — 5 decisões do dono)
+
+- Q: A `tf-table` do Catálogo em tela larga (handoff ≥1024 × ADR-0031 limiar único 1280 × mestre-detalhe do 018)? → A: **Emenda datada no ADR-0031**: limiar NOMEADO de 1024 só para a densidade da lista do Catálogo (faixa 1024–1279); ≥1280 o mestre-detalhe fica como está.
+- Q: Onde mora a lista de Simulações em ≥1280px? → A: **Coluna larga dentro de `/calcular`** (a mesma emenda nomeia os dois limiares que convivem nessa tela: 1024 layout da Calculadora, 1280 coluna). Nenhuma rota nova.
+- Q: A parede de `/kits` cai junto com a do Catálogo, e "montar um kit sem salvar" é permitido no grátis/lapsed? → A: **Cai, e montar sem salvar é permitido** — só "Salvar" bloqueia.
+- Q: "Enviar" (congelar + PDF) sem rede? → A: **Enviar exige conexão**: o construtor funciona offline, o botão fica desabilitado com o motivo; nada novo entra no outbox (research §K mantida).
+- Q: O limiar de gramas do aviso de plausibilidade (prancheta 850 g × produto 50.000 g homologado)? → A: **Mantém 50.000 g**; a copy é transcrita, o número-exemplo da prancheta não é regra.
+
+
 ### Session 2026-08-26
 
 - Q: Onde mora o "preço anterior" e a marca de "última visita" do recálculo do Catálogo (Q3 do brief)? → A: **B — no servidor.** Nasce a primeira tabela com preço guardado (observação de preço por produto, com data); a frase "desde a sua última visita" vale em qualquer aparelho. Consequências assumidas pelo dono: migração de schema na PR-D, escalação opus (ADR-0022), e Clarification datada na spec 007 (FR-310/FR-313 passam a admitir preço OBSERVADO, nunca preço-fonte).
