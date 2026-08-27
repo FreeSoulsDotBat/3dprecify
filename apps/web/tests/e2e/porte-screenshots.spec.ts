@@ -1,10 +1,11 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
+import { grantPremium, signUpThrowaway } from "./history-helpers";
 
 // 019/T034 — os screenshots 1:1 da PR-A (fundação DS), nos dois temas, para
 // `specs/019-porte-design/evidencias/pr-a/`. Só roda com `PORTE_SCREENSHOTS=1` (é evidência, não
@@ -41,7 +42,10 @@ const FROZEN_MARKUP = `
 test.beforeAll(() => mkdirSync(OUT, { recursive: true }));
 
 for (const theme of THEMES) {
-  test(`TabBar 390 + selo compact da Shopee (${theme})`, async ({ page }) => {
+  test(`TabBar 390 + selo compact da Shopee (${theme})`, async ({ page }, info) => {
+    // o marketplace é Premium (016/PR-E): sem conta não há slot nem select
+    const email = await signUpThrowaway(page, `shots-${theme}-${info.workerIndex}`);
+    grantPremium(email);
     await page.goto("/calcular");
     await setTheme(page, theme);
     await expect(page.locator(".tf-nav--tabbar")).toBeVisible();
@@ -49,14 +53,29 @@ for (const theme of THEMES) {
 
     // o selo compacto vive na seção Shopee: escolher SHOPEE no 1º marketplace
     await page
-      .getByLabel(messages.calculator.channels.marketplace, { exact: true })
+      .getByTestId("channel-slot")
       .first()
+      .getByLabel(messages.calculator.channels.marketplace, { exact: true })
       .selectOption("SHOPEE");
     const selo = page.getByTestId("shopee-measured-freight-warning");
     await expect(selo).toBeVisible();
     await selo.scrollIntoViewIfNeeded();
     await selo.screenshot({ path: join(OUT, `selo-compact-shopee-${theme}.png`) });
     await page.screenshot({ path: join(OUT, `secao-shopee-390-${theme}.png`) });
+
+    // 019/T021 — re-medir a seção Shopee a 360px (a geometria do compact mudou 8/12px → 12/8px)
+    await page.setViewportSize({ width: 360, height: 800 });
+    const box = await selo.boundingBox();
+    const secao = await page
+      .locator("[data-testid='shopee-measured-freight-warning']")
+      .evaluate((el) => {
+        const s = el.closest("section, .tf-card") ?? el.parentElement;
+        return s ? s.getBoundingClientRect().height : 0;
+      });
+    writeFileSync(
+      join(OUT, `medidas-shopee-360-${theme}.json`),
+      JSON.stringify({ viewport: 360, selo: box, secaoShopeePx: secao }, null, 2) + "\n",
+    );
   });
 
   test(`404 (${theme})`, async ({ page }) => {

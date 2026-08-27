@@ -222,3 +222,28 @@ caminho). Dois testes ficaram vermelhos de propósito porque a duplicação era 
 Flakies observadas (não tocadas): `catalog.spec.ts:192` mobile (o item 21 do CI); `billing.spec.ts`
 SC-701/703 só quando corre na MESMA invocação que `billing-teasers` (o cabeçalho do arquivo já avisa —
 banco compartilhado).
+
+### T034 — a rodada final (2026-08-27)
+
+E2E completo contra a stack real, com os dois `fix(018)` dentro: **350 passaram · 0 falharam · 30 skipped ·
+3,6 min · exit 0** (antes: 318 / 24). Os 30 skipped são os de sempre (projeto mobile × specs desktop-only e
+vice-versa). Inclui `focus-none` (T024) verde nos dois projetos e nas duas larguras, `porte-medidas` 8/8, e
+os 13 specs re-escopados do 018. `price-hero.css`: diff vs `develop` = 0 linhas (T022).
+
+**Adendo T024 — a prova de não-vácuo, feita duas vezes (a primeira estava ERRADA).** Prova 1: anel
+temporário em `.tf-btn:focus-visible` (`button.css`), build fresco, `focus-none` chromium → **4 passaram**.
+Primeira leitura minha: "a guarda é vácua, `locator.focus()` não aciona `:focus-visible`". Leitura ERRADA:
+o alternador de tema é `button.tf-topbar__theme`, sem `tf-btn` — a prova mirava um seletor que o controle
+testado não tem. Prova 2: regra GLOBAL `:focus-visible { outline: 2px solid red !important; box-shadow: …
+!important }` em `base.css` → **4 falharam** ("botão: outline solid 2px", "campo (input): outline solid
+2px"); revertida (0 mudanças no git). A guarda VÊ anel. De quebra o foco passou a chegar por TECLADO (Tab →
+Shift+Tab de volta), a modalidade em que `:focus-visible` é garantido — mais fiel ao usuário real, e sem
+custo. Lição: a prova de não-vácuo também pode ser vácua; ela tem de mirar o MESMO elemento que a guarda.
+
+**T021 — re-medida da seção Shopee a 360px** (`evidencias/pr-a/medidas-shopee-360-{dark,light}.json`): o selo
+"Frete aferido pode gerar cobrança retroativa" mede **75px** (286px de largura) com a geometria da folha;
+a A5/016 o tinha levado de 248px a **60px**. Diferença **+15px**, acima dos ~8px que o research §A previu
+— o padding 12px e o corpo em coluna (`gap: 2px`) custam mais que a estimativa. Seção Shopee inteira a
+360px: 968px (a A5 media 1248 antes e 1152 depois). Consequência honesta: a PR-A devolve 15 dos 188px que
+a A5 economizou; a linha continua UMA (título + ⓘ inline). Screenshots 1:1 em `evidencias/pr-a/`
+(10 arquivos: TabBar 390, 404, selo compact, seção Shopee, Frozen × 2 temas); a tela de ERRO não tem rota.

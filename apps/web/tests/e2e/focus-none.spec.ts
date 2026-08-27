@@ -15,6 +15,24 @@ const VIEWPORTS = [
   { name: "1440 (sidebar)", width: 1440, height: 900 },
 ] as const;
 
+// O foco tem de chegar por TECLADO: `locator.focus()` programático NÃO aciona `:focus-visible` no
+// Chromium — a prova de não-vácuo (anel temporário em button.css) passou VERDE com o anel dentro
+// enquanto a guarda focava por script. Sai por Tab e volta por Shift+Tab (ou o inverso, se o
+// controle for a última parada), e só então lê o estilo — com a modalidade de teclado ativa.
+async function focusByKeyboard(locator: Locator): Promise<void> {
+  const page = locator.page();
+  await locator.focus();
+  for (const [out, back] of [
+    ["Tab", "Shift+Tab"],
+    ["Shift+Tab", "Tab"],
+  ] as const) {
+    await page.keyboard.press(out);
+    await page.keyboard.press(back);
+    if (await locator.evaluate((el) => document.activeElement === el)) return;
+    await locator.focus();
+  }
+}
+
 async function focusStyles(locator: Locator): Promise<{
   outlineStyle: string;
   outlineWidth: string;
@@ -22,7 +40,7 @@ async function focusStyles(locator: Locator): Promise<{
   background: string;
   hasFocus: boolean;
 }> {
-  await locator.focus();
+  await focusByKeyboard(locator);
   return locator.evaluate((el) => {
     const cs = getComputedStyle(el);
     return {
