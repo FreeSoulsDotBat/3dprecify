@@ -79,11 +79,17 @@ a recusa**. Espelho na aplicação: `_BASIS_TOTAL_KEY` + `Literal` com guarda de
 
 ```
 { kind: "QUOTE",
-  lines: [{ name, quantity, unitPrice, subtotal, origin }],   // a forma que o PDF já lê
+  lines: [{ name, quantity, unitPrice, subtotal, origin }],   // FrozenQuoteLine — lida por um ramo QUOTE NOVO em
+                                                              // build_quote_view (o PDF de hoje lê line.totals[key]; "a forma
+                                                              // que o PDF já lê" era FALSA — auditoria 27/08). Dinheiro = STRING.
   totals: { precoOrcamento },                                 // = netTotal = headline_total
-  discount: { mode: "PCT"|"AMOUNT", value, amount, grossTotal },  // DECLARADO, nunca embutido
+  discount: { mode: "PCT"|"AMOUNT", value, amount, grossTotal },  // DECLARADO, nunca embutido; value TAMBÉM string
+                                                              // (validation.py:106 rejeita float); amount/grossTotal entram em
+                                                              // _MONEY_POSITION_KEYS; coerência validada no pydantic (422)
   costFloor,                                                  // custoTotal do motor
-  quoteValidityDays }                                         // já existe — "Válido até" é TEXTO
+  modelVersion: "4.2.0", schemaVersion: 1 }                    // exigidos pelos CHECKs :606/:627. quoteValidityDays
+                                                              // NÃO entra no payload: é COLUNA (models:652) e o PDF já a
+                                                              // imprime — "Válido até" é TEXTO derivado dela
 ```
 
 Gatilho de imutabilidade, `UNIQUE (owner_uid, client_snapshot_id)` e `PATCH` só-de-`label`: **intactos**.
