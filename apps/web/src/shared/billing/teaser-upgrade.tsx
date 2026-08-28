@@ -46,6 +46,16 @@ export interface TeaserUpgradeProps {
    */
   align?: "start" | "center";
   className?: string;
+  /**
+   * 019/PR-B (T045, prancheta 32b/32e) — no rodapé do formulário inerte o convite é SECUNDÁRIO
+   * ("o primário desta tela é preencher o formulário") e sem a linha de preço: é o MESMO elemento
+   * do vazio didático (mesmo href, mesma intenção preservada), nunca um segundo link.
+   */
+  variant?: "primary" | "secondary";
+  /** "Reativar Premium" para quem TINHA e deixou vencer (32e); default = "Assinar Premium". */
+  label?: string;
+  /** `false` esconde a linha de preço (o rodapé do formulário inerte não a tem — 32b). */
+  price?: boolean;
 }
 
 /**
@@ -54,7 +64,14 @@ export interface TeaserUpgradeProps {
  * roteador, e um componente que só funciona sob um provider é um componente que ninguém consegue
  * testar isolado.
  */
-export function TeaserUpgrade({ signedOut, align, className }: TeaserUpgradeProps): ReactNode {
+export function TeaserUpgrade({
+  signedOut,
+  align,
+  className,
+  variant = "primary",
+  label,
+  price = true,
+}: TeaserUpgradeProps): ReactNode {
   // Sem o `redirect`, quem entra pela oferta cai na home e perde o que veio fazer — o defeito de
   // retorno frio que o `951d714` já consertou uma vez nesta mesma jornada.
   const href = signedOut
@@ -65,9 +82,9 @@ export function TeaserUpgrade({ signedOut, align, className }: TeaserUpgradeProp
     <div
       className={`tf-teaser-upgrade${align === "center" ? " tf-teaser-upgrade--center" : ""}${className ? ` ${className}` : ""}`}
     >
-      <span className="tf-teaser-upgrade__price">{teaserPriceLine()}</span>
-      <a className="tf-btn tf-btn--primary" href={href}>
-        {t.subscribeAction}
+      {price && <span className="tf-teaser-upgrade__price">{teaserPriceLine()}</span>}
+      <a className={`tf-btn tf-btn--${variant}`} href={href} data-testid="teaser-upgrade-cta">
+        {label ?? t.subscribeAction}
       </a>
     </div>
   );

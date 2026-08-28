@@ -256,3 +256,45 @@ cobertura 88,82% (statements), depcruise/boundaries/typecheck ok; backend **474 
 assertando as AUSÊNCIAS (zero classe duplicada · zero dispositivo de prancheta · zero `tf-lockup` · zero anel ·
 zero "canal" visível · zero "canal" no PDF · `price-hero.css` intocado) e pedindo o flip do **ADR-0032**.
 Estado da fatia: **CORREÇÃO DECLARADA** — nada homologado até a Rodada 1 fechar.
+
+---
+
+## PR-B — Premium sem parede (US3) · branch `019-pr-b-premium` (do develop `ebf3ec0`, pós-merge do PR #59)
+
+### T042 — a transcrição (2026-08-28)
+
+- **Pranchetas congeladas** (DesignSync `get_file`, nenhuma truncada): `Premium - O Caminho Sem Parede` e
+  `Catalogo - Os Estados da Lista`, escuro verbatim + claro derivado pela transformação enumerável da T009
+  (invariantes: 0 `rgba(255,255,255`, 7/6 blocos `light` = os blocos `dark`, `<h1>` com " — claro"). Hashes em
+  `design/README.md`.
+- **A 32h não existe no remoto** (listagem de 28/08: 33 pranchetas × 2 temas, nenhuma "entrada com intenção"/
+  deslogado). O comportamento JÁ existe (`TeaserUpgrade` → `/sign-in?redirect=/conta?assinar=1`); a copy do
+  prompt `docs/design/prompts/019-lote32h-deslogado.md` entra quando a prancheta existir — **follow-up
+  declarado**, não omissão.
+- **Copy transcrita byte a byte** (`messages.pt-br.ts`): as 6 frases da 32c (`catalogo.didatico{Filaments,
+  Printers,Products,Kits}Body`, `historico.didaticoBody`, `scenarios.didaticoBody`); `catalogo.emptyFilamentsTitle`
+  → "Nenhum filamento cadastrado" (32a: "o título perdeu o ainda" — vale para quem paga E para quem não paga);
+  `historico.didaticoTitle` "Nenhum orçamento registrado" (32f); `premiumTeaser.salvarFazParteDoPremium` (32b/32f);
+  `premiumTeaser.fazerUmCalculo` (32f); `billing.reactivateAction` "Reativar Premium" (32e).
+  `catalogo.reactivateBody` conferido contra a 32e: **idêntico** — não duplicado.
+- **O que a prancheta NÃO desenhou e por isso NÃO foi escrito**: os títulos do vazio de impressora/produto/kit e de
+  simulação (a 32c só traz as frases). Ficam os títulos de hoje (`emptyPrintersTitle`… "salva ainda") — o
+  argumento do "ainda" da 32a se aplicaria, mas copy é do dono: **ponto para a segunda passada**.
+
+### T036 · T043 — `premiumGate` + o vazio didático (2026-08-28)
+
+- `shared/billing/premium-gate.ts`: função PURA, zero imports (guarda de grafo no teste). Cinco estados; `stale`
+  nunca promove (recebe o `data` que o hook já resolveu — fresco ou lembrado); status que o servidor não emite =
+  `unknown`. **Decisão registrada**: sessão `loading` → `unknown` (não é "deslogado": ainda não se sabe; na prática
+  `main.tsx` segura o app nesse estado). Vermelho provado: `Cannot find module './premium-gate'` → 8/8 verdes.
+- `shared/billing/vazio-didatico.tsx`: compõe `EmptyState` (`tf-empty` existente), **sem CSS próprio** (T006
+  continua a guarda), e carrega o ÚNICO `TeaserUpgrade` da tela; `teaser={false}` quando o formulário inerte está
+  aberto (o rodapé dele passa a ser o único — T041 conta nos dois estados).
+- `TeaserUpgrade` ganha `variant="secondary"`, `label`, `price={false}` — o botão secundário sem preço do rodapé
+  (32b/32e) é o MESMO elemento do vazio (mesmo href, mesma intenção preservada), nunca um segundo link.
+- **Divergência de autoridade, registrada para o dono**: a 32a diz do vazio didático "Nenhuma coroa, nenhum preço,
+  nenhuma menção a plano — o convite vem depois"; a FR-1906 exige "invariante um-teaser mantido" e a T041/SC-006
+  contam exatamente UM convite por tela no estado de lista. **A FR ganhou**: o vazio carrega o `TeaserUpgrade`
+  (linha de preço + "Assinar Premium") abaixo do botão de adicionar. Se o dono preferir a leitura da prancheta,
+  a mudança é `teaser={false}` por padrão + relaxar a contagem no estado de lista.
+
