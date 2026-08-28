@@ -585,3 +585,29 @@ TabBar aceitando a colisão com o toaster (o §I rejeita). T054 (o e2e) espera a
 - **Push e abertura do PR-C**: aguardam a autorização do dono (corpo em `evidencias/pr-c/pr-body.md`, com as 7
   decisões a ratificar e o ⛔ DONO do T212). Estado: **CORREÇÃO DECLARADA**.
 
+### As decisões do dono (2026-08-28) aplicadas na PR-C
+
+O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Clarifications, sessão 28/08):
+
+1. **T212** → prompt de correção para o Claude Design (`docs/design/prompts/019-pr-c-correcoes.md` §1, também em
+   `uploads/` do projeto `a90ed7d4`): o preço provisório acompanha o preenchimento e se MESCLA com o cartão final
+   ao chegar ao fim. T059/T054 **esperam a prancheta**.
+2. **Confirmação de modo → diálogo** (prompt §2). O inline da 15e fica até a prancheta nova (T144).
+3. **Pílulas ficam** (13b) — nada muda.
+4. **Hook criado**: `useIsCalcWide()` (`CALC_WIDE_QUERY` 1024px como limiar NOMEADO em `use-is-wide.ts`, o caminho
+   que o ADR-0031 §Follow-ups prescreve — nunca um segundo `matchMedia` solto); a 15f implementada: ≥1024 o
+   segmented "Estimar · Ajustar" fica `size="sm"` na linha do título "A máquina" (um único `Segmented` por vez —
+   dois radiogroups montados seria o erro que o ADR evita). Teste com `installMatchMedia(1024)`, vermelho antes.
+   **Achado**: a 15a desenha o título "A máquina" + um ⓘ "Sobre o custo da máquina" em TODAS as larguras; o
+   produto não tinha título no bloco. "A máquina" transcrito (`machineCost.blockTitle`) e mostrado no ramo
+   desktop; o ⓘ espera a copy do dono (o corpo não está na prancheta).
+5. **As 8 copies só-lição aprovadas** (`plausibilidade.licao.<campo>`, a da tarifa lendo
+   `TOOLTIP_REF_TARIFA_MEDIA_NACIONAL`): campo RECUSADO com lição escrita mostra SÓ a lição (sem "Confira…", sem
+   "Entendi"), ignorando dispensa — `licaoDeCampo` puro + a regra no hook; não-vácuo por mutação (`licao = null`
+   ⇒ `machine-readout` vermelho no caso "vida útil = 0").
+6. **14c (marca da seção) e 14e (linha de kit)** → prompt §3/§4 para o design detalhar os estados; T145/T146
+   esperam a prancheta.
+7. **Prancheta 10 → PR-F**: T141–T143 na Phase 9.
+8. **Como no design**: ícone `wifi` verbatim do projeto (lucide, 4 paths) no `ICONS` + cópia estática;
+   `Alert.icon` (prop aditiva) para o selo embutido; chevron rotacionado no "Ver fonte" (botão e link).
+

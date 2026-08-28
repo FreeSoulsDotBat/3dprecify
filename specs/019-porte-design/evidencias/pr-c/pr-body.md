@@ -9,9 +9,10 @@
 - **Selo de procedência** (prancheta 13): de `Badge` dobrado para `Alert compact` — rótulo nomeia o número ("Comissão"/"Taxa fixa"), citação em 2 linhas, categoria de origem, data, **"Ver fonte"** (abre a citação inteira + o `sourceUrl` que o catálogo sempre carregou e nunca mostrou), **"Dispensar"** até a fonte mudar (chave `marketplace::source::data`, 50 recentes, `localStorage`). Os qualificadores curtos continuam pílulas; o catch-all vira linha do corpo (o transbordo de 360px do 016).
 - **Precisão**: a tarifa de energia aceita 4 casas (R$ 0,8734/kWh) sem truncar no blur — custo de energia numericamente igual (SC-1905); "0" reabre "0,00". **Achado real**: a reabertura de cenário (`moneyLeafToPtBr`, o "R5" do 016) cortava a tarifa a 2 casas — corte de VALOR, não de exibição — morto com teste vermelho→verde.
 
-### O que NÃO está aqui — ⛔ DONO
+### O que espera prancheta nova (prompt de correção já no projeto de design — `uploads/019-pr-c-correcoes.md`)
 
-- **T212 (resumo fixo do preço a 390px — T059/T054)**: a prancheta 10 não nomeia elemento fixo; `sticky; top` no último elemento do DOM nunca gruda e `sticky; bottom` colide com o toaster (research §I). Cumprir exige mover/criar o resumo no topo do DOM mobile — a mudança estrutural que a T059 manda PARAR. Três opções em dod-evidence §T059; recomendo **(a)** uma barra-resumo compacta nova no topo do formulário mobile.
+- **T212** (resumo do preço a 390px): o dono decidiu o desenho — o preço provisório acompanha o preenchimento e se **mescla** com o cartão final ao chegar ao fim da rolagem. Implementa quando a prancheta existir (T059/T054).
+- **Confirmação de modo como diálogo** (o inline da 15e fica até lá — T144), a **marca da seção** `{n} avisos` (T145) e a **linha de kit com `tf-aviso`** (T146).
 
 ### Verificação
 
@@ -20,15 +21,10 @@
 - Não-vácuo provado por mutação no `precision`; vermelho capturado antes em T049/T050/T051/T052/T053/T060.
 - A captura do "Ver fonte" achou a URL inquebrável transbordando o diálogo a 390px — corrigido antes do gate (a lição de sempre: geometria só aparece na imagem).
 
-### Decisões a ratificar na segunda passada
+### Decisões do dono já aplicadas (28/08)
 
-1. Confirmação de troca de modo **inline** (15e, "não cobre a tela") em vez do diálogo central que a T057 citava.
-2. `adjusted`/`estimate`/`none` continuam **pílulas** (13b), não `Alert compact` como a T052 dizia.
-3. 15f (segmented `size="sm"` na linha do título ≥1024px) **não implementada** — o corte da Calculadora é 1024 e o hook de largura mede 1280.
-4. A 14b desenha o caso "0 → só a lição" (sem cabeça "Confira…") — o módulo não gera aviso para 0; ficou como a T049 escreveu (o aviso do valor comprometido persiste com o fecho trocado). Copy "só-lição" por campo é decisão sua.
-5. A "marca da seção" `{n} avisos` (14c) e a linha de kit como `tf-aviso` (14e — `bom-line-card.tsx` ainda usa `.tf-field__aviso`) não têm task — follow-ups.
-6. A prancheta 10 redesenha o rodapé inteiro (segmented Varejo|Atacado, barra de proporção, markup no cabeçalho, marketplaces como seção) — **nenhuma task do 019 cobre isso**; decidir onde entra.
-7. Diálogo da taxa fixa reusa o título "Fonte da comissão" e "vigente desde" como data (só uma string transcrita; a entrada não tem `lastReviewed` próprio da taxa fixa). Ícone `wifi` (13b·3) não existe no DS — renderiza `info`.
+- Pílulas continuam pílulas (13b) · hook `useIsCalcWide` (1024, limiar nomeado) + segmented na linha do título ≥1024 (15f) · as 8 copies só-lição aprovadas (campo recusado mostra só a lição) · ícone wifi e chevron como no design · prancheta 10 (rodapé redesenhado) entra na PR-F (T141–T143).
+- Ainda sem copy do dono: o ⓘ "Sobre o custo da máquina" que a 15a desenha ao lado do título "A máquina" (o corpo não está na prancheta); o diálogo da taxa fixa reusa "Fonte da comissão".
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
