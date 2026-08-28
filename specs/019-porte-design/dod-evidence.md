@@ -455,3 +455,49 @@ Re-rodado: catalog + catalogo + bom + a guarda **196/196**, tsc/eslint limpos.
 - Token ledger: fechado com os reais (1,04M nos executores vs ~650k estimados; o cluster do Catálogo 2,3× o
   previsto).
 
+---
+
+## PR-C — Comportamentos da calculadora (US4) · branch `019-pr-c-calculadora` (do develop `daec0f2`, pós-merge do PR #60)
+
+### T055 — a transcrição (2026-08-28)
+
+- **4 pranchetas congeladas** (DesignSync, nenhuma truncada; claras derivadas pela transformação da T009 —
+  7/7/7/6 blocos `light` = os `dark`). Hashes em `design/README.md`.
+- **Copy transcrita** (`messages.pt-br.ts`): `plausibilidade.entendi` "Entendi" · `fechoComRecusa` "Corrija o campo
+  acima para calcular." (14b: quando o aviso convive com uma recusa, o fecho "Nada foi recusado." mentiria) ·
+  `machineCost.estimar/ajustar` (SUBSTITUEM `adjustButton`/`backToEstimateButton`, apagados) ·
+  `readoutLabel` "Custo da máquina por hora de impressão" · `readoutDivisao` "de {valor} ÷ {horas} h" ·
+  `ressalvaSemValor` "falta o valor da máquina" · a confirmação da 15e em 4 chaves (`confirmTitle`, `confirmBody`,
+  `confirmUse`, `confirmKeep`; `{anos}` recebe o rótulo já flexionado — a lição do T031) · `seals.commissionLabel`
+  "Comissão" · `verFonte` · `dispensar` · `fonteTitle` "Fonte da comissão" · `fonteConferida` · `fonteAviso`.
+  `derivedCaption` apagada (T057: obsoleta).
+- **Confronto com `LIMIARES`** (decisão 5 do dono): a prancheta 14 usa 120 kW, R$ 12/kWh, 3 h, 1.000 kg, 150 h,
+  3.000.000.000 — TODOS acima/abaixo dos limiares do produto (5 kW · R$ 5 · 100 h · 50 kg · 100 h · 2^31−1);
+  nenhum exemplo de gramas aparece na prancheta (o "850 g" do brief não está nela) — o limiar de 50.000 g fica.
+- **Leituras que divergem das tasks, registradas**: (1) a **15e** desenha a confirmação de troca de modo como
+  `tf-alert--warning` INLINE no bloco ("nasce onde o segmented está… e não cobre a tela"), com os dois números
+  em disputa cada um no seu botão — a T057 dizia "diálogo center" (palpite da auditoria, antes da transcrição).
+  **A prancheta ganha**: inline, sem cobrir a tela. (2) a **14b** mostra o caso erro+aviso com o valor 0 e uma
+  LIÇÃO sem cabeça ("Se você pensou em anos…") — o módulo puro não gera aviso para 0 (`> 0` no guard), e uma
+  copy "só-lição" por campo não existe; a T049 é implementada como está escrita (o aviso do valor comprometido
+  PERSISTE quando a validação recusa, com o fecho trocado e sem "Entendi"); o caso "0 → lição" fica registrado
+  como follow-up de copy para o dono. (3) a **14c** desenha uma "marca da seção" (`{n} avisos`, sem contar os
+  dispensados) que nenhuma task da Phase 6 pede — follow-up. (4) a prancheta **10** ("A Conta e os Precos")
+  redesenha o rodapé inteiro (segmented Varejo|Atacado, barra de proporção, markup no cabeçalho, "Preços por
+  marketplace" como seção) — NADA disso está na US4/Phase 6; fica como lacuna para o dono decidir onde entra.
+
+### T059 · T054 — T212: a leitura PARA e vai ao dono (2026-08-28)
+
+A T059 manda registrar QUAL elemento gruda antes de codar, e parar se a leitura implicar mover o bloco no DOM
+mobile. **Leitura**: a prancheta 10 **não nomeia elemento fixo algum** — o rodapé é conta → barra → segmented →
+marketplaces → cartão de preço, tudo em fluxo. O research §I manda `position: sticky` **no topo** da coluna do
+formulário. Mas o bloco de preço é o **ÚLTIMO** elemento do DOM (`.tf-calc-footer`, `calcular-page.tsx:572`):
+um `sticky; top` nele **nunca gruda** (ele nunca é rolado para fora por cima — não há nada depois dele), e um
+`sticky; bottom` o põe **exatamente no slot do toaster** (`toast.css:6`, `bottom: calc(var(--tabbar-h) + …)`) que
+o §I proíbe. Logo, cumprir o T212 exige **mover o resumo para o topo do DOM mobile ou criar um segundo elemento**
+— a mudança estrutural que a T059 manda PARAR. **⛔ DONO**, com três opções: (a) uma barra-resumo compacta NOVA
+no topo do formulário mobile (`sticky; top`, "Preço varejo · R$ 24,24", `data-testid="price-summary-sticky"`) —
+recomendada: não move nada, não briga com o toaster, é a "exceção mobile autorizada" no espírito; (b) mover o
+cartão de preço para o topo (muda a ordem de leitura que a prancheta 10 desenha); (c) `sticky; bottom` acima da
+TabBar aceitando a colisão com o toaster (o §I rejeita). T054 (o e2e) espera a mesma decisão.
+

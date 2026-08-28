@@ -202,6 +202,7 @@ export function ControlledField({
                 {...p}
                 currency={meta.currency}
                 unit={meta.unit}
+                precision={meta.precision}
                 name={field.name}
                 value={field.value}
                 onChange={field.onChange}
