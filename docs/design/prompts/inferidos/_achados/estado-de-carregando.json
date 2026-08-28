@@ -1,0 +1,24 @@
+{
+  "id": "estado-de-carregando",
+  "nome": "Carregando — o giro que substituiu o esqueleto desenhado",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/shared/ui/spinner.tsx",
+    "apps/web/src/shared/ui/spinner.css",
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/billing/checkout-return.tsx",
+    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+    "apps/web/src/pages/historico/historico-page.tsx",
+    "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+    "apps/web/src/pages/catalogo/produto-page.tsx",
+    "apps/web/src/pages/conta/conta-page.tsx",
+    "apps/web/src/pages/bom/bom-page.tsx"
+  ],
+  "oQueFoiInferido": "Que o carregamento é um `<Spinner />` sozinho no lugar do conteúdo. Contei os pontos: 9 ocorrências de `<Spinner />` solto fora do `shared/ui` — checkout-return:98, catalog-panel:225, scenarios-list-sheet:276, bom-page:159, produto-page:249, conta-page:54, historico-page:151 e :324, snapshot-detail-page:84 — sem rótulo visível, sem esqueleto, sem posição definida. Não existe `Skeleton` nem `ProgressBar` em `shared/ui` (`grep -rni skeleton|progressbar` no app: ZERO ocorrências, inclusive em CSS). Inferidos ainda os três tamanhos do anel, a cor accent, o rótulo 'Carregando…' só para leitor de tela, e o fato de a lista COLAPSAR para um ponto girando — a página encolhe e volta a crescer quando os dados chegam.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Toda tela premium abre com um ponto girando no vazio e depois salta para a lista cheia. O esqueleto que o protótipo desenhou, corrigiu e teve MEDIDO simplesmente não foi construído.",
+  "prioridade": "MEDIA",
+  "refutacao": "Derruba a acusação para duas superfícies e endurece o resto. O carregamento da LISTA está desenhado e desenhado ao CONTRÁRIO do que o app faz: `CatalogScreen.jsx:42-49` monta três linhas de esqueleto no formato da lista real (`Skeleton variant=\"circle\" 36×36` + duas linhas de texto, 55% e 35%); §D.2 pede 'Skeleton — placeholders de loading (linhas/cards) com shimmer discreto respeitando reduced-motion'; e a auditoria fecha o ciclo — item 8 lista 'loading skeletons' como falta, e a V3 registra '#14 \"Demo: carregando\" toggle + dark-visible skeleton (1,79:1, reduced-motion honrado)' como CORRIGIDO E MEDIDO no protótipo. Logo, para Catálogo e Histórico o achado 'ninguém desenhou' é falso: o desenho existe e foi ignorado. Sobrevive o que o app pôs no lugar e nunca foi desenhado — o giro sozinho substituindo o conteúdo nos 9 pontos acima, com o colapso e o salto da página; e para Conta, Kits, Produto, Simulações e retorno de checkout não há desenho de carregamento em autoridade nenhuma.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "estado-busca-sem-resultado",
+  "nome": "Estado \"nenhum registro encontrado para {termo}\"",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
+  "oQueFoiInferido": "Um `EmptyState icon=\"history\"` cujo TÍTULO é a frase inteira com o termo interpolado ('Nenhum registro encontrado para \"{termo}\"'), SEM descrição nenhuma, seguido de um Button secondary 'Limpar busca' — e o mesmo estado serve para o filtro de período, caso em que o 'termo' vira '01/07/2026 – 31/07/2026'. Inferido: reaproveitar o MESMO ícone e o mesmo componente do vazio frio (o vendedor vê a mesma arte para 'você não tem nada' e 'sua busca não achou'), pôr a frase inteira como título em vez de título+descrição (o Catálogo, no mesmo app, usa título curto + corpo), e não mostrar quais filtros estão em vigor no momento do vazio.",
+  "autoridade": "NENHUMA",
+  "impacto": "Ver a mesma arte de 'você ainda não tem orçamentos' depois de buscar um cliente faz o vendedor acreditar que o histórico dele sumiu — foi exatamente o bug que o código teve de corrigir com o debounce.",
+  "prioridade": "MEDIA",
+  "refutacao": "A busca não existe em nenhuma autoridade, então o vazio-de-busca também não. O que existe — e isso torna o achado mais forte, não mais fraco — é o vazio FRIO: `claude-design-prototype-fixes.md` item 18 pede 'Seus cálculos salvos aparecem aqui.' + CTA 'Fazer um cálculo' + grafismo, e a auditoria V2 confirma o item 18 na lista FIXED, renderizado ('17-19: load-error+retry, premium-history empty, generic 500 screen'); o -r2 item 14b só acrescentou um caminho de demo até ele, também verificado em V3. Ou seja: o vazio frio foi desenhado e checado; o vazio de busca foi decidido em código EM CIMA dele. `HistoryScreen.jsx` tem um único EmptyState ('Nenhum cálculo salvo'), sem busca. `Abas-Desktop.dc.html` não desenha nenhum estado vazio da lista de Orçamentos (só o teaser free do ramo `isFree`). E a distinção busca-vazia × vazio-frio está documentada como decisão de código: o comentário em `historico-page.tsx` explica que ler o input CRU em vez do debounced 'flashava a tela fria de você-não-tem-histórico durante os 250 ms'. Corrijo um detalhe: existe no mesmo arquivo de mensagens um par `searchEmptyTitle`/`searchEmptyBody` (linhas 619-620) usado pelo Catálogo com título curto + corpo — o Histórico usa uma chave própria (`searchEmpty`, linha 929) com a frase toda no título, e essa divergência entre duas telas do mesmo app não tem desenho por trás.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

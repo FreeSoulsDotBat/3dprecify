@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
@@ -17,6 +17,13 @@ import {
 // ONLY copy of a quote.
 
 const t = messages.historico;
+
+// 018 mestre-detalhe: a ≥1280px o primeiro registro abre sozinho ao lado da lista (SC-002), então
+// o badge do card aparece duas vezes (o card `.tf-historico__link` da lista + a coluna
+// `complementary` do detalhe). A fila é a leitura da LISTA.
+function ledgerCard(page: Page) {
+  return page.locator(".tf-historico__link").first();
+}
 
 test("a blocked entry offers Tentar novamente / Descartar, and discard removes it (B2/ADR-0018 §9)", async ({
   page,
@@ -39,14 +46,17 @@ test("a blocked entry offers Tentar novamente / Descartar, and discard removes i
   // and visible (never silently dropped). A lapse leaves the ledger readable (FR-517).
   await goOnline(page, context);
   await page.goto("/historico");
-  await expect(page.getByText(t.syncBlockedBadge)).toBeVisible({ timeout: 15_000 });
+  const card = ledgerCard(page);
+  await expect(card.getByText(t.syncBlockedBadge)).toBeVisible({ timeout: 15_000 });
 
-  // The dead end is gone: the entry offers a way out right on the card.
-  await expect(page.getByRole("button", { name: t.retryAgain })).toBeVisible();
-  await expect(page.getByRole("button", { name: t.discard })).toBeVisible();
+  // The dead end is gone: the entry offers a way out right on the card. 018 mestre-detalhe: a
+  // ≥1280px a ficha aberta ao lado repete o mesmo `EntryActions` — escopado ao card da lista para
+  // não colidir com o par da coluna de detalhe.
+  await expect(card.getByRole("button", { name: t.retryAgain })).toBeVisible();
+  await expect(card.getByRole("button", { name: t.discard })).toBeVisible();
 
   // Discard is destructive and confirmed. After confirming, the entry is gone.
-  await page.getByRole("button", { name: t.discard }).click();
+  await card.getByRole("button", { name: t.discard }).click();
   const confirm = page.getByRole("dialog");
   await expect(confirm.getByText(t.discardConfirmBody)).toBeVisible();
   await confirm.getByRole("button", { name: t.discard }).click();

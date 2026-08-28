@@ -1,0 +1,16 @@
+{
+  "id": "secao-marketplace-multicanal",
+  "nome": "Seção Marketplace — chave “Incluir marketplaces no preço” e canais repetíveis",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/pages/calcular/calcular-page.tsx"
+  ],
+  "oQueFoiInferido": "Título com ⓘ, um `<label>` de largura total com o texto à esquerda e um Switch à direita ('Incluir marketplaces no preço') que liga/desliga TODO o cálculo de canais, e, quando ligado: um Alert info opcional de falha de atualização, N `ChannelSlot` empilhados com gap-3, e um Button secondary 'Adicionar canal'. Inferido: que marketplace virou lista repetível (o protótipo tinha UM canal como select), a existência e o lugar do interruptor mestre, o que a tela mostra com a chave desligada (hoje: nada — nenhum resumo do que se perdeu), o limite prático de canais, e como N cartões se comportam empilhados numa coluna de metade da tela.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Toda a promessa multicanal do produto (comparar Shopee × ML × Amazon) mora numa estrutura de repetição que ninguém desenhou; empilhada, ela é a maior fonte de altura da página e a razão pela qual a coluna direita fica ~2.500px mais alta que a esquerda no desktop.",
+  "prioridade": "ALTA",
+  "refutacao": "§E4 (243-244) desenha 'Marketplace: canal (Shopee / ML Clássico / ML Premium / Nenhum) → taxa fixa (R$) + comissão (%)', UM canal, dois campos, dentro de uma CollapsibleSection compartilhada com Falha; `CalculatorScreen.jsx` (94-101) implementa exatamente isso (`mpFixa`/`mpPct`). `-fixes.md` item 5 e item 11 mexem só nos VALORES dos presets e na guarda de comissão ≥100%. Grep por 'Incluir marketplace' e 'Adicionar canal' nas 4 autoridades (incluindo o canvas 018 e o readme do DS): ZERO. O canal existe no protótipo; a REPETIÇÃO e o interruptor mestre não. Sobrevive, PROTOTIPO_PARCIAL confirmado.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

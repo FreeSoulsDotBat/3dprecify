@@ -1,0 +1,17 @@
+{
+  "id": "regiao-de-toasts",
+  "nome": "Região de toasts (posição, empilhamento e dispensa)",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/shared/ui/toast.tsx",
+    "apps/web/src/shared/ui/toast.css",
+    "apps/web/src/app/providers.tsx"
+  ],
+  "oQueFoiInferido": "O `<Toaster/>` é montado uma única vez em `providers.tsx` e vive numa região `position: fixed` com regras próprias: no mobile centrado embaixo e levantado acima da barra de abas (`bottom: calc(var(--tabbar-h) + var(--space-3))`, `left:50%` + `translateX(-50%)`, largura `min(92vw, 30rem)`); a partir de 768px salta para o canto inferior direito (`right: var(--space-6); bottom: var(--space-6)`). Empilha SEM limite (`toasts: [...s.toasts, novo]`), auto-dispensa de 5000ms por item, quatro tons (neutral/info/success/danger) e um botão de fechar de 44px. Inferidos: onde os toasts moram em cada largura, quantos podem coexistir, o que acontece quando três se empilham sobre a barra de abas, e a relação deles com as faixas do topo e com os diálogos (z-index 60 contra 40).",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o canal de confirmação de quase toda ação do app e ele se posiciona por conta própria em cima da navegação mobile — a mesma classe do E6/T028, em que um toast prometido nunca apareceu e não havia desenho para comparar.",
+  "prioridade": "MEDIA",
+  "refutacao": "Existe autoridade sobre a PEÇA e nenhuma sobre a REGIÃO, então rebaixo em vez de derrubar. COBERTO: §D.2 cria \"**Toast** — feedback efêmero (sucesso/erro/info), radius md, sombra sm\" e o readme do `.design-import` lista `Toast` entre as 32 primitivas de `feedback(...)`. Isso fixa a pele de um toast — e o CSS a honra (`--radius-md`, `--shadow-md`). NÃO COBERTO: nenhuma prancha do inventário §E mostra a região — não há posição, empilhamento, duração, limite nem convivência com a BottomBar em E1–E9; a matriz §G não tem linha de toast; as duas rodadas de correção não o citam (procurei \"toast\" nos dois arquivos de fixes: nada); a auditoria não o mede em V1/V2/V3. `.design-import/components/` exportou exatamente 2 arquivos e nenhum é Toast.jsx (confirmado por listagem completa). Canvas 018: nenhuma ocorrência de \"toast\" nem de `tf-toast` no `.dc.html`. O tom \"neutral\", o 5000ms e o z-index 60 não vêm de lugar nenhum.",
+  "sobreviveu": true,
+  "area": "shell"
+}

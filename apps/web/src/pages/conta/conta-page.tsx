@@ -1,4 +1,4 @@
-import { type ReactNode, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { useSearch } from "@tanstack/react-router";
 
 import { useEntitlement } from "@/entities/user/use-entitlement";
@@ -141,6 +141,15 @@ function PlanSection() {
   const ofereceAssinar =
     state.kind === "free" || state.kind === "lapsed" || state.kind === "subscription-canceled";
   const ofertaInline = isWide && ofereceAssinar;
+  // 019/PR-A (dívida do 018, achada pelo e2e): `?assinar=1` abria a GAVETA por cima da oferta inline —
+  // a mesma oferta duas vezes na tela (dois rádios de período, dois preços), exatamente o que o botão da
+  // linha já evita. A intenção da URL faz o que o botão faz: com oferta na coluna, LEVA até ela; a gaveta
+  // só existe quando não há coluna. Derivado, não efeito preso à URL — fechar continua fechando.
+  const sheetOpen = offerOpen && !ofertaInline;
+  useEffect(() => {
+    if (offerOpen && ofertaInline)
+      document.getElementById("tf-conta-oferta")?.scrollIntoView?.({ block: "nearest" });
+  }, [offerOpen, ofertaInline]);
 
   return (
     <>
@@ -196,8 +205,8 @@ function PlanSection() {
         </Card>
       )}
 
-      <Sheet open={offerOpen} onOpenChange={setOfferOpen}>
-        {offerOpen && (
+      <Sheet open={sheetOpen} onOpenChange={setOfferOpen}>
+        {sheetOpen && (
           <SheetContent>
             <SheetTitle>{tb.offerTitle}</SheetTitle>
             <OfferPanel />

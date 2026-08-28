@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import preRemovalFixture from "../../src/entities/history/__fixtures__/frozen-payload-pre-016.json" with { type: "json" };
 
@@ -27,6 +27,12 @@ import { grantPremium, recordFromCalculator, signUpThrowaway } from "./history-h
 // can, and that is exactly what these two cases must prove survives.
 
 const t = messages;
+
+// 018 mestre-detalhe: a ≥1280px o registro aberto vive na coluna `complementary`, ao lado da
+// lista — que também mostra o valor como resumo do card. Abaixo do corte a ficha é a tela inteira.
+function historicoDetail(page: Page) {
+  return (page.viewportSize()?.width ?? 0) >= 1280 ? page.getByRole("complementary") : page;
+}
 
 test.describe("016/T041 — a matriz de documentos (congelado antigo · simulação antiga · novo)", () => {
   test("[a] um orçamento gravado HOJE reabre limpo — sem declaração nenhuma (4.0.0)", async ({
@@ -209,7 +215,8 @@ test.describe("016/T041 — a matriz de documentos (congelado antigo · simulaç
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 
     // What was quoted — frozen, immutable, exactly the 3.1.0 numbers (ADR-0019 untouched).
-    await expect(page.getByText("R$ 42,98")).toBeVisible(); // frozen precoVarejo
+    const detalhe = historicoDetail(page);
+    await expect(detalhe.getByText("R$ 42,98")).toBeVisible(); // frozen precoVarejo
     await expect(page.getByText("3.1.0")).toBeVisible(); // the technical sheet names the OLD model
 
     // "Comparar hoje": the live product resolves (cheaper — today's model drops the waste term),

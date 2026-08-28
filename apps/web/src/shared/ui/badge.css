@@ -28,3 +28,9 @@
   background: var(--tf-danger-soft);
   color: var(--danger-text);
 }
+/* 019/PR-A (handoff §2, tf-components.css:517) — a faixa de aviso: mesma construção das irmãs,
+   fundo suave do laranja da marca, texto no tom profundo via `--warning-text`. */
+.tf-badge--warning {
+  background: rgba(247, 147, 30, 0.16);
+  color: var(--warning-text);
+}

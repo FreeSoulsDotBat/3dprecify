@@ -506,7 +506,7 @@ describe("BomPage — per-channel rollup (US1/FR-403, honest by construction)", 
     fireEvent.change(commissions[1], { target: { value: "100" } }); // invalid sibling slot
     const rollup = screen.getByText(t.channelsTitle).closest("section, div") as HTMLElement;
     expect(within(rollup).getByText(t.channelContributing.replace("{n}", "1"))).toBeInTheDocument();
-    expect(within(rollup).queryByText(/sem preço neste canal/)).not.toBeInTheDocument();
+    expect(within(rollup).queryByText(/sem preço neste marketplace/)).not.toBeInTheDocument();
     expect(within(rollup).getAllByText(/30,30/).length).toBeGreaterThan(0); // valid slot's money (016/PR-C B1 seed)
   });
 });

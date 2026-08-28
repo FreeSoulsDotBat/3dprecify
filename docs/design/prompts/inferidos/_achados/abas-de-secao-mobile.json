@@ -1,0 +1,17 @@
+{
+  "id": "abas-de-secao-mobile",
+  "nome": "Abas de seção do Catálogo no mobile (Filamentos · Impressoras · Produtos · Kits)",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/pages/catalogo/catalogo-page.tsx",
+    "apps/web/src/pages/catalogo/catalogo-page.css",
+    "apps/web/src/shared/ui/segmented.tsx"
+  ],
+  "oQueFoiInferido": "São QUATRO seções (Kits entrou como quarta, sem precedente em nenhuma autoridade) num `Segmented size=\"sm\"`. CORREÇÃO ao mapeamento original: o comportamento em tela estreita não é indefinido — são DUAS regras deliberadas em camadas diferentes. `.tf-catalogo-head` tem `flex-wrap` e derruba a bandeja inteira para a linha abaixo do título; e `segmented.css` declara `max-width:100%; overflow-x:auto; scrollbar-width:none` com `white-space:nowrap` nos itens, ou seja, quando as quatro pílulas não couberem elas ROLAM na horizontal, com a barra de rolagem escondida. O que foi inferido, portanto, não é \"o que acontece\", e sim a ESCOLHA de rolagem invisível sobre encolher/quebrar, e o fato de que a quarta pílula (Kits) pode ficar fora da vista sem nenhum indício visual de que existe mais coisa à direita.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Em 360px a aba Kits pode ficar além da borda de uma bandeja cuja barra de rolagem foi deliberadamente escondida — o vendedor não tem como saber que ela está lá.",
+  "prioridade": "BAIXA",
+  "refutacao": "(1) §E5 (linha 260) pede \"chips pill para alternar Filamentos|Impressoras\" — DUAS opções. (3) `CatalogScreen.jsx` linhas 38-39 instancia `SegmentedControl` com TRÊS (filamento/impressora/produto). Kits não aparece em nenhuma das quatro autoridades como seção do Catálogo. (2) A auditoria só encosta no assunto pelo alvo de toque (`-fixes.md` item 23 / r2 item 12, V3 FIXED, \"segmented 116×44\") — e essa parte o código honra (`min-height:44px` mesmo no `--sm`). (4) O canvas desenha as quatro pílulas (`role=\"tablist\"`, linhas 76-81) mas a 1920px, na mesma linha do título e sem restrição de largura. Não derruba: viewport diferente do achado. Sobrevive com a descrição reescrita — o mapeador perguntou \"encolhem? rolam? quebram?\" quando o CSS já responde \"rolam, com a barra escondida\"; a lacuna real é ninguém ter desenhado essa escolha nem o seu indício de transbordo.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

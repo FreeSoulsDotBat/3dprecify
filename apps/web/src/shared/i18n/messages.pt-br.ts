@@ -176,7 +176,7 @@ export const messages = {
     // A frase e deliberadamente descritiva ("ficou acima"), nunca corretiva ("corrija"): quem le um
     // aviso escrito como erro conclui que o produto recusou, e o produto nao recusou.
     avisoAtacadoAcimaDoVarejo:
-      "O preco de atacado ficou acima do varejo. Nada foi recusado — so confira se e isso mesmo.",
+      "O preço de atacado ficou acima do varejo. Nada foi recusado — só confira se é isso mesmo.",
     // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Etiqueta…); each value
     // soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria linha no
     // detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
@@ -194,8 +194,8 @@ export const messages = {
     // US1 — multi-channel marketplace pricing. Each slot names a marketplace + modality and its
     // fees; "Preços por canal" shows every slot's anúncio + líquido for varejo e atacado together.
     channels: {
-      addChannel: "Adicionar canal",
-      removeChannel: "Remover canal",
+      addChannel: "Adicionar marketplace",
+      removeChannel: "Remover marketplace",
       marketplace: "Marketplace",
       modality: "Modalidade",
       commission: "Comissão",
@@ -208,12 +208,12 @@ export const messages = {
       // estrutural mora em `freight-declared.test.ts`), então a linha nomeia o controle, não uma
       // forma de desconto que não existe mais no catálogo.
       freightLine: "Frete",
-      negativeLiquido: "Canal não-lucrativo neste preço (frete maior que a margem).",
+      negativeLiquido: "Marketplace não-lucrativo neste preço (frete maior que a margem).",
       // 014/SC-817 — o anúncio necessário cai numa faixa de preço para a qual o marketplace não
       // publica tarifa. Dizer isso é a única resposta honesta: a tarifa da faixa vizinha não vale
       // aqui, e um R$ 0,00 sob selo de referência seria pior que nenhum número.
       unpricedBand:
-        "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do canal para precificar.",
+        "Sem tarifa publicada para a faixa de preço deste anúncio — informe a comissão do marketplace para precificar.",
       // 016/PR-F homologação (A1) — quando a entrada é bandada, os placeholders de Comissão/Taxa
       // fixa mostram a banda REALMENTE aplicada ao preço da tela (nunca a mesma banda para todo
       // preço) — esta legenda avisa que o número muda se o preço mudar de faixa.
@@ -230,10 +230,10 @@ export const messages = {
       // 016/US11 (T048, FR-915) — the switch's disabled state needs a legible reason: a disabled
       // control with no text beside it reads as broken, not as "assine para usar".
       premiumOnly: "Vender em marketplaces faz parte do Premium.",
-      pricesTitle: "Preços por canal",
-      channelFallback: "Canal",
-      errorRow: "Corrija os campos deste canal para ver os preços.",
-      noFeeHint: "Informe a comissão do canal para ver os preços.",
+      pricesTitle: "Preços por marketplace",
+      channelFallback: "Marketplace",
+      errorRow: "Corrija os campos deste marketplace para ver os preços.",
+      noFeeHint: "Informe a comissão do marketplace para ver os preços.",
       // US3 — the online catalog refresh failed. NON-BLOCKING: the saved/seed reference still
       // pre-fills and every price computes; this only offers a retry (never an error wall).
       refreshErrorTitle: "Não foi possível atualizar as taxas",
@@ -261,7 +261,7 @@ export const messages = {
       // ANÚNCIO sobe mais do que ele porque a comissão incide sobre ele também.
       surcharges: {
         perOrderCaption:
-          "{value} por pedido, somado como custo do canal — o preço do anúncio sobe MAIS que isso, porque a comissão incide sobre ele também. Somado inteiro nesta unidade (não é dividido entre os itens do pedido).",
+          "{value} por pedido, somado como custo do marketplace — o preço do anúncio sobe MAIS que isso, porque a comissão incide sobre ele também. Somado inteiro nesta unidade (não é dividido entre os itens do pedido).",
         provenance: "Fonte: {source}, vigente desde {date}.",
       },
       // hotfix 016/A2 (H2c, 2026-08-07) — o subsídio de frete da Shopee como INFORMAÇÃO, nunca como
@@ -331,8 +331,8 @@ export const messages = {
       // precisa desconfiar. Agora há duas mensagens, e o seletor só fala do que ele sabe — a lista de
       // categorias. Quem fala da taxa é o selo do mesmo slot, e os dois passam a concordar.
       unavailableNoReference:
-        "Este canal ainda não tem taxa de referência — informe a comissão nos campos abaixo.",
-      unavailableWithFee: "A lista de categorias ainda não está disponível para este canal.",
+        "Este marketplace ainda não tem taxa de referência — informe a comissão nos campos abaixo.",
+      unavailableWithFee: "A lista de categorias ainda não está disponível para este marketplace.",
       // 016/US13 (T054, FR-920) — a navegação hierárquica, ao lado da busca. `browseCount` é o
       // contador HONESTO do modo de navegação (o total real de categorias do catálogo — nunca "8"
       // quando existem mais, o mesmo princípio de `resultsTruncated`). Um marketplace de espinha
@@ -483,6 +483,8 @@ export const messages = {
         always: "Praticamente o dia todo",
       },
       paybackLabel: "Em quantos anos quer que ela se pague?",
+      // 019/T031 — o singular é do texto ("1 anos" era a única frase do produto que não era português).
+      paybackYearLabel: "{n} ano",
       paybackYearsLabel: "{n} anos",
       derivedCaption: "≈ {value} por hora de impressão",
       adjustButton: "Ajustar horas direto",
@@ -752,10 +754,10 @@ export const messages = {
     assemblyNoPriceBody:
       "O preço do kit aparece assim que ao menos uma peça estiver completa e válida.",
     assemblyExcluded: "{n} peça(s) fora do total — confira os avisos nas peças acima.",
-    channelsTitle: "Preços por canal (kit)",
-    channelContributing: "{n} peça(s) somaram neste canal",
-    channelSkipped: "{n} peça(s) sem preço neste canal — não entrou na soma.",
-    channelNoContrib: "Nenhuma peça com preço neste canal.",
+    channelsTitle: "Preços por marketplace (kit)",
+    channelContributing: "{n} peça(s) somaram neste marketplace",
+    channelSkipped: "{n} peça(s) sem preço neste marketplace — não entrou na soma.",
+    channelNoContrib: "Nenhuma peça com preço neste marketplace.",
     // 016/US1 (T004/T006) — o teaser de Kits passou a ser o padrão único (`premiumTeaser.KITS`);
     // as chaves antigas (título/corpo/CTA próprios) saíram daqui pela mesma razão do Catálogo.
     // Guard states (§0.1) — honest, specific; a network failure is NOT "not premium"
@@ -830,16 +832,16 @@ export const messages = {
     // C2) — "3× R$ 135,00" would read as a unit price and be multiplied again.
     kitPieceQty: "{n} un",
     breakdown: "Detalhamento",
-    channels: "Preços por canal",
+    channels: "Preços por marketplace",
     // 014/T120 — um canal gravado SEM comissão informada. Com comissão 0 o motor devolve anúncio ==
     // base, então existe um número — mas ele não é um preço de marketplace, e a Calcular já se
-    // recusa a exibi-lo ("Informe a comissão do canal para ver os preços"). O congelado herda a
+    // recusa a exibi-lo ("Informe a comissão do marketplace para ver os preços"). O congelado herda a
     // recusa em vez de afirmar o que a origem negou. O tempo verbal é o do registro, não o do
-    // conserto: não há o que informar agora, o que houve foi um canal sem comissão naquele dia.
-    channelNoFee: "sem comissão informada — este canal não teve preço",
+    // conserto: não há o que informar agora, o que houve foi um marketplace sem comissão naquele dia.
+    channelNoFee: "sem comissão informada — este marketplace não teve preço",
     // per-channel rollup captions (M11) — contributing/skipped kit lines, stated honestly
     channelContributing: "{n} de {total} peças",
-    channelSkipped: "{n} sem este canal",
+    channelSkipped: "{n} sem este marketplace",
     channelNet: "líquido",
     techTitle: "Ficha técnica",
     modelVersionLine: "Calculado com a fórmula versão {versao}",
@@ -1051,7 +1053,7 @@ export const messages = {
     saveAction: "Salvar simulação",
     saveSheetTitle: "Salvar simulação",
     saveSheetIntro:
-      "Guardamos a estratégia desta tela — canais, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.",
+      "Guardamos a estratégia desta tela — marketplaces, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.",
     nameField: "Nome",
     nameRequired: "Dê um nome à simulação.",
     nameTooLong: "Máximo de 120 caracteres.",
@@ -1070,7 +1072,7 @@ export const messages = {
     updatedRelative: "Atualizado {quando}", // "há 2 dias" etc. — NUNCA uma data-alegação
     emptyTitle: "Nenhuma simulação salva ainda",
     emptyBody:
-      "Monte uma comparação de canais na calculadora e toque em “Salvar simulação” para guardá-la e reabrir quando quiser.",
+      "Monte uma comparação de marketplaces na calculadora e toque em “Salvar simulação” para guardá-la e reabrir quando quiser.",
     emptyAction: "Voltar para a calculadora",
     loadError: "Não foi possível carregar suas simulações.",
     retry: "Tentar novamente",
@@ -1113,7 +1115,7 @@ export const messages = {
     searchClear: "Limpar busca",
     // kit basis reopen (T024, Q12) — no scalar form to hydrate; a read-only per-channel rollup
     kitBasisTitle: "Kit: {nome}",
-    kitBasisHint: "Preços por canal do kit, recalculados com os preços de hoje.",
+    kitBasisHint: "Preços por marketplace do kit, recalculados com os preços de hoje.",
     // 016/US1 (T004/T006) — o teaser de Simulações passou a ser o padrão único
     // (`premiumTeaser.SCENARIOS`); as chaves antigas saíram daqui pela mesma razão do Catálogo/Kits.
     // 016/T036 (US10, FR-913) — a declaração de descarte: uma simulação salva ANTES do
@@ -1290,7 +1292,7 @@ export const messages = {
     KITS: {
       title: "Monte e precifique kits com várias peças",
       subtitle:
-        "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro, por canal.",
+        "Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro, por marketplace.",
       caption: "A calculadora de peça única continua grátis.",
     },
     QUOTES: {
@@ -1306,5 +1308,8 @@ export const messages = {
   ds: {
     close: "Fechar",
     notifications: "Notificações",
+    // 019/PR-A (contracts/ui-porte.md §C0) — o nome acessível da dispensa do selo de procedência
+    // (`tf-alert__close`), verbatim da prancheta "A camada de baixo" 23b.
+    dismiss: "Dispensar",
   },
 } as const;

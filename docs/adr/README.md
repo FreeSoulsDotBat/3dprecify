@@ -30,6 +30,15 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Accepted |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
 | [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Proposed |
+| 0024–0031 | *(linhas ausentes deste índice — os arquivos existem em `docs/adr/`; backfill pendente, ver nota abaixo)* | — |
+| [0032](0032-primitivos-do-porte-do-design.md) | Os primitivos do porte — onde cada classe `tf-*` mora, e como o porte não cria uma segunda camada (estende ADR-0007) | Proposed |
+| [0033](0033-observacao-e-fixacao-de-preco.md) | Observação de preço, fixação de preço e unicidade de nome — o Catálogo ganha dado novo sem virar fonte de preço (019/PR-D) | Proposed |
+| [0034](0034-orcamento-montado-motor-e-congelamento.md) | "Montar e Enviar" — `computeQuote` no motor e o congelamento pela maquinaria do E4 (019/PR-E) | Proposed |
+
+> **Nota (2026-08-26, arquiteto/019)**: o índice parou de ser atualizado em 0023 — os ADRs **0024 a
+> 0031 existem** como arquivo e estão em uso (o 0031 foi aceito em 2026-08-26). Não preenchi as linhas
+> deles porque não medi o status de cada um, e inventar status num índice é pior que a lacuna. O
+> backfill é uma tarefa de uma linha por ADR para quem tiver a leitura na mão.
 
 ## Pending (to be written; numbers assigned when authored)
 - ~~Payments — Google Play Billing vs Mercado Pago recurring~~ → **resolved as ADR-0023** (2026-07-20;

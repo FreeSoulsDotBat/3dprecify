@@ -27,9 +27,10 @@
 .tf-btn:active:not(:disabled) {
   transform: scale(var(--press-scale));
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-btn:focus-visible {
   outline: none;
-  box-shadow: var(--ring);
+  box-shadow: none;
 }
 .tf-btn:disabled {
   cursor: not-allowed;
@@ -93,6 +94,27 @@
 .tf-btn--danger-ghost:hover:not(:disabled) {
   background: var(--danger-soft, transparent);
   border-color: var(--danger-deep);
+}
+
+/* 019/PR-A (tf-components.css:213/216) — o produto só declarava o alvo mínimo; as duas larguras
+   legítimas de um botão solto em coluna são desta folha. */
+.tf-btn--full {
+  width: 100%;
+}
+/* Meia caixa: 50% EXATOS mesmo quando o rótulo é mais longo que isso — aí ele quebra em duas
+   linhas em vez de o botão crescer. `line-height: 1` do `.tf-btn` é seguro só com `nowrap`
+   (uma linha garantida); permitindo quebra, leading 1,0 sobrepõe as duas linhas em 3px — os
+   glifos colidem (o "rótulo de 211px vazando de 157px" que a folha mede). Entrelinha própria,
+   e altura livre para acomodar a segunda linha. */
+.tf-btn--half {
+  width: 50%;
+  align-self: flex-start;
+  white-space: normal;
+  text-align: center;
+  line-height: var(--lh-snug);
+  min-height: var(--control-h);
+  height: auto;
+  padding-block: var(--space-2);
 }
 
 .tf-btn--glow {

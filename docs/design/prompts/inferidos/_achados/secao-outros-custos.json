@@ -1,0 +1,16 @@
+{
+  "id": "secao-outros-custos",
+  "nome": "Seção “Outros custos” — linhas nomeadas adicionáveis",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/pages/calcular/calcular-page.tsx"
+  ],
+  "oQueFoiInferido": "Título com ⓘ + hint + lista 0..N de linhas SEM rótulo, cada uma `flex items-end gap-2` com um `<input type=text>` cru dentro de um `.tf-inputwrap` (flex 3, só placeholder + aria-label), um NumberField currency (flex 2) e um Button ghost com o glifo '✕', mais um Button secondary 'Adicionar custo'. Inferido: a supressão dos rótulos por linha, a proporção 3:2, o ✕ tipográfico como remoção, o estado de lista vazia (hoje: só hint + botão, sem nada educativo), o erro por linha vindo do modelo e não do RHF, e — no desktop — que a seção MIGRA de coluna (esquerda no Premium, direita no grátis) para compensar o gate.",
+  "autoridade": "NENHUMA",
+  "impacto": "É onde entram embalagem, etiqueta e frete até a transportadora — custos que o vendedor esquece e que o produto existe para não deixar esquecer. Uma lista sem rótulos, com ✕ tipográfico e sem estado vazio educativo, foi inventada em código; e ela é o único bloco da tela cuja POSIÇÃO depende do plano do usuário.",
+  "prioridade": "MEDIA",
+  "refutacao": "Grep por 'outros custos' nas 4 autoridades: zero em `claude-design-prototype.md`, `-fixes.md`, `-fixes-r2.md` e `prototype-audit-2026-07-02.md`. `CalculatorScreen.jsx` tem breakdown fixo, sem sub-custos nomeados. UM achado que corrige o mapeador: o `Abas-Desktop.dc.html` TEM a string, na linha 330 — mas é uma LINHA DE LEITURA no detalhamento da aba Orçamentos (`Embalagem` / sub-rótulo `Outros custos` / R$ 2,50), num orçamento congelado. Isso desenha como um outro-custo é LIDO depois de salvo, em outra aba; não desenha o editor de linhas da Calcular (nem o input, nem o ✕, nem o vazio, nem a migração de coluna). Sobrevive com autoridade NENHUMA para a superfície editável.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

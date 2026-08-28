@@ -1,0 +1,16 @@
+{
+  "id": "congelamento-de-escrita-premium-pausado-e-offline",
+  "nome": "Congelamento de escrita — \"Premium pausado\" (lapsado) e offline",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+    "apps/web/src/features/scenarios/scenario-context-bar.tsx"
+  ],
+  "oQueFoiInferido": "O estado em que tudo pode ser LIDO e nada ESCRITO, expresso por acúmulo de peças, confirmado no JSX: um `Alert tone=\"info\" title=\"Premium pausado\"` no topo da lista (só quando `items.length > 0` e não-stale), os três botões de ação de TODOS os cartões em `disabled`, e uma linha `text-right text-xs text-[var(--text-muted)]` REPETIDA EMBAIXO DE CADA CARTÃO com o mesmo texto (\"Premium pausado — reative para renomear, duplicar, editar ou excluir.\" ou \"Esta ação precisa de conexão.\"), mais a mesma linha de novo na barra de contexto. Inferido: repetir a justificativa por cartão em vez de dizê-la uma vez; o tom `info` (não danger) e a inexistência de qualquer CTA para reativar o Premium dentro do aviso; e a colisão entre lapso e offline (o código escolhe lapso primeiro, sem desenho que arbitre).",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "Com o Premium pausado, o painel vira uma pilha de avisos repetidos — a mesma frase até N vezes, uma por cartão — e nenhum deles leva a reativar.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei o modo somente-leitura desenhado. O protótipo não podia tê-lo: E8 é explicitamente \"Upsell (sem checkout — E6 fora de escopo)\", então não existe o conceito de assinatura que EXPIROU — só grátis × premium. A matriz §G tem coluna offline para Login/Calcular/Catálogo/Histórico/Exportar/Conta (\"leitura mock ok, salvar off\"), nenhuma linha de cenários e nenhuma noção de \"lapsado\". O canvas 018 tem um `{{ writeBlocked }}` que desabilita os botões PRIMÁRIOS de cada aba (Catálogo \"Adicionar\", Orçamentos \"Exportar\") — desabilitação SEM nenhuma frase de justificativa repetida por item, o oposto do que foi construído; e o único alerta desenhado ali é o de pendência de sincronização, com um CTA que AGE (\"Sincronizar agora\", linha 265). Nenhuma autoridade desenha onde a explicação vive nem quantas vezes se repete. Sobrevive.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "porta-do-plano-verificando-e-erro",
+  "nome": "Porta do plano: \"verificando\" e \"não foi possível verificar seu plano\"",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
+  "oQueFoiInferido": "Dois estados de guarda que rodam ANTES de a aba existir, dentro do mesmo `GateShell` (PageHeader 'Orçamentos' + conteúdo): um `<Spinner>` centralizado com `py-8` e nenhuma palavra, servindo a dois casos distintos (sessão carregando e entitlement carregando); e um `Alert tone=\"danger\"` com 'Não foi possível verificar seu plano.' + Button 'Tentar novamente', também centralizado, ocupando a página inteira. Inferido: que o carregamento é um spinner mudo e não um esqueleto da lista, e que uma falha de CONSULTA usa tom danger em página inteira em vez de faixa.",
+  "autoridade": "NENHUMA",
+  "impacto": "É a primeira coisa que um assinante vê ao abrir a aba com rede ruim. Uma tela quase vazia com spinner mudo, seguida de um alerta vermelho de página inteira, sugerem que o Premium caiu — quando o que caiu foi uma consulta.",
+  "prioridade": "BAIXA",
+  "refutacao": "Procurei e o que achei foi o contrário do construído. O protótipo tratou o carregamento do Histórico como SKELETON: matriz §G ('Histórico | loading: skeleton'), fixes item 16 pedindo shimmer com reduced-motion, e a auditoria confirma o ciclo completo — PARTIAL em V2 ('skeletons exist but no Demo:carregando toggle; near-invisible in dark') e FIXED em V3 ('#14 Demo: carregando toggle + dark-visible skeleton, 1,79:1, reduced-motion honored'). Ou seja: existe um estado de carregamento desenhado, medido e verificado — e ele é de outra forma (skeleton) e para outra pergunta (a LISTA, não o plano). O erro de verificação de PLANO não existe em autoridade nenhuma: o item 17 cobre erro de CARREGAMENTO, o §E8 trata upsell mas não falha de consulta, `HistoryScreen.jsx` decide premium por uma prop booleana (`isPremium`) sem estado intermediário, e `Abas-Desktop.dc.html` alterna free/premium por `sc-if` — também sem estado intermediário. O próprio código registra a origem: o comentário diz que este ramo veio do achado C5 da revisão do PR-A.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

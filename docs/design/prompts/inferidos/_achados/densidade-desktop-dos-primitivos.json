@@ -1,0 +1,21 @@
+{
+  "id": "densidade-desktop-dos-primitivos",
+  "nome": "Densidade dos primitivos no desktop (≥1280px)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/shared/ui/button.css",
+    "apps/web/src/shared/ui/card.css",
+    "apps/web/src/shared/ui/field.css",
+    "apps/web/src/shared/ui/dialog.css",
+    "apps/web/src/shared/ui/empty-state.css",
+    "apps/web/src/shared/ui/toast.css",
+    "apps/web/src/shared/ui/segmented.css"
+  ],
+  "oQueFoiInferido": "Que não muda nada. Medi: `grep -rn \"@media\" apps/web/src/shared/ui` devolve exatamente DUAS linhas — `switch.css:54` (prefers-reduced-motion) e `toast.css:15` (min-width 768px). Nenhum outro primitivo tem regra de largura. A 1920px o app segue desenhando controles de 48px com piso de toque de 44px, cartões com padding --space-5, modal de 32rem, folha de 26rem, estado vazio limitado a 28rem centralizado dentro de uma coluna de 1720px, e `.tf-field__label` com reserva de DUAS linhas de altura — reserva cujo próprio comentário explica que existe para alinhar grades de 2 colunas, um problema de celular.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É exatamente a queixa que abriu o 018: o dono re-andou as abas e julgou o desktop errado. Os quadros novos estão desenhados, mas as peças dentro deles continuam com corpo de celular.",
+  "prioridade": "ALTA",
+  "refutacao": "Achei um fato CONTRA e um A FAVOR, e o contra não basta. Contra: o canvas decide densidade por encaixe — usa `tf-btn--sm` em uma dúzia de botões, `tf-card--pad-sm` nos cartões laterais, pílulas com padding 8px 18px, `h1` a 1.75rem, preço a 2.25rem/1.5rem — tudo inline, a 1920. A favor (medição nova): `specs/018-abas-desktop/design/assets/` NÃO EXISTE — o diretório contém só `Abas-Desktop.dc.html`, então o `<link rel=\"stylesheet\" href=\"assets/app.css\">` da linha 12 é morto neste repo e as classes `tf-*` do canvas não têm pele; a aparência que o arquivo entrega vem SÓ dos estilos inline. Não dá para afirmar que o dono aprovou a densidade dos primitivos: ela não é renderizada pelo desenho. (1) O prompt fixa alturas 44/48/56 sem falar de faixa de viewport; §D.2 só diz 'Sidebar esquerda no desktop com os mesmos itens'. (2) A auditoria item 16 reclama de 'contentMax 880 vs token 1120' — largura de página, não densidade de peça. (3) O readme crava 'control heights 36/48/56' e 'touch targets >= 44px' como valores únicos. Sobrevive: alturas, paddings, tipografia e o alvo de ponteiro (que não precisa de 44px) na faixa ≥1280 não têm desenho.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

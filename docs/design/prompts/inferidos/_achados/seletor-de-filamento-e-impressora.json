@@ -1,0 +1,13 @@
+{
+  "id": "seletor-de-filamento-e-impressora",
+  "nome": "Seletor de filamento e impressora do produto (com a opção \"— Manual —\")",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
+  "oQueFoiInferido": "Um `Card padding=\"md\"` com `sectionLabel`, uma linha de `captionText` e dois `Select` em `gridCard` (linhas 332-357). Escolher preenche os campos de custo abaixo via `applyFilament`/`applyPrinter` → `setValue`, SEM nenhum aviso de que valores digitados foram sobrescritos. Inferido: a opção vazia do select virar o rótulo \"— Manual —\" quando a referência foi perdida (linhas 263-270: `manualFilament ? pf.manualOption : t.catalogPicker.placeholder`) em vez do LINK \"inserir manualmente\" que o desenho pede; a ausência de qualquer marca de que os campos preenchidos vieram do catálogo; e o que o vendedor vê ao trocar de filamento depois de ter editado um custo à mão.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o vínculo entre catálogo e cálculo; escolher um item reescreve silenciosamente os custos digitados, e a saída \"manual\" se esconde como primeira linha de um dropdown em vez do link sempre disponível que foi desenhado.",
+  "prioridade": "MEDIA",
+  "refutacao": "Derruba parcial nos DOIS lados, e mesmo assim sobrevive. (1) §E4 (linhas 245-246) é concreta: \"Seletor catalog-driven: dropdowns Filamento ▾ e Impressora ▾ (puxam do catálogo) + link 'inserir manualmente' como fallback SEMPRE DISPONÍVEL\", e §F item 4 repete a interação (\"escolher no dropdown preenche os campos; 'inserir manualmente' libera edição direta\"). A DUPLA de selects tem desenho. (4) O canvas também desenha dois selects, rotulados \"Filamento salvo\"/\"Impressora salva\", dentro de um bloco \"Referências\" (linhas 141-150) que não foi construído nesta tela. O que NÃO tem desenho em nenhuma das duas: o link virar uma OPÇÃO dentro do select, o cartão-invólucro com rótulo+dica, e a sobrescrita silenciosa. (3) `.design-import` não traz o seletor — `grep -i filament|impressora|catalogo|manual|Select` em `CalculatorScreen.jsx` devolve ZERO linhas, então o esqueleto da Calcular não o implementa. (2) Sem menção.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

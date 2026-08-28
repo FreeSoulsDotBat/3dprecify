@@ -1,0 +1,23 @@
+{
+  "id": "campo-de-texto-sem-primitivo",
+  "nome": "Campo de texto — o primitivo que nunca foi construído",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/shared/ui/field.css",
+    "apps/web/src/shared/ui/index.ts",
+    "apps/web/src/features/catalog/catalog-controls.tsx",
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/history/record-snapshot-sheet.tsx",
+    "apps/web/src/features/history/snapshot-manage.tsx",
+    "apps/web/src/features/scenarios/save-scenario-sheet.tsx",
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/features/calculator/category-picker.tsx"
+  ],
+  "oQueFoiInferido": "Não existe `Input` nem `Textarea` em `shared/ui` — conferi os 20 exports de `index.ts` e nenhum é campo de texto. Cada tela remonta a moldura à mão (`<div className=\"tf-inputwrap\"><input className=\"tf-input\" …/></div>`), em pelo menos 10 lugares. Consequências decididas caso a caso: o estado de ERRO é composto por concatenação manual (`catalog-controls.tsx:43` junta `tf-inputwrap--error` no array de classes — quem esquecer, não pinta); não há contador de caracteres nem campo multilinha; a busca do Catálogo (`catalog-panel.tsx:265`) inventa uma quarta forma — um `<label class=\"tf-inputwrap\">` com lupa à esquerda e `<span class=\"sr-only\">` como rótulo; e o `category-picker` usa a mesma moldura para fingir um seletor que não é campo.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "O nome do filamento, o nome do orçamento, o nome da simulação — tudo o que o vendedor DIGITA em texto passa por uma peça sem dono. O erro aparece em uns campos e não em outros por esquecimento de classe, não por decisão.",
+  "prioridade": "ALTA",
+  "refutacao": "Corrijo o mapeador: o canvas desenha o campo em CINCO lugares, não um — busca do Catálogo (l.102, `tf-inputwrap` + lupa + 'Buscar no catálogo…'), os campos da ficha com prefixo/sufixo (l.130), a quantidade da peça do kit (l.191, `tf-input--num` + afixo 'un'), 'Nome do kit' (l.230) e a busca dos ORÇAMENTOS (l.270, 'Cliente, pedido…') — usando `tf-field__label-row` e `tf-field__label--tight`. Há desenho também no kit: `CatalogScreen.jsx:76` põe `Input` dentro de `Field` com `iconLeft`. Ou seja, o campo PARADO está coberto (a 1920 pelo dono; a 390 pelo esqueleto do kit). O que continua sem desenho: erro, desabilitado, foco, preenchido, com ação de limpar, multilinha e o campo de BUSCA como peça própria — e permanece o fato duro: `Input`/`Textarea` são nomeados no readme (l.28) mas nenhum código deles veio para `.design-import/components/`, então não havia nada a copiar. Rebaixo a autoridade, mantenho ALTA pela dispersão do erro.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

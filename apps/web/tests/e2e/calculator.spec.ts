@@ -235,7 +235,7 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
   await slot0.getByLabel(t.channels.fixedFee).fill("5");
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const slot1 = page.getByTestId("channel-slot").nth(1);
-  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
 
   await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4); // 2 channels × 2 levels
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded); // the long seal wraps
@@ -266,7 +266,7 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   await expect(page.getByTestId("channel-slot")).toHaveCount(2);
   const slot1 = page.getByTestId("channel-slot").nth(1);
-  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await slot1.getByLabel(/^Comissão(?! mínima)/).fill("20");
   await slot1.getByLabel(t.channels.fixedFee).fill("4");
 
@@ -284,7 +284,7 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
   // Re-add Shopee, then set Mercado Livre's commission to 100% — it errors ONLY its slot.
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const shopee = page.getByTestId("channel-slot").nth(1);
-  await shopee.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await shopee.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await shopee.getByLabel(/^Comissão(?! mínima)/).fill("20");
   await shopee.getByLabel(t.channels.fixedFee).fill("4");
 
@@ -322,7 +322,7 @@ test("US2: a covered marketplace pre-fills fees with an honesty seal; editing fl
   // from the catalog and the channel computes — the seal states the numbers came from a reference.
   // No backend runs in e2e (vite preview only) → the store falls back to the bundled seed, so the
   // reference is the offline-embedded one.
-  await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await expect(slot0.getByTestId("fee-seal")).toContainText(seals.embedded);
   // The pre-filled catalog bands drive the per-channel prices with NO manual entry.
   await expect(page.getByTestId("channel-price")).toHaveCount(1);
@@ -355,7 +355,7 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").nth(0);
-  await slot0.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
 
   // The online reference seal (long) renders — proving the source is the served catalog, not the seed.
   const seal = slot0.getByTestId("fee-seal");
@@ -398,7 +398,7 @@ test("US1: o seletor de categoria é um campo de primeira classe, não um <input
   await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
   const slot0 = page.getByTestId("channel-slot").nth(0);
-  await slot0.getByLabel(t.channels.marketplace).selectOption("AMAZON");
+  await slot0.getByLabel(t.channels.marketplace, { exact: true }).selectOption("AMAZON");
 
   const seletor = slot0.getByLabel(t.categoryPicker.label);
   await expect(seletor).toBeVisible();
@@ -591,7 +591,7 @@ test("US6 (premium): full multi-channel + sub-costs surface — no bad numbers, 
   // reference path), so both fee models (manual + curated bands) compute side by side.
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const slot1 = page.getByTestId("channel-slot").nth(1);
-  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
 
   // Itemized sub-costs: a named one and a BLANK-named one (falls back to the neutral label).
   await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
@@ -667,7 +667,7 @@ test("US6: offline + premium — channels, toggle and sub-costs all compute from
   // Shopee pre-fills from the BUNDLED SEED while offline (the honesty seal says so).
   await page.getByRole("button", { name: t.channels.addChannel }).click();
   const slot1 = page.getByTestId("channel-slot").nth(1);
-  await slot1.getByLabel(t.channels.marketplace).selectOption("SHOPEE");
+  await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded);
 
   // Sub-cost folds into custo_total offline (016/PR-C B1 seed 16,16 + 3,00 = 19,16).

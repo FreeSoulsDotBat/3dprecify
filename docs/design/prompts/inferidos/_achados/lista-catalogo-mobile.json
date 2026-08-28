@@ -1,0 +1,17 @@
+{
+  "id": "lista-catalogo-mobile",
+  "nome": "Lista do Catálogo no mobile (linha do item + contagem + botão adicionar)",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/catalog/catalog-schema.ts",
+    "apps/web/src/entities/catalog/product-summary.ts"
+  ],
+  "oQueFoiInferido": "O ramo `else` do CatalogPanel (linhas 368-431, abaixo de 1280px) desenha sozinho: uma faixa com `copy.count(n)` à esquerda e um Button `size=\"sm\"` de TEXTO \"Adicionar filamento\" à direita; cada item é um `Card padding=\"sm\"` em `flex items-center gap-2` com uma área clicável `min-w-0 flex-1` seguida de 2 a 3 Buttons ghost (lápis sempre, copiar só se `onDuplicate`, lixeira sempre). Dentro da área clicável empilham-se ATÉ QUATRO spans: nome em `fw-semibold`, resumo em caption, `rowNote` (\"Vincule um filamento e uma impressora salvos\"), `staleHint` (\"pode estar desatualizada\") e `readOnlyHint` (\"somente leitura\") — três deles com EXATAMENTE a mesma tipografia (`rowSummary`), sem hierarquia e sem limite de quantos coexistem. Os resumos também são composição inferida: `filamentSummary` (catalog-schema.ts:143) cola \"PLA · R$ 89,90 / 1 kg\" e `printerSummary` (:211) cola TRÊS grandezas numa linha só — \"R$ 2.400,00 · 4680 h · 0,12 kW\".",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É a tela que o vendedor usa no celular todo dia. Hoje uma linha pode carregar quatro textos empilhados mais três alvos de toque de 44px, e o único desenho que existe para ela previa avatar + duas linhas + UM ícone.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei derrubar nas 4 e não consegui. (1) §E5 (linha 260) descreve \"Lista de filamentos/impressoras em Card interativo\" — é uma frase de uma linha, não uma densidade. (3) `CatalogScreen.jsx` linhas 57-66 é a versão desenhada, e ela DIVERGE ponto a ponto: UM `Card padding=\"none\"` envolvendo todos os itens com `divided`, `Avatar` de 36px como leading, `title`+`subtitle` (DUAS linhas, não quatro), e um ÚNICO IconButton de lápis como trailing; o \"+\" é IconButton `variant=\"solid\"` na TopBar (linha 36), não um botão de texto numa faixa de contagem — e não existe faixa de contagem em lugar nenhum. (2) A auditoria toca na lista só pelo sub-rótulo de unidades (`-fixes.md` item 12, V2 FIXED) e pelas iniciais de 1 letra (item 35, V3 NOT FIXED); nada sobre densidade, quantidade de ações ou hierarquia de avisos. (4) O `.dc.html` é `width:1920px` e o `research.md` §B declara o ramo mobile intocado por decisão — não alcança este código. Achado parcialmente enfraquecido em UM ponto e vale registrar: o RESUMO de duas grandezas tem precedente (o `subtitle` do JSX, corrigido pelo item 12 para \"R$ 120,00/rolo · 1 kg\"); o de TRÊS grandezas do `printerSummary` não tem — e o canvas, quando desenha a impressora, SEPARA em duas linhas (`meta: \"0,12 kW · 4.680 h de vida útil\"` + `money: \"R$ 2.400,00\"`), que é o oposto de colar as três.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

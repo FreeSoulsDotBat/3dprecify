@@ -1,0 +1,1101 @@
+[
+  {
+    "id": "composer-kits-mobile",
+    "area": "kits",
+    "nome": "Compositor de kits em mobile (a tela /kits inteira abaixo de 1280px)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "linha-do-kit-card-recolhido",
+    "area": "kits",
+    "nome": "Card da peça recolhido (a linha do kit)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "editor-de-linha-expandido",
+    "area": "kits",
+    "nome": "Editor da peça expandido dentro da linha (formulário completo da calculadora aninhado)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "seletor-produto-salvo-na-linha",
+    "area": "kits",
+    "nome": "Seletor 'Usar produto salvo' e o selo de origem da peça",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "nome-da-peca-no-catalogo",
+    "area": "kits",
+    "nome": "Campo 'Nome da peça no catálogo' e o aviso de que a peça vira produto",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "recibo-de-materializacao",
+    "area": "kits",
+    "nome": "Recibo 'O que este kit fez no seu catálogo' (pós-salvamento)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "rollup-precos-por-canal-kit",
+    "area": "kits",
+    "nome": "Cartão 'Preços por canal (kit)'",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "resumo-sem-preco-ainda",
+    "area": "kits",
+    "nome": "Estado 'Sem preço ainda' do Total do kit",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-vazio-do-compositor",
+    "area": "kits",
+    "nome": "Estado vazio do compositor de kits",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estados-de-verificacao-de-plano-kits",
+    "area": "kits",
+    "nome": "Estados de verificação de plano na aba Kits (checando e parede de erro)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "kits-premium-pausado",
+    "area": "kits",
+    "nome": "Superfícies de Premium pausado em Kits (painel de reativação e faixa no kit reaberto)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "linha-degradada-produto-removido",
+    "area": "kits",
+    "nome": "Peça degradada (produto referenciado apagado depois do salvamento)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "quantidade-e-avisos-da-peca",
+    "area": "kits",
+    "nome": "Controle de quantidade e seus avisos (zero e limite do banco)",
+    "escala": "COMPONENTE",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "registrar-orcamento-a-partir-do-kit",
+    "area": "kits",
+    "nome": "Ação 'Salvar em Orçamentos' dentro do compositor de kits",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "aviso-catalogo-de-tarifas-em-kits",
+    "area": "kits",
+    "nome": "Aviso de falha ao atualizar o catálogo de tarifas na tela de kits",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "aba-kits-no-catalogo",
+    "area": "kits",
+    "nome": "Aba Kits dentro do Catálogo (lista de kits salvos e a ficha do kit)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "kits-desktop-duas-colunas",
+    "area": "kits",
+    "nome": "Composição desktop de Kits em duas colunas (o que o canvas cobriu — e o que sobrou inferido)",
+    "escala": "TELA",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "lista-de-orcamentos-mobile",
+    "area": "orcamentos",
+    "nome": "Aba Orçamentos no celular (lista completa, 390px)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "detalhe-do-orcamento-mobile",
+    "area": "orcamentos",
+    "nome": "Registro congelado em tela cheia (celular)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "folha-salvar-em-orcamentos",
+    "area": "orcamentos",
+    "nome": "Folha \"Salvar em Orçamentos\" (onde o registro nasce)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "folha-de-exportacao",
+    "area": "orcamentos",
+    "nome": "Folha de exportação PDF/CSV + o botão desabilitado com motivo",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "alerta-de-sincronizacao-no-detalhe",
+    "area": "orcamentos",
+    "nome": "Alerta de estado do registro não sincronizado (4 estados)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "banner-agregado-da-fila",
+    "area": "orcamentos",
+    "nome": "Banner agregado da fila (5 redações, [Ver], [Entrar de novo], [Sincronizar agora])",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "bloco-comparar-com-hoje",
+    "area": "orcamentos",
+    "nome": "Bloco \"Comparar com hoje\" (então vs. hoje)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "dialogo-recalcular-hoje",
+    "area": "orcamentos",
+    "nome": "Diálogo de confirmação \"Recalcular hoje\"",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "barra-de-filtros-orcamentos-mobile",
+    "area": "orcamentos",
+    "nome": "Barra de filtros da lista no celular (busca + chips de período + chip ativo)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "folha-periodo-personalizado",
+    "area": "orcamentos",
+    "nome": "Folha \"Período…\" (intervalo de datas)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "acoes-de-registro-travado",
+    "area": "orcamentos",
+    "nome": "Ações do registro travado ([Tentar novamente] / [Descartar] + confirmação)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "dialogos-renomear-e-excluir-registro",
+    "area": "orcamentos",
+    "nome": "Barra gerenciar: diálogos de renomear rótulo e excluir registro",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "bloco-pecas-do-kit-no-orcamento",
+    "area": "orcamentos",
+    "nome": "Bloco \"Peças do kit\" dentro do registro congelado",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "bloco-precos-por-canal-congelado",
+    "area": "orcamentos",
+    "nome": "Preços por canal no registro congelado (e seus três estados honestos)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "dialogo-sair-com-fila-pendente",
+    "area": "orcamentos",
+    "nome": "Diálogo de sair com registros na fila (+ confirmação destrutiva + falha parcial)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-busca-sem-resultado",
+    "area": "orcamentos",
+    "nome": "Estado \"nenhum registro encontrado para {termo}\"",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "avisos-de-topo-da-lista",
+    "area": "orcamentos",
+    "nome": "Avisos de topo: leitura offline, erro de carga com retry inline, Premium pausado",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "mestre-detalhe-larguras-1280-1440",
+    "area": "orcamentos",
+    "nome": "Mestre-detalhe do desktop entre 1280 e 1440px",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "avisos-de-documento-repreçado",
+    "area": "orcamentos",
+    "nome": "Avisos de honestidade sobre o documento repreçado (reaproveitado / modelo aposentado)",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "porta-do-plano-verificando-e-erro",
+    "area": "orcamentos",
+    "nome": "Porta do plano: \"verificando\" e \"não foi possível verificar seu plano\"",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "transicao-pendente-para-sincronizado",
+    "area": "orcamentos",
+    "nome": "Momento em que o registro pendente vira sincronizado",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "shell-deslogado",
+    "area": "shell",
+    "nome": "Shell no estado deslogado (sem identidade, sem \"Entrar\")",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "tabbar-mobile-cinco-abas",
+    "area": "shell",
+    "nome": "Barra de abas do mobile com 5 seções",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "top-bar-mobile",
+    "area": "shell",
+    "nome": "Barra superior do mobile (logo centralizado + Sair + tema)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "entrar-dentro-do-shell",
+    "area": "shell",
+    "nome": "Tela Entrar emoldurada pelo shell (e sua versão desktop)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "banner-sessao-expirada",
+    "area": "shell",
+    "nome": "Faixa de sessão expirada (\"Entrar de novo\")",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "pilha-de-faixas-do-topo",
+    "area": "shell",
+    "nome": "Empilhamento das faixas de aviso no topo do shell",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "dialogo-saida-fila-pendente",
+    "area": "shell",
+    "nome": "Diálogo de saída com orçamentos na fila",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "rail-forcado-426-599",
+    "area": "shell",
+    "nome": "Menu recolhido à força na faixa 426–599px",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "faixa-intermediaria-600-1023",
+    "area": "shell",
+    "nome": "Faixa intermediária 600–1023px (menu de 240px + coluna de 460px)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "pagina-privacidade",
+    "area": "shell",
+    "nome": "Página \"Como tratamos seus dados\" (rota avulsa)",
+    "escala": "TELA",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "erro-e-404-dentro-do-shell",
+    "area": "shell",
+    "nome": "Telas de Erro e 404 emolduradas pelo shell",
+    "escala": "TELA",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "regiao-de-toasts",
+    "area": "shell",
+    "nome": "Região de toasts (posição, empilhamento e dispensa)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "lista-catalogo-mobile",
+    "area": "catalogo",
+    "nome": "Lista do Catálogo no mobile (linha do item + contagem + botão adicionar)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "abas-de-secao-mobile",
+    "area": "catalogo",
+    "nome": "Abas de seção do Catálogo no mobile (Filamentos · Impressoras · Produtos · Kits)",
+    "escala": "COMPONENTE",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "barra-de-ferramentas-mestre-desktop",
+    "area": "catalogo",
+    "nome": "Barra de ferramentas da lista no desktop (busca + contagem + adicionar)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "vazio-da-busca",
+    "area": "catalogo",
+    "nome": "Estado \"nada encontrado\" da busca do Catálogo",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "cartao-da-lista-desktop-avisos",
+    "area": "catalogo",
+    "nome": "Cartão do item no desktop e seus avisos empilhados (somente leitura · desatualizada · precisa de atenção)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "ficha-resumo-produto-kit-desktop",
+    "area": "catalogo",
+    "nome": "Ficha de resumo de Produto/Kit no desktop (coluna direita que não edita)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "estado-vazio-por-secao",
+    "area": "catalogo",
+    "nome": "Estado vazio por seção do Catálogo (nenhum filamento/impressora/produto salvo)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-de-carregamento-catalogo",
+    "area": "catalogo",
+    "nome": "Carregando o Catálogo (spinner centralizado onde havia skeleton)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "erro-de-carga-e-tentar-novamente",
+    "area": "catalogo",
+    "nome": "Erro ao carregar o Catálogo (alerta + \"Tentar novamente\")",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "leitura-offline-desatualizada",
+    "area": "catalogo",
+    "nome": "Leitura offline do Catálogo (faixa \"Modo leitura offline\" + \"pode estar desatualizada\" por item)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "premium-pausado-somente-leitura",
+    "area": "catalogo",
+    "nome": "Premium pausado no Catálogo (faixa calma, formulário inerte e a linha de reativação)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "dialogo-de-exclusao",
+    "area": "catalogo",
+    "nome": "Confirmar exclusão de item do catálogo (com o aviso de produtos que o usam)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "folha-criar-editar-mobile",
+    "area": "catalogo",
+    "nome": "Folha (Sheet) de criar/editar filamento e impressora no mobile",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "formulario-filamento",
+    "area": "catalogo",
+    "nome": "Formulário de filamento (Nome · Material · Custo do rolo · Peso do rolo)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "formulario-impressora",
+    "area": "catalogo",
+    "nome": "Formulário de impressora (5 campos, com dica de consumo e um campo opcional)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "editor-de-produto-pagina-cheia",
+    "area": "catalogo",
+    "nome": "Editor de produto em página cheia (cabeçalho, cartão de nome + salvar, corpo em duas colunas)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "seletor-de-filamento-e-impressora",
+    "area": "catalogo",
+    "nome": "Seletor de filamento e impressora do produto (com a opção \"— Manual —\")",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-precisa-de-atencao",
+    "area": "catalogo",
+    "nome": "Estado \"precisa de atenção\" / referência manual do produto",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "recados-do-editor-de-produto",
+    "area": "catalogo",
+    "nome": "Telas de recado do editor de produto (pré-requisito e produto não encontrado)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "rodape-do-editor-de-produto",
+    "area": "catalogo",
+    "nome": "Rodapé do editor de produto (preço recalculado + registrar orçamento + salvar simulação)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "retorno-checkout-aguardando",
+    "area": "billing",
+    "nome": "Retorno do checkout — \"Confirmando seu pagamento…\" (espera com sondagem limitada)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "retorno-checkout-sucesso",
+    "area": "billing",
+    "nome": "Retorno do checkout — \"Premium ativo!\" (confirmação de compra)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "retorno-checkout-nao-confirmado",
+    "area": "billing",
+    "nome": "Retorno do checkout — \"Ainda não recebemos a confirmação\" (paciência esgotada)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "cta-assinar-estados",
+    "area": "billing",
+    "nome": "Botão \"Assinar Premium\" — estados pendente, conflito e indisponível",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "plano-estado-carencia",
+    "area": "billing",
+    "nome": "Linha do plano na Conta — estado de CARÊNCIA (pagamento recusado, prazo correndo)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "plano-estado-cancelamento-agendado",
+    "area": "billing",
+    "nome": "Linha do plano na Conta — CANCELAMENTO AGENDADO (\"ativo até {data} · não renova\")",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "plano-estado-pausado",
+    "area": "billing",
+    "nome": "Linha do plano na Conta — \"Premium pausado\" (grant caducado, leitura congelada)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "plano-estado-cortesia",
+    "area": "billing",
+    "nome": "Linha do plano na Conta — CORTESIA / programa beta (grant de operador)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "plano-estado-desconhecido-e-defasado",
+    "area": "billing",
+    "nome": "Linha do plano na Conta — plano NÃO CONFIRMADO e selo de dado defasado (offline)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "dialogo-cancelar-assinatura",
+    "area": "billing",
+    "nome": "Diálogo de cancelamento da assinatura",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "toast-cancelamento-confirmado",
+    "area": "billing",
+    "nome": "Reconhecimento do cancelamento (toast \"Assinatura cancelada. Premium ativo até {data}.\")",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "oferta-mobile-gaveta",
+    "area": "billing",
+    "nome": "Oferta de planos em GAVETA (mobile / < 1280px)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "aviso-hand-off-pagamento",
+    "area": "billing",
+    "nome": "Aviso de hand-off (\"Você paga no Mercado Pago (Pix ou cartão)\" · \"O cartão nunca passa pelo nosso app\")",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "oferta-ja-e-premium",
+    "area": "billing",
+    "nome": "Oferta aberta por quem JÁ é Premium (\"Você já é Premium.\")",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "identidade-carregando-e-erro",
+    "area": "billing",
+    "nome": "Cartão de identidade da Conta — estados carregando e erro (sessão expirada / falha)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "conta-mobile-empilhada",
+    "area": "billing",
+    "nome": "Aba Conta no MOBILE (coluna única, < 1280px)",
+    "escala": "TELA",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "teaser-simulacoes-na-folha",
+    "area": "billing",
+    "nome": "Teaser Premium dentro da folha de Simulações",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "teaser-picker-calculadora",
+    "area": "billing",
+    "nome": "Teaser do \"Usar do catálogo\" na calculadora (com botão desabilitado visível)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "gate-marketplace-faixa-de-preco",
+    "area": "billing",
+    "nome": "Gate de Marketplace na calculadora — interruptor desligado + faixa de preço e \"Assinar\"",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "folha-minhas-simulacoes",
+    "area": "simulacoes",
+    "nome": "Folha \"Minhas simulações\" (a lista inteira)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "entrada-minhas-simulacoes-no-calcular",
+    "area": "simulacoes",
+    "nome": "Entrada \"Minhas simulações\" no topo do Calcular",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "cartao-de-simulacao",
+    "area": "simulacoes",
+    "nome": "Cartão de simulação na lista",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "acoes-do-cartao-renomear-duplicar-excluir",
+    "area": "simulacoes",
+    "nome": "Linha de ações do cartão (renomear · duplicar · excluir)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "busca-de-simulacoes",
+    "area": "simulacoes",
+    "nome": "Campo de busca por nome + estado \"nada encontrado\"",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estados-da-lista-de-simulacoes",
+    "area": "simulacoes",
+    "nome": "Estados da lista: carregando · erro frio · cache offline · paginação",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-vazio-primeira-simulacao",
+    "area": "simulacoes",
+    "nome": "Estado vazio — nenhuma simulação salva ainda",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "teaser-premium-dentro-da-folha-de-simulacoes",
+    "area": "simulacoes",
+    "nome": "Porta honesta para grátis / deslogado dentro da folha de Simulações",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "folha-salvar-simulacao",
+    "area": "simulacoes",
+    "nome": "Folha \"Salvar simulação\" (nome · nota · eco da base de custo)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "botao-salvar-simulacao-no-calcular",
+    "area": "simulacoes",
+    "nome": "Botão \"Salvar simulação\" abaixo do resultado, colado no \"Salvar no histórico\"",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "salvar-simulacao-na-ficha-do-produto",
+    "area": "simulacoes",
+    "nome": "\"Salvar simulação\" dentro da ficha de produto do Catálogo",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "barra-de-contexto-simulacao-carregada",
+    "area": "simulacoes",
+    "nome": "Barra de contexto \"Simulação: {nome}\" (com a simulação aberta)",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "dialogo-descartar-alteracoes",
+    "area": "simulacoes",
+    "nome": "Confirmação de descarte ao fechar com alterações não salvas",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "folhas-de-renomear-simulacao",
+    "area": "simulacoes",
+    "nome": "Renomear simulação — duas folhas diferentes para a mesma ação",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "duplicar-para-ajustar",
+    "area": "simulacoes",
+    "nome": "Duplicar-para-ajustar (o movimento central do E5)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "congelamento-de-escrita-premium-pausado-e-offline",
+    "area": "simulacoes",
+    "nome": "Congelamento de escrita — \"Premium pausado\" (lapsado) e offline",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "resumo-de-kit-na-simulacao-reaberta",
+    "area": "simulacoes",
+    "nome": "Resumo somente-leitura de simulação com base KIT",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "registrar-orcamento-a-partir-da-simulacao",
+    "area": "simulacoes",
+    "nome": "Registrar orçamento a partir de uma simulação (ponte E5→E4)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "aviso-de-campo-aposentado-na-simulacao",
+    "area": "simulacoes",
+    "nome": "Aviso de campo aposentado numa simulação antiga",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "simulacoes-no-desktop",
+    "area": "simulacoes",
+    "nome": "Toda a área de Simulações em tela larga (≥1280px)",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "dialogo-modal-central",
+    "area": "design-system",
+    "nome": "Diálogo modal central (confirmar / excluir / sair)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "folha-lateral-direita",
+    "area": "design-system",
+    "nome": "Folha lateral (Sheet) que entra pela direita",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "densidade-desktop-dos-primitivos",
+    "area": "design-system",
+    "nome": "Densidade dos primitivos no desktop (≥1280px)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "info-tip-de-ajuda",
+    "area": "design-system",
+    "nome": "Dica de ajuda ⓘ (InfoTip)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "campo-de-texto-sem-primitivo",
+    "area": "design-system",
+    "nome": "Campo de texto — o primitivo que nunca foi construído",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "selo-badge-e-tons",
+    "area": "design-system",
+    "nome": "Selo (Badge) — o selo Premium desenhado que não existe, e as exceções do selo de tarifa",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-vazio",
+    "area": "design-system",
+    "nome": "Estado vazio (EmptyState) — a arte que virou ícone, e o vazio da busca",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "torradeira-de-avisos",
+    "area": "design-system",
+    "nome": "Aviso efêmero (Toast) — posição, empilhamento e duração",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-de-carregando",
+    "area": "design-system",
+    "nome": "Carregando — o giro que substituiu o esqueleto desenhado",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "price-hero-valor-que-nao-cabe",
+    "area": "design-system",
+    "nome": "PriceHero — o preço que não cabe (quebra, encolhe, rola)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "anel-de-foco",
+    "area": "design-system",
+    "nome": "O anel de foco — duas implementações e metade da espessura",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "campo-aviso-de-plausibilidade",
+    "area": "design-system",
+    "nome": "Campo — a terceira camada de mensagem (aviso de plausibilidade)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "numberfield-mascara-de-milhar",
+    "area": "design-system",
+    "nome": "NumberField — a máscara de milhar que reescreve o valor ao sair do campo",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "grupo-segmentado",
+    "area": "design-system",
+    "nome": "Grupo segmentado (bandeja com pílulas)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "botao-carregando-e-desabilitado",
+    "area": "design-system",
+    "nome": "Botão em carregamento, desabilitado e com brilho",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "botao-destrutivo",
+    "area": "design-system",
+    "nome": "Botão destrutivo (danger e danger-ghost)",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "select-nativo",
+    "area": "design-system",
+    "nome": "Seletor (Select) — o cursor ▾ e o popup do sistema",
+    "escala": "COMPONENTE",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "alerta-tons-e-variante-compacta",
+    "area": "design-system",
+    "nome": "Alerta em bloco — tons e a variante compacta",
+    "escala": "COMPONENTE",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "linha-de-detalhamento",
+    "area": "design-system",
+    "nome": "Linha do detalhamento (BreakdownRow) — a ênfase negativa e o nome que o vendedor digita",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "cartao-clicavel-e-selecionado",
+    "area": "design-system",
+    "nome": "Cartão — o clicável, o selecionado e as variantes sem espelho",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "interruptor-de-tema",
+    "area": "design-system",
+    "nome": "Interruptor (Switch) — a trilha, o polegar e o alvo escondido",
+    "escala": "COMPONENTE",
+    "prioridade": "BAIXA"
+  },
+  {
+    "id": "calcular-desktop-duas-colunas",
+    "area": "calculadora",
+    "nome": "Calcular no desktop — grade de duas colunas + rodapé centralizado",
+    "escala": "TELA",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "secao-custos-da-peca",
+    "area": "calculadora",
+    "nome": "Seção “Custos da peça” — grade fundida de campos obrigatórios e opcionais",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "campo-tempo-h-min",
+    "area": "calculadora",
+    "nome": "Campo de tempo de impressão em horas + minutos",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "pergunta-de-custo-de-maquina",
+    "area": "calculadora",
+    "nome": "Bloco “quanto custa a máquina” — ritmo + payback + custo/hora derivado + modo ajustar",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "secao-outros-custos",
+    "area": "calculadora",
+    "nome": "Seção “Outros custos” — linhas nomeadas adicionáveis",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "secao-marketplace-multicanal",
+    "area": "calculadora",
+    "nome": "Seção Marketplace — chave “Incluir marketplaces no preço” e canais repetíveis",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "cartao-de-canal",
+    "area": "calculadora",
+    "nome": "Cartão de um canal — composição, ordem e densidade",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "seletor-de-categoria",
+    "area": "calculadora",
+    "nome": "Seletor de categoria do marketplace — busca, contagem, resultados e árvore",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "selo-de-vigencia-de-tarifa",
+    "area": "calculadora",
+    "nome": "Selo de origem e vigência da tarifa (e o selo separado da taxa fixa)",
+    "escala": "COMPONENTE",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "perguntas-de-perfil-do-vendedor",
+    "area": "calculadora",
+    "nome": "Perguntas de perfil do vendedor (CPF/CNPJ e alto volume)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "taxas-opcionais-do-canal",
+    "area": "calculadora",
+    "nome": "Chaves de taxa opcional do canal (ex.: item volumoso)",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "campo-de-taxa-pre-preenchido-pelo-catalogo",
+    "area": "calculadora",
+    "nome": "Campo de taxa com valor do catálogo no placeholder + legendas de faixa e regra",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "avisos-shopee",
+    "area": "calculadora",
+    "nome": "Os dois avisos honestos da Shopee (taxa não publicada e frete aferido)",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "info-subsidio-de-frete-shopee",
+    "area": "calculadora",
+    "nome": "Informação do subsídio de frete da Shopee sob a grade de taxas",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "precos-por-canal",
+    "area": "calculadora",
+    "nome": "Bloco “Preços por canal” dentro de “Como chegamos no preço”",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "estados-de-preco-por-canal",
+    "area": "calculadora",
+    "nome": "Estados de um canal sem preço: faixa sem tarifa, líquido negativo, sem comissão, canal com erro",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "avisos-de-plausibilidade-nos-campos",
+    "area": "calculadora",
+    "nome": "Avisos de plausibilidade por campo (aviso que não é erro)",
+    "escala": "ESTADO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "avisos-do-resultado",
+    "area": "calculadora",
+    "nome": "Avisos que só o resultado denuncia (preço zero, custo absurdo, atacado acima do varejo)",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "estado-formulario-invalido",
+    "area": "calculadora",
+    "nome": "Estado “não dá para calcular” — o resultado inteiro substituído por um alerta",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "falha-de-atualizacao-do-catalogo-de-tarifas",
+    "area": "calculadora",
+    "nome": "Estado de falha (não bloqueante) na atualização do catálogo de tarifas",
+    "escala": "ESTADO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "gate-premium-do-marketplace",
+    "area": "calculadora",
+    "nome": "Gate Premium da seção Marketplace na conta grátis",
+    "escala": "BLOCO",
+    "prioridade": "ALTA"
+  },
+  {
+    "id": "bloco-usar-do-catalogo",
+    "area": "calculadora",
+    "nome": "Bloco “Usar do catálogo” na Calcular e seus três estados",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "resumo-de-kit-como-base",
+    "area": "calculadora",
+    "nome": "Resumo somente-leitura de um kit como base do cálculo",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "dicas-info-nas-secoes-e-campos",
+    "area": "calculadora",
+    "nome": "Dicas ⓘ nos títulos de seção e nos rótulos de campo",
+    "escala": "COMPONENTE",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "conta-item-a-item-e-cartoes-de-preco",
+    "area": "calculadora",
+    "nome": "“Como chegamos no preço” e os dois cartões de preço final",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "topo-da-calcular",
+    "area": "calculadora",
+    "nome": "Topo da Calcular — título, promessa freemium e a porta “Meus cenários”",
+    "escala": "BLOCO",
+    "prioridade": "MEDIA"
+  },
+  {
+    "id": "aviso-de-campo-aposentado",
+    "area": "calculadora",
+    "nome": "Aviso persistente de campo aposentado ao reabrir uma simulação antiga",
+    "escala": "ESTADO",
+    "prioridade": "BAIXA"
+  }
+]

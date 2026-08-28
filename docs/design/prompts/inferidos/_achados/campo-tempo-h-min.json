@@ -1,0 +1,16 @@
+{
+  "id": "campo-tempo-h-min",
+  "nome": "Campo de tempo de impressão em horas + minutos",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/features/calculator/time-input.ts"
+  ],
+  "oQueFoiInferido": "Um controle de DOIS `NumberField` lado a lado (`flex items-center gap-2`, unidades h e min) sob um único `Field` 'Tempo de impressão' com rótulo, hint e erro compartilhados, onde só o campo de horas aceita relógio digitado ('2:30', '2h30') via um rascunho local (`CampoDeHoras`) que segura o texto intermediário ('0:') sem commitar. Inferido: que são dois campos e não um, a proporção entre eles (nenhuma — os dois herdam o mesmo flex), o que acontece com rótulo/erro/hint compartilhado por dois controles, o comportamento visual durante a digitação, e como o par se acomoda dentro do Card entre 360px e o desktop.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o campo que multiplica o custo de máquina e o de energia. A forma dele foi decidida em código e já produziu um defeito silencioso de 60× (digitar 2:30 virava 30 horas) que só um review de PR pegou — e o próprio comentário do código registra que a homologação foi CEGA a isso.",
+  "prioridade": "MEDIA",
+  "refutacao": "Procurei nas 4 autoridades por um controle de tempo. §E4 (linha 240) lista 'tempo de impressão (h)' como UM campo decimal dentro da colapsável Energia; `CalculatorScreen.jsx` linha 91 implementa `<Field label=\"Horas\"><NumberField unit=\"h\" placeholder=\"0,0\">` — um input só, decimal. `-fixes.md` item 8 e `-fixes-r2.md` item 8 tocam no campo apenas para exigir validação de negativos ('horas'), nunca a forma. `prototype-audit` não menciona. `.design-import` não tem componente de tempo. O canvas 018 não cobre Calcular. O campo EXISTE no protótipo, em outra forma (um decimal); o par h+min, o parser de relógio e o rascunho não. PROTOTIPO_PARCIAL confirmado, sobrevive.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

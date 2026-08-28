@@ -1,0 +1,13 @@
+{
+  "id": "dicas-info-nas-secoes-e-campos",
+  "nome": "Dicas ⓘ nos títulos de seção e nos rótulos de campo",
+  "escala": "COMPONENTE",
+  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+  "oQueFoiInferido": "Dois usos generalizados do `InfoTip` (016/US6): um ⓘ colado a CADA título de seção (`SectionTitle` — Custos da peça, Mão de obra, Markup, Marketplace, Outros custos, Como chegamos no preço) e um ⓘ como `labelAddon` à direita do rótulo de vários campos (`meta.tip` em gramas, potência, tarifa, manutenção, falha, acabamento, mão de obra, vida útil da máquina). Inferido: quais seções e campos merecem dica, o lugar exato do gatilho — a passagem de 'na linha do controle' para 'na linha do rótulo' foi correção de homologação (B4), não desenho —, o tamanho/tom do glifo e o comportamento ao toque num cartão estreito.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "As dicas são o único lugar onde o produto ensina o conceito ao leigo, e a densidade delas (ⓘ em praticamente todo título) foi decidida caso a caso em código — já custou um campo com 1px de largura útil ('Tarifa de energia', com R$ à esquerda e /kWh à direita disputando a linha com o ⓘ).",
+  "prioridade": "MEDIA",
+  "refutacao": "O protótipo usa Tooltip UMA vez e §E4 (234) fixa esse único hint: 'Label do markup: \"Markup\"; hint: \"Margem sobre o custo (não sobre o preço de venda).\"'. `CalculatorScreen.jsx` (68-69) o implementa — e, revelador, o coloca DENTRO do `<label>`, exatamente a construção que o achado B4 depois proibiu no app (um botão aninhado dobra o próprio nome no nome acessível do controle). Não há em nenhuma autoridade a generalização para títulos de seção nem para os demais campos. Sobrevive, PROTOTIPO_PARCIAL.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

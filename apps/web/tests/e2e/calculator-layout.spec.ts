@@ -262,7 +262,7 @@ test.describe("calculator — a legenda do subsídio de frete Shopee não transb
       await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
       const slot0 = page.getByTestId("channel-slot").first();
-      await slot0.getByLabel(t2.marketplace).selectOption("SHOPEE");
+      await slot0.getByLabel(t2.marketplace, { exact: true }).selectOption("SHOPEE");
 
       const legend = page.getByTestId("freight-subsidy-info");
       await expect(legend).toBeVisible();

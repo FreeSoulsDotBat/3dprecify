@@ -1,0 +1,1021 @@
+/* ============================================================================
+   tf-* primitives — CÓPIA VERBATIM, para uso em marcação estática.
+   NÃO é um design system novo. Quase tudo aqui é cópia. O que NÃO é cópia está marcado `NOVO`
+   em comentário sobre a própria regra, e listado abaixo em dois grupos: dez invenções (o que
+   o desenvolvedor precisa construir — nenhuma existe no produto nem no kit) e duas variantes
+   novas de primitivos que já existem (a construção é a das irmãs; só os tokens são outros).
+
+   Procedência de cada bloco:
+   · tf-btn                       → 3dprecify/apps/web/src/shared/ui/button.css
+   · tf-alert                     → 3dprecify/apps/web/src/shared/ui/alert.css
+   · tf-field/tf-inputwrap/tf-input/tf-select
+                                  → DS components/forms/{Field,Select}.jsx (FIELD_CSS)
+   · tf-field__aviso              → 3dprecify/apps/web/src/shared/ui/field.css
+   · tf-costs-grid                → apps/web/src/features/calculator/calculator-form.css
+   · tf-card                      → DS components/data/Card.jsx
+   · tf-price                     → 3dprecify/apps/web/src/shared/ui/price-hero.css
+                                     (era DS components/data/PriceHero.jsx; re-copiado do produto,
+                                      que tem os consertos 015/A6 e 016/T018-A1 — o kit não tem)
+   · tf-brow                      → DS components/data/BreakdownRow.jsx
+   · tf-empty                     → DS components/feedback/EmptyState.jsx
+   · tf-badge                     → DS components/feedback/Badge.jsx
+   · tf-topbar / tf-nav--tabbar   → apps/web/src/widgets/{top-bar,app-nav}/*.css
+   · tokens *-text                → apps/web/src/styles/tokens/colors.css
+
+   As DEZ invenções — o que construir (nenhuma existe no produto nem no kit).
+   Para achar cada uma no arquivo: `grep NOVO` — o marcador viaja com a regra, número de linha não.
+   · --warning-text / tf-alert--warning
+                                  → NOVO. O produto tem quatro tons de aviso (neutral, info,
+                                     success, danger) e nenhum de atenção. Valores do próprio DS:
+                                     --tf-amber-deep no claro, #ffc070 no escuro.
+   · tf-aviso                     → NOVO. A terceira categoria de mensagem: nem dica, nem erro.
+                                     O número é válido e a conta sai.
+   · tf-plist                     → NOVO. A lista densa do Catálogo a 390px — quatro itens
+                                     visíveis contra nove.
+   · tf-table                     → NOVO. O Catálogo a partir de 1024px: tabela, não cartões,
+                                     porque comparar preços é leitura de coluna.
+   · tf-alert__close              → NOVO. O `tf-alert` do produto não dispensa (avisos são
+                                     estados, e estado não se fecha). Proposta para o selo de
+                                     procedência — ver a prancheta 23b.
+   · tf-alert--compact / __action → NOVO. A geometria do selo de procedência: 12px de padding e
+                                     ação de 20px, contra os 16px e 44px do alerta de página.
+   · tf-frozen                   → NOVO. O congelamento com o dim nos CONTROLES, não no contêiner:
+                                     `opacity` no wrapper arrastava a dica de campo para 2,58:1.
+   · tf-segmented--split         → NOVO. A bandeja ocupa a linha e divide em partes iguais; o
+                                     produto só tem a que se ajusta ao texto.
+   · tf-btn--full / --half      → NOVO. As duas larguras do botão solto em coluna — inteira ou
+                                     metade; button.css só declara o alvo mínimo de toque.
+   · tf-phone-scroll             → NOVO. Rolagem sem barra clássica na moldura de telefone: a
+                                     barra de 15px encolhia o espécime (299px onde a irmã dá 314).
+
+   As DUAS variantes novas — não são primitivos, são tons que faltavam a um primitivo existente.
+   Mesma construção das irmãs; só os tokens mudam:
+   · tf-badge--success / --danger → NOVO no lote 18. Um orçamento aceito não é aviso e um
+                                     recusado não é laranja.
+   · tf-plist__flag--neutral      → NOVO no lote 18. A marca da linha herdava o laranja de
+                                     "fixado"/"parado"; três dos cinco estados não avisam nada.
+
+   DECISÃO DO DONO (25/08/2026): nenhum controle mostra indicador de foco. O anel foi removido de
+   botão, cartão interativo, item de menu, aba segmentada, interruptor, linha de lista, ação e
+   dispensa de alerta, fechar de aviso, e do campo (que mantém só a borda de acento). A consequência
+   é conhecida e aceita: quem navega por teclado perde a referência de posição, e no menu o item
+   ativo passa a ser indistinguível do focado — WCAG 2.4.7 deixa de ser atendido. A prancheta 22b
+   fica como registro do padrão anterior.
+
+   Substituições declaradas: OITO — cada uma em comentário ao lado da própria regra.
+   1. `var(--border)` → `--border-default` (mesmo valor no kit, nome diferente).
+   2. `position: fixed` → `absolute` no toaster e na TabBar (a moldura da prancheta não é a janela).
+   3. URLs de ícone Lucide → cópia local em assets/icons/lucide/ (o que `window.TF_ICON_BASE` faz).
+   4. Componente React → classe CSS (uma prancheta é marcação estática).
+   5. `a.tf-btn { text-decoration: none }` — o produto herda isso do preflight do Tailwind.
+   6. `clamp(3rem, 11cqw, ...)` no lugar do `12vw` do produto, com `container-type: inline-size`
+      no bloco de preço: a moldura de 390px da prancheta não é a janela, então `vw` media o canvas
+      inteiro e o preço ficava no teto do clamp. Piso e teto são os do produto.
+   7. `flex: 0 0 auto` no `.tf-price__int`, onde o produto tem `min-width: 0`. Com o int podendo
+      encolher, um valor de vinte dígitos vazava da caixa (638px de glifos em caixa de 238px) e os
+      centavos eram pintados por cima dele. Sobrepor é a mesma falha que quebrar: o número lido
+      deixa de ser o número escrito.
+   8. `tf-price--rola`: máscara de esmaecimento na borda direita do valor, aplicada por classe ao
+      espécime que rola. Dispositivo DA PRANCHETA, não do produto — ali a rolagem é raríssima e a
+      barra do navegador basta; aqui o espécime existe justamente para ser lido parado, e sem o
+      sinal "R$ 184.467.44" se lê como 184 milhões. Incondicional na folha, a máscara apagava os
+      centavos dos 29 preços do conjunto (medido: 40% do valor num bloco de 101px).
+   ========================================================================== */
+
+/* ---- tokens de status COMO TEXTO (existem no produto, não no bundle do DS) ---- */
+:root {
+  --danger-text: var(--tf-danger-deep);
+  --success-text: var(--tf-success-deep);
+  --info-text: #0a6d80;
+  /* NOVO no produto: o par -text do warning. O produto não tem `--warning-text` nem
+     `.tf-alert--warning` (alert.css cobre neutral/info/success/danger). Os valores são os do
+     próprio DS: --tf-amber-deep no claro, e #ffc070 no escuro (o mesmo do .tf-badge--warning). */
+  --warning-text: var(--tf-amber-deep);
+}
+[data-theme="dark"] {
+  --danger-text: var(--tf-danger);
+  --success-text: #25b57e;
+  --info-text: var(--tf-cyan);
+  --warning-text: #ffc070;
+}
+
+/* ---- tf-icon: o mesmo desenho do componente Icon do DS (máscara CSS + currentColor,
+   Lucide 0.487.0, traço 2px), escrito como classe para poder viver em marcação estática.
+   Nenhum ícone foi redesenhado: são os SVGs copiados em assets/icons/lucide/. ---- */
+.tf-ico {
+  display: inline-block; flex: 0 0 auto; width: 20px; height: 20px; background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-position: center; mask-position: center;
+}
+.tf-ico--14 { width: 14px; height: 14px; }
+.tf-ico--16 { width: 16px; height: 16px; }
+.tf-ico--22 { width: 22px; height: 22px; }
+.tf-ico--28 { width: 28px; height: 28px; }
+.tf-ico-chevron-down { -webkit-mask-image: url('assets/icons/lucide/chevron-down.svg'); mask-image: url('assets/icons/lucide/chevron-down.svg'); }
+.tf-ico-chevron-up { -webkit-mask-image: url('assets/icons/lucide/chevron-up.svg'); mask-image: url('assets/icons/lucide/chevron-up.svg'); }
+.tf-ico-plus { -webkit-mask-image: url('assets/icons/lucide/plus.svg'); mask-image: url('assets/icons/lucide/plus.svg'); }
+.tf-ico-save { -webkit-mask-image: url('assets/icons/lucide/save.svg'); mask-image: url('assets/icons/lucide/save.svg'); }
+.tf-ico-x { -webkit-mask-image: url('assets/icons/lucide/x.svg'); mask-image: url('assets/icons/lucide/x.svg'); }
+.tf-ico-package { -webkit-mask-image: url('assets/icons/lucide/package.svg'); mask-image: url('assets/icons/lucide/package.svg'); }
+.tf-ico-box { -webkit-mask-image: url('assets/icons/lucide/box.svg'); mask-image: url('assets/icons/lucide/box.svg'); }
+.tf-ico-info { -webkit-mask-image: url('assets/icons/lucide/info.svg'); mask-image: url('assets/icons/lucide/info.svg'); }
+.tf-ico-circle-x { -webkit-mask-image: url('assets/icons/lucide/circle-x.svg'); mask-image: url('assets/icons/lucide/circle-x.svg'); }
+.tf-ico-circle-alert { -webkit-mask-image: url('assets/icons/lucide/circle-alert.svg'); mask-image: url('assets/icons/lucide/circle-alert.svg'); }
+.tf-ico-triangle-alert { -webkit-mask-image: url('assets/icons/lucide/triangle-alert.svg'); mask-image: url('assets/icons/lucide/triangle-alert.svg'); }
+.tf-ico-calculator { -webkit-mask-image: url('assets/icons/lucide/calculator.svg'); mask-image: url('assets/icons/lucide/calculator.svg'); }
+.tf-ico-layers { -webkit-mask-image: url('assets/icons/lucide/layers.svg'); mask-image: url('assets/icons/lucide/layers.svg'); }
+.tf-ico-boxes { -webkit-mask-image: url('assets/icons/lucide/boxes.svg'); mask-image: url('assets/icons/lucide/boxes.svg'); }
+.tf-ico-panel-left { -webkit-mask-image: url('assets/icons/lucide/panel-left.svg'); mask-image: url('assets/icons/lucide/panel-left.svg'); }
+.tf-ico-history { -webkit-mask-image: url('assets/icons/lucide/history.svg'); mask-image: url('assets/icons/lucide/history.svg'); }
+.tf-ico-circle-user { -webkit-mask-image: url('assets/icons/lucide/circle-user.svg'); mask-image: url('assets/icons/lucide/circle-user.svg'); }
+.tf-ico-moon { -webkit-mask-image: url('assets/icons/lucide/moon.svg'); mask-image: url('assets/icons/lucide/moon.svg'); }
+.tf-ico-sun { -webkit-mask-image: url('assets/icons/lucide/sun.svg'); mask-image: url('assets/icons/lucide/sun.svg'); }
+.tf-ico-trash-2 { -webkit-mask-image: url('assets/icons/lucide/trash-2.svg'); mask-image: url('assets/icons/lucide/trash-2.svg'); }
+.tf-ico-circle-check { -webkit-mask-image: url('assets/icons/lucide/circle-check.svg'); mask-image: url('assets/icons/lucide/circle-check.svg'); }
+.tf-ico-pencil { -webkit-mask-image: url('assets/icons/lucide/pencil.svg'); mask-image: url('assets/icons/lucide/pencil.svg'); }
+.tf-ico-copy { -webkit-mask-image: url('assets/icons/lucide/copy.svg'); mask-image: url('assets/icons/lucide/copy.svg'); }
+.tf-ico-search { -webkit-mask-image: url('assets/icons/lucide/search.svg'); mask-image: url('assets/icons/lucide/search.svg'); }
+.tf-ico-crown { -webkit-mask-image: url('assets/icons/lucide/crown.svg'); mask-image: url('assets/icons/lucide/crown.svg'); }
+.tf-ico-wifi { -webkit-mask-image: url('assets/icons/lucide/wifi.svg'); mask-image: url('assets/icons/lucide/wifi.svg'); }
+.tf-ico-ellipsis { -webkit-mask-image: url('assets/icons/lucide/ellipsis.svg'); mask-image: url('assets/icons/lucide/ellipsis.svg'); }
+.tf-ico-arrow-left { -webkit-mask-image: url('assets/icons/lucide/arrow-left.svg'); mask-image: url('assets/icons/lucide/arrow-left.svg'); }
+.tf-ico-clock { -webkit-mask-image: url('assets/icons/lucide/clock.svg'); mask-image: url('assets/icons/lucide/clock.svg'); }
+.tf-ico-share-2 { -webkit-mask-image: url('assets/icons/lucide/share-2.svg'); mask-image: url('assets/icons/lucide/share-2.svg'); }
+.tf-ico-percent { -webkit-mask-image: url('assets/icons/lucide/percent.svg'); mask-image: url('assets/icons/lucide/percent.svg'); }
+.tf-ico-user { -webkit-mask-image: url('assets/icons/lucide/user.svg'); mask-image: url('assets/icons/lucide/user.svg'); }
+.tf-ico-minus { -webkit-mask-image: url('assets/icons/lucide/minus.svg'); mask-image: url('assets/icons/lucide/minus.svg'); }
+.tf-ico-check { -webkit-mask-image: url('assets/icons/lucide/check.svg'); mask-image: url('assets/icons/lucide/check.svg'); }
+.tf-ico-folder { -webkit-mask-image: url('assets/icons/lucide/folder.svg'); mask-image: url('assets/icons/lucide/folder.svg'); }
+.tf-ico-lock { -webkit-mask-image: url('assets/icons/lucide/lock.svg'); mask-image: url('assets/icons/lucide/lock.svg'); }
+
+/* ---- reset de âncora: o que o preflight do Tailwind faz no produto ----
+   O produto importa o preflight ANTES da base da marca (`styles/global.css`), e é ele quem
+   zera `text-decoration` em `a`. Esta folha não carrega Tailwind, então sem esta regra todo
+   `<a class="tf-btn">` nasce sublinhado — e o produto usa a classe em âncora de propósito
+   (`not-found-page.tsx`, `session-expiry-banner.tsx`). O `.tf-btn` do produto não declara
+   `text-decoration` porque não precisa; aqui precisa. Adaptação declarada, não invenção. ---- */
+a.tf-btn, a.tf-nav__item, a.tf-plist__row { text-decoration: none; }
+
+/* ---- tf-btn (produto) ---- */
+.tf-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--touch-min);
+  min-width: var(--touch-min);
+  height: var(--control-h);
+  padding: 0 var(--space-5);
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-md);
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  font-weight: var(--fw-semibold);
+  line-height: 1;
+  cursor: pointer;
+  user-select: none;
+  /* Botão não encolhe abaixo do próprio rótulo: como item de flex ele herda `flex-shrink: 1`, e
+     com `white-space: nowrap` o texto vazava da caixa — medido, 86px em "Salvar em Orçamentos".
+     Se a linha não couber, ela embrulha; o rótulo nunca sai do botão. */
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-spring),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.tf-btn:active:not(:disabled) { transform: scale(var(--press-scale)); }
+.tf-btn:focus-visible { outline: none; box-shadow: none; }
+.tf-btn:disabled { cursor: not-allowed; opacity: 0.55; }
+/* O compilador de template das pranchetas não deixa passar o atributo booleano `disabled`, então
+   o estado desabilitado é declarado por `aria-disabled="true"` — que é o que o leitor de tela já
+   deveria receber. Mesmos valores da regra acima; nenhuma aparência nova. */
+.tf-btn[aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; }
+.tf-input[aria-disabled="true"], .tf-select[aria-disabled="true"], .tf-switch[aria-disabled="true"] { cursor: not-allowed; opacity: 0.55; }
+.tf-btn--sm { height: var(--control-h-sm); padding: 0 var(--space-4); font-size: var(--fs-body-sm); }
+.tf-btn--lg { height: var(--control-h-lg); padding: 0 var(--space-7); font-size: var(--fs-md); }
+.tf-btn--primary { background: var(--accent); color: var(--accent-contrast); }
+.tf-btn--primary:hover:not(:disabled) { background: var(--accent-hover); }
+.tf-btn--primary:active:not(:disabled) { background: var(--accent-active); }
+.tf-btn--secondary { background: var(--surface-card); color: var(--text-strong); border-color: var(--border-default); }
+.tf-btn--secondary:hover:not(:disabled) { border-color: var(--border-strong); }
+.tf-btn--ghost { background: transparent; color: var(--text-strong); }
+.tf-btn--ghost:hover:not(:disabled) { background: var(--bg-muted); }
+.tf-btn--danger { background: var(--danger); color: var(--tf-white); }
+.tf-btn--danger:hover:not(:disabled) { background: var(--danger-deep); }
+.tf-btn--danger-ghost { background: transparent; color: var(--danger-text); border-color: var(--danger); }
+.tf-btn--danger-ghost:hover:not(:disabled) { background: var(--danger-soft, transparent); border-color: var(--danger-deep); }
+.tf-btn--glow { box-shadow: var(--glow-purple); }
+.tf-btn--loading { cursor: progress; }
+/* NOVO — o produto não tem variantes de largura de botão: button.css declara só o alvo mínimo
+   (min-width: var(--touch-min)). As duas larguras do botão solto em coluna são desta folha. */
+.tf-btn--full { width: 100%; }
+/* NOVO — meia caixa: 50% EXATOS, mesmo quando o rótulo é mais longo que isso — aí ele quebra em duas
+   linhas em vez de o botão crescer. Um botão solto numa coluna tem duas larguras legítimas,
+   inteira ou metade; largura tirada do número de letras do rótulo não é uma delas. */
+.tf-btn--half {
+  width: 50%; align-self: flex-start; white-space: normal; text-align: center;
+  /* O `.tf-btn` do produto tem `line-height: 1`, seguro lá porque `nowrap` garante uma linha só.
+     Esta variante permite quebra, e com leading 1,0 as duas linhas se sobrepõem em 3px — os
+     glifos colidem. Entrelinha própria, e altura livre para acomodar a segunda linha. */
+  line-height: var(--lh-snug);
+  min-height: var(--control-h); height: auto; padding-block: var(--space-2);
+}
+
+/* ---- tf-card (DS) ---- */
+.tf-card {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  color: var(--text-body);
+}
+.tf-card--flat { box-shadow: none; }
+.tf-card--outline { box-shadow: none; border-color: var(--border-default); }
+.tf-card--ghost { background: transparent; border: none; box-shadow: none; padding: 0; }
+.tf-card--inverse { background: var(--surface-inverse); color: var(--text-on-inverse); border-color: transparent; }
+.tf-card--accent { background: var(--accent-soft); border-color: transparent; box-shadow: none; }
+.tf-card--pad-sm { padding: var(--space-4); }
+.tf-card--pad-lg { padding: var(--space-7); }
+.tf-card--pad-none { padding: 0; }
+/* Espelho de shared/ui/card.css:43 — o cartão clicável da lista do Catálogo. */
+.tf-card--interactive {
+  cursor: pointer;
+  transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.tf-card--interactive:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); border-color: var(--border-default); }
+.tf-card--interactive:active { transform: translateY(0); }
+.tf-card--interactive:focus-visible { outline: none; box-shadow: none; }
+
+/* ---- tf-catalog-md (produto: features/catalog/catalog-master-detail.css) ---- */
+.tf-catalog-md { display: grid; grid-template-columns: minmax(0, 1fr) 560px; gap: var(--space-6); align-items: start; }
+.tf-catalog-md__master { display: flex; flex-direction: column; gap: var(--space-3); min-width: 0; }
+.tf-catalog-md__toolbar { display: flex; align-items: center; gap: var(--space-3); }
+.tf-catalog-md__search { flex: 1; max-width: 420px; }
+.tf-catalog-md__list { display: grid; grid-template-columns: 1fr; gap: var(--space-2); list-style: none; margin: 0; padding: 0; }
+/* Duas colunas só a partir de 1600px — a premissa do desenho a 1920px. */
+.tf-catalog-md__list--wide { grid-template-columns: 1fr 1fr; }
+.tf-catalog-md__card {
+  display: flex; flex-direction: column; gap: var(--space-1); width: 100%; min-width: 0;
+  overflow-wrap: anywhere; text-align: left; font: inherit; cursor: pointer;
+}
+.tf-catalog-md__card--selected { border-color: var(--accent); background: var(--accent-soft); }
+.tf-catalog-md__detail { display: flex; flex-direction: column; gap: var(--space-4); min-width: 0; }
+.tf-catalog-md__detail-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--space-3); }
+.tf-catalog-md__detail-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.tf-catalog-md__detail-title h2 { font-size: var(--fs-lg); color: var(--text-strong); overflow-wrap: anywhere; margin: 0; }
+.tf-catalog-md__kicker {
+  font-size: var(--fs-caption); font-weight: var(--fw-semibold);
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted);
+}
+
+/* ---- tf-alert (produto) ---- */
+.tf-alert {
+  display: flex;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+}
+.tf-alert__icon { flex: 0 0 auto; margin-top: 0.0625rem; }
+.tf-alert__body { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.tf-alert__title { margin: 0; font-weight: var(--fw-semibold); font-size: var(--fs-body-sm); }
+.tf-alert__text { margin: 0; font-size: var(--fs-body-sm); color: var(--text-body); line-height: var(--lh-normal); }
+.tf-alert--neutral { background: var(--bg-muted); color: var(--text-body); }
+.tf-alert--neutral .tf-alert__icon, .tf-alert--neutral .tf-alert__title { color: var(--text-strong); }
+.tf-alert--info { background: var(--tf-info-soft); }
+.tf-alert--info .tf-alert__icon, .tf-alert--info .tf-alert__title { color: var(--info-text); }
+.tf-alert--success { background: var(--tf-success-soft); }
+.tf-alert--success .tf-alert__icon, .tf-alert--success .tf-alert__title { color: var(--success-text); }
+.tf-alert--danger { background: var(--tf-danger-soft); }
+.tf-alert--danger .tf-alert__icon, .tf-alert--danger .tf-alert__title { color: var(--danger-text); }
+/* NOVO no produto (ver nota nos tokens): o tom warning do alerta. */
+.tf-alert--warning { background: var(--tf-warning-soft); }
+.tf-alert--warning .tf-alert__icon, .tf-alert--warning .tf-alert__title { color: var(--warning-text); }
+
+/* ---- tf-field / tf-inputwrap / tf-input / tf-select (DS) ---- */
+.tf-field { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.tf-field__label {
+  display: flex; align-items: center; gap: var(--space-2); font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold); color: var(--text-strong); letter-spacing: var(--tracking-snug);
+}
+.tf-field__req { color: var(--energy); font-weight: var(--fw-bold); }
+.tf-field__optional { margin-left: auto; font-weight: var(--fw-regular); color: var(--text-faint); font-size: var(--fs-caption); }
+.tf-field__hint { font-size: var(--fs-caption); color: var(--text-muted); line-height: var(--lh-normal); }
+.tf-field__error {
+  display: flex; align-items: center; gap: var(--space-1); font-size: var(--fs-caption);
+  color: var(--tf-danger); font-weight: var(--fw-medium);
+}
+.tf-field__error::before {
+  content: ""; width: 14px; height: 14px; flex: 0 0 auto; background: var(--tf-danger);
+  -webkit-mask: url('assets/icons/lucide/circle-alert.svg') center/contain no-repeat;
+  mask: url('assets/icons/lucide/circle-alert.svg') center/contain no-repeat;
+}
+.tf-field__aviso { display: block; margin-top: var(--space-1); color: var(--info-text); overflow-wrap: anywhere; }
+
+/* ---- tf-aviso (NOVO — o aviso de plausibilidade) ----
+   Terceira categoria de mensagem: nem dica, nem erro. O número é válido e a conta
+   sai; o aviso só diz que ele provavelmente significa outra coisa. Uma forma só
+   para os três lugares onde aparece — abaixo de um campo, junto ao resultado e na
+   linha de peça de kit. Muda de largura, nunca de tipo, cor ou anatomia.
+   Não usar tf-alert para isto: alerta é o que interrompe; aviso é o que acompanha.
+   O fundo compõe o tom soft (que é translúcido) sobre uma base fixa: sem isso o mesmo
+   aviso muda de cor conforme o que estiver atrás — mais escuro solto na página, mais
+   claro dentro de um cartão. A cor da categoria não pode depender do vizinho. */
+.tf-aviso {
+  display: flex; gap: var(--space-2); min-width: 0;
+  padding: var(--space-3); border-radius: var(--radius-md);
+  background: linear-gradient(var(--tf-info-soft), var(--tf-info-soft)), var(--surface-card);
+}
+.tf-aviso__icon { flex: 0 0 auto; margin-top: 0.125rem; color: var(--info-text); }
+.tf-aviso__body { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.tf-aviso__text {
+  margin: 0; font-size: var(--fs-caption); line-height: var(--lh-normal);
+  color: var(--info-text); overflow-wrap: anywhere;
+}
+/* Dispensa. Ausente quando o aviso acompanha uma recusa. */
+.tf-aviso__action { align-self: flex-start; margin-left: calc(var(--space-3) * -1); color: var(--info-text); }
+.tf-inputwrap {
+  display: flex; align-items: center; gap: var(--space-2); height: var(--control-h);
+  padding: 0 var(--space-4); background: var(--surface-card); border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-field); cursor: text;
+  transition: border-color var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.tf-inputwrap:hover { border-color: var(--border-strong); }
+/* O anel de foco é UM, e mora na moldura. O `<input>` interno desenha o contorno próprio do
+   navegador, que soma com este e dá duas bordas concêntricas — o campo tem uma borda só. */
+.tf-inputwrap:focus-within { border-color: var(--border-accent); box-shadow: none; }
+.tf-inputwrap .tf-input:focus,
+.tf-inputwrap .tf-input:focus-visible,
+.tf-inputwrap .tf-select:focus,
+.tf-inputwrap .tf-select:focus-visible { outline: none; box-shadow: none; }
+/* Dentro da moldura, o controle não tem borda nem fundo próprios: quem desenha a caixa é o
+   `tf-inputwrap`. O `tf-select` traz borda e raio próprios para funcionar solto, e dentro do
+   wrapper isso rendia duas bordas concêntricas. */
+.tf-inputwrap .tf-select,
+.tf-inputwrap .tf-input { border: none; border-radius: 0; background: transparent; }
+.tf-inputwrap--sm { height: var(--control-h-sm); padding: 0 var(--space-3); }
+.tf-inputwrap--lg { height: var(--control-h-lg); padding: 0 var(--space-5); }
+.tf-inputwrap--error { border-color: var(--tf-danger); }
+.tf-inputwrap--disabled { background: var(--bg-muted); opacity: .6; cursor: not-allowed; }
+.tf-inputwrap__affix {
+  display: inline-flex; align-items: center; color: var(--text-muted); font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium); white-space: nowrap; flex: 0 0 auto; user-select: none;
+}
+.tf-inputwrap__affix--strong { color: var(--text-strong); font-weight: var(--fw-semibold); }
+.tf-input {
+  flex: 1 1 auto; min-width: 0; width: 100%; border: none; outline: none; background: transparent;
+  color: var(--text-strong); font: inherit; font-size: var(--fs-base); height: 100%;
+}
+.tf-input::placeholder { color: var(--text-faint); }
+.tf-input--num {
+  font-family: var(--font-numeric); font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features); text-align: right;
+}
+/* O produto usa `class="tf-input tf-select"` DENTRO do wrapper (`shared/ui/select.css` +
+   `select.tsx`): o select não tem caixa própria — herda a do `tf-inputwrap` —, só remove o cromo
+   do sistema e reserva espaço à direita para um caret desenhado como irmão. A cópia anterior era
+   de controle solto, com padding, borda, fundo e altura próprios: dentro do wrapper isso rendia
+   borda dupla e o texto 14px mais à direita que o de qualquer input. */
+.tf-selectwrap { position: relative; cursor: pointer; padding-right: var(--space-3); }
+.tf-select {
+  appearance: none; -webkit-appearance: none; cursor: pointer; text-align: left;
+  /* espaço para o caret, para rótulo longo nunca passar sob ele */
+  padding-right: var(--space-5);
+}
+.tf-select__caret, .tf-selectwrap__chev {
+  position: absolute; top: 50%; right: var(--space-4); transform: translateY(-50%);
+  width: 18px; height: 18px; pointer-events: none; user-select: none; background: var(--text-strong);
+  -webkit-mask: url('assets/icons/lucide/chevron-down.svg') center/contain no-repeat;
+  mask: url('assets/icons/lucide/chevron-down.svg') center/contain no-repeat;
+}
+.tf-costs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: var(--space-3); }
+
+/* NOVO — área rolável dentro de moldura de telefone. A barra clássica do Chromium tira 15px do
+   `clientWidth` e encolhe TODO o conteúdo do espécime — medido: bandeja de 299px onde a irmã
+   de 390px dá 314px. Aparelho real usa barra em overlay, que não ocupa espaço. Mesmo par que a
+   folha já copia do produto em `.tf-segmented`. */
+.tf-phone-scroll { overflow-y: auto; scrollbar-width: none; -ms-overflow-style: none; }
+.tf-phone-scroll::-webkit-scrollbar { display: none; }
+
+/* ---- tf-price (DS) ---- */
+.tf-price {
+  display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl); background: var(--surface-card); border: 1px solid var(--border-subtle);
+}
+.tf-price--accent { background: var(--accent); border-color: transparent; color: var(--accent-contrast); box-shadow: var(--glow-purple); }
+.tf-price--plain { background: transparent; border: none; padding: 0; }
+.tf-price--center { align-items: center; text-align: center; }
+.tf-price__label {
+  font-size: var(--fs-sm); font-weight: var(--fw-semibold); text-transform: uppercase;
+  letter-spacing: var(--tracking-caps); opacity: .9;
+}
+.tf-price__amount {
+  display: flex; align-items: baseline; gap: var(--space-1); font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums; font-feature-settings: var(--num-features);
+  /* A segunda defesa, do produto (`price-hero.css`): a linha EMBRULHA entre as três peças — R$,
+     inteiro, centavos — antes de rolar. O inteiro não quebra por dentro, mas os centavos podem
+     descer para a linha seguinte, e é isso que evita rolagem na faixa realista. */
+  flex-wrap: wrap;
+  /* 016/T018-A1 — line-height 1.2, NÃO 1. Com `line-height: 1` o conteúdo fica 4px mais alto que
+     a caixa; `overflow-x: auto` (abaixo) faz o overflow-y computar `auto`; e o Chromium headed
+     desenha a barra clássica de 15px, que ainda empurra o valor 7,5px do centro. 1.2 remove a
+     CAUSA e preserva o scroll-X de último recurso. Medir o eixo Y por scrollHeight: headless
+     desenha barra em overlay e não vê a clássica. */
+  line-height: 1.2; font-weight: var(--fw-bold); letter-spacing: var(--tracking-tight);
+  /* 015/A6 — o tamanho vive AQUI, não no `__int`: com os modificadores no filho, `__cur` e `__dec`
+     (0,4em / 0,5em) se calculavam sobre a base herdada e os centavos fotografavam ~7px. E a última
+     defesa de um valor que não cabe nem no piso do clamp é ROLAR: quebrar renderiza outro número,
+     cortar esconde dígitos, rolar mantém tudo legível. Cópia de shared/ui/price-hero.css. */
+  font-size: var(--fs-price); overflow-x: auto;
+}
+.tf-price__cur { font-size: 0.4em; font-weight: var(--fw-bold); opacity: .85; transform: translateY(-0.55em); flex: 0 0 auto; }
+/* O inteiro NUNCA quebra por dentro: `18.130` virando `18.13`/`0` é um número diferente para quem
+   lê. E NUNCA encolhe: com `min-width: 0` ele encolhia abaixo do conteúdo, o texto vazava da caixa
+   (medido: caixa de 238px para 638px de glifos) e os centavos eram posicionados a partir da caixa
+   encolhida — pintados por cima do inteiro. Sobrepor é a mesma falha que quebrar: o número lido
+   deixa de ser o número escrito. Sem encolhimento, a linha tem a largura real e o scroll alcança. */
+.tf-price__int { font-size: 1em; flex: 0 0 auto; overflow-wrap: normal; word-break: keep-all; }
+.tf-price__dec { flex: 0 0 auto; }
+/* NOVO — sinal de continuação, SÓ no espécime que rola, por classe explícita. CSS não detecta transbordo,
+   então gatear "aparece quando rola" na folha é impossível: incondicional, a máscara apagava os
+   centavos dos 29 preços do conjunto (medido: 40% do valor num bloco de 101px). Num bloco de 306px
+   com dígitos de 48px a barra de rolagem lê como ornamento, e o valor em repouso ("R$ 184.467.44")
+   é um número plausível e ERRADO — 184 milhões no lugar de 184 quintilhões. */
+.tf-price--rola .tf-price__amount {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent 100%);
+}
+/* O tamanho responde à largura do PRÓPRIO BLOCO, não da janela: nas pranchetas a moldura de
+   390px não é a janela, então `vw` deixava o preço no teto do clamp e a rolagem — última defesa —
+   entrava onde no produto ele apenas encolheria. Com `cqw` a defesa demonstrada é a que a legenda
+   descreve, e os centavos param de ser cortados. */
+.tf-price { container-type: inline-size; }
+.tf-price--lg .tf-price__amount { font-size: clamp(3rem, 11cqw, 4.75rem); }
+.tf-price--md .tf-price__amount { font-size: var(--fs-2xl); }
+.tf-price__dec { font-size: 0.5em; font-weight: var(--fw-bold); }
+.tf-price__cap { font-size: var(--fs-caption); opacity: .92; font-weight: var(--fw-medium); }
+
+/* A5-b/A5-c (assembly-summary.css) — o readout FIXADO: uma coluna, rótulo à esquerda,
+   valor à direita; quem cede é o rótulo (reticências), nunca o número. */
+.tf-pinned-prices { display: grid; grid-template-columns: 1fr; gap: var(--space-2); }
+.tf-pinned-prices .tf-price {
+  flex-direction: row; align-items: baseline; justify-content: space-between; gap: var(--space-3);
+  padding: 0; background: transparent; border: none; box-shadow: none; color: var(--accent-text);
+}
+.tf-pinned-prices .tf-price__label {
+  font-size: var(--fs-caption); white-space: nowrap; min-width: 0; overflow: hidden; text-overflow: ellipsis;
+}
+.tf-pinned-prices .tf-price__amount { flex: 0 0 auto; max-width: 100%; }
+
+/* ---- tf-brow (DS) ---- */
+.tf-brow { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) 0; min-height: 40px; }
+.tf-brow + .tf-brow { border-top: 1px solid var(--border-subtle); }
+.tf-brow__main { display: flex; flex-direction: column; gap: 1px; min-width: 0; flex: 1; }
+.tf-brow__label { font-size: var(--fs-body-sm); color: var(--text-body); font-weight: var(--fw-medium); }
+.tf-brow__sub { font-size: var(--fs-caption); color: var(--text-muted); }
+.tf-brow__val {
+  font-family: var(--font-numeric); font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features); font-size: var(--fs-body-sm); font-weight: var(--fw-semibold);
+  color: var(--text-strong); white-space: nowrap; text-align: right;
+}
+.tf-brow--muted .tf-brow__label, .tf-brow--muted .tf-brow__val { color: var(--text-muted); font-weight: var(--fw-regular); }
+.tf-brow--accent .tf-brow__val { color: var(--accent-text); }
+.tf-brow--total { margin-top: var(--space-2); padding-top: var(--space-4); border-top: 2px solid var(--border-strong) !important; }
+.tf-brow--total .tf-brow__label { font-weight: var(--fw-bold); color: var(--text-strong); font-size: var(--fs-base); }
+.tf-brow--total .tf-brow__val { font-size: var(--fs-lg); font-weight: var(--fw-bold); }
+
+/* ---- tf-empty (DS) ---- */
+.tf-empty {
+  display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--space-3);
+  padding: var(--space-10) var(--space-6);
+}
+.tf-empty__art { margin-bottom: var(--space-2); opacity: .95; }
+.tf-empty__title {
+  font-family: var(--font-title); text-transform: uppercase; letter-spacing: var(--tracking-wide);
+  font-size: var(--fs-lg); color: var(--text-strong); line-height: var(--lh-snug);
+}
+.tf-empty__desc { font-size: var(--fs-body-sm); color: var(--text-muted); max-width: 38ch; line-height: var(--lh-normal); }
+.tf-empty__actions { display: flex; gap: var(--space-3); margin-top: var(--space-3); flex-wrap: wrap; justify-content: center; }
+
+/* ---- tf-badge (DS) ---- */
+.tf-badge {
+  display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 9px;
+  border-radius: var(--radius-pill); font-family: var(--font-body); font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold); line-height: 1; white-space: nowrap; letter-spacing: var(--tracking-snug);
+}
+.tf-badge--sm { height: 18px; padding: 0 7px; font-size: 11px; }
+.tf-badge--neutral { background: var(--bg-muted); color: var(--text-body); }
+.tf-badge--accent { background: var(--accent-soft); color: var(--accent-active); }
+.tf-badge--info { background: var(--tf-info-soft); color: var(--tf-teal-deep); }
+/* A faixa de aviso: os comentários deste arquivo já a citavam, mas a regra nunca existiu.
+   Mesma construção das irmãs — fundo suave do próprio laranja da marca, texto no tom profundo. */
+.tf-badge--warning { background: rgba(247, 147, 30, 0.16); color: var(--warning-text); }
+[data-theme="dark"] .tf-badge--accent { color: #c9a4ff; }
+[data-theme="dark"] .tf-badge--warning { color: #ffc070; }
+/* NOVO no lote 18 (Orçamentos): os dois tons que o conjunto de selos não tinha. Um orçamento
+   aceito não é um aviso e um recusado não é laranja — mesma construção das irmãs, tokens do DS. */
+.tf-badge--success { background: var(--tf-success-soft); color: var(--success-text); }
+.tf-badge--danger { background: var(--tf-danger-soft); color: var(--danger-text); }
+[data-theme="dark"] .tf-badge--info { color: #7fe0f2; }
+
+/* ---- tf-dialog (produto: shared/ui/dialog.css) — a folha de baixo ---- */
+.tf-dialog__overlay { position: absolute; inset: 0; z-index: 70; background: var(--surface-overlay); }
+.tf-dialog {
+  position: absolute; z-index: 71; display: flex; flex-direction: column; gap: var(--space-3);
+  background: var(--surface-card); color: var(--text-body); border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+}
+.tf-dialog--sheet { padding: var(--space-5); overflow: auto; }
+.tf-dialog--sheet-bottom { left: 0; right: 0; bottom: 0; max-height: 85%; border-radius: var(--radius-xl) var(--radius-xl) 0 0; }
+.tf-dialog__title {
+  margin: 0; padding-right: var(--space-10); font-family: var(--font-title); text-transform: uppercase;
+  letter-spacing: var(--tracking-wide); font-size: var(--fs-lg); color: var(--text-strong);
+}
+.tf-dialog__desc { margin: 0; color: var(--text-muted); font-size: var(--fs-body-sm); line-height: var(--lh-normal); }
+.tf-dialog__x {
+  position: absolute; top: var(--space-3); right: var(--space-3); display: inline-flex; align-items: center;
+  justify-content: center; min-width: var(--touch-min); min-height: var(--touch-min); border: none;
+  background: transparent; color: var(--text-muted); border-radius: var(--radius-sm); cursor: pointer;
+}
+.tf-dialog__x:hover { color: var(--text-strong); background: var(--bg-muted); }
+
+/* ---- o seletor com busca (produto: features/calculator/category-picker.css).
+   É o MESMO primitivo do seletor de categoria, reusado para produtos salvos — decisão do dono,
+   lote 2. As classes ficam com o nome de origem de propósito: é o mesmo componente. ---- */
+.category-picker { display: flex; flex-direction: column; gap: var(--space-2); min-width: 0; }
+.category-picker__list {
+  list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; overflow: hidden;
+  background: var(--surface-raised); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+.category-picker__list li + li { border-top: 1px solid var(--border-subtle); }
+.category-picker__option {
+  width: 100%; min-height: 44px; padding: var(--space-2) var(--space-3); display: flex; align-items: center;
+  gap: var(--space-3); text-align: left; background: transparent; border: none; color: var(--text-strong);
+  font: inherit; font-size: var(--fs-body-sm); font-weight: var(--fw-medium); line-height: var(--lh-normal);
+  overflow-wrap: anywhere; cursor: pointer;
+}
+.category-picker__go { margin-left: auto; color: var(--text-muted); font-size: var(--fs-base); line-height: 1; }
+.category-picker__option:hover { background: var(--bg-muted); }
+.category-picker__note { font-size: var(--fs-caption); line-height: var(--lh-normal); color: var(--text-muted); }
+.category-picker__count { font-weight: var(--fw-medium); }
+.tf-inputwrap.category-picker--chosen {
+  height: auto; min-height: var(--control-h); padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  flex-direction: row; align-items: center; flex-wrap: wrap; cursor: default;
+}
+.category-picker__chosen {
+  flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium); color: var(--text-strong);
+}
+.category-picker__sub { display: block; font-size: var(--fs-caption); font-weight: var(--fw-regular); color: var(--text-muted); }
+
+/* ---- tf-infotip (produto: shared/ui/info-tip.css) — o gatilho ⓘ ao lado do título ---- */
+.tf-infotip__trigger {
+  display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px;
+  padding: 0; border: none; background: transparent; color: var(--text-muted);
+  border-radius: var(--radius-pill); cursor: pointer; flex-shrink: 0; position: relative;
+}
+/* A6 — o alvo de 44px vem de um pseudo-elemento FORA DO FLUXO; o botão pinta 28×28. */
+.tf-infotip__trigger::after { content: ""; position: absolute; inset: -12px -8px -4px; }
+.tf-infotip__trigger:hover { color: var(--accent-text); background: var(--accent-soft); }
+
+/* ---- tf-switch (produto: shared/ui/switch.css) ---- */
+.tf-switch {
+  display: inline-flex; align-items: center; justify-content: center; min-width: var(--touch-min);
+  min-height: var(--touch-min); padding: 0; border: none; background: transparent; cursor: pointer;
+}
+.tf-switch:disabled { cursor: not-allowed; opacity: 0.55; }
+.tf-switch__track {
+  position: relative; width: 44px; height: 24px; border-radius: var(--radius-pill);
+  background: var(--border-default); transition: background var(--dur-fast) var(--ease-out);
+}
+.tf-switch[data-state="checked"] .tf-switch__track { background: var(--accent); }
+.tf-switch__thumb {
+  position: absolute; top: 2px; left: 2px; display: block; width: 20px; height: 20px; border-radius: 50%;
+  background: var(--tf-white); box-shadow: var(--shadow-sm); transition: transform var(--dur-fast) var(--ease-out);
+}
+.tf-switch[data-state="checked"] .tf-switch__thumb { transform: translateX(20px); }
+.tf-switch:focus-visible { outline: none; }
+.tf-switch:focus-visible .tf-switch__track { box-shadow: none; }
+
+/* ---- tf-export (produto: features/history/export-sheet.css) ----
+   Espelho fiel, com uma troca de token: o produto escreve `var(--border)`, que não existe
+   nesta folha — aqui é `--border-default`, o mesmo valor que o DS resolve. */
+.tf-export { display: flex; flex-direction: column; gap: var(--space-1); }
+.tf-export__reason { color: var(--text-muted); font-size: var(--fs-body-sm); margin: 0; }
+.tf-export__form { display: flex; flex-direction: column; gap: var(--space-4); }
+.tf-export__formats {
+  border: 1px solid var(--border-default); border-radius: var(--radius-md);
+  display: flex; flex-direction: column; gap: var(--space-2); padding: var(--space-3); margin: 0;
+}
+.tf-export__formats legend { color: var(--text-muted); font-size: var(--fs-body-sm); padding-inline: var(--space-1); }
+/* ≥44px de alvo — a linha inteira é o controle, não só o ponto (INV-2). */
+.tf-export__option {
+  align-items: center; cursor: pointer; display: flex; gap: var(--space-2);
+  min-height: var(--touch-min); font-size: var(--fs-body-sm); color: var(--text-body);
+}
+.tf-export__option input { width: 18px; height: 18px; accent-color: var(--accent); }
+.tf-export__optin {
+  align-items: center; display: flex; gap: var(--space-3);
+  justify-content: space-between; min-height: var(--touch-min);
+}
+.tf-export__optin-label { font-size: var(--fs-body-sm); font-weight: var(--fw-semibold); color: var(--text-strong); }
+/* O dano que o interruptor causa, embaixo do interruptor que o causa (Q4/FR-512). */
+.tf-export__warn {
+  color: var(--text-muted); font-size: var(--fs-body-sm); line-height: var(--lh-normal);
+  margin: calc(-1 * var(--space-3)) 0 0;
+}
+
+/* ---- tf-scenario-note (produto: features/scenarios/scenario-list.css) ----
+   `line-clamp-2` sozinho corta um token SEM espaço sem nunca mostrar a reticência, porque não
+   há oportunidade de quebra. `overflow-wrap: anywhere` cria uma. */
+.tf-scenario-note {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+  overflow-wrap: anywhere; word-break: break-word;
+  font-size: var(--fs-body-sm); line-height: var(--lh-normal); color: var(--text-muted); margin: 0;
+}
+/* O nome de uma simulação é UMA linha truncada: 120 caracteres não podem empurrar
+   [Duplicar]/[Salvar alterações] fora da tela (ux §0.4). */
+.tf-scenario-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0;
+}
+
+/* ---- tf-spinner (produto: shared/ui/spinner.css) ---- */
+.tf-spinner { display: inline-flex; align-items: center; justify-content: center; color: var(--accent); }
+/* Giro dentro de botão herda a cor do rótulo — `.tf-btn__spin { color: currentColor }` no produto
+   (`shared/ui/button.css`). Sem isso ele fica em `--accent` sobre o botão primário, que é a mesma
+   cor: contraste 1,00, giro invisível num espécime que existe para mostrar carregamento. */
+.tf-btn .tf-spinner { position: absolute; left: var(--space-5); color: currentColor; }
+/* Reserva o espaço do giro SÓ à esquerda, onde ele está. Reservar dos dois lados deixava 49px de
+   vazio morto à direita e empurrava o botão a 232px — o par "Voltar"+"Salvar alterações" somava
+   328px contra 314 de largura útil e embrulhava. */
+.tf-btn:has(.tf-spinner) { padding-left: calc(var(--space-5) + 1.25rem + var(--space-2)); }
+.tf-spinner__ring {
+  display: block; width: 1.25rem; height: 1.25rem;
+  border: 2px solid color-mix(in srgb, currentColor 28%, transparent); border-top-color: currentColor;
+  border-radius: var(--radius-pill); animation: tf-spin 0.7s linear infinite;
+}
+.tf-spinner--sm .tf-spinner__ring { width: 0.9375rem; height: 0.9375rem; border-width: 2px; }
+.tf-spinner--lg .tf-spinner__ring { width: 1.75rem; height: 1.75rem; border-width: 3px; }
+@keyframes tf-spin { to { transform: rotate(360deg); } }
+
+/* ---- tf-frozen (NOVO — a adaptação do `fieldset disabled` do produto) ----
+   O produto envolve os campos num `<fieldset disabled>`: o estilo de UA esmaece os CONTROLES e
+   deixa rótulo e dica em cor cheia. Esmaecer o contêiner com `opacity` não é a mesma coisa —
+   opacity cria contexto de composição e arrasta TODO descendente, inclusive o texto de ajuda:
+   medido, a dica caía de 5,67:1 para 2,58:1 e reprovava AA. Aqui o dim mora nos controles.
+   Importa porque a dica do consumo médio é a peça mais didática do formulário, e ela existe
+   justamente para ser lida por quem ainda não assinou. */
+/* Fundo do campo congelado: `--border-subtle` é o token que difere da superfície do cartão nos
+   DOIS temas (escuro #1f2128 vs #14151a; claro um cinza contra o branco). `--bg-muted` sozinho
+   não servia: no escuro ele é idêntico ao cartão e a única pista sobrava na opacidade.
+   A borda continua SÓLIDA de propósito: tracejado já significa "anotação da prancheta" na 24f
+   ("o contorno tracejado existe só nesta prancheta"), e um sinal com dois sentidos no mesmo
+   pacote de entrega é pior que um estado com uma pista a menos. */
+.tf-frozen .tf-inputwrap,
+.tf-frozen .tf-select { opacity: .55; cursor: not-allowed; background: var(--border-subtle); }
+.tf-frozen .tf-input, .tf-frozen .tf-select { cursor: not-allowed; }
+
+/* ---- tf-segmented (produto: shared/ui/segmented.css, 018) — bandeja com pílulas, a selecionada
+   em relevo. Cópia verbatim, inclusive o `overflow-x` da bandeja (quando não couber ela ROLA em vez
+   de empurrar a página) e o `--surface-raised` da pílula selecionada (review do PR #58: no escuro
+   `--surface-card` empatava com a bandeja, 1,00:1). ---- */
+.tf-segmented {
+  display: inline-flex; align-items: center; gap: var(--space-1); padding: var(--space-1);
+  background: var(--bg-muted); border-radius: var(--radius-pill);
+  max-width: 100%; overflow-x: auto; scrollbar-width: none;
+}
+.tf-segmented::-webkit-scrollbar { display: none; }
+.tf-segmented__item {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2);
+  border: none; cursor: pointer; font: inherit; font-weight: 600; white-space: nowrap;
+  background: transparent; color: var(--text-muted); border-radius: var(--radius-pill);
+  min-height: 44px; padding: var(--space-2) var(--space-4);
+  transition: background-color 0.15s ease-out, color 0.15s ease-out;
+}
+.tf-segmented--sm .tf-segmented__item { font-size: var(--fs-caption); padding: var(--space-2) var(--space-3); }
+.tf-segmented--md .tf-segmented__item { font-size: var(--fs-body-sm); }
+/* NOVO — o produto não tem variante de largura: segmented.css só declara inline-flex com
+   max-width 100%, então a bandeja sempre se ajusta ao texto. Aqui ela ocupa a linha e divide em
+   partes iguais, com dois itens ou com quatro: as opções são do mesmo tipo, e larguras que saem
+   de quantas letras cada palavra tem fazem "Impressoras" parecer mais importante que "Kits".
+   Usar SÓ onde a largura é escassa — no celular, e no par varejo/atacado que acompanha uma coluna
+   de conteúdo. Numa coluna de 1138px isto dá abas de 280px, o oposto da variante compacta que a
+   entrega documenta para o desktop; lá a bandeja volta a se ajustar ao texto. */
+.tf-segmented--split { display: flex; width: 100%; }
+.tf-segmented--split .tf-segmented__item { flex: 1 1 0; min-width: 0; }
+.tf-segmented__item:hover:not(.tf-segmented__item--selected) { color: var(--text-body); }
+.tf-segmented__item--selected { background: var(--surface-raised); color: var(--accent-text); box-shadow: var(--shadow-xs); }
+.tf-segmented__item:focus-visible { outline: none; }
+
+/* ---- tf-toast / tf-toaster (produto: shared/ui/toast.css) — cópia verbatim. Única adaptação,
+   declarada: a região é `position: fixed` no produto (ancorada no viewport, acima da TabBar); nas
+   pranchetas ela é `position: absolute` dentro da moldura do telefone, porque a prancheta não é um
+   viewport. O recuo `--tabbar-h + space-3` e todo o resto são os do produto. ---- */
+.tf-toaster {
+  position: absolute; left: 50%; bottom: calc(var(--tabbar-h) + var(--space-3)); transform: translateX(-50%);
+  z-index: 60; display: flex; flex-direction: column; gap: var(--space-2);
+  width: min(92%, 30rem); pointer-events: none;
+}
+.tf-toast {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
+  border-radius: var(--radius-md); background: var(--surface-raised); color: var(--text-strong);
+  border: 1px solid var(--border-subtle); box-shadow: var(--shadow-md); pointer-events: auto;
+}
+.tf-toast__icon { flex: 0 0 auto; }
+.tf-toast__msg { flex: 1 1 auto; min-width: 0; font-size: var(--fs-body-sm); line-height: var(--lh-snug); }
+/* ---- tf-alert--compact (NOVO — o selo de procedência) ----
+   O `tf-alert` do produto é alerta de página: 16px de padding e ação de 44px de altura. O selo é
+   um bloco denso de três a quatro linhas dentro de um cartão de 390px, e herdava as duas medidas
+   — o "Ver fonte" sozinho valia 44px de altura, um quarto do selo. Aqui: 12px de padding, 8px de
+   gap, e as duas âncoras (ícone e dispensa) com a MESMA caixa de 20px à MESMA distância das duas
+   bordas — a simetria é o que faz o bloco ler como um selo e não como um aviso amassado.
+   Uma estrutura só para todos os selos; tom e copy mudam, geometria não. */
+.tf-alert--compact { padding: var(--space-3); gap: var(--space-2); align-items: flex-start; }
+/* O corpo TEM que crescer: sem isso a dispensa gruda no fim do texto em vez de ancorar no canto,
+   e o selo fica assimétrico só nas linhas curtas — o defeito não aparece no espécime mais longo. */
+.tf-alert--compact .tf-alert__body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+/* Ícone e dispensa sem deslocamento: mesma caixa de 20px, mesma distância das quatro bordas. */
+.tf-alert--compact .tf-alert__icon { margin-top: 0; }
+
+/* Ação interna do selo: link, não botão de formulário. Altura desenhada de 20px e alvo de 44px
+   pelo mesmo pseudo-elemento da dispensa — caixa de 44px aqui empurraria o selo inteiro. */
+.tf-alert__action {
+  position: relative; align-self: flex-start; display: inline-flex; align-items: center; gap: 4px;
+  margin-top: var(--space-1); padding: 0; border: none; background: transparent;
+  font: inherit; font-size: var(--fs-caption); font-weight: var(--fw-semibold);
+  color: inherit; cursor: pointer; border-radius: var(--radius-sm);
+}
+.tf-alert__action::after { content: ""; position: absolute; inset: -13px -8px; }
+.tf-alert__action:hover { text-decoration: underline; }
+.tf-alert__action:focus-visible { outline: none; box-shadow: none; }
+/* A cor da ação segue o tom, como o ícone: sem isso o selo neutro herda a cor do corpo e a ação
+   deixa de se distinguir do texto — a estrutura seria a mesma e a leitura, não. */
+.tf-alert__action { color: var(--text-strong); }
+.tf-alert--info .tf-alert__action { color: var(--info-text); }
+.tf-alert--success .tf-alert__action { color: var(--success-text); }
+.tf-alert--warning .tf-alert__action { color: var(--warning-text); }
+.tf-alert--danger .tf-alert__action { color: var(--danger-text); }
+
+/* Dispensa do selo de procedência. (NOVO — o produto não tem dispensa em `tf-alert`; proposta,
+   ver a prancheta "A camada de baixo" 23b.) Alinha ao TOPO e o alvo de 44px é um pseudo-elemento,
+   não a caixa: com 44px de caixa o botão fica mais alto que um selo de uma linha e passa a ditar
+   a altura do alerta, abrindo um vão sob o texto. Assim o desenho é o ícone e o toque é a norma. */
+.tf-alert__close {
+  position: relative; flex: 0 0 auto; align-self: flex-start;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 20px; height: 20px; margin-inline-start: var(--space-1);
+  border: none; background: transparent; color: var(--text-muted);
+  border-radius: var(--radius-sm); cursor: pointer;
+}
+.tf-alert__close::after { content: ""; position: absolute; inset: calc((var(--touch-min) - 20px) / -2); }
+.tf-alert__close:hover { color: var(--text-strong); }
+.tf-alert__close:focus-visible { outline: none; box-shadow: none; }
+
+.tf-toast__close {
+  flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--touch-min); min-height: var(--touch-min);
+  margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-1));
+  border: none; background: transparent; color: var(--text-muted); border-radius: var(--radius-sm); cursor: pointer;
+}
+.tf-toast__close:hover { color: var(--text-strong); }
+.tf-toast__close:focus-visible { outline: none; box-shadow: none; }
+.tf-toast--info .tf-toast__icon { color: var(--info-text); }
+.tf-toast--success .tf-toast__icon { color: var(--success-text); }
+.tf-toast--danger .tf-toast__icon { color: var(--danger-text); }
+
+/* ---- tf-page-header (produto: widgets/page-header/page-header.css) ---- */.tf-page-header { margin-bottom: var(--space-4); }
+.tf-page-header--center { text-align: center; }
+/* Título e texto não são controles: nenhum indicador visual de foco neles. O produto move o foco
+   para o `h1` na troca de aba para o leitor de tela reler a seção (`tabindex="-1"`), e esse foco é
+   PROGRAMÁTICO — anel ali é ruído sobre uma coisa que ninguém navegou. Vale para qualquer elemento
+   de texto focável por script; os controles continuam com o anel. */
+.tf-page-header__title { margin: 0; font-size: var(--fs-lg); overflow-wrap: anywhere; }
+.tf-page-header__title:focus,
+.tf-page-header__title:focus-visible,
+h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus, h3[tabindex="-1"]:focus,
+p[tabindex="-1"]:focus, span[tabindex="-1"]:focus,
+h1[tabindex="-1"]:focus-visible, h2[tabindex="-1"]:focus-visible, h3[tabindex="-1"]:focus-visible,
+p[tabindex="-1"]:focus-visible, span[tabindex="-1"]:focus-visible { outline: none; box-shadow: none; }
+.tf-page-header__desc { margin: var(--space-1) 0 0; color: var(--text-muted); font-size: var(--fs-body-sm); line-height: var(--lh-normal); }
+
+/* ---- cromo do shell: top bar + TabBar (produto) ---- */
+.tf-topbar {
+  position: relative; display: flex; align-items: center; justify-content: space-between;
+  gap: var(--space-3); height: var(--topbar-h); padding-inline: var(--gutter);
+  background: var(--surface-card); border-bottom: 1px solid var(--border-subtle);
+}
+.tf-topbar__logo { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); height: 32px; width: auto; flex-shrink: 0; }
+.tf-topbar__actions { display: flex; align-items: center; gap: var(--space-2); min-width: 0; margin-inline-start: auto; }
+.tf-topbar__theme {
+  display: inline-flex; align-items: center; justify-content: center; min-width: var(--touch-min);
+  min-height: var(--touch-min); flex-shrink: 0; border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); background: transparent; color: var(--text-body); cursor: pointer;
+}
+.tf-topbar__theme[aria-pressed="true"] { color: var(--accent-text); border-color: var(--border-default); }
+.tf-nav__list { margin: 0; padding: 0; list-style: none; }
+.tf-nav__item {
+  display: flex; align-items: center; justify-content: center; min-width: var(--touch-min);
+  min-height: var(--touch-min); color: var(--text-muted); text-decoration: none;
+  font-weight: var(--fw-medium); border-radius: var(--radius-md);
+}
+.tf-nav__item[aria-current="page"] { color: var(--accent-text); font-weight: var(--fw-semibold); }
+.tf-nav__label { white-space: nowrap; }
+.tf-nav--tabbar {
+  position: absolute; inset-inline: 0; bottom: 0; z-index: 30; background: var(--surface-card);
+  border-top: 1px solid var(--border-subtle);
+}
+.tf-nav--tabbar .tf-nav__list { display: flex; height: var(--tabbar-h); }
+.tf-nav--tabbar .tf-nav__cell { display: flex; flex: 1 1 0; min-width: 0; }
+.tf-nav--tabbar .tf-nav__item { position: relative; flex: 1; flex-direction: column; gap: 2px; padding: var(--space-1); font-size: var(--fs-caption); }
+.tf-nav--tabbar .tf-nav__item[aria-current="page"]::before {
+  content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 28px; height: 2px; border-radius: var(--radius-pill); background: var(--accent);
+}
+.tf-nav--sidebar {
+  flex: 0 0 auto; width: 240px; background: var(--surface-card); border-right: 1px solid var(--border-subtle);
+  padding: var(--space-4) var(--space-3); display: flex; flex-direction: column;
+}
+.tf-nav--sidebar .tf-nav__list { display: flex; flex-direction: column; gap: var(--space-1); flex: 1; }
+.tf-nav--sidebar .tf-nav__item { justify-content: flex-start; gap: var(--space-3); width: 100%; padding: var(--space-3) var(--space-4); }
+.tf-nav--sidebar .tf-nav__item[aria-current="page"] { background: var(--accent-soft); }
+
+/* Foco do menu: anel INTERNO, nunca a caixa externa. No item JÁ ativo o fundo suave é o mesmo do
+   estado ativo, então sem o anel receber foco não mudaria nada (CF-001-UI-02 / WCAG 2.4.7). */
+/* Foco do menu: anel INTERNO, nunca a caixa externa. No item JÁ ativo o fundo suave é o mesmo do
+   estado ativo, então sem o anel receber foco não mudaria nada (CF-001-UI-02 / WCAG 2.4.7).
+   A cor é a do TRAÇO do item ativo — `--accent`, não `--focus-ring`, que no escuro resolve para um
+   lilás mais claro. Traço e anel são o mesmo indicador visto de dois jeitos; em dois roxos eles
+   competem em vez de se completar.
+   O anel é de 2px na TabBar: a 390px a célula tem 71px e o rótulo mais longo ("Orçamentos") media
+   71,0px a 12px — encostado nas duas bordas ANTES de existir anel. O anel não criou o aperto, só
+   o tornou visível. A 11px o texto ainda mede 65,3px e sobra 1px depois do anel; a 10px mede
+   58,4px e sobram ~4px de respiro de cada lado. */
+.tf-nav__item:focus-visible { outline: none; box-shadow: none; }
+.tf-nav--tabbar .tf-nav__item:focus-visible { box-shadow: none; }
+/* 10px é o tamanho de rótulo de barra de abas que o iOS usa há uma década, e é o que faz o rótulo
+   mais longo caber numa célula de 71px com folga real em vez de encostar. */
+.tf-nav--tabbar .tf-nav__label { font-size: 10px; }
+
+/* 018/US5 — o rail. Só largura e alinhamento mudam; o rótulo continua no DOM com `sr-only`. */
+.tf-nav--rail { padding-inline: var(--space-2); width: 76px; }
+.tf-nav--rail .tf-nav__item { justify-content: center; gap: 0; padding-inline: var(--space-2); }
+.tf-nav__collapse {
+  border: none; background: transparent; cursor: pointer; font: inherit;
+  font-weight: var(--fw-medium); margin-top: var(--space-2);
+}
+.tf-nav__collapse:hover { color: var(--text-body); }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---- tf-offline-banner (produto: widgets/offline-banner/offline-banner.css) ---- */
+.tf-offline-banner {
+  display: flex; align-items: center; justify-content: center; gap: var(--space-2);
+  padding: var(--space-2) var(--gutter); background: var(--tf-info-soft); color: var(--info-text);
+  font-size: var(--fs-body-sm); font-weight: var(--fw-medium); text-align: center;
+  line-height: var(--lh-normal);
+}
+.tf-offline-banner__icon { flex: 0 0 auto; }
+.tf-offline-banner__msg { min-width: 0; }
+
+/* ---- tf-grafismo (DS components/brand/Grafismo.jsx) — máscara CSS sobre currentColor,
+   igual aos ícones. Os SVGs são os do kit, copiados em assets/grafismos/. ---- */
+.tf-grafismo {
+  display: inline-block; flex: 0 0 auto; background-color: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-position: center; mask-position: center;
+}
+.tf-grafismo-arco { -webkit-mask-image: url('assets/grafismos/arco.svg'); mask-image: url('assets/grafismos/arco.svg'); }
+.tf-grafismo-espada { -webkit-mask-image: url('assets/grafismos/espada.svg'); mask-image: url('assets/grafismos/espada.svg'); }
+.tf-grafismo-onda { -webkit-mask-image: url('assets/grafismos/onda.svg'); mask-image: url('assets/grafismos/onda.svg'); }
+.tf-grafismo-linha { -webkit-mask-image: url('assets/grafismos/linha-curva.svg'); mask-image: url('assets/grafismos/linha-curva.svg'); }
+
+/* ---- tf-notfound / tf-error (produto: pages/{not-found,error}/*.css) ---- */
+/* Centrado nos dois eixos: o 404 e o erro são colunas curtas e o texto delas é centrado, então o
+   bloco inteiro também. `text-align: center` sem `align-items` deixaria o botão à esquerda. */
+.tf-notfound { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding-block: var(--space-6); }
+.tf-notfound__grafismo, .tf-error__grafismo { width: 96px; height: 48px; color: var(--accent); opacity: .55; }
+.tf-error {
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-4);
+  max-width: 28rem; margin-inline: auto; padding-block: var(--space-8); text-align: center;
+}
+.tf-error__title { margin: 0; font-size: var(--fs-xl); }
+.tf-error__body { margin: 0; color: var(--text-muted); line-height: var(--lh-normal); }
+.tf-error__actions { margin-top: var(--space-1); }
+.tf-error__support { margin: 0; color: var(--text-faint); font-size: var(--fs-caption); }
+.tf-error__code { font-variant-numeric: tabular-nums; word-break: break-all; }
+
+
+/* ---- tf-plist (NOVO — a lista densa do Catálogo, 390px) ----
+   O card salvo deixa de ser card. Com dois dados por item (preço sugerido e a data),
+   a moldura de cartão gastava 24px de padding e 1px de borda para separar duas linhas
+   de texto — e cabiam três itens na dobra. Como linha, cabem seis. O que separa os
+   itens é um filete, não uma caixa; o alvo continua tendo 56px de altura.
+   A linha "era R$ X" é o único marcador de preço recalculado: informação, não cor. ---- */
+.tf-plist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.tf-plist li + li { border-top: 1px solid var(--border-subtle); }
+.tf-plist__row {
+  display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 56px;
+  padding: var(--space-3) var(--space-2); background: transparent; border: none;
+  border-radius: var(--radius-sm); text-align: left; font: inherit; color: inherit; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out);
+}
+.tf-plist__row:hover { background: var(--bg-muted); }
+.tf-plist__row:focus-visible { outline: none; box-shadow: none; }
+.tf-plist__row[aria-selected="true"] { background: var(--accent-soft); }
+.tf-plist__main { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.tf-plist__name {
+  font-size: var(--fs-body-sm); font-weight: var(--fw-semibold); color: var(--text-strong);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.tf-plist__meta { font-size: var(--fs-caption); color: var(--text-muted); white-space: nowrap; }
+.tf-plist__val { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; flex: 0 0 auto; }
+.tf-plist__price {
+  font-family: var(--font-numeric); font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features); font-size: var(--fs-base);
+  font-weight: var(--fw-bold); color: var(--text-strong); line-height: 1.15;
+}
+.tf-plist__was {
+  font-family: var(--font-numeric); font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features); font-size: var(--fs-caption); color: var(--text-muted);
+}
+.tf-plist__flag { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-caption); color: var(--warning-text); }
+/* NOVO no lote 18: a marca da linha herdou o laranja de "fixado"/"parado", que eram sempre avisos.
+   A lista de Orçamentos tem cinco estados e três deles não avisam nada. */
+.tf-plist__flag--neutral { color: var(--text-muted); }
+.tf-plist__flag--success { color: var(--success-text); }
+.tf-plist__flag--danger { color: var(--danger-text); }
+
+/* ---- tf-historico (produto: pages/historico/historico-page.css) ---- */
+.tf-historico__filters { display: flex; flex-direction: column; gap: var(--space-2); }
+.tf-historico__chips { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.tf-historico__filterchip {
+  display: inline-flex; align-items: center; flex-wrap: wrap; gap: var(--space-2);
+  color: var(--text-muted); font-size: var(--fs-caption);
+}
+.tf-historico__banner {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); justify-content: space-between;
+}
+.tf-historico__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-block-start: var(--space-2); }
+.tf-historico__section {
+  font-size: var(--fs-caption); font-weight: 600; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--text-muted);
+}
+.tf-historico__piece { display: flex; align-items: baseline; gap: var(--space-2); }
+.tf-historico__piece strong { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+.tf-historico__qty { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.tf-historico__channel { display: flex; flex-direction: column; gap: var(--space-1); }
+.tf-historico__channel-name { font-weight: 600; }
+.tf-historico__meta { color: var(--text-muted); font-size: var(--fs-caption); }
+/* Os dois valores da comparação têm o MESMO peso de propósito: destacar "hoje" faria uma
+   comparação informativa parecer a nova verdade. Cópia verbatim de `.tf-compare`. */
+.tf-compare { display: flex; flex-direction: column; gap: var(--space-2); }
+.tf-compare__row { display: flex; align-items: baseline; gap: var(--space-2); }
+.tf-compare__row strong { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
+/* Diálogo centrado: o produto usa o mesmo Dialog do DS, que centra por padrão; nas pranchetas a
+   moldura do telefone é o contexto de posicionamento (adaptação declarada, a mesma do toaster). */
+.tf-dialog--center {
+  left: var(--space-4); right: var(--space-4); top: 50%; transform: translateY(-50%);
+  padding: var(--space-5); border-radius: var(--radius-lg); max-height: 85%; overflow: auto;
+}
+
+/* Folha lateral (produto: shared/ui/dialog.css, `side="right"`). Adaptação declarada, a mesma do
+   toaster: o produto mede `min(92vw, 26rem)` contra a janela; aqui é `92%` da moldura do telefone,
+   porque a prancheta não é um viewport. Raio, bordas e ancoragem são os do produto. */
+.tf-dialog--sheet-right, .tf-dialog--sheet-left {
+  top: 0; bottom: 0; width: min(92%, 26rem); border-radius: 0;
+}
+.tf-dialog--sheet-right { right: 0; border-radius: var(--radius-xl) 0 0 var(--radius-xl); }
+.tf-dialog--sheet-left { left: 0; border-radius: 0 var(--radius-xl) var(--radius-xl) 0; }
+
+/* ---- tf-table (NOVO — o Catálogo a partir de 1024px) ----
+   Decisão do dono: em 1280px o Catálogo não vira grade de cartões nem mestre-detalhe;
+   vira tabela densa. Com dois dados por item, cartões só espalhariam ar, e o que a
+   largura compra é comparação vertical: seis preços alinhados na mesma coluna tabular.
+   O nome é a única célula que cede (reticências); número nenhum quebra. ---- */
+.tf-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body-sm); }
+.tf-table th {
+  text-align: left; padding: var(--space-2) var(--space-3); white-space: nowrap;
+  font-size: var(--fs-caption); font-weight: var(--fw-semibold); text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-muted); border-bottom: 1px solid var(--border-default);
+}
+.tf-table td { padding: var(--space-3); border-bottom: 1px solid var(--border-subtle); color: var(--text-body); vertical-align: middle; }
+.tf-table tbody tr:hover td { background: var(--bg-muted); }
+.tf-table tbody tr[aria-selected="true"] td { background: var(--accent-soft); }
+.tf-table__name { width: 42%; max-width: 0; font-weight: var(--fw-semibold); color: var(--text-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tf-table__num {
+  font-family: var(--font-numeric); font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features); text-align: right; white-space: nowrap;
+  font-weight: var(--fw-semibold); color: var(--text-strong);
+}
+.tf-table__num--muted { font-weight: var(--fw-regular); color: var(--text-muted); }
+.tf-table__actions { width: 1%; white-space: nowrap; text-align: right; }

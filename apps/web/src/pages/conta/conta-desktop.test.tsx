@@ -18,9 +18,12 @@ import { ContaPage } from "./conta-page";
 
 // O padrão da casa (conta.test.tsx, bom-teaser.test.tsx): a página monta FORA de um RouterProvider,
 // então os hooks de roteador entram dublados. Sem isto, `useSearch` estoura em "stores" de null.
+// 019/PR-A — a intenção `?assinar=1` dos teasers entra por aqui (variável hoisted: o dublê é fixo, o
+// valor não).
+const search = vi.hoisted(() => ({ assinar: undefined as string | undefined }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => ({}) };
+  return { ...actual, useNavigate: () => vi.fn(), useSearch: () => search };
 });
 
 vi.mock("@/entities/user/use-identity", () => ({
@@ -104,5 +107,29 @@ describe("Conta — desktop (018/US4)", () => {
     expect(screen.getByRole("switch")).toBeInTheDocument();
     // …e a oferta volta a ser assunto da gaveta.
     expect(screen.queryByText(messages.billing.offerTitle)).not.toBeInTheDocument();
+  });
+});
+
+// 019/PR-A — dívida do 018 achada pelo e2e (billing-offer-geometry / billing-teasers em chromium):
+// no desktop, para quem pode assinar, a oferta já mora na coluna (`#tf-conta-oferta`); chegar por um
+// teaser (`?assinar=1`) abria a GAVETA por cima — a mesma oferta duas vezes (dois preços, dois rádios
+// de período), a violação de "um convite por tela" (016/US1) que o botão da linha já evitava.
+describe("Conta — desktop, chegando por um teaser (?assinar=1)", () => {
+  let mm: ReturnType<typeof installMatchMedia>;
+  beforeEach(() => {
+    mm = installMatchMedia(VIEWPORT.desktopLarge);
+    search.assinar = "1";
+  });
+  afterEach(() => {
+    mm.restore();
+    search.assinar = undefined;
+  });
+
+  it("a oferta aparece UMA vez — na coluna, sem gaveta por cima", () => {
+    render(<ContaPage />);
+    expect(document.getElementById("tf-conta-oferta")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    // a medida do e2e: 2 rádios de período por oferta; a duplicata dava 4
+    expect(document.querySelectorAll('input[name="tf-billing-period"]')).toHaveLength(2);
   });
 });

@@ -1,0 +1,17 @@
+{
+  "id": "estado-vazio",
+  "nome": "Estado vazio (EmptyState) — a arte que virou ícone, e o vazio da busca",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/shared/ui/empty-state.tsx",
+    "apps/web/src/shared/ui/empty-state.css",
+    "apps/web/src/features/catalog/catalog-panel.tsx"
+  ],
+  "oQueFoiInferido": "O desenho pedia ARTE no vazio; o código entregou um quadrado arredondado de 56px com fundo `--accent-soft` e um ícone Lucide de 28px dentro. O `EmptyStateProps` não tem slot de arte — só `icon?: IconName` —, e o `Grafismo` do app perdeu as props de cor e tamanho que o kit usava, sobrando em 2 telas do produto inteiro. Também decididos no código: `max-width: 28rem` centrado (que dentro de uma coluna de 1720px deixa o vazio perdido no meio), padding --space-10, e o segundo vazio — o da BUSCA sem resultado, com ação 'limpar busca' — que só existe acima de 1280px.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A primeira tela que o vendedor novo vê em Catálogo, Kits, Orçamentos e Simulações é essa — e ela ficou sem a arte que o desenho usava justamente ali para não parecer um erro; o vazio da busca, que só existe no desktop, não tem desenho nenhum.",
+  "prioridade": "MEDIA",
+  "refutacao": "O vazio ESTÁ desenhado, três vezes e COM arte: `CatalogScreen.jsx:19-23` (gate Premium, `art={<Grafismo shape=\"espada\" color=\"var(--accent)\" size={96}/>}`), `CatalogScreen.jsx:51-55` (lista vazia, arco/espada 84) e `HistoryScreen.jsx:20-26`/`:38-39` (linha 96); §C.6 e §E5 pedem o floreio ali. Então 'ninguém desenhou o vazio' é falso — é DIVERGÊNCIA (arte → quadrado com ícone). Mas achei contraprova a favor do código que o mapeador não viu: o canvas do DONO renderiza `tf-empty` com `tf-empty__icon` (l.452-457, painel 'Calcular (ponteiro)'), na forma de ícone, sem arte — só que é o único vazio do canvas e não pertence a nenhuma das 4 abas. Sobrevive o que ninguém desenhou: o vazio da BUSCA sem resultado, o `max-width: 28rem` dentro de 1720px, e os vazios premium das 4 abas (o canvas põe `tf-premium-teaser` no lugar, que é outra peça).",
+  "sobreviveu": true,
+  "area": "design-system"
+}

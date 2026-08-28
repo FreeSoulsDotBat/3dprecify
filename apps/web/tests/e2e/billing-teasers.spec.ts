@@ -70,8 +70,16 @@ test.describe("E6 PR-C — o estorno derruba o premium, visto pelo vendedor", ()
       route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP</html>" }),
     );
     await page.goto("/conta");
-    await page.getByRole("button", { name: tb.subscribeAction }).click();
-    await page.getByRole("dialog").getByRole("button", { name: tb.subscribeAction }).click();
+    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+    await page
+      .locator(".tf-conta__row--plan")
+      .getByRole("button", { name: tb.subscribeAction })
+      .click();
+    await page
+      .locator("#tf-conta-oferta")
+      .getByRole("button", { name: tb.subscribeAction })
+      .click();
     await page.waitForURL(/stub\.mercadopago\.local/);
     const pre = page.url().split("/").pop()!;
 

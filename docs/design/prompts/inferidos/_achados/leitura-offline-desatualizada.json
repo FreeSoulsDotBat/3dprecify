@@ -1,0 +1,16 @@
+{
+  "id": "leitura-offline-desatualizada",
+  "nome": "Leitura offline do Catálogo (faixa \"Modo leitura offline\" + \"pode estar desatualizada\" por item)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/entities/catalog/use-catalog.ts"
+  ],
+  "oQueFoiInferido": "Com `list.stale`, o painel ganha DOIS avisos simultâneos: um `Alert tone=\"info\"` no topo do componente (linhas 437-441, \"Modo leitura offline\" / \"Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.\") e uma linha extra \"pode estar desatualizada\" em CADA item, nos dois ramos (linha 316 no desktop, 391 no mobile). Inferido: a relação entre os dois; a convivência com o banner offline global do shell, que já existe e diz outra coisa; e — o ponto mais duro — o botão \"Adicionar\" permanecer ATIVO, convidando para uma ação que só falha ao salvar.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Três avisos de rede podem aparecer juntos (banner do shell + faixa do painel + linha por item) enquanto o botão de adicionar segue convidando — e o desenho mandava justamente o contrário.",
+  "prioridade": "MEDIA",
+  "refutacao": "Não cai, e a autoridade que existe CONTRADIZ o código num ponto específico, o que o mapeador não tinha extraído. (1) §E9 (linha 287) e §E3 (linha 228) desenham um \"Offline banner discreto em ciano\" no SHELL — não uma faixa dentro do painel, nem um rótulo por linha — e §E3 continua: \"ações de rede (salvar/sync) ficam DESABILITADAS\"; a matriz §G (linha 318) repete para a lista do Catálogo: \"offline: leitura mock ok, salvar off\", e para o form (linha 319): \"salvar desabilitado\". O botão \"Adicionar\" ativo é portanto uma divergência do desenho, não uma lacuna. §D.2 (linha 203) ainda fixa a copy do banner (\"Offline — o cálculo continua funcionando\"), diferente das duas frases implementadas. (3) `CatalogScreen.jsx` não tem faixa nem rótulo por item. (2) A auditoria trata só do contraste do banner GLOBAL (V3 PARTIAL #1, resolvido via `--p3d-info-text` local). (4) `grep -ci offline` no `.dc.html` devolve ZERO — o canvas não desenha offline em nenhum dos quatro artboards.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

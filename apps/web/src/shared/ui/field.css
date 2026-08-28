@@ -87,11 +87,11 @@
 .tf-inputwrap:hover {
   border-color: var(--border-strong);
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco.
+   O `:focus-within` marca só pela cor da borda (o mesmo tom de `--accent`), sem anel. */
 .tf-inputwrap:focus-within {
-  /* Match the ring color so border + ring read as ONE stroke. In dark, --border-accent
-     (#7800ff) differed from --focus-ring (#9a4bff), which showed as a double border. */
-  border-color: var(--focus-ring);
-  box-shadow: var(--ring);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 .tf-inputwrap--sm {
   height: var(--control-h-sm);

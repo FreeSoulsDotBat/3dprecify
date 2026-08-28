@@ -417,6 +417,18 @@ export function useSyncOutbox(
     },
     onSettled: () => {
       void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });
+      // 018 master-detail regression (history-offline.spec.ts, B1/FR-527): on ≥1280px the first
+      // record auto-opens in the detail column (`historico-page.tsx`), so `useSnapshot`'s query can
+      // already be mounted and settled to a real, genuine network error WHILE OFFLINE (`retry:
+      // false`, `networkMode: "always"` — it does not pause, it fails for real). That query never
+      // self-heals on reconnect: `networkMode: "always"` opts a query OUT of the online-manager's
+      // pause/resume machinery, and TanStack's automatic `refetchOnReconnect` piggybacks on that same
+      // mechanism — so an "always" query, once errored, sits there until something explicitly
+      // invalidates it. `useRecordSnapshot` already does this; this reconnect drain (fired from
+      // `OutboxSyncer`'s `online` listener) is the OTHER path that can settle the very entry the
+      // detail is showing, and it must invalidate the SAME key or the detail column is stuck showing
+      // "Não foi possível carregar seus orçamentos." forever over a record that is, by then, synced.
+      void client.invalidateQueries({ queryKey: historyDetailPrefix(uid) });
       void client.invalidateQueries({ queryKey: outboxQueryKey(uid) });
     },
   });

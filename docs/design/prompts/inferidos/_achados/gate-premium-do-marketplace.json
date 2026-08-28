@@ -1,0 +1,17 @@
+{
+  "id": "gate-premium-do-marketplace",
+  "nome": "Gate Premium da seção Marketplace na conta grátis",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/pages/calcular/calcular-page.tsx",
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/features/calculator/calculator-form.css"
+  ],
+  "oQueFoiInferido": "Na conta grátis a seção vira: o mesmo título com ⓘ, o mesmo `<label>` de largura total com o Switch DESLIGADO e `disabled`, uma legenda centralizada 'Vender em marketplaces faz parte do Premium.' e o `TeaserUpgrade align=\"center\"` — e, no desktop, esse bloco sai da coluna direita e vira `.tf-calc-grid__full` (`grid-column: 1/-1`), enquanto 'Outros custos' migra da coluna esquerda para a direita para compensar. Inferido: que o gate mantém a chave visível-porém-morta em vez de substituir a seção por um teaser, o alinhamento centralizado, e sobretudo a RECOMPOSIÇÃO do layout desktop em função do plano — duas montagens diferentes da mesma tela, nenhuma desenhada.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Metade dos usuários (os grátis) vê uma montagem de página que ninguém desenhou; foi exatamente aí que a homologação mediu o buraco de 1.671px e o CTA órfão a ~950px da legenda que o motiva.",
+  "prioridade": "ALTA",
+  "refutacao": "Fui atrás de um precedente desenhado e ele existe, para OUTRO bloco: `-fixes.md` item 1 — 'o card \"Do catálogo\" só pode existir para usuário Premium. Para o usuário grátis, substitua por um card compacto de teaser: \"Preencha direto do seu catálogo — recurso Premium\" + link \"Ver Premium\"' — e o audit V2 registra FIXED, renderizado. Ou seja: o padrão desenhado para gate INLINE dentro da Calcular é SUBSTITUIR o bloco por um teaser compacto, não manter o controle morto na tela. §E8 desenha o upsell como bottom-sheet contextual e diz 'E6 fora de escopo'; `PremiumScreen.jsx` (63 linhas) é a tela de planos. O canvas 018 desenha um teaser Premium completo (linhas 85-95: ícone + título + subtítulo + preço + CTA lg + caption) — mas para Catálogo/Kits/Orçamentos/Conta, e o gate da Calcular não usa essa forma. Nenhuma autoridade trata mudança de layout desktop por entitlement. Sobrevive, PROTOTIPO_PARCIAL — e agora com um padrão desenhado que o código contraria.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

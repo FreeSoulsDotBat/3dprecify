@@ -118,4 +118,27 @@ describe("Segmented", () => {
     renderTabs();
     for (const tab of screen.getAllByRole("tab")) expect(tab).toHaveAttribute("type", "button");
   });
+
+  // 019/PR-A T014 (contracts/ui-porte.md §C0) — a bandeja que ocupa a linha e divide em partes
+  // iguais; só onde a largura é escassa. Sem a prop, a bandeja segue se ajustando ao texto.
+  it("split aplica tf-segmented--split, combinável com o size", () => {
+    render(
+      <Segmented
+        options={OPTIONS}
+        value="fil"
+        onChange={() => {}}
+        ariaLabel="Seções do catálogo"
+        size="sm"
+        split
+      />,
+    );
+    const list = screen.getByRole("tablist", { name: "Seções do catálogo" });
+    expect(list).toHaveClass("tf-segmented--split");
+    expect(list).toHaveClass("tf-segmented--sm");
+  });
+
+  it("sem split nenhuma classe --split é aplicada", () => {
+    renderTabs();
+    expect(screen.getByRole("tablist")).not.toHaveClass("tf-segmented--split");
+  });
 });

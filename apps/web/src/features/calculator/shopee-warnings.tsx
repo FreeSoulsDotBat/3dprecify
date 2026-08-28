@@ -1,7 +1,5 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Icon, InfoTip } from "@/shared/ui";
-
-import "./shopee-warnings.css";
+import { Alert, InfoTip } from "@/shared/ui";
 
 // 016/PR-F (US17, FR-924, T057) — the two Shopee warnings: where the fee is NOT published (the CPF
 // regressive fee below R$ 12), and where a real cost is not modelled because it is incalculable in
@@ -38,17 +36,24 @@ export function ShopeeRegressiveFeeWarning() {
  * mesmo depois de editar). Colapsa para UMA linha (título curto + ⓘ InfoTip com o corpo completo) —
  * continua presente, continua acessível (o InfoTip da casa já é teclado/toque), só não ocupa a
  * altura inteira até alguém pedir o detalhe.
+ *
+ * 019/T021 — a variante `compact` nasceu aqui, local, com uma geometria (8/12px, centrado); a folha
+ * do design a redefiniu no DS com outra (12px/8px, `flex-start`). Promovida: `<Alert compact>` é o
+ * dono; a cópia local morreu (guarda `tf-class-uniqueness`). O ⓘ segue INLINE no título para a
+ * linha continuar UMA (a razão de ser da A5); a diferença de geometria (~8px) é re-medida a 360px.
  */
 export function ShopeeMeasuredFreightWarning() {
   return (
-    <div
-      className="tf-alert tf-alert--info tf-alert--compact"
-      role="status"
+    <Alert
+      tone="info"
+      compact
       data-testid="shopee-measured-freight-warning"
-    >
-      <Icon name="info" size={20} className="tf-alert__icon" aria-hidden="true" />
-      <p className="tf-alert__title">{t.measuredFreightTitle}</p>
-      <InfoTip label={t.measuredFreightTipLabel}>{t.measuredFreightBody}</InfoTip>
-    </div>
+      title={
+        <>
+          {t.measuredFreightTitle}{" "}
+          <InfoTip label={t.measuredFreightTipLabel}>{t.measuredFreightBody}</InfoTip>
+        </>
+      }
+    />
   );
 }

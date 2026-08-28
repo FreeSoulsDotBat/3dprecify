@@ -502,5 +502,8 @@ export const RITMO_OPTIONS: readonly SelectOption[] = [
 /** 016/US8 (FR-910) — "em quantos anos quer que ela se pague": 1–5 anos, sem digitar. */
 export const PAYBACK_YEAR_OPTIONS: readonly SelectOption[] = [1, 2, 3, 4, 5].map((years) => ({
   value: String(years),
-  label: t.machineCost.paybackYearsLabel.replace("{n}", String(years)),
+  label: (years === 1 ? t.machineCost.paybackYearLabel : t.machineCost.paybackYearsLabel).replace(
+    "{n}",
+    String(years),
+  ),
 }));

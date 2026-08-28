@@ -1,0 +1,13 @@
+{
+  "id": "faixa-intermediaria-600-1023",
+  "nome": "Faixa intermediária 600–1023px (menu de 240px + coluna de 460px)",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/app/app-shell.css", "apps/web/src/app/app-shell.tsx"],
+  "oQueFoiInferido": "Entre 600px e 1023px o shell monta a sidebar EXPANDIDA de 240px (`--sidebar-w: 240px`; o rail forçado já acabou aos 599px e o `data-rail=\"collapsed\"` não vale ali) enquanto as páginas continuam limitadas a `--app-max`: `.tf-page-wide { max-width: var(--app-max, 460px) }`, que só sobe para `--content-max` (1120px) em `@media (min-width: 1024px)` e para `--content-max-wide` (1720px) em `@media (min-width: 1280px)`. Resultado não decidido por ninguém: coluna de 460px encostada à esquerda, ~340px+ de vazio à direita, ao lado de um menu de 240px. Falta decidir largura de coluna, alinhamento, e se o menu deveria estar recolhido nessa faixa.",
+  "autoridade": "NENHUMA",
+  "impacto": "Tablets e janelas médias — como muita gente usa um app web em cima da bancada — mostram um telefone esticado ao lado de um menu grande demais. É a mesma classe de desperdício que a homologação do 016 mediu em 1440px (\"~39% usado\") antes de criar a `.tf-page-wide`.",
+  "prioridade": "MEDIA",
+  "refutacao": "Procurei prancha de tablet nas 4 autoridades e não existe nenhuma. §H entrega apenas \"**Todas as telas** (E1–E9) em **mobile (~390px)** e **desktop**\" — dois pontos, sem meio; §C.5 declara só duas larguras de referência (`--app-max 460px` mobile, `--content-max 1120px` desktop), e é exatamente esse par que o CSS usa, o que confirma que a faixa do meio é interpolação de código, não decisão. A auditoria só toca no assunto pelo teto (item 31/#15, \"contentMax still 880\") e registra que ficou NÃO CORRIGIDO nas duas rodadas, empurrado para o app — a própria recomendação final (\"absorva os resíduos no app\") é a prova de que essa decisão foi delegada ao código. `.design-import` é declaradamente mobile-first (readme: \"mobile-first 3D-printing pricing calculator\") e nenhuma das 6 telas tem media query. O canvas 018 tem UM artboard, de 1920px, e o corte de 1280px é a fronteira declarada dele.",
+  "sobreviveu": true,
+  "area": "shell"
+}

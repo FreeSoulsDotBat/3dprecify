@@ -1,0 +1,16 @@
+{
+  "id": "erro-de-carga-e-tentar-novamente",
+  "nome": "Erro ao carregar o Catálogo (alerta + \"Tentar novamente\")",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Linhas 232-239: `Alert tone=\"danger\"` com título \"Não foi possível carregar seu catálogo.\" e, DENTRO do alerta, um `Button variant=\"secondary\" size=\"sm\"` \"Tentar novamente\" com `mt-2`. Inferido: o botão morar dentro do corpo do alerta em vez de ser a ação de um estado de página; o tom `danger` (enquanto offline e pausado usam `info`); ocupar o lugar da lista inteira — o que no desktop leva junto a coluna da ficha, porque o ramo do erro precede o `isWide`. E, no mesmo `else if` (linha 228-231), um SEGUNDO erro sem desenho algum: `ENTITLEMENT_REQUIRED` vira um `EmptyState icon=\"crown\"` só com título, sem corpo e sem ação.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "O caminho de volta depois de uma falha de rede é um botão pequeno embutido num alerta vermelho; no desktop o alerta engole a coluna da ficha inteira, e o estado de entitlement negado não oferece saída nenhuma.",
+  "prioridade": "MEDIA",
+  "refutacao": "REBAIXO a prioridade de ALTA para MEDIA, com razão. O estado NÃO foi inventado: `-fixes.md` item 17 (linha 62) especifica nominalmente \"estado 'Não foi possível carregar. Tente de novo.' + botão 'Tentar novamente' para Catálogo e Histórico\", e a V2 lista 17-19 entre os 20 FIXED (\"load-error+retry\") — houve um desenho renderizado deste estado, com o texto do botão idêntico ao implementado. O que sobra sem autoridade é menor do que o mapeador pintou: a copy do título (\"Não foi possível carregar seu catálogo.\" vs a especificada), o CONTAINER (alerta danger com botão dentro), a consequência no mestre-detalhe, e o ramo `ENTITLEMENT_REQUIRED` — este último realmente sem nenhuma autoridade, já que o protótipo só conhece grátis (que vê o `EmptyState` \"Catálogo é Premium\" com descrição E ação, `CatalogScreen.jsx` linhas 19-23) e não conhece um 403 de leitura. (3) `CatalogScreen.jsx` não tem ramo de erro. (4) O canvas não desenha erro de carga.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

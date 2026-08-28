@@ -43,6 +43,7 @@ import {
   useHistory,
   useRecordSnapshot,
   useSnapshot,
+  useSyncOutbox,
   useUpdateLabel,
 } from "./use-history";
 
@@ -358,6 +359,48 @@ describe("useSnapshot — resolve ONE record by clientSnapshotId (lazy-safe deta
 
     await waitFor(() => expect(result.current.item).toBeNull());
     expect(result.current.isError).toBe(false);
+  });
+});
+
+describe("useSyncOutbox invalidates the detail query too (018 master-detail regression)", () => {
+  it("a reconnect drain that syncs THIS entry un-sticks a detail query that had errored while offline", async () => {
+    // The 018 master-detail auto-opens the first record next to the list (`historico-page.tsx`), so
+    // `useSnapshot`'s own query can already be mounted, offline, and settled to a REAL network error
+    // (`retry: false`) before the seller ever reconnects. `useRecordSnapshot` invalidates the detail
+    // prefix on settle; the RECONNECT drain (`useSyncOutbox`, fired by `OutboxSyncer`'s `online`
+    // listener) is a SEPARATE mutation that used to invalidate only the list + the outbox — never the
+    // detail — so a query that errored offline stayed stuck showing "Não foi possível carregar seus
+    // orçamentos." forever, even after the very record it was trying to show had synced.
+    idbStore.set("history:outbox:u1", [
+      { clientSnapshotId: "csid-1", body: BODY, syncState: "pending", attempts: 0 },
+    ]);
+    // The detail query fails for real while the entry is still only in the outbox (offline).
+    listHistory.mockRejectedValue({ status: 0 });
+
+    const { result } = renderHook(
+      () => ({ snap: useSnapshot("csid-1"), outbox: useSyncOutbox() }),
+      { wrapper },
+    );
+
+    // Item still resolves — from the OUTBOX — even though the server query errored.
+    await waitFor(() => expect(result.current.snap.item?.syncState).toBe("pending"));
+    expect(result.current.snap.isError).toBe(false);
+
+    // Reconnect: the entry syncs, and the server can now answer for it.
+    postSnapshot.mockResolvedValue({ status: 201, data: { id: "s1" } });
+    listHistory.mockResolvedValue({
+      status: 200,
+      data: { items: [{ ...SERVER_ROW, clientSnapshotId: "csid-1" }], nextCursor: null },
+    });
+
+    await result.current.outbox.sync();
+    await waitFor(async () => expect(await listOutbox("u1")).toHaveLength(0));
+
+    // Without invalidating the detail prefix, `snap.item` stays whatever the stale query/outbox
+    // union last computed (null, with `isError` still true) — a record the seller can no longer
+    // reach, even though it is, by now, safely on the server.
+    await waitFor(() => expect(result.current.snap.item?.syncState).toBe("synced"));
+    expect(result.current.snap.isError).toBe(false);
   });
 });
 
