@@ -1,10 +1,48 @@
 import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
 
+import type { PremiumGate } from "@/shared/billing/premium-gate";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
+import { messages } from "@/shared/i18n/messages.pt-br";
 import { Field, NumberField } from "@/shared/ui";
 
 // Small RHF↔DS control adapters shared by the filament + printer forms (T019/T022). They mirror the
 // calculator's `ControlledField` (Field render-fn → NumberField) so a saved value validates with the
 // same wiring the calculator uses — no new field mechanics, just the DS composed around RHF.
+
+const catalogo = messages.catalogo;
+
+// 019/PR-B (T045) — os dois pedaços do rodapé do formulário inerte (prancheta 32b/32e/32f),
+// extraídos aqui para não duplicar a regra "lapsed → reativar, free/deslogado → assinar, unknown →
+// nem frase nem convite" entre FilamentForm/PrinterForm/ProdutoPage — os três compõem o MESMO
+// footer, nunca uma segunda cópia da lógica.
+
+/** A frase acima da linha de botões (`data-testid="premium-footer-note"`) — ausente em `active`
+ *  (o formulário funciona, não há nada a explicar) e em `unknown` (nunca presume, T045). */
+export function PremiumFooterNote({ gate }: { gate: PremiumGate }) {
+  if (gate === "lapsed") {
+    return <p data-testid="premium-footer-note">{catalogo.reactivateBody}</p>;
+  }
+  if (gate === "free-nunca-teve" || gate === "signed-out") {
+    return (
+      <p data-testid="premium-footer-note">{messages.premiumTeaser.salvarFazParteDoPremium}</p>
+    );
+  }
+  return null;
+}
+
+/** O ÚNICO convite da tela quando o formulário inerte está aberto (FR-1906) — o MESMO elemento do
+ *  vazio didático, nunca um segundo link. Ausente em `active` e `unknown`. */
+export function PremiumInviteCta({ gate }: { gate: PremiumGate }) {
+  if (gate === "active" || gate === "unknown") return null;
+  return (
+    <TeaserUpgrade
+      variant="secondary"
+      price={false}
+      signedOut={gate === "signed-out"}
+      label={gate === "lapsed" ? messages.billing.reactivateAction : undefined}
+    />
+  );
+}
 
 interface BaseProps<T extends FieldValues> {
   control: Control<T>;

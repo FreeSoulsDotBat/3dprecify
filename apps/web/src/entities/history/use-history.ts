@@ -15,6 +15,7 @@ import {
   recordSnapshotApiV1HistoryPost,
   relabelSnapshotApiV1HistorySnapshotIdPatch,
 } from "@/shared/api/generated";
+import { type ApiError } from "@/shared/api/transport";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { loadCachedSnapshots, persistCachedSnapshots } from "./history-cache";
@@ -154,6 +155,10 @@ export interface HistoryListState {
   isLoading: boolean;
   /** A COLD failure: the server refused AND there is nothing cached AND nothing queued. */
   isError: boolean;
+  /** 019/PR-B (T111) — the transport error, quando existe (molde `CatalogListState`,
+   *  `entities/catalog/use-catalog.ts:54`): deixa a tela distinguir um 403 `ENTITLEMENT_REQUIRED`
+   *  (a parede caiu, é vazio didático) de uma falha de rede de verdade (é erro/retry). */
+  error: ApiError | null;
   /** Serving retained/cached rows because a read failed — the honest "may be outdated". */
   stale: boolean;
   refetch: () => void;
@@ -262,6 +267,7 @@ export function useHistory(filters: HistoryFilters = {}): HistoryListState {
     isLoading: query.isFetching && !hasData,
     // The wall is ONLY for a COLD failure — nothing fetched, nothing cached, nothing queued.
     isError: query.isError && !hasData,
+    error: (query.error as ApiError | null) ?? null,
     // Serving something non-fresh (retained pages OR the device cache) after a failed read.
     stale: query.isError && hasData,
     refetch: () => void query.refetch(),

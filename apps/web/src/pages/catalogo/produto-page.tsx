@@ -37,13 +37,16 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
+import { PremiumFooterNote, PremiumInviteCta } from "@/features/catalog/catalog-controls";
 import { RecordSnapshotButton, type RecordSource } from "@/features/history/record-snapshot-sheet";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
+import { type PremiumGate } from "@/shared/billing/premium-gate";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Button, Card, Field, Select, Spinner, toast } from "@/shared/ui";
+import { Frozen } from "@/shared/ui/frozen";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 // US6/T030 — the product create/edit FULL PAGE route (ux §1.6b): the calculator body + a name +
@@ -54,27 +57,28 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 // ordinary editable inputs (US6-4) — never blank, never broken. Saving is honest: a real toast
 // only after a real 2xx; a failure keeps the page open with a specific pt-BR line.
 //
-// 013/FB-02 (ux-catalog §3): a lapsed premium keeps every read (FR-409) but freezes writes — a
-// native `<fieldset disabled>` inerts the name field, the pickers and the whole calculator body in
-// one place, with the reactivation line replacing Salvar. Visible and honest from first render,
-// never a fail-at-save surprise. `readOnly` is passed in by CatalogoPage (the same server-informed
-// `useEntitlement()` read it already makes for its other tabs) rather than re-derived here.
-// RecordSnapshotButton/SaveScenarioSheet already self-gate on `active` only, so they need no extra
-// handling.
+// 019/PR-B (T045, ux-catalog §3 + prancheta 32b/32e/32f) — reads/recompute keep working for EVERY
+// gate (FR-409); only writes freeze. Fora de `active` os três `<fieldset>` viram `<Frozen>` (nunca
+// só um `disabled` isolado), Salvar some do rodapé de sempre e vira "Salvar"/"Salvar alterações"
+// SEMPRE renderizado (`type="button" disabled`), e o rodapé ganha a frase + o convite único —
+// mesma regra do FilamentForm/PrinterForm (`PremiumFooterNote`/`PremiumInviteCta`, sem duplicar a
+// lógica). `gate` chega pronto de CatalogoPage (o mesmo `premiumGate()` que os quatro painéis
+// leem) em vez de um `readOnly` binário — 013/FB-02 só cobria `lapsed`; um `free-nunca-teve` que
+// abrisse esta URL direto via `?produto=` via chegava com o formulário VIVO (bug fechado aqui).
+// RecordSnapshotButton/SaveScenarioSheet já se auto-gateiam em `active`, sem mudança.
 
 const t = messages.calculator;
 const pf = messages.productForm;
-const catalogo = messages.catalogo;
 
 export function ProdutoPage({
   productId,
-  readOnly: lapsed = false,
+  gate,
 }: {
   productId?: string;
-  /** Premium lapsed (013/FB-02): presentation only — the server's write-time gate is unchanged
-   *  (Constitution IV). */
-  readOnly?: boolean;
+  /** Os cinco estados (`shared/billing/premium-gate`) — só `active` fica editável. */
+  gate: PremiumGate;
 }) {
+  const active = gate === "active";
   const navigate = useNavigate();
   const products = useProducts();
   const { items: filaments } = useFilaments();
@@ -283,135 +287,163 @@ export function ProdutoPage({
         </Alert>
       )}
 
-      {/* 013/FB-02 (ux-catalog §3): reads/recompute stay complete while lapsed (FR-409); only the
-          write below is frozen — visibly and up front, never discovered at "Salvar". */}
-      {lapsed && (
-        <Alert tone="info" title={catalogo.lapsedTitle}>
-          {catalogo.lapsedBody}
-        </Alert>
-      )}
-
       {/* `display:contents` keeps every child a direct flex item of the section above (same gap
-          rhythm) while a NATIVE `disabled` fieldset inerts every input/select/button nested inside
-          — with zero per-field prop threading. Name/save + the catalog-ref pickers stay full width,
-          above the two-column grid (they identify the product, not price it). */}
-      <fieldset disabled={lapsed} className="contents">
-        {/* Name + save — the page's header action (ux §1.6b). */}
-        <Card padding="md" className="flex flex-col gap-3">
-          <Field label={pf.nameLabel} required error={nameError}>
-            {(p) => (
-              <div className="tf-inputwrap">
-                <input
-                  {...p}
-                  type="text"
-                  className="tf-input"
-                  placeholder={pf.namePlaceholder}
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-            )}
-          </Field>
-          {!lapsed && (
-            <Button
-              loading={create.isPending || update.isPending}
-              onClick={() => void handleSave()}
-            >
-              {pf.saveProduct}
-            </Button>
-          )}
-          {submitError && <Alert tone="danger">{submitError}</Alert>}
-          {lapsed && (
-            <Alert tone="info" title={catalogo.reactivateTitle}>
-              {catalogo.reactivateBody}
-            </Alert>
-          )}
-        </Card>
+          rhythm). `active` fica num `<fieldset>` normal; fora dele veste `<Frozen>` (`tf-frozen`,
+          T045) — inerta cada input/select nested inside, sem thread de prop por campo. Name + os
+          pickers ficam full width, acima da grade de duas colunas (identificam o produto, não o
+          precificam). O botão Salvar saiu daqui (T045): mora no rodapé abaixo, sempre visível. */}
+      {(() => {
+        const identityFields = (
+          <>
+            <Card padding="md" className="flex flex-col gap-3">
+              <Field label={pf.nameLabel} required error={nameError}>
+                {(p) => (
+                  <div className="tf-inputwrap">
+                    <input
+                      {...p}
+                      type="text"
+                      className="tf-input"
+                      placeholder={pf.namePlaceholder}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                    />
+                  </div>
+                )}
+              </Field>
+            </Card>
 
-        {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
-        <Card padding="md" className="flex flex-col gap-3">
-          <p style={sectionLabel}>{t.catalogPicker.title}</p>
-          <p style={captionText}>{t.catalogPicker.hint}</p>
-          <div style={gridCard}>
-            <Field label={t.catalogPicker.filament} tightLabel>
-              {(p) => (
-                <Select
-                  {...p}
-                  options={filamentOptions}
-                  value={filamentId}
-                  onChange={(e) => applyFilament(e.target.value)}
-                />
-              )}
-            </Field>
-            <Field label={t.catalogPicker.printer} tightLabel>
-              {(p) => (
-                <Select
-                  {...p}
-                  options={printerOptions}
-                  value={printerId}
-                  onChange={(e) => applyPrinter(e.target.value)}
-                />
-              )}
-            </Field>
-          </div>
-        </Card>
-      </fieldset>
+            {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
+            <Card padding="md" className="flex flex-col gap-3">
+              <p style={sectionLabel}>{t.catalogPicker.title}</p>
+              <p style={captionText}>{t.catalogPicker.hint}</p>
+              <div style={gridCard}>
+                <Field label={t.catalogPicker.filament} tightLabel>
+                  {(p) => (
+                    <Select
+                      {...p}
+                      options={filamentOptions}
+                      value={filamentId}
+                      onChange={(e) => applyFilament(e.target.value)}
+                    />
+                  )}
+                </Field>
+                <Field label={t.catalogPicker.printer} tightLabel>
+                  {(p) => (
+                    <Select
+                      {...p}
+                      options={printerOptions}
+                      value={printerId}
+                      onChange={(e) => applyPrinter(e.target.value)}
+                    />
+                  )}
+                </Field>
+              </div>
+            </Card>
+          </>
+        );
+        return active ? (
+          <fieldset className="contents">{identityFields}</fieldset>
+        ) : (
+          <Frozen className="contents" data-testid="catalog-form-frozen">
+            {identityFields}
+          </Frozen>
+        );
+      })()}
+
+      {/* 019/PR-B (T045) — rodapé: a frase + o convite (mesmo elemento do vazio didático,
+          FR-1906) fora de `active`, e Salvar SEMPRE visível — `disabled` fora de `active`, nunca um
+          fail-at-save surpresa. */}
+      {!active && <PremiumFooterNote gate={gate} />}
+      <div className={active ? "flex justify-end" : "flex justify-between gap-2"}>
+        {!active && <PremiumInviteCta gate={gate} />}
+        <Button
+          type="button"
+          disabled={!active}
+          loading={create.isPending || update.isPending}
+          onClick={active ? () => void handleSave() : undefined}
+        >
+          {pf.saveProduct}
+        </Button>
+      </div>
+      {submitError && <Alert tone="danger">{submitError}</Alert>}
 
       {/* 016/PR-B (US4/T015) — same two-column split as Calcular (SC-305: identical body,
           identical layout). Costs on the left, markup + marketplace channel editing on the
-          right; each column's own `disabled` fieldset preserves the lapsed-premium freeze
-          exactly as before (FB-02), just scoped per column instead of one big wrapper. */}
+          right; each column freezes independently. 019/PR-B (T045): `active` usa `<fieldset>`
+          normal, fora dele `<Frozen>` — mesma regra do bloco de identidade acima. */}
       <div className="tf-calc-grid">
         <div className="tf-calc-grid__col">
-          <fieldset disabled={lapsed} className="contents">
-            {/* 016/PR-C (US6/US7/US8/US9) — see calcular-page.tsx: SAME body, SAME components,
-                so this route stays byte-identical to Calcular (SC-305). */}
-            <CostsSection control={control} fields={COST_FIELDS} />
-            <FieldGroup
-              control={control}
-              title={t.sections.labor}
-              info={t.sectionInfo.labor}
-              fields={LABOR_AND_FINISH_FIELDS}
-            />
-            <OtherCostsSection
-              control={control}
-              fields={otherCostFields}
-              errors={otherCostErrors}
-              onAppend={() => appendOtherCost(defaultOtherCost())}
-              onRemove={removeOtherCost}
-            />
-          </fieldset>
+          {(() => {
+            const costsFields = (
+              <>
+                {/* 016/PR-C (US6/US7/US8/US9) — see calcular-page.tsx: SAME body, SAME components,
+                    so this route stays byte-identical to Calcular (SC-305). */}
+                <CostsSection control={control} fields={COST_FIELDS} />
+                <FieldGroup
+                  control={control}
+                  title={t.sections.labor}
+                  info={t.sectionInfo.labor}
+                  fields={LABOR_AND_FINISH_FIELDS}
+                />
+                <OtherCostsSection
+                  control={control}
+                  fields={otherCostFields}
+                  errors={otherCostErrors}
+                  onAppend={() => appendOtherCost(defaultOtherCost())}
+                  onRemove={removeOtherCost}
+                />
+              </>
+            );
+            return active ? (
+              <fieldset className="contents">{costsFields}</fieldset>
+            ) : (
+              <Frozen className="contents" data-testid="catalog-form-frozen">
+                {costsFields}
+              </Frozen>
+            );
+          })()}
         </div>
         <div className="tf-calc-grid__col">
-          <fieldset disabled={lapsed} className="contents">
-            <FieldGroup
-              control={control}
-              title={t.sections.markup}
-              info={t.sectionInfo.markup}
-              fields={MARKUP_FIELDS}
-            />
-            <MarketplaceSection
-              control={control}
-              values={values}
-              fields={fields}
-              channelOutcomes={channelOutcomes}
-              included={values.includeMarketplace !== false}
-              onToggleInclude={(next) => setValue("includeMarketplace", next)}
-              onAppend={append}
-              onRemove={remove}
-              onMarketplaceChange={handleMarketplaceChange}
-              refreshFailed={refreshFailed}
-              refreshing={refreshing}
-              onRetryCatalog={retryCatalog}
-              spineFor={(m) => spineForMarketplace(catalog, m)}
-              catalog={catalog}
-              // 016/US11 (T048) — the product page mounts only behind the catalog's OWN
-              // page-level entitlement gate (`catalogo-page.tsx`), so a channel slot here is
-              // always premium already.
-              entitled
-              signedOut={false}
-            />
-          </fieldset>
+          {(() => {
+            const marketFields = (
+              <>
+                <FieldGroup
+                  control={control}
+                  title={t.sections.markup}
+                  info={t.sectionInfo.markup}
+                  fields={MARKUP_FIELDS}
+                />
+                <MarketplaceSection
+                  control={control}
+                  values={values}
+                  fields={fields}
+                  channelOutcomes={channelOutcomes}
+                  included={values.includeMarketplace !== false}
+                  onToggleInclude={(next) => setValue("includeMarketplace", next)}
+                  onAppend={append}
+                  onRemove={remove}
+                  onMarketplaceChange={handleMarketplaceChange}
+                  refreshFailed={refreshFailed}
+                  refreshing={refreshing}
+                  onRetryCatalog={retryCatalog}
+                  spineFor={(m) => spineForMarketplace(catalog, m)}
+                  catalog={catalog}
+                  // 016/US11 (T048) — the product page mounts only behind the catalog's OWN
+                  // page-level entitlement gate (`catalogo-page.tsx`), so a channel slot here is
+                  // always premium already.
+                  entitled
+                  signedOut={false}
+                />
+              </>
+            );
+            return active ? (
+              <fieldset className="contents">{marketFields}</fieldset>
+            ) : (
+              <Frozen className="contents" data-testid="catalog-form-frozen">
+                {marketFields}
+              </Frozen>
+            );
+          })()}
         </div>
       </div>
 

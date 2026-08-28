@@ -8,7 +8,9 @@ import {
 } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { ProductOut } from "@/shared/api/generated";
+import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 import { productNeedsAttention, productSummary } from "@/entities/catalog/product-summary";
 
@@ -18,6 +20,9 @@ import { CatalogPanel } from "./catalog-panel";
 // panel in NAVIGATION mode — create/edit live on the full-page route (ux §1.6b), delete keeps
 // the confirm Dialog here. The row summary resolves the reference NAMES from the sibling
 // caches; a degraded link reads as manual. Never a price in a row (FR-310).
+//
+// 019/PR-B (T044): `gate` substitui o `lapsed` binário — o painel navega (não tem `renderForm`),
+// então só decide vazio didático × lista e o intercept do delete em `gate === "lapsed"`.
 
 const catalogo = messages.catalogo;
 const pf = messages.productForm;
@@ -28,12 +33,8 @@ export function ProductsPanel() {
   const { items: printers, isLoading: printersLoading } = usePrinters();
   const remove = useDeleteProduct();
   const navigate = useNavigate();
-  // 013/FB-02 (confirmation audit F-lapsed): the panel reads its own lapsed state, same as the
-  // filaments/printers siblings. Without this, a lapsed account's Produtos tab showed no "Premium
-  // pausado" banner AND its delete opened a working destructive confirm that only 403'd on submit —
-  // the exact "delete working then fail" ux-catalog §3 forbids (the T034 fix in catalog-panel was
-  // never reached because this flag was never passed). Presentation only; the server stays the gate.
   const entitlement = useEntitlement();
+  const gate = premiumGate(entitlement.data, { status: useSessionStore((s) => s.status) });
 
   const nameOf = (id: string | null, kind: "filament" | "printer") => {
     if (!id) return undefined;
@@ -45,6 +46,8 @@ export function ProductsPanel() {
     <CatalogPanel<ProductOut, never>
       list={list}
       detailKicker={catalogo.detailProduct}
+      feature="products"
+      gate={gate}
       copy={{
         addLabel: catalogo.addProduct,
         emptyTitle: catalogo.emptyProductsTitle,
@@ -71,7 +74,6 @@ export function ProductsPanel() {
       onEditNavigate={(p) => void navigate({ to: "/catalogo", search: { produto: p.id } })}
       remove={(id) => remove.mutateAsync(id)}
       deleting={remove.isPending}
-      lapsed={entitlement.data?.status === "lapsed"}
     />
   );
 }

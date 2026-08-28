@@ -11,7 +11,8 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import { apiErrorMessage } from "@/shared/api/error-messages";
 import type { ScenarioOut } from "@/shared/api/generated";
 import { ApiError } from "@/shared/api/transport";
-import { PremiumTeaser } from "@/shared/billing/premium-teaser";
+import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
+import { VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
 import { useOnline } from "@/shared/lib/use-online";
@@ -185,19 +186,30 @@ function ScenarioListBody({
   onOpenScenario,
   onClose,
   lapsed,
+  gate,
 }: {
   onOpenScenario: (item: ScenarioOut) => void;
   onClose: () => void;
   lapsed: boolean;
+  /** 019/PR-B (T046/T112, prancheta 32c/32f) — o estado que a folha lê de `premiumGate(...)`. */
+  gate: PremiumGate;
 }) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
-  const { items, isLoading, isError, stale, refetch, loadMore, hasMore, isFetchingMore } =
+  const { items, isLoading, isError, error, stale, refetch, loadMore, hasMore, isFetchingMore } =
     useScenarios({ q: debouncedQuery });
 
   const online = useOnline();
   const writesDisabled = lapsed || !online;
   const writesReason = lapsed ? t.writeLapsed : !online ? t.writeOffline : undefined;
+
+  // 019/PR-B (T112) — a parede caiu (`showTeaser` saiu): "nunca teve"/deslogado agora MONTAM esta
+  // folha como todo mundo, e é AQUI que a decisão mora. O fallback do 403 (`ENTITLEMENT_REQUIRED`)
+  // cobre o caso raro em que `premiumGate` ainda não sabe dizer (ex.: entitlement sem resposta) mas
+  // a PRÓPRIA lista já ouviu a recusa do servidor (o mesmo par que `use-history.ts`/T111 usa).
+  const doorGate: PremiumGate =
+    gate === "unknown" && error?.code === "ENTITLEMENT_REQUIRED" ? "free-nunca-teve" : gate;
+  const showDoor = doorGate === "free-nunca-teve" || doorGate === "signed-out";
 
   const rename = useRenameScenario();
   const duplicate = useDuplicateScenario();
@@ -269,6 +281,19 @@ function ScenarioListBody({
       setDeleteError(honestWriteError(err));
     }
   };
+
+  // 019/PR-B (T046, prancheta 32c/32f) — o vazio didático É o conteúdo inteiro: sem busca, sem
+  // spinner de lista — não há nada para buscar em uma conta que nunca salvou (ou não está logada).
+  // O convite (`TeaserUpgrade`, dentro do `VazioDidatico`) é o ÚNICO desta folha (FR-1906).
+  if (showDoor) {
+    return (
+      <VazioDidatico
+        feature="scenarios"
+        gate={doorGate}
+        action={<Button onClick={onClose}>{messages.premiumTeaser.fazerUmCalculo}</Button>}
+      />
+    );
+  }
 
   if (isLoading) {
     return (
@@ -456,38 +481,35 @@ export function ScenariosListSheet({
 }: ScenariosListSheetProps) {
   const sessionStatus = useSessionStore((s) => s.status);
   const entitlement = useEntitlement();
-  const signedOut = sessionStatus !== "authenticated";
-  // Never/free (a session that exists but never bought Premium) meets the SAME honest door as
-  // signed-out (§0.1 matrix, "none" row) — never a broken empty list pretending the feature is on.
-  const showTeaser = signedOut || entitlement.data?.status === "none";
+  // 019/PR-B (T046/T112, prancheta 32c/32f) — a parede caiu: "nunca teve" e deslogado não saltam
+  // mais para o `PremiumTeaser` de página inteira. `ScenarioListBody` monta para todo mundo e é ELA
+  // quem decide (com o próprio `error` da lista) mostrar o vazio didático no lugar do conteúdo.
+  const gate = premiumGate(entitlement.data, { status: sessionStatus });
+  const showsDoor = gate === "free-nunca-teve" || gate === "signed-out";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       {open && (
         <SheetContent>
           <SheetTitle>{t.listTitle}</SheetTitle>
-          {/* 016/T010-A1 — no grátis, a descrição da lista dizia a MESMA promessa que o subtítulo
-              do teaser logo abaixo ("…preços de hoje", duas vezes, coladas) — o "subtítulo
-              duplicado" que a US1-AC2 manda remover. A descrição pertence à LISTA, então ela só
-              renderiza quando a lista renderiza. */}
-          {!showTeaser && <SheetDescription>{t.listSubtitle}</SheetDescription>}
+          {/* 016/T010-A1 — a descrição pertence à LISTA ("Estratégias salvas..."), então ela só
+              renderiza quando existe (ou pode existir) uma lista para descrever — nunca por cima do
+              vazio didático, que já explica a feature com a própria frase. */}
+          {!showsDoor && <SheetDescription>{t.listSubtitle}</SheetDescription>}
 
-          {showTeaser ? (
-            <PremiumTeaser feature="SCENARIOS" signedOut={signedOut} />
-          ) : (
-            <ScenarioListBody
-              lapsed={entitlement.data?.status === "lapsed"}
-              onClose={() => onOpenChange(false)}
-              onOpenScenario={(item) => {
-                onOpenScenario(item.config as unknown as ScenarioConfig, {
-                  id: item.id,
-                  name: item.name,
-                  note: item.note,
-                });
-                onOpenChange(false);
-              }}
-            />
-          )}
+          <ScenarioListBody
+            gate={gate}
+            lapsed={entitlement.data?.status === "lapsed"}
+            onClose={() => onOpenChange(false)}
+            onOpenScenario={(item) => {
+              onOpenScenario(item.config as unknown as ScenarioConfig, {
+                id: item.id,
+                name: item.name,
+                note: item.note,
+              });
+              onOpenChange(false);
+            }}
+          />
         </SheetContent>
       )}
     </Sheet>

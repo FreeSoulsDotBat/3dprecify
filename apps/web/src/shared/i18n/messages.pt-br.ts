@@ -656,10 +656,9 @@ export const messages = {
     // (`shared/billing/premium-teaser.tsx`, registro `premiumTeaser.CATALOG`); as chaves antigas
     // (título/corpo/modal/CTA próprios) saíram daqui — eram exatamente a divergência que a US1
     // existe para eliminar.
-    // Lapsed (Q3 · §3) — calmo, não punitivo
-    lapsedTitle: "Premium pausado",
-    lapsedBody:
-      "Seus itens continuam aqui e podem ser usados no cálculo. Para criar ou editar, reative o Premium.",
+    // 019/PR-B (T038, prancheta 32e): a faixa "Premium pausado" do Catálogo SAIU — "a mensagem agora
+    // mora no formulário, junto ao botão que ela explica" (`reactivateBody`). `lapsedTitle`/`lapsedBody`
+    // foram apagadas por ficarem sem consumidor; as de Kits/Simulações continuam (T090 vigia).
     readOnlyHint: "somente leitura",
     // 013/FB-02 — the reactivation line a read-only form footer shows in place of Salvar
     // (ux-catalog §3, owner-ratified copy). No price, no date — same honesty bar as the teaser.

@@ -9,7 +9,8 @@ import {
   SnapshotDetailPage,
   SnapshotEmbeddedContext,
 } from "@/pages/historico/snapshot-detail-page";
-import { PremiumTeaser } from "@/shared/billing/premium-teaser";
+import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
+import { VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionExpired } from "@/shared/session/session-expiry";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
@@ -68,21 +69,23 @@ export function HistoricoPage() {
   const search = useSearch({ strict: false }) as { snapshot?: string };
   // 018/US2 — o corte de 1280px decide entre mestre-detalhe e a tela de hoje.
   const isWide = useIsWide();
+  // 019/PR-B (T046, prancheta 32f) — a parede caiu: "free-nunca-teve" e "signed-out" NÃO saltam
+  // mais para um teaser de página inteira. A página segue com o cabeçalho normal e é a
+  // `HistoryLedger` (e o corte mestre-detalhe, que a compõe) quem decide mostrar o vazio didático
+  // no lugar da lista — exatamente como quem paga vê um vazio quando ainda não tem registro.
+  const gate = premiumGate(entitlement.data, { status: sessionStatus });
 
-  // Session bootstrap is NOT "signed out" — a premium seller must never flash the teaser (the E3
-  // lesson). Nor is "we have not heard from the server yet" the same as "free".
+  // Session bootstrap is NOT "signed out" — a premium seller must never flash the door. Nor is "we
+  // have not heard from the server yet" the same as "free": `unknown` com dado ausente ainda
+  // precisa do spinner/erro de sempre (o deslogado nunca chega aqui — `premiumGate` já resolve
+  // `signed-out` sem depender de `entitlement.data`).
   if (sessionStatus === "loading") return <GateChecking />;
-  if (sessionStatus !== "authenticated") return <TeaserShell signedOut />;
-  if (!entitlement.data && entitlement.isLoading) return <GateChecking />;
-  // A never-granted account meets the honest door. A LAPSED one does not: its records are its own
-  // data, and FR-517 promises they stay readable — it reaches the ledger and is simply told, calmly,
-  // that writing needs an active Premium.
-  if (entitlement.data?.status === "none") return <TeaserShell signedOut={false} />;
+  if (gate === "unknown" && !entitlement.data && entitlement.isLoading) return <GateChecking />;
   // Settled with NO answer and nothing cached (offline / server down / no persisted plan): do NOT
   // fall through to the ledger's COLD error wall, and do NOT presume "free" for a premium seller
   // whose plan simply could not be checked. A calm "could not verify your plan" + retry, mirroring
   // the shipped E2/E3 gate (review PR-A, C5).
-  if (!entitlement.data) return <GateError onRetry={entitlement.refetch} />;
+  if (gate === "unknown" && !entitlement.data) return <GateError onRetry={entitlement.refetch} />;
   // 018/US2 — no desktop, lista e registro na MESMA tela. Abaixo do corte nada muda: `?snapshot=`
   // continua sendo uma tomada de página inteira, que é o caminho do mobile e do link compartilhado.
   if (isWide) return <HistoryMasterDetail snapshotId={search.snapshot} />;
@@ -154,16 +157,9 @@ function GateChecking() {
   );
 }
 
-function TeaserShell({ signedOut }: { signedOut: boolean }) {
-  return (
-    <GateShell>
-      <PremiumTeaser feature="QUOTES" signedOut={signedOut} />
-    </GateShell>
-  );
-}
-
 function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
   const entitlement = useEntitlement();
+  const sessionStatus = useSessionStore((s) => s.status);
   const navigate = useNavigate();
   // 018/US2 — `embedded` = a lista é a coluna ESQUERDA do mestre-detalhe: sem `<section>` própria,
   // sem PageHeader (a página já os tem). O conteúdo é o mesmo, byte por byte.
@@ -189,6 +185,13 @@ function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
 
   const history = useHistory(filters);
   const entitled = entitlement.data?.status === "active";
+  // 019/PR-B (T046, prancheta 32f) — a porta sem parede: "nunca teve" e deslogado (mais o caso raro
+  // em que `premiumGate` ainda não sabe dizer mas a LISTA já ouviu o 403 do servidor, T111/T112)
+  // ganham o vazio didático NO LUGAR do conteúdo de sempre. `lapsed`/`active` seguem intocados.
+  const gate = premiumGate(entitlement.data, { status: sessionStatus });
+  const doorGate: PremiumGate =
+    gate === "unknown" && history.error?.code === "ENTITLEMENT_REQUIRED" ? "free-nunca-teve" : gate;
+  const showDoor = doorGate === "free-nunca-teve" || doorGate === "signed-out";
   // hotfix 016/A3 (H4) — `HistoryLedger` only mounts past `HistoricoPage`'s own
   // `sessionStatus === "authenticated"` gate, so a mount here already means the session IS back:
   // an `unauthenticated` entry may always be retried from this screen (the mirror of `retryBlocked`,
@@ -263,7 +266,20 @@ function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
   // aqui dentro. Cada render criava uma função nova, o React via um TIPO novo, e desmontava a
   // subárvore inteira — o campo de busca perdia o que estava digitado a cada tecla e o debounce
   // nunca chegava ao servidor. Dois testes do US6 pegaram na hora. Elemento, nunca componente.
-  const conteudo = (
+  const conteudo = showDoor ? (
+    // 019/PR-B (T046) — o vazio didático É o conteúdo inteiro: sem filtros, sem fila, sem spinner
+    // de lista — não há nada para filtrar ou sincronizar em uma conta que nunca gravou (ou não está
+    // logada). O convite é o ÚNICO desta tela (FR-1906/invariante um-teaser).
+    <VazioDidatico
+      feature="quotes"
+      gate={doorGate}
+      action={
+        <Button onClick={() => void navigate({ to: "/calcular" })}>
+          {messages.premiumTeaser.fazerUmCalculo}
+        </Button>
+      }
+    />
+  ) : (
     <>
       {/* A lapse deletes NOTHING: the ledger stays readable, and only writing needs an active
           Premium (FR-517). */}

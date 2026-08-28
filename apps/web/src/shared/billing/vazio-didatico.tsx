@@ -70,6 +70,10 @@ export interface VazioDidaticoProps {
 
 export function VazioDidatico({ feature, gate, action, teaser = true }: VazioDidaticoProps) {
   const copy = copyOf(feature);
+  // `unknown` (logado sem resposta do servidor) NÃO recebe convite: convidar a assinar quem talvez
+  // já pague é presumir — o precedente é o `PlanState` do E6, e o CF-045 da homologação vigia
+  // exatamente isso ("falha de rede nunca é vendida como 'você não é premium'").
+  const convida = teaser && gate !== "unknown";
   return (
     <EmptyState
       icon={copy.icon}
@@ -80,7 +84,7 @@ export function VazioDidatico({ feature, gate, action, teaser = true }: VazioDid
       action={
         <div className="flex flex-col items-center gap-3">
           {action}
-          {teaser && (
+          {convida && (
             <TeaserUpgrade
               signedOut={gate === "signed-out"}
               align="center"

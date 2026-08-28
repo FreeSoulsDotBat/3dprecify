@@ -1,32 +1,39 @@
 import { useForm } from "react-hook-form";
 
 import type { PrinterIn } from "@/shared/api/generated";
+import type { PremiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Alert, Button } from "@/shared/ui";
+import { Frozen } from "@/shared/ui/frozen";
 
-import { ControlledNumber, ControlledText } from "./catalog-controls";
+import {
+  ControlledNumber,
+  ControlledText,
+  PremiumFooterNote,
+  PremiumInviteCta,
+} from "./catalog-controls";
 import { type PrinterFormValues, printerResolver, printerToWire } from "./catalog-schema";
 
 // Printer create/edit form (T022) — the mirror of FilamentForm. Same RHF + E1 validation (the
 // `machineLifetimeHours > 0` denominator rule reuses `machineLifetimePositive`), same money-as-string
 // wire payload, and the avgPower field carries the E1 "consumo médio real, não a placa" hint (FR-022).
-// Read-only mode (lapsed freeze, ux-catalog §3 / 013 FB-02): mirrors FilamentForm's `<fieldset
-// disabled>` + reactivation footer swap.
+//
+// 019/PR-B (T045) — mesma barreira-por-ausência do FilamentForm: fora de `active` o `<form>` não
+// recebe `onSubmit`, os campos vestem `<Frozen>`, e o rodapé troca "Voltar" pelo convite único.
 
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const hints = messages.calculator.hints;
-const catalogo = messages.catalogo;
 
 export interface PrinterFormProps {
   mode: "create" | "edit";
   defaultValues: PrinterFormValues;
   submitting?: boolean;
   submitError?: string;
-  /** Premium lapsed (ux-catalog §3): fields render inert and Salvar is replaced by the
-   *  reactivation line. Presentation only — the server's own gate is unchanged (Constitution IV). */
-  readOnly?: boolean;
-  onSubmit: (body: PrinterIn) => void;
+  /** Os cinco estados (`shared/billing/premium-gate`) — só `active` fica editável. */
+  gate: PremiumGate;
+  /** Ausente fora de `active` — a barreira é a ausência do handler. */
+  onSubmit?: (body: PrinterIn) => void;
   onCancel: () => void;
 }
 
@@ -35,7 +42,7 @@ export function PrinterForm({
   defaultValues,
   submitting = false,
   submitError,
-  readOnly = false,
+  gate,
   onSubmit,
   onCancel,
 }: PrinterFormProps) {
@@ -44,70 +51,77 @@ export function PrinterForm({
     resolver: printerResolver,
     mode: "onTouched",
   });
+  const active = gate === "active";
+  const formFields = (
+    <>
+      <ControlledText
+        control={control}
+        name="name"
+        label={cf.name}
+        placeholder={cf.namePlaceholderPrinter}
+        required
+      />
+      <ControlledNumber
+        control={control}
+        name="machineValue"
+        label={fields.machineValue}
+        currency
+        required
+      />
+      <ControlledNumber
+        control={control}
+        name="machineLifetimeHours"
+        label={fields.machineLifetime}
+        unit="h"
+        required
+      />
+      <ControlledNumber
+        control={control}
+        name="avgPowerKw"
+        label={fields.avgPower}
+        unit="kW"
+        hint={hints.avgPower}
+        required
+      />
+      <ControlledNumber
+        control={control}
+        name="maintenanceReservePerHour"
+        label={fields.maintenance}
+        currency
+        unit="/h"
+        optional
+      />
+    </>
+  );
 
   return (
     <form
       className="flex flex-col gap-3"
-      onSubmit={handleSubmit((values) => onSubmit(printerToWire(values)))}
+      onSubmit={onSubmit && handleSubmit((values) => onSubmit(printerToWire(values)))}
       noValidate
     >
-      <fieldset disabled={readOnly} className="flex flex-col gap-3 border-0 p-0 m-0">
-        <ControlledText
-          control={control}
-          name="name"
-          label={cf.name}
-          placeholder={cf.namePlaceholderPrinter}
-          required
-        />
-        <ControlledNumber
-          control={control}
-          name="machineValue"
-          label={fields.machineValue}
-          currency
-          required
-        />
-        <ControlledNumber
-          control={control}
-          name="machineLifetimeHours"
-          label={fields.machineLifetime}
-          unit="h"
-          required
-        />
-        <ControlledNumber
-          control={control}
-          name="avgPowerKw"
-          label={fields.avgPower}
-          unit="kW"
-          hint={hints.avgPower}
-          required
-        />
-        <ControlledNumber
-          control={control}
-          name="maintenanceReservePerHour"
-          label={fields.maintenance}
-          currency
-          unit="/h"
-          optional
-        />
-      </fieldset>
+      {active ? (
+        <fieldset className="flex flex-col gap-3 border-0 p-0 m-0">{formFields}</fieldset>
+      ) : (
+        <Frozen className="flex flex-col gap-3 border-0 p-0 m-0" data-testid="catalog-form-frozen">
+          {formFields}
+        </Frozen>
+      )}
 
       {submitError && <Alert tone="danger">{submitError}</Alert>}
 
-      {readOnly && (
-        <Alert tone="info" title={catalogo.reactivateTitle}>
-          {catalogo.reactivateBody}
-        </Alert>
-      )}
+      {!active && <PremiumFooterNote gate={gate} />}
 
-      <div className="flex justify-end gap-2">
-        <Button variant="ghost" onClick={onCancel}>
-          {cf.cancel}
-        </Button>
-        {!readOnly && (
-          <Button type="submit" loading={submitting}>
-            {mode === "edit" ? cf.saveChanges : cf.save}
+      <div className={active ? "flex justify-end gap-2" : "flex justify-between gap-2"}>
+        {active && (
+          <Button variant="ghost" onClick={onCancel}>
+            {cf.cancel}
           </Button>
         )}
+        {!active && <PremiumInviteCta gate={gate} />}
+        <Button type={active ? "submit" : "button"} disabled={!active} loading={submitting}>
+          {mode === "edit" ? cf.saveChanges : cf.save}
+        </Button>
       </div>
     </form>
   );

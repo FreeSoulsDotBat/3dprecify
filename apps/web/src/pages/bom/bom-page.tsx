@@ -15,7 +15,9 @@ import { productToForm } from "@/features/calculator/product-mapping";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import type { BomOut, Materialization } from "@/shared/api/generated";
-import { PremiumTeaser } from "@/shared/billing/premium-teaser";
+import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
+import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
+import { VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
@@ -33,17 +35,19 @@ import {
   savesAsReference,
 } from "./kit-save";
 
-// 008/T005+T006 — the /kits page (module stays pages/bom, K1; research R7 wiring): the
-// SERVER-INFORMED premium gate
-// (ADR-0015 — the composer mounts only on an authoritative `GET /api/v1/entitlement`
-// `status = active`, NEVER a local flag) around the BOM composer (US1). The page owns the line
-// list; each line's editor is the calculator piece form hosted at the widgets layer; every money
-// number comes from `computeFromForm` → `composeBom` (pricing-core) — the view sums nothing.
-// Free/signed-out surfaces are the honest US5 teaser (T008); the compute being offline is a SOFT
-// boundary and nothing here implies otherwise (ADR-0015 honesty clause).
+// 008/T005+T006 — the /kits page (module stays pages/bom, K1; research R7 wiring). The page owns
+// the line list; each line's editor is the calculator piece form hosted at the widgets layer;
+// every money number comes from `computeFromForm` → `composeBom` (pricing-core) — the view sums
+// nothing. The compute being offline is a SOFT boundary and nothing here implies otherwise.
 //
-// PR-B adds saving (T015) and reopening (`?id=`), and with them the LAPSED split: a lapsed account
-// is no longer teased, because its saved kits are its own data (FR-409, the Q3 freeze).
+// 019/PR-B (T046, DECISÃO 3 do dono 27/08 — spec §Clarifications): "a parede de /kits cai junto
+// com a do Catálogo, e montar um kit sem salvar é permitido no grátis/lapsed — só 'Salvar'
+// bloqueia." O composer MONTA para qualquer sessão conhecida (deslogado, `none`, `lapsed`,
+// `active`) e COMPÕE para todos — adicionar/remover linha é estado local, nunca rede. A única
+// coisa que o `premiumGate` (`shared/billing/premium-gate.ts`, servidor-informado, Constituição IV
+// intocada) decide aqui é o rodapé de "Salvar" e o convite único (FR-1906). O que continua sendo
+// um MURO é a AUSÊNCIA de resposta do servidor sobre uma conta autenticada (`unknown`) — nunca
+// presumido free nem premium.
 
 const t = messages.bom;
 const tc = messages.calculator;
@@ -110,34 +114,32 @@ export function BomPage() {
   const sessionStatus = useSessionStore((s) => s.status);
   const entitlement = useEntitlement();
 
-  // Session bootstrap is not "signed out" — a premium user must never flash the teaser (review
+  // Session bootstrap is not "signed out" — a premium user must never flash a wrong state (review
   // minor, 2026-07-11).
   if (sessionStatus === "loading") return <GateChecking />;
-  if (sessionStatus !== "authenticated") return <BomGatePanel signedOut />;
+  // 019/PR-B (T046): a conta autenticada ainda precisa de uma resposta do servidor antes do
+  // composer montar — não para decidir SE monta (agora monta sempre), mas para saber COM QUE gate.
   // The retry wall is ONLY for "no server answer at all". A failed BACKGROUND refetch keeps the
   // last server answer in `data` (React Query v5) — tearing the composer down there would destroy
   // every composed line (review major, 2026-07-11); the guard stays server-informed on the
   // last-known response (the ux §0.1 offline-active row depends on exactly that).
-  if (entitlement.isError && !entitlement.data) {
-    return (
-      <GateShell>
-        <Alert tone="info">{t.guardError}</Alert>
-        <Button variant="secondary" onClick={() => void entitlement.refetch()}>
-          {t.guardRetry}
-        </Button>
-      </GateShell>
-    );
+  if (sessionStatus === "authenticated") {
+    if (entitlement.isError && !entitlement.data) {
+      return (
+        <GateShell>
+          <Alert tone="info">{t.guardError}</Alert>
+          <Button variant="secondary" onClick={() => void entitlement.refetch()}>
+            {t.guardRetry}
+          </Button>
+        </GateShell>
+      );
+    }
+    if (!entitlement.data) return <GateChecking />;
   }
-  if (!entitlement.data) return <GateChecking />;
-  // A never-granted account meets the honest teaser. A LAPSED one does not: its kits are its own
-  // data, and the Q3 freeze (FR-409) promises they stay readable — so it reaches the composer,
-  // can reopen and recompute, and is told plainly that saving is what needs an active Premium.
-  // (PR-A parked this split for PR-B; nothing was saveable back then.)
-  if (entitlement.data.status === "none") return <BomGatePanel signedOut={false} />;
   return (
     <BomComposer
       staleEntitlement={entitlement.stale}
-      lapsed={entitlement.data.status === "lapsed"}
+      gate={premiumGate(entitlement.data, { status: sessionStatus })}
     />
   );
 }
@@ -163,17 +165,10 @@ function GateChecking() {
   );
 }
 
-/** The never-granted / signed-out door — the honest US5 teaser (T008). A LAPSED account does not
- *  come here (PR-B): it keeps reading and recomputing its saved kits (FR-409). */
-function BomGatePanel({ signedOut }: { signedOut: boolean }) {
-  return (
-    <GateShell>
-      <PremiumTeaser feature="KITS" signedOut={signedOut} />
-    </GateShell>
-  );
-}
-
-function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; lapsed: boolean }) {
+function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; gate: PremiumGate }) {
+  // 019/PR-B (T046): a única coisa que o gate decide dentro do composer — o resto (compor,
+  // recalcular) é o mesmo para todo mundo (DECISÃO 3).
+  const lapsed = gate === "lapsed";
   const products = useProducts();
   const { catalog, source, refreshFailed, refreshing, refetch: retryCatalog } = useFeeCatalog();
   const navigate = useNavigate();
@@ -403,40 +398,13 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
     }
   };
 
-  // Lapsed + NOT reopening a saved kit = the CREATE entry, and creating is exactly what a lapse
-  // freezes (ADR-0015 gates feature access on `active`; FR-409 only promises the DATA stays
-  // readable). Handing a lapsed seller a full composer and letting them discover at "Salvar" that
-  // none of it can be kept is a fake affordance — so the create door is a calm reactivation panel
-  // that points at the kits they still have (ux §3, the reconciliation the plan asked PR-B to
-  // settle). Reopening a saved kit (`?id=`) still lands in the composer below and recomputes.
-  //
-  // 016/T072-A10 (2026-08-07): `openedKit` is a `find()` over `savedKits.items`, which starts
-  // EMPTY while the list is still loading. That made `!openedKit` transiently TRUE for a LAPSED
-  // seller reopening a saved kit (`?id=…`) — flashing this reactivation panel (meant for the
-  // CREATE case only) over what is actually a valid reopen, before swapping to the composer a
-  // moment later. Held on `savedKits.isLoading` the same way the top-level `BomPage` bootstrap
-  // guard above holds on the entitlement query — a state that WILL resolve differently must not
-  // render as if it already had. Scoped to lapsed only: the active path already hydrates the
-  // composer cleanly once the kit arrives (existing behaviour, untouched).
+  // 019/PR-B (T046, DECISÃO 3): a parede de CRIAÇÃO para quem está lapsed saiu — montar um kit sem
+  // salvar é permitido no lapsed (igual ao grátis); só "Salvar" segue bloqueado, mais abaixo. O
+  // `openedKit` (reopen via `?id=`) continua igual: enquanto `savedKits` carrega, `lines` fica
+  // vazio e o efeito de hidratação (acima) roda quando o kit chega — nenhuma parede especial a
+  // proteger mais (016/T072-A10 ficou sem consumidor, removido).
   // 018/US3 — o corte que decide se o resumo vira coluna ou continua barra no rodapé.
   const isWide = useIsWide();
-
-  if (lapsed && Boolean(search.id) && savedKits.isLoading && !openedKit) return <GateChecking />;
-  if (lapsed && !openedKit) {
-    return (
-      <GateShell>
-        <Alert tone="info" title={t.lapsedTitle}>
-          {t.lapsedBody}
-        </Alert>
-        <Button
-          variant="secondary"
-          onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
-        >
-          {t.viewKits}
-        </Button>
-      </GateShell>
-    );
-  }
 
   return (
     <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
@@ -472,27 +440,51 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
       )}
 
       {lines.length === 0 ? (
-        <EmptyState
-          icon="package"
-          title={t.emptyTitle}
-          description={t.emptyBody}
-          action={
-            <div className="flex flex-col items-center gap-2">
-              <Button onClick={addLine}>
-                <Icon name="plus" size={16} aria-hidden /> {t.addLine}
-              </Button>
-              {/* A seller with saved kits should reach them from the empty composer, not only from
-                  the nav tab (review IA nit, 2026-07-12). */}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
-              >
-                {t.viewKits}
-              </Button>
-            </div>
-          }
-        />
+        gate === "active" ? (
+          <EmptyState
+            icon="package"
+            title={t.emptyTitle}
+            description={t.emptyBody}
+            action={
+              <div className="flex flex-col items-center gap-2">
+                <Button onClick={addLine}>
+                  <Icon name="plus" size={16} aria-hidden /> {t.addLine}
+                </Button>
+                {/* A seller with saved kits should reach them from the empty composer, not only
+                    from the nav tab (review IA nit, 2026-07-12). */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+                >
+                  {t.viewKits}
+                </Button>
+              </div>
+            }
+          />
+        ) : (
+          // 019/PR-B (T046, detalhe 2/prancheta 32c): o vazio didático troca o vazio "de quem
+          // paga" — a mesma forma, a frase mais longa, e o ÚNICO convite da tela (`teaser` default
+          // true — some quando ≥1 linha, cujo rodapé passa a carregar o convite).
+          <VazioDidatico
+            feature="kits"
+            gate={gate}
+            action={
+              <div className="flex flex-col items-center gap-2">
+                <Button onClick={addLine}>
+                  <Icon name="plus" size={16} aria-hidden /> {t.addLine}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+                >
+                  {t.viewKits}
+                </Button>
+              </div>
+            }
+          />
+        )
       ) : (
         // 018/US3 — duas colunas no desktop: peças à esquerda, resumo à direita.
         //
@@ -629,7 +621,26 @@ function BomComposer({ staleEntitlement, lapsed }: { staleEntitlement: boolean; 
               {/* While lapsed, a refused save is the EXPECTED answer, not a failure — the rest of
                 the lapse surface is calm and this must not be the one red thing on it. */}
               {saveError && <Alert tone={lapsed ? "info" : "danger"}>{saveError}</Alert>}
-              <Button onClick={() => void save()} disabled={saving}>
+              {/* 019/PR-B (T046, detalhe 3/prancheta 32b/32e): a frase fica ACIMA da linha de
+                  botões (não cabe ao lado do Salvar a 390px) — e é o convite único desta tela
+                  enquanto há ≥1 linha (o vazio didático perde o dele, `teaser` default true não
+                  aparece aqui porque não há vazio). `unknown` nunca chega aqui (T046 detalhe 4) —
+                  os gates de topo da página seguram nesse estado antes do composer montar; ainda
+                  assim o `gate !== "active"` do botão abaixo cobre esse caso por segurança. */}
+              {gate !== "active" && gate !== "unknown" && (
+                <>
+                  <p data-testid="premium-footer-note" className="text-sm text-[var(--text-body)]">
+                    {messages.premiumTeaser.salvarFazParteDoPremium}
+                  </p>
+                  <TeaserUpgrade
+                    variant="secondary"
+                    price={false}
+                    signedOut={gate === "signed-out"}
+                    label={gate === "lapsed" ? messages.billing.reactivateAction : undefined}
+                  />
+                </>
+              )}
+              <Button onClick={() => void save()} disabled={gate !== "active" || saving}>
                 {saving ? t.saving : t.save}
               </Button>
 

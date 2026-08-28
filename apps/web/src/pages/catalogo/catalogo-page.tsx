@@ -6,7 +6,7 @@ import { KitsPanel } from "@/features/catalog/kits-panel";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 import { ProdutoPage } from "@/pages/catalogo/produto-page";
-import { PremiumTeaser } from "@/shared/billing/premium-teaser";
+import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Segmented } from "@/shared/ui";
@@ -17,10 +17,13 @@ import "./catalogo-page.css";
 // Catálogo — the premium catalog surface (E2 · US3/US4 → T019/T022; US6 → T030). IA = segmented
 // tabs (ux §0.1-A, G1) composed from a Button toggle-group with `role="tablist"` + roving tabindex
 // + `aria-selected` (no new DS primitive invented). Each tab owns one premium panel; Produtos
-// navigates to its full-page create/edit routes (§1.6b). The route is PUBLIC — only the
-// `?produto=` sub-view within it requires auth (`router.tsx` `catalogoRoute`, 007/US7); the
-// free/lapsed teaser is US7. (013 audit remediation, E2-04: this comment previously said
-// "auth-guarded", contradicting the router.)
+// navigates to its full-page create/edit routes (§1.6b). The route is PUBLIC.
+//
+// 019/PR-B (T044, "Premium sem parede") — a parede US7 (`PremiumTeaser`, logado `none` OU
+// deslogado) SAIU: os quatro painéis leem o próprio `premiumGate()` e mostram o vazio didático —
+// não paga vê a MESMA IA de quem paga, nunca uma tela substituta. O `?produto=` continua exigindo
+// auth no `beforeLoad` do router (não mexido aqui); dentro dele o formulário agora nasce inerte
+// para qualquer `gate !== "active"`, não só `lapsed` (013/FB-02 só cobria o vencido).
 
 const catalogo = messages.catalogo;
 
@@ -75,40 +78,23 @@ export function CatalogoPage() {
   const setActive = (id: TabId) =>
     void navigate({ to: "/catalogo", search: { tab: id }, replace: true });
 
-  // US7 (spec scenario 2 / ux §2): free and signed-out accounts meet the honest teaser — never
-  // a broken CRUD screen. The teaser renders ONLY on a POSITIVELY known non-premium state
-  // (signed-out, or the server said "none"); while loading/unknown the real panels render and
-  // stay honest on their own (the server-side 403 → crown state). Server stays authoritative.
-  //
-  // Both hooks are called UNCONDITIONALLY, above every early return (including the `?produto=`
-  // branch right below) — the Rules of Hooks: this component stays mounted across a `/catalogo`
-  // ⇄ `/catalogo?produto=…` transition (same route, different search), so a hook called on only
-  // ONE of those branches throws "Rendered fewer hooks than expected" on the very next render.
+  // 019/PR-B (T044) — a parede US7 saiu: os dois hooks continuam UNCONDICIONAIS, acima de todo
+  // early return (Rules of Hooks — este componente segue montado na transição `/catalogo` ⇄
+  // `/catalogo?produto=…`, mesma rota, `search` diferente), e `gate` é o único derivado que os
+  // quatro painéis e o `ProdutoPage` leem para decidir vazio didático × lista / vivo × inerte.
   const sessionStatus = useSessionStore((s) => s.status);
   const entitlement = useEntitlement();
+  const gate = premiumGate(entitlement.data, { status: sessionStatus });
 
   // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route, now
   // `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
   // required auth for this param, mirroring the old routes' own guard exactly — no entitlement
   // teaser check here either, matching the routes it replaces: ProdutoPage relies on the
-  // server's write-time gate, GC-5). 013/FB-02: `readOnly` is the same server-informed lapsed
-  // read here as everywhere else on this page — ProdutoPage does not re-derive it.
+  // server's write-time gate, GC-5). 019/PR-B: `gate` replaces the `lapsed`-only read (013/FB-02
+  // never covered a "none"/free account reaching this URL directly — T044 closes that gap).
   if (search.produto !== undefined) {
     return (
-      <ProdutoPage
-        productId={search.produto === "novo" ? undefined : search.produto}
-        readOnly={entitlement.data?.status === "lapsed"}
-      />
-    );
-  }
-
-  const signedOut = sessionStatus !== "authenticated";
-  if (signedOut || entitlement.data?.status === "none") {
-    return (
-      <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
-        <PageHeader title={messages.nav.catalogo} />
-        <PremiumTeaser feature="CATALOG" signedOut={signedOut} />
-      </section>
+      <ProdutoPage productId={search.produto === "novo" ? undefined : search.produto} gate={gate} />
     );
   }
 
