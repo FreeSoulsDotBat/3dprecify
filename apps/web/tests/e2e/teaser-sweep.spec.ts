@@ -15,12 +15,21 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 // second composition per screen — a teaser correct on mobile can be duplicated by the desktop
 // branch, and vice versa. That is precisely how the width-dependent defects of this project
 // escaped before (016/PR-B).
+//
+// 019/PR-B (T041) — a parede saiu (FR-1906): a ÂNCORA "a tela renderizou o estado grátis" deixa de
+// ser o título do teaser e passa a ser o título do VAZIO DIDÁTICO; e o invariante é contado em DOIS
+// estados por tela — a lista (o convite mora no vazio) e o formulário inerte ABERTO (o convite mora
+// no rodapé do formulário, e o do vazio some). Um convite em cada estado; nunca dois ao mesmo tempo.
 const CTA = messages.billing.subscribeAction;
 
-const SCREENS: { route: string; title: string }[] = [
-  { route: "/catalogo", title: messages.premiumTeaser.CATALOG.title },
-  { route: "/kits", title: messages.premiumTeaser.KITS.title },
-  { route: "/historico", title: messages.premiumTeaser.QUOTES.title },
+const SCREENS: { route: string; title: string; abrir?: string }[] = [
+  {
+    route: "/catalogo",
+    title: messages.catalogo.emptyFilamentsTitle,
+    abrir: messages.catalogo.addFilament,
+  },
+  { route: "/kits", title: messages.catalogo.emptyKitsTitle },
+  { route: "/historico", title: messages.historico.didaticoTitle },
 ];
 
 const VIEWPORTS = [
@@ -35,9 +44,16 @@ for (const vp of VIEWPORTS) {
     }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto(s.route);
-      // Anchor on the teaser title first — proves the screen finished rendering its gated state.
+      // Anchor on the didactic-empty title first — proves the screen finished rendering its free state.
       await expect(page.getByText(s.title).first()).toBeVisible();
       await expect(page.getByRole("link", { name: CTA })).toHaveCount(1);
+
+      // Second state: the inert form OPEN. The empty state's invite must yield to the form footer's.
+      if (s.abrir) {
+        await page.getByRole("button", { name: s.abrir }).first().click();
+        await expect(page.getByTestId("catalog-form-frozen")).toBeVisible();
+        await expect(page.getByRole("link", { name: CTA })).toHaveCount(1);
+      }
     });
   }
 
@@ -51,7 +67,7 @@ for (const vp of VIEWPORTS) {
     await page.goto("/calcular");
     await page.getByRole("button", { name: messages.scenarios.navEntry }).click();
     const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText(messages.premiumTeaser.SCENARIOS.title)).toBeVisible();
+    await expect(sheet.getByText(messages.scenarios.emptyTitle)).toBeVisible();
     await expect(sheet.getByRole("link", { name: CTA })).toHaveCount(1);
   });
 }

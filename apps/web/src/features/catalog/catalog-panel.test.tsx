@@ -1,11 +1,12 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { FilamentOut } from "@/shared/api/generated";
 import { ApiError } from "@/shared/api/transport";
+import type { PremiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { CatalogPanel } from "./catalog-panel";
@@ -18,7 +19,20 @@ import {
 import { FilamentForm } from "./filament-form";
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
 
-afterEach(() => cleanup());
+// 019/PR-B (T106) — spy real do `toast` para provar ZERO chamadas quando `create`/`update` estão
+// ausentes (o toast FALSO da auditoria: `await create?.(body)` não lançava, e caía direto no
+// sucesso). `importOriginal` preserva todo o resto do módulo (Sheet/Dialog/EmptyState…) — só o
+// `toast` vira espião.
+const { toastSpy } = vi.hoisted(() => ({ toastSpy: vi.fn() }));
+vi.mock("@/shared/ui", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/ui")>();
+  return { ...actual, toast: toastSpy };
+});
+
+afterEach(() => {
+  cleanup();
+  toastSpy.mockClear();
+});
 
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
@@ -64,22 +78,30 @@ function renderPanel(
     create?: ReturnType<typeof vi.fn>;
     update?: ReturnType<typeof vi.fn>;
     remove?: ReturnType<typeof vi.fn>;
+    /** 019/PR-B (T044) — `"active"` por padrão: os testes de CRUD de hoje continuam exercitando
+     *  o caminho vivo sem precisar declarar o gate em cada `it`. */
+    gate?: PremiumGate;
   } = {},
 ) {
   const create = opts.create ?? vi.fn().mockResolvedValue({});
   const update = opts.update ?? vi.fn().mockResolvedValue({});
   const remove = opts.remove ?? vi.fn().mockResolvedValue(undefined);
+  const gate = opts.gate ?? "active";
   render(
     <CatalogPanel<FilamentOut, FilamentFormValues>
       list={opts.list ?? listState()}
       copy={copy}
+      feature="filaments"
+      gate={gate}
       rowName={(f) => f.name}
       rowSummary={filamentSummary}
       emptyForm={emptyFilamentForm}
       toFormValues={filamentToForm}
       renderForm={(args) => <FilamentForm {...args} />}
-      create={create as (body: unknown) => Promise<unknown>}
-      update={update as (id: string, body: unknown) => Promise<unknown>}
+      create={gate === "active" ? (create as (body: unknown) => Promise<unknown>) : undefined}
+      update={
+        gate === "active" ? (update as (id: string, body: unknown) => Promise<unknown>) : undefined
+      }
       remove={remove as (id: string) => Promise<unknown>}
       saving={false}
       deleting={false}
@@ -167,5 +189,155 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
     // No fake success: the honest "precisa de conexão" line shows and the sheet stays open.
     expect(await screen.findByText(catalogo.offlineWriteBlocked)).toBeInTheDocument();
     expect(screen.getByText(cf.newFilament)).toBeInTheDocument();
+  });
+});
+
+// 019/PR-B (T037) — o vazio didático substitui a crown/`ENTITLEMENT_REQUIRED` e o vazio curto de
+// hoje nos dois ramos que o grátis alcança. Nota: `messages.apiError.entitlementRequired` e
+// `messages.premiumTeaser.salvarFazParteDoPremium` são o MESMO texto ("Salvar faz parte do
+// Premium.") — então NÃO dá para provar "não é mais a crown" checando ausência desse texto (ele
+// aparece de novo, legitimamente, como a frase do rodapé do formulário inerte). A prova estrutural
+// é a existência do botão "Adicionar filamento": a crown de hoje nunca teve `action` nenhuma.
+describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)", () => {
+  it("logado sem premium (403 ENTITLEMENT_REQUIRED): vazio didático + Adicionar abre o formulário inerte", async () => {
+    renderPanel({
+      list: listState({
+        items: [],
+        isError: true,
+        error: new ApiError({
+          status: 403,
+          code: "ENTITLEMENT_REQUIRED",
+          message: "",
+          correlationId: null,
+        }),
+      }),
+      gate: "free-nunca-teve",
+    });
+
+    const vazio = screen.getByTestId("vazio-didatico");
+    expect(within(vazio).getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+    expect(within(vazio).getByText(catalogo.didaticoFilamentsBody)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+
+    const frozen = await screen.findByTestId("catalog-form-frozen");
+    expect(frozen.tagName.toLowerCase()).toBe("fieldset");
+    expect(frozen).toHaveAttribute("disabled");
+
+    const note = screen.getByTestId("premium-footer-note");
+    expect(note).toHaveTextContent(messages.premiumTeaser.salvarFazParteDoPremium);
+
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta.className).toContain("tf-btn--secondary");
+    expect(cta.closest("fieldset[disabled]")).toBeNull(); // fora do Frozen
+    expect(cta).not.toHaveAttribute("aria-disabled");
+
+    const saveBtn = screen.getByRole("button", { name: cf.save });
+    expect(saveBtn).toBeVisible();
+    expect(saveBtn).toBeDisabled();
+
+    // A frase vem ANTES da linha de botões no DOM.
+    expect(note.compareDocumentPosition(saveBtn) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // Clicar em tudo: zero chamadas de mutação/toast (create/update nem chegam ao painel).
+    fireEvent.click(saveBtn);
+    fireEvent.click(cta);
+    expect(toastSpy).not.toHaveBeenCalled();
+  });
+
+  it("deslogado: lista vazia SEM consulta é o MESMO vazio didático, e o convite leva ao sign-in", async () => {
+    renderPanel({
+      list: listState({ items: [], isError: false }),
+      gate: "signed-out",
+    });
+
+    const vazio = screen.getByTestId("vazio-didatico");
+    expect(within(vazio).getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+
+    const frozen = await screen.findByTestId("catalog-form-frozen");
+    expect(frozen).toHaveAttribute("disabled");
+
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta.className).toContain("tf-btn--secondary");
+    expect(cta.closest("fieldset[disabled]")).toBeNull();
+    expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
+
+    const saveBtn = screen.getByRole("button", { name: cf.save });
+    expect(saveBtn).toBeVisible();
+    expect(saveBtn).toBeDisabled();
+    fireEvent.click(saveBtn);
+    expect(toastSpy).not.toHaveBeenCalled();
+  });
+});
+
+// 019/PR-B (T038) — lapsed com itens: reads completos, SEM a faixa "Premium pausado", e o
+// formulário abre PREENCHIDO inerte com a frase de reativação.
+describe("CatalogPanel — lapsed com itens (019/PR-B T038)", () => {
+  it("mostra os itens sem a faixa lapsed, e editar abre o formulário preenchido com o convite de reativar", async () => {
+    renderPanel({ gate: "lapsed" }); // default list já tem filA (PLA Azul)
+
+    expect(screen.getByText("PLA Azul")).toBeInTheDocument();
+    expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.edit} PLA Azul` }));
+
+    const frozen = await screen.findByTestId("catalog-form-frozen");
+    expect(within(frozen).getByRole("textbox", { name: cf.name })).toHaveValue("PLA Azul");
+
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalogo.reactivateBody);
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta).toHaveTextContent(messages.billing.reactivateAction);
+    expect(cta.closest("fieldset[disabled]")).toBeNull();
+
+    const saveBtn = screen.getByRole("button", { name: cf.saveChanges });
+    expect(saveBtn).toBeDisabled();
+    fireEvent.click(saveBtn);
+    expect(toastSpy).not.toHaveBeenCalled();
+  });
+});
+
+// 019/PR-B (T106, achado 01 da auditoria) — o toast FALSO: um submit programático (bypassando o
+// botão desabilitado) não pode gerar um sucesso inventado.
+describe("CatalogPanel — sem toast falso quando create/update ausentes (019/PR-B T106)", () => {
+  it("primeira camada: sem onSubmit ligado (gate não-active), um submit nativo no <form> não faz nada", async () => {
+    renderPanel({ list: listState({ items: [] }), gate: "free-nunca-teve" });
+    fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+
+    const frozen = await screen.findByTestId("catalog-form-frozen");
+    const form = frozen.closest("form");
+    expect(form).not.toBeNull();
+    fireEvent.submit(form!);
+
+    expect(toastSpy).not.toHaveBeenCalled();
+    expect(screen.getByText(cf.newFilament)).toBeInTheDocument(); // a gaveta continua aberta
+  });
+
+  it("segunda camada: gate active mas `create` ausente — handleSubmit não fecha nem avisa sozinho", async () => {
+    render(
+      <CatalogPanel<FilamentOut, FilamentFormValues>
+        list={listState({ items: [] })}
+        copy={copy}
+        feature="filaments"
+        gate="active"
+        rowName={(f) => f.name}
+        rowSummary={filamentSummary}
+        emptyForm={emptyFilamentForm}
+        toFormValues={filamentToForm}
+        renderForm={(args) => <FilamentForm {...args} />}
+        remove={vi.fn().mockResolvedValue(undefined)}
+        saving={false}
+        deleting={false}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
+    fireEvent.change(field(cf.name), { target: { value: "PETG Preto" } });
+    fireEvent.change(field(fields.costPerRoll), { target: { value: "135,00" } });
+    fireEvent.change(field(fields.rollWeight), { target: { value: "1" } });
+    fireEvent.click(screen.getByRole("button", { name: cf.save }));
+
+    await waitFor(() => expect(screen.queryByText(cf.newFilament)).toBeInTheDocument());
+    expect(toastSpy).not.toHaveBeenCalled();
   });
 });

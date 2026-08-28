@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ProductOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 // 008/T015d (K3) — the attention indicator on the Produtos LIST, written FAILING-first. A product
 // a kit save materialized arrives with no filament/printer references; so does one whose
@@ -83,11 +84,16 @@ function listState<T>(items: T[]) {
 beforeEach(() => {
   useFilamentsMock.mockReturnValue(listState([{ id: "f1", name: "PLA Azul" }]));
   usePrintersMock.mockReturnValue(listState([{ id: "pr1", name: "Ender 3" }]));
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("Produtos list — the K3 attention indicator", () => {

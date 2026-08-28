@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 // US6-4/T030 — deleting a filament/printer that products REFERENCE warns first (ux §1.6b): the
 // confirm Dialog gains an info line with the count; confirming still deletes (the server
@@ -61,11 +62,17 @@ beforeEach(() => {
   useFilamentsMock.mockReturnValue(listState([filament]));
   useProductsMock.mockReturnValue(listState([]));
   entitlementStatus.current = "active";
+  // 019/PR-B (T044) — `premiumGate()` também lê a sessão.
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("FilamentsPanel — referenced-item delete warn (US6-4)", () => {
@@ -105,8 +112,9 @@ describe("FilamentsPanel — lapsed delete honesty (T034)", () => {
     entitlementStatus.current = "lapsed";
     render(<FilamentsPanel />);
     fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} PLA Azul` }));
-    // The read-only edit sheet with its reactivation footer — the same honest surface Edit uses.
-    expect(screen.getByText(catalogo.reactivateTitle)).toBeInTheDocument();
+    // The inert edit sheet with its reactivation footer (019/PR-B T045) — the same honest surface
+    // Edit uses.
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalogo.reactivateBody);
     // And crucially NOT the working destructive confirm.
     expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
   });

@@ -49,6 +49,10 @@ export interface ScenarioListState {
   isLoading: boolean;
   /** A COLD failure: the server refused AND there is nothing cached. */
   isError: boolean;
+  /** 019/PR-B (T112) — o mesmo campo que `HistoryListState.error` (T111, molde `CatalogListState`):
+   *  deixa a folha distinguir um 403 `ENTITLEMENT_REQUIRED` (a parede caiu, é vazio didático) de uma
+   *  falha de rede de verdade (é erro/retry). Aditivo — nada mais muda no hook. */
+  error: ApiError | null;
   /** Serving cached rows because a read failed — the honest "may be outdated" state. */
   stale: boolean;
   refetch: () => void;
@@ -131,6 +135,7 @@ export function useScenarios(filters: { q?: string } = {}): ScenarioListState {
     items,
     isLoading: query.isFetching && !hasData,
     isError: query.isError && !hasData,
+    error: (query.error as ApiError | null) ?? null,
     stale: query.isError && hasData,
     refetch: () => void query.refetch(),
     loadMore: () => void query.fetchNextPage(),

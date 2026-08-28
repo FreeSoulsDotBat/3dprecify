@@ -607,9 +607,13 @@ describe("BomPage — reopen re-hydrates on fresh server truth (D6 degrade, PR-C
 
 // 016/T072-A10 — a LAPSED seller reopening a saved kit (`?id=…`) must reach the composer (FR-409:
 // reads/recompute survive a lapse). `openedKit` is a `find()` over the kits list, which starts
-// EMPTY while still loading — before this fix that transiently satisfied `!openedKit`, flashing
-// the CREATE-only reactivation panel over a valid reopen.
-describe("BomPage — T072-A10: lapsed reopen never flashes the reactivation panel", () => {
+// EMPTY while still loading.
+// 019/PR-B (T110, DECISÃO 3, 27/08): a parede de CRIAÇÃO (`t.lapsedTitle`/`t.lapsedBody`) que
+// existia para "id não encontrado" SAIU junto com a de criação — não há mais painel especial a
+// flashar; o composer sempre monta, e "não encontrado" degrada para o mesmo vazio didático do
+// grátis (0 linhas). Os dois primeiros testes continuam válidos como estavam (o comportamento que
+// verificavam não mudou); o terceiro está invertido.
+describe("BomPage — T072-A10 + T046: lapsed reopen reaches the composer, id-not-found degrades to the vazio", () => {
   function reopenLapsed(boms: typeof emptyBoms) {
     useSessionStore.setState({ status: "authenticated" });
     useEntitlementMock.mockReturnValue({
@@ -625,7 +629,7 @@ describe("BomPage — T072-A10: lapsed reopen never flashes the reactivation pan
     return render(bomTree(client));
   }
 
-  it("kits list still LOADING: shows a neutral checking state, never the reactivation panel", () => {
+  it("kits list still LOADING: no reactivation copy (there is none anymore) while it hydrates", () => {
     reopenLapsed({ ...emptyBoms, items: [], isLoading: true });
     expect(screen.queryByText(t.lapsedTitle)).not.toBeInTheDocument();
     expect(screen.queryByText(t.lapsedBody)).not.toBeInTheDocument();
@@ -639,8 +643,13 @@ describe("BomPage — T072-A10: lapsed reopen never flashes the reactivation pan
     expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
   });
 
-  it("kits list LOADED, id genuinely not found: the reactivation panel (honest — nothing to reopen)", () => {
+  it("kits list LOADED, id genuinely not found: composer degrades to the vazio didático (T046, inverte o antigo)", () => {
+    // O teste antigo esperava o painel de reativação (`t.lapsedTitle`) — ele saiu (DECISÃO 3). Sem
+    // o kit encontrado, `lines` fica vazio e o gate=lapsed cai no MESMO vazio didático do grátis.
     reopenLapsed({ ...emptyBoms, items: [], isLoading: false });
-    expect(screen.getByText(t.lapsedTitle)).toBeInTheDocument();
+    expect(screen.queryByText(t.lapsedTitle)).not.toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    // A faixa de topo (§32e "sai") não existe mais nesta tela — só o `lapsedBanner`, mantido.
+    expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
   });
 });

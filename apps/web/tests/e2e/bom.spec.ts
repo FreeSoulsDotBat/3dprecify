@@ -25,9 +25,10 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
 }, info) => {
   const email = await signUpThrowaway(page, `bom-${info.workerIndex}`);
 
-  // Free (never granted): /kits shows the honest UNIFIED teaser, never the composer (ADR-0015).
+  // Free (never granted): 019/PR-B — a parede saiu; /kits mostra o vazio didático de Kits (o
+  // composer monta sem salvar — decisão do dono 27/08). Esta visita JIT-provisiona a conta.
   await page.goto("/kits");
-  await expect(page.getByText(t.premiumTeaser.KITS.title)).toBeVisible();
+  await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
 
   grantPremium(email);
 
@@ -164,13 +165,11 @@ for (const vp of [
 test("signed-out at /kits sees the honest UNIFIED teaser; the FREE calculator is untouched (US5, SC-408/409, rewritten 016/US1)", async ({
   page,
 }) => {
-  // Signed-out: /kits renders the teaser directly (no bounce, no dialog). The 5th nav tab
-  // "Kits" is the entry point (K1/SC-410) and must be present on every surface.
-  const pt = t.premiumTeaser.KITS;
+  // Signed-out: 019/PR-B — /kits renders the didactic empty state + live composer directly (no
+  // bounce, no dialog, no wall). The 5th nav tab "Kits" is the entry point (K1/SC-410).
   await page.goto("/kits");
   await expect(page.getByRole("link", { name: t.nav.kits })).toBeVisible();
-  await expect(page.getByText(pt.title)).toBeVisible();
-  await expect(page.getByText(pt.subtitle)).toBeVisible();
+  await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
   // NO price surprise, NO date, NO separate "Entrar"/"Entendi" (US1-AC2): the ONE CTA is
   // TeaserUpgrade's own "Assinar Premium" link, whose href already carries sign-in + redirect.
   // E6/US7 — a proibicao de PRECO caiu com a premissa dela ("cobranca e E6", e o E6 chegou). O
@@ -192,7 +191,7 @@ test("signed-out at /kits sees the honest UNIFIED teaser; the FREE calculator is
   // Recomputes live: a REAL price renders (review nit — assert it, don't just claim it) and no
   // premium wall appears anywhere on this page.
   await expect(page.getByText(/R\$\s?\d/).first()).toBeVisible();
-  await expect(page.getByText(pt.title)).toHaveCount(0);
+  await expect(page.getByText(t.premiumTeaser.KITS.title)).toHaveCount(0);
 });
 
 // 018/US3 (T042) — no desktop a barra "Total do kit" deixa de ser fixada: o resumo vira COLUNA

@@ -2,6 +2,8 @@ import { type CSSProperties, type ReactNode, useState } from "react";
 
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
 import { honestWriteError } from "@/shared/api/error-messages";
+import { type PremiumGate } from "@/shared/billing/premium-gate";
+import { type VazioFeature, VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import {
@@ -28,6 +30,13 @@ import "./catalog-master-detail.css";
 // (form, row texts, wire mapping) come in as props. The honesty rules are enforced HERE: a success
 // toast fires ONLY after a real 2xx; a failed write keeps the Sheet open with a specific, honest line
 // (offline → "precisa de conexão"; a server code → its pt-BR phrase) and never fakes a save.
+//
+// 019/PR-B (T044/T045, "Premium sem parede") — não paga NÃO é mais uma parede: o corpo troca a
+// crown/`ENTITLEMENT_REQUIRED` de hoje e o vazio curto pelo VAZIO DIDÁTICO (`shared/billing/
+// vazio-didatico.tsx`) sempre que `gate !== "active"`, e "Adicionar" abre o MESMO formulário —
+// inerte (`<Frozen>`, barreira = ausência do handler de submit; nunca um 2º gate no cliente,
+// Constituição IV intocada). A faixa "Premium pausado" (T038) saiu: o rodapé do formulário inerte
+// já explica.
 
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
@@ -63,6 +72,8 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   copy: CatalogPanelCopy;
   rowName: (item: TItem) => string;
   rowSummary: (item: TItem) => string;
+  /** Qual vazio didático mostrar (`shared/billing/vazio-didatico.tsx`) — um por aba. */
+  feature: VazioFeature;
   /** Sheet mode (filaments/printers, §0.2). Omitted when the panel NAVIGATES instead (products). */
   emptyForm?: TForm;
   toFormValues?: (item: TItem) => TForm;
@@ -71,9 +82,11 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
     defaultValues: TForm;
     submitting: boolean;
     submitError?: string;
-    /** 013/FB-02 — threaded straight from the panel's `lapsed` prop. */
-    readOnly?: boolean;
-    onSubmit: (body: TWire) => void;
+    /** 019/PR-B (T045) — os cinco estados; `renderForm` decide sozinho o que mostrar em vez do
+     *  `active`/`lapsed` binário de antes (013/FB-02). */
+    gate: PremiumGate;
+    /** Ausente fora de `active` — a barreira é a AUSÊNCIA do handler (T045), nunca um 2º gate. */
+    onSubmit?: (body: TWire) => void;
     onCancel: () => void;
   }) => ReactNode;
   create?: (body: TWire) => Promise<unknown>;
@@ -81,11 +94,15 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   /** Navigation mode (products, ux §1.6b): create/edit are FULL PAGE routes, not a Sheet. */
   onCreateNavigate?: () => void;
   onEditNavigate?: (item: TItem) => void;
-  remove: (id: string) => Promise<unknown>;
-  /** 013/FB-02 — Premium lapsed (ux-catalog §3): reads stay complete, writes render inert (the
-   *  Sheet opens read-only with the reactivation line instead of Salvar). This only presents the
-   *  state `useEntitlement()` already returned — no new gate (Constitution IV untouched). */
-  lapsed?: boolean;
+  /** 019/PR-B (T107, achado do agente): AUSENTE fora de `active` — a mesma barreira estrutural de
+   *  `create`/`update`. Sem `remove`, a lixeira leva à edição (o intercepto honesto do 013/FB-02),
+   *  nunca a um diálogo que iria 403 no submit. */
+  remove?: (id: string) => Promise<unknown>;
+  /** 019/PR-B (T044) — os cinco estados que `premiumGate` deriva (`shared/billing/premium-gate`).
+   *  Decide SÓ o que a tela MOSTRA (vazio didático × lista, formulário vivo × inerte); nunca o que
+   *  PODE — o servidor segue sendo o gate real (Constituição IV intocada, diff vazio em
+   *  `app/entitlement/`). Substitui o `lapsed?: boolean` binário do 013/FB-02. */
+  gate: PremiumGate;
   /** A calm per-row note (E3/K3): the honest "needs attention" line on a product whose saved
    *  filament/printer references are missing. Absent → the row renders exactly as before. */
   rowNote?: (item: TItem) => string | undefined;
@@ -109,7 +126,8 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   rowName: nameOf,
   rowSummary: summaryOf,
   rowNote: noteOf,
-  lapsed = false,
+  feature,
+  gate,
   onDuplicate,
   emptyForm,
   toFormValues,
@@ -154,11 +172,26 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
     setSubmitError(undefined);
   };
 
+  // 019/PR-B (T106, achado 01 da auditoria) — o toast FALSO: `await create?.(body)` com `create`
+  // ausente resolvia pra `undefined` sem lançar, e caía direto no toast + fechar como se um 2xx
+  // real tivesse acontecido. A barreira agora é uma saída explícita: sem `writer`, nem toast nem
+  // fechamento — os valores digitados continuam na tela (nunca um sucesso inventado).
   const handleSubmit = async (body: TWire) => {
     setSubmitError(undefined);
+    if (sheet?.mode === "edit") {
+      if (!update) return;
+      try {
+        await update(sheet.item.id, body);
+        toast(copy.savedToast, { tone: "success" }); // real 2xx only
+        setSheet(null);
+      } catch (err) {
+        setSubmitError(honestWriteError(err));
+      }
+      return;
+    }
+    if (!create) return;
     try {
-      if (sheet?.mode === "edit") await update?.(sheet.item.id, body);
-      else await create?.(body);
+      await create(body);
       toast(copy.savedToast, { tone: "success" }); // real 2xx only
       setSheet(null);
     } catch (err) {
@@ -167,7 +200,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !remove) return;
     setDeleteError(undefined);
     try {
       await remove(deleteTarget.id);
@@ -181,8 +214,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   // erro fica ao lado do formulário em vez de dentro de uma gaveta que nem está aberta.
   const handleInlineSubmit = async (item: TItem, wire: TWire) => {
     setInlineError(undefined);
+    if (!update) return; // T106 — mesma barreira: sem `update`, nem toast nem sucesso inventado
     try {
-      await update?.(item.id, wire);
+      await update(item.id, wire);
       toast(copy.savedToast, { tone: "success" });
     } catch (err) {
       setInlineError(honestWriteError(err));
@@ -211,12 +245,18 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         variant="ghost"
         size="sm"
         aria-label={`${catalogo.remove} ${nameOf(item)}`}
-        onClick={() => (lapsed ? openEdit(item) : setDeleteTarget(item))}
+        onClick={() => (remove ? setDeleteTarget(item) : openEdit(item))}
       >
         <Icon name="trash-2" size={18} aria-hidden />
       </Button>
     </>
   );
+
+  // 019/PR-B (T044) — "Adicionar" no vazio didático abre o MESMO formulário de sempre, inerte fora
+  // de `active`; o Sheet mobile e a ficha do mestre-detalhe são o MESMO propósito (nunca dois
+  // convites simultâneos — FR-1906), então o teaser do vazio se apaga enquanto um dos dois está
+  // aberto (`teaser={sheet === null}`).
+  const nonActiveGate: Exclude<PremiumGate, "active"> | null = gate !== "active" ? gate : null;
 
   let body: ReactNode;
   if (list.isLoading) {
@@ -225,10 +265,56 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         <Spinner />
       </div>
     );
-  } else if (list.isError && list.error?.code === "ENTITLEMENT_REQUIRED") {
-    // Reads are gated server-side for a non-active account — honest, no fake CRUD (the full US7
-    // teaser lands separately; this is the calm, no-price/date placeholder).
-    body = <EmptyState icon="crown" title={messages.apiError.entitlementRequired} />;
+  } else if (
+    nonActiveGate &&
+    ((list.isError && list.error?.code === "ENTITLEMENT_REQUIRED") ||
+      // Um `lapsed` com cache vazio e a REDE falhando não é "nenhum item cadastrado": ele tem itens
+      // que a leitura não trouxe — cai no erro de carga (a ordem da prancheta 29: erro antes de vazio).
+      (list.items.length === 0 && !(list.isError && gate === "lapsed")))
+  ) {
+    // Não paga (ou deslogado, ou pausou): a lista está vazia porque nunca houve leitura (403
+    // honesto) ou porque de fato não há nada salvo — os dois casos leem IGUAL (prancheta 32a/32c):
+    // o vazio didático, nunca a parede/crown de antes.
+    if (isWide && renderForm && toFormValues) {
+      // 32g — mestre-detalhe: o vazio à esquerda, o formulário INERTE de criação à direita. O
+      // convite mora SEMPRE num rodapé de formulário aqui (a ficha, ou o Sheet quando aberto) —
+      // o vazio nunca carrega o seu, senão o desktop mostra dois (FR-1906; T041 conta a 1920).
+      body = (
+        <div className="tf-catalog-md">
+          <div className="tf-catalog-md__master">
+            <VazioDidatico
+              feature={feature}
+              gate={nonActiveGate}
+              action={addButton(true)}
+              teaser={false}
+            />
+          </div>
+          {sheet === null && (
+            <aside className="tf-card tf-catalog-md__detail" data-testid="detail-panel">
+              {renderForm({
+                mode: "create",
+                defaultValues: emptyForm as TForm,
+                submitting: saving ?? false,
+                submitError: undefined,
+                gate,
+                onSubmit: undefined,
+                onCancel: () => undefined,
+              })}
+            </aside>
+          )}
+        </div>
+      );
+    } else {
+      // Produtos/kits (navegam, sem `renderForm`) ou mobile: só o vazio, com o único convite.
+      body = (
+        <VazioDidatico
+          feature={feature}
+          gate={nonActiveGate}
+          action={addButton(true)}
+          teaser={sheet === null}
+        />
+      );
+    }
   } else if (list.isError) {
     body = (
       <Alert tone="danger" title={catalogo.loadError}>
@@ -238,6 +324,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
       </Alert>
     );
   } else if (list.items.length === 0) {
+    // `active` e vazio de verdade: o vazio CURTO de sempre, sem convite nenhum.
     body = (
       <EmptyState
         icon="package"
@@ -314,7 +401,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                         </span>
                       )}
                       {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
-                      {lapsed && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+                      {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
                     </button>
                   </li>
                 );
@@ -347,8 +434,11 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   defaultValues: toFormValues(selected),
                   submitting: saving ?? false,
                   submitError: inlineError,
-                  readOnly: lapsed,
-                  onSubmit: (wire) => void handleInlineSubmit(selected, wire),
+                  gate,
+                  onSubmit:
+                    gate === "active"
+                      ? (wire) => void handleInlineSubmit(selected, wire)
+                      : undefined,
                   onCancel: () => setInlineError(undefined),
                 })}
               </div>
@@ -389,7 +479,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                     </span>
                   )}
                   {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
-                  {lapsed && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+                  {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
                 </button>
                 <Button
                   variant="ghost"
@@ -419,7 +509,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   // already routes lapsed to the read-only reactivation surface; delete now mirrors it,
                   // so both write affordances land on the same honest intercept (the server's
                   // ENTITLEMENT_REQUIRED 403 stays the real backstop — this is presentation only).
-                  onClick={() => (lapsed ? openEdit(item) : setDeleteTarget(item))}
+                  onClick={() => (remove ? setDeleteTarget(item) : openEdit(item))}
                 >
                   <Icon name="trash-2" size={18} aria-hidden />
                 </Button>
@@ -437,13 +527,6 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
       {list.stale && (
         <Alert tone="info" title={catalogo.offlineTitle}>
           {catalogo.offlineBody}
-        </Alert>
-      )}
-
-      {/* 013/FB-02 — Premium lapsed (ux-catalog §3): calm, never punitive; reads stay complete. */}
-      {!list.stale && !list.isError && list.items.length > 0 && lapsed && (
-        <Alert tone="info" title={catalogo.lapsedTitle}>
-          {catalogo.lapsedBody}
         </Alert>
       )}
 
@@ -466,8 +549,12 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   sheet.mode === "edit" ? toFormValues!(sheet.item) : (emptyForm as TForm),
                 submitting: saving ?? false,
                 submitError,
-                readOnly: lapsed,
-                onSubmit: handleSubmit,
+                gate,
+                // T045 — a barreira é a AUSÊNCIA do handler: fora de `active` o formulário nem
+                // recebe onSubmit (o `<form>` do FilamentForm/PrinterForm não fica com um handler
+                // ligado a um botão desabilitado; `handleSubmit` acima é a segunda camada, para
+                // quem chamar `renderForm` diretamente com `gate="active"` mas sem essa checagem).
+                onSubmit: gate === "active" ? handleSubmit : undefined,
                 onCancel: closeSheet,
               })}
             </div>

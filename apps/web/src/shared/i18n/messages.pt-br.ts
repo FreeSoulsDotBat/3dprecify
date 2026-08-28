@@ -584,7 +584,10 @@ export const messages = {
     tabProducts: "Produtos",
     tabKits: "Kits",
     // Empty (premium, per entity)
-    emptyFilamentsTitle: "Nenhum filamento salvo ainda",
+    // 019/PR-B (T042) — prancheta 32a: o título perdeu o "ainda" ("prometia que aquilo ia mudar
+    // sozinho — e para quem não paga, não ia"); é o MESMO título para quem paga e para quem não paga.
+    // Os títulos de impressora/produto/kit NÃO foram desenhados no lote 32 — ficam como estavam.
+    emptyFilamentsTitle: "Nenhum filamento cadastrado",
     emptyFilamentsBody: "Salve seus filamentos uma vez e reutilize em cada cálculo.",
     emptyPrintersTitle: "Nenhuma impressora salva ainda",
     emptyPrintersBody: "Salve os dados da sua impressora uma vez e reutilize em cada cálculo.",
@@ -592,6 +595,18 @@ export const messages = {
     emptyProductsBody: "Salve uma peça com seus custos e reabra com o preço sempre recalculado.",
     emptyKitsTitle: "Nenhum kit salvo ainda",
     emptyKitsBody: "Monte um kit com várias peças e reabra com o preço sempre recalculado.",
+    // 019/PR-B (T042) — o VAZIO DIDÁTICO (prancheta 32c, "as seis frases"): a versão longa que quem
+    // ainda não paga lê no lugar da parede. A de filamento é do dono, verbatim (25/08); as outras
+    // seguem o padrão dela e foram aprovadas pelo dono em 25/08 (design/README.md §4). Transcritas
+    // byte a byte da cópia congelada em `specs/019-porte-design/design/`.
+    didaticoFilamentsBody:
+      "Cadastre um filamento para poder reutilizar em todos os seus cálculos de precificação em poucos cliques.",
+    didaticoPrintersBody:
+      "Cadastre sua impressora para que a depreciação e a energia entrem em todos os cálculos sem você calcular nada.",
+    didaticoProductsBody:
+      "Cadastre uma peça com seus custos para reabrir o preço sempre recalculado, sem digitar tudo de novo.",
+    didaticoKitsBody:
+      "Monte um kit com várias peças para ver o preço do conjunto inteiro recalculado a cada abertura.",
     addFilament: "Adicionar filamento",
     addPrinter: "Adicionar impressora",
     addProduct: "Adicionar produto",
@@ -641,10 +656,9 @@ export const messages = {
     // (`shared/billing/premium-teaser.tsx`, registro `premiumTeaser.CATALOG`); as chaves antigas
     // (título/corpo/modal/CTA próprios) saíram daqui — eram exatamente a divergência que a US1
     // existe para eliminar.
-    // Lapsed (Q3 · §3) — calmo, não punitivo
-    lapsedTitle: "Premium pausado",
-    lapsedBody:
-      "Seus itens continuam aqui e podem ser usados no cálculo. Para criar ou editar, reative o Premium.",
+    // 019/PR-B (T038, prancheta 32e): a faixa "Premium pausado" do Catálogo SAIU — "a mensagem agora
+    // mora no formulário, junto ao botão que ela explica" (`reactivateBody`). `lapsedTitle`/`lapsedBody`
+    // foram apagadas por ficarem sem consumidor; as de Kits/Simulações continuam (T090 vigia).
     readOnlyHint: "somente leitura",
     // 013/FB-02 — the reactivation line a read-only form footer shows in place of Salvar
     // (ux-catalog §3, owner-ratified copy). No price, no date — same honesty bar as the teaser.
@@ -807,6 +821,11 @@ export const messages = {
     emptyBody:
       "Calcule uma peça ou um kit e toque em “Salvar em Orçamentos” para guardar o preço com a data.",
     emptyAction: "Ir para a calculadora",
+    // 019/PR-B (T042) — prancheta 32f: o vazio didático de Orçamentos para quem não paga; o botão
+    // leva à calculadora ("é lá que um orçamento nasce"), rótulo em `premiumTeaser.fazerUmCalculo`.
+    didaticoTitle: "Nenhum orçamento registrado",
+    didaticoBody:
+      "Registre um orçamento para guardar o preço do dia congelado, do jeito que você passou para o cliente.",
     quotedAtCard: "Cotado em {data}",
     quotedAtTime: "Cotado em {data} às {hora}",
     quotedValue: "Valor cotado",
@@ -1074,6 +1093,10 @@ export const messages = {
     emptyBody:
       "Monte uma comparação de marketplaces na calculadora e toque em “Salvar simulação” para guardá-la e reabrir quando quiser.",
     emptyAction: "Voltar para a calculadora",
+    // 019/PR-B (T042) — prancheta 32c: a frase didática de Simulações (o título não foi desenhado no
+    // lote 32 — fica `emptyTitle`); o botão do vazio leva à calculadora (32f).
+    didaticoBody:
+      "Salve uma simulação para reabrir sua estratégia de marketplaces e taxas com os preços de hoje.",
     loadError: "Não foi possível carregar suas simulações.",
     retry: "Tentar novamente",
     loadMore: "Carregar mais",
@@ -1229,6 +1252,8 @@ export const messages = {
     planMonthlyPrice: "R$ 15,99/mês",
     planMonthlyNote: "cobrança todo mês, cancele quando quiser",
     subscribeAction: "Assinar Premium",
+    // 019/PR-B (T042) — prancheta 32e: quem TINHA e deixou vencer vê "Reativar", não "Assinar".
+    reactivateAction: "Reativar Premium",
     // E6/US7 (T032) — a linha de preco dos teasers. So conectivos: os NUMEROS vem de
     // `BILLING_PLANS`, nunca daqui, porque duas fontes de preco sao duas verdades (FR-710/SC-707).
     teaserPriceLead: "Premium:",
@@ -1264,6 +1289,11 @@ export const messages = {
   // Nenhum item explica a mecânica do Premium (isso é da oferta, `billing`); o preço/CTA vêm do
   // `TeaserUpgrade` (E6), absorvido — nunca bifurcado (plan §H).
   premiumTeaser: {
+    // 019/PR-B (T042) — prancheta 32b/32e/32f (Premium - O Caminho Sem Parede): a frase que fica
+    // ACIMA da linha de botões do formulário inerte, e o rótulo do botão do vazio de Orçamentos e
+    // Simulações (o destino, não "Adicionar" — "prometeria uma tela de cadastro que não existe").
+    salvarFazParteDoPremium: "Salvar faz parte do Premium.",
+    fazerUmCalculo: "Fazer um cálculo",
     SCENARIOS: {
       title: "Salve suas simulações",
       // Texto EXATO aprovado pelo dono (spec 016 US1-AC5) — não parafrasear.

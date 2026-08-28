@@ -7,7 +7,9 @@ import {
 } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { PrinterIn, PrinterOut } from "@/shared/api/generated";
+import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 import { CatalogPanel } from "./catalog-panel";
 import {
@@ -19,8 +21,8 @@ import {
 import { PrinterForm } from "./printer-form";
 
 // Printers tab wiring (T022) — the mirror of FilamentsPanel: the same generic premium panel with the
-// printer read cache + online-only write mutations + the printer form. 013/FB-02: same lapsed
-// presentation via the panel's own `useEntitlement()` read.
+// printer read cache + online-only write mutations + the printer form. 019/PR-B (T044/T045): same
+// `gate` wiring as the sibling — presentation AND the create/update barrier by absence.
 
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
@@ -31,6 +33,7 @@ export function PrintersPanel() {
   const update = useUpdatePrinter();
   const remove = useDeletePrinter();
   const entitlement = useEntitlement();
+  const gate = premiumGate(entitlement.data, { status: useSessionStore((s) => s.status) });
   // US6-4: deleting a referenced printer warns first (the server keeps last-known + unlinks).
   const { items: products } = useProducts();
   const deleteWarning = (p: PrinterOut) => {
@@ -42,7 +45,8 @@ export function PrintersPanel() {
     <CatalogPanel<PrinterOut, PrinterFormValues, PrinterIn>
       list={list}
       detailKicker={catalogo.detailPrinter}
-      lapsed={entitlement.data?.status === "lapsed"}
+      feature="printers"
+      gate={gate}
       copy={{
         addLabel: catalogo.addPrinter,
         emptyTitle: catalogo.emptyPrintersTitle,
@@ -57,9 +61,9 @@ export function PrintersPanel() {
       emptyForm={emptyPrinterForm}
       toFormValues={printerToForm}
       renderForm={(args) => <PrinterForm {...args} />}
-      create={(body) => create.mutateAsync(body)}
-      update={(id, body) => update.mutateAsync({ id, body })}
-      remove={(id) => remove.mutateAsync(id)}
+      create={gate === "active" ? (body) => create.mutateAsync(body) : undefined}
+      update={gate === "active" ? (id, body) => update.mutateAsync({ id, body }) : undefined}
+      remove={gate === "active" ? (id) => remove.mutateAsync(id) : undefined}
       saving={create.isPending || update.isPending}
       deleting={remove.isPending}
       deleteWarning={deleteWarning}

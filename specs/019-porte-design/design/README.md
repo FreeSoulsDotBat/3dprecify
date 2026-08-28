@@ -37,6 +37,10 @@ transcrição — a fonte remota pode mudar; a cópia não.
 | `Shell - O Cromo e a Navegacao - Tema Claro.dc.html` | PR-A | `99ad786d35d4bb8d3f86eb9ccc215b1e60a1b25bc2829203c9e3b599f0267a4c` | 2026-08-27 |
 | `Entrada e Bordas - Tema Escuro.dc.html` | PR-A | `d8e02cd4a344b96bee37ca4d18fb265f627487212c049290a3a289b7c7fdc72d` | 2026-08-27 |
 | `Entrada e Bordas - Tema Claro.dc.html` | PR-A | `63b47b214260cd2811da07c385cc69f93b266cbe6b8c978b07071c2acd96e75a` | 2026-08-27 |
+| `Premium - O Caminho Sem Parede - Tema Escuro.dc.html` | PR-B | `65ccbb10e326f8945e168f9ea692c26016557e2733b4746e5a9a64adf819e1fc` | 2026-08-28 |
+| `Premium - O Caminho Sem Parede - Tema Claro.dc.html` | PR-B | `2e4933d8c86d8401e4c14849d4fc24091cacf7cc9a08b8c0c20ec2d166c0d664` | 2026-08-28 |
+| `Catalogo - Os Estados da Lista - Tema Escuro.dc.html` | PR-B | `464275a63c37dae07dce8471827bc56843281357736182058e3b8629e7d5fd62` | 2026-08-28 |
+| `Catalogo - Os Estados da Lista - Tema Claro.dc.html` | PR-B | `63eb56bcc102da14a593a305714771dc4cf6c1209d8c31636758ed2ab79104c6` | 2026-08-28 |
 | _(as demais fatias acrescentam as suas)_ | | | |
 
 **Como as cópias foram feitas (T009, 27/08).** As três pranchetas ESCURAS vieram de `DesignSync get_file`
@@ -52,3 +56,12 @@ geometria/cor.
 **Divergência a registrar na transcrição:** a folha escreve `--warning-text: var(--tf-amber-deep)`; o produto NÃO
 copia esse valor (reprova AA como texto: 3,95/3,46 — dod-evidence §T002). O porte usa `#9a570a` (claro) e
 `var(--tf-orange)` (escuro), decisão do dono de 27/08.
+
+**Como as cópias da PR-B foram feitas (T042, 28/08).** As duas pranchetas ESCURAS vieram de `DesignSync
+get_file` (nenhuma truncada) e foram gravadas verbatim; as CLARAS foram derivadas pela MESMA transformação
+enumerável da T009 (`sed`, os 7 pares) — invariantes conferidas: zero `rgba(255,255,255` sobrando, os dois
+títulos com " — claro", 7/6 blocos `data-theme="light"` (= os blocos `dark` do escuro). **A 32h não existe
+no remoto** (listagem de 28/08: nenhuma prancheta de "entrada com intenção"/deslogado) — a copy do prompt
+`docs/design/prompts/019-lote32h-deslogado.md` NÃO foi transcrita; o comportamento já existe
+(`TeaserUpgrade` → `/sign-in?redirect=/conta?assinar=1`) e a copy entra quando a prancheta existir.
+

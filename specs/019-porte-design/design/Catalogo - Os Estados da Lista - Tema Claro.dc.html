@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">Os estados da lista — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Primeiro lote das <strong style="color:var(--sheet-ink)">de passagem</strong> — as superfícies que apareciam corretas dentro de outra prancheta, mas nunca tiveram os estados próprios exercitados. O Catálogo concentra seis delas, e todas seis são a mesma pergunta: <strong style="color:var(--sheet-ink)">o que a lista mostra quando não tem lista para mostrar?</strong></p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Um único bloco de decisão escolhe entre sete corpos possíveis, nesta ordem: carregando, sem direito, erro, vazio, busca vazia, e a lista. A ordem <em>é</em> a regra — "vazio" vem depois de "erro" de propósito, porque uma leitura que falhou não é um catálogo vazio, e trocar as duas diz a alguém com trinta filamentos que ele não tem nenhum.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#29a">29a</a> os quatro vazios · <a href="#29b">29b</a> carregando, sem direito, erro · <a href="#29c">29c</a> a folha que entra pela direita · <a href="#29d">29d</a> leitura offline e o item defasado · <a href="#29e">29e</a> o diálogo de exclusão · <a href="#29f">29f</a> 1280px, a busca vazia.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Sem primitivo novo.</strong> Estrutura de <code>features/catalog/catalog-panel.tsx</code>; copy literal de <code>messages.pt-br.ts §§ catalogo, catalogForm, apiError</code>.</p>
+<div class="tf-alert tf-alert--warning" style="max-width:880px"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__title">A parede do Premium (29b) e os textos dos vazios (29a) foram superados</p><p class="tf-alert__text">O dono trocou o padrão: o Premium passou a bloquear só no salvar. Esta prancheta continua aqui como registro do comportamento anterior — o desenho a implementar está em <a href="Premium - O Caminho Sem Parede - Tema Escuro.dc.html">O caminho sem parede</a>. O resto dela (carregando, erro, folha lateral, leitura offline, exclusão) segue valendo.</p></div></div>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="29a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os quatro vazios · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Quatro seções, quatro vazios, quatro textos. Nenhum deles diz "nada aqui": cada um explica <em>para que serve</em> guardar aquele tipo de item.</p>
+<div data-theme="light" data-screen-label="29a Quatro vazios" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-segmented tf-segmented--sm tf-segmented--split" role="tablist">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Filamentos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Impressoras</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Produtos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-package"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nenhum filamento salvo ainda</h2>
+<p class="tf-empty__desc" style="margin:0">Salve seus filamentos uma vez e reutilize em cada cálculo.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button></div>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Nenhuma impressora salva ainda</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Salve os dados da sua impressora uma vez e reutilize em cada cálculo.</span>
+<span style="font-size:var(--fs-caption);color:var(--accent-text);margin-top:4px">Adicionar impressora</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Nenhum produto salvo ainda</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Salve uma peça com seus custos e reabra com o preço sempre recalculado.</span>
+<span style="font-size:var(--fs-caption);color:var(--accent-text);margin-top:4px">Adicionar produto</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:2px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Nenhum kit salvo ainda</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Monte um kit com várias peças e reabra com o preço sempre recalculado.</span>
+<span style="font-size:var(--fs-caption);color:var(--accent-text);margin-top:4px">Montar kit</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Filamento e impressora prometem <strong style="color:var(--sheet-ink)">reuso</strong> — "reutilize em cada cálculo". Produto e kit prometem <strong style="color:var(--sheet-ink)">recálculo</strong> — "reabra com o preço sempre recalculado". São duas propostas de valor diferentes, e é por isso que quatro textos existem onde um genérico caberia.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O verbo do último muda: "Montar kit", não "Adicionar kit". Um kit não se adiciona — ele se compõe peça por peça, e o rótulo do botão é o primeiro lugar onde isso aparece.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Cada vazio carrega o próprio botão de criar. Um vazio sem saída é uma tela que descreve um problema e não oferece o passo — e aqui o passo é literalmente a única coisa a fazer.</p>
+</div>
+
+<div id="29b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Carregando, sem direito, erro · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os três corpos que vêm <em>antes</em> do vazio na ordem de decisão. Nenhum dos três pode ser confundido com "você não tem nada salvo".</p>
+<div data-theme="light" data-screen-label="29b Tres estados de carga" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Carregando</span>
+<div class="tf-card" style="display:flex;justify-content:center;padding-block:24px"><span class="tf-spinner tf-spinner--lg"><span class="tf-spinner__ring"></span></span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Sem direito — o servidor recusou a leitura</span>
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--accent)"><span class="tf-ico tf-ico--28 tf-ico-crown"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Salvar faz parte do Premium.</h2>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Erro de carga</span>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__title">Não foi possível carregar seu catálogo.</p><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" style="margin-top:8px">Tentar novamente</button></div></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O giro substituiu um esqueleto desenhado, e a troca é defensável aqui: o esqueleto promete a <em>forma</em> do que vem — e o que vem pode ser um vazio, um erro ou uma parede de Premium. Um esqueleto de três linhas seguido de "nenhum filamento salvo" é uma promessa desmentida.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A recusa por direito é <strong style="color:var(--sheet-ink)">calma e sem preço</strong>: uma coroa, uma frase, nada de data e nada de botão de compra. O convite completo mora no teaser, que chega por outro caminho — aqui só se diz o fato.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">É a única das três que <em>não</em> tem "Tentar novamente". Repetir a leitura daria a mesma recusa: o que falta não é a rede, é o plano.</p>
+</div>
+
+<div id="29c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A folha que entra pela direita · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Filamento e impressora se criam numa folha, não numa página. E ela entra pela <strong style="color:var(--sheet-ink)">direita</strong>, inteira em altura — inclusive no celular.</p>
+<div data-theme="light" data-screen-label="29c Folha criar editar" style="width:390px;height:560px;position:relative;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div style="padding:16px;display:flex;flex-direction:column;gap:10px">
+<div class="tf-page-header" style="margin:0"><h1 class="tf-page-header__title tf-title">Catálogo</h1></div>
+<div class="tf-card tf-card--pad-sm" style="height:64px"></div>
+<div class="tf-card tf-card--pad-sm" style="height:64px"></div>
+</div>
+<div class="tf-dialog__overlay"></div>
+<div class="tf-dialog tf-dialog--sheet tf-dialog--sheet-right">
+<h2 class="tf-dialog__title">Novo filamento</h2>
+<button type="button" class="tf-dialog__x" aria-label="Fechar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button>
+<div style="display:flex;flex-direction:column;gap:12px;margin-top:4px">
+<div class="tf-field">
+<label class="tf-field__label" for="c29n">Nome <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="c29n" class="tf-input" type="text" placeholder="Ex.: PLA Azul"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="c29m">Material</label>
+<div class="tf-inputwrap"><input id="c29m" class="tf-input" type="text" placeholder="Ex.: PLA"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="c29c">Custo do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input id="c29c" class="tf-input tf-input--num" type="text" value="94,90"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="c29p">Peso do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="c29p" class="tf-input tf-input--num" type="text" value="1"><span class="tf-inputwrap__affix">kg</span></div>
+</div>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Criar e editar precisam de conexão.</p></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--secondary">Voltar</button><button type="button" class="tf-btn tf-btn--primary">Salvar</button></div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A ancoragem à direita, do topo ao pé, é o que <strong style="color:var(--sheet-ink)">sobrevive ao teclado do celular</strong>. Uma folha de baixo é empurrada pelo teclado e some com os próprios botões; uma coluna cheia continua rolando com o campo em foco visível.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Falha na escrita <em>mantém a folha aberta</em>, com a frase da causa dentro dela. Fechar e mostrar um aviso avulso perderia os quatro campos que a pessoa acabou de digitar — e o aviso apareceria sobre uma lista que não mudou.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Produtos e kits não usam folha: eles vão para uma página inteira, porque o formulário deles não cabe honestamente em 26rem. Mesmo painel, dois modos — e é o tipo de item que escolhe.</p>
+</div>
+
+<div id="29d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Leitura offline e o item defasado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Sem conexão a lista continua servindo — e cada linha admite, em três palavras, que pode estar velha.</p>
+<div data-theme="light" data-screen-label="29d Offline e defasado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__title">Modo leitura offline</p><p class="tf-alert__text">Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.</p></div></div>
+<ul class="tf-plist">
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">PLA Azul</span><span class="tf-plist__meta">PLA · 1 kg · <span class="tf-plist__flag tf-plist__flag--neutral">pode estar desatualizada</span></span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;94,90</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">PETG Transparente</span><span class="tf-plist__meta">PETG · 1 kg · <span class="tf-plist__flag tf-plist__flag--neutral">pode estar desatualizada</span></span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;129,00</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">TPU Preto</span><span class="tf-plist__meta">TPU · 0,5 kg · <span class="tf-plist__flag tf-plist__flag--neutral">pode estar desatualizada</span></span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;112,00</span></span></span></li>
+</ul>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">A marca é cinza, não laranja</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">"Pode estar desatualizada" é uma <em>ressalva</em>, não um aviso: nada está errado, só não foi confirmado agora. Em laranja, três linhas seguidas viram uma tela de alarme por um estado que é normal no celular.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Repetida em cada linha, e isso é uma pergunta aberta</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A faixa do topo já disse o fato uma vez, para a lista inteira. A ressalva por item repete a mesma verdade N vezes — defensável se a lista mistura itens de origens diferentes, ruído se não mistura.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A faixa é informação, <strong style="color:var(--sheet-ink)">nunca</strong> erro. Estar offline é um estado esperado num app que se propõe a calcular na feira — e a frase divide claramente o que continua (usar no cálculo) do que para (criar e editar).</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A mesma ressalva é reusada quando a leitura falhou <em>online</em>: nos dois casos a lista vem do aparelho. É o único texto do Catálogo que serve a duas causas, e serve porque descreve a consequência em vez da causa.</p>
+</div>
+
+<div id="29e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O diálogo de exclusão · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Quatro versões do mesmo diálogo: sem consequência, com consequência, em voo, e depois da falha. O nome do item aparece na pergunta, sempre.</p>
+<div data-theme="light" data-screen-label="29e Dialogo de exclusao" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<h2 class="tf-dialog__title" style="padding-right:0">Excluir “PLA Azul”?</h2>
+<p class="tf-dialog__desc">Esta ação não pode ser desfeita.</p>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--ghost">Voltar</button><button type="button" class="tf-btn tf-btn--danger">Excluir</button></div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Com produtos que usam este item</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Excluir “PLA Azul”?</h2>
+<p class="tf-dialog__desc">Esta ação não pode ser desfeita.</p>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">Este filamento é usado em 4 produto(s). Eles manterão os últimos valores, editáveis.</p></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--ghost">Voltar</button><button type="button" class="tf-btn tf-btn--danger">Excluir</button></div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Em voo</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Excluir “PLA Azul”?</h2>
+<p class="tf-dialog__desc">Esta ação não pode ser desfeita.</p>
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--ghost" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Voltar</button><button type="button" class="tf-btn tf-btn--danger" aria-disabled="true" style="opacity:.55;cursor:not-allowed"><span class="tf-spinner"><span class="tf-spinner__ring"></span></span>Excluir</button></div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">A exclusão falhou — e é retentável</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Excluir “PLA Azul”?</h2>
+<p class="tf-dialog__desc">Esta ação não pode ser desfeita.</p>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Criar e editar precisam de conexão.</p></div></div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--ghost">Voltar</button><button type="button" class="tf-btn tf-btn--danger">Excluir</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O aviso dos produtos é <strong style="color:var(--sheet-ink)">informação, e a exclusão continua permitida</strong>. Ele não pede confirmação extra nem trava nada: diz o que vai acontecer com os quatro produtos — eles guardam os últimos valores e seguem editáveis — e deixa a pessoa decidir.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Bloquear a exclusão seria o caminho fácil e o errado: o filamento é da pessoa, ela sabe que não usa mais, e um catálogo que não deixa apagar vira um catálogo que ninguém limpa.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os dois últimos espécimes são <strong style="color:var(--sheet-ink)">instantes que não se sobrepõem</strong>, e por isso são dois cartões. Em voo: giro, os dois botões inertes, nenhum alerta — ainda não há o que dizer. Depois da falha: o alerta aparece e o Excluir <em>volta a funcionar</em>, porque o erro só é escrito quando a requisição já assentou. Erro com giro seria um estado que o código não consegue produzir.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">E é o ponto do estado: a falha aqui é quase sempre de conexão, então o botão precisa estar clicável no segundo seguinte. Deixá-lo esmaecido transformaria um erro passageiro num beco.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A saída é "Voltar", como em todo o app — e é a palavra que o próprio módulo de textos garante, não a revisão de código.</p>
+</div>
+
+<div id="29f" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">29f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · a busca que não achou</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">No mestre-detalhe a busca filtra a lista <em>já carregada</em> — nenhuma requisição nova. Por isso o vazio dela fala de busca, e a ficha da direita não fica órfã.</p>
+<div data-theme="light" data-screen-label="29f Desktop busca vazia" style="display:flex;width:1280px;height:640px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar tf-nav--rail" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#29f" title="Calcular"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label sr-only">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#29f" title="Catálogo" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label sr-only">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#29f" title="Kits"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label sr-only">Kits</span></a></li>
+<li><a class="tf-nav__item" href="#29f" title="Orçamentos"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label sr-only">Orçamentos</span></a></li>
+<li><a class="tf-nav__item" href="#29f" title="Conta"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label sr-only">Conta</span></a></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:24px 32px;overflow:hidden">
+<div class="tf-page-header"><h1 class="tf-page-header__title tf-title">Catálogo</h1><p class="tf-page-header__desc">Filamentos, impressoras e produtos que você reutiliza nos cálculos.</p></div>
+<div class="tf-segmented tf-segmented--sm" role="tablist" style="align-self:flex-start">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Filamentos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Impressoras</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Produtos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<div class="tf-catalog-md" style="flex:1;min-height:0">
+<div class="tf-catalog-md__master">
+<div style="display:flex;align-items:center;gap:8px">
+<div class="tf-inputwrap tf-inputwrap--sm" style="flex:1"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted)"></span><input class="tf-input" type="search" value="nylon" aria-label="Buscar no catálogo"></div>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button>
+</div>
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-package"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nada encontrado para essa busca</h2>
+<p class="tf-empty__desc" style="margin:0">Tente outro termo, ou limpe a busca para ver tudo de novo.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Limpar busca</button></div>
+</div>
+</div>
+<div class="tf-catalog-md__detail">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Filamento salvo</span>
+<span class="tf-title" style="font-size:var(--fs-base);color:var(--text-strong)">A ficha segue no último item válido</span>
+<span style="font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted)">A seleção é derivada da lista visível a cada render: item excluído, filtrado ou vindo de outro aparelho cai para um item válido — nunca para uma ficha órfã de algo que não está mais na lista.</span>
+<span style="flex:1"></span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">"Nada encontrado para essa busca" não menciona o termo, ao contrário de Orçamentos e Simulações — que dizem “{termo}”. Três listas, duas convenções.</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A diferença com Orçamentos é real e tem causa: lá a busca <em>vai ao servidor</em> e o termo é o que a consulta usou, então nomeá-lo é informação. Aqui ela filtra em memória, e a frase escolheu apontar a saída em vez de repetir o que está no campo dois centímetros acima.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Ainda assim são duas convenções para o mesmo vazio, em três listas do mesmo app. É a única inconsistência que este lote encontrou — e é pequena o suficiente para ser decisão de gosto, não de correção.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

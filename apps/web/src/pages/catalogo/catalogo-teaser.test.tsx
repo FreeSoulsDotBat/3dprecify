@@ -7,9 +7,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
-// US7/T031 — the honest free-tier teaser on the Catálogo tab (ux §2). 016/US1 (T006): rewritten
-// for the unified `PremiumTeaser` (feature=CATALOG) — no dialog, no "+ Adicionar filamento"
-// affordance on the free surface (US1-AC2), the panel is visible directly.
+// 019/PR-B (T105) — a parede US7 saiu (016/US1 tinha unificado as QUATRO em UM `PremiumTeaser`;
+// agora nem essa sobrevive no Catálogo). Grátis e deslogado veem a MESMA IA de quem paga — o
+// tablist inteiro — com o vazio didático no lugar de cada lista, nunca uma tela substituta. Este
+// arquivo testava exatamente o oposto (ausência de tablist, ausência de "Adicionar filamento") —
+// reescrito para as novas invariantes: tablist sempre presente, vazio didático + UM convite.
 
 const { navigateMock, useEntitlementMock } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
@@ -47,7 +49,7 @@ vi.mock("@/entities/catalog/use-catalog", () => ({
 import { CatalogoPage } from "./catalogo-page";
 
 const tb = messages.billing;
-const pt = messages.premiumTeaser.CATALOG;
+const catalogo = messages.catalogo;
 
 afterEach(() => {
   cleanup();
@@ -55,7 +57,7 @@ afterEach(() => {
   useSessionStore.setState({ status: "anonymous", user: null });
 });
 
-describe("Catálogo tab — FREE signed-in teaser (US7 scenario 2, rewritten 016/US1)", () => {
+describe("Catálogo tab — FREE signed-in: a MESMA IA, com o vazio didático (019/PR-B T105)", () => {
   beforeEach(() => {
     useSessionStore.setState({
       status: "authenticated",
@@ -64,25 +66,26 @@ describe("Catálogo tab — FREE signed-in teaser (US7 scenario 2, rewritten 016
     useEntitlementMock.mockReturnValue({ data: { status: "none" }, isLoading: false });
   });
 
-  it("explains the premium value honestly, directly — never a broken CRUD screen, never a dialog", () => {
+  it("mostra o tablist inteiro — nunca uma tela substituta", () => {
     render(<CatalogoPage />);
-
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
-    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
-    expect(screen.getByText(pt.caption)).toBeInTheDocument();
-    // NO CRUD surface, NO dialog, NO "+ Adicionar filamento" affordance (US1-AC2).
-    expect(screen.queryByRole("tablist")).not.toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /adicionar filamento/i })).not.toBeInTheDocument();
   });
 
-  it("the CTA leads to the offer directly — no price, no date, no fake purchase", () => {
+  it("o vazio didático explica a feature — mesmo título/frase de quem paga, verbatim (T042)", () => {
     render(<CatalogoPage />);
+    const vazio = screen.getByTestId("vazio-didatico");
+    expect(vazio).toHaveTextContent(catalogo.emptyFilamentsTitle);
+    expect(vazio).toHaveTextContent(catalogo.didaticoFilamentsBody);
+  });
 
-    const cta = screen.getByRole("link", { name: tb.subscribeAction });
-    expect(cta).toHaveAttribute("href", "/conta?assinar=1");
-    // E6/US7 — a proibição de PREÇO caiu com a premissa dela ("billing is E6", e o E6 chegou). O
-    // que sobra é a honestidade do preço: só os três números praticados, sem urgência/"de-por".
+  it("exatamente UM convite 'Assinar Premium', levando à oferta direto — sem preço-de-checkout, sem data", () => {
+    render(<CatalogoPage />);
+    const links = screen.getAllByRole("link", { name: tb.subscribeAction });
+    expect(links).toHaveLength(1);
+    expect(links[0]).toHaveAttribute("href", "/conta?assinar=1");
+
+    // E6/US7 — só os três preços praticados, nunca uma urgência/desconto fabricado.
     const texto = document.body.textContent ?? "";
     for (const n of texto.match(/\d+[.,]\d{2}/g) ?? []) {
       expect(["15,99", "12,99", "155,88"]).toContain(n);
@@ -99,23 +102,24 @@ describe("Catálogo tab — FREE signed-in teaser (US7 scenario 2, rewritten 016
   });
 });
 
-describe("Catálogo tab — SIGNED-OUT teaser (US7 / ux §2.2, rewritten 016/US1)", () => {
+describe("Catálogo tab — SIGNED-OUT: a MESMA IA, o convite passa pelo sign-in (019/PR-B T105)", () => {
   beforeEach(() => {
     useSessionStore.setState({ status: "anonymous", user: null });
     useEntitlementMock.mockReturnValue({ data: undefined, isLoading: false });
   });
 
-  it("shows the same honest layout, and the CTA's own href carries the sign-in + redirect intent", () => {
+  it("mostra o mesmo tablist + vazio didático, e o convite carrega a intenção de voltar", () => {
     render(<CatalogoPage />);
+    expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
 
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
     const cta = screen.getByRole("link", { name: tb.subscribeAction });
     expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
   });
 });
 
-describe("Catálogo tab — premium keeps the real CRUD surface", () => {
-  it("active entitlement renders the tabs, not the teaser", () => {
+describe("Catálogo tab — premium ativo: tabs SEM vazio didático (regression guard)", () => {
+  it("active entitlement renders the tabs, never the vazio didático/convite", () => {
     useSessionStore.setState({
       status: "authenticated",
       user: { uid: "u-1", email: "u@x.dev" } as never,
@@ -124,6 +128,7 @@ describe("Catálogo tab — premium keeps the real CRUD surface", () => {
     render(<CatalogoPage />);
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
-    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: tb.subscribeAction })).not.toBeInTheDocument();
   });
 });

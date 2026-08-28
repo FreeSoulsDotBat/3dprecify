@@ -37,16 +37,25 @@ export async function signUpThrowaway(page: Page, tag: string): Promise<string> 
  *  Retries while the account doesn't exist yet: the backend creates it JIT on the FIRST
  *  authenticated request after sign-up, and on a loaded CI runner the grant can race that
  *  request ("no existing account matches …" — observed on the PR #26 run). Bounded retry,
- *  any other error still throws immediately. */
-export function grantPremium(email: string): void {
+ *  any other error still throws immediately.
+ *
+ *  `expiresAt` (019/T114) repasses `--expires <ISO>` ao script (`grant_premium.py:150-156,167`,
+ *  ISO datetime/date, optional) — para armar um grant com prazo. NÃO confundir com
+ *  `forcarExpiracao` (`billing-lifecycle.spec.ts:32-54`, que faz UPDATE direto para simular a
+ *  transição ativo→vencido de uma assinatura JÁ concedida); aqui o prazo nasce COM o grant. */
+export function grantPremium(email: string, opts?: { expiresAt?: string }): void {
   const deadline = Date.now() + 15_000;
+  const expiresFlag = opts?.expiresAt ? ` --expires ${opts.expiresAt}` : "";
   for (;;) {
     try {
-      execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
-        cwd: backendDir,
-        stdio: "pipe",
-        env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
-      });
+      execSync(
+        `uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e${expiresFlag}`,
+        {
+          cwd: backendDir,
+          stdio: "pipe",
+          env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
+        },
+      );
       return;
     } catch (err) {
       const stderr = (err as { stderr?: Buffer }).stderr?.toString() ?? "";

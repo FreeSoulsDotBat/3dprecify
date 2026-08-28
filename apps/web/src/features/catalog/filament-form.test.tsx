@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -27,6 +27,7 @@ function renderForm(over: Partial<Parameters<typeof FilamentForm>[0]> = {}) {
     <FilamentForm
       mode="create"
       defaultValues={emptyFilamentForm}
+      gate="active"
       onSubmit={onSubmit}
       onCancel={onCancel}
       {...over}
@@ -93,24 +94,51 @@ describe("FilamentForm — E1 validation reused verbatim + money-as-string wire"
   });
 });
 
-describe("FilamentForm — lapsed read-only (013/FB-02, ux-catalog §3)", () => {
-  it("readOnly disables every field up front and swaps Salvar for the reactivation line", () => {
-    renderForm({ readOnly: true });
-    expect(field(cf.name)).toBeDisabled();
-    expect(field(cf.material)).toBeDisabled();
-    expect(field(fields.costPerRoll)).toBeDisabled();
-    expect(field(fields.rollWeight)).toBeDisabled();
-    expect(screen.getByText(catalogo.reactivateTitle)).toBeInTheDocument();
-    expect(screen.getByText(catalogo.reactivateBody)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: cf.save })).not.toBeInTheDocument();
-    // Reading/exiting still works — never a dead end.
-    expect(screen.getByRole("button", { name: cf.cancel })).toBeInTheDocument();
+describe("FilamentForm — os cinco estados do gate (019/PR-B T045, ex-013/FB-02)", () => {
+  it("lapsed: campos inertes (Frozen), Salvar visível e disabled, convite 'Reativar Premium' fora do Frozen", () => {
+    renderForm({ gate: "lapsed" });
+    const frozen = screen.getByTestId("catalog-form-frozen");
+    expect(within(frozen).getByRole("textbox", { name: cf.name })).toBeDisabled();
+    expect(within(frozen).getByRole("textbox", { name: cf.material })).toBeDisabled();
+    expect(within(frozen).getByRole("textbox", { name: fields.costPerRoll })).toBeDisabled();
+    expect(within(frozen).getByRole("textbox", { name: fields.rollWeight })).toBeDisabled();
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(catalogo.reactivateBody);
+
+    const saveBtn = screen.getByRole("button", { name: cf.save });
+    expect(saveBtn).toBeVisible();
+    expect(saveBtn).toBeDisabled();
+
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta).toHaveTextContent(messages.billing.reactivateAction);
+    expect(cta.closest("fieldset[disabled]")).toBeNull();
+    // "Voltar" saiu do rodapé inerte — o convite ocupa o lugar dele (decisão T045, ver relatório).
+    expect(screen.queryByRole("button", { name: cf.cancel })).not.toBeInTheDocument();
   });
 
-  it("active (readOnly=false, the default) stays fully editable — regression guard", () => {
+  it("free-nunca-teve: mesma inércia, mas o convite é 'Assinar Premium' sem preço", () => {
+    renderForm({ gate: "free-nunca-teve" });
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
+      messages.premiumTeaser.salvarFazParteDoPremium,
+    );
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta).toHaveTextContent(messages.billing.subscribeAction);
+    expect(screen.queryByText(messages.billing.planMonthlyPrice)).not.toBeInTheDocument(); // price={false}
+  });
+
+  it("unknown: nem frase nem convite — nunca presume (T045)", () => {
+    renderForm({ gate: "unknown" });
+    expect(screen.queryByTestId("premium-footer-note")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("teaser-upgrade-cta")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: cf.save })).toBeDisabled();
+  });
+
+  it("active (o default) stays fully editable — regression guard", () => {
     renderForm();
     expect(field(cf.name)).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: cf.save })).toBeInTheDocument();
-    expect(screen.queryByText(catalogo.reactivateTitle)).not.toBeInTheDocument();
+    const saveBtn = screen.getByRole("button", { name: cf.save });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).not.toBeDisabled();
+    expect(screen.queryByTestId("catalog-form-frozen")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("premium-footer-note")).not.toBeInTheDocument();
   });
 });

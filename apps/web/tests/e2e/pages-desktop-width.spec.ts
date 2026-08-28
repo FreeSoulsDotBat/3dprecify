@@ -34,7 +34,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/catalogo");
-    await expect(page.getByText(t.premiumTeaser.CATALOG.title)).toBeVisible();
+    await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
     const ratio = await widthRatio(page);
     expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
   });
@@ -44,7 +44,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
   }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/historico");
-    await expect(page.getByText(t.premiumTeaser.QUOTES.title)).toBeVisible();
+    await expect(page.getByText(t.historico.didaticoTitle)).toBeVisible();
     const ratio = await widthRatio(page);
     expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
   });
@@ -52,7 +52,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
   test("/kits (signed-out teaser) uses ≥40% of the shell's main content area", async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/kits");
-    await expect(page.getByText(t.premiumTeaser.KITS.title)).toBeVisible();
+    await expect(page.getByText(t.catalogo.emptyKitsTitle).first()).toBeVisible();
     const ratio = await widthRatio(page);
     expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
   });

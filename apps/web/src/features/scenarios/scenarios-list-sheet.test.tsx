@@ -59,6 +59,8 @@ function listState(items: unknown[] = [ROW], over: Record<string, unknown> = {})
     items,
     isLoading: false,
     isError: false,
+    // 019/PR-B (T112) — o campo novo de `ScenarioListState` (T110: adotado aqui pelo default).
+    error: null,
     stale: false,
     refetch: vi.fn(),
     loadMore: vi.fn(),
@@ -237,6 +239,86 @@ describe("ScenariosListSheet — lapse read-only freeze (VR-610/§0.1)", () => {
     renderSheet();
     expect(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` })).toBeDisabled();
     expect(screen.getAllByText(t.writeOffline).length).toBeGreaterThan(0);
+  });
+});
+
+// 019/PR-B (T039/T110, prancheta 32c/32f) — a parede caiu: "nunca teve" e deslogado não saltam
+// mais para o `PremiumTeaser` de página inteira. Ambos montam esta MESMA folha (nunca uma tela
+// substituta) e veem o vazio didático no lugar da lista salva — mesma forma do vazio de quem paga,
+// frase mais curta, sem coroa/preço no título. O convite (`TeaserUpgrade`, dentro do
+// `VazioDidatico`) continua sendo o ÚNICO desta folha (FR-1906).
+describe("ScenariosListSheet — o vazio didático substitui a parede (T046/T112)", () => {
+  it("nunca teve (status none): o vazio didático mostra a frase verbatim, nunca uma lista quebrada", () => {
+    entitlement.data = { status: "none" };
+    useScenariosMock.mockReturnValue(listState([]));
+    renderSheet();
+
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.didaticoBody)).toBeInTheDocument();
+    // A descrição da LISTA ("Estratégias salvas...") não faz sentido por cima do vazio.
+    expect(screen.queryByText(t.listSubtitle)).not.toBeInTheDocument();
+  });
+
+  it("nunca teve: o botão do vazio é 'Fazer um cálculo' e fecha a folha (ela já está em /calcular)", async () => {
+    entitlement.data = { status: "none" };
+    useScenariosMock.mockReturnValue(listState([]));
+    const user = setup();
+    const onOpenChange = vi.fn();
+    render(<ScenariosListSheet open onOpenChange={onOpenChange} onOpenScenario={vi.fn()} />);
+
+    await user.click(screen.getByRole("button", { name: messages.premiumTeaser.fazerUmCalculo }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("deslogado: a mesma porta sem parede, com o caminho de entrada via o href do próprio CTA", () => {
+    useSessionStore.setState({ status: "anonymous", user: null });
+    entitlement.data = undefined;
+    useScenariosMock.mockReturnValue(listState([]));
+    renderSheet();
+
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    const cta = screen.getByRole("link", { name: messages.billing.subscribeAction });
+    expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
+  });
+
+  it("exatamente UM convite Premium na folha (FR-1906, invariante um-teaser)", () => {
+    entitlement.data = { status: "none" };
+    useScenariosMock.mockReturnValue(listState([]));
+    renderSheet();
+    expect(screen.getAllByRole("link", { name: messages.billing.subscribeAction })).toHaveLength(1);
+  });
+
+  it("LAPSED não vê o vazio didático — a lista continua a de sempre (VR-610)", () => {
+    entitlement.data = { status: "lapsed" };
+    renderSheet();
+    expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
+  });
+
+  it("ACTIVE não vê o vazio didático — a lista continua a de sempre", () => {
+    renderSheet();
+    expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
+  });
+
+  // T112 — o fallback: `premiumGate` ainda não sabe dizer (sem resposta do entitlement) mas a
+  // PRÓPRIA lista já ouviu o 403 do servidor. Mesmo vazio didático, nunca a parede de erro genérica.
+  it("entitlement indefinido + a lista responde ENTITLEMENT_REQUIRED: mesmo vazio didático (T112)", () => {
+    entitlement.data = undefined;
+    useScenariosMock.mockReturnValue(
+      listState([], {
+        isError: true,
+        error: new ApiError({
+          status: 403,
+          code: "ENTITLEMENT_REQUIRED",
+          message: "premium",
+          correlationId: null,
+        }),
+      }),
+    );
+    renderSheet();
+
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.queryByText(t.loadError)).not.toBeInTheDocument();
   });
 });
 

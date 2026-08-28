@@ -6,6 +6,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { PremiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -125,11 +126,11 @@ function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
 }
 
-function renderPage(productId?: string, readOnly?: boolean) {
+function renderPage(productId?: string, gate: PremiumGate = "active") {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
     <QueryClientProvider client={client}>
-      <ProdutoPage productId={productId} readOnly={readOnly} />
+      <ProdutoPage productId={productId} gate={gate} />
     </QueryClientProvider>,
   );
 }
@@ -331,26 +332,45 @@ describe("ProdutoPage — save a scenario referencing THIS product (010/T021b)",
   });
 });
 
-describe("ProdutoPage — lapsed premium, read-only up front (013/FB-02, ux-catalog §3)", () => {
-  it("disables the fields and swaps Salvar for the reactivation line — never a fail-at-save surprise", () => {
-    // `readOnly` comes from the PARENT (CatalogoPage) — the page's OWN entitlement mock stays
-    // "active" here, proving the fieldset freeze is driven by the prop, not a second gate.
-    renderPage("prod-1", true);
+describe("ProdutoPage — gate não-active, inerte up front (019/PR-B T045, ex-013/FB-02)", () => {
+  it("lapsed: campos inertes (Frozen), Salvar visível+disabled, rodapé com a frase de reativação — nunca um fail-at-save surpresa", () => {
+    // `gate` vem do PAI (CatalogoPage) — o mock de entitlement da própria página fica "active"
+    // aqui, provando que o congelamento é guiado pela prop, não por um segundo gate.
+    renderPage("prod-1", "lapsed");
 
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeDisabled();
     expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeDisabled();
-    expect(screen.getByText(messages.catalogo.reactivateTitle)).toBeInTheDocument();
-    expect(screen.getByText(messages.catalogo.reactivateBody)).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: pf.saveProduct })).not.toBeInTheDocument();
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
+      messages.catalogo.reactivateBody,
+    );
+    const cta = screen.getByTestId("teaser-upgrade-cta");
+    expect(cta).toHaveTextContent(messages.billing.reactivateAction);
+    const saveBtn = screen.getByRole("button", { name: pf.saveProduct });
+    expect(saveBtn).toBeVisible();
+    expect(saveBtn).toBeDisabled();
     // FR-409 — reads/recompute still work while lapsed.
     expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
+  });
+
+  it("free-nunca-teve: mesma inércia, convite 'Assinar Premium'", () => {
+    renderPage("prod-1", "free-nunca-teve");
+    expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
+    expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
+      messages.premiumTeaser.salvarFazParteDoPremium,
+    );
+    expect(screen.getByTestId("teaser-upgrade-cta")).toHaveTextContent(
+      messages.billing.subscribeAction,
+    );
   });
 
   it("active keeps the product form fully editable — regression guard", () => {
     renderPage("prod-1");
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).not.toBeDisabled();
-    expect(screen.getByRole("button", { name: pf.saveProduct })).toBeInTheDocument();
-    expect(screen.queryByText(messages.catalogo.reactivateTitle)).not.toBeInTheDocument();
+    const saveBtn = screen.getByRole("button", { name: pf.saveProduct });
+    expect(saveBtn).toBeInTheDocument();
+    expect(saveBtn).not.toBeDisabled();
+    expect(screen.queryByTestId("premium-footer-note")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("teaser-upgrade-cta")).not.toBeInTheDocument();
   });
 });

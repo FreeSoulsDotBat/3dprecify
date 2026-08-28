@@ -55,10 +55,10 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
 }, info) => {
   const email = await signUpThrowaway(page, `cat-${info.workerIndex}`);
 
-  // Never-granted: Catálogo shows the honest UNIFIED teaser (016/US1) — and this authenticated
-  // request JIT-provisions the account the CLI grants below.
+  // Never-granted: 019/PR-B — Catálogo shows the didactic empty state (no wall) — and this
+  // authenticated request JIT-provisions the account the CLI grants below.
   await page.goto("/catalogo");
-  await expect(page.getByText(t.premiumTeaser.CATALOG.title).first()).toBeVisible();
+  await expect(page.getByTestId("vazio-didatico")).toBeVisible();
 
   grantPremium(email);
   await page.reload();
@@ -139,8 +139,12 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
 }, info) => {
   await signUpThrowaway(page, `free-${info.workerIndex}`);
 
+  // 019/PR-B (T108) — a parede US7 saiu: grátis vê a MESMA IA (tablist) com o vazio didático no
+  // lugar da lista, nunca uma tela substituta.
   await page.goto("/catalogo");
-  await expect(page.getByText(t.premiumTeaser.CATALOG.title).first()).toBeVisible();
+  await expect(page.getByTestId("vazio-didatico")).toBeVisible();
+  await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: t.catalogo.addFilament })).toBeVisible();
 
   // No picker renders for a never-granted account; the manual calculator is untouched.
   await page.goto("/calcular");
@@ -157,14 +161,23 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
 test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser — no price surprises, no fake save (US7/T031, rewritten 016/US1)", async ({
   page,
 }) => {
-  // 016/US1 — the four diverging teasers (incl. this Dialog) were replaced by ONE shared
-  // component (`shared/billing/premium-teaser.tsx`); the Catálogo tab now renders it DIRECTLY,
-  // never behind a dialog the seller has to open first.
-  const pt = t.premiumTeaser.CATALOG;
+  // 019/PR-B (T108) — a parede US7 (o `PremiumTeaser` de página inteira) saiu do Catálogo:
+  // deslogado vê o MESMO tablist + o vazio didático (formulário inerte ao abrir "Adicionar"),
+  // nunca uma tela substituta nem um dialog.
   await page.goto("/catalogo");
-  await expect(page.getByText(pt.title)).toBeVisible();
-  await expect(page.getByText(pt.subtitle)).toBeVisible();
+  await expect(page.getByRole("tablist", { name: t.catalogo.tabsLabel })).toBeVisible();
+  await expect(page.getByTestId("vazio-didatico")).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+  await expect(page.locator("fieldset[disabled]")).toBeVisible();
+  const saveBtn = page.getByRole("button", { name: t.catalogForm.save });
+  await expect(saveBtn).toBeVisible();
+  await expect(saveBtn).toBeDisabled();
+  const cta = page.getByTestId("teaser-upgrade-cta");
+  await expect(cta).toBeVisible();
+  await expect(cta).toHaveAttribute("href", /\/sign-in\?redirect=/);
+
   // E6/US7 — o preco real esta na tela e um caminho para assinar; a proibicao valia enquanto a
   // cobranca nao existia. Sobra a honestidade: so os tres precos praticados.
   for (const n of (await page.locator("body").innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
