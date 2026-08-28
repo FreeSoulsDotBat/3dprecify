@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useRef } from "react";
+import { type HTMLAttributes, type KeyboardEvent, type ReactNode, useRef } from "react";
 
 import "./segmented.css";
 
@@ -30,7 +30,10 @@ export interface SegmentedOption<T extends string> {
   icon?: ReactNode;
 }
 
-export interface SegmentedProps<T extends string> {
+export interface SegmentedProps<T extends string> extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  "role" | "className" | "onChange"
+> {
   options: readonly SegmentedOption<T>[];
   value: T;
   onChange: (id: T) => void;
@@ -61,6 +64,7 @@ export function Segmented<T extends string>({
   size = "md",
   split = false,
   className = "",
+  ...rest
 }: SegmentedProps<T>) {
   const refs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
   const isTabs = role === "tablist";
@@ -93,6 +97,7 @@ export function Segmented<T extends string>({
       ]
         .filter(Boolean)
         .join(" ")}
+      {...rest}
     >
       {options.map((option, index) => {
         const selected = option.id === value;

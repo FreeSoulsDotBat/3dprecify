@@ -1,16 +1,80 @@
-/* Honesty-seal presentation overrides on the shared Badge — feature-local (FSD-Lite): the DS Badge is
-   a short status pill, but the seal is domain copy that can run long and must stay a legible "pill".
-   Both fixes come from the US2 homologation (T026b) and are scoped to `.tf-badge.fee-seal` (specificity
-   0,2,0 > the DS `.tf-badge`) so the design-system Badge itself is never changed:
-   (1) the online reference seal carries a long string ("Referência: <source> · atualizada em dd/mm/aaaa")
-       — it MUST wrap inside 390px instead of forcing horizontal overflow (FR-010); `white-space: normal`
-       drops the badge's min-content from the whole line to its longest word so the flex item shrinks and
-       wraps.
-   (2) a hairline border keeps the seal reading as a pill in the DARK theme, where the neutral badge fill
-       (`--bg-muted`) equals the card surface (both neutral-900) and the pill would otherwise vanish. */
-.tf-badge.fee-seal {
-  white-space: normal;
-  text-align: left;
-  line-height: 1.3;
-  border: 1px solid var(--border-default);
+/* 019/PR-C (T052/T058, prancheta "Selo de Procedencia") — o bloco que respalda um NÚMERO deixou de
+   ser um `tf-badge` (que precisava dos remendos abaixo: `white-space: normal`, borda hairline) e
+   passou a ser `tf-alert--compact` (shared/ui/alert.css, 019/PR-A) — o primitivo que o DS já tem
+   para ícone + corpo multilinha + ação. Só sobram aqui classes LOCAIS da feature, nenhuma base
+   `tf-*` de novo (guarda `tf-class-uniqueness`): o rótulo/citação/data no `--fs-caption` denso que o
+   selo pede (o `tf-alert__title`/`tf-alert__text` do produto são maiores, para o alerta de página), o
+   clamp de duas linhas da citação, a linha de aviso do catch-all e o agrupamento das pílulas. */
+
+.fee-seal__label {
+  margin: 0;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+}
+
+/* 13a·2 — a citação corta em duas linhas; o resto mora atrás de "Ver fonte" (decisão do dono). */
+.fee-seal__cite {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 13a·3 — a categoria de origem ganha linha própria (pode ser um ancestral do que o vendedor
+   escolheu); o `FeeSeal` só a renderiza quando a citação ainda não a nomeia (R2 da homologação 014). */
+.fee-seal__for-category {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-body);
+}
+
+.fee-seal__date {
+  margin: 0;
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+}
+
+/* 13b·5 — "categoria não informada — usando a maior alíquota da tabela" tem 58 caracteres e vira
+   linha do corpo, nunca pílula: uma pílula desse tamanho força a linha inteira como largura mínima
+   e estoura o cartão a 360px — a armadilha que 016/PR-B já mediu uma vez. */
+.fee-seal__catch-all-warning {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--warning-text);
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+.fee-seal__catch-all-warning svg {
+  flex: 0 0 auto;
+  margin-top: 2px;
+}
+
+/* 13c — onde a pílula "pode estar desatualizada" mora quando aparece: dentro do corpo do bloco,
+   abaixo da data. */
+.fee-seal__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* 13a·2 — o cartão de "Ver fonte" aberto. */
+.fee-seal__source-date {
+  margin: 0;
+  font-size: var(--fs-caption);
+  opacity: 0.75;
+}
+
+.fee-seal__source-notice {
+  margin: 0;
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  opacity: 0.75;
 }

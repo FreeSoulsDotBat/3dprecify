@@ -358,6 +358,52 @@ describe("applyScenarioConfig → computeFromForm — REOPEN + live recompute (T
     const patch = applyScenarioConfig(config);
     expect(patch.otherCosts[0]!.value).toBe("2.500,00");
   });
+
+  // 019/PR-C (T060, FR-1912/SC-1905) — R5 (016/T072) mascarou o reabrir de um leaf de dinheiro
+  // SEMPRE em 2 casas (`moneyLeafToPtBr` chamava `formatDecimal(n, 2)` fixo). A tarifa
+  // (`tariffPerKwh`) é a ÚNICA folha com 4 casas de verdade — "0,8734" salva e reaberta virava
+  // "0,87", um corte de valor (não só de exibição) reintroduzido pelo próprio R5.
+  it("019/T060 — a tarifa (4 casas) reabre com as 4 casas intactas, não truncada para 2 (0,8734)", () => {
+    const saveForm = values({ tariffPerKwh: "0,8734", channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.scalars.tariffPerKwh).toBe("0,8734");
+  });
+
+  it("019/T060 — uma tarifa salva '0' reabre '0,0000' (4 casas), não '0,00'", () => {
+    const saveForm = values({ tariffPerKwh: "0", channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    expect(patch.scalars.tariffPerKwh).toBe("0,0000");
+  });
+
+  it("019/T060 — um scalar de dinheiro comum (machineValue) continua em 2 casas (regressão R5)", () => {
+    const saveForm = values({ machineValue: "12345,678", channels: [] });
+    const saveOutcome = computeFromForm(saveForm, ctx);
+    const config = buildScenarioConfig({
+      values: saveForm,
+      channelOutcomes: saveOutcome.channels,
+      parsedInput: saveOutcome.input,
+    })!;
+
+    const patch = applyScenarioConfig(config);
+    // machineValue não tem `precision` declarada em CalcFieldMeta (o controle dedicado
+    // `MachineCostFields` não passa por ela) — o wire chega já com o que o form validou; aqui só
+    // se prova que o padrão de 2 casas sobrevive intacto para o campo comum.
+    expect(patch.scalars.machineValue).toBe("12.345,68");
+  });
 });
 
 // 010/T024 (E5, PR-B US3, Q12) — the KIT-basis reopen: the ONE shared `channels[]` applied

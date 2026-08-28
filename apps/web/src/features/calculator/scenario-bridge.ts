@@ -25,6 +25,7 @@ import {
   CHANNEL_CURRENCY_FIELD_NAMES,
   CURRENCY_FIELD_NAMES,
   defaultCalcValues,
+  FIELD_PRECISION,
   type ChannelFieldName,
   type ChannelSlotForm,
   type MarketplaceId,
@@ -66,11 +67,16 @@ const decimalStringToPtBr = wireToPtBr;
 // straight into the form (`decimalStringToPtBr` alone), so a value ≥1000 rendered "12345,00" on
 // reopen — masked everywhere else, unmasked here. `formatDecimal(parseDecimal(x))` is a true
 // round-trip through the exact functions the mask itself uses (never a re-round: the wire string
-// already carries the field's real precision, and `formatDecimal`'s 2dp matches every money
-// field's own scale).
-function moneyLeafToPtBr(leaf: string): string {
+// already carries the field's real precision).
+//
+// 019/PR-C (T060) — R5's own `formatDecimal(n, 2)` was HARDCODED, so it re-truncated any leaf
+// with more than 2 real decimals — the tariff (R$/kWh) is the one currency field with 4
+// (FR-1912/SC-1905): a saved "0,8734" reopened as "0,87", a silent value cut reintroduced by the
+// fix meant to stop a DIFFERENT cut (missing thousands separator). `precision` defaults to 2 (the
+// R5 behaviour for every other money field, unchanged).
+function moneyLeafToPtBr(leaf: string, precision = 2): string {
   const n = parseDecimal(wireToPtBr(leaf));
-  return Number.isFinite(n) ? formatDecimal(n, 2) : decimalStringToPtBr(leaf);
+  return Number.isFinite(n) ? formatDecimal(n, precision) : decimalStringToPtBr(leaf);
 }
 
 /** An ABSENT `feeOverrides` leaf becomes a BLANK string (re-resolve live), a PRESENT one becomes its
@@ -208,7 +214,7 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
       const leaf = stripped.kept[name];
       if (typeof leaf === "string") {
         scalars[name] = CURRENCY_FIELD_NAMES.has(name)
-          ? moneyLeafToPtBr(leaf)
+          ? moneyLeafToPtBr(leaf, FIELD_PRECISION[name])
           : decimalStringToPtBr(leaf);
       }
     }
@@ -293,7 +299,7 @@ export function computeScenarioKitChannels(
       const leaf = stripped.kept[name];
       if (typeof leaf === "string") {
         scalars[name] = CURRENCY_FIELD_NAMES.has(name)
-          ? moneyLeafToPtBr(leaf)
+          ? moneyLeafToPtBr(leaf, FIELD_PRECISION[name])
           : decimalStringToPtBr(leaf);
       }
     }

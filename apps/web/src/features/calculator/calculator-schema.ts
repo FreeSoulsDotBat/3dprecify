@@ -495,6 +495,17 @@ export const CHANNEL_CURRENCY_FIELD_NAMES: ReadonlySet<ChannelFieldName> = new S
   CHANNEL_FEE_FIELDS.filter((f) => f.currency).map((f) => f.name),
 );
 
+// 019/PR-C (T060) — a mesma casas-decimais que `CalcFieldMeta.precision` declara para o campo
+// AO VIVO (só `tariffPerKwh`, hoje), re-exposta como um mapa simples para `scenario-bridge.ts`
+// aplicar a MESMA precisão na hidratação (R5 reintroduziu o corte: `moneyLeafToPtBr` mascarava
+// TODO leaf de dinheiro em 2 casas fixas, então uma tarifa salva "0,8734" reabria "0,87"). Um
+// campo ausente aqui (o padrão, todo o resto) usa 2 — o mesmo default de sempre.
+export const FIELD_PRECISION: Partial<Record<CalcFieldName, number>> = Object.fromEntries(
+  [...COST_FIELDS, ...LABOR_AND_FINISH_FIELDS]
+    .filter((f) => f.precision !== undefined)
+    .map((f) => [f.name, f.precision]),
+);
+
 /** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */
 export const RITMO_OPTIONS: readonly SelectOption[] = [
   { value: "0", label: t.machineCost.ritmoOptions.few },
