@@ -97,7 +97,7 @@ describe("US6 — os 9 campos se explicam sozinhos (FR-908, SC-904)", () => {
     expect(
       screen.queryByRole("button", { name: t.fieldTips.machineLifetime.label }),
     ).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: t.machineCost.adjustButton }));
+    await user.click(screen.getByRole("radio", { name: t.machineCost.ajustar }));
     expect(
       screen.getByRole("button", { name: t.fieldTips.machineLifetime.label }),
     ).toBeInTheDocument();

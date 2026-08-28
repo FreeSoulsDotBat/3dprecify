@@ -114,12 +114,18 @@ describe("feeSealState — the honesty seal per slot (SC-103 / FR-107)", () => {
       reviewedOn: "2026-07-06",
       embedded: false,
       stale: false,
+      // 019/PR-C (T052) — a entrada online carrega `sourceUrl`, para "Ver fonte" alcançar a fonte
+      // real; a semente (embedded) NÃO carrega (13b·3) — cobre no describe de `embedded: true` abaixo.
+      sourceUrl: "https://www.mercadolivre.com.br/ajuda/",
     });
   });
 
   it("the same slot from the bundled seed is marked embutida (offline)", () => {
     const s = feeSealState({ entry, source: "seed", now: reviewedMs + day, edited: false });
     expect(s).toMatchObject({ kind: "reference", embedded: true });
+    // 019/PR-C (13b·3) — a semente não carrega sourceUrl: "Ver fonte" não teria página nenhuma
+    // que o app tivesse de fato buscado ao empacotar, então o selo nem oferece a ação.
+    expect(s).not.toHaveProperty("sourceUrl");
   });
 
   it("past the 30-day window the reference is flagged stale", () => {
