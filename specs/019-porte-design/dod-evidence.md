@@ -449,6 +449,9 @@ Re-rodado: catalog + catalogo + bom + a guarda **196/196**, tsc/eslint limpos.
   authorizes each push/merge"). O corpo do PR está pronto (assertando as AUSÊNCIAS: diff vazio no servidor,
   0 escritas, 0 outbox, 0 toast falso, 1 convite por estado, 0 classe `tf-*` nova) e as 6 decisões a ratificar
   na segunda passada estão listadas nele. Estado da fatia: **CORREÇÃO DECLARADA**.
+- **`pnpm gate:all` (o mesmo comando do pre-push/CI): VERDE** — frontend 163 arquivos / **1876** testes, cobertura
+  89,46% (statements), format/lint/boundaries/depcruise/typecheck ok; backend ruff + format + basedpyright limpos,
+  **474 passed**, 1 skipped, import-linter ok (3m45s de pytest).
 - Token ledger: fechado com os reais (1,04M nos executores vs ~650k estimados; o cluster do Catálogo 2,3× o
   previsto).
 
