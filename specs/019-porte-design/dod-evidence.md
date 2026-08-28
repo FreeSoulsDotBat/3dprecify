@@ -445,8 +445,8 @@ Re-rodado: catalog + catalogo + bom + a guarda **196/196**, tsc/eslint limpos.
 - **Commits da fatia** (branch `019-pr-b-premium`, do develop `ebf3ec0`): `18eb6ac` transcrição + núcleo ·
   `e2f3f93` produto + testes novos · `fc0e975` asserções adotadas (separado, research §J) · `2d55795` T107 +
   simetria remove/Salvar + screenshots · o fechamento (scenarios.spec + ledger + esta seção).
-- **Push e abertura do PR-B**: ações externas — aguardam a autorização do dono (regra do projeto: "Jonatan
-  authorizes each push/merge"). O corpo do PR está pronto (assertando as AUSÊNCIAS: diff vazio no servidor,
+- **Push e abertura do PR-B**: autorizados pelo dono em 28/08 — push confirmado por `ls-remote` = HEAD `c5a4ec1`
+  (gate do pre-push verde) e **PR #60** aberto contra `develop` (https://github.com/FreeSoulsDotBat/3dprecify/pull/60). O corpo do PR está pronto (assertando as AUSÊNCIAS: diff vazio no servidor,
   0 escritas, 0 outbox, 0 toast falso, 1 convite por estado, 0 classe `tf-*` nova) e as 6 decisões a ratificar
   na segunda passada estão listadas nele. Estado da fatia: **CORREÇÃO DECLARADA**.
 - **`pnpm gate:all` (o mesmo comando do pre-push/CI): VERDE** — frontend 163 arquivos / **1876** testes, cobertura
