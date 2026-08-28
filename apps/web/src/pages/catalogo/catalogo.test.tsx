@@ -168,8 +168,8 @@ describe("CatalogoPage — segmented tabs IA (G1) + premium filament panel", () 
   });
 });
 
-describe("CatalogoPage — lapsed premium variant (013/FB-02, ux-catalog §3)", () => {
-  it("shows the calm 'Premium pausado' banner AND the COMPLETE filament list — reads never gate on lapsed", () => {
+describe("CatalogoPage — gate não-active (019/PR-B T044, ex-013/FB-02)", () => {
+  it("lapsed: SEM a faixa 'Premium pausado', lista COMPLETA — reads nunca gateiam (FR-409)", () => {
     entitlement.data = { status: "lapsed" };
     filamentsItems.push({
       id: "f1",
@@ -182,18 +182,24 @@ describe("CatalogoPage — lapsed premium variant (013/FB-02, ux-catalog §3)", 
     });
     render(<CatalogoPage />);
 
-    expect(screen.getByText(catalogo.lapsedTitle)).toBeInTheDocument();
-    expect(screen.getByText(catalogo.lapsedBody)).toBeInTheDocument();
+    expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Para criar ou editar, reative o Premium/)).not.toBeInTheDocument();
     // The full item still renders — a lapse freezes writes, never reads (FR-409).
     expect(screen.getByText("PLA Azul")).toBeInTheDocument();
     expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    // Há itens: não é o vazio didático que aparece aqui (isso é o teste seguinte).
+    expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
   });
 
-  it("'none' (never subscribed) still sees the honest teaser, NOT the lapsed banner — different states, different copy", () => {
+  it("'none' (nunca assinou): a MESMA IA (tablist) com o vazio didático — a parede US7 saiu (T044)", () => {
     entitlement.data = { status: "none" };
     render(<CatalogoPage />);
 
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
-    expect(screen.queryByText(catalogo.lapsedTitle)).not.toBeInTheDocument();
+    // A parede de antes (o teaser único de página inteira) não existe mais.
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.getByRole("tablist", { name: catalogo.tabsLabel })).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
+    expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
   });
 });

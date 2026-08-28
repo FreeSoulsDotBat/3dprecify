@@ -6,11 +6,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { BomOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 // 008/T015c (US6/K2) — the Kits tab of the catalog, written FAILING-first. A saved kit is
 // catalog content like any other: it lists per-account, it has an honest empty state, it opens
 // back into the composer, and it deletes behind a confirm. The panel never prices anything — a
 // kit stores inputs only (FR-407), so a row shows structure ("N peças"), never money.
+//
+// 019/PR-B (T044) — KitsPanel ganhou `useEntitlement()`/`gate` (era o único dos quatro sem faixa
+// lapsed nem vazio didático); precisa do MESMO par de mocks (entitlement + sessão) dos irmãos.
 
 const { useBomsMock, deleteBomMock, navigateMock } = vi.hoisted(() => ({
   useBomsMock: vi.fn(),
@@ -24,6 +28,9 @@ vi.mock("@tanstack/react-router", async (importOriginal) => {
 vi.mock("@/entities/bom/use-bom", () => ({
   useBoms: () => useBomsMock(),
   useDeleteBom: () => ({ mutateAsync: deleteBomMock, isPending: false }),
+}));
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
 }));
 
 import { KitsPanel } from "./kits-panel";
@@ -60,11 +67,16 @@ beforeEach(() => {
   useBomsMock.mockReset();
   deleteBomMock.mockReset();
   navigateMock.mockReset();
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("KitsPanel — the saved kits list (K2)", () => {

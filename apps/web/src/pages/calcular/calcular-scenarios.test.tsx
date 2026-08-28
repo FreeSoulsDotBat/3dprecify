@@ -40,7 +40,6 @@ import { CalcularPage } from "./calcular-page";
 
 const s = messages.scenarios;
 const tb = messages.billing;
-const pt = messages.premiumTeaser.SCENARIOS;
 
 function listState(items: unknown[]) {
   return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
@@ -116,10 +115,13 @@ describe('CalcularPage — "Minhas simulações" is the honest door (visible for
     const entry = screen.getByRole("button", { name: new RegExp(s.navEntry) });
     fireEvent.click(entry);
 
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
-    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
-    // Never a fabricated sample scenario row on the teaser surface (SC-607) — no card/list item.
-    expect(screen.queryByText(s.emptyTitle)).not.toBeInTheDocument();
+    // 019/PR-B (T046, prancheta 32c/32f) — a parede caiu: a folha "Meus cenários" mostra o VAZIO
+    // DIDÁTICO no lugar do `PremiumTeaser` de página inteira (mesma folha para todo mundo).
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.getByText(s.emptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(s.didaticoBody)).toBeInTheDocument();
+    // Never a fabricated sample scenario row on the door surface (SC-607) — no card/list item.
+    expect(screen.queryByTestId("scenario-card")).not.toBeInTheDocument();
   });
 
   it("free signed-in (none): the SAME honest door (not a broken empty list)", () => {
@@ -131,7 +133,7 @@ describe('CalcularPage — "Minhas simulações" is the honest door (visible for
     renderPage();
 
     fireEvent.click(screen.getByRole("button", { name: new RegExp(s.navEntry) }));
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
   });
 
   it("signed-out: the CTA's own href carries the sign-in + redirect intent, no separate 'Entrar'", () => {

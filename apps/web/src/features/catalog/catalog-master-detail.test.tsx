@@ -58,6 +58,8 @@ function renderPanel(items: FilamentOut[], over: Record<string, unknown> = {}) {
     <CatalogPanel
       list={listState(items)}
       copy={copy}
+      feature="filaments"
+      gate="active"
       detailKicker={catalogo.detailFilament}
       rowName={(f) => f.name}
       rowSummary={filamentSummary}
@@ -165,6 +167,8 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
           refetch: vi.fn(),
         }}
         copy={{ ...copy, addLabel: catalogo.addProduct }}
+        feature="products"
+        gate="active"
         detailKicker={catalogo.detailProduct}
         rowName={(p) => p.name}
         rowSummary={() => "42 g"}

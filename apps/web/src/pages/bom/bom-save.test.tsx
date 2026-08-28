@@ -142,6 +142,32 @@ function renderPremiumPage(products: ProductOut[] = []) {
   );
 }
 
+// 019/PR-B (T046, DECISÃO 3) — o composer monta para QUALQUER sessão conhecida; esta função varia
+// o gate para provar que compor (não Salvar) nunca toca a rede, seja qual for o plano.
+function renderWithPlan(sessionStatus: "authenticated" | "anonymous", plan?: "none" | "lapsed") {
+  useSessionStore.setState({ status: sessionStatus });
+  useEntitlementMock.mockReturnValue({
+    data: plan ? { status: plan } : undefined,
+    isLoading: false,
+    isError: false,
+    refetch: vi.fn(),
+  });
+  useProductsMock.mockReturnValue({
+    items: [],
+    isLoading: false,
+    isError: false,
+    error: null,
+    stale: false,
+    refetch: vi.fn(),
+  });
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return render(
+    <QueryClientProvider client={client}>
+      <BomPage />
+    </QueryClientProvider>,
+  );
+}
+
 function addLine() {
   fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine, "i") }));
 }
@@ -328,5 +354,47 @@ describe("kit save — saving twice edits the kit, it does not file a second one
     await waitFor(() => expect(updateBomMock).toHaveBeenCalledTimes(1));
     expect(updateBomMock.mock.calls[0][0].id).toBe("k1");
     expect(createBomMock).toHaveBeenCalledTimes(1); // still exactly ONE create
+  });
+});
+
+// 019/PR-B (T046, DECISÃO 3 do dono 27/08) — "montar um kit sem salvar é permitido no
+// grátis/lapsed — só 'Salvar' bloqueia". Compor (adicionar/remover linha, editar quantidade) é
+// estado LOCAL — nunca dispara `useCreateBom`/`useUpdateBom`. Só um clique real em "Salvar" toca a
+// rede, e mesmo esse é recusado pelo servidor sem `active` (Constituição IV; a UI só desabilita o
+// botão como affordance, nunca como a barreira real).
+describe("kit save — compor nunca é rede; só 'Salvar' toca a rede (019/PR-B)", () => {
+  it("premium (active): adicionar linha, editar quantidade e remover não chamam create/update", () => {
+    renderPremiumPage();
+    addLine();
+    fireEvent.change(screen.getByRole("textbox", { name: new RegExp(t.quantity) }), {
+      target: { value: "3" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.removeLine) }));
+    expect(createBomMock).not.toHaveBeenCalled();
+    expect(updateBomMock).not.toHaveBeenCalled();
+  });
+
+  it("free (none): o composer monta e compõe sem tocar a rede — só 'Salvar' fica desabilitado", () => {
+    renderWithPlan("authenticated", "none");
+    addLine();
+    expect(createBomMock).not.toHaveBeenCalled();
+    expect(updateBomMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: t.save })).toBeDisabled();
+  });
+
+  it("lapsed: o composer monta e compõe sem tocar a rede — só 'Salvar' fica desabilitado", () => {
+    renderWithPlan("authenticated", "lapsed");
+    addLine();
+    expect(createBomMock).not.toHaveBeenCalled();
+    expect(updateBomMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: t.save })).toBeDisabled();
+  });
+
+  it("deslogado: o composer monta e compõe sem tocar a rede — só 'Salvar' fica desabilitado", () => {
+    renderWithPlan("anonymous");
+    addLine();
+    expect(createBomMock).not.toHaveBeenCalled();
+    expect(updateBomMock).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: t.save })).toBeDisabled();
   });
 });

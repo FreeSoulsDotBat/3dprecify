@@ -20,10 +20,12 @@ import {
 
 const PUBLICAS = ["/calcular", "/catalogo", "/kits", "/historico", "/privacidade"] as const;
 
+// 019/PR-B (T109) — a parede saiu (FR-1906): o "teaser" que se conta agora é o VAZIO DIDÁTICO
+// (título da feature, não do plano) — e o convite único continua sendo "Assinar Premium".
 const TEASERS: { rota: string; titulo: string }[] = [
-  { rota: "/catalogo", titulo: t.premiumTeaser.CATALOG.title },
-  { rota: "/kits", titulo: t.premiumTeaser.KITS.title },
-  { rota: "/historico", titulo: t.premiumTeaser.QUOTES.title },
+  { rota: "/catalogo", titulo: t.catalogo.emptyFilamentsTitle },
+  { rota: "/kits", titulo: t.catalogo.emptyKitsTitle },
+  { rota: "/historico", titulo: t.historico.didaticoTitle },
 ];
 
 /** Palavras que denunciam um erro sendo mostrado onde deveria haver uma oferta honesta. */
@@ -211,7 +213,9 @@ test("CF-045-UI-02 — falha de rede NUNCA pode ser vendida como 'você não é 
     await abrir(page, rota);
     executado(info, SUB, "rede");
     const corpo = await page.locator("body").innerText();
-    const mostraTeaser = corpo.includes(titulo);
+    // 019/PR-B: o vazio didático pode aparecer (a LISTA respondeu 403 — é a palavra do servidor);
+    // o que não pode é o CONVITE afirmar "você não é premium" sem o plano verificado.
+    const mostraTeaser = corpo.includes(titulo) && /Assinar Premium/i.test(corpo);
     const admiteQueNaoSabe =
       /não conseguimos|nao conseguimos|tente|verificar|conexão|conexao|offline/i.test(corpo);
     if (mostraTeaser && !admiteQueNaoSabe) {

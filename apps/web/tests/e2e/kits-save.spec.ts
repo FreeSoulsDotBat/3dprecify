@@ -183,9 +183,13 @@ test("a FREE account cannot save a kit — and nothing is materialized (SC-411)"
 }, info) => {
   await signUpThrowaway(page, `kit-free-${info.workerIndex}`); // never granted
 
-  // The free account meets the honest teaser at /kits — the composer never mounts (ADR-0015),
-  // so there is no save affordance to fake. The server is the boundary either way.
+  // 019/PR-B: a conta grátis monta o kit (composição local, sem rede) e encontra "Salvar kit"
+  // desabilitado e VISÍVEL — nada é materializado porque nenhum handler de escrita existe. O
+  // servidor continua sendo a fronteira (SC-1903).
   await page.goto("/kits");
-  await expect(page.getByText(t.premiumTeaser.KITS.title)).toBeVisible();
-  await expect(page.getByRole("button", { name: t.bom.save, exact: true })).toHaveCount(0);
+  await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
+  await page.getByRole("button", { name: t.bom.addLine }).first().click();
+  const salvar = page.getByRole("button", { name: t.bom.save, exact: true });
+  await expect(salvar).toBeVisible();
+  await expect(salvar).toBeDisabled();
 });

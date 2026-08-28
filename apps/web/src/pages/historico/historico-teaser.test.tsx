@@ -30,17 +30,25 @@ import { HistoricoPage } from "./historico-page";
 // 009/T014 (E4, PR-A) — the honest door. 016/US1+US2 (T006/T008): rewritten for the unified
 // `PremiumTeaser` (feature=QUOTES) and the "Orçamentos" label (renamed from "Histórico").
 //
-// The three prohibitions inherited from E2/E3 hold: no fabricated sample entry, and the free
-// calculator promise is restated (via the shared teaser's caption).
+// 019/PR-B (T039/T110, prancheta 32f) — a parede caiu: "nunca teve" e deslogado não saltam mais
+// para o teaser de página inteira. Ambos ficam na página normal (cabeçalho de sempre) e veem o
+// VAZIO DIDÁTICO no lugar da lista — a mesma forma do vazio de quem paga, com a frase mais curta
+// e SEM coroa/preço no título. O convite (`TeaserUpgrade`) mora DENTRO do vazio, e continua sendo o
+// ÚNICO desta tela (FR-1906) — a garantia é contada pelo link `billing.subscribeAction`, não mais
+// pelo `premium-teaser-title` (que não existe nesse caminho).
+//
+// As três proibições herdadas de E2/E3 continuam de pé: nenhuma linha/entrada de amostra fabricada,
+// e a promessa da calculadora grátis segue restatada — agora na frase do vazio didático em vez da
+// legenda do `PremiumTeaser`.
 
 const t = messages.historico;
 const tb = messages.billing;
-const pt = messages.premiumTeaser.QUOTES;
 
 const emptyList = {
   items: [],
   isLoading: false,
   isError: false,
+  error: null,
   stale: false,
   refetch: vi.fn(),
 };
@@ -66,31 +74,46 @@ beforeEach(() => {
 afterEach(() => cleanup());
 
 describe("free and signed-out meet an explanation, never a broken list", () => {
-  it("free: explains what Orçamentos is for — and fabricates NO sample entry", () => {
+  it("free: a página normal (cabeçalho de sempre) mostra o vazio didático, e fabrica NENHUMA entrada de amostra", () => {
     useEntitlementMock.mockReturnValue(entitlement("none"));
     render(<HistoricoPage />);
 
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
-    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
+    // O cabeçalho de sempre — a parede não é mais uma tela substituta.
+    expect(screen.getByText(t.title)).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.getByText(t.didaticoTitle)).toBeInTheDocument();
+    expect(screen.getByText(t.didaticoBody)).toBeInTheDocument();
     // A demo row here would be a FAKE RECEIPT — the one thing this epic exists to make impossible.
     expect(screen.queryByText(t.quotedValue)).not.toBeInTheDocument();
-    // O `/R\$/` cru era um PROXY para "nenhum recibo inventado", e ele funcionava enquanto o teaser
-    // não tinha preço nenhum. Com a US7 ele passou a ter o do PLANO, e o proxy pegaria justamente o
-    // dinheiro legítimo. A garantia real é mais estreita e continua inteira: todo valor na tela é um
-    // dos três preços praticados — qualquer outro seria um registro fabricado.
     for (const n of (document.body.textContent ?? "").match(/\d+[.,]\d{2}/g) ?? []) {
       expect(["15,99", "12,99", "155,88"]).toContain(n);
     }
   });
 
-  it("signed out: the same honest door, plus a way in via the CTA's own href", () => {
+  it("free: o botão do vazio é 'Fazer um cálculo' — nunca um formulário de criar (32f)", () => {
+    useEntitlementMock.mockReturnValue(entitlement("none"));
+    render(<HistoricoPage />);
+
+    expect(
+      screen.getByRole("button", { name: messages.premiumTeaser.fazerUmCalculo }),
+    ).toBeInTheDocument();
+  });
+
+  it("signed out: a mesma porta sem parede, com o caminho de entrada via o href do próprio CTA", () => {
     useSessionStore.setState({ status: "anonymous", user: null });
     useEntitlementMock.mockReturnValue(entitlement(null));
     render(<HistoricoPage />);
 
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
     const cta = screen.getByRole("link", { name: tb.subscribeAction });
     expect(cta.getAttribute("href")).toContain("/sign-in?redirect=");
+  });
+
+  it("exatamente UM convite Premium por tela (FR-1906, invariante um-teaser)", () => {
+    useEntitlementMock.mockReturnValue(entitlement("none"));
+    render(<HistoricoPage />);
+
+    expect(screen.getAllByRole("link", { name: tb.subscribeAction })).toHaveLength(1);
   });
 
   it("o preço é HONESTO (E6/US7) e nada é prometido antes de existir", () => {
@@ -106,18 +129,11 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
     expect(text).not.toMatch(/\b(em breve|a partir de|lançamento)\b/i);
   });
 
-  it("the free calculator promise is restated (SC-507/512, via the shared teaser's caption)", () => {
-    useEntitlementMock.mockReturnValue(entitlement("none"));
-    render(<HistoricoPage />);
-
-    expect(screen.getByText(pt.caption)).toBeInTheDocument();
-  });
-
   it("LAPSED is NOT teased — a lapsed seller's records are their own data (FR-517)", () => {
     useEntitlementMock.mockReturnValue(entitlement("lapsed"));
     render(<HistoricoPage />);
 
-    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.queryByTestId("vazio-didatico")).not.toBeInTheDocument();
     expect(screen.getByText(t.lapsedBanner)).toBeInTheDocument();
   });
 });

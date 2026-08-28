@@ -5,6 +5,7 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useSessionStore } from "@/shared/session/session-store";
 
 // US6/T030 — the Produtos tab panel. Create/edit are FULL PAGE routes (ux §1.6b), so the panel
 // navigates instead of opening the Sheet; delete keeps the confirm Dialog. The row summary shows
@@ -84,11 +85,18 @@ beforeEach(() => {
   );
   usePrintersMock.mockReturnValue(listState([{ id: "p-1", name: "Ender 3" }]));
   entitlementStatus.current = "active";
+  // 019/PR-B (T044) — `premiumGate()` também lê a sessão; sem isto o gate cairia em "signed-out"
+  // e os testes "active" leriam o vazio didático em vez da lista/CRUD de sempre.
+  useSessionStore.setState({
+    status: "authenticated",
+    user: { uid: "u-1", email: "u@x.dev" } as never,
+  });
 });
 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
+  useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("ProductsPanel — Produtos tab (US6/T030)", () => {
@@ -162,17 +170,17 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
     useProductsMock.mockReturnValue(listState([product]));
     render(<ProductsPanel />);
     expect(screen.getByText("Vaso G")).toBeInTheDocument();
-    expect(screen.queryByText(catalogo.lapsedTitle)).not.toBeInTheDocument();
+    expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
   });
 
-  it("lapsed: shows the 'Premium pausado' banner and tapping delete opens the reactivation intercept, NOT a working confirm", () => {
+  it("lapsed: reads sobrevivem SEM a faixa 'Premium pausado' (019/PR-B T038), delete abre o intercept de reativação, NÃO a confirmação de verdade", () => {
     entitlementStatus.current = "lapsed";
     useProductsMock.mockReturnValue(listState([product]));
     render(<ProductsPanel />);
 
-    // Reads survive: the product is still listed with the calm banner (FR-409 + ux-catalog §3).
+    // Reads survive: the product is still listed (FR-409 + ux-catalog §3); a faixa saiu no T038.
     expect(screen.getByText("Vaso G")).toBeInTheDocument();
-    expect(screen.getByText(catalogo.lapsedTitle)).toBeInTheDocument();
+    expect(screen.queryByText("Premium pausado")).not.toBeInTheDocument();
 
     // Tapping delete must reach the honest reactivation surface — for products (navigation mode)
     // the row/delete affordance leads to the read-only page, NEVER the working destructive confirm.

@@ -78,13 +78,17 @@ afterEach(() => {
 });
 
 describe("BOM teaser — free account (US5, SC-408) — unified PremiumTeaser (016/US1)", () => {
-  it("shows the honest panel: value copy, the free-calculator promise, NO composer", () => {
+  // 019/PR-B (T110, DECISÃO 3 do dono 27/08): a parede caiu — quem nunca teve Premium encontra o
+  // VAZIO DIDÁTICO (mesma forma do vazio de quem paga, frase mais longa) com o composer vivo por
+  // baixo, não mais o `PremiumTeaser` cheio. O convite único da tela migrou para dentro do vazio.
+  it("shows the vazio didático (kits) with the composer alive, not the old full-screen teaser", () => {
     renderAt("authenticated", "none");
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
-    expect(screen.getByText(pt.subtitle)).toBeInTheDocument();
-    expect(screen.getByText(pt.caption)).toBeInTheDocument();
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.getByText(messages.catalogo.didaticoKitsBody)).toBeInTheDocument();
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: new RegExp(t.addLine) })).not.toBeInTheDocument();
+    // O composer está vivo por baixo do vazio — compor não é mais bloqueado, só "Salvar".
+    expect(screen.getByRole("button", { name: new RegExp(t.addLine) })).toBeInTheDocument();
   });
 
   it("o preço é HONESTO (E6/US7); nenhuma data prometida, nenhuma compra fingida", () => {
@@ -98,23 +102,41 @@ describe("BOM teaser — free account (US5, SC-408) — unified PremiumTeaser (0
     expect(cta).toHaveAttribute("href", "/conta?assinar=1");
   });
 
-  it("a LAPSED account is NOT teased — it gets the calm reactivation panel (FR-409 / ux §3)", () => {
+  it("a LAPSED account is NOT teased — composer alive; with 0 linhas, vazio didático (FR-409/DECISÃO 3)", () => {
     // PR-A parked this: nothing was saveable then, so lapsed fell through to the teaser. Now that
     // kits persist, a lapse freezes WRITES without repossessing the seller's work — so the teaser
     // (which sells the feature to someone who never had it) is the wrong door.
+    // 019/PR-B (T110, DECISÃO 3): a parede de CRIAÇÃO para lapsed caiu junto — o composer monta
+    // igual ao grátis; com 0 linhas o vazio didático é a única superfície (o Salvar só existe
+    // com ≥1 linha, ver o teste abaixo).
     renderAt("authenticated", "lapsed");
     expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
-    expect(screen.getByText(t.lapsedTitle)).toBeInTheDocument();
-    expect(screen.getByText(t.lapsedBody)).toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
     expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: t.save })).not.toBeInTheDocument();
+  });
+
+  it("com ≥1 linha, 'Salvar' fica VISÍVEL+desabilitado — nunca ausente (T046 detalhe 3, inverte o antigo)", () => {
+    // O teste antigo asserava `queryByRole("button", {name: t.save})` AUSENTE porque a parede de
+    // criação nem deixava o composer montar. Agora que ele monta, adicionar uma peça revela o
+    // rodapé de Salvar — visível, desabilitado, com o convite "Reativar Premium" (32e).
+    renderAt("authenticated", "lapsed");
+    fireEvent.click(screen.getByRole("button", { name: new RegExp(t.addLine) }));
+    const save = screen.getByRole("button", { name: t.save });
+    expect(save).toBeInTheDocument();
+    expect(save).toBeDisabled();
+    expect(screen.getByText(messages.premiumTeaser.salvarFazParteDoPremium)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: tb.reactivateAction })).toBeInTheDocument();
   });
 });
 
 describe("BOM teaser — signed-out (US5, ux §2.2) — unified PremiumTeaser (016/US1)", () => {
-  it("shows the same honest panel, with the sign-in path embedded in the CTA", () => {
+  it("shows the same vazio didático, with the sign-in path embedded in the CTA", () => {
     renderAt("anonymous");
-    expect(screen.getByText(pt.title)).toBeInTheDocument();
+    // 019/PR-B (T110, DECISÃO 3): a parede caiu para o deslogado também — o mesmo vazio didático
+    // (não mais o `PremiumTeaser` cheio), com o convite levando ao sign-in.
+    expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
     const cta = screen.getByRole("link", { name: tb.subscribeAction });
     expect(cta).toHaveAttribute("href", expect.stringContaining("/sign-in?redirect="));
     expect(decodeURIComponent(cta.getAttribute("href") ?? "")).toContain("/conta?assinar=1");
