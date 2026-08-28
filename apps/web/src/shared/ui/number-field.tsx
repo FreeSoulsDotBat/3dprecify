@@ -20,6 +20,10 @@ export interface NumberFieldProps extends Omit<InputHTMLAttributes<HTMLInputElem
   /** Unit suffix, e.g. "g", "kg", "kWh", "h", "%". */
   unit?: ReactNode;
   error?: boolean;
+  /** 019/PR-C (T053/T060) — casas decimais que a máscara de blur PRESERVA (default 2). A tarifa de
+   *  energia chega com 4 casas (R$ 0,8734/kWh) e a máscara de 2 casas a truncava — o comentário
+   *  abaixo ("nunca muda o valor semântico") era falso para 4 casas: 0,8734 virava 0,87. */
+  precision?: number;
 }
 
 /**
@@ -33,6 +37,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     currency = false,
     unit,
     error = false,
+    precision = 2,
     disabled = false,
     inputMode = "decimal",
     placeholder = "0,00",
@@ -65,7 +70,7 @@ export const NumberField = forwardRef<HTMLInputElement, NumberFieldProps>(functi
     if (currency && typeof value === "string" && value.trim() !== "" && onChange) {
       const n = parseDecimal(value);
       if (Number.isFinite(n)) {
-        const grouped = formatDecimal(n, 2);
+        const grouped = formatDecimal(n, precision);
         if (grouped !== value) {
           e.target.value = grouped;
           onChange(e as unknown as ChangeEvent<HTMLInputElement>);

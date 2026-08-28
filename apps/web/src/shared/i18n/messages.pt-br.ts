@@ -152,6 +152,14 @@ export const messages = {
         "Confira a comissão: {v}%. Marketplaces costumam cobrar entre 10% e 20% — se você quis dizer 12%, escreva 12 e não 0,12. Nada foi recusado.",
       quantidade:
         "Confira a quantidade: {v}. O máximo por peça é {max}. Acima disso o kit não consegue ser salvo. Nada foi recusado.",
+      // 019/PR-C (T055) — prancheta 14 ("Aviso de Plausibilidade"), cópia congelada em
+      // `specs/019-porte-design/design/`. "Entendi" dispensa o aviso (some o aviso, não o valor; guarda
+      // o par campo+valor pela sessão). Quando o aviso convive com uma RECUSA, o fecho "Nada foi
+      // recusado." mentiria — troca por este, e o "Entendi" não aparece (14b: "não se dispensa uma
+      // lição que acompanha uma recusa").
+      entendi: "Entendi",
+      fechoNormal: "Nada foi recusado.",
+      fechoComRecusa: "Corrija o campo acima para calcular.",
     },
     results: {
       material: "Material",
@@ -366,6 +374,16 @@ export const messages = {
       // porque o selo principal já nomeia a procedência da comissão, e as duas não são a mesma fonte.
       fixedFeeSource: "Taxa fixa",
       fixedFeeSourceSince: "vigente desde",
+      // 019/PR-C (T055) — prancheta 13 ("Selo de Procedencia"): o selo deixa de ser pílula e vira
+      // `tf-alert--compact`; o rótulo nomeia o NÚMERO que o selo respalda ("Comissão" / "Taxa fixa" —
+      // nunca "Referência"); "Ver fonte" abre a citação inteira + o link do catálogo; "Dispensar" tira
+      // o selo até a fonte (citação ou data) mudar.
+      commissionLabel: "Comissão",
+      verFonte: "Ver fonte",
+      dispensar: "Dispensar",
+      fonteTitle: "Fonte da comissão",
+      fonteConferida: "Conferida por nós em {data}",
+      fonteAviso: "Abre fora do app. A tarifa é da {marketplace} — nós citamos, não garantimos.",
     },
     marketplaceNames: {
       MERCADO_LIVRE: "Mercado Livre",
@@ -486,9 +504,22 @@ export const messages = {
       // 019/T031 — o singular é do texto ("1 anos" era a única frase do produto que não era português).
       paybackYearLabel: "{n} ano",
       paybackYearsLabel: "{n} anos",
-      derivedCaption: "≈ {value} por hora de impressão",
-      adjustButton: "Ajustar horas direto",
-      backToEstimateButton: "Usar estimativa por ritmo",
+      // 019/PR-C (T055) — prancheta 15 ("Bloco da Maquina"): o par de botões vira o segmented
+      // "Estimar · Ajustar"; o custo/hora vira READOUT com a divisão que o produziu escrita embaixo
+      // ("de R$ 4.000,00 ÷ 3.600 h"), nos DOIS modos; sem valor da máquina o zero ganha a ressalva; e
+      // voltar à estimativa com horas digitadas à mão PERGUNTA antes de sobrescrever (15e — inline no
+      // bloco, com os dois números em disputa, cada um no seu botão). `adjustButton`/
+      // `backToEstimateButton`/`derivedCaption` saíram: substituídos, não renomeados.
+      estimar: "Estimar",
+      ajustar: "Ajustar",
+      readoutLabel: "Custo da máquina por hora de impressão",
+      readoutDivisao: "de {valor} ÷ {horas} h",
+      ressalvaSemValor: "falta o valor da máquina",
+      confirmTitle: "A estimativa por ritmo vai substituir as suas {atual} h por {novo} h",
+      // `{anos}` recebe o rótulo já flexionado ("3 anos" / "1 ano" — a lição do T031).
+      confirmBody: '{ritmo} h/ano × {anos}. Seu número volta se você tocar "Ajustar" de novo.',
+      confirmUse: "Usar {novo} h",
+      confirmKeep: "Manter {atual} h",
     },
   },
   account: {

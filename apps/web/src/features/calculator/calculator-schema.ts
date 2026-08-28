@@ -357,6 +357,8 @@ export interface CalcFieldMeta {
   tip?: { label: string; body: string };
   /** True for the mandatory + pre-filled inputs (marked required); false for optional-core. */
   required: boolean;
+  /** 019/PR-C (T060) — casas decimais que a máscara de blur preserva; só a tarifa (4). */
+  precision?: number;
 }
 
 /**
@@ -389,6 +391,7 @@ export const COST_FIELDS: readonly CalcFieldMeta[] = [
     label: t.fields.tariff,
     currency: true,
     unit: "/kWh",
+    precision: 4,
     tip: t.fieldTips.tariff,
     required: true,
   },
