@@ -640,7 +640,11 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
                   />
                 </>
               )}
-              <Button onClick={() => void save()} disabled={gate !== "active" || saving}>
+              {/* 019/PR-B (T107): a barreira é a AUSÊNCIA do handler, não só o `disabled`. */}
+              <Button
+                onClick={gate === "active" ? () => void save() : undefined}
+                disabled={gate !== "active" || saving}
+              >
                 {saving ? t.saving : t.save}
               </Button>
 

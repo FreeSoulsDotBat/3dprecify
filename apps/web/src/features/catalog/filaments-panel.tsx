@@ -65,7 +65,7 @@ export function FilamentsPanel() {
       renderForm={(args) => <FilamentForm {...args} />}
       create={gate === "active" ? (body) => create.mutateAsync(body) : undefined}
       update={gate === "active" ? (id, body) => update.mutateAsync({ id, body }) : undefined}
-      remove={(id) => remove.mutateAsync(id)}
+      remove={gate === "active" ? (id) => remove.mutateAsync(id) : undefined}
       saving={create.isPending || update.isPending}
       deleting={remove.isPending}
       deleteWarning={deleteWarning}

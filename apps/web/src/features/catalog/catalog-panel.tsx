@@ -94,7 +94,10 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   /** Navigation mode (products, ux §1.6b): create/edit are FULL PAGE routes, not a Sheet. */
   onCreateNavigate?: () => void;
   onEditNavigate?: (item: TItem) => void;
-  remove: (id: string) => Promise<unknown>;
+  /** 019/PR-B (T107, achado do agente): AUSENTE fora de `active` — a mesma barreira estrutural de
+   *  `create`/`update`. Sem `remove`, a lixeira leva à edição (o intercepto honesto do 013/FB-02),
+   *  nunca a um diálogo que iria 403 no submit. */
+  remove?: (id: string) => Promise<unknown>;
   /** 019/PR-B (T044) — os cinco estados que `premiumGate` deriva (`shared/billing/premium-gate`).
    *  Decide SÓ o que a tela MOSTRA (vazio didático × lista, formulário vivo × inerte); nunca o que
    *  PODE — o servidor segue sendo o gate real (Constituição IV intocada, diff vazio em
@@ -197,7 +200,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || !remove) return;
     setDeleteError(undefined);
     try {
       await remove(deleteTarget.id);
@@ -242,7 +245,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         variant="ghost"
         size="sm"
         aria-label={`${catalogo.remove} ${nameOf(item)}`}
-        onClick={() => (gate === "lapsed" ? openEdit(item) : setDeleteTarget(item))}
+        onClick={() => (remove ? setDeleteTarget(item) : openEdit(item))}
       >
         <Icon name="trash-2" size={18} aria-hidden />
       </Button>
@@ -506,7 +509,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   // already routes lapsed to the read-only reactivation surface; delete now mirrors it,
                   // so both write affordances land on the same honest intercept (the server's
                   // ENTITLEMENT_REQUIRED 403 stays the real backstop — this is presentation only).
-                  onClick={() => (gate === "lapsed" ? openEdit(item) : setDeleteTarget(item))}
+                  onClick={() => (remove ? setDeleteTarget(item) : openEdit(item))}
                 >
                   <Icon name="trash-2" size={18} aria-hidden />
                 </Button>

@@ -49,7 +49,7 @@ export function KitsPanel() {
       // and saves it. Nothing is written behind their back, and the copy's lines reference the same
       // products, so a duplicate never forks the catalog.
       onDuplicate={(k) => void navigate({ to: "/kits", search: { id: k.id, copy: true } })}
-      remove={(id) => remove.mutateAsync(id)}
+      remove={gate === "active" ? (id) => remove.mutateAsync(id) : undefined}
       deleting={remove.isPending}
     />
   );

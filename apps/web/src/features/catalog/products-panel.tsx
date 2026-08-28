@@ -72,7 +72,7 @@ export function ProductsPanel() {
       // would still work, but it costs an extra hop and keeps a dead URL alive in history.
       onCreateNavigate={() => void navigate({ to: "/catalogo", search: { produto: "novo" } })}
       onEditNavigate={(p) => void navigate({ to: "/catalogo", search: { produto: p.id } })}
-      remove={(id) => remove.mutateAsync(id)}
+      remove={gate === "active" ? (id) => remove.mutateAsync(id) : undefined}
       deleting={remove.isPending}
     />
   );

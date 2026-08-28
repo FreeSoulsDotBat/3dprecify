@@ -298,3 +298,136 @@ Estado da fatia: **CORREÇÃO DECLARADA** — nada homologado até a Rodada 1 fe
   (linha de preço + "Assinar Premium") abaixo do botão de adicionar. Se o dono preferir a leitura da prancheta,
   a mudança é `teaser={false}` por padrão + relaxar a contagem no estado de lista.
 
+### T037 · T038 · T106 · T044 · T045 — o Catálogo sem parede (dev-frontend, 2026-08-28)
+
+- **Onde a parede morava e o que entrou no lugar**: `catalogo-page.tsx:105-113` (o `if (signedOut || none) return
+  <PremiumTeaser>`) SAIU inteira; `catalog-panel.tsx` decide o corpo por `gate` (`premiumGate`), e os ramos
+  `ENTITLEMENT_REQUIRED` (o 403 do servidor para quem nunca teve) e "lista vazia sem consulta" (deslogado) leem
+  IGUAL — o `VazioDidatico`, nunca a coroa. A prop `lapsed?: boolean` (013/FB-02) virou `gate: PremiumGate` nos 4
+  painéis (`kits-panel` era o único sem `useEntitlement`; ganhou).
+- **A barreira é a AUSÊNCIA do handler** (research §E-2), em duas camadas: `filaments-panel`/`printers-panel` só
+  passam `create`/`update` quando `gate === "active"`; `renderForm.onSubmit` é opcional e o `<form>` fica SEM
+  `onSubmit` fora de `active` (botão `type="button" disabled` — não existe caminho de submit); e
+  `handleSubmit`/`handleInlineSubmit` retornam sem toast e sem fechar quando o writer falta — **o toast falso
+  (T106, achado 01 da auditoria) morreu**: `await create?.(body)` resolvia `undefined` e caía no `toast` +
+  `setSheet(null)` como se um 2xx tivesse acontecido.
+- **O rodapé da prancheta 32b/32e** vive em `catalog-controls.tsx` (`PremiumFooterNote` + `PremiumInviteCta`,
+  reusados por `FilamentForm`/`PrinterForm`/`ProdutoPage` — a regra lapsed/free/signed-out/unknown escrita uma vez):
+  `<p>` ANTES da linha de botões (`salvarFazParteDoPremium`; no lapsed `reactivateBody`), linha
+  `justify-between` com o `TeaserUpgrade` secundário sem preço à esquerda e "Salvar"/"Salvar alterações"
+  SEMPRE renderizado e `disabled` à direita. O `<Alert title={reactivateTitle}>` saiu (32d). `produto-page.tsx`:
+  os 3 fieldsets viram `<Frozen>` fora de `active` — fecha a brecha pré-existente do logado `none` em
+  `/catalogo?produto=novo` com formulário VIVO (013/FB-02 só cobria `lapsed`).
+- **Mestre-detalhe (32g)**: lista vazia + gate≠active + `renderForm` → vazio à esquerda **sem convite** e a ficha
+  inerte de criação à direita com o único convite. **Defeito achado na revisão do main loop, antes do e2e**: o
+  agente entregou `teaser={sheet === null}` no vazio dessa composição — dois "Assinar Premium" no desktop
+  (o `teaser-sweep` a 1920 teria pego); corrigido para `teaser={false}`. Segundo ajuste da revisão: a ordem de
+  decisão deixava um `lapsed` com cache vazio e a rede falhando cair no vazio didático — agora cai no erro de
+  carga (a ordem da prancheta 29: erro antes de vazio).
+- **Decisões do executor, para a segunda passada**: "Voltar" sai do rodapé inerte (o Sheet tem o X; a 32b só
+  desenha dois itens) — na ficha inline do desktop também; `unknown` = Salvar disabled sozinho, sem frase e sem
+  convite (nunca presume); `catalogo.lapsedTitle/lapsedBody` apagadas (T038) e as 6 asserções de ausência que as
+  citavam passaram a mirar o texto literal antigo; `catalogo.reactivateTitle` ficou órfã (a T090 vigia).
+- **Desvio de processo, registrado**: o cluster do Catálogo NÃO seguiu vermelho-por-task estrito — painel, 4
+  painéis, 2 formulários e `ProdutoPage` mudam de contrato juntos e nada renderiza coerente pela metade; o
+  agente implementou e testou em conjunto e disse isso em vez de inventar um log. O vermelho real que a suíte
+  pegou depois: `cf.save` × `cf.saveChanges` no modo edit (1 caso).
+- Verde: `src/features/catalog` + `src/pages/catalogo` **108/108**; suíte inteira do web **1374/1374**; tsc/eslint
+  limpos.
+
+### T039 · T111 · T112 · T046(Orçamentos/Simulações) — Histórico e a folha (dev-frontend, 2026-08-28)
+
+- `historico-page.tsx:75/:80` (`TeaserShell`) e `scenarios-list-sheet.tsx:462/:475-476` (`showTeaser`) SAÍRAM;
+  `free-nunca-teve`/`signed-out` veem o `VazioDidatico` (quotes/scenarios) com "Fazer um cálculo" → `/calcular`
+  (na folha, fechar É ir para a calculadora). `lapsed`/`active` byte-idênticos.
+- T111: `HistoryListState.error: ApiError | null` (aditivo); **corolário necessário**: `ScenarioListState`
+  ganhou o mesmo campo (`entities/scenario/use-scenarios.ts`, fora da lista da task — sem ele a T112 não
+  distingue 403 de rede). T112: `ScenarioListBody` tem o ramo `ENTITLEMENT_REQUIRED` → vazio didático quando o
+  gate é `unknown` mas o servidor já disse 403.
+- Efeito colateral adotado: `pages/calcular/calcular-scenarios.test.tsx` (2 casos assertavam o teaser dentro
+  da folha). `SheetDescription` (`listSubtitle`) some no estado de porta (016/T010-A1: a descrição pertence à
+  lista).
+- Verde: historico + scenarios + entities + calcular + shared/billing **341/341**.
+
+### T046 — Kits sem parede (dev-frontend, 2026-08-28)
+
+- Vermelho capturado ANTES: 4 casos (`bom-teaser.test.tsx` ×3, `bom-page.test.tsx` T072-A10) — exatamente os
+  que assertavam a parede. `BomGatePanel` e a parede de criação do lapsed SAÍRAM (decisão 3 do dono, 27/08:
+  montar sem salvar é permitido); o composer compõe para todos; 0 linhas + gate≠active → `VazioDidatico kits`
+  (com o convite); ≥1 linha → rodapé com `salvarFazParteDoPremium` + convite secundário + "Salvar kit"
+  `disabled={gate !== "active" || saving}`. Os dois ramos são mutuamente exclusivos — nunca dois convites.
+  `bom.lapsedBanner` mantido. Teste novo: compor (adicionar/remover/editar) NUNCA chama mutação, nos 4 estados.
+- Verde: `src/pages/bom` **50/50**.
+
+### T115 · T114 — a guarda por método e o helper (dev-backend, 2026-08-28)
+
+- **Achado que vale mais que a task**: `test_every_catalog_route_carries_the_gate` era **VÁCUO** — no
+  `fastapi==0.138.1` o `app.routes` não achata os `include_router` (ficam em `_IncludedRouter`, com o prefixo
+  em `include_context.prefix`), então a varredura por `route.path.startswith(prefixo)` encontrava **zero rotas**
+  e o loop passava sem exercitar nada (o comentário dizia "vacuous today, arms itself when PR-B lands" — estava
+  vácuo por outro motivo). O novo `_flatten_routes(app)` recursa e reconstrói o path: **43 rotas gated**
+  (filaments · printers · products · boms · history+export · scenarios), todo `POST/PUT/PATCH/DELETE` com
+  `require_entitlement`, todo `GET` com uma das duas portas; sanidade `write_routes > 0` e `read_routes > 0`.
+  **Não-vácuo por mutação**: `POST /filaments` → `require_catalog_read` ⇒ vermelho na linha 260; revertido,
+  `git diff --stat backend/app` vazio. Rodado com o banco: **10/10**.
+- T114: `grantPremium(email, { expiresAt? })` repassa `--expires <ISO>`; a chamada antiga continua (15 specs).
+  A T040 usa o SQL de `vencerGrants` (o mesmo de `billing-lifecycle`) em vez do `expiresAt`, porque um grant
+  que já nasce vencido não deixa criar os itens que o cenário "lapsed-com-itens" precisa — a REGRA do lapso,
+  não a passagem do tempo.
+
+### T040 · T041 · T108 · T109 — a stack real (2026-08-28)
+
+- `tests/e2e/premium-sem-parede.spec.ts` (3 cenários × chromium+mobile): grátis (vazio → inerte → dica do
+  consumo com `opacity` 1 no texto E no fieldset → kits compõe com Salvar disabled → Orçamentos "Fazer um
+  cálculo" → `/calcular` → folha de Simulações), grant vencido com itens (lista + preenchido + "Reative" +
+  "Reativar Premium" + "Salvar alterações" disabled), deslogado (o mesmo caminho + `?tab=products` → o
+  `beforeLoad` manda ao sign-in com `produto=novo` na intenção + "Assinar Premium" → sign-in → oferta aberta).
+  Em cada cenário: **0 escritas** (`page.route` contando POST/PUT/PATCH/DELETE) e **0 entradas** no
+  IndexedDB `history:outbox:*`. **18/18** na rodada final.
+- As rodadas anteriores acharam 4 causas, todas de teste: 2 âncoras antigas do teaser que os greps não pegaram
+  (`bom.spec.ts:173` via alias local `pt`; `catalog.spec.ts:61`), `getByText("Reative o Premium")` casando por
+  substring com o `reactivateBody`, e a URL pós-login `/conta?assinar=%221%22` — o router serializa a intenção
+  como JSON e a Conta lê `assinar === "1"` (a oferta abre; o que se asserta é a oferta, não a grafia).
+- T041/T109: âncora "a tela renderizou" = título do vazio didático; `teaser-sweep` conta o convite nos DOIS
+  estados (lista e formulário aberto) nas duas larguras; `cf-011-048` só chama "teaser sem verificar" quando o
+  CONVITE aparece com o plano em 500. 3 âncoras que nenhuma task citava (`kits-save`, `pages-desktop-width`,
+  `bom.spec`) adotadas.
+
+### Screenshots 1:1 (T047) — `evidencias/pr-b/` (2026-08-28)
+
+32 PNGs (`porte-screenshots-pr-b.spec.ts`, `PORTE_SCREENSHOTS=1`): grátis × {vazio, form inerte, dica da
+impressora, kits vazio, kits composer, orçamentos, simulações} · vencido × {lista, form preenchido} · deslogado
+× {vazio, form} a 390px, nos 2 temas; e a 1920px deslogado × {catálogo, kits, orçamentos} + grátis × {filamentos,
+impressoras}. Conferidas pelo main loop contra as pranchetas: 32a/32b/32e/32g batem. **Observações para a
+segunda passada**: (1) o custo no edit inerte mostra "94,9" (o zero à direita some — formatação pré-existente do
+formulário de edição, não desta fatia); (2) a ficha inerte do desktop (32g) não tem o título "Novo filamento" +
+"Voltar" que a prancheta desenha no cartão; (3) o vazio didático carrega a linha de preço + "Assinar Premium"
+(decisão FR-1906 × 32a, registrada em §T043). Medição (`medidas-pr-b.json`): convites por tela, fieldsets
+congelados, vazios e transbordo horizontal em cada captura — ver a tabela abaixo.
+
+| medida (`medidas-pr-b.json`, 30 capturas, chromium) | valor |
+| --- | --- |
+| convites (`teaser-upgrade-cta`) por captura | **1** em 27; **0** em `lapsed-catalogo-lista` (o convite mora no formulário — a lista não o tem, 32e) e em `free-catalogo-1920-light` (a captura correu antes do entitlement resolver: gate `unknown` = sem convite, por desenho; a mesma tela no tema escuro mediu 1); **2** em `free-simulacoes-vazio` (medição da PÁGINA inteira: `/calcular` tem a própria superfície premium por desenho — o `teaser-sweep` conta dentro da folha, e lá é 1) |
+| `fieldset.tf-frozen` presentes | 1 em toda captura de formulário (mobile e 1920), 0 nas listas/vazios |
+| transbordo horizontal (`scrollWidth − clientWidth`) | **0** em todas as 30 |
+
+### T107 — a guarda de AUSÊNCIA (qa-software, 2026-08-28)
+
+`src/pages/premium-write-absence.test.tsx` (solto em `pages/` de propósito: é a única posição que pode importar
+`catalogo-page`, `bom-page` e `historico-page` juntas sob o eslint-boundaries) — **38 testes**: 4 painéis do
+Catálogo + `CatalogoPage` em 3 modos (abas, `?produto=novo`, `?produto=<id>`) + `BomPage` + `HistoricoPage`, cada
+um nos 4 estados não-`active`; em cada caso clica em TODO botão habilitado (até 5 passadas — abre Sheet/Dialog e
+clica no que aparece) e submete todo `<form>`; **zero chamadas** em 18 hooks de escrita espiados. A lista dos
+18 é PROVADA completa por leitura (`readFileSync` de `entities/{catalog,bom,history}/use-*.ts` + regex
+`^export function use(Create|Update|Delete|Record)\w+`): um hook de escrita novo que nasça fora da guarda a
+deixa vermelha. Não-vácuo: `FilamentsPanel` em `active` salva de verdade — `useCreateFilament().mutateAsync`
+chamado exatamente 1×, os outros 17 intocados. Suíte inteira do web: **1412/1412**.
+
+**Dois achados do agente, fechados no main loop pelo princípio da fatia (handler AUSENTE, não `if`)**:
+(1) `remove` era passado INCONDICIONALMENTE pelos 4 painéis e a lixeira só desviava para a edição com
+`gate === "lapsed"` — nos outros gates uma lista com itens (hoje inalcançável, escondida pelo vazio) chamaria
+`remove.mutateAsync` de verdade; agora `remove?` é opcional, só chega em `active`, e "sem `remove` ⇒ a lixeira
+abre a edição" (o intercepto do 013/FB-02, sem depender do nome do estado). (2) o "Salvar kit" tinha
+`onClick={save}` sempre presente e só `disabled` — passou a `onClick={gate === "active" ? … : undefined}`.
+Re-rodado: catalog + catalogo + bom + a guarda **196/196**, tsc/eslint limpos.
+

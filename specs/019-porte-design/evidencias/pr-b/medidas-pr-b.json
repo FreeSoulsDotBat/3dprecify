@@ -1,0 +1,302 @@
+{
+  "free-catalogo-vazio-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-catalogo-form-inerte-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-kits-vazio-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-kits-composer-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "free-orcamentos-vazio-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-simulacoes-vazio-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 2,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "lapsed-catalogo-lista-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 0,
+    "frozen": 0,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "lapsed-catalogo-form-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "signedout-catalogo-vazio-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-catalogo-form-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-catalogo-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-kits-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-orcamentos-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-catalogo-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-impressoras-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-catalogo-vazio-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-catalogo-form-inerte-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-kits-vazio-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-kits-composer-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "free-orcamentos-vazio-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-simulacoes-vazio-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 2,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "lapsed-catalogo-lista-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 0,
+    "frozen": 0,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "lapsed-catalogo-form-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 0,
+    "overflowX": 0
+  },
+  "signedout-catalogo-vazio-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-catalogo-form-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-catalogo-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-kits-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "signedout-orcamentos-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 0,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-catalogo-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 0,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  },
+  "free-impressoras-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 1080
+    },
+    "convites": 1,
+    "frozen": 1,
+    "vazioDidatico": 1,
+    "overflowX": 0
+  }
+}
