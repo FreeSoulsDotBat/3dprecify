@@ -241,6 +241,16 @@ export function avisoDeCampo(nome: string, bruto: string, comErro = false): stri
   return comErro ? texto.replace(t.fechoNormal, t.fechoComRecusa) : texto;
 }
 
+/**
+ * 019/PR-C (decisão do dono 28/08, prancheta 14b) — a LIÇÃO de um campo, sem cabeça e sem o valor
+ * digitado: quando o campo TAMBÉM está recusado, é isto (não `avisoDeCampo`) que a tela mostra —
+ * puro pelo NOME do campo, nunca pelo valor comprometido. `null` para quem não tem lição escrita
+ * (hoje, todo campo fora dos oito de `messages.calculator.plausibilidade.licao`).
+ */
+export function licaoDeCampo(nome: string): string | null {
+  return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
+}
+
 /** Conveniência para a tela: os avisos indexados por campo. */
 export function avisosPorCampo(avisos: AvisoPlausibilidade[]): Partial<Record<string, string>> {
   const mapa: Partial<Record<string, string>> = {};

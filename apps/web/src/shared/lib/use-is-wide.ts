@@ -41,6 +41,17 @@ export const WIDE_QUERY = "(min-width: 1280px)";
  */
 export const RAIL_FORCADO_QUERY = "(max-width: 599px)";
 
+/**
+ * 019/PR-C (T057, prancheta 15f) — o corte da Calculadora, e não um `matchMedia` novo solto: o
+ * ADR-0031 §Follow-ups já previu exatamente este caso ("se um dia uma quinta tela quiser um limiar
+ * diferente, ela **não** abre um segundo `matchMedia` — estende este hook com um limiar nomeado").
+ *
+ * Por que 1024px: é o corte em que `.tf-calc-grid` (features/calculator/calculator-form.css:25,40,
+ * 65,81) vira duas colunas — a Calculadora já tinha ESSE limiar antes de qualquer decisão de
+ * layout desta fatia; o segmented "Estimar · Ajustar" só passa a acompanhá-lo.
+ */
+export const CALC_WIDE_QUERY = "(min-width: 1024px)";
+
 /** A leitura defensiva compartilhada: sem `window`/`matchMedia` (o ambiente do jsdom) a resposta é
  *  `false`, que é a propriedade que mantém toda a suíte existente no ramo de hoje (ADR-0031). */
 function useMediaQuery(query: string): boolean {
@@ -72,4 +83,11 @@ export function useIsWide(): boolean {
  */
 export function useRailForcado(): boolean {
   return useMediaQuery(RAIL_FORCADO_QUERY);
+}
+
+/** 019/PR-C — o limiar em que o bloco "A máquina" da Calculadora move o segmented
+ *  "Estimar · Ajustar" para a linha do título (prancheta 15f). Sem `matchMedia` (jsdom) → `false`,
+ *  a mesma propriedade que mantém a suíte existente no ramo mobile. */
+export function useIsCalcWide(): boolean {
+  return useMediaQuery(CALC_WIDE_QUERY);
 }

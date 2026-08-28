@@ -199,7 +199,7 @@ describe("FeeSeal — Dispensar (T058) some até a fonte mudar (decisão do dono
 // novo render — o que muda é ONDE o texto mora, não a regra).
 describe("FeeSeal — embutida (offline, 13b·3): sem citação, sem 'Ver fonte'", () => {
   it("diz 'referência embutida (offline)', tom neutro, e NÃO oferece 'Ver fonte'", () => {
-    render(
+    const { container } = render(
       <FeeSeal
         state={{
           kind: "reference",
@@ -215,6 +215,10 @@ describe("FeeSeal — embutida (offline, 13b·3): sem citação, sem 'Ver fonte'
     expect(seal).toHaveTextContent("06/07/2026"); // a data sobrevive (SC-807)
     expect(seal.className).toContain("tf-alert--neutral");
     expect(screen.queryByRole("button", { name: t.verFonte })).not.toBeInTheDocument();
+    // decisão do dono 28/08 (13b·3) — o ícone "como no design" para a referência embutida: `wifi`,
+    // não o `info` padrão do tone `neutral`. Identificado pelo glifo (o DS não marca `data-icon`).
+    const glyph = container.querySelector(".tf-alert__icon");
+    expect(glyph?.innerHTML).toContain('d="M12 20h.01"');
   });
 
   it("embutida E vencida: o alarme de 45 dias dispara também na semente (SC-807)", () => {

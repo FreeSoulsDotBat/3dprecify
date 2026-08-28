@@ -264,7 +264,7 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
     expect(await screen.findByTestId("aviso-rollWeightKg")).toBeInTheDocument();
   });
 
-  it("com uma recusa junto (fieldState.error), o aviso PERMANECE e troca o fecho — sem 'Entendi' (14b)", async () => {
+  it("com uma recusa junto (fieldState.error), o aviso vira a LIÇÃO — sem 'Confira', sem 'Entendi' (decisão do dono 28/08, prancheta 14b)", async () => {
     const user = userEvent.setup();
     render(<RollWeightWithForcedError />);
     const input = screen.getByRole("textbox") as HTMLInputElement;
@@ -279,7 +279,8 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
 
     const avisoComErro = screen.getByTestId("aviso-rollWeightKg");
     expect(avisoComErro).toBeInTheDocument();
-    expect(avisoComErro).toHaveTextContent(t.plausibilidade.fechoComRecusa);
+    expect(avisoComErro).toHaveTextContent(t.plausibilidade.licao.rollWeightKg);
+    expect(avisoComErro).not.toHaveTextContent("Confira o peso do rolo");
     expect(avisoComErro).not.toHaveTextContent(t.plausibilidade.fechoNormal);
     expect(
       within(avisoComErro).queryByRole("button", { name: t.plausibilidade.entendi }),

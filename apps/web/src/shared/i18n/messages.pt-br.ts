@@ -160,6 +160,27 @@ export const messages = {
       entendi: "Entendi",
       fechoNormal: "Nada foi recusado.",
       fechoComRecusa: "Corrija o campo acima para calcular.",
+      // 019/PR-C (decisão do dono 28/08, prancheta 14b "Erro e aviso juntos") — quando o campo TAMBÉM
+      // foi recusado, o `tf-aviso` não repete "Confira {campo}: {valor}…"; ele guarda SÓ A LIÇÃO
+      // (derivada das frases acima, mesmo fecho `fechoComRecusa`), sem cabeça e sem "Entendi" — não
+      // se dispensa uma lição que acompanha uma recusa.
+      licao: {
+        machineLifetimeHours:
+          "Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.",
+        avgPowerKw:
+          "Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Corrija o campo acima para calcular.",
+        tariffPerKwh: `No Brasil se paga perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL} por kWh. Na conta de luz, divida o valor total pelos kWh do mês. Corrija o campo acima para calcular.`,
+        rollWeightKg:
+          "O rolo comum tem 1 kg — se você informou gramas, 1.000 g são 1 kg. Corrija o campo acima para calcular.",
+        printGrams:
+          "O campo pede o que a PEÇA consome, não o peso do rolo. Corrija o campo acima para calcular.",
+        printTimeHours:
+          "Se você quis dizer minutos, use o campo de minutos ao lado. Corrija o campo acima para calcular.",
+        laborRatePerHour:
+          "Se você informou quanto quer ganhar por mês, divida pelas horas do mês — R$ 3.000 ÷ 160 h = R$ 18,75. Corrija o campo acima para calcular.",
+        maintenanceReservePerHour:
+          "Se você informou o gasto do ano inteiro, divida pelas horas que imprime no ano. Corrija o campo acima para calcular.",
+      },
     },
     results: {
       material: "Material",
@@ -510,6 +531,10 @@ export const messages = {
       // voltar à estimativa com horas digitadas à mão PERGUNTA antes de sobrescrever (15e — inline no
       // bloco, com os dois números em disputa, cada um no seu botão). `adjustButton`/
       // `backToEstimateButton`/`derivedCaption` saíram: substituídos, não renomeados.
+      // 019/PR-C (decisão do dono 28/08, prancheta 15a/15f) — o título do bloco. A 15a o desenha em
+      // TODAS as larguras com um ⓘ "Sobre o custo da máquina" cujo corpo a prancheta não traz —
+      // o título entra; o ⓘ espera a copy do dono.
+      blockTitle: "A máquina",
       estimar: "Estimar",
       ajustar: "Ajustar",
       readoutLabel: "Custo da máquina por hora de impressão",

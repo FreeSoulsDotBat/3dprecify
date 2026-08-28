@@ -104,6 +104,8 @@ function FeeSourceDialog({
           rel="noopener noreferrer"
         >
           {sourceUrl.replace(/^https?:\/\//, "")}
+          {/* 019/PR-C — decisão do dono 28/08: mesmo chevron do botão "Ver fonte" (13a·2). */}
+          <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
         </a>
         <p className="fee-seal__source-notice">
           {t.fonteAviso.replace("{marketplace}", marketplaceLabel)}
@@ -142,6 +144,9 @@ function FeeReferenceAlert({
     <>
       <Alert
         tone={tone}
+        // 019/PR-C (prancheta 13b·3, decisão do dono 28/08) — a referência embutida (offline, sem
+        // internet) troca o ícone padrão do tone `neutral` pelo `wifi`, "como no design".
+        icon={state.embedded ? "wifi" : undefined}
         compact
         data-testid="fee-seal"
         dismissLabel={t.dispensar}
@@ -150,6 +155,8 @@ function FeeReferenceAlert({
           state.sourceUrl ? (
             <button type="button" onClick={() => setSourceOpen(true)}>
               {t.verFonte}
+              {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
+              <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
             </button>
           ) : undefined
         }
@@ -260,6 +267,8 @@ export function FixedFeeSourceBadge({
         action={
           <button type="button" onClick={() => setSourceOpen(true)}>
             {t.verFonte}
+            {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
+            <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
           </button>
         }
       >

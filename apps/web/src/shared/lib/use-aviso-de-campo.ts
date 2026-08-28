@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { avisoDeCampo } from "./plausibilidade";
+import { avisoDeCampo, licaoDeCampo } from "./plausibilidade";
 import { dismissKey, usePlausibilityDismissStore } from "./plausibility-dismiss-store";
 
 export interface UseAvisoDeCampoResult {
@@ -48,8 +48,15 @@ export function useAvisoDeCampo(
   // existir, mesmo que o mesmo par campo+valor já tivesse sido dispensado ANTES de a recusa nascer.
   const suprimidoPelaDispensa = !temErro && key !== null && dismissed.has(key);
 
+  // 019/PR-C (decisão do dono 28/08, prancheta 14b "Erro e aviso juntos") — quando o campo tem
+  // erro E lição escrita, é a LIÇÃO que aparece, não "Confira {campo}: {valor}…" com o fecho
+  // trocado: independentemente do valor comprometido (a lição não olha para ele) e da dispensa
+  // (uma lição que acompanha uma recusa nunca se dispensa). Sem lição para o campo, cai no
+  // comportamento de sempre.
+  const licao = committed !== null && temErro ? licaoDeCampo(nome) : null;
+
   return {
-    aviso: suprimidoPelaDispensa ? null : texto,
+    aviso: licao ?? (suprimidoPelaDispensa ? null : texto),
     comErro: temErro,
     onBlur: () => setCommitted(latest.current),
     onEntendi: () => {

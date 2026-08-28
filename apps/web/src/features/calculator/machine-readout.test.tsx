@@ -13,6 +13,7 @@ import {
   defaultCalcValues,
 } from "@/features/calculator/calculator-schema";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { installMatchMedia, type MatchMediaHandle } from "@/shared/lib/match-media.test-helper";
 
 // 019/PR-C (T051, prancheta "Calculadora - Bloco da Maquina") — o readout do custo/hora, o par
 // segmented "Estimar · Ajustar" e a confirmação inline de troca (15e). Vermelho primeiro: nada
@@ -75,6 +76,38 @@ describe("T051 — o par vira Segmented 'Estimar · Ajustar' (role=radiogroup, s
   });
 });
 
+describe("T057 (prancheta 15f, decisão do dono 28/08) — 1024px move o segmented para a linha do título", () => {
+  let mm: MatchMediaHandle | null = null;
+  afterEach(() => {
+    mm?.restore();
+    mm = null;
+  });
+
+  it("abaixo de 1024px (mobile, sem matchMedia instalado): continua 'split', sem título 'A máquina'", () => {
+    render(<Harness />);
+    const group = screen.getByTestId("machine-mode");
+    expect(group.className).toContain("tf-segmented--split");
+    expect(group.className).not.toContain("tf-segmented--sm");
+    expect(screen.queryByText("A máquina")).not.toBeInTheDocument();
+  });
+
+  it("a partir de 1024px: 'size=sm', SEM split, na linha do título 'A máquina'", () => {
+    mm = installMatchMedia(1024);
+    render(<Harness />);
+    const group = screen.getByTestId("machine-mode");
+    expect(group.className).toContain("tf-segmented--sm");
+    expect(group.className).not.toContain("tf-segmented--split");
+    // Mesma linha: o título e o grupo são irmãos, dentro do mesmo wrapper flex.
+    const title = screen.getByText("A máquina");
+    expect(title.parentElement).toBe(group.parentElement);
+    // Ainda os dois papéis certos (radiogroup, um selecionado) — só a APARÊNCIA mudou.
+    expect(within(group).getByRole("radio", { name: t.machineCost.estimar })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+  });
+});
+
 describe("T051 — valor 0 da máquina: ressalva verbatim, sem divisão por zero (15d/15c)", () => {
   it("machineValue vazio ⇒ readout mostra a ressalva 'falta o valor da máquina'", async () => {
     const user = userEvent.setup();
@@ -95,6 +128,28 @@ describe("T051 — valor 0 da máquina: ressalva verbatim, sem divisão por zero
     await user.type(hoursInput, "0");
     await user.tab();
     expect(screen.queryByTestId("machine-readout")).not.toBeInTheDocument();
+  });
+
+  // decisão do dono 28/08, prancheta 14b ("Erro e aviso juntos") — o campo dedicado da máquina
+  // (fora de `ControlledField`, ver o comentário do próprio `MachineCostFields`) passa pelo MESMO
+  // `useAvisoDeCampo`, então a recusa "vida útil deve ser maior que zero" também troca o aviso pela
+  // LIÇÃO — nunca "Confira a vida útil: 0 horas…" com o fecho trocado.
+  it("vida útil = 0 ⇒ erro + a LIÇÃO (sem 'Confira', sem 'Entendi'); o readout continua ausente", async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole("radio", { name: t.machineCost.ajustar }));
+    const hoursInput = screen.getByRole("textbox", { name: t.fields.machineLifetime });
+    await user.clear(hoursInput);
+    await user.type(hoursInput, "0");
+    await user.tab();
+
+    expect(screen.queryByTestId("machine-readout")).not.toBeInTheDocument();
+    const aviso = await screen.findByTestId("aviso-machineLifetimeHours");
+    expect(aviso).toHaveTextContent(t.plausibilidade.licao.machineLifetimeHours);
+    expect(aviso).not.toHaveTextContent("Confira a vida útil");
+    expect(
+      within(aviso).queryByRole("button", { name: t.plausibilidade.entendi }),
+    ).not.toBeInTheDocument();
   });
 });
 

@@ -90,4 +90,10 @@
   min-height: 44px;
   display: flex;
   align-items: center;
+  /* 019/PR-C — decisão do dono 28/08: o chevron do "Ver fonte" (13a·2) ganha o mesmo respiro do
+     design (gap:6px) entre a URL e o ícone; o SVG não deve encolher junto do texto quebrável. */
+  gap: 6px;
+}
+.fee-seal__source-link svg {
+  flex: 0 0 auto;
 }

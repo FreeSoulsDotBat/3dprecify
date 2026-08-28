@@ -38,6 +38,7 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { avisoDeComissao, avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
 import { useAvisoDeCampo, type UseAvisoDeCampoResult } from "@/shared/lib/use-aviso-de-campo";
+import { useIsCalcWide } from "@/shared/lib/use-is-wide";
 import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
 import {
   decimalHoursToHm,
@@ -456,6 +457,10 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
   const valueField = useController({ control, name: "machineValue" });
   const lifetimeField = useController({ control, name: "machineLifetimeHours" });
   const [manualOverride, setManualOverride] = useState(false);
+  // 019/PR-C (T057, prancheta 15f) — o corte da própria Calculadora (`.tf-calc-grid`, 1024px), não
+  // o `useIsWide` de 1280px do resto do app: nenhum dos dois hooks existentes servia a ESTE bloco
+  // isoladamente (divergência registrada abaixo do Segmented). `useIsCalcWide` fecha isso.
+  const isCalcWide = useIsCalcWide();
   // 019/PR-C (T057, prancheta 15e) — a confirmação inline ao tocar "Estimar" vindo de "Ajustar",
   // com horas fora de todo ritmo × payback. Fica pendente até "Usar {novo} h" (aplica e volta para
   // "Estimar") ou "Manter {atual} h" (fecha sem mudar nada — o segmented continua em "Ajustar",
@@ -526,25 +531,42 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
         )}
       </Field>
 
-      {/* 019/PR-C (T057, prancheta 15a) — "Estimar · Ajustar" vira `Segmented`. DIVERGÊNCIA
-          REGISTRADA da 15f: o briefing pede `size="sm"` na linha do título a partir de 1024px —
-          mas a Calculadora corta em 1024px (`.tf-calc-grid`) e o hook de largura do produto
-          (`useIsWide`) mede 1280px, um corte que nenhum dos dois existentes serve para ESTE bloco
-          isoladamente. Fica `split size="md"` em TODAS as larguras; fica para o dono decidir se
-          vale um hook novo só para isto. */}
-      <Segmented<MachineMode>
-        options={[
-          { id: "estimar", label: t.machineCost.estimar },
-          { id: "ajustar", label: t.machineCost.ajustar },
-        ]}
-        value={mode}
-        onChange={handleModeChange}
-        // O grupo decide COMO a vida útil é obtida — é ela que nomeia o grupo, não a pergunta do ritmo.
-        ariaLabel={t.fields.machineLifetime}
-        role="radiogroup"
-        split
-        data-testid="machine-mode"
-      />
+      {/* 019/PR-C (T057, prancheta 15f, decisão do dono 28/08) — a divergência registrada
+          anteriormente (nenhum dos dois hooks existentes servia a ESTE bloco) fecha com
+          `useIsCalcWide` (o corte de 1024px do próprio `.tf-calc-grid`). Dois `Segmented` NUNCA
+          montados juntos (mesmo motivo do ADR-0031: dois radiogroups com o mesmo nome) — o hook
+          decide qual dos dois existe, nunca CSS escondendo um dos dois. */}
+      {isCalcWide ? (
+        <div className="flex items-center gap-2">
+          <p style={{ ...sectionLabel, flex: 1 }}>{t.machineCost.blockTitle}</p>
+          <Segmented<MachineMode>
+            options={[
+              { id: "estimar", label: t.machineCost.estimar },
+              { id: "ajustar", label: t.machineCost.ajustar },
+            ]}
+            value={mode}
+            onChange={handleModeChange}
+            ariaLabel={t.fields.machineLifetime}
+            role="radiogroup"
+            size="sm"
+            data-testid="machine-mode"
+          />
+        </div>
+      ) : (
+        <Segmented<MachineMode>
+          options={[
+            { id: "estimar", label: t.machineCost.estimar },
+            { id: "ajustar", label: t.machineCost.ajustar },
+          ]}
+          value={mode}
+          onChange={handleModeChange}
+          // O grupo decide COMO a vida útil é obtida — é ela que nomeia o grupo, não a pergunta do ritmo.
+          ariaLabel={t.fields.machineLifetime}
+          role="radiogroup"
+          split
+          data-testid="machine-mode"
+        />
+      )}
 
       {!adjustMode ? (
         <>
