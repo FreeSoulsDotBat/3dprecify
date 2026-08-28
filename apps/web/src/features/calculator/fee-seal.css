@@ -78,3 +78,16 @@
   line-height: var(--lh-normal);
   opacity: 0.75;
 }
+
+/* 019/PR-C (T061) — o link do "Ver fonte": uma URL é uma palavra só; sem isto ela força a largura do
+   diálogo a 390px (medido na captura). `anywhere` deixa quebrar em qualquer ponto, e `min-width: 0` no
+   item de flex é o que permite o encolhimento. */
+.fee-seal__source-link {
+  display: block;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+}

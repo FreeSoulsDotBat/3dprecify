@@ -94,8 +94,16 @@ function FeeSourceDialog({
         <DialogTitle>{t.fonteTitle}</DialogTitle>
         <DialogDescription>{citation}</DialogDescription>
         <p className="fee-seal__source-date tf-tnum">{dateLine}</p>
-        <a href={sourceUrl} target="_blank" rel="noopener noreferrer">
-          {sourceUrl}
+        {/* 13a·2 — o link sem o esquema ("seller.shopee.com.br/…"), e QUEBRÁVEL: a screenshot da
+            T061 mostrou a URL inquebrável transbordando o diálogo a 390px (a lição de sempre —
+            geometria só aparece na imagem). */}
+        <a
+          className="fee-seal__source-link"
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {sourceUrl.replace(/^https?:\/\//, "")}
         </a>
         <p className="fee-seal__source-notice">
           {t.fonteAviso.replace("{marketplace}", marketplaceLabel)}

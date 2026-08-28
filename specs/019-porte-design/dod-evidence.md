@@ -569,3 +569,19 @@ TabBar aceitando a colisão com o toaster (o §I rejeita). T054 (o e2e) espera a
   `FIELD_PRECISION` (`calculator-schema.ts`, derivado de `COST_FIELDS`; hoje `{ tariffPerKwh: 4 }`) nos dois call
   sites de escalares. Vermelho capturado ANTES ("0,87" × "0,8734"; "0,00" × "0,0000"); depois **29/29** no bridge.
 
+### T061 — gate, e2e, screenshots e o PR (2026-08-28)
+
+- **E2E completo** (stack real): **354 passed · 2 failed · 58 skipped · 2,9 min** — as 2 (×2 projetos) eram
+  `marketplace-premium.spec.ts:135` `getByText("Frete")` casando por SUBSTRING com a citação do selo da Amazon
+  ("…inclui frete"), que agora vive num `<p>` próprio; adotada com `exact: true`; re-rodada verde. Outras 2
+  âncoras adotadas antes: `calculator.spec.ts` (`adjustButton` → rádio "Ajustar"; "Referência" → "Comissão").
+- **Screenshots 1:1** (`porte-screenshots-pr-c.spec.ts`, 390px × 2 temas, 16 PNGs): aviso no blur (tela + bloco),
+  readout nos 2 modos, confirmação inline, selo compacto, "Ver fonte" aberto, selo dispensado após reload.
+  Conferidas contra 14b/15a/15e/13a. **Dois defeitos que só a imagem mostrou**: "1200 h/ano" sem agrupamento
+  (a 15e escreve "1.200") — corrigido com `fmtHoras`; e a URL do "Ver fonte" INQUEBRÁVEL transbordando o diálogo
+  a 390px — corrigido (`overflow-wrap: anywhere` + exibição sem esquema, como a 13a·2), re-capturado 2/2.
+- **`pnpm gate:all`: VERDE** — frontend 166 arquivos / **1916** testes, cobertura 89,53%; backend **474 passed**,
+  ruff/format/basedpyright/import-linter ok. `PRICING_MODEL_VERSION` 4.1.0 (28/28 no pacote).
+- **Push e abertura do PR-C**: aguardam a autorização do dono (corpo em `evidencias/pr-c/pr-body.md`, com as 7
+  decisões a ratificar e o ⛔ DONO do T212). Estado: **CORREÇÃO DECLARADA**.
+
