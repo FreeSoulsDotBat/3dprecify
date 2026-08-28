@@ -132,7 +132,9 @@ test("premium: a hidden fee field never keeps charging — ML+Frete → Amazon b
   await expect(slot0.getByLabel(t.channels.freight)).toHaveCount(0);
   // (b) ...and so is the DISCOUNT: no "Frete / cupom" deduction line, no "não-lucrativo" warning —
   // the exact symptoms the homologação measured (−R$ 50, líquido −R$ 25,76, the warning caption).
-  await expect(page.getByText(t.channels.freightLine)).toHaveCount(0);
+  // 019/PR-C — `exact`: a citação do selo da Amazon ("…comissão sobre base que inclui frete") agora
+  // vive num `<p>` próprio, e o casamento por substring de `getByText` a confundia com a linha "Frete".
+  await expect(page.getByText(t.channels.freightLine, { exact: true })).toHaveCount(0);
   await expect(page.getByText(t.channels.negativeLiquido)).toHaveCount(0);
   await expect(page.getByText(/−R\$\s*50,00/)).toHaveCount(0);
 

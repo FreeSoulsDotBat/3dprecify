@@ -640,7 +640,7 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
         >
           <p>
             {t.machineCost.confirmBody
-              .replace("{ritmo}", String(RITMOS_HORAS_ANO[ritmoIndex]))
+              .replace("{ritmo}", fmtHoras(RITMOS_HORAS_ANO[ritmoIndex])) // "1.200", como a 15e
               .replace("{anos}", anosLabel)}
           </p>
           <div className="flex flex-wrap gap-2 mt-1">

@@ -501,3 +501,71 @@ recomendada: não move nada, não briga com o toaster, é a "exceção mobile au
 cartão de preço para o topo (muda a ordem de leitura que a prancheta 10 desenha); (c) `sticky; bottom` acima da
 TabBar aceitando a colisão com o toaster (o §I rejeita). T054 (o e2e) espera a mesma decisão.
 
+### T049 · T050 · T056 · T118 · T051 · T057 — plausibilidade + bloco da máquina (dev-frontend, 2026-08-28)
+
+- **Vermelho capturado**: T049 — `Cannot read properties of undefined (reading 'replace')` (a chave `adjustButton`
+  apagada na T055) + os casos novos (aviso não nascia no blur, fecho não trocava); T050 — módulo inexistente;
+  T051 — readout/segmented/confirmação inexistentes. `computeCalculator.test.ts` 28/28, `PRICING_MODEL_VERSION`
+  **"4.1.0"** intocado (rodado, não editado).
+- **O aviso** (prancheta 14): `useAvisoDeCampo(nome, bruto, temErro)` em `shared/lib/use-aviso-de-campo.ts` (React +
+  store; `shared` pode ter hooks; `features/calculator` E `widgets/bom-line-editor` importam de lá) — `useRef` com
+  o valor ao vivo, `useState` com o valor COMPROMETIDO no blur, dispensa pela chave `campo:valorNormalizado` no
+  `plausibility-dismiss-store.ts` (zustand puro, SEM `persist` — "nesta sessão"). `ControlledField`/`TimeHmField`
+  extraídos em `ControlledFieldBody`/`TimeHmFieldBody` (hook dentro do `render` do `Controller` viola
+  `rules-of-hooks`). O `<Aviso>` é IRMÃO do `Field` dentro de `.calc-field-cell` (14f: cresce na célula, não empurra
+  o vizinho); "Entendi" via `action`; com ERRO junto o fecho troca (`fechoNormal` → `fechoComRecusa`, `String.replace`
+  no texto pronto — toda frase termina literalmente em "Nada foi recusado.") e o "Entendi" não aparece (14b).
+  `AvisoDeResultado` → `<Aviso lines=[…]>` (14d: dois fatos, dois `<p>`). `fmtMoney` (2 casas sempre) para
+  tariff/laborRate/maintenance/custoAbsurdo — "R$ 6.000.061,60", nunca "R$ 6.000.061,6". Achado real do teste: o
+  store é singleton de sessão e VAZAVA dispensa entre casos do mesmo arquivo — `afterEach` limpa.
+- **O bloco da máquina** (prancheta 15): `<Segmented split role="radiogroup">` Estimar/Ajustar (nome do grupo =
+  `fields.machineLifetime`, corrigido na revisão: o agente tinha posto a pergunta do ritmo); `<MachineCostReadout>`
+  nos DOIS modos — rótulo + `formatBRL(perHour)` grande + "de R$ X ÷ N h"; some quando `currentHours <= 0` (15c: não
+  há divisão por zero) e ganha a ressalva `--warning-text` + valor em `--text-muted` quando `machineValueNum === 0`
+  (15d); a confirmação é INLINE (`<Alert tone="warning" role="alertdialog">`, 15e — não o diálogo center que a
+  T057 dizia): só ao tocar "Estimar" vindo de "Ajustar" com `detectRitmoMode(horas) === null`; "Usar {novo} h"
+  aplica; "Manter {atual} h" fecha e o segmented continua em "Ajustar"; NADA sobrescrito antes do "Usar".
+- **Divergências registradas**: 15f (segmented `size="sm"` na linha do título ≥1024px) NÃO implementada — a
+  Calculadora corta em 1024 e `useIsWide` mede 1280; fica `split size="md"` em toda largura (ponto para o dono).
+  `.tf-field__aviso` (T118) NÃO apagada: `features/bom/bom-line-card.tsx` ainda a consome (o aviso de quantidade
+  da linha de kit como parágrafo solto — a 14e manda virar `tf-aviso`; fora do cluster, follow-up). O comentário
+  de `field.css:166` corrigido (o módulo sempre morou em `shared/lib`).
+- `Aviso` e `Segmented` ganharam `...rest` (para `data-testid`); testids: `aviso-<campo>` (sobrevive),
+  `machine-readout`, `machine-mode`, `machine-confirm`.
+
+### T052 · T058 — o selo de procedência (dev-frontend, 2026-08-28)
+
+- **Vermelho**: `fee-seal.test.tsx` reescrito contra o `Badge` antigo — 12 falhas / 14 passes (as 14 = lógica pura de
+  `feeSealState`). Depois: **102/102** no trio (`fee-seal`, `fee-seal-dismiss-store`, `fee-prefill`);
+  `tf-class-uniqueness` verde.
+- **Badge → `Alert compact`** (prancheta 13): o bloco que respalda um NÚMERO (comissão: tom info/neutral; taxa
+  fixa: neutral) com rótulo `commissionLabel`/`fixedFeeSource` + citação em 2 linhas (`.fee-seal__cite`, clamp) +
+  "para {categoria}" + data + "Ver fonte" (só com `sourceUrl` — a semente não tem, 13b·3) + "Dispensar" (`onDismiss`
+  do `Alert`, chave `${marketplace}::${source}::${effectiveDate ?? reviewedOn}` em `localStorage`, 50 recentes,
+  degrada para memória em aba privada). "Ver fonte" abre `Dialog` center com `fonteTitle`, a citação inteira,
+  `fonteConferida`, o link (`target=_blank rel=noopener`) e `fonteAviso` com o nome do marketplace. O catch-all vira
+  LINHA do corpo em `--warning-text` (13b·5 — em pílula estourava a 360px); "pode estar desatualizada" continua
+  pílula, DENTRO do corpo (13c). `adjusted`/`estimate`/`none` continuam `Badge` (accent/info/warning) — a T052
+  dizia `Alert compact`; **a prancheta 13b ganhou** (são qualificadores, não procedência). `fee-seal.css` perdeu o
+  remendo `.tf-badge.fee-seal`. `fee-prefill.ts` passa `sourceUrl` (aditivo) fora da semente; a janela de
+  desatualização é 45 dias (o comentário dizia 30 — corrigido). `tf-badge--accent`/`--sm` portados de
+  `tf-components.css:511-518` (a prancheta pede accent, que não existia). Ordem fixa no sítio (13d): comissão →
+  taxa fixa → pílulas, `flex-col`.
+- **O que faltou, registrado**: ícone `wifi` (13b·3, embutida) não existe no `ICONS` e o `Alert` fixa o ícone por
+  tom — renderiza `info`; o chevron decorativo do "Ver fonte" omitido; o diálogo da taxa fixa reusa o título
+  "Fonte da comissão" (só uma string transcrita; não inventar "Fonte da taxa fixa") e usa "vigente desde" como data
+  (a entrada não tem `lastReviewed` próprio para a taxa fixa).
+
+### T053 · T060 — precision e a hidratação (dev-frontend, 2026-08-28)
+
+- `NumberField.precision` (default 2; o `formatDecimal(n, 2)` hardcoded do blur era a perda — o comentário "nunca
+  muda o valor semântico" era falso para 4 casas) · `CalcFieldMeta.precision` + `tariffPerKwh: 4` · `ControlledNumber`
+  repassa · `ControlledField` repassa. `number-field.test.tsx` +5 casos; **não-vácuo por mutação**: `precision` →
+  `2` de volta ⇒ 3/13 vermelhos exatamente nos casos de precisão; revertido. `calculator-model.test.ts`: energia =
+  100 h × 1 kW × 0,8734 = **87,34** com `toBe` (igualdade numérica, SC-1905).
+- **Achado real (o "R5" do 016 tinha um bug próprio)**: `scenario-bridge.ts` `moneyLeafToPtBr` chamava
+  `formatDecimal(n, 2)` para TODO leaf de dinheiro — uma tarifa salva "0.8734" **reabria como "0,87"**, corte de
+  VALOR (a recomputação seguinte usava 0,87), não só de exibição. Corrigido: `moneyLeafToPtBr(leaf, precision)` +
+  `FIELD_PRECISION` (`calculator-schema.ts`, derivado de `COST_FIELDS`; hoje `{ tariffPerKwh: 4 }`) nos dois call
+  sites de escalares. Vermelho capturado ANTES ("0,87" × "0,8734"; "0,00" × "0,0000"); depois **29/29** no bridge.
+
