@@ -431,3 +431,24 @@ abre a edição" (o intercepto do 013/FB-02, sem depender do nome do estado). (2
 `onClick={save}` sempre presente e só `disabled` — passou a `onClick={gate === "active" ? … : undefined}`.
 Re-rodado: catalog + catalogo + bom + a guarda **196/196**, tsc/eslint limpos.
 
+### T047 · T048 — a rodada completa, o gate e o PR (2026-08-28)
+
+- **E2E completo** contra a stack real (emulador 9500 · Postgres 5433 · backend 8100 · stub 8200): **351 passed ·
+  4 failed · 1 flaky · 46 skipped · 3,1 min**. Os 4 = 2 casos × 2 projetos de `scenarios.spec.ts` (:250/:278)
+  assertando o teaser antigo DENTRO da folha via alias local `pt` — a quinta âncora que nenhuma task citava,
+  adotada (vazio didático + `scenarios.didaticoBody`); re-rodada `scenarios` + `overflow-geometria`: **16/16**.
+  O flaky (`overflow-geometria` mobile, 1ª tentativa "Target page, context or browser has been closed" no
+  `setViewportSize`) é infra do browser, não geometria — verde no retry e na re-rodada; registrado porque o
+  projeto já pagou por vermelho intermitente (US5/US8), e este NÃO é da classe de produto.
+- **SC-1903 provado nos 4 caminhos**: `git diff origin/develop -- backend/app/entitlement backend/app/api
+  backend/app/models backend/app/services` = **vazio** + `test_entitlement_gate.py` 10/10 (a guarda por método).
+- **Commits da fatia** (branch `019-pr-b-premium`, do develop `ebf3ec0`): `18eb6ac` transcrição + núcleo ·
+  `e2f3f93` produto + testes novos · `fc0e975` asserções adotadas (separado, research §J) · `2d55795` T107 +
+  simetria remove/Salvar + screenshots · o fechamento (scenarios.spec + ledger + esta seção).
+- **Push e abertura do PR-B**: ações externas — aguardam a autorização do dono (regra do projeto: "Jonatan
+  authorizes each push/merge"). O corpo do PR está pronto (assertando as AUSÊNCIAS: diff vazio no servidor,
+  0 escritas, 0 outbox, 0 toast falso, 1 convite por estado, 0 classe `tf-*` nova) e as 6 decisões a ratificar
+  na segunda passada estão listadas nele. Estado da fatia: **CORREÇÃO DECLARADA**.
+- Token ledger: fechado com os reais (1,04M nos executores vs ~650k estimados; o cluster do Catálogo 2,3× o
+  previsto).
+

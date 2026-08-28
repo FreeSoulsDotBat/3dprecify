@@ -19,7 +19,6 @@ import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-he
 const t = messages.calculator;
 const s = messages.scenarios;
 const tb = messages.billing;
-const pt = messages.premiumTeaser.SCENARIOS;
 
 /** A 120-char adversarial name (the T002-decided cap) — no spaces, so CSS truncation is the ONLY
  *  thing standing between this and a horizontal overflow (the E4 "homologate size" lesson). */
@@ -256,8 +255,10 @@ test("free/signed-out meets the honest UNIFIED teaser — NO inline 'Salvar simu
   await expect(page.getByRole("button", { name: s.saveAction })).toHaveCount(0);
 
   const listDialog = await openScenariosList(page);
-  await expect(listDialog.getByText(pt.title)).toBeVisible();
-  await expect(listDialog.getByText(pt.subtitle)).toBeVisible();
+  // 019/PR-B — a parede saiu: a folha mostra o vazio DIDÁTICO (título da feature + a frase da 32c).
+  await expect(listDialog.getByTestId("vazio-didatico")).toBeVisible();
+  await expect(listDialog.getByText(s.emptyTitle)).toBeVisible();
+  await expect(listDialog.getByText(s.didaticoBody)).toBeVisible();
   // No price surprise, no availability date, no fabricated sample scenario.
   // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
   // sobra e a honestidade do numero: so os tres precos praticados.
@@ -285,7 +286,8 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
   await expect(page.getByRole("button", { name: s.saveAction })).toHaveCount(0);
 
   const listDialog = await openScenariosList(page);
-  await expect(listDialog.getByText(pt.title)).toBeVisible();
+  await expect(listDialog.getByTestId("vazio-didatico")).toBeVisible(); // 019/PR-B
+  await expect(listDialog.getByText(s.didaticoBody)).toBeVisible();
   // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
   // sobra e a honestidade do numero: so os tres precos praticados.
   for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {
