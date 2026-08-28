@@ -33,6 +33,15 @@ desenhadas) + as pranchetas remotas, transcritas por fatia.
 
 ## Clarifications
 
+### Sessão 2026-08-28 (PR-C — decisões do dono sobre as divergências prancheta × tasks)
+
+- Q: T212 (resumo fixo do preço a 390px) — a prancheta 10 não nomeia elemento fixo e `sticky` não gruda no último elemento do DOM. → A: **Claude Design recebe um prompt de correção**: o preço aparece enquanto o vendedor preenche e, ao chegar ao fim da rolagem, o preço "provisório" **se mescla** com o preço desenhado no fim da página. Implementação só depois da prancheta.
+- Q: A confirmação de troca de modo (15e) é inline no bloco; a T057 dizia diálogo. → A: **Diálogo mesmo** — Claude Design recebe um prompt para redesenhar essa parte. Até lá o inline fica (CORREÇÃO DECLARADA).
+- Q: `adjusted`/`estimate`/`none` continuam pílulas (13b) ou viram `Alert compact` (T052)? → A: **Prancheta** — continuam pílulas.
+- Q: 15f (segmented `size="sm"` na linha do título ≥1024px) exige um limiar que nenhum hook serve. → A: **Criar o hook** (limiar NOMEADO em `use-is-wide.ts`, como o ADR-0031 §Follow-ups prevê).
+- Q: A prancheta 10 ("A Conta e os Preços") redesenha o rodapé inteiro (segmented Varejo|Atacado, barra de proporção, markup no cabeçalho, "Preços por marketplace" como seção) — nenhuma task cobre. → A: **Entra na PR-F.**
+- Q: Miudezas do selo (ícone wifi do embutido, chevron do "Ver fonte"). → A: **Como no design.**
+
 ### Sessão 2026-08-27 (auditoria de implementabilidade — 5 decisões do dono)
 
 - Q: A `tf-table` do Catálogo em tela larga (handoff ≥1024 × ADR-0031 limiar único 1280 × mestre-detalhe do 018)? → A: **Emenda datada no ADR-0031**: limiar NOMEADO de 1024 só para a densidade da lista do Catálogo (faixa 1024–1279); ≥1280 o mestre-detalhe fica como está.
