@@ -439,21 +439,28 @@ def test_dedup_references_the_existing_live_product_and_supersedes_values(
     assert products[0]["filamentId"] == fid  # still linked — a kit save never unlinks it
 
 
-def test_dedup_is_case_sensitive(
+def test_dedup_matches_by_name_norm(
     db_client: TestClient, migrated_db: str, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """The rule is trim + EXACT (E2 has no case-folding anywhere) — 'suporte l' is a new piece."""
+    """019/PR-D · T129 — emenda datada ao ADR-0017 §3: o match é por `name_norm`.
+
+    A regra ERA trim + exato, case-sensitive, e este teste documentava isso ("'suporte l' é uma
+    peça nova"). Com a unicidade de nome (ADR-0033 §4) essa regra virou armadilha: 'suporte l'
+    não casaria aqui, seguiria para a materialização e bateria no índice único DENTRO da
+    transação atômica do kit. Casar pela MESMA chave que o índice usa é o que faz a referência e
+    a unicidade contarem a mesma história — e o efeito para o vendedor é o certo: ele digitou o
+    nome da peça que já tem, então é ELA que entra no kit, com os valores vivos dela.
+    """
     h = _premium(monkeypatch, migrated_db, "bom-case-1")
     fid, pid = _mk_refs(db_client, h)
-    _mk_product(db_client, h, fid, pid, "Suporte L")
+    existing = _mk_product(db_client, h, fid, pid, "Suporte L")
 
     created = _post(db_client, h, _bom_body([_ad_hoc_line(piece_name="suporte l")]))
     assert created.status_code == 201
-    assert created.json()["materializations"][0]["action"] == "created"
-    assert sorted(p["name"] for p in db_client.get("/api/v1/products", headers=h).json()) == [
-        "Suporte L",
-        "suporte l",
-    ]
+    assert created.json()["materializations"][0]["action"] == "referenced"
+    assert created.json()["materializations"][0]["productId"] == existing
+    # Nada foi criado em duplicidade — e nenhum "(2)" apareceu, porque não houve conflito nenhum.
+    assert [p["name"] for p in db_client.get("/api/v1/products", headers=h).json()] == ["Suporte L"]
 
 
 def test_dedup_never_matches_a_soft_deleted_product(

@@ -17,10 +17,11 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
-from pydantic import ConfigDict, field_validator, model_validator
+from pydantic import ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -31,10 +32,15 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
+from app.lib.name_norm import name_norm_key
 from app.models import Filament, Product
 from app.validation import CEIL_KG, CEIL_MONEY, finite_non_negative
 
 router = APIRouter(tags=["filaments"])
+
+#: 019/PR-D (ADR-0033 §4) — o índice único parcial desta tabela; só ELE dispara o retry de sufixo
+#: (qualquer outra violação de integridade continua subindo, ver `app/api/naming.py`).
+_NAME_INDEX = "uq_filaments_owner_name_norm"
 
 # 016/US10 (ADR-0026): `defaultWasteGrams` was REMOVED from pricing-core in 4.0.0 — a client that
 # still sends it is NOT silently ignored (Pydantic's default `extra="ignore"` would let a seller
@@ -48,7 +54,9 @@ _RETIRED_WASTE_FIELD = "defaultWasteGrams"
 class FilamentIn(CamelModel):
     model_config = ConfigDict(extra="forbid")
 
-    name: str
+    # 019/PR-D (T072): teto de nome só no pydantic — o banco não ganha CHECK de comprimento,
+    # que invalidaria o legado (ADR-0033 §Adendo 27/08 §3).
+    name: str = Field(max_length=NAME_MAX_CHARS)
     material: str | None = None
     cost_per_roll: Decimal
     roll_weight_kg: Decimal
@@ -107,6 +115,19 @@ def _to_out(row: Filament) -> FilamentOut:
     )
 
 
+def _apply(row: Filament, body: FilamentIn) -> None:
+    """Corpo → linha (019/PR-D · T072): o FUNIL de escrita, chamado de dentro do savepoint.
+
+    O `name` aqui é o ENVIADO; o nome FINAL (com sufixo, se houver conflito) quem escreve é
+    `flush_with_unique_name`, logo depois — por isso `name_norm` também é reescrita lá.
+    """
+    row.name = body.name
+    row.name_norm = name_norm_key(body.name)
+    row.material = body.material
+    row.cost_per_roll = body.cost_per_roll
+    row.roll_weight_kg = body.roll_weight_kg
+
+
 def _not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Filament not found", status_code=404)
 
@@ -156,14 +177,10 @@ async def create_filament(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    row = Filament(
-        owner_uid=claims["uid"],
-        name=body.name,
-        material=body.material,
-        cost_per_roll=body.cost_per_roll,
-        roll_weight_kg=body.roll_weight_kg,
+    row = Filament(owner_uid=claims["uid"])
+    await flush_with_unique_name(
+        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
     )
-    session.add(row)
     await session.commit()
     await session.refresh(row)
     return _to_out(row)
@@ -189,10 +206,9 @@ async def update_filament(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
     row = await _owned(session, claims["uid"], filament_id)
-    row.name = body.name
-    row.material = body.material
-    row.cost_per_roll = body.cost_per_roll
-    row.roll_weight_kg = body.roll_weight_kg
+    await flush_with_unique_name(
+        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+    )
     await session.commit()
     await session.refresh(row)
     return _to_out(row)

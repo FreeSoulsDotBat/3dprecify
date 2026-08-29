@@ -32,6 +32,7 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
+from functools import partial
 from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, status
@@ -39,6 +40,7 @@ from pydantic import Field, field_validator, model_validator
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
 from app.api.products import (
     ChannelSlot,
     FilamentValues,
@@ -65,10 +67,16 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
+from app.lib.name_norm import name_norm_key
 from app.models import Bom, BomLine, Product
 from app.validation import CEIL_QUANTITY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["boms"])
+
+#: 019/PR-D (ADR-0033 §4) — o índice único parcial dos KITS. O dos produtos vive em `products.py`
+#: e é nomeado aqui porque a materialização passa pelo mesmo helper.
+_NAME_INDEX = "uq_boms_owner_name_norm"
+_PRODUCT_NAME_INDEX = "uq_products_owner_name_norm"
 
 
 class BomLineIn(CamelModel):
@@ -80,7 +88,11 @@ class BomLineIn(CamelModel):
 
     quantity: int
     product_id: uuid.UUID | None = None
-    piece_name: str | None = None
+    # 019/PR-D (T072): o mesmo teto do nome de produto — uma linha ad-hoc VIRA um produto
+    # (`as_product_in`), então um nome que o produto recusaria não pode entrar por aqui: sem este
+    # teto o `ProductIn` construído no meio da rota estouraria um `ValidationError` que não é de
+    # requisição, e o vendedor receberia 500 no lugar de 422.
+    piece_name: str | None = Field(default=None, max_length=NAME_MAX_CHARS)
     piece_inputs: PieceInputs | None = None
     filament_values: FilamentValues | None = None
     printer_values: PrinterValues | None = None
@@ -173,7 +185,8 @@ class BomLineIn(CamelModel):
 
 
 class BomIn(CamelModel):
-    name: str
+    # 019/PR-D (T072): teto de nome só no pydantic (ADR-0033 §Adendo 27/08 §3).
+    name: str = Field(max_length=NAME_MAX_CHARS)
     #: `min_length=1` (owner decision D4, audit E3-04): an empty kit was refused by the client and
     #: accepted by the server — the client's promise now holds at the boundary that enforces it.
     #: This is a real OpenAPI delta (`minItems`), so the contract is regenerated with it.
@@ -292,8 +305,14 @@ async def _resolve_product(session: AsyncSession, uid: str, product_id: uuid.UUI
 
 
 async def _dedup_match(session: AsyncSession, uid: str, name: str) -> Product | None:
-    """ADR-0017 §3 — trim + EXACT (case-sensitive, as everywhere in E2), LIVE rows only: a name
-    that matches only a soft-deleted product must materialize a NEW one, never revive a dead row.
+    """ADR-0017 §3, **emenda datada 2026-08-27** (019/PR-D · T129): o match é por `name_norm`.
+
+    Era trim + EXATO, case-sensitive. Com a unicidade nova (ADR-0033 §4) isso viraria armadilha:
+    uma linha ad-hoc "gancho" com um produto vivo "Gancho" NÃO casaria aqui, seguiria para a
+    materialização e bateria no índice único — dentro da transação atômica do kit. Casar pela
+    MESMA chave que o índice usa é o que faz a referência e a unicidade contarem a mesma história.
+    LIVE rows only, como antes: um nome que só casa com produto apagado materializa um NOVO, nunca
+    revive um morto (e o índice é parcial pelo mesmo motivo).
     """
     return (
         await session.execute(
@@ -301,7 +320,7 @@ async def _dedup_match(session: AsyncSession, uid: str, name: str) -> Product | 
             .where(
                 Product.owner_uid == uid,
                 Product.deleted_at.is_(None),
-                Product.name == name,
+                Product.name_norm == name_norm_key(name),
             )
             .order_by(Product.created_at)
             .limit(1)
@@ -416,7 +435,9 @@ async def _materialize(
             continue
 
         name = line.piece_name or ""  # non-blank by the validator
-        existing = minted.get(name) or await _dedup_match(session, uid, name)
+        # 019/PR-D (T129): a chave do mapa é a MESMA do dedup e do índice — duas linhas ad-hoc do
+        # mesmo save escritas "Gancho" e "gancho " são a mesma peça, e criar duas bateria no índice.
+        existing = minted.get(name_norm_key(name)) or await _dedup_match(session, uid, name)
         if existing is not None:
             # The reference wins: the submitted typed values are SUPERSEDED by the live ones.
             resolved.append(existing)
@@ -428,10 +449,19 @@ async def _materialize(
         product = Product(owner_uid=uid)
         # Refs NULL + the full snapshot — the shape the products CHECKs already admit, and the
         # honest "needs attention" state (K3) until a saved filament + printer are linked.
-        _apply_product(product, line.as_product_in(), None, None)
-        session.add(product)
-        await session.flush()  # assign the PK so the line can reference it in this same txn
-        minted[name] = product
+        # 019/PR-D (T072/T065): o flush do produto acontece em SAVEPOINT. Um conflito de nome com
+        # uma criação CONCORRENTE (o dedup acima não vê a linha que a outra transação ainda não
+        # commitou) custa uma renomeação "(2)"; sem o savepoint ele abortaria a transação atômica
+        # do kit inteiro (ADR-0017) e o vendedor perderia o save por causa de um nome.
+        product_in = line.as_product_in()
+        await flush_with_unique_name(
+            session,
+            product,
+            product_in.name,
+            index_name=_PRODUCT_NAME_INDEX,
+            apply=partial(_apply_product, product, product_in, None, None),
+        )  # o flush do helper já atribui o PK para a linha referenciar nesta mesma txn
+        minted[name_norm_key(name)] = product
         resolved.append(product)
         materializations.append(
             Materialization(position=position, product_id=product.id, action="created")
@@ -593,9 +623,10 @@ async def create_bom(
     # ONE transaction (ADR-0017 §1): materialize → write → commit. A raise anywhere before the
     # commit takes the materialized products down with it (FR-415/SC-411).
     products, materializations = await _materialize(session, uid, body)
-    bom = Bom(owner_uid=uid, name=body.name)
-    session.add(bom)
-    await session.flush()
+    bom = Bom(owner_uid=uid)
+    # O nome do KIT também é único por conta (ADR-0033 §4) — e o helper já faz o flush que
+    # atribui o PK que as linhas referenciam.
+    await flush_with_unique_name(session, bom, body.name, index_name=_NAME_INDEX)
     await _write_lines(session, bom, body, products)
     await session.commit()
     await session.refresh(bom)
@@ -639,7 +670,9 @@ async def update_bom(
     uid = claims["uid"]
     bom = await _owned(session, uid, bom_id)
     products, materializations = await _materialize(session, uid, body)
-    bom.name = body.name
+    # A renomeação segue a MESMA regra da criação; a linha chega limpa ao helper, que é o que
+    # permite o retry em savepoint (ver `app/api/naming.py`).
+    await flush_with_unique_name(session, bom, body.name, index_name=_NAME_INDEX)
     # Replace semantics: the submitted lines ARE the kit (positions are re-derived from order).
     for line in await _lines_of(session, bom.owner_uid, bom.id):
         await session.delete(line)

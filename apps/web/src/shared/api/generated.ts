@@ -126,6 +126,7 @@ export interface BomLineIn {
 }
 
 export interface BomIn {
+  /** @maxLength 120 */
   name: string;
   /** @minItems 1 */
   lines: BomLineIn[];
@@ -495,6 +496,7 @@ export interface FeeCatalog {
 }
 
 export interface FilamentIn {
+  /** @maxLength 120 */
   name: string;
   material?: string | null;
   costPerRoll: number | string;
@@ -513,7 +515,74 @@ export interface FilamentOut {
   updatedAt: string;
 }
 
+export type PriceObservationInSubjectKind = typeof PriceObservationInSubjectKind[keyof typeof PriceObservationInSubjectKind];
+
+
+export const PriceObservationInSubjectKind = {
+  PRODUCT: 'PRODUCT',
+  KIT: 'KIT',
+} as const;
+
+/**
+ * Um item do lote. `observedAt` NÃO vem daqui: quem carimba é o servidor.
+ *
+ * **Chave desconhecida é 422** — e a recusa vive num validador, não em
+ * `model_config = ConfigDict(extra="forbid")`, por uma razão MEDIDA (2026-08-29): um
+ * `additionalProperties: false` publicado no ITEM de um array faz a coleta da suíte de
+ * conformidade (Schemathesis/Hypothesis, `test_conformance.py`) passar de **6,7s para mais de
+ * 4 minutos sem terminar** — o gate inteiro deixa de rodar. As quatro combinações medidas:
+ * `maxItems` 5/50/200 + `forbid` → rápido · `maxItems` 500 + `forbid` → não termina · sem
+ * `maxItems` + `forbid` → não termina · `maxItems` 500 sem `forbid` no item → 6,7s.
+ *
+ * O comportamento é o mesmo do `extra="forbid"` (a mensagem, inclusive, NOMEIA as chaves
+ * recusadas, o que a genérica do pydantic não faz); o que se perde é a linha
+ * `additionalProperties: false` no schema publicado DESTE item — o envelope
+ * (`PriceObservationsPutIn`) segue com `extra="forbid"` de verdade, porque ele não está dentro
+ * de um array. **Ponto para o dono decidir** (registrado no relatório da fatia): a alternativa é
+ * manter o `forbid` no item e tirar a operação da suíte de conformidade, trocando uma linha de
+ * schema por cobertura de FR-210/211 na rota nova.
+ */
+export interface PriceObservationIn {
+  subjectKind: PriceObservationInSubjectKind;
+  subjectId: string;
+  observedPrice: number | string;
+  modelVersion: string;
+  catalogVersion?: string | null;
+}
+
+export type PriceObservationOutSubjectKind = typeof PriceObservationOutSubjectKind[keyof typeof PriceObservationOutSubjectKind];
+
+
+export const PriceObservationOutSubjectKind = {
+  PRODUCT: 'PRODUCT',
+  KIT: 'KIT',
+} as const;
+
+export interface PriceObservationOut {
+  subjectKind: PriceObservationOutSubjectKind;
+  subjectId: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  observedPrice: string;
+  observedAt: string;
+  modelVersion: string;
+  catalogVersion: string | null;
+}
+
+export interface PriceObservationsOut {
+  items: PriceObservationOut[];
+}
+
+export interface PriceObservationsPutIn {
+  /** @maxItems 500 */
+  items: PriceObservationIn[];
+}
+
+export interface PriceObservationsPutOut {
+  upserted: number;
+}
+
 export interface PrinterIn {
+  /** @maxLength 120 */
   name: string;
   machineValue: number | string;
   machineLifetimeHours: number | string;
@@ -537,6 +606,7 @@ export interface PrinterOut {
 }
 
 export interface ProductIn {
+  /** @maxLength 120 */
   name: string;
   filamentId?: string | null;
   printerId?: string | null;
@@ -566,8 +636,24 @@ export interface ProductOut {
   includeMarketplace: boolean;
   channels: ProductOutChannelsItem[];
   otherCosts: ProductOutOtherCostsItem[];
+  sellerFixedPrice: string | null;
+  sellerFixedAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * Corpo do `PATCH` — UM campo, e ele é obrigatório (019/PR-D · T073 · ADR-0033 §3).
+ *
+ * `extra="forbid"` (que `CamelModel` não traz) para que um `price` contrabandeado seja um 422
+ * honesto, nunca um ignorar calado. O campo é obrigatório porque um `PATCH` de corpo vazio não
+ * tem intenção: fixar e desfixar são as duas escolhas, e `null` já é a segunda.
+ * `sellerFixedAt` **não existe aqui** — quem carimba a data é o servidor (o único carimbo de
+ * aparelho na casa é `device_quoted_at`, e o prefixo `device_` declara justamente que aquele o
+ * servidor não verifica).
+ */
+export interface ProductPatchIn {
+  sellerFixedPrice: number | string | null;
 }
 
 /**
@@ -2836,6 +2922,118 @@ export const useUpdateProductApiV1ProductsProductIdPut = <TError = ErrorEnvelope
       return useMutation(getUpdateProductApiV1ProductsProductIdPutMutationOptions(options), queryClient);
     }
 
+export type fixProductPriceApiV1ProductsProductIdPatchResponse200 = {
+  data: ProductOut
+  status: 200
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse404 = {
+  data: ErrorEnvelope
+  status: 404
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponseSuccess = (fixProductPriceApiV1ProductsProductIdPatchResponse200) & {
+  headers: Headers;
+};
+export type fixProductPriceApiV1ProductsProductIdPatchResponseError = (fixProductPriceApiV1ProductsProductIdPatchResponse400 | fixProductPriceApiV1ProductsProductIdPatchResponse401 | fixProductPriceApiV1ProductsProductIdPatchResponse403 | fixProductPriceApiV1ProductsProductIdPatchResponse404 | fixProductPriceApiV1ProductsProductIdPatchResponse422) & {
+  headers: Headers;
+};
+
+export type fixProductPriceApiV1ProductsProductIdPatchResponse = (fixProductPriceApiV1ProductsProductIdPatchResponseSuccess | fixProductPriceApiV1ProductsProductIdPatchResponseError)
+
+export const getFixProductPriceApiV1ProductsProductIdPatchUrl = (productId: string,) => {
+
+
+
+
+  return `/api/v1/products/${productId}`
+}
+
+/**
+ * Fixa (ou desfixa) o preço declarado pelo vendedor; nada mais desta linha é tocado.
+ * @summary Fix Product Price
+ */
+export const fixProductPriceApiV1ProductsProductIdPatch = async (productId: string,
+    productPatchIn: ProductPatchIn, options?: RequestInit): Promise<fixProductPriceApiV1ProductsProductIdPatchResponse> => {
+
+  return orvalFetch<fixProductPriceApiV1ProductsProductIdPatchResponse>(getFixProductPriceApiV1ProductsProductIdPatchUrl(productId),
+  {
+    ...options,
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(productPatchIn)
+  }
+);}
+
+
+
+
+
+export const getFixProductPriceApiV1ProductsProductIdPatchMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>, TError,{productId: string;data: ProductPatchIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>, TError,{productId: string;data: ProductPatchIn}, TContext> => {
+
+const mutationKey = ['fixProductPriceApiV1ProductsProductIdPatch'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>, {productId: string;data: ProductPatchIn}> = (props) => {
+          const {productId,data} = props ?? {};
+
+          return  fixProductPriceApiV1ProductsProductIdPatch(productId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FixProductPriceApiV1ProductsProductIdPatchMutationResult = NonNullable<Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>>
+    export type FixProductPriceApiV1ProductsProductIdPatchMutationBody = ProductPatchIn
+    export type FixProductPriceApiV1ProductsProductIdPatchMutationError = ErrorEnvelope
+
+    /**
+ * @summary Fix Product Price
+ */
+export const useFixProductPriceApiV1ProductsProductIdPatch = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>, TError,{productId: string;data: ProductPatchIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof fixProductPriceApiV1ProductsProductIdPatch>>,
+        TError,
+        {productId: string;data: ProductPatchIn},
+        TContext
+      > => {
+      return useMutation(getFixProductPriceApiV1ProductsProductIdPatchMutationOptions(options), queryClient);
+    }
+
 export type deleteProductApiV1ProductsProductIdDeleteResponse204 = {
   data: void
   status: 204
@@ -2934,6 +3132,238 @@ export const useDeleteProductApiV1ProductsProductIdDelete = <TError = ErrorEnvel
         TContext
       > => {
       return useMutation(getDeleteProductApiV1ProductsProductIdDeleteMutationOptions(options), queryClient);
+    }
+
+export type listPriceObservationsApiV1PriceObservationsGetResponse200 = {
+  data: PriceObservationsOut
+  status: 200
+}
+
+export type listPriceObservationsApiV1PriceObservationsGetResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type listPriceObservationsApiV1PriceObservationsGetResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type listPriceObservationsApiV1PriceObservationsGetResponseSuccess = (listPriceObservationsApiV1PriceObservationsGetResponse200) & {
+  headers: Headers;
+};
+export type listPriceObservationsApiV1PriceObservationsGetResponseError = (listPriceObservationsApiV1PriceObservationsGetResponse401 | listPriceObservationsApiV1PriceObservationsGetResponse403) & {
+  headers: Headers;
+};
+
+export type listPriceObservationsApiV1PriceObservationsGetResponse = (listPriceObservationsApiV1PriceObservationsGetResponseSuccess | listPriceObservationsApiV1PriceObservationsGetResponseError)
+
+export const getListPriceObservationsApiV1PriceObservationsGetUrl = () => {
+
+
+
+
+  return `/api/v1/price-observations`
+}
+
+/**
+ * As observações da conta — contexto para o "era R$ …", nunca fonte do valor exibido.
+ * @summary List Price Observations
+ */
+export const listPriceObservationsApiV1PriceObservationsGet = async ( options?: RequestInit): Promise<listPriceObservationsApiV1PriceObservationsGetResponse> => {
+
+  return orvalFetch<listPriceObservationsApiV1PriceObservationsGetResponse>(getListPriceObservationsApiV1PriceObservationsGetUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getListPriceObservationsApiV1PriceObservationsGetQueryKey = () => {
+    return [
+    `/api/v1/price-observations`
+    ] as const;
+    }
+
+
+export const getListPriceObservationsApiV1PriceObservationsGetQueryOptions = <TData = Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError = ErrorEnvelope>( options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListPriceObservationsApiV1PriceObservationsGetQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>> = ({ signal }) => listPriceObservationsApiV1PriceObservationsGet({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListPriceObservationsApiV1PriceObservationsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>>
+export type ListPriceObservationsApiV1PriceObservationsGetQueryError = ErrorEnvelope
+
+
+export function useListPriceObservationsApiV1PriceObservationsGet<TData = Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError = ErrorEnvelope>(
+  options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPriceObservationsApiV1PriceObservationsGet<TData = Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListPriceObservationsApiV1PriceObservationsGet<TData = Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Price Observations
+ */
+
+export function useListPriceObservationsApiV1PriceObservationsGet<TData = Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError = ErrorEnvelope>(
+  options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listPriceObservationsApiV1PriceObservationsGet>>, TError, TData>>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListPriceObservationsApiV1PriceObservationsGetQueryOptions(options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return withQueryKey(query, queryOptions.queryKey);
+}
+
+
+
+
+
+
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse200 = {
+  data: PriceObservationsPutOut
+  status: 200
+}
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse400 = {
+  data: ErrorEnvelope
+  status: 400
+}
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse401 = {
+  data: ErrorEnvelope
+  status: 401
+}
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse403 = {
+  data: ErrorEnvelope
+  status: 403
+}
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse422 = {
+  data: ErrorEnvelope
+  status: 422
+}
+
+export type putPriceObservationsApiV1PriceObservationsPutResponseSuccess = (putPriceObservationsApiV1PriceObservationsPutResponse200) & {
+  headers: Headers;
+};
+export type putPriceObservationsApiV1PriceObservationsPutResponseError = (putPriceObservationsApiV1PriceObservationsPutResponse400 | putPriceObservationsApiV1PriceObservationsPutResponse401 | putPriceObservationsApiV1PriceObservationsPutResponse403 | putPriceObservationsApiV1PriceObservationsPutResponse422) & {
+  headers: Headers;
+};
+
+export type putPriceObservationsApiV1PriceObservationsPutResponse = (putPriceObservationsApiV1PriceObservationsPutResponseSuccess | putPriceObservationsApiV1PriceObservationsPutResponseError)
+
+export const getPutPriceObservationsApiV1PriceObservationsPutUrl = () => {
+
+
+
+
+  return `/api/v1/price-observations`
+}
+
+/**
+ * Grava o lote, idempotente por `(subjectKind, subjectId)` — uma linha por item da conta.
+ * @summary Put Price Observations
+ */
+export const putPriceObservationsApiV1PriceObservationsPut = async (priceObservationsPutIn: PriceObservationsPutIn, options?: RequestInit): Promise<putPriceObservationsApiV1PriceObservationsPutResponse> => {
+
+  return orvalFetch<putPriceObservationsApiV1PriceObservationsPutResponse>(getPutPriceObservationsApiV1PriceObservationsPutUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(priceObservationsPutIn)
+  }
+);}
+
+
+
+
+
+export const getPutPriceObservationsApiV1PriceObservationsPutMutationOptions = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>, TError,{data: PriceObservationsPutIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>, TError,{data: PriceObservationsPutIn}, TContext> => {
+
+const mutationKey = ['putPriceObservationsApiV1PriceObservationsPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>, {data: PriceObservationsPutIn}> = (props) => {
+          const {data} = props ?? {};
+
+          return  putPriceObservationsApiV1PriceObservationsPut(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type PutPriceObservationsApiV1PriceObservationsPutMutationResult = NonNullable<Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>>
+    export type PutPriceObservationsApiV1PriceObservationsPutMutationBody = PriceObservationsPutIn
+    export type PutPriceObservationsApiV1PriceObservationsPutMutationError = ErrorEnvelope
+
+    /**
+ * @summary Put Price Observations
+ */
+export const usePutPriceObservationsApiV1PriceObservationsPut = <TError = ErrorEnvelope,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>, TError,{data: PriceObservationsPutIn}, TContext>, request?: SecondParameter<typeof orvalFetch>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof putPriceObservationsApiV1PriceObservationsPut>>,
+        TError,
+        {data: PriceObservationsPutIn},
+        TContext
+      > => {
+      return useMutation(getPutPriceObservationsApiV1PriceObservationsPutMutationOptions(options), queryClient);
     }
 
 export type listBomsApiV1BomsGetResponse200 = {

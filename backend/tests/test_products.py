@@ -141,8 +141,15 @@ def test_crud_round_trip_inputs_only(
     assert body["includeMarketplace"] is True
     assert body["channels"] == [CHANNEL]  # JSONB round-trips byte-exact (D4)
     assert body["otherCosts"] == [OTHER_COST]
-    # INPUTS ONLY — no stored price anywhere in the payload (FR-310/FR-313).
-    assert not [k for k in _keys_recursive(body) if "price" in k.lower()]
+    # INPUTS ONLY — no CALCULATED price anywhere in the payload (FR-310/FR-313, as reworded by
+    # the 2026-08-26 Clarification of spec 007 / ADR-0033 §3): the app never shows a price it
+    # computed in the past. The ONE money key admitted here is `sellerFixedPrice` — the seller's
+    # DECLARED ad price, whose prefix says out loud whose number it is — and on a freshly created
+    # product it is null, which a stored calculation could never be.
+    price_keys = [k for k in _keys_recursive(body) if "price" in k.lower()]
+    assert price_keys == ["sellerFixedPrice"]
+    assert body["sellerFixedPrice"] is None
+    assert body["sellerFixedAt"] is None
 
     listed = db_client.get("/api/v1/products", headers=h)
     assert listed.status_code == 200
