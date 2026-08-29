@@ -1,23 +1,49 @@
+import { useState } from "react";
+
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Badge, type BadgeTone } from "@/shared/ui";
+import { dismissFeeSeal, useFeeSealDismissed } from "@/shared/lib/fee-seal-dismiss-store";
+import {
+  Alert,
+  type AlertTone,
+  Badge,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+  Icon,
+} from "@/shared/ui";
+
+import type { MarketplaceId } from "./calculator-schema";
 
 import "./fee-seal.css";
 
-// US2 honesty seal (FR-107): a small pill that states, per channel slot, where its fee numbers came
-// from and how fresh they are — so a pre-filled number is never mistaken for something the user
-// vouched for. Domain copy (pt-BR) lives here in the feature, built on the generic shared Badge; it
-// NEVER asserts a fabricated value is exact (Constitution II) — an uncovered slot reads "sem referência".
+// US2 honesty seal (FR-107): states, per channel slot, where its fee numbers came from and how
+// fresh they are — so a pre-filled number is never mistaken for something the user vouched for.
+// Domain copy (pt-BR) lives here in the feature. NEVER asserts a fabricated value is exact
+// (Constitution II) — an uncovered slot reads "sem referência".
+//
+// 019/PR-C (T052/T058, prancheta "Selo de Procedencia") — the block that backs a NUMBER (commission
+// or the fixed fee) is a `tf-alert--compact` (shared/ui, 019/PR-A), not a `Badge` pill: it carries a
+// two-line citation, a review date, "Ver fonte" and "Dispensar". The three SHORT qualifiers —
+// `adjusted`/`estimate`/`none` — stay `Badge` pills per the design authority (13b·4/6/7), even though
+// the task text that opened this slice suggested folding them into `Alert` too; the prancheta wins
+// (research §A / Principle VIII), and this divergence from the task's own wording is deliberate.
 
 const t = messages.calculator.seals;
+const marketplaceNames = messages.calculator.marketplaceNames;
 
 /** What backs a slot's fee numbers. `reference` carries provenance; `embedded` = the bundled seed
- *  (offline); `stale` = past the 30-day window; `adjusted` = the user edited a pre-fill; `none` =
- *  uncovered (manual); `estimate` = the labelled ML freight subsidy (A4). */
+ *  (offline); `stale` = past the STALENESS_DAYS window (45 — the loop's monthly cycle + delivery
+ *  slack, `shared/fee-catalog`'s `isStale` is the source of truth); `adjusted` = the user edited a
+ *  pre-fill; `none` = uncovered (manual); `estimate` = the labelled ML freight subsidy (A4). */
 export type FeeSealState =
   | {
       kind: "reference";
       source: string;
       reviewedOn: string;
+      /** 019/PR-C — reaches "Ver fonte". Absent on the embedded (seed) path on purpose (13b·3): the
+       *  seed cites no page at all, so there is nothing "Ver fonte" could open. */
+      sourceUrl?: string;
       embedded?: boolean;
       stale?: boolean;
       /** The category this number belongs to — may be an ANCESTOR of the one the seller chose. */
@@ -29,6 +55,7 @@ export type FeeSealState =
       kind: "catchAll";
       source: string;
       reviewedOn: string;
+      sourceUrl?: string;
       embedded?: boolean;
       stale?: boolean;
     }
@@ -42,87 +69,221 @@ function fmtDate(iso: string): string {
   return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
 }
 
-function textAndTone(state: FeeSealState): { text: string; tone: BadgeTone } {
-  switch (state.kind) {
-    case "reference": {
-      // `embedded` is a MODIFIER of the head, never an early return. It used to be one, and that
-      // return swallowed both clauses below: on the seed path the 30-day alarm could not fire (SC-807
-      // — and the seed is the copy that ages MOST, since it only moves when a new bundle ships), and
-      // an ancestor-inherited rate lost the clause naming which category it actually belongs to. The
-      // neighbouring `catchAll` case applies `t.outdated` without consulting `embedded` at all, which
-      // is what gives the asymmetry away as an accident rather than a decision.
-      const head = state.embedded ? t.embedded : `${t.reference}: ${state.source}`;
-      // Naming the ORIGIN category costs one clause and closes a real gap: with sparse entries the
-      // number may come from an ANCESTOR of the chosen category, and "Referência: <fonte>" alone
-      // would let the seller read it as his own category's rate.
-      //
-      // …unless the head ALREADY named it. Measured in the Fase 6C homologation: Amazon's catalog
-      // `source` embeds the category ("Tabela de comissões da Amazon — Calçados (…)"), so the seal
-      // read "… — Calçados (…) (para Calçados) …". The test is on what was actually PRINTED rather
-      // than on which marketplace it is — on the seed path the head cites no source at all
-      // ("referência embutida (offline)"), and there this clause is the only disclosure there is.
-      const forCat =
-        state.originCategoryName && !head.includes(state.originCategoryName)
-          ? ` (${t.forCategory} ${state.originCategoryName})`
-          : "";
-      const base = `${head}${forCat} · ${t.updatedOn} ${fmtDate(state.reviewedOn)}`;
-      return state.stale || state.embedded
-        ? { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" }
-        : { text: base, tone: "info" };
-    }
-    case "catchAll": {
-      // 014/T099 — this used to interpolate a `catchAllName`, a field NO production path ever set:
-      // only a test did, so the seal shipped a decorative slot that could never fill. The published
-      // row's name is already inside `source` ("… — Outros (…)"), so nothing was lost by removing it,
-      // and one less always-empty branch is one less place where a seal can quietly say less than it
-      // appears to (Princípio V).
-      // 014/T055 — `embedded` também vale aqui. Este ramo nasceu com o eixo de categoria e herdou a
-      // MESMA assimetria que a T098 corrigiu no ramo `reference`: ele aplicava `t.outdated` sem
-      // nunca consultar `embedded`, então um catch-all vindo da SEMENTE lia igual a um recém-buscado
-      // do endpoint. A pista importa mais aqui do que lá — no catch-all o vendedor já está aceitando
-      // a MAIOR alíquota da tabela, e merece saber que o número veio do bundle e não da rede.
-      const origem = state.embedded ? `${t.embedded} · ` : "";
-      const base = `${origem}${t.catchAll} ${t.catchAllHighest}`;
-      // Deliberately NOT "info": this is not a confirmed rate for the seller's category, and giving
-      // it the same tone as one is what makes a plausible number stop the seller from choosing.
-      return { text: state.stale ? `${base} · ${t.outdated}` : base, tone: "neutral" };
-    }
-    case "adjusted":
-      return { text: t.adjusted, tone: "neutral" };
-    case "estimate":
-      return { text: t.estimate, tone: "info" };
-    case "none":
-      return { text: t.none, tone: "neutral" };
-  }
+/** 13a·2 — "Ver fonte" aberto: a citação inteira, quando conferimos, e o link do catálogo (nunca
+ *  mostrado antes desta fatia). Compartilhado entre o selo principal e o da taxa fixa — só existe
+ *  UMA cópia transcrita de "Fonte da comissão" (messages.calculator.seals.fonteTitle), então os dois
+ *  diálogos usam o mesmo título; ver o relatório da task sobre essa divergência de conteúdo. */
+function FeeSourceDialog({
+  open,
+  onOpenChange,
+  citation,
+  dateLine,
+  sourceUrl,
+  marketplaceLabel,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  citation: string;
+  dateLine: string;
+  sourceUrl: string;
+  marketplaceLabel: string;
+}) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent variant="center" data-testid="fee-seal-source-dialog">
+        <DialogTitle>{t.fonteTitle}</DialogTitle>
+        <DialogDescription>{citation}</DialogDescription>
+        <p className="fee-seal__source-date tf-tnum">{dateLine}</p>
+        {/* 13a·2 — o link sem o esquema ("seller.shopee.com.br/…"), e QUEBRÁVEL: a screenshot da
+            T061 mostrou a URL inquebrável transbordando o diálogo a 390px (a lição de sempre —
+            geometria só aparece na imagem). */}
+        <a
+          className="fee-seal__source-link"
+          href={sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {sourceUrl.replace(/^https?:\/\//, "")}
+          {/* 019/PR-C — decisão do dono 28/08: mesmo chevron do botão "Ver fonte" (13a·2). */}
+          <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
+        </a>
+        <p className="fee-seal__source-notice">
+          {t.fonteAviso.replace("{marketplace}", marketplaceLabel)}
+        </p>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** 13a/13b·1·2·3 — the commission block: `tf-alert--compact`, tone `info` online or `neutral`
+ *  embedded, with the label naming the NUMBER ("Comissão"), the citation, the origin-category line
+ *  (13a·3, deduped against the citation — R2 da homologação 014), the review date, the catch-all
+ *  warning line (13b·5) when it applies, and the "desatualizada" pill (13b·4, still neutral, still a
+ *  pill — a body LINE of 58 chars becomes the card's minimum width and overflows at 360px, the
+ *  016/PR-B trap the prancheta names verbatim). */
+function FeeReferenceAlert({
+  state,
+  marketplace,
+}: {
+  state: Extract<FeeSealState, { kind: "reference" | "catchAll" }>;
+  marketplace: MarketplaceId;
+}) {
+  const key = `${marketplace}::${state.source}::${state.reviewedOn}`;
+  const dismissed = useFeeSealDismissed(key);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  if (dismissed) return null;
+
+  const tone: AlertTone = state.embedded ? "neutral" : "info";
+  const citation = state.embedded ? t.embedded : state.source;
+  const showForCategory =
+    state.kind === "reference" &&
+    !!state.originCategoryName &&
+    !citation.includes(state.originCategoryName);
+
+  return (
+    <>
+      <Alert
+        tone={tone}
+        // 019/PR-C (prancheta 13b·3, decisão do dono 28/08) — a referência embutida (offline, sem
+        // internet) troca o ícone padrão do tone `neutral` pelo `wifi`, "como no design".
+        icon={state.embedded ? "wifi" : undefined}
+        compact
+        data-testid="fee-seal"
+        dismissLabel={t.dispensar}
+        onDismiss={() => dismissFeeSeal(key)}
+        action={
+          state.sourceUrl ? (
+            <button type="button" onClick={() => setSourceOpen(true)}>
+              {t.verFonte}
+              {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
+              <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
+            </button>
+          ) : undefined
+        }
+      >
+        <p className="fee-seal__label">{t.commissionLabel}</p>
+        <p className="fee-seal__cite">{citation}</p>
+        {showForCategory && (
+          <p className="fee-seal__for-category">
+            {t.forCategory} <strong>{state.originCategoryName}</strong>
+          </p>
+        )}
+        <p className="fee-seal__date tf-tnum">{`${t.updatedOn} ${fmtDate(state.reviewedOn)}`}</p>
+        {state.kind === "catchAll" && (
+          <p className="fee-seal__catch-all-warning">
+            <Icon name="triangle-alert" size={14} />
+            {`${t.catchAll} ${t.catchAllHighest}`}
+          </p>
+        )}
+        {state.stale && (
+          <div className="fee-seal__pills">
+            <Badge tone="neutral" className="tf-badge--sm">
+              {t.outdated}
+            </Badge>
+          </div>
+        )}
+      </Alert>
+      {state.sourceUrl && (
+        <FeeSourceDialog
+          open={sourceOpen}
+          onOpenChange={setSourceOpen}
+          citation={state.source}
+          dateLine={t.fonteConferida.replace("{data}", fmtDate(state.reviewedOn))}
+          sourceUrl={state.sourceUrl}
+          marketplaceLabel={marketplaceNames[marketplace]}
+        />
+      )}
+    </>
+  );
 }
 
 /** The honesty seal for one channel slot (or the ML freight field). */
-export function FeeSeal({ state }: { state: FeeSealState }) {
-  const { text, tone } = textAndTone(state);
-  return (
-    <Badge tone={tone} className="fee-seal" data-testid="fee-seal">
-      {text}
-    </Badge>
-  );
+export function FeeSeal({
+  state,
+  marketplace,
+}: {
+  state: FeeSealState;
+  marketplace: MarketplaceId;
+}) {
+  switch (state.kind) {
+    case "adjusted":
+      return (
+        <Badge tone="accent" className="tf-badge--sm" data-testid="fee-seal">
+          {t.adjusted}
+        </Badge>
+      );
+    case "estimate":
+      return (
+        <Badge tone="info" className="tf-badge--sm" data-testid="fee-seal">
+          {t.estimate}
+        </Badge>
+      );
+    case "none":
+      return (
+        <Badge tone="warning" className="tf-badge--sm" data-testid="fee-seal">
+          {t.none}
+        </Badge>
+      );
+    case "reference":
+    case "catchAll":
+      return <FeeReferenceAlert state={state} marketplace={marketplace} />;
+  }
 }
 
 /**
  * 016/PR-F (T057) — the fixed fee's OWN provenance, when the catalog entry carries one (Amazon
  * Individual: the commission comes from the category table, the R$ 2,00 per-item charge comes from a
- * DIFFERENT official page — `venda.amazon.com.br/precos`). A SEPARATE badge, never folded into the
+ * DIFFERENT official page — `venda.amazon.com.br/precos`). A SEPARATE block, never folded into the
  * main `FeeSeal`'s text: the main seal already names the commission's source, and citing a second
- * source inside the same sentence would blur which number it backs (Constitution II — a provenance
- * that does not name what it is FOR is not really a provenance).
+ * source inside the same sentence would blur which number it backs (Constitution II).
+ *
+ * 019/PR-C (13b·9) — also `tf-alert--compact`, always tone `neutral` (never `info`: it is not "the
+ * live reference for the seller's category", just a second, separately-dated citation), and says
+ * "vigente desde" — WHEN the fee took effect — never "atualizada em", which would claim it is the
+ * date we last confirmed it (the entry has no second `lastReviewed` of its own — see `fee-catalog.ts`).
  */
 export function FixedFeeSourceBadge({
   source,
+  marketplace,
 }: {
   source: { source: string; sourceUrl: string; effectiveDate: string };
+  marketplace: MarketplaceId;
 }) {
-  const text = `${t.fixedFeeSource}: ${source.source} · ${t.fixedFeeSourceSince} ${fmtDate(source.effectiveDate)}`;
+  const key = `${marketplace}::${source.source}::${source.effectiveDate}`;
+  const dismissed = useFeeSealDismissed(key);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  if (dismissed) return null;
+
+  const sinceLine = `${t.fixedFeeSourceSince} ${fmtDate(source.effectiveDate)}`;
+
   return (
-    <Badge tone="neutral" className="fee-seal" data-testid="fixed-fee-source-seal">
-      {text}
-    </Badge>
+    <>
+      <Alert
+        tone="neutral"
+        compact
+        data-testid="fixed-fee-source-seal"
+        dismissLabel={t.dispensar}
+        onDismiss={() => dismissFeeSeal(key)}
+        action={
+          <button type="button" onClick={() => setSourceOpen(true)}>
+            {t.verFonte}
+            {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
+            <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
+          </button>
+        }
+      >
+        <p className="fee-seal__label">{t.fixedFeeSource}</p>
+        <p className="fee-seal__cite">{source.source}</p>
+        <p className="fee-seal__date tf-tnum">{sinceLine}</p>
+      </Alert>
+      <FeeSourceDialog
+        open={sourceOpen}
+        onOpenChange={setSourceOpen}
+        citation={source.source}
+        dateLine={sinceLine}
+        sourceUrl={source.sourceUrl}
+        marketplaceLabel={marketplaceNames[marketplace]}
+      />
+    </>
   );
 }

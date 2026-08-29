@@ -113,7 +113,15 @@ export function ControlledNumber<T extends FieldValues>({
   currency = false,
   unit,
   hint,
-}: BaseProps<T> & { currency?: boolean; unit?: string; hint?: string }) {
+  precision,
+}: BaseProps<T> & {
+  currency?: boolean;
+  unit?: string;
+  hint?: string;
+  /** 019/PR-C (T060) — repassado ao `NumberField`; nenhum consumidor atual precisa passar
+   *  (default 2, o mesmo de sempre). */
+  precision?: number;
+}) {
   return (
     <Controller
       control={control}
@@ -132,6 +140,7 @@ export function ControlledNumber<T extends FieldValues>({
               {...p}
               currency={currency}
               unit={unit}
+              precision={precision}
               disabled={disabled}
               name={field.name}
               value={(field.value as string) ?? ""}

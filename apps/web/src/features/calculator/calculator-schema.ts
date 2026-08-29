@@ -357,6 +357,8 @@ export interface CalcFieldMeta {
   tip?: { label: string; body: string };
   /** True for the mandatory + pre-filled inputs (marked required); false for optional-core. */
   required: boolean;
+  /** 019/PR-C (T060) — casas decimais que a máscara de blur preserva; só a tarifa (4). */
+  precision?: number;
 }
 
 /**
@@ -389,6 +391,7 @@ export const COST_FIELDS: readonly CalcFieldMeta[] = [
     label: t.fields.tariff,
     currency: true,
     unit: "/kWh",
+    precision: 4,
     tip: t.fieldTips.tariff,
     required: true,
   },
@@ -490,6 +493,17 @@ export const CURRENCY_FIELD_NAMES: ReadonlySet<CalcFieldName> = new Set([
 
 export const CHANNEL_CURRENCY_FIELD_NAMES: ReadonlySet<ChannelFieldName> = new Set(
   CHANNEL_FEE_FIELDS.filter((f) => f.currency).map((f) => f.name),
+);
+
+// 019/PR-C (T060) — a mesma casas-decimais que `CalcFieldMeta.precision` declara para o campo
+// AO VIVO (só `tariffPerKwh`, hoje), re-exposta como um mapa simples para `scenario-bridge.ts`
+// aplicar a MESMA precisão na hidratação (R5 reintroduziu o corte: `moneyLeafToPtBr` mascarava
+// TODO leaf de dinheiro em 2 casas fixas, então uma tarifa salva "0,8734" reabria "0,87"). Um
+// campo ausente aqui (o padrão, todo o resto) usa 2 — o mesmo default de sempre.
+export const FIELD_PRECISION: Partial<Record<CalcFieldName, number>> = Object.fromEntries(
+  [...COST_FIELDS, ...LABOR_AND_FINISH_FIELDS]
+    .filter((f) => f.precision !== undefined)
+    .map((f) => [f.name, f.precision]),
 );
 
 /** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */

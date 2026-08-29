@@ -152,6 +152,35 @@ export const messages = {
         "Confira a comissão: {v}%. Marketplaces costumam cobrar entre 10% e 20% — se você quis dizer 12%, escreva 12 e não 0,12. Nada foi recusado.",
       quantidade:
         "Confira a quantidade: {v}. O máximo por peça é {max}. Acima disso o kit não consegue ser salvo. Nada foi recusado.",
+      // 019/PR-C (T055) — prancheta 14 ("Aviso de Plausibilidade"), cópia congelada em
+      // `specs/019-porte-design/design/`. "Entendi" dispensa o aviso (some o aviso, não o valor; guarda
+      // o par campo+valor pela sessão). Quando o aviso convive com uma RECUSA, o fecho "Nada foi
+      // recusado." mentiria — troca por este, e o "Entendi" não aparece (14b: "não se dispensa uma
+      // lição que acompanha uma recusa").
+      entendi: "Entendi",
+      fechoNormal: "Nada foi recusado.",
+      fechoComRecusa: "Corrija o campo acima para calcular.",
+      // 019/PR-C (decisão do dono 28/08, prancheta 14b "Erro e aviso juntos") — quando o campo TAMBÉM
+      // foi recusado, o `tf-aviso` não repete "Confira {campo}: {valor}…"; ele guarda SÓ A LIÇÃO
+      // (derivada das frases acima, mesmo fecho `fechoComRecusa`), sem cabeça e sem "Entendi" — não
+      // se dispensa uma lição que acompanha uma recusa.
+      licao: {
+        machineLifetimeHours:
+          "Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.",
+        avgPowerKw:
+          "Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Corrija o campo acima para calcular.",
+        tariffPerKwh: `No Brasil se paga perto de ${TOOLTIP_REF_TARIFA_MEDIA_NACIONAL} por kWh. Na conta de luz, divida o valor total pelos kWh do mês. Corrija o campo acima para calcular.`,
+        rollWeightKg:
+          "O rolo comum tem 1 kg — se você informou gramas, 1.000 g são 1 kg. Corrija o campo acima para calcular.",
+        printGrams:
+          "O campo pede o que a PEÇA consome, não o peso do rolo. Corrija o campo acima para calcular.",
+        printTimeHours:
+          "Se você quis dizer minutos, use o campo de minutos ao lado. Corrija o campo acima para calcular.",
+        laborRatePerHour:
+          "Se você informou quanto quer ganhar por mês, divida pelas horas do mês — R$ 3.000 ÷ 160 h = R$ 18,75. Corrija o campo acima para calcular.",
+        maintenanceReservePerHour:
+          "Se você informou o gasto do ano inteiro, divida pelas horas que imprime no ano. Corrija o campo acima para calcular.",
+      },
     },
     results: {
       material: "Material",
@@ -366,6 +395,16 @@ export const messages = {
       // porque o selo principal já nomeia a procedência da comissão, e as duas não são a mesma fonte.
       fixedFeeSource: "Taxa fixa",
       fixedFeeSourceSince: "vigente desde",
+      // 019/PR-C (T055) — prancheta 13 ("Selo de Procedencia"): o selo deixa de ser pílula e vira
+      // `tf-alert--compact`; o rótulo nomeia o NÚMERO que o selo respalda ("Comissão" / "Taxa fixa" —
+      // nunca "Referência"); "Ver fonte" abre a citação inteira + o link do catálogo; "Dispensar" tira
+      // o selo até a fonte (citação ou data) mudar.
+      commissionLabel: "Comissão",
+      verFonte: "Ver fonte",
+      dispensar: "Dispensar",
+      fonteTitle: "Fonte da comissão",
+      fonteConferida: "Conferida por nós em {data}",
+      fonteAviso: "Abre fora do app. A tarifa é da {marketplace} — nós citamos, não garantimos.",
     },
     marketplaceNames: {
       MERCADO_LIVRE: "Mercado Livre",
@@ -486,9 +525,26 @@ export const messages = {
       // 019/T031 — o singular é do texto ("1 anos" era a única frase do produto que não era português).
       paybackYearLabel: "{n} ano",
       paybackYearsLabel: "{n} anos",
-      derivedCaption: "≈ {value} por hora de impressão",
-      adjustButton: "Ajustar horas direto",
-      backToEstimateButton: "Usar estimativa por ritmo",
+      // 019/PR-C (T055) — prancheta 15 ("Bloco da Maquina"): o par de botões vira o segmented
+      // "Estimar · Ajustar"; o custo/hora vira READOUT com a divisão que o produziu escrita embaixo
+      // ("de R$ 4.000,00 ÷ 3.600 h"), nos DOIS modos; sem valor da máquina o zero ganha a ressalva; e
+      // voltar à estimativa com horas digitadas à mão PERGUNTA antes de sobrescrever (15e — inline no
+      // bloco, com os dois números em disputa, cada um no seu botão). `adjustButton`/
+      // `backToEstimateButton`/`derivedCaption` saíram: substituídos, não renomeados.
+      // 019/PR-C (decisão do dono 28/08, prancheta 15a/15f) — o título do bloco. A 15a o desenha em
+      // TODAS as larguras com um ⓘ "Sobre o custo da máquina" cujo corpo a prancheta não traz —
+      // o título entra; o ⓘ espera a copy do dono.
+      blockTitle: "A máquina",
+      estimar: "Estimar",
+      ajustar: "Ajustar",
+      readoutLabel: "Custo da máquina por hora de impressão",
+      readoutDivisao: "de {valor} ÷ {horas} h",
+      ressalvaSemValor: "falta o valor da máquina",
+      confirmTitle: "A estimativa por ritmo vai substituir as suas {atual} h por {novo} h",
+      // `{anos}` recebe o rótulo já flexionado ("3 anos" / "1 ano" — a lição do T031).
+      confirmBody: '{ritmo} h/ano × {anos}. Seu número volta se você tocar "Ajustar" de novo.',
+      confirmUse: "Usar {novo} h",
+      confirmKeep: "Manter {atual} h",
     },
   },
   account: {

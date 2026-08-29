@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useFieldArray, useForm } from "react-hook-form";
 import { afterEach, describe, expect, it } from "vitest";
 
@@ -9,18 +10,30 @@ import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/chann
 import type { FeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-import { MarketplaceSection } from "./calculator-form";
+import { usePlausibilityDismissStore } from "@/shared/lib/plausibility-dismiss-store";
+
+import { ControlledField, FieldGroup, MarketplaceSection } from "./calculator-form";
 import {
+  calculatorResolver,
+  type CalcFieldMeta,
   type CalcFormValues,
   type ChannelSlotForm,
+  COST_FIELDS,
   defaultCalcValues,
   defaultChannelSlot,
+  LABOR_AND_FINISH_FIELDS,
   type ChannelFieldName,
   type MarketplaceId,
   slotResetOnMarketplaceChange,
 } from "./calculator-schema";
 
-afterEach(() => cleanup());
+afterEach(() => {
+  cleanup();
+  // 019/PR-C (T049) — a dispensa é um store SINGLETON de sessão (deliberadamente sem `persist`,
+  // ver `plausibility-dismiss-store.ts`), então sobrevive entre testes do MESMO arquivo se
+  // ninguém o limpar — um "Entendi" de um teste vazava para o próximo e escondia o aviso ali.
+  usePlausibilityDismissStore.setState({ dismissed: new Set() });
+});
 
 const t = messages.calculator;
 
@@ -150,5 +163,157 @@ describe("bloqueador PR-E — a hidden fee field must never keep charging (RA5)"
     // Amazon's plan does NOT include freightCost — yet the field is visible because it carries a
     // value (the "OR has value" render clause), editable/erasable, never a silent number.
     expect(slot0.querySelector(`input[name="channels.0.freightCost"]`)).toHaveValue("50");
+  });
+});
+
+// 019/PR-C (T049, US4/FR-1909-1910, prancheta "Calculadora - Aviso de Plausibilidade") — o aviso
+// de plausibilidade nasce no BLUR, nunca no `change` (o defeito de hoje). Um harness mínimo em
+// torno de `FieldGroup`/`ControlledField` — um único `CalcFieldMeta` por vez, para isolar o campo
+// sob teste do resto do formulário.
+function rollWeightHarness() {
+  const meta = COST_FIELDS.find((f) => f.name === "rollWeightKg") as CalcFieldMeta;
+  function Harness() {
+    const { control } = useForm<CalcFormValues>({
+      defaultValues: defaultCalcValues,
+      resolver: calculatorResolver,
+      mode: "onChange",
+    });
+    return (
+      <FieldGroup
+        control={control}
+        title="Custos"
+        info={{ label: "info", body: "corpo" }}
+        fields={[meta]}
+      />
+    );
+  }
+  return Harness;
+}
+
+/** A harness that also exposes RHF's `setError`, para o cenário "erro E aviso juntos" (14b) — o
+ *  par não nasce naturalmente do `rollWeightKg` (positivo é a única validação, e nenhum valor
+ *  negativo cruza o limiar de 50 kg), então o erro é forçado exatamente como o comentário do
+ *  T049 permite ("monte o erro via setError do RHF sobre um valor com aviso"). */
+function RollWeightWithForcedError() {
+  const meta = COST_FIELDS.find((f) => f.name === "rollWeightKg") as CalcFieldMeta;
+  const { control, setError } = useForm<CalcFormValues>({
+    defaultValues: defaultCalcValues,
+    resolver: calculatorResolver,
+    mode: "onChange",
+  });
+  return (
+    <>
+      <ControlledField control={control} meta={meta} />
+      <button
+        type="button"
+        onClick={() => setError("rollWeightKg", { type: "manual", message: "erro forçado" })}
+      >
+        forçar erro
+      </button>
+    </>
+  );
+}
+
+describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/PR-C)", () => {
+  it("digitar até um valor acima do limiar SEM sair do campo não mostra aviso nenhum", async () => {
+    const Harness = rollWeightHarness();
+    const user = userEvent.setup();
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input[name="rollWeightKg"]') as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "60");
+    expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();
+  });
+
+  it("blur mostra o <Aviso role=status> com 'Entendi'; 'Entendi' o dispensa", async () => {
+    const Harness = rollWeightHarness();
+    const user = userEvent.setup();
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input[name="rollWeightKg"]') as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "60");
+    await user.tab();
+
+    const aviso = await screen.findByTestId("aviso-rollWeightKg");
+    expect(aviso).toHaveAttribute("role", "status");
+    const entendi = within(aviso).getByRole("button", { name: t.plausibilidade.entendi });
+
+    await user.click(entendi);
+    expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();
+  });
+
+  it("outro valor acima do limiar + blur volta a mostrar o aviso, mesmo após dispensado", async () => {
+    const Harness = rollWeightHarness();
+    const user = userEvent.setup();
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input[name="rollWeightKg"]') as HTMLInputElement;
+
+    await user.clear(input);
+    await user.type(input, "60");
+    await user.tab();
+    await user.click(
+      within(screen.getByTestId("aviso-rollWeightKg")).getByRole("button", {
+        name: t.plausibilidade.entendi,
+      }),
+    );
+    expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();
+
+    await user.clear(input);
+    await user.type(input, "70");
+    await user.tab();
+    expect(await screen.findByTestId("aviso-rollWeightKg")).toBeInTheDocument();
+  });
+
+  it("com uma recusa junto (fieldState.error), o aviso vira a LIÇÃO — sem 'Confira', sem 'Entendi' (decisão do dono 28/08, prancheta 14b)", async () => {
+    const user = userEvent.setup();
+    render(<RollWeightWithForcedError />);
+    const input = screen.getByRole("textbox") as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "60");
+    await user.tab();
+
+    const avisoOk = await screen.findByTestId("aviso-rollWeightKg");
+    expect(avisoOk).toHaveTextContent(t.plausibilidade.fechoNormal);
+
+    await user.click(screen.getByRole("button", { name: "forçar erro" }));
+
+    const avisoComErro = screen.getByTestId("aviso-rollWeightKg");
+    expect(avisoComErro).toBeInTheDocument();
+    expect(avisoComErro).toHaveTextContent(t.plausibilidade.licao.rollWeightKg);
+    expect(avisoComErro).not.toHaveTextContent("Confira o peso do rolo");
+    expect(avisoComErro).not.toHaveTextContent(t.plausibilidade.fechoNormal);
+    expect(
+      within(avisoComErro).queryByRole("button", { name: t.plausibilidade.entendi }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("dinheiro no texto do aviso usa SEMPRE 2 casas — 'R$ 6.000.061,60', nunca 'R$ 6.000.061,6'", async () => {
+    const meta = LABOR_AND_FINISH_FIELDS.find(
+      (f) => f.name === "laborRatePerHour",
+    ) as CalcFieldMeta;
+    function Harness() {
+      const { control } = useForm<CalcFormValues>({
+        defaultValues: defaultCalcValues,
+        resolver: calculatorResolver,
+        mode: "onChange",
+      });
+      return (
+        <FieldGroup
+          control={control}
+          title="Mão de obra"
+          info={{ label: "info", body: "corpo" }}
+          fields={[meta]}
+        />
+      );
+    }
+    const user = userEvent.setup();
+    const { container } = render(<Harness />);
+    const input = container.querySelector('input[name="laborRatePerHour"]') as HTMLInputElement;
+    await user.clear(input);
+    await user.type(input, "6000061,60");
+    await user.tab();
+    expect(await screen.findByTestId("aviso-laborRatePerHour")).toHaveTextContent(
+      "R$ 6.000.061,60",
+    );
   });
 });

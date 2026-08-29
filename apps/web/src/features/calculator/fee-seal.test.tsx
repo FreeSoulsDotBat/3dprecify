@@ -1,42 +1,205 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { cleanup, render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { STALENESS_DAYS } from "@/shared/fee-catalog";
-import { feeSealState } from "./fee-prefill";
+import { useFeeSealDismissStore } from "@/shared/lib/fee-seal-dismiss-store";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
+import { feeSealState } from "./fee-prefill";
 import { FeeSeal, FixedFeeSourceBadge } from "./fee-seal";
 
+// 019/PR-C (T052, prancheta "Selo de Procedencia") — REESCRITA: o selo principal ("Comissão" /
+// "Taxa fixa") deixou de ser um `<Badge>` pílula e virou um `tf-alert--compact` denso (13a/13b),
+// com "Ver fonte" (quando a entrada carrega `sourceUrl`) e "Dispensar" (até a fonte mudar, T058).
+//
+// DIVERGÊNCIA registrada (a prancheta é a autoridade de desenho, contra o texto literal do T052):
+// os três estados curtos — `adjusted`/`estimate`/`none` — o T052 sugeria virarem `<Alert compact>`
+// sem dispensa; a prancheta 13b (estados 4/5/6/7) diz que os três CONTINUAM pílula (`Badge`), e é
+// isso que este arquivo testa. Só o bloco que respalda um NÚMERO (comissão/taxa fixa) virou `tf-alert`.
+
+const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
+
 afterEach(() => cleanup());
+beforeEach(() => {
+  localStorage.clear();
+  useFeeSealDismissStore.setState({ keys: [] });
+});
 
 const t = messages.calculator.seals;
 
-describe("FeeSeal — honesty states (FR-107)", () => {
-  it("a fresh reference shows the source + a pt-BR review date", () => {
-    render(
-      <FeeSeal state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }} />,
-    );
+describe("FeeSeal — os três qualificadores curtos continuam pílula (13b·4/5/6/7)", () => {
+  it("ajustado por você — Badge, tom accent, sem dispensa (nada a lembrar)", () => {
+    render(<FeeSeal state={{ kind: "adjusted" }} marketplace="AMAZON" />);
     const seal = screen.getByTestId("fee-seal");
-    expect(seal).toHaveTextContent(t.reference);
-    expect(seal).toHaveTextContent("Ajuda Shopee");
-    expect(seal).toHaveTextContent("06/07/2026"); // ISO → pt-BR dd/mm/yyyy
-    expect(seal).not.toHaveTextContent(t.outdated);
+    expect(seal).toHaveTextContent(t.adjusted);
+    expect(seal.tagName).toBe("SPAN"); // Badge, não Alert
+    expect(seal.className).toContain("tf-badge--accent");
+    expect(within(seal).queryByRole("button")).not.toBeInTheDocument();
   });
 
-  it("a stale reference appends the desatualizada warning", () => {
+  it("a estimativa de frete (A4) — Badge, tom info", () => {
+    render(<FeeSeal state={{ kind: "estimate" }} marketplace="MERCADO_LIVRE" />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.estimate);
+    expect(seal.className).toContain("tf-badge--info");
+  });
+
+  it("sem referência — Badge, tom warning (nunca uma cor que pareça confirmada)", () => {
+    render(<FeeSeal state={{ kind: "none" }} marketplace="OUTRO" />);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.none);
+    expect(seal.className).toContain("tf-badge--warning");
+  });
+});
+
+describe("FeeSeal — a referência online (13b·1) é um tf-alert denso", () => {
+  it("nomeia o NÚMERO ('Comissão'), não a natureza ('Referência') — 13a nota 1", () => {
     render(
       <FeeSeal
-        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-01-01", stale: true }}
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }}
+        marketplace="SHOPEE"
       />,
     );
-    expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.outdated);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.commissionLabel); // "Comissão"
+    expect(seal).not.toHaveTextContent(t.reference); // "Referência" não aparece mais
+    expect(seal).toHaveTextContent("Ajuda Shopee");
+    expect(seal).toHaveTextContent("06/07/2026");
+    expect(seal).not.toHaveTextContent(t.outdated);
+    expect(seal.getAttribute("role")).toBe("status"); // Alert (não danger)
   });
 
-  it("an embedded (seed) reference says so — AND still carries its review date", () => {
+  it("tom info quando a fonte é online (não embutida)", () => {
     render(
+      <FeeSeal
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }}
+        marketplace="SHOPEE"
+      />,
+    );
+    expect(screen.getByTestId("fee-seal").className).toContain("tf-alert--info");
+  });
+
+  it("uma stale reference soma a pílula 'pode estar desatualizada' (13c) — tom neutro, dentro do bloco", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Ajuda Shopee",
+          reviewedOn: "2026-01-01",
+          stale: true,
+        }}
+        marketplace="SHOPEE"
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.outdated);
+    // a pílula é neutra — nunca compete com o tom de quem respalda o número (13b·4 nota do dono).
+    const pilula = within(seal).getByText(t.outdated);
+    expect(pilula.className).toContain("tf-badge--neutral");
+  });
+});
+
+describe("FeeSeal — 'Ver fonte' (13a·6) só existe quando a entrada carrega sourceUrl", () => {
+  it("sem sourceUrl: nenhuma ação 'Ver fonte' — nada para abrir", () => {
+    render(
+      <FeeSeal
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }}
+        marketplace="SHOPEE"
+      />,
+    );
+    expect(screen.queryByRole("button", { name: t.verFonte })).not.toBeInTheDocument();
+  });
+
+  it("com sourceUrl: 'Ver fonte' abre o diálogo com a citação inteira, a data e o link (13a·2)", async () => {
+    const user = setup();
+    render(
+      <FeeSeal
+        state={{
+          kind: "reference",
+          source: "Central de Educação do Vendedor Shopee — Política de Comissão 2026",
+          reviewedOn: "2026-08-06",
+          sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
+        }}
+        marketplace="SHOPEE"
+      />,
+    );
+    expect(screen.queryByTestId("fee-seal-source-dialog")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: t.verFonte }));
+
+    const dialog = await screen.findByTestId("fee-seal-source-dialog");
+    expect(within(dialog).getByText(t.fonteTitle)).toBeInTheDocument();
+    expect(dialog).toHaveTextContent(
+      "Central de Educação do Vendedor Shopee — Política de Comissão 2026",
+    );
+    expect(dialog).toHaveTextContent(t.fonteConferida.replace("{data}", "06/08/2026"));
+    expect(within(dialog).getByRole("link")).toHaveAttribute(
+      "href",
+      "https://seller.shopee.com.br/edu/article/26839",
+    );
+    expect(within(dialog).getByRole("link")).toHaveAttribute("target", "_blank");
+    expect(within(dialog).getByRole("link")).toHaveAttribute("rel", "noopener noreferrer");
+    expect(dialog).toHaveTextContent(t.fonteAviso.replace("{marketplace}", "Shopee"));
+  });
+});
+
+describe("FeeSeal — Dispensar (T058) some até a fonte mudar (decisão do dono 2026-08-26)", () => {
+  it("dispensar tira o selo da tela", async () => {
+    const user = setup();
+    render(
+      <FeeSeal
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }}
+        marketplace="SHOPEE"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: t.dispensar }));
+    expect(screen.queryByTestId("fee-seal")).not.toBeInTheDocument();
+  });
+
+  it("a MESMA fonte+data continua oculta depois de remontar (reload)", async () => {
+    const user = setup();
+    const state = {
+      kind: "reference" as const,
+      source: "Ajuda Shopee",
+      reviewedOn: "2026-07-06",
+    };
+    const { unmount } = render(<FeeSeal state={state} marketplace="SHOPEE" />);
+    await user.click(screen.getByRole("button", { name: t.dispensar }));
+    unmount();
+
+    render(<FeeSeal state={state} marketplace="SHOPEE" />);
+    expect(screen.queryByTestId("fee-seal")).not.toBeInTheDocument();
+  });
+
+  it("uma data diferente (a fonte mudou) volta a mostrar o selo", () => {
+    render(
+      <FeeSeal
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-07-06" }}
+        marketplace="SHOPEE"
+      />,
+    );
+    useFeeSealDismissStore.getState().dismiss("SHOPEE::Ajuda Shopee::2026-07-06");
+    cleanup();
+    render(
+      <FeeSeal
+        state={{ kind: "reference", source: "Ajuda Shopee", reviewedOn: "2026-08-01" }}
+        marketplace="SHOPEE"
+      />,
+    );
+    expect(screen.getByTestId("fee-seal")).toBeInTheDocument();
+  });
+});
+
+// 014/T098 (SC-807 / A5) — o `embedded` é um MODIFICADOR do texto-base, não um `return` antecipado
+// que engole o alarme de obsolescência e a categoria de origem (a lição continua valendo com o
+// novo render — o que muda é ONDE o texto mora, não a regra).
+describe("FeeSeal — embutida (offline, 13b·3): sem citação, sem 'Ver fonte'", () => {
+  it("diz 'referência embutida (offline)', tom neutro, e NÃO oferece 'Ver fonte'", () => {
+    const { container } = render(
       <FeeSeal
         state={{
           kind: "reference",
@@ -44,45 +207,21 @@ describe("FeeSeal — honesty states (FR-107)", () => {
           reviewedOn: "2026-07-06",
           embedded: true,
         }}
+        marketplace="SHOPEE"
       />,
     );
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
-    // The date used to be dropped here. Hiding it is what made the seed path unable to say how old
-    // its number is — and the 30-day alarm below is computed from exactly this date.
-    expect(seal).toHaveTextContent("06/07/2026");
+    expect(seal).toHaveTextContent("06/07/2026"); // a data sobrevive (SC-807)
+    expect(seal.className).toContain("tf-alert--neutral");
+    expect(screen.queryByRole("button", { name: t.verFonte })).not.toBeInTheDocument();
+    // decisão do dono 28/08 (13b·3) — o ícone "como no design" para a referência embutida: `wifi`,
+    // não o `info` padrão do tone `neutral`. Identificado pelo glifo (o DS não marca `data-icon`).
+    const glyph = container.querySelector(".tf-alert__icon");
+    expect(glyph?.innerHTML).toContain('d="M12 20h.01"');
   });
 
-  it("an adjusted slot reads 'ajustado por você'", () => {
-    render(<FeeSeal state={{ kind: "adjusted" }} />);
-    expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.adjusted);
-  });
-
-  it("an uncovered slot reads 'sem referência' — never a fabricated number", () => {
-    render(<FeeSeal state={{ kind: "none" }} />);
-    expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.none);
-  });
-
-  it("the ML freight subsidy is marked as an estimate (A4)", () => {
-    render(<FeeSeal state={{ kind: "estimate" }} />);
-    expect(screen.getByTestId("fee-seal")).toHaveTextContent(t.estimate);
-  });
-});
-
-// 014/T098 (SC-807 / A5) — o `embedded` era um `return` ANTECIPADO, e engolia duas coisas de uma vez.
-//
-// (a) O alarme de 30 dias: no caminho da SEMENTE ele nunca disparava. A semente é justamente a cópia
-//     que mais envelhece — ela viaja no bundle e só muda quando um build novo sai —, então o único
-//     caminho onde "pode estar desatualizada" era impossível era o que mais precisava dela. O
-//     docstring do `feeSealState` declarava literalmente o contrato oposto ("marked 'embutida' ... e
-//     'desatualizada' passado da janela de 30 dias"): documentação certa, código não.
-// (b) O `originCategoryName`: uma alíquota herdada de ANCESTRAL aparecia sem dizer que não é a da
-//     categoria escolhida — a disclosure que existe para o vendedor não confundir as duas.
-//
-// O ramo `catchAll` vizinho aplica `t.outdated` sem olhar `embedded`, o que mostra que a assimetria
-// era acidental, não uma decisão. `embedded` virou MODIFICADOR do texto-base.
-describe("FeeSeal — `embedded` é modificador, não um desvio que engole o resto (T098)", () => {
-  it("embutida E vencida: o alarme de 30 dias dispara também na semente (SC-807)", () => {
+  it("embutida E vencida: o alarme de 45 dias dispara também na semente (SC-807)", () => {
     render(
       <FeeSeal
         state={{
@@ -92,6 +231,7 @@ describe("FeeSeal — `embedded` é modificador, não um desvio que engole o res
           embedded: true,
           stale: true,
         }}
+        marketplace="SHOPEE"
       />,
     );
     const seal = screen.getByTestId("fee-seal");
@@ -99,7 +239,7 @@ describe("FeeSeal — `embedded` é modificador, não um desvio que engole o res
     expect(seal).toHaveTextContent(t.outdated);
   });
 
-  it("embutida E herdada de ancestral: continua dizendo de QUAL categoria é o número", () => {
+  it("embutida E herdada de ancestral: continua dizendo de qual categoria é o número", () => {
     render(
       <FeeSeal
         state={{
@@ -109,49 +249,21 @@ describe("FeeSeal — `embedded` é modificador, não um desvio que engole o res
           embedded: true,
           originCategoryName: "Celulares e Telefones",
         }}
+        marketplace="AMAZON"
       />,
     );
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
     expect(seal).toHaveTextContent("Celulares e Telefones");
   });
-
-  it("embutida, vencida E herdada: as três coisas cabem no mesmo selo", () => {
-    render(
-      <FeeSeal
-        state={{
-          kind: "reference",
-          source: "Tabela Amazon",
-          reviewedOn: "2026-01-01",
-          embedded: true,
-          stale: true,
-          originCategoryName: "Relógios",
-        }}
-      />,
-    );
-    const seal = screen.getByTestId("fee-seal");
-    expect(seal).toHaveTextContent(t.embedded);
-    expect(seal).toHaveTextContent(t.outdated);
-    expect(seal).toHaveTextContent("Relógios");
-  });
 });
 
-// 014/R2 (homologação da Fase 6C, 2026-07-30) — MEDIDO na tela:
-//   "Referência: Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)
-//    (para Calçados) · atualizada em 28/07/2026"
-//
-// O nome sai duas vezes. A cláusula `(para X)` foi acrescentada por este incremento para revelar que
-// a alíquota pode vir de um ANCESTRAL da categoria escolhida — e continua necessária para isso. O que
-// faltava era notar que a fonte do catálogo da Amazon JÁ nomeia a categoria no próprio rótulo.
-//
-// A condição certa é sobre o que já foi IMPRESSO, não sobre qual marketplace é: no caminho da semente
-// o cabeçalho não cita fonte nenhuma ("referência embutida (offline)"), e ali a cláusula volta a ser
-// a única coisa que diz de qual categoria o número é.
+// R2 da homologação 014 — a categoria não é nomeada duas vezes quando a própria citação já a nomeia.
 describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () => {
   const AMAZON_SOURCE =
     "Tabela de comissões da Amazon — Calçados (comissão sobre base que inclui frete)";
 
-  it("fonte que já nomeia a categoria não ganha a cláusula de novo", () => {
+  it("fonte que já nomeia a categoria não ganha a linha 'para X' de novo", () => {
     render(
       <FeeSeal
         state={{
@@ -160,16 +272,16 @@ describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () 
           reviewedOn: "2026-07-28",
           originCategoryName: "Calçados",
         }}
+        marketplace="AMAZON"
       />,
     );
-    const texto = screen.getByTestId("fee-seal").textContent ?? "";
-    expect(texto).toContain(AMAZON_SOURCE); // a fonte inteira continua lá
-    expect(texto).not.toContain(`(${t.forCategory} Calçados)`);
-    // E o nome aparece exatamente uma vez, que é a asserção que a redundância viola.
-    expect(texto.split("Calçados").length - 1).toBe(1);
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(AMAZON_SOURCE);
+    expect(seal).not.toHaveTextContent(`${t.forCategory} Calçados`);
+    expect((seal.textContent ?? "").split("Calçados").length - 1).toBe(1);
   });
 
-  it("fonte que NÃO nomeia a categoria continua ganhando a cláusula — é a disclosure do ancestral", () => {
+  it("fonte que NÃO nomeia a categoria ganha a linha — é a disclosure do ancestral", () => {
     render(
       <FeeSeal
         state={{
@@ -178,14 +290,15 @@ describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () 
           reviewedOn: "2026-07-28",
           originCategoryName: "Celulares e Telefones",
         }}
+        marketplace="AMAZON"
       />,
     );
     expect(screen.getByTestId("fee-seal")).toHaveTextContent(
-      `(${t.forCategory} Celulares e Telefones)`,
+      `${t.forCategory} Celulares e Telefones`,
     );
   });
 
-  it("na semente o cabeçalho não cita fonte, então a cláusula é a única disclosure e permanece", () => {
+  it("na semente o cabeçalho não cita fonte, então a linha é a única disclosure e permanece", () => {
     render(
       <FeeSeal
         state={{
@@ -195,25 +308,81 @@ describe("FeeSeal — a categoria é nomeada UMA vez (R2 da homologação)", () 
           embedded: true,
           originCategoryName: "Calçados",
         }}
+        marketplace="AMAZON"
       />,
     );
     const seal = screen.getByTestId("fee-seal");
     expect(seal).toHaveTextContent(t.embedded);
-    expect(seal).toHaveTextContent(`(${t.forCategory} Calçados)`);
+    expect(seal).toHaveTextContent(`${t.forCategory} Calçados`);
   });
 });
 
-// 014/T052 (US5, FR-020b emendada 2026-08-01) — o alarme de obsolescencia tem de SIGNIFICAR alguma
-// coisa. A janela era de 30 dias e o laco roda mensalmente, entao todo valor passava os ultimos dias
-// do ciclo gritando "pode estar desatualizada" MESMO COM O ROBO FUNCIONANDO. Um alarme que dispara
-// todo mes sobre valores corretos e reverificados nao avisa: ele treina o vendedor a ignorar
-// exatamente o aviso que a US5 existe para dar.
-//
-// A decisao do dono (Clarification 2026-08-01) foi manter o relogio em `lastReviewed` — que e onde o
-// RISCO mora, porque o perigo e a Amazon ter mudado a tarifa desde que conferimos — e dimensionar a
-// JANELA pelo ciclo real. Mover o relogio para a entrega faria um numero nao-verificado ha meses
-// parecer fresco ao chegar num aparelho novo: a mentira inversa, e maior.
-describe("a janela de obsolescencia cobre o ciclo do laco (T052 / FR-020b emendada)", () => {
+// 019/PR-C (13b·5) — o catch-all vira LINHA do corpo, em laranja, com o ícone de alerta — nunca
+// pílula (uma pílula de 58 caracteres estoura o cartão a 360px, a armadilha do 016/PR-B).
+describe("FeeSeal — o catch-all (13b·5) é linha do corpo, nunca pílula", () => {
+  it("mostra a citação da entrada + a linha 'categoria não informada — usando a maior alíquota'", () => {
+    render(
+      <FeeSeal
+        state={{ kind: "catchAll", source: "Tabela Amazon — Outros", reviewedOn: "2026-07-28" }}
+        marketplace="AMAZON"
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent("Tabela Amazon — Outros");
+    expect(seal).toHaveTextContent(`${t.catchAll} ${t.catchAllHighest}`);
+    // nunca uma pílula própria para essa linha — o texto vive dentro do próprio alerta.
+    expect(within(seal).queryByText(`${t.catchAll} ${t.catchAllHighest}`)?.tagName).not.toBe(
+      "SPAN",
+    );
+  });
+
+  it("catch-all embutido diz que é da semente (T055)", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "catchAll",
+          source: "Tabela Amazon",
+          reviewedOn: "2026-07-28",
+          embedded: true,
+        }}
+        marketplace="AMAZON"
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(`${t.catchAll} ${t.catchAllHighest}`);
+  });
+
+  it("catch-all do catálogo NÃO se diz embutido", () => {
+    render(
+      <FeeSeal
+        state={{ kind: "catchAll", source: "Tabela Amazon", reviewedOn: "2026-07-28" }}
+        marketplace="AMAZON"
+      />,
+    );
+    expect(screen.getByTestId("fee-seal")).not.toHaveTextContent(t.embedded);
+  });
+
+  it("embutido E vencido: as duas coisas cabem, como no ramo `reference`", () => {
+    render(
+      <FeeSeal
+        state={{
+          kind: "catchAll",
+          source: "Tabela Amazon",
+          reviewedOn: "2026-01-01",
+          embedded: true,
+          stale: true,
+        }}
+        marketplace="AMAZON"
+      />,
+    );
+    const seal = screen.getByTestId("fee-seal");
+    expect(seal).toHaveTextContent(t.embedded);
+    expect(seal).toHaveTextContent(t.outdated);
+  });
+});
+
+describe("a janela de obsolescência é de 45 dias (T052/FR-020b) — comentário do componente corrigido", () => {
   const dia = 24 * 60 * 60 * 1000;
   const lido = Date.parse("2026-08-01");
   const selo = (diasDepois: number) =>
@@ -235,74 +404,19 @@ describe("a janela de obsolescencia cobre o ciclo do laco (T052 / FR-020b emenda
       edited: false,
     });
 
-  it("um ciclo mensal INTEIRO nao alarma — era aqui que o falso positivo nascia", () => {
-    // O laco le no dia 1 e volta a ler no dia 1 do mes seguinte: ate 31 dias e operacao normal.
+  it("STALENESS_DAYS é 45, não 30", () => {
+    expect(STALENESS_DAYS).toBe(45);
+  });
+
+  it("um ciclo mensal inteiro (31 dias) não alarma; passado ciclo+folga (46), alarma", () => {
     expect(selo(31)).toMatchObject({ stale: false });
-  });
-
-  it("a folga de entrega tambem nao alarma — revisao do PR + merge + corte + o cliente buscar", () => {
-    expect(selo(44)).toMatchObject({ stale: false });
-  });
-
-  it("passado o ciclo MAIS a folga, alarma — e ai significa que algo falhou de verdade", () => {
+    expect(selo(45)).toMatchObject({ stale: false });
     expect(selo(46)).toMatchObject({ stale: true });
   });
-
-  // A propriedade, dita sobre a constante e nao sobre um numero magico: a janela nunca pode ser
-  // menor que o ciclo, senao o alarme volta a disparar por construcao.
-  // U5-d — a assercao era `> 31`, e trocar `>` por `>=` na implementacao nao a fazia reprovar: ela
-  // prendia a ORDEM DE GRANDEZA, nao a fronteira. Agora prende as duas pontas do intervalo com o
-  // valor exato, e qualquer mexida na cadencia ou na folga tem de passar por aqui.
-  it("a janela e ciclo + folga, e as duas pontas sao exatas", () => {
-    expect(STALENESS_DAYS).toBe(45);
-    expect(STALENESS_DAYS).toBeGreaterThan(31); // nunca menor que o ciclo — a propriedade
-    expect(selo(45)).toMatchObject({ stale: false }); // no limite ainda confia
-    expect(selo(46)).toMatchObject({ stale: true }); // um dia depois, avisa
-  });
 });
 
-// 014/T055 (US5) — a ORIGEM do valor (embutida / do catálogo) tem de continuar refletida no selo
-// depois do eixo novo. A T098 corrigiu isso no ramo `reference`, e o ramo `catchAll` — que NASCEU
-// com o eixo de categoria — ficou com a assimetria intacta: ele aplica `t.outdated` sem nunca
-// consultar `embedded`.
-//
-// O efeito: um catch-all servido pela SEMENTE lê exatamente como um catch-all recém-buscado do
-// endpoint. O vendedor perde a única pista de que aquele número vem do bundle e não da rede — e no
-// catch-all essa pista importa mais, porque ali ele já está aceitando a MAIOR alíquota da tabela.
-describe("FeeSeal — o catch-all também diz de onde veio (T055)", () => {
-  const catchAll = (over: Record<string, unknown> = {}) =>
-    ({
-      kind: "catchAll" as const,
-      source: "Tabela Amazon",
-      reviewedOn: "2026-07-28",
-      ...over,
-    }) as never;
-
-  it("catch-all da semente diz que a referência é embutida", () => {
-    render(<FeeSeal state={catchAll({ embedded: true })} />);
-    const seal = screen.getByTestId("fee-seal");
-    expect(seal).toHaveTextContent(t.embedded);
-    // …e não perde o que já dizia: continua avisando que é o catch-all.
-    expect(seal).toHaveTextContent(t.catchAll);
-  });
-
-  it("catch-all do catálogo NÃO se diz embutido", () => {
-    render(<FeeSeal state={catchAll()} />);
-    expect(screen.getByTestId("fee-seal")).not.toHaveTextContent(t.embedded);
-  });
-
-  it("embutido E vencido: as duas coisas cabem, como já cabem no ramo `reference`", () => {
-    render(<FeeSeal state={catchAll({ embedded: true, stale: true })} />);
-    const seal = screen.getByTestId("fee-seal");
-    expect(seal).toHaveTextContent(t.embedded);
-    expect(seal).toHaveTextContent(t.outdated);
-  });
-});
-
-// 016/PR-F (T057) — a procedência PRÓPRIA da taxa fixa (Amazon Individual: comissão e tarifa por
-// item vêm de páginas oficiais DIFERENTES) é um selo SEPARADO do `FeeSeal` principal.
-describe("FixedFeeSourceBadge — a procedência da taxa fixa, num selo à parte (T057)", () => {
-  it("mostra a fonte e a data (pt-BR), sem poluir o selo principal", () => {
+describe("FixedFeeSourceBadge (T057) — a procedência própria da taxa fixa, num tf-alert à parte", () => {
+  it("mostra o rótulo 'Taxa fixa', a citação e 'vigente desde' (pt-BR) — nunca 'atualizada em'", () => {
     render(
       <FixedFeeSourceBadge
         source={{
@@ -310,13 +424,47 @@ describe("FixedFeeSourceBadge — a procedência da taxa fixa, num selo à parte
           sourceUrl: "https://venda.amazon.com.br/precos",
           effectiveDate: "2020-12-01",
         }}
+        marketplace="AMAZON"
       />,
     );
     const badge = screen.getByTestId("fixed-fee-source-seal");
     expect(badge).toHaveTextContent(t.fixedFeeSource);
     expect(badge).toHaveTextContent("Amazon — Preços e planos de venda");
-    expect(badge).toHaveTextContent("01/12/2020"); // ISO → pt-BR dd/mm/yyyy
-    // É um elemento SEPARADO do selo principal — nunca o mesmo nó.
+    expect(badge).toHaveTextContent(t.fixedFeeSourceSince);
+    expect(badge).toHaveTextContent("01/12/2020");
+    // separado do selo principal — nunca o mesmo nó.
     expect(screen.queryByTestId("fee-seal")).not.toBeInTheDocument();
+  });
+
+  it("'Ver fonte' abre o mesmo diálogo, com o link da procedência própria", async () => {
+    const user = setup();
+    render(
+      <FixedFeeSourceBadge
+        source={{
+          source: "Amazon — Preços e planos de venda",
+          sourceUrl: "https://venda.amazon.com.br/precos",
+          effectiveDate: "2020-12-01",
+        }}
+        marketplace="AMAZON"
+      />,
+    );
+    await user.click(screen.getByRole("button", { name: t.verFonte }));
+    const dialog = await screen.findByTestId("fee-seal-source-dialog");
+    expect(within(dialog).getByRole("link")).toHaveAttribute(
+      "href",
+      "https://venda.amazon.com.br/precos",
+    );
+  });
+
+  it("Dispensar tira o selo até a data mudar", async () => {
+    const user = setup();
+    const source = {
+      source: "Amazon — Preços e planos de venda",
+      sourceUrl: "https://venda.amazon.com.br/precos",
+      effectiveDate: "2020-12-01",
+    };
+    render(<FixedFeeSourceBadge source={source} marketplace="AMAZON" />);
+    await user.click(screen.getByRole("button", { name: t.dispensar }));
+    expect(screen.queryByTestId("fixed-fee-source-seal")).not.toBeInTheDocument();
   });
 });

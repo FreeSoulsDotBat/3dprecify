@@ -15,12 +15,21 @@ afterEach(() => cleanup());
 // form state carries (`parseDecimal` already reads grouped and ungrouped forms identically).
 
 /** A tiny controlled harness mirroring how `ControlledField`/RHF wire `value`/`onChange`. */
-function Harness({ currency = true, initial = "" }: { currency?: boolean; initial?: string }) {
+function Harness({
+  currency = true,
+  initial = "",
+  precision,
+}: {
+  currency?: boolean;
+  initial?: string;
+  precision?: number;
+}) {
   const [value, setValue] = useState(initial);
   return (
     <NumberField
       aria-label="Valor"
       currency={currency}
+      precision={precision}
       value={value}
       onChange={(e) => setValue(e.target.value)}
     />
@@ -96,5 +105,46 @@ describe("NumberField — pt-BR thousands grouping on blur (currency mode)", () 
     );
     fireEvent.blur(screen.getByLabelText("Valor2"));
     expect(blurred).toBe(true);
+  });
+});
+
+// 019/PR-C (T053, FR-1912/SC-1905) — `precision` (default 2) é as casas que o blur PRESERVA. A
+// tarifa de energia (R$/kWh) chega com 4 casas ("0,8734") e a máscara de 2 casas hardcoded a
+// truncava para "0,87" — um corte silencioso de valor, não só de exibição (o form guarda a STRING
+// truncada, então o cálculo seguinte usa 0,87, não 0,8734).
+describe("NumberField — precision (019/PR-C, tarifa de 4 casas)", () => {
+  it("preserva 4 casas no blur quando precision=4 (0,8734 não vira 0,87)", () => {
+    render(<Harness precision={4} initial="0,8734" />);
+    const input = screen.getByLabelText("Valor");
+    fireEvent.blur(input);
+    expect(input).toHaveValue("0,8734");
+  });
+
+  it("ainda agrupa milhar com precision=4 (1234,5678 → 1.234,5678)", () => {
+    render(<Harness precision={4} initial="1234,5678" />);
+    const input = screen.getByLabelText("Valor");
+    fireEvent.blur(input);
+    expect(input).toHaveValue("1.234,5678");
+  });
+
+  it("'0' reabre '0,00' com a precisão padrão (2)", () => {
+    render(<Harness initial="0" />);
+    const input = screen.getByLabelText("Valor");
+    fireEvent.blur(input);
+    expect(input).toHaveValue("0,00");
+  });
+
+  it("'0' reabre '0,0000' quando precision=4", () => {
+    render(<Harness precision={4} initial="0" />);
+    const input = screen.getByLabelText("Valor");
+    fireEvent.blur(input);
+    expect(input).toHaveValue("0,0000");
+  });
+
+  it("regressão 016/B2 — sem precision (padrão 2), o agrupamento de milhar continua (12345,67 → 12.345,67)", () => {
+    render(<Harness initial="12345,67" />);
+    const input = screen.getByLabelText("Valor");
+    fireEvent.blur(input);
+    expect(input).toHaveValue("12.345,67");
   });
 });

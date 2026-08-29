@@ -58,4 +58,24 @@ describe("Alert — compact (selo de procedência)", () => {
     const alert = screen.getByRole("status");
     expect(alert).toHaveClass("tf-alert--warning");
   });
+
+  // 019/PR-C (prancheta 13b·3, decisão do dono 28/08) — a prop `icon` sobrepõe o ícone do `tone`;
+  // sem a prop, nada muda (o `info` padrão de `neutral` continua). Identificado pelo glifo mesmo —
+  // o DS não marca `data-icon`, então a assinatura é um `<path>`/`<circle>` exclusivo de cada ícone.
+  it('icon sobrepõe o ícone do tone (ex.: tone="neutral" + icon="wifi")', () => {
+    const { container } = render(
+      <Alert tone="neutral" icon="wifi">
+        Referência embutida no dispositivo — funciona sem internet.
+      </Alert>,
+    );
+    const glyph = container.querySelector(".tf-alert__icon");
+    expect(glyph?.innerHTML).toContain('d="M12 20h.01"'); // exclusivo do glifo wifi
+    expect(glyph?.innerHTML).not.toContain('cx="12" cy="12" r="10"'); // o círculo do "info" padrão
+  });
+
+  it("sem icon, o tone continua escolhendo o glifo padrão (neutral ⇒ info)", () => {
+    const { container } = render(<Alert tone="neutral">Texto</Alert>);
+    const glyph = container.querySelector(".tf-alert__icon");
+    expect(glyph?.innerHTML).toContain('cx="12" cy="12" r="10"');
+  });
 });

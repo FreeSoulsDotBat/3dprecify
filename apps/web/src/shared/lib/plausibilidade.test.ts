@@ -7,6 +7,7 @@ import {
   avisoDeComissao,
   avisoDeQuantidade,
   avisosDePlausibilidade,
+  licaoDeCampo,
   LIMIARES,
 } from "./plausibilidade";
 
@@ -160,6 +161,23 @@ describe("avisoDeCampo — a porta que a tela usa", () => {
   });
   it("uma string inválida não gera aviso — quem recusa é o schema, não este módulo", () => {
     expect(avisoDeCampo("avgPowerKw", "abc")).toBeNull();
+  });
+});
+
+describe("licaoDeCampo — a lição SÓ, sem cabeça e sem o valor digitado (decisão do dono 28/08, 14b)", () => {
+  it("os oito campos com faixa têm lição escrita, verbatim, terminando no fecho de recusa", () => {
+    const t = messages.calculator.plausibilidade;
+    for (const [nome, texto] of Object.entries(t.licao)) {
+      expect(licaoDeCampo(nome)).toBe(texto);
+      expect(texto).toContain(t.fechoComRecusa);
+      expect(texto).not.toContain("Confira");
+      expect(texto).not.toContain(t.fechoNormal);
+    }
+  });
+  it("um campo sem lição escrita (ex.: comissão, quantidade) devolve null", () => {
+    expect(licaoDeCampo("commissionPct")).toBeNull();
+    expect(licaoDeCampo("quantity")).toBeNull();
+    expect(licaoDeCampo("resultado")).toBeNull();
   });
 });
 

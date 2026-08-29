@@ -71,7 +71,11 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   // 016/US8 — machineLifetime only renders (in "ajustar" mode). The seed (3600h) IS a ritmo ×
   // payback product now (016/PR-C homologação B1), so the form opens in RITMO mode — "Ajustar
   // horas direto" reveals the raw hours field this canonical vector needs to type 2000 into.
-  await page.getByRole("button", { name: messages.calculator.machineCost.adjustButton }).click();
+  // 019/PR-C (T057) — o par de botões virou o segmented "Estimar · Ajustar" (prancheta 15a).
+  await page
+    .getByTestId("machine-mode")
+    .getByRole("radio", { name: messages.calculator.machineCost.ajustar })
+    .click();
   await page.getByRole("textbox", { name: f.machineLifetime, exact: true }).fill("2000");
   // failure/finishTime/finishRate are OPTIONAL fields — their accessible name carries the "opcional"
   // suffix (field.tsx), so `exact` would miss them; role alone already excludes the tip's button.
@@ -359,7 +363,9 @@ test("US2: the long ONLINE reference seal wraps — no 390px overflow (FR-010, T
 
   // The online reference seal (long) renders — proving the source is the served catalog, not the seed.
   const seal = slot0.getByTestId("fee-seal");
-  await expect(seal).toContainText(t.seals.reference); // "Referência"
+  // 019/PR-C (T058, prancheta 13a) — o rótulo nomeia o NÚMERO que o selo respalda ("Comissão"),
+  // nunca "Referência"; a citação (a fonte longa) continua no corpo.
+  await expect(seal).toContainText(t.seals.commissionLabel); // "Comissão"
   await expect(seal).toContainText(t.seals.updatedOn); // "atualizada em"
   await expect(seal).not.toContainText(t.seals.embedded); // not the offline/seed seal
 

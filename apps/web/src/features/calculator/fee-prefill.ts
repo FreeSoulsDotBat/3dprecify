@@ -312,7 +312,7 @@ export function appliedBandFees(fees: ChannelFees, base: number): AppliedBandFee
 /**
  * Derive a slot's honesty seal. `edited` wins — once the user changes a pre-filled value it reads
  * "ajustado por você". No entry → "sem referência". Otherwise a dated reference, marked "embutida"
- * when it came from the bundled seed (offline) and "desatualizada" past the 30-day window — the two
+ * when it came from the bundled seed (offline) and "desatualizada" past the STALENESS_DAYS window — the two
  * marks COMPOSE, and until T098 they did not: `embedded` short-circuited the staleness clause, so
  * the copy that ages most was the one that could never say it had aged (SC-807).
  */
@@ -328,11 +328,16 @@ export function feeSealState(args: {
   const { entry, source, now, edited, originCategoryName, viaCatchAll } = args;
   if (edited) return { kind: "adjusted" };
   if (!entry) return { kind: "none" };
+  const embedded = source === "seed";
   const dated = {
     source: entry.source,
     reviewedOn: entry.lastReviewed,
-    embedded: source === "seed",
+    embedded,
     stale: isStale(entry, now),
+    // 019/PR-C (T052/T058, prancheta 13b·3) — a entrada SEMPRE carrega `sourceUrl`, mas a semente
+    // (embutida, offline) deliberadamente não cita fonte nenhuma: "Ver fonte" alcançaria uma página
+    // que ninguém buscou ao empacotar o app, não a que confirmou o número na tela.
+    ...(embedded ? {} : { sourceUrl: entry.sourceUrl }),
   };
   // A catch-all is a DIFFERENT claim from "this is your category's rate", and collapsing the two is
   // how a seller ends up with the wrong number believing it is his. Amazon's "Outros" is the highest

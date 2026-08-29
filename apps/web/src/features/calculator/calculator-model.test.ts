@@ -83,6 +83,31 @@ describe("computeFromForm — canonical vector flows through the engine (SC-001)
   });
 });
 
+// 019/PR-C (T053, FR-1912/SC-1905) — a tarifa (R$/kWh) tem 4 casas de verdade ("0,8734"); a
+// máscara de blur truncava para 2 ("0,87") ANTES de o form chegar aqui, então o custo de energia
+// computado era o de uma tarifa errada — um corte silencioso de valor, não só de exibição.
+// `computeFromForm` em si nunca soube de precisão (ela é só uma string pt-BR que `parseDecimal`
+// lê igual com 2 ou 4 casas); esta pinagem prova que, uma vez a string CORRETA de 4 casas chega
+// aqui, energy = printTimeHours × avgPowerKw × tariffPerKwh EXATAMENTE (igualdade numérica, não
+// aproximação frouxa) — os fatores foram escolhidos para que o produto já caia em 2 casas
+// (100h × 1kW × 0,8734 = 87,34 exato), então `toMoney` não arredonda nada e a igualdade é direta.
+describe("computeFromForm — tarifa de 4 casas (019/PR-C, SC-1905)", () => {
+  it("energy = printTimeHours × avgPowerKw × tariffPerKwh com igualdade numérica (0,8734)", () => {
+    const values: CalcFormValues = {
+      ...canonical,
+      printTimeHours: "100",
+      avgPowerKw: "1",
+      tariffPerKwh: "0,8734",
+    };
+    const { ok, result } = computeFromForm(values);
+    expect(ok).toBe(true);
+    // `100 * 1 * 0.8734` em ponto-flutuante nativo já erra (87.33999999999999) — o próprio motivo
+    // de o motor usar Decimal.js. 87.34 é o produto exato pt-BR (100 × 0,8734), não um arredondamento.
+    expect(result?.energy).toBe(87.34);
+    expect(result?.energy).toBeCloseTo(87.34, 10);
+  });
+});
+
 // 016/US9 (T022, FR-911, arquitetura-016.md §7) — PR-C reorganizes sections ("Ajustes opcionais"
 // folds into "Custos da peça"; Tempo/Valor do acabamento migram para "Mão de obra e custos") and
 // wires h+min + the machine-cost question at the BORDER only. None of that touches

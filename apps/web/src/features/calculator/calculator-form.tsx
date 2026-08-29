@@ -1,5 +1,11 @@
 import { type CSSProperties, useState } from "react";
-import { type Control, Controller, useController } from "react-hook-form";
+import {
+  type Control,
+  Controller,
+  type ControllerFieldState,
+  type ControllerRenderProps,
+  useController,
+} from "react-hook-form";
 
 import {
   type ChannelSlotOutcome,
@@ -16,6 +22,7 @@ import {
   costPerHour,
   deriveMachineLifetimeHours,
   detectRitmoMode,
+  RITMOS_HORAS_ANO,
   type RitmoIndex,
 } from "@/features/calculator/machine-cost";
 import {
@@ -29,7 +36,9 @@ import {
   PAYBACK_YEAR_OPTIONS,
   RITMO_OPTIONS,
 } from "@/features/calculator/calculator-schema";
-import { avisoDeCampo, avisoDeComissao, avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
+import { avisoDeComissao, avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
+import { useAvisoDeCampo, type UseAvisoDeCampoResult } from "@/shared/lib/use-aviso-de-campo";
+import { useIsCalcWide } from "@/shared/lib/use-is-wide";
 import { channelFieldPlan } from "@/features/calculator/channel-field-plan";
 import {
   decimalHoursToHm,
@@ -48,6 +57,7 @@ import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 import type { PriceResult } from "@3dprecify/pricing-core";
 import {
   Alert,
+  Aviso,
   BreakdownRow,
   Button,
   Card,
@@ -55,6 +65,7 @@ import {
   InfoTip,
   NumberField,
   PriceHero,
+  Segmented,
   Select,
   Switch,
 } from "@/shared/ui";
@@ -125,11 +136,10 @@ function AvisoDeResultado({ result }: { result: PriceResult }) {
     { custoTotal: result.custoTotal, precoVarejo: result.precoVarejo },
   );
   if (avisos.length === 0) return null;
-  return (
-    <Alert tone="info">
-      <span data-testid="aviso-resultado">{avisos.map((a) => a.texto).join(" ")}</span>
-    </Alert>
-  );
+  // 019/PR-C (T056, prancheta 14d) — vira `<Aviso>`, sem "Entendi": não há campo para corrigir, e
+  // um botão que não dispensa nada é botão vazio. Duas frases juntas param de ser um `join(" ")` —
+  // são dois fatos, e cada um pede seu próprio `<p>`.
+  return <Aviso data-testid="aviso-resultado" lines={avisos.map((a) => a.texto)} />;
 }
 
 /** A section title with an inline ⓘ info tip explaining what/how the section calculates. */
@@ -144,6 +154,80 @@ export function SectionTitle({
     <div className="flex items-center gap-1">
       <p style={sectionLabel}>{title}</p>
       <InfoTip label={info.label}>{info.body}</InfoTip>
+    </div>
+  );
+}
+
+/** 019/PR-C (T056, prancheta 14) — o corpo do `<Aviso>` de UM campo, comum aos três consumidores
+ *  de `useAvisoDeCampo` (`ControlledField`/`TimeHmField`/`MachineCostFields`): nenhum aviso ⇒ nada
+ *  renderiza; com uma recusa junto (14b), sem "Entendi" — não se dispensa uma lição que acompanha
+ *  uma recusa. */
+function CampoAviso({ aviso, testId }: { aviso: UseAvisoDeCampoResult; testId: string }) {
+  if (!aviso.aviso) return null;
+  return (
+    <Aviso
+      data-testid={testId}
+      action={
+        !aviso.comErro && (
+          <Button variant="ghost" size="sm" onClick={aviso.onEntendi}>
+            {t.plausibilidade.entendi}
+          </Button>
+        )
+      }
+    >
+      {aviso.aviso}
+    </Aviso>
+  );
+}
+
+/** 019/PR-C (T056) — o corpo de `ControlledField`, extraído em componente PRÓPRIO (nome maiúsculo)
+ *  para que `useAvisoDeCampo` (um hook de verdade — `useRef`/`useState`/zustand) seja chamado
+ *  dentro de um function component reconhecido pelo `react-hooks/rules-of-hooks`, e não dentro do
+ *  `render` do `<Controller>` (uma função qualquer, ainda que chamada de forma estável a cada
+ *  render — o lint não sabe disso). */
+function ControlledFieldBody({
+  meta,
+  field,
+  fieldState,
+}: {
+  meta: CalcFieldMeta;
+  field: ControllerRenderProps<CalcFormValues, CalcFieldMeta["name"]>;
+  fieldState: ControllerFieldState;
+}) {
+  const aviso = useAvisoDeCampo(meta.name, String(field.value ?? ""), Boolean(fieldState.error));
+  return (
+    // 019/PR-C (T056, prancheta 14f) — o `<Aviso>` é IRMÃO do `Field`, dentro do mesmo wrapper de
+    // célula: num grid `auto-fit` (`.tf-costs-grid`), cada filho DIRETO é um item — dois elementos
+    // soltos aqui viraria duas células, e o aviso empurraria o campo vizinho em vez de crescer
+    // dentro da própria célula.
+    <div className="calc-field-cell">
+      <Field
+        label={meta.label}
+        labelAddon={meta.tip && <InfoTip label={meta.tip.label}>{meta.tip.body}</InfoTip>}
+        required={meta.required}
+        optional={!meta.required}
+        hint={meta.hint}
+        error={fieldState.error?.message}
+      >
+        {(p) => (
+          <NumberField
+            {...p}
+            currency={meta.currency}
+            unit={meta.unit}
+            precision={meta.precision}
+            name={field.name}
+            value={field.value}
+            onChange={field.onChange}
+            onBlur={() => {
+              field.onBlur();
+              aviso.onBlur();
+            }}
+            ref={field.ref}
+            error={Boolean(fieldState.error)}
+          />
+        )}
+      </Field>
+      <CampoAviso aviso={aviso} testId={`aviso-${meta.name}`} />
     </div>
   );
 }
@@ -165,54 +249,9 @@ export function ControlledField({
     <Controller
       control={control}
       name={meta.name}
-      render={({ field, fieldState }) => {
-        // Homologação automatizada — o aviso de plausibilidade nasce AQUI, do próprio valor do
-        // campo, sem prop nenhuma atravessando a árvore. Consequência desejada: o
-        // `widgets/bom-line-editor`, que renderiza os MESMOS `CalcFieldMeta`, ganha os mesmos
-        // avisos sem uma linha a mais.
-        //
-        // Ele entra como HINT, nunca como `error`: o `Field` substitui o hint pelo erro, então um
-        // campo genuinamente inválido continua mostrando a recusa (que é o que importa), e o aviso
-        // some — que é o comportamento certo, porque avisar sobre a plausibilidade de um número que
-        // o produto nem aceitou seria ruído. E, sobretudo: aviso não é erro. Ver o cabeçalho de
-        // `plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
-        const aviso = avisoDeCampo(meta.name, String(field.value ?? ""));
-        return (
-          <Field
-            label={meta.label}
-            labelAddon={meta.tip && <InfoTip label={meta.tip.label}>{meta.tip.body}</InfoTip>}
-            required={meta.required}
-            optional={!meta.required}
-            hint={
-              aviso ? (
-                <>
-                  {meta.hint && <span className="tf-field__hint-line">{meta.hint}</span>}
-                  <span className="tf-field__aviso" data-testid={`aviso-${meta.name}`}>
-                    {aviso}
-                  </span>
-                </>
-              ) : (
-                meta.hint
-              )
-            }
-            error={fieldState.error?.message}
-          >
-            {(p) => (
-              <NumberField
-                {...p}
-                currency={meta.currency}
-                unit={meta.unit}
-                name={field.name}
-                value={field.value}
-                onChange={field.onChange}
-                onBlur={field.onBlur}
-                ref={field.ref}
-                error={Boolean(fieldState.error)}
-              />
-            )}
-          </Field>
-        );
-      }}
+      render={({ field, fieldState }) => (
+        <ControlledFieldBody meta={meta} field={field} fieldState={fieldState} />
+      )}
     />
   );
 }
@@ -282,6 +321,56 @@ function CampoDeHoras({
   );
 }
 
+/** 019/PR-C (T056) — o corpo de `TimeHmField`, extraído pela MESMA razão de `ControlledFieldBody`
+ *  (`useAvisoDeCampo` precisa de um function component de verdade). O blur do aviso é disparado
+ *  tanto pelo campo de horas (`CampoDeHoras`) quanto pelo de minutos — os dois marcam "saí do
+ *  campo" para o mesmo `printTimeHours`. */
+function TimeHmFieldBody({
+  field,
+  fieldState,
+}: {
+  field: ControllerRenderProps<CalcFormValues, "printTimeHours">;
+  fieldState: ControllerFieldState;
+}) {
+  const { h, min } = decimalHoursToHm(field.value);
+  const commit = (nextH: number, nextMin: number) => {
+    field.onChange(hmToDecimalString(nextH, nextMin));
+  };
+  // Este campo NÃO passa pelo `ControlledField` (tem controle próprio de h+min), então o aviso
+  // precisa ser pedido aqui — e é justamente o caso do achado CF-002-LEIGO-C: 150 no campo de
+  // HORAS, quando o vendedor queria dizer 150 minutos, multiplica o custo por 15.
+  const aviso = useAvisoDeCampo(
+    "printTimeHours",
+    String(field.value ?? ""),
+    Boolean(fieldState.error),
+  );
+  const onBlurTime = () => {
+    field.onBlur();
+    aviso.onBlur();
+  };
+  return (
+    <div className="calc-field-cell">
+      <Field label={t.fields.printTime} required hint={undefined} error={fieldState.error?.message}>
+        {() => (
+          <div className="flex items-center gap-2">
+            <CampoDeHoras h={h} min={min} onCommit={commit} onBlurField={onBlurTime} />
+            <NumberField
+              aria-label={t.timeInput.minutesAria}
+              unit={t.timeInput.minutesUnit}
+              inputMode="numeric"
+              placeholder="0"
+              value={String(min)}
+              onChange={(e) => commit(h, Number.parseInt(e.target.value, 10) || 0)}
+              onBlur={onBlurTime}
+            />
+          </div>
+        )}
+      </Field>
+      <CampoAviso aviso={aviso} testId="aviso-printTimeHours" />
+    </div>
+  );
+}
+
 /** 016/US7 (FR-909) — the printTime border: two number inputs (h + min), converted to/from the
  *  SAME decimal the engine has always received (`time-input.ts` owns the pure conversion; the RHF
  *  field value never changes shape). A document saved with a decimal (`5.5`) reopens showing the
@@ -291,45 +380,7 @@ export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
     <Controller
       control={control}
       name="printTimeHours"
-      render={({ field, fieldState }) => {
-        const { h, min } = decimalHoursToHm(field.value);
-        const commit = (nextH: number, nextMin: number) => {
-          field.onChange(hmToDecimalString(nextH, nextMin));
-        };
-        // Este campo NÃO passa pelo `ControlledField` (tem controle próprio de h+min), então o
-        // aviso precisa ser pedido aqui — e é justamente o caso do achado CF-002-LEIGO-C: 150 no
-        // campo de HORAS, quando o vendedor queria dizer 150 minutos, multiplica o custo por 15.
-        const aviso = avisoDeCampo("printTimeHours", String(field.value ?? ""));
-        return (
-          <Field
-            label={t.fields.printTime}
-            required
-            hint={
-              aviso ? (
-                <span className="tf-field__aviso" data-testid="aviso-printTimeHours">
-                  {aviso}
-                </span>
-              ) : undefined
-            }
-            error={fieldState.error?.message}
-          >
-            {() => (
-              <div className="flex items-center gap-2">
-                <CampoDeHoras h={h} min={min} onCommit={commit} onBlurField={field.onBlur} />
-                <NumberField
-                  aria-label={t.timeInput.minutesAria}
-                  unit={t.timeInput.minutesUnit}
-                  inputMode="numeric"
-                  placeholder="0"
-                  value={String(min)}
-                  onChange={(e) => commit(h, Number.parseInt(e.target.value, 10) || 0)}
-                  onBlur={field.onBlur}
-                />
-              </div>
-            )}
-          </Field>
-        );
-      }}
+      render={({ field, fieldState }) => <TimeHmFieldBody field={field} fieldState={fieldState} />}
     />
   );
 }
@@ -347,14 +398,79 @@ export function TimeHmField({ control }: { control: Control<CalcFormValues> }) {
  * the seller explicitly asked for it; a lifetime outside every ritmo×payback ALWAYS shows
  * "ajustar" regardless (US8-AC4 — the value the document holds is never silently coerced).
  */
+// 019/PR-C (T057, prancheta 15) — pt-BR só de agrupamento (sem casas), para a divisão do readout
+// ("de R$ 4.000,00 ÷ 3.600 h") e para os números da confirmação ("2.000 h" / "3.600 h").
+function fmtHoras(n: number): string {
+  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 2 }).format(n);
+}
+
+/** 019/PR-C (T057, prancheta 15a/15b/15d) — o custo/hora deixa de ser legenda solta e vira
+ *  READOUT, com a divisão que o produziu escrita embaixo — existe nos DOIS modos agora (15b: hoje
+ *  só existia em "estimar"). `machineValueNum===0` mantém o número (é literalmente R$ 0,00, não
+ *  uma mentira), mas com peso de tinta menor + a ressalva ao lado (15d). `currentHours<=0` não tem
+ *  o que dividir — NADA renderiza (15c: "não há divisão por zero" é a terceira afirmação falsa que
+ *  um R$ 0,00 em destaque seria). */
+function MachineCostReadout({
+  perHour,
+  machineValueNum,
+  currentHours,
+}: {
+  perHour: number;
+  machineValueNum: number;
+  currentHours: number;
+}) {
+  if (!(currentHours > 0)) return null;
+  const semValor = machineValueNum === 0;
+  return (
+    <div className="calc-machine-readout" data-testid="machine-readout">
+      <span style={captionText}>{t.machineCost.readoutLabel}</span>
+      <div className="flex items-baseline gap-2" style={{ flexWrap: "wrap" }}>
+        <span
+          className="tf-tnum"
+          style={{
+            fontSize: "var(--fs-xl)",
+            fontWeight: "var(--fw-bold)",
+            color: semValor ? "var(--text-muted)" : "var(--text-strong)",
+            lineHeight: 1.1,
+          }}
+        >
+          {formatBRL(perHour)}
+        </span>
+        {semValor && (
+          <span style={{ fontSize: "var(--fs-caption)", color: "var(--warning-text)" }}>
+            {t.machineCost.ressalvaSemValor}
+          </span>
+        )}
+      </div>
+      <span className="tf-tnum" style={captionText}>
+        {t.machineCost.readoutDivisao
+          .replace("{valor}", formatBRL(machineValueNum))
+          .replace("{horas}", fmtHoras(currentHours))}
+      </span>
+    </div>
+  );
+}
+
+type MachineMode = "estimar" | "ajustar";
+
 export function MachineCostFields({ control }: { control: Control<CalcFormValues> }) {
   const valueField = useController({ control, name: "machineValue" });
   const lifetimeField = useController({ control, name: "machineLifetimeHours" });
   const [manualOverride, setManualOverride] = useState(false);
+  // 019/PR-C (T057, prancheta 15f) — o corte da própria Calculadora (`.tf-calc-grid`, 1024px), não
+  // o `useIsWide` de 1280px do resto do app: nenhum dos dois hooks existentes servia a ESTE bloco
+  // isoladamente (divergência registrada abaixo do Segmented). `useIsCalcWide` fecha isso.
+  const isCalcWide = useIsCalcWide();
+  // 019/PR-C (T057, prancheta 15e) — a confirmação inline ao tocar "Estimar" vindo de "Ajustar",
+  // com horas fora de todo ritmo × payback. Fica pendente até "Usar {novo} h" (aplica e volta para
+  // "Estimar") ou "Manter {atual} h" (fecha sem mudar nada — o segmented continua em "Ajustar",
+  // porque `manualOverride` nunca deixou de ser `true`).
+  const [pendingConfirm, setPendingConfirm] = useState(false);
 
   const currentHours = parseDecimal(lifetimeField.field.value);
   const detected = detectRitmoMode(currentHours);
   const adjustMode = manualOverride || detected === null;
+  const mode: MachineMode = adjustMode ? "ajustar" : "estimar";
   const ritmoIndex: RitmoIndex = detected?.ritmoIndex ?? 1;
   const paybackYears = detected?.paybackYears ?? 3;
 
@@ -362,8 +478,42 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
     lifetimeField.field.onChange(String(deriveMachineLifetimeHours(idx, years)));
   };
 
-  const machineValueNum = parseDecimal(valueField.field.value);
+  // 019/PR-C (T057, prancheta 15d) — um campo vazio dá `parseDecimal` = NaN, e NaN !== 0: sem este
+  // guarda, "falta o valor da máquina" nunca aparecia (a comparação estrita nunca batia) e
+  // `formatBRL(NaN)` imprimia "R$ " sem o zero. Vazio e zero são o MESMO caso aqui — os dois não
+  // têm valor de máquina a dividir.
+  const rawMachineValueNum = parseDecimal(valueField.field.value);
+  const machineValueNum = Number.isFinite(rawMachineValueNum) ? rawMachineValueNum : 0;
   const perHour = costPerHour(machineValueNum, currentHours);
+  const proposedHours = deriveMachineLifetimeHours(ritmoIndex, paybackYears);
+  const anosLabel = (
+    paybackYears === 1 ? t.machineCost.paybackYearLabel : t.machineCost.paybackYearsLabel
+  ).replace("{n}", String(paybackYears));
+
+  const handleModeChange = (next: MachineMode) => {
+    if (next === "ajustar") {
+      setManualOverride(true);
+      setPendingConfirm(false);
+      return;
+    }
+    if (!adjustMode) return; // já em "estimar" — nada a fazer.
+    if (detectRitmoMode(currentHours) !== null) {
+      // As horas cruas JÁ são produto de um ritmo × payback — nada seria sobrescrito.
+      setManualOverride(false);
+      return;
+    }
+    setPendingConfirm(true);
+  };
+
+  const aviso = useAvisoDeCampo(
+    "machineLifetimeHours",
+    String(lifetimeField.field.value ?? ""),
+    Boolean(lifetimeField.fieldState.error),
+  );
+  const onBlurLifetime = () => {
+    lifetimeField.field.onBlur();
+    aviso.onBlur();
+  };
 
   return (
     <div className="flex flex-col gap-3">
@@ -380,6 +530,43 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
           />
         )}
       </Field>
+
+      {/* 019/PR-C (T057, prancheta 15f, decisão do dono 28/08) — a divergência registrada
+          anteriormente (nenhum dos dois hooks existentes servia a ESTE bloco) fecha com
+          `useIsCalcWide` (o corte de 1024px do próprio `.tf-calc-grid`). Dois `Segmented` NUNCA
+          montados juntos (mesmo motivo do ADR-0031: dois radiogroups com o mesmo nome) — o hook
+          decide qual dos dois existe, nunca CSS escondendo um dos dois. */}
+      {isCalcWide ? (
+        <div className="flex items-center gap-2">
+          <p style={{ ...sectionLabel, flex: 1 }}>{t.machineCost.blockTitle}</p>
+          <Segmented<MachineMode>
+            options={[
+              { id: "estimar", label: t.machineCost.estimar },
+              { id: "ajustar", label: t.machineCost.ajustar },
+            ]}
+            value={mode}
+            onChange={handleModeChange}
+            ariaLabel={t.fields.machineLifetime}
+            role="radiogroup"
+            size="sm"
+            data-testid="machine-mode"
+          />
+        </div>
+      ) : (
+        <Segmented<MachineMode>
+          options={[
+            { id: "estimar", label: t.machineCost.estimar },
+            { id: "ajustar", label: t.machineCost.ajustar },
+          ]}
+          value={mode}
+          onChange={handleModeChange}
+          // O grupo decide COMO a vida útil é obtida — é ela que nomeia o grupo, não a pergunta do ritmo.
+          ariaLabel={t.fields.machineLifetime}
+          role="radiogroup"
+          split
+          data-testid="machine-mode"
+        />
+      )}
 
       {!adjustMode ? (
         <>
@@ -413,20 +600,6 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
               )}
             </Field>
           </div>
-          <p style={captionText}>
-            {t.machineCost.derivedCaption.replace("{value}", formatBRL(perHour))}
-          </p>
-          {/* 016/PR-C homologação (R1) — plain text read with no clickable affordance; `secondary`
-              draws the real border+surface a button needs to look tappable (`ghost` reads as
-              text until hovered/focused, which a touch device never does before the tap itself). */}
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => setManualOverride(true)}
-            className="self-start"
-          >
-            {t.machineCost.adjustButton}
-          </Button>
         </>
       ) : (
         <>
@@ -442,7 +615,9 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
               Consequência real: quem pensa a vida útil em ANOS e digita 3 leva o custo/hora de
               R$ 1,11 para R$ 1.333,33, calado — um dos nove ALTA declarados corrigidos.
               E a medição da homologação era CEGA a isto: a bateria faz `continue` quando o campo
-              não está visível, e a semente 3600h abre em modo ritmo, onde ele nem é montado. */}
+              não está visível, e a semente 3600h abre em modo ritmo, onde ele nem é montado.
+              019/PR-C (T057) — o aviso não é mais o `hint` do `Field`: sai como `<Aviso>` irmão,
+              via `CampoAviso`, igual aos demais campos (14b). */}
           <Field
             label={t.fields.machineLifetime}
             labelAddon={
@@ -451,17 +626,6 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
               </InfoTip>
             }
             required
-            hint={(() => {
-              const aviso = avisoDeCampo(
-                "machineLifetimeHours",
-                String(lifetimeField.field.value ?? ""),
-              );
-              return aviso ? (
-                <span className="tf-field__aviso" data-testid="aviso-machineLifetimeHours">
-                  {aviso}
-                </span>
-              ) : undefined;
-            })()}
           >
             {(p) => (
               <NumberField
@@ -470,23 +634,54 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                 name={lifetimeField.field.name}
                 value={lifetimeField.field.value}
                 onChange={lifetimeField.field.onChange}
-                onBlur={lifetimeField.field.onBlur}
+                onBlur={onBlurLifetime}
                 ref={lifetimeField.field.ref}
               />
             )}
           </Field>
-          <Button
-            variant="secondary"
-            size="sm"
-            className="self-start"
-            onClick={() => {
-              setManualOverride(false);
-              applyRitmo(ritmoIndex, paybackYears);
-            }}
-          >
-            {t.machineCost.backToEstimateButton}
-          </Button>
+          <CampoAviso aviso={aviso} testId="aviso-machineLifetimeHours" />
         </>
+      )}
+
+      <MachineCostReadout
+        perHour={perHour}
+        machineValueNum={machineValueNum}
+        currentHours={currentHours}
+      />
+
+      {/* 019/PR-C (T057, prancheta 15e) — a confirmação inline, dentro do próprio bloco (nunca
+          cobrindo a tela): os dois números em disputa, cada um no seu botão. */}
+      {pendingConfirm && (
+        <Alert
+          tone="warning"
+          role="alertdialog"
+          data-testid="machine-confirm"
+          title={t.machineCost.confirmTitle
+            .replace("{atual}", fmtHoras(currentHours))
+            .replace("{novo}", fmtHoras(proposedHours))}
+        >
+          <p>
+            {t.machineCost.confirmBody
+              .replace("{ritmo}", fmtHoras(RITMOS_HORAS_ANO[ritmoIndex])) // "1.200", como a 15e
+              .replace("{anos}", anosLabel)}
+          </p>
+          <div className="flex flex-wrap gap-2 mt-1">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                applyRitmo(ritmoIndex, paybackYears);
+                setManualOverride(false);
+                setPendingConfirm(false);
+              }}
+            >
+              {t.machineCost.confirmUse.replace("{novo}", fmtHoras(proposedHours))}
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => setPendingConfirm(false)}>
+              {t.machineCost.confirmKeep.replace("{atual}", fmtHoras(currentHours))}
+            </Button>
+          </div>
+        </Alert>
       )}
     </div>
   );
@@ -1076,12 +1271,18 @@ function ChannelSlot({
       )}
       {/* Honesty seal (FR-107): where this slot's fees came from + how fresh they are; the ML
           free-shipping subsidy carries its own "estimativa" seal (A4); the fixed fee's OWN
-          provenance (016/PR-F, T057) is a SEPARATE badge when the entry carries one. */}
+          provenance (016/PR-F, T057) is a SEPARATE block when the entry carries one. 019/PR-C
+          (prancheta 13d) — a ORDEM é fixa: bloco da comissão, bloco da taxa fixa, pílulas por
+          último (nunca `flex-wrap`, que deixava o selo curto subir e o longo descer). */}
       {outcome && (
-        <div className="flex flex-wrap items-center gap-2">
-          <FeeSeal state={outcome.seal} />
-          {outcome.freightIsEstimate && <FeeSeal state={{ kind: "estimate" }} />}
-          {outcome.fixedFeeSource && <FixedFeeSourceBadge source={outcome.fixedFeeSource} />}
+        <div className="flex flex-col gap-2">
+          <FeeSeal state={outcome.seal} marketplace={slot.marketplace} />
+          {outcome.fixedFeeSource && (
+            <FixedFeeSourceBadge source={outcome.fixedFeeSource} marketplace={slot.marketplace} />
+          )}
+          {outcome.freightIsEstimate && (
+            <FeeSeal state={{ kind: "estimate" }} marketplace={slot.marketplace} />
+          )}
         </div>
       )}
       {/* 016/US17 (FR-924) — the two honest Shopee warnings. The regressive-fee one fires only where

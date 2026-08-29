@@ -26,6 +26,9 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLDivElement>, "title"
   onDismiss?: () => void;
   /** 013/FC-02 — o DS não guarda copy; default de `messages.ds`, sobrescrevível por chamada. */
   dismissLabel?: string;
+  /** 019/PR-C (prancheta 13b·3, decisão do dono 28/08) — sobrescreve o ícone padrão do `tone`
+   *  (`TONE_ICON`); aditiva, sem a prop nada muda. */
+  icon?: IconName;
 }
 
 /** `tf-alert__action` vive no elemento de ação em si (link/botão), não num wrapper — a folha o
@@ -58,6 +61,7 @@ export function Alert({
   action,
   onDismiss,
   dismissLabel = messages.ds.dismiss,
+  icon,
   ...rest
 }: AlertProps) {
   const cls = ["tf-alert", `tf-alert--${tone}`, compact && "tf-alert--compact", className]
@@ -65,7 +69,7 @@ export function Alert({
     .join(" ");
   return (
     <div className={cls} role={tone === "danger" ? "alert" : "status"} {...rest}>
-      <Icon name={TONE_ICON[tone]} size={20} className="tf-alert__icon" />
+      <Icon name={icon ?? TONE_ICON[tone]} size={20} className="tf-alert__icon" />
       <div className="tf-alert__body">
         {title && <p className="tf-alert__title">{title}</p>}
         {children && <div className="tf-alert__text">{children}</div>}

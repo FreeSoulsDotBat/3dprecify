@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">O selo de procedência</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Sexto lote da Calculadora: a única coisa na tela que diz de onde veio a comissão que o vendedor vai pagar — ou que confessa que ela não veio de lugar nenhum. O protótipo desenhou uma nota fixa de uma frase; o que existe hoje são cinco estados e dois modificadores que se compõem, montados em tempo de execução, e nada disso passou por desenho.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A prova material está no CSS: <code>fee-seal.css</code> sobrescreve o <code>Badge</code> do DS — <code>white-space: normal</code>, <code>text-align: left</code>, borda hairline — porque o primitivo foi feito para status curto e o selo carrega um parágrafo de 160 caracteres. <strong style="color:var(--sheet-ink)">O componente foi dobrado para caber.</strong> E a homologação 015 mediu o pior efeito: com os campos vazios e o preço já descontado, o selo era o elemento de menor peso visual do painel.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Suas decisões, aplicadas: a citação fica em <strong style="color:var(--sheet-ink)">duas linhas com o resto atrás de "ver fonte"</strong> · o "ver fonte" <strong style="color:var(--sheet-ink)">alcança a fonte</strong>, que hoje o catálogo carrega e o selo nunca mostra · "sem referência" <strong style="color:var(--sheet-ink)">continua pílula, em tom de alerta</strong> · "pode estar desatualizada" <strong style="color:var(--sheet-ink)">continua neutro</strong>, porque dispara de mês em mês · e os dois rótulos passam a nomear o número: <strong style="color:var(--sheet-ink)">"Comissão:" e "Taxa fixa:"</strong>.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">O primitivo, nomeado em vez de inventado: com duas linhas de citação, um rótulo, uma data e uma ação, o selo <strong style="color:var(--sheet-ink)">deixa de ser <code>tf-badge</code> e passa a ser <code>tf-alert</code></strong> nos tons neutro e info, com o corpo em <code>--fs-caption</code>. É a construção que o DS já tem para ícone + corpo multilinha + ação. Os modificadores curtos — "ajustado por você", "estimativa de frete", "sem referência" — <strong style="color:var(--sheet-ink)">continuam pílulas</strong>; "categoria não informada — usando a maior alíquota da tabela" tem 58 caracteres e <strong style="color:var(--sheet-ink)">entra como linha do corpo do bloco</strong>, em laranja. Essa divisão é o que resolve a linha de três selos: um bloco que respalda um número, e pílulas que o qualificam.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#13a">13a</a> a anatomia · <a href="#13b">13b</a> os nove estados · <a href="#13c">13c</a> as combinações · <a href="#13d">13d</a> três selos a 390 e a 360 · <a href="#13e">13e</a> o slot inteiro, 390 e 1280.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="13a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">13a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A anatomia · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Cinco slots e duas ações. O rótulo nomeia o número que o selo respalda, não a natureza da coisa; a categoria de origem ganha lugar próprio em vez de virar sufixo entre parênteses (na Amazon a fonte já contém o nome da categoria, e hoje o código precisa detectar a repetição para não dizer duas vezes).</p>
+<div data-theme="dark" data-screen-label="13a Anatomia" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note">
+<span class="tf-ico tf-alert__icon tf-ico-info"></span>
+<div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div>
+<button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div style="display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">
+<p style="margin:0"><strong style="color:var(--sheet-ink)">1. Rótulo</strong> — o número que este selo respalda: "Comissão" ou "Taxa fixa". Nunca "Referência", que nomeava a natureza e não dizia de qual campo era.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">2. Fonte</strong> — a citação do catálogo, de 1 a ~140 caracteres, cortada em duas linhas.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">3. Categoria de origem</strong> — quando existe, entra como terceira linha própria ("para Casa e Cozinha"), porque pode ser um ancestral do que o vendedor escolheu.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">4. Data</strong> — quando <em>nós</em> conferimos, não quando o app baixou.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">5. Marca de desatualização</strong> — pílula neutra ao lado, passados 45 dias.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">6. Ver fonte</strong> — abre a citação inteira e o link do catálogo, que existe em toda entrada e nunca foi mostrado. Alvo de 44px, sem indicador de foco (decisão do dono).</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">7. Dispensar</strong> — o selo sai da tela. É a única peça do selo que não fala do número: as outras seis respaldam a comissão, esta assume que quem já conferiu a fonte não precisa reconferir a cada visita. Alvo de 44px, alinhado ao topo — num selo de duas linhas com pílula de estado embaixo, centrar o X o deixaria flutuando no meio do texto.</p>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span class="tf-badge tf-badge--info">13a·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">"Ver fonte" aberto</span></div>
+<div class="tf-card tf-card--pad-sm" style="background:var(--surface-inverse);color:var(--text-on-inverse);border-color:transparent;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide)">Fonte da comissão</span><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Fechar" style="color:inherit;width:44px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-relaxed)">Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)</p>
+<p style="margin:0;font-size:var(--fs-caption);opacity:.75" class="tf-tnum">Conferida por nós em 06/08/2026</p>
+<a href="#13a" style="font-size:var(--fs-body-sm);display:inline-flex;align-items:center;gap:6px;min-height:44px">seller.shopee.com.br/edu/article/26839<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></a>
+<p style="margin:0;font-size:var(--fs-caption);opacity:.75;line-height:var(--lh-normal)">Abre fora do app. A tarifa é da Shopee — nós citamos, não garantimos.</p>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">A dispensa é nova</strong> — o produto não tem. Ela levanta uma pergunta que só o dono responde: dispensar vale <em>para sempre</em> ou <em>até a fonte mudar</em>? Guardar para sempre transforma o selo em algo que o vendedor desliga uma vez e nunca mais vê — e aí uma tabela que mudou passa despercebida. O padrão seguro é a fonte reaparecer quando a citação ou a data mudarem: o que foi dispensado é <em>aquela</em> procedência conferida, não a ideia de mostrar procedência.</p>
+</div>
+
+<div id="13b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">13b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os nove estados · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Empilhados e comparáveis, com o texto literal de cada um. Nenhum deles é verde: o estado "tudo certo" é atribuição, não aprovação. E dois tons nunca se encontram — o que respalda (info) e o que avisa (laranja) precisam ser distinguíveis de relance, porque é assim que o vendedor termina com a alíquota errada achando que é a dele.</p>
+<div data-theme="dark" data-screen-label="13b Nove estados" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">1 · referência online</span>
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">2 · referência com categoria de origem</span>
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Tabela de comissões da Amazon — Casa e Cozinha (comissão sobre base que inclui frete)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-body)">para <strong>Casa e Cozinha</strong></p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A categoria de origem pode ser um ancestral do que ele escolheu — "Calçados" quando ele marcou "Tênis de corrida". Por isso ela tem linha própria: é uma afirmação, não um adendo.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">3 · embutida (offline)</span>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-wifi"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">referência embutida (offline)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-body)">para <strong>Calçados</strong></p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Sem fonte citada e sem "ver fonte": a semente veio com o app, não de uma página. É o estado que mais envelhece.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">4 · pode estar desatualizada · 5 · categoria não informada · 6 · ajustado por você</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px">
+<span class="tf-badge tf-badge--neutral tf-badge--sm">pode estar desatualizada</span>
+<span class="tf-badge tf-badge--accent tf-badge--sm">ajustado por você</span>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--warning-text);display:flex;gap:6px;align-items:flex-start"><span class="tf-ico tf-ico--14 tf-ico-triangle-alert" style="flex-shrink:0;margin-top:2px"></span>categoria não informada — usando a maior alíquota da tabela</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Os três são qualificadores, não procedência. Dois cabem em pílula; o terceiro tem 58 caracteres e entra como linha do corpo do bloco, em laranja — em pílula ele forçava a linha inteira como largura mínima e estourava o cartão a 360px, que é exatamente a armadilha registrada em 016/PR-B. "Pode estar desatualizada" fica neutra, como você decidiu, para não gastar o alarme de mês em mês.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">7 · sem referência</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tf-badge tf-badge--warning tf-badge--sm">sem referência — informe as taxas</span></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Pílula, como você decidiu, mas em laranja e nunca sozinha: quando ela aparece, os campos de taxa estão vazios de verdade, sem placeholder — não existe preço "pronto" com uma explicação minúscula ao lado.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">8 · estimativa de frete</span>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tf-badge tf-badge--info tf-badge--sm">estimativa de frete</span></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">9 · a taxa fixa, que respalda outro número</span>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Taxa fixa</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">Amazon — Preços e planos</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">vigente desde 01/03/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Ele diz "vigente desde", não "atualizada em": é a data em que a tarifa passou a valer, não a data em que conferimos.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Ausência total · o slot ainda sem cálculo</span>
+<div class="tf-card tf-card--pad-sm tf-card--flat" style="background:var(--surface-raised);min-height:44px;display:flex;align-items:center"><span style="font-size:var(--fs-caption);color:var(--text-muted)">Nada renderiza aqui.</span></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Sem resultado ainda, o lugar do selo fica vazio — e vazio não é "sem referência". Nenhum espaço reservado, nenhum esqueleto: o bloco simplesmente não existe até haver conta.</p>
+</div>
+
+</div>
+</div>
+
+
+<div id="13c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">13c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As combinações · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os modificadores compõem, e é a composição que aparece na tela de verdade. Com o bloco e as pílulas separados, a pior combinação — embutida, sem categoria e velha — lê como três fatos empilhados, e não como uma frase de 120 caracteres dentro de uma pílula.</p>
+<div data-theme="dark" data-screen-label="13c Combinacoes" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">embutida + desatualizada</span>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-wifi"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">referência embutida (offline)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><span class="tf-badge tf-badge--neutral tf-badge--sm">pode estar desatualizada</span></div>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">embutida + categoria não informada + desatualizada</span>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-wifi"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">referência embutida (offline)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--warning-text);display:flex;gap:6px;align-items:flex-start"><span class="tf-ico tf-ico--14 tf-ico-triangle-alert" style="flex-shrink:0;margin-top:2px"></span>categoria não informada — usando a maior alíquota da tabela</p>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><span class="tf-badge tf-badge--neutral tf-badge--sm">pode estar desatualizada</span></div>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Hoje isto é uma pílula única com 118 caracteres e três fatos separados por pontos médios. O laranja no meio da fila é o que o vendedor precisa ver primeiro, e é o único que muda o número que ele vai pagar.</p>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">ajustado por você · a procedência deixa de valer</span>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note" style="opacity:.6"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tf-badge tf-badge--accent tf-badge--sm">ajustado por você</span></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Quando ele digita por cima, a citação continua na tela apagada — para ele saber de onde o número saiu antes — e a pílula accent diz que o valor agora é dele. É a única pílula que fala do vendedor, não da tabela.</p>
+</div>
+
+</div>
+</div>
+
+
+<div id="13d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">13d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Três selos · 390px e o estresse de 360px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A hierarquia dos três: o bloco da comissão primeiro, o bloco da taxa fixa depois (cada um nomeando o seu número), e as pílulas por último. Com <code>flex-wrap</code> e três pílulas de comprimentos diferentes, o selo curto podia subir e o longo descer — agora a ordem é fixa e ninguém precisa adivinhar qual selo respalda qual campo.</p>
+<div data-theme="dark" data-screen-label="13d Tres selos 390" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Tabela de comissões da Amazon — Casa e Cozinha (comissão sobre base que inclui frete)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Taxa fixa</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">Amazon — Preços e planos</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">vigente desde 01/03/2026</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tf-badge tf-badge--info tf-badge--sm">estimativa de frete</span></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:12px"><span class="tf-badge tf-badge--info">13d·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">360px · o estado mais longo, com tudo junto</span></div>
+<div data-theme="dark" data-screen-label="13d2 Estresse 360" style="width:360px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-wifi"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">referência embutida (offline)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--warning-text);display:flex;gap:6px;align-items:flex-start"><span class="tf-ico tf-ico--14 tf-ico-triangle-alert" style="flex-shrink:0;margin-top:2px"></span>categoria não informada — usando a maior alíquota da tabela</p>
+<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"><span class="tf-badge tf-badge--neutral tf-badge--sm">pode estar desatualizada</span></div>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Taxa fixa</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">Amazon — Preços e planos</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">vigente desde 01/03/2026</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div style="display:flex;flex-wrap:wrap;gap:6px"><span class="tf-badge tf-badge--info tf-badge--sm">estimativa de frete</span></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A 360px o texto quebra e nada estoura no eixo horizontal — foi aqui que este projeto mediu transbordo real, com <code>white-space: nowrap</code> forçando a linha inteira como largura mínima.</p>
+</div>
+
+
+<div id="13e" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">13e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O slot inteiro em contexto · 390 e 1280</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A ordem dentro do cartão: grade de taxas, legenda da banda, os selos, e por último os avisos de risco. No desktop o bloco não vira "a mesma pílula, mais larga": ele para em 480px, ao lado dos campos que respalda, para a citação não virar uma linha de 900px que ninguém lê.</p>
+<div style="display:flex;gap:24px;align-items:flex-start">
+<div data-theme="dark" data-screen-label="13e Slot 390" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-field"><span class="tf-field__label">Marketplace</span><span class="tf-selectwrap"><select class="tf-input tf-select"><option selected>Amazon</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span></div>
+<div class="tf-costs-grid">
+<div class="tf-field"><span class="tf-field__label">Comissão</span><div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" placeholder="14,5"><span class="tf-inputwrap__affix">%</span></div></div>
+<div class="tf-field"><span class="tf-field__label">Taxa fixa</span><div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" placeholder="2,00"></div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Tabela por faixa de preço — valores da faixa do seu anúncio.</p>
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Tabela de comissões da Amazon — Casa e Cozinha (comissão sobre base que inclui frete)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-body)">para <strong>Casa e Cozinha</strong></p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Taxa fixa</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">Amazon — Preços e planos</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">vigente desde 01/03/2026</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+</div>
+</div>
+<div data-theme="dark" data-screen-label="13e Slot 1280" style="position:relative;width:860px;height:648px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);border-radius:20px;color:var(--text-body);font-family:var(--font-body);padding:24px">
+<span class="tf-catalog-md__kicker">O recorte da coluna direita a 1280px</span>
+<div class="tf-card" style="margin-top:12px;display:flex;flex-direction:column;gap:12px;max-width:480px">
+<div class="tf-costs-grid">
+<div class="tf-field"><span class="tf-field__label">Comissão</span><div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" placeholder="14,5"><span class="tf-inputwrap__affix">%</span></div></div>
+<div class="tf-field"><span class="tf-field__label">Taxa fixa</span><div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" placeholder="2,00"></div></div>
+</div>
+<div class="tf-alert tf-alert--info tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Comissão</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Central de Educação do Vendedor Shopee — Política de Comissão 2026, vendedor CNPJ (e CPF com menos de 450 pedidos/90 dias)</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">atualizada em 06/08/2026</p>
+<button type="button" class="tf-alert__action">Ver fonte<span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="transform:rotate(-90deg)"></span></button>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div class="tf-alert tf-alert--neutral tf-alert--compact" role="note"><span class="tf-ico tf-alert__icon tf-ico-info"></span><div class="tf-alert__body">
+<p style="margin:0;font-size:var(--fs-caption);font-weight:var(--fw-semibold);color:var(--text-strong)">Taxa fixa</p>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-body)">Amazon — Preços e planos</p>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)" class="tf-tnum">vigente desde 01/03/2026</p>
+</div><button type="button" class="tf-alert__close" aria-label="Dispensar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<div class="tf-alert tf-alert--warning" role="status"><span class="tf-ico tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__title">A Shopee não publica a fórmula completa desta taxa</p></div></div>
+</div>
+<p style="margin:16px 0 0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted);max-width:480px">Com 480px a citação da Shopee ainda ocupa duas linhas, e é por isso que o corte em duas linhas vale nas duas larguras: a fonte mais longa do catálogo não cabe em uma linha em lugar nenhum.</p>
+</div>
+</div>
+</div>
+
+</div>
+
+<footer style="display:flex;flex-direction:column;gap:8px;max-width:880px;border-top:1px solid rgba(255,255,255,.12);padding-top:20px">
+<p style="margin:0;font-size:13px;line-height:1.7;color:var(--sheet-ink-2)">O que muda no código: o selo principal deixa de ser <code>tf-badge</code> e passa a ser <code>tf-alert</code> (tons neutro e info, corpo em <code>--fs-caption</code>), o que dispensa os remendos de <code>fee-seal.css</code> — <code>white-space: normal</code>, <code>text-align: left</code> e a borda hairline existiam só para dobrar a pílula. Os modificadores curtos continuam <code>tf-badge</code>, e o <code>tf-badge</code> <strong>não</strong> ganha variante multilinha: o qualificador longo vira linha do corpo do bloco. Pílula que quebra em duas linhas é a pílula dobrada de novo. O <code>sourceUrl</code>, que o catálogo já carrega, passa a ser alcançável pelo "Ver fonte". E o comentário do componente ainda fala em janela de 30 dias: a janela é de 45.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Lotes anteriores: <a href="Calculadora - O Topo e a Navegacao - Tema Escuro.dc.html">o topo</a> · <a href="Calculadora - Custos da Peca - Tema Escuro.dc.html">custos da peça</a> · <a href="Calculadora - A Conta e os Precos - Tema Escuro.dc.html">a conta e os preços</a> · <a href="Calculadora - Secao Marketplace - Tema Escuro.dc.html">a seção Marketplace</a> · <a href="Calculadora - Seletor de Categoria - Tema Escuro.dc.html">o seletor de categoria</a> · Tema claro: <a href="Calculadora - Selo de Procedencia - Tema Claro.dc.html">esta prancheta, tema claro</a></p>
+</footer>
+</section>
+</x-dc>
+</body>
+</html>

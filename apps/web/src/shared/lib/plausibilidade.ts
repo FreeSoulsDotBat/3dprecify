@@ -1,5 +1,5 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { parseDecimal } from "./decimal-ptbr";
+import { formatDecimal, parseDecimal } from "./decimal-ptbr";
 
 // Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE.
 //
@@ -82,6 +82,15 @@ function fmt(n: number): string {
   return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 }).format(n);
 }
 
+/** 019/PR-C (T049/T056) — a variante de dinheiro do formatador acima: SEMPRE 2 casas, nunca as 4
+ *  do `fmt` genérico ("R$ 6.000.061,6" era o defeito que a prancheta 14 mediu — a frase perdia os
+ *  centavos). Reusa `formatDecimal` (mesma casa que `formatBRL`) para não ter uma SEGUNDA regra de
+ *  dinheiro no produto — os quatro campos monetários deste arquivo (tarifa, valor da hora, reserva
+ *  de manutenção, custo absurdo) passam por aqui. */
+function fmtMoney(n: number): string {
+  return formatDecimal(n, 2);
+}
+
 /** A entrada que este módulo lê — o subconjunto numérico já parseado pelo schema. */
 export interface EntradaPlausivel {
   avgPowerKw?: number;
@@ -111,7 +120,7 @@ export function avisosDePlausibilidade(
   if (acima(entrada.tariffPerKwh, LIMIARES.tariffPerKwhMax)) {
     avisos.push({
       campo: "tariffPerKwh",
-      texto: t.tariff.replace("{v}", fmt(entrada.tariffPerKwh)),
+      texto: t.tariff.replace("{v}", fmtMoney(entrada.tariffPerKwh)),
     });
   }
   if (
@@ -133,13 +142,13 @@ export function avisosDePlausibilidade(
   if (acima(entrada.laborRatePerHour, LIMIARES.laborRatePerHourMax)) {
     avisos.push({
       campo: "laborRatePerHour",
-      texto: t.laborRate.replace("{v}", fmt(entrada.laborRatePerHour)),
+      texto: t.laborRate.replace("{v}", fmtMoney(entrada.laborRatePerHour)),
     });
   }
   if (acima(entrada.maintenanceReservePerHour, LIMIARES.maintenanceReservePerHourMax)) {
     avisos.push({
       campo: "maintenanceReservePerHour",
-      texto: t.maintenance.replace("{v}", fmt(entrada.maintenanceReservePerHour)),
+      texto: t.maintenance.replace("{v}", fmtMoney(entrada.maintenanceReservePerHour)),
     });
   }
   if (acima(entrada.printGrams, LIMIARES.printGramsMax)) {
@@ -167,7 +176,7 @@ export function avisosDePlausibilidade(
   if (resultado && resultado.custoTotal > LIMIARES.custoTotalMax) {
     avisos.push({
       campo: "resultado",
-      texto: t.custoAbsurdo.replace("{v}", fmt(resultado.custoTotal)),
+      texto: t.custoAbsurdo.replace("{v}", fmtMoney(resultado.custoTotal)),
     });
   }
 
@@ -215,13 +224,31 @@ const CAMPOS_COM_FAIXA: readonly string[] = [
   "printTimeHours",
 ];
 
-export function avisoDeCampo(nome: string, bruto: string): string | null {
+/**
+ * `comErro` (019/PR-C, T056, prancheta 14b) — quando o mesmo campo TAMBÉM foi recusado pela
+ * validação, "Nada foi recusado." mentiria bem abaixo da recusa. O fecho troca para
+ * "Corrija o campo acima para calcular." e a tela (`useAvisoDeCampo`) é quem decide não oferecer
+ * "Entendi" nesse estado — não se dispensa uma lição que acompanha uma recusa.
+ */
+export function avisoDeCampo(nome: string, bruto: string, comErro = false): string | null {
   if (!CAMPOS_COM_FAIXA.includes(nome)) return null;
   const n = parseDecimal(bruto);
   if (!Number.isFinite(n)) return null;
   const entrada: EntradaPlausivel = {};
   (entrada as Record<string, number>)[nome] = n;
-  return avisosDePlausibilidade(entrada)[0]?.texto ?? null;
+  const texto = avisosDePlausibilidade(entrada)[0]?.texto ?? null;
+  if (!texto) return null;
+  return comErro ? texto.replace(t.fechoNormal, t.fechoComRecusa) : texto;
+}
+
+/**
+ * 019/PR-C (decisão do dono 28/08, prancheta 14b) — a LIÇÃO de um campo, sem cabeça e sem o valor
+ * digitado: quando o campo TAMBÉM está recusado, é isto (não `avisoDeCampo`) que a tela mostra —
+ * puro pelo NOME do campo, nunca pelo valor comprometido. `null` para quem não tem lição escrita
+ * (hoje, todo campo fora dos oito de `messages.calculator.plausibilidade.licao`).
+ */
+export function licaoDeCampo(nome: string): string | null {
+  return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
 }
 
 /** Conveniência para a tela: os avisos indexados por campo. */

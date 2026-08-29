@@ -41,6 +41,14 @@ transcrição — a fonte remota pode mudar; a cópia não.
 | `Premium - O Caminho Sem Parede - Tema Claro.dc.html` | PR-B | `2e4933d8c86d8401e4c14849d4fc24091cacf7cc9a08b8c0c20ec2d166c0d664` | 2026-08-28 |
 | `Catalogo - Os Estados da Lista - Tema Escuro.dc.html` | PR-B | `464275a63c37dae07dce8471827bc56843281357736182058e3b8629e7d5fd62` | 2026-08-28 |
 | `Catalogo - Os Estados da Lista - Tema Claro.dc.html` | PR-B | `63eb56bcc102da14a593a305714771dc4cf6c1209d8c31636758ed2ab79104c6` | 2026-08-28 |
+| `Calculadora - Aviso de Plausibilidade - Tema Escuro.dc.html` | PR-C | `f7470c9bdaed7d417d2a9b21cce6ec119187a31aea3acaf5df7329a78c832c7a` | 2026-08-28 |
+| `Calculadora - Aviso de Plausibilidade - Tema Claro.dc.html` | PR-C | `3404685a7e5c9166bfc542cfb99fb66fcab2cf8a41c803fa9983ea8f4ec11764` | 2026-08-28 |
+| `Calculadora - Bloco da Maquina - Tema Escuro.dc.html` | PR-C | `dfdc1418d91422316365ef9daf4d423184a2e0fe5dbda618ff9fa69e18e43fe3` | 2026-08-28 |
+| `Calculadora - Bloco da Maquina - Tema Claro.dc.html` | PR-C | `d8144aedc70bbafe6f73ef75e1134615e58fd475c20e8de60b53b820c3831c47` | 2026-08-28 |
+| `Calculadora - Selo de Procedencia - Tema Escuro.dc.html` | PR-C | `604e16c22d2e58f969df5f04c13245375a8a65aa3e4a374633fbcf82dc072c4b` | 2026-08-28 |
+| `Calculadora - Selo de Procedencia - Tema Claro.dc.html` | PR-C | `514bcd0bb9dafa8b29695ac57a3bae349f4ee2e72eaa5e07525879b604d6648d` | 2026-08-28 |
+| `Calculadora - A Conta e os Precos - Tema Escuro.dc.html` | PR-C | `ceb3a6a20e5003a37c9d09cf17e2c1cd70e2a62237d7dfc71ec6b531b08b1795` | 2026-08-28 |
+| `Calculadora - A Conta e os Precos - Tema Claro.dc.html` | PR-C | `6a2903f47e407d6aa9818807179528c1a8e42175d6395cd1cbc976caeb87989b` | 2026-08-28 |
 | _(as demais fatias acrescentam as suas)_ | | | |
 
 **Como as cópias foram feitas (T009, 27/08).** As três pranchetas ESCURAS vieram de `DesignSync get_file`
@@ -65,3 +73,11 @@ no remoto** (listagem de 28/08: nenhuma prancheta de "entrada com intenção"/de
 `docs/design/prompts/019-lote32h-deslogado.md` NÃO foi transcrita; o comportamento já existe
 (`TeaserUpgrade` → `/sign-in?redirect=/conta?assinar=1`) e a copy entra quando a prancheta existir.
 
+**Como as cópias da PR-C foram feitas (T055, 28/08).** As quatro pranchetas ESCURAS vieram de `DesignSync
+get_file` (nenhuma truncada) e foram gravadas verbatim; as CLARAS derivadas pela transformação da T009.
+Observação: o `<footer>` das pranchetas da Calculadora usa `rgba(255,255,255,.12)` na linha divisória — NÃO é
+um dos 7 pares (que cobrem `.16`), ficou como está nas duas cópias (é moldura da prancheta, não copy nem
+geometria de tela). **Leituras que a transcrição registra (dod-evidence §T055)**: a 15e desenha a confirmação de
+troca de modo como `tf-alert--warning` INLINE no bloco ("não cobre a tela"), não como diálogo central; a 14c
+desenha uma "marca da seção" (`{n} avisos`) que nenhuma task da Phase 6 pede; a prancheta 10 NÃO nomeia elemento
+fixo algum (T212/T059).
