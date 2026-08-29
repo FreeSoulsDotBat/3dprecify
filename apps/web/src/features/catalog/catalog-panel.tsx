@@ -551,7 +551,16 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
               return (
                 <tr key={item.id}>
                   <td className="tf-table__name">
-                    <button type="button" onClick={() => openEdit(item)} className="tf-table__name">
+                    {/* 019/PR-F (T099, achado do QA): o botão NÃO repete `tf-table__name` — a folha
+                        (`table.css`) foi escrita para a CÉLULA, onde `max-width: 0` é inerte no
+                        `table-layout: auto`; num `<button>` ele vale de verdade e o nome nascia com
+                        largura ZERO (invisível e inclicável a 1024–1279, nas três abas — regressão da
+                        PR-D que chegou a develop). O botão só herda a fonte da célula e trunca. */}
+                    <button
+                      type="button"
+                      onClick={() => openEdit(item)}
+                      className="block w-full min-w-0 truncate text-left"
+                    >
                       {nameOf(item)}
                     </button>
                   </td>

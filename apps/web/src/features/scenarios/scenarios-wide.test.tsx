@@ -113,3 +113,35 @@ describe("019/PR-F — ScenariosList extraída e sem duplicação (T092)", () =>
     expect(screen.getAllByTestId("scenario-card")).toHaveLength(1);
   });
 });
+
+// 019/PR-F (T095, revisão do main loop) — a coluna larga fica AO LADO dos dois convites que
+// `/calcular` já carrega por desenho; o vazio dela não pode trazer um terceiro "Assinar Premium".
+// Na gaveta (estreito) o convite do vazio continua sendo o único da folha (FR-1906).
+describe("019/PR-F — o vazio da coluna larga não repete o convite (T095)", () => {
+  beforeEach(() => {
+    useScenariosMock.mockReset().mockReturnValue({ ...listState(), items: [] });
+    useSessionStore.setState({ status: "anonymous", user: null });
+  });
+  afterEach(() => cleanup());
+
+  it("deslogado, `teaser={false}` (a coluna): o vazio didático aparece SEM o convite", () => {
+    render(
+      <ScenariosList
+        onOpenScenario={vi.fn()}
+        onClose={vi.fn()}
+        lapsed={false}
+        gate="signed-out"
+        teaser={false}
+      />,
+    );
+    expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
+    expect(screen.queryByTestId("teaser-upgrade-cta")).not.toBeInTheDocument();
+  });
+
+  it("deslogado, padrão (a gaveta): o vazio traz exatamente UM convite", () => {
+    render(
+      <ScenariosList onOpenScenario={vi.fn()} onClose={vi.fn()} lapsed={false} gate="signed-out" />,
+    );
+    expect(screen.getAllByTestId("teaser-upgrade-cta")).toHaveLength(1);
+  });
+});

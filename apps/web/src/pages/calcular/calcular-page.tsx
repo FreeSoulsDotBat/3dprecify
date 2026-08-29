@@ -50,7 +50,11 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
-import { ScenariosList, ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
+import {
+  ScenariosList,
+  ScenariosListSheet,
+  scenarioOpenArgs,
+} from "@/features/scenarios/scenarios-list-sheet";
 import { premiumGate } from "@/shared/billing/premium-gate";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
@@ -681,16 +685,14 @@ export function CalcularPage() {
             <ScenariosList
               gate={scenariosGate}
               lapsed={scenariosLapsed}
+              teaser={false}
               onClose={() =>
                 wideMainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
               }
-              onOpenScenario={(item) =>
-                openScenario(item.config as unknown as ScenarioConfig, {
-                  id: item.id,
-                  name: item.name,
-                  note: item.note,
-                })
-              }
+              onOpenScenario={(item) => {
+                const { config, meta } = scenarioOpenArgs(item);
+                openScenario(config, meta);
+              }}
             />
           </aside>
         </div>

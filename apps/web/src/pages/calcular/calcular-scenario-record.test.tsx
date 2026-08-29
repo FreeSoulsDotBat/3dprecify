@@ -204,7 +204,10 @@ describe("recording an E4 snapshot from an AD_HOC/PRODUCT scenario (US7)", () =>
 
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
     // Recording never enables/uses "Salvar alterações" — the context bar stays exactly as loaded.
-    expect(screen.getByRole("button", { name: s.saveChanges })).toBeDisabled();
+    // 019/PR-F (T099): dentro de `waitFor` — o diálogo Radix ainda pode estar fechando, e enquanto
+    // o seu focus-guard existe o botão fica `aria-hidden` (vermelho INTERMITENTE só sob a carga da
+    // suíte inteira; a lição do 016: o intermitente morre na causa, não no "roda de novo").
+    await waitFor(() => expect(screen.getByRole("button", { name: s.saveChanges })).toBeDisabled());
   });
 });
 

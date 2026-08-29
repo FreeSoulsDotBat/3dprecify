@@ -193,12 +193,19 @@ export function ScenariosList({
   onClose,
   lapsed,
   gate,
+  teaser = true,
 }: {
   onOpenScenario: (item: ScenarioOut) => void;
   onClose: () => void;
   lapsed: boolean;
   /** 019/PR-B (T046/T112, prancheta 32c/32f) — o estado que a folha lê de `premiumGate(...)`. */
   gate: PremiumGate;
+  /** 019/PR-F (T095, revisão do main loop) — `false` na coluna larga de `/calcular`: a página já
+   *  carrega os seus DOIS convites por desenho (o teaser do picker e o gate do marketplace), e a
+   *  coluna fica ao lado deles o tempo todo; um terceiro "Assinar Premium" colado ao primeiro é o
+   *  duplo convite que a PR-B matou no desktop do Catálogo. Na gaveta (estreito) o convite do vazio
+   *  continua sendo o ÚNICO da folha (FR-1906). */
+  teaser?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
@@ -297,6 +304,7 @@ export function ScenariosList({
         feature="scenarios"
         gate={doorGate}
         action={<Button onClick={onClose}>{messages.premiumTeaser.fazerUmCalculo}</Button>}
+        teaser={teaser}
       />
     );
   }
@@ -480,6 +488,21 @@ export function ScenariosList({
   );
 }
 
+/**
+ * 019/PR-F (revisão do main loop) — o ÚNICO lugar que traduz um item da lista para o que a
+ * Calculadora abre. A gaveta (estreito) e a coluna larga (≥1280) chamam esta função — se a
+ * tradução mudar, muda nos dois; duas cópias divergiriam em silêncio (a mesma classe do D2/T091).
+ */
+export function scenarioOpenArgs(item: ScenarioOut): {
+  config: ScenarioConfig;
+  meta: { id: string; name: string; note: ScenarioOut["note"] };
+} {
+  return {
+    config: item.config as unknown as ScenarioConfig,
+    meta: { id: item.id, name: item.name, note: item.note },
+  };
+}
+
 export function ScenariosListSheet({
   open,
   onOpenChange,
@@ -508,11 +531,8 @@ export function ScenariosListSheet({
             lapsed={entitlement.data?.status === "lapsed"}
             onClose={() => onOpenChange(false)}
             onOpenScenario={(item) => {
-              onOpenScenario(item.config as unknown as ScenarioConfig, {
-                id: item.id,
-                name: item.name,
-                note: item.note,
-              });
+              const { config, meta } = scenarioOpenArgs(item);
+              onOpenScenario(config, meta);
               onOpenChange(false);
             }}
           />
