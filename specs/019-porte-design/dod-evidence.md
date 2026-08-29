@@ -686,6 +686,55 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   o CONTRATO perde a linha `additionalProperties:false` no item (o comportamento é o mesmo). ⛔ ratificação do dono no PR.
 - Backend: **577 passed**, ruff/basedpyright/import-linter ok. Commit `8a78b5f`. Ledger: ~272,5k.
 
+### T067 · T075 · T127 — a camada de dados das observações (dev-frontend, 2026-08-29)
+
+- `entities/catalog/price-observations.ts` — `usePriceObservations()` (query `["price-observations", uid]`, só autenticado,
+  `staleTime` curto, **sem cache de dispositivo**: `providers.test.tsx` varre o IDB antes/depois da troca de conta e afirma que
+  NENHUMA chave `price-observations` existe — prova, não comentário); 403 `ENTITLEMENT_REQUIRED` ⇒ `entitlementDenied` e
+  NENHUM erro visível; `derivePriceChanges` PURA em centavos (item sem observação não conta — nunca "0 mudaram", nunca "era
+  R$ 0,00"); `useObservePrices().observe(items, catalogVersion?)` — PUT em lote chamado pela TELA depois do commit, online-only
+  (offline ⇒ zero PUT, nada no outbox), dedupe por ASSINATURA (`kind:id:preço` ordenados) na montagem do hook, falha
+  SILENCIOSA (`onError` vazio de propósito; só o 2xx invalida). 13 testes com o motor REAL (nenhum mock de `pricing-core`).
+  Asserção de grafo: o módulo não importa `features` nem `catalog-cache`.
+- `useFixProductPrice()` (PATCH) em `use-catalog.ts` no molde de `useUpdateProduct`; `readSellerFixedPrice(p)` em
+  `catalog-cache.ts` colapsa `undefined` (entrada cacheada ANTES da 0008) e `null` no MESMO "não fixado" — nunca `0`. 243/243.
+- Revisão do main loop: `byKey` memoizado por resposta (um `Map` novo a cada render viraria loop no `useEffect` da tela).
+  Commit `cd78f68`. Ledger: ~144k.
+
+### T124 · T076 · T068 · T125 — as telas (dev-frontend, 2026-08-29)
+
+- **T124** o recálculo mora em `pages/catalogo/catalogo-page.tsx` (fronteira: `features/catalog` ↛ `features/calculator`,
+  depcruise 0 violações): `computeFromForm(productToForm(p))` por produto, SÓ com filamentos e impressoras resolvidos
+  ("envenenamento": com referência carregando o mapa fica vazio e NENHUM PUT sai); degradado (`productNeedsAttention`) fica
+  fora do mapa; `observe()` roda num `useEffect` pós-commit com a lista completa, guardado por `gate === "active"` (a barreira
+  é a AUSÊNCIA da chamada — `premium-write-absence.test.tsx` estendido para `observe`/`useFixProductPrice`). Revisão do main
+  loop (`5128402`): a marca só avança com a LISTA visível (ficha `?produto=` aberta ou deep-link não marcam os outros itens),
+  nunca depois de um GET falhado por rede (senão o PUT sobrescreveria um "era" nunca visto), e leva `catalogVersion`.
+- **T076** `catalog-panel.tsx`: `rowPrice?/rowWas?/rowFlag?/rowMeta?`; mestre-lista e lista mobile com a linha densa
+  `tf-plist__*` (classes byte a byte dentro do `master-item` existente — o `<Plist>` componente não aceita `data-testid`/
+  `aria-current`, decisão registrada); `<Table>` na faixa **1024–1279** (`useIsListDense() && !useIsWide()`, colunas Peça ·
+  Preço sugerido · Antes · Salvo em · Ações, travessão onde não mudou); ≥1280 o mestre-detalhe do 018 intacto.
+  `products-panel.tsx` (puro, tudo por prop): faixa `priceChangedCount/One`, "era"/"Salvo em" (fuso do aparelho), item fixado
+  (preço grande = declaração, flag "fixado"), `productPriceOverFixed` (`product-price-state.ts`, NÃO reusa
+  `productNeedsAttention`) ⇒ `<Alert tone="warning">` + "Voltar a acompanhar o custo", "Manter {valor}", diálogo de duplicar
+  17d (`" (cópia)"`, não herda `sellerFixedPrice`, degradado continua degradado). `produto-page.tsx`: cabeçalho 17g nos 4
+  estados, bloco 17c, Manter/Aceitar, e a **recusa de nome ANTES do submit** (17b: `nameConflict` por `nameNormKey` contra a
+  lista carregada excluindo o próprio id, `nameConflictHint`, contador `n de 120`, `maxLength`). `kits-panel.tsx`: `kitMeta`.
+- **T068** `products-panel.test.tsx` +12 casos (12 produtos com preço na linha, 3 mudados ⇒ "3 preços mudaram…" + "era R$
+  38,90" + "Salvo em 12/05" com `observedAt` que cruza a meia-noite UTC; fixado; custo > fixado ⇒ Alert; desfixar; duplicar;
+  degradado sem 0,00; n=1); `produto-page.test.tsx` +2 (recusa antes do submit sem chamar `create`; editar sem mudar o próprio
+  nome não se recusa). Adotados por MARCAÇÃO (stub novo, nenhum comportamento antigo mudou): `products-attention`,
+  `catalogo`, `catalogo-teaser`, `premium-write-absence`; 6 fixtures `ProductOut` pós-0008.
+- **T125** `pages/catalogo/fixed-price-property.test.tsx`: por LEITURA DO FONTE, fora de `features/catalog/**` e
+  `pages/catalogo/**` nenhum arquivo de produção em `pages/**`+`features/**` lê `sellerFixedPrice`/`observedPrice`/
+  `price-observations` (lista de exceções VAZIA; `entities`/`shared` são a camada de dados e ficam de fora por definição);
+  e um render: o número grande da ficha vem de `recomputed` ou de `sellerFixedPrice`, nunca de `observedPrice`.
+- Front **1526/0**, tsc 0, eslint 0, prettier ok, depcruise 0. Commits `33d51f5` + follow-up do nome. Ledger: ~448k + ~428k
+  (o follow-up retomado após a interrupção da sessão — o transcript sobreviveu; nada foi refeito).
+- **Sem preço nesta fatia: Kits** (não há função pronta para o total do kit na lista — T124 previa; `KitsPanel` ganhou só
+  `kitMeta`). **Ícone `lock`** não existe em `icon.tsx` — a flag "fixado" vai só com texto; "parado" usa `triangle-alert`.
+  **Ações da linha** continuam os botões discretos (a folha de ações da 16e não está nas tasks).
+
 ### Pontos que o dono ratifica no PR-D (registrados aqui para não sumirem)
 
 1. O contrato sem `additionalProperties:false` no item do array (acima).
@@ -697,4 +746,12 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
 5. A 2ª frase do aviso da 16b (a causa do aumento) não é derivável — não transcrita (T074, leitura 4).
 6. Contador 60 → 120 (adendo do ADR-0033).
 7. A nota do item fixado com tom ATENÇÃO (spec) onde a 17c desenha info.
+8. **O preço "parado" (16f/17g)**: a prancheta mostra o VALOR de quando você salvou com a legenda "Preço parado · de {data}"
+   — o FE-2 seguiu a prancheta e o preço do item degradado vem da última OBSERVAÇÃO. O ADR-0033 §1 diz "o app não exibe um
+   preço que calculou no passado"; aqui ele exibe, mas ROTULADO como passado. As tasks (T068) diziam "degradado sem preço". É
+   uma leitura de design × ADR — o dono decide (o guard T125 continua valendo: fora do Catálogo ninguém lê a observação).
+9. Na LISTA, o item fixado-acima-do-custo e o item mudado ganharam um bloco compacto acima da lista/tabela (sem prancheta
+   própria — no modo navegação não existe "item aberto" inline); é um trade-off de engenharia marcado para revisão de design.
+10. A recusa de nome antes do submit está só no formulário do PRODUTO (17b); filamentos/impressoras/kits dependem do sufixo
+    silencioso do servidor — estender exige mudar `CatalogPanelProps.renderForm` (3 painéis + testes). Fica para o dono.
 
