@@ -127,42 +127,58 @@ async function createProduct(
   await expect(page.getByText(pf.savedProduct).last()).toBeVisible();
 }
 
-function escapeRegex(raw: string): string {
-  return raw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+/** A linha do item na aba ativa — ancorada por `data-testid="master-item"` (≥1280, mestre-
+ *  detalhe) ou pela classe folha `tf-plist__row` (< 1280, a lista densa que o achado do T069
+ *  corrigiu em `cde9469`), FILTRADA por texto EXATO (`getByText(name, { exact: true })`), nunca
+ *  substring solta — a causa raiz do intermitente: `getByText(name)`/`hasText` sem `exact` casava
+ *  a MESMA string dentro do resumo de um PRODUTO que só MENCIONA este filamento ("Vaso Shot A
+ *  Filamento Shot · Impressora Shot"), e o clique caía na linha errada (ou em nada clicável). */
+function filamentRow(page: Page, name: string) {
+  const isWide = (page.viewportSize()?.width ?? 0) >= 1280;
+  return isWide
+    ? page.getByTestId("master-item").filter({ has: page.getByText(name, { exact: true }) })
+    : page.locator(".tf-plist__row").filter({ has: page.getByText(name, { exact: true }) });
 }
 
 async function editFilamentCost(page: Page, name: string, newCost: string): Promise<void> {
+  // ACHADO (2ª rodada): `openProductFicha` deixa a página na FICHA (`/catalogo?produto=<id>`,
+  // `data-testid="calc-content"`) — essa rota NÃO tem o tablist Filamentos/Impressoras/Produtos/
+  // Kits (é uma página inteira separada, não uma aba). Chamar esta função logo depois de uma
+  // ficha aberta ficava esperando um `tab` que nunca existia até o teste estourar o timeout. Ir
+  // para `/catalogo` de propósito torna a função independente de onde a página estava antes —
+  // nunca assume o tablist já visível.
+  await page.goto("/catalogo");
   await page.getByRole("tab", { name: catalogo.tabFilaments }).click();
-  // Largura-agnóstico (este spec varia entre 390 e 1920): abaixo de 1280 não existe
-  // `data-testid="master-item"` (só a partir do mestre-detalhe, `useIsWide`) — mas em QUALQUER
-  // largura a linha é um `<button>` cujo nome acessível começa com o nome do item (`rowName` +
-  // `rowSummary`, ex. "Filamento Shot PLA · R$ 100,00 / 1 kg") — o `^` ancora no INÍCIO, então
-  // nunca casa com "Excluir {nome}"/"Duplicar {nome}" (começam com o VERBO) nem com a linha de um
-  // PRODUTO que só MENCIONA este filamento no resumo (o nome do produto vem primeiro, não este).
-  // `getByText(name, { exact: true })` foi tentado antes e falhou: a mesma string aparece dentro
-  // do resumo de linha de PRODUTO ("Vaso Shot A Filamento Shot · …"), e o clique caiu ali — achado
-  // registrado no relatório da fatia.
-  await page
-    .getByRole("button", { name: new RegExp(`^${escapeRegex(name)}\\b`) })
-    .first()
-    .click();
+  await filamentRow(page, name).click();
   const field = page.getByRole("textbox", { name: new RegExp(t.fields.costPerRoll) });
+  // Prova que a edição abriu — achado: às vezes o clique caía fora e este campo nunca aparecia; o
+  // `.fill()` seguinte travaria esperando um alvo inexistente até o timeout do teste.
+  await expect(field).toBeVisible();
   await field.fill(newCost);
   // O rótulo do botão de salvar também muda por modo ("Salvar" no Sheet de criação/edição vs.
   // "Salvar alterações" na ficha inline do mestre-detalhe) — os dois começam com "Salvar".
   await page.getByRole("button", { name: /^Salvar/ }).click();
   await expect(page.getByText(cf.savedFilament)).toBeVisible();
+  // Lição do hotfix A2 ("a semente responde primeiro"): esperar o VALOR MUTADO aparecer na
+  // própria linha antes de seguir — o toast confirma o 2xx do CLIENTE, mas a próxima leitura
+  // (`gotoProductsTab`/`openProductFicha` fazem um reload de verdade, uma leitura NOVA do
+  // servidor) só é honesta se o servidor já persistiu. `filamentSummary` (`catalog-schema.ts:143`)
+  // formata "R$ {custo},00 / …" — aguardamos essa substring exata na linha, não um
+  // `waitForTimeout` às cegas.
+  await expect(filamentRow(page, name)).toContainText(`R$ ${newCost},00`, { timeout: 10_000 });
 }
 
 async function deleteFilament(page: Page, name: string): Promise<void> {
+  // Mesmo motivo do `editFilamentCost` acima — não assume o tablist já visível.
+  await page.goto("/catalogo");
   await page.getByRole("tab", { name: catalogo.tabFilaments }).click();
-  await page.getByTestId("master-item").filter({ hasText: name }).click();
+  await filamentRow(page, name).click();
   await page.getByRole("button", { name: `${catalogo.remove} ${name}` }).click();
   await page
     .getByRole("dialog")
     .getByRole("button", { name: cf.deleteConfirm, exact: true })
     .click();
-  await expect(page.getByTestId("master-item").filter({ hasText: name })).toHaveCount(0);
+  await expect(filamentRow(page, name)).toHaveCount(0);
 }
 
 async function gotoProductsTab(page: Page): Promise<void> {
@@ -203,6 +219,14 @@ for (const theme of THEMES) {
     await expect(page.locator(".tf-toast")).toHaveCount(0, { timeout: 6_000 });
     await setTheme(page, theme);
 
+    // ACHADO (2ª rodada, trace de rede): sem bloquear o PUT, a marca se autocorrige RÁPIDO DEMAIS
+    // para o teste flagrar — GET+PUT+GET de `/price-observations` em ~30ms no localhost (visto no
+    // trace: GET 34.202 → PUT 34.233 → GET 34.256), então a faixa "mudou" já tinha desaparecido
+    // antes do primeiro poll do `expect`. Mesmo bloqueio das outras cenas (T069/`catalog-recalculo.
+    // spec.ts`): segurar o PUT até depois da captura mantém a comparação "mudou" visível.
+    await page.route("**/api/v1/price-observations", (route) =>
+      route.request().method() === "PUT" ? route.abort() : route.continue(),
+    );
     await editFilamentCost(page, "Filamento Shot", "120");
     await gotoProductsTab(page);
     await setTheme(page, theme); // goto = navegação real, o tema volta ao padrão do sistema
@@ -212,13 +236,18 @@ for (const theme of THEMES) {
     });
     await expect(page.getByTestId("product-row-was").first()).toBeVisible();
     await shot(page, `lista-390-mudou-${theme}`); // página inteira: faixa + 3 linhas + era + salvo
+    await page.unroute("**/api/v1/price-observations");
   });
 }
 
-// ---- (2) — item fixado: flag "fixado" na lista + Alert atenção na lista E na ficha ------------
+// ---- (2) — item fixado: flag "fixado" na lista + Alert atenção só na FICHA ---------------------
+//
+// Correção de fidelidade (019/PR-D): nenhuma prancheta (16a/16b/17c) desenha "Manter {valor}" nem
+// o Alert "custo hoje > fixado" NA LISTA — os dois vivem só no ITEM ABERTO. `lista-fixado-alert-*`
+// não existe mais; a captura `ficha-fixado-alert-*` já cobre o aviso.
 
 for (const theme of THEMES) {
-  test(`(2) item fixado — flag na lista + Alert atenção (lista e ficha) (${theme})`, async ({
+  test(`(2) item fixado — flag na lista + Alert atenção (só na ficha) (${theme})`, async ({
     page,
   }, info) => {
     test.setTimeout(90_000);
@@ -244,27 +273,26 @@ for (const theme of THEMES) {
     await expect(page.getByTestId("products-price-changed-banner")).toBeVisible({
       timeout: 10_000,
     });
-    const keepButton = page.getByRole("button", { name: /^Manter/ });
-    await expect(keepButton).toBeVisible({ timeout: 10_000 });
-    await keepButton.click();
-    await page.unroute("**/api/v1/price-observations");
-
     const row = page.getByTestId("master-item").filter({ hasText: "Produto Fixado" });
-    await expect(row.getByTestId("product-row-fixed")).toBeVisible({ timeout: 10_000 });
-    const listAlert = page.getByTestId("product-fixed-over-alert");
-    await expect(listAlert).toBeVisible({ timeout: 10_000 });
-    await shot(page, `lista-fixado-flag-1280-${theme}`, row);
-    await shot(page, `lista-fixado-alert-1280-${theme}`, listAlert);
-
     await row.click();
     await page
       .getByTestId("detail-panel")
       .getByRole("button", { name: catalogo.detailOpenEditor })
       .click();
     await expect(page.getByTestId("calc-content")).toBeVisible();
+    const keepButton = page.getByRole("button", { name: /^Manter/ });
+    await expect(keepButton).toBeVisible({ timeout: 10_000 });
+    await keepButton.click();
+    await page.unroute("**/api/v1/price-observations");
+
     const fichaAlert = page.getByTestId("product-fixed-over-alert");
     await expect(fichaAlert).toBeVisible({ timeout: 10_000 });
     await shot(page, `ficha-fixado-alert-1280-${theme}`, fichaAlert);
+
+    await gotoProductsTab(page);
+    await setTheme(page, theme);
+    await expect(row.getByTestId("product-row-fixed")).toBeVisible({ timeout: 10_000 });
+    await shot(page, `lista-fixado-flag-1280-${theme}`, row);
   });
 }
 
@@ -376,22 +404,15 @@ for (const theme of THEMES) {
       page.locator(".tf-price").first(),
     );
 
-    // ---- fixado: editar + "Manter {valor}" — `capFixed`. ----
+    // ---- fixado: editar + "Manter {valor}" na FICHA — `capFixed`. Correção de fidelidade
+    // (019/PR-D): "Manter" mora só no ITEM ABERTO (17c/16b·2), nunca na lista. -----------------
     await editFilamentCost(page, "Filamento Fixo H", "130");
-    await gotoProductsTab(page);
+    await openProductFicha(page, "Produto Fixado H");
     await setTheme(page, theme);
-    await expect(page.getByTestId("products-price-changed-banner")).toBeVisible({
-      timeout: 10_000,
-    });
-    const keepButton = page
-      .locator("body")
-      .getByRole("button", { name: /^Manter/ })
-      .first();
+    const keepButton = page.getByRole("button", { name: /^Manter/ });
     await expect(keepButton).toBeVisible({ timeout: 10_000 });
     await keepButton.click();
     await page.unroute("**/api/v1/price-observations");
-    await openProductFicha(page, "Produto Fixado H");
-    await setTheme(page, theme);
     await expect(page.getByText(catalogo.fixedByYou)).toBeVisible();
     await shot(page, `ficha-cabecalho-fixado-1280-${theme}`, page.locator(".tf-price").first());
 

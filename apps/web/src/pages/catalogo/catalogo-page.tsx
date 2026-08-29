@@ -10,12 +10,7 @@ import {
   usePriceObservations,
   useObservePrices,
 } from "@/entities/catalog/price-observations";
-import {
-  useFilaments,
-  useFixProductPrice,
-  usePrinters,
-  useProducts,
-} from "@/entities/catalog/use-catalog";
+import { useFilaments, usePrinters, useProducts } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { computeFromForm } from "@/features/calculator/calculator-model";
 import { productToForm } from "@/features/calculator/product-mapping";
@@ -118,7 +113,6 @@ export function CatalogoPage() {
     isError: observationsError,
   } = usePriceObservations();
   const { observe } = useObservePrices();
-  const fixPrice = useFixProductPrice();
 
   // "Envenenamento" (achado registrado na fatia): com filamentos/impressoras ainda carregando,
   // `productToForm` prefiliria custo/potência a partir de defaults ("0"), e o preço computado
@@ -229,11 +223,6 @@ export function CatalogoPage() {
             observations={observations}
             changed={changedByProductId}
             changedCount={changedCount}
-            onFixPrice={
-              gate === "active"
-                ? (id, sellerFixedPrice) => fixPrice.mutate({ id, sellerFixedPrice })
-                : undefined
-            }
           />
         )}
         {active === "kits" && <KitsPanel />}

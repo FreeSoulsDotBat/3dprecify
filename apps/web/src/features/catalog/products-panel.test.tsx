@@ -244,34 +244,29 @@ describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
     expect(screen.getByTestId("product-row-fixed")).toHaveTextContent(catalogo.fixedFlag);
   });
 
-  it("custo hoje > fixado: Alert warning + 'Voltar a acompanhar o custo' chama onFixPrice(id, null)", () => {
-    const onFixPrice = vi.fn();
+  // 019/PR-D (correção de fidelidade) — nenhuma prancheta (16a/16b/17c) desenha o aviso
+  // "custo hoje > fixado" nem "Manter {valor}" NA LISTA; os dois vivem só no ITEM ABERTO
+  // (`pages/catalogo/produto-page.test.tsx`). A LISTA nunca escreve — não sobrou prop para chamar.
+  it("custo hoje > fixado NA LISTA: nenhum Alert/'Voltar a acompanhar o custo' (mora só na ficha)", () => {
     useProductsMock.mockReturnValue(listState([n("p1", "Suporte", { sellerFixedPrice: "38.90" })]));
-    render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} onFixPrice={onFixPrice} />);
+    render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} />);
 
-    const alert = screen.getByTestId("product-fixed-over-alert");
-    expect(alert).toHaveTextContent(
-      catalogo.fixedOverNote.replace("{hoje}", "R$ 41,20").replace("{diff}", "R$ 2,30"),
-    );
-    fireEvent.click(screen.getByRole("button", { name: catalogo.unfix }));
-    expect(onFixPrice).toHaveBeenCalledWith("p1", null);
+    expect(screen.queryByTestId("product-fixed-over-alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: catalogo.unfix })).not.toBeInTheDocument();
   });
 
-  it("'Manter {valor}' no item que mudou chama onFixPrice(id, was.toFixed(2))", () => {
-    const onFixPrice = vi.fn();
+  it("'Manter {valor}' NA LISTA: não renderiza nenhum botão (mora só na ficha)", () => {
     useProductsMock.mockReturnValue(listState([n("p1", "Suporte")]));
     render(
       <ProductsPanel
         recomputed={new Map([["p1", 41.2]])}
         changed={new Map([["p1", { was: 38.9, observedAt: "2026-05-12" }]])}
-        onFixPrice={onFixPrice}
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 38,90") }),
-    );
-    expect(onFixPrice).toHaveBeenCalledWith("p1", "38.90");
+    expect(
+      screen.queryByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 38,90") }),
+    ).not.toBeInTheDocument();
   });
 
   it("nome repetido no diálogo de duplicar recusa ANTES do submit (nameConflict)", async () => {

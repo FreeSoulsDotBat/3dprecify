@@ -21,12 +21,10 @@ import type {
 } from "@/shared/api/generated";
 import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { formatDayMonthPtBr } from "@/shared/lib/format-date";
 import { NAME_MAX, nameNormKey } from "@/shared/lib/name-norm";
 import { useSessionStore } from "@/shared/session/session-store";
 import {
-  Alert,
   Aviso,
   BreakdownRow,
   Button,
@@ -39,7 +37,6 @@ import {
 import { productNeedsAttention, productSummary } from "@/entities/catalog/product-summary";
 
 import { CatalogPanel } from "./catalog-panel";
-import { productPriceOverFixed } from "./product-price-state";
 
 // Produtos tab wiring (US6/T030): the uid-keyed read cache plugged into the generic premium
 // panel in NAVIGATION mode — create/edit live on the full-page route (ux §1.6b), delete keeps
@@ -51,8 +48,11 @@ import { productPriceOverFixed } from "./product-price-state";
 //
 // 019/PR-D (T076/T124) — o recálculo do Catálogo: nada aqui CHAMA `computeFromForm` nem os hooks
 // de `entities/catalog/price-observations` (regra da fatia — hooks só na PAGE, este painel
-// permanece PURO/testável por prop); `recomputed`/`changed`/`onFixPrice` chegam prontos de
-// `pages/catalogo/catalogo-page.tsx`.
+// permanece PURO/testável por prop); `recomputed`/`changed` chegam prontos de
+// `pages/catalogo/catalogo-page.tsx`. A LISTA nunca escreve nada (correção de fidelidade,
+// achado da homologação): o aviso "custo hoje > fixado" e "Manter {valor}"/"Aceitar novo preço"
+// vivem só no ITEM ABERTO (`pages/catalogo/produto-page.tsx`, prancheta 17c/16b·2) — nenhuma
+// prancheta desenha os dois blocos aqui.
 
 const catalogo = messages.catalogo;
 const pf = messages.productForm;
@@ -67,9 +67,6 @@ export interface ProductsPanelProps {
   /** Só os produtos cujo preço de hoje difere da última observação (`derivePriceChanges`). */
   changed?: ReadonlyMap<string, { was: number; observedAt: string }>;
   changedCount?: number;
-  /** PATCH fixar/desfixar (T076) — a page resolve a mutation; o painel só chama. AUSENTE fora de
-   *  `active` é a mesma barreira estrutural de `create`/`update`/`remove` (Constituição IV). */
-  onFixPrice?: (id: string, sellerFixedPrice: string | null) => void;
 }
 
 export function ProductsPanel({
@@ -77,7 +74,6 @@ export function ProductsPanel({
   observations = new Map(),
   changed = new Map(),
   changedCount = 0,
-  onFixPrice,
 }: ProductsPanelProps = {}) {
   const list = useProducts();
   const { items: filaments, isLoading: filamentsLoading } = useFilaments();
@@ -181,17 +177,6 @@ export function ProductsPanel({
     }
   };
 
-  // 019/PR-D (T076, 17c/16b·2) — os dois avisos por-item: custo hoje > fixado (a spec US5 AC3
-  // vence o desenho, que pinta info — este é `tone="warning"`) e "Manter {valor}" no item que
-  // mudou. `onFixPrice` ausente (gate ≠ active) apaga os DOIS blocos — a mesma barreira estrutural
-  // de `create`/`update`/`remove`, nunca um botão desabilitado escondendo uma escrita que falharia.
-  const overFixedProducts = onFixPrice
-    ? list.items.filter((p) => productPriceOverFixed(p, recomputed.get(p.id)))
-    : [];
-  const keepPriceProducts = onFixPrice
-    ? list.items.filter((p) => p.sellerFixedPrice == null && changed.has(p.id))
-    : [];
-
   return (
     <>
       {changedCount > 0 && (
@@ -201,40 +186,6 @@ export function ProductsPanel({
             : catalogo.priceChangedCount.replace("{n}", String(changedCount))}
         </Aviso>
       )}
-
-      {overFixedProducts.map((p) => {
-        const hoje = recomputed.get(p.id)!;
-        const fixado = Number(p.sellerFixedPrice);
-        return (
-          <Alert
-            key={p.id}
-            tone="warning"
-            title={p.name}
-            data-testid="product-fixed-over-alert"
-            action={
-              <Button variant="ghost" size="sm" onClick={() => onFixPrice!(p.id, null)}>
-                {catalogo.unfix}
-              </Button>
-            }
-          >
-            {catalogo.fixedOverNote
-              .replace("{hoje}", formatBRL(hoje))
-              .replace("{diff}", formatBRL(hoje - fixado))}
-          </Alert>
-        );
-      })}
-
-      {keepPriceProducts.map((p) => {
-        const was = changed.get(p.id)!.was;
-        return (
-          <div key={p.id} className="flex items-center justify-between gap-2">
-            <span>{p.name}</span>
-            <Button variant="secondary" size="sm" onClick={() => onFixPrice!(p.id, was.toFixed(2))}>
-              {catalogo.keepPrice.replace("{valor}", formatBRL(was))}
-            </Button>
-          </div>
-        );
-      })}
 
       <CatalogPanel<ProductOut, never>
         list={list}

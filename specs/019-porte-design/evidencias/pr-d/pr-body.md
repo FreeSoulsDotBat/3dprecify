@@ -1,0 +1,31 @@
+## 019 PR-D — Recálculo do Catálogo (US5 · FR-1913/1914/1915 · migração 0008 · **escalação opus**)
+
+**Estado: CORREÇÃO DECLARADA** — nada homologado; a Rodada 1 fecha antes (D5). Evidência em `specs/019-porte-design/dod-evidence.md` §PR-D e `evidencias/pr-d/` (34 screenshots 1:1 nos dois temas + `medidas-pr-d.json`, `overflowX: 0` em todas as larguras).
+
+### O invariante que governa a fatia (ADR-0033 §1)
+
+O app **nunca mostra um preço que calculou no passado**: o número grande é sempre o recomputado HOJE ou o número que o vendedor DECLAROU. A observação guardada é contexto ("era R$ 38,90 · Salvo em 12/05"), nunca fonte — e uma guarda de propriedade (T125) prova por leitura do fonte que fora de `features/catalog` e `pages/catalogo` ninguém lê `sellerFixedPrice`/`observedPrice`.
+
+### O que muda
+
+- **Servidor (opus)** — migração `0008`: `price_observations` (uma linha por conta+item, UNIQUE, 4 CHECKs, FK só para `accounts`), `products.seller_fixed_price/seller_fixed_at` (+CHECK), `name_norm NOT NULL` + índice único PARCIAL por dono nas 4 tabelas com backfill em Python (função de normalização **congelada na migração**, desempate "(2)" só entre linhas vivas, reserva para o sufixo). Rotas `GET/PUT /price-observations` (lote ≤500; `(kind,id)` repetido ⇒ 422; escala > 2 casas ⇒ 422; `observedAt` do servidor; portas `catalog_read`/`entitlement`) e `PATCH /products/{id}` `{sellerFixedPrice}` (`null` desfixa; `sellerFixedAt` do servidor; `ProductOut` congelado — a não-composição é provada pela AUSÊNCIA de preço na resposta). **Nome único nos 7 sítios** via `naming.commit_with_unique_name`: sufixo "(n)" em silêncio (Q5) sob SAVEPOINT — **mutação**: sem ele a transação do kit morre na 1ª colisão; **corrida** provada com duas sessões observadas por `pg_stat_activity`. `_dedup_match` de kit por `name_norm` (emenda 0017). Achado lateral: `pieceName` sem teto virava 500 → 422.
+- **Cliente** — o recálculo mora em `catalogo-page.tsx` (fronteira: `features/catalog` ↛ `features/calculator`, depcruise 0): cada produto passa pelo motor SÓ com filamentos e impressoras resolvidos ("envenenamento": com referência carregando, nenhum item entra e **nenhum PUT sai** — provado no e2e com `page.route` atrasada e IDB limpo); degradado fica fora (nunca R$ 0,00). O PUT de observação sai **depois do commit**, só com a lista visível, gate `active`, GET sem erro de rede; online-only; dedupe por assinatura; falha **silenciosa**; 403 é parede, não erro; **sem cache de dispositivo** (a varredura de IDB prova a ausência da chave). Lista: faixa "N preços mudaram desde a sua última visita" + "era R$ X" + "Salvo em dd/mm"; `tf-plist` a 390 (linhas de 56px com filete — achado do e2e: o container montava cartões); **`tf-table` na faixa 1024–1279** (limiar NOMEADO `LIST_DENSE_QUERY`, ADR-0031 §Emenda 2); ≥1280 o mestre-detalhe do 018 intacto. Ficha (17g): cabeçalho nos 4 estados (recalculado / sem mudança / **fixado** — badge + "Preço fixado por você" + `Alert` atenção quando o custo passa o fixado + "Voltar a acompanhar o custo" / **parado** — o filamento sumiu), "Manter {valor}"/"Aceitar novo preço" (16b·2), duplicar com " (cópia)" (17d: herda campos, NÃO herda o fixado), e a **recusa de nome antes do submit** (17b: "Este nome já está no catálogo", contador n de 120).
+- **Folhas compartilhadas**: `name_norm` idêntico nos dois idiomas (vetor `contracts/fixtures/name-norm.json`, 22/22 em Python e TS, classe de espaço por escapes, NEL preservado); `format-date` promovido a `shared/lib`.
+
+### Verificação
+
+- {{GATE}}
+- **E2E na stack real**: T069 `catalog-recalculo.spec.ts` — 7 cenários (sem observação ⇒ nada; filamento 100→120 ⇒ "1 preço mudou" + "era" igual ao valor capturado antes; fixar ⇒ preço travado + aviso ⇒ desfixar; "gancho " ⇒ **201 "gancho (2)"** pela API; densidade 390/1024/1279/1280/1920 sem overflow; envenenamento 0 PUT → 1 PUT; offline 0 PUT). {{E2E}}
+- **Drift-guard** (T070): os três comandos do CI, da raiz, duas vezes — diff vazio nas duas.
+- Não-vácuo por mutação: migração 0008 (índice parcial, CHECK, backfill), SAVEPOINT do funil de nome, guarda de contrato (`ProductOut` sem preço).
+- Achados desta fatia: a pílula "Filamentos" branca nas capturas era a `transition .15s` do Segmented congelada 40 ms após a troca de tema — **reproduzida pixel a pixel antes de culpar o produto** (captura com `animations: "disabled"`); a lista a 390 sem a classe `tf-plist`; o bloco "Manter"/aviso que o FE-2 tinha inventado ACIMA da lista foi removido — vive só no item aberto, como as pranchetas 16b·2/17c.
+
+### Pede ao dono
+
+- **Flip do ADR-0033** (Proposed → Accepted) com o §Adendo 2026-08-27 já escrito (observed_at no servidor · lote 500 · nome 120 no pydantic + `left(…,200)` no legado · `_dedup_match` normalizado) + **emenda 2026-08-29 do ADR-0017** + **Emenda 2 do ADR-0031**.
+- **Ratificar (10 pontos, detalhados em dod-evidence §PR-D)**: (1) o contrato perdeu `additionalProperties:false` no ITEM do lote — o `forbid` no item fazia o Schemathesis não terminar; um `model_validator` dá o mesmo 422; (2) `name_norm` com default no MODELO só no INSERT; (3) `observedPrice` com 3+ casas ⇒ 422 (nunca arredondar dinheiro em silêncio); (4) sufixo sobre o nome ENVIADO aparado ("gancho (2)"); (5) a 2ª frase da 16b (a causa do aumento) não é derivável — não transcrita; (6) contador 60→120; (7) nota do fixado em tom ATENÇÃO (spec) onde a 17c desenha info; (8) **o preço "parado" (16f/17g) vem da última OBSERVAÇÃO, rotulado "de {data}"** — a prancheta manda, mas o ADR-0033 §1 lê estrito; (9) kits SEM preço na lista nesta fatia (não há função de total do kit na lista); (10) a recusa de nome antes do submit só no formulário do PRODUTO — filamentos/impressoras/kits contam com o "(2)" silencioso do servidor.
+- Sem copy do dono: o ícone `lock` da flag "fixado" não existe no DS (texto só).
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+https://claude.ai/code/session_01DP6jGooCvL3M2dac3o34EW

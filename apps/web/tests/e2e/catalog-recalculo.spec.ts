@@ -116,6 +116,20 @@ function productRow(page: Page, name: string) {
   return page.getByTestId("master-item").filter({ hasText: name });
 }
 
+// Correção de fidelidade (019/PR-D): "Manter"/"Aceitar novo preço"/"Voltar a acompanhar o custo"
+// vivem só no ITEM ABERTO (ficha, `pages/catalogo/produto-page.tsx`), nunca na lista — nenhuma
+// prancheta (16a/16b/17c) desenha esses dois blocos na lista. Molde:
+// `porte-screenshots-pr-d.spec.ts`'s `openProductFicha`.
+async function openProductFicha(page: Page, name: string): Promise<void> {
+  await gotoProductsTab(page);
+  await productRow(page, name).click();
+  await page
+    .getByTestId("detail-panel")
+    .getByRole("button", { name: catalogo.detailOpenEditor })
+    .click();
+  await expect(page.getByTestId("calc-content")).toBeVisible();
+}
+
 // ---------------------------------------------------------------------------------------------
 // Cenários 1–3 (T069): sem observação na 1ª visita → mudou → fixar/desfixar
 // ---------------------------------------------------------------------------------------------
@@ -178,10 +192,12 @@ test("recompute do Catálogo: sem observação → preço mudou → fixar/desfix
   const priceText2 = (await row.locator(".tf-plist__price").innerText()).trim();
   expect(priceText2).not.toBe(priceText1);
 
-  // ---- Cenário 3a: fixar via "Manter {valor}" (16b·2) — o preço fixado é o ANTERIOR (priceText1,
-  // baseado no filamento a 100/kg). O custo de HOJE já está no filamento a 120/kg (priceText2, mais
-  // alto) — então o aviso de atenção aparece JÁ NO ATO de fixar, não só depois de uma 3ª edição: o
-  // "fixar" é escolher CONGELAR um preço que já ficou atrás do custo. ----
+  // ---- Cenário 3a: fixar via "Manter {valor}" (16b·2) NA FICHA (correção de fidelidade — o
+  // botão não existe mais na lista) — o preço fixado é o ANTERIOR (priceText1, baseado no
+  // filamento a 100/kg). O custo de HOJE já está no filamento a 120/kg (priceText2, mais alto) —
+  // então o aviso de atenção aparece JÁ NO ATO de fixar, não só depois de uma 3ª edição: o "fixar"
+  // é escolher CONGELAR um preço que já ficou atrás do custo. ----
+  await openProductFicha(page, "Vaso Recalculo");
   const keepButton = page.getByRole("button", {
     name: catalogo.keepPrice.replace("{valor}", priceText1),
     exact: true,
@@ -189,25 +205,29 @@ test("recompute do Catálogo: sem observação → preço mudou → fixar/desfix
   await expect(keepButton).toBeVisible();
   await keepButton.click();
   await page.unroute("**/api/v1/price-observations"); // a janela de corrida já passou (PATCH fixou)
-  await expect(row.getByTestId("product-row-fixed")).toBeVisible({ timeout: 10_000 });
-  await expect(row.locator(".tf-plist__price")).toHaveText(priceText1);
   const overAlert = page.getByTestId("product-fixed-over-alert");
   await expect(overAlert).toBeVisible({ timeout: 10_000 });
-  await expect(overAlert).toContainText("Vaso Recalculo");
+
+  await gotoProductsTab(page);
+  await expect(row.getByTestId("product-row-fixed")).toBeVisible({ timeout: 10_000 });
+  await expect(row.locator(".tf-plist__price")).toHaveText(priceText1);
 
   // ---- Cenário 3b: editar o filamento de novo (120 → 150/kg) — o preço GRANDE (fixado) continua
-  // SEM mudar; o aviso de atenção permanece (a diferença só cresce). ----
+  // SEM mudar; o aviso de atenção permanece na ficha (a diferença só cresce). ----
   await editFilamentCost(page, "Filamento Recalculo", "150");
   await gotoProductsTab(page);
 
   await expect(row.locator(".tf-plist__price")).toHaveText(priceText1); // continua fixado
+  await openProductFicha(page, "Vaso Recalculo");
   await expect(overAlert).toBeVisible({ timeout: 10_000 });
-  await expect(overAlert).toContainText("Vaso Recalculo");
 
-  // ---- Cenário 3c: desfixar ("Voltar a acompanhar o custo") — volta ao recomputado de hoje. ----
+  // ---- Cenário 3c: desfixar ("Voltar a acompanhar o custo") NA FICHA — volta ao recomputado de
+  // hoje. ----
   await overAlert.getByRole("button", { name: catalogo.unfix }).click();
+  await expect(page.getByTestId("product-fixed-over-alert")).toHaveCount(0, { timeout: 10_000 });
+
+  await gotoProductsTab(page);
   await expect(row.getByTestId("product-row-fixed")).toHaveCount(0, { timeout: 10_000 });
-  await expect(page.getByTestId("product-fixed-over-alert")).toHaveCount(0);
   const priceText3 = (await row.locator(".tf-plist__price").innerText()).trim();
   expect(priceText3).not.toBe(priceText1);
 });

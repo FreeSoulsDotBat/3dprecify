@@ -44,6 +44,7 @@ import {
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import { PremiumFooterNote, PremiumInviteCta } from "@/features/catalog/catalog-controls";
+import { productPriceOverFixed } from "@/features/catalog/product-price-state";
 import { RecordSnapshotButton, type RecordSource } from "@/features/history/record-snapshot-sheet";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
@@ -255,7 +256,7 @@ export function ProdutoPage({
   // 17c — custo hoje > fixado: o aviso de ATENÇÃO (spec US5 AC3 vence a 17c, que desenha info) +
   // "Voltar a acompanhar o custo". A escrita (fixar/desfixar) só existe quando `active` — a
   // barreira de sempre é a AUSÊNCIA do handler, nunca um 2º gate.
-  const overFixed = isFixed && todayPrice !== undefined && fixedPriceValue! < todayPrice;
+  const overFixed = editing !== undefined && productPriceOverFixed(editing, todayPrice);
   const fixPrice = useFixProductPrice();
   const { observe: observeThis } = useObservePrices();
   const handleUnfix = () => {
