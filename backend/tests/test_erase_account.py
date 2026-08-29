@@ -39,9 +39,11 @@ def _seed(engine: sa.Engine, uid: str) -> tuple[str, float]:
         )
         conn.execute(
             sa.text(
-                "INSERT INTO filaments (id, owner_uid, name, material, cost_per_roll, "
+                # 019/PR-D: `name_norm` NOT NULL (migração 0008) — este seed é SQL cru, então não
+                # passa pelo default do modelo; o valor é o mesmo `left(name_norm(name), 200)`.
+                "INSERT INTO filaments (id, owner_uid, name, name_norm, material, cost_per_roll, "
                 "roll_weight_kg, created_at, updated_at) "
-                "VALUES (:i, :u, 'PLA do Joao', 'PLA', 120, 1, now(), now())"
+                "VALUES (:i, :u, 'PLA do Joao', 'pla do joao', 'PLA', 120, 1, now(), now())"
             ),
             {"i": str(uuid.uuid4()), "u": uid},
         )
