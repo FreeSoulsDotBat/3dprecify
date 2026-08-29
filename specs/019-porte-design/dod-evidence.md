@@ -833,3 +833,42 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   (prancheta 30b: "se um dia divergirem, vão divergir em silêncio") — guarda por referência de chave no fonte; **mutação**:
   bifurcar para `t.rename` no título ⇒ vermelho; revertido, diff vazio.
 
+### T092 · T095 · T093 · T098 · T097 — a lista na coluna larga (dev-frontend B, 2026-08-29)
+
+- `ScenarioListBody` → `export function ScenariosList` no MESMO arquivo; `scenarios-wide.test.tsx` prova UMA instância: largo
+  (`installMatchMedia(desktopLarge)`) monta a lista direta e zero `<dialog>`; estreito, a gaveta de sempre. O ramo `showTeaser` que
+  a task cita já tinha saído na PR-B (o vazio didático/`premiumGate` vive num lugar só).
+- **DECISÃO 2 aplicada**: ≥1280 a lista vive num `<aside data-testid="scenarios-wide-aside">` sticky de 320px ao lado da
+  calculadora, DENTRO da mesma `.tf-calc-page` (a `section` que o `widthRatio()` mede não muda — por isso 93,8/93,3/66,7% são
+  IDÊNTICOS ao baseline); a gaveta não monta; "Minhas simulações" rola+foca a coluna; "Fazer um cálculo" do vazio rola de volta.
+  O corte 1024 de `calculator-form.css` fica intocado (os dois limiares convivem — emenda 2 do ADR-0031). A 20g se declarava
+  "proposta" (300px fixos do desenhista) — a coluna é 320px pelos dois primitivos existentes não truncarem cedo (registrado).
+- **T093**: overflow 0 nos dois eixos a 1280/1440/1920; gaveta 390/360 comparada ao baseline por `boundingBox` + `overflowX`
+  (não há `pngjs`/`pixelmatch` no lockfile — comparação por geometria, não por frase).
+- **Q1/Q2** (T098): `catalogo.searchEmpty` com `{termo}` no molde de `historico.searchEmpty`; `staleHint` por linha fora do mestre e
+  do `tf-plist` — só a faixa "Modo leitura offline".
+- **A11-r** (T097, só medição): `a11r.json` — tf-table 1024 = 9 · 1279 = 9 · mestre-detalhe 1280 = 7 · 1920 = 14.
+- **Adoção com achado**: o projeto Chromium do Playwright usa 1280×720 por padrão — exatamente o limiar de `useIsWide`; os helpers
+  de `scenarios*.spec` abriam a gaveta e passaram a não achar `<dialog>`. Fixados a 900×900 (abaixo dos DOIS limiares). Uma tentativa
+  a 1024 achou a linha "PLA Azul" **oculta** na `tf-table` da PR-D (`tf-table__name` `max-width:0`) — **investigado no T099**.
+
+### T142 · T143 — o rodapé da prancheta 10 (dev-frontend C, 2026-08-29)
+
+- `price-results.test.tsx` (15 casos, vermelho primeiro; não-vácuo por mutação: sem `<CostProportionBar>` o teste da barra morre):
+  a conta TERMINA no custo total (ausência das linhas de preço), `markupHeader` com os percentuais reais, barra com N segmentos
+  (mesmas 6+N parcelas do detalhamento — `custoTotal = sumMoney([...])` no `pricing-core`, soma 100% ±1; sem custo > 0 a barra não
+  renderiza), Segmented Varejo|Atacado (default Varejo; `role="radiogroup"` como o `MachineMode` do mesmo arquivo — a prancheta
+  marca `tablist` na marcação estática, padrão de interação, não copy), cartão grande um por vez (atacado escolhido =
+  **`tf-price--neutral`**, tom novo em `price-hero.css`, único acréscimo ao DS), linha-resumo `summaryLine`, os números de cada
+  marketplace seguem o nível, "Preços por marketplace" seção própria ANTES dos cartões com `marketplaceLevelHint`, sem Premium a
+  seção NÃO existe no DOM; os seis estados da 10c. **Reversão datada do 016/US5 FR-907-AC2**: as bolinhas voltam (`BreakdownRow`
+  `color`, já existente) com os tokens da prancheta (`--tf-purple/teal/orange` + `-deep`, hexes idênticos: #5a16a6 #0b8196 #bd6c0e).
+- **T143**: R$ 950.096,00 (o número exato da 10b, produzido pelo motor com `costPerRoll=950096`) sem transbordo em X e Y no cartão
+  e no `.tf-price__amount` a 360/390/1280/1920; a 1280 o bloco ≤ 721px e centralizado (±2px). 14 capturas nos dois temas
+  (`rodape-*`), `medidas-pr-f.json` fundido. Achado de captura corrigido no spec: a 1ª leva fotografava o topo — `scrollIntoView`
+  no `price-hero`. Adoções por MARCAÇÃO em `calculator.spec.ts` (4: contagens 4→2 porque o Segmented governa; `getByText` exato →
+  regex porque o cartão divide o valor em spans) e `produto-page.test.tsx` (matcher sobre `.tf-price__amount`, main loop).
+- Copy que a T141 não listou e a prancheta traz byte a byte: `aria-label="Nível de preço"` → `sections.priceLevelLabel` (registrado).
+  `.tf-brow__dot` herdado do 016 é 10×10/raio 3 onde a prancheta desenha 8px redondo — para o dono.
+- Unit 475/475 · e2e `calculator-layout` + `calculator` 66 passed / 0 failed nos dois projetos.
+
