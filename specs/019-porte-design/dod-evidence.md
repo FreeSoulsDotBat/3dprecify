@@ -776,7 +776,7 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   o build de produção, deslogados, já mostravam a pílula certa; só a sequência exata do spec (clique → troca de tema →
   captura imediata) reproduzia.
 - `medidas-pr-d.json`: a 1ª rodada gravou `{}` (o `afterAll` do último worker sobrescrevia — a armadilha da PR-C); agora funde.
-- Gate final: frontend 1994/1994 (cobertura 89,7%) · backend 577 passed (cov 84%) · exit 0. Drift-guard 2× diff vazio. PR aguarda o "pode" do dono.
+- Gate final: frontend 1994/1994 (cobertura 89,7%) · backend 577 passed (cov 84%) · exit 0. Drift-guard 2× diff vazio. Push autorizado pelo dono ("pode", 29/08) — **PR #62** aberta contra `develop` (`855709a`), CORREÇÃO DECLARADA.
 
 ### Pontos que o dono ratifica no PR-D (registrados aqui para não sumirem)
 
