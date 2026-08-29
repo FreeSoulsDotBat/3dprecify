@@ -735,6 +735,49 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   `kitMeta`). **Ícone `lock`** não existe em `icon.tsx` — a flag "fixado" vai só com texto; "parado" usa `triangle-alert`.
   **Ações da linha** continuam os botões discretos (a folha de ações da 16e não está nas tasks).
 
+### T069 — o e2e na stack real (qa-software, 2026-08-29, duas rodadas)
+
+- `tests/e2e/catalog-recalculo.spec.ts` — 7 cenários, valores REAIS capturados: (1) sem observação ⇒ nenhuma faixa, nem "0
+  mudaram"; sair/voltar ⇒ preço idêntico; (2) filamento 100→120 ⇒ "1 preço mudou desde a sua última visita" + `product-row-was`
+  = "era {preço capturado antes}" (igualdade de STRING com o valor da linha na visita anterior, nunca número fixo); (3) "Manter
+  {era}" na FICHA ⇒ o aviso de atenção aparece já ao fixar (o custo de hoje JÁ passava o fixado — o raciocínio "só numa 3ª
+  edição" estava errado e o teste corrigiu), filamento → 150 ⇒ preço travado, "Voltar a acompanhar o custo" ⇒ volta ao
+  recomputado; (4) "Gancho" + `"gancho "` pela API com o bearer da sessão ⇒ **201** (nunca 409/422) nome final `"gancho (2)"`
+  — a ficha barra ANTES do submit, por isso a prova do servidor é pela rota; (5) densidade 390 `ul.tf-plist` · 1024/1279
+  `table.tf-table` com os 4 cabeçalhos · 1280/1920 `master-item` sem `tf-table`, overflow horizontal 0 em todas; (6)
+  **envenenamento**: `page.route` atrasando filaments/printers 3 s ⇒ 0 PUT na janela de 1,5 s; libera ⇒ exatamente 1 PUT —
+  só reproduz com o IDB uid-keyed LIMPO (com cache quente `isLoading` nunca liga: `isFetching && items.length === 0`); (7)
+  offline ⇒ 0 PUT.
+- **Armadilhas de teste que a stack real ensinou**: a marca se autocorrige em ~30 ms no localhost (GET→PUT→GET no trace) —
+  para flagrar a janela "mudou" o PUT é abortado por `page.route` durante a asserção; `getByText(nome)` sem `exact` casava o
+  resumo de um PRODUTO que só MENCIONA o filamento; funções de edição assumiam a lista visível quando a página estava na
+  ficha; **`pnpm --filter … test:e2e -- x.spec --workers=1` roda a suíte INTEIRA e ignora as flags** (o `--` sobrevive ao
+  repasse e o playwright o lê como fim de opções) — invocar `pnpm --filter @3dprecify/web exec playwright test …` direto.
+- Rodada final (4 arquivos: T069 + screenshots + `catalog.spec` + `premium-sem-parede.spec`, `--workers=1` confirmado no log):
+  **48 passed · 6 flaky · 0 failed** — os 6 são o `grant_premium` "no existing account matches" (corrida JIT×CLI já documentada
+  em `history-helpers.ts`), verdes no retry. Após a remoção do bloco da lista: T069 9 passed (1 flaky idem) + screenshots
+  14/14. A primeira rodada (antes do fix da `tf-plist`) tinha rodado a suíte COMPLETA por acidente: 366 passed / 58 skipped.
+
+### T078 — screenshots, o achado que não era, e o que a imagem achou (2026-08-29)
+
+- **34 capturas 1:1 nos dois temas** em `evidencias/pr-d/` + `medidas-pr-d.json` (33 entradas, `overflowX: 0` em
+  390/1024/1279/1280/1920): faixa "3 preços mudaram" + "era" + "Salvo em" a 390 (`tf-plist`), `tf-table` 1024/1279,
+  mestre-detalhe 1280/1920, ficha nos 4 estados (recalculado · sem mudança · fixado · parado), aviso do fixado, flag "fixado"
+  na lista, diálogo de duplicar, recusa de nome repetido.
+- **A imagem achou o que a asserção não viu** (a lição do 014, de novo): (a) a lista a 390 montava CARTÕES com os spans
+  `tf-plist__*` soltos — nome em 3 linhas, 4 itens na dobra; nenhuma asserção de texto reclamava. Corrigido: `ul.tf-plist` +
+  `tf-plist__row` (`cde9469`). (b) O FE-2 tinha inventado um bloco ACIMA da lista ("{nome} · Manter R$ X" por produto mudado
+  + um Alert por fixado) que nenhuma prancheta desenha — a captura mostrava a lista duplicada. Removido (`fcf34a5`): a LISTA
+  não escreve; Manter/Aceitar (16b·2) e o aviso com "Voltar a acompanhar" (17c) vivem no item aberto.
+- **O achado que não era**: 5 capturas mostravam a pílula "Filamentos" clara com "Produtos" selecionada. Reproduzido no
+  browser real, pixel a pixel ((174,175,176) e (24,24,31) idênticos à captura): é a `transition: background-color .15s` do
+  Segmented congelada ~40 ms depois do `setTheme` — `rgba(255,255,255,.66)` sobre o escuro. Produto certo; a captura passou a
+  usar `animations: "disabled"`. Corolário: **antes de culpar o produto por uma captura, reproduza a captura** — o dev server e
+  o build de produção, deslogados, já mostravam a pílula certa; só a sequência exata do spec (clique → troca de tema →
+  captura imediata) reproduzia.
+- `medidas-pr-d.json`: a 1ª rodada gravou `{}` (o `afterAll` do último worker sobrescrevia — a armadilha da PR-C); agora funde.
+- Gate final: frontend 1994/1994 (cobertura 89,7%) · backend 577 passed (cov 84%) · exit 0. Drift-guard 2× diff vazio. PR aguarda o "pode" do dono.
+
 ### Pontos que o dono ratifica no PR-D (registrados aqui para não sumirem)
 
 1. O contrato sem `additionalProperties:false` no item do array (acima).
@@ -754,4 +797,3 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
    própria — no modo navegação não existe "item aberto" inline); é um trade-off de engenharia marcado para revisão de design.
 10. A recusa de nome antes do submit está só no formulário do PRODUTO (17b); filamentos/impressoras/kits dependem do sufixo
     silencioso do servidor — estender exige mudar `CatalogPanelProps.renderForm` (3 painéis + testes). Fica para o dono.
-
