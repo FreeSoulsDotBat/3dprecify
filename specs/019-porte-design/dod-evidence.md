@@ -899,5 +899,5 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   1280/1920 não destaca visualmente a simulação aberta (a barra de contexto a nomeia).
 - Órfãos: dois `vite preview --port 4175` (das minhas reproduções do main loop) sobreviveram fora das 4 portas vigiadas — a
   lista de portas a matar antes do e2e ganha a 4175.
-- Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0 — push/PR aguardam o "pode" do dono.
+- Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0. Push autorizado ("pode seguir", 29/08) — **PR #63** aberta contra `develop` (`6d55474`), CORREÇÃO DECLARADA.
 
