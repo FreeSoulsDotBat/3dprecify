@@ -193,9 +193,15 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
   await page.getByRole("button", { name: t.premiumTeaser.fazerUmCalculo }).click();
   await expect(page).toHaveURL(/\/calcular/);
   await page.getByRole("button", { name: t.scenarios.navEntry }).click();
-  const folha = page.getByRole("dialog");
+  // 019/PR-F (T099, adoção) — ≥1280px "a folha" é a coluna larga sempre visível
+  // (`scenarios-wide-aside`, T095), não mais um `dialog`; e a revisão do main loop fez o vazio
+  // dela montar com `teaser={false}` — a página JÁ carrega o seu convite por desenho (o picker),
+  // um segundo dentro do aside seria o duplo-convite que a PR-B matou no Catálogo. < 1280 (a
+  // gaveta) segue como estava — um `dialog` com o convite único (FR-1906). Molde
+  // `porte-pr-f-t093.spec.ts`.
+  const folha = largo(page) ? page.getByTestId("scenarios-wide-aside") : page.getByRole("dialog");
   await expect(folha.getByTestId("vazio-didatico")).toContainText(t.scenarios.didaticoBody);
-  await expect(folha.getByTestId("teaser-upgrade-cta")).toHaveCount(1);
+  await expect(folha.getByTestId("teaser-upgrade-cta")).toHaveCount(largo(page) ? 0 : 1);
 
   // ---- O que NÃO aconteceu: nenhuma escrita, nenhuma fila.
   expect(escritas, `escritas de API no fluxo grátis: ${escritas.join(", ")}`).toEqual([]);
@@ -269,9 +275,11 @@ test("deslogado (E-5): o MESMO caminho sem parede; 'Assinar Premium' leva a entr
   await expect(cta(page)).toHaveCount(1);
   await page.goto("/calcular");
   await page.getByRole("button", { name: t.scenarios.navEntry }).click();
-  await expect(page.getByRole("dialog").getByTestId("vazio-didatico")).toContainText(
-    t.scenarios.didaticoBody,
-  );
+  // 019/PR-F (T099, adoção) — mesmo ramo por largura da nota acima.
+  const folhaSims = largo(page)
+    ? page.getByTestId("scenarios-wide-aside")
+    : page.getByRole("dialog");
+  await expect(folhaSims.getByTestId("vazio-didatico")).toContainText(t.scenarios.didaticoBody);
 
   // Produtos: o `beforeLoad` do `?produto=` continua exigindo conta — o clique leva ao sign-in
   // com a intenção preservada (nominal: o redirect carrega o `produto=novo`).
