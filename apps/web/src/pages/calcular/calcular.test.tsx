@@ -58,15 +58,18 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
   it("shows BOTH prices together (SC-010) and the breakdown by default", () => {
     renderPage();
 
-    // Retail + wholesale are always shown together (label appears in the hero + derivation row).
-    expect(screen.getAllByText(t.results.varejo).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(t.results.atacado).length).toBeGreaterThan(0);
+    // 019/PR-F (T142, adoção, prancheta 10a) — a conta não tem mais as linhas "Preço
+    // varejo"/"Preço atacado" (elas saem para o cabeçalho + o cartão/linha-resumo finais). SC-010
+    // continua satisfeita: os DOIS preços seguem visíveis juntos — um no cartão grande (varejo,
+    // default), o outro na linha-resumo logo abaixo.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(t.results.varejo);
+    expect(screen.getByTestId("price-summary-line")).toHaveTextContent(t.captions.atacado);
 
     // Breakdown lines (single-node currency strings) for the default seed.
     expect(screen.getByText("R$ 0,60")).toBeInTheDocument(); // energy
     expect(screen.getByText("R$ 16,16")).toBeInTheDocument(); // custo_total (unique)
-    expect(screen.getByText("R$ 24,24")).toBeInTheDocument(); // varejo derivation
-    expect(screen.getByText("R$ 21,01")).toBeInTheDocument(); // atacado derivation
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/); // varejo hero
+    expect(screen.getByTestId("price-summary-line")).toHaveTextContent(/R\$\s*21,01/); // atacado summary
   });
 
   // 016/US9 (FR-911) — "Ajustes opcionais" fused into "Custos da peça" (retired as its own
@@ -218,8 +221,8 @@ describe("CalcularPage — US4 'Incluir marketplaces no preço' visibility toggl
     expect(screen.queryByRole("button", { name: t.channels.addChannel })).not.toBeInTheDocument();
     expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
     // …but the direct varejo headline the seller reads first is untouched (016/PR-C B1 seed
-    // varejo R$ 24,24).
-    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
+    // varejo R$ 24,24). 019/PR-F (T142, adoção) — o valor quebra em spans dentro do `price-hero`.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/);
   });
 
   it("toggling OFF then ON restores the marketplace section (the switch stays reachable)", () => {

@@ -72,8 +72,9 @@ describe("CalcularPage — free/signed-out teaser slot (US7/T031, rewritten 016/
     expect(button).toBeVisible();
     expect(button).toBeDisabled();
     // The manual free calculator is untouched behind it (SC-310). 016/PR-C homologação B1 — the
-    // seed's varejo is now R$ 24,24 (machine 4000/3600h).
-    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
+    // seed's varejo is now R$ 24,24 (machine 4000/3600h). 019/PR-F (T142, adoção) — o valor agora
+    // quebra em spans dentro do cartão `price-hero`; `toHaveTextContent` concatena os descendentes.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/);
   });
 
   it("free signed-in (none): same disabled-and-visible affordance → same honest teaser", () => {

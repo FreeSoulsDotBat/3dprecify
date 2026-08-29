@@ -66,6 +66,7 @@ import {
   InfoTip,
   NumberField,
   PriceHero,
+  type PriceHeroTone,
   Segmented,
   Select,
   Switch,
@@ -107,9 +108,38 @@ const channelModality: CSSProperties = {
   color: "var(--text-muted)",
 };
 
-const channelDivider: CSSProperties = {
-  borderTop: "1px solid var(--border-default)",
-  paddingTop: "var(--space-3)",
+// 019/PR-F (T142, prancheta 10a) — "Preços por marketplace" leva o mesmo tratamento tipográfico
+// que `.tf-catalog-md__kicker` (catalog-master-detail.css) já usa: caption maiúscula, tracking,
+// tom muted. Cópia local em vez de importar a classe de outra feature (nenhum acoplamento de CSS
+// entre `features/catalog` e `features/calculator`) — os valores são os mesmos, de propósito.
+const kickerLabel: CSSProperties = {
+  margin: 0,
+  fontSize: "var(--fs-caption)",
+  fontWeight: "var(--fw-semibold)",
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "var(--text-muted)",
+};
+
+// 019/PR-F (10a) — o título de cada cartão de marketplace ("Mercado Livre · Clássico"): a
+// prancheta usa `font-size:var(--fs-body-sm);font-weight:var(--fw-semibold)`, um degrau abaixo do
+// `sectionLabel` (fs-sm) que os títulos de SEÇÃO usam — o cartão não é uma seção.
+const channelCardTitle: CSSProperties = {
+  margin: 0,
+  fontSize: "var(--fs-body-sm)",
+  fontWeight: "var(--fw-semibold)",
+  color: "var(--text-strong)",
+};
+
+// 019/PR-F (10a) — a trilha da barra de proporção. Sem classe `tf-*` própria: a prancheta também
+// não tem uma (é estilo inline solto na marcação estática), então o mesmo objeto `CSSProperties`
+// que o resto deste arquivo já usa para nós sem primitivo dedicado (ver `sectionLabel` acima).
+const proportionTrack: CSSProperties = {
+  display: "flex",
+  height: "8px",
+  borderRadius: "var(--radius-pill)",
+  overflow: "hidden",
+  background: "var(--bg-muted)",
 };
 
 // Warning caption for a co-funded voucher that exceeds the margin (líquido < 0) — truthful, not clamped.
@@ -716,12 +746,73 @@ export function CostsSection({
   );
 }
 
-/** US1 hero prices + US2 transparent breakdown. Rendered only for a fully valid form.
- *  US5 (FR-907) — the per-channel descriptives ("Preços por canal") fold in here, inside the
- *  SAME "Como chegamos no preço" Card, instead of living as their own titled section: pass
- *  `channelOutcomes` from the page (already computed regardless of where `MarketplaceSection`
- *  itself renders) and they render right after the cost breakdown, before the final price
- *  cards — one section describes every price the seller reads. */
+/** 019/PR-F (T142, prancheta 10) — o nível de preço que o `<Segmented split>` governa: o cartão
+ *  grande, a linha-resumo do outro nível e os números de cada marketplace leem TODOS o mesmo
+ *  `level`. Estado só de apresentação (nunca RHF) — nenhuma aritmética nova, é seleção de qual
+ *  campo já calculado o cartão mostra. */
+type PriceLevel = "varejo" | "atacado";
+
+/** 019/PR-F (T142, prancheta 10a) — o corpo do cartão grande (accent no varejo, superfície
+ *  NEUTRA no atacado escolhido: a diferença entre os dois é cor, não corpo — o mesmo tamanho, um
+ *  preço por vez). `PriceHeroTone` ainda não tinha um tom neutro-com-borda; ver price-hero.css. */
+const HERO_TONE: Record<PriceLevel, PriceHeroTone> = { varejo: "accent", atacado: "neutral" };
+
+/** 019/PR-F (10b) — "seis dígitos entram no corpo médio; o corpo grande fica para os valores de
+ *  até quatro dígitos". Medido pela prancheta, não pela largura de tela: R$ 950.096,00 (6 dígitos)
+ *  cabe no `md` sem rolagem; um preço de 4 dígitos usa o `lg` sempre que existir espaço. */
+function heroSizeFor(value: number): "md" | "lg" {
+  return Math.floor(Math.abs(value)).toString().length > 4 ? "md" : "lg";
+}
+
+/** 019/PR-F (10a) — a barra fina de proporção dos custos, sob a conta: as MESMAS linhas e cores
+ *  do detalhamento acima, como largura. Reverte 016/US5 FR-907-AC2 (as bolinhas de cor tinham
+ *  sido removidas do detalhamento como "chrome de legenda"; a prancheta 10a as traz de volta —
+ *  agora como a própria chave de cor da barra, registrando a reversão aqui e no relatório da
+ *  fatia). As parcelas somam exatamente `custoTotal` por construção (mesmos valores arredondados
+ *  que compõem `PriceResult.custoTotal`, packages/pricing-core); sem custo total positivo a barra
+ *  não ensina nada — não renderiza. */
+function CostProportionBar({
+  rows,
+  custoTotal,
+}: {
+  rows: { label: string; value: number; color: string }[];
+  custoTotal: number;
+}) {
+  if (custoTotal <= 0 || rows.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2">
+      <div style={proportionTrack} data-testid="cost-proportion-bar">
+        {rows.map((row, i) => (
+          <span
+            key={i}
+            aria-hidden="true"
+            style={{
+              display: "block",
+              height: "100%",
+              width: `${(row.value / custoTotal) * 100}%`,
+              background: row.color,
+            }}
+          />
+        ))}
+      </div>
+      {/* A frase da prancheta continua em "…metade do seu custo é material.": essa segunda parte
+          é o EXEMPLO do desenho (50% = material neste conjunto de dados), não copy fixa — T141
+          já registrou a decisão; só a parte fixa é exibida até o dono decidir sobre o exemplo. */}
+      <p style={captionText}>{t.sections.proportionCaption}</p>
+    </div>
+  );
+}
+
+/** US1 hero price (um nível por vez) + US2 transparent breakdown. Rendered only for a fully
+ *  valid form.
+ *
+ *  019/PR-F (T142, prancheta 10, decisão do dono 28/08): a conta agora TERMINA no custo total —
+ *  "Preço varejo"/"Preço atacado" saem do detalhamento e o markup sobe para o cabeçalho da seção
+ *  (`markupHeader`). "Preços por marketplace" vira seção PRÓPRIA, antes dos cartões finais (não
+ *  mais dobrada dentro do mesmo Card do detalhamento — a inversão de FR-907 que o 016 tinha feito
+ *  para reduzir seções agora abre de novo, porque o segmented precisa de um lugar visível entre
+ *  os dois). `<Segmented split>` (já existe desde a PR-A) governa o cartão grande, a linha-resumo
+ *  do outro nível e os números de cada marketplace — um único `level` para os três. */
 export function PriceResults({
   result,
   values,
@@ -731,77 +822,139 @@ export function PriceResults({
   values: CalcFormValues;
   channelOutcomes?: ChannelSlotOutcome[];
 }) {
+  const [level, setLevel] = useState<PriceLevel>("varejo");
   const line = (value: number, optional: boolean) =>
     optional && value === 0 ? ("muted" as const) : ("default" as const);
 
+  // As MESMAS linhas alimentam o detalhamento E a barra de proporção (fonte única — se um dia
+  // divergirem, é a barra que erra, nunca o detalhamento; ver o comentário de CostProportionBar).
+  const proportionRows = [
+    {
+      label: t.results.material,
+      value: result.material,
+      color: "var(--tf-purple)",
+      emphasis: "default" as const,
+    },
+    {
+      label: t.results.energy,
+      value: result.energy,
+      color: "var(--tf-cyan)",
+      emphasis: "default" as const,
+    },
+    {
+      label: t.results.machine,
+      value: result.machine,
+      color: "var(--tf-orange)",
+      emphasis: "default" as const,
+    },
+    {
+      label: t.results.failure,
+      value: result.falha,
+      color: "var(--tf-purple-deep)",
+      emphasis: line(result.falha, true),
+    },
+    {
+      label: t.results.finishing,
+      value: result.finishing,
+      color: "var(--tf-teal-deep)",
+      emphasis: line(result.finishing, true),
+    },
+    {
+      label: t.results.labor,
+      value: result.labor,
+      color: "var(--tf-amber-deep)",
+      emphasis: line(result.labor, true),
+    },
+    // US5 (FR-115): each named "Outros custos" sub-cost is its own breakdown line (a blank name
+    // falls back to a neutral label); every one reads the SAME muted dot as "Embalagem" in 10a's
+    // example (the prancheta names one example cost — the colour is generic for the whole slot).
+    ...result.otherCosts.map((c) => ({
+      label: c.name.trim() || t.outrosCustos.lineFallback,
+      value: c.value,
+      color: "var(--text-muted)",
+      emphasis: "default" as const,
+    })),
+  ];
+
+  const heroPrice = level === "varejo" ? result.precoVarejo : result.precoAtacado;
+  const heroMarkupPct =
+    (level === "varejo" ? values.markupVarejoPct : values.markupAtacadoPct) || "0";
+  const otherLevel: PriceLevel = level === "varejo" ? "atacado" : "varejo";
+  const summaryPrice = otherLevel === "varejo" ? result.precoVarejo : result.precoAtacado;
+  const summaryMarkupPct =
+    (otherLevel === "varejo" ? values.markupVarejoPct : values.markupAtacadoPct) || "0";
+  const summaryText = t.sections.summaryLine
+    .replace("{nivel}", t.captions[otherLevel])
+    .replace("{pct}", summaryMarkupPct);
+
   return (
     <>
-      {/* (4) Transparent breakdown — every R$ line sums to custo_total, then the markup
-          derivation (SC-002). Shown BEFORE the suggested prices so the user sees how the
-          number is built before the takeaway. */}
-      <div className="flex flex-col gap-2">
+      {/* (4) Transparent breakdown — every R$ line sums to custo_total; the markup that turns it
+          into a price now reads in the section header (10a), not as a derivation row here. */}
+      <div className="flex flex-col gap-1">
         <SectionTitle title={t.sections.breakdown} info={t.sectionInfo.breakdown} />
+        <p style={captionText} className="tf-tnum">
+          {t.sections.markupHeader
+            .replace("{varejo}", values.markupVarejoPct || "0")
+            .replace("{atacado}", values.markupAtacadoPct || "0")}
+        </p>
+      </div>
+      <div className="flex flex-col gap-2">
         {/* Homologação automatizada (CF-001-LEIGO-D-P5) — a persona que "zera o que não entende"
             chega a custo R$ 0,00 e preço de venda R$ 0,00, e o produto entregava isso calado. Cada
             campo em 0 é perfeitamente válido isolado: só o RESULTADO denuncia. Por isso este aviso
             é o único que não mora num campo — não há um campo culpado. */}
         <AvisoDeResultado result={result} />
-        <Card padding="md">
-          {/* 016/US5 — the colour key dots beside Material/Energia were removed (FR-907-AC2);
-              the rows are already legible by label + tabular value, and the dots read as
-              chart-legend chrome the breakdown never needed. */}
-          <BreakdownRow label={t.results.material} value={result.material} />
-          <BreakdownRow label={t.results.energy} value={result.energy} />
-          <BreakdownRow label={t.results.machine} value={result.machine} />
-          <BreakdownRow
-            label={t.results.failure}
-            value={result.falha}
-            emphasis={line(result.falha, true)}
-          />
-          <BreakdownRow
-            label={t.results.finishing}
-            value={result.finishing}
-            emphasis={line(result.finishing, true)}
-          />
-          <BreakdownRow
-            label={t.results.labor}
-            value={result.labor}
-            emphasis={line(result.labor, true)}
-          />
-          {/* US5 (FR-115): each named "Outros custos" sub-cost is its own breakdown line (a blank name
-              falls back to a neutral label). Their sum is folded into custo_total below. */}
-          {result.otherCosts.map((c, i) => (
-            <BreakdownRow
-              key={`other-cost-${i}`}
-              label={c.name.trim() || t.outrosCustos.lineFallback}
-              value={c.value}
-            />
-          ))}
-          <BreakdownRow label={t.results.custoTotal} value={result.custoTotal} emphasis="total" />
-          {/* How each sale price derives from custo_total via markup (FR-033). */}
-          <BreakdownRow
-            label={t.results.varejo}
-            sublabel={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
-            value={result.precoVarejo}
-            emphasis="accent"
-          />
-          <BreakdownRow
-            label={t.results.atacado}
-            sublabel={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
-            value={result.precoAtacado}
-          />
-          {/* US5 (FR-907) — "Preços por canal" folded into the SAME Card: no second titled
-              section, no duplicated total/markup lines above, nothing lost (every channel still
-              shows anúncio + líquido for varejo e atacado). Absent entirely with no active
-              channel (toggle OFF / no slots), exactly as the standalone section was before. */}
-          {channelOutcomes.length > 0 && (
-            <div className="flex flex-col gap-4" style={channelDivider}>
-              <p style={sectionLabel}>{t.channels.pricesTitle}</p>
-              <ChannelPriceBlocks values={values} channelOutcomes={channelOutcomes} />
-            </div>
-          )}
+        <Card padding="md" className="flex flex-col gap-3">
+          <div className="flex flex-col">
+            {proportionRows.map((row, i) => (
+              <BreakdownRow
+                key={i}
+                label={row.label}
+                value={row.value}
+                color={row.color}
+                emphasis={row.emphasis}
+              />
+            ))}
+            <BreakdownRow label={t.results.custoTotal} value={result.custoTotal} emphasis="total" />
+          </div>
+          <CostProportionBar rows={proportionRows} custoTotal={result.custoTotal} />
         </Card>
       </div>
+
+      {/* 019/PR-F (10a/10e) — o primitivo que faltava construir (research §I): a bandeja
+          Varejo|Atacado governa o cartão grande, a linha-resumo do outro nível e os números de
+          cada marketplace. `radiogroup`, não `tablist`: a escolha é um VALOR que troca o que os
+          cartões abaixo mostram, não um painel controlado por `aria-controls` — o mesmo padrão já
+          usado pelo `Segmented` de tema/modo-de-máquina neste arquivo (a prancheta transcreve
+          `role="tablist"` na marcação estática, mas a semântica a11y não é copy; ver docstring do
+          próprio `Segmented`). */}
+      <Segmented<PriceLevel>
+        options={[
+          { id: "varejo", label: t.captions.varejo },
+          { id: "atacado", label: t.captions.atacado },
+        ]}
+        value={level}
+        onChange={setLevel}
+        ariaLabel={t.sections.priceLevelLabel}
+        role="radiogroup"
+        split
+        data-testid="price-level-segmented"
+      />
+
+      {/* 019/PR-F (10a/10c) — "Preços por marketplace" agora é seção PRÓPRIA, ANTES dos cartões
+          finais (o cartão é o fim da leitura). Ausente por completo sem canal ativo (toggle OFF /
+          nenhum slot) OU sem Premium (`channelOutcomes=[]` que a page já passa) — nunca um
+          contêiner borrado ou vazio: a seção simplesmente não existe no DOM (10c, "Sem Premium"). */}
+      {channelOutcomes.length > 0 && (
+        <div className="flex flex-col gap-3" data-testid="marketplace-prices-section">
+          <span style={kickerLabel}>{t.channels.pricesTitle}</span>
+          <div className="tf-marketplace-cards">
+            <ChannelPriceBlocks values={values} channelOutcomes={channelOutcomes} level={level} />
+          </div>
+          <p style={captionText}>{t.sections.marketplaceLevelHint}</p>
+        </div>
+      )}
 
       {/* 015/A8 ([F03a-003], decisão do dono 2026-08-03) — atacado acima do varejo é ENTRADA
           VÁLIDA: o motor calcula, nada é recusado, e a UI avisa. A comparação é sobre os PREÇOS
@@ -815,42 +968,22 @@ export function PriceResults({
         <Alert tone="info">{t.avisoAtacadoAcimaDoVarejo}</Alert>
       )}
 
-      {/* (5) The suggested prices — the user's final takeaway, so they close the screen.
-          Both retail + wholesale are always shown together (SC-010). */}
-      {/* 015/A6 ([F11a-002]) — was a hardcoded `1fr 1fr` at EVERY width. At 360px that left each
-          price card ~108px of content for a value needing 124px, and the number was the thing that
-          gave: it broke mid-digit (`950.096` on two lines) so the page would not overflow. The
-          constraint was never the font size — it was the two-column grid. `auto-fit` + a 160px
-          floor keeps both prices side by side wherever they fit and stacks them at 360, where a
-          six-figure price then has room to spare. SC-010 is untouched: both are still always
-          shown together, now one above the other instead of one beside the other. */}
-      <div
-        style={{
-          display: "grid",
-          // 210px = the 147px a six-figure price needs at 36px + the card's 48px of padding,
-          // plus headroom for font fallback. Measured, not guessed: a 160px floor fixed 360px
-          // and left 390px still scrolling 24px, because two columns still fit there.
-          gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))",
-          gap: "var(--space-3)",
-        }}
-      >
-        {/* T016 — final price cards read centered (label/amount/caption), not left-aligned. */}
+      {/* (5) The suggested price — the user's final takeaway, so they close the screen.
+          019/PR-F (10a/10d/10e, decisão do dono 28/08): um preço grande por vez agora — o par de
+          cartões de peso igual (015/A6) SAI; o outro nível vira a linha-resumo abaixo, no MESMO
+          tamanho de texto que o detalhamento usa (BreakdownRow), nunca escondido. */}
+      <div className="flex flex-col gap-3">
+        {/* T016 — final price card reads centered (label/amount/caption), not left-aligned. */}
         <PriceHero
-          label={t.results.varejo}
-          value={result.precoVarejo}
-          caption={`${t.captions.markup} ${values.markupVarejoPct || "0"}%`}
-          tone="accent"
-          size="md"
+          label={t.results[level]}
+          value={heroPrice}
+          caption={`${t.captions.markup} ${heroMarkupPct}%`}
+          tone={HERO_TONE[level]}
+          size={heroSizeFor(heroPrice)}
           center
+          data-testid="price-hero"
         />
-        <PriceHero
-          label={t.results.atacado}
-          value={result.precoAtacado}
-          caption={`${t.captions.markup} ${values.markupAtacadoPct || "0"}%`}
-          tone="energy"
-          size="md"
-          center
-        />
+        <BreakdownRow label={summaryText} value={summaryPrice} data-testid="price-summary-line" />
       </div>
     </>
   );
@@ -1298,28 +1431,32 @@ function ChannelSlot({
  *  líquido — flagged when negative when a typed freight exceeds the margin. hotfix-016-a2 (R4): a
  *  freight line exists ONLY when the seller typed `freightCost` (FR-111b — "declarado OU com
  *  valor"); the old "Shopee co-funded voucher" wording described the 005 model the sources refuted
- *  (art. 23431: the coupon subsidy is Shopee's cost, universal — never the seller's). */
+ *  (art. 23431: the coupon subsidy is Shopee's cost, universal — never the seller's).
+ *
+ *  019/PR-F (T142, prancheta 10a/10c) — no caption "Varejo"/"Atacado" própria mais: o `<Segmented
+ *  split>` de `PriceResults` já governa qual nível é este, e repeti-lo aqui seria a mesma
+ *  informação duas vezes. O aviso de frete (`freightHint`) migra da legenda solta que existia
+ *  ABAIXO do bloco para o `sublabel` da própria linha "Frete" (10c: `tf-brow--muted` com o
+ *  sublabel embutido) — um único lugar em vez de dois. */
 function ChannelLevelRows({
-  caption,
   anuncio,
   liquido,
   freight,
-  marginTop,
 }: {
-  caption: string;
   anuncio: number;
   liquido: number;
   freight: number;
-  marginTop?: boolean;
 }) {
   return (
     <>
-      <p style={marginTop ? { ...captionText, marginTop: "var(--space-2)" } : captionText}>
-        {caption}
-      </p>
       <BreakdownRow label={t.results.precoAnuncio} value={anuncio} />
       {freight > 0 && (
-        <BreakdownRow label={t.channels.freightLine} value={-freight} emphasis="muted" />
+        <BreakdownRow
+          label={t.channels.freightLine}
+          sublabel={t.channels.freightHint}
+          value={-freight}
+          emphasis="muted"
+        />
       )}
       <BreakdownRow
         label={t.results.recebidoLiquido}
@@ -1333,33 +1470,33 @@ function ChannelLevelRows({
 
 /** One markup level the engine REFUSED to price (SC-817 / FR-014a): the announce it would need
  *  falls in a window the marketplace publishes no fee for, so there is no rate to charge and no
- *  líquido to promise. Saying that costs one line; printing R$ 0,00 would cost the seller a sale. */
-function UnpricedLevel({ caption, marginTop }: { caption: string; marginTop?: boolean }) {
+ *  líquido to promise. Saying that costs one line; printing R$ 0,00 would cost the seller a sale.
+ *  019/PR-F — no caption própria pela mesma razão de `ChannelLevelRows` acima. */
+function UnpricedLevel() {
   return (
-    <>
-      <p style={marginTop ? { ...captionText, marginTop: "var(--space-2)" } : captionText}>
-        {caption}
-      </p>
-      <p style={warnCaption} data-testid="unpriced-level">
-        {t.channels.unpricedBand}
-      </p>
-    </>
+    <p style={warnCaption} data-testid="unpriced-level">
+      {t.channels.unpricedBand}
+    </p>
   );
 }
 
-/** "Preços por canal" ROWS: every slot's anúncio + líquido for varejo e atacado, shown together
- *  so the seller compares channels at a glance. A slot with an inline error shows a note, not
- *  stale prices. 016/US5 (FR-907) — this used to own its own titled Card; it is now the tail of
- *  `PriceResults`' single "Como chegamos no preço" Card (the caller supplies the heading), so the
- *  descriptives live in ONE section instead of two. Returns `null` with no active channel — same
- *  visibility rule as before (toggle OFF / no slots ⇒ nothing renders, t.channels.pricesTitle
- *  included, since the caller only renders its wrapping heading when this has content). */
+/** "Preços por marketplace" cards: every slot's anúncio + líquido, one `level` at a time (the
+ *  `<Segmented split>` in `PriceResults` governs it — SAME `level` as the hero + the summary
+ *  line). A slot with an inline error shows a note, not stale prices.
+ *
+ *  019/PR-F (T142, prancheta 10a/10d) — was folded into the SAME "Como chegamos no preço" Card
+ *  (016/US5, FR-907); now it is its OWN section (10a: "vira seção própria"), and each channel is
+ *  its OWN `<Card>` (10d: a two-column grid at ≥1024px via `.tf-marketplace-cards`, one column
+ *  below that) instead of a `channelDivider`-separated list inside one big card. Returns `null`
+ *  with no active channel — the caller only renders the wrapping section when this has content. */
 function ChannelPriceBlocks({
   values,
   channelOutcomes,
+  level,
 }: {
   values: CalcFormValues;
   channelOutcomes: ChannelSlotOutcome[];
+  level: PriceLevel;
 }) {
   if (channelOutcomes.length === 0) return null;
   return (
@@ -1372,52 +1509,47 @@ function ChannelPriceBlocks({
         // Three states: a valid priced channel shows its rows; a valid slot with no fee yet shows
         // a hint (base==anúncio rows would just echo the headline); a bad slot shows its note.
         const priced = r && r.error === null && oc.hasFee;
+        // SC-817 — a level whose announce falls outside every published band is NOT priced.
+        // `?? 0` would have printed R$ 0,00 under a "Referência" seal; the absence of a published
+        // fee is said in words, and only for the LEVEL SELECTED (varejo and atacado can land on
+        // different sides of a gap, but only one shows at a time now). `r` non-null is what
+        // `priced` already proved — `fields` re-narrows it once, so `anuncio`/`liquido` type as
+        // `number | null` (never `undefined`, matching `ChannelResult`'s own shape).
+        const fields = r
+          ? level === "varejo"
+            ? {
+                anuncio: r.precoAnuncioVarejo,
+                liquido: r.recebidoLiquidoVarejo,
+                freight: r.freightCostVarejo,
+              }
+            : {
+                anuncio: r.precoAnuncioAtacado,
+                liquido: r.recebidoLiquidoAtacado,
+                freight: r.freightCostAtacado,
+              }
+          : null;
         return (
-          <div
-            key={i}
-            className="flex flex-col gap-1"
-            data-testid="channel-price"
-            style={i > 0 ? channelDivider : undefined}
-          >
-            <p style={sectionLabel}>
+          <Card key={i} padding="md" className="flex flex-col gap-2" data-testid="channel-price">
+            <p style={channelCardTitle}>
               {name}
               {modName && <span style={channelModality}> · {modName}</span>}
             </p>
-            {priced ? (
-              <>
-                {/* SC-817 — a level whose announce falls outside every published band is NOT
-                      priced. `?? 0` would have printed R$ 0,00 under a "Referência" seal; the
-                      absence of a published fee is said in words, and only for the level it hits
-                      (varejo and atacado can land on different sides of a gap). */}
-                {r.precoAnuncioVarejo === null || r.recebidoLiquidoVarejo === null ? (
-                  <UnpricedLevel caption={t.captions.varejo} />
+            <div className="flex flex-col">
+              {priced && fields ? (
+                fields.anuncio === null || fields.liquido === null ? (
+                  <UnpricedLevel />
                 ) : (
                   <ChannelLevelRows
-                    caption={t.captions.varejo}
-                    anuncio={r.precoAnuncioVarejo}
-                    liquido={r.recebidoLiquidoVarejo}
-                    freight={r.freightCostVarejo}
+                    anuncio={fields.anuncio}
+                    liquido={fields.liquido}
+                    freight={fields.freight}
                   />
-                )}
-                {r.precoAnuncioAtacado === null || r.recebidoLiquidoAtacado === null ? (
-                  <UnpricedLevel caption={t.captions.atacado} marginTop />
-                ) : (
-                  <ChannelLevelRows
-                    caption={t.captions.atacado}
-                    anuncio={r.precoAnuncioAtacado}
-                    liquido={r.recebidoLiquidoAtacado}
-                    freight={r.freightCostAtacado}
-                    marginTop
-                  />
-                )}
-                {(r.freightCostVarejo > 0 || r.freightCostAtacado > 0) && (
-                  <p style={captionText}>{t.channels.freightHint}</p>
-                )}
-              </>
-            ) : (
-              <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>
-            )}
-          </div>
+                )
+              ) : (
+                <p style={captionText}>{oc.result ? t.channels.noFeeHint : t.channels.errorRow}</p>
+              )}
+            </div>
+          </Card>
         );
       })}
     </>

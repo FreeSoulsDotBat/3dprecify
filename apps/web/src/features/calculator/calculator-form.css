@@ -117,6 +117,26 @@
   gap: var(--space-3);
 }
 
+/* 019/PR-F (T142, prancheta 10d) — "Preços por marketplace": um cartão por canal, empilhados
+   abaixo do breakpoint desktop (a coluna estreita que a conta já assume até 1024px) e em grade de
+   duas colunas a partir dele — a mesma medida de `.tf-calc-grid` acima, mas para os cartões DENTRO
+   do rodapé, não para as duas colunas do formulário. N canais preenchem a grade em linhas; a
+   prancheta exemplifica com dois. */
+.tf-marketplace-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+@media (min-width: 1024px) {
+  .tf-marketplace-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+  }
+}
+
 /* 019/PR-C (T056, prancheta 14f) — o wrapper de célula que faz o `<Aviso>` crescer DENTRO do
    grid item, sem virar um segundo item: `.tf-costs-grid`/`gridCard` tratam cada FILHO DIRETO
    como uma célula, então `Field` + `Aviso` juntos aqui (em vez de soltos como irmãos do grid)

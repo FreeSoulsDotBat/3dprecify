@@ -182,8 +182,10 @@ describe("recording an E4 snapshot from an AD_HOC/PRODUCT scenario (US7)", () =>
   it("freezes exactly the displayed totals — byte-identical to what is on screen", async () => {
     renderPage();
     await openScenario(AD_HOC_SCENARIO.name);
-    const displayedVarejo = screen.getAllByText(/R\$\s*30,90/)[0];
-    expect(displayedVarejo).toBeInTheDocument();
+    // 019/PR-F (T142, adoção) — o preço final agora quebra em spans (R$/inteiro/decimais) dentro
+    // do cartão `price-hero`; `toHaveTextContent` concatena os nós descendentes, o que um
+    // `getByText` de string única não faz mais.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*30,90/);
 
     fireEvent.click(screen.getByRole("button", { name: h.saveAction }));
     fireEvent.click(await screen.findByRole("button", { name: h.saveSheetSubmit }));

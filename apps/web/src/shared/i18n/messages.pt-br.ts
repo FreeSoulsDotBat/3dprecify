@@ -79,6 +79,11 @@ export const messages = {
       // 10a/10e — a linha-resumo do preço que NÃO está no cartão grande ("Atacado · markup 30%").
       summaryLine: "{nivel} · markup {pct}%",
       marketplace: "Marketplace",
+      // 019/PR-F (T142) — a T141 listou as quatro frases visíveis do lote 10 e não capturou esta:
+      // o `aria-label` do `<Segmented split>` Varejo|Atacado, presente byte a byte na marcação
+      // congelada das 10a/10b/10c/10d/10e (`aria-label="Nível de preço"`). Transcrita agora, da
+      // mesma cópia congelada — não é copy nova, é a que a T141 deixou passar.
+      priceLevelLabel: "Nível de preço",
     },
     // Section info tooltips (E1 homologation item 8): honest, derived from the spec
     // formulas — never copied from the third-party Amado3D sheet. `label` names the ⓘ
@@ -705,8 +710,10 @@ export const messages = {
     // requisição nova), e por isso o vazio dela fala de busca, não de catálogo vazio.
     searchLabel: "Buscar no catálogo",
     searchPlaceholder: "Buscar no catálogo…",
-    searchEmptyTitle: "Nada encontrado para essa busca",
-    searchEmptyBody: "Tente outro termo, ou limpe a busca para ver tudo de novo.",
+    // 019/PR-F (T098, Q1/Q2 27/08) — as duas strings sem `{termo}` (`searchEmptyTitle`/
+    // `searchEmptyBody`) colapsam nesta, no molde de `historico.searchEmpty` (`:1095`): reaproveita
+    // a frase existente ("Nada encontrado") em vez de inventar uma nova.
+    searchEmpty: "Nada encontrado para “{termo}”.",
     searchClear: "Limpar busca",
     detailFilament: "Filamento salvo",
     detailPrinter: "Impressora salva",

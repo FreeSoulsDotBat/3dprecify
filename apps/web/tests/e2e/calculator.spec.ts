@@ -85,13 +85,15 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
   await page.getByLabel(f.markupVarejo).fill("50");
   await page.getByLabel(f.markupAtacado).fill("30");
 
-  // 015/A11 — `.first()` porque o valor aparece DUAS vezes, e a segunda e aritmetica do modelo, nao
-  // duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no canal e por
-  // construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao vem antes no
-  // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
+  // 019/PR-F (T142, adoção) — a linha de derivação "Preço varejo"/"Preço atacado" SAIU da conta
+  // (10a); o cartão final agora quebra o valor em spans (R$/inteiro/decimais), então um
+  // `getByText` de string exata não o vê mais — `.first()` continua certo (o canal AMAZON
+  // pré-precificado do 015/A11 ainda ecoa o varejo na sua linha "Recebido líquido", e o atacado
+  // continua na linha-resumo), mas a asserção precisa tolerar a falta de espaço entre "R$" e o
+  // número dentro do cartão (regex, não string).
   await expect(page.getByText("R$ 27,55")).toBeVisible(); // custo_total breakdown row
-  await expect(page.getByText("R$ 41,33").first()).toBeVisible(); // varejo derivation row
-  await expect(page.getByText("R$ 35,82").first()).toBeVisible(); // atacado derivation row
+  await expect(page.getByText(/R\$\s*41,33/).first()).toBeVisible(); // varejo (cartão ou canal)
+  await expect(page.getByText(/R\$\s*35,82/).first()).toBeVisible(); // atacado (linha-resumo)
 
   // FR-021 / analyze A1: the corrected model carries NO tax/imposto input.
   await expect(page.getByText(/imposto/i)).toHaveCount(0);
@@ -126,7 +128,7 @@ test("app shell + calculator work offline once the SW has precached (FR-003/FR-0
     .fill("100");
   // With the remaining pre-filled defaults (5 h · 0,12 kW · tarifa 1 · máquina 4000/3600 h —
   // 016/PR-C homologação B1) this yields custo_total R$ 16,16 → varejo R$ 24,24.
-  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
+  await expect(page.getByText(/R\$\s*24,24/).first()).toBeVisible(); // 019/PR-F (T142, adoção) — cartão em spans, regex tolera a falta de espaço
 
   await context.setOffline(false);
 });
@@ -157,7 +159,7 @@ test("signed-out user computes offline with a full breakdown — no save/export,
   // DOM (o proprio componente diz "shown BEFORE the suggested prices"), entao `.first()` e ela.
   // 016/PR-C homologação B1 — seed custo_total R$ 16,16 / varejo R$ 24,24 (machine 4000/3600h).
   await expect(page.getByText("R$ 16,16")).toBeVisible(); // custo_total breakdown row (seed)
-  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // varejo for the seed
+  await expect(page.getByText(/R\$\s*24,24/).first()).toBeVisible(); // 019/PR-F (T142, adoção) — cartão em spans, regex tolera a falta de espaço
 
   // SC-009: nothing is saved/exported and there is no upgrade/paywall CTA. The free-tier
   // note is an honest statement (not a call to action) and stays visible.
@@ -192,7 +194,7 @@ test("US3: a failed fee refresh shows a non-blocking retry; the calculator still
   await page.getByLabel(t.fields.rollWeight).fill("1");
   await page.getByRole("textbox", { name: t.fields.grams, exact: true }).fill("100");
   // 016/PR-C homologação B1 — seed varejo R$ 24,24.
-  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // varejo from the seed — never a blank grid // .first(): ver nota do A11 (o liquido do canal = varejo, por construcao)
+  await expect(page.getByText(/R\$\s*24,24/).first()).toBeVisible(); // 019/PR-F (T142, adoção) — cartão em spans, regex tolera a falta de espaço
 
   // Retry now succeeds → the notice clears (the served catalog is adopted).
   failFetch = false;
@@ -241,7 +243,9 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
   const slot1 = page.getByTestId("channel-slot").nth(1);
   await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
 
-  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4); // 2 channels × 2 levels
+  // 019/PR-F (T142, adoção) — o `<Segmented split>` Varejo|Atacado agora governa qual nível cada
+  // marketplace mostra; um cartão por canal, UM nível por vez (default varejo).
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2); // 2 channels × 1 level
   await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded); // the long seal wraps
   await expect(costRows.nth(1).getByText(t.validation.negative)).toBeVisible();
 
@@ -274,16 +278,17 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
   await slot1.getByLabel(/^Comissão(?! mínima)/).fill("20");
   await slot1.getByLabel(t.channels.fixedFee).fill("4");
 
-  // Both channels compute together: each shows anúncio + líquido for varejo e atacado
-  // (2 channels × 2 markup levels = 4 "Preço para anunciar" rows).
+  // Both channels compute together: each shows anúncio + líquido for the SELECTED level (019/PR-F,
+  // T142 adoção — o Segmented Varejo|Atacado troca as duas, nunca mostra as duas juntas; default
+  // varejo ⇒ 2 canais × 1 nível = 2 linhas, não mais as 4 de antes).
   await expect(page.getByTestId("channel-price")).toHaveCount(2);
-  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
-  await expect(page.getByText(t.results.recebidoLiquido)).toHaveCount(4);
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
+  await expect(page.getByText(t.results.recebidoLiquido)).toHaveCount(2);
 
   // Remove the Shopee slot → only its rows drop; Mercado Livre keeps computing.
   await slot1.getByRole("button", { name: t.channels.removeChannel }).click();
   await expect(page.getByTestId("channel-slot")).toHaveCount(1);
-  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(1);
 
   // Re-add Shopee, then set Mercado Livre's commission to 100% — it errors ONLY its slot.
   await page.getByRole("button", { name: t.channels.addChannel }).click();
@@ -607,8 +612,9 @@ test("US6 (premium): full multi-channel + sub-costs surface — no bad numbers, 
   await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("3,00");
   await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("1,005"); // rounds HALF_UP → 1,01
 
-  // Everything computes together: both channels price both markup levels (2×2 anúncio rows).
-  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
+  // Everything computes together: both channels price the SELECTED markup level (019/PR-F, T142
+  // adoção — Segmented default varejo ⇒ 2×1 anúncio rows, not the old 2×2 side by side).
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
   await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
   await expect(page.getByText("R$ 1,01")).toBeVisible(); // the HALF_UP-rounded blank-named line
 
@@ -619,7 +625,7 @@ test("US6 (premium): full multi-channel + sub-costs surface — no bad numbers, 
   // …and back on restores BOTH slots with their fees/prefill intact (RHF state survives).
   await page.getByRole("switch", { name: t.channels.includeToggle }).click();
   await expect(page.getByTestId("channel-slot")).toHaveCount(2);
-  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(4);
+  await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
 
   // SC-109's numeric half still holds for the full premium surface: never a NaN/Infinity/#DIV!.
   await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);

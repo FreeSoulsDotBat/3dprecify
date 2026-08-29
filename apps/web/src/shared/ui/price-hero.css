@@ -33,6 +33,16 @@
   border-color: transparent;
   color: var(--text-on-accent);
 }
+/* 019/PR-F (T142, prancheta 10a/10d) — o cartão de preço no nível ESCOLHIDO que não é o accent
+   (o atacado, quando selecionado no Segmented varejo/atacado): mesmo tamanho do accent, superfície
+   neutra — "a diferença entre os dois é cor, não corpo". Substitui o antigo `tone="energy"` cheio
+   (var(--energy), fundo colorido) que os dois cartões de peso igual usavam antes desta fatia
+   (10e "hoje" — o par que sai). */
+.tf-price--neutral {
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+  color: var(--text-strong);
+}
 .tf-price--plain {
   background: transparent;
   border: none;

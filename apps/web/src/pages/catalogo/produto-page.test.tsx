@@ -181,6 +181,16 @@ afterEach(() => {
   useSessionStore.setState({ status: "anonymous", user: null });
 });
 
+// 019/PR-F (T142, prancheta 10): o cartão grande divide o valor em `tf-price__cur/int/dec`, então
+// "R$ 25,65" deixou de ser um nó de texto único — o matcher lê o `tf-price__amount` inteiro,
+// sem espaços (a lição da PR-C: âncoras por elemento, não por substring solta).
+function heroAmount(value: string) {
+  const want = value.replace(/\s/g, "");
+  return (_: string, el: Element | null) =>
+    el?.classList.contains("tf-price__amount") === true &&
+    (el.textContent ?? "").replace(/\s/g, "") === want;
+}
+
 describe("ProdutoPage — create (US6/T030)", () => {
   it("renders name + pickers + the calculator sections, recomputing live (seed R$ 24,24)", () => {
     renderPage();
@@ -190,7 +200,7 @@ describe("ProdutoPage — create (US6/T030)", () => {
     expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeInTheDocument();
     // Live recompute of the untouched defaults — same seed number as Calcular (FR-310). 016/PR-C
     // homologação B1 — the seed's varejo is now R$ 24,24 (machine 4000/3600h).
-    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(heroAmount("R$ 24,24")).length).toBeGreaterThan(0);
   });
 
   it("picking the saved refs pre-fills editable fields and recomputes the SC-305 number", () => {
@@ -205,7 +215,7 @@ describe("ProdutoPage — create (US6/T030)", () => {
 
     expect(screen.getByDisplayValue("110,00")).toBeInTheDocument();
     expect(screen.getByDisplayValue("1200,00")).toBeInTheDocument();
-    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(heroAmount("R$ 25,65")).length).toBeGreaterThan(0);
   });
 
   it("saves through the wire mapping and navigates back to the catalog", async () => {
@@ -292,7 +302,7 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
     expect(screen.getByRole("textbox", { name: pf.nameLabel })).toHaveValue("Vaso G");
     expect(screen.getByDisplayValue("110,00")).toBeInTheDocument();
     // R$ 25,65 comes from computeFromForm NOW, not from any persisted price (FR-310/FR-313).
-    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(heroAmount("R$ 25,65")).length).toBeGreaterThan(0);
   });
 
   it("an UNLINKED product shows the calm state + manual picker + editable last-known values", () => {
@@ -450,7 +460,7 @@ describe("ProdutoPage — gate não-active, inerte up front (019/PR-B T045, ex-0
     expect(saveBtn).toBeVisible();
     expect(saveBtn).toBeDisabled();
     // FR-409 — reads/recompute still work while lapsed.
-    expect(screen.getAllByText("R$ 25,65").length).toBeGreaterThan(0);
+    expect(screen.getAllByText(heroAmount("R$ 25,65")).length).toBeGreaterThan(0);
   });
 
   it("free-nunca-teve: mesma inércia, convite 'Assinar Premium'", () => {

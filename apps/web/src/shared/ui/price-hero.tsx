@@ -4,7 +4,7 @@ import { formatDecimal } from "@/shared/lib/decimal-ptbr";
 
 import "./price-hero.css";
 
-export type PriceHeroTone = "plain" | "accent" | "energy" | "inverse" | "success";
+export type PriceHeroTone = "plain" | "accent" | "energy" | "inverse" | "success" | "neutral";
 
 export interface PriceHeroProps extends HTMLAttributes<HTMLDivElement> {
   /** Eyebrow label, e.g. "Preço sugerido". */

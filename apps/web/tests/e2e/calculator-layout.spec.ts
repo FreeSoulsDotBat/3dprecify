@@ -1,3 +1,7 @@
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import { messages } from "../../src/shared/i18n/messages.pt-br";
@@ -272,6 +276,234 @@ test.describe("calculator — a legenda do subsídio de frete Shopee não transb
         return el.scrollWidth - el.clientWidth;
       });
       expect(overflow, `document horizontal overflow at ${width}px: ${overflow}px`).toBe(0);
+    });
+  }
+});
+
+// 019/PR-F (T142/T143, prancheta 10 — "Calculadora - A Conta e os Preços") — o rodapé redesenhado:
+// a conta termina no custo total, o `<Segmented split>` Varejo|Atacado governa um preço grande por
+// vez, e "Preços por marketplace" vira seção própria. Este bloco cobre a 10b (seis dígitos, sem
+// transbordo nos dois eixos, 360/390/1280/1920) e a 10d (720px centralizado a 1280).
+
+/** 10b — o preço que já quebrou no meio do dígito neste projeto (`950.096` em duas linhas a
+ *  360px, 015/A6). Material sozinho (energia/máquina/mão de obra/acabamento/falha zerados) com
+ *  markup 0% imprime EXATAMENTE R$ 950.096,00 no cartão grande — não um six-digit qualquer, o
+ *  mesmo número da prancheta (rollWeightKg=1kg, 1000 g = o rolo inteiro, custo do rolo =
+ *  950096,00 ⇒ material = custo_total = preço). */
+async function fillSixDigitPrice(page: Page): Promise<void> {
+  await fillNumeric(page, t.fields.costPerRoll, "950096");
+  await fillNumeric(page, t.fields.grams, "1000");
+  await fillNumeric(page, t.fields.avgPower, "0");
+  await fillNumeric(page, t.fields.machineValue, "0");
+  await fillNumeric(page, t.fields.markupVarejo, "0");
+}
+
+async function heroGeometry(page: Page): Promise<{
+  text: string;
+  cardOverflowX: number;
+  cardOverflowY: number;
+  amountOverflowX: number;
+  amountOverflowY: number;
+}> {
+  const card = page.getByTestId("price-hero");
+  await expect(card).toBeVisible();
+  return card.evaluate((el) => {
+    const amount = el.querySelector(".tf-price__amount") as HTMLElement | null;
+    return {
+      text: (amount?.textContent ?? "").trim(),
+      cardOverflowX: el.scrollWidth - el.clientWidth,
+      cardOverflowY: el.scrollHeight - el.clientHeight,
+      amountOverflowX: amount ? amount.scrollWidth - amount.clientWidth : 0,
+      amountOverflowY: amount ? amount.scrollHeight - amount.clientHeight : 0,
+    };
+  });
+}
+
+test.describe("calculator — o rodapé redesenhado (019/PR-F, T142/T143, prancheta 10)", () => {
+  for (const width of [360, 390, 1280, 1920]) {
+    test(`at ${width}px o preço de seis dígitos (R$ 950.096,00, 10b) não transborda em nenhum eixo`, async ({
+      page,
+    }, info) => {
+      const email = await signUpThrowaway(page, `calc-layout-rodape-${width}-${info.workerIndex}`);
+      grantPremium(email);
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/calcular");
+      await page.reload();
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+      await fillSixDigitPrice(page);
+
+      const geo = await heroGeometry(page);
+      // Non-vacuidade: prova que o preço realmente estressou a caixa (o número da prancheta),
+      // não um six-digit qualquer.
+      expect(geo.text, `esperava R$ 950.096,00, veio "${geo.text}"`).toContain("950.096");
+      expect(
+        geo.cardOverflowX,
+        `${width}px: o cartão do preço transborda X em ${geo.cardOverflowX}px`,
+      ).toBeLessThanOrEqual(0);
+      expect(
+        geo.cardOverflowY,
+        `${width}px: o cartão do preço transborda Y em ${geo.cardOverflowY}px`,
+      ).toBeLessThanOrEqual(0);
+      expect(
+        geo.amountOverflowX,
+        `${width}px: o número transborda X em ${geo.amountOverflowX}px`,
+      ).toBeLessThanOrEqual(0);
+      expect(
+        geo.amountOverflowY,
+        `${width}px: o número transborda Y em ${geo.amountOverflowY}px`,
+      ).toBeLessThanOrEqual(0);
+
+      const docOverflow = await page.evaluate(() => {
+        const el = document.scrollingElement ?? document.documentElement;
+        return el.scrollWidth - el.clientWidth;
+      });
+      expect(
+        docOverflow,
+        `${width}px: o documento transborda horizontalmente em ${docOverflow}px`,
+      ).toBeLessThanOrEqual(1);
+    });
+  }
+
+  test("at 1280px o bloco de resultado atravessa as duas colunas do formulário, ≤720px e centralizado (10d)", async ({
+    page,
+  }, info) => {
+    const email = await signUpThrowaway(page, `calc-layout-rodape-1280-centro-${info.workerIndex}`);
+    grantPremium(email);
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto("/calcular");
+    await page.reload();
+    await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+    await fillSixDigitPrice(page);
+
+    const geo = await page.evaluate(() => {
+      const hero = document.querySelector('[data-testid="price-hero"]') as HTMLElement;
+      // `PriceResults` é um Fragment (T142): o wrapper que envolve o cartão + a linha-resumo é
+      // um FILHO DIRETO de `.tf-calc-footer` — exatamente o seletor que `calculator-form.css`
+      // usa para o teto de 720px (`.tf-calc-footer > *`) e para a centralização
+      // (`.tf-calc-footer { align-items: center }`).
+      const wrapper = hero.parentElement as HTMLElement;
+      const footer = document.querySelector(".tf-calc-footer") as HTMLElement;
+      const w = wrapper.getBoundingClientRect();
+      const f = footer.getBoundingClientRect();
+      return {
+        width: w.width,
+        wrapperCenter: w.left + w.width / 2,
+        footerCenter: f.left + f.width / 2,
+      };
+    });
+    expect(
+      geo.width,
+      `o bloco de resultado tem ${geo.width}px, esperado ≤720px`,
+    ).toBeLessThanOrEqual(721);
+    expect(
+      Math.abs(geo.wrapperCenter - geo.footerCenter),
+      "o bloco de resultado não está centralizado no rodapé",
+    ).toBeLessThanOrEqual(2);
+  });
+});
+
+// ---- Evidência 1:1 do rodapé (T143) — só roda com PORTE_SCREENSHOTS=1; molde
+// `porte-screenshots-pr-d.spec.ts` (mesma disciplina: deviceScaleFactor 1, animations disabled,
+// medidas-pr-f.json FUNDIDO no afterAll — nunca sobrescrito, a armadilha da PR-C). ----------------
+
+const EVIDENCE_OUT = fileURLToPath(
+  new URL("../../../../specs/019-porte-design/evidencias/pr-f/", import.meta.url),
+);
+const THEMES = ["dark", "light"] as const;
+
+test.describe("PR-F — evidência 1:1 do rodapé (T143)", () => {
+  test.skip(!process.env.PORTE_SCREENSHOTS, "evidência sob demanda: PORTE_SCREENSHOTS=1");
+  test.use({ deviceScaleFactor: 1 });
+
+  async function setTheme(page: Page, theme: (typeof THEMES)[number]): Promise<void> {
+    await page.evaluate((th) => {
+      document.documentElement.dataset.theme = th;
+    }, theme);
+  }
+
+  const medidas: Record<string, unknown> = {};
+  async function shot(page: Page, chave: string): Promise<void> {
+    // O rodapé (10a) fica ABAIXO da dobra em todas as larguras que este bloco captura — sem rolar
+    // até o `price-hero`, `page.screenshot()` (viewport, não `fullPage`) fotografa só "Custos da
+    // peça" no topo, achado no PRIMEIRO run (rodape-390-dark.png mostrava o formulário, não a
+    // conta). `scrollIntoViewIfNeeded` é o mesmo padrão do molde `porte-screenshots-pr-d.spec.ts`.
+    await page.getByTestId("price-hero").scrollIntoViewIfNeeded();
+    await page.screenshot({ path: join(EVIDENCE_OUT, `${chave}.png`), animations: "disabled" });
+    medidas[chave] = {
+      viewport: page.viewportSize(),
+      overflowX: await page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    };
+  }
+
+  test.beforeAll(() => mkdirSync(EVIDENCE_OUT, { recursive: true }));
+  test.afterAll(() => {
+    const path = join(EVIDENCE_OUT, "medidas-pr-f.json");
+    let prev: Record<string, unknown>;
+    try {
+      prev = JSON.parse(readFileSync(path, "utf-8")) as Record<string, unknown>;
+    } catch {
+      prev = {};
+    }
+    writeFileSync(path, JSON.stringify({ ...prev, ...medidas }, null, 2) + "\n");
+  });
+
+  for (const width of [360, 390, 1280, 1920]) {
+    for (const theme of THEMES) {
+      test(`rodape-${width}-${theme}`, async ({ page }, info) => {
+        const email = await signUpThrowaway(
+          page,
+          `pr-f-rodape-${width}-${theme}-${info.workerIndex}`,
+        );
+        grantPremium(email);
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto("/calcular");
+        await page.reload();
+        await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+        await setTheme(page, theme);
+        await shot(page, `rodape-${width}-${theme}`);
+      });
+    }
+  }
+
+  for (const theme of THEMES) {
+    test(`rodape-atacado-390-${theme}`, async ({ page }, info) => {
+      const email = await signUpThrowaway(page, `pr-f-atacado-${theme}-${info.workerIndex}`);
+      grantPremium(email);
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.goto("/calcular");
+      await page.reload();
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+      const slot0 = page.getByTestId("channel-slot").first();
+      await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
+      await page
+        .getByTestId("price-level-segmented")
+        .getByRole("radio", { name: t.captions.atacado })
+        .click();
+      await setTheme(page, theme);
+      await shot(page, `rodape-atacado-390-${theme}`);
+    });
+
+    test(`rodape-seis-digitos-360-${theme}`, async ({ page }, info) => {
+      const email = await signUpThrowaway(page, `pr-f-seis-digitos-${theme}-${info.workerIndex}`);
+      grantPremium(email);
+      await page.setViewportSize({ width: 360, height: 900 });
+      await page.goto("/calcular");
+      await page.reload();
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+      await fillSixDigitPrice(page);
+      await setTheme(page, theme);
+      await shot(page, `rodape-seis-digitos-360-${theme}`);
+    });
+
+    test(`rodape-sem-premium-390-${theme}`, async ({ page }, info) => {
+      await signUpThrowaway(page, `pr-f-sem-premium-${theme}-${info.workerIndex}`);
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.goto("/calcular");
+      await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+      await setTheme(page, theme);
+      await shot(page, `rodape-sem-premium-390-${theme}`);
     });
   }
 });

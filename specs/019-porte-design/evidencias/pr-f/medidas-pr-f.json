@@ -1,0 +1,100 @@
+{
+  "rodape-360-dark": {
+    "viewport": {
+      "width": 360,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-360-light": {
+    "viewport": {
+      "width": 360,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-1280-dark": {
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-1280-light": {
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-1920-dark": {
+    "viewport": {
+      "width": 1920,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-1920-light": {
+    "viewport": {
+      "width": 1920,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-atacado-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-seis-digitos-360-dark": {
+    "viewport": {
+      "width": 360,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-sem-premium-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-atacado-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-seis-digitos-360-light": {
+    "viewport": {
+      "width": 360,
+      "height": 900
+    },
+    "overflowX": 0
+  },
+  "rodape-sem-premium-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 900
+    },
+    "overflowX": 0
+  }
+}
