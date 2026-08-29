@@ -818,3 +818,18 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   (`invalidNote`, resultado zerado, `avisoAtacadoAcimaDoVarejo` — os acentos que a prancheta corrige já estavam corrigidos —,
   `freightHint`, `negativeLiquido`, `noFeeHint`, a faixa sem tarifa).
 
+### T094 (baseline) · T090 · T091 — antes de tocar código (qa-software, 2026-08-29)
+
+- **Baseline** `evidencias/pr-f/baseline-mobile/`: gaveta "Minhas simulações" (2 salvas, uma com nota) e barra de contexto a 390 e
+  360 nos dois temas (8 PNGs, `animations: "disabled"`); `medidas-baseline.json`: `widthRatio()` de `/calcular` (o método de
+  `pages-desktop-width.spec.ts:17-29`) **1280 = 93,8% · 1440 = 93,3% · 1920 = 66,7%**, idêntico com e sem simulação aberta (a
+  lista ainda era gaveta), overflow 0 nos dois eixos em todas as combinações. É a referência da T093 ("mobile idêntico") e da
+  comparação desktop pós-T095.
+- **T090 (D1)**: as ocorrências REAIS de "Premium pausado" hoje são **6 vivas + 1 apagada** — `conta.planLapsed`,
+  `bom.lapsedTitle`, `bom.lapsedBanner`, `historico.lapsedBanner`, `scenarios.lapsedTitle`, `scenarios.writeLapsed`;
+  `catalogo.lapsedTitle` SAIU na PR-B (T038, prancheta 32e — migrou para `catalogo.reactivateBody`) e o teste registra o porquê.
+  Snapshot conjunto inline; **mutação**: "Premium Pausado" numa chave ⇒ 2 vermelhos; revertido.
+- **T091 (D2)**: `scenarios-list-sheet.tsx:413/:150` e `scenario-context-bar.tsx:233/:205` leem `t.renameSheetTitle`/`t.rename`
+  (prancheta 30b: "se um dia divergirem, vão divergir em silêncio") — guarda por referência de chave no fonte; **mutação**:
+  bifurcar para `t.rename` no título ⇒ vermelho; revertido, diff vazio.
+
