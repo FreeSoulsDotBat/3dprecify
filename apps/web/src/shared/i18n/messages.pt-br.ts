@@ -62,6 +62,22 @@ export const messages = {
       labor: "Mão de obra e custos",
       markup: "Markup",
       breakdown: "Como chegamos no preço",
+      // 019/PR-F (T141) — prancheta 10 ("Calculadora - A Conta e os Precos"), cópia congelada em
+      // `specs/019-porte-design/design/`, byte a byte. As frases dos seis estados da 10c JÁ existiam
+      // (invalidNote, resultadoZerado, avisoAtacadoAcimaDoVarejo já acentuado, freightHint,
+      // negativeLiquido, noFeeHint, a faixa sem tarifa) — só o que o lote 10 acrescenta entra aqui.
+      // 10a — o markup sobe para o cabeçalho da seção; a conta termina no custo total.
+      markupHeader: "markup {varejo}% no varejo · {atacado}% no atacado",
+      // 10a — a legenda da barra de proporção. A prancheta diz "…acima — metade do seu custo é
+      // material." e a 10d "O peso de cada custo no total. Metade do seu custo é material.": a
+      // segunda frase é EXEMPLO (50% = material), não copy fixa — registrada para o dono; até ele
+      // decidir, só a parte fixa é exibida.
+      proportionCaption: "O peso de cada custo no total. As cores são as das bolinhas acima",
+      // 10a — sob a seção de marketplaces, explicando o que o segmented governa.
+      marketplaceLevelHint:
+        "O marketplace mostra só o nível escolhido acima — trocar para Atacado troca os dois números.",
+      // 10a/10e — a linha-resumo do preço que NÃO está no cartão grande ("Atacado · markup 30%").
+      summaryLine: "{nivel} · markup {pct}%",
       marketplace: "Marketplace",
     },
     // Section info tooltips (E1 homologation item 8): honest, derived from the spec

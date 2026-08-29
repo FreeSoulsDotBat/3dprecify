@@ -797,3 +797,24 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
    própria — no modo navegação não existe "item aberto" inline); é um trade-off de engenharia marcado para revisão de design.
 10. A recusa de nome antes do submit está só no formulário do PRODUTO (17b); filamentos/impressoras/kits dependem do sufixo
     silencioso do servidor — estender exige mudar `CatalogPanelProps.renderForm` (3 painéis + testes). Fica para o dono.
+
+---
+
+## PR-F — Simulações desktop + as divergências (US7) · branch `019-pr-f-simulacoes` (do develop `6cbe1c3`, pós-merge do PR #62)
+
+### T094 (pranchetas) · T141 — a transcrição (2026-08-29)
+
+- **4 pranchetas congeladas** (`Simulacoes - A Estrategia Viva`, `As Escritas Congeladas` × 2 temas): as escuras verbatim via
+  DesignSync; as claras EXISTEM no remoto e foram lidas — diferem do escuro só pelos pares da T009 + o véu da 20a (`.55→.42`);
+  as locais saem da transformação com esse par (README). Hashes no README.
+- **Leituras**: a 20g (1280) se declara **"proposta, não leitura do código"** (coluna fixa de 300px "invenção" do desenhista) — a
+  DECISÃO 2 do dono manda a lista para a coluna larga de `/calcular` (T095); a 20g ainda mostra os dois preços lado a lado e uma
+  `tf-table` de marketplaces, ANTERIORES ao lote 10 — onde divergem, a 10d manda ("um preço grande por vez também aqui").
+  As Escritas (30a–30g) são as guardas D1/D2: 30b é o T091; 30e/30f trazem 3 das 7 frases "Premium pausado" do T090.
+- **T141** (prancheta 10, já congelada na PR-C): só 4 frases eram NOVAS — `markupHeader` "markup {varejo}% no varejo · {atacado}%
+  no atacado", `proportionCaption` "O peso de cada custo no total. As cores são as das bolinhas acima" (**a 2ª frase "metade do
+  seu custo é material" é EXEMPLO** — a 10d nem repete "bolinhas"; até o dono decidir uma regra para a frase dinâmica, só a parte
+  fixa é exibida), `marketplaceLevelHint`, `summaryLine` "{nivel} · markup {pct}%". As seis frases da 10c JÁ existiam
+  (`invalidNote`, resultado zerado, `avisoAtacadoAcimaDoVarejo` — os acentos que a prancheta corrige já estavam corrigidos —,
+  `freightHint`, `negativeLiquido`, `noFeeHint`, a faixa sem tarifa).
+
