@@ -53,6 +53,7 @@ import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { formatDayMonthPtBr } from "@/shared/lib/format-date";
+import { NAME_MAX, nameNormKey } from "@/shared/lib/name-norm";
 import { Alert, Button, Card, Field, PriceHero, Select, Spinner, toast } from "@/shared/ui";
 import { Frozen } from "@/shared/ui/frozen";
 import { PageHeader } from "@/widgets/page-header/page-header";
@@ -78,6 +79,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 const t = messages.calculator;
 const pf = messages.productForm;
 const catalogo = messages.catalogo;
+const cf = messages.catalogForm;
 
 export function ProdutoPage({
   productId,
@@ -276,15 +278,26 @@ export function ProdutoPage({
 
   const handleSave = async () => {
     setSubmitError(undefined);
-    const blankName = name.trim() === "";
-    setNameError(blankName ? pf.nameRequired : undefined);
+    const trimmedName = name.trim();
+    const blankName = trimmedName === "";
+    // 019/PR-D (T068/T076, achado do coordenador) — o mesmo intercepto do 17b/17d, agora no
+    // formulário do produto: nome repetido recusa ANTES do submit (nunca um POST/PUT que o
+    // servidor resolveria em silêncio com um sufixo — a recusa aqui é intencional, não a mesma
+    // regra do servidor). A lista carregada É a referência de unicidade; o próprio id sai da
+    // comparação (editar um produto sem mudar o nome não pode se recusar sozinho).
+    const nameConflict =
+      !blankName &&
+      products.items.some(
+        (p) => p.id !== editing?.id && nameNormKey(p.name) === nameNormKey(trimmedName),
+      );
+    setNameError(blankName ? pf.nameRequired : nameConflict ? cf.nameConflict : undefined);
     const slotsValid =
       channelOutcomes.every((o) => Object.keys(o.errors).length === 0) &&
       otherCostErrors.every((e) => !e);
     // Create references SAVED items (FR-310); edit may keep a degraded ref as values (US6-4).
     const linksValid = editing ? true : filamentId !== "" && printerId !== "";
-    if (blankName || !result || !slotsValid || !linksValid) {
-      if (!blankName) setSubmitError(pf.saveInvalid);
+    if (blankName || nameConflict || !result || !slotsValid || !linksValid) {
+      if (!blankName && !nameConflict) setSubmitError(pf.saveInvalid);
       return;
     }
     const body = formToProductIn({
@@ -410,7 +423,14 @@ export function ProdutoPage({
         const identityFields = (
           <>
             <Card padding="md" className="flex flex-col gap-3">
-              <Field label={pf.nameLabel} required error={nameError}>
+              <Field
+                label={pf.nameLabel}
+                required
+                error={nameError}
+                hint={cf.nameCounter
+                  .replace("{n}", String(name.length))
+                  .replace("{max}", String(NAME_MAX))}
+              >
                 {(p) => (
                   <div className="tf-inputwrap">
                     <input
@@ -419,11 +439,21 @@ export function ProdutoPage({
                       className="tf-input"
                       placeholder={pf.namePlaceholder}
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      maxLength={NAME_MAX}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        // A recusa é do CAMPO, então some assim que deixar de ser verdade — não
+                        // espera o próximo Salvar (mesma disciplina do 17b·2).
+                        setNameError(undefined);
+                      }}
                     />
                   </div>
                 )}
               </Field>
+              {/* 17b·2 — a dica some quando o erro NÃO é "nome repetido" (o `Field` compartilhado
+                  só mostra hint OU erro; a dica de apoio do conflito é uma segunda linha própria,
+                  simultânea ao erro, como o desenho pede). */}
+              {nameError === cf.nameConflict && <p style={captionText}>{cf.nameConflictHint}</p>}
             </Card>
 
             {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
