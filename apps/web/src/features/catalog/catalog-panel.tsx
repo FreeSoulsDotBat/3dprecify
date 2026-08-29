@@ -10,7 +10,6 @@ import { useIsListDense, useIsWide } from "@/shared/lib/use-is-wide";
 import {
   Alert,
   Button,
-  Card,
   Dialog,
   DialogContent,
   DialogDescription,
@@ -575,34 +574,42 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
           <p style={captionText}>{copy.count(list.items.length)}</p>
           {addButton()}
         </div>
-        <ul className="flex flex-col gap-2" style={{ listStyle: "none", margin: 0, padding: 0 }}>
+        {/* 019/PR-D (T076, prancheta 16a; achado do e2e T069 — o container não levava a classe):
+            a 390px a lista É a `tf-plist` de `shared/ui/plist.css` — linhas de 56px separadas por
+            um filete, não cartões (com moldura o nome quebrava em três linhas e cabiam 4 itens na
+            dobra). A linha inteira é o alvo de `openEdit`; os botões de ação ficam ao lado, fora
+            da linha, porque a ficha do produto não tem duplicar/excluir (a folha da 16e não está
+            nesta fatia). `truncate` na meta: `.tf-plist__meta` é `nowrap` sem corte, e um resumo
+            "Filamento · Impressora" comprido viraria transbordo horizontal da página (SC-003). */}
+        <ul className="tf-plist">
           {list.items.map((item) => (
-            <li key={item.id}>
-              <Card padding="sm" className="flex items-center gap-2">
-                <button
-                  type="button"
-                  className="min-w-0 flex-1 text-left"
-                  onClick={() => openEdit(item)}
-                >
-                  {/* 019/PR-D (T076) — mesma linha `tf-plist` (nome+meta à esquerda, preço+era+flag
-                      à direita) usada no mestre-detalhe; o `<button>` de fora continua o mesmo
-                      alvo de toque de sempre (nenhum teste de `openEdit` muda). */}
-                  <span className="flex w-full items-start justify-between gap-3">
-                    <span className="tf-plist__main">
-                      <span style={rowName}>{nameOf(item)}</span>
-                      <span style={rowSummary}>{summaryOf(item)}</span>
-                      {rowMeta?.(item) && <span style={rowSummary}>{rowMeta(item)}</span>}
-                      {noteOf?.(item) && (
-                        <span style={rowSummary} data-testid="row-note">
-                          {noteOf(item)}
-                        </span>
-                      )}
-                      {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
-                      {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+            <li key={item.id} className="flex items-center gap-1">
+              <button
+                type="button"
+                className="tf-plist__row min-w-0 flex-1"
+                onClick={() => openEdit(item)}
+              >
+                <span className="tf-plist__main">
+                  <span className="tf-plist__name">{nameOf(item)}</span>
+                  <span className="tf-plist__meta truncate">{summaryOf(item)}</span>
+                  {rowMeta?.(item) && (
+                    <span className="tf-plist__meta truncate">{rowMeta(item)}</span>
+                  )}
+                  {noteOf?.(item) && (
+                    <span className="tf-plist__meta truncate" data-testid="row-note">
+                      {noteOf(item)}
                     </span>
-                    {priceVal(item)}
-                  </span>
-                </button>
+                  )}
+                  {list.stale && (
+                    <span className="tf-plist__meta truncate">{catalogo.staleHint}</span>
+                  )}
+                  {gate === "lapsed" && (
+                    <span className="tf-plist__meta truncate">{catalogo.readOnlyHint}</span>
+                  )}
+                </span>
+                {priceVal(item)}
+              </button>
+              <span className="flex shrink-0 items-center">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -635,7 +642,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                 >
                   <Icon name="trash-2" size={18} aria-hidden />
                 </Button>
-              </Card>
+              </span>
             </li>
           ))}
         </ul>
