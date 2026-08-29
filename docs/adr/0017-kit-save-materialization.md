@@ -181,3 +181,38 @@ is to migrate E2 toward R under its own ADR — never to drag E3 back to eager-c
 - Accepted: a non-null `product_id` to a soft-deleted row (harmless, documented); D6 differs from E2;
   `_snapshot_line` running on every save is load-bearing (skipping it for product-linked lines would
   break the hard-purge CHECK safety) — pinned by test.
+
+## Emenda — 2026-08-29 (019/PR-D, T129): a sub-regra 3 passa a casar por `name_norm`
+
+**Status**: aplicada com o ADR-0033 (o dono pode reverter para "exato + (2)" no gate da PR-D).
+
+A sub-regra 3 acima diz, com todas as letras, **"No unique index is added"** — e a Opção C foi recusada
+em 2026-07-11 exatamente porque um índice único sobre `products(owner_uid, name)` mudaria a semântica do
+E2 e faria a migração falhar em contas com nomes duplicados. **O ADR-0033 §4 reabriu essa porta com as
+duas objeções endereçadas**: o índice é sobre `name_norm` (não sobre `name`), é **parcial**
+(`WHERE deleted_at IS NULL`), e a migração 0008 **desempata o legado com "(2)" em silêncio** antes de
+criá-lo — em vez de falhar. E a mudança de semântica que a Opção C temia deixou de ser efeito colateral:
+ela virou decisão explícita do dono (Q5 do clarify de 2026-08-26, conflito ⇒ renomeia, nunca recusa).
+
+Com a unicidade existindo, **manter o `_dedup_match` (`app/api/boms.py:294-309`) casando por `btrim(name)`
+exato vira uma armadilha**, e é este o motivo da emenda: uma linha ad-hoc "gancho" NÃO casaria com o
+produto vivo "Gancho" (case-sensitive), o serviço tentaria **materializar um produto novo**, e o índice
+recusaria a inserção com `IntegrityError` **dentro da transação atômica do kit** — que é a coisa que o
+ADR-0017 existe para proteger (SC-411: uma falha persiste NADA). O dono veria o kit inteiro morrer por
+causa de uma diferença de maiúscula.
+
+Portanto:
+
+1. **`_dedup_match` casa por `name_norm`** (`app.lib.name_norm.name_norm_key`), ainda filtrado a linhas
+   **vivas**. O resto da sub-regra 3 fica intacto: colisão com valores diferentes ⇒ a referência vence e
+   os valores tipados são **superados**, com honestidade, nunca em silêncio.
+2. A "case-sensitivity flag" que a sub-regra 3 registrava como revisível (~75%) está **resolvida**:
+   passa a ser insensível a maiúsculas e a acentos, pela mesma definição que o formulário e o índice usam.
+   O teste `test_dedup_is_case_sensitive` (`tests/test_boms.py:441`) documenta a regra ANTIGA e é
+   reescrito na PR-D — ele fica vermelho de propósito até lá.
+3. O sufixo de desempate **roda em SAVEPOINT** (`session.begin_nested()`), nunca na transação raiz: é o
+   que permite reagir ao `IntegrityError` sem abortar o save do kit (T065/T072).
+
+Consequência aceita: um kit ad-hoc "gancho" passa a REFERENCIAR o "Gancho" existente em vez de criar um
+quase-duplicado. É a leitura que o vendedor já tinha ("é o mesmo gancho"), e é a única compatível com um
+catálogo onde os dois nomes não podem mais coexistir.

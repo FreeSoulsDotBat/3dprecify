@@ -21,9 +21,11 @@ from typing import Annotated, Any, Literal
 
 from fastapi import APIRouter, Depends, status
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -34,6 +36,7 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
+from app.lib.name_norm import name_norm_key
 from app.models import Filament, Printer, Product
 from app.validation import (
     CEIL_GRAMS,
@@ -47,6 +50,12 @@ from app.validation import (
 )
 
 router = APIRouter(tags=["products"])
+
+#: 019/PR-D (ADR-0033 §4) — o índice único parcial que decide o conflito de nome desta tabela.
+#: Nomeado aqui porque é ele que o retry de sufixo reconhece: qualquer OUTRA violação de
+#: integridade continua subindo (um retry cego renomearia a linha por um erro que nada tem a ver
+#: com nome, e o vendedor veria "(2)" sem motivo).
+_NAME_INDEX = "uq_products_owner_name_norm"
 
 # 016/US10 (ADR-0026): `wasteGrams` was REMOVED from pricing-core in 4.0.0 — see the identical
 # rationale in `app/api/filaments.py::_RETIRED_WASTE_FIELD`.
@@ -200,7 +209,9 @@ class PrinterValues(CamelModel):
 
 
 class ProductIn(CamelModel):
-    name: str
+    # 019/PR-D (T072): teto só no pydantic — sem CHECK de comprimento no banco, que invalidaria
+    # o legado (ADR-0033 §Adendo 27/08 §3). Precedente: `scenarios.py:84`.
+    name: str = Field(max_length=NAME_MAX_CHARS)
     filament_id: uuid.UUID | None = None
     printer_id: uuid.UUID | None = None
     filament_values: FilamentValues | None = None
@@ -245,6 +256,13 @@ class ProductOut(CamelModel):
     include_marketplace: bool
     channels: list[dict[str, Any]]
     other_costs: list[dict[str, Any]]
+    #: 019/PR-D (ADR-0033 §3) — o número do ANÚNCIO, **declarado** pelo vendedor, e a data em que
+    #: ele o declarou. NÃO é preço calculado: o app nunca exibe um preço que ele mesmo calculou no
+    #: passado, e este payload segue sem nenhum campo derivado de cálculo (drift-guard é a prova).
+    #: `None` = acompanhando o custo. Não participa de kit, orçamento ou cenário — composição é
+    #: sempre pelo motor, no cliente.
+    seller_fixed_price: Decimal | None
+    seller_fixed_at: datetime | None
     created_at: datetime
     updated_at: datetime
 
@@ -299,6 +317,8 @@ def _to_out(row: Product, filament: Filament | None, printer: Printer | None) ->
         include_marketplace=row.include_marketplace,
         channels=row.channels,
         other_costs=row.other_costs,
+        seller_fixed_price=row.seller_fixed_price,
+        seller_fixed_at=row.seller_fixed_at,
         created_at=row.created_at,
         updated_at=row.updated_at,
     )
@@ -372,7 +392,12 @@ def _apply(
 ) -> None:
     """Write body → row. Linked refs re-snapshot from the LIVE row (D3 write rule (a));
     degraded refs persist the submitted editable overrides (US6-4)."""
+    # 019/PR-D (T072, ADR-0033 §4): este é o FUNIL de nome dos produtos — POST, PUT e a
+    # materialização de kit passam todos por aqui. `name_norm` é derivada agora, e o nome FINAL
+    # (com sufixo, se houver conflito) é escrito por `flush_with_unique_name`, que chama esta
+    # função de dentro do savepoint.
     row.name = body.name
+    row.name_norm = name_norm_key(body.name)
     piece = body.piece_inputs
     row.print_grams = piece.print_grams
     row.print_time_hours = piece.print_time_hours
@@ -504,8 +529,15 @@ async def create_product(
         raise _unresolvable("printerId")
     filament, printer = await _resolve_links(session, claims["uid"], body)
     row = Product(owner_uid=claims["uid"])
-    _apply(row, body, filament, printer)
-    session.add(row)
+    # A linha chega LIMPA ao helper: toda a escrita acontece dentro do savepoint
+    # (`app/api/naming.py` explica por que isso não é estilo, é requisito).
+    await flush_with_unique_name(
+        session,
+        row,
+        body.name,
+        index_name=_NAME_INDEX,
+        apply=lambda: _apply(row, body, filament, printer),
+    )
     await session.commit()
     await session.refresh(row)
     return _to_out(row, filament, printer)
@@ -538,10 +570,71 @@ async def update_product(
 ) -> ProductOut:
     row = await _owned(session, claims["uid"], product_id)
     filament, printer = await _resolve_links(session, claims["uid"], body)
-    _apply(row, body, filament, printer)
+    await flush_with_unique_name(
+        session,
+        row,
+        body.name,
+        index_name=_NAME_INDEX,
+        apply=lambda: _apply(row, body, filament, printer),
+    )
     await session.commit()
     await session.refresh(row)
     return _to_out(row, filament, printer)
+
+
+class ProductPatchIn(CamelModel):
+    """Corpo do `PATCH` — UM campo, e ele é obrigatório (019/PR-D · T073 · ADR-0033 §3).
+
+    `extra="forbid"` (que `CamelModel` não traz) para que um `price` contrabandeado seja um 422
+    honesto, nunca um ignorar calado. O campo é obrigatório porque um `PATCH` de corpo vazio não
+    tem intenção: fixar e desfixar são as duas escolhas, e `null` já é a segunda.
+    `sellerFixedAt` **não existe aqui** — quem carimba a data é o servidor (o único carimbo de
+    aparelho na casa é `device_quoted_at`, e o prefixo `device_` declara justamente que aquele o
+    servidor não verifica).
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid")
+
+    seller_fixed_price: Decimal | None
+
+    @field_validator("seller_fixed_price")
+    @classmethod
+    def _fixed_price(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
+        finite_non_negative(v, "sellerFixedPrice", CEIL_MONEY)
+        exponent = v.as_tuple().exponent
+        # O número é do VENDEDOR: `MONEY_SETTLED` (Numeric(12,2)) arredondaria a 3ª casa em
+        # silêncio, e arredondar o número dele é alterá-lo. 422 — a mesma regra de
+        # `price-observations`.
+        if not isinstance(exponent, int) or exponent < -2:
+            raise ValueError("sellerFixedPrice must have at most 2 decimal places")
+        return v
+
+
+@router.patch(
+    "/products/{product_id}",
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS, **VALIDATION_ERRORS},
+)
+async def fix_product_price(
+    product_id: str,
+    body: ProductPatchIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProductOut:
+    """Fixa (ou desfixa) o preço declarado pelo vendedor; nada mais desta linha é tocado."""
+    row = await _owned(session, claims["uid"], product_id)
+    row.seller_fixed_price = body.seller_fixed_price
+    # Desfixar zera a data junto: uma data de fixação sem fixação seria um fantasma na tela.
+    row.seller_fixed_at = datetime.now(UTC) if body.seller_fixed_price is not None else None
+    await session.commit()
+    await session.refresh(row)
+    filaments, printers = await _live_links(session, claims["uid"], [row])
+    return _to_out(
+        row,
+        filaments.get(row.filament_id) if row.filament_id else None,
+        printers.get(row.printer_id) if row.printer_id else None,
+    )
 
 
 @router.delete(

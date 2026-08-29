@@ -13,6 +13,7 @@ import {
   deleteFilamentApiV1FilamentsFilamentIdDelete,
   deletePrinterApiV1PrintersPrinterIdDelete,
   deleteProductApiV1ProductsProductIdDelete,
+  fixProductPriceApiV1ProductsProductIdPatch,
   type FilamentIn,
   type FilamentOut,
   listFilamentsApiV1FilamentsGet,
@@ -286,6 +287,33 @@ export function useUpdateProduct(): UseMutationResult<
   return useMutation({
     mutationFn: async ({ id, body }: { id: string; body: ProductIn }) => {
       const res = await updateProductApiV1ProductsProductIdPut(id, body);
+      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+      return res.data;
+    },
+    onSuccess: invalidate,
+  });
+}
+
+// 019/PR-D (T075, ADR-0033 §3) — fixar/desfixar o preço declarado pelo vendedor. Molde de
+// `useUpdateProduct`: invalida a lista de produtos (o recálculo lê `sellerFixedPrice` do
+// `ProductOut` fresco) — a atualização do cache IDB uid-keyed acontece pelo MESMO caminho das
+// outras mutações desta lista: a invalidação reabre `useCatalogList`, que refaz a leitura online e
+// persiste o resultado fresco (`persistCachedCatalog`, linha 111-113 acima) sob a mesma chave.
+export function useFixProductPrice(): UseMutationResult<
+  ProductOut,
+  ApiError,
+  { id: string; sellerFixedPrice: string | null }
+> {
+  const invalidate = useInvalidateCatalog("products");
+  return useMutation({
+    mutationFn: async ({
+      id,
+      sellerFixedPrice,
+    }: {
+      id: string;
+      sellerFixedPrice: string | null;
+    }) => {
+      const res = await fixProductPriceApiV1ProductsProductIdPatch(id, { sellerFixedPrice });
       if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
       return res.data;
     },

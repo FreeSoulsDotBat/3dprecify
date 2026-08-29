@@ -24,6 +24,7 @@ from .api.fee_catalog import router as fee_catalog_router
 from .api.filaments import router as filaments_router
 from .api.history import router as history_router
 from .api.me import router as me_router
+from .api.price_observations import router as price_observations_router
 from .api.printers import router as printers_router
 from .api.products import router as products_router
 from .api.scenarios import router as scenarios_router
@@ -132,6 +133,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     api.include_router(filaments_router)
     api.include_router(printers_router)
     api.include_router(products_router)
+    # 019/PR-D (ADR-0033 §2): a observação de preço — recurso SEPARADO do produto, para que
+    # `ProductOut` continue sem dinheiro derivado de cálculo. Escrita pelo cliente (o backend
+    # nunca recomputa, ADR-0008); o servidor valida e guarda.
+    api.include_router(price_observations_router)
     # E3 kits (premium persistence — the same gates; writes also materialize catalog products,
     # ADR-0017).
     api.include_router(boms_router)

@@ -50,6 +50,9 @@ _OWNED_TABLES = [
     "scenarios",
     "subscriptions",
     "billing_events",
+    # 019/PR-D (T062/N1): a 0008 é a dona de `price_observations` — sem esta linha o `downgrade()`
+    # dela ficaria "verificado" por um no-op (uma tabela fora da lista nunca é olhada).
+    "price_observations",
 ]
 
 

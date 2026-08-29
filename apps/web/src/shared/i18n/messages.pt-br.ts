@@ -720,12 +720,85 @@ export const messages = {
     // (ux-catalog §3, owner-ratified copy). No price, no date — same honesty bar as the teaser.
     reactivateTitle: "Reative o Premium",
     reactivateBody: "Reative o Premium para voltar a criar e editar. Seus itens estão salvos.",
+    // 019/PR-D (T074) — pranchetas 16 ("Lista e o Recalculo") e 17 ("O Item Aberto"), cópias
+    // congeladas em `specs/019-porte-design/design/`, byte a byte. O preço GRANDE é sempre o
+    // recomputado de hoje ou o número que o vendedor declarou (ADR-0033 §1); a observação guardada é
+    // contexto ("era"), nunca fonte.
+    // 16b — a faixa do topo. Só o plural foi desenhado; o singular segue o molde (lição do T031).
+    priceChangedCount: "{n} preços mudaram desde a sua última visita",
+    priceChangedOne: "1 preço mudou desde a sua última visita",
+    priceWasLabel: "era {valor}",
+    savedAtLabel: "Salvo em {data}",
+    savedAtLower: "salvo em {data}",
+    stoppedAtLabel: "Parou em {data}",
+    // 16b·2 / 17a / 17g — os cabeçalhos do item aberto (a legenda carrega o estado).
+    suggestedToday: "Preço sugerido hoje",
+    suggestedRetail: "Preço sugerido · varejo",
+    capRecalculated: "recalculado hoje · era {valor} quando você salvou",
+    capRecalculatedShort: "recalculado hoje · era {valor}",
+    capWasWhenSaved: "era {valor} quando você salvou, em {data}",
+    capUnchanged: "salvo em {data} · sem mudança de custo desde então",
+    keepPrice: "Manter {valor}",
+    acceptNewPrice: "Aceitar novo preço",
+    // 17c — o preço fixado (tom ATENÇÃO no aviso: spec US5 AC3; a 17c desenha info — a spec ganha).
+    fixedByYou: "Preço fixado por você",
+    fixedBadge: "Fixado",
+    fixedFlag: "fixado",
+    fixedSince: "desde {data}",
+    capFixed: "desde {data} · a conta hoje daria {hoje}",
+    fixedOverNote:
+      "A conta hoje daria {hoje} — {diff} acima. Enquanto estiver fixado, este preço não acompanha o custo do filamento.",
+    unfix: "Voltar a acompanhar o custo",
+    // 16f / 17g — o item parado (o insumo sumiu): "parado" é impedimento, "fixado" é escolha.
+    stoppedFlag: "parado",
+    stoppedPrice: "Preço parado",
+    capStopped: "de {data} · o filamento saiu dos seus materiais",
+    stoppedTitle: "Este preço parou em {data}",
+    stoppedBody:
+      "O filamento {filamento} foi apagado dos seus materiais, então não há custo novo para usar. {valor} é o valor de quando você salvou.",
+    chooseAnotherFilament: "Escolher outro filamento",
+    // 16e / 17a — ações do item.
+    openInCalculator: "Abrir no cálculo",
+    rename: "Renomear",
+    deleteProductBody:
+      "A peça sai do catálogo e o preço para de acompanhar o custo do filamento. Os cálculos que você já fez continuam no Histórico.",
+    // 17d — duplicar: o nome já vem com o sufixo; a cópia NÃO herda a data nem o preço fixado.
+    duplicateTitle: "Duplicar {nome}",
+    duplicateCopySuffix: " (cópia)",
+    copyNameLabel: "Nome da cópia",
+    inherits: "Herda",
+    inheritsBody: "peso, tempo, filamento, markup, marketplace e categoria",
+    notInherits: "Não herda",
+    notInheritsBody:
+      "a data — a cópia é salva hoje — nem o preço fixado, que volta a acompanhar o custo",
+    // 17e — a aba Kits: o kit herda o pior estado de qualquer peça sua.
+    kitMeta: "{n} peças · salvo em {data}",
+    kitStoppedCount: "{n} parada",
+    kitStoppedTitle: "O total do kit está parado em {data}",
+    kitStoppedBody:
+      "Uma das peças não pôde ser recalculada, então a soma também não. Resolva {peca} e o kit volta a acompanhar.",
+    kitLineStopped: "filamento apagado · parado",
+    // 16g — a tabela ≥1024px: a coluna "Antes" é o "era R$ X" promovido a coluna; travessão onde não mudou.
+    tableColName: "Peça",
+    tableColPrice: "Preço sugerido",
+    tableColBefore: "Antes",
+    tableColSavedAt: "Salvo em",
+    tableColActions: "Ações",
+    tableNoChange: "—",
   },
   // Catálogo create/edit form (Sheet) + delete confirm (Dialog). Numeric field LABELS reuse
   // `calculator.fields.*`; per-field VALIDATION reuses `calculator.validation.*` verbatim (FR-306).
   catalogForm: {
     newFilament: "Novo filamento",
     editFilament: "Editar filamento",
+    // 019/PR-D (T074) — prancheta 17b: as duas recusas do nome, ANTES do submit (a normalização
+    // local `shared/lib/name-norm.ts` é a mesma do servidor; o servidor renomeia em silêncio — Q5).
+    nameRequired: "A peça precisa de um nome para você achá-la depois",
+    nameConflict: "Este nome já está no catálogo",
+    nameConflictHint:
+      "Nomes repetidos são aceitos em Kits, onde a mesma peça aparece em vários; aqui eles impedem você de saber qual abriu.",
+    nameCounter: "{n} de {max} caracteres",
+    saveName: "Salvar nome",
     newPrinter: "Nova impressora",
     editPrinter: "Editar impressora",
     name: "Nome",
@@ -1350,6 +1423,9 @@ export const messages = {
     // Simulações (o destino, não "Adicionar" — "prometeria uma tela de cadastro que não existe").
     salvarFazParteDoPremium: "Salvar faz parte do Premium.",
     fazerUmCalculo: "Fazer um cálculo",
+    // 019/PR-D (T074) — brief US13 AC5 / prancheta 16d: sem consumidor nesta fatia (a 16d foi superada
+    // pela PR-B); transcrita porque a T074 a lista — o dono decide onde entra.
+    calculoContinuaGratis: "O cálculo continua grátis",
     SCENARIOS: {
       title: "Salve suas simulações",
       // Texto EXATO aprovado pelo dono (spec 016 US1-AC5) — não parafrasear.

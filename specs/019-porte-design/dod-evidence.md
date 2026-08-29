@@ -612,3 +612,188 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
 8. **Como no design**: ícone `wifi` verbatim do projeto (lucide, 4 paths) no `ICONS` + cópia estática;
    `Alert.icon` (prop aditiva) para o selo embutido; chevron rotacionado no "Ver fonte" (botão e link).
 
+---
+
+## PR-D — Recálculo do Catálogo (US5) · branch `019-pr-d-recalculo` (do develop `4ec2c0b`, pós-merge do PR #61) · **escalação OPUS** (ADR-0022)
+
+### T074 — a transcrição (2026-08-29)
+
+- **2 pranchetas congeladas** (`Catalogo - Lista e o Recalculo`, `Catalogo - O Item Aberto`; DesignSync, nenhuma
+  truncada; claras pela transformação da T009 — 11/11 e 7/7 blocos). Hashes em `design/README.md`.
+- **Copy transcrita** (`messages.catalogo`, `catalogForm`, `premiumTeaser`): `priceChangedCount` "{n} preços mudaram
+  desde a sua última visita" (+ `priceChangedOne` pelo molde — só o plural foi desenhado), `priceWasLabel` "era
+  {valor}", `savedAtLabel` "Salvo em {data}", os cabeçalhos do item aberto (17a/17g: `suggestedRetail`,
+  `capRecalculated`, `capUnchanged`, `capFixed`, `stoppedPrice`, `capStopped`), `fixedByYou` "Preço fixado por
+  você", `unfix` "Voltar a acompanhar o custo", `fixedOverNote` (17c), `keepPrice` "Manter {valor}",
+  `acceptNewPrice`, `duplicateCopySuffix` " (cópia)" + o diálogo da 17d (herda / não herda), `nameConflict` "Este
+  nome já está no catálogo" + `nameRequired` + `nameConflictHint` + `nameCounter` (17b), o item parado (16f/17g),
+  a aba Kits (17e), as colunas da `tf-table` (16g), `deleteProductBody` (16e), `calculoContinuaGratis` (brief
+  US13 AC5 — sem consumidor nesta fatia, ver abaixo).
+- **Leituras registradas** (divergências prancheta × decisões): (1) os lotes 16/17 são ANTERIORES ao lote 32 — a
+  16c ("Nada salvo ainda") e a 16d (gate do free) foram superadas pelo caminho sem parede da PR-B; NÃO transcritas;
+  (2) as abas "Peças · Kits" da 16a são as 4 abas do produto (32a confirma); (3) o contador "36 de 60" da 17b ×
+  teto 120 do adendo do ADR-0033 (decisão do dono 27/08) — 120 vence, `NAME_MAX = 120`; (4) a segunda frase do
+  aviso da 16b ("O filamento PLA Cinza subiu de R$ 89,90 para R$ 96,00/kg em 03/06") exige histórico de custo de
+  insumo que a observação de preço NÃO guarda — não transcrita, **lacuna para o dono**; (5) a 17c desenha a nota
+  do item fixado como `tf-aviso` (info) e a spec US5 AC3/T068 pedem tom ATENÇÃO — a spec ganha, copy verbatim;
+  (6) a 17b limita a edição do item aberto ao NOME ("quem muda números é a Calculadora") — o produto tem o
+  formulário completo do produto (`produto-page.tsx`), que a PR-D mantém (fora do escopo da US5).
+- **Fixture `name-norm.json`: 18 → 22 casos** (NBSP interno, BOM nas pontas, NEL PRESERVADO, `İ`), com a classe de
+  espaço explícita documentada no `$comment`.
+
+### T130 · T063(ts) · FE-1a — as folhas compartilhadas (dev-frontend, 2026-08-29)
+
+- `shared/lib/name-norm.ts`: `nameNorm`/`nameNormKey`/`NAME_MAX = 120`, vetor `contracts/fixtures/name-norm.json` **22/22** nos dois
+  idiomas (a classe de espaço é escrita com os MESMOS escapes de codepoint; NEL preservado nos dois). `use-is-wide.ts`: `LIST_DENSE_QUERY`
+  (1024) + `useIsListDense()` ao lado de `WIDE_QUERY` — **ADR-0031 §Emenda 2** escrita (três limiares nomeados, nenhum fora do arquivo).
+  `format-date.ts` promovido a `shared/lib` (as 2 cópias absorvidas; fuso do aparelho declarado no comentário). Commit `630f1b1`.
+
+### T071 · T062 · T063(py) · T129 · T077 · N1 — a migração 0008 (dev-estrutura-de-dados **opus**, 2026-08-29)
+
+- **Migração `0008`** em 6 passos LITERAIS da auditoria §SQL: `price_observations` (UNIQUE por conta+item, 4 CHECKs, FK só para
+  `accounts`), `products.seller_fixed_price` Numeric(12,2) + `seller_fixed_at` + CHECK, `name_norm` nas 4 tabelas com **backfill em
+  Python** (a função de normalização **congelada** dentro da migração — não importa `app/lib`, para que uma mudança futura da regra não
+  reescreva o passado), desempate `(2)` só entre linhas VIVAS, `left(…, 200)` com reserva para o sufixo (`base[:200 - len(" (n)")]`),
+  `NOT NULL` + índice único PARCIAL por dono; downgrade simétrico.
+- **`PriceObservation`** + `seller_fixed_price/at` no modelo; `name_norm` com `default=_name_norm_default` **no INSERT apenas** (o UPDATE
+  passa pelo funil da API — decisão registrada para o dono, abaixo). Docstring do invariante reescrito (ADR-0033 §1).
+- `app/lib/name_norm.py` como FOLHA — contrato novo no import-linter (`app.lib` não importa nada de `app`). `test_name_norm.py`: 22/22
+  do MESMO vetor (falha explícita se o fixture não existir).
+- `test_migration_0008.py` (8 testes) afirma o estado pós-upgrade **e é não-vácuo por mutação**: sem o índice parcial, sem o CHECK
+  de `seller_fixed_price`, e com o backfill desligado o teste morre.
+- **T129**: `_dedup_match` (`boms.py`) casa por `name_norm` — emenda datada ao ADR-0017 §3 (reversível para "exato + (2)").
+- **T077**: a Clarification da 007 (`spec.md:410`) é TEXTUALMENTE o ADR-0033 §5 (diff vazio). Commit `55721ce`. Ledger: ~154,7k.
+
+### T072 · T073 · T064 · T065 · T066 · T070 — as rotas e o funil do nome (dev-backend **opus**, 2026-08-29)
+
+- **`GET/PUT /api/v1/price-observations`** (`price_observations.py`): upsert em lote ≤500 por `(subjectKind, subjectId)` na linha
+  única da conta; `(kind,id)` repetido no lote ⇒ 422; `observedPrice` com escala > 2 ⇒ 422 (validador `exponent >= -2`);
+  `observedAt` carimbado pelo SERVIDOR; `GET` → `require_catalog_read` (`lapsed` 200, `none` 403), `PUT` → `require_entitlement`.
+  `test_price_observations.py`: 8 funções/20 casos.
+- **`PATCH /api/v1/products/{id}`** `{ sellerFixedPrice }` (`ProductPatchIn`, `extra="forbid"`): grava e devolve; `null` desfixa e ZERA
+  `sellerFixedAt` (do servidor); outra chave ⇒ 422; `lapsed` ⇒ 403; produto de outro dono ⇒ 404. **A não-composição é provada**:
+  `ProductOut` congelado — a rota não devolve nenhum preço calculado, e o teste afirma a AUSÊNCIA da chave. `test_products_fixed_price.py`:
+  9 funções/18 casos.
+- **Nome único nos 7 sítios** via `api/naming.py::commit_with_unique_name` — o chamador entrega a linha limpa; TODA escrita corre no
+  callback `apply` sob `begin_nested()` (SAVEPOINT); colisão ⇒ sufixo `(n)` em silêncio (Q5), até 50 tentativas ⇒ 422. **Mutação**: sem o
+  SAVEPOINT o kit morre (a transação inteira aborta na 1ª colisão). **Corrida** provada com duas sessões concorrentes observadas por
+  `pg_stat_activity` — a segunda espera o lock do índice e sai como `(2)`. `test_catalog_name_conflict.py`: 9 funções/24 casos.
+  Achado lateral: `pieceName` de kit sem teto virava **500** — agora `max_length=120` ⇒ 422.
+- **T070 contrato**: os TRÊS comandos do CI, da raiz, duas vezes — diff vazio na 2ª (idempotente). `PriceObservationIn/Out`,
+  `PriceObservationsOut`, `ProductPatchIn`, `fix_product_price_api_v1_products__product_id__patch` no cliente gerado.
+- **Conformidade**: `extra="forbid"` no ITEM do array (`PriceObservationIn`) fazia o Schemathesis não terminar (>4 min no
+  `additionalProperties:false` aninhado); trocado por `@model_validator(mode="before")` que rejeita chaves desconhecidas com o mesmo 422 —
+  o CONTRATO perde a linha `additionalProperties:false` no item (o comportamento é o mesmo). ⛔ ratificação do dono no PR.
+- Backend: **577 passed**, ruff/basedpyright/import-linter ok. Commit `8a78b5f`. Ledger: ~272,5k.
+
+### T067 · T075 · T127 — a camada de dados das observações (dev-frontend, 2026-08-29)
+
+- `entities/catalog/price-observations.ts` — `usePriceObservations()` (query `["price-observations", uid]`, só autenticado,
+  `staleTime` curto, **sem cache de dispositivo**: `providers.test.tsx` varre o IDB antes/depois da troca de conta e afirma que
+  NENHUMA chave `price-observations` existe — prova, não comentário); 403 `ENTITLEMENT_REQUIRED` ⇒ `entitlementDenied` e
+  NENHUM erro visível; `derivePriceChanges` PURA em centavos (item sem observação não conta — nunca "0 mudaram", nunca "era
+  R$ 0,00"); `useObservePrices().observe(items, catalogVersion?)` — PUT em lote chamado pela TELA depois do commit, online-only
+  (offline ⇒ zero PUT, nada no outbox), dedupe por ASSINATURA (`kind:id:preço` ordenados) na montagem do hook, falha
+  SILENCIOSA (`onError` vazio de propósito; só o 2xx invalida). 13 testes com o motor REAL (nenhum mock de `pricing-core`).
+  Asserção de grafo: o módulo não importa `features` nem `catalog-cache`.
+- `useFixProductPrice()` (PATCH) em `use-catalog.ts` no molde de `useUpdateProduct`; `readSellerFixedPrice(p)` em
+  `catalog-cache.ts` colapsa `undefined` (entrada cacheada ANTES da 0008) e `null` no MESMO "não fixado" — nunca `0`. 243/243.
+- Revisão do main loop: `byKey` memoizado por resposta (um `Map` novo a cada render viraria loop no `useEffect` da tela).
+  Commit `cd78f68`. Ledger: ~144k.
+
+### T124 · T076 · T068 · T125 — as telas (dev-frontend, 2026-08-29)
+
+- **T124** o recálculo mora em `pages/catalogo/catalogo-page.tsx` (fronteira: `features/catalog` ↛ `features/calculator`,
+  depcruise 0 violações): `computeFromForm(productToForm(p))` por produto, SÓ com filamentos e impressoras resolvidos
+  ("envenenamento": com referência carregando o mapa fica vazio e NENHUM PUT sai); degradado (`productNeedsAttention`) fica
+  fora do mapa; `observe()` roda num `useEffect` pós-commit com a lista completa, guardado por `gate === "active"` (a barreira
+  é a AUSÊNCIA da chamada — `premium-write-absence.test.tsx` estendido para `observe`/`useFixProductPrice`). Revisão do main
+  loop (`5128402`): a marca só avança com a LISTA visível (ficha `?produto=` aberta ou deep-link não marcam os outros itens),
+  nunca depois de um GET falhado por rede (senão o PUT sobrescreveria um "era" nunca visto), e leva `catalogVersion`.
+- **T076** `catalog-panel.tsx`: `rowPrice?/rowWas?/rowFlag?/rowMeta?`; mestre-lista e lista mobile com a linha densa
+  `tf-plist__*` (classes byte a byte dentro do `master-item` existente — o `<Plist>` componente não aceita `data-testid`/
+  `aria-current`, decisão registrada); `<Table>` na faixa **1024–1279** (`useIsListDense() && !useIsWide()`, colunas Peça ·
+  Preço sugerido · Antes · Salvo em · Ações, travessão onde não mudou); ≥1280 o mestre-detalhe do 018 intacto.
+  `products-panel.tsx` (puro, tudo por prop): faixa `priceChangedCount/One`, "era"/"Salvo em" (fuso do aparelho), item fixado
+  (preço grande = declaração, flag "fixado"), `productPriceOverFixed` (`product-price-state.ts`, NÃO reusa
+  `productNeedsAttention`) ⇒ `<Alert tone="warning">` + "Voltar a acompanhar o custo", "Manter {valor}", diálogo de duplicar
+  17d (`" (cópia)"`, não herda `sellerFixedPrice`, degradado continua degradado). `produto-page.tsx`: cabeçalho 17g nos 4
+  estados, bloco 17c, Manter/Aceitar, e a **recusa de nome ANTES do submit** (17b: `nameConflict` por `nameNormKey` contra a
+  lista carregada excluindo o próprio id, `nameConflictHint`, contador `n de 120`, `maxLength`). `kits-panel.tsx`: `kitMeta`.
+- **T068** `products-panel.test.tsx` +12 casos (12 produtos com preço na linha, 3 mudados ⇒ "3 preços mudaram…" + "era R$
+  38,90" + "Salvo em 12/05" com `observedAt` que cruza a meia-noite UTC; fixado; custo > fixado ⇒ Alert; desfixar; duplicar;
+  degradado sem 0,00; n=1); `produto-page.test.tsx` +2 (recusa antes do submit sem chamar `create`; editar sem mudar o próprio
+  nome não se recusa). Adotados por MARCAÇÃO (stub novo, nenhum comportamento antigo mudou): `products-attention`,
+  `catalogo`, `catalogo-teaser`, `premium-write-absence`; 6 fixtures `ProductOut` pós-0008.
+- **T125** `pages/catalogo/fixed-price-property.test.tsx`: por LEITURA DO FONTE, fora de `features/catalog/**` e
+  `pages/catalogo/**` nenhum arquivo de produção em `pages/**`+`features/**` lê `sellerFixedPrice`/`observedPrice`/
+  `price-observations` (lista de exceções VAZIA; `entities`/`shared` são a camada de dados e ficam de fora por definição);
+  e um render: o número grande da ficha vem de `recomputed` ou de `sellerFixedPrice`, nunca de `observedPrice`.
+- Front **1526/0**, tsc 0, eslint 0, prettier ok, depcruise 0. Commits `33d51f5` + follow-up do nome. Ledger: ~448k + ~428k
+  (o follow-up retomado após a interrupção da sessão — o transcript sobreviveu; nada foi refeito).
+- **Sem preço nesta fatia: Kits** (não há função pronta para o total do kit na lista — T124 previa; `KitsPanel` ganhou só
+  `kitMeta`). **Ícone `lock`** não existe em `icon.tsx` — a flag "fixado" vai só com texto; "parado" usa `triangle-alert`.
+  **Ações da linha** continuam os botões discretos (a folha de ações da 16e não está nas tasks).
+
+### T069 — o e2e na stack real (qa-software, 2026-08-29, duas rodadas)
+
+- `tests/e2e/catalog-recalculo.spec.ts` — 7 cenários, valores REAIS capturados: (1) sem observação ⇒ nenhuma faixa, nem "0
+  mudaram"; sair/voltar ⇒ preço idêntico; (2) filamento 100→120 ⇒ "1 preço mudou desde a sua última visita" + `product-row-was`
+  = "era {preço capturado antes}" (igualdade de STRING com o valor da linha na visita anterior, nunca número fixo); (3) "Manter
+  {era}" na FICHA ⇒ o aviso de atenção aparece já ao fixar (o custo de hoje JÁ passava o fixado — o raciocínio "só numa 3ª
+  edição" estava errado e o teste corrigiu), filamento → 150 ⇒ preço travado, "Voltar a acompanhar o custo" ⇒ volta ao
+  recomputado; (4) "Gancho" + `"gancho "` pela API com o bearer da sessão ⇒ **201** (nunca 409/422) nome final `"gancho (2)"`
+  — a ficha barra ANTES do submit, por isso a prova do servidor é pela rota; (5) densidade 390 `ul.tf-plist` · 1024/1279
+  `table.tf-table` com os 4 cabeçalhos · 1280/1920 `master-item` sem `tf-table`, overflow horizontal 0 em todas; (6)
+  **envenenamento**: `page.route` atrasando filaments/printers 3 s ⇒ 0 PUT na janela de 1,5 s; libera ⇒ exatamente 1 PUT —
+  só reproduz com o IDB uid-keyed LIMPO (com cache quente `isLoading` nunca liga: `isFetching && items.length === 0`); (7)
+  offline ⇒ 0 PUT.
+- **Armadilhas de teste que a stack real ensinou**: a marca se autocorrige em ~30 ms no localhost (GET→PUT→GET no trace) —
+  para flagrar a janela "mudou" o PUT é abortado por `page.route` durante a asserção; `getByText(nome)` sem `exact` casava o
+  resumo de um PRODUTO que só MENCIONA o filamento; funções de edição assumiam a lista visível quando a página estava na
+  ficha; **`pnpm --filter … test:e2e -- x.spec --workers=1` roda a suíte INTEIRA e ignora as flags** (o `--` sobrevive ao
+  repasse e o playwright o lê como fim de opções) — invocar `pnpm --filter @3dprecify/web exec playwright test …` direto.
+- Rodada final (4 arquivos: T069 + screenshots + `catalog.spec` + `premium-sem-parede.spec`, `--workers=1` confirmado no log):
+  **48 passed · 6 flaky · 0 failed** — os 6 são o `grant_premium` "no existing account matches" (corrida JIT×CLI já documentada
+  em `history-helpers.ts`), verdes no retry. Após a remoção do bloco da lista: T069 9 passed (1 flaky idem) + screenshots
+  14/14. A primeira rodada (antes do fix da `tf-plist`) tinha rodado a suíte COMPLETA por acidente: 366 passed / 58 skipped.
+
+### T078 — screenshots, o achado que não era, e o que a imagem achou (2026-08-29)
+
+- **34 capturas 1:1 nos dois temas** em `evidencias/pr-d/` + `medidas-pr-d.json` (33 entradas, `overflowX: 0` em
+  390/1024/1279/1280/1920): faixa "3 preços mudaram" + "era" + "Salvo em" a 390 (`tf-plist`), `tf-table` 1024/1279,
+  mestre-detalhe 1280/1920, ficha nos 4 estados (recalculado · sem mudança · fixado · parado), aviso do fixado, flag "fixado"
+  na lista, diálogo de duplicar, recusa de nome repetido.
+- **A imagem achou o que a asserção não viu** (a lição do 014, de novo): (a) a lista a 390 montava CARTÕES com os spans
+  `tf-plist__*` soltos — nome em 3 linhas, 4 itens na dobra; nenhuma asserção de texto reclamava. Corrigido: `ul.tf-plist` +
+  `tf-plist__row` (`cde9469`). (b) O FE-2 tinha inventado um bloco ACIMA da lista ("{nome} · Manter R$ X" por produto mudado
+  + um Alert por fixado) que nenhuma prancheta desenha — a captura mostrava a lista duplicada. Removido (`fcf34a5`): a LISTA
+  não escreve; Manter/Aceitar (16b·2) e o aviso com "Voltar a acompanhar" (17c) vivem no item aberto.
+- **O achado que não era**: 5 capturas mostravam a pílula "Filamentos" clara com "Produtos" selecionada. Reproduzido no
+  browser real, pixel a pixel ((174,175,176) e (24,24,31) idênticos à captura): é a `transition: background-color .15s` do
+  Segmented congelada ~40 ms depois do `setTheme` — `rgba(255,255,255,.66)` sobre o escuro. Produto certo; a captura passou a
+  usar `animations: "disabled"`. Corolário: **antes de culpar o produto por uma captura, reproduza a captura** — o dev server e
+  o build de produção, deslogados, já mostravam a pílula certa; só a sequência exata do spec (clique → troca de tema →
+  captura imediata) reproduzia.
+- `medidas-pr-d.json`: a 1ª rodada gravou `{}` (o `afterAll` do último worker sobrescrevia — a armadilha da PR-C); agora funde.
+- Gate final: frontend 1994/1994 (cobertura 89,7%) · backend 577 passed (cov 84%) · exit 0. Drift-guard 2× diff vazio. Push autorizado pelo dono ("pode", 29/08) — **PR #62** aberta contra `develop` (`855709a`), CORREÇÃO DECLARADA.
+
+### Pontos que o dono ratifica no PR-D (registrados aqui para não sumirem)
+
+1. O contrato sem `additionalProperties:false` no item do array (acima).
+2. `name_norm` com default no MODELO (INSERT) — o UPDATE só normaliza pelo funil da API; um `UPDATE` cru fora da API deixaria
+   `name_norm` velho (o índice parcial ainda impede duplicata, mas o valor divergiria do nome).
+3. `observedPrice` com 3+ casas ⇒ 422 (a spec não fixa; a alternativa seria arredondar em silêncio — rejeitamos o silêncio num leaf de dinheiro).
+4. A regra do sufixo: "Gancho" existente + `"gancho "` novo ⇒ nome FINAL `"gancho (2)"` (o nome enviado, aparado, mais o sufixo — não
+   o nome do primeiro).
+5. A 2ª frase do aviso da 16b (a causa do aumento) não é derivável — não transcrita (T074, leitura 4).
+6. Contador 60 → 120 (adendo do ADR-0033).
+7. A nota do item fixado com tom ATENÇÃO (spec) onde a 17c desenha info.
+8. **O preço "parado" (16f/17g)**: a prancheta mostra o VALOR de quando você salvou com a legenda "Preço parado · de {data}"
+   — o FE-2 seguiu a prancheta e o preço do item degradado vem da última OBSERVAÇÃO. O ADR-0033 §1 diz "o app não exibe um
+   preço que calculou no passado"; aqui ele exibe, mas ROTULADO como passado. As tasks (T068) diziam "degradado sem preço". É
+   uma leitura de design × ADR — o dono decide (o guard T125 continua valendo: fora do Catálogo ninguém lê a observação).
+9. Na LISTA, o item fixado-acima-do-custo e o item mudado ganharam um bloco compacto acima da lista/tabela (sem prancheta
+   própria — no modo navegação não existe "item aberto" inline); é um trade-off de engenharia marcado para revisão de design.
+10. A recusa de nome antes do submit está só no formulário do PRODUTO (17b); filamentos/impressoras/kits dependem do sufixo
+    silencioso do servidor — estender exige mudar `CatalogPanelProps.renderForm` (3 painéis + testes). Fica para o dono.

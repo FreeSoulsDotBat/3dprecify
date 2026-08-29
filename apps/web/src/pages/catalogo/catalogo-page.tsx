@@ -1,12 +1,26 @@
 import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useEffect, useMemo } from "react";
 
+import { productNeedsAttention } from "@/entities/catalog/product-summary";
+import {
+  type PriceObservation,
+  type RecomputedPrice,
+  derivePriceChanges,
+  observationKey,
+  usePriceObservations,
+  useObservePrices,
+} from "@/entities/catalog/price-observations";
+import { useFilaments, usePrinters, useProducts } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
+import { computeFromForm } from "@/features/calculator/calculator-model";
+import { productToForm } from "@/features/calculator/product-mapping";
 import { FilamentsPanel } from "@/features/catalog/filaments-panel";
 import { KitsPanel } from "@/features/catalog/kits-panel";
 import { PrintersPanel } from "@/features/catalog/printers-panel";
 import { ProductsPanel } from "@/features/catalog/products-panel";
 import { ProdutoPage } from "@/pages/catalogo/produto-page";
 import { premiumGate } from "@/shared/billing/premium-gate";
+import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Segmented } from "@/shared/ui";
@@ -86,6 +100,99 @@ export function CatalogoPage() {
   const entitlement = useEntitlement();
   const gate = premiumGate(entitlement.data, { status: sessionStatus });
 
+  // 019/PR-D (T124) — o recálculo do Catálogo mora AQUI, não em `features/catalog` (boundary:
+  // features/catalog não importa features/calculator). Também UNCONDICIONAL, acima do early
+  // return do `?produto=` — os mesmos hooks de sempre.
+  const products = useProducts();
+  const { isLoading: filamentsLoading } = useFilaments();
+  const { isLoading: printersLoading } = usePrinters();
+  const { catalog, source } = useFeeCatalog();
+  const {
+    byKey,
+    isLoading: observationsLoading,
+    isError: observationsError,
+  } = usePriceObservations();
+  const { observe } = useObservePrices();
+
+  // "Envenenamento" (achado registrado na fatia): com filamentos/impressoras ainda carregando,
+  // `productToForm` prefiliria custo/potência a partir de defaults ("0"), e o preço computado
+  // seria uma mentira momentânea — NENHUM item entra no mapa, e o PUT de observação nem dispara.
+  const referencesLoading = filamentsLoading || printersLoading;
+
+  const recomputeItems = useMemo(() => {
+    if (referencesLoading) return [] as { id: string; precoVarejo: number }[];
+    const out: { id: string; precoVarejo: number }[] = [];
+    for (const p of products.items) {
+      // Degradado (K3): fora do recálculo — nenhum "R$ 0,00", nenhuma observação nova.
+      if (productNeedsAttention(p)) continue;
+      const bundle = productToForm(p);
+      const outcome = computeFromForm(bundle.values, { catalog, source, now: Date.now() });
+      if (outcome.result) out.push({ id: p.id, precoVarejo: outcome.result.precoVarejo });
+    }
+    return out;
+  }, [products.items, referencesLoading, catalog, source]);
+
+  const recomputed = useMemo(
+    () => new Map(recomputeItems.map((r) => [r.id, r.precoVarejo])),
+    [recomputeItems],
+  );
+
+  // "Parado" (K3): a última observação salva de QUALQUER produto — inclusive um degradado, cujo
+  // preço na lista é o congelado de quando o vínculo ainda existia (prancheta 16f).
+  const observations = useMemo(() => {
+    const out = new Map<string, { observedPrice: number; observedAt: string }>();
+    for (const p of products.items) {
+      const obs: PriceObservation | undefined = byKey.get(observationKey("PRODUCT", p.id));
+      if (obs) out.set(p.id, { observedPrice: obs.observedPrice, observedAt: obs.observedAt });
+    }
+    return out;
+  }, [products.items, byKey]);
+
+  const observeInput = useMemo<RecomputedPrice[]>(
+    () =>
+      recomputeItems.map((r) => ({
+        subjectKind: "PRODUCT" as const,
+        subjectId: r.id,
+        precoVarejo: r.precoVarejo,
+      })),
+    [recomputeItems],
+  );
+
+  const { changed, count: changedCount } = derivePriceChanges(observeInput, byKey);
+  const changedByProductId = useMemo(
+    () => new Map(changed.map((c) => [c.subjectId, { was: c.was, observedAt: c.observedAt }])),
+    [changed],
+  );
+
+  // T124 — o PUT em lote roda DEPOIS do commit, com a lista completa dos recomputáveis (nunca
+  // durante o render). `useObservePrices` já deduplica por assinatura na sessão do hook.
+  //
+  // `gate === "active"` — a barreira de sempre (Constituição IV, SC-709): ler/recomputar sobrevive
+  // em QUALQUER gate (FR-409, "lapsed com itens" continua mostrando preço), mas GRAVAR uma
+  // observação é uma escrita, e a ausência da chamada é a barreira, nunca um 403 do servidor como
+  // primeira linha de defesa.
+  //
+  // Três guardas a mais (revisão do main loop): a "visita" é a LISTA — com a ficha `?produto=`
+  // aberta ninguém viu a lista, e um deep-link na ficha não pode marcar os outros itens como
+  // vistos; um GET que falhou por rede (`observationsError`, nunca o 403) também não avança a marca —
+  // senão o PUT sobrescreve uma comparação "era" que o vendedor nunca chegou a ver; e o
+  // `catalogVersion` do catálogo de taxas vai junto, como o ADR-0033 §2 pede.
+  const listVisible = search.produto === undefined;
+  useEffect(() => {
+    if (gate !== "active" || !listVisible) return;
+    if (referencesLoading || observationsLoading || observationsError) return;
+    observe(observeInput, catalog.catalogVersion);
+  }, [
+    gate,
+    listVisible,
+    referencesLoading,
+    observationsLoading,
+    observationsError,
+    observeInput,
+    observe,
+    catalog.catalogVersion,
+  ]);
+
   // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route, now
   // `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
   // required auth for this param, mirroring the old routes' own guard exactly — no entitlement
@@ -110,7 +217,14 @@ export function CatalogoPage() {
       <div role="tabpanel" id={`catalog-panel-${active}`} aria-labelledby={`catalog-tab-${active}`}>
         {active === "filaments" && <FilamentsPanel />}
         {active === "printers" && <PrintersPanel />}
-        {active === "products" && <ProductsPanel />}
+        {active === "products" && (
+          <ProductsPanel
+            recomputed={recomputed}
+            observations={observations}
+            changed={changedByProductId}
+            changedCount={changedCount}
+          />
+        )}
         {active === "kits" && <KitsPanel />}
       </div>
     </section>

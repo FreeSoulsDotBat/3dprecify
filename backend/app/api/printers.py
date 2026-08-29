@@ -12,10 +12,11 @@ from decimal import Decimal
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -26,14 +27,19 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
+from app.lib.name_norm import name_norm_key
 from app.models import Printer, Product
 from app.validation import CEIL_HOURS, CEIL_KW, CEIL_MONEY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["printers"])
 
+#: 019/PR-D (ADR-0033 §4) — o índice único parcial desta tabela; só ELE dispara o retry de sufixo.
+_NAME_INDEX = "uq_printers_owner_name_norm"
+
 
 class PrinterIn(CamelModel):
-    name: str
+    # 019/PR-D (T072): teto de nome só no pydantic (ADR-0033 §Adendo 27/08 §3).
+    name: str = Field(max_length=NAME_MAX_CHARS)
     machine_value: Decimal
     machine_lifetime_hours: Decimal
     avg_power_kw: Decimal
@@ -95,6 +101,17 @@ def _to_out(row: Printer) -> PrinterOut:
     )
 
 
+def _apply(row: Printer, body: PrinterIn) -> None:
+    """Corpo → linha (019/PR-D · T072): o FUNIL de escrita, chamado de dentro do savepoint —
+    o nome FINAL (com sufixo, se houver conflito) quem escreve é `flush_with_unique_name`."""
+    row.name = body.name
+    row.name_norm = name_norm_key(body.name)
+    row.machine_value = body.machine_value
+    row.machine_lifetime_hours = body.machine_lifetime_hours
+    row.avg_power_kw = body.avg_power_kw
+    row.maintenance_reserve_per_hour = body.maintenance_reserve_per_hour
+
+
 def _not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Printer not found", status_code=404)
 
@@ -143,15 +160,10 @@ async def create_printer(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    row = Printer(
-        owner_uid=claims["uid"],
-        name=body.name,
-        machine_value=body.machine_value,
-        machine_lifetime_hours=body.machine_lifetime_hours,
-        avg_power_kw=body.avg_power_kw,
-        maintenance_reserve_per_hour=body.maintenance_reserve_per_hour,
+    row = Printer(owner_uid=claims["uid"])
+    await flush_with_unique_name(
+        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
     )
-    session.add(row)
     await session.commit()
     await session.refresh(row)
     return _to_out(row)
@@ -177,11 +189,9 @@ async def update_printer(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
     row = await _owned(session, claims["uid"], printer_id)
-    row.name = body.name
-    row.machine_value = body.machine_value
-    row.machine_lifetime_hours = body.machine_lifetime_hours
-    row.avg_power_kw = body.avg_power_kw
-    row.maintenance_reserve_per_hour = body.maintenance_reserve_per_hour
+    await flush_with_unique_name(
+        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+    )
     await session.commit()
     await session.refresh(row)
     return _to_out(row)

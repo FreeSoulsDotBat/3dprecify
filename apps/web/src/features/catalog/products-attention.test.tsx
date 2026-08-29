@@ -31,6 +31,8 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useFilaments: () => useFilamentsMock(),
     usePrinters: () => usePrintersMock(),
     useDeleteProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    // 019/PR-D (T068/T076) — o diálogo de duplicar usa `useCreateProduct` direto no painel.
+    useCreateProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
 // F-lapsed: ProductsPanel now reads its own entitlement; this suite is about the K3 attention

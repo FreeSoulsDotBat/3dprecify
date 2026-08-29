@@ -78,6 +78,8 @@ function productAt(costPerRoll: string): ProductOut {
     includeMarketplace: false,
     channels: [],
     otherCosts: [],
+    sellerFixedPrice: null,
+    sellerFixedAt: null,
     createdAt: "2026-07-10T00:00:00Z",
     updatedAt: "2026-07-10T00:00:00Z",
   } as ProductOut;

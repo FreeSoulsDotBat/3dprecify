@@ -3,8 +3,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
+  observationKey,
+  useObservePrices,
+  usePriceObservations,
+} from "@/entities/catalog/price-observations";
+import {
   useCreateProduct,
   useFilaments,
+  useFixProductPrice,
   usePrinters,
   useProducts,
   useUpdateProduct,
@@ -38,6 +44,7 @@ import {
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import { PremiumFooterNote, PremiumInviteCta } from "@/features/catalog/catalog-controls";
+import { productPriceOverFixed } from "@/features/catalog/product-price-state";
 import { RecordSnapshotButton, type RecordSource } from "@/features/history/record-snapshot-sheet";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { honestWriteError } from "@/shared/api/error-messages";
@@ -45,7 +52,10 @@ import { type PremiumGate } from "@/shared/billing/premium-gate";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { Alert, Button, Card, Field, Select, Spinner, toast } from "@/shared/ui";
+import { formatBRL } from "@/shared/lib/decimal-ptbr";
+import { formatDayMonthPtBr } from "@/shared/lib/format-date";
+import { NAME_MAX, nameNormKey } from "@/shared/lib/name-norm";
+import { Alert, Button, Card, Field, PriceHero, Select, Spinner, toast } from "@/shared/ui";
 import { Frozen } from "@/shared/ui/frozen";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
@@ -69,6 +79,8 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 const t = messages.calculator;
 const pf = messages.productForm;
+const catalogo = messages.catalogo;
+const cf = messages.catalogForm;
 
 export function ProdutoPage({
   productId,
@@ -198,17 +210,95 @@ export function ProdutoPage({
   // they even save (SC-412).
   const needsAttention = Boolean(editing) && (filamentId === "" || printerId === "");
 
+  // 019/PR-D (T076, prancheta 17g) — os quatro estados do cabeçalho: fixado > parado > mudou >
+  // sem mudança (a MESMA ordem do 16f/17c: fixado é escolha, parado é impedimento, os dois nunca
+  // se confundem). `editing` é o produto salvo — um produto NOVO não tem observação nem fixação.
+  const { byKey: observationsByKey } = usePriceObservations();
+  const savedObservation = editing
+    ? observationsByKey.get(observationKey("PRODUCT", editing.id))
+    : undefined;
+  const isFixed = editing?.sellerFixedPrice != null;
+  const fixedPriceValue = isFixed ? Number(editing!.sellerFixedPrice) : undefined;
+  const todayPrice = result?.precoVarejo;
+  const priceChanged =
+    !isFixed &&
+    !needsAttention &&
+    savedObservation !== undefined &&
+    todayPrice !== undefined &&
+    Math.round(savedObservation.observedPrice * 100) !== Math.round(todayPrice * 100);
+
+  const headerLabel = isFixed
+    ? catalogo.fixedByYou
+    : needsAttention
+      ? catalogo.stoppedPrice
+      : catalogo.suggestedRetail;
+  const headerValue = isFixed
+    ? fixedPriceValue
+    : needsAttention
+      ? savedObservation?.observedPrice
+      : todayPrice;
+  const headerCaption =
+    isFixed && editing?.sellerFixedAt && todayPrice !== undefined
+      ? catalogo.capFixed
+          .replace("{data}", formatDayMonthPtBr(editing.sellerFixedAt))
+          .replace("{hoje}", formatBRL(todayPrice))
+      : needsAttention && savedObservation
+        ? catalogo.capStopped.replace("{data}", formatDayMonthPtBr(savedObservation.observedAt))
+        : priceChanged && savedObservation
+          ? catalogo.capRecalculated.replace("{valor}", formatBRL(savedObservation.observedPrice))
+          : !isFixed && !needsAttention && savedObservation
+            ? catalogo.capUnchanged.replace(
+                "{data}",
+                formatDayMonthPtBr(savedObservation.observedAt),
+              )
+            : undefined;
+
+  // 17c — custo hoje > fixado: o aviso de ATENÇÃO (spec US5 AC3 vence a 17c, que desenha info) +
+  // "Voltar a acompanhar o custo". A escrita (fixar/desfixar) só existe quando `active` — a
+  // barreira de sempre é a AUSÊNCIA do handler, nunca um 2º gate.
+  const overFixed = editing !== undefined && productPriceOverFixed(editing, todayPrice);
+  const fixPrice = useFixProductPrice();
+  const { observe: observeThis } = useObservePrices();
+  const handleUnfix = () => {
+    if (!editing) return;
+    fixPrice.mutate({ id: editing.id, sellerFixedPrice: null });
+  };
+  // 16b·2 — "Manter {valor}" fixa no preço ANTERIOR (a observação salva); "Aceitar novo preço"
+  // atualiza a observação para o preço de hoje, sem fixar nada (a conta segue livre).
+  const handleKeepPrice = () => {
+    if (!editing || !savedObservation) return;
+    fixPrice.mutate({
+      id: editing.id,
+      sellerFixedPrice: savedObservation.observedPrice.toFixed(2),
+    });
+  };
+  const handleAcceptNewPrice = () => {
+    if (!editing || todayPrice === undefined) return;
+    observeThis([{ subjectKind: "PRODUCT", subjectId: editing.id, precoVarejo: todayPrice }]);
+  };
+
   const handleSave = async () => {
     setSubmitError(undefined);
-    const blankName = name.trim() === "";
-    setNameError(blankName ? pf.nameRequired : undefined);
+    const trimmedName = name.trim();
+    const blankName = trimmedName === "";
+    // 019/PR-D (T068/T076, achado do coordenador) — o mesmo intercepto do 17b/17d, agora no
+    // formulário do produto: nome repetido recusa ANTES do submit (nunca um POST/PUT que o
+    // servidor resolveria em silêncio com um sufixo — a recusa aqui é intencional, não a mesma
+    // regra do servidor). A lista carregada É a referência de unicidade; o próprio id sai da
+    // comparação (editar um produto sem mudar o nome não pode se recusar sozinho).
+    const nameConflict =
+      !blankName &&
+      products.items.some(
+        (p) => p.id !== editing?.id && nameNormKey(p.name) === nameNormKey(trimmedName),
+      );
+    setNameError(blankName ? pf.nameRequired : nameConflict ? cf.nameConflict : undefined);
     const slotsValid =
       channelOutcomes.every((o) => Object.keys(o.errors).length === 0) &&
       otherCostErrors.every((e) => !e);
     // Create references SAVED items (FR-310); edit may keep a degraded ref as values (US6-4).
     const linksValid = editing ? true : filamentId !== "" && printerId !== "";
-    if (blankName || !result || !slotsValid || !linksValid) {
-      if (!blankName) setSubmitError(pf.saveInvalid);
+    if (blankName || nameConflict || !result || !slotsValid || !linksValid) {
+      if (!blankName && !nameConflict) setSubmitError(pf.saveInvalid);
       return;
     }
     const body = formToProductIn({
@@ -277,6 +367,44 @@ export function ProdutoPage({
     <section className="tf-calc-page" data-testid="calc-content">
       <PageHeader title={title} />
 
+      {/* 019/PR-D (T076, prancheta 17g) — a tira do cabeçalho: um preço grande e uma legenda que
+          muda de conteúdo, nunca de posição. Só para um produto SALVO — um novo/não-salvo não tem
+          observação nem fixação para descrever ainda. */}
+      {editing && headerValue !== undefined && (
+        <PriceHero label={headerLabel} value={headerValue} caption={headerCaption} size="md" />
+      )}
+
+      {/* 17c — custo hoje > fixado: a spec (US5 AC3) vence o desenho (que pinta info) — este é o
+          `tone="warning"` que a spec pede. Escrever (desfixar) só existe quando `active`. */}
+      {overFixed && todayPrice !== undefined && (
+        <Alert
+          tone="warning"
+          data-testid="product-fixed-over-alert"
+          action={
+            active ? (
+              <Button variant="ghost" size="sm" onClick={handleUnfix} loading={fixPrice.isPending}>
+                {catalogo.unfix}
+              </Button>
+            ) : undefined
+          }
+        >
+          {catalogo.fixedOverNote
+            .replace("{hoje}", formatBRL(todayPrice))
+            .replace("{diff}", formatBRL(todayPrice - fixedPriceValue!))}
+        </Alert>
+      )}
+
+      {/* 16b·2 — quando o preço mudou desde a última observação e ninguém fixou nada ainda: as
+          duas escolhas, lado a lado. */}
+      {active && priceChanged && savedObservation && (
+        <div className="flex flex-wrap gap-2">
+          <Button variant="secondary" onClick={handleKeepPrice} loading={fixPrice.isPending}>
+            {catalogo.keepPrice.replace("{valor}", formatBRL(savedObservation.observedPrice))}
+          </Button>
+          <Button onClick={handleAcceptNewPrice}>{catalogo.acceptNewPrice}</Button>
+        </div>
+      )}
+
       {/* K3: ONE calm, actionable state — the product has no live filament/printer behind it,
           whether a kit save materialized it that way or a deletion severed the links. It says
           what is true (nothing linked, values kept) and never invents a removal it cannot know
@@ -296,7 +424,14 @@ export function ProdutoPage({
         const identityFields = (
           <>
             <Card padding="md" className="flex flex-col gap-3">
-              <Field label={pf.nameLabel} required error={nameError}>
+              <Field
+                label={pf.nameLabel}
+                required
+                error={nameError}
+                hint={cf.nameCounter
+                  .replace("{n}", String(name.length))
+                  .replace("{max}", String(NAME_MAX))}
+              >
                 {(p) => (
                   <div className="tf-inputwrap">
                     <input
@@ -305,11 +440,21 @@ export function ProdutoPage({
                       className="tf-input"
                       placeholder={pf.namePlaceholder}
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      maxLength={NAME_MAX}
+                      onChange={(e) => {
+                        setName(e.target.value);
+                        // A recusa é do CAMPO, então some assim que deixar de ser verdade — não
+                        // espera o próximo Salvar (mesma disciplina do 17b·2).
+                        setNameError(undefined);
+                      }}
                     />
                   </div>
                 )}
               </Field>
+              {/* 17b·2 — a dica some quando o erro NÃO é "nome repetido" (o `Field` compartilhado
+                  só mostra hint OU erro; a dica de apoio do conflito é uma segunda linha própria,
+                  simultânea ao erro, como o desenho pede). */}
+              {nameError === cf.nameConflict && <p style={captionText}>{cf.nameConflictHint}</p>}
             </Card>
 
             {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}

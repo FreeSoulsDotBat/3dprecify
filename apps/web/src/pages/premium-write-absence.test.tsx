@@ -89,6 +89,8 @@ const productA: ProductOut = {
   includeMarketplace: true,
   channels: [],
   otherCosts: [],
+  sellerFixedPrice: null,
+  sellerFixedAt: null,
   createdAt: "2026-07-01T00:00:00Z",
   updatedAt: "2026-07-01T00:00:00Z",
 };
@@ -140,6 +142,7 @@ const {
   useHistoryMock,
   useSyncOutboxMock,
   catalogWrites,
+  priceObservationsWrites,
   bomWrites,
   historyWrites,
 } = vi.hoisted(() => {
@@ -165,6 +168,11 @@ const {
       useUpdateProduct: mutation(),
       useDeleteProduct: mutation(),
     },
+    // 019/PR-D (T124/T125) — `useFixProductPrice`/`useObservePrices().observe` são escritas NOVAS
+    // que o grep de completude (regex `use(?:Create|Update|Delete|Record)\w+`) não alcança pelo
+    // nome — ficam FORA de `catalogWrites` (que aquele grep confere byte a byte) e ganham uma
+    // asserção manual em `assertNoWrites`, para não forçar o regex a mudar por um verbo novo.
+    priceObservationsWrites: { observe: vi.fn(), useFixProductPrice: mutation() },
     bomWrites: {
       useCreateBom: mutation(),
       useUpdateBom: mutation(),
@@ -207,6 +215,22 @@ vi.mock("@/entities/catalog/use-catalog", () => ({
   useCreateProduct: () => catalogWrites.useCreateProduct,
   useUpdateProduct: () => catalogWrites.useUpdateProduct,
   useDeleteProduct: () => catalogWrites.useDeleteProduct,
+  useFixProductPrice: () => priceObservationsWrites.useFixProductPrice,
+}));
+
+// 019/PR-D (T124/T125) — a leitura sempre neutra (sem observações salvas) + `observe` rastreado
+// pela MESMA guarda de ausência.
+vi.mock("@/entities/catalog/price-observations", () => ({
+  usePriceObservations: () => ({
+    byKey: new Map(),
+    isLoading: false,
+    isError: false,
+    error: null,
+    entitlementDenied: false,
+  }),
+  useObservePrices: () => ({ observe: priceObservationsWrites.observe }),
+  derivePriceChanges: () => ({ changed: [], count: 0 }),
+  observationKey: (kind: string, id: string) => `${kind}:${id}`,
 }));
 
 vi.mock("@/entities/bom/use-bom", () => ({
@@ -254,6 +278,9 @@ function resetWrites() {
     hook.mutateAsync.mockReset();
     hook.mutate.mockReset();
   }
+  priceObservationsWrites.observe.mockReset();
+  priceObservationsWrites.useFixProductPrice.mutateAsync.mockReset();
+  priceObservationsWrites.useFixProductPrice.mutate.mockReset();
 }
 
 function assertNoWrites() {
@@ -261,6 +288,11 @@ function assertNoWrites() {
     expect(hook.mutateAsync, `${name}.mutateAsync`).not.toHaveBeenCalled();
     expect(hook.mutate, `${name}.mutate`).not.toHaveBeenCalled();
   }
+  expect(priceObservationsWrites.observe, "useObservePrices.observe").not.toHaveBeenCalled();
+  expect(
+    priceObservationsWrites.useFixProductPrice.mutateAsync,
+    "useFixProductPrice.mutateAsync",
+  ).not.toHaveBeenCalled();
 }
 
 const emptyList = {

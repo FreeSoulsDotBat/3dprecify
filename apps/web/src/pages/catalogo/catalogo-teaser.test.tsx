@@ -44,7 +44,36 @@ vi.mock("@/entities/catalog/use-catalog", () => ({
   useUpdatePrinter: () => idleMutation,
   useDeletePrinter: () => idleMutation,
   useDeleteProduct: () => idleMutation,
+  useCreateProduct: () => idleMutation,
+  useUpdateProduct: () => idleMutation,
+  useFixProductPrice: () => idleMutation,
 }));
+// 019/PR-D (T124) — a page recomputa/observa preços; esta suíte é sobre o teaser, não sobre isso.
+vi.mock("@/entities/catalog/price-observations", () => ({
+  usePriceObservations: () => ({
+    byKey: new Map(),
+    isLoading: false,
+    isError: false,
+    error: null,
+    entitlementDenied: false,
+  }),
+  useObservePrices: () => ({ observe: vi.fn() }),
+  derivePriceChanges: () => ({ changed: [], count: 0 }),
+  observationKey: (kind: string, id: string) => `${kind}:${id}`,
+}));
+vi.mock("@/shared/fee-catalog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
+  return {
+    ...actual,
+    useFeeCatalog: () => ({
+      catalog: { catalogVersion: "test-0", schemaVersion: "1", generatedAt: "", marketplaces: [] },
+      source: "seed" as const,
+      refreshFailed: false,
+      refreshing: false,
+      refetch: vi.fn(),
+    }),
+  };
+});
 
 import { CatalogoPage } from "./catalogo-page";
 

@@ -135,6 +135,8 @@ const productP: ProductOut = {
   includeMarketplace: true,
   channels: [],
   otherCosts: [],
+  sellerFixedPrice: null,
+  sellerFixedAt: null,
   createdAt: "2026-07-01T00:00:00Z",
   updatedAt: "2026-07-01T00:00:00Z",
 };

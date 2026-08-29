@@ -28,6 +28,9 @@ const {
   recordMock,
   entitlement,
   createScenarioMock,
+  fixPriceMutateMock,
+  observationsResult,
+  observeMock,
 } = vi.hoisted(() => ({
   navigateMock: vi.fn(),
   useProductsMock: vi.fn(),
@@ -38,6 +41,11 @@ const {
   recordMock: vi.fn(),
   entitlement: { data: undefined as { status: string } | undefined },
   createScenarioMock: vi.fn(),
+  fixPriceMutateMock: vi.fn(),
+  observationsResult: {
+    byKey: new Map<string, { observedPrice: number; observedAt: string; subjectId: string }>(),
+  },
+  observeMock: vi.fn(),
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@tanstack/react-router")>();
@@ -52,6 +60,23 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     usePrinters: () => usePrintersMock(),
     useCreateProduct: () => ({ mutateAsync: createMock, isPending: false }),
     useUpdateProduct: () => ({ mutateAsync: updateMock, isPending: false }),
+    // 019/PR-D (correção de fidelidade) — o alert "custo hoje > fixado" e "Manter/Aceitar" agora
+    // vivem só na FICHA; este stub deixa a mutation observável sem um QueryClient real.
+    useFixProductPrice: () => ({ mutate: fixPriceMutateMock, isPending: false }),
+  };
+});
+vi.mock("@/entities/catalog/price-observations", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/entities/catalog/price-observations")>();
+  return {
+    ...actual,
+    usePriceObservations: () => ({
+      byKey: observationsResult.byKey,
+      isLoading: false,
+      isError: false,
+      error: null,
+      entitlementDenied: false,
+    }),
+    useObservePrices: () => ({ observe: observeMock }),
   };
 });
 // US3/T019 — the record action on the product page needs the entitlement gate (server's last word)
@@ -147,6 +172,7 @@ beforeEach(() => {
   updateMock.mockResolvedValue(savedProduct);
   entitlement.data = { status: "active" };
   recordMock.mockResolvedValue({ clientSnapshotId: "csid-1", syncState: "synced" });
+  observationsResult.byKey = new Map();
 });
 
 afterEach(() => {
@@ -185,8 +211,11 @@ describe("ProdutoPage — create (US6/T030)", () => {
   it("saves through the wire mapping and navigates back to the catalog", async () => {
     renderPage();
 
+    // 019/PR-D (T068, achado do coordenador) — "Vaso G" já é o nome de `savedProduct` na lista
+    // carregada por padrão (`beforeEach`); um nome DIFERENTE prova o caminho feliz sem colidir com
+    // a recusa nova de nome repetido (coberta em teste próprio, abaixo).
     fireEvent.change(screen.getByRole("textbox", { name: pf.nameLabel }), {
-      target: { value: "Vaso G" },
+      target: { value: "Vaso H" },
     });
     fireEvent.change(screen.getByRole("combobox", { name: t.catalogPicker.filament }), {
       target: { value: "f-1" },
@@ -198,9 +227,39 @@ describe("ProdutoPage — create (US6/T030)", () => {
 
     await waitFor(() => expect(createMock).toHaveBeenCalled());
     const body = createMock.mock.calls[0][0];
-    expect(body).toMatchObject({ name: "Vaso G", filamentId: "f-1", printerId: "p-1" });
+    expect(body).toMatchObject({ name: "Vaso H", filamentId: "f-1", printerId: "p-1" });
     expect(body.pieceInputs.markupVarejoPct).toBe("50");
     expect(navigateMock).toHaveBeenCalledWith({ to: "/catalogo", search: { tab: "products" } });
+  });
+
+  // 019/PR-D (T068, achado do coordenador) — o mesmo intercepto do 17b/17d, agora no formulário
+  // do produto: nome repetido recusa ANTES do submit, nunca chega a `create`/`update`.
+  it("nome repetido (create): recusa ANTES do submit, com o texto de apoio, e não chama create", async () => {
+    renderPage();
+
+    fireEvent.change(screen.getByRole("textbox", { name: pf.nameLabel }), {
+      target: { value: "Vaso G" }, // o nome de `savedProduct`, já na lista carregada
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: t.catalogPicker.filament }), {
+      target: { value: "f-1" },
+    });
+    fireEvent.change(screen.getByRole("combobox", { name: t.catalogPicker.printer }), {
+      target: { value: "p-1" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: pf.saveProduct }));
+
+    expect(await screen.findByText(messages.catalogForm.nameConflict)).toBeInTheDocument();
+    expect(screen.getByText(messages.catalogForm.nameConflictHint)).toBeInTheDocument();
+    expect(createMock).not.toHaveBeenCalled();
+  });
+
+  it("nome repetido (edit): editar SEM mudar o próprio nome não se recusa sozinho (o próprio id sai da comparação)", async () => {
+    renderPage("prod-1"); // productId = savedProduct.id ("prod-1"), name já é "Vaso G"
+
+    fireEvent.click(screen.getByRole("button", { name: pf.saveProduct }));
+
+    await waitFor(() => expect(updateMock).toHaveBeenCalled());
+    expect(screen.queryByText(messages.catalogForm.nameConflict)).not.toBeInTheDocument();
   });
 
   it("without a saved filament AND printer, explains honestly why a product cannot be created", () => {
@@ -260,6 +319,47 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
     const { id, body } = updateMock.mock.calls[0][0];
     expect(id).toBe("prod-1");
     expect(body).toMatchObject({ name: "Vaso G", filamentId: "f-1", printerId: "p-1" });
+  });
+});
+
+describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correção de fidelidade)", () => {
+  const catalogo = messages.catalogo;
+
+  // Movido de `features/catalog/products-panel.test.tsx` — a prancheta 17c desenha este aviso só
+  // no ITEM ABERTO, nunca na lista.
+  it("fixado com custo hoje > fixado: Alert warning + 'Voltar a acompanhar o custo' chama a mutation com { id, sellerFixedPrice: null }", () => {
+    useProductsMock.mockReturnValue(
+      listState([
+        { ...savedProduct, sellerFixedPrice: "20.00", sellerFixedAt: "2026-06-04T00:00:00Z" },
+      ]),
+    );
+    renderPage("prod-1");
+
+    const alert = screen.getByTestId("product-fixed-over-alert");
+    expect(alert).toHaveTextContent(
+      catalogo.fixedOverNote.replace("{hoje}", "R$ 25,65").replace("{diff}", "R$ 5,65"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: catalogo.unfix }));
+    expect(fixPriceMutateMock).toHaveBeenCalledWith({ id: "prod-1", sellerFixedPrice: null });
+  });
+
+  // Movido de `features/catalog/products-panel.test.tsx` — 16b·2: "Manter {valor}" fixa no preço
+  // ANTERIOR (a observação salva); "Aceitar novo preço" existe ao lado.
+  it("produto com mudança: 'Manter {era}' chama a mutation com sellerFixedPrice = era.toFixed(2), e 'Aceitar novo preço' existe", () => {
+    useProductsMock.mockReturnValue(listState([savedProduct]));
+    observationsResult.byKey = new Map([
+      ["PRODUCT:prod-1", { observedPrice: 20, observedAt: "2026-05-12", subjectId: "prod-1" }],
+    ]);
+    renderPage("prod-1");
+
+    expect(
+      screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 20,00") }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: catalogo.acceptNewPrice })).toBeInTheDocument();
+    fireEvent.click(
+      screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 20,00") }),
+    );
+    expect(fixPriceMutateMock).toHaveBeenCalledWith({ id: "prod-1", sellerFixedPrice: "20.00" });
   });
 });
 

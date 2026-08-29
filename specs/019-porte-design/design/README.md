@@ -49,6 +49,10 @@ transcrição — a fonte remota pode mudar; a cópia não.
 | `Calculadora - Selo de Procedencia - Tema Claro.dc.html` | PR-C | `514bcd0bb9dafa8b29695ac57a3bae349f4ee2e72eaa5e07525879b604d6648d` | 2026-08-28 |
 | `Calculadora - A Conta e os Precos - Tema Escuro.dc.html` | PR-C | `ceb3a6a20e5003a37c9d09cf17e2c1cd70e2a62237d7dfc71ec6b531b08b1795` | 2026-08-28 |
 | `Calculadora - A Conta e os Precos - Tema Claro.dc.html` | PR-C | `6a2903f47e407d6aa9818807179528c1a8e42175d6395cd1cbc976caeb87989b` | 2026-08-28 |
+| `Catalogo - Lista e o Recalculo - Tema Escuro.dc.html` | PR-D | `5ab9dc25934f5a28edf907ca428fe17d44d336260bbfd1464bb7329debf67486` | 2026-08-29 |
+| `Catalogo - Lista e o Recalculo - Tema Claro.dc.html` | PR-D | `4eac71231d9e14cab7e3a0db4764dc670e46c6f4cda4bd4bb918e517f2619bff` | 2026-08-29 |
+| `Catalogo - O Item Aberto - Tema Escuro.dc.html` | PR-D | `17515fbb5210b4c5febd7981df6cc55b5084eb5d4c08c022cad235f9ccee9a92` | 2026-08-29 |
+| `Catalogo - O Item Aberto - Tema Claro.dc.html` | PR-D | `86f7d54122432c52e22322074b87d51760d351d5f4c88dfb378f7399fd3ded3f` | 2026-08-29 |
 | _(as demais fatias acrescentam as suas)_ | | | |
 
 **Como as cópias foram feitas (T009, 27/08).** As três pranchetas ESCURAS vieram de `DesignSync get_file`
@@ -81,3 +85,13 @@ geometria de tela). **Leituras que a transcrição registra (dod-evidence §T055
 troca de modo como `tf-alert--warning` INLINE no bloco ("não cobre a tela"), não como diálogo central; a 14c
 desenha uma "marca da seção" (`{n} avisos`) que nenhuma task da Phase 6 pede; a prancheta 10 NÃO nomeia elemento
 fixo algum (T212/T059).
+
+**Como as cópias da PR-D foram feitas (T074, 29/08).** Duas pranchetas ESCURAS via `DesignSync get_file`
+(nenhuma truncada), gravadas verbatim; claras pela transformação da T009. **Leituras registradas na transcrição
+(dod-evidence §T074)**: os lotes 16/17 são anteriores ao lote 32 — a 16c ("Nada salvo ainda") e a 16d (o gate do
+free) foram SUPERADAS pelo caminho sem parede da PR-B e não são transcritas; as abas "Peças · Kits" da 16a são as 4
+abas do produto (Filamentos · Impressoras · Produtos · Kits, confirmadas pela 32a); o contador "36 de 60" da 17b
+diverge do teto 120 do adendo do ADR-0033 (decisão do dono 27/08 — 120 vence); a segunda frase do aviso da 16b
+("O filamento PLA Cinza subiu de … em …") exige um histórico de custo de insumo que a observação de preço não guarda
+— NÃO transcrita, lacuna para o dono; a 17c desenha a nota do item fixado como `tf-aviso` (info) e a spec/T068
+pedem tom ATENÇÃO — a spec ganha, com a copy verbatim.

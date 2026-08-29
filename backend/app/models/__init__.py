@@ -37,8 +37,11 @@ from sqlalchemy import (
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.engine.default import DefaultExecutionContext
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from uuid6 import uuid7
+
+from app.lib.name_norm import name_norm_key
 
 # Deterministic constraint names so Alembic migrations stay stable across autogenerations.
 NAMING_CONVENTION = {
@@ -48,6 +51,27 @@ NAMING_CONVENTION = {
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
 }
+
+
+def _name_norm_default(context: DefaultExecutionContext) -> str:
+    """019/PR-D (ADR-0033 §4) — `name_norm` NASCE junto com a linha, derivada de `name`.
+
+    A normalização é da APLICAÇÃO (não há extensão `unaccent` nem expressão IMMUTABLE que a
+    exprima em SQL), e este default é o que torna "existe `name_norm` para toda linha" uma
+    propriedade ESTRUTURAL em vez de uma disciplina de sete sítios de escrita: uma rota nova que
+    esqueça de calculá-la insere certo do mesmo jeito.
+
+    Ele NÃO substitui o escritor: quem RENOMEIA tem de reescrever `name_norm` explicitamente, e é
+    também o escritor que trata o conflito com o sufixo "(2)" sob SAVEPOINT (T072/T065). O default
+    cobre o INSERT; o UPDATE é decisão de quem renomeia, e por isso não há `onupdate` aqui — um
+    `onupdate` "esperto" leria um `name` que pode nem estar no SET e devolveria NULL numa coluna
+    NOT NULL.
+    """
+    raw = context.get_current_parameters().get("name")
+    if not isinstance(raw, str):  # pragma: no cover - `name` é NOT NULL em todas as 4 tabelas
+        raise ValueError("name_norm derives from `name`, which is missing from the INSERT")
+    return name_norm_key(raw)
+
 
 # Type domains (data-model §0.1). Stored precision ≥ input precision ⇒ lossless round-trip,
 # which is what makes catalog pre-fill byte-identical by construction (SC-305).
@@ -136,6 +160,15 @@ class Filament(Base):
             "cost_per_roll >= 0 AND cost_per_roll <> 'NaN'::numeric", name="cost_per_roll_valid"
         ),
         CheckConstraint("roll_weight_kg > 0", name="roll_weight_positive"),
+        # 019/PR-D (ADR-0033 §4): a unicidade de nome vira propriedade do BANCO, não intenção da
+        # aplicação (duas requisições simultâneas passariam as duas). PARCIAL de propósito.
+        Index(
+            "uq_filaments_owner_name_norm",
+            "owner_uid",
+            "name_norm",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
@@ -143,6 +176,10 @@ class Filament(Base):
         Text, ForeignKey("accounts.account_uid"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    #: 019/PR-D (ADR-0033 §4) — a chave de unicidade "sem maiúscula e sem acento" por conta.
+    #: `left(name_norm(name), 200)`, escrita pela aplicação (`app.lib.name_norm`), NUNCA exibida:
+    #: o vendedor lê `name`. O índice único é PARCIAL, então um item apagado não reserva o nome.
+    name_norm: Mapped[str] = mapped_column(Text, nullable=False, default=_name_norm_default)
     material: Mapped[str | None] = mapped_column(Text)
     cost_per_roll: Mapped[decimal.Decimal] = mapped_column(MONEY_SETTLED, nullable=False)
     roll_weight_kg: Mapped[decimal.Decimal] = mapped_column(QTY_KG, nullable=False)
@@ -172,6 +209,15 @@ class Printer(Base):
             "maintenance_reserve_per_hour >= 0 AND maintenance_reserve_per_hour <> 'NaN'::numeric",
             name="maintenance_valid",
         ),
+        # 019/PR-D (ADR-0033 §4): a unicidade de nome vira propriedade do BANCO, não intenção da
+        # aplicação (duas requisições simultâneas passariam as duas). PARCIAL de propósito.
+        Index(
+            "uq_printers_owner_name_norm",
+            "owner_uid",
+            "name_norm",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
@@ -179,6 +225,10 @@ class Printer(Base):
         Text, ForeignKey("accounts.account_uid"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    #: 019/PR-D (ADR-0033 §4) — a chave de unicidade "sem maiúscula e sem acento" por conta.
+    #: `left(name_norm(name), 200)`, escrita pela aplicação (`app.lib.name_norm`), NUNCA exibida:
+    #: o vendedor lê `name`. O índice único é PARCIAL, então um item apagado não reserva o nome.
+    name_norm: Mapped[str] = mapped_column(Text, nullable=False, default=_name_norm_default)
     machine_value: Mapped[decimal.Decimal] = mapped_column(MONEY_SETTLED, nullable=False)
     machine_lifetime_hours: Mapped[decimal.Decimal] = mapped_column(QTY_H, nullable=False)
     avg_power_kw: Mapped[decimal.Decimal] = mapped_column(QTY_KW, nullable=False)
@@ -197,8 +247,23 @@ class Printer(Base):
 class Product(Base):
     """FR-310 — live-recompute product: piece inputs + reference-with-fallback (D3) + JSONB (D4).
 
-    NO price column exists anywhere — prices are recomputed client-side with the current
-    ``PRICING_MODEL_VERSION`` (FR-310/FR-313). ``filament_id``/``printer_id`` present ⇒ the live
+    **O app nunca exibe um preço que ele mesmo calculou no passado; ele exibe o cálculo de hoje ou
+    o número que o vendedor declarou** (ADR-0033 §1 — a redação que substitui o antigo "NO price
+    column exists anywhere", 019/PR-D, Clarification datada em `specs/007-e2-catalog-entitlement`).
+    Continua não existindo aqui NENHUMA coluna de preço CALCULADO: o preço é recomputado no cliente
+    com o ``PRICING_MODEL_VERSION`` corrente (FR-310/FR-313) e o backend nunca chama o motor
+    (ADR-0008). O único dinheiro desta linha é ``seller_fixed_price`` — o número do ANÚNCIO,
+    **declarado** pelo vendedor, com ``seller_fixed_at`` dizendo quando —, e o prefixo ``seller_``
+    é carga: ele faz "usar isto como o preço do produto" ler errado em voz alta. ``NULL`` = o
+    produto acompanha o custo; desfixar volta o recomputado de hoje, e o produto NUNCA desfixa
+    sozinho. O fixado **não compõe** kit, orçamento nem cenário (embute a comissão do marketplace;
+    composição é sempre pelo motor).
+
+    O "era R$ …" mora em outro lugar de propósito: ``PriceObservation`` é *contexto*, nunca
+    *fonte*, e mantê-lo fora desta tabela é o que preserva o invariante do E2 verificável por
+    AUSÊNCIA em vez de por sutileza.
+
+    ``filament_id``/``printer_id`` present ⇒ the live
     row is authoritative (US6-3); NULL (via delete-degradation) ⇒ the resolved columns are
     authoritative and editable (US6-4) — the CHECKs make a "blank product" unrepresentable.
     """
@@ -285,6 +350,23 @@ class Product(Base):
             " AND printer_maintenance_reserve_per_hour <> 'NaN'::numeric)",
             name="printer_maintenance_valid",
         ),
+        # 019/PR-D (ADR-0033 §3): o guarda de dinheiro da casa aplicado ao ÚNICO valor monetário
+        # desta tabela — declarado pelo vendedor, nunca calculado. `numeric` aceita NaN e trata
+        # `NaN = NaN` como TRUE, por isso o `<> 'NaN'` explícito.
+        CheckConstraint(
+            "seller_fixed_price IS NULL OR"
+            " (seller_fixed_price >= 0 AND seller_fixed_price <> 'NaN'::numeric)",
+            name="seller_fixed_price_valid",
+        ),
+        # 019/PR-D (ADR-0033 §4): a unicidade de nome vira propriedade do BANCO, não intenção da
+        # aplicação (duas requisições simultâneas passariam as duas). PARCIAL de propósito.
+        Index(
+            "uq_products_owner_name_norm",
+            "owner_uid",
+            "name_norm",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
@@ -292,6 +374,10 @@ class Product(Base):
         Text, ForeignKey("accounts.account_uid"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    #: 019/PR-D (ADR-0033 §4) — a chave de unicidade "sem maiúscula e sem acento" por conta.
+    #: `left(name_norm(name), 200)`, escrita pela aplicação (`app.lib.name_norm`), NUNCA exibida:
+    #: o vendedor lê `name`. O índice único é PARCIAL, então um item apagado não reserva o nome.
+    name_norm: Mapped[str] = mapped_column(Text, nullable=False, default=_name_norm_default)
 
     # Piece inputs (product-owned; tariff lives here — spec assumption, data-model §11).
     # ``waste_grams`` was REMOVED in pricing-core 4.0.0 (ADR-0026, 016/US10) — migration 0007.
@@ -340,6 +426,14 @@ class Product(Base):
     printer_avg_power_kw: Mapped[decimal.Decimal | None] = mapped_column(QTY_KW)
     printer_maintenance_reserve_per_hour: Mapped[decimal.Decimal | None] = mapped_column(MONEY_RATE)
 
+    # 019/PR-D (ADR-0033 §3) — o preço do ANÚNCIO, DECLARADO pelo vendedor. NULL = acompanhando o
+    # custo (o estado "não fixado" é a ausência, sem tabela paralela e sem etapa intermediária).
+    # Não é cálculo guardado, não desfixa sozinho e NÃO participa de kit/orçamento/cenário.
+    seller_fixed_price: Mapped[decimal.Decimal | None] = mapped_column(MONEY_SETTLED)
+    #: Carimbado pelo SERVIDOR ao fixar (NULL ao desfixar) — sem prefixo `device_` porque, ao
+    #: contrário de `device_quoted_at`, este instante é o servidor que sabe.
+    seller_fixed_at: Mapped[datetime.datetime | None] = mapped_column(DateTime(timezone=True))
+
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -363,6 +457,15 @@ class Bom(Base):
         CheckConstraint("length(btrim(name)) > 0", name="name_not_blank"),
         # Active listing is always owner + not-deleted — the composite serves it directly.
         Index("ix_boms_owner_uid_deleted_at", "owner_uid", "deleted_at"),
+        # 019/PR-D (ADR-0033 §4): a unicidade de nome vira propriedade do BANCO, não intenção da
+        # aplicação (duas requisições simultâneas passariam as duas). PARCIAL de propósito.
+        Index(
+            "uq_boms_owner_name_norm",
+            "owner_uid",
+            "name_norm",
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
@@ -370,6 +473,10 @@ class Bom(Base):
         Text, ForeignKey("accounts.account_uid"), nullable=False, index=True
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
+    #: 019/PR-D (ADR-0033 §4) — a chave de unicidade "sem maiúscula e sem acento" por conta.
+    #: `left(name_norm(name), 200)`, escrita pela aplicação (`app.lib.name_norm`), NUNCA exibida:
+    #: o vendedor lê `name`. O índice único é PARCIAL, então um item apagado não reserva o nome.
+    name_norm: Mapped[str] = mapped_column(Text, nullable=False, default=_name_norm_default)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
@@ -538,6 +645,70 @@ class BomLine(Base):
         JSONB, nullable=False, server_default="[]"
     )
 
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now()
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, server_default=func.now(), onupdate=func.now()
+    )
+
+
+class PriceObservation(Base):
+    """019/PR-D (ADR-0033 §2) — o último preço que o vendedor VIU, uma linha por (conta, item).
+
+    Serve à frase "era R$ …" e à contagem "3 preços mudaram desde a sua última visita". É
+    **contexto, nunca fonte**: nenhum caminho de exibição pode ler daqui o número GRANDE — o valor
+    exibido é sempre o recomputado de hoje ou o declarado pelo vendedor.
+
+    **Quem escreve é o CLIENTE**, porque é o único que sabe calcular (ADR-0008: o backend nunca
+    recomputa). O servidor valida e guarda; não deriva, não compara e não conta — a frase é
+    derivada no cliente. A escrita acontece **depois** do render, nunca antes: se ela falhar, a
+    marca não avança e o vendedor vê o mesmo aviso na próxima visita (repetir uma verdade é
+    honesto; escrever sem ter exibido ESCONDERIA uma mudança real).
+
+    **Ausência é ausência** — sem observação a linha não diz nada, nem "0 preços mudaram" nem
+    "era R$ 0,00" (FR-1913).
+
+    Uma linha por item, atualizada no lugar (não é append-only): uma observação não PROVA nada, é
+    um marcador de leitura, e o histórico que ninguém consulta cresceria sem fim. Se um dia alguém
+    precisar da trilha, isso é uma tabela de EVIDÊNCIA nova, com dono e razão próprios.
+
+    ``model_version``/``catalog_version`` são REGISTRO, não regra: guardados para que um "era R$ X"
+    produzido por outra versão do motor ou por outra tabela de tarifas possa ser explicado sem
+    adivinhação. Nesta fatia eles não mudam comportamento nenhum.
+    """
+
+    __tablename__ = "price_observations"
+    __table_args__ = (
+        # Uma linha por (conta, item). `KIT` já cabe pelo discriminador — kits entram sem migração.
+        # A UNIQUE liderada por `owner_uid` também serve o `WHERE owner_uid = :uid` do GET.
+        UniqueConstraint(
+            "owner_uid", "subject_kind", "subject_id", name="uq_price_observations_subject"
+        ),
+        CheckConstraint("subject_kind IN ('PRODUCT','KIT')", name="subject_kind_enum"),
+        CheckConstraint(
+            "observed_price >= 0 AND observed_price <> 'NaN'::numeric",
+            name="observed_price_valid",
+        ),
+        CheckConstraint(
+            "observed_at > '-infinity' AND observed_at < 'infinity'", name="observed_at_finite"
+        ),
+        CheckConstraint("length(btrim(model_version)) > 0", name="model_version_set"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=_uuid7)
+    owner_uid: Mapped[str] = mapped_column(Text, ForeignKey("accounts.account_uid"), nullable=False)
+    subject_kind: Mapped[str] = mapped_column(Text, nullable=False)
+    #: **Sem FK, de propósito** (precedente ADR-0019 §5 / ADR-0021 N2): um id que resolve ou não
+    #: resolve, nunca uma FK que escreve na linha alheia — apagar um produto não pode fazer o banco
+    #: mexer numa observação, e uma observação órfã simplesmente não resolve na leitura.
+    subject_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=False)
+    observed_price: Mapped[decimal.Decimal] = mapped_column(MONEY_SETTLED, nullable=False)
+    #: Carimbado pelo SERVIDOR (`now()`); o corpo do PUT não o envia. "Salvo em DD/MM" formata no
+    #: fuso do aparelho na LEITURA (ADR-0033 §Adendo 2026-08-27, decisão 1).
+    observed_at: Mapped[datetime.datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    model_version: Mapped[str] = mapped_column(Text, nullable=False)
+    catalog_version: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime.datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
