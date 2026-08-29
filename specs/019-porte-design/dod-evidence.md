@@ -872,3 +872,32 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   `.tf-brow__dot` herdado do 016 é 10×10/raio 3 onde a prancheta desenha 8px redondo — para o dono.
 - Unit 475/475 · e2e `calculator-layout` + `calculator` 66 passed / 0 failed nos dois projetos.
 
+### T099 — gate, e2e completo, screenshots e o que a stack real achou (qa-software ×2 + main loop, 2026-08-29)
+
+- **E2E completo** (508 testes, chromium + mobile, `--workers=1`): 363 passed · 12 failed · 3 flaky (o `grant_premium` JIT×CLI
+  de sempre, verdes no retry) · 130 skipped. Os 12 vermelhos eram **4 classes, nenhuma nova depois do tratamento**:
+  (a) `.tf-price--md` sumiu de `/calcular` para a semente — o par de cartões saiu (T142) e o cartão único só é `md` a partir de
+  R$ 10.000: o teste de geometria A5 passou a GERAR R$ 950.096,00 para seguir exercitando o variant; (b) `getByText("R$ 24,24")`
+  não casa mais — o cartão divide o valor em spans: regex no `price-hero`; (c) **achado novo**: ≥1280 a gaveta não existe (a
+  coluna larga é permanente) e 3 testes que assumiam um `<dialog>` nessa faixa ramificam por largura; e ao verificar (c) no
+  browser real, deslogado a 1280, apareceram **três** "Assinar Premium" na tela — o teaser da calculadora e, colado a ele, o
+  do vazio da coluna. Tratado no produto: o vazio da coluna monta com `teaser={false}` (a página mantém os 2 convites por
+  desenho; a gaveta estreita mantém o dela — FR-1906), com teste unitário nos dois sentidos; (d) SC-611 intermitente só sob a
+  carga da suíte — o focus-guard do Radix ainda fechando deixava o botão `aria-hidden`; `waitFor` na causa. Rerodagem dos 9
+  specs afetados: chromium todos verdes · mobile 51 passed / 2 flaky (idem) · vitest completo **1564/1564** com o SC-611 sob carga.
+- **A regressão da PR-D que só a stack real pegou**: entre 1024 e 1279 o nome de filamento/impressora/produto na `tf-table` era
+  INVISÍVEL e INCLICÁVEL — `btnOffsetWidth: 0, scrollWidth: 61` medidos, coluna "Peça" em branco na imagem
+  (`qa-repro-tftable-{1024,1279,long-*}.png`, mantidas como prova). Causa: o `<button>` do nome repetia a classe `tf-table__name`
+  da célula; o `max-width: 0` da folha é inerte numa célula (`table-layout: auto`) e vale de verdade num botão. As capturas
+  `tf-table-1024/1279` da PR-D não denunciaram porque a asserção era `toContainText` — um elemento de largura zero contém o
+  texto. Corrigido (classe só na célula) + guarda permanente `catalog-table-name-visible.spec.ts` (1024/1279 × 3 abas,
+  `offsetWidth > 40` + o clique abre a edição). **Lição (a 4ª vez do projeto): visibilidade é geometria, não texto — a guarda
+  de uma lista densa mede a caixa do elemento interativo, não o `textContent` da célula.**
+- **Screenshots** (`porte-screenshots-pr-f.spec.ts`, `animations: "disabled"`, medidas fundidas): `simulacoes-{1280,1920}-*`,
+  `simulacoes-aberta-{1280,1920}-*`, `simulacoes-390-*` nos dois temas — a gaveta 390 é **idêntica ao baseline** (mesmo tamanho
+  de arquivo no escuro, 56 bytes de antialiasing no claro; geometria igual por asserção). Ponto para a 2ª passada: a lista a
+  1280/1920 não destaca visualmente a simulação aberta (a barra de contexto a nomeia).
+- Órfãos: dois `vite preview --port 4175` (das minhas reproduções do main loop) sobreviveram fora das 4 portas vigiadas — a
+  lista de portas a matar antes do e2e ganha a 4175.
+- Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0 — push/PR aguardam o "pode" do dono.
+
