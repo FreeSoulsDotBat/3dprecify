@@ -36,6 +36,7 @@ import {
   PAYBACK_YEAR_OPTIONS,
   RITMO_OPTIONS,
 } from "@/features/calculator/calculator-schema";
+import { formatDatePtBr } from "@/shared/lib/format-date";
 import { avisoDeComissao, avisosDePlausibilidade } from "@/shared/lib/plausibilidade";
 import { useAvisoDeCampo, type UseAvisoDeCampoResult } from "@/shared/lib/use-aviso-de-campo";
 import { useIsCalcWide } from "@/shared/lib/use-is-wide";
@@ -964,13 +965,6 @@ function ChannelFeeField({
   );
 }
 
-/** ISO date ("2026-02-02") → pt-BR "02/02/2026" (mirrors `fee-seal.tsx`'s `fmtDate`; kept local —
- *  the surcharge caption is the only consumer in this file). */
-function fmtDatePtBr(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
-}
-
 /** One catalog-driven optional surcharge toggle (016/US16, FR-923, ADR-0027 §3.2) — Shopee
  *  "Item volumoso" today, but nothing here names it: label, value and provenance all come from
  *  `surcharge` (the catalog entry `channelFieldPlan.surcharges` carries). Checked → the id joins
@@ -1020,7 +1014,7 @@ function SurchargeCheckbox({
               {" · "}
               {t2.provenance
                 .replace("{source}", surcharge.source)
-                .replace("{date}", fmtDatePtBr(surcharge.effectiveDate))}
+                .replace("{date}", formatDatePtBr(surcharge.effectiveDate))}
             </p>
           </div>
         );
@@ -1256,7 +1250,7 @@ function ChannelSlot({
           {t.channels.freightSubsidy.caption.replace("{ceiling}", formatBRL(subsidyCeiling))}{" "}
           {t.channels.freightSubsidy.provenance
             .replace("{source}", shopeeSubsidy.source)
-            .replace("{date}", fmtDatePtBr(shopeeSubsidy.effectiveDate))}
+            .replace("{date}", formatDatePtBr(shopeeSubsidy.effectiveDate))}
         </p>
       )}
       {/* 016/US16 (FR-923, ADR-0027 §3.2) — catalog-driven optional surcharges (Shopee

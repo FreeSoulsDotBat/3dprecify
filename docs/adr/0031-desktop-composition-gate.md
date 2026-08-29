@@ -144,3 +144,47 @@ Vale, sem mudar uma vírgula do corpo acima:
    antes e depois** — o risco declarado do `position: sticky` acima vale igual aqui.
 6. **O que esta emenda NÃO autoriza**: mudar o limiar, abrir um segundo gate, mover a seleção para a
    URL, ou tocar no ramo mobile. Qualquer um dos quatro exige nova emenda datada.
+
+---
+
+## Emenda 2 (2026-08-27/29) — os três limiares nomeados convivem, nenhum sem nome fora deste arquivo
+
+- **Status da emenda**: Proposed (o dono flipa junto com o gate da fatia que a executa — a PR-D do
+  019, T130)
+- **Autor**: dev-frontend (019-porte-design, cluster FE-1a) · **Motivo**: decisões 1 e 2 do dono
+  (2026-08-27) — a lista do Catálogo ganha uma faixa densa (`tf-table`) entre 1024 e 1279px, um
+  limiar que a PR-C (Calculadora) já tinha nomeado para OUTRA decisão sem que este ADR tivesse
+  registrado a coincidência. Sem emenda, a terceira constante `1024` nasceria inferida.
+
+**Decisão: emenda datada, não ADR novo** — pela mesma razão da Emenda 2026-08-26: o corpo já previu
+o caso ("estende este hook com um limiar nomeado"), e um documento novo para um número que já existe
+duplicaria a decisão sem decidir nada novo.
+
+Os três limiares que hoje vivem em `use-is-wide.ts`, e por que são TRÊS constantes e não uma:
+
+1. **`WIDE_QUERY` — 1280px.** O gate original deste ADR: o mestre-detalhe das quatro (agora cinco,
+   com Simulações) telas, e a coluna larga de Simulações dentro de `/calcular` (019/PR-F). Governa
+   uma mudança ESTRUTURAL de composição (Option C, corpo acima).
+2. **`LIST_DENSE_QUERY` — 1024px** (019/PR-D, T130, nova nesta emenda). SÓ a densidade da lista do
+   Catálogo: entre 1024 e 1279px a `tf-table` substitui os cards do mobile, mas o mestre-detalhe
+   ainda não monta (isso só acontece em `WIDE_QUERY`). É uma decisão de DENSIDADE, não de estrutura.
+3. **`CALC_WIDE_QUERY` — 1024px** (019/PR-C, T057). O corte de layout da Calculadora
+   (`calculator-form.css`, `.tf-calc-grid` em duas colunas) — existia sem nome antes da PR-C e
+   ganhou nome ali.
+
+`LIST_DENSE_QUERY` e `CALC_WIDE_QUERY` têm o MESMO número (1024) e nomes DIFERENTES de propósito:
+são decisões tomadas por fatias diferentes, por razões diferentes (uma sobre uma tabela do Catálogo,
+outra sobre uma grade da Calculadora), e nada nesta emenda as amarra — se um dia só uma delas mudar
+de corte, ela edita só a própria constante, sem tocar na outra nem reabrir este ADR.
+
+O que já era regra e esta emenda reafirma, agora citando os TRÊS: **nenhum limiar de largura vive
+fora de `use-is-wide.ts`, e nenhum `matchMedia` de largura é aberto em outro lugar.** Onde o corpo do
+ADR e a Emenda 2026-08-26 diziam "um único limiar", a partir de agora a propriedade é "um único
+ARQUIVO de limiares nomeados" — o número de constantes cresce (três, hoje), a regra de onde elas
+moram não.
+
+**Confiança na emenda: 92%** — o risco descartado foi que `LIST_DENSE_QUERY` e `CALC_WIDE_QUERY`
+precisassem, cedo ou tarde, do mesmo valor por acaso (o que tornaria uma constante única tentadora);
+rejeitado porque as duas fatias que os nomearam não têm nenhuma dependência declarada uma da outra —
+uma coincidência numérica não é uma relação.
+

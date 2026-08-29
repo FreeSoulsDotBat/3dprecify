@@ -2,6 +2,7 @@ import { useState } from "react";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { dismissFeeSeal, useFeeSealDismissed } from "@/shared/lib/fee-seal-dismiss-store";
+import { formatDatePtBr } from "@/shared/lib/format-date";
 import {
   Alert,
   type AlertTone,
@@ -62,12 +63,6 @@ export type FeeSealState =
   | { kind: "adjusted" }
   | { kind: "estimate" }
   | { kind: "none" };
-
-/** ISO date ("2026-07-06" or a full timestamp) → pt-BR "06/07/2026"; raw string if unparseable. */
-function fmtDate(iso: string): string {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  return m ? `${m[3]}/${m[2]}/${m[1]}` : iso;
-}
 
 /** 13a·2 — "Ver fonte" aberto: a citação inteira, quando conferimos, e o link do catálogo (nunca
  *  mostrado antes desta fatia). Compartilhado entre o selo principal e o da taxa fixa — só existe
@@ -168,7 +163,7 @@ function FeeReferenceAlert({
             {t.forCategory} <strong>{state.originCategoryName}</strong>
           </p>
         )}
-        <p className="fee-seal__date tf-tnum">{`${t.updatedOn} ${fmtDate(state.reviewedOn)}`}</p>
+        <p className="fee-seal__date tf-tnum">{`${t.updatedOn} ${formatDatePtBr(state.reviewedOn)}`}</p>
         {state.kind === "catchAll" && (
           <p className="fee-seal__catch-all-warning">
             <Icon name="triangle-alert" size={14} />
@@ -188,7 +183,7 @@ function FeeReferenceAlert({
           open={sourceOpen}
           onOpenChange={setSourceOpen}
           citation={state.source}
-          dateLine={t.fonteConferida.replace("{data}", fmtDate(state.reviewedOn))}
+          dateLine={t.fonteConferida.replace("{data}", formatDatePtBr(state.reviewedOn))}
           sourceUrl={state.sourceUrl}
           marketplaceLabel={marketplaceNames[marketplace]}
         />
@@ -254,7 +249,7 @@ export function FixedFeeSourceBadge({
   const [sourceOpen, setSourceOpen] = useState(false);
   if (dismissed) return null;
 
-  const sinceLine = `${t.fixedFeeSourceSince} ${fmtDate(source.effectiveDate)}`;
+  const sinceLine = `${t.fixedFeeSourceSince} ${formatDatePtBr(source.effectiveDate)}`;
 
   return (
     <>

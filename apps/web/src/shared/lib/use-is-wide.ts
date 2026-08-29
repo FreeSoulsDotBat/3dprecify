@@ -52,6 +52,20 @@ export const RAIL_FORCADO_QUERY = "(max-width: 599px)";
  */
 export const CALC_WIDE_QUERY = "(min-width: 1024px)";
 
+/**
+ * 019/PR-D (T130, prancheta do Catálogo) — o limiar da DENSIDADE da lista, e não um `matchMedia`
+ * novo solto: mesmo caso já previsto no ADR-0031 §Follow-ups ("se um dia uma quinta tela quiser um
+ * limiar diferente, ela **não** abre um segundo `matchMedia` — estende este hook com um limiar
+ * nomeado"). Na faixa 1024–1279px a lista do Catálogo vira `tf-table` (mais densa que os cards do
+ * mobile); em 1280px o mestre-detalhe do 018 assume, e este limiar deixa de importar para aquela
+ * tela — os dois convivem porque governam decisões DIFERENTES (ADR-0031 §Emenda 2).
+ *
+ * Mesmo número que `CALC_WIDE_QUERY` (1024px), NOME diferente: são decisões diferentes tomadas por
+ * fatias diferentes por razões diferentes, e uma pode mudar sem a outra — se um dia a Calculadora ou
+ * o Catálogo pedirem outro corte, cada um edita só a própria constante.
+ */
+export const LIST_DENSE_QUERY = "(min-width: 1024px)";
+
 /** A leitura defensiva compartilhada: sem `window`/`matchMedia` (o ambiente do jsdom) a resposta é
  *  `false`, que é a propriedade que mantém toda a suíte existente no ramo de hoje (ADR-0031). */
 function useMediaQuery(query: string): boolean {
@@ -90,4 +104,11 @@ export function useRailForcado(): boolean {
  *  a mesma propriedade que mantém a suíte existente no ramo mobile. */
 export function useIsCalcWide(): boolean {
   return useMediaQuery(CALC_WIDE_QUERY);
+}
+
+/** 019/PR-D — o limiar em que a lista do Catálogo vira `tf-table` densa (1024–1279px; ≥1280px é o
+ *  mestre-detalhe do 018, que consome `useIsWide`). Sem `matchMedia` (jsdom) → `false`, a mesma
+ *  propriedade que mantém a suíte existente no ramo mobile/cards. */
+export function useIsListDense(): boolean {
+  return useMediaQuery(LIST_DENSE_QUERY);
 }
