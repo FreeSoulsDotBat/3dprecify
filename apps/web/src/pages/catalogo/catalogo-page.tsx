@@ -112,7 +112,11 @@ export function CatalogoPage() {
   const { isLoading: filamentsLoading } = useFilaments();
   const { isLoading: printersLoading } = usePrinters();
   const { catalog, source } = useFeeCatalog();
-  const { byKey, isLoading: observationsLoading } = usePriceObservations();
+  const {
+    byKey,
+    isLoading: observationsLoading,
+    isError: observationsError,
+  } = usePriceObservations();
   const { observe } = useObservePrices();
   const fixPrice = useFixProductPrice();
 
@@ -173,10 +177,27 @@ export function CatalogoPage() {
   // em QUALQUER gate (FR-409, "lapsed com itens" continua mostrando preço), mas GRAVAR uma
   // observação é uma escrita, e a ausência da chamada é a barreira, nunca um 403 do servidor como
   // primeira linha de defesa.
+  //
+  // Três guardas a mais (revisão do main loop): a "visita" é a LISTA — com a ficha `?produto=`
+  // aberta ninguém viu a lista, e um deep-link na ficha não pode marcar os outros itens como
+  // vistos; um GET que falhou por rede (`observationsError`, nunca o 403) também não avança a marca —
+  // senão o PUT sobrescreve uma comparação "era" que o vendedor nunca chegou a ver; e o
+  // `catalogVersion` do catálogo de taxas vai junto, como o ADR-0033 §2 pede.
+  const listVisible = search.produto === undefined;
   useEffect(() => {
-    if (gate !== "active" || referencesLoading || observationsLoading) return;
-    observe(observeInput);
-  }, [gate, referencesLoading, observationsLoading, observeInput, observe]);
+    if (gate !== "active" || !listVisible) return;
+    if (referencesLoading || observationsLoading || observationsError) return;
+    observe(observeInput, catalog.catalogVersion);
+  }, [
+    gate,
+    listVisible,
+    referencesLoading,
+    observationsLoading,
+    observationsError,
+    observeInput,
+    observe,
+    catalog.catalogVersion,
+  ]);
 
   // 013/F-02 (D1=A): the product create/edit FULL PAGE — formerly its own 2-segment route, now
   // `?produto=<id>` (or `?produto=novo`) on `/catalogo` (the route's `beforeLoad` already
