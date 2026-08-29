@@ -15,6 +15,22 @@ import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-he
 //     cenário" button at all (SC-109).
 // Reach every scenario surface via CLIENT-NAV (a Sheet inside /calcular) — never a 2-segment
 // `page.goto` deep link (the `base:'./'` blank-route trap).
+//
+// 019/PR-F (T093, achado "por comportamento") — `openScenariosList` esperava um `<dialog>` a
+// QUALQUER largura porque, até a T095, a gaveta sempre abria. Playwright's Chromium project (sem
+// `viewport` próprio no `playwright.config.ts`) usa o preset "Desktop Chrome" — 1280×720, o próprio
+// limiar de `useIsWide` — e a DECISÃO 2 (ADR-0031 §Emenda 2) fez a gaveta parar de abrir ali: a
+// lista já está sempre visível ao lado (`ScenariosList` na coluna larga de `/calcular`). Estas
+// suítes testam CRUD/gerência de simulações, não a composição ≥1280 (coberta em
+// `porte-pr-f-t093.spec.ts`), então o arquivo inteiro passa a rodar num viewport explicitamente
+// estreito — a mesma disciplina que os dois testes que já chamavam `setViewportSize(390, …)`
+// adotavam pontualmente. Adoção, não reversão: o comportamento realmente mudou.
+//
+// 900px, não 1024px: 1024–1279 é a faixa `tf-table` densa do Catálogo (PR-D, `useIsListDense`) — um
+// viewport ali trocaria o ramo que `scenarios-manage.spec.ts` já esperava (o `tf-plist` de sempre)
+// por um NOVO ramo que essas suítes nunca exerceram (achou uma linha oculta lá — achado real, mas
+// de OUTRA fatia, fora deste escopo). 900px fica abaixo dos DOIS limiares (1024 e 1280).
+test.use({ viewport: { width: 900, height: 900 } });
 
 const t = messages.calculator;
 const s = messages.scenarios;

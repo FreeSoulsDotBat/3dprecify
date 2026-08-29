@@ -10,7 +10,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 // `useRenameScenario`/`useScenarios` hooks (only the wire functions mocked, like
 // `entities/scenario/use-scenarios.test.tsx` does) over a REAL QueryClient, so the genuine
 // query-invalidation-triggered re-render of the list (PATCH success → `invalidateQueries` →
-// `ScenarioListBody` refetches) races against the nested Sheet's own close — exactly the
+// `ScenariosList` — renamed+exported 019/PR-F T092, was the private `ScenarioListBody` — refetches)
+// races against the nested Sheet's own close — exactly the
 // concurrency the fully-mocked `scenarios-list-sheet.test.tsx` repro cannot exercise.
 
 const { entitlement, onlineState, renameScenario, listScenarios } = vi.hoisted(() => ({

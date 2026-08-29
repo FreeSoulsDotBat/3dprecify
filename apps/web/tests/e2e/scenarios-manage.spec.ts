@@ -26,6 +26,22 @@ import { grantPremium, revokePremium, signUpThrowaway } from "./history-helpers"
 // artifact. Lesson kept here on purpose: a layout/hit-testing symptom is diagnosed in a real
 // browser with element GEOMETRY, never inferred from a probe over an invisible target.
 
+// 019/PR-F (T093, achado "por comportamento") — `openScenariosList` esperava um `<dialog>` a
+// QUALQUER largura porque, até a T095, a gaveta sempre abria. O projeto Chromium (sem `viewport`
+// próprio no `playwright.config.ts`) usa o preset "Desktop Chrome" — 1280×720, o próprio limiar de
+// `useIsWide` — e a DECISÃO 2 (ADR-0031 §Emenda 2) fez a gaveta parar de abrir ali: a lista já está
+// sempre visível ao lado (`ScenariosList` na coluna larga de `/calcular`). Esta suíte testa D3/D6/
+// duplicar/gerência/lapso, não a composição ≥1280 (coberta em `porte-pr-f-t093.spec.ts`); o arquivo
+// inteiro passa a rodar num viewport estreito — abaixo do limiar de `itemVisible`/`openCatalogItem`
+// (`>= 1280`), que já sabiam tratar largura estreita. Adoção, não reversão: o comportamento mudou.
+//
+// 900px, não 1024px: 1024–1279 é a faixa `tf-table` densa do Catálogo (PR-D, `useIsListDense`) —
+// tentei 1024 primeiro e `createFilamentAndPrinter` (linha 85) achou "PLA Azul" OCULTO
+// (`tf-table__name` hidden): `itemVisible`/`openCatalogItem` só conheciam o corte de 1280 (018), não
+// o de 1024 (PR-D) — esta suíte nunca exerceu o ramo `tf-table`, e não é o escopo desta fatia
+// consertar o que ele achou. 900px fica abaixo dos DOIS limiares, no ramo `tf-plist` de sempre.
+test.use({ viewport: { width: 900, height: 900 } });
+
 const t = messages.calculator;
 const s = messages.scenarios;
 const pf = messages.productForm;

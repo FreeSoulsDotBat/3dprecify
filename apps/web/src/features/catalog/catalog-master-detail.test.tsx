@@ -135,9 +135,19 @@ describe("Catálogo — mestre-detalhe (018/US1)", () => {
     await user.clear(screen.getByLabelText(catalogo.searchLabel));
     await user.type(screen.getByLabelText(catalogo.searchLabel), "zzz");
     expect(screen.queryByTestId("master-item")).not.toBeInTheDocument();
-    expect(screen.getByText(catalogo.searchEmptyTitle)).toBeInTheDocument();
+    expect(screen.getByText(catalogo.searchEmpty.replace("{termo}", "zzz"))).toBeInTheDocument();
     // O vazio do CATÁLOGO diria outra coisa — e seria mentira sobre os dados do vendedor.
     expect(screen.queryByText(catalogo.emptyFilamentsTitle)).not.toBeInTheDocument();
+  });
+
+  // 019/PR-F (T098) — a ressalva `staleHint` por linha ("pode estar desatualizada") saiu dos DOIS
+  // ramos; só resta a faixa única "Modo leitura offline" no topo do painel.
+  it("offline (stale): a faixa única aparece, e NENHUMA linha do mestre-detalhe repete o aviso", () => {
+    const items = [fil("f1", "PLA Prata"), fil("f2", "PETG Preto", "PETG")];
+    renderPanel(items, { list: { ...listState(items), stale: true } });
+
+    expect(screen.getByText(catalogo.offlineTitle)).toBeInTheDocument();
+    expect(screen.queryByText(catalogo.staleHint)).not.toBeInTheDocument();
   });
 
   it("a seleção é derivada da lista atual: filtrar o item aberto não deixa ficha órfã", async () => {

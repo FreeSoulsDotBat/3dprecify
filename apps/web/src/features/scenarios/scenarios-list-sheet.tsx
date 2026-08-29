@@ -182,7 +182,13 @@ function ScenarioCard({
   );
 }
 
-function ScenarioListBody({
+// 019/PR-F (T092, US7) — extraída de `ScenarioListBody` (nome privado até aqui) para um export
+// NOMEADO no MESMO arquivo: `pages/calcular/calcular-page.tsx` (T095) monta ESTA função direto na
+// coluna larga ≥1280px, sem passar pelo `Sheet`/gaveta que `ScenariosListSheet` continua sendo
+// (estreito). Mesmas props de sempre — `onOpenScenario`/`onClose`/`lapsed`/`gate` — nada mudou na
+// forma, só a visibilidade do símbolo. `ScenariosListSheet` (abaixo) é o único chamador da gaveta;
+// o hospedeiro largo é o outro.
+export function ScenariosList({
   onOpenScenario,
   onClose,
   lapsed,
@@ -497,7 +503,7 @@ export function ScenariosListSheet({
               vazio didático, que já explica a feature com a própria frase. */}
           {!showsDoor && <SheetDescription>{t.listSubtitle}</SheetDescription>}
 
-          <ScenarioListBody
+          <ScenariosList
             gate={gate}
             lapsed={entitlement.data?.status === "lapsed"}
             onClose={() => onOpenChange(false)}

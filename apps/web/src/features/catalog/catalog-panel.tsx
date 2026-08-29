@@ -422,8 +422,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
             // não achou. Dizer "nenhum filamento salvo" seria mentira sobre os dados do vendedor.
             <EmptyState
               icon="package"
-              title={catalogo.searchEmptyTitle}
-              description={catalogo.searchEmptyBody}
+              title={catalogo.searchEmpty.replace("{termo}", query.trim())}
               action={
                 <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
                   {catalogo.searchClear}
@@ -458,7 +457,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                               {noteOf(item)}
                             </span>
                           )}
-                          {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                          {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu: a faixa "Modo leitura
+                              offline" (`list.stale`, abaixo no rodapé do painel) já cobre a mesma
+                              informação uma vez só, para a lista inteira. */}
                           {gate === "lapsed" && (
                             <span style={rowSummary}>{catalogo.readOnlyHint}</span>
                           )}
@@ -600,9 +601,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                       {noteOf(item)}
                     </span>
                   )}
-                  {list.stale && (
-                    <span className="tf-plist__meta truncate">{catalogo.staleHint}</span>
-                  )}
+                  {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu (mesmo raciocínio do ramo
+                      mestre-detalhe acima): a faixa "Modo leitura offline" já cobre a lista
+                      inteira, uma vez só. */}
                   {gate === "lapsed" && (
                     <span className="tf-plist__meta truncate">{catalogo.readOnlyHint}</span>
                   )}
