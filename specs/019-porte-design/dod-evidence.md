@@ -641,3 +641,60 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
 - **Fixture `name-norm.json`: 18 → 22 casos** (NBSP interno, BOM nas pontas, NEL PRESERVADO, `İ`), com a classe de
   espaço explícita documentada no `$comment`.
 
+### T130 · T063(ts) · FE-1a — as folhas compartilhadas (dev-frontend, 2026-08-29)
+
+- `shared/lib/name-norm.ts`: `nameNorm`/`nameNormKey`/`NAME_MAX = 120`, vetor `contracts/fixtures/name-norm.json` **22/22** nos dois
+  idiomas (a classe de espaço é escrita com os MESMOS escapes de codepoint; NEL preservado nos dois). `use-is-wide.ts`: `LIST_DENSE_QUERY`
+  (1024) + `useIsListDense()` ao lado de `WIDE_QUERY` — **ADR-0031 §Emenda 2** escrita (três limiares nomeados, nenhum fora do arquivo).
+  `format-date.ts` promovido a `shared/lib` (as 2 cópias absorvidas; fuso do aparelho declarado no comentário). Commit `630f1b1`.
+
+### T071 · T062 · T063(py) · T129 · T077 · N1 — a migração 0008 (dev-estrutura-de-dados **opus**, 2026-08-29)
+
+- **Migração `0008`** em 6 passos LITERAIS da auditoria §SQL: `price_observations` (UNIQUE por conta+item, 4 CHECKs, FK só para
+  `accounts`), `products.seller_fixed_price` Numeric(12,2) + `seller_fixed_at` + CHECK, `name_norm` nas 4 tabelas com **backfill em
+  Python** (a função de normalização **congelada** dentro da migração — não importa `app/lib`, para que uma mudança futura da regra não
+  reescreva o passado), desempate `(2)` só entre linhas VIVAS, `left(…, 200)` com reserva para o sufixo (`base[:200 - len(" (n)")]`),
+  `NOT NULL` + índice único PARCIAL por dono; downgrade simétrico.
+- **`PriceObservation`** + `seller_fixed_price/at` no modelo; `name_norm` com `default=_name_norm_default` **no INSERT apenas** (o UPDATE
+  passa pelo funil da API — decisão registrada para o dono, abaixo). Docstring do invariante reescrito (ADR-0033 §1).
+- `app/lib/name_norm.py` como FOLHA — contrato novo no import-linter (`app.lib` não importa nada de `app`). `test_name_norm.py`: 22/22
+  do MESMO vetor (falha explícita se o fixture não existir).
+- `test_migration_0008.py` (8 testes) afirma o estado pós-upgrade **e é não-vácuo por mutação**: sem o índice parcial, sem o CHECK
+  de `seller_fixed_price`, e com o backfill desligado o teste morre.
+- **T129**: `_dedup_match` (`boms.py`) casa por `name_norm` — emenda datada ao ADR-0017 §3 (reversível para "exato + (2)").
+- **T077**: a Clarification da 007 (`spec.md:410`) é TEXTUALMENTE o ADR-0033 §5 (diff vazio). Commit `55721ce`. Ledger: ~154,7k.
+
+### T072 · T073 · T064 · T065 · T066 · T070 — as rotas e o funil do nome (dev-backend **opus**, 2026-08-29)
+
+- **`GET/PUT /api/v1/price-observations`** (`price_observations.py`): upsert em lote ≤500 por `(subjectKind, subjectId)` na linha
+  única da conta; `(kind,id)` repetido no lote ⇒ 422; `observedPrice` com escala > 2 ⇒ 422 (validador `exponent >= -2`);
+  `observedAt` carimbado pelo SERVIDOR; `GET` → `require_catalog_read` (`lapsed` 200, `none` 403), `PUT` → `require_entitlement`.
+  `test_price_observations.py`: 8 funções/20 casos.
+- **`PATCH /api/v1/products/{id}`** `{ sellerFixedPrice }` (`ProductPatchIn`, `extra="forbid"`): grava e devolve; `null` desfixa e ZERA
+  `sellerFixedAt` (do servidor); outra chave ⇒ 422; `lapsed` ⇒ 403; produto de outro dono ⇒ 404. **A não-composição é provada**:
+  `ProductOut` congelado — a rota não devolve nenhum preço calculado, e o teste afirma a AUSÊNCIA da chave. `test_products_fixed_price.py`:
+  9 funções/18 casos.
+- **Nome único nos 7 sítios** via `api/naming.py::commit_with_unique_name` — o chamador entrega a linha limpa; TODA escrita corre no
+  callback `apply` sob `begin_nested()` (SAVEPOINT); colisão ⇒ sufixo `(n)` em silêncio (Q5), até 50 tentativas ⇒ 422. **Mutação**: sem o
+  SAVEPOINT o kit morre (a transação inteira aborta na 1ª colisão). **Corrida** provada com duas sessões concorrentes observadas por
+  `pg_stat_activity` — a segunda espera o lock do índice e sai como `(2)`. `test_catalog_name_conflict.py`: 9 funções/24 casos.
+  Achado lateral: `pieceName` de kit sem teto virava **500** — agora `max_length=120` ⇒ 422.
+- **T070 contrato**: os TRÊS comandos do CI, da raiz, duas vezes — diff vazio na 2ª (idempotente). `PriceObservationIn/Out`,
+  `PriceObservationsOut`, `ProductPatchIn`, `fix_product_price_api_v1_products__product_id__patch` no cliente gerado.
+- **Conformidade**: `extra="forbid"` no ITEM do array (`PriceObservationIn`) fazia o Schemathesis não terminar (>4 min no
+  `additionalProperties:false` aninhado); trocado por `@model_validator(mode="before")` que rejeita chaves desconhecidas com o mesmo 422 —
+  o CONTRATO perde a linha `additionalProperties:false` no item (o comportamento é o mesmo). ⛔ ratificação do dono no PR.
+- Backend: **577 passed**, ruff/basedpyright/import-linter ok. Commit `8a78b5f`. Ledger: ~272,5k.
+
+### Pontos que o dono ratifica no PR-D (registrados aqui para não sumirem)
+
+1. O contrato sem `additionalProperties:false` no item do array (acima).
+2. `name_norm` com default no MODELO (INSERT) — o UPDATE só normaliza pelo funil da API; um `UPDATE` cru fora da API deixaria
+   `name_norm` velho (o índice parcial ainda impede duplicata, mas o valor divergiria do nome).
+3. `observedPrice` com 3+ casas ⇒ 422 (a spec não fixa; a alternativa seria arredondar em silêncio — rejeitamos o silêncio num leaf de dinheiro).
+4. A regra do sufixo: "Gancho" existente + `"gancho "` novo ⇒ nome FINAL `"gancho (2)"` (o nome enviado, aparado, mais o sufixo — não
+   o nome do primeiro).
+5. A 2ª frase do aviso da 16b (a causa do aumento) não é derivável — não transcrita (T074, leitura 4).
+6. Contador 60 → 120 (adendo do ADR-0033).
+7. A nota do item fixado com tom ATENÇÃO (spec) onde a 17c desenha info.
+
