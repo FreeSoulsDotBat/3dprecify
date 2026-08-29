@@ -5,7 +5,8 @@ import { honestWriteError } from "@/shared/api/error-messages";
 import { type PremiumGate } from "@/shared/billing/premium-gate";
 import { type VazioFeature, VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { useIsWide } from "@/shared/lib/use-is-wide";
+import { formatBRL } from "@/shared/lib/decimal-ptbr";
+import { useIsListDense, useIsWide } from "@/shared/lib/use-is-wide";
 import {
   Alert,
   Button,
@@ -20,6 +21,7 @@ import {
   SheetContent,
   SheetTitle,
   Spinner,
+  Table,
   toast,
 } from "@/shared/ui";
 
@@ -116,6 +118,17 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
   deleteWarning?: (item: TItem) => string | undefined;
   /** 018/US1 — rótulo do bloco de detalhe no desktop ("Filamento salvo", "Produto salvo"…). */
   detailKicker?: string;
+  /** 019/PR-D (T076) — o preço recomputado HOJE (ou o preço fixado, como declaração), pronto para
+   *  exibir. Ausente → a linha não mostra preço nenhum (nunca "R$ 0,00" — a ausência é honesta:
+   *  item degradado, referências ainda carregando, ou a aba não tem preço nesta fatia, como Kits). */
+  rowPrice?: (item: TItem) => number | undefined;
+  /** O preço ANTERIOR (a última observação salva), só quando ele difere do de hoje — "era {valor}". */
+  rowWas?: (item: TItem) => number | undefined;
+  /** A marca da linha ("fixado"/"parado") — o `tf-plist__flag` da prancheta 16f/17c·2. */
+  rowFlag?: (item: TItem) => { kind: "fixed" | "stopped"; label: string } | undefined;
+  /** Uma legenda curta por linha ("Salvo em {data}"/"Parou em {data}") — soma-se a `rowSummary`,
+   *  nunca a substitui (FR-310 continua valendo: a referência do produto é o texto principal). */
+  rowMeta?: (item: TItem) => string | undefined;
 }
 
 type SheetState<TItem> = { mode: "create" } | { mode: "edit"; item: TItem };
@@ -141,6 +154,10 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   deleting,
   deleteWarning,
   detailKicker,
+  rowPrice,
+  rowWas,
+  rowFlag,
+  rowMeta,
 }: CatalogPanelProps<TItem, TForm, TWire>) {
   const [sheet, setSheet] = useState<SheetState<TItem> | null>(null);
   const [submitError, setSubmitError] = useState<string | undefined>(undefined);
@@ -151,6 +168,10 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
   // `?tab=` (013/F-02 segue valendo), mas a seleção dentro de uma lista é efêmera e escrevê-la na
   // URL faria cada clique mexer no roteador sem que ninguém queira aquele link (ADR-0031/C).
   const isWide = useIsWide();
+  // 019/PR-D (T076/T130) — a faixa 1024–1279px vira `tf-table` densa; ≥1280 o mestre-detalhe do
+  // 018 assume. `useIsListDense()` sozinho responde "true" em AMBAS as faixas (1024px é o piso das
+  // duas), então a tabela só entra quando o mestre-detalhe NÃO entrou.
+  const isDense = useIsListDense() && !isWide;
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   // A seleção "vaza" de seção sozinha? Não: a página monta um componente DIFERENTE por seção, então
@@ -251,6 +272,38 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
       </Button>
     </>
   );
+
+  // 019/PR-D (T076, prancheta 16b/16f/16g) — a coluna de valor: preço + "era" + a marca da linha.
+  // Ausente quando `rowPrice` não devolve nada (item degradado, sem recompute nesta fatia — Kits —
+  // ou referências ainda carregando): NUNCA "R$ 0,00" no lugar de um preço que não existe.
+  const priceVal = (item: TItem): ReactNode => {
+    const price = rowPrice?.(item);
+    if (price === undefined) return null;
+    const was = rowWas?.(item);
+    const flag = rowFlag?.(item);
+    return (
+      <span className="tf-plist__val">
+        <span className="tf-plist__price">{formatBRL(price)}</span>
+        {was !== undefined && (
+          <span className="tf-plist__was" data-testid="product-row-was">
+            {catalogo.priceWasLabel.replace("{valor}", formatBRL(was))}
+          </span>
+        )}
+        {flag && (
+          <span
+            className="tf-plist__flag"
+            data-testid={flag.kind === "fixed" ? "product-row-fixed" : undefined}
+          >
+            {/* O desenho (17c·2) usa `tf-ico-lock` para "fixado" — glifo ausente do conjunto
+                curado (`shared/ui/icon.tsx`); registrado no relatório da fatia, sem inventar um
+                substituto. "parado" usa `triangle-alert`, que já existe. */}
+            {flag.kind === "stopped" && <Icon name="triangle-alert" size={14} aria-hidden />}
+            {flag.label}
+          </span>
+        )}
+      </span>
+    );
+  };
 
   // 019/PR-B (T044) — "Adicionar" no vazio didático abre o MESMO formulário de sempre, inerte fora
   // de `active`; o Sheet mobile e a ficha do mestre-detalhe são o MESMO propósito (nunca dois
@@ -393,15 +446,26 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                       }`}
                       onClick={() => setSelectedId(item.id)}
                     >
-                      <span style={rowName}>{nameOf(item)}</span>
-                      <span style={rowSummary}>{summaryOf(item)}</span>
-                      {noteOf?.(item) && (
-                        <span style={rowSummary} data-testid="row-note">
-                          {noteOf(item)}
+                      {/* 019/PR-D (T076) — o conteúdo vira uma linha `tf-plist` (nome+meta à
+                          esquerda, preço+era+flag à direita) SEM trocar o `<button>` de fora: os
+                          testids/`aria-current` do mestre-detalhe (018/US1) continuam iguais. */}
+                      <span className="flex w-full items-start justify-between gap-3">
+                        <span className="tf-plist__main">
+                          <span style={rowName}>{nameOf(item)}</span>
+                          <span style={rowSummary}>{summaryOf(item)}</span>
+                          {rowMeta?.(item) && <span style={rowSummary}>{rowMeta(item)}</span>}
+                          {noteOf?.(item) && (
+                            <span style={rowSummary} data-testid="row-note">
+                              {noteOf(item)}
+                            </span>
+                          )}
+                          {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                          {gate === "lapsed" && (
+                            <span style={rowSummary}>{catalogo.readOnlyHint}</span>
+                          )}
                         </span>
-                      )}
-                      {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
-                      {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+                        {priceVal(item)}
+                      </span>
                     </button>
                   </li>
                 );
@@ -455,6 +519,55 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         )}
       </div>
     );
+  } else if (isDense) {
+    // 019/PR-D (T076/T130, prancheta 16g) — 1024–1279px: `tf-table`, a coluna "Antes" é o "era R$
+    // X" da lista promovida a coluna, e um travessão (`tableNoChange`) onde a linha não mudou.
+    body = (
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center justify-between gap-2">
+          <p style={captionText}>{copy.count(list.items.length)}</p>
+          {addButton()}
+        </div>
+        <Table>
+          <thead>
+            <tr>
+              <th scope="col">{catalogo.tableColName}</th>
+              <th scope="col" style={{ textAlign: "right" }}>
+                {catalogo.tableColPrice}
+              </th>
+              <th scope="col" style={{ textAlign: "right" }}>
+                {catalogo.tableColBefore}
+              </th>
+              <th scope="col">{catalogo.tableColSavedAt}</th>
+              <th scope="col">
+                <span className="sr-only">{catalogo.tableColActions}</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.items.map((item) => {
+              const price = rowPrice?.(item);
+              const was = rowWas?.(item);
+              return (
+                <tr key={item.id}>
+                  <td className="tf-table__name">
+                    <button type="button" onClick={() => openEdit(item)} className="tf-table__name">
+                      {nameOf(item)}
+                    </button>
+                  </td>
+                  <td className="tf-table__num">{price !== undefined ? formatBRL(price) : "—"}</td>
+                  <td className="tf-table__num tf-table__num--muted">
+                    {was !== undefined ? formatBRL(was) : catalogo.tableNoChange}
+                  </td>
+                  <td>{rowMeta?.(item) ?? summaryOf(item)}</td>
+                  <td className="tf-table__actions">{rowActions(item)}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      </div>
+    );
   } else {
     body = (
       <div className="flex flex-col gap-3">
@@ -471,15 +584,24 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                   className="min-w-0 flex-1 text-left"
                   onClick={() => openEdit(item)}
                 >
-                  <span style={rowName}>{nameOf(item)}</span>
-                  <span style={rowSummary}>{summaryOf(item)}</span>
-                  {noteOf?.(item) && (
-                    <span style={rowSummary} data-testid="row-note">
-                      {noteOf(item)}
+                  {/* 019/PR-D (T076) — mesma linha `tf-plist` (nome+meta à esquerda, preço+era+flag
+                      à direita) usada no mestre-detalhe; o `<button>` de fora continua o mesmo
+                      alvo de toque de sempre (nenhum teste de `openEdit` muda). */}
+                  <span className="flex w-full items-start justify-between gap-3">
+                    <span className="tf-plist__main">
+                      <span style={rowName}>{nameOf(item)}</span>
+                      <span style={rowSummary}>{summaryOf(item)}</span>
+                      {rowMeta?.(item) && <span style={rowSummary}>{rowMeta(item)}</span>}
+                      {noteOf?.(item) && (
+                        <span style={rowSummary} data-testid="row-note">
+                          {noteOf(item)}
+                        </span>
+                      )}
+                      {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                      {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
                     </span>
-                  )}
-                  {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
-                  {gate === "lapsed" && <span style={rowSummary}>{catalogo.readOnlyHint}</span>}
+                    {priceVal(item)}
+                  </span>
                 </button>
                 <Button
                   variant="ghost"

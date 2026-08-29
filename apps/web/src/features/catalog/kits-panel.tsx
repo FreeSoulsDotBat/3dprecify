@@ -5,6 +5,7 @@ import { useEntitlement } from "@/entities/user/use-entitlement";
 import type { BomOut } from "@/shared/api/generated";
 import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { formatDayMonthPtBr } from "@/shared/lib/format-date";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { CatalogPanel } from "./catalog-panel";
@@ -43,6 +44,14 @@ export function KitsPanel() {
       }}
       rowName={(k) => k.name}
       rowSummary={(k) => catalogo.countKitPieces.replace("{n}", String(k.lines?.length ?? 0))}
+      // 019/PR-D (T076, prancheta 17e) — "{n} peças · salvo em {data}". O preço do kit fica FORA
+      // desta fatia (T124: nenhuma função pronta de preço de kit na lista) — registrado no
+      // relatório; a linha do kit não ganha `rowPrice`/`rowFlag`, só a meta.
+      rowMeta={(k) =>
+        catalogo.kitMeta
+          .replace("{n}", String(k.lines?.length ?? 0))
+          .replace("{data}", formatDayMonthPtBr(k.updatedAt))
+      }
       onCreateNavigate={() => void navigate({ to: "/kits" })}
       onEditNavigate={(k) => void navigate({ to: "/kits", search: { id: k.id } })}
       // Duplicate (US4) opens the copy in the composer as a NEW, unsaved kit — the seller reviews

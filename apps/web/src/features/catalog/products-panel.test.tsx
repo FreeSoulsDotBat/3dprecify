@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -32,6 +32,9 @@ vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
     useFilaments: () => useFilamentsMock(),
     usePrinters: () => usePrintersMock(),
     useDeleteProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    // 019/PR-D (T068) — o diálogo de duplicar (17d) usa `useCreateProduct` direto no painel; sem
+    // este stub o teste precisaria de um `QueryClientProvider` real só para montar o componente.
+    useCreateProduct: () => ({ mutateAsync: vi.fn(), isPending: false }),
   };
 });
 // F-lapsed: the panel now reads its own lapsed state (mutable so a test can flip it).
@@ -186,5 +189,168 @@ describe("ProductsPanel — Produtos tab (US6/T030)", () => {
     // the row/delete affordance leads to the read-only page, NEVER the working destructive confirm.
     fireEvent.click(screen.getByRole("button", { name: `${catalogo.remove} Vaso G` }));
     expect(screen.queryByText(messages.catalogForm.deleteBody)).not.toBeInTheDocument();
+  });
+});
+
+// 019/PR-D (T068, pranchetas 16/17) — o recálculo do Catálogo: preço/era/flag por prop (a page
+// injeta `recomputed`/`observations`/`changed`; o painel é PURO — nada aqui chama
+// `entities/catalog/price-observations` diretamente).
+describe("ProductsPanel — o recálculo do Catálogo (019/PR-D T068)", () => {
+  function n(id: string, name: string, over: Record<string, unknown> = {}) {
+    return { ...product, id, name, ...over };
+  }
+
+  it("3 preços mudaram desde a última visita: a faixa (plural) + 'era R$ 38,90' + 'Salvo em 12/05'", () => {
+    const items = [
+      n("p1", "Suporte", { updatedAt: "2026-05-12T00:00:00Z" }),
+      n("p2", "Vaso", { updatedAt: "2026-05-09T00:00:00Z" }),
+      n("p3", "Dragão", { updatedAt: "2026-04-28T00:00:00Z" }),
+    ];
+    useProductsMock.mockReturnValue(listState(items));
+    render(
+      <ProductsPanel
+        recomputed={new Map([["p1", 41.2]])}
+        observations={new Map([["p1", { observedPrice: 38.9, observedAt: "2026-05-12" }]])}
+        changed={new Map([["p1", { was: 38.9, observedAt: "2026-05-12" }]])}
+        changedCount={3}
+      />,
+    );
+
+    expect(screen.getByTestId("products-price-changed-banner")).toHaveTextContent(
+      catalogo.priceChangedCount.replace("{n}", "3"),
+    );
+    expect(screen.getByText("era R$ 38,90")).toBeInTheDocument();
+    expect(screen.getByText("Salvo em 12/05")).toBeInTheDocument();
+  });
+
+  it("n=1: usa o singular priceChangedOne", () => {
+    useProductsMock.mockReturnValue(listState([n("p1", "Suporte")]));
+    render(<ProductsPanel changedCount={1} />);
+
+    expect(screen.getByTestId("products-price-changed-banner")).toHaveTextContent(
+      catalogo.priceChangedOne,
+    );
+  });
+
+  it("fixado: mostra 'Preço fixado por você' (valor do vendedor) e a flag 'fixado' na lista", () => {
+    useProductsMock.mockReturnValue(
+      listState([
+        n("p1", "Suporte", { sellerFixedPrice: "38.90", sellerFixedAt: "2026-06-04T00:00:00Z" }),
+      ]),
+    );
+    render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} />);
+
+    expect(screen.getByText("R$ 38,90")).toBeInTheDocument();
+    expect(screen.getByTestId("product-row-fixed")).toHaveTextContent(catalogo.fixedFlag);
+  });
+
+  it("custo hoje > fixado: Alert warning + 'Voltar a acompanhar o custo' chama onFixPrice(id, null)", () => {
+    const onFixPrice = vi.fn();
+    useProductsMock.mockReturnValue(listState([n("p1", "Suporte", { sellerFixedPrice: "38.90" })]));
+    render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} onFixPrice={onFixPrice} />);
+
+    const alert = screen.getByTestId("product-fixed-over-alert");
+    expect(alert).toHaveTextContent(
+      catalogo.fixedOverNote.replace("{hoje}", "R$ 41,20").replace("{diff}", "R$ 2,30"),
+    );
+    fireEvent.click(screen.getByRole("button", { name: catalogo.unfix }));
+    expect(onFixPrice).toHaveBeenCalledWith("p1", null);
+  });
+
+  it("'Manter {valor}' no item que mudou chama onFixPrice(id, was.toFixed(2))", () => {
+    const onFixPrice = vi.fn();
+    useProductsMock.mockReturnValue(listState([n("p1", "Suporte")]));
+    render(
+      <ProductsPanel
+        recomputed={new Map([["p1", 41.2]])}
+        changed={new Map([["p1", { was: 38.9, observedAt: "2026-05-12" }]])}
+        onFixPrice={onFixPrice}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: catalogo.keepPrice.replace("{valor}", "R$ 38,90") }),
+    );
+    expect(onFixPrice).toHaveBeenCalledWith("p1", "38.90");
+  });
+
+  it("nome repetido no diálogo de duplicar recusa ANTES do submit (nameConflict)", async () => {
+    useProductsMock.mockReturnValue(
+      listState([n("p1", "Gancho"), n("p2", "Vaso hexagonal 15 cm")]),
+    );
+    render(<ProductsPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+    const dialog = await screen.findByTestId("product-duplicate-dialog");
+    const nameInput = within(dialog).getByRole("textbox");
+    fireEvent.change(nameInput, { target: { value: "Vaso hexagonal 15 cm" } });
+    fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+
+    expect(await within(dialog).findByText(messages.catalogForm.nameConflict)).toBeInTheDocument();
+  });
+
+  it("duplicar: nome pré-preenchido com '(cópia)', cria com o wire do original (sem sellerFixedPrice)", async () => {
+    const createMock = vi.fn().mockResolvedValue({});
+    // 019/PR-D — reaproveita o mock hoisted de useCreateProduct via override local.
+    const useCatalog = await import("@/entities/catalog/use-catalog");
+    vi.spyOn(useCatalog, "useCreateProduct").mockReturnValue({
+      mutateAsync: createMock,
+      isPending: false,
+    } as never);
+    useProductsMock.mockReturnValue(listState([n("p1", "Gancho", { sellerFixedPrice: "38.90" })]));
+    render(<ProductsPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+    const dialog = await screen.findByTestId("product-duplicate-dialog");
+    expect(within(dialog).getByRole("textbox")).toHaveValue(
+      `Gancho${catalogo.duplicateCopySuffix}`,
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+
+    await vi.waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
+    const body = createMock.mock.calls[0][0];
+    expect(body.name).toBe(`Gancho${catalogo.duplicateCopySuffix}`);
+    expect(body).not.toHaveProperty("sellerFixedPrice");
+  });
+
+  it("cópia de um produto degradado continua degradada (filamentId/printerId nulos herdados)", async () => {
+    const createMock = vi.fn().mockResolvedValue({});
+    const useCatalog = await import("@/entities/catalog/use-catalog");
+    vi.spyOn(useCatalog, "useCreateProduct").mockReturnValue({
+      mutateAsync: createMock,
+      isPending: false,
+    } as never);
+    useProductsMock.mockReturnValue(listState([n("p1", "Gancho", { filamentId: null })]));
+    render(<ProductsPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: `${catalogo.duplicate} Gancho` }));
+    const dialog = await screen.findByTestId("product-duplicate-dialog");
+    fireEvent.click(within(dialog).getByRole("button", { name: catalogo.duplicate }));
+
+    await vi.waitFor(() => expect(createMock).toHaveBeenCalledTimes(1));
+    expect(createMock.mock.calls[0][0].filamentId).toBeNull();
+  });
+
+  it("degradado: sem preço, sem observação — nunca 'R$ 0,00'; flag 'parado' só quando a referência sumiu", () => {
+    useProductsMock.mockReturnValue(listState([n("p1", "Chaveiro logo", { filamentId: null })]));
+    render(<ProductsPanel recomputed={new Map([["p1", 41.2]])} />);
+
+    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+  });
+
+  it("degradado com uma observação salva (o preço 'parado' de quando o vínculo existia) mostra a flag e o valor congelado", () => {
+    useProductsMock.mockReturnValue(listState([n("p1", "Chaveiro logo", { filamentId: null })]));
+    render(
+      <ProductsPanel
+        observations={new Map([["p1", { observedPrice: 9.5, observedAt: "2026-04-21" }]])}
+      />,
+    );
+
+    expect(screen.getByText("R$ 9,50")).toBeInTheDocument();
+    expect(screen.queryByTestId("product-row-fixed")).not.toBeInTheDocument(); // não é "fixado"
+    expect(screen.getByText(catalogo.stoppedFlag)).toBeInTheDocument();
+    expect(
+      screen.getByText(catalogo.stoppedAtLabel.replace("{data}", "21/04")),
+    ).toBeInTheDocument();
   });
 });

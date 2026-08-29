@@ -34,7 +34,41 @@ vi.mock("@/entities/catalog/use-catalog", () => ({
   useUpdatePrinter: () => idleMutation,
   useDeletePrinter: () => idleMutation,
   useDeleteProduct: () => idleMutation,
+  // 019/PR-D (T076) — o diálogo de duplicar (ProductsPanel) e a ficha de produto (ProdutoPage)
+  // chamam estes dois direto; sem o stub o teste da IA precisaria de um QueryClientProvider real.
+  useCreateProduct: () => idleMutation,
+  useUpdateProduct: () => idleMutation,
+  useFixProductPrice: () => idleMutation,
 }));
+// 019/PR-D (T124) — a page recomputa a lista e observa preços; a suíte da IA não é sobre isso,
+// então tudo aqui é neutro (sem mudanças, sem observações).
+vi.mock("@/entities/catalog/price-observations", () => ({
+  usePriceObservations: () => ({
+    byKey: new Map(),
+    isLoading: false,
+    isError: false,
+    error: null,
+    entitlementDenied: false,
+  }),
+  useObservePrices: () => ({ observe: vi.fn() }),
+  derivePriceChanges: () => ({ changed: [], count: 0 }),
+  observationKey: (kind: string, id: string) => `${kind}:${id}`,
+}));
+// T124 — `useFeeCatalog` chama `useQuery` de verdade; sem este stub a suíte da IA precisaria de um
+// `QueryClientProvider`, e o catálogo de taxas não é o que ela homologa.
+vi.mock("@/shared/fee-catalog", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/shared/fee-catalog")>();
+  return {
+    ...actual,
+    useFeeCatalog: () => ({
+      catalog: { catalogVersion: "test-0", schemaVersion: "1", generatedAt: "", marketplaces: [] },
+      source: "seed" as const,
+      refreshFailed: false,
+      refreshing: false,
+      refetch: vi.fn(),
+    }),
+  };
+});
 // The Produtos panel navigates to its full-page create/edit routes (ux §1.6b).
 // 013/F-02 follow-up: `search` is mutable so a test can assert the tab is DERIVED from the URL.
 const { search, navigateMock } = vi.hoisted(() => ({

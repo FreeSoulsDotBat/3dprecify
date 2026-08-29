@@ -48,6 +48,8 @@ const linked: ProductOut = {
     },
   ],
   otherCosts: [{ name: "Embalagem", value: "3.50" }],
+  sellerFixedPrice: null,
+  sellerFixedAt: null,
   createdAt: "2026-07-10T00:00:00Z",
   updatedAt: "2026-07-10T00:00:00Z",
 };
