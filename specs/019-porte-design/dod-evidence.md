@@ -612,3 +612,32 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
 8. **Como no design**: ícone `wifi` verbatim do projeto (lucide, 4 paths) no `ICONS` + cópia estática;
    `Alert.icon` (prop aditiva) para o selo embutido; chevron rotacionado no "Ver fonte" (botão e link).
 
+---
+
+## PR-D — Recálculo do Catálogo (US5) · branch `019-pr-d-recalculo` (do develop `4ec2c0b`, pós-merge do PR #61) · **escalação OPUS** (ADR-0022)
+
+### T074 — a transcrição (2026-08-29)
+
+- **2 pranchetas congeladas** (`Catalogo - Lista e o Recalculo`, `Catalogo - O Item Aberto`; DesignSync, nenhuma
+  truncada; claras pela transformação da T009 — 11/11 e 7/7 blocos). Hashes em `design/README.md`.
+- **Copy transcrita** (`messages.catalogo`, `catalogForm`, `premiumTeaser`): `priceChangedCount` "{n} preços mudaram
+  desde a sua última visita" (+ `priceChangedOne` pelo molde — só o plural foi desenhado), `priceWasLabel` "era
+  {valor}", `savedAtLabel` "Salvo em {data}", os cabeçalhos do item aberto (17a/17g: `suggestedRetail`,
+  `capRecalculated`, `capUnchanged`, `capFixed`, `stoppedPrice`, `capStopped`), `fixedByYou` "Preço fixado por
+  você", `unfix` "Voltar a acompanhar o custo", `fixedOverNote` (17c), `keepPrice` "Manter {valor}",
+  `acceptNewPrice`, `duplicateCopySuffix` " (cópia)" + o diálogo da 17d (herda / não herda), `nameConflict` "Este
+  nome já está no catálogo" + `nameRequired` + `nameConflictHint` + `nameCounter` (17b), o item parado (16f/17g),
+  a aba Kits (17e), as colunas da `tf-table` (16g), `deleteProductBody` (16e), `calculoContinuaGratis` (brief
+  US13 AC5 — sem consumidor nesta fatia, ver abaixo).
+- **Leituras registradas** (divergências prancheta × decisões): (1) os lotes 16/17 são ANTERIORES ao lote 32 — a
+  16c ("Nada salvo ainda") e a 16d (gate do free) foram superadas pelo caminho sem parede da PR-B; NÃO transcritas;
+  (2) as abas "Peças · Kits" da 16a são as 4 abas do produto (32a confirma); (3) o contador "36 de 60" da 17b ×
+  teto 120 do adendo do ADR-0033 (decisão do dono 27/08) — 120 vence, `NAME_MAX = 120`; (4) a segunda frase do
+  aviso da 16b ("O filamento PLA Cinza subiu de R$ 89,90 para R$ 96,00/kg em 03/06") exige histórico de custo de
+  insumo que a observação de preço NÃO guarda — não transcrita, **lacuna para o dono**; (5) a 17c desenha a nota
+  do item fixado como `tf-aviso` (info) e a spec US5 AC3/T068 pedem tom ATENÇÃO — a spec ganha, copy verbatim;
+  (6) a 17b limita a edição do item aberto ao NOME ("quem muda números é a Calculadora") — o produto tem o
+  formulário completo do produto (`produto-page.tsx`), que a PR-D mantém (fora do escopo da US5).
+- **Fixture `name-norm.json`: 18 → 22 casos** (NBSP interno, BOM nas pontas, NEL PRESERVADO, `İ`), com a classe de
+  espaço explícita documentada no `$comment`.
+

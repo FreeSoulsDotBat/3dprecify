@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">A lista e o recálculo — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Primeiro lote do Catálogo: a tela onde o que foi calculado volta a aparecer. Duas abas — <em>Peças</em> e <em>Kits</em> —, uma linha por item, e dois dados por linha: o preço sugerido e a data. O Catálogo não cria nada; ele guarda o que a Calculadora produziu.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A armadilha deste lote está na sua decisão de <strong style="color:var(--sheet-ink)">recalcular sozinho</strong>. Ela é a certa — um catálogo que envelhece em silêncio vende ao preço do ano passado. Mas recálculo automático tem um custo: o número que a pessoa decorou, colou no anúncio e falou no WhatsApp muda sem que ela tenha mexido em nada. Por isso o preço antigo <strong style="color:var(--sheet-ink)">não some</strong>: cada item alterado carrega "era R$ X" até ser aberto uma vez.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">E uma consequência que só aparece quando se desenha: se o recálculo tocasse a data, todo item passaria a exibir "hoje" e a coluna morreria. A data é <strong style="color:var(--sheet-ink)">salvo em</strong> — a última vez que <em>você</em> mexeu. O recálculo é da máquina e se conta em outra linha.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#16a">16a</a> a lista em repouso · <a href="#16b">16b</a> o que mudou · <a href="#16c">16c</a> vazio e sem resultado · <a href="#16d">16d</a> o gate do free · <a href="#16e">16e</a> ações e exclusão · <a href="#16f">16f</a> quando não dá para recalcular · <a href="#16g">16g</a> 1280px e a tira de estados.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Dois primitivos novos:</strong> <code>tf-plist</code> (a linha densa, porque com dois dados o cartão gastava 24px de padding para separar duas linhas de texto — como linha cabem seis itens na dobra, como cartão cabiam três) e <code>tf-table</code> (a tabela de 1024px pra cima). <strong style="color:var(--sheet-ink)">Copy nova para aprovar:</strong> "3 preços mudaram desde a sua última visita", "era R$&nbsp;38,90", "Salvo em 12/05", "O cálculo continua grátis" e as duas frases da exclusão.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="16a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A lista em repouso · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Dois níveis de navegação na mesma tela: a TabBar diz em que parte do app você está, o segmented diz o que a lista mostra. Só isso já é limite — nenhum terceiro nível de filtro entra aqui.</p>
+<div data-theme="light" data-screen-label="16a Lista em repouso" style="position:relative;display:flex;flex-direction:column;width:390px;height:748px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-topbar"><span class="tf-title" style="font-size:var(--fs-base);letter-spacing:var(--tracking-wide);color:var(--text-strong)">Catálogo</span></div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:16px 16px 0">
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1">Peças</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1">Kits</button>
+</div>
+<div class="tf-inputwrap"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted)"></span><input class="tf-input" type="text" placeholder="Buscar por nome"></div>
+<ul class="tf-plist">
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Suporte de headset "Gancho"</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Vaso hexagonal 15 cm</span><span class="tf-plist__meta">Salvo em 09/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;68,00</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Organizador de bancada com 6 divisórias e tampa</span><span class="tf-plist__meta">Salvo em 02/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;112,50</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Miniatura Dragão</span><span class="tf-plist__meta">Salvo em 28/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;24,90</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Chaveiro logo</span><span class="tf-plist__meta">Salvo em 21/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;9,50</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Case para Raspberry Pi 5</span><span class="tf-plist__meta">Salvo em 15/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;35,00</span></span></button></li>
+</ul>
+<p style="margin:0;font-size:var(--fs-caption);color:var(--text-muted)">6 peças salvas</p>
+</div>
+<nav class="tf-nav tf-nav--tabbar"><ul class="tf-nav__list">
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16a"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16a" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16a"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Histórico</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16a"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Não há botão de criar. O item nasce no "Salvar" da Calculadora e chega aqui pronto — um "+" nesta tela só teria para onde ir se levasse de volta ao cálculo, e aí ele é a aba Calcular, que já está ali embaixo.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O nome longo do terceiro item corta com reticências em uma linha. Deixá-lo quebrar em duas quebraria também a altura constante da linha, e é a altura constante que faz seis itens caberem sem parecer amontoado.</p>
+</div>
+
+<div id="16b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O que mudou · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O recálculo já aconteceu — a lista abre com os preços de hoje. O que a tela precisa fazer é prestar contas: quantos mudaram, quais, e por quê.</p>
+<div data-theme="light" data-screen-label="16b O que mudou" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">3 preços mudaram desde a sua última visita. O filamento PLA Cinza subiu de R$&nbsp;89,90 para R$&nbsp;96,00/kg em 03/06.</p>
+</div></div>
+<ul class="tf-plist">
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Suporte de headset "Gancho"</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span><span class="tf-plist__was">era R$&nbsp;38,90</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Vaso hexagonal 15 cm</span><span class="tf-plist__meta">Salvo em 09/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;68,00</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Miniatura Dragão</span><span class="tf-plist__meta">Salvo em 28/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;26,40</span><span class="tf-plist__was">era R$&nbsp;24,90</span></span></button></li>
+</ul>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">16b·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">O item aberto</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Preço recalculado</span>
+<div class="tf-price tf-price--plain tf-price--md">
+<span class="tf-price__label">Preço sugerido hoje</span>
+<span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">41</span><span class="tf-price__dec">,20</span></span>
+<span class="tf-price__cap">era R$&nbsp;38,90 quando você salvou, em 12/05</span>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Filamento</span><span class="tf-brow__sub">85 g de PLA Cinza · R$&nbsp;96,00/kg</span></span><span class="tf-brow__val">R$&nbsp;8,16</span></div>
+<div class="tf-brow tf-brow--muted"><span class="tf-brow__main"><span class="tf-brow__label">Demais custos</span><span class="tf-brow__sub">sem mudança</span></span><span class="tf-brow__val">R$&nbsp;19,31</span></div>
+<div class="tf-brow tf-brow--total"><span class="tf-brow__main"><span class="tf-brow__label">Diferença</span></span><span class="tf-brow__val">+ R$&nbsp;2,30</span></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" style="flex:1 0 auto">Manter R$&nbsp;38,90</button><button type="button" class="tf-btn tf-btn--primary tf-btn--sm" style="flex:1 0 auto">Aceitar novo preço</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Manter R$&nbsp;38,90" existe porque o preço já pode estar impresso em uma etiqueta ou combinado com um cliente. Escolher manter congela aquele item e ele passa a mostrar a ressalva "preço fixado por você" — o cálculo continua correndo por baixo, mas não sobrescreve mais.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O "era R$ X" sai da linha quando o item é aberto uma vez, não quando o aviso do topo é dispensado. Um botão só, no topo, apagaria a prova dos itens que a pessoa ainda não olhou.</p>
+</div>
+
+<div id="16c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Vazio e sem resultado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Dois vazios diferentes que costumam virar a mesma tela. O primeiro é uma promessa que ainda não foi cumprida; o segundo é uma busca que falhou. Confundi-los faz o app dizer "salve sua primeira peça" a quem tem quarenta.</p>
+<div data-theme="light" data-screen-label="16c Catalogo vazio" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-empty">
+<span class="tf-empty__art"><span class="tf-ico tf-ico--28 tf-ico-package" style="color:var(--text-faint)"></span></span>
+<h2 class="tf-empty__title">Nada salvo ainda</h2>
+<p class="tf-empty__desc">Quando um cálculo ficar bom, toque em Salvar. Ele aparece aqui com o preço sempre atualizado.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary">Ir para o cálculo</button></div>
+</div>
+</div>
+<div data-theme="light" data-screen-label="16c Sem resultado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-inputwrap"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted)"></span><input class="tf-input" type="text" value="engrenagem"></div>
+<div class="tf-empty" style="padding:24px 16px">
+<h2 class="tf-empty__title">Nenhuma peça com "engrenagem"</h2>
+<p class="tf-empty__desc">A busca olha só o nome. Se você salvou com outro nome, limpe o campo e percorra a lista.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Limpar busca</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O segundo vazio mantém o campo de busca visível e preenchido. Escondê-lo é o erro clássico: a pessoa perde a única coisa que pode corrigir.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"A busca olha só o nome" é uma confissão de escopo. É mais barata que fingir busca semântica e mais útil que um "nenhum resultado" mudo.</p>
+</div>
+
+<div id="16d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O gate do free · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Você escolheu o gate inteiro: no free, o Catálogo não é uma lista vazia nem uma lista borrada — é esta tela. Sem lista falsa por trás, sem contagem de itens que não existem, sem provocar vontade com dados inventados.</p>
+<div data-theme="light" data-screen-label="16d Gate do free" style="position:relative;display:flex;flex-direction:column;width:390px;height:600px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-topbar"><span class="tf-title" style="font-size:var(--fs-base);letter-spacing:var(--tracking-wide);color:var(--text-strong)">Catálogo</span></div>
+<div style="flex:1;display:flex;flex-direction:column;justify-content:center;padding:0 16px">
+<div class="tf-empty">
+<span class="tf-empty__art"><span class="tf-ico tf-ico--28 tf-ico-crown" style="color:var(--energy)"></span></span>
+<h2 class="tf-empty__title">O catálogo é do Premium</h2>
+<p class="tf-empty__desc">O cálculo continua grátis e sem limite. O que o Premium adiciona é guardar: encontrar a peça depois, ver o preço acompanhar o custo do filamento, comparar.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary tf-btn--glow">Ver os planos</button><button type="button" class="tf-btn tf-btn--ghost">Agora não</button></div>
+</div>
+<p style="margin:16px 0 0;text-align:center;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Até lá, o que você calcular fica só na tela do cálculo.</p>
+</div>
+<nav class="tf-nav tf-nav--tabbar"><ul class="tf-nav__list">
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16d"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16d" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16d"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Histórico</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#16d"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A última linha é a parte desconfortável dita em voz alta: no free, sair da tela perde a conta. Escondê-la faria a pessoa descobrir isso do pior jeito — depois de fechar o app.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A aba do Catálogo continua na TabBar e continua clicável. Trancar a aba esconderia a existência do recurso; o manual da marca já diz onde fica a fronteira, e ela é dita, não escondida.</p>
+</div>
+
+<div id="16e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Ações e exclusão · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Toque na linha abre o item. As outras ações vêm de um toque longo ou do botão de reticências, numa folha de baixo — não de um deslize lateral, que na lista densa esbarra no gesto de voltar do sistema.</p>
+<div data-theme="light" data-screen-label="16e Folha de acoes" style="position:relative;width:390px;height:440px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);padding:16px">
+<ul class="tf-plist">
+<li><button type="button" class="tf-plist__row" aria-selected="true"><span class="tf-plist__main"><span class="tf-plist__name">Suporte de headset "Gancho"</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Vaso hexagonal 15 cm</span><span class="tf-plist__meta">Salvo em 09/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;68,00</span></span></button></li>
+</ul>
+<div class="tf-dialog__overlay"></div>
+<div class="tf-dialog tf-dialog--sheet tf-dialog--sheet-bottom">
+<h2 class="tf-dialog__title">Suporte de headset "Gancho"</h2>
+<button type="button" class="tf-dialog__x" aria-label="Fechar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button>
+<div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--full" style="justify-content:flex-start;gap:12px"><span class="tf-ico tf-ico--16 tf-ico-calculator"></span>Abrir no cálculo</button>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--full" style="justify-content:flex-start;gap:12px"><span class="tf-ico tf-ico--16 tf-ico-copy"></span>Duplicar</button>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--full" style="justify-content:flex-start;gap:12px"><span class="tf-ico tf-ico--16 tf-ico-pencil"></span>Renomear</button>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--full" style="justify-content:flex-start;gap:12px;color:var(--danger-text)"><span class="tf-ico tf-ico--16 tf-ico-trash-2"></span>Excluir</button>
+</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">16e·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">A confirmação</span></div>
+<div data-theme="light" data-screen-label="16e Confirmacao" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<h2 class="tf-dialog__title" style="padding-right:0">Excluir "Gancho"?</h2>
+<p class="tf-dialog__desc">A peça sai do catálogo e o preço para de acompanhar o custo do filamento. Os cálculos que você já fez continuam no Histórico.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="tf-btn tf-btn--secondary" style="flex:1 0 auto">Voltar</button><button type="button" class="tf-btn tf-btn--danger" style="flex:1 0 auto">Excluir</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A confirmação diz o que se perde de verdade — o acompanhamento — e o que não se perde. "Esta ação não pode ser desfeita" é verdade e é inútil: não ajuda ninguém a decidir.</p>
+</div>
+
+<div id="16f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Quando não dá para recalcular · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Recálculo automático precisa de um plano para quando ele não pode acontecer. Dois casos: o insumo sumiu, e a lista não carregou.</p>
+<div data-theme="light" data-screen-label="16f Item impedido" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<ul class="tf-plist">
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Chaveiro logo</span><span class="tf-plist__meta">Salvo em 21/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;9,50</span><span class="tf-plist__flag"><span class="tf-ico tf-ico--14 tf-ico-triangle-alert"></span>parado</span></span></button></li>
+</ul>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--warning">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">Este preço parou em 21/04</p>
+<p class="tf-alert__text">O filamento PLA Preto foi apagado dos seus materiais, então não há custo novo para usar. R$&nbsp;9,50 é o valor de quando você salvou.</p>
+</div>
+</div>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--full">Escolher outro filamento</button>
+</div>
+</div>
+<div data-theme="light" data-screen-label="16f Lista sem carregar" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-empty">
+<span class="tf-empty__art"><span class="tf-ico tf-ico--28 tf-ico-wifi" style="color:var(--text-faint)"></span></span>
+<h2 class="tf-empty__title">Sem conexão</h2>
+<p class="tf-empty__desc">Não deu para buscar o catálogo agora. Os preços que você vir depois já vêm recalculados.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--secondary">Tentar de novo</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"parado" na linha, e não "erro": nada quebrou e o número exibido é honesto — só é velho. O aviso muda a data do rótulo de "salvo em" para "parou em", que é a informação de que a pessoa precisa antes de usar o valor.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A tela offline não mostra cache silencioso. Se mostrasse a última lista sem dizer, cairíamos exatamente no problema que o recálculo automático veio resolver: um preço velho passando por atual.</p>
+</div>
+
+<div id="16g" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">16g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px e a tira de estados</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Sua escolha: tabela densa. Com dois dados por item, a grade de cartões só espalharia ar e o mestre-detalhe reservaria 560px para um detalhe de quatro linhas. O que a largura compra aqui é comparação vertical — seis preços na mesma coluna tabular, lidos de uma vez.</p>
+<div data-theme="light" data-screen-label="16g Desktop 1280" style="display:flex;width:1280px;height:640px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#16g"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#16g" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#16g"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Histórico</span></a></li>
+<li><a class="tf-nav__item" href="#16g"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:24px 32px;overflow:hidden">
+<div class="tf-catalog-md__toolbar">
+<div class="tf-segmented tf-segmented--sm" role="tablist">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Peças</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<div class="tf-inputwrap tf-inputwrap--sm tf-catalog-md__search"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted)"></span><input class="tf-input" type="text" placeholder="Buscar por nome"></div>
+</div>
+<div class="tf-aviso" role="status" style="max-width:640px"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">3 preços mudaram desde a sua última visita. O filamento PLA Cinza subiu de R$&nbsp;89,90 para R$&nbsp;96,00/kg em 03/06.</p>
+</div></div>
+<table class="tf-table">
+<thead><tr><th scope="col">Peça</th><th scope="col" style="text-align:right">Preço sugerido</th><th scope="col" style="text-align:right">Antes</th><th scope="col">Salvo em</th><th scope="col"><span style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Ações</span></th></tr></thead>
+<tbody>
+<tr><td class="tf-table__name">Suporte de headset "Gancho"</td><td class="tf-table__num">R$&nbsp;41,20</td><td class="tf-table__num tf-table__num--muted">R$&nbsp;38,90</td><td>12/05</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+<tr><td class="tf-table__name">Vaso hexagonal 15 cm</td><td class="tf-table__num">R$&nbsp;68,00</td><td class="tf-table__num tf-table__num--muted">—</td><td>09/05</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+<tr aria-selected="true"><td class="tf-table__name">Organizador de bancada com 6 divisórias e tampa</td><td class="tf-table__num">R$&nbsp;112,50</td><td class="tf-table__num tf-table__num--muted">—</td><td>02/05</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+<tr><td class="tf-table__name">Miniatura Dragão</td><td class="tf-table__num">R$&nbsp;26,40</td><td class="tf-table__num tf-table__num--muted">R$&nbsp;24,90</td><td>28/04</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+<tr><td class="tf-table__name">Chaveiro logo</td><td class="tf-table__num">R$&nbsp;9,50</td><td class="tf-table__num tf-table__num--muted">—</td><td>21/04 · parado</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+<tr><td class="tf-table__name">Case para Raspberry Pi 5</td><td class="tf-table__num">R$&nbsp;35,00</td><td class="tf-table__num tf-table__num--muted">—</td><td>15/04</td><td class="tf-table__actions"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A coluna "Antes" é o "era R$ X" da lista de celular, promovido a coluna porque aqui há largura para ele. Onde não houve mudança, um travessão — a coluna precisa existir em todas as linhas para os números continuarem alinhados.</p>
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+<div data-theme="light" data-screen-label="16g Tira de estados" style="width:420px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<span class="tf-catalog-md__kicker">A linha, nos cinco estados</span>
+<ul class="tf-plist" style="margin-top:8px">
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Repouso</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span></span></button></li>
+<li><button type="button" class="tf-plist__row" style="background:var(--bg-muted)"><span class="tf-plist__main"><span class="tf-plist__name">Sob o cursor</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span></span></button></li>
+<li><button type="button" class="tf-plist__row" aria-selected="true"><span class="tf-plist__main"><span class="tf-plist__name">Selecionada</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Recalculada</span><span class="tf-plist__meta">Salvo em 12/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;41,20</span><span class="tf-plist__was">era R$&nbsp;38,90</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Parada</span><span class="tf-plist__meta">Parou em 21/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;9,50</span><span class="tf-plist__flag"><span class="tf-ico tf-ico--14 tf-ico-triangle-alert"></span>parado</span></span></button></li>
+</ul>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2);max-width:380px">Nenhum dos cinco estados depende de cor sozinha: hover e seleção mudam o fundo, recalculada ganha uma linha de texto, parada ganha ícone e troca o rótulo da data. A altura da linha muda em dois deles — de 56 para 62px — e é por isso que a lista não usa altura fixa, só mínima.</p>
+</div>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

@@ -204,7 +204,7 @@ duplicar; lista com PREÇO por item (hoje não há — `products-panel.tsx:20`).
 
 ### Transcrição (PRIMEIRA)
 
-- [ ] T074 [US5] Baixar `Catalogo - Lista e o Recalculo` e `Catalogo - O Item Aberto` (dois temas) para `design/` e transcrever US13/US14/US15 verbatim para `messages.pt-br.ts` (chaves ausentes hoje: `catalogo.priceChangedCount`, `catalogo.priceWasLabel`, `catalogo.savedAtLabel`, `catalogo.fixedByYou`, `catalogo.unfix`, `productForm.nameConflict`, `catalogo.duplicateCopySuffix`, e a frase do brief US13 AC5 "O cálculo continua grátis" — `scope-brief.md:284`).
+- [x] T074 [US5] Baixar `Catalogo - Lista e o Recalculo` e `Catalogo - O Item Aberto` (dois temas) para `design/` e transcrever US13/US14/US15 verbatim para `messages.pt-br.ts` (chaves ausentes hoje: `catalogo.priceChangedCount`, `catalogo.priceWasLabel`, `catalogo.savedAtLabel`, `catalogo.fixedByYou`, `catalogo.unfix`, `productForm.nameConflict`, `catalogo.duplicateCopySuffix`, e a frase do brief US13 AC5 "O cálculo continua grátis" — `scope-brief.md:284`). **Feito 29/08** — 2 pranchetas × 2 temas (hashes no README); ~45 chaves transcritas (lista em dod-evidence §T074); fixture 18→22; 6 leituras registradas (16c/16d superadas pela PR-B; 60→120; a causa do aumento não é derivável; 17c info × spec ATENÇÃO).
 
 ### Tests (vermelhos primeiro)
 
