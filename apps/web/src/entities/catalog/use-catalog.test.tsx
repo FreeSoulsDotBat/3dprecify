@@ -19,6 +19,7 @@ const {
   listProductsMock,
   updateProductMock,
   deleteProductMock,
+  fixProductPriceMock,
 } = vi.hoisted(() => ({
   idbGet: vi.fn(),
   idbSet: vi.fn(),
@@ -31,6 +32,7 @@ const {
   listProductsMock: vi.fn(),
   updateProductMock: vi.fn(),
   deleteProductMock: vi.fn(),
+  fixProductPriceMock: vi.fn(),
 }));
 vi.mock("idb-keyval", () => ({ get: idbGet, set: idbSet, del: idbDel }));
 vi.mock("@/shared/api/generated", () => ({
@@ -46,6 +48,7 @@ vi.mock("@/shared/api/generated", () => ({
   createProductApiV1ProductsPost: vi.fn(),
   updateProductApiV1ProductsProductIdPut: updateProductMock,
   deleteProductApiV1ProductsProductIdDelete: deleteProductMock,
+  fixProductPriceApiV1ProductsProductIdPatch: fixProductPriceMock,
 }));
 
 import type { FilamentOut } from "@/shared/api/generated";
@@ -58,7 +61,13 @@ import {
   persistCachedCatalog,
   purgeCatalogCache,
 } from "./catalog-cache";
-import { useCreateFilament, useDeleteProduct, useFilaments, useUpdateProduct } from "./use-catalog";
+import {
+  useCreateFilament,
+  useDeleteProduct,
+  useFilaments,
+  useFixProductPrice,
+  useUpdateProduct,
+} from "./use-catalog";
 
 function filament(over: Partial<FilamentOut> = {}): FilamentOut {
   return {
@@ -96,6 +105,7 @@ beforeEach(() => {
   listProductsMock.mockReset().mockResolvedValue({ data: [], status: 200 });
   updateProductMock.mockReset();
   deleteProductMock.mockReset();
+  fixProductPriceMock.mockReset();
   signInAs("uidA");
 });
 
@@ -288,5 +298,48 @@ describe("product update/delete — invalidates the kits list too (D3/D6 freshne
     );
     // D3 live-reflect: an edited product changes a referencing kit's resolved values on reopen.
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ["boms", "uidA"] });
+  });
+});
+
+// 019/PR-D (T075, ADR-0033 §3) — useFixProductPrice: PATCH one field, invalidate the products list.
+describe("useFixProductPrice — PATCH sellerFixedPrice, invalidates the products query", () => {
+  it("fixes the price and invalidates the products list on success", async () => {
+    const client = novoCliente();
+    const invalidate = vi.spyOn(client, "invalidateQueries");
+    fixProductPriceMock.mockResolvedValue({
+      data: { id: "p1", sellerFixedPrice: "42.00", sellerFixedAt: "2026-08-29T00:00:00Z" },
+      status: 200,
+    });
+
+    const { result } = renderHook(() => useFixProductPrice(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+
+    const updated = await result.current.mutateAsync({ id: "p1", sellerFixedPrice: "42.00" });
+
+    expect(fixProductPriceMock).toHaveBeenCalledWith("p1", { sellerFixedPrice: "42.00" });
+    expect(updated.sellerFixedPrice).toBe("42.00");
+    await waitFor(() =>
+      expect(invalidate).toHaveBeenCalledWith({ queryKey: catalogQueryKey("products", "uidA") }),
+    );
+  });
+
+  it("unfixes with sellerFixedPrice: null", async () => {
+    const client = novoCliente();
+    fixProductPriceMock.mockResolvedValue({
+      data: { id: "p1", sellerFixedPrice: null, sellerFixedAt: null },
+      status: 200,
+    });
+
+    const { result } = renderHook(() => useFixProductPrice(), {
+      wrapper: ({ children }: { children: ReactNode }) => (
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      ),
+    });
+
+    await result.current.mutateAsync({ id: "p1", sellerFixedPrice: null });
+    expect(fixProductPriceMock).toHaveBeenCalledWith("p1", { sellerFixedPrice: null });
   });
 });

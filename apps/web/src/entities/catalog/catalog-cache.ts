@@ -64,6 +64,20 @@ export async function persistCachedCatalog<T extends CatalogItem>(
   }
 }
 
+/**
+ * Lê `sellerFixedPrice` de um `ProductOut`, honrando entradas cacheadas ANTES da migração 0008
+ * (019/PR-D, T127): um item persistido pelo `use-catalog.ts:61` antes do campo existir volta do IDB
+ * com `sellerFixedPrice` **`undefined`** — nunca gravado no wire, então nunca `null`. As duas formas
+ * de "não fixado" (`undefined` do cache antigo, `null` do servidor) precisam colapsar no MESMO
+ * estado; a alternativa (deixar `undefined` vazar) renderizaria como preço zerado (`Number(undefined)
+ * = NaN`, e uma tela menos cuidadosa vira `0,00`) — a mentira que este helper existe para impedir.
+ */
+export function readSellerFixedPrice(p: ProductOut): number | null {
+  const raw = (p as Partial<ProductOut>).sellerFixedPrice;
+  if (raw === undefined || raw === null) return null;
+  return Number(raw);
+}
+
 /** Purge EVERY resource cache for a uid — the sign-out privacy sweep (Q2/FR-309). Called from the
  *  app-layer session subscription the moment the session goes anonymous / the uid changes. */
 export async function purgeCatalogCache(uid: string): Promise<void> {

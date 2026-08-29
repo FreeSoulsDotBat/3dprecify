@@ -72,6 +72,14 @@ describe("an INVOLUNTARY sign-out never destroys the only copy of a quote", () =
 //   (b) the `uidChanged` branch (u1 -> u2 DIRECTLY, no intervening `anonymous`) has NEVER been
 //       exercised — `providers.tsx:29`'s `||` has a dead half until now.
 
+// 019/PR-D (T127) — `entities/catalog/price-observations.ts` deliberadamente NÃO ganha cache de
+// dispositivo (leia o comentário do módulo): não há `priceObservationsIdbKey`, e a query key não
+// entra nas tabelas abaixo porque não há nada a purgar. A ausência é o próprio contrato — a
+// asserção que a mantém verdadeira é o prefixo genérico: se algum dia alguém adicionar uma chave IDB
+// para observações, ela aparece aqui e os dois testes T050 abaixo (que enumeram TODAS as chaves)
+// passam a falhar até serem atualizados a propósito.
+const PRICE_OBSERVATIONS_IDB_PREFIX = "price-observations";
+
 /** Seed all 5 idb-keyed caches + the outbox + all 6 query roots for a given uid. */
 function seedEverythingFor(uid: string): void {
   idbStore.set(bomIdbKey(uid), [{ id: "bom-1" }]);
@@ -142,6 +150,10 @@ describe("T050 — the privacy sweep purges every named store, per key (finding 
     }
     // The ONLY store never purged by this subscription.
     expect(idbStore.has(historyOutboxKey("u1"))).toBe(true);
+    // price-observations never had a device cache to begin with — nothing appears to purge.
+    expect(
+      Array.from(idbStore.keys()).some((k) => k.startsWith(PRICE_OBSERVATIONS_IDB_PREFIX)),
+    ).toBe(false);
   });
 
   it("(b) u1 -> u2 DIRECTLY (no intervening anonymous) purges u1's data via the uidChanged branch", async () => {
@@ -183,5 +195,9 @@ describe("T050 — the privacy sweep purges every named store, per key (finding 
       expect(idbStore.has(key), `u2's idb key "${name}" (${key}) should survive`).toBe(true);
     }
     expect(idbStore.has(historyOutboxKey("u2"))).toBe(true);
+    // No device cache exists for price-observations under EITHER account.
+    expect(
+      Array.from(idbStore.keys()).some((k) => k.startsWith(PRICE_OBSERVATIONS_IDB_PREFIX)),
+    ).toBe(false);
   });
 });
