@@ -582,8 +582,9 @@ TabBar aceitando a colisão com o toaster (o §I rejeita). T054 (o e2e) espera a
   a 390px — corrigido (`overflow-wrap: anywhere` + exibição sem esquema, como a 13a·2), re-capturado 2/2.
 - **`pnpm gate:all`: VERDE** — frontend 166 arquivos / **1916** testes, cobertura 89,53%; backend **474 passed**,
   ruff/format/basedpyright/import-linter ok. `PRICING_MODEL_VERSION` 4.1.0 (28/28 no pacote).
-- **Push e abertura do PR-C**: aguardam a autorização do dono (corpo em `evidencias/pr-c/pr-body.md`, com as 7
-  decisões a ratificar e o ⛔ DONO do T212). Estado: **CORREÇÃO DECLARADA**.
+- **Push e abertura do PR-C**: autorizados pelo dono em 28/08 — push confirmado por `ls-remote` = HEAD `4831395`
+  (gate do pre-push verde: 1923 unit · 474 backend) e **PR #61** aberto contra `develop`
+  (https://github.com/FreeSoulsDotBat/3dprecify/pull/61). Estado: **CORREÇÃO DECLARADA**.
 
 ### As decisões do dono (2026-08-28) aplicadas na PR-C
 
