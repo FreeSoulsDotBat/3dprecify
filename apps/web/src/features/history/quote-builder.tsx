@@ -498,7 +498,12 @@ export function QuoteBuilder({
         )}
       </Card>
 
+      {/* 18e — o cartão "Enviar congela este preço" é o PASSO final do construtor (a prancheta o
+          desenha como cartão do fluxo, com Voltar | Enviar; não um modal por cima — leitura
+          registrada em dod-evidence para a 2ª passada). O título e o "Total enviado" vêm dela. */}
       <Card padding="md" className="flex flex-col gap-3">
+        <h2 className="tf-title text-[var(--text-strong)]">{t.sendTitle}</h2>
+        <BreakdownRow label={t.totalSent} value={formatBRL(quoteResult?.netTotal ?? 0)} prefix="" />
         <Field label={th.validityField}>
           {({ id, ...aria }) => (
             <NumberField

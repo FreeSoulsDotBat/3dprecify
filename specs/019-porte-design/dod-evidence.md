@@ -1001,3 +1001,23 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   arquiteto como follow-up. Extra: `price-observations.test` lia "4.1.0" literal — passou a ler `PRICING_MODEL_VERSION`. Suíte 1594/0
   fora o T083.
 
+### T088 · T083(verde) — o construtor (dev-frontend, 2026-08-29)
+
+- `features/history/quote-builder.tsx` contra o teste-contrato (15/15): seleção 18b (produto/kit, quantidade, item PARADO apagado
+  com `stoppedCannotQuote` — a data vem de `product.updatedAt`, nunca de observação), desconto %|R$, readout bruto/desconto/total/
+  piso ("Sobra sobre o custo" apagada), `belowCost` como AVISO com Enviar habilitado (Q10), "Cliente" = `SnapshotIn.label`, o passo
+  final é o cartão 18e (título "Enviar congela este preço" + "Total enviado" + Válido até + `freezeNote` + Voltar | Enviar — a
+  prancheta o desenha como CARTÃO do fluxo; **leitura registrada: não é um modal por cima** — para a 2ª passada), envio em UMA
+  requisição com guarda de reentrância dupla (`sendingRef` síncrono contra o duplo clique no mesmo commit do React; `sentRef`
+  porque reenviar é duplicar), offline `disabled` + `sendOffline` e NADA no outbox (DECISÃO 4).
+- **Fronteira (T124-precedente)**: `pages/historico/quote-line-input.ts` monta `toLineInput` — reusa LITERALMENTE `bomLineToInput`
+  (exportado de `recalc-today.tsx`) e `productToForm`+`computeFromForm`; `directSale()` remove `channels` (Q6). Follow-up ao
+  arquiteto: TRÊS telas já reimplementam o mapeamento — descer para `entities` eliminaria a triplicação.
+- **18d·2 ("aperta, mas passa") OMITIDO e registrado**: não há limiar de % decidido em lugar nenhum (o "12%" da prancheta é
+  exemplo) — `tightMarginTitle/Body` transcritas ficam sem consumidor até o design decidir. **Ícones**: `check`/`share-2` existiam
+  no bundle e entraram no mapa; `percent/minus/user/folder` NÃO estão no bundle (o desconto usa sufixo textual); `lock` → `info`.
+- **A guarda T125 (ADR-0033) pegou de verdade**: a 1ª versão vazava `usePriceObservations`/`observedPrice` para
+  `pages/historico/**` — vermelho na hora, corrigido (o construtor não lê observação nenhuma).
+- Suíte FE 1609/1609 · tsc 0 · boundaries/depcruise ok. T084 escrito; o veredito é da rodada limpa do main loop (as duas rodadas
+  do agente morreram por briga de portas — lição: UMA stack por vez, o coordenador roda o e2e quando dois agentes competem).
+
