@@ -1,0 +1,652 @@
+"""US6 (FR-310/311/313) — products CRUD, live-recomputed on the client.
+
+Wire: camelCase, money/quantities as DECIMAL STRINGS; the payload carries INPUTS ONLY — no
+price is ever stored or served (FR-310/FR-313; the backend never computes prices). Reference
+semantics per data-model D3: ``filamentId``/``printerId`` present ⇒ the LIVE row is
+authoritative (``filamentValues``/``printerValues`` are served from it and re-snapshotted on
+every write); NULL (delete-degradation, D6) ⇒ the resolved columns are the authoritative,
+EDITABLE source. At create both links are required (FR-310 — a product references SAVED
+items); a reference that does not resolve to an OWNED live row is a 422 whether it is
+nonexistent or another tenant's (no existence oracle, SC-308). ``channels[]``/``otherCosts[]``
+are pydantic-validated JSONB shapes (D4) mirroring the calculator's per-slot rules — money as
+decimal strings, never JSON floats (ADR-0008).
+"""
+
+from __future__ import annotations
+
+import uuid
+from datetime import UTC, datetime
+from decimal import Decimal
+from typing import Annotated, Any, Literal
+
+from fastapi import APIRouter, Depends, status
+from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic.alias_generators import to_camel
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
+from app.db import get_session
+from app.entitlement import require_catalog_read, require_entitlement
+from app.errors import (
+    ENTITLEMENT_ERRORS,
+    NOT_FOUND_ERRORS,
+    VALIDATION_ERRORS,
+    AppError,
+    CamelModel,
+    ErrorCode,
+)
+from app.lib.name_norm import name_norm_key
+from app.models import Filament, Printer, Product
+from app.validation import (
+    CEIL_GRAMS,
+    CEIL_HOURS,
+    CEIL_KG,
+    CEIL_KW,
+    CEIL_MONEY,
+    CEIL_PERCENT,
+    CEIL_RATE,
+    finite_non_negative,
+)
+
+router = APIRouter(tags=["products"])
+
+#: 019/PR-D (ADR-0033 §4) — o índice único parcial que decide o conflito de nome desta tabela.
+#: Nomeado aqui porque é ele que o retry de sufixo reconhece: qualquer OUTRA violação de
+#: integridade continua subindo (um retry cego renomearia a linha por um erro que nada tem a ver
+#: com nome, e o vendedor veria "(2)" sem motivo).
+_NAME_INDEX = "uq_products_owner_name_norm"
+
+# 016/US10 (ADR-0026): `wasteGrams` was REMOVED from pricing-core in 4.0.0 — see the identical
+# rationale in `app/api/filaments.py::_RETIRED_WASTE_FIELD`.
+_RETIRED_WASTE_FIELD = "wasteGrams"
+
+
+# Piece-input fields fan out to different NUMERIC domains, so the "*" validator picks per field.
+# The ceilings themselves live in `app.validation` (the shared financial leaf, audit Q-03).
+_PIECE_CEILINGS: dict[str, Decimal] = {
+    "print_grams": CEIL_GRAMS,
+    "print_time_hours": CEIL_HOURS,
+    "failure_pct": CEIL_PERCENT,
+    "finish_time_hours": CEIL_HOURS,
+    "finish_rate_per_hour": CEIL_RATE,
+    "labor_hours": CEIL_HOURS,
+    "labor_rate_per_hour": CEIL_RATE,
+    "markup_varejo_pct": CEIL_PERCENT,
+    "markup_atacado_pct": CEIL_PERCENT,
+}
+
+
+class ChannelSlot(CamelModel):
+    """One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).
+
+    Every fee is NULLABLE on purpose: in the calculator a BLANK fee means "resolve from the
+    live fee catalog", so persisting a fabricated 0 would dishonestly freeze today's fee.
+    null round-trips back to a blank field on reopen; a present value validates as before.
+    """
+
+    marketplace: Literal["MERCADO_LIVRE", "SHOPEE", "AMAZON", "OUTRO"]
+    modality: Literal["CLASSICO", "PREMIUM", "PROFISSIONAL", "INDIVIDUAL", ""] = ""
+    commission_pct: Decimal | None = None
+    fixed_fee: Decimal | None = None
+    min_per_item: Decimal | None = None
+    freight_cost: Decimal | None = None
+
+    @field_validator("commission_pct")
+    @classmethod
+    def _commission(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
+        if not v.is_finite() or v < 0 or v >= 100:
+            raise ValueError("commissionPct must be a finite number in [0, 100)")
+        return v
+
+    @field_validator("fixed_fee", "min_per_item", "freight_cost")
+    @classmethod
+    def _money(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
+        return finite_non_negative(v, "channel money field", CEIL_MONEY)
+
+
+class OtherCost(CamelModel):
+    """One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116)."""
+
+    name: str = ""
+    value: Decimal
+
+    @field_validator("value")
+    @classmethod
+    def _value(cls, v: Decimal) -> Decimal:
+        return finite_non_negative(v, "value", CEIL_MONEY)
+
+
+class PieceInputs(CamelModel):
+    """The product-owned E1 piece fields (data-model §2.5).
+
+    ``wasteGrams`` was REMOVED by pricing-core 4.0.0 (ADR-0026, 016/US10) — ``extra="forbid"``
+    rejects it explicitly (never silently ignores it) with a message naming the change.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    print_grams: Decimal
+    print_time_hours: Decimal
+    failure_pct: Decimal = Decimal("0")
+    finish_time_hours: Decimal = Decimal("0")
+    finish_rate_per_hour: Decimal = Decimal("0")
+    labor_hours: Decimal = Decimal("0")
+    labor_rate_per_hour: Decimal = Decimal("0")
+    markup_varejo_pct: Decimal
+    markup_atacado_pct: Decimal
+
+    @model_validator(mode="before")
+    @classmethod
+    def _reject_retired_waste_field(cls, data: Any) -> Any:
+        raw = data
+        if isinstance(raw, dict) and _RETIRED_WASTE_FIELD in raw:
+            raise ValueError(
+                f"{_RETIRED_WASTE_FIELD} was removed by pricing-core 4.0.0 (US10/ADR-0026): "
+                "wasted material now folds into printGrams, so this field is REJECTED, never "
+                "silently ignored"
+            )
+        return data
+
+    @field_validator("*")
+    @classmethod
+    def _all_finite_non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
+        field = info.field_name or "piece input"
+        return finite_non_negative(v, field, _PIECE_CEILINGS.get(field, CEIL_RATE))
+
+
+class FilamentValues(CamelModel):
+    """Resolved filament fields — live cache while linked, editable override when degraded."""
+
+    material: str | None = None
+    cost_per_roll: Decimal
+    roll_weight_kg: Decimal
+
+    @field_validator("cost_per_roll")
+    @classmethod
+    def _cost(cls, v: Decimal) -> Decimal:
+        return finite_non_negative(v, "costPerRoll", CEIL_MONEY)
+
+    @field_validator("roll_weight_kg")
+    @classmethod
+    def _roll(cls, v: Decimal) -> Decimal:
+        if not v.is_finite() or v <= 0 or v >= CEIL_KG:
+            raise ValueError("rollWeightKg must be a finite number > 0 within the storable range")
+        return v
+
+
+class PrinterValues(CamelModel):
+    """Resolved printer fields — live cache while linked, editable override when degraded."""
+
+    machine_value: Decimal
+    machine_lifetime_hours: Decimal
+    avg_power_kw: Decimal
+    maintenance_reserve_per_hour: Decimal = Decimal("0")
+
+    @field_validator("machine_value", "avg_power_kw", "maintenance_reserve_per_hour")
+    @classmethod
+    def _non_negative(cls, v: Decimal, info: ValidationInfo) -> Decimal:
+        ceilings = {
+            "machine_value": CEIL_MONEY,
+            "avg_power_kw": CEIL_KW,
+            "maintenance_reserve_per_hour": CEIL_RATE,
+        }
+        field = info.field_name or "printer value"
+        return finite_non_negative(v, field, ceilings.get(field, CEIL_RATE))
+
+    @field_validator("machine_lifetime_hours")
+    @classmethod
+    def _lifetime(cls, v: Decimal) -> Decimal:
+        if not v.is_finite() or v <= 0 or v >= CEIL_HOURS:
+            raise ValueError(
+                "machineLifetimeHours must be a finite number > 0 within the storable range"
+            )
+        return v
+
+
+class ProductIn(CamelModel):
+    # 019/PR-D (T072): teto só no pydantic — sem CHECK de comprimento no banco, que invalidaria
+    # o legado (ADR-0033 §Adendo 27/08 §3). Precedente: `scenarios.py:84`.
+    name: str = Field(max_length=NAME_MAX_CHARS)
+    filament_id: uuid.UUID | None = None
+    printer_id: uuid.UUID | None = None
+    filament_values: FilamentValues | None = None
+    printer_values: PrinterValues | None = None
+    piece_inputs: PieceInputs
+    tariff_per_kwh: Decimal
+    include_marketplace: bool = True
+    channels: list[ChannelSlot] = Field(default_factory=list)
+    other_costs: list[OtherCost] = Field(default_factory=list)
+
+    @field_validator("name")
+    @classmethod
+    def _name_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("name must not be blank")
+        return v.strip()
+
+    @field_validator("tariff_per_kwh")
+    @classmethod
+    def _tariff(cls, v: Decimal) -> Decimal:
+        return finite_non_negative(v, "tariffPerKwh", CEIL_RATE)
+
+    @model_validator(mode="after")
+    def _link_or_snapshot(self) -> ProductIn:
+        # The API-level mirror of the DB CHECK — a blank product is unrepresentable.
+        if self.filament_id is None and self.filament_values is None:
+            raise ValueError("filamentId or filamentValues is required")
+        if self.printer_id is None and self.printer_values is None:
+            raise ValueError("printerId or printerValues is required")
+        return self
+
+
+class ProductOut(CamelModel):
+    id: uuid.UUID
+    name: str
+    filament_id: uuid.UUID | None
+    printer_id: uuid.UUID | None
+    filament_values: FilamentValues
+    printer_values: PrinterValues
+    piece_inputs: PieceInputs
+    tariff_per_kwh: Decimal
+    include_marketplace: bool
+    channels: list[dict[str, Any]]
+    other_costs: list[dict[str, Any]]
+    #: 019/PR-D (ADR-0033 §3) — o número do ANÚNCIO, **declarado** pelo vendedor, e a data em que
+    #: ele o declarou. NÃO é preço calculado: o app nunca exibe um preço que ele mesmo calculou no
+    #: passado, e este payload segue sem nenhum campo derivado de cálculo (drift-guard é a prova).
+    #: `None` = acompanhando o custo. Não participa de kit, orçamento ou cenário — composição é
+    #: sempre pelo motor, no cliente.
+    seller_fixed_price: Decimal | None
+    seller_fixed_at: datetime | None
+    created_at: datetime
+    updated_at: datetime
+
+
+def _to_out(row: Product, filament: Filament | None, printer: Printer | None) -> ProductOut:
+    """Serialize with the D3 resolution rule: linked ⇒ the LIVE row wins; degraded ⇒ columns."""
+    if filament is not None:
+        filament_values = FilamentValues(
+            material=filament.material,
+            cost_per_roll=filament.cost_per_roll,
+            roll_weight_kg=filament.roll_weight_kg,
+        )
+    else:
+        filament_values = FilamentValues(
+            material=row.filament_material,
+            cost_per_roll=row.filament_cost_per_roll or Decimal("0"),
+            roll_weight_kg=row.filament_roll_weight_kg or Decimal("1"),
+        )
+    if printer is not None:
+        printer_values = PrinterValues(
+            machine_value=printer.machine_value,
+            machine_lifetime_hours=printer.machine_lifetime_hours,
+            avg_power_kw=printer.avg_power_kw,
+            maintenance_reserve_per_hour=printer.maintenance_reserve_per_hour,
+        )
+    else:
+        printer_values = PrinterValues(
+            machine_value=row.printer_machine_value or Decimal("0"),
+            machine_lifetime_hours=row.printer_machine_lifetime_hours or Decimal("1"),
+            avg_power_kw=row.printer_avg_power_kw or Decimal("0"),
+            maintenance_reserve_per_hour=row.printer_maintenance_reserve_per_hour or Decimal("0"),
+        )
+    return ProductOut(
+        id=row.id,
+        name=row.name,
+        filament_id=row.filament_id,
+        printer_id=row.printer_id,
+        filament_values=filament_values,
+        printer_values=printer_values,
+        piece_inputs=PieceInputs(
+            print_grams=row.print_grams,
+            print_time_hours=row.print_time_hours,
+            failure_pct=row.failure_pct,
+            finish_time_hours=row.finish_time_hours,
+            finish_rate_per_hour=row.finish_rate_per_hour,
+            labor_hours=row.labor_hours,
+            labor_rate_per_hour=row.labor_rate_per_hour,
+            markup_varejo_pct=row.markup_varejo_pct,
+            markup_atacado_pct=row.markup_atacado_pct,
+        ),
+        tariff_per_kwh=row.tariff_per_kwh,
+        include_marketplace=row.include_marketplace,
+        channels=row.channels,
+        other_costs=row.other_costs,
+        seller_fixed_price=row.seller_fixed_price,
+        seller_fixed_at=row.seller_fixed_at,
+        created_at=row.created_at,
+        updated_at=row.updated_at,
+    )
+
+
+def _not_found() -> AppError:
+    return AppError(ErrorCode.NOT_FOUND, "Product not found", status_code=404)
+
+
+def _unresolvable(field: str) -> AppError:
+    # Same 422 for nonexistent, soft-deleted and cross-tenant ids — no existence oracle.
+    return AppError(
+        ErrorCode.VALIDATION_ERROR,
+        f"{field} does not resolve to a saved item on this account",
+        status_code=422,
+    )
+
+
+async def _owned(session: AsyncSession, uid: str, product_id: str) -> Product:
+    """Owner-scoped fetch (FR-307): wrong owner, soft-deleted or malformed id → 404."""
+    try:
+        pid = uuid.UUID(product_id)
+    except ValueError as exc:
+        raise _not_found() from exc
+    row = (
+        await session.execute(
+            select(Product).where(
+                Product.id == pid,
+                Product.owner_uid == uid,
+                Product.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise _not_found()
+    return row
+
+
+async def _resolve_filament(session: AsyncSession, uid: str, filament_id: uuid.UUID) -> Filament:
+    row = (
+        await session.execute(
+            select(Filament).where(
+                Filament.id == filament_id,
+                Filament.owner_uid == uid,
+                Filament.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise _unresolvable("filamentId")
+    return row
+
+
+async def _resolve_printer(session: AsyncSession, uid: str, printer_id: uuid.UUID) -> Printer:
+    row = (
+        await session.execute(
+            select(Printer).where(
+                Printer.id == printer_id,
+                Printer.owner_uid == uid,
+                Printer.deleted_at.is_(None),
+            )
+        )
+    ).scalar_one_or_none()
+    if row is None:
+        raise _unresolvable("printerId")
+    return row
+
+
+def _apply(
+    row: Product, body: ProductIn, filament: Filament | None, printer: Printer | None
+) -> None:
+    """Write body → row. Linked refs re-snapshot from the LIVE row (D3 write rule (a));
+    degraded refs persist the submitted editable overrides (US6-4)."""
+    # 019/PR-D (T072, ADR-0033 §4): este é o FUNIL de nome dos produtos — POST, PUT e a
+    # materialização de kit passam todos por aqui. `name_norm` é derivada agora, e o nome FINAL
+    # (com sufixo, se houver conflito) é escrito por `flush_with_unique_name`, que chama esta
+    # função de dentro do savepoint.
+    row.name = body.name
+    row.name_norm = name_norm_key(body.name)
+    piece = body.piece_inputs
+    row.print_grams = piece.print_grams
+    row.print_time_hours = piece.print_time_hours
+    row.failure_pct = piece.failure_pct
+    row.finish_time_hours = piece.finish_time_hours
+    row.finish_rate_per_hour = piece.finish_rate_per_hour
+    row.labor_hours = piece.labor_hours
+    row.labor_rate_per_hour = piece.labor_rate_per_hour
+    row.markup_varejo_pct = piece.markup_varejo_pct
+    row.markup_atacado_pct = piece.markup_atacado_pct
+    row.tariff_per_kwh = body.tariff_per_kwh
+    row.include_marketplace = body.include_marketplace
+    # JSON mode dumps Decimal as string — money never becomes a JSON float (ADR-0008).
+    row.channels = [c.model_dump(mode="json", by_alias=True) for c in body.channels]
+    row.other_costs = [c.model_dump(mode="json", by_alias=True) for c in body.other_costs]
+
+    if filament is not None:
+        row.filament_id = filament.id
+        row.filament_material = filament.material
+        row.filament_cost_per_roll = filament.cost_per_roll
+        row.filament_roll_weight_kg = filament.roll_weight_kg
+    else:
+        values = body.filament_values
+        if values is None:  # unreachable — enforced by the link-or-snapshot model validator
+            raise _unresolvable("filamentId")
+        row.filament_id = None
+        row.filament_material = values.material
+        row.filament_cost_per_roll = values.cost_per_roll
+        row.filament_roll_weight_kg = values.roll_weight_kg
+
+    if printer is not None:
+        row.printer_id = printer.id
+        row.printer_machine_value = printer.machine_value
+        row.printer_machine_lifetime_hours = printer.machine_lifetime_hours
+        row.printer_avg_power_kw = printer.avg_power_kw
+        row.printer_maintenance_reserve_per_hour = printer.maintenance_reserve_per_hour
+    else:
+        pvalues = body.printer_values
+        if pvalues is None:  # unreachable — enforced by the link-or-snapshot model validator
+            raise _unresolvable("printerId")
+        row.printer_id = None
+        row.printer_machine_value = pvalues.machine_value
+        row.printer_machine_lifetime_hours = pvalues.machine_lifetime_hours
+        row.printer_avg_power_kw = pvalues.avg_power_kw
+        row.printer_maintenance_reserve_per_hour = pvalues.maintenance_reserve_per_hour
+
+
+async def _resolve_links(
+    session: AsyncSession, uid: str, body: ProductIn
+) -> tuple[Filament | None, Printer | None]:
+    filament = await _resolve_filament(session, uid, body.filament_id) if body.filament_id else None
+    printer = await _resolve_printer(session, uid, body.printer_id) if body.printer_id else None
+    return filament, printer
+
+
+async def _live_links(
+    session: AsyncSession, uid: str, rows: list[Product]
+) -> tuple[dict[uuid.UUID, Filament], dict[uuid.UUID, Printer]]:
+    """Load the live rows the products link to (deleted links degrade in the delete txn, so a
+    present link points at a live row; missing rows simply fall back to the columns).
+
+    ``uid`` is REQUIRED (audit finding E2-03, 2026-07-23): this used to select by ID alone, the one
+    query in the read path without an ``owner_uid`` predicate. The write path never lets a product
+    point at another account's reference, so the hole was latent — but "unreachable by today's
+    writers" is not tenant isolation, and this is the function that decides which values a product
+    RENDERS. Scoped, an out-of-tenant link simply does not resolve and the product falls back to its
+    own snapshot columns, which is the same honest degradation a deleted link already gets."""
+    fil_ids = {r.filament_id for r in rows if r.filament_id is not None}
+    prn_ids = {r.printer_id for r in rows if r.printer_id is not None}
+    filaments: dict[uuid.UUID, Filament] = {}
+    printers: dict[uuid.UUID, Printer] = {}
+    if fil_ids:
+        for f in (
+            await session.execute(
+                select(Filament).where(Filament.id.in_(fil_ids), Filament.owner_uid == uid)
+            )
+        ).scalars():
+            filaments[f.id] = f
+    if prn_ids:
+        for p in (
+            await session.execute(
+                select(Printer).where(Printer.id.in_(prn_ids), Printer.owner_uid == uid)
+            )
+        ).scalars():
+            printers[p.id] = p
+    return filaments, printers
+
+
+@router.get("/products", responses=ENTITLEMENT_ERRORS)
+async def list_products(
+    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> list[ProductOut]:
+    rows = list(
+        (
+            await session.execute(
+                select(Product)
+                .where(Product.owner_uid == claims["uid"], Product.deleted_at.is_(None))
+                .order_by(Product.created_at)
+            )
+        ).scalars()
+    )
+    filaments, printers = await _live_links(session, claims["uid"], rows)
+    return [
+        _to_out(
+            r,
+            filaments.get(r.filament_id) if r.filament_id else None,
+            printers.get(r.printer_id) if r.printer_id else None,
+        )
+        for r in rows
+    ]
+
+
+@router.post(
+    "/products",
+    status_code=status.HTTP_201_CREATED,
+    responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS},
+)
+async def create_product(
+    body: ProductIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProductOut:
+    # FR-310: at CREATE a product references saved items — both links are mandatory
+    # (values-only products exist solely via the delete-degradation path).
+    if body.filament_id is None:
+        raise _unresolvable("filamentId")
+    if body.printer_id is None:
+        raise _unresolvable("printerId")
+    filament, printer = await _resolve_links(session, claims["uid"], body)
+    row = Product(owner_uid=claims["uid"])
+    # A linha chega LIMPA ao helper: toda a escrita acontece dentro do savepoint
+    # (`app/api/naming.py` explica por que isso não é estilo, é requisito).
+    await flush_with_unique_name(
+        session,
+        row,
+        body.name,
+        index_name=_NAME_INDEX,
+        apply=lambda: _apply(row, body, filament, printer),
+    )
+    await session.commit()
+    await session.refresh(row)
+    return _to_out(row, filament, printer)
+
+
+@router.get("/products/{product_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
+async def get_product(
+    product_id: str,
+    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProductOut:
+    row = await _owned(session, claims["uid"], product_id)
+    filaments, printers = await _live_links(session, claims["uid"], [row])
+    return _to_out(
+        row,
+        filaments.get(row.filament_id) if row.filament_id else None,
+        printers.get(row.printer_id) if row.printer_id else None,
+    )
+
+
+@router.put(
+    "/products/{product_id}",
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS, **VALIDATION_ERRORS},
+)
+async def update_product(
+    product_id: str,
+    body: ProductIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProductOut:
+    row = await _owned(session, claims["uid"], product_id)
+    filament, printer = await _resolve_links(session, claims["uid"], body)
+    await flush_with_unique_name(
+        session,
+        row,
+        body.name,
+        index_name=_NAME_INDEX,
+        apply=lambda: _apply(row, body, filament, printer),
+    )
+    await session.commit()
+    await session.refresh(row)
+    return _to_out(row, filament, printer)
+
+
+class ProductPatchIn(CamelModel):
+    """Corpo do `PATCH` — UM campo, e ele é obrigatório (019/PR-D · T073 · ADR-0033 §3).
+
+    `extra="forbid"` (que `CamelModel` não traz) para que um `price` contrabandeado seja um 422
+    honesto, nunca um ignorar calado. O campo é obrigatório porque um `PATCH` de corpo vazio não
+    tem intenção: fixar e desfixar são as duas escolhas, e `null` já é a segunda.
+    `sellerFixedAt` **não existe aqui** — quem carimba a data é o servidor (o único carimbo de
+    aparelho na casa é `device_quoted_at`, e o prefixo `device_` declara justamente que aquele o
+    servidor não verifica).
+    """
+
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True, extra="forbid")
+
+    seller_fixed_price: Decimal | None
+
+    @field_validator("seller_fixed_price")
+    @classmethod
+    def _fixed_price(cls, v: Decimal | None) -> Decimal | None:
+        if v is None:
+            return v
+        finite_non_negative(v, "sellerFixedPrice", CEIL_MONEY)
+        exponent = v.as_tuple().exponent
+        # O número é do VENDEDOR: `MONEY_SETTLED` (Numeric(12,2)) arredondaria a 3ª casa em
+        # silêncio, e arredondar o número dele é alterá-lo. 422 — a mesma regra de
+        # `price-observations`.
+        if not isinstance(exponent, int) or exponent < -2:
+            raise ValueError("sellerFixedPrice must have at most 2 decimal places")
+        return v
+
+
+@router.patch(
+    "/products/{product_id}",
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS, **VALIDATION_ERRORS},
+)
+async def fix_product_price(
+    product_id: str,
+    body: ProductPatchIn,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> ProductOut:
+    """Fixa (ou desfixa) o preço declarado pelo vendedor; nada mais desta linha é tocado."""
+    row = await _owned(session, claims["uid"], product_id)
+    row.seller_fixed_price = body.seller_fixed_price
+    # Desfixar zera a data junto: uma data de fixação sem fixação seria um fantasma na tela.
+    row.seller_fixed_at = datetime.now(UTC) if body.seller_fixed_price is not None else None
+    await session.commit()
+    await session.refresh(row)
+    filaments, printers = await _live_links(session, claims["uid"], [row])
+    return _to_out(
+        row,
+        filaments.get(row.filament_id) if row.filament_id else None,
+        printers.get(row.printer_id) if row.printer_id else None,
+    )
+
+
+@router.delete(
+    "/products/{product_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS},
+)
+async def delete_product(
+    product_id: str,
+    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    session: Annotated[AsyncSession, Depends(get_session)],
+) -> None:
+    row = await _owned(session, claims["uid"], product_id)
+    row.deleted_at = datetime.now(UTC)  # soft-delete (D6) — voluntary deletion only
+    await session.commit()

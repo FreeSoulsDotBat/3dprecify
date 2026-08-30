@@ -1,0 +1,98 @@
+/* Grupo segmentado (018) — bandeja com pílulas, a selecionada em relevo.
+   Só tokens do DS: nenhuma cor literal entra aqui, para o claro e o escuro seguirem juntos. */
+
+.tf-segmented {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: var(--bg-muted);
+  border-radius: var(--radius-pill);
+  /* A bandeja é uma linha só: quando não couber, ela ROLA na horizontal em vez de empurrar a
+     página — o transbordo horizontal da página é defeito duro (SC-003), o de um contêiner que se
+     declara rolável não é. */
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tf-segmented::-webkit-scrollbar {
+  display: none;
+}
+
+.tf-segmented__item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  white-space: nowrap;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-pill);
+  /* INV-2 — alvo de toque de 44px de altura mesmo no tamanho pequeno. */
+  min-height: 44px;
+  padding: var(--space-2) var(--space-4);
+  transition:
+    background-color 0.15s ease-out,
+    color 0.15s ease-out;
+}
+
+.tf-segmented--sm .tf-segmented__item {
+  font-size: var(--fs-caption);
+  padding: var(--space-2) var(--space-3);
+}
+.tf-segmented--md .tf-segmented__item {
+  font-size: var(--fs-body-sm);
+}
+
+.tf-segmented__item:hover:not(.tf-segmented__item--selected) {
+  color: var(--text-body);
+}
+
+/* 019/PR-A (tf-components.css:703-712) — bandeja que ocupa a linha e divide em partes iguais, com
+   dois itens ou com quatro: as opções são do mesmo tipo, e larguras tiradas de quantas letras cada
+   palavra tem fariam "Impressoras" parecer mais importante que "Kits". Usar SÓ onde a largura é
+   escassa (celular; par varejo/atacado ao lado de uma coluna de conteúdo) — numa coluna de 1138px
+   isto daria abas de 280px, o oposto da compacta que o desktop usa; lá a bandeja volta a se
+   ajustar ao texto. */
+.tf-segmented--split {
+  display: flex;
+  width: 100%;
+}
+.tf-segmented--split .tf-segmented__item {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Review do PR #58 (2026-08-15) — a pílula selecionada era `--surface-card`, que no tema ESCURO é
+   o MESMO valor da bandeja `--bg-muted` (os dois são `--tf-neutral-900`, #14151a): contraste
+   1,00:1, ou seja, não existia pílula na tela. Como todos os itens têm `font-weight: 600` e nenhum
+   tem borda, o único sinal do item ativo virava a COR DO TEXTO — reprova WCAG 1.4.1 (cor como
+   único meio) e 1.4.11 (indicador de estado abaixo de 3:1). Na Conta era pior: o Segmented vive
+   dentro de um `<Card>`, então card, bandeja e pílula eram os três o mesmo #14151a.
+
+   `--surface-raised` é o token que o próprio cabeçalho deste arquivo já prometia ("a selecionada
+   em relevo"): no escuro é `--tf-neutral-800`, distinto da bandeja; no claro segue branco, como
+   era. A sombra dá o relevo em AMBOS os temas, para a seleção não depender só de matiz — que é o
+   que a 1.4.1 pede. */
+.tf-segmented__item--selected {
+  background: var(--surface-raised);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-xs);
+}
+
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
+.tf-segmented__item:focus-visible {
+  outline: none;
+  outline-offset: 0;
+}
+
+.tf-segmented__item > svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  pointer-events: none;
+}

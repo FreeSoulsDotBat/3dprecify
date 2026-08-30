@@ -1,0 +1,48 @@
+/* 009/T010 — the record Sheet. Token-only (tf-*), no utility skin (ADR-0007). */
+
+.tf-record {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 1rem);
+}
+
+.tf-record__unit {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding-inline: var(--space-2, 0.5rem);
+  white-space: nowrap;
+}
+
+.tf-record__basis {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+  padding: var(--space-3, 0.75rem);
+}
+
+.tf-record__basis legend {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  padding-inline: var(--space-1, 0.25rem);
+}
+
+/* ≥44px tap target — the whole row is the control, not just the dot. */
+.tf-record__option {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  min-height: 44px;
+}
+
+.tf-record__option strong {
+  margin-inline-start: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.tf-record__date {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}

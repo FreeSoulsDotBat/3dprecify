@@ -1,0 +1,13 @@
+{
+  "id": "dialogo-descartar-alteracoes",
+  "nome": "Confirmação de descarte ao fechar com alterações não salvas",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/features/scenarios/scenario-context-bar.tsx"],
+  "oQueFoiInferido": "Um `Dialog variant=\"center\"` mínimo: `DialogTitle` com a pergunta (\"Descartar as alterações não salvas desta simulação?\") e `<div className=\"flex justify-end gap-2\">` com \"Voltar\" (ghost) e \"Descartar\" (danger). Verificado no JSX: NÃO há `DialogDescription` — nenhum corpo dizendo o que se perde. Inferido: a ausência do corpo, a ausência de uma terceira saída (\"Salvar e fechar\"), o alinhamento à direita e a ordem dos botões, e o tamanho do diálogo. Contraste interno que ninguém desenhou: o diálogo de EXCLUIR, no mesmo épico, TEM `DialogDescription` — duas confirmações destrutivas com anatomias diferentes.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "O único ponto onde o trabalho do vendedor pode sumir é uma caixa com uma pergunta e um botão vermelho, sem dizer o que se perde — e menos explicativa que o diálogo de excluir do mesmo épico.",
+  "prioridade": "MEDIA",
+  "refutacao": "Procurei qualquer diálogo de confirmação destrutiva desenhado. O protótipo não tem nenhum: E9 Transversais cobre banner offline, erro global e 404; a rodada 1 acrescentou a tela de erro genérica 500 (item 19) e nada de confirmação; a matriz §G não tem linha de confirmação destrutiva. `.design-import/` não exporta Dialog nem confirmação — os únicos componentes exportados são `PriceHero.jsx` e `IconButton.jsx`. O canvas 018 tem botões \"Excluir\" (`tf-btn--danger-ghost`) em duas fichas, mas nenhum artboard do diálogo que eles abrem. A única autoridade textual (ux §4.1) define a frase e o par [Voltar][Descartar], e §10.2/G3 manda compor com Dialog + Button danger \"sem inventar primitiva\" — instrução de composição, não desenho. Sobrevive.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

@@ -1,0 +1,392 @@
+{
+  "meta": {
+    "fase": 3,
+    "data": "2026-08-13",
+    "execucoes_reais": 773,
+    "subcenarios_tocados": 62,
+    "testes_playwright": 61,
+    "passaram": 54,
+    "falharam": 7,
+    "renderizacoes_pdf": 300,
+    "por_categoria": {
+      "estresse_de_dados": 161,
+      "layout": 204,
+      "input_invalido": 132,
+      "usuario_burro": 7,
+      "acolhimento": 61,
+      "calculo": 37,
+      "rede": 11,
+      "gate_premium": 31,
+      "fluxo": 33,
+      "sessao": 3,
+      "seguranca": 6,
+      "rota": 3,
+      "crud": 1,
+      "tema": 3,
+      "acessibilidade": 3,
+      "usuario_leigo": 76,
+      "concorrencia": 1
+    },
+    "por_severidade": {
+      "alta": 11,
+      "media": 18,
+      "baixa": 6
+    }
+  },
+  "defeitos": [
+    {
+      "subcenario": "CF-001-LEIGO-A",
+      "categoria": "acolhimento",
+      "descricao": "\"Consumo médio\": digitar 120 em vez de 0,12 muda o custo de R$ 16.16 para R$ 615.56 (38×) SEM nenhum aviso. Motivo do erro: A etiqueta da impressora diz 120 W; o campo pede kW. Ele copia o número da etiqueta.",
+      "resultado_esperado": "Um aviso de plausibilidade quando o número informado leva o preço para outra ordem de grandeza — o vendedor leigo não tem como perceber sozinho",
+      "resultado_obtido": "custo total R$ 615.56, apresentado como um preço normal",
+      "severidade": "alta",
+      "evidencia": "campo=Consumo médio certo=0,12 digitado=120 fator=38.1",
+      "id": "D-w7-001",
+      "ts": "2026-08-13T16:06:41.508Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-A",
+      "categoria": "acolhimento",
+      "descricao": "\"Consumo médio\": digitar 220 em vez de 0,12 muda o custo de R$ 16.16 para R$ 1115.56 (69×) SEM nenhum aviso. Motivo do erro: Ele confunde consumo com a TENSÃO da tomada (220 V) — o número que ele conhece.",
+      "resultado_esperado": "Um aviso de plausibilidade quando o número informado leva o preço para outra ordem de grandeza — o vendedor leigo não tem como perceber sozinho",
+      "resultado_obtido": "custo total R$ 1115.56, apresentado como um preço normal",
+      "severidade": "alta",
+      "evidencia": "campo=Consumo médio certo=0,12 digitado=220 fator=69.0",
+      "id": "D-w7-002",
+      "ts": "2026-08-13T16:06:42.238Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-A",
+      "categoria": "acolhimento",
+      "descricao": "\"Reserva de manutenção\": digitar 500 em vez de 0,50 muda o custo de R$ 18.66 para R$ 2516.16 (135×) SEM nenhum aviso. Motivo do erro: Ele informa o gasto ANUAL de manutenção num campo que pede R$ por HORA.",
+      "resultado_esperado": "Um aviso de plausibilidade quando o número informado leva o preço para outra ordem de grandeza — o vendedor leigo não tem como perceber sozinho",
+      "resultado_obtido": "custo total R$ 2516.16, apresentado como um preço normal",
+      "severidade": "alta",
+      "evidencia": "campo=Reserva de manutenção certo=0,50 digitado=500 fator=134.8",
+      "id": "D-w7-003",
+      "ts": "2026-08-13T16:06:47.748Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-B",
+      "categoria": "acolhimento",
+      "descricao": "\"1,000\" (mil, no formato que sites em inglês usam) foi lido como 1 em \"Custo do rolo\", sem aviso — o custo caiu para R$ 6.26",
+      "resultado_esperado": "Interpretar como 1000 ou avisar que o separador foi lido como decimal",
+      "resultado_obtido": "custo total R$ 6.26",
+      "severidade": "alta",
+      "id": "D-w7-004",
+      "ts": "2026-08-13T16:06:53.819Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-D-P2",
+      "categoria": "acolhimento",
+      "descricao": "A persona \"Copia da etiqueta\" chega a um custo 3528× maior que o de referência (R$ 57005.57) sem nenhum aviso de plausibilidade",
+      "resultado_esperado": "Aviso quando o resultado sai da faixa que um vendedor reconheceria",
+      "resultado_obtido": "custo total R$ 57005.57",
+      "severidade": "alta",
+      "id": "D-w7-008",
+      "ts": "2026-08-13T16:07:22.221Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-D-P3",
+      "categoria": "acolhimento",
+      "descricao": "A persona \"Pensa em anos e meses\" chega a um custo 341× maior que o de referência (R$ 5516.16) sem nenhum aviso de plausibilidade",
+      "resultado_esperado": "Aviso quando o resultado sai da faixa que um vendedor reconheceria",
+      "resultado_obtido": "custo total R$ 5516.16",
+      "severidade": "alta",
+      "id": "D-w7-010",
+      "ts": "2026-08-13T16:07:23.640Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-D-P5",
+      "categoria": "acolhimento",
+      "descricao": "A persona que zera o que não entende chega a um custo total de R$ 0,00 e a um preço de venda de R$ 0,00 sem nenhum aviso",
+      "resultado_esperado": "Dizer que um preço zero não é vendável antes de entregá-lo",
+      "resultado_obtido": "R$ 0,00 apresentado como um preço normal",
+      "severidade": "alta",
+      "id": "D-w7-011",
+      "ts": "2026-08-13T16:07:26.805Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-D-P6",
+      "categoria": "acolhimento",
+      "descricao": "A persona \"Exagera sem perceber\" chega a um custo 371291× maior que o de referência (R$ 6000061.60) sem nenhum aviso de plausibilidade",
+      "resultado_esperado": "Aviso quando o resultado sai da faixa que um vendedor reconheceria",
+      "resultado_obtido": "custo total R$ 6000061.60",
+      "severidade": "alta",
+      "id": "D-w7-012",
+      "ts": "2026-08-13T16:07:28.079Z"
+    },
+    {
+      "subcenario": "CF-002-LEIGO-C",
+      "categoria": "acolhimento",
+      "descricao": "Digitar 150 no campo de HORAS (o vendedor quis dizer 150 minutos) multiplica o custo por 15× sem nenhum aviso",
+      "resultado_esperado": "Aviso de plausibilidade para uma impressão de 150 horas (mais de 6 dias)",
+      "resultado_obtido": "custo total R$ 194.67, sem comentário",
+      "severidade": "alta",
+      "id": "D-w7-005",
+      "ts": "2026-08-13T16:07:17.351Z"
+    },
+    {
+      "subcenario": "CF-010-UI-02",
+      "categoria": "acolhimento",
+      "descricao": "Digitar 0,12 em \"Comissão\" (o vendedor quis dizer 12%) baixa o anúncio de R$ 27.55 para R$ 25.24 — ele anuncia R$ 2.31 abaixo do necessário e descobre no extrato. Sem nenhum aviso.",
+      "resultado_esperado": "Aviso de plausibilidade para uma comissão de 0,12% (nenhum marketplace cobra isso), ou a unidade dita ao lado do campo",
+      "resultado_obtido": "anúncio R$ 25.24, apresentado normalmente",
+      "severidade": "alta",
+      "id": "D-w2-002",
+      "ts": "2026-08-13T16:03:03.792Z"
+    },
+    {
+      "subcenario": "CF-021-UI-03",
+      "categoria": "acolhimento",
+      "descricao": "Quantidade \"2147483648\" (acima do int4 (estoura a coluna)) foi aceita sem nenhum aviso na tela",
+      "resultado_esperado": "Peça fora do total com o motivo dito, ou mensagem explicando por que o valor não serve",
+      "resultado_obtido": "nenhum aviso visível",
+      "severidade": "alta",
+      "id": "D-w0-005",
+      "ts": "2026-08-13T16:03:51.460Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-D-P3",
+      "categoria": "fluxo",
+      "descricao": "A persona \"Pensa em anos e meses\" não encontrou o campo \"Vida útil da máquina\" na tela",
+      "resultado_esperado": "Todo campo do modelo é alcançável na calculadora",
+      "resultado_obtido": "campo não visível",
+      "severidade": "media",
+      "id": "D-w7-009",
+      "ts": "2026-08-13T16:07:22.874Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-E",
+      "categoria": "acolhimento",
+      "descricao": "Recarregar a página apagou o que o vendedor tinha preenchido (custo era R$ 19.91, voltou a R$ 16.16)",
+      "resultado_esperado": "Ou o rascunho sobrevive à recarga, ou o produto avisa que vai perder o que foi digitado",
+      "resultado_obtido": "os valores voltaram para a semente, sem aviso",
+      "severidade": "media",
+      "id": "D-w7-013",
+      "ts": "2026-08-13T16:07:29.370Z"
+    },
+    {
+      "subcenario": "CF-001-LEIGO-E",
+      "categoria": "acolhimento",
+      "descricao": "O custo total só aparece depois de 3.9 telas de rolagem — quem não rola não vê o resultado",
+      "resultado_esperado": "O resultado alcançável em no máximo 2 a 3 telas, ou um resumo fixo",
+      "resultado_obtido": "topo do custo total a 3289px numa viewport de 844px",
+      "severidade": "media",
+      "id": "D-w7-014",
+      "ts": "2026-08-13T16:07:32.299Z"
+    },
+    {
+      "subcenario": "CF-001-UI-01",
+      "categoria": "input_invalido",
+      "descricao": "T12: \"999999999999\" (gramas absurdas) em \"Gramas usadas\" foi aceito sem nenhuma mensagem visível",
+      "resultado_esperado": "Mensagem inline em pt-BR explicando o que fazer",
+      "resultado_obtido": "nenhuma mensagem de validação visível",
+      "severidade": "media",
+      "id": "D-w3-001",
+      "ts": "2026-08-13T16:02:34.595Z"
+    },
+    {
+      "subcenario": "CF-001-UI-02",
+      "categoria": "acessibilidade",
+      "descricao": "2 elemento(s) sem NENHUMA mudança visual ao receber foco por teclado: A[Calcular], INPUT[]",
+      "resultado_esperado": "WCAG 2.4.7 — o foco muda algo visível (contorno, sombra, fundo, borda ou cor)",
+      "resultado_obtido": "estilo idêntico com e sem foco: A[Calcular], INPUT[]",
+      "severidade": "media",
+      "id": "D-w2-001",
+      "ts": "2026-08-13T16:02:44.460Z"
+    },
+    {
+      "subcenario": "CF-002-LEIGO-C",
+      "categoria": "acolhimento",
+      "descricao": "O formato \"2:30\" (formato de relógio) não foi aceito nem explicado — o campo simplesmente não reage",
+      "resultado_esperado": "Aceitar o formato de relógio ou dizer \"use horas e minutos separados\"",
+      "resultado_obtido": "nenhuma mensagem e nenhum efeito no preço",
+      "severidade": "media",
+      "id": "D-w7-006",
+      "ts": "2026-08-13T16:07:17.584Z"
+    },
+    {
+      "subcenario": "CF-002-LEIGO-C",
+      "categoria": "acolhimento",
+      "descricao": "O formato \"2h30\" (como o fatiador mostra) não foi aceito nem explicado — o campo simplesmente não reage",
+      "resultado_esperado": "Aceitar o formato de relógio ou dizer \"use horas e minutos separados\"",
+      "resultado_obtido": "nenhuma mensagem e nenhum efeito no preço",
+      "severidade": "media",
+      "id": "D-w7-007",
+      "ts": "2026-08-13T16:07:17.816Z"
+    },
+    {
+      "subcenario": "CF-004-UI-02",
+      "categoria": "layout",
+      "evidencia": "TEXTO em SPAN.tf-brow__label right=3540 conteudo=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…\"",
+      "descricao": "Nome de sub-custo com 300 caracteres gerou 2100px de overflow horizontal. Culpados: TEXTO em SPAN.tf-brow__label right=3540 conteudo=\"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA…\"",
+      "resultado_esperado": "Texto longo trunca ou quebra, sem rolagem horizontal",
+      "resultado_obtido": "2100px",
+      "severidade": "media",
+      "id": "D-w1-002",
+      "ts": "2026-08-13T16:02:36.515Z"
+    },
+    {
+      "subcenario": "CF-004-UI-02",
+      "categoria": "layout",
+      "descricao": "Overflow horizontal de 2100px em outros custos com 20 linhas",
+      "resultado_esperado": "scrollWidth == clientWidth (sem rolagem horizontal)",
+      "resultado_obtido": "2100px de excesso",
+      "severidade": "media",
+      "id": "D-w1-003",
+      "ts": "2026-08-13T16:02:36.607Z"
+    },
+    {
+      "subcenario": "CF-013-UI-01",
+      "categoria": "input_invalido",
+      "descricao": "Salvar simulação com nome vazio não exibiu a mensagem que o produto define",
+      "resultado_esperado": "\"Dê um nome à simulação.\"",
+      "resultado_obtido": "submit desabilitado=false; folha: SALVAR SIMULAÇÃO Guardamos a estratégia desta tela — canais, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje. Nome * Nota (opcional) opcional Base de custo: avulsa Salvar simulação",
+      "severidade": "media",
+      "id": "D-w5-006",
+      "ts": "2026-08-13T16:03:56.937Z"
+    },
+    {
+      "subcenario": "CF-015-UI-02",
+      "categoria": "layout",
+      "descricao": "A lista do catálogo rola 4948px na horizontal com um nome de 500 caracteres",
+      "resultado_esperado": "Nome longo trunca ou quebra dentro do card",
+      "resultado_obtido": "CAIXA LI. right=6388 ;; CAIXA BUTTON.tf-card tf-card--interactive tf-catalog- right=6388 ;; CAIXA SPAN. right=6367",
+      "severidade": "media",
+      "id": "D-w0-003",
+      "ts": "2026-08-13T16:03:38.561Z"
+    },
+    {
+      "subcenario": "CF-015-UI-02",
+      "categoria": "layout",
+      "descricao": "Overflow horizontal de 4948px em catálogo com itens adversariais",
+      "resultado_esperado": "scrollWidth == clientWidth (sem rolagem horizontal)",
+      "resultado_obtido": "4948px de excesso",
+      "severidade": "media",
+      "id": "D-w0-004",
+      "ts": "2026-08-13T16:03:38.563Z"
+    },
+    {
+      "subcenario": "CF-021-UI-03",
+      "categoria": "acolhimento",
+      "descricao": "Quantidade \"999999999999999\" (absurda) foi aceita sem nenhum aviso na tela",
+      "resultado_esperado": "Peça fora do total com o motivo dito, ou mensagem explicando por que o valor não serve",
+      "resultado_obtido": "nenhum aviso visível",
+      "severidade": "media",
+      "id": "D-w0-006",
+      "ts": "2026-08-13T16:03:51.769Z"
+    },
+    {
+      "subcenario": "CF-036-UI-02",
+      "categoria": "acessibilidade",
+      "descricao": "1 texto(s) abaixo do contraste WCAG em Conta premium wide",
+      "resultado_esperado": "Contraste >= 4,5:1 (3:1 para texto grande)",
+      "resultado_obtido": "\"Premium\" 4.46:1 (min 4.5) cor=rgb(26, 160, 106) fundo=rgb(21, 43, 39)",
+      "severidade": "media",
+      "id": "D-w5-003",
+      "ts": "2026-08-13T16:03:40.311Z"
+    },
+    {
+      "subcenario": "CF-037-UI-01",
+      "categoria": "acessibilidade",
+      "descricao": "1 texto(s) abaixo do contraste WCAG em oferta a 390px",
+      "resultado_esperado": "Contraste >= 4,5:1 (3:1 para texto grande)",
+      "resultado_obtido": "\"Premium\" 4.46:1 (min 4.5) cor=rgb(26, 160, 106) fundo=rgb(21, 43, 39)",
+      "severidade": "media",
+      "id": "D-w5-004",
+      "ts": "2026-08-13T16:03:41.596Z"
+    },
+    {
+      "subcenario": "CF-037-UI-01",
+      "categoria": "acessibilidade",
+      "descricao": "1 texto(s) abaixo do contraste WCAG em oferta a 1440px",
+      "resultado_esperado": "Contraste >= 4,5:1 (3:1 para texto grande)",
+      "resultado_obtido": "\"Premium\" 4.46:1 (min 4.5) cor=rgb(26, 160, 106) fundo=rgb(21, 43, 39)",
+      "severidade": "media",
+      "id": "D-w5-005",
+      "ts": "2026-08-13T16:03:42.879Z"
+    },
+    {
+      "subcenario": "CF-040-UI-01",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) abaixo de 24x24 em tela de entrada — reprova WCAG 2.2 AA (2.5.8)",
+      "resultado_esperado": "Alvos interativos >= 24x24 CSS px",
+      "resultado_obtido": "A[Como tratamos seus dados] 181x20",
+      "severidade": "media",
+      "id": "D-w5-002",
+      "ts": "2026-08-13T16:03:36.416Z"
+    },
+    {
+      "subcenario": "CF-043-UI-03",
+      "categoria": "layout",
+      "descricao": "Redimensionar para 426px gerou 131px de rolagem horizontal",
+      "resultado_esperado": "Nenhuma largura entre 390 e 1440 gera rolagem horizontal",
+      "resultado_obtido": "CAIXA DIV.tf-premium-teaser right=506 ;; CAIXA H2.tf-premium-teaser__title right=486 ;; CAIXA P.tf-premium-teaser__subtitle right=486",
+      "severidade": "media",
+      "id": "D-w2-004",
+      "ts": "2026-08-13T16:03:31.539Z"
+    },
+    {
+      "subcenario": "CF-003-UI-01",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) entre 24 e 43px em bloco de custo de máquina — passa na AA, abaixo do conforto de 44px",
+      "resultado_esperado": "Alvos de toque com 44x44 CSS px no mobile (recomendação)",
+      "resultado_obtido": "BUTTON[] 28x28",
+      "severidade": "baixa",
+      "id": "D-w1-001",
+      "ts": "2026-08-13T16:02:34.620Z"
+    },
+    {
+      "subcenario": "CF-005-UI-01",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) entre 24 e 43px em detalhamento mobile — passa na AA, abaixo do conforto de 44px",
+      "resultado_esperado": "Alvos de toque com 44x44 CSS px no mobile (recomendação)",
+      "resultado_obtido": "BUTTON[] 28x28",
+      "severidade": "baixa",
+      "id": "D-w0-001",
+      "ts": "2026-08-13T16:02:35.262Z"
+    },
+    {
+      "subcenario": "CF-010-UI-01",
+      "categoria": "observacao",
+      "descricao": "O slot da Amazon não renderiza o campo \"Frete\" — os campos do canal são dirigidos pelos eixos declarados no catálogo. É o comportamento que o dono pediu na rodada 1 (ponto 10: \"os campos devem fazer sentido de acordo com o marketplace\"), registrado aqui como confirmação, não como defeito.",
+      "resultado_esperado": "Campos coerentes com o marketplace escolhido",
+      "resultado_obtido": "Comissão, Taxa fixa e Comissão mínima/item — sem Frete",
+      "severidade": "baixa",
+      "id": "D-w0-002",
+      "ts": "2026-08-13T16:03:20.074Z"
+    },
+    {
+      "subcenario": "CF-013-UI-03",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) entre 24 e 43px em folha de simulações do free — passa na AA, abaixo do conforto de 44px",
+      "resultado_esperado": "Alvos de toque com 44x44 CSS px no mobile (recomendação)",
+      "resultado_obtido": "BUTTON[] 28x28",
+      "severidade": "baixa",
+      "id": "D-w5-007",
+      "ts": "2026-08-13T16:04:11.117Z"
+    },
+    {
+      "subcenario": "CF-043-UI-V1-dark",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) entre 24 e 43px em /calcular em V1/dark — passa na AA, abaixo do conforto de 44px",
+      "resultado_esperado": "Alvos de toque com 44x44 CSS px no mobile (recomendação)",
+      "resultado_obtido": "BUTTON[] 28x28",
+      "severidade": "baixa",
+      "id": "D-w2-003",
+      "ts": "2026-08-13T16:03:15.299Z"
+    },
+    {
+      "subcenario": "CF-043-UI-V1-light",
+      "categoria": "acessibilidade",
+      "descricao": "1 alvo(s) entre 24 e 43px em /calcular em V1/light — passa na AA, abaixo do conforto de 44px",
+      "resultado_esperado": "Alvos de toque com 44x44 CSS px no mobile (recomendação)",
+      "resultado_obtido": "BUTTON[] 28x28",
+      "severidade": "baixa",
+      "id": "D-w5-001",
+      "ts": "2026-08-13T16:03:15.515Z"
+    }
+  ]
+}

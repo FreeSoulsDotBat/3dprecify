@@ -6,11 +6,22 @@ import type { PriceInput } from "../src/index";
 // Canonical SC-001 vector (004 §3). Marketplace + admin start empty here so the vector maps onto the
 // documented cost breakdown + prices; the single-channel gross-up is exercised in its own block via
 // `channels` (3.0.0 shape — the 004 `marketplace`/`adminTotal` inputs are gone, ADR-0011 / A1).
+//
+// **RE-BASELINE 4.0.0 (ADR-0026 / 016 US10)**: o `wasteGrams: 10` saiu da entrada e o material passa
+// a ser `gramas × custo/kg`. A conta canônica inteira, refeita (ADR-0008: Decimal, 2dp HALF_UP):
+//   material   = 100 g × (R$ 100 / 1000 g) ............ 10,00   (era 11,00 com os 10 g de desperdício)
+//   energy     = 5 h × 0,1 kW × R$ 1/kWh .............. 0,50    (inalterado)
+//   machine    = (4000/2000) × 5 h .................... 10,00   (inalterado)
+//   produção   = 10,00 + 0,50 + 10,00 ................. 20,50
+//   falha      = 10% × 20,50 .......................... 2,05    (era 2,15)
+//   finishing  = 0,5 h × R$ 10/h ...................... 5,00    (inalterado)
+//   custoTotal = 10,00+0,50+10,00+2,05+5,00 ........... 27,55   (era 28,65)
+//   varejo     = 27,55 × 1,50 = 41,325 → HALF_UP ...... 41,33   (era 42,98)
+//   atacado    = 27,55 × 1,30 = 35,815 → HALF_UP ...... 35,82   (era 37,25)
 const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -32,24 +43,24 @@ describe("computeCalculator — canonical worked example (SC-001)", () => {
   const r = computeCalculator(SC001);
 
   it("computes each cost line in R$ (SC-001)", () => {
-    expect(r.material).toBe(11.0);
+    expect(r.material).toBe(10.0);
     expect(r.energy).toBe(0.5);
     expect(r.machine).toBe(10.0);
-    expect(r.falha).toBe(2.15);
+    expect(r.falha).toBe(2.05);
     expect(r.finishing).toBe(5.0);
     expect(r.labor).toBe(0);
     expect(r.admin).toBe(0);
   });
 
-  it("custo_total is R$ 28,65 and the breakdown lines sum to it (SC-002)", () => {
-    expect(r.custoTotal).toBe(28.65);
+  it("custo_total is R$ 27,55 and the breakdown lines sum to it (SC-002)", () => {
+    expect(r.custoTotal).toBe(27.55);
     const sum = r.material + r.energy + r.machine + r.falha + r.finishing + r.labor + r.admin;
     expect(Number(sum.toFixed(2))).toBe(r.custoTotal);
   });
 
-  it("prices are R$ 42,98 (varejo) and R$ 37,25 (atacado)", () => {
-    expect(r.precoVarejo).toBe(42.98);
-    expect(r.precoAtacado).toBe(37.25);
+  it("prices are R$ 41,33 (varejo) and R$ 35,82 (atacado)", () => {
+    expect(r.precoVarejo).toBe(41.33);
+    expect(r.precoAtacado).toBe(35.82);
   });
 
   it("no channel configured ⇒ channels is [] and catalogVersion null", () => {
@@ -57,8 +68,7 @@ describe("computeCalculator — canonical worked example (SC-001)", () => {
     expect(r.catalogVersion).toBeNull();
   });
 
-  it("stamps modelVersion 3.0.0 (= PRICING_MODEL_VERSION)", () => {
-    expect(r.modelVersion).toBe("3.0.0");
+  it("stamps modelVersion (= PRICING_MODEL_VERSION — the literal pin lives in version.test.ts)", () => {
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });
@@ -72,11 +82,11 @@ describe("computeCalculator — single-channel gross-up (3.0.0 channels[])", () 
     expect(r.channels).toHaveLength(1);
     const c = r.channels[0];
     // anúncio = (base + fixedFee) / (1 − commission/100)
-    expect(c.precoAnuncioVarejo).toBe(59.98); // (42,98 + 5) / 0,8
-    expect(c.precoAnuncioAtacado).toBe(52.81); // (37,25 + 5) / 0,8
+    expect(c.precoAnuncioVarejo).toBe(57.91); // (41,33 + 5) / 0,8 = 57,9125 → 57,91
+    expect(c.precoAnuncioAtacado).toBe(51.03); // (35,82 + 5) / 0,8 = 51,025 → 51,03
     // recebido líquido nets back to the base price (round-trip; freightCost 0)
-    expect(c.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 42,98
-    expect(c.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 37,25
+    expect(c.recebidoLiquidoVarejo).toBe(r.precoVarejo); // 41,33
+    expect(c.recebidoLiquidoAtacado).toBe(r.precoAtacado); // 35,82
     expect(c.freightCostVarejo).toBe(0);
     expect(c.freightCostAtacado).toBe(0);
     expect(c.marketplace).toBe("GENERIC");
@@ -105,16 +115,16 @@ describe("computeCalculator — single-channel gross-up (3.0.0 channels[])", () 
     expect(c.precoAnuncioVarejo).toBe(r.precoVarejo);
     expect(c.recebidoLiquidoVarejo).toBe(Number((r.precoVarejo - 3).toFixed(2)));
     // custo_total is untouched by any channel fee/freight
-    expect(r.custoTotal).toBe(28.65);
+    expect(r.custoTotal).toBe(27.55);
   });
 });
 
 describe("computeCalculator — corrected-math guards", () => {
   it("failure covers material + energy + machine, not material alone (SC-006)", () => {
     const r = computeCalculator(SC001);
-    // 10% of (11 + 0.5 + 10) = 2.15, NOT 10% of material (1.10)
-    expect(r.falha).toBe(2.15);
-    expect(r.falha).not.toBe(1.1);
+    // 10% of (10 + 0.5 + 10) = 2.05, NOT 10% of material (1.00)
+    expect(r.falha).toBe(2.05);
+    expect(r.falha).not.toBe(1.0);
   });
 
   it("machine-hour = value/lifetime + reserve (ADR-0009 A, SC-007)", () => {
@@ -142,8 +152,8 @@ describe("computeCalculator — edges & robustness", () => {
     const r = computeCalculator({ ...SC001, printTimeHours: 0, failurePct: 0, finishTimeHours: 0 });
     expect(r.energy).toBe(0);
     expect(r.machine).toBe(0);
-    expect(r.material).toBe(11.0);
-    expect(r.custoTotal).toBe(11.0);
+    expect(r.material).toBe(10.0);
+    expect(r.custoTotal).toBe(10.0);
   });
 
   it("omitted optional fields default to 0 / empty", () => {
@@ -165,7 +175,7 @@ describe("computeCalculator — edges & robustness", () => {
     expect(r.labor).toBe(0);
     expect(r.admin).toBe(0);
     expect(r.channels).toEqual([]);
-    // material 10.00 (no waste) + energy 0.50 + machine 10.00 = custo_total 20.50
+    // material 10.00 + energy 0.50 + machine 10.00 = custo_total 20.50 (falha/finishing/labor = 0)
     expect(r.material).toBe(10.0);
     expect(r.custoTotal).toBe(20.5);
   });
@@ -179,7 +189,7 @@ describe("computeCalculator — edges & robustness", () => {
     });
     expect(r.labor).toBe(50.0);
     expect(r.admin).toBe(3.0);
-    expect(r.custoTotal).toBe(81.65); // 28.65 + 50 + 3
+    expect(r.custoTotal).toBe(80.55); // 27.55 + 50 + 3
   });
 
   it("multiple named sub-costs sum (each rounded) into admin", () => {
@@ -191,7 +201,7 @@ describe("computeCalculator — edges & robustness", () => {
       ],
     });
     expect(r.admin).toBe(5.0);
-    expect(r.custoTotal).toBe(33.65); // 28.65 + 5
+    expect(r.custoTotal).toBe(32.55); // 27.55 + 5
   });
 
   // FR-115 / SC-106: each named sub-cost is echoed onto the result (rounded, in order) so the UI can
@@ -238,8 +248,8 @@ describe("computeCalculator — edges & robustness", () => {
       ],
     });
     const one = computeCalculator({ ...SC001, otherCosts: [{ name: "Embalagem", value: 3 }] });
-    expect(two.custoTotal).toBe(33.65);
-    expect(one.custoTotal).toBe(31.65); // exactly −2,00, no residual
+    expect(two.custoTotal).toBe(32.55);
+    expect(one.custoTotal).toBe(30.55); // exactly −2,00, no residual
     expect(one.otherCosts).toEqual([{ name: "Embalagem", value: 3.0 }]);
   });
 

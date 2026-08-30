@@ -151,3 +151,16 @@ are taken in themed rounds; each outcome is recorded here (→ then an ADR for t
 | X.1 | Backend host | Cloud Run / Fly.io / Render / Railway | (open — drives S1.2) |
 | X.2 | SPA host | Cloudflare Pages / Vercel / Firebase Hosting / Netlify | (open) |
 | X.3 | Capacitor timing | PWA Capacitor-ready now, `cap add android` post-MVP | (80%) |
+
+## Round CG — Coverage gates (PR-B review follow-up)
+**DECIDED 2026-07-12 (Jonatan):** the frontend coverage gate is EXTENDED from the pure-logic core
+to `apps/web/src`. This is **NOT a reversal** of the earlier "apps/web is validated by visual
+homologation" call — it is **one more DoD step ON TOP of it**: apps/web is now validated by **BOTH**
+the visual homologation walk **AND** a coverage floor. Every apps/web increment still gets a
+qa-produto homologation; the coverage gate is an additional regression net, not a substitute.
+Implementation (per-glob thresholds, one config): `packages/*/src/**` keeps its **100%** ratchet;
+`apps/web/src/**` gets a **realistic FLOOR** set a few points below the measured baseline
+(stmts ~81 / branches ~77 / funcs ~78 / lines ~82 → floors 77/73/74/78) so it catches a real DROP
+without flaking on churn. The **backend** gains its first coverage gate too: `pytest-cov` +
+`--cov=app --cov-fail-under=82` in `gate:be` (measured baseline 85%). Both floors are ordinary
+numbers, not ratchets — raise them deliberately, never silently.

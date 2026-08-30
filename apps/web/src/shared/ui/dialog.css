@@ -92,7 +92,8 @@
   color: var(--text-strong);
   background: var(--bg-muted);
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-dialog__x:focus-visible {
   outline: none;
-  box-shadow: var(--ring);
+  box-shadow: none;
 }

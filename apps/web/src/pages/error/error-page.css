@@ -1,5 +1,6 @@
-/* Generic error screen (T054 / SS-3). Centered on-brand column: a soft Grafismo flourish, the
-   honest title/body, the reload action, and a discreet support-code line. Reduced-motion safe. */
+/* Generic error screen (T054 / SS-3). Centered on-brand column: the honest title/body, the reload
+   action, and a discreet support-code line (019/T030: sem grafismo — prancheta 24c). Reduced-motion
+   safe. */
 .tf-error {
   display: flex;
   flex-direction: column;
@@ -9,12 +10,6 @@
   margin-inline: auto;
   padding-block: var(--space-8);
   text-align: center;
-}
-.tf-error__grafismo {
-  width: 96px;
-  height: 48px;
-  color: var(--accent);
-  opacity: 0.55;
 }
 .tf-error__title {
   margin: 0;

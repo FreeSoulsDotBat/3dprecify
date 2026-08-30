@@ -18,7 +18,9 @@ vi.mock("@sentry/react", () => ({
 
 import * as Sentry from "@sentry/react";
 
-import { ApiError, apiFetch } from "./transport";
+import { clearSessionExpired, isSessionExpired } from "@/shared/session/session-expiry";
+
+import { ApiError, apiFetch, apiFetchFile } from "./transport";
 
 type FetchInit = RequestInit & { signal: AbortSignal };
 type MockFetch = (url: string, init?: RequestInit) => Promise<Response>;
@@ -28,11 +30,105 @@ const REQUEST_TIMEOUT_TEST_MS = 15_000;
 
 beforeEach(() => {
   vi.clearAllMocks();
+  clearSessionExpired();
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.useRealTimers();
+  clearSessionExpired();
+});
+
+// ---- hotfix 016/A3 (H5) — the session-expired marker ------------------------------------
+describe("transport — session-expiry marker (016/A3 H5)", () => {
+  it("um 401 UNAUTHENTICATED marca a sessão expirada", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(
+            JSON.stringify({ error: { code: "UNAUTHENTICATED", message: "no session" } }),
+            { status: 401, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+    expect(isSessionExpired()).toBe(false);
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+  });
+
+  it("um 401 TOKEN_EXPIRED marca a sessão expirada", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "TOKEN_EXPIRED", message: "expired" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+  });
+
+  it("um 403 (ENTITLEMENT_REQUIRED) NÃO marca a sessão expirada — não é a mesma história", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(
+            JSON.stringify({ error: { code: "ENTITLEMENT_REQUIRED", message: "premium" } }),
+            { status: 403, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(false);
+  });
+
+  it("um 401 sem um dos dois códigos NÃO marca (nunca inventa uma causa)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "INTERNAL", message: "oops" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(false);
+  });
+
+  it("uma resposta bem-sucedida LIMPA um marcador que uma requisição anterior deixou", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ error: { code: "UNAUTHENTICATED", message: "x" } }), {
+            status: 401,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history").catch(() => {});
+    expect(isSessionExpired()).toBe(true);
+
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { "content-type": "application/json" },
+          }),
+      ),
+    );
+    await apiFetch("/api/v1/history");
+    expect(isSessionExpired()).toBe(false);
+  });
 });
 
 // ---- (a) malformed body → ApiError with the REAL status ---------------------------------
@@ -103,5 +199,72 @@ describe("transport — Authorization origin allowlist (hardening c)", () => {
     await apiFetch("https://evil.example.com/steal");
     const foreign = new Headers(fetchMock.mock.calls[1]![1]?.headers);
     expect(foreign.get("Authorization")).toBeNull();
+  });
+});
+
+// ---- server-rendered files (009/T028, ADR-0020) -------------------------------------------
+// The export artifacts are BINARY and authenticated. Both facts are why this entry point exists:
+// `res.text()` decodes bytes as UTF-8 and silently corrupts a PDF, and a plain `<a href>` would
+// fetch without the ID token. What must not be lost in the binary path is the ERROR envelope — a
+// lapse answers 403 with JSON, and the call site needs that `code` to say "Premium pausado" instead
+// of a generic failure.
+describe("transport — apiFetchFile (server-rendered artifacts)", () => {
+  const PDF_BYTES = new Uint8Array([0x25, 0x50, 0x44, 0x46, 0x2d, 0x31, 0x2e, 0x34]); // %PDF-1.4
+
+  it("returns the bytes VERBATIM as a Blob, with the filename the server chose", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(PDF_BYTES, {
+            status: 200,
+            headers: {
+              "content-type": "application/pdf",
+              "Content-Disposition": 'attachment; filename="orcamento.pdf"',
+            },
+          }),
+      ),
+    );
+
+    const file = await apiFetchFile("/api/v1/history/s1/quote.pdf");
+
+    expect(file.filename).toBe("orcamento.pdf");
+    expect(file.blob).toBeInstanceOf(Blob);
+    // Byte-for-byte: the whole point. A text round-trip would mangle any non-UTF-8 sequence.
+    expect(new Uint8Array(await file.blob.arrayBuffer())).toEqual(PDF_BYTES);
+  });
+
+  it("no Content-Disposition ⇒ a null filename, never a guess", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () => new Response(PDF_BYTES, { status: 200, headers: { "content-type": "application/pdf" } }),
+      ),
+    );
+
+    expect((await apiFetchFile("/api/v1/history/s1/quote.pdf")).filename).toBeNull();
+  });
+
+  it("a 403 still parses the JSON envelope — the lapse keeps its code (FR-515)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn<MockFetch>(
+        async () =>
+          new Response(
+            JSON.stringify({
+              error: {
+                code: "ENTITLEMENT_REQUIRED",
+                message: "Premium required",
+                correlationId: "corr-403",
+              },
+            }),
+            { status: 403, headers: { "content-type": "application/json" } },
+          ),
+      ),
+    );
+
+    const err = await apiFetchFile("/api/v1/history/s1/quote.pdf").catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err).toMatchObject({ status: 403, code: "ENTITLEMENT_REQUIRED" });
   });
 });

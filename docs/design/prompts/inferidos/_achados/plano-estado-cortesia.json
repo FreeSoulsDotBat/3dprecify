@@ -1,0 +1,17 @@
+{
+  "id": "plano-estado-cortesia",
+  "nome": "Linha do plano na Conta — CORTESIA / programa beta (grant de operador)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/billing/plan-panel.tsx",
+    "apps/web/src/features/billing/plan-view.ts",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Badge verde \"Premium\" (idêntico ao do assinante) + legenda \"cortesia · expira em {data}\" ou \"via programa beta · expira em {data}\", e NENHUMA ação: `PlanActions` cai no `return null` final para `kind === \"courtesy\"`, então a linha fica com selo, legenda e apenas o \"Recarregar\" que a `conta-page.tsx` renderiza ao lado. Inferido: que um premium que NÃO é assinatura mostra a origem do grant como legenda; que a data de expiração ocupa a mesma posição e o mesmo tom da data de renovação de um assinante, significando o oposto; e que não existe nenhuma affordance de conversão nessa linha.",
+  "autoridade": "NENHUMA",
+  "impacto": "Um beta tester vê o mesmo selo verde de quem paga, com uma data que parece renovação e é vencimento — e sem nenhum caminho oferecido para assinar antes de perder.",
+  "prioridade": "MEDIA",
+  "refutacao": "Canvas: `planCaption: isPremium ? \"renova em 01/09/2026\" : …` — só o caso assinatura, e grep por `cortesia|beta|expira` no artboard = 0. §E7 e `AccountScreen.jsx` são binários. A distinção de FONTE do grant existe como requisito em `specs/007-e2-catalog-entitlement` (FR-304) e como redação em `ux-billing.md` — requisito e spec textual, nenhum dos dois conta. Testei a derrubada por outro ângulo: o protótipo trata premium como estado do `localStorage` de demonstração, e a própria r2 (item 5) manda anotar no readme que \"o status Premium vem do servidor — o localStorage do protótipo é apenas simulação\", ou seja a autoridade declara explicitamente que a PROVENIÊNCIA do premium está fora do que ela desenha. Sobrevive.",
+  "sobreviveu": true,
+  "area": "billing"
+}

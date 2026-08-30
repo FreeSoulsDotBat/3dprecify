@@ -1,0 +1,16 @@
+{
+  "id": "bloco-usar-do-catalogo",
+  "nome": "Bloco “Usar do catálogo” na Calcular e seus três estados",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/pages/calcular/calcular-page.tsx",
+    "apps/web/src/features/calculator/catalog-prefill.ts"
+  ],
+  "oQueFoiInferido": "A mesma faixa do topo do formulário com três montagens: (a) premium com itens — Card 'Usar do catálogo' + hint + dois Selects (Filamento salvo / Impressora salva) em `gridCard`, que podem aparecer sozinhos se só um tipo tiver itens; (b) grátis/deslogado — Card com `PremiumTeaser feature=CATALOG_PICKER` e, como `disabledAffordance`, um Button secondary DESABILITADO com o texto 'Usar do catálogo'; (c) falha real de leitura sem cache — Card com `Alert tone=\"danger\"` + Button 'Tentar de novo'. Inferido: o estado (c) inteiro, a escolha de um BOTÃO desabilitado como afordância do gate (em vez do link desenhado), o desaparecimento silencioso quando o vendedor simplesmente não tem itens, a ausência do link 'inserir manualmente' que o protótipo exigia, e como as três montagens ocupam a mesma posição.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É a ponte entre o catálogo e o cálculo — o motivo de o Premium existir. A mesma faixa da tela troca de identidade três vezes conforme plano e rede, sem desenho que una as três, e o fallback manual prometido no protótipo nunca virou afordância.",
+  "prioridade": "MEDIA",
+  "refutacao": "CORRIJO a evidência do mapeador, que estava incompleta: além de §E4 (245-246: 'Seletor catalog-driven: dropdowns Filamento ▾ e Impressora ▾ + link \"inserir manualmente\" como fallback sempre disponível') e §F.4, o estado (b) ESTÁ desenhado — `-fixes.md` item 1 especifica o card de teaser compacto para o usuário grátis com o link 'Ver Premium', e o `prototype-audit` §V2 o lista entre os 20 FIXED, verificado em render real. Então dois dos três estados têm ancestral desenhado. O que NÃO tem: o estado (c) de falha com retentativa (nasceu em 016/T072-A8), a troca do link 'Ver Premium' por um botão desabilitado, o sumiço silencioso sem itens, e o 'inserir manualmente' — que o protótipo pediu e o `CalculatorScreen.jsx` exportado nem chegou a implementar (o esqueleto de 131 linhas vai direto às entradas básicas, sem picker nenhum). Sobrevive, PROTOTIPO_PARCIAL, com a cobertura agora medida corretamente.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

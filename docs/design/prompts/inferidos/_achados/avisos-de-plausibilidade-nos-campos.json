@@ -1,0 +1,16 @@
+{
+  "id": "avisos-de-plausibilidade-nos-campos",
+  "nome": "Avisos de plausibilidade por campo (aviso que não é erro)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/shared/lib/plausibilidade.ts"
+  ],
+  "oQueFoiInferido": "Uma TERCEIRA categoria visual de mensagem de campo, entre hint e erro: `.tf-field__aviso` (field.css:170 — `display:block`, `margin-top:space-1`, `color:var(--info-text)`) que ocupa o slot do hint, empurrando o hint para uma linha própria (`.tf-field__hint-line`) quando os dois coexistem, some quando há erro de verdade (porque o `Field` substitui o hint pelo erro), e aparece nos campos numéricos via `ControlledField`, no campo de horas, no campo de vida útil da máquina e no de comissão. Inferido: que aviso≠erro se comunica só por cor de texto no lugar do hint, sem ícone, sem título e sem afordância de 'entendi' — e como se lê um formulário com 3 avisos simultâneos.",
+  "autoridade": "NENHUMA",
+  "impacto": "É a defesa do vendedor leigo contra erro de casa decimal (150 no campo de horas = custo ×15). Sendo hoje só uma cor de texto no lugar do hint, é o tipo de mensagem que passa despercebida exatamente para quem ela existe.",
+  "prioridade": "ALTA",
+  "refutacao": "A matriz §G só tem 'error' e os `-fixes` itens 9/10/11 (+ `-fixes-r2` item 8) pedem VALIDAÇÃO inline — sempre recusa, nunca aviso. Grep por 'aviso' e 'plausib' nas 4 autoridades: zero em todas as textuais. O canvas 018 tem a palavra duas vezes (linha 232 'Confira as peças com aviso antes de salvar' e 617), mas ali 'aviso' se refere a peças INVÁLIDAS de um kit, renderizadas como `tf-alert--danger` — é erro com outro nome, não a categoria não-bloqueante. `.design-import` não expõe estado de aviso no `Field` (o readme lista label+hint+erro). Sobrevive, NENHUMA.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

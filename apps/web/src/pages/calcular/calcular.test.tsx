@@ -3,9 +3,24 @@ import "@testing-library/jest-dom/vitest";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
+
+// 016/US11 (T048, FR-915) — marketplace pricing is Premium now; this file's intent has always been
+// the CHANNEL MECHANICS (gross-up, the toggle, the fee grid), not proving free-tier access — that
+// proof lives in `apps/web/tests/e2e/marketplace-premium.spec.ts`. Mocked `active` so those mechanics
+// stay reachable; no test below asserts anything about the teaser/gate itself.
+vi.mock("@/entities/user/use-entitlement", () => ({
+  useEntitlement: () => ({
+    data: { status: "active" },
+    isError: false,
+    isLoading: false,
+    stale: false,
+    isFetching: false,
+    refetch: () => {},
+  }),
+}));
 
 import { CalcularPage } from "./calcular-page";
 
@@ -32,31 +47,37 @@ function expectDomOrder(nodes: readonly HTMLElement[]) {
   }
 }
 
-// E1 MVP (US1 + US2). The default seed (100/1kg/100g, 5h, 0,12kW, tariff 1, machine 4000/2000h,
-// optionals 0) renders a coherent price with no user input: custo_total R$ 20,60, varejo
-// R$ 30,90, atacado R$ 26,78. The numeric formula is pinned in pricing-core + the model test;
-// here we guard the screen wiring (both prices shown together, the transparent breakdown, and
-// the per-field validation path).
+// E1 MVP (US1 + US2). The default seed (100/1kg/100g, 5h, 0,12kW, tariff 1, machine 4000/3600h —
+// 016/PR-C homologação B1: 3600 = 1200h/ano "quase todo dia" × 3 anos, the ritmo-mode default —
+// optionals 0) renders a coherent price with no user input: custo_total R$ 16,16, varejo
+// R$ 24,24, atacado R$ 21,01 (confirmed by running computeCalculator with this seed, not
+// guessed). The numeric formula is pinned in pricing-core + the model test; here we guard the
+// screen wiring (both prices shown together, the transparent breakdown, and the per-field
+// validation path).
 describe("CalcularPage — US1 correct retail + wholesale price", () => {
   it("shows BOTH prices together (SC-010) and the breakdown by default", () => {
     renderPage();
 
-    // Retail + wholesale are always shown together (label appears in the hero + derivation row).
-    expect(screen.getAllByText(t.results.varejo).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(t.results.atacado).length).toBeGreaterThan(0);
+    // 019/PR-F (T142, adoção, prancheta 10a) — a conta não tem mais as linhas "Preço
+    // varejo"/"Preço atacado" (elas saem para o cabeçalho + o cartão/linha-resumo finais). SC-010
+    // continua satisfeita: os DOIS preços seguem visíveis juntos — um no cartão grande (varejo,
+    // default), o outro na linha-resumo logo abaixo.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(t.results.varejo);
+    expect(screen.getByTestId("price-summary-line")).toHaveTextContent(t.captions.atacado);
 
     // Breakdown lines (single-node currency strings) for the default seed.
     expect(screen.getByText("R$ 0,60")).toBeInTheDocument(); // energy
-    expect(screen.getByText("R$ 20,60")).toBeInTheDocument(); // custo_total (unique)
-    expect(screen.getByText("R$ 30,90")).toBeInTheDocument(); // varejo derivation
-    expect(screen.getByText("R$ 26,78")).toBeInTheDocument(); // atacado derivation
+    expect(screen.getByText("R$ 16,16")).toBeInTheDocument(); // custo_total (unique)
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/); // varejo hero
+    expect(screen.getByTestId("price-summary-line")).toHaveTextContent(/R\$\s*21,01/); // atacado summary
   });
 
-  it("orders the sections top→bottom: inputs → optional → markup → breakdown → prices (SC-010, item 1)", () => {
+  // 016/US9 (FR-911) — "Ajustes opcionais" fused into "Custos da peça" (retired as its own
+  // section); the order pin drops it accordingly.
+  it("orders the sections top→bottom: inputs → markup → breakdown → prices (SC-010, item 1)", () => {
     renderPage();
 
     const inputs = screen.getByText(t.sections.inputs);
-    const optional = screen.getByText(t.sections.optional);
     const markup = screen.getByText(t.sections.markup);
     const breakdown = screen.getByText(t.sections.breakdown);
     // "Preço varejo" appears in the breakdown derivation row AND the closing hero — the
@@ -64,14 +85,13 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
     const varejoNodes = screen.getAllByText(t.results.varejo);
     const priceHero = varejoNodes[varejoNodes.length - 1];
 
-    expectDomOrder([inputs, optional, markup, breakdown, priceHero]);
+    expectDomOrder([inputs, markup, breakdown, priceHero]);
   });
 
   it("shows an ⓘ info tip on each section title (item 8)", () => {
     renderPage();
 
     expect(screen.getByRole("button", { name: t.sectionInfo.inputs.label })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: t.sectionInfo.optional.label })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.sectionInfo.markup.label })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: t.sectionInfo.breakdown.label })).toBeInTheDocument();
   });
@@ -112,7 +132,7 @@ describe("CalcularPage — US2 transparency + validation", () => {
     // Per-field pt-BR message, never a NaN/#DIV0.
     expect(await screen.findByText(t.rollWeightError)).toBeInTheDocument();
     // The price is withheld until the input is valid again.
-    expect(screen.queryByText("R$ 20,60")).toBeNull();
+    expect(screen.queryByText("R$ 16,16")).toBeNull();
     expect(screen.getByText(t.invalidNote)).toBeInTheDocument();
   });
 });
@@ -140,12 +160,15 @@ describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () 
     ).toBeInTheDocument();
   });
 
-  it("starts with one Mercado Livre channel slot and its fee inputs (US1)", () => {
+  it("starts with one Amazon channel slot and its fee inputs (US1)", () => {
     renderPage();
 
-    // The default slot: a Marketplace selector defaulting to Mercado Livre + a Comissão fee input.
+    // 015/A11 ([F11a-006]) — o padrao era MERCADO_LIVRE, e o catalogo servido devolve `entries: []`
+    // para ele ate a fatia ML existir: a primeira tela do recurso nao mostrava preco NENHUM. Passou
+    // a ser AMAZON, que tem tabela — junto com o [F11a-007], que faz o campo "Comissao" mostrar a
+    // aliquota aplicada em vez de um "0,00" que implica zero. Quando o ML tiver tarifas, isto volta.
     expect(screen.getByRole("combobox", { name: new RegExp(t.channels.marketplace) })).toHaveValue(
-      "MERCADO_LIVRE",
+      "AMAZON",
     );
     expect(
       screen.getByRole("textbox", {
@@ -168,8 +191,9 @@ describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () 
       },
     );
 
-    // Seed varejo 30,90 grossed up at 20% → 38,63 to advertise; anúncio + líquido rows are shown.
-    expect(screen.getByText("R$ 38,63")).toBeInTheDocument();
+    // 016/PR-C homologação B1 — seed varejo 24,24 grossed up at 20% → 30,30 to advertise;
+    // anúncio + líquido rows are shown.
+    expect(screen.getByText("R$ 30,30")).toBeInTheDocument();
     expect(screen.getAllByText(t.results.precoAnuncio).length).toBeGreaterThan(0);
     expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
   });
@@ -196,8 +220,9 @@ describe("CalcularPage — US4 'Incluir marketplaces no preço' visibility toggl
     // The channel machinery is gone: no "Adicionar canal", no "Preços por canal".
     expect(screen.queryByRole("button", { name: t.channels.addChannel })).not.toBeInTheDocument();
     expect(screen.queryByText(t.channels.pricesTitle)).not.toBeInTheDocument();
-    // …but the direct varejo headline the seller reads first is untouched (seed varejo R$ 30,90).
-    expect(screen.getAllByText("R$ 30,90").length).toBeGreaterThan(0);
+    // …but the direct varejo headline the seller reads first is untouched (016/PR-C B1 seed
+    // varejo R$ 24,24). 019/PR-F (T142, adoção) — o valor quebra em spans dentro do `price-hero`.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/);
   });
 
   it("toggling OFF then ON restores the marketplace section (the switch stays reachable)", () => {

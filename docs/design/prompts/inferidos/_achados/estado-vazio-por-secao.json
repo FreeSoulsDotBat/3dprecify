@@ -1,0 +1,18 @@
+{
+  "id": "estado-vazio-por-secao",
+  "nome": "Estado vazio por seção do Catálogo (nenhum filamento/impressora/produto salvo)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/catalog/filaments-panel.tsx",
+    "apps/web/src/features/catalog/printers-panel.tsx",
+    "apps/web/src/features/catalog/products-panel.tsx"
+  ],
+  "oQueFoiInferido": "`EmptyState icon=\"package\"` (linhas 240-248): o MESMO ícone genérico para as quatro seções, título, uma linha de corpo e UM botão \"Adicionar …\". Faltam duas coisas que o desenho tinha: o grafismo de marca POR SEÇÃO (espada para filamento/produto, arco para impressora, 84px) e o CTA secundário de semeadura \"Começar com filamentos comuns\". E uma terceira que nenhuma autoridade cobre: o vazio dentro do mestre-detalhe — hoje o ramo do vazio é avaliado ANTES do `isWide` (linha 240 precede a 249), então o EmptyState ocupa a largura toda e a coluna da ficha simplesmente não existe.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "O primeiro contato do vendedor Premium com o Catálogo é uma caixa cinza com um ícone genérico, no lugar do onboarding com arte e semente que o desenho previa e que a auditoria chegou a verificar renderizado.",
+  "prioridade": "MEDIA",
+  "refutacao": "Este é o achado mais perto de cair, e o que sobra é preciso. (1)/(3) A ESTRUTURA está desenhada e o código a segue quase à risca: `CatalogScreen.jsx` linhas 50-55 renderiza `EmptyState` com título `Nenhum {label} salvo`, descrição `Adicione {label}s para reutilizar nos cálculos.` e action `Button primary` \"Adicionar {label}\" — exatamente o que existe. Portanto não é verdade que o vazio \"foi inferido\": ele foi copiado. O que NÃO foi: o `art={<Grafismo shape={...} size={84}/>}` — o JSX alterna espada/arco POR SEGMENTO, o código usa `icon=\"package\"` de 28px para tudo — e o CTA secundário de semeadura, pedido em §E5 (linha 261), repetido em `-fixes.md` item 21 e `-fixes-r2.md` item 10, e verificado RENDERIZADO na V3 (\"#10 FIXED: seed CTA 'Começar com filamentos comuns', catalog now starts empty, seeds PLA/PETG/ABS\") — logo o vazio desenhado tem DUAS ações e o construído tem uma. (4) O canvas não desenha vazio de catálogo (só o `tf-premium-teaser` do grátis, linhas 87-97), e portanto nada diz sobre o vazio dentro da grade de duas colunas. Sobrevive, com o escopo estreitado a: arte por seção, segundo CTA, e o vazio no mestre-detalhe.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

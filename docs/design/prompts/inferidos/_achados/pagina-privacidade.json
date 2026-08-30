@@ -1,0 +1,16 @@
+{
+  "id": "pagina-privacidade",
+  "nome": "Página \"Como tratamos seus dados\" (rota avulsa)",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/pages/privacidade/privacidade-page.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Uma `<section className=\"mx-auto flex w-full max-w-md flex-col gap-4 py-4\">` com `<h1 className=\"tf-title\">` e um único `Card padding=\"lg\"` contendo CINCO parágrafos corridos (google · monitoring · noSale · calculatorFree · catalogData), sem hierarquia, sem separadores, sem data de vigência e sem botão de voltar — a volta depende do menu do shell. Montada dentro do shell (`privacidadeRoute` é filha da `rootRoute`) e alcançável deslogada. Inferidos: o formato (um cartão-bloco de texto), a ordem e o agrupamento das cinco frases, a ausência de navegação de retorno, e a versão desktop (o mesmo bloco de 448px num `<main>` de até 1720px — a página usa `max-w-md`, nem sequer a `.tf-page-wide` que o 016 criou para as outras).",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A página que responde \"o que vocês fazem com meus dados\" — a única peça de confiança do fluxo de login — é um bloco de texto sem forma; e o mesmo conteúdo agora existe em dois lugares com tamanhos diferentes (a página tem 5 frases, o cartão da Conta tem 2, o desenho tem 1) sem que ninguém tenha desenhado a relação entre eles.",
+  "prioridade": "MEDIA",
+  "refutacao": "O CARTÃO da Conta cai; a PÁGINA avulsa sobrevive. Procurei nas 4 autoridades: o inventário §E (E1–E9, fechado) não tem tela de privacidade — o aviso legal aparece só como frase de rodapé no `.design-import/ui_kits/precifica3d/LoginScreen.jsx` (\"Ao continuar você concorda com os Termos e a Política de Privacidade. Os cálculos funcionam offline.\"), sem destino nenhum. A auditoria não a cita. O canvas 018 DESENHA \"Como tratamos seus dados\" — verifiquei a linha 439 do `.dc.html`: é um `tf-card` na terceira coluna da aba Conta, com `<h2>` e UMA frase (\"Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.\"). Isso cobre o cartão, e o código o segue (o comentário em `conta-page.tsx` até declara \"Sem link para `/privacidade` — o desenho não tem um\"), mas não cobre a rota `/privacidade`: outro lugar, outra moldura, outro tamanho de conteúdo, sem volta. Tentei ainda derrubar por conteúdo — as 5 frases da página não estão em autoridade nenhuma; só 2 delas reaparecem no cartão do código e 1 no desenho.",
+  "sobreviveu": true,
+  "area": "shell"
+}

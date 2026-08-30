@@ -1,0 +1,13 @@
+{
+  "id": "precos-por-canal",
+  "nome": "Bloco “Preços por canal” dentro de “Como chegamos no preço”",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+  "oQueFoiInferido": "Um bloco por canal empilhado na CAUDA do mesmo Card do breakdown, separado por um `borderTop` entre canais: título 'Marketplace · Modalidade' (modalidade em peso regular e cor muted) e, para varejo e depois atacado, as linhas Preço do anúncio / (Frete −R$ X, só se digitado) / Recebido líquido. Inferido: a fusão desse bloco DENTRO do card do breakdown (era seção titulada própria até 016/US5), a repetição varejo+atacado dentro de cada canal, o divisor, e como comparar 3 canais empilhados verticalmente — o protótipo prometia varejo × atacado 'lado a lado' e o que existe é uma pilha de pilhas.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o take-away do multicanal — o número que faz o vendedor escolher onde anunciar. Ele é lido numa pilha de linhas quase idênticas, sem nenhuma forma desenhada de comparação, e dentro do mesmo card que já carrega 10+ linhas de custo.",
+  "prioridade": "ALTA",
+  "refutacao": "§E4 (250-251) desenha 'taxa de marketplace (negativa) → líquido' como duas linhas do breakdown ÚNICO, para um canal só; `CalculatorScreen.jsx` (114-115) faz exatamente isso. CORRIJO o mapeador num ponto importante: o grep por 'Preços por canal' NÃO dá zero — o `Abas-Desktop.dc.html` do dono tem o bloco DUAS vezes: na aba Orçamentos (linha ~338: um card PRÓPRIO intitulado 'Preços por canal', ao lado do card 'Detalhamento', numa grade 1fr-1fr, com nome do canal + anúncio + líquido) e na aba Kits (linha ~221: 'Preços por canal (kit)', card próprio na coluna direita fixa). Isso NÃO derruba o achado — o canvas cobre outras abas e declara Calcular fora dele —, mas inverte o peso da evidência: quando o dono desenhou este bloco, ele o fez como um card SEPARADO ao lado do detalhamento, e sem o par varejo/atacado; a Calcular hoje o funde dentro do card do breakdown e repete varejo+atacado por canal. Existe forma desenhada para este conteúdo, em outra aba, e o código da Calcular não a segue. Sobrevive, PROTOTIPO_PARCIAL.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

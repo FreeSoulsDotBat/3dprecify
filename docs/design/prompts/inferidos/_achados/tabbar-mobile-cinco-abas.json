@@ -1,0 +1,17 @@
+{
+  "id": "tabbar-mobile-cinco-abas",
+  "nome": "Barra de abas do mobile com 5 seções",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/widgets/app-nav/app-nav.tsx",
+    "apps/web/src/widgets/app-nav/app-nav.css",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "A barra inferior fixa distribui CINCO células em `flex: 1 1 0` iguais (Calcular · Catálogo · Kits · Orçamentos · Conta), cada uma com ícone 22px + rótulo em `--fs-caption` e `.tf-nav__label { white-space: nowrap }`, altura `--tabbar-h`, e o ativo marcado por texto roxo mais uma pílula `::before` de 28×3px colada no topo da célula. Inferidos: (a) como cinco rótulos cabem em 360px (~72px por célula, com \"Orçamentos\" e \"Catálogo\" sendo os mais longos — o `nowrap` significa que ninguém decidiu truncar, abreviar ou virar só-ícone); (b) a hierarquia entre as 5 seções depois que a IA original de 4 mudou; (c) a própria pílula superior, que não sai de autoridade nenhuma (o protótipo marca o ativo por COR, não por pílula).",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A navegação principal da plataforma primária tem 25% mais itens do que o único desenho que existe dela, com rótulos mais longos e nenhuma decisão sobre o que fazer quando não couber. É onde o vendedor toca o dia inteiro.",
+  "prioridade": "ALTA",
+  "refutacao": "O protótipo cobre uma versão ANTERIOR e mais simples, então rebaixo em vez de derrubar. COBERTO: §D.2 fixa \"Tabs / BottomBar (mobile) + Sidebar (desktop) — mesma IA: Calcular · Catálogo · Histórico · Conta. BottomBar altura 64px, ícone 24 + label caption, item ≥44px, estado ativo em roxo (`--accent`)\", §E3 repete a IA e o readme do `.design-import` a carimba (\"IA labels fixed: Calcular · Catálogo · Histórico · Conta\"). NÃO COBERTO: a QUINTA célula (Kits, 008/K1) e a troca do rótulo \"Histórico\"→\"Orçamentos\" (016/US2, messages.pt-br.ts:520 documenta a mudança), ambas decisões de produto posteriores — o próprio `app-nav.tsx` declara \"owner-approved amendment of the original fixed four\"; a pílula de 28×3px do ativo (o desenho pede cor, não pílula); e qualquer regra de caber/truncar em 360px. Tentei derrubar pelo canvas 018: ele desenha os 5 itens, mas dentro de `<nav class=\"tf-nav tf-nav--sidebar\">` no artboard `data-layout=\"desktop\"` de 1920px, e o próprio arquivo declara cobrir só as abas desktop — viewport errado, não derruba. Busca por qualquer barra inferior no `.dc.html`: nenhuma ocorrência de `tabbar`.",
+  "sobreviveu": true,
+  "area": "shell"
+}

@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">As escritas congeladas</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Sete <em>de passagem</em> de três áreas, e todas dizem a mesma coisa por caminhos diferentes: <strong style="color:var(--sheet-ink)">a leitura nunca é o que se perde</strong>. Offline, Premium pausado, registro travado — em nenhum desses estados o vendedor deixa de ver o que é dele. O que congela é escrever.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Três áreas escreveram essa promessa em <strong style="color:var(--sheet-ink)">três textos independentes</strong>, cada um listando os próprios verbos: "abertas e recalculadas" em Simulações, "reabertos e recalculados" em Kits, "abertos" em Orçamentos. Não é um componente compartilhado — é a mesma decisão tomada três vezes, e aqui elas ficam lado a lado pela primeira vez.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#30a">30a</a> os quatro estados da lista de simulações · <a href="#30b">30b</a> renomear, duas folhas · <a href="#30c">30c</a> salvar simulação na ficha · <a href="#30d">30d</a> o registro travado · <a href="#30e">30e</a> os avisos do topo de Orçamentos · <a href="#30f">30f</a> Kits com Premium pausado · <a href="#30g">30g</a> preços por marketplace do kit.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Sem primitivo novo.</strong> Estrutura de <code>features/scenarios/*</code>, <code>features/history/entry-actions.tsx</code>, <code>features/bom/channel-rollup.tsx</code>; copy literal de <code>messages.pt-br.ts §§ scenarios, historico, bom</code>. O vocabulário de <strong style="color:var(--sheet-ink)">marketplace</strong> é a única reescrita: proposta do dono, ainda não refletida no módulo, que fala "canal".</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="30a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os quatro estados da lista · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Carregando, erro frio, cache do aparelho e paginação. Os dois do meio parecem o mesmo problema e recebem tratamentos opostos.</p>
+<div data-theme="dark" data-screen-label="30a Estados da lista" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Carregando</span>
+<div class="tf-card" style="display:flex;justify-content:center;padding-block:20px"><span class="tf-spinner tf-spinner--lg"><span class="tf-spinner__ring"></span></span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Erro frio — nada servido, nem do aparelho</span>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Não foi possível carregar suas simulações.</p></div></div>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--half">Tentar novamente</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Servindo o cache do aparelho</span>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__title">Modo leitura offline</p><p class="tf-alert__text">Suas simulações continuam aqui e podem ser abertas. Salvar, renomear, duplicar ou excluir precisam de conexão.</p><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" style="margin-top:8px">Tentar novamente</button></div></div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:2px"><span class="tf-scenario-name">Natal — margem cheia</span><span class="tf-scenario-note">Base de custo: Vaso hexagonal</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-catalog-md__kicker">Paginação</span>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:2px"><span class="tf-scenario-name">Atacado para revenda</span><span class="tf-scenario-note">Base de custo: Kit sazonal</span></div>
+<div style="display:flex;justify-content:center"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Carregar mais</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O erro frio <strong style="color:var(--sheet-ink)">substitui</strong> a lista; o cache do aparelho <strong style="color:var(--sheet-ink)">acompanha</strong> a lista. A regra é só uma: nunca uma parede de erro sobre dados que a pessoa já tem — e nunca uma lista vazia calada quando não há nada para mostrar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os dois trazem "Tentar novamente", e é a mesma forma das três listas irmãs — Catálogo, Orçamentos e Simulações erram do mesmo jeito e oferecem a mesma saída. O que difere é a <em>moldura</em>: no erro frio o botão fica solto abaixo do alerta, porque não há lista para não atrapalhar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Carregar mais" só aparece enquanto há página seguinte. Um botão que sempre existe ensina a pessoa a desconfiar de que a lista acabou.</p>
+</div>
+
+<div id="30b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Renomear, duas folhas · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A mesma ação, o mesmo título, dois lugares diferentes — e é a diferença de <em>lugar</em> que justifica as duas existirem.</p>
+<div data-theme="dark" data-screen-label="30b Duas folhas de renomear" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Da lista — renomeando um item entre vários</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Renomear simulação</h2>
+<div class="tf-field">
+<label class="tf-field__label" for="r30a">Nome</label>
+<div class="tf-inputwrap"><input id="r30a" class="tf-input" type="text" value="Natal — margem cheia"></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--secondary">Voltar</button><button type="button" class="tf-btn tf-btn--primary">Renomear</button></div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Da barra de contexto — renomeando a que está aberta</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Renomear simulação</h2>
+<div class="tf-field">
+<label class="tf-field__label" for="r30b">Nome</label>
+<div class="tf-inputwrap"><input id="r30b" class="tf-input" type="text" value="Natal — margem cheia"></div>
+</div>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--secondary">Voltar</button><button type="button" class="tf-btn tf-btn--primary">Renomear</button></div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Idênticas na tela, diferentes no efeito</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A da lista fecha e a linha muda de nome. A da barra fecha e o <em>nome do que está aberto</em> muda — a barra acima do resultado passa a dizer outra coisa, sem recarregar a simulação nem perder alterações pendentes.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Duas folhas para uma ação é o tipo de duplicação que costuma ser um defeito, e aqui não é: elas vivem em telas que não coexistem, e cada uma atualiza um estado local diferente. Unificar exigiria um caminho de retorno que dissesse a quem avisar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O que <em>vale</em> vigiar é o texto: as duas leem o mesmo título e o mesmo rótulo do módulo de mensagens. Se um dia divergirem, vão divergir em silêncio — nada na tela mostra as duas juntas.</p>
+</div>
+
+<div id="30c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Salvar simulação na ficha · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O mesmo botão da calculadora, dentro do produto salvo. A diferença está no que ele grava como base de custo.</p>
+<div data-theme="dark" data-screen-label="30c Salvar na ficha" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Produto salvo</span>
+<span class="tf-title" style="font-size:var(--fs-base);color:var(--text-strong)">Vaso hexagonal grande</span>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Preço varejo</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;148,20</span></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Salvar em Orçamentos</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Salvar simulação</button>
+</div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<h2 class="tf-dialog__title" style="padding-right:0">Salvar simulação</h2>
+<p class="tf-dialog__desc">Guardamos a estratégia desta tela — marketplaces, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.</p>
+<div class="tf-field">
+<label class="tf-field__label" for="n30c">Nome</label>
+<div class="tf-inputwrap"><input id="n30c" class="tf-input" type="text" placeholder="Ex.: Natal — margem cheia"></div>
+</div>
+<span class="tf-field__hint">Base de custo: Vaso hexagonal grande</span>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--secondary">Voltar</button><button type="button" class="tf-btn tf-btn--primary">Salvar simulação</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Salva da ficha, a base de custo é <strong style="color:var(--sheet-ink)">o produto</strong>, não os números avulsos. Reabrir amanhã recalcula com o custo do produto naquele dia — se o filamento subiu, a simulação acompanha. É a diferença entre guardar uma estratégia e guardar uma foto.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O eco da base aparece na folha antes de salvar, porque é a única parte da gravação que a pessoa não consegue ver na tela — nome e nota ela acabou de digitar; a base é inferida de onde ela estava.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os dois botões ficam lado a lado e não competem: um congela o que este produto vale hoje, o outro guarda a estratégia que continua viva. É a mesma dupla da calculadora, no mesmo lugar relativo.</p>
+</div>
+
+<div id="30d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O registro travado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um orçamento que não conseguiu chegar à conta precisa de uma saída <em>no próprio cartão</em>, ou envenena todo logout futuro.</p>
+<div data-theme="dark" data-screen-label="30d Registro travado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Papelaria Ponto — pedido 214</span>
+<span class="tf-badge tf-badge--danger tf-badge--sm" style="align-self:flex-start">Não foi possível registrar</span>
+<span class="tf-historico__meta">Cotado em 23/08/2026 · Kit · 3 peças</span>
+<span class="tf-historico__piece"><span style="font-size:var(--fs-body-sm)">Valor cotado</span><strong class="tf-tnum">R$&nbsp;487,90</strong></span>
+<div class="tf-historico__actions"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Tentar novamente</button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Descartar</button></div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Descartar pergunta antes</span>
+<h2 class="tf-dialog__title" style="padding-right:0">Descartar este registro?</h2>
+<p class="tf-dialog__desc">Ele não foi enviado para a sua conta e não poderá ser recuperado.</p>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--secondary">Voltar</button><button type="button" class="tf-btn tf-btn--danger">Descartar</button></div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Três selos, uma linha de ações</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">As ações aparecem em <em>não foi possível registrar</em>, <em>envio pausado</em> e <em>sessão expirada</em> — os três estados que pedem decisão humana. Pendente não recebe: aquele drena sozinho, e a faixa do topo já oferece o envio manual.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Tentar novamente" numa sessão expirada é um <strong style="color:var(--sheet-ink)">não-ato seguro</strong>: falha e reclassifica para o mesmo estado. Depois de entrar de novo, o mesmo botão funciona. Nunca um botão morto — um que ainda não pode dar certo.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Sem essas duas ações o cartão é um beco: o registro fica na fila para sempre, e cada tentativa de sair passa pelo diálogo que conta os pendentes. Um defeito que só aparece semanas depois, no logout.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A linha embrulha a 390px, e é por isso que ela existe como bloco próprio em vez de dois botões soltos no rodapé do cartão.</p>
+</div>
+
+<div id="30e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os avisos do topo de Orçamentos · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Três faixas que podem aparecer acima da lista, e a regra que decide qual delas fala.</p>
+<div data-theme="dark" data-screen-label="30e Avisos do topo" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-crown"></span><div class="tf-alert__body"><p class="tf-alert__text">Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.</p></div></div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__title">Modo leitura offline</p><p class="tf-alert__text">Seus registros continuam aqui. Novos registros ficam pendentes neste dispositivo até você voltar a ficar online.</p></div></div>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><div class="tf-historico__banner"><span>Não foi possível carregar seus orçamentos.</span><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Tentar novamente</button></div></div></div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Offline e erro de carga são exclusivos</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A lista está servindo o cache nos dois casos — o que muda é <em>por quê</em>. Offline é calmo e esperado; falhar <strong style="color:var(--text-strong)">estando online</strong> é algo que se pode repetir. Dizer "modo leitura offline" a quem está claramente online seria uma mentira pequena e desnecessária.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Com a sessão expirada, a genérica cala</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O banner do shell e a faixa da fila já nomeiam a causa. Um terceiro alerta genérico seria a terceira voz sobre o mesmo fato — e o "Tentar novamente" dele só pode produzir outra recusa.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O aviso de Premium pausado é o único que <strong style="color:var(--sheet-ink)">lista os verbos</strong>: salvar, renomear, excluir, exportar. Sem a lista, "reative para continuar" deixaria a pessoa procurando o que parou — e o que não parou é a leitura, que é a maior parte do uso.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O erro de carga põe o botão <em>na mesma linha</em> do texto, não abaixo. É uma faixa fina sobre uma lista que funciona; empilhar em duas linhas daria a ela o peso de uma parede.</p>
+</div>
+
+<div id="30f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Kits com Premium pausado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Duas superfícies, dois textos: a lista de kits e o kit já aberto. Um congela a entrada de criar; o outro congela só o salvar.</p>
+<div data-theme="dark" data-screen-label="30f Kits pausado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-crown"></span><div class="tf-alert__body"><p class="tf-alert__title">Premium pausado</p><p class="tf-alert__text">Seus kits salvos continuam aqui e podem ser reabertos e recalculados. Para criar ou editar, reative o Premium.</p></div></div>
+<ul class="tf-plist">
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Kit sazonal</span><span class="tf-plist__meta">3 peça(s)</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;487,90</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Kit presente pequeno</span><span class="tf-plist__meta">2 peça(s)</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;196,40</span></span></span></li>
+</ul>
+<button type="button" class="tf-btn tf-btn--primary" aria-disabled="true" style="align-self:flex-start;opacity:.55;cursor:not-allowed">Montar kit</button>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<span class="tf-catalog-md__kicker">O kit reaberto</span>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-crown"></span><div class="tf-alert__body"><p class="tf-alert__text">Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.</p></div></div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">"Montar kit" é bloqueado na entrada</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Deixar entrar e recusar no fim seria fazer a pessoa compor cinco peças para descobrir que não pode salvar. O bloqueio vem antes do trabalho, não depois dele.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os dois textos <strong style="color:var(--sheet-ink)">não</strong> se repetem: o da lista fala do que existe ("seus kits salvos continuam aqui"), o do kit aberto fala do que está em curso ("você pode reabrir e recalcular <em>este</em> kit"). Uma frase única cobriria os dois lugares e não diria nem uma coisa nem a outra.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Recalcular continua funcionando com o plano pausado, e isso é a escolha mais generosa do produto: o preço de um kit salvo acompanha o custo de hoje mesmo sem pagar. Só gravar precisa de plano.</p>
+</div>
+
+<div id="30g" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">30g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Preços por marketplace do kit · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Quatro linhas por marketplace, e duas contagens que impedem o total de mentir sobre quantas peças ele soma.</p>
+<div data-theme="dark" data-screen-label="30g Marketplaces do kit" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-title" style="font-size:var(--fs-base);color:var(--text-strong)">Preços por marketplace (kit)</span>
+<div class="tf-historico__channel">
+<span class="tf-historico__channel-name">Mercado Livre</span>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Varejo · Preço para anunciar</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;512,40</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Varejo · Recebido líquido</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;388,10</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Atacado · Preço para anunciar</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;441,20</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Atacado · Recebido líquido</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;334,90</span></div>
+<span class="tf-historico__meta">3 peça(s) somaram neste marketplace</span>
+</div>
+<div class="tf-historico__channel">
+<span class="tf-historico__channel-name">Shopee</span>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Varejo · Preço para anunciar</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;486,90</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Varejo · Recebido líquido</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;351,30</span></div>
+<span class="tf-historico__meta">2 peça(s) somaram neste marketplace</span>
+<span class="tf-historico__meta">1 peça(s) sem preço neste marketplace — não entrou na soma.</span>
+</div>
+<div class="tf-historico__channel">
+<span class="tf-historico__channel-name">Amazon</span>
+<span class="tf-historico__meta">Nenhuma peça com preço neste marketplace.</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Não entrou na soma" é a frase que salva o número. Sem ela, um total de dois terços do kit se lê como o kit inteiro — e a pessoa anuncia por menos do que precisa.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A soma é feita pelo motor de preços, não por esta tela. Quatro linhas visíveis por marketplace, e nenhuma delas é uma conta feita na apresentação: repetir a aritmética aqui seria abrir uma segunda fonte de verdade para o mesmo valor.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Peças com taxa inválida <em>também</em> caem na contagem de fora, embora nunca cheguem ao motor. É a única costura entre uma recusa de formulário e um número do motor — e ela existe para que a contagem de "sem preço" nunca seja menor que a verdade.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

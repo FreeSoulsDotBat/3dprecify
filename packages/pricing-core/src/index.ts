@@ -3,13 +3,87 @@
 // of specs/004-e1-pricing-model). ADR-0008 (money) · ADR-0009 (machine) · ADR-0011 (3.0.0 result
 // contract). The backend never recomputes any price (FR-118); this module is the single source of
 // the formula.
-import { grossUp, type ChannelFees, type PriceBand, type VoucherBand } from "./channels";
-import { Decimal, toMoney, sumMoney } from "./rounding";
+import {
+  grossUp,
+  validateBandRules,
+  type BandMode,
+  type ChannelFees,
+  type ChannelSurcharge,
+  type PriceBand,
+  type VoucherBand,
+} from "./channels.ts";
+import { Decimal, toMoney, sumMoney } from "./rounding.ts";
 
 // 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
 // breaking to the 2.0.0 result contract ⇒ MAJOR bump. The constant tracks the package.json major so
 // a saved calc records which formula produced it.
-export const PRICING_MODEL_VERSION = "3.0.0";
+// 3.1.0 (ADR-0016): E3 adds `computeBom` (assembly = independent per-piece sum + per-marketplace
+// rollup) and exports `toMoney`/`sumMoney`/`Decimal` — additive public surface ⇒ MINOR bump.
+// 4.0.0 (ADR-0026, 016/US10): `wasteGrams` SAI da entrada — o material passa de
+// `custo/kg × (gramas + desperdício)` para `custo/kg × gramas`. Remoção de campo de entrada é
+// quebra ⇒ MAJOR, e o rótulo é congelado dentro de um snapshot imutável (ADR-0019): ele precisa
+// continuar respondendo QUAL fórmula produziu aquele número.
+// 4.1.0 (ADR-0027, 016/PR-F): `PriceBand.fixedFeeRule` (a taxa fixa como FUNÇÃO do preço — Shopee
+// abaixo de R$ 8) e `ChannelInput.surcharges` (custo opcional declarado pelo vendedor). As duas
+// adições são OPCIONAIS e a ausência preserva o comportamento bit a bit ⇒ MINOR.
+export const PRICING_MODEL_VERSION = "4.1.0";
+
+/**
+ * Campos que já foram entrada do motor e **não são mais aceitos** (ADR-0026 §3.1).
+ *
+ * A recusa é NOMINAL e por CHAVE PRESENTE, não por valor: um `{...documentoAntigo}` carrega a chave,
+ * e é assim que o campo voltaria na prática. Ignorar em silêncio era a alternativa rejeitada — é a
+ * definição do defeito que a US10 existe para matar: um preço diferente sem nenhum sinal.
+ */
+export const RETIRED_INPUT_FIELDS = ["wasteGrams"] as const;
+
+/** Um campo aposentado encontrado num documento gravado, com o valor que a tela vai declarar. */
+export interface DiscardedField {
+  field: (typeof RETIRED_INPUT_FIELDS)[number];
+  /** Sempre texto: a folha é número numa entrada viva e string num documento gravado. Vazio quando
+   *  a chave existia sem valor — a CHAVE é o fato a declarar, o valor é só o que dá para mostrar. */
+  value: string;
+}
+
+/**
+ * A porta documentada da recusa (ADR-0026 §3.2): tira os campos aposentados de um documento gravado
+ * e devolve, junto, o que foi descartado — para que a tela possa DIZER (FR-913).
+ *
+ * Pura, determinística, offline e **genérica na folha**: o mesmo mapeamento serve ao documento de
+ * cenário (folha string) e a uma entrada viva (folha número).
+ *
+ * Ela mora aqui, e não em `entities/`/`shared/`, porque "o `wasteGrams` existiu até a 3.x" é a mesma
+ * informação que `PRICING_MODEL_VERSION` data. Dois lugares que precisam concordar viram um lugar
+ * que fica para trás.
+ */
+export function stripRetiredFields<T extends Record<string, unknown>>(
+  stored: T,
+): { kept: Omit<T, (typeof RETIRED_INPUT_FIELDS)[number]>; discarded: DiscardedField[] } {
+  // O espalhamento copia só as chaves PRÓPRIAS enumeráveis; o `delete` abaixo garante que nem uma
+  // chave com `undefined` sobrevive. Atribuir `undefined` no lugar do `delete` devolveria um
+  // documento que o próprio motor recusa — a porta cuspindo o que a porta existe para consertar.
+  const kept: Record<string, unknown> = { ...stored };
+  const discarded: DiscardedField[] = [];
+  for (const field of RETIRED_INPUT_FIELDS) {
+    if (!(field in stored)) continue;
+    const value = stored[field];
+    discarded.push({ field, value: value == null ? "" : String(value) });
+    delete kept[field];
+  }
+  return { kept: kept as Omit<T, (typeof RETIRED_INPUT_FIELDS)[number]>, discarded };
+}
+
+/**
+ * `major(modelVersion) < 4` — o sinal para um documento CONGELADO, que não tem a folha para
+ * inspecionar (o desperdício já vem somado dentro de `material`, ADR-0026 §3.3).
+ *
+ * O 4 é literal de propósito: é o major em que a remoção aconteceu, um fato permanente. Derivá-lo de
+ * `PRICING_MODEL_VERSION` faria a resposta mudar sozinha no dia de uma 5.0.0 que nada tem a ver com
+ * o desperdício.
+ */
+export function isPreRemovalModel(modelVersion: string): boolean {
+  return Number.parseInt(modelVersion.split(".")[0], 10) < 4;
+}
 
 /** One named "outros custos" sub-cost; its value folds into custo_total exactly as 004's adminTotal. */
 export interface OtherCostItem {
@@ -34,6 +108,14 @@ export interface ChannelInput {
   freightCost?: number; // R$, ≥ 0, default 0 — deducted from líquido (never added to custo_total)
   freightVoucherBands?: VoucherBand[]; // Shopee co-funded voucher, deducted by the announce band (FR-111a)
   priceBands?: PriceBand[]; // fee by listing-price band (Shopee / ML custo fixo) — resolved by pricing-core
+  bandMode?: BandMode; // ABSENT = "SELECTION" (ADR-0024) — absence is what preserves every stored payload
+  /**
+   * Custos opcionais que o VENDEDOR declara (ADR-0027 §3.2) — o valor vem do catálogo, nunca do
+   * código. Somados por cima do fixo em TODOS os regimes, e é aí que está a razão de existirem:
+   * um `fixedFee` digitado é INERTE sobre uma entrada bandada (regra 013/F1), então os R$ 50 do
+   * volumoso da Shopee somados ali desapareceriam em silêncio. ABSENTE = nenhum = byte-idêntico.
+   */
+  surcharges?: ChannelSurcharge[];
 }
 
 /**
@@ -53,21 +135,34 @@ export interface ChannelResult {
   // resolved by that level's announce band (varejo/atacado can differ). 0 when the slot has no freight.
   freightCostVarejo: number;
   freightCostAtacado: number;
+  /** As sobretaxas declaradas, ECOADAS (ADR-0027 §3.2) — a legenda e a linha do PDF se nomeiam a
+   *  partir daqui. Lista VAZIA quando não há nenhuma: uma forma só para o consumidor. */
+  surcharges: ChannelSurcharge[];
   error: string | null;
 }
 
 export interface PriceInput {
   costPerRoll: number; // R$, ≥ 0
   rollWeightKg: number; // kg, > 0
-  printGrams: number; // g, ≥ 0
-  wasteGrams?: number; // g, ≥ 0, default 0
+  /** g, ≥ 0 — **todo** o filamento que a peça consome: purga, suporte e brim entram aqui (4.0.0 /
+   *  FR-914). O antigo `wasteGrams` foi removido em 4.0.0 e é RECUSADO (ADR-0026). */
+  printGrams: number;
   printTimeHours: number; // h, ≥ 0
   avgPowerKw: number; // kW, ≥ 0 (effective average draw)
   tariffPerKwh: number; // R$/kWh, ≥ 0
   machineValue: number; // R$, ≥ 0
   machineLifetimeHours: number; // h, > 0
   maintenanceReservePerHour?: number; // R$/h, ≥ 0, default 0
-  failurePct?: number; // %, ≥ 0, default 0
+  /**
+   * %, ≥ 0, default 0 — e **sem teto, deliberadamente** (015/A8, `[F03a-002]`, decisão do dono
+   * 2026-08-03). A auditoria pré-provisionamento perguntou se `failurePct = 1000` deveria ser
+   * recusado, já que produz uma falha de 10× o subtotal de produção. Não deve: **300% representa
+   * legitimamente uma peça que falha três vezes antes de sair**, e um teto arbitrário recusaria um
+   * caso real. O número é do vendedor.
+   *
+   * Este comentário existe para impedir que o próximo leitor "conserte" o que foi decidido.
+   */
+  failurePct?: number;
   finishTimeHours?: number; // h, ≥ 0, default 0
   finishRatePerHour?: number; // R$/h, ≥ 0, default 0
   laborHours?: number; // h, ≥ 0, default 0
@@ -122,8 +217,20 @@ function assertPositive(value: number, field: string): void {
 }
 
 export function computeCalculator(input: PriceInput): PriceResult {
+  // A PRIMEIRA coisa que acontece aqui, antes de qualquer validação (ADR-0026 §3.1): um campo
+  // aposentado é recusado pelo NOME, e a mensagem diz a saída. Se esta recusa viesse depois, uma
+  // entrada que também fosse inválida por outro motivo culparia o outro campo — e o chamador
+  // consertaria a coisa errada, deixando o descarte silencioso de pé.
+  for (const field of RETIRED_INPUT_FIELDS) {
+    if (field in input) {
+      throw new ValidationError(
+        `${field} foi removido do modelo de preço em 4.0.0 — use stripRetiredFields() antes de recomputar`,
+        field,
+      );
+    }
+  }
+
   // Normalize optionals to their 0 default (FR-023).
-  const wasteGrams = input.wasteGrams ?? 0;
   const maintenanceReservePerHour = input.maintenanceReservePerHour ?? 0;
   const failurePct = input.failurePct ?? 0;
   const finishTimeHours = input.finishTimeHours ?? 0;
@@ -138,7 +245,6 @@ export function computeCalculator(input: PriceInput): PriceResult {
   assertNonNegative(input.costPerRoll, "costPerRoll");
   assertPositive(input.rollWeightKg, "rollWeightKg");
   assertNonNegative(input.printGrams, "printGrams");
-  assertNonNegative(wasteGrams, "wasteGrams");
   assertNonNegative(input.printTimeHours, "printTimeHours");
   assertNonNegative(input.avgPowerKw, "avgPowerKw");
   assertNonNegative(input.tariffPerKwh, "tariffPerKwh");
@@ -156,9 +262,12 @@ export function computeCalculator(input: PriceInput): PriceResult {
 
   // Full-precision intermediates (Decimal); quantize only at emit (ADR-0008).
   // Production inputs — the three lines the failure factor covers (A16.4).
+  // 4.0.0 (FR-024 / ADR-0026): material = gramas × custo por grama. O somando de desperdício saiu —
+  // purga/suporte/brim entram nas GRAMAS USADAS, e o que se perde por impressão inteira perdida é a
+  // taxa de falha. Eram dois campos que o vendedor lia como a mesma coisa (homologação do dono, D2).
   const material = new Decimal(input.costPerRoll)
     .dividedBy(new Decimal(input.rollWeightKg).times(1000))
-    .times(new Decimal(input.printGrams).plus(wasteGrams)); // FR-024
+    .times(input.printGrams);
   // A16.2 (SC-005): energy = the effective average draw (avgPowerKw) × time × tariff.
   // There is deliberately NO nameplate-power × duty-cycle path — the corrected model takes the
   // real average kW directly, so only this line moves when avgPowerKw changes.
@@ -246,6 +355,7 @@ function computeChannel(
   const minPerItem = ch.minPerItem ?? 0;
   const freightCost = ch.freightCost ?? 0;
   const voucherBands = ch.freightVoucherBands ?? [];
+  const surcharges = ch.surcharges ?? [];
 
   const shell: ChannelResult = {
     marketplace: ch.marketplace ?? null,
@@ -257,6 +367,9 @@ function computeChannel(
     recebidoLiquidoAtacado: null,
     freightCostVarejo: 0,
     freightCostAtacado: 0,
+    // Ecoadas mesmo no slot que FALHA: o vendedor declarou o custo, e sumir com a declaração junto
+    // com o preço esconderia metade do motivo do erro.
+    surcharges,
     error: null,
   };
   const fail = (error: string): ChannelResult => ({ ...shell, error });
@@ -275,6 +388,19 @@ function computeChannel(
   if (voucherBands.some((b) => !Number.isFinite(b.voucherCeiling) || b.voucherCeiling < 0)) {
     return fail("freightVoucherBands.voucherCeiling must be a finite number >= 0");
   }
+  // ADR-0027 §3.2 — uma sobretaxa malformada não vira preço. O rótulo entra na conta porque é ele
+  // que a legenda e a linha do PDF imprimem: uma linha de dinheiro sem nome é uma taxa sem
+  // procedência, exatamente o que o array rotulado existe para impedir.
+  if (surcharges.some((s) => !Number.isFinite(s.value) || s.value < 0)) {
+    return fail("surcharges[].value must be a finite number >= 0");
+  }
+  if (surcharges.some((s) => s.label.trim().length === 0)) {
+    return fail("surcharges[].label must name the charge (a fee line with no name has no origin)");
+  }
+  // A recusa de forma das bandas (fixedFeeRule fora de SELECTION, c + pct >= 100) chega ao vendedor
+  // como ERRO POR SLOT NOMEADO — nunca um Infinity sob selo, nunca um slot vizinho derrubado.
+  const bandRuleError = validateBandRules(ch.priceBands, ch.bandMode);
+  if (bandRuleError !== null) return fail(bandRuleError);
 
   const fees: ChannelFees = {
     commissionPct,
@@ -283,6 +409,15 @@ function computeChannel(
     freightCost,
     freightVoucherBands: voucherBands.length > 0 ? voucherBands : undefined,
     priceBands: ch.priceBands,
+    // Carried through, never re-derived. Dropping it here would silently degrade a progressive
+    // schedule back to selection — the exact defect ADR-0024 fixes, reintroduced where the default
+    // makes it invisible (ADR-0024 §5 names losing this field as the real risk, not the arithmetic).
+    ...(ch.bandMode ? { bandMode: ch.bandMode } : {}),
+    // Mesmo raciocínio do `bandMode` acima, e o ADR-0027 §5 nomeia este como O risco da mudança:
+    // o perigo não é errar a aritmética (é linear e testada em três regimes), é um trajeto PERDER
+    // o campo e degradar em silêncio para a constante antiga — invisível, porque o padrão o
+    // justifica. Ausente vira lista vazia lá dentro, que é byte-idêntico.
+    ...(surcharges.length > 0 ? { surcharges } : {}),
   };
   const varejo = grossUp(precoVarejo, fees);
   const atacado = grossUp(precoAtacado, fees);
@@ -302,7 +437,202 @@ function percentMultiplier(pct: number): Decimal {
   return new Decimal(1).plus(new Decimal(pct).dividedBy(100));
 }
 
+// ── E3 assembly compute (ADR-0016, 3.1.0) ────────────────────────────────────────────────────────
+// A BOM prices N independent lines (each a full single-piece input × a quantity) and sums them —
+// no shared-plate amortization in 3.1.0 (spec Q1; a shared-plate mode can extend this additively).
+// Contract: specs/008-e3-multi-piece-bom/contracts/pricing-core-bom.md.
+
+/** One BOM line: the existing single-piece input (reused verbatim) × a finite integer qty ≥ 0. */
+export interface BomLineInput {
+  input: PriceInput;
+  quantity: number;
+}
+
+/** Per-line outcome: the per-UNIT result (unchanged) + its money scaled by quantity. */
+export interface BomLineResult {
+  line: PriceResult;
+  quantity: number;
+  custoTotal: number;
+  precoVarejo: number;
+  precoAtacado: number;
+}
+
+/**
+ * Per-marketplace assembly rollup (FR-403). Money fields are assembly TOTALS — Σ over the
+ * contributing lines of (that line's slot values × quantity), per level. Counts are per LINE,
+ * not per slot: a line with several slots of one marketplace contributes once (its money still
+ * sums every valid slot), and it counts as skipped only when EVERY one of its slots for that
+ * marketplace errored (honest, not silent — extends SC-107). A rollup nobody fed
+ * (`contributingLines === 0`) reports null prices, never a fake R$ 0,00.
+ */
+export interface BomChannelRollup {
+  marketplace: string | null;
+  precoAnuncioVarejo: number | null;
+  recebidoLiquidoVarejo: number | null;
+  precoAnuncioAtacado: number | null;
+  recebidoLiquidoAtacado: number | null;
+  freightCostVarejo: number;
+  freightCostAtacado: number;
+  contributingLines: number;
+  skippedLines: number;
+}
+
+export interface BomResult {
+  lines: BomLineResult[];
+  custoTotal: number;
+  precoVarejo: number;
+  precoAtacado: number;
+  channels: BomChannelRollup[];
+  modelVersion: string;
+}
+
+/** Decimal accumulator behind one BomChannelRollup while the lines stream in. */
+interface RollupAccumulator {
+  marketplace: string | null;
+  anuncioVarejo: Decimal;
+  liquidoVarejo: Decimal;
+  anuncioAtacado: Decimal;
+  liquidoAtacado: Decimal;
+  freightVarejo: Decimal;
+  freightAtacado: Decimal;
+  contributingLines: number;
+  skippedLines: number;
+}
+
+/**
+ * Canonical assembly compute (ADR-0016). Money rule one level up from ADR-0008: the per-unit line
+ * is already rounded (2dp), per-line×qty is `toMoney(Decimal × qty)` — never native `*` — and every
+ * aggregate is `sumMoney` of those already-rounded per-line values, so the assembly total equals
+ * the sum of the numbers the user SEES (FR-412, no double-rounding). A line's channel error stays
+ * channel-local (per-slot isolation); a bad quantity or piece input throws ValidationError exactly
+ * like computeCalculator does.
+ */
+export function computeBom(lines: BomLineInput[]): BomResult {
+  lines.forEach((l, i) => {
+    if (!Number.isInteger(l.quantity) || l.quantity < 0) {
+      throw new ValidationError(
+        `lines[${i}].quantity must be a finite integer >= 0`,
+        `lines[${i}].quantity`,
+      );
+    }
+  });
+
+  const lineResults: BomLineResult[] = lines.map(({ input, quantity }) => {
+    const line = computeCalculator(input);
+    const times = (perUnit: number): number => toMoney(new Decimal(perUnit).times(quantity));
+    return {
+      line,
+      quantity,
+      custoTotal: times(line.custoTotal),
+      precoVarejo: times(line.precoVarejo),
+      precoAtacado: times(line.precoAtacado),
+    };
+  });
+
+  // Per-marketplace rollup — grouped in first-appearance order (deterministic; Map keeps it).
+  const rollups = new Map<string | null, RollupAccumulator>();
+  for (const { line, quantity } of lineResults) {
+    // Line-scoped flags so the counts stay per LINE even when a line carries several slots of
+    // the same marketplace (money accumulates per slot; counts resolve after the line closes).
+    const lineFlags = new Map<string | null, { ok: boolean; err: boolean }>();
+    for (const slot of line.channels) {
+      let acc = rollups.get(slot.marketplace);
+      if (!acc) {
+        acc = {
+          marketplace: slot.marketplace,
+          anuncioVarejo: new Decimal(0),
+          liquidoVarejo: new Decimal(0),
+          anuncioAtacado: new Decimal(0),
+          liquidoAtacado: new Decimal(0),
+          freightVarejo: new Decimal(0),
+          freightAtacado: new Decimal(0),
+          contributingLines: 0,
+          skippedLines: 0,
+        };
+        rollups.set(slot.marketplace, acc);
+      }
+      const flags = lineFlags.get(slot.marketplace) ?? { ok: false, err: false };
+      lineFlags.set(slot.marketplace, flags);
+      // Two ways a slot cannot feed the rollup, and BOTH are skips, never silent drops: its own
+      // validation failed, or a level is UNPRICED — no published band covers that announce
+      // (SC-817). Summing an unpriced level as R$ 0,00 would understate the kit under a seal; a
+      // partial sum is exactly the lie the whole rollup exists to avoid.
+      if (
+        slot.error !== null ||
+        slot.precoAnuncioVarejo === null ||
+        slot.precoAnuncioAtacado === null
+      ) {
+        flags.err = true; // honest: resolved to a skipped LINE below, never silently dropped
+        continue;
+      }
+      flags.ok = true;
+      // Past that guard a slot carries the four prices together (computeChannel writes announce and
+      // líquido as one outcome per level): a `?? 0` here would add four dead branches the
+      // 100%-branch gate can never cover — the non-null assertion states the invariant instead.
+      acc.anuncioVarejo = acc.anuncioVarejo.plus(
+        new Decimal(slot.precoAnuncioVarejo!).times(quantity),
+      );
+      acc.liquidoVarejo = acc.liquidoVarejo.plus(
+        new Decimal(slot.recebidoLiquidoVarejo!).times(quantity),
+      );
+      acc.anuncioAtacado = acc.anuncioAtacado.plus(
+        new Decimal(slot.precoAnuncioAtacado!).times(quantity),
+      );
+      acc.liquidoAtacado = acc.liquidoAtacado.plus(
+        new Decimal(slot.recebidoLiquidoAtacado!).times(quantity),
+      );
+      acc.freightVarejo = acc.freightVarejo.plus(
+        new Decimal(slot.freightCostVarejo).times(quantity),
+      );
+      acc.freightAtacado = acc.freightAtacado.plus(
+        new Decimal(slot.freightCostAtacado).times(quantity),
+      );
+    }
+    // Close the line: one contributing count per marketplace it fed; skipped only when every
+    // slot of that marketplace on this line errored. A flags entry exists only because a slot
+    // set ok OR err, so `!ok` implies err — a third branch would be dead code the 100%-branch
+    // gate can never cover.
+    for (const [marketplace, flags] of lineFlags) {
+      const acc = rollups.get(marketplace)!;
+      if (flags.ok) acc.contributingLines += 1;
+      else acc.skippedLines += 1;
+    }
+  }
+
+  const channels: BomChannelRollup[] = [...rollups.values()].map((acc) => ({
+    marketplace: acc.marketplace,
+    precoAnuncioVarejo: acc.contributingLines === 0 ? null : toMoney(acc.anuncioVarejo),
+    recebidoLiquidoVarejo: acc.contributingLines === 0 ? null : toMoney(acc.liquidoVarejo),
+    precoAnuncioAtacado: acc.contributingLines === 0 ? null : toMoney(acc.anuncioAtacado),
+    recebidoLiquidoAtacado: acc.contributingLines === 0 ? null : toMoney(acc.liquidoAtacado),
+    freightCostVarejo: toMoney(acc.freightVarejo),
+    freightCostAtacado: toMoney(acc.freightAtacado),
+    contributingLines: acc.contributingLines,
+    skippedLines: acc.skippedLines,
+  }));
+
+  return {
+    lines: lineResults,
+    custoTotal: sumMoney(lineResults.map((l) => l.custoTotal)),
+    precoVarejo: sumMoney(lineResults.map((l) => l.precoVarejo)),
+    precoAtacado: sumMoney(lineResults.map((l) => l.precoAtacado)),
+    channels,
+    modelVersion: PRICING_MODEL_VERSION,
+  };
+}
+
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
-export { grossUp } from "./channels";
-export type { ChannelFees, ChannelLevel, PriceBand, VoucherBand } from "./channels";
+export { grossUp } from "./channels.ts";
+export type {
+  BandMode,
+  ChannelFees,
+  ChannelLevel,
+  ChannelSurcharge,
+  FixedFeeRule,
+  PriceBand,
+  VoucherBand,
+} from "./channels.ts";
+// 3.1.0 public money primitives (ADR-0016): consumers (the BOM feature layer) format/verify with
+// these instead of ever doing native float arithmetic — pricing-core stays the only money home.
+export { Decimal, toMoney, sumMoney } from "./rounding.ts";

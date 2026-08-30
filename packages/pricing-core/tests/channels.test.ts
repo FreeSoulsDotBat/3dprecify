@@ -4,13 +4,14 @@ import { computeCalculator } from "../src/index";
 import type { PriceInput } from "../src/index";
 
 // US1 — price the SAME product across several channels at once. The cost half of the vector is the
-// 004 SC-001 canonical (→ custo_total 28,65, varejo 42,98, atacado 37,25); the channels exercise the
-// multi-channel gross-up shown together in "Preços por canal".
+// 004 SC-001 canonical, RE-BASELINADO em 4.0.0 (ADR-0026: o `wasteGrams: 10` saiu, material =
+// gramas × custo/kg) → custo_total **27,55**, varejo **41,33**, atacado **35,82** (a conta completa
+// está em computeCalculator.test.ts); the channels exercise the multi-channel gross-up shown
+// together in "Preços por canal".
 const SC001: PriceInput = {
   costPerRoll: 100,
   rollWeightKg: 1,
   printGrams: 100,
-  wasteGrams: 10,
   printTimeHours: 5,
   avgPowerKw: 0.1,
   tariffPerKwh: 1,
@@ -42,15 +43,15 @@ describe("SC-101 — price the same product across channels at once", () => {
     expect(r.channels).toHaveLength(2);
     const [ml, shopee] = r.channels;
     // ML Clássico 12% + R$6,75
-    expect(ml.precoAnuncioVarejo).toBe(56.51); // (42,98 + 6,75) / 0,88
-    expect(ml.recebidoLiquidoVarejo).toBe(42.98);
-    expect(ml.precoAnuncioAtacado).toBe(50.0); // (37,25 + 6,75) / 0,88
-    expect(ml.recebidoLiquidoAtacado).toBe(37.25);
+    expect(ml.precoAnuncioVarejo).toBe(54.64); // (41,33 + 6,75) / 0,88 = 54,6363… → 54,64
+    expect(ml.recebidoLiquidoVarejo).toBe(41.33);
+    expect(ml.precoAnuncioAtacado).toBe(48.38); // (35,82 + 6,75) / 0,88 = 48,375 → 48,38
+    expect(ml.recebidoLiquidoAtacado).toBe(35.82);
     // Shopee 20% + R$4
-    expect(shopee.precoAnuncioVarejo).toBe(58.73); // (42,98 + 4) / 0,80
-    expect(shopee.recebidoLiquidoVarejo).toBe(42.98);
-    expect(shopee.precoAnuncioAtacado).toBe(51.56); // (37,25 + 4) / 0,80
-    expect(shopee.recebidoLiquidoAtacado).toBe(37.25);
+    expect(shopee.precoAnuncioVarejo).toBe(56.66); // (41,33 + 4) / 0,80 = 56,6625 → 56,66
+    expect(shopee.recebidoLiquidoVarejo).toBe(41.33);
+    expect(shopee.precoAnuncioAtacado).toBe(49.78); // (35,82 + 4) / 0,80 = 49,775 → 49,78
+    expect(shopee.recebidoLiquidoAtacado).toBe(35.82);
   });
 
   it("no channel errors; freightCost 0 (no freight configured)", () => {
@@ -93,8 +94,8 @@ describe("SC-107 — per-slot error isolation (never a silent clamp, never a thr
     expect(r.channels[1].precoAnuncioVarejo).toBeNull();
     expect(r.channels[1].recebidoLiquidoVarejo).toBeNull();
     expect(r.channels[0].error).toBeNull();
-    expect(r.channels[0].precoAnuncioVarejo).toBe(56.51);
-    expect(r.channels[2].precoAnuncioVarejo).toBe(58.73);
+    expect(r.channels[0].precoAnuncioVarejo).toBe(54.64);
+    expect(r.channels[2].precoAnuncioVarejo).toBe(56.66);
     const nums = r.channels
       .flatMap((c) => [c.precoAnuncioVarejo, c.recebidoLiquidoVarejo])
       .filter((n): n is number => n !== null);

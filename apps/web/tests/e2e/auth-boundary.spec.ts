@@ -39,19 +39,21 @@ test("a guarded tab signed-out routes through sign-in and lands on the intended 
 }, info) => {
   await page.goto("/calcular");
 
-  // Select a guarded tab from the app-nav while signed out.
-  await page.getByRole("link", { name: messages.nav.catalogo }).click();
+  // Select a guarded tab from the app-nav while signed out. (007/US7 moved /catalogo out of the
+  // guarded set — signed-out sees its honest teaser — so the boundary contract is exercised on
+  // Conta, which stays guarded.)
+  await page.getByRole("link", { name: messages.nav.conta }).click();
 
   // GC-2: redirected to sign-in carrying the return-to-intent.
-  await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fcatalogo/);
+  await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
   await expect(page.getByRole("heading", { name: messages.signIn.title })).toBeVisible();
 
   // Sign in through the Auth emulator seam.
   await signUpThrowaway(page, `boundary-${info.workerIndex}`);
 
-  // GC-3/GC-4: land on the originally requested section (Catálogo), not the calculator.
-  await expect(page).toHaveURL(/\/catalogo$/);
-  await expect(page.getByText(messages.catalogo.emptyTitle)).toBeVisible();
+  // GC-3/GC-4: land on the originally requested section (Conta), not the calculator.
+  await expect(page).toHaveURL(/\/conta$/);
+  await expect(page.getByRole("heading", { name: messages.conta.title })).toBeVisible();
 });
 
 test("a signed-in user is bounced off /sign-in to the calculator by default", async ({

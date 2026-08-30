@@ -16,6 +16,97 @@
 
 ---
 
+
+## Clarifications
+
+### Session 2026-08-07 (hotfix A2 — desenho em `docs/homologacao/hotfix-a2-a3-desenho.md`)
+
+### Clarification 2026-08-07 — o frete Shopee do FR-111a estava invertido (achado A2, 016/T072)
+
+**O que se mediu.** Canal Shopee, semente varejo R$ 24,24: anúncio R$ 35,30, linha "Frete / cupom
+−R$ 20,00", **líquido R$ 4,24**, com o campo "Frete (opcional)" exibindo **R$ 0,00**; com o
+manuseio de item volumoso ligado, o líquido fica **negativo (−R$ 5,76)**.
+
+**O que a fonte diz.** Art. 26839 (a MESMA fonte que o catálogo já cita), verbatim:
+"*A Shopee **oferece subsídios de frete para todos os vendedores** nos valores de R$20 … R$30 …
+R$40*" e "*Cupons de frete grátis **válidos para fretes de até** R$20*". O R$ 20/30/40 é o valor
+que **a Shopee oferece** e é um **teto de validade do cupom** — não uma cobrança do vendedor.
+A palavra "coparticipação" aparece uma única vez no artigo e vem escopada a "*vendedores que
+utilizam o modelo logístico Intelipost ou outras ferramentas através da API de Frete*", sem os
+números, que ficam em artigo linkado.
+
+**Correção da FR-111a.** A cláusula "**Shopee** — the seller-co-funded free-shipping **voucher
+ceiling** by price band (curatable from the official source)" **é revogada**: ela atribuía ao
+vendedor um custo que a fonte atribui à Shopee, e cobrava um **teto** como **certo e integral**.
+Passa a valer: **Shopee — `freightCost = 0` por padrão**; o único frete descontado do líquido é o
+que o vendedor **declara** no campo de frete do canal. O subsídio da Shopee é publicado como
+**informação não-computante** (com procedência e data), nunca como parcela da conta.
+
+**NÃO-DETERMINADO, e deliberadamente não preenchido.** Se existe custo para o vendedor quando o
+frete real excede o teto — e, se existe, se ele é o excedente, um percentual ou uma coparticipação —
+**as fontes lidas não respondem**. Fecha-se com o verbatim de: art. 23431 ("Programa de Frete
+Grátis"), o artigo de coparticipação linkado na seção Intelipost/API de Frete do 26839, e art. 7749.
+Até lá o produto não desconta nada que o vendedor não tenha digitado. (Art. 4478, "cobrança
+adicional de frete", é outra cobrança — divergência de peso/dimensão — e já está coberta pelo aviso
+permanente da US17.)
+
+**FR-111b passa a ser verificável, não só declarada.** "O vendedor DEVE ver e poder sobrescrever o
+`freightCost` resultante" estava sendo violado pela Shopee desde E1: o valor descontado não tinha
+controle na tela. Regra reafirmada e sob guarda automática: **nenhum valor entra na conta sem um
+controle que o nomeie** — para toda entrada de todo marketplace do catálogo servido,
+`grossUp(base, fees).freightCost === (fees.freightCost ?? 0)`.
+
+**Compatibilidade.** Correção **de dado** (`freight: {kind:"NONE"}` nas duas entradas Shopee +
+bump de `catalogVersion`). O motor **não muda**: `freightVoucherBands` continua sendo honrado
+exatamente como antes para payloads já gravados (fica **DEPRECATED**, sem novos emissores), porque
+ele viaja dentro de snapshot congelado (ADR-0019) e de documento de cenário (ADR-0021).
+`pricing-core` permanece **4.1.0** e `PRICING_MODEL_VERSION` **não é bumpado**. Orçamentos
+congelados **não mudam** (registram o que foi cotado); cenários salvos com base Shopee
+**reprecificam para cima**, e isso é a correção chegando.
+
+*(Implementação: `catalogVersion` `2026-08-06.1` → `2026-08-07.0`, decidido por `nextCatalogVersion`
+e não à mão; o subsídio migrou para `freightSubsidyInfo` no nível do marketplace SHOPEE — aditivo,
+`nullish`, não-computante, deliberadamente NÃO um `kind` novo do `discriminatedUnion` `freight`,
+que faria um cliente PWA já instalado recusar o catálogo inteiro em silêncio. A guarda vive em
+`apps/web/src/features/calculator/freight-declared.test.ts` — em `features` e não em `shared`
+porque `entryToChannelFees` mora ali e o eslint-boundaries proíbe `shared → feature`.)*
+
+### Session 2026-08-03 (emenda da homologação pré-provisionamento — 015/A7)
+
+- **`[F02A-007]` — FR-118/SC-109 fixam `PRICING_MODEL_VERSION = "3.0.0"`, e o código está em
+  `"3.1.0"`** (`packages/pricing-core/src/index.ts:20`). O bump foi legítimo e está documentado no
+  próprio arquivo: a **3.1.0 (ADR-0016)** acrescentou `computeBom` e exportou `toMoney`/`sumMoney`/
+  `Decimal` — superfície pública **aditiva**, portanto MINOR. O que não aconteceu foi emendar esta
+  spec, que continua citando o número antigo em duas FRs.
+
+  **A spec não é reescrita**: o `3.0.0` era correto quando ela foi escrita, e o requisito real nunca
+  foi "seja exatamente 3.0.0" — foi "carimbe a versão do modelo no resultado, para que um cálculo
+  salvo saiba qual fórmula o produziu". Esse requisito está cumprido. Leia as duas FRs como
+  "`PRICING_MODEL_VERSION` corrente", que hoje é `3.1.0`.
+
+### Session 2026-08-06 (016/US11 — a virada de freemium do marketplace)
+
+- **A precificação por canal de marketplace deixou de ser grátis.** Decisão do dono, 2026-08-05
+  (registrada em `specs/016-correcao-homologacao/spec.md` US11, FR-915/916/917) e implementada na
+  fatia PR-E do 016: para uma conta NÃO-ENTITULADA, o switch "Incluir marketplaces no preço" nasce
+  **desabilitado e desligado**, com o caminho de assinatura ("Assinar Premium") visível logo abaixo
+  — nenhum número de canal, parcial ou fabricado, chega à tela por caminho nenhum (nem calculadora,
+  nem deep-link). Uma conta com entitlement ativo continua **byte-idêntica** ao que esta spec sempre
+  descreveu (FR-919).
+- **SC-109 é emendada por esta cláusula**: "nunca mostra… paywall" continua verdadeiro para o custo
+  e o markup (a calculadora em si, US1–US5 do 004, segue livre e sem gate); o que passou a existir é
+  o gate ESPECIFICAMENTE em cima do bloco de canal de marketplace desta spec (005), não do cálculo
+  base. O texto de SC-109 não é reescrito — como na sessão anterior, ele continua sendo lido à luz
+  desta decisão datada, e não da leitura literal de "nunca paywall" que valia até 2026-08-05.
+- **A promessa da primeira dobra foi reescrita** (`messages.calculator.freemiumNote`) para declarar
+  com precisão o que continua grátis — custo e markup, sem canal de venda — em vez da frase antiga
+  ("Calcular e ver a conta é grátis. Salvar e exportar fazem parte do Premium."), que ficou FALSA no
+  dia em que o switch de marketplace passou a exigir assinatura.
+- **Por que isto é uma Clarification e não uma nova FR**: a decisão do dono altera o que "grátis"
+  significa NESTA spec — o comportamento de 004 (calcular custo+markup) continua intocado; o que
+  mudou é o escopo do que 005 (marketplace) entrega sem assinatura. Ver a Clarification irmã em
+  `specs/007-e2-catalog-entitlement/spec.md` (FR-313/SC-310) para a frase de enforcement.
+
 ## The E1 v3 model delta (only what changes from 004)
 
 004's cost pipeline (`material · energy · machine · producao · falha · finishing · labor · custo_total · preco_varejo · preco_atacado`) is **unchanged**. `packages/pricing-core` takes a **MAJOR bump → `3.0.0`** for the two structural changes below. All amounts BRL; rounding stays ADR-0008 (2-dp HALF_UP per line, sums reconcile).
@@ -123,11 +214,11 @@ A master toggle **"Incluir marketplaces no preço"** (default **on**) controls t
 
 **Why this priority**: Sellers who sell direct (own store, in person) and sellers who sell only on marketplaces need different headlines. The owner explicitly required the marketplace outcome to compose the main account unless the seller opts out.
 
-**Independent Test**: With the toggle on, confirm the channel prices are presented as the result; flip it off and confirm the headline reverts to the direct cost×markup prices while the channel list remains visible but marked as simulation-only.
+**Independent Test**: With the toggle on, confirm the channel prices are presented as the result; flip it off and confirm the headline reverts to the direct cost×markup prices while the entire channel section is hidden (Clarification 2026-07-23, D2=A — see §5).
 
 **Acceptance Scenarios**:
 1. **Given** the toggle **on** (default) with ≥ 1 channel, **When** prices render, **Then** the per-channel announce/net prices are presented as the pricing result.
-2. **Given** the toggle **off**, **When** prices render, **Then** the headline is the direct `preço varejo`/`preço atacado` and the channel list is labelled a non-driving simulation.
+2. **Given** the toggle **off**, **When** prices render, **Then** the headline is the direct `preço varejo`/`preço atacado` and the channel section is hidden entirely — pure UI show/hide, not a labelled simulation list (Clarification 2026-07-23, D2=A).
 3. **Given** the toggle **off**, **When** the seller reads the direct headline, **Then** it equals exactly the 004 cost×markup prices (no channel fee folded into it).
 
 ### User Story 5 — Itemize "Outros custos" as named sub-costs (Priority: P2)
@@ -193,10 +284,10 @@ The entire expansion stays inside the **free, offline, signed-out** calculator: 
 
 - **FR-110**: For **each** channel and for **each** base ∈ {`preco_varejo`, `preco_atacado`}, the calculator MUST compute `preço para anunciar` and `recebido líquido = anúncio − max(commissionPct/100 × anúncio, minPerItem) − fixedFee − freightCost`, where `(commissionPct, fixedFee, minPerItem)` come from `resolveFee(marketplace, feeDeterminants, listingPrice)` (catalog or override; `minPerItem` defaults 0) and `freightCost` from FR-111a. The commission is a **floor** (`max(% , minPerItem)` — Amazon's per-item minimum); `preço para anunciar` MUST be grossed up so `recebido líquido == base`, which is piecewise (the minimum binds only at low prices). This is 004 FR-031 generalized to N channels with a commission floor.
 - **FR-111**: When a marketplace prices its **fixed fee by price band** (Shopee; Mercado Livre custo fixo) **or its commission by a per-item minimum** (Amazon), the calculator MUST resolve the fee for the **computed listing price** via one **deterministic bounded fixed-point** — no oscillation at a band or floor boundary; identical inputs yield the identical listing price, fee, and regime (see Assumptions).
-- **FR-111a** (Q2 — generic freight / free-shipping component): The calculator MUST subtract a per-channel `freightCost` from `recebido líquido` where the channel imposes one: **Mercado Livre** — for listings at/above the free-shipping threshold, an **editable shipping-subsidy estimate** (research 2026-07-06: reputation/weight/volume/region-dependent, therefore **not curatable as an exact catalog value** — seeded by a rough default at most, always seller-overridable, seal MUST mark it an **estimate**); **Shopee** — the seller-co-funded free-shipping **voucher ceiling** by price band (curatable from the official source); **Amazon** — `freightCost = 0` (own/FBA shipping is out of this model). Where none applies, `freightCost = 0` and `recebido líquido` equals the base as in 004. No `freightCost` value may be shown as authoritative when it is an estimate.
+- **FR-111a** (Q2 — generic freight / free-shipping component): The calculator MUST subtract a per-channel `freightCost` from `recebido líquido` where the channel imposes one: **Mercado Livre** — for listings at/above the free-shipping threshold, an **editable shipping-subsidy estimate** (research 2026-07-06: reputation/weight/volume/region-dependent, therefore **not curatable as an exact catalog value** — seeded by a rough default at most, always seller-overridable, seal MUST mark it an **estimate**); ~~**Shopee** — the seller-co-funded free-shipping **voucher ceiling** by price band (curatable from the official source)~~ **REVOGADA em 2026-08-07** (achado A2 — ver a Clarification 2026-08-07 acima): **Shopee — `freightCost = 0` por padrão**, e o único frete descontado é o que o vendedor declara no campo do canal; o subsídio da Shopee é informação não-computante; **Amazon** — `freightCost = 0` (own/FBA shipping is out of this model). Where none applies, `freightCost = 0` and `recebido líquido` equals the base as in 004. No `freightCost` value may be shown as authoritative when it is an estimate.
 - **FR-111b**: Any inputs a freight component needs (e.g. ML peso/categoria) MUST be presented with sensible editable defaults; the seller MUST see and be able to override the resulting `freightCost`. Missing/unknown inputs MUST degrade to a clearly-labelled estimate or zero — never to a bad number or a blocked calculation.
 - **FR-112**: All channels MUST be computed and presented **together** ("Preços por canal"), each showing announce + net for varejo and atacado. No marketplace fee is EVER added into `custo_total`.
-- **FR-113**: A master **"Incluir marketplaces no preço"** toggle (default **on**) MUST govern framing: **on** → the per-channel announce prices are the presented pricing result; **off** → the headline is the direct `preco_varejo`/`preco_atacado` (equal to 004 exactly) and the channel list is labelled a non-driving simulation.
+- **FR-113**: A master **"Incluir marketplaces no preço"** toggle (default **on**) MUST govern framing: **on** → the per-channel announce prices are the presented pricing result; **off** → the headline is the direct `preco_varejo`/`preco_atacado` (equal to 004 exactly) and the channel section is hidden entirely — pure UI show/hide (Clarification 2026-07-23, D2=A; officializes the 2026-07-08 dod-evidence owner-clarification that this living spec had never been amended to reflect — audit finding FA-04). **Descope note**: `PriceResult.includeInHeadline` was never added to the pricing-core result contract — that descope decision was made and recorded in ADR-0011 (§"Field-name/shape reconciliation"), not in this spec; the toggle is client-only UI state, never carried on the computed result.
 
 ### 2.4 Itemized other-costs
 
@@ -230,11 +321,11 @@ The entire expansion stays inside the **free, offline, signed-out** calculator: 
 - **SC-102 (add/remove isolation).** Adding a channel adds exactly its rows; removing a channel removes exactly its rows and changes no other channel's numbers; channel ordering is stable and deterministic.
 - **SC-103 (fee pre-fill + override + seal).** Selecting a catalog-covered `(marketplace, feeDeterminants)` pre-fills its fees and shows a seal with source + date; editing a fee is honoured in the result and flips the seal to "ajustado por você"; an unresolved combination shows manual fields with a "sem referência" seal and no fabricated number.
 - **SC-104 (offline resilience: cache + seed).** With no network — including a cold first-ever load — the **bundled seed** pre-fills fees and every per-channel price computes signed-out, with no bad number; **online, the app fetches the catalog and persists it to the store**, and a **fetch error is non-blocking** (falls back to store → seed, with a retry affordance). An active entry (store/seed) older than 30 days pre-fills with a possibly-stale seal; an uncovered combination falls back to manual entry. The full result computes offline from the store/seed.
-- **SC-105 (include/exclude framing).** With the toggle **on**, the per-channel announce prices are the presented result; with it **off**, the headline equals the 004 direct `preço varejo`/`preço atacado` **exactly** (no channel fee folded into `custo_total`) and the channel list is marked simulation-only.
+- **SC-105 (include/exclude framing).** With the toggle **on**, the per-channel announce prices are the presented result; with it **off**, the headline equals the 004 direct `preço varejo`/`preço atacado` **exactly** (no channel fee folded into `custo_total`) and the channel section is hidden entirely — pure show/hide, not a labelled simulation list (Clarification 2026-07-23, D2=A).
 - **SC-106 (itemized admin equivalence).** Sub-costs "Embalagem" R$ 3,00 + "Frete" R$ 2,00 raise `custo_total` from R$ 28,65 to **R$ 33,65** — identical to a single R$ 5,00 admin — and each named line appears in the breakdown; removing "Frete" lowers `custo_total` to R$ 31,65 exactly. An empty slot reproduces the 004 result byte-for-byte.
 - **SC-107 (commission guard per slot).** A slot with commission ≥ 100 % shows an inline pt-BR error and yields no `NaN`/`Infinity`; other slots continue to compute normally.
 - **SC-108 (price-band determinism).** For a marketplace with a price-band fixed fee (Shopee; ML custo fixo), the applied band matches the computed listing price and is stable at band boundaries (no oscillation); identical inputs yield the identical band and fee.
-- **SC-109 (no bad numbers, no gate, versioned).** Across any number of channels and sub-costs the calculator never renders `NaN`/`Infinity`/`#DIV/0!`, never shows a save/export/history affordance or paywall, and stamps `PRICING_MODEL_VERSION = "3.0.0"`; the backend performs no price computation.
+- **SC-109 (no bad numbers, no gate, versioned).** Across any number of channels and sub-costs the calculator never renders `NaN`/`Infinity`/`#DIV/0!`, never shows a save/export/history affordance or paywall, and stamps `PRICING_MODEL_VERSION = "3.0.0"` **as of this increment**; the backend performs no price computation. ⚠ **Note (2026-07-23, E1-07)**: `pricing-core` has since bumped to **`3.1.0`** (E3's BOM compose contract, ADR-0016) — this criterion's literal "3.0.0" is this increment's own baseline stamp and is correct as written for 005; it was never retro-annotated when the later bump landed, which is now recorded here for the next reader.
 - **SC-110 (determinism at scale).** Identical inputs (any channel count, any sub-cost set) produce byte-identical outputs across runs and locales, with stable channel and sub-cost ordering.
 - **SC-111 (ML free-shipping subsidy estimate).** For a Mercado Livre channel whose listing price is **≥ the free-shipping threshold**, `recebido líquido = anúncio × (1 − commission/100) − fixedFee − freightCost`, is strictly **less** than the same channel's no-freight net by exactly the applied `freightCost`, and is **deterministic** for fixed inputs. The `freightCost` is presented as an **estimate** (its seal says so); editing it changes only that channel's net by exactly the delta. Below the threshold (or non-ML), `freightCost = 0` and the net equals the base. *(The subsidy magnitude used in tests is an illustrative value, not asserted as ML's exact figure.)*
 - **SC-112 (Amazon per-item commission minimum).** For an Amazon channel whose listing price is low enough that `commissionPct/100 × anúncio < minPerItem`, the net reflects the **floor** (`recebido líquido = anúncio − minPerItem − fixedFee`) and `preço para anunciar` is grossed up so the net still equals the base; this is strictly less optimistic than the %-only formula would give. For listing prices where `commissionPct/100 × anúncio ≥ minPerItem` the minimum does **not** bind and the result equals the plain gross-up. For channels with no minimum (`minPerItem = 0` — ML, Shopee) the term vanishes. The bound regime is **deterministic** and stable at the floor boundary (shares FR-111's fixed-point).
@@ -255,6 +346,24 @@ The entire expansion stays inside the **free, offline, signed-out** calculator: 
 ---
 
 ## 5. Clarifications
+
+### Resolved by owner (2026-07-23, audit remediation — 013, formalizing a 2026-07-08 decision)
+
+- **D2 — toggle-off behaviour → CHOSEN: Option A, full hide (pure show/hide).** FR-113/SC-105 and the US4
+  acceptance scenarios originally called for the channel list to **stay visible, labelled a non-driving
+  simulation** when the master toggle is off. What actually shipped (`calculator-form.tsx` US4,
+  `{included && (...)}`) is **Option A — the whole channel section disappears**; there is no
+  "simulation-labelled" intermediate state. This was owner-clarified informally at ship time
+  (`dod-evidence.md:48-49`, 2026-07-08: *"pure UI show/hide"*) but the living spec text was never amended to
+  match, which the 013 audit caught (**FA-04** — a Principle II/VI drift: the spec kept describing behaviour
+  the product does not have). **Officialized now**: Option A stands, chosen for simplicity (one less UI
+  state to design/maintain and no partial-simulation copy to write) over Option B (keep the list visible,
+  add a "simulação" label) which was never built and is not being retroactively required. FR-113, SC-105 and
+  the US4 prose above are amended in place to say "hidden entirely" rather than "visible, labelled".
+- **FR-113 descope note.** `PriceResult.includeInHeadline` was never added to the pricing-core result
+  contract; that decision was made and recorded in **ADR-0011** (§"Field-name/shape reconciliation as-built
+  vs the Part 2 draft block"), not in this spec — recorded here for traceability. The toggle is pure
+  client-side UI state; the computed `PriceResult` carries no flag for it.
 
 ### Resolved by owner (2026-07-06, after source-of-truth research)
 

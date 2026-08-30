@@ -9,7 +9,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import SecretStr
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,8 +28,62 @@ class Settings(BaseSettings):
     firebase_project_id: str | None = None
     firebase_auth_emulator_host: str | None = None  # e.g. "localhost:9099"
 
+    # Database (E2 / ADR-0013). Default targets the compose-local Postgres (docker-compose.yml);
+    # dev/CI only — Cloud SQL lands at v1-launch by replaying the same Alembic migrations. psycopg3
+    # driver for BOTH async app engine and sync Alembic. The engine is created LAZILY (FR-313: free
+    # calculator surfaces keep responding with the DB unreachable).
+    database_url: SecretStr = SecretStr(
+        "postgresql+psycopg://precifica3d@localhost:5433/precifica3d"
+    )
+
     # Observability.
     sentry_dsn: SecretStr | None = None
+
+    # E6 billing — Mercado Pago (ADR-0023 §1/§5, seguranca §4). Per-environment, SecretStr, and
+    # DEFAULT ABSENT: no secret is ever hard-coded, and "unset" must read as absent (None), never as
+    # a usable value. Fail-closed is enforced at the route (T010) — a missing webhook secret rejects
+    # EVERY event (SEC-403); here the config layer only exposes the absence honestly. The sandbox
+    # secret/token bind the running app_env; a sandbox event can never write a prod grant (SEC-402).
+    mp_access_token: SecretStr | None = None
+    mp_webhook_secret: SecretStr | None = None
+    mp_plan_id_monthly: SecretStr | None = None
+    mp_plan_id_annual: SecretStr | None = None
+    # Overridable ONLY for the e2e stack (uvicorn-served tests/mp_stub — the owner's build-first
+    # phase); every deployed environment keeps this production default.
+    mp_base_url: str = "https://api.mercadopago.com"
+
+    @model_validator(mode="after")
+    def _prod_never_points_at_a_stub(self) -> Settings:
+        """T017 finding L1 (the SEC-402 spirit, third guard): the MP lookup is the ONLY source of
+        grant truth — under `app_env=prod` a non-production base URL would redirect that truth to
+        an arbitrary host, so prod refuses to boot with one."""
+        if self.app_env == "prod" and self.mp_base_url != "https://api.mercadopago.com":
+            msg = "P3D_MP_BASE_URL must be the production Mercado Pago API when app_env=prod"
+            raise ValueError(msg)
+        return self
+
+    # E6 Play Billing (ADR-0023 §6, owner Q2 / SEC-701/702). BUILT + sandbox-validated behind an OFF
+    # flag in E6; turns ON at E7. Server-side config (never a client flag — Constitution IV). The
+    # default AND any unset/unknown value is OFF — no configuration reads ON.
+    play_billing_enabled: bool = False
+
+    @field_validator("play_billing_enabled", mode="before")
+    @classmethod
+    def _play_flag_is_strict(cls, v: object) -> bool:
+        """A ADR-0023 §6 diz: "the default AND any unset/unknown value is OFF". O parser de bool do
+        pydantic NAO faz isso — ele aceita `yes`, `on`, `y`, `t`, `1`.
+
+        MEDIDO 2026-08-02 pelo T035: `P3D_PLAY_BILLING_ENABLED=yes` e `=ON` LIGAVAM a flag. Um erro
+        de digitacao num `.env` acenderia uma superficie de PAGAMENTO — e ninguem notaria, porque
+        nada falha quando uma rota passa a existir.
+
+        Aqui so o literal `true` (em qualquer caixa) liga. Todo o resto e OFF, e OFF em silencio de
+        proposito: levantar excecao derrubaria o app inteiro por causa de um typo, o que e pior do
+        que ficar desligado — e ficar desligado e justamente o estado seguro.
+        """
+        if isinstance(v, bool):
+            return v
+        return isinstance(v, str) and v.strip().lower() == "true"
 
 
 @lru_cache

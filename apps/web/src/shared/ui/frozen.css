@@ -1,0 +1,15 @@
+/* tf-frozen (NOVO — handoff-019 §1 / tf-components.css:667-682, cópia verbatim, 0 adaptações).
+   O dim mora nos CONTROLES, não no contêiner: `opacity` no wrapper arrastava TODO descendente,
+   inclusive a dica — medido, 5,67:1 caía para 2,58:1 e reprovava AA. Fundo `--border-subtle`
+   (não `--bg-muted`: no escuro `--bg-muted` empata com o cartão, 1,00:1, e a única pista sobraria
+   na opacidade). Borda sólida de propósito — tracejado já significa "anotação de prancheta". */
+.tf-frozen .tf-inputwrap,
+.tf-frozen .tf-select {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--border-subtle);
+}
+.tf-frozen .tf-input,
+.tf-frozen .tf-select {
+  cursor: not-allowed;
+}

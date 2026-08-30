@@ -18,8 +18,12 @@
     "depcruise": "depcruise packages apps --config .dependency-cruiser.cjs",
     "gate": "pnpm gate:all",
     "gate:fe": "pnpm format:check && pnpm lint && pnpm depcruise && pnpm typecheck && pnpm test:coverage",
-    "gate:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run pytest -q && uv run lint-imports",
+    "gate:be": "cd backend && uv run ruff check . && uv run ruff format --check . && uv run basedpyright && uv run pytest -q --cov=app --cov-fail-under=82 && uv run lint-imports",
     "gate:all": "pnpm gate:fe && pnpm gate:be",
+    "fee:build": "node packages/fee-ingest/src/build.mjs",
+    "gate:artifact": "vitest run .artifact.test.",
+    "graph:update": "graphify update .",
+    "graph:query": "graphify query",
     "prepare": "lefthook install"
   },
   "devDependencies": {

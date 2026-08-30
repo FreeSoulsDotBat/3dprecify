@@ -1,0 +1,882 @@
+{
+  "meta": {
+    "increment": "homologacao-automatizada",
+    "fase": 1,
+    "data": "2026-08-12",
+    "branch": "018-abas-desktop",
+    "escopo": "Toda a plataforma EXCETO checkout de pagamento (Mercado Pago). Fluxos que tangenciam pagamento são testados até a borda em que a integração começaria.",
+    "principio": "Todo cenário abaixo foi confirmado por leitura do código-fonte. Nenhum foi inferido. Cada um cita os arquivos que o comprovam.",
+    "stack_real_confirmada": {
+      "frontend": "React 19 + Vite PWA + TanStack Router/Query + Zustand + RHF/Zod + Tailwind v4 + DS tf-* (Radix)",
+      "backend": "FastAPI (Python 3.12) + SQLAlchemy 2.0 + PostgreSQL + Alembic",
+      "auth": "Firebase Auth (Google sign-in APENAS) — emulador em dev/e2e",
+      "pagamento": "Mercado Pago (fora de escopo) + Play Billing atrás de flag DESLIGADA",
+      "motor_de_preco": "packages/pricing-core 4.1.0 (TS, puro, offline; backend NUNCA recomputa)"
+    },
+    "divergencias_do_enunciado": [
+      "O enunciado descreve Expo + React Native Web, Supabase e RevenueCat. Nenhum dos três existe no repositório (grep -rniE 'supabase|revenuecat|react-native|\\bexpo\\b' em apps/ backend/ packages/ retorna ZERO ocorrências). Os cenários abaixo foram mapeados contra o stack REAL.",
+      "Não existe cadastro por e-mail/senha, recuperação de senha nem exclusão de conta: o único método de autenticação é signInWithGoogle (features/auth/sign-in-screen.tsx:5,39). Esses cenários do enunciado NÃO foram criados — não existem na plataforma.",
+      "Não há mais de um idioma: a plataforma é pt-BR único (shared/i18n/messages.pt-br.ts é o único arquivo de mensagens). A dimensão 'idioma' da Fase 2 fica com um valor só.",
+      "Não há orientação landscape específica: não existe nenhuma media query de orientation no código. A dimensão é testável como largura, não como orientação declarada."
+    ],
+    "breakpoints_reais": {
+      "mobile": "<= 425px (app/app-shell.tsx:18 MOBILE_QUERY) — TabBar inferior",
+      "desktop": "426px a 1279px — sidebar fixa, sem rail colapsável",
+      "wide": ">= 1280px (shared/lib/use-is-wide.ts:WIDE_QUERY) — composição mestre-detalhe do 018 + rail colapsável"
+    },
+    "estados_de_usuario_reais": [
+      "anonimo (SessionStatus 'anonymous')",
+      "not-configured (Firebase ausente — SessionStatus 'not-configured')",
+      "logado_free (entitlement status 'none')",
+      "logado_lapsed (entitlement status 'lapsed')",
+      "logado_premium_ativo (entitlement status 'active')",
+      "logado_premium_cortesia (grant de operador via CLI)",
+      "logado_entitlement_desconhecido (erro de leitura → PlanState 'unknown')",
+      "logado_offline_com_entitlement_em_cache (stale)"
+    ],
+    "totais": { "cenarios_funcionais": 48 }
+  },
+
+  "cenarios_funcionais": [
+    {
+      "id": "CF-001",
+      "grupo": "Calculadora",
+      "nome": "Cálculo do preço da peça (custo total, varejo e atacado)",
+      "descricao": "A partir dos custos da peça a plataforma calcula material, energia, máquina, falha, acabamento, mão de obra e outros custos; soma em custo total e aplica os dois markups.",
+      "pre_condicoes": ["Rota /calcular acessível a qualquer visitante (pública, router.tsx:76)"],
+      "entradas": [
+        "costPerRoll",
+        "rollWeightKg",
+        "printGrams",
+        "printTimeHours",
+        "avgPowerKw",
+        "tariffPerKwh",
+        "machineValue",
+        "machineLifetimeHours",
+        "maintenanceReservePerHour",
+        "failurePct",
+        "finishTimeHours",
+        "finishRatePerHour",
+        "laborHours",
+        "laborRatePerHour",
+        "otherCosts[]",
+        "markupVarejoPct",
+        "markupAtacadoPct"
+      ],
+      "saida_esperada": "PriceResult com as 7 linhas de custo arredondadas, custoTotal, precoVarejo, precoAtacado, modelVersion '4.1.0'",
+      "regras_de_negocio": [
+        "material = costPerRoll / (rollWeightKg*1000) * printGrams (SEM desperdício — removido na 4.0.0)",
+        "energy = printTimeHours * avgPowerKw * tariffPerKwh",
+        "machine = (machineValue/machineLifetimeHours + maintenanceReservePerHour) * printTimeHours",
+        "falha = failurePct% do subtotal ARREDONDADO de produção (material+energy+machine)",
+        "custoTotal = soma das 7 linhas já arredondadas (ADR-0008)",
+        "preco = custoTotal * (1 + markup/100) — markup sobre o custo total EXIBIDO",
+        "rollWeightKg e machineLifetimeHours devem ser > 0; os demais >= 0",
+        "failurePct NÃO tem teto (decisão do dono 2026-08-03)"
+      ],
+      "evidencia_codigo": [
+        "packages/pricing-core/src/index.ts:219-339",
+        "packages/pricing-core/src/rounding.ts",
+        "apps/web/src/features/calculator/calculator-model.ts:443",
+        "apps/web/src/features/calculator/calculator-schema.ts:147-168"
+      ],
+      "criticidade": "CRITICA — é o core do produto; qualquer divergência numérica é severidade crítica"
+    },
+    {
+      "id": "CF-002",
+      "grupo": "Calculadora",
+      "nome": "Tempo de impressão em horas + minutos",
+      "descricao": "O tempo de impressão é digitado como h e min separados e convertido para decimal antes do cálculo.",
+      "pre_condicoes": ["/calcular"],
+      "entradas": ["horas (int)", "minutos (int)"],
+      "saida_esperada": "printTimeHours decimal equivalente; o preço reflete a conversão",
+      "regras_de_negocio": ["Conversão h+min → decimal (016/US7)"],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/time-input.ts",
+        "apps/web/src/features/calculator/calculator-form.tsx (TimeHmField)"
+      ]
+    },
+    {
+      "id": "CF-003",
+      "grupo": "Calculadora",
+      "nome": "Custo de máquina por RITMO ou por ajuste direto",
+      "descricao": "O vendedor responde 'com que frequência a máquina roda' + 'em quantos anos quer que ela se pague' e a plataforma deriva a vida útil em horas; ou alterna para o modo de ajuste direto.",
+      "pre_condicoes": ["/calcular"],
+      "entradas": [
+        "ritmo (3 opções)",
+        "anos de payback (1..5)",
+        "machineValue",
+        "ou machineLifetimeHours direto"
+      ],
+      "saida_esperada": "machineLifetimeHours derivado + a frase '≈ R$ X por hora'",
+      "regras_de_negocio": [
+        "Semente 3600h = 1200 h/ano × 3 anos, nasce no modo ritmo (calculator-schema.ts:322-330)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/machine-cost.ts",
+        "apps/web/src/features/calculator/calculator-schema.ts:495-506"
+      ]
+    },
+    {
+      "id": "CF-004",
+      "grupo": "Calculadora",
+      "nome": "Outros custos itemizados (0..N sub-custos nomeados)",
+      "descricao": "O vendedor adiciona linhas nome+valor; a soma vira a linha 'admin' do custo total e cada linha aparece no detalhamento.",
+      "pre_condicoes": ["/calcular"],
+      "entradas": ["otherCosts[] = {name, value}"],
+      "saida_esperada": "admin = Σ dos valores arredondados; cada item ecoado em ordem no breakdown",
+      "regras_de_negocio": [
+        "Nome em branco é aceito (rótulo genérico, FR-116)",
+        "Valor negativo é recusado"
+      ],
+      "evidencia_codigo": [
+        "packages/pricing-core/src/index.ts:298-305",
+        "apps/web/src/features/calculator/calculator-schema.ts:81-84,291"
+      ]
+    },
+    {
+      "id": "CF-005",
+      "grupo": "Calculadora",
+      "nome": "Detalhamento 'Como chegamos no preço'",
+      "descricao": "Exibição linha a linha das 7 componentes de custo com rótulos em pt-BR e valores em BRL.",
+      "pre_condicoes": ["Um cálculo válido em tela"],
+      "entradas": [],
+      "saida_esperada": "Linhas de breakdown cujos valores somam exatamente o custo total exibido",
+      "regras_de_negocio": ["WYSIWYG: a soma das linhas exibidas é o total exibido"],
+      "evidencia_codigo": [
+        "apps/web/src/shared/ui/breakdown-row.tsx",
+        "apps/web/src/pages/calcular/calcular-page.tsx"
+      ]
+    },
+    {
+      "id": "CF-006",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Configurar canais de venda (adicionar/remover slot, marketplace e modalidade)",
+      "descricao": "0..N slots de canal; cada um tem marketplace (ML/Shopee/Amazon/Outro) e modalidade quando existir.",
+      "pre_condicoes": ["/calcular", "toggle 'incluir marketplaces' ligado"],
+      "entradas": ["marketplace", "modality"],
+      "saida_esperada": "Um bloco de preços por canal; trocar de marketplace RESETA modalidade, categoria, perfil e sobretaxas",
+      "regras_de_negocio": [
+        "slotResetOnMarketplaceChange: categoria/perfil/sobretaxas não sobrevivem à troca de marketplace",
+        "Slot novo nasce em AMAZON (mitigação 015/A11 — ML sem tabela)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/calculator-schema.ts:245-287",
+        "apps/web/src/features/calculator/channel-field-plan.ts"
+      ]
+    },
+    {
+      "id": "CF-007",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Pré-preenchimento de tarifas pelo catálogo servido + selo de procedência",
+      "descricao": "As tarifas do canal vêm do catálogo (servido, cacheado ou semente embarcada) e a UI declara de onde vieram.",
+      "pre_condicoes": ["Catálogo disponível em alguma das 3 fontes"],
+      "entradas": ["determinantes do slot (marketplace, modalidade, categoria, perfil)"],
+      "saida_esperada": "Campos de tarifa preenchidos/refletidos + selo dizendo a fonte e a data; ausência de tabela mostra mensagem honesta ('sem referência — informe as taxas')",
+      "regras_de_negocio": [
+        "Campo digitado pelo vendedor NUNCA é sobrescrito",
+        "Mercado Livre não tem tabela hoje (US6-ML gateada) → mensagem honesta"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/fee-prefill.ts",
+        "apps/web/src/features/calculator/fee-seal.tsx",
+        "apps/web/src/shared/fee-catalog/{fee-catalog.ts,seed.ts,use-fee-catalog.ts}",
+        "backend/app/api/fee_catalog.py:219"
+      ]
+    },
+    {
+      "id": "CF-008",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Escolha de categoria do produto por canal (busca + árvore de subcategorias)",
+      "descricao": "Picker de categoria por slot, com busca textual e navegação em árvore; define a comissão aplicada.",
+      "pre_condicoes": ["Marketplace com eixo de categoria declarado (Amazon)"],
+      "entradas": ["texto de busca", "seleção na árvore"],
+      "saida_esperada": "Categoria escolhida vira determinante da comissão; 'Limpar' desfaz; sem categoria a Amazon aplica a maior alíquota",
+      "regras_de_negocio": [
+        "Categoria é POR marketplace e nunca sobrevive à troca dele",
+        "Categoria nunca bloqueia o cálculo (SC-809)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/category-picker.tsx",
+        "apps/web/src/shared/fee-catalog/category-tree.ts",
+        "apps/web/tests/e2e/category-picker.spec.ts"
+      ]
+    },
+    {
+      "id": "CF-009",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Perfil do vendedor Shopee (CPF/CNPJ + alto volume) e sobretaxas opcionais",
+      "descricao": "Duas perguntas de perfil que escolhem a tabela Shopee, e caixas de sobretaxa opcional (ex.: manuseio volumoso).",
+      "pre_condicoes": ["Slot com marketplace SHOPEE"],
+      "entradas": ["sellerType (CPF/CNPJ/vazio)", "highVolume (SIM/NAO/vazio)", "surcharges[]"],
+      "saida_esperada": "Tabela de tarifa correspondente; vazio = catch-all (byte-idêntico ao comportamento anterior)",
+      "regras_de_negocio": [
+        "highVolume só é perguntado quando sellerType=CPF",
+        "Sobretaxa sem rótulo é recusada pelo motor"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/calculator-schema.ts:48-69",
+        "apps/web/src/features/calculator/shopee-warnings.tsx",
+        "packages/pricing-core/src/index.ts:391-399",
+        "apps/web/tests/e2e/shopee-profile-volumoso.spec.ts"
+      ]
+    },
+    {
+      "id": "CF-010",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Gross-up por canal: preço de anúncio, líquido recebido, bandas e taxa fixa como função do preço",
+      "descricao": "Dado o preço-base, calcula o preço de anúncio que entrega o líquido desejado, respeitando comissão %, taxa fixa, piso por item, frete, bandas de preço (seleção ou progressiva) e regra PCT_OF_PRICE.",
+      "pre_condicoes": ["Slot válido com pelo menos uma tarifa"],
+      "entradas": ["precoVarejo", "precoAtacado", "ChannelFees"],
+      "saida_esperada": "precoAnuncio{Varejo,Atacado}, recebidoLiquido{...}, freightCost{...}; null quando nenhuma banda publicada cobre o anúncio (recusa honesta, FR-014a)",
+      "regras_de_negocio": [
+        "commissionPct deve estar em [0,100) — fora disso o SLOT erra sozinho, sem derrubar os vizinhos",
+        "O anúncio publicado é o MAIS BARATO que entrega a base (property test band-dominance)",
+        "Frete Shopee: subsídio é aditivo (freightSubsidyInfo), NÃO desconto do vendedor (hotfix A2)"
+      ],
+      "evidencia_codigo": [
+        "packages/pricing-core/src/channels.ts:416 grossUp",
+        "packages/pricing-core/src/channels.ts:172 validateBandRules",
+        "packages/pricing-core/src/index.ts:348-433",
+        "packages/pricing-core/tests/band-dominance.test.ts"
+      ],
+      "criticidade": "CRITICA"
+    },
+    {
+      "id": "CF-011",
+      "grupo": "Calculadora / Marketplace",
+      "nome": "Toggle 'incluir marketplaces' e gate premium da seção",
+      "descricao": "A seção de marketplace é Premium; no free o switch fica desligado/desabilitado com CTA de assinatura.",
+      "pre_condicoes": ["/calcular"],
+      "entradas": ["clique no switch"],
+      "saida_esperada": "Free: switch falso e desabilitado + CTA. Premium: seção operante.",
+      "regras_de_negocio": ["016/PR-E: marketplace virou Premium com promessa reescrita"],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/calculator-form.tsx",
+        "apps/web/src/shared/billing/teaser-upgrade.tsx",
+        "apps/web/tests/e2e/marketplace-premium.spec.ts"
+      ]
+    },
+    {
+      "id": "CF-012",
+      "grupo": "Calculadora",
+      "nome": "Usar do catálogo (pré-preencher filamento / impressora / produto)",
+      "descricao": "Premium: abre o catálogo em modo folha e traz os valores do item escolhido para o formulário.",
+      "pre_condicoes": ["Entitlement active", "Itens cadastrados"],
+      "entradas": ["item escolhido"],
+      "saida_esperada": "Campos preenchidos byte-idênticos ao item (SC-305)",
+      "regras_de_negocio": [
+        "Free: botão desabilitado + explicação do que é o catálogo + CTA (round 1, ponto 4)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/calculator/catalog-prefill.ts",
+        "apps/web/src/features/catalog/catalog-panel.tsx",
+        "apps/web/src/features/calculator/product-mapping.ts"
+      ]
+    },
+    {
+      "id": "CF-013",
+      "grupo": "Cenários",
+      "nome": "Salvar cenário a partir da calculadora",
+      "descricao": "Premium: grava a INTENÇÃO da configuração (não o preço) como cenário nomeado.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["nome do cenário", "estado do formulário"],
+      "saida_esperada": "Cenário persistido; a base é resolvida ao vivo na reabertura (ADR-0021)",
+      "regras_de_negocio": [
+        "Nenhum preço é armazenado no cenário",
+        "Campos aposentados (wasteGrams) são descartados COM declaração ao reabrir"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/scenarios/save-scenario-sheet.tsx",
+        "apps/web/src/features/calculator/scenario-bridge.ts",
+        "apps/web/src/entities/scenario/config-document.ts",
+        "backend/app/api/scenarios.py:525"
+      ]
+    },
+    {
+      "id": "CF-014",
+      "grupo": "Orçamentos",
+      "nome": "Registrar orçamento (snapshot imutável) a partir da calculadora",
+      "descricao": "Congela o preço calculado num registro imutável, online ou offline (fila durável).",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["rótulo opcional", "resultado corrente"],
+      "saida_esperada": "Registro no histórico com payload congelado e origem",
+      "regras_de_negocio": [
+        "Imutabilidade garantida por trigger PL/pgSQL (ADR-0019)",
+        "Offline: entra no outbox e sincroniza sozinho (ADR-0018)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/history/record-snapshot-sheet.tsx",
+        "apps/web/src/entities/history/outbox.ts",
+        "backend/app/api/history.py:292"
+      ]
+    },
+
+    {
+      "id": "CF-015",
+      "grupo": "Catálogo",
+      "nome": "CRUD de filamentos",
+      "descricao": "Criar, listar, editar e excluir filamentos do vendedor.",
+      "pre_condicoes": ["Entitlement active (escrita gated no servidor)"],
+      "entradas": ["nome (obrigatório)", "material", "custo por rolo", "peso do rolo"],
+      "saida_esperada": "Item persistido e refletido na lista e no cache offline",
+      "regras_de_negocio": [
+        "Servidor é a fronteira: free recebe 403 mesmo forçando a chamada",
+        "Nome vazio recusado no cliente (min(1))"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/catalog/{filament-form.tsx,filaments-panel.tsx,catalog-schema.ts:99-117}",
+        "backend/app/api/filaments.py:134-201"
+      ]
+    },
+    {
+      "id": "CF-016",
+      "grupo": "Catálogo",
+      "nome": "CRUD de impressoras",
+      "descricao": "Criar, listar, editar e excluir impressoras.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": [
+        "nome",
+        "valor da máquina",
+        "vida útil",
+        "consumo médio",
+        "reserva de manutenção"
+      ],
+      "saida_esperada": "Item persistido e disponível para pré-preenchimento",
+      "regras_de_negocio": ["Mesmos tetos numéricos do backend (validation.py CEIL_*)"],
+      "evidencia_codigo": [
+        "apps/web/src/features/catalog/{printer-form.tsx,printers-panel.tsx}",
+        "backend/app/api/printers.py:121-190"
+      ]
+    },
+    {
+      "id": "CF-017",
+      "grupo": "Catálogo",
+      "nome": "CRUD de produtos com referência viva ao catálogo",
+      "descricao": "Produto guarda referência a filamento/impressora; o preço é recomputado ao vivo e degrada de forma honesta quando a referência some.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["nome", "referências", "parâmetros da peça"],
+      "saida_esperada": "Resumo do produto recomputado; item apagado vira '(avulsa)' com último valor conhecido",
+      "regras_de_negocio": [
+        "D3 live-reflect + D6 degradação em tempo de leitura",
+        "Nenhum preço é armazenado no produto"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/catalog/products-panel.tsx",
+        "apps/web/src/entities/catalog/product-summary.ts",
+        "apps/web/src/pages/catalogo/produto-page.tsx",
+        "backend/app/api/products.py:464-560"
+      ]
+    },
+    {
+      "id": "CF-018",
+      "grupo": "Catálogo",
+      "nome": "Busca, filtro e ordenação das listas do catálogo",
+      "descricao": "Controles de lista compartilhados pelos painéis de filamento/impressora/produto/kit.",
+      "pre_condicoes": ["Lista com itens"],
+      "entradas": ["texto de busca", "ordenação"],
+      "saida_esperada": "Lista filtrada com contagem coerente com o número de itens realmente exibidos",
+      "regras_de_negocio": [
+        "014: contagem que mente ('8 encontrados' com 31 correspondências) é defeito conhecido dessa classe"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/catalog/catalog-controls.tsx",
+        "apps/web/src/shared/lib/use-debounced-value.ts"
+      ]
+    },
+    {
+      "id": "CF-019",
+      "grupo": "Catálogo",
+      "nome": "Cache offline do catálogo chaveado por uid",
+      "descricao": "As listas ficam disponíveis offline e nunca vazam entre contas na mesma máquina.",
+      "pre_condicoes": ["Uma leitura online prévia"],
+      "entradas": ["troca de rede para offline", "troca de conta"],
+      "saida_esperada": "Offline: última resposta do servidor com aviso honesto. Conta B nunca vê dados da conta A.",
+      "regras_de_negocio": ["Cache é chaveado por uid e purgado no sign-out"],
+      "evidencia_codigo": [
+        "apps/web/src/entities/catalog/catalog-cache.ts",
+        "apps/web/src/entities/user/entitlement-cache.ts"
+      ]
+    },
+    {
+      "id": "CF-020",
+      "grupo": "Catálogo",
+      "nome": "Teaser premium honesto do Catálogo (anônimo e free)",
+      "descricao": "Sem premium a aba mostra título + subtítulo + botão Assinar Premium, sem prometer o que não entrega.",
+      "pre_condicoes": ["Anônimo ou free"],
+      "entradas": [],
+      "saida_esperada": "UM teaser (nunca dois), sem botões 'Entrar'/'Entendi', sem erro de verificação",
+      "regras_de_negocio": [
+        "Round 1 pontos 12 e 15: free NÃO pode ver erro de verificação de premium",
+        "016/US1: invariante 'um teaser, nunca dois'"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/shared/billing/premium-teaser.tsx",
+        "apps/web/src/shared/billing/teaser-upgrade.tsx",
+        "apps/web/tests/e2e/billing-teasers.spec.ts"
+      ]
+    },
+
+    {
+      "id": "CF-021",
+      "grupo": "Kits",
+      "nome": "Compor kit multi-peça (linhas + quantidades) e calcular o conjunto",
+      "descricao": "Cada linha é uma peça com seus próprios custos; o kit soma as peças de forma independente.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["linhas do kit", "quantidade por linha"],
+      "saida_esperada": "BomResult com total do conjunto e linhas contribuintes/puladas",
+      "regras_de_negocio": [
+        "Montagem = soma independente por peça (ADR-0016)",
+        "quantity é int com teto 2147483647 (CEIL_QUANTITY)"
+      ],
+      "evidencia_codigo": [
+        "packages/pricing-core/src/index.ts:446-625 computeBom",
+        "apps/web/src/features/bom/bom-compute.ts",
+        "apps/web/src/widgets/bom-line-editor/bom-line-editor.tsx"
+      ]
+    },
+    {
+      "id": "CF-022",
+      "grupo": "Kits",
+      "nome": "Salvar, reabrir e duplicar kit",
+      "descricao": "Kit salvo atomicamente; reabrir recarrega as entradas e RECALCULA (nenhum preço foi guardado); duplicar carrega como novo e não salvo.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["/kits?id=<kitId>", "&copy=1"],
+      "saida_esperada": "Composição restaurada; cópia exige salvamento explícito",
+      "regras_de_negocio": [
+        "Save atômico + materialização (ADR-0017)",
+        "FR-407: nenhum preço armazenado"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/pages/bom/kit-save.ts",
+        "apps/web/src/app/router.tsx:166-178",
+        "backend/app/api/boms.py:553-660"
+      ]
+    },
+    {
+      "id": "CF-023",
+      "grupo": "Kits",
+      "nome": "Rollup de canais do kit",
+      "descricao": "Consolidação por marketplace dos preços das linhas do kit.",
+      "pre_condicoes": ["Kit com linhas que declaram canais"],
+      "entradas": [],
+      "saida_esperada": "Resumo por canal coerente com a soma das linhas",
+      "regras_de_negocio": ["Q12 kit rollup (E5/PR-B)"],
+      "evidencia_codigo": [
+        "apps/web/src/features/bom/channel-rollup.tsx",
+        "apps/web/src/features/bom/assembly-summary.tsx"
+      ]
+    },
+    {
+      "id": "CF-024",
+      "grupo": "Kits",
+      "nome": "Degradação honesta de linha de kit cuja referência de catálogo foi apagada",
+      "descricao": "Apagar o filamento/impressora referenciado não corrompe o kit: a linha degrada em tempo de leitura com legenda '(avulsa)'.",
+      "pre_condicoes": ["Kit salvo referenciando um item que depois é excluído"],
+      "entradas": ["exclusão do item referenciado"],
+      "saida_esperada": "Linha mantida, marcada como avulsa, com último valor conhecido; nunca some nem quebra",
+      "regras_de_negocio": ["ADR-0017 §6: degradação é em tempo de LEITURA, não captura ansiosa"],
+      "evidencia_codigo": [
+        "apps/web/src/entities/bom/use-bom.ts",
+        "apps/web/src/features/bom/bom-line-card.tsx"
+      ]
+    },
+
+    {
+      "id": "CF-025",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Registrar snapshot online e offline (fila durável)",
+      "descricao": "O registro é aceito com ou sem rede; offline entra numa fila por uid e sincroniza sozinha.",
+      "pre_condicoes": ["Entitlement active (ou active em cache, offline)"],
+      "entradas": ["rótulo", "payload congelado"],
+      "saida_esperada": "Registro visível imediatamente com estado de sincronização honesto",
+      "regras_de_negocio": [
+        "Estados: pending | blocked | failed | unauthenticated | synced",
+        "'synced' só quando o servidor confirmou — nunca por falha de releitura",
+        "401 NUNCA purga a fila (hotfix A3)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/entities/history/outbox.ts:38,205-345",
+        "apps/web/src/features/history/outbox-syncer.tsx",
+        "backend/app/api/history.py:292"
+      ],
+      "criticidade": "ALTA — perda de dados do vendedor"
+    },
+    {
+      "id": "CF-026",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Consultar o histórico com paginação por keyset e filtros de período",
+      "descricao": "Lista ilimitada paginada com 'carregar mais' e filtros de período.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["período", "carregar mais"],
+      "saida_esperada": "Páginas coerentes sem duplicar nem pular registros",
+      "regras_de_negocio": ["Keyset paginado, ledger não limitado (A29 fechado)"],
+      "evidencia_codigo": [
+        "apps/web/src/pages/historico/historico-page.tsx:62,367,461",
+        "apps/web/src/entities/history/use-history.ts",
+        "backend/app/api/history.py:365"
+      ]
+    },
+    {
+      "id": "CF-027",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Abrir o detalhe de um orçamento congelado e ver sua origem",
+      "descricao": "Detalhe renderizado a partir do payload congelado, com a origem (CALCULADORA / KIT / CENÁRIO).",
+      "pre_condicoes": ["Um registro existente"],
+      "entradas": ["/historico?snapshot=<clientSnapshotId>"],
+      "saida_esperada": "Os mesmos números do dia do registro, inertes a mudanças posteriores do catálogo",
+      "regras_de_negocio": [
+        "A chave da URL é o clientSnapshotId (um registro ainda não sincronizado precisa abrir)",
+        "Inércia a churn de catálogo (US3)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+        "apps/web/src/entities/history/{frozen-payload.ts,origin.ts}",
+        "apps/web/src/app/router.tsx:191-206"
+      ]
+    },
+    {
+      "id": "CF-028",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Recalcular hoje e comparar então-vs-agora",
+      "descricao": "A partir de um registro congelado, recalcular com os dados de hoje e comparar as duas colunas.",
+      "pre_condicoes": ["Um registro existente"],
+      "entradas": ["ação 'Recalcular hoje'"],
+      "saida_esperada": "Comparativo; o registro original permanece intacto (imutável)",
+      "regras_de_negocio": ["O recálculo herda o rótulo", "Nunca sobrescreve o congelado"],
+      "evidencia_codigo": ["apps/web/src/pages/historico/{recalc-today.tsx,compare-today.tsx}"]
+    },
+    {
+      "id": "CF-029",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Exportar orçamento em PDF e CSV",
+      "descricao": "Exportação renderizada no servidor, atrás de entitlement ATIVO.",
+      "pre_condicoes": ["Entitlement active", "Registro sincronizado"],
+      "entradas": ["formato"],
+      "saida_esperada": "Arquivo baixado com os valores do registro; layout sem colisão de colunas",
+      "regras_de_negocio": [
+        "Gate de entitlement ATIVO (não apenas logado)",
+        "Nome longo NÃO pode invadir a coluna de preço (lição E4)",
+        "CSV: injeção de fórmula é risco conscientemente aceito com gatilhos de reabertura"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/history/export-sheet.tsx",
+        "apps/web/src/entities/history/use-export.ts",
+        "backend/app/api/export.py:39,80",
+        "backend/app/services/quote_render.py"
+      ]
+    },
+    {
+      "id": "CF-030",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Gerenciar registros (renomear rótulo, encerrar validade, excluir)",
+      "descricao": "Ações de gestão sobre o ledger sem violar a imutabilidade do payload.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["novo rótulo", "lapse", "exclusão"],
+      "saida_esperada": "Metadados mudam; o payload congelado nunca muda",
+      "regras_de_negocio": ["PATCH só toca metadado; o trigger de imutabilidade recusa o resto"],
+      "evidencia_codigo": [
+        "apps/web/src/features/history/snapshot-manage.tsx",
+        "backend/app/api/history.py:442,471"
+      ]
+    },
+    {
+      "id": "CF-031",
+      "grupo": "Orçamentos / Histórico",
+      "nome": "Guarda de sign-out com fila não sincronizada",
+      "descricao": "Sair com registros pendentes avisa antes de destruí-los.",
+      "pre_condicoes": ["Outbox não vazio"],
+      "entradas": ["clique em Sair (em qualquer um dos dois pontos)"],
+      "saida_esperada": "Diálogo de confirmação honesto; nada é perdido em silêncio",
+      "regras_de_negocio": ["A guarda mora no shell justamente para cobrir os DOIS botões de sair"],
+      "evidencia_codigo": [
+        "apps/web/src/features/history/sign-out-outbox-guard.tsx",
+        "apps/web/src/app/app-shell.tsx:113",
+        "apps/web/tests/e2e/history-signout-queue.spec.ts"
+      ]
+    },
+
+    {
+      "id": "CF-032",
+      "grupo": "Cenários salvos",
+      "nome": "Listar, buscar, duplicar, editar e excluir cenários",
+      "descricao": "Gestão completa dos cenários salvos.",
+      "pre_condicoes": ["Entitlement active"],
+      "entradas": ["busca", "duplicar", "renomear", "excluir"],
+      "saida_esperada": "Operações refletidas na lista; duplicar abre para ajuste sem salvar sozinho",
+      "regras_de_negocio": ["PUT/PATCH/DELETE/search/lapse existem no servidor"],
+      "evidencia_codigo": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/entities/scenario/use-scenarios.ts",
+        "backend/app/api/scenarios.py:491-700"
+      ]
+    },
+    {
+      "id": "CF-033",
+      "grupo": "Cenários salvos",
+      "nome": "Resolver a base do cenário ao vivo (produto e kit)",
+      "descricao": "O cenário guarda intenção; ao abrir, resolve a base contra o catálogo de hoje e reflete mudanças de tarifa/comissão.",
+      "pre_condicoes": ["Cenário salvo sobre produto ou kit"],
+      "entradas": ["abrir cenário"],
+      "saida_esperada": "Preço recalculado com os dados atuais; base apagada degrada de forma honesta (lastKnown)",
+      "regras_de_negocio": [
+        "ADR-0021 híbrido JSONB: guardar intenção, resolver ao vivo",
+        "Homologado por MUTAÇÃO: mudar a comissão servida reprecifica o mesmo cenário"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/entities/scenario/resolved-basis.ts",
+        "apps/web/src/entities/scenario/config-document.ts"
+      ]
+    },
+    {
+      "id": "CF-034",
+      "grupo": "Cenários salvos",
+      "nome": "Registrar orçamento congelado a partir de um cenário",
+      "descricao": "Ponte E5→E4: um cenário vira snapshot com procedência 'SCENARIO'.",
+      "pre_condicoes": ["Cenário salvo", "Entitlement active"],
+      "entradas": ["ação de registrar"],
+      "saida_esperada": "Snapshot com provenance SCENARIO no payload",
+      "regras_de_negocio": ["A imutabilidade do snapshot não é tocada"],
+      "evidencia_codigo": [
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+        "apps/web/src/entities/history/frozen-payload.ts"
+      ]
+    },
+
+    {
+      "id": "CF-035",
+      "grupo": "Conta",
+      "nome": "Exibir identidade da conta (/me)",
+      "descricao": "Mostra e-mail/identificação vindos do servidor, com estados de carregando e erro.",
+      "pre_condicoes": ["Autenticado"],
+      "entradas": [],
+      "saida_esperada": "Identidade real ou erro honesto com botão de tentar de novo — NUNCA um fallback inventado",
+      "regras_de_negocio": ["Sem `title` no DOM (PII não vaza para o Sentry)"],
+      "evidencia_codigo": [
+        "apps/web/src/pages/conta/conta-page.tsx:45-95",
+        "apps/web/src/entities/user/use-identity.ts",
+        "backend/app/api/me.py:19"
+      ]
+    },
+    {
+      "id": "CF-036",
+      "grupo": "Conta / Billing",
+      "nome": "Exibir o estado do plano (7 estados possíveis)",
+      "descricao": "O painel recebe um PlanState já resolvido e renderiza exatamente ele.",
+      "pre_condicoes": ["Autenticado"],
+      "entradas": ["entitlement + subscription do servidor"],
+      "saida_esperada": "Um dos 7: unknown | subscription-active | subscription-canceled | grace | courtesy | lapsed | free",
+      "regras_de_negocio": [
+        "PlanState é união discriminada: nenhum `if` esquecido produz painel sem estado (SC-708)",
+        "Precedência 'assinatura vence' SÓ vale consultando o ledger — assinatura authorized com grant expirado NÃO é premium (defeito real do PR-B)",
+        "Janela de graça ancorada em current_period_end, nunca em now"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/billing/plan-view.ts:33-96",
+        "apps/web/src/features/billing/plan-panel.tsx",
+        "apps/web/src/features/billing/use-subscription.ts",
+        "backend/app/billing/subscription.py"
+      ],
+      "criticidade": "CRITICA — 'premium falso' e 'premium para sempre' já ocorreram"
+    },
+    {
+      "id": "CF-037",
+      "grupo": "Conta / Billing",
+      "nome": "Abrir o painel de oferta até a borda do checkout",
+      "descricao": "?assinar=1 abre a folha de oferta com planos e preços; o teste PARA no clique que iniciaria o checkout.",
+      "pre_condicoes": ["Autenticado"],
+      "entradas": ["/conta?assinar=1", "os quatro teasers"],
+      "saida_esperada": "Oferta legível, sem overflow, com preços corretos; o botão de checkout existe e é alcançável",
+      "regras_de_negocio": [
+        "ESCOPO: não acionar o checkout (fora de escopo)",
+        "Já houve 100,5px de overflow e botão nascendo fora da viewport"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/billing/offer-panel.tsx",
+        "apps/web/src/shared/billing/{plans.ts,price-line.ts}",
+        "apps/web/src/app/router.tsx:232-238",
+        "apps/web/tests/e2e/billing-offer-geometry.spec.ts"
+      ]
+    },
+    {
+      "id": "CF-038",
+      "grupo": "Conta / Billing",
+      "nome": "Superfície de retorno de checkout (?checkout=retorno)",
+      "descricao": "A tela que o vendedor encontra ao voltar do provedor — testável sem executar pagamento.",
+      "pre_condicoes": ["Autenticado"],
+      "entradas": ["/conta?checkout=retorno"],
+      "saida_esperada": "Mensagem honesta de 'estamos confirmando' sem afirmar premium antes da confirmação",
+      "regras_de_negocio": ["A query sobrevive ao round-trip pelo /sign-in (safeRedirect)"],
+      "evidencia_codigo": [
+        "apps/web/src/features/billing/checkout-return.tsx",
+        "apps/web/src/app/router.tsx:39-46"
+      ]
+    },
+    {
+      "id": "CF-039",
+      "grupo": "Conta",
+      "nome": "Sair da conta",
+      "descricao": "Encerra a sessão e purga caches por uid.",
+      "pre_condicoes": ["Autenticado"],
+      "entradas": ["clique em Sair"],
+      "saida_esperada": "Volta ao estado anônimo; caches do uid purgados; guarda de outbox respeitada",
+      "regras_de_negocio": ["Dois pontos de saída existem (sign-out-entry-points.test.tsx)"],
+      "evidencia_codigo": [
+        "apps/web/src/shared/session/{session-store.ts:71,sign-out-guard.ts}",
+        "apps/web/src/app/sign-out-entry-points.test.tsx"
+      ]
+    },
+
+    {
+      "id": "CF-040",
+      "grupo": "Autenticação",
+      "nome": "Entrar com Google",
+      "descricao": "Único método de autenticação da plataforma.",
+      "pre_condicoes": ["Firebase configurado (emulador em dev/e2e)"],
+      "entradas": ["clique em Entrar"],
+      "saida_esperada": "Sessão autenticada e retorno ao destino pretendido",
+      "regras_de_negocio": [
+        "Firebase ausente ⇒ status 'not-configured', tratado como não autenticado",
+        "Conta é criada just-in-time na primeira requisição autenticada"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/features/auth/sign-in-screen.tsx",
+        "apps/web/src/shared/session/session-store.ts:66",
+        "backend/app/auth.py"
+      ]
+    },
+    {
+      "id": "CF-041",
+      "grupo": "Autenticação",
+      "nome": "Guardas de rota e retorno ao destino pretendido",
+      "descricao": "Rotas privadas redirecionam ao /sign-in carregando o destino; o retorno preserva query params.",
+      "pre_condicoes": [],
+      "entradas": ["/conta", "/catalogo?produto=X", "/historico?snapshot=Y", "redirect malicioso"],
+      "saida_esperada": "Volta exatamente ao destino interno; alvo externo/protocol-relative cai em /calcular",
+      "regras_de_negocio": [
+        "Whitelist RETURN_TO_INTENT = /catalogo /kits /historico /conta (guarda de open-redirect)",
+        "/calcular /catalogo /kits /historico /privacidade são PÚBLICAS"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/app/router.tsx:32-56,243-258",
+        "apps/web/src/app/router.guards.test.tsx"
+      ],
+      "criticidade": "ALTA — superfície de open-redirect"
+    },
+    {
+      "id": "CF-042",
+      "grupo": "Autenticação",
+      "nome": "Sessão expirada durante o uso",
+      "descricao": "Quando o servidor recusa a sessão viva (401), a plataforma mostra faixa fixa com caminho de volta e não destrói a fila.",
+      "pre_condicoes": ["Sessão autenticada que expira"],
+      "entradas": ["401 do servidor"],
+      "saida_esperada": "Faixa 'Entrar de novo' persistente; entradas do outbox viram 'unauthenticated', não são purgadas",
+      "regras_de_negocio": ["hotfix 016/A3"],
+      "evidencia_codigo": [
+        "apps/web/src/shared/session/session-expiry.ts",
+        "apps/web/src/widgets/session-expiry-banner/session-expiry-banner.tsx",
+        "apps/web/tests/e2e/session-expiry.spec.ts"
+      ]
+    },
+
+    {
+      "id": "CF-043",
+      "grupo": "Shell",
+      "nome": "Navegação por viewport (TabBar / sidebar / rail colapsável)",
+      "descricao": "Três composições de navegação conforme a largura, com o rail colapsável só acima de 1280px.",
+      "pre_condicoes": [],
+      "entradas": ["redimensionamento", "toggle do rail"],
+      "saida_esperada": "≤425px TabBar; 426–1279 sidebar fixa; ≥1280 rail com colapso persistido",
+      "regras_de_negocio": [
+        "useIsWide retorna false sem matchMedia — o ramo mobile é o MESMO código"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/app/app-shell.tsx:18,52-119",
+        "apps/web/src/shared/lib/use-is-wide.ts",
+        "apps/web/src/shared/ui/nav-rail-store.ts",
+        "apps/web/src/widgets/app-nav/app-nav.tsx"
+      ]
+    },
+    {
+      "id": "CF-044",
+      "grupo": "Shell",
+      "nome": "Tema claro/escuro com persistência e primeira pintura",
+      "descricao": "Preferência salva em localStorage, aplicada antes do React montar; controle segmentado é desktop-only (018).",
+      "pre_condicoes": [],
+      "entradas": ["troca de tema", "reload", "prefers-color-scheme"],
+      "saida_esperada": "Sem flash de tema errado; a escolha sobrevive ao reload; contraste legível nos dois temas",
+      "regras_de_negocio": [
+        "Chave 'precifica3d-theme' compartilhada com o script inline do index.html"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/shared/ui/theme-store.ts",
+        "apps/web/src/shared/ui/segmented.tsx",
+        "apps/web/src/widgets/top-bar/top-bar.tsx"
+      ]
+    },
+    {
+      "id": "CF-045",
+      "grupo": "Shell",
+      "nome": "Modo offline e faixa de aviso",
+      "descricao": "A plataforma continua calculando offline (o motor é local) e avisa o estado da rede sem mentir.",
+      "pre_condicoes": [],
+      "entradas": ["queda de conexão"],
+      "saida_esperada": "Faixa role=status; cálculo continua; leituras servem cache com procedência; falha de rede NUNCA é vendida como 'não é premium'",
+      "regras_de_negocio": [
+        "Lição 016/T072: falha de rede apresentada como falta de premium é defeito"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/widgets/offline-banner/offline-banner.tsx",
+        "apps/web/src/shared/lib/use-online.ts"
+      ]
+    },
+    {
+      "id": "CF-046",
+      "grupo": "Shell",
+      "nome": "Aviso de privacidade público",
+      "descricao": "Página pública ligada à tela de entrada.",
+      "pre_condicoes": [],
+      "entradas": ["/privacidade"],
+      "saida_esperada": "Conteúdo legível sem sessão",
+      "regras_de_negocio": ["FR-214 (006)"],
+      "evidencia_codigo": [
+        "apps/web/src/pages/privacidade/privacidade-page.tsx",
+        "apps/web/tests/e2e/privacy.spec.ts"
+      ]
+    },
+    {
+      "id": "CF-047",
+      "grupo": "Shell",
+      "nome": "Rota inexistente e fronteira de erro",
+      "descricao": "404 e errorComponent do root.",
+      "pre_condicoes": [],
+      "entradas": ["URL inexistente", "erro de render"],
+      "saida_esperada": "Página amigável em pt-BR; nunca tela branca, stack trace ou JSON cru",
+      "regras_de_negocio": [
+        "Round 1 follow-up A4: rota de 2 segmentos engolindo o 404 é defeito conhecido dessa classe"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/pages/{not-found/not-found-page.tsx,error/error-page.tsx}",
+        "apps/web/src/app/router.tsx:58-62"
+      ]
+    },
+    {
+      "id": "CF-048",
+      "grupo": "Shell",
+      "nome": "Deep links e redirects de URLs legadas",
+      "descricao": "URLs antigas de 2 segmentos redirecionam para a forma com query param, preservando o id.",
+      "pre_condicoes": [],
+      "entradas": ["/catalogo/produtos/novo", "/catalogo/produtos/$id", "/historico/$id"],
+      "saida_esperada": "Redirecionamento preservando o id; cold load não branqueia a tela",
+      "regras_de_negocio": [
+        "base:'./' branqueia rota de 2 segmentos em cold load — daí a forma ?produto=/?snapshot=",
+        "Os redirects NÃO carregam guarda de auth própria (016/T072-A4)"
+      ],
+      "evidencia_codigo": [
+        "apps/web/src/app/router.tsx:121-160,208-220",
+        "apps/web/tests/e2e/deep-links.spec.ts",
+        "firebase.json"
+      ]
+    }
+  ]
+}

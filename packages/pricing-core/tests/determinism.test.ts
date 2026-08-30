@@ -11,7 +11,6 @@ const INPUT: PriceInput = {
   costPerRoll: 137.5,
   rollWeightKg: 1,
   printGrams: 83,
-  wasteGrams: 7,
   printTimeHours: 6.25,
   avgPowerKw: 0.14,
   tariffPerKwh: 0.92,
@@ -53,7 +52,7 @@ describe("computeCalculator — single source + version stamp (SC-109)", () => {
 
   it("stamps every result with the model version", () => {
     const r = computeCalculator(INPUT);
-    expect(r.modelVersion).toBe("3.0.0");
+    // The literal pin lives in version.test.ts (single source); here only the stamping matters.
     expect(r.modelVersion).toBe(PRICING_MODEL_VERSION);
   });
 });

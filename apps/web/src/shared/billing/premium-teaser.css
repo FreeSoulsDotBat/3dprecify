@@ -1,0 +1,37 @@
+/* 016/US1 (T005) — the ONE teaser layout: centered, generous, on-brand (the `.tf-empty` family's
+   spacing, without borrowing its icon/action slots — this component's shape is closed). */
+.tf-premium-teaser {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--space-3);
+  padding: var(--space-6) var(--space-5);
+  /* Homologação automatizada (CF-043-UI-03) — `max-width: 28rem` (448px) NÃO encolhe um item de
+     flex/grid abaixo do seu conteúdo: a 426px, o primeiro pixel do layout desktop, a sidebar come
+     240px e o teaser continuava reivindicando ~506px — 131px fora da viewport. `min()` + o
+     `min-width: 0` que libera o encolhimento resolvem sem mexer no desenho acima de 600px.
+     A faixa 426–600px é estreita e é exatamente onde ninguém olha. */
+  max-width: min(28rem, 100%);
+  min-width: 0;
+  margin-inline: auto;
+}
+.tf-premium-teaser__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+}
+.tf-premium-teaser__subtitle {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}
+.tf-premium-teaser__caption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-caption);
+}
+.tf-premium-teaser__disabled {
+  margin-top: var(--space-2);
+  width: 100%;
+}

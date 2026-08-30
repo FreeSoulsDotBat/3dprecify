@@ -55,7 +55,8 @@
 .tf-card--interactive:active {
   transform: translateY(0);
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-card--interactive:focus-visible {
   outline: none;
-  box-shadow: var(--ring);
+  box-shadow: none;
 }

@@ -1,6 +1,8 @@
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import { type ComponentPropsWithoutRef, forwardRef } from "react";
 
+import { messages } from "@/shared/i18n/messages.pt-br";
+
 import { Icon } from "./icon";
 
 import "./dialog.css";
@@ -41,7 +43,7 @@ export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(func
     variant = "center",
     side = "right",
     showClose = true,
-    closeLabel = "Fechar",
+    closeLabel = messages.ds.close,
     className = "",
     children,
     ...rest

@@ -1,0 +1,19 @@
+{
+  "id": "selo-badge-e-tons",
+  "nome": "Selo (Badge) — o selo Premium desenhado que não existe, e as exceções do selo de tarifa",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/shared/ui/badge.tsx",
+    "apps/web/src/shared/ui/badge.css",
+    "apps/web/src/features/calculator/fee-seal.tsx",
+    "apps/web/src/features/calculator/fee-seal.css",
+    "apps/web/src/features/billing/offer-panel.tsx"
+  ],
+  "oQueFoiInferido": "O app construiu um Badge de quatro tons de status (neutral/info/success/danger) com uma prop só (`tone`) e NÃO construiu o selo Premium que o desenho especifica duas vezes — sem slot de ícone, sem aparência sólida, sem o laranja de energia. Inferidos no código: altura mínima 24px, padding 0,125rem × --space-3, radius pill, `white-space: nowrap` e fundo `*-soft` com texto no token de status. Fora do DS nasceu `.tf-badge.fee-seal`, que reverte três decisões do primitivo — deixa quebrar linha, alinha à esquerda e ganha borda de 1px porque no tema escuro o fundo do selo (`--bg-muted`) é igual ao do cartão e a pílula sumia.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A marca visual do que é Premium — o principal sinal do modelo freemium — foi desenhada e não existe; e o selo que atesta a origem da tarifa precisou de exceções locais para não sumir no escuro.",
+  "prioridade": "MEDIA",
+  "refutacao": "Metade cai, metade endurece. CAI: os tons de status ESTÃO desenhados no canvas do dono — `tf-badge--success` ('Ao vivo', l.212), `tf-badge--info` ('recomendado', l.403) e `tf-badge--neutral` nos chips de período (l.272-275) —, então 'os quatro tons foram escolhidos no código' é falso. ENDURECE: o Badge Premium não é lacuna, é DIVERGÊNCIA declarada — §D.2 o especifica duas vezes ('Badge Premium — pequeno, laranja (--energy), texto preto, rótulo \"Premium\". Marca ações gated') e `AccountScreen.jsx:28` o desenha com `tone=\"accent\" appearance=\"solid\" icon={<Icon name=\"crown\" size={11}/>}`; o `badge.tsx` do app não tem `appearance` nem `icon` e nenhum tom laranja. E o canvas prova a falta pela prática: os selos das listas, do plano e do estado do item são pintados com `background`/`color` INLINE vindos do helper `tone()` (l.108, 284, 384) — o dono precisou de tons que o primitivo não oferece. Sem desenho também as exceções do `fee-seal.css` ('US2 homologation (T026b)').",
+  "sobreviveu": true,
+  "area": "design-system"
+}

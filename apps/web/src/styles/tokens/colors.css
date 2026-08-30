@@ -132,6 +132,12 @@
      (--tf-info-soft #e0f6fb). The old --tf-teal-deep (#0b8196) read only ~4.1:1 on the
      tint (the D3 miss); #0a6d80 reads ~5.3:1 on the tint and ~6.0:1 on white. */
   --info-text: #0a6d80;
+  /* 019/T002/T020: `--tf-amber-deep` (#bd6c0e) REPROVA AA como texto — 3,95:1 sobre
+     branco e 3,46:1 sobre `--tf-warning-soft` (#fdeed8), ambos < 4,5:1. `#9a570a` passa
+     nos dois fundos (5,61:1 / 4,92:1) e é o primeiro tom que folga sobre o soft
+     (`#a35c0b` reprova por 0,01). ADR-0032 §4: só o texto escurece — ícone/badge/botão
+     seguem em `--tf-amber-deep`, o laranja da marca não muda. */
+  --warning-text: #9a570a;
 
   --focus-ring: var(--tf-purple);
   --selection-bg: var(--tf-purple);
@@ -190,11 +196,22 @@
   --tf-warning-soft: rgba(247, 147, 30, 0.16);
 
   /* Status AS TEXT (INV-3/4) — the brighter base hues read for status text on
-     the dark plane. Contrast vs #14151a card: danger ~5.9:1, success ~5.5:1,
-     info ~8.0:1 (all ≥4.5:1 AA). */
+     the dark plane.
+     Homologação automatizada (CF-036/CF-037): a medida deste bloco era contra o CARD (#14151a) —
+     mas o texto de status vive dentro do `.tf-badge--*`, cujo fundo é o `*-soft` (16% da cor) JÁ
+     COMPOSTO sobre o card. Esse fundo é mais claro, e o `success` caía para **4,46:1** — reprova
+     por 0,04. A palavra "Premium" do plano ativo é exatamente esse caso.
+     Os números abaixo são contra o FUNDO REAL (o soft sobre o card), que é o pior caso e o que o
+     olho vê: danger ~5,3:1 · success ~5,7:1 · info ~7,2:1. */
   --danger-text: var(--tf-danger);
-  --success-text: var(--tf-success);
+  --success-text: #25b57e;
   --info-text: var(--tf-cyan);
+  /* 019/T002/T020: same INV-3/4 rule as the other *-text tokens on the dark plane — the
+     base brand hue, unmodified, already clears AA against the real backgrounds: 7,94:1
+     on the card (#14151a) and 6,08:1 on the composited soft (`--tf-warning-soft` over
+     the card, the pior-caso pattern from CF-036/037 above). ADR-0032 §4: the brand
+     orange itself never changes; only text needed a darker tone, and only on light. */
+  --warning-text: var(--tf-orange);
 }
 
 /* First-paint theme selection is the consuming app's job: set

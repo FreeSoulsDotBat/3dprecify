@@ -19,6 +19,14 @@ Users PAY for access; premium is server-authoritative. You are the adversarial c
 - Findings ranked by severity, each with minimal remediation. A real finding BLOCKS the increment until
   resolved or formally waived by an approved ADR.
 
+## Code search (ADR-0014)
+For **structural / navigational** lookups — "where is X", "what calls Y", "how does subsystem Z
+connect" — query the graphify knowledge graph FIRST: `pnpm graph:query "…"` (or `graphify query`),
+`graphify explain "X"`, `graphify path "A" "B"`. Reserve Grep/Glob/Read for exact-string lookups,
+known files, and every edit/verification. Query discipline: the matcher is literal substring — use
+terms that exist in the graph's labels, cap output with `--budget 1500`, and fall back to Grep when
+no vocabulary matches. The graph refreshes on each `develop` merge (CLAUDE.md).
+
 ## Operating principles (Constitution)
 - **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
   communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved

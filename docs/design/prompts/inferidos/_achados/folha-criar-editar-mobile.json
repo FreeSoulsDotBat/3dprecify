@@ -1,0 +1,13 @@
+{
+  "id": "folha-criar-editar-mobile",
+  "nome": "Folha (Sheet) de criar/editar filamento e impressora no mobile",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/features/catalog/catalog-panel.tsx"],
+  "oQueFoiInferido": "Linhas 452-476: o formulário abre num `SheetContent side=\"right\"` de altura cheia, com o `SheetTitle` como primeiro elemento de uma coluna `gap-4`; as ações \"Voltar\"/\"Salvar\" vêm do próprio formulário, `flex justify-end` no FIM do conteúdo, sem rodapé fixo. Inferido: a ancoragem lateral no celular (área de toque para fechar, comportamento com o teclado aberto), se as ações rolam com o conteúdo, e o erro de gravação — que injeta um `Alert tone=\"danger\"` ENTRE os campos e os botões (filament-form linha 86), empurrando-os para baixo no instante em que o vendedor vai tocá-los.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "O caminho de criar um item no celular usa uma ancoragem que nenhuma autoridade desenhou e que UMA delas proíbe explicitamente, e o erro de salvar desloca os botões justamente quando o dedo vai neles.",
+  "prioridade": "MEDIA",
+  "refutacao": "Não cai, e como no carregamento a autoridade não é omissa — ela diz o CONTRÁRIO. (1) §D.2 (linhas 197-198) define o componente: \"Sheet / bottom-sheet — painel radius xl (24px), `--surface-overlay` de fundo, ENTRA DE BAIXO (mobile) / centralizado (desktop)\". §E5 (linha 262) prevê \"Form add/editar\". (3) `CatalogScreen.jsx` linhas 70-74 implementa `Sheet placement=\"bottom\"` com `footer` de DOIS botões `full` lado a lado (Cancelar | Salvar) — rodapé próprio, ações fixas, ancoragem inferior. A gaveta lateral não aparece em autoridade nenhuma; o comentário do código (linha 452, \"right-anchored full-height Sheet (survives the mobile keyboard, §0.2)\") cita `ux-catalog.md`, que é SPEC_TEXTUAL. (2) A auditoria trata do foco/Escape do sheet (itens 22/11, V3 #11 FIXED) sem tocar na ancoragem. (4) O canvas substituiu a gaveta pela ficha no desktop (research §E) e não cobre o mobile.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

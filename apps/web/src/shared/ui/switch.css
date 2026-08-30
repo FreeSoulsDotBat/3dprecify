@@ -44,11 +44,12 @@
   transform: translateX(20px);
 }
 
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-switch:focus-visible {
   outline: none;
 }
 .tf-switch:focus-visible .tf-switch__track {
-  box-shadow: var(--ring);
+  box-shadow: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,0 +1,18 @@
+{
+  "id": "cartao-clicavel-e-selecionado",
+  "nome": "Cartão — o clicável, o selecionado e as variantes sem espelho",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/shared/ui/card.tsx",
+    "apps/web/src/shared/ui/card.css",
+    "apps/web/src/features/catalog/catalog-master-detail.css",
+    "apps/web/src/features/catalog/catalog-panel.tsx"
+  ],
+  "oQueFoiInferido": "O `interactive` (hover levanta o cartão 2px com `--shadow-md` e borda mais forte, foco pelo anel, `role=\"button\"` + `tabIndex` injetados quando a tag não é botão) e as seis variantes / quatro paddings, das quais `inverse`, `accent` e `ghost` nunca foram desenhadas em contexto. O estado SELECIONADO não é variante do primitivo: virou classe de feature (`catalog-master-detail.css:66`, aplicada por concatenação em `catalog-panel.tsx:305`) — o `card.tsx` não sabe o que é 'selecionado'.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "No desktop a lista mestre inteira é feita de cartões clicáveis: passar o mouse levanta, o selecionado pinta, o foco desenha um anel — três sinais que nunca foram vistos juntos num desenho.",
+  "prioridade": "BAIXA",
+  "refutacao": "O par PARADO está desenhado pelo dono e conferi no script: os cartões da lista do Catálogo (l.105, `tf-card tf-card--interactive`, `border-color: {{ it.border }}` que resolve para `var(--accent)` no item aberto, l.601) e os registros de Orçamentos (l.280, com `background: {{ rc.bg }}` = `var(--accent-soft)` no selecionado, l.625). §D.1 lista as variantes e o `interactive` em prosa, declarando que o componente 'já existe no código' — documenta o código, não o desenha; `.design-import` não traz Card.jsx e `AccountScreen.jsx` usa `Card padding=\"none\"/\"md\"` com cores forçadas por style inline. Continua sem desenho: hover (`translateY(-2px)`), foco, o selecionado como parte da família (hoje é classe de feature) e as variantes `inverse`/`accent`/`ghost` em contexto. Sobrevive, BAIXA.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

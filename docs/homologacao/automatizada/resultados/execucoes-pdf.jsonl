@@ -1,0 +1,300 @@
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=curto | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=curto | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=descritivo longo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=descritivo longo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=200+ caracteres COM espaços (pode quebrar linha) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=120 caracteres SEM espaço (não há onde quebrar) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=400 caracteres SEM espaço | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=400 caracteres SEM espaço | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=hifenizado longo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=hifenizado longo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tudo maiúsculo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tudo maiúsculo | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=markup e aspas | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=markup e aspas | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=emoji (glifos largos) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=emoji (glifos largos) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=CJK | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=CJK | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=árabe (RTL) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=árabe (RTL) | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=acentuação pesada | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=acentuação pesada | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=texto com cara de fórmula | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=texto com cara de fórmula | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=tabulações | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=tabulações | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=normal | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=normal | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=milhar | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=milhar | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=milhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=milhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=bilhão | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=bilhão | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=doze dígitos | custos=nao"}
+{"subcenario": "CF-029-UI-01", "categoria": "estresse_de_dados", "titulo": "nome=espaços múltiplos | total=doze dígitos | custos=sim"}
+{"subcenario": "CF-029-UI-01", "categoria": "layout", "titulo": "nome=espaços múltiplos | total=doze dígitos | custos=sim"}

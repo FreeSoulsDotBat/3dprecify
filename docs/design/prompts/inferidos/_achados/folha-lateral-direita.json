@@ -1,0 +1,24 @@
+{
+  "id": "folha-lateral-direita",
+  "nome": "Folha lateral (Sheet) que entra pela direita",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/shared/ui/dialog.tsx",
+    "apps/web/src/shared/ui/dialog.css",
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/history/export-sheet.tsx",
+    "apps/web/src/features/history/record-snapshot-sheet.tsx",
+    "apps/web/src/features/scenarios/save-scenario-sheet.tsx",
+    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+    "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+    "apps/web/src/pages/conta/conta-page.tsx",
+    "apps/web/src/pages/historico/historico-page.tsx"
+  ],
+  "oQueFoiInferido": "A ANCORAGEM, contra o único desenho que existe. `dialog.tsx:44` fixa `side = \"right\"` como PADRÃO; das 12 folhas do app, apenas `catalog-panel.tsx:459` declara `side` — e declara 'right'. As outras 11 (exportar, registrar orçamento, salvar simulação, lista de simulações, renomear cenário, conta, histórico) entram pela direita porque ninguém escolheu. Junto vieram: largura min(92vw, 26rem) × altura inteira, arredondamento só na borda interna, ausência de alça de arrasto, rolagem interna, rodapé de ações montado caso a caso, e `.tf-dialog--sheet-left` (dialog.css:39/49) sem UM consumidor no app inteiro (`grep side=\"left\"` = 0).",
+  "autoridade": "NENHUMA",
+  "impacto": "No celular — o formato principal do produto — todo formulário de cadastro e toda ação de salvar/exportar chega por um painel que cobre 92% da tela vindo do lado, gesto que nenhuma autoridade previu e que confunde o 'voltar' do sistema.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei prova de que já estava desenhado e achei o CONTRÁRIO, duas vezes: `CatalogScreen.jsx:70` e `HistoryScreen.jsx:64` abrem `<Sheet … placement=\"bottom\">` — as duas únicas folhas desenhadas do kit são de BAIXO. (1) §D.2 repete 'entra de baixo (mobile) / centralizado (desktop)' e §E8 chama o upsell de 'bottom-sheet contextual'. (2) A auditoria não trata de ancoragem em nenhuma das três rodadas. (4) O canvas 018 RESOLVE o desktop removendo a folha, não desenhando-a: o hint da aba diz literalmente 'abas de seção no topo · lista em 2 colunas · ficha do item à direita, sem sheet' (Abas-Desktop.dc.html:570) — o que cobre ≥1280px e deixa 390px, onde a folha vive, sem desenho nenhum. Nada derruba.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

@@ -1,0 +1,13 @@
+{
+  "id": "avisos-do-resultado",
+  "nome": "Avisos que só o resultado denuncia (preço zero, custo absurdo, atacado acima do varejo)",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+  "oQueFoiInferido": "Dois `Alert tone=\"info\"` no bloco de resultado: `AvisoDeResultado` acima do Card do breakdown, concatenando num parágrafo só as frases de plausibilidade que nenhum campo isolado poderia denunciar (custo R$ 0,00 / preço R$ 6.000.061,60), e outro entre o breakdown e os cartões de preço quando `precoAtacado > precoVarejo`. Inferido: que ambos são info e não erro (decisão registrada em comentário: 'um aviso escrito como erro faz o vendedor concluir que o produto RECUSOU'), sua posição relativa ao breakdown e aos cartões, e a concatenação de N frases num parágrafo único.",
+  "autoridade": "NENHUMA",
+  "impacto": "São as duas frases que impedem o vendedor de anunciar por R$ 0,00 ou por seis milhões. Estão hoje empilhadas como blocos info genéricos, com peso visual igual ao de qualquer outra nota da tela.",
+  "prioridade": "MEDIA",
+  "refutacao": "Nenhuma das 4 autoridades prevê aviso sobre o RESULTADO — §G trata o resultado como sempre-verdadeiro ('success: preço + breakdown', 'recompute ao vivo'), e o único estado de recusa desenhado é peso=0 (`-fixes.md` item 9), que é validação de campo. Grep por 'atacado' nas autoridades só devolve a definição do par varejo/atacado e a linha de escopo por época. `AvisoDeResultado` (linha 122) e o alerta de atacado citam como origem a homologação automatizada (CF-001-LEIGO-D-P5/P6) e a decisão do dono 015/A8 — registro pós-construção, que por regra não é protótipo. Sobrevive, NENHUMA.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

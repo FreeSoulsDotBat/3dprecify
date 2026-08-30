@@ -246,6 +246,25 @@ current; the orphan branch no longer exists on the remote (its unique changes ve
   before a verified deploy exists — accepted by the owner; the release is a repository state snapshot, not
   a production deploy (prod deploy remains out of scope). Folded into FR-209.
 
+### Session 2026-07-09
+
+- Q: When to provision the cloud side and run the first deploy? → A (OWNER DECISION, re-scopes this
+  feature): **defer provisioning + first deploy until "version 1 complete" = epics E1–E6 delivered**
+  (calculator ✅ · catalog+persistence · BOM · history/export · marketplace scenarios · billing — the
+  monetizable product). Consequences, recorded honestly (Principle II): the US1 EXECUTION half
+  (provisioning P1–P11, GitHub `uat` Environment, the deploy trigger, smoke checklist, rollback
+  rehearsal — FR-201..208 fulfillment, SC-201..204 measurement) is **DEFERRED to the v1-complete
+  milestone**, and **FR-010 (public deploy, MUST since 002) consciously stays open across E2–E6** — remote
+  homologation on real devices remains impossible until then. Everything the deploy needs is left READY
+  and verified at the dry level: pipeline on the default branch (trigger visible), runbook, gate parity,
+  honest contract, privacy notice. Risk accepted: the first real deploy will carry a much larger surface;
+  mitigants are the hardened pipeline, the runbook, and the conformance/e2e suites. This feature therefore
+  CLOSES with its code half (US2, US3, US1-code, US4) + the release cut; the execution half re-opens as
+  the v1-launch increment. **This posture is explicitly REVISITABLE**: the owner may bring the deploy
+  forward (e.g. after E2, to validate with real users) or push it later as development unfolds — the
+  E1–E6 trigger is the CURRENT default, not a lock. Any change lands as a new dated Clarification here
+  and in the decision log.
+
 ## Assumptions
 
 - The owner provides (or creates, guided) the cloud project, billing, and console access for the UAT

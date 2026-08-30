@@ -1,0 +1,16 @@
+{
+  "id": "folha-de-exportacao",
+  "nome": "Folha de exportação PDF/CSV + o botão desabilitado com motivo",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/history/export-sheet.tsx",
+    "apps/web/src/features/history/export-sheet.css"
+  ],
+  "oQueFoiInferido": "O TRATAMENTO do desabilitado e a folha inteira. Do lado do botão: visível-e-desabilitado com a frase do motivo IMPRESSA embaixo (`.tf-export__reason`, nunca tooltip, ligada por `aria-describedby`), com três motivos possíveis (Premium pausado > offline > registro pendente). Dentro da folha: fieldset com 2 radios ('Orçamento para o cliente (PDF)' / 'Meus orçamentos (CSV)'), o radio de PDF podendo estar desabilitado com a SUA própria frase de motivo por baixo, o bloco opt-in com Switch 'Incluir detalhamento de custos' e o aviso de dano puxado para junto dele por `margin-block-start: calc(-1 * var(--space-3))`, duas redações do aviso (peça e kit), a descrição do que vai no arquivo e o rótulo do submit que muda por formato. Inferido também: a ausência total de feedback de sucesso (o arquivo é o feedback — decisão registrada em comentário).",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o artefato que sai do app e chega ao cliente final. O switch de custos exposto sem desenho é o caminho direto para o vendedor entregar a própria margem; e três motivos de indisponibilidade sem tratamento desenhado viram um botão morto sem explicação.",
+  "prioridade": "ALTA",
+  "refutacao": "Reclassifiquei o mapeador: existe cobertura PARCIAL, e ela é só do gatilho. §E6 lista 'Exportar (PDF/CSV, Premium)' e a matriz §G dá a linha 'Exportar | spinner curto | — | falha | arquivo pronto (mock) | disabled se free | desabilitado' — ou seja, o protótipo já previa o botão e DOIS dos estados desabilitados (free e offline). `HistoryScreen.jsx` tem o botão [Exportar] com ícone `download`, que apenas chama `onUpsell`. Isso é uma versão anterior e mais simples do AFFORDANCE ⇒ PROTOTIPO_PARCIAL. O que não existe em autoridade nenhuma: a folha (nenhuma), o seletor de formato (nenhum), o switch de custos e o aviso de dano (nenhum), a regra 'visível-e-desabilitado com a frase impressa' (o §G diz só 'disabled', não como se explica), o motivo 'pendente' e o motivo 'Premium pausado' (o protótipo só conhecia free×premium). No canvas do dono há DOIS botões 'Exportar' (linha 248 no cabeçalho da aba, linha 313 na ficha), um deles com `disabled=\"{{ writeBlocked }}\"` — e nenhum painel, nenhum formato, nenhum aviso e nenhuma frase de motivo.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

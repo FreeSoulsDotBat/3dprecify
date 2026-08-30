@@ -1,0 +1,100 @@
+/* E6/T014-T015 — the offer surface + the shared Assinar CTA + the checkout return states. Token-
+   only (tf-*), no utility skin (ADR-0007). Adversarial size (§0.4): long period dates wrap to
+   ≤2 lines and never horizontal-scroll at 390px. */
+
+.tf-billing-offer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+}
+
+.tf-billing-offer__lead {
+  color: var(--text-muted);
+  font-size: 0.9375rem;
+}
+
+.tf-billing-offer__plans {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  margin: 0;
+  padding: 0;
+}
+
+/* The whole card is the tap target (≥44px), not just the radio dot (INV-2). */
+.tf-billing-offer__plan {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md, 0.5rem);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1, 0.25rem);
+  padding: var(--space-3, 0.75rem);
+}
+
+/* 016/T072-A7 (2026-08-07) — the radio itself. As a bare flex ITEM of `.tf-billing-offer__plan`
+   (a `flex-direction: column` container), the default cross-axis `align-items: stretch` made it
+   fill the card's full WIDTH while keeping the browser's native ~13px height — a 292-350px bar,
+   MEASURED. `align-self: start` takes it out of the stretch; the explicit square size is the
+   browser's own native radio footprint (kept, not shrunk further, so the tap target stays real —
+   the CARD is still the actual ≥44px target per INV-2 above, this is only the visible dot). The
+   focus ring (`outline`) is scoped to the radio's own box, never the label/card. */
+.tf-billing-offer__plan input[type="radio"] {
+  align-self: start;
+  block-size: 1.125rem;
+  flex: none;
+  inline-size: 1.125rem;
+  margin: 0;
+}
+
+.tf-billing-offer__plan--selected {
+  border-color: var(--accent);
+}
+
+.tf-billing-offer__plan-head {
+  align-items: center;
+  display: flex;
+  gap: var(--space-2, 0.5rem);
+  justify-content: space-between;
+}
+
+.tf-billing-offer__plan-price {
+  color: var(--text-strong);
+  font-family: var(--font-title);
+  font-size: var(--fs-md);
+}
+
+.tf-billing-offer__plan-note {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.tf-billing-offer__notice {
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+}
+
+.tf-billing-cta__alert {
+  margin-top: var(--space-2, 0.5rem);
+}
+
+.tf-billing-return {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3, 0.75rem);
+  text-align: center;
+}
+
+.tf-billing-return__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2, 0.5rem);
+}
+
+/* qa pós-016 (ressalva A7) — o par radio+nome é UMA unidade de leitura na cabeça do cartão. */
+.tf-billing-offer__plan-name {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--space-2, 0.5rem);
+}

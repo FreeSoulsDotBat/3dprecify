@@ -68,9 +68,17 @@ tension — the DoD record must be made true either way).
   LGPD interplay (A19: retention vs erasure). Must exist before E2 schema.
 - **A28 Launch auth-provider set** [MED/E2-E7] — Google-only was decided "for this slice" only; store
   policies commonly require an alternative (e-mail/Apple); prerequisite for paid accounts. Decide the launch set.
-- **A29 Formula-version UX for saved quotes** [MED/E4] — mechanism decided (frozen snapshot + semver,
-  A13/TD-009); user-facing behavior not: silent freeze · labeled ("calculado com a fórmula v1") · offer
-  recalculation with diff. Pair with E4 spec.
+- ~~**A29 Formula-version UX for saved quotes**~~ [MED/E4] — **RESOLVED 2026-07-16 (E4 Q3): LABELED +
+  "Recalcular hoje"** — of the three candidates, **not** silent freeze and **not** recalculation-with-diff.
+  A snapshot displays *when* it was calculated and *with which formula version* (FR-506); "Recalcular hoje"
+  creates a **new** snapshot leaving the original untouched (FR-505), and it **re-resolves the origin**
+  against today's catalog rather than repricing frozen inputs under a newer formula — *"meu custo subiu
+  desde que cotei?" is the question the seller is actually asking, and a frozen-input reprice could never
+  answer "sim" to a filament price rise.* The rejected **diff** survives as US7's side-by-side ("cotado em
+  {data}" vs "hoje"), which labels two numbers and **computes no delta** — money arithmetic lives in
+  `pricing-core` (ADR-0008). Open since 2026-07-02 and explicitly reserved for E4; closed by it.
+  Shipped in PR-B #19 (`bd9d95e`) + US7 in PR-C #20 (`e10b49f`). See `specs/009-e4-history-snapshots-export/spec.md`
+  §Q3 + FR-505/506/507.
 - **A30 Persona/ICP as ratified product artifact** [MED/now] — persona exists only in design briefs
   (`claude-design-brief.md:16`); A17 (WTP validation) has no target population without it. Formalize segments
   (MEI vs non-MEI, hobbyist vs prestador) + anti-persona.
@@ -328,3 +336,46 @@ deferral, owner-decided) is implemented, green, and homologated. NOT yet merged 
   nits (toggle-label wrap, verbose row labels) fixed same day. **Open:** T042 design reconciliation
   (non-blocking) · D1–D4 ML ingestion (off critical path, blocked on the house ML account Q-D) ·
   the owner-authorized squash-merge PR to `develop`.
+
+### FIRST RELEASE CUT (2026-07-09 — `develop`→`main`, FR-209 / 006)
+
+Owner-authorized first formal release merge (`0b12426`, --no-ff), per the 006 spec Clarification of
+2026-07-08. **Purpose: deploy-trigger availability** — GitHub only surfaces `workflow_dispatch` for
+workflows on the default branch; with `deploy.yml` now on `main`, the manual `Deploy` control exists
+(verified: workflow listed active post-push) and `auto-pr.yml` activated as the ADR-0006 side effect.
+**Explicitly accepted:** the release snapshot was cut BEFORE a verified deploy exists; UAT deploys build
+from `develop`, nothing was deployed FROM `main`. Snapshot = 002 + 001/003 (PRs #3/#4) + E1 complete
+(004+005, PRs #6/#7) + 006 code half (PR #8: `gate:all` parity D4 · honest error contract + Schemathesis
+A21 · privacy notice FR-214 · UAT runbook · ground reconcile). NOT a new ADR — ADR-0006 already rules
+`main` = release; this line records the first exercise of that rule.
+
+### 006 BUILT — CODE HALF (2026-07-09) + DEPLOY DEFERRED TO V1 (owner decision)
+
+**Shipped to `develop` (PR #8) and cut to `main` (`0b12426`):** D4 `gate:all` (literal same command in
+lefthook pre-push and ONE CI job + explicit `build` job; deliberate-failure verified — **A21 and D4 are
+DONE**) · A21 honest error contract (`/me` 200+401, phantom `HTTPValidationError` stripped, Schemathesis
+conformance as pytest/ASGI failing-first, Orval regen, `use-identity` on the generated client — **TD-019
+retired**) · FR-214 privacy notice (`/privacidade` + sign-in link, test-first) · UAT runbook
+(`docs/runbooks/uat-deploy.md`) · ground reconcile + orphan `fix/deploy-env-wiring` pruned (supersession
+proven) · `VITE_RELEASE` stamp (owner-accepted).
+
+**OWNER DECISION (2026-07-09): provisioning + first deploy DEFERRED until v1 complete = E1–E6** (catalog,
+BOM, history/export, scenarios, billing on top of the shipped calculator). Consequences recorded in the 006
+spec Clarifications: **T022-deploy / FR-010 (MUST) consciously stays open across E2–E6**; remote
+homologation waits; everything is dry-ready (trigger visible on `main`, runbook, parity, honest contract).
+The execution half (P1–P11 provisioning, Deploy trigger, smoke, rollback — 006 T002–T006/T025–T028)
+re-opens as the **v1-launch increment**. **The trigger is REVISITABLE** — the owner may bring the deploy
+forward or defer further as development unfolds; any change is a new dated entry here + a spec
+Clarification. Next real increment: **E2 (catalog + persistence + entitlement scaffolding)**.
+
+## E2 (007-e2-catalog-entitlement) capture — 2026-07-09..10
+E2 built across three owner-authorized slices on `develop`: **PR-A #10** (entitlement gate + ledger +
+operator CLI — the first database, Constitution IV live), **PR-B #11** (`e655504` — the demoable premium
+catalog loop US3/US4/US5, owner + QA homologated), and **PR-C** (US6 products + US7 honest free tier, on
+`feature/007-e2-pr-c`, QA-homologated, awaiting owner homologation + merge). Dated refinements landed as
+data-model notes: channel fees nullable (blank = live-catalog); the filament last-known-snapshot CHECK
+dropped the `material IS NOT NULL` clause (material is an optional label — a PR-C **homologation-found bug**
+where deleting a material-less referenced filament 500'd, `e02a9b1`, regression-tested); `/catalogo` left the
+GC-2 guarded set so signed-out sees the honest US7 teaser (writes stay server-gated). Evidence:
+`specs/007-e2-catalog-entitlement/{dod-evidence,homologation-prb,homologation-prc}.md`. The first public
+deploy stays DEFERRED to v1 = E1–E6 (REVISITABLE). Next real increment after E2 closes: **E3 (multi-piece BOM)**.

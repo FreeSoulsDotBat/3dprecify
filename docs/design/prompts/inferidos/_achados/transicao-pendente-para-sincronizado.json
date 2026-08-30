@@ -1,0 +1,16 @@
+{
+  "id": "transicao-pendente-para-sincronizado",
+  "nome": "Momento em que o registro pendente vira sincronizado",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/history/outbox-syncer.tsx",
+    "apps/web/src/pages/historico/historico-page.tsx"
+  ],
+  "oQueFoiInferido": "A ausência de momento. A fila drena em segundo plano a partir de quatro gatilhos (boot/uid, `online`, `focus`, `visibilitychange`) mais a volta do entitlement a `active`, e o único sinal visual é negativo: o badge SOME e o banner desaparece. Sem toast, sem animação, sem anúncio para leitor de tela. Inferido por omissão: que a confirmação de que o orçamento chegou à conta não precisa de momento próprio — decisão tomada por não ter sido tomada.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "O vendedor que gravou um orçamento sem sinal precisa saber quando ele finalmente chegou à conta — é o que decide se ele pode limpar dados do app ou trocar de aparelho. Hoje ele só descobre reparando que um selo sumiu.",
+  "prioridade": "BAIXA",
+  "refutacao": "Aqui a spec textual pede o OPOSTO do construído, e as três autoridades desenhadas não têm nada. `ux-history.md` §1.5 especifica 'the badge disappears, a real success toast fires, the card stays in place… Announce politely: aria-live=polite → Registro sincronizado.' Verifiquei por grep em todo `apps/web/src`: `syncedAnnounce` tem UMA ocorrência, a definição em `messages.pt-br.ts:1008` — nenhum uso, em nenhum componente. A cópia foi escrita e nunca ligada. Nas outras três: o protótipo não tem fila (§E6/§E9 e a matriz §G não têm linha de sincronização; o único `success` que a matriz registra para o Histórico é 'lista mock + detalhe'), os fixes não têm, `HistoryScreen.jsx` não tem, e `Abas-Desktop.dc.html` desenha o alerta de fila estático (linha 264) sem nenhum 'depois' — nenhum estado de transição, nenhum toast, nenhuma variante pós-sincronização.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

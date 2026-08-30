@@ -20,3 +20,14 @@
 *.xlsx binary
 *.zip binary
 *.lockb binary
+
+# Codigo-fonte e SEMPRE texto, mesmo carregando um byte que o git leria como binario.
+# Medido 2026-07-31/08-01: `apps/web/src/shared/fee-catalog/fee-catalog.ts` — o schema do dominio de
+# PRECIFICACAO — entrava em revisao como `Bin 14879 -> 16047` por causa de um NUL literal em
+# `determinantKey`. Consequencia: `git diff` e `git blame` cegos, o `Grep` pulando o arquivo, e a
+# mudanca de dinheiro desta fatia invisivel num code review normal. Duas revisoes adversariais
+# tropecaram nisso. A causa raiz (o proprio NUL) e outra tarefa — este atributo devolve a
+# visibilidade sem tocar em geracao de chave no dominio de preco.
+*.ts text diff
+*.tsx text diff
+*.mjs text diff

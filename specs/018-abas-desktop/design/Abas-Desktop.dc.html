@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="design_doc_mode" content="canvas">
+  <link rel="stylesheet" href="assets/app.css">
+  <style>
+    body { margin: 0; background: #0b0c0f; color: #ededf1; }
+    a { color: #15bddc; }
+    a:hover { color: #5fd6ea; }
+  </style>
+</helmet>
+
+<section style="display:flex;flex-direction:column;gap:20px;padding:44px 56px;font-family:Inter,system-ui,sans-serif">
+  <div style="display:flex;flex-direction:column;gap:6px;max-width:1200px">
+    <div style="font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#8c8f9d">Turno 2 · Catálogo · Kits · Orçamentos · Conta — desktop 1920</div>
+    <div style="font-size:14px;color:#b9bbc6;line-height:1.5">As quatro abas restantes num único quadro navegável: clique no menu lateral para trocar de aba. Catálogo e Orçamentos usam mestre-detalhe (lista à esquerda, detalhe à direita, sem sair da tela); Kits usa o resumo fixo na coluna direita em vez da barra colada no rodapé. Alterne tema no topo e o plano (premium/grátis) no painel Tweaks.</div>
+  </div>
+
+  <div id="2a" data-screen-label="2a Abas desktop" style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="background:#7800ff;color:#fff;font-weight:700;font-size:13px;padding:4px 12px;border-radius:999px">2a</span>
+      <span style="font-weight:600;color:#fff">{{ tabTitle }}</span>
+      <span style="font-size:13px;color:#8c8f9d">{{ tabHint }}</span>
+    </div>
+
+    <div style="width:1920px;border-radius:18px;overflow:hidden;box-shadow:0 30px 80px -20px rgba(0,0,0,0.8);border:1px solid #353841">
+      <div data-theme="{{ theme }}">
+        <div class="tf-shell" data-layout="desktop" style="min-height:0;height:1080px">
+          <div class="tf-shell__body" style="height:100%">
+
+            <nav class="tf-nav tf-nav--sidebar" aria-label="Navegação principal" style="display:flex;flex-direction:column;width:{{ railW }};transition:width 0.18s ease-out">
+              <ul class="tf-nav__list" style="flex:1">
+                <li><button class="tf-nav__item" data-tab="calcular" onClick="{{ goTab }}" title="Calcular" style="border:none;background:transparent;cursor:pointer;width:100%;font:inherit;font-weight:500;justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><rect width="16" height="20" x="4" y="2" rx="2"></rect><line x1="8" x2="16" y1="6" y2="6"></line><line x1="16" x2="16" y1="14" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Calcular</span></button></li>
+                <li><button class="tf-nav__item" data-tab="catalogo" onClick="{{ goTab }}" aria-current="{{ curCatalogo }}" title="Catálogo" style="border:none;background:{{ bgCatalogo }};cursor:pointer;width:100%;font:inherit;font-weight:500;color:{{ colCatalogo }};justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><path d="M2.97 12.92A2 2 0 0 0 2 14.63v3.24a2 2 0 0 0 .97 1.71l3 1.8a2 2 0 0 0 2.06 0L12 19v-5.5l-5-3-4.03 2.42Z"></path><path d="m7 16.5-4.74-2.85"></path><path d="m7 16.5 5-3"></path><path d="M7 16.5v5.17"></path><path d="M12 13.5V19l3.97 2.38a2 2 0 0 0 2.06 0l3-1.8a2 2 0 0 0 .97-1.71v-3.24a2 2 0 0 0-.97-1.71L17 10.5l-5 3Z"></path><path d="m17 16.5-5-3"></path><path d="m17 16.5 4.74-2.85"></path><path d="M17 16.5v5.17"></path><path d="M7.97 4.42A2 2 0 0 0 7 6.13v4.37l5 3 5-3V6.13a2 2 0 0 0-.97-1.71l-3-1.8a2 2 0 0 0-2.06 0l-3 1.8Z"></path><path d="M12 8 7.26 5.15"></path><path d="m12 8 4.74-2.85"></path><path d="M12 13.5V8"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Catálogo</span></button></li>
+                <li><button class="tf-nav__item" data-tab="kits" onClick="{{ goTab }}" aria-current="{{ curKits }}" title="Kits" style="border:none;background:{{ bgKits }};cursor:pointer;width:100%;font:inherit;font-weight:500;color:{{ colKits }};justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><path d="M11 21.73a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73z"></path><path d="M12 22V12"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><path d="m7.5 4.27 9 5.15"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Kits</span></button></li>
+                <li><button class="tf-nav__item" data-tab="orcamentos" onClick="{{ goTab }}" aria-current="{{ curOrc }}" title="Orçamentos" style="border:none;background:{{ bgOrc }};cursor:pointer;width:100%;font:inherit;font-weight:500;color:{{ colOrc }};justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Orçamentos</span></button></li>
+                <li><button class="tf-nav__item" data-tab="conta" onClick="{{ goTab }}" aria-current="{{ curConta }}" title="Conta" style="border:none;background:{{ bgConta }};cursor:pointer;width:100%;font:inherit;font-weight:500;color:{{ colConta }};justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="10" r="3"></circle><path d="M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Conta</span></button></li>
+              </ul>
+              <button class="tf-nav__item" onClick="{{ toggleRail }}" title="Recolher menu" style="border:none;background:transparent;cursor:pointer;width:100%;font:inherit;justify-content:{{ navJus }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;flex-shrink:0;pointer-events:none"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M9 3v18"></path></svg><span class="tf-nav__label" style="display:{{ navLbl }};pointer-events:none">Recolher</span></button>
+            </nav>
+
+            <div class="tf-shell__content">
+              <header class="tf-topbar">
+                <span class="tf-topbar__logo" style="display:flex;align-items:center">
+                  <img class="tf-logo" src="apps/web/public/brand/logo/logo-inteira-white.png" alt="Truth's Forge" style="height:40px;display:{{ logoDark }}">
+                  <img class="tf-logo" src="apps/web/public/brand/logo/logo-inteira-black.png" alt="Truth's Forge" style="height:40px;display:{{ logoLight }}">
+                </span>
+                <div class="tf-topbar__actions">
+                  <span class="tf-topbar__email" title="Conectado como">maker@truthsforge.com</span>
+                  <button class="tf-topbar__theme" onClick="{{ toggleTheme }}" title="Tema" aria-pressed="{{ darkPressed }}">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:{{ sunDisp }}"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px;display:{{ moonDisp }}"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+                  </button>
+                  <button class="tf-btn tf-btn--ghost tf-btn--sm">Sair</button>
+                </div>
+              </header>
+
+              <main class="tf-shell__main" style="overflow-y:auto;padding:28px 40px 40px">
+
+                <!-- ======================= CATÁLOGO ======================= -->
+                <sc-if value="{{ isCatalogo }}" hint-placeholder-val="{{ true }}">
+                <div style="display:flex;flex-direction:column;gap:20px;max-width:1720px">
+                  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+                    <div class="tf-page-header" style="margin-bottom:0">
+                      <h1 class="tf-page-header__title" tabindex="-1" style="font-size:1.75rem">Catálogo</h1>
+                      <p class="tf-page-header__desc">{{ secCount }}</p>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:12px">
+                      <div role="tablist" aria-label="Seções do catálogo" style="display:flex;gap:4px;padding:4px;background:var(--bg-muted);border-radius:999px">
+                        <button role="tab" data-sec="fil" onClick="{{ goSec }}" aria-selected="{{ selFil }}" style="border:none;cursor:pointer;font:inherit;font-size:0.875rem;font-weight:600;padding:8px 18px;border-radius:999px;background:{{ bgFil }};color:{{ colFil }}">Filamentos</button>
+                        <button role="tab" data-sec="imp" onClick="{{ goSec }}" aria-selected="{{ selImp }}" style="border:none;cursor:pointer;font:inherit;font-size:0.875rem;font-weight:600;padding:8px 18px;border-radius:999px;background:{{ bgImp }};color:{{ colImp }}">Impressoras</button>
+                        <button role="tab" data-sec="prod" onClick="{{ goSec }}" aria-selected="{{ selProd }}" style="border:none;cursor:pointer;font:inherit;font-size:0.875rem;font-weight:600;padding:8px 18px;border-radius:999px;background:{{ bgProd }};color:{{ colProd }}">Produtos</button>
+                        <button role="tab" data-sec="kit" onClick="{{ goSec }}" aria-selected="{{ selKit }}" style="border:none;cursor:pointer;font:inherit;font-size:0.875rem;font-weight:600;padding:8px 18px;border-radius:999px;background:{{ bgKit }};color:{{ colKit }}">Kits</button>
+                      </div>
+                      <button class="tf-btn tf-btn--primary" disabled="{{ writeBlocked }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>{{ addLabel }}</button>
+                    </div>
+                  </div>
+
+                  <sc-if value="{{ isFree }}" hint-placeholder-val="{{ false }}">
+                  <div class="tf-card" style="padding:56px 40px">
+                    <div class="tf-premium-teaser">
+                      <span class="tf-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg></span>
+                      <h2 class="tf-premium-teaser__title">Assinar o Premium</h2>
+                      <p class="tf-premium-teaser__subtitle">O Premium guarda seu catálogo, kits, orçamentos e simulações — e libera exportar.</p>
+                      <p class="tf-premium-teaser__caption">Premium: R$&nbsp;15,99/mês ou R$&nbsp;155,88/ano</p>
+                      <button class="tf-btn tf-btn--primary tf-btn--lg" style="margin-top:8px">Assinar Premium</button>
+                      <p class="tf-premium-teaser__caption">Calcular custo e markup é grátis, sem limite.</p>
+                    </div>
+                  </div>
+                  </sc-if>
+
+                  <sc-if value="{{ isPremium }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 560px;gap:28px;align-items:start">
+                    <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+                      <div class="tf-inputwrap" style="max-width:420px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input class="tf-input" placeholder="Buscar no catálogo…" aria-label="Buscar no catálogo"></div>
+                      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <sc-for list="{{ items }}" as="it" hint-placeholder-count="4">
+                          <button class="tf-card tf-card--interactive" data-i="{{ it.i }}" onClick="{{ pickItem }}" style="text-align:left;font:inherit;display:flex;flex-direction:column;gap:8px;border-color:{{ it.border }};cursor:pointer">
+                            <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                              <strong style="color:var(--text-strong);font-size:1rem">{{ it.nome }}</strong>
+                              <span class="tf-badge" style="background:{{ it.badgeBg }};color:{{ it.badgeCol }};display:{{ it.badgeDisp }}">{{ it.badge }}</span>
+                            </div>
+                            <span style="font-size:0.875rem;color:var(--text-muted)">{{ it.meta }}</span>
+                            <span class="tf-tnum" style="font-size:0.875rem;color:var(--text-body)">{{ it.money }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </div>
+
+                    <aside class="tf-card" style="position:sticky;top:0;display:flex;flex-direction:column;gap:16px;min-width:0">
+                      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+                        <div style="display:flex;flex-direction:column;gap:2px">
+                          <span style="font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">{{ detailKicker }}</span>
+                          <h2 style="font-size:1.375rem">{{ detail.nome }}</h2>
+                        </div>
+                        <div style="display:flex;gap:8px">
+                          <button class="tf-btn tf-btn--secondary tf-btn--sm">Duplicar</button>
+                          <button class="tf-btn tf-btn--danger-ghost tf-btn--sm">Excluir</button>
+                        </div>
+                      </div>
+                      <div class="tf-costs-grid">
+                        <sc-for list="{{ detail.fields }}" as="fd" hint-placeholder-count="4">
+                          <div class="tf-field"><div class="tf-field__label-row"><label class="tf-field__label">{{ fd.label }}</label></div><div class="tf-inputwrap"><span class="tf-inputwrap__affix" style="display:{{ fd.preDisp }}">{{ fd.pre }}</span><input class="{{ fd.cls }}" value="{{ fd.value }}" data-k="{{ fd.key }}" onInput="{{ onField }}"><span class="tf-inputwrap__affix" style="display:{{ fd.sufDisp }}">{{ fd.suf }}</span></div></div>
+                        </sc-for>
+                      </div>
+                      <sc-if value="{{ detail.hasRefs }}" hint-placeholder-val="{{ false }}">
+                      <div style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border-subtle);padding-top:14px">
+                        <span class="tf-historico__section">Referências</span>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                          <div class="tf-field"><div class="tf-field__label-row"><label class="tf-field__label tf-field__label--tight">Filamento salvo</label></div><div class="tf-inputwrap tf-selectwrap"><select class="tf-input tf-select"><option>{{ detail.filamento }}</option></select><span class="tf-select__caret">▾</span></div></div>
+                          <div class="tf-field"><div class="tf-field__label-row"><label class="tf-field__label tf-field__label--tight">Impressora salva</label></div><div class="tf-inputwrap tf-selectwrap"><select class="tf-input tf-select"><option>{{ detail.impressora }}</option></select><span class="tf-select__caret">▾</span></div></div>
+                        </div>
+                      </div>
+                      </sc-if>
+                      <sc-if value="{{ detail.needsAttention }}" hint-placeholder-val="{{ false }}">
+                      <div class="tf-alert tf-alert--info"><span class="tf-alert__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"></circle><line x1="12" x2="12" y1="8" y2="12"></line><line x1="12" x2="12.01" y1="16" y2="16"></line></svg></span><div class="tf-alert__body"><p class="tf-alert__title">Vincule um filamento e uma impressora salvos</p></div></div>
+                      </sc-if>
+                      <div style="display:flex;align-items:center;gap:12px;border-top:1px solid var(--border-subtle);padding-top:16px">
+                        <button class="tf-btn tf-btn--primary" style="flex:1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg>Salvar alterações</button>
+                        <button class="tf-btn tf-btn--secondary" style="flex:1">Usar no cálculo</button>
+                      </div>
+                    </aside>
+                  </div>
+                  </sc-if>
+                </div>
+                </sc-if>
+
+                <!-- ======================= KITS ======================= -->
+                <sc-if value="{{ isKits }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:20px;max-width:1720px">
+                  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+                    <div class="tf-page-header" style="margin-bottom:0">
+                      <h1 class="tf-page-header__title" tabindex="-1" style="font-size:1.75rem">Monte seus kits</h1>
+                      <p class="tf-page-header__desc" style="max-width:720px">Aqui você pode montar Kits para anúncios únicos de acordo com seus produtos cadastrados ou peças avulsas</p>
+                    </div>
+                    <div style="display:flex;gap:10px">
+                      <button class="tf-btn tf-btn--secondary">Ver meus kits</button>
+                      <button class="tf-btn tf-btn--primary" onClick="{{ addLine }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Adicionar peça</button>
+                    </div>
+                  </div>
+
+                  <sc-if value="{{ isFree }}" hint-placeholder-val="{{ false }}">
+                  <div class="tf-card" style="padding:56px 40px">
+                    <div class="tf-premium-teaser">
+                      <span class="tf-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.734H5.81a1 1 0 0 1-.957-.734L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"></path><path d="M5 21h14"></path></svg></span>
+                      <h2 class="tf-premium-teaser__title">Assinar o Premium</h2>
+                      <p class="tf-premium-teaser__subtitle">O Premium guarda seu catálogo, kits, orçamentos e simulações — e libera exportar.</p>
+                      <p class="tf-premium-teaser__caption">Premium: R$&nbsp;15,99/mês ou R$&nbsp;155,88/ano</p>
+                      <button class="tf-btn tf-btn--primary tf-btn--lg" style="margin-top:8px">Assinar Premium</button>
+                    </div>
+                  </div>
+                  </sc-if>
+
+                  <sc-if value="{{ isPremium }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:grid;grid-template-columns:minmax(0,1fr) 480px;gap:28px;align-items:start">
+                    <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+                      <sc-for list="{{ lines }}" as="ln" hint-placeholder-count="3">
+                        <div class="tf-card" style="display:flex;flex-direction:column;gap:14px;border-color:{{ ln.border }}">
+                          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+                            <strong style="color:var(--text-strong);font-size:1rem">{{ ln.titulo }}</strong>
+                            <span style="font-size:0.8125rem;color:var(--text-muted)">{{ ln.origem }}</span>
+                            <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
+                              <span style="font-size:0.8125rem;color:var(--text-muted)">Quantidade</span>
+                              <div class="tf-inputwrap tf-inputwrap--sm" style="min-width:104px;width:104px"><input class="tf-input tf-input--num" inputMode="numeric" value="{{ ln.qty }}" data-i="{{ ln.i }}" onInput="{{ onQty }}"><span class="tf-inputwrap__affix">un</span></div>
+                              <button class="tf-btn tf-btn--ghost tf-btn--sm" title="Remover peça" data-i="{{ ln.i }}" onClick="{{ rmLine }}" style="min-width:44px;padding:0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;pointer-events:none"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path><line x1="10" x2="10" y1="11" y2="17"></line><line x1="14" x2="14" y1="11" y2="17"></line></svg></button>
+                            </div>
+                          </div>
+                          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+                            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.75rem;color:var(--text-muted)">Gramas</span><span class="tf-tnum" style="color:var(--text-strong);font-weight:500">{{ ln.gramas }}</span></div>
+                            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.75rem;color:var(--text-muted)">Impressão</span><span class="tf-tnum" style="color:var(--text-strong);font-weight:500">{{ ln.tempo }}</span></div>
+                            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.75rem;color:var(--text-muted)">Custo unitário</span><span class="tf-tnum" style="color:var(--text-strong);font-weight:500">{{ ln.unit }}</span></div>
+                            <div style="display:flex;flex-direction:column;gap:2px"><span style="font-size:0.75rem;color:var(--text-muted)">{{ ln.lineTotalLabel }}</span><span class="tf-tnum" style="color:{{ ln.totalCol }};font-weight:600">{{ ln.total }}</span></div>
+                          </div>
+                          <sc-if value="{{ ln.invalid }}" hint-placeholder-val="{{ false }}">
+                          <div class="tf-alert tf-alert--danger"><span class="tf-alert__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"></path><path d="M12 9v4"></path><path d="M12 17h.01"></path></svg></span><div class="tf-alert__body"><p class="tf-alert__title">Confira os campos desta peça — ela não entra no total até ser corrigida.</p></div></div>
+                          </sc-if>
+                          <div style="display:flex;gap:10px"><button class="tf-btn tf-btn--ghost tf-btn--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>Editar esta peça</button><button class="tf-btn tf-btn--ghost tf-btn--sm" style="display:{{ ln.pickDisp }}">Usar produto salvo</button></div>
+                        </div>
+                      </sc-for>
+                      <button class="tf-btn tf-btn--secondary" onClick="{{ addLine }}" style="align-self:flex-start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M5 12h14"></path><path d="M12 5v14"></path></svg>Adicionar peça</button>
+                    </div>
+
+                    <aside style="position:sticky;top:0;display:flex;flex-direction:column;gap:14px;min-width:0">
+                      <div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px"><h2 style="font-size:1.125rem;letter-spacing:0.02em">Total do kit</h2><span class="tf-badge tf-badge--success">Ao vivo</span></div>
+                        <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Custo total</span><span class="tf-brow__sub">{{ kitPiecesCap }}</span></div><span class="tf-brow__val">{{ kitCusto }}</span></div>
+                        <div class="tf-price tf-price--accent tf-price--md tf-price--center" style="padding:16px 20px">
+                          <span class="tf-price__label">Varejo</span>
+                          <span class="tf-price__amount" style="font-size:2.25rem"><span class="tf-price__cur">R$</span><span class="tf-price__int">{{ kitVarejoInt }}</span><span class="tf-price__dec">{{ kitVarejoDec }}</span></span>
+                        </div>
+                        <div class="tf-price tf-price--md tf-price--center" style="padding:12px 20px">
+                          <span class="tf-price__label" style="color:var(--text-muted)">Atacado</span>
+                          <span class="tf-price__amount" style="font-size:1.5rem"><span class="tf-price__cur">R$</span><span class="tf-price__int">{{ kitAtacadoInt }}</span><span class="tf-price__dec">{{ kitAtacadoDec }}</span></span>
+                        </div>
+                        <p class="tf-field__hint" style="margin:0;display:{{ excludedDisp }}">{{ excludedCap }}</p>
+                      </div>
+                      <div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:10px">
+                        <h2 style="font-size:0.9375rem;letter-spacing:0.02em">Preços por canal (kit)</h2>
+                        <div class="tf-brow" style="padding:8px 0"><div class="tf-brow__main"><span class="tf-brow__label">Mercado Livre · Clássico</span><span class="tf-brow__sub">{{ chContrib }}</span></div><span class="tf-brow__val">{{ kitMl }}</span></div>
+                        <div class="tf-brow" style="padding:8px 0"><div class="tf-brow__main"><span class="tf-brow__label">Shopee</span><span class="tf-brow__sub">{{ chSkipped }}</span></div><span class="tf-brow__val">{{ kitSp }}</span></div>
+                      </div>
+                      <div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:12px">
+                        <div class="tf-field"><div class="tf-field__label-row"><label class="tf-field__label tf-field__label--tight">Nome do kit</label></div><div class="tf-inputwrap"><input class="tf-input" placeholder="Kit suporte + base" value="Kit suporte + base"></div></div>
+                        <button class="tf-btn tf-btn--primary tf-btn--lg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"></path><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"></path><path d="M7 3v4a1 1 0 0 0 1 1h7"></path></svg>Salvar kit</button>
+                        <p class="tf-field__hint" style="margin:0">Confira as peças com aviso antes de salvar.</p>
+                      </div>
+                    </aside>
+                  </div>
+                  </sc-if>
+                </div>
+                </sc-if>
+
+                <!-- ======================= ORÇAMENTOS ======================= -->
+                <sc-if value="{{ isOrc }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:20px;max-width:1720px">
+                  <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;flex-wrap:wrap">
+                    <div class="tf-page-header" style="margin-bottom:0">
+                      <h1 class="tf-page-header__title" tabindex="-1" style="font-size:1.75rem">Orçamentos</h1>
+                      <p class="tf-page-header__desc" style="max-width:760px">O que você cotou, com a data. Os valores ficam congelados como estavam no dia.</p>
+                    </div>
+                    <button class="tf-btn tf-btn--secondary" disabled="{{ writeBlocked }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 17V3"></path><path d="m6 11 6 6 6-6"></path><path d="M19 21H5"></path></svg>Exportar</button>
+                  </div>
+
+                  <sc-if value="{{ isFree }}" hint-placeholder-val="{{ false }}">
+                  <div class="tf-card" style="padding:56px 40px">
+                    <div class="tf-premium-teaser">
+                      <span class="tf-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path><path d="M12 7v5l4 2"></path></svg></span>
+                      <h2 class="tf-premium-teaser__title">Assinar o Premium</h2>
+                      <p class="tf-premium-teaser__subtitle">O Premium guarda seu catálogo, kits, orçamentos e simulações — e libera exportar.</p>
+                      <p class="tf-premium-teaser__caption">Premium: R$&nbsp;15,99/mês ou R$&nbsp;155,88/ano</p>
+                      <button class="tf-btn tf-btn--primary tf-btn--lg" style="margin-top:8px">Assinar Premium</button>
+                    </div>
+                  </div>
+                  </sc-if>
+
+                  <sc-if value="{{ isPremium }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-direction:column;gap:14px">
+                    <div class="tf-alert tf-alert--info tf-alert--compact" style="align-items:center"><span class="tf-alert__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4"></path><path d="M12 8h.01"></path></svg></span><div class="tf-alert__body" style="flex:1"><p class="tf-alert__title">1 registro(s) pendente(s) neste dispositivo.</p></div><button class="tf-btn tf-btn--secondary tf-btn--sm">Sincronizar agora</button></div>
+
+                    <div style="display:grid;grid-template-columns:520px minmax(0,1fr);gap:28px;align-items:start">
+                      <div style="display:flex;flex-direction:column;gap:12px;min-width:0">
+                        <div class="tf-historico__filters">
+                          <div class="tf-inputwrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;color:var(--text-muted);flex-shrink:0"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-3.5-3.5"></path></svg><input class="tf-input" placeholder="Cliente, pedido…" aria-label="Buscar por rótulo"></div>
+                          <div class="tf-historico__chips">
+                            <button class="tf-badge tf-badge--neutral" style="border:1px solid var(--border-default);cursor:pointer;min-height:32px;background:var(--accent-soft);color:var(--accent-text)">30 dias</button>
+                            <button class="tf-badge tf-badge--neutral" style="border:1px solid var(--border-subtle);cursor:pointer;min-height:32px">90 dias</button>
+                            <button class="tf-badge tf-badge--neutral" style="border:1px solid var(--border-subtle);cursor:pointer;min-height:32px">Tudo</button>
+                            <button class="tf-badge tf-badge--neutral" style="border:1px solid var(--border-subtle);cursor:pointer;min-height:32px">Período…</button>
+                          </div>
+                        </div>
+                        <div style="display:flex;flex-direction:column;gap:10px">
+                          <sc-for list="{{ records }}" as="rc" hint-placeholder-count="4">
+                            <button class="tf-card tf-card--interactive tf-card--pad-sm" data-i="{{ rc.i }}" onClick="{{ pickRec }}" style="text-align:left;font:inherit;cursor:pointer;border-color:{{ rc.border }};background:{{ rc.bg }}">
+                              <div class="tf-historico__card">
+                                <div style="display:flex;align-items:center;gap:8px">
+                                  <span class="tf-historico__label" style="color:var(--text-strong)">{{ rc.label }}</span>
+                                  <span class="tf-badge" style="margin-left:auto;background:{{ rc.badgeBg }};color:{{ rc.badgeCol }}">{{ rc.badge }}</span>
+                                </div>
+                                <span class="tf-historico__meta">{{ rc.quotedAt }} · {{ rc.kind }}</span>
+                                <div class="tf-historico__money"><span class="tf-historico__basis">{{ rc.basis }}</span><strong style="color:var(--text-strong);font-size:1.125rem">{{ rc.total }}</strong></div>
+                              </div>
+                            </button>
+                          </sc-for>
+                          <button class="tf-btn tf-btn--ghost tf-btn--sm" style="align-self:center">Carregar mais</button>
+                        </div>
+                      </div>
+
+                      <aside style="display:flex;flex-direction:column;gap:16px;min-width:0;position:sticky;top:0">
+                        <div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+                          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap">
+                            <div class="tf-historico__claim">
+                              <div style="display:flex;align-items:center;gap:10px">
+                                <h2 style="font-size:1.375rem">{{ rec.label }}</h2>
+                                <button class="tf-btn tf-btn--ghost tf-btn--sm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>Editar rótulo</button>
+                              </div>
+                              <span class="tf-historico__meta">{{ rec.quotedAtTime }} · {{ rec.kind }}</span>
+                              <span class="tf-historico__meta">Validade da proposta: 7 dias</span>
+                            </div>
+                            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px">
+                              <span style="font-size:0.75rem;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-muted)">Valor cotado</span>
+                              <strong class="tf-tnum" style="font-size:2rem;color:var(--text-strong)">{{ rec.total }}</strong>
+                              <span class="tf-historico__basis">{{ rec.basis }}</span>
+                            </div>
+                          </div>
+                          <div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border-subtle);padding-top:16px">
+                            <button class="tf-btn tf-btn--primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M12 17V3"></path><path d="m6 11 6 6 6-6"></path><path d="M19 21H5"></path></svg>Exportar</button>
+                            <button class="tf-btn tf-btn--secondary">Recalcular hoje</button>
+                            <button class="tf-btn tf-btn--secondary">Comparar com hoje</button>
+                            <button class="tf-btn tf-btn--danger-ghost" style="margin-left:auto">Excluir</button>
+                          </div>
+                          <p class="tf-field__hint" style="margin:0">Este registro guarda os valores como foram calculados naquele dia. Ele não muda quando você edita o catálogo nem quando a fórmula do app é atualizada.</p>
+                        </div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start">
+                          <div class="tf-card" style="display:flex;flex-direction:column;gap:2px">
+                            <h3 class="tf-historico__section" style="margin-bottom:6px">Detalhamento</h3>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Material</span></div><span class="tf-brow__val">R$ 3,78</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Energia</span></div><span class="tf-brow__val">R$ 0,36</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Máquina</span></div><span class="tf-brow__val">R$ 3,55</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Falha / perdas</span></div><span class="tf-brow__val">R$ 0,77</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Acabamento</span></div><span class="tf-brow__val">R$ 4,69</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Mão de obra</span></div><span class="tf-brow__val">R$ 6,19</span></div>
+                            <div class="tf-brow"><div class="tf-brow__main"><span class="tf-brow__label">Embalagem</span><span class="tf-brow__sub">Outros custos</span></div><span class="tf-brow__val">R$ 2,50</span></div>
+                            <div class="tf-brow tf-brow--total"><div class="tf-brow__main"><span class="tf-brow__label">Custo total</span></div><span class="tf-brow__val">R$ 21,84</span></div>
+                          </div>
+                          <div style="display:flex;flex-direction:column;gap:16px">
+                            <div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+                              <h3 class="tf-historico__section">Preços por canal</h3>
+                              <div class="tf-historico__channel">
+                                <span class="tf-historico__channel-name">Mercado Livre · Clássico</span>
+                                <div class="tf-historico__piece"><span class="tf-historico__qty">anúncio</span><strong>R$ 231,88</strong></div>
+                                <div class="tf-historico__piece"><span class="tf-historico__qty">líquido</span><strong>R$ 196,44</strong></div>
+                              </div>
+                              <div class="tf-historico__channel">
+                                <span class="tf-historico__channel-name">Shopee</span>
+                                <div class="tf-historico__piece"><span class="tf-historico__qty">anúncio</span><strong>R$ 252,84</strong></div>
+                                <div class="tf-historico__piece"><span class="tf-historico__qty">líquido</span><strong>R$ 196,44</strong></div>
+                              </div>
+                            </div>
+                            <div class="tf-card" style="display:flex;flex-direction:column;gap:8px">
+                              <h3 class="tf-historico__section">Ficha técnica</h3>
+                              <span style="font-size:0.875rem;color:var(--text-body)">Calculado com a fórmula versão 2026.08</span>
+                              <span style="font-size:0.875rem;color:var(--text-body)">Registro criado a partir de: {{ rec.origem }}</span>
+                              <a class="tf-historico__origin-link" href="#2a">{{ rec.openLabel }}</a>
+                              <span class="tf-historico__meta">Data registrada pelo seu aparelho no momento da cotação.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </aside>
+                    </div>
+                  </div>
+                  </sc-if>
+                </div>
+                </sc-if>
+
+                <!-- ======================= CONTA ======================= -->
+                <sc-if value="{{ isConta }}" hint-placeholder-val="{{ false }}">
+                <div style="display:flex;flex-direction:column;gap:20px;max-width:1720px">
+                  <div class="tf-page-header" style="margin-bottom:0">
+                    <h1 class="tf-page-header__title" tabindex="-1" style="font-size:1.75rem">Conta</h1>
+                    <p class="tf-page-header__desc">Sua identidade, seu plano e as preferências deste aparelho.</p>
+                  </div>
+                  <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr) minmax(0,0.85fr);gap:24px;align-items:start">
+                    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+                      <div class="tf-card">
+                        <div class="tf-conta__identity">
+                          <span class="tf-conta__avatar">M</span>
+                          <span class="tf-conta__email">maker@truthsforge.com</span>
+                          <span style="font-size:0.8125rem;color:var(--text-muted);white-space:nowrap">Conectado como</span>
+                        </div>
+                      </div>
+                      <div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+                        <div class="tf-conta__row tf-conta__row--plan">
+                          <div style="display:flex;flex-direction:column;gap:6px">
+                            <span class="tf-conta__row-label">Plano</span>
+                            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+                              <span class="tf-badge" style="background:{{ planBadgeBg }};color:{{ planBadgeCol }}">{{ planLabel }}</span>
+                              <span style="font-size:0.8125rem;color:var(--text-muted)">{{ planCaption }}</span>
+                            </div>
+                          </div>
+                          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
+                            <div style="display:flex;gap:8px">
+                              <button class="tf-btn tf-btn--secondary tf-btn--sm">{{ planPrimaryLabel }}</button>
+                              <button class="tf-btn tf-btn--ghost tf-btn--sm">Recarregar</button>
+                            </div>
+                            <span style="font-size:0.75rem;color:var(--text-faint)">Mudou de plano agora?</span>
+                          </div>
+                        </div>
+                        <sc-if value="{{ isFree }}" hint-placeholder-val="{{ false }}">
+                        <div class="tf-billing-offer" style="border-top:1px solid var(--border-subtle);padding-top:16px">
+                          <h2 style="font-size:1.125rem;letter-spacing:0.02em">Assinar o Premium</h2>
+                          <p class="tf-billing-offer__lead">A calculadora é grátis e continua grátis.</p>
+                          <p style="margin:0;font-size:0.9375rem;color:var(--text-body)">O Premium guarda seu catálogo, kits, orçamentos e simulações — e libera exportar.</p>
+                          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                            <label class="tf-billing-offer__plan tf-billing-offer__plan--selected" style="border-color:var(--accent)">
+                              <span class="tf-billing-offer__plan-head"><span class="tf-billing-offer__plan-name"><input type="radio" name="plano" checked>Plano anual</span><span class="tf-badge tf-badge--info">recomendado</span></span>
+                              <span class="tf-billing-offer__plan-price">R$&nbsp;155,88/ano</span>
+                              <span class="tf-billing-offer__plan-note">equivalente a R$&nbsp;12,99/mês · ~19% de economia frente ao mensal</span>
+                            </label>
+                            <label class="tf-billing-offer__plan" style="border-color:var(--border-default)">
+                              <span class="tf-billing-offer__plan-head"><span class="tf-billing-offer__plan-name"><input type="radio" name="plano">Plano mensal</span></span>
+                              <span class="tf-billing-offer__plan-price">R$&nbsp;15,99/mês</span>
+                              <span class="tf-billing-offer__plan-note">cobrança todo mês, cancele quando quiser</span>
+                            </label>
+                          </div>
+                          <button class="tf-btn tf-btn--primary tf-btn--lg" style="align-self:flex-start">Assinar Premium</button>
+                        </div>
+                        </sc-if>
+                        <sc-if value="{{ isPremium }}" hint-placeholder-val="{{ true }}">
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;border-top:1px solid var(--border-subtle);padding-top:16px">
+                          <button class="tf-btn tf-btn--secondary tf-btn--sm">Atualizar forma de pagamento</button>
+                          <button class="tf-btn tf-btn--ghost tf-btn--sm">Cancelar assinatura</button>
+                        </div>
+                        </sc-if>
+                      </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+                      <div class="tf-card" style="display:flex;flex-direction:column;gap:14px">
+                        <div class="tf-conta__row" style="flex-wrap:wrap;row-gap:12px">
+                          <span class="tf-conta__row-label">Tema</span>
+                          <div style="display:flex;gap:4px;padding:4px;background:var(--bg-muted);border-radius:999px">
+                            <button data-th="light" onClick="{{ setTheme }}" style="border:none;cursor:pointer;font:inherit;font-size:0.8125rem;font-weight:600;padding:8px 16px;border-radius:999px;display:flex;align-items:center;gap:6px;background:{{ bgLight }};color:{{ colLight }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;pointer-events:none"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2"></path><path d="M12 20v2"></path><path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path><path d="M2 12h2"></path><path d="M20 12h2"></path><path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path></svg>Claro</button>
+                            <button data-th="dark" onClick="{{ setTheme }}" style="border:none;cursor:pointer;font:inherit;font-size:0.8125rem;font-weight:600;padding:8px 16px;border-radius:999px;display:flex;align-items:center;gap:6px;background:{{ bgDark }};color:{{ colDark }}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px;pointer-events:none"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>Escuro</button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style="display:flex;flex-direction:column;gap:20px;min-width:0">
+                      <div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+                        <h2 style="font-size:1.125rem;letter-spacing:0.02em">Como tratamos seus dados</h2>
+                        <p style="margin:0;font-size:0.875rem;color:var(--text-body);line-height:1.5">Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.</p>
+                      </div>
+                      <div class="tf-conta__signout">
+                        <button class="tf-btn tf-btn--secondary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" x2="9" y1="12" y2="12"></line></svg>Sair</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </sc-if>
+
+                <!-- ======================= CALCULAR (ponteiro) ======================= -->
+                <sc-if value="{{ isCalcular }}" hint-placeholder-val="{{ false }}">
+                <div class="tf-empty" style="padding-top:120px">
+                  <span class="tf-empty__icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:26px;height:26px"><rect width="16" height="20" x="4" y="2" rx="2"></rect><line x1="8" x2="16" y1="6" y2="6"></line><line x1="16" x2="16" y1="14" y2="18"></line><path d="M16 10h.01"></path><path d="M12 10h.01"></path><path d="M8 10h.01"></path><path d="M12 14h.01"></path><path d="M8 14h.01"></path><path d="M12 18h.01"></path><path d="M8 18h.01"></path></svg></span>
+                  <h2 class="tf-empty__title">A tela Calcular está no outro arquivo</h2>
+                  <p class="tf-empty__desc">As duas direções de layout da calculadora (painel fixo e rodapé aprimorado) estão em “Calcular Desktop”.</p>
+                  <button class="tf-btn tf-btn--secondary tf-empty__action" data-tab="catalogo" onClick="{{ goTab }}">Voltar para o Catálogo</button>
+                </div>
+                </sc-if>
+
+              </main>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;plano&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;premium&quot;,&quot;options&quot;:[&quot;premium&quot;,&quot;free&quot;],&quot;tsType&quot;:&quot;\&quot;premium\&quot; | \&quot;free\&quot;&quot;,&quot;section&quot;:&quot;Estado da conta&quot;},&quot;railRecolhido&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Navegação&quot;}}">
+class Component extends DCLogic {
+  state = { tab: "catalogo", theme: "dark", rail: null, sec: "fil", pick: 0, rec: 0, qty: { 0: "2", 1: "1", 2: "3" }, removed: [], edits: {} };
+
+  n2(v) { return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  brl(v) { return "R$\u00a0" + this.n2(v); }
+  split(v) { const s = this.n2(v); const i = s.lastIndexOf(","); return [s.slice(0, i), s.slice(i)]; }
+
+  catalog() {
+    const F = (label, value, pre, suf) => ({ label, value, pre: pre || "", suf: suf || "", preDisp: pre ? "inline-flex" : "none", sufDisp: suf ? "inline-flex" : "none", numeric: !!(pre || suf) });
+    return {
+      fil: {
+        kicker: "Filamento salvo", add: "Adicionar filamento", count: n => n + " filamento(s)",
+        rows: [
+          { nome: "PLA Prata 1kg", meta: "PLA", money: "R$ 89,90 · 1000 g", fields: [F("Nome", "PLA Prata 1kg"), F("Material", "PLA"), F("Custo do rolo", "89,90", "R$"), F("Peso do rolo", "1000", "", "g")] },
+          { nome: "PETG Preto 1kg", meta: "PETG", money: "R$ 129,90 · 1000 g", fields: [F("Nome", "PETG Preto 1kg"), F("Material", "PETG"), F("Custo do rolo", "129,90", "R$"), F("Peso do rolo", "1000", "", "g")] },
+          { nome: "PLA Azul", meta: "PLA", money: "R$ 92,00 · 1000 g", fields: [F("Nome", "PLA Azul"), F("Material", "PLA"), F("Custo do rolo", "92,00", "R$"), F("Peso do rolo", "1000", "", "g")] },
+          { nome: "TPU Flex", meta: "TPU · somente leitura", money: "R$ 168,00 · 750 g", badge: "somente leitura", tone: "neutral", fields: [F("Nome", "TPU Flex"), F("Material", "TPU"), F("Custo do rolo", "168,00", "R$"), F("Peso do rolo", "750", "", "g")] }
+        ]
+      },
+      imp: {
+        kicker: "Impressora salva", add: "Adicionar impressora", count: n => n + " impressora(s)",
+        rows: [
+          { nome: "Ender 3 V3", meta: "0,12 kW · 4.680 h de vida útil", money: "R$ 2.400,00", fields: [F("Nome", "Ender 3 V3"), F("Valor da máquina", "2400,00", "R$"), F("Consumo médio", "0,12", "", "kW"), F("Vida útil da máquina", "4680", "", "h"), F("Reserva de manutenção", "0,50", "R$", "/h")] },
+          { nome: "Bambu A1 mini", meta: "0,10 kW · 3.600 h de vida útil", money: "R$ 1.899,00", fields: [F("Nome", "Bambu A1 mini"), F("Valor da máquina", "1899,00", "R$"), F("Consumo médio", "0,10", "", "kW"), F("Vida útil da máquina", "3600", "", "h"), F("Reserva de manutenção", "0,40", "R$", "/h")] }
+        ]
+      },
+      prod: {
+        kicker: "Produto salvo", add: "Adicionar produto", count: n => n + " produto(s)",
+        rows: [
+          { nome: "Vaso G", meta: "42 g · 3 h 30 min", money: "custo R$ 21,84 · varejo R$ 65,52", refs: 1, filamento: "PLA Prata 1kg", impressora: "Ender 3 V3", fields: [F("Nome do produto", "Vaso G"), F("Gramas usadas", "42", "", "g"), F("Tempo de impressão", "3,50", "", "h"), F("Taxa de falha", "10", "", "%")] },
+          { nome: "Suporte de celular", meta: "18 g · 1 h 05 min", money: "custo R$ 9,40 · varejo R$ 28,20", refs: 1, filamento: "PLA Azul", impressora: "Ender 3 V3", fields: [F("Nome do produto", "Suporte de celular"), F("Gramas usadas", "18", "", "g"), F("Tempo de impressão", "1,08", "", "h"), F("Taxa de falha", "8", "", "%")] },
+          { nome: "Base hexagonal", meta: "manual", money: "custo R$ 12,10", badge: "precisa de atenção", tone: "danger", needs: 1, fields: [F("Nome do produto", "Base hexagonal"), F("Gramas usadas", "26", "", "g"), F("Tempo de impressão", "1,75", "", "h"), F("Taxa de falha", "10", "", "%")] }
+        ]
+      },
+      kit: {
+        kicker: "Kit salvo", add: "Montar kit", count: n => n + " kit(s)",
+        rows: [
+          { nome: "Kit suporte + base", meta: "3 peça(s)", money: "custo R$ 52,34 · varejo R$ 157,02", fields: [F("Nome do kit", "Kit suporte + base"), F("Peças", "3", "", "un"), F("Custo total", "52,34", "R$"), F("Markup varejo", "200", "", "%")] },
+          { nome: "Kit vasos trio", meta: "3 peça(s)", money: "custo R$ 65,52 · varejo R$ 196,56", fields: [F("Nome do kit", "Kit vasos trio"), F("Peças", "3", "", "un"), F("Custo total", "65,52", "R$"), F("Markup varejo", "200", "", "%")] }
+        ]
+      }
+    };
+  }
+
+  kitLines() {
+    return [
+      { i: 0, titulo: "Peça 1 · Vaso G", origem: "do catálogo: Vaso G", gramas: "42 g", tempo: "3 h 30 min", unitN: 21.84, bound: 1 },
+      { i: 1, titulo: "Peça 2 (avulsa)", origem: "— Manual —", gramas: "— g", tempo: "—", unitN: 0, invalid: 1 },
+      { i: 2, titulo: "Peça 3 · Suporte de celular", origem: "do catálogo: Suporte de celular", gramas: "18 g", tempo: "1 h 05 min", unitN: 9.4, bound: 1 }
+    ];
+  }
+
+  records() {
+    return [
+      { label: "Cliente Ana · pedido 132", quotedAt: "Cotado em 08/08/2026", quotedAtTime: "Cotado em 08/08/2026 às 14:20", kind: "Peça única", basis: "preço de varejo", total: "R$ 196,44", badge: "Salvo", tone: "success", origem: "Vaso G", openLabel: "Abrir produto" },
+      { label: "Kit suporte + base", quotedAt: "Cotado em 05/08/2026", quotedAtTime: "Cotado em 05/08/2026 às 09:12", kind: "Kit · 3 peças", basis: "preço de varejo", total: "R$ 512,80", badge: "Pendente neste dispositivo", tone: "neutral", origem: "Kit suporte + base", openLabel: "Abrir kit" },
+      { label: "Feira do maker", quotedAt: "Cotado em 28/07/2026", quotedAtTime: "Cotado em 28/07/2026 às 17:45", kind: "Peça única", basis: "preço de atacado", total: "R$ 88,20", badge: "Salvo", tone: "success", origem: "Suporte de celular", openLabel: "Abrir produto" },
+      { label: "Cálculo avulso", quotedAt: "Cotado em 19/07/2026", quotedAtTime: "Cotado em 19/07/2026 às 11:03", kind: "Peça única", basis: "preço de varejo", total: "R$ 143,10", badge: "Salvo", tone: "success", origem: "Cálculo avulso", openLabel: "Abrir produto" }
+    ];
+  }
+
+  renderVals() {
+    const s = this.state;
+    const isPremium = (this.props.plano ?? "premium") === "premium";
+    const rail = s.rail ?? (this.props.railRecolhido ?? false);
+    const cat = this.catalog();
+    const sec = cat[s.sec];
+    const rows = sec.rows;
+    const idx = Math.min(s.pick, rows.length - 1);
+    const d = rows[idx];
+    const tone = t => t === "danger" ? { bg: "var(--tf-danger-soft)", col: "var(--danger-text)" }
+      : t === "success" ? { bg: "var(--tf-success-soft)", col: "var(--success-text)" }
+      : t === "info" ? { bg: "var(--tf-info-soft)", col: "var(--info-text)" }
+      : { bg: "var(--bg-muted)", col: "var(--text-body)" };
+
+    const lines = this.kitLines().filter(l => !s.removed.includes(l.i)).map(l => {
+      const q = parseInt(s.qty[l.i] ?? "1", 10) || 0;
+      const total = l.unitN * q;
+      return {
+        ...l, qty: s.qty[l.i] ?? "1",
+        unit: l.invalid ? "—" : this.brl(l.unitN),
+        lineTotalLabel: "Total da linha (" + q + "×)",
+        total: l.invalid ? "—" : this.brl(total),
+        totalCol: l.invalid ? "var(--text-muted)" : "var(--text-strong)",
+        border: l.invalid ? "var(--danger)" : "var(--border-subtle)",
+        pickDisp: l.bound ? "none" : "inline-flex",
+        _t: l.invalid ? 0 : total, _ok: l.invalid ? 0 : 1
+      };
+    });
+    const kitCusto = lines.reduce((t, l) => t + l._t, 0);
+    const okCount = lines.reduce((t, l) => t + l._ok, 0);
+    const excluded = lines.length - okCount;
+    const [kvi, kvd] = this.split(kitCusto * 3), [kai, kad] = this.split(kitCusto * 2);
+
+    const recs = this.records();
+    const ri = Math.min(s.rec, recs.length - 1);
+    const rec = recs[ri];
+
+    const tabTitles = { catalogo: "Catálogo — mestre-detalhe", kits: "Kits — composição com resumo fixo", orcamentos: "Orçamentos — mestre-detalhe", conta: "Conta — plano, tema e dados", calcular: "Calcular" };
+    const tabHints = {
+      catalogo: "abas de seção no topo · lista em 2 colunas · ficha do item à direita, sem sheet",
+      kits: "peças à esquerda · total do kit e canais fixos à direita (edite a quantidade)",
+      orcamentos: "filtros + lista à esquerda · registro congelado aberto à direita",
+      conta: "identidade e plano à esquerda · tema, privacidade e sair à direita",
+      calcular: "está no arquivo Calcular Desktop"
+    };
+    const navOn = t => s.tab === t ? { bg: "var(--accent-soft)", col: "var(--accent-text)", cur: "page" } : { bg: "transparent", col: "var(--text-muted)", cur: null };
+    const nc = navOn("catalogo"), nk = navOn("kits"), no = navOn("orcamentos"), nco = navOn("conta");
+    const segOn = k => s.sec === k ? { bg: "var(--surface-card)", col: "var(--accent-text)" } : { bg: "transparent", col: "var(--text-muted)" };
+    const sf = segOn("fil"), si = segOn("imp"), sp = segOn("prod"), sk = segOn("kit");
+    const thOn = k => s.theme === k ? { bg: "var(--surface-card)", col: "var(--accent-text)" } : { bg: "transparent", col: "var(--text-muted)" };
+    const tl = thOn("light"), td = thOn("dark");
+    const pb = isPremium ? tone("success") : tone();
+
+    return {
+      theme: s.theme, darkPressed: s.theme === "dark",
+      sunDisp: s.theme === "dark" ? "block" : "none", moonDisp: s.theme === "dark" ? "none" : "block",
+      logoDark: s.theme === "dark" ? "block" : "none", logoLight: s.theme === "dark" ? "none" : "block",
+      railW: rail ? "76px" : "240px", navLbl: rail ? "none" : "inline", navJus: rail ? "center" : "flex-start",
+      isPremium, isFree: !isPremium, writeBlocked: !isPremium,
+      isCatalogo: s.tab === "catalogo", isKits: s.tab === "kits", isOrc: s.tab === "orcamentos", isConta: s.tab === "conta", isCalcular: s.tab === "calcular",
+      tabTitle: tabTitles[s.tab], tabHint: tabHints[s.tab],
+      bgCatalogo: nc.bg, colCatalogo: nc.col, curCatalogo: nc.cur,
+      bgKits: nk.bg, colKits: nk.col, curKits: nk.cur,
+      bgOrc: no.bg, colOrc: no.col, curOrc: no.cur,
+      bgConta: nco.bg, colConta: nco.col, curConta: nco.cur,
+      bgFil: sf.bg, colFil: sf.col, selFil: s.sec === "fil",
+      bgImp: si.bg, colImp: si.col, selImp: s.sec === "imp",
+      bgProd: sp.bg, colProd: sp.col, selProd: s.sec === "prod",
+      bgKit: sk.bg, colKit: sk.col, selKit: s.sec === "kit",
+      addLabel: sec.add, secCount: sec.count(rows.length), detailKicker: sec.kicker,
+      items: rows.map((r, i) => {
+        const t = tone(r.tone);
+        return { i, nome: r.nome, meta: r.meta, money: r.money, badge: r.badge || "", badgeDisp: r.badge ? "inline-flex" : "none", badgeBg: t.bg, badgeCol: t.col, border: i === idx ? "var(--accent)" : "var(--border-subtle)" };
+      }),
+      detail: {
+        nome: s.edits[s.sec + ":" + idx + ":" + d.fields[0].label] ?? d.nome,
+        fields: d.fields.map(fd => {
+          const key = s.sec + ":" + idx + ":" + fd.label;
+          return { ...fd, key, value: s.edits[key] ?? fd.value, cls: fd.numeric ? "tf-input tf-input--num" : "tf-input" };
+        }),
+        hasRefs: !!d.refs, filamento: d.filamento || "", impressora: d.impressora || "", needsAttention: !!d.needs
+      },
+      lines,
+      kitCusto: this.brl(kitCusto), kitVarejoInt: kvi, kitVarejoDec: kvd, kitAtacadoInt: kai, kitAtacadoDec: kad,
+      kitPiecesCap: okCount + " peça(s) no total",
+      excludedDisp: excluded > 0 ? "block" : "none",
+      excludedCap: excluded + " peça(s) fora do total — confira os avisos nas peças acima.",
+      kitMl: this.brl(kitCusto * 3 * 1.16), kitSp: this.brl(kitCusto * 3 * 1.22),
+      chContrib: okCount + " peça(s) somaram neste canal",
+      chSkipped: excluded > 0 ? excluded + " peça(s) sem preço neste canal — não entrou na soma." : okCount + " peça(s) somaram neste canal",
+      records: recs.map((r, i) => {
+        const t = tone(r.tone);
+        return { ...r, i, badgeBg: t.bg, badgeCol: t.col, border: i === ri ? "var(--accent)" : "var(--border-subtle)", bg: i === ri ? "var(--accent-soft)" : "var(--surface-card)" };
+      }),
+      rec,
+      planLabel: isPremium ? "Premium" : "Gratuito", planBadgeBg: pb.bg, planBadgeCol: pb.col,
+      planCaption: isPremium ? "renova em 01/09/2026" : "Calcular custo e markup é grátis, sem limite.",
+      planPrimaryLabel: isPremium ? "Gerenciar assinatura" : "Assinar Premium",
+      bgLight: tl.bg, colLight: tl.col, bgDark: td.bg, colDark: td.col,
+      goTab: e => { const t = e.currentTarget.dataset.tab; this.setState({ tab: t }); },
+      goSec: e => { const k = e.currentTarget.dataset.sec; this.setState({ sec: k, pick: 0 }); },
+      pickItem: e => this.setState({ pick: +e.currentTarget.dataset.i }),
+      onField: e => { const k = e.target.dataset.k, v = e.target.value; this.setState(st => ({ edits: { ...st.edits, [k]: v } })); },
+      pickRec: e => this.setState({ rec: +e.currentTarget.dataset.i }),
+      onQty: e => { const i = e.target.dataset.i, v = e.target.value; this.setState(st => ({ qty: { ...st.qty, [i]: v } })); },
+      rmLine: e => { const i = +e.currentTarget.dataset.i; this.setState(st => ({ removed: [...st.removed, i] })); },
+      addLine: () => this.setState(st => ({ removed: st.removed.slice(0, -1) })),
+      toggleTheme: () => this.setState(st => ({ theme: st.theme === "dark" ? "light" : "dark" })),
+      setTheme: e => this.setState({ theme: e.currentTarget.dataset.th }),
+      toggleRail: () => this.setState(st => ({ rail: !(st.rail ?? (this.props.railRecolhido ?? false)) }))
+    };
+  }
+}
+</script>
+</body>
+</html>

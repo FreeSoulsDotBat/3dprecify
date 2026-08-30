@@ -8,8 +8,19 @@
   gap: var(--space-2);
   min-width: 0;
 }
+/* 016/PR-C homologação (B4) — the label + its optional `labelAddon` (an InfoTip trigger) share
+   ONE row, but the addon is a FLEX SIBLING of `.tf-field__label`, never a descendant — see the
+   `labelAddon` doc in field.tsx for why. `.tf-field__label` keeps its own internal min-height
+   reservation (below) so the row's height is still driven by the label, not the addon. */
+.tf-field__label-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
 .tf-field__label {
   display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
   align-items: flex-end;
   gap: var(--space-2);
   /* Reserve two lines so a label that wraps (e.g. "Reserva de manutenção") does not
@@ -60,6 +71,14 @@
   border: 1.5px solid var(--border-default);
   border-radius: var(--radius-field);
   cursor: text;
+  /* 016/PR-C homologação (B4) — a defensive floor for EVERY numeric input, everywhere: `.tf-input`
+     below carries `min-width:0` on purpose (D2's overflow lesson), so nothing stopped the WRAPPER
+     from following it all the way down inside a tight 2-col grid. This alone is not the fix for
+     the worst-case outlier (a currency prefix AND a wide unit suffix together, "Tarifa de
+     energia") — that grid is now `.tf-costs-grid` (calculator-form.css), which reflows instead of
+     forcing an oversized min-width into a fixed 2-col track (that overflowed the 360/390 viewport
+     when tried). This value is the safe floor for every OTHER numeric grid in the app. */
+  min-width: 8rem;
   transition:
     border-color var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out),
@@ -68,11 +87,11 @@
 .tf-inputwrap:hover {
   border-color: var(--border-strong);
 }
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco.
+   O `:focus-within` marca só pela cor da borda (o mesmo tom de `--accent`), sem anel. */
 .tf-inputwrap:focus-within {
-  /* Match the ring color so border + ring read as ONE stroke. In dark, --border-accent
-     (#7800ff) differed from --focus-ring (#9a4bff), which showed as a double border. */
-  border-color: var(--focus-ring);
-  box-shadow: var(--ring);
+  border-color: var(--accent);
+  box-shadow: none;
 }
 .tf-inputwrap--sm {
   height: var(--control-h-sm);
@@ -139,4 +158,26 @@
   font-variant-numeric: tabular-nums lining-nums;
   font-feature-settings: var(--num-features);
   text-align: right;
+}
+
+/* Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE.
+   Tom `info`, deliberadamente distinto do `--danger` do erro: o número não foi recusado, e uma
+   frase pintada de vermelho diria o contrário do que ela está escrita para dizer.
+   Ver `shared/lib/plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
+
+   019/PR-C (T118) — dois consertos: (1) a referência apontava para `features/calculator/
+   plausibilidade.ts`, que nunca existiu — o módulo sempre morou em `shared/lib` (a razão está no
+   cabeçalho dele). (2) `.tf-field__aviso` deixou de ser o estilo do aviso DENTRO do `hint` do
+   `Field` — a família `tf-aviso` (`shared/ui/aviso.tsx`, ADR-0032) tomou esse lugar em
+   `calculator-form.tsx` (T056). A regra sobrevive aqui porque `features/bom/bom-line-card.tsx`
+   ainda a usa como parágrafo solto para o aviso de quantidade da linha de kit — apagá-la agora
+   quebraria aquele consumidor, fora do escopo desta fatia. */
+.tf-field__hint-line {
+  display: block;
+}
+.tf-field__aviso {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--info-text);
+  overflow-wrap: anywhere;
 }

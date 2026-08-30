@@ -1,0 +1,16 @@
+{
+  "id": "gate-marketplace-faixa-de-preco",
+  "nome": "Gate de Marketplace na calculadora — interruptor desligado + faixa de preço e \"Assinar\"",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/calculator/calculator-form.tsx",
+    "apps/web/src/shared/billing/teaser-upgrade.tsx"
+  ],
+  "oQueFoiInferido": "No lugar do bloco de canais, o gratuito recebe (`calculator-form.tsx`, bloco `data-testid=\"marketplace-premium-gate\"`): o `SectionTitle` normal da seção Marketplace, o `<Switch checked={entitled && included} disabled={!entitled}/>` — renderizado VISÍVEL, desligado e morto —, a frase `t.channels.premiumOnly`, e um `<div style={{textAlign:\"center\"}}>` com o `<TeaserUpgrade align=\"center\"/>`: uma superfície de compra enxertada no meio de um formulário de cálculo. Inferido: a posição dentro do formulário, o alinhamento (que só virou `center` depois de medir ~950px entre a legenda e o CTA na faixa full-width), e a decisão de manter o interruptor visível-porém-morto em vez de substituí-lo. Falta desenhar: o bloco de marketplace trancado — o que fica visível do que ele faria, e onde a oferta entra sem quebrar a leitura do cálculo.",
+  "autoridade": "NENHUMA",
+  "impacto": "A promessa central do produto (mostrar a conta inteira, com a taxa do marketplace) aparece trancada no meio do formulário com um interruptor morto e um botão de compra — composição que nunca passou por desenho.",
+  "prioridade": "ALTA",
+  "refutacao": "Este é o achado com a refutação mais fácil de tentar e a mais impossível de sustentar, por cronologia. §E4 do protótipo desenha Marketplace como uma seção colável NORMAL e GRÁTIS — \"canal (Shopee / ML Clássico / ML Premium / Nenhum) → taxa fixa (R$) + comissão (%)\", \"Mostrar como taxa negativa no breakdown → líquido\" — e §I proíbe explicitamente \"paywall no cálculo (computar é sempre grátis)\"; a rodada 1 item 5 até CORRIGIU os presets de taxa (ML Clássico 6,75+14%, Premium 6,75+19%) para o usuário livre. O marketplace só virou Premium no incremento 016 (PR-E, 2026-08-06), mais de um mês depois — o desenho não podia prever um gate que contraria a sua própria regra escrita. `CalculatorScreen.jsx` (131 linhas) não tem gate de canal. `PremiumScreen.jsx` lista \"Cenários de marketplace salvos\" como benefício — o que é gated ali é SALVAR cenários, não CALCULAR com canal. E o canvas 018 não cobre Calcular (artboard-ponteiro; arquivo referenciado inexistente — verificado). Nenhuma autoridade desenha um bloco de cálculo trancado. Sobrevive integralmente.",
+  "sobreviveu": true,
+  "area": "billing"
+}
