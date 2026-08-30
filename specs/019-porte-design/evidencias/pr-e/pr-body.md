@@ -1,6 +1,6 @@
 ## 019 PR-E — Montar e Enviar (US6 · FR-1916/1917 · pricing-core 4.2.0 · migração 0009 · **escalação opus ×3**)
 
-**Estado: CORREÇÃO DECLARADA** — nada homologado; a Rodada 1 fecha antes (D5). Evidência em `specs/019-porte-design/dod-evidence.md` §PR-E e `evidencias/pr-e/` ({{PNGS}} capturas 1:1 nos dois temas + medidas).
+**Estado: CORREÇÃO DECLARADA** — nada homologado; a Rodada 1 fecha antes (D5). Evidência em `specs/019-porte-design/dod-evidence.md` §PR-E e `evidencias/pr-e/` (18 capturas 1:1 nos dois temas + medidas).
 
 ### A regra do tempo que a fatia acrescenta
 
@@ -14,14 +14,18 @@ Um orçamento **enviado** não pode se recalcular sozinho — o cliente tem uma 
 
 ### Verificação
 
-- {{GATE}}
-- {{E2E}}
+- **Gate `pnpm gate:all`**: frontend **2098/2098** (cobertura 88,96%) · backend **622 passed** (cov 83,98%, import-linter 6/6). O mesmo comando literal do pre-push e do CI.
+- **E2E**: T084 `quote-builder.spec` **10/10 × 2 projetos** na stack real (igualdade com `computeQuote` rodado no teste; imutável após envio; PDF 200; offline DECISÃO 4 provado lendo o IDB); suíte COMPLETA `--workers=1`: **389 passed · 1 flaky conhecido · 0 failed** após a adoção do `waste-removal` (pinava a versão do motor como literal — quebrou pelo 2º bump seguido; agora lê `PRICING_MODEL_VERSION`). As 3 causas dos timeouts iniciais eram do TESTE (rótulo opcional no nome acessível, toast empilhado, `?construir=true` serializado cru).
 - Drift-guard 2× diff vazio; Schemathesis 45 passed em 54 s; migration-guard ok (1 head).
 - A guarda T125 (ADR-0033) pegou de verdade durante a fatia: a 1ª versão do construtor vazava `observedPrice` para `pages/historico` — vermelho na hora, corrigido.
 
 ### Fronteira decidida (Princípio VIII, precedente T124)
 
 `features/history` ↛ `features/calculator`: a PAGE monta `toLineInput` (`pages/historico/quote-line-input.ts`, reusa `bomLineToInput` + `productToForm`/`computeFromForm`; `directSale()` remove `channels`). **Follow-up ao arquiteto**: três telas já reimplementam esse mapeamento — descê-lo para `entities` eliminaria a triplicação.
+
+### Achado ALTA (pré-existente, reportado — follow-up, não desta fatia)
+
+`app-shell.tsx` monta **dois `<Outlet/>`** (um por ramo de `isMobile`, corte 425px): redimensionar a janela cruzando a borda troca a identidade da subárvore React e **zera o estado local não salvo de qualquer página** — determinístico (no construtor: a seleção some só de redimensionar). Fix sugerido: uma única posição de árvore para o `<Outlet/>`.
 
 ### Pede ao dono
 

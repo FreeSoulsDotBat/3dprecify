@@ -1021,3 +1021,27 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
 - Suíte FE 1609/1609 · tsc 0 · boundaries/depcruise ok. T084 escrito; o veredito é da rodada limpa do main loop (as duas rodadas
   do agente morreram por briga de portas — lição: UMA stack por vez, o coordenador roda o e2e quando dois agentes competem).
 
+### T084 · T089 — a stack real e o fechamento (qa-software + main loop, 2026-08-29/30)
+
+- **T084 verde: 10/10 × 2 projetos.** As três causas eram do TESTE, nenhuma do produto: (1) "Reserva de manutenção" é opcional e o
+  `Field` acrescenta " opcional" ao nome acessível — `exact: true` nunca resolvia e o `.fill()` pendurava o teste inteiro (o timeout
+  de 2,5 min); (2) três produtos em sequência empilham o toast "Produto salvo." — `.last()`; (3) `navigate({ search: { construir:
+  true } })` serializa `?construir=true` (booleano cru), nunca `=1` — a mesma classe da PR-C (`?assinar=%221%22`); âncora no
+  `data-testid="quote-builder"` (único acréscimo ao produto). Adoção com lição: um produto PARADO **não pode nascer por POST**
+  (FR-310) — o único caminho real é materializar um kit com peça avulsa; o helper usa esse caminho. O guard de altura a 390 foi
+  reduzido a X: a tela de revisão excede 844px por DESENHO (rolagem de página é o comportamento certo — a lição do 016 mirava
+  scroll indesejado em superfície compacta).
+- **T089**: contrato 2× diff vazio · gate FE **2098/2098** (cobertura 88,96%) + BE **622 passed** (cov 83,98%) · e2e COMPLETO
+  `--workers=1`: **389 passed · 2 failed · 1 flaky** — os 2 eram o `waste-removal.spec` pinando a versão do motor como LITERAL
+  ("4.1.0"), quebrado pelo bump 4.2.0 desta fatia: o literal já tinha quebrado no bump 4.1.0 — agora lê `PRICING_MODEL_VERSION`
+  (verde na re-rodada: 25 passed + 1 flaky conhecido). **Screenshots**: 18 capturas × 2 temas em `evidencias/pr-e/` +
+  `medidas-pr-e.json` (overflowX 0) — construtor 390/1280, abaixo-do-custo (Q10, Enviar habilitado), o cartão 18e, offline com a
+  razão, lista + detalhe itemizado. Achado de captura consertado no spec: o tema vive no `dataset` do documento VIVO e cada
+  goto/reload o apaga — 3 pares saíram byte-idênticos (o "dark" era claro) até o `setTheme` ser reaplicado antes de CADA captura
+  (pego por HASH dos pares, não pelo olho).
+- **ACHADO ALTA (pré-existente, fora da fatia — follow-up prioritário)**: `app-shell.tsx` monta DOIS `<Outlet/>` distintos (um por
+  ramo de `isMobile`); redimensionar cruzando 425px troca a identidade da subárvore React e **zera o estado local não salvo de
+  qualquer página** — reproduzido determinístico no construtor ("1 item / Peça selecionada" vira "0 itens / R$ 0,00" só de
+  redimensionar). Fix sugerido: UMA posição de árvore para o `<Outlet/>`, trocando só CSS ao redor. Mesma família do A2/A3 do 016 —
+  vai ao dono como follow-up, não nesta fatia (arquivo largamente compartilhado).
+

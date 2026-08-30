@@ -197,6 +197,8 @@ for (const theme of THEMES) {
       page.locator('[data-testid^="quote-line-"]').filter({ hasText: stoppedName }),
     ).toBeVisible();
     await pick(page, "Peca Shot", "1");
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `construtor-selecao-390-${theme}`);
 
     // ACHADO REAL (T089, achado de produto — NÃO conserto aqui, só registro e contorno para a
@@ -212,6 +214,8 @@ for (const theme of THEMES) {
     await page.setViewportSize({ width: 1280, height: 900 });
     await openBuilder(page);
     await pick(page, "Peca Shot", "1");
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `construtor-selecao-1280-${theme}`);
   });
 
@@ -243,7 +247,11 @@ for (const theme of THEMES) {
     const aviso = page.getByTestId("quote-below-cost");
     await expect(aviso).toBeVisible();
     await expect(page.getByTestId("quote-send")).toBeEnabled();
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `abaixo-do-custo-390-${theme}`, aviso);
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await page.screenshot({
       path: join(OUT, `abaixo-do-custo-tela-390-${theme}.png`),
       animations: "disabled",
@@ -273,7 +281,11 @@ for (const theme of THEMES) {
     await page.getByRole("button", { name: tq.continueAction }).click();
     const card = page.getByText(tq.sendTitle).locator("..");
     await expect(page.getByText(tq.sendTitle)).toBeVisible();
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `cartao-enviar-congela-390-${theme}`, card);
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await page.screenshot({
       path: join(OUT, `cartao-enviar-congela-tela-390-${theme}.png`),
       animations: "disabled",
@@ -312,6 +324,8 @@ for (const theme of THEMES) {
     // abaixo da dobra a 390×844 — `toBeVisible()` não exige estar rolado à vista (só CSS), então a
     // 1ª rodada gravou uma imagem sem a superfície pedida. Rolar até a razão antes da captura.
     await reason.scrollIntoViewIfNeeded();
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `offline-enviar-desabilitado-390-${theme}`);
     await goOnline(page, context);
   });
@@ -341,10 +355,14 @@ for (const theme of THEMES) {
     await page.goto("/historico");
     await setTheme(page, theme);
     await expect(page.getByText("Cliente Screenshot").first()).toBeVisible();
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `lista-orcamentos-390-${theme}`);
 
     await page.getByText("Cliente Screenshot").first().click();
     await expect(page.getByTestId("quote-document-dates")).toBeVisible();
+    // o tema vive em `dataset` do documento VIVO — cada goto/reload o apaga; reaplicar antes de capturar.
+    await setTheme(page, theme);
     await shot(page, `detalhe-itemizado-390-${theme}`);
   });
 }
