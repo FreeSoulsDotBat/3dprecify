@@ -1045,3 +1045,47 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   redimensionar). Fix sugerido: UMA posição de árvore para o `<Outlet/>`, trocando só CSS ao redor. Mesma família do A2/A3 do 016 —
   vai ao dono como follow-up, não nesta fatia (arquivo largamente compartilhado).
 
+---
+
+## Polish & fechamento (Phase 10, 2026-08-30) · branch `019-polish`
+
+### T100 · T101 · T139 · T140
+
+- **T100**: vetor canônico + `band-dominance.artifact` **76/76** após as seis fatias — 27,55/41,33/35,82 intactos, `catalogVersion`
+  intocado (SC-007). O 4.2.0 é MINOR de verdade: a varredura de igualdade da PR-E (T080) já o tinha provado campo a campo.
+- **T101**: zero `_diag-foco*` (só a menção histórica no comentário da guarda viva `focus-none.spec.ts`); zero asserção de anel nos
+  testes de gate. Exceção DECLARADA: `tests/homologacao/{_diagnostico.spec.ts,_harness.ts}` medem `outline` como FERRAMENTA de
+  diagnóstico do harness de homologação (fora do gate) — não são asserções de anel.
+- **T139**: `tf-segmented--split` ganhou consumidor na PR-F (o Segmented Varejo|Atacado da T142) e `tf-badge--warning` no selo
+  (`fee-seal.tsx`); `tf-btn--full` e `--half` NÃO tinham consumidor de produto — ganharam exatamente os que as pranchetas desenham:
+  o "Novo orçamento" da 18a (`width="full"`) e o "Tentar novamente" do erro frio de Simulações da 30a (`width="half"`). Nada
+  declarado morto.
+- **T140**: build limpo; `dist/sw.js` precacheia `logo-inteira-{white,black}.png` + os 4 símbolos; as seis fatias não acrescentaram
+  nenhum asset binário (ícones novos são SVG inline em `icon.tsx`) — a classe 009/T016-N5 não reabriu.
+
+### T102 — SC-1907: a geometria consolidada (lida dos `medidas-*.json`, não re-medida)
+
+| Fatia | arquivo | entradas | larguras medidas | overflowX > 0 |
+| --- | --- | --- | --- | --- |
+| PR-A | `medidas-shopee-360-{dark,light}.json` | 3+3 | 360 (seção Shopee) | nenhum |
+| PR-B | `medidas-pr-b.json` | 30 | 390 · 1920 | nenhum |
+| PR-C | `medidas-pr-c.json` | 12 | 390 (+1280 nos specs de layout) | nenhum |
+| PR-D | `medidas-pr-d.json` | 34 | 390 · 1024 · 1279 · 1280 · 1920 | nenhum |
+| PR-E | `medidas-pr-e.json` | 14 | 390 · 1280 | nenhum |
+| PR-F | `medidas-pr-f.json` + `baseline-mobile/` + `a11r.json` | 24+9 | 360 · 390 · 1280 · 1920 (+1440 no baseline) | nenhum |
+
+Os quatro cortes do SC-1907 (360/1280/1440/1920) ficam cobertos pela UNIÃO: 360 (PR-A/PR-F/T143), 1280 (PR-D/PR-E/PR-F), 1440
+(baseline PR-F/`pages-desktop-width`), 1920 (PR-B/PR-D/PR-F); os cortes intermediários do 019 (1024/1279, a faixa `tf-table`)
+entraram pela PR-D e ganharam guarda permanente (`catalog-table-name-visible.spec.ts`). Além do overflow: as suítes
+`overflow-geometria` + `a5-a6-geometry` + `pages-desktop-width` + `calculator-layout` rodaram verdes no e2e completo de cada gate.
+
+### T103 · T104
+
+- **T103**: `docs/homologacao/rodadas/019-correcao-declarada-2026-08-30.md` — as seis fatias em CORREÇÃO DECLARADA aguardando a
+  Rodada 1 fechar; nenhum cenário novo aberto (D5).
+- **T104** (a parte mecânica): `docs/adr/README.md` — 0023 corrigido para Accepted (gate do E6 PR-A, como a própria task registra);
+  linhas 0024–0031 preenchidas com o status MEDIDO em cada arquivo (0026/0027/0031 Aceitos · 0025/0028/0029/0030 Propostos ·
+  **0024 diverge**: o arquivo diz Proposto, o ground do 014 diz Accepted + live — vai ao dono). Os flips de **0032/0033/0034 + as
+  emendas (0031 §2026-08-26 · 0017 §2026-08-29)** são atos do dono — pedidos nos corpos dos PRs #59/#62/#65 e confirmados na
+  pergunta de fechamento do Polish.
+

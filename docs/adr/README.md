@@ -29,8 +29,15 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0020](0020-export-artifact-rendering.md) | Export artifact rendering — server-rendered PDF/CSV behind an active-entitlement gate | Accepted |
 | [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Accepted |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
-| [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Proposed |
-| 0024–0031 | *(linhas ausentes deste índice — os arquivos existem em `docs/adr/`; backfill pendente, ver nota abaixo)* | — |
+| [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Accepted (gate do E6 PR-A, T020) |
+| [0024](0024-progressive-price-bands.md) | Bandas de preço progressivas — comissão por parcela, sem reinterpretar o passado (014/PR-A) | Proposto no arquivo (⚠ o ground do 014 diz Accepted + live — divergência ao dono, Polish 019) |
+| [0025](0025-marketplace-level-fee-axes.md) | Eixos de tarifa de nível de marketplace (custo fixo ML) | Proposto (adiado com ML/US6-ML/017) |
+| [0026](0026-pricing-core-4-0-0-waste-removal.md) | pricing-core 4.0.0 — remoção do `wasteGrams` e a regra de leitura do legado | Aceito (2026-08-07) |
+| [0027](0027-price-dependent-fixed-fee-and-surcharges.md) | Taxa fixa como função do preço + sobretaxas por item (pricing-core 4.1.0) | Aceito (2026-08-07) |
+| [0028](0028-laco-mensal-coletor-emite-fatia.md) | O laço mensal de tarifas — coletor emite FATIA, a composição publica (017) | Proposto (flip no gate da PR-A do 017) |
+| [0029](0029-semente-como-projecao-gerada.md) | A semente como projeção gerada do artefato servido (017) | Proposto (flip no gate da PR-A do 017) |
+| [0030](0030-ocr-admissivel-para-dinheiro.md) | OCR admissível para dinheiro — motor fixado, endereço por bytes, guardas conjuntivas (017) | Proposto (flip no gate da PR-C do 017) |
+| [0031](0031-desktop-composition-gate.md) | O gate de composição desktop, e a invariância mobile por construção (018; §Emendas 2026-08-26 e §2 2026-08-27/29) | Accepted (2026-08-26) |
 | [0032](0032-primitivos-do-porte-do-design.md) | Os primitivos do porte — onde cada classe `tf-*` mora, e como o porte não cria uma segunda camada (estende ADR-0007) | Proposed |
 | [0033](0033-observacao-e-fixacao-de-preco.md) | Observação de preço, fixação de preço e unicidade de nome — o Catálogo ganha dado novo sem virar fonte de preço (019/PR-D) | Proposed |
 | [0034](0034-orcamento-montado-motor-e-congelamento.md) | "Montar e Enviar" — `computeQuote` no motor e o congelamento pela maquinaria do E4 (019/PR-E) | Proposed |
