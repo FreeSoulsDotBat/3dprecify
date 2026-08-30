@@ -516,3 +516,77 @@ describe("SC-816 — 404 só apaga a entrada com PROVA de replay", () => {
     expect(value).toEqual([]);
   });
 });
+
+// ── 019/PR-E · T135 — o ORÇAMENTO na fila ───────────────────────────────────────────────────────
+//
+// A decisão desta varredura, para este arquivo, é NENHUMA MUDANÇA: a fila é kind-agnóstica por
+// construção (`HistoryItem.kind: string`, `body.kind` copiado sem ler), e a coisa certa a fazer
+// com um `kind` novo é não ganhar ramo. O teste existe porque "não ganhou ramo" é uma AFIRMAÇÃO —
+// e um `if (kind === "SINGLE")` acrescentado sem querer aqui deixaria orçamentos presos na fila
+// para sempre, offline, onde ninguém olha.
+const QUOTE_BODY = {
+  ...BODY,
+  clientSnapshotId: "csid-q",
+  kind: "QUOTE" as unknown as typeof BODY.kind,
+  modelVersion: "4.2.0",
+  headlineTotal: "64.80",
+  headlineBasis: "PRECO_ORCAMENTO" as unknown as typeof BODY.headlineBasis,
+  quoteValidityDays: 15,
+  payload: {
+    schemaVersion: 1,
+    kind: "QUOTE",
+    modelVersion: "4.2.0",
+    lines: [{ name: "Vaso", quantity: 2, unitPrice: "30.00", subtotal: "60.00", origin: null }],
+    discount: { mode: "PCT", value: "10.00", amount: "7.20", grossTotal: "72.00" },
+    costFloor: "48.00",
+    totals: { precoOrcamento: "64.80" },
+  },
+};
+
+function quoteEntry(over: Partial<OutboxEntry> = {}): OutboxEntry {
+  return {
+    clientSnapshotId: QUOTE_BODY.clientSnapshotId,
+    body: { ...QUOTE_BODY },
+    syncState: "pending",
+    attempts: 0,
+    ...over,
+  } as unknown as OutboxEntry;
+}
+
+describe("019/PR-E (T135) — um QUOTE atravessa a fila como qualquer outro kind", () => {
+  it("drena e sai da fila, com o corpo repassado byte a byte", async () => {
+    idbGet.mockResolvedValue([quoteEntry()]);
+    const post = vi.fn().mockResolvedValue({ id: "s-q" });
+
+    await drainOutbox("u1", { post });
+
+    expect(post).toHaveBeenCalledTimes(1);
+    // O corpo vai como foi congelado — a fila não reescreve documento (ADR-0018 §1).
+    expect(post.mock.calls[0]?.[0]).toEqual(QUOTE_BODY);
+    const [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value).toEqual([]);
+  });
+
+  it("as mesmas falhas honestas: resposta perdida ⇒ pendente, 403 ⇒ bloqueado", async () => {
+    idbGet.mockResolvedValue([quoteEntry()]);
+    await drainOutbox("u1", { post: vi.fn().mockRejectedValue({ status: 0 }) });
+    let [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value[0]?.syncState).toBe("pending");
+
+    idbGet.mockResolvedValue([quoteEntry()]);
+    await drainOutbox("u1", {
+      post: vi.fn().mockRejectedValue({ status: 403, code: "ENTITLEMENT_REQUIRED" }),
+    });
+    [, value] = idbSet.mock.calls.at(-1) as [string, OutboxEntry[]];
+    expect(value[0]?.syncState).toBe("blocked");
+  });
+
+  it("na lista, um orçamento ainda na fila aparece como qualquer registro pendente", () => {
+    const [row] = mergeHistory([], [quoteEntry()]);
+    expect(row?.kind).toBe("QUOTE");
+    expect(row?.headlineBasis).toBe("PRECO_ORCAMENTO");
+    expect(row?.syncState).toBe("pending");
+    // Sem id do servidor — e é por isso que o PDF ainda não existe (`quote.pdfWaitsSync`).
+    expect(row?.id).toBeNull();
+  });
+});

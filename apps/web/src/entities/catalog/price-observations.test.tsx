@@ -1,7 +1,9 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, renderHook, waitFor } from "@testing-library/react";
-import { computeCalculator, type PriceInput } from "@3dprecify/pricing-core";
+// 019/PR-E — a versão do modelo vem do PACOTE, nunca de um literal: o bump 4.1.0 → 4.2.0
+// (ADR-0034 §1) deixou este arquivo vermelho por um literal que não tinha por que existir.
+import { computeCalculator, type PriceInput, PRICING_MODEL_VERSION } from "@3dprecify/pricing-core";
 import { type ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -113,7 +115,7 @@ function observation(subjectId: string, observedPrice: number): PriceObservation
     subjectId,
     observedPrice,
     observedAt: "2026-08-01T00:00:00Z",
-    modelVersion: "4.1.0",
+    modelVersion: PRICING_MODEL_VERSION,
   };
 }
 
@@ -166,7 +168,7 @@ describe("usePriceObservations", () => {
             subjectId: "p1",
             observedPrice: "10.00",
             observedAt: "2026-08-01T00:00:00Z",
-            modelVersion: "4.1.0",
+            modelVersion: PRICING_MODEL_VERSION,
             catalogVersion: null,
           },
         ],
@@ -234,13 +236,13 @@ describe("useObservePrices", () => {
           subjectKind: "PRODUCT",
           subjectId: "p1",
           observedPrice: "10.00",
-          modelVersion: "4.1.0",
+          modelVersion: PRICING_MODEL_VERSION,
         },
         {
           subjectKind: "PRODUCT",
           subjectId: "p2",
           observedPrice: "20.50",
-          modelVersion: "4.1.0",
+          modelVersion: PRICING_MODEL_VERSION,
         },
       ],
     });

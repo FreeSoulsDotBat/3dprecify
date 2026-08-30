@@ -296,3 +296,74 @@ describe("honest feedback — a failure is never a file", () => {
     await waitFor(() => expect(screen.queryByText(t.exportContents)).not.toBeInTheDocument());
   });
 });
+
+// ── 019/PR-E · T135 — o ORÇAMENTO exporta pelo MESMO caminho ────────────────────────────────────
+//
+// Decisão para este arquivo: nenhum formato novo, nenhuma rota nova, nenhum ramo de `kind` na
+// geração. O artefato é do SERVIDOR (ADR-0020) e ele já sabe ler o documento que gravou; o que o
+// cliente acrescenta é UMA frase — a razão da espera, que agora nomeia o orçamento em vez de dizer
+// "sincronize" sobre um documento que o vendedor chama de outra coisa.
+const QUOTE_SYNCED: HistoryItem = {
+  ...SYNCED,
+  kind: "QUOTE",
+  headlineTotal: "64.80",
+  headlineBasis: "PRECO_ORCAMENTO",
+} as unknown as HistoryItem;
+
+const QUOTE_PENDING: HistoryItem = {
+  ...QUOTE_SYNCED,
+  syncState: "pending",
+  snapshot: undefined,
+} as unknown as HistoryItem;
+
+describe("019/PR-E (T135) — o orçamento exporta como qualquer registro", () => {
+  it("sincronizado: o PDF sai pela MESMA chamada, com o id do servidor", async () => {
+    const user = setup();
+    render(
+      <>
+        <ExportButton item={QUOTE_SYNCED} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
+    await screen.findByText(t.exportContents);
+    await user.click(screen.getByRole("button", { name: t.exportGenerate }));
+
+    await waitFor(() => expect(exportQuote).toHaveBeenCalledTimes(1));
+    expect(exportQuote).toHaveBeenCalledWith({ snapshotId: "srv-1", includeCostBreakdown: false });
+  });
+
+  it("antes de sincronizar não há PDF, e a razão NOMEIA o orçamento", async () => {
+    const user = setup();
+    render(
+      <>
+        <ExportButton item={QUOTE_PENDING} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
+    // Num registro pendente a gaveta abre no CSV (o PDF é o que depende do id do servidor), então
+    // o texto do conteúdo do PDF não está na tela — a âncora é a própria opção desabilitada.
+    await screen.findByRole("radio", { name: t.exportQuotePdf });
+
+    expect(screen.getByRole("radio", { name: t.exportQuotePdf })).toBeDisabled();
+    expect(screen.getByText(messages.quote.pdfWaitsSync)).toBeInTheDocument();
+    // A frase genérica do E4 continua sendo a dos outros kinds — esta é do orçamento.
+    expect(screen.queryByText(t.exportPending)).not.toBeInTheDocument();
+  });
+
+  it("NÃO-VÁCUO: um SINGLE pendente continua com a frase de sempre", async () => {
+    const user = setup();
+    render(
+      <>
+        <ExportButton item={PENDING} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: t.exportAction }));
+    await screen.findByRole("radio", { name: t.exportQuotePdf });
+
+    expect(screen.getByText(t.exportPending)).toBeInTheDocument();
+    expect(screen.queryByText(messages.quote.pdfWaitsSync)).not.toBeInTheDocument();
+  });
+});

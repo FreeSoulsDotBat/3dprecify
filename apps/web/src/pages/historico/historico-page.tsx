@@ -34,7 +34,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 import {
   basisCaption,
   cardTitle,
-  frozenPayloadOf,
+  kindLabel,
   money,
   offsetOf,
   quotedDate,
@@ -638,8 +638,10 @@ function QueueBanner({
 }
 
 function SnapshotCard({ item }: { item: HistoryItem }) {
-  const pieces = frozenPayloadOf(item)?.lines?.length ?? 0;
-  const kind = item.kind === "KIT" ? t.kindKit.replace("{n}", String(pieces)) : t.kindSingle;
+  // 019/PR-E (T135) — o rótulo do registro mora em `entities/history` (`kindLabel`): a lista e o
+  // detalhe têm de dizer a MESMA coisa sobre o mesmo registro, e a forma anterior aqui chamaria
+  // todo orçamento de "Peça única".
+  const kind = kindLabel(item);
   // 018 — achado A1 da minha própria homologação: no mestre-detalhe o registro abria à direita e
   // NENHUM card da lista ficava marcado. O vendedor perdia o vínculo entre o que escolheu e o que
   // está lendo — e a spec pede a marcação (FR-021). O Catálogo já marcava; aqui faltava.

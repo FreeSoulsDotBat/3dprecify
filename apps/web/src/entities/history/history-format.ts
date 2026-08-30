@@ -1,3 +1,4 @@
+import type { SnapshotInHeadlineBasis } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 
@@ -50,9 +51,49 @@ export function offsetOf(item: HistoryItem): number | undefined {
   return item.snapshot?.deviceUtcOffsetMinutes ?? item.entry?.body.deviceUtcOffsetMinutes;
 }
 
+// 019/PR-E (T135) — a legenda por BASE, como Record: a base nova do orçamento entrou por aqui, e a
+// forma anterior (um ternário `=== "PRECO_ATACADO" ? … : varejo`) teria etiquetado todo orçamento
+// como "Preço de varejo" — silenciosamente, sem quebrar nada, num registro imutável. Um Record
+// sobre a união do contrato faz o compilador cobrar a decisão quando surgir a quarta base.
+const BASIS_CAPTION: Record<SnapshotInHeadlineBasis, string> = {
+  PRECO_VAREJO: t.basisRetailCaption,
+  PRECO_ATACADO: t.basisWholesaleCaption,
+  // Prancheta 18e — o total de um orçamento ENVIADO. Não é varejo nem atacado: é o que o vendedor
+  // mandou para o cliente, já com o desconto que ele decidiu dar.
+  PRECO_ORCAMENTO: messages.quote.totalSent,
+};
+
 /** An unlabelled total is an ambiguous claim — the basis is spelled out on every surface. */
 export function basisCaption(basis: string): string {
-  return basis === "PRECO_ATACADO" ? t.basisWholesaleCaption : t.basisRetailCaption;
+  // Um documento gravado por uma versão futura pode trazer uma base que este cliente não conhece;
+  // aí a leitura cai no varejo, como sempre caiu — o que muda é que as bases CONHECIDAS não caem.
+  return BASIS_CAPTION[basis as SnapshotInHeadlineBasis] ?? t.basisRetailCaption;
+}
+
+/**
+ * 019/PR-E (T135) — o que a linha da lista DIZ que o registro é. Mesmo motivo do Record acima: o
+ * ternário `kind === "KIT" ? … : "Peça única"` chamaria todo orçamento de peça única.
+ * Um QUOTE conta ITENS (a cópia da prancheta 18b), que é o que ele tem.
+ */
+export function kindLabel(item: HistoryItem): string {
+  const lines = frozenPayloadOf(item)?.lines?.length ?? 0;
+  if (item.kind === "QUOTE") {
+    return lines === 1
+      ? messages.quote.itemCountOne
+      : messages.quote.itemCount.replace("{n}", String(lines));
+  }
+  return item.kind === "KIT" ? t.kindKit.replace("{n}", String(lines)) : t.kindSingle;
+}
+
+/**
+ * "Válido até" — TEXTO derivado da coluna `quoteValidityDays` (Q7, ADR-0034 §2). Não existe estado
+ * de vencimento: nada some da lista sozinho, nenhum job expira nada. Um vencimento de verdade
+ * precisaria de autoridade de relógio, e `deviceQuotedAt` é, por decisão do E4, um carimbo do
+ * aparelho que o servidor não verifica.
+ */
+export function validUntil(item: HistoryItem, days: number): string {
+  const at = new Date(item.deviceQuotedAt).getTime() + days * 86_400_000;
+  return quotedDate(new Date(at).toISOString(), offsetOf(item));
 }
 
 /** The label, or the CAPTURED origin name, or an honest neutral — never an invented one. */

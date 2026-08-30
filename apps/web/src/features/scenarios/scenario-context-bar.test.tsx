@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 // 010/T023+T029 (E5, PR-B US3/US6) — written FAILING-first (the extended context bar did not
 // exist: PR-A shipped name + live subtitle + Fechar only).
@@ -31,6 +31,11 @@ vi.mock("@/shared/lib/use-online", () => ({
 }));
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
+import {
+  readResolvedCostBasis,
+  type ResolvedCostBasisMeta,
+} from "@/entities/scenario/resolved-basis";
+import type { SnapshotInKind } from "@/shared/api/generated";
 import { ApiError } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
@@ -256,5 +261,33 @@ describe("ScenarioContextBar — lapse read-only freeze (VR-610) + offline", () 
     render(<ScenarioContextBar {...baseProps()} />);
     expect(screen.getByRole("button", { name: t.rename })).toBeDisabled();
     expect(screen.getByText(t.writeOffline)).toBeInTheDocument();
+  });
+});
+
+// ── 019/PR-E · T135 — a barra da simulação IGNORA orçamento ─────────────────────────────────────
+//
+// Decisão deste arquivo: NENHUMA MUDANÇA, e a razão é estrutural. A base de custo de uma simulação
+// é `ResolvedCostBasisMeta`, cujo `kind` é `"AD_HOC" | "PRODUCT" | "KIT"` — "QUOTE" não é um valor
+// que este tipo tenha, e `parseResolvedCostBasis` devolve `null` para qualquer kind que não
+// reconheça (nunca fabrica um). Ou seja: "salvar simulação a partir de um orçamento" não é uma
+// funcionalidade ausente, é uma frase que não se escreve aqui — e é o que este teste fixa, para
+// que alargar o tipo passe a ser uma decisão VISÍVEL em vez de um efeito colateral.
+describe("019/PR-E (T135) — um orçamento não vira simulação", () => {
+  it("o tipo da base de custo não tem 'QUOTE' — e a união do contrato tem", () => {
+    expectTypeOf<ResolvedCostBasisMeta["kind"]>().toEqualTypeOf<"AD_HOC" | "PRODUCT" | "KIT">();
+    expectTypeOf<SnapshotInKind>().toEqualTypeOf<"SINGLE" | "KIT" | "QUOTE">();
+  });
+
+  it("uma base cujo kind é 'QUOTE' não é reconhecida: null, nunca um kind inventado", () => {
+    expect(
+      readResolvedCostBasis({
+        costBasis: { kind: "QUOTE", ref: { id: "s-q", name: "Cliente João" } },
+      }),
+    ).toBeNull();
+    // NÃO-VÁCUO: as bases que existem continuam sendo lidas.
+    expect(
+      readResolvedCostBasis({ costBasis: { kind: "PRODUCT", ref: { id: "p1", name: "Vaso" } } })
+        ?.kind,
+    ).toBe("PRODUCT");
   });
 });

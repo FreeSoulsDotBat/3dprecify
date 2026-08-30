@@ -49,7 +49,7 @@ const t = messages.historico;
 
 /** What the surface hands over: its kind, and how to freeze what is currently on screen. */
 export interface RecordSource {
-  kind: SnapshotInKind;
+  kind: RecordableKind;
   /** Called at RECORD time (Sheet open), never at render — it captures the displayed values. */
   freeze: () => FrozenSnapshotPayload;
 }
@@ -92,7 +92,17 @@ export function RecordSnapshotButton({
   );
 }
 
-const BASIS_LABEL: Record<SnapshotInHeadlineBasis, string> = {
+// 019/PR-E (T135) — esta gaveta NÃO grava orçamento, e a barreira é de TIPO, não de `if`.
+//
+// O orçamento nasce no construtor (`quote-builder.tsx`), que monta N itens, aplica desconto no
+// total e congela pelo `buildQuotePayload`. Aqui se grava o que está NA TELA da Calculadora: uma
+// peça ou um kit, na base que o vendedor escolhe. Estreitar os dois tipos abaixo faz o compilador
+// recusar `kind: "QUOTE"` / `headlineBasis: "PRECO_ORCAMENTO"` nesta superfície — um `if` que
+// alguém remova por engano não reabriria o caminho, porque o caminho não existe no tipo.
+type RecordableKind = Exclude<SnapshotInKind, "QUOTE">;
+type RecordableBasis = Exclude<SnapshotInHeadlineBasis, "PRECO_ORCAMENTO">;
+
+const BASIS_LABEL: Record<RecordableBasis, string> = {
   PRECO_VAREJO: t.basisRetail,
   PRECO_ATACADO: t.basisWholesale,
 };
@@ -108,14 +118,16 @@ function RecordForm({ source, onDone }: { source: RecordSource; onDone: () => vo
   const record = useRecordSnapshot();
   const [label, setLabel] = useState("");
   const [validity, setValidity] = useState("");
-  const [basis, setBasis] = useState<SnapshotInHeadlineBasis>("PRECO_VAREJO");
+  const [basis, setBasis] = useState<RecordableBasis>("PRECO_VAREJO");
 
+  // As DUAS bases que esta gaveta oferece — e só elas: um documento de orçamento (cujo total mora
+  // em `totals.precoOrcamento`) não produz candidato nenhum aqui, então não há o que gravar.
   const candidates = (
     [
       ["PRECO_VAREJO", payload.totals.precoVarejo],
       ["PRECO_ATACADO", payload.totals.precoAtacado],
-    ] as const
-  ).filter((c): c is [SnapshotInHeadlineBasis, MoneyString] => !!c[1]);
+    ] as [RecordableBasis, MoneyString | undefined][]
+  ).filter((c): c is [RecordableBasis, MoneyString] => !!c[1]);
 
   const total = candidates.find(([b]) => b === basis)?.[1];
 
