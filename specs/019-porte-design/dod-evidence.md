@@ -932,3 +932,48 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   `grossTotal === bom.precoVarejo`), sem degrau de atacado: as metas transcritas não trazem o nível; (10) a razão do Enviar offline
   (DECISÃO 4) não está na prancheta — `sendOffline` segue o molde da família "precisa de conexão" (registrado como derivada).
 
+### T080 · T079 · T085 — o motor 4.2.0 (dev-estrutura-de-dados **opus**, 2026-08-29)
+
+- **A fixture antes do bump** (o checkpoint da fase): `equality-4.1.0.json` (2,3 MB, SHA-256 `41122df1a0d3005913a9be3ddaa8dad9dc0d9cccee7c9d7b9141beb70c740513`)
+  gerada com `src/index.ts` INTOCADO por `mulberry32(20260827)` (determinismo provado por dupla execução, mesmo SHA); 500 `calculator`
+  (250 com canais / 250 sem) + 200 `bom` (474 linhas, **415 rollups** comparados, 21 com preço `null`, 37 slots com erro isolado);
+  306 casos com `otherCosts`; meio-centavo injetado em `costPerRoll`, `otherCosts[].value` e no desconto; `failurePct` 100–1000% em
+  ~35%. **O gerador recusa rodar contra 4.2.0** — a fixture não pode ser "reconciliada" regenerando (a maneira óbvia de apagar a
+  prova). **Não-vácuo**: `ROUND_HALF_UP → ROUND_HALF_DOWN` ⇒ vermelho; e `skippedLines: 0` no rollup — uma mutação que não muda
+  NENHUM preço — ⇒ vermelho: a varredura enxerga `result.channels[]`.
+- **`computeQuote`** (`index.ts:636-763`): `QuoteInput { lines: (BomLineInput & { name? })[]; discount?: { mode: "PCT" | "AMOUNT";
+  value } }` → `QuoteResult { bom, lines[]: { name, quantity, unitPrice, subtotal }, grossTotal, discountAmount, netTotal, costFloor,
+  belowCost, modelVersion }` — tudo `Decimal`/`toMoney` (ADR-0008); `belowCost = netTotal < costFloor` (estrito); `ValidationError`
+  para desconto não-finito/negativo/pct > 100/reais > bruto e para `lines[i].input.channels` não-vazio (em RUNTIME, antes de qualquer
+  cálculo — o tipo não barra); **devolve números** (a string decimal é do documento, T133). `PRICING_MODEL_VERSION` 4.1.0 → **4.2.0**
+  (MINOR aditiva; `package.json` junto; `version.test.ts` com o porquê). Varredura 4.1→4.2 **verde contra 4.2.0**. 216/216, cobertura
+  **100%** (ratchet). Declarado para o gate: `QuoteResult` é SUPERSET do esboço do ADR-0034 §Decision 1 (+`lines[]` — o documento
+  exige `unitPrice`/`subtotal` por linha —, +`modelVersion`); `origin` fica de fora (é procedência de catálogo, do cliente).
+
+### T081 · T082 · T131 · T086 · T070 — a migração 0009 e o documento QUOTE (dev-backend **opus**, 2026-08-29)
+
+- **0009**: DROP+ADD dos TRÊS CHECKs no mesmo ato (`kind` +QUOTE · `headline_basis` +PRECO_ORCAMENTO · `headline_matches_totals` com
+  `WHEN 'PRECO_ORCAMENTO' THEN 'precoOrcamento'`). **A mutação vive dentro do teste**: numa transação revertida o CHECK é recriado SEM
+  o ramo e o mesmo INSERT divergente PASSA — o `CASE` devolve NULL e um CHECK NULL é satisfeito no Postgres. `downgrade()` é
+  irreversível na presença de um QUOTE (`trg_snapshots_forbid_delete` da 0006 impede apagar antes) — declarado no docstring, provado
+  em container próprio; custo zero enquanto o deploy está adiado.
+- **O documento QUOTE** aceito por `_validate_frozen_document`: `kind`, `modelVersion "4.2.0"`, `schemaVersion 1`, `lines[] { name,
+  quantity, unitPrice, subtotal, origin }`, `discount { mode, value, amount, grossTotal }`, `costFloor`, `totals.precoOrcamento` (=
+  `headlineTotal`, VR-503 + CHECK); `quoteValidityDays` é a COLUNA (CHECK 1..3650), não payload. Regras (422 no pydantic, nunca
+  `IntegrityError` — 500 vira laço infinito no outbox): todo dinheiro STRING decimal incl. `discount.value`; `_MONEY_POSITION_KEYS`
+  ganha as FOLHAS `unitPrice/subtotal/costFloor/amount/grossTotal` — **nunca `lines` nem `discount`** (o KIT com `quantity` inteiro
+  continua 201 — o teste que obriga as folhas a entrarem uma a uma); `mode ∈ {PCT, AMOUNT}`, PCT em [0,100], `amount ≤ grossTotal`,
+  `grossTotal − amount == precoOrcamento`; `origin` não é lido; `value` em AMOUNT não é obrigado a igualar `amount` (JSONB sobrevive
+  a um bump do motor). Mutações: folhas revertidas ⇒ 4 vermelhos; fallback `precoVarejo` restaurado ⇒ 6; ramo QUOTE do PDF desligado
+  ⇒ 6; validador do desconto ⇒ 10.
+- **PDF** (`quote_render.py`): ramo QUOTE itemiza `lines` por `subtotal`, bloco bruto→desconto→total, `_basis_key` sem fallback (erro
+  explícito), legenda TRADUZIDA (teste exige que nenhuma chave crua chegue ao cliente), `<b>`/`&amp;` literais via `_xml`, geometria do
+  nome de 300 chars (`_assert_no_overprint` promovida a módulo). Decisão aditiva para o gate: no opt-in "mostrar custos" o QUOTE imprime
+  `Custo total = costFloor` (sem isso o interruptor não faria nada — a classe do defeito que o teste do KIT já guarda). Os rótulos do
+  PDF são a cópia da 18d duplicada em Python (servidor sem i18n) — par sem guarda automática, registrado. CSV intocado.
+- **Espelhos**: 4 por igualdade de conjuntos E de chaves (`_BASIS_TOTAL_KEY == _BASIS_TOTAL` — senão a rota grava um número e o PDF
+  imprime outro) + `kind` × CHECK do modelo × `pg_get_constraintdef` vivo.
+- Contrato 2× byte-idêntico (`openapi.json 64092ea2…`, `generated.ts 6e785567…`; diff de 4 linhas); Schemathesis 45 passed em 54 s
+  (o `extra="forbid"` da PR-D não foi tocado — o payload QUOTE é `dict` opaco). **622 passed**, ruff/basedpyright/import-linter/
+  migration-guard ok. Commit `6fd47eb`.
+
