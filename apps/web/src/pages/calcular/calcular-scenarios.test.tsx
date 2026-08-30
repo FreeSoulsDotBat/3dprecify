@@ -102,7 +102,9 @@ describe("CalcularPage — the free 005 calculator is byte-untouched by E5 (SC-1
     setupFreeOrSignedOut(undefined);
     renderPage();
     // 016/PR-C homologação B1 — the seed's varejo is now R$ 24,24 (machine 4000/3600h).
-    expect(screen.getAllByText("R$ 24,24").length).toBeGreaterThan(0);
+    // 019/PR-F (T142, adoção) — o valor agora quebra em spans (R$/inteiro/decimais) dentro do
+    // cartão `price-hero`; `toHaveTextContent` concatena os nós descendentes.
+    expect(screen.getByTestId("price-hero")).toHaveTextContent(/R\$\s*24,24/);
   });
 });
 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
@@ -50,15 +50,23 @@ import {
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
-import { ScenariosListSheet } from "@/features/scenarios/scenarios-list-sheet";
+import {
+  ScenariosList,
+  ScenariosListSheet,
+  scenarioOpenArgs,
+} from "@/features/scenarios/scenarios-list-sheet";
+import { premiumGate } from "@/shared/billing/premium-gate";
 import { PremiumTeaser } from "@/shared/billing/premium-teaser";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
 import { useAvisoDeSaida } from "@/features/calculator/aviso-de-saida";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { useIsWide } from "@/shared/lib/use-is-wide";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
+
+import "@/features/scenarios/scenarios-wide.css";
 
 // E1 calculator screen. RHF (form state) + Zod (calculatorResolver) own the pt-BR inputs; the price +
 // breakdown come from one synchronous computeFromForm pass over the canonical pricing-core engine
@@ -296,8 +304,35 @@ export function CalcularPage() {
     }
   };
 
-  return (
-    <section className="tf-calc-page" data-testid="calc-content">
+  // 019/PR-F (T095, DECISÃO 2 — ADR-0031 §Emenda 2) — o único gate: acima do corte, "Minhas
+  // simulações" monta ao lado da calculadora (a coluna larga de `/calcular`, prancheta 20g); abaixo,
+  // a gaveta de sempre. `gate`/`lapsed` são a MESMA leitura que `ScenariosListSheet` já fazia por
+  // conta própria — computados aqui só para o hospedeiro largo, que monta `ScenariosList` direto.
+  const isWide = useIsWide();
+  const scenariosGate = premiumGate(entitlement.data, { status: sessionStatus });
+  const scenariosLapsed = entitlement.data?.status === "lapsed";
+
+  // A referência da coluna PRINCIPAL (não a lista) — o "Fazer um cálculo" do vazio didático e o
+  // "Limpar busca" sem resultado, dentro de `ScenariosList`, chamam `onClose` esperando fechar uma
+  // gaveta; na coluna larga não existe gaveta para fechar, então o mesmo callback rola de volta ao
+  // topo da calculadora (o mesmo destino que "Fazer um cálculo" já significa: já se está em
+  // `/calcular`).
+  const wideMainRef = useRef<HTMLDivElement | null>(null);
+  // A referência da lista — o botão "Minhas simulações" do cabeçalho, na coluna larga, não abre
+  // nada: rola/foca a lista que já está sempre visível ao lado (decisão do dono, prancheta 20g:
+  // "a lista está sempre visível ao lado").
+  const wideAsideRef = useRef<HTMLElement | null>(null);
+  const handleScenariosNavClick = () => {
+    if (isWide) {
+      wideAsideRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      wideAsideRef.current?.focus();
+    } else {
+      setScenariosOpen(true);
+    }
+  };
+
+  const pageInner = (
+    <>
       <PageHeader title={t.title} className="tf-page-header--center" />
 
       {/* 015/A8 ([F11a-003], decisão do dono 2026-08-03) — a promessa SOBE para a primeira dobra.
@@ -313,15 +348,20 @@ export function CalcularPage() {
           page title (never inside the results block) and is VISIBLE for everyone, incl. free/
           signed-out (the SC-109-safe honest door, ux §0.1/§2.2/§11-F1/F2). */}
       <div className="flex justify-end">
-        <Button variant="ghost" size="sm" onClick={() => setScenariosOpen(true)}>
+        <Button variant="ghost" size="sm" onClick={handleScenariosNavClick}>
           <Icon name="boxes" size={16} aria-hidden /> {messages.scenarios.navEntry}
         </Button>
       </div>
-      <ScenariosListSheet
-        open={scenariosOpen}
-        onOpenChange={setScenariosOpen}
-        onOpenScenario={openScenario}
-      />
+      {/* 019/PR-F (T095) — a gaveta SÓ monta estreito: a coluna larga já tem `ScenariosList` sempre
+          visível ao lado (abaixo), e montar as duas seria a duplicata que a T092 provou impossível
+          no hospedeiro de teste — aqui é o hospedeiro real. */}
+      {!isWide && (
+        <ScenariosListSheet
+          open={scenariosOpen}
+          onOpenChange={setScenariosOpen}
+          onOpenScenario={openScenario}
+        />
+      )}
 
       {/* The "cenário carregado" context bar (ux §4.1) — NO date anywhere, ever (§0.2): the
           subtitle states the LIVE promise instead. T023 adds the D3/D6 honest caption + "Abrir
@@ -617,6 +657,52 @@ export function CalcularPage() {
           </div>
         )}
       </div>
+    </>
+  );
+
+  // 019/PR-F (T095, DECISÃO 2) — ≥1280px o hospedeiro é a PRÓPRIA `.tf-calc-page`: o corpo de
+  // sempre (`pageInner`, byte-idêntico ao ramo estreito abaixo) vira a coluna principal, e
+  // "Minhas simulações" (`ScenariosList`, extraída na T092) monta ao lado, sempre visível
+  // (prancheta 20g). `.tf-calc-page` continua sendo o ÚNICO filho de `.tf-shell__main`
+  // (`widthRatio()` em `pages-desktop-width.spec.ts`/T093 lê `.tf-shell__main > section` — um
+  // wrapper por fora quebraria essa leitura), então o `tf-scenarios-wide` mora DENTRO da section.
+  if (isWide) {
+    return (
+      <section className="tf-calc-page" data-testid="calc-content">
+        <div className="tf-scenarios-wide">
+          <div className="tf-scenarios-wide__main" ref={wideMainRef}>
+            {pageInner}
+          </div>
+          <aside
+            ref={wideAsideRef}
+            tabIndex={-1}
+            className="tf-card tf-scenarios-wide__aside"
+            aria-label={messages.scenarios.listTitle}
+            data-testid="scenarios-wide-aside"
+          >
+            <p style={sectionLabel}>{messages.scenarios.listTitle}</p>
+            <p style={captionText}>{messages.scenarios.listSubtitle}</p>
+            <ScenariosList
+              gate={scenariosGate}
+              lapsed={scenariosLapsed}
+              teaser={false}
+              onClose={() =>
+                wideMainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+              }
+              onOpenScenario={(item) => {
+                const { config, meta } = scenarioOpenArgs(item);
+                openScenario(config, meta);
+              }}
+            />
+          </aside>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="tf-calc-page" data-testid="calc-content">
+      {pageInner}
     </section>
   );
 }

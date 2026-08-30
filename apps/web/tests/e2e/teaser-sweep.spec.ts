@@ -63,11 +63,30 @@ for (const vp of VIEWPORTS) {
     // A QUARTA tela do invariante 016/US1 é a folha "Minhas simulações" — não a /calcular inteira:
     // a página da calculadora tem DUAS superfícies premium por desenho (o teaser do picker e o gate
     // do marketplace), cada uma com o próprio convite. Dentro da FOLHA, o convite é um só.
+    //
+    // 019/PR-F (T099, adoção) — ≥1280px a "folha" deixou de ser um `dialog`: a coluna larga
+    // (`scenarios-wide-aside`, T095) fica sempre visível ao lado da calculadora, e o clique em
+    // "Minhas simulações" só rola/foca essa coluna (nunca abre um diálogo). A revisão do main loop
+    // fez o vazio da coluna montar com `teaser={false}` de propósito — a página JÁ carrega os
+    // seus DOIS convites por desenho (picker + gate do marketplace); um terceiro ali seria o
+    // duplo-convite que a PR-B matou no Catálogo. Então ≥1280: zero convites DENTRO da coluna, e a
+    // PÁGINA INTEIRA mantém exatamente os 2 de sempre. < 1280 (a gaveta): segue como estava — um
+    // dialog com o convite único (FR-1906).
     await page.setViewportSize({ width: vp.width, height: vp.height });
     await page.goto("/calcular");
     await page.getByRole("button", { name: messages.scenarios.navEntry }).click();
-    const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText(messages.scenarios.emptyTitle)).toBeVisible();
-    await expect(sheet.getByRole("link", { name: CTA })).toHaveCount(1);
+
+    if (vp.width >= 1280) {
+      const aside = page.getByTestId("scenarios-wide-aside");
+      await expect(aside).toBeVisible();
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(aside.getByText(messages.scenarios.emptyTitle)).toBeVisible();
+      await expect(aside.getByRole("link", { name: CTA })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: CTA })).toHaveCount(2);
+    } else {
+      const sheet = page.getByRole("dialog");
+      await expect(sheet.getByText(messages.scenarios.emptyTitle)).toBeVisible();
+      await expect(sheet.getByRole("link", { name: CTA })).toHaveCount(1);
+    }
   });
 }

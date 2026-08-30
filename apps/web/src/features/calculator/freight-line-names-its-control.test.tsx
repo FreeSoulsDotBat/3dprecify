@@ -73,8 +73,9 @@ function renderShopeeSlot(freightCost: string) {
 describe("hotfix 016/A2 (H2) — a linha de frete nomeia o controle que a produz", () => {
   it('o rótulo é "Frete", nunca "Frete / cupom"', () => {
     renderShopeeSlot("12,00");
-    // Um rótulo por nível de markup (varejo + atacado) — os dois cobram o mesmo frete declarado.
-    expect(screen.getAllByText(t.channels.freightLine)).toHaveLength(2);
+    // 019/PR-F (T142, adoção) — o `<Segmented split>` Varejo|Atacado agora governa qual nível o
+    // marketplace mostra; o cartão vem UMA linha por vez (default varejo), não mais as duas juntas.
+    expect(screen.getAllByText(t.channels.freightLine)).toHaveLength(1);
     expect(t.channels.freightLine).toBe("Frete");
     expect(screen.queryByText("Frete / cupom")).not.toBeInTheDocument();
   });
@@ -96,9 +97,9 @@ describe("hotfix 016/A2 (H2) — a linha de frete nomeia o controle que a produz
     const r = outcome.channels[0].result!;
     expect(r.freightCostVarejo).toBe(12);
     expect(r.freightCostAtacado).toBe(12);
-    // Exatamente duas linhas (varejo + atacado), e as duas mostram o MESMO valor do campo — nunca
-    // um desconto de banda/voucher que o campo não carrega.
-    expect(screen.getAllByText("−R$ 12,00")).toHaveLength(2);
+    // 019/PR-F (T142, adoção) — uma linha por vez agora (o nível selecionado, default varejo); o
+    // valor mostrado é o MESMO do campo — nunca um desconto de banda/voucher que ele não carrega.
+    expect(screen.getAllByText("−R$ 12,00")).toHaveLength(1);
   });
 });
 

@@ -53,6 +53,10 @@ transcrição — a fonte remota pode mudar; a cópia não.
 | `Catalogo - Lista e o Recalculo - Tema Claro.dc.html` | PR-D | `4eac71231d9e14cab7e3a0db4764dc670e46c6f4cda4bd4bb918e517f2619bff` | 2026-08-29 |
 | `Catalogo - O Item Aberto - Tema Escuro.dc.html` | PR-D | `17515fbb5210b4c5febd7981df6cc55b5084eb5d4c08c022cad235f9ccee9a92` | 2026-08-29 |
 | `Catalogo - O Item Aberto - Tema Claro.dc.html` | PR-D | `86f7d54122432c52e22322074b87d51760d351d5f4c88dfb378f7399fd3ded3f` | 2026-08-29 |
+| `Simulacoes - A Estrategia Viva - Tema Escuro.dc.html` | PR-F | `bafdc7ecf427c0fff65bf7a6532bfc26b1a9d66df471cd994e8cc4800196cb7c` | 2026-08-29 |
+| `Simulacoes - A Estrategia Viva - Tema Claro.dc.html` | PR-F | `6d4de984772c52d7897c19995a8579c04f2424a0a90f5aaa30d96d750d6a76ff` | 2026-08-29 |
+| `As Escritas Congeladas - Tema Escuro.dc.html` | PR-F | `a217b1a06737c67e7cd1d1c0a6f2b218cb6c5ca80abc6f66fa1bcc5c455cba45` | 2026-08-29 |
+| `As Escritas Congeladas - Tema Claro.dc.html` | PR-F | `d64a7b3317d167cf91b8c64244cdb2199e99e8c61e76907caa89b08e03d465f2` | 2026-08-29 |
 | _(as demais fatias acrescentam as suas)_ | | | |
 
 **Como as cópias foram feitas (T009, 27/08).** As três pranchetas ESCURAS vieram de `DesignSync get_file`
@@ -95,3 +99,17 @@ diverge do teto 120 do adendo do ADR-0033 (decisão do dono 27/08 — 120 vence)
 ("O filamento PLA Cinza subiu de … em …") exige um histórico de custo de insumo que a observação de preço não guarda
 — NÃO transcrita, lacuna para o dono; a 17c desenha a nota do item fixado como `tf-aviso` (info) e a spec/T068
 pedem tom ATENÇÃO — a spec ganha, com a copy verbatim.
+
+**Como as cópias da PR-F foram feitas (T094, 29/08).** As duas pranchetas ESCURAS (`Simulacoes - A Estrategia Viva`,
+`As Escritas Congeladas`) via `DesignSync get_file` (nenhuma truncada), gravadas verbatim. As CLARAS existem no remoto e
+foram LIDAS na mesma sessão: diferem do escuro exatamente pelos pares da transformação da T009 mais UM par a mais na 20a
+(o véu da gaveta, `rgba(0,0,0,.55)` → `rgba(0,0,0,.42)`) — as cópias claras locais saem da transformação com esse par
+acrescentado, e a conferência é esta nota (nenhum outro byte diverge nas remotas). **Leituras registradas**: a 20g
+(1280px) se declara **"proposta, não leitura do código"** — a coluna fixa de 300px "é invenção" do desenhista; a DECISÃO 2
+do dono (27/08) manda a lista para a coluna larga de `/calcular` (emenda 2 do ADR-0031), que é o que a T095 faz; a 20a diz
+que a gaveta a 390 fica como está (mobile idêntico ao baseline — T093). A 20g mostra "Preço varejo/atacado" lado a lado
+com `tf-price--plain` e uma `tf-table` de marketplaces (Marketplace · Anúncio · Líquido · Frete) — o lote 10 (T142)
+decide o segmented Varejo|Atacado e é POSTERIOR; onde as duas divergem a 10d (1280) manda, por ser a mais nova e a
+decisão explícita do dono ("um preço grande por vez também aqui"). As Escritas (30a–30g) são as guardas D1/D2: 30b
+("as duas leem o mesmo título… se um dia divergirem, vão divergir em silêncio") é o T091; 30e/30f trazem 3 das 7
+frases de "Premium pausado" que o T090 nomeia.

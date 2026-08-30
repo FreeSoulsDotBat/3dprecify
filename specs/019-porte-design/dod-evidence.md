@@ -797,3 +797,107 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
    própria — no modo navegação não existe "item aberto" inline); é um trade-off de engenharia marcado para revisão de design.
 10. A recusa de nome antes do submit está só no formulário do PRODUTO (17b); filamentos/impressoras/kits dependem do sufixo
     silencioso do servidor — estender exige mudar `CatalogPanelProps.renderForm` (3 painéis + testes). Fica para o dono.
+
+---
+
+## PR-F — Simulações desktop + as divergências (US7) · branch `019-pr-f-simulacoes` (do develop `6cbe1c3`, pós-merge do PR #62)
+
+### T094 (pranchetas) · T141 — a transcrição (2026-08-29)
+
+- **4 pranchetas congeladas** (`Simulacoes - A Estrategia Viva`, `As Escritas Congeladas` × 2 temas): as escuras verbatim via
+  DesignSync; as claras EXISTEM no remoto e foram lidas — diferem do escuro só pelos pares da T009 + o véu da 20a (`.55→.42`);
+  as locais saem da transformação com esse par (README). Hashes no README.
+- **Leituras**: a 20g (1280) se declara **"proposta, não leitura do código"** (coluna fixa de 300px "invenção" do desenhista) — a
+  DECISÃO 2 do dono manda a lista para a coluna larga de `/calcular` (T095); a 20g ainda mostra os dois preços lado a lado e uma
+  `tf-table` de marketplaces, ANTERIORES ao lote 10 — onde divergem, a 10d manda ("um preço grande por vez também aqui").
+  As Escritas (30a–30g) são as guardas D1/D2: 30b é o T091; 30e/30f trazem 3 das 7 frases "Premium pausado" do T090.
+- **T141** (prancheta 10, já congelada na PR-C): só 4 frases eram NOVAS — `markupHeader` "markup {varejo}% no varejo · {atacado}%
+  no atacado", `proportionCaption` "O peso de cada custo no total. As cores são as das bolinhas acima" (**a 2ª frase "metade do
+  seu custo é material" é EXEMPLO** — a 10d nem repete "bolinhas"; até o dono decidir uma regra para a frase dinâmica, só a parte
+  fixa é exibida), `marketplaceLevelHint`, `summaryLine` "{nivel} · markup {pct}%". As seis frases da 10c JÁ existiam
+  (`invalidNote`, resultado zerado, `avisoAtacadoAcimaDoVarejo` — os acentos que a prancheta corrige já estavam corrigidos —,
+  `freightHint`, `negativeLiquido`, `noFeeHint`, a faixa sem tarifa).
+
+### T094 (baseline) · T090 · T091 — antes de tocar código (qa-software, 2026-08-29)
+
+- **Baseline** `evidencias/pr-f/baseline-mobile/`: gaveta "Minhas simulações" (2 salvas, uma com nota) e barra de contexto a 390 e
+  360 nos dois temas (8 PNGs, `animations: "disabled"`); `medidas-baseline.json`: `widthRatio()` de `/calcular` (o método de
+  `pages-desktop-width.spec.ts:17-29`) **1280 = 93,8% · 1440 = 93,3% · 1920 = 66,7%**, idêntico com e sem simulação aberta (a
+  lista ainda era gaveta), overflow 0 nos dois eixos em todas as combinações. É a referência da T093 ("mobile idêntico") e da
+  comparação desktop pós-T095.
+- **T090 (D1)**: as ocorrências REAIS de "Premium pausado" hoje são **6 vivas + 1 apagada** — `conta.planLapsed`,
+  `bom.lapsedTitle`, `bom.lapsedBanner`, `historico.lapsedBanner`, `scenarios.lapsedTitle`, `scenarios.writeLapsed`;
+  `catalogo.lapsedTitle` SAIU na PR-B (T038, prancheta 32e — migrou para `catalogo.reactivateBody`) e o teste registra o porquê.
+  Snapshot conjunto inline; **mutação**: "Premium Pausado" numa chave ⇒ 2 vermelhos; revertido.
+- **T091 (D2)**: `scenarios-list-sheet.tsx:413/:150` e `scenario-context-bar.tsx:233/:205` leem `t.renameSheetTitle`/`t.rename`
+  (prancheta 30b: "se um dia divergirem, vão divergir em silêncio") — guarda por referência de chave no fonte; **mutação**:
+  bifurcar para `t.rename` no título ⇒ vermelho; revertido, diff vazio.
+
+### T092 · T095 · T093 · T098 · T097 — a lista na coluna larga (dev-frontend B, 2026-08-29)
+
+- `ScenarioListBody` → `export function ScenariosList` no MESMO arquivo; `scenarios-wide.test.tsx` prova UMA instância: largo
+  (`installMatchMedia(desktopLarge)`) monta a lista direta e zero `<dialog>`; estreito, a gaveta de sempre. O ramo `showTeaser` que
+  a task cita já tinha saído na PR-B (o vazio didático/`premiumGate` vive num lugar só).
+- **DECISÃO 2 aplicada**: ≥1280 a lista vive num `<aside data-testid="scenarios-wide-aside">` sticky de 320px ao lado da
+  calculadora, DENTRO da mesma `.tf-calc-page` (a `section` que o `widthRatio()` mede não muda — por isso 93,8/93,3/66,7% são
+  IDÊNTICOS ao baseline); a gaveta não monta; "Minhas simulações" rola+foca a coluna; "Fazer um cálculo" do vazio rola de volta.
+  O corte 1024 de `calculator-form.css` fica intocado (os dois limiares convivem — emenda 2 do ADR-0031). A 20g se declarava
+  "proposta" (300px fixos do desenhista) — a coluna é 320px pelos dois primitivos existentes não truncarem cedo (registrado).
+- **T093**: overflow 0 nos dois eixos a 1280/1440/1920; gaveta 390/360 comparada ao baseline por `boundingBox` + `overflowX`
+  (não há `pngjs`/`pixelmatch` no lockfile — comparação por geometria, não por frase).
+- **Q1/Q2** (T098): `catalogo.searchEmpty` com `{termo}` no molde de `historico.searchEmpty`; `staleHint` por linha fora do mestre e
+  do `tf-plist` — só a faixa "Modo leitura offline".
+- **A11-r** (T097, só medição): `a11r.json` — tf-table 1024 = 9 · 1279 = 9 · mestre-detalhe 1280 = 7 · 1920 = 14.
+- **Adoção com achado**: o projeto Chromium do Playwright usa 1280×720 por padrão — exatamente o limiar de `useIsWide`; os helpers
+  de `scenarios*.spec` abriam a gaveta e passaram a não achar `<dialog>`. Fixados a 900×900 (abaixo dos DOIS limiares). Uma tentativa
+  a 1024 achou a linha "PLA Azul" **oculta** na `tf-table` da PR-D (`tf-table__name` `max-width:0`) — **investigado no T099**.
+
+### T142 · T143 — o rodapé da prancheta 10 (dev-frontend C, 2026-08-29)
+
+- `price-results.test.tsx` (15 casos, vermelho primeiro; não-vácuo por mutação: sem `<CostProportionBar>` o teste da barra morre):
+  a conta TERMINA no custo total (ausência das linhas de preço), `markupHeader` com os percentuais reais, barra com N segmentos
+  (mesmas 6+N parcelas do detalhamento — `custoTotal = sumMoney([...])` no `pricing-core`, soma 100% ±1; sem custo > 0 a barra não
+  renderiza), Segmented Varejo|Atacado (default Varejo; `role="radiogroup"` como o `MachineMode` do mesmo arquivo — a prancheta
+  marca `tablist` na marcação estática, padrão de interação, não copy), cartão grande um por vez (atacado escolhido =
+  **`tf-price--neutral`**, tom novo em `price-hero.css`, único acréscimo ao DS), linha-resumo `summaryLine`, os números de cada
+  marketplace seguem o nível, "Preços por marketplace" seção própria ANTES dos cartões com `marketplaceLevelHint`, sem Premium a
+  seção NÃO existe no DOM; os seis estados da 10c. **Reversão datada do 016/US5 FR-907-AC2**: as bolinhas voltam (`BreakdownRow`
+  `color`, já existente) com os tokens da prancheta (`--tf-purple/teal/orange` + `-deep`, hexes idênticos: #5a16a6 #0b8196 #bd6c0e).
+- **T143**: R$ 950.096,00 (o número exato da 10b, produzido pelo motor com `costPerRoll=950096`) sem transbordo em X e Y no cartão
+  e no `.tf-price__amount` a 360/390/1280/1920; a 1280 o bloco ≤ 721px e centralizado (±2px). 14 capturas nos dois temas
+  (`rodape-*`), `medidas-pr-f.json` fundido. Achado de captura corrigido no spec: a 1ª leva fotografava o topo — `scrollIntoView`
+  no `price-hero`. Adoções por MARCAÇÃO em `calculator.spec.ts` (4: contagens 4→2 porque o Segmented governa; `getByText` exato →
+  regex porque o cartão divide o valor em spans) e `produto-page.test.tsx` (matcher sobre `.tf-price__amount`, main loop).
+- Copy que a T141 não listou e a prancheta traz byte a byte: `aria-label="Nível de preço"` → `sections.priceLevelLabel` (registrado).
+  `.tf-brow__dot` herdado do 016 é 10×10/raio 3 onde a prancheta desenha 8px redondo — para o dono.
+- Unit 475/475 · e2e `calculator-layout` + `calculator` 66 passed / 0 failed nos dois projetos.
+
+### T099 — gate, e2e completo, screenshots e o que a stack real achou (qa-software ×2 + main loop, 2026-08-29)
+
+- **E2E completo** (508 testes, chromium + mobile, `--workers=1`): 363 passed · 12 failed · 3 flaky (o `grant_premium` JIT×CLI
+  de sempre, verdes no retry) · 130 skipped. Os 12 vermelhos eram **4 classes, nenhuma nova depois do tratamento**:
+  (a) `.tf-price--md` sumiu de `/calcular` para a semente — o par de cartões saiu (T142) e o cartão único só é `md` a partir de
+  R$ 10.000: o teste de geometria A5 passou a GERAR R$ 950.096,00 para seguir exercitando o variant; (b) `getByText("R$ 24,24")`
+  não casa mais — o cartão divide o valor em spans: regex no `price-hero`; (c) **achado novo**: ≥1280 a gaveta não existe (a
+  coluna larga é permanente) e 3 testes que assumiam um `<dialog>` nessa faixa ramificam por largura; e ao verificar (c) no
+  browser real, deslogado a 1280, apareceram **três** "Assinar Premium" na tela — o teaser da calculadora e, colado a ele, o
+  do vazio da coluna. Tratado no produto: o vazio da coluna monta com `teaser={false}` (a página mantém os 2 convites por
+  desenho; a gaveta estreita mantém o dela — FR-1906), com teste unitário nos dois sentidos; (d) SC-611 intermitente só sob a
+  carga da suíte — o focus-guard do Radix ainda fechando deixava o botão `aria-hidden`; `waitFor` na causa. Rerodagem dos 9
+  specs afetados: chromium todos verdes · mobile 51 passed / 2 flaky (idem) · vitest completo **1564/1564** com o SC-611 sob carga.
+- **A regressão da PR-D que só a stack real pegou**: entre 1024 e 1279 o nome de filamento/impressora/produto na `tf-table` era
+  INVISÍVEL e INCLICÁVEL — `btnOffsetWidth: 0, scrollWidth: 61` medidos, coluna "Peça" em branco na imagem
+  (`qa-repro-tftable-{1024,1279,long-*}.png`, mantidas como prova). Causa: o `<button>` do nome repetia a classe `tf-table__name`
+  da célula; o `max-width: 0` da folha é inerte numa célula (`table-layout: auto`) e vale de verdade num botão. As capturas
+  `tf-table-1024/1279` da PR-D não denunciaram porque a asserção era `toContainText` — um elemento de largura zero contém o
+  texto. Corrigido (classe só na célula) + guarda permanente `catalog-table-name-visible.spec.ts` (1024/1279 × 3 abas,
+  `offsetWidth > 40` + o clique abre a edição). **Lição (a 4ª vez do projeto): visibilidade é geometria, não texto — a guarda
+  de uma lista densa mede a caixa do elemento interativo, não o `textContent` da célula.**
+- **Screenshots** (`porte-screenshots-pr-f.spec.ts`, `animations: "disabled"`, medidas fundidas): `simulacoes-{1280,1920}-*`,
+  `simulacoes-aberta-{1280,1920}-*`, `simulacoes-390-*` nos dois temas — a gaveta 390 é **idêntica ao baseline** (mesmo tamanho
+  de arquivo no escuro, 56 bytes de antialiasing no claro; geometria igual por asserção). Ponto para a 2ª passada: a lista a
+  1280/1920 não destaca visualmente a simulação aberta (a barra de contexto a nomeia).
+- Órfãos: dois `vite preview --port 4175` (das minhas reproduções do main loop) sobreviveram fora das 4 portas vigiadas — a
+  lista de portas a matar antes do e2e ganha a 4175.
+- Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0. Push autorizado ("pode seguir", 29/08) — **PR #63** aberta contra `develop` (`6d55474`), CORREÇÃO DECLARADA.
+

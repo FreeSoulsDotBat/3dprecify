@@ -422,8 +422,7 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
             // não achou. Dizer "nenhum filamento salvo" seria mentira sobre os dados do vendedor.
             <EmptyState
               icon="package"
-              title={catalogo.searchEmptyTitle}
-              description={catalogo.searchEmptyBody}
+              title={catalogo.searchEmpty.replace("{termo}", query.trim())}
               action={
                 <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
                   {catalogo.searchClear}
@@ -458,7 +457,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                               {noteOf(item)}
                             </span>
                           )}
-                          {list.stale && <span style={rowSummary}>{catalogo.staleHint}</span>}
+                          {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu: a faixa "Modo leitura
+                              offline" (`list.stale`, abaixo no rodapé do painel) já cobre a mesma
+                              informação uma vez só, para a lista inteira. */}
                           {gate === "lapsed" && (
                             <span style={rowSummary}>{catalogo.readOnlyHint}</span>
                           )}
@@ -550,7 +551,16 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
               return (
                 <tr key={item.id}>
                   <td className="tf-table__name">
-                    <button type="button" onClick={() => openEdit(item)} className="tf-table__name">
+                    {/* 019/PR-F (T099, achado do QA): o botão NÃO repete `tf-table__name` — a folha
+                        (`table.css`) foi escrita para a CÉLULA, onde `max-width: 0` é inerte no
+                        `table-layout: auto`; num `<button>` ele vale de verdade e o nome nascia com
+                        largura ZERO (invisível e inclicável a 1024–1279, nas três abas — regressão da
+                        PR-D que chegou a develop). O botão só herda a fonte da célula e trunca. */}
+                    <button
+                      type="button"
+                      onClick={() => openEdit(item)}
+                      className="block w-full min-w-0 truncate text-left"
+                    >
                       {nameOf(item)}
                     </button>
                   </td>
@@ -600,9 +610,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
                       {noteOf(item)}
                     </span>
                   )}
-                  {list.stale && (
-                    <span className="tf-plist__meta truncate">{catalogo.staleHint}</span>
-                  )}
+                  {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu (mesmo raciocínio do ramo
+                      mestre-detalhe acima): a faixa "Modo leitura offline" já cobre a lista
+                      inteira, uma vez só. */}
                   {gate === "lapsed" && (
                     <span className="tf-plist__meta truncate">{catalogo.readOnlyHint}</span>
                   )}

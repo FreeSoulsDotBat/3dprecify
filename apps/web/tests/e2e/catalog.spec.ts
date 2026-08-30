@@ -155,7 +155,9 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
   // modelo, nao duplicacao: com o padrao AMAZON o canal e precificado, e o LIQUIDO RECEBIDO no
   // canal e por construcao igual ao preco de varejo — e exatamente o alvo do gross-up. A derivacao
   // vem antes no DOM (o proprio componente diz "shown BEFORE the suggested prices").
-  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C B1 seed varejo — the free math lives
+  // 019/PR-F (T099, adoção) — o preço agora quebra em spans (R$/inteiro/decimais) dentro do
+  // price-hero; `getByText` de string única não concatena nós descendentes.
+  await expect(page.getByTestId("price-hero")).toContainText(/R\$\s*24,24/); // 016/PR-C B1 seed varejo — the free math lives
 });
 
 test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser — no price surprises, no fake save (US7/T031, rewritten 016/US1)", async ({
@@ -191,7 +193,8 @@ test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser
   const ptPicker = t.premiumTeaser.CATALOG_PICKER;
   await expect(page.getByText(ptPicker.title)).toBeVisible();
   await expect(page.getByRole("button", { name: t.calculator.catalogPicker.title })).toBeDisabled();
-  await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C B1 seed — ver nota do A11 acima
+  // 019/PR-F (T099, adoção) — mesma quebra em spans do price-hero, ver nota acima.
+  await expect(page.getByTestId("price-hero")).toContainText(/R\$\s*24,24/); // 016/PR-C B1 seed — ver nota do A11 acima
 });
 
 // 018/US1 (T027) — o mestre-detalhe do Catálogo no desktop: lista e ficha na MESMA tela, e trocar

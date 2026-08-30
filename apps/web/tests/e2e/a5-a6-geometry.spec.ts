@@ -17,6 +17,23 @@ import { grantPremium, signUpThrowaway } from "./history-helpers";
 
 const t = messages.calculator;
 
+/** 019/PR-F (T099, adoção) — `heroSizeFor()` (`calculator-form.tsx`) só escolhe a variante `md`
+ *  quando o inteiro do preço tem MAIS de 4 dígitos (≥ R$ 10.000); a semente livre (~R$16-24)
+ *  sempre renderiza `lg` desde o rodapé redesenhado (T142/T143, prancheta 10). Este teste é SOBRE
+ *  a proporção do `md` — então em vez de trocar de variante, cravamos um preço de 6 dígitos que
+ *  segue exercitando `md` de propósito (o mesmo valor/receita de `calculator-layout.spec.ts`'s
+ *  `fillSixDigitPrice`, prancheta 10b: material sozinho, markup 0%, imprime EXATAMENTE
+ *  R$ 950.096,00). */
+async function fillSixDigitPrice(page: import("@playwright/test").Page): Promise<void> {
+  const fill = (label: string | RegExp, value: string) =>
+    page.getByRole("textbox", { name: label, exact: true }).fill(value);
+  await fill(t.fields.costPerRoll, "950096");
+  await fill(t.fields.grams, "1000");
+  await fill(t.fields.avgPower, "0");
+  await fill(t.fields.machineValue, "0");
+  await fill(t.fields.markupVarejo, "0");
+}
+
 test.describe("A5 — preço-herói: centavos e símbolo com a base certa (360×800)", () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
@@ -30,6 +47,8 @@ test.describe("A5 — preço-herói: centavos e símbolo com a base certa (360×
   test("proporção pinada em px na variante md (cartão Varejo) + a regra que sobrevive a troca de token", async ({
     page,
   }) => {
+    await fillSixDigitPrice(page);
+    await expect(page.getByTestId("price-hero")).toContainText("950.096");
     const sizes = await page.evaluate(() => {
       const md = document.querySelector(".tf-price--md");
       if (!md) return null;
@@ -75,6 +94,8 @@ test.describe("A5 — preço-herói: centavos e símbolo com a base certa (360×
   test("não-vacuidade por mutação viva: sem a base no contêiner, os px voltam a 6,72/8", async ({
     page,
   }) => {
+    await fillSixDigitPrice(page);
+    await expect(page.getByTestId("price-hero")).toContainText("950.096");
     await page.addStyleTag({
       content: ".tf-price__amount { font-size: 1rem !important; }",
     });

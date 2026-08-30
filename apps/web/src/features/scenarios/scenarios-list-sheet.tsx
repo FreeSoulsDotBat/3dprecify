@@ -182,17 +182,30 @@ function ScenarioCard({
   );
 }
 
-function ScenarioListBody({
+// 019/PR-F (T092, US7) — extraída de `ScenarioListBody` (nome privado até aqui) para um export
+// NOMEADO no MESMO arquivo: `pages/calcular/calcular-page.tsx` (T095) monta ESTA função direto na
+// coluna larga ≥1280px, sem passar pelo `Sheet`/gaveta que `ScenariosListSheet` continua sendo
+// (estreito). Mesmas props de sempre — `onOpenScenario`/`onClose`/`lapsed`/`gate` — nada mudou na
+// forma, só a visibilidade do símbolo. `ScenariosListSheet` (abaixo) é o único chamador da gaveta;
+// o hospedeiro largo é o outro.
+export function ScenariosList({
   onOpenScenario,
   onClose,
   lapsed,
   gate,
+  teaser = true,
 }: {
   onOpenScenario: (item: ScenarioOut) => void;
   onClose: () => void;
   lapsed: boolean;
   /** 019/PR-B (T046/T112, prancheta 32c/32f) — o estado que a folha lê de `premiumGate(...)`. */
   gate: PremiumGate;
+  /** 019/PR-F (T095, revisão do main loop) — `false` na coluna larga de `/calcular`: a página já
+   *  carrega os seus DOIS convites por desenho (o teaser do picker e o gate do marketplace), e a
+   *  coluna fica ao lado deles o tempo todo; um terceiro "Assinar Premium" colado ao primeiro é o
+   *  duplo convite que a PR-B matou no desktop do Catálogo. Na gaveta (estreito) o convite do vazio
+   *  continua sendo o ÚNICO da folha (FR-1906). */
+  teaser?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebouncedValue(query, 250);
@@ -291,6 +304,7 @@ function ScenarioListBody({
         feature="scenarios"
         gate={doorGate}
         action={<Button onClick={onClose}>{messages.premiumTeaser.fazerUmCalculo}</Button>}
+        teaser={teaser}
       />
     );
   }
@@ -474,6 +488,21 @@ function ScenarioListBody({
   );
 }
 
+/**
+ * 019/PR-F (revisão do main loop) — o ÚNICO lugar que traduz um item da lista para o que a
+ * Calculadora abre. A gaveta (estreito) e a coluna larga (≥1280) chamam esta função — se a
+ * tradução mudar, muda nos dois; duas cópias divergiriam em silêncio (a mesma classe do D2/T091).
+ */
+export function scenarioOpenArgs(item: ScenarioOut): {
+  config: ScenarioConfig;
+  meta: { id: string; name: string; note: ScenarioOut["note"] };
+} {
+  return {
+    config: item.config as unknown as ScenarioConfig,
+    meta: { id: item.id, name: item.name, note: item.note },
+  };
+}
+
 export function ScenariosListSheet({
   open,
   onOpenChange,
@@ -497,16 +526,13 @@ export function ScenariosListSheet({
               vazio didático, que já explica a feature com a própria frase. */}
           {!showsDoor && <SheetDescription>{t.listSubtitle}</SheetDescription>}
 
-          <ScenarioListBody
+          <ScenariosList
             gate={gate}
             lapsed={entitlement.data?.status === "lapsed"}
             onClose={() => onOpenChange(false)}
             onOpenScenario={(item) => {
-              onOpenScenario(item.config as unknown as ScenarioConfig, {
-                id: item.id,
-                name: item.name,
-                note: item.note,
-              });
+              const { config, meta } = scenarioOpenArgs(item);
+              onOpenScenario(config, meta);
               onOpenChange(false);
             }}
           />

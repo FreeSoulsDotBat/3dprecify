@@ -125,6 +125,14 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
     expect(screen.getByRole("button", { name: catalogo.addFilament })).toBeInTheDocument();
   });
 
+  // 019/PR-F (T098) — a ressalva `staleHint` por linha ("pode estar desatualizada") saiu do ramo
+  // mobile também; só resta a faixa única "Modo leitura offline" no topo do painel.
+  it("offline (stale): a faixa única aparece, e a linha do mobile não repete o aviso por item", () => {
+    renderPanel({ list: listState({ stale: true }) });
+    expect(screen.getByText(catalogo.offlineTitle)).toBeInTheDocument();
+    expect(screen.queryByText(catalogo.staleHint)).not.toBeInTheDocument();
+  });
+
   it("opens the create sheet, posts the wire body, then closes on success", async () => {
     const { create } = renderPanel();
     fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));

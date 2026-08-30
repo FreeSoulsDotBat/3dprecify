@@ -1,0 +1,38 @@
+/* 019/PR-F (T095, DECISÃO 2 — ADR-0031 §Emenda 2, prancheta "Simulações - A Estratégia Viva" 20g)
+   — o hospedeiro ≥1280px NÃO é uma tela nova: é a própria COLUNA LARGA de `/calcular`
+   (`.tf-calc-page`, `features/calculator/calculator-form.css`). "Minhas simulações" fica ao lado
+   da calculadora preenchida. A 20g se declara "proposta" (a lista fixa de 300px é do desenhista);
+   o que manda aqui é a decisão do dono — largura suficiente para os dois primitivos existentes
+   (`tf-scenario-name`/`tf-scenario-note`, `scenario-list.css`) não truncarem cedo demais.
+
+   Só existe ≥1280px (`useIsWide`, `pages/calcular/calcular-page.tsx`) — abaixo dele esta árvore não
+   monta, mesma disciplina de `.tf-catalog-md` (`catalog-master-detail.css`): o mobile continua
+   exatamente como era (byte-idêntico, T093/baseline). */
+.tf-scenarios-wide {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-6);
+  min-width: 0;
+}
+
+/* A coluna de sempre — mesma pilha vertical que `.tf-calc-page` já tinha (`gap: var(--space-4)`)
+   antes desta fatia, agora um item flex em vez do corpo inteiro da section. */
+.tf-scenarios-wide__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  flex: 1;
+  min-width: 0;
+}
+
+/* A lista ao lado — grudada no topo como a ficha do mestre-detalhe do 018
+   (`.tf-catalog-md__detail`), pela mesma razão: uma lista mais curta que a calculadora não deve
+   ficar presa lá embaixo quando o vendedor rola a página. */
+.tf-scenarios-wide__aside {
+  flex: 0 0 320px;
+  min-width: 0;
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100dvh - var(--space-8));
+  overflow-y: auto;
+}
