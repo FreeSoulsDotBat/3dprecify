@@ -977,3 +977,27 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   (o `extra="forbid"` da PR-D não foi tocado — o payload QUOTE é `dict` opaco). **622 passed**, ruff/basedpyright/import-linter/
   migration-guard ok. Commit `6fd47eb`.
 
+### T133 · T135 · T083 — o envelope QUOTE e a varredura (dev-frontend **opus**, 2026-08-29)
+
+- **T133** (`frozen-payload.ts`, vermelho 8 → verde 39/39): `kind` admite `"QUOTE"`; `FrozenTotals.precoOrcamento?`; `FrozenQuoteLine
+  { name, quantity, unitPrice, subtotal, origin }` (NÃO reusa `FrozenKitLine`, que carrega `input/breakdown/totals`); `FrozenQuoteDiscount
+  { mode, value, amount, grossTotal }`; `costFloor?`; `lines?: FrozenKitLine[] | FrozenQuoteLine[]` (união de ARRAYS — foi ela que quebrou
+  os consumidores e forçou cada decisão da T135), com dois leitores estreitos atrás do teste de `kind`. `buildQuotePayload(result, { lines:
+  (FrozenProvenance | null)[], discount? })` converte TODO dinheiro (e `discount.value`) para string decimal — o payload gerado casa com o
+  `QUOTE_PAYLOAD` que o backend congelou em `test_history.py`. `FROZEN_PAYLOAD_SCHEMA_VERSION` continua **1**. Escolhas declaradas:
+  `catalogVersion: null` e `provenance: null` explícitos (N origens, uma por linha); `discount.value` gravado "10.00" e formatado "10%" na
+  leitura.
+- **T135** — por arquivo, com teste e não-vácuo no SINGLE: `snapshot-detail-page` itemiza `lines`, bruto→desconto→total, `documentDates`
+  "válido até" como TEXTO (Q7) e `noUnfixForSent`; `recalc-today` e `compare-today` devolvem `null` para QUOTE (US17: nenhuma origem a
+  repreçar); `historico-page` rotula por `kindLabel` (o ternário antigo chamava todo orçamento de "Peça única"); `history-format.ts` (9º
+  arquivo) ganha `kindLabel`/`validUntil` e `basisCaption` vira Record sobre a união (PRECO_ORCAMENTO = "Total enviado" — antes cairia
+  em "Preço de varejo", o defeito silencioso); `record-snapshot-sheet` NÃO grava QUOTE **por tipo** (`Exclude<…,"QUOTE">`) e por dados;
+  `export-sheet` exporta pelo mesmo caminho só com id do servidor (`pdfWaitsSync` antes); `outbox` drena QUOTE sem ramo novo;
+  `scenario-context-bar` nunca oferece "salvar simulação" de um orçamento.
+- **T083** — o teste-contrato do construtor (15 casos) deixado VERMELHO de propósito (a suíte não coleta: `./quote-builder` não existe);
+  fixa props, testids e o fluxo 18b→18d→18e. **PARADA de Princípio VIII resolvida pelo main loop**: `features/history` não pode importar
+  `features/calculator` (`productToForm`/`computeFromForm`); decidido pelo precedente da T124 (PR-D) — a PAGE compõe e o construtor
+  recebe `toLineInput` por prop; a alternativa "descer o mapeamento para `entities`" (três telas já reimplementam o caminho) vai para o
+  arquiteto como follow-up. Extra: `price-observations.test` lia "4.1.0" literal — passou a ler `PRICING_MODEL_VERSION`. Suíte 1594/0
+  fora o T083.
+
