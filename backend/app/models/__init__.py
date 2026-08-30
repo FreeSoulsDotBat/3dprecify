@@ -752,9 +752,12 @@ class Snapshot(Base):
         # Exactly-once (SC-513): UNCONDITIONAL — tombstones included, so a queued retry arriving
         # after a delete cannot RESURRECT the snapshot.
         UniqueConstraint("owner_uid", "client_snapshot_id", name="uq_snapshots_client_snapshot_id"),
-        CheckConstraint("kind IN ('SINGLE','KIT')", name="kind_enum"),
+        # 019/PR-E (ADR-0034 §2, migração 0009): `QUOTE`/`PRECO_ORCAMENTO` — o orçamento enviado
+        # congela AQUI, na mesma tabela, sob o mesmo gatilho. Nenhum segundo mecanismo (FR-1917).
+        CheckConstraint("kind IN ('SINGLE','KIT','QUOTE')", name="kind_enum"),
         CheckConstraint(
-            "headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO')", name="headline_basis_enum"
+            "headline_basis IN ('PRECO_VAREJO','PRECO_ATACADO','PRECO_ORCAMENTO')",
+            name="headline_basis_enum",
         ),
         CheckConstraint("label IS NULL OR length(btrim(label)) > 0", name="label_not_blank"),
         CheckConstraint(
@@ -792,6 +795,10 @@ class Snapshot(Base):
             "CASE headline_basis"
             " WHEN 'PRECO_VAREJO' THEN 'precoVarejo'"
             " WHEN 'PRECO_ATACADO' THEN 'precoAtacado'"
+            # O ramo do orçamento entrou junto com o enum, e tinha de entrar: um `headline_basis`
+            # sem ramo cai no `ELSE` implícito, o `CASE` devolve NULL, e um `CHECK` que avalia NULL
+            # PASSA — o guarda se desligaria em silêncio (ADR-0034 §2, migração 0009).
+            " WHEN 'PRECO_ORCAMENTO' THEN 'precoOrcamento'"
             " END))::numeric",
             name="headline_matches_totals",
         ),

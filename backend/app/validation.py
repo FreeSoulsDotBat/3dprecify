@@ -49,7 +49,25 @@ CEIL_QUANTITY = 2_147_483_647
 #: and then rendered as an EMPTY cell on the customer's PDF, because the renderer prints stored
 #: STRINGS and never coerces a number. Outside these keys an int is a legitimate count
 #: (`schemaVersion`, `quantity`, `contributingLines`, `skippedLines`) and passes untouched.
-_MONEY_POSITION_KEYS = frozenset({"totals", "breakdown"})
+#:
+#: 019/PR-E (ADR-0034 §2) — o documento do ORÇAMENTO trouxe dinheiro FORA de `totals`/`breakdown`,
+#: e ele entra aqui pelas FOLHAS, uma a uma. A marca é de SUBÁRVORE (`_walk` abaixo), e é por isso
+#: que `lines` e `discount` ficam de fora **por decisão, não por esquecimento**:
+#:
+#: * marcar `lines` recusaria o `quantity` INTEIRO de todo KIT já gravado — uma regressão do `kind`
+#:   antigo causada pelo `kind` novo;
+#: * marcar `discount` marcaria `value`, que em modo `PCT` é um PERCENTUAL, não dinheiro.
+_MONEY_POSITION_KEYS = frozenset(
+    {
+        "totals",
+        "breakdown",
+        "unitPrice",
+        "subtotal",
+        "costFloor",
+        "amount",
+        "grossTotal",
+    }
+)
 
 
 def finite_non_negative(value: Decimal, field: str, ceiling: Decimal) -> Decimal:

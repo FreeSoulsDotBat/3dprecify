@@ -1,22 +1,32 @@
 import {
   type BomResult,
   computeCalculator,
+  computeQuote,
   type PriceInput,
   PRICING_MODEL_VERSION,
   type PriceResult,
+  type QuoteDiscount,
+  type QuoteResult,
   stripRetiredFields,
   ValidationError,
 } from "@3dprecify/pricing-core";
 
 import PRE_ADR_0024 from "./__fixtures__/frozen-payload-pre-adr-0024.json";
+// 019/PR-E (T133) — o molde do documento PRÉ-019: gravado sob a mesma versão de envelope (1), é o
+// que prova que alargar a união não moveu o passado.
+import PRE_016 from "./__fixtures__/frozen-payload-pre-016.json";
 import { describe, expect, expectTypeOf, it } from "vitest";
 
 import {
+  buildQuotePayload,
   FROZEN_PAYLOAD_SCHEMA_VERSION,
   freezeBomResult,
   freezePriceResult,
   type FrozenBreakdown,
   frozenChannelHasFee,
+  frozenKitLines,
+  type FrozenProvenance,
+  type FrozenQuoteLine,
   type FrozenSnapshotPayload,
   type MoneyString,
   readFrozenMoney,
@@ -216,10 +226,10 @@ describe("the document is self-sufficient — the export PRINTS, it never CALCUL
     expect(payload.kind).toBe("KIT");
     // The piece's NAME and QUANTITY must be in the document — a kit quote itemizes its pieces
     // (SC-515), and the server renderer may not go looking them up.
-    expect(payload.lines?.[0]?.name).toBe("Vaso G");
-    expect(payload.lines?.[0]?.quantity).toBe(3);
+    expect(frozenKitLines(payload)[0]?.name).toBe("Vaso G");
+    expect(frozenKitLines(payload)[0]?.quantity).toBe(3);
     // The quantity-scaled money must be STORED, not derived at print time.
-    expect(payload.lines?.[0]?.totals.precoVarejo).toBe("114.54");
+    expect(frozenKitLines(payload)[0]?.totals.precoVarejo).toBe("114.54");
     expect(payload.channels?.[0]?.precoAnuncioVarejo).toBe("185.70");
     // Counts are the only legal JSON numbers.
     expect(payload.channels?.[0]?.contributingLines).toBe(1);
@@ -608,5 +618,199 @@ describe("congelado — o volumoso (surcharges) viaja dentro de inputs.channels 
     const frozen = freezePriceResult(input, computeCalculator(input), null);
     const frozenChannels = frozen.inputs?.channels as unknown as Array<Record<string, unknown>>;
     expect("surcharges" in frozenChannels[0]!).toBe(false);
+  });
+});
+
+// ── 019/PR-E · T133 — o ORÇAMENTO congelado (ADR-0034 §2, data-model §4) ─────────────────────────
+//
+// Um `kind: "QUOTE"` não ganha mecanismo: ganha um valor a mais na união e um bloco de dinheiro NOVO
+// dentro do mesmo documento plano (`lines[].unitPrice/subtotal`, `discount`, `costFloor`,
+// `totals.precoOrcamento`). Duas coisas precisam ser verdadeiras ao mesmo tempo, e uma delas é sobre
+// o PASSADO:
+//
+//   1. O ENVELOPE NÃO MUDA DE FORMA. `FROZEN_PAYLOAD_SCHEMA_VERSION` continua **1** — alargar uma
+//      união e acrescentar campos OPCIONAIS não invalida nenhum documento já gravado, e uma tabela
+//      imutável (ADR-0019) não tem onde consertar um envelope que mudou de significado.
+//   2. O MOTOR DEVOLVE NÚMEROS (T079, regime `toMoney(): number`); o DOCUMENTO só aceita STRING
+//      decimal (`validation.py:106-110` rejeita float — um float ali é uma mentira gravada para
+//      sempre). A fronteira mora AQUI, em `buildQuotePayload`, e em lugar nenhum mais.
+
+/** As FOLHAS de dinheiro do documento de orçamento — a marca é de folha, nunca de subárvore
+ *  (`lines`/`discount` marcariam `quantity`/`value` percentual: `validation.py:96-99`). */
+const QUOTE_MONEY_LEAVES = new Set([
+  "unitPrice",
+  "subtotal",
+  "costFloor",
+  "amount",
+  "grossTotal",
+  "value",
+  "precoOrcamento",
+]);
+
+/** Todo caminho cuja FOLHA está em posição de dinheiro e voltou do JSON como número. */
+function numbersInMoneyPosition(node: unknown, path = "$", key = ""): string[] {
+  if (Array.isArray(node))
+    return node.flatMap((child, i) => numbersInMoneyPosition(child, `${path}[${i}]`, key));
+  if (node && typeof node === "object") {
+    return Object.entries(node).flatMap(([field, value]) =>
+      numbersInMoneyPosition(value, `${path}.${field}`, field),
+    );
+  }
+  return typeof node === "number" && QUOTE_MONEY_LEAVES.has(key) ? [path] : [];
+}
+
+/** Um orçamento REAL: duas linhas × quantidade, pelo motor de verdade (nada de mock — o que se
+ *  prova aqui é a fronteira entre o número do motor e a string do documento). */
+function quoteFixture(discount?: QuoteDiscount): QuoteResult {
+  return computeQuote({
+    lines: [
+      { input: priceInput(), quantity: 2, name: "Vaso" },
+      { input: priceInput({ printGrams: 40 }), quantity: 1, name: "Prato (avulsa)" },
+    ],
+    discount,
+  });
+}
+
+const QUOTE_ORIGINS: readonly (FrozenProvenance | null)[] = [
+  { kind: "PRODUCT", id: "p1", name: "Vaso" },
+  null,
+];
+
+describe("019/PR-E — o orçamento congelado (T133)", () => {
+  it("o envelope continua na versão 1 — alargar a união não é mudar de forma", () => {
+    expect(FROZEN_PAYLOAD_SCHEMA_VERSION).toBe(1);
+    expect(buildQuotePayload(quoteFixture(), { lines: QUOTE_ORIGINS }).schemaVersion).toBe(1);
+  });
+
+  it("os documentos PRÉ-019 leem idêntico — o passado não se moveu", () => {
+    // Se este teste reprova, é o código de hoje que precisa de conserto, nunca o fixture
+    // (`__fixtures__/README.md`): um documento gravado é imutável por gatilho (ADR-0019).
+    const pre016 = PRE_016 as unknown as FrozenSnapshotPayload;
+    expect(pre016.schemaVersion).toBe(FROZEN_PAYLOAD_SCHEMA_VERSION);
+    expect(pre016.kind).toBe("SINGLE");
+    expect(readFrozenMoney(pre016.totals.custoTotal)).toBe("28.65");
+    expect(readFrozenMoney(pre016.totals.precoVarejo)).toBe("42.98");
+    expect(readFrozenMoney(pre016.totals.precoAtacado)).toBe("37.25");
+    // Um total de orçamento em documento que não é orçamento é ABSENTE, jamais "0,00" (FR-507).
+    expect(readFrozenMoney(pre016.totals.precoOrcamento)).toBeNull();
+    expect(pre016.provenance).toBeNull();
+
+    for (const doc of PRE_ADR_0024 as unknown as FrozenSnapshotPayload[]) {
+      expect(doc.schemaVersion).toBe(FROZEN_PAYLOAD_SCHEMA_VERSION);
+      expect(readFrozenMoney(doc.totals.precoOrcamento)).toBeNull();
+      expect(doc.discount).toBeUndefined();
+      expect(doc.costFloor).toBeUndefined();
+    }
+  });
+
+  it("um QUOTE construído com o motor REAL não tem UM número em posição de dinheiro", () => {
+    const payload = buildQuotePayload(quoteFixture({ mode: "PCT", value: 10 }), {
+      lines: QUOTE_ORIGINS,
+      discount: { mode: "PCT", value: 10 },
+    });
+    const roundTripped: unknown = JSON.parse(JSON.stringify(payload));
+
+    expect(numbersInMoneyPosition(roundTripped)).toEqual([]);
+    // E os ÚNICOS números que sobram são contagens inteiras (quantidade, schemaVersion).
+    const nonIntegers: string[] = [];
+    const walk = (node: unknown, path: string): void => {
+      if (typeof node === "number") {
+        if (!Number.isInteger(node)) nonIntegers.push(path);
+        return;
+      }
+      if (Array.isArray(node)) {
+        node.forEach((child, i) => walk(child, `${path}[${i}]`));
+        return;
+      }
+      if (node && typeof node === "object")
+        for (const [k, v] of Object.entries(node)) walk(v, `${path}.${k}`);
+    };
+    walk(roundTripped, "$");
+    expect(nonIntegers).toEqual([]);
+  });
+
+  it("totals.precoOrcamento É o líquido do motor, com as duas casas da casa (ADR-0008)", () => {
+    const result = quoteFixture({ mode: "PCT", value: 10 });
+    const payload = buildQuotePayload(result, {
+      lines: QUOTE_ORIGINS,
+      discount: { mode: "PCT", value: 10 },
+    });
+
+    expect(payload.kind).toBe("QUOTE");
+    expect(payload.modelVersion).toBe(PRICING_MODEL_VERSION);
+    expect(payload.totals.precoOrcamento).toBe(result.netTotal.toFixed(2));
+    // O card e o documento nunca divergem (VR-503): é este número que vira `headlineTotal`.
+    expect(payload.totals.precoOrcamento).toBe(toMoneyString(result.netTotal));
+    // Um orçamento é venda DIRETA: nem canal, nem tarifa, nem `catalogVersion` (ADR-0034 §1.7).
+    expect(payload.channels).toBeUndefined();
+    expect(payload.catalogVersion).toBeNull();
+    // Os totais de kit/peça NÃO aparecem: o documento não afirma o que não é a conta dele.
+    expect(payload.totals.precoVarejo).toBeUndefined();
+    expect(payload.totals.precoAtacado).toBeUndefined();
+    expect(payload.totals.custoTotal).toBeUndefined();
+  });
+
+  it("o desconto é DECLARADO, nunca embutido — modo, valor, quanto e o bruto de onde saiu", () => {
+    const result = quoteFixture({ mode: "AMOUNT", value: 10 });
+    const payload = buildQuotePayload(result, {
+      lines: QUOTE_ORIGINS,
+      discount: { mode: "AMOUNT", value: 10 },
+    });
+
+    expect(payload.discount).toEqual({
+      mode: "AMOUNT",
+      value: "10.00",
+      amount: toMoneyString(result.discountAmount),
+      grossTotal: toMoneyString(result.grossTotal),
+    });
+    expect(payload.costFloor).toBe(toMoneyString(result.costFloor));
+    // A conta fecha DENTRO do documento — é o que o servidor confere (T131) e o PDF imprime.
+    expect(Number(payload.discount?.grossTotal) - Number(payload.discount?.amount)).toBeCloseTo(
+      Number(payload.totals.precoOrcamento),
+      2,
+    );
+  });
+
+  it("sem desconto o documento não INVENTA o bloco (ausente ≠ zero, FR-507)", () => {
+    const payload = buildQuotePayload(quoteFixture(), { lines: QUOTE_ORIGINS });
+    expect(payload.discount).toBeUndefined();
+    expect("discount" in payload).toBe(false);
+  });
+
+  it("cada linha carrega nome, quantidade e o dinheiro JÁ escalado — o PDF imprime, não calcula", () => {
+    const result = quoteFixture();
+    const payload = buildQuotePayload(result, { lines: QUOTE_ORIGINS });
+
+    expect(payload.lines).toHaveLength(2);
+    const [first, second] = payload.lines as FrozenQuoteLine[];
+    expect(first).toEqual({
+      name: "Vaso",
+      quantity: 2,
+      unitPrice: toMoneyString(result.lines[0]!.unitPrice),
+      subtotal: toMoneyString(result.lines[0]!.subtotal),
+      // A origem é CAPTURADA (id + nome de então), nunca chave estrangeira (ADR-0019 §5).
+      origin: { kind: "PRODUCT", id: "p1", name: "Vaso" },
+    });
+    // Uma peça sem origem no catálogo é `null` — não um id que não resolve, não um nome inventado.
+    expect(second?.origin).toBeNull();
+    expect(second?.name).toBe("Prato (avulsa)");
+  });
+
+  it("FrozenQuoteLine NÃO é FrozenKitLine: nem input, nem breakdown, nem totals", () => {
+    const [line] = buildQuotePayload(quoteFixture(), { lines: QUOTE_ORIGINS })
+      .lines as FrozenQuoteLine[];
+    expect(line).toBeDefined();
+    expect(Object.keys(line!).sort()).toEqual([
+      "name",
+      "origin",
+      "quantity",
+      "subtotal",
+      "unitPrice",
+    ]);
+  });
+
+  it("uma linha sem origem declarada no meta é null — o construtor não adivinha", () => {
+    const payload = buildQuotePayload(quoteFixture(), { lines: [] });
+    expect((payload.lines as FrozenQuoteLine[]).every((l) => l.origin === null)).toBe(true);
   });
 });

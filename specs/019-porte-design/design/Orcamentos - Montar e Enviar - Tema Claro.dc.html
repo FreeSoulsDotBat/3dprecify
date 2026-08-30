@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">Montar e enviar — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Primeiro lote de Orçamentos: transformar peças salvas em um número que sai do app. É a primeira vez que um preço da Precifica3D vai para a mão de outra pessoa, e isso muda a regra do tempo — um orçamento enviado não pode se recalcular sozinho, porque o cliente tem uma cópia dele.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">O Catálogo tem três relações com o tempo: <strong style="color:var(--sheet-ink)">recalculado</strong> (acompanha o custo), <strong style="color:var(--sheet-ink)">fixado</strong> (<a href="#17c">17c</a>, a pessoa mandou parar) e <strong style="color:var(--sheet-ink)">parado</strong> (<a href="#16f">16f</a>, o app não conseguiu). O orçamento acrescenta a quarta e a mais rígida: <strong style="color:var(--sheet-ink)">enviado</strong>. Fixar é reversível com um toque; enviado só se resolve com uma data de validade, porque desfazer não apaga a mensagem que a pessoa já mandou.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#18a">18a</a> a lista · <a href="#18b">18b</a> escolher do catálogo · <a href="#18c">18c</a> o degrau do atacado · <a href="#18d">18d</a> o desconto e o piso · <a href="#18e">18e</a> enviar congela · <a href="#18f">18f</a> o que o cliente recebe · <a href="#18g">18g</a> 1280px.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Duas decisões suas.</strong> (1) <em>Onde Orçamentos mora.</em> A IA do design system tem quatro destinos fixos — Calcular · Catálogo · Histórico · Conta — e um quinto não cabe na barra. Desenhei como terceiro segmento do Catálogo (Peças · Kits · Orçamentos), porque um orçamento é feito de itens salvos. A alternativa é a lista viver no Histórico, que já significa "o que aconteceu", com "Fazer orçamento" partindo do Catálogo. (2) <em>Se o piso do custo bloqueia ou só avisa</em> — <a href="#18d">18d</a> mostra bloqueando.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Um primitivo novo, pequeno:</strong> os tons do selo de linha e do badge. <code>tf-plist__flag</code> nasceu laranja porque "fixado" e "parado" eram sempre avisos; a lista de orçamentos tem cinco estados e três não avisam nada — daí <code>--neutral</code>, <code>--success</code>, <code>--danger</code>, mais <code>tf-badge--success/--danger</code>. Seis ícones novos do conjunto curado: <code>share-2</code>, <code>percent</code>, <code>user</code>, <code>minus</code>, <code>check</code>, <code>folder</code>. <strong style="color:var(--sheet-ink)">Copy nova para aprovar:</strong> "Válido até", "Enviar congela este preço", "Voltar a acompanhar não vale para orçamentos enviados", "Abaixo do custo", "10 un. sai mais barato que 9" e as cinco palavras de estado.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="18a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A lista · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A mesma linha do Catálogo, com o cliente no lugar do nome da peça — é por ele que a pessoa procura. A meta traz a contagem de itens; o selo traz o estado, e é o estado que ordena a lista, não a data.</p>
+<div data-theme="light" data-screen-label="18a Lista de orcamentos" style="position:relative;display:flex;flex-direction:column;width:390px;height:748px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-topbar">
+<button type="button" class="tf-topbar__theme" aria-label="Buscar"><span class="tf-ico tf-ico--22 tf-ico-search"></span></button>
+<div class="tf-topbar__actions"><button type="button" class="tf-topbar__theme" aria-label="Tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button></div>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:14px;padding:16px 16px 0;overflow:hidden">
+<h1 class="tf-page-header__title tf-title" style="font-size:var(--fs-lg);color:var(--text-strong);line-height:var(--lh-snug)">Catálogo</h1>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1">Peças</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1">Kits</button>
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1">Orçamentos</button>
+</div>
+<ul class="tf-plist">
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Marcela — Papelaria Ponto</span><span class="tf-plist__meta">3 itens · aberto em 07/06</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;790,98</span><span class="tf-plist__flag tf-plist__flag--neutral"><span class="tf-ico tf-ico--14 tf-ico-pencil"></span>rascunho</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Loja Gato Preto</span><span class="tf-plist__meta">2 itens · enviado em 05/06</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;318,00</span><span class="tf-plist__flag"><span class="tf-ico tf-ico--14 tf-ico-clock"></span>vence em 13 dias</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Ateliê Rosa Nova</span><span class="tf-plist__meta">5 itens · enviado em 02/06</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;1.204,50</span><span class="tf-plist__flag tf-plist__flag--success"><span class="tf-ico tf-ico--14 tf-ico-check"></span>aceito</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Bruno — feira de maio</span><span class="tf-plist__meta">1 item · enviado em 28/05</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;96,00</span><span class="tf-plist__flag tf-plist__flag--danger"><span class="tf-ico tf-ico--14 tf-ico-circle-x"></span>recusado</span></span></button></li>
+<li><button type="button" class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">Papelaria Ponto — abril</span><span class="tf-plist__meta">4 itens · enviado em 15/04</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;655,20</span><span class="tf-plist__flag tf-plist__flag--neutral"><span class="tf-ico tf-ico--14 tf-ico-clock"></span>venceu em 30/04</span></span></button></li>
+</ul>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--full" style="margin-top:auto;margin-bottom:16px"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Novo orçamento</button>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Vence em 13 dias" é o único selo que insiste, porque é o único com prazo correndo. Aceito, recusado e vencido são fatos parados — dizê-los em laranja pediria uma ação que não existe mais.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O expirado fica na lista em vez de desaparecer: é dele que sai o próximo orçamento para o mesmo cliente. Duplicar um orçamento vencido recalcula tudo pelos custos de hoje.</p>
+</div>
+
+<div id="18b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Escolher do catálogo · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um orçamento não digita preços: ele escolhe itens que já foram calculados. Peças e kits aparecem na mesma lista, porque para o cliente ambos são uma linha da conta.</p>
+<div data-theme="light" data-screen-label="18b Escolher do catalogo" style="position:relative;display:flex;flex-direction:column;width:390px;height:748px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-topbar">
+<button type="button" class="tf-topbar__theme" aria-label="Voltar"><span class="tf-ico tf-ico--22 tf-ico-arrow-left"></span></button>
+</div>
+<div style="flex:1;display:flex;flex-direction:column;gap:12px;padding:12px 16px 0;overflow:hidden">
+<div class="tf-field">
+<span class="tf-field__label">Cliente</span>
+<div class="tf-inputwrap"><input class="tf-input" type="text" value="Marcela — Papelaria Ponto"></div>
+</div>
+<div class="tf-inputwrap"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted);margin-left:12px"></span><input class="tf-input" type="text" placeholder="Buscar no catálogo"></div>
+<div style="display:flex;flex-direction:column;gap:8px;overflow:hidden">
+<button type="button" class="tf-card tf-card--pad-sm tf-card--interactive" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;border-color:var(--accent)">
+<span class="tf-ico tf-ico--16 tf-ico-check" style="color:var(--accent)"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Suporte de headset "Gancho"</span><span style="font-size:var(--fs-caption);color:var(--text-muted)">12 un. · atacado</span></span>
+<span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--text-strong)">R$&nbsp;395,40</span>
+</button>
+<button type="button" class="tf-card tf-card--pad-sm tf-card--interactive" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;border-color:var(--accent)">
+<span class="tf-ico tf-ico--16 tf-ico-check" style="color:var(--accent)"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Vaso hexagonal 15 cm</span><span style="font-size:var(--fs-caption);color:var(--text-muted)">3 un. · varejo</span></span>
+<span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--text-strong)">R$&nbsp;204,00</span>
+</button>
+<button type="button" class="tf-card tf-card--pad-sm tf-card--interactive" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;border-color:var(--accent)">
+<span class="tf-ico tf-ico--16 tf-ico-check" style="color:var(--accent)"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Kit organizador de mesa</span><span style="font-size:var(--fs-caption);color:var(--text-muted)">1 un. · 4 peças</span></span>
+<span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--text-strong)">R$&nbsp;189,00</span>
+</button>
+<button type="button" class="tf-card tf-card--pad-sm tf-card--interactive" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit">
+<span class="tf-ico tf-ico--16 tf-ico-plus" style="color:var(--text-muted)"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-body-sm);color:var(--text-body)">Miniatura Dragão</span><span style="font-size:var(--fs-caption);color:var(--text-muted)">R$&nbsp;26,40 a unidade</span></span>
+</button>
+<button type="button" class="tf-card tf-card--pad-sm" style="display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;opacity:.62">
+<span class="tf-ico tf-ico--16 tf-ico-triangle-alert" style="color:var(--warning-text)"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-body-sm);color:var(--text-body)">Chaveiro logo</span><span style="font-size:var(--fs-caption);color:var(--warning-text)">preço parado desde 21/04 — resolva para orçar</span></span>
+</button>
+</div>
+</div>
+<div style="border-top:1px solid var(--border-subtle);padding:12px 16px;display:flex;align-items:center;gap:12px;background:var(--surface-card)">
+<span style="flex:1;display:flex;flex-direction:column;gap:2px"><span style="font-size:var(--fs-caption);color:var(--text-muted)">3 itens</span><span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-md);font-weight:var(--fw-semibold);color:var(--text-strong)">R$&nbsp;788,40</span></span>
+<button type="button" class="tf-btn tf-btn--primary">Continuar</button>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A peça com preço parado não entra. Ela aparece apagada, com o motivo — esconder faria a pessoa procurar por um item que existe; deixar clicável colocaria um número de abril num orçamento de junho.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O total mora na tira de baixo e nunca sai de vista. É o número que decide se ela adiciona mais um item, e a decisão acontece enquanto ela rola a lista.</p>
+</div>
+
+<div id="18c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O degrau do atacado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O momento mais estranho da tela, e o mais útil: subir de 9 para 10 unidades faz o total <em>cair</em>. O app já sabe o preço de atacado desde a Calculadora — o orçamento é onde a regra encosta na quantidade real.</p>
+<div data-theme="light" data-screen-label="18c Degrau do atacado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">9 unidades</span>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="flex:1;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Suporte de headset "Gancho"</span>
+<div style="display:flex;align-items:center;gap:4px">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-label="Menos um" style="width:36px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-minus"></span></button>
+<span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--text-strong);min-width:28px;text-align:center">9</span>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-label="Mais um" style="width:36px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-plus"></span></button>
+</div>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">R$&nbsp;41,20 a unidade</span><span class="tf-brow__sub">varejo — o atacado começa em 10 un.</span></span><span class="tf-brow__val">R$&nbsp;370,80</span></div>
+</div>
+<div class="tf-aviso"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Com 10 un. o preço cai para R$&nbsp;32,95 e o total fica em R$&nbsp;329,50 — R$&nbsp;41,30 menos que com 9.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Usar 10 un.</button>
+</div></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">18c·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Depois do degrau</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">12 unidades</span>
+<div style="display:flex;align-items:center;gap:12px">
+<span style="flex:1;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Suporte de headset "Gancho"</span>
+<div style="display:flex;align-items:center;gap:4px">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-label="Menos um" style="width:36px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-minus"></span></button>
+<span class="tf-tnum" style="font-family:var(--font-numeric);font-size:var(--fs-base);font-weight:var(--fw-semibold);color:var(--text-strong);min-width:28px;text-align:center">12</span>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-label="Mais um" style="width:36px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-plus"></span></button>
+</div>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">R$&nbsp;32,95 a unidade</span><span class="tf-brow__sub">atacado, a partir de 10 un.</span></span><span class="tf-brow__val">R$&nbsp;395,40</span></div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O aviso oferece a troca mas não a faz. Nove unidades podem ser exatamente o pedido; decidir por ela transformaria uma informação útil em um orçamento errado.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Passado o degrau, o aviso some e a sublinha assume: "atacado, a partir de 10 un." A pessoa precisa saber por que aquele preço é aquele quando o cliente perguntar.</p>
+</div>
+
+<div id="18d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O desconto e o piso · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Descontar é a hora em que a transparência do app tem função: ela sabe o custo, então pode dizer quanto sobra. Três estados, e o terceiro é o único lugar do produto onde uma ação é recusada.</p>
+<div data-theme="light" data-screen-label="18d Desconto e piso" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-field">
+<span class="tf-field__label">Desconto</span>
+<div class="tf-inputwrap"><input class="tf-input" type="text" value="5"><span class="tf-ico tf-ico--16 tf-ico-percent" style="color:var(--text-muted);margin-right:12px"></span></div>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Subtotal</span></span><span class="tf-brow__val">R$&nbsp;788,40</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Desconto 5%</span></span><span class="tf-brow__val">− R$&nbsp;39,42</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Frete</span></span><span class="tf-brow__val">R$&nbsp;42,00</span></div>
+<div class="tf-brow tf-brow--total"><span class="tf-brow__main"><span class="tf-brow__label">Total</span></span><span class="tf-brow__val">R$&nbsp;790,98</span></div>
+<div class="tf-brow tf-brow--muted"><span class="tf-brow__main"><span class="tf-brow__label">Sobra sobre o custo</span><span class="tf-brow__sub">custo de R$&nbsp;633,54, frete incluído</span></span><span class="tf-brow__val">R$&nbsp;157,44</span></div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--warning">18d·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Aperta, mas passa</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-field">
+<span class="tf-field__label">Desconto</span>
+<div class="tf-inputwrap"><input class="tf-input" type="text" value="15"><span class="tf-ico tf-ico--16 tf-ico-percent" style="color:var(--text-muted);margin-right:12px"></span></div>
+</div>
+<div class="tf-alert tf-alert--warning">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">Sobram R$&nbsp;78,60 — 12% sobre o custo</p>
+<p class="tf-alert__text">Total de R$&nbsp;712,14. Ainda dá lucro, mas uma falha de impressão nesse lote come a sobra.</p>
+</div>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--danger">18d·3</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Abaixo do custo</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-field">
+<span class="tf-field__label">Desconto</span>
+<div class="tf-inputwrap tf-inputwrap--error"><input class="tf-input" type="text" value="28"><span class="tf-ico tf-ico--16 tf-ico-percent" style="color:var(--danger-text);margin-right:12px"></span></div>
+<span class="tf-field__error">Abaixo do custo — o total fica R$&nbsp;23,89 menor que o que você gasta</span>
+</div>
+<div class="tf-alert tf-alert--danger">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">O desconto máximo aqui é 25%</p>
+<p class="tf-alert__text">A 25% o total empata com o custo. Se você quer vender abaixo dele de propósito, tire o desconto e baixe o preço da peça no cálculo — assim o orçamento continua dizendo a verdade.</p>
+</div>
+</div>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--full" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Continuar</button>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Sobra sobre o custo" fica na linha apagada nos dois primeiros estados: é informação da vendedora, não do cliente, e nunca sai do app. Ela sobe de tom só quando vira um problema.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O bloqueio manda a pessoa para a Calculadora em vez de só dizer não. Vender abaixo do custo é uma decisão legítima — o que não pode é acontecer por acidente num campo de porcentagem.</p>
+</div>
+
+<div id="18e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Enviar congela · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A confirmação existe por uma razão só: depois dela o número para de acompanhar o custo, e não há botão que desfaça isso na cabeça do cliente. A validade é o que faz o congelamento ter fim.</p>
+<div data-theme="light" data-screen-label="18e Enviar congela" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<h2 class="tf-dialog__title" style="padding-right:0">Enviar congela este preço</h2>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Total enviado</span></span><span class="tf-brow__val">R$&nbsp;790,98</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Válido até</span><span class="tf-brow__sub">15 dias, contados de hoje</span></span><span class="tf-brow__val">22/06/2026</span></div>
+</div>
+<div class="tf-aviso"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-lock"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Até 22/06 este total não muda, mesmo que o filamento suba. Depois disso ele vence e você pode refazer com os custos do dia.</p>
+</div></div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="tf-btn tf-btn--ghost" style="flex:1 0 auto">Voltar</button><button type="button" class="tf-btn tf-btn--primary" style="flex:1 0 auto"><span class="tf-ico tf-ico--16 tf-ico-share-2"></span>Enviar</button></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">18e·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Enviado, com o custo andando por baixo</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:6px"><span class="tf-badge tf-badge--warning"><span class="tf-ico tf-ico--14 tf-ico-clock"></span>Vence em 13 dias</span></div>
+<div class="tf-price tf-price--plain tf-price--md">
+<span class="tf-price__label">Total enviado</span>
+<span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">790</span><span class="tf-price__dec">,98</span></span>
+<span class="tf-price__cap">enviado em 07/06 · válido até 22/06</span>
+</div>
+<div class="tf-alert tf-alert--info">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">Hoje a mesma lista daria R$&nbsp;812,40</p>
+<p class="tf-alert__text">O PLA Cinza subiu depois do envio. Voltar a acompanhar não vale para orçamentos enviados — se a Marcela aceitar, você honra os R$&nbsp;790,98.</p>
+</div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="tf-btn tf-btn--secondary" style="flex:1 0 auto">Marcar recusado</button><button type="button" class="tf-btn tf-btn--primary" style="flex:1 0 auto">Marcar aceito</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A diferença de R$&nbsp;21,42 aparece, e não some. É o que ensina a pessoa a encurtar a validade quando o filamento está instável — o app não escolhe os 15 dias por ela, mas mostra o que eles custaram.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Aceito e recusado são marcados à mão, porque o app não tem como saber. Marcar aceito é o gancho para o Histórico: um orçamento aceito é uma venda com preço, custo e data já registrados.</p>
+</div>
+
+<div id="18f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O que o cliente recebe · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A fronteira do produto. A transparência da Precifica3D é para a vendedora — filamento, energia, máquina, falha, markup. Nada disso atravessa. O cliente recebe itens, quantidades, preços e uma data.</p>
+<div data-theme="light" data-screen-label="18f Visao do cliente" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:2px">
+<span class="tf-catalog-md__kicker">Orçamento 024</span>
+<span style="font-size:var(--fs-md);font-weight:var(--fw-semibold);color:var(--text-strong)">Marcela — Papelaria Ponto</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">07/06/2026 · válido até 22/06/2026</span>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Suporte de headset "Gancho"</span><span class="tf-brow__sub">12 un. × R$&nbsp;32,95</span></span><span class="tf-brow__val">R$&nbsp;395,40</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Vaso hexagonal 15 cm</span><span class="tf-brow__sub">3 un. × R$&nbsp;68,00</span></span><span class="tf-brow__val">R$&nbsp;204,00</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Kit organizador de mesa</span><span class="tf-brow__sub">1 un. × R$&nbsp;189,00</span></span><span class="tf-brow__val">R$&nbsp;189,00</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Desconto 5%</span></span><span class="tf-brow__val">− R$&nbsp;39,42</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Frete</span></span><span class="tf-brow__val">R$&nbsp;42,00</span></div>
+<div class="tf-brow tf-brow--total"><span class="tf-brow__main"><span class="tf-brow__label">Total</span></span><span class="tf-brow__val">R$&nbsp;790,98</span></div>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Prazo de produção de 6 dias úteis após a confirmação. Impressão em PLA; cores conforme combinado.</span>
+</div>
+<div class="tf-card tf-card--accent" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Como sai no WhatsApp</span>
+<span style="font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body);white-space:pre-line">Orçamento 024 — Papelaria Ponto
+Válido até 22/06/2026
+
+Suporte de headset "Gancho" — 12 un. × R$&nbsp;32,95 = R$&nbsp;395,40
+Vaso hexagonal 15 cm — 3 un. × R$&nbsp;68,00 = R$&nbsp;204,00
+Kit organizador de mesa — 1 un. = R$&nbsp;189,00
+Desconto 5% — R$&nbsp;39,42
+Frete R$&nbsp;42,00
+
+Total: R$&nbsp;790,98</span>
+<div style="display:flex;flex-wrap:wrap;gap:8px"><button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" style="flex:1 0 auto"><span class="tf-ico tf-ico--16 tf-ico-copy"></span>Copiar texto</button><button type="button" class="tf-btn tf-btn--primary tf-btn--sm" style="flex:1 0 auto"><span class="tf-ico tf-ico--16 tf-ico-share-2"></span>Compartilhar</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A versão de texto não é um resumo do cartão: é o formato em que o orçamento realmente viaja no Brasil. Desenhá-la depois do PDF seria desenhar para o marketplace secundário.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O prazo de produção é o único campo que a pessoa escreve à mão. Ele não sai de nenhum cálculo, e sem ele o cliente pergunta por mensagem — o que atrasa a resposta que interessa.</p>
+</div>
+
+<div id="18g" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">18g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · a lista com o orçamento ao lado</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Mesma divisão de <a href="#17f">17f</a>: tabela densa à esquerda, documento à direita. Aqui a largura paga uma coisa que o celular não consegue — ver o total enviado e a sobra sobre o custo na mesma tela.</p>
+<div data-theme="light" data-screen-label="18g Desktop orcamento" style="display:flex;width:1280px;height:712px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#18g"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#18g" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#18g"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Histórico</span></a></li>
+<li><a class="tf-nav__item" href="#18g"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;gap:24px;padding:24px 32px;overflow:hidden">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+<div class="tf-segmented tf-segmented--md" role="tablist" style="align-self:flex-start">
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Peças</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Orçamentos</button>
+</div>
+<table class="tf-table">
+<thead><tr><th scope="col">Cliente</th><th scope="col" style="text-align:right">Total</th><th scope="col">Estado</th></tr></thead>
+<tbody>
+<tr aria-selected="true"><td class="tf-table__name">Marcela — Papelaria Ponto</td><td class="tf-table__num">R$&nbsp;790,98</td><td>vence em 13 dias</td></tr>
+<tr><td class="tf-table__name">Loja Gato Preto</td><td class="tf-table__num">R$&nbsp;318,00</td><td>vence em 13 dias</td></tr>
+<tr><td class="tf-table__name">Ateliê Rosa Nova</td><td class="tf-table__num">R$&nbsp;1.204,50</td><td>aceito</td></tr>
+<tr><td class="tf-table__name">Bruno — feira de maio</td><td class="tf-table__num">R$&nbsp;96,00</td><td>recusado</td></tr>
+<tr><td class="tf-table__name">Papelaria Ponto — abril</td><td class="tf-table__num">R$&nbsp;655,20</td><td>venceu em 30/04</td></tr>
+<tr><td class="tf-table__name">Marina — presentes de formatura</td><td class="tf-table__num">R$&nbsp;432,00</td><td>rascunho</td></tr>
+</tbody>
+</table>
+</div>
+<div class="tf-card" style="flex:0 0 440px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+<div class="tf-catalog-md__detail-head">
+<div class="tf-catalog-md__detail-title"><span class="tf-catalog-md__kicker">Orçamento 024 · enviado em 07/06</span><h2>Marcela — Papelaria Ponto</h2></div>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Ações"><span class="tf-ico tf-ico--16 tf-ico-ellipsis"></span></button>
+</div>
+<div class="tf-price tf-price--plain tf-price--md">
+<span class="tf-price__label">Total enviado</span>
+<span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">790</span><span class="tf-price__dec">,98</span></span>
+<span class="tf-price__cap">válido até 22/06 · hoje a mesma lista daria R$&nbsp;812,40</span>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Suporte de headset "Gancho"</span><span class="tf-brow__sub">12 un. × R$&nbsp;32,95 · atacado</span></span><span class="tf-brow__val">R$&nbsp;395,40</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Vaso hexagonal 15 cm</span><span class="tf-brow__sub">3 un. × R$&nbsp;68,00</span></span><span class="tf-brow__val">R$&nbsp;204,00</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Kit organizador de mesa</span><span class="tf-brow__sub">1 un. · 4 peças</span></span><span class="tf-brow__val">R$&nbsp;189,00</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Desconto 5% e frete</span></span><span class="tf-brow__val">+ R$&nbsp;2,58</span></div>
+<div class="tf-brow tf-brow--total"><span class="tf-brow__main"><span class="tf-brow__label">Total</span></span><span class="tf-brow__val">R$&nbsp;790,98</span></div>
+<div class="tf-brow tf-brow--muted"><span class="tf-brow__main"><span class="tf-brow__label">Sobra sobre o custo</span><span class="tf-brow__sub">custo de R$&nbsp;633,54 no dia do envio</span></span><span class="tf-brow__val">R$&nbsp;157,44</span></div>
+</div>
+<div style="display:flex;gap:8px;margin-top:auto"><button type="button" class="tf-btn tf-btn--secondary" style="flex:1 0 auto">Marcar recusado</button><button type="button" class="tf-btn tf-btn--primary" style="flex:1 0 auto">Marcar aceito</button></div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Desconto 5% e frete" vira uma linha só no painel: são dois ajustes de sinal oposto que quase se anulam, e separá-los aqui gastaria duas linhas para explicar R$&nbsp;2,58. No documento do cliente (<a href="#18f">18f</a>) eles continuam separados — lá cada um precisa ser conferido.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

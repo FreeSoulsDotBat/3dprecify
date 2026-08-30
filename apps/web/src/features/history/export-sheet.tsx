@@ -96,6 +96,9 @@ export function ExportButton({ item }: { item: HistoryItem }) {
             <ExportForm
               serverId={serverId}
               isKit={item.kind === "KIT"}
+              // 019/PR-E (T135) — um orçamento exporta pelo MESMO caminho (nenhum ramo novo de
+              // formato); o que muda é só a razão da espera, que o nomeia.
+              isQuote={item.kind === "QUOTE"}
               onDone={() => setOpen(false)}
             />
           </SheetContent>
@@ -108,11 +111,13 @@ export function ExportButton({ item }: { item: HistoryItem }) {
 function ExportForm({
   serverId,
   isKit,
+  isQuote,
   onDone,
 }: {
   /** null ⇒ this record has never reached the account, so it has no quote. The CSV still does. */
   serverId: string | null;
   isKit: boolean;
+  isQuote: boolean;
   onDone: () => void;
 }) {
   const quote = useExportQuote();
@@ -181,7 +186,9 @@ function ExportForm({
                   NAME and be announced twice (name + description). Here it is the description. */}
               {blocked && (
                 <p id="tf-export-pdf-reason" className="tf-export__reason">
-                  {t.exportPending}
+                  {/* A espera é a mesma (o artefato é do SERVIDOR e precisa do id de lá); a frase
+                      do orçamento diz isso com o nome que o vendedor deu ao documento. */}
+                  {isQuote ? messages.quote.pdfWaitsSync : t.exportPending}
                 </p>
               )}
             </div>

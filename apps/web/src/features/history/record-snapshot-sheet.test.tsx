@@ -3,7 +3,7 @@ import "@testing-library/jest-dom/vitest";
 
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, expectTypeOf, it, vi } from "vitest";
 
 const mutateAsync = vi.fn();
 vi.mock("@/entities/history/use-history", () => ({
@@ -17,10 +17,10 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import type { SnapshotIn } from "@/shared/api/generated";
+import type { SnapshotIn, SnapshotInKind } from "@/shared/api/generated";
 import { Toaster, useToastStore } from "@/shared/ui";
 
-import { RecordSnapshotButton } from "./record-snapshot-sheet";
+import { RecordSnapshotButton, type RecordSource } from "./record-snapshot-sheet";
 
 // 009/T010 (E4, PR-A) — the record action, written FAILING-first.
 //
@@ -253,5 +253,51 @@ describe("the gate is the SERVER's last word (Principle IV)", () => {
     expect(
       screen.queryByRole("button", { name: messages.historico.saveAction }),
     ).not.toBeInTheDocument();
+  });
+});
+
+// ── 019/PR-E · T135 — esta gaveta NÃO grava orçamento ───────────────────────────────────────────
+//
+// A decisão deste arquivo é uma BARREIRA DE TIPO, não um `if`: `RecordSource.kind` é
+// `Exclude<SnapshotInKind, "QUOTE">` e a base escolhida é `Exclude<…, "PRECO_ORCAMENTO">`. Um `if`
+// pode ser removido numa refatoração e ninguém percebe; um tipo que não tem o valor não tem por
+// onde. O orçamento nasce no construtor (`quote-builder.tsx`), que é quem sabe montar N itens,
+// aplicar desconto no total e congelar pelo `buildQuotePayload`.
+//
+// A segunda metade é comportamental, e é a que pega o caminho por dados: se um documento de
+// orçamento chegasse aqui por engano (payload cru vindo de outro lugar), os candidatos de base
+// saem VAZIOS — `totals.precoOrcamento` não é oferecido — e nada é gravado. Nem 500, nem registro
+// com base errada: nada.
+describe("019/PR-E (T135) — o construtor de orçamento não passa por aqui", () => {
+  it("o TIPO recusa: nem 'QUOTE' como kind, nem 'PRECO_ORCAMENTO' como base", () => {
+    expectTypeOf<RecordSource["kind"]>().toEqualTypeOf<"SINGLE" | "KIT">();
+    // A união do contrato tem três valores; esta superfície só admite dois — e o compilador é quem
+    // garante, não este teste (ele só documenta o fato e quebra se alguém alargar de volta).
+    expectTypeOf<SnapshotInKind>().toEqualTypeOf<"SINGLE" | "KIT" | "QUOTE">();
+  });
+
+  it("um documento de orçamento não oferece base nenhuma — e nada é gravado", async () => {
+    const user = setup();
+    entitlement.data = { status: "active" };
+    const quotePayload = {
+      schemaVersion: 1,
+      kind: "QUOTE",
+      modelVersion: "4.2.0",
+      catalogVersion: null,
+      totals: { precoOrcamento: "64.80" },
+      provenance: null,
+    } as unknown as FrozenSnapshotPayload;
+
+    render(
+      <>
+        <RecordSnapshotButton source={{ kind: "SINGLE", freeze: () => quotePayload }} />
+        <Toaster />
+      </>,
+    );
+    await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+
+    expect(screen.queryByRole("radio")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: messages.historico.saveSheetSubmit })).toBeDisabled();
+    expect(mutateAsync).not.toHaveBeenCalled();
   });
 });

@@ -3,6 +3,7 @@ import {
   Decimal,
   type PriceInput,
   type PriceResult,
+  type QuoteResult,
 } from "@3dprecify/pricing-core";
 
 // 009/T003 (E4, PR-A) — THE FROZEN DOCUMENT (data-model D1, ADR-0008, ADR-0020 §1).
@@ -71,6 +72,11 @@ export interface FrozenTotals {
   custoTotal?: MoneyString;
   precoVarejo?: MoneyString;
   precoAtacado?: MoneyString;
+  // 019/PR-E (T133, ADR-0034 §2) — o total do ORÇAMENTO: `netTotal` (bruto − desconto), e o mesmo
+  // número do `headline_total` da coluna (VR-503, `CASE … WHEN 'PRECO_ORCAMENTO'`). Opcional como
+  // todas as outras: um documento SINGLE/KIT de ontem não passa a ter um total de orçamento — ele
+  // simplesmente não tem a chave, e `readFrozenMoney` a lê como null, nunca como "0,00" (FR-507).
+  precoOrcamento?: MoneyString;
 }
 
 /** One recorded channel. Serves BOTH a single piece (per-slot, may carry `error`) and a kit rollup
@@ -135,9 +141,41 @@ export interface FrozenProvenance {
   name: string;
 }
 
+// ── 019/PR-E (T133) — o ORÇAMENTO dentro do MESMO envelope (ADR-0034 §2, data-model §4) ──────────
+//
+// Um `kind: "QUOTE"` não ganha tabela, rota nem mecanismo: ganha um valor a mais na união e três
+// campos OPCIONAIS. A `FrozenKitLine` (:111) NÃO é reaproveitada, e isso é decisão, não estilo: ela
+// carrega `input`/`breakdown`/`totals` (a peça inteira, para "Recalcular hoje" ter de que partir), e
+// um orçamento não recalcula — ele imprime nome, quantidade, unitário e subtotal. Reusá-la faria o
+// documento de orçamento AFIRMAR uma decomposição de custo que ninguém orçou.
+
+/** O desconto como o documento o DECLARA — modo, o que o vendedor digitou, quanto deu, e o bruto de
+ *  onde saiu. Um documento que mostra só o líquido esconde a conta que o vendedor fez (ADR-0034 §2).
+ *  `value` também é STRING: `validation.py:106-110` rejeita float em posição de dinheiro. */
+export interface FrozenQuoteDiscount {
+  mode: "PCT" | "AMOUNT";
+  /** % (modo `PCT`) ou R$ (modo `AMOUNT`), como digitado — quantizado às duas casas da casa. */
+  value: MoneyString;
+  amount: MoneyString;
+  grossTotal: MoneyString;
+}
+
+/** Uma linha do orçamento congelado. `quantity` é o único número JSON legal aqui (contagem
+ *  inteira); o dinheiro já vem ESCALADO, para o renderizador imprimir sem multiplicar nada. */
+export interface FrozenQuoteLine {
+  /** O nome como foi orçado — inclusive a legenda de degradação do E3/D6 quando for o caso. */
+  name: string | null;
+  quantity: number;
+  unitPrice: MoneyString;
+  subtotal: MoneyString;
+  /** De onde a linha veio — a MESMA tríade informativa da proveniência do documento (id + nome de
+   *  então), nunca chave estrangeira (ADR-0019 §5); `null` quando a linha não veio do catálogo. */
+  origin: FrozenProvenance | null;
+}
+
 export interface FrozenSnapshotPayload {
   schemaVersion: number;
-  kind: "SINGLE" | "KIT";
+  kind: "SINGLE" | "KIT" | "QUOTE";
   /** The formula that produced these numbers (`PRICING_MODEL_VERSION`) — closes A29. */
   modelVersion: string;
   /** The fee-catalog version that priced the channels (ADR-0010) — root-level provenance, captured
@@ -148,8 +186,16 @@ export interface FrozenSnapshotPayload {
   inputs?: FrozenPriceInput;
   /** SINGLE only. */
   breakdown?: FrozenBreakdown;
-  /** KIT only. */
-  lines?: FrozenKitLine[];
+  /** KIT (peças, com input+breakdown) ou QUOTE (itens, só o que se imprime). A união é de ARRAY, de
+   *  propósito: um documento tem UMA das duas formas, e quem lê tem de estreitar pelo `kind` — um
+   *  `FrozenKitLine[] & FrozenQuoteLine[]` deixaria a tela alcançar `line.totals` num orçamento e
+   *  imprimir `undefined` (019/PR-E T133/T135). */
+  lines?: FrozenKitLine[] | FrozenQuoteLine[];
+  /** QUOTE only — o desconto DECLARADO. Ausente = orçamento sem desconto (nunca zero fabricado). */
+  discount?: FrozenQuoteDiscount;
+  /** QUOTE only — `bom.custoTotal`: o custo somado dos itens × quantidade (ADR-0034 §1.4), o piso
+   *  que o aviso "Abaixo do custo" compara. Congelado porque o documento é auto-suficiente. */
+  costFloor?: MoneyString;
   totals: FrozenTotals;
   channels?: FrozenChannel[];
   provenance: FrozenProvenance | null;
@@ -165,6 +211,22 @@ export interface FrozenSnapshotPayload {
    * an ambiguous record stays ambiguous forever, so there is no later place to add the truth.
    */
   repricedFromFrozen?: true;
+}
+
+// 019/PR-E (T133/T135) — `lines` passou a ser união de ARRAYS, e o compilador passou a exigir o
+// estreitamento em cada leitor. Estes dois são a ÚNICA porta: a asserção mora aqui, atrás de um
+// teste de `kind`, em vez de virar um `as` espalhado por oito consumidores (onde um `as` errado lê
+// `line.totals` de um orçamento e imprime `undefined`). Um `kind` que não é o pedido devolve lista
+// VAZIA — a tela não renderiza peça nenhuma, que é a verdade, em vez de arriscar campo inexistente.
+
+/** As peças de um KIT. Vazio para qualquer outro `kind`. */
+export function frozenKitLines(payload: FrozenSnapshotPayload): FrozenKitLine[] {
+  return payload.kind === "KIT" ? ((payload.lines ?? []) as FrozenKitLine[]) : [];
+}
+
+/** Os itens de um ORÇAMENTO. Vazio para qualquer outro `kind`. */
+export function frozenQuoteLines(payload: FrozenSnapshotPayload): FrozenQuoteLine[] {
+  return payload.kind === "QUOTE" ? ((payload.lines ?? []) as FrozenQuoteLine[]) : [];
 }
 
 /** Read a recorded money line. An ABSENT line reads as `null` — never as "0.00" (FR-507). A line
@@ -317,6 +379,65 @@ export function freezeBomResult(
   };
 }
 
+/**
+ * 019/PR-E (T133) — a FRONTEIRA entre o número do motor e a string do documento.
+ *
+ * `computeQuote` devolve NÚMEROS (o regime de `toMoney` do pacote, ADR-0008); o documento congelado
+ * só aceita STRING decimal, e não por gosto: `validation.py:106-110` rejeita float em posição de
+ * dinheiro, e um float que passasse viraria imprecisão gravada para sempre numa tabela que um
+ * gatilho impede de reescrever (ADR-0019). A conversão mora AQUI e em lugar nenhum mais — nenhuma
+ * tela formata dinheiro para dentro do documento.
+ *
+ * O que ela NÃO faz: não calcula nada. Todo número vem do `QuoteResult`; `meta` só acrescenta o que
+ * o motor legitimamente não sabe — de onde veio cada linha e o desconto COMO FOI DIGITADO (o motor
+ * devolve quanto deu, não em que modo foi pedido).
+ */
+export function buildQuotePayload(
+  result: QuoteResult,
+  meta: {
+    /** A origem de cada linha, na MESMA ordem de `result.lines`. Uma posição ausente é `null` — o
+     *  documento não adivinha catálogo. */
+    lines: readonly (FrozenProvenance | null)[];
+    /** O desconto como entrou no motor. Ausente = sem desconto, e o bloco simplesmente não nasce. */
+    discount?: { mode: "PCT" | "AMOUNT"; value: number };
+  },
+): FrozenSnapshotPayload {
+  const lines: FrozenQuoteLine[] = result.lines.map((line, index) => ({
+    name: line.name,
+    quantity: line.quantity,
+    unitPrice: toMoneyString(line.unitPrice),
+    subtotal: toMoneyString(line.subtotal),
+    origin: meta.lines[index] ?? null,
+  }));
+
+  return {
+    schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+    kind: "QUOTE",
+    modelVersion: result.modelVersion,
+    // Um orçamento é venda DIRETA: nem canal, nem banda, nem tarifa entram no motor (ADR-0034 §1.7),
+    // então não há versão de catálogo a capturar. `null` DECLARADO, jamais chave ausente (I2).
+    catalogVersion: null,
+    lines,
+    ...(meta.discount === undefined
+      ? {}
+      : {
+          discount: {
+            mode: meta.discount.mode,
+            value: toMoneyString(meta.discount.value),
+            amount: toMoneyString(result.discountAmount),
+            grossTotal: toMoneyString(result.grossTotal),
+          },
+        }),
+    costFloor: toMoneyString(result.costFloor),
+    // SÓ o total do orçamento. Gravar o líquido em `precoVarejo` — a "simplificação" que o ADR-0034
+    // nomeia como o risco desta fatia — faria o documento afirmar que o MOTOR produziu aquele
+    // número, com o desconto embutido: uma mentira dentro de um registro imutável.
+    totals: { precoOrcamento: toMoneyString(result.netTotal) },
+    // Um orçamento tem N origens, uma por linha (`lines[].origin`) — não UMA no documento.
+    provenance: null,
+  };
+}
+
 /** Is this frozen channel INPUT carrying a fee at all? The six fields are the same ones the live
  *  calculator's `hasFee` reads (`calculator-model.ts`) — kept in sync by the shared meaning, not by
  *  a shared call, because this side reads exact decimal STRINGS out of an immutable document. */
@@ -364,8 +485,10 @@ export function frozenChannelHasFee(payload: FrozenSnapshotPayload, index: numbe
 
   // A KIT channel is a ROLLUP over the lines, so it is matched by marketplace, never by index. If
   // ANY contributing line carried a fee for that marketplace, the rolled-up number means something.
+  // 019/PR-E: só um KIT tem linhas COM entrada de canal — um QUOTE é venda direta e nem chega aqui
+  // (não tem `channels` a renderizar), e `frozenKitLines` devolve vazio para ele por construção.
   let matched = false;
-  for (const line of payload.lines ?? []) {
+  for (const line of frozenKitLines(payload)) {
     const slots = line.input["channels"];
     if (!Array.isArray(slots)) continue;
     for (const slot of slots) {

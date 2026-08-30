@@ -5984,7 +5984,8 @@
             "type": "string",
             "enum": [
               "SINGLE",
-              "KIT"
+              "KIT",
+              "QUOTE"
             ],
             "title": "Kind"
           },
@@ -6039,7 +6040,8 @@
             "type": "string",
             "enum": [
               "PRECO_VAREJO",
-              "PRECO_ATACADO"
+              "PRECO_ATACADO",
+              "PRECO_ORCAMENTO"
             ],
             "title": "Headlinebasis"
           },

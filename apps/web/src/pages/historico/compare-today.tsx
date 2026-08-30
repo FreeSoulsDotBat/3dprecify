@@ -52,7 +52,11 @@ export function CompareTodayBlock({
   // No resolvable origin ⇒ there is no "today" to compare against, so the affordance is simply not
   // here. Silent, like the "abrir origem" link: a gone origin is not a problem the seller has
   // (FR-503), and a button that can only ever apologise is worse than no button.
-  if (!frozen || (!product && !kit)) return null;
+  // 019/PR-E · US17 (T135) — "comparar com hoje" também não vale para um orçamento: a pergunta que
+  // esta tela responde ("meu custo subiu desde que cotei?") se apoia em repreçar a origem, e o
+  // orçamento não tem UMA origem — tem N, uma por item, mais um desconto que foi decisão do dia.
+  // Um "hoje" aqui seria um número que ninguém calculou para aquele cliente.
+  if (!frozen || frozen.kind === "QUOTE" || (!product && !kit)) return null;
   return <CompareBody item={item} product={product} kit={kit} />;
 }
 

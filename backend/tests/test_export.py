@@ -873,6 +873,28 @@ def _pdf_runs(pdf: bytes) -> list[tuple[float, float, float, str]]:
     return runs
 
 
+def _assert_no_overprint(runs: list[tuple[float, float, float, str]], right_cell: str) -> None:
+    """Nothing drawn left of `right_cell` may reach it, ON ITS OWN BASELINE.
+
+    Baseline-scoped on purpose: the column header is right-aligned, so it legitimately starts
+    left of the value below it and would read as a collision against a whole-page filter. Only
+    runs sharing a baseline can actually overprint each other.
+    """
+    anchor = [r for r in runs if r[3] == right_cell]
+    assert len(anchor) == 1, f"expected exactly one {right_cell!r} run, got {anchor!r}"
+    anchor_x, row_y = anchor[0][0], anchor[0][1]
+
+    on_row = [r for r in runs if abs(r[1] - row_y) < 0.5 and r[0] < anchor_x]
+    assert on_row, f"nothing rendered left of {right_cell!r} — the row did not render"
+
+    for x, _y, x_end, text in on_row:
+        assert x_end <= anchor_x, (
+            f"{text!r} overprints {right_cell!r}: it runs from {x:.1f}pt to {x_end:.1f}pt, "
+            f"but {right_cell!r} is drawn at {anchor_x:.1f}pt. "
+            "A raw str in a Table cell does not wrap."
+        )
+
+
 class TestQuoteLayout:
     # Long, but ordinary: a seller who names their pieces descriptively writes this. Carries `&`
     # and `<…>` too, so the fix cannot buy wrapping back by dropping the markup guarantee —
@@ -890,28 +912,6 @@ class TestQuoteLayout:
             _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=breakdown
         )
 
-    @staticmethod
-    def _assert_no_overprint(runs: list[tuple[float, float, float, str]], right_cell: str) -> None:
-        """Nothing drawn left of `right_cell` may reach it, ON ITS OWN BASELINE.
-
-        Baseline-scoped on purpose: the column header is right-aligned, so it legitimately starts
-        left of the value below it and would read as a collision against a whole-page filter. Only
-        runs sharing a baseline can actually overprint each other.
-        """
-        anchor = [r for r in runs if r[3] == right_cell]
-        assert len(anchor) == 1, f"expected exactly one {right_cell!r} run, got {anchor!r}"
-        anchor_x, row_y = anchor[0][0], anchor[0][1]
-
-        on_row = [r for r in runs if abs(r[1] - row_y) < 0.5 and r[0] < anchor_x]
-        assert on_row, f"nothing rendered left of {right_cell!r} — the row did not render"
-
-        for x, _y, x_end, text in on_row:
-            assert x_end <= anchor_x, (
-                f"{text!r} overprints {right_cell!r}: it runs from {x:.1f}pt to {x_end:.1f}pt, "
-                f"but {right_cell!r} is drawn at {anchor_x:.1f}pt. "
-                "A raw str in a Table cell does not wrap."
-            )
-
     def test_a_long_item_name_never_overprints_the_quantity_or_the_price(self) -> None:
         """The defect, stated as geometry: no part of the Item cell may reach the Qtd. column.
 
@@ -920,8 +920,8 @@ class TestQuoteLayout:
         perfectly; only the customer could tell.
         """
         runs = _pdf_runs(render_quote_pdf(self._long_name_quote()))
-        self._assert_no_overprint(runs, "2")  # the quantity
-        self._assert_no_overprint(runs, "R$ 30,00")  # the price
+        _assert_no_overprint(runs, "2")  # the quantity
+        _assert_no_overprint(runs, "R$ 30,00")  # the price
 
     def test_a_long_other_costs_label_never_overprints_its_value(self) -> None:
         """The SAME defect, one table over, and the reason this class checks both: an "Outros
@@ -947,7 +947,7 @@ class TestQuoteLayout:
             _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
         )
         runs = _pdf_runs(render_quote_pdf(quote))
-        self._assert_no_overprint(runs, "R$ 3,60")
+        _assert_no_overprint(runs, "R$ 3,60")
 
     def test_the_long_name_WRAPS_rather_than_being_truncated_or_dropped(self) -> None:
         """The other half, and the honest one: fitting the column by LOSING characters would pass
@@ -990,7 +990,7 @@ class TestQuoteLayout:
             _snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=True
         )
         runs = _pdf_runs(render_quote_pdf(quote))
-        self._assert_no_overprint(runs, "R$ 50,00")
+        _assert_no_overprint(runs, "R$ 50,00")
 
     def test_the_long_surcharge_label_WRAPS_rather_than_being_dropped(self) -> None:
         payload = {
@@ -1113,3 +1113,206 @@ class TestRouteGuarantees:
         )
         # The product decision, pinned: a kit shows its stored aggregate, not a per-piece breakdown.
         assert [(c.label, c.value) for c in q.cost_breakdown] == [("Custo total", "28.00")]
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# 019/PR-E · T082 (US6/US17, ADR-0034 §2) — o ORÇAMENTO ENVIADO como documento exportado.
+#
+# `kind="QUOTE"` reusa INTEIRA a maquinaria do E4 (mesma tabela, mesmo gatilho, mesmo exportador):
+# nenhum segundo mecanismo (FR-1917). O que muda no renderizador é o mínimo — e cada uma das três
+# mudanças, se esquecida, imprime uma MENTIRA no papel que vai para o cliente:
+#
+# * `_BASIS_TOTAL` sem `PRECO_ORCAMENTO` ⇒ o antigo fallback silencioso de `_basis_key` escolhia
+#   `precoVarejo` — o total ANTES do desconto, num orçamento que o vendedor descontou;
+# * `_BASIS_CAPTION` sem a entrada ⇒ o consumidor imprimia a chave crua ("PRECO_ORCAMENTO");
+# * sem o ramo `QUOTE` em `build_quote_view` ⇒ o documento caía no ramo SINGLE e imprimia UMA linha
+#   ("Peça única") no lugar dos N itens que o vendedor montou.
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+QUOTE_PAYLOAD: dict[str, Any] = {
+    "schemaVersion": 1,
+    "kind": "QUOTE",
+    "modelVersion": "4.2.0",
+    "catalogVersion": None,
+    "lines": [
+        {
+            "name": "Vaso",
+            "quantity": 2,
+            "unitPrice": "30.00",
+            "subtotal": "60.00",
+            "origin": {"kind": "PRODUCT", "id": "p1", "name": "Vaso"},
+        },
+        {"name": "Prato", "quantity": 1, "unitPrice": "12.00", "subtotal": "12.00", "origin": None},
+    ],
+    "discount": {"mode": "PCT", "value": "10", "amount": "7.20", "grossTotal": "72.00"},
+    "costFloor": "48.00",
+    "totals": {"precoOrcamento": "64.80"},
+}
+
+
+def _quote_snap(payload: dict[str, Any] | None = None, **over: Any) -> Snapshot:
+    fields: dict[str, Any] = {
+        "headline_total": decimal.Decimal("64.80"),
+        "headline_basis": "PRECO_ORCAMENTO",
+        "model_version": "4.2.0",
+    }
+    fields.update(over)
+    return _snap(payload if payload is not None else QUOTE_PAYLOAD, **fields)
+
+
+def _quote_view(payload: dict[str, Any] | None = None, *, breakdown: bool = False) -> Any:
+    return build_quote_view(
+        _quote_snap(payload), seller_name="Ana", seller_email=None, include_cost_breakdown=breakdown
+    )
+
+
+class TestQuoteDocument:
+    def test_the_quote_prints_the_ORCAMENTO_total_never_the_varejo_fallback(self) -> None:
+        """O `precoVarejo` abaixo é uma ISCA: nenhum documento real de orçamento o traz, e ele está
+        aqui exatamente para tornar o antigo fallback de `_basis_key` VISÍVEL. Com o fallback, o
+        cliente receberia R$ 72,00 — o total ANTES do desconto que o vendedor concedeu."""
+        payload = {
+            **json.loads(json.dumps(QUOTE_PAYLOAD)),
+            "totals": {"precoOrcamento": "64.80", "precoVarejo": "72.00"},
+        }
+        assert _quote_view(payload).total == "64.80"
+
+    def test_an_UNKNOWN_basis_is_an_EXPLICIT_error_not_a_silent_varejo(self) -> None:
+        """O fallback morreu: um `headline_basis` que o renderizador não conhece é um erro que se
+        ouve, não um número plausível impresso no papel do cliente. É inalcançável pela rota (o
+        `Literal` e o `CHECK` o barram) — e é por isso mesmo que ele nunca deve ser "resolvido" com
+        um chute."""
+        with pytest.raises(ValueError, match="PRECO_FUTURO"):
+            build_quote_view(
+                _quote_snap(headline_basis="PRECO_FUTURO"),
+                seller_name="Ana",
+                seller_email=None,
+                include_cost_breakdown=False,
+            )
+
+    def test_the_quote_itemizes_every_line_by_its_stored_subtotal(self) -> None:
+        """O total de uma linha do orçamento é `subtotal` (unitário vezes a quantidade, já
+        arredondado
+        pelo motor) — NÃO `line.totals[basis]`, que é a forma do KIT. Ler a forma errada devolveria
+        string vazia e o cliente veria os nomes com as células de preço em BRANCO (E4-01)."""
+        q = _quote_view()
+        assert [(line.name, line.quantity, line.total) for line in q.lines] == [
+            ("Vaso", 2, "60.00"),
+            ("Prato", 1, "12.00"),
+        ]
+        assert q.cost_breakdown == []  # SC-506 vale igual para um orçamento
+
+    def test_the_discount_block_is_DECLARED_gross_then_discount_then_total(self) -> None:
+        """FR-1917 / ADR-0034 §2 — "o desconto é declarado, nunca embutido": um documento que mostra
+        só o líquido esconde a conta que o vendedor fez com o cliente."""
+        text = _pdf_text(render_quote_pdf(_quote_view()))
+        assert "Subtotal" in text
+        assert "R$ 72,00" in text  # o bruto
+        assert "Desconto 10%" in text  # o rótulo da prancheta 18d, verbatim
+        assert "R$ 7,20" in text  # o abatimento
+        assert "Total (Preço do orçamento): R$ 64,80" in text  # e a legenda TRADUZIDA
+        assert "PRECO_ORCAMENTO" not in text  # nunca a chave crua na frente do cliente
+
+    def test_an_AMOUNT_discount_prints_without_inventing_a_percentage(self) -> None:
+        payload = {
+            **json.loads(json.dumps(QUOTE_PAYLOAD)),
+            "discount": {
+                "mode": "AMOUNT",
+                "value": "7.20",
+                "amount": "7.20",
+                "grossTotal": "72.00",
+            },
+        }
+        text = _pdf_text(render_quote_pdf(_quote_view(payload)))
+        assert "Desconto" in text
+        assert "%" not in text
+
+    def test_a_quote_WITHOUT_a_discount_prints_no_discount_block_at_all(self) -> None:
+        """FR-507, a regra de sempre: chave ausente é LINHA ausente, nunca um "R$ 0,00" fabricado —
+        um desconto de zero impresso sugere ao cliente uma negociação que não houve."""
+        payload = {
+            k: v for k, v in json.loads(json.dumps(QUOTE_PAYLOAD)).items() if k != "discount"
+        }
+        payload["totals"] = {"precoOrcamento": "72.00"}
+        view = build_quote_view(
+            _snap(
+                payload,
+                headline_total=decimal.Decimal("72.00"),
+                headline_basis="PRECO_ORCAMENTO",
+            ),
+            seller_name="Ana",
+            seller_email=None,
+            include_cost_breakdown=False,
+        )
+        text = _pdf_text(render_quote_pdf(view))
+        assert "Subtotal" not in text
+        assert "Desconto" not in text
+        assert "Total (Preço do orçamento): R$ 72,00" in text
+
+    def test_the_opt_in_shows_the_stored_cost_FLOOR_and_the_default_shows_nothing(self) -> None:
+        """O piso é custo INTERNO: segue o opt-in de SC-506 como material/energia/máquina. Sem isto
+        o vendedor liga o interruptor num orçamento e não acontece NADA — um controle que não faz
+        nada sem dizer é uma promessa que o app não cumpre (o mesmo defeito que o teste do KIT
+        abaixo já guarda)."""
+        assert _quote_view(breakdown=False).cost_breakdown == []
+        assert [(c.label, c.value) for c in _quote_view(breakdown=True).cost_breakdown] == [
+            ("Custo total", "48.00")
+        ]
+
+    # O nome adversarialmente LONGO — 300 caracteres, contra os ~68 que bastaram para o defeito do
+    # fechamento do E4. Um construtor de orçamento aceita nomes do catálogo sem limite de tamanho.
+    LONG_QUOTE_NAME = ("Suporte articulado para bancada com braco duplo e trava de seguranca " * 5)[
+        :300
+    ]
+
+    def _long_name_payload(self) -> dict[str, Any]:
+        payload = json.loads(json.dumps(QUOTE_PAYLOAD))
+        payload["lines"] = [{**payload["lines"][0], "name": self.LONG_QUOTE_NAME}]
+        return payload
+
+    def test_a_300_char_item_name_never_overprints_the_quantity_or_the_price(self) -> None:
+        """GEOMETRIA, e nenhuma asserção de texto substitui isto: os glifos colidem na PÁGINA, não
+        na string (lição do E4/T034). `_pdf_text` devolveria os dois valores perfeitos enquanto o
+        cliente lê um preço por cima de um nome."""
+        runs = _pdf_runs(render_quote_pdf(_quote_view(self._long_name_payload())))
+        _assert_no_overprint(runs, "2")  # a quantidade
+        _assert_no_overprint(runs, "R$ 60,00")  # o preço da linha
+
+    def test_the_300_char_name_WRAPS_rather_than_being_truncated(self) -> None:
+        """A outra metade, e a honesta: caber na coluna PERDENDO caracteres passaria na geometria
+        acima e entregaria ao cliente um nome que não é o nome da peça."""
+        text = _pdf_text(render_quote_pdf(_quote_view(self._long_name_payload())))
+        for word in self.LONG_QUOTE_NAME.split():
+            assert word in text, f"{word!r} sumiu do nome quebrado: {text!r}"
+
+    def test_markup_in_the_item_name_and_in_the_discount_label_is_PRINTED_not_parsed(self) -> None:
+        """`Paragraph` PARSA o conteúdo: um `<b>` conhecido levanta ValueError → 500 sem artefato
+        nenhum, e uma tag desconhecida é ENGOLIDA (o texto some do orçamento sem nada a notar). O
+        rótulo do desconto é montado a partir de `discount.value`, que é texto do DOCUMENTO — logo
+        passa pelo mesmo `_xml` que o nome do item."""
+        payload = json.loads(json.dumps(QUOTE_PAYLOAD))
+        payload["lines"] = [{**payload["lines"][0], "name": "Vaso <b>M&M</b> &amp; cia"}]
+        payload["discount"] = {
+            "mode": "PCT",
+            "value": "10 <b>&amp;",
+            "amount": "7.20",
+            "grossTotal": "72.00",
+        }
+        text = _pdf_text(render_quote_pdf(_quote_view(payload)))
+        assert "Vaso <b>M&M</b> &amp; cia" in text
+        assert "Desconto 10 <b>&amp;%" in text
+
+
+class TestQuoteInTheCsv:
+    def test_the_csv_carries_a_QUOTE_row_with_the_SAME_header(self) -> None:
+        """O CSV fica INTOCADO: uma coluna nova reabriria a decisão de injeção de fórmula do E4
+        (aceita conscientemente, com 4 gatilhos de reabertura). Um orçamento é mais uma linha —
+        `kind=QUOTE`, `headlineBasis=PRECO_ORCAMENTO` — sob o cabeçalho de sempre."""
+        csv_text = build_history_csv([_snap(), _quote_snap(label="Cliente Ana")])
+        rows = list(csv.DictReader(io.StringIO(csv_text)))
+        assert csv_text.splitlines()[0] == ",".join(
+            ("label", "kind", "deviceQuotedAt", "headlineBasis", "headlineTotal")
+        )
+        assert [r["kind"] for r in rows] == ["SINGLE", "QUOTE"]
+        assert rows[1]["headlineBasis"] == "PRECO_ORCAMENTO"
+        assert rows[1]["headlineTotal"] == "64.80"

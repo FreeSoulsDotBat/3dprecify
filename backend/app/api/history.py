@@ -68,9 +68,14 @@ _PAYLOAD_SIZE_CAP_BYTES = 512 * 1024
 # map(headline_basis) -> the key of the matching total inside `payload.totals`. The envelope is FLAT
 # (I2 / Option A): `totals` sits at the ROOT, there is no `payload.result` wrapper. VR-503 binds the
 # denormalised `headline_total` to exactly this leaf.
+#: 019/PR-E: `PRECO_ORCAMENTO` -> `precoOrcamento` (ADR-0034 §2). Este dict e os `Literal` abaixo
+#: sao ESPELHOS um do outro, e de mais dois em `services/quote_render.py`; uma chave faltando aqui e
+#: um `KeyError` -> 500, num POST que o outbox re-POSTa para sempre (ADR-0018 §3).
+#: `tests/test_history_basis_mirror.py` mantem os quatro conjuntos IGUAIS.
 _BASIS_TOTAL_KEY: dict[str, str] = {
     "PRECO_VAREJO": "precoVarejo",
     "PRECO_ATACADO": "precoAtacado",
+    "PRECO_ORCAMENTO": "precoOrcamento",
 }
 
 # A frozen quote's structure is SHALLOW by nature (root -> totals/breakdown/channels[] -> fees ->
@@ -101,12 +106,71 @@ def _reject_overly_nested(payload: dict[str, Any]) -> None:
             stack.extend((item, depth + 1) for item in cast("list[object]", node))
 
 
+def _money_leaf(raw: object, field: str) -> decimal.Decimal:
+    """Uma folha de dinheiro DECLARADA no documento, como Decimal — ou um 422 explícito.
+
+    A folha já passou por `reject_bad_leaves` (nada de float, nada de inteiro nestas
+    posições), então
+    o que sobra é: string decimal bem formada, finita, >= 0 e abaixo do teto da coluna. `None` e
+    string não-numérica caem aqui como erro, nunca como `Decimal("NaN")` silencioso.
+    """
+    try:
+        value = decimal.Decimal(str(raw))
+    except (decimal.InvalidOperation, ValueError) as exc:
+        raise ValueError(f"payload.{field} must be a decimal string") from exc
+    return finite_non_negative(value, f"payload.{field}", CEIL_MONEY)
+
+
+def _validate_declared_discount(payload: dict[str, Any], net_total: decimal.Decimal) -> None:
+    """VR-1917 (ADR-0034 §2) — o desconto é DECLARADO, e um bloco declarado tem de FECHAR.
+
+    Um orçamento sem desconto é o caso comum e não passa por nada disto: a guarda só existe quando o
+    documento traz o bloco. Quando traz, ele imprime no papel do cliente três números — bruto,
+    abatimento e total — e o banco só amarra o terceiro (`ck_snapshots_headline_matches_totals`). Se
+    os dois primeiros não fecharem no terceiro, o vendedor manda ao cliente uma conta que não bate,
+    e
+    ela fica congelada assim para sempre.
+
+    Toda recusa aqui é um 422 TERMINAL. Nenhuma pode virar `IntegrityError`/`DataError` no INSERT:
+    um
+    5xx é re-POSTado pelo outbox indefinidamente (ADR-0018 §3), então um 500 numa entrada inválida é
+    um laço infinito.
+    """
+    raw = payload.get("discount")
+    if raw is None:
+        return
+    if not isinstance(raw, dict):
+        raise ValueError("payload.discount must be an object")
+    discount = cast("dict[str, object]", raw)
+
+    mode = discount.get("mode")
+    if mode not in ("PCT", "AMOUNT"):
+        raise ValueError("payload.discount.mode must be 'PCT' or 'AMOUNT'")
+
+    amount = _money_leaf(discount.get("amount"), "discount.amount")
+    gross = _money_leaf(discount.get("grossTotal"), "discount.grossTotal")
+    # `value` é o que o vendedor DIGITOU: em `AMOUNT` são reais, em `PCT` é um percentual — e é por
+    # isso que `discount` NÃO entra em `_MONEY_POSITION_KEYS` (marcaria `value` como dinheiro).
+    value = _money_leaf(discount.get("value"), "discount.value")
+    if mode == "PCT" and value > 100:
+        raise ValueError("payload.discount.value must be within [0, 100] in PCT mode")
+
+    # ADR-0034 §1.6 — um desconto maior que o total é ENTRADA INVÁLIDA, nunca um líquido negativo
+    # em silêncio.
+    if amount > gross:
+        raise ValueError("payload.discount.amount may not exceed payload.discount.grossTotal")
+    if gross - amount != net_total:
+        raise ValueError(
+            "payload.discount.grossTotal minus payload.discount.amount must equal the basis total"
+        )
+
+
 class SnapshotIn(CamelModel):
     """A recorded claim. Self-contained and frozen on the device at record time — the outbox stores
     exactly this body and replays it byte-for-byte."""
 
     client_snapshot_id: uuid.UUID
-    kind: Literal["SINGLE", "KIT"]
+    kind: Literal["SINGLE", "KIT", "QUOTE"]
     label: str | None = None
     quote_validity_days: int | None = None
     device_quoted_at: datetime.datetime
@@ -116,7 +180,7 @@ class SnapshotIn(CamelModel):
     #: WHICH number the seller says they quoted — they choose it at record time (design round F1):
     #: a seller quoting a shopkeeper quoted ATACADO, and forcing varejo would record a number they
     #: never said to the customer.
-    headline_basis: Literal["PRECO_VAREJO", "PRECO_ATACADO"]
+    headline_basis: Literal["PRECO_VAREJO", "PRECO_ATACADO", "PRECO_ORCAMENTO"]
     #: The frozen document. Money leaves inside it are decimal STRINGS (a JSON number would come
     #: back from `json.loads` as a float — the precision dies in the serializer, silently).
     payload: dict[str, Any]
@@ -178,6 +242,9 @@ class SnapshotIn(CamelModel):
             raise ValueError(f"payload.totals.{key} is not a valid decimal") from exc
         if basis_decimal != self.headline_total:
             raise ValueError(f"headlineTotal must equal payload.totals.{key}")
+
+        # 019/PR-E — o bloco de desconto do orcamento, quando existe, tem de fechar no total acima.
+        _validate_declared_discount(self.payload, basis_decimal)
 
         # The remaining column CHECK mirrors — range guards + blank-label normalisation.
         if self.quote_validity_days is not None and not 1 <= self.quote_validity_days <= 3650:

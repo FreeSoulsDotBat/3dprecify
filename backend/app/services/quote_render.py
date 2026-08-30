@@ -28,7 +28,13 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 from app.models import Snapshot
 
 # map(headline_basis) -> the key of the matching total inside the frozen `totals` (Option A: FLAT).
-_BASIS_TOTAL = {"PRECO_VAREJO": "precoVarejo", "PRECO_ATACADO": "precoAtacado"}
+# 019/PR-E: `PRECO_ORCAMENTO` (ADR-0034 §2). Espelho de `api.history._BASIS_TOTAL_KEY` — a
+# igualdade dos dois conjuntos (e das duas CHAVES) é guardada em `test_history_basis_mirror.py`.
+_BASIS_TOTAL = {
+    "PRECO_VAREJO": "precoVarejo",
+    "PRECO_ATACADO": "precoAtacado",
+    "PRECO_ORCAMENTO": "precoOrcamento",
+}
 
 # The internal cost lines a customer must NEVER see unless the seller opts in (Q4 / FR-512 /
 # SC-506), in a stable print order. Only the keys actually recorded in the frozen breakdown are
@@ -91,10 +97,27 @@ class QuoteView:
     total: str
     # EMPTY unless the seller explicitly opted in — the default a customer receives leaks no cost.
     cost_breakdown: list[CostLineView]
+    # 019/PR-E — o bloco bruto -> desconto do orçamento, e ele é OPCIONAL de propósito: chave
+    # ausente é LINHA ausente (FR-507). Um "Desconto R$ 0,00" impresso sugeriria ao cliente
+    # uma negociação que não houve. Ambos vêm do documento; nada aqui é calculado.
+    gross_total: str | None = None
+    discount_label: str | None = None
+    discount_amount: str | None = None
 
 
 def _basis_key(basis: str) -> str:
-    return _BASIS_TOTAL.get(basis, "precoVarejo")
+    """A chave do total do documento para este `headline_basis` — SEM fallback.
+
+    O fallback silencioso para `precoVarejo` que morava aqui era uma bomba-relógio: o dia em
+    que um `basis` novo chegasse (e chegou — `PRECO_ORCAMENTO`), o PDF imprimiria, para o
+    CLIENTE, o total de varejo no lugar do total do orçamento — o número ANTES do desconto que
+    o vendedor concedeu. Um `basis` desconhecido é impossível pela rota (o `Literal`) e pelo
+    banco (o `CHECK`); se acontecer mesmo assim, o certo é NÃO imprimir nada.
+    """
+    try:
+        return _BASIS_TOTAL[basis]
+    except KeyError as exc:
+        raise ValueError(f"unknown headline_basis {basis!r} — refusing to guess a total") from exc
 
 
 def _str_or_empty(value: Any) -> str:
@@ -176,6 +199,35 @@ def _channel_surcharge_lines(channels: Any) -> list[CostLineView]:
     return lines
 
 
+# Os rótulos que o cliente lê, VERBATIM da prancheta 18d (i18n `quote.subtotal`,
+# `quote.discountLine`, `quote.discountAmountLine`): o PDF é servidor e não tem i18n, então a
+# cópia mora aqui — e não pode divergir da tela que o vendedor leu antes de enviar.
+_DISCOUNT_PCT_LABEL = "Desconto {value}%"
+_DISCOUNT_AMOUNT_LABEL = "Desconto"
+
+
+def _discount_block(payload: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
+    """(bruto, rótulo, abatimento) do desconto DECLARADO — ou três `None` se não houve desconto.
+
+    Tudo lido, nada derivado: `grossTotal` e `amount` são strings congeladas, e o rótulo só
+    reescreve
+    o `value` que o documento guardou. Um bloco incompleto (sem bruto ou sem abatimento) não vira
+    meia linha: some inteiro, pela mesma regra de FR-507 que rege o detalhamento de custos.
+    """
+    discount = _obj(payload.get("discount"))
+    gross = _str_or_empty(discount.get("grossTotal"))
+    amount = _str_or_empty(discount.get("amount"))
+    if not gross or not amount:
+        return None, None, None
+    value = _str_or_empty(discount.get("value"))
+    label = (
+        _DISCOUNT_PCT_LABEL.format(value=value)
+        if discount.get("mode") == "PCT" and value
+        else _DISCOUNT_AMOUNT_LABEL
+    )
+    return gross, label, amount
+
+
 def build_quote_view(
     snapshot: Snapshot,
     *,
@@ -192,7 +244,26 @@ def build_quote_view(
     totals = _obj(payload.get("totals"))
     total = _str_or_empty(totals.get(key))
 
-    if snapshot.kind == "KIT":
+    gross_total: str | None = None
+    discount_label: str | None = None
+    discount_amount: str | None = None
+
+    if snapshot.kind == "QUOTE":
+        # 019/PR-E (ADR-0034 §2) — o orçamento montado. A linha traz o seu PRÓPRIO total
+        # (`subtotal` = unitário vezes a quantidade, já arredondado pelo motor), e não um
+        # `totals[basis]` por linha como o kit: um orçamento não tem varejo/atacado por peça,
+        # tem o preço que o vendedor está cobrando. Ler a forma do kit devolveria string
+        # vazia e o cliente veria o nome com a célula de preço em BRANCO.
+        lines = [
+            QuoteLineView(
+                name=str(_obj(line).get("name") or _ADHOC_ITEM),
+                quantity=_int_or_zero(_obj(line).get("quantity")),
+                total=_str_or_empty(_obj(line).get("subtotal")),
+            )
+            for line in _seq(payload.get("lines"))
+        ]
+        gross_total, discount_label, discount_amount = _discount_block(payload)
+    elif snapshot.kind == "KIT":
         lines = [
             QuoteLineView(
                 # A piece with no captured name is legitimate (an ad-hoc line); it gets the same
@@ -214,7 +285,13 @@ def build_quote_view(
 
     cost_breakdown: list[CostLineView] = []
     if include_cost_breakdown:
-        if snapshot.kind == "KIT":
+        if snapshot.kind == "QUOTE":
+            # O piso é custo INTERNO como qualquer outro: só sai no opt-in (SC-506). É o
+            # único custo que o documento do orçamento congela, e é um valor STORED.
+            floor = payload.get("costFloor")
+            if isinstance(floor, str):
+                cost_breakdown = [CostLineView(label="Custo total", value=floor)]
+        elif snapshot.kind == "KIT":
             # A kit stores its breakdown per line; at the quote level the honest aggregate is the
             # stored `custoTotal`. A single stored value, printed — no summation here.
             custo = totals.get("custoTotal")
@@ -241,10 +318,30 @@ def build_quote_view(
         lines=lines,
         total=total,
         cost_breakdown=cost_breakdown,
+        gross_total=gross_total,
+        discount_label=discount_label,
+        discount_amount=discount_amount,
     )
 
 
-_BASIS_CAPTION = {"PRECO_VAREJO": "Preço de varejo", "PRECO_ATACADO": "Preço de atacado"}
+# A legenda que o CLIENTE lê ao lado do total. Quarto espelho de `headline_basis`: uma entrada
+# faltando imprimiria a chave crua ("PRECO_ORCAMENTO") num documento comercial.
+_BASIS_CAPTION = {
+    "PRECO_VAREJO": "Preço de varejo",
+    "PRECO_ATACADO": "Preço de atacado",
+    "PRECO_ORCAMENTO": "Preço do orçamento",
+}
+
+
+def _basis_caption(basis: str) -> str:
+    """A legenda do total — SEM fallback, pela mesma razão de `_basis_key`: o antigo
+    `.get(basis, basis)` imprimia a CHAVE ("PRECO_ORCAMENTO") na frente do cliente no dia em que um
+    `basis` novo chegasse, e um documento comercial ilegível é da mesma família de um preço
+    errado."""
+    try:
+        return _BASIS_CAPTION[basis]
+    except KeyError as exc:
+        raise ValueError(f"unknown headline_basis {basis!r} — refusing to print a raw key") from exc
 
 
 def format_money_pt_br(value: str) -> str:
@@ -345,10 +442,32 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
     )
     story.append(items)
     story.append(Spacer(1, 4 * mm))
+    # 019/PR-E — bruto -> desconto -> total, e SÓ quando o documento declarou um desconto
+    # (FR-1917: "o desconto é declarado, nunca embutido" — um documento que mostra só o
+    # líquido esconde do cliente a conta que o vendedor fez). Todo texto do vendedor passa
+    # por `_xml` num `Paragraph`, incluindo o rótulo: ele carrega `discount.value`, que é
+    # conteúdo do DOCUMENTO e um `<b>` ali levantaria ValueError -> 500 sem artefato nenhum.
+    if quote.gross_total is not None and quote.discount_amount is not None:
+        summary = Table(
+            [
+                ["Subtotal", format_money_pt_br(quote.gross_total)],
+                [
+                    Paragraph(_xml(quote.discount_label or "Desconto"), styles["Normal"]),
+                    format_money_pt_br(quote.discount_amount),
+                ],
+            ],
+            hAlign="LEFT",
+            colWidths=[120 * mm, 40 * mm],
+        )
+        summary.setStyle(
+            TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
+        )
+        story.append(summary)
+        story.append(Spacer(1, 2 * mm))
+
     story.append(
         Paragraph(
-            f"<b>Total ({_BASIS_CAPTION.get(quote.basis, quote.basis)}): "
-            f"{format_money_pt_br(quote.total)}</b>",
+            f"<b>Total ({_basis_caption(quote.basis)}): {format_money_pt_br(quote.total)}</b>",
             styles["Normal"],
         )
     )

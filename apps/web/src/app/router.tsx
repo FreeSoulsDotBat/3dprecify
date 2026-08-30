@@ -195,12 +195,19 @@ const historicoRoute = createRoute({
   // device at record time and is the only id a still-unsynced record HAS. Keying on the server id
   // would make a pending quote unopenable — and it is stable across the sync, so a link taken
   // while pending keeps working afterwards.
-  validateSearch: (search: Record<string, unknown>): { snapshot?: string } => ({
+  //
+  // 019/PR-E (T088) — `?construir=1` opens the quote builder on this same route (same 1-segment
+  // shape as `?snapshot=`/`?produto=novo` — the measured `base:'./'` trap this project already
+  // documented). Entitlement is gated IN-PAGE (Constitution IV); this only requires a session.
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { snapshot?: string; construir?: boolean } => ({
     snapshot: typeof search.snapshot === "string" && search.snapshot ? search.snapshot : undefined,
+    construir: search.construir === true || search.construir === "1" ? true : undefined,
   }),
   // Same `location.href` reasoning as `catalogoRoute` above — preserve the id through /sign-in.
   beforeLoad: ({ context, search, location }) => {
-    if (search.snapshot) requireAuth(context.status, location.href);
+    if (search.snapshot || search.construir) requireAuth(context.status, location.href);
   },
   component: HistoricoPage,
 });

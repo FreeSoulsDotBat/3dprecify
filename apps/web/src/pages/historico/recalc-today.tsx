@@ -50,9 +50,17 @@ const t = messages.historico;
 /** Which leaf of `payload.totals` the recorded basis points at. Exported because `compare-today`
  *  reads the same leaf to answer "and what would it cost today?" — two copies of this map is two
  *  chances to point a wholesale quote at the retail number. */
-export const BASIS_TOTAL: Record<SnapshotInHeadlineBasis, "precoVarejo" | "precoAtacado"> = {
+export const BASIS_TOTAL: Record<
+  SnapshotInHeadlineBasis,
+  "precoVarejo" | "precoAtacado" | "precoOrcamento"
+> = {
   PRECO_VAREJO: "precoVarejo",
   PRECO_ATACADO: "precoAtacado",
+  // 019/PR-E (T135) — o mapa continua TOTAL: qual folha uma base aponta é um fato do documento, e
+  // vale mesmo para a base que esta tela não recalcula. Deixar a chave de fora não impediria o
+  // recálculo de um orçamento (isso é decidido logo abaixo, na AUSÊNCIA do botão) — só faria um
+  // `undefined` chegar em `payload.totals[…]` se alguém abrisse o caminho.
+  PRECO_ORCAMENTO: "precoOrcamento",
 };
 
 /** 016/T037 (US10, FR-913, arquitetura-016.md §D.2) — the structural note both "Recalcular hoje"
@@ -75,8 +83,14 @@ export interface RecalcedPayload {
 /** Mirror of pages/bom `lineToForm` kept local (a feature/page may not import another page): a saved
  *  kit line's server-resolved values ARE a ProductOut value surface, so `productToForm` maps it. The
  *  server already applied D3 (a linked line resolves from its live product), so a freshly-fetched
- *  kit's line values are TODAY's catalog values. */
-function bomLineToInput(line: BomOut["lines"][number], ctx: CatalogContext): PriceInput | null {
+ *  kit's line values are TODAY's catalog values.
+ *
+ *  Exportada em 019/PR-E (T088) — `pages/historico/quote-line-input.ts` reusa esta MESMA leitura
+ *  D3/D6 para o construtor de orçamento (mesma pasta `pages/historico`, sem cruzar fronteira). */
+export function bomLineToInput(
+  line: BomOut["lines"][number],
+  ctx: CatalogContext,
+): PriceInput | null {
   const { values } = productToForm({
     id: line.productId ?? "",
     name: line.pieceName ?? "",
@@ -158,6 +172,12 @@ export function RecalcTodayButton({
 
   const frozen = frozenPayloadOf(item);
   if (!frozen) return null;
+  // 019/PR-E · US17 (T135) — "Voltar a acompanhar não vale para orçamentos enviados". Um orçamento
+  // é um documento que o vendedor MANDOU para um cliente, com validade declarada; recalculá-lo
+  // criaria um segundo orçamento que ninguém mandou, com a mesma cara do primeiro. E a base do
+  // recálculo (`recalcToday`) reprecifica peça/kit a partir da proveniência — que um orçamento não
+  // tem (a origem é por LINHA). O botão não aparece; ausência, não botão desabilitado.
+  if (frozen.kind === "QUOTE") return null;
 
   return <RecalcDialog item={item} frozen={frozen} product={product} kit={kit} />;
 }

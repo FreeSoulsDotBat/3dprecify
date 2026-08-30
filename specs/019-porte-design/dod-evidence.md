@@ -901,3 +901,147 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   lista de portas a matar antes do e2e ganha a 4175.
 - Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0. Push autorizado ("pode seguir", 29/08) — **PR #63** aberta contra `develop` (`6d55474`), CORREÇÃO DECLARADA.
 
+---
+
+## PR-E — Montar e Enviar (US6) · branch `019-pr-e-montar-enviar` (do develop `410b574`, pós-merge do PR #63) · **escalação OPUS** (ADR-0022)
+
+### T087 — a transcrição (2026-08-29)
+
+- **Prancheta congelada** `Orcamentos - Montar e Enviar` (escura verbatim via DesignSync; clara pela transformação da T009 — a 18
+  não tem o véu da 20a). Hashes no README.
+- **Namespace `quote`** (30 chaves, verbatim): 18a `newQuote`; 18b `clientLabel`, `searchPlaceholder`, `unitPriceMeta`, `lineMeta`
+  "{n} un. × {valor}", `kitLineMeta`, `stoppedCannotQuote`, `itemCount`, `continueAction`; 18d `discountLabel`, `subtotal`,
+  `discountLine`, `total`, `marginOverCost` (+`Sub` "custo de {valor}", sem "frete incluído"), `tightMarginTitle/Body` (18d·2),
+  `belowCost` (18d·3, a linha do campo); 18e `sendTitle` "Enviar congela este preço", `totalSent`, `validUntil`, `validUntilSub`,
+  `freezeNote`, `back`, `send`, `sentCaption`, `noUnfixForSent` "Voltar a acompanhar não vale para orçamentos enviados"; 18f
+  `documentKicker`, `documentDates`.
+- **Leituras registradas (prancheta × decisões da spec)**: (1) a prancheta desenha Orçamentos como 3º segmento do Catálogo e chama
+  isso de "decisão sua" — a spec/018 já decidiram: a lista é a aba Orçamentos (ex-Histórico) e o construtor entra por
+  `/historico?construir=1` (rota de 1 segmento, armadilha `base:'./'`); (2) a 18c inteira (o degrau do atacado, "Usar 10 un.",
+  "10 un. sai mais barato que 9") é a **US18 RETIRADA** (Q6: venda direta torna o total monotônico) — não transcrita; (3) a 18d
+  mostra o piso BLOQUEANDO ("O desconto máximo aqui é 25%" + Continuar desabilitado) — **Q10 decidiu AVISA**: só a linha "Abaixo do
+  custo — …" entra, como aviso, e o alerta de bloqueio não; (4) "Frete" (18d/18f) está fora do escopo (spec §fora: "frete real");
+  (5) os cinco estados da lista (rascunho · vence em N dias · aceito · recusado · venceu) e "Marcar aceito/recusado" (18a/18e·2/18g)
+  não estão em US6/US16/US17 — um orçamento enviado é um snapshot imutável `kind=QUOTE` com "Válido até" como TEXTO (Q7, não vence
+  como estado); registrados como lacuna de produto para o dono (PO); (6) "Hoje a mesma lista daria R$ X" (18e·2/18g) exige
+  recalcular um QUOTE — a T135 decide que "Recalcular hoje"/comparar NÃO valem para QUOTE; só a frase fixa `noUnfixForSent` entra;
+  (7) "Como sai no WhatsApp", "Copiar texto", "Compartilhar" e o "prazo de produção" escrito à mão (18f) — fora (Q8 = PDF pelo
+  servidor, "sem link/e-mail pelo app"); lacuna registrada; (8) o item com preço PARADO não entra no orçamento (18b) — e um KIT com
+  linha degradada entra por D6 com "(avulsa)" (T083): as duas regras convivem (produto parado × kit com linha parada); (9) a 18b
+  marca "12 un. · atacado"/"3 un. · varejo" por item — na Q6 cada item entra pelo preço de VENDA DIRETA (o varejo do motor;
+  `grossTotal === bom.precoVarejo`), sem degrau de atacado: as metas transcritas não trazem o nível; (10) a razão do Enviar offline
+  (DECISÃO 4) não está na prancheta — `sendOffline` segue o molde da família "precisa de conexão" (registrado como derivada).
+
+### T080 · T079 · T085 — o motor 4.2.0 (dev-estrutura-de-dados **opus**, 2026-08-29)
+
+- **A fixture antes do bump** (o checkpoint da fase): `equality-4.1.0.json` (2,3 MB, SHA-256 `41122df1a0d3005913a9be3ddaa8dad9dc0d9cccee7c9d7b9141beb70c740513`)
+  gerada com `src/index.ts` INTOCADO por `mulberry32(20260827)` (determinismo provado por dupla execução, mesmo SHA); 500 `calculator`
+  (250 com canais / 250 sem) + 200 `bom` (474 linhas, **415 rollups** comparados, 21 com preço `null`, 37 slots com erro isolado);
+  306 casos com `otherCosts`; meio-centavo injetado em `costPerRoll`, `otherCosts[].value` e no desconto; `failurePct` 100–1000% em
+  ~35%. **O gerador recusa rodar contra 4.2.0** — a fixture não pode ser "reconciliada" regenerando (a maneira óbvia de apagar a
+  prova). **Não-vácuo**: `ROUND_HALF_UP → ROUND_HALF_DOWN` ⇒ vermelho; e `skippedLines: 0` no rollup — uma mutação que não muda
+  NENHUM preço — ⇒ vermelho: a varredura enxerga `result.channels[]`.
+- **`computeQuote`** (`index.ts:636-763`): `QuoteInput { lines: (BomLineInput & { name? })[]; discount?: { mode: "PCT" | "AMOUNT";
+  value } }` → `QuoteResult { bom, lines[]: { name, quantity, unitPrice, subtotal }, grossTotal, discountAmount, netTotal, costFloor,
+  belowCost, modelVersion }` — tudo `Decimal`/`toMoney` (ADR-0008); `belowCost = netTotal < costFloor` (estrito); `ValidationError`
+  para desconto não-finito/negativo/pct > 100/reais > bruto e para `lines[i].input.channels` não-vazio (em RUNTIME, antes de qualquer
+  cálculo — o tipo não barra); **devolve números** (a string decimal é do documento, T133). `PRICING_MODEL_VERSION` 4.1.0 → **4.2.0**
+  (MINOR aditiva; `package.json` junto; `version.test.ts` com o porquê). Varredura 4.1→4.2 **verde contra 4.2.0**. 216/216, cobertura
+  **100%** (ratchet). Declarado para o gate: `QuoteResult` é SUPERSET do esboço do ADR-0034 §Decision 1 (+`lines[]` — o documento
+  exige `unitPrice`/`subtotal` por linha —, +`modelVersion`); `origin` fica de fora (é procedência de catálogo, do cliente).
+
+### T081 · T082 · T131 · T086 · T070 — a migração 0009 e o documento QUOTE (dev-backend **opus**, 2026-08-29)
+
+- **0009**: DROP+ADD dos TRÊS CHECKs no mesmo ato (`kind` +QUOTE · `headline_basis` +PRECO_ORCAMENTO · `headline_matches_totals` com
+  `WHEN 'PRECO_ORCAMENTO' THEN 'precoOrcamento'`). **A mutação vive dentro do teste**: numa transação revertida o CHECK é recriado SEM
+  o ramo e o mesmo INSERT divergente PASSA — o `CASE` devolve NULL e um CHECK NULL é satisfeito no Postgres. `downgrade()` é
+  irreversível na presença de um QUOTE (`trg_snapshots_forbid_delete` da 0006 impede apagar antes) — declarado no docstring, provado
+  em container próprio; custo zero enquanto o deploy está adiado.
+- **O documento QUOTE** aceito por `_validate_frozen_document`: `kind`, `modelVersion "4.2.0"`, `schemaVersion 1`, `lines[] { name,
+  quantity, unitPrice, subtotal, origin }`, `discount { mode, value, amount, grossTotal }`, `costFloor`, `totals.precoOrcamento` (=
+  `headlineTotal`, VR-503 + CHECK); `quoteValidityDays` é a COLUNA (CHECK 1..3650), não payload. Regras (422 no pydantic, nunca
+  `IntegrityError` — 500 vira laço infinito no outbox): todo dinheiro STRING decimal incl. `discount.value`; `_MONEY_POSITION_KEYS`
+  ganha as FOLHAS `unitPrice/subtotal/costFloor/amount/grossTotal` — **nunca `lines` nem `discount`** (o KIT com `quantity` inteiro
+  continua 201 — o teste que obriga as folhas a entrarem uma a uma); `mode ∈ {PCT, AMOUNT}`, PCT em [0,100], `amount ≤ grossTotal`,
+  `grossTotal − amount == precoOrcamento`; `origin` não é lido; `value` em AMOUNT não é obrigado a igualar `amount` (JSONB sobrevive
+  a um bump do motor). Mutações: folhas revertidas ⇒ 4 vermelhos; fallback `precoVarejo` restaurado ⇒ 6; ramo QUOTE do PDF desligado
+  ⇒ 6; validador do desconto ⇒ 10.
+- **PDF** (`quote_render.py`): ramo QUOTE itemiza `lines` por `subtotal`, bloco bruto→desconto→total, `_basis_key` sem fallback (erro
+  explícito), legenda TRADUZIDA (teste exige que nenhuma chave crua chegue ao cliente), `<b>`/`&amp;` literais via `_xml`, geometria do
+  nome de 300 chars (`_assert_no_overprint` promovida a módulo). Decisão aditiva para o gate: no opt-in "mostrar custos" o QUOTE imprime
+  `Custo total = costFloor` (sem isso o interruptor não faria nada — a classe do defeito que o teste do KIT já guarda). Os rótulos do
+  PDF são a cópia da 18d duplicada em Python (servidor sem i18n) — par sem guarda automática, registrado. CSV intocado.
+- **Espelhos**: 4 por igualdade de conjuntos E de chaves (`_BASIS_TOTAL_KEY == _BASIS_TOTAL` — senão a rota grava um número e o PDF
+  imprime outro) + `kind` × CHECK do modelo × `pg_get_constraintdef` vivo.
+- Contrato 2× byte-idêntico (`openapi.json 64092ea2…`, `generated.ts 6e785567…`; diff de 4 linhas); Schemathesis 45 passed em 54 s
+  (o `extra="forbid"` da PR-D não foi tocado — o payload QUOTE é `dict` opaco). **622 passed**, ruff/basedpyright/import-linter/
+  migration-guard ok. Commit `6fd47eb`.
+
+### T133 · T135 · T083 — o envelope QUOTE e a varredura (dev-frontend **opus**, 2026-08-29)
+
+- **T133** (`frozen-payload.ts`, vermelho 8 → verde 39/39): `kind` admite `"QUOTE"`; `FrozenTotals.precoOrcamento?`; `FrozenQuoteLine
+  { name, quantity, unitPrice, subtotal, origin }` (NÃO reusa `FrozenKitLine`, que carrega `input/breakdown/totals`); `FrozenQuoteDiscount
+  { mode, value, amount, grossTotal }`; `costFloor?`; `lines?: FrozenKitLine[] | FrozenQuoteLine[]` (união de ARRAYS — foi ela que quebrou
+  os consumidores e forçou cada decisão da T135), com dois leitores estreitos atrás do teste de `kind`. `buildQuotePayload(result, { lines:
+  (FrozenProvenance | null)[], discount? })` converte TODO dinheiro (e `discount.value`) para string decimal — o payload gerado casa com o
+  `QUOTE_PAYLOAD` que o backend congelou em `test_history.py`. `FROZEN_PAYLOAD_SCHEMA_VERSION` continua **1**. Escolhas declaradas:
+  `catalogVersion: null` e `provenance: null` explícitos (N origens, uma por linha); `discount.value` gravado "10.00" e formatado "10%" na
+  leitura.
+- **T135** — por arquivo, com teste e não-vácuo no SINGLE: `snapshot-detail-page` itemiza `lines`, bruto→desconto→total, `documentDates`
+  "válido até" como TEXTO (Q7) e `noUnfixForSent`; `recalc-today` e `compare-today` devolvem `null` para QUOTE (US17: nenhuma origem a
+  repreçar); `historico-page` rotula por `kindLabel` (o ternário antigo chamava todo orçamento de "Peça única"); `history-format.ts` (9º
+  arquivo) ganha `kindLabel`/`validUntil` e `basisCaption` vira Record sobre a união (PRECO_ORCAMENTO = "Total enviado" — antes cairia
+  em "Preço de varejo", o defeito silencioso); `record-snapshot-sheet` NÃO grava QUOTE **por tipo** (`Exclude<…,"QUOTE">`) e por dados;
+  `export-sheet` exporta pelo mesmo caminho só com id do servidor (`pdfWaitsSync` antes); `outbox` drena QUOTE sem ramo novo;
+  `scenario-context-bar` nunca oferece "salvar simulação" de um orçamento.
+- **T083** — o teste-contrato do construtor (15 casos) deixado VERMELHO de propósito (a suíte não coleta: `./quote-builder` não existe);
+  fixa props, testids e o fluxo 18b→18d→18e. **PARADA de Princípio VIII resolvida pelo main loop**: `features/history` não pode importar
+  `features/calculator` (`productToForm`/`computeFromForm`); decidido pelo precedente da T124 (PR-D) — a PAGE compõe e o construtor
+  recebe `toLineInput` por prop; a alternativa "descer o mapeamento para `entities`" (três telas já reimplementam o caminho) vai para o
+  arquiteto como follow-up. Extra: `price-observations.test` lia "4.1.0" literal — passou a ler `PRICING_MODEL_VERSION`. Suíte 1594/0
+  fora o T083.
+
+### T088 · T083(verde) — o construtor (dev-frontend, 2026-08-29)
+
+- `features/history/quote-builder.tsx` contra o teste-contrato (15/15): seleção 18b (produto/kit, quantidade, item PARADO apagado
+  com `stoppedCannotQuote` — a data vem de `product.updatedAt`, nunca de observação), desconto %|R$, readout bruto/desconto/total/
+  piso ("Sobra sobre o custo" apagada), `belowCost` como AVISO com Enviar habilitado (Q10), "Cliente" = `SnapshotIn.label`, o passo
+  final é o cartão 18e (título "Enviar congela este preço" + "Total enviado" + Válido até + `freezeNote` + Voltar | Enviar — a
+  prancheta o desenha como CARTÃO do fluxo; **leitura registrada: não é um modal por cima** — para a 2ª passada), envio em UMA
+  requisição com guarda de reentrância dupla (`sendingRef` síncrono contra o duplo clique no mesmo commit do React; `sentRef`
+  porque reenviar é duplicar), offline `disabled` + `sendOffline` e NADA no outbox (DECISÃO 4).
+- **Fronteira (T124-precedente)**: `pages/historico/quote-line-input.ts` monta `toLineInput` — reusa LITERALMENTE `bomLineToInput`
+  (exportado de `recalc-today.tsx`) e `productToForm`+`computeFromForm`; `directSale()` remove `channels` (Q6). Follow-up ao
+  arquiteto: TRÊS telas já reimplementam o mapeamento — descer para `entities` eliminaria a triplicação.
+- **18d·2 ("aperta, mas passa") OMITIDO e registrado**: não há limiar de % decidido em lugar nenhum (o "12%" da prancheta é
+  exemplo) — `tightMarginTitle/Body` transcritas ficam sem consumidor até o design decidir. **Ícones**: `check`/`share-2` existiam
+  no bundle e entraram no mapa; `percent/minus/user/folder` NÃO estão no bundle (o desconto usa sufixo textual); `lock` → `info`.
+- **A guarda T125 (ADR-0033) pegou de verdade**: a 1ª versão vazava `usePriceObservations`/`observedPrice` para
+  `pages/historico/**` — vermelho na hora, corrigido (o construtor não lê observação nenhuma).
+- Suíte FE 1609/1609 · tsc 0 · boundaries/depcruise ok. T084 escrito; o veredito é da rodada limpa do main loop (as duas rodadas
+  do agente morreram por briga de portas — lição: UMA stack por vez, o coordenador roda o e2e quando dois agentes competem).
+
+### T084 · T089 — a stack real e o fechamento (qa-software + main loop, 2026-08-29/30)
+
+- **T084 verde: 10/10 × 2 projetos.** As três causas eram do TESTE, nenhuma do produto: (1) "Reserva de manutenção" é opcional e o
+  `Field` acrescenta " opcional" ao nome acessível — `exact: true` nunca resolvia e o `.fill()` pendurava o teste inteiro (o timeout
+  de 2,5 min); (2) três produtos em sequência empilham o toast "Produto salvo." — `.last()`; (3) `navigate({ search: { construir:
+  true } })` serializa `?construir=true` (booleano cru), nunca `=1` — a mesma classe da PR-C (`?assinar=%221%22`); âncora no
+  `data-testid="quote-builder"` (único acréscimo ao produto). Adoção com lição: um produto PARADO **não pode nascer por POST**
+  (FR-310) — o único caminho real é materializar um kit com peça avulsa; o helper usa esse caminho. O guard de altura a 390 foi
+  reduzido a X: a tela de revisão excede 844px por DESENHO (rolagem de página é o comportamento certo — a lição do 016 mirava
+  scroll indesejado em superfície compacta).
+- **T089**: contrato 2× diff vazio · gate FE **2098/2098** (cobertura 88,96%) + BE **622 passed** (cov 83,98%) · e2e COMPLETO
+  `--workers=1`: **389 passed · 2 failed · 1 flaky** — os 2 eram o `waste-removal.spec` pinando a versão do motor como LITERAL
+  ("4.1.0"), quebrado pelo bump 4.2.0 desta fatia: o literal já tinha quebrado no bump 4.1.0 — agora lê `PRICING_MODEL_VERSION`
+  (verde na re-rodada: 25 passed + 1 flaky conhecido). **Screenshots**: 18 capturas × 2 temas em `evidencias/pr-e/` +
+  `medidas-pr-e.json` (overflowX 0) — construtor 390/1280, abaixo-do-custo (Q10, Enviar habilitado), o cartão 18e, offline com a
+  razão, lista + detalhe itemizado. Achado de captura consertado no spec: o tema vive no `dataset` do documento VIVO e cada
+  goto/reload o apaga — 3 pares saíram byte-idênticos (o "dark" era claro) até o `setTheme` ser reaplicado antes de CADA captura
+  (pego por HASH dos pares, não pelo olho).
+- **ACHADO ALTA (pré-existente, fora da fatia — follow-up prioritário)**: `app-shell.tsx` monta DOIS `<Outlet/>` distintos (um por
+  ramo de `isMobile`); redimensionar cruzando 425px troca a identidade da subárvore React e **zera o estado local não salvo de
+  qualquer página** — reproduzido determinístico no construtor ("1 item / Peça selecionada" vira "0 itens / R$ 0,00" só de
+  redimensionar). Fix sugerido: UMA posição de árvore para o `<Outlet/>`, trocando só CSS ao redor. Mesma família do A2/A3 do 016 —
+  vai ao dono como follow-up, não nesta fatia (arquivo largamente compartilhado).
+
