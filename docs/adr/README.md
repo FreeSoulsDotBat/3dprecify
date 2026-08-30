@@ -30,7 +30,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Accepted |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
 | [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Accepted (gate do E6 PR-A, T020) |
-| [0024](0024-progressive-price-bands.md) | Bandas de preço progressivas — comissão por parcela, sem reinterpretar o passado (014/PR-A) | Proposto no arquivo (⚠ o ground do 014 diz Accepted + live — divergência ao dono, Polish 019) |
+| [0024](0024-progressive-price-bands.md) | Bandas de preço progressivas — comissão por parcela, sem reinterpretar o passado (014/PR-A) | Proposto (divergência resolvida pelo dono em 2026-08-30: NÃO foi aceito — o ground do 014 estava errado e foi corrigido; flip pendente de gate próprio) |
 | [0025](0025-marketplace-level-fee-axes.md) | Eixos de tarifa de nível de marketplace (custo fixo ML) | Proposto (adiado com ML/US6-ML/017) |
 | [0026](0026-pricing-core-4-0-0-waste-removal.md) | pricing-core 4.0.0 — remoção do `wasteGrams` e a regra de leitura do legado | Aceito (2026-08-07) |
 | [0027](0027-price-dependent-fixed-fee-and-surcharges.md) | Taxa fixa como função do preço + sobretaxas por item (pricing-core 4.1.0) | Aceito (2026-08-07) |
@@ -38,9 +38,9 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0029](0029-semente-como-projecao-gerada.md) | A semente como projeção gerada do artefato servido (017) | Proposto (flip no gate da PR-A do 017) |
 | [0030](0030-ocr-admissivel-para-dinheiro.md) | OCR admissível para dinheiro — motor fixado, endereço por bytes, guardas conjuntivas (017) | Proposto (flip no gate da PR-C do 017) |
 | [0031](0031-desktop-composition-gate.md) | O gate de composição desktop, e a invariância mobile por construção (018; §Emendas 2026-08-26 e §2 2026-08-27/29) | Accepted (2026-08-26) |
-| [0032](0032-primitivos-do-porte-do-design.md) | Os primitivos do porte — onde cada classe `tf-*` mora, e como o porte não cria uma segunda camada (estende ADR-0007) | Proposed |
-| [0033](0033-observacao-e-fixacao-de-preco.md) | Observação de preço, fixação de preço e unicidade de nome — o Catálogo ganha dado novo sem virar fonte de preço (019/PR-D) | Proposed |
-| [0034](0034-orcamento-montado-motor-e-congelamento.md) | "Montar e Enviar" — `computeQuote` no motor e o congelamento pela maquinaria do E4 (019/PR-E) | Proposed |
+| [0032](0032-primitivos-do-porte-do-design.md) | Os primitivos do porte — onde cada classe `tf-*` mora, e como o porte não cria uma segunda camada (estende ADR-0007) | Accepted (2026-08-30) |
+| [0033](0033-observacao-e-fixacao-de-preco.md) | Observação de preço, fixação de preço e unicidade de nome — o Catálogo ganha dado novo sem virar fonte de preço (019/PR-D) | Accepted (2026-08-30) |
+| [0034](0034-orcamento-montado-motor-e-congelamento.md) | "Montar e Enviar" — `computeQuote` no motor e o congelamento pela maquinaria do E4 (019/PR-E) | Accepted (2026-08-30) |
 
 > **Nota (2026-08-26, arquiteto/019)**: o índice parou de ser atualizado em 0023 — os ADRs **0024 a
 > 0031 existem** como arquivo e estão em uso (o 0031 foi aceito em 2026-08-26). Não preenchi as linhas

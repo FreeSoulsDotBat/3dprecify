@@ -1,6 +1,6 @@
 # ADR-0033: Observação de preço, fixação de preço e unicidade de nome — como o Catálogo ganha dado novo sem virar fonte de preço
 
-- **Status**: Proposed (o dono flipa para Accepted no gate da PR-D do 019)
+- **Status**: Accepted (2026-08-30 — ratificado pelo dono no fechamento do Polish do 019, com o §Adendo 2026-08-27 e os 10 pontos do PR #62)
 - **Date**: 2026-08-26
 - **Deciders**: Jonatan (owner — Q3/Q4/Q5 no clarify de 2026-08-26) + arquiteto (019-porte-design)
 - **Escalação**: domínio de pricing (leaf de dinheiro + migração) ⇒ **opus**, por ADR-0022

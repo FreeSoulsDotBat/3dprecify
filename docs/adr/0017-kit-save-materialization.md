@@ -184,7 +184,7 @@ is to migrate E2 toward R under its own ADR — never to drag E3 back to eager-c
 
 ## Emenda — 2026-08-29 (019/PR-D, T129): a sub-regra 3 passa a casar por `name_norm`
 
-**Status**: aplicada com o ADR-0033 (o dono pode reverter para "exato + (2)" no gate da PR-D).
+**Status**: aplicada com o ADR-0033 e **ratificada pelo dono (2026-08-30, fechamento do Polish do 019)** — o casamento por `name_norm` é a regra.
 
 A sub-regra 3 acima diz, com todas as letras, **"No unique index is added"** — e a Opção C foi recusada
 em 2026-07-11 exatamente porque um índice único sobre `products(owner_uid, name)` mudaria a semântica do

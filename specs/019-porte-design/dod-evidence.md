@@ -1089,3 +1089,11 @@ entraram pela PR-D e ganharam guarda permanente (`catalog-table-name-visible.spe
   emendas (0031 §2026-08-26 · 0017 §2026-08-29)** são atos do dono — pedidos nos corpos dos PRs #59/#62/#65 e confirmados na
   pergunta de fechamento do Polish.
 
+### T104 — os flips do dono (2026-08-30)
+
+- Dono confirmou por escrito: **ADR-0032, 0033 e 0034 → Accepted**; **emendas ratificadas** (0031 §2026-08-26 e §Emenda 2;
+  0017 §2026-08-29 — o casamento por `name_norm` vira regra). Status aplicados nos arquivos + índice no mesmo commit.
+- **ADR-0024 = alternativa (b)**: o dono NÃO o tinha aceitado — a linha "Accepted + live" no ground do 014 (CLAUDE.md) era **erro
+  de registro** (a mesma classe dos ground lines falsos de 2026-08-01/08-07). Corrigido nos três lugares (CLAUDE.md, arquivo,
+  índice); o código das bandas continua live e o flip fica pendente de um gate próprio.
+
