@@ -26,7 +26,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { Toaster } from "@/shared/ui";
 
-import { QuoteBuilder } from "./quote-builder";
+import { QuoteBuilder, type QuoteCatalogItem, type QuoteLineInputResult } from "./quote-builder";
 
 // 019/PR-E · T083 (US6/US16, ADR-0034) — o CONSTRUTOR de orçamento, escrito VERMELHO primeiro.
 //
@@ -218,6 +218,80 @@ const OBSERVATIONS = new Map([
   ["p-parado", { observedPrice: 42.98, observedAt: "2026-07-30T12:00:00Z" }],
 ]);
 
+// ── ADAPTAÇÃO DO CONTRATO (T088, decisão de fronteira registrada no dispatch) ──────────────────
+//
+// `quote-builder.tsx` não importa `features/calculator` (eslint-boundaries) — quem sabe traduzir um
+// PRODUCT/KIT do Catálogo num `PriceInput` é a PAGE, injetada via `toLineInput`. O contrato original
+// não previa essa prop porque o componente ainda não existia; este é o ÚNICO ajuste permitido no
+// arquivo (ver dispatch T088). O mock abaixo NÃO reimplementa `productToForm`/`computeFromForm` (que
+// violaria a mesma fronteira dentro do teste) — ele lê os campos de fio já em `PieceNumbers` que
+// `productOf`/`kitOf` gravaram no wire, exatamente como `inputOf()` já faz, sem precisar de um mapa
+// externo id→números.
+function wireToInput(
+  fv: { costPerRoll: string; rollWeightKg: string },
+  pv: { machineValue: string; machineLifetimeHours: string; avgPowerKw: string },
+  pi: {
+    printGrams: string;
+    printTimeHours: string;
+    markupVarejoPct: string;
+    markupAtacadoPct: string;
+  },
+  tariffPerKwh: string,
+): PriceInput {
+  return {
+    costPerRoll: Number(fv.costPerRoll),
+    rollWeightKg: Number(fv.rollWeightKg),
+    printGrams: Number(pi.printGrams),
+    printTimeHours: Number(pi.printTimeHours),
+    avgPowerKw: Number(pv.avgPowerKw),
+    tariffPerKwh: Number(tariffPerKwh),
+    machineValue: Number(pv.machineValue),
+    machineLifetimeHours: Number(pv.machineLifetimeHours),
+    markupVarejoPct: Number(pi.markupVarejoPct),
+    markupAtacadoPct: Number(pi.markupAtacadoPct),
+  };
+}
+
+function testToLineInput(item: QuoteCatalogItem): QuoteLineInputResult {
+  if (item.kind === "PRODUCT") {
+    const p = item.product;
+    // K3 — mesma detecção de `entities/catalog/product-summary.ts` `productNeedsAttention`.
+    if (p.filamentId === null || p.printerId === null) {
+      return {
+        lines: [],
+        origin: { kind: "PRODUCT", id: p.id, name: p.name },
+        degraded: false,
+        stopped: true,
+      };
+    }
+    // ADR-0033 §3 — `sellerFixedPrice` nunca é lido aqui: o motor é a única fonte de preço.
+    const input = wireToInput(p.filamentValues, p.printerValues, p.pieceInputs, p.tariffPerKwh);
+    return {
+      lines: [{ input, quantity: 1, name: p.name }],
+      origin: { kind: "PRODUCT", id: p.id, name: p.name },
+      degraded: false,
+      stopped: false,
+    };
+  }
+  const k = item.kit;
+  const lines = k.lines.map((line) => ({
+    input: wireToInput(
+      line.filamentValues,
+      line.printerValues,
+      line.pieceInputs,
+      line.tariffPerKwh,
+    ),
+    quantity: line.quantity,
+    name: line.pieceName ?? undefined,
+  }));
+  return {
+    lines,
+    origin: { kind: "KIT", id: k.id, name: k.name },
+    degraded: k.lines.some((l) => l.degraded),
+    stopped: false,
+  };
+}
+
 function renderBuilder(props: Partial<Parameters<typeof QuoteBuilder>[0]> = {}) {
   return render(
     <>
@@ -229,6 +303,7 @@ function renderBuilder(props: Partial<Parameters<typeof QuoteBuilder>[0]> = {}) 
         catalog={CATALOG}
         source={"catalog" satisfies CatalogSource}
         observations={OBSERVATIONS}
+        toLineInput={testToLineInput}
         onSent={vi.fn()}
         {...props}
       />

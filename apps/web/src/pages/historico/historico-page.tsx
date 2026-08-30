@@ -1,16 +1,24 @@
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useFilaments, usePrinters, useProducts } from "@/entities/catalog/use-catalog";
 import type { HistoryItem } from "@/entities/history/outbox";
 import { useHistory, useSyncOutbox, type HistoryFilters } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
+import { useBoms } from "@/entities/bom/use-bom";
 import { EntryActions } from "@/features/history/entry-actions";
+import {
+  QuoteBuilder,
+  type QuoteCatalogItem,
+  type QuoteLineInputResult,
+} from "@/features/history/quote-builder";
 import {
   SnapshotDetailPage,
   SnapshotEmbeddedContext,
 } from "@/pages/historico/snapshot-detail-page";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
 import { VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionExpired } from "@/shared/session/session-expiry";
 import { useDebouncedValue } from "@/shared/lib/use-debounced-value";
@@ -24,6 +32,7 @@ import {
   Card,
   EmptyState,
   Field,
+  Icon,
   Sheet,
   SheetContent,
   SheetTitle,
@@ -40,6 +49,7 @@ import {
   quotedDate,
   SYNC_BADGE,
 } from "@/entities/history/history-format";
+import { toLineInput } from "@/pages/historico/quote-line-input";
 
 import "./historico-page.css";
 
@@ -66,7 +76,9 @@ export function HistoricoPage() {
   // 013/F-02 (D1=A): `?snapshot=<clientSnapshotId>` — formerly its own 2-segment route
   // (`/historico/$snapshotId`), now a search param on THIS route (route's `beforeLoad` already
   // required auth for this param, mirroring the old route's own guard).
-  const search = useSearch({ strict: false }) as { snapshot?: string };
+  // 019/PR-E (T088) — `?construir=1`, molde de `?produto=novo`/`?snapshot=` (1 segmento, a
+  // armadilha de `base:'./'` do 013/F-02): abre o construtor de orçamento NA MESMA rota.
+  const search = useSearch({ strict: false }) as { snapshot?: string; construir?: boolean };
   // 018/US2 — o corte de 1280px decide entre mestre-detalhe e a tela de hoje.
   const isWide = useIsWide();
   // 019/PR-B (T046, prancheta 32f) — a parede caiu: "free-nunca-teve" e "signed-out" NÃO saltam
@@ -86,11 +98,76 @@ export function HistoricoPage() {
   // whose plan simply could not be checked. A calm "could not verify your plan" + retry, mirroring
   // the shipped E2/E3 gate (review PR-A, C5).
   if (gate === "unknown" && !entitlement.data) return <GateError onRetry={entitlement.refetch} />;
+  // 019/PR-E (T088) — a barreira é a AUSÊNCIA do construtor (Premium sem parede, PR-B): sem gate
+  // `active` o `?construir=1` cai para o vazio didático/lista de sempre — nunca um formulário
+  // inerte de orçamento. O `beforeLoad` da rota já exige sessão para este parâmetro; falta só o
+  // gate de entitlement, que é sempre em-página (Constituição IV).
+  if (search.construir && gate === "active") return <QuoteBuilderRoute />;
   // 018/US2 — no desktop, lista e registro na MESMA tela. Abaixo do corte nada muda: `?snapshot=`
   // continua sendo uma tomada de página inteira, que é o caminho do mobile e do link compartilhado.
   if (isWide) return <HistoryMasterDetail snapshotId={search.snapshot} />;
   if (search.snapshot) return <SnapshotDetailPage snapshotId={search.snapshot} />;
   return <HistoryLedger />;
+}
+
+/**
+ * 019/PR-E (T088) — o construtor de orçamento, na mesma rota (`?construir=1`, molde do
+ * `?produto=novo`/`?snapshot=` de sempre). A page é quem tem os quatro hooks do Catálogo E o
+ * `useFeeCatalog` — a mesma composição de `pages/catalogo/catalogo-page.tsx` (T124), só que aqui
+ * alimenta `toLineInput` em vez de um mapa `recomputed`.
+ *
+ * T125 (ADR-0033) — o construtor NÃO lê observação de preço (vocabulário exclusivo do recálculo do
+ * Catálogo, guarda `fixed-price-property.test.tsx`): a data de "preço parado desde" que a lista de
+ * escolha mostra é `updatedAt` do próprio registro do produto, nunca uma observação salva.
+ */
+function QuoteBuilderRoute() {
+  const navigate = useNavigate();
+  const products = useProducts();
+  const boms = useBoms();
+  const { isLoading: filamentsLoading } = useFilaments();
+  const { isLoading: printersLoading } = usePrinters();
+  const { catalog, source } = useFeeCatalog();
+
+  const referencesLoading = filamentsLoading || printersLoading;
+
+  const observations = useMemo(() => {
+    const out = new Map<string, { observedAt: string }>();
+    for (const p of products.items) out.set(p.id, { observedAt: p.updatedAt });
+    return out;
+  }, [products.items]);
+
+  const ctx = useMemo(() => ({ catalog, source, now: Date.now() }), [catalog, source]);
+  const toLine = useCallback(
+    (item: QuoteCatalogItem): QuoteLineInputResult | null => toLineInput(item, ctx),
+    [ctx],
+  );
+
+  // A volta para a lista: `onSent` NÃO abre o registro recém-gravado direto — a lista mostra o
+  // novo card (o mestre-detalhe abre o primeiro sozinho, que já é o mais recente).
+  const backToList = () => void navigate({ to: "/historico", search: {}, replace: true });
+
+  return (
+    <section className="tf-historico mx-auto flex w-full tf-page-wide flex-col gap-4">
+      <PageHeader title={t.title} />
+      {products.isLoading || boms.isLoading || referencesLoading ? (
+        <div className="flex justify-center py-8">
+          <Spinner />
+        </div>
+      ) : (
+        <QuoteBuilder
+          products={products.items}
+          kits={boms.items}
+          filaments={[]}
+          printers={[]}
+          catalog={catalog}
+          source={source}
+          observations={observations}
+          toLineInput={toLine}
+          onSent={backToList}
+        />
+      )}
+    </section>
+  );
 }
 
 /**
@@ -281,6 +358,16 @@ function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
     />
   ) : (
     <>
+      {/* 019/PR-E (T088, prancheta 18a) — "Novo orçamento" só existe com gate `active` (Premium
+          sem parede, PR-B): a barreira é a AUSÊNCIA do botão, nunca um clique que esbarra num
+          403. Sem premium ativo o convite de sempre (VazioDidatico/lapsedBanner) já cobre o caso. */}
+      {gate === "active" && (
+        <Button onClick={() => void navigate({ to: "/historico", search: { construir: true } })}>
+          <Icon name="plus" size={16} />
+          {messages.quote.newQuote}
+        </Button>
+      )}
+
       {/* A lapse deletes NOTHING: the ledger stays readable, and only writing needs an active
           Premium (FR-517). */}
       {entitlement.data?.status === "lapsed" && <Alert tone="info">{t.lapsedBanner}</Alert>}

@@ -83,8 +83,14 @@ export interface RecalcedPayload {
 /** Mirror of pages/bom `lineToForm` kept local (a feature/page may not import another page): a saved
  *  kit line's server-resolved values ARE a ProductOut value surface, so `productToForm` maps it. The
  *  server already applied D3 (a linked line resolves from its live product), so a freshly-fetched
- *  kit's line values are TODAY's catalog values. */
-function bomLineToInput(line: BomOut["lines"][number], ctx: CatalogContext): PriceInput | null {
+ *  kit's line values are TODAY's catalog values.
+ *
+ *  Exportada em 019/PR-E (T088) — `pages/historico/quote-line-input.ts` reusa esta MESMA leitura
+ *  D3/D6 para o construtor de orçamento (mesma pasta `pages/historico`, sem cruzar fronteira). */
+export function bomLineToInput(
+  line: BomOut["lines"][number],
+  ctx: CatalogContext,
+): PriceInput | null {
   const { values } = productToForm({
     id: line.productId ?? "",
     name: line.pieceName ?? "",
