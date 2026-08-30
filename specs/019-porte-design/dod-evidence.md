@@ -1093,7 +1093,10 @@ entraram pela PR-D e ganharam guarda permanente (`catalog-table-name-visible.spe
 
 - Dono confirmou por escrito: **ADR-0032, 0033 e 0034 → Accepted**; **emendas ratificadas** (0031 §2026-08-26 e §Emenda 2;
   0017 §2026-08-29 — o casamento por `name_norm` vira regra). Status aplicados nos arquivos + índice no mesmo commit.
-- **ADR-0024 = alternativa (b)**: o dono NÃO o tinha aceitado — a linha "Accepted + live" no ground do 014 (CLAUDE.md) era **erro
-  de registro** (a mesma classe dos ground lines falsos de 2026-08-01/08-07). Corrigido nos três lugares (CLAUDE.md, arquivo,
-  índice); o código das bandas continua live e o flip fica pendente de um gate próprio.
+- **ADR-0024**: o dono não se recordava do aceite — a linha "Accepted + live" no ground do 014 era **erro de registro** (a mesma
+  classe dos ground lines falsos de 2026-08-01/08-07). Em vez de flip cego, houve **revisão dedicada** (30/08): o problema, a
+  decisão aditiva (`bandMode`, ausência = SELECTION), as alternativas rejeitadas e a **prova de três pontos re-executada ao vivo
+  no motor** (anúncio 100/200/300 em Móveis: comissão 15,00/30,00/**40,00** no progressivo vs 30,00 na seleção; sem `bandMode` o
+  comportamento antigo bit a bit). O dono aceitou; corrigido nos três lugares com a história completa — o registro agora diz
+  QUANDO e COMO o aceite aconteceu, não finge que foi no gate do 014.
 

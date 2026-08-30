@@ -132,8 +132,8 @@ increment; its deferred US8 became increment 014. See `specs/013-audit-remediati
 **014-fee-category-mapping PR-A SHIPPED to `develop`** (PR #31, `461a367`, 2026-07-31, owner-merged) —
 the category→commission axis + the Amazon map (US1+US2+US3 + the monthly comparator), plus **Fase 6C**,
 the correction phase that gated the merge. **ADR-0024** (progressive price bands; additive `bandMode`,
-absence = `SELECTION`) **Proposed** (o dono confirmou em 2026-08-30 que NÃO o aceitou — esta linha dizia
-"Accepted + live" por erro de registro; o código está live, o flip segue pendente) . Owner-homologated (`qa-produto`, PASS COM RESSALVAS 92%, 41
+absence = `SELECTION`) **Accepted (2026-08-30, em revisão dedicada no fechamento do 019** — não no gate do 014: esta linha
+dizia "Accepted + live" desde 31/07 por erro de registro; o dono reviu o ADR com a prova de três pontos e o aceitou). Owner-homologated (`qa-produto`, PASS COM RESSALVAS 92%, 41
 screenshots, geometry read from the DOM) after an adversarial workflow review whose ONE blocker —
 `catalogVersion` unbumped across a 77→79-entry change — was fixed before merge. Evidence:
 `specs/014-fee-category-mapping/{tasks.md,dod-evidence.md}`.

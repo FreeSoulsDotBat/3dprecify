@@ -1,6 +1,6 @@
 # ADR-0024 — Bandas de preço **progressivas**: comissão por parcela, sem reinterpretar o passado
 
-- **Status**: Proposto (confirmado pelo dono em 2026-08-30 no fechamento do 019 — a linha "Accepted + live" do ground do 014 era erro de registro; o flip segue pendente de um gate próprio)
+- **Status**: Aceito (2026-08-30 — o dono NÃO o tinha aceitado no gate do 014 (o "Accepted + live" do ground era erro de registro); aceito nesta data após revisão dedicada no fechamento do 019, com a prova de três pontos re-executada no motor: 100→15,00 · 200→30,00 · 300→40,00 progressivo vs 30,00 seleção, e ausência de `bandMode` = SELECTION bit a bit)
 - **Data**: 2026-07-28
 - **Contexto**: 014-fee-category-mapping (correção do PR #31)
 - **Decide**: como representar uma comissão cobrada **por parcela do preço** sem alterar o significado

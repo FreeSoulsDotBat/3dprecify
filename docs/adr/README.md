@@ -30,7 +30,7 @@ Every ADR lists ≥3 options with pros/cons/scalability/confidence (Constitution
 | [0021](0021-scenario-persistence-live-reference-model.md) | Scenario persistence & the live-reference model — hybrid JSONB config, store-intent/resolve-live, no-FK Product-or-Kit basis (extends ADR-0013/0017) | Accepted |
 | [0022](0022-token-cost-engineering-dev-workflow.md) | Token-cost engineering of the dev workflow — per-role model routing + command-output filter + graphify auto-rebuild (amends ADR-0014) | Accepted |
 | [0023](0023-payments-mercado-pago-recurring.md) | Payments — Mercado Pago recurring (preapproval + hosted checkout, verify-by-lookup, exactly-once inbox, shared grant_writer, Play flag-ready OFF; extends ADR-0012) | Accepted (gate do E6 PR-A, T020) |
-| [0024](0024-progressive-price-bands.md) | Bandas de preço progressivas — comissão por parcela, sem reinterpretar o passado (014/PR-A) | Proposto (divergência resolvida pelo dono em 2026-08-30: NÃO foi aceito — o ground do 014 estava errado e foi corrigido; flip pendente de gate próprio) |
+| [0024](0024-progressive-price-bands.md) | Bandas de preço progressivas — comissão por parcela, sem reinterpretar o passado (014/PR-A) | Aceito (2026-08-30 — em revisão dedicada no fechamento do 019, não no gate do 014; a prova de três pontos re-executada) |
 | [0025](0025-marketplace-level-fee-axes.md) | Eixos de tarifa de nível de marketplace (custo fixo ML) | Proposto (adiado com ML/US6-ML/017) |
 | [0026](0026-pricing-core-4-0-0-waste-removal.md) | pricing-core 4.0.0 — remoção do `wasteGrams` e a regra de leitura do legado | Aceito (2026-08-07) |
 | [0027](0027-price-dependent-fixed-fee-and-surcharges.md) | Taxa fixa como função do preço + sobretaxas por item (pricing-core 4.1.0) | Aceito (2026-08-07) |
