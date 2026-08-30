@@ -698,6 +698,7 @@ export type SnapshotInKind = typeof SnapshotInKind[keyof typeof SnapshotInKind];
 export const SnapshotInKind = {
   SINGLE: 'SINGLE',
   KIT: 'KIT',
+  QUOTE: 'QUOTE',
 } as const;
 
 export type SnapshotInHeadlineBasis = typeof SnapshotInHeadlineBasis[keyof typeof SnapshotInHeadlineBasis];
@@ -706,6 +707,7 @@ export type SnapshotInHeadlineBasis = typeof SnapshotInHeadlineBasis[keyof typeo
 export const SnapshotInHeadlineBasis = {
   PRECO_VAREJO: 'PRECO_VAREJO',
   PRECO_ATACADO: 'PRECO_ATACADO',
+  PRECO_ORCAMENTO: 'PRECO_ORCAMENTO',
 } as const;
 
 export type SnapshotInPayload = { [key: string]: unknown };

@@ -33,7 +33,7 @@ import uuid
 from collections.abc import Callable, Iterator
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 import pytest
 import sqlalchemy as sa
@@ -1226,3 +1226,288 @@ def test_E4_05_a_naive_date_bound_is_a_422_demanding_a_timezone(
     for aware in ("2026-07-13T00:00:00Z", "2026-07-13T00:00:00-03:00"):
         ok = db_client.get("/api/v1/history", headers=h, params={bound: aware})
         assert ok.status_code == 200, ok.text
+
+
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+# 019/PR-E · T131 (US6/US17, ADR-0034 §2) — o ORÇAMENTO ENVIADO entra pela MESMA porta.
+#
+# Um `kind="QUOTE"` não ganha rota, tabela nem mecanismo: ganha três valores de enum e um bloco de
+# dinheiro NOVO dentro do documento congelado (`discount`, `costFloor`, `lines[].unitPrice` e
+# `lines[].subtotal`).
+# Todo dinheiro novo precisa cair sob as MESMAS guardas, e por um motivo bem específico: aqui um 500
+# é PIOR que um 422, porque o outbox re-POSTa um 5xx para sempre (`history.py`, ADR-0018 §3). Toda
+# recusa abaixo tem de acontecer no pydantic — nunca virar `IntegrityError` no INSERT.
+# ════════════════════════════════════════════════════════════════════════════════════════════════
+
+QUOTE_PAYLOAD: dict[str, Any] = {
+    "schemaVersion": 1,
+    "kind": "QUOTE",
+    "modelVersion": "4.2.0",
+    "catalogVersion": None,
+    "lines": [
+        {
+            "name": "Vaso",
+            "quantity": 2,
+            "unitPrice": "30.00",
+            "subtotal": "60.00",
+            "origin": {"kind": "PRODUCT", "id": "p1", "name": "Vaso"},
+        },
+        {"name": "Prato", "quantity": 1, "unitPrice": "12.00", "subtotal": "12.00", "origin": None},
+    ],
+    "discount": {"mode": "PCT", "value": "10", "amount": "7.20", "grossTotal": "72.00"},
+    "costFloor": "48.00",
+    "totals": {"precoOrcamento": "64.80"},
+}
+
+KIT_PAYLOAD_TODAY: dict[str, Any] = {
+    "schemaVersion": 1,
+    "kind": "KIT",
+    "modelVersion": "3.1.0",
+    "catalogVersion": None,
+    "lines": [
+        {
+            "name": "Vaso",
+            "quantity": 2,
+            "totals": {"custoTotal": "20.00", "precoVarejo": "30.00", "precoAtacado": "26.00"},
+        }
+    ],
+    "totals": {"custoTotal": "20.00", "precoVarejo": "30.00", "precoAtacado": "26.00"},
+    "channels": [],
+    "provenance": None,
+}
+
+
+def _quote_body(csid: str, payload: dict[str, Any] | None = None, **over: Any) -> dict[str, Any]:
+    doc = json.loads(json.dumps(QUOTE_PAYLOAD if payload is None else payload))
+    fields: dict[str, Any] = {
+        "kind": "QUOTE",
+        "modelVersion": "4.2.0",
+        "headlineTotal": str(doc.get("totals", {}).get("precoOrcamento")),
+        "headlineBasis": "PRECO_ORCAMENTO",
+        "payload": doc,
+    }
+    fields.update(over)
+    return _body(csid, **fields)
+
+
+def _mutate(**path: Any) -> dict[str, Any]:
+    """Uma cópia funda do documento de orçamento com UMA folha trocada."""
+    doc = json.loads(json.dumps(QUOTE_PAYLOAD))
+    for key, value in path.items():
+        if key == "unitPrice":
+            doc["lines"][0]["unitPrice"] = value
+        elif key in {"amount", "grossTotal", "value", "mode"}:
+            doc["discount"][key] = value
+        else:
+            doc[key] = value
+    return doc
+
+
+def _assert_refused_for_the_MONEY(r: Any, why: str) -> None:
+    """422 — e 422 pelo motivo CERTO.
+
+    Sem esta segunda metade os casos abaixo passariam por VACUIDADE enquanto `QUOTE` ainda não
+    existisse no `Literal`: o corpo seria recusado pelo enum e nenhuma guarda de dinheiro teria sido
+    exercitada. O `Literal` está aberto; o que recusa é a folha.
+    """
+    assert r.status_code == 422, f"{why}: {r.status_code} {r.text}"
+    assert r.json()["error"]["code"] == "VALIDATION_ERROR", why
+    assert "'SINGLE' or 'KIT'" not in r.text, f"{why}: recusado pelo ENUM, não pelo dinheiro"
+    assert "'PRECO_VAREJO' or 'PRECO_ATACADO'" not in r.text, why
+
+
+def test_the_QUOTE_document_the_client_will_build_is_ACCEPTED(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """O contrato de ponta a ponta: o corpo exato que o construtor da tela vai montar (T088) passa
+    por `SnapshotIn._validate_frozen_document` e congela. `headlineTotal == totals.precoOrcamento`
+    (VR-503, e o `CHECK` do banco é o backstop), `modelVersion` "4.2.0" batendo com o documento,
+    `schemaVersion` 1 — e ZERO float em qualquer folha.
+
+    É o teste que descreve a FORMA aceita; se ele mudar, o cliente muda junto."""
+    h = _premium(monkeypatch, migrated_db, "u-quote-ok")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID))
+    assert r.status_code == 201, r.text
+    out = r.json()
+    assert out["kind"] == "QUOTE"
+    assert out["headlineBasis"] == "PRECO_ORCAMENTO"
+    assert out["headlineTotal"] == "64.80"
+    assert out["payload"]["discount"] == {
+        "mode": "PCT",
+        "value": "10",
+        "amount": "7.20",
+        "grossTotal": "72.00",
+    }
+    assert out["payload"]["costFloor"] == "48.00"
+    assert out["payload"]["lines"][0]["subtotal"] == "60.00"
+    # Nenhuma folha voltou como float — o documento gravado é o documento enviado.
+    assert not _has_float(out["payload"]), out["payload"]
+
+
+def _has_float(node: object) -> bool:
+    if isinstance(node, dict):
+        return any(_has_float(v) for v in cast("dict[str, object]", node).values())
+    if isinstance(node, list):
+        return any(_has_float(v) for v in cast("list[object]", node))
+    return isinstance(node, float)
+
+
+@pytest.mark.parametrize(
+    ("payload", "why"),
+    [
+        # `amount` INTEIRO num documento que, fora isso, FECHA (72 - 7 = 65): sem a folha em
+        # `_MONEY_POSITION_KEYS` este caso passaria — a guarda de coerência do desconto não o pega,
+        # porque a conta está certa. É a versão não-vácua do caso.
+        pytest.param(
+            {
+                **_mutate(amount=7),
+                "totals": {"precoOrcamento": "65.00"},
+            },
+            "discount.amount",
+            id="int-in-discount-amount",
+        ),
+        pytest.param(_mutate(costFloor=48), "costFloor", id="int-in-costFloor"),
+        pytest.param(_mutate(unitPrice=30), "lines[0].unitPrice", id="int-in-line-unitPrice"),
+        pytest.param(_mutate(grossTotal=72), "discount.grossTotal", id="int-in-discount-gross"),
+    ],
+)
+def test_T131_a_JSON_integer_in_any_NEW_money_leaf_is_a_422(
+    db_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_db: str,
+    payload: dict[str, Any],
+    why: str,
+) -> None:
+    """E4-01, aplicado ao dinheiro que a PR-E acrescenta.
+
+    NÃO-VÁCUO: sem estender `_MONEY_POSITION_KEYS` (`validation.py`) com as FOLHAS `unitPrice`,
+    `subtotal`, `costFloor`, `amount` e `grossTotal`, o primeiro destes casos passa e CONGELA — e o
+    renderizador só imprime STRINGS, então a linha sai como célula VAZIA no papel do cliente. Um
+    registro imutável que mostra o item sem o preço.
+
+    As folhas entram uma a uma **de propósito**: a marca de `_MONEY_POSITION_KEYS` é de SUBÁRVORE
+    (`validation.py`, `_walk`), então marcar `lines` recusaria o `quantity` INTEIRO de todo kit já
+    gravado, e marcar `discount` recusaria `value`, que em modo `PCT` é um percentual.
+    """
+    h = _premium(monkeypatch, migrated_db, f"u-int-{why[:6]}")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID, payload))
+    _assert_refused_for_the_MONEY(r, why)
+    assert _count(migrated_db, f"u-int-{why[:6]}") == 0
+
+
+def test_T131_a_KIT_with_an_integer_QUANTITY_still_records(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """A NÃO-REGRESSÃO que decide COMO as chaves novas entram. `quantity` é uma CONTAGEM e é um
+    inteiro JSON legítimo em todo kit que já existe; marcar a subárvore `lines` como dinheiro
+    recusaria todos eles — um `kind` novo derrubando o `kind` antigo."""
+    h = _premium(monkeypatch, migrated_db, "u-kit-qty")
+    body = _body(
+        CSID,
+        kind="KIT",
+        headlineTotal="30.00",
+        headlineBasis="PRECO_VAREJO",
+        payload=json.loads(json.dumps(KIT_PAYLOAD_TODAY)),
+    )
+    r = db_client.post("/api/v1/history", headers=h, json=body)
+    assert r.status_code == 201, r.text
+    assert r.json()["payload"]["lines"][0]["quantity"] == 2
+
+
+def test_T131_a_QUOTE_line_quantity_is_also_still_a_legal_integer(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """A outra metade: no orçamento `quantity` continua contagem, exatamente como no kit."""
+    h = _premium(monkeypatch, migrated_db, "u-quote-qty")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID))
+    assert r.status_code == 201, r.text
+    assert r.json()["payload"]["lines"][0]["quantity"] == 2
+
+
+def test_T131_a_discount_that_does_not_ADD_UP_is_a_422(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """`grossTotal - amount` TEM de dar `totals.precoOrcamento`. Sem isto o documento imprime, no
+    papel do cliente, um bruto e um desconto que não fecham no total — e o total é o único dos três
+    números amarrado pelo banco. O desconto é DECLARADO justamente para poder ser conferido."""
+    h = _premium(monkeypatch, migrated_db, "u-disc-sum")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID, _mutate(amount="5.00")))
+    _assert_refused_for_the_MONEY(r, "grossTotal - amount != precoOrcamento")
+    assert _count(migrated_db, "u-disc-sum") == 0
+
+
+@pytest.mark.parametrize(
+    ("payload", "why"),
+    [
+        pytest.param(_mutate(mode="PERCENTUAL"), "modo fora do enum", id="bad-mode"),
+        pytest.param(_mutate(mode=None), "modo ausente", id="null-mode"),
+        pytest.param(
+            _mutate(mode="PCT", value="120", amount="86.40", grossTotal="72.00"),
+            "PCT acima de 100",
+            id="pct-over-100",
+        ),
+        pytest.param(
+            _mutate(mode="PCT", value="-10", amount="-7.20", grossTotal="72.00"),
+            "PCT negativo",
+            id="pct-negative",
+        ),
+        pytest.param(
+            _mutate(mode="AMOUNT", value="80.00", amount="80.00", grossTotal="72.00"),
+            "abatimento maior que o bruto (o líquido ficaria negativo)",
+            id="amount-over-gross",
+        ),
+        pytest.param(_mutate(amount="-7.20"), "abatimento negativo", id="negative-amount"),
+        pytest.param(_mutate(grossTotal="-72.00"), "bruto negativo", id="negative-gross"),
+        pytest.param(
+            _mutate(amount="sete"), "abatimento que não é número", id="amount-not-decimal"
+        ),
+        pytest.param(
+            {**json.loads(json.dumps(QUOTE_PAYLOAD)), "discount": "10%"},
+            "desconto que não é objeto",
+            id="discount-not-object",
+        ),
+    ],
+)
+def test_T131_an_invalid_discount_is_a_422_in_the_PYDANTIC_never_a_500(
+    db_client: TestClient,
+    monkeypatch: pytest.MonkeyPatch,
+    migrated_db: str,
+    payload: dict[str, Any],
+    why: str,
+) -> None:
+    """Cada caso é um 422 TERMINAL, e o `assert` do status é a metade menos importante: o que
+    importa é NÃO ser 500. Um 5xx aqui é um laço infinito — o outbox re-POSTa para sempre o mesmo
+    corpo inválido (ADR-0018 §3), e nenhuma dessas entradas é alcançável só por engano do cliente.
+
+    ADR-0034 §1.6: um desconto maior que o total é ENTRADA INVÁLIDA, nunca um total negativo em
+    silêncio."""
+    h = _premium(monkeypatch, migrated_db, "u-disc-bad")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID, payload))
+    _assert_refused_for_the_MONEY(r, why)
+    assert _count(migrated_db, "u-disc-bad") == 0, why
+
+
+def test_T131_a_QUOTE_without_a_discount_is_perfectly_valid(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """A guarda do desconto só existe quando há desconto: vender sem desconto é o caso comum, e um
+    validador que exigisse o bloco transformaria o caso comum em 422."""
+    h = _premium(monkeypatch, migrated_db, "u-no-disc")
+    doc = json.loads(json.dumps(QUOTE_PAYLOAD))
+    del doc["discount"]
+    doc["totals"]["precoOrcamento"] = "72.00"
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID, doc))
+    assert r.status_code == 201, r.text
+    assert "discount" not in r.json()["payload"]
+
+
+def test_T131_a_QUOTE_whose_headline_disagrees_with_the_document_is_a_422_not_a_500(
+    db_client: TestClient, monkeypatch: pytest.MonkeyPatch, migrated_db: str
+) -> None:
+    """VR-503 para o `basis` novo: sem a entrada em `_BASIS_TOTAL_KEY` isto seria um `KeyError` —
+    500 — antes de chegar a ser uma divergência. Com ela, é um 422 terminal; e se ambos falhassem,
+    o `CHECK` do banco (migração 0009) ainda recusaria a linha."""
+    h = _premium(monkeypatch, migrated_db, "u-quote-diverge")
+    r = db_client.post("/api/v1/history", headers=h, json=_quote_body(CSID, headlineTotal="99.99"))
+    _assert_refused_for_the_MONEY(r, "headlineTotal != totals.precoOrcamento")
+    assert _count(migrated_db, "u-quote-diverge") == 0
