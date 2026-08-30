@@ -13,9 +13,16 @@ import { PRICING_MODEL_VERSION } from "../src/index";
 // (custo opcional declarado) são adições OPCIONAIS cuja ausência preserva o resultado bit a bit —
 // superfície pública aditiva ⇒ MINOR. O rótulo continua respondendo QUAL fórmula produziu o número
 // congelado: um 4.0.0 não sabia representar "metade do preço abaixo de R$ 8".
-describe("PRICING_MODEL_VERSION (ADR-0008 / ADR-0011 / ADR-0016 / ADR-0026 / ADR-0027)", () => {
-  it("is 4.1.0", () => {
-    expect(PRICING_MODEL_VERSION).toBe("4.1.0");
+// 4.2.0 (ADR-0034 / 019 PR-E): nasce `computeQuote` — o orçamento montado. É capacidade NOVA e
+// ADITIVA: nenhuma computação existente muda de resultado, no precedente exato da 4.0.0 → 4.1.0 ⇒
+// MINOR, e por isso `:25` (o major "4") permanece. A prova de que a afirmação é verdadeira não é a
+// leitura do diff — é `version-equality-4.1-4.2.test.ts`, que recomputa 500 casos de calculadora e
+// 200 de BOM (com o rollup por marketplace) contra uma fixture gerada ANTES do bump, com o motor
+// 4.1.0 intocado, e compara campo a campo ignorando só `modelVersion`. A lição do 014/C: versão
+// bumpada sem diferença medida e implementação reescrita sem bump são a mesma mentira.
+describe("PRICING_MODEL_VERSION (ADR-0008 / ADR-0011 / ADR-0016 / ADR-0026 / ADR-0027 / ADR-0034)", () => {
+  it("is 4.2.0", () => {
+    expect(PRICING_MODEL_VERSION).toBe("4.2.0");
   });
 
   it("tracks the package.json version (major AND minor)", () => {
