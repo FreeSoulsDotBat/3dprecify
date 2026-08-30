@@ -246,7 +246,7 @@ multi-item; desconto no TOTAL; piso avisa; "Válido até" = `quote_validity_days
 
 ### Transcrição (PRIMEIRA)
 
-- [ ] T087 [US6] Baixar `Orcamentos - Montar e Enviar` (dois temas) e transcrever US16/US17 verbatim ("Válido até", "Enviar congela este preço", "Voltar a acompanhar não vale para orçamentos enviados", "Abaixo do custo", rótulos do desconto). "10 un. sai mais barato que 9" NÃO é transcrita (US18 retirada).
+- [x] T087 [US6] Baixar `Orcamentos - Montar e Enviar` (dois temas) e transcrever US16/US17 verbatim ("Válido até", "Enviar congela este preço", "Voltar a acompanhar não vale para orçamentos enviados", "Abaixo do custo", rótulos do desconto). "10 un. sai mais barato que 9" NÃO é transcrita (US18 retirada). **Feito 29/08** — prancheta 18 × 2 temas congeladas; namespace `quote` (30 chaves) só com o que US6/US16/US17 abrangem; a 18c (US18), os 5 estados, frete, WhatsApp/Copiar/Compartilhar e o prazo de produção ficaram FORA e registrados; `sendOffline` derivada pelo molde 'precisa de conexão' (DECISÃO 4).
 
 ### Tests (vermelhos primeiro)
 

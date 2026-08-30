@@ -901,3 +901,34 @@ O dono respondeu às 8 pendências listadas depois da primeira rodada (spec §Cl
   lista de portas a matar antes do e2e ganha a 4175.
 - Gate final: frontend 2028/2028 (cobertura 89,75%) · backend 577 passed (cov 84%) · exit 0. Push autorizado ("pode seguir", 29/08) — **PR #63** aberta contra `develop` (`6d55474`), CORREÇÃO DECLARADA.
 
+---
+
+## PR-E — Montar e Enviar (US6) · branch `019-pr-e-montar-enviar` (do develop `410b574`, pós-merge do PR #63) · **escalação OPUS** (ADR-0022)
+
+### T087 — a transcrição (2026-08-29)
+
+- **Prancheta congelada** `Orcamentos - Montar e Enviar` (escura verbatim via DesignSync; clara pela transformação da T009 — a 18
+  não tem o véu da 20a). Hashes no README.
+- **Namespace `quote`** (30 chaves, verbatim): 18a `newQuote`; 18b `clientLabel`, `searchPlaceholder`, `unitPriceMeta`, `lineMeta`
+  "{n} un. × {valor}", `kitLineMeta`, `stoppedCannotQuote`, `itemCount`, `continueAction`; 18d `discountLabel`, `subtotal`,
+  `discountLine`, `total`, `marginOverCost` (+`Sub` "custo de {valor}", sem "frete incluído"), `tightMarginTitle/Body` (18d·2),
+  `belowCost` (18d·3, a linha do campo); 18e `sendTitle` "Enviar congela este preço", `totalSent`, `validUntil`, `validUntilSub`,
+  `freezeNote`, `back`, `send`, `sentCaption`, `noUnfixForSent` "Voltar a acompanhar não vale para orçamentos enviados"; 18f
+  `documentKicker`, `documentDates`.
+- **Leituras registradas (prancheta × decisões da spec)**: (1) a prancheta desenha Orçamentos como 3º segmento do Catálogo e chama
+  isso de "decisão sua" — a spec/018 já decidiram: a lista é a aba Orçamentos (ex-Histórico) e o construtor entra por
+  `/historico?construir=1` (rota de 1 segmento, armadilha `base:'./'`); (2) a 18c inteira (o degrau do atacado, "Usar 10 un.",
+  "10 un. sai mais barato que 9") é a **US18 RETIRADA** (Q6: venda direta torna o total monotônico) — não transcrita; (3) a 18d
+  mostra o piso BLOQUEANDO ("O desconto máximo aqui é 25%" + Continuar desabilitado) — **Q10 decidiu AVISA**: só a linha "Abaixo do
+  custo — …" entra, como aviso, e o alerta de bloqueio não; (4) "Frete" (18d/18f) está fora do escopo (spec §fora: "frete real");
+  (5) os cinco estados da lista (rascunho · vence em N dias · aceito · recusado · venceu) e "Marcar aceito/recusado" (18a/18e·2/18g)
+  não estão em US6/US16/US17 — um orçamento enviado é um snapshot imutável `kind=QUOTE` com "Válido até" como TEXTO (Q7, não vence
+  como estado); registrados como lacuna de produto para o dono (PO); (6) "Hoje a mesma lista daria R$ X" (18e·2/18g) exige
+  recalcular um QUOTE — a T135 decide que "Recalcular hoje"/comparar NÃO valem para QUOTE; só a frase fixa `noUnfixForSent` entra;
+  (7) "Como sai no WhatsApp", "Copiar texto", "Compartilhar" e o "prazo de produção" escrito à mão (18f) — fora (Q8 = PDF pelo
+  servidor, "sem link/e-mail pelo app"); lacuna registrada; (8) o item com preço PARADO não entra no orçamento (18b) — e um KIT com
+  linha degradada entra por D6 com "(avulsa)" (T083): as duas regras convivem (produto parado × kit com linha parada); (9) a 18b
+  marca "12 un. · atacado"/"3 un. · varejo" por item — na Q6 cada item entra pelo preço de VENDA DIRETA (o varejo do motor;
+  `grossTotal === bom.precoVarejo`), sem degrau de atacado: as metas transcritas não trazem o nível; (10) a razão do Enviar offline
+  (DECISÃO 4) não está na prancheta — `sendOffline` segue o molde da família "precisa de conexão" (registrado como derivada).
+

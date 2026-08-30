@@ -57,6 +57,8 @@ transcrição — a fonte remota pode mudar; a cópia não.
 | `Simulacoes - A Estrategia Viva - Tema Claro.dc.html` | PR-F | `6d4de984772c52d7897c19995a8579c04f2424a0a90f5aaa30d96d750d6a76ff` | 2026-08-29 |
 | `As Escritas Congeladas - Tema Escuro.dc.html` | PR-F | `a217b1a06737c67e7cd1d1c0a6f2b218cb6c5ca80abc6f66fa1bcc5c455cba45` | 2026-08-29 |
 | `As Escritas Congeladas - Tema Claro.dc.html` | PR-F | `d64a7b3317d167cf91b8c64244cdb2199e99e8c61e76907caa89b08e03d465f2` | 2026-08-29 |
+| `Orcamentos - Montar e Enviar - Tema Escuro.dc.html` | PR-E | `31ff07386825c1ea79d5871cbbfc02948782afdf66e7a21532b629f6ccd76106` | 2026-08-29 |
+| `Orcamentos - Montar e Enviar - Tema Claro.dc.html` | PR-E | `cde546c5328187edca4b854ce319a5469ebcf755a1be623892519c9f0071c3a8` | 2026-08-29 |
 | _(as demais fatias acrescentam as suas)_ | | | |
 
 **Como as cópias foram feitas (T009, 27/08).** As três pranchetas ESCURAS vieram de `DesignSync get_file`
