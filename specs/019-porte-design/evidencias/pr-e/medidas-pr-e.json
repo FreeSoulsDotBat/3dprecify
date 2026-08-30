@@ -1,0 +1,148 @@
+{
+  "abaixo-do-custo-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 307,
+    "box": {
+      "x": 37,
+      "y": 510.984375,
+      "width": 316,
+      "height": 76
+    }
+  },
+  "cartao-enviar-congela-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 238,
+    "box": {
+      "x": 16,
+      "y": 460.984375,
+      "width": 358,
+      "height": 383.375
+    }
+  },
+  "offline-enviar-desabilitado-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 324,
+    "box": null
+  },
+  "lista-orcamentos-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  },
+  "detalhe-itemizado-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 197,
+    "box": null
+  },
+  "abaixo-do-custo-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 307,
+    "box": {
+      "x": 37,
+      "y": 510.984375,
+      "width": 316,
+      "height": 76
+    }
+  },
+  "cartao-enviar-congela-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 238,
+    "box": {
+      "x": 16,
+      "y": 460.984375,
+      "width": 358,
+      "height": 383.375
+    }
+  },
+  "offline-enviar-desabilitado-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 324,
+    "box": null
+  },
+  "lista-orcamentos-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  },
+  "detalhe-itemizado-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 197,
+    "box": null
+  },
+  "construtor-selecao-390-dark": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  },
+  "construtor-selecao-1280-dark": {
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  },
+  "construtor-selecao-390-light": {
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  },
+  "construtor-selecao-1280-light": {
+    "viewport": {
+      "width": 1280,
+      "height": 900
+    },
+    "overflowX": 0,
+    "overflowY": 0,
+    "box": null
+  }
+}

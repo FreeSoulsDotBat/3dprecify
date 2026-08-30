@@ -277,7 +277,7 @@ export function QuoteBuilder({
 
   if (step === "select") {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3" data-testid="quote-builder">
         <Field label={t.clientLabel}>
           {({ id, ...aria }) => (
             <div className="tf-inputwrap">
@@ -405,7 +405,7 @@ export function QuoteBuilder({
 
   // ── Revisão (18d + 18e num passo só — ver decisão de fidelidade no topo do arquivo) ────────────
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4" data-testid="quote-builder">
       <Card padding="md" className="flex flex-col gap-2">
         {[...selected.entries()].map(([id]) => {
           const item = items.find((it) => itemId(it) === id);

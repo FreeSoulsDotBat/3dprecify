@@ -1,3 +1,5 @@
+import { PRICING_MODEL_VERSION } from "@3dprecify/pricing-core";
+
 import { expect, test, type Page } from "@playwright/test";
 
 import preRemovalFixture from "../../src/entities/history/__fixtures__/frozen-payload-pre-016.json" with { type: "json" };
@@ -55,10 +57,9 @@ test.describe("016/T041 — a matriz de documentos (congelado antigo · simulaç
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 
     // The technical sheet names the CURRENT model — never a declaration surface for a clean doc.
-    // 016/PR-F bumped pricing-core 4.0.0 → 4.1.0 MINOR (`fixedFeeRule` + `ChannelInput.surcharges`,
-    // both additive/absent-preserving) — `PRICING_MODEL_VERSION` moved, so the pinned literal here
-    // moves with it (never guessed: `packages/pricing-core/src/index.ts`'s own exported constant).
-    await expect(page.getByText("4.1.0")).toBeVisible();
+    // 019/PR-E: o literal pinado quebrou DUAS vezes com bump MINOR (4.1.0 na 016/PR-F, 4.2.0 aqui) —
+    // a âncora passa a ler a constante exportada do próprio pacote, como o resto da suíte faz.
+    await expect(page.getByText(PRICING_MODEL_VERSION)).toBeVisible();
     await expect(page.getByText(/O documento salvo continha/)).toHaveCount(0);
     await expect(page.getByText(/Desperdício \(g\)/)).toHaveCount(0);
   });
