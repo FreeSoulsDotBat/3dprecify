@@ -1,0 +1,16 @@
+{
+  "id": "barra-de-ferramentas-mestre-desktop",
+  "nome": "Barra de ferramentas da lista no desktop (busca + contagem + adicionar)",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/catalog/catalog-master-detail.css"
+  ],
+  "oQueFoiInferido": "`.tf-catalog-md__toolbar` é um `display:flex` SEM `flex-wrap` com três filhos numa linha só: o campo de busca (`flex:1; max-width:420px`), a contagem empurrada por `margin-left:auto`, e o botão \"Adicionar filamento\". O canvas põe esses três elementos em TRÊS lugares diferentes. Também inferido: a busca filtra `nome + resumo` da lista já em memória (`catalog-panel.tsx:252-256`), sem debounce, sem contador próprio de resultados — a contagem exibida passa a ser `visible.length`, ou seja, o mesmo texto \"{n} filamento(s)\" muda de significado quando há filtro ativo, sem nada dizer isso.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Com catálogo grande a busca é o único caminho até o item, e ela divide a linha com dois elementos que o desenho colocou noutro lugar; sem `flex-wrap`, três elementos que não caibam se espremem em vez de quebrar.",
+  "prioridade": "MEDIA",
+  "refutacao": "Tentei derrubar pelo canvas, que é a autoridade do MESMO viewport, e ele derruba só um terço: a linha 102 desenha o `tf-inputwrap` com placeholder \"Buscar no catálogo…\" e `aria-label` — a BUSCA tem desenho e a copy implementada bate. Mas as linhas 71-83 colocam a contagem como `tf-page-header__desc` (`secCount`, ao lado do título) e o botão primário `{{ addLabel }}` GRUDADO no `role=\"tablist\"` — nenhum dos dois na barra. O arranjo implementado não existe em desenho nenhum, e a semântica da contagem sob filtro tampouco. (1)/(3) Nenhuma busca ou filtro no protótipo: grep por buscar/filtrar/ordenar nas três prompts devolve só o \"Chip de catálogo\" (§D.2 linha 194), que é seleção. (2) A auditoria não cita busca em nenhuma das três rodadas.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

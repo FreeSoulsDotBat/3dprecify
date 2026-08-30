@@ -1,0 +1,183 @@
+/* Field + NumberField shared styles. Ported from Truth's Forge (Claude Design),
+   adapted for apps/web: raw --tf-danger → semantic --danger/--danger-deep, and
+   the CDN-Lucide error glyph dropped (offline/no-CDN); the error text + role
+   convey the state. */
+.tf-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+/* 016/PR-C homologação (B4) — the label + its optional `labelAddon` (an InfoTip trigger) share
+   ONE row, but the addon is a FLEX SIBLING of `.tf-field__label`, never a descendant — see the
+   `labelAddon` doc in field.tsx for why. `.tf-field__label` keeps its own internal min-height
+   reservation (below) so the row's height is still driven by the label, not the addon. */
+.tf-field__label-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-1);
+}
+.tf-field__label {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  align-items: flex-end;
+  gap: var(--space-2);
+  /* Reserve two lines so a label that wraps (e.g. "Reserva de manutenção") does not
+     push its input below the sibling's in a 2-column row — inputs stay baseline-aligned
+     regardless of label height. Bottom-aligned so the label always hugs its input. */
+  min-height: calc(2 * var(--lh-snug) * 1em);
+  line-height: var(--lh-snug);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  letter-spacing: var(--tracking-snug);
+}
+/* Standalone full-width control (e.g. a select) whose label never wraps: reserve one line,
+   so it doesn't inherit the 2-line reservation the 2-col grids use for baseline alignment. */
+.tf-field__label--tight {
+  min-height: calc(var(--lh-snug) * 1em);
+}
+.tf-field__req {
+  color: var(--energy);
+  font-weight: var(--fw-bold);
+}
+.tf-field__optional {
+  margin-left: auto;
+  font-weight: var(--fw-regular);
+  color: var(--text-faint);
+  font-size: var(--fs-caption);
+}
+.tf-field__hint {
+  font-size: var(--fs-caption);
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+.tf-field__error {
+  font-size: var(--fs-caption);
+  /* Status text uses the semantic --danger-text token, never a raw hue (INV-4,
+     ADR-0007). Same measured "deep" red on light; theme-aware on dark. */
+  color: var(--danger-text);
+  font-weight: var(--fw-medium);
+}
+
+.tf-inputwrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: var(--control-h);
+  padding: 0 var(--space-4);
+  background: var(--surface-card);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-field);
+  cursor: text;
+  /* 016/PR-C homologação (B4) — a defensive floor for EVERY numeric input, everywhere: `.tf-input`
+     below carries `min-width:0` on purpose (D2's overflow lesson), so nothing stopped the WRAPPER
+     from following it all the way down inside a tight 2-col grid. This alone is not the fix for
+     the worst-case outlier (a currency prefix AND a wide unit suffix together, "Tarifa de
+     energia") — that grid is now `.tf-costs-grid` (calculator-form.css), which reflows instead of
+     forcing an oversized min-width into a fixed 2-col track (that overflowed the 360/390 viewport
+     when tried). This value is the safe floor for every OTHER numeric grid in the app. */
+  min-width: 8rem;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.tf-inputwrap:hover {
+  border-color: var(--border-strong);
+}
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco.
+   O `:focus-within` marca só pela cor da borda (o mesmo tom de `--accent`), sem anel. */
+.tf-inputwrap:focus-within {
+  border-color: var(--accent);
+  box-shadow: none;
+}
+.tf-inputwrap--sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--space-3);
+}
+.tf-inputwrap--lg {
+  height: var(--control-h-lg);
+  padding: 0 var(--space-5);
+}
+.tf-inputwrap--error {
+  border-color: var(--danger);
+}
+/* Keep the border RED while an invalid field is focused: without this, `.tf-inputwrap:focus-within`
+   (same specificity, declared earlier) would repaint it the purple focus-ring colour and the field
+   would stop looking like an error. The danger-tinted ring below replaces the purple halo too. */
+.tf-inputwrap--error:focus-within {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 var(--ring-width) color-mix(in srgb, var(--danger) 38%, transparent);
+}
+.tf-inputwrap--disabled {
+  background: var(--bg-muted);
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.tf-inputwrap__affix {
+  display: inline-flex;
+  align-items: center;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  white-space: nowrap;
+  flex: 0 0 auto;
+  user-select: none;
+}
+.tf-inputwrap__affix--strong {
+  color: var(--text-strong);
+  font-weight: var(--fw-semibold);
+}
+.tf-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-strong);
+  font: inherit;
+  font-size: var(--fs-base);
+  height: 100%;
+}
+/* The visible focus ring lives on the wrapper (.tf-inputwrap:focus-within); the raw
+   input inside it must NOT draw its own ring on top (that read as a double border). */
+.tf-input:focus-visible {
+  box-shadow: none;
+}
+.tf-input::placeholder {
+  color: var(--text-faint);
+}
+.tf-input:disabled {
+  cursor: not-allowed;
+}
+.tf-input--num {
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features);
+  text-align: right;
+}
+
+/* Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE.
+   Tom `info`, deliberadamente distinto do `--danger` do erro: o número não foi recusado, e uma
+   frase pintada de vermelho diria o contrário do que ela está escrita para dizer.
+   Ver `shared/lib/plausibilidade.ts` — "AVISO NUNCA VIRA VALIDAÇÃO".
+
+   019/PR-C (T118) — dois consertos: (1) a referência apontava para `features/calculator/
+   plausibilidade.ts`, que nunca existiu — o módulo sempre morou em `shared/lib` (a razão está no
+   cabeçalho dele). (2) `.tf-field__aviso` deixou de ser o estilo do aviso DENTRO do `hint` do
+   `Field` — a família `tf-aviso` (`shared/ui/aviso.tsx`, ADR-0032) tomou esse lugar em
+   `calculator-form.tsx` (T056). A regra sobrevive aqui porque `features/bom/bom-line-card.tsx`
+   ainda a usa como parágrafo solto para o aviso de quantidade da linha de kit — apagá-la agora
+   quebraria aquele consumidor, fora do escopo desta fatia. */
+.tf-field__hint-line {
+  display: block;
+}
+.tf-field__aviso {
+  display: block;
+  margin-top: var(--space-1);
+  color: var(--info-text);
+  overflow-wrap: anywhere;
+}

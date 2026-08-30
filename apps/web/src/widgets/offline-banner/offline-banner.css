@@ -1,0 +1,22 @@
+/* Offline banner (T052 / SS-1). A calm, honest info bar pinned above the top-bar. Soft info
+   tint + the semantic status-text token so it reads ≥4.5:1 in both themes (INV-3/4). Full-bleed
+   across the shell width; no motion (nothing to distract from "the calc still works"). */
+.tf-offline-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--gutter);
+  background: var(--tf-info-soft);
+  color: var(--info-text);
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  text-align: center;
+  line-height: var(--lh-normal);
+}
+.tf-offline-banner__icon {
+  flex: 0 0 auto;
+}
+.tf-offline-banner__msg {
+  min-width: 0;
+}

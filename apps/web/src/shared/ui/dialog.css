@@ -1,0 +1,99 @@
+/* Dialog / Sheet skin over Radix behavior. Matte brand surface, tight radius,
+   scrim overlay. Close control is a ≥44×44px touch target (INV-2). */
+.tf-dialog__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: var(--surface-overlay);
+}
+.tf-dialog {
+  position: fixed;
+  z-index: 71;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  background: var(--surface-card);
+  color: var(--text-body);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Centered modal */
+.tf-dialog:not(.tf-dialog--sheet) {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 32rem);
+  max-height: 85vh;
+  overflow: auto;
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+}
+
+/* Edge-anchored sheet */
+.tf-dialog--sheet {
+  padding: var(--space-5);
+  overflow: auto;
+}
+.tf-dialog--sheet-right,
+.tf-dialog--sheet-left {
+  top: 0;
+  bottom: 0;
+  width: min(92vw, 26rem);
+  border-radius: 0;
+}
+.tf-dialog--sheet-right {
+  right: 0;
+  border-radius: var(--radius-xl) 0 0 var(--radius-xl);
+}
+.tf-dialog--sheet-left {
+  left: 0;
+  border-radius: 0 var(--radius-xl) var(--radius-xl) 0;
+}
+.tf-dialog--sheet-bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 85vh;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.tf-dialog__title {
+  margin: 0;
+  padding-right: var(--space-10);
+  font-family: var(--font-title);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  font-size: var(--fs-lg);
+  color: var(--text-strong);
+}
+.tf-dialog__desc {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}
+.tf-dialog__x {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--touch-min);
+  min-height: var(--touch-min);
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.tf-dialog__x:hover {
+  color: var(--text-strong);
+  background: var(--bg-muted);
+}
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
+.tf-dialog__x:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

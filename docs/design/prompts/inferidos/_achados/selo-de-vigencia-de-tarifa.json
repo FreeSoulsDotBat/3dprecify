@@ -1,0 +1,16 @@
+{
+  "id": "selo-de-vigencia-de-tarifa",
+  "nome": "Selo de origem e vigência da tarifa (e o selo separado da taxa fixa)",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/features/calculator/fee-seal.tsx",
+    "apps/web/src/features/calculator/fee-seal.css"
+  ],
+  "oQueFoiInferido": "Um Badge do DS carregando texto composto em runtime, com 5 estados semânticos (`reference` / `catchAll` / `adjusted` / `estimate` / `none`) e dois modificadores (`embedded`, `stale`), tom `info` ou `neutral` conforme o estado, frases de 80+ caracteres ('Referência: <fonte> (para <categoria>) · atualizado em 06/07/2026 · desatualizado'), mais um SEGUNDO Badge (`FixedFeeSourceBadge`) para a origem da taxa fixa, ambos numa linha `flex-wrap`. Inferido: que a honestidade da tarifa é comunicada como PÍLULA de texto corrido, a hierarquia entre os dois selos, o tom de cada estado, e o que acontece a 360px — tanto que `fee-seal.css` precisa sobrescrever o Badge do DS (`white-space:normal`, `text-align:left`, borda hairline) porque o primitivo foi desenhado para status curto, não para isto.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o elemento que separa 'este número é seu' de 'este número é um palpite do catálogo' — e a homologação 015 mediu que ele era o elemento de MENOR peso visual do painel enquanto os campos ao lado estavam vazios com o preço já descontado. O CSS local é a prova material de que o desenho não previu este conteúdo: o componente teve que ser dobrado para caber.",
+  "prioridade": "ALTA",
+  "refutacao": "A única coisa próxima nas autoridades é `-fixes.md` item 5: 'adicione nota visível \"Taxas de referência — confirme as taxas atuais do canal\". Não apresente taxas de terceiros como fato' — e o audit V2 registra o item 5 como FIXED, então essa NOTA foi desenhada e renderizada. Mas é uma nota FIXA: sem estados, sem data, sem categoria de origem, sem catch-all, sem 'embutida (offline)', sem 'desatualizado', sem badge e sem segundo selo. Grep por 'selo' nas 4: zero. `.design-import` lista um `Badge` genérico entre os 32 primitivos, não este selo. Canvas 018 não cobre Calcular. Ancestral existe e é uma frase; o componente de 5 estados não. Sobrevive, PROTOTIPO_PARCIAL confirmado.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

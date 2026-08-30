@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": ".",
+    "noEmit": true,
+    "resolveJsonModule": true,
+    // 014 — este pacote é EXECUTADO por `node` (o `build-amazon.mjs` roda com strip-types), e o
+    // resolvedor ESM do node exige a extensão explícita em import relativo. O vitest é tolerante e
+    // resolvia `./x` sem ela, então a cadeia quebrada desde o PR-A (`461a367`) passou verde em toda
+    // suíte e só aparecia ao rodar o gerador de verdade. Com a extensão obrigatória no código, o tsc
+    // precisa desta flag — que só é legal sob `noEmit`, que é o caso aqui.
+    "allowImportingTsExtensions": true
+  },
+  "include": ["src"]
+}

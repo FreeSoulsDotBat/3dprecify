@@ -1,0 +1,142 @@
+/* Hero suggested-price readout. Ported from Truth's Forge (Claude Design);
+   success tone uses semantic --success / --text-on-accent. */
+.tf-price {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-5) var(--space-6);
+  border-radius: var(--radius-xl);
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  /* D2: allow the flex column to shrink below its content's intrinsic width so a huge
+     price wraps instead of pushing horizontal overflow at 390px. */
+  min-width: 0;
+}
+.tf-price--accent {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-contrast);
+  box-shadow: var(--glow-purple);
+}
+.tf-price--energy {
+  background: var(--energy);
+  border-color: transparent;
+  color: var(--energy-contrast);
+}
+.tf-price--inverse {
+  background: var(--surface-inverse);
+  border-color: transparent;
+  color: var(--text-on-inverse);
+}
+.tf-price--success {
+  background: var(--success);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+/* 019/PR-F (T142, prancheta 10a/10d) — o cartão de preço no nível ESCOLHIDO que não é o accent
+   (o atacado, quando selecionado no Segmented varejo/atacado): mesmo tamanho do accent, superfície
+   neutra — "a diferença entre os dois é cor, não corpo". Substitui o antigo `tone="energy"` cheio
+   (var(--energy), fundo colorido) que os dois cartões de peso igual usavam antes desta fatia
+   (10e "hoje" — o par que sai). */
+.tf-price--neutral {
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+  color: var(--text-strong);
+}
+.tf-price--plain {
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+/* 016/T016 — centers the card's TEXT, not the boxes' cross-size. `align-items: center` (the
+   obvious first reach) switches `.tf-price`'s flex column from the default `stretch` to
+   content-sized items — which lets `.tf-price__amount` grow to its own intrinsic width instead
+   of staying clamped to the card, and an astronomical value's un-breakable integer (word-break:
+   keep-all, [F11a-002]) then pushes the card, and the PAGE, wide open: `overflow-x: auto` on
+   `.tf-price__amount` only has anything to scroll WITHIN once something upstream hands it a
+   definite (narrower-than-content) width, and stretch is that something. `text-align` alone
+   centers each item's own text inside its still-stretched (full-width) box; the amount row's
+   three inline tokens (currency/integer/decimal) get their own `justify-content: center` below,
+   since flex items don't obey the parent's `text-align`. */
+.tf-price--center {
+  text-align: center;
+}
+.tf-price--center .tf-price__amount {
+  justify-content: center;
+}
+.tf-price__label {
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  opacity: 0.9;
+}
+.tf-price__amount {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+  font-family: var(--font-numeric);
+  font-variant-numeric: tabular-nums lining-nums;
+  font-feature-settings: var(--num-features);
+  /* 016/T018-A1 — o scroll da foto do dono (item 9) era VERTICAL: com `line-height: 1` o
+     conteúdo fica 4px mais alto que a caixa, `overflow-x: auto` (abaixo) faz o overflow-y
+     computar `auto`, e o Chromium headed renderiza a barra clássica de 15px — que ainda
+     empurra o valor 7,5px do centro. 1.2 remove a CAUSA (altura), preservando o scroll-X de
+     último recurso do 015/A6; `overflow-y: hidden` esconderia a barra sem remover o overflow,
+     e nenhuma asserção headless conseguiria prová-lo. */
+  line-height: 1.2;
+  font-weight: var(--fw-bold);
+  letter-spacing: var(--tracking-tight);
+  /* D2: wrap BETWEEN the currency / integer / decimal tokens so an oversized value never
+     forces horizontal overflow on the page. */
+  flex-wrap: wrap;
+  min-width: 0;
+  /* A5 (T072) — a BASE do em mora aqui, não no __int: `cur`/`dec` são irmãos do inteiro, e
+     com o contêiner herdando 16px do body os 0,4/0,5em fotografavam 6,72px/8px — centavos
+     como decoração num produto cujo objeto é preço. As proporções sempre estiveram certas;
+     a base estava no lugar errado. */
+  font-size: var(--fs-price);
+  /* 015/A6 — last resort for a value that fits nowhere even at the clamp floor (the D2
+     regression case: a 15-digit cost times a 9-digit markup, ~10^24). `clamp()` responds to
+     the VIEWPORT, not to how long the number is, so no font size can rescue every input.
+     The three honest options are break / clip / scroll: breaking renders a DIFFERENT number,
+     clipping hides digits silently, and scrolling keeps every digit readable and truthful.
+     Scrolling wins. It never triggers in the realistic range — a six-figure price fits. */
+  overflow-x: auto;
+}
+.tf-price__cur {
+  font-size: 0.4em;
+  font-weight: var(--fw-bold);
+  opacity: 0.85;
+  transform: translateY(-0.55em);
+}
+.tf-price__int {
+  font-size: 1em;
+  min-width: 0;
+  /* 015/A6 ([F11a-002]) — the integer part NEVER breaks inside itself. D2 originally set
+     `overflow-wrap: anywhere; word-break: break-word` here to kill horizontal overflow, and it
+     worked by splitting the price mid-number: `18.130` rendered as `18.13` / `0`, and `950.096`
+     as two lines at 360px. A number cut in half is a DIFFERENT number to whoever reads it, and
+     no overflow assertion can see it (a wrapped block still reports scrollWidth === clientWidth).
+     Overflow is now absorbed by SHRINKING (the clamp below) and, as a last resort, by wrapping
+     BETWEEN the R$ / integer / decimals tokens — which `.tf-price__amount` already allows. */
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+/* A5 — os modificadores migram do __int para o __amount: se ficassem no filho, cur/dec
+   seriam calculados sobre a base default dentro de um cartão md (erro invisível a olho nu). */
+.tf-price--lg .tf-price__amount {
+  font-size: clamp(3rem, 12vw, 4.75rem);
+}
+.tf-price--md .tf-price__amount {
+  font-size: var(--fs-2xl);
+}
+.tf-price__dec {
+  font-size: 0.5em;
+  font-weight: var(--fw-bold);
+}
+.tf-price__cap {
+  font-size: var(--fs-caption);
+  opacity: 0.92;
+  font-weight: var(--fw-medium);
+}

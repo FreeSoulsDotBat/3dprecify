@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">A estratégia viva — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Simulações é o oposto exato de Orçamentos, e o produto sabe disso: <em>"Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre."</em> O registro congelado guarda um número; a simulação guarda uma <strong style="color:var(--sheet-ink)">decisão</strong> — quais marketplaces, quais taxas ajustadas, qual base de custo — e recalcula tudo na abertura.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Disso sai a regra mais incomum do lote: <strong style="color:var(--sheet-ink)">nenhuma data, em lugar nenhum.</strong> Uma simulação não tem "salvo em" nem "cotado em" — a lista diz "Atualizado há 2 dias" e a barra de contexto diz "Recalculado com os preços de hoje". Uma data ali seria uma alegação sobre valores que a tela acabou de recomputar. A segunda regra: <strong style="color:var(--sheet-ink)">"Cancelar" é proibido</strong> em toda a superfície — todo controle de saída é "Voltar".</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#20a">20a</a> a lista · <a href="#20b">20b</a> salvar · <a href="#20c">20c</a> a barra de contexto · <a href="#20d">20d</a> sem data, nunca · <a href="#20e">20e</a> o congelamento de escrita · <a href="#20f">20f</a> tamanho adversário · <a href="#20g">20g</a> 1280px.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Dois primitivos espelhados</strong> de <code>features/scenarios/scenario-list.css</code>: <code>tf-scenario-note</code> (nota de duas linhas com reticência mesmo num token de 500 caracteres sem espaço) e <code>tf-scenario-name</code> (o nome em uma linha, para que 120 caracteres não empurrem os botões fora da tela). Copy literal de <code>messages.pt-br.ts</code> § <code>scenarios</code>. Estrutura lida de <code>scenarios-list-sheet.tsx</code>, <code>save-scenario-sheet.tsx</code> e <code>scenario-context-bar.tsx</code> — a lista é uma <em>gaveta</em> aberta da Calculadora, não uma aba; <a href="#20g">20g</a> é proposta. O vocabulário de <strong style="color:var(--sheet-ink)">marketplace</strong> é a única reescrita: proposta do dono, ainda não refletida no módulo, que fala "canal".</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="20a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A lista · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A lista não é uma tela: é uma gaveta aberta de dentro da Calculadora. O motivo é medido, não estético — uma rota de dois segmentos apaga na recarga a frio, e é por isso que "Voltar para a calculadora" faz sentido no estado vazio.</p>
+<div data-theme="light" data-screen-label="20a Gaveta de simulacoes" style="position:relative;display:flex;width:390px;height:748px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div style="position:absolute;inset:0;background:rgba(0,0,0,.42)"></div>
+<div style="position:absolute;top:0;right:0;bottom:0;width:359px;background:var(--surface-card);border-left:1px solid var(--border-subtle);display:flex;flex-direction:column;gap:12px;padding:16px;overflow:hidden">
+<div style="display:flex;align-items:flex-start;gap:12px">
+<div style="flex:1;display:flex;flex-direction:column;gap:4px">
+<h2 class="tf-dialog__title" style="padding-right:0">Minhas simulações</h2>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted)">Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre.</p>
+</div>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Voltar"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button>
+</div>
+<div class="tf-inputwrap"><span class="tf-ico tf-ico--16 tf-ico-search" style="color:var(--text-muted);margin-left:12px"></span><input class="tf-input" type="text" placeholder="Buscar por nome…"></div>
+<div style="display:flex;flex-direction:column;gap:8px;overflow:hidden">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<button type="button" style="display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer">
+<span class="tf-scenario-name" style="width:100%;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Shopee vs. loja própria — vaso 15 cm</span>
+<span class="tf-scenario-note">Comparar o frete grátis da Shopee com a venda direta. Se o líquido ficar abaixo de 30 não vale a pena.</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 2 dias</span>
+</button>
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Renomear"><span class="tf-ico tf-ico--16 tf-ico-pencil"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Duplicar"><span class="tf-ico tf-ico--16 tf-ico-copy"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Excluir"><span class="tf-ico tf-ico--16 tf-ico-trash-2"></span></button></div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<button type="button" style="display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer">
+<span class="tf-scenario-name" style="width:100%;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Atacado para papelarias</span>
+<span class="tf-scenario-note">Markup 30% com o kit de mesa como base de custo.</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 3 semanas</span>
+</button>
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Renomear"><span class="tf-ico tf-ico--16 tf-ico-pencil"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Duplicar"><span class="tf-ico tf-ico--16 tf-ico-copy"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Excluir"><span class="tf-ico tf-ico--16 tf-ico-trash-2"></span></button></div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<button type="button" style="display:flex;flex-direction:column;gap:4px;width:100%;text-align:left;background:none;border:none;padding:0;font:inherit;color:inherit;cursor:pointer">
+<span class="tf-scenario-name" style="width:100%;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Mercado Livre — miniaturas</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 2 meses</span>
+</button>
+<div style="display:flex;align-items:center;justify-content:flex-end;gap:4px"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Renomear"><span class="tf-ico tf-ico--16 tf-ico-pencil"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Duplicar"><span class="tf-ico tf-ico--16 tf-ico-copy"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Excluir"><span class="tf-ico tf-ico--16 tf-ico-trash-2"></span></button></div>
+</div>
+</div>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--full" style="margin-top:auto">Carregar mais</button>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Não há botão "Abrir": o corpo do cartão inteiro é o botão, e a fileira de ações fica encostada à direita, fora dele. Um "Abrir" ao lado de três ícones daria quatro alvos para uma decisão que é uma.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Atualizado há 3 semanas" é tempo relativo de propósito. Uma data exata ali seria lida como a data dos números — e os números só existem quando a simulação abre.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A nota é opcional e o cartão não finge que ela existe: sem nota, o terceiro só encolhe. Nenhum espaço reservado, nenhum traço de preenchimento.</p>
+</div>
+
+<div id="20b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Salvar · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A folha diz exatamente o que guarda — "marketplaces, taxas ajustadas, base de custo" — e o que <em>não</em> guarda, ao prometer o recálculo na reabertura. O eco da base de custo fecha a frase com o nome real.</p>
+<div data-theme="light" data-screen-label="20b Salvar simulacao" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:4px">
+<h2 class="tf-dialog__title" style="padding-right:0">Salvar simulação</h2>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body)">Guardamos a estratégia desta tela — marketplaces, taxas ajustadas, base de custo. Ao reabrir, ela recalcula com os preços de hoje.</p>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Nome</span>
+<div class="tf-inputwrap"><input class="tf-input" type="text" value="Shopee vs. loja própria — vaso 15 cm"></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Nota (opcional)</span>
+<div class="tf-inputwrap" style="height:auto;padding:10px 12px"><textarea class="tf-input" rows="3" style="height:auto;padding:0;resize:none">Se o líquido ficar abaixo de 30 não vale a pena.</textarea></div>
+</div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted);overflow-wrap:anywhere">Base de custo: Vaso hexagonal 15 cm</p>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--full">Salvar simulação</button>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--warning">20b·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">As quatro recusas</span></div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-field">
+<span class="tf-field__label">Nome</span>
+<div class="tf-inputwrap tf-inputwrap--error"><input class="tf-input" type="text" value=""></div>
+<span class="tf-field__error">Dê um nome à simulação.</span>
+</div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-wifi"></span><div class="tf-alert__body"><p class="tf-alert__text">Salvar uma simulação precisa de conexão.</p></div></div>
+<div class="tf-alert tf-alert--warning"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Corrija os campos da calculadora antes de salvar.</p></div></div>
+<div class="tf-alert tf-alert--danger"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-circle-alert"></span><div class="tf-alert__body"><p class="tf-alert__text">Esta simulação ficou grande demais para salvar. Reduza o número de peças ou de custos e tente de novo.</p></div></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um botão só. A folha se fecha pela própria gaveta, e "Cancelar" é proibido em toda a superfície de Simulações — onde há saída explícita, ela se chama "Voltar". O motivo é o vocabulário de assinatura: "cancelar" tem um significado caro neste app.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Dê um nome à simulação." só aparece depois de digitar algo ou depois de tentar salvar. Ficar calado nas duas situações foi um defeito real e medido: o botão habilitado, o clique registrado, e nada acontecendo.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A recusa por tamanho diz o que reduzir. "Grande demais" sozinho manda a pessoa adivinhar qual dos dois eixos — peças ou custos — encolher.</p>
+</div>
+
+<div id="20c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A barra de contexto · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Abrir uma simulação não abre uma tela nova: enche a Calculadora e põe uma barra em cima dela. A barra é o que diz que aquela tela não é mais um cálculo solto.</p>
+<div data-theme="light" data-screen-label="20c Barra de contexto" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Simulação: Shopee vs. loja própria — vaso 15 cm</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Recalculado com os preços de hoje</span>
+</div>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Fechar simulação</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Abrir origem</button>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Renomear</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Duplicar</button>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm" aria-disabled="true"  style="opacity:.55;cursor:not-allowed">Salvar alterações</button>
+</div>
+</div>
+<div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Shopee</span><span class="tf-brow__sub">anúncio R$&nbsp;49,78 · cupom de frete R$&nbsp;20,00</span></span><span class="tf-brow__val">R$&nbsp;15,82</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Mercado Livre</span><span class="tf-brow__sub">anúncio R$&nbsp;45,60</span></span><span class="tf-brow__val">R$&nbsp;30,17</span></div>
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Loja própria</span><span class="tf-brow__sub">anúncio R$&nbsp;35,82</span></span><span class="tf-brow__val">R$&nbsp;34,03</span></div>
+<div class="tf-brow tf-brow--muted"><span class="tf-brow__main"><span class="tf-brow__label">Amazon</span><span class="tf-brow__sub">sem comissão informada — este marketplace não teve preço</span></span></div>
+</div>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--warning">20c·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">Com alterações não salvas</span></div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Simulação: Shopee vs. loja própria — vaso 15 cm</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Recalculado com os preços de hoje · <span class="tf-badge tf-badge--neutral tf-badge--sm">Alterações não salvas</span></span>
+</div>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Fechar simulação</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Renomear</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Duplicar</button>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm">Salvar alterações</button>
+</div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<h2 class="tf-dialog__title" style="padding-right:0">Descartar as alterações não salvas desta simulação?</h2>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><button type="button" class="tf-btn tf-btn--ghost">Voltar</button><button type="button" class="tf-btn tf-btn--danger">Descartar</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O selo "Alterações não salvas" fica <em>dentro</em> da legenda, depois de um ponto médio, não numa linha própria. A barra cresceria de altura a cada edição, e ela está em cima do formulário que a pessoa está editando.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Salvar alterações" nasce desabilitado e só acende quando há o que salvar. É a única ação primária da barra — "Salvar como novo" existe no vocabulário do produto, mas não nesta superfície: quem quer uma segunda cópia usa Duplicar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Abrir origem" aparece só quando a referência do catálogo ainda resolve. Sumiu, o botão não está lá — nunca um link quebrado, nunca um "removido".</p>
+</div>
+
+<div id="20d" style="display:flex;flex-direction:column;gap:10px;width:420px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Sem data, nunca</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A prancheta-tese do lote: os dois vocabulários lado a lado. Nada aqui é decorativo — cada par existe porque as duas abas guardam coisas de naturezas opostas e usam palavras diferentes de propósito.</p>
+<div data-theme="light" data-screen-label="20d Sem data nunca" style="width:420px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-catalog-md__kicker">Simulações</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Atualizado há 2 dias</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Recalculado com os preços de hoje</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Estratégias salvas</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Salvar alterações</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-catalog-md__kicker">Orçamentos</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Cotado em 12/08 às 19:30</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Valores congelados em 12/08</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">O que você cotou, com a data</span>
+<span style="font-size:var(--fs-body-sm);color:var(--text-body)">Recalcular hoje (cria um novo)</span>
+</div>
+</div>
+<div class="tf-aviso"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">O único campo mutável de um orçamento é o rótulo. Numa simulação, tudo é mutável menos o histórico — que não existe.</p>
+</div></div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">As duas abas foram chamadas de "Histórico" e "Cenários" antes. O par não comunicava a diferença, e renomear foi mais barato que explicá-la em cada tela.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Recalcular hoje" existe nas duas, com sentidos opostos: no orçamento cria um registro novo e preserva o antigo; na simulação é o que acontece sozinho na abertura.</p>
+</div>
+
+<div id="20e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O congelamento de escrita · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Offline e Premium pausado congelam a mesma coisa — salvar, renomear, duplicar, excluir — e deixam intacta a mesma coisa: abrir e recalcular. Mesma forma, textos diferentes, porque só uma das duas a pessoa resolve esperando.</p>
+<div data-theme="light" data-screen-label="20e Congelamento de escrita" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-wifi"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">Modo leitura offline</p>
+<p class="tf-alert__text">Suas simulações continuam aqui e podem ser abertas. Salvar, renomear, duplicar ou excluir precisam de conexão.</p>
+</div>
+</div>
+<div class="tf-alert tf-alert--warning">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-crown"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__title">Premium pausado</p>
+<p class="tf-alert__text">Suas simulações continuam aqui e podem ser abertas e recalculadas. Para salvar, renomear, duplicar ou excluir, reative o Premium.</p>
+</div>
+</div>
+<div class="tf-export"><button type="button" class="tf-btn tf-btn--secondary" aria-disabled="true" style="opacity:.55;cursor:not-allowed;align-self:flex-start">Duplicar</button><p class="tf-export__reason">Premium pausado — reative para renomear, duplicar, editar ou excluir.</p></div>
+<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><span class="tf-badge tf-badge--info">20e·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">O campo aposentado</span></div>
+<div class="tf-alert tf-alert--warning">
+<span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span>
+<div class="tf-alert__body">
+<p class="tf-alert__text">O documento salvo continha Desperdício (g). O modelo de preço atual não usa mais esse campo — o recálculo abaixo não o inclui.</p>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O aviso do campo aposentado é <strong style="color:var(--sheet-ink)">persistente, não um toast</strong>. A divergência de preço que ele explica fica na tela enquanto a simulação estiver aberta; um aviso que pisca e some deixaria a diferença sem causa.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O nome do campo aparece em pt-BR — "Desperdício (g)" —, nunca a chave técnica. Quem lê o aviso não sabe o que é <code>wasteGrams</code>, e não deveria precisar saber.</p>
+</div>
+
+<div id="20f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Tamanho adversário · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os limites reais são 120 caracteres no nome e 500 na nota, e os dois quebram um card mal desenhado. O nome numa linha só; a nota em duas, com reticência garantida mesmo num token sem nenhum espaço.</p>
+<div data-theme="light" data-screen-label="20f Tamanho adversario" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:baseline;gap:8px">
+<span class="tf-scenario-name" style="flex:1;font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Comparação de marketplaces para o vaso hexagonal de 15 cm com frete subsidiado e markup de atacado revisado em agosto</span>
+<span style="flex:0 0 auto;font-size:var(--fs-caption);color:var(--text-muted)">há 2 dias</span>
+</div>
+<p class="tf-scenario-note">observacaomuitolongasemnenhumespacoparaquebrarquetestaoclampdeduaslinhasenaoacontecerdeoflowvazarparafora
+doscartoesnemempurrarosbotoesparalongedatela</p>
+<div style="display:flex;gap:6px"><button type="button" class="tf-btn tf-btn--primary tf-btn--sm" style="flex:1 0 auto">Abrir</button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Duplicar"><span class="tf-ico tf-ico--16 tf-ico-copy"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Renomear"><span class="tf-ico tf-ico--16 tf-ico-pencil"></span></button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Excluir"><span class="tf-ico tf-ico--16 tf-ico-trash-2"></span></button></div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:2px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Simulação: Comparação de marketplaces para o vaso hexagonal de 15 cm com frete subsidiado e markup revisado</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Recalculado com os preços de hoje · <span class="tf-badge tf-badge--neutral tf-badge--sm">Alterações não salvas</span></span>
+</div>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Fechar simulação</button>
+</div>
+<div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Renomear</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Duplicar</button>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm">Salvar alterações</button>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Na barra de contexto o nome truncar é obrigatório, não estético: em duas linhas ele empurraria "Fechar simulação" para fora da tela num aparelho de 390px, e a fileira de ações desceria por cima do formulário.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O tempo relativo encurta com o espaço — "há 2 dias" sem o "Atualizado" quando o nome é longo. É a única concessão: a palavra que sai é a que se deduz.</p>
+</div>
+
+<div id="20g" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">20g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · a simulação aberta sobre a calculadora</span><span class="tf-badge tf-badge--warning">proposta</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Proposta, não leitura do código.</strong> O incremento de desktop do produto cobre quatro abas — Catálogo, Kits, Orçamentos, Conta — e não tem prancheta de Simulações; a coluna fixa de 300px aqui é invenção minha. Aqui a diferença com Orçamentos fica óbvia no layout: não há painel de detalhe, porque não há documento para ler. A simulação <em>é</em> a calculadora preenchida, e a lista fica ao lado para trocar de estratégia sem fechar a atual.</p>
+<div data-theme="light" data-screen-label="20g Desktop Simulacoes" style="display:flex;width:1280px;height:712px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#20g" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#20g"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#20g"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></a></li>
+<li><a class="tf-nav__item" href="#20g"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></a></li>
+<li><a class="tf-nav__item" href="#20g"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:24px 32px;overflow:hidden">
+<div class="tf-card tf-card--accent" style="display:flex;align-items:center;gap:16px">
+<span class="tf-scenario-name" style="flex:1;font-size:var(--fs-md);font-weight:var(--fw-semibold);color:var(--text-strong)">Simulação: Shopee vs. loja própria — vaso 15 cm</span>
+<span style="flex:0 0 auto;font-size:var(--fs-caption);color:var(--text-muted)">Recalculado com os preços de hoje</span>
+<div style="flex:0 0 auto;display:flex;gap:8px"><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Abrir origem</button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Duplicar</button><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm">Fechar simulação</button></div>
+</div>
+<div style="flex:1;min-width:0;display:flex;gap:24px;overflow:hidden">
+<div style="flex:0 0 300px;display:flex;flex-direction:column;gap:8px;overflow:hidden">
+<h2 class="tf-title" style="margin:0;font-size:var(--fs-base);color:var(--text-strong)">Minhas simulações</h2>
+<div class="tf-card tf-card--pad-sm tf-catalog-md__card--selected" style="display:flex;flex-direction:column;gap:4px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Shopee vs. loja própria — vaso 15 cm</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 2 dias</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);color:var(--text-body)">Atacado para papelarias</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 3 semanas</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<span class="tf-scenario-name" style="font-size:var(--fs-body-sm);color:var(--text-body)">Mercado Livre — miniaturas</span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Atualizado há 2 meses</span>
+</div>
+</div>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px;overflow:hidden">
+<div style="display:flex;gap:16px">
+<div class="tf-price tf-price--plain tf-price--md" style="flex:1">
+<span class="tf-price__label">Preço varejo</span>
+<span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">41</span><span class="tf-price__dec">,33</span></span>
+<span class="tf-price__cap">markup 50%</span>
+</div>
+<div class="tf-price tf-price--plain tf-price--md" style="flex:1">
+<span class="tf-price__label">Preço atacado</span>
+<span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">35</span><span class="tf-price__dec">,82</span></span>
+<span class="tf-price__cap">markup 30%</span>
+</div>
+</div>
+<h3 class="tf-title" style="margin:0;font-size:var(--fs-base);color:var(--text-strong)">Preços por marketplace</h3>
+<table class="tf-table">
+<thead><tr><th scope="col">Marketplace</th><th scope="col" style="text-align:right">Anúncio</th><th scope="col" style="text-align:right">Líquido</th><th scope="col">Frete</th></tr></thead>
+<tbody>
+<tr><td class="tf-table__name">Shopee</td><td class="tf-table__num">R$&nbsp;49,78</td><td class="tf-table__num">R$&nbsp;15,82</td><td>cupom R$&nbsp;20,00</td></tr>
+<tr><td class="tf-table__name">Mercado Livre</td><td class="tf-table__num">R$&nbsp;45,60</td><td class="tf-table__num">R$&nbsp;30,17</td><td>—</td></tr>
+<tr><td class="tf-table__name">Loja própria</td><td class="tf-table__num">R$&nbsp;35,82</td><td class="tf-table__num">R$&nbsp;34,03</td><td>—</td></tr>
+<tr><td class="tf-table__name">Amazon</td><td class="tf-table__num">—</td><td class="tf-table__num">—</td><td>sem comissão informada</td></tr>
+</tbody>
+</table>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Base de custo: Vaso hexagonal 15 cm · referência do catálogo. Custo R$&nbsp;27,55.</p>
+</div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O marketplace sem comissão informada mostra travessões, não zeros. Com comissão zero o motor devolveria anúncio igual à base — um número que existe e não é um preço de marketplace, e a Calculadora já se recusa a exibi-lo.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "id": "ficha-resumo-produto-kit-desktop",
+  "nome": "Ficha de resumo de Produto/Kit no desktop (coluna direita que não edita)",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/catalog/catalog-panel.tsx",
+    "apps/web/src/features/catalog/products-panel.tsx"
+  ],
+  "oQueFoiInferido": "No ramo `else` das linhas 355-363, a coluna de 560px renderiza quatro coisas: kicker (\"Produto salvo\"), nome, as ações de ícone no canto (`rowActions` — copiar/lixeira ghost), o MESMO `summaryOf(selected)` já exibido no cartão que o vendedor acabou de clicar, e um Button secundário \"Abrir para editar\". Para produtos esse resumo são só os NOMES das referências (\"PLA Prata · Ender 3 V3\") — nenhum número: nem custo, nem preço, nem gramas, nem tempo. Inferido: que meia tela pode repetir uma linha; e a ausência de qualquer conteúdo próprio da ficha.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "560px — a metade da largura útil — mostram MENOS informação do que o cartão já mostrava. O vendedor clica num produto e não descobre nada novo sobre ele, e a ficha do canvas ao lado prova que havia o que mostrar.",
+  "prioridade": "ALTA",
+  "refutacao": "CORRIJO A CLASSIFICAÇÃO DO MAPEADOR: era NENHUMA, é PROTOTIPO_PARCIAL. (4) O canvas desenha SIM a ficha de produto e de kit no mesmo viewport — o `<aside>` é único e serve as quatro seções, e o `catalog()` dá a `prod` e a `kit` os mesmos `fields` que dá a filamento/impressora: produto = Nome do produto, Gramas usadas, Tempo de impressão, Taxa de falha, com `refs:1`, `filamento`, `impressora` alimentando o bloco \"Referências\" (linhas 141-150) e `needs:1` acendendo o alerta; kit = Nome do kit, Peças, Custo total, Markup varejo. O rodapé desenhado é \"Salvar alterações\" + \"Usar no cálculo\", e a cabeça traz \"Duplicar\" e \"Excluir\" como botões DE TEXTO, não ícones ghost. Ou seja: existe desenho para o espaço, e ele é MAIS RICO que o construído. O achado sobrevive porque o que foi construído — o resumo mínimo — não está desenhado em lugar nenhum; a escolha de não recompor o editor de produto em 560px foi registrada só em texto (`research.md` §E, linhas 111-113: \"Rejeitado: recompor o formulário completo de Produto dentro de 560px\"), e texto de decisão não é desenho. O que ninguém desenhou é o que uma ficha-resumo deve mostrar quando não edita. (1)/(2)/(3) Não existe coluna lateral nenhuma no protótipo — `CatalogScreen.jsx` é uma coluna só.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

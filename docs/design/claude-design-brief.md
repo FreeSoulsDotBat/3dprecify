@@ -35,7 +35,9 @@ zone). Optional subtle glow/rim-light on hero interactive elements (as on the br
 Purple is the signature; orange and cyan support.
 
 ### Typography
-- **Peace Sans** — display/titles and the brand name; always UPPERCASE + Bold. (Logo/headlines.)
+- **Peace Sans** — display/titles and the brand name; always UPPERCASE + Bold. (Logo/headlines.) *(Web `.woff2`
+  not yet vendored — until then **Paytone One** is the loaded stand-in; titles fall back to Inter bold if
+  neither loads. Vendor the real Peace Sans to close this.)*
 - **Lilita One** — secondary titles/subtitles, mostly UPPERCASE.
 - **Inter** — body, UI text, forms, labels (the web/body face).
 - **Numbers:** per the manual, the type system is **Peace Sans / Lilita One / Inter — no separate monospace**.
@@ -60,8 +62,8 @@ negative space; confident focal logo/hero with breathing room.
 - **Mobile-first** (design at ≤414px width first), then responsive up to desktop.
 - **PWA**: installable, works offline for calculation; design offline/empty/error states.
 - **Accessibility: WCAG 2.2 AA** — contrast ≥4.5:1, touch targets ≥44px, visible focus, labeled inputs.
-- **Light theme is the default (v1); dark theme is first-class** (brand is high-contrast both ways) — provide
-  tokens, not one-off colors.
+- **Dark theme is the default (v1); light theme is first-class** (brand is high-contrast both ways) — provide
+  tokens, not one-off colors. *(Default flipped to dark by Jonatan, 2026-07-01.)*
 - Copy: **pt-BR**, tone **direct / technical-cordial** — precise, talks in numbers, no flattery.
 
 ## 4. UX foundations (decided — design to these)
@@ -72,8 +74,10 @@ negative space; confident focal logo/hero with breathing room.
 3. **Result:** suggested price as a hero, plus a **full itemized breakdown** (material, energy, machine, labor,
    failure, margin, marketplace fee → net), **varejo vs atacado** comparable side by side. Make the math feel
    transparent and trustworthy.
-4. **Inputs:** **catalog-driven** — select saved filament/printer; manual entry as fallback. (Free users see the
-   premium upsell when they hit persistence limits — design an honest, non-dark-pattern upsell.)
+4. **Inputs:** **catalog-driven** — select saved filament/printer; manual entry as fallback. (Freemium is
+   **binary, no quota**: computing + viewing the breakdown is always free; **any persistence** — save, catalog,
+   history, export, marketplace scenarios — is Premium. Design an honest, non-dark-pattern upsell fired only at
+   the persistence boundary, never on the calculation. Authoritative source: `docs/product/business-rules.md`.)
 5. **States:** design loading / empty / error / success / disabled for every interactive surface. Errors show a
    friendly pt-BR message (never a raw error/stack).
 6. **Input affordances:** `R$` prefix, comma decimal, unit suffixes (g, kg, kWh, h), numeric keypad on mobile.

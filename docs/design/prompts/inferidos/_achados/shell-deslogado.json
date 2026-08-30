@@ -1,0 +1,18 @@
+{
+  "id": "shell-deslogado",
+  "nome": "Shell no estado deslogado (sem identidade, sem \"Entrar\")",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/app/app-shell.tsx",
+    "apps/web/src/widgets/top-bar/top-bar.tsx",
+    "apps/web/src/widgets/app-nav/app-nav.tsx",
+    "apps/web/src/app/router.tsx"
+  ],
+  "oQueFoiInferido": "O shell inteiro é montado para o ANÔNIMO: `router.tsx` deixa `/calcular`, `/catalogo`, `/kits` e `/historico` públicos (só `/conta` chama `requireAuth` incondicionalmente; `/catalogo` e `/historico` gateiam apenas quando trazem `?produto=`/`?snapshot=`). Nesse estado `AccountChrome` retorna `null` (top-bar.tsx: `if (status !== \"authenticated\") return null`), então a barra superior fica com logo + ícone de tema e NADA mais — verifiquei por busca: a palavra \"Entrar\" não aparece em nenhum arquivo de `widgets/` ou `app/` (só em comentários do router sobre os teasers das PÁGINAS). O único caminho para entrar é tocar em \"Conta\" e ser redirecionado. Inferidos: a barra superior sem identidade, a inexistência de convite para criar conta no chrome, e a ausência de qualquer distinção visual entre os 5 itens de menu (nenhum cadeado/badge separa público de gateado).",
+  "autoridade": "NENHUMA",
+  "impacto": "O caminho de entrada que o produto vende (\"calcular é grátis\") acontece num shell sem porta: o vendedor deslogado não tem convite visível para criar conta e só descobre a fronteira do freemium colidindo com um redirecionamento. É a fronteira comercial acontecendo sem desenho.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei prova nas 4 autoridades e não achei nenhuma. §E3 descreve o app shell como o destino DEPOIS do login e §F item 7 fecha o ciclo como \"Login/logout fullscreen (Login E2 ↔ shell; Sair na Conta volta ao Login)\" — em E1–E9 não existe shell anônimo, e a matriz §G não tem linha para ele. A auditoria de 2026-07-02 não cita shell deslogado em nenhuma das três rodadas (V1/V2/V3). `.design-import` NÃO exportou TopBar nem TabBar em JSX — confirmei por listagem completa: o pacote tem exatamente 2 componentes (`data/PriceHero.jsx`, `forms/IconButton.jsx`) e 6 telas; o `TopBar` só aparece CONSUMIDO dentro delas, sempre como `<TopBar title=\"Conta\"/>` etc., nunca definido. No canvas 018 a top-bar tem sempre `maker@truthsforge.com` + \"Sair\" — só o estado autenticado; e o `isFree` do canvas é o usuário LOGADO sem premium, que não é este estado. Tentativa extra de derrubada: verifiquei se algum teaser do canvas fazia as vezes de convite de entrada no chrome — os teasers desenhados (`tf-premium-teaser`) vivem no CONTEÚDO das abas e dizem \"Assinar Premium\", nunca \"Entrar\".",
+  "sobreviveu": true,
+  "area": "shell"
+}

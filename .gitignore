@@ -22,10 +22,22 @@ dist/
 build/
 .next/
 coverage/
+.coverage
+htmlcov/
 *.log
 npm-debug.log*
 pnpm-debug.log*
 yarn-error.log*
+
+# --- Test / tooling artifacts ---
+playwright-report/
+test-results/
+blob-report/
+.playwright/
+# Browser-MCP session artifacts (page snapshots the playwright MCP writes during qa-produto runs)
+.playwright-mcp/
+apps/web/dev-dist/
+.import_linter_cache/
 
 # --- Python ---
 __pycache__/
@@ -42,3 +54,36 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+.design-import/
+
+# graphify knowledge graph output (generated)
+graphify-out/
+
+# rtk tee output (generated, RTK_TEE_DIR)
+.rtk-tee/
+
+# 013 audit remediation (P-02): `.config/rtk/filters.toml` is a USER-GLOBAL rtk template that got
+# written into the project directory, where rtk never reads it (it reads ~/.config/rtk/). It is
+# inert debris — comments and `schema_version` only, no actual filters. Ignored rather than deleted;
+# delete it by hand if you want it gone.
+.config/
+
+# Playwright MCP scratch output (browser snapshots/screenshots from in-session debugging)
+.playwright-mcp/
+
+# 015 — screenshots da homologacao pre-provisionamento (31 MB, 208 imagens).
+# Os achados em docs/homologacao/achados/ ja citam a geometria medida de cada um; as imagens
+# sao regeneraveis re-rodando a homologacao visual e nao valem o peso permanente no historico
+# (decisao do dono, 2026-08-03).
+docs/homologacao/evidencias/f11a/
+docs/homologacao/evidencias/f11b/
+specs/016-correcao-homologacao/evidencias/
+
+# Review do PR #58 — o relatório BRUTO do Playwright da homologação é artefato de máquina, e uma
+# cópia dele chegou a ser versionada num estado que dizia "No tests found": evidência falsa dentro
+# do repositório. Os JSONL de defeitos/execuções continuam versionados (são a evidência que o
+# relatório cita); o dump bruto, não.
+docs/homologacao/automatizada/resultados/playwright-raw.json
+firebase.e2e-local.json
+# 017 — os vereditos que os jobs de coleta deixam para o `publicar` sao artefatos de RUN, nunca commit.
+packages/fee-ingest/artifacts/

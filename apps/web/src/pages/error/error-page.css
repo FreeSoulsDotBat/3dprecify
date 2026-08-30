@@ -1,0 +1,34 @@
+/* Generic error screen (T054 / SS-3). Centered on-brand column: the honest title/body, the reload
+   action, and a discreet support-code line (019/T030: sem grafismo — prancheta 24c). Reduced-motion
+   safe. */
+.tf-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 28rem;
+  margin-inline: auto;
+  padding-block: var(--space-8);
+  text-align: center;
+}
+.tf-error__title {
+  margin: 0;
+  font-size: var(--fs-xl);
+}
+.tf-error__body {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: var(--lh-normal);
+}
+.tf-error__actions {
+  margin-top: var(--space-1);
+}
+.tf-error__support {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: var(--fs-caption);
+}
+.tf-error__code {
+  font-variant-numeric: tabular-nums;
+  word-break: break-all;
+}

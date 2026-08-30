@@ -1,0 +1,16 @@
+{
+  "id": "bloco-pecas-do-kit-no-orcamento",
+  "nome": "Bloco \"Peças do kit\" dentro do registro congelado",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+    "apps/web/src/pages/historico/historico-page.css"
+  ],
+  "oQueFoiInferido": "Uma lista de `<span class=tf-historico__piece>` com baseline compartilhada: nome capturado da peça à esquerda, a contagem em `.tf-historico__qty` cinza ('3 un' — nunca '3×', porque o total já vem multiplicado), e o total em `<strong>` empurrado por `margin-inline-start:auto`, com '—' quando não há valor para a base cotada, sob um `<h2 class=tf-historico__section>` em caixa alta. Inferido: como essas três colunas se comportam em 390px quando o nome é longo (nada trunca — não há ellipsis nessa classe, ao contrário do rótulo do card); o fallback 'Cálculo avulso' para peça sem nome; e a ausência de qualquer separador entre peças (`gap-1`), o que faz um kit de 8 peças virar um bloco de texto contínuo.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "É a prova itemizada que o cliente recebe de um orçamento de kit. Sem desenho, o nome longo de uma peça empurra o valor e a leitura 'quantidade × preço' fica ambígua justo onde o número já vem multiplicado.",
+  "prioridade": "MEDIA",
+  "refutacao": "Confirmei a ausência lendo a aba Orçamentos inteira do canvas: a aside vai do card da alegação direto para um grid de duas colunas com 'Detalhamento' (8 linhas `tf-brow`) e, na coluna direita, 'Preços por canal' e 'Ficha técnica'. Não há bloco de peças de kit em lugar nenhum da aba — o registro exemplar é peça única. (A classe `tf-historico__piece` até aparece no canvas, mas nas linhas de CANAL 'anúncio'/'líquido', não em peças.) No protótipo é ainda mais claro: ele é de 2026-07-02, anterior ao próprio conceito de kit (E3, PR-A de 2026-07-11) — §E6 não tem peças e `HistoryScreen.jsx` não tem. Resta `ux-history.md` §3, que mostra a linha em ASCII como 'Vaso G 3× R$ 135,00'; e a troca de '3×' por '3 un' veio de review de código (o comentário está em `snapshot-detail-page.tsx`, 'A COUNT, not a \"×\" factor… review PR-A, C2'), não de desenho.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

@@ -21,6 +21,17 @@ web + desktop + Android/Google Play, internationalization-ready).
 - Google Play Billing vs. external PSP (Mercado Pago) for recurring subscriptions consumed in-app.
 - Cross-platform entitlement model (server-side authoritative).
 
+## Code orientation (ADR-0014)
+The repo keeps a graphify knowledge graph, but this agent has no Bash and cannot run `graphify
+query`. For structural orientation — "what's in this area", "how does subsystem Z connect" — Read
+`graphify-out/GRAPH_REPORT.md` FIRST (§Community Hubs names the areas; jump to the relevant
+community section). Reserve Grep/Glob for exact-string lookups and known files. The report
+refreshes on each `develop` merge.
+
 ## Operating principles (Constitution)
+- **Principle VIII (NON-NEGOTIABLE — no inference)**: never infer structure, architecture, inter-app
+  communication, or coding standards; they are decided WITH the owner before implementation. On any unresolved
+  such point, STOP and surface ≥3 options (pros, cons, scalability, confidence %) — never default. Conventions
+  only for product/UX/content.
 - Scalability & quality first; truth over approval with confidence %; lean docs.
 - Communicate with the user in Brazilian Portuguese (pt-BR).

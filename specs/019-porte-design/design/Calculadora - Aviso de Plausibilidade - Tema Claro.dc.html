@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">O aviso de plausibilidade — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Sétimo lote da Calculadora: a terceira categoria de mensagem — nem dica, nem erro. Ela aparece quando o vendedor digita um número perfeitamente válido que provavelmente significa outra coisa: 120 no campo que pede kW, 3 no campo que pede horas de vida útil, 0,12 no campo que pede 12%. Nada é recusado, e a conta continua saindo.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">É a defesa principal do vendedor leigo contra erro de casa decimal, e hoje ela é <strong style="color:var(--sheet-ink)">uma cor de texto no lugar da dica</strong> — sem ícone, sem título, sem afordância. A matriz de estados do design system só tem <code>error</code>; busca por "aviso" e "plausib" nas quatro autoridades de desenho devolve zero. Autoridade de desenho: nenhuma.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Suas decisões, aplicadas: erro e aviso <strong style="color:var(--sheet-ink)">aparecem juntos</strong>, a recusa em cima e a lição embaixo · o aviso entra <strong style="color:var(--sheet-ink)">ao sair do campo</strong>, não a cada tecla · pode ser <strong style="color:var(--sheet-ink)">dispensado com "Entendi"</strong>, e não volta para o mesmo valor <strong style="color:var(--sheet-ink)">nesta sessão</strong> · a seção ganha <strong style="color:var(--sheet-ink)">uma marca discreta</strong>, que não conta os dispensados · e a categoria passa a falar uma língua só.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">O padrão que faltava.</strong> O aviso aparecia em três formas diferentes — texto azul sem fundo abaixo do campo, <code>tf-alert</code> no resultado, parágrafo solto em <code>text-sm</code> na linha de kit — porque a categoria nunca teve componente próprio. Agora tem: <code>tf-aviso</code>, uma anatomia só (ícone · texto · dispensa) que muda de largura e nunca de tipo, cor ou forma. Ele não é <code>tf-alert</code> de propósito: <strong style="color:var(--sheet-ink)">alerta é o que interrompe, aviso é o que acompanha</strong> — o número continua válido e a conta continua saindo. E o fundo compõe o tom translúcido sobre uma base fixa, para o mesmo aviso não mudar de cor conforme o que estiver atrás: solto na página ele saía mais escuro; dentro de um cartão, mais claro.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#14a">14a</a> a anatomia, ao lado da do erro · <a href="#14b">14b</a> o campo em quatro estados · <a href="#14c">14c</a> três avisos e a marca da seção · <a href="#14d">14d</a> o aviso no resultado · <a href="#14e">14e</a> a linha de peça de kit · <a href="#14f">14f</a> 1280px, a linha de dois campos · <a href="#14g">14g</a> 360px, o número mais longo.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Copy nova para você aprovar</strong>, nas três frases que suas decisões exigiram e que o produto não tem: "Corrija o campo acima para calcular." (fecha a lição quando há recusa junto — "Nada foi recusado." mentiria ali), "Entendi" (o botão que dispensa) e "2 avisos" (a marca da seção). <strong style="color:var(--sheet-ink)">Um defeito de texto que o desenho já mostra certo</strong>: o valor digitado hoje perde os centavos dentro da frase — sai "R$&nbsp;6.000.061,6" e "R$&nbsp;3.000" em vez de R$&nbsp;6.000.061,60 e R$&nbsp;3.000,00. E <strong style="color:var(--sheet-ink)">uma consequência de acessibilidade</strong>: entrando no <code>blur</code> e podendo ser dispensado, o aviso deixa de ser só descrição do campo e passa a ser anunciado quando aparece.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="14a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A anatomia · aviso e erro lado a lado</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A diferença entre os dois não pode ser só a matiz: quem enxerga mal leria recusa onde não houve. Então são três diferenças somadas — o ícone (informação contra alerta), a moldura do campo (intacta contra vermelha) e a afordância (o aviso pode ser dispensado, o erro não).</p>
+<div data-theme="light" data-screen-label="14a Anatomia" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Aviso · o campo continua válido</span>
+<div class="tf-field">
+<span class="tf-field__label">Peso do rolo</span>
+<div class="tf-inputwrap" style="max-width:50%"><input class="tf-input tf-input--num" type="text" value="1.000"><span class="tf-inputwrap__affix">kg</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira o peso do rolo: 1.000 kg. O rolo comum tem 1 kg — se você informou gramas, 1.000 g são 1 kg. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+</div>
+
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Erro · o campo foi recusado</span>
+<div class="tf-field">
+<span class="tf-field__label">Peso do rolo</span>
+<div class="tf-inputwrap tf-inputwrap--error" style="max-width:50%"><input class="tf-input tf-input--num" type="text" value="0" aria-invalid="true"><span class="tf-inputwrap__affix">kg</span></div>
+<span class="tf-field__error">O peso do rolo deve ser maior que zero.</span>
+</div>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">
+<p style="margin:0"><strong style="color:var(--sheet-ink)">Ícone</strong> — <code>tf-aviso__icon</code>, 14px, alinhado à primeira linha. Informação, não alerta: é a metade do argumento que distingue o aviso do erro sem depender da matiz.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">Texto</strong> — <code>tf-aviso__text</code>, legenda em <code>--fs-caption</code>, com o exemplo de conversão intacto. A frase nunca é resumida: o exemplo é a parte útil.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">Entendi</strong> — <code>tf-aviso__action</code>, 44px de alvo, dentro do bloco e nunca sobre o campo. Some o aviso, não o valor.</p>
+<p style="margin:0"><strong style="color:var(--sheet-ink)">Altura máxima</strong> — a frase mais longa do conjunto (consumo médio, 183 caracteres) ocupa cinco linhas numa coluna de 390px e sete na célula de 238px do desktop — 166px e 202px de bloco. O teto é por largura, não absoluto: é essa a altura que o campo seguinte tem de aguentar ser empurrado.</p>
+</div>
+</div>
+</div>
+
+
+<div id="14b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O campo em quatro estados · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Dica e aviso juntos, o aviso com o campo ativo, e a novidade que você decidiu: erro e aviso convivendo. A recusa vem em cima porque é o que bloqueia; a lição embaixo porque é o que ensina — e ali ela troca o fecho, porque "Nada foi recusado." mentiria logo abaixo de uma recusa.</p>
+<div data-theme="light" data-screen-label="14b Quatro estados" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Dica e aviso no mesmo campo</span>
+<div class="tf-field">
+<span class="tf-field__label">Consumo médio<button type="button" class="tf-infotip__trigger" aria-label="Sobre o consumo médio"><span class="tf-ico tf-ico--14 tf-ico-info"></span></button></span>
+<div class="tf-inputwrap" style="max-width:50%"><input class="tf-input tf-input--num" type="text" value="120"><span class="tf-inputwrap__affix">kW</span></div>
+<span class="tf-field__hint">Consumo médio real da impressora, não a potência de placa (~0,12 kW).</span>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira o consumo: 120 kW. Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A dica é a regra e fica em cinza; o aviso é a leitura do número digitado e fica em azul com ícone. Sem ler, dá para saber qual é qual.</p>
+</div>
+
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Com o campo ativo</span>
+<div class="tf-field">
+<span class="tf-field__label">Tarifa de energia</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="12"><span class="tf-inputwrap__affix">/kWh</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a tarifa: R$&nbsp;12 por kWh está bem acima do que se paga no Brasil (perto de R$&nbsp;0,85). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Ele entra ao sair do campo, como você decidiu — quem digita 1200 não vê mais o aviso de 120 piscar no meio do caminho. Com o teclado virtual aberto, o aviso nasce acima da dobra porque o campo ainda está ativo.</p>
+</div>
+
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Erro e aviso juntos</span>
+<div class="tf-field">
+<span class="tf-field__label">Vida útil da máquina</span>
+<div class="tf-inputwrap tf-inputwrap--error" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="0" aria-invalid="true"><span class="tf-inputwrap__affix">h</span></div>
+<span class="tf-field__error">A vida útil deve ser maior que zero.</span>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.</p>
+</div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Era este o caso que a regra antiga perdia: a recusa dizia "maior que zero" e a lição sobre anos × horas evaporava. Aqui o "Entendi" não aparece — não se dispensa uma lição que acompanha uma recusa.</p>
+</div>
+
+</div>
+</div>
+
+
+<div id="14c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Três avisos ao mesmo tempo · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O estado que ninguém desenhou e o que mais assusta: três blocos que somam 480px, mais que a altura útil de um iPhone SE. A marca da seção é a resposta que você escolheu — discreta, ao lado do título, e mais silenciosa que os próprios avisos. Ela não conta os dispensados: quem já leu e resolveu vê a marca baixar.</p>
+<div data-theme="light" data-screen-label="14c Tres avisos" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide);color:var(--text-strong);flex:1">Energia</span><span style="display:flex;align-items:center;gap:4px;font-size:var(--fs-caption);color:var(--info-text)"><span class="tf-ico tf-ico--14 tf-ico-info"></span>2 avisos</span></div>
+<div class="tf-field">
+<span class="tf-field__label">Consumo médio</span>
+<div class="tf-inputwrap" style="max-width:50%"><input class="tf-input tf-input--num" type="text" value="120"><span class="tf-inputwrap__affix">kW</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira o consumo: 120 kW. Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Tarifa de energia</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="12"><span class="tf-inputwrap__affix">/kWh</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a tarifa: R$&nbsp;12 por kWh está bem acima do que se paga no Brasil (perto de R$&nbsp;0,85). Na conta de luz, divida o valor total pelos kWh do mês. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide);color:var(--text-strong);flex:1">Máquina</span><span style="display:flex;align-items:center;gap:4px;font-size:var(--fs-caption);color:var(--info-text)"><span class="tf-ico tf-ico--14 tf-ico-info"></span>1 aviso</span></div>
+<div class="tf-field">
+<span class="tf-field__label">Vida útil da máquina</span>
+<div class="tf-inputwrap" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="3"><span class="tf-inputwrap__affix">h</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a vida útil: 3 horas é menos de uma semana ligada. Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A marca fica no título da seção, em legenda, sem fundo e sem borda — não é badge nem alerta. Ela existe para quem rolou rápido e não viu o azul lá embaixo, e some quando a seção não tem mais aviso ativo.</p>
+</div>
+</div>
+
+
+<div id="14d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O aviso no resultado · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Aqui não há campo culpado, então o aviso ocupa a largura toda junto ao preço. Mesmo <code>tf-aviso</code> do campo, sem dispensa: não há campo para corrigir, e um "Entendi" que não some nada é botão vazio. Quando as duas frases disparam juntas, elas param de ser um parágrafo só: são dois fatos, e cada um pede uma linha.</p>
+<div data-theme="light" data-screen-label="14d Aviso no resultado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">Preço zerado</span>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">O custo total ficou em R$&nbsp;0,00 e o preço de venda também — por esse preço não dá para vender. Confira os campos de custo que ficaram zerados. Nada foi recusado.</p>
+</div></div>
+<div class="tf-price tf-price--md tf-price--accent tf-price--center"><span class="tf-price__label">Preço varejo</span><span class="tf-price__amount"><span class="tf-price__cur">R$</span><span class="tf-price__int">0</span><span class="tf-price__dec">,00</span></span><span class="tf-price__cap">markup 50%</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:10px">
+<span class="tf-catalog-md__kicker">As duas frases, separadas</span>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">O custo total ficou em R$&nbsp;0,00 e o preço de venda também — por esse preço não dá para vender. Confira os campos de custo que ficaram zerados. Nada foi recusado.</p>
+<p class="tf-aviso__text">Confira os custos: R$&nbsp;6.000.061,60 para uma peça é muito acima do que costuma acontecer. Normalmente é uma casa decimal a mais em algum campo. Nada foi recusado.</p>
+</div></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Hoje as duas viram um parágrafo só, e o valor sai sem os centavos — "R$&nbsp;6.000.061,6". Aqui aparece como o produto formata dinheiro em todo o resto da tela.</p>
+</div>
+</div>
+</div>
+
+
+<div id="14e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A linha de peça de kit · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O terceiro lugar onde a categoria aparecia com um terceiro tamanho: aqui era parágrafo solto em <code>text-sm</code>, maior que o do formulário. Agora é o mesmo <code>tf-aviso</code>, só dentro de um cartão menor — a largura muda, a anatomia não.</p>
+<div data-theme="light" data-screen-label="14e Linha de kit" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;align-items:center;gap:8px;min-height:44px"><span class="tf-ico tf-ico--16 tf-ico-chevron-down" style="color:var(--text-muted)"></span><span style="flex:1;min-width:0;font-size:var(--fs-body-sm);font-weight:var(--fw-medium);color:var(--text-strong)">Peça 2 · Suporte de fone</span><span class="tf-tnum" style="font-size:var(--fs-body-sm)">R$&nbsp;9,40</span></div>
+<div class="tf-field">
+<span class="tf-field__label">Quantidade</span>
+<div class="tf-inputwrap" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="3.000.000.000"></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a quantidade: 3.000.000.000. O máximo por peça é 2.147.483.647. Acima disso o kit não consegue ser salvo. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="14f" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · a linha em que só um campo avisa</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Dois campos dividem a linha e só um avisa: o aviso cresce para baixo, dentro da célula, e não empurra o vizinho. Os rótulos já reservam duas linhas para manter os inputs alinhados; o aviso é o novo risco, e a regra que o resolve é a mesma — a mensagem pertence à célula, nunca à linha.</p>
+<div data-theme="light" data-screen-label="14f Desktop dois campos" style="position:relative;width:1280px;height:760px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);border-radius:20px;color:var(--text-body);font-family:var(--font-body);display:flex">
+<nav class="tf-nav tf-nav--sidebar" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li><span class="tf-nav__item" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-box"></span><span class="tf-nav__label">Minhas simulações</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></span></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div class="tf-topbar" style="justify-content:flex-start"><img src="assets/logo/logo-inteira-black.png" alt="Truth's Forge" style="height:40px;width:auto;flex-shrink:0"><div class="tf-topbar__actions"><button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema"><span class="tf-ico tf-ico-sun"></span></button></div></div>
+<div style="flex:1;min-height:0;padding:32px;overflow:hidden">
+<div style="max-width:1120px;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start">
+<div class="tf-card" style="min-width:0;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide);color:var(--text-strong);flex:1">Energia</span><span style="display:flex;align-items:center;gap:4px;font-size:var(--fs-caption);color:var(--info-text)"><span class="tf-ico tf-ico--14 tf-ico-info"></span>1 aviso</span></div>
+<div class="tf-costs-grid">
+<div class="tf-field">
+<span class="tf-field__label">Consumo médio</span>
+<div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" value="120"><span class="tf-inputwrap__affix">kW</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira o consumo: 120 kW. Acima de 5 kW já é faixa de chuveiro elétrico — uma impressora fica perto de 0,12 kW. A etiqueta costuma trazer watts: 120 W são 0,12 kW. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Tarifa de energia</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="1,00"><span class="tf-inputwrap__affix">/kWh</span></div>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A tarifa fica alinhada ao topo da célula, junto do seu rótulo — ela não desce para acompanhar o aviso do vizinho.</p>
+</div>
+<div class="tf-card" style="color:var(--text-muted);font-size:var(--fs-caption)">Coluna direita</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="14g" style="display:flex;flex-direction:column;gap:10px;width:360px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">14g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">360px · o número mais longo no campo mais estreito</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A frase do tempo de impressão (148 caracteres) e o número mais longo do produto (3.000.000.000) na largura em que este projeto já mediu transbordo duas vezes. O número cabe inteiro numa linha: quebrar um numeral no meio é pior que quebrar a frase.</p>
+<div data-theme="light" data-screen-label="14g Estresse 360" style="width:360px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-field">
+<span class="tf-field__label">Tempo de impressão</span>
+<div class="tf-costs-grid">
+<div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" value="150"><span class="tf-inputwrap__affix">h</span></div>
+<div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" value="0"><span class="tf-inputwrap__affix">min</span></div>
+</div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira o tempo: 150 horas equivalem a 6,3 dias imprimindo sem parar. Se você quis dizer minutos, use o campo de minutos ao lado. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-field">
+<span class="tf-field__label">Quantidade</span>
+<div class="tf-inputwrap"><input class="tf-input tf-input--num" type="text" value="3.000.000.000"></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a quantidade: 3.000.000.000. O máximo por peça é 2.147.483.647. Acima disso o kit não consegue ser salvo. Nada foi recusado.</p>
+</div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Os dois numerais de dez dígitos ficam inteiros. A frase quebra onde precisar, mas nunca dentro do número — é o número que o vendedor precisa reconhecer como o dele.</p>
+</div>
+</div>
+</div>
+
+</div>
+
+<footer style="display:flex;flex-direction:column;gap:8px;max-width:880px;border-top:1px solid rgba(255,255,255,.12);padding-top:20px">
+<p style="margin:0;font-size:13px;line-height:1.7;color:var(--sheet-ink-2)">Uma família nova, e só uma: <code>tf-aviso</code> (<code>__icon</code>, <code>__body</code>, <code>__text</code>, <code>__action</code>), que substitui as três formas divergentes e aposenta <code>tf-field__aviso</code> como estilo solto. Ela não é variante de <code>tf-alert</code>: os dois convivem na mesma tela e precisam ser distinguíveis — alerta interrompe, aviso acompanha. O que muda no código: o gatilho passa do <code>change</code> para o <code>blur</code>, o aviso sai do <code>aria-describedby</code> puro e passa a ser anunciado ao aparecer, o "Entendi" guarda o par campo+valor pela sessão, o erro deixa de comer a lição, e a formatação do valor dentro da frase passa a usar o mesmo dinheiro do resto do produto.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Lotes anteriores: <a href="Calculadora - O Topo e a Navegacao - Tema Escuro.dc.html">o topo</a> · <a href="Calculadora - Custos da Peca - Tema Escuro.dc.html">custos da peça</a> · <a href="Calculadora - A Conta e os Precos - Tema Escuro.dc.html">a conta e os preços</a> · <a href="Calculadora - Secao Marketplace - Tema Escuro.dc.html">a seção Marketplace</a> · <a href="Calculadora - Seletor de Categoria - Tema Escuro.dc.html">o seletor de categoria</a> · <a href="Calculadora - Selo de Procedencia - Tema Escuro.dc.html">o selo de procedência</a> · Tema claro: <a href="Calculadora - Aviso de Plausibilidade - Tema Claro.dc.html">esta prancheta, tema claro</a></p>
+</footer>
+</section>
+</x-dc>
+</body>
+</html>

@@ -1,0 +1,96 @@
+/* App shell layout (T033). Column: top-bar, body (side nav + main), and — on mobile —
+   a fixed bottom TabBar. The main column caps its own width per page; the shell only
+   owns the frame. No horizontal overflow at 390px (INV-1). */
+.tf-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--bg-base);
+  /* Side-nav column width — single source, so the top-bar can centre the desktop
+     logo over the exact menu width (consumed by app-nav + top-bar). */
+  --sidebar-w: 240px;
+  /* 014/T118 — how far above the viewport floor a PINNED element must stop so the shell's own
+     chrome does not sit on top of it. The shell is the only layer that knows what chrome it has;
+     a feature that hard-codes `bottom: 8px` is guessing, and the kit total bar guessed wrong.
+     Desktop has no bottom bar, so the gap is just breathing room; the mobile value below adds the
+     TabBar. Consumers: `.assembly-summary__pinned`. */
+  --pinned-bottom: var(--space-2);
+}
+
+/* 018/US5 — o rail recolhido. A largura da coluna do menu é UMA variável, e por isso recolher o
+   menu devolve a diferença ao conteúdo sem que nenhuma página precise saber que isso aconteceu.
+   O atributo só existe acima de 1280px (o shell não o escreve abaixo), então nada disso alcança
+   o mobile nem a faixa intermediária. */
+.tf-shell[data-rail="collapsed"] {
+  --sidebar-w: 76px;
+}
+.tf-shell__body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+/* 016/US3 (T014) — the desktop right-hand column: the sidebar's sibling in `.tf-shell__body`,
+   stacking the top-bar above `<main>` so the sidebar alone spans the full body height (the
+   sidebar's `align-items: stretch` default already does that — this column just keeps its OWN
+   two children from doing the same). Mobile never renders this wrapper (the top-bar stays a
+   direct child of `.tf-shell` there, unchanged). */
+.tf-shell__content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+.tf-shell__main {
+  flex: 1;
+  min-width: 0;
+  padding: var(--gutter);
+}
+
+/* Mobile: reserve space under the content for the fixed bottom TabBar. */
+.tf-shell[data-layout="mobile"] .tf-shell__main {
+  padding-bottom: calc(var(--tabbar-h) + var(--space-4) + env(safe-area-inset-bottom, 0px));
+}
+/* …and the same reservation for anything PINNED. The `padding-bottom` above only moves content that
+   SCROLLS: a `position: sticky` element stops relative to the viewport, so padding never reaches it.
+   That gap is the whole T118 defect — the kit total bar stopped 8px off the floor, which is 56px
+   INSIDE the TabBar, and the seller read the total with its digits cut for the whole composition. */
+.tf-shell[data-layout="mobile"] {
+  --pinned-bottom: calc(var(--tabbar-h) + var(--space-2) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Desktop: roomier gutter next to the side nav. */
+.tf-shell[data-layout="desktop"] .tf-shell__main {
+  padding: var(--gutter-lg);
+}
+
+/* 016/T072-A11 (2026-08-07) — the SAME pattern `.tf-calc-page` (calculator-form.css, PR-B/US4)
+   already ratified for the calculator: mobile/tablet keeps the existing `--app-max` column, and
+   at the desktop breakpoint the page widens into the room the sidebar-fronted shell actually
+   gives it (`--content-max`). PR-B only reached the calculator; every OTHER main page
+   (/catalogo, /historico, /kits, /conta) kept a flat `max-w-md` (28rem/448px) — MEASURED at
+   1440px: main content area ~1160px, page capped at 448px ⇒ ~39% used, matching PR-B's own
+   pre-fix "~37%" finding on a DIFFERENT page. `.tf-page-wide` REPLACES `max-w-md` on those pages
+   (never both — Tailwind's own `max-w-md` utility and this custom class would otherwise race on
+   specificity); it does not touch the calculator's own `.tf-calc-page`, which already has this. */
+.tf-page-wide {
+  max-width: var(--app-max, 460px);
+}
+
+@media (min-width: 1024px) {
+  .tf-page-wide {
+    max-width: var(--content-max, 1120px);
+  }
+}
+
+/* 018 — a partir do corte de 1280px as quatro telas redesenhadas usam a largura que a tela dá.
+   O teto de 1120px foi a resposta certa do 016 para um layout de coluna única; para mestre-detalhe
+   ele DESPERDIÇA o que a composição existe para usar — a 1920px sobravam 560px de margem morta de
+   cada lado. `--content-max-wide` é um teto, não uma largura: telas ultrawide não viram uma linha
+   de texto de dois metros. Os únicos consumidores de `.tf-page-wide` são exatamente as quatro
+   telas do 018 (+ o detalhe do orçamento, que é a mesma família). */
+@media (min-width: 1280px) {
+  .tf-page-wide {
+    max-width: var(--content-max-wide, 1720px);
+  }
+}

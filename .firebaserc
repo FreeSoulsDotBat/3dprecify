@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "precifica3d-uat",
+    "uat": "precifica3d-uat",
+    "prod": "precifica3d-prod"
+  }
+}

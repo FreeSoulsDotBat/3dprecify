@@ -1,0 +1,179 @@
+/* 014/T115 (FR-006a) — o seletor de categoria não tinha NENHUMA regra de CSS: `<input>` nativo cru de
+   ~24px, sem borda, sem fundo, sem padding, dentro de um formulário onde todo campo de dinheiro usa a
+   moldura do DS. A FR-006a exige um campo "de primeira classe, sempre expandido" exatamente para que o
+   vendedor não aceite a alíquota errada sem perceber — e um campo que não PARECE campo falha nisso
+   igual a um campo colapsado.
+
+   A moldura em si NÃO está aqui: o input entrou no `.tf-inputwrap`/`.tf-input` do design system, o
+   mesmo par que o NumberField usa. Reescrever borda/altura/foco aqui teria criado um segundo campo
+   com a mesma aparência e um destino próprio — e o próximo ajuste de tema corrigiria só um dos dois.
+   O que sobra neste arquivo é o que o DS não tem: a lista de resultados e o chip da escolha. */
+
+.category-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Em FLUXO, nunca sobreposta. Uma lista flutuante sobre o formulário reabriria a classe de defeito
+   que este projeto já pagou três vezes (sintoma de layout/hit-testing só visível em browser real);
+   empurrar o conteúdo para baixo é feio por meio segundo e correto sempre.
+
+   A primeira versão desta lista usou a moldura de campo (`--radius-field` + `--border-default`, o
+   mesmo par do input logo acima) e o screenshot mostrou o que a asserção geométrica não vê: com UM
+   resultado, a lista lia como um SEGUNDO CAMPO já preenchido com "Calçados" — um item clicável
+   disfarçado de valor digitado. Daí a superfície elevada, o raio menor e as divisórias: é uma lista
+   de resultados e precisa parecer uma. */
+.category-picker__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-md);
+}
+.category-picker__list li + li {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.category-picker__option {
+  width: 100%;
+  /* O caminho completo ("Celulares e Telefones › Celulares e Smartphones") é o que distingue dois
+     homônimos de 2 pontos percentuais — ele quebra em várias linhas, e o alvo cresce junto. */
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: var(--text-strong);
+  font: inherit;
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+/* Sinal de "isto se toca", sem depender de hover — que num celular não existe. É um elemento REAL
+   com `aria-hidden`, não um `::after`: conteúdo gerado por CSS entra no nome acessível em alguns
+   motores, e o nome desta opção é o caminho da categoria, não um chevron. */
+.category-picker__go {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  line-height: 1;
+}
+.category-picker__option:hover {
+  background: var(--bg-muted);
+}
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
+.category-picker__option:focus-visible {
+  outline: none;
+  background: none;
+  box-shadow: none;
+}
+
+/* O estado escolhido usa a MESMA moldura `.tf-inputwrap` do campo de busca — mas o caminho completo
+   de uma categoria de três níveis não cabe em uma linha de 48px em 390px. A altura fixa do DS vira
+   um piso, e o chip cresce para baixo em vez de vazar para os lados. O `padding-right` menor abre
+   espaço para o "Limpar", que já traz o seu próprio. */
+.tf-inputwrap.category-picker--chosen {
+  height: auto;
+  min-height: var(--control-h);
+  padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  cursor: default;
+}
+
+.category-picker__chosen {
+  /* Ocupa a linha e empurra o "Limpar" para a borda do campo, como o afixo de unidade do
+     NumberField — em vez de os dois ficarem colados no canto esquerdo. */
+  flex: 1 1 auto;
+  min-width: 0;
+  /* Um caminho de três níveis não cabe em 390px: quebra dentro do chip em vez de empurrar o "Limpar"
+     para fora da tela. `anywhere` porque nomes de categoria do ML chegam sem espaço útil. */
+  overflow-wrap: anywhere;
+  font-size: var(--fs-body-sm);
+  font-weight: var(--fw-medium);
+  color: var(--text-strong);
+}
+
+/* T116 — a categoria escolhida não está nesta espinha. É um aviso, não um nome: fica em tom apagado
+   para não se passar pelo caminho que o vendedor esperava ler. */
+.category-picker__chosen--unknown {
+  font-weight: var(--fw-regular);
+  color: var(--text-muted);
+}
+
+.category-picker__note {
+  font-size: var(--fs-caption);
+  line-height: var(--lh-normal);
+  color: var(--text-muted);
+}
+/* A live region da T117 fica SEMPRE montada (uma que aparece junto com o texto não é anunciada de
+   forma confiável), então ela passa a maior parte do tempo vazia — e vazia não pode ocupar linha
+   nem `gap` do flex. `:empty` esconde a caixa sem tirar o elemento do DOM, que é exatamente a
+   distinção de que o leitor de tela depende. */
+.category-picker__note:empty {
+  display: none;
+}
+.category-picker__count {
+  font-weight: var(--fw-medium);
+}
+
+/* 016/US13 (T054) — the hierarchical browse tree: the disclosure "▸"/"▾" sits BESIDE the option
+   button, its own real touch target (44px, same floor as `.category-picker__option`), never nested
+   INSIDE it — a button inside a button is invalid HTML and would fold both names into one. Nested
+   `.category-picker__list` (a subtree) indents so the level reads visually, without a second
+   surface/shadow per level (that would look like N separate cards, not one tree). */
+.category-picker__tree-row {
+  display: flex;
+  align-items: stretch;
+}
+.category-picker__expand {
+  flex: 0 0 auto;
+  width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: var(--fs-base);
+  cursor: pointer;
+}
+.category-picker__expand:hover,
+.category-picker__expand:focus-visible {
+  color: var(--text-strong);
+}
+.category-picker__tree .category-picker__tree {
+  margin-left: var(--space-4);
+  box-shadow: none;
+  border-left: 1px solid var(--border-subtle);
+  border-radius: 0;
+}
+
+/* 016/US11 (T044 homologação PR-E, R2) — the OPENED browse tree gets its own scroll instead of
+   growing the page: measured, an inline 38-node spine put the page at 1.795px and dropped the
+   final price to y≈4.800 at 360px. `40vh` is a viewport-relative cap (never a fixed px that reads
+   differently on a 360px phone vs a 1440px desktop), and the count line stays OUTSIDE the scroll
+   frame — the seller reads "38 categorias" before deciding whether to scroll for one. */
+.category-picker__browse-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.category-picker__browse-scroll .category-picker__list {
+  max-height: 40vh;
+  overflow-y: auto;
+}

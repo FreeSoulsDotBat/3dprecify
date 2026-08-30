@@ -1,0 +1,26 @@
+# Local development infrastructure (E2 / ADR-0013). ONLY the database lives here — the app itself
+# runs via `uv run uvicorn` / `pnpm dev` as before. Dev credentials are compose-local defaults
+# (overridable via env), never production secrets; Cloud SQL provisioning is the v1-launch increment
+# (same Alembic migrations replayed — nothing here to migrate away from).
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: precifica3d-postgres
+    environment:
+      POSTGRES_USER: ${P3D_DB_USER:-precifica3d}
+      # Localhost-only dev container: trust auth means NO credential exists anywhere (nothing to
+      # leak or scan). Set P3D_DB_PASSWORD + drop this line if you need password auth locally.
+      POSTGRES_HOST_AUTH_METHOD: ${P3D_DB_AUTH:-trust}
+      POSTGRES_DB: ${P3D_DB_NAME:-precifica3d}
+    ports:
+      - "${P3D_DB_PORT:-5433}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${P3D_DB_USER:-precifica3d}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:

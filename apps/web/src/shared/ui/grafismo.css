@@ -1,0 +1,14 @@
+/* Decorative grafismo — recoloured via CSS mask + currentColor (recolour via `color`; keep ONE per
+   screen). 019/T021: display / colour / pointer-events moravam em styles/base.css — a guarda
+   tf-class-uniqueness (ADR-0032 §5) achou o nome em duas casas; agora UMA. */
+.tf-grafismo {
+  display: inline-block;
+  color: var(--accent);
+  pointer-events: none;
+  user-select: none;
+  width: var(--tf-grafismo-w, 120px);
+  height: var(--tf-grafismo-h, 40px);
+  background: currentColor;
+  -webkit-mask: var(--tf-grafismo-src) center / contain no-repeat;
+  mask: var(--tf-grafismo-src) center / contain no-repeat;
+}

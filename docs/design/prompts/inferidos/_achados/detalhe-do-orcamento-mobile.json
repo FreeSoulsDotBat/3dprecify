@@ -1,0 +1,16 @@
+{
+  "id": "detalhe-do-orcamento-mobile",
+  "nome": "Registro congelado em tela cheia (celular)",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+    "apps/web/src/pages/historico/historico-page.css"
+  ],
+  "oQueFoiInferido": "A ORDEM DE LEITURA dos 11 blocos numa coluna de 390px, decidida no código: link '← Voltar', PageHeader com o rótulo, badge de sincronização solto, Card da alegação (data+hora / 'Valor cotado' / base / validade), banner de Premium pausado, barra gerenciar, alerta de sincronização, legenda 'Valores congelados em {data}' (+ a legenda de reaproveitamento), peças do kit, detalhamento, custo total, preços por canal, ficha técnica, bloco comparar, e só então a linha [Recalcular hoje] [Exportar] com `flex-wrap`. Inferido: o que é Card e o que é texto solto (a alegação e a ficha são Card; detalhamento, peças e canais são divs soltas), o fato de as ações primárias morarem no FIM de um scroll longo, e a ficha técnica ter virado Card sempre aberto.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o documento que o vendedor mostra ao cliente. Blocos empilhados por ordem de implementação e não de leitura fazem o valor cotado competir com o detalhamento de custo, e enterram as duas ações no fim do scroll.",
+  "prioridade": "ALTA",
+  "refutacao": "Tentei derrubar pelo protótipo e ele desenhou OUTRA forma. §E6 dá uma linha: 'Detalhe do cálculo = snapshot congelado (inputs + breakdown reproduzível) + Exportar (PDF/CSV, Premium)'. `HistoryScreen.jsx` materializa isso como BOTTOM-SHEET com PriceHero (`tone=accent`, centrado) + 3 BreakdownRow + [Duplicar]/[Exportar]. O produto abandonou as três coisas: virou página inteira, proibiu PriceHero no congelado (a proibição está escrita no cabeçalho de `snapshot-detail-page.tsx`) e 'Duplicar' nunca existiu. Versão anterior e mais simples da mesma superfície ⇒ sobrevive como PROTOTIPO_PARCIAL. O canvas do dono (linhas 296-355) desenha o registro como ASIDE do mestre-detalhe, com grid de duas colunas para Detalhamento e Canais/Ficha — layout que só existe acima de 1280px e que o próprio código não usa no celular. Confirmei ainda uma divergência contra a única spec textual que existia: `ux-history.md:362` pedia 'ficha técnica (colapsável, calma)' e a decisão F2 (linha 846) pendura nela a ressalva do relógio do aparelho; o código entrega `TechnicalSheet` como Card sempre aberto.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

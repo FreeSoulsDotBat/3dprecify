@@ -1,0 +1,17 @@
+{
+  "id": "resumo-de-kit-na-simulacao-reaberta",
+  "nome": "Resumo somente-leitura de simulação com base KIT",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/calculator/kit-basis-summary.tsx",
+    "apps/web/src/pages/calcular/calcular-page.tsx",
+    "apps/web/src/features/calculator/scenario-bridge.ts"
+  ],
+  "oQueFoiInferido": "Quando a simulação reaberta tem base KIT não há formulário para hidratar, então um `Card padding=\"sm\"` aparece no topo com \"Kit: {nome}\" em `text-sm font-semibold`, uma legenda `text-xs`, e uma lista por marketplace com \"Varejo: R$ x\" / \"Atacado: R$ y\" em `text-xs text-muted` (12px) — enquanto os campos da calculadora LOGO ABAIXO continuam com os valores antigos, sem relação com o que está sendo exibido (o comentário no código admite: \"stay whatever they were before the reopen\"). Inferido: o layout do rollup (empilhado, sem PriceHero, sem hierarquia de preço), o aviso de linhas excluídas montado concatenando uma string de erro de OUTRA tela (`tc.channels.errorRow`) com um número entre parênteses, o fallback \"cálculo inválido\" como `Alert tone=\"info\"`, e — o principal — a ausência de qualquer tratamento visual dizendo \"os campos abaixo NÃO são esta simulação\".",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Reabrir uma simulação de kit mostra um resumo de preços em letra miúda por cima de um formulário que contradiz o que está sendo exibido.",
+  "prioridade": "ALTA",
+  "refutacao": "REBAIXEI a autoridade: o dono DESENHOU um rollup de kit, e é justamente o vocabulário que falta aqui. Canvas 018, aside do artboard Kits (linhas 208-228): card \"Total do kit\" com `tf-brow` de custo, `tf-price tf-price--accent tf-price--md` para Varejo (2.25rem, split inteiro/decimais) e `tf-price` menor para Atacado (1.5rem); card \"Preços por canal (kit)\" com linhas `tf-brow` (label do marketplace + `tf-brow__sub` + valor à direita); e o aviso de peças excluídas como `tf-field__hint` DISCRETO (`{{ excludedCap }}`), não como Alert. O construído não usa nada disso: 12px muted, sem PriceHero, com Alert info reciclando string de erro alheia. O que continua SEM desenho — e é o coração do achado — é a superfície inteira \"simulação de kit reaberta DENTRO do Calcular\": o canvas desenha o COMPOSITOR de kits na aba Kits (com campos editáveis e \"Salvar kit\"), não um resumo somente-leitura sobre um formulário órfão, e exclui Calcular por escrito. Verifiquei também a afirmação do mapeador sobre a CRIAÇÃO de simulação com base KIT: não existe no código (nenhum `SaveScenarioSheet` em `pages/kits/` nem em `features/bom/`; `scenario-bridge.ts` trata KIT só na leitura) — adiada por falta de UX, então corretamente não listada como superfície própria. Sobrevive como PROTOTIPO_PARCIAL.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

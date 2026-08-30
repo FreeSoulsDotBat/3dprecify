@@ -1,0 +1,29 @@
+{
+  "hosting": {
+    "public": "apps/web/dist",
+    "ignore": ["firebase.json", "**/.*", "**/node_modules/**"],
+    "redirects": [
+      {
+        "source": "/historico/:id",
+        "destination": "/historico?snapshot=:id",
+        "type": 301
+      },
+      {
+        "source": "/catalogo/produtos/novo",
+        "destination": "/catalogo?produto=novo",
+        "type": 301
+      },
+      {
+        "source": "/catalogo/produtos/:id",
+        "destination": "/catalogo?produto=:id",
+        "type": 301
+      }
+    ],
+    "rewrites": [{ "source": "**", "destination": "/index.html" }]
+  },
+  "emulators": {
+    "auth": { "port": 9099 },
+    "ui": { "enabled": true, "port": 4000 },
+    "singleProjectMode": true
+  }
+}

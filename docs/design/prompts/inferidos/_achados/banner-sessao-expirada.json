@@ -1,0 +1,16 @@
+{
+  "id": "banner-sessao-expirada",
+  "nome": "Faixa de sessão expirada (\"Entrar de novo\")",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/widgets/session-expiry-banner/session-expiry-banner.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Um `Alert tone=\"info\"` com título \"Sua sessão expirou\" (messages.pt-br.ts:1142), corpo \"Entre de novo para continuar de onde parou.\" e um `<a className=\"tf-btn tf-btn--primary tf-btn--sm\">` \"Entrar de novo\", tudo envolto num `<div style={{ position: \"sticky\", top: 0, zIndex: 40 }}>` escrito com estilo INLINE dentro do próprio componente. Inferidos: a forma (faixa larga sobre todo o shell, em vez de toast, folha ou diálogo); a fixação no topo, decidida por MEDIÇÃO DE BUG e não por desenho — o comentário no arquivo registra que a faixa nascia 1.746px (1440) / 3.608px (360) fora da viewport; o tom `info` em vez de `danger`; a ausência de qualquer dispensa; e como ela convive com o conteúdo que continua editável embaixo.",
+  "autoridade": "NENHUMA",
+  "impacto": "É o único caminho de volta quando o SERVIDOR recusa uma sessão viva, e aparece por cima de qualquer tela no meio do trabalho — inclusive com orçamento não sincronizado na fila. A superfície que governa o momento mais frágil do uso foi desenhada por acidente de correção.",
+  "prioridade": "ALTA",
+  "refutacao": "Tentei derrubar por três caminhos e os três falharam. (1) Data: o componente é do hotfix 016/A3 de 2026-08-07, cinco semanas depois do protótipo de 2026-07-02 — nada em E1–E9 poderia tê-lo previsto, e de fato a seção E não tem faixa nem tela de sessão. (2) Copy ≠ superfície: as duas menções que existem são de TEXTO numa tabela código→frase — `claude-design-prototype-fixes.md` item 20 (\"UNAUTHENTICATED → 'Sua sessão expirou. Entre de novo.'\") e `-fixes-r2.md` item 3 (rechavear `errorMessage()` para os códigos canônicos, incluindo `TOKEN_EXPIRED`). Uma frase mapeada a um código não diz onde ela mora, que forma tem, se é fixa ou se pode ser dispensada; e a frase do código nem é a mesma (o app usa título + corpo + ação, três strings, não uma). (3) Canvas 018: busca por \"sess\" no `.dc.html` = 0 ocorrências; busca por `tf-alert` = 3, mas nenhuma é de sessão. `.design-import` não tem nada equivalente (nenhum Alert.jsx exportado; `Alert` só existe como nome na lista de 32 primitivas do readme).",
+  "sobreviveu": true,
+  "area": "shell"
+}

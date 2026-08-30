@@ -1,0 +1,16 @@
+{
+  "id": "formulario-impressora",
+  "nome": "Formulário de impressora (5 campos, com dica de consumo e um campo opcional)",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/catalog/printer-form.tsx",
+    "apps/web/src/features/catalog/catalog-controls.tsx"
+  ],
+  "oQueFoiInferido": "Cinco campos em coluna única nesta ORDEM: Nome, Valor da máquina (R$), Vida útil da máquina (h), Consumo médio (kW, com `hint={hints.avgPower}` — \"consumo médio real, não a placa\"), Reserva de manutenção (R$ + sufixo \"/h\", `optional`). Inferido: a ORDEM (o canvas troca — Consumo vem antes de Vida útil); o TEXTO da dica e a decisão de pôr uma dica só neste campo; QUAL campo recebe a tag \"opcional\"; a coluna única contra a grade do canvas; e o fato de este ser o formulário que obriga a ficha do desktop a ter rolagem interna própria (`max-height: calc(100dvh - var(--space-8)); overflow-y:auto`, registrado em research §F como \"o caso do formulário de impressora com todos os campos\").",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "É o formulário mais longo do Catálogo e o que decide depreciação e energia; a única frase que impede o vendedor de copiar a potência da etiqueta foi escrita sem desenho, e é a que mais muda o preço.",
+  "prioridade": "MEDIA",
+  "refutacao": "Derruba PARCIAL, e mais do que o mapeador admitiu. (4) O canvas desenha os CINCO campos com os rótulos idênticos aos implementados: `F(\"Nome\")`, `F(\"Valor da máquina\",\"R$\")`, `F(\"Consumo médio\",suf \"kW\")`, `F(\"Vida útil da máquina\",suf \"h\")`, `F(\"Reserva de manutenção\",\"R$\",\"/h\")` — o conjunto de campos, os prefixos e os sufixos TÊM desenho. Além disso, §D.1 do prompt (linha 173) documenta o componente `Field` com as props `hint` e `optional` (\"tag 'opcional' à direita\"), então a FORMA da dica e da tag é afordância de DS documentada — inferido é onde elas caem e o que dizem, não que existam. (1) §E5 (linha 264) descreve uma impressora de outro modelo — \"modelo, valor, h/dia, dias/mês, payback, nível de uso → desgaste\" — que pertence ao modelo de precificação DESCARTADO. (3) `CatalogScreen.jsx` esconde custo/peso quando `seg === 'impressora'` (linha 77), deixando SÓ o Nome. (2) V2 registra 34 PARTIAL e V3 #17 NOT FIXED (\"printer form missing modelo/h-dia/dias-mês/payback\"). Sobrevive: ordem, texto da dica, escolha do opcional, arranjo em coluna e o comportamento em 560px continuam sem autoridade.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

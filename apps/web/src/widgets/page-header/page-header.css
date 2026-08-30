@@ -1,0 +1,33 @@
+/* Section title (T030). The focusable heading is the US3 focus-to-title target. */
+.tf-page-header {
+  margin-bottom: var(--space-4);
+}
+/* Opt-in centred title (Calcular tab). Scoped modifier — other pages keep the
+   default leading-edge alignment. */
+.tf-page-header--center {
+  text-align: center;
+}
+.tf-page-header__title {
+  margin: 0;
+  font-size: var(--fs-lg);
+  /* Programmatic focus (US3/T045) must not paint a persistent outline. 019/T029 —
+     decisão do dono, ver spec §Clarificações: nenhum controle mostra anel de foco. */
+  outline: none;
+  /* 014/T119 — the title is DATA on every page that names a record (a snapshot's label, a kit, a
+     product). A 120-character single word — the exact length the record sheet's own `maxLength`
+     invites — has no break opportunity, so the h1's content ran to 1782px inside a 358px box and
+     dragged the whole document to 1798px in a 390px viewport. Measured: the h1 was the ONLY leaf
+     overflowing; every ancestor above it merely inherited the width.
+
+     `anywhere` and not `break-word`: `break-word` refuses to break when the element's min-content
+     width is what set the container size, which is precisely this case. Nothing was contained with
+     an `overflow-x` of its own — with the word breaking there is nothing left to contain, and a
+     scroll container that can never be exercised is a defence against a state that cannot occur. */
+  overflow-wrap: anywhere;
+}
+.tf-page-header__desc {
+  margin: var(--space-1) 0 0;
+  color: var(--text-muted);
+  font-size: var(--fs-body-sm);
+  line-height: var(--lh-normal);
+}

@@ -1,0 +1,16 @@
+{
+  "id": "botao-salvar-simulacao-no-calcular",
+  "nome": "Botão \"Salvar simulação\" abaixo do resultado, colado no \"Salvar no histórico\"",
+  "escala": "COMPONENTE",
+  "arquivos": [
+    "apps/web/src/pages/calcular/calcular-page.tsx",
+    "apps/web/src/features/scenarios/save-scenario-sheet.tsx"
+  ],
+  "oQueFoiInferido": "Não é o botão isolado — é o PAR. Dentro de `tf-calc-footer`, depois do `PriceResults`, o app empilha dois `<div className=\"flex justify-center\">`: primeiro `SaveScenarioSheet` (`Button variant=\"secondary\"`, ícone \"save\", \"Salvar simulação\", que retorna `null` sem entitlement ativo e fica visível-porém-`disabled` enquanto o form é inválido) e logo abaixo `RecordSnapshotButton` (\"Salvar no histórico\"). Dois botões centralizados, quase idênticos, empilhados, para dois objetos de regra OPOSTA (um recalcula com os preços de hoje, o outro congela para sempre), sem nenhuma distinção visual nem legenda. Inferido: o par, a ordem, o peso `secondary` para ambos, e o estado desabilitado sem explicação adjacente.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Dois botões \"salvar\" quase idênticos, um sobre o outro, para dois objetos com regras opostas (recalcula × congelado).",
+  "prioridade": "ALTA",
+  "refutacao": "REBAIXEI a autoridade do mapeador: o protótipo DESENHA uma ação de salvar naquele exato ponto. `.design-import/ui_kits/precifica3d/CalculatorScreen.jsx`, bloco final: `<div style={{display:'flex', gap:'var(--space-3)'}}>` com `<Button variant=\"primary\" full glow iconLeft={<Icon name=\"save\"/>} disabled={erroPeso} onClick={onSave}>Salvar cálculo</Button>` + `<Button variant=\"outline\" iconLeft={<Icon name=\"share-2\"/>}>Compartilhar</Button>`, seguido da frase freemium centralizada — e o prompt §C.5/§I ainda fixa \"um glow por zona\" e a correção item 33 moveu esse glow do Salvar para o PriceHero. Ou seja, o SLOT de ação abaixo do resultado está desenhado, com UMA ação de salvar, primary, full-width, em linha horizontal. O que nenhuma autoridade desenha é o PAR de dois salvares empilhados e centralizados, ambos `secondary`, para objetos de natureza oposta — e o segundo (simulação) nem existia no protótipo, onde salvar era gated. Canvas 018 não cobre Calcular (linha 455) e o \"Calcular Desktop\" citado não está no repo. Sobrevive como PROTOTIPO_PARCIAL: o desenho anterior cobre um botão, não o par.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

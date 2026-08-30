@@ -1,0 +1,17 @@
+{
+  "id": "retorno-checkout-aguardando",
+  "nome": "Retorno do checkout — \"Confirmando seu pagamento…\" (espera com sondagem limitada)",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/features/billing/checkout-return.tsx",
+    "apps/web/src/features/billing/billing.css",
+    "apps/web/src/pages/conta/conta-page.tsx"
+  ],
+  "oQueFoiInferido": "Estado 1 de 3 do `CheckoutReturnPanel` — o único componente da rota `/conta?checkout=retorno`, que TOMA a página inteira (`conta-page.tsx` faz `return` antes da grade de 3 colunas, mantendo só o `PageHeader title=\"Conta\"` acima de uma tela que não é mais a Conta). Foi inferido: `<Card className=\"tf-billing-return\">` com `<Spinner/>` + h2 + p + dois botões (`Atualizar` secundário e `Voltar para a Conta` fantasma) em `.tf-billing-return__actions`. Não há barra de progresso, contador, nem qualquer indicação da duração — `CHECKOUT_RETURN_MAX_ATTEMPTS = 15` × `CHECKOUT_RETURN_POLL_INTERVAL_MS = 3000` ≈ 45s invisíveis. Não há `aria-live` nem gestão de foco para a troca automática de estado (o card inteiro é substituído sem anúncio). Falta desenhar: a hierarquia da espera, a passagem do tempo, e o que acontece com o resto do shell — o rail/abas continuam desenhados ao redor? O desenho não diz porque não existe.",
+  "autoridade": "NENHUMA",
+  "impacto": "É o instante de maior ansiedade da jornada — o cartão já foi cobrado (ou não) e o app não sabe. Sem desenho, o vendedor encara um spinner mudo por até 45s sem saber se deve esperar, atualizar ou sair.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei prova em TODAS as 4 autoridades e não achei nenhuma. (a) `claude-design-prototype.md` §E8 exclui o assunto por escrito duas vezes — o próprio título da seção é \"Upsell (sem checkout — E6 fora de escopo)\" e §J repete \"Sem checkout (E6 fora de escopo): o fluxo de upsell termina na tela de planos\". Um estado de RETORNO de checkout não pode existir num protótipo que não tem checkout. (b) Grep no `Abas-Desktop.dc.html` por `checkout|retorno|confirmando|toast|offline` = 0 ocorrências; o artboard Conta (linhas 363-445) tem exatamente dois ramos, `sc-if isFree` e `sc-if isPremium`, sobre uma prop `plano` declarada como enum binário `\"premium\"|\"free\"` no `data-props`. (c) `.design-import/ui_kits/precifica3d/PremiumScreen.jsx` termina no par de botões `Assinar Premium`/`Agora não` e o cabeçalho do arquivo diz literalmente \"Pagamento (Mercado Pago) integra depois — só a tela\"; `AccountScreen.jsx` não tem estado pós-compra. (d) A auditoria não cita o assunto em nenhum dos 16 achados nem nas verificações V2/V3. Tentei também a rota indireta: a matriz §G do protótipo tem uma linha \"Exportar | spinner curto\" — é o único spinner de espera especificado, e é de exportação, não de pagamento; não cobre nada aqui. CORREÇÃO AO MAPEADOR: esta entrada, `retorno-checkout-sucesso` e `retorno-checkout-nao-confirmado` são três estados mutuamente exclusivos de UM componente numa MESMA rota — mantidas separadas para o registro, mas o trabalho de desenho é UMA tela com três desfechos.",
+  "sobreviveu": true,
+  "area": "billing"
+}

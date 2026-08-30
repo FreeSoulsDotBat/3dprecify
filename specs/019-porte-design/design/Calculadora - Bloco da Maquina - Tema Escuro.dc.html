@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">O bloco da máquina</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Oitavo lote da Calculadora: o último bloco de "Custos da peça", onde a tela pergunta <em>quanto a máquina custou</em>, <em>com que frequência ela roda</em> e <em>em quantos anos ele quer que ela se pague</em> — em vez de pedir "vida útil em horas" a um vendedor que acabou de comprar a impressora e nunca ouviu falar de depreciação.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A armadilha que este bloco existe para tapar: digitar <strong style="color:var(--sheet-ink)">3</strong> pensando em anos levava o custo/hora de R$&nbsp;1,11 para <strong style="color:var(--sheet-ink)">R$&nbsp;1.333,33</strong>, calado. O aviso existia no código, com teste verde, e nenhuma tela o renderizava — a bateria automatizada pula o campo quando ele não está montado, e a semente de 3.600 h abre no modo estimativa, onde o campo nem existe. Foi achado por revisão humana.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Suas decisões, aplicadas: os dois modos ganham <strong style="color:var(--sheet-ink)">segmented "Estimar · Ajustar"</strong> · o custo/hora vira <strong style="color:var(--sheet-ink)">linha própria com a procedência dita</strong> · sem valor da máquina ele continua R$&nbsp;0,00, mas <strong style="color:var(--sheet-ink)">com a ressalva ao lado</strong> · as horas derivadas aparecem <strong style="color:var(--sheet-ink)">só no momento da troca</strong> · e a troca <strong style="color:var(--sheet-ink)">pergunta antes de sobrescrever</strong>, dentro do próprio bloco, sem cobrir a tela.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#15a">15a</a> modo estimativa · <a href="#15b">15b</a> modo ajustar e o ⓘ · <a href="#15c">15c</a> aviso e erro · <a href="#15d">15d</a> derivado impossível · <a href="#15e">15e</a> a transição · <a href="#15f">15f</a> 1280px · <a href="#15g">15g</a> a tira de estados.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Correção de copy sem decisão:</strong> "1 anos" vira "1 ano" — o rótulo era o molde <code>{n} anos</code> aplicado de 1 a 5. <strong style="color:var(--sheet-ink)">Copy nova para aprovar:</strong> "Estimar" e "Ajustar" (o segmented), "de R$&nbsp;4.000,00 ÷ 3.600 h" (a procedência do derivado), "falta o valor da máquina" (a ressalva) e as três frases da confirmação de troca. Nenhum primitivo novo: <code>tf-card</code>, <code>tf-field</code>, <code>tf-select</code>, <code>tf-inputwrap</code>, <code>tf-segmented</code>, <code>tf-infotip</code>, <code>tf-aviso</code> e <code>tf-btn</code>.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="15a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Modo estimativa · repouso · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O estado da primeira visita. Os dois rótulos reservam a mesma altura de duas linhas — "Em quantos anos quer que ela se pague?" quebra onde "Com que frequência ela roda?" cabe em uma, e sem essa reserva os dois controles saem desalinhados.</p>
+<div data-theme="dark" data-screen-label="15a Modo estimativa" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide);color:var(--text-strong);flex:1">A máquina</span><button type="button" class="tf-infotip__trigger" style="position:relative" aria-label="Sobre o custo da máquina"><span class="tf-ico tf-ico--16 tf-ico-info"></span></button></div>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1;min-height:44px">Estimar</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1;min-height:44px">Ajustar</button>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Valor da máquina</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="4.000,00"></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label" style="min-height:40px;align-items:flex-start">Com que frequência ela roda?</span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" ref="{{ ritmoRef }}"><option>Poucas horas por semana</option><option>Quase todo dia</option><option>Praticamente o dia todo</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+<div class="tf-field">
+<span class="tf-field__label" style="min-height:40px;align-items:flex-start">Em quantos anos quer que ela se pague?</span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" ref="{{ paybackRef }}"><option>1 ano</option><option>2 anos</option><option>3 anos</option><option>4 anos</option><option>5 anos</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-strong);line-height:1.1">R$&nbsp;1,11</span>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;4.000,00 ÷ 3.600 h</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O derivado deixa de ser o texto mais apagado do cartão e vira a linha que fecha o bloco. Ele não é campo e não pode parecer um: sem moldura de input, sem afixo, sem cursor de texto — só um readout com a conta que o produziu escrita embaixo. É ali que as 3.600 h aparecem pela primeira vez, como procedência, não como número editável.</p>
+</div>
+
+
+<div id="15b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Modo ajustar · e o ⓘ aberto · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Para quem já sabe o número. Abre por escolha, ou sozinho quando o valor guardado não é produto de nenhum ritmo × payback — um cenário salvo com 2.000 h, por exemplo. O número guardado nunca é coagido.</p>
+<div data-theme="dark" data-screen-label="15b Modo ajustar" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1;min-height:44px">Estimar</button>
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1;min-height:44px">Ajustar</button>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Valor da máquina</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="4.000,00"></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label">Vida útil da máquina<button type="button" class="tf-infotip__trigger" style="position:relative" aria-label="Sobre a vida útil da máquina"><span class="tf-ico tf-ico--14 tf-ico-info"></span></button></span>
+<div class="tf-inputwrap" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="2.000"><span class="tf-inputwrap__affix">h</span></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-strong);line-height:1.1">R$&nbsp;2,00</span>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;4.000,00 ÷ 2.000 h</span>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A linha do derivado sobrevive à troca de modo. Hoje ela desaparece justamente aqui — no único modo em que a pessoa digita o número cru e erra.</p>
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--info">15b·2</span><span class="tf-title" style="font-size:12px;color:var(--sheet-ink)">O ⓘ aberto</span></div>
+<div class="tf-card tf-card--pad-sm" style="background:var(--surface-inverse);color:var(--text-on-inverse);border-color:transparent;box-shadow:var(--shadow-md);display:flex;flex-direction:column;gap:8px">
+<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide)">Sobre a vida útil da máquina</span><button type="button" class="tf-btn tf-btn--ghost tf-btn--sm" aria-label="Fechar" style="color:inherit;width:44px;padding:0"><span class="tf-ico tf-ico--16 tf-ico-x"></span></button></div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-relaxed)">A impressora se gasta imprimindo. Espalhar o preço dela pelas horas faz cada peça devolver um pedaço da máquina — assim a próxima sai do negócio, não do seu bolso. Fabricante não publica esse número: estime. Horas que você imprime por ano × anos até querer trocar. Ex.: 1.200 h/ano × 3 anos = 3.600 h.</p>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O corpo já homologado, inteiro. O gatilho pinta 28×28 e o alvo de 44px vem de um pseudo-elemento fora do fluxo, para não empurrar a linha do rótulo.</p>
+</div>
+</div>
+
+
+<div id="15c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O aviso e o erro · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O aviso é a defesa contra o "3 pensando em anos" — e agora ele tem uma tela onde aparecer. Repare no que o derivado faz nesse instante: R$&nbsp;1.333,33 por hora, dito em voz alta, é a segunda prova de que algo está errado.</p>
+<div data-theme="dark" data-screen-label="15c Aviso e erro" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Aviso de plausibilidade</span>
+<div class="tf-field">
+<span class="tf-field__label">Vida útil da máquina<button type="button" class="tf-infotip__trigger" style="position:relative" aria-label="Sobre a vida útil da máquina"><span class="tf-ico tf-ico--14 tf-ico-info"></span></button></span>
+<div class="tf-inputwrap" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="3"><span class="tf-inputwrap__affix">h</span></div>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Confira a vida útil: 3 horas é menos de uma semana ligada. Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Nada foi recusado.</p>
+<button type="button" class="tf-btn tf-btn--ghost tf-btn--sm tf-aviso__action">Entendi</button>
+</div></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-strong);line-height:1.1">R$&nbsp;1.333,33</span>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;4.000,00 ÷ 3 h</span>
+</div>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Erro de validação</span>
+<div class="tf-field">
+<span class="tf-field__label">Vida útil da máquina<button type="button" class="tf-infotip__trigger" style="position:relative" aria-label="Sobre a vida útil da máquina"><span class="tf-ico tf-ico--14 tf-ico-info"></span></button></span>
+<div class="tf-inputwrap tf-inputwrap--error" style="max-width:60%"><input class="tf-input tf-input--num" type="text" value="0" aria-invalid="true"><span class="tf-inputwrap__affix">h</span></div>
+<span class="tf-field__error">A vida útil deve ser maior que zero.</span>
+<div class="tf-aviso" role="status"><span class="tf-ico tf-ico--14 tf-aviso__icon tf-ico-info"></span><div class="tf-aviso__body">
+<p class="tf-aviso__text">Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.</p>
+</div></div>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Com o campo recusado, a linha do derivado não aparece: não há divisão possível por zero, e um R$&nbsp;0,00 em destaque aqui seria a terceira afirmação falsa da tela.</p>
+</div>
+</div>
+</div>
+
+
+<div id="15d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Derivado impossível · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Sem o valor da máquina o número é R$&nbsp;0,00 — e você decidiu que ele continua sendo dito. Com o destaque que o derivado ganhou, dizê-lo sozinho seria pôr um número falso em evidência; a ressalva ao lado é o que o mantém honesto.</p>
+<div data-theme="dark" data-screen-label="15d Derivado impossivel" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:16px">
+<div class="tf-field">
+<span class="tf-field__label">Valor da máquina</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value=""></div>
+</div>
+<div class="tf-field">
+<span class="tf-field__label" style="min-height:40px;align-items:flex-start">Com que frequência ela roda?</span>
+<span class="tf-selectwrap"><select class="tf-input tf-select"><option selected>Quase todo dia</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap">
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-muted);line-height:1.1">R$&nbsp;0,00</span>
+<span style="font-size:var(--fs-caption);color:var(--warning-text)">falta o valor da máquina</span>
+</div>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;0,00 ÷ 3.600 h</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Duas diferenças em relação ao número certo, além da ressalva: o valor perde o peso de tinta forte e a procedência mostra de onde o zero veio. O bloco continua no mesmo lugar e com a mesma altura — nada salta quando ele finalmente digita o valor.</p>
+</div>
+
+
+<div id="15e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A transição entre os modos · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Hoje "Usar estimativa por ritmo" reescreve as horas digitadas, calado e sem desfazer. Você pediu que perguntasse antes, dentro do próprio bloco: a confirmação nasce onde o segmented está, com os dois números na mão, e não cobre a tela.</p>
+<div data-theme="dark" data-screen-label="15e Transicao" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:16px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Ele tocou "Estimar" com 2.000 h digitadas</span>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1;min-height:44px">Estimar</button>
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1;min-height:44px">Ajustar</button>
+</div>
+<div class="tf-alert tf-alert--warning" role="alertdialog"><span class="tf-ico tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body">
+<p class="tf-alert__title">A estimativa por ritmo vai substituir as suas 2.000 h por 3.600 h</p>
+<p class="tf-alert__text">1.200 h/ano × 3 anos. Seu número volta se você tocar "Ajustar" de novo.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm">Usar 3.600 h</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Manter 2.000 h</button>
+</div>
+</div></div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">É a única tela do bloco onde as duas horas aparecem juntas, e é aqui que elas importam: os dois números que estão em disputa, cada um em seu botão. "Manter 2.000 h" devolve o segmented para "Ajustar" — recusar a troca não pode deixar o controle mostrando um modo que não está valendo.</p>
+</div>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<span class="tf-catalog-md__kicker">Depois de "Usar 3.600 h"</span>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="flex:1;min-height:44px">Estimar</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="flex:1;min-height:44px">Ajustar</button>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-strong);line-height:1.1">R$&nbsp;1,11</span>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;4.000,00 ÷ 3.600 h</span>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A troca é reversível sem perda: tocar "Ajustar" traz 2.000 h de volta ao campo, e é isso que a frase promete. Sem essa garantia, a confirmação viraria mais um alerta que a pessoa aprende a atravessar.</p>
+</div>
+</div>
+</div>
+
+
+<div id="15f" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · os dois Selects lado a lado</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A largura real do bloco no desktop: dentro do cartão "Custos da peça", que divide a tela com o painel de resultado. Os dois Selects <strong style="color:var(--sheet-ink)">não</strong> dividem a linha aqui, e essa é uma divergência do briefing, que pedia lado a lado com no mínimo 240px cada. O motivo está medido: neste cartão, dividir a linha dá 240px por coluna, e um <code>tf-select</code> gasta 54px com recuo e chevron — sobram 186px para um rótulo de 195px. A regra do produto é reempilhar, nunca comprimir, então eles empilham. Para caber lado a lado a coluna precisaria de 249px, o que exige um cartão mais largo do que os 530px que sobram nesta tela — a área de conteúdo a 1280px é 974px, menos o painel de 420px e o vão de 24px.</p>
+<div data-theme="dark" data-screen-label="15f Desktop 1280" style="position:relative;width:1280px;height:720px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);border-radius:20px;color:var(--text-body);font-family:var(--font-body);display:flex">
+<nav class="tf-nav tf-nav--sidebar" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li><span class="tf-nav__item" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-box"></span><span class="tf-nav__label">Minhas simulações</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></span></li>
+<li><span class="tf-nav__item"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></span></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<div class="tf-topbar" style="justify-content:flex-start"><img src="assets/logo/logo-inteira-white.png" alt="Truth's Forge" style="height:40px;width:auto;flex-shrink:0"><div class="tf-topbar__actions"><button type="button" class="tf-topbar__theme" aria-pressed="true" aria-label="Alternar tema"><span class="tf-ico tf-ico-moon"></span></button></div></div>
+<div style="flex:1;min-height:0;padding:32px;overflow:hidden">
+<div style="max-width:1120px;display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:24px;align-items:start">
+<div class="tf-card" style="min-width:0;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-title" style="font-size:var(--fs-sm);letter-spacing:var(--tracking-wide);color:var(--text-strong);flex:1">A máquina</span><div class="tf-segmented tf-segmented--sm" role="tablist"><button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true" style="min-height:44px">Estimar</button><button type="button" class="tf-segmented__item" role="tab" aria-selected="false" style="min-height:44px">Ajustar</button></div></div>
+<div class="tf-field" style="max-width:280px">
+<span class="tf-field__label">Valor da máquina</span>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input class="tf-input tf-input--num" type="text" value="4.000,00"></div>
+</div>
+<div style="display:flex;flex-direction:column;gap:16px;max-width:520px">
+<div class="tf-field">
+<span class="tf-field__label" style="min-height:40px;align-items:flex-start">Com que frequência ela roda?</span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" ref="{{ ritmoRef }}"><option>Poucas horas por semana</option><option>Quase todo dia</option><option>Praticamente o dia todo</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+<div class="tf-field">
+<span class="tf-field__label" style="min-height:40px;align-items:flex-start">Em quantos anos quer que ela se pague?</span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" ref="{{ paybackRef }}"><option>1 ano</option><option>2 anos</option><option>3 anos</option><option>4 anos</option><option>5 anos</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:2px;padding:12px 0 0;border-top:1px solid var(--border-subtle)">
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Custo da máquina por hora de impressão</span>
+<span class="tf-tnum" style="font-size:var(--fs-xl);font-weight:var(--fw-bold);color:var(--text-strong);line-height:1.1">R$&nbsp;1,11</span>
+<span class="tf-tnum" style="font-size:var(--fs-caption);color:var(--text-muted)">de R$&nbsp;4.000,00 ÷ 3.600 h</span>
+</div>
+</div>
+<div class="tf-card" style="color:var(--text-muted);font-size:var(--fs-caption)">Painel de resultado</div>
+</div>
+<p style="margin:16px 0 0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted);max-width:640px">No desktop o segmented sobe para a linha do título, ao lado de "A máquina": ali ele fica na mesma altura do olho que procura o bloco, sem gastar uma faixa inteira de 44px na coluna. O valor da máquina não estica: um campo de dinheiro com 640px de largura é uma caixa vazia com quatro dígitos no canto.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+<div id="15g" style="display:flex;flex-direction:column;gap:10px;width:560px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">15g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A tira de estados</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O Select e o segmented nos estados que um aparelho de toque nunca visita antes do toque — por isso o repouso precisa parecer clicável sozinho.</p>
+<div data-theme="dark" data-screen-label="15g Tira de estados" style="width:560px;padding:24px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:20px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-catalog-md__kicker">Select · repouso, hover, desabilitado</span>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<span class="tf-selectwrap"><select class="tf-input tf-select"><option selected>Quase todo dia</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" style="border-color:var(--border-strong);background:var(--bg-muted)"><option selected>Quase todo dia</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" style="border-color:var(--accent)"><option selected>Quase todo dia</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+<span class="tf-selectwrap"><select class="tf-input tf-select" aria-disabled="true" style="opacity:.55;cursor:not-allowed"><option selected>Quase todo dia</option></select><span class="tf-select__caret" aria-hidden="true"></span><span class="tf-selectwrap__chev"></span></span>
+</div>
+<p style="margin:0;font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A opção mais larga é "Poucas horas por semana", com 195px de texto — contra 181px de "Praticamente o dia todo" e 115px de "Quase todo dia". Ela tem de caber inteira no controle fechado a 390px, nem corte nem reticências, e é ela que fixa a largura mínima do Select.</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-catalog-md__kicker">Segmented · repouso, hover no não-selecionado</span>
+<div style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%"><button type="button" class="tf-segmented__item tf-segmented__item--selected" style="flex:1;min-height:44px">Estimar</button><button type="button" class="tf-segmented__item" style="flex:1;min-height:44px">Ajustar</button></div>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%"><button type="button" class="tf-segmented__item tf-segmented__item--selected" style="flex:1;min-height:44px">Estimar</button><button type="button" class="tf-segmented__item" style="flex:1;min-height:44px;color:var(--text-body)">Ajustar</button></div>
+<div class="tf-segmented tf-segmented--md" role="tablist" style="width:100%"><button type="button" class="tf-segmented__item tf-segmented__item--selected" style="flex:1;min-height:44px">Estimar</button><button type="button" class="tf-segmented__item" style="flex:1;min-height:44px;outline:2px solid var(--accent);outline-offset:2px">Ajustar</button></div>
+</div>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<span class="tf-catalog-md__kicker">Botões da confirmação · repouso, hover</span>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px">
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm">Usar 3.600 h</button>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm" style="background:var(--accent-hover)">Usar 3.600 h</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Manter 2.000 h</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Manter 2.000 h</button>
+</div>
+</div>
+</div>
+</div>
+
+</div>
+
+<footer style="display:flex;flex-direction:column;gap:8px;max-width:880px;border-top:1px solid rgba(255,255,255,.12);padding-top:20px">
+<p style="margin:0;font-size:13px;line-height:1.7;color:var(--sheet-ink-2)">O que muda no código: o rótulo do payback deixa de ser o molde <code>{n} anos</code> e ganha texto por opção (1 ano); o custo/hora sai de legenda e vira readout, com a divisão que o produziu escrita embaixo; ele passa a existir também no modo ajustar; o zero ganha a ressalva e perde o peso de tinta; a troca de modo pede confirmação com os dois números; e o aviso de plausibilidade das horas finalmente tem uma tela onde aparecer — ele já existia, com teste verde, invisível.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Lotes anteriores: <a href="Calculadora - O Topo e a Navegacao - Tema Escuro.dc.html">o topo</a> · <a href="Calculadora - Custos da Peca - Tema Escuro.dc.html">custos da peça</a> · <a href="Calculadora - A Conta e os Precos - Tema Escuro.dc.html">a conta e os preços</a> · <a href="Calculadora - Secao Marketplace - Tema Escuro.dc.html">a seção Marketplace</a> · <a href="Calculadora - Seletor de Categoria - Tema Escuro.dc.html">o seletor de categoria</a> · <a href="Calculadora - Selo de Procedencia - Tema Escuro.dc.html">o selo de procedência</a> · <a href="Calculadora - Aviso de Plausibilidade - Tema Escuro.dc.html">o aviso de plausibilidade</a> · Tema claro: <a href="Calculadora - Bloco da Maquina - Tema Claro.dc.html">esta prancheta, tema claro</a></p>
+</footer>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const set = (v) => (el) => { if (el) el.value = v; };
+    return { ritmoRef: set('Quase todo dia'), paybackRef: set('3 anos') };
+  }
+}
+</script>
+</body>
+</html>

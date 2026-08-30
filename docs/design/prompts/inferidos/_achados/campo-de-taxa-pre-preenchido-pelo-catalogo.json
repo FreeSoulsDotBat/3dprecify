@@ -1,0 +1,13 @@
+{
+  "id": "campo-de-taxa-pre-preenchido-pelo-catalogo",
+  "nome": "Campo de taxa com valor do catálogo no placeholder + legendas de faixa e regra",
+  "escala": "ESTADO",
+  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+  "oQueFoiInferido": "A convenção de exibir o valor que o catálogo está APLICANDO como PLACEHOLDER do campo (campo vazio mostrando '13,00' em cinza, via `applied.toFixed(2)`), mais duas legendas de largura total sob a grade: 'Tabela por faixa de preço — valores da faixa do seu anúncio' e 'taxa fixa = {pct}% do preço'. Inferido: que 'aplicado mas não digitado' se representa como placeholder (e não como valor, chip ou texto auxiliar), que a frase da REGRA vive numa legenda e não como sufixo do campo, e como o vendedor percebe que o placeholder MUDA quando o preço troca de faixa.",
+  "autoridade": "NENHUMA",
+  "impacto": "Já produziu a leitura errada mais cara medida na 015: quatro campos vazios lendo 'Comissão 0,00 %' enquanto 'Preços por canal' mostrava um preço com 15% já descontados. A representação de 'o catálogo está cobrando isto por você' segue sendo uma invenção de código.",
+  "prioridade": "ALTA",
+  "refutacao": "Tentei derrubar pelos presets e o resultado REFORÇA o achado: `-fixes.md` item 5 manda 'corrija ML Clássico para R$ 6,75 + 14% e ML Premium para R$ 6,75 + 19%', e o audit V2 confirma FIXED — ou seja, a convenção DESENHADA é o valor de referência PREENCHIDO no campo, exatamente o oposto da convenção de hoje (placeholder cinza, campo vazio, porque um valor preenchido faria `editedFields` mentir). Bandas progressivas são ADR-0024 (014) e `fixedFeeRule` é 016/PR-F — ambos posteriores a todas as autoridades. Nada nas 4 sobre pré-preenchimento por catálogo, faixa de preço ou regra percentual. Os comentários de `ChannelFeeField` (692-760) citam achados de homologação (F11a-007, A1 e o reverify) como origem, nunca desenho. Sobrevive, NENHUMA.",
+  "sobreviveu": true,
+  "area": "calculadora"
+}

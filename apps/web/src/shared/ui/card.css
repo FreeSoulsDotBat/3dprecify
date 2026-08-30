@@ -1,0 +1,62 @@
+/* Card surface. Ported from Truth's Forge (Claude Design). Matte by default
+   (subtle shadow); inverse = brand black plane, accent = soft purple tint. */
+.tf-card {
+  background: var(--surface-card);
+  border-radius: var(--radius-card);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  color: var(--text-body);
+}
+.tf-card--flat {
+  box-shadow: none;
+}
+.tf-card--outline {
+  box-shadow: none;
+  border-color: var(--border-default);
+}
+.tf-card--ghost {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.tf-card--inverse {
+  background: var(--surface-inverse);
+  color: var(--text-on-inverse);
+  border-color: transparent;
+}
+.tf-card--accent {
+  background: var(--accent-soft);
+  border-color: transparent;
+  box-shadow: none;
+}
+.tf-card--pad-sm {
+  padding: var(--space-4);
+}
+.tf-card--pad-lg {
+  padding: var(--space-7);
+}
+.tf-card--pad-none {
+  padding: 0;
+}
+.tf-card--interactive {
+  cursor: pointer;
+  transition:
+    box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out);
+}
+.tf-card--interactive:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+  border-color: var(--border-default);
+}
+.tf-card--interactive:active {
+  transform: translateY(0);
+}
+/* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
+.tf-card--interactive:focus-visible {
+  outline: none;
+  box-shadow: none;
+}

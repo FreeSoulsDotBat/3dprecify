@@ -1,0 +1,16 @@
+{
+  "id": "cta-assinar-estados",
+  "nome": "Botão \"Assinar Premium\" — estados pendente, conflito e indisponível",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/billing/billing-cta.tsx",
+    "apps/web/src/features/billing/billing.css"
+  ],
+  "oQueFoiInferido": "O `BillingCta` tem quatro estados tipados (`\"idle\"|\"pending\"|\"conflict\"|\"unavailable\"`) e só o de repouso existe em desenho. Inferido em código: (a) o `pending` que NUNCA volta ao repouso — o comentário do arquivo declara a escolha (\"stay pending rather than settle back to idle, so there is no flash of a re-enabled button before navigation\") e a frase `messages.billing.openingCheckout` = \"Abrindo o Mercado Pago…\" existe no bundle mas NÃO É RENDERIZADA em lugar nenhum: o botão só recebe `loading={state===\"pending\"}`; (b) o 409 (\"Você já tem um pagamento em andamento…\") e o 503 (\"O Mercado Pago não respondeu agora… nada foi cobrado.\") renderizados AMBOS como `<Alert tone=\"danger\" className=\"tf-billing-cta__alert\">` empilhado ABAIXO do botão — mesmo vermelho para um caso informativo e para uma queda de provedor. Falta desenhar: onde o erro de cobrança aparece em relação ao botão, com que tom cada caso fala, e como se comunica \"estamos te levando para fora do app\".",
+  "autoridade": "NENHUMA",
+  "impacto": "Quando o pagamento não abre, o vendedor recebe uma tarja vermelha logo abaixo do botão em que acabou de clicar — a mesma cor para \"você já tem um pagamento aberto\" (informativo) e para \"o MP caiu\".",
+  "prioridade": "ALTA",
+  "refutacao": "O canvas 018 desenha o botão APENAS em repouso: linha 413, `<button class=\"tf-btn tf-btn--primary tf-btn--lg\" style=\"align-self:flex-start\">Assinar Premium</button>` — é a última linha do bloco `tf-billing-offer`, sem irmão de erro, sem variante de carga. `PremiumScreen.jsx` idem (`<Button variant=\"primary\" size=\"lg\" full glow>Assinar Premium</Button>` + `Agora não`, nenhum estado). §E8 não tem checkout, logo não pode ter falha de checkout — e a matriz §G confirma: a linha \"Upsell sheet\" tem `loading —`, `error —`, `disabled —`. Procurei ainda socorro na §G para o padrão de erro: ela manda \"Erros sempre em frase pt-BR amigável (envelope ADR-0002), nunca stack\" — o código OBEDECE isso, mas é regra de COPY, não desenho de onde/como/com que tom. E a própria auditoria (achado 8, MÉDIA) registra \"Missing states\" como resíduo NÃO resolvido, com a recomendação final de absorver no app — ou seja, a autoridade admite explicitamente que estes estados ficaram para a inferência. Sobrevive com folga.",
+  "sobreviveu": true,
+  "area": "billing"
+}

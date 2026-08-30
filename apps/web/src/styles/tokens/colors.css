@@ -1,0 +1,220 @@
+/* ============================================================
+   Truth's Forge — Color tokens
+   Source: Manual de ID Visual - TF (paleta de cores).
+   Rule: flat color-blocking, NO gradients. Large black/white
+   planes carry structure; saturated accents used sparingly
+   (one accent per zone). Purple is the signature.
+   Contrast (WCAG 2.2 AA): text on orange/cyan must be BLACK;
+   text on purple is WHITE. Cyan as link/text on light uses the
+   deep teal (#0b8196) to clear 4.5:1.
+
+   Adopted verbatim from Claude Design project fad776 (fresh import
+   2026-06-29). Replaces the placeholder tokens.css — resolves
+   TD-011 (semantic role->color mapping) and the dark-accent=cyan bug.
+   ============================================================ */
+:root {
+  /* Native controls (the <option> popup, scrollbars, number spinners, caret) follow the
+     browser's `color-scheme`. Declaring it per theme is the root-cause fix for the white
+     <select> dropdown on the dark plane — the popup is OS/browser chrome, not our DOM. */
+  color-scheme: light;
+
+  /* ---- Brand — primary (institucionais) ---- */
+  --tf-purple: #7800ff; /* signature: CTAs, brand highlights, active */
+  --tf-orange: #f7931e; /* energy: secondary actions, badges */
+  --tf-cyan: #15bddc; /* support: info, links, fresh surfaces */
+  --tf-black: #000000;
+  --tf-white: #ffffff;
+
+  /* ---- Brand — secondary (details/icons only; = pressed states) ---- */
+  --tf-purple-deep: #5a16a6;
+  --tf-amber-deep: #bd6c0e;
+  --tf-teal-deep: #0b8196;
+
+  /* ---- Accent state ramps (flat darken on hover/press) ---- */
+  --tf-purple-hover: #6500d6;
+  --tf-purple-active: var(--tf-purple-deep);
+  --tf-purple-soft: #f1e7ff; /* tint surface on light */
+  --tf-purple-soft-2: #e6d4ff;
+
+  --tf-orange-hover: #e27f0c;
+  --tf-orange-active: var(--tf-amber-deep);
+  --tf-orange-soft: #fdeed8;
+
+  --tf-cyan-hover: #11a7c4;
+  --tf-cyan-active: var(--tf-teal-deep);
+  --tf-cyan-soft: #e0f6fb;
+
+  /* ---- Neutral ramp (near-neutral, faint cool cast) ---- */
+  --tf-neutral-0: #ffffff;
+  --tf-neutral-50: #f6f6f8;
+  --tf-neutral-100: #ededf1;
+  --tf-neutral-150: #e4e4ea;
+  --tf-neutral-200: #d7d8e0;
+  --tf-neutral-300: #b9bbc6;
+  --tf-neutral-400: #8c8f9d;
+  --tf-neutral-500: #6a6d7b;
+  --tf-neutral-600: #4d505c;
+  --tf-neutral-700: #353841;
+  --tf-neutral-800: #1f2128;
+  --tf-neutral-900: #14151a;
+  --tf-neutral-950: #0b0c0f;
+
+  /* ---- Status (info/warning are brand; success/danger derived,
+          outside the manual, added for product states) ---- */
+  --tf-info: var(--tf-cyan);
+  --tf-warning: var(--tf-orange);
+  --tf-success: #1aa06a;
+  --tf-danger: #ef3340;
+  --tf-success-deep: #137a50;
+  --tf-danger-deep: #c41f2b;
+  --tf-success-soft: #e0f5ec;
+  --tf-danger-soft: #fde4e6;
+  --tf-info-soft: var(--tf-cyan-soft);
+  --tf-warning-soft: var(--tf-orange-soft);
+
+  /* ============ Semantic — LIGHT (first-class; dark is the v1 default) ============ */
+  --bg-base: var(--tf-white);
+  --bg-subtle: var(--tf-neutral-50);
+  --bg-muted: var(--tf-neutral-100);
+  --bg-inverse: var(--tf-black);
+
+  --surface-card: var(--tf-white);
+  --surface-raised: var(--tf-white);
+  --surface-sunken: var(--tf-neutral-50);
+  --surface-inverse: var(--tf-black);
+  --surface-overlay: rgba(11, 12, 15, 0.55);
+
+  --text-strong: var(--tf-neutral-950);
+  --text-body: var(--tf-neutral-800);
+  --text-muted: var(--tf-neutral-600); /* AA: ~7:1 on white */
+  --text-faint: var(
+    --tf-neutral-500
+  ); /* AA: ~5:1 on white (neutral-400 reserved for borders/icons) */
+  --text-on-accent: var(--tf-white); /* on purple */
+  --text-on-energy: var(--tf-black); /* on orange / cyan */
+  --text-on-inverse: var(--tf-white);
+  --text-link: var(--tf-teal-deep);
+
+  --border-subtle: var(--tf-neutral-200);
+  --border-default: var(--tf-neutral-300);
+  --border-strong: var(--tf-neutral-950);
+  --border-accent: var(--tf-purple);
+
+  --accent: var(--tf-purple);
+  --accent-hover: var(--tf-purple-hover);
+  --accent-active: var(--tf-purple-active);
+  --accent-contrast: var(--tf-white);
+  --accent-soft: var(--tf-purple-soft);
+  --accent-text: var(--tf-purple); /* accent AS TEXT — AA ~5.6:1 on white */
+
+  --energy: var(--tf-orange);
+  --energy-hover: var(--tf-orange-hover);
+  --energy-active: var(--tf-orange-active);
+  --energy-contrast: var(--tf-black);
+
+  /* Semantic status aliases (use these in UI, never raw --tf-* hues) */
+  --success: var(--tf-success);
+  --success-soft: var(--tf-success-soft);
+  --success-deep: var(--tf-success-deep);
+  --danger: var(--tf-danger);
+  --danger-soft: var(--tf-danger-soft);
+  --danger-deep: var(--tf-danger-deep);
+  --warning: var(--energy);
+  --info: var(--tf-cyan);
+  --info-deep: var(--tf-teal-deep);
+
+  /* Status AS TEXT (INV-3/4) — the AA-measured "deep" hues for status text on
+     light surfaces. Components use these, never a raw --tf-* hue. Contrast vs
+     white surface: danger ~6.0:1, success ~5.0:1, info ~6.0:1 (all ≥4.5:1 AA). */
+  --danger-text: var(--tf-danger-deep);
+  --success-text: var(--tf-success-deep);
+  /* D3: calibrated to clear 4.5:1 on BOTH white AND the offline-banner info tint
+     (--tf-info-soft #e0f6fb). The old --tf-teal-deep (#0b8196) read only ~4.1:1 on the
+     tint (the D3 miss); #0a6d80 reads ~5.3:1 on the tint and ~6.0:1 on white. */
+  --info-text: #0a6d80;
+  /* 019/T002/T020: `--tf-amber-deep` (#bd6c0e) REPROVA AA como texto — 3,95:1 sobre
+     branco e 3,46:1 sobre `--tf-warning-soft` (#fdeed8), ambos < 4,5:1. `#9a570a` passa
+     nos dois fundos (5,61:1 / 4,92:1) e é o primeiro tom que folga sobre o soft
+     (`#a35c0b` reprova por 0,01). ADR-0032 §4: só o texto escurece — ícone/badge/botão
+     seguem em `--tf-amber-deep`, o laranja da marca não muda. */
+  --warning-text: #9a570a;
+
+  --focus-ring: var(--tf-purple);
+  --selection-bg: var(--tf-purple);
+  --selection-fg: var(--tf-white);
+}
+
+/* ================ Semantic — DARK (first-class) ================ */
+[data-theme="dark"] {
+  color-scheme: dark; /* paints the native <option> popup, scrollbars + caret dark */
+
+  --bg-base: var(--tf-black);
+  --bg-subtle: var(--tf-neutral-950);
+  --bg-muted: var(--tf-neutral-900);
+  --bg-inverse: var(--tf-white);
+
+  --surface-card: var(--tf-neutral-900);
+  --surface-raised: var(--tf-neutral-800);
+  --surface-sunken: var(--tf-neutral-950);
+  --surface-inverse: var(--tf-white);
+  --surface-overlay: rgba(0, 0, 0, 0.66);
+
+  --text-strong: var(--tf-white);
+  --text-body: var(--tf-neutral-150);
+  --text-muted: var(--tf-neutral-400); /* AA: ~7:1 on black */
+  --text-faint: var(--tf-neutral-300); /* AA: ~10:1 on black */
+  --text-on-accent: var(--tf-white);
+  --text-on-energy: var(--tf-black);
+  --text-on-inverse: var(--tf-black);
+  --text-link: var(--tf-cyan);
+
+  --border-subtle: var(--tf-neutral-800);
+  --border-default: var(--tf-neutral-700);
+  --border-strong: var(--tf-white);
+  --border-accent: var(--tf-purple);
+
+  --accent: var(--tf-purple);
+  --accent-hover: #8a2bff;
+  --accent-active: #6500d6;
+  --accent-contrast: var(--tf-white);
+  --accent-soft: rgba(120, 0, 255, 0.18);
+  --accent-text: #b79aff; /* accent AS TEXT — AA ~5:1 on #14151a */
+
+  --energy: var(--tf-orange);
+  --energy-hover: #ffa42f;
+  --energy-active: var(--tf-orange-active);
+  --energy-contrast: var(--tf-black);
+
+  --focus-ring: #9a4bff;
+  --selection-bg: var(--tf-purple);
+  --selection-fg: var(--tf-white);
+
+  /* status soft surfaces re-tinted for dark */
+  --tf-success-soft: rgba(26, 160, 106, 0.16);
+  --tf-danger-soft: rgba(239, 51, 64, 0.16);
+  --tf-info-soft: rgba(21, 189, 220, 0.16);
+  --tf-warning-soft: rgba(247, 147, 30, 0.16);
+
+  /* Status AS TEXT (INV-3/4) — the brighter base hues read for status text on
+     the dark plane.
+     Homologação automatizada (CF-036/CF-037): a medida deste bloco era contra o CARD (#14151a) —
+     mas o texto de status vive dentro do `.tf-badge--*`, cujo fundo é o `*-soft` (16% da cor) JÁ
+     COMPOSTO sobre o card. Esse fundo é mais claro, e o `success` caía para **4,46:1** — reprova
+     por 0,04. A palavra "Premium" do plano ativo é exatamente esse caso.
+     Os números abaixo são contra o FUNDO REAL (o soft sobre o card), que é o pior caso e o que o
+     olho vê: danger ~5,3:1 · success ~5,7:1 · info ~7,2:1. */
+  --danger-text: var(--tf-danger);
+  --success-text: #25b57e;
+  --info-text: var(--tf-cyan);
+  /* 019/T002/T020: same INV-3/4 rule as the other *-text tokens on the dark plane — the
+     base brand hue, unmodified, already clears AA against the real backgrounds: 7,94:1
+     on the card (#14151a) and 6,08:1 on the composited soft (`--tf-warning-soft` over
+     the card, the pior-caso pattern from CF-036/037 above). ADR-0032 §4: the brand
+     orange itself never changes; only text needed a darker tone, and only on light. */
+  --warning-text: var(--tf-orange);
+}
+
+/* First-paint theme selection is the consuming app's job: set
+   data-theme on <html> from saved pref / prefers-color-scheme via a
+   pre-paint inline script — no CSS token duplication, so the token
+   graph stays canonical. (apps/web: shared/ui/theme-store.ts) */

@@ -1,0 +1,16 @@
+{
+  "id": "retorno-checkout-sucesso",
+  "nome": "Retorno do checkout — \"Premium ativo!\" (confirmação de compra)",
+  "escala": "TELA",
+  "arquivos": [
+    "apps/web/src/features/billing/checkout-return.tsx",
+    "apps/web/src/shared/i18n/messages.pt-br.ts"
+  ],
+  "oQueFoiInferido": "Estado 2 de 3 do mesmo componente: o ÚNICO momento de confirmação de compra do produto inteiro, composto como `Card` + `<Icon name=\"crown\" size={28}/>` + h2 \"Premium ativo!\" + parágrafo \"Seu catálogo, kits, orçamentos e simulações agora salvam e exportam. Bom trabalho.\" + UM botão \"Ir para a calculadora\" (`navigate({to:\"/calcular\"})`). Inferido: que não há recibo, valor pago, plano contratado (mensal ou anual), data da próxima cobrança nem link para o comprovante do MP; que a coroa de 28px carrega sozinha a celebração; e que o destino é sempre a calculadora, não a superfície onde o vendedor bateu no teaser (a intenção que `TEASER_UPGRADE_TARGET` preservou até aqui é DESCARTADA neste ponto).",
+  "autoridade": "NENHUMA",
+  "impacto": "O vendedor paga R$ 155,88 e recebe uma frase e um botão — sem valor, sem plano, sem data. Não há onde conferir o que acabou de comprar, e ele é devolvido a um lugar que não escolheu.",
+  "prioridade": "ALTA",
+  "refutacao": "Mesma varredura, mesmo resultado: nada. §E8 do protótipo termina na \"Tela de planos Free × Premium\" com preços \"R$ —\" e SEM checkout — não pode haver confirmação de uma compra que o protótipo proíbe. O canvas 018 não tem artboard de confirmação; a prop `plano` já nasce `premium` ou `free`, sem transição. `PremiumScreen.jsx` recebe `open`/`onClose`/`onSubscribe` e o `onSubscribe` cai em `onClose` (`onClick={onSubscribe || onClose}`) — o protótipo literalmente FECHA a tela no clique de assinar, não desenha nada depois. `AccountScreen.jsx` só troca o `Badge` entre 'Premium' e 'Grátis'. Também verifiquei se a auditoria teria absorvido isto em algum achado de \"success state\": a matriz §G do prompt tem coluna `success`, mas a linha \"Upsell sheet\" registra success = \"Ver planos\" — o sucesso do upsell prototipado é ABRIR A TELA DE PLANOS, não completar uma compra. Nada derruba o achado.",
+  "sobreviveu": true,
+  "area": "billing"
+}

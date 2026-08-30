@@ -10,8 +10,9 @@ Minimal surface for the skeleton. Establishes the server-side auth boundary (FR-
 Proves the server verifies the Firebase ID token; the client cannot grant itself access.
 - **Request header**: `Authorization: Bearer <Firebase ID token>`
 - **200** → `{ "uid": "<string>", "email": "<string|null>" }` when the token is valid.
-- **401** → `{ "detail": "missing or invalid token" }` when the header is absent, malformed, expired, or fails
-  signature/audience/issuer verification.
+- **401** → ADR-0002 error envelope `{ "error": { "code": "UNAUTHENTICATED", "message": "<string>",
+  "correlationId": "<string>" } }` (code `TOKEN_EXPIRED` when the token is specifically expired) when the header
+  is absent, malformed, expired, or fails signature/audience/issuer verification.
 
 ## Required test cases (pytest, written first, must fail before impl)
 | Case | Expected |

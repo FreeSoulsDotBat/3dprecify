@@ -1,0 +1,18 @@
+{
+  "id": "estado-precisa-de-atencao",
+  "nome": "Estado \"precisa de atenção\" / referência manual do produto",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/entities/catalog/product-summary.ts",
+    "apps/web/src/features/catalog/products-panel.tsx",
+    "apps/web/src/pages/catalogo/produto-page.tsx",
+    "apps/web/src/features/catalog/catalog-panel.tsx"
+  ],
+  "oQueFoiInferido": "O mesmo estado aparece em três formas. Duas delas o canvas define; a terceira e a quarta não: (a) o resumo da linha vira \"manual · manual\" via `productSummary`, e — sem autoridade nenhuma — \"carregando…\" enquanto os caches irmãos de filamento/impressora respondem (`resolvingRef`, product-summary.ts:22, com um comentário que reconhece o risco: \"a loading reference is indistinguishable from a genuinely manual one\"); (b) no cartão, uma quarta caption cinza \"Vincule um filamento e uma impressora salvos\" onde o desenho manda um badge danger; (c) no editor de página cheia, um `Alert tone=\"info\"` com esse título MAIS o corpo \"Os valores atuais foram mantidos e continuam editáveis.\" (produto-page linhas 280-284), sem autoridade nem para o corpo nem para essa localização.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "A informação que impede o vendedor de confiar num preço calculado sobre valores órfãos ainda fala dialetos diferentes conforme onde aparece — e um deles, o \"carregando…\", é indistinguível de defeito.",
+  "prioridade": "MEDIA",
+  "refutacao": "REBAIXO de ALTA para MEDIA porque a queixa central do mapeador — \"falta desenhar a forma única desse estado (badge? linha? alerta?)\" — está em boa parte RESPONDIDA. (4) O canvas define a forma única e a define bem: badge `\"precisa de atenção\"` com `tone:\"danger\"` no cartão, `meta:\"manual\"` como resumo da linha, e o `tf-alert--info` com a copy \"Vincule um filamento e uma impressora salvos\" — literalmente a mesma string de `messages.catalogo.needsAttention` — dentro da ficha, condicionado a `detail.needsAttention`. Duas superfícies, dois papéis, uma copy. O que sobra sem autoridade nenhuma: o \"carregando…\", a versão do alerta no editor de página cheia (com corpo próprio), e a degradação para caption empilhada porque o badge não foi construído (ver `cartao-da-lista-desktop-avisos`). (1)/(2)/(3) O protótipo não tem referências ENTRE itens de catálogo, logo não tem degradação — `grep -i manual` nas prompts devolve só o link \"inserir manualmente\" da §E4 e a nota de identidade do readme.",
+  "sobreviveu": true,
+  "area": "catalogo"
+}

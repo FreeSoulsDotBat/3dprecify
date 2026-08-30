@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">O caminho sem parede</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">Mudança de padrão pedida pelo dono, e ela troca uma tese do produto por outra. Hoje o Premium bloqueia em <strong style="color:var(--sheet-ink)">três lugares</strong>: uma parede antes da lista, um aviso dentro do formulário, e o botão de criar desabilitado. A partir daqui há <strong style="color:var(--sheet-ink)">um só</strong> — o salvar.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Nas palavras dele: <em>"melhor que escrever um texto do que a pessoa poderia fazer é mostrar o que ela poderia fazer"</em>. O caminho passa a ser: vazio com uma frase didática → botão de adicionar → formulário inerte, campos vazios → a mensagem do Premium acima da linha de botões. Quem não paga percorre a feature inteira e vê a forma exata do que está comprando.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#32a">32a</a> o vazio didático · <a href="#32b">32b</a> o formulário inerte · <a href="#32c">32c</a> as seis frases · <a href="#32d">32d</a> o que sai · <a href="#32e">32e</a> quem tinha e deixou vencer · <a href="#32f">32f</a> orçamento e simulação · <a href="#32g">32g</a> 1280px.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Primitivo novo:</strong> <code>tf-frozen</code> — o congelamento com o esmaecimento nos controles, não no contêiner (ver <a href="#32b">32b</a>). Uma frase é do dono, verbatim; as outras cinco seguem o padrão dela e estão marcadas como minhas na <a href="#32c">32c</a>. Estrutura de <code>features/catalog/catalog-panel.tsx</code> e <code>{filament,printer}-form.tsx</code>.</p>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="32a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O vazio didático · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Sem Premium, a lista não é substituída por parede nenhuma: ela está vazia porque nunca houve o que salvar. E o vazio explica a feature.</p>
+<div data-theme="dark" data-screen-label="32a Vazio didatico" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-segmented tf-segmented--sm tf-segmented--split" role="tablist">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Filamentos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Impressoras</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Produtos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-package"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nenhum filamento cadastrado</h2>
+<p class="tf-empty__desc" style="margin:0">Cadastre um filamento para poder reutilizar em todos os seus cálculos de precificação em poucos cliques.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button></div>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<span class="tf-catalog-md__kicker">Quem já paga vê a versão curta</span>
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-package"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nenhum filamento cadastrado</h2>
+<p class="tf-empty__desc" style="margin:0">Salve seus filamentos uma vez e reutilize em cada cálculo.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os dois vazios têm a <strong style="color:var(--sheet-ink)">mesma forma</strong> — ícone, título, frase, botão. Só o comprimento da frase muda. Quem paga já sabe para que serve a seção; quem não paga está lendo aquilo pela primeira vez, e é a única chance de explicar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O título perdeu o "ainda": <em>"Nenhum filamento cadastrado"</em>. O "ainda" prometia que aquilo ia mudar sozinho — e para quem não paga, não ia.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nenhuma coroa, nenhum preço, nenhuma menção a plano. Este é o momento de <em>mostrar a feature</em>, não de vender: o convite vem depois, quando a pessoa já viu o formulário e sabe o que está comprando.</p>
+</div>
+
+<div id="32b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O formulário inerte · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O botão de adicionar abre de verdade. Os campos aparecem inteiros, na ordem certa, com rótulos e unidades — inertes e vazios.</p>
+<div data-theme="dark" data-screen-label="32b Formulario inerte" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><h2 class="tf-title" style="margin:0;flex:1;min-width:0;font-size:var(--fs-base);color:var(--text-strong)">Novo filamento</h2><button type="button" class="tf-btn tf-btn--ghost">Voltar</button></div>
+<div class="tf-frozen" style="display:flex;flex-direction:column;gap:12px" aria-disabled="true">
+<div class="tf-field">
+<label class="tf-field__label" for="p1">Nome <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="p1" class="tf-input" type="text" placeholder="Ex.: PLA Azul" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="p2">Material</label>
+<div class="tf-inputwrap"><input id="p2" class="tf-input" type="text" placeholder="Ex.: PLA" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="p3">Custo do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input id="p3" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="p4">Peso do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="p4" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"><span class="tf-inputwrap__affix">kg</span></div>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body)">Salvar faz parte do Premium.</p>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<button type="button" class="tf-btn tf-btn--secondary">Assinar Premium</button>
+<button type="button" class="tf-btn tf-btn--primary" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Salvar</button>
+</div>
+</div>
+<span class="tf-catalog-md__kicker">A dica também fica — impressora, campo do consumo</span>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:12px">
+<div class="tf-frozen" aria-disabled="true">
+<div class="tf-field">
+<label class="tf-field__label" for="pc">Consumo médio <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="pc" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"><span class="tf-inputwrap__affix">kW</span></div>
+<span class="tf-field__hint">Consumo médio real da impressora, não a potência de placa (~0,12 kW).</span>
+</div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A frase fica <strong style="color:var(--sheet-ink)">acima</strong> da linha de botões, não ao lado do Salvar. A 390px "Salvar faz parte do Premium" mais dois botões não caberiam numa linha — e a frase é sobre o que está bloqueado, então ela pertence à seção inteira, não a um botão.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">As <strong style="color:var(--sheet-ink)">dicas de campo continuam legíveis</strong>, e essa é a parte que mais justifica o padrão novo: a dica do consumo médio é a peça mais didática dos dois formulários — ela corrige o erro que quase todo mundo comete, digitar a potência de placa em vez da média. Escondida atrás de uma parede, ela nunca é lida por quem ainda não assinou.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Legíveis" é medida, não figura: o esmaecimento vive nos <em>controles</em>, nunca no contêiner. Esmaecer o bloco inteiro com opacidade arrastava a dica para <strong style="color:var(--sheet-ink)">2,58:1</strong> e reprovava AA — e não era o que o produto faz. Lá o congelamento é um <code>fieldset</code> desabilitado, que esmaece campo e deixa rótulo e dica em cor cheia. Aqui a dica marca 5,67:1 e o rótulo 18,23:1.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Os campos ficam <em>vazios</em>, com os exemplos nos marcadores de posição. Dados de exemplo pré-preenchidos seriam mais bonitos e mais mentirosos: alguém acharia que tem um filamento cadastrado.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Salvar" continua na tela, desabilitado, em vez de desaparecer. O que a pessoa precisa entender é que <em>existe</em> um salvar e é ele que o plano libera — um botão ausente não ensina isso.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Assinar Premium" é secundário, não primário. O primário desta tela é preencher o formulário; a assinatura é o que destrava, e ainda assim não é o que a pessoa veio fazer.</p>
+</div>
+
+<div id="32c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As seis frases</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Uma por feature paga. A primeira é do dono, verbatim; as outras cinco seguem o padrão dela — verbo no imperativo, o que se ganha, e a facilidade no fim.</p>
+<div data-theme="dark" data-screen-label="32c Seis frases" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px;border-color:var(--accent)">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Filamento</span><span class="tf-badge tf-badge--accent tf-badge--sm">do dono</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Cadastre um filamento para poder reutilizar em todos os seus cálculos de precificação em poucos cliques.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Impressora</span><span class="tf-badge tf-badge--warning tf-badge--sm">minha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Cadastre sua impressora para que a depreciação e a energia entrem em todos os cálculos sem você calcular nada.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Produto</span><span class="tf-badge tf-badge--warning tf-badge--sm">minha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Cadastre uma peça com seus custos para reabrir o preço sempre recalculado, sem digitar tudo de novo.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Kit</span><span class="tf-badge tf-badge--warning tf-badge--sm">minha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Monte um kit com várias peças para ver o preço do conjunto inteiro recalculado a cada abertura.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Orçamento</span><span class="tf-badge tf-badge--warning tf-badge--sm">minha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Registre um orçamento para guardar o preço do dia congelado, do jeito que você passou para o cliente.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:4px">
+<div style="display:flex;align-items:center;gap:6px"><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Simulação</span><span class="tf-badge tf-badge--warning tf-badge--sm">minha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Salve uma simulação para reabrir sua estratégia de marketplaces e taxas com os preços de hoje.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nenhuma delas diz "Premium", "assine" ou "desbloqueie". São <strong style="color:var(--sheet-ink)">frases sobre a feature</strong>, e servem igual a quem paga e a quem não paga — é o que permite usar a mesma frase nos dois casos e mudar só o comprimento.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">As cinco minhas estão marcadas porque copy de produto é decisão do dono, não do desenho. O padrão dele é claro o suficiente para eu seguir; a palavra final não é minha.</p>
+</div>
+
+<div id="32d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O que sai · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Três superfícies deixam de existir. Todas as três estavam corretas pela tese antiga — e é a tese que mudou.</p>
+<div data-theme="dark" data-screen-label="32d O que sai" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Sai — a parede antes da lista</span>
+<div class="tf-card" style="opacity:.45">
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--accent)"><span class="tf-ico tf-ico--28 tf-ico-crown"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Salvar faz parte do Premium.</h2>
+</div>
+</div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Ela ocupava o lugar da lista. Quem não pagava nunca via a seção — só a recusa.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Sai — o botão de criar desabilitado</span>
+<button type="button" class="tf-btn tf-btn--primary" aria-disabled="true" style="align-self:flex-start;opacity:.3;cursor:not-allowed">Montar kit</button>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Bloquear na entrada evitava trabalho perdido. Mas com campos inertes não há trabalho a perder — e a entrada fechada é justamente o que impedia de ver a feature.</span>
+</div>
+<div style="display:flex;flex-direction:column;gap:6px">
+<span style="font-size:var(--fs-caption);color:var(--danger-text);font-weight:var(--fw-semibold)">Sai — o aviso de reativação dentro do formulário</span>
+<div class="tf-alert tf-alert--info" style="opacity:.45"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-crown"></span><div class="tf-alert__body"><p class="tf-alert__title">Reative o Premium</p><p class="tf-alert__text">Reative o Premium para voltar a criar e editar. Seus itens estão salvos.</p></div></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Este continua existindo em um caso só: quem <em>tinha</em> Premium e deixou vencer. Ver <a href="#32e">32e</a>.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A tese antiga era <strong style="color:var(--sheet-ink)">não fazer a pessoa trabalhar para nada</strong>: bloquear cedo, avisar antes, poupar o esforço. A nova é <strong style="color:var(--sheet-ink)">mostrar em vez de contar</strong>. As duas são defensáveis; a diferença é que a segunda aposta que ver a ferramenta vende melhor que ler sobre ela.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O que <em>não</em> muda: o servidor continua recusando toda escrita. Nada aqui é permissão — é interface. Um app que confia na própria tela para negar escrita está confiando no aparelho de quem escreve.</p>
+</div>
+
+<div id="32e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Quem tinha e deixou vencer · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Caso diferente, tela diferente: <strong style="color:var(--sheet-ink)">esta pessoa tem itens salvos</strong>. A lista não está vazia, então não há vazio didático — e ela já conhece a feature.</p>
+<div data-theme="dark" data-screen-label="32e Premium pausado" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<ul class="tf-plist">
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">PLA Azul</span><span class="tf-plist__meta">PLA · 1 kg</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;94,90</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">PETG Transparente</span><span class="tf-plist__meta">PETG · 1 kg</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;129,00</span></span></span></li>
+<li><span class="tf-plist__row"><span class="tf-plist__main"><span class="tf-plist__name">TPU Preto</span><span class="tf-plist__meta">TPU · 0,5 kg</span></span><span class="tf-plist__val"><span class="tf-plist__price">R$&nbsp;112,00</span></span></span></li>
+</ul>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--half"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<span class="tf-catalog-md__kicker">E o formulário, ao abrir</span>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><h2 class="tf-title" style="margin:0;flex:1;min-width:0;font-size:var(--fs-base);color:var(--text-strong)">Editar filamento</h2><button type="button" class="tf-btn tf-btn--ghost">Voltar</button></div>
+<div class="tf-frozen" style="display:flex;flex-direction:column;gap:12px" aria-disabled="true">
+<div class="tf-field">
+<label class="tf-field__label" for="e1">Nome <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><input id="e1" class="tf-input" type="text" value="PLA Azul" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="e2">Custo do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input id="e2" class="tf-input tf-input--num" type="text" value="94,90" aria-disabled="true" readOnly="true"></div>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body)">Reative o Premium para voltar a criar e editar. Seus itens estão salvos.</p>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<button type="button" class="tf-btn tf-btn--secondary">Reativar Premium</button>
+<button type="button" class="tf-btn tf-btn--primary" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Salvar alterações</button>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Aqui os campos vêm <strong style="color:var(--sheet-ink)">preenchidos</strong>, inertes: são os dados dela, e ela precisa poder ler o que salvou. É a diferença que justifica as duas telas — no caso novo os campos estão vazios porque não há o que ler.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Reative", não "Assine", e "Seus itens estão salvos" continua na frase. Quem já pagou uma vez não precisa da apresentação da feature; precisa da garantia de que não perdeu nada.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A faixa de topo que existia nesta tela sai — a mensagem agora mora no formulário, junto ao botão que ela explica. Dois avisos sobre o mesmo plano na mesma tela era uma repetição que a lista não pedia.</p>
+</div>
+
+<div id="32f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Orçamento e simulação · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nestas duas não existe formulário de criar: o que se salva é o resultado de um cálculo. O caminho é o mesmo das outras quatro — o botão do vazio abre a tela onde o registro nasce, e o bloqueio fica no salvar.</p>
+<div data-theme="dark" data-screen-label="32f Orcamento e simulacao" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-history"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nenhum orçamento registrado</h2>
+<p class="tf-empty__desc" style="margin:0">Registre um orçamento para guardar o preço do dia congelado, do jeito que você passou para o cliente.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary"><span class="tf-ico tf-ico--16 tf-ico-calculator"></span>Fazer um cálculo</button></div>
+</div>
+<div style="border-top:1px solid var(--border-subtle)"></div>
+<span class="tf-catalog-md__kicker">E o botão leva aqui — o rodapé da calculadora</span>
+<div class="tf-card" style="display:flex;flex-direction:column;gap:10px">
+<div class="tf-brow"><span class="tf-brow__main"><span class="tf-brow__label">Preço varejo</span></span><span class="tf-brow__val tf-tnum">R$&nbsp;148,20</span></div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body)">Salvar faz parte do Premium.</p>
+<div style="display:flex;flex-wrap:wrap;gap:8px">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Assinar Premium</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Salvar em Orçamentos</button>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Salvar simulação</button>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O botão do vazio leva para <strong style="color:var(--sheet-ink)">a calculadora</strong>, não para um formulário de criar — é lá que um orçamento nasce. O rótulo diz o destino ("Fazer um cálculo"), porque "Adicionar orçamento" prometeria uma tela de cadastro que não existe.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Aqui a nova tese se paga sozinha: a calculadora é grátis, então quem não assina <em>já preencheu tudo e já viu o preço</em>. Os dois botões desabilitados aparecem no exato momento em que a pessoa tem um número que quer guardar.</p>
+</div>
+
+<div id="32g" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">32g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · o vazio e o formulário lado a lado</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">No mestre-detalhe o caminho fica visível de uma vez: a lista vazia com a frase à esquerda, o formulário inerte à direita. Ninguém precisa navegar para entender a feature.</p>
+<div data-theme="dark" data-screen-label="32g Desktop sem parede" style="display:flex;width:1280px;height:660px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(255,255,255,.16);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar tf-nav--rail" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#32g" title="Calcular"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label sr-only">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#32g" title="Catálogo" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label sr-only">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#32g" title="Kits"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label sr-only">Kits</span></a></li>
+<li><a class="tf-nav__item" href="#32g" title="Orçamentos"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label sr-only">Orçamentos</span></a></li>
+<li><a class="tf-nav__item" href="#32g" title="Conta"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label sr-only">Conta</span></a></li>
+</ul></nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:16px;padding:24px 32px;overflow:hidden">
+<div class="tf-page-header"><h1 class="tf-page-header__title tf-title">Catálogo</h1><p class="tf-page-header__desc">Filamentos, impressoras e produtos que você reutiliza nos cálculos.</p></div>
+<div class="tf-segmented tf-segmented--sm" role="tablist" style="align-self:flex-start">
+<button type="button" class="tf-segmented__item tf-segmented__item--selected" role="tab" aria-selected="true">Filamentos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Impressoras</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Produtos</button>
+<button type="button" class="tf-segmented__item" role="tab" aria-selected="false">Kits</button>
+</div>
+<div class="tf-catalog-md" style="flex:1;min-height:0">
+<div class="tf-catalog-md__master">
+<div class="tf-empty">
+<span class="tf-empty__art" style="display:inline-flex;color:var(--text-muted)"><span class="tf-ico tf-ico--28 tf-ico-package"></span></span>
+<h2 class="tf-empty__title" style="margin:0">Nenhum filamento cadastrado</h2>
+<p class="tf-empty__desc" style="margin:0">Cadastre um filamento para poder reutilizar em todos os seus cálculos de precificação em poucos cliques.</p>
+<div class="tf-empty__actions"><button type="button" class="tf-btn tf-btn--primary tf-btn--sm"><span class="tf-ico tf-ico--16 tf-ico-plus"></span>Adicionar filamento</button></div>
+</div>
+</div>
+<div class="tf-catalog-md__detail">
+<div class="tf-card" style="display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;align-items:center;gap:12px"><h2 class="tf-title" style="margin:0;flex:1;min-width:0;font-size:var(--fs-base);color:var(--text-strong)">Novo filamento</h2><button type="button" class="tf-btn tf-btn--ghost">Voltar</button></div>
+<div class="tf-frozen" style="display:flex;flex-direction:column;gap:12px" aria-disabled="true">
+<div class="tf-field">
+<label class="tf-field__label" for="g1">Nome <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap tf-inputwrap--sm"><input id="g1" class="tf-input" type="text" placeholder="Ex.: PLA Azul" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="g2">Material</label>
+<div class="tf-inputwrap tf-inputwrap--sm"><input id="g2" class="tf-input" type="text" placeholder="Ex.: PLA" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-costs-grid">
+<div class="tf-field">
+<label class="tf-field__label" for="g3">Custo do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap tf-inputwrap--sm"><span class="tf-inputwrap__affix tf-inputwrap__affix--strong">R$</span><input id="g3" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"></div>
+</div>
+<div class="tf-field">
+<label class="tf-field__label" for="g4">Peso do rolo <span class="tf-field__req" aria-hidden="true">*</span></label>
+<div class="tf-inputwrap tf-inputwrap--sm"><input id="g4" class="tf-input tf-input--num" type="text" aria-disabled="true" readOnly="true"><span class="tf-inputwrap__affix">kg</span></div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-body)">Salvar faz parte do Premium.</p>
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Assinar Premium</button>
+<button type="button" class="tf-btn tf-btn--primary tf-btn--sm" aria-disabled="true" style="opacity:.55;cursor:not-allowed">Salvar</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Nenhuma coroa, nenhum preço, nenhuma faixa de plano em toda a tela. O único lugar onde o Premium aparece é a frase acima dos botões — e ela aparece <em>depois</em> de a pessoa ter visto a lista, a frase da feature e o formulário inteiro.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Comparar com <a href="Catalogo - Os Estados da Lista - Tema Escuro.dc.html">Os estados da lista</a>, que documenta o comportamento antigo: lá a mesma tela mostrava uma coroa e uma frase de seis palavras no lugar de tudo isso.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

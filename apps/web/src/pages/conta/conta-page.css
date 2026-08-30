@@ -1,0 +1,118 @@
+/* Conta page skin (T060). Single mobile column; cards stacked with a steady rhythm.
+   Everything wraps/truncates so a long email never causes horizontal overflow (INV-1). */
+.tf-conta {
+  gap: var(--space-4);
+}
+
+.tf-conta__identity {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+.tf-conta__identity--loading {
+  justify-content: center;
+}
+/* qa pós-016 (N01) — no erro os filhos são Alert + botão, não avatar + texto: a linha vira
+   coluna (o mesmo tratamento que o --loading já dava ao Spinner). */
+.tf-conta__identity--error {
+  align-items: stretch;
+  flex-direction: column;
+}
+
+.tf-conta__avatar {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-contrast);
+  font-family: var(--font-title);
+  font-size: var(--fs-md);
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.tf-conta__email {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-strong);
+  font-weight: var(--fw-medium);
+}
+
+.tf-conta__retry {
+  margin-top: var(--space-3);
+}
+
+.tf-conta__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+.tf-conta__row-label {
+  color: var(--text-body);
+}
+
+/* E6/T016 (a11y-overflow finding): the plan row now carries up to TWO nowrap `tf-btn`s
+   ("Assinar Premium" + "Atualizar") beside the badge/caption column. Their combined min-content
+   width can exceed 390px (measured 397 vs 390 — the coordinator's 7px finding), so this row
+   specifically wraps onto a second line instead of forcing a horizontal scrollbar — the same
+   "wrap, never scroll" rule every other adversarial-size surface in the app already follows. */
+.tf-conta__row--plan {
+  flex-wrap: wrap;
+  row-gap: var(--space-2);
+}
+.tf-conta__row--plan > :last-child {
+  margin-left: auto;
+}
+
+.tf-conta__signout {
+  margin-top: var(--space-2);
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ---- 018/US4 — a grade de três colunas do desktop ----
+   Uma coluna abaixo do corte (o empilhamento de hoje, na mesma ordem de DOM) e três a partir de
+   1280px. Media query aqui é legítimo: isto é APENAS arranjo visual — nenhum comportamento muda
+   com a largura nesta tela, então não há nada para o `useIsWide` decidir. Onde o comportamento
+   muda (o controle de tema, a oferta inline) quem decide é o hook, nunca o CSS. */
+.tf-conta__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+  align-items: start;
+}
+.tf-conta__col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+@media (min-width: 1280px) {
+  .tf-conta__grid {
+    /* A coluna do plano é a mais larga: é ela que hospeda a oferta com os dois planos. */
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.85fr);
+    gap: var(--space-6);
+  }
+}
+
+.tf-conta__offer-title {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semibold);
+  color: var(--text-strong);
+  letter-spacing: 0.02em;
+}
+.tf-conta__privacy-line {
+  margin: 0;
+  font-size: var(--fs-body-sm);
+  color: var(--text-body);
+  line-height: 1.5;
+}

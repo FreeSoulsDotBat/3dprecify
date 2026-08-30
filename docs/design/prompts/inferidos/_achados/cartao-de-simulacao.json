@@ -1,0 +1,16 @@
+{
+  "id": "cartao-de-simulacao",
+  "nome": "Cartão de simulação na lista",
+  "escala": "BLOCO",
+  "arquivos": [
+    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+    "apps/web/src/features/scenarios/scenario-list.css"
+  ],
+  "oQueFoiInferido": "A anatomia: `Card padding=\"sm\"` contendo um `<button>` de bloco inteiro com nome em `truncate text-sm font-medium`, nota opcional em `line-clamp-2` (+ `overflow-wrap:anywhere` via `scenario-list.css`) e um carimbo relativo em `text-xs` (\"Atualizado há 2 dias\" — nunca uma data, regra §0.2). Inferido: a hierarquia tipográfica entre nome/nota/carimbo (três tamanhos, nenhum desenhado), a ausência total de preço no cartão (regra correta, nunca desenhada — o cartão precisa ser IMPOSSÍVEL de confundir com um card de preço), a área clicável (o bloco é `<button>` e a linha de ações fica FORA dele, irmã), e o comportamento com nome/nota adversariais. Falta desenhar: como um cartão sem nota difere de um com nota de 2 linhas, o que distingue visualmente uma simulação de um orçamento congelado, e como o cartão indica que reabrir vai RECALCULAR.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "O objeto central da funcionalidade — o cartão que o vendedor lê para escolher qual estratégia reabrir — nunca foi desenhado, e é justamente o que precisa não ser confundido com um orçamento.",
+  "prioridade": "ALTA",
+  "refutacao": "Procurei um card de lista desenhado que servisse. Achei três, e nenhum é este — todos são o objeto OPOSTO, com dinheiro no rosto: (a) protótipo E6 Histórico = \"lista mock de orçamentos (data, produto, preço)\", e o `HistoryScreen.jsx` confirma no JSX (`ListItem` com `title`, `subtitle={data · markup}` e `value={R$ preço}`); (b) `CatalogScreen.jsx` = `ListItem` com Avatar + subtitle de custo; (c) canvas 018 = `tf-card--interactive` com `{{ rc.total }}` em 1.125rem (Orçamentos) e `{{ it.money }}` (Catálogo). Ou seja, TODO card de lista desenhado neste produto ostenta um valor — e o cartão de simulação precisa, por regra, não ter nenhum. A inversão que mais importa é exatamente a que nunca foi desenhada. O `updatedRelative` sem data também não tem precedente desenhado (todos os desenhados mostram data). Sobrevive.",
+  "sobreviveu": true,
+  "area": "simulacoes"
+}

@@ -1,0 +1,7 @@
+{"subcenario":"CF-003-UI-01","categoria":"fluxo","titulo":"CF-003-UI-01 — modo ritmo: as combinações derivam a vida útil e o R$/h declarado bate","ts":"2026-08-15T18:13:51.529Z"}
+{"subcenario":"CF-003-UI-01","categoria":"calculo","titulo":"CF-003-UI-01 — modo ritmo: as combinações derivam a vida útil e o R$/h declarado bate","ts":"2026-08-15T18:13:51.552Z"}
+{"subcenario":"CF-004-UI-02","categoria":"estresse_de_dados","titulo":"CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoção do meio","ts":"2026-08-15T18:13:53.833Z"}
+{"subcenario":"CF-004-UI-02","categoria":"seguranca","titulo":"CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoção do meio","ts":"2026-08-15T18:13:53.849Z"}
+{"subcenario":"CF-004-UI-02","categoria":"usuario_burro","titulo":"CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoção do meio","ts":"2026-08-15T18:13:53.919Z"}
+{"subcenario":"CF-004-UI-02","categoria":"input_invalido","titulo":"CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoção do meio","ts":"2026-08-15T18:13:53.958Z"}
+{"subcenario":"CF-009-UI-01","categoria":"gate_premium","titulo":"CF-009-UI-01 — perfil Shopee: as duas perguntas aparecem, mudam a tarifa e o vazio é o catch-all","ts":"2026-08-15T18:13:59.650Z"}

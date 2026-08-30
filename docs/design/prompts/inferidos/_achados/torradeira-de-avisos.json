@@ -1,0 +1,13 @@
+{
+  "id": "torradeira-de-avisos",
+  "nome": "Aviso efêmero (Toast) — posição, empilhamento e duração",
+  "escala": "COMPONENTE",
+  "arquivos": ["apps/web/src/shared/ui/toast.tsx", "apps/web/src/shared/ui/toast.css"],
+  "oQueFoiInferido": "Onde aparece, quanto tempo fica e quantos cabem. No celular fica preso ao rodapé, centralizado, EMPURRADO para cima pela altura da barra de abas (`bottom: calc(var(--tabbar-h) + var(--space-3))`); a partir de 768px pula para o canto inferior direito; some sozinho em 5000ms; empilha em coluna sem limite de fila; tem botão de fechar de 44px com margem negativa; e não tem NENHUMA animação de entrada ou saída.",
+  "autoridade": "SPEC_TEXTUAL",
+  "impacto": "É como o produto confirma que salvou, copiou ou falhou. Some em 5 segundos por escolha de código, e no celular mora sobre a barra de abas, o lugar mais disputado da tela.",
+  "prioridade": "MEDIA",
+  "refutacao": "Nada derruba, e a medição fica pior do que o relatado. (1) §D.2 tem UMA linha de prosa ('Toast — feedback efêmero (sucesso/erro/info), radius md, sombra sm') — sem posição, duração ou pilha. (3) O readme o nomeia entre os 32; nenhuma das 6 telas do ui_kit dispara um. (2) A auditoria não o cita em nenhuma das três rodadas. (4) O canvas não desenha aviso efêmero. Medição nova: `toast.css:15` é o ÚNICO corte de largura em todo o `shared/ui` (o outro `@media` do diretório é `prefers-reduced-motion` no switch) — a peça mais efêmera do app é a única com faixa de viewport própria, e ela quebra em 768px, não no corte de 1280px que o 018 adotou. Reforço do registro: no E6/PR-B a homologação visual achou 'um toast que nunca renderizou'.",
+  "sobreviveu": true,
+  "area": "design-system"
+}

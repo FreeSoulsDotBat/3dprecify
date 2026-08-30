@@ -1,0 +1,16 @@
+{
+  "id": "plano-estado-desconhecido-e-defasado",
+  "nome": "Linha do plano na Conta — plano NÃO CONFIRMADO e selo de dado defasado (offline)",
+  "escala": "ESTADO",
+  "arquivos": [
+    "apps/web/src/features/billing/plan-panel.tsx",
+    "apps/web/src/pages/conta/conta-page.tsx"
+  ],
+  "oQueFoiInferido": "Dois estados de honestidade sobre a própria leitura, ambos compostos em código. (a) `kind: \"unknown\"` (ledger falhou): `planCaption()` devolve `{badge: \"Não foi possível confirmar seu plano.\", tone: \"neutral\"}` — uma frase de 34 caracteres DENTRO de um `<Badge>`, componente de rótulo curto — com `planDetail()` = null e `PlanActions` = null, isto é, selo-frase e nada mais. (b) leitura vinda do cache do aparelho: `conta-page.tsx` faz `caption = [caption, t.planStale].filter(Boolean).join(\" · \")`, concatenando \" · última informação do servidor\" na legenda que já existia — o que na carência produz legenda + nota + sufixo, três frases num `--fs-caption`. Falta desenhar: como um selo diz \"não sei\" sem parecer \"você não tem\", e onde vive a marca de dado offline (hoje é sufixo de texto, não elemento).",
+  "autoridade": "NENHUMA",
+  "impacto": "Uma frase inteira dentro de um badge quebra a linha do plano; e o vendedor offline não distingue \"você é gratuito\" de \"não consegui confirmar\".",
+  "prioridade": "MEDIA",
+  "refutacao": "O canvas só tem os ramos `isFree`/`isPremium` (linhas 394-421) — não há ramo de erro nem de cache — e grep por `não foi possível|defasad|offline|última informação` no artboard Conta = 0. Esta foi a entrada em que a derrubada parecia mais plausível, porque o protótipo TEM um vocabulário de offline: §E9 e §D.2 desenham um \"Offline banner\" em ciano com o texto fixo \"Offline — o cálculo continua funcionando\", a §G marca a linha Conta com `offline: logout ok, sync off`, e a r2 item 1 até corrigiu o contraste dele no dark (V3: 11,96:1, medido). Mas isso é uma FAIXA GLOBAL do shell sobre a rede, não uma marca de procedência num dado específico — o que o código faz é o oposto: sufixo textual dentro da legenda de um valor. E o \"não sei\" do ledger não tem nenhum precedente: a auditoria achado 8 registra `load-error` como resíduo NÃO resolvido, e a V2 confirma que o erro de carga só foi desenhado para as LISTAS de Catálogo/Histórico (\"Não foi possível carregar. Tente de novo.\" + botão), nunca para um selo de estado. Sobrevive.",
+  "sobreviveu": true,
+  "area": "billing"
+}

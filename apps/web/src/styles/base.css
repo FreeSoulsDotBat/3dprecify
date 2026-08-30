@@ -1,0 +1,171 @@
+/* ============================================================
+   Truth's Forge — Base layer
+   Minimal resets + brand defaults. Components style themselves
+   via the custom properties in tokens/. Loaded after Tailwind
+   preflight so brand body/heading defaults win.
+   ============================================================ */
+/* ---- Self-hosted brand webfonts (offline-capable) ----
+   `.woff2` files live in `apps/web/public/brand/fonts/`, served static (no CDN at
+   runtime). Inter 400/500/600/700 + Lilita One + Paytone One vendored 2026-07-03
+   (Google Fonts latin subset — covers pt-BR) → closes TD-014. Peace Sans stays
+   commented until its license clears (TD-010); do NOT reference a missing file. */
+
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/inter-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/brand/fonts/inter-500.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/brand/fonts/inter-600.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Inter";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/brand/fonts/inter-700.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Lilita One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/lilita-one-400.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Paytone One";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/brand/fonts/paytone-one-400.woff2") format("woff2");
+}
+/* Peace Sans (TD-010, license pending):
+@font-face { font-family: "Peace Sans"; font-style: normal; font-weight: 400 700; font-display: swap;
+  src: url("/brand/fonts/PeaceSans.woff2") format("woff2"); }
+*/
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  font-size: var(--fs-base);
+  line-height: var(--lh-normal);
+  color: var(--text-body);
+  background: var(--bg-base);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+:where(a) {
+  color: var(--text-link);
+  text-underline-offset: 0.18em;
+}
+
+:where(h1, h2, h3, h4) {
+  margin: 0;
+  font-family: var(--font-title);
+  font-weight: var(--fw-bold);
+  line-height: var(--lh-snug);
+  color: var(--text-strong);
+}
+
+:where(button, input, select, textarea) {
+  font: inherit;
+}
+
+/* 019/T029 — decisão do dono (25/08, reafirmada 27/08; spec §Clarificações), exceção
+   explícita ao WCAG 2.4.7: nenhum controle mostra indicador de foco. */
+:where(input, select, textarea):focus-visible {
+  outline: none;
+  box-shadow: none;
+  border-radius: var(--radius-xs);
+}
+:where(a, button):focus-visible {
+  outline: none;
+  outline-offset: 0;
+  box-shadow: none;
+  border-radius: var(--radius-xs);
+}
+
+/* Programmatically-focused, non-interactive elements (e.g. the page <h1 tabindex="-1">
+   that receives focus on navigation) must show NO ring — the focus is a screen-reader
+   affordance, not a visual state the user chose. */
+:where([tabindex="-1"]):focus,
+:where([tabindex="-1"]):focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* ---- Brand utilities ---- */
+.tf-display {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  line-height: var(--lh-tight);
+  color: var(--text-strong);
+}
+.tf-title {
+  font-family: var(--font-title);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  line-height: var(--lh-snug);
+  color: var(--text-strong);
+}
+/* Tabular figures for money / quantity readouts (manual: Inter tnum) */
+.tf-tnum {
+  font-family: var(--font-numeric);
+  font-feature-settings: var(--num-features);
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* Screen-reader-only text (keeps a label for AT while hiding it visually). */
+.tf-vh {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

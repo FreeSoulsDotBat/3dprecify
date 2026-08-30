@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/fonts.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/colors.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/typography.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/spacing.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/radius.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/elevation.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/motion.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/tokens/base.css">
+<link rel="stylesheet" href="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/styles.css">
+<link rel="stylesheet" href="tf-components.css">
+<script src="_ds/truth-s-forge-precifica3d-design-system-fad7763e-f10c-49fa-a655-72f73c2e9370/_ds_bundle.js"></script>
+<style>
+body { margin: 0; background: #26272e; }
+a { color: #b79aff; }
+a:hover { color: #d7c2ff; }
+</style>
+</helmet>
+<section style="display:flex;flex-direction:column;gap:32px;padding:40px;background:#26272e;--sheet-ink:#f6f6f8;--sheet-ink-2:#b9bbc6">
+<header style="display:flex;flex-direction:column;gap:10px;max-width:880px">
+<h1 class="tf-display" style="font-size:30px;color:var(--sheet-ink);margin:0">O cromo e a navegação — claro</h1>
+<p style="margin:0;font-size:15px;line-height:1.55;color:var(--sheet-ink-2);text-wrap:pretty">O shell é a única parte do app que nenhuma tela pode redesenhar, e por isso é a que aparece em todas as capturas de todos os lotes anteriores. Aqui ela é o assunto: <strong style="color:var(--sheet-ink)">três larguras de menu, dois banners, uma barra de topo e um piso reservado</strong> — cada um deles resposta a uma medição, não a um gosto.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">A decisão mais forte do lote é negativa: o menu <strong style="color:var(--sheet-ink)">não é um widget de abas</strong>. São cinco links de rota de verdade, com <code>aria-current="page"</code> no ativo, e uma travessia por setas por cima. Abas dariam painéis; links dão endereços — e o app tem endereços.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)">Pranchetas: <a href="#22a">22a</a> os dois esqueletos · <a href="#22b">22b</a> a TabBar e os cinco itens · <a href="#22c">22c</a> as três larguras do menu · <a href="#22d">22d</a> os dois banners · <a href="#22e">22e</a> o rótulo recolhido · <a href="#22f">22f</a> a barra de topo · <a href="#22g">22g</a> 1280px com o rail.</p>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--sheet-ink-2)"><strong style="color:var(--sheet-ink)">Primitivos novos:</strong> <code>tf-nav--rail</code>, <code>tf-nav__collapse</code>, <code>tf-offline-banner</code> e <code>sr-only</code>, espelhados de <code>widgets/app-nav/app-nav.css</code> e <code>widgets/offline-banner/offline-banner.css</code>. O <code>:focus-visible</code> do item também foi espelhado e depois <strong style="color:var(--sheet-ink)">zerado por decisão do dono</strong> — a regra existe vazia. Ícones <code>boxes</code> e <code>panel-left</code> copiados de <code>public/brand/icons/lucide/</code> — e Kits passa a usar <code>boxes</code>, que é o que o código pede; os lotes anteriores usavam <code>layers</code> por falta do arquivo.</p>
+<div class="tf-alert tf-alert--warning" style="max-width:880px"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-triangle-alert"></span><div class="tf-alert__body"><p class="tf-alert__title">O anel de foco (22b) foi superado</p><p class="tf-alert__text">Por decisão do dono, nenhum controle mostra indicador de foco. Esta prancheta continua aqui como registro do comportamento anterior — inclusive do defeito medido que o anel corrigia: receber foco no item ativo do menu não mudava nada. <strong>O resto dela segue valendo:</strong> os cinco itens do menu, a rota <code>/historico</code> com rótulo "Orçamentos", a travessia por setas, o rótulo de 10px, as três larguras, os dois banners e o piso reservado. A consequência da remoção está declarada no cabeçalho de <code>tf-components.css</code>.</p></div></div>
+</header>
+<div style="display:flex;flex-wrap:wrap;gap:48px;align-items:flex-start">
+
+<div id="22a" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22a</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os dois esqueletos · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">No celular: banner, barra de topo, conteúdo, TabBar fixa no rodapé. No desktop a ordem muda de verdade — a barra lateral fica <em>à frente</em> do header, coluna inteira à esquerda de tudo, e a barra de topo começa onde ela termina.</p>
+<div data-theme="light" data-screen-label="22a Esqueleto mobile" style="width:390px;height:560px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;position:relative">
+<header class="tf-topbar">
+<img src="assets/logo/tf-symbol-color.svg" alt="Precifica3D" class="tf-topbar__logo">
+<div class="tf-topbar__actions">
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</header>
+<main style="flex:1;min-height:0;padding:16px;padding-bottom:calc(56px + 16px);display:flex;flex-direction:column;gap:12px;overflow:hidden">
+<div class="tf-page-header"><h1 class="tf-page-header__title tf-title">Calcular</h1></div>
+<div class="tf-card tf-card--pad-sm" style="height:96px"></div>
+<div class="tf-card tf-card--pad-sm" style="height:140px"></div>
+<div class="tf-card tf-card--pad-sm" style="flex:1"></div>
+</main>
+<nav class="tf-nav tf-nav--tabbar" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22a" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22a"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22a"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22a"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22a"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O corte é <strong style="color:var(--sheet-ink)">425px</strong>, e é feito em JavaScript, não em media query. Duas composições que diferem em comportamento — não só em aparência — não podem ficar as duas montadas na árvore: seriam dois handlers no mesmo cartão e dois teasers de Premium onde o produto promete um.</p>
+<div data-theme="light" data-screen-label="22a Esqueleto desktop" style="width:390px;height:230px;border-radius:16px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);display:flex">
+<div style="flex:0 0 74px;background:var(--surface-card);border-right:1px solid var(--border-subtle);display:flex;flex-direction:column;align-items:center;gap:8px;padding:12px 0">
+<span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-text);font-weight:700">menu</span>
+<span style="flex:1"></span>
+<span style="font-size:9px;color:var(--text-muted)">100dvh</span>
+</div>
+<div style="flex:1;display:flex;flex-direction:column">
+<div style="height:44px;background:var(--surface-card);border-bottom:1px solid var(--border-subtle);display:flex;align-items:center;padding-inline:12px"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:700">barra de topo</span></div>
+<div style="flex:1;display:flex;align-items:center;justify-content:center"><span style="font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-weight:700">main</span></div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A ordem no DOM é menu → topo → main, que é também a ordem do Tab. Ela mudou junto com o desenho: a travessia por teclado passou a bater com o que está na tela, da esquerda para a direita.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O menu do desktop vive na altura da <em>janela</em>, grudado no topo, não na altura da página. Sem isso ele estica junto com o conteúdo e o botão de recolher nasce no fim do documento — medido a 2 803px numa Calcular cheia.</p>
+</div>
+
+<div id="22b" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22b</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A TabBar e os cinco itens · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Cinco seções, largura igual, alvo de 44px. O ativo se lê por <strong style="color:var(--sheet-ink)">cor</strong> — texto e ícone roxos, peso maior — mais um traço curto no alto da célula. Nunca uma caixa em volta.</p>
+<div data-theme="light" data-screen-label="22b TabBar estados" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div>
+<span style="display:block;font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:6px">Como ela chega ao rodapé</span>
+<nav class="tf-nav tf-nav--tabbar" aria-label="Navegação principal" style="position:static;border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle)"><ul class="tf-nav__list">
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+</div>
+<div>
+<span style="display:block;font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:6px">O ativo com foco de teclado — hoje, <em>idêntico ao repouso</em></span>
+<nav class="tf-nav tf-nav--tabbar" aria-label="Navegação principal" style="position:static;border-top:1px solid var(--border-subtle);border-bottom:1px solid var(--border-subtle)"><ul class="tf-nav__list">
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label">Calcular</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label">Catálogo</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label">Kits</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label">Orçamentos</span></a></li>
+<li class="tf-nav__cell"><a class="tf-nav__item" href="#22b"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label">Conta</span></a></li>
+</ul></nav>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">A rota é /historico; o rótulo é "Orçamentos"</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O par "Histórico / Cenários" não comunicava a diferença entre um número congelado e um número recalculado hoje. O endereço não mudou — o nome mudou, porque era o nome que estava errado.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O foco tinha um defeito medido: o indicador era o mesmo fundo suave que já marca o item ativo, então <strong style="color:var(--sheet-ink)">receber foco no item ativo não mudava nada</strong>. A correção era um anel interno, que preservava as duas leituras. Sob a decisão de remover o indicador de foco, o problema volta em forma mais radical: o item focado é indistinguível de qualquer outro, ativo ou não.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O anel expôs um defeito mais antigo, e este <strong style="color:var(--sheet-ink)">permanece corrigido</strong>: a 390px a célula tem 71px e "Orçamentos" media 71,0px a 12px — encostado nas duas bordas antes de existir anel nenhum. Nenhuma medição de transbordo via, porque a caixa cabia. O rótulo desceu para 10px, o tamanho que barras de abas usam há uma década.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O anel <em>usava</em> a <strong style="color:var(--sheet-ink)">mesma cor do traço</strong> do item ativo. Não é economia de token: traço e anel eram o mesmo indicador visto de dois jeitos — um dizia "você está aqui", o outro "seu teclado está aqui" — e em dois roxos parecidos eles competiriam em vez de se completar. Com o indicador removido, sobra o traço: quem navega por teclado passa a contar posições. O token de foco do tema resolve para um lilás mais claro no escuro, e era essa a diferença.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Setas ↑↓←→, Home e End andam por um único ponto de parada de Tab; cada item continua sendo um link legítimo. É a travessia composta sem abandonar a semântica de navegação.</p>
+</div>
+
+<div id="22c" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22c</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">As três larguras do menu</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Uma variável só governa a coluna do menu, e é por isso que recolher devolve a diferença ao conteúdo sem que nenhuma página saiba que isso aconteceu.</p>
+<div data-theme="light" data-screen-label="22c Tres larguras" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:12px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--neutral">≤425px</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Nenhuma barra lateral</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">TabBar no rodapé. Abaixo desse corte não existe caminho de render para a sidebar — não é disciplina, é ausência de código.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--warning">426–599px</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">Rail de 76px, sem interruptor</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">A 426px — o primeiro pixel em que a barra lateral monta — os 240px dela deixam ~150px de conteúdo, e nada do produto cabe nisso: a medição acusou a página inteira por 131px de transbordo. Com 76px sobram ~318px.</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--warning-text)">Sem botão de expandir, de propósito: expandir devolveria o transbordo. Aqui é restrição de espaço, não preferência.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--neutral">600–1279px</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">240px, a de sempre</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Rótulos visíveis, sem escolha a fazer.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">≥1280px</span><span style="font-size:var(--fs-body-sm);font-weight:var(--fw-semibold);color:var(--text-strong)">240px ou 76px, por escolha</span></div>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">O botão aparece e o estado é preferência do aparelho, não da conta: quem recolhe está arrumando <em>esta</em> tela.</span>
+</div>
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__text">1280px porque a 1024px sobram ~700px depois dos 240px de menu, e a ficha do mestre-detalhe tem 560px — restariam ~140px de lista. A 1280px sobram ~960px.</p></div></div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Um único limiar de largura no app inteiro, com limiares nomeados quando aparece um caso novo. Duas fontes de "é largo?" são duas verdades, e a segunda envelhece calada.</p>
+</div>
+
+<div id="22d" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22d</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">Os dois banners · 390px</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O de conexão e o de sessão nunca falam da mesma coisa, e é justamente por isso que nenhum dos dois empresta a palavra do outro.</p>
+<div data-theme="light" data-screen-label="22d Banners" style="width:390px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column">
+<div role="status" aria-live="polite" class="tf-offline-banner"><span class="tf-ico tf-ico--16 tf-offline-banner__icon tf-ico-info"></span><span class="tf-offline-banner__msg">Você está offline. O cálculo continua funcionando.</span></div>
+<div style="padding:16px;display:flex;flex-direction:column;gap:12px">
+<div class="tf-alert tf-alert--info"><span class="tf-ico tf-ico--16 tf-alert__icon tf-ico-info"></span><div class="tf-alert__body"><p class="tf-alert__title">Sua sessão expirou</p><p class="tf-alert__text">Entre de novo para continuar de onde parou.</p><a class="tf-btn tf-btn--primary tf-btn--sm" href="#22d" style="margin-top:8px">Entrar de novo</a></div></div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">Por que os dois são "info"</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Nada foi destruído em nenhum dos dois casos. Offline, a calculadora inteira continua funcionando; sessão expirada, a fila de orçamentos não sincronizados fica guardada. Alarme vermelho seria mentira sobre o estrago.</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O banner de sessão é <strong style="color:var(--sheet-ink)">sticky</strong>. No instante em que o servidor recusa a sessão a pessoa está tipicamente no fim da página — é onde "Salvar em Orçamentos" mora — e um banner no topo do documento nascia 1 746px (a 1440) e 3 608px (a 360) fora da viewport. O caminho de volta tem que estar onde a pessoa está.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">A frase da sessão nunca diz "conexão" nem "online": a conexão está boa, o token não. E o endereço de volta carrega para onde a pessoa ia, então entrar de novo devolve a intenção, não a home.</p>
+</div>
+
+<div id="22e" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22e</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">O rótulo recolhido</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Recolhido, o rótulo sai da tela — não da árvore. O que se vê é o desenho; o que se ouve continua sendo "Catálogo".</p>
+<div data-theme="light" data-screen-label="22e Rail e rotulo" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;gap:12px;align-items:flex-start">
+<nav class="tf-nav tf-nav--sidebar tf-nav--rail" aria-label="Navegação principal" style="height:auto;border-radius:var(--radius-md);border-right:1px solid var(--border-subtle)"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#22e" title="Calcular"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label sr-only">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#22e" title="Catálogo" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label sr-only">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#22e" title="Kits"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label sr-only">Kits</span></a></li>
+<li><a class="tf-nav__item" href="#22e" title="Orçamentos"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label sr-only">Orçamentos</span></a></li>
+<li><a class="tf-nav__item" href="#22e" title="Conta"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label sr-only">Conta</span></a></li>
+</ul>
+<button type="button" class="tf-nav__item tf-nav__collapse" aria-expanded="false" title="Expandir"><span class="tf-ico tf-ico--22 tf-ico-panel-left"></span><span class="tf-nav__label sr-only">Expandir</span></button>
+</nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">sr-only, nunca display:none</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Com <code>display:none</code> cada item do menu ficaria sem nome para quem usa leitor de tela: cinco ícones e nenhuma palavra. A dica de mouse devolve o nome ao ponteiro; o texto escondido devolve ao leitor.</span>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">O botão diz o que vai acontecer</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">"Recolher" e "Expandir", não "Recolhido". Quem lê o verbo sabe o que o clique faz; quem lê o estado fica adivinhando. E ele mora fora da lista — não é uma seção, e não entra na travessia por setas.</span>
+</div>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">"Ser rail" deixou de depender de o botão existir. Antes, um recolhimento forçado encolhia a coluna para 76px e deixava os rótulos renderizados — o pior dos dois mundos, e visível só na imagem.</p>
+</div>
+
+<div id="22f" style="display:flex;flex-direction:column;gap:10px;width:390px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22f</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">A barra de topo, em três contextos</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Marca, identidade e tema. Uma barra, três leituras: o símbolo centrado no celular, o lockup na borda do desktop, e nada de logo na tela de entrar.</p>
+<div data-theme="light" data-screen-label="22f Barra de topo" style="width:390px;padding:16px;border-radius:20px;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body);display:flex;flex-direction:column;gap:14px">
+<div>
+<span style="display:block;font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:6px">Celular · símbolo centrado, ações à direita</span>
+<div class="tf-topbar" style="border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
+<img src="assets/logo/tf-symbol-color.svg" alt="Precifica3D" class="tf-topbar__logo">
+<div class="tf-topbar__actions">
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Sair</button>
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</div>
+</div>
+<div>
+<span style="display:block;font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:6px">Desktop · lockup na borda, e-mail visível a partir de 640px</span>
+<div class="tf-topbar" style="border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
+<img src="assets/logo/logo-inteira-black.png" alt="Precifica3D" class="tf-topbar__logo" style="position:static;transform:none;height:30px">
+<div class="tf-topbar__actions">
+<span style="max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);font-size:var(--fs-body-sm)">Conectado como marcela@…</span>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Sair</button>
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</div>
+</div>
+<div>
+<span style="display:block;font-size:var(--fs-caption);color:var(--text-muted);margin-bottom:6px">/sign-in · sem logo, um espaçador no lugar</span>
+<div class="tf-topbar" style="border:1px solid var(--border-subtle);border-radius:var(--radius-md)">
+<span class="tf-topbar__logo-spacer" aria-hidden="true"></span>
+<div class="tf-topbar__actions">
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</div>
+</div>
+<div class="tf-card tf-card--pad-sm" style="display:flex;flex-direction:column;gap:6px">
+<span class="tf-title" style="font-size:var(--fs-body-sm);color:var(--text-strong)">O tema é um controle com estado</span>
+<span style="font-size:var(--fs-caption);line-height:var(--lh-normal);color:var(--text-muted)">Pressionado = escuro, dito em <code>aria-pressed</code>. Um botão de tema que não anuncia o tema atual é um interruptor sem posição — quem não vê a tela não sabe o que vai acontecer ao tocar.</span>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Na tela de entrar o cartão já mostra o lockup centrado. Repetir a marca na barra seria a segunda logo da mesma tela, então ali ela sai e deixa um espaçador para as ações não caírem para a esquerda.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">No desktop a barra não atravessa mais o menu — começa onde ele termina. Centrar a logo sobre uma largura que ela já não cobre estava errado, então lá ela vira item de flex na borda.</p>
+</div>
+
+<div id="22g" style="display:flex;flex-direction:column;gap:10px;width:1280px">
+<div style="display:flex;align-items:center;gap:8px"><span class="tf-badge tf-badge--accent">22g</span><span class="tf-title" style="font-size:13px;color:var(--sheet-ink)">1280px · o shell inteiro, com o rail recolhido</span></div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O menu recolhido por escolha, a barra de topo começando onde ele termina, e o conteúdo usando a largura que sobrou. É a única prancheta do lote onde o botão de recolher existe.</p>
+<div data-theme="light" data-screen-label="22g Desktop shell" style="display:flex;width:1280px;height:660px;border-radius:20px;overflow:hidden;background:var(--bg-base);border:1px solid rgba(0,0,0,.22);font-family:var(--font-body);color:var(--text-body)">
+<nav class="tf-nav tf-nav--sidebar tf-nav--rail" aria-label="Navegação principal"><ul class="tf-nav__list">
+<li><a class="tf-nav__item" href="#22g" title="Calcular"><span class="tf-ico tf-ico--22 tf-ico-calculator"></span><span class="tf-nav__label sr-only">Calcular</span></a></li>
+<li><a class="tf-nav__item" href="#22g" title="Catálogo" aria-current="page"><span class="tf-ico tf-ico--22 tf-ico-package"></span><span class="tf-nav__label sr-only">Catálogo</span></a></li>
+<li><a class="tf-nav__item" href="#22g" title="Kits"><span class="tf-ico tf-ico--22 tf-ico-boxes"></span><span class="tf-nav__label sr-only">Kits</span></a></li>
+<li><a class="tf-nav__item" href="#22g" title="Orçamentos"><span class="tf-ico tf-ico--22 tf-ico-history"></span><span class="tf-nav__label sr-only">Orçamentos</span></a></li>
+<li><a class="tf-nav__item" href="#22g" title="Conta"><span class="tf-ico tf-ico--22 tf-ico-circle-user"></span><span class="tf-nav__label sr-only">Conta</span></a></li>
+</ul>
+<button type="button" class="tf-nav__item tf-nav__collapse" aria-expanded="false" title="Expandir"><span class="tf-ico tf-ico--22 tf-ico-panel-left"></span><span class="tf-nav__label sr-only">Expandir</span></button>
+</nav>
+<div style="flex:1;min-width:0;display:flex;flex-direction:column">
+<header class="tf-topbar">
+<img src="assets/logo/logo-inteira-black.png" alt="Precifica3D" class="tf-topbar__logo" style="position:static;transform:none;height:34px">
+<div class="tf-topbar__actions">
+<span style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-muted);font-size:var(--fs-body-sm)">Conectado como marcela@papelariaponto.com.br</span>
+<button type="button" class="tf-btn tf-btn--secondary tf-btn--sm">Sair</button>
+<button type="button" class="tf-topbar__theme" aria-pressed="false" aria-label="Alternar tema" title="Alternar tema"><span class="tf-ico tf-ico--22 tf-ico-sun"></span></button>
+</div>
+</header>
+<main style="flex:1;min-height:0;padding:24px 32px;display:flex;flex-direction:column;gap:16px;overflow:hidden">
+<div class="tf-page-header"><h1 class="tf-page-header__title tf-title">Catálogo</h1><p class="tf-page-header__desc">Filamentos, impressoras e produtos que você reutiliza nos cálculos.</p></div>
+<div style="display:flex;gap:20px;flex:1;min-height:0">
+<div style="flex:0 0 380px;display:flex;flex-direction:column;gap:10px">
+<div class="tf-card tf-card--pad-sm" style="height:72px"></div>
+<div class="tf-card tf-card--pad-sm" style="height:72px;border-color:var(--accent);background:var(--accent-soft)"></div>
+<div class="tf-card tf-card--pad-sm" style="height:72px"></div>
+<div class="tf-card tf-card--pad-sm" style="flex:1"></div>
+</div>
+<div class="tf-card" style="flex:1;min-width:0;display:flex;flex-direction:column;gap:12px">
+<span class="tf-title" style="font-size:var(--fs-base);color:var(--text-strong)">A ficha, onde o mestre-detalhe seleciona</span>
+<span style="font-size:var(--fs-body-sm);line-height:var(--lh-normal);color:var(--text-muted)">A partir daqui, clicar num cartão <em>seleciona</em> onde antes <em>navegava</em>. É comportamento, e é por isso que o limiar não é uma media query.</span>
+<span style="flex:1"></span>
+<span style="font-size:var(--fs-caption);color:var(--text-muted)">Teto de 1 720px para a coluna de conteúdo: um teto, não uma largura — telas ultrawide não viram uma linha de texto de dois metros.</span>
+</div>
+</div>
+</main>
+</div>
+</div>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">Cinco páginas ficaram travadas em 448px depois que só a calculadora ganhou a coluna larga: a 1440px, ~1 160px de área útil e 39% usados. A classe que substitui aquele teto vive no shell, e nunca conviveu com o utilitário antigo — duas regras disputando especificidade é um empate que ninguém vê chegar.</p>
+<p style="margin:0;font-size:12px;line-height:1.5;color:var(--sheet-ink-2)">O piso reservado é a última peça do shell e a mais invisível: no celular, o que é <em>pinado</em> tem que parar acima da TabBar. Preenchimento embaixo só move o que rola; um elemento sticky para em relação à janela e nunca vê aquele espaço — a barra de total do kit parava 8px do chão, ou seja 56px <em>dentro</em> da TabBar, com os dígitos cortados durante a composição inteira. Quem sabe que tem TabBar é o shell, então é ele quem publica a medida.</p>
+</div>
+
+</div>
+</section>
+</x-dc>
+</body>
+</html>

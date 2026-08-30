@@ -1,0 +1,13 @@
+{
+  "id": "dialogos-renomear-e-excluir-registro",
+  "nome": "Barra gerenciar: diálogos de renomear rótulo e excluir registro",
+  "escala": "BLOCO",
+  "arquivos": ["apps/web/src/features/history/snapshot-manage.tsx"],
+  "oQueFoiInferido": "A barra e os dois diálogos. A barra: dois `Button size=sm variant=secondary` ('Editar rótulo' e 'Excluir') lado a lado numa `div flex gap-2` que o detalhe renderiza ABAIXO do Card da alegação e acima do alerta de sincronização — os dois com peso visual idêntico, sendo um deles irreversível. Os diálogos: um com um único campo de texto pré-preenchido (maxLength 120) + [Voltar]/[Salvar rótulo]; outro com 'Excluir este registro?' / 'Esta ação não pode ser desfeita.' + [Voltar]/[Excluir] danger. Inferido: o peso neutro do 'Excluir' na barra; o fato de o diálogo de exclusão NÃO ecoar o rótulo do registro que vai sumir; e o sucesso do rename ser só um toast, sem estado no campo.",
+  "autoridade": "PROTOTIPO_PARCIAL",
+  "impacto": "Excluir é a única operação irreversível sobre um documento imutável, e o diálogo não repete qual registro está prestes a sumir. No celular os dois botões ficam colados, com pesos visuais iguais.",
+  "prioridade": "MEDIA",
+  "refutacao": "Metade da superfície tem desenho — a outra metade, nenhuma — e a metade desenhada CONTRADIZ o código. `Abas-Desktop.dc.html` desenha os dois gatilhos separados e hierarquizados: 'Editar rótulo' como `tf-btn--ghost tf-btn--sm` com ícone de lápis, colado ao `<h2>` do rótulo dentro do bloco da alegação (linha 302); 'Excluir' como `tf-btn--danger-ghost` com `margin-left:auto`, no fim da fileira de ações, separado dos outros três por todo o espaço da linha (linha 316). O código junta os dois como `secondary` neutros numa barra própria abaixo da alegação — nem a posição, nem o peso, nem o tom batem. Nenhum dos dois DIÁLOGOS existe em autoridade alguma (o canvas não tem um único diálogo). No protótipo não há renomear nem excluir: §E6 não os cita e `HistoryScreen.jsx` não os tem. `ux-history.md` §3 (ASCII com ✎ 🗑) e §9.2/G5 são texto. Corrigi a posição afirmada pelo mapeador: no código a barra vem DEPOIS do card da alegação, não antes.",
+  "sobreviveu": true,
+  "area": "orcamentos"
+}

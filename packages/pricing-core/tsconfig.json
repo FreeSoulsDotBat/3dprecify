@@ -2,7 +2,17 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": ".",
-    "noEmit": true
+    "noEmit": true,
+    "resolveJsonModule": true,
+    // 015/A5 ([F03a-001]) — a MESMA flag que o `fee-ingest` ganhou na 014, pelo mesmo motivo, e a
+    // ausência dela aqui É o achado: a cura foi aplicada num pacote e não no irmão. O resolvedor
+    // ESM do node exige extensão explícita em import relativo; o vitest é tolerante e resolvia
+    // `./rounding` sem ela, então o pacote não bootava sob `node` e 118 testes eram cegos a isso.
+    // Com a extensão obrigatória no código, o tsc precisa desta flag — legal só sob `noEmit`.
+    "allowImportingTsExtensions": true,
+    // O teste de boot roda `node` num subprocesso (`node:child_process`, `process.execPath`) — é a
+    // única forma de provar que o pacote CARREGA, e não apenas que o vitest consegue resolvê-lo.
+    "types": ["node"]
   },
   "include": ["src", "tests"]
 }

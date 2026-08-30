@@ -1,0 +1,82 @@
+# 003-app-shell-and-ds — DoD evidence (increment CLOSED 2026-07-03)
+
+**Branch**: `feature/003-app-shell-and-ds` · **Owner sign-off**: Jonatan, 2026-07-03 ("pode fechar a 003").
+All 73 tasks done (T001–T073); every user story homologated by the owner the same day it shipped.
+
+## Gates (final run, post-polish)
+
+| Gate | Result |
+|------|--------|
+| `prettier --check` / `eslint` (boundaries FSD-Lite) | clean |
+| `dependency-cruiser` | 126 modules, 0 violations |
+| `tsc --noEmit` (web + pricing-core) | clean |
+| Unit/integration | **75/75** (web 68 in 13 files · pricing-core 7) |
+| Coverage (`packages/*`) | 100% stmts/branches/funcs |
+| Playwright e2e (chromium + mobile, Auth emulator) | **54/54** |
+| Token-parity snapshot | 4/4 (87 tokens frozen, incl. status-text) |
+
+## Story homologations (owner, 2026-07-03 — evidence inline at each tasks.md checkpoint)
+
+- **US1 T027 PASS** — 4-tab shell (TabBar ≤425px / sidebar), canonical R$ 2,00 / R$ 3,00; breakpoint
+  changed 414→425px during homologation (owner decision, A39 partial).
+- **US2 T070 PASS** — public `/calcular`, guarded tabs + return-to-intent, sign-in re-skin, A33 phase-1
+  offline message; dual-logo layout accepted.
+- **US3 T044 PASS** — focus-to-title, light first-class + persistence (A34 chain incl.
+  `prefers-color-scheme`), `--danger-text` contrast, reduced-motion.
+- **US4 T071 PASS** — offline banner (<1s, calc keeps working), branded 404, error screen with stable
+  "Código de suporte: {correlationId}", copy-honesty locked by test.
+- **US5 T058 PASS** — server-confirmed identity via live `/api/v1/me` against emulator-validated backend
+  (A23: live wire proven by OWNER MANUAL homologation with a locally-run backend; the automated e2e suite
+  proves the transport→/me wire with a route-mocked response — it does not spin FastAPI), honest
+  "Gratuito", persisting theme Switch, sign-out re-guards.
+- **T065 final** — ACCEPTED BY OWNER per V2 (advisory homologation): the five story passes cover every
+  surface in both themes/viewports; quickstart V1–V10 all PASS (record appended to quickstart.md).
+
+## Success criteria: SC-001..SC-008 all covered (see quickstart execution record).
+
+## Decisions honored (capture log: `docs/decisions/audit-findings-r2.md` §5)
+
+A20 (transport: getIdToken per request, ApiError, baseURL, Sentry hook — incl. no-response
+normalization), A23 (identity from `/me` response only), A33 phases 1+2, A34 (theme chain), A39 partial
+(425px), A40/ADR-0007 (Radix + `tf-*`), C1 (Dialog built, FR-016), D2 (Sentry FE live), TD-014 closed
+(webfonts), TD-015 closed (status-text tokens), TD-017 closed (shell adopted).
+
+## Residual debt / follow-ups (registered)
+
+- **TD-018** — top-bar shows client-session e-mail; globalizing `/me` is an owner call.
+- **TD-019** — `use-identity` on `apiFetch` until A21 backend contract fix (phantom 422); Orval
+  `clean:false` rationale documented.
+- **A21/A22/D4** — backend contract fix + runtime-env wiring + shared `gate:all` (decided in R2, not in
+  003 scope; schedule next).
+- **R2-1..R2-7** — mechanical doc reconciles incl. stale `CLAUDE.md` "Nothing committed yet" and the
+  `quality-gate.ps1` hook inconsistency.
+- Deploy (T022 of 001 / FR-010) remains out of 003 scope — blocked on manual cloud prereqs.
+
+## Post-close audit (2026-07-03, 5-agent adversarial sweep) — fix batch applied
+
+The close above was audited by 5 independent agents (architecture, logic, rendered-adversarial, record
+veracity, security). Findings and resolution (authorized by owner):
+
+- **D1 HIGH (fixed)** — identity of the PREVIOUS user served to the next user on Conta (query cache
+  `["me"]` without uid + 5-min staleTime + client never cleared on sign-out). Confirmed in dev AND the
+  production build. Fixed: uid-keyed query + app-layer cache purge on sign-out + shared-client regression
+  test that failed pre-fix. This invalidated the original SC-008 claim until fixed.
+- **Fixed with it (mediums)**: transport now normalizes invalid-JSON bodies into `ApiError` (real status +
+  header correlationId + Sentry) and aborts hung requests at 15s; `Authorization` only attaches to the
+  API origin; huge-value overflow at 390px removed (PriceHero/BreakdownRow wrap) + e2e case; light-theme
+  offline-banner contrast raised to ≥4.5:1 over the tint (+ the e2e gap that let it slip is closed);
+  e-mail removed from `title` + Sentry `beforeBreadcrumb` scrub (LGPD); optional `VITE_RELEASE` stamping;
+  dead `@radix-ui/react-tabs` removed; stale comments fixed; switch label aligned to the copy contract.
+- **Deferred/registered**: TD-020 (`parseDecimal` silent misparse — fix with per-field validation UX, E1),
+  TD-021 (`shared/network` store extraction trigger), StrictMode-only first-load focus (dev-only,
+  production correct), `__e2eAuth` seam intentionally gated by env flag (a DEV gate would break the
+  production-mode e2e/preview build — accepted with code comment).
+- **Gates after the batch**: unit **79/79** (web 72 · pricing-core 7), e2e **62/62** (incl. new D2/D3
+  cases), lint/format/tsc/depcruise clean, coverage 100% in `packages/*` — these supersede the table above.
+- **Re-homologation (2026-07-03): PASS — SC-008 RELEASED.** All HIGH/MEDIUM fixes re-verified against the
+  PRODUCTION build (vite preview): D1 account-switch correct in dev AND prod (fresh `GET /me` for user B),
+  D2 overflow 585→0px @390, D3 banner light contrast 4.08→**5.34:1** (locked in CI by the new e2e case
+  measuring over the real tint), D5 hang → error+retry at 15s with successful recovery, D6 label per
+  contract. Full regression clean (0 console errors, 0 token-in-URL, open-redirect still blindado); only
+  known dev-only artifacts remain (no SW in `pnpm dev`; StrictMode first-load focus — production correct).
+  The 003 increment is now closed on a TRUE green.
