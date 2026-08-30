@@ -322,7 +322,8 @@ export function ScenariosList({
     return (
       <div className="flex flex-col gap-3">
         <Alert tone="danger">{t.loadError}</Alert>
-        <Button variant="secondary" onClick={refetch}>
+        {/* 019/Polish (T139) — a 30a desenha o "Tentar novamente" do erro frio como `tf-btn--half`. */}
+        <Button variant="secondary" width="half" onClick={refetch}>
           {t.retry}
         </Button>
       </div>

@@ -362,7 +362,12 @@ function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
           sem parede, PR-B): a barreira é a AUSÊNCIA do botão, nunca um clique que esbarra num
           403. Sem premium ativo o convite de sempre (VazioDidatico/lapsedBanner) já cobre o caso. */}
       {gate === "active" && (
-        <Button onClick={() => void navigate({ to: "/historico", search: { construir: true } })}>
+        // 019/Polish (T139) — a 18a desenha "Novo orçamento" como `tf-btn--full`: o consumidor de
+        // produto que a classe esperava desde a PR-A.
+        <Button
+          width="full"
+          onClick={() => void navigate({ to: "/historico", search: { construir: true } })}
+        >
           <Icon name="plus" size={16} />
           {messages.quote.newQuote}
         </Button>
