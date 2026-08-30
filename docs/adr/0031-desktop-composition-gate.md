@@ -108,7 +108,7 @@ ADR-0025–0030.
 
 ## Emenda 2026-08-26 — a quinta aba (Simulações, 019/US19)
 
-- **Status da emenda**: Proposed (o dono flipa junto com o gate da fatia que a executa — a PR-F do 019)
+- **Status da emenda**: Accepted (2026-08-30 — ratificada pelo dono no fechamento do Polish do 019; executada na PR-F #63)
 - **Autor**: arquiteto (019-porte-design) · **Motivo**: 019 R8 / FR-1919 — este ADR foi escrito para
   **quatro** abas (Catálogo, Kits, Orçamentos, Conta) e a US19 traz **Simulações**. Implementar sem
   registro seria inferir arquitetura (Princípio VIII).
@@ -149,8 +149,8 @@ Vale, sem mudar uma vírgula do corpo acima:
 
 ## Emenda 2 (2026-08-27/29) — os três limiares nomeados convivem, nenhum sem nome fora deste arquivo
 
-- **Status da emenda**: Proposed (o dono flipa junto com o gate da fatia que a executa — a PR-D do
-  019, T130)
+- **Status da emenda**: Accepted (2026-08-30 — ratificada pelo dono no fechamento do Polish do 019;
+  executada na PR-D #62/T130 e consumida pela PR-F #63)
 - **Autor**: dev-frontend (019-porte-design, cluster FE-1a) · **Motivo**: decisões 1 e 2 do dono
   (2026-08-27) — a lista do Catálogo ganha uma faixa densa (`tf-table`) entre 1024 e 1279px, um
   limiar que a PR-C (Calculadora) já tinha nomeado para OUTRA decisão sem que este ADR tivesse

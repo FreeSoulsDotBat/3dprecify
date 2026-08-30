@@ -1,6 +1,6 @@
 # ADR-0032: Os primitivos do porte — onde cada classe `tf-*` mora, e como o porte não cria uma segunda camada
 
-- **Status**: Proposed (o dono flipa para Accepted no gate da PR-A do 019, como fez com 0025–0031)
+- **Status**: Accepted (2026-08-30 — ratificado pelo dono no fechamento do Polish do 019; pedido no gate da PR-A #59, executado nas 6 fatias)
 - **Date**: 2026-08-26
 - **Deciders**: Jonatan (owner, no gate) + arquiteto (019-porte-design)
 - **Estende**: ADR-0007 (o DS é `tf-*` cabeado em Radix, não a pele de utilitários do shadcn)

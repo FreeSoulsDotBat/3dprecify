@@ -1,6 +1,6 @@
 # ADR-0034: "Montar e Enviar" — onde mora a regra do desconto, e como o orçamento enviado congela sem um segundo mecanismo
 
-- **Status**: Proposed (o dono flipa para Accepted no gate da PR-E do 019)
+- **Status**: Accepted (2026-08-30 — ratificado pelo dono no fechamento do Polish do 019, com os 9 pontos do PR #65)
 - **Date**: 2026-08-26
 - **Deciders**: Jonatan (owner — Q6/Q8 no clarify de 2026-08-26) + arquiteto (019-porte-design)
 - **Escalação**: domínio de pricing (desconto, piso, quantidade) ⇒ **opus**, por ADR-0022
