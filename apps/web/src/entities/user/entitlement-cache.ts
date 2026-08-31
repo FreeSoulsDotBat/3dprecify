@@ -1,4 +1,5 @@
 import type { EntitlementView } from "@/shared/api/generated";
+import { SERVER_STATUSES } from "@/shared/billing/premium-gate";
 import { createUidCache } from "@/shared/lib/uid-cache";
 
 // 009/T011b (E4, PR-A) — the last-known SERVER entitlement, persisted (owner decision 2026-07-13).
@@ -25,10 +26,9 @@ export function entitlementIdbKey(uid: string): string {
     return `entitlement:${uid}`;
 }
 
-const SERVER_STATUSES = new Set(["none", "active", "lapsed"]);
-
 /** A stored value is trusted ONLY if it carries one of the three statuses the server can actually
- *  answer. Anything else is not "a plan we do not recognise" — it is NOT AN ANSWER. */
+ *  answer (the ONE list, `shared/billing/premium-gate.ts`). Anything else is not "a plan we do not
+ *  recognise" — it is NOT AN ANSWER. */
 function isEntitlementView(raw: unknown): raw is EntitlementView {
     return (
         typeof raw === "object" &&

@@ -536,9 +536,11 @@ export function resolveEntry(
  * `now` is passed in (epoch ms) so the function stays pure/deterministic (no `Date.now()` inside). An
  * unparseable date returns false — never cry wolf over a malformed value.
  */
+
+const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export function isStale(entry: FeeEntry, now: number): boolean {
     const reviewed = Date.parse(entry.lastReviewed);
     if (Number.isNaN(reviewed)) return false;
-    const ageDays = (now - reviewed) / (1000 * 60 * 60 * 24);
+    const ageDays = (now - reviewed) / MS_PER_DAY;
     return ageDays > STALENESS_DAYS;
 }

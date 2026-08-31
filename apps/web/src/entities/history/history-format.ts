@@ -27,18 +27,21 @@ export function formatFrozenBRL(value: string): string {
     return formatBRL(Number(value));
 }
 
+const MS_PER_MINUTE = 60_000;
+const MS_PER_DAY = 86_400_000;
+
 /**
  * The date AS THE SELLER SAW IT. The snapshot carries the device's captured UTC offset precisely so
  * a quote made at 19:30 in São Paulo never re-renders as "20/07" for a reader in another timezone —
  * the date is part of the claim, not a rendering detail.
  */
 export function quotedDate(iso: string, offsetMinutes: number | undefined): string {
-    const shifted = new Date(new Date(iso).getTime() + (offsetMinutes ?? 0) * 60_000);
+    const shifted = new Date(new Date(iso).getTime() + (offsetMinutes ?? 0) * MS_PER_MINUTE);
     return shifted.toLocaleDateString("pt-BR", { timeZone: "UTC" });
 }
 
 export function quotedTime(iso: string, offsetMinutes: number | undefined): string {
-    const shifted = new Date(new Date(iso).getTime() + (offsetMinutes ?? 0) * 60_000);
+    const shifted = new Date(new Date(iso).getTime() + (offsetMinutes ?? 0) * MS_PER_MINUTE);
     return shifted.toLocaleTimeString("pt-BR", {
         timeZone: "UTC",
         hour: "2-digit",
@@ -92,7 +95,7 @@ export function kindLabel(item: HistoryItem): string {
  * aparelho que o servidor não verifica.
  */
 export function validUntil(item: HistoryItem, days: number): string {
-    const at = new Date(item.deviceQuotedAt).getTime() + days * 86_400_000;
+    const at = new Date(item.deviceQuotedAt).getTime() + days * MS_PER_DAY;
     return quotedDate(new Date(at).toISOString(), offsetOf(item));
 }
 

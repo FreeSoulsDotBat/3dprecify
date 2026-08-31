@@ -32,6 +32,9 @@ import {
     type SyncState,
 } from "./outbox";
 
+/** Quanto tempo a lista/registro do histórico vale antes de refetch em foco (1 min). */
+const HISTORY_STALE_MS = 60_000;
+
 // 009/T010 (E4, PR-A) — RECORDING a snapshot; 009/T022 (PR-B) — LAZY reading + manage.
 //
 // Recording is ONE code path, online and offline. The record is ALWAYS queued durably first, then
@@ -216,7 +219,7 @@ export function useHistory(filters: HistoryFilters = {}): HistoryListState {
         queryKey: historyQueryKey(uid, filters),
         enabled: status === "authenticated" && !!uid,
         retry: false,
-        staleTime: 60_000,
+        staleTime: HISTORY_STALE_MS,
         // Offline, a PAUSED query would leave the page in a permanent "loading" limbo. Let it run and
         // FAIL: the failure is what tells the surface it is serving the device cache (`stale`).
         networkMode: "always",
@@ -301,7 +304,7 @@ export function useSnapshot(clientSnapshotId: string): SnapshotState {
         queryKey: historyDetailKey(uid, clientSnapshotId),
         enabled: status === "authenticated" && !!uid,
         retry: false,
-        staleTime: 60_000,
+        staleTime: HISTORY_STALE_MS,
         networkMode: "always",
         queryFn: async () => {
             const res = await listHistoryApiV1HistoryGet({ clientSnapshotId });

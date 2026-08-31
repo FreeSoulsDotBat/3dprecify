@@ -32,7 +32,9 @@ export interface SessionLike {
  */
 export type PremiumGate = "active" | "lapsed" | "never-subscribed" | "signed-out" | "unknown";
 
-const SERVER_STATUSES: ReadonlySet<string> = new Set<ServerEntitlementStatus>([
+/** Os três estados que o SERVIDOR emite (ledger via GET /api/v1/entitlement) — exportado para que
+ *  a guarda do cache de entitlement valide contra o MESMO conjunto (uma lista só, nunca duas). */
+export const SERVER_STATUSES: ReadonlySet<string> = new Set<ServerEntitlementStatus>([
     "none",
     "active",
     "lapsed",

@@ -196,6 +196,17 @@ export async function purgeOutbox(uid: string): Promise<void> {
     }
 }
 
+/** O mapa status HTTP → `SyncState` de uma tentativa que NÃO sincronizou (regras nos comentários —
+ *  cada ramo é uma decisão registrada, não uma conveniência). */
+function syncStateForStatus(status: number): OutboxEntry["syncState"] {
+    // hotfix 016/A3 (H4): o 401 é recusa ATIVA do token, nunca "sem resposta" — não é `pending`.
+    if (status === 401) return "unauthenticated";
+    if (status === 403) return "blocked";
+    if (status === 422) return "failed";
+    // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
+    return "pending";
+}
+
 export interface DrainDeps {
     /** POSTs one frozen body. Resolves on 201 (created) AND on 200 (idempotent replay) alike. */
     post: (body: SnapshotIn) => Promise<SnapshotOut>;
@@ -264,15 +275,7 @@ export async function settleEntry(
         // function does not know about auth state at all, and that absence is the guarantee: the ONLY
         // copy of an unsynced quote survives a dead session (see `session-expiry.ts` for the non-negotiable
         // property, enforced where sign-out actually lives).
-        const syncState: OutboxEntry["syncState"] =
-            status === 401
-                ? "unauthenticated"
-                : status === 403
-                  ? "blocked"
-                  : status === 422
-                    ? "failed"
-                    : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
-                      "pending";
+        const syncState = syncStateForStatus(status);
 
         await updateEntry(uid, entry.clientSnapshotId, (current) => ({
             ...current,
