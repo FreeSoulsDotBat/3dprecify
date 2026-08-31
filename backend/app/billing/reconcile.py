@@ -18,11 +18,7 @@ from app.models import Subscription
 
 from .grant_writer import process_verified_event
 from .providers.mercadopago import MercadoPagoProvider, ProviderUnavailable
-
-#: `data-model.md` §5 — the state machine's non-terminal statuses (a subscription still expecting
-#: MP-side activity). `cancelled` is terminal for reconciliation purposes even though its grant can
-#: still be running out the paid period (that lapse is expiry-driven, not reconciliation-driven).
-NON_TERMINAL_STATUSES = ("pending", "authorized", "grace", "paused")
+from .states import NON_TERMINAL_STATUSES
 
 log = structlog.get_logger(__name__)
 

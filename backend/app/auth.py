@@ -14,6 +14,7 @@ back at E2).
 from __future__ import annotations
 
 import os
+from dataclasses import dataclass
 from typing import Any, cast
 
 import firebase_admin
@@ -25,6 +26,23 @@ from .errors import AppError, ErrorCode
 from .settings import Settings
 
 _app: firebase_admin.App | None = None
+
+
+@dataclass(frozen=True)
+class Claims:
+    """019/polish — the verified Firebase ID-token fields this app actually reads, typed instead
+    of an untyped `dict[str, Any]` every route dependency threaded through by hand. `uid` is
+    always present (Firebase always sets it); `email`/`name` are OPTIONAL claims (an anonymous or
+    email-less provider omits them) — never derived, never defaulted to a lie.
+
+    This is a WIRE-ADJACENT boundary type, not a wire model: it is never serialised to a response
+    (OpenAPI is unaffected), only passed between `current_claims` and every route/dependency that
+    used to read the raw decoded token dict.
+    """
+
+    uid: str
+    email: str | None = None
+    name: str | None = None
 
 
 def init_firebase(settings: Settings) -> None:
@@ -61,8 +79,9 @@ async def verify_id_token(token: str) -> dict[str, Any]:
     return decoded
 
 
-async def current_claims(authorization: str | None = Header(default=None)) -> dict[str, Any]:
-    """Dependency yielding the verified Firebase token claims. 401 if missing/invalid."""
+async def current_claims(authorization: str | None = Header(default=None)) -> Claims:
+    """Dependency yielding the verified Firebase token claims, TYPED. 401 if missing/invalid."""
     if not authorization or not authorization.startswith("Bearer "):
         raise AppError(ErrorCode.UNAUTHENTICATED, "Missing bearer token", status_code=401)
-    return await verify_id_token(authorization.removeprefix("Bearer "))
+    decoded = await verify_id_token(authorization.removeprefix("Bearer "))
+    return Claims(uid=decoded["uid"], email=decoded.get("email"), name=decoded.get("name"))

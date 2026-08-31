@@ -26,7 +26,8 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.catalog_resolver import apply_product, live_links, product_to_out
-from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
+from app.api.naming import NAME_INDEX, NAME_MAX_CHARS, flush_with_unique_name
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -47,15 +48,10 @@ from app.validation import (
     CEIL_PERCENT,
     CEIL_RATE,
     finite_non_negative,
+    money_scale_ok,
 )
 
 router = APIRouter(tags=["products"])
-
-#: 019/PR-D (ADR-0033 §4) — o índice único parcial que decide o conflito de nome desta tabela.
-#: Nomeado aqui porque é ele que o retry de sufixo reconhece: qualquer OUTRA violação de
-#: integridade continua subindo (um retry cego renomearia a linha por um erro que nada tem a ver
-#: com nome, e o vendedor veria "(2)" sem motivo).
-_NAME_INDEX = "uq_products_owner_name_norm"
 
 # 016/US10 (ADR-0026): `wasteGrams` was REMOVED from pricing-core in 4.0.0 — see the identical
 # rationale in `app/api/filaments.py::_RETIRED_WASTE_FIELD`.
@@ -340,19 +336,19 @@ async def _resolve_links(
 
 @router.get("/products", responses=ENTITLEMENT_ERRORS)
 async def list_products(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[ProductOut]:
     rows = list(
         (
             await session.execute(
                 select(Product)
-                .where(Product.owner_uid == claims["uid"], Product.deleted_at.is_(None))
+                .where(Product.owner_uid == claims.uid, Product.deleted_at.is_(None))
                 .order_by(Product.created_at)
             )
         ).scalars()
     )
-    filaments, printers = await live_links(session, claims["uid"], rows)
+    filaments, printers = await live_links(session, claims.uid, rows)
     return [
         product_to_out(
             r,
@@ -370,7 +366,7 @@ async def list_products(
 )
 async def create_product(
     body: ProductIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
     # FR-310: at CREATE a product references saved items — both links are mandatory
@@ -379,15 +375,15 @@ async def create_product(
         raise _unresolvable("filamentId")
     if body.printer_id is None:
         raise _unresolvable("printerId")
-    filament, printer = await _resolve_links(session, claims["uid"], body)
-    row = Product(owner_uid=claims["uid"])
+    filament, printer = await _resolve_links(session, claims.uid, body)
+    row = Product(owner_uid=claims.uid)
     # A linha chega LIMPA ao helper: toda a escrita acontece dentro do savepoint
     # (`app/api/naming.py` explica por que isso não é estilo, é requisito).
     await flush_with_unique_name(
         session,
         row,
         body.name,
-        index_name=_NAME_INDEX,
+        index_name=NAME_INDEX[Product],
         apply=lambda: apply_product(row, body, filament, printer),
     )
     await session.commit()
@@ -398,11 +394,11 @@ async def create_product(
 @router.get("/products/{product_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_product(
     product_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
-    row = await _owned(session, claims["uid"], product_id)
-    filaments, printers = await live_links(session, claims["uid"], [row])
+    row = await _owned(session, claims.uid, product_id)
+    filaments, printers = await live_links(session, claims.uid, [row])
     return product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
@@ -417,16 +413,16 @@ async def get_product(
 async def update_product(
     product_id: str,
     body: ProductIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
-    row = await _owned(session, claims["uid"], product_id)
-    filament, printer = await _resolve_links(session, claims["uid"], body)
+    row = await _owned(session, claims.uid, product_id)
+    filament, printer = await _resolve_links(session, claims.uid, body)
     await flush_with_unique_name(
         session,
         row,
         body.name,
-        index_name=_NAME_INDEX,
+        index_name=NAME_INDEX[Product],
         apply=lambda: apply_product(row, body, filament, printer),
     )
     await session.commit()
@@ -455,11 +451,10 @@ class ProductPatchIn(CamelModel):
         if v is None:
             return v
         finite_non_negative(v, "sellerFixedPrice", CEIL_MONEY)
-        exponent = v.as_tuple().exponent
         # O número é do VENDEDOR: `MONEY_SETTLED` (Numeric(12,2)) arredondaria a 3ª casa em
         # silêncio, e arredondar o número dele é alterá-lo. 422 — a mesma regra de
         # `price-observations`.
-        if not isinstance(exponent, int) or exponent < -2:
+        if not money_scale_ok(v):
             raise ValueError("sellerFixedPrice must have at most 2 decimal places")
         return v
 
@@ -471,17 +466,17 @@ class ProductPatchIn(CamelModel):
 async def fix_product_price(
     product_id: str,
     body: ProductPatchIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
     """Fixa (ou desfixa) o preço declarado pelo vendedor; nada mais desta linha é tocado."""
-    row = await _owned(session, claims["uid"], product_id)
+    row = await _owned(session, claims.uid, product_id)
     row.seller_fixed_price = body.seller_fixed_price
     # Desfixar zera a data junto: uma data de fixação sem fixação seria um fantasma na tela.
     row.seller_fixed_at = datetime.now(UTC) if body.seller_fixed_price is not None else None
     await session.commit()
     await session.refresh(row)
-    filaments, printers = await live_links(session, claims["uid"], [row])
+    filaments, printers = await live_links(session, claims.uid, [row])
     return product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
@@ -496,9 +491,9 @@ async def fix_product_price(
 )
 async def delete_product(
     product_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    row = await _owned(session, claims["uid"], product_id)
+    row = await _owned(session, claims.uid, product_id)
     row.deleted_at = datetime.now(UTC)  # soft-delete (D6) — voluntary deletion only
     await session.commit()

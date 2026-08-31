@@ -73,6 +73,8 @@ class Snapshot(Base):
         ),
         CheckConstraint("label IS NULL OR length(btrim(label)) > 0", name="label_not_blank"),
         CheckConstraint(
+            # 3650 = MAX_QUOTE_VALIDITY_DAYS (app/validation.py, via api/history.py) — kept as a
+            # literal here on purpose (a model never imports from a validation/api module).
             "quote_validity_days IS NULL OR"
             " (quote_validity_days > 0 AND quote_validity_days <= 3650)",
             name="quote_validity_days_range",
@@ -85,7 +87,10 @@ class Snapshot(Base):
             name="device_quoted_at_finite",
         ),
         CheckConstraint(
-            "device_utc_offset_minutes BETWEEN -840 AND 840", name="device_utc_offset_range"
+            # 840 = MAX_UTC_OFFSET_MINUTES (app/validation.py, via api/history.py) — literal here
+            # for the same reason as quote_validity_days_range above.
+            "device_utc_offset_minutes BETWEEN -840 AND 840",
+            name="device_utc_offset_range",
         ),
         CheckConstraint("jsonb_typeof(payload) = 'object'", name="payload_is_object"),
         # The denormalised columns may never drift from the document. Safe here precisely BECAUSE

@@ -49,6 +49,7 @@ from app.api.catalog_resolver import (
     resolve_views,
 )
 from app.api.products import ProductOut
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -74,6 +75,9 @@ _VALID_COST_BASIS_KINDS = {"AD_HOC", "PRODUCT", "KIT"}
 #: `scenarios.name` is `VARCHAR(120)` with `ck_scenarios_name_len` behind it (data-model §2) — the
 #: bound the duplicate path has to fit its `"Cópia de …"` inside, not a display preference.
 _NAME_MAX_CHARS = 120
+#: `scenarios.note` is `VARCHAR(500)` with `ck_scenarios_note_len` behind it (mirrors
+#: `_NAME_MAX_CHARS` above) — see `app/models/scenario.py` for the CHECK the DB enforces.
+_NOTE_MAX_CHARS = 500
 _COPY_PREFIX = "Cópia de "
 
 
@@ -158,7 +162,7 @@ class ScenarioIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             return None  # blank => NULL, unrepresentable as '' (data-model §2)
-        if len(trimmed) > 500:
+        if len(trimmed) > _NOTE_MAX_CHARS:
             raise ValueError("note exceeds the maximum length (500)")
         return trimmed
 
@@ -231,72 +235,99 @@ def _decode_cursor(cursor: str) -> tuple[datetime, uuid.UUID]:
         ) from exc
 
 
-def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
-    """The FLAT `PriceInput`-shaped `lastKnown`/`lines[].input` contract (`contracts/api-surface.md`
-    lines 69-79, data-model §3) — the EXACT `CalcFieldName` set
+class PriceInputWire(CamelModel):
+    """019/polish — the FLAT `PriceInput`-shaped `lastKnown`/`lines[].input` contract
+    (`contracts/api-surface.md` lines 69-79, data-model §3) — the EXACT `CalcFieldName` set
     `apps/web/src/features/calculator/calculator-schema.ts::CALC_FIELD_NAMES` lists and
     `applyScenarioConfig` looks up by name (mirrors `pricing-core`'s own `PriceInput` keys verbatim
     — no `filament`/`printer` prefix, no material-name leaf; `PriceInput` doesn't have one either).
 
-    Redirect (2026-07-20, T030 e2e finding): the PREVIOUS version of this function emitted
-    `BomLine`'s OWN internal prefixed column names (`filamentCostPerRoll`, `printerMachineValue`,
-    …) — an implementation-storage detail that leaked onto the wire and silently broke every
-    `applyScenarioConfig` reopen (6+ keys never matched, defaults silently applied instead). Hand-
-    built (not a pydantic model dump) so the leaf set matches the contract exactly — money/rate/qty/
-    percent as `str(Decimal)` (scale-preserving, the same idiom `model_dump(mode="json")` uses
-    under the hood). Shared by the PRODUCT and KIT-line resolve paths (T022) — a KIT line's live
-    value-set is a `ProductOut` one level down."""
+    Every leaf is a `str` (money/rate/qty/percent as `str(Decimal)`, scale-preserving) — this model
+    is never fed a `Decimal` to coerce, only the already-stringified values `_price_input_dict`/
+    `_price_input_dict_from_bom_line` (below) compute. Field DECLARATION order is the dict order
+    `.model_dump(by_alias=True)` emits (Python dicts + pydantic both preserve insertion order),
+    which is what keeps this a byte-identical replacement of the hand-built dict literal it
+    replaces — asserted by the E5 scenario reopen/degradation tests, unedited.
+
+    Redirect (2026-07-20, T030 e2e finding) that this model must keep true: a PREVIOUS version of
+    the code this replaces emitted `BomLine`'s OWN internal prefixed column names
+    (`filamentCostPerRoll`, `printerMachineValue`, …) — an implementation-storage detail that
+    leaked onto the wire and silently broke every `applyScenarioConfig` reopen (6+ keys never
+    matched, defaults silently applied instead).
+    """
+
+    cost_per_roll: str
+    roll_weight_kg: str
+    print_grams: str
+    print_time_hours: str
+    avg_power_kw: str
+    tariff_per_kwh: str
+    machine_value: str
+    machine_lifetime_hours: str
+    maintenance_reserve_per_hour: str
+    failure_pct: str
+    finish_time_hours: str
+    finish_rate_per_hour: str
+    labor_hours: str
+    labor_rate_per_hour: str
+    markup_varejo_pct: str
+    markup_atacado_pct: str
+
+
+def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
+    """`PriceInputWire` from a LIVE `ProductOut` — shared by the PRODUCT and KIT-line resolve
+    paths (T022): a KIT line's live value-set is a `ProductOut` one level down."""
     piece = resolved.piece_inputs
     filament = resolved.filament_values
     printer = resolved.printer_values
-    return {
-        "costPerRoll": str(filament.cost_per_roll),
-        "rollWeightKg": str(filament.roll_weight_kg),
-        "printGrams": str(piece.print_grams),
-        "printTimeHours": str(piece.print_time_hours),
-        "avgPowerKw": str(printer.avg_power_kw),
-        "tariffPerKwh": str(resolved.tariff_per_kwh),
-        "machineValue": str(printer.machine_value),
-        "machineLifetimeHours": str(printer.machine_lifetime_hours),
-        "maintenanceReservePerHour": str(printer.maintenance_reserve_per_hour),
-        "failurePct": str(piece.failure_pct),
-        "finishTimeHours": str(piece.finish_time_hours),
-        "finishRatePerHour": str(piece.finish_rate_per_hour),
-        "laborHours": str(piece.labor_hours),
-        "laborRatePerHour": str(piece.labor_rate_per_hour),
-        "markupVarejoPct": str(piece.markup_varejo_pct),
-        "markupAtacadoPct": str(piece.markup_atacado_pct),
-    }
+    return PriceInputWire(
+        cost_per_roll=str(filament.cost_per_roll),
+        roll_weight_kg=str(filament.roll_weight_kg),
+        print_grams=str(piece.print_grams),
+        print_time_hours=str(piece.print_time_hours),
+        avg_power_kw=str(printer.avg_power_kw),
+        tariff_per_kwh=str(resolved.tariff_per_kwh),
+        machine_value=str(printer.machine_value),
+        machine_lifetime_hours=str(printer.machine_lifetime_hours),
+        maintenance_reserve_per_hour=str(printer.maintenance_reserve_per_hour),
+        failure_pct=str(piece.failure_pct),
+        finish_time_hours=str(piece.finish_time_hours),
+        finish_rate_per_hour=str(piece.finish_rate_per_hour),
+        labor_hours=str(piece.labor_hours),
+        labor_rate_per_hour=str(piece.labor_rate_per_hour),
+        markup_varejo_pct=str(piece.markup_varejo_pct),
+        markup_atacado_pct=str(piece.markup_atacado_pct),
+    ).model_dump(by_alias=True)
 
 
 def _price_input_dict_from_bom_line(line: BomLine) -> dict[str, Any]:
-    """The SAME flat `PriceInput` contract shape (see `_price_input_dict` above), built from a
-    `BomLine`'s OWN last-known snapshot COLUMNS — the E3 read path's degraded-line branch
-    (`catalog_resolver.product_to_out`), for a kit LINE whose own product ref is gone even though
-    the KIT itself still resolves (D6 one level down, mirrored verbatim via
-    `catalog_resolver.degraded_or` so a stored zero is never corrupted to a dropped scale). The
-    `BomLine` column NAMES stay prefixed (its own internal storage idiom, unaffected by this fix);
-    only the WIRE keys this function emits follow the contract."""
-    return {
-        "costPerRoll": str(degraded_or(line.filament_cost_per_roll, "0")),
-        "rollWeightKg": str(degraded_or(line.filament_roll_weight_kg, "1")),
-        "printGrams": str(degraded_or(line.print_grams, "0")),
-        "printTimeHours": str(degraded_or(line.print_time_hours, "0")),
-        "avgPowerKw": str(degraded_or(line.printer_avg_power_kw, "0")),
-        "tariffPerKwh": str(degraded_or(line.tariff_per_kwh, "0")),
-        "machineValue": str(degraded_or(line.printer_machine_value, "0")),
-        "machineLifetimeHours": str(degraded_or(line.printer_machine_lifetime_hours, "1")),
-        "maintenanceReservePerHour": str(
+    """The SAME `PriceInputWire` shape (see above), built from a `BomLine`'s OWN last-known
+    snapshot COLUMNS — the E3 read path's degraded-line branch (`catalog_resolver.product_to_out`),
+    for a kit LINE whose own product ref is gone even though the KIT itself still resolves (D6 one
+    level down, mirrored verbatim via `catalog_resolver.degraded_or` so a stored zero is never
+    corrupted to a dropped scale). The `BomLine` column NAMES stay prefixed (its own internal
+    storage idiom, unaffected by this model); only the WIRE keys this function emits follow the
+    contract."""
+    return PriceInputWire(
+        cost_per_roll=str(degraded_or(line.filament_cost_per_roll, "0")),
+        roll_weight_kg=str(degraded_or(line.filament_roll_weight_kg, "1")),
+        print_grams=str(degraded_or(line.print_grams, "0")),
+        print_time_hours=str(degraded_or(line.print_time_hours, "0")),
+        avg_power_kw=str(degraded_or(line.printer_avg_power_kw, "0")),
+        tariff_per_kwh=str(degraded_or(line.tariff_per_kwh, "0")),
+        machine_value=str(degraded_or(line.printer_machine_value, "0")),
+        machine_lifetime_hours=str(degraded_or(line.printer_machine_lifetime_hours, "1")),
+        maintenance_reserve_per_hour=str(
             degraded_or(line.printer_maintenance_reserve_per_hour, "0")
         ),
-        "failurePct": str(degraded_or(line.failure_pct, "0")),
-        "finishTimeHours": str(degraded_or(line.finish_time_hours, "0")),
-        "finishRatePerHour": str(degraded_or(line.finish_rate_per_hour, "0")),
-        "laborHours": str(degraded_or(line.labor_hours, "0")),
-        "laborRatePerHour": str(degraded_or(line.labor_rate_per_hour, "0")),
-        "markupVarejoPct": str(degraded_or(line.markup_varejo_pct, "0")),
-        "markupAtacadoPct": str(degraded_or(line.markup_atacado_pct, "0")),
-    }
+        failure_pct=str(degraded_or(line.failure_pct, "0")),
+        finish_time_hours=str(degraded_or(line.finish_time_hours, "0")),
+        finish_rate_per_hour=str(degraded_or(line.finish_rate_per_hour, "0")),
+        labor_hours=str(degraded_or(line.labor_hours, "0")),
+        labor_rate_per_hour=str(degraded_or(line.labor_rate_per_hour, "0")),
+        markup_varejo_pct=str(degraded_or(line.markup_varejo_pct, "0")),
+        markup_atacado_pct=str(degraded_or(line.markup_atacado_pct, "0")),
+    ).model_dump(by_alias=True)
 
 
 async def _resolve_product_last_known(
@@ -484,7 +515,7 @@ async def _resnapshot_cost_basis(
 
 @router.get("/scenarios", responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS})
 async def list_scenarios(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 25,
     cursor: Annotated[str | None, Query()] = None,
@@ -493,7 +524,7 @@ async def list_scenarios(
     """Keyset pagination (never OFFSET — the per-account list is unbounded, data-model §5); `?q=`
     is an owner-scoped, case-insensitive, ACCENT-SENSITIVE substring `name ILIKE` (owner-decided
     2026-07-19, the E4 D4 idiom). Readable on lapse (`require_catalog_read`, FR-612)."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     stmt = (
         select(Scenario)
         .where(Scenario.owner_uid == uid, Scenario.deleted_at.is_(None))
@@ -523,13 +554,13 @@ async def list_scenarios(
 )
 async def create_scenario(
     body: ScenarioIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
     """Create (VR-601 ACTIVE-only write gate). Materializes NOTHING (VR-607) — no catalog row is
     ever touched, the row only REFERENCES the catalog. `owner_uid` is injected from the verified
     token, never the body."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     config = await _resnapshot_cost_basis(session, uid, dict(body.config))
     row = Scenario(
         owner_uid=uid,
@@ -547,12 +578,12 @@ async def create_scenario(
 @router.get("/scenarios/{scenario_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_scenario(
     scenario_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
     """Own + not-deleted only (VR-609); `config.costBasis` is resolved read-time (T022, D3/D6);
     every other leaf is served VERBATIM (the seller's intent)."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     row = await _owned(session, uid, scenario_id)
     return await _render_out(session, uid, row)
 
@@ -564,14 +595,14 @@ async def get_scenario(
 async def update_scenario(
     scenario_id: str,
     body: ScenarioIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
     """T028 — the full-config-edit path (`PUT`, the four-object-map "whole config editable"). The
     submitted `config` REPLACES the stored one wholesale — VR-602/603 re-run on this UPDATE (the
     one operational difference from E4: the row is mutable, so the validators run on every write,
     not once), and the cost basis is re-snapshotted the same way a create is (T011)."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     row = await _owned(session, uid, scenario_id)
     config = await _resnapshot_cost_basis(session, uid, dict(body.config))
     row.name = body.name
@@ -612,7 +643,7 @@ class RenameIn(CamelModel):
         trimmed = v.strip()
         if not trimmed:
             return None
-        if len(trimmed) > 500:
+        if len(trimmed) > _NOTE_MAX_CHARS:
             raise ValueError("note exceeds the maximum length (500)")
         return trimmed
 
@@ -624,11 +655,11 @@ class RenameIn(CamelModel):
 async def rename_scenario(
     scenario_id: str,
     body: RenameIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
     """T028 — rename only (`name`/`note`); `config` is never touched by this route."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     row = await _owned(session, uid, scenario_id)
     fields_set = body.model_fields_set
     if "name" in fields_set and body.name is not None:
@@ -647,13 +678,13 @@ async def rename_scenario(
 )
 async def duplicate_scenario(
     scenario_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ScenarioOut:
     """T026 — VR-608 duplicate independence: a DEEP copy of `config` into a NEW row (new id, own
     name `"Cópia de {name}"`). A separate row BY CONSTRUCTION — editing one changes 0% of the
     other. Materializes nothing (VR-607's twin)."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     original = await _owned(session, uid, scenario_id)
     # The copy's name must fit `name`'s 120-char limit (VR-614). Truncating the WHOLE string at
     # [:120] (the pre-2026-07-23 guard, audit finding E5-02) amputated the tail with no sign
@@ -685,11 +716,11 @@ async def duplicate_scenario(
 )
 async def delete_scenario(
     scenario_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
     """Soft-delete — VOLUNTARY only (a lapse never deletes, VR-610/FR-612)."""
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     row = await _owned(session, uid, scenario_id)
     row.deleted_at = datetime.now(UTC)
     await session.commit()

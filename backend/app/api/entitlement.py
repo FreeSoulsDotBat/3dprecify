@@ -8,12 +8,12 @@ never exposed. Statuses published: 200 + 401 (contracts/api-surface.md).
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import current_claims
+from app.auth import Claims, current_claims
 from app.db import get_session
 from app.entitlement import EntitlementStatus, ensure_account, read_entitlement_state
 from app.errors import AUTH_ERRORS, CamelModel
@@ -29,10 +29,9 @@ class EntitlementView(CamelModel):
 
 @router.get("/entitlement", responses=AUTH_ERRORS, response_model_exclude_none=True)
 async def get_entitlement(
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> EntitlementView:
-    uid: str = claims["uid"]
-    await ensure_account(session, uid, claims.get("email"))
-    state = await read_entitlement_state(session, uid)
+    await ensure_account(session, claims.uid, claims.email)
+    state = await read_entitlement_state(session, claims.uid)
     return EntitlementView(status=state.status, source=state.source, expires_at=state.expires_at)

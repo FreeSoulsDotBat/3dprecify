@@ -12,7 +12,7 @@ it is simply not found here (404) — you cannot export a record the record-keep
 from __future__ import annotations
 
 import uuid
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import load_only
 
 from app.api.history import owned_snapshot
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_entitlement
 from app.errors import ENTITLEMENT_ERRORS, NOT_FOUND_ERRORS
@@ -42,7 +43,7 @@ _FILE = {"schema": {"type": "string", "format": "binary"}}
     response_class=Response,
 )
 async def export_history_csv(
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> Response:
     """The whole ledger as a data file whose rows equal the stored snapshots exactly (FR-513)."""
@@ -50,7 +51,7 @@ async def export_history_csv(
         (
             await session.execute(
                 select(Snapshot)
-                .where(Snapshot.owner_uid == claims["uid"], Snapshot.deleted_at.is_(None))
+                .where(Snapshot.owner_uid == claims.uid, Snapshot.deleted_at.is_(None))
                 # The ledger is UNBOUNDED (which is why the list is keyset-paginated, A29) and the
                 # frozen `payload` is a KB-scale JSONB per row — a kit carries one input+breakdown
                 # per piece. The CSV reads six scalars and never touches the document, so loading it
@@ -88,17 +89,17 @@ async def export_history_csv(
 )
 async def export_quote_pdf(
     snapshot_id: uuid.UUID,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
     include_cost_breakdown: Annotated[bool, Query(alias="includeCostBreakdown")] = False,
 ) -> Response:
     """A customer-facing PDF quote for ONE snapshot. Zero internal cost lines unless the seller opts
     in (SC-506); seller identity from the verified ID-token claims (FR-514 / Q13)."""
-    row = await owned_snapshot(session, claims["uid"], snapshot_id)
+    row = await owned_snapshot(session, claims.uid, snapshot_id)
     quote = build_quote_view(
         row,
-        seller_name=claims.get("name"),
-        seller_email=claims.get("email"),
+        seller_name=claims.name,
+        seller_email=claims.email,
         include_cost_breakdown=include_cost_breakdown,
     )
     return Response(

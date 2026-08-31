@@ -45,6 +45,7 @@ from sqlalchemy import literal, select, tuple_
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -56,7 +57,13 @@ from app.errors import (
     ErrorCode,
 )
 from app.models import Snapshot
-from app.validation import CEIL_MONEY, finite_non_negative, reject_bad_leaves
+from app.validation import (
+    CEIL_MONEY,
+    MAX_QUOTE_VALIDITY_DAYS,
+    MAX_UTC_OFFSET_MINUTES,
+    finite_non_negative,
+    reject_bad_leaves,
+)
 
 router = APIRouter(tags=["history"])
 
@@ -247,9 +254,12 @@ class SnapshotIn(CamelModel):
         _validate_declared_discount(self.payload, basis_decimal)
 
         # The remaining column CHECK mirrors — range guards + blank-label normalisation.
-        if self.quote_validity_days is not None and not 1 <= self.quote_validity_days <= 3650:
+        if (
+            self.quote_validity_days is not None
+            and not 1 <= self.quote_validity_days <= MAX_QUOTE_VALIDITY_DAYS
+        ):
             raise ValueError("quoteValidityDays must be within [1, 3650]")
-        if not -840 <= self.device_utc_offset_minutes <= 840:
+        if not -MAX_UTC_OFFSET_MINUTES <= self.device_utc_offset_minutes <= MAX_UTC_OFFSET_MINUTES:
             raise ValueError("deviceUtcOffsetMinutes must be within [-840, 840]")
         if self.label is not None and not self.label.strip():
             self.label = None  # blank is unrepresentable as '' (ck_snapshots_label_not_blank)
@@ -375,7 +385,7 @@ def _decode_cursor(cursor: str) -> tuple[datetime.datetime, uuid.UUID]:
 async def record_snapshot(
     body: SnapshotIn,
     response: Response,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
     """Record a snapshot — the ONLY writer of frozen fields, and idempotent by construction.
@@ -387,7 +397,7 @@ async def record_snapshot(
     arrives AFTER the seller deleted the entry cannot RESURRECT it: the insert no-ops, and the
     read-back finds only the soft-deleted row, which is not served.
     """
-    uid: str = claims["uid"]
+    uid: str = claims.uid
 
     stmt = (
         pg_insert(Snapshot)
@@ -431,7 +441,7 @@ async def record_snapshot(
 
 @router.get("/history", responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS})
 async def list_history(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
     limit: Annotated[int, Query(ge=1, le=100)] = 50,
     cursor: Annotated[str | None, Query()] = None,
@@ -463,7 +473,7 @@ async def list_history(
     * ``clientSnapshotId`` — an exact lookup, so the detail can resolve a deep-linked snapshot that
       may not be on the first lazily-loaded page (review PR-A M3, preserved under lazy pagination).
     """
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     stmt = (
         select(Snapshot)
         .where(Snapshot.owner_uid == uid, Snapshot.deleted_at.is_(None))
@@ -499,11 +509,11 @@ async def list_history(
 @router.get("/history/{snapshot_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_snapshot(
     snapshot_id: uuid.UUID,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
     """Serves the STORED document. No recomputation, ever — that is the whole promise."""
-    return _snapshot_to_out(await owned_snapshot(session, claims["uid"], snapshot_id))
+    return _snapshot_to_out(await owned_snapshot(session, claims.uid, snapshot_id))
 
 
 @router.patch(
@@ -513,7 +523,7 @@ async def get_snapshot(
 async def relabel_snapshot(
     snapshot_id: uuid.UUID,
     body: SnapshotLabelIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
     """The label, and ONLY the label. Anything else was already rejected as a 422 by the model.
@@ -523,7 +533,7 @@ async def relabel_snapshot(
     ``null`` clears it; a blank/whitespace string is a 422 (the DB ``ck_snapshots_label_not_blank``
     would otherwise surface as a 500), never a silent no-op.
     """
-    row = await owned_snapshot(session, claims["uid"], snapshot_id)
+    row = await owned_snapshot(session, claims.uid, snapshot_id)
     if "label" not in body.model_fields_set:
         return _snapshot_to_out(row)  # label omitted ⇒ untouched
     new_label = body.label
@@ -542,11 +552,11 @@ async def relabel_snapshot(
 )
 async def delete_snapshot(
     snapshot_id: uuid.UUID,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
     """Voluntary soft-delete. The tombstone is ALSO the idempotency guard: it lives inside the
     unique key, so a queued retry cannot bring the entry back (SC-513)."""
-    row = await owned_snapshot(session, claims["uid"], snapshot_id)
+    row = await owned_snapshot(session, claims.uid, snapshot_id)
     row.deleted_at = datetime.datetime.now(datetime.UTC)
     await session.commit()

@@ -46,7 +46,10 @@ class Scenario(Base):
     __table_args__ = (
         CheckConstraint("length(btrim(name)) > 0 AND length(name) <= 120", name="name_not_blank"),
         CheckConstraint(
-            "note IS NULL OR (length(btrim(note)) > 0 AND length(note) <= 500)", name="note_valid"
+            # 500 = _NOTE_MAX_CHARS (api/scenarios.py) — the DB CHECK keeps its own literal on
+            # purpose (a model never imports from an api router); kept in sync by convention.
+            "note IS NULL OR (length(btrim(note)) > 0 AND length(note) <= 500)",
+            name="note_valid",
         ),
         CheckConstraint("jsonb_typeof(config) = 'object'", name="config_is_object"),
         CheckConstraint("config_schema_version >= 1", name="config_schema_valid"),

@@ -34,11 +34,12 @@ from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import ENTITLEMENT_ERRORS, VALIDATION_ERRORS, CamelModel
 from app.models import PriceObservation
-from app.validation import CEIL_MONEY, finite_non_negative
+from app.validation import CEIL_MONEY, finite_non_negative, money_scale_ok
 
 router = APIRouter(tags=["price-observations"])
 
@@ -94,9 +95,8 @@ class PriceObservationIn(CamelModel):
     @classmethod
     def _price(cls, v: Decimal) -> Decimal:
         finite_non_negative(v, "observedPrice", CEIL_MONEY)
-        exponent = v.as_tuple().exponent
-        # `finite_non_negative` já barrou NaN/Infinity, então aqui o expoente é sempre int.
-        if not isinstance(exponent, int) or exponent < -2:
+        # `finite_non_negative` já barrou NaN/Infinity, então `money_scale_ok` é seguro aqui.
+        if not money_scale_ok(v):
             raise ValueError("observedPrice must have at most 2 decimal places")
         return v
 
@@ -140,14 +140,14 @@ class PriceObservationsPutOut(CamelModel):
 
 @router.get("/price-observations", responses=ENTITLEMENT_ERRORS)
 async def list_price_observations(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PriceObservationsOut:
     """As observações da conta — contexto para o "era R$ …", nunca fonte do valor exibido."""
     rows = (
         await session.execute(
             select(PriceObservation)
-            .where(PriceObservation.owner_uid == claims["uid"])
+            .where(PriceObservation.owner_uid == claims.uid)
             .order_by(PriceObservation.subject_id)
         )
     ).scalars()
@@ -175,7 +175,7 @@ def _kind_of(row: PriceObservation) -> SubjectKind:
 @router.put("/price-observations", responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS})
 async def put_price_observations(
     body: PriceObservationsPutIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PriceObservationsPutOut:
     """Grava o lote, idempotente por `(subjectKind, subjectId)` — uma linha por item da conta."""
@@ -186,7 +186,7 @@ async def put_price_observations(
     stmt = pg_insert(PriceObservation).values(
         [
             {
-                "owner_uid": claims["uid"],  # SÓ do token — o corpo nunca escolhe a conta
+                "owner_uid": claims.uid,  # SÓ do token — o corpo nunca escolhe a conta
                 "subject_kind": item.subject_kind,
                 "subject_id": item.subject_id,
                 "observed_price": item.observed_price,

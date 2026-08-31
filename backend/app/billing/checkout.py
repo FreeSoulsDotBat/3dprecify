@@ -22,7 +22,7 @@ from app.entitlement import ensure_account
 from app.models import Subscription
 
 from .providers.mercadopago import MercadoPagoProvider
-from .reconcile import NON_TERMINAL_STATUSES
+from .states import NON_TERMINAL_STATUSES, SubscriptionStatus
 
 PlanPeriod = Literal["monthly", "annual"]
 
@@ -87,7 +87,7 @@ async def start_checkout(
             provider="mercadopago",
             mp_preapproval_id=preapproval_id,
             plan_period=period,
-            status="pending",
+            status=SubscriptionStatus.PENDING.value,
             payer_ref=email,
         )
     )

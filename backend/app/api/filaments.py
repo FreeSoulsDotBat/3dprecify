@@ -21,7 +21,8 @@ from pydantic import ConfigDict, Field, field_validator, model_validator
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
+from app.api.naming import NAME_INDEX, NAME_MAX_CHARS, flush_with_unique_name
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -37,10 +38,6 @@ from app.models import Filament, Product
 from app.validation import CEIL_KG, CEIL_MONEY, finite_non_negative
 
 router = APIRouter(tags=["filaments"])
-
-#: 019/PR-D (ADR-0033 §4) — o índice único parcial desta tabela; só ELE dispara o retry de sufixo
-#: (qualquer outra violação de integridade continua subindo, ver `app/api/naming.py`).
-_NAME_INDEX = "uq_filaments_owner_name_norm"
 
 # 016/US10 (ADR-0026): `defaultWasteGrams` was REMOVED from pricing-core in 4.0.0 — a client that
 # still sends it is NOT silently ignored (Pydantic's default `extra="ignore"` would let a seller
@@ -154,13 +151,13 @@ async def _owned_filament(session: AsyncSession, uid: str, filament_id: str) -> 
 
 @router.get("/filaments", responses=ENTITLEMENT_ERRORS)
 async def list_filaments(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[FilamentOut]:
     rows = (
         await session.execute(
             select(Filament)
-            .where(Filament.owner_uid == claims["uid"], Filament.deleted_at.is_(None))
+            .where(Filament.owner_uid == claims.uid, Filament.deleted_at.is_(None))
             .order_by(Filament.created_at)
         )
     ).scalars()
@@ -174,12 +171,12 @@ async def list_filaments(
 )
 async def create_filament(
     body: FilamentIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    row = Filament(owner_uid=claims["uid"])
+    row = Filament(owner_uid=claims.uid)
     await flush_with_unique_name(
-        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+        session, row, body.name, index_name=NAME_INDEX[Filament], apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
@@ -189,10 +186,10 @@ async def create_filament(
 @router.get("/filaments/{filament_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_filament(
     filament_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    return _filament_to_out(await _owned_filament(session, claims["uid"], filament_id))
+    return _filament_to_out(await _owned_filament(session, claims.uid, filament_id))
 
 
 @router.put(
@@ -202,12 +199,12 @@ async def get_filament(
 async def update_filament(
     filament_id: str,
     body: FilamentIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    row = await _owned_filament(session, claims["uid"], filament_id)
+    row = await _owned_filament(session, claims.uid, filament_id)
     await flush_with_unique_name(
-        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+        session, row, body.name, index_name=NAME_INDEX[Filament], apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
@@ -221,10 +218,10 @@ async def update_filament(
 )
 async def delete_filament(
     filament_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    row = await _owned_filament(session, claims["uid"], filament_id)
+    row = await _owned_filament(session, claims.uid, filament_id)
     # D6/US6-4: the SAME txn writes last-known values into every referencing product and
     # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
     await session.execute(

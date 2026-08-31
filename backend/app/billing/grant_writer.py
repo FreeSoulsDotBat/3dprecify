@@ -24,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import BillingEvent, EntitlementGrant, Subscription
 
 from .events import VerifiedEvent
+from .states import SubscriptionStatus
 
 #: T003 — MEDIDO na doc oficial do MP (2026-07-21, fonte em `research.md` §D10): uma cobrança
 #: recusada entra num esquema de reciclagem de até 4 retentativas numa janela de ~10 dias, com
@@ -110,7 +111,7 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
                 subscription_id=sub.id,
             )
         )
-        sub.status = "authorized"
+        sub.status = SubscriptionStatus.AUTHORIZED.value
         sub.current_period_end = period_end  # guaranteed non-null by the L2-N1 guard above
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)
@@ -164,7 +165,7 @@ async def _open_grace(
                 subscription_id=sub.id,
             )
         )
-        sub.status = "grace"
+        sub.status = SubscriptionStatus.GRACE.value
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)
 

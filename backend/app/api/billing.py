@@ -24,7 +24,7 @@ import structlog
 from fastapi import APIRouter, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import current_claims
+from app.auth import Claims, current_claims
 from app.billing.checkout import CheckoutConflict, CheckoutUnavailable, PlanPeriod, start_checkout
 from app.billing.grant_writer import process_verified_event
 from app.billing.providers.mercadopago import MercadoPagoProvider, ProviderUnavailable
@@ -190,11 +190,11 @@ def _back_url(settings: Settings) -> str:
 )
 async def create_checkout(
     body: CheckoutIn,
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> CheckoutOut:
     settings = get_settings()
-    uid: str = claims["uid"]
+    uid: str = claims.uid
     plan_id = _plan_id(settings, body.period)
     if plan_id is None:
         # A genuinely returnable case (SC-702 adjacent): the environment has no plan id
@@ -209,7 +209,7 @@ async def create_checkout(
             session,
             provider,
             uid=uid,
-            email=claims.get("email"),
+            email=claims.email,
             period=body.period,
             plan_id=plan_id,
             back_url=_back_url(settings),
@@ -269,12 +269,12 @@ def _out(view: SubscriptionView) -> SubscriptionOut:
     responses=_SUBSCRIPTION_RESPONSES,
 )
 async def get_subscription(
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SubscriptionOut | None:
     """`null` quando a conta não tem assinatura (cortesia/gratuita) — a Conta cai para a superfície
     de entitlement, e NADA de estado de cobrança é inferido no cliente (SC-708)."""
-    view = await read_subscription(session, claims["uid"])
+    view = await read_subscription(session, claims.uid)
     return _out(view) if view is not None else None
 
 
@@ -284,7 +284,7 @@ async def get_subscription(
     responses=_CANCEL_RESPONSES,
 )
 async def cancel_subscription_route(
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SubscriptionOut:
     """Cancela no MP e espelha aqui. NÃO escreve no ledger e NÃO apaga nada (VR-706/SC-704).
@@ -294,7 +294,7 @@ async def cancel_subscription_route(
     """
     provider = MercadoPagoProvider(get_settings())
     try:
-        view = await cancel_subscription(session, provider, uid=claims["uid"])
+        view = await cancel_subscription(session, provider, uid=claims.uid)
     except NoSubscription as exc:
         # A mensagem nomeia o DOMÍNIO de propósito: um 404 genérico ("Not Found") é
         # indistinguível de "esta rota não existe", e foi exatamente assim que o teste deste caso
@@ -349,7 +349,7 @@ def play_router(settings: Settings) -> APIRouter | None:
     @play.post("/billing/checkout/play", status_code=status.HTTP_200_OK)
     async def play_checkout(
         body: PlayCheckoutIn,
-        claims: Annotated[dict[str, Any], Depends(current_claims)],
+        claims: Annotated[Claims, Depends(current_claims)],
         session: Annotated[AsyncSession, Depends(get_session)],
     ) -> WebhookAck:
         # T036 (BLOQUEADO no dono): a verificacao do `purchase_token` contra a Play Developer API

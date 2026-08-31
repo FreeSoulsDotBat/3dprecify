@@ -51,6 +51,9 @@ class Settings(BaseSettings):
     # Overridable ONLY for the e2e stack (uvicorn-served tests/mp_stub — the owner's build-first
     # phase); every deployed environment keeps this production default.
     mp_base_url: str = "https://api.mercadopago.com"
+    # 019/polish — was a bare `timeout=10.0` literal in `MercadoPagoProvider.__init__`; same
+    # default, now overridable per-environment like the other MP knobs above.
+    mp_timeout_seconds: float = 10.0
 
     @model_validator(mode="after")
     def _prod_never_points_at_a_stub(self) -> Settings:

@@ -16,14 +16,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.auth import current_claims
+from app.auth import Claims, current_claims
 from app.db import get_session
 from app.errors import AppError, ErrorCode
 from app.models import Account, EntitlementGrant
@@ -90,26 +90,24 @@ def _deny() -> AppError:
 
 
 async def require_entitlement(
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
-) -> dict[str, Any]:
+) -> Claims:
     """WRITE gate: only an ACTIVE grant passes (binary — FR-301 precision)."""
-    uid: str = claims["uid"]
-    await ensure_account(session, uid, claims.get("email"))
-    state = await read_entitlement_state(session, uid)
+    await ensure_account(session, claims.uid, claims.email)
+    state = await read_entitlement_state(session, claims.uid)
     if state.status != "active":
         raise _deny()
     return claims
 
 
 async def require_catalog_read(
-    claims: Annotated[dict[str, Any], Depends(current_claims)],
+    claims: Annotated[Claims, Depends(current_claims)],
     session: Annotated[AsyncSession, Depends(get_session)],
-) -> dict[str, Any]:
+) -> Claims:
     """READ gate: active OR lapsed (Q3 freeze keeps reads); never-granted is denied."""
-    uid: str = claims["uid"]
-    await ensure_account(session, uid, claims.get("email"))
-    state = await read_entitlement_state(session, uid)
+    await ensure_account(session, claims.uid, claims.email)
+    state = await read_entitlement_state(session, claims.uid)
     if state.status == "none":
         raise _deny()
     return claims

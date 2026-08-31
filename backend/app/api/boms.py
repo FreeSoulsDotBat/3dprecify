@@ -41,7 +41,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.catalog_resolver import apply_product, degraded_or, lines_of, resolve_views
-from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
+from app.api.naming import NAME_INDEX, NAME_MAX_CHARS, flush_with_unique_name
 from app.api.products import (
     ChannelSlot,
     FilamentValues,
@@ -51,6 +51,7 @@ from app.api.products import (
     ProductIn,
     ProductOut,
 )
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -66,11 +67,6 @@ from app.models import Bom, BomLine, Product
 from app.validation import CEIL_QUANTITY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["boms"])
-
-#: 019/PR-D (ADR-0033 §4) — o índice único parcial dos KITS. O dos produtos vive em `products.py`
-#: e é nomeado aqui porque a materialização passa pelo mesmo helper.
-_NAME_INDEX = "uq_boms_owner_name_norm"
-_PRODUCT_NAME_INDEX = "uq_products_owner_name_norm"
 
 
 class BomLineIn(CamelModel):
@@ -397,7 +393,7 @@ async def _materialize(
             session,
             product,
             product_in.name,
-            index_name=_PRODUCT_NAME_INDEX,
+            index_name=NAME_INDEX[Product],
             apply=partial(apply_product, product, product_in, None, None),
         )  # o flush do helper já atribui o PK para a linha referenciar nesta mesma txn
         minted[name_norm_key(name)] = product
@@ -511,10 +507,10 @@ def _to_out(
 
 @router.get("/boms", responses=ENTITLEMENT_ERRORS)
 async def list_boms(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[BomOut]:
-    uid = claims["uid"]
+    uid = claims.uid
     rows = list(
         (
             await session.execute(
@@ -545,17 +541,17 @@ async def list_boms(
 )
 async def create_bom(
     body: BomIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> BomOut:
-    uid = claims["uid"]
+    uid = claims.uid
     # ONE transaction (ADR-0017 §1): materialize → write → commit. A raise anywhere before the
     # commit takes the materialized products down with it (FR-415/SC-411).
     products, materializations = await _materialize(session, uid, body)
     bom = Bom(owner_uid=uid)
     # O nome do KIT também é único por conta (ADR-0033 §4) — e o helper já faz o flush que
     # atribui o PK que as linhas referenciam.
-    await flush_with_unique_name(session, bom, body.name, index_name=_NAME_INDEX)
+    await flush_with_unique_name(session, bom, body.name, index_name=NAME_INDEX[Bom])
     await _write_lines(session, bom, body, products)
     await session.commit()
     await session.refresh(bom)
@@ -579,11 +575,11 @@ async def _rendered(
 @router.get("/boms/{bom_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_bom(
     bom_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> BomOut:
-    bom = await _owned(session, claims["uid"], bom_id)
-    return await _rendered(session, claims["uid"], bom)
+    bom = await _owned(session, claims.uid, bom_id)
+    return await _rendered(session, claims.uid, bom)
 
 
 @router.put(
@@ -593,15 +589,15 @@ async def get_bom(
 async def update_bom(
     bom_id: str,
     body: BomIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> BomOut:
-    uid = claims["uid"]
+    uid = claims.uid
     bom = await _owned(session, uid, bom_id)
     products, materializations = await _materialize(session, uid, body)
     # A renomeação segue a MESMA regra da criação; a linha chega limpa ao helper, que é o que
     # permite o retry em savepoint (ver `app/api/naming.py`).
-    await flush_with_unique_name(session, bom, body.name, index_name=_NAME_INDEX)
+    await flush_with_unique_name(session, bom, body.name, index_name=NAME_INDEX[Bom])
     # Replace semantics: the submitted lines ARE the kit (positions are re-derived from order).
     for line in await lines_of(session, bom.owner_uid, bom.id):
         await session.delete(line)
@@ -619,9 +615,9 @@ async def update_bom(
 )
 async def delete_bom(
     bom_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    bom = await _owned(session, claims["uid"], bom_id)
+    bom = await _owned(session, claims.uid, bom_id)
     bom.deleted_at = datetime.now(UTC)  # soft-delete — VOLUNTARY only (a lapse never deletes)
     await session.commit()

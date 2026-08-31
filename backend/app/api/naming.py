@@ -47,6 +47,18 @@ MAX_SUFFIX_ATTEMPTS = 50
 #: tipo para `Any` compraria elegância com a checagem que este projeto usa como guarda.
 NamedRow = Filament | Printer | Product | Bom
 
+#: O índice único parcial `(owner_uid, name_norm)` de cada tabela — só ELE dispara o retry de
+#: sufixo em `flush_with_unique_name` (qualquer outra violação de integridade continua subindo).
+#: 019/PR-D polish: as quatro entradas viviam repetidas como `_NAME_INDEX` em cada router
+#: (`filaments.py`/`printers.py`/`products.py`/`boms.py`), e `boms.py` ainda duplicava a entrada
+#: de `Product` como `_PRODUCT_NAME_INDEX` — um único dicionário público mata as duas duplicatas.
+NAME_INDEX: dict[type[NamedRow], str] = {
+    Filament: "uq_filaments_owner_name_norm",
+    Printer: "uq_printers_owner_name_norm",
+    Product: "uq_products_owner_name_norm",
+    Bom: "uq_boms_owner_name_norm",
+}
+
 
 def _violated_constraint(exc: IntegrityError) -> str | None:
     diag = getattr(exc.orig, "diag", None)

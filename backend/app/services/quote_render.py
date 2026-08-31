@@ -27,6 +27,39 @@ from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, Tabl
 
 from app.models import Snapshot
 
+# Todo texto que o CLIENTE lê no artefato, num único lugar — 019/polish: eram ~15 literais soltos
+# entre `build_quote_view`/`render_quote_pdf`, cada um podendo divergir silenciosamente de uma
+# variação copiada errado. A duplicação com o i18n do front (`apps/web` fala a MESMA língua nesses
+# rótulos) é CONSCIENTE: o PDF é gerado no servidor, sem acesso ao bundle i18n do cliente — as
+# strings abaixo são a cópia VERBATIM que o servidor mantém por conta própria.
+_COPY = {
+    "title": "Orçamento",
+    "adhoc_item": "Peça única",
+    "cost_total": "Custo total",
+    "cost_other": "Outros",
+    "cost_material": "Material",
+    "cost_energy": "Energia",
+    "cost_machine": "Máquina",
+    "cost_falha": "Falhas",
+    "cost_finishing": "Acabamento",
+    "cost_labor": "Mão de obra",
+    "col_item": "Item",
+    "col_qty": "Qtd.",
+    "col_total": "Total",
+    "reference_prefix": "Referência",
+    "quoted_prefix": "Cotado em",
+    "validity_prefix": "Validade",
+    "validity_suffix": "dias",
+    "subtotal": "Subtotal",
+    "discount_pct": "Desconto {value}%",
+    "discount_amount": "Desconto",
+    "cost_breakdown_heading": "Detalhamento de custos",
+    "total_caption": "Total ({basis}): {value}",
+    "basis_varejo": "Preço de varejo",
+    "basis_atacado": "Preço de atacado",
+    "basis_orcamento": "Preço do orçamento",
+}
+
 # map(headline_basis) -> the key of the matching total inside the frozen `totals` (Option A: FLAT).
 # 019/PR-E: `PRECO_ORCAMENTO` (ADR-0034 §2). Espelho de `api.history._BASIS_TOTAL_KEY` — a
 # igualdade dos dois conjuntos (e das duas CHAVES) é guardada em `test_history_basis_mirror.py`.
@@ -40,12 +73,12 @@ _BASIS_TOTAL = {
 # SC-506), in a stable print order. Only the keys actually recorded in the frozen breakdown are
 # shown — an absent key is an absent line, never a fabricated zero (FR-507).
 _COST_LABELS: tuple[tuple[str, str], ...] = (
-    ("material", "Material"),
-    ("energy", "Energia"),
-    ("machine", "Máquina"),
-    ("falha", "Falhas"),
-    ("finishing", "Acabamento"),
-    ("labor", "Mão de obra"),
+    ("material", _COPY["cost_material"]),
+    ("energy", _COPY["cost_energy"]),
+    ("machine", _COPY["cost_machine"]),
+    ("falha", _COPY["cost_falha"]),
+    ("finishing", _COPY["cost_finishing"]),
+    ("labor", _COPY["cost_labor"]),
 )
 # `admin` is deliberately ABSENT. `pricing-core` (index.ts:77/93) defines it as "Σ otherCosts ===
 # admin" — it IS their sum, not a line beside them, so printing both counts the same money twice and
@@ -56,11 +89,20 @@ _COST_LABELS: tuple[tuple[str, str], ...] = (
 # calculator snapshot — `provenance: null`). Mirrors the app's own `kindSingle` wording: it names
 # the ITEM, where the frontend's `adhocFallback` ("Cálculo avulso") names the RECORD — a customer
 # is not buying a calculation.
-_ADHOC_ITEM = "Peça única"
+_ADHOC_ITEM = _COPY["adhoc_item"]
 
 # The CSV columns — the stored row, verbatim. `created_at` is deliberately ABSENT: it is
 # unverifiable metadata, never displayed and never exported (FR-528).
 _CSV_FIELDS = ("label", "kind", "deviceQuotedAt", "headlineBasis", "headlineTotal")
+
+# Layout: margens da página e as duas larguras de coluna que os blocos usam. `_ITEMS_COL_WIDTHS_MM`
+# (tabela de itens) e `_SUMMARY_COL_WIDTHS_MM` (resumo do desconto e detalhamento de custos) somam o
+# MESMO total (160mm) hoje sem nada dizer isso — são desenhos de tabela diferentes (3 colunas vs. 2)
+# que precisam concordar visualmente na largura total impressa na página.
+_PAGE_MARGIN_MM = 18
+_CONTENT_WIDTH_MM = 174  # A4 (210mm) menos 2x _PAGE_MARGIN_MM; referência, não usada diretamente.
+_ITEMS_COL_WIDTHS_MM = (95, 25, 40)  # Item | Qtd. | Total
+_SUMMARY_COL_WIDTHS_MM = (120, 40)  # rótulo | valor — mesma soma (160mm) de _ITEMS_COL_WIDTHS_MM
 
 
 @dataclass(frozen=True)
@@ -171,7 +213,9 @@ def _cost_lines(breakdown: dict[str, Any]) -> list[CostLineView]:
     for other in _seq(breakdown.get("otherCosts")):
         value = _obj(other).get("value")
         if isinstance(value, str):
-            lines.append(CostLineView(label=str(_obj(other).get("name") or "Outros"), value=value))
+            lines.append(
+                CostLineView(label=str(_obj(other).get("name") or _COPY["cost_other"]), value=value)
+            )
     return lines
 
 
@@ -199,13 +243,6 @@ def _channel_surcharge_lines(channels: Any) -> list[CostLineView]:
     return lines
 
 
-# Os rótulos que o cliente lê, VERBATIM da prancheta 18d (i18n `quote.subtotal`,
-# `quote.discountLine`, `quote.discountAmountLine`): o PDF é servidor e não tem i18n, então a
-# cópia mora aqui — e não pode divergir da tela que o vendedor leu antes de enviar.
-_DISCOUNT_PCT_LABEL = "Desconto {value}%"
-_DISCOUNT_AMOUNT_LABEL = "Desconto"
-
-
 def _discount_block(payload: dict[str, Any]) -> tuple[str | None, str | None, str | None]:
     """(bruto, rótulo, abatimento) do desconto DECLARADO — ou três `None` se não houve desconto.
 
@@ -221,11 +258,89 @@ def _discount_block(payload: dict[str, Any]) -> tuple[str | None, str | None, st
         return None, None, None
     value = _str_or_empty(discount.get("value"))
     label = (
-        _DISCOUNT_PCT_LABEL.format(value=value)
+        _COPY["discount_pct"].format(value=value)
         if discount.get("mode") == "PCT" and value
-        else _DISCOUNT_AMOUNT_LABEL
+        else _COPY["discount_amount"]
     )
     return gross, label, amount
+
+
+def _quote_lines(payload: dict[str, Any]) -> list[QuoteLineView]:
+    """kind == "QUOTE" — 019/PR-E (ADR-0034 §2): o orçamento montado. A linha traz o seu PRÓPRIO
+    total (`subtotal` = unitário vezes a quantidade, já arredondado pelo motor), e não um
+    `totals[basis]` por linha como o kit: um orçamento não tem varejo/atacado por peça, tem o
+    preço que o vendedor está cobrando. Ler a forma do kit devolveria string vazia e o cliente
+    veria o nome com a célula de preço em BRANCO."""
+    return [
+        QuoteLineView(
+            name=str(_obj(line).get("name") or _ADHOC_ITEM),
+            quantity=_int_or_zero(_obj(line).get("quantity")),
+            total=_str_or_empty(_obj(line).get("subtotal")),
+        )
+        for line in _seq(payload.get("lines"))
+    ]
+
+
+def _kit_lines(payload: dict[str, Any], key: str) -> list[QuoteLineView]:
+    """kind == "KIT" — one line per piece, each reading its OWN `totals[basis]`."""
+    return [
+        QuoteLineView(
+            # A piece with no captured name is legitimate (an ad-hoc line); it gets the same
+            # neutral the SINGLE branch uses below, never a blank cell with a price beside it.
+            name=str(_obj(line).get("name") or _ADHOC_ITEM),
+            quantity=_int_or_zero(_obj(line).get("quantity")),
+            total=_str_or_empty(_obj(_obj(line).get("totals")).get(key)),
+        )
+        for line in _seq(payload.get("lines"))
+    ]
+
+
+def _single_line(payload: dict[str, Any], total: str) -> list[QuoteLineView]:
+    """Neither QUOTE nor KIT — a single-snapshot quote. A customer-facing quote names the ITEM,
+    never the buyer. The label is the seller's own reference and prints as "Referência" — reusing
+    it here would title the line after the CUSTOMER ("Item: Cliente João") and duplicate the
+    reference line. An ad-hoc calculator snapshot genuinely has NO product name
+    (`provenance: null` — the common case per T019), so it falls back to the app's existing
+    neutral for a single piece rather than a lie."""
+    name = _obj(payload.get("provenance")).get("name") or _ADHOC_ITEM
+    return [QuoteLineView(name=str(name), quantity=1, total=total)]
+
+
+def _breakdown_for(
+    kind: str,
+    payload: dict[str, Any],
+    totals: dict[str, Any],
+    *,
+    include_cost_breakdown: bool,
+) -> list[CostLineView]:
+    """The opt-in cost breakdown (SC-506) for this snapshot `kind` — EMPTY unless the seller
+    explicitly asked for it, never a default the customer receives unlabelled."""
+    if not include_cost_breakdown:
+        return []
+    if kind == "QUOTE":
+        # O piso é custo INTERNO como qualquer outro: só sai no opt-in (SC-506). É o
+        # único custo que o documento do orçamento congela, e é um valor STORED.
+        floor = payload.get("costFloor")
+        return (
+            [CostLineView(label=_COPY["cost_total"], value=floor)] if isinstance(floor, str) else []
+        )
+    if kind == "KIT":
+        # A kit stores its breakdown per line; at the quote level the honest aggregate is the
+        # stored `custoTotal`. A single stored value, printed — no summation here.
+        cost_breakdown: list[CostLineView] = []
+        custo = totals.get("custoTotal")
+        if isinstance(custo, str):
+            cost_breakdown = [CostLineView(label=_COPY["cost_total"], value=custo)]
+        # Each piece carries its OWN channel inputs (`line.input.channels`) — a surcharge
+        # declared on one piece's channel is real money for THAT piece, so every line's
+        # surcharges are read, not just the rollup's.
+        for line in _seq(payload.get("lines")):
+            line_channels = _obj(_obj(line).get("input")).get("channels")
+            cost_breakdown += _channel_surcharge_lines(line_channels)
+        return cost_breakdown
+    cost_breakdown = _cost_lines(_obj(payload.get("breakdown")))
+    cost_breakdown += _channel_surcharge_lines(_obj(payload.get("inputs")).get("channels"))
+    return cost_breakdown
 
 
 def build_quote_view(
@@ -249,63 +364,16 @@ def build_quote_view(
     discount_amount: str | None = None
 
     if snapshot.kind == "QUOTE":
-        # 019/PR-E (ADR-0034 §2) — o orçamento montado. A linha traz o seu PRÓPRIO total
-        # (`subtotal` = unitário vezes a quantidade, já arredondado pelo motor), e não um
-        # `totals[basis]` por linha como o kit: um orçamento não tem varejo/atacado por peça,
-        # tem o preço que o vendedor está cobrando. Ler a forma do kit devolveria string
-        # vazia e o cliente veria o nome com a célula de preço em BRANCO.
-        lines = [
-            QuoteLineView(
-                name=str(_obj(line).get("name") or _ADHOC_ITEM),
-                quantity=_int_or_zero(_obj(line).get("quantity")),
-                total=_str_or_empty(_obj(line).get("subtotal")),
-            )
-            for line in _seq(payload.get("lines"))
-        ]
+        lines = _quote_lines(payload)
         gross_total, discount_label, discount_amount = _discount_block(payload)
     elif snapshot.kind == "KIT":
-        lines = [
-            QuoteLineView(
-                # A piece with no captured name is legitimate (an ad-hoc line); it gets the same
-                # neutral the SINGLE branch uses below, never a blank cell with a price beside it.
-                name=str(_obj(line).get("name") or _ADHOC_ITEM),
-                quantity=_int_or_zero(_obj(line).get("quantity")),
-                total=_str_or_empty(_obj(_obj(line).get("totals")).get(key)),
-            )
-            for line in _seq(payload.get("lines"))
-        ]
+        lines = _kit_lines(payload, key)
     else:
-        # A customer-facing quote names the ITEM, never the buyer. The label is the seller's own
-        # reference and prints as "Referência" — reusing it here would title the line after the
-        # CUSTOMER ("Item: Cliente João") and duplicate the reference line. An ad-hoc calculator
-        # snapshot genuinely has NO product name (`provenance: null` — the common case per T019),
-        # so it falls back to the app's existing neutral for a single piece rather than a lie.
-        name = _obj(payload.get("provenance")).get("name") or _ADHOC_ITEM
-        lines = [QuoteLineView(name=str(name), quantity=1, total=total)]
+        lines = _single_line(payload, total)
 
-    cost_breakdown: list[CostLineView] = []
-    if include_cost_breakdown:
-        if snapshot.kind == "QUOTE":
-            # O piso é custo INTERNO como qualquer outro: só sai no opt-in (SC-506). É o
-            # único custo que o documento do orçamento congela, e é um valor STORED.
-            floor = payload.get("costFloor")
-            if isinstance(floor, str):
-                cost_breakdown = [CostLineView(label="Custo total", value=floor)]
-        elif snapshot.kind == "KIT":
-            # A kit stores its breakdown per line; at the quote level the honest aggregate is the
-            # stored `custoTotal`. A single stored value, printed — no summation here.
-            custo = totals.get("custoTotal")
-            if isinstance(custo, str):
-                cost_breakdown = [CostLineView(label="Custo total", value=custo)]
-            # Each piece carries its OWN channel inputs (`line.input.channels`) — a surcharge
-            # declared on one piece's channel is real money for THAT piece, so every line's
-            # surcharges are read, not just the rollup's.
-            for line in _seq(payload.get("lines")):
-                line_channels = _obj(_obj(line).get("input")).get("channels")
-                cost_breakdown += _channel_surcharge_lines(line_channels)
-        else:
-            cost_breakdown = _cost_lines(_obj(payload.get("breakdown")))
-            cost_breakdown += _channel_surcharge_lines(_obj(payload.get("inputs")).get("channels"))
+    cost_breakdown = _breakdown_for(
+        snapshot.kind, payload, totals, include_cost_breakdown=include_cost_breakdown
+    )
 
     return QuoteView(
         seller_name=seller_name,
@@ -327,9 +395,9 @@ def build_quote_view(
 # A legenda que o CLIENTE lê ao lado do total. Quarto espelho de `headline_basis`: uma entrada
 # faltando imprimiria a chave crua ("PRECO_ORCAMENTO") num documento comercial.
 _BASIS_CAPTION = {
-    "PRECO_VAREJO": "Preço de varejo",
-    "PRECO_ATACADO": "Preço de atacado",
-    "PRECO_ORCAMENTO": "Preço do orçamento",
+    "PRECO_VAREJO": _COPY["basis_varejo"],
+    "PRECO_ATACADO": _COPY["basis_atacado"],
+    "PRECO_ORCAMENTO": _COPY["basis_orcamento"],
 }
 
 
@@ -379,24 +447,11 @@ def format_date_pt_br(moment: datetime.datetime) -> str:
     return f"{moment.day:02d}/{moment.month:02d}/{moment.year}"
 
 
-def render_quote_pdf(quote: QuoteView) -> bytes:
-    """Print a QuoteView to a PDF. Layout + locale formatting only — every value is already decided
-    and stored as a string on the view; this function performs no arithmetic and no rounding."""
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(
-        buffer,
-        pagesize=A4,
-        topMargin=18 * mm,
-        bottomMargin=18 * mm,
-        leftMargin=18 * mm,
-        rightMargin=18 * mm,
-        title="Orçamento",
-    )
-    styles = getSampleStyleSheet()
-    story: list[Any] = [Paragraph("Orçamento", styles["Title"])]
-
-    # Every free-text value below is escaped: the label is the seller's own, and the name/e-mail
-    # come from the ID-token claims ("M&M Ateliê" is an ordinary shop name).
+def _header_story(quote: QuoteView, styles: Any) -> list[Any]:
+    """Seller identity, reference, date and validity — the block that opens the document, before
+    any item is printed. Every free-text value is escaped: the label is the seller's own, and the
+    name/e-mail come from the ID-token claims ("M&M Ateliê" is an ordinary shop name)."""
+    story: list[Any] = []
     seller = quote.seller_name or quote.seller_email or ""
     if seller:
         story.append(Paragraph(_xml(seller), styles["Normal"]))
@@ -404,15 +459,26 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
         story.append(Paragraph(_xml(quote.seller_email), styles["Normal"]))
 
     if quote.reference:
-        story.append(Paragraph(f"Referência: {_xml(quote.reference)}", styles["Normal"]))
+        story.append(
+            Paragraph(f"{_COPY['reference_prefix']}: {_xml(quote.reference)}", styles["Normal"])
+        )
 
     quoted = format_date_pt_br(device_local_date(quote))
-    story.append(Paragraph(f"Cotado em {quoted}", styles["Normal"]))
+    story.append(Paragraph(f"{_COPY['quoted_prefix']} {quoted}", styles["Normal"]))
     if quote.validity_days is not None:
-        story.append(Paragraph(f"Validade: {quote.validity_days} dias", styles["Normal"]))
+        story.append(
+            Paragraph(
+                f"{_COPY['validity_prefix']}: {quote.validity_days} {_COPY['validity_suffix']}",
+                styles["Normal"],
+            )
+        )
     story.append(Spacer(1, 8 * mm))
+    return story
 
-    item_rows: list[list[Any]] = [["Item", "Qtd.", "Total"]]
+
+def _items_table(quote: QuoteView, styles: Any) -> Table:
+    """The itemized quote — a single line for a plain snapshot, one per piece for a kit/quote."""
+    item_rows: list[list[Any]] = [[_COPY["col_item"], _COPY["col_qty"], _COPY["col_total"]]]
     # The name is a `Paragraph`, not a raw str, for the reason the two columns beside it exist: a
     # raw str in a Table cell does NOT wrap — it runs straight through `Qtd.` and `Total` and
     # overprints them once the name passes ~68 characters, and nothing anywhere bounds a name's
@@ -427,7 +493,7 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
         ]
         for line in quote.lines
     ]
-    items = Table(item_rows, hAlign="LEFT", colWidths=[95 * mm, 25 * mm, 40 * mm])
+    items = Table(item_rows, hAlign="LEFT", colWidths=[w * mm for w in _ITEMS_COL_WIDTHS_MM])
     items.setStyle(
         TableStyle(
             [
@@ -440,52 +506,93 @@ def render_quote_pdf(quote: QuoteView) -> bytes:
             ]
         )
     )
-    story.append(items)
-    story.append(Spacer(1, 4 * mm))
-    # 019/PR-E — bruto -> desconto -> total, e SÓ quando o documento declarou um desconto
-    # (FR-1917: "o desconto é declarado, nunca embutido" — um documento que mostra só o
-    # líquido esconde do cliente a conta que o vendedor fez). Todo texto do vendedor passa
-    # por `_xml` num `Paragraph`, incluindo o rótulo: ele carrega `discount.value`, que é
-    # conteúdo do DOCUMENTO e um `<b>` ali levantaria ValueError -> 500 sem artefato nenhum.
-    if quote.gross_total is not None and quote.discount_amount is not None:
-        summary = Table(
+    return items
+
+
+def _summary_table(quote: QuoteView, styles: Any) -> Table | None:
+    """The bruto -> desconto block — `None` when the document declared no discount. 019/PR-E:
+    bruto -> desconto -> total, e SÓ quando o documento declarou um desconto (FR-1917: "o
+    desconto é declarado, nunca embutido" — um documento que mostra só o líquido esconde do
+    cliente a conta que o vendedor fez). Todo texto do vendedor passa por `_xml` num `Paragraph`,
+    incluindo o rótulo: ele carrega `discount.value`, que é conteúdo do DOCUMENTO e um `<b>` ali
+    levantaria ValueError -> 500 sem artefato nenhum."""
+    if quote.gross_total is None or quote.discount_amount is None:
+        return None
+    summary = Table(
+        [
+            [_COPY["subtotal"], format_money_pt_br(quote.gross_total)],
             [
-                ["Subtotal", format_money_pt_br(quote.gross_total)],
-                [
-                    Paragraph(_xml(quote.discount_label or "Desconto"), styles["Normal"]),
-                    format_money_pt_br(quote.discount_amount),
-                ],
+                Paragraph(_xml(quote.discount_label or _COPY["discount_amount"]), styles["Normal"]),
+                format_money_pt_br(quote.discount_amount),
             ],
-            hAlign="LEFT",
-            colWidths=[120 * mm, 40 * mm],
-        )
-        summary.setStyle(
-            TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
-        )
+        ],
+        hAlign="LEFT",
+        colWidths=[w * mm for w in _SUMMARY_COL_WIDTHS_MM],
+    )
+    summary.setStyle(
+        TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
+    )
+    return summary
+
+
+def _costs_table(quote: QuoteView, styles: Any) -> Table | None:
+    """The opt-in cost breakdown table — `None` when there is nothing to print. Same rule as
+    `_items_table` above, and for the same reason: an "Outros custos" label is the seller's own
+    free text (`_cost_lines`), so it is unbounded and must wrap rather than run through the value
+    column. `_xml` keeps the Paragraph printing it instead of parsing it."""
+    if not quote.cost_breakdown:
+        return None
+    cost_rows: list[list[Any]] = [
+        [Paragraph(_xml(line.label), styles["Normal"]), format_money_pt_br(line.value)]
+        for line in quote.cost_breakdown
+    ]
+    costs = Table(cost_rows, hAlign="LEFT", colWidths=[w * mm for w in _SUMMARY_COL_WIDTHS_MM])
+    costs.setStyle(
+        TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
+    )
+    return costs
+
+
+def render_quote_pdf(quote: QuoteView) -> bytes:
+    """Print a QuoteView to a PDF. Layout + locale formatting only — every value is already decided
+    and stored as a string on the view; this function performs no arithmetic and no rounding."""
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        topMargin=_PAGE_MARGIN_MM * mm,
+        bottomMargin=_PAGE_MARGIN_MM * mm,
+        leftMargin=_PAGE_MARGIN_MM * mm,
+        rightMargin=_PAGE_MARGIN_MM * mm,
+        title=_COPY["title"],
+    )
+    styles = getSampleStyleSheet()
+    story: list[Any] = [Paragraph(_COPY["title"], styles["Title"])]
+    story += _header_story(quote, styles)
+
+    story.append(_items_table(quote, styles))
+    story.append(Spacer(1, 4 * mm))
+
+    summary = _summary_table(quote, styles)
+    if summary is not None:
         story.append(summary)
         story.append(Spacer(1, 2 * mm))
 
     story.append(
         Paragraph(
-            f"<b>Total ({_basis_caption(quote.basis)}): {format_money_pt_br(quote.total)}</b>",
+            "<b>"
+            + _COPY["total_caption"].format(
+                basis=_basis_caption(quote.basis), value=format_money_pt_br(quote.total)
+            )
+            + "</b>",
             styles["Normal"],
         )
     )
 
-    if quote.cost_breakdown:
+    costs = _costs_table(quote, styles)
+    if costs is not None:
         story.append(Spacer(1, 8 * mm))
-        story.append(Paragraph("Detalhamento de custos", styles["Heading3"]))
-        # Same rule as `item_rows` above, and for the same reason: an "Outros custos" label is the
-        # seller's own free text (`_cost_lines`), so it is unbounded and must wrap rather than run
-        # through the value column. `_xml` keeps the Paragraph printing it instead of parsing it.
-        cost_rows: list[list[Any]] = [
-            [Paragraph(_xml(line.label), styles["Normal"]), format_money_pt_br(line.value)]
-            for line in quote.cost_breakdown
-        ]
-        costs = Table(cost_rows, hAlign="LEFT", colWidths=[120 * mm, 40 * mm])
-        costs.setStyle(
-            TableStyle([("ALIGN", (1, 0), (-1, -1), "RIGHT"), ("VALIGN", (0, 0), (-1, -1), "TOP")])
-        )
+        story.append(Paragraph(_COPY["cost_breakdown_heading"], styles["Heading3"]))
         story.append(costs)
 
     doc.build(story)

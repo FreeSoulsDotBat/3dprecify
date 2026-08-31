@@ -9,14 +9,15 @@ from __future__ import annotations
 import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Annotated, Any
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, status
 from pydantic import Field, field_validator
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
+from app.api.naming import NAME_INDEX, NAME_MAX_CHARS, flush_with_unique_name
+from app.auth import Claims
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -32,9 +33,6 @@ from app.models import Printer, Product
 from app.validation import CEIL_HOURS, CEIL_KW, CEIL_MONEY, CEIL_RATE, finite_non_negative
 
 router = APIRouter(tags=["printers"])
-
-#: 019/PR-D (ADR-0033 §4) — o índice único parcial desta tabela; só ELE dispara o retry de sufixo.
-_NAME_INDEX = "uq_printers_owner_name_norm"
 
 
 class PrinterIn(CamelModel):
@@ -137,13 +135,13 @@ async def _owned_printer(session: AsyncSession, uid: str, printer_id: str) -> Pr
 
 @router.get("/printers", responses=ENTITLEMENT_ERRORS)
 async def list_printers(
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> list[PrinterOut]:
     rows = (
         await session.execute(
             select(Printer)
-            .where(Printer.owner_uid == claims["uid"], Printer.deleted_at.is_(None))
+            .where(Printer.owner_uid == claims.uid, Printer.deleted_at.is_(None))
             .order_by(Printer.created_at)
         )
     ).scalars()
@@ -157,12 +155,12 @@ async def list_printers(
 )
 async def create_printer(
     body: PrinterIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    row = Printer(owner_uid=claims["uid"])
+    row = Printer(owner_uid=claims.uid)
     await flush_with_unique_name(
-        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+        session, row, body.name, index_name=NAME_INDEX[Printer], apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
@@ -172,10 +170,10 @@ async def create_printer(
 @router.get("/printers/{printer_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
 async def get_printer(
     printer_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
+    claims: Annotated[Claims, Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    return _printer_to_out(await _owned_printer(session, claims["uid"], printer_id))
+    return _printer_to_out(await _owned_printer(session, claims.uid, printer_id))
 
 
 @router.put(
@@ -185,12 +183,12 @@ async def get_printer(
 async def update_printer(
     printer_id: str,
     body: PrinterIn,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    row = await _owned_printer(session, claims["uid"], printer_id)
+    row = await _owned_printer(session, claims.uid, printer_id)
     await flush_with_unique_name(
-        session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
+        session, row, body.name, index_name=NAME_INDEX[Printer], apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
@@ -204,10 +202,10 @@ async def update_printer(
 )
 async def delete_printer(
     printer_id: str,
-    claims: Annotated[dict[str, Any], Depends(require_entitlement)],
+    claims: Annotated[Claims, Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    row = await _owned_printer(session, claims["uid"], printer_id)
+    row = await _owned_printer(session, claims.uid, printer_id)
     # D6/US6-4: the SAME txn writes last-known values into every referencing product and
     # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
     await session.execute(

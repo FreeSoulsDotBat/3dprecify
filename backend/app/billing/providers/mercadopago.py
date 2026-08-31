@@ -119,7 +119,7 @@ class MercadoPagoProvider:
             # (P3D_MP_BASE_URL); every deployed environment keeps the production default.
             base_url=settings.mp_base_url,
             headers=headers,
-            timeout=10.0,
+            timeout=settings.mp_timeout_seconds,
             transport=_test_transport,
         )
 

@@ -44,6 +44,15 @@ CEIL_CONFIG_LEAF = Decimal(10) ** 12
 #: is INCLUSIVE — 2147483647 is storable, 2147483648 overflows the column.
 CEIL_QUANTITY = 2_147_483_647
 
+#: `snapshots.quote_validity_days` range (E4/019 history mirror — `history.py` + the DB CHECK on
+#: `app/models/snapshot.py`, which keeps its own literal since a model never imports from an api
+#: router).
+MAX_QUOTE_VALIDITY_DAYS = 3650  # 10 anos
+
+#: `snapshots.device_utc_offset_minutes` range, INCLUSIVE both ends (UTC±14h is the real-world
+#: extreme — Kiribati's Line Islands). Same mirror note as `MAX_QUOTE_VALIDITY_DAYS` above.
+MAX_UTC_OFFSET_MINUTES = 840  # UTC±14h
+
 #: Object keys whose SUBTREE is money by definition. Inside them a JSON integer is never a count,
 #: so it is rejected (E4-01): an int money leaf passed the float scan, froze into an immutable row,
 #: and then rendered as an EMPTY cell on the customer's PDF, because the renderer prints stored
@@ -68,6 +77,18 @@ _MONEY_POSITION_KEYS = frozenset(
         "grossTotal",
     }
 )
+
+
+def money_scale_ok(value: Decimal) -> bool:
+    """`True` iff `value` has AT MOST 2 fractional digits — the `MONEY_SETTLED` `Numeric(12,2)`
+    scale. `finite_non_negative` checks MAGNITUDE, never scale — a value entering that column by
+    silent rounding (Postgres would round the 3rd decimal on write) is a change to a number that
+    is the SELLER's own (never engine-rounded), so a caller writing one must check both.
+    `value` must already be finite (call `finite_non_negative` first): a non-finite `Decimal`
+    (NaN/Infinity) has no integer exponent, and this function does not itself guard against that.
+    """
+    exponent = value.as_tuple().exponent
+    return isinstance(exponent, int) and exponent >= -2
 
 
 def finite_non_negative(value: Decimal, field: str, ceiling: Decimal) -> Decimal:

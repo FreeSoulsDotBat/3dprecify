@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import EntitlementGrant, Subscription
 
 from .providers.mercadopago import MercadoPagoProvider
-from .reconcile import NON_TERMINAL_STATUSES
+from .states import NON_TERMINAL_STATUSES, SubscriptionStatus
 
 
 class SubscriptionError(Exception):
@@ -63,7 +63,7 @@ def _view(sub: Subscription, grace_until: datetime.datetime | None = None) -> Su
         # depende da hora vira falso sozinho à meia-noite do fim do período, e a Conta passaria a
         # dizer "renova" sobre uma assinatura cancelada. Quem responde "o período ainda corre" é
         # `currentPeriodEnd`, que viaja junto — o cliente compõe a frase com os dois campos.
-        cancel_at_period_end=sub.status == "cancelled",
+        cancel_at_period_end=sub.status == SubscriptionStatus.CANCELLED,
         # analyze U1 — DERIVADO do `expires_at` do grant de carência, nunca uma coluna nova. É esta
         # data que a Conta transforma em "regularize até {data}", então ela tem de ser exatamente a
         # que segura o premium: uma coluna própria poderia divergir do ledger e a tela prometeria um
@@ -96,7 +96,7 @@ async def _grace_until(session: AsyncSession, sub: Subscription) -> datetime.dat
     (ele nasce em `period_end + janela`, depois do grant do periodo que falhou). Quando o
     pagamento se recupera, o status sai de `grace` e o campo volta a `None` sozinho.
     """
-    if sub.status != "grace":
+    if sub.status != SubscriptionStatus.GRACE:
         return None
     return (
         await session.execute(
@@ -139,7 +139,7 @@ async def cancel_subscription(
 
     # Só o espelho muda: o status. `current_period_end` fica onde está (é a data que o vendedor
     # pagou), `deleted_at` continua nulo (cancelar não é apagar), e o ledger não é tocado.
-    sub.status = "cancelled"
+    sub.status = SubscriptionStatus.CANCELLED.value
     await session.commit()
     await session.refresh(sub)
     return _view(sub)
