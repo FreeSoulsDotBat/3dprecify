@@ -210,16 +210,21 @@ function grossUpOnce(
     minPerItem: number,
     surcharge: Decimal,
 ): Decimal {
-    const keepFixedPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
-    const keep = keepFixedPct.minus(new Decimal(commissionPct).dividedBy(100));
-    const listPct = new Decimal(base).plus(fixed.constant).plus(surcharge).dividedBy(keep);
-    const commissionAtListPct = (commissionPct / 100) * listPct.toNumber();
-    if (commissionAtListPct >= minPerItem) return listPct;
+    // Nomes com unidade: `anuncio*` são VALORES EM R$ (o L da álgebra acima); `fator*` são os
+    // denominadores adimensionais (1 − percentuais). Nada aqui é um percentual.
+    const fatorSemFixoPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
+    const fatorRetido = fatorSemFixoPct.minus(new Decimal(commissionPct).dividedBy(100));
+    const anuncioRegimePct = new Decimal(base)
+        .plus(fixed.constant)
+        .plus(surcharge)
+        .dividedBy(fatorRetido);
+    const comissaoNoAnuncio = (commissionPct / 100) * anuncioRegimePct.toNumber();
+    if (comissaoNoAnuncio >= minPerItem) return anuncioRegimePct;
     return new Decimal(base)
         .plus(minPerItem)
         .plus(fixed.constant)
         .plus(surcharge)
-        .dividedBy(keepFixedPct);
+        .dividedBy(fatorSemFixoPct);
 }
 
 /**
