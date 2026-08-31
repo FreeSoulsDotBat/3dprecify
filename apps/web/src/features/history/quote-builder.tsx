@@ -17,21 +17,30 @@ import type {
     SnapshotInHeadlineBasis,
 } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
-import { formatBRL, parseDecimal } from "@/shared/lib/decimal-ptbr";
-import { formatDatePtBr, formatDayMonthPtBr } from "@/shared/lib/format-date";
+import { parseDecimal } from "@/shared/lib/decimal-ptbr";
+import { formatDatePtBr } from "@/shared/lib/format-date";
 import { useOnline } from "@/shared/lib/use-online";
+import { toast } from "@/shared/ui";
+
 import {
-    Alert,
-    Aviso,
-    BreakdownRow,
-    Button,
-    Card,
-    Field,
-    Icon,
-    NumberField,
-    Select,
-    toast,
-} from "@/shared/ui";
+    itemId,
+    itemName,
+    type QuoteCatalogItem,
+    type QuoteLineInputResult,
+} from "./quote-catalog-item";
+import { QuoteItemPicker } from "./quote-item-picker";
+import { QuoteReview } from "./quote-review";
+
+// `QuoteCatalogItem`/`QuoteLineInputResult`/`itemId`/`itemName`/`itemBaseTotal` moram em
+// `quote-catalog-item.ts` — os dois passos extraídos (`quote-item-picker.tsx`/`quote-review.tsx`)
+// e este orquestrador precisam do MESMO vocabulário sem formar um ciclo de import entre si.
+// Reexportados aqui para não quebrar quem já importava daqui (o teste, `historico-page.tsx`,
+// `quote-line-input.ts`).
+export {
+    itemBaseTotal,
+    type QuoteCatalogItem,
+    type QuoteLineInputResult,
+} from "./quote-catalog-item";
 
 // 019/PR-E (T088, US16/US17/US18-retirada, ADR-0034) — O CONSTRUTOR de orçamento (18b→18d→18e).
 //
@@ -58,27 +67,12 @@ import {
 // sufixo textual do `NumberField` (%, R$) em vez de um ícone, e `lock` (18e) não existe → `Aviso`
 // já usa `info` por padrão (mesma troca que o resto do 019 já fez noutras pranchetas).
 
-const t = messages.quote;
 const th = messages.historico;
-const tb = messages.bom;
 
 const DAY_MS = 86_400_000;
 /** Default do campo "Válido até" — o mesmo número que a prancheta 18e usa no exemplo ("15 dias,
  *  contados de hoje"); editável, nunca imposto (research/ADR-0034 §2, Q7: é TEXTO, não estado). */
 const DEFAULT_VALIDITY_DAYS = "15";
-
-export type QuoteCatalogItem =
-    { kind: "PRODUCT"; product: ProductOut } | { kind: "KIT"; kit: BomOut };
-
-/** O que a PAGE devolve para cada item do catálogo: as linhas já resolvidas pelo motor (sem
- *  `channels` — venda DIRETA, Q6), de onde vieram (para o documento congelado), se alguma peça do
- *  kit está degradada (D6) e se o item está PARADO (K3) e não pode ser orçado hoje. */
-export interface QuoteLineInputResult {
-    lines: QuoteLineInput[];
-    origin: FrozenProvenance | null;
-    degraded: boolean;
-    stopped: boolean;
-}
 
 export interface QuoteBuilderProps {
     products: ProductOut[];
@@ -92,11 +86,18 @@ export interface QuoteBuilderProps {
     onSent: (clientSnapshotId: string) => void;
 }
 
-function itemId(item: QuoteCatalogItem): string {
-    return item.kind === "PRODUCT" ? item.product.id : item.kit.id;
-}
-function itemName(item: QuoteCatalogItem): string {
-    return item.kind === "PRODUCT" ? item.product.name : item.kit.name;
+/** As DUAS posições que precisavam repriçar com desconto e recair no orçamento SEM desconto quando
+ *  o desconto não é um `computeQuote` válido (ex.: um dígito transitório enquanto o vendedor
+ *  digita) — nunca deixa a tela quebrar sobre uma entrada em trânsito. */
+function computeQuoteWithDiscountFallback(
+    lines: QuoteLineInput[],
+    discount: { mode: QuoteDiscountMode; value: number },
+): QuoteResult {
+    try {
+        return computeQuote({ lines, discount });
+    } catch {
+        return computeQuote({ lines });
+    }
 }
 
 export function QuoteBuilder({
@@ -201,16 +202,14 @@ export function QuoteBuilder({
     // Nunca deixa o total quebrar por um dígito transitório (ex.: um campo momentaneamente vazio
     // enquanto o vendedor digita): recai no orçamento SEM desconto, que é sempre um `computeQuote`
     // válido — a tela nunca lança sobre uma entrada em trânsito.
-    const quoteResult: QuoteResult = useMemo(() => {
-        try {
-            return computeQuote({
-                lines: picked.flatLines,
-                discount: { mode: discountMode, value: discountNum },
-            });
-        } catch {
-            return computeQuote({ lines: picked.flatLines });
-        }
-    }, [picked.flatLines, discountMode, discountNum]);
+    const quoteResult: QuoteResult = useMemo(
+        () =>
+            computeQuoteWithDiscountFallback(picked.flatLines, {
+                mode: discountMode,
+                value: discountNum,
+            }),
+        [picked.flatLines, discountMode, discountNum],
+    );
 
     const validityN = Math.max(1, Math.floor(parseDecimal(validityDays) || 0));
     const validUntilLabel = formatDatePtBr(new Date(Date.now() + validityN * DAY_MS).toISOString());
@@ -221,12 +220,7 @@ export function QuoteBuilder({
         setSending(true);
         try {
             const discount = { mode: discountMode, value: discountNum };
-            let result: QuoteResult;
-            try {
-                result = computeQuote({ lines: picked.flatLines, discount });
-            } catch {
-                result = computeQuote({ lines: picked.flatLines });
-            }
+            const result = computeQuoteWithDiscountFallback(picked.flatLines, discount);
             const payload = buildQuotePayload(result, { lines: picked.origins, discount });
             const now = new Date();
             const body: SnapshotIn = {
@@ -267,312 +261,45 @@ export function QuoteBuilder({
 
     if (step === "select") {
         return (
-            <div className="flex flex-col gap-3" data-testid="quote-builder">
-                <Field label={t.clientLabel}>
-                    {({ id, ...aria }) => (
-                        <div className="tf-inputwrap">
-                            <input
-                                id={id}
-                                {...aria}
-                                className="tf-input"
-                                type="text"
-                                maxLength={120}
-                                value={clientLabel}
-                                onChange={(e) => setClientLabel(e.target.value)}
-                            />
-                        </div>
-                    )}
-                </Field>
-
-                <div className="tf-inputwrap">
-                    <Icon name="search" size={16} />
-                    <input
-                        className="tf-input"
-                        type="text"
-                        placeholder={t.searchPlaceholder}
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                    />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                    {filtered.map((item) => {
-                        const id = itemId(item);
-                        const result = resultById.get(id);
-                        const isSelected = selected.has(id);
-
-                        if (result?.stopped) {
-                            const product = item.kind === "PRODUCT" ? item.product : null;
-                            const obs = product ? observations.get(product.id) : undefined;
-                            const dataIso = obs?.observedAt ?? product?.updatedAt ?? "";
-                            return (
-                                <Card
-                                    key={id}
-                                    padding="sm"
-                                    data-testid={`quote-line-${id}`}
-                                    className="flex items-center gap-3 opacity-60"
-                                >
-                                    <Icon
-                                        name="triangle-alert"
-                                        size={16}
-                                        className="text-[var(--warning-text)]"
-                                    />
-                                    <div className="flex flex-col gap-0.5">
-                                        <span className="text-sm">{itemName(item)}</span>
-                                        <span className="text-xs text-[var(--warning-text)]">
-                                            {t.stoppedCannotQuote.replace(
-                                                "{data}",
-                                                formatDayMonthPtBr(dataIso),
-                                            )}
-                                        </span>
-                                    </div>
-                                </Card>
-                            );
-                        }
-
-                        let baseTotal = 0;
-                        if (result && result.lines.length > 0) {
-                            try {
-                                baseTotal = computeQuote({ lines: result.lines }).netTotal;
-                            } catch {
-                                baseTotal = 0;
-                            }
-                        }
-
-                        return (
-                            <Card
-                                key={id}
-                                padding="sm"
-                                interactive
-                                data-testid={`quote-line-${id}`}
-                                onClick={() => toggle(item)}
-                                className="flex items-center gap-3"
-                            >
-                                <Icon
-                                    name={isSelected ? "check" : "plus"}
-                                    size={16}
-                                    className={
-                                        isSelected
-                                            ? "text-[var(--accent)]"
-                                            : "text-[var(--text-muted)]"
-                                    }
-                                />
-                                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                                    <span className="truncate text-sm font-semibold">
-                                        {itemName(item)}
-                                    </span>
-                                    <span className="text-xs text-[var(--text-muted)]">
-                                        {item.kind === "KIT"
-                                            ? t.kitLineMeta
-                                                  .replace("{n}", selected.get(id) ?? "1")
-                                                  .replace("{pecas}", String(item.kit.lines.length))
-                                            : t.unitPriceMeta.replace(
-                                                  "{valor}",
-                                                  formatBRL(baseTotal),
-                                              )}
-                                    </span>
-                                </div>
-                                <span className="tf-tnum text-sm font-semibold">
-                                    {formatBRL(baseTotal)}
-                                </span>
-                                {isSelected && (
-                                    <div onClick={(e) => e.stopPropagation()}>
-                                        <NumberField
-                                            size="sm"
-                                            className="w-20"
-                                            inputMode="numeric"
-                                            data-testid={`quote-qty-${id}`}
-                                            value={selected.get(id) ?? "1"}
-                                            onChange={(e) => setQty(id, e.target.value)}
-                                        />
-                                    </div>
-                                )}
-                            </Card>
-                        );
-                    })}
-                </div>
-
-                <div className="flex items-center gap-3 border-t border-[var(--border-subtle)] pt-3">
-                    <div className="flex flex-1 flex-col gap-0.5">
-                        <span className="text-xs text-[var(--text-muted)]">
-                            {selected.size === 1
-                                ? t.itemCountOne
-                                : t.itemCount.replace("{n}", String(selected.size))}
-                        </span>
-                        <span className="tf-tnum text-base font-semibold">
-                            {formatBRL(quoteResult.grossTotal)}
-                        </span>
-                    </div>
-                    <Button disabled={selected.size === 0} onClick={() => setStep("review")}>
-                        {t.continueAction}
-                    </Button>
-                </div>
-            </div>
+            <QuoteItemPicker
+                clientLabel={clientLabel}
+                onClientLabelChange={setClientLabel}
+                query={query}
+                onQueryChange={setQuery}
+                filtered={filtered}
+                resultById={resultById}
+                selected={selected}
+                onToggle={toggle}
+                onQtyChange={setQty}
+                observations={observations}
+                grossTotal={quoteResult.grossTotal}
+                onContinue={() => setStep("review")}
+            />
         );
     }
 
     // ── Revisão (18d + 18e num passo só — ver decisão de fidelidade no topo do arquivo) ────────────
     return (
-        <div className="flex flex-col gap-4" data-testid="quote-builder">
-            <Card padding="md" className="flex flex-col gap-2">
-                {[...selected.entries()].map(([id]) => {
-                    const item = items.find((it) => itemId(it) === id);
-                    const result = resultById.get(id);
-                    const range = picked.perItemRange.get(id);
-                    if (!item || !result || !range) return null;
-                    const itemLines = quoteResult.lines.slice(range.start, range.end);
-                    const subtotal = itemLines.reduce((sum, l) => sum + l.subtotal, 0);
-                    return (
-                        <div
-                            key={id}
-                            data-testid={`quote-line-${id}`}
-                            className="flex flex-col gap-1 border-b border-[var(--border-subtle)] pb-2 last:border-0 last:pb-0"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-semibold">{itemName(item)}</span>
-                                <span className="tf-tnum text-sm font-semibold">
-                                    {formatBRL(subtotal)}
-                                </span>
-                            </div>
-                            {/* Kit: cada peça aparece — a degradada (D6, ADR-0017 §6) com a legenda que o produto
-                  já usa, nunca um erro ou um sumiço silencioso. */}
-                            {item.kind === "KIT" &&
-                                itemLines.map((l, i) => (
-                                    <span key={i} className="text-xs text-[var(--text-muted)]">
-                                        {l.name ?? tb.lineAdhoc} · {l.quantity} un.
-                                    </span>
-                                ))}
-                        </div>
-                    );
-                })}
-            </Card>
-
-            <Card padding="md" className="flex flex-col gap-3">
-                <Field label={t.discountLabel} tightLabel>
-                    <div className="flex gap-2">
-                        <Select
-                            data-testid="quote-discount-mode"
-                            value={discountMode}
-                            onChange={(e) => setDiscountMode(e.target.value as QuoteDiscountMode)}
-                            options={[
-                                { value: "PCT", label: "%" },
-                                { value: "AMOUNT", label: "R$" },
-                            ]}
-                        />
-                        <NumberField
-                            data-testid="quote-discount-value"
-                            inputMode="decimal"
-                            value={discountValue}
-                            onChange={(e) => setDiscountValue(e.target.value)}
-                        />
-                    </div>
-                </Field>
-
-                <BreakdownRow
-                    label={t.subtotal}
-                    value={quoteResult.grossTotal}
-                    data-testid="quote-gross"
-                />
-                {discountNum > 0 && (
-                    <BreakdownRow
-                        label={
-                            discountMode === "PCT"
-                                ? t.discountLine.replace("{pct}", discountValue)
-                                : t.discountAmountLine
-                        }
-                        value={-quoteResult.discountAmount}
-                        data-testid="quote-discount-amount"
-                    />
-                )}
-                <BreakdownRow
-                    label={t.total}
-                    value={quoteResult.netTotal}
-                    emphasis="total"
-                    data-testid="quote-net"
-                />
-                {/* Sobra sobre o custo — SÓ a linha apagada (o limiar "aperta, mas passa" da 18d·2 não foi
-            decidido, e T088 pede para não inventar regra de dinheiro; ver nota no topo). */}
-                {!quoteResult.belowCost && (
-                    <BreakdownRow
-                        label={t.marginOverCost}
-                        sublabel={t.marginOverCostSub.replace(
-                            "{valor}",
-                            formatBRL(quoteResult.costFloor),
-                        )}
-                        value={quoteResult.netTotal - quoteResult.costFloor}
-                        emphasis="muted"
-                        data-testid="quote-cost-floor"
-                    />
-                )}
-                {/* Q10 (ADR-0034 §1.5) — avisa, nunca bloqueia. O Enviar continua vivo. */}
-                {quoteResult.belowCost && (
-                    <Alert tone="warning" data-testid="quote-below-cost">
-                        {t.belowCost.replace(
-                            "{valor}",
-                            formatBRL(quoteResult.costFloor - quoteResult.netTotal),
-                        )}
-                    </Alert>
-                )}
-            </Card>
-
-            {/* 18e — o cartão "Enviar congela este preço" é o PASSO final do construtor (a prancheta o
-          desenha como cartão do fluxo, com Voltar | Enviar; não um modal por cima — leitura
-          registrada em dod-evidence para a 2ª passada). O título e o "Total enviado" vêm dela. */}
-            <Card padding="md" className="flex flex-col gap-3">
-                <h2 className="tf-title text-[var(--text-strong)]">{t.sendTitle}</h2>
-                <BreakdownRow
-                    label={t.totalSent}
-                    value={formatBRL(quoteResult.netTotal)}
-                    prefix=""
-                />
-                <Field label={th.validityField}>
-                    {({ id, ...aria }) => (
-                        <NumberField
-                            id={id}
-                            {...aria}
-                            unit={th.validityUnit}
-                            inputMode="numeric"
-                            min={1}
-                            max={3650}
-                            value={validityDays}
-                            onChange={(e) => setValidityDays(e.target.value)}
-                        />
-                    )}
-                </Field>
-
-                <BreakdownRow
-                    data-testid="quote-valid-until"
-                    label={t.validUntil}
-                    sublabel={t.validUntilSub.replace("{n}", String(validityN))}
-                    value={validUntilLabel}
-                    prefix=""
-                />
-
-                {/* 18e — "lock" não existe no conjunto curado; `Aviso` já usa `info` por padrão. */}
-                <Aviso>{t.freezeNote.replace(/\{data\}/g, validUntilLabel)}</Aviso>
-            </Card>
-
-            <div className="flex flex-col gap-2">
-                {!online && (
-                    <p data-testid="quote-send-reason" className="text-sm text-[var(--text-muted)]">
-                        {t.sendOffline}
-                    </p>
-                )}
-                <div className="flex gap-2">
-                    <Button variant="ghost" onClick={() => setStep("select")}>
-                        {t.back}
-                    </Button>
-                    <Button
-                        data-testid="quote-send"
-                        disabled={!online || sending || sent || selected.size === 0}
-                        loading={sending}
-                        onClick={() => void handleSend()}
-                    >
-                        <Icon name="share-2" size={16} />
-                        {t.send}
-                    </Button>
-                </div>
-            </div>
-        </div>
+        <QuoteReview
+            selected={selected}
+            items={items}
+            resultById={resultById}
+            perItemRange={picked.perItemRange}
+            quoteResult={quoteResult}
+            discountMode={discountMode}
+            onDiscountModeChange={setDiscountMode}
+            discountValue={discountValue}
+            onDiscountValueChange={setDiscountValue}
+            discountNum={discountNum}
+            validityDays={validityDays}
+            onValidityDaysChange={setValidityDays}
+            validityN={validityN}
+            validUntilLabel={validUntilLabel}
+            online={online}
+            sending={sending}
+            sent={sent}
+            onBack={() => setStep("select")}
+            onSend={() => void handleSend()}
+        />
     );
 }

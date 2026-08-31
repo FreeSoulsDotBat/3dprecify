@@ -12,7 +12,7 @@ import {
     type FrozenSnapshotPayload,
 } from "@/entities/history/frozen-payload";
 import { resolveOrigin, type OriginTarget } from "@/entities/history/origin";
-import type { HistoryItem } from "@/entities/history/outbox";
+import type { HistoryItem, SyncState } from "@/entities/history/outbox";
 import { useSnapshot } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { EntryActions } from "@/features/history/entry-actions";
@@ -64,6 +64,17 @@ const t = messages.historico;
 // 019/PR-E — a cópia do orçamento é a da prancheta 18, verbatim (T087).
 const tq = messages.quote;
 const tr = messages.calculator.results;
+
+/** §1.2 — a copy de cada estado do `SyncAlert`, no mesmo idiom de `SYNC_BADGE`
+ *  (`entities/history/history-format.ts`). `unauthenticated` tem a SUA própria linha (hotfix
+ *  016/A3, H4b): cair no `failed` por omissão diria "Não foi possível registrar" sobre um registro
+ *  que não foi rejeitado — a sessão é que morreu. */
+const SYNC_ALERT_COPY: Record<Exclude<SyncState, "synced">, { title: string; body: string }> = {
+    pending: { title: t.syncPendingTitle, body: t.syncPendingBody },
+    blocked: { title: t.syncBlockedTitle, body: t.syncBlockedBody },
+    unauthenticated: { title: t.syncUnauthenticatedTitle, body: t.syncUnauthenticatedBody },
+    failed: { title: t.syncFailedTitle, body: t.syncFailedBody },
+};
 
 export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
     // Resolve THIS record by its clientSnapshotId (the URL key). Under lazy pagination it need not be
@@ -235,25 +246,7 @@ function SyncAlert({ item }: { item: HistoryItem }) {
     if (item.syncState === "synced") return null;
 
     const state = item.syncState;
-    // hotfix 016/A3 (H4b) — `unauthenticated` is its OWN branch, never falling into the `failed`
-    // default: falling through there would print "Não foi possível registrar" under a danger tone
-    // over a record that is not rejected — its session just died.
-    const title =
-        state === "pending"
-            ? t.syncPendingTitle
-            : state === "blocked"
-              ? t.syncBlockedTitle
-              : state === "unauthenticated"
-                ? t.syncUnauthenticatedTitle
-                : t.syncFailedTitle;
-    const body =
-        state === "pending"
-            ? t.syncPendingBody
-            : state === "blocked"
-              ? t.syncBlockedBody
-              : state === "unauthenticated"
-                ? t.syncUnauthenticatedBody
-                : t.syncFailedBody;
+    const { title, body } = SYNC_ALERT_COPY[state];
     const supportCode = item.entry?.lastStatus;
 
     return (
@@ -333,37 +326,33 @@ function FrozenChannelRow({
             </span>
             {!semComissao && (
                 <>
-                    {channel.precoAnuncioVarejo != null && (
-                        <span className="tf-historico__piece">
-                            <span>
-                                {tr.precoAnuncio} · {messages.calculator.captions.varejo}
-                            </span>
-                            <strong>{formatFrozenBRL(channel.precoAnuncioVarejo)}</strong>
-                        </span>
-                    )}
-                    {channel.recebidoLiquidoVarejo != null && (
-                        <span className="tf-historico__piece">
-                            <span>
-                                {tr.recebidoLiquido} · {messages.calculator.captions.varejo}
-                            </span>
-                            <strong>{formatFrozenBRL(channel.recebidoLiquidoVarejo)}</strong>
-                        </span>
-                    )}
-                    {channel.precoAnuncioAtacado != null && (
-                        <span className="tf-historico__piece">
-                            <span>
-                                {tr.precoAnuncio} · {messages.calculator.captions.atacado}
-                            </span>
-                            <strong>{formatFrozenBRL(channel.precoAnuncioAtacado)}</strong>
-                        </span>
-                    )}
-                    {channel.recebidoLiquidoAtacado != null && (
-                        <span className="tf-historico__piece">
-                            <span>
-                                {tr.recebidoLiquido} · {messages.calculator.captions.atacado}
-                            </span>
-                            <strong>{formatFrozenBRL(channel.recebidoLiquidoAtacado)}</strong>
-                        </span>
+                    {(
+                        [
+                            {
+                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.varejo}`,
+                                value: channel.precoAnuncioVarejo,
+                            },
+                            {
+                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.varejo}`,
+                                value: channel.recebidoLiquidoVarejo,
+                            },
+                            {
+                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.atacado}`,
+                                value: channel.precoAnuncioAtacado,
+                            },
+                            {
+                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.atacado}`,
+                                value: channel.recebidoLiquidoAtacado,
+                            },
+                        ] as const
+                    ).map(
+                        (piece, i) =>
+                            piece.value != null && (
+                                <span key={i} className="tf-historico__piece">
+                                    <span>{piece.label}</span>
+                                    <strong>{formatFrozenBRL(piece.value)}</strong>
+                                </span>
+                            ),
                     )}
                 </>
             )}

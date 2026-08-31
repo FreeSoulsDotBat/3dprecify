@@ -1,5 +1,5 @@
 import { useNavigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
 import {
@@ -81,6 +81,74 @@ const t = messages.calculator;
 const pf = messages.productForm;
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
+
+/** 019/PR-B (T045) — `active` num `<fieldset>` normal, fora dele um `<Frozen>` (mesma regra nos
+ *  três blocos do formulário: identidade, custos, mercado). Extraído das três IIFEs anônimas que
+ *  decidiam a mesma coisa no JSX — a árvore DOM de cada sítio fica idêntica. */
+function EditableSection({ active, children }: { active: boolean; children: ReactNode }) {
+    return active ? (
+        <fieldset className="contents">{children}</fieldset>
+    ) : (
+        <Frozen className="contents" data-testid="catalog-form-frozen">
+            {children}
+        </Frozen>
+    );
+}
+
+/** 019/PR-D (T076, prancheta 17g) — os quatro estados do cabeçalho: fixado > parado > mudou > sem
+ *  mudança (a MESMA ordem do 16f/17c: fixado é escolha, parado é impedimento, os dois nunca se
+ *  confundem). Extraída das três variáveis `headerLabel`/`headerValue`/`headerCaption` que repetiam
+ *  a mesma árvore de decisão — os ternários aqui são os MESMOS, sem simplificação semântica. */
+function productHeaderState({
+    isFixed,
+    needsAttention,
+    fixedPriceValue,
+    savedObservation,
+    todayPrice,
+    priceChanged,
+    sellerFixedAt,
+}: {
+    isFixed: boolean;
+    needsAttention: boolean;
+    fixedPriceValue: number | undefined;
+    savedObservation: { observedPrice: number; observedAt: string } | undefined;
+    todayPrice: number | undefined;
+    priceChanged: boolean;
+    sellerFixedAt: string | null | undefined;
+}): { label: string; value: number | undefined; caption: string | undefined } {
+    const label = isFixed
+        ? catalogo.fixedByYou
+        : needsAttention
+          ? catalogo.stoppedPrice
+          : catalogo.suggestedRetail;
+    const value = isFixed
+        ? fixedPriceValue
+        : needsAttention
+          ? savedObservation?.observedPrice
+          : todayPrice;
+    const caption =
+        isFixed && sellerFixedAt && todayPrice !== undefined
+            ? catalogo.capFixed
+                  .replace("{data}", formatDayMonthPtBr(sellerFixedAt))
+                  .replace("{hoje}", formatBRL(todayPrice))
+            : needsAttention && savedObservation
+              ? catalogo.capStopped.replace(
+                    "{data}",
+                    formatDayMonthPtBr(savedObservation.observedAt),
+                )
+              : priceChanged && savedObservation
+                ? catalogo.capRecalculated.replace(
+                      "{valor}",
+                      formatBRL(savedObservation.observedPrice),
+                  )
+                : !isFixed && !needsAttention && savedObservation
+                  ? catalogo.capUnchanged.replace(
+                        "{data}",
+                        formatDayMonthPtBr(savedObservation.observedAt),
+                    )
+                  : undefined;
+    return { label, value, caption };
+}
 
 export function ProdutoPage({
     productId,
@@ -230,37 +298,19 @@ export function ProdutoPage({
         todayPrice !== undefined &&
         Math.round(savedObservation.observedPrice * 100) !== Math.round(todayPrice * 100);
 
-    const headerLabel = isFixed
-        ? catalogo.fixedByYou
-        : needsAttention
-          ? catalogo.stoppedPrice
-          : catalogo.suggestedRetail;
-    const headerValue = isFixed
-        ? fixedPriceValue
-        : needsAttention
-          ? savedObservation?.observedPrice
-          : todayPrice;
-    const headerCaption =
-        isFixed && editing?.sellerFixedAt && todayPrice !== undefined
-            ? catalogo.capFixed
-                  .replace("{data}", formatDayMonthPtBr(editing.sellerFixedAt))
-                  .replace("{hoje}", formatBRL(todayPrice))
-            : needsAttention && savedObservation
-              ? catalogo.capStopped.replace(
-                    "{data}",
-                    formatDayMonthPtBr(savedObservation.observedAt),
-                )
-              : priceChanged && savedObservation
-                ? catalogo.capRecalculated.replace(
-                      "{valor}",
-                      formatBRL(savedObservation.observedPrice),
-                  )
-                : !isFixed && !needsAttention && savedObservation
-                  ? catalogo.capUnchanged.replace(
-                        "{data}",
-                        formatDayMonthPtBr(savedObservation.observedAt),
-                    )
-                  : undefined;
+    const {
+        label: headerLabel,
+        value: headerValue,
+        caption: headerCaption,
+    } = productHeaderState({
+        isFixed,
+        needsAttention,
+        fixedPriceValue,
+        savedObservation,
+        todayPrice,
+        priceChanged,
+        sellerFixedAt: editing?.sellerFixedAt,
+    });
 
     // 17c — custo hoje > fixado: o aviso de ATENÇÃO (spec US5 AC3 vence a 17c, que desenha info) +
     // "Voltar a acompanhar o custo". A escrita (fixar/desfixar) só existe quando `active` — a
@@ -449,82 +499,71 @@ export function ProdutoPage({
           T045) — inerta cada input/select nested inside, sem thread de prop por campo. Name + os
           pickers ficam full width, acima da grade de duas colunas (identificam o produto, não o
           precificam). O botão Salvar saiu daqui (T045): mora no rodapé abaixo, sempre visível. */}
-            {(() => {
-                const identityFields = (
-                    <>
-                        <Card padding="md" className="flex flex-col gap-3">
-                            <Field
-                                label={pf.nameLabel}
-                                required
-                                error={nameError}
-                                hint={cf.nameCounter
-                                    .replace("{n}", String(name.length))
-                                    .replace("{max}", String(NAME_MAX))}
-                            >
-                                {(p) => (
-                                    <div className="tf-inputwrap">
-                                        <input
-                                            {...p}
-                                            type="text"
-                                            className="tf-input"
-                                            placeholder={pf.namePlaceholder}
-                                            value={name}
-                                            maxLength={NAME_MAX}
-                                            onChange={(e) => {
-                                                setName(e.target.value);
-                                                // A recusa é do CAMPO, então some assim que deixar de ser verdade — não
-                                                // espera o próximo Salvar (mesma disciplina do 17b·2).
-                                                setNameError(undefined);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </Field>
-                            {/* 17b·2 — a dica some quando o erro NÃO é "nome repetido" (o `Field` compartilhado
-                  só mostra hint OU erro; a dica de apoio do conflito é uma segunda linha própria,
-                  simultânea ao erro, como o desenho pede). */}
-                            {nameError === cf.nameConflict && (
-                                <p style={captionText}>{cf.nameConflictHint}</p>
-                            )}
-                        </Card>
-
-                        {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
-                        <Card padding="md" className="flex flex-col gap-3">
-                            <p style={sectionLabel}>{t.catalogPicker.title}</p>
-                            <p style={captionText}>{t.catalogPicker.hint}</p>
-                            <div style={gridCard}>
-                                <Field label={t.catalogPicker.filament} tightLabel>
-                                    {(p) => (
-                                        <Select
-                                            {...p}
-                                            options={filamentOptions}
-                                            value={filamentId}
-                                            onChange={(e) => applyFilament(e.target.value)}
-                                        />
-                                    )}
-                                </Field>
-                                <Field label={t.catalogPicker.printer} tightLabel>
-                                    {(p) => (
-                                        <Select
-                                            {...p}
-                                            options={printerOptions}
-                                            value={printerId}
-                                            onChange={(e) => applyPrinter(e.target.value)}
-                                        />
-                                    )}
-                                </Field>
+            <EditableSection active={active}>
+                <Card padding="md" className="flex flex-col gap-3">
+                    <Field
+                        label={pf.nameLabel}
+                        required
+                        error={nameError}
+                        hint={cf.nameCounter
+                            .replace("{n}", String(name.length))
+                            .replace("{max}", String(NAME_MAX))}
+                    >
+                        {(p) => (
+                            <div className="tf-inputwrap">
+                                <input
+                                    {...p}
+                                    type="text"
+                                    className="tf-input"
+                                    placeholder={pf.namePlaceholder}
+                                    value={name}
+                                    maxLength={NAME_MAX}
+                                    onChange={(e) => {
+                                        setName(e.target.value);
+                                        // A recusa é do CAMPO, então some assim que deixar de ser verdade — não
+                                        // espera o próximo Salvar (mesma disciplina do 17b·2).
+                                        setNameError(undefined);
+                                    }}
+                                />
                             </div>
-                        </Card>
-                    </>
-                );
-                return active ? (
-                    <fieldset className="contents">{identityFields}</fieldset>
-                ) : (
-                    <Frozen className="contents" data-testid="catalog-form-frozen">
-                        {identityFields}
-                    </Frozen>
-                );
-            })()}
+                        )}
+                    </Field>
+                    {/* 17b·2 — a dica some quando o erro NÃO é "nome repetido" (o `Field` compartilhado
+              só mostra hint OU erro; a dica de apoio do conflito é uma segunda linha própria,
+              simultânea ao erro, como o desenho pede). */}
+                    {nameError === cf.nameConflict && (
+                        <p style={captionText}>{cf.nameConflictHint}</p>
+                    )}
+                </Card>
+
+                {/* The catalog refs — same picker as Calcular; picking pre-fills the editable fields. */}
+                <Card padding="md" className="flex flex-col gap-3">
+                    <p style={sectionLabel}>{t.catalogPicker.title}</p>
+                    <p style={captionText}>{t.catalogPicker.hint}</p>
+                    <div style={gridCard}>
+                        <Field label={t.catalogPicker.filament} tightLabel>
+                            {(p) => (
+                                <Select
+                                    {...p}
+                                    options={filamentOptions}
+                                    value={filamentId}
+                                    onChange={(e) => applyFilament(e.target.value)}
+                                />
+                            )}
+                        </Field>
+                        <Field label={t.catalogPicker.printer} tightLabel>
+                            {(p) => (
+                                <Select
+                                    {...p}
+                                    options={printerOptions}
+                                    value={printerId}
+                                    onChange={(e) => applyPrinter(e.target.value)}
+                                />
+                            )}
+                        </Field>
+                    </div>
+                </Card>
+            </EditableSection>
 
             {/* 019/PR-B (T045) — rodapé: a frase + o convite (mesmo elemento do vazio didático,
           FR-1906) fora de `active`, e Salvar SEMPRE visível — `disabled` fora de `active`, nunca um
@@ -549,77 +588,55 @@ export function ProdutoPage({
           normal, fora dele `<Frozen>` — mesma regra do bloco de identidade acima. */}
             <div className="tf-calc-grid">
                 <div className="tf-calc-grid__col">
-                    {(() => {
-                        const costsFields = (
-                            <>
-                                {/* 016/PR-C (US6/US7/US8/US9) — see calcular-page.tsx: SAME body, SAME components,
-                    so this route stays byte-identical to Calcular (SC-305). */}
-                                <CostsSection control={control} fields={COST_FIELDS} />
-                                <FieldGroup
-                                    control={control}
-                                    title={t.sections.labor}
-                                    info={t.sectionInfo.labor}
-                                    fields={LABOR_AND_FINISH_FIELDS}
-                                />
-                                <OtherCostsSection
-                                    control={control}
-                                    fields={otherCostFields}
-                                    errors={otherCostErrors}
-                                    onAppend={() => appendOtherCost(defaultOtherCost())}
-                                    onRemove={removeOtherCost}
-                                />
-                            </>
-                        );
-                        return active ? (
-                            <fieldset className="contents">{costsFields}</fieldset>
-                        ) : (
-                            <Frozen className="contents" data-testid="catalog-form-frozen">
-                                {costsFields}
-                            </Frozen>
-                        );
-                    })()}
+                    <EditableSection active={active}>
+                        {/* 016/PR-C (US6/US7/US8/US9) — see calcular-page.tsx: SAME body, SAME components,
+                so this route stays byte-identical to Calcular (SC-305). */}
+                        <CostsSection control={control} fields={COST_FIELDS} />
+                        <FieldGroup
+                            control={control}
+                            title={t.sections.labor}
+                            info={t.sectionInfo.labor}
+                            fields={LABOR_AND_FINISH_FIELDS}
+                        />
+                        <OtherCostsSection
+                            control={control}
+                            fields={otherCostFields}
+                            errors={otherCostErrors}
+                            onAppend={() => appendOtherCost(defaultOtherCost())}
+                            onRemove={removeOtherCost}
+                        />
+                    </EditableSection>
                 </div>
                 <div className="tf-calc-grid__col">
-                    {(() => {
-                        const marketFields = (
-                            <>
-                                <FieldGroup
-                                    control={control}
-                                    title={t.sections.markup}
-                                    info={t.sectionInfo.markup}
-                                    fields={MARKUP_FIELDS}
-                                />
-                                <MarketplaceSection
-                                    control={control}
-                                    values={values}
-                                    fields={fields}
-                                    channelOutcomes={channelOutcomes}
-                                    included={values.includeMarketplace !== false}
-                                    onToggleInclude={(next) => setValue("includeMarketplace", next)}
-                                    onAppend={append}
-                                    onRemove={remove}
-                                    onMarketplaceChange={handleMarketplaceChange}
-                                    refreshFailed={refreshFailed}
-                                    refreshing={refreshing}
-                                    onRetryCatalog={retryCatalog}
-                                    spineFor={(m) => spineForMarketplace(catalog, m)}
-                                    catalog={catalog}
-                                    // 016/US11 (T048) — the product page mounts only behind the catalog's OWN
-                                    // page-level entitlement gate (`catalogo-page.tsx`), so a channel slot here is
-                                    // always premium already.
-                                    entitled
-                                    signedOut={false}
-                                />
-                            </>
-                        );
-                        return active ? (
-                            <fieldset className="contents">{marketFields}</fieldset>
-                        ) : (
-                            <Frozen className="contents" data-testid="catalog-form-frozen">
-                                {marketFields}
-                            </Frozen>
-                        );
-                    })()}
+                    <EditableSection active={active}>
+                        <FieldGroup
+                            control={control}
+                            title={t.sections.markup}
+                            info={t.sectionInfo.markup}
+                            fields={MARKUP_FIELDS}
+                        />
+                        <MarketplaceSection
+                            control={control}
+                            values={values}
+                            fields={fields}
+                            channelOutcomes={channelOutcomes}
+                            included={values.includeMarketplace !== false}
+                            onToggleInclude={(next) => setValue("includeMarketplace", next)}
+                            onAppend={append}
+                            onRemove={remove}
+                            onMarketplaceChange={handleMarketplaceChange}
+                            refreshFailed={refreshFailed}
+                            refreshing={refreshing}
+                            onRetryCatalog={retryCatalog}
+                            spineFor={(m) => spineForMarketplace(catalog, m)}
+                            catalog={catalog}
+                            // 016/US11 (T048) — the product page mounts only behind the catalog's OWN
+                            // page-level entitlement gate (`catalogo-page.tsx`), so a channel slot here is
+                            // always premium already.
+                            entitled
+                            signedOut={false}
+                        />
+                    </EditableSection>
                 </div>
             </div>
 

@@ -1,9 +1,9 @@
-import { type CSSProperties, type ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 
 import { type CatalogListState } from "@/entities/catalog/use-catalog";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { type PremiumGate } from "@/shared/billing/premium-gate";
-import { type VazioFeature, VazioDidatico } from "@/shared/billing/vazio-didatico";
+import { type VazioFeature } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { useIsListDense, useIsWide } from "@/shared/lib/use-is-wide";
@@ -14,15 +14,22 @@ import {
     DialogContent,
     DialogDescription,
     DialogTitle,
-    EmptyState,
     Icon,
     Sheet,
     SheetContent,
     SheetTitle,
-    Spinner,
-    Table,
     toast,
 } from "@/shared/ui";
+
+import { CatalogPanelDenseTable } from "./catalog-panel-dense-table";
+import { CatalogPanelMasterDetail } from "./catalog-panel-master-detail";
+import { CatalogPanelMobileList } from "./catalog-panel-mobile-list";
+import {
+    CatalogPanelErrorState,
+    CatalogPanelGateEmpty,
+    CatalogPanelLoading,
+    CatalogPanelShortEmpty,
+} from "./catalog-panel-states";
 
 import "./catalog-master-detail.css";
 
@@ -42,21 +49,20 @@ import "./catalog-master-detail.css";
 const catalogo = messages.catalogo;
 const cf = messages.catalogForm;
 
-const captionText: CSSProperties = {
-    margin: 0,
-    fontSize: "var(--fs-caption)",
-    color: "var(--text-muted)",
-};
-const rowName: CSSProperties = {
-    display: "block",
-    fontWeight: "var(--fw-semibold)",
-    color: "var(--text-strong)",
-};
-const rowSummary: CSSProperties = {
-    display: "block",
-    fontSize: "var(--fs-caption)",
-    color: "var(--text-muted)",
-};
+/** O formulário passado por quem monta o painel (filamentos/impressoras, §0.2) — nomeado para ser
+ *  reutilizado pelo mestre-detalhe (`catalog-panel-master-detail.tsx`) sem repetir a assinatura. */
+export type CatalogPanelRenderForm<TForm, TWire> = (args: {
+    mode: "create" | "edit";
+    defaultValues: TForm;
+    submitting: boolean;
+    submitError?: string;
+    /** 019/PR-B (T045) — os cinco estados; `renderForm` decide sozinho o que mostrar em vez do
+     *  `active`/`lapsed` binário de antes (013/FB-02). */
+    gate: PremiumGate;
+    /** Ausente fora de `active` — a barreira é a AUSÊNCIA do handler (T045), nunca um 2º gate. */
+    onSubmit?: (body: TWire) => void;
+    onCancel: () => void;
+}) => ReactNode;
 
 export interface CatalogPanelCopy {
     addLabel: string;
@@ -78,18 +84,7 @@ export interface CatalogPanelProps<TItem extends { id: string }, TForm, TWire = 
     /** Sheet mode (filaments/printers, §0.2). Omitted when the panel NAVIGATES instead (products). */
     emptyForm?: TForm;
     toFormValues?: (item: TItem) => TForm;
-    renderForm?: (args: {
-        mode: "create" | "edit";
-        defaultValues: TForm;
-        submitting: boolean;
-        submitError?: string;
-        /** 019/PR-B (T045) — os cinco estados; `renderForm` decide sozinho o que mostrar em vez do
-         *  `active`/`lapsed` binário de antes (013/FB-02). */
-        gate: PremiumGate;
-        /** Ausente fora de `active` — a barreira é a AUSÊNCIA do handler (T045), nunca um 2º gate. */
-        onSubmit?: (body: TWire) => void;
-        onCancel: () => void;
-    }) => ReactNode;
+    renderForm?: CatalogPanelRenderForm<TForm, TWire>;
     create?: (body: TWire) => Promise<unknown>;
     update?: (id: string, body: TWire) => Promise<unknown>;
     /** Navigation mode (products, ux §1.6b): create/edit are FULL PAGE routes, not a Sheet. */
@@ -171,10 +166,9 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
     // 018 assume. `useIsListDense()` sozinho responde "true" em AMBAS as faixas (1024px é o piso das
     // duas), então a tabela só entra quando o mestre-detalhe NÃO entrou.
     const isDense = useIsListDense() && !isWide;
-    const [query, setQuery] = useState("");
-    const [selectedId, setSelectedId] = useState<string | null>(null);
-    // A seleção "vaza" de seção sozinha? Não: a página monta um componente DIFERENTE por seção, então
-    // trocar de aba desmonta este painel e o estado nasce limpo.
+    // A busca/seleção do mestre-detalhe mora em `CatalogPanelMasterDetail` (a seleção "vaza" de seção
+    // sozinha? Não: a página monta um componente DIFERENTE por seção, então trocar de aba desmonta
+    // este painel e o estado nasce limpo de qualquer forma).
     const [inlineError, setInlineError] = useState<string | undefined>(undefined);
 
     const openCreate = () => {
@@ -312,13 +306,13 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
     // aberto (`teaser={sheet === null}`).
     const nonActiveGate: Exclude<PremiumGate, "active"> | null = gate !== "active" ? gate : null;
 
+    // O router de estados do painel (T019/T022): cada ramo é um componente nomeado em
+    // `catalog-panel-{states,master-detail,dense-table,mobile-list}.tsx`; esta cadeia só DECIDE qual
+    // deles mostrar, com a MESMA ordem e as MESMAS condições de antes (prancheta 29: erro antes de
+    // vazio).
     let body: ReactNode;
     if (list.isLoading) {
-        body = (
-            <div className="flex justify-center py-8">
-                <Spinner />
-            </div>
-        );
+        body = <CatalogPanelLoading />;
     } else if (
         nonActiveGate &&
         ((list.isError && list.error?.code === "ENTITLEMENT_REQUIRED") ||
@@ -329,59 +323,43 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         // Não paga (ou deslogado, ou pausou): a lista está vazia porque nunca houve leitura (403
         // honesto) ou porque de fato não há nada salvo — os dois casos leem IGUAL (prancheta 32a/32c):
         // o vazio didático, nunca a parede/crown de antes.
-        if (isWide && renderForm && toFormValues) {
-            // 32g — mestre-detalhe: o vazio à esquerda, o formulário INERTE de criação à direita. O
-            // convite mora SEMPRE num rodapé de formulário aqui (a ficha, ou o Sheet quando aberto) —
-            // o vazio nunca carrega o seu, senão o desktop mostra dois (FR-1906; T041 conta a 1920).
-            body = (
-                <div className="tf-catalog-md">
-                    <div className="tf-catalog-md__master">
-                        <VazioDidatico
-                            feature={feature}
-                            gate={nonActiveGate}
-                            action={addButton(true)}
-                            teaser={false}
-                        />
-                    </div>
-                    {sheet === null && (
-                        <aside className="tf-card tf-catalog-md__detail" data-testid="detail-panel">
-                            {renderForm({
-                                mode: "create",
-                                defaultValues: emptyForm as TForm,
-                                submitting: saving ?? false,
-                                submitError: undefined,
-                                gate,
-                                onSubmit: undefined,
-                                onCancel: () => undefined,
-                            })}
-                        </aside>
-                    )}
-                </div>
-            );
-        } else {
-            // Produtos/kits (navegam, sem `renderForm`) ou mobile: só o vazio, com o único convite.
-            body = (
-                <VazioDidatico
-                    feature={feature}
-                    gate={nonActiveGate}
-                    action={addButton(true)}
-                    teaser={sheet === null}
-                />
-            );
-        }
-    } else if (list.isError) {
         body = (
-            <Alert tone="danger" title={catalogo.loadError}>
-                <Button variant="secondary" size="sm" onClick={list.refetch} className="mt-2">
-                    {catalogo.retry}
-                </Button>
-            </Alert>
+            <CatalogPanelGateEmpty
+                feature={feature}
+                gate={nonActiveGate}
+                action={addButton(true)}
+                teaser={sheet === null}
+                detail={
+                    isWide && renderForm && toFormValues ? (
+                        // 32g — mestre-detalhe: o vazio à esquerda, o formulário INERTE de criação à direita.
+                        // O convite mora SEMPRE num rodapé de formulário aqui (a ficha, ou o Sheet quando
+                        // aberto) — o vazio nunca carrega o seu, senão o desktop mostra dois (FR-1906; T041
+                        // conta a 1920).
+                        sheet === null ? (
+                            <aside
+                                className="tf-card tf-catalog-md__detail"
+                                data-testid="detail-panel"
+                            >
+                                {renderForm({
+                                    mode: "create",
+                                    defaultValues: emptyForm as TForm,
+                                    submitting: saving ?? false,
+                                    submitError: undefined,
+                                    gate,
+                                    onSubmit: undefined,
+                                    onCancel: () => undefined,
+                                })}
+                            </aside>
+                        ) : null
+                    ) : undefined
+                }
+            />
         );
+    } else if (list.isError) {
+        body = <CatalogPanelErrorState onRetry={list.refetch} />;
     } else if (list.items.length === 0) {
-        // `active` e vazio de verdade: o vazio CURTO de sempre, sem convite nenhum.
         body = (
-            <EmptyState
-                icon="package"
+            <CatalogPanelShortEmpty
                 title={copy.emptyTitle}
                 description={copy.emptyBody}
                 action={addButton(true)}
@@ -389,305 +367,61 @@ export function CatalogPanel<TItem extends { id: string }, TForm, TWire = unknow
         );
     } else if (isWide) {
         // ---- 018/US1 — mestre-detalhe (≥1280px). Lista à esquerda, ficha do item à direita. ----
-        const term = query.trim().toLowerCase();
-        const visible = term
-            ? list.items.filter((item) =>
-                  `${nameOf(item)} ${summaryOf(item)}`.toLowerCase().includes(term),
-              )
-            : list.items;
-        // Derivada contra a lista ATUAL a cada render: item excluído, filtrado ou vindo de outro
-        // aparelho cai para um item válido — nunca para uma ficha órfã.
-        const selected = visible.find((item) => item.id === selectedId) ?? visible[0] ?? null;
-
         body = (
-            <div className="tf-catalog-md">
-                <div className="tf-catalog-md__master">
-                    <div className="tf-catalog-md__toolbar">
-                        <label className="tf-inputwrap tf-catalog-md__search">
-                            <span className="sr-only">{catalogo.searchLabel}</span>
-                            <Icon name="search" size={18} aria-hidden />
-                            <input
-                                className="tf-input"
-                                type="search"
-                                value={query}
-                                placeholder={catalogo.searchPlaceholder}
-                                aria-label={catalogo.searchLabel}
-                                onChange={(event) => setQuery(event.target.value)}
-                            />
-                        </label>
-                        <p style={captionText}>{copy.count(visible.length)}</p>
-                        {addButton()}
-                    </div>
-
-                    {visible.length === 0 ? (
-                        // O vazio da BUSCA não é o vazio do catálogo: aqui existem itens salvos, o filtro é que
-                        // não achou. Dizer "nenhum filamento salvo" seria mentira sobre os dados do vendedor.
-                        <EmptyState
-                            icon="package"
-                            title={catalogo.searchEmpty.replace("{termo}", query.trim())}
-                            action={
-                                <Button variant="secondary" size="sm" onClick={() => setQuery("")}>
-                                    {catalogo.searchClear}
-                                </Button>
-                            }
-                        />
-                    ) : (
-                        <ul className="tf-catalog-md__list" data-testid="master-list">
-                            {visible.map((item) => {
-                                const isSelected = selected?.id === item.id;
-                                return (
-                                    <li key={item.id}>
-                                        <button
-                                            type="button"
-                                            data-testid="master-item"
-                                            aria-current={isSelected ? "true" : undefined}
-                                            className={`tf-card tf-card--interactive tf-catalog-md__card${
-                                                isSelected ? " tf-catalog-md__card--selected" : ""
-                                            }`}
-                                            onClick={() => setSelectedId(item.id)}
-                                        >
-                                            {/* 019/PR-D (T076) — o conteúdo vira uma linha `tf-plist` (nome+meta à
-                          esquerda, preço+era+flag à direita) SEM trocar o `<button>` de fora: os
-                          testids/`aria-current` do mestre-detalhe (018/US1) continuam iguais. */}
-                                            <span className="flex w-full items-start justify-between gap-3">
-                                                <span className="tf-plist__main">
-                                                    <span style={rowName}>{nameOf(item)}</span>
-                                                    <span style={rowSummary}>
-                                                        {summaryOf(item)}
-                                                    </span>
-                                                    {rowMeta?.(item) && (
-                                                        <span style={rowSummary}>
-                                                            {rowMeta(item)}
-                                                        </span>
-                                                    )}
-                                                    {noteOf?.(item) && (
-                                                        <span
-                                                            style={rowSummary}
-                                                            data-testid="row-note"
-                                                        >
-                                                            {noteOf(item)}
-                                                        </span>
-                                                    )}
-                                                    {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu: a faixa "Modo leitura
-                              offline" (`list.stale`, abaixo no rodapé do painel) já cobre a mesma
-                              informação uma vez só, para a lista inteira. */}
-                                                    {gate === "lapsed" && (
-                                                        <span style={rowSummary}>
-                                                            {catalogo.readOnlyHint}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                                {priceVal(item)}
-                                            </span>
-                                        </button>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    )}
-                </div>
-
-                {selected && (
-                    <aside className="tf-card tf-catalog-md__detail" data-testid="detail-panel">
-                        <header className="tf-catalog-md__detail-head">
-                            <div className="tf-catalog-md__detail-title">
-                                {detailKicker && (
-                                    <span className="tf-catalog-md__kicker">{detailKicker}</span>
-                                )}
-                                <h2>{nameOf(selected)}</h2>
-                            </div>
-                            <div className="flex items-center gap-1">{rowActions(selected)}</div>
-                        </header>
-
-                        {noteOf?.(selected) && <Alert tone="info">{noteOf(selected)}</Alert>}
-                        {inlineError && <Alert tone="danger">{inlineError}</Alert>}
-
-                        {renderForm && toFormValues ? (
-                            // Filamento e impressora: a ficha É o editor. O MESMO formulário do Sheet, montado
-                            // aqui — não uma segunda cópia (decisão do dono no clarify; research §E).
-                            // `key` pelo id: sem ele o RHF manteria os defaultValues do item anterior, porque
-                            // `defaultValues` só valem na montagem.
-                            <div key={selected.id}>
-                                {renderForm({
-                                    mode: "edit",
-                                    defaultValues: toFormValues(selected),
-                                    submitting: saving ?? false,
-                                    submitError: inlineError,
-                                    gate,
-                                    onSubmit:
-                                        gate === "active"
-                                            ? (wire) => void handleInlineSubmit(selected, wire)
-                                            : undefined,
-                                    onCancel: () => setInlineError(undefined),
-                                })}
-                            </div>
-                        ) : (
-                            // Produto e kit: a ficha RESUME e manda para o editor de página cheia que já existe.
-                            <div className="flex flex-col gap-3">
-                                <p style={rowSummary}>{summaryOf(selected)}</p>
-                                <Button variant="secondary" onClick={() => openEdit(selected)}>
-                                    <Icon name="pencil" size={18} aria-hidden />{" "}
-                                    {catalogo.detailOpenEditor}
-                                </Button>
-                            </div>
-                        )}
-                    </aside>
-                )}
-            </div>
+            <CatalogPanelMasterDetail
+                items={list.items}
+                nameOf={nameOf}
+                summaryOf={summaryOf}
+                rowMeta={rowMeta}
+                noteOf={noteOf}
+                gate={gate}
+                priceVal={priceVal}
+                rowActions={rowActions}
+                addButton={addButton}
+                count={copy.count}
+                renderForm={renderForm}
+                toFormValues={toFormValues}
+                detailKicker={detailKicker}
+                inlineError={inlineError}
+                onInlineSubmit={(item, wire) => void handleInlineSubmit(item, wire)}
+                onInlineCancel={() => setInlineError(undefined)}
+                openEdit={openEdit}
+                saving={saving}
+            />
         );
     } else if (isDense) {
-        // 019/PR-D (T076/T130, prancheta 16g) — 1024–1279px: `tf-table`, a coluna "Antes" é o "era R$
-        // X" da lista promovida a coluna, e um travessão (`tableNoChange`) onde a linha não mudou.
+        // 019/PR-D (T076/T130, prancheta 16g) — 1024–1279px: `tf-table`.
         body = (
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                    <p style={captionText}>{copy.count(list.items.length)}</p>
-                    {addButton()}
-                </div>
-                <Table>
-                    <thead>
-                        <tr>
-                            <th scope="col">{catalogo.tableColName}</th>
-                            <th scope="col" style={{ textAlign: "right" }}>
-                                {catalogo.tableColPrice}
-                            </th>
-                            <th scope="col" style={{ textAlign: "right" }}>
-                                {catalogo.tableColBefore}
-                            </th>
-                            <th scope="col">{catalogo.tableColSavedAt}</th>
-                            <th scope="col">
-                                <span className="sr-only">{catalogo.tableColActions}</span>
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {list.items.map((item) => {
-                            const price = rowPrice?.(item);
-                            const was = rowWas?.(item);
-                            return (
-                                <tr key={item.id}>
-                                    <td className="tf-table__name">
-                                        {/* 019/PR-F (T099, achado do QA): o botão NÃO repete `tf-table__name` — a folha
-                        (`table.css`) foi escrita para a CÉLULA, onde `max-width: 0` é inerte no
-                        `table-layout: auto`; num `<button>` ele vale de verdade e o nome nascia com
-                        largura ZERO (invisível e inclicável a 1024–1279, nas três abas — regressão da
-                        PR-D que chegou a develop). O botão só herda a fonte da célula e trunca. */}
-                                        <button
-                                            type="button"
-                                            onClick={() => openEdit(item)}
-                                            className="block w-full min-w-0 truncate text-left"
-                                        >
-                                            {nameOf(item)}
-                                        </button>
-                                    </td>
-                                    <td className="tf-table__num">
-                                        {price !== undefined ? formatBRL(price) : "—"}
-                                    </td>
-                                    <td className="tf-table__num tf-table__num--muted">
-                                        {was !== undefined
-                                            ? formatBRL(was)
-                                            : catalogo.tableNoChange}
-                                    </td>
-                                    <td>{rowMeta?.(item) ?? summaryOf(item)}</td>
-                                    <td className="tf-table__actions">{rowActions(item)}</td>
-                                </tr>
-                            );
-                        })}
-                    </tbody>
-                </Table>
-            </div>
+            <CatalogPanelDenseTable
+                items={list.items}
+                count={copy.count}
+                addButton={addButton}
+                nameOf={nameOf}
+                summaryOf={summaryOf}
+                rowMeta={rowMeta}
+                rowPrice={rowPrice}
+                rowWas={rowWas}
+                rowActions={rowActions}
+                openEdit={openEdit}
+            />
         );
     } else {
+        // 019/PR-D (T076, prancheta 16a) — a lista mobile (<1024px).
         body = (
-            <div className="flex flex-col gap-3">
-                <div className="flex items-center justify-between gap-2">
-                    <p style={captionText}>{copy.count(list.items.length)}</p>
-                    {addButton()}
-                </div>
-                {/* 019/PR-D (T076, prancheta 16a; achado do e2e T069 — o container não levava a classe):
-            a 390px a lista É a `tf-plist` de `shared/ui/plist.css` — linhas de 56px separadas por
-            um filete, não cartões (com moldura o nome quebrava em três linhas e cabiam 4 itens na
-            dobra). A linha inteira é o alvo de `openEdit`; os botões de ação ficam ao lado, fora
-            da linha, porque a ficha do produto não tem duplicar/excluir (a folha da 16e não está
-            nesta fatia). `truncate` na meta: `.tf-plist__meta` é `nowrap` sem corte, e um resumo
-            "Filamento · Impressora" comprido viraria transbordo horizontal da página (SC-003). */}
-                <ul className="tf-plist">
-                    {list.items.map((item) => (
-                        <li key={item.id} className="flex items-center gap-1">
-                            <button
-                                type="button"
-                                className="tf-plist__row min-w-0 flex-1"
-                                onClick={() => openEdit(item)}
-                            >
-                                <span className="tf-plist__main">
-                                    <span className="tf-plist__name">{nameOf(item)}</span>
-                                    <span className="tf-plist__meta truncate">
-                                        {summaryOf(item)}
-                                    </span>
-                                    {rowMeta?.(item) && (
-                                        <span className="tf-plist__meta truncate">
-                                            {rowMeta(item)}
-                                        </span>
-                                    )}
-                                    {noteOf?.(item) && (
-                                        <span
-                                            className="tf-plist__meta truncate"
-                                            data-testid="row-note"
-                                        >
-                                            {noteOf(item)}
-                                        </span>
-                                    )}
-                                    {/* 019/PR-F (T098) — o `staleHint` POR LINHA saiu (mesmo raciocínio do ramo
-                      mestre-detalhe acima): a faixa "Modo leitura offline" já cobre a lista
-                      inteira, uma vez só. */}
-                                    {gate === "lapsed" && (
-                                        <span className="tf-plist__meta truncate">
-                                            {catalogo.readOnlyHint}
-                                        </span>
-                                    )}
-                                </span>
-                                {priceVal(item)}
-                            </button>
-                            <span className="flex shrink-0 items-center">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    aria-label={`${catalogo.edit} ${nameOf(item)}`}
-                                    onClick={() => openEdit(item)}
-                                >
-                                    <Icon name="pencil" size={18} aria-hidden />
-                                </Button>
-                                {onDuplicate && (
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        aria-label={`${catalogo.duplicate} ${nameOf(item)}`}
-                                        onClick={() => onDuplicate(item)}
-                                    >
-                                        <Icon name="copy" size={18} aria-hidden />
-                                    </Button>
-                                )}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    aria-label={`${catalogo.remove} ${nameOf(item)}`}
-                                    // 013/FB-02 (T034 homologation nit): on lapsed, tapping delete must NOT open the
-                                    // working destructive confirm and then 403 on submit — ux-catalog §3: "Never show a
-                                    // delete/edit as *working* then fail — the intercept happens on tap, honestly." Edit
-                                    // already routes lapsed to the read-only reactivation surface; delete now mirrors it,
-                                    // so both write affordances land on the same honest intercept (the server's
-                                    // ENTITLEMENT_REQUIRED 403 stays the real backstop — this is presentation only).
-                                    onClick={() =>
-                                        remove ? setDeleteTarget(item) : openEdit(item)
-                                    }
-                                >
-                                    <Icon name="trash-2" size={18} aria-hidden />
-                                </Button>
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
+            <CatalogPanelMobileList
+                items={list.items}
+                count={copy.count}
+                addButton={addButton}
+                nameOf={nameOf}
+                summaryOf={summaryOf}
+                rowMeta={rowMeta}
+                noteOf={noteOf}
+                gate={gate}
+                priceVal={priceVal}
+                onDuplicate={onDuplicate}
+                openEdit={openEdit}
+                onRemove={(item) => (remove ? setDeleteTarget(item) : openEdit(item))}
+            />
         );
     }
 
