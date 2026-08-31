@@ -2,7 +2,7 @@ import type { FieldErrors, Resolver } from "react-hook-form";
 import { z } from "zod";
 
 import type { FilamentIn, FilamentOut, PrinterIn, PrinterOut } from "@/shared/api/generated";
-import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
+import { formatBRL, parseDecimal } from "@/shared/lib/decimal-ptbr";
 import { messages } from "@/shared/i18n/messages.pt-br";
 
 // Catalog form schemas (T019/T022). The forms are pt-BR STRING forms (like the calculator); Zod
@@ -143,7 +143,7 @@ export function filamentToForm(f: FilamentOut): FilamentFormValues {
 export function filamentSummary(f: FilamentOut): string {
     const material = f.material?.trim();
     const head = material ? `${material} · ` : "";
-    return `${head}R$ ${formatDecimal(Number(f.costPerRoll))} / ${wireToPtBrNormalized(f.rollWeightKg)} kg`;
+    return `${head}${formatBRL(Number(f.costPerRoll))} / ${wireToPtBrNormalized(f.rollWeightKg)} kg`;
 }
 
 // ── Printer ───────────────────────────────────────────────────────────────────────────────────
@@ -209,5 +209,5 @@ export function printerToForm(p: PrinterOut): PrinterFormValues {
 
 /** Muted second row for a printer list item: `R$ {value} · {life} h · {power} kW`. */
 export function printerSummary(p: PrinterOut): string {
-    return `R$ ${formatDecimal(Number(p.machineValue))} · ${wireToPtBrNormalized(p.machineLifetimeHours)} h · ${wireToPtBrNormalized(p.avgPowerKw)} kW`;
+    return `${formatBRL(Number(p.machineValue))} · ${wireToPtBrNormalized(p.machineLifetimeHours)} h · ${wireToPtBrNormalized(p.avgPowerKw)} kW`;
 }
