@@ -44,7 +44,7 @@ import {
     basisCaption,
     cardTitle,
     kindLabel,
-    money,
+    formatFrozenBRL,
     offsetOf,
     quotedDate,
     SYNC_BADGE,
@@ -796,7 +796,7 @@ function SnapshotCard({ item }: { item: HistoryItem }) {
 
                 <span className="tf-historico__money">
                     <span>{t.quotedValue}</span>
-                    <strong>{money(item.headlineTotal)}</strong>
+                    <strong>{formatFrozenBRL(item.headlineTotal)}</strong>
                 </span>
                 <span className="tf-historico__basis">{basisCaption(item.headlineBasis)}</span>
 

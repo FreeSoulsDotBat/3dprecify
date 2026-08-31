@@ -21,7 +21,7 @@ vi.mock("@/shared/fee-catalog", async (importOriginal) => {
     };
 });
 
-import { basisCaption, money } from "@/entities/history/history-format";
+import { basisCaption, formatFrozenBRL } from "@/entities/history/history-format";
 import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
 import type { HistoryItem } from "@/entities/history/outbox";
 import type { CatalogContext } from "@/features/calculator/calculator-model";
@@ -190,10 +190,12 @@ describe("the comparison answers the question, on request (US7)", () => {
 
         // The frozen side: the number they charged, under the date they charged it.
         expect(screen.getByText(t.quotedAt.replace("{data}", "03/07/2026"))).toBeInTheDocument();
-        expect(screen.getByText(money("30.90"))).toBeInTheDocument();
+        expect(screen.getByText(formatFrozenBRL("30.90"))).toBeInTheDocument();
         // Today's side: a genuinely different number — this is the "sim" the seller came for.
         expect(screen.getByText(t.compareToday)).toBeInTheDocument();
-        expect(screen.getByText(money(today.payload.totals.precoVarejo!))).toBeInTheDocument();
+        expect(
+            screen.getByText(formatFrozenBRL(today.payload.totals.precoVarejo!)),
+        ).toBeInTheDocument();
         // Which of the two prices this is (varejo vs atacado) — an unlabelled total is ambiguous.
         expect(screen.getByText(basisCaption("PRECO_VAREJO"))).toBeInTheDocument();
     });
@@ -208,11 +210,13 @@ describe("the comparison answers the question, on request (US7)", () => {
 
         await user.click(screen.getByRole("button", { name: t.compareAction }));
 
-        expect(screen.getByText(money(today.payload.totals.precoAtacado!))).toBeInTheDocument();
+        expect(
+            screen.getByText(formatFrozenBRL(today.payload.totals.precoAtacado!)),
+        ).toBeInTheDocument();
         // The varejo number is a DIFFERENT product decision; showing it here would compare a wholesale
         // quote against a retail price and manufacture an increase that never happened.
         expect(
-            screen.queryByText(money(today.payload.totals.precoVarejo!)),
+            screen.queryByText(formatFrozenBRL(today.payload.totals.precoVarejo!)),
         ).not.toBeInTheDocument();
     });
 
@@ -229,7 +233,7 @@ describe("the comparison answers the question, on request (US7)", () => {
 
         // The same number twice, each still wearing its own label — the surface does not collapse them
         // into one row, because "não mudou" is a comparison the seller has to be able to SEE.
-        expect(screen.getAllByText(money(unchanged))).toHaveLength(2);
+        expect(screen.getAllByText(formatFrozenBRL(unchanged))).toHaveLength(2);
         expect(screen.getByText(t.compareToday)).toBeInTheDocument();
     });
 
@@ -241,7 +245,7 @@ describe("the comparison answers the question, on request (US7)", () => {
 
         expect(screen.getByText(t.compareNote)).toBeInTheDocument();
         // The frozen total on screen is still, literally, the stored one.
-        expect(screen.getByText(money("30.90"))).toBeInTheDocument();
+        expect(screen.getByText(formatFrozenBRL("30.90"))).toBeInTheDocument();
     });
 });
 

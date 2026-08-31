@@ -10,7 +10,7 @@ import { Alert, Button, Card } from "@/shared/ui";
 import {
     basisCaption,
     frozenPayloadOf,
-    money,
+    formatFrozenBRL,
     offsetOf,
     quotedDate,
 } from "@/entities/history/history-format";
@@ -106,11 +106,11 @@ function CompareBody({
                 <>
                     <span className="tf-compare__row">
                         <span>{t.quotedAt.replace("{data}", date)}</span>
-                        <strong>{money(item.headlineTotal)}</strong>
+                        <strong>{formatFrozenBRL(item.headlineTotal)}</strong>
                     </span>
                     <span className="tf-compare__row">
                         <span>{t.compareToday}</span>
-                        <strong>{money(todayTotal)}</strong>
+                        <strong>{formatFrozenBRL(todayTotal)}</strong>
                     </span>
                     {/* F3 — offline, "hoje" means the catalog cached on this device, which may be stale. */}
                     {!online && <p className="tf-historico__meta">{t.recalcOfflineNote}</p>}

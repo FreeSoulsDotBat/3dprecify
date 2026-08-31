@@ -26,7 +26,7 @@ import {
     basisCaption,
     cardTitle,
     frozenPayloadOf,
-    money,
+    formatFrozenBRL,
     offsetOf,
     quotedDate,
     quotedTime,
@@ -148,7 +148,7 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
                 </span>
                 <span className="tf-historico__money">
                     <span>{t.quotedValue}</span>
-                    <strong>{money(item.headlineTotal)}</strong>
+                    <strong>{formatFrozenBRL(item.headlineTotal)}</strong>
                 </span>
                 <span className="tf-historico__basis">{basisCaption(item.headlineBasis)}</span>
                 {/* A promise the seller made — NOT a TTL. Nothing ever expires the record. */}
@@ -192,7 +192,7 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
                     {payload.totals.custoTotal && (
                         <BreakdownRow
                             label={tr.custoTotal}
-                            value={money(payload.totals.custoTotal)}
+                            value={formatFrozenBRL(payload.totals.custoTotal)}
                             emphasis="total"
                         />
                     )}
@@ -338,7 +338,7 @@ function FrozenChannelRow({
                             <span>
                                 {tr.precoAnuncio} · {messages.calculator.captions.varejo}
                             </span>
-                            <strong>{money(channel.precoAnuncioVarejo)}</strong>
+                            <strong>{formatFrozenBRL(channel.precoAnuncioVarejo)}</strong>
                         </span>
                     )}
                     {channel.recebidoLiquidoVarejo != null && (
@@ -346,7 +346,7 @@ function FrozenChannelRow({
                             <span>
                                 {tr.recebidoLiquido} · {messages.calculator.captions.varejo}
                             </span>
-                            <strong>{money(channel.recebidoLiquidoVarejo)}</strong>
+                            <strong>{formatFrozenBRL(channel.recebidoLiquidoVarejo)}</strong>
                         </span>
                     )}
                     {channel.precoAnuncioAtacado != null && (
@@ -354,7 +354,7 @@ function FrozenChannelRow({
                             <span>
                                 {tr.precoAnuncio} · {messages.calculator.captions.atacado}
                             </span>
-                            <strong>{money(channel.precoAnuncioAtacado)}</strong>
+                            <strong>{formatFrozenBRL(channel.precoAnuncioAtacado)}</strong>
                         </span>
                     )}
                     {channel.recebidoLiquidoAtacado != null && (
@@ -362,7 +362,7 @@ function FrozenChannelRow({
                             <span>
                                 {tr.recebidoLiquido} · {messages.calculator.captions.atacado}
                             </span>
-                            <strong>{money(channel.recebidoLiquidoAtacado)}</strong>
+                            <strong>{formatFrozenBRL(channel.recebidoLiquidoAtacado)}</strong>
                         </span>
                     )}
                 </>
@@ -462,16 +462,19 @@ function QuoteDocument({
                     <span className="tf-historico__qty">
                         {tq.lineMeta
                             .replace("{n}", String(line.quantity))
-                            .replace("{valor}", money(line.unitPrice))}
+                            .replace("{valor}", formatFrozenBRL(line.unitPrice))}
                     </span>
-                    <strong>{money(line.subtotal)}</strong>
+                    <strong>{formatFrozenBRL(line.subtotal)}</strong>
                 </span>
             ))}
 
             {/* O desconto só aparece quando foi DECLARADO — ausente não é zero (FR-507). */}
             {discount && (
                 <>
-                    <BreakdownRow label={tq.subtotal} value={money(discount.grossTotal)} />
+                    <BreakdownRow
+                        label={tq.subtotal}
+                        value={formatFrozenBRL(discount.grossTotal)}
+                    />
                     <BreakdownRow
                         label={
                             discount.mode === "PCT"
@@ -485,14 +488,14 @@ function QuoteDocument({
                                   )
                                 : tq.discountAmountLine
                         }
-                        value={`- ${money(discount.amount)}`}
+                        value={`- ${formatFrozenBRL(discount.amount)}`}
                     />
                 </>
             )}
             {payload.totals.precoOrcamento && (
                 <BreakdownRow
                     label={tq.total}
-                    value={money(payload.totals.precoOrcamento)}
+                    value={formatFrozenBRL(payload.totals.precoOrcamento)}
                     emphasis="total"
                 />
             )}
@@ -518,7 +521,7 @@ function KitLines({ payload, basis }: { payload: FrozenSnapshotPayload; basis: s
                         <span className="tf-historico__qty">
                             {t.kitPieceQty.replace("{n}", String(line.quantity))}
                         </span>
-                        <strong>{total ? money(total) : "—"}</strong>
+                        <strong>{total ? formatFrozenBRL(total) : "—"}</strong>
                     </span>
                 );
             })}
@@ -544,13 +547,13 @@ function Breakdown({ breakdown }: { breakdown: FrozenBreakdown }) {
         <div className="flex flex-col gap-1">
             <h2 className="tf-historico__section">{t.breakdown}</h2>
             {present.map(([label, value]) => (
-                <BreakdownRow key={label} label={label} value={money(value)} />
+                <BreakdownRow key={label} label={label} value={formatFrozenBRL(value)} />
             ))}
             {others.map((cost, i) => (
                 <BreakdownRow
                     key={`other-${i}`}
                     label={cost.name ?? messages.calculator.outrosCustos.lineFallback}
-                    value={money(cost.value)}
+                    value={formatFrozenBRL(cost.value)}
                 />
             ))}
         </div>

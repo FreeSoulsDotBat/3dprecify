@@ -23,7 +23,7 @@ export function frozenPayloadOf(item: HistoryItem): FrozenSnapshotPayload | null
 }
 
 /** Format a stored money STRING. The string is the record; the number exists only to be printed. */
-export function money(value: string): string {
+export function formatFrozenBRL(value: string): string {
     return formatBRL(Number(value));
 }
 
