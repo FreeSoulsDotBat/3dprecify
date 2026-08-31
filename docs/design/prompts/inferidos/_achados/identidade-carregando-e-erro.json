@@ -1,16 +1,16 @@
 {
-  "id": "identidade-carregando-e-erro",
-  "nome": "Cartão de identidade da Conta — estados carregando e erro (sessão expirada / falha)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/pages/conta/conta-page.tsx",
-    "apps/web/src/pages/conta/conta-page.css"
-  ],
-  "oQueFoiInferido": "Três estados do `IdentitySection` decididos em código: carregando = `Card` com classe `tf-conta__identity--loading` contendo só um `<Spinner/>` (nenhum esqueleto de avatar/e-mail, embora o DS tenha `Skeleton`); sessão expirada = `Card` com `tf-conta__identity--error` + `<Alert tone=\"danger\" title=\"Não foi possível carregar sua conta\">` com a frase de token expirado e SEM botão nenhum; erro genérico = mesmo Alert + \"Tentar novamente\" numa `div.tf-conta__retry` própria. O empilhamento da variante `--error` só nasceu depois de a homologação medir o botão nascendo fora do cartão E da viewport a 360px (`right 378,5 > 360`). Falta desenhar: como a identidade se comporta antes de responder e quando falha, e onde aparece o caminho de volta ao login.",
-  "autoridade": "NENHUMA",
-  "impacto": "Quando a sessão cai, a Conta mostra uma tarja vermelha e nenhuma porta de volta ao login desenhada — e o remendo de layout foi feito por medição, não por desenho.",
-  "prioridade": "MEDIA",
-  "refutacao": "O canvas desenha só o cartão RESOLVIDO (linhas 372-377: `tf-conta__avatar` \"M\" + `tf-conta__email` + o rótulo \"Conectado como\" — que, aliás, o código NEM renderiza). §E7 lista apenas \"Email Google\". `AccountScreen.jsx` tem avatar+nome+e-mail hardcoded sem nenhum estado, e a auditoria achado 15 registra justamente a identidade hardcoded como resíduo a resolver NO APP. A hipótese de derrubada que testei: a rodada 1 (itens 16/17) pediu skeletons e um estado \"Não foi possível carregar. Tente de novo.\" + \"Tentar novamente\", e a V2 confirma ambos FIXED e renderizados — existe portanto um PADRÃO desenhado de erro-de-carga com retry. Mas ele foi desenhado para as LISTAS de Catálogo e Histórico, não para o cartão de identidade, e não responde às duas perguntas específicas deste achado: o que fazer com a variante SEM botão (sessão expirada, onde nenhum retry ajuda e o caminho certo é o login) e como o cartão empilha no estreito. O achado sobrevive com autoridade NENHUMA; o padrão das listas é o precedente mais próximo e deveria ser o ponto de partida do desenho.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "identidade-carregando-e-erro",
+    "nome": "Cartão de identidade da Conta — estados carregando e erro (sessão expirada / falha)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/pages/conta/conta-page.tsx",
+        "apps/web/src/pages/conta/conta-page.css"
+    ],
+    "oQueFoiInferido": "Três estados do `IdentitySection` decididos em código: carregando = `Card` com classe `tf-conta__identity--loading` contendo só um `<Spinner/>` (nenhum esqueleto de avatar/e-mail, embora o DS tenha `Skeleton`); sessão expirada = `Card` com `tf-conta__identity--error` + `<Alert tone=\"danger\" title=\"Não foi possível carregar sua conta\">` com a frase de token expirado e SEM botão nenhum; erro genérico = mesmo Alert + \"Tentar novamente\" numa `div.tf-conta__retry` própria. O empilhamento da variante `--error` só nasceu depois de a homologação medir o botão nascendo fora do cartão E da viewport a 360px (`right 378,5 > 360`). Falta desenhar: como a identidade se comporta antes de responder e quando falha, e onde aparece o caminho de volta ao login.",
+    "autoridade": "NENHUMA",
+    "impacto": "Quando a sessão cai, a Conta mostra uma tarja vermelha e nenhuma porta de volta ao login desenhada — e o remendo de layout foi feito por medição, não por desenho.",
+    "prioridade": "MEDIA",
+    "refutacao": "O canvas desenha só o cartão RESOLVIDO (linhas 372-377: `tf-conta__avatar` \"M\" + `tf-conta__email` + o rótulo \"Conectado como\" — que, aliás, o código NEM renderiza). §E7 lista apenas \"Email Google\". `AccountScreen.jsx` tem avatar+nome+e-mail hardcoded sem nenhum estado, e a auditoria achado 15 registra justamente a identidade hardcoded como resíduo a resolver NO APP. A hipótese de derrubada que testei: a rodada 1 (itens 16/17) pediu skeletons e um estado \"Não foi possível carregar. Tente de novo.\" + \"Tentar novamente\", e a V2 confirma ambos FIXED e renderizados — existe portanto um PADRÃO desenhado de erro-de-carga com retry. Mas ele foi desenhado para as LISTAS de Catálogo e Histórico, não para o cartão de identidade, e não responde às duas perguntas específicas deste achado: o que fazer com a variante SEM botão (sessão expirada, onde nenhum retry ajuda e o caminho certo é o login) e como o cartão empilha no estreito. O achado sobrevive com autoridade NENHUMA; o padrão das listas é o precedente mais próximo e deveria ser o ponto de partida do desenho.",
+    "sobreviveu": true,
+    "area": "billing"
 }

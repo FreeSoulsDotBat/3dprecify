@@ -1,16 +1,16 @@
 {
-  "id": "plano-estado-cancelamento-agendado",
-  "nome": "Linha do plano na Conta — CANCELAMENTO AGENDADO (\"ativo até {data} · não renova\")",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/billing/plan-panel.tsx",
-    "apps/web/src/features/billing/plan-view.ts"
-  ],
-  "oQueFoiInferido": "Badge verde \"Premium\" + legenda \"ativo até {data} · não renova\" + nota \"Seus itens salvos continuam disponíveis; nada é apagado.\" + uma TERCEIRA frase condicional emendada na mesma nota (\"Seu acesso de cortesia continua depois disso.\") quando `cortesiaSobrevive()` detecta um grant que passa do fim do período + botão \"Assinar novamente\". Inferido: que cabem até três frases sob o selo, em que ordem, com que tom (todas em `--text-muted`, `--fs-caption`), e que a data de corte convive com a promessa de que nada é apagado sem virar contradição visual. O próprio `plan-view.ts` marca a regra como \"recomendação §10-F1, ~70%, **pendente de ratificação do dono**\". Falta desenhar: a linha do plano em três alturas conforme o estado, e como a frase da cortesia não lê como letra miúda.",
-  "autoridade": "NENHUMA",
-  "impacto": "Quem cancela sai da tela sem saber, pelo desenho, o que perde e quando — a informação existe em até três frases empilhadas que ninguém compôs visualmente.",
-  "prioridade": "ALTA",
-  "refutacao": "O artboard Conta renderiza UMA legenda de uma linha e não tem nenhum elemento equivalente a `planNote` — verifiquei o markup (linhas 388-393: `tf-badge` + um único `<span>{{ planCaption }}</span>`) e o script (nenhuma variável de segunda linha existe no objeto de estado). Grep por `não renova|ativo até|apagado|cortesia` no canvas = 0. §E7 do protótipo: \"plano atual (Free/Premium)\". `AccountScreen.jsx`: badge binário. A redação inteira vem de `specs/012-e6-billing/ux-billing.md` §4.3 — SPEC_TEXTUAL. Verifiquei também se a rodada de correção teria desenhado algo de cancelamento: pelo contrário, `claude-design-prototype-fixes.md` item 2 mandou REMOVER a frase \"Cancele quando quiser\" do overlay Premium justamente porque \"política de cancelamento ainda não foi decidida pelo produto\" (auditoria achado 2, ALTA) — a autoridade fecha a porta em vez de abri-la. Sobrevive.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "plano-estado-cancelamento-agendado",
+    "nome": "Linha do plano na Conta — CANCELAMENTO AGENDADO (\"ativo até {data} · não renova\")",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/billing/plan-panel.tsx",
+        "apps/web/src/features/billing/plan-view.ts"
+    ],
+    "oQueFoiInferido": "Badge verde \"Premium\" + legenda \"ativo até {data} · não renova\" + nota \"Seus itens salvos continuam disponíveis; nada é apagado.\" + uma TERCEIRA frase condicional emendada na mesma nota (\"Seu acesso de cortesia continua depois disso.\") quando `cortesiaSobrevive()` detecta um grant que passa do fim do período + botão \"Assinar novamente\". Inferido: que cabem até três frases sob o selo, em que ordem, com que tom (todas em `--text-muted`, `--fs-caption`), e que a data de corte convive com a promessa de que nada é apagado sem virar contradição visual. O próprio `plan-view.ts` marca a regra como \"recomendação §10-F1, ~70%, **pendente de ratificação do dono**\". Falta desenhar: a linha do plano em três alturas conforme o estado, e como a frase da cortesia não lê como letra miúda.",
+    "autoridade": "NENHUMA",
+    "impacto": "Quem cancela sai da tela sem saber, pelo desenho, o que perde e quando — a informação existe em até três frases empilhadas que ninguém compôs visualmente.",
+    "prioridade": "ALTA",
+    "refutacao": "O artboard Conta renderiza UMA legenda de uma linha e não tem nenhum elemento equivalente a `planNote` — verifiquei o markup (linhas 388-393: `tf-badge` + um único `<span>{{ planCaption }}</span>`) e o script (nenhuma variável de segunda linha existe no objeto de estado). Grep por `não renova|ativo até|apagado|cortesia` no canvas = 0. §E7 do protótipo: \"plano atual (Free/Premium)\". `AccountScreen.jsx`: badge binário. A redação inteira vem de `specs/012-e6-billing/ux-billing.md` §4.3 — SPEC_TEXTUAL. Verifiquei também se a rodada de correção teria desenhado algo de cancelamento: pelo contrário, `claude-design-prototype-fixes.md` item 2 mandou REMOVER a frase \"Cancele quando quiser\" do overlay Premium justamente porque \"política de cancelamento ainda não foi decidida pelo produto\" (auditoria achado 2, ALTA) — a autoridade fecha a porta em vez de abri-la. Sobrevive.",
+    "sobreviveu": true,
+    "area": "billing"
 }

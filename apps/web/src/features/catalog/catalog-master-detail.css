@@ -3,49 +3,49 @@
    nenhuma destas regras alcança o mobile. */
 
 .tf-catalog-md {
-  display: grid;
-  /* A ficha tem largura FIXA (o desenho pede 560px) e a lista fica com o resto. `minmax(0, 1fr)`
+    display: grid;
+    /* A ficha tem largura FIXA (o desenho pede 560px) e a lista fica com o resto. `minmax(0, 1fr)`
      na primeira coluna é o que impede um nome comprido de empurrar a grade — sem isso, uma coluna
      `1fr` cresce com o conteúdo e o transbordo horizontal aparece na página, não no card. */
-  grid-template-columns: minmax(0, 1fr) 560px;
-  gap: var(--space-6);
-  align-items: start;
+    grid-template-columns: minmax(0, 1fr) 560px;
+    gap: var(--space-6);
+    align-items: start;
 }
 
 .tf-catalog-md__master {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
 }
 
 .tf-catalog-md__toolbar {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
 }
 .tf-catalog-md__search {
-  flex: 1;
-  max-width: 420px;
+    flex: 1;
+    max-width: 420px;
 }
 .tf-catalog-md__toolbar > p {
-  margin-left: auto;
+    margin-left: auto;
 }
 
 .tf-catalog-md__list {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-2);
-  list-style: none;
-  margin: 0;
-  padding: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 /* Duas colunas só quando há largura de sobra — a premissa do desenho a 1920px. Abaixo disso a
    lista fica em uma coluna ao lado da ficha, que é o que cabe (spec §Clarifications). */
 @media (min-width: 1600px) {
-  .tf-catalog-md__list {
-    grid-template-columns: 1fr 1fr;
-  }
+    .tf-catalog-md__list {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 /* Homologação automatizada (CF-015-UI-02) — a ficha à direita já quebrava o nome longo
@@ -53,58 +53,58 @@
    espaço gerou 4.948px de rolagem horizontal a 1440px. Mesma regra, mesma razão: o nome é do
    vendedor e ele pode colar um código sem espaço nenhum. */
 .tf-catalog-md__card {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  width: 100%;
-  min-width: 0;
-  overflow-wrap: anywhere;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    width: 100%;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    text-align: left;
+    font: inherit;
+    cursor: pointer;
 }
 .tf-catalog-md__card--selected {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
 .tf-catalog-md__detail {
-  position: sticky;
-  /* Gruda logo abaixo da goteira do topo. Cuidado registrado (research §F): se algum ancestral
+    position: sticky;
+    /* Gruda logo abaixo da goteira do topo. Cuidado registrado (research §F): se algum ancestral
      ganhar `overflow` diferente de `visible`, o sticky morre EM SILÊNCIO — não quebra, só para de
      grudar. A guarda de geometria é quem pega isso. */
-  top: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
-  /* Rola POR DENTRO quando o formulário é mais alto que a janela (o de impressora é), em vez de
+    top: var(--space-4);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
+    /* Rola POR DENTRO quando o formulário é mais alto que a janela (o de impressora é), em vez de
      esticar a página. */
-  max-height: calc(100dvh - var(--space-8));
-  overflow-y: auto;
+    max-height: calc(100dvh - var(--space-8));
+    overflow-y: auto;
 }
 
 .tf-catalog-md__detail-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--space-3);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-3);
 }
 .tf-catalog-md__detail-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
 }
 .tf-catalog-md__detail-title h2 {
-  font-size: var(--fs-lg);
-  color: var(--text-strong);
-  overflow-wrap: anywhere;
+    font-size: var(--fs-lg);
+    color: var(--text-strong);
+    overflow-wrap: anywhere;
 }
 .tf-catalog-md__kicker {
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-muted);
 }

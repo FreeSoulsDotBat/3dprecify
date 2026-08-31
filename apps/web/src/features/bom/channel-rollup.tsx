@@ -14,53 +14,53 @@ const t = messages.bom;
 const tc = messages.calculator;
 
 function marketplaceLabel(marketplace: string | null): string {
-  if (marketplace === null) return tc.channels.channelFallback;
-  const names = tc.marketplaceNames as Record<string, string>;
-  return names[marketplace] ?? marketplace;
+    if (marketplace === null) return tc.channels.channelFallback;
+    const names = tc.marketplaceNames as Record<string, string>;
+    return names[marketplace] ?? marketplace;
 }
 
 /** Interpolate the honest count into a "{n} peça(s)…" caption (the "(s)" is in the copy itself). */
 function withCount(template: string, n: number): string {
-  return template.replace("{n}", String(n));
+    return template.replace("{n}", String(n));
 }
 
 function RollupBlock({ rollup }: { rollup: BomChannelRollup }) {
-  const empty = rollup.contributingLines === 0;
-  return (
-    <div className="flex flex-col gap-1 border-t border-[var(--border-soft,transparent)] pt-2">
-      <p className="text-sm font-medium">{marketplaceLabel(rollup.marketplace)}</p>
-      {empty ? (
-        <p className="text-sm text-[var(--text-muted)]">{t.channelNoContrib}</p>
-      ) : (
-        <>
-          <BreakdownRow
-            label={`${tc.captions.varejo} · ${tc.results.precoAnuncio}`}
-            value={formatBRL(rollup.precoAnuncioVarejo ?? 0)}
-          />
-          <BreakdownRow
-            label={`${tc.captions.varejo} · ${tc.results.recebidoLiquido}`}
-            value={formatBRL(rollup.recebidoLiquidoVarejo ?? 0)}
-          />
-          <BreakdownRow
-            label={`${tc.captions.atacado} · ${tc.results.precoAnuncio}`}
-            value={formatBRL(rollup.precoAnuncioAtacado ?? 0)}
-          />
-          <BreakdownRow
-            label={`${tc.captions.atacado} · ${tc.results.recebidoLiquido}`}
-            value={formatBRL(rollup.recebidoLiquidoAtacado ?? 0)}
-          />
-          <p className="text-xs text-[var(--text-muted)]">
-            {withCount(t.channelContributing, rollup.contributingLines)}
-          </p>
-        </>
-      )}
-      {rollup.skippedLines > 0 && (
-        <p className="text-xs text-[var(--text-muted)]">
-          {withCount(t.channelSkipped, rollup.skippedLines)}
-        </p>
-      )}
-    </div>
-  );
+    const empty = rollup.contributingLines === 0;
+    return (
+        <div className="flex flex-col gap-1 border-t border-[var(--border-soft,transparent)] pt-2">
+            <p className="text-sm font-medium">{marketplaceLabel(rollup.marketplace)}</p>
+            {empty ? (
+                <p className="text-sm text-[var(--text-muted)]">{t.channelNoContrib}</p>
+            ) : (
+                <>
+                    <BreakdownRow
+                        label={`${tc.captions.varejo} · ${tc.results.precoAnuncio}`}
+                        value={formatBRL(rollup.precoAnuncioVarejo ?? 0)}
+                    />
+                    <BreakdownRow
+                        label={`${tc.captions.varejo} · ${tc.results.recebidoLiquido}`}
+                        value={formatBRL(rollup.recebidoLiquidoVarejo ?? 0)}
+                    />
+                    <BreakdownRow
+                        label={`${tc.captions.atacado} · ${tc.results.precoAnuncio}`}
+                        value={formatBRL(rollup.precoAnuncioAtacado ?? 0)}
+                    />
+                    <BreakdownRow
+                        label={`${tc.captions.atacado} · ${tc.results.recebidoLiquido}`}
+                        value={formatBRL(rollup.recebidoLiquidoAtacado ?? 0)}
+                    />
+                    <p className="text-xs text-[var(--text-muted)]">
+                        {withCount(t.channelContributing, rollup.contributingLines)}
+                    </p>
+                </>
+            )}
+            {rollup.skippedLines > 0 && (
+                <p className="text-xs text-[var(--text-muted)]">
+                    {withCount(t.channelSkipped, rollup.skippedLines)}
+                </p>
+            )}
+        </div>
+    );
 }
 
 /** A per-marketplace count of FORM-invalid slots (T006b top nit): per-slot validation rejects a
@@ -68,50 +68,50 @@ function RollupBlock({ rollup }: { rollup: BomChannelRollup }) {
  *  the page counts them and this component merges the COUNTS (never money) into the honest
  *  skipped caption, so a line that can't price is never silently missing from "N somaram". */
 export interface UiSkippedChannel {
-  marketplace: string | null;
-  count: number;
+    marketplace: string | null;
+    count: number;
 }
 
 /** The whole rollup card; omitted entirely when no line carries a channel (like the calculator
  *  with marketplaces off — ux §1.7). */
 export function ChannelRollup({
-  channels,
-  uiSkipped = [],
+    channels,
+    uiSkipped = [],
 }: {
-  channels: BomChannelRollup[];
-  uiSkipped?: UiSkippedChannel[];
+    channels: BomChannelRollup[];
+    uiSkipped?: UiSkippedChannel[];
 }) {
-  // Accumulate (never overwrite) so duplicate marketplace entries can't silently drop counts.
-  const extra = new Map<string | null, number>();
-  for (const u of uiSkipped) {
-    if (u.count > 0) extra.set(u.marketplace, (extra.get(u.marketplace) ?? 0) + u.count);
-  }
-  const merged = channels.map((rollup) => {
-    const add = extra.get(rollup.marketplace) ?? 0;
-    extra.delete(rollup.marketplace);
-    return add === 0 ? rollup : { ...rollup, skippedLines: rollup.skippedLines + add };
-  });
-  // A marketplace whose EVERY slot was form-invalid has no engine rollup at all — it still gets
-  // an honest block (absence + skipped), never a silent omission.
-  const synthetic: BomChannelRollup[] = [...extra].map(([marketplace, count]) => ({
-    marketplace,
-    precoAnuncioVarejo: null,
-    recebidoLiquidoVarejo: null,
-    precoAnuncioAtacado: null,
-    recebidoLiquidoAtacado: null,
-    freightCostVarejo: 0,
-    freightCostAtacado: 0,
-    contributingLines: 0,
-    skippedLines: count,
-  }));
-  const blocks = [...merged, ...synthetic];
-  if (blocks.length === 0) return null;
-  return (
-    <Card padding="md" className="flex flex-col gap-2">
-      <p className="text-sm font-semibold">{t.channelsTitle}</p>
-      {blocks.map((rollup, i) => (
-        <RollupBlock key={`${rollup.marketplace ?? "manual"}-${i}`} rollup={rollup} />
-      ))}
-    </Card>
-  );
+    // Accumulate (never overwrite) so duplicate marketplace entries can't silently drop counts.
+    const extra = new Map<string | null, number>();
+    for (const u of uiSkipped) {
+        if (u.count > 0) extra.set(u.marketplace, (extra.get(u.marketplace) ?? 0) + u.count);
+    }
+    const merged = channels.map((rollup) => {
+        const add = extra.get(rollup.marketplace) ?? 0;
+        extra.delete(rollup.marketplace);
+        return add === 0 ? rollup : { ...rollup, skippedLines: rollup.skippedLines + add };
+    });
+    // A marketplace whose EVERY slot was form-invalid has no engine rollup at all — it still gets
+    // an honest block (absence + skipped), never a silent omission.
+    const synthetic: BomChannelRollup[] = [...extra].map(([marketplace, count]) => ({
+        marketplace,
+        precoAnuncioVarejo: null,
+        recebidoLiquidoVarejo: null,
+        precoAnuncioAtacado: null,
+        recebidoLiquidoAtacado: null,
+        freightCostVarejo: 0,
+        freightCostAtacado: 0,
+        contributingLines: 0,
+        skippedLines: count,
+    }));
+    const blocks = [...merged, ...synthetic];
+    if (blocks.length === 0) return null;
+    return (
+        <Card padding="md" className="flex flex-col gap-2">
+            <p className="text-sm font-semibold">{t.channelsTitle}</p>
+            {blocks.map((rollup, i) => (
+                <RollupBlock key={`${rollup.marketplace ?? "manual"}-${i}`} rollup={rollup} />
+            ))}
+        </Card>
+    );
 }

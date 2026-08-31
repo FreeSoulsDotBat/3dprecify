@@ -20,70 +20,72 @@ import "./billing.css";
 const t = messages.billing;
 
 export function OfferPanel() {
-  const entitlement = useEntitlement();
-  const [selected, setSelected] = useState<BillingPlanKey>("annual");
+    const entitlement = useEntitlement();
+    const [selected, setSelected] = useState<BillingPlanKey>("annual");
 
-  if (entitlement.data?.status === "active") {
+    if (entitlement.data?.status === "active") {
+        return (
+            <div className="tf-billing-offer">
+                <p>{t.alreadyPremium}</p>
+            </div>
+        );
+    }
+
+    const plan = BILLING_PLANS[selected];
+
     return (
-      <div className="tf-billing-offer">
-        <p>{t.alreadyPremium}</p>
-      </div>
-    );
-  }
-
-  const plan = BILLING_PLANS[selected];
-
-  return (
-    <div className="tf-billing-offer">
-      {/* No own heading here: the caller (a Sheet's `SheetTitle`, or a future dedicated route)
+        <div className="tf-billing-offer">
+            {/* No own heading here: the caller (a Sheet's `SheetTitle`, or a future dedicated route)
           owns the accessible title — this panel is composed inside it (review PR-A). */}
-      <p className="tf-billing-offer__lead">{t.offerFreeLead}</p>
-      <p>{t.offerBody}</p>
+            <p className="tf-billing-offer__lead">{t.offerFreeLead}</p>
+            <p>{t.offerBody}</p>
 
-      <fieldset className="tf-billing-offer__plans">
-        <legend className="sr-only">{t.offerTitle}</legend>
-        {(Object.keys(BILLING_PLANS) as BillingPlanKey[]).map((key) => {
-          const p = BILLING_PLANS[key];
-          const isSelected = key === selected;
-          return (
-            <label
-              key={key}
-              className={[
-                "tf-billing-offer__plan",
-                isSelected && "tf-billing-offer__plan--selected",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              <div className="tf-billing-offer__plan-head">
-                {/* qa pós-016, ressalva A7 — o radio mora NA LINHA do nome do plano (a "cabeça"
+            <fieldset className="tf-billing-offer__plans">
+                <legend className="sr-only">{t.offerTitle}</legend>
+                {(Object.keys(BILLING_PLANS) as BillingPlanKey[]).map((key) => {
+                    const p = BILLING_PLANS[key];
+                    const isSelected = key === selected;
+                    return (
+                        <label
+                            key={key}
+                            className={[
+                                "tf-billing-offer__plan",
+                                isSelected && "tf-billing-offer__plan--selected",
+                            ]
+                                .filter(Boolean)
+                                .join(" ")}
+                        >
+                            <div className="tf-billing-offer__plan-head">
+                                {/* qa pós-016, ressalva A7 — o radio mora NA LINHA do nome do plano (a "cabeça"
                     já é flex row): `align-self:start` sozinho matava a barra de 292px mas
                     deixava o controle 22px ACIMA de "Plano mensal", órfão do rótulo. */}
-                <span className="tf-billing-offer__plan-name">
-                  <input
-                    type="radio"
-                    name="tf-billing-period"
-                    value={key}
-                    checked={isSelected}
-                    onChange={() => setSelected(key)}
-                  />
-                  {p.name}
-                </span>
-                {"badge" in p && <Badge tone="success">{p.badge}</Badge>}
-              </div>
-              <span className="tf-billing-offer__plan-price">{p.price}</span>
-              {"equivalent" in p && <span>{p.equivalent}</span>}
-              {"saving" in p && <span>{p.saving}</span>}
-              {"note" in p && <span className="tf-billing-offer__plan-note">{p.note}</span>}
-            </label>
-          );
-        })}
-      </fieldset>
+                                <span className="tf-billing-offer__plan-name">
+                                    <input
+                                        type="radio"
+                                        name="tf-billing-period"
+                                        value={key}
+                                        checked={isSelected}
+                                        onChange={() => setSelected(key)}
+                                    />
+                                    {p.name}
+                                </span>
+                                {"badge" in p && <Badge tone="success">{p.badge}</Badge>}
+                            </div>
+                            <span className="tf-billing-offer__plan-price">{p.price}</span>
+                            {"equivalent" in p && <span>{p.equivalent}</span>}
+                            {"saving" in p && <span>{p.saving}</span>}
+                            {"note" in p && (
+                                <span className="tf-billing-offer__plan-note">{p.note}</span>
+                            )}
+                        </label>
+                    );
+                })}
+            </fieldset>
 
-      <BillingCta period={plan.period} />
+            <BillingCta period={plan.period} />
 
-      <p className="tf-billing-offer__notice">{t.handoffNotice}</p>
-      <p className="tf-billing-offer__notice">{t.cardNeverTouches}</p>
-    </div>
-  );
+            <p className="tf-billing-offer__notice">{t.handoffNotice}</p>
+            <p className="tf-billing-offer__notice">{t.cardNeverTouches}</p>
+        </div>
+    );
 }

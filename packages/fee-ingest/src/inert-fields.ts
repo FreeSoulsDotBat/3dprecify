@@ -23,5 +23,5 @@ const INERTES = new Set<string>(INERT_FIELDS);
 
 /** O campo mudou sem que nada de dinheiro tenha mudado? */
 export function isInerte(campo: string): boolean {
-  return INERTES.has(campo);
+    return INERTES.has(campo);
 }

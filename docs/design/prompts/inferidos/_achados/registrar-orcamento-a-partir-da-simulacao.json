@@ -1,13 +1,13 @@
 {
-  "id": "registrar-orcamento-a-partir-da-simulacao",
-  "nome": "Registrar orçamento a partir de uma simulação (ponte E5→E4)",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
-  "oQueFoiInferido": "A ponte entre o objeto vivo e o congelado, resolvida por posicionamento de botão. Com simulação escalar aberta, o \"Salvar no histórico\" comum (no rodapé, abaixo do resultado) passa a carregar `scenarioProvenance`, sem nada na tela dizendo isso. Com simulação de KIT aberta, aquele botão é SUPRIMIDO (`loadedScenario?.config.costBasis.kind !== \"KIT\"`) e um segundo botão idêntico (`KitScenarioRecordButton`) aparece LÁ EM CIMA, junto do resumo do kit. Inferido: as duas posições, a ausência de rótulo distinguindo \"congelar esta simulação\" de \"congelar este cálculo\", e o silêncio, no momento da ação, sobre o vínculo que está sendo criado.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O botão que transforma uma estratégia viva em orçamento congelado muda de lugar conforme o tipo de base e não diz, no ato, o que está fazendo.",
-  "prioridade": "MEDIA",
-  "refutacao": "Corrigi o mapeador aqui: a metade RECEPTORA da ponte ESTÁ desenhada. O canvas 018, na ficha de Orçamentos (linhas 350-352, card \"Ficha técnica\"), traz literalmente \"Registro criado a partir de: {{ rec.origem }}\" mais um `tf-historico__origin-link` com `{{ rec.openLabel }}` — o vínculo com a origem é visível no destino, desenhado pelo dono, a 1920px. Logo, \"o orçamento não diz de onde veio\" é FALSO no destino. O que continua sem desenho — e é o achado, reescrito — é o lado EMISSOR: onde vive a ação de congelar a partir de uma simulação, por que ela troca de lugar conforme a base (uma exclusão mutuamente condicionada, não desenhada), e como ela avisa no ato que o resultado será outro tipo de objeto. O canvas exclui Calcular; o protótipo E6 desenha \"Detalhe do cálculo = snapshot congelado + Exportar\" sem nenhuma origem de cenário; ux §8 prescreve o botão DENTRO da barra de contexto, que não é onde ele está, e §10.1 item 8 marca \"Low (droppable)\". Sobrevive, com impacto corrigido.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "registrar-orcamento-a-partir-da-simulacao",
+    "nome": "Registrar orçamento a partir de uma simulação (ponte E5→E4)",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
+    "oQueFoiInferido": "A ponte entre o objeto vivo e o congelado, resolvida por posicionamento de botão. Com simulação escalar aberta, o \"Salvar no histórico\" comum (no rodapé, abaixo do resultado) passa a carregar `scenarioProvenance`, sem nada na tela dizendo isso. Com simulação de KIT aberta, aquele botão é SUPRIMIDO (`loadedScenario?.config.costBasis.kind !== \"KIT\"`) e um segundo botão idêntico (`KitScenarioRecordButton`) aparece LÁ EM CIMA, junto do resumo do kit. Inferido: as duas posições, a ausência de rótulo distinguindo \"congelar esta simulação\" de \"congelar este cálculo\", e o silêncio, no momento da ação, sobre o vínculo que está sendo criado.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O botão que transforma uma estratégia viva em orçamento congelado muda de lugar conforme o tipo de base e não diz, no ato, o que está fazendo.",
+    "prioridade": "MEDIA",
+    "refutacao": "Corrigi o mapeador aqui: a metade RECEPTORA da ponte ESTÁ desenhada. O canvas 018, na ficha de Orçamentos (linhas 350-352, card \"Ficha técnica\"), traz literalmente \"Registro criado a partir de: {{ rec.origem }}\" mais um `tf-historico__origin-link` com `{{ rec.openLabel }}` — o vínculo com a origem é visível no destino, desenhado pelo dono, a 1920px. Logo, \"o orçamento não diz de onde veio\" é FALSO no destino. O que continua sem desenho — e é o achado, reescrito — é o lado EMISSOR: onde vive a ação de congelar a partir de uma simulação, por que ela troca de lugar conforme a base (uma exclusão mutuamente condicionada, não desenhada), e como ela avisa no ato que o resultado será outro tipo de objeto. O canvas exclui Calcular; o protótipo E6 desenha \"Detalhe do cálculo = snapshot congelado + Exportar\" sem nenhuma origem de cenário; ux §8 prescreve o botão DENTRO da barra de contexto, que não é onde ele está, e §10.1 item 8 marca \"Low (droppable)\". Sobrevive, com impacto corrigido.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

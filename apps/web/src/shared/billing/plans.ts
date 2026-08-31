@@ -19,20 +19,20 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 const t = messages.billing;
 
 export const BILLING_PLANS = {
-  monthly: {
-    period: CheckoutInPeriod.monthly,
-    name: t.planMonthlyName,
-    price: t.planMonthlyPrice,
-    note: t.planMonthlyNote,
-  },
-  annual: {
-    period: CheckoutInPeriod.annual,
-    name: t.planAnnualName,
-    price: t.planAnnualPrice,
-    equivalent: t.planAnnualEquiv,
-    saving: t.planAnnualSaving,
-    badge: t.planAnnualBadge,
-  },
+    monthly: {
+        period: CheckoutInPeriod.monthly,
+        name: t.planMonthlyName,
+        price: t.planMonthlyPrice,
+        note: t.planMonthlyNote,
+    },
+    annual: {
+        period: CheckoutInPeriod.annual,
+        name: t.planAnnualName,
+        price: t.planAnnualPrice,
+        equivalent: t.planAnnualEquiv,
+        saving: t.planAnnualSaving,
+        badge: t.planAnnualBadge,
+    },
 } as const;
 
 export type BillingPlanKey = keyof typeof BILLING_PLANS;

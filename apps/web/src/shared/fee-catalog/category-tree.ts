@@ -15,9 +15,9 @@ import { z } from "zod";
 
 /** One node of a marketplace's category tree, flattened (`parentId` instead of nesting). */
 export const categoryNodeSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  parentId: z.string().min(1).nullable(),
+    id: z.string().min(1),
+    name: z.string().min(1),
+    parentId: z.string().min(1).nullable(),
 });
 export type CategoryNode = z.infer<typeof categoryNodeSchema>;
 
@@ -27,40 +27,43 @@ export type CategoryNode = z.infer<typeof categoryNodeSchema>;
  * rejected at parse rather than defended against at runtime with a visit counter.
  */
 export const categorySpineSchema = z.array(categoryNodeSchema).superRefine((nodes, ctx) => {
-  const byId = new Map<string, CategoryNode>();
-  for (const n of nodes) {
-    if (byId.has(n.id)) {
-      ctx.addIssue({ code: "custom", message: `duplicate category id: ${n.id}` });
-      return;
+    const byId = new Map<string, CategoryNode>();
+    for (const n of nodes) {
+        if (byId.has(n.id)) {
+            ctx.addIssue({ code: "custom", message: `duplicate category id: ${n.id}` });
+            return;
+        }
+        byId.set(n.id, n);
     }
-    byId.set(n.id, n);
-  }
-  for (const n of nodes) {
-    if (n.parentId !== null && !byId.has(n.parentId)) {
-      ctx.addIssue({
-        code: "custom",
-        message: `orphan parentId "${n.parentId}" on category "${n.id}"`,
-      });
-      return;
+    for (const n of nodes) {
+        if (n.parentId !== null && !byId.has(n.parentId)) {
+            ctx.addIssue({
+                code: "custom",
+                message: `orphan parentId "${n.parentId}" on category "${n.id}"`,
+            });
+            return;
+        }
     }
-  }
-  // Cycle detection: walk each node to a root, bounded by the node count.
-  for (const n of nodes) {
-    let hops = 0;
-    let cur: CategoryNode | undefined = n;
-    while (cur?.parentId != null) {
-      if (++hops > nodes.length) {
-        ctx.addIssue({ code: "custom", message: `cycle in the category tree at "${n.id}"` });
-        return;
-      }
-      cur = byId.get(cur.parentId);
+    // Cycle detection: walk each node to a root, bounded by the node count.
+    for (const n of nodes) {
+        let hops = 0;
+        let cur: CategoryNode | undefined = n;
+        while (cur?.parentId != null) {
+            if (++hops > nodes.length) {
+                ctx.addIssue({
+                    code: "custom",
+                    message: `cycle in the category tree at "${n.id}"`,
+                });
+                return;
+            }
+            cur = byId.get(cur.parentId);
+        }
     }
-  }
 });
 
 /** Index a spine for lookup. Built once per catalog, not per resolution. */
 export function indexSpine(nodes: readonly CategoryNode[]): Map<string, CategoryNode> {
-  return new Map(nodes.map((n) => [n.id, n]));
+    return new Map(nodes.map((n) => [n.id, n]));
 }
 
 /**
@@ -71,15 +74,15 @@ export function indexSpine(nodes: readonly CategoryNode[]): Map<string, Category
  * already follows: the honest answer falls out of the data, never a marketplace `if`).
  */
 export function rootNodes(nodes: readonly CategoryNode[]): readonly CategoryNode[] {
-  return nodes.filter((n) => n.parentId === null);
+    return nodes.filter((n) => n.parentId === null);
 }
 
 /** The direct children of `parentId`, in the spine's own order — `[]` for a leaf (or an unknown id). */
 export function childrenOf(
-  nodes: readonly CategoryNode[],
-  parentId: string,
+    nodes: readonly CategoryNode[],
+    parentId: string,
 ): readonly CategoryNode[] {
-  return nodes.filter((n) => n.parentId === parentId);
+    return nodes.filter((n) => n.parentId === parentId);
 }
 
 /**
@@ -95,21 +98,21 @@ export function childrenOf(
  * `index.size` bounds the walk so a spine that somehow escaped cycle validation cannot hang the UI.
  */
 export function ancestorChain(
-  index: Map<string, CategoryNode>,
-  categoryId: string,
+    index: Map<string, CategoryNode>,
+    categoryId: string,
 ): readonly string[] {
-  const chain: string[] = [categoryId];
-  let cur = index.get(categoryId);
-  while (cur?.parentId != null && chain.length <= index.size) {
-    chain.push(cur.parentId);
-    cur = index.get(cur.parentId);
-  }
-  return chain;
+    const chain: string[] = [categoryId];
+    let cur = index.get(categoryId);
+    while (cur?.parentId != null && chain.length <= index.size) {
+        chain.push(cur.parentId);
+        cur = index.get(cur.parentId);
+    }
+    return chain;
 }
 
 /** Normalise for search: case- and accent-insensitive, so "orgao" finds "Órgão". */
 function fold(s: string): string {
-  return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+    return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
 
 /**
@@ -118,20 +121,20 @@ function fold(s: string): string {
  * "Celulares e Smartphones" at 16%) are distinguishable rather than a coin flip.
  */
 export function searchCategories(
-  nodes: readonly CategoryNode[],
-  query: string,
-  limit = 50,
+    nodes: readonly CategoryNode[],
+    query: string,
+    limit = 50,
 ): readonly CategoryNode[] {
-  const q = fold(query.trim());
-  if (q.length === 0) return [];
-  const out: CategoryNode[] = [];
-  for (const n of nodes) {
-    if (fold(n.name).includes(q)) {
-      out.push(n);
-      if (out.length >= limit) break;
+    const q = fold(query.trim());
+    if (q.length === 0) return [];
+    const out: CategoryNode[] = [];
+    for (const n of nodes) {
+        if (fold(n.name).includes(q)) {
+            out.push(n);
+            if (out.length >= limit) break;
+        }
     }
-  }
-  return out;
+    return out;
 }
 
 /**
@@ -140,14 +143,14 @@ export function searchCategories(
  * ancestor resolves, because `categorySpineSchema` rejects orphans at parse.
  */
 export function categoryPathOfNode(index: Map<string, CategoryNode>, node: CategoryNode): string {
-  const names: string[] = [];
-  let cur: CategoryNode | undefined = node;
-  let hops = 0;
-  while (cur && hops++ <= index.size) {
-    names.unshift(cur.name);
-    cur = cur.parentId == null ? undefined : index.get(cur.parentId);
-  }
-  return names.join(" › ");
+    const names: string[] = [];
+    let cur: CategoryNode | undefined = node;
+    let hops = 0;
+    while (cur && hops++ <= index.size) {
+        names.unshift(cur.name);
+        cur = cur.parentId == null ? undefined : index.get(cur.parentId);
+    }
+    return names.join(" › ");
 }
 
 /**
@@ -161,6 +164,6 @@ export function categoryPathOfNode(index: Map<string, CategoryNode>, node: Categ
  * decide what to say, which is the only honest option — the spine cannot name what it does not have.
  */
 export function categoryPath(index: Map<string, CategoryNode>, categoryId: string): string | null {
-  const node = index.get(categoryId);
-  return node ? categoryPathOfNode(index, node) : null;
+    const node = index.get(categoryId);
+    return node ? categoryPathOfNode(index, node) : null;
 }

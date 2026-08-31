@@ -17,61 +17,61 @@ import { premiumGate } from "./premium-gate";
 // (mostraria um Salvar vivo a quem o servidor vai recusar). O precedente é o `PlanState` do E6.
 
 describe("premiumGate — a união de cinco estados (T036)", () => {
-  const authed = { status: "authenticated" } as const;
+    const authed = { status: "authenticated" } as const;
 
-  it("logado + {status:'none'} → free-nunca-teve", () => {
-    expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
-  });
+    it("logado + {status:'none'} → free-nunca-teve", () => {
+        expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
+    });
 
-  it("logado + {status:'lapsed'} → lapsed (o ledger decide, nunca uma heurística de tela)", () => {
-    expect(premiumGate({ status: "lapsed" }, authed)).toBe("lapsed");
-  });
+    it("logado + {status:'lapsed'} → lapsed (o ledger decide, nunca uma heurística de tela)", () => {
+        expect(premiumGate({ status: "lapsed" }, authed)).toBe("lapsed");
+    });
 
-  it("logado + {status:'active'} → active", () => {
-    expect(premiumGate({ status: "active" }, authed)).toBe("active");
-  });
+    it("logado + {status:'active'} → active", () => {
+        expect(premiumGate({ status: "active" }, authed)).toBe("active");
+    });
 
-  it("sessão não autenticada → signed-out, QUALQUER que seja o entitlement (E-5)", () => {
-    for (const ent of [
-      undefined,
-      { status: "none" },
-      { status: "active" },
-      { status: "lapsed" },
-    ] as const) {
-      expect(premiumGate(ent, { status: "anonymous" })).toBe("signed-out");
-      expect(premiumGate(ent, { status: "not-configured" })).toBe("signed-out");
-    }
-  });
+    it("sessão não autenticada → signed-out, QUALQUER que seja o entitlement (E-5)", () => {
+        for (const ent of [
+            undefined,
+            { status: "none" },
+            { status: "active" },
+            { status: "lapsed" },
+        ] as const) {
+            expect(premiumGate(ent, { status: "anonymous" })).toBe("signed-out");
+            expect(premiumGate(ent, { status: "not-configured" })).toBe("signed-out");
+        }
+    });
 
-  it("logado sem resposta do servidor (ausente/erro) → unknown — nunca presume", () => {
-    expect(premiumGate(undefined, authed)).toBe("unknown");
-    expect(premiumGate(null, authed)).toBe("unknown");
-  });
+    it("logado sem resposta do servidor (ausente/erro) → unknown — nunca presume", () => {
+        expect(premiumGate(undefined, authed)).toBe("unknown");
+        expect(premiumGate(null, authed)).toBe("unknown");
+    });
 
-  it("sessão ainda carregando → unknown (não é 'deslogado': ainda não se sabe)", () => {
-    expect(premiumGate({ status: "active" }, { status: "loading" })).toBe("unknown");
-  });
+    it("sessão ainda carregando → unknown (não é 'deslogado': ainda não se sabe)", () => {
+        expect(premiumGate({ status: "active" }, { status: "loading" })).toBe("unknown");
+    });
 
-  it("resposta STALE do cache devolve o status LEMBRADO (ADR-0018 §9) — stale nunca promove none→active", () => {
-    // O hook `useEntitlement()` entrega em `data` o que o servidor disse por último (fresco ou
-    // lembrado do IndexedDB uid-scoped). A função recebe esse `data`: um `none` lembrado continua
-    // `free-nunca-teve`; a ausência de resposta continua `unknown`. Não existe caminho em que um
-    // valor lembrado vire MAIS permissivo do que o servidor disse.
-    expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
-    expect(premiumGate({ status: "active" }, authed)).toBe("active");
-    // Um status que o servidor não emite não é "um plano que não reconhecemos" — é NÃO-RESPOSTA.
-    expect(premiumGate({ status: "premium-forever" } as never, authed)).toBe("unknown");
-  });
+    it("resposta STALE do cache devolve o status LEMBRADO (ADR-0018 §9) — stale nunca promove none→active", () => {
+        // O hook `useEntitlement()` entrega em `data` o que o servidor disse por último (fresco ou
+        // lembrado do IndexedDB uid-scoped). A função recebe esse `data`: um `none` lembrado continua
+        // `free-nunca-teve`; a ausência de resposta continua `unknown`. Não existe caminho em que um
+        // valor lembrado vire MAIS permissivo do que o servidor disse.
+        expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
+        expect(premiumGate({ status: "active" }, authed)).toBe("active");
+        // Um status que o servidor não emite não é "um plano que não reconhecemos" — é NÃO-RESPOSTA.
+        expect(premiumGate({ status: "premium-forever" } as never, authed)).toBe("unknown");
+    });
 });
 
 describe("premiumGate — guarda de grafo (molde tf-class-uniqueness)", () => {
-  it("o módulo não importa `@/entities` nem `@/features` (shared → shared, só)", () => {
-    const src = readFileSync(join(__dirname, "premium-gate.ts"), "utf8");
-    const imports = [...src.matchAll(/from\s+["']([^"']+)["']/g)].map((m) => m[1]);
-    for (const spec of imports) {
-      expect(spec, `import proibido em premium-gate.ts: ${spec}`).not.toMatch(
-        /^@\/(entities|features|pages|widgets|app)\b/,
-      );
-    }
-  });
+    it("o módulo não importa `@/entities` nem `@/features` (shared → shared, só)", () => {
+        const src = readFileSync(join(__dirname, "premium-gate.ts"), "utf8");
+        const imports = [...src.matchAll(/from\s+["']([^"']+)["']/g)].map((m) => m[1]);
+        for (const spec of imports) {
+            expect(spec, `import proibido em premium-gate.ts: ${spec}`).not.toMatch(
+                /^@\/(entities|features|pages|widgets|app)\b/,
+            );
+        }
+    });
 });

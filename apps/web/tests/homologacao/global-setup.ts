@@ -16,13 +16,13 @@ import baseGlobalSetup from "../e2e/global-setup";
  * mesma pilha, e ter duas provisões seria ter duas verdades sobre o ambiente.
  */
 export default function homologGlobalSetup(): void {
-  const resultados = fileURLToPath(
-    new URL("../../../../docs/homologacao/automatizada/resultados", import.meta.url),
-  );
-  for (const arquivo of ["defeitos", "execucoes"]) {
-    for (let worker = 0; worker < 32; worker += 1) {
-      rmSync(`${resultados}/${arquivo}-w${worker}.jsonl`, { force: true });
+    const resultados = fileURLToPath(
+        new URL("../../../../docs/homologacao/automatizada/resultados", import.meta.url),
+    );
+    for (const arquivo of ["defeitos", "execucoes"]) {
+        for (let worker = 0; worker < 32; worker += 1) {
+            rmSync(`${resultados}/${arquivo}-w${worker}.jsonl`, { force: true });
+        }
     }
-  }
-  baseGlobalSetup();
+    baseGlobalSetup();
 }

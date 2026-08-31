@@ -1,16 +1,16 @@
 {
-  "id": "bloco-comparar-com-hoje",
-  "nome": "Bloco \"Comparar com hoje\" (então vs. hoje)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/pages/historico/compare-today.tsx",
-    "apps/web/src/pages/historico/historico-page.css"
-  ],
-  "oQueFoiInferido": "O PAINEL inteiro. Um `Button variant=ghost` que, ao ser tocado, se substitui in-place por um Card `.tf-compare` com: a base dita uma vez no topo, duas linhas `.tf-compare__row` de peso IDÊNTICO ('Cotado em {data}' × 'Hoje') com os valores em `<strong>` tabular alinhados à direita, uma nota de catálogo desatualizado quando offline, um `Alert tone=info` com a nota estrutural do modelo aposentado, e a nota 'Comparação informativa: este registro não muda'. Inferido: que é disclosure in-place e não folha/diálogo; que as duas linhas têm peso igual (decisão anti-mentira que hoje existe apenas como comentário no CSS, sem nenhum desenho por trás); que NÃO se mostra a diferença calculada; e o estado 'não foi possível calcular o valor de hoje', que é um `<p>` mudo sozinho dentro de um Card.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a resposta para 'meu custo subiu desde que cotei?' — a pergunta que faz o vendedor voltar ao app. Sem desenho, dois números lado a lado parecem uma edição do registro, e o vendedor pode achar que o orçamento antigo mudou sozinho.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas quatro e o painel não está em nenhuma. `claude-design-prototype.md` não menciona comparação em §E6 nem em §E4/§E9 nem na matriz §G; os dois fixes também não. `HistoryScreen.jsx` TEM um `compareMode`, e eu li: ele liga um botão 'Comparar' na TopBar, mostra 'Selecione 2 cálculos para comparar (n/2)', põe checkbox no trailing de cada `ListItem` e, com dois escolhidos, renderiza um Card com dois `BreakdownRow` e uma linha 'Diferença' (`Math.abs(a-b)`). São três diferenças fundamentais contra o construído: compara dois registros SALVOS (não então-vs-hoje), MOSTRA a diferença (o construído recusa-se, por decisão registrada: 'a aritmética de dinheiro mora no pricing-core'), e nunca foi construído. Não é uma versão anterior da mesma superfície — é outra funcionalidade. O canvas do dono desenha só o GATILHO (linha 315, `tf-btn--secondary` 'Comparar com hoje', na fileira de ações junto de Exportar/Recalcular) e nada do painel — e mesmo o gatilho diverge: o código o renderiza como `variant=ghost` solto entre a ficha técnica e a linha de ações. Mantenho NENHUMA: a superfície do achado é o painel, e o painel não tem autoridade alguma.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "bloco-comparar-com-hoje",
+    "nome": "Bloco \"Comparar com hoje\" (então vs. hoje)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/pages/historico/compare-today.tsx",
+        "apps/web/src/pages/historico/historico-page.css"
+    ],
+    "oQueFoiInferido": "O PAINEL inteiro. Um `Button variant=ghost` que, ao ser tocado, se substitui in-place por um Card `.tf-compare` com: a base dita uma vez no topo, duas linhas `.tf-compare__row` de peso IDÊNTICO ('Cotado em {data}' × 'Hoje') com os valores em `<strong>` tabular alinhados à direita, uma nota de catálogo desatualizado quando offline, um `Alert tone=info` com a nota estrutural do modelo aposentado, e a nota 'Comparação informativa: este registro não muda'. Inferido: que é disclosure in-place e não folha/diálogo; que as duas linhas têm peso igual (decisão anti-mentira que hoje existe apenas como comentário no CSS, sem nenhum desenho por trás); que NÃO se mostra a diferença calculada; e o estado 'não foi possível calcular o valor de hoje', que é um `<p>` mudo sozinho dentro de um Card.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a resposta para 'meu custo subiu desde que cotei?' — a pergunta que faz o vendedor voltar ao app. Sem desenho, dois números lado a lado parecem uma edição do registro, e o vendedor pode achar que o orçamento antigo mudou sozinho.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas quatro e o painel não está em nenhuma. `claude-design-prototype.md` não menciona comparação em §E6 nem em §E4/§E9 nem na matriz §G; os dois fixes também não. `HistoryScreen.jsx` TEM um `compareMode`, e eu li: ele liga um botão 'Comparar' na TopBar, mostra 'Selecione 2 cálculos para comparar (n/2)', põe checkbox no trailing de cada `ListItem` e, com dois escolhidos, renderiza um Card com dois `BreakdownRow` e uma linha 'Diferença' (`Math.abs(a-b)`). São três diferenças fundamentais contra o construído: compara dois registros SALVOS (não então-vs-hoje), MOSTRA a diferença (o construído recusa-se, por decisão registrada: 'a aritmética de dinheiro mora no pricing-core'), e nunca foi construído. Não é uma versão anterior da mesma superfície — é outra funcionalidade. O canvas do dono desenha só o GATILHO (linha 315, `tf-btn--secondary` 'Comparar com hoje', na fileira de ações junto de Exportar/Recalcular) e nada do painel — e mesmo o gatilho diverge: o código o renderiza como `variant=ghost` solto entre a ficha técnica e a linha de ações. Mantenho NENHUMA: a superfície do achado é o painel, e o painel não tem autoridade alguma.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

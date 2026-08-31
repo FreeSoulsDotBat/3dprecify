@@ -1,16 +1,16 @@
 {
-  "id": "retorno-checkout-nao-confirmado",
-  "nome": "Retorno do checkout — \"Ainda não recebemos a confirmação\" (paciência esgotada)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/features/billing/checkout-return.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "Estado 3 de 3: o desfecho em que o app não sabe se houve cobrança e precisa falar com quem pagou E com quem abandonou pela MESMA frase (os dois casos são indistinguíveis por contrato — o comentário do arquivo declara isso: \"o caso abandonado deve ser indistinguível de nunca-iniciado\"). Inferido: `<Icon name=\"circle-alert\" size={28}/>` — um ícone de ALERTA para um estado que pode significar \"você não comprou nada\" —, o corpo que emenda as duas leituras num parágrafo só (\"Se você concluiu… Se você não concluiu, nada foi cobrado.\"), e dois botões \"Verificar de novo\" (secundário) + \"Voltar para a Conta\" (fantasma). Não existe nenhum caminho de suporte/contato em lugar nenhum do componente. Falta desenhar: a temperatura visual desse estado, a separação visual das duas leituras, e a saída para quem pagou e não vê o Premium.",
-  "autoridade": "NENHUMA",
-  "impacto": "Quem pagou e caiu aqui vê um ícone de alerta e nenhum caminho de suporte; quem desistiu vê um alarme sobre algo que não aconteceu. É o ponto onde o produto mais arrisca a confiança conquistada.",
-  "prioridade": "ALTA",
-  "refutacao": "Nada nas 4 autoridades. §E8 exclui o checkout inteiro; grep no canvas por `confirmação|não recebemos|verificar` = 0. Testei a hipótese mais forte a favor da derrubada: a rodada 1 (item 19) e a r2 (item 3) DESENHARAM uma \"tela de erro genérica\" on-brand com \"Algo deu errado\" + \"Recarregar\" + \"Código de suporte: {correlationId}\", e a auditoria V2 confirma que ela foi renderizada e verificada. Mas essa tela é o error-boundary de FALHA TÉCNICA — este estado não é falha: o sistema funcionou perfeitamente e a resposta é \"não sei ainda\". São problemas de desenho opostos (um confessa um bug, o outro comunica incerteza sobre dinheiro), e usar a tela de erro aqui seria exatamente a leitura falsa que o achado denuncia. Não derruba. Confirmei ainda que nenhuma tela de `.design-import/ui_kits/precifica3d/` tem estado de pagamento não confirmado.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "retorno-checkout-nao-confirmado",
+    "nome": "Retorno do checkout — \"Ainda não recebemos a confirmação\" (paciência esgotada)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/features/billing/checkout-return.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "Estado 3 de 3: o desfecho em que o app não sabe se houve cobrança e precisa falar com quem pagou E com quem abandonou pela MESMA frase (os dois casos são indistinguíveis por contrato — o comentário do arquivo declara isso: \"o caso abandonado deve ser indistinguível de nunca-iniciado\"). Inferido: `<Icon name=\"circle-alert\" size={28}/>` — um ícone de ALERTA para um estado que pode significar \"você não comprou nada\" —, o corpo que emenda as duas leituras num parágrafo só (\"Se você concluiu… Se você não concluiu, nada foi cobrado.\"), e dois botões \"Verificar de novo\" (secundário) + \"Voltar para a Conta\" (fantasma). Não existe nenhum caminho de suporte/contato em lugar nenhum do componente. Falta desenhar: a temperatura visual desse estado, a separação visual das duas leituras, e a saída para quem pagou e não vê o Premium.",
+    "autoridade": "NENHUMA",
+    "impacto": "Quem pagou e caiu aqui vê um ícone de alerta e nenhum caminho de suporte; quem desistiu vê um alarme sobre algo que não aconteceu. É o ponto onde o produto mais arrisca a confiança conquistada.",
+    "prioridade": "ALTA",
+    "refutacao": "Nada nas 4 autoridades. §E8 exclui o checkout inteiro; grep no canvas por `confirmação|não recebemos|verificar` = 0. Testei a hipótese mais forte a favor da derrubada: a rodada 1 (item 19) e a r2 (item 3) DESENHARAM uma \"tela de erro genérica\" on-brand com \"Algo deu errado\" + \"Recarregar\" + \"Código de suporte: {correlationId}\", e a auditoria V2 confirma que ela foi renderizada e verificada. Mas essa tela é o error-boundary de FALHA TÉCNICA — este estado não é falha: o sistema funcionou perfeitamente e a resposta é \"não sei ainda\". São problemas de desenho opostos (um confessa um bug, o outro comunica incerteza sobre dinheiro), e usar a tela de erro aqui seria exatamente a leitura falsa que o achado denuncia. Não derruba. Confirmei ainda que nenhuma tela de `.design-import/ui_kits/precifica3d/` tem estado de pagamento não confirmado.",
+    "sobreviveu": true,
+    "area": "billing"
 }

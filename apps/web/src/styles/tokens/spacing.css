@@ -3,41 +3,41 @@
    4px base grid. Mobile-first; ≥44px touch targets (WCAG 2.2 AA).
    ============================================================ */
 :root {
-  --space-0: 0;
-  --space-1: 0.25rem; /* 4  */
-  --space-2: 0.5rem; /* 8  */
-  --space-3: 0.75rem; /* 12 */
-  --space-4: 1rem; /* 16 */
-  --space-5: 1.25rem; /* 20 */
-  --space-6: 1.5rem; /* 24 */
-  --space-7: 1.75rem; /* 28 */
-  --space-8: 2rem; /* 32 */
-  --space-10: 2.5rem; /* 40 */
-  --space-12: 3rem; /* 48 */
-  --space-14: 3.5rem; /* 56 */
-  --space-16: 4rem; /* 64 */
-  --space-20: 5rem; /* 80 */
-  --space-24: 6rem; /* 96 */
+    --space-0: 0;
+    --space-1: 0.25rem; /* 4  */
+    --space-2: 0.5rem; /* 8  */
+    --space-3: 0.75rem; /* 12 */
+    --space-4: 1rem; /* 16 */
+    --space-5: 1.25rem; /* 20 */
+    --space-6: 1.5rem; /* 24 */
+    --space-7: 1.75rem; /* 28 */
+    --space-8: 2rem; /* 32 */
+    --space-10: 2.5rem; /* 40 */
+    --space-12: 3rem; /* 48 */
+    --space-14: 3.5rem; /* 56 */
+    --space-16: 4rem; /* 64 */
+    --space-20: 5rem; /* 80 */
+    --space-24: 6rem; /* 96 */
 
-  /* ---- Component rhythm ---- */
-  --gutter: var(--space-4); /* screen edge padding (mobile) */
-  --gutter-lg: var(--space-8); /* desktop */
-  --stack: var(--space-4); /* default vertical gap */
-  --field-gap: var(--space-3); /* between form fields */
-  --section-gap: var(--space-8);
+    /* ---- Component rhythm ---- */
+    --gutter: var(--space-4); /* screen edge padding (mobile) */
+    --gutter-lg: var(--space-8); /* desktop */
+    --stack: var(--space-4); /* default vertical gap */
+    --field-gap: var(--space-3); /* between form fields */
+    --section-gap: var(--space-8);
 
-  /* ---- Sizing ---- */
-  --touch-min: 44px; /* min hit target */
-  --control-h-sm: 36px;
-  --control-h: 48px; /* default input/button height */
-  --control-h-lg: 56px; /* hero CTA */
-  --icon-sm: 16px;
-  --icon-md: 20px;
-  --icon-lg: 24px;
+    /* ---- Sizing ---- */
+    --touch-min: 44px; /* min hit target */
+    --control-h-sm: 36px;
+    --control-h: 48px; /* default input/button height */
+    --control-h-lg: 56px; /* hero CTA */
+    --icon-sm: 16px;
+    --icon-md: 20px;
+    --icon-lg: 24px;
 
-  /* ---- Layout widths ---- */
-  --app-max: 460px; /* mobile app column cap */
-  --content-max: 1120px; /* responsive desktop content */
-  --tabbar-h: 64px; /* bottom tab bar */
-  --topbar-h: 56px;
+    /* ---- Layout widths ---- */
+    --app-max: 460px; /* mobile app column cap */
+    --content-max: 1120px; /* responsive desktop content */
+    --tabbar-h: 64px; /* bottom tab bar */
+    --topbar-h: 56px;
 }

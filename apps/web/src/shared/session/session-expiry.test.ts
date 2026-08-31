@@ -19,48 +19,48 @@ const purgeOutbox = vi.fn(async () => {});
 vi.mock("@/entities/history/outbox", () => ({ purgeOutbox }));
 
 const { clearSessionExpired, isSessionExpired, markSessionExpired, useSessionExpired } =
-  await import("./session-expiry");
+    await import("./session-expiry");
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  clearSessionExpired();
+    vi.clearAllMocks();
+    clearSessionExpired();
 });
 
 describe("the store — one boolean, nothing else", () => {
-  it("starts cleared", () => {
-    expect(isSessionExpired()).toBe(false);
-  });
+    it("starts cleared", () => {
+        expect(isSessionExpired()).toBe(false);
+    });
 
-  it("markSessionExpired sets it; clearSessionExpired unsets it", () => {
-    markSessionExpired();
-    expect(isSessionExpired()).toBe(true);
-    clearSessionExpired();
-    expect(isSessionExpired()).toBe(false);
-  });
+    it("markSessionExpired sets it; clearSessionExpired unsets it", () => {
+        markSessionExpired();
+        expect(isSessionExpired()).toBe(true);
+        clearSessionExpired();
+        expect(isSessionExpired()).toBe(false);
+    });
 
-  it("markSessionExpired is idempotent — calling it twice changes nothing else", () => {
-    markSessionExpired();
-    markSessionExpired();
-    expect(isSessionExpired()).toBe(true);
-  });
+    it("markSessionExpired is idempotent — calling it twice changes nothing else", () => {
+        markSessionExpired();
+        markSessionExpired();
+        expect(isSessionExpired()).toBe(true);
+    });
 });
 
 describe("PROPRIEDADE NÃO-NEGOCIÁVEL — a 401 NUNCA chama requestSignOut nem purgeOutbox", () => {
-  it("marcar e limpar a sessão expirada repetidamente nunca dispara nenhum dos dois", () => {
-    markSessionExpired();
-    markSessionExpired();
-    clearSessionExpired();
-    markSessionExpired();
-    clearSessionExpired();
+    it("marcar e limpar a sessão expirada repetidamente nunca dispara nenhum dos dois", () => {
+        markSessionExpired();
+        markSessionExpired();
+        clearSessionExpired();
+        markSessionExpired();
+        clearSessionExpired();
 
-    expect(requestSignOut).not.toHaveBeenCalled();
-    expect(purgeOutbox).not.toHaveBeenCalled();
-  });
+        expect(requestSignOut).not.toHaveBeenCalled();
+        expect(purgeOutbox).not.toHaveBeenCalled();
+    });
 
-  it("useSessionExpired (o hook que o banner lê) também nunca toca em nenhum dos dois", () => {
-    // Reading the hook's underlying getter must be equally inert.
-    void useSessionExpired;
-    expect(requestSignOut).not.toHaveBeenCalled();
-    expect(purgeOutbox).not.toHaveBeenCalled();
-  });
+    it("useSessionExpired (o hook que o banner lê) também nunca toca em nenhum dos dois", () => {
+        // Reading the hook's underlying getter must be equally inert.
+        void useSessionExpired;
+        expect(requestSignOut).not.toHaveBeenCalled();
+        expect(purgeOutbox).not.toHaveBeenCalled();
+    });
 });

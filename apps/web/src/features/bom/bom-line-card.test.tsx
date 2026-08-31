@@ -21,87 +21,87 @@ const t = messages.bom;
 const kept = messages.productForm.manualValuesKept;
 
 const SC001: PriceInput = {
-  costPerRoll: 100,
-  rollWeightKg: 1,
-  printGrams: 100,
-  printTimeHours: 5,
-  avgPowerKw: 0.1,
-  tariffPerKwh: 1,
-  machineValue: 4000,
-  machineLifetimeHours: 2000,
-  failurePct: 10,
-  finishTimeHours: 0.5,
-  finishRatePerHour: 10,
-  markupVarejoPct: 50,
-  markupAtacadoPct: 30,
-  channels: [],
+    costPerRoll: 100,
+    rollWeightKg: 1,
+    printGrams: 100,
+    printTimeHours: 5,
+    avgPowerKw: 0.1,
+    tariffPerKwh: 1,
+    machineValue: 4000,
+    machineLifetimeHours: 2000,
+    failurePct: 10,
+    finishTimeHours: 0.5,
+    finishRatePerHour: 10,
+    markupVarejoPct: 50,
+    markupAtacadoPct: 30,
+    channels: [],
 };
 const lineResult = computeBom([{ input: SC001, quantity: 2 }]).lines[0];
 
 function renderCard(props: Partial<ComponentProps<typeof BomLineCard>> = {}) {
-  return render(
-    <BomLineCard
-      index={2}
-      name={null}
-      quantityRaw="2"
-      onQuantityChange={vi.fn()}
-      expanded={false}
-      onToggle={vi.fn()}
-      onRemove={vi.fn()}
-      lineResult={lineResult}
-      invalid={false}
-      {...props}
-    />,
-  );
+    return render(
+        <BomLineCard
+            index={2}
+            name={null}
+            quantityRaw="2"
+            onQuantityChange={vi.fn()}
+            expanded={false}
+            onToggle={vi.fn()}
+            onRemove={vi.fn()}
+            lineResult={lineResult}
+            invalid={false}
+            {...props}
+        />,
+    );
 }
 
 afterEach(cleanup);
 
 describe("BomLineCard — degraded-line caption (F1/K3, ux §1.2-D)", () => {
-  it("degraded: renders the calm 'valores mantidos' caption", () => {
-    renderCard({ degraded: true });
-    expect(screen.getByText(kept)).toBeInTheDocument();
-  });
+    it("degraded: renders the calm 'valores mantidos' caption", () => {
+        renderCard({ degraded: true });
+        expect(screen.getByText(kept)).toBeInTheDocument();
+    });
 
-  it("degraded: NEVER claims the product was removed/excluded/deleted (F1 honesty guard)", () => {
-    renderCard({ degraded: true });
-    expect(screen.queryByText(/removid|excluíd|deletad/i)).not.toBeInTheDocument();
-  });
+    it("degraded: NEVER claims the product was removed/excluded/deleted (F1 honesty guard)", () => {
+        renderCard({ degraded: true });
+        expect(screen.queryByText(/removid|excluíd|deletad/i)).not.toBeInTheDocument();
+    });
 
-  it("degraded: labels the line the honest '(avulsa)', not a stale product name", () => {
-    renderCard({ degraded: true });
-    // The summary/expand button carries the label; anchor on its "— Editar esta peça" suffix so
-    // the assertion isn't ambiguous with the remove button (which also names the line).
-    expect(
-      screen.getByRole("button", {
-        name: new RegExp(`Peça 2 · ${escapeRe(t.lineAdhoc)} — ${escapeRe(t.expand)}`),
-      }),
-    ).toBeInTheDocument();
-  });
+    it("degraded: labels the line the honest '(avulsa)', not a stale product name", () => {
+        renderCard({ degraded: true });
+        // The summary/expand button carries the label; anchor on its "— Editar esta peça" suffix so
+        // the assertion isn't ambiguous with the remove button (which also names the line).
+        expect(
+            screen.getByRole("button", {
+                name: new RegExp(`Peça 2 · ${escapeRe(t.lineAdhoc)} — ${escapeRe(t.expand)}`),
+            }),
+        ).toBeInTheDocument();
+    });
 
-  it("degraded: the line stays priced — the caption sits ALONGSIDE the money, not instead of it", () => {
-    renderCard({ degraded: true });
-    expect(screen.getByText(kept)).toBeInTheDocument();
-    // 016/US10 — custo 27,55 × qty 2 = 55,10 (re-baseline SEM wasteGrams) — a real, priceable line.
-    expect(screen.getAllByText(/R\$\s?55,10/).length).toBeGreaterThan(0);
-  });
+    it("degraded: the line stays priced — the caption sits ALONGSIDE the money, not instead of it", () => {
+        renderCard({ degraded: true });
+        expect(screen.getByText(kept)).toBeInTheDocument();
+        // 016/US10 — custo 27,55 × qty 2 = 55,10 (re-baseline SEM wasteGrams) — a real, priceable line.
+        expect(screen.getAllByText(/R\$\s?55,10/).length).toBeGreaterThan(0);
+    });
 
-  it("NOT degraded: no caption (negative control — the caption is degrade-only)", () => {
-    renderCard({ degraded: false });
-    expect(screen.queryByText(kept)).not.toBeInTheDocument();
-  });
+    it("NOT degraded: no caption (negative control — the caption is degrade-only)", () => {
+        renderCard({ degraded: false });
+        expect(screen.queryByText(kept)).not.toBeInTheDocument();
+    });
 
-  it("NOT degraded with a bound product: shows the product name and no caption", () => {
-    renderCard({ name: "Base do suporte", degraded: false });
-    expect(
-      screen.getByRole("button", {
-        name: new RegExp(`Peça 2 · Base do suporte — ${escapeRe(t.expand)}`),
-      }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(kept)).not.toBeInTheDocument();
-  });
+    it("NOT degraded with a bound product: shows the product name and no caption", () => {
+        renderCard({ name: "Base do suporte", degraded: false });
+        expect(
+            screen.getByRole("button", {
+                name: new RegExp(`Peça 2 · Base do suporte — ${escapeRe(t.expand)}`),
+            }),
+        ).toBeInTheDocument();
+        expect(screen.queryByText(kept)).not.toBeInTheDocument();
+    });
 });
 
 function escapeRe(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

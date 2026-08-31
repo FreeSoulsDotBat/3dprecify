@@ -54,19 +54,19 @@ export type { ToastTone, ToastItem } from "./toast";
 
 // ---- Added batch-1 primitives (Radix-skinned) ----
 export {
-  Dialog,
-  DialogTrigger,
-  DialogClose,
-  DialogPortal,
-  DialogContent,
-  DialogTitle,
-  DialogDescription,
-  Sheet,
-  SheetTrigger,
-  SheetClose,
-  SheetContent,
-  SheetTitle,
-  SheetDescription,
+    Dialog,
+    DialogTrigger,
+    DialogClose,
+    DialogPortal,
+    DialogContent,
+    DialogTitle,
+    DialogDescription,
+    Sheet,
+    SheetTrigger,
+    SheetClose,
+    SheetContent,
+    SheetTitle,
+    SheetDescription,
 } from "./dialog";
 export type { DialogContentProps, DialogVariant, SheetSide } from "./dialog";
 

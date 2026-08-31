@@ -5,7 +5,7 @@ import "./grafismo.css";
 export type GrafismoName = "arco" | "espada" | "linha-curva" | "onda";
 
 export interface GrafismoProps extends HTMLAttributes<HTMLSpanElement> {
-  name: GrafismoName;
+    name: GrafismoName;
 }
 
 /**
@@ -14,16 +14,16 @@ export interface GrafismoProps extends HTMLAttributes<HTMLSpanElement> {
  * always `aria-hidden`, and reduced-motion safe (no animation).
  */
 export function Grafismo({ name, className = "", style, ...rest }: GrafismoProps) {
-  const vars = {
-    "--tf-grafismo-src": `url("/brand/grafismos/${name}.svg")`,
-    ...style,
-  } as CSSProperties;
-  return (
-    <span
-      aria-hidden="true"
-      className={["tf-grafismo", `tf-grafismo--${name}`, className].filter(Boolean).join(" ")}
-      style={vars}
-      {...rest}
-    />
-  );
+    const vars = {
+        "--tf-grafismo-src": `url("/brand/grafismos/${name}.svg")`,
+        ...style,
+    } as CSSProperties;
+    return (
+        <span
+            aria-hidden="true"
+            className={["tf-grafismo", `tf-grafismo--${name}`, className].filter(Boolean).join(" ")}
+            style={vars}
+            {...rest}
+        />
+    );
 }

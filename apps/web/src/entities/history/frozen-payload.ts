@@ -1,9 +1,9 @@
 import {
-  type BomResult,
-  Decimal,
-  type PriceInput,
-  type PriceResult,
-  type QuoteResult,
+    type BomResult,
+    Decimal,
+    type PriceInput,
+    type PriceResult,
+    type QuoteResult,
 } from "@3dprecify/pricing-core";
 
 // 009/T003 (E4, PR-A) — THE FROZEN DOCUMENT (data-model D1, ADR-0008, ADR-0020 §1).
@@ -39,18 +39,18 @@ export type MoneyString = string;
 
 /** Settled money: exactly 2dp, ROUND_HALF_UP (ADR-0008 / ADR-0004 — one money story end-to-end). */
 export function toMoneyString(value: number): MoneyString {
-  return new Decimal(value).toFixed(2);
+    return new Decimal(value).toFixed(2);
 }
 
 /** An input leaf (grams, hours, kW, %, rates): stringified WITHOUT rounding — quantizing an input
  *  to 2dp would silently corrupt it (0.125 kW is not 0.13 kW). */
 function toExactString(value: number): MoneyString {
-  return new Decimal(value).toString();
+    return new Decimal(value).toString();
 }
 
 export interface FrozenOtherCost {
-  name: string;
-  value: MoneyString;
+    name: string;
+    value: MoneyString;
 }
 
 /**
@@ -58,42 +58,42 @@ export interface FrozenOtherCost {
  * line invented by a later formula is simply an ABSENT KEY here, never a zero (FR-507).
  */
 export interface FrozenBreakdown {
-  material?: MoneyString;
-  energy?: MoneyString;
-  machine?: MoneyString;
-  falha?: MoneyString;
-  finishing?: MoneyString;
-  labor?: MoneyString;
-  admin?: MoneyString;
-  otherCosts?: FrozenOtherCost[];
+    material?: MoneyString;
+    energy?: MoneyString;
+    machine?: MoneyString;
+    falha?: MoneyString;
+    finishing?: MoneyString;
+    labor?: MoneyString;
+    admin?: MoneyString;
+    otherCosts?: FrozenOtherCost[];
 }
 
 export interface FrozenTotals {
-  custoTotal?: MoneyString;
-  precoVarejo?: MoneyString;
-  precoAtacado?: MoneyString;
-  // 019/PR-E (T133, ADR-0034 §2) — o total do ORÇAMENTO: `netTotal` (bruto − desconto), e o mesmo
-  // número do `headline_total` da coluna (VR-503, `CASE … WHEN 'PRECO_ORCAMENTO'`). Opcional como
-  // todas as outras: um documento SINGLE/KIT de ontem não passa a ter um total de orçamento — ele
-  // simplesmente não tem a chave, e `readFrozenMoney` a lê como null, nunca como "0,00" (FR-507).
-  precoOrcamento?: MoneyString;
+    custoTotal?: MoneyString;
+    precoVarejo?: MoneyString;
+    precoAtacado?: MoneyString;
+    // 019/PR-E (T133, ADR-0034 §2) — o total do ORÇAMENTO: `netTotal` (bruto − desconto), e o mesmo
+    // número do `headline_total` da coluna (VR-503, `CASE … WHEN 'PRECO_ORCAMENTO'`). Opcional como
+    // todas as outras: um documento SINGLE/KIT de ontem não passa a ter um total de orçamento — ele
+    // simplesmente não tem a chave, e `readFrozenMoney` a lê como null, nunca como "0,00" (FR-507).
+    precoOrcamento?: MoneyString;
 }
 
 /** One recorded channel. Serves BOTH a single piece (per-slot, may carry `error`) and a kit rollup
  *  (which additionally carries the honest line counts) — optional fields, one shape. */
 export interface FrozenChannel {
-  marketplace: string | null;
-  precoAnuncioVarejo?: MoneyString | null;
-  recebidoLiquidoVarejo?: MoneyString | null;
-  precoAnuncioAtacado?: MoneyString | null;
-  recebidoLiquidoAtacado?: MoneyString | null;
-  freightCostVarejo?: MoneyString;
-  freightCostAtacado?: MoneyString;
-  /** Kit rollup only — integer counts are the ONLY legal JSON numbers in this document. */
-  contributingLines?: number;
-  skippedLines?: number;
-  /** Single-piece slot only — an honest per-slot failure, echoed as recorded. */
-  error?: string | null;
+    marketplace: string | null;
+    precoAnuncioVarejo?: MoneyString | null;
+    recebidoLiquidoVarejo?: MoneyString | null;
+    precoAnuncioAtacado?: MoneyString | null;
+    recebidoLiquidoAtacado?: MoneyString | null;
+    freightCostVarejo?: MoneyString;
+    freightCostAtacado?: MoneyString;
+    /** Kit rollup only — integer counts are the ONLY legal JSON numbers in this document. */
+    contributingLines?: number;
+    skippedLines?: number;
+    /** Single-piece slot only — an honest per-slot failure, echoed as recorded. */
+    error?: string | null;
 }
 
 /**
@@ -104,7 +104,7 @@ export interface FrozenChannel {
  * inside the immutable document (review PR-A, finding I1) — a recursive value type forbids that.
  */
 export type FrozenInputValue =
-  MoneyString | null | FrozenInputValue[] | { [field: string]: FrozenInputValue };
+    MoneyString | null | FrozenInputValue[] | { [field: string]: FrozenInputValue };
 
 /** The fully RESOLVED inputs (filament/printer values inlined, never references) — so a snapshot
  *  reproduces with nothing but itself, and "Recalcular hoje" has something to fall back on when the
@@ -115,15 +115,15 @@ export type FrozenPriceInput = { [field: string]: FrozenInputValue };
 export type FrozenChannelInput = { [field: string]: FrozenInputValue };
 
 export interface FrozenKitLine {
-  /** The piece's name as captured — a kit quote itemizes its pieces (SC-515), and the renderer must
-   *  not have to look it up. */
-  name: string | null;
-  quantity: number;
-  input: FrozenPriceInput;
-  /** Per-UNIT breakdown, exactly as displayed. */
-  breakdown: FrozenBreakdown;
-  /** Quantity-SCALED money — stored, never derived at print time. */
-  totals: FrozenTotals;
+    /** The piece's name as captured — a kit quote itemizes its pieces (SC-515), and the renderer must
+     *  not have to look it up. */
+    name: string | null;
+    quantity: number;
+    input: FrozenPriceInput;
+    /** Per-UNIT breakdown, exactly as displayed. */
+    breakdown: FrozenBreakdown;
+    /** Quantity-SCALED money — stored, never derived at print time. */
+    totals: FrozenTotals;
 }
 
 /**
@@ -133,12 +133,12 @@ export interface FrozenKitLine {
  * affordance is simply absent — no broken link, no "produto excluído" claim, no degraded caption.
  */
 export interface FrozenProvenance {
-  // 010/T035 (E5, PR-C, US7) — "SCENARIO" is the E4 bridge: recording from a saved scenario's live
-  // result captures the SAME informational triad as PRODUCT/KIT (id + the name AS CAPTURED), never a
-  // foreign key, never a value source. The scenario keeps changing after this; the snapshot does not.
-  kind: "PRODUCT" | "KIT" | "SCENARIO";
-  id: string;
-  name: string;
+    // 010/T035 (E5, PR-C, US7) — "SCENARIO" is the E4 bridge: recording from a saved scenario's live
+    // result captures the SAME informational triad as PRODUCT/KIT (id + the name AS CAPTURED), never a
+    // foreign key, never a value source. The scenario keeps changing after this; the snapshot does not.
+    kind: "PRODUCT" | "KIT" | "SCENARIO";
+    id: string;
+    name: string;
 }
 
 // ── 019/PR-E (T133) — o ORÇAMENTO dentro do MESMO envelope (ADR-0034 §2, data-model §4) ──────────
@@ -153,64 +153,64 @@ export interface FrozenProvenance {
  *  onde saiu. Um documento que mostra só o líquido esconde a conta que o vendedor fez (ADR-0034 §2).
  *  `value` também é STRING: `validation.py:106-110` rejeita float em posição de dinheiro. */
 export interface FrozenQuoteDiscount {
-  mode: "PCT" | "AMOUNT";
-  /** % (modo `PCT`) ou R$ (modo `AMOUNT`), como digitado — quantizado às duas casas da casa. */
-  value: MoneyString;
-  amount: MoneyString;
-  grossTotal: MoneyString;
+    mode: "PCT" | "AMOUNT";
+    /** % (modo `PCT`) ou R$ (modo `AMOUNT`), como digitado — quantizado às duas casas da casa. */
+    value: MoneyString;
+    amount: MoneyString;
+    grossTotal: MoneyString;
 }
 
 /** Uma linha do orçamento congelado. `quantity` é o único número JSON legal aqui (contagem
  *  inteira); o dinheiro já vem ESCALADO, para o renderizador imprimir sem multiplicar nada. */
 export interface FrozenQuoteLine {
-  /** O nome como foi orçado — inclusive a legenda de degradação do E3/D6 quando for o caso. */
-  name: string | null;
-  quantity: number;
-  unitPrice: MoneyString;
-  subtotal: MoneyString;
-  /** De onde a linha veio — a MESMA tríade informativa da proveniência do documento (id + nome de
-   *  então), nunca chave estrangeira (ADR-0019 §5); `null` quando a linha não veio do catálogo. */
-  origin: FrozenProvenance | null;
+    /** O nome como foi orçado — inclusive a legenda de degradação do E3/D6 quando for o caso. */
+    name: string | null;
+    quantity: number;
+    unitPrice: MoneyString;
+    subtotal: MoneyString;
+    /** De onde a linha veio — a MESMA tríade informativa da proveniência do documento (id + nome de
+     *  então), nunca chave estrangeira (ADR-0019 §5); `null` quando a linha não veio do catálogo. */
+    origin: FrozenProvenance | null;
 }
 
 export interface FrozenSnapshotPayload {
-  schemaVersion: number;
-  kind: "SINGLE" | "KIT" | "QUOTE";
-  /** The formula that produced these numbers (`PRICING_MODEL_VERSION`) — closes A29. */
-  modelVersion: string;
-  /** The fee-catalog version that priced the channels (ADR-0010) — root-level provenance, captured
-   *  so a snapshot records WHICH tariff table it used; `null` when every channel used manual fees.
-   *  Owner decision I2/Option A: a first-class root field, not buried inside `inputs`. */
-  catalogVersion: string | null;
-  /** SINGLE only. */
-  inputs?: FrozenPriceInput;
-  /** SINGLE only. */
-  breakdown?: FrozenBreakdown;
-  /** KIT (peças, com input+breakdown) ou QUOTE (itens, só o que se imprime). A união é de ARRAY, de
-   *  propósito: um documento tem UMA das duas formas, e quem lê tem de estreitar pelo `kind` — um
-   *  `FrozenKitLine[] & FrozenQuoteLine[]` deixaria a tela alcançar `line.totals` num orçamento e
-   *  imprimir `undefined` (019/PR-E T133/T135). */
-  lines?: FrozenKitLine[] | FrozenQuoteLine[];
-  /** QUOTE only — o desconto DECLARADO. Ausente = orçamento sem desconto (nunca zero fabricado). */
-  discount?: FrozenQuoteDiscount;
-  /** QUOTE only — `bom.custoTotal`: o custo somado dos itens × quantidade (ADR-0034 §1.4), o piso
-   *  que o aviso "Abaixo do custo" compara. Congelado porque o documento é auto-suficiente. */
-  costFloor?: MoneyString;
-  totals: FrozenTotals;
-  channels?: FrozenChannel[];
-  provenance: FrozenProvenance | null;
-  /**
-   * 014/SC-818 — set ONLY when "Recalcular hoje" could not reprice from the catalog and re-emitted
-   * the FROZEN document instead (the origin was deleted or unresolvable). ABSENT means an ordinary
-   * record: every payload written before this field existed keeps meaning exactly what it meant,
-   * which is why the flag is additive and one-sided (the same discipline as `bandMode`, ADR-0024).
-   *
-   * It has to be decided AT WRITE TIME. The dialog already warns before confirming, but that warning
-   * dies with the dialog: without this, the stored record is indistinguishable from a genuine reprice
-   * while carrying today's `deviceQuotedAt`. And a snapshot is IMMUTABLE by DB trigger (ADR-0019) —
-   * an ambiguous record stays ambiguous forever, so there is no later place to add the truth.
-   */
-  repricedFromFrozen?: true;
+    schemaVersion: number;
+    kind: "SINGLE" | "KIT" | "QUOTE";
+    /** The formula that produced these numbers (`PRICING_MODEL_VERSION`) — closes A29. */
+    modelVersion: string;
+    /** The fee-catalog version that priced the channels (ADR-0010) — root-level provenance, captured
+     *  so a snapshot records WHICH tariff table it used; `null` when every channel used manual fees.
+     *  Owner decision I2/Option A: a first-class root field, not buried inside `inputs`. */
+    catalogVersion: string | null;
+    /** SINGLE only. */
+    inputs?: FrozenPriceInput;
+    /** SINGLE only. */
+    breakdown?: FrozenBreakdown;
+    /** KIT (peças, com input+breakdown) ou QUOTE (itens, só o que se imprime). A união é de ARRAY, de
+     *  propósito: um documento tem UMA das duas formas, e quem lê tem de estreitar pelo `kind` — um
+     *  `FrozenKitLine[] & FrozenQuoteLine[]` deixaria a tela alcançar `line.totals` num orçamento e
+     *  imprimir `undefined` (019/PR-E T133/T135). */
+    lines?: FrozenKitLine[] | FrozenQuoteLine[];
+    /** QUOTE only — o desconto DECLARADO. Ausente = orçamento sem desconto (nunca zero fabricado). */
+    discount?: FrozenQuoteDiscount;
+    /** QUOTE only — `bom.custoTotal`: o custo somado dos itens × quantidade (ADR-0034 §1.4), o piso
+     *  que o aviso "Abaixo do custo" compara. Congelado porque o documento é auto-suficiente. */
+    costFloor?: MoneyString;
+    totals: FrozenTotals;
+    channels?: FrozenChannel[];
+    provenance: FrozenProvenance | null;
+    /**
+     * 014/SC-818 — set ONLY when "Recalcular hoje" could not reprice from the catalog and re-emitted
+     * the FROZEN document instead (the origin was deleted or unresolvable). ABSENT means an ordinary
+     * record: every payload written before this field existed keeps meaning exactly what it meant,
+     * which is why the flag is additive and one-sided (the same discipline as `bandMode`, ADR-0024).
+     *
+     * It has to be decided AT WRITE TIME. The dialog already warns before confirming, but that warning
+     * dies with the dialog: without this, the stored record is indistinguishable from a genuine reprice
+     * while carrying today's `deviceQuotedAt`. And a snapshot is IMMUTABLE by DB trigger (ADR-0019) —
+     * an ambiguous record stays ambiguous forever, so there is no later place to add the truth.
+     */
+    repricedFromFrozen?: true;
 }
 
 // 019/PR-E (T133/T135) — `lines` passou a ser união de ARRAYS, e o compilador passou a exigir o
@@ -221,84 +221,92 @@ export interface FrozenSnapshotPayload {
 
 /** As peças de um KIT. Vazio para qualquer outro `kind`. */
 export function frozenKitLines(payload: FrozenSnapshotPayload): FrozenKitLine[] {
-  return payload.kind === "KIT" ? ((payload.lines ?? []) as FrozenKitLine[]) : [];
+    return payload.kind === "KIT" ? ((payload.lines ?? []) as FrozenKitLine[]) : [];
 }
 
 /** Os itens de um ORÇAMENTO. Vazio para qualquer outro `kind`. */
 export function frozenQuoteLines(payload: FrozenSnapshotPayload): FrozenQuoteLine[] {
-  return payload.kind === "QUOTE" ? ((payload.lines ?? []) as FrozenQuoteLine[]) : [];
+    return payload.kind === "QUOTE" ? ((payload.lines ?? []) as FrozenQuoteLine[]) : [];
 }
 
 /** Read a recorded money line. An ABSENT line reads as `null` — never as "0.00" (FR-507). A line
  *  that was genuinely recorded as zero still reads as zero, because it really happened. */
 export function readFrozenMoney(value: MoneyString | null | undefined): MoneyString | null {
-  return value ?? null;
+    return value ?? null;
 }
 
 function freezeOtherCosts(items: readonly { name: string; value: number }[]): FrozenOtherCost[] {
-  return items.map((item) => ({ name: item.name, value: toMoneyString(item.value) }));
+    return items.map((item) => ({ name: item.name, value: toMoneyString(item.value) }));
 }
 
 function freezeBreakdown(result: PriceResult): FrozenBreakdown {
-  return {
-    material: toMoneyString(result.material),
-    energy: toMoneyString(result.energy),
-    machine: toMoneyString(result.machine),
-    falha: toMoneyString(result.falha),
-    finishing: toMoneyString(result.finishing),
-    labor: toMoneyString(result.labor),
-    admin: toMoneyString(result.admin),
-    otherCosts: freezeOtherCosts(result.otherCosts),
-  };
+    return {
+        material: toMoneyString(result.material),
+        energy: toMoneyString(result.energy),
+        machine: toMoneyString(result.machine),
+        falha: toMoneyString(result.falha),
+        finishing: toMoneyString(result.finishing),
+        labor: toMoneyString(result.labor),
+        admin: toMoneyString(result.admin),
+        otherCosts: freezeOtherCosts(result.otherCosts),
+    };
 }
 
 function freezeTotals(totals: {
-  custoTotal: number;
-  precoVarejo: number;
-  precoAtacado: number;
+    custoTotal: number;
+    precoVarejo: number;
+    precoAtacado: number;
 }): FrozenTotals {
-  return {
-    custoTotal: toMoneyString(totals.custoTotal),
-    precoVarejo: toMoneyString(totals.precoVarejo),
-    precoAtacado: toMoneyString(totals.precoAtacado),
-  };
+    return {
+        custoTotal: toMoneyString(totals.custoTotal),
+        precoVarejo: toMoneyString(totals.precoVarejo),
+        precoAtacado: toMoneyString(totals.precoAtacado),
+    };
 }
 
 function freezeSlotChannels(result: PriceResult): FrozenChannel[] {
-  return result.channels.map((channel) => ({
-    marketplace: channel.marketplace,
-    precoAnuncioVarejo:
-      channel.precoAnuncioVarejo === null ? null : toMoneyString(channel.precoAnuncioVarejo),
-    recebidoLiquidoVarejo:
-      channel.recebidoLiquidoVarejo === null ? null : toMoneyString(channel.recebidoLiquidoVarejo),
-    precoAnuncioAtacado:
-      channel.precoAnuncioAtacado === null ? null : toMoneyString(channel.precoAnuncioAtacado),
-    recebidoLiquidoAtacado:
-      channel.recebidoLiquidoAtacado === null
-        ? null
-        : toMoneyString(channel.recebidoLiquidoAtacado),
-    freightCostVarejo: toMoneyString(channel.freightCostVarejo),
-    freightCostAtacado: toMoneyString(channel.freightCostAtacado),
-    error: channel.error,
-  }));
+    return result.channels.map((channel) => ({
+        marketplace: channel.marketplace,
+        precoAnuncioVarejo:
+            channel.precoAnuncioVarejo === null ? null : toMoneyString(channel.precoAnuncioVarejo),
+        recebidoLiquidoVarejo:
+            channel.recebidoLiquidoVarejo === null
+                ? null
+                : toMoneyString(channel.recebidoLiquidoVarejo),
+        precoAnuncioAtacado:
+            channel.precoAnuncioAtacado === null
+                ? null
+                : toMoneyString(channel.precoAnuncioAtacado),
+        recebidoLiquidoAtacado:
+            channel.recebidoLiquidoAtacado === null
+                ? null
+                : toMoneyString(channel.recebidoLiquidoAtacado),
+        freightCostVarejo: toMoneyString(channel.freightCostVarejo),
+        freightCostAtacado: toMoneyString(channel.freightCostAtacado),
+        error: channel.error,
+    }));
 }
 
 function freezeRollupChannels(bom: BomResult): FrozenChannel[] {
-  return bom.channels.map((rollup) => ({
-    marketplace: rollup.marketplace,
-    precoAnuncioVarejo:
-      rollup.precoAnuncioVarejo === null ? null : toMoneyString(rollup.precoAnuncioVarejo),
-    recebidoLiquidoVarejo:
-      rollup.recebidoLiquidoVarejo === null ? null : toMoneyString(rollup.recebidoLiquidoVarejo),
-    precoAnuncioAtacado:
-      rollup.precoAnuncioAtacado === null ? null : toMoneyString(rollup.precoAnuncioAtacado),
-    recebidoLiquidoAtacado:
-      rollup.recebidoLiquidoAtacado === null ? null : toMoneyString(rollup.recebidoLiquidoAtacado),
-    freightCostVarejo: toMoneyString(rollup.freightCostVarejo),
-    freightCostAtacado: toMoneyString(rollup.freightCostAtacado),
-    contributingLines: rollup.contributingLines,
-    skippedLines: rollup.skippedLines,
-  }));
+    return bom.channels.map((rollup) => ({
+        marketplace: rollup.marketplace,
+        precoAnuncioVarejo:
+            rollup.precoAnuncioVarejo === null ? null : toMoneyString(rollup.precoAnuncioVarejo),
+        recebidoLiquidoVarejo:
+            rollup.recebidoLiquidoVarejo === null
+                ? null
+                : toMoneyString(rollup.recebidoLiquidoVarejo),
+        precoAnuncioAtacado:
+            rollup.precoAnuncioAtacado === null ? null : toMoneyString(rollup.precoAnuncioAtacado),
+        recebidoLiquidoAtacado:
+            rollup.recebidoLiquidoAtacado === null
+                ? null
+                : toMoneyString(rollup.recebidoLiquidoAtacado),
+        freightCostVarejo: toMoneyString(rollup.freightCostVarejo),
+        freightCostAtacado: toMoneyString(rollup.freightCostAtacado),
+        contributingLines: rollup.contributingLines,
+        skippedLines: rollup.skippedLines,
+    }));
 }
 
 /** Freeze one INPUT value RECURSIVELY: a numeric leaf → an exact decimal string (never rounded);
@@ -306,77 +314,77 @@ function freezeRollupChannels(bom: BomResult): FrozenChannel[] {
  *  channel band (review PR-A, I1). A `PriceInput` has no integer-count leaves, so every number
  *  legitimately becomes a string here. */
 function freezeInputValue(value: unknown): FrozenInputValue {
-  if (value === null) return null;
-  if (typeof value === "number") return toExactString(value);
-  if (typeof value === "string") return value;
-  if (Array.isArray(value)) return value.map(freezeInputValue);
-  if (typeof value === "object") {
-    const out: { [field: string]: FrozenInputValue } = {};
-    for (const [key, child] of Object.entries(value)) {
-      if (child === undefined) continue;
-      out[key] = freezeInputValue(child);
+    if (value === null) return null;
+    if (typeof value === "number") return toExactString(value);
+    if (typeof value === "string") return value;
+    if (Array.isArray(value)) return value.map(freezeInputValue);
+    if (typeof value === "object") {
+        const out: { [field: string]: FrozenInputValue } = {};
+        for (const [key, child] of Object.entries(value)) {
+            if (child === undefined) continue;
+            out[key] = freezeInputValue(child);
+        }
+        return out;
     }
-    return out;
-  }
-  // Booleans / other non-money leaves do not occur in a resolved PriceInput; invent nothing.
-  return null;
+    // Booleans / other non-money leaves do not occur in a resolved PriceInput; invent nothing.
+    return null;
 }
 
 /** Stringify every numeric leaf of a resolved `PriceInput`, at any depth. */
 function freezeInput(input: PriceInput): FrozenPriceInput {
-  const frozen: FrozenPriceInput = {};
-  for (const [key, value] of Object.entries(input)) {
-    if (value === undefined) continue;
-    frozen[key] = freezeInputValue(value);
-  }
-  return frozen;
+    const frozen: FrozenPriceInput = {};
+    for (const [key, value] of Object.entries(input)) {
+        if (value === undefined) continue;
+        frozen[key] = freezeInputValue(value);
+    }
+    return frozen;
 }
 
 /** Freeze a single-piece calculation into the immutable document. */
 export function freezePriceResult(
-  input: PriceInput,
-  result: PriceResult,
-  provenance: FrozenProvenance | null,
+    input: PriceInput,
+    result: PriceResult,
+    provenance: FrozenProvenance | null,
 ): FrozenSnapshotPayload {
-  return {
-    schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
-    kind: "SINGLE",
-    modelVersion: result.modelVersion,
-    catalogVersion: result.catalogVersion,
-    inputs: freezeInput(input),
-    breakdown: freezeBreakdown(result),
-    totals: freezeTotals(result),
-    channels: freezeSlotChannels(result),
-    provenance,
-  };
+    return {
+        schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+        kind: "SINGLE",
+        modelVersion: result.modelVersion,
+        catalogVersion: result.catalogVersion,
+        inputs: freezeInput(input),
+        breakdown: freezeBreakdown(result),
+        totals: freezeTotals(result),
+        channels: freezeSlotChannels(result),
+        provenance,
+    };
 }
 
 /** Freeze a kit into the immutable document. The piece names ride along because a kit quote
  *  itemizes its pieces (SC-515) and the renderer may not go looking them up. */
 export function freezeBomResult(
-  lines: readonly { input: PriceInput; quantity: number; name: string | null }[],
-  bom: BomResult,
-  provenance: FrozenProvenance | null,
-  // `BomResult` carries no catalogVersion (every line resolves from the same catalog); the call
-  // site supplies it explicitly (I2/Option A) rather than bumping pricing-core to add it.
-  catalogVersion: string | null,
+    lines: readonly { input: PriceInput; quantity: number; name: string | null }[],
+    bom: BomResult,
+    provenance: FrozenProvenance | null,
+    // `BomResult` carries no catalogVersion (every line resolves from the same catalog); the call
+    // site supplies it explicitly (I2/Option A) rather than bumping pricing-core to add it.
+    catalogVersion: string | null,
 ): FrozenSnapshotPayload {
-  return {
-    schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
-    kind: "KIT",
-    modelVersion: bom.modelVersion,
-    catalogVersion,
-    lines: bom.lines.map((lineResult, index) => ({
-      name: lines[index]?.name ?? null,
-      quantity: lineResult.quantity,
-      input: freezeInput(lines[index]?.input ?? ({} as PriceInput)),
-      breakdown: freezeBreakdown(lineResult.line),
-      totals: freezeTotals(lineResult),
-    })),
-    totals: freezeTotals(bom),
-    channels: freezeRollupChannels(bom),
-    provenance,
-  };
+    return {
+        schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+        kind: "KIT",
+        modelVersion: bom.modelVersion,
+        catalogVersion,
+        lines: bom.lines.map((lineResult, index) => ({
+            name: lines[index]?.name ?? null,
+            quantity: lineResult.quantity,
+            input: freezeInput(lines[index]?.input ?? ({} as PriceInput)),
+            breakdown: freezeBreakdown(lineResult.line),
+            totals: freezeTotals(lineResult),
+        })),
+        totals: freezeTotals(bom),
+        channels: freezeRollupChannels(bom),
+        provenance,
+    };
 }
 
 /**
@@ -393,66 +401,66 @@ export function freezeBomResult(
  * devolve quanto deu, não em que modo foi pedido).
  */
 export function buildQuotePayload(
-  result: QuoteResult,
-  meta: {
-    /** A origem de cada linha, na MESMA ordem de `result.lines`. Uma posição ausente é `null` — o
-     *  documento não adivinha catálogo. */
-    lines: readonly (FrozenProvenance | null)[];
-    /** O desconto como entrou no motor. Ausente = sem desconto, e o bloco simplesmente não nasce. */
-    discount?: { mode: "PCT" | "AMOUNT"; value: number };
-  },
+    result: QuoteResult,
+    meta: {
+        /** A origem de cada linha, na MESMA ordem de `result.lines`. Uma posição ausente é `null` — o
+         *  documento não adivinha catálogo. */
+        lines: readonly (FrozenProvenance | null)[];
+        /** O desconto como entrou no motor. Ausente = sem desconto, e o bloco simplesmente não nasce. */
+        discount?: { mode: "PCT" | "AMOUNT"; value: number };
+    },
 ): FrozenSnapshotPayload {
-  const lines: FrozenQuoteLine[] = result.lines.map((line, index) => ({
-    name: line.name,
-    quantity: line.quantity,
-    unitPrice: toMoneyString(line.unitPrice),
-    subtotal: toMoneyString(line.subtotal),
-    origin: meta.lines[index] ?? null,
-  }));
+    const lines: FrozenQuoteLine[] = result.lines.map((line, index) => ({
+        name: line.name,
+        quantity: line.quantity,
+        unitPrice: toMoneyString(line.unitPrice),
+        subtotal: toMoneyString(line.subtotal),
+        origin: meta.lines[index] ?? null,
+    }));
 
-  return {
-    schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
-    kind: "QUOTE",
-    modelVersion: result.modelVersion,
-    // Um orçamento é venda DIRETA: nem canal, nem banda, nem tarifa entram no motor (ADR-0034 §1.7),
-    // então não há versão de catálogo a capturar. `null` DECLARADO, jamais chave ausente (I2).
-    catalogVersion: null,
-    lines,
-    ...(meta.discount === undefined
-      ? {}
-      : {
-          discount: {
-            mode: meta.discount.mode,
-            value: toMoneyString(meta.discount.value),
-            amount: toMoneyString(result.discountAmount),
-            grossTotal: toMoneyString(result.grossTotal),
-          },
-        }),
-    costFloor: toMoneyString(result.costFloor),
-    // SÓ o total do orçamento. Gravar o líquido em `precoVarejo` — a "simplificação" que o ADR-0034
-    // nomeia como o risco desta fatia — faria o documento afirmar que o MOTOR produziu aquele
-    // número, com o desconto embutido: uma mentira dentro de um registro imutável.
-    totals: { precoOrcamento: toMoneyString(result.netTotal) },
-    // Um orçamento tem N origens, uma por linha (`lines[].origin`) — não UMA no documento.
-    provenance: null,
-  };
+    return {
+        schemaVersion: FROZEN_PAYLOAD_SCHEMA_VERSION,
+        kind: "QUOTE",
+        modelVersion: result.modelVersion,
+        // Um orçamento é venda DIRETA: nem canal, nem banda, nem tarifa entram no motor (ADR-0034 §1.7),
+        // então não há versão de catálogo a capturar. `null` DECLARADO, jamais chave ausente (I2).
+        catalogVersion: null,
+        lines,
+        ...(meta.discount === undefined
+            ? {}
+            : {
+                  discount: {
+                      mode: meta.discount.mode,
+                      value: toMoneyString(meta.discount.value),
+                      amount: toMoneyString(result.discountAmount),
+                      grossTotal: toMoneyString(result.grossTotal),
+                  },
+              }),
+        costFloor: toMoneyString(result.costFloor),
+        // SÓ o total do orçamento. Gravar o líquido em `precoVarejo` — a "simplificação" que o ADR-0034
+        // nomeia como o risco desta fatia — faria o documento afirmar que o MOTOR produziu aquele
+        // número, com o desconto embutido: uma mentira dentro de um registro imutável.
+        totals: { precoOrcamento: toMoneyString(result.netTotal) },
+        // Um orçamento tem N origens, uma por linha (`lines[].origin`) — não UMA no documento.
+        provenance: null,
+    };
 }
 
 /** Is this frozen channel INPUT carrying a fee at all? The six fields are the same ones the live
  *  calculator's `hasFee` reads (`calculator-model.ts`) — kept in sync by the shared meaning, not by
  *  a shared call, because this side reads exact decimal STRINGS out of an immutable document. */
 function feeBearing(slot: FrozenInputValue | undefined): boolean {
-  if (slot === null || typeof slot !== "object" || Array.isArray(slot)) return false;
-  const positive = (key: string): boolean => Number(slot[key] ?? 0) > 0;
-  const filled = (key: string): boolean => Array.isArray(slot[key]) && slot[key].length > 0;
-  return (
-    positive("commissionPct") ||
-    positive("fixedFee") ||
-    positive("minPerItem") ||
-    positive("freightCost") ||
-    filled("priceBands") ||
-    filled("freightVoucherBands")
-  );
+    if (slot === null || typeof slot !== "object" || Array.isArray(slot)) return false;
+    const positive = (key: string): boolean => Number(slot[key] ?? 0) > 0;
+    const filled = (key: string): boolean => Array.isArray(slot[key]) && slot[key].length > 0;
+    return (
+        positive("commissionPct") ||
+        positive("fixedFee") ||
+        positive("minPerItem") ||
+        positive("freightCost") ||
+        filled("priceBands") ||
+        filled("freightVoucherBands")
+    );
 }
 
 /**
@@ -474,29 +482,29 @@ function feeBearing(slot: FrozenInputValue | undefined): boolean {
  * would be the same fabrication in the other direction (SC-815).
  */
 export function frozenChannelHasFee(payload: FrozenSnapshotPayload, index: number): boolean {
-  const rendered = payload.channels?.[index];
-  if (!rendered) return true;
+    const rendered = payload.channels?.[index];
+    if (!rendered) return true;
 
-  if (payload.kind === "SINGLE") {
-    const slots = payload.inputs?.["channels"];
-    if (!Array.isArray(slots) || slots[index] === undefined) return true;
-    return feeBearing(slots[index]);
-  }
-
-  // A KIT channel is a ROLLUP over the lines, so it is matched by marketplace, never by index. If
-  // ANY contributing line carried a fee for that marketplace, the rolled-up number means something.
-  // 019/PR-E: só um KIT tem linhas COM entrada de canal — um QUOTE é venda direta e nem chega aqui
-  // (não tem `channels` a renderizar), e `frozenKitLines` devolve vazio para ele por construção.
-  let matched = false;
-  for (const line of frozenKitLines(payload)) {
-    const slots = line.input["channels"];
-    if (!Array.isArray(slots)) continue;
-    for (const slot of slots) {
-      if (slot === null || typeof slot !== "object" || Array.isArray(slot)) continue;
-      if (slot["marketplace"] !== rendered.marketplace) continue;
-      matched = true;
-      if (feeBearing(slot)) return true;
+    if (payload.kind === "SINGLE") {
+        const slots = payload.inputs?.["channels"];
+        if (!Array.isArray(slots) || slots[index] === undefined) return true;
+        return feeBearing(slots[index]);
     }
-  }
-  return !matched;
+
+    // A KIT channel is a ROLLUP over the lines, so it is matched by marketplace, never by index. If
+    // ANY contributing line carried a fee for that marketplace, the rolled-up number means something.
+    // 019/PR-E: só um KIT tem linhas COM entrada de canal — um QUOTE é venda direta e nem chega aqui
+    // (não tem `channels` a renderizar), e `frozenKitLines` devolve vazio para ele por construção.
+    let matched = false;
+    for (const line of frozenKitLines(payload)) {
+        const slots = line.input["channels"];
+        if (!Array.isArray(slots)) continue;
+        for (const slot of slots) {
+            if (slot === null || typeof slot !== "object" || Array.isArray(slot)) continue;
+            if (slot["marketplace"] !== rendered.marketplace) continue;
+            matched = true;
+            if (feeBearing(slot)) return true;
+        }
+    }
+    return !matched;
 }

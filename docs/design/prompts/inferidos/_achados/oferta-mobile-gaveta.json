@@ -1,17 +1,17 @@
 {
-  "id": "oferta-mobile-gaveta",
-  "nome": "Oferta de planos em GAVETA (mobile / < 1280px)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/billing/offer-panel.tsx",
-    "apps/web/src/pages/conta/conta-page.tsx",
-    "apps/web/src/shared/billing/plans.ts"
-  ],
-  "oQueFoiInferido": "Abaixo de 1280px (`WIDE_QUERY = \"(min-width: 1280px)\"`) o mesmo `<OfferPanel/>` abre dentro de um `Sheet`/`SheetContent` com `SheetTitle` \"Assinar o Premium\", acionado pelo botão do plano OU pela chegada de um teaser com `?assinar=1`. Foi inferido: a altura e a rolagem da gaveta com os dois cartões de plano EMPILHADOS (o canvas os desenha lado a lado em `grid-template-columns:1fr 1fr`, layout que colapsa sozinho no estreito), a ordem lead → corpo → fieldset de rádios → CTA → dois avisos, e a ausência de qualquer dispensa explícita.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A tela de compra na largura em que a maioria dos vendedores está é uma adaptação automática de um layout desenhado para 1920px, dentro de uma gaveta cuja altura ninguém compôs.",
-  "prioridade": "ALTA",
-  "refutacao": "Sobrevive, mas o protótipo cobre MAIS do que o mapeador creditou, e vale registrar o que exatamente. `PremiumScreen.jsx` (63 linhas) é uma tela de oferta MOBILE completa e composta: overlay `position:absolute; inset:0` de tela cheia, botão de fechar no topo à direita, `Icon crown 32` + h1 \"Truth's Forge Premium\", lead \"O cálculo é sempre grátis…\", um bloco `bg-muted` \"NO PLANO GRÁTIS VOCÊ TEM\", quatro linhas de benefício com `circle-check`, e — ancorado por `marginTop:'auto'` — um `SegmentedControl` mensal/anual, UM preço grande em `--fs-3xl` com `/mês`, a linha de aviso de pagamento, o CTA `primary size=lg full glow` e um `ghost full` \"Agora não\". §E8 do prompt confirma a estrutura (bottom-sheet contextual + \"Tela de planos Free × Premium\", botões \"Agora não\"/\"Ver planos\", preços \"R$ —\"). Ou seja: existe SIM um desenho mobile da oferta — mas é uma versão ANTERIOR e estruturalmente diferente (tela cheia, não gaveta; segmented + um preço, não fieldset de rádios com dois cartões; benefícios explícitos, ausentes no código; dispensa presente, ausente no código; preço placeholder, proibido de ser real pela rodada 1 item 2). Nenhuma dessas peças sobreviveu no código. Pelo critério do meio-termo do mandato, o achado SOBREVIVE como PROTOTIPO_PARCIAL — e a pergunta específica (o que fica acima da dobra da gaveta, se o CTA gruda no rodapé, como se sai) continua sem resposta em qualquer autoridade.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "oferta-mobile-gaveta",
+    "nome": "Oferta de planos em GAVETA (mobile / < 1280px)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/billing/offer-panel.tsx",
+        "apps/web/src/pages/conta/conta-page.tsx",
+        "apps/web/src/shared/billing/plans.ts"
+    ],
+    "oQueFoiInferido": "Abaixo de 1280px (`WIDE_QUERY = \"(min-width: 1280px)\"`) o mesmo `<OfferPanel/>` abre dentro de um `Sheet`/`SheetContent` com `SheetTitle` \"Assinar o Premium\", acionado pelo botão do plano OU pela chegada de um teaser com `?assinar=1`. Foi inferido: a altura e a rolagem da gaveta com os dois cartões de plano EMPILHADOS (o canvas os desenha lado a lado em `grid-template-columns:1fr 1fr`, layout que colapsa sozinho no estreito), a ordem lead → corpo → fieldset de rádios → CTA → dois avisos, e a ausência de qualquer dispensa explícita.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A tela de compra na largura em que a maioria dos vendedores está é uma adaptação automática de um layout desenhado para 1920px, dentro de uma gaveta cuja altura ninguém compôs.",
+    "prioridade": "ALTA",
+    "refutacao": "Sobrevive, mas o protótipo cobre MAIS do que o mapeador creditou, e vale registrar o que exatamente. `PremiumScreen.jsx` (63 linhas) é uma tela de oferta MOBILE completa e composta: overlay `position:absolute; inset:0` de tela cheia, botão de fechar no topo à direita, `Icon crown 32` + h1 \"Truth's Forge Premium\", lead \"O cálculo é sempre grátis…\", um bloco `bg-muted` \"NO PLANO GRÁTIS VOCÊ TEM\", quatro linhas de benefício com `circle-check`, e — ancorado por `marginTop:'auto'` — um `SegmentedControl` mensal/anual, UM preço grande em `--fs-3xl` com `/mês`, a linha de aviso de pagamento, o CTA `primary size=lg full glow` e um `ghost full` \"Agora não\". §E8 do prompt confirma a estrutura (bottom-sheet contextual + \"Tela de planos Free × Premium\", botões \"Agora não\"/\"Ver planos\", preços \"R$ —\"). Ou seja: existe SIM um desenho mobile da oferta — mas é uma versão ANTERIOR e estruturalmente diferente (tela cheia, não gaveta; segmented + um preço, não fieldset de rádios com dois cartões; benefícios explícitos, ausentes no código; dispensa presente, ausente no código; preço placeholder, proibido de ser real pela rodada 1 item 2). Nenhuma dessas peças sobreviveu no código. Pelo critério do meio-termo do mandato, o achado SOBREVIVE como PROTOTIPO_PARCIAL — e a pergunta específica (o que fica acima da dobra da gaveta, se o CTA gruda no rodapé, como se sai) continua sem resposta em qualquer autoridade.",
+    "sobreviveu": true,
+    "area": "billing"
 }

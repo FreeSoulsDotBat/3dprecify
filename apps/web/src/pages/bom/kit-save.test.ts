@@ -11,93 +11,97 @@ import { defaultPieceName, type KitSaveLine, linesToBomIn } from "./kit-save";
 //      "adjusted bound line": unbind → ad-hoc → materialize) — saves as a named value-set.
 
 function line(over: Partial<KitSaveLine> = {}): KitSaveLine {
-  return {
-    values: { ...structuredClone(defaultCalcValues), printGrams: "100", printTimeHours: "5" },
-    quantityRaw: "2",
-    productId: "",
-    productName: null,
-    filamentMaterial: null,
-    adjusted: false,
-    pieceName: "Suporte",
-    ...over,
-  };
+    return {
+        values: { ...structuredClone(defaultCalcValues), printGrams: "100", printTimeHours: "5" },
+        quantityRaw: "2",
+        productId: "",
+        productName: null,
+        filamentMaterial: null,
+        adjusted: false,
+        pieceName: "Suporte",
+        ...over,
+    };
 }
 
 describe("defaultPieceName — the K4 pre-fill", () => {
-  it("names an ad-hoc piece after its position and the kit", () => {
-    expect(defaultPieceName(0, "Kit Suporte")).toBe("Peça 1 · Kit Suporte");
-    expect(defaultPieceName(2, "Kit Suporte")).toBe("Peça 3 · Kit Suporte");
-  });
+    it("names an ad-hoc piece after its position and the kit", () => {
+        expect(defaultPieceName(0, "Kit Suporte")).toBe("Peça 1 · Kit Suporte");
+        expect(defaultPieceName(2, "Kit Suporte")).toBe("Peça 3 · Kit Suporte");
+    });
 
-  it("falls back to a bare piece name while the kit is still unnamed", () => {
-    expect(defaultPieceName(0, "  ")).toBe("Peça 1");
-  });
+    it("falls back to a bare piece name while the kit is still unnamed", () => {
+        expect(defaultPieceName(0, "  ")).toBe("Peça 1");
+    });
 });
 
 describe("linesToBomIn — reference vs materialization", () => {
-  it("a bound, untouched line saves as a LIVE REFERENCE (id only, no values)", () => {
-    const body = linesToBomIn("Kit Suporte", [
-      line({ productId: "p1", productName: "Base", adjusted: false }),
-    ]);
+    it("a bound, untouched line saves as a LIVE REFERENCE (id only, no values)", () => {
+        const body = linesToBomIn("Kit Suporte", [
+            line({ productId: "p1", productName: "Base", adjusted: false }),
+        ]);
 
-    expect(body.name).toBe("Kit Suporte");
-    expect(body.lines).toHaveLength(1);
-    const [l] = body.lines;
-    expect(l.productId).toBe("p1");
-    expect(l.quantity).toBe(2);
-    // The server re-snapshots from the live product — sending values would fight the D3 rule
-    // (and the wire's XOR validator would 422 the whole save).
-    expect(l.pieceName).toBeUndefined();
-    expect(l.pieceInputs).toBeUndefined();
-    expect(l.filamentValues).toBeUndefined();
-  });
+        expect(body.name).toBe("Kit Suporte");
+        expect(body.lines).toHaveLength(1);
+        const [l] = body.lines;
+        expect(l.productId).toBe("p1");
+        expect(l.quantity).toBe(2);
+        // The server re-snapshots from the live product — sending values would fight the D3 rule
+        // (and the wire's XOR validator would 422 the whole save).
+        expect(l.pieceName).toBeUndefined();
+        expect(l.pieceInputs).toBeUndefined();
+        expect(l.filamentValues).toBeUndefined();
+    });
 
-  it("an ad-hoc line saves as a NAMED value-set (it has to materialize)", () => {
-    const body = linesToBomIn("Kit Suporte", [line({ pieceName: "Suporte L" })]);
-    const [l] = body.lines;
+    it("an ad-hoc line saves as a NAMED value-set (it has to materialize)", () => {
+        const body = linesToBomIn("Kit Suporte", [line({ pieceName: "Suporte L" })]);
+        const [l] = body.lines;
 
-    expect(l.productId).toBeUndefined();
-    expect(l.pieceName).toBe("Suporte L");
-    expect(l.pieceInputs?.printGrams).toBe("100");
-    expect(l.filamentValues).toBeDefined();
-    expect(l.printerValues).toBeDefined();
-    expect(l.tariffPerKwh).toBeDefined();
-  });
+        expect(l.productId).toBeUndefined();
+        expect(l.pieceName).toBe("Suporte L");
+        expect(l.pieceInputs?.printGrams).toBe("100");
+        expect(l.filamentValues).toBeDefined();
+        expect(l.printerValues).toBeDefined();
+        expect(l.tariffPerKwh).toBeDefined();
+    });
 
-  it("an ADJUSTED bound line unbinds and materializes — the edit is never thrown away", () => {
-    // ADR-0017's edit-after-bind convention. Saving it as a reference would let the live
-    // product's values SUPERSEDE the seller's adjustment: silent data loss, the exact thing
-    // the materialization rule exists to prevent.
-    const body = linesToBomIn("Kit Suporte", [
-      line({
-        productId: "p1",
-        productName: "Base",
-        adjusted: true,
-        pieceName: "Base ajustada",
-        values: { ...structuredClone(defaultCalcValues), printGrams: "250", printTimeHours: "9" },
-      }),
-    ]);
-    const [l] = body.lines;
+    it("an ADJUSTED bound line unbinds and materializes — the edit is never thrown away", () => {
+        // ADR-0017's edit-after-bind convention. Saving it as a reference would let the live
+        // product's values SUPERSEDE the seller's adjustment: silent data loss, the exact thing
+        // the materialization rule exists to prevent.
+        const body = linesToBomIn("Kit Suporte", [
+            line({
+                productId: "p1",
+                productName: "Base",
+                adjusted: true,
+                pieceName: "Base ajustada",
+                values: {
+                    ...structuredClone(defaultCalcValues),
+                    printGrams: "250",
+                    printTimeHours: "9",
+                },
+            }),
+        ]);
+        const [l] = body.lines;
 
-    expect(l.productId).toBeUndefined();
-    expect(l.pieceName).toBe("Base ajustada");
-    expect(l.pieceInputs?.printGrams).toBe("250");
-  });
+        expect(l.productId).toBeUndefined();
+        expect(l.pieceName).toBe("Base ajustada");
+        expect(l.pieceInputs?.printGrams).toBe("250");
+    });
 
-  it("carries quantity per line, including the honest zero", () => {
-    const body = linesToBomIn("Kit", [
-      line({ quantityRaw: "0" }),
-      line({ quantityRaw: "7", pieceName: "Outra" }),
-    ]);
-    expect(body.lines.map((l) => l.quantity)).toEqual([0, 7]);
-  });
+    it("carries quantity per line, including the honest zero", () => {
+        const body = linesToBomIn("Kit", [
+            line({ quantityRaw: "0" }),
+            line({ quantityRaw: "7", pieceName: "Outra" }),
+        ]);
+        expect(body.lines.map((l) => l.quantity)).toEqual([0, 7]);
+    });
 
-  it("trims the kit name and keeps the submitted line order", () => {
-    const body = linesToBomIn("  Kit Suporte  ", [
-      line({ pieceName: "A" }),
-      line({ pieceName: "B" }),
-    ]);
-    expect(body.name).toBe("Kit Suporte");
-    expect(body.lines.map((l) => l.pieceName)).toEqual(["A", "B"]);
-  });
+    it("trims the kit name and keeps the submitted line order", () => {
+        const body = linesToBomIn("  Kit Suporte  ", [
+            line({ pieceName: "A" }),
+            line({ pieceName: "B" }),
+        ]);
+        expect(body.name).toBe("Kit Suporte");
+        expect(body.lines.map((l) => l.pieceName)).toEqual(["A", "B"]);
+    });
 });

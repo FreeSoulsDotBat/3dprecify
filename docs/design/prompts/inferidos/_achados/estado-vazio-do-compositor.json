@@ -1,13 +1,13 @@
 {
-  "id": "estado-vazio-do-compositor",
-  "nome": "Estado vazio do compositor de kits",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "O primeiro contato com a aba: um `EmptyState` com ícone `package` (o mesmo do Catálogo), título 'Monte seu kit peça por peça', corpo 'Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.' e DOIS botões empilhados e centralizados — 'Adicionar peça' (primário) e 'Ver meus kits' (ghost, size sm, acrescentado por um nit de review de IA em 2026-07-12). Não foi desenhado: se a aba deve abrir vazia ou já com uma peça, qual glifo representa 'kit' (o `package` foi tomado emprestado do Catálogo; a própria `ux-bom` §6.2-G3 registra que não existe ícone de montagem no set de 43), e a relação entre criar e consultar kits salvos nesse mesmo vazio.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a porta de entrada da aba para quem acabou de assinar o Premium; hoje o que ela ensina veio de copy escrita por IA e de um nit de review, com um ícone assumidamente emprestado.",
-  "prioridade": "MEDIA",
-  "refutacao": "O canvas tem exatamente dois ramos no bloco Kits — `sc-if isFree` (o teaser) e `sc-if isPremium` (três peças populadas, `hint-placeholder-count=3`) — e nenhum ramo vazio; o mesmo vale para o Catálogo, cujas listas nunca aparecem vazias no artboard. §E5 e §E6 do protótipo desenham empty-states de Catálogo ('educativo' + seed 'Começar com filamentos comuns') e de Histórico ('gated para free'), mas §E não lista a aba Kits, então não há vazio de kits. Auditoria de 2026-07-02: nada. `.design-import/`: sem tela de kits. A única autoridade é textual: `ux-bom.md` §1.8, e o §6.1 item 7 classificou o vazio como *Low / DS-ready* — pedido, não desenho.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "estado-vazio-do-compositor",
+    "nome": "Estado vazio do compositor de kits",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "O primeiro contato com a aba: um `EmptyState` com ícone `package` (o mesmo do Catálogo), título 'Monte seu kit peça por peça', corpo 'Some peças avulsas ou produtos do seu catálogo, com quantidade, e veja o preço do kit inteiro.' e DOIS botões empilhados e centralizados — 'Adicionar peça' (primário) e 'Ver meus kits' (ghost, size sm, acrescentado por um nit de review de IA em 2026-07-12). Não foi desenhado: se a aba deve abrir vazia ou já com uma peça, qual glifo representa 'kit' (o `package` foi tomado emprestado do Catálogo; a própria `ux-bom` §6.2-G3 registra que não existe ícone de montagem no set de 43), e a relação entre criar e consultar kits salvos nesse mesmo vazio.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a porta de entrada da aba para quem acabou de assinar o Premium; hoje o que ela ensina veio de copy escrita por IA e de um nit de review, com um ícone assumidamente emprestado.",
+    "prioridade": "MEDIA",
+    "refutacao": "O canvas tem exatamente dois ramos no bloco Kits — `sc-if isFree` (o teaser) e `sc-if isPremium` (três peças populadas, `hint-placeholder-count=3`) — e nenhum ramo vazio; o mesmo vale para o Catálogo, cujas listas nunca aparecem vazias no artboard. §E5 e §E6 do protótipo desenham empty-states de Catálogo ('educativo' + seed 'Começar com filamentos comuns') e de Histórico ('gated para free'), mas §E não lista a aba Kits, então não há vazio de kits. Auditoria de 2026-07-02: nada. `.design-import/`: sem tela de kits. A única autoridade é textual: `ux-bom.md` §1.8, e o §6.1 item 7 classificou o vazio como *Low / DS-ready* — pedido, não desenho.",
+    "sobreviveu": true,
+    "area": "kits"
 }

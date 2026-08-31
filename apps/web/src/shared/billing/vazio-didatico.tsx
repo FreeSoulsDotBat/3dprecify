@@ -25,74 +25,76 @@ import { TeaserUpgrade } from "./teaser-upgrade";
 export type VazioFeature = "filaments" | "printers" | "products" | "kits" | "quotes" | "scenarios";
 
 interface VazioCopy {
-  icon: IconName;
-  title: string;
-  body: string;
+    icon: IconName;
+    title: string;
+    body: string;
 }
 
 const c = messages.catalogo;
 
 function copyOf(feature: VazioFeature): VazioCopy {
-  switch (feature) {
-    case "filaments":
-      return { icon: "package", title: c.emptyFilamentsTitle, body: c.didaticoFilamentsBody };
-    case "printers":
-      return { icon: "package", title: c.emptyPrintersTitle, body: c.didaticoPrintersBody };
-    case "products":
-      return { icon: "package", title: c.emptyProductsTitle, body: c.didaticoProductsBody };
-    case "kits":
-      return { icon: "package", title: c.emptyKitsTitle, body: c.didaticoKitsBody };
-    case "quotes":
-      return {
-        icon: "history",
-        title: messages.historico.didaticoTitle,
-        body: messages.historico.didaticoBody,
-      };
-    case "scenarios":
-      return {
-        icon: "boxes",
-        title: messages.scenarios.emptyTitle,
-        body: messages.scenarios.didaticoBody,
-      };
-  }
+    switch (feature) {
+        case "filaments":
+            return { icon: "package", title: c.emptyFilamentsTitle, body: c.didaticoFilamentsBody };
+        case "printers":
+            return { icon: "package", title: c.emptyPrintersTitle, body: c.didaticoPrintersBody };
+        case "products":
+            return { icon: "package", title: c.emptyProductsTitle, body: c.didaticoProductsBody };
+        case "kits":
+            return { icon: "package", title: c.emptyKitsTitle, body: c.didaticoKitsBody };
+        case "quotes":
+            return {
+                icon: "history",
+                title: messages.historico.didaticoTitle,
+                body: messages.historico.didaticoBody,
+            };
+        case "scenarios":
+            return {
+                icon: "boxes",
+                title: messages.scenarios.emptyTitle,
+                body: messages.scenarios.didaticoBody,
+            };
+    }
 }
 
 export interface VazioDidaticoProps {
-  feature: VazioFeature;
-  /** O estado que a tela leu de `premiumGate(...)`. Só decide DUAS coisas aqui: se o convite é
-   *  "Assinar" (nunca teve / deslogado) ou "Reativar" (teve e venceu), e para onde o deslogado vai. */
-  gate: Exclude<PremiumGate, "active">;
-  /** O botão do vazio — "Adicionar filamento" (abre o formulário inerte) ou "Fazer um cálculo". */
-  action: ReactNode;
-  /** `false` enquanto o formulário inerte está aberto: o rodapé dele é o único convite da tela. */
-  teaser?: boolean;
+    feature: VazioFeature;
+    /** O estado que a tela leu de `premiumGate(...)`. Só decide DUAS coisas aqui: se o convite é
+     *  "Assinar" (nunca teve / deslogado) ou "Reativar" (teve e venceu), e para onde o deslogado vai. */
+    gate: Exclude<PremiumGate, "active">;
+    /** O botão do vazio — "Adicionar filamento" (abre o formulário inerte) ou "Fazer um cálculo". */
+    action: ReactNode;
+    /** `false` enquanto o formulário inerte está aberto: o rodapé dele é o único convite da tela. */
+    teaser?: boolean;
 }
 
 export function VazioDidatico({ feature, gate, action, teaser = true }: VazioDidaticoProps) {
-  const copy = copyOf(feature);
-  // `unknown` (logado sem resposta do servidor) NÃO recebe convite: convidar a assinar quem talvez
-  // já pague é presumir — o precedente é o `PlanState` do E6, e o CF-045 da homologação vigia
-  // exatamente isso ("falha de rede nunca é vendida como 'você não é premium'").
-  const convida = teaser && gate !== "unknown";
-  return (
-    <EmptyState
-      icon={copy.icon}
-      title={copy.title}
-      description={copy.body}
-      data-testid="vazio-didatico"
-      data-feature={feature}
-      action={
-        <div className="flex flex-col items-center gap-3">
-          {action}
-          {convida && (
-            <TeaserUpgrade
-              signedOut={gate === "signed-out"}
-              align="center"
-              label={gate === "lapsed" ? messages.billing.reactivateAction : undefined}
-            />
-          )}
-        </div>
-      }
-    />
-  );
+    const copy = copyOf(feature);
+    // `unknown` (logado sem resposta do servidor) NÃO recebe convite: convidar a assinar quem talvez
+    // já pague é presumir — o precedente é o `PlanState` do E6, e o CF-045 da homologação vigia
+    // exatamente isso ("falha de rede nunca é vendida como 'você não é premium'").
+    const convida = teaser && gate !== "unknown";
+    return (
+        <EmptyState
+            icon={copy.icon}
+            title={copy.title}
+            description={copy.body}
+            data-testid="vazio-didatico"
+            data-feature={feature}
+            action={
+                <div className="flex flex-col items-center gap-3">
+                    {action}
+                    {convida && (
+                        <TeaserUpgrade
+                            signedOut={gate === "signed-out"}
+                            align="center"
+                            label={
+                                gate === "lapsed" ? messages.billing.reactivateAction : undefined
+                            }
+                        />
+                    )}
+                </div>
+            }
+        />
+    );
 }

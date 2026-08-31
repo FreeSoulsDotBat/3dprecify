@@ -1,110 +1,110 @@
 {
-  "aviso-blur-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 338.921875,
-      "width": 316,
-      "height": 166
+    "aviso-blur-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 338.921875,
+            "width": 316,
+            "height": 166
+        }
+    },
+    "readout-estimar-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 380.234375,
+            "width": 316,
+            "height": 83.796875
+        }
+    },
+    "readout-ajustar-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 281.046875,
+            "width": 316,
+            "height": 83.796875
+        }
+    },
+    "confirmacao-modo-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 376.84375,
+            "width": 316,
+            "height": 222
+        }
+    },
+    "selo-compact-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 360.96875,
+            "width": 316,
+            "height": 122
+        }
+    },
+    "selo-ver-fonte-390-dark": {
+        "overflowX": 0,
+        "box": {
+            "x": 15.6015625,
+            "y": 277.3046875,
+            "width": 358.796875,
+            "height": 289.390625
+        }
+    },
+    "aviso-blur-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 338.921875,
+            "width": 316,
+            "height": 166
+        }
+    },
+    "readout-estimar-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 380.234375,
+            "width": 316,
+            "height": 83.796875
+        }
+    },
+    "readout-ajustar-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 281.046875,
+            "width": 316,
+            "height": 83.796875
+        }
+    },
+    "confirmacao-modo-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 376.84375,
+            "width": 316,
+            "height": 222
+        }
+    },
+    "selo-compact-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 37,
+            "y": 360.96875,
+            "width": 316,
+            "height": 122
+        }
+    },
+    "selo-ver-fonte-390-light": {
+        "overflowX": 0,
+        "box": {
+            "x": 15.6015625,
+            "y": 277.3046875,
+            "width": 358.796875,
+            "height": 289.390625
+        }
     }
-  },
-  "readout-estimar-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 380.234375,
-      "width": 316,
-      "height": 83.796875
-    }
-  },
-  "readout-ajustar-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 281.046875,
-      "width": 316,
-      "height": 83.796875
-    }
-  },
-  "confirmacao-modo-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 376.84375,
-      "width": 316,
-      "height": 222
-    }
-  },
-  "selo-compact-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 360.96875,
-      "width": 316,
-      "height": 122
-    }
-  },
-  "selo-ver-fonte-390-dark": {
-    "overflowX": 0,
-    "box": {
-      "x": 15.6015625,
-      "y": 277.3046875,
-      "width": 358.796875,
-      "height": 289.390625
-    }
-  },
-  "aviso-blur-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 338.921875,
-      "width": 316,
-      "height": 166
-    }
-  },
-  "readout-estimar-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 380.234375,
-      "width": 316,
-      "height": 83.796875
-    }
-  },
-  "readout-ajustar-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 281.046875,
-      "width": 316,
-      "height": 83.796875
-    }
-  },
-  "confirmacao-modo-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 376.84375,
-      "width": 316,
-      "height": 222
-    }
-  },
-  "selo-compact-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 37,
-      "y": 360.96875,
-      "width": 316,
-      "height": 122
-    }
-  },
-  "selo-ver-fonte-390-light": {
-    "overflowX": 0,
-    "box": {
-      "x": 15.6015625,
-      "y": 277.3046875,
-      "width": 358.796875,
-      "height": 289.390625
-    }
-  }
 }

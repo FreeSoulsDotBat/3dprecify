@@ -1,13 +1,13 @@
 {
-  "id": "entrada-minhas-simulacoes-no-calcular",
-  "nome": "Entrada \"Minhas simulações\" no topo do Calcular",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
-  "oQueFoiInferido": "O único caminho de entrada para todo o E5: `<div className=\"flex justify-end\"><Button variant=\"ghost\" size=\"sm\"><Icon name=\"boxes\" size={16}/> Minhas simulações</Button></div>`, entre a frase freemium e o resto da página (calcular-page.tsx ~311-317). Inferido: que a porta de uma funcionalidade inteira cabe num botão fantasma pequeno; o ícone \"boxes\", emprestado do catálogo; o alinhamento à direita; a ausência de contador (\"3 salvas\") e de qualquer distinção entre o vendedor que tem simulações e o que nunca salvou nenhuma (o botão é byte-idêntico para grátis, deslogado e premium).",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "Metade do valor pago (Premium) fica atrás de um botão fantasma pequeno no canto — muito vendedor não descobre que simulações existem.",
-  "prioridade": "ALTA",
-  "refutacao": "Fui atrás da tela Calcular nas 4 autoridades para achar essa porta desenhada. O protótipo (E4 + §F) desenha na Calcular: recompute ao vivo, 4 seções coláveis, seletor catalog-driven, PriceHero, breakdown, varejo×atacado e a ação Salvar → sheet de upsell. Nenhuma entrada de lista de cenários. O esqueleto `CalculatorScreen.jsx` foi lido inteiro: a `TopBar` tem exatamente DUAS ações (`IconButton` de tema e `IconButton` \"Conta\") e o corpo não tem nenhum botão de navegação para cenários. O canvas 018 exclui Calcular por escrito (linha 455) e o \"Calcular Desktop\" que ele cita não existe no repo. A ux-scenarios.md §10.2/G4 chega a pedir o desenho (\"Design the header entry now\") — pedido que nunca virou pixel. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "entrada-minhas-simulacoes-no-calcular",
+    "nome": "Entrada \"Minhas simulações\" no topo do Calcular",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
+    "oQueFoiInferido": "O único caminho de entrada para todo o E5: `<div className=\"flex justify-end\"><Button variant=\"ghost\" size=\"sm\"><Icon name=\"boxes\" size={16}/> Minhas simulações</Button></div>`, entre a frase freemium e o resto da página (calcular-page.tsx ~311-317). Inferido: que a porta de uma funcionalidade inteira cabe num botão fantasma pequeno; o ícone \"boxes\", emprestado do catálogo; o alinhamento à direita; a ausência de contador (\"3 salvas\") e de qualquer distinção entre o vendedor que tem simulações e o que nunca salvou nenhuma (o botão é byte-idêntico para grátis, deslogado e premium).",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "Metade do valor pago (Premium) fica atrás de um botão fantasma pequeno no canto — muito vendedor não descobre que simulações existem.",
+    "prioridade": "ALTA",
+    "refutacao": "Fui atrás da tela Calcular nas 4 autoridades para achar essa porta desenhada. O protótipo (E4 + §F) desenha na Calcular: recompute ao vivo, 4 seções coláveis, seletor catalog-driven, PriceHero, breakdown, varejo×atacado e a ação Salvar → sheet de upsell. Nenhuma entrada de lista de cenários. O esqueleto `CalculatorScreen.jsx` foi lido inteiro: a `TopBar` tem exatamente DUAS ações (`IconButton` de tema e `IconButton` \"Conta\") e o corpo não tem nenhum botão de navegação para cenários. O canvas 018 exclui Calcular por escrito (linha 455) e o \"Calcular Desktop\" que ele cita não existe no repo. A ux-scenarios.md §10.2/G4 chega a pedir o desenho (\"Design the header entry now\") — pedido que nunca virou pixel. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

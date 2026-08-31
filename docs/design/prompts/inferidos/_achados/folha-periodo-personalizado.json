@@ -1,13 +1,13 @@
 {
-  "id": "folha-periodo-personalizado",
-  "nome": "Folha \"Período…\" (intervalo de datas)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
-  "oQueFoiInferido": "Uma `Sheet` com `showClose={false}`, título 'Período…', dois `<input type=\"date\">` nativos em Fields rotulados 'De' e 'Até' empilhados, e o par [Voltar]/[Aplicar] alinhado à direita. Inferido: entregar o seletor nativo do SO em vez de qualquer calendário desenhado; não validar nem avisar quando 'De' é posterior a 'Até' (o código monta o range sem checar); não oferecer atalho nenhum (este mês, ano passado); e não dizer em lugar algum que deixar um campo em branco significa 'sem limite' — embora `periodRange` aceite bound aberto e simplesmente omita o campo vazio.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "É o único componente de data do produto inteiro e foi resolvido pelo default do navegador. No Android e no iOS ele aparece diferente, e nada na tela explica que um campo vazio significa 'sem limite'.",
-  "prioridade": "MEDIA",
-  "refutacao": "Não há data desenhada em parte alguma do produto. Varri as quatro: `claude-design-prototype.md` (§E4/§E5/§E6/§E9 e a lista de componentes da seção D) não tem date picker, calendário nem campo de data — a lista de primitivas vai de Chip a Segmented control e para por aí; os dois fixes não pedem nenhum; `HistoryScreen.jsx` não tem; `Abas-Desktop.dc.html` tem só o `tf-badge` 'Período…' (linha 276) e nenhum painel. A única fonte é `ux-history.md` §9.2 gap G4, que é literalmente uma RECOMENDAÇÃO escrita ('no date primitive… preset chips + a Sheet with two native <input type=date>') do subagente `designer-ux` — a categoria que o mandato manda classificar como SPEC_TEXTUAL. O código seguiu a recomendação ao pé da letra, o que confirma a inferência em vez de refutá-la.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "folha-periodo-personalizado",
+    "nome": "Folha \"Período…\" (intervalo de datas)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
+    "oQueFoiInferido": "Uma `Sheet` com `showClose={false}`, título 'Período…', dois `<input type=\"date\">` nativos em Fields rotulados 'De' e 'Até' empilhados, e o par [Voltar]/[Aplicar] alinhado à direita. Inferido: entregar o seletor nativo do SO em vez de qualquer calendário desenhado; não validar nem avisar quando 'De' é posterior a 'Até' (o código monta o range sem checar); não oferecer atalho nenhum (este mês, ano passado); e não dizer em lugar algum que deixar um campo em branco significa 'sem limite' — embora `periodRange` aceite bound aberto e simplesmente omita o campo vazio.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "É o único componente de data do produto inteiro e foi resolvido pelo default do navegador. No Android e no iOS ele aparece diferente, e nada na tela explica que um campo vazio significa 'sem limite'.",
+    "prioridade": "MEDIA",
+    "refutacao": "Não há data desenhada em parte alguma do produto. Varri as quatro: `claude-design-prototype.md` (§E4/§E5/§E6/§E9 e a lista de componentes da seção D) não tem date picker, calendário nem campo de data — a lista de primitivas vai de Chip a Segmented control e para por aí; os dois fixes não pedem nenhum; `HistoryScreen.jsx` não tem; `Abas-Desktop.dc.html` tem só o `tf-badge` 'Período…' (linha 276) e nenhum painel. A única fonte é `ux-history.md` §9.2 gap G4, que é literalmente uma RECOMENDAÇÃO escrita ('no date primitive… preset chips + a Sheet with two native <input type=date>') do subagente `designer-ux` — a categoria que o mandato manda classificar como SPEC_TEXTUAL. O código seguiu a recomendação ao pé da letra, o que confirma a inferência em vez de refutá-la.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

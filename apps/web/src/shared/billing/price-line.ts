@@ -22,5 +22,5 @@ const t = messages.billing;
  * existiu.
  */
 export function teaserPriceLine(): string {
-  return `${t.teaserPriceLead} ${t.planMonthlyPrice} · ${t.teaserAnnualLead} ${t.planAnnualEquiv}`;
+    return `${t.teaserPriceLead} ${t.planMonthlyPrice} · ${t.teaserAnnualLead} ${t.planAnnualEquiv}`;
 }

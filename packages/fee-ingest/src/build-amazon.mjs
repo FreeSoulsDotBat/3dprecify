@@ -38,40 +38,42 @@ const LINHAS = fileURLToPath(new URL("../artifacts/amazon-rows.json", import.met
 const ARTEFATO = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 
 async function fetchRows() {
-  // A página é renderizada por JS — `curl` devolve casca (medido, gate G2), então um navegador de
-  // verdade é obrigatório. Importado preguiçosamente para que `--from` não precise de browser algum.
-  const { chromium } = await import("@playwright/test");
-  const browser = await chromium.launch();
-  try {
-    const page = await browser.newPage({ locale: "pt-BR" });
-    await page.goto(PAGE, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    await page.waitForSelector("table", { timeout: 45_000 });
-    return await page.evaluate(() =>
-      [...document.querySelectorAll("table tr")].map((tr) =>
-        [...tr.querySelectorAll("td,th")].map((c) => c.textContent.replace(/\s+/g, " ").trim()),
-      ),
-    );
-  } finally {
-    await browser.close();
-  }
+    // A página é renderizada por JS — `curl` devolve casca (medido, gate G2), então um navegador de
+    // verdade é obrigatório. Importado preguiçosamente para que `--from` não precise de browser algum.
+    const { chromium } = await import("@playwright/test");
+    const browser = await chromium.launch();
+    try {
+        const page = await browser.newPage({ locale: "pt-BR" });
+        await page.goto(PAGE, { waitUntil: "domcontentloaded", timeout: 60_000 });
+        await page.waitForSelector("table", { timeout: 45_000 });
+        return await page.evaluate(() =>
+            [...document.querySelectorAll("table tr")].map((tr) =>
+                [...tr.querySelectorAll("td,th")].map((c) =>
+                    c.textContent.replace(/\s+/g, " ").trim(),
+                ),
+            ),
+        );
+    } finally {
+        await browser.close();
+    }
 }
 
 /** Escreve o veredito e sai. É o ÚNICO efeito de disco deste arquivo — e ele nunca toca dinheiro. */
 function emitir(veredito) {
-  mkdirSync(fileURLToPath(new URL("../artifacts/", import.meta.url)), { recursive: true });
-  writeFileSync(VEREDITO, `${JSON.stringify(veredito, null, 2)}\n`);
-  if (veredito.kind === "ABORTADO") {
-    // Um coletor que conclui SEM veredito é proibido (§A.4): o silêncio no disco é indistinguível de
-    // um job que nunca começou. Por isso o abortado também é escrito — e o exit é 0, porque o job
-    // FEZ o que devia; quem decide o desfecho do run é a composição.
-    console.error(`ABORTADO: ${veredito.reason}. O artefato fica intocado.`);
-    return;
-  }
-  const entradas = veredito.slice.leaves.filter((l) => l.level === "ENTRY").length;
-  console.log(
-    `LIDO: fatia da AMAZON com ${entradas} folhas de entrada, exaustiva em ` +
-      `${veredito.slice.exhaustive.join("+")} — coletado em ${veredito.collectedAt}`,
-  );
+    mkdirSync(fileURLToPath(new URL("../artifacts/", import.meta.url)), { recursive: true });
+    writeFileSync(VEREDITO, `${JSON.stringify(veredito, null, 2)}\n`);
+    if (veredito.kind === "ABORTADO") {
+        // Um coletor que conclui SEM veredito é proibido (§A.4): o silêncio no disco é indistinguível de
+        // um job que nunca começou. Por isso o abortado também é escrito — e o exit é 0, porque o job
+        // FEZ o que devia; quem decide o desfecho do run é a composição.
+        console.error(`ABORTADO: ${veredito.reason}. O artefato fica intocado.`);
+        return;
+    }
+    const entradas = veredito.slice.leaves.filter((l) => l.level === "ENTRY").length;
+    console.log(
+        `LIDO: fatia da AMAZON com ${entradas} folhas de entrada, exaustiva em ` +
+            `${veredito.slice.exhaustive.join("+")} — coletado em ${veredito.collectedAt}`,
+    );
 }
 
 const fromArg = process.argv.indexOf("--from");
@@ -80,25 +82,25 @@ const fromArg = process.argv.indexOf("--from");
 // uma data de captura que só quem chama sabe; carimbar hoje faria o selo dizer "atualizada em
 // <hoje>" sobre números que ninguém conferiu contra a Amazon. A regra mora em `guardrails.ts`.
 const quando = collectedAtFor({
-  fromFixture: fromArg > -1,
-  envDate: process.env.COLLECTED_AT,
-  today: new Date().toISOString().slice(0, 10),
+    fromFixture: fromArg > -1,
+    envDate: process.env.COLLECTED_AT,
+    today: new Date().toISOString().slice(0, 10),
 });
 if (!quando.ok) {
-  // Sem data honesta não há coleta: o veredito é ABORTADO, e ele é ESCRITO (nunca omitido).
-  emitir({
-    kind: "ABORTADO",
-    marketplace: "AMAZON",
-    reason: quando.reason,
-    sourceUrl: AMAZON_SOURCE_URL,
-  });
-  process.exit(0);
+    // Sem data honesta não há coleta: o veredito é ABORTADO, e ele é ESCRITO (nunca omitido).
+    emitir({
+        kind: "ABORTADO",
+        marketplace: "AMAZON",
+        reason: quando.reason,
+        sourceUrl: AMAZON_SOURCE_URL,
+    });
+    process.exit(0);
 }
 
 const rows =
-  fromArg > -1
-    ? JSON.parse(readFileSync(process.argv[fromArg + 1], "utf8"))[0].rows
-    : await fetchRows();
+    fromArg > -1
+        ? JSON.parse(readFileSync(process.argv[fromArg + 1], "utf8"))[0].rows
+        : await fetchRows();
 
 // As linhas capturadas sobem como artefato da run — inclusive quando a leitura for ABORTADA
 // (RA5): "consequência é parada, nunca corrupção", e a evidência do que a página devolveu é o
@@ -109,19 +111,19 @@ writeFileSync(LINHAS, `${JSON.stringify(rows, null, 2)}\n`);
 const artefato = JSON.parse(readFileSync(ARTEFATO, "utf8"));
 const amazon = artefato.marketplaces.find((m) => m.marketplace === "AMAZON");
 if (!amazon) {
-  emitir({
-    kind: "ABORTADO",
-    marketplace: "AMAZON",
-    reason: "o artefato não carrega a seção AMAZON — este coletor relê um marketplace, não cria um",
-    sourceUrl: AMAZON_SOURCE_URL,
-  });
-  process.exit(0);
+    emitir({
+        kind: "ABORTADO",
+        marketplace: "AMAZON",
+        reason: "o artefato não carrega a seção AMAZON — este coletor relê um marketplace, não cria um",
+        sourceUrl: AMAZON_SOURCE_URL,
+    });
+    process.exit(0);
 }
 
 emitir(
-  veredictoAmazon({
-    categorias: parseAmazonTable(rows),
-    collectedAt: quando.date,
-    previousEffectiveDates: vigenciasAnteriores(amazon),
-  }),
+    veredictoAmazon({
+        categorias: parseAmazonTable(rows),
+        collectedAt: quando.date,
+        previousEffectiveDates: vigenciasAnteriores(amazon),
+    }),
 );

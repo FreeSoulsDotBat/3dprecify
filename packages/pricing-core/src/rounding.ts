@@ -9,12 +9,12 @@ type Num = Decimal | number | string;
 
 /** Quantize a full-precision value to a 2-decimal BRL amount (ROUND_HALF_UP). */
 export function toMoney(value: Num): number {
-  return new Decimal(value).toDecimalPlaces(MONEY_DP, Decimal.ROUND_HALF_UP).toNumber();
+    return new Decimal(value).toDecimalPlaces(MONEY_DP, Decimal.ROUND_HALF_UP).toNumber();
 }
 
 /** Exact sum of already-rounded money lines — the aggregate a breakdown must add up to. */
 export function sumMoney(rounded: number[]): number {
-  return toMoney(rounded.reduce<Decimal>((acc, n) => acc.plus(n), new Decimal(0)));
+    return toMoney(rounded.reduce<Decimal>((acc, n) => acc.plus(n), new Decimal(0)));
 }
 
 // Re-export Decimal so the engine composes full-precision intermediates from one instance.

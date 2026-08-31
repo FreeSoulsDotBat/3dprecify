@@ -1,17 +1,17 @@
 {
-  "id": "avisos-de-documento-repreçado",
-  "nome": "Avisos de honestidade sobre o documento repreçado (reaproveitado / modelo aposentado)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/pages/historico/snapshot-detail-page.tsx",
-    "apps/web/src/pages/historico/recalc-today.tsx",
-    "apps/web/src/pages/historico/compare-today.tsx"
-  ],
-  "oQueFoiInferido": "Duas ressalvas equivalentes com dois pesos visuais diferentes, coladas ao número. A primeira ('Estes valores foram reaproveitados de um congelamento anterior — a origem não estava disponível para repreçar') é um `<p class=tf-historico__meta>` cinza de 0.8125rem logo abaixo de 'Valores congelados em {data}', governada por `payload.repricedFromFrozen`. A segunda (a nota estrutural do modelo com Desperdício, derivada por VERSÃO via `structuralModelNote`) é um `Alert tone=info` em dois lugares — o diálogo de recálculo e o bloco de comparação. Inferido: os dois pesos, e o fato de a informação mais importante do registro (a data é de hoje mas o número não é de hoje) viajar como legenda descartável.",
-  "autoridade": "NENHUMA",
-  "impacto": "Sem essas frases, o registro afirma por omissão um preço de hoje que ninguém calculou hoje. Elas existem justamente para impedir isso — e estão desenhadas como legenda descartável.",
-  "prioridade": "BAIXA",
-  "refutacao": "Cronologicamente impossível ter desenho: as duas frases nascem em 2026-08 (SC-818 do 014 e T037 do 016), um mês depois do protótipo (2026-07-02) e da spec textual (2026-07-13). Confirmei mesmo assim, autoridade por autoridade: não estão em `claude-design-prototype.md` (§E6 não conhece recálculo, e a versão da fórmula aparece só como o carimbo pedido no fixes item 8, 'fórmula v1.0.0'), não estão nos dois fixes, não estão em `HistoryScreen.jsx`, e a ficha técnica do canvas do dono (linhas 346-353) traz apenas três linhas — versão da fórmula, origem com link, e a nota do relógio do aparelho. Nem a legenda de reaproveitamento nem a nota do modelo aposentado aparecem em qualquer lugar do canvas.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "avisos-de-documento-repreçado",
+    "nome": "Avisos de honestidade sobre o documento repreçado (reaproveitado / modelo aposentado)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+        "apps/web/src/pages/historico/recalc-today.tsx",
+        "apps/web/src/pages/historico/compare-today.tsx"
+    ],
+    "oQueFoiInferido": "Duas ressalvas equivalentes com dois pesos visuais diferentes, coladas ao número. A primeira ('Estes valores foram reaproveitados de um congelamento anterior — a origem não estava disponível para repreçar') é um `<p class=tf-historico__meta>` cinza de 0.8125rem logo abaixo de 'Valores congelados em {data}', governada por `payload.repricedFromFrozen`. A segunda (a nota estrutural do modelo com Desperdício, derivada por VERSÃO via `structuralModelNote`) é um `Alert tone=info` em dois lugares — o diálogo de recálculo e o bloco de comparação. Inferido: os dois pesos, e o fato de a informação mais importante do registro (a data é de hoje mas o número não é de hoje) viajar como legenda descartável.",
+    "autoridade": "NENHUMA",
+    "impacto": "Sem essas frases, o registro afirma por omissão um preço de hoje que ninguém calculou hoje. Elas existem justamente para impedir isso — e estão desenhadas como legenda descartável.",
+    "prioridade": "BAIXA",
+    "refutacao": "Cronologicamente impossível ter desenho: as duas frases nascem em 2026-08 (SC-818 do 014 e T037 do 016), um mês depois do protótipo (2026-07-02) e da spec textual (2026-07-13). Confirmei mesmo assim, autoridade por autoridade: não estão em `claude-design-prototype.md` (§E6 não conhece recálculo, e a versão da fórmula aparece só como o carimbo pedido no fixes item 8, 'fórmula v1.0.0'), não estão nos dois fixes, não estão em `HistoryScreen.jsx`, e a ficha técnica do canvas do dono (linhas 346-353) traz apenas três linhas — versão da fórmula, origem com link, e a nota do relógio do aparelho. Nem a legenda de reaproveitamento nem a nota do modelo aposentado aparecem em qualquer lugar do canvas.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

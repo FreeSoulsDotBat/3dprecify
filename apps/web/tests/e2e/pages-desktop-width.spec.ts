@@ -15,54 +15,56 @@ import { signUpThrowaway } from "./history-helpers";
 const t = messages;
 
 async function widthRatio(page: import("@playwright/test").Page): Promise<number> {
-  const widths = await page.evaluate(() => {
-    const main = document.querySelector(".tf-shell__main");
-    const content = document.querySelector(".tf-shell__main > section");
-    if (!main || !content) return null;
-    return {
-      main: main.getBoundingClientRect().width,
-      content: content.getBoundingClientRect().width,
-    };
-  });
-  expect(widths, "expected both .tf-shell__main and its section child in the DOM").not.toBeNull();
-  return widths!.content / widths!.main;
+    const widths = await page.evaluate(() => {
+        const main = document.querySelector(".tf-shell__main");
+        const content = document.querySelector(".tf-shell__main > section");
+        if (!main || !content) return null;
+        return {
+            main: main.getBoundingClientRect().width,
+            content: content.getBoundingClientRect().width,
+        };
+    });
+    expect(widths, "expected both .tf-shell__main and its section child in the DOM").not.toBeNull();
+    return widths!.content / widths!.main;
 }
 
 test.describe("T072-A11 — desktop content width outside the calculator (1440px)", () => {
-  test("/catalogo (signed-out teaser) uses ≥40% of the shell's main content area", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/catalogo");
-    await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
-    const ratio = await widthRatio(page);
-    expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
-  });
+    test("/catalogo (signed-out teaser) uses ≥40% of the shell's main content area", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto("/catalogo");
+        await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
+        const ratio = await widthRatio(page);
+        expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
+    });
 
-  test("/historico (signed-out teaser) uses ≥40% of the shell's main content area", async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/historico");
-    await expect(page.getByText(t.historico.didaticoTitle)).toBeVisible();
-    const ratio = await widthRatio(page);
-    expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
-  });
+    test("/historico (signed-out teaser) uses ≥40% of the shell's main content area", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto("/historico");
+        await expect(page.getByText(t.historico.didaticoTitle)).toBeVisible();
+        const ratio = await widthRatio(page);
+        expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
+    });
 
-  test("/kits (signed-out teaser) uses ≥40% of the shell's main content area", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto("/kits");
-    await expect(page.getByText(t.catalogo.emptyKitsTitle).first()).toBeVisible();
-    const ratio = await widthRatio(page);
-    expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
-  });
+    test("/kits (signed-out teaser) uses ≥40% of the shell's main content area", async ({
+        page,
+    }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await page.goto("/kits");
+        await expect(page.getByText(t.catalogo.emptyKitsTitle).first()).toBeVisible();
+        const ratio = await widthRatio(page);
+        expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
+    });
 
-  test("/conta (authenticated) uses ≥40% of the shell's main content area", async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await signUpThrowaway(page, "a11-conta-width");
-    await page.goto("/conta");
-    await expect(page.getByRole("heading", { name: t.conta.title })).toBeVisible();
-    const ratio = await widthRatio(page);
-    expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
-  });
+    test("/conta (authenticated) uses ≥40% of the shell's main content area", async ({ page }) => {
+        await page.setViewportSize({ width: 1440, height: 900 });
+        await signUpThrowaway(page, "a11-conta-width");
+        await page.goto("/conta");
+        await expect(page.getByRole("heading", { name: t.conta.title })).toBeVisible();
+        const ratio = await widthRatio(page);
+        expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
+    });
 });

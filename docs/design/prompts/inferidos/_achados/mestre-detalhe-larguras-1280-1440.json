@@ -1,16 +1,16 @@
 {
-  "id": "mestre-detalhe-larguras-1280-1440",
-  "nome": "Mestre-detalhe do desktop entre 1280 e 1440px",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/pages/historico/historico-page.css",
-    "apps/web/src/pages/historico/historico-page.tsx"
-  ],
-  "oQueFoiInferido": "Tudo o que existe entre 1280 e 1440px. O desenho fixa a lista em 520px; a 1280 isso deixava a lista MAIOR que o documento (432px), então o código criou uma segunda regra que o desenho não tem — `minmax(320px, 0.85fr) minmax(0, 1.15fr)`, com a largura fixa de 520px voltando só num `@media (min-width:1440px)`. Mais: a coluna direita é `position:sticky` com `max-height: calc(100dvh - var(--space-8))` e scroll próprio, e o primeiro registro abre sozinho via `navigate(..., replace:true)`. Inferido: a proporção lista×documento na faixa 1280-1440, o scroll independente da coluna direita, e o estado vazio dessa coluna — que reusa o EmptyState do vazio FRIO e afirma 'Nenhum registro ainda' ao lado de uma lista que pode simplesmente estar filtrada.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Num notebook comum (1366px) o vendedor vê uma proporção que ninguém desenhou, e a coluna do documento — a que carrega a tabela de detalhamento e os preços por canal — pode ficar mais estreita que a lista.",
-  "prioridade": "MEDIA",
-  "refutacao": "O desenho existe para UMA largura só. `Abas-Desktop.dc.html` linha 266: `grid-template-columns:520px minmax(0,1fr)` dentro de um artboard de `width:1920px` (linha 33) — confirmei por grep que 1920 é a única largura no arquivo inteiro, e que não há `@media`, nem segundo artboard, nem qualquer anotação de breakpoint. O corte de 1280px é decisão técnica de `specs/018-abas-desktop/research.md`, não desenho. As duas correções (A1, o card aberto que não se marcava; A2, a lista maior que o documento) estão registradas em comentários do próprio CSS como achados da homologação do agente que construiu — isto é, nasceram depois do desenho e contra ele. `ux-history.md` é declaradamente 'mobile-first 390px com desktop notes inline' e não trata mestre-detalhe. §E3 do protótipo diz apenas 'Sidebar no desktop com os mesmos itens'. Sobrevive como PROTOTIPO_PARCIAL: a proporção 520+1fr está desenhada a 1920, e só a 1920.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "mestre-detalhe-larguras-1280-1440",
+    "nome": "Mestre-detalhe do desktop entre 1280 e 1440px",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/pages/historico/historico-page.css",
+        "apps/web/src/pages/historico/historico-page.tsx"
+    ],
+    "oQueFoiInferido": "Tudo o que existe entre 1280 e 1440px. O desenho fixa a lista em 520px; a 1280 isso deixava a lista MAIOR que o documento (432px), então o código criou uma segunda regra que o desenho não tem — `minmax(320px, 0.85fr) minmax(0, 1.15fr)`, com a largura fixa de 520px voltando só num `@media (min-width:1440px)`. Mais: a coluna direita é `position:sticky` com `max-height: calc(100dvh - var(--space-8))` e scroll próprio, e o primeiro registro abre sozinho via `navigate(..., replace:true)`. Inferido: a proporção lista×documento na faixa 1280-1440, o scroll independente da coluna direita, e o estado vazio dessa coluna — que reusa o EmptyState do vazio FRIO e afirma 'Nenhum registro ainda' ao lado de uma lista que pode simplesmente estar filtrada.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Num notebook comum (1366px) o vendedor vê uma proporção que ninguém desenhou, e a coluna do documento — a que carrega a tabela de detalhamento e os preços por canal — pode ficar mais estreita que a lista.",
+    "prioridade": "MEDIA",
+    "refutacao": "O desenho existe para UMA largura só. `Abas-Desktop.dc.html` linha 266: `grid-template-columns:520px minmax(0,1fr)` dentro de um artboard de `width:1920px` (linha 33) — confirmei por grep que 1920 é a única largura no arquivo inteiro, e que não há `@media`, nem segundo artboard, nem qualquer anotação de breakpoint. O corte de 1280px é decisão técnica de `specs/018-abas-desktop/research.md`, não desenho. As duas correções (A1, o card aberto que não se marcava; A2, a lista maior que o documento) estão registradas em comentários do próprio CSS como achados da homologação do agente que construiu — isto é, nasceram depois do desenho e contra ele. `ux-history.md` é declaradamente 'mobile-first 390px com desktop notes inline' e não trata mestre-detalhe. §E3 do protótipo diz apenas 'Sidebar no desktop com os mesmos itens'. Sobrevive como PROTOTIPO_PARCIAL: a proporção 520+1fr está desenhada a 1920, e só a 1920.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

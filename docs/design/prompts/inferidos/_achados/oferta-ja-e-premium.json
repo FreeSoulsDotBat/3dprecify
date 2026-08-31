@@ -1,13 +1,13 @@
 {
-  "id": "oferta-ja-e-premium",
-  "nome": "Oferta aberta por quem JÁ é Premium (\"Você já é Premium.\")",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/features/billing/offer-panel.tsx"],
-  "oQueFoiInferido": "Um guarda de entrada no `OfferPanel` que troca a oferta inteira por um único `<p>{t.alreadyPremium}</p>` solto dentro do container `.tf-billing-offer` — sem ícone, sem título próprio (o painel não tem heading: quem titula é o `SheetTitle`/`<h2>` do chamador), sem nenhuma ação (nem \"gerenciar\", nem \"fechar\"). Acontece de verdade: um teaser em cache ou um `?assinar=1` guardado leva um assinante até aqui, e no desktop o painel inline sequer é montado nesse estado, então o caso é sobretudo o da gaveta.",
-  "autoridade": "NENHUMA",
-  "impacto": "Um assinante que toca em qualquer caminho de assinatura cai num painel com uma frase e nenhuma saída oferecida.",
-  "prioridade": "BAIXA",
-  "refutacao": "O canvas alterna `isFree` (oferta) e `isPremium` (botões de gestão) na MESMA linha do plano, mas nunca desenha a OFERTA sendo aberta por um premium — são ramos exclusivos, e o ramo premium simplesmente não contém o bloco `tf-billing-offer`. §E8 assume sempre um usuário gratuito (\"Tela de planos Free × Premium\", upsell disparado \"ao tocar Salvar/Exportar/Adicionar\", que só um free encontra). `PremiumScreen.jsx` recebe só `open` e não tem ramo para assinante — se aberto por um premium, mostraria a oferta de compra completa, que é um defeito diferente e não um desenho deste estado. A matriz §G não tem linha para isso. Sobrevive.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "oferta-ja-e-premium",
+    "nome": "Oferta aberta por quem JÁ é Premium (\"Você já é Premium.\")",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/features/billing/offer-panel.tsx"],
+    "oQueFoiInferido": "Um guarda de entrada no `OfferPanel` que troca a oferta inteira por um único `<p>{t.alreadyPremium}</p>` solto dentro do container `.tf-billing-offer` — sem ícone, sem título próprio (o painel não tem heading: quem titula é o `SheetTitle`/`<h2>` do chamador), sem nenhuma ação (nem \"gerenciar\", nem \"fechar\"). Acontece de verdade: um teaser em cache ou um `?assinar=1` guardado leva um assinante até aqui, e no desktop o painel inline sequer é montado nesse estado, então o caso é sobretudo o da gaveta.",
+    "autoridade": "NENHUMA",
+    "impacto": "Um assinante que toca em qualquer caminho de assinatura cai num painel com uma frase e nenhuma saída oferecida.",
+    "prioridade": "BAIXA",
+    "refutacao": "O canvas alterna `isFree` (oferta) e `isPremium` (botões de gestão) na MESMA linha do plano, mas nunca desenha a OFERTA sendo aberta por um premium — são ramos exclusivos, e o ramo premium simplesmente não contém o bloco `tf-billing-offer`. §E8 assume sempre um usuário gratuito (\"Tela de planos Free × Premium\", upsell disparado \"ao tocar Salvar/Exportar/Adicionar\", que só um free encontra). `PremiumScreen.jsx` recebe só `open` e não tem ramo para assinante — se aberto por um premium, mostraria a oferta de compra completa, que é um defeito diferente e não um desenho deste estado. A matriz §G não tem linha para isso. Sobrevive.",
+    "sobreviveu": true,
+    "area": "billing"
 }

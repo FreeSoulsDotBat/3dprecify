@@ -1,13 +1,13 @@
 {
-  "id": "estado-formulario-invalido",
-  "nome": "Estado “não dá para calcular” — o resultado inteiro substituído por um alerta",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
-  "oQueFoiInferido": "Quando `computeFromForm` não devolve `result`, TODO o conteúdo do `.tf-calc-footer` (breakdown + Preços por canal + os dois cartões de preço + os botões de gravar) desaparece e é substituído por um único `Alert tone=\"danger\"` com a frase 'Confira os campos destacados para ver o preço.'. Inferido: que a resposta a um input inválido é apagar o resultado inteiro, o texto, e como o vendedor descobre QUAL campo causou o sumiço (a tela não aponta).",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O vendedor digita algo inválido num campo qualquer e a metade inferior da tela — a metade que ele veio buscar — some de uma vez, sem apontar o culpado. É divergência direta de uma correção já ratificada E VERIFICADA no protótipo.",
-  "prioridade": "MEDIA",
-  "refutacao": "Este é o segundo caso em que a autoridade diz o CONTRÁRIO, e aqui com verificação renderizada: `-fixes.md` item 9 — 'Peso do rolo = 0: além do alerta, zere TODAS as linhas do breakdown' — e o `prototype-audit-2026-07-02.md` §V2 lista o item 9 entre os 20 FIXED, medido em render real ('peso=0 zeroes breakdown'). `CalculatorScreen.jsx` implementa exatamente isso (linha 61 o Alert; linhas 57-58 e 115-116 os PriceHero/BreakdownRow em 0). O desenho manda MANTER o bloco zerado com um alerta junto; o código remove o bloco. Duas ressalvas honestas: o protótipo só desenhou o caso peso=0, e o código de hoje cobre qualquer invalidez do formulário. Sobrevive, PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "estado-formulario-invalido",
+    "nome": "Estado “não dá para calcular” — o resultado inteiro substituído por um alerta",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
+    "oQueFoiInferido": "Quando `computeFromForm` não devolve `result`, TODO o conteúdo do `.tf-calc-footer` (breakdown + Preços por canal + os dois cartões de preço + os botões de gravar) desaparece e é substituído por um único `Alert tone=\"danger\"` com a frase 'Confira os campos destacados para ver o preço.'. Inferido: que a resposta a um input inválido é apagar o resultado inteiro, o texto, e como o vendedor descobre QUAL campo causou o sumiço (a tela não aponta).",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O vendedor digita algo inválido num campo qualquer e a metade inferior da tela — a metade que ele veio buscar — some de uma vez, sem apontar o culpado. É divergência direta de uma correção já ratificada E VERIFICADA no protótipo.",
+    "prioridade": "MEDIA",
+    "refutacao": "Este é o segundo caso em que a autoridade diz o CONTRÁRIO, e aqui com verificação renderizada: `-fixes.md` item 9 — 'Peso do rolo = 0: além do alerta, zere TODAS as linhas do breakdown' — e o `prototype-audit-2026-07-02.md` §V2 lista o item 9 entre os 20 FIXED, medido em render real ('peso=0 zeroes breakdown'). `CalculatorScreen.jsx` implementa exatamente isso (linha 61 o Alert; linhas 57-58 e 115-116 os PriceHero/BreakdownRow em 0). O desenho manda MANTER o bloco zerado com um alerta junto; o código remove o bloco. Duas ressalvas honestas: o protótipo só desenhou o caso peso=0, e o código de hoje cobre qualquer invalidez do formulário. Sobrevive, PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

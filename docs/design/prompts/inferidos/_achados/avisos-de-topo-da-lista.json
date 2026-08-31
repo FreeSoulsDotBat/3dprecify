@@ -1,13 +1,13 @@
 {
-  "id": "avisos-de-topo-da-lista",
-  "nome": "Avisos de topo: leitura offline, erro de carga com retry inline, Premium pausado",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
-  "oQueFoiInferido": "Três Alerts de página que podem empilhar acima da lista, e a lógica de convivência entre eles: 'Modo leitura offline' (info, título + corpo, mostrado quando a leitura é do cache e o aparelho está offline), o erro de carga que embute o Button 'Tentar novamente' DENTRO do Alert num `.tf-historico__banner` com flex-wrap (mostrado quando está online), e o banner 'Premium pausado' (info, parágrafo de duas frases). Inferido: a ordem entre eles (pausado → offline/erro → fila), a regra de SILENCIAR o genérico quando a sessão expirou (para não virar a terceira voz sobre o mesmo fato), e a densidade de até três faixas antes do primeiro registro em 390px.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Três faixas empilhadas empurram os orçamentos para fora da primeira tela, e um Alert que CONTÉM botão é um padrão que não está desenhado em lugar nenhum do produto.",
-  "prioridade": "MEDIA",
-  "refutacao": "Reclassifiquei o mapeador para PROTOTIPO_PARCIAL: um dos três avisos tem, sim, cobertura desenhada e VERIFICADA. `claude-design-prototype-fixes.md` item 17 pede o estado 'Não foi possível carregar. Tente de novo.' + botão 'Tentar novamente' para Catálogo e Histórico, e `prototype-audit-2026-07-02.md` §V2 lista '17-19 (load-error+retry…)' entre os 20 FIXED, renderizados com o bundle real. O que o item 17 não diz — e o protótipo, sendo um estado de falha de carga, quase certamente não fez — é que o botão vive DENTRO do Alert, sobre dados que o vendedor já tem em cache; o construído distingue erro-com-cache (faixa) de erro-frio (painel inteiro, mais abaixo no mesmo arquivo). Os outros dois avisos não têm nada: 'Modo leitura offline' não é o banner offline do shell de §E9 (aquele é a faixa ciano global 'Offline — o cálculo continua funcionando', outro objeto, em outro lugar da tela), e o banner de Premium pausado não existe em autoridade alguma — o protótipo só conhecia free × premium, sem estado 'lapsed' (ele nasce com a entitlement de E2/E6). `HistoryScreen.jsx` não tem aviso nenhum. `Abas-Desktop.dc.html` desenha só o alerta da fila (linha 264).",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "avisos-de-topo-da-lista",
+    "nome": "Avisos de topo: leitura offline, erro de carga com retry inline, Premium pausado",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
+    "oQueFoiInferido": "Três Alerts de página que podem empilhar acima da lista, e a lógica de convivência entre eles: 'Modo leitura offline' (info, título + corpo, mostrado quando a leitura é do cache e o aparelho está offline), o erro de carga que embute o Button 'Tentar novamente' DENTRO do Alert num `.tf-historico__banner` com flex-wrap (mostrado quando está online), e o banner 'Premium pausado' (info, parágrafo de duas frases). Inferido: a ordem entre eles (pausado → offline/erro → fila), a regra de SILENCIAR o genérico quando a sessão expirou (para não virar a terceira voz sobre o mesmo fato), e a densidade de até três faixas antes do primeiro registro em 390px.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Três faixas empilhadas empurram os orçamentos para fora da primeira tela, e um Alert que CONTÉM botão é um padrão que não está desenhado em lugar nenhum do produto.",
+    "prioridade": "MEDIA",
+    "refutacao": "Reclassifiquei o mapeador para PROTOTIPO_PARCIAL: um dos três avisos tem, sim, cobertura desenhada e VERIFICADA. `claude-design-prototype-fixes.md` item 17 pede o estado 'Não foi possível carregar. Tente de novo.' + botão 'Tentar novamente' para Catálogo e Histórico, e `prototype-audit-2026-07-02.md` §V2 lista '17-19 (load-error+retry…)' entre os 20 FIXED, renderizados com o bundle real. O que o item 17 não diz — e o protótipo, sendo um estado de falha de carga, quase certamente não fez — é que o botão vive DENTRO do Alert, sobre dados que o vendedor já tem em cache; o construído distingue erro-com-cache (faixa) de erro-frio (painel inteiro, mais abaixo no mesmo arquivo). Os outros dois avisos não têm nada: 'Modo leitura offline' não é o banner offline do shell de §E9 (aquele é a faixa ciano global 'Offline — o cálculo continua funcionando', outro objeto, em outro lugar da tela), e o banner de Premium pausado não existe em autoridade alguma — o protótipo só conhecia free × premium, sem estado 'lapsed' (ele nasce com a entitlement de E2/E6). `HistoryScreen.jsx` não tem aviso nenhum. `Abas-Desktop.dc.html` desenha só o alerta da fila (linha 264).",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

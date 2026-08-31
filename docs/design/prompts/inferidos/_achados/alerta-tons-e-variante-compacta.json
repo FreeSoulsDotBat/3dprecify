@@ -1,17 +1,17 @@
 {
-  "id": "alerta-tons-e-variante-compacta",
-  "nome": "Alerta em bloco — tons e a variante compacta",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/shared/ui/alert.tsx",
-    "apps/web/src/shared/ui/alert.css",
-    "apps/web/src/features/calculator/shopee-warnings.css"
-  ],
-  "oQueFoiInferido": "É a peça de feedback mais usada do app (30+ pontos) e o código decidiu sozinho: o mapa tom→ícone, o fundo tingido `*-soft` com ícone e título no token de texto de status, e a diferença de papel ARIA (`alert` no danger, `status` nos demais). Sem desenho: os tons `success` e `neutral`, o alerta SEM título, e a densidade a 360px — que é justamente o que forçou a `.tf-alert--compact` a nascer fora do design system, em `features/calculator/shopee-warnings.css`, datada '016/PR-F homologação (A5)', porque a seção media 1248px a 360px.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Notícia ruim ou incompleta chega por um bloco cujos tons `success`/`neutral` e cuja densidade em telas estreitas foram escolhidos no código — e um deles teve de ser espremido às pressas por transbordo medido.",
-  "prioridade": "BAIXA",
-  "refutacao": "DERRUBA boa parte. '(4) O canvas 018 não desenha nenhum alerta nas 4 abas' é FALSO — desenha três: `tf-alert tf-alert--info` na ficha do Catálogo (l.143, 'Vincule um filamento e uma impressora salvos'), `tf-alert tf-alert--danger` na peça inválida do Kit (l.202, 'Confira os campos desta peça — ela não entra no total até ser corrigida.') e, o que mais importa, `tf-alert tf-alert--info tf-alert--compact` nos Orçamentos (l.265), com `align-items:center` e o botão 'Sincronizar agora' à direita. Ou seja, a variante compacta que o achado chama de gambiarra fora do DS foi DESENHADA pelo dono, com ação, a 1920 — e com os mesmos ícones que o mapa do app usa. Some-se `CalculatorScreen.jsx:61` (`<Alert tone=\"danger\" title=\"Confira o peso do rolo\">`) e o §D.2 (offline banner ciano) e sobram só `success`, `neutral`, o alerta sem título e o 360px. Rebaixo MEDIA → BAIXA.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "alerta-tons-e-variante-compacta",
+    "nome": "Alerta em bloco — tons e a variante compacta",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/shared/ui/alert.tsx",
+        "apps/web/src/shared/ui/alert.css",
+        "apps/web/src/features/calculator/shopee-warnings.css"
+    ],
+    "oQueFoiInferido": "É a peça de feedback mais usada do app (30+ pontos) e o código decidiu sozinho: o mapa tom→ícone, o fundo tingido `*-soft` com ícone e título no token de texto de status, e a diferença de papel ARIA (`alert` no danger, `status` nos demais). Sem desenho: os tons `success` e `neutral`, o alerta SEM título, e a densidade a 360px — que é justamente o que forçou a `.tf-alert--compact` a nascer fora do design system, em `features/calculator/shopee-warnings.css`, datada '016/PR-F homologação (A5)', porque a seção media 1248px a 360px.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Notícia ruim ou incompleta chega por um bloco cujos tons `success`/`neutral` e cuja densidade em telas estreitas foram escolhidos no código — e um deles teve de ser espremido às pressas por transbordo medido.",
+    "prioridade": "BAIXA",
+    "refutacao": "DERRUBA boa parte. '(4) O canvas 018 não desenha nenhum alerta nas 4 abas' é FALSO — desenha três: `tf-alert tf-alert--info` na ficha do Catálogo (l.143, 'Vincule um filamento e uma impressora salvos'), `tf-alert tf-alert--danger` na peça inválida do Kit (l.202, 'Confira os campos desta peça — ela não entra no total até ser corrigida.') e, o que mais importa, `tf-alert tf-alert--info tf-alert--compact` nos Orçamentos (l.265), com `align-items:center` e o botão 'Sincronizar agora' à direita. Ou seja, a variante compacta que o achado chama de gambiarra fora do DS foi DESENHADA pelo dono, com ação, a 1920 — e com os mesmos ícones que o mapa do app usa. Some-se `CalculatorScreen.jsx:61` (`<Alert tone=\"danger\" title=\"Confira o peso do rolo\">`) e o §D.2 (offline banner ciano) e sobram só `success`, `neutral`, o alerta sem título e o 360px. Rebaixo MEDIA → BAIXA.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

@@ -4,57 +4,57 @@
    `docs/design/handoff-019/tf-components.css` (bloco `tf-table`, ~l.1000) — usa `--border-default`
    / `--border-subtle` já com o nome do produto, nenhuma adaptação do §3 do handoff se aplica aqui. */
 .tf-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-body-sm);
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--fs-body-sm);
 }
 .tf-table th {
-  text-align: left;
-  padding: var(--space-2) var(--space-3);
-  white-space: nowrap;
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted);
-  border-bottom: 1px solid var(--border-default);
+    text-align: left;
+    padding: var(--space-2) var(--space-3);
+    white-space: nowrap;
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border-default);
 }
 .tf-table td {
-  padding: var(--space-3);
-  border-bottom: 1px solid var(--border-subtle);
-  color: var(--text-body);
-  vertical-align: middle;
+    padding: var(--space-3);
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-body);
+    vertical-align: middle;
 }
 .tf-table tbody tr:hover td {
-  background: var(--bg-muted);
+    background: var(--bg-muted);
 }
 .tf-table tbody tr[aria-selected="true"] td {
-  background: var(--accent-soft);
+    background: var(--accent-soft);
 }
 .tf-table__name {
-  width: 42%;
-  max-width: 0;
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    width: 42%;
+    max-width: 0;
+    font-weight: var(--fw-semibold);
+    color: var(--text-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .tf-table__num {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: var(--num-features);
-  text-align: right;
-  white-space: nowrap;
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: var(--num-features);
+    text-align: right;
+    white-space: nowrap;
+    font-weight: var(--fw-semibold);
+    color: var(--text-strong);
 }
 .tf-table__num--muted {
-  font-weight: var(--fw-regular);
-  color: var(--text-muted);
+    font-weight: var(--fw-regular);
+    color: var(--text-muted);
 }
 .tf-table__actions {
-  width: 1%;
-  white-space: nowrap;
-  text-align: right;
+    width: 1%;
+    white-space: nowrap;
+    text-align: right;
 }

@@ -17,38 +17,38 @@ const SRC = join(__dirname, "..");
 const DIST = join(__dirname, "..", "..", "dist");
 
 function walk(dir: string, ext: RegExp, out: string[] = []): string[] {
-  if (!existsSync(dir)) return out;
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) walk(p, ext, out);
-    else if (ext.test(p)) out.push(p);
-  }
-  return out;
+    if (!existsSync(dir)) return out;
+    for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (statSync(p).isDirectory()) walk(p, ext, out);
+        else if (ext.test(p)) out.push(p);
+    }
+    return out;
 }
 
 function ocorrencias(files: string[], base: string): string[] {
-  const hits: string[] = [];
-  for (const f of files) {
-    const txt = readFileSync(f, "utf8");
-    for (const cls of PROIBIDAS) {
-      if (txt.includes(cls)) hits.push(`${cls} em ${relative(base, f).replace(/\\/g, "/")}`);
+    const hits: string[] = [];
+    for (const f of files) {
+        const txt = readFileSync(f, "utf8");
+        for (const cls of PROIBIDAS) {
+            if (txt.includes(cls)) hits.push(`${cls} em ${relative(base, f).replace(/\\/g, "/")}`);
+        }
     }
-  }
-  return hits;
+    return hits;
 }
 
 describe("019/ADR-0032 — dispositivos de prancheta ficam na prancheta", () => {
-  it("zero ocorrência no código-fonte (css/ts/tsx)", () => {
-    const hits = ocorrencias(walk(SRC, /\.(css|ts|tsx)$/), SRC).filter(
-      // este próprio arquivo cita os nomes para procurá-los
-      (h) => !h.endsWith("styles/prancheta-devices.test.ts"),
-    );
-    expect(hits).toEqual([]);
-  });
+    it("zero ocorrência no código-fonte (css/ts/tsx)", () => {
+        const hits = ocorrencias(walk(SRC, /\.(css|ts|tsx)$/), SRC).filter(
+            // este próprio arquivo cita os nomes para procurá-los
+            (h) => !h.endsWith("styles/prancheta-devices.test.ts"),
+        );
+        expect(hits).toEqual([]);
+    });
 
-  it("zero ocorrência no bundle (quando apps/web/dist existir)", () => {
-    const files = walk(DIST, /\.(css|js)$/);
-    if (files.length === 0) return; // sem build local: o e2e (que faz `pnpm build`) cobre este ramo
-    expect(ocorrencias(files, DIST)).toEqual([]);
-  });
+    it("zero ocorrência no bundle (quando apps/web/dist existir)", () => {
+        const files = walk(DIST, /\.(css|js)$/);
+        if (files.length === 0) return; // sem build local: o e2e (que faz `pnpm build`) cobre este ramo
+        expect(ocorrencias(files, DIST)).toEqual([]);
+    });
 });

@@ -1,17 +1,17 @@
 {
-  "id": "plano-estado-carencia",
-  "nome": "Linha do plano na Conta — estado de CARÊNCIA (pagamento recusado, prazo correndo)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/billing/plan-panel.tsx",
-    "apps/web/src/features/billing/plan-view.ts",
-    "apps/web/src/pages/conta/conta-page.tsx"
-  ],
-  "oQueFoiInferido": "Um estado inteiro do painel: `planCaption()` devolve badge VERDE \"Premium\" (o premium segue ativo), `planToneVar()` pinta legenda E nota em `var(--info-text)` — a única exceção ao `--text-muted` de todos os outros estados —, `planDetail()` escreve \"pagamento pendente — regularize\" e `planNote()` acrescenta a SEGUNDA linha \"até {data}, senão o Premium pausa.\"; `PlanActions` promove `ManageAtProvider` a `variant=\"primary\"` só aqui. Tudo decidido em código e depois CORRIGIDO DUAS VEZES por medição de homologação: T028/A3 (carência e ativa tinham temperatura visual idêntica — mesmos pixels de selo, mesmas duas frases no cinza neutro) e 015/A8 (a única ação que recupera o Premium era a mais fraca da linha, sem preenchimento, ao lado do \"Recarregar\"). Falta desenhar: como \"ativo mas em risco\" se distingue de \"ativo saudável\" sem degradar o selo, a hierarquia entre a ação de recuperação e o \"Recarregar\", e onde mora o prazo.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a tela em que o vendedor pagante descobre que o cartão falhou e tem dias contados para agir; a hierarquia visual estava invertida em relação ao risco e só foi corrigida depois, por medição — não por desenho.",
-  "prioridade": "ALTA",
-  "refutacao": "Confirmei a leitura do canvas no `<script>`, não só no markup: linhas 626-628 dão `planLabel: isPremium ? \"Premium\" : \"Gratuito\"`, `planCaption: isPremium ? \"renova em 01/09/2026\" : \"Calcular custo e markup é grátis, sem limite.\"`, `planPrimaryLabel: isPremium ? \"Gerenciar assinatura\" : \"Assinar Premium\"` — a Conta desenhada tem DOIS estados e uma única legenda de UMA linha (`<span>{{ planCaption }}</span>`), sem `planNote` nenhum. Grep por `carência|carencia|pendente|pausad` no canvas = 0. §E7 do protótipo lista o item como \"plano atual (Free/Premium)\" e nada mais; `AccountScreen.jsx` reduz tudo a `isPremium ? 'Premium' : 'Grátis'` num `Badge`. A única fonte da redação e da regra é `specs/012-e6-billing/ux-billing.md` §9-G1 — SPEC_TEXTUAL do subagente `designer-ux`, que por definição não conta; e o próprio comentário do `planToneVar` admite que o §9-G1 \"previa e não tinha sido aplicado\", ou seja nem a spec textual chegou ao produto sem uma medição no meio. Nada a derrubar.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "plano-estado-carencia",
+    "nome": "Linha do plano na Conta — estado de CARÊNCIA (pagamento recusado, prazo correndo)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/billing/plan-panel.tsx",
+        "apps/web/src/features/billing/plan-view.ts",
+        "apps/web/src/pages/conta/conta-page.tsx"
+    ],
+    "oQueFoiInferido": "Um estado inteiro do painel: `planCaption()` devolve badge VERDE \"Premium\" (o premium segue ativo), `planToneVar()` pinta legenda E nota em `var(--info-text)` — a única exceção ao `--text-muted` de todos os outros estados —, `planDetail()` escreve \"pagamento pendente — regularize\" e `planNote()` acrescenta a SEGUNDA linha \"até {data}, senão o Premium pausa.\"; `PlanActions` promove `ManageAtProvider` a `variant=\"primary\"` só aqui. Tudo decidido em código e depois CORRIGIDO DUAS VEZES por medição de homologação: T028/A3 (carência e ativa tinham temperatura visual idêntica — mesmos pixels de selo, mesmas duas frases no cinza neutro) e 015/A8 (a única ação que recupera o Premium era a mais fraca da linha, sem preenchimento, ao lado do \"Recarregar\"). Falta desenhar: como \"ativo mas em risco\" se distingue de \"ativo saudável\" sem degradar o selo, a hierarquia entre a ação de recuperação e o \"Recarregar\", e onde mora o prazo.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a tela em que o vendedor pagante descobre que o cartão falhou e tem dias contados para agir; a hierarquia visual estava invertida em relação ao risco e só foi corrigida depois, por medição — não por desenho.",
+    "prioridade": "ALTA",
+    "refutacao": "Confirmei a leitura do canvas no `<script>`, não só no markup: linhas 626-628 dão `planLabel: isPremium ? \"Premium\" : \"Gratuito\"`, `planCaption: isPremium ? \"renova em 01/09/2026\" : \"Calcular custo e markup é grátis, sem limite.\"`, `planPrimaryLabel: isPremium ? \"Gerenciar assinatura\" : \"Assinar Premium\"` — a Conta desenhada tem DOIS estados e uma única legenda de UMA linha (`<span>{{ planCaption }}</span>`), sem `planNote` nenhum. Grep por `carência|carencia|pendente|pausad` no canvas = 0. §E7 do protótipo lista o item como \"plano atual (Free/Premium)\" e nada mais; `AccountScreen.jsx` reduz tudo a `isPremium ? 'Premium' : 'Grátis'` num `Badge`. A única fonte da redação e da regra é `specs/012-e6-billing/ux-billing.md` §9-G1 — SPEC_TEXTUAL do subagente `designer-ux`, que por definição não conta; e o próprio comentário do `planToneVar` admite que o §9-G1 \"previa e não tinha sido aplicado\", ou seja nem a spec textual chegou ao produto sem uma medição no meio. Nada a derrubar.",
+    "sobreviveu": true,
+    "area": "billing"
 }

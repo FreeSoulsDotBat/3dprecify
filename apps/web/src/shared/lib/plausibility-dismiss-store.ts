@@ -14,19 +14,19 @@ import { create } from "zustand";
  * `features/bom` não pode importar `features/calculator`.
  */
 export function dismissKey(campo: string, valorBruto: string): string {
-  return `${campo}:${valorBruto}`;
+    return `${campo}:${valorBruto}`;
 }
 
 interface PlausibilityDismissState {
-  dismissed: ReadonlySet<string>;
-  dismiss: (key: string) => void;
+    dismissed: ReadonlySet<string>;
+    dismiss: (key: string) => void;
 }
 
 export const usePlausibilityDismissStore = create<PlausibilityDismissState>((set) => ({
-  dismissed: new Set<string>(),
-  dismiss: (key) =>
-    set((s) => {
-      if (s.dismissed.has(key)) return s;
-      return { dismissed: new Set(s.dismissed).add(key) };
-    }),
+    dismissed: new Set<string>(),
+    dismiss: (key) =>
+        set((s) => {
+            if (s.dismissed.has(key)) return s;
+            return { dismissed: new Set(s.dismissed).add(key) };
+        }),
 }));

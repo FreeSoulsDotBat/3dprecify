@@ -1,17 +1,17 @@
 {
-  "id": "duplicar-para-ajustar",
-  "nome": "Duplicar-para-ajustar (o movimento central do E5)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/features/scenarios/scenario-context-bar.tsx",
-    "backend/app/api/scenarios.py"
-  ],
-  "oQueFoiInferido": "O fluxo inteiro, que só existe como comportamento. Pelo cartão (`handleDuplicate`): cria a cópia, dispara `toast(\"Simulação duplicada.\")`, chama `onOpenScenario(copy)` — que FECHA a folha e repovoa a calculadora com a cópia. Pela barra de contexto (`doDuplicate`): troca a simulação carregada por baixo do vendedor, no lugar, sem sair da tela. O nome sai do servidor: `backend/app/api/scenarios.py:670-673` monta `\"Cópia de {nome}\"` e, se estourar 120, trunca a BASE com reticências — nome que o vendedor nunca confirma nem edita no ato. Inferido: a ausência de qualquer confirmação ou campo de nome no momento de duplicar, a troca de contexto sem transição, e o toast como único aviso de que agora ele edita OUTRO objeto.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O movimento que a própria spec chama de \"headline\" acontece sem aviso visual: o vendedor toca em copiar e a tela inteira vira outra simulação, com um nome que ele não escolheu.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei \"Duplicar\" desenhado, e existe — três vezes, nenhuma delas este fluxo: (a) `HistoryScreen.jsx`, no sheet de detalhe, `<Button variant=\"outline\" full iconLeft={copy}>Duplicar</Button>` — objeto congelado, e no protótipo o botão nem tem handler (é ilustrativo); (b) canvas 018, ficha do Catálogo (linha 124), `tf-btn--secondary tf-btn--sm` \"Duplicar\" — item de catálogo; (c) nada em Kits/Orçamentos. Em nenhuma das três há o que este achado cobra: o que acontece DEPOIS de duplicar (nome automático, troca de contexto, aviso). Grep de cenário/simulação nas 4 autoridades = 0. ux §10.1 item 7 pede o protótipo do \"Duplicate + the 120-char default-name interaction\" (Medium) e ele nunca foi feito. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "duplicar-para-ajustar",
+    "nome": "Duplicar-para-ajustar (o movimento central do E5)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+        "backend/app/api/scenarios.py"
+    ],
+    "oQueFoiInferido": "O fluxo inteiro, que só existe como comportamento. Pelo cartão (`handleDuplicate`): cria a cópia, dispara `toast(\"Simulação duplicada.\")`, chama `onOpenScenario(copy)` — que FECHA a folha e repovoa a calculadora com a cópia. Pela barra de contexto (`doDuplicate`): troca a simulação carregada por baixo do vendedor, no lugar, sem sair da tela. O nome sai do servidor: `backend/app/api/scenarios.py:670-673` monta `\"Cópia de {nome}\"` e, se estourar 120, trunca a BASE com reticências — nome que o vendedor nunca confirma nem edita no ato. Inferido: a ausência de qualquer confirmação ou campo de nome no momento de duplicar, a troca de contexto sem transição, e o toast como único aviso de que agora ele edita OUTRO objeto.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O movimento que a própria spec chama de \"headline\" acontece sem aviso visual: o vendedor toca em copiar e a tela inteira vira outra simulação, com um nome que ele não escolheu.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei \"Duplicar\" desenhado, e existe — três vezes, nenhuma delas este fluxo: (a) `HistoryScreen.jsx`, no sheet de detalhe, `<Button variant=\"outline\" full iconLeft={copy}>Duplicar</Button>` — objeto congelado, e no protótipo o botão nem tem handler (é ilustrativo); (b) canvas 018, ficha do Catálogo (linha 124), `tf-btn--secondary tf-btn--sm` \"Duplicar\" — item de catálogo; (c) nada em Kits/Orçamentos. Em nenhuma das três há o que este achado cobra: o que acontece DEPOIS de duplicar (nome automático, troca de contexto, aviso). Grep de cenário/simulação nas 4 autoridades = 0. ux §10.1 item 7 pede o protótipo do \"Duplicate + the 120-char default-name interaction\" (Medium) e ele nunca foi feito. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

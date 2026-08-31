@@ -1,16 +1,16 @@
 {
-  "id": "aba-kits-no-catalogo",
-  "nome": "Aba Kits dentro do Catálogo (lista de kits salvos e a ficha do kit)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/catalog/kits-panel.tsx",
-    "apps/web/src/features/catalog/catalog-panel.tsx"
-  ],
-  "oQueFoiInferido": "O que está no ar: kits salvos reaproveitam o `CatalogPanel` genérico em modo NAVEGAÇÃO — linha com nome + resumo estrutural ('N peça(s)', nunca dinheiro, porque nenhum preço é guardado, FR-407), ações duplicar/excluir com confirmação, e no desktop uma 'ficha' que não edita nada: kicker + nome + duplicar/excluir + a MESMA frase de resumo da linha + um botão 'Abrir editor' que manda o vendedor para /kits. Não foi desenhado o que essa ficha deveria mostrar (as peças? o total recalculado? a data?) em vez de repetir uma frase num painel de 560px; nem como um kit se distingue de um produto na mesma lista; nem o vazio da aba Kits; nem nada da versão mobile (lista + gaveta).",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A ficha do kit no desktop entrega uma frase e um botão num painel de 560px — e o desenho que existe para ela é outro. O vendedor paga meia tela por uma informação que já estava na linha da lista, num arranjo que ninguém desenhou.",
-  "prioridade": "MEDIA",
-  "refutacao": "Aqui o mapeador errou e o desenho cobre mais do que ele viu — mas o achado sobrevive por DIVERGÊNCIA, não por ausência. Ele escreveu que 'não há artboard da ficha de kit'. Há: o aside mestre-detalhe do Catálogo (linhas 116-149) é alimentado por `cat[s.sec].rows[idx].fields`, e o dono autorou a seção `kit` com kicker 'Kit salvo', add 'Montar kit', contagem 'N kit(s)', linhas com meta '3 peça(s)' e money 'custo R$ 52,34 · varejo R$ 157,02', e uma ficha de QUATRO campos (Nome do kit · Peças · Custo total · Markup varejo) com Duplicar/Excluir no topo e 'Salvar alterações' + 'Usar no cálculo' no rodapé. Com a pílula 'Kits' (linha 81) selecionada, é isso que o quadro de 1920px mostra. O que está no ar é outra coisa em DUAS direções: `catalog-panel.tsx:356-362` renderiza, para produto e kit, um resumo + 'Abrir editor' (regra de `specs/018-abas-desktop/spec.md` FR-016, texto ⇒ SPEC_TEXTUAL, que contradiz o canvas), e `kits-panel.tsx` faz a linha exibir só 'N peça(s)', sem o 'custo … · varejo …' que o desenho previa — corretamente, já que nenhum preço é armazenado, o que revela que o próprio canvas desenhou dinheiro que o modelo não tem. Fora isso: §E5 do protótipo desenha o Catálogo com chips 'Filamentos|Impressoras' apenas (§E3 fixa 4 abas, sem Produtos nem Kits); `.design-import/ui_kits/precifica3d/CatalogScreen.jsx` (86 linhas) tem `seg` com 'filamento' e nada de kits; a auditoria não menciona. Vazio da aba e mobile: sem desenho em lugar nenhum.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "aba-kits-no-catalogo",
+    "nome": "Aba Kits dentro do Catálogo (lista de kits salvos e a ficha do kit)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/catalog/kits-panel.tsx",
+        "apps/web/src/features/catalog/catalog-panel.tsx"
+    ],
+    "oQueFoiInferido": "O que está no ar: kits salvos reaproveitam o `CatalogPanel` genérico em modo NAVEGAÇÃO — linha com nome + resumo estrutural ('N peça(s)', nunca dinheiro, porque nenhum preço é guardado, FR-407), ações duplicar/excluir com confirmação, e no desktop uma 'ficha' que não edita nada: kicker + nome + duplicar/excluir + a MESMA frase de resumo da linha + um botão 'Abrir editor' que manda o vendedor para /kits. Não foi desenhado o que essa ficha deveria mostrar (as peças? o total recalculado? a data?) em vez de repetir uma frase num painel de 560px; nem como um kit se distingue de um produto na mesma lista; nem o vazio da aba Kits; nem nada da versão mobile (lista + gaveta).",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A ficha do kit no desktop entrega uma frase e um botão num painel de 560px — e o desenho que existe para ela é outro. O vendedor paga meia tela por uma informação que já estava na linha da lista, num arranjo que ninguém desenhou.",
+    "prioridade": "MEDIA",
+    "refutacao": "Aqui o mapeador errou e o desenho cobre mais do que ele viu — mas o achado sobrevive por DIVERGÊNCIA, não por ausência. Ele escreveu que 'não há artboard da ficha de kit'. Há: o aside mestre-detalhe do Catálogo (linhas 116-149) é alimentado por `cat[s.sec].rows[idx].fields`, e o dono autorou a seção `kit` com kicker 'Kit salvo', add 'Montar kit', contagem 'N kit(s)', linhas com meta '3 peça(s)' e money 'custo R$ 52,34 · varejo R$ 157,02', e uma ficha de QUATRO campos (Nome do kit · Peças · Custo total · Markup varejo) com Duplicar/Excluir no topo e 'Salvar alterações' + 'Usar no cálculo' no rodapé. Com a pílula 'Kits' (linha 81) selecionada, é isso que o quadro de 1920px mostra. O que está no ar é outra coisa em DUAS direções: `catalog-panel.tsx:356-362` renderiza, para produto e kit, um resumo + 'Abrir editor' (regra de `specs/018-abas-desktop/spec.md` FR-016, texto ⇒ SPEC_TEXTUAL, que contradiz o canvas), e `kits-panel.tsx` faz a linha exibir só 'N peça(s)', sem o 'custo … · varejo …' que o desenho previa — corretamente, já que nenhum preço é armazenado, o que revela que o próprio canvas desenhou dinheiro que o modelo não tem. Fora isso: §E5 do protótipo desenha o Catálogo com chips 'Filamentos|Impressoras' apenas (§E3 fixa 4 abas, sem Produtos nem Kits); `.design-import/ui_kits/precifica3d/CatalogScreen.jsx` (86 linhas) tem `seg` com 'filamento' e nada de kits; a auditoria não menciona. Vazio da aba e mobile: sem desenho em lugar nenhum.",
+    "sobreviveu": true,
+    "area": "kits"
 }

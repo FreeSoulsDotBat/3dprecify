@@ -1,17 +1,17 @@
 {
-  "id": "rail-forcado-426-599",
-  "nome": "Menu recolhido à força na faixa 426–599px",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/shared/lib/use-is-wide.ts",
-    "apps/web/src/app/app-shell.tsx",
-    "apps/web/src/widgets/app-nav/app-nav.css"
-  ],
-  "oQueFoiInferido": "Entre 426px (primeiro pixel acima do `MOBILE_QUERY = \"(max-width: 425px)\"`) e 599px o app já usa o layout DESKTOP — sidebar em vez de barra inferior — e o menu é recolhido automaticamente ao rail de 76px (`RAIL_FORCADO_QUERY = \"(max-width: 599px)\"`; `railCollapsed = railForcado || (isWide && collapsed)`), SEM botão de expandir: `onToggleCollapsed` só é passado quando `isWide` (≥1280px), e `AppNav` só desenha o botão quando `onToggleCollapsed !== undefined`. Nessa faixa o rótulo sai da tela e o nome da seção vive no atributo `title` — dica de MOUSE — num tamanho de tela que costuma ser tocado. Inferidos: que a fronteira mobile/desktop fica em 425px; que a resposta a \"não cabe\" é rail sem volta em vez de manter a barra inferior; e como o vendedor descobre o nome das 5 seções sem rótulo e sem dica de toque.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Toda janela estreita de desktop e todo aparelho grande em paisagem cai num modo de navegação que ninguém desenhou para aquele tamanho: cinco ícones sem rótulo, sem jeito de expandir, com o nome acessível só por mouse.",
-  "prioridade": "MEDIA",
-  "refutacao": "Rebaixei de NENHUMA para PROTOTIPO_PARCIAL — o mapeador subestimou o que o canvas cobre. COBERTO: o canvas 018 desenha o rail recolhido de verdade, e mais do que o mapeador viu — `railRecolhido` é prop de editor (`section: \"Navegação\"`), a `<nav>` tem `width:{{ railW }}` com `transition:width 0.18s ease-out` (o CSS do app copia isso), os rótulos somem por `display:{{ navLbl }}`, os itens ganham `justify-content:{{ navJus }}` e CADA item já traz `title=\"Calcular\"/\"Catálogo\"/…` — ou seja, até a dica por `title` veio do desenho, não da inferência. NÃO COBERTO, e é o que sustenta o achado: no canvas isso é uma ESCOLHA num artboard de 1920px, com o botão \"Recolher\" no rodapé do menu — exatamente o botão que nesta faixa não existe. O achado alega 426–599px; a regra manda derrubar só com o MESMO viewport, e 1920 ≠ 599. O protótipo §H pede as telas em \"mobile (~390px) e desktop\", sem faixa intermediária, e §E3 só conhece BottomBar ou Sidebar. Confirmei que o limiar não nasceu de desenho: o comentário em `use-is-wide.ts` registra que os 600px vêm de uma medição de transbordo de 131px no review do PR #58 (2026-08-15), e `research.md`/ADR-0031 são autoridade técnica, não desenho.",
-  "sobreviveu": true,
-  "area": "shell"
+    "id": "rail-forcado-426-599",
+    "nome": "Menu recolhido à força na faixa 426–599px",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/shared/lib/use-is-wide.ts",
+        "apps/web/src/app/app-shell.tsx",
+        "apps/web/src/widgets/app-nav/app-nav.css"
+    ],
+    "oQueFoiInferido": "Entre 426px (primeiro pixel acima do `MOBILE_QUERY = \"(max-width: 425px)\"`) e 599px o app já usa o layout DESKTOP — sidebar em vez de barra inferior — e o menu é recolhido automaticamente ao rail de 76px (`RAIL_FORCADO_QUERY = \"(max-width: 599px)\"`; `railCollapsed = railForcado || (isWide && collapsed)`), SEM botão de expandir: `onToggleCollapsed` só é passado quando `isWide` (≥1280px), e `AppNav` só desenha o botão quando `onToggleCollapsed !== undefined`. Nessa faixa o rótulo sai da tela e o nome da seção vive no atributo `title` — dica de MOUSE — num tamanho de tela que costuma ser tocado. Inferidos: que a fronteira mobile/desktop fica em 425px; que a resposta a \"não cabe\" é rail sem volta em vez de manter a barra inferior; e como o vendedor descobre o nome das 5 seções sem rótulo e sem dica de toque.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Toda janela estreita de desktop e todo aparelho grande em paisagem cai num modo de navegação que ninguém desenhou para aquele tamanho: cinco ícones sem rótulo, sem jeito de expandir, com o nome acessível só por mouse.",
+    "prioridade": "MEDIA",
+    "refutacao": "Rebaixei de NENHUMA para PROTOTIPO_PARCIAL — o mapeador subestimou o que o canvas cobre. COBERTO: o canvas 018 desenha o rail recolhido de verdade, e mais do que o mapeador viu — `railRecolhido` é prop de editor (`section: \"Navegação\"`), a `<nav>` tem `width:{{ railW }}` com `transition:width 0.18s ease-out` (o CSS do app copia isso), os rótulos somem por `display:{{ navLbl }}`, os itens ganham `justify-content:{{ navJus }}` e CADA item já traz `title=\"Calcular\"/\"Catálogo\"/…` — ou seja, até a dica por `title` veio do desenho, não da inferência. NÃO COBERTO, e é o que sustenta o achado: no canvas isso é uma ESCOLHA num artboard de 1920px, com o botão \"Recolher\" no rodapé do menu — exatamente o botão que nesta faixa não existe. O achado alega 426–599px; a regra manda derrubar só com o MESMO viewport, e 1920 ≠ 599. O protótipo §H pede as telas em \"mobile (~390px) e desktop\", sem faixa intermediária, e §E3 só conhece BottomBar ou Sidebar. Confirmei que o limiar não nasceu de desenho: o comentário em `use-is-wide.ts` registra que os 600px vêm de uma medição de transbordo de 131px no review do PR #58 (2026-08-15), e `research.md`/ADR-0031 são autoridade técnica, não desenho.",
+    "sobreviveu": true,
+    "area": "shell"
 }

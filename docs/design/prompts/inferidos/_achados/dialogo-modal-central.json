@@ -1,24 +1,24 @@
 {
-  "id": "dialogo-modal-central",
-  "nome": "Diálogo modal central (confirmar / excluir / sair)",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/shared/ui/dialog.tsx",
-    "apps/web/src/shared/ui/dialog.css",
-    "apps/web/src/features/catalog/catalog-panel.tsx",
-    "apps/web/src/features/history/entry-actions.tsx",
-    "apps/web/src/features/history/sign-out-outbox-guard.tsx",
-    "apps/web/src/features/history/snapshot-manage.tsx",
-    "apps/web/src/features/billing/plan-panel.tsx",
-    "apps/web/src/features/scenarios/scenario-context-bar.tsx",
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/pages/historico/recalc-today.tsx"
-  ],
-  "oQueFoiInferido": "A caixa inteira, sem uma linha de desenho: largura min(92vw, 32rem), altura máxima 85vh com rolagem interna, padding --space-6, radius xl, scrim --surface-overlay, título em fonte de título CAIXA ALTA com padding-right de --space-10 para não passar por baixo do X, descrição em --text-muted e um X de 44×44 encostado no canto superior direito. E a decisão de código `showClose={false}` — um modal do qual só se sai escolhendo — hoje em 6 pontos: excluir orçamento (entry-actions:67), sair com fila pendente (sign-out-outbox-guard:100), gerir/expirar snapshot (snapshot-manage:83 e :113), recalcular hoje (recalc-today:257) e, o que o mapeador não viu, uma FOLHA sem saída pelo X (historico-page:488). A ordem e o alinhamento dos botões de ação cada chamador monta do seu jeito.",
-  "autoridade": "NENHUMA",
-  "impacto": "Toda confirmação irreversível do produto (excluir filamento/impressora/orçamento, sair com fila pendente, cancelar assinatura) acontece numa caixa que nunca foi desenhada — inclusive as seis que travam a saída pelo X.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas 4 e não achei nada que derrube. (1) §D.2 descreve APENAS a Sheet ('entra de baixo (mobile) / centralizado (desktop)… usado no upsell contextual') e §E8 confirma que o único modal prototipado foi a bottom-sheet de upsell — e mesmo a 'tela de planos' não é caixa: `PremiumScreen.jsx:18` é `position:absolute;inset:0`, tela cheia. (2) A auditoria só fala de foco 'in sheets/upsell/404' (item 6) — não existe diálogo de confirmação lá, nem na V2/V3. (3) O readme lista `Sheet` entre os 32 primitivos e NÃO lista Dialog/Modal; nenhuma das 6 telas do ui_kit abre caixa central. (4) Li o canvas inteiro: nenhum diálogo — e é coerente, porque o dono desenhou as 4 abas SEM as confirmações (o 'Excluir' da ficha e o dos Orçamentos aparecem como botão, nunca o que acontece depois do clique). Conferi os consumidores reais: 9 `<DialogContent>` no app. O próprio dialog.tsx declara a origem: 'ADR-0007, decision C1 = build now' — decisão técnica, não desenho.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "dialogo-modal-central",
+    "nome": "Diálogo modal central (confirmar / excluir / sair)",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/shared/ui/dialog.tsx",
+        "apps/web/src/shared/ui/dialog.css",
+        "apps/web/src/features/catalog/catalog-panel.tsx",
+        "apps/web/src/features/history/entry-actions.tsx",
+        "apps/web/src/features/history/sign-out-outbox-guard.tsx",
+        "apps/web/src/features/history/snapshot-manage.tsx",
+        "apps/web/src/features/billing/plan-panel.tsx",
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/pages/historico/recalc-today.tsx"
+    ],
+    "oQueFoiInferido": "A caixa inteira, sem uma linha de desenho: largura min(92vw, 32rem), altura máxima 85vh com rolagem interna, padding --space-6, radius xl, scrim --surface-overlay, título em fonte de título CAIXA ALTA com padding-right de --space-10 para não passar por baixo do X, descrição em --text-muted e um X de 44×44 encostado no canto superior direito. E a decisão de código `showClose={false}` — um modal do qual só se sai escolhendo — hoje em 6 pontos: excluir orçamento (entry-actions:67), sair com fila pendente (sign-out-outbox-guard:100), gerir/expirar snapshot (snapshot-manage:83 e :113), recalcular hoje (recalc-today:257) e, o que o mapeador não viu, uma FOLHA sem saída pelo X (historico-page:488). A ordem e o alinhamento dos botões de ação cada chamador monta do seu jeito.",
+    "autoridade": "NENHUMA",
+    "impacto": "Toda confirmação irreversível do produto (excluir filamento/impressora/orçamento, sair com fila pendente, cancelar assinatura) acontece numa caixa que nunca foi desenhada — inclusive as seis que travam a saída pelo X.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas 4 e não achei nada que derrube. (1) §D.2 descreve APENAS a Sheet ('entra de baixo (mobile) / centralizado (desktop)… usado no upsell contextual') e §E8 confirma que o único modal prototipado foi a bottom-sheet de upsell — e mesmo a 'tela de planos' não é caixa: `PremiumScreen.jsx:18` é `position:absolute;inset:0`, tela cheia. (2) A auditoria só fala de foco 'in sheets/upsell/404' (item 6) — não existe diálogo de confirmação lá, nem na V2/V3. (3) O readme lista `Sheet` entre os 32 primitivos e NÃO lista Dialog/Modal; nenhuma das 6 telas do ui_kit abre caixa central. (4) Li o canvas inteiro: nenhum diálogo — e é coerente, porque o dono desenhou as 4 abas SEM as confirmações (o 'Excluir' da ficha e o dos Orçamentos aparecem como botão, nunca o que acontece depois do clique). Conferi os consumidores reais: 9 `<DialogContent>` no app. O próprio dialog.tsx declara a origem: 'ADR-0007, decision C1 = build now' — decisão técnica, não desenho.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

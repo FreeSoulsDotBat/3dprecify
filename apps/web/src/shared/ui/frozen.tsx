@@ -3,7 +3,7 @@ import { type FieldsetHTMLAttributes, type ReactNode } from "react";
 import "./frozen.css";
 
 export interface FrozenProps extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, "disabled"> {
-  children?: ReactNode;
+    children?: ReactNode;
 }
 
 /**
@@ -18,10 +18,10 @@ export interface FrozenProps extends Omit<FieldsetHTMLAttributes<HTMLFieldSetEle
  * um `fieldset` desabilitado desabilita tudo dentro dele, sem exceção.
  */
 export function Frozen({ className = "", children, ...rest }: FrozenProps) {
-  const cls = ["tf-frozen", className].filter(Boolean).join(" ");
-  return (
-    <fieldset className={cls} {...rest} disabled>
-      {children}
-    </fieldset>
-  );
+    const cls = ["tf-frozen", className].filter(Boolean).join(" ");
+    return (
+        <fieldset className={cls} {...rest} disabled>
+            {children}
+        </fieldset>
+    );
 }

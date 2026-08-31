@@ -1,13 +1,13 @@
 {
-  "id": "numberfield-mascara-de-milhar",
-  "nome": "NumberField — a máscara de milhar que reescreve o valor ao sair do campo",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/shared/ui/number-field.tsx", "apps/web/src/shared/ui/field.css"],
-  "oQueFoiInferido": "Um COMPORTAMENTO, não uma aparência: ao perder o foco, todo campo `currency` reescreve o que foi digitado com separador de milhar pt-BR ('12345,67' vira '12.345,67'), disparando o mesmo `onChange` do formulário — nunca durante a digitação, e deixando intacto o valor em branco ou ilegível. Datado no código: '016/PR-C homologação (B2) — todos os campos currency ganham — consistência'. Também decididos no código: o piso `min-width: 8rem` da moldura (comentário: defesa contra transbordo em grade de 2 colunas) e o alinhamento à direita com figuras tabulares (`tf-input--num`).",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O campo mais tocado do produto muda o texto sozinho quando o vendedor sai dele. Se a leitura falhar, o valor fica cru e só a validação explica — momento que nenhuma tela desenhada prevê (e a memória do projeto já registra o efeito colateral: máscara perdida ao reabrir simulação).",
-  "prioridade": "MEDIA",
-  "refutacao": "O componente NOMINAL está coberto e mais do que o mapeador disse: `CalculatorScreen.jsx` instancia NumberField oito vezes com `currency` e `unit` (kg, g, %, kWh, h), e o canvas do dono desenha prefixo E sufixo JUNTOS na mesma moldura (l.130, `preDisp`/`sufDisp` — 'Reserva de manutenção' com 'R$' e '/h'), além do numérico com afixo 'un' (l.191) — ou seja, o pior caso que o achado dizia faltar está desenhado, a 1920. O que nenhuma autoridade mostra é o MOMENTO da máscara: um desenho estático não pode mostrá-lo e o protótipo clicável não o exercita (§D.1 descreve vírgula decimal, inputmode, placeholder e figuras tabulares — nunca separador de milhar nem reescrita no blur; a auditoria item 16 fala de 'money format' na V2 sem tratar de máscara). Sobrevive, rebaixado a PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "numberfield-mascara-de-milhar",
+    "nome": "NumberField — a máscara de milhar que reescreve o valor ao sair do campo",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/shared/ui/number-field.tsx", "apps/web/src/shared/ui/field.css"],
+    "oQueFoiInferido": "Um COMPORTAMENTO, não uma aparência: ao perder o foco, todo campo `currency` reescreve o que foi digitado com separador de milhar pt-BR ('12345,67' vira '12.345,67'), disparando o mesmo `onChange` do formulário — nunca durante a digitação, e deixando intacto o valor em branco ou ilegível. Datado no código: '016/PR-C homologação (B2) — todos os campos currency ganham — consistência'. Também decididos no código: o piso `min-width: 8rem` da moldura (comentário: defesa contra transbordo em grade de 2 colunas) e o alinhamento à direita com figuras tabulares (`tf-input--num`).",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O campo mais tocado do produto muda o texto sozinho quando o vendedor sai dele. Se a leitura falhar, o valor fica cru e só a validação explica — momento que nenhuma tela desenhada prevê (e a memória do projeto já registra o efeito colateral: máscara perdida ao reabrir simulação).",
+    "prioridade": "MEDIA",
+    "refutacao": "O componente NOMINAL está coberto e mais do que o mapeador disse: `CalculatorScreen.jsx` instancia NumberField oito vezes com `currency` e `unit` (kg, g, %, kWh, h), e o canvas do dono desenha prefixo E sufixo JUNTOS na mesma moldura (l.130, `preDisp`/`sufDisp` — 'Reserva de manutenção' com 'R$' e '/h'), além do numérico com afixo 'un' (l.191) — ou seja, o pior caso que o achado dizia faltar está desenhado, a 1920. O que nenhuma autoridade mostra é o MOMENTO da máscara: um desenho estático não pode mostrá-lo e o protótipo clicável não o exercita (§D.1 descreve vírgula decimal, inputmode, placeholder e figuras tabulares — nunca separador de milhar nem reescrita no blur; a auditoria item 16 fala de 'money format' na V2 sem tratar de máscara). Sobrevive, rebaixado a PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

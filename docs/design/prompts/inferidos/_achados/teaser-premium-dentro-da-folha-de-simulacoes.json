@@ -1,16 +1,16 @@
 {
-  "id": "teaser-premium-dentro-da-folha-de-simulacoes",
-  "nome": "Porta honesta para grátis / deslogado dentro da folha de Simulações",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/shared/billing/premium-teaser.tsx"
-  ],
-  "oQueFoiInferido": "Quando o vendedor é grátis ou deslogado, a MESMA folha troca o conteúdo inteiro por `<PremiumTeaser feature=\"SCENARIOS\"/>` e SUPRIME o `SheetDescription` da lista (correção 016/T010-A1, para não repetir a promessa duas vezes coladas). Inferido: como o cartão de teaser — desenhado para caber numa PÁGINA de aba, em coluna larga de desktop, dentro de um `tf-card` de padding 56/40 e COM ícone acima do título — se comporta dentro de um painel lateral estreito sobre o Calcular; a supressão condicional do subtítulo; e a ausência de qualquer amostra do que o Premium destrava aqui.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A vitrine de venda mais importante da funcionalidade aparece espremida num painel lateral cujo layout ninguém desenhou, e sem o ícone que a versão desenhada tem.",
-  "prioridade": "MEDIA",
-  "refutacao": "Este é o único achado em que uma autoridade cobre o BLOCO, então medi exatamente o que ela cobre. Desenhado (canvas 018, artboards de Catálogo linha 90, Kits 173, Orçamentos 255 e Conta 398): `tf-premium-teaser` dentro de um `tf-card` com `padding:56px 40px`, com `tf-empty__icon` (svg trofeu/relógio, 26px) ACIMA do `tf-premium-teaser__title`, subtítulo, caption de preço, `tf-btn--primary tf-btn--lg` e um segundo caption. NÃO desenhado: (i) o mesmo bloco num painel lateral estreito a 390px — o canvas é 1920 e não cobre Calcular nem Simulações; (ii) o componente construído (`premium-teaser.tsx`) é um contrato FECHADO de 4 elementos SEM ícone e SEM card wrapper, então nem no desktop ele é o que o dono desenhou; (iii) o protótipo trata upsell em E8 como bottom-sheet contextual disparado por Salvar/Exportar/Adicionar, que é outro caso (aqui o teaser É o conteúdo da folha, não um sheet disparado). Sobrevive como PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "teaser-premium-dentro-da-folha-de-simulacoes",
+    "nome": "Porta honesta para grátis / deslogado dentro da folha de Simulações",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/shared/billing/premium-teaser.tsx"
+    ],
+    "oQueFoiInferido": "Quando o vendedor é grátis ou deslogado, a MESMA folha troca o conteúdo inteiro por `<PremiumTeaser feature=\"SCENARIOS\"/>` e SUPRIME o `SheetDescription` da lista (correção 016/T010-A1, para não repetir a promessa duas vezes coladas). Inferido: como o cartão de teaser — desenhado para caber numa PÁGINA de aba, em coluna larga de desktop, dentro de um `tf-card` de padding 56/40 e COM ícone acima do título — se comporta dentro de um painel lateral estreito sobre o Calcular; a supressão condicional do subtítulo; e a ausência de qualquer amostra do que o Premium destrava aqui.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A vitrine de venda mais importante da funcionalidade aparece espremida num painel lateral cujo layout ninguém desenhou, e sem o ícone que a versão desenhada tem.",
+    "prioridade": "MEDIA",
+    "refutacao": "Este é o único achado em que uma autoridade cobre o BLOCO, então medi exatamente o que ela cobre. Desenhado (canvas 018, artboards de Catálogo linha 90, Kits 173, Orçamentos 255 e Conta 398): `tf-premium-teaser` dentro de um `tf-card` com `padding:56px 40px`, com `tf-empty__icon` (svg trofeu/relógio, 26px) ACIMA do `tf-premium-teaser__title`, subtítulo, caption de preço, `tf-btn--primary tf-btn--lg` e um segundo caption. NÃO desenhado: (i) o mesmo bloco num painel lateral estreito a 390px — o canvas é 1920 e não cobre Calcular nem Simulações; (ii) o componente construído (`premium-teaser.tsx`) é um contrato FECHADO de 4 elementos SEM ícone e SEM card wrapper, então nem no desktop ele é o que o dono desenhou; (iii) o protótipo trata upsell em E8 como bottom-sheet contextual disparado por Salvar/Exportar/Adicionar, que é outro caso (aqui o teaser É o conteúdo da folha, não um sheet disparado). Sobrevive como PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

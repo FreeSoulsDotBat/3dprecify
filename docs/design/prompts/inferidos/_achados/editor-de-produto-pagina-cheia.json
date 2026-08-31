@@ -1,16 +1,16 @@
 {
-  "id": "editor-de-produto-pagina-cheia",
-  "nome": "Editor de produto em página cheia (cabeçalho, cartão de nome + salvar, corpo em duas colunas)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/catalogo/produto-page.tsx",
-    "apps/web/src/pages/catalogo/catalogo-page.tsx"
-  ],
-  "oQueFoiInferido": "A tela inteira (produto-page linhas 272-453): `PageHeader` \"Novo produto\"/\"Editar produto\" sem nenhum botão de voltar ou fechar; um `Card padding=\"md\"` no topo que contém o campo \"Nome do produto\" E o botão \"Salvar produto\" E o `Alert` de erro de gravação — a ação principal mora no primeiro cartão, não num rodapé nem numa barra fixa; depois o cartão do seletor; depois `tf-calc-grid` de duas colunas reaproveitada da Calcular; e por fim o `tf-calc-footer`. Inferido: onde vive o salvar, a ordem dos blocos, a ausência de saída no topo, e o fato de a tela NÃO participar do mestre-detalhe do desktop mesmo a 1920px.",
-  "autoridade": "NENHUMA",
-  "impacto": "É o maior formulário do aplicativo e o coração do Catálogo Premium, e nunca passou por uma prancheta: o botão de salvar está preso ao cartão do nome, no alto, longe do resultado que o vendedor está conferindo.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas 4 e mantenho NENHUMA. (1) O inventário E1–E9 não tem editor de produto: §E5 (linha 262) prevê \"Form add/editar\" em sheet para filamento e impressora; produto aparece só como terceiro segmento de LISTA, e §E4 é a Calcular, não um editor de item salvo. (3) `CatalogScreen.jsx` trata \"produto\" com o MESMO sheet de dois campos (`seg !== 'impressora'` libera custo/peso) — não é remotamente esta tela. (2) A auditoria, nas três rodadas, não conhece a tela. (4) O que mais se aproxima no canvas é a ficha de 560px da seção `prod` (4 campos + Referências + Salvar alterações), que é uma superfície DIFERENTE e menor, e o `research.md` §E (linhas 111-112) registra explicitamente \"Rejeitado: recompor o formulário completo de Produto dentro de 560px\" e mantém \"o editor de página cheia que já existe\" — decisão textual, sem artboard. Este achado é o PAI de `seletor-de-filamento-e-impressora`, `recados-do-editor-de-produto` e `rodape-do-editor-de-produto`; mantive os quatro separados porque cada um tem um veredito de autoridade diferente, e fundi-los esconderia que só este e os recados estão em NENHUMA.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "editor-de-produto-pagina-cheia",
+    "nome": "Editor de produto em página cheia (cabeçalho, cartão de nome + salvar, corpo em duas colunas)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/catalogo/produto-page.tsx",
+        "apps/web/src/pages/catalogo/catalogo-page.tsx"
+    ],
+    "oQueFoiInferido": "A tela inteira (produto-page linhas 272-453): `PageHeader` \"Novo produto\"/\"Editar produto\" sem nenhum botão de voltar ou fechar; um `Card padding=\"md\"` no topo que contém o campo \"Nome do produto\" E o botão \"Salvar produto\" E o `Alert` de erro de gravação — a ação principal mora no primeiro cartão, não num rodapé nem numa barra fixa; depois o cartão do seletor; depois `tf-calc-grid` de duas colunas reaproveitada da Calcular; e por fim o `tf-calc-footer`. Inferido: onde vive o salvar, a ordem dos blocos, a ausência de saída no topo, e o fato de a tela NÃO participar do mestre-detalhe do desktop mesmo a 1920px.",
+    "autoridade": "NENHUMA",
+    "impacto": "É o maior formulário do aplicativo e o coração do Catálogo Premium, e nunca passou por uma prancheta: o botão de salvar está preso ao cartão do nome, no alto, longe do resultado que o vendedor está conferindo.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas 4 e mantenho NENHUMA. (1) O inventário E1–E9 não tem editor de produto: §E5 (linha 262) prevê \"Form add/editar\" em sheet para filamento e impressora; produto aparece só como terceiro segmento de LISTA, e §E4 é a Calcular, não um editor de item salvo. (3) `CatalogScreen.jsx` trata \"produto\" com o MESMO sheet de dois campos (`seg !== 'impressora'` libera custo/peso) — não é remotamente esta tela. (2) A auditoria, nas três rodadas, não conhece a tela. (4) O que mais se aproxima no canvas é a ficha de 560px da seção `prod` (4 campos + Referências + Salvar alterações), que é uma superfície DIFERENTE e menor, e o `research.md` §E (linhas 111-112) registra explicitamente \"Rejeitado: recompor o formulário completo de Produto dentro de 560px\" e mantém \"o editor de página cheia que já existe\" — decisão textual, sem artboard. Este achado é o PAI de `seletor-de-filamento-e-impressora`, `recados-do-editor-de-produto` e `rodape-do-editor-de-produto`; mantive os quatro separados porque cada um tem um veredito de autoridade diferente, e fundi-los esconderia que só este e os recados estão em NENHUMA.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

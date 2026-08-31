@@ -17,75 +17,75 @@ import { CalcularPage } from "./calcular-page";
 // for the catalog-prefill path (the cheapest repro of the 4 affected `setValue` call sites).
 
 const { useFilamentsMock, usePrintersMock } = vi.hoisted(() => ({
-  useFilamentsMock: vi.fn(),
-  usePrintersMock: vi.fn(),
+    useFilamentsMock: vi.fn(),
+    usePrintersMock: vi.fn(),
 }));
 vi.mock("@/entities/catalog/use-catalog", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/entities/catalog/use-catalog")>();
-  return {
-    ...actual,
-    useFilaments: () => useFilamentsMock(),
-    usePrinters: () => usePrintersMock(),
-  };
+    const actual = await importOriginal<typeof import("@/entities/catalog/use-catalog")>();
+    return {
+        ...actual,
+        useFilaments: () => useFilamentsMock(),
+        usePrinters: () => usePrintersMock(),
+    };
 });
 
 const t = messages.calculator;
 
 const filament = {
-  id: "f-1",
-  name: "PLA Azul",
-  material: "PLA",
-  costPerRoll: "110.00",
-  rollWeightKg: "1.000",
-  createdAt: "2026-07-09T00:00:00Z",
-  updatedAt: "2026-07-09T00:00:00Z",
+    id: "f-1",
+    name: "PLA Azul",
+    material: "PLA",
+    costPerRoll: "110.00",
+    rollWeightKg: "1.000",
+    createdAt: "2026-07-09T00:00:00Z",
+    updatedAt: "2026-07-09T00:00:00Z",
 };
 
 function listState(items: unknown[]) {
-  return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
+    return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };
 }
 
 function renderPage() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <CalcularPage />
-    </QueryClientProvider>,
-  );
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    return render(
+        <QueryClientProvider client={client}>
+            <CalcularPage />
+        </QueryClientProvider>,
+    );
 }
 
 beforeEach(() => {
-  useFilamentsMock.mockReturnValue(listState([filament]));
-  usePrintersMock.mockReturnValue(listState([]));
-  useSessionStore.setState({
-    status: "authenticated",
-    user: { uid: "u-1", email: "a@b.dev" } as never,
-  });
+    useFilamentsMock.mockReturnValue(listState([filament]));
+    usePrintersMock.mockReturnValue(listState([]));
+    useSessionStore.setState({
+        status: "authenticated",
+        user: { uid: "u-1", email: "a@b.dev" } as never,
+    });
 });
 
 afterEach(() => {
-  cleanup();
-  useSessionStore.setState({ status: "anonymous", user: null });
+    cleanup();
+    useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("CalcularPage — stale validation error after a catalog prefill (FA-03)", () => {
-  it("clears the rollWeight error the instant a valid filament is picked, no manual touch", async () => {
-    renderPage();
+    it("clears the rollWeight error the instant a valid filament is picked, no manual touch", async () => {
+        renderPage();
 
-    fireEvent.change(screen.getByRole("textbox", { name: t.fields.rollWeight }), {
-      target: { value: "0" },
-    });
-    expect(await screen.findByText(t.rollWeightError)).toBeInTheDocument();
+        fireEvent.change(screen.getByRole("textbox", { name: t.fields.rollWeight }), {
+            target: { value: "0" },
+        });
+        expect(await screen.findByText(t.rollWeightError)).toBeInTheDocument();
 
-    fireEvent.change(screen.getByRole("combobox", { name: t.catalogPicker.filament }), {
-      target: { value: "f-1" },
-    });
+        fireEvent.change(screen.getByRole("combobox", { name: t.catalogPicker.filament }), {
+            target: { value: "f-1" },
+        });
 
-    // The prefilled value (1,000) is valid — the stale error must be gone with NO further
-    // interaction on the field itself (async resolver revalidation — await it).
-    await waitFor(() => {
-      expect(screen.queryByText(t.rollWeightError)).not.toBeInTheDocument();
+        // The prefilled value (1,000) is valid — the stale error must be gone with NO further
+        // interaction on the field itself (async resolver revalidation — await it).
+        await waitFor(() => {
+            expect(screen.queryByText(t.rollWeightError)).not.toBeInTheDocument();
+        });
+        expect(screen.getByRole("textbox", { name: t.fields.rollWeight })).toHaveValue("1,000");
     });
-    expect(screen.getByRole("textbox", { name: t.fields.rollWeight })).toHaveValue("1,000");
-  });
 });

@@ -1,17 +1,17 @@
 {
-  "id": "erro-e-404-dentro-do-shell",
-  "nome": "Telas de Erro e 404 emolduradas pelo shell",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/error/error-page.tsx",
-    "apps/web/src/pages/not-found/not-found-page.tsx",
-    "apps/web/src/app/router.tsx"
-  ],
-  "oQueFoiInferido": "`errorComponent: ErrorPage` e `notFoundComponent: NotFoundPage` estão declarados na `rootRoute`, cujo `component` é o `AppShell` — logo ambas renderizam DENTRO do shell: menu, top-bar e faixas continuam de pé em volta de \"Algo deu errado\". Inferidos: o enquadramento (o protótipo tratou as duas como telas do fluxo); o que o menu deveria fazer quando a própria árvore de rotas falhou (hoje continua clicável e navegável); a versão desktop das duas (uma coluna estreita centrada num campo largo); e o caso em que NADA renderiza — a armadilha medida das rotas de 2 segmentos com `base:'./'`, em que os assets 404 e o vendedor vê página em branco, sem 404 e sem tela de erro.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Quando algo quebra, o vendedor vê a mensagem honesta dentro de um app que continua parecendo funcionar; no pior caso (2 segmentos) vê branco absoluto, que é a ausência total de qualquer tela desenhada.",
-  "prioridade": "MEDIA",
-  "refutacao": "O CONTEÚDO das duas cai — é bem coberto — e só o ENQUADRAMENTO sobrevive. COBERTO: §E9 (\"**404** — página de rota inexistente, on-brand (um grafismo, link de volta ao shell)\" e \"**Erro global** — envelope ADR-0002, nunca stack trace\"), `claude-design-prototype-fixes.md` item 19 (tela genérica \"Algo deu errado\" + botão \"Recarregar\" + linha \"Código de suporte: {correlationId}\"), e a auditoria confirma renderizado nas três rodadas (\"good 404 (A37 input)\"; V2 \"19 (generic 500 screen w/ correlationId) FIXED\"; V3 \"bonus: 500-screen copy ('Código de suporte:' / 'Recarregar')\"). O código é fiel a isso: `Grafismo name=\"arco\"` + `EmptyState` + link para `/calcular` no 404; `Grafismo name=\"espada\"` + título + \"Recarregar\" + \"Código de suporte\" no erro. NÃO COBERTO: nenhuma autoridade mostra essas telas com o shell em volta — no protótipo elas são telas do fluxo (o 404 tem \"link de volta ao shell\", frase que só faz sentido se ele estiver FORA do shell), e o canvas 018 não tem artboard de erro nem 404 (busca por \"404\" e \"Algo deu errado\" no `.dc.html` = 0). A página em branco de 2 segmentos é defeito registrado como follow-up (016/A4), por definição não desenhada.",
-  "sobreviveu": true,
-  "area": "shell"
+    "id": "erro-e-404-dentro-do-shell",
+    "nome": "Telas de Erro e 404 emolduradas pelo shell",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/error/error-page.tsx",
+        "apps/web/src/pages/not-found/not-found-page.tsx",
+        "apps/web/src/app/router.tsx"
+    ],
+    "oQueFoiInferido": "`errorComponent: ErrorPage` e `notFoundComponent: NotFoundPage` estão declarados na `rootRoute`, cujo `component` é o `AppShell` — logo ambas renderizam DENTRO do shell: menu, top-bar e faixas continuam de pé em volta de \"Algo deu errado\". Inferidos: o enquadramento (o protótipo tratou as duas como telas do fluxo); o que o menu deveria fazer quando a própria árvore de rotas falhou (hoje continua clicável e navegável); a versão desktop das duas (uma coluna estreita centrada num campo largo); e o caso em que NADA renderiza — a armadilha medida das rotas de 2 segmentos com `base:'./'`, em que os assets 404 e o vendedor vê página em branco, sem 404 e sem tela de erro.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Quando algo quebra, o vendedor vê a mensagem honesta dentro de um app que continua parecendo funcionar; no pior caso (2 segmentos) vê branco absoluto, que é a ausência total de qualquer tela desenhada.",
+    "prioridade": "MEDIA",
+    "refutacao": "O CONTEÚDO das duas cai — é bem coberto — e só o ENQUADRAMENTO sobrevive. COBERTO: §E9 (\"**404** — página de rota inexistente, on-brand (um grafismo, link de volta ao shell)\" e \"**Erro global** — envelope ADR-0002, nunca stack trace\"), `claude-design-prototype-fixes.md` item 19 (tela genérica \"Algo deu errado\" + botão \"Recarregar\" + linha \"Código de suporte: {correlationId}\"), e a auditoria confirma renderizado nas três rodadas (\"good 404 (A37 input)\"; V2 \"19 (generic 500 screen w/ correlationId) FIXED\"; V3 \"bonus: 500-screen copy ('Código de suporte:' / 'Recarregar')\"). O código é fiel a isso: `Grafismo name=\"arco\"` + `EmptyState` + link para `/calcular` no 404; `Grafismo name=\"espada\"` + título + \"Recarregar\" + \"Código de suporte\" no erro. NÃO COBERTO: nenhuma autoridade mostra essas telas com o shell em volta — no protótipo elas são telas do fluxo (o 404 tem \"link de volta ao shell\", frase que só faz sentido se ele estiver FORA do shell), e o canvas 018 não tem artboard de erro nem 404 (busca por \"404\" e \"Algo deu errado\" no `.dc.html` = 0). A página em branco de 2 segmentos é defeito registrado como follow-up (016/A4), por definição não desenhada.",
+    "sobreviveu": true,
+    "area": "shell"
 }

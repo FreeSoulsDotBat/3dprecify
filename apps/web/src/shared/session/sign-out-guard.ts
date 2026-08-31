@@ -23,10 +23,10 @@ let guard: SignOutGuard | null = null;
 /** Install the guard (app shell, on mount). Returns its unregister — an unmounted guard must never
  *  keep blocking sign-out. */
 export function registerSignOutGuard(next: SignOutGuard | null): () => void {
-  guard = next;
-  return () => {
-    if (guard === next) guard = null;
-  };
+    guard = next;
+    return () => {
+        if (guard === next) guard = null;
+    };
 }
 
 /**
@@ -34,6 +34,6 @@ export function registerSignOutGuard(next: SignOutGuard | null): () => void {
  * now reserved for the guard's own "yes, sign out" path.
  */
 export async function requestSignOut(): Promise<void> {
-  if (guard && !(await guard())) return;
-  await signOutUser();
+    if (guard && !(await guard())) return;
+    await signOutUser();
 }

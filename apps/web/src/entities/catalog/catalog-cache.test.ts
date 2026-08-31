@@ -10,53 +10,53 @@ import { readSellerFixedPrice } from "./catalog-cache";
 // documento antigo simplesmente não tem a chave). Nenhum dos dois é `0,00`.
 
 function product(over: Partial<ProductOut> = {}): ProductOut {
-  return {
-    id: "p1",
-    name: "Suporte L",
-    filamentId: null,
-    printerId: null,
-    filamentValues: { material: "PLA", costPerRoll: "100.00", rollWeightKg: "1.000" },
-    printerValues: {
-      machineValue: "4000.00",
-      machineLifetimeHours: "2000",
-      avgPowerKw: "0.100",
-      maintenanceReservePerHour: "0",
-    },
-    pieceInputs: {
-      printGrams: "100",
-      printTimeHours: "5",
-      failurePct: "0",
-      finishTimeHours: "0",
-      finishRatePerHour: "0",
-      laborHours: "0",
-      laborRatePerHour: "0",
-      markupVarejoPct: "50",
-      markupAtacadoPct: "30",
-    },
-    tariffPerKwh: "1.00",
-    includeMarketplace: true,
-    channels: [],
-    otherCosts: [],
-    sellerFixedPrice: null,
-    sellerFixedAt: null,
-    createdAt: "2026-07-11T00:00:00Z",
-    updatedAt: "2026-07-11T00:00:00Z",
-    ...over,
-  } as ProductOut;
+    return {
+        id: "p1",
+        name: "Suporte L",
+        filamentId: null,
+        printerId: null,
+        filamentValues: { material: "PLA", costPerRoll: "100.00", rollWeightKg: "1.000" },
+        printerValues: {
+            machineValue: "4000.00",
+            machineLifetimeHours: "2000",
+            avgPowerKw: "0.100",
+            maintenanceReservePerHour: "0",
+        },
+        pieceInputs: {
+            printGrams: "100",
+            printTimeHours: "5",
+            failurePct: "0",
+            finishTimeHours: "0",
+            finishRatePerHour: "0",
+            laborHours: "0",
+            laborRatePerHour: "0",
+            markupVarejoPct: "50",
+            markupAtacadoPct: "30",
+        },
+        tariffPerKwh: "1.00",
+        includeMarketplace: true,
+        channels: [],
+        otherCosts: [],
+        sellerFixedPrice: null,
+        sellerFixedAt: null,
+        createdAt: "2026-07-11T00:00:00Z",
+        updatedAt: "2026-07-11T00:00:00Z",
+        ...over,
+    } as ProductOut;
 }
 
 describe("readSellerFixedPrice — undefined (cache pré-0008) e null (servidor) são o MESMO 'não fixado'", () => {
-  it("null (servidor, nunca fixado) ⇒ null", () => {
-    expect(readSellerFixedPrice(product({ sellerFixedPrice: null }))).toBeNull();
-  });
+    it("null (servidor, nunca fixado) ⇒ null", () => {
+        expect(readSellerFixedPrice(product({ sellerFixedPrice: null }))).toBeNull();
+    });
 
-  it("undefined (item do cache gravado antes da 0008) ⇒ null, NUNCA 0", () => {
-    const semCampo = product();
-    delete (semCampo as Partial<ProductOut>).sellerFixedPrice;
-    expect(readSellerFixedPrice(semCampo)).toBeNull();
-  });
+    it("undefined (item do cache gravado antes da 0008) ⇒ null, NUNCA 0", () => {
+        const semCampo = product();
+        delete (semCampo as Partial<ProductOut>).sellerFixedPrice;
+        expect(readSellerFixedPrice(semCampo)).toBeNull();
+    });
 
-  it("fixado ⇒ o número", () => {
-    expect(readSellerFixedPrice(product({ sellerFixedPrice: "42.00" }))).toBe(42);
-  });
+    it("fixado ⇒ o número", () => {
+        expect(readSellerFixedPrice(product({ sellerFixedPrice: "42.00" }))).toBe(42);
+    });
 });

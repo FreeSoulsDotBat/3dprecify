@@ -1,16 +1,16 @@
 {
-  "id": "registrar-orcamento-a-partir-do-kit",
-  "nome": "Ação 'Salvar em Orçamentos' dentro do compositor de kits",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/pages/bom/bom-page.tsx",
-    "apps/web/src/features/history/record-snapshot-sheet.tsx"
-  ],
-  "oQueFoiInferido": "Um `Button variant=\"secondary\"` com ícone `save` e o rótulo **'Salvar em Orçamentos'** (`messages.historico.saveAction`), centralizado entre o resumo e o cartão de salvar, que abre uma folha para congelar o kit como orçamento; desabilitado quando nenhuma peça entrou no total, e INEXISTENTE (não desabilitado, não teaser — `if (!entitled) return null`) para quem não tem Premium ativo. Não foi desenhado: como duas ações de persistência com significados opostos — 'Salvar kit' (coisa viva que recalcula) e 'Salvar em Orçamentos' (documento congelado) — convivem a um cartão de distância na mesma coluna, ambas começando com o mesmo verbo; a hierarquia entre elas; e o que o botão desabilitado comunica.",
-  "autoridade": "NENHUMA",
-  "impacto": "Duas ações de gravar, com efeitos irreversivelmente diferentes, dividem o mesmo canto da tela sem desenho que as distinga — e, com o rótulo real, dividem também o mesmo verbo inicial. É a confusão mais provável de todo o fluxo de kits.",
-  "prioridade": "ALTA",
-  "refutacao": "Corrijo o rótulo, e a correção agrava o achado: o botão não se chama 'Registrar orçamento' — é `t.saveAction` de `messages.historico`, ou seja **'Salvar em Orçamentos'** (`record-snapshot-sheet.tsx:80`, copy em `messages.pt-br.ts:968`). No canvas, o aside de Kits (linhas 210-241) tem Total do kit, Preços por canal (kit), Nome do kit e Salvar kit — e nada mais; grep por 'Salvar em Orçamentos' e por 'Registrar' no `.dc.html`: zero (a palavra 'Orçamentos' só aparece como item de navegação, como título da própria aba e no teaser Premium). §E6 do protótipo desenha o Histórico como lista + detalhe congelado + exportar, nunca a AÇÃO de registrar a partir de outra tela — e kits não existem no protótipo. `.design-import/ui_kits/precifica3d/HistoryScreen.jsx` (81 linhas) e a auditoria de 2026-07-02 não cobrem a ação. Subo a prioridade de MEDIA para ALTA por causa da colisão de rótulo, que só ficou visível ao abrir o arquivo.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "registrar-orcamento-a-partir-do-kit",
+    "nome": "Ação 'Salvar em Orçamentos' dentro do compositor de kits",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/pages/bom/bom-page.tsx",
+        "apps/web/src/features/history/record-snapshot-sheet.tsx"
+    ],
+    "oQueFoiInferido": "Um `Button variant=\"secondary\"` com ícone `save` e o rótulo **'Salvar em Orçamentos'** (`messages.historico.saveAction`), centralizado entre o resumo e o cartão de salvar, que abre uma folha para congelar o kit como orçamento; desabilitado quando nenhuma peça entrou no total, e INEXISTENTE (não desabilitado, não teaser — `if (!entitled) return null`) para quem não tem Premium ativo. Não foi desenhado: como duas ações de persistência com significados opostos — 'Salvar kit' (coisa viva que recalcula) e 'Salvar em Orçamentos' (documento congelado) — convivem a um cartão de distância na mesma coluna, ambas começando com o mesmo verbo; a hierarquia entre elas; e o que o botão desabilitado comunica.",
+    "autoridade": "NENHUMA",
+    "impacto": "Duas ações de gravar, com efeitos irreversivelmente diferentes, dividem o mesmo canto da tela sem desenho que as distinga — e, com o rótulo real, dividem também o mesmo verbo inicial. É a confusão mais provável de todo o fluxo de kits.",
+    "prioridade": "ALTA",
+    "refutacao": "Corrijo o rótulo, e a correção agrava o achado: o botão não se chama 'Registrar orçamento' — é `t.saveAction` de `messages.historico`, ou seja **'Salvar em Orçamentos'** (`record-snapshot-sheet.tsx:80`, copy em `messages.pt-br.ts:968`). No canvas, o aside de Kits (linhas 210-241) tem Total do kit, Preços por canal (kit), Nome do kit e Salvar kit — e nada mais; grep por 'Salvar em Orçamentos' e por 'Registrar' no `.dc.html`: zero (a palavra 'Orçamentos' só aparece como item de navegação, como título da própria aba e no teaser Premium). §E6 do protótipo desenha o Histórico como lista + detalhe congelado + exportar, nunca a AÇÃO de registrar a partir de outra tela — e kits não existem no protótipo. `.design-import/ui_kits/precifica3d/HistoryScreen.jsx` (81 linhas) e a auditoria de 2026-07-02 não cobrem a ação. Subo a prioridade de MEDIA para ALTA por causa da colisão de rótulo, que só ficou visível ao abrir o arquivo.",
+    "sobreviveu": true,
+    "area": "kits"
 }

@@ -16,7 +16,7 @@
  * caractere cru quebraria um regex literal (o bug que este comentário evita).
  */
 const SPACE_CLASS_SOURCE =
-  "[ \\t\\n\\r\\f\\v\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]";
+    "[ \\t\\n\\r\\f\\v\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff]";
 const SPACE_CLASS_RUN = new RegExp(`${SPACE_CLASS_SOURCE}+`, "gu");
 const SPACE_CLASS_BOUNDARY = new RegExp(`^${SPACE_CLASS_SOURCE}+|${SPACE_CLASS_SOURCE}+$`, "gu");
 
@@ -28,13 +28,13 @@ export const NAME_MAX = 120;
  * (ADR-0033 §4). NÃO trunca — quem grava a chave usa `nameNormKey`.
  */
 export function nameNorm(raw: string): string {
-  const decomposed = raw.normalize("NFD").replace(/\p{Mn}/gu, "");
-  const lower = decomposed.toLowerCase();
-  const trimmed = lower.replace(SPACE_CLASS_BOUNDARY, "");
-  return trimmed.replace(SPACE_CLASS_RUN, " ");
+    const decomposed = raw.normalize("NFD").replace(/\p{Mn}/gu, "");
+    const lower = decomposed.toLowerCase();
+    const trimmed = lower.replace(SPACE_CLASS_BOUNDARY, "");
+    return trimmed.replace(SPACE_CLASS_RUN, " ");
 }
 
 /** O que o servidor grava como chave de deduplicação: `nameNorm` truncado a 200 caracteres. */
 export function nameNormKey(raw: string): string {
-  return nameNorm(raw).slice(0, 200);
+    return nameNorm(raw).slice(0, 200);
 }

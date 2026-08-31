@@ -1,13 +1,13 @@
 {
-  "id": "estados-de-verificacao-de-plano-kits",
-  "nome": "Estados de verificação de plano na aba Kits (checando e parede de erro)",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "Duas telas inteiras que substituem o compositor dentro do mesmo `GateShell` (um PageHeader e nada mais): (a) `GateChecking` — `Spinner` centralizado com 'Verificando seu plano…' e `py-8`; (b) a parede `Alert tone=\"info\"` com 'Não foi possível verificar seu plano.' e um botão secundário 'Tentar novamente'. Mais o MESMO texto reaparecendo como Alert info no topo do compositor quando a re-checagem falha mas a última resposta 'ativo' ainda vale (`staleEntitlement`). Não foi desenhado: quanto tempo o spinner pode ficar sozinho numa página vazia, se a parede é tela cheia ou bloco, e como distinguir visualmente 'não sabemos do seu plano' de 'você não tem Premium' — a distinção que o produto trata como inegociável.",
-  "autoridade": "NENHUMA",
-  "impacto": "São os estados que decidem se o vendedor acredita que perdeu o Premium ou que a rede falhou — a honestidade central do produto, segundo o próprio preâmbulo de marca ('nunca vender falha de rede como recurso premium') — e nenhum dos dois foi desenhado.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'Verificando' e 'Não foi possível' no `.dc.html`: ausentes. O canvas modela o plano como um `prop` enum (`plano: premium|free`) com dois ramos apenas — não existe estado de checagem nem de falha de checagem em nenhum dos quatro artboards. No protótipo de 2026-07, §E1 desenha um Splash 'Verificando sessão…', que é SESSÃO e é a tela de abertura do app, não uma parede de entitlement por aba; §E9 cobre erro global (envelope ADR-0002) e 404; §E8 é o upsell, que é outra coisa; e a matriz da §G não tem linha de verificação de plano. `.design-import/ui_kits/precifica3d/PremiumScreen.jsx` (63 linhas) é a vitrine de planos. Auditoria de 2026-07-02: o achado #8 lista 'missing states' e cita skeletons, load-error de Catálogo/Histórico, empty premium e tela 500 — nunca verificação de plano.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "estados-de-verificacao-de-plano-kits",
+    "nome": "Estados de verificação de plano na aba Kits (checando e parede de erro)",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "Duas telas inteiras que substituem o compositor dentro do mesmo `GateShell` (um PageHeader e nada mais): (a) `GateChecking` — `Spinner` centralizado com 'Verificando seu plano…' e `py-8`; (b) a parede `Alert tone=\"info\"` com 'Não foi possível verificar seu plano.' e um botão secundário 'Tentar novamente'. Mais o MESMO texto reaparecendo como Alert info no topo do compositor quando a re-checagem falha mas a última resposta 'ativo' ainda vale (`staleEntitlement`). Não foi desenhado: quanto tempo o spinner pode ficar sozinho numa página vazia, se a parede é tela cheia ou bloco, e como distinguir visualmente 'não sabemos do seu plano' de 'você não tem Premium' — a distinção que o produto trata como inegociável.",
+    "autoridade": "NENHUMA",
+    "impacto": "São os estados que decidem se o vendedor acredita que perdeu o Premium ou que a rede falhou — a honestidade central do produto, segundo o próprio preâmbulo de marca ('nunca vender falha de rede como recurso premium') — e nenhum dos dois foi desenhado.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'Verificando' e 'Não foi possível' no `.dc.html`: ausentes. O canvas modela o plano como um `prop` enum (`plano: premium|free`) com dois ramos apenas — não existe estado de checagem nem de falha de checagem em nenhum dos quatro artboards. No protótipo de 2026-07, §E1 desenha um Splash 'Verificando sessão…', que é SESSÃO e é a tela de abertura do app, não uma parede de entitlement por aba; §E9 cobre erro global (envelope ADR-0002) e 404; §E8 é o upsell, que é outra coisa; e a matriz da §G não tem linha de verificação de plano. `.design-import/ui_kits/precifica3d/PremiumScreen.jsx` (63 linhas) é a vitrine de planos. Auditoria de 2026-07-02: o achado #8 lista 'missing states' e cita skeletons, load-error de Catálogo/Histórico, empty premium e tela 500 — nunca verificação de plano.",
+    "sobreviveu": true,
+    "area": "kits"
 }

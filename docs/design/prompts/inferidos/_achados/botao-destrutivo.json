@@ -1,13 +1,13 @@
 {
-  "id": "botao-destrutivo",
-  "nome": "Botão destrutivo (danger e danger-ghost)",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/shared/ui/button.tsx", "apps/web/src/shared/ui/button.css"],
-  "oQueFoiInferido": "Duas variantes inteiras: `danger` (fundo --danger, texto branco, hover --danger-deep) e `danger-ghost` (transparente, texto --danger-text, borda --danger), esta última criada para quando a ação irreversível NÃO é a ação padrão. Sem desenho: a APARÊNCIA dos dois vermelhos (hover, foco, desabilitado) nos dois temas, e a variante sólida em qualquer contexto — hoje o único consumidor de `danger-ghost` no app é `plan-panel.tsx:241` (cancelar assinatura).",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Excluir dado do vendedor passa por um botão cuja APARÊNCIA foi decidida numa correção de bug — embora a colocação, no desktop, o dono tenha desenhado.",
-  "prioridade": "BAIXA",
-  "refutacao": "DERRUBA a parte principal. 'O canvas 018 não desenha exclusão' é FALSO: `tf-btn--danger-ghost` aparece duas vezes no arquivo do dono — na ficha do Catálogo (l.125, ao lado de 'Duplicar', tamanho `--sm`) e nas ações do Orçamento (l.316, com `margin-left:auto`, isolado à direita, longe de 'Exportar'/'Recalcular hoje'/'Comparar com hoje'). Isso responde justamente as duas perguntas que o achado dizia faltar: QUAL variante se usa e ONDE o perigoso fica na linha de ações. Ressalva medida: como `assets/app.css` não existe no repo, o canvas fixa a COLOCAÇÃO, não a pele. Continua sem desenho a variante SÓLIDA `tf-btn--danger` (§D.2 descreve só primary/secondary/ghost; o readme l.33 admite 'success/danger added outside the brand manual'; nenhuma tela do ui_kit usa botão destrutivo — o 'Sair' do AccountScreen é um `ListItem` com texto vermelho), os estados hover/foco/desabilitado do vermelho e a linha de ações do diálogo. Rebaixo MEDIA → BAIXA.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "botao-destrutivo",
+    "nome": "Botão destrutivo (danger e danger-ghost)",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/shared/ui/button.tsx", "apps/web/src/shared/ui/button.css"],
+    "oQueFoiInferido": "Duas variantes inteiras: `danger` (fundo --danger, texto branco, hover --danger-deep) e `danger-ghost` (transparente, texto --danger-text, borda --danger), esta última criada para quando a ação irreversível NÃO é a ação padrão. Sem desenho: a APARÊNCIA dos dois vermelhos (hover, foco, desabilitado) nos dois temas, e a variante sólida em qualquer contexto — hoje o único consumidor de `danger-ghost` no app é `plan-panel.tsx:241` (cancelar assinatura).",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Excluir dado do vendedor passa por um botão cuja APARÊNCIA foi decidida numa correção de bug — embora a colocação, no desktop, o dono tenha desenhado.",
+    "prioridade": "BAIXA",
+    "refutacao": "DERRUBA a parte principal. 'O canvas 018 não desenha exclusão' é FALSO: `tf-btn--danger-ghost` aparece duas vezes no arquivo do dono — na ficha do Catálogo (l.125, ao lado de 'Duplicar', tamanho `--sm`) e nas ações do Orçamento (l.316, com `margin-left:auto`, isolado à direita, longe de 'Exportar'/'Recalcular hoje'/'Comparar com hoje'). Isso responde justamente as duas perguntas que o achado dizia faltar: QUAL variante se usa e ONDE o perigoso fica na linha de ações. Ressalva medida: como `assets/app.css` não existe no repo, o canvas fixa a COLOCAÇÃO, não a pele. Continua sem desenho a variante SÓLIDA `tf-btn--danger` (§D.2 descreve só primary/secondary/ghost; o readme l.33 admite 'success/danger added outside the brand manual'; nenhuma tela do ui_kit usa botão destrutivo — o 'Sair' do AccountScreen é um `ListItem` com texto vermelho), os estados hover/foco/desabilitado do vermelho e a linha de ações do diálogo. Rebaixo MEDIA → BAIXA.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

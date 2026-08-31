@@ -1,16 +1,16 @@
 {
-  "id": "dialogo-cancelar-assinatura",
-  "nome": "Diálogo de cancelamento da assinatura",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/billing/plan-panel.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "O `CancelDialog` inteiro: `DialogContent variant=\"center\"` com `DialogTitle` \"Cancelar a assinatura?\", `DialogDescription` com a data (\"Seu Premium continua ativo até {data}.\"), um TERCEIRO parágrafo em `--fs-caption`/`--text-muted` sobre o congelamento em leitura, um `<Alert tone=\"danger\">` de falha que aparece DENTRO da caixa, e a linha `flex justify-end gap-2` com \"Voltar\" (`secondary`) × \"Cancelar assinatura\" (`danger-ghost`). A hierarquia dos dois botões foi decidida por inferência, medida como INVERTIDA na homologação (015/A8: destrutivo vermelho preenchido 187,6×48px contra saída segura fantasma 85,6×48px — 2,2× mais largo E o único com fundo) e remendada depois; o próprio comentário registra que \"a largura continua desigual — ela vem do tamanho dos rótulos, e igualá-la era a outra opção, que não foi a escolhida\". Falta desenhar: peso e largura relativos das duas saídas, onde o aviso de congelamento vive, e como o erro de cancelamento aparece sem parecer que o cancelamento aconteceu.",
-  "autoridade": "NENHUMA",
-  "impacto": "É o único fluxo destrutivo pago do produto, e o desenho contradizia a própria cópia: a caixa dizia \"dá para voltar\" enquanto dava ao botão destrutivo o dobro da largura e o único preenchimento.",
-  "prioridade": "ALTA",
-  "refutacao": "O canvas desenha só o GATILHO — linha 419, `<button class=\"tf-btn tf-btn--ghost tf-btn--sm\">Cancelar assinatura</button>` dentro do bloco `sc-if isPremium` — e nenhum artboard tem diálogo, overlay ou confirmação. §E8 não tem cancelamento nem checkout. `PremiumScreen.jsx`/`AccountScreen.jsx` não têm fluxo de cancelamento. A fonte é `ux-billing.md` §5 — SPEC_TEXTUAL. Testei o argumento mais forte contra o achado: o protótipo desenha SIM um padrão de Sheet/modal e, mais que isso, a r2 item 11 especificou e a V3 VERIFICOU o comportamento de foco (Escape devolve o foco ao gatilho; troca de tela foca o título) e os alvos ≥44px medidos. Isso é um padrão de CAIXA reutilizável — mas não desenha esta caixa: nenhuma autoridade compõe título+corpo+aviso+erro+duas saídas de peso desigual para uma ação destrutiva de cobrança, e a rodada 1 item 2 tinha acabado de PROIBIR o assunto no protótipo (\"Cancele quando quiser\" removido por ser decisão em aberto). Sobrevive.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "dialogo-cancelar-assinatura",
+    "nome": "Diálogo de cancelamento da assinatura",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/billing/plan-panel.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "O `CancelDialog` inteiro: `DialogContent variant=\"center\"` com `DialogTitle` \"Cancelar a assinatura?\", `DialogDescription` com a data (\"Seu Premium continua ativo até {data}.\"), um TERCEIRO parágrafo em `--fs-caption`/`--text-muted` sobre o congelamento em leitura, um `<Alert tone=\"danger\">` de falha que aparece DENTRO da caixa, e a linha `flex justify-end gap-2` com \"Voltar\" (`secondary`) × \"Cancelar assinatura\" (`danger-ghost`). A hierarquia dos dois botões foi decidida por inferência, medida como INVERTIDA na homologação (015/A8: destrutivo vermelho preenchido 187,6×48px contra saída segura fantasma 85,6×48px — 2,2× mais largo E o único com fundo) e remendada depois; o próprio comentário registra que \"a largura continua desigual — ela vem do tamanho dos rótulos, e igualá-la era a outra opção, que não foi a escolhida\". Falta desenhar: peso e largura relativos das duas saídas, onde o aviso de congelamento vive, e como o erro de cancelamento aparece sem parecer que o cancelamento aconteceu.",
+    "autoridade": "NENHUMA",
+    "impacto": "É o único fluxo destrutivo pago do produto, e o desenho contradizia a própria cópia: a caixa dizia \"dá para voltar\" enquanto dava ao botão destrutivo o dobro da largura e o único preenchimento.",
+    "prioridade": "ALTA",
+    "refutacao": "O canvas desenha só o GATILHO — linha 419, `<button class=\"tf-btn tf-btn--ghost tf-btn--sm\">Cancelar assinatura</button>` dentro do bloco `sc-if isPremium` — e nenhum artboard tem diálogo, overlay ou confirmação. §E8 não tem cancelamento nem checkout. `PremiumScreen.jsx`/`AccountScreen.jsx` não têm fluxo de cancelamento. A fonte é `ux-billing.md` §5 — SPEC_TEXTUAL. Testei o argumento mais forte contra o achado: o protótipo desenha SIM um padrão de Sheet/modal e, mais que isso, a r2 item 11 especificou e a V3 VERIFICOU o comportamento de foco (Escape devolve o foco ao gatilho; troca de tela foca o título) e os alvos ≥44px medidos. Isso é um padrão de CAIXA reutilizável — mas não desenha esta caixa: nenhuma autoridade compõe título+corpo+aviso+erro+duas saídas de peso desigual para uma ação destrutiva de cobrança, e a rodada 1 item 2 tinha acabado de PROIBIR o assunto no protótipo (\"Cancele quando quiser\" removido por ser decisão em aberto). Sobrevive.",
+    "sobreviveu": true,
+    "area": "billing"
 }

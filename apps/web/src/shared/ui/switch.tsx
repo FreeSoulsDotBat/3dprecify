@@ -13,18 +13,18 @@ import "./switch.css";
 export type SwitchProps = ComponentPropsWithoutRef<typeof SwitchPrimitive.Root>;
 
 export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(function Switch(
-  { className = "", ...rest },
-  ref,
+    { className = "", ...rest },
+    ref,
 ) {
-  return (
-    <SwitchPrimitive.Root
-      ref={ref}
-      className={["tf-switch", className].filter(Boolean).join(" ")}
-      {...rest}
-    >
-      <span className="tf-switch__track" aria-hidden="true">
-        <SwitchPrimitive.Thumb className="tf-switch__thumb" />
-      </span>
-    </SwitchPrimitive.Root>
-  );
+    return (
+        <SwitchPrimitive.Root
+            ref={ref}
+            className={["tf-switch", className].filter(Boolean).join(" ")}
+            {...rest}
+        >
+            <span className="tf-switch__track" aria-hidden="true">
+                <SwitchPrimitive.Thumb className="tf-switch__thumb" />
+            </span>
+        </SwitchPrimitive.Root>
+    );
 });

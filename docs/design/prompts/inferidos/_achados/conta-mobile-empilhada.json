@@ -1,16 +1,16 @@
 {
-  "id": "conta-mobile-empilhada",
-  "nome": "Aba Conta no MOBILE (coluna única, < 1280px)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/conta/conta-page.tsx",
-    "apps/web/src/pages/conta/conta-page.css"
-  ],
-  "oQueFoiInferido": "Abaixo de 1280px a grade `tf-conta__grid` colapsa numa coluna na ordem de DOM: identidade → plano (com a oferta indo para a gaveta) → tema (Switch, não Segmented) → privacidade → Sair. Foi inferido: essa ORDEM — o bloco de privacidade, dois parágrafos longos, cai ENTRE o tema e o Sair; a ausência de qualquer agrupamento em seções nomeadas; e a ausência de qualquer cartão de valor do Premium para o gratuito além da linha do plano. Falta desenhar: a Conta no celular DEPOIS de a cobrança existir — o produto ganhou 6 estados de plano e um bloco de privacidade desde o único desenho mobile que há.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A Conta que a maioria dos vendedores vê é o desenho de 2026-07-02 (pré-cobrança) esvaziado e recomposto por código, mais blocos que nunca foram desenhados juntos.",
-  "prioridade": "MEDIA",
-  "refutacao": "Sobrevive como PROTOTIPO_PARCIAL, e a leitura do JSX confirma exatamente o que o mapeador afirmou — com um detalhe a mais. `AccountScreen.jsx` (62 linhas) desenha uma Conta mobile: `TopBar title=\"Conta\"`, grafismo `onda`, linha avatar 52px + nome + e-mail + `Badge` binário, um Card de marketing \"TRUTH'S FORGE PREMIUM\" com coroa laranja e `Button secondary full` \"Ver planos\" (só `!isPremium`), um grupo rotulado \"PREFERÊNCIAS\" com três `Row` (Tema escuro / Recalcular ao digitar / Moeda), um Card com `ListItem` \"Ajuda e glossário\" + \"Sair\" em vermelho, e o rodapé \"Precifica3D · Truth's Forge · v0.1\". §E7 lista os mesmos 5 itens (email · plano · tema · Sair · Sobre/versão). QUATRO desses blocos não existem no código (card de marketing, \"Recalcular ao digitar\", \"Ajuda e glossário\", rodapé de versão) e DOIS blocos do código não existem no desenho (o aviso de privacidade e a linha de plano com ações/estados). O `Abas-Desktop.dc.html` não socorre: o próprio artboard se anuncia como \"As quatro abas restantes\" em \"desktop 1920\" e nada nele descreve o colapso. Versão anterior e mais simples da mesma tela → sobrevive, autoridade mantida.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "conta-mobile-empilhada",
+    "nome": "Aba Conta no MOBILE (coluna única, < 1280px)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/conta/conta-page.tsx",
+        "apps/web/src/pages/conta/conta-page.css"
+    ],
+    "oQueFoiInferido": "Abaixo de 1280px a grade `tf-conta__grid` colapsa numa coluna na ordem de DOM: identidade → plano (com a oferta indo para a gaveta) → tema (Switch, não Segmented) → privacidade → Sair. Foi inferido: essa ORDEM — o bloco de privacidade, dois parágrafos longos, cai ENTRE o tema e o Sair; a ausência de qualquer agrupamento em seções nomeadas; e a ausência de qualquer cartão de valor do Premium para o gratuito além da linha do plano. Falta desenhar: a Conta no celular DEPOIS de a cobrança existir — o produto ganhou 6 estados de plano e um bloco de privacidade desde o único desenho mobile que há.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A Conta que a maioria dos vendedores vê é o desenho de 2026-07-02 (pré-cobrança) esvaziado e recomposto por código, mais blocos que nunca foram desenhados juntos.",
+    "prioridade": "MEDIA",
+    "refutacao": "Sobrevive como PROTOTIPO_PARCIAL, e a leitura do JSX confirma exatamente o que o mapeador afirmou — com um detalhe a mais. `AccountScreen.jsx` (62 linhas) desenha uma Conta mobile: `TopBar title=\"Conta\"`, grafismo `onda`, linha avatar 52px + nome + e-mail + `Badge` binário, um Card de marketing \"TRUTH'S FORGE PREMIUM\" com coroa laranja e `Button secondary full` \"Ver planos\" (só `!isPremium`), um grupo rotulado \"PREFERÊNCIAS\" com três `Row` (Tema escuro / Recalcular ao digitar / Moeda), um Card com `ListItem` \"Ajuda e glossário\" + \"Sair\" em vermelho, e o rodapé \"Precifica3D · Truth's Forge · v0.1\". §E7 lista os mesmos 5 itens (email · plano · tema · Sair · Sobre/versão). QUATRO desses blocos não existem no código (card de marketing, \"Recalcular ao digitar\", \"Ajuda e glossário\", rodapé de versão) e DOIS blocos do código não existem no desenho (o aviso de privacidade e a linha de plano com ações/estados). O `Abas-Desktop.dc.html` não socorre: o próprio artboard se anuncia como \"As quatro abas restantes\" em \"desktop 1920\" e nada nele descreve o colapso. Versão anterior e mais simples da mesma tela → sobrevive, autoridade mantida.",
+    "sobreviveu": true,
+    "area": "billing"
 }

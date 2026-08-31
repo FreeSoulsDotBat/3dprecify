@@ -3,11 +3,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { messages } from "../../src/shared/i18n/messages.pt-br";
 
 import {
-  goOffline,
-  grantPremium,
-  recordFromCalculator,
-  revokePremium,
-  signUpThrowaway,
+    goOffline,
+    grantPremium,
+    recordFromCalculator,
+    revokePremium,
+    signUpThrowaway,
 } from "./history-helpers";
 
 // 009/T031 (E4, PR-C, US4) e2e — the claims of the export slice that only the REAL stack can settle.
@@ -50,80 +50,80 @@ const t = messages;
  *  The wait cannot live in the shared `recordFromCalculator`: the offline specs record while offline,
  *  where the honest confirmation is "pendente", not "salvo". */
 async function recordAndWaitSaved(page: Page): Promise<void> {
-  await recordFromCalculator(page);
-  await expect(page.getByText(t.historico.saved)).toBeVisible();
+    await recordFromCalculator(page);
+    await expect(page.getByText(t.historico.saved)).toBeVisible();
 }
 
 async function openFirstRecord(page: Page): Promise<void> {
-  await page.goto("/historico");
-  await page.getByText(t.historico.quotedAt.split("{")[0]!.trim()).first().click();
-  // 013/F-02 (D1=A): `?snapshot=<id>` on `/historico`, not `/historico/<id>` (the migrated shape).
-  await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
+    await page.goto("/historico");
+    await page.getByText(t.historico.quotedAt.split("{")[0]!.trim()).first().click();
+    // 013/F-02 (D1=A): `?snapshot=<id>` on `/historico`, not `/historico/<id>` (the migrated shape).
+    await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 }
 
 test("US4: the export round trip — a real PDF, and the default asks for NO cost lines (SC-506)", async ({
-  page,
+    page,
 }, info) => {
-  const email = await signUpThrowaway(page, `export-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `export-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
-  await recordAndWaitSaved(page);
-  await openFirstRecord(page);
+    await page.goto("/calcular");
+    await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
+    await recordAndWaitSaved(page);
+    await openFirstRecord(page);
 
-  // Watch the actual request the app makes — the switch is only real if its value reaches the server.
-  const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
-  const download = page.waitForEvent("download");
+    // Watch the actual request the app makes — the switch is only real if its value reaches the server.
+    const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
+    const download = page.waitForEvent("download");
 
-  await page.getByRole("button", { name: t.historico.exportAction }).click();
-  const sheet = page.getByRole("dialog");
-  await expect(sheet.getByText(t.historico.exportContents)).toBeVisible();
-  // Untouched — the default artifact is the one that goes to the seller's customer.
-  await expect(
-    sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }),
-  ).not.toBeChecked();
-  await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
+    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    const sheet = page.getByRole("dialog");
+    await expect(sheet.getByText(t.historico.exportContents)).toBeVisible();
+    // Untouched — the default artifact is the one that goes to the seller's customer.
+    await expect(
+        sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }),
+    ).not.toBeChecked();
+    await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
 
-  expect((await quoteRequest).url()).toContain("includeCostBreakdown=false");
+    expect((await quoteRequest).url()).toContain("includeCostBreakdown=false");
 
-  // A real file, with the name the SERVER chose, carrying real PDF bytes.
-  const file = await download;
-  expect(file.suggestedFilename()).toBe("orcamento.pdf");
-  const path = await file.path();
-  const bytes = await import("node:fs/promises").then((fs) => fs.readFile(path));
-  expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
-  expect(bytes.byteLength).toBeGreaterThan(1000); // a rendered quote, not an empty shell
+    // A real file, with the name the SERVER chose, carrying real PDF bytes.
+    const file = await download;
+    expect(file.suggestedFilename()).toBe("orcamento.pdf");
+    const path = await file.path();
+    const bytes = await import("node:fs/promises").then((fs) => fs.readFile(path));
+    expect(bytes.subarray(0, 5).toString()).toBe("%PDF-");
+    expect(bytes.byteLength).toBeGreaterThan(1000); // a rendered quote, not an empty shell
 });
 
 test("US4: the opt-in is the ONLY way the breakdown travels (Q4/FR-512)", async ({
-  page,
+    page,
 }, info) => {
-  const email = await signUpThrowaway(page, `export-optin-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `export-optin-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
-  await recordAndWaitSaved(page);
-  await openFirstRecord(page);
+    await page.goto("/calcular");
+    await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
+    await recordAndWaitSaved(page);
+    await openFirstRecord(page);
 
-  const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
-  const download = page.waitForEvent("download");
+    const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
+    const download = page.waitForEvent("download");
 
-  await page.getByRole("button", { name: t.historico.exportAction }).click();
-  const sheet = page.getByRole("dialog");
-  await sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }).click();
-  await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
+    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    const sheet = page.getByRole("dialog");
+    await sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }).click();
+    await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
 
-  expect((await quoteRequest).url()).toContain("includeCostBreakdown=true");
-  await download;
+    expect((await quoteRequest).url()).toContain("includeCostBreakdown=true");
+    await download;
 
-  // Reopening starts OFF again: the decision to show a customer the cost lines is per-quote, and a
-  // remembered "on" would leak the margin on the NEXT one silently.
-  await page.getByRole("button", { name: t.historico.exportAction }).click();
-  await expect(
-    page.getByRole("dialog").getByRole("switch", { name: t.historico.exportIncludeCosts }),
-  ).not.toBeChecked();
+    // Reopening starts OFF again: the decision to show a customer the cost lines is per-quote, and a
+    // remembered "on" would leak the margin on the NEXT one silently.
+    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    await expect(
+        page.getByRole("dialog").getByRole("switch", { name: t.historico.exportIncludeCosts }),
+    ).not.toBeChecked();
 });
 
 // The SERVER's own refusal (403 ENTITLEMENT_REQUIRED, zero bytes) is proven in
@@ -134,44 +134,44 @@ test("US4: the opt-in is the ONLY way the breakdown travels (Q4/FR-512)", async 
 // the half no backend test can see: that the client faithfully REFLECTS that refusal, and reflects
 // it as a paused plan rather than a missing record.
 test("SC-508: a lapse pauses the export and says so — the record itself stays whole (FR-517)", async ({
-  page,
+    page,
 }, info) => {
-  const email = await signUpThrowaway(page, `export-lapse-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `export-lapse-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
-  await recordAndWaitSaved(page);
-  await openFirstRecord(page);
+    await page.goto("/calcular");
+    await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
+    await recordAndWaitSaved(page);
+    await openFirstRecord(page);
 
-  revokePremium(email);
-  await page.reload();
-  await openFirstRecord(page);
+    revokePremium(email);
+    await page.reload();
+    await openFirstRecord(page);
 
-  // Visible, disabled, and it names which thing is paused (ux §6) — not a vanished button.
-  const button = page.getByRole("button", { name: t.historico.exportAction });
-  await expect(button).toBeVisible();
-  await expect(button).toBeDisabled();
-  await expect(page.getByText(t.historico.exportLapsed)).toBeVisible();
-  // The record is NOT gone and NOT degraded: a lapse pauses writes, it deletes nothing (FR-517).
-  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
+    // Visible, disabled, and it names which thing is paused (ux §6) — not a vanished button.
+    const button = page.getByRole("button", { name: t.historico.exportAction });
+    await expect(button).toBeVisible();
+    await expect(button).toBeDisabled();
+    await expect(page.getByText(t.historico.exportLapsed)).toBeVisible();
+    // The record is NOT gone and NOT degraded: a lapse pauses writes, it deletes nothing (FR-517).
+    await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
 });
 
 test("US4: offline, the affordance is disabled WITH ITS REASON — never a spinner into nothing", async ({
-  page,
-  context,
+    page,
+    context,
 }, info) => {
-  const email = await signUpThrowaway(page, `export-offline-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `export-offline-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/calcular");
-  await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
-  await recordAndWaitSaved(page);
-  await openFirstRecord(page);
+    await page.goto("/calcular");
+    await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
+    await recordAndWaitSaved(page);
+    await openFirstRecord(page);
 
-  await goOffline(page, context);
+    await goOffline(page, context);
 
-  const button = page.getByRole("button", { name: t.historico.exportAction });
-  await expect(button).toBeDisabled();
-  await expect(page.getByText(t.historico.exportOffline)).toBeVisible();
+    const button = page.getByRole("button", { name: t.historico.exportAction });
+    await expect(button).toBeDisabled();
+    await expect(page.getByText(t.historico.exportOffline)).toBeVisible();
 });

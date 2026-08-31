@@ -17,39 +17,40 @@ import { describe, expect, it } from "vitest";
 const WORKFLOWS_DIR = fileURLToPath(new URL("../../../.github/workflows/", import.meta.url));
 
 const workflowFiles = readdirSync(WORKFLOWS_DIR)
-  .filter((f) => f.endsWith(".yml") || f.endsWith(".yaml"))
-  .sort();
+    .filter((f) => f.endsWith(".yml") || f.endsWith(".yaml"))
+    .sort();
 
 const read = (nome: string) => readFileSync(`${WORKFLOWS_DIR}${nome}`, "utf8");
 
 /** Toda referência a `secrets.X` / `secrets['X']` de um YAML, como lista de NOMES. */
 function segredosDe(yaml: string): string[] {
-  const nomes: string[] = [];
-  for (const m of yaml.matchAll(/secrets\.([A-Za-z_][A-Za-z0-9_]*)/g)) nomes.push(m[1]!);
-  for (const m of yaml.matchAll(/secrets\[['"]([A-Za-z_][A-Za-z0-9_]*)['"]\]/g)) nomes.push(m[1]!);
-  return nomes;
+    const nomes: string[] = [];
+    for (const m of yaml.matchAll(/secrets\.([A-Za-z_][A-Za-z0-9_]*)/g)) nomes.push(m[1]!);
+    for (const m of yaml.matchAll(/secrets\[['"]([A-Za-z_][A-Za-z0-9_]*)['"]\]/g))
+        nomes.push(m[1]!);
+    return nomes;
 }
 
 describe("auditoria de workflows — repo-wide (roda sempre)", () => {
-  it("há workflows para auditar (senão as asserções abaixo passariam por vacuidade)", () => {
-    expect(workflowFiles.length).toBeGreaterThan(0);
-  });
+    it("há workflows para auditar (senão as asserções abaixo passariam por vacuidade)", () => {
+        expect(workflowFiles.length).toBeGreaterThan(0);
+    });
 
-  // A afirmação que o 017 precisa poder fazer inteira: o incremento não carrega credencial do ML.
-  // Ela só é verdade depois que as sondas descartáveis morrem (ADR-0010 §A13 "Evidence": disposable,
-  // e a MEDIÇÃO delas está preservada nas tabelas do próprio ADR — apagar não perde dado).
-  it("nenhum workflow do repositório referencia um segredo `ML_*`", () => {
-    const ofensores = workflowFiles
-      .map((f) => ({ f, nomes: segredosDe(read(f)).filter((n) => n.startsWith("ML_")) }))
-      .filter((x) => x.nomes.length > 0)
-      .map((x) => `${x.f}: ${x.nomes.join(", ")}`);
-    expect(ofensores).toEqual([]);
-  });
+    // A afirmação que o 017 precisa poder fazer inteira: o incremento não carrega credencial do ML.
+    // Ela só é verdade depois que as sondas descartáveis morrem (ADR-0010 §A13 "Evidence": disposable,
+    // e a MEDIÇÃO delas está preservada nas tabelas do próprio ADR — apagar não perde dado).
+    it("nenhum workflow do repositório referencia um segredo `ML_*`", () => {
+        const ofensores = workflowFiles
+            .map((f) => ({ f, nomes: segredosDe(read(f)).filter((n) => n.startsWith("ML_")) }))
+            .filter((x) => x.nomes.length > 0)
+            .map((x) => `${x.f}: ${x.nomes.join(", ")}`);
+        expect(ofensores).toEqual([]);
+    });
 
-  it("nenhum workflow do repositório referencia sonda descartável já removida", () => {
-    const ofensores = workflowFiles.filter((f) => /scripts\/probes\//.test(read(f)));
-    expect(ofensores).toEqual([]);
-  });
+    it("nenhum workflow do repositório referencia sonda descartável já removida", () => {
+        const ofensores = workflowFiles.filter((f) => /scripts\/probes\//.test(read(f)));
+        expect(ofensores).toEqual([]);
+    });
 });
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────────
@@ -66,31 +67,31 @@ const FEE_REFRESH = "fee-refresh.yml";
 const feeRefreshExiste = existsSync(`${WORKFLOWS_DIR}${FEE_REFRESH}`);
 
 describe.skipIf(!feeRefreshExiste)(`auditoria de ${FEE_REFRESH} (T015 — onda 2)`, () => {
-  const yaml = feeRefreshExiste ? read(FEE_REFRESH) : "";
+    const yaml = feeRefreshExiste ? read(FEE_REFRESH) : "";
 
-  it("não usa nenhum `secrets.` além de `GITHUB_TOKEN`", () => {
-    expect([...new Set(segredosDe(yaml))].filter((n) => n !== "GITHUB_TOKEN")).toEqual([]);
-  });
+    it("não usa nenhum `secrets.` além de `GITHUB_TOKEN`", () => {
+        expect([...new Set(segredosDe(yaml))].filter((n) => n !== "GITHUB_TOKEN")).toEqual([]);
+    });
 
-  it("declara os DOIS gatilhos: `schedule` e `workflow_dispatch`", () => {
-    expect(yaml).toMatch(/^\s{2}schedule:/m);
-    expect(yaml).toMatch(/^\s{2}workflow_dispatch:/m);
-  });
+    it("declara os DOIS gatilhos: `schedule` e `workflow_dispatch`", () => {
+        expect(yaml).toMatch(/^\s{2}schedule:/m);
+        expect(yaml).toMatch(/^\s{2}workflow_dispatch:/m);
+    });
 
-  it("o cabeçalho RA1 diz, em comentário antes do `name:`, que o laço NÃO dispara sozinho", () => {
-    const cabecalho = yaml.slice(0, yaml.search(/^name:/m));
-    expect(cabecalho).toMatch(/#/);
-    // A frase da manualidade (RA1): `schedule` lê do branch DEFAULT e o corte de release está
-    // adiado — quem abre o arquivo não pode sair achando que o laço está vivo.
-    expect(cabecalho.toLowerCase()).toContain("workflow_dispatch");
-    expect(cabecalho).toMatch(/manual/i);
-    expect(cabecalho).toMatch(/\bmain\b/);
-  });
+    it("o cabeçalho RA1 diz, em comentário antes do `name:`, que o laço NÃO dispara sozinho", () => {
+        const cabecalho = yaml.slice(0, yaml.search(/^name:/m));
+        expect(cabecalho).toMatch(/#/);
+        // A frase da manualidade (RA1): `schedule` lê do branch DEFAULT e o corte de release está
+        // adiado — quem abre o arquivo não pode sair achando que o laço está vivo.
+        expect(cabecalho.toLowerCase()).toContain("workflow_dispatch");
+        expect(cabecalho).toMatch(/manual/i);
+        expect(cabecalho).toMatch(/\bmain\b/);
+    });
 });
 
 it("o bloco gateado acorda: se `fee-refresh.yml` existe, ele NÃO pode ter sido pulado", () => {
-  // Uma tautologia útil: documenta em teste (e não em prosa) que a única razão de o bloco acima
-  // dormir é o arquivo não existir ainda. Se alguém o criar e o bloco continuar pulado, a condição
-  // de skip mudou e este `it` é o lugar onde isso aparece.
-  expect(feeRefreshExiste).toBe(existsSync(`${WORKFLOWS_DIR}${FEE_REFRESH}`));
+    // Uma tautologia útil: documenta em teste (e não em prosa) que a única razão de o bloco acima
+    // dormir é o arquivo não existir ainda. Se alguém o criar e o bloco continuar pulado, a condição
+    // de skip mudou e este `it` é o lugar onde isso aparece.
+    expect(feeRefreshExiste).toBe(existsSync(`${WORKFLOWS_DIR}${FEE_REFRESH}`));
 });

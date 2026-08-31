@@ -1,13 +1,13 @@
 {
-  "id": "resumo-sem-preco-ainda",
-  "nome": "Estado 'Sem preço ainda' do Total do kit",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/features/bom/assembly-summary.tsx"],
-  "oQueFoiInferido": "O ramo `bom.lines.length === 0` do resumo: em vez de R$ 0,00, um Card com três parágrafos — 'Total do kit', 'Sem preço ainda' e 'O preço do kit aparece assim que ao menos uma peça estiver completa e válida.' — e SEM rollup de canal nenhum. Não foi desenhado: como esse estado ocupa o espaço que o total cheio ocupa (no mobile ele continua sendo a barra colada no rodapé; no desktop vira o topo de uma coluna de 480px com três linhas de texto e o resto vazio), nem como ele se relaciona visualmente com os avisos das peças que o causaram.",
-  "autoridade": "NENHUMA",
-  "impacto": "É o primeiro estado que qualquer vendedor vê ao abrir a aba e adicionar a primeira peça incompleta — o mais frequente da tela, e o único do resumo que nenhum artboard mostra.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'Sem preço' no `.dc.html`: zero. O artboard de Kits só existe populado — `hint-placeholder-count=3` com três peças e valores calculados (`kitCusto`, `kitVarejoInt/Dec`, `kitAtacadoInt/Dec`), e o único ramo de ausência que o dono desenhou ali é a legenda de excluídas (`excludedCap` = 'N peça(s) fora do total — confira os avisos nas peças acima.', VERBATIM igual a `messages.bom.assemblyExcluded`, que renderiza quando algumas peças ficam de fora — nunca quando NENHUMA entra). §E4 do protótipo desenha o PriceHero sempre com preço, e a matriz de estados da §G registra para Resultado/breakdown a linha 'empty: zerado (0,00)' — que é exatamente o oposto do que o produto faz hoje. §E9 cobre offline, erro global e 404, não ausência de total. `.design-import/components/data/PriceHero.jsx` é a primitiva, não o estado. A origem está declarada no próprio `assembly-summary.tsx`: 'review 2026-07-12' — decisão de revisão, não desenho.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "resumo-sem-preco-ainda",
+    "nome": "Estado 'Sem preço ainda' do Total do kit",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/features/bom/assembly-summary.tsx"],
+    "oQueFoiInferido": "O ramo `bom.lines.length === 0` do resumo: em vez de R$ 0,00, um Card com três parágrafos — 'Total do kit', 'Sem preço ainda' e 'O preço do kit aparece assim que ao menos uma peça estiver completa e válida.' — e SEM rollup de canal nenhum. Não foi desenhado: como esse estado ocupa o espaço que o total cheio ocupa (no mobile ele continua sendo a barra colada no rodapé; no desktop vira o topo de uma coluna de 480px com três linhas de texto e o resto vazio), nem como ele se relaciona visualmente com os avisos das peças que o causaram.",
+    "autoridade": "NENHUMA",
+    "impacto": "É o primeiro estado que qualquer vendedor vê ao abrir a aba e adicionar a primeira peça incompleta — o mais frequente da tela, e o único do resumo que nenhum artboard mostra.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'Sem preço' no `.dc.html`: zero. O artboard de Kits só existe populado — `hint-placeholder-count=3` com três peças e valores calculados (`kitCusto`, `kitVarejoInt/Dec`, `kitAtacadoInt/Dec`), e o único ramo de ausência que o dono desenhou ali é a legenda de excluídas (`excludedCap` = 'N peça(s) fora do total — confira os avisos nas peças acima.', VERBATIM igual a `messages.bom.assemblyExcluded`, que renderiza quando algumas peças ficam de fora — nunca quando NENHUMA entra). §E4 do protótipo desenha o PriceHero sempre com preço, e a matriz de estados da §G registra para Resultado/breakdown a linha 'empty: zerado (0,00)' — que é exatamente o oposto do que o produto faz hoje. §E9 cobre offline, erro global e 404, não ausência de total. `.design-import/components/data/PriceHero.jsx` é a primitiva, não o estado. A origem está declarada no próprio `assembly-summary.tsx`: 'review 2026-07-12' — decisão de revisão, não desenho.",
+    "sobreviveu": true,
+    "area": "kits"
 }

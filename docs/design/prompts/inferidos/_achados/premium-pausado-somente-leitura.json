@@ -1,18 +1,18 @@
 {
-  "id": "premium-pausado-somente-leitura",
-  "nome": "Premium pausado no Catálogo (faixa calma, formulário inerte e a linha de reativação)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/catalog/catalog-panel.tsx",
-    "apps/web/src/features/catalog/filament-form.tsx",
-    "apps/web/src/features/catalog/printer-form.tsx",
-    "apps/web/src/pages/catalogo/produto-page.tsx"
-  ],
-  "oQueFoiInferido": "O estado `lapsed` foi composto por inferência em quatro lugares: (a) `Alert tone=\"info\" title=\"Premium pausado\"` acima da lista (catalog-panel linhas 444-448), condicionado a `!stale && !isError && items.length>0`; (b) `readOnlyHint` \"somente leitura\" como quarta caption de cada item; (c) `<fieldset disabled={readOnly} className=\"...border-0 p-0 m-0\">` envolvendo TODOS os campos de uma vez (filament-form linha 56, printer-form linha 54, produto-page linhas 298/366/386) — nenhuma autoridade desenha como um formulário inteiro inerte deve PARECER, e o resultado é o cinza nativo do navegador; (d) o rodapé onde o Salvar simplesmente some (`{!readOnly && ...}`) e um `Alert tone=\"info\" title=\"Reative o Premium\"` toma o lugar, ao lado de um \"Voltar\" que continua ativo. Mais o desvio de affordance: tocar a lixeira chama `openEdit(item)` (linhas 214 e 422) e leva à ficha somente-leitura em vez de abrir o confirmar.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É o estado que o assinante em atraso encontra, e foi montado por peças: campos apagados pelo estilo do sistema operacional e um aviso ocupando o lugar do botão principal.",
-  "prioridade": "ALTA",
-  "refutacao": "Tentei derrubar pelo canvas e ele cobre menos do que parece — e cobre OUTRA COISA. (4) Os dois fragmentos que o mapeador citou existem, mas: o `disabled=\"{{ writeBlocked }}\"` do botão Adicionar (linha 83) tem `writeBlocked: !isPremium` no `renderVals`, ou seja, modela o GRÁTIS, não o pausado — o canvas só tem `props.plano ∈ {premium, free}` e não conhece um terceiro estado; e o badge \"somente leitura\" (`catalog()`, TPU Flex) é um atributo DA LINHA, não do plano, então nem ele é o estado `lapsed`. Restam sem desenho: a faixa \"Premium pausado\", o formulário inerte, a linha de reativação e o desvio da lixeira. (1)/(3) O protótipo só conhece `isPremium` binário (`CatalogScreen.jsx` linha 14), e §B do prompt crava a fronteira como BINÁRIA (\"computar = grátis; qualquer persistência = Premium\") — \"pausado\" não existe em nenhuma das três prompts. (2) A auditoria não cita o estado. O resto está definido só em `specs/007-e2-catalog-entitlement/ux-catalog.md` §3, que é SPEC_TEXTUAL por regra e é justamente o que os comentários do código citam como fonte.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "premium-pausado-somente-leitura",
+    "nome": "Premium pausado no Catálogo (faixa calma, formulário inerte e a linha de reativação)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/catalog/catalog-panel.tsx",
+        "apps/web/src/features/catalog/filament-form.tsx",
+        "apps/web/src/features/catalog/printer-form.tsx",
+        "apps/web/src/pages/catalogo/produto-page.tsx"
+    ],
+    "oQueFoiInferido": "O estado `lapsed` foi composto por inferência em quatro lugares: (a) `Alert tone=\"info\" title=\"Premium pausado\"` acima da lista (catalog-panel linhas 444-448), condicionado a `!stale && !isError && items.length>0`; (b) `readOnlyHint` \"somente leitura\" como quarta caption de cada item; (c) `<fieldset disabled={readOnly} className=\"...border-0 p-0 m-0\">` envolvendo TODOS os campos de uma vez (filament-form linha 56, printer-form linha 54, produto-page linhas 298/366/386) — nenhuma autoridade desenha como um formulário inteiro inerte deve PARECER, e o resultado é o cinza nativo do navegador; (d) o rodapé onde o Salvar simplesmente some (`{!readOnly && ...}`) e um `Alert tone=\"info\" title=\"Reative o Premium\"` toma o lugar, ao lado de um \"Voltar\" que continua ativo. Mais o desvio de affordance: tocar a lixeira chama `openEdit(item)` (linhas 214 e 422) e leva à ficha somente-leitura em vez de abrir o confirmar.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É o estado que o assinante em atraso encontra, e foi montado por peças: campos apagados pelo estilo do sistema operacional e um aviso ocupando o lugar do botão principal.",
+    "prioridade": "ALTA",
+    "refutacao": "Tentei derrubar pelo canvas e ele cobre menos do que parece — e cobre OUTRA COISA. (4) Os dois fragmentos que o mapeador citou existem, mas: o `disabled=\"{{ writeBlocked }}\"` do botão Adicionar (linha 83) tem `writeBlocked: !isPremium` no `renderVals`, ou seja, modela o GRÁTIS, não o pausado — o canvas só tem `props.plano ∈ {premium, free}` e não conhece um terceiro estado; e o badge \"somente leitura\" (`catalog()`, TPU Flex) é um atributo DA LINHA, não do plano, então nem ele é o estado `lapsed`. Restam sem desenho: a faixa \"Premium pausado\", o formulário inerte, a linha de reativação e o desvio da lixeira. (1)/(3) O protótipo só conhece `isPremium` binário (`CatalogScreen.jsx` linha 14), e §B do prompt crava a fronteira como BINÁRIA (\"computar = grátis; qualquer persistência = Premium\") — \"pausado\" não existe em nenhuma das três prompts. (2) A auditoria não cita o estado. O resto está definido só em `specs/007-e2-catalog-entitlement/ux-catalog.md` §3, que é SPEC_TEXTUAL por regra e é justamente o que os comentários do código citam como fonte.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

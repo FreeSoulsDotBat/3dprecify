@@ -9,33 +9,33 @@
 // `ref` is present (a resolvable reference) — never a broken link.
 
 export interface ResolvedCostBasisMeta {
-  kind: "AD_HOC" | "PRODUCT" | "KIT";
-  ref: { id: string; name: string } | null;
-  /** `true` ⇒ D6 last-known (the ref did not resolve); `false` ⇒ D3 live-reflect or a pure AD_HOC
-   *  basis (which never degrades — data-model §1). */
-  degraded: boolean;
+    kind: "AD_HOC" | "PRODUCT" | "KIT";
+    ref: { id: string; name: string } | null;
+    /** `true` ⇒ D6 last-known (the ref did not resolve); `false` ⇒ D3 live-reflect or a pure AD_HOC
+     *  basis (which never degrades — data-model §1). */
+    degraded: boolean;
 }
 
 function isRefShaped(v: unknown): v is { id: unknown; name: unknown } {
-  return typeof v === "object" && v !== null && "id" in v && "name" in v;
+    return typeof v === "object" && v !== null && "id" in v && "name" in v;
 }
 
 /** Structural read of `config.costBasis` off a raw wire payload (`ScenarioOutConfig` = an untyped
  *  bag). Returns `null` when the shape is not recognizable — never throws, never fabricates a kind. */
 export function readResolvedCostBasis(config: unknown): ResolvedCostBasisMeta | null {
-  if (typeof config !== "object" || config === null) return null;
-  const costBasis = (config as Record<string, unknown>).costBasis;
-  if (typeof costBasis !== "object" || costBasis === null) return null;
-  const cb = costBasis as Record<string, unknown>;
-  const kind = cb.kind;
-  if (kind !== "AD_HOC" && kind !== "PRODUCT" && kind !== "KIT") return null;
-  const rawRef = cb.ref;
-  const ref = isRefShaped(rawRef) ? { id: String(rawRef.id), name: String(rawRef.name) } : null;
-  return { kind, ref, degraded: cb.degraded === true };
+    if (typeof config !== "object" || config === null) return null;
+    const costBasis = (config as Record<string, unknown>).costBasis;
+    if (typeof costBasis !== "object" || costBasis === null) return null;
+    const cb = costBasis as Record<string, unknown>;
+    const kind = cb.kind;
+    if (kind !== "AD_HOC" && kind !== "PRODUCT" && kind !== "KIT") return null;
+    const rawRef = cb.ref;
+    const ref = isRefShaped(rawRef) ? { id: String(rawRef.id), name: String(rawRef.name) } : null;
+    return { kind, ref, degraded: cb.degraded === true };
 }
 
 /** "Abrir origem" is offered ONLY when the reference actually resolves (owned + live) — never a
  *  broken link, never offered on a degraded/AD_HOC basis (ux §4.2-4, the E3/E4 posture). */
 export function canOpenOrigin(meta: ResolvedCostBasisMeta | null): boolean {
-  return meta !== null && meta.kind !== "AD_HOC" && meta.ref !== null && !meta.degraded;
+    return meta !== null && meta.kind !== "AD_HOC" && meta.ref !== null && !meta.degraded;
 }

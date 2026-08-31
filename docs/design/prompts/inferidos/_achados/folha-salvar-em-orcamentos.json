@@ -1,16 +1,16 @@
 {
-  "id": "folha-salvar-em-orcamentos",
-  "nome": "Folha \"Salvar em Orçamentos\" (onde o registro nasce)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/history/record-snapshot-sheet.tsx",
-    "apps/web/src/features/history/record-snapshot-sheet.css"
-  ],
-  "oQueFoiInferido": "A folha modal inteira: SheetTitle + SheetDescription, campo Rótulo com hint, campo Validade com sufixo 'dias' dentro do `tf-inputwrap`, um `<fieldset class=tf-record__basis>` de radios 'Preço que você está cotando' com rótulo à esquerda e valor em `<strong>` tabular empurrado por `margin-inline-start:auto`, a linha 'Cotado em {data}' e o submit. Inferido: a hierarquia entre os três campos — a decisão IRREVERSÍVEL (a base) tem exatamente o mesmo peso visual do rótulo opcional, e é o único dos três que muda o significado do registro; como a escolha se apresenta quando `candidates` tem UM único item (o fieldset renderiza um radio solitário já marcado); e o que a folha vira no desktop (é o mesmo Sheet, sem variante).",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "É o único momento em que o vendedor declara QUAL preço ele cotou (varejo ou atacado). Se essa escolha não tiver o peso visual certo, o histórico inteiro passa a mentir sobre o que foi cobrado — e o erro é silencioso e imutável (ADR-0019: só o rótulo é mutável).",
-  "prioridade": "ALTA",
-  "refutacao": "Não sobrou nada para derrubar. O protótipo desenhou apenas o caminho FREE: §E4 'Ação Salvar → dispara bottom-sheet de upsell (persistir é Premium)' e §E5 'Salvar → dispara sheet Premium' — a folha de GRAVAÇÃO premium nunca foi desenhada porque, no protótipo, salvar sempre terminava no upsell (§E8, 'E6 fora de escopo'). Os dois fixes tocam o comportamento de `onSave()` (item 8: 'grave os valores realmente calculados, nunca constantes') mas nenhum campo, nenhuma hierarquia e nenhuma escolha de base. `HistoryScreen.jsx` não tem fluxo de gravação — o Histórico dele recebe `calcs` prontos por prop. `Abas-Desktop.dc.html` não tem a aba Calcular real (só 'Calcular (ponteiro)', linha 568) nem folha alguma. A escolha de base varejo×atacado só aparece no protótipo como segmented control de RESULTADO na calculadora (§E4), o que é outra decisão: lá é uma visualização, aqui é uma declaração permanente.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "folha-salvar-em-orcamentos",
+    "nome": "Folha \"Salvar em Orçamentos\" (onde o registro nasce)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/history/record-snapshot-sheet.tsx",
+        "apps/web/src/features/history/record-snapshot-sheet.css"
+    ],
+    "oQueFoiInferido": "A folha modal inteira: SheetTitle + SheetDescription, campo Rótulo com hint, campo Validade com sufixo 'dias' dentro do `tf-inputwrap`, um `<fieldset class=tf-record__basis>` de radios 'Preço que você está cotando' com rótulo à esquerda e valor em `<strong>` tabular empurrado por `margin-inline-start:auto`, a linha 'Cotado em {data}' e o submit. Inferido: a hierarquia entre os três campos — a decisão IRREVERSÍVEL (a base) tem exatamente o mesmo peso visual do rótulo opcional, e é o único dos três que muda o significado do registro; como a escolha se apresenta quando `candidates` tem UM único item (o fieldset renderiza um radio solitário já marcado); e o que a folha vira no desktop (é o mesmo Sheet, sem variante).",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "É o único momento em que o vendedor declara QUAL preço ele cotou (varejo ou atacado). Se essa escolha não tiver o peso visual certo, o histórico inteiro passa a mentir sobre o que foi cobrado — e o erro é silencioso e imutável (ADR-0019: só o rótulo é mutável).",
+    "prioridade": "ALTA",
+    "refutacao": "Não sobrou nada para derrubar. O protótipo desenhou apenas o caminho FREE: §E4 'Ação Salvar → dispara bottom-sheet de upsell (persistir é Premium)' e §E5 'Salvar → dispara sheet Premium' — a folha de GRAVAÇÃO premium nunca foi desenhada porque, no protótipo, salvar sempre terminava no upsell (§E8, 'E6 fora de escopo'). Os dois fixes tocam o comportamento de `onSave()` (item 8: 'grave os valores realmente calculados, nunca constantes') mas nenhum campo, nenhuma hierarquia e nenhuma escolha de base. `HistoryScreen.jsx` não tem fluxo de gravação — o Histórico dele recebe `calcs` prontos por prop. `Abas-Desktop.dc.html` não tem a aba Calcular real (só 'Calcular (ponteiro)', linha 568) nem folha alguma. A escolha de base varejo×atacado só aparece no protótipo como segmented control de RESULTADO na calculadora (§E4), o que é outra decisão: lá é uma visualização, aqui é uma declaração permanente.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

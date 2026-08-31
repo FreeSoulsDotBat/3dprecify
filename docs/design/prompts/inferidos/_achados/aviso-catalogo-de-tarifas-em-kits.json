@@ -1,13 +1,13 @@
 {
-  "id": "aviso-catalogo-de-tarifas-em-kits",
-  "nome": "Aviso de falha ao atualizar o catálogo de tarifas na tela de kits",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "Um `Alert tone=\"info\"` no topo da tela, com título, corpo e um botão 'Tentar novamente' com spinner (`refreshFailed` é sticky para não piscar durante o retry), declarado UMA vez para o kit inteiro — não por peça — e explicitamente não bloqueante. Não foi desenhado: a pilha de avisos possíveis acima da lista de peças, que pode conter ao mesmo tempo o de plano desatualizado (`staleEntitlement`), o de Premium pausado (`lapsedBanner`) e este; a ordem entre eles; e quanto espaço vertical podem tomar antes da primeira peça aparecer no celular.",
-  "autoridade": "NENHUMA",
-  "impacto": "Três avisos podem empilhar acima da lista de peças sem ordem desenhada, empurrando o conteúdo real para fora da primeira dobra justamente na largura que nenhum artboard cobre.",
-  "prioridade": "BAIXA",
-  "refutacao": "No canvas, o bloco Kits tem exatamente UM `tf-alert`, e ele é o de peça inválida DENTRO do card (linha 199); não há nenhum alerta no topo da página e, portanto, nenhuma pilha. O único alerta de topo desenhado no arquivo inteiro está em Orçamentos (linha 263, 'N registro(s) pendente(s) neste dispositivo' + 'Sincronizar agora') e é sobre outra coisa. No protótipo de 2026-07, §E9 desenha o 'Banner offline' (faixa ciano no shell) e o erro global — este aviso é sobre a TABELA DE TARIFAS, específico das telas que precificam canal, e o catálogo de tarifas nem existia no protótipo (a auditoria #9 fala dos presets de marketplace como valores, não de uma atualização que falha). `.design-import/`: nada.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "aviso-catalogo-de-tarifas-em-kits",
+    "nome": "Aviso de falha ao atualizar o catálogo de tarifas na tela de kits",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "Um `Alert tone=\"info\"` no topo da tela, com título, corpo e um botão 'Tentar novamente' com spinner (`refreshFailed` é sticky para não piscar durante o retry), declarado UMA vez para o kit inteiro — não por peça — e explicitamente não bloqueante. Não foi desenhado: a pilha de avisos possíveis acima da lista de peças, que pode conter ao mesmo tempo o de plano desatualizado (`staleEntitlement`), o de Premium pausado (`lapsedBanner`) e este; a ordem entre eles; e quanto espaço vertical podem tomar antes da primeira peça aparecer no celular.",
+    "autoridade": "NENHUMA",
+    "impacto": "Três avisos podem empilhar acima da lista de peças sem ordem desenhada, empurrando o conteúdo real para fora da primeira dobra justamente na largura que nenhum artboard cobre.",
+    "prioridade": "BAIXA",
+    "refutacao": "No canvas, o bloco Kits tem exatamente UM `tf-alert`, e ele é o de peça inválida DENTRO do card (linha 199); não há nenhum alerta no topo da página e, portanto, nenhuma pilha. O único alerta de topo desenhado no arquivo inteiro está em Orçamentos (linha 263, 'N registro(s) pendente(s) neste dispositivo' + 'Sincronizar agora') e é sobre outra coisa. No protótipo de 2026-07, §E9 desenha o 'Banner offline' (faixa ciano no shell) e o erro global — este aviso é sobre a TABELA DE TARIFAS, específico das telas que precificam canal, e o catálogo de tarifas nem existia no protótipo (a auditoria #9 fala dos presets de marketplace como valores, não de uma atualização que falha). `.design-import/`: nada.",
+    "sobreviveu": true,
+    "area": "kits"
 }

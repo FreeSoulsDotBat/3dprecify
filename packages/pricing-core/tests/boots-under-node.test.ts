@@ -18,11 +18,11 @@ import { describe, expect, it } from "vitest";
  * conforme a moda do dia) — ele manda o Node importar o módulo e usar o que importou.
  */
 describe("o pacote boota sob node puro", () => {
-  it("importa o entry point e calcula, sem passar por bundler nenhum", () => {
-    // A URL `file://`, e nao o caminho do SO: no Windows o `import()` do Node recusa `D:\...`
-    // com ERR_UNSUPPORTED_ESM_URL_SCHEME. Errei isto na primeira versao deste proprio teste.
-    const entry = new URL("../src/index.ts", import.meta.url).href;
-    const script = `
+    it("importa o entry point e calcula, sem passar por bundler nenhum", () => {
+        // A URL `file://`, e nao o caminho do SO: no Windows o `import()` do Node recusa `D:\...`
+        // com ERR_UNSUPPORTED_ESM_URL_SCHEME. Errei isto na primeira versao deste proprio teste.
+        const entry = new URL("../src/index.ts", import.meta.url).href;
+        const script = `
       const { computeCalculator, PRICING_MODEL_VERSION } = await import(${JSON.stringify(entry)});
       const r = computeCalculator({
         costPerRoll: 120, rollWeightKg: 1, printGrams: 250, printTimeHours: 8,
@@ -33,16 +33,16 @@ describe("o pacote boota sob node puro", () => {
       console.log(JSON.stringify({ versao: PRICING_MODEL_VERSION, varejo: r.precoVarejo }));
     `;
 
-    // `--input-type=module` + stdin: nenhum arquivo temporário, e o `node` é o do ambiente —
-    // o mesmo binário que rodaria o script de ingestão em produção.
-    const saida = execFileSync(process.execPath, ["--input-type=module", "--eval", script], {
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "pipe"],
-    });
+        // `--input-type=module` + stdin: nenhum arquivo temporário, e o `node` é o do ambiente —
+        // o mesmo binário que rodaria o script de ingestão em produção.
+        const saida = execFileSync(process.execPath, ["--input-type=module", "--eval", script], {
+            encoding: "utf8",
+            stdio: ["ignore", "pipe", "pipe"],
+        });
 
-    const resultado = JSON.parse(saida.trim()) as { versao: string; varejo: number };
-    expect(resultado.versao).toMatch(/^\d+\.\d+\.\d+$/);
-    // Guarda de não-vacuidade: um `undefined` aqui significaria que o módulo carregou pela metade.
-    expect(resultado.varejo).toBeGreaterThan(0);
-  });
+        const resultado = JSON.parse(saida.trim()) as { versao: string; varejo: number };
+        expect(resultado.versao).toMatch(/^\d+\.\d+\.\d+$/);
+        // Guarda de não-vacuidade: um `undefined` aqui significaria que o módulo carregou pela metade.
+        expect(resultado.varejo).toBeGreaterThan(0);
+    });
 });

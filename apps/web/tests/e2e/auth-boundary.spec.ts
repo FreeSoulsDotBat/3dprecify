@@ -9,59 +9,59 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 // `pnpm e2e` at the repo root (firebase emulators:exec wraps the Playwright run).
 
 async function signUpThrowaway(page: Page, tag: string): Promise<void> {
-  await page.waitForFunction(() => "__e2eAuth" in window);
-  const email = `e2e-${tag}-${Date.now()}@e2e.local`;
-  await page.evaluate(
-    ({ em, pw }) => {
-      const w = window as unknown as {
-        __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
-      };
-      if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
-      // awaiting it here would let that navigation destroy this evaluate's execution context
-      // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
-      void w.__e2eAuth.signUp(em, pw);
-    },
-    { em: email, pw: "test-passw0rd" },
-  );
+    await page.waitForFunction(() => "__e2eAuth" in window);
+    const email = `e2e-${tag}-${Date.now()}@e2e.local`;
+    await page.evaluate(
+        ({ em, pw }) => {
+            const w = window as unknown as {
+                __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
+            };
+            if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
+            // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
+            // awaiting it here would let that navigation destroy this evaluate's execution context
+            // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
+            void w.__e2eAuth.signUp(em, pw);
+        },
+        { em: email, pw: "test-passw0rd" },
+    );
 }
 
 test("Calcular is reachable signed-out — the boundary does not gate the calculator", async ({
-  page,
+    page,
 }) => {
-  await page.goto("/calcular");
-  await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
-  await expect(page).toHaveURL(/\/calcular$/); // no bounce to /sign-in
+    await page.goto("/calcular");
+    await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
+    await expect(page).toHaveURL(/\/calcular$/); // no bounce to /sign-in
 });
 
 test("a guarded tab signed-out routes through sign-in and lands on the intended section", async ({
-  page,
+    page,
 }, info) => {
-  await page.goto("/calcular");
+    await page.goto("/calcular");
 
-  // Select a guarded tab from the app-nav while signed out. (007/US7 moved /catalogo out of the
-  // guarded set — signed-out sees its honest teaser — so the boundary contract is exercised on
-  // Conta, which stays guarded.)
-  await page.getByRole("link", { name: messages.nav.conta }).click();
+    // Select a guarded tab from the app-nav while signed out. (007/US7 moved /catalogo out of the
+    // guarded set — signed-out sees its honest teaser — so the boundary contract is exercised on
+    // Conta, which stays guarded.)
+    await page.getByRole("link", { name: messages.nav.conta }).click();
 
-  // GC-2: redirected to sign-in carrying the return-to-intent.
-  await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
-  await expect(page.getByRole("heading", { name: messages.signIn.title })).toBeVisible();
+    // GC-2: redirected to sign-in carrying the return-to-intent.
+    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
+    await expect(page.getByRole("heading", { name: messages.signIn.title })).toBeVisible();
 
-  // Sign in through the Auth emulator seam.
-  await signUpThrowaway(page, `boundary-${info.workerIndex}`);
+    // Sign in through the Auth emulator seam.
+    await signUpThrowaway(page, `boundary-${info.workerIndex}`);
 
-  // GC-3/GC-4: land on the originally requested section (Conta), not the calculator.
-  await expect(page).toHaveURL(/\/conta$/);
-  await expect(page.getByRole("heading", { name: messages.conta.title })).toBeVisible();
+    // GC-3/GC-4: land on the originally requested section (Conta), not the calculator.
+    await expect(page).toHaveURL(/\/conta$/);
+    await expect(page.getByRole("heading", { name: messages.conta.title })).toBeVisible();
 });
 
 test("a signed-in user is bounced off /sign-in to the calculator by default", async ({
-  page,
+    page,
 }, info) => {
-  await page.goto("/sign-in");
-  await signUpThrowaway(page, `already-${info.workerIndex}`);
-  // GC-4: no redirect param → default landing is the public calculator.
-  await expect(page).toHaveURL(/\/calcular$/);
-  await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
+    await page.goto("/sign-in");
+    await signUpThrowaway(page, `already-${info.workerIndex}`);
+    // GC-4: no redirect param → default landing is the public calculator.
+    await expect(page).toHaveURL(/\/calcular$/);
+    await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
 });

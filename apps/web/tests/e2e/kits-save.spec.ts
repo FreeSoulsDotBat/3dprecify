@@ -20,176 +20,176 @@ const t = messages;
 // aparece duas vezes (a linha `master-item` + o `<h2>` da ficha). Abaixo do corte a lista segue
 // sendo a única leitura — daí o locator trocar por viewport, nunca `.first()` às cegas.
 function itemVisible(page: Page, text: string) {
-  return (page.viewportSize()?.width ?? 0) >= 1280
-    ? page.getByTestId("master-item").filter({ hasText: text })
-    : page.getByText(text);
+    return (page.viewportSize()?.width ?? 0) >= 1280
+        ? page.getByTestId("master-item").filter({ hasText: text })
+        : page.getByText(text);
 }
 
 /** Abre um produto/kit salvo do Catálogo: no mestre-detalhe (≥1280) o clique na lista só
  *  SELECIONA — quem navega para a rota cheia é o botão "Abrir para editar" da ficha. Abaixo do
  *  corte o clique na linha já navega. */
 async function openCatalogItem(page: Page, text: string): Promise<void> {
-  if ((page.viewportSize()?.width ?? 0) >= 1280) {
-    await page.getByTestId("master-item").filter({ hasText: text }).click();
-    await page
-      .getByTestId("detail-panel")
-      .getByRole("button", { name: t.catalogo.detailOpenEditor })
-      .click();
-  } else {
-    await page.getByText(text).click();
-  }
+    if ((page.viewportSize()?.width ?? 0) >= 1280) {
+        await page.getByTestId("master-item").filter({ hasText: text }).click();
+        await page
+            .getByTestId("detail-panel")
+            .getByRole("button", { name: t.catalogo.detailOpenEditor })
+            .click();
+    } else {
+        await page.getByText(text).click();
+    }
 }
 
 async function signUpThrowaway(page: Page, tag: string): Promise<string> {
-  await page.goto("/sign-in");
-  await page.waitForFunction(() => "__e2eAuth" in window);
-  const email = `e2e-${tag}-${Date.now()}@e2e.local`;
-  await page.evaluate(
-    ({ em, pw }) => {
-      const w = window as unknown as {
-        __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
-      };
-      if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      void w.__e2eAuth.signUp(em, pw); // fire-and-forget (redirect destroys the eval context)
-    },
-    { em: email, pw: "test-passw0rd" },
-  );
-  await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
-  return email;
+    await page.goto("/sign-in");
+    await page.waitForFunction(() => "__e2eAuth" in window);
+    const email = `e2e-${tag}-${Date.now()}@e2e.local`;
+    await page.evaluate(
+        ({ em, pw }) => {
+            const w = window as unknown as {
+                __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
+            };
+            if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
+            void w.__e2eAuth.signUp(em, pw); // fire-and-forget (redirect destroys the eval context)
+        },
+        { em: email, pw: "test-passw0rd" },
+    );
+    await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
+    return email;
 }
 
 /** Grant premium through the REAL operator path (the CLI writing the ledger — ADR-0012). */
 function grantPremium(email: string): void {
-  execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
-    cwd: backendDir,
-    stdio: "pipe",
-    env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
-  });
+    execSync(`uv run python -m app.scripts.grant_premium grant ${email} --source beta --by e2e`, {
+        cwd: backendDir,
+        stdio: "pipe",
+        env: { ...process.env, P3D_DATABASE_URL: E2E_DATABASE_URL },
+    });
 }
 
 test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (US2/US6, SC-411)", async ({
-  page,
+    page,
 }, info) => {
-  const email = await signUpThrowaway(page, `kit-save-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `kit-save-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/kits");
-  await page.reload();
+    await page.goto("/kits");
+    await page.reload();
 
-  // One ad-hoc line at the default values — the composer prices it live (custo R$ 16,16, 016/PR-C B1 seed).
-  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
+    // One ad-hoc line at the default values — the composer prices it live (custo R$ 16,16, 016/PR-C B1 seed).
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
 
-  await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Suporte");
-  await page.getByRole("button", { name: t.bom.save, exact: true }).click();
+    await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Suporte");
+    await page.getByRole("button", { name: t.bom.save, exact: true }).click();
 
-  // A real 2xx — and the save SAYS what it did to the catalog (K4).
-  await expect(page.getByText(t.bom.saved)).toBeVisible();
-  await expect(page.getByText(t.bom.savedTitle)).toBeVisible();
-  await expect(
-    page.getByText(t.bom.savedCreated.replace("{nome}", "Peça 1 · Kit Suporte")),
-  ).toBeVisible();
+    // A real 2xx — and the save SAYS what it did to the catalog (K4).
+    await expect(page.getByText(t.bom.saved)).toBeVisible();
+    await expect(page.getByText(t.bom.savedTitle)).toBeVisible();
+    await expect(
+        page.getByText(t.bom.savedCreated.replace("{nome}", "Peça 1 · Kit Suporte")),
+    ).toBeVisible();
 
-  // The piece really is in the catalog now — as a MANUAL product, flagged for attention (K3),
-  // because it has no saved filament/printer behind it yet.
-  await page.goto("/catalogo?tab=products");
-  await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toBeVisible();
-  await expect(page.getByText(t.catalogo.needsAttention).first()).toBeVisible();
+    // The piece really is in the catalog now — as a MANUAL product, flagged for attention (K3),
+    // because it has no saved filament/printer behind it yet.
+    await page.goto("/catalogo?tab=products");
+    await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toBeVisible();
+    await expect(page.getByText(t.catalogo.needsAttention).first()).toBeVisible();
 
-  // The kit is in the Kits tab, described by STRUCTURE — never a price (FR-407).
-  await page.goto("/catalogo?tab=kits");
-  await expect(itemVisible(page, "Kit Suporte")).toBeVisible();
-  // 018 mestre-detalhe: a ≥1280px o resumo "1 peça(s)" também aparece na ficha (mesmo texto do
-  // card) — escopado à linha da lista, nunca `.first()` às cegas.
-  await expect(itemVisible(page, t.catalogo.countKitPieces.replace("{n}", "1"))).toBeVisible();
+    // The kit is in the Kits tab, described by STRUCTURE — never a price (FR-407).
+    await page.goto("/catalogo?tab=kits");
+    await expect(itemVisible(page, "Kit Suporte")).toBeVisible();
+    // 018 mestre-detalhe: a ≥1280px o resumo "1 peça(s)" também aparece na ficha (mesmo texto do
+    // card) — escopado à linha da lista, nunca `.first()` às cegas.
+    await expect(itemVisible(page, t.catalogo.countKitPieces.replace("{n}", "1"))).toBeVisible();
 
-  // Reopen it: the inputs come back and the SAME money is RECOMPUTED from them (no stored price).
-  await openCatalogItem(page, "Kit Suporte");
-  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
-  await expect(page.getByRole("textbox", { name: new RegExp(t.bom.kitName) })).toHaveValue(
-    "Kit Suporte",
-  );
+    // Reopen it: the inputs come back and the SAME money is RECOMPUTED from them (no stored price).
+    await openCatalogItem(page, "Kit Suporte");
+    await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
+    await expect(page.getByRole("textbox", { name: new RegExp(t.bom.kitName) })).toHaveValue(
+        "Kit Suporte",
+    );
 
-  // Saving a SECOND kit whose piece carries the same name REFERENCES the existing product — the
-  // catalog must never grow a duplicate (SC-411), and the seller is told the saved values won.
-  await page.goto("/kits");
-  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Dois");
-  await page
-    .getByRole("textbox", { name: new RegExp(t.bom.pieceName) })
-    .fill("Peça 1 · Kit Suporte");
-  await page.getByRole("button", { name: t.bom.save, exact: true }).click();
+    // Saving a SECOND kit whose piece carries the same name REFERENCES the existing product — the
+    // catalog must never grow a duplicate (SC-411), and the seller is told the saved values won.
+    await page.goto("/kits");
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Dois");
+    await page
+        .getByRole("textbox", { name: new RegExp(t.bom.pieceName) })
+        .fill("Peça 1 · Kit Suporte");
+    await page.getByRole("button", { name: t.bom.save, exact: true }).click();
 
-  await expect(
-    page.getByText(t.bom.savedReferenced.replace("{nome}", "Peça 1 · Kit Suporte")),
-  ).toBeVisible();
-  await expect(page.getByText(t.bom.savedSuperseded)).toBeVisible();
+    await expect(
+        page.getByText(t.bom.savedReferenced.replace("{nome}", "Peça 1 · Kit Suporte")),
+    ).toBeVisible();
+    await expect(page.getByText(t.bom.savedSuperseded)).toBeVisible();
 
-  await page.goto("/catalogo?tab=products");
-  // 018 mestre-detalhe: a ≥1280px o nome também aparece no `<h2>` da ficha aberta — a contagem
-  // que prova "nenhum duplicado" é a das LINHAS da lista, não a de todo texto na tela.
-  await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toHaveCount(1); // no duplicate, ever
+    await page.goto("/catalogo?tab=products");
+    // 018 mestre-detalhe: a ≥1280px o nome também aparece no `<h2>` da ficha aberta — a contagem
+    // que prova "nenhum duplicado" é a das LINHAS da lista, não a de todo texto na tela.
+    await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toHaveCount(1); // no duplicate, ever
 });
 
 test("deleting a referenced product degrades the kit line on reopen — never a live-reference lie (D6/SC-405)", async ({
-  page,
+    page,
 }, info) => {
-  const email = await signUpThrowaway(page, `kit-degrade-${info.workerIndex}`);
-  grantPremium(email);
+    const email = await signUpThrowaway(page, `kit-degrade-${info.workerIndex}`);
+    grantPremium(email);
 
-  await page.goto("/kits");
-  await page.reload();
+    await page.goto("/kits");
+    await page.reload();
 
-  // Save a kit with one ad-hoc line → it materializes a manual product the kit line references.
-  await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
-  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
-  await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Degrada");
-  await page.getByRole("button", { name: t.bom.save, exact: true }).click();
-  await expect(page.getByText(t.bom.saved)).toBeVisible();
-  // The save navigated to /kits?id=<kit>; keep that URL to reopen the exact kit after the delete.
-  await expect(page).toHaveURL(/\/kits\?id=/);
-  const kitUrl = page.url();
+    // Save a kit with one ad-hoc line → it materializes a manual product the kit line references.
+    await page.getByRole("button", { name: new RegExp(t.bom.addLine) }).click();
+    await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible();
+    await page.getByRole("textbox", { name: new RegExp(t.bom.kitName) }).fill("Kit Degrada");
+    await page.getByRole("button", { name: t.bom.save, exact: true }).click();
+    await expect(page.getByText(t.bom.saved)).toBeVisible();
+    // The save navigated to /kits?id=<kit>; keep that URL to reopen the exact kit after the delete.
+    await expect(page).toHaveURL(/\/kits\?id=/);
+    const kitUrl = page.url();
 
-  const piece = "Peça 1 · Kit Degrada";
+    const piece = "Peça 1 · Kit Degrada";
 
-  // Delete the materialized product the kit line references.
-  await page.goto("/catalogo?tab=products");
-  await expect(itemVisible(page, piece)).toBeVisible();
-  await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
-  await page
-    .getByRole("dialog")
-    .getByRole("button", { name: t.catalogForm.deleteConfirm, exact: true })
-    .click();
-  await expect(page.getByText(piece)).toHaveCount(0); // gone from the catalog
+    // Delete the materialized product the kit line references.
+    await page.goto("/catalogo?tab=products");
+    await expect(itemVisible(page, piece)).toBeVisible();
+    await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
+    await page
+        .getByRole("dialog")
+        .getByRole("button", { name: t.catalogForm.deleteConfirm, exact: true })
+        .click();
+    await expect(page.getByText(piece)).toHaveCount(0); // gone from the catalog
 
-  // Reopen the kit. The server resolves the soft-deleted product LIVE-only, so the line comes back
-  // degraded; the composer recomputes from the last-known snapshot and re-hydrates to it (the
-  // client-side staleness + re-hydration are pinned deterministically in the unit tests —
-  // use-catalog.test.tsx invalidation + bom-page.test.tsx re-hydration).
-  await page.goto(kitUrl);
+    // Reopen the kit. The server resolves the soft-deleted product LIVE-only, so the line comes back
+    // degraded; the composer recomputes from the last-known snapshot and re-hydrates to it (the
+    // client-side staleness + re-hydration are pinned deterministically in the unit tests —
+    // use-catalog.test.tsx invalidation + bom-page.test.tsx re-hydration).
+    await page.goto(kitUrl);
 
-  // The line degrades HONESTLY: a calm "(avulsa)" + valores-mantidos caption, still priced; it
-  // NEVER presents the deleted product as a live reference, and NEVER claims a removal.
-  await expect(page.getByText(t.productForm.manualValuesKept)).toBeVisible({ timeout: 15_000 });
-  await expect(page.getByText(/\(avulsa\)/).first()).toBeVisible();
-  await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible(); // still priceable
-  await expect(page.getByText(piece)).toHaveCount(0); // the deleted product is NOT shown as live
-  // F1/K3 honesty guard: no removal/deletion claim anywhere on the degraded surface.
-  await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);
+    // The line degrades HONESTLY: a calm "(avulsa)" + valores-mantidos caption, still priced; it
+    // NEVER presents the deleted product as a live reference, and NEVER claims a removal.
+    await expect(page.getByText(t.productForm.manualValuesKept)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(/\(avulsa\)/).first()).toBeVisible();
+    await expect(page.getByText(/R\$\s?16,16/).first()).toBeVisible(); // still priceable
+    await expect(page.getByText(piece)).toHaveCount(0); // the deleted product is NOT shown as live
+    // F1/K3 honesty guard: no removal/deletion claim anywhere on the degraded surface.
+    await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);
 });
 
 test("a FREE account cannot save a kit — and nothing is materialized (SC-411)", async ({
-  page,
+    page,
 }, info) => {
-  await signUpThrowaway(page, `kit-free-${info.workerIndex}`); // never granted
+    await signUpThrowaway(page, `kit-free-${info.workerIndex}`); // never granted
 
-  // 019/PR-B: a conta grátis monta o kit (composição local, sem rede) e encontra "Salvar kit"
-  // desabilitado e VISÍVEL — nada é materializado porque nenhum handler de escrita existe. O
-  // servidor continua sendo a fronteira (SC-1903).
-  await page.goto("/kits");
-  await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
-  await page.getByRole("button", { name: t.bom.addLine }).first().click();
-  const salvar = page.getByRole("button", { name: t.bom.save, exact: true });
-  await expect(salvar).toBeVisible();
-  await expect(salvar).toBeDisabled();
+    // 019/PR-B: a conta grátis monta o kit (composição local, sem rede) e encontra "Salvar kit"
+    // desabilitado e VISÍVEL — nada é materializado porque nenhum handler de escrita existe. O
+    // servidor continua sendo a fronteira (SC-1903).
+    await page.goto("/kits");
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
+    await page.getByRole("button", { name: t.bom.addLine }).first().click();
+    const salvar = page.getByRole("button", { name: t.bom.save, exact: true });
+    await expect(salvar).toBeVisible();
+    await expect(salvar).toBeDisabled();
 });

@@ -1,222 +1,222 @@
 {
-  "area": "calculadora",
-  "mapaFuncional": "### A área \"Calcular\" (aba 1, rota `/calcular`)\n\n**Como o vendedor chega.** `/calcular` é a porta do produto: a raiz `/` redireciona para cá e a aba é a\nprimeira do menu (`Calcular · Catálogo · Kits · Orçamentos · Conta` — no código: `/calcular`, `/catalogo`,\n`/kits`, `/historico`, `/conta`). É a **única rota pública sem nenhum portão**: renderiza para anônimo,\ngrátis, Premium, online e offline. O menu é barra inferior até 425px e barra lateral acima disso (rail de\n76px abaixo de 600px e a partir de 1280px por escolha do vendedor).\n\n**O que ele vem fazer.** Digitar os custos de uma peça impressa e ler dois preços sugeridos (varejo e\natacado), com a conta aberta item a item. É a única tela do app que calcula preço a partir de campos\ncrus — e ela é **grátis e ilimitada**.\n\n**Rotas da área.** Uma só: `/calcular`. Não há sub-rota; tudo o mais é folha/diálogo por cima\n(a folha \"Meus cenários\", a folha de salvar cenário, a folha de gravar no histórico). O mesmo formulário\né *reusado* fora da área — a página de produto (`/catalogo?produto=…`) e o editor de linha de kit\n(`/kits`) montam `CostsSection`, `FieldGroup`, `OtherCostsSection`, `MarketplaceSection`, `PriceResults`,\n`TimeHmField` e `MachineCostFields` exatamente iguais.\n\n**Layout.** Coluna única até 1023px, na ordem em que está escrito. A partir de `min-width:1024px` a\npágina sobe de 460px para 1120px e vira **duas colunas** (`.tf-calc-grid`) com um **rodapé de largura\ntotal** (`.tf-calc-footer`, filhos capados em 720px e centrados) que carrega o resultado inteiro.\n\n**O que a área guarda.** Nada por si só. O formulário vive em memória (React Hook Form); recarregar\nperde tudo — e por isso existe um diálogo de aviso de saída quando há algo digitado. Persistir é sempre\numa ação Premium **para fora** da área: \"Salvar cenário\" (simulação) e \"Salvar no histórico\" (orçamento\ncongelado). O que a área lê de fora: o **catálogo de tarifas** (servido → cache local → semente\nembutida, nunca bloqueia), o **entitlement** do servidor (`active` / `none` / `lapsed`), e as listas de\n**filamentos e impressoras** do catálogo Premium (cache local por uid, respondem offline).\n\n**Quem calcula.** `pricing-core`, no aparelho, sempre. O servidor nunca recalcula. Offline os preços\nsaem iguais; o que falha é só a atualização de tarifas e a escrita.\n\n**O que a área alimenta depois.** Um cálculo válido vira (a) uma **simulação salva** — reabri-la traz a\nCalcular preenchida de volta, com barra de contexto e selo de alterações não salvas; (b) um **orçamento\ncongelado** no Histórico (escrita offline vai para a fila/outbox e drena depois). No sentido inverso, o\nCatálogo alimenta a Calcular pelo bloco \"Usar do catálogo\", e um kit reaberto como base traz um resumo\nsomente-leitura no lugar da conta escalar.\n\n**Como muda por estado.**\n- **Grátis / deslogado** — todos os custos, markup e os dois preços funcionam. A seção Marketplace vira\n  um portão: chave desligada e desabilitada + \"Vender em marketplaces faz parte do Premium.\" + teaser\n  centrado, ocupando as **duas colunas**; \"Outros custos\" migra da esquerda para a direita para\n  compensar. Some \"Usar do catálogo\" (vira um cartão de teaser com botão desabilitado) e somem os dois\n  botões de gravar. \"Meus cenários\" continua visível para todos — é a porta honesta.\n- **Premium ativo** — marketplace ligável, canais repetíveis com tarifas pré-preenchidas pelo catálogo,\n  \"Preços por canal\" na cauda do detalhamento, e os dois botões de gravar no rodapé.\n- **Premium pausado (lapsed)** — a Calcular se comporta como grátis para OFERECER (só `active` habilita);\n  o que já foi salvo continua legível pela folha \"Meus cenários\", que exibe seu próprio aviso de plano.\n- **Offline** — cálculo intacto; o selo de cada canal passa a dizer \"referência embutida (offline)\" e\n  pode acusar \"desatualizado\"; um aviso não-bloqueante com \"Tentar de novo\" aparece no topo da lista de\n  canais; gravar vai para a fila.\n- **Sessão expirada** — faixa de sessão no topo do shell (\"Entrar de novo\"); as leituras Premium falham\n  e o bloco \"Usar do catálogo\" pode cair no cartão de erro com \"Tentar de novo\"; a conta continua sendo\n  feita normalmente.",
-  "insercoes": [
-    {
-      "id": "calcular-desktop-duas-colunas",
-      "ondeVive": "A rota /calcular inteira, acima de 1024px: `.tf-calc-page` (máx. 1120px, centrada) contendo, em ordem, a pilha de topo em largura total, a grade `.tf-calc-grid` de duas colunas e o rodapé `.tf-calc-footer` também em largura total.",
-      "comoChega": "É a primeira tela do app: a aba Calcular no menu (barra inferior ≤425px, barra lateral acima) ou a raiz `/` redirecionando. Chega sempre — anônimo, grátis, Premium, online ou offline — e normalmente com o formulário zerado (nada persiste entre recargas).",
-      "vizinhanca": "Acima da grade: título 'Calcular preço' centrado, a frase freemium, o botão 'Meus cenários' e (quando houver) a barra de cenário carregado, avisos, resumo de kit e o cartão 'Usar do catálogo'. Coluna ESQUERDA, de cima para baixo: 'Custos da peça' → 'Mão de obra e custos' → 'Outros custos' (só Premium). Coluna DIREITA: 'Markup' → 'Outros custos' (só na conta grátis) → 'Marketplace' (só Premium). Na conta grátis o portão do Marketplace sai da coluna e vira uma faixa de largura total (`grid-column: 1/-1`) logo abaixo das duas colunas. Abaixo de tudo, o rodapé com o resultado.",
-      "dadosQueChegam": "A grade em si não recebe dado: ela recebe a decisão de entitlement (`active` ⇒ marketplace na direita; qualquer outra coisa ⇒ portão em largura total e 'Outros custos' migrado). Abaixo de 1024px nada disso existe — é uma coluna só, na ordem escrita.",
-      "oQueAconteceDepois": "Cada campo digitado recalcula na hora (o motor roda local) e o rodapé se reescreve. O rodapé é sempre o último a ser lido, por decisão: ele soma tudo que as duas colunas alimentaram, canais incluídos."
-    },
-    {
-      "id": "secao-custos-da-peca",
-      "ondeVive": "Primeiro bloco da coluna esquerda em /calcular (e o primeiro bloco do formulário em coluna única no mobile): título de seção 'Custos da peça' com ⓘ + um Card único sempre aberto.",
-      "comoChega": "É a primeira coisa que o vendedor toca depois do topo da página. Chega com todos os campos vazios (ou pré-preenchidos se ele acabou de escolher um filamento/impressora em 'Usar do catálogo', logo acima).",
-      "vizinhanca": "Acima: o cartão 'Usar do catálogo' (ou, no grátis, o cartão de teaser). Dentro do Card, em ordem: a grade `.tf-costs-grid` com SETE campos numéricos (Custo do rolo · Peso do rolo · Gramas usadas · Consumo médio kW · Tarifa de energia · Reserva de manutenção · Taxa de falha), depois o campo de Tempo de impressão (h+min) e por último o bloco inteiro da máquina. Abaixo do Card: o título 'Mão de obra e custos'.",
-      "dadosQueChegam": "Valores digitados pelo vendedor, ou escritos pelo bloco 'Usar do catálogo' (filamento → custo/peso do rolo; impressora → valor da máquina, vida útil, consumo, manutenção) e por uma simulação reaberta. Devolve os campos crus ao motor a cada tecla.",
-      "oQueAconteceDepois": "Material, Energia, Máquina, Falha e Manutenção aparecem como linhas do detalhamento no rodapé. Um campo inválido apaga o resultado inteiro e o troca por um alerta."
-    },
-    {
-      "id": "campo-tempo-h-min",
-      "ondeVive": "Dentro do Card 'Custos da peça', imediatamente ABAIXO da grade dos sete campos numéricos e ACIMA do bloco 'Valor da máquina'.",
-      "comoChega": "O vendedor desce a grade de custos e este é o próximo controle. É o único campo obrigatório que não mora na grade.",
-      "vizinhanca": "Acima: a última linha da grade de custos (Taxa de falha / Reserva de manutenção, conforme a largura). Abaixo: o campo 'Valor da máquina'. Dentro do próprio campo: um único rótulo 'Tempo de impressão' (obrigatório) e, em uma linha `flex gap-2`, DOIS controles numéricos — horas (unidade 'h', aceita relógio digitado tipo '2:30' ou '2h30') e minutos (unidade 'min'). Rótulo, dica e erro são compartilhados pelos dois.",
-      "dadosQueChegam": "Recebe um número decimal de horas do formulário e o mostra como h+min; devolve o decimal recomposto a cada mexida. Recebe também o aviso de plausibilidade do campo (150 no lugar das horas quando o vendedor queria minutos), que ocupa a linha da dica.",
-      "oQueAconteceDepois": "Alimenta Energia, Máquina e Falha no detalhamento. Também aparece igual no editor de linha de kit (/kits), que monta este mesmo controle."
-    },
-    {
-      "id": "pergunta-de-custo-de-maquina",
-      "ondeVive": "Rodapé do Card 'Custos da peça' — o último bloco de dentro do cartão, abaixo do campo de tempo h+min.",
-      "comoChega": "Descendo o primeiro cartão. Abre por padrão no MODO ESTIMATIVA; abre já no modo ajuste quando o valor de vida útil que veio de fora (simulação reaberta, impressora do catálogo) não corresponde a nenhuma combinação ritmo×payback.",
-      "vizinhanca": "Acima: o campo de Tempo de impressão. Dentro do bloco, em ordem: campo 'Valor da máquina' (obrigatório, R$) → e então UM dos dois modos. Modo estimativa: dois selects lado a lado (a partir de ~240px cada; empilhados a 360/390px) — 'com que frequência ela roda' (3 opções) e 'em quantos anos quer que se pague' (1 a 5) — seguidos de uma legenda '≈ R$ X por hora de impressão' e de um botão secundário 'Ajustar horas direto' alinhado à esquerda. Modo ajuste: o campo cru 'Vida útil da máquina' (h) com ⓘ no rótulo e aviso de plausibilidade, mais um botão secundário de voltar. Abaixo do cartão inteiro: o título 'Mão de obra e custos'.",
-      "dadosQueChegam": "Lê o valor vivo de vida útil em horas do formulário e deduz o modo dele; escreve de volta as horas derivadas quando o vendedor mexe nos selects. A legenda de custo/hora é derivada de valor ÷ horas.",
-      "oQueAconteceDepois": "Entra na linha 'Máquina' do detalhamento. Digitar 3 no campo cru de horas (pensando em anos) muda o custo/hora de R$ 1,11 para R$ 1.333,33 — daí o aviso."
-    },
-    {
-      "id": "secao-outros-custos",
-      "ondeVive": "Terceiro bloco da COLUNA ESQUERDA quando a conta é Premium (abaixo de 'Mão de obra e custos'); na conta grátis a MESMA seção migra para a COLUNA DIREITA, logo abaixo de 'Markup'. No mobile é sempre a terceira seção da pilha.",
-      "comoChega": "Rolando o formulário. Nasce sem nenhuma linha: só o título, a frase de ajuda e o botão de adicionar.",
-      "vizinhanca": "Acima (Premium): o Card 'Mão de obra e custos'. Acima (grátis): o Card 'Markup'. Dentro: título 'Outros custos' com ⓘ → uma frase de ajuda em cinza → 0..N linhas, cada uma `flex items-end gap-2` com um campo de texto sem rótulo (só placeholder) ocupando 3 partes, um campo de dinheiro ocupando 2 partes, e um botão fantasma com o glifo '✕' → um botão secundário 'Adicionar custo' ao final. Abaixo (Premium): o topo da coluna direita; abaixo (grátis): a faixa do portão Marketplace.",
-      "dadosQueChegam": "Texto e valor digitados linha a linha; o erro de cada linha vem do motor (não do validador de formulário), então uma linha ruim se marca sozinha e as demais continuam somando.",
-      "oQueAconteceDepois": "Cada item nomeado vira SUA PRÓPRIA linha do detalhamento no rodapé (nome em branco cai num rótulo neutro) e a soma entra no custo total."
-    },
-    {
-      "id": "secao-marketplace-multicanal",
-      "ondeVive": "Último bloco da COLUNA DIREITA de /calcular, abaixo do Card 'Markup' (conta Premium). Na conta grátis a seção sai da coluna e vira uma faixa de largura total abaixo das duas colunas — ver o portão.",
-      "comoChega": "É o fim do caminho de entrada: o vendedor já digitou custos, mão de obra e markup e agora diz onde vende. A chave mestra começa LIGADA para quem é Premium.",
-      "vizinhanca": "Acima: o Card 'Markup' (e, no grátis, 'Outros custos'). Dentro, em ordem: título 'Marketplace' com ⓘ → uma linha inteira com o texto 'Incluir marketplaces no preço' à esquerda e o interruptor à direita → (se ligado) o alerta opcional de falha de atualização do catálogo → N cartões de canal empilhados com gap → um botão secundário 'Adicionar canal'. Abaixo: nada nessa coluna — o próximo elemento é o rodapé de largura total.",
-      "dadosQueChegam": "Recebe o catálogo de tarifas (servido, cacheado ou semente) e o entitlement. Devolve, por canal, um resultado calculado localmente — anúncio e líquido para varejo e atacado.",
-      "oQueAconteceDepois": "Com a chave desligada, nada de canal é computado nem mostrado (o preço direto varejo/atacado continua intacto). Com ela ligada, cada canal aparece no bloco 'Preços por canal', na cauda do cartão do detalhamento, lá no rodapé — nunca aqui."
-    },
-    {
-      "id": "cartao-de-canal",
-      "ondeVive": "Dentro da seção Marketplace (coluna direita), um Card por canal, empilhados entre a chave mestra e o botão 'Adicionar canal'. O primeiro nasce sozinho já com Mercado Livre.",
-      "comoChega": "O vendedor liga a chave 'Incluir marketplaces no preço' e o primeiro cartão já está lá; 'Adicionar canal' acrescenta os seguintes ao fim da pilha.",
-      "vizinhanca": "Dentro do Card, ordem fixa e condicional: (1) linha `flex items-end` com o select 'Marketplace' ocupando o resto da largura e um botão fantasma '✕' à direita; (2) select 'Modalidade'; (3) o seletor de categoria; (4) select 'Você vende como'; (5) select 'mais de 450 pedidos?' — só quando CPF; (6) grade de duas colunas com até 4 campos de taxa (Comissão · Taxa fixa · Comissão mínima/item · Frete); (7) a legenda de faixa + regra da taxa fixa; (8) a legenda de subsídio de frete; (9) as chaves de taxa opcional; (10) uma linha `flex-wrap` com até 3 selos; (11) os dois avisos da Shopee. Acima do primeiro cartão: a chave mestra ou o alerta de falha de atualização; abaixo do último: 'Adicionar canal'.",
-      "dadosQueChegam": "Quais dos onze blocos existem é decidido pelo catálogo, marketplace a marketplace (o 'plano de campos'). Trocar o marketplace zera modalidade, categoria, perfil e as taxas que o novo plano não mostra; um campo que já tem valor continua visível mesmo fora do plano, para poder ser apagado.",
-      "oQueAconteceDepois": "Cada cartão produz um bloco correspondente em 'Preços por canal', no rodapé. Um cartão com erro não derruba os irmãos — ele exibe sua própria frase lá embaixo."
-    },
-    {
-      "id": "seletor-de-categoria",
-      "ondeVive": "Terceiro controle de dentro do cartão de canal, entre o select 'Modalidade' e o select 'Você vende como'. Só existe onde o catálogo publica uma árvore de categorias para aquele marketplace (Mercado Livre e Amazon têm; Shopee não).",
-      "comoChega": "O vendedor escolhe o marketplace, depois a modalidade, e este é o próximo campo — é ele que decide QUAL comissão será cobrada.",
-      "vizinhanca": "Acima: o select de Modalidade. Abaixo: o select 'Você vende como' (ou, onde não houver perfil, direto a grade de taxas). Estados, todos no mesmo lugar: (a) BUSCA — campo de texto com placeholder, uma linha viva de contagem ('N categorias encontradas' / 'Mostrando 8 de 23' / a frase de 'busque de outro jeito'), uma lista de até 8 botões mostrando o CAMINHO completo com '›' à direita, e — só enquanto nada foi digitado — um botão secundário 'Ver todas as categorias (N)' que abre uma árvore recursiva com rolagem própria (~40vh) e disclosure ▸/▾ apenas nos nós que têm filhos; (b) ESCOLHIDO — o campo vira um quadro com o caminho num chip e um botão fantasma 'Limpar' dentro do próprio frame; (c) escolhido mas ausente do catálogo — o mesmo quadro dizendo isso; (d) marketplace sem árvore — só uma frase, em duas versões conforme o canal já tenha ou não referência de tarifa.",
-      "dadosQueChegam": "A árvore vem do mesmo catálogo de tarifas que traz as taxas (esparsa por construção). A frase do estado vazio é derivada do SELO do canal, para nunca discordar dele.",
-      "oQueAconteceDepois": "Escolher a categoria muda a comissão pré-preenchida e o texto do selo logo abaixo da grade de taxas; trocar de marketplace apaga a categoria, porque ela pertence à taxonomia antiga."
-    },
-    {
-      "id": "selo-de-vigencia-de-tarifa",
-      "ondeVive": "Penúltimo bloco de dentro do cartão de canal: uma linha `flex-wrap` logo abaixo das chaves de taxa opcional e acima dos avisos da Shopee.",
-      "comoChega": "Ele aparece sozinho assim que o canal tem um resultado — o vendedor não o aciona, ele o lê depois de preencher as taxas.",
-      "vizinhanca": "Acima: as chaves de taxa opcional (ou, se não houver, as legendas de faixa/subsídio, ou a grade de taxas). Abaixo: os avisos da Shopee, se for um canal Shopee; senão, o fim do cartão. Na mesma linha podem coexistir até três pílulas: o selo principal, um selo de 'estimativa' (subsídio de frete do ML) e um selo SEPARADO para a origem da taxa fixa.",
-      "dadosQueChegam": "Cinco estados vindos do cálculo do canal — referência, catch-all publicado, ajustado pelo vendedor, estimativa, sem referência — com dois modificadores: embutido (semente offline) e desatualizado (fora da janela de 30 dias). O texto é montado em tempo de execução e passa de 80 caracteres ('Referência: <fonte> (para <categoria>) · atualizado em 06/07/2026 · desatualizado').",
-      "oQueAconteceDepois": "Nada acontece ao tocar — é declaração, não controle. É a peça que impede que um número pré-preenchido seja lido como número conferido pelo vendedor."
-    },
-    {
-      "id": "perguntas-de-perfil-do-vendedor",
-      "ondeVive": "No MEIO do cartão de canal: logo abaixo do seletor de categoria e logo acima da grade de taxas. Só onde o catálogo do marketplace tem esse eixo (hoje, Shopee).",
-      "comoChega": "O vendedor está descendo o cartão e encontra duas perguntas sobre ELE, não sobre a peça. A segunda só nasce quando a primeira for CPF.",
-      "vizinhanca": "Acima: o seletor de categoria (quando existe) ou o select de Modalidade. Primeiro select: 'Você vende como' (CPF / CNPJ) com um placeholder que significa 'não respondi'. Segundo select, condicional: 'mais de 450 pedidos?' (SIM / NÃO). Abaixo: a grade de duas colunas com os campos de taxa.",
-      "dadosQueChegam": "As duas respostas juntas formam o determinante que o catálogo usa para escolher a tabela; não responder cai na tabela catch-all, e nada na tela diz isso hoje.",
-      "oQueAconteceDepois": "Muda a tarifa aplicada (portanto os placeholders da grade de taxas logo abaixo e o texto do selo), e a combinação CPF + alto volume é a única que pode acender o aviso regressivo da Shopee no fim do cartão. Revelar/esconder a segunda pergunta muda a altura do cartão no meio dele."
-    },
-    {
-      "id": "taxas-opcionais-do-canal",
-      "ondeVive": "Dentro do cartão de canal, entre as legendas (faixa/regra e subsídio de frete) e a linha dos selos.",
-      "comoChega": "Não é acionado: renderiza sozinho quando o catálogo daquele marketplace publica alguma taxa opcional (hoje, o manuseio de item volumoso da Shopee). Sem nenhuma, o bloco simplesmente não existe.",
-      "vizinhanca": "Acima: a legenda de subsídio de frete (Shopee) ou a legenda de faixa/regra, ou a grade de taxas. Cada item é um rótulo de largura total com o interruptor do DS e, logo abaixo, uma legenda de duas partes ('R$ X por pedido · fonte, dd/mm/aaaa'). Abaixo do bloco: a linha `flex-wrap` dos selos de vigência.",
-      "dadosQueChegam": "Rótulo, valor e procedência vêm inteiros do catálogo — nenhuma palavra ou número está escrito no código.",
-      "oQueAconteceDepois": "Ligar a chave soma a taxa ao custo do canal, mudando anúncio e líquido daquele canal no bloco 'Preços por canal', no rodapé."
-    },
-    {
-      "id": "campo-de-taxa-pre-preenchido-pelo-catalogo",
-      "ondeVive": "Dentro da grade de duas colunas de taxas do cartão de canal (Comissão · Taxa fixa · Comissão mínima/item · Frete) — é o estado normal desses campos, mais as duas legendas de largura total logo abaixo da grade.",
-      "comoChega": "O vendedor escolhe marketplace/modalidade/categoria e os campos já 'sabem' o valor: eles ficam VAZIOS, com o número que o catálogo está aplicando em cinza, no placeholder.",
-      "vizinhanca": "Acima da grade: os selects de perfil do vendedor (ou a categoria, ou a modalidade). Abaixo da grade, em largura total: a legenda 'Tabela por faixa de preço — valores da faixa do seu anúncio' seguida, quando houver, de 'taxa fixa = {pct}% do preço' — na legenda, nunca como sufixo do campo (com 77–187px úteis o sufixo cortava para '2,50 (= 50'). Abaixo dessa legenda: a legenda de subsídio de frete e depois as chaves de taxa opcional.",
-      "dadosQueChegam": "O valor aplicado vem do catálogo resolvido para o preço da tela; digitar por cima troca o selo para 'ajustado'. O erro de cada campo vem do motor, por canal.",
-      "oQueAconteceDepois": "O placeholder MUDA sozinho quando o preço do anúncio troca de faixa — e é essa mudança silenciosa que a legenda de faixa existe para explicar."
-    },
-    {
-      "id": "avisos-shopee",
-      "ondeVive": "O ÚLTIMO bloco de dentro do cartão de canal, abaixo da linha dos selos de vigência — e só quando o marketplace do cartão é Shopee.",
-      "comoChega": "O vendedor escolhe Shopee no select do topo do cartão. O aviso compacto aparece imediatamente e nunca some; o outro só acende na combinação CPF + mais de 450 pedidos + preço abaixo da faixa publicada.",
-      "vizinhanca": "Acima: a linha `flex-wrap` com o selo de vigência (e possíveis selos de estimativa/taxa fixa). Os dois avisos têm FORMAS diferentes e ficam empilhados com gap: primeiro o alerta completo (título + corpo, tom informativo) da tarifa não publicada, depois o alerta COMPACTO de uma linha (ícone + título curto + um ⓘ que guarda o corpo inteiro) do frete aferido. Abaixo: o fim do Card — o próximo cartão de canal ou o botão 'Adicionar canal'.",
-      "dadosQueChegam": "O primeiro depende do resultado do canal (o motor recusou precificar aquela faixa); o segundo é estático, uma nota de risco permanente de qualquer canal Shopee.",
-      "oQueAconteceDepois": "Nenhum dos dois bloqueia nada — o cálculo segue. O caso que acende o primeiro é o mesmo que faz o bloco daquele canal, no rodapé, aparecer sem preço."
-    },
-    {
-      "id": "info-subsidio-de-frete-shopee",
-      "ondeVive": "Uma legenda de largura total dentro do cartão de canal Shopee, imediatamente ABAIXO da legenda de faixa/regra da taxa fixa e ACIMA das chaves de taxa opcional — ou seja, sob a grade de taxas, ao lado das outras legendas, e deliberadamente FORA do campo 'Frete'.",
-      "comoChega": "Aparece sozinha, e só quando duas coisas são verdade: o catálogo publica a informação de subsídio para a Shopee E o canal já tem um preço de anúncio de varejo calculado, para resolver a faixa do cupom.",
-      "vizinhanca": "Acima: a legenda 'Tabela por faixa de preço…' (quando existe) ou diretamente a grade de taxas — em particular o campo 'Frete', que é o vizinho conceitual. Abaixo: as chaves de taxa opcional, depois os selos.",
-      "dadosQueChegam": "Teto do cupom, fonte e data, todos lidos do catálogo; zero número escrito no código.",
-      "oQueAconteceDepois": "Nada entra na conta: o campo 'Frete' continua sendo a ÚNICA origem de desconto. A legenda existe justamente porque o modelo antigo cobrava esse cupom do vendedor num campo que mostrava R$ 0,00."
-    },
-    {
-      "id": "precos-por-canal",
-      "ondeVive": "No RODAPÉ de largura total, na CAUDA do mesmo Card 'Como chegamos no preço' — depois da última linha do detalhamento (Atacado) e antes de o cartão fechar. Não tem seção própria e não mora na seção Marketplace.",
-      "comoChega": "O vendedor termina de configurar os canais na coluna direita e desce até o rodapé: é lá, junto do detalhamento, que os preços de cada canal são lidos.",
-      "vizinhanca": "Dentro do cartão, acima: as linhas 'Preço varejo' e 'Preço atacado' do detalhamento. Aqui: um rótulo 'Preços por canal' e, abaixo dele, um bloco por canal separado por uma linha divisória superior. Cada bloco: título 'Mercado Livre · Clássico' (a modalidade em peso normal e cor apagada) e então, para varejo e depois para atacado, as linhas 'Preço do anúncio' / '(Frete −R$ X)' quando digitado / 'Recebido líquido'. Fora do cartão, abaixo: o eventual aviso de atacado acima do varejo e os dois cartões de preço final.",
-      "dadosQueChegam": "Um resultado por canal, calculado localmente pelo motor a partir das taxas do cartão de canal correspondente; some por inteiro quando a chave mestra está desligada ou não há canal.",
-      "oQueAconteceDepois": "É o número que o vendedor leva para o anúncio. Salvar cenário ou gravar no histórico congela exatamente esses valores."
-    },
-    {
-      "id": "estados-de-preco-por-canal",
-      "ondeVive": "Dentro de um bloco de canal em 'Preços por canal' (cauda do cartão do detalhamento, no rodapé), substituindo as linhas de números daquele canal ou daquele nível.",
-      "comoChega": "Não é acionado — o vendedor chega ao rodapé para ler o preço e encontra uma frase no lugar do número.",
-      "vizinhanca": "Sempre logo abaixo do título 'Marketplace · Modalidade' do canal, ou logo abaixo da legenda 'Varejo'/'Atacado' do nível. Quatro estados, todos como parágrafo solto, sem ícone e sem moldura: (a) faixa sem tarifa publicada — uma frase em cor de perigo no lugar do preço, POR NÍVEL (varejo e atacado podem cair em lados diferentes da lacuna); (b) líquido negativo — o valor renderizado como negativo, seguido de 'Canal não-lucrativo neste preço (frete maior que a margem).'; (c) canal válido sem comissão informada — 'Informe a comissão do canal para ver os preços.'; (d) canal com erro de campo — 'Corrija os campos deste canal para ver os preços.'. Nos casos (c) e (d) a frase substitui o bloco inteiro do canal; nos casos (a) e (b) ela convive com o outro nível, que pode estar precificado normalmente.",
-      "dadosQueChegam": "O resultado do canal (ou a sua ausência) vindo do motor; nenhum desses estados imprime R$ 0,00 no lugar de um número que não existe.",
-      "oQueAconteceDepois": "O conserto é sempre lá em cima, no cartão daquele canal na coluna direita — e a tela não leva o vendedor até lá."
-    },
-    {
-      "id": "avisos-de-plausibilidade-nos-campos",
-      "ondeVive": "No slot da DICA de um campo, entre o rótulo/controle e a mensagem de erro. Aparece em oito campos: gramas usadas, consumo médio, tarifa de energia, peso do rolo, reserva de manutenção, valor da hora de mão de obra (todos na coluna esquerda), tempo de impressão e vida útil da máquina (no bloco da máquina) — além da comissão, dentro do cartão de canal.",
-      "comoChega": "Surge enquanto o vendedor digita, no instante em que o valor sai da faixa plausível. Ele não pediu e não pode fechar.",
-      "vizinhanca": "Ocupa a linha imediatamente abaixo do controle; quando o campo também tem dica, a dica é empurrada para uma linha própria logo abaixo. Some por completo quando existe um erro de verdade, porque o erro toma esse mesmo slot.",
-      "dadosQueChegam": "Uma faixa por campo, avaliada sobre o texto cru digitado; devolve uma frase ou nada.",
-      "oQueAconteceDepois": "Nada é bloqueado — o cálculo continua com o valor digitado. É uma terceira categoria de mensagem (nem dica, nem erro) distinguida hoje apenas pela cor do texto, sem ícone e sem título. Os mesmos avisos aparecem no editor de linha de kit, que monta os mesmos campos."
-    },
-    {
-      "id": "avisos-do-resultado",
-      "ondeVive": "Dois alertas informativos no rodapé de largura total: o primeiro entre o título 'Como chegamos no preço' e o Card do detalhamento; o segundo entre o Card do detalhamento e a grade dos dois cartões de preço final.",
-      "comoChega": "Não são acionados: aparecem quando o RESULTADO denuncia algo que nenhum campo isolado poderia denunciar — custo total R$ 0,00 e preço R$ 0,00 (a persona que zera tudo que não entende), ou um preço absurdo, ou preço de atacado maior que o de varejo.",
-      "vizinhanca": "O de cima fica colado abaixo do título da seção e acima da primeira linha do detalhamento (Material); ele concatena N frases num parágrafo só. O de baixo fica exatamente entre a borda inferior do Card do detalhamento e os dois cartões PriceHero. Ambos com tom informativo, nunca de perigo.",
-      "dadosQueChegam": "Vêm do resultado calculado, não dos campos; a comparação atacado×varejo é feita sobre os PREÇOS resultantes, não sobre os markups digitados.",
-      "oQueAconteceDepois": "Nada é recusado — o preço continua ali, abaixo. O tom informativo é decisão registrada: escrito como erro, o vendedor conclui que o produto recusou o cálculo."
-    },
-    {
-      "id": "estado-formulario-invalido",
-      "ondeVive": "O rodapé de largura total inteiro (`.tf-calc-footer`), na posição do resultado.",
-      "comoChega": "O vendedor esvazia ou estraga um campo obrigatório em qualquer uma das duas colunas e, ao descer, encontra o rodapé trocado.",
-      "vizinhanca": "No lugar de TODO o conteúdo do rodapé — detalhamento, 'Preços por canal', os dois cartões de preço, 'Salvar cenário' e 'Salvar no histórico' — fica um único alerta de tom perigo com a frase 'Confira os campos destacados para ver o preço.'. Acima dele continuam as duas colunas do formulário, intactas.",
-      "dadosQueChegam": "É a ausência de resultado: o motor não devolveu nada calculável a partir dos campos atuais.",
-      "oQueAconteceDepois": "Corrigir o campo faz o rodapé inteiro voltar. A tela NÃO aponta qual campo causou o sumiço — o vendedor tem de procurar as marcações de erro nas colunas acima."
-    },
-    {
-      "id": "falha-de-atualizacao-do-catalogo-de-tarifas",
-      "ondeVive": "Dentro da seção Marketplace (coluna direita), no TOPO da lista de canais: abaixo da linha da chave 'Incluir marketplaces no preço' e acima do primeiro cartão de canal. Só para conta Premium e com a chave ligada.",
-      "comoChega": "Aparece sozinho quando a busca online de tarifas falha (offline, servidor fora, sessão morta). É pegajoso de propósito: não pisca durante a retentativa.",
-      "vizinhanca": "Acima: a linha da chave mestra. Abaixo: o primeiro Card de canal. É um alerta de tom informativo com título, corpo e, embutido nele, um botão secundário 'Tentar de novo' que mostra estado de carregamento enquanto tenta.",
-      "dadosQueChegam": "O estado da atualização do catálogo (falhou / tentando) e a ação de refazer a busca. Nenhuma tarifa se perde: a versão salva ou a semente embutida continua pré-preenchendo tudo.",
-      "oQueAconteceDepois": "Nenhum cálculo é impedido. Convive com o selo de cada canal, que já diz algo parecido em outra forma ('referência embutida (offline) · desatualizado')."
-    },
-    {
-      "id": "gate-premium-do-marketplace",
-      "ondeVive": "Uma faixa de LARGURA TOTAL (as duas colunas) logo abaixo da grade de duas colunas e acima do rodapé, na conta grátis/deslogada. No mobile é simplesmente a última seção da pilha.",
-      "comoChega": "O vendedor grátis desce o formulário e chega no lugar onde estaria a seção Marketplace. Ele não clicou em nada.",
-      "vizinhanca": "Acima: as duas colunas — esquerda terminando em 'Mão de obra e custos', direita terminando em 'Outros custos' (que migrou para cá justamente por causa deste portão). Dentro: o mesmo título 'Marketplace' com ⓘ, a mesma linha de largura total com o texto 'Incluir marketplaces no preço' à esquerda e o interruptor à direita — DESLIGADO e desabilitado —, depois um bloco centrado com a legenda 'Vender em marketplaces faz parte do Premium.' e o teaser de assinatura centrado logo abaixo. Abaixo da faixa: o rodapé com o resultado (que continua calculando varejo e atacado normalmente).",
-      "dadosQueChegam": "O entitlement do servidor; só `active` habilita. Estado indefinido, em verificação ou com erro degrada para 'não entitulado' — nunca para um 'sim' presumido.",
-      "oQueAconteceDepois": "Assinar leva ao fluxo de compra (deslogado passa pelo login antes, preservando a intenção). Nada de canal é computado enquanto isso — nenhum número parcial, nenhum número falso."
-    },
-    {
-      "id": "bloco-usar-do-catalogo",
-      "ondeVive": "A faixa logo ACIMA da grade de duas colunas: é o último elemento da pilha de topo, imediatamente antes de 'Custos da peça'.",
-      "comoChega": "Aparece sozinho ao abrir /calcular, em uma de três montagens conforme quem está olhando e o que está salvo.",
-      "vizinhanca": "Acima: o teaser (no grátis), o resumo de kit, os avisos de campo aposentado, a barra de cenário carregado, o botão 'Meus cenários' — nessa ordem inversa. Abaixo: sempre o título 'Custos da peça'. As três montagens: (a) Premium com itens salvos — Card com o rótulo 'Usar do catálogo', a frase 'Preenche os campos com o item salvo — você ainda pode editar tudo.' e dois selects lado a lado ('Filamento salvo' e 'Impressora salva'), que podem aparecer sozinhos se só um tipo tiver itens; (b) grátis/deslogado — Card com o teaser de Premium e, como afordância, um botão secundário DESABILITADO escrito 'Usar do catálogo'; (c) falha real de leitura sem cache — Card com alerta de perigo e um botão 'Tentar de novo'.",
-      "dadosQueChegam": "As listas de filamentos e impressoras do catálogo Premium, por uid, que respondem do cache local depois de uma leitura online. Escolher um item escreve nos campos do formulário abaixo.",
-      "oQueAconteceDepois": "Filamento preenche custo e peso do rolo; impressora preenche valor da máquina, vida útil, consumo e reserva de manutenção — e a vida útil vinda de lá pode abrir o bloco da máquina já no modo 'ajustar'. Os campos continuam editáveis: é pré-preenchimento, nunca travamento."
-    },
-    {
-      "id": "resumo-de-kit-como-base",
-      "ondeVive": "Na pilha de topo de /calcular, entre os avisos de campo aposentado e o botão de gravar do kit — ou seja, acima do cartão 'Usar do catálogo' e bem acima da grade de duas colunas.",
-      "comoChega": "Só existe por um caminho: o vendedor abre a folha 'Meus cenários' (botão no topo) e reabre uma simulação cuja base é um KIT. Um kit é multi-peça e não cabe no formulário escalar, então este resumo passa a ser a fonte do resultado.",
-      "vizinhanca": "Acima: a barra de cenário carregado e, quando houver, o alerta de campo aposentado do kit. Dentro: um Card compacto com o nome do kit em 14px, uma frase de ajuda em 12px, um alerta informativo contando as linhas excluídas (quando houver) e, por marketplace, o nome em 14px seguido de duas linhas de 12px ('Varejo: R$ X' / 'Atacado: R$ Y'). Abaixo: um botão de gravar no histórico exclusivo deste modo. Mais abaixo, o formulário escalar inteiro continua visível e EDITÁVEL, embora não alimente nada do que está sendo mostrado aqui.",
-      "dadosQueChegam": "O documento do cenário e o catálogo de tarifas; o resumo aplica o conjunto de canais do cenário uniformemente a todas as linhas do kit e soma.",
-      "oQueAconteceDepois": "Gravar congela exatamente estes números (os do resumo, não os dos campos abaixo). Editar as PEÇAS do kit é em /kits, pelo 'Abrir origem' da barra de cenário — nunca aqui."
-    },
-    {
-      "id": "dicas-info-nas-secoes-e-campos",
-      "ondeVive": "Dois usos espalhados por /calcular. (1) Colado a cada TÍTULO de seção: 'Custos da peça', 'Mão de obra e custos', 'Markup', 'Outros custos', 'Marketplace' (nas duas colunas) e 'Como chegamos no preço' (no rodapé) — seis lugares. (2) Na LINHA DO RÓTULO, à direita do nome do campo, em: gramas usadas, consumo médio, tarifa de energia, reserva de manutenção, taxa de falha, tempo/valor de acabamento, mão de obra e vida útil da máquina. Também aparece dentro do aviso compacto da Shopee, guardando o corpo do alerta.",
-      "comoChega": "É acionado pelo vendedor: um glifo ⓘ que abre um texto curto explicando o que aquela seção calcula ou o que aquele número significa.",
-      "vizinhanca": "No título de seção fica imediatamente à direita do texto do título, na mesma linha, acima do Card. No campo fica na linha do rótulo (é um irmão do rótulo, nunca aninhado dentro dele — mover para lá foi correção de homologação), à direita do nome e acima do controle.",
-      "dadosQueChegam": "Cada gatilho carrega um par nome+corpo, escritos a partir das fórmulas do produto ('Material = (custo do rolo ÷ peso do rolo) × gramas usadas…').",
-      "oQueAconteceDepois": "Abre e fecha; não muda nada no cálculo. Os mesmos ⓘ aparecem, com o mesmo texto, na página de produto do Catálogo e no editor de linha de kit, que montam os mesmos campos."
-    },
-    {
-      "id": "conta-item-a-item-e-cartoes-de-preco",
-      "ondeVive": "O rodapé de largura total (`.tf-calc-footer`), abaixo da grade de duas colunas — no desktop os filhos ficam centrados e capados em 720px.",
-      "comoChega": "É o destino de toda a rolagem: o vendedor preenche as colunas acima e desce para ler o resultado. Aparece assim que o formulário fica válido, sem botão de calcular.",
-      "vizinhanca": "De cima para baixo: título 'Como chegamos no preço' com ⓘ → eventual aviso de resultado → o Card do detalhamento (Material · Energia · Máquina · Falha · Acabamento · Mão de obra · uma linha por item de 'Outros custos' · Custo total em destaque · Preço varejo com o markup como sublinha · Preço atacado · e, na cauda do MESMO cartão, o bloco 'Preços por canal') → eventual aviso de atacado acima do varejo → a grade dos dois cartões de preço final, lado a lado onde couberem 210px cada e empilhados a 360px, ambos centrados e do mesmo tamanho, um com tom de destaque e outro com tom de energia → o botão 'Salvar cenário' centrado → o botão 'Salvar no histórico' centrado.",
-      "dadosQueChegam": "O resultado calculado localmente pelo motor a partir de todos os campos das duas colunas; as linhas de 'Outros custos' herdam o nome digitado (nome em branco cai num rótulo neutro).",
-      "oQueAconteceDepois": "Daqui saem as duas escritas Premium: salvar como simulação (reabrível na Calcular) e congelar como orçamento no Histórico — offline, essa escrita entra na fila e drena depois. Não existe controle segmentado Varejo|Atacado: os dois são sempre mostrados juntos."
-    },
-    {
-      "id": "topo-da-calcular",
-      "ondeVive": "A primeira dobra de /calcular, acima de tudo: as três primeiras faixas da página, em largura total.",
-      "comoChega": "É o que o vendedor vê ao abrir o app — /calcular é a rota inicial e é pública, então esta é literalmente a primeira tela do produto para um visitante anônimo.",
-      "vizinhanca": "Ordem exata: (1) o cabeçalho de página com o título 'Calcular preço' CENTRADO; (2) logo abaixo, centrada, a promessa freemium como legenda cinza de 12px — 'Calcular custo e markup é grátis, sem limite. Vender em marketplaces, salvar e exportar fazem parte do Premium.'; (3) uma linha alinhada à DIREITA com um botão fantasma pequeno, com ícone, escrito 'Meus cenários'. Depois disso vêm, quando existem: a barra de cenário carregado, o alerta de campo aposentado, o resumo de kit, o cartão de teaser e o cartão 'Usar do catálogo' — e só então a grade do formulário.",
-      "dadosQueChegam": "Nada calculado: é texto fixo. O botão abre a folha lateral de simulações salvas, que existe para TODOS (inclusive grátis e deslogado) — é a porta honesta para o que é Premium.",
-      "oQueAconteceDepois": "A folha 'Meus cenários' cobre a página; escolher uma simulação a carrega DENTRO deste mesmo formulário (e, se a base for kit, troca o resultado pelo resumo somente-leitura). Enquanto a folha está aberta, o cartão de teaser abaixo é escondido para não haver dois botões de compra na mesma tela."
-    },
-    {
-      "id": "aviso-de-campo-aposentado",
-      "ondeVive": "Na pilha de topo de /calcular, imediatamente ABAIXO da barra de cenário carregado e ACIMA do resumo de kit (quando houver) e do cartão 'Usar do catálogo'.",
-      "comoChega": "Aparece só ao reabrir, pela folha 'Meus cenários', uma simulação salva antes da mudança do modelo de preço — uma que ainda carrega um campo que o motor não aceita mais.",
-      "vizinhanca": "Acima: a barra de cenário carregado (nome da simulação, ações de renomear/duplicar/salvar alterações, selo de alterações não salvas). Abaixo: o resumo de kit, ou o teaser, ou o cartão 'Usar do catálogo'. É um alerta informativo permanente — não é um aviso passageiro e não tem como fechar; fica enquanto a simulação estiver aberta. Duas variantes: a de uma simulação escalar e a de kit, esta deduplicada linha a linha para dizer uma vez só.",
-      "dadosQueChegam": "A lista de campos descartados no recálculo do documento antigo; o próprio motor recusa a chave aposentada, e o alerta apenas declara isso.",
-      "oQueAconteceDepois": "O preço mostrado abaixo já é o recalculado SEM o campo aposentado. Salvar as alterações grava o documento no formato novo. É a peça de topo que mais compete por espaço: pode dividir a dobra com a barra de cenário, o resumo de kit, o teaser e o cartão de erro do picker."
-    }
-  ]
+    "area": "calculadora",
+    "mapaFuncional": "### A área \"Calcular\" (aba 1, rota `/calcular`)\n\n**Como o vendedor chega.** `/calcular` é a porta do produto: a raiz `/` redireciona para cá e a aba é a\nprimeira do menu (`Calcular · Catálogo · Kits · Orçamentos · Conta` — no código: `/calcular`, `/catalogo`,\n`/kits`, `/historico`, `/conta`). É a **única rota pública sem nenhum portão**: renderiza para anônimo,\ngrátis, Premium, online e offline. O menu é barra inferior até 425px e barra lateral acima disso (rail de\n76px abaixo de 600px e a partir de 1280px por escolha do vendedor).\n\n**O que ele vem fazer.** Digitar os custos de uma peça impressa e ler dois preços sugeridos (varejo e\natacado), com a conta aberta item a item. É a única tela do app que calcula preço a partir de campos\ncrus — e ela é **grátis e ilimitada**.\n\n**Rotas da área.** Uma só: `/calcular`. Não há sub-rota; tudo o mais é folha/diálogo por cima\n(a folha \"Meus cenários\", a folha de salvar cenário, a folha de gravar no histórico). O mesmo formulário\né *reusado* fora da área — a página de produto (`/catalogo?produto=…`) e o editor de linha de kit\n(`/kits`) montam `CostsSection`, `FieldGroup`, `OtherCostsSection`, `MarketplaceSection`, `PriceResults`,\n`TimeHmField` e `MachineCostFields` exatamente iguais.\n\n**Layout.** Coluna única até 1023px, na ordem em que está escrito. A partir de `min-width:1024px` a\npágina sobe de 460px para 1120px e vira **duas colunas** (`.tf-calc-grid`) com um **rodapé de largura\ntotal** (`.tf-calc-footer`, filhos capados em 720px e centrados) que carrega o resultado inteiro.\n\n**O que a área guarda.** Nada por si só. O formulário vive em memória (React Hook Form); recarregar\nperde tudo — e por isso existe um diálogo de aviso de saída quando há algo digitado. Persistir é sempre\numa ação Premium **para fora** da área: \"Salvar cenário\" (simulação) e \"Salvar no histórico\" (orçamento\ncongelado). O que a área lê de fora: o **catálogo de tarifas** (servido → cache local → semente\nembutida, nunca bloqueia), o **entitlement** do servidor (`active` / `none` / `lapsed`), e as listas de\n**filamentos e impressoras** do catálogo Premium (cache local por uid, respondem offline).\n\n**Quem calcula.** `pricing-core`, no aparelho, sempre. O servidor nunca recalcula. Offline os preços\nsaem iguais; o que falha é só a atualização de tarifas e a escrita.\n\n**O que a área alimenta depois.** Um cálculo válido vira (a) uma **simulação salva** — reabri-la traz a\nCalcular preenchida de volta, com barra de contexto e selo de alterações não salvas; (b) um **orçamento\ncongelado** no Histórico (escrita offline vai para a fila/outbox e drena depois). No sentido inverso, o\nCatálogo alimenta a Calcular pelo bloco \"Usar do catálogo\", e um kit reaberto como base traz um resumo\nsomente-leitura no lugar da conta escalar.\n\n**Como muda por estado.**\n- **Grátis / deslogado** — todos os custos, markup e os dois preços funcionam. A seção Marketplace vira\n  um portão: chave desligada e desabilitada + \"Vender em marketplaces faz parte do Premium.\" + teaser\n  centrado, ocupando as **duas colunas**; \"Outros custos\" migra da esquerda para a direita para\n  compensar. Some \"Usar do catálogo\" (vira um cartão de teaser com botão desabilitado) e somem os dois\n  botões de gravar. \"Meus cenários\" continua visível para todos — é a porta honesta.\n- **Premium ativo** — marketplace ligável, canais repetíveis com tarifas pré-preenchidas pelo catálogo,\n  \"Preços por canal\" na cauda do detalhamento, e os dois botões de gravar no rodapé.\n- **Premium pausado (lapsed)** — a Calcular se comporta como grátis para OFERECER (só `active` habilita);\n  o que já foi salvo continua legível pela folha \"Meus cenários\", que exibe seu próprio aviso de plano.\n- **Offline** — cálculo intacto; o selo de cada canal passa a dizer \"referência embutida (offline)\" e\n  pode acusar \"desatualizado\"; um aviso não-bloqueante com \"Tentar de novo\" aparece no topo da lista de\n  canais; gravar vai para a fila.\n- **Sessão expirada** — faixa de sessão no topo do shell (\"Entrar de novo\"); as leituras Premium falham\n  e o bloco \"Usar do catálogo\" pode cair no cartão de erro com \"Tentar de novo\"; a conta continua sendo\n  feita normalmente.",
+    "insercoes": [
+        {
+            "id": "calcular-desktop-duas-colunas",
+            "ondeVive": "A rota /calcular inteira, acima de 1024px: `.tf-calc-page` (máx. 1120px, centrada) contendo, em ordem, a pilha de topo em largura total, a grade `.tf-calc-grid` de duas colunas e o rodapé `.tf-calc-footer` também em largura total.",
+            "comoChega": "É a primeira tela do app: a aba Calcular no menu (barra inferior ≤425px, barra lateral acima) ou a raiz `/` redirecionando. Chega sempre — anônimo, grátis, Premium, online ou offline — e normalmente com o formulário zerado (nada persiste entre recargas).",
+            "vizinhanca": "Acima da grade: título 'Calcular preço' centrado, a frase freemium, o botão 'Meus cenários' e (quando houver) a barra de cenário carregado, avisos, resumo de kit e o cartão 'Usar do catálogo'. Coluna ESQUERDA, de cima para baixo: 'Custos da peça' → 'Mão de obra e custos' → 'Outros custos' (só Premium). Coluna DIREITA: 'Markup' → 'Outros custos' (só na conta grátis) → 'Marketplace' (só Premium). Na conta grátis o portão do Marketplace sai da coluna e vira uma faixa de largura total (`grid-column: 1/-1`) logo abaixo das duas colunas. Abaixo de tudo, o rodapé com o resultado.",
+            "dadosQueChegam": "A grade em si não recebe dado: ela recebe a decisão de entitlement (`active` ⇒ marketplace na direita; qualquer outra coisa ⇒ portão em largura total e 'Outros custos' migrado). Abaixo de 1024px nada disso existe — é uma coluna só, na ordem escrita.",
+            "oQueAconteceDepois": "Cada campo digitado recalcula na hora (o motor roda local) e o rodapé se reescreve. O rodapé é sempre o último a ser lido, por decisão: ele soma tudo que as duas colunas alimentaram, canais incluídos."
+        },
+        {
+            "id": "secao-custos-da-peca",
+            "ondeVive": "Primeiro bloco da coluna esquerda em /calcular (e o primeiro bloco do formulário em coluna única no mobile): título de seção 'Custos da peça' com ⓘ + um Card único sempre aberto.",
+            "comoChega": "É a primeira coisa que o vendedor toca depois do topo da página. Chega com todos os campos vazios (ou pré-preenchidos se ele acabou de escolher um filamento/impressora em 'Usar do catálogo', logo acima).",
+            "vizinhanca": "Acima: o cartão 'Usar do catálogo' (ou, no grátis, o cartão de teaser). Dentro do Card, em ordem: a grade `.tf-costs-grid` com SETE campos numéricos (Custo do rolo · Peso do rolo · Gramas usadas · Consumo médio kW · Tarifa de energia · Reserva de manutenção · Taxa de falha), depois o campo de Tempo de impressão (h+min) e por último o bloco inteiro da máquina. Abaixo do Card: o título 'Mão de obra e custos'.",
+            "dadosQueChegam": "Valores digitados pelo vendedor, ou escritos pelo bloco 'Usar do catálogo' (filamento → custo/peso do rolo; impressora → valor da máquina, vida útil, consumo, manutenção) e por uma simulação reaberta. Devolve os campos crus ao motor a cada tecla.",
+            "oQueAconteceDepois": "Material, Energia, Máquina, Falha e Manutenção aparecem como linhas do detalhamento no rodapé. Um campo inválido apaga o resultado inteiro e o troca por um alerta."
+        },
+        {
+            "id": "campo-tempo-h-min",
+            "ondeVive": "Dentro do Card 'Custos da peça', imediatamente ABAIXO da grade dos sete campos numéricos e ACIMA do bloco 'Valor da máquina'.",
+            "comoChega": "O vendedor desce a grade de custos e este é o próximo controle. É o único campo obrigatório que não mora na grade.",
+            "vizinhanca": "Acima: a última linha da grade de custos (Taxa de falha / Reserva de manutenção, conforme a largura). Abaixo: o campo 'Valor da máquina'. Dentro do próprio campo: um único rótulo 'Tempo de impressão' (obrigatório) e, em uma linha `flex gap-2`, DOIS controles numéricos — horas (unidade 'h', aceita relógio digitado tipo '2:30' ou '2h30') e minutos (unidade 'min'). Rótulo, dica e erro são compartilhados pelos dois.",
+            "dadosQueChegam": "Recebe um número decimal de horas do formulário e o mostra como h+min; devolve o decimal recomposto a cada mexida. Recebe também o aviso de plausibilidade do campo (150 no lugar das horas quando o vendedor queria minutos), que ocupa a linha da dica.",
+            "oQueAconteceDepois": "Alimenta Energia, Máquina e Falha no detalhamento. Também aparece igual no editor de linha de kit (/kits), que monta este mesmo controle."
+        },
+        {
+            "id": "pergunta-de-custo-de-maquina",
+            "ondeVive": "Rodapé do Card 'Custos da peça' — o último bloco de dentro do cartão, abaixo do campo de tempo h+min.",
+            "comoChega": "Descendo o primeiro cartão. Abre por padrão no MODO ESTIMATIVA; abre já no modo ajuste quando o valor de vida útil que veio de fora (simulação reaberta, impressora do catálogo) não corresponde a nenhuma combinação ritmo×payback.",
+            "vizinhanca": "Acima: o campo de Tempo de impressão. Dentro do bloco, em ordem: campo 'Valor da máquina' (obrigatório, R$) → e então UM dos dois modos. Modo estimativa: dois selects lado a lado (a partir de ~240px cada; empilhados a 360/390px) — 'com que frequência ela roda' (3 opções) e 'em quantos anos quer que se pague' (1 a 5) — seguidos de uma legenda '≈ R$ X por hora de impressão' e de um botão secundário 'Ajustar horas direto' alinhado à esquerda. Modo ajuste: o campo cru 'Vida útil da máquina' (h) com ⓘ no rótulo e aviso de plausibilidade, mais um botão secundário de voltar. Abaixo do cartão inteiro: o título 'Mão de obra e custos'.",
+            "dadosQueChegam": "Lê o valor vivo de vida útil em horas do formulário e deduz o modo dele; escreve de volta as horas derivadas quando o vendedor mexe nos selects. A legenda de custo/hora é derivada de valor ÷ horas.",
+            "oQueAconteceDepois": "Entra na linha 'Máquina' do detalhamento. Digitar 3 no campo cru de horas (pensando em anos) muda o custo/hora de R$ 1,11 para R$ 1.333,33 — daí o aviso."
+        },
+        {
+            "id": "secao-outros-custos",
+            "ondeVive": "Terceiro bloco da COLUNA ESQUERDA quando a conta é Premium (abaixo de 'Mão de obra e custos'); na conta grátis a MESMA seção migra para a COLUNA DIREITA, logo abaixo de 'Markup'. No mobile é sempre a terceira seção da pilha.",
+            "comoChega": "Rolando o formulário. Nasce sem nenhuma linha: só o título, a frase de ajuda e o botão de adicionar.",
+            "vizinhanca": "Acima (Premium): o Card 'Mão de obra e custos'. Acima (grátis): o Card 'Markup'. Dentro: título 'Outros custos' com ⓘ → uma frase de ajuda em cinza → 0..N linhas, cada uma `flex items-end gap-2` com um campo de texto sem rótulo (só placeholder) ocupando 3 partes, um campo de dinheiro ocupando 2 partes, e um botão fantasma com o glifo '✕' → um botão secundário 'Adicionar custo' ao final. Abaixo (Premium): o topo da coluna direita; abaixo (grátis): a faixa do portão Marketplace.",
+            "dadosQueChegam": "Texto e valor digitados linha a linha; o erro de cada linha vem do motor (não do validador de formulário), então uma linha ruim se marca sozinha e as demais continuam somando.",
+            "oQueAconteceDepois": "Cada item nomeado vira SUA PRÓPRIA linha do detalhamento no rodapé (nome em branco cai num rótulo neutro) e a soma entra no custo total."
+        },
+        {
+            "id": "secao-marketplace-multicanal",
+            "ondeVive": "Último bloco da COLUNA DIREITA de /calcular, abaixo do Card 'Markup' (conta Premium). Na conta grátis a seção sai da coluna e vira uma faixa de largura total abaixo das duas colunas — ver o portão.",
+            "comoChega": "É o fim do caminho de entrada: o vendedor já digitou custos, mão de obra e markup e agora diz onde vende. A chave mestra começa LIGADA para quem é Premium.",
+            "vizinhanca": "Acima: o Card 'Markup' (e, no grátis, 'Outros custos'). Dentro, em ordem: título 'Marketplace' com ⓘ → uma linha inteira com o texto 'Incluir marketplaces no preço' à esquerda e o interruptor à direita → (se ligado) o alerta opcional de falha de atualização do catálogo → N cartões de canal empilhados com gap → um botão secundário 'Adicionar canal'. Abaixo: nada nessa coluna — o próximo elemento é o rodapé de largura total.",
+            "dadosQueChegam": "Recebe o catálogo de tarifas (servido, cacheado ou semente) e o entitlement. Devolve, por canal, um resultado calculado localmente — anúncio e líquido para varejo e atacado.",
+            "oQueAconteceDepois": "Com a chave desligada, nada de canal é computado nem mostrado (o preço direto varejo/atacado continua intacto). Com ela ligada, cada canal aparece no bloco 'Preços por canal', na cauda do cartão do detalhamento, lá no rodapé — nunca aqui."
+        },
+        {
+            "id": "cartao-de-canal",
+            "ondeVive": "Dentro da seção Marketplace (coluna direita), um Card por canal, empilhados entre a chave mestra e o botão 'Adicionar canal'. O primeiro nasce sozinho já com Mercado Livre.",
+            "comoChega": "O vendedor liga a chave 'Incluir marketplaces no preço' e o primeiro cartão já está lá; 'Adicionar canal' acrescenta os seguintes ao fim da pilha.",
+            "vizinhanca": "Dentro do Card, ordem fixa e condicional: (1) linha `flex items-end` com o select 'Marketplace' ocupando o resto da largura e um botão fantasma '✕' à direita; (2) select 'Modalidade'; (3) o seletor de categoria; (4) select 'Você vende como'; (5) select 'mais de 450 pedidos?' — só quando CPF; (6) grade de duas colunas com até 4 campos de taxa (Comissão · Taxa fixa · Comissão mínima/item · Frete); (7) a legenda de faixa + regra da taxa fixa; (8) a legenda de subsídio de frete; (9) as chaves de taxa opcional; (10) uma linha `flex-wrap` com até 3 selos; (11) os dois avisos da Shopee. Acima do primeiro cartão: a chave mestra ou o alerta de falha de atualização; abaixo do último: 'Adicionar canal'.",
+            "dadosQueChegam": "Quais dos onze blocos existem é decidido pelo catálogo, marketplace a marketplace (o 'plano de campos'). Trocar o marketplace zera modalidade, categoria, perfil e as taxas que o novo plano não mostra; um campo que já tem valor continua visível mesmo fora do plano, para poder ser apagado.",
+            "oQueAconteceDepois": "Cada cartão produz um bloco correspondente em 'Preços por canal', no rodapé. Um cartão com erro não derruba os irmãos — ele exibe sua própria frase lá embaixo."
+        },
+        {
+            "id": "seletor-de-categoria",
+            "ondeVive": "Terceiro controle de dentro do cartão de canal, entre o select 'Modalidade' e o select 'Você vende como'. Só existe onde o catálogo publica uma árvore de categorias para aquele marketplace (Mercado Livre e Amazon têm; Shopee não).",
+            "comoChega": "O vendedor escolhe o marketplace, depois a modalidade, e este é o próximo campo — é ele que decide QUAL comissão será cobrada.",
+            "vizinhanca": "Acima: o select de Modalidade. Abaixo: o select 'Você vende como' (ou, onde não houver perfil, direto a grade de taxas). Estados, todos no mesmo lugar: (a) BUSCA — campo de texto com placeholder, uma linha viva de contagem ('N categorias encontradas' / 'Mostrando 8 de 23' / a frase de 'busque de outro jeito'), uma lista de até 8 botões mostrando o CAMINHO completo com '›' à direita, e — só enquanto nada foi digitado — um botão secundário 'Ver todas as categorias (N)' que abre uma árvore recursiva com rolagem própria (~40vh) e disclosure ▸/▾ apenas nos nós que têm filhos; (b) ESCOLHIDO — o campo vira um quadro com o caminho num chip e um botão fantasma 'Limpar' dentro do próprio frame; (c) escolhido mas ausente do catálogo — o mesmo quadro dizendo isso; (d) marketplace sem árvore — só uma frase, em duas versões conforme o canal já tenha ou não referência de tarifa.",
+            "dadosQueChegam": "A árvore vem do mesmo catálogo de tarifas que traz as taxas (esparsa por construção). A frase do estado vazio é derivada do SELO do canal, para nunca discordar dele.",
+            "oQueAconteceDepois": "Escolher a categoria muda a comissão pré-preenchida e o texto do selo logo abaixo da grade de taxas; trocar de marketplace apaga a categoria, porque ela pertence à taxonomia antiga."
+        },
+        {
+            "id": "selo-de-vigencia-de-tarifa",
+            "ondeVive": "Penúltimo bloco de dentro do cartão de canal: uma linha `flex-wrap` logo abaixo das chaves de taxa opcional e acima dos avisos da Shopee.",
+            "comoChega": "Ele aparece sozinho assim que o canal tem um resultado — o vendedor não o aciona, ele o lê depois de preencher as taxas.",
+            "vizinhanca": "Acima: as chaves de taxa opcional (ou, se não houver, as legendas de faixa/subsídio, ou a grade de taxas). Abaixo: os avisos da Shopee, se for um canal Shopee; senão, o fim do cartão. Na mesma linha podem coexistir até três pílulas: o selo principal, um selo de 'estimativa' (subsídio de frete do ML) e um selo SEPARADO para a origem da taxa fixa.",
+            "dadosQueChegam": "Cinco estados vindos do cálculo do canal — referência, catch-all publicado, ajustado pelo vendedor, estimativa, sem referência — com dois modificadores: embutido (semente offline) e desatualizado (fora da janela de 30 dias). O texto é montado em tempo de execução e passa de 80 caracteres ('Referência: <fonte> (para <categoria>) · atualizado em 06/07/2026 · desatualizado').",
+            "oQueAconteceDepois": "Nada acontece ao tocar — é declaração, não controle. É a peça que impede que um número pré-preenchido seja lido como número conferido pelo vendedor."
+        },
+        {
+            "id": "perguntas-de-perfil-do-vendedor",
+            "ondeVive": "No MEIO do cartão de canal: logo abaixo do seletor de categoria e logo acima da grade de taxas. Só onde o catálogo do marketplace tem esse eixo (hoje, Shopee).",
+            "comoChega": "O vendedor está descendo o cartão e encontra duas perguntas sobre ELE, não sobre a peça. A segunda só nasce quando a primeira for CPF.",
+            "vizinhanca": "Acima: o seletor de categoria (quando existe) ou o select de Modalidade. Primeiro select: 'Você vende como' (CPF / CNPJ) com um placeholder que significa 'não respondi'. Segundo select, condicional: 'mais de 450 pedidos?' (SIM / NÃO). Abaixo: a grade de duas colunas com os campos de taxa.",
+            "dadosQueChegam": "As duas respostas juntas formam o determinante que o catálogo usa para escolher a tabela; não responder cai na tabela catch-all, e nada na tela diz isso hoje.",
+            "oQueAconteceDepois": "Muda a tarifa aplicada (portanto os placeholders da grade de taxas logo abaixo e o texto do selo), e a combinação CPF + alto volume é a única que pode acender o aviso regressivo da Shopee no fim do cartão. Revelar/esconder a segunda pergunta muda a altura do cartão no meio dele."
+        },
+        {
+            "id": "taxas-opcionais-do-canal",
+            "ondeVive": "Dentro do cartão de canal, entre as legendas (faixa/regra e subsídio de frete) e a linha dos selos.",
+            "comoChega": "Não é acionado: renderiza sozinho quando o catálogo daquele marketplace publica alguma taxa opcional (hoje, o manuseio de item volumoso da Shopee). Sem nenhuma, o bloco simplesmente não existe.",
+            "vizinhanca": "Acima: a legenda de subsídio de frete (Shopee) ou a legenda de faixa/regra, ou a grade de taxas. Cada item é um rótulo de largura total com o interruptor do DS e, logo abaixo, uma legenda de duas partes ('R$ X por pedido · fonte, dd/mm/aaaa'). Abaixo do bloco: a linha `flex-wrap` dos selos de vigência.",
+            "dadosQueChegam": "Rótulo, valor e procedência vêm inteiros do catálogo — nenhuma palavra ou número está escrito no código.",
+            "oQueAconteceDepois": "Ligar a chave soma a taxa ao custo do canal, mudando anúncio e líquido daquele canal no bloco 'Preços por canal', no rodapé."
+        },
+        {
+            "id": "campo-de-taxa-pre-preenchido-pelo-catalogo",
+            "ondeVive": "Dentro da grade de duas colunas de taxas do cartão de canal (Comissão · Taxa fixa · Comissão mínima/item · Frete) — é o estado normal desses campos, mais as duas legendas de largura total logo abaixo da grade.",
+            "comoChega": "O vendedor escolhe marketplace/modalidade/categoria e os campos já 'sabem' o valor: eles ficam VAZIOS, com o número que o catálogo está aplicando em cinza, no placeholder.",
+            "vizinhanca": "Acima da grade: os selects de perfil do vendedor (ou a categoria, ou a modalidade). Abaixo da grade, em largura total: a legenda 'Tabela por faixa de preço — valores da faixa do seu anúncio' seguida, quando houver, de 'taxa fixa = {pct}% do preço' — na legenda, nunca como sufixo do campo (com 77–187px úteis o sufixo cortava para '2,50 (= 50'). Abaixo dessa legenda: a legenda de subsídio de frete e depois as chaves de taxa opcional.",
+            "dadosQueChegam": "O valor aplicado vem do catálogo resolvido para o preço da tela; digitar por cima troca o selo para 'ajustado'. O erro de cada campo vem do motor, por canal.",
+            "oQueAconteceDepois": "O placeholder MUDA sozinho quando o preço do anúncio troca de faixa — e é essa mudança silenciosa que a legenda de faixa existe para explicar."
+        },
+        {
+            "id": "avisos-shopee",
+            "ondeVive": "O ÚLTIMO bloco de dentro do cartão de canal, abaixo da linha dos selos de vigência — e só quando o marketplace do cartão é Shopee.",
+            "comoChega": "O vendedor escolhe Shopee no select do topo do cartão. O aviso compacto aparece imediatamente e nunca some; o outro só acende na combinação CPF + mais de 450 pedidos + preço abaixo da faixa publicada.",
+            "vizinhanca": "Acima: a linha `flex-wrap` com o selo de vigência (e possíveis selos de estimativa/taxa fixa). Os dois avisos têm FORMAS diferentes e ficam empilhados com gap: primeiro o alerta completo (título + corpo, tom informativo) da tarifa não publicada, depois o alerta COMPACTO de uma linha (ícone + título curto + um ⓘ que guarda o corpo inteiro) do frete aferido. Abaixo: o fim do Card — o próximo cartão de canal ou o botão 'Adicionar canal'.",
+            "dadosQueChegam": "O primeiro depende do resultado do canal (o motor recusou precificar aquela faixa); o segundo é estático, uma nota de risco permanente de qualquer canal Shopee.",
+            "oQueAconteceDepois": "Nenhum dos dois bloqueia nada — o cálculo segue. O caso que acende o primeiro é o mesmo que faz o bloco daquele canal, no rodapé, aparecer sem preço."
+        },
+        {
+            "id": "info-subsidio-de-frete-shopee",
+            "ondeVive": "Uma legenda de largura total dentro do cartão de canal Shopee, imediatamente ABAIXO da legenda de faixa/regra da taxa fixa e ACIMA das chaves de taxa opcional — ou seja, sob a grade de taxas, ao lado das outras legendas, e deliberadamente FORA do campo 'Frete'.",
+            "comoChega": "Aparece sozinha, e só quando duas coisas são verdade: o catálogo publica a informação de subsídio para a Shopee E o canal já tem um preço de anúncio de varejo calculado, para resolver a faixa do cupom.",
+            "vizinhanca": "Acima: a legenda 'Tabela por faixa de preço…' (quando existe) ou diretamente a grade de taxas — em particular o campo 'Frete', que é o vizinho conceitual. Abaixo: as chaves de taxa opcional, depois os selos.",
+            "dadosQueChegam": "Teto do cupom, fonte e data, todos lidos do catálogo; zero número escrito no código.",
+            "oQueAconteceDepois": "Nada entra na conta: o campo 'Frete' continua sendo a ÚNICA origem de desconto. A legenda existe justamente porque o modelo antigo cobrava esse cupom do vendedor num campo que mostrava R$ 0,00."
+        },
+        {
+            "id": "precos-por-canal",
+            "ondeVive": "No RODAPÉ de largura total, na CAUDA do mesmo Card 'Como chegamos no preço' — depois da última linha do detalhamento (Atacado) e antes de o cartão fechar. Não tem seção própria e não mora na seção Marketplace.",
+            "comoChega": "O vendedor termina de configurar os canais na coluna direita e desce até o rodapé: é lá, junto do detalhamento, que os preços de cada canal são lidos.",
+            "vizinhanca": "Dentro do cartão, acima: as linhas 'Preço varejo' e 'Preço atacado' do detalhamento. Aqui: um rótulo 'Preços por canal' e, abaixo dele, um bloco por canal separado por uma linha divisória superior. Cada bloco: título 'Mercado Livre · Clássico' (a modalidade em peso normal e cor apagada) e então, para varejo e depois para atacado, as linhas 'Preço do anúncio' / '(Frete −R$ X)' quando digitado / 'Recebido líquido'. Fora do cartão, abaixo: o eventual aviso de atacado acima do varejo e os dois cartões de preço final.",
+            "dadosQueChegam": "Um resultado por canal, calculado localmente pelo motor a partir das taxas do cartão de canal correspondente; some por inteiro quando a chave mestra está desligada ou não há canal.",
+            "oQueAconteceDepois": "É o número que o vendedor leva para o anúncio. Salvar cenário ou gravar no histórico congela exatamente esses valores."
+        },
+        {
+            "id": "estados-de-preco-por-canal",
+            "ondeVive": "Dentro de um bloco de canal em 'Preços por canal' (cauda do cartão do detalhamento, no rodapé), substituindo as linhas de números daquele canal ou daquele nível.",
+            "comoChega": "Não é acionado — o vendedor chega ao rodapé para ler o preço e encontra uma frase no lugar do número.",
+            "vizinhanca": "Sempre logo abaixo do título 'Marketplace · Modalidade' do canal, ou logo abaixo da legenda 'Varejo'/'Atacado' do nível. Quatro estados, todos como parágrafo solto, sem ícone e sem moldura: (a) faixa sem tarifa publicada — uma frase em cor de perigo no lugar do preço, POR NÍVEL (varejo e atacado podem cair em lados diferentes da lacuna); (b) líquido negativo — o valor renderizado como negativo, seguido de 'Canal não-lucrativo neste preço (frete maior que a margem).'; (c) canal válido sem comissão informada — 'Informe a comissão do canal para ver os preços.'; (d) canal com erro de campo — 'Corrija os campos deste canal para ver os preços.'. Nos casos (c) e (d) a frase substitui o bloco inteiro do canal; nos casos (a) e (b) ela convive com o outro nível, que pode estar precificado normalmente.",
+            "dadosQueChegam": "O resultado do canal (ou a sua ausência) vindo do motor; nenhum desses estados imprime R$ 0,00 no lugar de um número que não existe.",
+            "oQueAconteceDepois": "O conserto é sempre lá em cima, no cartão daquele canal na coluna direita — e a tela não leva o vendedor até lá."
+        },
+        {
+            "id": "avisos-de-plausibilidade-nos-campos",
+            "ondeVive": "No slot da DICA de um campo, entre o rótulo/controle e a mensagem de erro. Aparece em oito campos: gramas usadas, consumo médio, tarifa de energia, peso do rolo, reserva de manutenção, valor da hora de mão de obra (todos na coluna esquerda), tempo de impressão e vida útil da máquina (no bloco da máquina) — além da comissão, dentro do cartão de canal.",
+            "comoChega": "Surge enquanto o vendedor digita, no instante em que o valor sai da faixa plausível. Ele não pediu e não pode fechar.",
+            "vizinhanca": "Ocupa a linha imediatamente abaixo do controle; quando o campo também tem dica, a dica é empurrada para uma linha própria logo abaixo. Some por completo quando existe um erro de verdade, porque o erro toma esse mesmo slot.",
+            "dadosQueChegam": "Uma faixa por campo, avaliada sobre o texto cru digitado; devolve uma frase ou nada.",
+            "oQueAconteceDepois": "Nada é bloqueado — o cálculo continua com o valor digitado. É uma terceira categoria de mensagem (nem dica, nem erro) distinguida hoje apenas pela cor do texto, sem ícone e sem título. Os mesmos avisos aparecem no editor de linha de kit, que monta os mesmos campos."
+        },
+        {
+            "id": "avisos-do-resultado",
+            "ondeVive": "Dois alertas informativos no rodapé de largura total: o primeiro entre o título 'Como chegamos no preço' e o Card do detalhamento; o segundo entre o Card do detalhamento e a grade dos dois cartões de preço final.",
+            "comoChega": "Não são acionados: aparecem quando o RESULTADO denuncia algo que nenhum campo isolado poderia denunciar — custo total R$ 0,00 e preço R$ 0,00 (a persona que zera tudo que não entende), ou um preço absurdo, ou preço de atacado maior que o de varejo.",
+            "vizinhanca": "O de cima fica colado abaixo do título da seção e acima da primeira linha do detalhamento (Material); ele concatena N frases num parágrafo só. O de baixo fica exatamente entre a borda inferior do Card do detalhamento e os dois cartões PriceHero. Ambos com tom informativo, nunca de perigo.",
+            "dadosQueChegam": "Vêm do resultado calculado, não dos campos; a comparação atacado×varejo é feita sobre os PREÇOS resultantes, não sobre os markups digitados.",
+            "oQueAconteceDepois": "Nada é recusado — o preço continua ali, abaixo. O tom informativo é decisão registrada: escrito como erro, o vendedor conclui que o produto recusou o cálculo."
+        },
+        {
+            "id": "estado-formulario-invalido",
+            "ondeVive": "O rodapé de largura total inteiro (`.tf-calc-footer`), na posição do resultado.",
+            "comoChega": "O vendedor esvazia ou estraga um campo obrigatório em qualquer uma das duas colunas e, ao descer, encontra o rodapé trocado.",
+            "vizinhanca": "No lugar de TODO o conteúdo do rodapé — detalhamento, 'Preços por canal', os dois cartões de preço, 'Salvar cenário' e 'Salvar no histórico' — fica um único alerta de tom perigo com a frase 'Confira os campos destacados para ver o preço.'. Acima dele continuam as duas colunas do formulário, intactas.",
+            "dadosQueChegam": "É a ausência de resultado: o motor não devolveu nada calculável a partir dos campos atuais.",
+            "oQueAconteceDepois": "Corrigir o campo faz o rodapé inteiro voltar. A tela NÃO aponta qual campo causou o sumiço — o vendedor tem de procurar as marcações de erro nas colunas acima."
+        },
+        {
+            "id": "falha-de-atualizacao-do-catalogo-de-tarifas",
+            "ondeVive": "Dentro da seção Marketplace (coluna direita), no TOPO da lista de canais: abaixo da linha da chave 'Incluir marketplaces no preço' e acima do primeiro cartão de canal. Só para conta Premium e com a chave ligada.",
+            "comoChega": "Aparece sozinho quando a busca online de tarifas falha (offline, servidor fora, sessão morta). É pegajoso de propósito: não pisca durante a retentativa.",
+            "vizinhanca": "Acima: a linha da chave mestra. Abaixo: o primeiro Card de canal. É um alerta de tom informativo com título, corpo e, embutido nele, um botão secundário 'Tentar de novo' que mostra estado de carregamento enquanto tenta.",
+            "dadosQueChegam": "O estado da atualização do catálogo (falhou / tentando) e a ação de refazer a busca. Nenhuma tarifa se perde: a versão salva ou a semente embutida continua pré-preenchendo tudo.",
+            "oQueAconteceDepois": "Nenhum cálculo é impedido. Convive com o selo de cada canal, que já diz algo parecido em outra forma ('referência embutida (offline) · desatualizado')."
+        },
+        {
+            "id": "gate-premium-do-marketplace",
+            "ondeVive": "Uma faixa de LARGURA TOTAL (as duas colunas) logo abaixo da grade de duas colunas e acima do rodapé, na conta grátis/deslogada. No mobile é simplesmente a última seção da pilha.",
+            "comoChega": "O vendedor grátis desce o formulário e chega no lugar onde estaria a seção Marketplace. Ele não clicou em nada.",
+            "vizinhanca": "Acima: as duas colunas — esquerda terminando em 'Mão de obra e custos', direita terminando em 'Outros custos' (que migrou para cá justamente por causa deste portão). Dentro: o mesmo título 'Marketplace' com ⓘ, a mesma linha de largura total com o texto 'Incluir marketplaces no preço' à esquerda e o interruptor à direita — DESLIGADO e desabilitado —, depois um bloco centrado com a legenda 'Vender em marketplaces faz parte do Premium.' e o teaser de assinatura centrado logo abaixo. Abaixo da faixa: o rodapé com o resultado (que continua calculando varejo e atacado normalmente).",
+            "dadosQueChegam": "O entitlement do servidor; só `active` habilita. Estado indefinido, em verificação ou com erro degrada para 'não entitulado' — nunca para um 'sim' presumido.",
+            "oQueAconteceDepois": "Assinar leva ao fluxo de compra (deslogado passa pelo login antes, preservando a intenção). Nada de canal é computado enquanto isso — nenhum número parcial, nenhum número falso."
+        },
+        {
+            "id": "bloco-usar-do-catalogo",
+            "ondeVive": "A faixa logo ACIMA da grade de duas colunas: é o último elemento da pilha de topo, imediatamente antes de 'Custos da peça'.",
+            "comoChega": "Aparece sozinho ao abrir /calcular, em uma de três montagens conforme quem está olhando e o que está salvo.",
+            "vizinhanca": "Acima: o teaser (no grátis), o resumo de kit, os avisos de campo aposentado, a barra de cenário carregado, o botão 'Meus cenários' — nessa ordem inversa. Abaixo: sempre o título 'Custos da peça'. As três montagens: (a) Premium com itens salvos — Card com o rótulo 'Usar do catálogo', a frase 'Preenche os campos com o item salvo — você ainda pode editar tudo.' e dois selects lado a lado ('Filamento salvo' e 'Impressora salva'), que podem aparecer sozinhos se só um tipo tiver itens; (b) grátis/deslogado — Card com o teaser de Premium e, como afordância, um botão secundário DESABILITADO escrito 'Usar do catálogo'; (c) falha real de leitura sem cache — Card com alerta de perigo e um botão 'Tentar de novo'.",
+            "dadosQueChegam": "As listas de filamentos e impressoras do catálogo Premium, por uid, que respondem do cache local depois de uma leitura online. Escolher um item escreve nos campos do formulário abaixo.",
+            "oQueAconteceDepois": "Filamento preenche custo e peso do rolo; impressora preenche valor da máquina, vida útil, consumo e reserva de manutenção — e a vida útil vinda de lá pode abrir o bloco da máquina já no modo 'ajustar'. Os campos continuam editáveis: é pré-preenchimento, nunca travamento."
+        },
+        {
+            "id": "resumo-de-kit-como-base",
+            "ondeVive": "Na pilha de topo de /calcular, entre os avisos de campo aposentado e o botão de gravar do kit — ou seja, acima do cartão 'Usar do catálogo' e bem acima da grade de duas colunas.",
+            "comoChega": "Só existe por um caminho: o vendedor abre a folha 'Meus cenários' (botão no topo) e reabre uma simulação cuja base é um KIT. Um kit é multi-peça e não cabe no formulário escalar, então este resumo passa a ser a fonte do resultado.",
+            "vizinhanca": "Acima: a barra de cenário carregado e, quando houver, o alerta de campo aposentado do kit. Dentro: um Card compacto com o nome do kit em 14px, uma frase de ajuda em 12px, um alerta informativo contando as linhas excluídas (quando houver) e, por marketplace, o nome em 14px seguido de duas linhas de 12px ('Varejo: R$ X' / 'Atacado: R$ Y'). Abaixo: um botão de gravar no histórico exclusivo deste modo. Mais abaixo, o formulário escalar inteiro continua visível e EDITÁVEL, embora não alimente nada do que está sendo mostrado aqui.",
+            "dadosQueChegam": "O documento do cenário e o catálogo de tarifas; o resumo aplica o conjunto de canais do cenário uniformemente a todas as linhas do kit e soma.",
+            "oQueAconteceDepois": "Gravar congela exatamente estes números (os do resumo, não os dos campos abaixo). Editar as PEÇAS do kit é em /kits, pelo 'Abrir origem' da barra de cenário — nunca aqui."
+        },
+        {
+            "id": "dicas-info-nas-secoes-e-campos",
+            "ondeVive": "Dois usos espalhados por /calcular. (1) Colado a cada TÍTULO de seção: 'Custos da peça', 'Mão de obra e custos', 'Markup', 'Outros custos', 'Marketplace' (nas duas colunas) e 'Como chegamos no preço' (no rodapé) — seis lugares. (2) Na LINHA DO RÓTULO, à direita do nome do campo, em: gramas usadas, consumo médio, tarifa de energia, reserva de manutenção, taxa de falha, tempo/valor de acabamento, mão de obra e vida útil da máquina. Também aparece dentro do aviso compacto da Shopee, guardando o corpo do alerta.",
+            "comoChega": "É acionado pelo vendedor: um glifo ⓘ que abre um texto curto explicando o que aquela seção calcula ou o que aquele número significa.",
+            "vizinhanca": "No título de seção fica imediatamente à direita do texto do título, na mesma linha, acima do Card. No campo fica na linha do rótulo (é um irmão do rótulo, nunca aninhado dentro dele — mover para lá foi correção de homologação), à direita do nome e acima do controle.",
+            "dadosQueChegam": "Cada gatilho carrega um par nome+corpo, escritos a partir das fórmulas do produto ('Material = (custo do rolo ÷ peso do rolo) × gramas usadas…').",
+            "oQueAconteceDepois": "Abre e fecha; não muda nada no cálculo. Os mesmos ⓘ aparecem, com o mesmo texto, na página de produto do Catálogo e no editor de linha de kit, que montam os mesmos campos."
+        },
+        {
+            "id": "conta-item-a-item-e-cartoes-de-preco",
+            "ondeVive": "O rodapé de largura total (`.tf-calc-footer`), abaixo da grade de duas colunas — no desktop os filhos ficam centrados e capados em 720px.",
+            "comoChega": "É o destino de toda a rolagem: o vendedor preenche as colunas acima e desce para ler o resultado. Aparece assim que o formulário fica válido, sem botão de calcular.",
+            "vizinhanca": "De cima para baixo: título 'Como chegamos no preço' com ⓘ → eventual aviso de resultado → o Card do detalhamento (Material · Energia · Máquina · Falha · Acabamento · Mão de obra · uma linha por item de 'Outros custos' · Custo total em destaque · Preço varejo com o markup como sublinha · Preço atacado · e, na cauda do MESMO cartão, o bloco 'Preços por canal') → eventual aviso de atacado acima do varejo → a grade dos dois cartões de preço final, lado a lado onde couberem 210px cada e empilhados a 360px, ambos centrados e do mesmo tamanho, um com tom de destaque e outro com tom de energia → o botão 'Salvar cenário' centrado → o botão 'Salvar no histórico' centrado.",
+            "dadosQueChegam": "O resultado calculado localmente pelo motor a partir de todos os campos das duas colunas; as linhas de 'Outros custos' herdam o nome digitado (nome em branco cai num rótulo neutro).",
+            "oQueAconteceDepois": "Daqui saem as duas escritas Premium: salvar como simulação (reabrível na Calcular) e congelar como orçamento no Histórico — offline, essa escrita entra na fila e drena depois. Não existe controle segmentado Varejo|Atacado: os dois são sempre mostrados juntos."
+        },
+        {
+            "id": "topo-da-calcular",
+            "ondeVive": "A primeira dobra de /calcular, acima de tudo: as três primeiras faixas da página, em largura total.",
+            "comoChega": "É o que o vendedor vê ao abrir o app — /calcular é a rota inicial e é pública, então esta é literalmente a primeira tela do produto para um visitante anônimo.",
+            "vizinhanca": "Ordem exata: (1) o cabeçalho de página com o título 'Calcular preço' CENTRADO; (2) logo abaixo, centrada, a promessa freemium como legenda cinza de 12px — 'Calcular custo e markup é grátis, sem limite. Vender em marketplaces, salvar e exportar fazem parte do Premium.'; (3) uma linha alinhada à DIREITA com um botão fantasma pequeno, com ícone, escrito 'Meus cenários'. Depois disso vêm, quando existem: a barra de cenário carregado, o alerta de campo aposentado, o resumo de kit, o cartão de teaser e o cartão 'Usar do catálogo' — e só então a grade do formulário.",
+            "dadosQueChegam": "Nada calculado: é texto fixo. O botão abre a folha lateral de simulações salvas, que existe para TODOS (inclusive grátis e deslogado) — é a porta honesta para o que é Premium.",
+            "oQueAconteceDepois": "A folha 'Meus cenários' cobre a página; escolher uma simulação a carrega DENTRO deste mesmo formulário (e, se a base for kit, troca o resultado pelo resumo somente-leitura). Enquanto a folha está aberta, o cartão de teaser abaixo é escondido para não haver dois botões de compra na mesma tela."
+        },
+        {
+            "id": "aviso-de-campo-aposentado",
+            "ondeVive": "Na pilha de topo de /calcular, imediatamente ABAIXO da barra de cenário carregado e ACIMA do resumo de kit (quando houver) e do cartão 'Usar do catálogo'.",
+            "comoChega": "Aparece só ao reabrir, pela folha 'Meus cenários', uma simulação salva antes da mudança do modelo de preço — uma que ainda carrega um campo que o motor não aceita mais.",
+            "vizinhanca": "Acima: a barra de cenário carregado (nome da simulação, ações de renomear/duplicar/salvar alterações, selo de alterações não salvas). Abaixo: o resumo de kit, ou o teaser, ou o cartão 'Usar do catálogo'. É um alerta informativo permanente — não é um aviso passageiro e não tem como fechar; fica enquanto a simulação estiver aberta. Duas variantes: a de uma simulação escalar e a de kit, esta deduplicada linha a linha para dizer uma vez só.",
+            "dadosQueChegam": "A lista de campos descartados no recálculo do documento antigo; o próprio motor recusa a chave aposentada, e o alerta apenas declara isso.",
+            "oQueAconteceDepois": "O preço mostrado abaixo já é o recalculado SEM o campo aposentado. Salvar as alterações grava o documento no formato novo. É a peça de topo que mais compete por espaço: pode dividir a dobra com a barra de cenário, o resumo de kit, o teaser e o cartão de erro do picker."
+        }
+    ]
 }

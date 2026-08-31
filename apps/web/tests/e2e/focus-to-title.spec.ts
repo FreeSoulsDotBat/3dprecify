@@ -13,47 +13,47 @@ import { messages } from "../../src/shared/i18n/messages.pt-br";
 const VIEWPORT = { width: 390, height: 844 };
 
 async function signUpThrowaway(page: Page, tag: string): Promise<void> {
-  await page.waitForFunction(() => "__e2eAuth" in window);
-  const email = `e2e-${tag}-${Date.now()}@e2e.local`;
-  await page.evaluate(
-    ({ em, pw }) => {
-      const w = window as unknown as {
-        __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
-      };
-      if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
-      // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
-      // awaiting it here would let that navigation destroy this evaluate's execution context
-      // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
-      void w.__e2eAuth.signUp(em, pw);
-    },
-    { em: email, pw: "test-passw0rd" },
-  );
+    await page.waitForFunction(() => "__e2eAuth" in window);
+    const email = `e2e-${tag}-${Date.now()}@e2e.local`;
+    await page.evaluate(
+        ({ em, pw }) => {
+            const w = window as unknown as {
+                __e2eAuth?: { signUp: (e: string, p: string) => Promise<void> };
+            };
+            if (!w.__e2eAuth) throw new Error("e2e auth seam missing");
+            // Fire-and-forget: signUp triggers the /sign-in → guarded-route auth redirect, and
+            // awaiting it here would let that navigation destroy this evaluate's execution context
+            // ("Execution context was destroyed"). Kick it off; the caller waits for the redirect UI.
+            void w.__e2eAuth.signUp(em, pw);
+        },
+        { em: email, pw: "test-passw0rd" },
+    );
 }
 
 test("the first hard load does NOT move focus to the page title", async ({ page }) => {
-  await page.setViewportSize(VIEWPORT);
-  await page.goto("/calcular");
-  await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
-  // Nothing has navigated in-app yet — the landing focus must stay off the title.
-  await expect(page.locator("[data-page-header]")).not.toBeFocused();
+    await page.setViewportSize(VIEWPORT);
+    await page.goto("/calcular");
+    await expect(page.getByRole("heading", { name: messages.calculator.title })).toBeVisible();
+    // Nothing has navigated in-app yet — the landing focus must stay off the title.
+    await expect(page.locator("[data-page-header]")).not.toBeFocused();
 });
 
 test("switching tabs moves focus to the destination section title", async ({ page }, info) => {
-  await page.setViewportSize(VIEWPORT);
-  await page.goto("/sign-in");
-  await signUpThrowaway(page, `focus-${info.workerIndex}`);
-  await expect(page).toHaveURL(/\/calcular$/);
+    await page.setViewportSize(VIEWPORT);
+    await page.goto("/sign-in");
+    await signUpThrowaway(page, `focus-${info.workerIndex}`);
+    await expect(page).toHaveURL(/\/calcular$/);
 
-  // Tab 1: Calcular → Catálogo.
-  await page.getByRole("link", { name: messages.nav.catalogo }).click();
-  await expect(page).toHaveURL(/\/catalogo$/);
-  const header = page.locator("[data-page-header]");
-  await expect(header).toBeFocused();
-  await expect(header).toHaveText(messages.nav.catalogo);
+    // Tab 1: Calcular → Catálogo.
+    await page.getByRole("link", { name: messages.nav.catalogo }).click();
+    await expect(page).toHaveURL(/\/catalogo$/);
+    const header = page.locator("[data-page-header]");
+    await expect(header).toBeFocused();
+    await expect(header).toHaveText(messages.nav.catalogo);
 
-  // Tab 2: Catálogo → Histórico — focus follows to the new title.
-  await page.getByRole("link", { name: messages.nav.historico }).click();
-  await expect(page).toHaveURL(/\/historico$/);
-  await expect(page.locator("[data-page-header]")).toBeFocused();
-  await expect(page.locator("[data-page-header]")).toHaveText(messages.nav.historico);
+    // Tab 2: Catálogo → Histórico — focus follows to the new title.
+    await page.getByRole("link", { name: messages.nav.historico }).click();
+    await expect(page).toHaveURL(/\/historico$/);
+    await expect(page.locator("[data-page-header]")).toBeFocused();
+    await expect(page.locator("[data-page-header]")).toHaveText(messages.nav.historico);
 });

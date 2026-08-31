@@ -30,8 +30,8 @@ import type { CatalogJson } from "./slice.ts";
  * descrição do que existe, não uma regra nova imposta ao dado.
  */
 export function ehPodada(marketplace: CatalogJson): boolean {
-  const ds = marketplace.determinantsSchema;
-  return typeof ds === "object" && ds !== null && "category" in ds;
+    const ds = marketplace.determinantsSchema;
+    return typeof ds === "object" && ds !== null && "category" in ds;
 }
 
 /**
@@ -44,23 +44,23 @@ export function ehPodada(marketplace: CatalogJson): boolean {
  * `pnpm fee:build` não teria ponto fixo e abriria um PR novo todo mês sobre a mesma tabela.
  */
 export function projetarSemente(servido: CatalogJson): CatalogJson {
-  const marketplaces = Array.isArray(servido.marketplaces)
-    ? (servido.marketplaces as CatalogJson[])
-    : [];
-  return {
-    ...servido,
-    marketplaces: marketplaces.map((m) => {
-      if (!ehPodada(m)) return m;
-      // A espinha SAI (é o mapa por categoria que não cabe no bundle) e as entradas viram lista
-      // vazia; o resto da seção viaja com as chaves na ordem original, para o JSON ser estável.
-      const semEspinha = Object.entries(m).filter(([k]) => k !== "categorySpine");
-      return { ...Object.fromEntries(semEspinha), entries: [] };
-    }),
-  };
+    const marketplaces = Array.isArray(servido.marketplaces)
+        ? (servido.marketplaces as CatalogJson[])
+        : [];
+    return {
+        ...servido,
+        marketplaces: marketplaces.map((m) => {
+            if (!ehPodada(m)) return m;
+            // A espinha SAI (é o mapa por categoria que não cabe no bundle) e as entradas viram lista
+            // vazia; o resto da seção viaja com as chaves na ordem original, para o JSON ser estável.
+            const semEspinha = Object.entries(m).filter(([k]) => k !== "categorySpine");
+            return { ...Object.fromEntries(semEspinha), entries: [] };
+        }),
+    };
 }
 
 /** O texto exato que vai para o disco — o MESMO formato do artefato servido (2 espaços + \n final),
  *  porque um diff de formatação num PR mensal de dinheiro é ruído que treina o revisor a não olhar. */
 export function serializarSemente(semente: CatalogJson): string {
-  return `${JSON.stringify(semente, null, 2)}\n`;
+    return `${JSON.stringify(semente, null, 2)}\n`;
 }

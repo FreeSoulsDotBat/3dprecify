@@ -1,16 +1,16 @@
 {
-  "id": "folha-minhas-simulacoes",
-  "nome": "Folha \"Minhas simulações\" (a lista inteira)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/pages/calcular/calcular-page.tsx"
-  ],
-  "oQueFoiInferido": "O frame inteiro. É um `Sheet` ancorado à DIREITA (`SheetContent` → `DialogContent variant=\"sheet\"`, `side` default `\"right\"` em `shared/ui/dialog.tsx:44`) aberto POR CIMA da tela Calcular — nunca uma rota, decisão tomada no código por um motivo técnico documentado no próprio arquivo (`base:'./'` blanca rota de 2 segmentos). Inferido: largura/altura do painel, a ordem vertical (título → subtítulo → busca → alertas de estado → cards → \"Carregar mais\"), o gap de 12px entre cards (`gap-3`) e de 8px na pilha (`gap-2`), onde fica o X de fechar, o que acontece com a página atrás do overlay, e o fato de que abrir um card CHAMA `onOpenChange(false)` e repovoa a calculadora sem nenhuma transição. Falta desenhar: proporção, densidade, hierarquia entre o subtítulo-promessa (\"Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre.\") e a lista, e o retorno visual do instante em que a folha fecha e a calculadora muda embaixo.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "A tela onde o vendedor guarda a estratégia de preço dele nunca foi vista por um designer: ele encontra um painel lateral genérico montado com primitivas, sem hierarquia pensada entre buscar, ler e reabrir.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei prova de que a folha já estava desenhada nas 4 autoridades. (a) Li a seção E INTEIRA do prompt do protótipo: E1 Splash · E2 Login · E3 Shell 4 abas · E4 Calcular · E5 Catálogo · E6 Histórico · E7 Conta · E8 Upsell (\"sem checkout\") · E9 Transversais — nenhuma tela de cenários, e §F (as 8 interações clicáveis) também não tem nenhuma. (b) A ÚNICA menção a \"simulador de marketplace\" no prompt (linha 28) está na descrição do produto, e os dois prompts de correção o colocam explicitamente numa lista de escopo FUTURO (\"E5 = simulador de marketplace\", fixes.md:128 e fixes-r2 item 4) — o prompt declara, por escrito, que isto está fora do que foi desenhado. (c) `.design-import/ui_kits/`: os 6 esqueletos (59–131 linhas) são Login, Calculator, Catalog, History, Account, Premium — não existe ScenarioScreen. O único Sheet desenhado ali é `placement=\"bottom\"` (CatalogScreen), não right-anchored. (d) O canvas 018 tem 4 artboards (Catálogo linha 72, Kits 160, Orçamentos 245, Conta 367) e um ponteiro na 454; grep de cenário/simulação/scenario nele só acha a frase de venda do teaser. (e) Tentei a rota do \"Calcular Desktop\" citado na linha 455: `find . -name \"*.dc.html\"` devolve UM arquivo só — esse canvas não existe no repo. O achado sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "folha-minhas-simulacoes",
+    "nome": "Folha \"Minhas simulações\" (a lista inteira)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/pages/calcular/calcular-page.tsx"
+    ],
+    "oQueFoiInferido": "O frame inteiro. É um `Sheet` ancorado à DIREITA (`SheetContent` → `DialogContent variant=\"sheet\"`, `side` default `\"right\"` em `shared/ui/dialog.tsx:44`) aberto POR CIMA da tela Calcular — nunca uma rota, decisão tomada no código por um motivo técnico documentado no próprio arquivo (`base:'./'` blanca rota de 2 segmentos). Inferido: largura/altura do painel, a ordem vertical (título → subtítulo → busca → alertas de estado → cards → \"Carregar mais\"), o gap de 12px entre cards (`gap-3`) e de 8px na pilha (`gap-2`), onde fica o X de fechar, o que acontece com a página atrás do overlay, e o fato de que abrir um card CHAMA `onOpenChange(false)` e repovoa a calculadora sem nenhuma transição. Falta desenhar: proporção, densidade, hierarquia entre o subtítulo-promessa (\"Estratégias salvas. Cada uma recalcula com os preços de hoje quando você abre.\") e a lista, e o retorno visual do instante em que a folha fecha e a calculadora muda embaixo.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "A tela onde o vendedor guarda a estratégia de preço dele nunca foi vista por um designer: ele encontra um painel lateral genérico montado com primitivas, sem hierarquia pensada entre buscar, ler e reabrir.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei prova de que a folha já estava desenhada nas 4 autoridades. (a) Li a seção E INTEIRA do prompt do protótipo: E1 Splash · E2 Login · E3 Shell 4 abas · E4 Calcular · E5 Catálogo · E6 Histórico · E7 Conta · E8 Upsell (\"sem checkout\") · E9 Transversais — nenhuma tela de cenários, e §F (as 8 interações clicáveis) também não tem nenhuma. (b) A ÚNICA menção a \"simulador de marketplace\" no prompt (linha 28) está na descrição do produto, e os dois prompts de correção o colocam explicitamente numa lista de escopo FUTURO (\"E5 = simulador de marketplace\", fixes.md:128 e fixes-r2 item 4) — o prompt declara, por escrito, que isto está fora do que foi desenhado. (c) `.design-import/ui_kits/`: os 6 esqueletos (59–131 linhas) são Login, Calculator, Catalog, History, Account, Premium — não existe ScenarioScreen. O único Sheet desenhado ali é `placement=\"bottom\"` (CatalogScreen), não right-anchored. (d) O canvas 018 tem 4 artboards (Catálogo linha 72, Kits 160, Orçamentos 245, Conta 367) e um ponteiro na 454; grep de cenário/simulação/scenario nele só acha a frase de venda do teaser. (e) Tentei a rota do \"Calcular Desktop\" citado na linha 455: `find . -name \"*.dc.html\"` devolve UM arquivo só — esse canvas não existe no repo. O achado sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

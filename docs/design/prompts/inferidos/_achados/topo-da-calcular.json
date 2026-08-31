@@ -1,13 +1,13 @@
 {
-  "id": "topo-da-calcular",
-  "nome": "Topo da Calcular — título, promessa freemium e a porta “Meus cenários”",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
-  "oQueFoiInferido": "A primeira dobra: `PageHeader` com `className=\"tf-page-header--center\"` ('Calcular preço'), logo abaixo a promessa freemium centralizada em `captionText` (12px, `--text-muted`), e em seguida uma linha `flex justify-end` com um Button ghost sm 'Meus cenários' — depois disso vêm os alertas de cenário/campo aposentado, o resumo de kit e o teaser. Inferido: que a promessa do produto é uma legenda cinza de 12px acima do formulário (a MUDANÇA de posição foi decisão do dono em 015/A8, medida; a FORMA não foi desenhada), e que a entrada para simulações salvas é um botão fantasma solto entre o título e o primeiro cartão.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É o que o vendedor lê nos primeiros dois segundos. A frase mais importante do produto é hoje o menor texto da dobra, e divide a região com uma porta de navegação que não pertence a ela. Subi de BAIXA para MÉDIA porque as quatro abas irmãs TÊM uma convenção de cabeçalho desenhada pelo dono, e esta tela faz o contrário.",
-  "prioridade": "MEDIA",
-  "refutacao": "O protótipo (§E3 + `CalculatorScreen.jsx` 43-49) desenha o topo como `TopBar` com logo à esquerda, título e dois IconButtons, e coloca a frase freemium no RODAPÉ, centralizada, depois dos botões de ação (linhas 124-126) — exatamente o layout que 015/A8 depois inverteu por medição (97% da altura da página). §E3 ainda registra a migração header→tabs (identidade/Sair/tema saem do header). Ou seja: o topo TEM desenho, e ele não é este. E o canvas 018 do dono, para as quatro abas irmãs, desenha o cabeçalho como `tf-page-header` à ESQUERDA (título + descrição, `max-width:760px`) com a ação primária na direita da MESMA linha (ex.: Orçamentos, linhas 236-241) — convenção que a Calcular contraria em duas frentes (centraliza o título e joga a porta numa linha própria). 'Meus cenários' é E5/010, posterior a tudo. Sobrevive, PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "topo-da-calcular",
+    "nome": "Topo da Calcular — título, promessa freemium e a porta “Meus cenários”",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/calcular/calcular-page.tsx"],
+    "oQueFoiInferido": "A primeira dobra: `PageHeader` com `className=\"tf-page-header--center\"` ('Calcular preço'), logo abaixo a promessa freemium centralizada em `captionText` (12px, `--text-muted`), e em seguida uma linha `flex justify-end` com um Button ghost sm 'Meus cenários' — depois disso vêm os alertas de cenário/campo aposentado, o resumo de kit e o teaser. Inferido: que a promessa do produto é uma legenda cinza de 12px acima do formulário (a MUDANÇA de posição foi decisão do dono em 015/A8, medida; a FORMA não foi desenhada), e que a entrada para simulações salvas é um botão fantasma solto entre o título e o primeiro cartão.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É o que o vendedor lê nos primeiros dois segundos. A frase mais importante do produto é hoje o menor texto da dobra, e divide a região com uma porta de navegação que não pertence a ela. Subi de BAIXA para MÉDIA porque as quatro abas irmãs TÊM uma convenção de cabeçalho desenhada pelo dono, e esta tela faz o contrário.",
+    "prioridade": "MEDIA",
+    "refutacao": "O protótipo (§E3 + `CalculatorScreen.jsx` 43-49) desenha o topo como `TopBar` com logo à esquerda, título e dois IconButtons, e coloca a frase freemium no RODAPÉ, centralizada, depois dos botões de ação (linhas 124-126) — exatamente o layout que 015/A8 depois inverteu por medição (97% da altura da página). §E3 ainda registra a migração header→tabs (identidade/Sair/tema saem do header). Ou seja: o topo TEM desenho, e ele não é este. E o canvas 018 do dono, para as quatro abas irmãs, desenha o cabeçalho como `tf-page-header` à ESQUERDA (título + descrição, `max-width:760px`) com a ação primária na direita da MESMA linha (ex.: Orçamentos, linhas 236-241) — convenção que a Calcular contraria em duas frentes (centraliza o título e joga a porta numa linha própria). 'Meus cenários' é E5/010, posterior a tudo. Sobrevive, PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

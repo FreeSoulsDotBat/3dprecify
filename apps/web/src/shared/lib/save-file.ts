@@ -11,14 +11,14 @@ const REVOKE_DELAY_MS = 1000;
 
 /** Saves `blob` as `filename`. No-op outside a DOM (SSR/tests without jsdom). */
 export function saveFile(blob: Blob, filename: string): void {
-  if (typeof document === "undefined" || typeof URL.createObjectURL !== "function") return;
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.rel = "noopener";
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
+    if (typeof document === "undefined" || typeof URL.createObjectURL !== "function") return;
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.rel = "noopener";
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), REVOKE_DELAY_MS);
 }

@@ -42,85 +42,87 @@ const LARGURAS = [360, 390, 426, 599, 600, 1024, 1279, 1440, 1600, 1920] as cons
 const NOME_SEM_ESPACO = "A".repeat(300);
 
 interface Estouro {
-  eixoX: number;
-  culpados: string[];
+    eixoX: number;
+    culpados: string[];
 }
 
 /** Mede o transbordo horizontal E nomeia o culpado, incluindo nós de TEXTO. */
 async function medir(page: Page): Promise<Estouro> {
-  return page.evaluate(() => {
-    const el = document.scrollingElement ?? document.documentElement;
-    const larg = document.documentElement.clientWidth;
-    const culpados: string[] = [];
+    return page.evaluate(() => {
+        const el = document.scrollingElement ?? document.documentElement;
+        const larg = document.documentElement.clientWidth;
+        const culpados: string[] = [];
 
-    for (const node of Array.from(document.querySelectorAll("*"))) {
-      const r = node.getBoundingClientRect();
-      if (r.right > larg + 2) {
-        culpados.push(`CAIXA ${node.tagName}.${String(node.className).slice(0, 40)}`);
-      }
-    }
-    // Os nós de TEXTO — a metade que a caixa não denuncia.
-    const andarilho = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-    let n = andarilho.nextNode();
-    while (n) {
-      if ((n.textContent ?? "").trim().length > 0) {
-        const faixa = document.createRange();
-        faixa.selectNodeContents(n);
-        const r = faixa.getBoundingClientRect();
-        if (r.right > larg + 2) {
-          const pai = n.parentElement;
-          culpados.push(`TEXTO em ${pai?.tagName}.${String(pai?.className ?? "").slice(0, 40)}`);
+        for (const node of Array.from(document.querySelectorAll("*"))) {
+            const r = node.getBoundingClientRect();
+            if (r.right > larg + 2) {
+                culpados.push(`CAIXA ${node.tagName}.${String(node.className).slice(0, 40)}`);
+            }
         }
-      }
-      n = andarilho.nextNode();
-    }
-    return { eixoX: el.scrollWidth - el.clientWidth, culpados: Array.from(new Set(culpados)) };
-  });
+        // Os nós de TEXTO — a metade que a caixa não denuncia.
+        const andarilho = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        let n = andarilho.nextNode();
+        while (n) {
+            if ((n.textContent ?? "").trim().length > 0) {
+                const faixa = document.createRange();
+                faixa.selectNodeContents(n);
+                const r = faixa.getBoundingClientRect();
+                if (r.right > larg + 2) {
+                    const pai = n.parentElement;
+                    culpados.push(
+                        `TEXTO em ${pai?.tagName}.${String(pai?.className ?? "").slice(0, 40)}`,
+                    );
+                }
+            }
+            n = andarilho.nextNode();
+        }
+        return { eixoX: el.scrollWidth - el.clientWidth, culpados: Array.from(new Set(culpados)) };
+    });
 }
 
 test("a calculadora não rola na horizontal em nenhuma largura suportada, nem com um nome sem espaços", async ({
-  page,
+    page,
 }) => {
-  await page.goto("/calcular");
-  await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
+    await page.goto("/calcular");
+    await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
-  // O dado adversarial: um sub-custo cujo nome é impossível de quebrar por espaço. Ele aparece no
-  // detalhamento como rótulo de linha, que é exatamente onde os 2.100px nasceram.
-  await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
-  await page
-    .getByRole("textbox", { name: /^Nome do custo$/ })
-    .first()
-    .fill(NOME_SEM_ESPACO);
-  await page
-    .getByRole("textbox", { name: /^Valor$/ })
-    .first()
-    .fill("10");
-  await page.keyboard.press("Tab");
-  await page.waitForTimeout(200);
+    // O dado adversarial: um sub-custo cujo nome é impossível de quebrar por espaço. Ele aparece no
+    // detalhamento como rótulo de linha, que é exatamente onde os 2.100px nasceram.
+    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page
+        .getByRole("textbox", { name: /^Nome do custo$/ })
+        .first()
+        .fill(NOME_SEM_ESPACO);
+    await page
+        .getByRole("textbox", { name: /^Valor$/ })
+        .first()
+        .fill("10");
+    await page.keyboard.press("Tab");
+    await page.waitForTimeout(200);
 
-  for (const largura of LARGURAS) {
-    await page.setViewportSize({ width: largura, height: 900 });
-    await page.waitForTimeout(150);
-    const { eixoX, culpados } = await medir(page);
-    expect(
-      eixoX,
-      `${largura}px: rolagem horizontal — culpados: ${culpados.join(" ;; ")}`,
-    ).toBeLessThanOrEqual(1);
-  }
+    for (const largura of LARGURAS) {
+        await page.setViewportSize({ width: largura, height: 900 });
+        await page.waitForTimeout(150);
+        const { eixoX, culpados } = await medir(page);
+        expect(
+            eixoX,
+            `${largura}px: rolagem horizontal — culpados: ${culpados.join(" ;; ")}`,
+        ).toBeLessThanOrEqual(1);
+    }
 });
 
 test("as abas públicas não rolam na horizontal em nenhuma largura suportada", async ({ page }) => {
-  for (const rota of ["/catalogo", "/kits", "/historico", "/privacidade"]) {
-    await page.goto(rota);
-    await page.waitForLoadState("networkidle").catch(() => undefined);
-    for (const largura of LARGURAS) {
-      await page.setViewportSize({ width: largura, height: 900 });
-      await page.waitForTimeout(150);
-      const { eixoX, culpados } = await medir(page);
-      expect(
-        eixoX,
-        `${rota} a ${largura}px: rolagem horizontal — culpados: ${culpados.join(" ;; ")}`,
-      ).toBeLessThanOrEqual(1);
+    for (const rota of ["/catalogo", "/kits", "/historico", "/privacidade"]) {
+        await page.goto(rota);
+        await page.waitForLoadState("networkidle").catch(() => undefined);
+        for (const largura of LARGURAS) {
+            await page.setViewportSize({ width: largura, height: 900 });
+            await page.waitForTimeout(150);
+            const { eixoX, culpados } = await medir(page);
+            expect(
+                eixoX,
+                `${rota} a ${largura}px: rolagem horizontal — culpados: ${culpados.join(" ;; ")}`,
+            ).toBeLessThanOrEqual(1);
+        }
     }
-  }
 });

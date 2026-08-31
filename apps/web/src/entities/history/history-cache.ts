@@ -14,43 +14,46 @@ import type { SnapshotOut } from "@/shared/api/generated";
 
 /** IndexedDB key — uid-scoped (FR-309 identity-leak lesson). */
 export function historyIdbKey(uid: string): string {
-  return `history:snapshots:${uid}`;
+    return `history:snapshots:${uid}`;
 }
 
 /** A stored payload is trusted only if it is an array of rows each carrying a string `id`. */
 function isSnapshotArray(raw: unknown): raw is SnapshotOut[] {
-  return (
-    Array.isArray(raw) &&
-    raw.every(
-      (x) => typeof x === "object" && x !== null && typeof (x as { id?: unknown }).id === "string",
-    )
-  );
+    return (
+        Array.isArray(raw) &&
+        raw.every(
+            (x) =>
+                typeof x === "object" &&
+                x !== null &&
+                typeof (x as { id?: unknown }).id === "string",
+        )
+    );
 }
 
 /** The uid's cached ledger; null on empty/error/corrupt (never a broken list fed to the UI). */
 export async function loadCachedSnapshots(uid: string): Promise<SnapshotOut[] | null> {
-  try {
-    const raw = await get(historyIdbKey(uid));
-    return isSnapshotArray(raw) ? raw : null;
-  } catch {
-    return null;
-  }
+    try {
+        const raw = await get(historyIdbKey(uid));
+        return isSnapshotArray(raw) ? raw : null;
+    } catch {
+        return null;
+    }
 }
 
 /** Best-effort persist — the cache is a convenience, never authoritative. */
 export async function persistCachedSnapshots(uid: string, items: SnapshotOut[]): Promise<void> {
-  try {
-    await set(historyIdbKey(uid), items);
-  } catch {
-    /* a ledger that failed to cache is simply re-read online next time */
-  }
+    try {
+        await set(historyIdbKey(uid), items);
+    } catch {
+        /* a ledger that failed to cache is simply re-read online next time */
+    }
 }
 
 /** Part of the sign-out privacy sweep. */
 export async function purgeHistoryCache(uid: string): Promise<void> {
-  try {
-    await del(historyIdbKey(uid));
-  } catch {
-    /* a failed purge must never crash the sign-out flow */
-  }
+    try {
+        await del(historyIdbKey(uid));
+    } catch {
+        /* a failed purge must never crash the sign-out flow */
+    }
 }

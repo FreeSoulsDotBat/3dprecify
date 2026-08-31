@@ -8,52 +8,52 @@
    Shared by both mount points that render the SAME calculator body (Calcular + the product full
    page, T030/SC-305), so the two stay visually identical, not just byte-identical in state. */
 .tf-calc-page {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: var(--app-max, 460px);
-  margin-inline: auto;
-  gap: var(--space-4);
-  /* D2's lesson, paid again here: a flex COLUMN item's automatic cross-size can still grow to its
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: var(--app-max, 460px);
+    margin-inline: auto;
+    gap: var(--space-4);
+    /* D2's lesson, paid again here: a flex COLUMN item's automatic cross-size can still grow to its
      content's intrinsic width even under `align-items: stretch`, once nested deep enough (the
      footer below is a second flex-column layer this PR added). `min-width: 0` at every level in
      the chain is what lets `.tf-price__amount`'s own `overflow-x: auto` (price-hero.css) actually
      engage instead of the whole page growing to fit an astronomical value's 900px+ digits. */
-  min-width: 0;
+    min-width: 0;
 }
 
 @media (min-width: 1024px) {
-  .tf-calc-page {
-    max-width: var(--content-max, 1120px);
-  }
+    .tf-calc-page {
+        max-width: var(--content-max, 1120px);
+    }
 }
 
 /* The input sections (costs / markup+channels) — single column stacked on mobile (today's
    order, untouched), two columns from the desktop breakpoint up. */
 .tf-calc-grid {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
 }
 
 @media (min-width: 1024px) {
-  .tf-calc-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-    gap: var(--space-6);
-  }
+    .tf-calc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+        gap: var(--space-6);
+    }
 }
 
 .tf-calc-grid__col {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  /* Grid children default to their content's intrinsic width (min-width:auto); a wide numeric
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    /* Grid children default to their content's intrinsic width (min-width:auto); a wide numeric
      value inside would otherwise push the column past its track (the same D2 lesson as the
      price cards, one level up). */
-  min-width: 0;
+    min-width: 0;
 }
 
 /* 016/US11 (T044 homologação PR-E, R3) — the free-tier marketplace GATE: a direct grid child
@@ -63,31 +63,31 @@
    a single flex column already, so `grid-column` has nothing to span; the rule only matters from
    the desktop breakpoint up, same as `.tf-calc-grid` itself. */
 @media (min-width: 1024px) {
-  .tf-calc-grid__full {
-    grid-column: 1 / -1;
-  }
+    .tf-calc-grid__full {
+        grid-column: 1 / -1;
+    }
 }
 
 /* T015 — "o total centralizado ao final, atravessando as colunas": the breakdown/"Como chegamos
    no preço" + the final price cards + the save/record actions are the LAST thing on the page,
    spanning the full width (never confined to one grid column). */
 .tf-calc-footer {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    min-width: 0;
 }
 
 @media (min-width: 1024px) {
-  .tf-calc-footer {
-    align-items: center;
-  }
-  /* Center the footer's own blocks (breakdown card, price-hero row, buttons) as a column, each
+    .tf-calc-footer {
+        align-items: center;
+    }
+    /* Center the footer's own blocks (breakdown card, price-hero row, buttons) as a column, each
      capped so a six-figure price row does not stretch edge-to-edge at 1120px. */
-  .tf-calc-footer > * {
-    width: 100%;
-    max-width: 720px;
-  }
+    .tf-calc-footer > * {
+        width: 100%;
+        max-width: 720px;
+    }
 }
 
 /* 016/PR-C homologação (B3, US8) — the ritmo/payback select pair. `auto-fit, minmax(240px, 1fr)`
@@ -98,9 +98,9 @@
    whatever is left over the 240px floor, so "folga real" grows WITH the viewport instead of
    staying pinned at zero. */
 .tf-machine-ritmo-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: var(--space-3);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--space-3);
 }
 
 /* 016/PR-C homologação (B4, US9) — "Custos da peça"'s own field grid. The old hard `1fr 1fr`
@@ -112,9 +112,9 @@
    `.tf-machine-ritmo-grid` above, sized to clear that one outlier's affix pair with real margin
    while still packing 2 (mobile, most fields) or up to 4 short fields (desktop) per row. */
 .tf-costs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  gap: var(--space-3);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--space-3);
 }
 
 /* 019/PR-F (T142, prancheta 10d) — "Preços por marketplace": um cartão por canal, empilhados
@@ -123,18 +123,18 @@
    do rodapé, não para as duas colunas do formulário. N canais preenchem a grade em linhas; a
    prancheta exemplifica com dois. */
 .tf-marketplace-cards {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    min-width: 0;
 }
 
 @media (min-width: 1024px) {
-  .tf-marketplace-cards {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-4);
-  }
+    .tf-marketplace-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+    }
 }
 
 /* 019/PR-C (T056, prancheta 14f) — o wrapper de célula que faz o `<Aviso>` crescer DENTRO do
@@ -142,20 +142,20 @@
    como uma célula, então `Field` + `Aviso` juntos aqui (em vez de soltos como irmãos do grid)
    é o que garante que o aviso empurre só o campo ABAIXO dele, nunca o vizinho ao lado. */
 .calc-field-cell {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-1);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+    min-width: 0;
 }
 
 /* 019/PR-C (T057, prancheta 15a) — o readout do custo/hora: rótulo pequeno, valor grande, e a
    divisão que o produziu embaixo, separado do resto do bloco por um fio (a mesma leitura de
    "linha que fecha o cartão" que o preço final usa em `price-hero.css`). */
 .calc-machine-readout {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border-subtle);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-subtle);
+    min-width: 0;
 }

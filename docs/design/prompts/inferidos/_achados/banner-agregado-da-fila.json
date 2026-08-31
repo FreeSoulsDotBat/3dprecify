@@ -1,13 +1,13 @@
 {
-  "id": "banner-agregado-da-fila",
-  "nome": "Banner agregado da fila (5 redações, [Ver], [Entrar de novo], [Sincronizar agora])",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
-  "oQueFoiInferido": "As quatro redações que o desenho não tem e as duas ações que ele não tem. A frase é escolhida por precedência (falhou > pausado > sessão expirada > pendente offline > pendente) e o Alert carrega até três controles num `<span class=flex gap-2>` dentro de um `.tf-historico__banner` com `flex-wrap`: [Ver] (rola suavemente até o primeiro card problemático via `scrollIntoView`), [Entrar de novo] (um `<a>` vestido de botão) e [Sincronizar agora] com estado de carregamento. Inferido: como esse Alert acomoda texto longo + 3 botões sem virar duas linhas quebradas em 390px; o tom danger reservado só a 'falhou'; e o mecanismo do [Ver] — chega ao card de destino SEM nenhum destaque visual nele, então o vendedor não sabe qual card era.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É o aviso que impede o vendedor de acreditar que gravou algo que nunca saiu do aparelho. Se ele embaralha 5 verdades diferentes num mesmo formato, a mais grave (registro recusado pelo servidor) passa como se fosse a mais banal.",
-  "prioridade": "ALTA",
-  "refutacao": "O canvas do dono desenha o caso feliz — e só ele. Linha 264: um `tf-alert tf-alert--info tf-alert--compact` com ícone de círculo-i, a frase '1 registro(s) pendente(s) neste dispositivo.' e um `tf-btn--secondary tf-btn--sm` 'Sincronizar agora'. Comparei com `messages.pt-br.ts:945`: a frase é `queuePending` VERBATIM — o desenho transcreveu a string do código (que é de 2026-07-15) num canvas de 2026-08. Ele ratifica uma das cinco redações, no desktop; não antecede nenhuma. As outras quatro (falhou/pausado/sessão expirada/pendente offline), o tom danger, o [Ver] e o [Entrar de novo] não estão lá. O protótipo não ajuda: §E9 tem só o banner offline genérico do shell e `HistoryScreen.jsx` não tem fila. `ux-history.md` §2.2 descreve o banner em texto. Sobrevive como PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "banner-agregado-da-fila",
+    "nome": "Banner agregado da fila (5 redações, [Ver], [Entrar de novo], [Sincronizar agora])",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/historico/historico-page.tsx"],
+    "oQueFoiInferido": "As quatro redações que o desenho não tem e as duas ações que ele não tem. A frase é escolhida por precedência (falhou > pausado > sessão expirada > pendente offline > pendente) e o Alert carrega até três controles num `<span class=flex gap-2>` dentro de um `.tf-historico__banner` com `flex-wrap`: [Ver] (rola suavemente até o primeiro card problemático via `scrollIntoView`), [Entrar de novo] (um `<a>` vestido de botão) e [Sincronizar agora] com estado de carregamento. Inferido: como esse Alert acomoda texto longo + 3 botões sem virar duas linhas quebradas em 390px; o tom danger reservado só a 'falhou'; e o mecanismo do [Ver] — chega ao card de destino SEM nenhum destaque visual nele, então o vendedor não sabe qual card era.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É o aviso que impede o vendedor de acreditar que gravou algo que nunca saiu do aparelho. Se ele embaralha 5 verdades diferentes num mesmo formato, a mais grave (registro recusado pelo servidor) passa como se fosse a mais banal.",
+    "prioridade": "ALTA",
+    "refutacao": "O canvas do dono desenha o caso feliz — e só ele. Linha 264: um `tf-alert tf-alert--info tf-alert--compact` com ícone de círculo-i, a frase '1 registro(s) pendente(s) neste dispositivo.' e um `tf-btn--secondary tf-btn--sm` 'Sincronizar agora'. Comparei com `messages.pt-br.ts:945`: a frase é `queuePending` VERBATIM — o desenho transcreveu a string do código (que é de 2026-07-15) num canvas de 2026-08. Ele ratifica uma das cinco redações, no desktop; não antecede nenhuma. As outras quatro (falhou/pausado/sessão expirada/pendente offline), o tom danger, o [Ver] e o [Entrar de novo] não estão lá. O protótipo não ajuda: §E9 tem só o banner offline genérico do shell e `HistoryScreen.jsx` não tem fila. `ux-history.md` §2.2 descreve o banner em texto. Sobrevive como PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

@@ -6,34 +6,34 @@
    handoff desfeita: o ícone é o componente `Icon` do produto, não uma classe `tf-ico`/`tf-ico-*`
    com máscara por URL. */
 .tf-aviso {
-  display: flex;
-  gap: var(--space-2);
-  min-width: 0;
-  padding: var(--space-3);
-  border-radius: var(--radius-md);
-  background: linear-gradient(var(--tf-info-soft), var(--tf-info-soft)), var(--surface-card);
+    display: flex;
+    gap: var(--space-2);
+    min-width: 0;
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background: linear-gradient(var(--tf-info-soft), var(--tf-info-soft)), var(--surface-card);
 }
 .tf-aviso__icon {
-  flex: 0 0 auto;
-  margin-top: 0.125rem;
-  color: var(--info-text);
+    flex: 0 0 auto;
+    margin-top: 0.125rem;
+    color: var(--info-text);
 }
 .tf-aviso__body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    min-width: 0;
 }
 .tf-aviso__text {
-  margin: 0;
-  font-size: var(--fs-caption);
-  line-height: var(--lh-normal);
-  color: var(--info-text);
-  overflow-wrap: anywhere;
+    margin: 0;
+    font-size: var(--fs-caption);
+    line-height: var(--lh-normal);
+    color: var(--info-text);
+    overflow-wrap: anywhere;
 }
 /* Dispensa. Ausente quando o aviso acompanha uma recusa. */
 .tf-aviso__action {
-  align-self: flex-start;
-  margin-left: calc(var(--space-3) * -1);
-  color: var(--info-text);
+    align-self: flex-start;
+    margin-left: calc(var(--space-3) * -1);
+    color: var(--info-text);
 }

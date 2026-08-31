@@ -11,19 +11,19 @@ import { useEffect, useState } from "react";
 /** Subscribes to `online`/`offline` and re-syncs post-mount, so every caller agrees and none
  *  freezes a one-time `navigator.onLine` read. */
 export function useOnline(): boolean {
-  const [online, setOnline] = useState<boolean>(
-    () => typeof navigator === "undefined" || navigator.onLine,
-  );
-  useEffect(() => {
-    const goOnline = () => setOnline(true);
-    const goOffline = () => setOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
-    setOnline(navigator.onLine); // re-sync in case connectivity flipped before this mounted
-    return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
-    };
-  }, []);
-  return online;
+    const [online, setOnline] = useState<boolean>(
+        () => typeof navigator === "undefined" || navigator.onLine,
+    );
+    useEffect(() => {
+        const goOnline = () => setOnline(true);
+        const goOffline = () => setOnline(false);
+        window.addEventListener("online", goOnline);
+        window.addEventListener("offline", goOffline);
+        setOnline(navigator.onLine); // re-sync in case connectivity flipped before this mounted
+        return () => {
+            window.removeEventListener("online", goOnline);
+            window.removeEventListener("offline", goOffline);
+        };
+    }, []);
+    return online;
 }

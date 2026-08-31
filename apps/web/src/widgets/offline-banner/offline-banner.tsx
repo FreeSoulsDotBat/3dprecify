@@ -16,12 +16,12 @@ import "./offline-banner.css";
  * C6), so there is one connectivity truth in the app, not one per widget.
  */
 export function OfflineBanner(): ReactNode {
-  const online = useOnline();
-  if (online) return null;
-  return (
-    <div role="status" aria-live="polite" className="tf-offline-banner">
-      <Icon name="info" size={18} className="tf-offline-banner__icon" />
-      <span className="tf-offline-banner__msg">{messages.state.offline}</span>
-    </div>
-  );
+    const online = useOnline();
+    if (online) return null;
+    return (
+        <div role="status" aria-live="polite" className="tf-offline-banner">
+            <Icon name="info" size={18} className="tf-offline-banner__icon" />
+            <span className="tf-offline-banner__msg">{messages.state.offline}</span>
+        </div>
+    );
 }

@@ -18,32 +18,32 @@ type Listener = (event: MediaQueryListEvent) => void;
  * MediaQueryList` acontece uma vez só, na fronteira em que devolvemos o objeto.
  */
 interface FakeMql {
-  media: string;
-  matches: boolean;
-  onchange: ((this: MediaQueryList, event: MediaQueryListEvent) => void) | null;
-  addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
-  removeEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
-  addListener: (listener: Listener) => void;
-  removeListener: (listener: Listener) => void;
-  dispatchEvent: () => boolean;
-  __update: (width: number) => void;
+    media: string;
+    matches: boolean;
+    onchange: ((this: MediaQueryList, event: MediaQueryListEvent) => void) | null;
+    addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
+    removeEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
+    addListener: (listener: Listener) => void;
+    removeListener: (listener: Listener) => void;
+    dispatchEvent: () => boolean;
+    __update: (width: number) => void;
 }
 
 /** Avalia `(min-width: Npx)` / `(max-width: Npx)` contra uma largura. Ignora o que não reconhece. */
 function matchesQuery(query: string, width: number): boolean {
-  let result = true;
-  const min = /\(min-width:\s*(\d+(?:\.\d+)?)px\)/.exec(query);
-  const max = /\(max-width:\s*(\d+(?:\.\d+)?)px\)/.exec(query);
-  if (min) result &&= width >= Number(min[1]);
-  if (max) result &&= width <= Number(max[1]);
-  return result;
+    let result = true;
+    const min = /\(min-width:\s*(\d+(?:\.\d+)?)px\)/.exec(query);
+    const max = /\(max-width:\s*(\d+(?:\.\d+)?)px\)/.exec(query);
+    if (min) result &&= width >= Number(min[1]);
+    if (max) result &&= width <= Number(max[1]);
+    return result;
 }
 
 export interface MatchMediaHandle {
-  /** Muda a largura e avisa quem estiver ouvindo — como um resize de verdade. */
-  setWidth: (width: number) => void;
-  /** Devolve o `matchMedia` original (ou remove o que instalamos). */
-  restore: () => void;
+    /** Muda a largura e avisa quem estiver ouvindo — como um resize de verdade. */
+    setWidth: (width: number) => void;
+    /** Devolve o `matchMedia` original (ou remove o que instalamos). */
+    restore: () => void;
 }
 
 /**
@@ -55,69 +55,69 @@ export interface MatchMediaHandle {
  * ```
  */
 export function installMatchMedia(width: number): MatchMediaHandle {
-  const original = Object.getOwnPropertyDescriptor(window, "matchMedia");
-  const live = new Set<FakeMql>();
-  let current = width;
+    const original = Object.getOwnPropertyDescriptor(window, "matchMedia");
+    const live = new Set<FakeMql>();
+    let current = width;
 
-  function create(query: string): FakeMql {
-    const listeners = new Set<Listener>();
-    const mql: FakeMql = {
-      media: query,
-      matches: matchesQuery(query, current),
-      onchange: null,
-      addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
-        listeners.add(listener as Listener);
-      },
-      removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
-        listeners.delete(listener as Listener);
-      },
-      addListener: (listener: Listener) => {
-        listeners.add(listener);
-      },
-      removeListener: (listener: Listener) => {
-        listeners.delete(listener);
-      },
-      dispatchEvent: () => true,
-      __update: (next: number) => {
-        const matches = matchesQuery(query, next);
-        if (matches === mql.matches) return;
-        mql.matches = matches;
-        const event = { matches, media: query } as MediaQueryListEvent;
-        listeners.forEach((listener) => listener(event));
-        mql.onchange?.call(mql as unknown as MediaQueryList, event);
-      },
+    function create(query: string): FakeMql {
+        const listeners = new Set<Listener>();
+        const mql: FakeMql = {
+            media: query,
+            matches: matchesQuery(query, current),
+            onchange: null,
+            addEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+                listeners.add(listener as Listener);
+            },
+            removeEventListener: (_type: string, listener: EventListenerOrEventListenerObject) => {
+                listeners.delete(listener as Listener);
+            },
+            addListener: (listener: Listener) => {
+                listeners.add(listener);
+            },
+            removeListener: (listener: Listener) => {
+                listeners.delete(listener);
+            },
+            dispatchEvent: () => true,
+            __update: (next: number) => {
+                const matches = matchesQuery(query, next);
+                if (matches === mql.matches) return;
+                mql.matches = matches;
+                const event = { matches, media: query } as MediaQueryListEvent;
+                listeners.forEach((listener) => listener(event));
+                mql.onchange?.call(mql as unknown as MediaQueryList, event);
+            },
+        };
+        live.add(mql);
+        return mql;
+    }
+
+    Object.defineProperty(window, "matchMedia", {
+        configurable: true,
+        writable: true,
+        value: (query: string) => create(query) as unknown as MediaQueryList,
+    });
+
+    return {
+        setWidth: (next: number) => {
+            current = next;
+            live.forEach((mql) => mql.__update(next));
+        },
+        restore: () => {
+            live.clear();
+            if (original) Object.defineProperty(window, "matchMedia", original);
+            else delete (window as Partial<Window>).matchMedia;
+        },
     };
-    live.add(mql);
-    return mql;
-  }
-
-  Object.defineProperty(window, "matchMedia", {
-    configurable: true,
-    writable: true,
-    value: (query: string) => create(query) as unknown as MediaQueryList,
-  });
-
-  return {
-    setWidth: (next: number) => {
-      current = next;
-      live.forEach((mql) => mql.__update(next));
-    },
-    restore: () => {
-      live.clear();
-      if (original) Object.defineProperty(window, "matchMedia", original);
-      else delete (window as Partial<Window>).matchMedia;
-    },
-  };
 }
 
 /** Larguras nomeadas, para o teste dizer o que quer medir em vez de repetir números mágicos. */
 export const VIEWPORT = {
-  /** Acima do corte, com folga para a lista em duas colunas (a premissa do desenho). */
-  desktopLarge: 1920,
-  /** Acima do corte, lista em uma coluna. */
-  desktop: 1280,
-  /** Um pixel abaixo do corte — a largura que PROVA o limiar. */
-  belowCut: 1279,
-  /** Mobile homologado. */
-  mobile: 390,
+    /** Acima do corte, com folga para a lista em duas colunas (a premissa do desenho). */
+    desktopLarge: 1920,
+    /** Acima do corte, lista em uma coluna. */
+    desktop: 1280,
+    /** Um pixel abaixo do corte — a largura que PROVA o limiar. */
+    belowCut: 1279,
+    /** Mobile homologado. */
+    mobile: 390,
 } as const;

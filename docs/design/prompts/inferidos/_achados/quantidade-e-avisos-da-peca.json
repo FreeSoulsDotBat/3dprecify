@@ -1,16 +1,16 @@
 {
-  "id": "quantidade-e-avisos-da-peca",
-  "nome": "Controle de quantidade e seus avisos (zero e limite do banco)",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/features/bom/bom-line-card.tsx",
-    "apps/web/src/shared/lib/plausibilidade.ts"
-  ],
-  "oQueFoiInferido": "O controle como está no ar — `NumberField size=\"sm\"` com sufixo 'un' e `className=\"w-24\"` (96px), sem rótulo visível (a palavra 'Quantidade' só existe no `aria-label`), espremido entre o botão expansível e o botão de remover — e os dois avisos que nascem embaixo dele: 'Quantidade 0 — não entra no total.' e o aviso de plausibilidade quando o número passa do teto `int4` (2.147.483.647), que avisa e NUNCA recusa. Não foi desenhado: onde avisos de campo moram num card que pode exibir simultaneamente legenda de preço, legenda de qtd-0, aviso de plausibilidade, aviso de peça inválida e legenda de degradada — cinco parágrafos possíveis, todos `text-sm text-[var(--text-muted)]`, sem hierarquia — nem se quantidade merece stepper em vez de input livre.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A quantidade é o controle que o vendedor mexe a cada ajuste de kit. O desenho que existe dele não foi seguido (rótulo visível e largura), e seus avisos se acumulam sem hierarquia — o do teto `int4` nasceu de um achado de homologação automatizada (CF-021-UI-03), não de desenho.",
-  "prioridade": "BAIXA",
-  "refutacao": "Subo de NENHUMA para PROTOTIPO_PARCIAL: o canvas DESENHA o controle (linha 190) — um rótulo textual 'Quantidade' à esquerda, um `tf-inputwrap--sm` de `min-width:104px;width:104px` com afixo 'un' e `inputMode=\"numeric\"`, seguido do botão de remover. E o que está no ar diverge: `bom-line-card.tsx` usa `w-24` (96px) e esconde a palavra 'Quantidade' num `aria-label`, e remove com ícone 'x' onde o desenho pôs uma lixeira. Os avisos, esses não existem em desenho nenhum: grep 'Quantidade 0' no `.dc.html` = zero, e o único alerta desenhado dentro do card é o de peça inválida (linha 199, `tf-alert--danger`, com a copy verbatim 'Confira os campos desta peça — ela não entra no total até ser corrigida.'). §D.2 do protótipo lista primitivas de campo e §E4 desenha os campos da calculadora, mas quantidade de peça em kit não está no inventário §E; auditoria e `.design-import/` não têm. A procedência do aviso de teto está escrita no próprio `bom-line-card.tsx` (homologação automatizada CF-021-UI-03) e a regra 'aviso nunca vira validação' está declarada no cabeçalho de `plausibilidade.ts`.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "quantidade-e-avisos-da-peca",
+    "nome": "Controle de quantidade e seus avisos (zero e limite do banco)",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/features/bom/bom-line-card.tsx",
+        "apps/web/src/shared/lib/plausibilidade.ts"
+    ],
+    "oQueFoiInferido": "O controle como está no ar — `NumberField size=\"sm\"` com sufixo 'un' e `className=\"w-24\"` (96px), sem rótulo visível (a palavra 'Quantidade' só existe no `aria-label`), espremido entre o botão expansível e o botão de remover — e os dois avisos que nascem embaixo dele: 'Quantidade 0 — não entra no total.' e o aviso de plausibilidade quando o número passa do teto `int4` (2.147.483.647), que avisa e NUNCA recusa. Não foi desenhado: onde avisos de campo moram num card que pode exibir simultaneamente legenda de preço, legenda de qtd-0, aviso de plausibilidade, aviso de peça inválida e legenda de degradada — cinco parágrafos possíveis, todos `text-sm text-[var(--text-muted)]`, sem hierarquia — nem se quantidade merece stepper em vez de input livre.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A quantidade é o controle que o vendedor mexe a cada ajuste de kit. O desenho que existe dele não foi seguido (rótulo visível e largura), e seus avisos se acumulam sem hierarquia — o do teto `int4` nasceu de um achado de homologação automatizada (CF-021-UI-03), não de desenho.",
+    "prioridade": "BAIXA",
+    "refutacao": "Subo de NENHUMA para PROTOTIPO_PARCIAL: o canvas DESENHA o controle (linha 190) — um rótulo textual 'Quantidade' à esquerda, um `tf-inputwrap--sm` de `min-width:104px;width:104px` com afixo 'un' e `inputMode=\"numeric\"`, seguido do botão de remover. E o que está no ar diverge: `bom-line-card.tsx` usa `w-24` (96px) e esconde a palavra 'Quantidade' num `aria-label`, e remove com ícone 'x' onde o desenho pôs uma lixeira. Os avisos, esses não existem em desenho nenhum: grep 'Quantidade 0' no `.dc.html` = zero, e o único alerta desenhado dentro do card é o de peça inválida (linha 199, `tf-alert--danger`, com a copy verbatim 'Confira os campos desta peça — ela não entra no total até ser corrigida.'). §D.2 do protótipo lista primitivas de campo e §E4 desenha os campos da calculadora, mas quantidade de peça em kit não está no inventário §E; auditoria e `.design-import/` não têm. A procedência do aviso de teto está escrita no próprio `bom-line-card.tsx` (homologação automatizada CF-021-UI-03) e a regra 'aviso nunca vira validação' está declarada no cabeçalho de `plausibilidade.ts`.",
+    "sobreviveu": true,
+    "area": "kits"
 }

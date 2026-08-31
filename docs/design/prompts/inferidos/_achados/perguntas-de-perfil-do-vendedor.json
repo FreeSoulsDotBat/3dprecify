@@ -1,13 +1,13 @@
 {
-  "id": "perguntas-de-perfil-do-vendedor",
-  "nome": "Perguntas de perfil do vendedor (CPF/CNPJ e alto volume)",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
-  "oQueFoiInferido": "Dois Selects encadeados no meio do cartão de canal, ambos com `tightLabel`: 'Você vende como' (CPF/CNPJ, com placeholder = não respondido → cai no catch-all) e, condicionado a `slot.sellerType === \"CPF\"`, 'mais de 450 pedidos?' (SIM/NÃO). Inferido: que são dois Selects e não um par de escolhas visuais (chips/radio), o placeholder que representa 'não respondi', a revelação condicional da segunda pergunta (que aparece e some NO MEIO do cartão, mudando sua altura), e como se comunica que não responder muda a tarifa cobrada — hoje, nada na tela diz isso.",
-  "autoridade": "NENHUMA",
-  "impacto": "Uma pergunta cadastral (que documento você usa para vender) foi enfiada no meio de um formulário de precificação como dois selects; a segunda aparecer só às vezes muda a altura do cartão sem aviso, e não responder tem consequência de dinheiro que nada na tela desenha.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'CPF', 'CNPJ' e 'volume' nas 4 autoridades (mais readme do DS, CalculatorScreen e o canvas 018): ZERO em todas. Nasceram em 016/PR-F (US17/FR-926, T057) — 2026-08-06, mais de um mês depois da última rodada de correção do protótipo (2026-07-02) e do sign-off 'PARE de iterar com o Claude Design'. Não há nem ancestral conceitual: o protótipo não modela perfil de vendedor em lugar nenhum. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "perguntas-de-perfil-do-vendedor",
+    "nome": "Perguntas de perfil do vendedor (CPF/CNPJ e alto volume)",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+    "oQueFoiInferido": "Dois Selects encadeados no meio do cartão de canal, ambos com `tightLabel`: 'Você vende como' (CPF/CNPJ, com placeholder = não respondido → cai no catch-all) e, condicionado a `slot.sellerType === \"CPF\"`, 'mais de 450 pedidos?' (SIM/NÃO). Inferido: que são dois Selects e não um par de escolhas visuais (chips/radio), o placeholder que representa 'não respondi', a revelação condicional da segunda pergunta (que aparece e some NO MEIO do cartão, mudando sua altura), e como se comunica que não responder muda a tarifa cobrada — hoje, nada na tela diz isso.",
+    "autoridade": "NENHUMA",
+    "impacto": "Uma pergunta cadastral (que documento você usa para vender) foi enfiada no meio de um formulário de precificação como dois selects; a segunda aparecer só às vezes muda a altura do cartão sem aviso, e não responder tem consequência de dinheiro que nada na tela desenha.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'CPF', 'CNPJ' e 'volume' nas 4 autoridades (mais readme do DS, CalculatorScreen e o canvas 018): ZERO em todas. Nasceram em 016/PR-F (US17/FR-926, T057) — 2026-08-06, mais de um mês depois da última rodada de correção do protótipo (2026-07-02) e do sign-off 'PARE de iterar com o Claude Design'. Não há nem ancestral conceitual: o protótipo não modela perfil de vendedor em lugar nenhum. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

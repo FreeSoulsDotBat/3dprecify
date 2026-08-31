@@ -1,13 +1,13 @@
 {
-  "id": "estados-da-lista-de-simulacoes",
-  "nome": "Estados da lista: carregando · erro frio · cache offline · paginação",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
-  "oQueFoiInferido": "Quatro estados montados com primitivas cruas: carregando = `<Spinner/>` centralizado com `py-8` (NÃO o skeleton de cards que o próprio protótipo padronizou para as outras listas); erro frio = `Alert tone=\"danger\"` + `Button secondary` \"Tentar novamente\"; offline com cache = `Alert tone=\"info\"` \"Modo leitura offline\" com um \"Tentar novamente\" EMBUTIDO dentro do alerta; lista longa = `Button variant=\"secondary\"` \"Carregar mais\" no fim (keyset, sem scroll infinito, sem quantos faltam). Falta desenhar: o esqueleto de carregamento coerente com o cartão, a diferença visual entre erro-sem-nada e aviso-sobre-cache, e o fim da lista paginada.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O vendedor offline ou com falha de rede recebe caixas de aviso genéricas empilhadas dentro do painel, sem hierarquia entre \"deu erro\" e \"isto aqui é uma cópia local\".",
-  "prioridade": "MEDIA",
-  "refutacao": "Procurei estes 4 estados desenhados e achei os PADRÕES, sempre para outras listas — e a versão construída diverge de todos: (a) skeleton de lista está desenhado no protótipo, com pixel: `CatalogScreen.jsx` renderiza 3 linhas de `Skeleton variant=\"circle\" 36px` + duas barras de texto, e a matriz §G manda \"skeleton\" para Catálogo e Histórico; a lista de simulações usa um Spinner solto; (b) erro de carregamento com \"Tentar novamente\" foi PEDIDO e VERIFICADO no protótipo (fixes item 17, auditoria §V2 \"FIXED 17-19\") — para Catálogo e Histórico; (c) \"Carregar mais\" está desenhado no canvas (Orçamentos, linha 285) como `tf-btn--ghost tf-btn--sm` com `align-self:center`, e o construído é `secondary`; (d) o estado \"cache offline / leitura local\" não está desenhado em lugar nenhum — a matriz §G do protótipo tem coluna offline para Login/Calcular/Catálogo/Histórico/Exportar/Conta, nenhuma linha de cenários, e o `tf-alert--info` do canvas é para pendências de sincronização, outra coisa. Nenhuma autoridade desenha os estados DESTA lista. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "estados-da-lista-de-simulacoes",
+    "nome": "Estados da lista: carregando · erro frio · cache offline · paginação",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
+    "oQueFoiInferido": "Quatro estados montados com primitivas cruas: carregando = `<Spinner/>` centralizado com `py-8` (NÃO o skeleton de cards que o próprio protótipo padronizou para as outras listas); erro frio = `Alert tone=\"danger\"` + `Button secondary` \"Tentar novamente\"; offline com cache = `Alert tone=\"info\"` \"Modo leitura offline\" com um \"Tentar novamente\" EMBUTIDO dentro do alerta; lista longa = `Button variant=\"secondary\"` \"Carregar mais\" no fim (keyset, sem scroll infinito, sem quantos faltam). Falta desenhar: o esqueleto de carregamento coerente com o cartão, a diferença visual entre erro-sem-nada e aviso-sobre-cache, e o fim da lista paginada.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O vendedor offline ou com falha de rede recebe caixas de aviso genéricas empilhadas dentro do painel, sem hierarquia entre \"deu erro\" e \"isto aqui é uma cópia local\".",
+    "prioridade": "MEDIA",
+    "refutacao": "Procurei estes 4 estados desenhados e achei os PADRÕES, sempre para outras listas — e a versão construída diverge de todos: (a) skeleton de lista está desenhado no protótipo, com pixel: `CatalogScreen.jsx` renderiza 3 linhas de `Skeleton variant=\"circle\" 36px` + duas barras de texto, e a matriz §G manda \"skeleton\" para Catálogo e Histórico; a lista de simulações usa um Spinner solto; (b) erro de carregamento com \"Tentar novamente\" foi PEDIDO e VERIFICADO no protótipo (fixes item 17, auditoria §V2 \"FIXED 17-19\") — para Catálogo e Histórico; (c) \"Carregar mais\" está desenhado no canvas (Orçamentos, linha 285) como `tf-btn--ghost tf-btn--sm` com `align-self:center`, e o construído é `secondary`; (d) o estado \"cache offline / leitura local\" não está desenhado em lugar nenhum — a matriz §G do protótipo tem coluna offline para Login/Calcular/Catálogo/Histórico/Exportar/Conta, nenhuma linha de cenários, e o `tf-alert--info` do canvas é para pendências de sincronização, outra coisa. Nenhuma autoridade desenha os estados DESTA lista. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

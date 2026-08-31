@@ -1,55 +1,55 @@
 /* Status pill. Soft tinted surface + semantic status-text token for the label. */
 .tf-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: 0.125rem var(--space-3);
-  min-height: 24px;
-  border-radius: var(--radius-pill);
-  font-size: var(--fs-caption);
-  font-weight: var(--fw-semibold);
-  letter-spacing: var(--tracking-snug);
-  line-height: 1;
-  white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+    padding: 0.125rem var(--space-3);
+    min-height: 24px;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-caption);
+    font-weight: var(--fw-semibold);
+    letter-spacing: var(--tracking-snug);
+    line-height: 1;
+    white-space: nowrap;
 }
 .tf-badge--neutral {
-  background: var(--bg-muted);
-  color: var(--text-body);
+    background: var(--bg-muted);
+    color: var(--text-body);
 }
 .tf-badge--info {
-  background: var(--tf-info-soft);
-  color: var(--info-text);
+    background: var(--tf-info-soft);
+    color: var(--info-text);
 }
 .tf-badge--success {
-  background: var(--tf-success-soft);
-  color: var(--success-text);
+    background: var(--tf-success-soft);
+    color: var(--success-text);
 }
 .tf-badge--danger {
-  background: var(--tf-danger-soft);
-  color: var(--danger-text);
+    background: var(--tf-danger-soft);
+    color: var(--danger-text);
 }
 /* 019/PR-A (handoff §2, tf-components.css:517) — a faixa de aviso: mesma construção das irmãs,
    fundo suave do laranja da marca, texto no tom profundo via `--warning-text`. */
 .tf-badge--warning {
-  background: rgba(247, 147, 30, 0.16);
-  color: var(--warning-text);
+    background: rgba(247, 147, 30, 0.16);
+    color: var(--warning-text);
 }
 /* 019/PR-C (T052, handoff §"tf-components.css:511-518") — porte byte-a-byte: "ajustado por você"
    (13b·6) é a ÚNICA pílula que fala do vendedor, não da tabela, e por isso pede o tom accent (roxo
    da marca), não um dos tons de status. No escuro `--accent-active` (#6500d6) não passa em AA sobre
    o soft do próprio tom — por isso a folha override com um roxo mais claro só aqui. */
 .tf-badge--accent {
-  background: var(--accent-soft);
-  color: var(--accent-active);
+    background: var(--accent-soft);
+    color: var(--accent-active);
 }
 [data-theme="dark"] .tf-badge--accent {
-  color: #c9a4ff;
+    color: #c9a4ff;
 }
 /* 019/PR-C (T052, mesma folha) — a geometria compacta que os qualificadores do selo pedem (13b):
    dois graus mais densa que a pílula padrão, para não competir de peso com o bloco tf-alert que
    os acompanha. */
 .tf-badge--sm {
-  height: 18px;
-  padding: 0 7px;
-  font-size: 11px;
+    height: 18px;
+    padding: 0 7px;
+    font-size: 11px;
 }

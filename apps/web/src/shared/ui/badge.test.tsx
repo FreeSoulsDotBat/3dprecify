@@ -12,8 +12,8 @@ import { Badge } from "./badge";
 afterEach(cleanup);
 
 describe("Badge — tone=warning", () => {
-  it('tone="warning" aplica tf-badge--warning', () => {
-    render(<Badge tone="warning">850 g</Badge>);
-    expect(screen.getByText("850 g")).toHaveClass("tf-badge--warning");
-  });
+    it('tone="warning" aplica tf-badge--warning', () => {
+        render(<Badge tone="warning">850 g</Badge>);
+        expect(screen.getByText("850 g")).toHaveClass("tf-badge--warning");
+    });
 });

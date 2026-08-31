@@ -18,19 +18,19 @@ import { Decimal, toMoney } from "./rounding.ts";
  * por conveniência.
  */
 export interface FixedFeeRule {
-  kind: "PCT_OF_PRICE";
-  /** % do ANÚNCIO, em (0, 100) — e `commissionPct + pct < 100` na mesma banda (denominador). */
-  pct: number;
+    kind: "PCT_OF_PRICE";
+    /** % do ANÚNCIO, em (0, 100) — e `commissionPct + pct < 100` na mesma banda (denominador). */
+    pct: number;
 }
 
 /** A listing-price fee band — half-open `[minPrice, maxPrice)` (`maxPrice: null` = ∞). */
 export interface PriceBand {
-  minPrice: number;
-  maxPrice: number | null;
-  commissionPct: number;
-  /** R$ — o valor do fixo QUANDO NÃO HÁ regra. Com `fixedFeeRule` presente ele nunca é lido. */
-  fixedFee: number;
-  fixedFeeRule?: FixedFeeRule; // ADITIVO (ADR-0027) — ausência = a constante acima
+    minPrice: number;
+    maxPrice: number | null;
+    commissionPct: number;
+    /** R$ — o valor do fixo QUANDO NÃO HÁ regra. Com `fixedFeeRule` presente ele nunca é lido. */
+    fixedFee: number;
+    fixedFeeRule?: FixedFeeRule; // ADITIVO (ADR-0027) — ausência = a constante acima
 }
 
 /**
@@ -40,8 +40,8 @@ export interface PriceBand {
  * surpresa no extrato.
  */
 export interface ChannelSurcharge {
-  label: string;
-  value: number; // R$, ≥ 0
+    label: string;
+    value: number; // R$, ≥ 0
 }
 
 /**
@@ -82,23 +82,23 @@ export type BandMode = "SELECTION" | "PROGRESSIVE";
  * Guarded by `tests/voucher-legacy-payload.test.ts`.
  */
 export interface VoucherBand {
-  minPrice: number;
-  maxPrice: number | null;
-  voucherCeiling: number;
+    minPrice: number;
+    maxPrice: number | null;
+    voucherCeiling: number;
 }
 
 /** Resolved per-channel fees fed into the gross-up (bands, when present, override commission/fixed). */
 export interface ChannelFees {
-  commissionPct: number;
-  fixedFee?: number;
-  minPerItem?: number; // Amazon per-item commission floor (default 0)
-  freightCost?: number; // flat freight (manual / ML estimate) deducted from líquido (default 0)
-  /** @deprecated 2026-08-07 (hotfix 016/A2) — honoured for STORED payloads only; see `VoucherBand`. */
-  freightVoucherBands?: VoucherBand[];
-  priceBands?: PriceBand[];
-  bandMode?: BandMode; // ABSENT = "SELECTION" — see BandMode; absence preserves every stored payload
-  /** Custos opcionais declarados pelo vendedor (ADR-0027 §3.2). ABSENTE/vazio = byte-idêntico. */
-  surcharges?: ChannelSurcharge[];
+    commissionPct: number;
+    fixedFee?: number;
+    minPerItem?: number; // Amazon per-item commission floor (default 0)
+    freightCost?: number; // flat freight (manual / ML estimate) deducted from líquido (default 0)
+    /** @deprecated 2026-08-07 (hotfix 016/A2) — honoured for STORED payloads only; see `VoucherBand`. */
+    freightVoucherBands?: VoucherBand[];
+    priceBands?: PriceBand[];
+    bandMode?: BandMode; // ABSENT = "SELECTION" — see BandMode; absence preserves every stored payload
+    /** Custos opcionais declarados pelo vendedor (ADR-0027 §3.2). ABSENTE/vazio = byte-idêntico. */
+    surcharges?: ChannelSurcharge[];
 }
 
 /**
@@ -113,21 +113,22 @@ export interface ChannelFees {
  * own, not a number; the caller shows "sem referência" instead of a price nobody published.
  */
 export interface ChannelLevel {
-  anuncio: number | null;
-  liquido: number | null;
-  appliedBand: [number, number | null] | null;
-  freightCost: number;
+    anuncio: number | null;
+    liquido: number | null;
+    appliedBand: [number, number | null] | null;
+    freightCost: number;
 }
 
 /** Half-open, lower-inclusive band selection: `price ∈ [minPrice, maxPrice)` (`maxPrice` null = ∞).
  *  Generic over any `{ minPrice, maxPrice }` band (price-fee bands AND freight voucher bands). */
 function bandContaining<T extends { minPrice: number; maxPrice: number | null }>(
-  bands: T[],
-  price: number,
+    bands: T[],
+    price: number,
 ): T | null {
-  return (
-    bands.find((b) => price >= b.minPrice && (b.maxPrice === null || price < b.maxPrice)) ?? null
-  );
+    return (
+        bands.find((b) => price >= b.minPrice && (b.maxPrice === null || price < b.maxPrice)) ??
+        null
+    );
 }
 
 /**
@@ -140,21 +141,21 @@ function bandContaining<T extends { minPrice: number; maxPrice: number | null }>
  * Sempre sobre o anúncio JÁ arredondado nas chamadas de cobrança (WYSIWYG, como a comissão).
  */
 function bandFixedFee(band: PriceBand, anuncio: number): Decimal {
-  return band.fixedFeeRule
-    ? new Decimal(anuncio).times(band.fixedFeeRule.pct).dividedBy(100)
-    : new Decimal(band.fixedFee);
+    return band.fixedFeeRule
+        ? new Decimal(anuncio).times(band.fixedFeeRule.pct).dividedBy(100)
+        : new Decimal(band.fixedFee);
 }
 
 /** A banda decomposta nas duas parcelas que o gross-up fechado consome: constante + % do preço. */
 function fixedShapeOf(band: PriceBand): { constant: number; pct: number } {
-  return band.fixedFeeRule
-    ? { constant: 0, pct: band.fixedFeeRule.pct }
-    : { constant: band.fixedFee, pct: 0 };
+    return band.fixedFeeRule
+        ? { constant: 0, pct: band.fixedFeeRule.pct }
+        : { constant: band.fixedFee, pct: 0 };
 }
 
 /** Σ das sobretaxas declaradas — atravessa TODOS os regimes (ADR-0027 §3.2 / regra 013/F1). */
 function surchargeTotal(surcharges: ChannelSurcharge[] | undefined): Decimal {
-  return (surcharges ?? []).reduce((t, s) => t.plus(s.value), new Decimal(0));
+    return (surcharges ?? []).reduce((t, s) => t.plus(s.value), new Decimal(0));
 }
 
 /**
@@ -170,24 +171,24 @@ function surchargeTotal(surcharges: ChannelSurcharge[] | undefined): Decimal {
  * Devolve a mensagem NOMEANDO a banda (`priceBands[i]`), ou `null` quando está tudo de pé.
  */
 export function validateBandRules(
-  bands: PriceBand[] | undefined,
-  bandMode: BandMode | undefined,
+    bands: PriceBand[] | undefined,
+    bandMode: BandMode | undefined,
 ): string | null {
-  if (!bands) return null;
-  for (const [i, band] of bands.entries()) {
-    const rule = band.fixedFeeRule;
-    if (!rule) continue;
-    if (bandMode === "PROGRESSIVE") {
-      return `priceBands[${i}].fixedFeeRule só tem significado em bandMode SELECTION (ADR-0027)`;
+    if (!bands) return null;
+    for (const [i, band] of bands.entries()) {
+        const rule = band.fixedFeeRule;
+        if (!rule) continue;
+        if (bandMode === "PROGRESSIVE") {
+            return `priceBands[${i}].fixedFeeRule só tem significado em bandMode SELECTION (ADR-0027)`;
+        }
+        if (!Number.isFinite(rule.pct) || rule.pct <= 0 || rule.pct >= 100) {
+            return `priceBands[${i}].fixedFeeRule.pct must be a finite number in (0, 100)`;
+        }
+        if (band.commissionPct + rule.pct >= 100) {
+            return `priceBands[${i}]: commissionPct + fixedFeeRule.pct must be < 100 (o gross-up não teria solução)`;
+        }
     }
-    if (!Number.isFinite(rule.pct) || rule.pct <= 0 || rule.pct >= 100) {
-      return `priceBands[${i}].fixedFeeRule.pct must be a finite number in (0, 100)`;
-    }
-    if (band.commissionPct + rule.pct >= 100) {
-      return `priceBands[${i}]: commissionPct + fixedFeeRule.pct must be < 100 (o gross-up não teria solução)`;
-    }
-  }
-  return null;
+    return null;
 }
 
 /**
@@ -203,22 +204,22 @@ export function validateBandRules(
  * as de 4.0.0.
  */
 function grossUpOnce(
-  base: number,
-  commissionPct: number,
-  fixed: { constant: number; pct: number },
-  minPerItem: number,
-  surcharge: Decimal,
+    base: number,
+    commissionPct: number,
+    fixed: { constant: number; pct: number },
+    minPerItem: number,
+    surcharge: Decimal,
 ): Decimal {
-  const keepFixedPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
-  const keep = keepFixedPct.minus(new Decimal(commissionPct).dividedBy(100));
-  const listPct = new Decimal(base).plus(fixed.constant).plus(surcharge).dividedBy(keep);
-  const commissionAtListPct = (commissionPct / 100) * listPct.toNumber();
-  if (commissionAtListPct >= minPerItem) return listPct;
-  return new Decimal(base)
-    .plus(minPerItem)
-    .plus(fixed.constant)
-    .plus(surcharge)
-    .dividedBy(keepFixedPct);
+    const keepFixedPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
+    const keep = keepFixedPct.minus(new Decimal(commissionPct).dividedBy(100));
+    const listPct = new Decimal(base).plus(fixed.constant).plus(surcharge).dividedBy(keep);
+    const commissionAtListPct = (commissionPct / 100) * listPct.toNumber();
+    if (commissionAtListPct >= minPerItem) return listPct;
+    return new Decimal(base)
+        .plus(minPerItem)
+        .plus(fixed.constant)
+        .plus(surcharge)
+        .dividedBy(keepFixedPct);
 }
 
 /**
@@ -231,12 +232,12 @@ function grossUpOnce(
  * point (see `progressiveAnnounce`).
  */
 function progressiveCommission(bands: PriceBand[], price: number): Decimal {
-  return bands.reduce((total, b) => {
-    const upper = b.maxPrice === null ? price : Math.min(price, b.maxPrice);
-    const slice = upper - b.minPrice;
-    if (slice <= 0) return total;
-    return total.plus(new Decimal(b.commissionPct).dividedBy(100).times(slice));
-  }, new Decimal(0));
+    return bands.reduce((total, b) => {
+        const upper = b.maxPrice === null ? price : Math.min(price, b.maxPrice);
+        const slice = upper - b.minPrice;
+        if (slice <= 0) return total;
+        return total.plus(new Decimal(b.commissionPct).dividedBy(100).times(slice));
+    }, new Decimal(0));
 }
 
 /**
@@ -257,31 +258,31 @@ function progressiveCommission(bands: PriceBand[], price: number): Decimal {
  * published.
  */
 function progressiveAnnounce(
-  base: number,
-  bands: PriceBand[],
-  surcharge: Decimal,
+    base: number,
+    bands: PriceBand[],
+    surcharge: Decimal,
 ): { list: Decimal; band: PriceBand } | null {
-  const solved: { list: Decimal; band: PriceBand }[] = [];
-  let acc = new Decimal(0);
-  for (const band of bands) {
-    const rate = new Decimal(band.commissionPct).dividedBy(100);
-    solved.push({
-      list: new Decimal(base)
-        .plus(band.fixedFee)
-        .plus(surcharge)
-        .plus(acc)
-        .minus(rate.times(band.minPrice))
-        .dividedBy(new Decimal(1).minus(rate)),
-      band,
-    });
-    if (band.maxPrice !== null) acc = acc.plus(rate.times(band.maxPrice - band.minPrice));
-  }
-  return (
-    solved.find(({ list, band }) => {
-      const n = list.toNumber();
-      return n >= band.minPrice && (band.maxPrice === null || n < band.maxPrice);
-    }) ?? null
-  );
+    const solved: { list: Decimal; band: PriceBand }[] = [];
+    let acc = new Decimal(0);
+    for (const band of bands) {
+        const rate = new Decimal(band.commissionPct).dividedBy(100);
+        solved.push({
+            list: new Decimal(base)
+                .plus(band.fixedFee)
+                .plus(surcharge)
+                .plus(acc)
+                .minus(rate.times(band.minPrice))
+                .dividedBy(new Decimal(1).minus(rate)),
+            band,
+        });
+        if (band.maxPrice !== null) acc = acc.plus(rate.times(band.maxPrice - band.minPrice));
+    }
+    return (
+        solved.find(({ list, band }) => {
+            const n = list.toNumber();
+            return n >= band.minPrice && (band.maxPrice === null || n < band.maxPrice);
+        }) ?? null
+    );
 }
 
 /** One SELECTION candidate announce, and the band that ACTUALLY contains it. `assumed` is the band
@@ -289,12 +290,12 @@ function progressiveAnnounce(
  *  rather than any band's answer. They differ from `applied` exactly when a schedule is not
  *  self-consistent at its own answer: the case the old bounded fixed-point silently mislabelled. */
 interface BandCandidate {
-  assumed: PriceBand | null;
-  applied: PriceBand;
-  anuncio: number;
-  charged: Decimal;
-  /** Announce minus what the APPLIED band really charges — what the seller actually takes home. */
-  net: Decimal;
+    assumed: PriceBand | null;
+    applied: PriceBand;
+    anuncio: number;
+    charged: Decimal;
+    /** Announce minus what the APPLIED band really charges — what the seller actually takes home. */
+    net: Decimal;
 }
 
 /**
@@ -311,8 +312,8 @@ interface BandCandidate {
  * uncovered, and the tie-break on the cheapest announce makes it independent of band order.
  */
 function rankCandidate(c: BandCandidate, base: number): number {
-  if (c.applied === c.assumed) return 0;
-  return c.net.greaterThanOrEqualTo(base) ? 1 : 2;
+    if (c.applied === c.assumed) return 0;
+    return c.net.greaterThanOrEqualTo(base) ? 1 : 2;
 }
 
 /**
@@ -328,80 +329,83 @@ function rankCandidate(c: BandCandidate, base: number): number {
  * results removes the cap, the oscillation and the silent mislabel in one move.
  */
 function chooseBand(
-  base: number,
-  bands: PriceBand[],
-  minPerItem: number,
-  surcharge: Decimal,
+    base: number,
+    bands: PriceBand[],
+    minPerItem: number,
+    surcharge: Decimal,
 ): BandCandidate | null {
-  /** Score one announce against the band that really contains it — `null` when none does. */
-  const at = (anuncio: number, assumed: PriceBand | null): BandCandidate | null => {
-    const applied = bandContaining(bands, anuncio);
-    if (!applied) return null; // this announce lands in a gap — it is not a priceable answer
-    const pct = new Decimal(applied.commissionPct).dividedBy(100).times(anuncio);
-    const charged = pct.toNumber() >= minPerItem ? pct : new Decimal(minPerItem);
-    return {
-      assumed,
-      applied,
-      anuncio,
-      charged,
-      // O que o vendedor leva PARA CASA: fixo da banda que CONTÉM o anúncio — pela regra dela,
-      // quando ela tem uma — menos as sobretaxas que ele declarou (elas atravessam a banda).
-      net: new Decimal(anuncio)
-        .minus(charged)
-        .minus(bandFixedFee(applied, anuncio))
-        .minus(surcharge),
+    /** Score one announce against the band that really contains it — `null` when none does. */
+    const at = (anuncio: number, assumed: PriceBand | null): BandCandidate | null => {
+        const applied = bandContaining(bands, anuncio);
+        if (!applied) return null; // this announce lands in a gap — it is not a priceable answer
+        const pct = new Decimal(applied.commissionPct).dividedBy(100).times(anuncio);
+        const charged = pct.toNumber() >= minPerItem ? pct : new Decimal(minPerItem);
+        return {
+            assumed,
+            applied,
+            anuncio,
+            charged,
+            // O que o vendedor leva PARA CASA: fixo da banda que CONTÉM o anúncio — pela regra dela,
+            // quando ela tem uma — menos as sobretaxas que ele declarou (elas atravessam a banda).
+            net: new Decimal(anuncio)
+                .minus(charged)
+                .minus(bandFixedFee(applied, anuncio))
+                .minus(surcharge),
+        };
     };
-  };
 
-  const fromSchedules = bands
-    .map((b) =>
-      at(toMoney(grossUpOnce(base, b.commissionPct, fixedShapeOf(b), minPerItem, surcharge)), b),
-    )
-    .filter((c): c is BandCandidate => c !== null);
-  // The level is priceable only if some PUBLISHED schedule answers it: an announce that both lands
-  // inside a published band and actually delivers `base` (rank 0 or 1). Otherwise the price the
-  // seller is asking about sits in a window the source never tarifou, and the level is unpriced
-  // (SC-817). This gate runs BEFORE the thresholds on purpose — a threshold may refine an answer we
-  // can already publish, but it must never CREATE one: walking the seller up to the next published
-  // boundary is filling the FR-014a gap by another door, at a price they never asked for.
-  if (!fromSchedules.some((c) => rankCandidate(c, base) <= 1)) return null;
+    const fromSchedules = bands
+        .map((b) =>
+            at(
+                toMoney(grossUpOnce(base, b.commissionPct, fixedShapeOf(b), minPerItem, surcharge)),
+                b,
+            ),
+        )
+        .filter((c): c is BandCandidate => c !== null);
+    // The level is priceable only if some PUBLISHED schedule answers it: an announce that both lands
+    // inside a published band and actually delivers `base` (rank 0 or 1). Otherwise the price the
+    // seller is asking about sits in a window the source never tarifou, and the level is unpriced
+    // (SC-817). This gate runs BEFORE the thresholds on purpose — a threshold may refine an answer we
+    // can already publish, but it must never CREATE one: walking the seller up to the next published
+    // boundary is filling the FR-014a gap by another door, at a price they never asked for.
+    if (!fromSchedules.some((c) => rankCandidate(c, base) <= 1)) return null;
 
-  // The thresholds themselves. SELECTION's fee function jumps DOWN at a boundary, so the cheapest
-  // announce that still delivers the base is often the boundary itself and NOT any schedule's own
-  // answer — without these the engine overshot (ML base R$ 69,51 priced at R$ 84,67 when R$ 79,00
-  // already netted R$ 69,52), which also broke monotonicity across the step.
-  const fromThresholds = bands
-    .map((b) => at(b.minPrice, null))
-    .filter((c): c is BandCandidate => c !== null);
+    // The thresholds themselves. SELECTION's fee function jumps DOWN at a boundary, so the cheapest
+    // announce that still delivers the base is often the boundary itself and NOT any schedule's own
+    // answer — without these the engine overshot (ML base R$ 69,51 priced at R$ 84,67 when R$ 79,00
+    // already netted R$ 69,52), which also broke monotonicity across the step.
+    const fromThresholds = bands
+        .map((b) => at(b.minPrice, null))
+        .filter((c): c is BandCandidate => c !== null);
 
-  const ordered = [...fromSchedules, ...fromThresholds].sort(
-    (a, b) => rankCandidate(a, base) - rankCandidate(b, base) || a.anuncio - b.anuncio,
-  );
-  const best = ordered[0]!;
+    const ordered = [...fromSchedules, ...fromThresholds].sort(
+        (a, b) => rankCandidate(a, base) - rankCandidate(b, base) || a.anuncio - b.anuncio,
+    );
+    const best = ordered[0]!;
 
-  // FORA DA TABELA ≠ lacuna DENTRO da tabela (arquitetura-016 §9.5, SC-817). Uma lacuna entre duas
-  // janelas publicadas é uma faixa que a fonte deliberadamente não tarifa, e subir até a próxima
-  // janela é honesto: todo preço no meio ESTÁ publicado e nenhum entrega a base (o platô do ML em
-  // R$ 79,00). Abaixo do PISO da tabela não é isso: a fonte declara ali outra regra e não a publica
-  // por inteiro (Shopee CPF alto volume — art. 26839 cita R$ 6,00 num item de R$ 8, mas não a
-  // fórmula). Andar com o vendedor até o piso afirmaria "este é o preço mais barato que dá", e a
-  // própria fonte desmente. Então: sem referência (I9) + o aviso da US17, nunca um preço.
-  //
-  // O teste é sobre a banda ESCOLHIDA: se a conta dela para esta base fecha abaixo do piso, o
-  // vendedor está fora da tabela e o anúncio devolvido seria um empurrão até a borda. Com piso
-  // ZERO — toda tabela publicada até 016 — o ramo é inalcançável, e é por isso que a regra é
-  // byte-idêntica por construção em tudo que já existia.
-  const publishedFloor = Math.min(...bands.map((b) => b.minPrice));
-  const ownSchedule = toMoney(
-    grossUpOnce(
-      base,
-      best.applied.commissionPct,
-      fixedShapeOf(best.applied),
-      minPerItem,
-      surcharge,
-    ),
-  );
-  return ownSchedule < publishedFloor ? null : best;
+    // FORA DA TABELA ≠ lacuna DENTRO da tabela (arquitetura-016 §9.5, SC-817). Uma lacuna entre duas
+    // janelas publicadas é uma faixa que a fonte deliberadamente não tarifa, e subir até a próxima
+    // janela é honesto: todo preço no meio ESTÁ publicado e nenhum entrega a base (o platô do ML em
+    // R$ 79,00). Abaixo do PISO da tabela não é isso: a fonte declara ali outra regra e não a publica
+    // por inteiro (Shopee CPF alto volume — art. 26839 cita R$ 6,00 num item de R$ 8, mas não a
+    // fórmula). Andar com o vendedor até o piso afirmaria "este é o preço mais barato que dá", e a
+    // própria fonte desmente. Então: sem referência (I9) + o aviso da US17, nunca um preço.
+    //
+    // O teste é sobre a banda ESCOLHIDA: se a conta dela para esta base fecha abaixo do piso, o
+    // vendedor está fora da tabela e o anúncio devolvido seria um empurrão até a borda. Com piso
+    // ZERO — toda tabela publicada até 016 — o ramo é inalcançável, e é por isso que a regra é
+    // byte-idêntica por construção em tudo que já existia.
+    const publishedFloor = Math.min(...bands.map((b) => b.minPrice));
+    const ownSchedule = toMoney(
+        grossUpOnce(
+            base,
+            best.applied.commissionPct,
+            fixedShapeOf(best.applied),
+            minPerItem,
+            surcharge,
+        ),
+    );
+    return ownSchedule < publishedFloor ? null : best;
 }
 
 /**
@@ -414,91 +418,97 @@ function chooseBand(
  * SC-108). The returned `freightCost` is the total deducted at this level.
  */
 export function grossUp(base: number, fees: ChannelFees): ChannelLevel {
-  const minPerItem = fees.minPerItem ?? 0;
-  const flatFreight = fees.freightCost ?? 0;
-  const surcharge = surchargeTotal(fees.surcharges);
+    const minPerItem = fees.minPerItem ?? 0;
+    const flatFreight = fees.freightCost ?? 0;
+    const surcharge = surchargeTotal(fees.surcharges);
 
-  // Shared tail for BOTH band modes: the freight truth (flat + the co-funded voucher resolved for
-  // THIS announce, so varejo and atacado can land in different voucher bands) and the líquido.
-  // `fixed` já chega como o fixo EFETIVO — `bandFixedFee(banda, L) + Σ surcharges` (ADR-0027).
-  const finish = (
-    anuncioFinal: number,
-    charged: Decimal,
-    fixed: Decimal,
-    band: [number, number | null] | null,
-  ): ChannelLevel => {
-    const voucher =
-      fees.freightVoucherBands && fees.freightVoucherBands.length > 0
-        ? (bandContaining(fees.freightVoucherBands, anuncioFinal)?.voucherCeiling ?? 0)
-        : 0;
-    const freightCost = toMoney(new Decimal(flatFreight).plus(voucher));
-    const liquido = toMoney(
-      new Decimal(anuncioFinal).minus(charged).minus(fixed).minus(freightCost),
-    );
-    return { anuncio: anuncioFinal, liquido, appliedBand: band, freightCost };
-  };
+    // Shared tail for BOTH band modes: the freight truth (flat + the co-funded voucher resolved for
+    // THIS announce, so varejo and atacado can land in different voucher bands) and the líquido.
+    // `fixed` já chega como o fixo EFETIVO — `bandFixedFee(banda, L) + Σ surcharges` (ADR-0027).
+    const finish = (
+        anuncioFinal: number,
+        charged: Decimal,
+        fixed: Decimal,
+        band: [number, number | null] | null,
+    ): ChannelLevel => {
+        const voucher =
+            fees.freightVoucherBands && fees.freightVoucherBands.length > 0
+                ? (bandContaining(fees.freightVoucherBands, anuncioFinal)?.voucherCeiling ?? 0)
+                : 0;
+        const freightCost = toMoney(new Decimal(flatFreight).plus(voucher));
+        const liquido = toMoney(
+            new Decimal(anuncioFinal).minus(charged).minus(fixed).minus(freightCost),
+        );
+        return { anuncio: anuncioFinal, liquido, appliedBand: band, freightCost };
+    };
 
-  /** SC-817 — no published band covers this price. A state, not a number: the caller shows "sem
-   *  referência" rather than a price borrowed from a band that does not contain it. */
-  const unpriced: ChannelLevel = {
-    anuncio: null,
-    liquido: null,
-    appliedBand: null,
-    freightCost: 0,
-  };
+    /** SC-817 — no published band covers this price. A state, not a number: the caller shows "sem
+     *  referência" rather than a price borrowed from a band that does not contain it. */
+    const unpriced: ChannelLevel = {
+        anuncio: null,
+        liquido: null,
+        appliedBand: null,
+        freightCost: 0,
+    };
 
-  // Forma inválida NÃO vira número (ADR-0027 §3.1). `computeChannel` recusa ANTES, com erro por
-  // slot nomeado; este ramo existe para o primitivo exportado, que qualquer teste ou consumidor
-  // pode chamar direto — e a resposta honesta ali é "sem referência", jamais um `Infinity`.
-  if (validateBandRules(fees.priceBands, fees.bandMode) !== null) return unpriced;
+    // Forma inválida NÃO vira número (ADR-0027 §3.1). `computeChannel` recusa ANTES, com erro por
+    // slot nomeado; este ramo existe para o primitivo exportado, que qualquer teste ou consumidor
+    // pode chamar direto — e a resposta honesta ali é "sem referência", jamais um `Infinity`.
+    if (validateBandRules(fees.priceBands, fees.bandMode) !== null) return unpriced;
 
-  const bands = fees.priceBands;
-  const first = bands?.[0];
+    const bands = fees.priceBands;
+    const first = bands?.[0];
 
-  // PROGRESSIVE (ADR-0024): the fee is a SUM over slices, so there is no single `commissionPct` that
-  // describes it — this branch owns both the announce and the charged commission, and returns early
-  // through the shared freight/líquido tail below.
-  if (fees.bandMode === "PROGRESSIVE" && bands && first) {
-    const solved = progressiveAnnounce(base, bands, surcharge);
-    if (!solved) return unpriced;
-    let anuncioProg = toMoney(solved.list);
-    // The per-item floor still applies, now measured against the PROGRESSIVE commission.
-    if (progressiveCommission(bands, anuncioProg).toNumber() < minPerItem) {
-      anuncioProg = toMoney(
-        new Decimal(base).plus(minPerItem).plus(solved.band.fixedFee).plus(surcharge),
-      );
+    // PROGRESSIVE (ADR-0024): the fee is a SUM over slices, so there is no single `commissionPct` that
+    // describes it — this branch owns both the announce and the charged commission, and returns early
+    // through the shared freight/líquido tail below.
+    if (fees.bandMode === "PROGRESSIVE" && bands && first) {
+        const solved = progressiveAnnounce(base, bands, surcharge);
+        if (!solved) return unpriced;
+        let anuncioProg = toMoney(solved.list);
+        // The per-item floor still applies, now measured against the PROGRESSIVE commission.
+        if (progressiveCommission(bands, anuncioProg).toNumber() < minPerItem) {
+            anuncioProg = toMoney(
+                new Decimal(base).plus(minPerItem).plus(solved.band.fixedFee).plus(surcharge),
+            );
+        }
+        // The floor regime moves the announce, so re-check that it still sits inside a published band:
+        // a slice of the price outside the schedule has no rate, and summing over it would invent one.
+        const held = bandContaining(bands, anuncioProg);
+        if (!held) return unpriced;
+        const owed = progressiveCommission(bands, anuncioProg);
+        const charged = owed.toNumber() >= minPerItem ? owed : new Decimal(minPerItem);
+        return finish(anuncioProg, charged, bandFixedFee(held, anuncioProg).plus(surcharge), [
+            held.minPrice,
+            held.maxPrice,
+        ]);
     }
-    // The floor regime moves the announce, so re-check that it still sits inside a published band:
-    // a slice of the price outside the schedule has no rate, and summing over it would invent one.
-    const held = bandContaining(bands, anuncioProg);
-    if (!held) return unpriced;
-    const owed = progressiveCommission(bands, anuncioProg);
-    const charged = owed.toNumber() >= minPerItem ? owed : new Decimal(minPerItem);
-    return finish(anuncioProg, charged, bandFixedFee(held, anuncioProg).plus(surcharge), [
-      held.minPrice,
-      held.maxPrice,
-    ]);
-  }
 
-  if (bands && first) {
-    const chosen = chooseBand(base, bands, minPerItem, surcharge);
-    if (!chosen) return unpriced;
-    // Charged by the band that CONTAINS the announce — never by the one that merely produced it.
-    return finish(
-      chosen.anuncio,
-      chosen.charged,
-      bandFixedFee(chosen.applied, chosen.anuncio).plus(surcharge),
-      [chosen.applied.minPrice, chosen.applied.maxPrice],
+    if (bands && first) {
+        const chosen = chooseBand(base, bands, minPerItem, surcharge);
+        if (!chosen) return unpriced;
+        // Charged by the band that CONTAINS the announce — never by the one that merely produced it.
+        return finish(
+            chosen.anuncio,
+            chosen.charged,
+            bandFixedFee(chosen.applied, chosen.anuncio).plus(surcharge),
+            [chosen.applied.minPrice, chosen.applied.maxPrice],
+        );
+    }
+
+    const fixedFee = fees.fixedFee ?? 0;
+    const anuncio = toMoney(
+        grossUpOnce(
+            base,
+            fees.commissionPct,
+            { constant: fixedFee, pct: 0 },
+            minPerItem,
+            surcharge,
+        ),
     );
-  }
-
-  const fixedFee = fees.fixedFee ?? 0;
-  const anuncio = toMoney(
-    grossUpOnce(base, fees.commissionPct, { constant: fixedFee, pct: 0 }, minPerItem, surcharge),
-  );
-  // Commission actually charged on the ROUNDED announce (WYSIWYG) — the floor may bind here too.
-  const pctCommission = new Decimal(fees.commissionPct).dividedBy(100).times(anuncio);
-  const commissionCharged =
-    pctCommission.toNumber() >= minPerItem ? pctCommission : new Decimal(minPerItem);
-  return finish(anuncio, commissionCharged, new Decimal(fixedFee).plus(surcharge), null);
+    // Commission actually charged on the ROUNDED announce (WYSIWYG) — the floor may bind here too.
+    const pctCommission = new Decimal(fees.commissionPct).dividedBy(100).times(anuncio);
+    const commissionCharged =
+        pctCommission.toNumber() >= minPerItem ? pctCommission : new Decimal(minPerItem);
+    return finish(anuncio, commissionCharged, new Decimal(fixedFee).plus(surcharge), null);
 }

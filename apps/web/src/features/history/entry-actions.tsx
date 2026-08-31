@@ -21,69 +21,69 @@ const t = messages.historico;
 
 /** Swallow the click so the surrounding `<Link>` card never navigates when a button is tapped. */
 function stop(e: MouseEvent) {
-  e.preventDefault();
-  e.stopPropagation();
+    e.preventDefault();
+    e.stopPropagation();
 }
 
 export function EntryActions({ item }: { item: HistoryItem }) {
-  const { retry, discard, retrying, discarding } = useEntryActions();
-  const online = useOnline();
-  const [confirming, setConfirming] = useState(false);
+    const { retry, discard, retrying, discarding } = useEntryActions();
+    const online = useOnline();
+    const [confirming, setConfirming] = useState(false);
 
-  if (item.syncState === "synced") return null;
+    if (item.syncState === "synced") return null;
 
-  const pending = item.syncState === "pending";
-  // A pending retry needs the network to do anything; blocked/failed retries are always offered.
-  const canRetry = !pending || online;
-  const retryLabel = pending ? t.retryNow : t.retryAgain;
+    const pending = item.syncState === "pending";
+    // A pending retry needs the network to do anything; blocked/failed retries are always offered.
+    const canRetry = !pending || online;
+    const retryLabel = pending ? t.retryNow : t.retryAgain;
 
-  return (
-    <div className="tf-historico__actions" onClick={stop}>
-      {canRetry && (
-        <Button
-          size="sm"
-          variant="secondary"
-          loading={retrying}
-          onClick={(e) => {
-            stop(e);
-            retry(item.clientSnapshotId);
-          }}
-        >
-          {retryLabel}
-        </Button>
-      )}
-      <Button
-        size="sm"
-        variant="danger"
-        onClick={(e) => {
-          stop(e);
-          setConfirming(true);
-        }}
-      >
-        {t.discard}
-      </Button>
-
-      <Dialog open={confirming} onOpenChange={(next) => !next && setConfirming(false)}>
-        <DialogContent showClose={false}>
-          <DialogTitle>{t.discardConfirmTitle}</DialogTitle>
-          <DialogDescription>{t.discardConfirmBody}</DialogDescription>
-          <div className="mt-4 flex justify-end gap-2" onClick={stop}>
-            <Button variant="secondary" onClick={() => setConfirming(false)}>
-              {t.back}
-            </Button>
+    return (
+        <div className="tf-historico__actions" onClick={stop}>
+            {canRetry && (
+                <Button
+                    size="sm"
+                    variant="secondary"
+                    loading={retrying}
+                    onClick={(e) => {
+                        stop(e);
+                        retry(item.clientSnapshotId);
+                    }}
+                >
+                    {retryLabel}
+                </Button>
+            )}
             <Button
-              variant="danger"
-              loading={discarding}
-              onClick={() => {
-                discard(item.clientSnapshotId);
-                setConfirming(false);
-              }}
+                size="sm"
+                variant="danger"
+                onClick={(e) => {
+                    stop(e);
+                    setConfirming(true);
+                }}
             >
-              {t.discard}
+                {t.discard}
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
+
+            <Dialog open={confirming} onOpenChange={(next) => !next && setConfirming(false)}>
+                <DialogContent showClose={false}>
+                    <DialogTitle>{t.discardConfirmTitle}</DialogTitle>
+                    <DialogDescription>{t.discardConfirmBody}</DialogDescription>
+                    <div className="mt-4 flex justify-end gap-2" onClick={stop}>
+                        <Button variant="secondary" onClick={() => setConfirming(false)}>
+                            {t.back}
+                        </Button>
+                        <Button
+                            variant="danger"
+                            loading={discarding}
+                            onClick={() => {
+                                discard(item.clientSnapshotId);
+                                setConfirming(false);
+                            }}
+                        >
+                            {t.discard}
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
+        </div>
+    );
 }

@@ -1,13 +1,13 @@
 {
-  "id": "nome-da-peca-no-catalogo",
-  "nome": "Campo 'Nome da peça no catálogo' e o aviso de que a peça vira produto",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "Um `Field` condicional no fim da peça expandida, renderizado só quando `!savesAsReference(saveLines[i])` — ou seja, quando aquela linha vai materializar como produto novo (avulsa, ou vinculada-e-editada). O placeholder é derivado ('Peça {n} · {kit}') e, quando a linha era vinculada, aparece antes dele um `<p>` de 12px: 'Você ajustou esta peça — ela será salva como uma peça nova no catálogo.' Não foi desenhado: como se anuncia que editar uma peça vinculada MUDA o destino dela; se isso é um campo, um aviso ou uma etapa do salvar; a hierarquia entre a legenda e o campo; e o que o vendedor vê quando o campo desaparece sozinho ao revincular o produto.",
-  "autoridade": "NENHUMA",
-  "impacto": "Um efeito colateral real no catálogo do vendedor (linhas novas aparecendo em Produtos) é comunicado por um campo que surge e some sozinho no fim de um formulário longo, precedido por uma legenda de 12px com o mesmo peso de outras quatro legendas possíveis no mesmo card.",
-  "prioridade": "MEDIA",
-  "refutacao": "Procurei e não existe. Grep por 'Nome da peça' e por 'ajustou' no `Abas-Desktop.dc.html`: zero — o aside de Kits (linhas 235-241) tem exatamente três coisas, 'Nome do kit', 'Salvar kit' e a dica 'Confira as peças com aviso antes de salvar', e o card da peça não tem nenhum campo de nome. §E5 do protótipo desenha formulários de filamento e impressora (nome, cor, custo do rolo, peso / modelo, valor, h-dia, dias-mês, payback, nível de uso) e nada sobre materialização de peça; §E não tem kits. Auditoria de 2026-07-02 e `.design-import/`: nada. A regra vem de ADR-0017 (decisão) e de `ux-bom.md` (texto do designer-ux) — nenhum dos dois é desenho.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "nome-da-peca-no-catalogo",
+    "nome": "Campo 'Nome da peça no catálogo' e o aviso de que a peça vira produto",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "Um `Field` condicional no fim da peça expandida, renderizado só quando `!savesAsReference(saveLines[i])` — ou seja, quando aquela linha vai materializar como produto novo (avulsa, ou vinculada-e-editada). O placeholder é derivado ('Peça {n} · {kit}') e, quando a linha era vinculada, aparece antes dele um `<p>` de 12px: 'Você ajustou esta peça — ela será salva como uma peça nova no catálogo.' Não foi desenhado: como se anuncia que editar uma peça vinculada MUDA o destino dela; se isso é um campo, um aviso ou uma etapa do salvar; a hierarquia entre a legenda e o campo; e o que o vendedor vê quando o campo desaparece sozinho ao revincular o produto.",
+    "autoridade": "NENHUMA",
+    "impacto": "Um efeito colateral real no catálogo do vendedor (linhas novas aparecendo em Produtos) é comunicado por um campo que surge e some sozinho no fim de um formulário longo, precedido por uma legenda de 12px com o mesmo peso de outras quatro legendas possíveis no mesmo card.",
+    "prioridade": "MEDIA",
+    "refutacao": "Procurei e não existe. Grep por 'Nome da peça' e por 'ajustou' no `Abas-Desktop.dc.html`: zero — o aside de Kits (linhas 235-241) tem exatamente três coisas, 'Nome do kit', 'Salvar kit' e a dica 'Confira as peças com aviso antes de salvar', e o card da peça não tem nenhum campo de nome. §E5 do protótipo desenha formulários de filamento e impressora (nome, cor, custo do rolo, peso / modelo, valor, h-dia, dias-mês, payback, nível de uso) e nada sobre materialização de peça; §E não tem kits. Auditoria de 2026-07-02 e `.design-import/`: nada. A regra vem de ADR-0017 (decisão) e de `ux-bom.md` (texto do designer-ux) — nenhum dos dois é desenho.",
+    "sobreviveu": true,
+    "area": "kits"
 }

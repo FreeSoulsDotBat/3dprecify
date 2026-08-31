@@ -1,18 +1,18 @@
 {
-  "id": "kits-desktop-duas-colunas",
-  "nome": "Composição desktop de Kits em duas colunas (o que o canvas cobriu — e o que sobrou inferido)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/bom/bom-page.tsx",
-    "apps/web/src/pages/bom/bom-page.css",
-    "apps/web/src/features/bom/assembly-summary.tsx",
-    "apps/web/src/features/bom/assembly-summary.css"
-  ],
-  "oQueFoiInferido": "É a única superfície da área com desenho do dono — peças à esquerda, resumo grudado à direita em 480px, sem barra no rodapé — e ainda assim quatro deltas foram inferidos. (a) O canvas põe 'Ver meus kits' e 'Adicionar peça' como ações NO CABEÇALHO da página; o código usa `PageHeader title description` sem prop `actions`, e o 'Adicionar peça' só existe no fim da lista. (b) O canvas marca o total com um `tf-badge tf-badge--success` 'Ao vivo'; não foi implementado. (c) O canvas desenha o par de preços como dois CARTÕES (Varejo em `tf-price--accent`, 2,25rem, e Atacado a 1,5rem); o código, mesmo na variante `column`, continua emitindo `.assembly-summary__pinned-prices` — o readout de UMA coluna projetado em A5-b para os 89px de um viewport de 360px, com fundo, borda e sombra removidos por CSS sem media query. (d) A rolagem da coluna direita (`position: sticky; max-height: calc(100dvh - var(--space-8)); overflow-y: auto`, que entra em ação quando resumo + rollup + salvar + recibo não cabem) não está desenhada em lugar nenhum.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O esqueleto foi desenhado e implementado, mas a manchete de dinheiro da tela desktop não é a desenhada: o vendedor a 1920px lê o par varejo/atacado no formato compacto que existe por causa de um aperto de 360px. Somado ao cabeçalho sem ações e ao badge que não veio, a fronteira precisa é esta — abaixo de 1279px, e para dentro de cada card de peça, não há desenho nenhum.",
-  "prioridade": "MEDIA",
-  "refutacao": "Confirmei a cobertura e ampliei os deltas. `Abas-Desktop.dc.html` linhas 155-243 é desenho do dono a 1920px e cobre: grade `minmax(0,1fr) 480px`, aside `position:sticky;top:0`, cartão 'Total do kit' com badge 'Ao vivo' + 'Custo total' + os dois preços + `excludedCap`, cartão 'Preços por canal (kit)', cartão 'Nome do kit' + 'Salvar kit' + dica. Implementado em T038-T041 (`tasks.md` linhas 103-106), e `bom-page.css` reproduz a grade e o 480px fielmente. Os deltas foram medidos abrindo os dois lados: `bom-page.tsx:443` passa só `title`/`description` ao `PageHeader` (canvas: linhas 158-166 com dois botões); grep 'Ao vivo' no código: zero (canvas: linha 212); `assembly-summary.tsx` monta `<div className=\"assembly-summary__pinned-prices\">` incondicionalmente e o CSS correspondente (`assembly-summary.css`, bloco A5-b/A5-c) não tem media query, então a 1920px vale a regra escrita para 360px; e `bom-page.css` linhas 33-38 declaram o `max-height`/`overflow-y` da coluna, que grep nenhum encontra no canvas. O protótipo de 2026-07 não tem esta aba (§E) e o `.design-import/` não tem tela de kits — o desenho desktop de Kits nasceu inteiro no 018.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "kits-desktop-duas-colunas",
+    "nome": "Composição desktop de Kits em duas colunas (o que o canvas cobriu — e o que sobrou inferido)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/bom/bom-page.tsx",
+        "apps/web/src/pages/bom/bom-page.css",
+        "apps/web/src/features/bom/assembly-summary.tsx",
+        "apps/web/src/features/bom/assembly-summary.css"
+    ],
+    "oQueFoiInferido": "É a única superfície da área com desenho do dono — peças à esquerda, resumo grudado à direita em 480px, sem barra no rodapé — e ainda assim quatro deltas foram inferidos. (a) O canvas põe 'Ver meus kits' e 'Adicionar peça' como ações NO CABEÇALHO da página; o código usa `PageHeader title description` sem prop `actions`, e o 'Adicionar peça' só existe no fim da lista. (b) O canvas marca o total com um `tf-badge tf-badge--success` 'Ao vivo'; não foi implementado. (c) O canvas desenha o par de preços como dois CARTÕES (Varejo em `tf-price--accent`, 2,25rem, e Atacado a 1,5rem); o código, mesmo na variante `column`, continua emitindo `.assembly-summary__pinned-prices` — o readout de UMA coluna projetado em A5-b para os 89px de um viewport de 360px, com fundo, borda e sombra removidos por CSS sem media query. (d) A rolagem da coluna direita (`position: sticky; max-height: calc(100dvh - var(--space-8)); overflow-y: auto`, que entra em ação quando resumo + rollup + salvar + recibo não cabem) não está desenhada em lugar nenhum.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O esqueleto foi desenhado e implementado, mas a manchete de dinheiro da tela desktop não é a desenhada: o vendedor a 1920px lê o par varejo/atacado no formato compacto que existe por causa de um aperto de 360px. Somado ao cabeçalho sem ações e ao badge que não veio, a fronteira precisa é esta — abaixo de 1279px, e para dentro de cada card de peça, não há desenho nenhum.",
+    "prioridade": "MEDIA",
+    "refutacao": "Confirmei a cobertura e ampliei os deltas. `Abas-Desktop.dc.html` linhas 155-243 é desenho do dono a 1920px e cobre: grade `minmax(0,1fr) 480px`, aside `position:sticky;top:0`, cartão 'Total do kit' com badge 'Ao vivo' + 'Custo total' + os dois preços + `excludedCap`, cartão 'Preços por canal (kit)', cartão 'Nome do kit' + 'Salvar kit' + dica. Implementado em T038-T041 (`tasks.md` linhas 103-106), e `bom-page.css` reproduz a grade e o 480px fielmente. Os deltas foram medidos abrindo os dois lados: `bom-page.tsx:443` passa só `title`/`description` ao `PageHeader` (canvas: linhas 158-166 com dois botões); grep 'Ao vivo' no código: zero (canvas: linha 212); `assembly-summary.tsx` monta `<div className=\"assembly-summary__pinned-prices\">` incondicionalmente e o CSS correspondente (`assembly-summary.css`, bloco A5-b/A5-c) não tem media query, então a 1920px vale a regra escrita para 360px; e `bom-page.css` linhas 33-38 declaram o `max-height`/`overflow-y` da coluna, que grep nenhum encontra no canvas. O protótipo de 2026-07 não tem esta aba (§E) e o `.design-import/` não tem tela de kits — o desenho desktop de Kits nasceu inteiro no 018.",
+    "sobreviveu": true,
+    "area": "kits"
 }

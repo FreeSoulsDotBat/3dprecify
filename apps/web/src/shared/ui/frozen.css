@@ -5,11 +5,11 @@
    na opacidade). Borda sólida de propósito — tracejado já significa "anotação de prancheta". */
 .tf-frozen .tf-inputwrap,
 .tf-frozen .tf-select {
-  opacity: 0.55;
-  cursor: not-allowed;
-  background: var(--border-subtle);
+    opacity: 0.55;
+    cursor: not-allowed;
+    background: var(--border-subtle);
 }
 .tf-frozen .tf-input,
 .tf-frozen .tf-select {
-  cursor: not-allowed;
+    cursor: not-allowed;
 }

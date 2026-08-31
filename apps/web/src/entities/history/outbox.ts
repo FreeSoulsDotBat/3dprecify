@@ -41,28 +41,28 @@ export type SyncState = "synced" | "pending" | "blocked" | "failed" | "unauthent
  *  recomputed, never patched at send time — the device clock and the idempotency key are part of
  *  the frozen body. */
 export interface OutboxEntry {
-  clientSnapshotId: string;
-  body: SnapshotIn;
-  syncState: Exclude<SyncState, "synced">;
-  attempts: number;
-  lastStatus?: number;
+    clientSnapshotId: string;
+    body: SnapshotIn;
+    syncState: Exclude<SyncState, "synced">;
+    attempts: number;
+    lastStatus?: number;
 }
 
 /** IndexedDB key — uid-scoped, so a device shared by two accounts never crosses them. */
 export function historyOutboxKey(uid: string): string {
-  return `history:outbox:${uid}`;
+    return `history:outbox:${uid}`;
 }
 
 function isOutboxArray(raw: unknown): raw is OutboxEntry[] {
-  return (
-    Array.isArray(raw) &&
-    raw.every(
-      (x) =>
-        typeof x === "object" &&
-        x !== null &&
-        typeof (x as { clientSnapshotId?: unknown }).clientSnapshotId === "string",
-    )
-  );
+    return (
+        Array.isArray(raw) &&
+        raw.every(
+            (x) =>
+                typeof x === "object" &&
+                x !== null &&
+                typeof (x as { clientSnapshotId?: unknown }).clientSnapshotId === "string",
+        )
+    );
 }
 
 /**
@@ -72,11 +72,11 @@ function isOutboxArray(raw: unknown): raw is OutboxEntry[] {
  * **Never use this as the base of a WRITE** — that is what `readOutboxStrict` is for (SC-816).
  */
 export async function listOutbox(uid: string): Promise<OutboxEntry[]> {
-  try {
-    return await readOutboxStrict(uid);
-  } catch {
-    return [];
-  }
+    try {
+        return await readOutboxStrict(uid);
+    } catch {
+        return [];
+    }
 }
 
 /**
@@ -96,13 +96,13 @@ export async function listOutbox(uid: string): Promise<OutboxEntry[]> {
  * A shape that READS FINE but is not ours is still discarded: that is knowledge, not ignorance.
  */
 async function readOutboxStrict(uid: string): Promise<OutboxEntry[]> {
-  const raw = await get(historyOutboxKey(uid));
-  return isOutboxArray(raw) ? raw : [];
+    const raw = await get(historyOutboxKey(uid));
+    return isOutboxArray(raw) ? raw : [];
 }
 
 /** Persist the queue. Deliberately NOT wrapped in try/catch — a failure here MUST surface. */
 async function writeOutbox(uid: string, entries: OutboxEntry[]): Promise<void> {
-  await set(historyOutboxKey(uid), entries);
+    await set(historyOutboxKey(uid), entries);
 }
 
 // EVERY read-modify-write of the queue runs under this lock (ADR-0018 §6).
@@ -120,15 +120,15 @@ async function writeOutbox(uid: string, entries: OutboxEntry[]): Promise<void> {
 let tabChain: Promise<unknown> = Promise.resolve();
 
 async function withOutboxLock<T>(uid: string, fn: () => Promise<T>): Promise<T> {
-  const locks = (navigator as { locks?: LockManager }).locks;
-  const run = async (): Promise<T> =>
-    locks ? ((await locks.request(historyOutboxKey(uid), fn)) as T) : fn();
-  const next: Promise<T> = tabChain.then(run, run);
-  tabChain = next.then(
-    () => undefined,
-    () => undefined,
-  );
-  return next;
+    const locks = (navigator as { locks?: LockManager }).locks;
+    const run = async (): Promise<T> =>
+        locks ? ((await locks.request(historyOutboxKey(uid), fn)) as T) : fn();
+    const next: Promise<T> = tabChain.then(run, run);
+    tabChain = next.then(
+        () => undefined,
+        () => undefined,
+    );
+    return next;
 }
 
 /**
@@ -136,75 +136,75 @@ async function withOutboxLock<T>(uid: string, fn: () => Promise<T>): Promise<T> 
  * tell the seller it did NOT queue, rather than show "pendente" over nothing.
  */
 export async function enqueueSnapshot(uid: string, body: SnapshotIn): Promise<OutboxEntry> {
-  const entry: OutboxEntry = {
-    clientSnapshotId: String(body.clientSnapshotId),
-    body,
-    syncState: "pending",
-    attempts: 0,
-  };
-  await withOutboxLock(uid, async () => {
-    const existing = await readOutboxStrict(uid);
-    await writeOutbox(uid, [
-      ...existing.filter((e) => e.clientSnapshotId !== entry.clientSnapshotId),
-      entry,
-    ]);
-  });
-  return entry;
+    const entry: OutboxEntry = {
+        clientSnapshotId: String(body.clientSnapshotId),
+        body,
+        syncState: "pending",
+        attempts: 0,
+    };
+    await withOutboxLock(uid, async () => {
+        const existing = await readOutboxStrict(uid);
+        await writeOutbox(uid, [
+            ...existing.filter((e) => e.clientSnapshotId !== entry.clientSnapshotId),
+            entry,
+        ]);
+    });
+    return entry;
 }
 
 /** Drop ONE entry, re-reading the queue inside the lock so a concurrent enqueue survives. */
 async function removeEntry(uid: string, clientSnapshotId: string): Promise<void> {
-  try {
-    await withOutboxLock(uid, async () => {
-      const current = await readOutboxStrict(uid);
-      await writeOutbox(
-        uid,
-        current.filter((e) => e.clientSnapshotId !== clientSnapshotId),
-      );
-    });
-  } catch {
-    // The entry is already on the server; a failed write-back only means it will be replayed, and
-    // the replay is idempotent. Never surface this as a recording failure.
-  }
+    try {
+        await withOutboxLock(uid, async () => {
+            const current = await readOutboxStrict(uid);
+            await writeOutbox(
+                uid,
+                current.filter((e) => e.clientSnapshotId !== clientSnapshotId),
+            );
+        });
+    } catch {
+        // The entry is already on the server; a failed write-back only means it will be replayed, and
+        // the replay is idempotent. Never surface this as a recording failure.
+    }
 }
 
 /** Update ONE entry in place, same re-read-inside-the-lock discipline. */
 async function updateEntry(
-  uid: string,
-  clientSnapshotId: string,
-  patch: (entry: OutboxEntry) => OutboxEntry,
+    uid: string,
+    clientSnapshotId: string,
+    patch: (entry: OutboxEntry) => OutboxEntry,
 ): Promise<void> {
-  try {
-    await withOutboxLock(uid, async () => {
-      const current = await readOutboxStrict(uid);
-      await writeOutbox(
-        uid,
-        current.map((e) => (e.clientSnapshotId === clientSnapshotId ? patch(e) : e)),
-      );
-    });
-  } catch {
-    // The entry keeps its previous state and is retried later — never dropped.
-  }
+    try {
+        await withOutboxLock(uid, async () => {
+            const current = await readOutboxStrict(uid);
+            await writeOutbox(
+                uid,
+                current.map((e) => (e.clientSnapshotId === clientSnapshotId ? patch(e) : e)),
+            );
+        });
+    } catch {
+        // The entry keeps its previous state and is retried later — never dropped.
+    }
 }
 
 /** Part of the sign-out privacy sweep — the queue never leaks into the next account. */
 export async function purgeOutbox(uid: string): Promise<void> {
-  try {
-    await withOutboxLock(uid, () => del(historyOutboxKey(uid)));
-  } catch {
-    /* a failed purge must never crash the sign-out flow */
-  }
+    try {
+        await withOutboxLock(uid, () => del(historyOutboxKey(uid)));
+    } catch {
+        /* a failed purge must never crash the sign-out flow */
+    }
 }
 
 export interface DrainDeps {
-  /** POSTs one frozen body. Resolves on 201 (created) AND on 200 (idempotent replay) alike. */
-  post: (body: SnapshotIn) => Promise<SnapshotOut>;
-  /** Set when the entitlement just became `active` again: blocked entries are retried. */
-  retryBlocked?: boolean;
-  /** hotfix 016/A3 (H4) — set when the SESSION just became `authenticated` again (the mirror of
-   *  `retryBlocked`, driven by a different signal): `unauthenticated` entries are retried. Retrying
-   *  a session-dead entry without this would just mint another 401 and another wasted attempt. */
-  retryUnauthenticated?: boolean;
+    /** POSTs one frozen body. Resolves on 201 (created) AND on 200 (idempotent replay) alike. */
+    post: (body: SnapshotIn) => Promise<SnapshotOut>;
+    /** Set when the entitlement just became `active` again: blocked entries are retried. */
+    retryBlocked?: boolean;
+    /** hotfix 016/A3 (H4) — set when the SESSION just became `authenticated` again (the mirror of
+     *  `retryBlocked`, driven by a different signal): `unauthenticated` entries are retried. Retrying
+     *  a session-dead entry without this would just mint another 401 and another wasted attempt. */
+    retryUnauthenticated?: boolean;
 }
 
 /**
@@ -221,67 +221,67 @@ export interface DrainDeps {
  * coming backoff/cap policy may space retries out, but it must NEVER flip a status 0 to `failed`.
  */
 export async function settleEntry(
-  uid: string,
-  entry: OutboxEntry,
-  deps: DrainDeps,
+    uid: string,
+    entry: OutboxEntry,
+    deps: DrainDeps,
 ): Promise<SyncState> {
-  try {
-    await deps.post(entry.body);
-    // Accepted — 201 (created) or 200 (the server returned the row it already had). Identical to
-    // the client: the record is on the server, so the queue entry has done its job.
-    await removeEntry(uid, entry.clientSnapshotId);
-    return "synced";
-  } catch (error) {
-    const status = (error as { status?: number }).status ?? 0;
-    const code = (error as { code?: string }).code;
+    try {
+        await deps.post(entry.body);
+        // Accepted — 201 (created) or 200 (the server returned the row it already had). Identical to
+        // the client: the record is on the server, so the queue entry has done its job.
+        await removeEntry(uid, entry.clientSnapshotId);
+        return "synced";
+    } catch (error) {
+        const status = (error as { status?: number }).status ?? 0;
+        const code = (error as { code?: string }).code;
 
-    // Deleted elsewhere by the seller — drop quietly (§5). It is gone from the account AND the
-    // queue, so there is nothing left to report as unsent.
-    //
-    // But that reading requires PROOF, because 404 is the status infrastructure produces most: a
-    // misrouted proxy, an unmounted route or the hosting 404 page all reach us as
-    // `ApiError{status: 404, code: "UNKNOWN"}` (transport.ts falls back to `wire?.code ?? "UNKNOWN"`
-    // when the body is not the API's error envelope). Treating those as a deletion erases the entry
-    // and answers `synced` — a green "Salvo" over a record the server never received, the same class
-    // of lie M1 already closed on the re-read path.
-    //
-    // Two independent pieces of evidence, both required:
-    //   * `attempts > 0` — §5 describes a REPLAY. The file already stated the invariant in prose
-    //     ("a just-minted id the server has never seen cannot 404") without enforcing it.
-    //   * `code === "NOT_FOUND"` — the API said so, not a stranger holding the same status.
-    //
-    // Without both, the entry SURVIVES and is retried. The cost of being wrong here is asymmetric:
-    // a retained entry nags; an erased one is gone.
-    if (status === 404 && entry.attempts > 0 && code === "NOT_FOUND") {
-      await removeEntry(uid, entry.clientSnapshotId);
-      return "synced";
+        // Deleted elsewhere by the seller — drop quietly (§5). It is gone from the account AND the
+        // queue, so there is nothing left to report as unsent.
+        //
+        // But that reading requires PROOF, because 404 is the status infrastructure produces most: a
+        // misrouted proxy, an unmounted route or the hosting 404 page all reach us as
+        // `ApiError{status: 404, code: "UNKNOWN"}` (transport.ts falls back to `wire?.code ?? "UNKNOWN"`
+        // when the body is not the API's error envelope). Treating those as a deletion erases the entry
+        // and answers `synced` — a green "Salvo" over a record the server never received, the same class
+        // of lie M1 already closed on the re-read path.
+        //
+        // Two independent pieces of evidence, both required:
+        //   * `attempts > 0` — §5 describes a REPLAY. The file already stated the invariant in prose
+        //     ("a just-minted id the server has never seen cannot 404") without enforcing it.
+        //   * `code === "NOT_FOUND"` — the API said so, not a stranger holding the same status.
+        //
+        // Without both, the entry SURVIVES and is retried. The cost of being wrong here is asymmetric:
+        // a retained entry nags; an erased one is gone.
+        if (status === 404 && entry.attempts > 0 && code === "NOT_FOUND") {
+            await removeEntry(uid, entry.clientSnapshotId);
+            return "synced";
+        }
+
+        // hotfix 016/A3 (H4) — a 401 is NOT "no answer": the server actively refused the token. It must
+        // never fall into `pending` (whose copy promises "sincroniza sozinho quando houver conexão" —
+        // false with a dead connection and a live one alike) nor auto-retry blindly (retrying without a
+        // session can only mint the same 401 again). It NEVER purges or signs the seller out here — this
+        // function does not know about auth state at all, and that absence is the guarantee: the ONLY
+        // copy of an unsynced quote survives a dead session (see `session-expiry.ts` for the non-negotiable
+        // property, enforced where sign-out actually lives).
+        const syncState: OutboxEntry["syncState"] =
+            status === 401
+                ? "unauthenticated"
+                : status === 403
+                  ? "blocked"
+                  : status === 422
+                    ? "failed"
+                    : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
+                      "pending";
+
+        await updateEntry(uid, entry.clientSnapshotId, (current) => ({
+            ...current,
+            syncState,
+            attempts: current.attempts + 1,
+            lastStatus: status,
+        }));
+        return syncState;
     }
-
-    // hotfix 016/A3 (H4) — a 401 is NOT "no answer": the server actively refused the token. It must
-    // never fall into `pending` (whose copy promises "sincroniza sozinho quando houver conexão" —
-    // false with a dead connection and a live one alike) nor auto-retry blindly (retrying without a
-    // session can only mint the same 401 again). It NEVER purges or signs the seller out here — this
-    // function does not know about auth state at all, and that absence is the guarantee: the ONLY
-    // copy of an unsynced quote survives a dead session (see `session-expiry.ts` for the non-negotiable
-    // property, enforced where sign-out actually lives).
-    const syncState: OutboxEntry["syncState"] =
-      status === 401
-        ? "unauthenticated"
-        : status === 403
-          ? "blocked"
-          : status === 422
-            ? "failed"
-            : // Includes status 0 (no response): the write may have landed. PENDING, never "falhou".
-              "pending";
-
-    await updateEntry(uid, entry.clientSnapshotId, (current) => ({
-      ...current,
-      syncState,
-      attempts: current.attempts + 1,
-      lastStatus: status,
-    }));
-    return syncState;
-  }
 }
 
 /**
@@ -301,30 +301,30 @@ export async function settleEntry(
  * and even from two tabs without risking a duplicate.
  */
 export async function drainOutbox(
-  uid: string,
-  deps: DrainDeps,
+    uid: string,
+    deps: DrainDeps,
 ): Promise<Record<string, SyncState>> {
-  const entries = await listOutbox(uid);
-  const results: Record<string, SyncState> = {};
+    const entries = await listOutbox(uid);
+    const results: Record<string, SyncState> = {};
 
-  for (const entry of entries) {
-    // A permanent rejection is never auto-retried; a blocked entry waits for the seller (or for
-    // premium to come back); an unauthenticated one waits for the seller (or for the session to come
-    // back — 016/A3 H4). Untouched — not rewritten, not reordered — but its existing state is still
-    // recorded so the caller can read the target's outcome.
-    if (
-      entry.syncState === "failed" ||
-      (entry.syncState === "blocked" && !deps.retryBlocked) ||
-      (entry.syncState === "unauthenticated" && !deps.retryUnauthenticated)
-    ) {
-      results[entry.clientSnapshotId] = entry.syncState;
-      continue;
+    for (const entry of entries) {
+        // A permanent rejection is never auto-retried; a blocked entry waits for the seller (or for
+        // premium to come back); an unauthenticated one waits for the seller (or for the session to come
+        // back — 016/A3 H4). Untouched — not rewritten, not reordered — but its existing state is still
+        // recorded so the caller can read the target's outcome.
+        if (
+            entry.syncState === "failed" ||
+            (entry.syncState === "blocked" && !deps.retryBlocked) ||
+            (entry.syncState === "unauthenticated" && !deps.retryUnauthenticated)
+        ) {
+            results[entry.clientSnapshotId] = entry.syncState;
+            continue;
+        }
+
+        results[entry.clientSnapshotId] = await settleEntry(uid, entry, deps);
     }
 
-    results[entry.clientSnapshotId] = await settleEntry(uid, entry, deps);
-  }
-
-  return results;
+    return results;
 }
 
 /**
@@ -333,14 +333,14 @@ export async function drainOutbox(
  * resulting state (or `pending` if it could not be re-read — never a fabricated `synced`).
  */
 export async function retryEntry(
-  uid: string,
-  clientSnapshotId: string,
-  deps: DrainDeps,
+    uid: string,
+    clientSnapshotId: string,
+    deps: DrainDeps,
 ): Promise<SyncState> {
-  await updateEntry(uid, clientSnapshotId, (current) => ({ ...current, syncState: "pending" }));
-  const entry = (await listOutbox(uid)).find((e) => e.clientSnapshotId === clientSnapshotId);
-  if (!entry) return "pending"; // could not re-read it — never claim it was accepted
-  return settleEntry(uid, entry, deps);
+    await updateEntry(uid, clientSnapshotId, (current) => ({ ...current, syncState: "pending" }));
+    const entry = (await listOutbox(uid)).find((e) => e.clientSnapshotId === clientSnapshotId);
+    if (!entry) return "pending"; // could not re-read it — never claim it was accepted
+    return settleEntry(uid, entry, deps);
 }
 
 /**
@@ -348,24 +348,24 @@ export async function retryEntry(
  * UI), never automatic: a blocked/failed record is retained until they decide (ADR-0018 §9).
  */
 export async function discardEntry(uid: string, clientSnapshotId: string): Promise<void> {
-  await removeEntry(uid, clientSnapshotId);
+    await removeEntry(uid, clientSnapshotId);
 }
 
 /** One row of the Histórico, whether it lives on the server or is still on this device. */
 export interface HistoryItem {
-  /** Null while pending — an unsynced entry has no server id and must not pretend to. */
-  id: string | null;
-  clientSnapshotId: string;
-  kind: string;
-  label: string | null;
-  headlineTotal: string;
-  headlineBasis: string;
-  deviceQuotedAt: string;
-  syncState: SyncState;
-  /** The full server row, when synced. */
-  snapshot: SnapshotOut | null;
-  /** The queued entry, when not. */
-  entry: OutboxEntry | null;
+    /** Null while pending — an unsynced entry has no server id and must not pretend to. */
+    id: string | null;
+    clientSnapshotId: string;
+    kind: string;
+    label: string | null;
+    headlineTotal: string;
+    headlineBasis: string;
+    deviceQuotedAt: string;
+    syncState: SyncState;
+    /** The full server row, when synced. */
+    snapshot: SnapshotOut | null;
+    /** The queued entry, when not. */
+    entry: OutboxEntry | null;
 }
 
 /**
@@ -383,37 +383,37 @@ export interface HistoryItem {
  * "draft") and never collapsed into a counter chip (that would be the silent drop).
  */
 export function mergeHistory(server: SnapshotOut[], outbox: OutboxEntry[]): HistoryItem[] {
-  const syncedKeys = new Set(server.map((s) => String(s.clientSnapshotId)));
+    const syncedKeys = new Set(server.map((s) => String(s.clientSnapshotId)));
 
-  const fromServer: HistoryItem[] = server.map((s) => ({
-    id: String(s.id),
-    clientSnapshotId: String(s.clientSnapshotId),
-    kind: s.kind,
-    label: s.label ?? null,
-    headlineTotal: String(s.headlineTotal),
-    headlineBasis: s.headlineBasis,
-    deviceQuotedAt: String(s.deviceQuotedAt),
-    syncState: "synced",
-    snapshot: s,
-    entry: null,
-  }));
-
-  const fromOutbox: HistoryItem[] = outbox
-    .filter((e) => !syncedKeys.has(e.clientSnapshotId))
-    .map((e) => ({
-      id: null,
-      clientSnapshotId: e.clientSnapshotId,
-      kind: e.body.kind,
-      label: e.body.label ?? null,
-      headlineTotal: String(e.body.headlineTotal),
-      headlineBasis: e.body.headlineBasis,
-      deviceQuotedAt: String(e.body.deviceQuotedAt),
-      syncState: e.syncState,
-      snapshot: null,
-      entry: e,
+    const fromServer: HistoryItem[] = server.map((s) => ({
+        id: String(s.id),
+        clientSnapshotId: String(s.clientSnapshotId),
+        kind: s.kind,
+        label: s.label ?? null,
+        headlineTotal: String(s.headlineTotal),
+        headlineBasis: s.headlineBasis,
+        deviceQuotedAt: String(s.deviceQuotedAt),
+        syncState: "synced",
+        snapshot: s,
+        entry: null,
     }));
 
-  return [...fromServer, ...fromOutbox].sort((a, b) =>
-    b.deviceQuotedAt.localeCompare(a.deviceQuotedAt),
-  );
+    const fromOutbox: HistoryItem[] = outbox
+        .filter((e) => !syncedKeys.has(e.clientSnapshotId))
+        .map((e) => ({
+            id: null,
+            clientSnapshotId: e.clientSnapshotId,
+            kind: e.body.kind,
+            label: e.body.label ?? null,
+            headlineTotal: String(e.body.headlineTotal),
+            headlineBasis: e.body.headlineBasis,
+            deviceQuotedAt: String(e.body.deviceQuotedAt),
+            syncState: e.syncState,
+            snapshot: null,
+            entry: e,
+        }));
+
+    return [...fromServer, ...fromOutbox].sort((a, b) =>
+        b.deviceQuotedAt.localeCompare(a.deviceQuotedAt),
+    );
 }

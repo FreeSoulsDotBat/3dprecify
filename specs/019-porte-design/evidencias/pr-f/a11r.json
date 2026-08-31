@@ -1,26 +1,26 @@
 {
-  "registradoEm": "2026-08-29T18:16:25.124Z",
-  "itensCriados": 40,
-  "medidas": {
-    "tf-table-1024": {
-      "largura": 1024,
-      "altura": 900,
-      "visiveisSemRolar": 9
-    },
-    "tf-table-1279": {
-      "largura": 1279,
-      "altura": 900,
-      "visiveisSemRolar": 9
-    },
-    "mestre-detalhe-1280": {
-      "largura": 1280,
-      "altura": 900,
-      "visiveisSemRolar": 7
-    },
-    "mestre-detalhe-1920": {
-      "largura": 1920,
-      "altura": 900,
-      "visiveisSemRolar": 14
+    "registradoEm": "2026-08-29T18:16:25.124Z",
+    "itensCriados": 40,
+    "medidas": {
+        "tf-table-1024": {
+            "largura": 1024,
+            "altura": 900,
+            "visiveisSemRolar": 9
+        },
+        "tf-table-1279": {
+            "largura": 1279,
+            "altura": 900,
+            "visiveisSemRolar": 9
+        },
+        "mestre-detalhe-1280": {
+            "largura": 1280,
+            "altura": 900,
+            "visiveisSemRolar": 7
+        },
+        "mestre-detalhe-1920": {
+            "largura": 1920,
+            "altura": 900,
+            "visiveisSemRolar": 14
+        }
     }
-  }
 }

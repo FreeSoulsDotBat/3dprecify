@@ -1,21 +1,21 @@
 /* InfoTip skin over Radix Popover. A quiet inline ⓘ affordance next to a section
    title; opens a matte brand card explaining what/how the section calculates. */
 .tf-infotip__trigger {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  /* ≥24px hit target (WCAG 2.2 AA §2.5.8) kept compact so it reads as an inline
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    /* ≥24px hit target (WCAG 2.2 AA §2.5.8) kept compact so it reads as an inline
      affordance beside the label, not a primary control. */
-  width: 28px;
-  height: 28px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  flex-shrink: 0;
-  position: relative; /* A6 — âncora do ::after de área de toque */
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    flex-shrink: 0;
+    position: relative; /* A6 — âncora do ::after de área de toque */
 }
 /* A6 (T072) — piso de alvo da casa (INV-2 ≥44px) sem inflar o visual: a área CLICÁVEL é
    estendida por um pseudo-elemento FORA DO FLUXO; o botão segue ocupando e pintando 28×28.
@@ -23,29 +23,29 @@
    concorrente) — com −4px sobra folga; acima há o --field-gap e texto não interativo.
    Conta: 8+28+8 = 44 de largura · 12+28+4 = 44 de altura. */
 .tf-infotip__trigger::after {
-  content: "";
-  position: absolute;
-  inset: -12px -8px -4px;
+    content: "";
+    position: absolute;
+    inset: -12px -8px -4px;
 }
 .tf-infotip__trigger:hover,
 .tf-infotip__trigger[data-state="open"] {
-  color: var(--accent-text);
-  background: var(--accent-soft);
+    color: var(--accent-text);
+    background: var(--accent-soft);
 }
 
 .tf-infotip__content {
-  z-index: 71;
-  /* Never overflow the viewport edge at 390px (003 FR-010). */
-  max-width: min(20rem, calc(100vw - 2 * var(--gutter)));
-  padding: var(--space-3) var(--space-4);
-  background: var(--surface-card);
-  color: var(--text-body);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
-  font-size: var(--fs-body-sm);
-  line-height: var(--lh-normal);
+    z-index: 71;
+    /* Never overflow the viewport edge at 390px (003 FR-010). */
+    max-width: min(20rem, calc(100vw - 2 * var(--gutter)));
+    padding: var(--space-3) var(--space-4);
+    background: var(--surface-card);
+    color: var(--text-body);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    font-size: var(--fs-body-sm);
+    line-height: var(--lh-normal);
 }
 .tf-infotip__arrow {
-  fill: var(--surface-card);
+    fill: var(--surface-card);
 }

@@ -1,13 +1,13 @@
 {
-  "id": "estado-vazio-primeira-simulacao",
-  "nome": "Estado vazio — nenhuma simulação salva ainda",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
-  "oQueFoiInferido": "O primeiro contato do vendedor Premium com a funcionalidade: `EmptyState icon=\"boxes\"` (ícone reciclado do catálogo, sem grafismo), título \"Nenhuma simulação salva ainda\", corpo que ensina o caminho e um `Button variant=\"secondary\"` \"Voltar para a calculadora\" cujo `onClick` é literalmente `onClose` — o CTA do vazio só fecha o painel. Inferido: o ícone, a ausência de qualquer ilustração, e a ideia de que a saída do vazio é fechar em vez de conduzir à ação que cria a primeira simulação.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O momento de ensinar o que é uma simulação é justamente a tela vazia, e ela hoje é um ícone emprestado com um botão que só fecha.",
-  "prioridade": "MEDIA",
-  "refutacao": "Testei a hipótese de que o EmptyState desenhado já cobre este caso. Cobre o COMPONENTE e derruba a versão construída: no protótipo, todo empty-state tem ARTE e um CTA que age — `CatalogScreen.jsx` usa `art={<Grafismo shape=\"espada\"|\"arco\" size={84..96}/>}` + `Button primary` \"Adicionar filamento\"; `HistoryScreen.jsx` idem com `shape=\"linha\"`; o prompt manda \"empty-state educativo + seed com grafismo/onda\" (E5) e a regra de marca §C.6 pede \"um floreio orgânico por tela… ótimos em empty-states\"; a rodada 2 (item 10) ainda ACRESCENTOU um CTA secundário de seed ao vazio do Catálogo, verificado FIXED no V3. Nada disso existe desenhado para cenários — e a instância construída é a única do produto sem grafismo e com um CTA que não faz nada além de fechar. Nas 4 autoridades, 0 ocorrências de vazio de cenários. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "estado-vazio-primeira-simulacao",
+    "nome": "Estado vazio — nenhuma simulação salva ainda",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
+    "oQueFoiInferido": "O primeiro contato do vendedor Premium com a funcionalidade: `EmptyState icon=\"boxes\"` (ícone reciclado do catálogo, sem grafismo), título \"Nenhuma simulação salva ainda\", corpo que ensina o caminho e um `Button variant=\"secondary\"` \"Voltar para a calculadora\" cujo `onClick` é literalmente `onClose` — o CTA do vazio só fecha o painel. Inferido: o ícone, a ausência de qualquer ilustração, e a ideia de que a saída do vazio é fechar em vez de conduzir à ação que cria a primeira simulação.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O momento de ensinar o que é uma simulação é justamente a tela vazia, e ela hoje é um ícone emprestado com um botão que só fecha.",
+    "prioridade": "MEDIA",
+    "refutacao": "Testei a hipótese de que o EmptyState desenhado já cobre este caso. Cobre o COMPONENTE e derruba a versão construída: no protótipo, todo empty-state tem ARTE e um CTA que age — `CatalogScreen.jsx` usa `art={<Grafismo shape=\"espada\"|\"arco\" size={84..96}/>}` + `Button primary` \"Adicionar filamento\"; `HistoryScreen.jsx` idem com `shape=\"linha\"`; o prompt manda \"empty-state educativo + seed com grafismo/onda\" (E5) e a regra de marca §C.6 pede \"um floreio orgânico por tela… ótimos em empty-states\"; a rodada 2 (item 10) ainda ACRESCENTOU um CTA secundário de seed ao vazio do Catálogo, verificado FIXED no V3. Nada disso existe desenhado para cenários — e a instância construída é a única do produto sem grafismo e com um CTA que não faz nada além de fechar. Nas 4 autoridades, 0 ocorrências de vazio de cenários. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

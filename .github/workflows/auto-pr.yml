@@ -3,33 +3,33 @@ name: Auto-open promotion PR
 # ADR-0006. When CI passes on develop/main, open the next promotion PR (idempotent). Never merges, never deploys.
 # Activates once this file is on the default branch (workflow_run requirement).
 on:
-  workflow_run:
-    workflows: ["CI"]
-    types: [completed]
+    workflow_run:
+        workflows: ["CI"]
+        types: [completed]
 
 permissions:
-  contents: read
-  pull-requests: write
+    contents: read
+    pull-requests: write
 
 jobs:
-  open-next:
-    if: >
-      github.event.workflow_run.conclusion == 'success' &&
-      contains(fromJSON('["develop","main"]'), github.event.workflow_run.head_branch)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-      - name: Open the next promotion PR
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          HEAD: ${{ github.event.workflow_run.head_branch }}
-        run: |
-          if [ "$HEAD" = "develop" ]; then BASE=main; else BASE=release; fi
-          open=$(gh pr list --head "$HEAD" --base "$BASE" --state open --json number --jq 'length')
-          if [ "$open" = "0" ]; then
-            gh pr create --head "$HEAD" --base "$BASE" \
-              --title "promote: $HEAD → $BASE" \
-              --body "Auto-opened after CI passed on \`$HEAD\` (ADR-0006). Review, then merge to promote."
-          else
-            echo "PR $HEAD → $BASE already open; nothing to do."
-          fi
+    open-next:
+        if: >
+            github.event.workflow_run.conclusion == 'success' &&
+            contains(fromJSON('["develop","main"]'), github.event.workflow_run.head_branch)
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+            - name: Open the next promotion PR
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  HEAD: ${{ github.event.workflow_run.head_branch }}
+              run: |
+                  if [ "$HEAD" = "develop" ]; then BASE=main; else BASE=release; fi
+                  open=$(gh pr list --head "$HEAD" --base "$BASE" --state open --json number --jq 'length')
+                  if [ "$open" = "0" ]; then
+                    gh pr create --head "$HEAD" --base "$BASE" \
+                      --title "promote: $HEAD → $BASE" \
+                      --body "Auto-opened after CI passed on \`$HEAD\` (ADR-0006). Review, then merge to promote."
+                  else
+                    echo "PR $HEAD → $BASE already open; nothing to do."
+                  fi

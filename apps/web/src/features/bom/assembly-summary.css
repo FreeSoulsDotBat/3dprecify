@@ -9,9 +9,9 @@
    camada que sabe qual cromo ela mesma tem. O fallback existe para quem renderizar este componente
    fora do shell (os testes de unidade), não para esconder um shell quebrado. */
 .assembly-summary__pinned {
-  position: sticky;
-  bottom: var(--pinned-bottom, var(--space-2));
-  z-index: 10;
+    position: sticky;
+    bottom: var(--pinned-bottom, var(--space-2));
+    z-index: 10;
 }
 
 /* A5-b — a barra fixada é um READOUT compacto, não uma grade de cartões: a 360px duas colunas
@@ -19,26 +19,26 @@
    com rótulo à esquerda e valor à direita devolve ~216px ao número E deixa a barra MAIS BAIXA que
    a grade de dois cartões — o oposto do custo de altura que se temia ao empilhar. */
 .assembly-summary__pinned-prices {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--space-2);
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
 }
 .assembly-summary__pinned-prices .tf-price {
-  flex-direction: row;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-3);
-  padding: 0;
-  background: transparent;
-  border: none;
-  box-shadow: none;
-  /* o tom accent pinta `color: var(--accent-contrast)` (claro, para fundo roxo); sem o fundo isso
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    /* o tom accent pinta `color: var(--accent-contrast)` (claro, para fundo roxo); sem o fundo isso
      vira texto claro sobre superfície clara. `--accent-text` é o token de texto accent SOBRE
      superfície — mantém a ênfase e o contraste. */
-  color: var(--accent-text);
+    color: var(--accent-text);
 }
 .assembly-summary__pinned-prices .tf-price__label {
-  white-space: nowrap;
+    white-space: nowrap;
 }
 
 /* A5-c — quem CEDE é sempre o rótulo, nunca o número. O rótulo em caps+tracking engorda ~70%
@@ -48,14 +48,14 @@
    obrigatório junto, senão um valor absurdo empurra overflow de página em vez de acionar o
    overflow-x que o amount já tem. */
 .assembly-summary__pinned-prices .tf-price__label {
-  font-size: var(--fs-caption);
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: var(--fs-caption);
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .assembly-summary__pinned-prices .tf-price__amount {
-  flex: 0 0 auto;
-  max-width: 100%;
+    flex: 0 0 auto;
+    max-width: 100%;
 }
 
 /* 018/US3 — a variante COLUNA (desktop ≥1280px). Aqui o resumo não gruda em nada por conta
@@ -63,5 +63,5 @@
    `sticky` aninhadas competiriam pelo mesmo eixo e a de dentro pareceria "solta".
    `--pinned-bottom` e toda a regra do 014/T118 continuam valendo para o mobile, intocadas. */
 .assembly-summary__col {
-  display: block;
+    display: block;
 }

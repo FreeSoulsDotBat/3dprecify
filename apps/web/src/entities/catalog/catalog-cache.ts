@@ -14,13 +14,13 @@ export type CatalogItem = FilamentOut | PrinterOut | ProductOut;
 
 /** IndexedDB key — uid-scoped so a device-shared cache never crosses accounts (FR-309). */
 export function catalogIdbKey(resource: CatalogResource, uid: string): string {
-  return `catalog:${resource}:${uid}`;
+    return `catalog:${resource}:${uid}`;
 }
 
 /** TanStack Query key — uid-scoped (identity-leak lesson): a re-login gets a distinct entry, so
  *  the previous account's list can never be read within staleTime (mirrors the `/me` query, D1). */
 export function catalogQueryKey(resource: CatalogResource, uid: string | undefined) {
-  return ["catalog", resource, uid] as const;
+    return ["catalog", resource, uid] as const;
 }
 
 /** Fuzzy root key — `removeQueries({ queryKey: CATALOG_QUERY_ROOT })` clears every uid entry. */
@@ -29,39 +29,42 @@ export const CATALOG_QUERY_ROOT = ["catalog"] as const;
 /** A stored payload is only trusted if it is an array of objects each carrying a string `id`. A
  *  corrupt/foreign shape is discarded (null) rather than fed to the UI as a broken list. */
 function isCatalogArray(raw: unknown): raw is CatalogItem[] {
-  return (
-    Array.isArray(raw) &&
-    raw.every(
-      (x) => typeof x === "object" && x !== null && typeof (x as { id?: unknown }).id === "string",
-    )
-  );
+    return (
+        Array.isArray(raw) &&
+        raw.every(
+            (x) =>
+                typeof x === "object" &&
+                x !== null &&
+                typeof (x as { id?: unknown }).id === "string",
+        )
+    );
 }
 
 /** Load + shape-guard the uid's cached list; null on empty/error/corrupt (non-blocking). */
 export async function loadCachedCatalog<T extends CatalogItem>(
-  resource: CatalogResource,
-  uid: string,
+    resource: CatalogResource,
+    uid: string,
 ): Promise<T[] | null> {
-  try {
-    const raw = await get(catalogIdbKey(resource, uid));
-    return isCatalogArray(raw) ? (raw as T[]) : null;
-  } catch {
-    return null;
-  }
+    try {
+        const raw = await get(catalogIdbKey(resource, uid));
+        return isCatalogArray(raw) ? (raw as T[]) : null;
+    } catch {
+        return null;
+    }
 }
 
 /** Best-effort persist of a fresh online read under the uid key (a write failure is swallowed —
  *  the cache is not a source of truth; the online read still answered). */
 export async function persistCachedCatalog<T extends CatalogItem>(
-  resource: CatalogResource,
-  uid: string,
-  items: T[],
+    resource: CatalogResource,
+    uid: string,
+    items: T[],
 ): Promise<void> {
-  try {
-    await set(catalogIdbKey(resource, uid), items);
-  } catch {
-    /* ignore — the cache is a convenience, never authoritative */
-  }
+    try {
+        await set(catalogIdbKey(resource, uid), items);
+    } catch {
+        /* ignore — the cache is a convenience, never authoritative */
+    }
 }
 
 /**
@@ -73,21 +76,21 @@ export async function persistCachedCatalog<T extends CatalogItem>(
  * = NaN`, e uma tela menos cuidadosa vira `0,00`) — a mentira que este helper existe para impedir.
  */
 export function readSellerFixedPrice(p: ProductOut): number | null {
-  const raw = (p as Partial<ProductOut>).sellerFixedPrice;
-  if (raw === undefined || raw === null) return null;
-  return Number(raw);
+    const raw = (p as Partial<ProductOut>).sellerFixedPrice;
+    if (raw === undefined || raw === null) return null;
+    return Number(raw);
 }
 
 /** Purge EVERY resource cache for a uid — the sign-out privacy sweep (Q2/FR-309). Called from the
  *  app-layer session subscription the moment the session goes anonymous / the uid changes. */
 export async function purgeCatalogCache(uid: string): Promise<void> {
-  try {
-    await Promise.all([
-      del(catalogIdbKey("filaments", uid)),
-      del(catalogIdbKey("printers", uid)),
-      del(catalogIdbKey("products", uid)),
-    ]);
-  } catch {
-    /* ignore — a failed purge must never crash the sign-out flow */
-  }
+    try {
+        await Promise.all([
+            del(catalogIdbKey("filaments", uid)),
+            del(catalogIdbKey("printers", uid)),
+            del(catalogIdbKey("products", uid)),
+        ]);
+    } catch {
+        /* ignore — a failed purge must never crash the sign-out flow */
+    }
 }

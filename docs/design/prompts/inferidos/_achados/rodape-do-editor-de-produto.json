@@ -1,13 +1,13 @@
 {
-  "id": "rodape-do-editor-de-produto",
-  "nome": "Rodapé do editor de produto (preço recalculado + registrar orçamento + salvar simulação)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
-  "oQueFoiInferido": "O `tf-calc-footer` (linhas 418-452) empilha três coisas de peso semelhante sem desenho de conjunto: o bloco `PriceResults` completo — ou um `Alert tone=\"danger\"` com `t.invalidNote` no lugar dele quando não há resultado; o `RecordSnapshotButton` (\"registrar orçamento\", provenance PRODUCT); e o `SaveScenarioSheet` centralizado por um `flex justify-center` avulso. Inferido: a ordem e a hierarquia visual das três; o fato de duas delas só existirem em produto SALVO com preço válido (`recordSource` e `editing && result && input`), aparecendo e sumindo sem que nada explique; e a relação delas com o \"Salvar produto\", que está lá em cima, dentro do primeiro cartão.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O vendedor termina de configurar um produto diante de três ações de peso parecido e nenhuma hierarquia desenhada dizendo qual é a que ele queria — e a quarta, a que realmente salva o produto, está fora de vista no topo.",
-  "prioridade": "MEDIA",
-  "refutacao": "CORRIJO a classificação: era NENHUMA, é PROTOTIPO_PARCIAL, porque um dos três componentes tem autoridade forte. (1) §E4 (linhas 247-253) desenha o bloco de resultado em detalhe — `PriceHero` com `tone=\"accent\"` + glow roxo, breakdown itemizado com `BreakdownRow` empilhado e a última linha em `emphasis=\"total\"` — e `-fixes.md` item 33 (V2 FIXED) moveu o glow do Salvar para o PriceHero justamente para fixar que o foco visual é a conta. (3) `.design-import/components/data/PriceHero.jsx` existe como componente exportado. Então o RESULTADO tem desenho. O que não tem: as duas ações de persistência neste rodapé e o empilhamento das três — §E4 só conhece \"Ação Salvar → dispara bottom-sheet de upsell\" (linha 254), e o inventário não tem cenários salvos em lugar nenhum (Histórico é §E6, cenários de marketplace não aparecem em E1–E9). (2) A auditoria não cobre. (4) O canvas não desenha o editor de produto; a única coisa próxima é o par \"Salvar alterações\" / \"Usar no cálculo\" no rodapé da ficha de 560px, que são outras duas ações, noutra superfície.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "rodape-do-editor-de-produto",
+    "nome": "Rodapé do editor de produto (preço recalculado + registrar orçamento + salvar simulação)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
+    "oQueFoiInferido": "O `tf-calc-footer` (linhas 418-452) empilha três coisas de peso semelhante sem desenho de conjunto: o bloco `PriceResults` completo — ou um `Alert tone=\"danger\"` com `t.invalidNote` no lugar dele quando não há resultado; o `RecordSnapshotButton` (\"registrar orçamento\", provenance PRODUCT); e o `SaveScenarioSheet` centralizado por um `flex justify-center` avulso. Inferido: a ordem e a hierarquia visual das três; o fato de duas delas só existirem em produto SALVO com preço válido (`recordSource` e `editing && result && input`), aparecendo e sumindo sem que nada explique; e a relação delas com o \"Salvar produto\", que está lá em cima, dentro do primeiro cartão.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O vendedor termina de configurar um produto diante de três ações de peso parecido e nenhuma hierarquia desenhada dizendo qual é a que ele queria — e a quarta, a que realmente salva o produto, está fora de vista no topo.",
+    "prioridade": "MEDIA",
+    "refutacao": "CORRIJO a classificação: era NENHUMA, é PROTOTIPO_PARCIAL, porque um dos três componentes tem autoridade forte. (1) §E4 (linhas 247-253) desenha o bloco de resultado em detalhe — `PriceHero` com `tone=\"accent\"` + glow roxo, breakdown itemizado com `BreakdownRow` empilhado e a última linha em `emphasis=\"total\"` — e `-fixes.md` item 33 (V2 FIXED) moveu o glow do Salvar para o PriceHero justamente para fixar que o foco visual é a conta. (3) `.design-import/components/data/PriceHero.jsx` existe como componente exportado. Então o RESULTADO tem desenho. O que não tem: as duas ações de persistência neste rodapé e o empilhamento das três — §E4 só conhece \"Ação Salvar → dispara bottom-sheet de upsell\" (linha 254), e o inventário não tem cenários salvos em lugar nenhum (Histórico é §E6, cenários de marketplace não aparecem em E1–E9). (2) A auditoria não cobre. (4) O canvas não desenha o editor de produto; a única coisa próxima é o par \"Salvar alterações\" / \"Usar no cálculo\" no rodapé da ficha de 560px, que são outras duas ações, noutra superfície.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

@@ -1,19 +1,19 @@
 {
-  "id": "info-tip-de-ajuda",
-  "nome": "Dica de ajuda ⓘ (InfoTip)",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/shared/ui/info-tip.tsx",
-    "apps/web/src/shared/ui/info-tip.css",
-    "apps/web/src/features/calculator/calculator-form.tsx",
-    "apps/web/src/features/calculator/shopee-warnings.tsx",
-    "apps/web/src/features/calculator/shopee-warnings.css"
-  ],
-  "oQueFoiInferido": "O gatilho como PÍLULA de 28×28 com o glifo `info` (--text-muted; fundo --accent-soft e cor --accent-text quando aberto), cuja área CLICÁVEL é esticada por um `::after` assimétrico (`inset: -12px -8px -4px`) para chegar a 44px sem inflar o desenho; o cartão flutuante (max-width min(20rem, 100vw − 2·gutter), radius lg, shadow md, seta, posicionado por colisão do Radix); a abertura por HOVER com 80ms de atraso de fechamento em ponteiro fino e por CLIQUE no toque; e a regra de que o Escape SUPRIME o hover até o ponteiro sair de verdade (`suppressHover`). Falta desenhar: o cartão ABERTO (largura, tipografia, hierarquia título/corpo), o texto longo, o estado aberto a 360px, e se a mesma peça serve para 'explicar a conta' e para 'esconder um aviso comprido' — que é o que ela faz hoje na `.tf-alert--compact` da Shopee.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A explicação de como cada bloco calcula — o coração da promessa de transparência do produto — está atrás de uma affordance cujo ESTADO ABERTO ninguém desenhou, e no toque não existe hover para dar a pista de que aquele ponto cinza é clicável.",
-  "prioridade": "ALTA",
-  "refutacao": "Tentei derrubar e derrubei um pedaço. `.design-import/ui_kits/precifica3d/CalculatorScreen.jsx:68-69` desenha LITERALMENTE um ⓘ na linha do rótulo: `<Field label={<span style={{display:'inline-flex',alignItems:'center',gap:5}}>Markup <Tooltip content=\"Markup (margem sobre o custo) — não sobre o preço de venda\"><Icon name=\"circle-help\" size={15} color=\"var(--text-faint)\"/></Tooltip></span>}>`. Logo a POSIÇÃO (mesma linha, à direita do texto, cinza-fraco) e o PAPEL (explicar como o campo entra na conta) ESTÃO desenhados — e o texto bate com o hint do §E4. É a versão anterior e mais simples: glifo `circle-help` de 15px, sem pílula, sem fundo aberto, sem seta, sem clique, e sem NENHUMA autoridade mostrando o popover aberto (o `Tooltip` é nomeado no readme l.30 mas nunca foi exportado — só PriceHero.jsx e IconButton.jsx vieram). (4) Medi o canvas: `grep -c \"infotip|tooltip|circle-help\"` = 0 — nenhuma das 4 abas desktop tem ⓘ. Sobrevive, rebaixado a PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "info-tip-de-ajuda",
+    "nome": "Dica de ajuda ⓘ (InfoTip)",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/shared/ui/info-tip.tsx",
+        "apps/web/src/shared/ui/info-tip.css",
+        "apps/web/src/features/calculator/calculator-form.tsx",
+        "apps/web/src/features/calculator/shopee-warnings.tsx",
+        "apps/web/src/features/calculator/shopee-warnings.css"
+    ],
+    "oQueFoiInferido": "O gatilho como PÍLULA de 28×28 com o glifo `info` (--text-muted; fundo --accent-soft e cor --accent-text quando aberto), cuja área CLICÁVEL é esticada por um `::after` assimétrico (`inset: -12px -8px -4px`) para chegar a 44px sem inflar o desenho; o cartão flutuante (max-width min(20rem, 100vw − 2·gutter), radius lg, shadow md, seta, posicionado por colisão do Radix); a abertura por HOVER com 80ms de atraso de fechamento em ponteiro fino e por CLIQUE no toque; e a regra de que o Escape SUPRIME o hover até o ponteiro sair de verdade (`suppressHover`). Falta desenhar: o cartão ABERTO (largura, tipografia, hierarquia título/corpo), o texto longo, o estado aberto a 360px, e se a mesma peça serve para 'explicar a conta' e para 'esconder um aviso comprido' — que é o que ela faz hoje na `.tf-alert--compact` da Shopee.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A explicação de como cada bloco calcula — o coração da promessa de transparência do produto — está atrás de uma affordance cujo ESTADO ABERTO ninguém desenhou, e no toque não existe hover para dar a pista de que aquele ponto cinza é clicável.",
+    "prioridade": "ALTA",
+    "refutacao": "Tentei derrubar e derrubei um pedaço. `.design-import/ui_kits/precifica3d/CalculatorScreen.jsx:68-69` desenha LITERALMENTE um ⓘ na linha do rótulo: `<Field label={<span style={{display:'inline-flex',alignItems:'center',gap:5}}>Markup <Tooltip content=\"Markup (margem sobre o custo) — não sobre o preço de venda\"><Icon name=\"circle-help\" size={15} color=\"var(--text-faint)\"/></Tooltip></span>}>`. Logo a POSIÇÃO (mesma linha, à direita do texto, cinza-fraco) e o PAPEL (explicar como o campo entra na conta) ESTÃO desenhados — e o texto bate com o hint do §E4. É a versão anterior e mais simples: glifo `circle-help` de 15px, sem pílula, sem fundo aberto, sem seta, sem clique, e sem NENHUMA autoridade mostrando o popover aberto (o `Tooltip` é nomeado no readme l.30 mas nunca foi exportado — só PriceHero.jsx e IconButton.jsx vieram). (4) Medi o canvas: `grep -c \"infotip|tooltip|circle-help\"` = 0 — nenhuma das 4 abas desktop tem ⓘ. Sobrevive, rebaixado a PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

@@ -2,8 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import {
-  type CheckoutInPeriod,
-  createCheckoutApiV1BillingCheckoutPost,
+    type CheckoutInPeriod,
+    createCheckoutApiV1BillingCheckoutPost,
 } from "@/shared/api/generated";
 import { ApiError } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -27,60 +27,60 @@ const t = messages.billing;
 export type BillingCtaState = "idle" | "pending" | "conflict" | "unavailable";
 
 export interface BillingCtaProps {
-  period: CheckoutInPeriod;
-  /** Whitelisted return-to-intent for a signed-out tap (router.tsx RETURN_TO_INTENT). */
-  signInRedirect?: string;
-  className?: string;
+    period: CheckoutInPeriod;
+    /** Whitelisted return-to-intent for a signed-out tap (router.tsx RETURN_TO_INTENT). */
+    signInRedirect?: string;
+    className?: string;
 }
 
 export function BillingCta({ period, signInRedirect = "/conta", className }: BillingCtaProps) {
-  const status = useSessionStore((s) => s.status);
-  const navigate = useNavigate();
-  const [state, setState] = useState<BillingCtaState>("idle");
+    const status = useSessionStore((s) => s.status);
+    const navigate = useNavigate();
+    const [state, setState] = useState<BillingCtaState>("idle");
 
-  async function onClick() {
-    if (status !== "authenticated") {
-      void navigate({ to: "/sign-in", search: { redirect: signInRedirect } });
-      return;
+    async function onClick() {
+        if (status !== "authenticated") {
+            void navigate({ to: "/sign-in", search: { redirect: signInRedirect } });
+            return;
+        }
+        setState("pending");
+        try {
+            const res = await createCheckoutApiV1BillingCheckoutPost({ period });
+            if (res.status !== 200) {
+                // unreachable: the transport throws a typed ApiError on any non-2xx (transport.ts) — only
+                // a real 200 reaches here.
+                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+            }
+            // The browser is about to leave the app for MP's hosted checkout — stay "pending" (the
+            // button keeps its spinner + "Abrindo o Mercado Pago…" affordance via `loading`) rather
+            // than settle back to idle, so there is no flash of a re-enabled button before navigation.
+            window.location.assign(res.data.initPoint);
+        } catch (err) {
+            if (err instanceof ApiError && err.status === 409) {
+                setState("conflict");
+            } else {
+                // Any other failure (503 BILLING_UNAVAILABLE, offline, malformed response) settles to the
+                // same honest "unavailable" copy — nothing was charged (§2.3).
+                setState("unavailable");
+            }
+        }
     }
-    setState("pending");
-    try {
-      const res = await createCheckoutApiV1BillingCheckoutPost({ period });
-      if (res.status !== 200) {
-        // unreachable: the transport throws a typed ApiError on any non-2xx (transport.ts) — only
-        // a real 200 reaches here.
-        throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
-      }
-      // The browser is about to leave the app for MP's hosted checkout — stay "pending" (the
-      // button keeps its spinner + "Abrindo o Mercado Pago…" affordance via `loading`) rather
-      // than settle back to idle, so there is no flash of a re-enabled button before navigation.
-      window.location.assign(res.data.initPoint);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setState("conflict");
-      } else {
-        // Any other failure (503 BILLING_UNAVAILABLE, offline, malformed response) settles to the
-        // same honest "unavailable" copy — nothing was charged (§2.3).
-        setState("unavailable");
-      }
-    }
-  }
 
-  return (
-    <div className={className}>
-      <Button onClick={() => void onClick()} loading={state === "pending"}>
-        {t.subscribeAction}
-      </Button>
-      {state === "conflict" && (
-        <Alert tone="danger" className="tf-billing-cta__alert">
-          {t.checkoutInProgress}
-        </Alert>
-      )}
-      {state === "unavailable" && (
-        <Alert tone="danger" className="tf-billing-cta__alert">
-          {t.offerUnavailable}
-        </Alert>
-      )}
-    </div>
-  );
+    return (
+        <div className={className}>
+            <Button onClick={() => void onClick()} loading={state === "pending"}>
+                {t.subscribeAction}
+            </Button>
+            {state === "conflict" && (
+                <Alert tone="danger" className="tf-billing-cta__alert">
+                    {t.checkoutInProgress}
+                </Alert>
+            )}
+            {state === "unavailable" && (
+                <Alert tone="danger" className="tf-billing-cta__alert">
+                    {t.offerUnavailable}
+                </Alert>
+            )}
+        </div>
+    );
 }

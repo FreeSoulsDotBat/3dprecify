@@ -1,17 +1,17 @@
 {
-  "id": "formulario-filamento",
-  "nome": "Formulário de filamento (Nome · Material · Custo do rolo · Peso do rolo)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/catalog/filament-form.tsx",
-    "apps/web/src/features/catalog/catalog-controls.tsx",
-    "apps/web/src/features/catalog/catalog-schema.ts"
-  ],
-  "oQueFoiInferido": "CORREÇÃO ao mapeamento original: o campo \"Material\" NÃO é inferido — está desenhado nominalmente no canvas. O que foi inferido é: (a) a coluna ÚNICA (`flex flex-col gap-3`, filament-form linha 56) contra o desenho, que agrupa em grade; (b) o campo \"Cor\" pedido duas vezes pelo desenho e nunca construído; (c) a UNIDADE do peso — o canvas escreve \"Peso do rolo\" em **g** (valor 1000), o código usa **kg** com `CEIL_KG` e `rollWeightError`; (d) a marcação de obrigatoriedade campo a campo (`required` em Nome/Custo/Peso, Material sem `required` E sem `optional` — nem asterisco nem tag, um terceiro estado que nenhuma autoridade define); (e) o Salvar que permanece HABILITADO com o formulário inválido, contra pedido explícito.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O formulário que alimenta todo o cálculo de material nunca teve desenho completo em nenhuma época: o campo que o protótipo pediu (Cor) não existe, a unidade diverge do canvas, e o Salvar segue clicável no estado inválido que duas rodadas de correção mandaram desabilitar.",
-  "prioridade": "MEDIA",
-  "refutacao": "Derruba PARCIAL e obriga a corrigir o mapeador. (4) O canvas, no `catalog()`, dá ao filamento EXATAMENTE quatro campos com estes rótulos: `F(\"Nome\")`, `F(\"Material\")`, `F(\"Custo do rolo\", pre \"R$\")`, `F(\"Peso do rolo\", suf \"g\")` — logo \"Material\" TEM desenho e a afirmação \"nasceu de inferência\" está errada; e o `<sc-for>` renderiza dentro de `tf-costs-grid`, que na implementação real (`calculator-form.css:114`) é uma grade que reflui, não uma coluna. (1) §E5 (linha 263) especifica \"Filamento: nome, cor, custo do rolo (R$), peso (kg)\" — pede COR, não Material. (3) `CatalogScreen.jsx` só implementa Nome + Custo + Peso, e ainda em `gridTemplateColumns:'1fr 1fr'` (linha 77). `-fixes.md` item 34 e `-fixes-r2.md` item 17 pedem \"adicione o campo 'Cor'\" e \"desabilite 'Salvar' enquanto o formulário estiver inválido\". (2) V2 marca 34 como PARTIAL e V3 marca #17 NOT FIXED por DUAS rodadas seguidas, além de #16 (\"Nome\" ainda `<input>` cru) também NOT FIXED — o protótipo NUNCA chegou a ter este formulário completo. Sobrevive com escopo estreitado.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "formulario-filamento",
+    "nome": "Formulário de filamento (Nome · Material · Custo do rolo · Peso do rolo)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/catalog/filament-form.tsx",
+        "apps/web/src/features/catalog/catalog-controls.tsx",
+        "apps/web/src/features/catalog/catalog-schema.ts"
+    ],
+    "oQueFoiInferido": "CORREÇÃO ao mapeamento original: o campo \"Material\" NÃO é inferido — está desenhado nominalmente no canvas. O que foi inferido é: (a) a coluna ÚNICA (`flex flex-col gap-3`, filament-form linha 56) contra o desenho, que agrupa em grade; (b) o campo \"Cor\" pedido duas vezes pelo desenho e nunca construído; (c) a UNIDADE do peso — o canvas escreve \"Peso do rolo\" em **g** (valor 1000), o código usa **kg** com `CEIL_KG` e `rollWeightError`; (d) a marcação de obrigatoriedade campo a campo (`required` em Nome/Custo/Peso, Material sem `required` E sem `optional` — nem asterisco nem tag, um terceiro estado que nenhuma autoridade define); (e) o Salvar que permanece HABILITADO com o formulário inválido, contra pedido explícito.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O formulário que alimenta todo o cálculo de material nunca teve desenho completo em nenhuma época: o campo que o protótipo pediu (Cor) não existe, a unidade diverge do canvas, e o Salvar segue clicável no estado inválido que duas rodadas de correção mandaram desabilitar.",
+    "prioridade": "MEDIA",
+    "refutacao": "Derruba PARCIAL e obriga a corrigir o mapeador. (4) O canvas, no `catalog()`, dá ao filamento EXATAMENTE quatro campos com estes rótulos: `F(\"Nome\")`, `F(\"Material\")`, `F(\"Custo do rolo\", pre \"R$\")`, `F(\"Peso do rolo\", suf \"g\")` — logo \"Material\" TEM desenho e a afirmação \"nasceu de inferência\" está errada; e o `<sc-for>` renderiza dentro de `tf-costs-grid`, que na implementação real (`calculator-form.css:114`) é uma grade que reflui, não uma coluna. (1) §E5 (linha 263) especifica \"Filamento: nome, cor, custo do rolo (R$), peso (kg)\" — pede COR, não Material. (3) `CatalogScreen.jsx` só implementa Nome + Custo + Peso, e ainda em `gridTemplateColumns:'1fr 1fr'` (linha 77). `-fixes.md` item 34 e `-fixes-r2.md` item 17 pedem \"adicione o campo 'Cor'\" e \"desabilite 'Salvar' enquanto o formulário estiver inválido\". (2) V2 marca 34 como PARTIAL e V3 marca #17 NOT FIXED por DUAS rodadas seguidas, além de #16 (\"Nome\" ainda `<input>` cru) também NOT FIXED — o protótipo NUNCA chegou a ter este formulário completo. Sobrevive com escopo estreitado.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

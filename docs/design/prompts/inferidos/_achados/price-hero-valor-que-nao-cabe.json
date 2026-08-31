@@ -1,13 +1,13 @@
 {
-  "id": "price-hero-valor-que-nao-cabe",
-  "nome": "PriceHero — o preço que não cabe (quebra, encolhe, rola)",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/shared/ui/price-hero.tsx", "apps/web/src/shared/ui/price-hero.css"],
-  "oQueFoiInferido": "O único primitivo com desenho COMPLETO no repo é também o mais reescrito — e tudo o que foi reescrito é comportamento que o desenho não previa: a linha do valor virou `flex-wrap: wrap` com `overflow-x: auto` (rola por dentro em último caso); o inteiro ganhou `word-break: keep-all` para nunca ser partido ao meio; o `line-height` foi de 1 para 1.2 porque com 1 o conteúdo ficava 4px mais alto que a caixa e o Chrome desenhava barra clássica de 15px, empurrando o preço 7,5px do centro; os modificadores `--md`/`--lg` migraram de `__int` para `__amount` (senão cur/dec calculavam sobre a base errada); e `--center` deixou de ser `align-items` para ser `text-align`.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É o número que o produto existe para mostrar. Cada defeito de transbordo foi descoberto com o preço já na tela do dono — nunca no desenho.",
-  "prioridade": "MEDIA",
-  "refutacao": "Corrijo a autoridade: não é NENHUMA. `.design-import/components/data/PriceHero.jsx` é o desenho mais completo do repo (CSS inteiro, 5 tons, 3 tamanhos, a divisão cur/int/dec) e o canvas instancia o resultado do kit duas vezes (`tf-price tf-price--accent tf-price--md tf-price--center` e um `--md --center` neutro, l.214-221). O caso NOMINAL está coberto. O que não está em autoridade nenhuma é o valor que NÃO CABE — e conferi as quatro correções do app contra o JSX original, todas contradizendo-o: o desenho não tem `flex-wrap`, não tem `overflow`, não tem `word-break`, crava `line-height:1` (exatamente a causa medida em 016/T018-A1) e define `--center` como `align-items:center` (a causa medida em 016/T016). §E4 crava exemplos pequenos (R$ 3,00, R$ 20,65) e a auditoria item 16 fala de 'glow on Save not on result', nunca de transbordo. Sobrevive.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "price-hero-valor-que-nao-cabe",
+    "nome": "PriceHero — o preço que não cabe (quebra, encolhe, rola)",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/shared/ui/price-hero.tsx", "apps/web/src/shared/ui/price-hero.css"],
+    "oQueFoiInferido": "O único primitivo com desenho COMPLETO no repo é também o mais reescrito — e tudo o que foi reescrito é comportamento que o desenho não previa: a linha do valor virou `flex-wrap: wrap` com `overflow-x: auto` (rola por dentro em último caso); o inteiro ganhou `word-break: keep-all` para nunca ser partido ao meio; o `line-height` foi de 1 para 1.2 porque com 1 o conteúdo ficava 4px mais alto que a caixa e o Chrome desenhava barra clássica de 15px, empurrando o preço 7,5px do centro; os modificadores `--md`/`--lg` migraram de `__int` para `__amount` (senão cur/dec calculavam sobre a base errada); e `--center` deixou de ser `align-items` para ser `text-align`.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É o número que o produto existe para mostrar. Cada defeito de transbordo foi descoberto com o preço já na tela do dono — nunca no desenho.",
+    "prioridade": "MEDIA",
+    "refutacao": "Corrijo a autoridade: não é NENHUMA. `.design-import/components/data/PriceHero.jsx` é o desenho mais completo do repo (CSS inteiro, 5 tons, 3 tamanhos, a divisão cur/int/dec) e o canvas instancia o resultado do kit duas vezes (`tf-price tf-price--accent tf-price--md tf-price--center` e um `--md --center` neutro, l.214-221). O caso NOMINAL está coberto. O que não está em autoridade nenhuma é o valor que NÃO CABE — e conferi as quatro correções do app contra o JSX original, todas contradizendo-o: o desenho não tem `flex-wrap`, não tem `overflow`, não tem `word-break`, crava `line-height:1` (exatamente a causa medida em 016/T018-A1) e define `--center` como `align-items:center` (a causa medida em 016/T016). §E4 crava exemplos pequenos (R$ 3,00, R$ 20,65) e a auditoria item 16 fala de 'glow on Save not on result', nunca de transbordo. Sobrevive.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

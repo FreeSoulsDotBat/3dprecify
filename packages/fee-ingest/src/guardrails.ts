@@ -9,16 +9,16 @@ import { categoryId } from "./amazon-to-catalog.ts";
 // pinned canaries can.
 
 export interface SanityOptions {
-  /** Below this many parsed rows, treat the run as a source-shape failure. */
-  minRows: number;
-  /** Valores fixados de uma leitura sabidamente boa: `[categoria, comissão %, mínimo por item]`.
-   *
-   *  014/T102 — era só `[categoria, comissão]`, e a lacuna era exatamente do tamanho do defeito que
-   *  esta guarda existe para pegar: a leitura das colunas é POSICIONAL, então uma coluna inserida na
-   *  fonte desloca o `minPerItem` sem tocar no percentual — e a canária dizia `ok: true` sobre uma
-   *  tabela em que todo mínimo por item virou zero. Números plausíveis, todos errados, sob selo de
-   *  referência. O PAR é o que torna o deslocamento visível. */
-  canaries: ReadonlyArray<readonly [string, number, number]>;
+    /** Below this many parsed rows, treat the run as a source-shape failure. */
+    minRows: number;
+    /** Valores fixados de uma leitura sabidamente boa: `[categoria, comissão %, mínimo por item]`.
+     *
+     *  014/T102 — era só `[categoria, comissão]`, e a lacuna era exatamente do tamanho do defeito que
+     *  esta guarda existe para pegar: a leitura das colunas é POSICIONAL, então uma coluna inserida na
+     *  fonte desloca o `minPerItem` sem tocar no percentual — e a canária dizia `ok: true` sobre uma
+     *  tabela em que todo mínimo por item virou zero. Números plausíveis, todos errados, sob selo de
+     *  referência. O PAR é o que torna o deslocamento visível. */
+    canaries: ReadonlyArray<readonly [string, number, number]>;
 }
 
 export type SanityVerdict = { ok: true } | { ok: false; reason: string };
@@ -46,38 +46,38 @@ export type SanityVerdict = { ok: true } | { ok: false; reason: string };
 export const MIN_PARSE_ROWS = 28;
 
 export function checkParseSanity(
-  categories: readonly ParsedCategory[],
-  opts: SanityOptions,
+    categories: readonly ParsedCategory[],
+    opts: SanityOptions,
 ): SanityVerdict {
-  if (categories.length < opts.minRows) {
-    return {
-      ok: false,
-      reason: `parsed ${categories.length} categories, below the ${opts.minRows} floor — source shape changed, not a fee change`,
-    };
-  }
-  for (const [name, expectedPct, expectedMin] of opts.canaries) {
-    const hit = categories.find((c) => c.name === name);
-    if (!hit) return { ok: false, reason: `canary "${name}" is missing from the parse` };
-    if (hit.commissionPct !== expectedPct) {
-      return {
-        ok: false,
-        reason: `canary "${name}" expected ${expectedPct}%, got ${hit.commissionPct} — the parser is likely reading the wrong column`,
-      };
+    if (categories.length < opts.minRows) {
+        return {
+            ok: false,
+            reason: `parsed ${categories.length} categories, below the ${opts.minRows} floor — source shape changed, not a fee change`,
+        };
     }
-    if (hit.minPerItem !== expectedMin) {
-      return {
-        ok: false,
-        reason: `canary "${name}" expected a per-item minimum of ${expectedMin}, got ${hit.minPerItem} — the parser is likely reading the wrong column`,
-      };
+    for (const [name, expectedPct, expectedMin] of opts.canaries) {
+        const hit = categories.find((c) => c.name === name);
+        if (!hit) return { ok: false, reason: `canary "${name}" is missing from the parse` };
+        if (hit.commissionPct !== expectedPct) {
+            return {
+                ok: false,
+                reason: `canary "${name}" expected ${expectedPct}%, got ${hit.commissionPct} — the parser is likely reading the wrong column`,
+            };
+        }
+        if (hit.minPerItem !== expectedMin) {
+            return {
+                ok: false,
+                reason: `canary "${name}" expected a per-item minimum of ${expectedMin}, got ${hit.minPerItem} — the parser is likely reading the wrong column`,
+            };
+        }
     }
-  }
-  return { ok: true };
+    return { ok: true };
 }
 
 /** The band shape the coverage check needs — structurally what the catalog carries. */
 export interface CoverableBand {
-  minPrice: number;
-  maxPrice: number | null;
+    minPrice: number;
+    maxPrice: number | null;
 }
 
 /**
@@ -99,30 +99,30 @@ export interface CoverableBand {
  * to leave the published artifact untouched rather than replace it with something malformed (SC-806).
  */
 export function checkBandCoverage(bands: readonly CoverableBand[]): SanityVerdict {
-  const sorted = [...bands].sort((a, b) => a.minPrice - b.minPrice);
-  for (const [i, band] of sorted.entries()) {
-    if (band.maxPrice !== null && band.maxPrice <= band.minPrice) {
-      return {
-        ok: false,
-        reason: `band [${band.minPrice}, ${band.maxPrice}) cannot contain a price`,
-      };
+    const sorted = [...bands].sort((a, b) => a.minPrice - b.minPrice);
+    for (const [i, band] of sorted.entries()) {
+        if (band.maxPrice !== null && band.maxPrice <= band.minPrice) {
+            return {
+                ok: false,
+                reason: `band [${band.minPrice}, ${band.maxPrice}) cannot contain a price`,
+            };
+        }
+        const next = sorted[i + 1];
+        if (!next) continue;
+        if (band.maxPrice === null) {
+            return {
+                ok: false,
+                reason: `only the terminal band may be unbounded — [${band.minPrice}, ∞) is followed by [${next.minPrice}, …)`,
+            };
+        }
+        if (next.minPrice < band.maxPrice) {
+            return {
+                ok: false,
+                reason: `bands overlap at ${next.minPrice}: [${band.minPrice}, ${band.maxPrice}) and [${next.minPrice}, …)`,
+            };
+        }
     }
-    const next = sorted[i + 1];
-    if (!next) continue;
-    if (band.maxPrice === null) {
-      return {
-        ok: false,
-        reason: `only the terminal band may be unbounded — [${band.minPrice}, ∞) is followed by [${next.minPrice}, …)`,
-      };
-    }
-    if (next.minPrice < band.maxPrice) {
-      return {
-        ok: false,
-        reason: `bands overlap at ${next.minPrice}: [${band.minPrice}, ${band.maxPrice}) and [${next.minPrice}, …)`,
-      };
-    }
-  }
-  return { ok: true };
+    return { ok: true };
 }
 
 /**
@@ -143,19 +143,19 @@ export function checkBandCoverage(bands: readonly CoverableBand[]): SanityVerdic
  * mudou. Ele nomeia o dado, não a execução: reler a mesma tabela não a torna uma tabela nova.
  */
 export function nextCatalogVersion(
-  // Exigido, não `string | null`: o artefato SEMPRE carrega um rótulo, e um artefato sem ele é uma
-  // falha de forma que `build-amazon.mjs` deve recusar em voz alta — como já recusa um artefato sem
-  // o marketplace AMAZON (T091). Aceitar a ausência aqui criava um ramo que nenhum caminho alcança,
-  // e o ratchet de 100% o encontrou. Rótulo ILEGÍVEL continua tratado: esse é representável.
-  previous: string,
-  collectedAt: string,
-  changed: boolean,
+    // Exigido, não `string | null`: o artefato SEMPRE carrega um rótulo, e um artefato sem ele é uma
+    // falha de forma que `build-amazon.mjs` deve recusar em voz alta — como já recusa um artefato sem
+    // o marketplace AMAZON (T091). Aceitar a ausência aqui criava um ramo que nenhum caminho alcança,
+    // e o ratchet de 100% o encontrou. Rótulo ILEGÍVEL continua tratado: esse é representável.
+    previous: string,
+    collectedAt: string,
+    changed: boolean,
 ): string {
-  if (!changed) return previous;
-  const parsed = /^(\d{4}-\d{2}-\d{2})\.(\d+)$/.exec(previous);
-  return parsed && parsed[1] === collectedAt
-    ? `${collectedAt}.${Number(parsed[2]) + 1}`
-    : `${collectedAt}.0`;
+    if (!changed) return previous;
+    const parsed = /^(\d{4}-\d{2}-\d{2})\.(\d+)$/.exec(previous);
+    return parsed && parsed[1] === collectedAt
+        ? `${collectedAt}.${Number(parsed[2]) + 1}`
+        : `${collectedAt}.0`;
 }
 
 /**
@@ -173,22 +173,22 @@ export function nextCatalogVersion(
  * acionável.
  */
 export function checkCategoryIdCollisions(categories: readonly { name: string }[]): SanityVerdict {
-  const byId = new Map<string, string[]>();
-  for (const c of categories) {
-    const id = categoryId(c.name);
-    byId.set(id, [...(byId.get(id) ?? []), c.name]);
-  }
-  const colliding = [...byId].filter(([, names]) => names.length > 1);
-  if (colliding.length === 0) return { ok: true };
-  return {
-    ok: false,
-    reason: colliding
-      .map(
-        ([id, names]) =>
-          `category id "${id}" is claimed by ${names.map((n) => `"${n}"`).join(" and ")}`,
-      )
-      .join("; "),
-  };
+    const byId = new Map<string, string[]>();
+    for (const c of categories) {
+        const id = categoryId(c.name);
+        byId.set(id, [...(byId.get(id) ?? []), c.name]);
+    }
+    const colliding = [...byId].filter(([, names]) => names.length > 1);
+    if (colliding.length === 0) return { ok: true };
+    return {
+        ok: false,
+        reason: colliding
+            .map(
+                ([id, names]) =>
+                    `category id "${id}" is claimed by ${names.map((n) => `"${n}"`).join(" and ")}`,
+            )
+            .join("; "),
+    };
 }
 
 /** A data de coleta a usar, ou a recusa quando ela nao pode ser afirmada. */
@@ -206,20 +206,20 @@ export type CollectedAtVerdict = { ok: true; date: string } | { ok: false; reaso
  * exigi-la e recusar sem ela, em vez de inventar a de hoje.
  */
 export function collectedAtFor(opts: {
-  fromFixture: boolean;
-  envDate?: string | undefined;
-  today: string;
+    fromFixture: boolean;
+    envDate?: string | undefined;
+    today: string;
 }): CollectedAtVerdict {
-  if (opts.envDate) return validarData(opts.envDate, opts.today);
-  if (opts.fromFixture) {
-    return {
-      ok: false,
-      reason:
-        "reading a CAPTURED table (--from) requires COLLECTED_AT: stamping today would advance " +
-        "lastReviewed without anyone having re-verified against the source (SC-807)",
-    };
-  }
-  return { ok: true, date: opts.today };
+    if (opts.envDate) return validarData(opts.envDate, opts.today);
+    if (opts.fromFixture) {
+        return {
+            ok: false,
+            reason:
+                "reading a CAPTURED table (--from) requires COLLECTED_AT: stamping today would advance " +
+                "lastReviewed without anyone having re-verified against the source (SC-807)",
+        };
+    }
+    return { ok: true, date: opts.today };
 }
 
 /**
@@ -239,18 +239,18 @@ export function collectedAtFor(opts: {
  * por tempo indeterminado — o mesmo dano, por outra porta.
  */
 function validarData(valor: string, today: string): CollectedAtVerdict {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
-    return { ok: false, reason: `COLLECTED_AT="${valor}" is not a date in YYYY-MM-DD form` };
-  }
-  const t = Date.parse(`${valor}T00:00:00.000Z`);
-  if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== valor) {
-    return { ok: false, reason: `COLLECTED_AT="${valor}" is not a real calendar date` };
-  }
-  if (valor > today) {
-    return {
-      ok: false,
-      reason: `COLLECTED_AT="${valor}" is in the future — a re-read cannot have happened tomorrow`,
-    };
-  }
-  return { ok: true, date: valor };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
+        return { ok: false, reason: `COLLECTED_AT="${valor}" is not a date in YYYY-MM-DD form` };
+    }
+    const t = Date.parse(`${valor}T00:00:00.000Z`);
+    if (Number.isNaN(t) || new Date(t).toISOString().slice(0, 10) !== valor) {
+        return { ok: false, reason: `COLLECTED_AT="${valor}" is not a real calendar date` };
+    }
+    if (valor > today) {
+        return {
+            ok: false,
+            reason: `COLLECTED_AT="${valor}" is in the future — a re-read cannot have happened tomorrow`,
+        };
+    }
+    return { ok: true, date: valor };
 }

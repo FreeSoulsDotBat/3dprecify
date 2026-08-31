@@ -1,16 +1,16 @@
 {
-  "id": "teaser-simulacoes-na-folha",
-  "nome": "Teaser Premium dentro da folha de Simulações",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/shared/billing/premium-teaser.tsx"
-  ],
-  "oQueFoiInferido": "O `<PremiumTeaser feature=\"SCENARIOS\"/>` — com preço real e CTA de compra — renderizado DENTRO de uma gaveta sobreposta (`scenarios-list-sheet.tsx` linha 476), e a regra de exclusão que impede dois CTAs simultâneos na mesma tela: `calcular-page.tsx` suprime o teaser do picker enquanto a folha está aberta (`showTeaserSlot && !scenariosOpen`). Falta desenhar: a oferta dentro de um overlay — altura, âncora do CTA, o que acontece com a superfície de compra que fica atrás — e a própria regra do CTA único como decisão de composição, não como guarda em código.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Dois CTAs de compra empilhados na mesma tela já aconteceram duas vezes (E6/T038-D4 e 016/T010-A3) e foram corrigidos por guarda em código, não por desenho.",
-  "prioridade": "MEDIA",
-  "refutacao": "Sobrevive, mas REBAIXO de NENHUMA para PROTOTIPO_PARCIAL: o BLOCO em si (`tf-premium-teaser` com título/subtítulo/preço/CTA/legenda) está desenhado no canvas, três vezes — o que não está desenhado é ele dentro de uma gaveta sobreposta, e o conteúdo específico de Simulações. Confirmei as duas ausências: o canvas cobre quatro abas (Catálogo, Kits, Orçamentos, Conta) e NÃO tem artboard de Simulações, e §E4-§E8 do protótipo não menciona cenários salvos por um motivo cronológico simples — a E5 é de 2026-07-20, dezoito dias POSTERIOR ao protótipo. `.design-import` não tem tela de cenários. A pergunta específica do achado — oferta dentro de overlay, e a regra do CTA único — continua sem resposta em qualquer autoridade.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "teaser-simulacoes-na-folha",
+    "nome": "Teaser Premium dentro da folha de Simulações",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/shared/billing/premium-teaser.tsx"
+    ],
+    "oQueFoiInferido": "O `<PremiumTeaser feature=\"SCENARIOS\"/>` — com preço real e CTA de compra — renderizado DENTRO de uma gaveta sobreposta (`scenarios-list-sheet.tsx` linha 476), e a regra de exclusão que impede dois CTAs simultâneos na mesma tela: `calcular-page.tsx` suprime o teaser do picker enquanto a folha está aberta (`showTeaserSlot && !scenariosOpen`). Falta desenhar: a oferta dentro de um overlay — altura, âncora do CTA, o que acontece com a superfície de compra que fica atrás — e a própria regra do CTA único como decisão de composição, não como guarda em código.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Dois CTAs de compra empilhados na mesma tela já aconteceram duas vezes (E6/T038-D4 e 016/T010-A3) e foram corrigidos por guarda em código, não por desenho.",
+    "prioridade": "MEDIA",
+    "refutacao": "Sobrevive, mas REBAIXO de NENHUMA para PROTOTIPO_PARCIAL: o BLOCO em si (`tf-premium-teaser` com título/subtítulo/preço/CTA/legenda) está desenhado no canvas, três vezes — o que não está desenhado é ele dentro de uma gaveta sobreposta, e o conteúdo específico de Simulações. Confirmei as duas ausências: o canvas cobre quatro abas (Catálogo, Kits, Orçamentos, Conta) e NÃO tem artboard de Simulações, e §E4-§E8 do protótipo não menciona cenários salvos por um motivo cronológico simples — a E5 é de 2026-07-20, dezoito dias POSTERIOR ao protótipo. `.design-import` não tem tela de cenários. A pergunta específica do achado — oferta dentro de overlay, e a regra do CTA único — continua sem resposta em qualquer autoridade.",
+    "sobreviveu": true,
+    "area": "billing"
 }

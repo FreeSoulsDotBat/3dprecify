@@ -6,16 +6,16 @@
    fonte de verdade sobre "o que é largo", competindo com o `useIsWide`. */
 
 .tf-catalogo-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-3);
 }
 
 /* O PageHeader traz sua própria margem inferior, pensada para quando ele é a única coisa da linha.
    Dentro da faixa, quem manda no espaçamento é o `gap`. */
 .tf-catalogo-head > .tf-page-header {
-  margin-bottom: 0;
-  min-width: 0;
+    margin-bottom: 0;
+    min-width: 0;
 }

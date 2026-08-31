@@ -24,8 +24,8 @@ export const NOME_TITULO = "pr-title.txt";
  * caso `PR`, e este módulo não inventa um).
  */
 export function escreverArtefatosDePr(desfecho: RunOutcome, dir: string): void {
-  if (desfecho.kind !== "PR") return;
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(`${dir}/${NOME_CORPO}`, desfecho.corpo);
-  writeFileSync(`${dir}/${NOME_TITULO}`, desfecho.titulo);
+    if (desfecho.kind !== "PR") return;
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(`${dir}/${NOME_CORPO}`, desfecho.corpo);
+    writeFileSync(`${dir}/${NOME_TITULO}`, desfecho.titulo);
 }

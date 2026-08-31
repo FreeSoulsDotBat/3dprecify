@@ -12,13 +12,13 @@ import type { BomOut } from "@/shared/api/generated";
 
 /** IndexedDB key — uid-scoped so a device shared by two accounts never crosses them (FR-309). */
 export function bomIdbKey(uid: string): string {
-  return `boms:${uid}`;
+    return `boms:${uid}`;
 }
 
 /** TanStack Query key — uid-scoped, so a re-login can never read the previous account's kits
  *  within staleTime (the identity-leak lesson, D1). */
 export function bomQueryKey(uid: string | undefined) {
-  return ["boms", uid] as const;
+    return ["boms", uid] as const;
 }
 
 /** Fuzzy root key — `removeQueries({ queryKey: BOM_QUERY_ROOT })` clears every uid entry. */
@@ -27,40 +27,43 @@ export const BOM_QUERY_ROOT = ["boms"] as const;
 /** A stored payload is trusted only if it is an array of objects each carrying a string `id`.
  *  A corrupt or foreign shape is discarded rather than fed to the UI as a broken list. */
 function isBomArray(raw: unknown): raw is BomOut[] {
-  return (
-    Array.isArray(raw) &&
-    raw.every(
-      (x) => typeof x === "object" && x !== null && typeof (x as { id?: unknown }).id === "string",
-    )
-  );
+    return (
+        Array.isArray(raw) &&
+        raw.every(
+            (x) =>
+                typeof x === "object" &&
+                x !== null &&
+                typeof (x as { id?: unknown }).id === "string",
+        )
+    );
 }
 
 /** Load + shape-guard the uid's cached kits; null on empty/error/corrupt (non-blocking). */
 export async function loadCachedBoms(uid: string): Promise<BomOut[] | null> {
-  try {
-    const raw = await get(bomIdbKey(uid));
-    return isBomArray(raw) ? raw : null;
-  } catch {
-    return null;
-  }
+    try {
+        const raw = await get(bomIdbKey(uid));
+        return isBomArray(raw) ? raw : null;
+    } catch {
+        return null;
+    }
 }
 
 /** Best-effort persist of a fresh online read (a failure is swallowed — the cache is never
  *  a source of truth; the online read already answered). */
 export async function persistCachedBoms(uid: string, items: BomOut[]): Promise<void> {
-  try {
-    await set(bomIdbKey(uid), items);
-  } catch {
-    /* ignore — the cache is a convenience, never authoritative */
-  }
+    try {
+        await set(bomIdbKey(uid), items);
+    } catch {
+        /* ignore — the cache is a convenience, never authoritative */
+    }
 }
 
 /** Purge the uid's kits — part of the sign-out privacy sweep (FR-309), called from the app layer
  *  alongside the catalog purge. */
 export async function purgeBomCache(uid: string): Promise<void> {
-  try {
-    await del(bomIdbKey(uid));
-  } catch {
-    /* ignore — a failed purge must never crash the sign-out flow */
-  }
+    try {
+        await del(bomIdbKey(uid));
+    } catch {
+        /* ignore — a failed purge must never crash the sign-out flow */
+    }
 }

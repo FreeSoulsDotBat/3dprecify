@@ -1,13 +1,13 @@
 {
-  "id": "resumo-de-kit-como-base",
-  "nome": "Resumo somente-leitura de um kit como base do cálculo",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/features/calculator/kit-basis-summary.tsx"],
-  "oQueFoiInferido": "Um `Card padding=\"sm\"` que passa a ser a fonte do resultado quando o cenário aberto tem base KIT: título 14px com o nome do kit, hint 12px, um `Alert info` de linhas excluídas, e por marketplace um nome 14px + duas linhas de 12px ('Varejo: R$ X' / 'Atacado: R$ Y'). Inferido: tudo — que o rollup é read-only, que os campos do formulário abaixo continuam visíveis e EDITÁVEIS enquanto não alimentam nada (o comentário do código confirma: 'stay whatever they were before the reopen'), a hierarquia tipográfica (12px para o preço final de um kit), e o botão de gravar próprio que só existe nesse modo, com o botão normal suprimido.",
-  "autoridade": "NENHUMA",
-  "impacto": "É o estado em que a tela mostra um resultado que NÃO vem dos campos que ela exibe — a maior chance de leitura errada da calculadora inteira — resolvido com um cartão de texto pequeno inventado em código.",
-  "prioridade": "MEDIA",
-  "refutacao": "Multi-peça/Kits é E3 (008) e cenário com base kit é E5 (010), ambos posteriores ao protótipo; grep por 'kit' em `claude-design-prototype*.md` e no audit só devolve 'UI-kit' e 'Kit de grafismos' — nenhuma menção a kit dentro da Calcular. Achei o vizinho mais próximo e ele NÃO cobre: o canvas 018 desenha a aba Kits com uma coluna direita fixa contendo 'Total do kit' (custo + Varejo como `tf-price--accent` 2.25rem + Atacado menor e muted) e um card 'Preços por canal (kit)' com uma linha por canal. É a forma que o dono deu ao MESMO conteúdo, no composer, com hierarquia de preço real — e o resumo dentro da Calcular usa 12px para os dois níveis. O canvas declara Calcular fora dele por escrito. Sobrevive, NENHUMA, com a forma vizinha registrada.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "resumo-de-kit-como-base",
+    "nome": "Resumo somente-leitura de um kit como base do cálculo",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/features/calculator/kit-basis-summary.tsx"],
+    "oQueFoiInferido": "Um `Card padding=\"sm\"` que passa a ser a fonte do resultado quando o cenário aberto tem base KIT: título 14px com o nome do kit, hint 12px, um `Alert info` de linhas excluídas, e por marketplace um nome 14px + duas linhas de 12px ('Varejo: R$ X' / 'Atacado: R$ Y'). Inferido: tudo — que o rollup é read-only, que os campos do formulário abaixo continuam visíveis e EDITÁVEIS enquanto não alimentam nada (o comentário do código confirma: 'stay whatever they were before the reopen'), a hierarquia tipográfica (12px para o preço final de um kit), e o botão de gravar próprio que só existe nesse modo, com o botão normal suprimido.",
+    "autoridade": "NENHUMA",
+    "impacto": "É o estado em que a tela mostra um resultado que NÃO vem dos campos que ela exibe — a maior chance de leitura errada da calculadora inteira — resolvido com um cartão de texto pequeno inventado em código.",
+    "prioridade": "MEDIA",
+    "refutacao": "Multi-peça/Kits é E3 (008) e cenário com base kit é E5 (010), ambos posteriores ao protótipo; grep por 'kit' em `claude-design-prototype*.md` e no audit só devolve 'UI-kit' e 'Kit de grafismos' — nenhuma menção a kit dentro da Calcular. Achei o vizinho mais próximo e ele NÃO cobre: o canvas 018 desenha a aba Kits com uma coluna direita fixa contendo 'Total do kit' (custo + Varejo como `tf-price--accent` 2.25rem + Atacado menor e muted) e um card 'Preços por canal (kit)' com uma linha por canal. É a forma que o dono deu ao MESMO conteúdo, no composer, com hierarquia de preço real — e o resumo dentro da Calcular usa 12px para os dois níveis. O canvas declara Calcular fora dele por escrito. Sobrevive, NENHUMA, com a forma vizinha registrada.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

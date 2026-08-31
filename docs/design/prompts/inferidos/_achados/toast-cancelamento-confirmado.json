@@ -1,16 +1,16 @@
 {
-  "id": "toast-cancelamento-confirmado",
-  "nome": "Reconhecimento do cancelamento (toast \"Assinatura cancelada. Premium ativo até {data}.\")",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/billing/use-subscription.ts",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "O único reconhecimento de que o cancelamento aconteceu é um toast efêmero disparado do `onSuccess` do HOOK (`use-subscription.ts` linha 83, `toast(…, { tone: \"success\" })`) — e ele mora ali, e não no diálogo, porque o diálogo DESMONTA no flip de estado e um callback preso a ele nunca roda (T028/B2, medido: `MutationObserver` sobre o toaster, armado antes do clique, 0 inserções em 8s). Inferido: que uma ação irreversível de cobrança é confirmada por uma mensagem que some sozinha, sem eco persistente além da mudança de legenda na linha do plano. Falta desenhar: onde vive a confirmação de uma ação de cobrança — toast, estado da própria linha, ou os dois — e por quanto tempo.",
-  "autoridade": "NENHUMA",
-  "impacto": "Uma confirmação de cancelamento de assinatura que desaparece sozinha; a homologação já provou uma vez que ela simplesmente nunca renderizava.",
-  "prioridade": "BAIXA",
-  "refutacao": "Tentei derrubar pelo DS: `claude-design-prototype.md` §D.2 manda CRIAR um \"Toast — feedback efêmero (sucesso/erro/info), radius md, sombra sm\" e o `.design-import/readme.md` confirma o primitivo `Toast` entre os 32 expostos. Mas isso desenha o COMPONENTE, não o seu uso numa confirmação de cobrança — e o critério do mandato é explícito (\"NÃO derrube por: o DS tem os tokens\"). Verifiquei então o uso: nenhuma tela de cobrança do protótipo dispara toast (§E8 termina na tela de planos), o canvas 018 não tem toast em nenhum dos artboards (grep = 0), e `AccountScreen.jsx`/`PremiumScreen.jsx` não têm confirmação de ação de espécie alguma. Sobrevive — com a nuance de que o primitivo existe e é a peça certa; o que não existe é a decisão de desenho sobre se um toast BASTA aqui.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "toast-cancelamento-confirmado",
+    "nome": "Reconhecimento do cancelamento (toast \"Assinatura cancelada. Premium ativo até {data}.\")",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/billing/use-subscription.ts",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "O único reconhecimento de que o cancelamento aconteceu é um toast efêmero disparado do `onSuccess` do HOOK (`use-subscription.ts` linha 83, `toast(…, { tone: \"success\" })`) — e ele mora ali, e não no diálogo, porque o diálogo DESMONTA no flip de estado e um callback preso a ele nunca roda (T028/B2, medido: `MutationObserver` sobre o toaster, armado antes do clique, 0 inserções em 8s). Inferido: que uma ação irreversível de cobrança é confirmada por uma mensagem que some sozinha, sem eco persistente além da mudança de legenda na linha do plano. Falta desenhar: onde vive a confirmação de uma ação de cobrança — toast, estado da própria linha, ou os dois — e por quanto tempo.",
+    "autoridade": "NENHUMA",
+    "impacto": "Uma confirmação de cancelamento de assinatura que desaparece sozinha; a homologação já provou uma vez que ela simplesmente nunca renderizava.",
+    "prioridade": "BAIXA",
+    "refutacao": "Tentei derrubar pelo DS: `claude-design-prototype.md` §D.2 manda CRIAR um \"Toast — feedback efêmero (sucesso/erro/info), radius md, sombra sm\" e o `.design-import/readme.md` confirma o primitivo `Toast` entre os 32 expostos. Mas isso desenha o COMPONENTE, não o seu uso numa confirmação de cobrança — e o critério do mandato é explícito (\"NÃO derrube por: o DS tem os tokens\"). Verifiquei então o uso: nenhuma tela de cobrança do protótipo dispara toast (§E8 termina na tela de planos), o canvas 018 não tem toast em nenhum dos artboards (grep = 0), e `AccountScreen.jsx`/`PremiumScreen.jsx` não têm confirmação de ação de espécie alguma. Sobrevive — com a nuance de que o primitivo existe e é a peça certa; o que não existe é a decisão de desenho sobre se um toast BASTA aqui.",
+    "sobreviveu": true,
+    "area": "billing"
 }

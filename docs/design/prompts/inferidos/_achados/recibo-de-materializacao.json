@@ -1,13 +1,13 @@
 {
-  "id": "recibo-de-materializacao",
-  "nome": "Recibo 'O que este kit fez no seu catálogo' (pós-salvamento)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "O bloco que nasce DENTRO do cartão de salvar, embaixo do botão, só depois de um 2xx real: o título 'O que este kit fez no seu catálogo', uma `<ul>` sem teto com uma linha por peça ('{nome} — criado no catálogo' / '{nome} — já existia no catálogo, referenciado'), um `Alert tone=\"info\"` quando alguma peça foi referenciada ('As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.') e um botão secundário 'Ver meus kits'. Não foi desenhado: se isso é bloco inline que empurra o layout, folha, toast expandido ou tela de confirmação; a hierarquia entre criado × referenciado; por quanto tempo permanece; e como fica com 8-10 peças — no desktop ele cresce no fim de uma coluna de 480px que já tem `overflow-y: auto`.",
-  "autoridade": "NENHUMA",
-  "impacto": "É o único momento em que o app conta que salvar um kit escreveu peças no catálogo do vendedor e que valores digitados por ele foram substituídos pelos do produto referenciado — a verdade mais surpreendente do fluxo, entregue num bloco que nenhum artboard jamais mostrou.",
-  "prioridade": "ALTA",
-  "refutacao": "Nenhuma autoridade tem estado pós-salvamento de kit. No canvas, o cartão de salvar (linhas 235-241) termina no botão 'Salvar kit' e na dica; não há `sc-if` de sucesso em lugar nenhum do bloco Kits, e grep por 'catálogo' no arquivo só devolve o texto do teaser Premium, o placeholder de busca do Catálogo e o `origem` das linhas. No protótipo de 2026-07 a única confirmação desenhada é o padrão 'Toast — feedback efêmero' da §D.2, e §E não tem kits; a auditoria e o `.design-import/` não mencionam. Autoridade só textual e parcial: `ux-bom.md` §1.9 (placeholder) e ADR-0017 §3 (a regra de que a referência vence os valores digitados) — decisão, não desenho. Corrijo a localização que o mapeador deu: o recibo não é um bloco solto no fim da página, ele mora dentro da caixa bordada do salvar (`bom-page.tsx:610-651`), que no desktop é o último cartão da coluna direita.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "recibo-de-materializacao",
+    "nome": "Recibo 'O que este kit fez no seu catálogo' (pós-salvamento)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "O bloco que nasce DENTRO do cartão de salvar, embaixo do botão, só depois de um 2xx real: o título 'O que este kit fez no seu catálogo', uma `<ul>` sem teto com uma linha por peça ('{nome} — criado no catálogo' / '{nome} — já existia no catálogo, referenciado'), um `Alert tone=\"info\"` quando alguma peça foi referenciada ('As peças referenciadas usam os valores do produto que já estava salvo, não os que você digitou aqui.') e um botão secundário 'Ver meus kits'. Não foi desenhado: se isso é bloco inline que empurra o layout, folha, toast expandido ou tela de confirmação; a hierarquia entre criado × referenciado; por quanto tempo permanece; e como fica com 8-10 peças — no desktop ele cresce no fim de uma coluna de 480px que já tem `overflow-y: auto`.",
+    "autoridade": "NENHUMA",
+    "impacto": "É o único momento em que o app conta que salvar um kit escreveu peças no catálogo do vendedor e que valores digitados por ele foram substituídos pelos do produto referenciado — a verdade mais surpreendente do fluxo, entregue num bloco que nenhum artboard jamais mostrou.",
+    "prioridade": "ALTA",
+    "refutacao": "Nenhuma autoridade tem estado pós-salvamento de kit. No canvas, o cartão de salvar (linhas 235-241) termina no botão 'Salvar kit' e na dica; não há `sc-if` de sucesso em lugar nenhum do bloco Kits, e grep por 'catálogo' no arquivo só devolve o texto do teaser Premium, o placeholder de busca do Catálogo e o `origem` das linhas. No protótipo de 2026-07 a única confirmação desenhada é o padrão 'Toast — feedback efêmero' da §D.2, e §E não tem kits; a auditoria e o `.design-import/` não mencionam. Autoridade só textual e parcial: `ux-bom.md` §1.9 (placeholder) e ADR-0017 §3 (a regra de que a referência vence os valores digitados) — decisão, não desenho. Corrijo a localização que o mapeador deu: o recibo não é um bloco solto no fim da página, ele mora dentro da caixa bordada do salvar (`bom-page.tsx:610-651`), que no desktop é o último cartão da coluna direita.",
+    "sobreviveu": true,
+    "area": "kits"
 }

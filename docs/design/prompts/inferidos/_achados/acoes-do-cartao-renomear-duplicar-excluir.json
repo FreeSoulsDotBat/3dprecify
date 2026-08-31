@@ -1,13 +1,13 @@
 {
-  "id": "acoes-do-cartao-renomear-duplicar-excluir",
-  "nome": "Linha de ações do cartão (renomear · duplicar · excluir)",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
-  "oQueFoiInferido": "A affordance foi TROCADA no código sem desenho: a autoridade textual descreve um menu de excesso \"⋯\" por cartão (ux §3.1 linha 279/291); o que existe é `<div className=\"flex items-center justify-end gap-1\">` com três `Button variant=\"ghost\" size=\"sm\"` contendo só `Icon` (pencil / copy / trash-2, 18px), sem rótulo visível, com `aria-label`. O comentário no topo do arquivo ASSUME a troca (\"T029 dated deviation\") justificando-a por não existir primitiva DropdownMenu no DS. Inferido: três ícones nus como ações permanentes de cada cartão, a ordem, a proximidade entre \"duplicar\" e \"excluir\" separados por `gap-1` (4px), o tamanho do alvo de toque, e a leitura de \"lixeira\" sem confirmação visível no próprio cartão.",
-  "autoridade": "NENHUMA",
-  "impacto": "Três ícones sem rótulo, com \"duplicar\" colado em \"excluir\" (4px de gap), governando a única cópia da estratégia salva do vendedor.",
-  "prioridade": "ALTA",
-  "refutacao": "Aqui a busca produziu o contrário de uma refutação — produziu evidência de que a forma construída CONTRADIZ o que está desenhado. O canvas do dono desenha duplicar/excluir DUAS vezes, sempre como botões COM TEXTO e com separação de peso: na ficha do Catálogo (linhas 124-125) `tf-btn--secondary tf-btn--sm` \"Duplicar\" + `tf-btn--danger-ghost tf-btn--sm` \"Excluir\"; na ficha de Orçamentos (linha 315) o \"Excluir\" `tf-btn--danger-ghost` é empurrado para longe dos demais com `margin-left:auto` — separação explícita da ação destrutiva. E o protótipo, quando usa ícone nu numa linha de lista, usa UM só (`CatalogScreen.jsx`: `trailing={<IconButton icon={pencil} label=\"Editar\" size=\"sm\"/>}`). Nenhuma das 4 autoridades desenha uma fileira de três ícones nus num cartão, e a única autoridade textual pede \"⋯\". A forma que existe não tem autoridade nenhuma. Sobrevive, e reforçado.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "acoes-do-cartao-renomear-duplicar-excluir",
+    "nome": "Linha de ações do cartão (renomear · duplicar · excluir)",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/features/scenarios/scenarios-list-sheet.tsx"],
+    "oQueFoiInferido": "A affordance foi TROCADA no código sem desenho: a autoridade textual descreve um menu de excesso \"⋯\" por cartão (ux §3.1 linha 279/291); o que existe é `<div className=\"flex items-center justify-end gap-1\">` com três `Button variant=\"ghost\" size=\"sm\"` contendo só `Icon` (pencil / copy / trash-2, 18px), sem rótulo visível, com `aria-label`. O comentário no topo do arquivo ASSUME a troca (\"T029 dated deviation\") justificando-a por não existir primitiva DropdownMenu no DS. Inferido: três ícones nus como ações permanentes de cada cartão, a ordem, a proximidade entre \"duplicar\" e \"excluir\" separados por `gap-1` (4px), o tamanho do alvo de toque, e a leitura de \"lixeira\" sem confirmação visível no próprio cartão.",
+    "autoridade": "NENHUMA",
+    "impacto": "Três ícones sem rótulo, com \"duplicar\" colado em \"excluir\" (4px de gap), governando a única cópia da estratégia salva do vendedor.",
+    "prioridade": "ALTA",
+    "refutacao": "Aqui a busca produziu o contrário de uma refutação — produziu evidência de que a forma construída CONTRADIZ o que está desenhado. O canvas do dono desenha duplicar/excluir DUAS vezes, sempre como botões COM TEXTO e com separação de peso: na ficha do Catálogo (linhas 124-125) `tf-btn--secondary tf-btn--sm` \"Duplicar\" + `tf-btn--danger-ghost tf-btn--sm` \"Excluir\"; na ficha de Orçamentos (linha 315) o \"Excluir\" `tf-btn--danger-ghost` é empurrado para longe dos demais com `margin-left:auto` — separação explícita da ação destrutiva. E o protótipo, quando usa ícone nu numa linha de lista, usa UM só (`CatalogScreen.jsx`: `trailing={<IconButton icon={pencil} label=\"Editar\" size=\"sm\"/>}`). Nenhuma das 4 autoridades desenha uma fileira de três ícones nus num cartão, e a única autoridade textual pede \"⋯\". A forma que existe não tem autoridade nenhuma. Sobrevive, e reforçado.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

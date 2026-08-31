@@ -10,16 +10,19 @@ import baseConfig from "./playwright.config";
 // Viewport e tema NÃO viram `projects` aqui: cada teste declara o seu (via `aplicarSubcenario`),
 // porque a matriz da Fase 2 é dirigida — um mesmo arquivo cobre V1/V2/V3 com focos diferentes.
 export default defineConfig({
-  ...baseConfig,
-  testDir: "./tests/homologacao",
-  globalSetup: "./tests/homologacao/global-setup.ts",
-  fullyParallel: true,
-  // Um defeito real precisa ser reprodutível: sem retry, um vermelho é um vermelho.
-  retries: 0,
-  timeout: 240_000, // a bateria de um subcenário faz dezenas de interações reais; 90s era do teste, não do produto
-  reporter: [
-    ["list"],
-    ["json", { outputFile: "../../docs/homologacao/automatizada/resultados/playwright-raw.json" }],
-  ],
-  projects: [{ name: "homolog", use: { ...devices["Desktop Chrome"] } }],
+    ...baseConfig,
+    testDir: "./tests/homologacao",
+    globalSetup: "./tests/homologacao/global-setup.ts",
+    fullyParallel: true,
+    // Um defeito real precisa ser reprodutível: sem retry, um vermelho é um vermelho.
+    retries: 0,
+    timeout: 240_000, // a bateria de um subcenário faz dezenas de interações reais; 90s era do teste, não do produto
+    reporter: [
+        ["list"],
+        [
+            "json",
+            { outputFile: "../../docs/homologacao/automatizada/resultados/playwright-raw.json" },
+        ],
+    ],
+    projects: [{ name: "homolog", use: { ...devices["Desktop Chrome"] } }],
 });

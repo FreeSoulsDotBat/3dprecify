@@ -53,38 +53,38 @@ const NUMERIC_CHARS = /[\d.,-]/;
 
 /** Drop the leading and trailing non-numeric runs ONLY — interior characters survive on purpose. */
 function stripAffixes(raw: string): string {
-  let start = 0;
-  let end = raw.length;
-  while (start < end && !NUMERIC_CHARS.test(raw[start])) start++;
-  while (end > start && !NUMERIC_CHARS.test(raw[end - 1])) end--;
-  return raw.slice(start, end);
+    let start = 0;
+    let end = raw.length;
+    while (start < end && !NUMERIC_CHARS.test(raw[start])) start++;
+    while (end > start && !NUMERIC_CHARS.test(raw[end - 1])) end--;
+    return raw.slice(start, end);
 }
 
 /** True when `digits` (already sign-stripped) is one of the four accepted forms. */
 function isAcceptedForm(digits: string): boolean {
-  return (
-    RE_INTEGER.test(digits) ||
-    RE_PTBR_DECIMAL.test(digits) ||
-    RE_PTBR_THOUSANDS.test(digits) ||
-    RE_ZERO_DECIMAL.test(digits) ||
-    RE_DOT_DECIMAL.test(digits)
-  );
+    return (
+        RE_INTEGER.test(digits) ||
+        RE_PTBR_DECIMAL.test(digits) ||
+        RE_PTBR_THOUSANDS.test(digits) ||
+        RE_ZERO_DECIMAL.test(digits) ||
+        RE_DOT_DECIMAL.test(digits)
+    );
 }
 
 /** The accepted form → a canonical en-US decimal string ready for `parseFloat`/the wire. */
 function canonicalize(digits: string): string {
-  if (digits.includes(",")) return digits.replace(/\./g, "").replace(",", ".");
-  if (RE_PTBR_THOUSANDS.test(digits)) return digits.replace(/\./g, "");
-  return digits; // integer or dot-decimal — already canonical
+    if (digits.includes(",")) return digits.replace(/\./g, "").replace(",", ".");
+    if (RE_PTBR_THOUSANDS.test(digits)) return digits.replace(/\./g, "");
+    return digits; // integer or dot-decimal — already canonical
 }
 
 /** The validated core of a raw entry: `{ sign, digits }`, or null when the string is not accepted. */
 function acceptedCore(str: string): { negative: boolean; digits: string } | null {
-  const core = stripAffixes(str.trim());
-  if (core === "") return null;
-  const negative = core.startsWith("-");
-  const digits = negative ? core.slice(1) : core;
-  return isAcceptedForm(digits) ? { negative, digits } : null;
+    const core = stripAffixes(str.trim());
+    if (core === "") return null;
+    const negative = core.startsWith("-");
+    const digits = negative ? core.slice(1) : core;
+    return isAcceptedForm(digits) ? { negative, digits } : null;
 }
 
 /**
@@ -94,12 +94,12 @@ function acceptedCore(str: string): { negative: boolean; digits: string } | null
  * the callers' `n < 0` branch keeps emitting its specific "negative" message.
  */
 export function parseDecimal(str: string | number): number {
-  if (typeof str === "number") return str;
-  if (!str) return Number.NaN;
-  const core = acceptedCore(String(str));
-  if (!core) return Number.NaN;
-  const n = Number.parseFloat(canonicalize(core.digits));
-  return core.negative ? -n : n;
+    if (typeof str === "number") return str;
+    if (!str) return Number.NaN;
+    const core = acceptedCore(String(str));
+    if (!core) return Number.NaN;
+    const n = Number.parseFloat(canonicalize(core.digits));
+    return core.negative ? -n : n;
 }
 
 /**
@@ -110,9 +110,9 @@ export function parseDecimal(str: string | number): number {
  * wire in practice because the form resolver blocks it first.
  */
 export function ptBrToWireDecimal(value: string): string {
-  const core = acceptedCore(value ?? "");
-  if (!core) return "0";
-  return `${core.negative ? "-" : ""}${canonicalize(core.digits)}`;
+    const core = acceptedCore(value ?? "");
+    if (!core) return "0";
+    return `${core.negative ? "-" : ""}${canonicalize(core.digits)}`;
 }
 
 /**
@@ -127,21 +127,21 @@ export function ptBrToWireDecimal(value: string): string {
  * (an honest field error) instead of silently becoming a wrong number.
  */
 export function wireToPtBr(value: string): string {
-  return value.replace(".", ",");
+    return value.replace(".", ",");
 }
 
 /** Format a number as pt-BR ("1234.5" → "1.234,50"). NaN/null → "". */
 export function formatDecimal(n: number, digits = 2): string {
-  if (n == null || Number.isNaN(n)) return "";
-  return n.toLocaleString("pt-BR", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
+    if (n == null || Number.isNaN(n)) return "";
+    return n.toLocaleString("pt-BR", {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+    });
 }
 
 /** Format a number as a pt-BR BRL string (28.65 → "R$ 28,65"). Values arrive already rounded to
  *  2dp by pricing-core; this only renders. Shared home (008 R7) so `features/bom` and the
  *  calculator print money through one rule — the calculator re-exports it unchanged. */
 export function formatBRL(value: number): string {
-  return `R$ ${formatDecimal(value, 2)}`;
+    return `R$ ${formatDecimal(value, 2)}`;
 }

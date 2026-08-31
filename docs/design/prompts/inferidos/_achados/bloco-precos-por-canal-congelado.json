@@ -1,13 +1,13 @@
 {
-  "id": "bloco-precos-por-canal-congelado",
-  "nome": "Preços por canal no registro congelado (e seus três estados honestos)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/pages/historico/snapshot-detail-page.tsx"],
-  "oQueFoiInferido": "O que o desenho não tem: as QUATRO linhas de preço por canal (anúncio/líquido × varejo/atacado, cada uma com legenda dupla do tipo 'Preço de anúncio · varejo') e os TRÊS recados de exceção que substituem ou acompanham os números — 'sem comissão informada — este canal não teve preço', o erro gravado por slot ecoado como texto, e a contagem de rollup de kit ('3 de 5 peças'). Inferido: que os três recados são todos `<span class=tf-historico__meta>` mudos, do mesmo tamanho e da mesma cor, indistinguíveis entre si e indistinguíveis de qualquer outra legenda da tela; e a diagramação de quatro linhas com legenda dupla em 390px.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É onde o vendedor confere o que receberia líquido em cada marketplace naquele dia. Três recados de exceção com aparência idêntica a legenda comum fazem 'este canal não teve preço' passar despercebido ao lado de canais que têm preço.",
-  "prioridade": "MEDIA",
-  "refutacao": "Aqui há cobertura parcial real, e ela é o caso feliz. `Abas-Desktop.dc.html` linhas 335-345 desenha o Card 'Preços por canal' com dois canais ('Mercado Livre · Clássico' e 'Shopee'), cada um com DUAS linhas — 'anúncio' e 'líquido' — usando as mesmas classes do código (`tf-historico__channel`, `__channel-name`, `__piece`, `__qty`). O que não está lá: o desdobramento varejo/atacado (quatro linhas), o canal sem comissão, o erro por slot e a contagem de peças do rollup. Isso é uma versão anterior e mais simples do mesmo bloco ⇒ PROTOTIPO_PARCIAL. No protótipo, marketplace aparece só na CALCULADORA (§E4: 'canal → taxa fixa + comissão, mostrar como taxa negativa → líquido'), nunca no Histórico; `HistoryScreen.jsx` não tem canais. As três frases honestas são de 2026-08 (014/T120, com o comentário no código explicando que um slot sem comissão precificava anúncio == base — 'quatro linhas afirmando um preço de marketplace que nunca foi computado') e não existem em autoridade nenhuma.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "bloco-precos-por-canal-congelado",
+    "nome": "Preços por canal no registro congelado (e seus três estados honestos)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/pages/historico/snapshot-detail-page.tsx"],
+    "oQueFoiInferido": "O que o desenho não tem: as QUATRO linhas de preço por canal (anúncio/líquido × varejo/atacado, cada uma com legenda dupla do tipo 'Preço de anúncio · varejo') e os TRÊS recados de exceção que substituem ou acompanham os números — 'sem comissão informada — este canal não teve preço', o erro gravado por slot ecoado como texto, e a contagem de rollup de kit ('3 de 5 peças'). Inferido: que os três recados são todos `<span class=tf-historico__meta>` mudos, do mesmo tamanho e da mesma cor, indistinguíveis entre si e indistinguíveis de qualquer outra legenda da tela; e a diagramação de quatro linhas com legenda dupla em 390px.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É onde o vendedor confere o que receberia líquido em cada marketplace naquele dia. Três recados de exceção com aparência idêntica a legenda comum fazem 'este canal não teve preço' passar despercebido ao lado de canais que têm preço.",
+    "prioridade": "MEDIA",
+    "refutacao": "Aqui há cobertura parcial real, e ela é o caso feliz. `Abas-Desktop.dc.html` linhas 335-345 desenha o Card 'Preços por canal' com dois canais ('Mercado Livre · Clássico' e 'Shopee'), cada um com DUAS linhas — 'anúncio' e 'líquido' — usando as mesmas classes do código (`tf-historico__channel`, `__channel-name`, `__piece`, `__qty`). O que não está lá: o desdobramento varejo/atacado (quatro linhas), o canal sem comissão, o erro por slot e a contagem de peças do rollup. Isso é uma versão anterior e mais simples do mesmo bloco ⇒ PROTOTIPO_PARCIAL. No protótipo, marketplace aparece só na CALCULADORA (§E4: 'canal → taxa fixa + comissão, mostrar como taxa negativa → líquido'), nunca no Histórico; `HistoryScreen.jsx` não tem canais. As três frases honestas são de 2026-08 (014/T120, com o comentário no código explicando que um slot sem comissão precificava anúncio == base — 'quatro linhas afirmando um preço de marketplace que nunca foi computado') e não existem em autoridade nenhuma.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

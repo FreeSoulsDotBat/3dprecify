@@ -1,17 +1,17 @@
 {
-  "id": "aviso-hand-off-pagamento",
-  "nome": "Aviso de hand-off (\"Você paga no Mercado Pago (Pix ou cartão)\" · \"O cartão nunca passa pelo nosso app\")",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/billing/offer-panel.tsx",
-    "apps/web/src/features/billing/billing.css",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "As duas frases de confiança que cercam a compra, inferidas em conteúdo, POSIÇÃO e forma: dois `<p className=\"tf-billing-offer__notice\">` idênticos e consecutivos, sem ícone, sem logo do Mercado Pago, sem selo de segurança, renderizados DEPOIS do `<BillingCta/>`. Falta desenhar: se a garantia de segurança vem antes ou depois do CTA, se carrega marca do provedor, e se as duas frases são uma unidade ou dois itens.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A única garantia de que o app não vê o cartão é um parágrafo cinza abaixo do botão, sem peso visual — na tela onde o vendedor decide pagar. E ela contraria a única composição desenhada, que punha a garantia ACIMA do CTA.",
-  "prioridade": "MEDIA",
-  "refutacao": "Sobrevive, mas REBAIXO a autoridade de NENHUMA para PROTOTIPO_PARCIAL, porque o mapeador cometeu um erro de lógica: usou a REMOÇÃO da frase (rodada 1, item 2) como prova de que o slot nunca existiu. Existe. `.design-import/ui_kits/precifica3d/PremiumScreen.jsx` desenha literalmente, entre o preço e o CTA: `<p style={{textAlign:'center', fontSize:'var(--fs-caption)', color:'var(--text-faint)'}}>Pagamento via Mercado Pago. Cancele quando quiser.</p>` seguido de `<Button variant=\"primary\" size=\"lg\" full glow>Assinar Premium</Button>`. E a rodada 1 item 2 não apagou o slot — SUBSTITUIU a copy por \"Preço em definição. Pagamento seguro — detalhes na contratação.\" (a auditoria V2 lista o item entre os 20 FIXED, renderizados e verificados). Portanto o desenho que existe é: UMA linha de aviso, centrada, `--fs-caption`/`--text-faint`, sem ícone e sem logo, ACIMA do CTA. O código faz o contrário — DUAS frases, alinhadas à esquerda, DEPOIS do CTA — e o canvas 018, que é a autoridade mais recente e do dono, termina o bloco no botão (linha 412 é a última) sem nenhum aviso. Ou seja: a única composição desenhada foi invertida sem que nenhuma autoridade ratificasse a inversão. Achado mantido, com a autoridade corrigida.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "aviso-hand-off-pagamento",
+    "nome": "Aviso de hand-off (\"Você paga no Mercado Pago (Pix ou cartão)\" · \"O cartão nunca passa pelo nosso app\")",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/billing/offer-panel.tsx",
+        "apps/web/src/features/billing/billing.css",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "As duas frases de confiança que cercam a compra, inferidas em conteúdo, POSIÇÃO e forma: dois `<p className=\"tf-billing-offer__notice\">` idênticos e consecutivos, sem ícone, sem logo do Mercado Pago, sem selo de segurança, renderizados DEPOIS do `<BillingCta/>`. Falta desenhar: se a garantia de segurança vem antes ou depois do CTA, se carrega marca do provedor, e se as duas frases são uma unidade ou dois itens.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A única garantia de que o app não vê o cartão é um parágrafo cinza abaixo do botão, sem peso visual — na tela onde o vendedor decide pagar. E ela contraria a única composição desenhada, que punha a garantia ACIMA do CTA.",
+    "prioridade": "MEDIA",
+    "refutacao": "Sobrevive, mas REBAIXO a autoridade de NENHUMA para PROTOTIPO_PARCIAL, porque o mapeador cometeu um erro de lógica: usou a REMOÇÃO da frase (rodada 1, item 2) como prova de que o slot nunca existiu. Existe. `.design-import/ui_kits/precifica3d/PremiumScreen.jsx` desenha literalmente, entre o preço e o CTA: `<p style={{textAlign:'center', fontSize:'var(--fs-caption)', color:'var(--text-faint)'}}>Pagamento via Mercado Pago. Cancele quando quiser.</p>` seguido de `<Button variant=\"primary\" size=\"lg\" full glow>Assinar Premium</Button>`. E a rodada 1 item 2 não apagou o slot — SUBSTITUIU a copy por \"Preço em definição. Pagamento seguro — detalhes na contratação.\" (a auditoria V2 lista o item entre os 20 FIXED, renderizados e verificados). Portanto o desenho que existe é: UMA linha de aviso, centrada, `--fs-caption`/`--text-faint`, sem ícone e sem logo, ACIMA do CTA. O código faz o contrário — DUAS frases, alinhadas à esquerda, DEPOIS do CTA — e o canvas 018, que é a autoridade mais recente e do dono, termina o bloco no botão (linha 412 é a última) sem nenhum aviso. Ou seja: a única composição desenhada foi invertida sem que nenhuma autoridade ratificasse a inversão. Achado mantido, com a autoridade corrigida.",
+    "sobreviveu": true,
+    "area": "billing"
 }

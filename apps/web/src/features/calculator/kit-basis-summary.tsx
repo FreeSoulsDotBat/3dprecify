@@ -20,57 +20,58 @@ const t = messages.scenarios;
 const tc = messages.calculator;
 
 export function KitBasisSummary({
-  config,
-  refName,
-  ctx,
+    config,
+    refName,
+    ctx,
 }: {
-  config: ScenarioConfig;
-  refName: string;
-  ctx?: CatalogContext;
+    config: ScenarioConfig;
+    refName: string;
+    ctx?: CatalogContext;
 }) {
-  if (config.costBasis.kind !== "KIT") return null;
-  const rollup = computeScenarioKitChannels(config, ctx);
-  if (!rollup) return null;
+    if (config.costBasis.kind !== "KIT") return null;
+    const rollup = computeScenarioKitChannels(config, ctx);
+    if (!rollup) return null;
 
-  return (
-    <Card padding="sm" className="flex flex-col gap-2" data-testid="kit-basis-summary">
-      <p className="text-sm font-semibold text-[var(--text-strong)]">
-        {t.kitBasisTitle.replace("{nome}", refName)}
-      </p>
-      <p className="text-xs text-[var(--text-muted)]">{t.kitBasisHint}</p>
+    return (
+        <Card padding="sm" className="flex flex-col gap-2" data-testid="kit-basis-summary">
+            <p className="text-sm font-semibold text-[var(--text-strong)]">
+                {t.kitBasisTitle.replace("{nome}", refName)}
+            </p>
+            <p className="text-xs text-[var(--text-muted)]">{t.kitBasisHint}</p>
 
-      {rollup.excludedLineCount > 0 && (
-        <Alert tone="info">
-          {tc.channels.errorRow} ({rollup.excludedLineCount})
-        </Alert>
-      )}
+            {rollup.excludedLineCount > 0 && (
+                <Alert tone="info">
+                    {tc.channels.errorRow} ({rollup.excludedLineCount})
+                </Alert>
+            )}
 
-      {rollup.bom ? (
-        <div className="flex flex-col gap-3">
-          {rollup.bom.channels.map((c, i) => (
-            <div key={`${c.marketplace}-${i}`} className="flex flex-col gap-1">
-              <p className="text-sm font-medium">
-                {c.marketplace
-                  ? ((tc.marketplaceNames as Record<string, string>)[c.marketplace] ??
-                    c.marketplace)
-                  : "—"}
-              </p>
-              {c.precoAnuncioVarejo !== null && (
-                <p className="text-xs text-[var(--text-muted)]">
-                  {tc.captions.varejo}: {formatBRL(c.precoAnuncioVarejo)}
-                </p>
-              )}
-              {c.precoAnuncioAtacado !== null && (
-                <p className="text-xs text-[var(--text-muted)]">
-                  {tc.captions.atacado}: {formatBRL(c.precoAnuncioAtacado)}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      ) : (
-        <Alert tone="info">{tc.invalidNote}</Alert>
-      )}
-    </Card>
-  );
+            {rollup.bom ? (
+                <div className="flex flex-col gap-3">
+                    {rollup.bom.channels.map((c, i) => (
+                        <div key={`${c.marketplace}-${i}`} className="flex flex-col gap-1">
+                            <p className="text-sm font-medium">
+                                {c.marketplace
+                                    ? ((tc.marketplaceNames as Record<string, string>)[
+                                          c.marketplace
+                                      ] ?? c.marketplace)
+                                    : "—"}
+                            </p>
+                            {c.precoAnuncioVarejo !== null && (
+                                <p className="text-xs text-[var(--text-muted)]">
+                                    {tc.captions.varejo}: {formatBRL(c.precoAnuncioVarejo)}
+                                </p>
+                            )}
+                            {c.precoAnuncioAtacado !== null && (
+                                <p className="text-xs text-[var(--text-muted)]">
+                                    {tc.captions.atacado}: {formatBRL(c.precoAnuncioAtacado)}
+                                </p>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            ) : (
+                <Alert tone="info">{tc.invalidNote}</Alert>
+            )}
+        </Card>
+    );
 }

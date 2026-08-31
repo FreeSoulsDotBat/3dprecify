@@ -1,13 +1,13 @@
 {
-  "id": "acoes-de-registro-travado",
-  "nome": "Ações do registro travado ([Tentar novamente] / [Descartar] + confirmação)",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/features/history/entry-actions.tsx"],
-  "oQueFoiInferido": "Um par de Buttons size=sm renderizado pelo MESMO componente em dois contextos muito diferentes — dentro do card da lista, que é um `<Link>` (por isso cada botão chama `e.preventDefault()`+`stopPropagation()`), e dentro do Alert do detalhe — mais o diálogo de confirmação do descarte ('Descartar este registro?' / 'Ele não foi enviado para a sua conta e não poderá ser recuperado.'). Inferido: que botões destrutivos moram DENTRO de um card inteiramente clicável em 390px; o rótulo variável do retry ('Tentar agora' quando pendente × 'Tentar novamente' nos demais); a ausência do retry quando pendente e offline; e que [Descartar] é `variant=danger` SÓLIDO dentro de um card de lista.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "Um registro travado sem saída envenena todo sign-out futuro. Mas botão destrutivo sólido dentro de um card inteiro clicável, num toque de polegar, é o desenho que produz descarte acidental de um orçamento que só existe naquele aparelho.",
-  "prioridade": "MEDIA",
-  "refutacao": "Nada a derrubar: as três autoridades desenhadas não têm fila, logo não têm ações de fila. `claude-design-prototype.md` §E6 é lista mock + vazio gated + detalhe + Exportar, e a matriz §G do Histórico não tem coluna para nada disso; os fixes 16/17/18 tratam skeleton, erro de carga e vazio frio, nenhum toca item travado. `HistoryScreen.jsx` não tem ação por item além de abrir o detalhe (`onClick={() => setDetail(c)}` com chevron). Reli o card do canvas do dono (linhas 281-292) botão por botão: ele contém rótulo, badge, meta e a linha de dinheiro — nenhum botão dentro, e nenhum estado travado desenhado. Resta `ux-history.md` §1.5 (copy verbatim da confirmação) e §9.2/G5 ('Dialog + Button danger' como padrão dos três confirms destrutivos), texto do `designer-ux`.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "acoes-de-registro-travado",
+    "nome": "Ações do registro travado ([Tentar novamente] / [Descartar] + confirmação)",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/features/history/entry-actions.tsx"],
+    "oQueFoiInferido": "Um par de Buttons size=sm renderizado pelo MESMO componente em dois contextos muito diferentes — dentro do card da lista, que é um `<Link>` (por isso cada botão chama `e.preventDefault()`+`stopPropagation()`), e dentro do Alert do detalhe — mais o diálogo de confirmação do descarte ('Descartar este registro?' / 'Ele não foi enviado para a sua conta e não poderá ser recuperado.'). Inferido: que botões destrutivos moram DENTRO de um card inteiramente clicável em 390px; o rótulo variável do retry ('Tentar agora' quando pendente × 'Tentar novamente' nos demais); a ausência do retry quando pendente e offline; e que [Descartar] é `variant=danger` SÓLIDO dentro de um card de lista.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "Um registro travado sem saída envenena todo sign-out futuro. Mas botão destrutivo sólido dentro de um card inteiro clicável, num toque de polegar, é o desenho que produz descarte acidental de um orçamento que só existe naquele aparelho.",
+    "prioridade": "MEDIA",
+    "refutacao": "Nada a derrubar: as três autoridades desenhadas não têm fila, logo não têm ações de fila. `claude-design-prototype.md` §E6 é lista mock + vazio gated + detalhe + Exportar, e a matriz §G do Histórico não tem coluna para nada disso; os fixes 16/17/18 tratam skeleton, erro de carga e vazio frio, nenhum toca item travado. `HistoryScreen.jsx` não tem ação por item além de abrir o detalhe (`onClick={() => setDetail(c)}` com chevron). Reli o card do canvas do dono (linhas 281-292) botão por botão: ele contém rótulo, badge, meta e a linha de dinheiro — nenhum botão dentro, e nenhum estado travado desenhado. Resta `ux-history.md` §1.5 (copy verbatim da confirmação) e §9.2/G5 ('Dialog + Button danger' como padrão dos três confirms destrutivos), texto do `designer-ux`.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

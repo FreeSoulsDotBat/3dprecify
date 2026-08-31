@@ -3,6 +3,6 @@
    to clamp at. `overflow-wrap: anywhere` gives it one, so a 500-char token note still truncates with
    a visible "…" at the 2-line boundary (adversarial SIZE, ux §0.4). */
 .tf-scenario-note {
-  overflow-wrap: anywhere;
-  word-break: break-word;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }

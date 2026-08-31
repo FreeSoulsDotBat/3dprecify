@@ -2,8 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef } from "react";
 
 import {
-  listPriceObservationsApiV1PriceObservationsGet,
-  putPriceObservationsApiV1PriceObservationsPut,
+    listPriceObservationsApiV1PriceObservationsGet,
+    putPriceObservationsApiV1PriceObservationsPut,
 } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
 import { useOnline } from "@/shared/lib/use-online";
@@ -23,27 +23,27 @@ import { PRICING_MODEL_VERSION } from "@3dprecify/pricing-core";
 export type SubjectKind = "PRODUCT" | "KIT";
 
 export interface PriceObservation {
-  subjectKind: SubjectKind;
-  subjectId: string;
-  observedPrice: number;
-  observedAt: string;
-  modelVersion: string;
-  catalogVersion?: string | null;
+    subjectKind: SubjectKind;
+    subjectId: string;
+    observedPrice: number;
+    observedAt: string;
+    modelVersion: string;
+    catalogVersion?: string | null;
 }
 
 /** Chave estável (kind:id) — usada tanto pelo `Map` de leitura quanto pelo comparador puro. */
 export const observationKey = (kind: SubjectKind, id: string): string => `${kind}:${id}`;
 
 export const priceObservationsQueryKey = (uid: string | undefined) =>
-  ["price-observations", uid] as const;
+    ["price-observations", uid] as const;
 
 export interface UsePriceObservationsResult {
-  byKey: ReadonlyMap<string, PriceObservation>;
-  isLoading: boolean;
-  isError: boolean;
-  error: ApiError | null;
-  /** 403 `ENTITLEMENT_REQUIRED` — a parede caiu; nunca um erro visível (molde `use-history.ts`). */
-  entitlementDenied: boolean;
+    byKey: ReadonlyMap<string, PriceObservation>;
+    isLoading: boolean;
+    isError: boolean;
+    error: ApiError | null;
+    /** 403 `ENTITLEMENT_REQUIRED` — a parede caiu; nunca um erro visível (molde `use-history.ts`). */
+    entitlementDenied: boolean;
 }
 
 /**
@@ -51,69 +51,69 @@ export interface UsePriceObservationsResult {
  * `staleTime` curto porque o valor é só contexto, não a fonte do preço mostrado.
  */
 export function usePriceObservations(): UsePriceObservationsResult {
-  const status = useSessionStore((s) => s.status);
-  const uid = useSessionStore((s) => s.user?.uid);
+    const status = useSessionStore((s) => s.status);
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  const query = useQuery({
-    queryKey: priceObservationsQueryKey(uid),
-    enabled: status === "authenticated" && !!uid,
-    retry: false,
-    staleTime: 30_000,
-    queryFn: async () => {
-      const res = await listPriceObservationsApiV1PriceObservationsGet();
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data.items;
-    },
-  });
+    const query = useQuery({
+        queryKey: priceObservationsQueryKey(uid),
+        enabled: status === "authenticated" && !!uid,
+        retry: false,
+        staleTime: 30_000,
+        queryFn: async () => {
+            const res = await listPriceObservationsApiV1PriceObservationsGet();
+            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data.items;
+        },
+    });
 
-  const apiError = (query.error as ApiError | null) ?? null;
-  const entitlementDenied = apiError?.code === "ENTITLEMENT_REQUIRED";
+    const apiError = (query.error as ApiError | null) ?? null;
+    const entitlementDenied = apiError?.code === "ENTITLEMENT_REQUIRED";
 
-  // Identidade estável por resposta: quem depende de `byKey` num `useEffect` (a tela que chama
-  // `observe` pós-render) não pode ver um Map novo a cada render.
-  const data = query.data;
-  const byKey = useMemo(() => {
-    const map = new Map<string, PriceObservation>();
-    for (const item of data ?? []) {
-      map.set(observationKey(item.subjectKind, item.subjectId), {
-        subjectKind: item.subjectKind,
-        subjectId: item.subjectId,
-        observedPrice: Number(item.observedPrice),
-        observedAt: item.observedAt,
-        modelVersion: item.modelVersion,
-        catalogVersion: item.catalogVersion,
-      });
-    }
-    return map;
-  }, [data]);
+    // Identidade estável por resposta: quem depende de `byKey` num `useEffect` (a tela que chama
+    // `observe` pós-render) não pode ver um Map novo a cada render.
+    const data = query.data;
+    const byKey = useMemo(() => {
+        const map = new Map<string, PriceObservation>();
+        for (const item of data ?? []) {
+            map.set(observationKey(item.subjectKind, item.subjectId), {
+                subjectKind: item.subjectKind,
+                subjectId: item.subjectId,
+                observedPrice: Number(item.observedPrice),
+                observedAt: item.observedAt,
+                modelVersion: item.modelVersion,
+                catalogVersion: item.catalogVersion,
+            });
+        }
+        return map;
+    }, [data]);
 
-  return {
-    byKey,
-    isLoading: query.isFetching && query.data === undefined,
-    // Um 403 ENTITLEMENT_REQUIRED nunca é "erro" — é a parede, e `entitlementDenied` já a comunica.
-    isError: query.isError && !entitlementDenied,
-    error: entitlementDenied ? null : apiError,
-    entitlementDenied,
-  };
+    return {
+        byKey,
+        isLoading: query.isFetching && query.data === undefined,
+        // Um 403 ENTITLEMENT_REQUIRED nunca é "erro" — é a parede, e `entitlementDenied` já a comunica.
+        isError: query.isError && !entitlementDenied,
+        error: entitlementDenied ? null : apiError,
+        entitlementDenied,
+    };
 }
 
 export interface RecomputedPrice {
-  subjectKind: SubjectKind;
-  subjectId: string;
-  precoVarejo: number;
+    subjectKind: SubjectKind;
+    subjectId: string;
+    precoVarejo: number;
 }
 
 export interface PriceChange {
-  subjectKind: SubjectKind;
-  subjectId: string;
-  was: number;
-  now: number;
-  observedAt: string;
+    subjectKind: SubjectKind;
+    subjectId: string;
+    was: number;
+    now: number;
+    observedAt: string;
 }
 
 /** Reais → centavos inteiros, para comparar sem o ruído de ponto flutuante. */
 function centavos(x: number): number {
-  return Math.round(x * 100);
+    return Math.round(x * 100);
 }
 
 /**
@@ -121,35 +121,35 @@ function centavos(x: number): number {
  * observação não conta — ausência é ausência, nunca "0 mudaram" nem "era R$ 0,00" (ADR-0033 §2).
  */
 export function derivePriceChanges(
-  recomputed: readonly RecomputedPrice[],
-  byKey: ReadonlyMap<string, PriceObservation>,
+    recomputed: readonly RecomputedPrice[],
+    byKey: ReadonlyMap<string, PriceObservation>,
 ): { changed: PriceChange[]; count: number } {
-  const changed: PriceChange[] = [];
-  for (const item of recomputed) {
-    const obs = byKey.get(observationKey(item.subjectKind, item.subjectId));
-    if (!obs) continue;
-    if (centavos(obs.observedPrice) === centavos(item.precoVarejo)) continue;
-    changed.push({
-      subjectKind: item.subjectKind,
-      subjectId: item.subjectId,
-      was: obs.observedPrice,
-      now: item.precoVarejo,
-      observedAt: obs.observedAt,
-    });
-  }
-  return { changed, count: changed.length };
+    const changed: PriceChange[] = [];
+    for (const item of recomputed) {
+        const obs = byKey.get(observationKey(item.subjectKind, item.subjectId));
+        if (!obs) continue;
+        if (centavos(obs.observedPrice) === centavos(item.precoVarejo)) continue;
+        changed.push({
+            subjectKind: item.subjectKind,
+            subjectId: item.subjectId,
+            was: obs.observedPrice,
+            now: item.precoVarejo,
+            observedAt: obs.observedAt,
+        });
+    }
+    return { changed, count: changed.length };
 }
 
 /** Assinatura estável de um conjunto — usada só para o dedupe "uma vez por visita" do hook abaixo. */
 function signature(items: readonly RecomputedPrice[]): string {
-  return items
-    .map((i) => `${i.subjectKind}:${i.subjectId}:${i.precoVarejo}`)
-    .sort()
-    .join("|");
+    return items
+        .map((i) => `${i.subjectKind}:${i.subjectId}:${i.precoVarejo}`)
+        .sort()
+        .join("|");
 }
 
 export interface UseObservePricesResult {
-  observe: (items: readonly RecomputedPrice[], catalogVersion?: string | null) => void;
+    observe: (items: readonly RecomputedPrice[], catalogVersion?: string | null) => void;
 }
 
 /**
@@ -164,48 +164,48 @@ export interface UseObservePricesResult {
  * e a próxima visita simplesmente tenta de novo.
  */
 export function useObservePrices(): UseObservePricesResult {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
-  const online = useOnline();
-  const lastSignature = useRef<string | null>(null);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
+    const online = useOnline();
+    const lastSignature = useRef<string | null>(null);
 
-  const mutation = useMutation({
-    mutationFn: async ({
-      items,
-      catalogVersion,
-    }: {
-      items: readonly RecomputedPrice[];
-      catalogVersion?: string | null;
-    }) => {
-      const res = await putPriceObservationsApiV1PriceObservationsPut({
-        items: items.map((i) => ({
-          subjectKind: i.subjectKind,
-          subjectId: i.subjectId,
-          observedPrice: i.precoVarejo.toFixed(2),
-          modelVersion: PRICING_MODEL_VERSION,
-          ...(catalogVersion ? { catalogVersion } : {}),
-        })),
-      });
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: priceObservationsQueryKey(uid) });
-    },
-    // Falha silenciosa por desenho (ADR-0033 §2): nenhum toast/Alert, a marca não avança.
-    onError: () => {
-      /* silencioso de propósito — a próxima visita tenta de novo */
-    },
-  });
+    const mutation = useMutation({
+        mutationFn: async ({
+            items,
+            catalogVersion,
+        }: {
+            items: readonly RecomputedPrice[];
+            catalogVersion?: string | null;
+        }) => {
+            const res = await putPriceObservationsApiV1PriceObservationsPut({
+                items: items.map((i) => ({
+                    subjectKind: i.subjectKind,
+                    subjectId: i.subjectId,
+                    observedPrice: i.precoVarejo.toFixed(2),
+                    modelVersion: PRICING_MODEL_VERSION,
+                    ...(catalogVersion ? { catalogVersion } : {}),
+                })),
+            });
+            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: priceObservationsQueryKey(uid) });
+        },
+        // Falha silenciosa por desenho (ADR-0033 §2): nenhum toast/Alert, a marca não avança.
+        onError: () => {
+            /* silencioso de propósito — a próxima visita tenta de novo */
+        },
+    });
 
-  return {
-    observe: (items, catalogVersion) => {
-      if (!online) return;
-      if (items.length === 0) return;
-      const sig = signature(items);
-      if (lastSignature.current === sig) return;
-      lastSignature.current = sig;
-      mutation.mutate({ items, catalogVersion });
-    },
-  };
+    return {
+        observe: (items, catalogVersion) => {
+            if (!online) return;
+            if (items.length === 0) return;
+            const sig = signature(items);
+            if (lastSignature.current === sig) return;
+            lastSignature.current = sig;
+            mutation.mutate({ items, catalogVersion });
+        },
+    };
 }

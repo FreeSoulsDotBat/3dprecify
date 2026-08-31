@@ -1,16 +1,16 @@
 {
-  "id": "dialogo-de-exclusao",
-  "nome": "Confirmar exclusão de item do catálogo (com o aviso de produtos que o usam)",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/features/catalog/catalog-panel.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "Um `Dialog variant=\"center\"` inteiro (linhas 479-510) sem desenho: `DialogTitle` \"Excluir «{nome}»?\", `DialogDescription` \"Esta ação não pode ser desfeita.\", um `Alert tone=\"info\"` condicional com a consequência real (\"Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.\"), um `Alert tone=\"danger\"` de falha que aparece DENTRO do diálogo, e o par \"Voltar\" (ghost) + \"Excluir\" (danger, `loading={deleting}`). Sem desenho: a hierarquia entre corpo, aviso de referências e erro; o diálogo aberto sobre o mestre-detalhe no desktop; e o estado enquanto a exclusão está em voo.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a única ação destrutiva do Catálogo e o momento em que o vendedor decide se perde um item — construída inteira por inferência, inclusive a frase que explica o efeito colateral nos produtos.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas 4 e confirmo NENHUMA. (1) `grep -i \"excluir|apagar|remover|exclus\"` em `docs/design/prompts/` inteiro devolve UMA linha — `-fixes-r2.md:71`, sobre excluir CÁLCULO do Histórico numa demo. O Catálogo do protótipo não tem exclusão: o `ListItem` (`CatalogScreen.jsx` linha 63) traz um único trailing, o lápis. (2) A auditoria não cita exclusão de catálogo em nenhuma das três rodadas. (3) `.design-import` não tem Dialog de confirmação — o readme lista 32 primitivas e a única de sobreposição é `Sheet`. (4) O canvas desenha o BOTÃO \"Excluir\" (`tf-btn--danger-ghost`, linha 125) na cabeça da ficha e absolutamente nada do que acontece depois do clique — e note que ali ele é um botão DE TEXTO, enquanto o código usa ícone ghost de lixeira nos dois ramos.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "dialogo-de-exclusao",
+    "nome": "Confirmar exclusão de item do catálogo (com o aviso de produtos que o usam)",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/features/catalog/catalog-panel.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "Um `Dialog variant=\"center\"` inteiro (linhas 479-510) sem desenho: `DialogTitle` \"Excluir «{nome}»?\", `DialogDescription` \"Esta ação não pode ser desfeita.\", um `Alert tone=\"info\"` condicional com a consequência real (\"Este filamento é usado em {n} produto(s). Eles manterão os últimos valores, editáveis.\"), um `Alert tone=\"danger\"` de falha que aparece DENTRO do diálogo, e o par \"Voltar\" (ghost) + \"Excluir\" (danger, `loading={deleting}`). Sem desenho: a hierarquia entre corpo, aviso de referências e erro; o diálogo aberto sobre o mestre-detalhe no desktop; e o estado enquanto a exclusão está em voo.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a única ação destrutiva do Catálogo e o momento em que o vendedor decide se perde um item — construída inteira por inferência, inclusive a frase que explica o efeito colateral nos produtos.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas 4 e confirmo NENHUMA. (1) `grep -i \"excluir|apagar|remover|exclus\"` em `docs/design/prompts/` inteiro devolve UMA linha — `-fixes-r2.md:71`, sobre excluir CÁLCULO do Histórico numa demo. O Catálogo do protótipo não tem exclusão: o `ListItem` (`CatalogScreen.jsx` linha 63) traz um único trailing, o lápis. (2) A auditoria não cita exclusão de catálogo em nenhuma das três rodadas. (3) `.design-import` não tem Dialog de confirmação — o readme lista 32 primitivas e a única de sobreposição é `Sheet`. (4) O canvas desenha o BOTÃO \"Excluir\" (`tf-btn--danger-ghost`, linha 125) na cabeça da ficha e absolutamente nada do que acontece depois do clique — e note que ali ele é um botão DE TEXTO, enquanto o código usa ícone ghost de lixeira nos dois ramos.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

@@ -1,16 +1,16 @@
 {
-  "id": "cartao-de-canal",
-  "nome": "Cartão de um canal — composição, ordem e densidade",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/calculator/calculator-form.tsx",
-    "apps/web/src/features/calculator/channel-field-plan.ts"
-  ],
-  "oQueFoiInferido": "Um Card com até ONZE blocos numa ordem fixa e condicional (`ChannelSlot`, calculator-form.tsx:844-1105): (1) linha de topo `flex items-end` com o Select de marketplace flex-1 + um Button ghost '✕'; (2) Select de modalidade; (3) CategoryPicker; (4) Select 'Você vende como'; (5) Select 'mais de 450 pedidos?' (só quando CPF); (6) grade `1fr 1fr` de até 4 campos de taxa; (7) legenda de faixa + regra de taxa fixa; (8) legenda de subsídio de frete; (9) chaves de taxa opcional; (10) linha `flex-wrap` de até 3 selos; (11) os dois avisos Shopee. Quais aparecem é decidido por `channelFieldPlan(catalog, marketplace)`. Inferido: a ORDEM desses blocos, o que acontece visualmente quando um marketplace mostra 3 e outro mostra 11, se o cartão deveria ser colável/resumível quando há vários, e onde mora o remover (hoje um '✕' cru colado ao Select).",
-  "autoridade": "NENHUMA",
-  "impacto": "É o cartão mais denso e mais variável do produto, e é onde o dinheiro real do vendedor é decidido. Sua altura varia de ~4 para ~11 blocos conforme o marketplace, sem nenhuma regra de desenho para essa variação — e N deles empilham dentro de meia tela no desktop.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas 4. O protótipo não tem 'cartão de canal': tem dois campos soltos numa colapsável (§E4 + `CalculatorScreen.jsx` 94-101). `prototype-audit-2026-07-02.md` não menciona canais em nenhuma das 16 linhas de achados nem nas verificações V2/V3. `.design-import` (readme + 32 primitivos + 6 esqueletos) não tem componente de slot. O canvas 018 não cobre Calcular. Li o `ChannelSlot` inteiro: cada bloco cita FR/achado de homologação como origem (US12/FR-918, US17/FR-926, US16/FR-923, hotfix A2/H2c, PR-F/A1) — nenhum cita desenho. Confirmado NENHUMA, sobrevive.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "cartao-de-canal",
+    "nome": "Cartão de um canal — composição, ordem e densidade",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/calculator/calculator-form.tsx",
+        "apps/web/src/features/calculator/channel-field-plan.ts"
+    ],
+    "oQueFoiInferido": "Um Card com até ONZE blocos numa ordem fixa e condicional (`ChannelSlot`, calculator-form.tsx:844-1105): (1) linha de topo `flex items-end` com o Select de marketplace flex-1 + um Button ghost '✕'; (2) Select de modalidade; (3) CategoryPicker; (4) Select 'Você vende como'; (5) Select 'mais de 450 pedidos?' (só quando CPF); (6) grade `1fr 1fr` de até 4 campos de taxa; (7) legenda de faixa + regra de taxa fixa; (8) legenda de subsídio de frete; (9) chaves de taxa opcional; (10) linha `flex-wrap` de até 3 selos; (11) os dois avisos Shopee. Quais aparecem é decidido por `channelFieldPlan(catalog, marketplace)`. Inferido: a ORDEM desses blocos, o que acontece visualmente quando um marketplace mostra 3 e outro mostra 11, se o cartão deveria ser colável/resumível quando há vários, e onde mora o remover (hoje um '✕' cru colado ao Select).",
+    "autoridade": "NENHUMA",
+    "impacto": "É o cartão mais denso e mais variável do produto, e é onde o dinheiro real do vendedor é decidido. Sua altura varia de ~4 para ~11 blocos conforme o marketplace, sem nenhuma regra de desenho para essa variação — e N deles empilham dentro de meia tela no desktop.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas 4. O protótipo não tem 'cartão de canal': tem dois campos soltos numa colapsável (§E4 + `CalculatorScreen.jsx` 94-101). `prototype-audit-2026-07-02.md` não menciona canais em nenhuma das 16 linhas de achados nem nas verificações V2/V3. `.design-import` (readme + 32 primitivos + 6 esqueletos) não tem componente de slot. O canvas 018 não cobre Calcular. Li o `ChannelSlot` inteiro: cada bloco cita FR/achado de homologação como origem (US12/FR-918, US17/FR-926, US16/FR-923, hotfix A2/H2c, PR-F/A1) — nenhum cita desenho. Confirmado NENHUMA, sobrevive.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

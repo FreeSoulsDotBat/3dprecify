@@ -32,265 +32,280 @@ const tc = messages.conta;
 const tn = messages.nav;
 
 test.describe("E6 billing turnstile (MP stub)", () => {
-  test.describe.configure({ mode: "serial" });
+    test.describe.configure({ mode: "serial" });
 
-  // Playwright requires the literal `{}` fixtures destructure as the first param even when no
-  // fixture is used; only `testInfo` is needed here.
-  // eslint-disable-next-line no-empty-pattern
-  test.beforeEach(({}, testInfo) => {
-    test.skip(
-      testInfo.project.name !== "chromium",
-      "billing.spec.ts is chromium-only — see the file header (cross-project concurrent checkouts share one e2e database)",
-    );
-  });
-
-  // ── US1 — offer honesty ──────────────────────────────────────────────────────────────────
-
-  test("signed-out: a guarded /conta routes through sign-in (the CTA's only reachable door today)", async ({
-    page,
-  }) => {
-    // BillingCta itself is only reachable once already inside Conta (the four teasers don't
-    // consume it yet — T031/T032, still open). The signed-out boundary is enforced one layer up,
-    // by the /conta route guard itself (also covered generically by auth-boundary.spec.ts); this
-    // assertion documents that the CTA is never reachable signed-out, honestly, rather than
-    // fabricating a UI path that doesn't exist yet. Unit coverage of the CTA's OWN signed-out
-    // branch (routes to /sign-in without calling checkout) lives in offer-panel.test.tsx.
-    await page.goto("/conta");
-    await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
-    await expect(page.getByRole("heading", { name: messages.signIn.title })).toBeVisible();
-  });
-
-  test("signed-in free seller: the offer shows exact honest prices, no de/por, annual pre-highlighted", async ({
-    page,
-  }, info) => {
-    await signUpThrowaway(page, `offer-${info.workerIndex}`);
-    await page.goto("/conta");
-
-    // 019: a ≥1280px (isWide) a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` —
-    // nenhum diálogo abre a partir do botão da linha do plano (ele só rola até o card, ver
-    // conta-page.tsx onSubscribe). A ficha que este teste inspeciona É esse card, sem diálogo.
-    const oferta = page.locator("#tf-conta-oferta");
-    await expect(oferta.getByText(t.offerFreeLead)).toBeVisible();
-
-    // Exact prices — the one product constant, byte-for-byte.
-    await expect(oferta.getByText(t.planMonthlyPrice, { exact: true })).toBeVisible(); // R$ 15,99/mês
-    await expect(oferta.getByText(t.planAnnualPrice, { exact: true })).toBeVisible(); // R$ 155,88/ano
-    await expect(oferta.getByText(t.planAnnualEquiv, { exact: true })).toBeVisible(); // equiv. 12,99/mês
-
-    // No de/por anchor, ever (§0.2).
-    await expect(oferta.getByText(/191,88/)).toHaveCount(0);
-    await expect(oferta.locator("s, del")).toHaveCount(0);
-
-    // Annual pre-highlighted "recomendado"; monthly is one tap away.
-    await expect(oferta.getByText(t.planAnnualBadge)).toBeVisible();
-    await expect(oferta.locator('input[value="annual"]')).toBeChecked();
-    await expect(oferta.locator('input[value="monthly"]')).not.toBeChecked();
-    await oferta.locator('input[value="monthly"]').click();
-    await expect(oferta.locator('input[value="monthly"]')).toBeChecked();
-
-    // Hand-off honesty notices.
-    await expect(oferta.getByText(t.handoffNotice)).toBeVisible();
-    await expect(oferta.getByText(t.cardNeverTouches)).toBeVisible();
-  });
-
-  // ── US3/SC-701 — the flip ────────────────────────────────────────────────────────────────
-
-  test("US3/SC-701: a confirmed stub payment grants entitlement server-side, no re-login needed", async ({
-    page,
-    request,
-  }) => {
-    await signUpThrowaway(page, "flip");
-    await page.goto("/conta");
-
-    // Reach checkout: intercept the external hand-off (the stub's init_point is a fake domain,
-    // never resolvable by real DNS) so the app's window.location.assign lands somewhere real.
-    await page.route("https://stub.mercadopago.local/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
-    );
-
-    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
-    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
-    await page
-      .locator(".tf-conta__row--plan")
-      .getByRole("button", { name: t.subscribeAction })
-      .click();
-    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
-    await page.waitForURL(/stub\.mercadopago\.local/);
-
-    // The stub "confirms" the payment: a real signed webhook straight at the backend (SEC-101..
-    // 107 verified, then resolved by the stub's cross-process DB fallback — see file header).
-    const res = await fireStubWebhook(request, { paymentId: "e2e-flip-payment" });
-    expect(res.status()).toBe(200);
-    expect((await res.json()).status).toBe("ok");
-
-    // Land back in the app WITHOUT the `checkout=retorno` marker — the dedicated test below covers
-    // that exact cold-return shape; this one stays a plain re-entry so it isolates the GRANT
-    // mechanics from the return-surface UI.
-    await page.goto("/conta");
-    // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
-    // rótulos; só o selo do plano É exatamente "Premium".
-    await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
-
-    // Spot-check: a premium surface unlocks WITHOUT re-login (same session, no new sign-in).
-    await page.getByRole("link", { name: tn.catalogo }).click();
-    await expect(page.getByRole("tab", { name: messages.catalogo.tabFilaments })).toBeVisible();
-  });
-
-  // Regression test for the cold-return defect this task found and `951d714` fixed: a HARD
-  // navigation (`page.goto`, exactly what MP's browser redirect-back does) to
-  // `/conta?checkout=retorno` used to transiently render unauthenticated and bounce through
-  // `/sign-in?redirect=%2Fconta` — `safeRedirect`/`RETURN_TO_INTENT` only remembered the PATHNAME,
-  // so the bounce-back silently dropped `checkout=retorno` and landed on the plain Conta panel
-  // instead of the honest `CheckoutReturnPanel` (confirming → success). The fix carries
-  // pathname+search through the redirect intent AND gates app boot on `auth.authStateReady()` so a
-  // persisted session never flashes anonymous on a cold navigation. This is the browser-level
-  // proof both land: a cold `/conta?checkout=retorno` now reaches the honest confirming state and
-  // settles to success on the entitlement flip, no bounce, no dropped query.
-  test("US3/SC-701 (return-surface UI): back from checkout shows the honest confirming state, then success", async ({
-    page,
-    request,
-  }) => {
-    await signUpThrowaway(page, "flip-ui");
-    await page.goto("/conta");
-    await page.route("https://stub.mercadopago.local/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
-    );
-    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
-    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
-    await page
-      .locator(".tf-conta__row--plan")
-      .getByRole("button", { name: t.subscribeAction })
-      .click();
-    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
-    await page.waitForURL(/stub\.mercadopago\.local/);
-
-    // Return from the hand-off BEFORE the payment is confirmed (MP's back_url — a 1-segment
-    // route, meant to be reachable on a cold navigation) — the honest "confirmando" state, never a
-    // premature "processando" that implies success.
-    await page.goto("/conta?checkout=retorno");
-    await expect(page.getByRole("heading", { name: t.returnPendingTitle })).toBeVisible();
-
-    // NOW the stub "confirms" the payment: a real signed webhook straight at the backend
-    // (SEC-101..107 verified, then resolved by the stub's cross-process DB fallback — file
-    // header). The already-mounted panel picks it up on its own poll — no reload, no re-login.
-    const res = await fireStubWebhook(request, { paymentId: "e2e-flip-ui-payment" });
-    expect((await res.json()).status).toBe("ok");
-
-    await expect(page.getByRole("heading", { name: t.returnSuccessTitle })).toBeVisible({
-      timeout: 20_000,
+    // Playwright requires the literal `{}` fixtures destructure as the first param even when no
+    // fixture is used; only `testInfo` is needed here.
+    // eslint-disable-next-line no-empty-pattern
+    test.beforeEach(({}, testInfo) => {
+        test.skip(
+            testInfo.project.name !== "chromium",
+            "billing.spec.ts is chromium-only — see the file header (cross-project concurrent checkouts share one e2e database)",
+        );
     });
-  });
 
-  // ── SC-703 — exactly-once ────────────────────────────────────────────────────────────────
+    // ── US1 — offer honesty ──────────────────────────────────────────────────────────────────
 
-  test("SC-703: the same signed webhook fired 3x still results in exactly ONE grant", async ({
-    page,
-    request,
-  }) => {
-    await signUpThrowaway(page, "once");
-    const tokenPromise = captureEntitlementBearerToken(page);
-    await page.goto("/conta");
-    const bearer = await tokenPromise;
-
-    await page.route("https://stub.mercadopago.local/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
-    );
-    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
-    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
-    await page
-      .locator(".tf-conta__row--plan")
-      .getByRole("button", { name: t.subscribeAction })
-      .click();
-    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
-    await page.waitForURL(/stub\.mercadopago\.local/);
-
-    const paymentId = "e2e-once-payment";
-    const first = await fireStubWebhook(request, { paymentId });
-    const second = await fireStubWebhook(request, { paymentId });
-    const third = await fireStubWebhook(request, { paymentId });
-
-    expect(first.status()).toBe(200);
-    expect((await first.json()).status).toBe("ok"); // the ONE call that actually granted
-    // Idempotent: neither replay grants a second time (webhook route acks 200 either way, SEC-105).
-    expect(second.status()).toBe(200);
-    expect((await second.json()).status).not.toBe("ok");
-    expect(third.status()).toBe(200);
-    expect((await third.json()).status).not.toBe("ok");
-
-    // Server-side confirmation via the API directly (not just the UI's word for it).
-    const entitlementRes = await request.get(`${E2E_BACKEND_URL}/api/v1/entitlement`, {
-      headers: { Authorization: bearer },
+    test("signed-out: a guarded /conta routes through sign-in (the CTA's only reachable door today)", async ({
+        page,
+    }) => {
+        // BillingCta itself is only reachable once already inside Conta (the four teasers don't
+        // consume it yet — T031/T032, still open). The signed-out boundary is enforced one layer up,
+        // by the /conta route guard itself (also covered generically by auth-boundary.spec.ts); this
+        // assertion documents that the CTA is never reachable signed-out, honestly, rather than
+        // fabricating a UI path that doesn't exist yet. Unit coverage of the CTA's OWN signed-out
+        // branch (routes to /sign-in without calling checkout) lives in offer-panel.test.tsx.
+        await page.goto("/conta");
+        await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
+        await expect(page.getByRole("heading", { name: messages.signIn.title })).toBeVisible();
     });
-    expect(entitlementRes.status()).toBe(200);
-    const entitlement = await entitlementRes.json();
-    expect(entitlement.status).toBe("active");
-    expect(entitlement.source).toBe("payment");
-  });
 
-  // ── US2 — checkout hand-off + abandonment ────────────────────────────────────────────────
+    test("signed-in free seller: the offer shows exact honest prices, no de/por, annual pre-highlighted", async ({
+        page,
+    }, info) => {
+        await signUpThrowaway(page, `offer-${info.workerIndex}`);
+        await page.goto("/conta");
 
-  test("US2: an abandoned checkout leaves no ghost premium; a retry shows the honest 409 copy", async ({
-    page,
-  }, info) => {
-    await signUpThrowaway(page, `abandon-${info.workerIndex}`);
-    await page.goto("/conta");
+        // 019: a ≥1280px (isWide) a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` —
+        // nenhum diálogo abre a partir do botão da linha do plano (ele só rola até o card, ver
+        // conta-page.tsx onSubscribe). A ficha que este teste inspeciona É esse card, sem diálogo.
+        const oferta = page.locator("#tf-conta-oferta");
+        await expect(oferta.getByText(t.offerFreeLead)).toBeVisible();
 
-    await page.route("https://stub.mercadopago.local/**", (route) =>
-      route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
-    );
+        // Exact prices — the one product constant, byte-for-byte.
+        await expect(oferta.getByText(t.planMonthlyPrice, { exact: true })).toBeVisible(); // R$ 15,99/mês
+        await expect(oferta.getByText(t.planAnnualPrice, { exact: true })).toBeVisible(); // R$ 155,88/ano
+        await expect(oferta.getByText(t.planAnnualEquiv, { exact: true })).toBeVisible(); // equiv. 12,99/mês
 
-    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
-    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
-    await page
-      .locator(".tf-conta__row--plan")
-      .getByRole("button", { name: t.subscribeAction })
-      .click();
-    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
-    await page.waitForURL(/stub\.mercadopago\.local/);
+        // No de/por anchor, ever (§0.2).
+        await expect(oferta.getByText(/191,88/)).toHaveCount(0);
+        await expect(oferta.locator("s, del")).toHaveCount(0);
 
-    // The abandoner: never completes the payment, just comes back to the app on their own.
-    await page.goto("/conta");
-    await expect(page.getByText(tc.planFree)).toBeVisible();
-    // exact: true — "Assinar Premium" (still visible, a free account) would otherwise substring-
-    // match "Premium" too; the badge text itself is the only exact match we care about.
-    await expect(page.getByText(tc.planPremium, { exact: true })).toHaveCount(0);
-    // No ghost "pendente premium" state anywhere on the page.
-    await expect(page.getByText(/pendente/i)).toHaveCount(0);
+        // Annual pre-highlighted "recomendado"; monthly is one tap away.
+        await expect(oferta.getByText(t.planAnnualBadge)).toBeVisible();
+        await expect(oferta.locator('input[value="annual"]')).toBeChecked();
+        await expect(oferta.locator('input[value="monthly"]')).not.toBeChecked();
+        await oferta.locator('input[value="monthly"]').click();
+        await expect(oferta.locator('input[value="monthly"]')).toBeChecked();
 
-    // A second Assinar attempt hits SEC-604 (an open subscription already exists) — honest copy,
-    // never the raw status code.
-    // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
-    // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
-    await page
-      .locator(".tf-conta__row--plan")
-      .getByRole("button", { name: t.subscribeAction })
-      .click();
-    await page.locator("#tf-conta-oferta").getByRole("button", { name: t.subscribeAction }).click();
-    await expect(page.getByRole("alert").getByText(t.checkoutInProgress)).toBeVisible();
-    await expect(page.getByText(/\b409\b/)).toHaveCount(0);
-  });
-
-  // ── SC-702 — spoofed webhook ──────────────────────────────────────────────────────────────
-
-  test("SC-702: a forged webhook signature is rejected 401 and grants nothing", async ({
-    page,
-    request,
-  }, info) => {
-    await signUpThrowaway(page, `spoof-${info.workerIndex}`);
-    const tokenPromise = captureEntitlementBearerToken(page);
-    await page.goto("/conta");
-    const bearer = await tokenPromise;
-
-    const res = await fireStubWebhook(request, {
-      paymentId: "e2e-spoof-payment",
-      secret: "definitely-the-wrong-secret",
+        // Hand-off honesty notices.
+        await expect(oferta.getByText(t.handoffNotice)).toBeVisible();
+        await expect(oferta.getByText(t.cardNeverTouches)).toBeVisible();
     });
-    expect(res.status()).toBe(401);
 
-    const entitlementRes = await request.get(`${E2E_BACKEND_URL}/api/v1/entitlement`, {
-      headers: { Authorization: bearer },
+    // ── US3/SC-701 — the flip ────────────────────────────────────────────────────────────────
+
+    test("US3/SC-701: a confirmed stub payment grants entitlement server-side, no re-login needed", async ({
+        page,
+        request,
+    }) => {
+        await signUpThrowaway(page, "flip");
+        await page.goto("/conta");
+
+        // Reach checkout: intercept the external hand-off (the stub's init_point is a fake domain,
+        // never resolvable by real DNS) so the app's window.location.assign lands somewhere real.
+        await page.route("https://stub.mercadopago.local/**", (route) =>
+            route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
+        );
+
+        // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+        // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+        await page
+            .locator(".tf-conta__row--plan")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page
+            .locator("#tf-conta-oferta")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page.waitForURL(/stub\.mercadopago\.local/);
+
+        // The stub "confirms" the payment: a real signed webhook straight at the backend (SEC-101..
+        // 107 verified, then resolved by the stub's cross-process DB fallback — see file header).
+        const res = await fireStubWebhook(request, { paymentId: "e2e-flip-payment" });
+        expect(res.status()).toBe(200);
+        expect((await res.json()).status).toBe("ok");
+
+        // Land back in the app WITHOUT the `checkout=retorno` marker — the dedicated test below covers
+        // that exact cold-return shape; this one stays a plain re-entry so it isolates the GRANT
+        // mechanics from the return-surface UI.
+        await page.goto("/conta");
+        // 019: exact — a oferta inline (#tf-conta-oferta) repete a palavra "Premium" em vários
+        // rótulos; só o selo do plano É exatamente "Premium".
+        await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
+
+        // Spot-check: a premium surface unlocks WITHOUT re-login (same session, no new sign-in).
+        await page.getByRole("link", { name: tn.catalogo }).click();
+        await expect(page.getByRole("tab", { name: messages.catalogo.tabFilaments })).toBeVisible();
     });
-    expect(entitlementRes.status()).toBe(200);
-    expect((await entitlementRes.json()).status).toBe("none");
-  });
+
+    // Regression test for the cold-return defect this task found and `951d714` fixed: a HARD
+    // navigation (`page.goto`, exactly what MP's browser redirect-back does) to
+    // `/conta?checkout=retorno` used to transiently render unauthenticated and bounce through
+    // `/sign-in?redirect=%2Fconta` — `safeRedirect`/`RETURN_TO_INTENT` only remembered the PATHNAME,
+    // so the bounce-back silently dropped `checkout=retorno` and landed on the plain Conta panel
+    // instead of the honest `CheckoutReturnPanel` (confirming → success). The fix carries
+    // pathname+search through the redirect intent AND gates app boot on `auth.authStateReady()` so a
+    // persisted session never flashes anonymous on a cold navigation. This is the browser-level
+    // proof both land: a cold `/conta?checkout=retorno` now reaches the honest confirming state and
+    // settles to success on the entitlement flip, no bounce, no dropped query.
+    test("US3/SC-701 (return-surface UI): back from checkout shows the honest confirming state, then success", async ({
+        page,
+        request,
+    }) => {
+        await signUpThrowaway(page, "flip-ui");
+        await page.goto("/conta");
+        await page.route("https://stub.mercadopago.local/**", (route) =>
+            route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
+        );
+        // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+        // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+        await page
+            .locator(".tf-conta__row--plan")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page
+            .locator("#tf-conta-oferta")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page.waitForURL(/stub\.mercadopago\.local/);
+
+        // Return from the hand-off BEFORE the payment is confirmed (MP's back_url — a 1-segment
+        // route, meant to be reachable on a cold navigation) — the honest "confirmando" state, never a
+        // premature "processando" that implies success.
+        await page.goto("/conta?checkout=retorno");
+        await expect(page.getByRole("heading", { name: t.returnPendingTitle })).toBeVisible();
+
+        // NOW the stub "confirms" the payment: a real signed webhook straight at the backend
+        // (SEC-101..107 verified, then resolved by the stub's cross-process DB fallback — file
+        // header). The already-mounted panel picks it up on its own poll — no reload, no re-login.
+        const res = await fireStubWebhook(request, { paymentId: "e2e-flip-ui-payment" });
+        expect((await res.json()).status).toBe("ok");
+
+        await expect(page.getByRole("heading", { name: t.returnSuccessTitle })).toBeVisible({
+            timeout: 20_000,
+        });
+    });
+
+    // ── SC-703 — exactly-once ────────────────────────────────────────────────────────────────
+
+    test("SC-703: the same signed webhook fired 3x still results in exactly ONE grant", async ({
+        page,
+        request,
+    }) => {
+        await signUpThrowaway(page, "once");
+        const tokenPromise = captureEntitlementBearerToken(page);
+        await page.goto("/conta");
+        const bearer = await tokenPromise;
+
+        await page.route("https://stub.mercadopago.local/**", (route) =>
+            route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
+        );
+        // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+        // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+        await page
+            .locator(".tf-conta__row--plan")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page
+            .locator("#tf-conta-oferta")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page.waitForURL(/stub\.mercadopago\.local/);
+
+        const paymentId = "e2e-once-payment";
+        const first = await fireStubWebhook(request, { paymentId });
+        const second = await fireStubWebhook(request, { paymentId });
+        const third = await fireStubWebhook(request, { paymentId });
+
+        expect(first.status()).toBe(200);
+        expect((await first.json()).status).toBe("ok"); // the ONE call that actually granted
+        // Idempotent: neither replay grants a second time (webhook route acks 200 either way, SEC-105).
+        expect(second.status()).toBe(200);
+        expect((await second.json()).status).not.toBe("ok");
+        expect(third.status()).toBe(200);
+        expect((await third.json()).status).not.toBe("ok");
+
+        // Server-side confirmation via the API directly (not just the UI's word for it).
+        const entitlementRes = await request.get(`${E2E_BACKEND_URL}/api/v1/entitlement`, {
+            headers: { Authorization: bearer },
+        });
+        expect(entitlementRes.status()).toBe(200);
+        const entitlement = await entitlementRes.json();
+        expect(entitlement.status).toBe("active");
+        expect(entitlement.source).toBe("payment");
+    });
+
+    // ── US2 — checkout hand-off + abandonment ────────────────────────────────────────────────
+
+    test("US2: an abandoned checkout leaves no ghost premium; a retry shows the honest 409 copy", async ({
+        page,
+    }, info) => {
+        await signUpThrowaway(page, `abandon-${info.workerIndex}`);
+        await page.goto("/conta");
+
+        await page.route("https://stub.mercadopago.local/**", (route) =>
+            route.fulfill({ status: 200, contentType: "text/html", body: "<html>MP stub</html>" }),
+        );
+
+        // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+        // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+        await page
+            .locator(".tf-conta__row--plan")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page
+            .locator("#tf-conta-oferta")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page.waitForURL(/stub\.mercadopago\.local/);
+
+        // The abandoner: never completes the payment, just comes back to the app on their own.
+        await page.goto("/conta");
+        await expect(page.getByText(tc.planFree)).toBeVisible();
+        // exact: true — "Assinar Premium" (still visible, a free account) would otherwise substring-
+        // match "Premium" too; the badge text itself is the only exact match we care about.
+        await expect(page.getByText(tc.planPremium, { exact: true })).toHaveCount(0);
+        // No ghost "pendente premium" state anywhere on the page.
+        await expect(page.getByText(/pendente/i)).toHaveCount(0);
+
+        // A second Assinar attempt hits SEC-604 (an open subscription already exists) — honest copy,
+        // never the raw status code.
+        // 019: a ≥1280px a oferta de um vendedor livre já vem inline em `#tf-conta-oferta` — o botão
+        // da linha do plano só rola até ela (nunca abre diálogo, ver conta-page.tsx onSubscribe).
+        await page
+            .locator(".tf-conta__row--plan")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await page
+            .locator("#tf-conta-oferta")
+            .getByRole("button", { name: t.subscribeAction })
+            .click();
+        await expect(page.getByRole("alert").getByText(t.checkoutInProgress)).toBeVisible();
+        await expect(page.getByText(/\b409\b/)).toHaveCount(0);
+    });
+
+    // ── SC-702 — spoofed webhook ──────────────────────────────────────────────────────────────
+
+    test("SC-702: a forged webhook signature is rejected 401 and grants nothing", async ({
+        page,
+        request,
+    }, info) => {
+        await signUpThrowaway(page, `spoof-${info.workerIndex}`);
+        const tokenPromise = captureEntitlementBearerToken(page);
+        await page.goto("/conta");
+        const bearer = await tokenPromise;
+
+        const res = await fireStubWebhook(request, {
+            paymentId: "e2e-spoof-payment",
+            secret: "definitely-the-wrong-secret",
+        });
+        expect(res.status()).toBe(401);
+
+        const entitlementRes = await request.get(`${E2E_BACKEND_URL}/api/v1/entitlement`, {
+            headers: { Authorization: bearer },
+        });
+        expect(entitlementRes.status()).toBe(200);
+        expect((await entitlementRes.json()).status).toBe("none");
+    });
 });

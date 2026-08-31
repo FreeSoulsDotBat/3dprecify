@@ -69,25 +69,25 @@ export const LIST_DENSE_QUERY = "(min-width: 1024px)";
 /** A leitura defensiva compartilhada: sem `window`/`matchMedia` (o ambiente do jsdom) a resposta é
  *  `false`, que é a propriedade que mantém toda a suíte existente no ramo de hoje (ADR-0031). */
 function useMediaQuery(query: string): boolean {
-  const read = () =>
-    typeof window !== "undefined" && typeof window.matchMedia === "function"
-      ? window.matchMedia(query).matches
-      : false;
-  const [matches, setMatches] = useState<boolean>(read);
-  useEffect(() => {
-    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
-    const mql = window.matchMedia(query);
-    const onChange = () => setMatches(mql.matches);
-    // Lê uma vez no efeito: entre o primeiro render e o commit a janela pode ter mudado.
-    onChange();
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, [query]);
-  return matches;
+    const read = () =>
+        typeof window !== "undefined" && typeof window.matchMedia === "function"
+            ? window.matchMedia(query).matches
+            : false;
+    const [matches, setMatches] = useState<boolean>(read);
+    useEffect(() => {
+        if (typeof window === "undefined" || typeof window.matchMedia !== "function") return;
+        const mql = window.matchMedia(query);
+        const onChange = () => setMatches(mql.matches);
+        // Lê uma vez no efeito: entre o primeiro render e o commit a janela pode ter mudado.
+        onChange();
+        mql.addEventListener("change", onChange);
+        return () => mql.removeEventListener("change", onChange);
+    }, [query]);
+    return matches;
 }
 
 export function useIsWide(): boolean {
-  return useMediaQuery(WIDE_QUERY);
+    return useMediaQuery(WIDE_QUERY);
 }
 
 /**
@@ -96,19 +96,19 @@ export function useIsWide(): boolean {
  * expandir ali devolveria o transbordo — é uma restrição de espaço, não uma preferência.
  */
 export function useRailForcado(): boolean {
-  return useMediaQuery(RAIL_FORCADO_QUERY);
+    return useMediaQuery(RAIL_FORCADO_QUERY);
 }
 
 /** 019/PR-C — o limiar em que o bloco "A máquina" da Calculadora move o segmented
  *  "Estimar · Ajustar" para a linha do título (prancheta 15f). Sem `matchMedia` (jsdom) → `false`,
  *  a mesma propriedade que mantém a suíte existente no ramo mobile. */
 export function useIsCalcWide(): boolean {
-  return useMediaQuery(CALC_WIDE_QUERY);
+    return useMediaQuery(CALC_WIDE_QUERY);
 }
 
 /** 019/PR-D — o limiar em que a lista do Catálogo vira `tf-table` densa (1024–1279px; ≥1280px é o
  *  mestre-detalhe do 018, que consome `useIsWide`). Sem `matchMedia` (jsdom) → `false`, a mesma
  *  propriedade que mantém a suíte existente no ramo mobile/cards. */
 export function useIsListDense(): boolean {
-  return useMediaQuery(LIST_DENSE_QUERY);
+    return useMediaQuery(LIST_DENSE_QUERY);
 }

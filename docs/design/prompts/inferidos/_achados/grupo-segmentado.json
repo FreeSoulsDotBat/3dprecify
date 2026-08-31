@@ -1,18 +1,18 @@
 {
-  "id": "grupo-segmentado",
-  "nome": "Grupo segmentado (bandeja com pílulas)",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/shared/ui/segmented.tsx",
-    "apps/web/src/shared/ui/segmented.css",
-    "apps/web/src/pages/catalogo/catalogo-page.tsx",
-    "apps/web/src/pages/conta/conta-page.tsx"
-  ],
-  "oQueFoiInferido": "O canvas desenha a bandeja parada; o resto veio do código: os dois tamanhos (`sm`/`md`), o piso de 44px de altura mesmo no `sm`, o hover (só troca a cor do texto dos não-selecionados), o FOCO (`outline: 2px solid var(--accent)` com offset — diferente do `--ring` que todos os outros primitivos usam), a rolagem horizontal escondida quando a bandeja não cabe, o tabindex móvel com setas/Home/End e a semântica dupla tablist × radiogroup. E a COR da pílula selecionada divergiu do desenho.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É o controle que troca a seção do Catálogo e o tema na Conta. O sinal de 'qual está escolhido' já falhou uma vez no tema escuro justamente porque a cor foi escolhida no desenho e corrigida no código.",
-  "prioridade": "MEDIA",
-  "refutacao": "Confirmei a divergência de cor DENTRO do arquivo do dono, o que o mapeador só supôs: o canvas define `const segOn = k => s.sec === k ? { bg: \"var(--surface-card)\", col: \"var(--accent-text)\" } : …` (l.578) e `thOn` idêntico para o tema (l.580) — é exatamente `--surface-card` que o `segmented.css` teve de trocar por `--surface-raised` + `--shadow-xs`, porque no escuro `--surface-card` e `--bg-muted` são ambos `#14151a` (contraste 1,00:1, sem pílula na tela). Desenhado: a bandeja parada nos dois usos (seções do Catálogo l.76-81 com `role=\"tablist\"`; tema Claro/Escuro l.429-431 com sol/lua), a 1920, com estilos inline próprios. Não desenhado: hover, foco, a rolagem horizontal, os dois tamanhos e a segunda semântica (o app usa `role=\"radiogroup\"` na Conta, `conta-page.tsx:227`). §D.2 pede 'Segmented control — pill, para Varejo × Atacado no mobile'; `PremiumScreen.jsx:49` o usa para mensal/anual, sem código-fonte no repo. Sobrevive.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "grupo-segmentado",
+    "nome": "Grupo segmentado (bandeja com pílulas)",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/shared/ui/segmented.tsx",
+        "apps/web/src/shared/ui/segmented.css",
+        "apps/web/src/pages/catalogo/catalogo-page.tsx",
+        "apps/web/src/pages/conta/conta-page.tsx"
+    ],
+    "oQueFoiInferido": "O canvas desenha a bandeja parada; o resto veio do código: os dois tamanhos (`sm`/`md`), o piso de 44px de altura mesmo no `sm`, o hover (só troca a cor do texto dos não-selecionados), o FOCO (`outline: 2px solid var(--accent)` com offset — diferente do `--ring` que todos os outros primitivos usam), a rolagem horizontal escondida quando a bandeja não cabe, o tabindex móvel com setas/Home/End e a semântica dupla tablist × radiogroup. E a COR da pílula selecionada divergiu do desenho.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É o controle que troca a seção do Catálogo e o tema na Conta. O sinal de 'qual está escolhido' já falhou uma vez no tema escuro justamente porque a cor foi escolhida no desenho e corrigida no código.",
+    "prioridade": "MEDIA",
+    "refutacao": "Confirmei a divergência de cor DENTRO do arquivo do dono, o que o mapeador só supôs: o canvas define `const segOn = k => s.sec === k ? { bg: \"var(--surface-card)\", col: \"var(--accent-text)\" } : …` (l.578) e `thOn` idêntico para o tema (l.580) — é exatamente `--surface-card` que o `segmented.css` teve de trocar por `--surface-raised` + `--shadow-xs`, porque no escuro `--surface-card` e `--bg-muted` são ambos `#14151a` (contraste 1,00:1, sem pílula na tela). Desenhado: a bandeja parada nos dois usos (seções do Catálogo l.76-81 com `role=\"tablist\"`; tema Claro/Escuro l.429-431 com sol/lua), a 1920, com estilos inline próprios. Não desenhado: hover, foco, a rolagem horizontal, os dois tamanhos e a segunda semântica (o app usa `role=\"radiogroup\"` na Conta, `conta-page.tsx:227`). §D.2 pede 'Segmented control — pill, para Varejo × Atacado no mobile'; `PremiumScreen.jsx:49` o usa para mensal/anual, sem código-fonte no repo. Sobrevive.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

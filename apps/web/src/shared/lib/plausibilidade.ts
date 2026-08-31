@@ -36,8 +36,8 @@ const t = messages.calculator.plausibilidade;
 
 /** Um aviso ancorado no campo que o causou. `campo` é o que a tela usa para colocá-lo no lugar. */
 export interface AvisoPlausibilidade {
-  campo: string;
-  texto: string;
+    campo: string;
+    texto: string;
 }
 
 /**
@@ -46,40 +46,40 @@ export interface AvisoPlausibilidade {
  * mexer sem saber o que está mexendo.
  */
 export const LIMIARES = {
-  /** Uma impressora 3D de mesa puxa ~0,05–0,25 kW. 5 kW é a faixa de um chuveiro elétrico. */
-  avgPowerKwMax: 5,
-  /** A tarifa residencial no Brasil orbita R$ 0,60–1,20/kWh. R$ 5 é 5× o teto do país. */
-  tariffPerKwhMax: 5,
-  /** 100 h é menos de uma semana ligada — vida útil de máquina não se mede assim. */
-  machineLifetimeHoursMin: 100,
-  /** Rolo comum: 1 kg. 50 kg denuncia gramas informadas como quilos. */
-  rollWeightKgMax: 50,
-  /** R$ 500/hora denuncia um salário MENSAL informado como valor da hora. */
-  laborRatePerHourMax: 500,
-  /** R$ 50/hora de reserva denuncia o gasto ANUAL de manutenção informado por hora. */
-  maintenanceReservePerHourMax: 50,
-  /** 100 h de impressão são mais de 4 dias. Denuncia minutos digitados no campo de horas. */
-  printTimeHoursMax: 100,
-  /**
-   * 50 kg de filamento numa peça só. A maior impressora FDM de mesa tem volume para poucos quilos;
-   * acima disso o número é do rolo inteiro, do lote, ou uma casa decimal a mais.
-   */
-  printGramsMax: 50_000,
-  /** Nenhum marketplace cobra menos de 1%. Denuncia 0,12 escrito quando se queria 12%. */
-  commissionPctMin: 1,
-  /** O teto do `int4` da coluna `bom_lines.quantity` (backend/app/validation.py CEIL_QUANTITY). */
-  quantityMax: 2_147_483_647,
-  /**
-   * Custo de UMA peça impressa em 3D acima disto não existe no negócio que este produto atende.
-   * Não é um teto de validação (o vendedor pode seguir): é a rede que pega o erro de casa decimal
-   * que nenhum limiar POR CAMPO pega — a persona que erra 12000 no rolo E 50000 nas gramas E 5000
-   * no markup chega a R$ 6 milhões sem estourar nenhuma faixa individual.
-   */
-  custoTotalMax: 100_000,
+    /** Uma impressora 3D de mesa puxa ~0,05–0,25 kW. 5 kW é a faixa de um chuveiro elétrico. */
+    avgPowerKwMax: 5,
+    /** A tarifa residencial no Brasil orbita R$ 0,60–1,20/kWh. R$ 5 é 5× o teto do país. */
+    tariffPerKwhMax: 5,
+    /** 100 h é menos de uma semana ligada — vida útil de máquina não se mede assim. */
+    machineLifetimeHoursMin: 100,
+    /** Rolo comum: 1 kg. 50 kg denuncia gramas informadas como quilos. */
+    rollWeightKgMax: 50,
+    /** R$ 500/hora denuncia um salário MENSAL informado como valor da hora. */
+    laborRatePerHourMax: 500,
+    /** R$ 50/hora de reserva denuncia o gasto ANUAL de manutenção informado por hora. */
+    maintenanceReservePerHourMax: 50,
+    /** 100 h de impressão são mais de 4 dias. Denuncia minutos digitados no campo de horas. */
+    printTimeHoursMax: 100,
+    /**
+     * 50 kg de filamento numa peça só. A maior impressora FDM de mesa tem volume para poucos quilos;
+     * acima disso o número é do rolo inteiro, do lote, ou uma casa decimal a mais.
+     */
+    printGramsMax: 50_000,
+    /** Nenhum marketplace cobra menos de 1%. Denuncia 0,12 escrito quando se queria 12%. */
+    commissionPctMin: 1,
+    /** O teto do `int4` da coluna `bom_lines.quantity` (backend/app/validation.py CEIL_QUANTITY). */
+    quantityMax: 2_147_483_647,
+    /**
+     * Custo de UMA peça impressa em 3D acima disto não existe no negócio que este produto atende.
+     * Não é um teto de validação (o vendedor pode seguir): é a rede que pega o erro de casa decimal
+     * que nenhum limiar POR CAMPO pega — a persona que erra 12000 no rolo E 50000 nas gramas E 5000
+     * no markup chega a R$ 6 milhões sem estourar nenhuma faixa individual.
+     */
+    custoTotalMax: 100_000,
 } as const;
 
 function fmt(n: number): string {
-  return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 }).format(n);
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 4 }).format(n);
 }
 
 /** 019/PR-C (T049/T056) — a variante de dinheiro do formatador acima: SEMPRE 2 casas, nunca as 4
@@ -88,19 +88,19 @@ function fmt(n: number): string {
  *  dinheiro no produto — os quatro campos monetários deste arquivo (tarifa, valor da hora, reserva
  *  de manutenção, custo absurdo) passam por aqui. */
 function fmtMoney(n: number): string {
-  return formatDecimal(n, 2);
+    return formatDecimal(n, 2);
 }
 
 /** A entrada que este módulo lê — o subconjunto numérico já parseado pelo schema. */
 export interface EntradaPlausivel {
-  avgPowerKw?: number;
-  tariffPerKwh?: number;
-  machineLifetimeHours?: number;
-  rollWeightKg?: number;
-  laborRatePerHour?: number;
-  maintenanceReservePerHour?: number;
-  printTimeHours?: number;
-  printGrams?: number;
+    avgPowerKw?: number;
+    tariffPerKwh?: number;
+    machineLifetimeHours?: number;
+    rollWeightKg?: number;
+    laborRatePerHour?: number;
+    maintenanceReservePerHour?: number;
+    printTimeHours?: number;
+    printGrams?: number;
 }
 
 /**
@@ -108,98 +108,104 @@ export interface EntradaPlausivel {
  * entendi" só é visível no RESULTADO: cada campo isolado está perfeitamente válido em 0.
  */
 export function avisosDePlausibilidade(
-  entrada: EntradaPlausivel,
-  resultado?: { custoTotal: number; precoVarejo: number },
+    entrada: EntradaPlausivel,
+    resultado?: { custoTotal: number; precoVarejo: number },
 ): AvisoPlausibilidade[] {
-  const avisos: AvisoPlausibilidade[] = [];
-  const acima = (v: number | undefined, teto: number): v is number => v !== undefined && v > teto;
+    const avisos: AvisoPlausibilidade[] = [];
+    const acima = (v: number | undefined, teto: number): v is number => v !== undefined && v > teto;
 
-  if (acima(entrada.avgPowerKw, LIMIARES.avgPowerKwMax)) {
-    avisos.push({ campo: "avgPowerKw", texto: t.avgPower.replace("{v}", fmt(entrada.avgPowerKw)) });
-  }
-  if (acima(entrada.tariffPerKwh, LIMIARES.tariffPerKwhMax)) {
-    avisos.push({
-      campo: "tariffPerKwh",
-      texto: t.tariff.replace("{v}", fmtMoney(entrada.tariffPerKwh)),
-    });
-  }
-  if (
-    entrada.machineLifetimeHours !== undefined &&
-    entrada.machineLifetimeHours > 0 &&
-    entrada.machineLifetimeHours < LIMIARES.machineLifetimeHoursMin
-  ) {
-    avisos.push({
-      campo: "machineLifetimeHours",
-      texto: t.machineLifetime.replace("{v}", fmt(entrada.machineLifetimeHours)),
-    });
-  }
-  if (acima(entrada.rollWeightKg, LIMIARES.rollWeightKgMax)) {
-    avisos.push({
-      campo: "rollWeightKg",
-      texto: t.rollWeight.replace("{v}", fmt(entrada.rollWeightKg)),
-    });
-  }
-  if (acima(entrada.laborRatePerHour, LIMIARES.laborRatePerHourMax)) {
-    avisos.push({
-      campo: "laborRatePerHour",
-      texto: t.laborRate.replace("{v}", fmtMoney(entrada.laborRatePerHour)),
-    });
-  }
-  if (acima(entrada.maintenanceReservePerHour, LIMIARES.maintenanceReservePerHourMax)) {
-    avisos.push({
-      campo: "maintenanceReservePerHour",
-      texto: t.maintenance.replace("{v}", fmtMoney(entrada.maintenanceReservePerHour)),
-    });
-  }
-  if (acima(entrada.printGrams, LIMIARES.printGramsMax)) {
-    avisos.push({ campo: "printGrams", texto: t.grams.replace("{v}", fmt(entrada.printGrams)) });
-  }
-  if (acima(entrada.printTimeHours, LIMIARES.printTimeHoursMax)) {
-    avisos.push({
-      campo: "printTimeHours",
-      texto: t.printTime
-        .replace("{v}", fmt(entrada.printTimeHours))
-        .replace("{d}", fmt(Math.round((entrada.printTimeHours / 24) * 10) / 10)),
-    });
-  }
+    if (acima(entrada.avgPowerKw, LIMIARES.avgPowerKwMax)) {
+        avisos.push({
+            campo: "avgPowerKw",
+            texto: t.avgPower.replace("{v}", fmt(entrada.avgPowerKw)),
+        });
+    }
+    if (acima(entrada.tariffPerKwh, LIMIARES.tariffPerKwhMax)) {
+        avisos.push({
+            campo: "tariffPerKwh",
+            texto: t.tariff.replace("{v}", fmtMoney(entrada.tariffPerKwh)),
+        });
+    }
+    if (
+        entrada.machineLifetimeHours !== undefined &&
+        entrada.machineLifetimeHours > 0 &&
+        entrada.machineLifetimeHours < LIMIARES.machineLifetimeHoursMin
+    ) {
+        avisos.push({
+            campo: "machineLifetimeHours",
+            texto: t.machineLifetime.replace("{v}", fmt(entrada.machineLifetimeHours)),
+        });
+    }
+    if (acima(entrada.rollWeightKg, LIMIARES.rollWeightKgMax)) {
+        avisos.push({
+            campo: "rollWeightKg",
+            texto: t.rollWeight.replace("{v}", fmt(entrada.rollWeightKg)),
+        });
+    }
+    if (acima(entrada.laborRatePerHour, LIMIARES.laborRatePerHourMax)) {
+        avisos.push({
+            campo: "laborRatePerHour",
+            texto: t.laborRate.replace("{v}", fmtMoney(entrada.laborRatePerHour)),
+        });
+    }
+    if (acima(entrada.maintenanceReservePerHour, LIMIARES.maintenanceReservePerHourMax)) {
+        avisos.push({
+            campo: "maintenanceReservePerHour",
+            texto: t.maintenance.replace("{v}", fmtMoney(entrada.maintenanceReservePerHour)),
+        });
+    }
+    if (acima(entrada.printGrams, LIMIARES.printGramsMax)) {
+        avisos.push({
+            campo: "printGrams",
+            texto: t.grams.replace("{v}", fmt(entrada.printGrams)),
+        });
+    }
+    if (acima(entrada.printTimeHours, LIMIARES.printTimeHoursMax)) {
+        avisos.push({
+            campo: "printTimeHours",
+            texto: t.printTime
+                .replace("{v}", fmt(entrada.printTimeHours))
+                .replace("{d}", fmt(Math.round((entrada.printTimeHours / 24) * 10) / 10)),
+        });
+    }
 
-  // O caso da persona "zera o que não entende": custo 0 e preço 0 são matematicamente certos e
-  // comercialmente absurdos. Só dispara quando a peça EXISTE (tem gramas ou tempo) — um formulário
-  // recém-aberto e ainda vazio não é um erro, é um formulário recém-aberto.
-  const pecaExiste = (entrada.printGrams ?? 0) > 0 || (entrada.printTimeHours ?? 0) > 0;
-  if (resultado && pecaExiste && resultado.custoTotal === 0 && resultado.precoVarejo === 0) {
-    avisos.push({ campo: "resultado", texto: t.precoZero });
-  }
-  // O outro extremo, e ele existe porque os limiares por campo NÃO o pegam: erros pequenos em
-  // vários campos ao mesmo tempo (uma casa decimal aqui, outra ali) compõem um custo que nenhum
-  // deles reprova sozinho. Medido na homologação: R$ 6.000.061,60 com todos os campos "válidos".
-  if (resultado && resultado.custoTotal > LIMIARES.custoTotalMax) {
-    avisos.push({
-      campo: "resultado",
-      texto: t.custoAbsurdo.replace("{v}", fmtMoney(resultado.custoTotal)),
-    });
-  }
+    // O caso da persona "zera o que não entende": custo 0 e preço 0 são matematicamente certos e
+    // comercialmente absurdos. Só dispara quando a peça EXISTE (tem gramas ou tempo) — um formulário
+    // recém-aberto e ainda vazio não é um erro, é um formulário recém-aberto.
+    const pecaExiste = (entrada.printGrams ?? 0) > 0 || (entrada.printTimeHours ?? 0) > 0;
+    if (resultado && pecaExiste && resultado.custoTotal === 0 && resultado.precoVarejo === 0) {
+        avisos.push({ campo: "resultado", texto: t.precoZero });
+    }
+    // O outro extremo, e ele existe porque os limiares por campo NÃO o pegam: erros pequenos em
+    // vários campos ao mesmo tempo (uma casa decimal aqui, outra ali) compõem um custo que nenhum
+    // deles reprova sozinho. Medido na homologação: R$ 6.000.061,60 com todos os campos "válidos".
+    if (resultado && resultado.custoTotal > LIMIARES.custoTotalMax) {
+        avisos.push({
+            campo: "resultado",
+            texto: t.custoAbsurdo.replace("{v}", fmtMoney(resultado.custoTotal)),
+        });
+    }
 
-  return avisos;
+    return avisos;
 }
 
 /** O aviso do slot de canal — a comissão que o vendedor escreveu como fração (0,12 = 12%). */
 export function avisoDeComissao(commissionPct: number | undefined): string | null {
-  // `Number.isFinite` PRIMEIRO, e não é zelo: um campo vazio faz `parseDecimal` devolver `NaN`, e
-  // `NaN <= 0` é FALSO — a primeira versão deste guarda deixava o NaN passar e a tela dizia
-  // "Confira a comissão: NaN%". Pego pelo teste que o projeto já mantinha contra exatamente isso
-  // (`calcular.test.tsx`: "never a NaN"), que é a razão de aquele teste existir.
-  if (commissionPct === undefined || !Number.isFinite(commissionPct)) return null;
-  if (commissionPct <= 0) return null;
-  if (commissionPct >= LIMIARES.commissionPctMin) return null;
-  return t.comissaoBaixa.replace("{v}", fmt(commissionPct));
+    // `Number.isFinite` PRIMEIRO, e não é zelo: um campo vazio faz `parseDecimal` devolver `NaN`, e
+    // `NaN <= 0` é FALSO — a primeira versão deste guarda deixava o NaN passar e a tela dizia
+    // "Confira a comissão: NaN%". Pego pelo teste que o projeto já mantinha contra exatamente isso
+    // (`calcular.test.tsx`: "never a NaN"), que é a razão de aquele teste existir.
+    if (commissionPct === undefined || !Number.isFinite(commissionPct)) return null;
+    if (commissionPct <= 0) return null;
+    if (commissionPct >= LIMIARES.commissionPctMin) return null;
+    return t.comissaoBaixa.replace("{v}", fmt(commissionPct));
 }
 
 /** O aviso do campo de quantidade de uma peça de kit. */
 export function avisoDeQuantidade(quantity: number | undefined): string | null {
-  if (quantity === undefined || !Number.isFinite(quantity)) return null;
-  if (quantity <= LIMIARES.quantityMax) return null;
-  return t.quantidade.replace("{v}", fmt(quantity)).replace("{max}", fmt(LIMIARES.quantityMax));
+    if (quantity === undefined || !Number.isFinite(quantity)) return null;
+    if (quantity <= LIMIARES.quantityMax) return null;
+    return t.quantidade.replace("{v}", fmt(quantity)).replace("{max}", fmt(LIMIARES.quantityMax));
 }
 
 /**
@@ -214,14 +220,14 @@ export function avisoDeQuantidade(quantity: number | undefined): string | null {
  * em `avisosDePlausibilidade`.
  */
 const CAMPOS_COM_FAIXA: readonly string[] = [
-  "printGrams",
-  "avgPowerKw",
-  "tariffPerKwh",
-  "machineLifetimeHours",
-  "rollWeightKg",
-  "laborRatePerHour",
-  "maintenanceReservePerHour",
-  "printTimeHours",
+    "printGrams",
+    "avgPowerKw",
+    "tariffPerKwh",
+    "machineLifetimeHours",
+    "rollWeightKg",
+    "laborRatePerHour",
+    "maintenanceReservePerHour",
+    "printTimeHours",
 ];
 
 /**
@@ -231,14 +237,14 @@ const CAMPOS_COM_FAIXA: readonly string[] = [
  * "Entendi" nesse estado — não se dispensa uma lição que acompanha uma recusa.
  */
 export function avisoDeCampo(nome: string, bruto: string, comErro = false): string | null {
-  if (!CAMPOS_COM_FAIXA.includes(nome)) return null;
-  const n = parseDecimal(bruto);
-  if (!Number.isFinite(n)) return null;
-  const entrada: EntradaPlausivel = {};
-  (entrada as Record<string, number>)[nome] = n;
-  const texto = avisosDePlausibilidade(entrada)[0]?.texto ?? null;
-  if (!texto) return null;
-  return comErro ? texto.replace(t.fechoNormal, t.fechoComRecusa) : texto;
+    if (!CAMPOS_COM_FAIXA.includes(nome)) return null;
+    const n = parseDecimal(bruto);
+    if (!Number.isFinite(n)) return null;
+    const entrada: EntradaPlausivel = {};
+    (entrada as Record<string, number>)[nome] = n;
+    const texto = avisosDePlausibilidade(entrada)[0]?.texto ?? null;
+    if (!texto) return null;
+    return comErro ? texto.replace(t.fechoNormal, t.fechoComRecusa) : texto;
 }
 
 /**
@@ -248,12 +254,12 @@ export function avisoDeCampo(nome: string, bruto: string, comErro = false): stri
  * (hoje, todo campo fora dos oito de `messages.calculator.plausibilidade.licao`).
  */
 export function licaoDeCampo(nome: string): string | null {
-  return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
+    return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
 }
 
 /** Conveniência para a tela: os avisos indexados por campo. */
 export function avisosPorCampo(avisos: AvisoPlausibilidade[]): Partial<Record<string, string>> {
-  const mapa: Partial<Record<string, string>> = {};
-  for (const a of avisos) if (!mapa[a.campo]) mapa[a.campo] = a.texto;
-  return mapa;
+    const mapa: Partial<Record<string, string>> = {};
+    for (const a of avisos) if (!mapa[a.campo]) mapa[a.campo] = a.texto;
+    return mapa;
 }

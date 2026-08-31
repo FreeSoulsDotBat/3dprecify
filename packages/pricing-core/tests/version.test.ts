@@ -21,14 +21,14 @@ import { PRICING_MODEL_VERSION } from "../src/index";
 // 4.1.0 intocado, e compara campo a campo ignorando só `modelVersion`. A lição do 014/C: versão
 // bumpada sem diferença medida e implementação reescrita sem bump são a mesma mentira.
 describe("PRICING_MODEL_VERSION (ADR-0008 / ADR-0011 / ADR-0016 / ADR-0026 / ADR-0027 / ADR-0034)", () => {
-  it("is 4.2.0", () => {
-    expect(PRICING_MODEL_VERSION).toBe("4.2.0");
-  });
+    it("is 4.2.0", () => {
+        expect(PRICING_MODEL_VERSION).toBe("4.2.0");
+    });
 
-  it("tracks the package.json version (major AND minor)", () => {
-    // O major sozinho não bastava: uma 4.1.0 no `package.json` com a constante parada em 4.0.0
-    // passava — e é exatamente a MINOR aditiva desta fatia que ficaria invisível no congelado.
-    expect(PRICING_MODEL_VERSION).toBe(pkg.version);
-    expect(pkg.version.split(".")[0]).toBe("4");
-  });
+    it("tracks the package.json version (major AND minor)", () => {
+        // O major sozinho não bastava: uma 4.1.0 no `package.json` com a constante parada em 4.0.0
+        // passava — e é exatamente a MINOR aditiva desta fatia que ficaria invisível no congelado.
+        expect(PRICING_MODEL_VERSION).toBe(pkg.version);
+        expect(pkg.version.split(".")[0]).toBe("4");
+    });
 });

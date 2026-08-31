@@ -17,182 +17,182 @@
 name: Fee refresh (monthly)
 
 on:
-  schedule:
-    - cron: "0 6 1 * *"
-  workflow_dispatch:
-    inputs:
-      allow_freshness_exemption:
-        description: >-
-          Dispensa de revisão para diff só-inerte (nasce DESLIGADA — desenho §I.2). NÃO afeta
-          remoção, folha de OCR, nem PR de decisão: `classificarDispensa` nega esses casos sempre.
-        type: string
-        required: false
-        default: "false"
-  # BOOTSTRAP (2026-08-07, o padrão das sondas G1/G2 do 014): o GitHub só resolve
-  # `workflow_dispatch` por nome quando o arquivo existe no branch DEFAULT — que é `main`, atrás
-  # do corte de release adiado. Este gatilho, escopado à branch da fatia E a este arquivo,
-  # registra o workflow e produz a EXECUÇÃO REAL do T017. Ele morre com a branch no squash-merge;
-  # em `develop`/`main` só valem schedule + dispatch.
-  push:
-    branches: [017-ingestao-mensal]
-    paths:
-      - ".github/workflows/fee-refresh.yml"
+    schedule:
+        - cron: "0 6 1 * *"
+    workflow_dispatch:
+        inputs:
+            allow_freshness_exemption:
+                description: >-
+                    Dispensa de revisão para diff só-inerte (nasce DESLIGADA — desenho §I.2). NÃO afeta
+                    remoção, folha de OCR, nem PR de decisão: `classificarDispensa` nega esses casos sempre.
+                type: string
+                required: false
+                default: "false"
+    # BOOTSTRAP (2026-08-07, o padrão das sondas G1/G2 do 014): o GitHub só resolve
+    # `workflow_dispatch` por nome quando o arquivo existe no branch DEFAULT — que é `main`, atrás
+    # do corte de release adiado. Este gatilho, escopado à branch da fatia E a este arquivo,
+    # registra o workflow e produz a EXECUÇÃO REAL do T017. Ele morre com a branch no squash-merge;
+    # em `develop`/`main` só valem schedule + dispatch.
+    push:
+        branches: [017-ingestao-mensal]
+        paths:
+            - ".github/workflows/fee-refresh.yml"
 
 concurrency:
-  group: fee-refresh
-  cancel-in-progress: false
+    group: fee-refresh
+    cancel-in-progress: false
 
 jobs:
-  # O único coletor desta fatia. Emite `artifacts/amazon.verdict.json` (o veredito, 3 casos) e
-  # `artifacts/amazon-rows.json` (as linhas cruas capturadas — RA5: um ABORT por bloqueio de bot ou
-  # mudança de layout precisa da evidência do que a página devolveu, não só do motivo em texto).
-  # NUNCA toca `backend/app/data/catalog.json` (T014 — regra da folha lida, §C do desenho): quem
-  # escreve é só o `publicar`, depois de validar. `contents: read` porque este job não escreve nada.
-  amazon-tabela:
-    name: Amazon — tabela de comissões (headless real)
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+    # O único coletor desta fatia. Emite `artifacts/amazon.verdict.json` (o veredito, 3 casos) e
+    # `artifacts/amazon-rows.json` (as linhas cruas capturadas — RA5: um ABORT por bloqueio de bot ou
+    # mudança de layout precisa da evidência do que a página devolveu, não só do motivo em texto).
+    # NUNCA toca `backend/app/data/catalog.json` (T014 — regra da folha lida, §C do desenho): quem
+    # escreve é só o `publicar`, depois de validar. `contents: read` porque este job não escreve nada.
+    amazon-tabela:
+        name: Amazon — tabela de comissões (headless real)
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-          cache: pnpm
+            - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+              with:
+                  node-version: 24
+                  cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+            - run: pnpm install --frozen-lockfile
 
-      # A página é renderizada por JS (`curl` devolve casca, medido — gate G2): `tesseract.js` da
-      # Shopee (fatia futura) já é WASM sob o mesmo lockfile, mas a Amazon precisa de um navegador
-      # de verdade. Só o Chromium do `@playwright/test` que já é devDependency de `fee-ingest`.
-      - run: pnpm --filter @3dprecify/fee-ingest exec playwright install --with-deps chromium
+            # A página é renderizada por JS (`curl` devolve casca, medido — gate G2): `tesseract.js` da
+            # Shopee (fatia futura) já é WASM sob o mesmo lockfile, mas a Amazon precisa de um navegador
+            # de verdade. Só o Chromium do `@playwright/test` que já é devDependency de `fee-ingest`.
+            - run: pnpm --filter @3dprecify/fee-ingest exec playwright install --with-deps chromium
 
-      # Boot honesto (014/US4 · J.1 do desenho): este é `node` puro sobre o `.mjs`, não `vitest` — o
-      # resolvedor tolerante que escondeu 3 imports sem extensão em 014/US4. É a execução REAL do
-      # coletor contra a página ao vivo, não um mock; o resultado (LIDO ou ABORTADO) é dado, não
-      # decidido aqui.
-      - name: node packages/fee-ingest/src/build-amazon.mjs (boot puro + coleta real)
-        run: node packages/fee-ingest/src/build-amazon.mjs
+            # Boot honesto (014/US4 · J.1 do desenho): este é `node` puro sobre o `.mjs`, não `vitest` — o
+            # resolvedor tolerante que escondeu 3 imports sem extensão em 014/US4. É a execução REAL do
+            # coletor contra a página ao vivo, não um mock; o resultado (LIDO ou ABORTADO) é dado, não
+            # decidido aqui.
+            - name: node packages/fee-ingest/src/build-amazon.mjs (boot puro + coleta real)
+              run: node packages/fee-ingest/src/build-amazon.mjs
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+            - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+              if: always()
+              with:
+                  name: amazon-verdict
+                  path: |
+                      packages/fee-ingest/artifacts/amazon.verdict.json
+                      packages/fee-ingest/artifacts/amazon-rows.json
+                  if-no-files-found: warn # um crash ANTES de emitir veredito não pode derrubar o run inteiro
+
+    # A composição. Único job com `contents: write`/`pull-requests: write` (desenho §A.3). Roda
+    # SEMPRE (`if: always()`) mesmo se `amazon-tabela` falhar — um coletor que falhou vira NÃO LIDO
+    # (motivo honesto), nunca faz o PR mensal inteiro sumir (US2/AC3, o "PR parcial" da clarify Q4).
+    publicar:
+        name: Compor + validar + (talvez) abrir PR
+        needs: [amazon-tabela]
         if: always()
-        with:
-          name: amazon-verdict
-          path: |
-            packages/fee-ingest/artifacts/amazon.verdict.json
-            packages/fee-ingest/artifacts/amazon-rows.json
-          if-no-files-found: warn # um crash ANTES de emitir veredito não pode derrubar o run inteiro
-
-  # A composição. Único job com `contents: write`/`pull-requests: write` (desenho §A.3). Roda
-  # SEMPRE (`if: always()`) mesmo se `amazon-tabela` falhar — um coletor que falhou vira NÃO LIDO
-  # (motivo honesto), nunca faz o PR mensal inteiro sumir (US2/AC3, o "PR parcial" da clarify Q4).
-  publicar:
-    name: Compor + validar + (talvez) abrir PR
-    needs: [amazon-tabela]
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      pull-requests: write
-    env:
-      # Nasce DESLIGADA (clarify Q5). Em `schedule` não há `inputs`, e o fallback cobre isso.
-      ALLOW_FRESHNESS_EXEMPTION: ${{ inputs.allow_freshness_exemption || 'false' }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      # Todos os vereditos da run, sem exigir nome (uma fatia futura acrescenta artefato sem editar
-      # este passo). `merge-multiple` achata em um único diretório — é o que `build.mjs` varre por
-      # `*.verdict.json` (§verdict.ts `resolverVereditos`). Ausência de artefato (coletor que nunca
-      # rodou/nunca emitiu) não falha o download: vira NÃO LIDO adiante, honestamente, não aqui.
-      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
-        with:
-          path: packages/fee-ingest/artifacts
-          merge-multiple: true
-
-      # Boot honesto + 1ª passada (014/US4 · J.1): `pnpm fee:build` É `node
-      # packages/fee-ingest/src/build.mjs` — node puro, não vitest (`package.json`). Compõe,
-      # valida e escreve o artefato + a semente SE houver fatia admitida; um run sem novidade
-      # nenhuma (`SEM_PR`) não toca `backend/app/data/catalog.json` (I2/SC-806), e por isso o diff
-      # desta passada NÃO é gateado — ele é DIFERENTE só quando houve mudança de fonte de verdade.
-      - name: pnpm fee:build (1ª passada)
-        run: pnpm fee:build
-
-      # C.4 do desenho — o ponto fixo, a mesma armadilha que o `contract-drift` já ensinou: um
-      # gerador sem ponto fixo abriria PR novo todo mês sobre a mesma tabela, e o revisor aprenderia
-      # a não olhar. A 2ª passada roda sobre a SAÍDA da 1ª, e o diff dela TEM de ser vazio.
-      # T017 ensinou na primeira run real: o ponto fixo compara a 2ª passada com a 1ª, NUNCA com
-      # o HEAD — contra o HEAD, qualquer mudança LEGÍTIMA de fonte (ex.: lastReviewed avançando
-      # numa releitura real) reprovaria o gerador por estar certo.
-      - name: snapshot da 1ª passada
-        run: |
-          mkdir -p /tmp/fixpoint
-          cp backend/app/data/catalog.json /tmp/fixpoint/catalog.json
-          cp apps/web/src/shared/fee-catalog/seed.data.json /tmp/fixpoint/seed.data.json
-      - name: pnpm fee:build (2ª passada — prova de ponto fixo)
-        run: pnpm fee:build
-      - name: ponto fixo (2ª passada byte-idêntica à 1ª)
-        run: |
-          cmp /tmp/fixpoint/catalog.json backend/app/data/catalog.json
-          cmp /tmp/fixpoint/seed.data.json apps/web/src/shared/fee-catalog/seed.data.json
-
-      # Q6 — o MESMO comando que um humano roda (`gate:artifact`), sobre o artefato que a run acabou
-      # de compor. Membresia derivada de `*.artifact.test.ts` (desenho §D), nunca uma lista curada.
-      - run: pnpm gate:artifact
-
-      # RunOutcome tem 2 casos (compose.ts), e só o caso PR escreve `artifacts/pr-body.md` +
-      # `artifacts/pr-title.txt` (T016, `pr-artifacts.ts`) — a checagem de existência abaixo só LÊ
-      # essa marca de tipo já resolvida em TS; ela não decide o CONTEÚDO do relatório (proibido em
-      # YAML pelo contrato), só SE há um relatório a publicar.
-      - name: Detectar se há PR a publicar
-        id: desfecho
-        run: |
-          if [ -f packages/fee-ingest/artifacts/pr-body.md ]; then
-            echo "tem_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "tem_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      # Idempotência (desenho §I.2, contrato): branch determinística por DATA, e `gh pr list` antes
-      # de criar — a mesma técnica que `auto-pr.yml` já roda. Mesmo artefato ⇒ mesmo diff ⇒ nenhum
-      # PR duplicado numa segunda execução no mesmo dia.
-      - name: Abrir (ou reaproveitar) o PR mensal
-        if: steps.desfecho.outputs.tem_pr == 'true'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: write
+            pull-requests: write
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # T017 run 4 ensinou: o `pnpm install` do job instala o lefthook, e o push do bot
-          # disparava o pre-push COMPLETO dentro do runner (gate de workstation, sem Docker/DB,
-          # `no merge base` no clone raso) — 123s para falhar por ambiente. O runner não é uma
-          # workstation: a validação DELE é o `pnpm gate:artifact` acima (clarify Q6) + o CI
-          # humano sobre o PR. LEFTHOOK=0 é a via sancionada do próprio lefthook.
-          LEFTHOOK: "0"
-        run: |
-          set -eu
-          DATA="$(date -u +%F)"
-          BRANCH="bot/fee-refresh-${DATA}"
+            # Nasce DESLIGADA (clarify Q5). Em `schedule` não há `inputs`, e o fallback cobre isso.
+            ALLOW_FRESHNESS_EXEMPTION: ${{ inputs.allow_freshness_exemption || 'false' }}
+        steps:
+            - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-          open=$(gh pr list --head "$BRANCH" --base develop --state open --json number --jq 'length')
-          if [ "$open" != "0" ]; then
-            echo "PR $BRANCH → develop já aberto; nada a fazer."
-            exit 0
-          fi
+            - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+              with:
+                  node-version: 24
+                  cache: pnpm
 
-          git config user.name "fee-refresh-bot"
-          git config user.email "actions@users.noreply.github.com"
-          git checkout -b "$BRANCH"
-          git add backend/app/data/catalog.json apps/web/src/shared/fee-catalog/seed.data.json
-          git commit -m "chore(fee-refresh): $(cat packages/fee-ingest/artifacts/pr-title.txt)"
-          git push origin "$BRANCH"
+            - run: pnpm install --frozen-lockfile
 
-          gh pr create --base develop --head "$BRANCH" \
-            --title "$(cat packages/fee-ingest/artifacts/pr-title.txt)" \
-            --body-file packages/fee-ingest/artifacts/pr-body.md
+            # Todos os vereditos da run, sem exigir nome (uma fatia futura acrescenta artefato sem editar
+            # este passo). `merge-multiple` achata em um único diretório — é o que `build.mjs` varre por
+            # `*.verdict.json` (§verdict.ts `resolverVereditos`). Ausência de artefato (coletor que nunca
+            # rodou/nunca emitiu) não falha o download: vira NÃO LIDO adiante, honestamente, não aqui.
+            - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+              with:
+                  path: packages/fee-ingest/artifacts
+                  merge-multiple: true
+
+            # Boot honesto + 1ª passada (014/US4 · J.1): `pnpm fee:build` É `node
+            # packages/fee-ingest/src/build.mjs` — node puro, não vitest (`package.json`). Compõe,
+            # valida e escreve o artefato + a semente SE houver fatia admitida; um run sem novidade
+            # nenhuma (`SEM_PR`) não toca `backend/app/data/catalog.json` (I2/SC-806), e por isso o diff
+            # desta passada NÃO é gateado — ele é DIFERENTE só quando houve mudança de fonte de verdade.
+            - name: pnpm fee:build (1ª passada)
+              run: pnpm fee:build
+
+            # C.4 do desenho — o ponto fixo, a mesma armadilha que o `contract-drift` já ensinou: um
+            # gerador sem ponto fixo abriria PR novo todo mês sobre a mesma tabela, e o revisor aprenderia
+            # a não olhar. A 2ª passada roda sobre a SAÍDA da 1ª, e o diff dela TEM de ser vazio.
+            # T017 ensinou na primeira run real: o ponto fixo compara a 2ª passada com a 1ª, NUNCA com
+            # o HEAD — contra o HEAD, qualquer mudança LEGÍTIMA de fonte (ex.: lastReviewed avançando
+            # numa releitura real) reprovaria o gerador por estar certo.
+            - name: snapshot da 1ª passada
+              run: |
+                  mkdir -p /tmp/fixpoint
+                  cp backend/app/data/catalog.json /tmp/fixpoint/catalog.json
+                  cp apps/web/src/shared/fee-catalog/seed.data.json /tmp/fixpoint/seed.data.json
+            - name: pnpm fee:build (2ª passada — prova de ponto fixo)
+              run: pnpm fee:build
+            - name: ponto fixo (2ª passada byte-idêntica à 1ª)
+              run: |
+                  cmp /tmp/fixpoint/catalog.json backend/app/data/catalog.json
+                  cmp /tmp/fixpoint/seed.data.json apps/web/src/shared/fee-catalog/seed.data.json
+
+            # Q6 — o MESMO comando que um humano roda (`gate:artifact`), sobre o artefato que a run acabou
+            # de compor. Membresia derivada de `*.artifact.test.ts` (desenho §D), nunca uma lista curada.
+            - run: pnpm gate:artifact
+
+            # RunOutcome tem 2 casos (compose.ts), e só o caso PR escreve `artifacts/pr-body.md` +
+            # `artifacts/pr-title.txt` (T016, `pr-artifacts.ts`) — a checagem de existência abaixo só LÊ
+            # essa marca de tipo já resolvida em TS; ela não decide o CONTEÚDO do relatório (proibido em
+            # YAML pelo contrato), só SE há um relatório a publicar.
+            - name: Detectar se há PR a publicar
+              id: desfecho
+              run: |
+                  if [ -f packages/fee-ingest/artifacts/pr-body.md ]; then
+                    echo "tem_pr=true" >> "$GITHUB_OUTPUT"
+                  else
+                    echo "tem_pr=false" >> "$GITHUB_OUTPUT"
+                  fi
+
+            # Idempotência (desenho §I.2, contrato): branch determinística por DATA, e `gh pr list` antes
+            # de criar — a mesma técnica que `auto-pr.yml` já roda. Mesmo artefato ⇒ mesmo diff ⇒ nenhum
+            # PR duplicado numa segunda execução no mesmo dia.
+            - name: Abrir (ou reaproveitar) o PR mensal
+              if: steps.desfecho.outputs.tem_pr == 'true'
+              env:
+                  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                  # T017 run 4 ensinou: o `pnpm install` do job instala o lefthook, e o push do bot
+                  # disparava o pre-push COMPLETO dentro do runner (gate de workstation, sem Docker/DB,
+                  # `no merge base` no clone raso) — 123s para falhar por ambiente. O runner não é uma
+                  # workstation: a validação DELE é o `pnpm gate:artifact` acima (clarify Q6) + o CI
+                  # humano sobre o PR. LEFTHOOK=0 é a via sancionada do próprio lefthook.
+                  LEFTHOOK: "0"
+              run: |
+                  set -eu
+                  DATA="$(date -u +%F)"
+                  BRANCH="bot/fee-refresh-${DATA}"
+
+                  open=$(gh pr list --head "$BRANCH" --base develop --state open --json number --jq 'length')
+                  if [ "$open" != "0" ]; then
+                    echo "PR $BRANCH → develop já aberto; nada a fazer."
+                    exit 0
+                  fi
+
+                  git config user.name "fee-refresh-bot"
+                  git config user.email "actions@users.noreply.github.com"
+                  git checkout -b "$BRANCH"
+                  git add backend/app/data/catalog.json apps/web/src/shared/fee-catalog/seed.data.json
+                  git commit -m "chore(fee-refresh): $(cat packages/fee-ingest/artifacts/pr-title.txt)"
+                  git push origin "$BRANCH"
+
+                  gh pr create --base develop --head "$BRANCH" \
+                    --title "$(cat packages/fee-ingest/artifacts/pr-title.txt)" \
+                    --body-file packages/fee-ingest/artifacts/pr-body.md

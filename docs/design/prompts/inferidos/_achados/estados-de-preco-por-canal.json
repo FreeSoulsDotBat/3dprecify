@@ -1,13 +1,13 @@
 {
-  "id": "estados-de-preco-por-canal",
-  "nome": "Estados de um canal sem preço: faixa sem tarifa, líquido negativo, sem comissão, canal com erro",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
-  "oQueFoiInferido": "Quatro estados textuais que substituem os números, todos como parágrafo solto: (a) faixa sem tarifa publicada — `UnpricedLevel`, uma frase em `--danger-text` no lugar do preço, POR NÍVEL (varejo e atacado podem cair em lados diferentes da lacuna); (b) líquido negativo — o valor com `emphasis=\"negative\"` + a frase 'Canal não-lucrativo neste preço (frete maior que a margem)'; (c) canal válido sem comissão informada — 'Informe a comissão do canal para ver os preços'; (d) canal com erro — 'Corrija os campos deste canal para ver os preços'. Inferido: que todos são texto solto (nenhum tem ícone, moldura ou hierarquia própria), o tom de cada um, e o que o vendedor vê quando varejo é precificável e atacado não.",
-  "autoridade": "NENHUMA",
-  "impacto": "São os momentos em que o produto se recusa a dar um número — a decisão de honestidade mais visível da tela — e todos foram resolvidos como frases avulsas escolhidas por um agente.",
-  "prioridade": "ALTA",
-  "refutacao": "A matriz §G do protótipo (linha 317) cobre 'Resultado/breakdown' com exatamente: loading=skeleton, empty=zerado (0,00), error=—, success=preço+breakdown, offline=mantém cálculo. Ela não prevê recusa de precificação; prevê o OPOSTO ('zerado 0,00'), que é precisamente o que o SC-817 proíbe hoje ('printing R$ 0,00 would cost the seller a sale', comentário de `UnpricedLevel`). `-fixes.md` item 11 chega perto — 'se comissão ≥ 100%, mostre erro amigável em vez de calcular' — mas é um caso só, e é ERRO, não recusa honesta por ausência de tarifa publicada. Nada em `-fixes-r2`, no audit, no `.design-import` ou no canvas 018. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "estados-de-preco-por-canal",
+    "nome": "Estados de um canal sem preço: faixa sem tarifa, líquido negativo, sem comissão, canal com erro",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+    "oQueFoiInferido": "Quatro estados textuais que substituem os números, todos como parágrafo solto: (a) faixa sem tarifa publicada — `UnpricedLevel`, uma frase em `--danger-text` no lugar do preço, POR NÍVEL (varejo e atacado podem cair em lados diferentes da lacuna); (b) líquido negativo — o valor com `emphasis=\"negative\"` + a frase 'Canal não-lucrativo neste preço (frete maior que a margem)'; (c) canal válido sem comissão informada — 'Informe a comissão do canal para ver os preços'; (d) canal com erro — 'Corrija os campos deste canal para ver os preços'. Inferido: que todos são texto solto (nenhum tem ícone, moldura ou hierarquia própria), o tom de cada um, e o que o vendedor vê quando varejo é precificável e atacado não.",
+    "autoridade": "NENHUMA",
+    "impacto": "São os momentos em que o produto se recusa a dar um número — a decisão de honestidade mais visível da tela — e todos foram resolvidos como frases avulsas escolhidas por um agente.",
+    "prioridade": "ALTA",
+    "refutacao": "A matriz §G do protótipo (linha 317) cobre 'Resultado/breakdown' com exatamente: loading=skeleton, empty=zerado (0,00), error=—, success=preço+breakdown, offline=mantém cálculo. Ela não prevê recusa de precificação; prevê o OPOSTO ('zerado 0,00'), que é precisamente o que o SC-817 proíbe hoje ('printing R$ 0,00 would cost the seller a sale', comentário de `UnpricedLevel`). `-fixes.md` item 11 chega perto — 'se comissão ≥ 100%, mostre erro amigável em vez de calcular' — mas é um caso só, e é ERRO, não recusa honesta por ausência de tarifa publicada. Nada em `-fixes-r2`, no audit, no `.design-import` ou no canvas 018. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

@@ -1,13 +1,13 @@
 {
-  "id": "dialogo-sair-com-fila-pendente",
-  "nome": "Diálogo de sair com registros na fila (+ confirmação destrutiva + falha parcial)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/features/history/sign-out-outbox-guard.tsx"],
-  "oQueFoiInferido": "Um diálogo bloqueante em duas etapas mais um terceiro estado. Etapa 1: contagem no título + explicação + três botões EMPILHADOS verticalmente numa `div flex-col gap-2` ([Sincronizar agora] primário, [Sair e descartar] danger, [Voltar] secondary), com a frase 'Precisa de conexão para enviar.' centralizada entre os dois primeiros quando offline. Etapa 2: a confirmação destrutiva, que substitui todo o conteúdo do mesmo diálogo. Terceiro estado, não óbvio: após uma sincronização PARCIAL, um `Alert tone=danger` aparece DENTRO do diálogo da etapa 1 com o número que sobrou, e a contagem do título é reescrita. Inferido: o empilhamento vertical em vez de linha, a posição do Alert de falha parcial, e a ausência de qualquer lista dos registros em risco — o vendedor decide descartar sem ver o que vai perder.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "É o único ponto do app onde sair da conta pode destruir trabalho do vendedor para sempre. Decidir 'descartar' sem ver quais orçamentos vão embora é a diferença entre uma escolha e um acidente.",
-  "prioridade": "MEDIA",
-  "refutacao": "Fui atrás do sign-out nas quatro autoridades. `claude-design-prototype.md` §E7 lista a Conta como 'email · plano · toggle de tema · Sair · Sobre/versão' e a matriz §G registra 'Conta | offline: logout ok, sync off' — o logout é tratado como trivial, porque no protótipo não existia fila. Os fixes não tocam sign-out. `HistoryScreen.jsx` não tem. No canvas do dono há DOIS 'Sair' (linha 61, ghost no rodapé do rail; linha 443, secondary na aba Conta) e nenhum guarda, nenhum diálogo, nenhuma contagem — coerente com o arquivo, que não desenha um único diálogo. A fonte é `ux-history.md` §5 (ASCII das duas etapas) e §9.1 item 4, que classifica 'Sign-out-with-queue dialog — High' como explicitamente pendente de protótipo em pixel. O terceiro estado (falha parcial) veio de review de código (o comentário cita 'review PR-A, M10') e não está nem na spec textual.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "dialogo-sair-com-fila-pendente",
+    "nome": "Diálogo de sair com registros na fila (+ confirmação destrutiva + falha parcial)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/features/history/sign-out-outbox-guard.tsx"],
+    "oQueFoiInferido": "Um diálogo bloqueante em duas etapas mais um terceiro estado. Etapa 1: contagem no título + explicação + três botões EMPILHADOS verticalmente numa `div flex-col gap-2` ([Sincronizar agora] primário, [Sair e descartar] danger, [Voltar] secondary), com a frase 'Precisa de conexão para enviar.' centralizada entre os dois primeiros quando offline. Etapa 2: a confirmação destrutiva, que substitui todo o conteúdo do mesmo diálogo. Terceiro estado, não óbvio: após uma sincronização PARCIAL, um `Alert tone=danger` aparece DENTRO do diálogo da etapa 1 com o número que sobrou, e a contagem do título é reescrita. Inferido: o empilhamento vertical em vez de linha, a posição do Alert de falha parcial, e a ausência de qualquer lista dos registros em risco — o vendedor decide descartar sem ver o que vai perder.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "É o único ponto do app onde sair da conta pode destruir trabalho do vendedor para sempre. Decidir 'descartar' sem ver quais orçamentos vão embora é a diferença entre uma escolha e um acidente.",
+    "prioridade": "MEDIA",
+    "refutacao": "Fui atrás do sign-out nas quatro autoridades. `claude-design-prototype.md` §E7 lista a Conta como 'email · plano · toggle de tema · Sair · Sobre/versão' e a matriz §G registra 'Conta | offline: logout ok, sync off' — o logout é tratado como trivial, porque no protótipo não existia fila. Os fixes não tocam sign-out. `HistoryScreen.jsx` não tem. No canvas do dono há DOIS 'Sair' (linha 61, ghost no rodapé do rail; linha 443, secondary na aba Conta) e nenhum guarda, nenhum diálogo, nenhuma contagem — coerente com o arquivo, que não desenha um único diálogo. A fonte é `ux-history.md` §5 (ASCII das duas etapas) e §9.1 item 4, que classifica 'Sign-out-with-queue dialog — High' como explicitamente pendente de protótipo em pixel. O terceiro estado (falha parcial) veio de review de código (o comentário cita 'review PR-A, M10') e não está nem na spec textual.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

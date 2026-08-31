@@ -17,38 +17,38 @@ export const MP_STUB_SECRET = "e2e-mp-stub-webhook-secret";
 const WEBHOOK_PATH = "/api/v1/billing/webhook/mercadopago";
 
 export interface FireWebhookOptions {
-  paymentId: string;
-  /** Wrong on purpose for the SC-702 spoof case. */
-  secret?: string;
-  requestId?: string;
-  liveMode?: boolean;
-  eventType?: string;
+    paymentId: string;
+    /** Wrong on purpose for the SC-702 spoof case. */
+    secret?: string;
+    requestId?: string;
+    liveMode?: boolean;
+    eventType?: string;
 }
 
 /** Signs `{type, action, data:{id}, live_mode}` with MP's real manifest (`id:…;request-id:…;
  *  ts:…;`, `data.id` lowercased) and POSTs it straight at the backend under test — mirrors
  *  `MPStub.fire_webhook` (Python) without needing the stub's in-process registration API. */
 export async function fireStubWebhook(
-  request: APIRequestContext,
-  opts: FireWebhookOptions,
+    request: APIRequestContext,
+    opts: FireWebhookOptions,
 ): Promise<APIResponse> {
-  const ts = Math.floor(Date.now() / 1000);
-  const requestId = opts.requestId ?? "e2e-req-1";
-  const secret = opts.secret ?? MP_STUB_SECRET;
-  const manifest = `id:${opts.paymentId.toLowerCase()};request-id:${requestId};ts:${ts};`;
-  const v1 = createHmac("sha256", secret).update(manifest).digest("hex");
-  return request.post(`${E2E_BACKEND_URL}${WEBHOOK_PATH}`, {
-    headers: {
-      "x-signature": `ts=${ts},v1=${v1}`,
-      "x-request-id": requestId,
-    },
-    data: {
-      type: opts.eventType ?? "subscription_authorized_payment",
-      action: "created",
-      data: { id: opts.paymentId },
-      live_mode: opts.liveMode ?? false,
-    },
-  });
+    const ts = Math.floor(Date.now() / 1000);
+    const requestId = opts.requestId ?? "e2e-req-1";
+    const secret = opts.secret ?? MP_STUB_SECRET;
+    const manifest = `id:${opts.paymentId.toLowerCase()};request-id:${requestId};ts:${ts};`;
+    const v1 = createHmac("sha256", secret).update(manifest).digest("hex");
+    return request.post(`${E2E_BACKEND_URL}${WEBHOOK_PATH}`, {
+        headers: {
+            "x-signature": `ts=${ts},v1=${v1}`,
+            "x-request-id": requestId,
+        },
+        data: {
+            type: opts.eventType ?? "subscription_authorized_payment",
+            action: "created",
+            data: { id: opts.paymentId },
+            live_mode: opts.liveMode ?? false,
+        },
+    });
 }
 
 /** Captures the bearer token the app's OWN authenticated fetch sends to
@@ -57,12 +57,12 @@ export async function fireStubWebhook(
  *  BEFORE the entitlement query fires (e.g. right after sign-up), then trigger a fetch (a nav to
  *  /conta is enough) and await the returned promise. */
 export function captureEntitlementBearerToken(page: Page): Promise<string> {
-  return new Promise((resolve) => {
-    page.on("request", (req) => {
-      if (req.url().includes("/api/v1/entitlement")) {
-        const auth = req.headers()["authorization"];
-        if (auth) resolve(auth);
-      }
+    return new Promise((resolve) => {
+        page.on("request", (req) => {
+            if (req.url().includes("/api/v1/entitlement")) {
+                const auth = req.headers()["authorization"];
+                if (auth) resolve(auth);
+            }
+        });
     });
-  });
 }

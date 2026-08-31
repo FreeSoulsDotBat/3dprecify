@@ -1,5 +1,5 @@
 context_file: CLAUDE.md
 context_files: []
 context_markers:
-  start: <!-- SPECKIT START -->
-  end: <!-- SPECKIT END -->
+    start: <!-- SPECKIT START -->
+    end: <!-- SPECKIT END -->

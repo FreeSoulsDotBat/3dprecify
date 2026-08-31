@@ -12,5 +12,5 @@ export type TableProps = TableHTMLAttributes<HTMLTableElement>;
  * as classes `tf-table__name`/`tf-table__num`/`tf-table__num--muted`/`tf-table__actions` da folha.
  */
 export function Table({ className = "", ...rest }: TableProps) {
-  return <table className={["tf-table", className].filter(Boolean).join(" ")} {...rest} />;
+    return <table className={["tf-table", className].filter(Boolean).join(" ")} {...rest} />;
 }

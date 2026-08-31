@@ -7,10 +7,10 @@ import { messages } from "./messages.pt-br";
 // grep over the WHOLE message module (every string leaf, incl. the ErrorCode→pt-BR phrases), so
 // the honesty guarantee holds as new keys are added — not just for the 003 keys.
 function collectStrings(value: unknown, acc: string[] = []): string[] {
-  if (typeof value === "string") acc.push(value);
-  else if (value && typeof value === "object")
-    for (const v of Object.values(value)) collectStrings(v, acc);
-  return acc;
+    if (typeof value === "string") acc.push(value);
+    else if (value && typeof value === "object")
+        for (const v of Object.values(value)) collectStrings(v, acc);
+    return acc;
 }
 
 // E6/T014 dated exception (2026-07-21, ux-billing.md §0.2/§8, owner flags F1-F9): the `billing`
@@ -44,39 +44,46 @@ void _omittedBillingCopy;
 // A exceção é estreita de propósito: se algum dia uma frase de plausibilidade citar o preço da
 // ASSINATURA, ela terá saído desta classe e a guarda deve voltar a cobri-la.
 const {
-  fieldTips: _omittedFieldTips,
-  tooltipRefs: _omittedTooltipRefs,
-  shopeeWarnings: _omittedShopeeWarnings,
-  plausibilidade: _omittedPlausibilidade,
-  ...NON_TOOLTIP_CALCULATOR
+    fieldTips: _omittedFieldTips,
+    tooltipRefs: _omittedTooltipRefs,
+    shopeeWarnings: _omittedShopeeWarnings,
+    plausibilidade: _omittedPlausibilidade,
+    ...NON_TOOLTIP_CALCULATOR
 } = messages.calculator;
 void _omittedFieldTips;
 void _omittedTooltipRefs;
 void _omittedShopeeWarnings;
 void _omittedPlausibilidade;
 const HAYSTACK = collectStrings({
-  ...NON_BILLING_MESSAGES,
-  calculator: NON_TOOLTIP_CALCULATOR,
+    ...NON_BILLING_MESSAGES,
+    calculator: NON_TOOLTIP_CALCULATOR,
 })
-  .join("\n")
-  .toLowerCase();
+    .join("\n")
+    .toLowerCase();
 
 describe("copy honesty (T051 / US4 — SS-4 / FR-014)", () => {
-  it("names no payment provider", () => {
-    for (const term of ["mercado pago", "mercadopago", "stripe", "paypal", "pagseguro", "boleto"]) {
-      expect(HAYSTACK, `provider name leaked: "${term}"`).not.toContain(term);
-    }
-  });
+    it("names no payment provider", () => {
+        for (const term of [
+            "mercado pago",
+            "mercadopago",
+            "stripe",
+            "paypal",
+            "pagseguro",
+            "boleto",
+        ]) {
+            expect(HAYSTACK, `provider name leaked: "${term}"`).not.toContain(term);
+        }
+    });
 
-  it("states no cancellation policy", () => {
-    for (const term of ["cancele", "cancelar", "cancelamento"]) {
-      expect(HAYSTACK, `cancellation copy leaked: "${term}"`).not.toContain(term);
-    }
-  });
+    it("states no cancellation policy", () => {
+        for (const term of ["cancele", "cancelar", "cancelamento"]) {
+            expect(HAYSTACK, `cancellation copy leaked: "${term}"`).not.toContain(term);
+        }
+    });
 
-  it("quotes no price (no currency literal in the copy)", () => {
-    // Prices are produced by number formatting at render time, never hard-coded in copy;
-    // a "R$ " literal in a message would imply an undecided commercial price.
-    expect(HAYSTACK, 'a "R$" price literal leaked into the copy').not.toContain("r$");
-  });
+    it("quotes no price (no currency literal in the copy)", () => {
+        // Prices are produced by number formatting at render time, never hard-coded in copy;
+        // a "R$ " literal in a message would imply an undecided commercial price.
+        expect(HAYSTACK, 'a "R$" price literal leaked into the copy').not.toContain("r$");
+    });
 });

@@ -1,69 +1,69 @@
 {
-  "custoTotal": 100,
-  "precoVarejo": 100,
-  "canais": [
-    {
-      "caso": "C1 so comissao 15%",
-      "anuncioVarejo": 117.65,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C2 comissao 15% + fixo 5",
-      "anuncioVarejo": 123.53,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C3 piso por item LIGA (min 20 > 15% do anuncio)",
-      "anuncioVarejo": 120,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C4 piso por item NAO liga (min 5 < 15% do anuncio)",
-      "anuncioVarejo": 117.65,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C5 bandas SELECTION",
-      "anuncioVarejo": 113.64,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C6 bandas PROGRESSIVE (ADR-0024)",
-      "anuncioVarejo": 116.67,
-      "liquidoVarejo": 100,
-      "freteVarejo": 0,
-      "error": null
-    },
-    {
-      "caso": "C7 frete DEDUZ do liquido, nao entra no custo",
-      "anuncioVarejo": 117.65,
-      "liquidoVarejo": 90,
-      "freteVarejo": 10,
-      "error": null
-    },
-    {
-      "caso": "C8 comissao 100 = slot invalido",
-      "anuncioVarejo": null,
-      "liquidoVarejo": null,
-      "freteVarejo": 0,
-      "error": "commissionPct must be a finite number in [0, 100)"
-    },
-    {
-      "caso": "C9 comissao negativa = slot invalido",
-      "anuncioVarejo": null,
-      "liquidoVarejo": null,
-      "freteVarejo": 0,
-      "error": "commissionPct must be a finite number in [0, 100)"
-    }
-  ]
+    "custoTotal": 100,
+    "precoVarejo": 100,
+    "canais": [
+        {
+            "caso": "C1 so comissao 15%",
+            "anuncioVarejo": 117.65,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C2 comissao 15% + fixo 5",
+            "anuncioVarejo": 123.53,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C3 piso por item LIGA (min 20 > 15% do anuncio)",
+            "anuncioVarejo": 120,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C4 piso por item NAO liga (min 5 < 15% do anuncio)",
+            "anuncioVarejo": 117.65,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C5 bandas SELECTION",
+            "anuncioVarejo": 113.64,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C6 bandas PROGRESSIVE (ADR-0024)",
+            "anuncioVarejo": 116.67,
+            "liquidoVarejo": 100,
+            "freteVarejo": 0,
+            "error": null
+        },
+        {
+            "caso": "C7 frete DEDUZ do liquido, nao entra no custo",
+            "anuncioVarejo": 117.65,
+            "liquidoVarejo": 90,
+            "freteVarejo": 10,
+            "error": null
+        },
+        {
+            "caso": "C8 comissao 100 = slot invalido",
+            "anuncioVarejo": null,
+            "liquidoVarejo": null,
+            "freteVarejo": 0,
+            "error": "commissionPct must be a finite number in [0, 100)"
+        },
+        {
+            "caso": "C9 comissao negativa = slot invalido",
+            "anuncioVarejo": null,
+            "liquidoVarejo": null,
+            "freteVarejo": 0,
+            "error": "commissionPct must be a finite number in [0, 100)"
+        }
+    ]
 }

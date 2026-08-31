@@ -1,16 +1,16 @@
 {
-  "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["@playwright/mcp@0.0.78"],
-      "env": {}
-    },
-    "chrome-devtools": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["chrome-devtools-mcp@1.6.0"],
-      "env": {}
+    "mcpServers": {
+        "playwright": {
+            "type": "stdio",
+            "command": "npx",
+            "args": ["@playwright/mcp@0.0.78"],
+            "env": {}
+        },
+        "chrome-devtools": {
+            "type": "stdio",
+            "command": "npx",
+            "args": ["chrome-devtools-mcp@1.6.0"],
+            "env": {}
+        }
     }
-  }
 }

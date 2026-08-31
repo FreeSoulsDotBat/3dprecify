@@ -1,16 +1,16 @@
 {
-  "id": "alerta-de-sincronizacao-no-detalhe",
-  "nome": "Alerta de estado do registro não sincronizado (4 estados)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/pages/historico/snapshot-detail-page.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "O Alert com título+corpo por estado (pendente / envio pausado / sessão expirada / não foi possível registrar) e até quatro elementos empilhados dentro dele: a ressalva de durabilidade em `<p class=tf-historico__meta>` ('se os dados do app forem limpos, ele se perde'), a linha 'Código de suporte: {n}', um `<a>` cru vestido de `tf-btn tf-btn--secondary tf-btn--sm` ('Entrar de novo') e o par [Tentar novamente]/[Descartar] do `EntryActions`. Inferido: o tom (só `failed` é danger; os outros três são info), a densidade de quatro elementos dentro de um Alert em 390px, e sobretudo o estado `unauthenticated` INTEIRO — título, corpo, tom e o link de volta —, que é posterior a toda autoridade.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "É a única voz que diz ao vendedor se o orçamento que ele acabou de fazer existe de verdade na conta dele. Um tom errado transforma um estado normal (pendente numa feira sem sinal) em pânico, ou esconde uma falha real como se fosse rotina.",
-  "prioridade": "ALTA",
-  "refutacao": "Nenhuma das quatro autoridades conhece fila de sincronização. §E6 e §E9 do protótipo não têm estado de fila algum — o único banner desenhado é o offline do SHELL (faixa ciano, 'Offline — o cálculo continua funcionando'), que fala da REDE, não do registro; a matriz §G dá ao Histórico só skeleton/gated/falha. Os dois fixes não mencionam sincronização. `HistoryScreen.jsx` não tem `syncState` nem badge. `Abas-Desktop.dc.html` não desenha nenhum alerta dentro do registro (a aside vai direto do card da alegação para o grid de Detalhamento/Canais). A única fonte é `ux-history.md` §1.1/§1.2, que é spec textual do `designer-ux`: confirmei que o título da seção diz 'The four states' mas as quatro incluem `synced` (sem badge) — ou seja, ela especifica TRÊS estados não-sincronizados, e o próprio §9.1 item 1 os classifica 'Highest — the surface the product has never had', pendente de protótipo. O quarto não-sincronizado (`unauthenticated`, 'Sessão expirada') nasceu no hotfix 016/A3 de 2026-08-07 e não existe nem nessa spec.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "alerta-de-sincronizacao-no-detalhe",
+    "nome": "Alerta de estado do registro não sincronizado (4 estados)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/pages/historico/snapshot-detail-page.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "O Alert com título+corpo por estado (pendente / envio pausado / sessão expirada / não foi possível registrar) e até quatro elementos empilhados dentro dele: a ressalva de durabilidade em `<p class=tf-historico__meta>` ('se os dados do app forem limpos, ele se perde'), a linha 'Código de suporte: {n}', um `<a>` cru vestido de `tf-btn tf-btn--secondary tf-btn--sm` ('Entrar de novo') e o par [Tentar novamente]/[Descartar] do `EntryActions`. Inferido: o tom (só `failed` é danger; os outros três são info), a densidade de quatro elementos dentro de um Alert em 390px, e sobretudo o estado `unauthenticated` INTEIRO — título, corpo, tom e o link de volta —, que é posterior a toda autoridade.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "É a única voz que diz ao vendedor se o orçamento que ele acabou de fazer existe de verdade na conta dele. Um tom errado transforma um estado normal (pendente numa feira sem sinal) em pânico, ou esconde uma falha real como se fosse rotina.",
+    "prioridade": "ALTA",
+    "refutacao": "Nenhuma das quatro autoridades conhece fila de sincronização. §E6 e §E9 do protótipo não têm estado de fila algum — o único banner desenhado é o offline do SHELL (faixa ciano, 'Offline — o cálculo continua funcionando'), que fala da REDE, não do registro; a matriz §G dá ao Histórico só skeleton/gated/falha. Os dois fixes não mencionam sincronização. `HistoryScreen.jsx` não tem `syncState` nem badge. `Abas-Desktop.dc.html` não desenha nenhum alerta dentro do registro (a aside vai direto do card da alegação para o grid de Detalhamento/Canais). A única fonte é `ux-history.md` §1.1/§1.2, que é spec textual do `designer-ux`: confirmei que o título da seção diz 'The four states' mas as quatro incluem `synced` (sem badge) — ou seja, ela especifica TRÊS estados não-sincronizados, e o próprio §9.1 item 1 os classifica 'Highest — the surface the product has never had', pendente de protótipo. O quarto não-sincronizado (`unauthenticated`, 'Sessão expirada') nasceu no hotfix 016/A3 de 2026-08-07 e não existe nem nessa spec.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

@@ -19,49 +19,49 @@ const { registerSignOutGuard, requestSignOut } = await import("./sign-out-guard"
 // skip the check.
 
 beforeEach(() => {
-  vi.clearAllMocks();
-  registerSignOutGuard(null);
+    vi.clearAllMocks();
+    registerSignOutGuard(null);
 });
 
 describe("requestSignOut — the only sign-out entry point the UI may call", () => {
-  it("signs out directly when no guard is registered", async () => {
-    await requestSignOut();
-    expect(signOutUser).toHaveBeenCalledTimes(1);
-  });
-
-  it("signs out when the guard allows it", async () => {
-    registerSignOutGuard(async () => true);
-    await requestSignOut();
-    expect(signOutUser).toHaveBeenCalledTimes(1);
-  });
-
-  it("does NOT sign out when the guard refuses — the seller went back", async () => {
-    registerSignOutGuard(async () => false);
-    await requestSignOut();
-    expect(signOutUser).not.toHaveBeenCalled();
-  });
-
-  it("asks the guard BEFORE signing out — never after the purge already ran", async () => {
-    const order: string[] = [];
-    signOutUser.mockImplementation(async () => {
-      order.push("signOut");
-    });
-    registerSignOutGuard(async () => {
-      order.push("guard");
-      return true;
+    it("signs out directly when no guard is registered", async () => {
+        await requestSignOut();
+        expect(signOutUser).toHaveBeenCalledTimes(1);
     });
 
-    await requestSignOut();
+    it("signs out when the guard allows it", async () => {
+        registerSignOutGuard(async () => true);
+        await requestSignOut();
+        expect(signOutUser).toHaveBeenCalledTimes(1);
+    });
 
-    expect(order).toEqual(["guard", "signOut"]);
-  });
+    it("does NOT sign out when the guard refuses — the seller went back", async () => {
+        registerSignOutGuard(async () => false);
+        await requestSignOut();
+        expect(signOutUser).not.toHaveBeenCalled();
+    });
 
-  it("unregisters cleanly, so an unmounted guard never blocks sign-out forever", async () => {
-    const unregister = registerSignOutGuard(async () => false);
-    unregister();
+    it("asks the guard BEFORE signing out — never after the purge already ran", async () => {
+        const order: string[] = [];
+        signOutUser.mockImplementation(async () => {
+            order.push("signOut");
+        });
+        registerSignOutGuard(async () => {
+            order.push("guard");
+            return true;
+        });
 
-    await requestSignOut();
+        await requestSignOut();
 
-    expect(signOutUser).toHaveBeenCalledTimes(1);
-  });
+        expect(order).toEqual(["guard", "signOut"]);
+    });
+
+    it("unregisters cleanly, so an unmounted guard never blocks sign-out forever", async () => {
+        const unregister = registerSignOutGuard(async () => false);
+        unregister();
+
+        await requestSignOut();
+
+        expect(signOutUser).toHaveBeenCalledTimes(1);
+    });
 });

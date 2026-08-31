@@ -21,12 +21,12 @@ import { describe, expect, it } from "vitest";
 const SRC = join(__dirname, "..");
 
 function walk(dir: string, out: string[] = []): string[] {
-  for (const name of readdirSync(dir)) {
-    const p = join(dir, name);
-    if (statSync(p).isDirectory()) walk(p, out);
-    else if (p.endsWith(".css")) out.push(p);
-  }
-  return out;
+    for (const name of readdirSync(dir)) {
+        const p = join(dir, name);
+        if (statSync(p).isDirectory()) walk(p, out);
+        else if (p.endsWith(".css")) out.push(p);
+    }
+    return out;
 }
 
 /** Extrai os nomes `tf-*` DEFINIDOS num arquivo CSS.
@@ -39,23 +39,25 @@ function walk(dir: string, out: string[] = []): string[] {
  *  O que sobra é exatamente a classe de defeito: a BASE de um primitivo (ou de um modificador dele)
  *  escrita de novo fora do arquivo dono. */
 function definedTfClasses(css: string): Set<string> {
-  const semComentario = css.replace(/\/\*[\s\S]*?\*\//g, "");
-  const found = new Set<string>();
-  const re = /([^{}]+)\{/g;
-  let m: RegExpExecArray | null;
-  while ((m = re.exec(semComentario))) {
-    const sel = m[1].trim();
-    if (sel.startsWith("@") || sel === "") continue;
-    for (const raw of sel.split(",")) {
-      const part = raw.trim();
-      if (/[\s>+~]/.test(part)) continue; // combinador ⇒ override contextual, não definição
-      const semPseudo = part.replace(/::?[a-z-]+(\([^)]*\))?/gi, "").replace(/\[[^\]]*\]/g, "");
-      const classes = semPseudo.match(/\.[a-z0-9_-]+/gi) ?? [];
-      if (classes.length === 0 || classes.some((c) => !c.startsWith(".tf-"))) continue;
-      for (const c of classes) found.add(c.slice(1));
+    const semComentario = css.replace(/\/\*[\s\S]*?\*\//g, "");
+    const found = new Set<string>();
+    const re = /([^{}]+)\{/g;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(semComentario))) {
+        const sel = m[1].trim();
+        if (sel.startsWith("@") || sel === "") continue;
+        for (const raw of sel.split(",")) {
+            const part = raw.trim();
+            if (/[\s>+~]/.test(part)) continue; // combinador ⇒ override contextual, não definição
+            const semPseudo = part
+                .replace(/::?[a-z-]+(\([^)]*\))?/gi, "")
+                .replace(/\[[^\]]*\]/g, "");
+            const classes = semPseudo.match(/\.[a-z0-9_-]+/gi) ?? [];
+            if (classes.length === 0 || classes.some((c) => !c.startsWith(".tf-"))) continue;
+            for (const c of classes) found.add(c.slice(1));
+        }
     }
-  }
-  return found;
+    return found;
 }
 
 /** Dívida CONHECIDA e datada — a única forma de uma duplicata passar. Cada entrada precisa continuar
@@ -63,45 +65,47 @@ function definedTfClasses(css: string): Set<string> {
  *  permanente até a T021 derrubaria o `gate:all` no pre-push e no CI, e vermelho permanente ensina "roda
  *  de novo" (lição 014/US5); a lista mantém a guarda VIVA para qualquer duplicata nova desde já. */
 const DIVIDA_CONHECIDA: ReadonlyMap<string, string> = new Map([
-  // vazia desde 019/T021 (tf-grafismo juntado em shared/ui/grafismo.css) — mantenha vazia.
+    // vazia desde 019/T021 (tf-grafismo juntado em shared/ui/grafismo.css) — mantenha vazia.
 ]);
 
 function duplicatasDeSrc(): Map<string, string[]> {
-  const owners = new Map<string, string[]>();
-  for (const file of walk(SRC)) {
-    const rel = relative(SRC, file).replace(/\\/g, "/");
-    for (const cls of definedTfClasses(readFileSync(file, "utf8"))) {
-      owners.set(cls, [...(owners.get(cls) ?? []), rel]);
+    const owners = new Map<string, string[]>();
+    for (const file of walk(SRC)) {
+        const rel = relative(SRC, file).replace(/\\/g, "/");
+        for (const cls of definedTfClasses(readFileSync(file, "utf8"))) {
+            owners.set(cls, [...(owners.get(cls) ?? []), rel]);
+        }
     }
-  }
-  return new Map(
-    [...owners.entries()]
-      .filter(([, files]) => new Set(files).size > 1)
-      .map(([cls, files]) => [cls, [...new Set(files)].sort()]),
-  );
+    return new Map(
+        [...owners.entries()]
+            .filter(([, files]) => new Set(files).size > 1)
+            .map(([cls, files]) => [cls, [...new Set(files)].sort()]),
+    );
 }
 
 describe("019/ADR-0032 — uma classe tf-*, um arquivo", () => {
-  it("nenhum nome tf-* é definido em dois arquivos de apps/web/src (fora a dívida declarada)", () => {
-    const novas = [...duplicatasDeSrc().entries()]
-      .filter(([cls]) => !DIVIDA_CONHECIDA.has(cls))
-      .map(([cls, files]) => `${cls} → ${files.join(" × ")}`)
-      .sort();
-    expect(novas, `classes tf-* definidas em mais de um arquivo:\n${novas.join("\n")}`).toEqual([]);
-  });
+    it("nenhum nome tf-* é definido em dois arquivos de apps/web/src (fora a dívida declarada)", () => {
+        const novas = [...duplicatasDeSrc().entries()]
+            .filter(([cls]) => !DIVIDA_CONHECIDA.has(cls))
+            .map(([cls, files]) => `${cls} → ${files.join(" × ")}`)
+            .sort();
+        expect(novas, `classes tf-* definidas em mais de um arquivo:\n${novas.join("\n")}`).toEqual(
+            [],
+        );
+    });
 
-  it("a dívida declarada ainda existe (uma entrada paga tem de sair da lista)", () => {
-    const atuais = duplicatasDeSrc();
-    for (const [cls, motivo] of DIVIDA_CONHECIDA) {
-      expect(
-        atuais.has(cls),
-        `"${cls}" não está mais duplicada — remova-a de DIVIDA_CONHECIDA (${motivo})`,
-      ).toBe(true);
-    }
-  });
+    it("a dívida declarada ainda existe (uma entrada paga tem de sair da lista)", () => {
+        const atuais = duplicatasDeSrc();
+        for (const [cls, motivo] of DIVIDA_CONHECIDA) {
+            expect(
+                atuais.has(cls),
+                `"${cls}" não está mais duplicada — remova-a de DIVIDA_CONHECIDA (${motivo})`,
+            ).toBe(true);
+        }
+    });
 
-  it("o extrator conta definições, não overrides (prova de que o vermelho é o certo)", () => {
-    const css = `
+    it("o extrator conta definições, não overrides (prova de que o vermelho é o certo)", () => {
+        const css = `
       .tf-alert { a: 1 }
       .tf-alert.tf-alert--compact { b: 2 }
       .tf-btn:hover, .tf-btn:focus-visible { c: 3 }
@@ -112,12 +116,12 @@ describe("019/ADR-0032 — uma classe tf-*, um arquivo", () => {
       @media (min-width: 1280px) { .tf-shell { h: 8 } }
       /* .tf-comentado { i: 9 } */
     `;
-    expect([...definedTfClasses(css)].sort()).toEqual([
-      "tf-alert",
-      "tf-alert--compact",
-      "tf-btn",
-      "tf-input",
-      "tf-shell",
-    ]);
-  });
+        expect([...definedTfClasses(css)].sort()).toEqual([
+            "tf-alert",
+            "tf-alert--compact",
+            "tf-btn",
+            "tf-input",
+            "tf-shell",
+        ]);
+    });
 });

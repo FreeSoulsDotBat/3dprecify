@@ -5,29 +5,29 @@ import "./plist.css";
 export type PlistFlagTone = "warning" | "neutral" | "success" | "danger";
 
 export interface PlistFlag {
-  label: ReactNode;
-  tone?: PlistFlagTone;
+    label: ReactNode;
+    tone?: PlistFlagTone;
 }
 
 export interface PlistItemData {
-  id: string | number;
-  name: ReactNode;
-  /** Texto simples do meta, OU uma flag (marca da linha — "recalcular", "fixado" etc). */
-  meta?: ReactNode | { flag: PlistFlag };
-  price: ReactNode;
-  /** Preço anterior, mostrado só quando o preço foi recalculado. */
-  was?: ReactNode;
-  onSelect?: () => void;
-  selected?: boolean;
+    id: string | number;
+    name: ReactNode;
+    /** Texto simples do meta, OU uma flag (marca da linha — "recalcular", "fixado" etc). */
+    meta?: ReactNode | { flag: PlistFlag };
+    price: ReactNode;
+    /** Preço anterior, mostrado só quando o preço foi recalculado. */
+    was?: ReactNode;
+    onSelect?: () => void;
+    selected?: boolean;
 }
 
 export interface PlistProps {
-  items: readonly PlistItemData[];
-  className?: string;
+    items: readonly PlistItemData[];
+    className?: string;
 }
 
 function isFlagMeta(meta: PlistItemData["meta"]): meta is { flag: PlistFlag } {
-  return typeof meta === "object" && meta !== null && "flag" in meta;
+    return typeof meta === "object" && meta !== null && "flag" in meta;
 }
 
 /**
@@ -38,65 +38,67 @@ function isFlagMeta(meta: PlistItemData["meta"]): meta is { flag: PlistFlag } {
  * os papéis `list`/`listitem` são explícitos aqui.
  */
 export function Plist({ items, className = "" }: PlistProps) {
-  return (
-    <ul className={["tf-plist", className].filter(Boolean).join(" ")} role="list">
-      {items.map((item) => {
-        const flag = isFlagMeta(item.meta) ? item.meta.flag : undefined;
-        const metaText = isFlagMeta(item.meta) ? undefined : item.meta;
-        const main = (
-          <span className="tf-plist__main">
-            <span className="tf-plist__name">{item.name}</span>
-            {flag ? (
-              <span className="tf-plist__meta">
-                <span
-                  className={[
-                    "tf-plist__flag",
-                    // "warning" é a cor BASE de `.tf-plist__flag` (folha, lote 18) — só
-                    // neutral/success/danger existem como modificador `--<tone>`.
-                    flag.tone && flag.tone !== "warning" && `tf-plist__flag--${flag.tone}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
-                >
-                  {flag.label}
-                </span>
-              </span>
-            ) : (
-              metaText !== undefined &&
-              metaText !== null && <span className="tf-plist__meta">{metaText}</span>
-            )}
-          </span>
-        );
-        const val = (
-          <span className="tf-plist__val">
-            <span className="tf-plist__price">{item.price}</span>
-            {item.was !== undefined && item.was !== null && (
-              <span className="tf-plist__was">{item.was}</span>
-            )}
-          </span>
-        );
+    return (
+        <ul className={["tf-plist", className].filter(Boolean).join(" ")} role="list">
+            {items.map((item) => {
+                const flag = isFlagMeta(item.meta) ? item.meta.flag : undefined;
+                const metaText = isFlagMeta(item.meta) ? undefined : item.meta;
+                const main = (
+                    <span className="tf-plist__main">
+                        <span className="tf-plist__name">{item.name}</span>
+                        {flag ? (
+                            <span className="tf-plist__meta">
+                                <span
+                                    className={[
+                                        "tf-plist__flag",
+                                        // "warning" é a cor BASE de `.tf-plist__flag` (folha, lote 18) — só
+                                        // neutral/success/danger existem como modificador `--<tone>`.
+                                        flag.tone &&
+                                            flag.tone !== "warning" &&
+                                            `tf-plist__flag--${flag.tone}`,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ")}
+                                >
+                                    {flag.label}
+                                </span>
+                            </span>
+                        ) : (
+                            metaText !== undefined &&
+                            metaText !== null && <span className="tf-plist__meta">{metaText}</span>
+                        )}
+                    </span>
+                );
+                const val = (
+                    <span className="tf-plist__val">
+                        <span className="tf-plist__price">{item.price}</span>
+                        {item.was !== undefined && item.was !== null && (
+                            <span className="tf-plist__was">{item.was}</span>
+                        )}
+                    </span>
+                );
 
-        return (
-          <li key={item.id} role="listitem">
-            {item.onSelect ? (
-              <button
-                type="button"
-                className="tf-plist__row"
-                onClick={item.onSelect}
-                aria-selected={item.selected ? "true" : "false"}
-              >
-                {main}
-                {val}
-              </button>
-            ) : (
-              <span className="tf-plist__row">
-                {main}
-                {val}
-              </span>
-            )}
-          </li>
-        );
-      })}
-    </ul>
-  );
+                return (
+                    <li key={item.id} role="listitem">
+                        {item.onSelect ? (
+                            <button
+                                type="button"
+                                className="tf-plist__row"
+                                onClick={item.onSelect}
+                                aria-selected={item.selected ? "true" : "false"}
+                            >
+                                {main}
+                                {val}
+                            </button>
+                        ) : (
+                            <span className="tf-plist__row">
+                                {main}
+                                {val}
+                            </span>
+                        )}
+                    </li>
+                );
+            })}
+        </ul>
+    );
 }

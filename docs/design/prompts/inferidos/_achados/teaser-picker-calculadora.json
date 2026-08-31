@@ -1,16 +1,16 @@
 {
-  "id": "teaser-picker-calculadora",
-  "nome": "Teaser do \"Usar do catálogo\" na calculadora (com botão desabilitado visível)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/pages/calcular/calcular-page.tsx",
-    "apps/web/src/shared/billing/premium-teaser.tsx"
-  ],
-  "oQueFoiInferido": "A exceção NOMEADA do padrão fechado: além dos quatro elementos, este teaser carrega a prop `disabledAffordance` — um `<Button variant=\"secondary\" disabled>` visível, renderizado numa `div.tf-premium-teaser__disabled` com `width:100%` ABAIXO da legenda, portanto abaixo do CTA de compra — tudo dentro de um `<Card padding=\"md\">` na coluna da calculadora. Inferido: que a affordance bloqueada aparece DEPOIS do botão de compra e não no lugar onde o controle real viveria, e o tamanho/tom desse botão morto. Falta desenhar: como se mostra um controle que existe mas está trancado, sem virar um segundo botão competindo com o \"Assinar\".",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Na tela central do produto, o vendedor gratuito vê um botão morto logo abaixo de um botão de compra — arranjo que nenhum desenho compôs.",
-  "prioridade": "MEDIA",
-  "refutacao": "Sobrevive, e a cobertura parcial é MAIS FORTE do que o mapeador registrou — o que torna a divergência mais séria, não menos. `claude-design-prototype-fixes.md` item 1 não só especifica a superfície como a especifica em detalhe (\"Na aba Calcular, o card 'Do catálogo' (selects Filamento/Impressora) só pode existir para usuário Premium. Para o usuário grátis, substitua por um card compacto de teaser: 'Preencha direto do seu catálogo — recurso Premium' + link 'Ver Premium'\"), e a auditoria V2 confirma que foi implementado e RENDERIZADO (\"FIXED (20): 1-9 … freemium teaser\"). Ou seja, existe desenho verificado desta superfície. Mas a instrução desenhada é SUBSTITUIR os selects por um card compacto com um LINK — e o que existe no código é o teaser de quatro elementos com preço real, um CTA primário de compra, e um botão DESABILITADO E VISÍVEL abaixo dele. A decisão desenhada (esconder o controle, oferecer um link discreto) foi invertida na decisão implementada (mostrar o controle morto, oferecer uma compra), e nenhuma autoridade ratificou a inversão — o canvas 018 não pode tê-la ratificado porque não cobre Calcular: o artboard é um ponteiro que diz \"A tela Calcular está no outro arquivo\", e CONFIRMEI que esse outro arquivo NÃO EXISTE no repositório (`specs/018-abas-desktop/design/` contém um único `.dc.html`; um `find` por `*.dc.html` em `specs/` e `docs/` retorna só ele). Versão anterior e mais simples da mesma superfície → sobrevive, PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "billing"
+    "id": "teaser-picker-calculadora",
+    "nome": "Teaser do \"Usar do catálogo\" na calculadora (com botão desabilitado visível)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/pages/calcular/calcular-page.tsx",
+        "apps/web/src/shared/billing/premium-teaser.tsx"
+    ],
+    "oQueFoiInferido": "A exceção NOMEADA do padrão fechado: além dos quatro elementos, este teaser carrega a prop `disabledAffordance` — um `<Button variant=\"secondary\" disabled>` visível, renderizado numa `div.tf-premium-teaser__disabled` com `width:100%` ABAIXO da legenda, portanto abaixo do CTA de compra — tudo dentro de um `<Card padding=\"md\">` na coluna da calculadora. Inferido: que a affordance bloqueada aparece DEPOIS do botão de compra e não no lugar onde o controle real viveria, e o tamanho/tom desse botão morto. Falta desenhar: como se mostra um controle que existe mas está trancado, sem virar um segundo botão competindo com o \"Assinar\".",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Na tela central do produto, o vendedor gratuito vê um botão morto logo abaixo de um botão de compra — arranjo que nenhum desenho compôs.",
+    "prioridade": "MEDIA",
+    "refutacao": "Sobrevive, e a cobertura parcial é MAIS FORTE do que o mapeador registrou — o que torna a divergência mais séria, não menos. `claude-design-prototype-fixes.md` item 1 não só especifica a superfície como a especifica em detalhe (\"Na aba Calcular, o card 'Do catálogo' (selects Filamento/Impressora) só pode existir para usuário Premium. Para o usuário grátis, substitua por um card compacto de teaser: 'Preencha direto do seu catálogo — recurso Premium' + link 'Ver Premium'\"), e a auditoria V2 confirma que foi implementado e RENDERIZADO (\"FIXED (20): 1-9 … freemium teaser\"). Ou seja, existe desenho verificado desta superfície. Mas a instrução desenhada é SUBSTITUIR os selects por um card compacto com um LINK — e o que existe no código é o teaser de quatro elementos com preço real, um CTA primário de compra, e um botão DESABILITADO E VISÍVEL abaixo dele. A decisão desenhada (esconder o controle, oferecer um link discreto) foi invertida na decisão implementada (mostrar o controle morto, oferecer uma compra), e nenhuma autoridade ratificou a inversão — o canvas 018 não pode tê-la ratificado porque não cobre Calcular: o artboard é um ponteiro que diz \"A tela Calcular está no outro arquivo\", e CONFIRMEI que esse outro arquivo NÃO EXISTE no repositório (`specs/018-abas-desktop/design/` contém um único `.dc.html`; um `find` por `*.dc.html` em `specs/` e `docs/` retorna só ele). Versão anterior e mais simples da mesma superfície → sobrevive, PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "billing"
 }

@@ -24,15 +24,15 @@ import { useEffect } from "react";
  * página (regra de user-activation) — que é exatamente o caso em que existe algo a perder.
  */
 export function useAvisoDeSaida(temAlteracoes: boolean): void {
-  useEffect(() => {
-    if (!temAlteracoes) return;
-    const aviso = (evento: BeforeUnloadEvent) => {
-      // O texto é do navegador, não nosso: `preventDefault` + `returnValue` é a forma que todos os
-      // navegadores atuais aceitam. Escrever uma frase aqui não a exibiria em lugar nenhum.
-      evento.preventDefault();
-      evento.returnValue = "";
-    };
-    window.addEventListener("beforeunload", aviso);
-    return () => window.removeEventListener("beforeunload", aviso);
-  }, [temAlteracoes]);
+    useEffect(() => {
+        if (!temAlteracoes) return;
+        const aviso = (evento: BeforeUnloadEvent) => {
+            // O texto é do navegador, não nosso: `preventDefault` + `returnValue` é a forma que todos os
+            // navegadores atuais aceitam. Escrever uma frase aqui não a exibiria em lugar nenhum.
+            evento.preventDefault();
+            evento.returnValue = "";
+        };
+        window.addEventListener("beforeunload", aviso);
+        return () => window.removeEventListener("beforeunload", aviso);
+    }, [temAlteracoes]);
 }

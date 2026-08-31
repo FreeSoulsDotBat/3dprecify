@@ -4,15 +4,15 @@ import "./field.css";
 import "./select.css";
 
 export interface SelectOption {
-  value: string;
-  label: string;
+    value: string;
+    label: string;
 }
 
 export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, "size"> {
-  options: readonly SelectOption[];
-  /** Optional leading placeholder rendered as a disabled first row (empty value). */
-  placeholder?: string;
-  error?: boolean;
+    options: readonly SelectOption[];
+    /** Optional leading placeholder rendered as a disabled first row (empty value). */
+    placeholder?: string;
+    error?: boolean;
 }
 
 /**
@@ -22,35 +22,41 @@ export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement
  * it into a DS `Field` render-fn exactly like NumberField.
  */
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select(
-  { options, placeholder, error = false, disabled = false, className = "", value, ...rest },
-  ref,
+    { options, placeholder, error = false, disabled = false, className = "", value, ...rest },
+    ref,
 ) {
-  const wrapCls = [
-    "tf-inputwrap",
-    "tf-selectwrap",
-    error && "tf-inputwrap--error",
-    disabled && "tf-inputwrap--disabled",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return (
-    <div className={wrapCls}>
-      <select ref={ref} className="tf-input tf-select" disabled={disabled} value={value} {...rest}>
-        {placeholder !== undefined && (
-          <option value="" disabled>
-            {placeholder}
-          </option>
-        )}
-        {options.map((o) => (
-          <option key={o.value} value={o.value}>
-            {o.label}
-          </option>
-        ))}
-      </select>
-      <span className="tf-select__caret" aria-hidden="true">
-        ▾
-      </span>
-    </div>
-  );
+    const wrapCls = [
+        "tf-inputwrap",
+        "tf-selectwrap",
+        error && "tf-inputwrap--error",
+        disabled && "tf-inputwrap--disabled",
+        className,
+    ]
+        .filter(Boolean)
+        .join(" ");
+    return (
+        <div className={wrapCls}>
+            <select
+                ref={ref}
+                className="tf-input tf-select"
+                disabled={disabled}
+                value={value}
+                {...rest}
+            >
+                {placeholder !== undefined && (
+                    <option value="" disabled>
+                        {placeholder}
+                    </option>
+                )}
+                {options.map((o) => (
+                    <option key={o.value} value={o.value}>
+                        {o.label}
+                    </option>
+                ))}
+            </select>
+            <span className="tf-select__caret" aria-hidden="true">
+                ▾
+            </span>
+        </div>
+    );
 });

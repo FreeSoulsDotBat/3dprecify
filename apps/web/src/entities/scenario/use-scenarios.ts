@@ -1,30 +1,30 @@
 import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-  type UseMutationResult,
+    useInfiniteQuery,
+    useMutation,
+    useQueryClient,
+    type UseMutationResult,
 } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  createScenarioApiV1ScenariosPost,
-  deleteScenarioApiV1ScenariosScenarioIdDelete,
-  duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost,
-  listScenariosApiV1ScenariosGet,
-  renameScenarioApiV1ScenariosScenarioIdPatch,
-  updateScenarioApiV1ScenariosScenarioIdPut,
-  type RenameIn,
-  type ScenarioIn,
-  type ScenarioOut,
+    createScenarioApiV1ScenariosPost,
+    deleteScenarioApiV1ScenariosScenarioIdDelete,
+    duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost,
+    listScenariosApiV1ScenariosGet,
+    renameScenarioApiV1ScenariosScenarioIdPatch,
+    updateScenarioApiV1ScenariosScenarioIdPut,
+    type RenameIn,
+    type ScenarioIn,
+    type ScenarioOut,
 } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import {
-  loadCachedScenarios,
-  persistCachedScenarios,
-  SCENARIO_QUERY_ROOT,
-  scenarioQueryKey,
+    loadCachedScenarios,
+    persistCachedScenarios,
+    SCENARIO_QUERY_ROOT,
+    scenarioQueryKey,
 } from "./scenario-cache";
 
 // 010/T012+T013 (E5, PR-A US2) — THE LIST: (server list, keyset `created_at DESC`) ∪ (uid-keyed
@@ -43,23 +43,23 @@ export { SCENARIO_QUERY_ROOT };
 
 /** The read state "Meus cenários" renders — the list plus honest load/stale/error/pagination flags. */
 export interface ScenarioListState {
-  /** (loaded server pages), pre-filled from the offline cache before the first online answer. */
-  items: ScenarioOut[];
-  /** First read in flight with nothing cached yet. */
-  isLoading: boolean;
-  /** A COLD failure: the server refused AND there is nothing cached. */
-  isError: boolean;
-  /** 019/PR-B (T112) — o mesmo campo que `HistoryListState.error` (T111, molde `CatalogListState`):
-   *  deixa a folha distinguir um 403 `ENTITLEMENT_REQUIRED` (a parede caiu, é vazio didático) de uma
-   *  falha de rede de verdade (é erro/retry). Aditivo — nada mais muda no hook. */
-  error: ApiError | null;
-  /** Serving cached rows because a read failed — the honest "may be outdated" state. */
-  stale: boolean;
-  refetch: () => void;
-  /** Fetch the next keyset page ([Carregar mais]) — never an OFFSET, never a cap. */
-  loadMore: () => void;
-  hasMore: boolean;
-  isFetchingMore: boolean;
+    /** (loaded server pages), pre-filled from the offline cache before the first online answer. */
+    items: ScenarioOut[];
+    /** First read in flight with nothing cached yet. */
+    isLoading: boolean;
+    /** A COLD failure: the server refused AND there is nothing cached. */
+    isError: boolean;
+    /** 019/PR-B (T112) — o mesmo campo que `HistoryListState.error` (T111, molde `CatalogListState`):
+     *  deixa a folha distinguir um 403 `ENTITLEMENT_REQUIRED` (a parede caiu, é vazio didático) de uma
+     *  falha de rede de verdade (é erro/retry). Aditivo — nada mais muda no hook. */
+    error: ApiError | null;
+    /** Serving cached rows because a read failed — the honest "may be outdated" state. */
+    stale: boolean;
+    refetch: () => void;
+    /** Fetch the next keyset page ([Carregar mais]) — never an OFFSET, never a cap. */
+    loadMore: () => void;
+    hasMore: boolean;
+    isFetchingMore: boolean;
 }
 
 /**
@@ -70,78 +70,81 @@ export interface ScenarioListState {
  * spec — this hook accepts it for forward-compat with the contract, but PR-A never wires it).
  */
 export function useScenarios(filters: { q?: string } = {}): ScenarioListState {
-  const status = useSessionStore((s) => s.status);
-  const uid = useSessionStore((s) => s.user?.uid);
-  const filtered = Boolean(filters.q?.trim());
+    const status = useSessionStore((s) => s.status);
+    const uid = useSessionStore((s) => s.user?.uid);
+    const filtered = Boolean(filters.q?.trim());
 
-  const [cached, setCached] = useState<ScenarioOut[] | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    setCached(null);
-    if (!uid) return;
-    void loadCachedScenarios(uid)
-      .then((items) => {
-        if (!cancelled && items) setCached(items);
-      })
-      // 015/A5 ([F08-001]) — o pre-carregamento pode falhar (quota estourada, store corrompido,
-      // navegacao privada) e a tela sobrevive, porque a consulta online roda de qualquer jeito. O que
-      // nao pode e falhar em SILENCIO: sem este catch a rejeicao ficava sem tratador, e o vendedor
-      // perdia o pre-preenchimento e o boot offline sem ninguem ficar sabendo. O `outbox.ts:121` ja
-      // fazia o certo com `then(run, run)`; os seis pre-carregamentos nao herdaram.
-      .catch((erro: unknown) => {
-        console.warn("[cache] pre-carregamento de cenarios falhou; seguindo pela rede", erro);
-      });
-    return () => {
-      cancelled = true;
+    const [cached, setCached] = useState<ScenarioOut[] | null>(null);
+    useEffect(() => {
+        let cancelled = false;
+        setCached(null);
+        if (!uid) return;
+        void loadCachedScenarios(uid)
+            .then((items) => {
+                if (!cancelled && items) setCached(items);
+            })
+            // 015/A5 ([F08-001]) — o pre-carregamento pode falhar (quota estourada, store corrompido,
+            // navegacao privada) e a tela sobrevive, porque a consulta online roda de qualquer jeito. O que
+            // nao pode e falhar em SILENCIO: sem este catch a rejeicao ficava sem tratador, e o vendedor
+            // perdia o pre-preenchimento e o boot offline sem ninguem ficar sabendo. O `outbox.ts:121` ja
+            // fazia o certo com `then(run, run)`; os seis pre-carregamentos nao herdaram.
+            .catch((erro: unknown) => {
+                console.warn(
+                    "[cache] pre-carregamento de cenarios falhou; seguindo pela rede",
+                    erro,
+                );
+            });
+        return () => {
+            cancelled = true;
+        };
+    }, [uid]);
+
+    const query = useInfiniteQuery({
+        queryKey: [...scenarioQueryKey(uid), filters],
+        enabled: status === "authenticated" && !!uid,
+        retry: false,
+        staleTime: 60_000,
+        // Offline, a PAUSED query would leave the surface in a permanent spinner instead of honestly
+        // falling back to the device cache (mirrors `useHistory`/`useEntitlement`, same reason).
+        networkMode: "always",
+        initialPageParam: undefined as string | undefined,
+        queryFn: async ({ pageParam }) => {
+            const params = {
+                ...(filters.q?.trim() ? { q: filters.q.trim() } : {}),
+                ...(pageParam ? { cursor: pageParam } : {}),
+            };
+            const res = await listScenariosApiV1ScenariosGet(
+                Object.keys(params).length ? params : undefined,
+            );
+            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        getNextPageParam: (last) => last.nextCursor ?? undefined,
+    });
+
+    const serverPages = useMemo(() => query.data?.pages.flatMap((p) => p.items), [query.data]);
+    useEffect(() => {
+        if (!filtered && serverPages && uid) void persistCachedScenarios(uid, serverPages);
+    }, [filtered, serverPages, uid]);
+
+    // Under a filter, never fall back to the unfiltered cache — that would show unfiltered rows
+    // beneath a search box (the same rule `useHistory` follows).
+    const items = serverPages ?? (filtered ? [] : (cached ?? []));
+    const hasServer = serverPages !== undefined;
+    const hasCache = !filtered && cached !== null;
+    const hasData = hasServer || hasCache;
+
+    return {
+        items,
+        isLoading: query.isFetching && !hasData,
+        isError: query.isError && !hasData,
+        error: (query.error as ApiError | null) ?? null,
+        stale: query.isError && hasData,
+        refetch: () => void query.refetch(),
+        loadMore: () => void query.fetchNextPage(),
+        hasMore: query.hasNextPage,
+        isFetchingMore: query.isFetchingNextPage,
     };
-  }, [uid]);
-
-  const query = useInfiniteQuery({
-    queryKey: [...scenarioQueryKey(uid), filters],
-    enabled: status === "authenticated" && !!uid,
-    retry: false,
-    staleTime: 60_000,
-    // Offline, a PAUSED query would leave the surface in a permanent spinner instead of honestly
-    // falling back to the device cache (mirrors `useHistory`/`useEntitlement`, same reason).
-    networkMode: "always",
-    initialPageParam: undefined as string | undefined,
-    queryFn: async ({ pageParam }) => {
-      const params = {
-        ...(filters.q?.trim() ? { q: filters.q.trim() } : {}),
-        ...(pageParam ? { cursor: pageParam } : {}),
-      };
-      const res = await listScenariosApiV1ScenariosGet(
-        Object.keys(params).length ? params : undefined,
-      );
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    getNextPageParam: (last) => last.nextCursor ?? undefined,
-  });
-
-  const serverPages = useMemo(() => query.data?.pages.flatMap((p) => p.items), [query.data]);
-  useEffect(() => {
-    if (!filtered && serverPages && uid) void persistCachedScenarios(uid, serverPages);
-  }, [filtered, serverPages, uid]);
-
-  // Under a filter, never fall back to the unfiltered cache — that would show unfiltered rows
-  // beneath a search box (the same rule `useHistory` follows).
-  const items = serverPages ?? (filtered ? [] : (cached ?? []));
-  const hasServer = serverPages !== undefined;
-  const hasCache = !filtered && cached !== null;
-  const hasData = hasServer || hasCache;
-
-  return {
-    items,
-    isLoading: query.isFetching && !hasData,
-    isError: query.isError && !hasData,
-    error: (query.error as ApiError | null) ?? null,
-    stale: query.isError && hasData,
-    refetch: () => void query.refetch(),
-    loadMore: () => void query.fetchNextPage(),
-    hasMore: query.hasNextPage,
-    isFetchingMore: query.isFetchingNextPage,
-  };
 }
 
 /** POST create — ONLINE-ONLY. No queue, no `pending` state, no optimistic fake (FR-613/VR-612): a
@@ -149,20 +152,20 @@ export function useScenarios(filters: { q?: string } = {}): ScenarioListState {
  *  the caller (the save Sheet) turns it into the honest specific copy. A real 2xx invalidates the
  *  uid's list so it refetches — never an optimistic insert. */
 export function useCreateScenario(): UseMutationResult<ScenarioOut, ApiError, ScenarioIn> {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  return useMutation<ScenarioOut, ApiError, ScenarioIn>({
-    networkMode: "always",
-    mutationFn: async (body: ScenarioIn) => {
-      const res = await createScenarioApiV1ScenariosPost(body);
-      if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
-    },
-  });
+    return useMutation<ScenarioOut, ApiError, ScenarioIn>({
+        networkMode: "always",
+        mutationFn: async (body: ScenarioIn) => {
+            const res = await createScenarioApiV1ScenariosPost(body);
+            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+        },
+    });
 }
 
 // 010/T029 (E5, PR-B US6) — manage + lapse. Every write below is the SAME online-only, no-outbox
@@ -172,80 +175,80 @@ export function useCreateScenario(): UseMutationResult<ScenarioOut, ApiError, Sc
 
 /** `PUT` full-config replace — "Salvar alterações" on a loaded scenario (T029/§4.1). */
 export function useUpdateScenario(): UseMutationResult<
-  ScenarioOut,
-  ApiError,
-  { id: string; body: ScenarioIn }
+    ScenarioOut,
+    ApiError,
+    { id: string; body: ScenarioIn }
 > {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  return useMutation<ScenarioOut, ApiError, { id: string; body: ScenarioIn }>({
-    networkMode: "always",
-    mutationFn: async ({ id, body }) => {
-      const res = await updateScenarioApiV1ScenariosScenarioIdPut(id, body);
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
-    },
-  });
+    return useMutation<ScenarioOut, ApiError, { id: string; body: ScenarioIn }>({
+        networkMode: "always",
+        mutationFn: async ({ id, body }) => {
+            const res = await updateScenarioApiV1ScenariosScenarioIdPut(id, body);
+            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+        },
+    });
 }
 
 /** `PATCH` rename — `name`/`note` ONLY (T029). */
 export function useRenameScenario(): UseMutationResult<
-  ScenarioOut,
-  ApiError,
-  { id: string; body: RenameIn }
+    ScenarioOut,
+    ApiError,
+    { id: string; body: RenameIn }
 > {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  return useMutation<ScenarioOut, ApiError, { id: string; body: RenameIn }>({
-    networkMode: "always",
-    mutationFn: async ({ id, body }) => {
-      const res = await renameScenarioApiV1ScenariosScenarioIdPatch(id, body);
-      if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
-    },
-  });
+    return useMutation<ScenarioOut, ApiError, { id: string; body: RenameIn }>({
+        networkMode: "always",
+        mutationFn: async ({ id, body }) => {
+            const res = await renameScenarioApiV1ScenariosScenarioIdPatch(id, body);
+            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+        },
+    });
 }
 
 /** `DELETE` soft-delete (T029). */
 export function useDeleteScenario(): UseMutationResult<void, ApiError, string> {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  return useMutation<void, ApiError, string>({
-    networkMode: "always",
-    mutationFn: async (id: string) => {
-      const res = await deleteScenarioApiV1ScenariosScenarioIdDelete(id);
-      if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
-    },
-  });
+    return useMutation<void, ApiError, string>({
+        networkMode: "always",
+        mutationFn: async (id: string) => {
+            const res = await deleteScenarioApiV1ScenariosScenarioIdDelete(id);
+            if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+        },
+    });
 }
 
 /** `POST /{id}/duplicate` — VR-608 independence (T029, mirrors the E3/E4 "Duplicar" idiom the T026
  *  checkbox claimed but never wired client-side; completed here as the shared overflow action). */
 export function useDuplicateScenario(): UseMutationResult<ScenarioOut, ApiError, string> {
-  const client = useQueryClient();
-  const uid = useSessionStore((s) => s.user?.uid);
+    const client = useQueryClient();
+    const uid = useSessionStore((s) => s.user?.uid);
 
-  return useMutation<ScenarioOut, ApiError, string>({
-    networkMode: "always",
-    mutationFn: async (id: string) => {
-      const res = await duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost(id);
-      if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
-      return res.data;
-    },
-    onSuccess: () => {
-      void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
-    },
-  });
+    return useMutation<ScenarioOut, ApiError, string>({
+        networkMode: "always",
+        mutationFn: async (id: string) => {
+            const res = await duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost(id);
+            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            return res.data;
+        },
+        onSuccess: () => {
+            void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
+        },
+    });
 }

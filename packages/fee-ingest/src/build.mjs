@@ -22,13 +22,13 @@ import { projetarSemente, serializarSemente } from "./seed-projection.ts";
 
 const ARTEFATO = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 const SEMENTE = fileURLToPath(
-  new URL("../../../apps/web/src/shared/fee-catalog/seed.data.json", import.meta.url),
+    new URL("../../../apps/web/src/shared/fee-catalog/seed.data.json", import.meta.url),
 );
 const VEREDITOS = fileURLToPath(new URL("../artifacts/", import.meta.url));
 
 const morrer = (mensagem) => {
-  console.error(`fee:build — ${mensagem}`);
-  process.exit(1);
+    console.error(`fee:build — ${mensagem}`);
+    process.exit(1);
 };
 
 const hoje = new Date().toISOString().slice(0, 10);
@@ -36,9 +36,9 @@ const hoje = new Date().toISOString().slice(0, 10);
 // declarava aquilo fresco PARA SEMPRE (014, revisão adversarial de 2026-08-01). A validação vale
 // para todos os caminhos.
 const data = collectedAtFor({
-  fromFixture: false,
-  envDate: process.env.COLLECTED_AT,
-  today: hoje,
+    fromFixture: false,
+    envDate: process.env.COLLECTED_AT,
+    today: hoje,
 });
 if (!data.ok) morrer(data.reason);
 
@@ -48,20 +48,23 @@ const base = JSON.parse(readFileSync(ARTEFATO, "utf8"));
 // Os vereditos que os jobs de coleta deixaram. Nenhum ⇒ nenhuma fatia: o laço roda, não muda nada, e
 // diz isso em voz alta. Não é erro.
 const vereditos = existsSync(VEREDITOS)
-  ? readdirSync(VEREDITOS)
-      .filter((f) => f.endsWith(".verdict.json"))
-      .sort()
-      .map((f) => JSON.parse(readFileSync(`${VEREDITOS}${f}`, "utf8")))
-  : [];
+    ? readdirSync(VEREDITOS)
+          .filter((f) => f.endsWith(".verdict.json"))
+          .sort()
+          .map((f) => JSON.parse(readFileSync(`${VEREDITOS}${f}`, "utf8")))
+    : [];
 
 const desfecho = compor({
-  base,
-  vereditos,
-  collectedAt: data.date,
-  generatedAt: `${data.date}T00:00:00.000Z`,
-  vigias: [],
-  dispensaPermitida: lerPermissaoDeDispensa(process.env.ALLOW_FRESHNESS_EXEMPTION),
-  arquivosDoPr: ["backend/app/data/catalog.json", "apps/web/src/shared/fee-catalog/seed.data.json"],
+    base,
+    vereditos,
+    collectedAt: data.date,
+    generatedAt: `${data.date}T00:00:00.000Z`,
+    vigias: [],
+    dispensaPermitida: lerPermissaoDeDispensa(process.env.ALLOW_FRESHNESS_EXEMPTION),
+    arquivosDoPr: [
+        "backend/app/data/catalog.json",
+        "apps/web/src/shared/fee-catalog/seed.data.json",
+    ],
 });
 
 // O artefato só é reescrito quando há PR — e o catálogo composto SÓ EXISTE dentro do caso PR
@@ -69,7 +72,7 @@ const desfecho = compor({
 // deixa o artefato byte a byte intocado, e não há sequer um valor a escrever.
 const publicado = desfecho.kind === "PR" ? desfecho.catalogo : base;
 if (desfecho.kind === "PR") {
-  writeFileSync(ARTEFATO, `${JSON.stringify(publicado, null, 2)}\n`);
+    writeFileSync(ARTEFATO, `${JSON.stringify(publicado, null, 2)}\n`);
 }
 // 017/T016 — o corpo/título saem como ARQUIVOS (`artifacts/pr-body.md` + `artifacts/pr-title.txt`),
 // nunca montados em shell dentro do job `publicar` (contrato `workflow-yaml.md`: "proíbe heredoc de
@@ -83,9 +86,9 @@ mkdirSync(dirname(SEMENTE), { recursive: true });
 writeFileSync(SEMENTE, serializarSemente(projetarSemente(publicado)));
 
 if (desfecho.kind === "SEM_PR") {
-  console.log(`fee:build — SEM PR: ${desfecho.motivo}`);
+    console.log(`fee:build — SEM PR: ${desfecho.motivo}`);
 } else {
-  console.log(`fee:build — PR: ${desfecho.titulo}`);
-  console.log(`fee:build — dispensa de revisão: ${desfecho.dispensa ? "CONCEDIDA" : "NEGADA"}`);
+    console.log(`fee:build — PR: ${desfecho.titulo}`);
+    console.log(`fee:build — dispensa de revisão: ${desfecho.dispensa ? "CONCEDIDA" : "NEGADA"}`);
 }
 console.log(`fee:build — vereditos lidos: ${vereditos.length}`);

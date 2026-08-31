@@ -27,76 +27,76 @@ export type DialogVariant = "center" | "sheet";
 export type SheetSide = "right" | "left" | "bottom";
 
 export interface DialogContentProps extends ComponentPropsWithoutRef<
-  typeof DialogPrimitive.Content
+    typeof DialogPrimitive.Content
 > {
-  /** `center` = modal dialog; `sheet` = edge-anchored panel. */
-  variant?: DialogVariant;
-  /** Sheet anchor edge (ignored for `center`). */
-  side?: SheetSide;
-  /** Render the built-in ≥44×44px close control. */
-  showClose?: boolean;
-  closeLabel?: string;
+    /** `center` = modal dialog; `sheet` = edge-anchored panel. */
+    variant?: DialogVariant;
+    /** Sheet anchor edge (ignored for `center`). */
+    side?: SheetSide;
+    /** Render the built-in ≥44×44px close control. */
+    showClose?: boolean;
+    closeLabel?: string;
 }
 
 export const DialogContent = forwardRef<HTMLDivElement, DialogContentProps>(function DialogContent(
-  {
-    variant = "center",
-    side = "right",
-    showClose = true,
-    closeLabel = messages.ds.close,
-    className = "",
-    children,
-    ...rest
-  },
-  ref,
+    {
+        variant = "center",
+        side = "right",
+        showClose = true,
+        closeLabel = messages.ds.close,
+        className = "",
+        children,
+        ...rest
+    },
+    ref,
 ) {
-  const cls = [
-    "tf-dialog",
-    variant === "sheet" && "tf-dialog--sheet",
-    variant === "sheet" && `tf-dialog--sheet-${side}`,
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
-  return (
-    <DialogPrimitive.Portal>
-      <DialogPrimitive.Overlay className="tf-dialog__overlay" />
-      <DialogPrimitive.Content ref={ref} className={cls} {...rest}>
-        {children}
-        {showClose && (
-          <DialogPrimitive.Close className="tf-dialog__x" aria-label={closeLabel}>
-            <Icon name="x" size={18} />
-          </DialogPrimitive.Close>
-        )}
-      </DialogPrimitive.Content>
-    </DialogPrimitive.Portal>
-  );
+    const cls = [
+        "tf-dialog",
+        variant === "sheet" && "tf-dialog--sheet",
+        variant === "sheet" && `tf-dialog--sheet-${side}`,
+        className,
+    ]
+        .filter(Boolean)
+        .join(" ");
+    return (
+        <DialogPrimitive.Portal>
+            <DialogPrimitive.Overlay className="tf-dialog__overlay" />
+            <DialogPrimitive.Content ref={ref} className={cls} {...rest}>
+                {children}
+                {showClose && (
+                    <DialogPrimitive.Close className="tf-dialog__x" aria-label={closeLabel}>
+                        <Icon name="x" size={18} />
+                    </DialogPrimitive.Close>
+                )}
+            </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+    );
 });
 
 export const DialogTitle = forwardRef<
-  HTMLHeadingElement,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+    HTMLHeadingElement,
+    ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
 >(function DialogTitle({ className = "", ...rest }, ref) {
-  return (
-    <DialogPrimitive.Title
-      ref={ref}
-      className={["tf-dialog__title", className].filter(Boolean).join(" ")}
-      {...rest}
-    />
-  );
+    return (
+        <DialogPrimitive.Title
+            ref={ref}
+            className={["tf-dialog__title", className].filter(Boolean).join(" ")}
+            {...rest}
+        />
+    );
 });
 
 export const DialogDescription = forwardRef<
-  HTMLParagraphElement,
-  ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+    HTMLParagraphElement,
+    ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
 >(function DialogDescription({ className = "", ...rest }, ref) {
-  return (
-    <DialogPrimitive.Description
-      ref={ref}
-      className={["tf-dialog__desc", className].filter(Boolean).join(" ")}
-      {...rest}
-    />
-  );
+    return (
+        <DialogPrimitive.Description
+            ref={ref}
+            className={["tf-dialog__desc", className].filter(Boolean).join(" ")}
+            {...rest}
+        />
+    );
 });
 
 // Sheet surface — same Radix primitive, `sheet` skin (edge-anchored panel).
@@ -107,7 +107,7 @@ export const SheetTitle = DialogTitle;
 export const SheetDescription = DialogDescription;
 
 export const SheetContent = forwardRef<HTMLDivElement, Omit<DialogContentProps, "variant">>(
-  function SheetContent(props, ref) {
-    return <DialogContent ref={ref} variant="sheet" {...props} />;
-  },
+    function SheetContent(props, ref) {
+        return <DialogContent ref={ref} variant="sheet" {...props} />;
+    },
 );

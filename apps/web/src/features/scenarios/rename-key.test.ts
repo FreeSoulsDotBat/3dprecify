@@ -36,43 +36,43 @@ const contextBarSource = readFileSync(CONTEXT_BAR_PATH, "utf-8");
  * de cada arquivo é o ÚNICO `SheetTitle` cujo conteúdo é uma referência de mensagem simples
  * (sem template literal), então o regex não precisa desambiguar entre vários `SheetTitle`. */
 function extractSheetTitleKey(source: string): string | null {
-  const match = /<SheetTitle>\{t\.(\w+)\}<\/SheetTitle>/.exec(source);
-  return match ? match[1] : null;
+    const match = /<SheetTitle>\{t\.(\w+)\}<\/SheetTitle>/.exec(source);
+    return match ? match[1] : null;
 }
 
 /** Extrai TODAS as ocorrências de `t.rename` (sem sufixo — distingue de `t.renameSheetTitle`) que
  * aparecem como rótulo/label de ação (aria-label ou filho de texto), não a chave do título. */
 function countRenameActionLabelUses(source: string): number {
-  const matches = source.match(/\bt\.rename\b(?!SheetTitle)/g);
-  return matches ? matches.length : 0;
+    const matches = source.match(/\bt\.rename\b(?!SheetTitle)/g);
+    return matches ? matches.length : 0;
 }
 
 describe("019/PR-F T091 (D2) — as duas folhas de renomear leem a MESMA chave (anti-regressão)", () => {
-  it("scenarios-list-sheet.tsx importa do módulo compartilhado de i18n", () => {
-    expect(listSheetSource).toContain('from "@/shared/i18n/messages.pt-br"');
-  });
+    it("scenarios-list-sheet.tsx importa do módulo compartilhado de i18n", () => {
+        expect(listSheetSource).toContain('from "@/shared/i18n/messages.pt-br"');
+    });
 
-  it("scenario-context-bar.tsx importa do módulo compartilhado de i18n", () => {
-    expect(contextBarSource).toContain('from "@/shared/i18n/messages.pt-br"');
-  });
+    it("scenario-context-bar.tsx importa do módulo compartilhado de i18n", () => {
+        expect(contextBarSource).toContain('from "@/shared/i18n/messages.pt-br"');
+    });
 
-  it("SheetTitle usa a mesma chave t.renameSheetTitle nos dois arquivos", () => {
-    const listSheetKey = extractSheetTitleKey(listSheetSource);
-    const contextBarKey = extractSheetTitleKey(contextBarSource);
+    it("SheetTitle usa a mesma chave t.renameSheetTitle nos dois arquivos", () => {
+        const listSheetKey = extractSheetTitleKey(listSheetSource);
+        const contextBarKey = extractSheetTitleKey(contextBarSource);
 
-    expect(listSheetKey).toBe("renameSheetTitle");
-    expect(contextBarKey).toBe("renameSheetTitle");
-    // A garantia REAL do D2: não são só iguais entre si por coincidência de dois valores
-    // hardcoded — são o MESMO NOME DE CHAVE do MESMO módulo (ambos importam de
-    // "@/shared/i18n/messages.pt-br", provado acima), então uma edição de valor em
-    // `messages.pt-br.ts` propaga para os dois automaticamente.
-    expect(listSheetKey).toBe(contextBarKey);
-  });
+        expect(listSheetKey).toBe("renameSheetTitle");
+        expect(contextBarKey).toBe("renameSheetTitle");
+        // A garantia REAL do D2: não são só iguais entre si por coincidência de dois valores
+        // hardcoded — são o MESMO NOME DE CHAVE do MESMO módulo (ambos importam de
+        // "@/shared/i18n/messages.pt-br", provado acima), então uma edição de valor em
+        // `messages.pt-br.ts` propaga para os dois automaticamente.
+        expect(listSheetKey).toBe(contextBarKey);
+    });
 
-  it("o rótulo de ação 'Renomear' (t.rename) aparece nos dois arquivos, não uma chave local", () => {
-    // scenarios-list-sheet.tsx:150 — aria-label do botão-lápis no card da lista.
-    expect(countRenameActionLabelUses(listSheetSource)).toBeGreaterThanOrEqual(1);
-    // scenario-context-bar.tsx:205 — rótulo do botão na barra do item aberto.
-    expect(countRenameActionLabelUses(contextBarSource)).toBeGreaterThanOrEqual(1);
-  });
+    it("o rótulo de ação 'Renomear' (t.rename) aparece nos dois arquivos, não uma chave local", () => {
+        // scenarios-list-sheet.tsx:150 — aria-label do botão-lápis no card da lista.
+        expect(countRenameActionLabelUses(listSheetSource)).toBeGreaterThanOrEqual(1);
+        // scenario-context-bar.tsx:205 — rótulo do botão na barra do item aberto.
+        expect(countRenameActionLabelUses(contextBarSource)).toBeGreaterThanOrEqual(1);
+    });
 });

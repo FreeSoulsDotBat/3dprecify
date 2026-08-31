@@ -34,28 +34,28 @@ const t = messages.billing;
 export const TEASER_UPGRADE_TARGET = "/conta?assinar=1";
 
 export interface TeaserUpgradeProps {
-  /** Deslogado: o caminho passa pelo sign-in preservando a intenção. */
-  signedOut: boolean;
-  /**
-   * T038/D2 — `"center"` nos painéis inline, cujo conteúdo é centrado.
-   *
-   * MEDIDO: nos três painéis, título, descrição, nota e o botão de dispensa tinham desvio **0,0px**
-   * do centro, e só a faixa saía — o "Assinar" ficava órfão a até **149,6px** à esquerda. Nos dois
-   * Dialogs o conteúdo já é alinhado à esquerda, e lá a faixa está coerente; por isso o alinhamento
-   * é ESCOLHA de quem monta, e não um palpite do componente.
-   */
-  align?: "start" | "center";
-  className?: string;
-  /**
-   * 019/PR-B (T045, prancheta 32b/32e) — no rodapé do formulário inerte o convite é SECUNDÁRIO
-   * ("o primário desta tela é preencher o formulário") e sem a linha de preço: é o MESMO elemento
-   * do vazio didático (mesmo href, mesma intenção preservada), nunca um segundo link.
-   */
-  variant?: "primary" | "secondary";
-  /** "Reativar Premium" para quem TINHA e deixou vencer (32e); default = "Assinar Premium". */
-  label?: string;
-  /** `false` esconde a linha de preço (o rodapé do formulário inerte não a tem — 32b). */
-  price?: boolean;
+    /** Deslogado: o caminho passa pelo sign-in preservando a intenção. */
+    signedOut: boolean;
+    /**
+     * T038/D2 — `"center"` nos painéis inline, cujo conteúdo é centrado.
+     *
+     * MEDIDO: nos três painéis, título, descrição, nota e o botão de dispensa tinham desvio **0,0px**
+     * do centro, e só a faixa saía — o "Assinar" ficava órfão a até **149,6px** à esquerda. Nos dois
+     * Dialogs o conteúdo já é alinhado à esquerda, e lá a faixa está coerente; por isso o alinhamento
+     * é ESCOLHA de quem monta, e não um palpite do componente.
+     */
+    align?: "start" | "center";
+    className?: string;
+    /**
+     * 019/PR-B (T045, prancheta 32b/32e) — no rodapé do formulário inerte o convite é SECUNDÁRIO
+     * ("o primário desta tela é preencher o formulário") e sem a linha de preço: é o MESMO elemento
+     * do vazio didático (mesmo href, mesma intenção preservada), nunca um segundo link.
+     */
+    variant?: "primary" | "secondary";
+    /** "Reativar Premium" para quem TINHA e deixou vencer (32e); default = "Assinar Premium". */
+    label?: string;
+    /** `false` esconde a linha de preço (o rodapé do formulário inerte não a tem — 32b). */
+    price?: boolean;
 }
 
 /**
@@ -65,27 +65,27 @@ export interface TeaserUpgradeProps {
  * testar isolado.
  */
 export function TeaserUpgrade({
-  signedOut,
-  align,
-  className,
-  variant = "primary",
-  label,
-  price = true,
+    signedOut,
+    align,
+    className,
+    variant = "primary",
+    label,
+    price = true,
 }: TeaserUpgradeProps): ReactNode {
-  // Sem o `redirect`, quem entra pela oferta cai na home e perde o que veio fazer — o defeito de
-  // retorno frio que o `951d714` já consertou uma vez nesta mesma jornada.
-  const href = signedOut
-    ? `/sign-in?redirect=${encodeURIComponent(TEASER_UPGRADE_TARGET)}`
-    : TEASER_UPGRADE_TARGET;
+    // Sem o `redirect`, quem entra pela oferta cai na home e perde o que veio fazer — o defeito de
+    // retorno frio que o `951d714` já consertou uma vez nesta mesma jornada.
+    const href = signedOut
+        ? `/sign-in?redirect=${encodeURIComponent(TEASER_UPGRADE_TARGET)}`
+        : TEASER_UPGRADE_TARGET;
 
-  return (
-    <div
-      className={`tf-teaser-upgrade${align === "center" ? " tf-teaser-upgrade--center" : ""}${className ? ` ${className}` : ""}`}
-    >
-      {price && <span className="tf-teaser-upgrade__price">{teaserPriceLine()}</span>}
-      <a className={`tf-btn tf-btn--${variant}`} href={href} data-testid="teaser-upgrade-cta">
-        {label ?? t.subscribeAction}
-      </a>
-    </div>
-  );
+    return (
+        <div
+            className={`tf-teaser-upgrade${align === "center" ? " tf-teaser-upgrade--center" : ""}${className ? ` ${className}` : ""}`}
+        >
+            {price && <span className="tf-teaser-upgrade__price">{teaserPriceLine()}</span>}
+            <a className={`tf-btn tf-btn--${variant}`} href={href} data-testid="teaser-upgrade-cta">
+                {label ?? t.subscribeAction}
+            </a>
+        </div>
+    );
 }

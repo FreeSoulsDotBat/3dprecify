@@ -17,20 +17,20 @@ import { useSessionStore } from "@/shared/session/session-store";
 // lapsed nem vazio didático); precisa do MESMO par de mocks (entitlement + sessão) dos irmãos.
 
 const { useBomsMock, deleteBomMock, navigateMock } = vi.hoisted(() => ({
-  useBomsMock: vi.fn(),
-  deleteBomMock: vi.fn(),
-  navigateMock: vi.fn(),
+    useBomsMock: vi.fn(),
+    deleteBomMock: vi.fn(),
+    navigateMock: vi.fn(),
 }));
 vi.mock("@tanstack/react-router", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@tanstack/react-router")>();
-  return { ...actual, useNavigate: () => navigateMock };
+    const actual = await importOriginal<typeof import("@tanstack/react-router")>();
+    return { ...actual, useNavigate: () => navigateMock };
 });
 vi.mock("@/entities/bom/use-bom", () => ({
-  useBoms: () => useBomsMock(),
-  useDeleteBom: () => ({ mutateAsync: deleteBomMock, isPending: false }),
+    useBoms: () => useBomsMock(),
+    useDeleteBom: () => ({ mutateAsync: deleteBomMock, isPending: false }),
 }));
 vi.mock("@/entities/user/use-entitlement", () => ({
-  useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
+    useEntitlement: () => ({ data: { status: "active" }, isLoading: false }),
 }));
 
 import { KitsPanel } from "./kits-panel";
@@ -38,83 +38,83 @@ import { KitsPanel } from "./kits-panel";
 const catalogo = messages.catalogo;
 
 function kit(over: Partial<BomOut> = {}): BomOut {
-  return {
-    id: "k1",
-    name: "Kit Suporte",
-    lines: [
-      { id: "l1", position: 0, quantity: 2 },
-      { id: "l2", position: 1, quantity: 1 },
-    ],
-    createdAt: "2026-07-11T00:00:00Z",
-    updatedAt: "2026-07-11T00:00:00Z",
-    ...over,
-  } as BomOut;
+    return {
+        id: "k1",
+        name: "Kit Suporte",
+        lines: [
+            { id: "l1", position: 0, quantity: 2 },
+            { id: "l2", position: 1, quantity: 1 },
+        ],
+        createdAt: "2026-07-11T00:00:00Z",
+        updatedAt: "2026-07-11T00:00:00Z",
+        ...over,
+    } as BomOut;
 }
 
 function mockKits(items: BomOut[], over: Record<string, unknown> = {}) {
-  useBomsMock.mockReturnValue({
-    items,
-    isLoading: false,
-    isError: false,
-    error: null,
-    stale: false,
-    refetch: vi.fn(),
-    ...over,
-  });
+    useBomsMock.mockReturnValue({
+        items,
+        isLoading: false,
+        isError: false,
+        error: null,
+        stale: false,
+        refetch: vi.fn(),
+        ...over,
+    });
 }
 
 beforeEach(() => {
-  useBomsMock.mockReset();
-  deleteBomMock.mockReset();
-  navigateMock.mockReset();
-  useSessionStore.setState({
-    status: "authenticated",
-    user: { uid: "u-1", email: "u@x.dev" } as never,
-  });
+    useBomsMock.mockReset();
+    deleteBomMock.mockReset();
+    navigateMock.mockReset();
+    useSessionStore.setState({
+        status: "authenticated",
+        user: { uid: "u-1", email: "u@x.dev" } as never,
+    });
 });
 
 afterEach(() => {
-  cleanup();
-  vi.clearAllMocks();
-  useSessionStore.setState({ status: "anonymous", user: null });
+    cleanup();
+    vi.clearAllMocks();
+    useSessionStore.setState({ status: "anonymous", user: null });
 });
 
 describe("KitsPanel — the saved kits list (K2)", () => {
-  it("lists the account's saved kits with their piece count, and never a price", () => {
-    mockKits([kit(), kit({ id: "k2", name: "Kit Prateleira", lines: [] })]);
-    render(<KitsPanel />);
+    it("lists the account's saved kits with their piece count, and never a price", () => {
+        mockKits([kit(), kit({ id: "k2", name: "Kit Prateleira", lines: [] })]);
+        render(<KitsPanel />);
 
-    expect(screen.getByText("Kit Suporte")).toBeInTheDocument();
-    expect(screen.getByText("Kit Prateleira")).toBeInTheDocument();
-    // A kit stores inputs only (FR-407) — a row describes structure, never money.
-    expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
-    expect(screen.getByText(catalogo.countKitPieces.replace("{n}", "2"))).toBeInTheDocument();
-  });
+        expect(screen.getByText("Kit Suporte")).toBeInTheDocument();
+        expect(screen.getByText("Kit Prateleira")).toBeInTheDocument();
+        // A kit stores inputs only (FR-407) — a row describes structure, never money.
+        expect(screen.queryByText(/R\$/)).not.toBeInTheDocument();
+        expect(screen.getByText(catalogo.countKitPieces.replace("{n}", "2"))).toBeInTheDocument();
+    });
 
-  it("shows the honest empty state when the account has no kits yet", () => {
-    mockKits([]);
-    render(<KitsPanel />);
+    it("shows the honest empty state when the account has no kits yet", () => {
+        mockKits([]);
+        render(<KitsPanel />);
 
-    expect(screen.getByText(catalogo.emptyKitsTitle)).toBeInTheDocument();
-    expect(screen.getByText(catalogo.emptyKitsBody)).toBeInTheDocument();
-  });
+        expect(screen.getByText(catalogo.emptyKitsTitle)).toBeInTheDocument();
+        expect(screen.getByText(catalogo.emptyKitsBody)).toBeInTheDocument();
+    });
 
-  it("opens a saved kit back in the composer (reload → recompute, never a stored price)", () => {
-    mockKits([kit()]);
-    render(<KitsPanel />);
+    it("opens a saved kit back in the composer (reload → recompute, never a stored price)", () => {
+        mockKits([kit()]);
+        render(<KitsPanel />);
 
-    // The row's own open affordance (the delete action also carries the kit's name).
-    fireEvent.click(screen.getByText("Kit Suporte"));
+        // The row's own open affordance (the delete action also carries the kit's name).
+        fireEvent.click(screen.getByText("Kit Suporte"));
 
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/kits", search: { id: "k1" } });
-  });
+        expect(navigateMock).toHaveBeenCalledWith({ to: "/kits", search: { id: "k1" } });
+    });
 
-  it("the add affordance sends the seller to the composer", () => {
-    mockKits([]);
-    render(<KitsPanel />);
+    it("the add affordance sends the seller to the composer", () => {
+        mockKits([]);
+        render(<KitsPanel />);
 
-    fireEvent.click(screen.getByRole("button", { name: new RegExp(catalogo.addKit, "i") }));
+        fireEvent.click(screen.getByRole("button", { name: new RegExp(catalogo.addKit, "i") }));
 
-    expect(navigateMock).toHaveBeenCalledWith({ to: "/kits" });
-  });
+        expect(navigateMock).toHaveBeenCalledWith({ to: "/kits" });
+    });
 });

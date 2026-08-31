@@ -1,16 +1,16 @@
 {
-  "id": "top-bar-mobile",
-  "nome": "Barra superior do mobile (logo centralizado + Sair + tema)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/widgets/top-bar/top-bar.tsx",
-    "apps/web/src/widgets/top-bar/top-bar.css"
-  ],
-  "oQueFoiInferido": "No mobile a faixa de 56px (`--topbar-h`) carrega três coisas: o símbolo da marca em posição ABSOLUTA no centro (`.tf-topbar__logo { position:absolute; top:50%; left:50%; transform: translate(-50%,-50%) }`), e à direita o botão \"Sair\" (`Button variant=\"secondary\" size=\"sm\"`, dentro de `AccountChrome`) mais o botão de tema (44×44, `aria-pressed`). O e-mail existe no mesmo cluster e some abaixo de 640px (`display:none` até `@media (min-width: 640px)`). Inferidos: que identidade/Sair/tema ficariam na barra superior do mobile — o protótipo decidiu explicitamente o CONTRÁRIO; como o logo absoluto convive com um cluster de largura variável quando o e-mail reaparece entre 640 e 425px; e o fato de \"Sair\" e o controle de tema passarem a existir DUAS vezes no mobile (aqui e na aba Conta), sem nenhuma decisão de desenho sobre qual manda.",
-  "autoridade": "PROTOTIPO_CONTRARIO",
-  "impacto": "A decisão de IA que o protótipo tomou justamente para resolver o aperto do mobile (TD-017) foi revertida no código sem redesenho, e a duplicação de Sair/tema em dois lugares nasceu daí.",
-  "prioridade": "MEDIA",
-  "refutacao": "Não só não achei prova a favor — achei prova CONTRA, o que fortalece o achado. §E3 é literal e é o oposto do código: \"**Header minimalista**: só logo/símbolo. **Migração header→tabs (resolve o cramping mobile, TD-017):** identidade (email), **Sair** e **toggle de tema** SAEM do header e vão para a aba **Conta**\"; §E7 recebe os três (\"Email Google … toggle de tema (Dark↔Light, migrado do header) · Sair\"); e `.design-import/ui_kits/precifica3d/AccountScreen.jsx` MATERIALIZA isso — o Switch de tema é uma `Row` da Conta e \"Sair\" é um `ListItem` da Conta, e a única TopBar que a tela usa é `<TopBar title=\"Conta\"/>`, sem e-mail, sem Sair, sem tema. Tentei derrubar pelo canvas 018: ele DESENHA a top-bar com e-mail + tema + \"Sair\", mas dentro de `<div class=\"tf-shell__content\">` do artboard `data-layout=\"desktop\"` de 1920px — é a barra do DESKTOP, e o arquivo declara não cobrir mobile. Viewport errado. `.design-import` não exportou TopBar.jsx (confirmado por listagem: só PriceHero e IconButton em `components/`). Portanto a composição mobile de hoje não tem autoridade e contradiz a única que fala do assunto.",
-  "sobreviveu": true,
-  "area": "shell"
+    "id": "top-bar-mobile",
+    "nome": "Barra superior do mobile (logo centralizado + Sair + tema)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/widgets/top-bar/top-bar.tsx",
+        "apps/web/src/widgets/top-bar/top-bar.css"
+    ],
+    "oQueFoiInferido": "No mobile a faixa de 56px (`--topbar-h`) carrega três coisas: o símbolo da marca em posição ABSOLUTA no centro (`.tf-topbar__logo { position:absolute; top:50%; left:50%; transform: translate(-50%,-50%) }`), e à direita o botão \"Sair\" (`Button variant=\"secondary\" size=\"sm\"`, dentro de `AccountChrome`) mais o botão de tema (44×44, `aria-pressed`). O e-mail existe no mesmo cluster e some abaixo de 640px (`display:none` até `@media (min-width: 640px)`). Inferidos: que identidade/Sair/tema ficariam na barra superior do mobile — o protótipo decidiu explicitamente o CONTRÁRIO; como o logo absoluto convive com um cluster de largura variável quando o e-mail reaparece entre 640 e 425px; e o fato de \"Sair\" e o controle de tema passarem a existir DUAS vezes no mobile (aqui e na aba Conta), sem nenhuma decisão de desenho sobre qual manda.",
+    "autoridade": "PROTOTIPO_CONTRARIO",
+    "impacto": "A decisão de IA que o protótipo tomou justamente para resolver o aperto do mobile (TD-017) foi revertida no código sem redesenho, e a duplicação de Sair/tema em dois lugares nasceu daí.",
+    "prioridade": "MEDIA",
+    "refutacao": "Não só não achei prova a favor — achei prova CONTRA, o que fortalece o achado. §E3 é literal e é o oposto do código: \"**Header minimalista**: só logo/símbolo. **Migração header→tabs (resolve o cramping mobile, TD-017):** identidade (email), **Sair** e **toggle de tema** SAEM do header e vão para a aba **Conta**\"; §E7 recebe os três (\"Email Google … toggle de tema (Dark↔Light, migrado do header) · Sair\"); e `.design-import/ui_kits/precifica3d/AccountScreen.jsx` MATERIALIZA isso — o Switch de tema é uma `Row` da Conta e \"Sair\" é um `ListItem` da Conta, e a única TopBar que a tela usa é `<TopBar title=\"Conta\"/>`, sem e-mail, sem Sair, sem tema. Tentei derrubar pelo canvas 018: ele DESENHA a top-bar com e-mail + tema + \"Sair\", mas dentro de `<div class=\"tf-shell__content\">` do artboard `data-layout=\"desktop\"` de 1920px — é a barra do DESKTOP, e o arquivo declara não cobrir mobile. Viewport errado. `.design-import` não exportou TopBar.jsx (confirmado por listagem: só PriceHero e IconButton em `components/`). Portanto a composição mobile de hoje não tem autoridade e contradiz a única que fala do assunto.",
+    "sobreviveu": true,
+    "area": "shell"
 }

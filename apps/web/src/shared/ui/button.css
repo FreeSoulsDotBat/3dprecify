@@ -1,105 +1,105 @@
 /* Button primitive. Flat colour-blocking, quick transitions, tap-scale 0.97.
    Min hit target 44×44px (INV-2). Status/brand colour via semantic tokens. */
 .tf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-2);
-  min-height: var(--touch-min);
-  min-width: var(--touch-min);
-  height: var(--control-h);
-  padding: 0 var(--space-5);
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-md);
-  font-family: var(--font-body);
-  font-size: var(--fs-base);
-  font-weight: var(--fw-semibold);
-  line-height: 1;
-  cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-  transition:
-    background var(--dur-fast) var(--ease-out),
-    border-color var(--dur-fast) var(--ease-out),
-    transform var(--dur-fast) var(--ease-spring),
-    box-shadow var(--dur-fast) var(--ease-out);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    min-height: var(--touch-min);
+    min-width: var(--touch-min);
+    height: var(--control-h);
+    padding: 0 var(--space-5);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-md);
+    font-family: var(--font-body);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-semibold);
+    line-height: 1;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+    transition:
+        background var(--dur-fast) var(--ease-out),
+        border-color var(--dur-fast) var(--ease-out),
+        transform var(--dur-fast) var(--ease-spring),
+        box-shadow var(--dur-fast) var(--ease-out);
 }
 .tf-btn:active:not(:disabled) {
-  transform: scale(var(--press-scale));
+    transform: scale(var(--press-scale));
 }
 /* 019/T029 — decisão do dono, ver spec §Clarificações: nenhum indicador de foco. */
 .tf-btn:focus-visible {
-  outline: none;
-  box-shadow: none;
+    outline: none;
+    box-shadow: none;
 }
 .tf-btn:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+    cursor: not-allowed;
+    opacity: 0.55;
 }
 
 /* ---- Sizes ---- */
 .tf-btn--sm {
-  height: var(--control-h-sm);
-  padding: 0 var(--space-4);
-  font-size: var(--fs-body-sm);
+    height: var(--control-h-sm);
+    padding: 0 var(--space-4);
+    font-size: var(--fs-body-sm);
 }
 .tf-btn--lg {
-  height: var(--control-h-lg);
-  padding: 0 var(--space-7);
-  font-size: var(--fs-md);
+    height: var(--control-h-lg);
+    padding: 0 var(--space-7);
+    font-size: var(--fs-md);
 }
 
 /* ---- Variants ---- */
 .tf-btn--primary {
-  background: var(--accent);
-  color: var(--accent-contrast);
+    background: var(--accent);
+    color: var(--accent-contrast);
 }
 .tf-btn--primary:hover:not(:disabled) {
-  background: var(--accent-hover);
+    background: var(--accent-hover);
 }
 .tf-btn--primary:active:not(:disabled) {
-  background: var(--accent-active);
+    background: var(--accent-active);
 }
 .tf-btn--secondary {
-  background: var(--surface-card);
-  color: var(--text-strong);
-  border-color: var(--border-default);
+    background: var(--surface-card);
+    color: var(--text-strong);
+    border-color: var(--border-default);
 }
 .tf-btn--secondary:hover:not(:disabled) {
-  border-color: var(--border-strong);
+    border-color: var(--border-strong);
 }
 .tf-btn--ghost {
-  background: transparent;
-  color: var(--text-strong);
+    background: transparent;
+    color: var(--text-strong);
 }
 .tf-btn--ghost:hover:not(:disabled) {
-  background: var(--bg-muted);
+    background: var(--bg-muted);
 }
 .tf-btn--danger {
-  background: var(--danger);
-  color: var(--tf-white);
+    background: var(--danger);
+    color: var(--tf-white);
 }
 .tf-btn--danger:hover:not(:disabled) {
-  background: var(--danger-deep);
+    background: var(--danger-deep);
 }
 /* 015/A8 ([F11b-004], decisao do dono 2026-08-03) — o destrutivo QUE NAO E A ACAO PADRAO.
    Num dialogo de perda, quem tem preenchimento e a saida SEGURA; a acao irreversivel fica
    legivel e vermelha, mas sem o peso visual de um botao cheio. A borda mantem o alvo de toque
    e a afordancia de "isto e clicavel" — o que ela nao da e o convite. */
 .tf-btn--danger-ghost {
-  background: transparent;
-  color: var(--danger-text);
-  border-color: var(--danger);
+    background: transparent;
+    color: var(--danger-text);
+    border-color: var(--danger);
 }
 .tf-btn--danger-ghost:hover:not(:disabled) {
-  background: var(--danger-soft, transparent);
-  border-color: var(--danger-deep);
+    background: var(--danger-soft, transparent);
+    border-color: var(--danger-deep);
 }
 
 /* 019/PR-A (tf-components.css:213/216) — o produto só declarava o alvo mínimo; as duas larguras
    legítimas de um botão solto em coluna são desta folha. */
 .tf-btn--full {
-  width: 100%;
+    width: 100%;
 }
 /* Meia caixa: 50% EXATOS mesmo quando o rótulo é mais longo que isso — aí ele quebra em duas
    linhas em vez de o botão crescer. `line-height: 1` do `.tf-btn` é seguro só com `nowrap`
@@ -107,22 +107,22 @@
    glifos colidem (o "rótulo de 211px vazando de 157px" que a folha mede). Entrelinha própria,
    e altura livre para acomodar a segunda linha. */
 .tf-btn--half {
-  width: 50%;
-  align-self: flex-start;
-  white-space: normal;
-  text-align: center;
-  line-height: var(--lh-snug);
-  min-height: var(--control-h);
-  height: auto;
-  padding-block: var(--space-2);
+    width: 50%;
+    align-self: flex-start;
+    white-space: normal;
+    text-align: center;
+    line-height: var(--lh-snug);
+    min-height: var(--control-h);
+    height: auto;
+    padding-block: var(--space-2);
 }
 
 .tf-btn--glow {
-  box-shadow: var(--glow-purple);
+    box-shadow: var(--glow-purple);
 }
 .tf-btn--loading {
-  cursor: progress;
+    cursor: progress;
 }
 .tf-btn__spin {
-  color: currentColor;
+    color: currentColor;
 }

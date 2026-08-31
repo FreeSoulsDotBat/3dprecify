@@ -1,16 +1,16 @@
 {
-  "id": "folhas-de-renomear-simulacao",
-  "nome": "Renomear simulação — duas folhas diferentes para a mesma ação",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/features/scenarios/scenario-context-bar.tsx"
-  ],
-  "oQueFoiInferido": "Existem DUAS telas de renomear, divergentes, porque cada uma foi inferida no seu PR — confirmado lendo os dois JSX. A da lista: `SheetTitle` t.renameSheetTitle + Field Nome + Field Nota (`textarea rows={3}`) + erro como parágrafo vermelho solto + `Button` com rótulo `t.saveChanges`, validando 120/500. A da barra de contexto: mesmo `SheetTitle`, SÓ o Field Nome (a nota fica inacessível por esse caminho), sem exibição de erro de validação (`submitRename` retorna calado se vazio ou >120) e o mesmo `Button` `t.saveChanges`. Esse rótulo \"Salvar alterações\" é, na barra de contexto, o nome de OUTRA ação (o PUT da configuração inteira) — a mesma frase significa duas coisas na mesma funcionalidade. Inferido: os campos de cada variante, o rótulo repetido, a posição do erro e a ausência de contador de caracteres.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "A mesma ação tem duas telas diferentes conforme de onde se entra, uma delas falha em silêncio, e \"Salvar alterações\" significa duas coisas distintas na mesma funcionalidade.",
-  "prioridade": "MEDIA",
-  "refutacao": "Procurei um padrão de renomear desenhado. O canvas 018 tem UMA coisa parecida — \"Editar rótulo\" (`tf-btn--ghost tf-btn--sm` com ícone de lápis, ficha de Orçamentos, linha 302) — mas é outro objeto (registro congelado), outro rótulo, e o canvas não desenha a folha que esse botão abre. O protótipo não tem renomear em lugar nenhum (nem Catálogo nem Histórico); o `Sheet` do CatalogScreen é de ADICIONAR. `.design-import` e os prompts: 0 ocorrências de cenário/simulação. ux §6 cita renomear em texto sem distinguir as duas origens nem os campos, e §10.1 nem lista renomear entre os itens a prototipar — não há autoridade que diga qual das duas folhas é a certa, o que é exatamente por que existem duas. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "folhas-de-renomear-simulacao",
+    "nome": "Renomear simulação — duas folhas diferentes para a mesma ação",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx"
+    ],
+    "oQueFoiInferido": "Existem DUAS telas de renomear, divergentes, porque cada uma foi inferida no seu PR — confirmado lendo os dois JSX. A da lista: `SheetTitle` t.renameSheetTitle + Field Nome + Field Nota (`textarea rows={3}`) + erro como parágrafo vermelho solto + `Button` com rótulo `t.saveChanges`, validando 120/500. A da barra de contexto: mesmo `SheetTitle`, SÓ o Field Nome (a nota fica inacessível por esse caminho), sem exibição de erro de validação (`submitRename` retorna calado se vazio ou >120) e o mesmo `Button` `t.saveChanges`. Esse rótulo \"Salvar alterações\" é, na barra de contexto, o nome de OUTRA ação (o PUT da configuração inteira) — a mesma frase significa duas coisas na mesma funcionalidade. Inferido: os campos de cada variante, o rótulo repetido, a posição do erro e a ausência de contador de caracteres.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "A mesma ação tem duas telas diferentes conforme de onde se entra, uma delas falha em silêncio, e \"Salvar alterações\" significa duas coisas distintas na mesma funcionalidade.",
+    "prioridade": "MEDIA",
+    "refutacao": "Procurei um padrão de renomear desenhado. O canvas 018 tem UMA coisa parecida — \"Editar rótulo\" (`tf-btn--ghost tf-btn--sm` com ícone de lápis, ficha de Orçamentos, linha 302) — mas é outro objeto (registro congelado), outro rótulo, e o canvas não desenha a folha que esse botão abre. O protótipo não tem renomear em lugar nenhum (nem Catálogo nem Histórico); o `Sheet` do CatalogScreen é de ADICIONAR. `.design-import` e os prompts: 0 ocorrências de cenário/simulação. ux §6 cita renomear em texto sem distinguir as duas origens nem os campos, e §10.1 nem lista renomear entre os itens a prototipar — não há autoridade que diga qual das duas folhas é a certa, o que é exatamente por que existem duas. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

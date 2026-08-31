@@ -1,13 +1,13 @@
 {
-  "id": "folha-salvar-simulacao",
-  "nome": "Folha \"Salvar simulação\" (nome · nota · eco da base de custo)",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/features/scenarios/save-scenario-sheet.tsx"],
-  "oQueFoiInferido": "O formulário de captura, na ordem literal do JSX: `SheetTitle` → `SheetDescription` (intro) → Field Nome (obrigatório, `maxLength 121`) → Field Nota (opcional, `textarea rows={3}`, 500) → parágrafo `text-sm text-[var(--text-muted)]` \"Base de custo: {nome}\" → erro → `Button type=\"submit\"`. Inferido: que o eco da base de custo — a informação que diz O QUE está sendo salvo — fique por ÚLTIMO, depois dos campos, em cinza; a ausência de contador de caracteres apesar dos dois limites; a ausência de nome sugerido; a regra de quando o erro do nome aparece (`nameError && (name !== \"\" || tentouSalvar)` — criada em resposta ao defeito CF-013-UI-01, não desenhada); e a folha ficar aberta com os valores intactos quando o POST falha. Não há botão Cancelar.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O formulário que nomeia a estratégia salva mostra por último, em cinza, a única informação que diz o que está sendo guardado.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei uma folha de formulário desenhada que cobrisse esta. A mais próxima é o `Sheet` de \"Adicionar filamento\" do protótipo (`CatalogScreen.jsx`): `placement=\"bottom\"`, título, Field Nome com `iconLeft`, campos numéricos, e um FOOTER com `[Cancelar][Salvar]` lado a lado. Três divergências que provam que não é a mesma superfície: a construída é right-anchored (não bottom), não tem footer, e não tem Cancelar. E o objeto é outro — o protótipo não podia ter formulário de salvar cenário porque, nele, persistir era gated: E4 diz \"Ação Salvar → dispara bottom-sheet de UPSELL\" e §F item 5 repete a regra. `.design-import/CalculatorScreen.jsx` confirma: o botão \"Salvar cálculo\" chama `onSave`, que no protótipo abre o upsell. Canvas 018: 0. ux-scenarios §10.1 item 4 pede o protótipo desta folha (\"High\") — nunca feito. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "folha-salvar-simulacao",
+    "nome": "Folha \"Salvar simulação\" (nome · nota · eco da base de custo)",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/features/scenarios/save-scenario-sheet.tsx"],
+    "oQueFoiInferido": "O formulário de captura, na ordem literal do JSX: `SheetTitle` → `SheetDescription` (intro) → Field Nome (obrigatório, `maxLength 121`) → Field Nota (opcional, `textarea rows={3}`, 500) → parágrafo `text-sm text-[var(--text-muted)]` \"Base de custo: {nome}\" → erro → `Button type=\"submit\"`. Inferido: que o eco da base de custo — a informação que diz O QUE está sendo salvo — fique por ÚLTIMO, depois dos campos, em cinza; a ausência de contador de caracteres apesar dos dois limites; a ausência de nome sugerido; a regra de quando o erro do nome aparece (`nameError && (name !== \"\" || tentouSalvar)` — criada em resposta ao defeito CF-013-UI-01, não desenhada); e a folha ficar aberta com os valores intactos quando o POST falha. Não há botão Cancelar.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O formulário que nomeia a estratégia salva mostra por último, em cinza, a única informação que diz o que está sendo guardado.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei uma folha de formulário desenhada que cobrisse esta. A mais próxima é o `Sheet` de \"Adicionar filamento\" do protótipo (`CatalogScreen.jsx`): `placement=\"bottom\"`, título, Field Nome com `iconLeft`, campos numéricos, e um FOOTER com `[Cancelar][Salvar]` lado a lado. Três divergências que provam que não é a mesma superfície: a construída é right-anchored (não bottom), não tem footer, e não tem Cancelar. E o objeto é outro — o protótipo não podia ter formulário de salvar cenário porque, nele, persistir era gated: E4 diz \"Ação Salvar → dispara bottom-sheet de UPSELL\" e §F item 5 repete a regra. `.design-import/CalculatorScreen.jsx` confirma: o botão \"Salvar cálculo\" chama `onSave`, que no protótipo abre o upsell. Canvas 018: 0. ux-scenarios §10.1 item 4 pede o protótipo desta folha (\"High\") — nunca feito. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

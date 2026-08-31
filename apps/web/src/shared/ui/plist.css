@@ -8,99 +8,99 @@
    §3 do handoff (o preflight do Tailwind já remove o sublinhado do link no produto), e a linha do
    produto nem é uma âncora. */
 .tf-plist {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
 }
 .tf-plist li + li {
-  border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--border-subtle);
 }
 .tf-plist__row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  width: 100%;
-  min-height: 56px;
-  padding: var(--space-3) var(--space-2);
-  background: transparent;
-  border: none;
-  border-radius: var(--radius-sm);
-  text-align: left;
-  font: inherit;
-  color: inherit;
-  cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-out);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    width: 100%;
+    min-height: 56px;
+    padding: var(--space-3) var(--space-2);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    text-align: left;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    transition: background var(--dur-fast) var(--ease-out);
 }
 .tf-plist__row:hover {
-  background: var(--bg-muted);
+    background: var(--bg-muted);
 }
 .tf-plist__row:focus-visible {
-  outline: none;
-  box-shadow: none;
+    outline: none;
+    box-shadow: none;
 }
 .tf-plist__row[aria-selected="true"] {
-  background: var(--accent-soft);
+    background: var(--accent-soft);
 }
 .tf-plist__main {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
 }
 .tf-plist__name {
-  font-size: var(--fs-body-sm);
-  font-weight: var(--fw-semibold);
-  color: var(--text-strong);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    font-size: var(--fs-body-sm);
+    font-weight: var(--fw-semibold);
+    color: var(--text-strong);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .tf-plist__meta {
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
-  white-space: nowrap;
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
+    white-space: nowrap;
 }
 .tf-plist__val {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
+    flex: 0 0 auto;
 }
 .tf-plist__price {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: var(--num-features);
-  font-size: var(--fs-base);
-  font-weight: var(--fw-bold);
-  color: var(--text-strong);
-  line-height: 1.15;
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: var(--num-features);
+    font-size: var(--fs-base);
+    font-weight: var(--fw-bold);
+    color: var(--text-strong);
+    line-height: 1.15;
 }
 .tf-plist__was {
-  font-family: var(--font-numeric);
-  font-variant-numeric: tabular-nums lining-nums;
-  font-feature-settings: var(--num-features);
-  font-size: var(--fs-caption);
-  color: var(--text-muted);
+    font-family: var(--font-numeric);
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: var(--num-features);
+    font-size: var(--fs-caption);
+    color: var(--text-muted);
 }
 .tf-plist__flag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: var(--fs-caption);
-  color: var(--warning-text);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--fs-caption);
+    color: var(--warning-text);
 }
 /* Lote 18: a marca da linha herdava o laranja de "fixado"/"parado", que eram sempre avisos. A
    lista de Orçamentos tem cinco estados e três deles não avisam nada. */
 .tf-plist__flag--neutral {
-  color: var(--text-muted);
+    color: var(--text-muted);
 }
 .tf-plist__flag--success {
-  color: var(--success-text);
+    color: var(--success-text);
 }
 .tf-plist__flag--danger {
-  color: var(--danger-text);
+    color: var(--danger-text);
 }

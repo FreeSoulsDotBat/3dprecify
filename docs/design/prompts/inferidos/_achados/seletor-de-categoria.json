@@ -1,16 +1,16 @@
 {
-  "id": "seletor-de-categoria",
-  "nome": "Seletor de categoria do marketplace — busca, contagem, resultados e árvore",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/features/calculator/category-picker.tsx",
-    "apps/web/src/features/calculator/category-picker.css"
-  ],
-  "oQueFoiInferido": "Um componente inteiro com cinco estados e nenhum desenho: (a) busca — input `.tf-input` + uma linha `role=status` de contagem ('N categorias encontradas' / 'Mostrando 8 de 23') + `<ul>` de até 8 botões mostrando o CAMINHO completo com '›' à direita; (b) escolhido — um `.tf-field` falso (span de rótulo, não `<label>`) com o caminho em chip + Button ghost 'Limpar' dentro do frame; (c) escolhido-fora-do-catálogo; (d) espinha vazia, com DUAS frases conforme o slot tenha ou não referência de tarifa; (e) árvore hierárquica atrás de um Button 'Ver todas as categorias (N)', recursiva, com ▸/▾ só onde há filhos, dentro de um scroll próprio de `max-height:40vh`. Inferido: layout, a afordância busca-vs-árvore, o que é chip e o que é lista, os glifos ▸▾›, a densidade da árvore e o corte em 8 resultados.",
-  "autoridade": "NENHUMA",
-  "impacto": "Este campo decide a comissão cobrada do vendedor (o ML publica 18% e 16% em categorias de nome quase igual — está escrito no cabeçalho do próprio arquivo). A homologação 014 já mediu duas leituras erradas invisíveis a teste: a lista de resultados lida como um segundo campo preenchido, e uma contagem dizendo '8 encontradas' com 31 existindo.",
-  "prioridade": "ALTA",
-  "refutacao": "Rodei grep case-insensitive por 'categoria' nas QUATRO autoridades juntas (os 3 markdown + o audit + `.design-import/readme.md` + `CalculatorScreen.jsx` + `Abas-Desktop.dc.html`): ZERO ocorrências em todas. O eixo categoria→comissão nasceu em 014, um ano-produto depois do protótipo. `.design-import` não tem componente de busca nem de árvore entre os 32 primitivos listados no readme. Canvas 018 não cobre Calcular. E o cabeçalho do próprio `category-picker.tsx` (linhas 19-20) confessa por escrito: '014/US1 — behaviour only; layout, the drill-vs-search affordance and where this sits inside the slot are `designer-ux`'s'. Não há como derrubar: o autor documentou a ausência. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "seletor-de-categoria",
+    "nome": "Seletor de categoria do marketplace — busca, contagem, resultados e árvore",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/features/calculator/category-picker.tsx",
+        "apps/web/src/features/calculator/category-picker.css"
+    ],
+    "oQueFoiInferido": "Um componente inteiro com cinco estados e nenhum desenho: (a) busca — input `.tf-input` + uma linha `role=status` de contagem ('N categorias encontradas' / 'Mostrando 8 de 23') + `<ul>` de até 8 botões mostrando o CAMINHO completo com '›' à direita; (b) escolhido — um `.tf-field` falso (span de rótulo, não `<label>`) com o caminho em chip + Button ghost 'Limpar' dentro do frame; (c) escolhido-fora-do-catálogo; (d) espinha vazia, com DUAS frases conforme o slot tenha ou não referência de tarifa; (e) árvore hierárquica atrás de um Button 'Ver todas as categorias (N)', recursiva, com ▸/▾ só onde há filhos, dentro de um scroll próprio de `max-height:40vh`. Inferido: layout, a afordância busca-vs-árvore, o que é chip e o que é lista, os glifos ▸▾›, a densidade da árvore e o corte em 8 resultados.",
+    "autoridade": "NENHUMA",
+    "impacto": "Este campo decide a comissão cobrada do vendedor (o ML publica 18% e 16% em categorias de nome quase igual — está escrito no cabeçalho do próprio arquivo). A homologação 014 já mediu duas leituras erradas invisíveis a teste: a lista de resultados lida como um segundo campo preenchido, e uma contagem dizendo '8 encontradas' com 31 existindo.",
+    "prioridade": "ALTA",
+    "refutacao": "Rodei grep case-insensitive por 'categoria' nas QUATRO autoridades juntas (os 3 markdown + o audit + `.design-import/readme.md` + `CalculatorScreen.jsx` + `Abas-Desktop.dc.html`): ZERO ocorrências em todas. O eixo categoria→comissão nasceu em 014, um ano-produto depois do protótipo. `.design-import` não tem componente de busca nem de árvore entre os 32 primitivos listados no readme. Canvas 018 não cobre Calcular. E o cabeçalho do próprio `category-picker.tsx` (linhas 19-20) confessa por escrito: '014/US1 — behaviour only; layout, the drill-vs-search affordance and where this sits inside the slot are `designer-ux`'s'. Não há como derrubar: o autor documentou a ausência. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

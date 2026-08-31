@@ -1,17 +1,17 @@
 {
-  "id": "secao-custos-da-peca",
-  "nome": "Seção “Custos da peça” — grade fundida de campos obrigatórios e opcionais",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/calculator/calculator-form.tsx",
-    "apps/web/src/features/calculator/calculator-schema.ts",
-    "apps/web/src/features/calculator/calculator-form.css"
-  ],
-  "oQueFoiInferido": "Um único Card sempre aberto com SETE campos numéricos (`COST_FIELDS`: Custo do rolo, Peso do rolo, Gramas usadas, Potência média kW, Tarifa de energia R$/kWh, Reserva de manutenção R$/h e Taxa de falha % — o mapeador esqueceu este último) numa grade `repeat(auto-fit, minmax(170px,1fr))` que empacota 2 campos a 360px e até 4 no desktop, mais o campo de tempo (h+min) e o bloco inteiro de máquina no mesmo Card. Inferido: a MORTE do disclosure progressivo (não existe uma única seção colável em toda a feature — grep por `Collapsible` em `features/calculator` + `pages/calcular` devolve só um comentário), a fusão obrigatório+opcional sem separação visual (a distinção é só a tag 'opcional' do `Field`), a ordem dos campos, quantos por linha em cada largura, e a decisão de manter 3 controles de naturezas diferentes (grade + tempo + pergunta de máquina) sob o mesmo título.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O vendedor leigo abre a tela e leva 7 campos numéricos de uma vez + o campo de tempo + duas perguntas de máquina, na ordem que um agente escolheu — exatamente o 'intimidar' que o protótipo mandava evitar por escrito (§I: 'Abrir todas as seções avançadas de uma vez (intimida)'). A homologação já pagou por isso duas vezes (o clip de 1px em 'Tarifa de energia', o reflow do grid).",
-  "prioridade": "ALTA",
-  "refutacao": "Tentei derrubar e o protótipo diz o CONTRÁRIO do código, por escrito e em três lugares: §D.2 cria o componente 'Collapsible section — cabeçalho tocável (≥44px) com chevron; usado nas seções avançadas da calculadora'; §E4 (linhas 237-238) manda 'Seções COLÁVEIS (progressive disclosure): Energia · Máquina/Depreciação · Falha · Marketplace. Regra: mostre 1 aberta + 1 fechada — nunca tudo aberto de uma vez'; §F.2 e §I repetem. `CalculatorScreen.jsx` implementa isso literalmente (linhas 81-102: três `<CollapsibleSection>` + um Card `1fr 1fr` com só 4 entradas básicas). Os CAMPOS existem no protótipo (tarifa, consumo, falha); a ORGANIZAÇÃO de hoje é a negação da desenhada. Sobrevive como PROTOTIPO_PARCIAL, e é um dos três achados em que o código contraria uma regra de desenho EXPLÍCITA em vez de apenas preencher um vazio.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "secao-custos-da-peca",
+    "nome": "Seção “Custos da peça” — grade fundida de campos obrigatórios e opcionais",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/calculator/calculator-form.tsx",
+        "apps/web/src/features/calculator/calculator-schema.ts",
+        "apps/web/src/features/calculator/calculator-form.css"
+    ],
+    "oQueFoiInferido": "Um único Card sempre aberto com SETE campos numéricos (`COST_FIELDS`: Custo do rolo, Peso do rolo, Gramas usadas, Potência média kW, Tarifa de energia R$/kWh, Reserva de manutenção R$/h e Taxa de falha % — o mapeador esqueceu este último) numa grade `repeat(auto-fit, minmax(170px,1fr))` que empacota 2 campos a 360px e até 4 no desktop, mais o campo de tempo (h+min) e o bloco inteiro de máquina no mesmo Card. Inferido: a MORTE do disclosure progressivo (não existe uma única seção colável em toda a feature — grep por `Collapsible` em `features/calculator` + `pages/calcular` devolve só um comentário), a fusão obrigatório+opcional sem separação visual (a distinção é só a tag 'opcional' do `Field`), a ordem dos campos, quantos por linha em cada largura, e a decisão de manter 3 controles de naturezas diferentes (grade + tempo + pergunta de máquina) sob o mesmo título.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O vendedor leigo abre a tela e leva 7 campos numéricos de uma vez + o campo de tempo + duas perguntas de máquina, na ordem que um agente escolheu — exatamente o 'intimidar' que o protótipo mandava evitar por escrito (§I: 'Abrir todas as seções avançadas de uma vez (intimida)'). A homologação já pagou por isso duas vezes (o clip de 1px em 'Tarifa de energia', o reflow do grid).",
+    "prioridade": "ALTA",
+    "refutacao": "Tentei derrubar e o protótipo diz o CONTRÁRIO do código, por escrito e em três lugares: §D.2 cria o componente 'Collapsible section — cabeçalho tocável (≥44px) com chevron; usado nas seções avançadas da calculadora'; §E4 (linhas 237-238) manda 'Seções COLÁVEIS (progressive disclosure): Energia · Máquina/Depreciação · Falha · Marketplace. Regra: mostre 1 aberta + 1 fechada — nunca tudo aberto de uma vez'; §F.2 e §I repetem. `CalculatorScreen.jsx` implementa isso literalmente (linhas 81-102: três `<CollapsibleSection>` + um Card `1fr 1fr` com só 4 entradas básicas). Os CAMPOS existem no protótipo (tarifa, consumo, falha); a ORGANIZAÇÃO de hoje é a negação da desenhada. Sobrevive como PROTOTIPO_PARCIAL, e é um dos três achados em que o código contraria uma regra de desenho EXPLÍCITA em vez de apenas preencher um vazio.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

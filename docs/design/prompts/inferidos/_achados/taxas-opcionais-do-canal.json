@@ -1,13 +1,13 @@
 {
-  "id": "taxas-opcionais-do-canal",
-  "nome": "Chaves de taxa opcional do canal (ex.: item volumoso)",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
-  "oQueFoiInferido": "Uma lista de chaves dirigidas pelo catálogo (`plan.surcharges`): para cada uma, um `<label>` com o Switch do DS + o rótulo vindo do dado, e abaixo uma legenda de duas partes ('R$ X por pedido · fonte, dd/mm/aaaa'). Inferido: que a taxa opcional é uma CHAVE e não um checkbox/chip/campo, a relação vertical entre a chave e a legenda de proveniência, o comportamento com N taxas, e o estado vazio (o bloco simplesmente não renderiza).",
-  "autoridade": "NENHUMA",
-  "impacto": "Um encargo real do vendedor entra na conta por uma chave que ninguém desenhou. O defeito de alvo de toque é a prova material: `SurchargeCheckbox` nasceu como `<input type=checkbox>` cru de 13×13px — o ÚNICO checkbox nativo do código, fora do sistema que garante ≥44px em todo o resto — e só virou Switch depois que a homologação A2 mediu o alvo.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'surcharge', 'volumoso' e 'taxa opcional' nas 4 autoridades: zero. O protótipo só desenha 'taxa fixa (R$) + comissão (%)' (§E4). O Switch EXISTE como primitivo (readme do DS o lista entre os 32; `-fixes.md` item 23 e `-fixes-r2.md` item 12 medem seu alvo de toque) — mas ele é usado no protótipo para toggles de demo na Conta, nunca para encargo de canal. Ter o primitivo não é ter o bloco desenhado, e a regra desta auditoria diz isso explicitamente. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "taxas-opcionais-do-canal",
+    "nome": "Chaves de taxa opcional do canal (ex.: item volumoso)",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+    "oQueFoiInferido": "Uma lista de chaves dirigidas pelo catálogo (`plan.surcharges`): para cada uma, um `<label>` com o Switch do DS + o rótulo vindo do dado, e abaixo uma legenda de duas partes ('R$ X por pedido · fonte, dd/mm/aaaa'). Inferido: que a taxa opcional é uma CHAVE e não um checkbox/chip/campo, a relação vertical entre a chave e a legenda de proveniência, o comportamento com N taxas, e o estado vazio (o bloco simplesmente não renderiza).",
+    "autoridade": "NENHUMA",
+    "impacto": "Um encargo real do vendedor entra na conta por uma chave que ninguém desenhou. O defeito de alvo de toque é a prova material: `SurchargeCheckbox` nasceu como `<input type=checkbox>` cru de 13×13px — o ÚNICO checkbox nativo do código, fora do sistema que garante ≥44px em todo o resto — e só virou Switch depois que a homologação A2 mediu o alvo.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'surcharge', 'volumoso' e 'taxa opcional' nas 4 autoridades: zero. O protótipo só desenha 'taxa fixa (R$) + comissão (%)' (§E4). O Switch EXISTE como primitivo (readme do DS o lista entre os 32; `-fixes.md` item 23 e `-fixes-r2.md` item 12 medem seu alvo de toque) — mas ele é usado no protótipo para toggles de demo na Conta, nunca para encargo de canal. Ter o primitivo não é ter o bloco desenhado, e a regra desta auditoria diz isso explicitamente. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

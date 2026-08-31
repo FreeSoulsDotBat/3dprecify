@@ -1,7 +1,7 @@
 /* Inline Lucide icon — inherits `currentColor` and sits on the text baseline. */
 .tf-icon {
-  display: inline-block;
-  flex: 0 0 auto;
-  vertical-align: middle;
-  color: currentColor;
+    display: inline-block;
+    flex: 0 0 auto;
+    vertical-align: middle;
+    color: currentColor;
 }

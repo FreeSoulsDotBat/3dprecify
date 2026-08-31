@@ -1,597 +1,597 @@
 {
-  "label": "baseline",
-  "base": "http://localhost:5173",
-  "capturedAt": "2026-08-11T13:00:41.763Z",
-  "pages": {
-    "calcular@390": {
-      "overflowX": 0,
-      "overflowY": 3061,
-      "layout": "mobile",
-      "h1": "Calcular preço",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 3904.8
+    "label": "baseline",
+    "base": "http://localhost:5173",
+    "capturedAt": "2026-08-11T13:00:41.763Z",
+    "pages": {
+        "calcular@390": {
+            "overflowX": 0,
+            "overflowY": 3061,
+            "layout": "mobile",
+            "h1": "Calcular preço",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 3904.8
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 3848.8
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 3848.8
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 779,
+                    "w": 390,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 3752.8
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 37,
+                    "y": 263.4,
+                    "w": 316,
+                    "h": 407.8
+                }
+            },
+            "url": "http://localhost:5173/calcular"
         },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 3848.8
+        "catalogo@390": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Catálogo",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 844
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 779,
+                    "w": 390,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 329.8
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 358,
+                    "h": 271.4
+                }
+            },
+            "url": "http://localhost:5173/catalogo"
         },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 3848.8
+        "kits@390": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Monte seus kits",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 844
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 779,
+                    "w": 390,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 377.2
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 358,
+                    "h": 318.8
+                }
+            },
+            "url": "http://localhost:5173/kits"
         },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 56
+        "historico@390": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Orçamentos",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 844
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 779,
+                    "w": 390,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 377.2
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 358,
+                    "h": 318.8
+                }
+            },
+            "url": "http://localhost:5173/historico"
         },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 779,
-          "w": 390,
-          "h": 65
+        "conta@390": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Entrar",
+            "teasers": 0,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 844
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 390,
+                    "h": 788
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 390,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 779,
+                    "w": 390,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 358,
+                    "h": 361.2
+                },
+                "h1": {
+                    "x": 45,
+                    "y": 185,
+                    "w": 300,
+                    "h": 19.2
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": null
+            },
+            "url": "http://localhost:5173/sign-in?redirect=%2Fconta"
         },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 3752.8
+        "calcular@360": {
+            "overflowX": 0,
+            "overflowY": 3123,
+            "layout": "mobile",
+            "h1": "Calcular preço",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 3922.8
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 3866.8
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 3866.8
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 735,
+                    "w": 360,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 3770.8
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 37,
+                    "y": 263.4,
+                    "w": 286,
+                    "h": 425.8
+                }
+            },
+            "url": "http://localhost:5173/calcular"
         },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 26.4
+        "catalogo@360": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Catálogo",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 800
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 735,
+                    "w": 360,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 350.8
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 328,
+                    "h": 292.4
+                }
+            },
+            "url": "http://localhost:5173/catalogo"
         },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 37,
-          "y": 263.4,
-          "w": 316,
-          "h": 407.8
+        "kits@360": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Monte seus kits",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 800
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 735,
+                    "w": 360,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 377.2
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 328,
+                    "h": 318.8
+                }
+            },
+            "url": "http://localhost:5173/kits"
+        },
+        "historico@360": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Orçamentos",
+            "teasers": 1,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 800
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 735,
+                    "w": 360,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 398.2
+                },
+                "h1": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 26.4
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": {
+                    "x": 16,
+                    "y": 130.4,
+                    "w": 328,
+                    "h": 339.8
+                }
+            },
+            "url": "http://localhost:5173/historico"
+        },
+        "conta@360": {
+            "overflowX": 0,
+            "overflowY": 0,
+            "layout": "mobile",
+            "h1": "Entrar",
+            "teasers": 0,
+            "marks": {
+                ".tf-shell": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 800
+                },
+                ".tf-shell__body": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-shell__main": {
+                    "x": 0,
+                    "y": 56,
+                    "w": 360,
+                    "h": 744
+                },
+                ".tf-topbar": {
+                    "x": 0,
+                    "y": 0,
+                    "w": 360,
+                    "h": 56
+                },
+                ".tf-nav--tabbar": {
+                    "x": 0,
+                    "y": 735,
+                    "w": 360,
+                    "h": 65
+                },
+                ".tf-nav--sidebar": null,
+                "main > section": {
+                    "x": 16,
+                    "y": 72,
+                    "w": 328,
+                    "h": 361.2
+                },
+                "h1": {
+                    "x": 45,
+                    "y": 185,
+                    "w": 270,
+                    "h": 19.2
+                },
+                ".assembly-summary__pinned": null,
+                ".tf-premium-teaser": null
+            },
+            "url": "http://localhost:5173/sign-in?redirect=%2Fconta"
         }
-      },
-      "url": "http://localhost:5173/calcular"
-    },
-    "catalogo@390": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Catálogo",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 844
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 779,
-          "w": 390,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 329.8
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 358,
-          "h": 271.4
-        }
-      },
-      "url": "http://localhost:5173/catalogo"
-    },
-    "kits@390": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Monte seus kits",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 844
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 779,
-          "w": 390,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 377.2
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 358,
-          "h": 318.8
-        }
-      },
-      "url": "http://localhost:5173/kits"
-    },
-    "historico@390": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Orçamentos",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 844
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 779,
-          "w": 390,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 377.2
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 358,
-          "h": 318.8
-        }
-      },
-      "url": "http://localhost:5173/historico"
-    },
-    "conta@390": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Entrar",
-      "teasers": 0,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 844
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 390,
-          "h": 788
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 390,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 779,
-          "w": 390,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 358,
-          "h": 361.2
-        },
-        "h1": {
-          "x": 45,
-          "y": 185,
-          "w": 300,
-          "h": 19.2
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": null
-      },
-      "url": "http://localhost:5173/sign-in?redirect=%2Fconta"
-    },
-    "calcular@360": {
-      "overflowX": 0,
-      "overflowY": 3123,
-      "layout": "mobile",
-      "h1": "Calcular preço",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 3922.8
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 3866.8
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 3866.8
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 735,
-          "w": 360,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 3770.8
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 37,
-          "y": 263.4,
-          "w": 286,
-          "h": 425.8
-        }
-      },
-      "url": "http://localhost:5173/calcular"
-    },
-    "catalogo@360": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Catálogo",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 800
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 735,
-          "w": 360,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 350.8
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 328,
-          "h": 292.4
-        }
-      },
-      "url": "http://localhost:5173/catalogo"
-    },
-    "kits@360": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Monte seus kits",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 800
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 735,
-          "w": 360,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 377.2
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 328,
-          "h": 318.8
-        }
-      },
-      "url": "http://localhost:5173/kits"
-    },
-    "historico@360": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Orçamentos",
-      "teasers": 1,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 800
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 735,
-          "w": 360,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 398.2
-        },
-        "h1": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 26.4
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": {
-          "x": 16,
-          "y": 130.4,
-          "w": 328,
-          "h": 339.8
-        }
-      },
-      "url": "http://localhost:5173/historico"
-    },
-    "conta@360": {
-      "overflowX": 0,
-      "overflowY": 0,
-      "layout": "mobile",
-      "h1": "Entrar",
-      "teasers": 0,
-      "marks": {
-        ".tf-shell": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 800
-        },
-        ".tf-shell__body": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-shell__main": {
-          "x": 0,
-          "y": 56,
-          "w": 360,
-          "h": 744
-        },
-        ".tf-topbar": {
-          "x": 0,
-          "y": 0,
-          "w": 360,
-          "h": 56
-        },
-        ".tf-nav--tabbar": {
-          "x": 0,
-          "y": 735,
-          "w": 360,
-          "h": 65
-        },
-        ".tf-nav--sidebar": null,
-        "main > section": {
-          "x": 16,
-          "y": 72,
-          "w": 328,
-          "h": 361.2
-        },
-        "h1": {
-          "x": 45,
-          "y": 185,
-          "w": 270,
-          "h": 19.2
-        },
-        ".assembly-summary__pinned": null,
-        ".tf-premium-teaser": null
-      },
-      "url": "http://localhost:5173/sign-in?redirect=%2Fconta"
     }
-  }
 }

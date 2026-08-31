@@ -1,19 +1,19 @@
 {
-  "id": "simulacoes-no-desktop",
-  "nome": "Toda a área de Simulações em tela larga (≥1280px)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
-    "apps/web/src/features/scenarios/scenario-context-bar.tsx",
-    "apps/web/src/features/scenarios/save-scenario-sheet.tsx",
-    "apps/web/src/features/calculator/kit-basis-summary.tsx",
-    "apps/web/src/pages/calcular/calcular-page.tsx"
-  ],
-  "oQueFoiInferido": "Nada foi desenhado e nada foi adaptado. Medi: grep de `useIsWide|isWide|matchMedia|min-width|md:|lg:` em todo `features/scenarios/*.tsx`, `kit-basis-summary.tsx` e `scenario-list.css` → ZERO ocorrências. Em 1920px o vendedor recebe exatamente o layout de celular: um painel lateral com cartões de largura total do painel, a barra de contexto como uma faixa estreita de botões atravessando a página larga, e a folha de salvar ocupando a altura toda para dois campos. Inferido por omissão: que a lista de simulações não vira lista+ficha (o padrão que o dono desenhou para Catálogo, Kits e Orçamentos), que a barra de contexto não vira cabeçalho fixo, e que nada aproveita a largura.",
-  "autoridade": "NENHUMA",
-  "impacto": "No computador — onde o vendedor de fato compara canais — a funcionalidade de comparação aparece inteira em formato de celular, num painel estreito, com o resto da tela vazio.",
-  "prioridade": "ALTA",
-  "refutacao": "Este é o achado que o canvas do dono mais poderia derrubar, então fui item por item. Ele tem QUATRO artboards e nenhum é Simulações: Catálogo (linha 72, grid `minmax(0,1fr) 560px` lista+ficha sticky), Kits (160, `minmax(0,1fr) 480px` com aside de resumo), Orçamentos (245, `520px minmax(0,1fr)` mestre-detalhe) e Conta (367, três colunas). A linha 454 é um placeholder explícito — \"A tela Calcular está no outro arquivo\" — e é exatamente onde toda a área de Simulações vive. Persegui esse \"outro arquivo\": `find . -name \"*.dc.html\"` retorna UM só, e `specs/018-abas-desktop/spec.md:392` confirma que \"Calcular Desktop\" não faz parte deste incremento. Grep de cenário/simulação no canvas = só a frase de venda do teaser. Nas outras autoridades: o prompt cita desktop apenas como \"Sidebar no desktop\" (E3) e \"Varejo × Atacado 2 colunas\" (E4), com `--content-max 1120px`, e §H pede \"todas as telas (E1–E9) em mobile e desktop\" — E1–E9 não inclui cenários; os `.design-import/ui_kits` são esqueletos mobile de 59–131 linhas sem nenhum breakpoint. Sobrevive, autoridade NENHUMA confirmada.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "simulacoes-no-desktop",
+    "nome": "Toda a área de Simulações em tela larga (≥1280px)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenarios-list-sheet.tsx",
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+        "apps/web/src/features/scenarios/save-scenario-sheet.tsx",
+        "apps/web/src/features/calculator/kit-basis-summary.tsx",
+        "apps/web/src/pages/calcular/calcular-page.tsx"
+    ],
+    "oQueFoiInferido": "Nada foi desenhado e nada foi adaptado. Medi: grep de `useIsWide|isWide|matchMedia|min-width|md:|lg:` em todo `features/scenarios/*.tsx`, `kit-basis-summary.tsx` e `scenario-list.css` → ZERO ocorrências. Em 1920px o vendedor recebe exatamente o layout de celular: um painel lateral com cartões de largura total do painel, a barra de contexto como uma faixa estreita de botões atravessando a página larga, e a folha de salvar ocupando a altura toda para dois campos. Inferido por omissão: que a lista de simulações não vira lista+ficha (o padrão que o dono desenhou para Catálogo, Kits e Orçamentos), que a barra de contexto não vira cabeçalho fixo, e que nada aproveita a largura.",
+    "autoridade": "NENHUMA",
+    "impacto": "No computador — onde o vendedor de fato compara canais — a funcionalidade de comparação aparece inteira em formato de celular, num painel estreito, com o resto da tela vazio.",
+    "prioridade": "ALTA",
+    "refutacao": "Este é o achado que o canvas do dono mais poderia derrubar, então fui item por item. Ele tem QUATRO artboards e nenhum é Simulações: Catálogo (linha 72, grid `minmax(0,1fr) 560px` lista+ficha sticky), Kits (160, `minmax(0,1fr) 480px` com aside de resumo), Orçamentos (245, `520px minmax(0,1fr)` mestre-detalhe) e Conta (367, três colunas). A linha 454 é um placeholder explícito — \"A tela Calcular está no outro arquivo\" — e é exatamente onde toda a área de Simulações vive. Persegui esse \"outro arquivo\": `find . -name \"*.dc.html\"` retorna UM só, e `specs/018-abas-desktop/spec.md:392` confirma que \"Calcular Desktop\" não faz parte deste incremento. Grep de cenário/simulação no canvas = só a frase de venda do teaser. Nas outras autoridades: o prompt cita desktop apenas como \"Sidebar no desktop\" (E3) e \"Varejo × Atacado 2 colunas\" (E4), com `--content-max 1120px`, e §H pede \"todas as telas (E1–E9) em mobile e desktop\" — E1–E9 não inclui cenários; os `.design-import/ui_kits` são esqueletos mobile de 59–131 linhas sem nenhum breakpoint. Sobrevive, autoridade NENHUMA confirmada.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

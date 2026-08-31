@@ -12,20 +12,20 @@ import { Button } from "./button";
 afterEach(cleanup);
 
 describe("Button — width", () => {
-  it('width="full" aplica tf-btn--full', () => {
-    render(<Button width="full">Salvar kit</Button>);
-    expect(screen.getByRole("button", { name: "Salvar kit" })).toHaveClass("tf-btn--full");
-  });
+    it('width="full" aplica tf-btn--full', () => {
+        render(<Button width="full">Salvar kit</Button>);
+        expect(screen.getByRole("button", { name: "Salvar kit" })).toHaveClass("tf-btn--full");
+    });
 
-  it('width="half" aplica tf-btn--half', () => {
-    render(<Button width="half">Usar estimativa</Button>);
-    expect(screen.getByRole("button", { name: "Usar estimativa" })).toHaveClass("tf-btn--half");
-  });
+    it('width="half" aplica tf-btn--half', () => {
+        render(<Button width="half">Usar estimativa</Button>);
+        expect(screen.getByRole("button", { name: "Usar estimativa" })).toHaveClass("tf-btn--half");
+    });
 
-  it("sem width nenhuma classe de largura é aplicada", () => {
-    render(<Button>Continuar</Button>);
-    const btn = screen.getByRole("button", { name: "Continuar" });
-    expect(btn).not.toHaveClass("tf-btn--full");
-    expect(btn).not.toHaveClass("tf-btn--half");
-  });
+    it("sem width nenhuma classe de largura é aplicada", () => {
+        render(<Button>Continuar</Button>);
+        const btn = screen.getByRole("button", { name: "Continuar" });
+        expect(btn).not.toHaveClass("tf-btn--full");
+        expect(btn).not.toHaveClass("tf-btn--half");
+    });
 });

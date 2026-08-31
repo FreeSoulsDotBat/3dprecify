@@ -1,13 +1,13 @@
 {
-  "id": "select-nativo",
-  "nome": "Seletor (Select) — o cursor ▾ e o popup do sistema",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/shared/ui/select.tsx", "apps/web/src/shared/ui/select.css"],
-  "oQueFoiInferido": "A decisão de usar um `<select>` NATIVO dentro da moldura `tf-inputwrap` (para abrir a roda do sistema no celular) e, com ela, tudo o que o app não controla: a lista aberta é do sistema operacional. Sem desenho: o placeholder (primeira `<option>` desabilitada de valor vazio), o desabilitado, o erro, o seletor a 390px, e o que fazer no desktop, onde a roda nativa não é a affordance certa.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É por aqui que o vendedor escolhe canal de marketplace, modalidade e categoria — as escolhas que mudam o preço; e a lista que se abre é a do sistema, que a marca não controla.",
-  "prioridade": "BAIXA",
-  "refutacao": "DERRUBA o núcleo do achado. '(4) O canvas 018 não usa nenhum seletor' é FALSO: as linhas 137-138 do arquivo do DONO desenham dois seletores completos na ficha do Catálogo — `<div class=\"tf-inputwrap tf-selectwrap\"><select class=\"tf-input tf-select\"><option>PLA Prata 1kg</option></select><span class=\"tf-select__caret\">▾</span></div>` — com o caractere ▾ LITERAL, sob os rótulos 'Filamento salvo' e 'Impressora salva' em `tf-field__label--tight`. Ou seja, o estado FECHADO COM ESCOLHA está desenhado a 1920, e a seta ▾ está no desenho do dono — o que esvazia a observação de coerência do mapeador sobre 'Icons: Lucide … No emoji' (o dono a viu e a manteve). §E4 cita 'dropdowns Filamento ▾ e Impressora ▾' como interação; nenhuma tela do ui_kit usa Select. Sobra sem desenho: placeholder, desabilitado, erro, 390px e a lista ABERTA — que, por decisão do `select.tsx`, é do sistema operacional e sequer é desenhável. Rebaixo MEDIA → BAIXA.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "select-nativo",
+    "nome": "Seletor (Select) — o cursor ▾ e o popup do sistema",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/shared/ui/select.tsx", "apps/web/src/shared/ui/select.css"],
+    "oQueFoiInferido": "A decisão de usar um `<select>` NATIVO dentro da moldura `tf-inputwrap` (para abrir a roda do sistema no celular) e, com ela, tudo o que o app não controla: a lista aberta é do sistema operacional. Sem desenho: o placeholder (primeira `<option>` desabilitada de valor vazio), o desabilitado, o erro, o seletor a 390px, e o que fazer no desktop, onde a roda nativa não é a affordance certa.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É por aqui que o vendedor escolhe canal de marketplace, modalidade e categoria — as escolhas que mudam o preço; e a lista que se abre é a do sistema, que a marca não controla.",
+    "prioridade": "BAIXA",
+    "refutacao": "DERRUBA o núcleo do achado. '(4) O canvas 018 não usa nenhum seletor' é FALSO: as linhas 137-138 do arquivo do DONO desenham dois seletores completos na ficha do Catálogo — `<div class=\"tf-inputwrap tf-selectwrap\"><select class=\"tf-input tf-select\"><option>PLA Prata 1kg</option></select><span class=\"tf-select__caret\">▾</span></div>` — com o caractere ▾ LITERAL, sob os rótulos 'Filamento salvo' e 'Impressora salva' em `tf-field__label--tight`. Ou seja, o estado FECHADO COM ESCOLHA está desenhado a 1920, e a seta ▾ está no desenho do dono — o que esvazia a observação de coerência do mapeador sobre 'Icons: Lucide … No emoji' (o dono a viu e a manteve). §E4 cita 'dropdowns Filamento ▾ e Impressora ▾' como interação; nenhuma tela do ui_kit usa Select. Sobra sem desenho: placeholder, desabilitado, erro, 390px e a lista ABERTA — que, por decisão do `select.tsx`, é do sistema operacional e sequer é desenhável. Rebaixo MEDIA → BAIXA.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

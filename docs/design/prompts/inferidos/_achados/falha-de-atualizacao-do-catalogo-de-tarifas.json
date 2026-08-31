@@ -1,16 +1,16 @@
 {
-  "id": "falha-de-atualizacao-do-catalogo-de-tarifas",
-  "nome": "Estado de falha (não bloqueante) na atualização do catálogo de tarifas",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/calculator/calculator-form.tsx",
-    "apps/web/src/pages/calcular/calcular-page.tsx"
-  ],
-  "oQueFoiInferido": "Um `Alert tone=\"info\"` com título, corpo e um Button secondary 'Tentar de novo' com estado `loading`, renderizado no topo da lista de canais (dentro da seção Marketplace, só quando entitulado e com a chave ligada), pegajoso por construção (`refreshFailed` é sticky para não piscar durante a retentativa) e sem impedir nenhum cálculo. Inferido: o tom (info e não perigo), o lugar, o botão embutido no alerta, e como isso convive com o selo 'referência embutida (offline) · desatualizado' que cada canal já exibe dizendo coisa parecida.",
-  "autoridade": "NENHUMA",
-  "impacto": "Duas superfícies dizem a mesma coisa com formas diferentes (o alerta com retentativa e o selo por canal), e nenhuma foi desenhada em relação à outra — o vendedor pode ler 'falhou ao atualizar' no topo e 'Referência: <fonte> · atualizado em …' logo abaixo.",
-  "prioridade": "MEDIA",
-  "refutacao": "Procurei o padrão de erro-com-retentativa e ele EXISTE no protótipo, para outras superfícies: `-fixes.md` item 17 desenha 'Não foi possível carregar. Tente de novo.' + botão 'Tentar novamente' para Catálogo e Histórico, e o audit V2 registra FIXED; §G tem a linha 'offline' (banner ciano, 'o cálculo continua funcionando'). Mas os dois são coisas diferentes desta: o item 17 é um estado que SUBSTITUI uma lista que não carregou; este é uma nota informativa não-bloqueante DENTRO de uma seção cujo conteúdo continua todo funcionando com dado embutido. O catálogo de tarifas não existia no protótipo (é 005/US3). Grep por 'atualizar tarifas'/'refresh' nas 4: nada. Mantenho NENHUMA para esta superfície, com o padrão vizinho nomeado. Sobrevive.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "falha-de-atualizacao-do-catalogo-de-tarifas",
+    "nome": "Estado de falha (não bloqueante) na atualização do catálogo de tarifas",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/calculator/calculator-form.tsx",
+        "apps/web/src/pages/calcular/calcular-page.tsx"
+    ],
+    "oQueFoiInferido": "Um `Alert tone=\"info\"` com título, corpo e um Button secondary 'Tentar de novo' com estado `loading`, renderizado no topo da lista de canais (dentro da seção Marketplace, só quando entitulado e com a chave ligada), pegajoso por construção (`refreshFailed` é sticky para não piscar durante a retentativa) e sem impedir nenhum cálculo. Inferido: o tom (info e não perigo), o lugar, o botão embutido no alerta, e como isso convive com o selo 'referência embutida (offline) · desatualizado' que cada canal já exibe dizendo coisa parecida.",
+    "autoridade": "NENHUMA",
+    "impacto": "Duas superfícies dizem a mesma coisa com formas diferentes (o alerta com retentativa e o selo por canal), e nenhuma foi desenhada em relação à outra — o vendedor pode ler 'falhou ao atualizar' no topo e 'Referência: <fonte> · atualizado em …' logo abaixo.",
+    "prioridade": "MEDIA",
+    "refutacao": "Procurei o padrão de erro-com-retentativa e ele EXISTE no protótipo, para outras superfícies: `-fixes.md` item 17 desenha 'Não foi possível carregar. Tente de novo.' + botão 'Tentar novamente' para Catálogo e Histórico, e o audit V2 registra FIXED; §G tem a linha 'offline' (banner ciano, 'o cálculo continua funcionando'). Mas os dois são coisas diferentes desta: o item 17 é um estado que SUBSTITUI uma lista que não carregou; este é uma nota informativa não-bloqueante DENTRO de uma seção cujo conteúdo continua todo funcionando com dado embutido. O catálogo de tarifas não existia no protótipo (é 005/US3). Grep por 'atualizar tarifas'/'refresh' nas 4: nada. Mantenho NENHUMA para esta superfície, com o padrão vizinho nomeado. Sobrevive.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

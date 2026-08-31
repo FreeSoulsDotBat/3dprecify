@@ -14,26 +14,28 @@ import { signUpThrowaway } from "./history-helpers";
 const t = messages.billing;
 
 test("T072-A7: o radio do periodo na oferta e um controle compacto, nao uma barra", async ({
-  page,
+    page,
 }) => {
-  await signUpThrowaway(page, "offer-radio-geom");
-  await page.goto("/kits");
-  await page.getByRole("link", { name: t.subscribeAction }).click();
+    await signUpThrowaway(page, "offer-radio-geom");
+    await page.goto("/kits");
+    await page.getByRole("link", { name: t.subscribeAction }).click();
 
-  await expect(page.getByText(t.planMonthlyPrice)).toBeVisible();
+    await expect(page.getByText(t.planMonthlyPrice)).toBeVisible();
 
-  const radios = page.locator('input[type="radio"][name="tf-billing-period"]');
-  await expect(radios).toHaveCount(2);
+    const radios = page.locator('input[type="radio"][name="tf-billing-period"]');
+    await expect(radios).toHaveCount(2);
 
-  for (let i = 0; i < 2; i++) {
-    const box = await radios.nth(i).boundingBox();
-    expect(box, `radio #${i} has a box`).not.toBeNull();
-    // A native radio's rendered box is small and roughly square — never a full-width bar. 28px is
-    // a generous ceiling (well above any real UA rendering, well below the measured 292px bug).
-    expect(box!.width, `radio #${i} width`).toBeLessThanOrEqual(28);
-    expect(box!.height, `radio #${i} height`).toBeGreaterThanOrEqual(12);
-    // Not squashed to a hairline either — MEASURED regression was 13px tall AND 292px wide; a fix
-    // that only shrank the width but left it a flat hairline would still be wrong.
-    expect(box!.width - box!.height, `radio #${i} is roughly square, not a bar`).toBeLessThan(12);
-  }
+    for (let i = 0; i < 2; i++) {
+        const box = await radios.nth(i).boundingBox();
+        expect(box, `radio #${i} has a box`).not.toBeNull();
+        // A native radio's rendered box is small and roughly square — never a full-width bar. 28px is
+        // a generous ceiling (well above any real UA rendering, well below the measured 292px bug).
+        expect(box!.width, `radio #${i} width`).toBeLessThanOrEqual(28);
+        expect(box!.height, `radio #${i} height`).toBeGreaterThanOrEqual(12);
+        // Not squashed to a hairline either — MEASURED regression was 13px tall AND 292px wide; a fix
+        // that only shrank the width but left it a flat hairline would still be wrong.
+        expect(box!.width - box!.height, `radio #${i} is roughly square, not a bar`).toBeLessThan(
+            12,
+        );
+    }
 });

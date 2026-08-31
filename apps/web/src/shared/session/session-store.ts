@@ -1,10 +1,10 @@
 import {
-  type Auth,
-  GoogleAuthProvider,
-  type User,
-  onIdTokenChanged,
-  signInWithPopup,
-  signOut,
+    type Auth,
+    GoogleAuthProvider,
+    type User,
+    onIdTokenChanged,
+    signInWithPopup,
+    signOut,
 } from "firebase/auth";
 import { create } from "zustand";
 
@@ -17,13 +17,13 @@ import { clearSessionExpired } from "@/shared/session/session-expiry";
 export type SessionStatus = "loading" | "authenticated" | "anonymous" | "not-configured";
 
 interface SessionState {
-  status: SessionStatus;
-  user: User | null;
+    status: SessionStatus;
+    user: User | null;
 }
 
 export const useSessionStore = create<SessionState>(() => ({
-  status: auth ? "loading" : "not-configured",
-  user: null,
+    status: auth ? "loading" : "not-configured",
+    user: null,
 }));
 
 // E6/T016 (coordinator-reported HIGH defect): Firebase can emit a TRANSIENT pre-restore callback
@@ -43,32 +43,32 @@ export const useSessionStore = create<SessionState>(() => ({
 // with no need to mock `@/shared/lib/firebase`'s module-init-time singleton. Production code only
 // ever calls it through `initSessionListener()`.
 export async function bootFromAuth(authInstance: Auth): Promise<void> {
-  await authInstance.authStateReady();
-  const initialUser = authInstance.currentUser;
-  useSessionStore.setState({
-    user: initialUser,
-    status: initialUser ? "authenticated" : "anonymous",
-  });
-  onIdTokenChanged(authInstance, (user) => {
-    useSessionStore.setState({ user, status: user ? "authenticated" : "anonymous" });
-    // hotfix 016/A3 (H5) — the seller signing back in (even through a different tab/flow) is the
-    // OTHER way the session-expired marker clears, mirroring `transport.ts`'s "first success" clear.
-    if (user) clearSessionExpired();
-  });
+    await authInstance.authStateReady();
+    const initialUser = authInstance.currentUser;
+    useSessionStore.setState({
+        user: initialUser,
+        status: initialUser ? "authenticated" : "anonymous",
+    });
+    onIdTokenChanged(authInstance, (user) => {
+        useSessionStore.setState({ user, status: user ? "authenticated" : "anonymous" });
+        // hotfix 016/A3 (H5) — the seller signing back in (even through a different tab/flow) is the
+        // OTHER way the session-expired marker clears, mirroring `transport.ts`'s "first success" clear.
+        if (user) clearSessionExpired();
+    });
 }
 
 export async function initSessionListener(): Promise<void> {
-  if (!auth) return;
-  await bootFromAuth(auth);
+    if (!auth) return;
+    await bootFromAuth(auth);
 }
 
 // Google sign-in (One Tap / popup on web). No-op when Firebase is not configured.
 export async function signInWithGoogle(): Promise<void> {
-  if (!auth) return;
-  await signInWithPopup(auth, new GoogleAuthProvider());
+    if (!auth) return;
+    await signInWithPopup(auth, new GoogleAuthProvider());
 }
 
 export async function signOutUser(): Promise<void> {
-  if (!auth) return;
-  await signOut(auth);
+    if (!auth) return;
+    await signOut(auth);
 }

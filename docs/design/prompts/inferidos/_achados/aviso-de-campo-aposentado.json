@@ -1,16 +1,16 @@
 {
-  "id": "aviso-de-campo-aposentado",
-  "nome": "Aviso persistente de campo aposentado ao reabrir uma simulação antiga",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/pages/calcular/calcular-page.tsx",
-    "apps/web/src/features/calculator/scenario-bridge.ts"
-  ],
-  "oQueFoiInferido": "Um `Alert tone=\"info\"` persistente (deliberadamente não-toast, `role=status`) logo abaixo da barra de cenário, dizendo que um campo do modelo antigo foi descartado no recálculo — em duas variantes, a escalar (`loadedScenario.discardedNotice`) e a de kit (deduplicada linha a linha por `computeScenarioKitChannels`). Inferido: que é alerta permanente e não toast, seu lugar na pilha do topo (onde pode competir com a barra de cenário, o resumo de kit, o teaser e o card de erro do picker), e o tom.",
-  "autoridade": "NENHUMA",
-  "impacto": "Aparece exatamente quando o preço de uma simulação salva MUDA sozinho — o momento em que a confiança no número está mais frágil — e a explicação disso é hoje mais um bloco info no meio de outros três blocos info possíveis no topo da tela.",
-  "prioridade": "BAIXA",
-  "refutacao": "016/US10 (FR-913), consequência da remoção de `wasteGrams` em pricing-core 4.0.0 — posterior a todas as autoridades. Nada em `claude-design-prototype*.md`, no `prototype-audit`, no `.design-import` ou no canvas 018 trata de migração de modelo de preço na interface; o mais próximo é `-fixes.md` item 8 ('mostre discretamente \"fórmula v1.0.0\" (carimbo de versão)'), que é um carimbo de versão no histórico, não um aviso de campo descartado num recálculo. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "aviso-de-campo-aposentado",
+    "nome": "Aviso persistente de campo aposentado ao reabrir uma simulação antiga",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/pages/calcular/calcular-page.tsx",
+        "apps/web/src/features/calculator/scenario-bridge.ts"
+    ],
+    "oQueFoiInferido": "Um `Alert tone=\"info\"` persistente (deliberadamente não-toast, `role=status`) logo abaixo da barra de cenário, dizendo que um campo do modelo antigo foi descartado no recálculo — em duas variantes, a escalar (`loadedScenario.discardedNotice`) e a de kit (deduplicada linha a linha por `computeScenarioKitChannels`). Inferido: que é alerta permanente e não toast, seu lugar na pilha do topo (onde pode competir com a barra de cenário, o resumo de kit, o teaser e o card de erro do picker), e o tom.",
+    "autoridade": "NENHUMA",
+    "impacto": "Aparece exatamente quando o preço de uma simulação salva MUDA sozinho — o momento em que a confiança no número está mais frágil — e a explicação disso é hoje mais um bloco info no meio de outros três blocos info possíveis no topo da tela.",
+    "prioridade": "BAIXA",
+    "refutacao": "016/US10 (FR-913), consequência da remoção de `wasteGrams` em pricing-core 4.0.0 — posterior a todas as autoridades. Nada em `claude-design-prototype*.md`, no `prototype-audit`, no `.design-import` ou no canvas 018 trata de migração de modelo de preço na interface; o mais próximo é `-fixes.md` item 8 ('mostre discretamente \"fórmula v1.0.0\" (carimbo de versão)'), que é um carimbo de versão no histórico, não um aviso de campo descartado num recálculo. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

@@ -1,16 +1,16 @@
 {
-  "id": "lista-de-orcamentos-mobile",
-  "nome": "Aba Orçamentos no celular (lista completa, 390px)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/historico/historico-page.tsx",
-    "apps/web/src/pages/historico/historico-page.css"
-  ],
-  "oQueFoiInferido": "A COMPOSIÇÃO VERTICAL da aba abaixo de 1280px, que é o que nunca foi desenhado em 390px: a ordem e o empilhamento dos avisos de topo (Premium pausado → leitura offline/erro de carga → banner da fila), a barra de filtros, a pilha de cards e o [Carregar mais] centralizado — até três faixas de aviso podem preceder o primeiro orçamento. Também inferido: a densidade da pilha em 390px (gap de var(--space-4), sem separador, sem cabeçalho fixo, sem agrupamento por mês, sem contagem de registros), o que trunca e o que nunca trunca (`.tf-historico__label` tem ellipsis de uma linha; `__meta` e `__money` são declarados 'a alegação, nunca truncam'), e o comportamento com 40 registros. A ANATOMIA do card em si NÃO é inferência pura — ela está desenhada no canvas do dono, só que na coluna de 520px do desktop e DEPOIS do código.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "É a aba premium que o vendedor mais abre no celular, e a única prova de que os orçamentos dele existem. Três faixas de aviso empilhadas empurram o primeiro orçamento para fora da primeira tela; e o rótulo do cliente — o único jeito de achar o orçamento certo — é justamente o campo que trunca.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei prova de desenho anterior em mobile e não achei. `claude-design-prototype.md` §E6 (primeira linha) diz apenas 'Lista mock de orçamentos salvos (data, produto, preço)'; §G acrescenta 'Histórico: skeleton · gated · falha · lista mock + detalhe'. `HistoryScreen.jsx` desenha essa lista em 390px, mas com anatomia OUTRA: `Card padding=none` contendo `ListItem`s com ícone leading em quadrado accent-soft, título, subtitle 'data · markup 50%', value 'R$ x' e chevron. O construído inverte isso deliberadamente (FR-523): data ACIMA do dinheiro, sem chevron, sem ícone leading, com badge de sincronização e legenda de base. É uma versão anterior e mais simples da mesma tela — o achado sobrevive rebaixado a PROTOTIPO_PARCIAL. O canvas do dono (linhas 281-292) desenha o card com a anatomia EXATA do código (rótulo + badge com margin-left:auto, `{{rc.quotedAt}} · {{rc.kind}}`, `__money` com base à esquerda e total 1.125rem à direita) — mas o arquivo é um artboard único de `width:1920px` (linha 33), sem nenhum breakpoint e sem nenhum artboard mobile, e é de 2026-08, posterior ao PR-A de 2026-07-15. Ele ratifica o card construído; não o antecede, e não diz nada sobre 390px. Nada em nenhuma das quatro autoridades trata os avisos de topo empilhados, o [Carregar mais] ou a densidade da pilha longa.",
-  "sobreviveu": true,
-  "area": "orcamentos"
+    "id": "lista-de-orcamentos-mobile",
+    "nome": "Aba Orçamentos no celular (lista completa, 390px)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/historico/historico-page.tsx",
+        "apps/web/src/pages/historico/historico-page.css"
+    ],
+    "oQueFoiInferido": "A COMPOSIÇÃO VERTICAL da aba abaixo de 1280px, que é o que nunca foi desenhado em 390px: a ordem e o empilhamento dos avisos de topo (Premium pausado → leitura offline/erro de carga → banner da fila), a barra de filtros, a pilha de cards e o [Carregar mais] centralizado — até três faixas de aviso podem preceder o primeiro orçamento. Também inferido: a densidade da pilha em 390px (gap de var(--space-4), sem separador, sem cabeçalho fixo, sem agrupamento por mês, sem contagem de registros), o que trunca e o que nunca trunca (`.tf-historico__label` tem ellipsis de uma linha; `__meta` e `__money` são declarados 'a alegação, nunca truncam'), e o comportamento com 40 registros. A ANATOMIA do card em si NÃO é inferência pura — ela está desenhada no canvas do dono, só que na coluna de 520px do desktop e DEPOIS do código.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "É a aba premium que o vendedor mais abre no celular, e a única prova de que os orçamentos dele existem. Três faixas de aviso empilhadas empurram o primeiro orçamento para fora da primeira tela; e o rótulo do cliente — o único jeito de achar o orçamento certo — é justamente o campo que trunca.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei prova de desenho anterior em mobile e não achei. `claude-design-prototype.md` §E6 (primeira linha) diz apenas 'Lista mock de orçamentos salvos (data, produto, preço)'; §G acrescenta 'Histórico: skeleton · gated · falha · lista mock + detalhe'. `HistoryScreen.jsx` desenha essa lista em 390px, mas com anatomia OUTRA: `Card padding=none` contendo `ListItem`s com ícone leading em quadrado accent-soft, título, subtitle 'data · markup 50%', value 'R$ x' e chevron. O construído inverte isso deliberadamente (FR-523): data ACIMA do dinheiro, sem chevron, sem ícone leading, com badge de sincronização e legenda de base. É uma versão anterior e mais simples da mesma tela — o achado sobrevive rebaixado a PROTOTIPO_PARCIAL. O canvas do dono (linhas 281-292) desenha o card com a anatomia EXATA do código (rótulo + badge com margin-left:auto, `{{rc.quotedAt}} · {{rc.kind}}`, `__money` com base à esquerda e total 1.125rem à direita) — mas o arquivo é um artboard único de `width:1920px` (linha 33), sem nenhum breakpoint e sem nenhum artboard mobile, e é de 2026-08, posterior ao PR-A de 2026-07-15. Ele ratifica o card construído; não o antecede, e não diz nada sobre 390px. Nada em nenhuma das quatro autoridades trata os avisos de topo empilhados, o [Carregar mais] ou a densidade da pilha longa.",
+    "sobreviveu": true,
+    "area": "orcamentos"
 }

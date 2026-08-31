@@ -1,13 +1,13 @@
 {
-  "id": "conta-item-a-item-e-cartoes-de-preco",
-  "nome": "“Como chegamos no preço” e os dois cartões de preço final",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
-  "oQueFoiInferido": "O breakdown ganhou linhas que o protótipo não tinha (acabamento, mão de obra e N linhas de Outros custos), PERDEU as bolinhas de cor de legenda (FR-907-AC2), e passou a hospedar 'Preços por canal' na própria cauda; os dois cartões finais viraram uma grade `repeat(auto-fit, minmax(210px,1fr))` que EMPILHA varejo e atacado a 360px, ambos `size=\"md\"` `center`, com tons accent e energy — mesmo peso visual. Inferido: a ordem e a ênfase das linhas novas, a remoção das cores, e — o desvio mais visível — a ausência total do segmented control Varejo|Atacado que o protótipo definiu para o mobile.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "A forma prototipada do resultado mobile (alternar entre varejo e atacado) nunca foi construída; o que existe foi ajustado por medição de overflow. É a última coisa que o vendedor lê antes de fechar a tela — e onde o produto escolhe qual dos dois preços é o principal. Subi de BAIXA para MÉDIA: não é só um vazio de desenho, é um componente que o protótipo CRIOU para esta finalidade e que o app nunca construiu.",
-  "prioridade": "MEDIA",
-  "refutacao": "Aqui a autoridade é forte e o código diverge dela em três pontos verificáveis. §E4 (250-253) desenha o breakdown itemizado (material, energia, máquina, mão de obra, falha, margem, taxa negativa → líquido) e manda: 'Varejo × Atacado: desktop = 2 colunas lado a lado; mobile = segmented control (Varejo|Atacado) + linha-resumo'; §F.3 repete; §D.2 CRIA o componente 'Segmented control — pill, para Varejo × Atacado no mobile'; o `claude-design-brief.md` (75) pede 'varejo vs atacado comparable side by side'. `CalculatorScreen.jsx` (56-59) mostra os dois PriceHero lado a lado e o breakdown COM bolinhas de cor (`color=\"var(--accent)\"`, `var(--energy)`, `var(--info)`). Hoje: sem segmented control em lugar nenhum, sem bolinhas, empilhamento por `auto-fit`. E o canvas 018 (aba Kits) mostra a opinião posterior do dono sobre a hierarquia — Varejo grande em accent, Atacado menor e muted —, que o par de hoje (mesmo tamanho, dois tons) também não segue. Sobrevive, PROTOTIPO_PARCIAL.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "conta-item-a-item-e-cartoes-de-preco",
+    "nome": "“Como chegamos no preço” e os dois cartões de preço final",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/features/calculator/calculator-form.tsx"],
+    "oQueFoiInferido": "O breakdown ganhou linhas que o protótipo não tinha (acabamento, mão de obra e N linhas de Outros custos), PERDEU as bolinhas de cor de legenda (FR-907-AC2), e passou a hospedar 'Preços por canal' na própria cauda; os dois cartões finais viraram uma grade `repeat(auto-fit, minmax(210px,1fr))` que EMPILHA varejo e atacado a 360px, ambos `size=\"md\"` `center`, com tons accent e energy — mesmo peso visual. Inferido: a ordem e a ênfase das linhas novas, a remoção das cores, e — o desvio mais visível — a ausência total do segmented control Varejo|Atacado que o protótipo definiu para o mobile.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "A forma prototipada do resultado mobile (alternar entre varejo e atacado) nunca foi construída; o que existe foi ajustado por medição de overflow. É a última coisa que o vendedor lê antes de fechar a tela — e onde o produto escolhe qual dos dois preços é o principal. Subi de BAIXA para MÉDIA: não é só um vazio de desenho, é um componente que o protótipo CRIOU para esta finalidade e que o app nunca construiu.",
+    "prioridade": "MEDIA",
+    "refutacao": "Aqui a autoridade é forte e o código diverge dela em três pontos verificáveis. §E4 (250-253) desenha o breakdown itemizado (material, energia, máquina, mão de obra, falha, margem, taxa negativa → líquido) e manda: 'Varejo × Atacado: desktop = 2 colunas lado a lado; mobile = segmented control (Varejo|Atacado) + linha-resumo'; §F.3 repete; §D.2 CRIA o componente 'Segmented control — pill, para Varejo × Atacado no mobile'; o `claude-design-brief.md` (75) pede 'varejo vs atacado comparable side by side'. `CalculatorScreen.jsx` (56-59) mostra os dois PriceHero lado a lado e o breakdown COM bolinhas de cor (`color=\"var(--accent)\"`, `var(--energy)`, `var(--info)`). Hoje: sem segmented control em lugar nenhum, sem bolinhas, empilhamento por `auto-fit`. E o canvas 018 (aba Kits) mostra a opinião posterior do dono sobre a hierarquia — Varejo grande em accent, Atacado menor e muted —, que o par de hoje (mesmo tamanho, dois tons) também não segue. Sobrevive, PROTOTIPO_PARCIAL.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

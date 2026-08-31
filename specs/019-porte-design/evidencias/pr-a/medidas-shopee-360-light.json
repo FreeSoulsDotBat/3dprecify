@@ -1,10 +1,10 @@
 {
-  "viewport": 360,
-  "selo": {
-    "x": 37,
-    "y": 418.140625,
-    "width": 286,
-    "height": 75
-  },
-  "secaoShopeePx": 968.53125
+    "viewport": 360,
+    "selo": {
+        "x": 37,
+        "y": 418.140625,
+        "width": 286,
+        "height": 75
+    },
+    "secaoShopeePx": 968.53125
 }

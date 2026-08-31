@@ -12,16 +12,16 @@ import { type CurrentUser } from "@/shared/api/generated";
 // email — see data-model E1.
 
 export interface UserIdentity {
-  uid: string;
-  email: string | null;
+    uid: string;
+    email: string | null;
 }
 
 /** Map the server `/me` response onto the read-only identity view-model. */
 export function toUserIdentity(me: CurrentUser): UserIdentity {
-  return { uid: me.uid, email: me.email ?? null };
+    return { uid: me.uid, email: me.email ?? null };
 }
 
 /** Short, safe label for account chrome / Conta (email, else the opaque uid). */
 export function identityLabel(identity: UserIdentity): string {
-  return identity.email ?? identity.uid;
+    return identity.email ?? identity.uid;
 }

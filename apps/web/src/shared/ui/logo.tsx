@@ -7,10 +7,10 @@ import "./logo.css";
 export type LogoVariant = "full" | "mark";
 
 export interface LogoProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt"> {
-  /** `full` = horizontal lockup, `mark` = compact symbol. */
-  variant?: LogoVariant;
-  /** Accessible name. Omit to render the logo decoratively (hidden from AT). */
-  alt?: string;
+    /** `full` = horizontal lockup, `mark` = compact symbol. */
+    variant?: LogoVariant;
+    /** Accessible name. Omit to render the logo decoratively (hidden from AT). */
+    alt?: string;
 }
 
 /**
@@ -24,19 +24,19 @@ export interface LogoProps extends Omit<ImgHTMLAttributes<HTMLImageElement>, "sr
  * (still the `tf-symbol-*.svg` compact mark) — only the full horizontal lockup was replaced.
  */
 export function Logo({ variant = "full", alt, className = "", ...rest }: LogoProps) {
-  const theme = useThemeStore((s) => s.theme);
-  const decorative = alt === undefined;
-  const src =
-    variant === "full"
-      ? `/brand/logo/logo-inteira-${theme === "dark" ? "white" : "black"}.png`
-      : `/brand/logo/tf-symbol-color${theme === "dark" ? "-dark" : ""}.svg`;
-  return (
-    <img
-      src={src}
-      alt={decorative ? "" : alt}
-      aria-hidden={decorative || undefined}
-      className={["tf-logo", `tf-logo--${variant}`, className].filter(Boolean).join(" ")}
-      {...rest}
-    />
-  );
+    const theme = useThemeStore((s) => s.theme);
+    const decorative = alt === undefined;
+    const src =
+        variant === "full"
+            ? `/brand/logo/logo-inteira-${theme === "dark" ? "white" : "black"}.png`
+            : `/brand/logo/tf-symbol-color${theme === "dark" ? "-dark" : ""}.svg`;
+    return (
+        <img
+            src={src}
+            alt={decorative ? "" : alt}
+            aria-hidden={decorative || undefined}
+            className={["tf-logo", `tf-logo--${variant}`, className].filter(Boolean).join(" ")}
+            {...rest}
+        />
+    );
 }

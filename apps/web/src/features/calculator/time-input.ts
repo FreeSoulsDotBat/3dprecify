@@ -12,8 +12,8 @@ import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 // carries into +1h/0min (arquitetura-016.md §7).
 
 export interface HoursMinutes {
-  h: number;
-  min: number;
+    h: number;
+    min: number;
 }
 
 /**
@@ -22,16 +22,16 @@ export interface HoursMinutes {
  * 0h0min — never NaN on screen (a document with a bad/blank decimal still opens).
  */
 export function decimalHoursToHm(value: string | number): HoursMinutes {
-  const n = typeof value === "number" ? value : parseDecimal(value);
-  if (!Number.isFinite(n) || n < 0) return { h: 0, min: 0 };
-  const h = Math.trunc(n);
-  let min = Math.round((n - h) * 60);
-  let carriedH = h;
-  if (min >= 60) {
-    min -= 60;
-    carriedH += 1;
-  }
-  return { h: carriedH, min };
+    const n = typeof value === "number" ? value : parseDecimal(value);
+    if (!Number.isFinite(n) || n < 0) return { h: 0, min: 0 };
+    const h = Math.trunc(n);
+    let min = Math.round((n - h) * 60);
+    let carriedH = h;
+    if (min >= 60) {
+        min -= 60;
+        carriedH += 1;
+    }
+    return { h: carriedH, min };
 }
 
 /**
@@ -40,9 +40,9 @@ export function decimalHoursToHm(value: string | number): HoursMinutes {
  * fractional artefact. Negative/non-finite parts are treated as 0.
  */
 export function hmToDecimalHours(h: number, min: number): number {
-  const safeH = Number.isFinite(h) && h >= 0 ? Math.trunc(h) : 0;
-  const safeMin = Number.isFinite(min) && min >= 0 ? Math.trunc(min) : 0;
-  return (safeH * 60 + safeMin) / 60;
+    const safeH = Number.isFinite(h) && h >= 0 ? Math.trunc(h) : 0;
+    const safeMin = Number.isFinite(min) && min >= 0 ? Math.trunc(min) : 0;
+    return (safeH * 60 + safeMin) / 60;
 }
 
 /**
@@ -53,10 +53,10 @@ export function hmToDecimalHours(h: number, min: number): number {
  * — trimmed to a bare integer string when minutes are 0 (matches the existing "5" seed value).
  */
 export function hmToDecimalString(h: number, min: number): string {
-  const decimal = hmToDecimalHours(h, min);
-  if (Number.isInteger(decimal)) return String(decimal);
-  const fixed = decimal.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
-  return fixed.replace(".", ",");
+    const decimal = hmToDecimalHours(h, min);
+    if (Number.isInteger(decimal)) return String(decimal);
+    const fixed = decimal.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+    return fixed.replace(".", ",");
 }
 
 /**
@@ -83,10 +83,10 @@ export function hmToDecimalString(h: number, min: number): string {
 const RE_RELOGIO = /^(\d{1,4})\s*[:hH]\s*(\d{1,2})\s*(?:m|min)?$/i;
 
 export function parseRelogio(bruto: string): HoursMinutes | null {
-  const m = RE_RELOGIO.exec((bruto ?? "").trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (!Number.isFinite(h) || !Number.isFinite(min) || min > 59) return null;
-  return { h, min };
+    const m = RE_RELOGIO.exec((bruto ?? "").trim());
+    if (!m) return null;
+    const h = Number(m[1]);
+    const min = Number(m[2]);
+    if (!Number.isFinite(h) || !Number.isFinite(min) || min > 59) return null;
+    return { h, min };
 }

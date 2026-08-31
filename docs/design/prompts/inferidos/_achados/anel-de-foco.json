@@ -1,20 +1,20 @@
 {
-  "id": "anel-de-foco",
-  "nome": "O anel de foco — duas implementações e metade da espessura",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/styles/tokens/elevation.css",
-    "apps/web/src/shared/ui/button.css",
-    "apps/web/src/shared/ui/field.css",
-    "apps/web/src/shared/ui/segmented.css",
-    "apps/web/src/shared/ui/switch.css",
-    "apps/web/src/shared/ui/dialog.css"
-  ],
-  "oQueFoiInferido": "A espessura e a forma do foco visível, e uma segunda linguagem. O token exportado define anel de 3px em DUAS camadas; o app redefiniu `--ring-width: 2px` com UMA camada só, e o comentário assume a divergência ('the former double-layer read as a double border, so the halo is dropped'). O Segmented nem usa o token: desenha `outline: 2px solid var(--accent)` com offset, porque uma troca de fundo sumiria justamente no item já selecionado. Falta desenhar: o foco de cada tipo de peça (botão, campo, pílula, cartão clicável, item do menu) nos dois temas.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Quem navega por teclado vê um contorno mais fino do que a marca especificou e de duas formas diferentes conforme a peça — e o anel é a única pista de onde o cursor está.",
-  "prioridade": "MEDIA",
-  "refutacao": "A comparação confere linha a linha: `.design-import/tokens/elevation.css:13-16` define `--ring-width: 3px` e `--ring` com sólido + halo 28%, sob o comentário 'UPDATED: focus ring is now solid + halo for AA 1.4.11'; `apps/web/src/styles/tokens/elevation.css:28-29` define `--ring-width: 2px` e uma camada; o readme (l.25) crava 'Focus: visible 3px purple ring, :focus-visible only, never removed'. Ou seja, o ANEL tem desenho (token exportado do Claude Design) e o app divergiu conscientemente — por isso PROTOTIPO_PARCIAL, não NENHUMA. O que não tem desenho em lugar nenhum é o foco POR PEÇA: nenhuma das 6 telas do ui_kit e nenhum quadro do canvas renderiza um estado de foco (o canvas só tem estilos inline, sem `:focus-visible`). E é aí que a segunda linguagem nasceu, com o motivo escrito no próprio `segmented.css`. Sobrevive.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "anel-de-foco",
+    "nome": "O anel de foco — duas implementações e metade da espessura",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/styles/tokens/elevation.css",
+        "apps/web/src/shared/ui/button.css",
+        "apps/web/src/shared/ui/field.css",
+        "apps/web/src/shared/ui/segmented.css",
+        "apps/web/src/shared/ui/switch.css",
+        "apps/web/src/shared/ui/dialog.css"
+    ],
+    "oQueFoiInferido": "A espessura e a forma do foco visível, e uma segunda linguagem. O token exportado define anel de 3px em DUAS camadas; o app redefiniu `--ring-width: 2px` com UMA camada só, e o comentário assume a divergência ('the former double-layer read as a double border, so the halo is dropped'). O Segmented nem usa o token: desenha `outline: 2px solid var(--accent)` com offset, porque uma troca de fundo sumiria justamente no item já selecionado. Falta desenhar: o foco de cada tipo de peça (botão, campo, pílula, cartão clicável, item do menu) nos dois temas.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Quem navega por teclado vê um contorno mais fino do que a marca especificou e de duas formas diferentes conforme a peça — e o anel é a única pista de onde o cursor está.",
+    "prioridade": "MEDIA",
+    "refutacao": "A comparação confere linha a linha: `.design-import/tokens/elevation.css:13-16` define `--ring-width: 3px` e `--ring` com sólido + halo 28%, sob o comentário 'UPDATED: focus ring is now solid + halo for AA 1.4.11'; `apps/web/src/styles/tokens/elevation.css:28-29` define `--ring-width: 2px` e uma camada; o readme (l.25) crava 'Focus: visible 3px purple ring, :focus-visible only, never removed'. Ou seja, o ANEL tem desenho (token exportado do Claude Design) e o app divergiu conscientemente — por isso PROTOTIPO_PARCIAL, não NENHUMA. O que não tem desenho em lugar nenhum é o foco POR PEÇA: nenhuma das 6 telas do ui_kit e nenhum quadro do canvas renderiza um estado de foco (o canvas só tem estilos inline, sem `:focus-visible`). E é aí que a segunda linguagem nasceu, com o motivo escrito no próprio `segmented.css`. Sobrevive.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

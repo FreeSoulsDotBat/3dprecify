@@ -1,16 +1,16 @@
 {
-  "id": "dialogo-saida-fila-pendente",
-  "nome": "Diálogo de saída com orçamentos na fila",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/history/sign-out-outbox-guard.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "Um `Dialog` BLOQUEANTE (`<DialogContent showClose={false}>`, sem X de fechar) montado pelo shell, em DOIS passos. Passo 1: título com a contagem, corpo, um `Alert tone=\"danger\"` de sincronização parcial que só aparece DEPOIS de uma tentativa que sobrou item, e uma coluna vertical de quatro ações nesta ordem — \"Sincronizar agora\" (desabilitado offline, com uma legenda centrada explicando por quê), \"Sair e descartar\" (`variant=\"danger\"`), \"Voltar\". Passo 2: confirmação destrutiva com \"Voltar\" + confirmar em `danger`. Inferido: tudo — a hierarquia entre sincronizar e descartar, a escada de dois passos, o botão desabilitado com legenda em vez de escondido, o vermelho no meio do diálogo, e a ordem da pilha.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a única superfície do app que pode destruir trabalho do vendedor — o item na fila é a ÚNICA cópia dele — e a decisão inteira (o que é primário, o que é perigoso, quantos passos) foi arbitrada por quem escreveu o código.",
-  "prioridade": "ALTA",
-  "refutacao": "Nenhuma autoridade chega perto. O protótipo trata \"Sair\" como uma linha simples da Conta (§E7) e §F item 7 como \"Sair na Conta volta ao Login\" — sem confirmação, sem fila, sem diálogo; a matriz §G, linha Conta, diz literalmente \"logout ok, sync off\", que é a decisão OPOSTA (sair sempre pode). §E8 usa Sheet, e só para upsell. A fila offline (outbox, ADR-0018) nasceu no E4 em 2026-07, depois do protótipo, então não havia o que desenhar. `docs/design/prototype-audit-2026-07-02.md` não menciona nada parecido em V1/V2/V3. `.design-import/ui_kits/precifica3d/AccountScreen.jsx` — o único desenho de \"Sair\" que existe em JSX — é um `ListItem` com ícone `log-out` em `var(--danger)` e `onClick={onLogout}` DIRETO, sem confirmação nenhuma. No canvas 018, \"Sair\" aparece 4 vezes: um `tf-btn tf-btn--ghost tf-btn--sm` na top-bar e um `tf-btn tf-btn--secondary` com ícone no `tf-conta__signout` — nenhum diálogo, nenhum estado de fila (busca por \"fila\"/\"sincroniz\" no artboard de Conta: nada).",
-  "sobreviveu": true,
-  "area": "shell"
+    "id": "dialogo-saida-fila-pendente",
+    "nome": "Diálogo de saída com orçamentos na fila",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/history/sign-out-outbox-guard.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "Um `Dialog` BLOQUEANTE (`<DialogContent showClose={false}>`, sem X de fechar) montado pelo shell, em DOIS passos. Passo 1: título com a contagem, corpo, um `Alert tone=\"danger\"` de sincronização parcial que só aparece DEPOIS de uma tentativa que sobrou item, e uma coluna vertical de quatro ações nesta ordem — \"Sincronizar agora\" (desabilitado offline, com uma legenda centrada explicando por quê), \"Sair e descartar\" (`variant=\"danger\"`), \"Voltar\". Passo 2: confirmação destrutiva com \"Voltar\" + confirmar em `danger`. Inferido: tudo — a hierarquia entre sincronizar e descartar, a escada de dois passos, o botão desabilitado com legenda em vez de escondido, o vermelho no meio do diálogo, e a ordem da pilha.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a única superfície do app que pode destruir trabalho do vendedor — o item na fila é a ÚNICA cópia dele — e a decisão inteira (o que é primário, o que é perigoso, quantos passos) foi arbitrada por quem escreveu o código.",
+    "prioridade": "ALTA",
+    "refutacao": "Nenhuma autoridade chega perto. O protótipo trata \"Sair\" como uma linha simples da Conta (§E7) e §F item 7 como \"Sair na Conta volta ao Login\" — sem confirmação, sem fila, sem diálogo; a matriz §G, linha Conta, diz literalmente \"logout ok, sync off\", que é a decisão OPOSTA (sair sempre pode). §E8 usa Sheet, e só para upsell. A fila offline (outbox, ADR-0018) nasceu no E4 em 2026-07, depois do protótipo, então não havia o que desenhar. `docs/design/prototype-audit-2026-07-02.md` não menciona nada parecido em V1/V2/V3. `.design-import/ui_kits/precifica3d/AccountScreen.jsx` — o único desenho de \"Sair\" que existe em JSX — é um `ListItem` com ícone `log-out` em `var(--danger)` e `onClick={onLogout}` DIRETO, sem confirmação nenhuma. No canvas 018, \"Sair\" aparece 4 vezes: um `tf-btn tf-btn--ghost tf-btn--sm` na top-bar e um `tf-btn tf-btn--secondary` com ícone no `tf-conta__signout` — nenhum diálogo, nenhum estado de fila (busca por \"fila\"/\"sincroniz\" no artboard de Conta: nada).",
+    "sobreviveu": true,
+    "area": "shell"
 }

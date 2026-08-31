@@ -4,24 +4,24 @@
 # Parity is by identical invocation, inspectable here and in .github/workflows/ci.yml (SC-206).
 # Accepted cost: slower push (decided R2-G3). e2e/docker/drift/secret-scan are CI-only by nature.
 pre-commit:
-  parallel: true
-  commands:
-    format:
-      glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}"
-      run: pnpm prettier --check {staged_files}
-    lint:
-      glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
-      run: pnpm eslint {staged_files}
+    parallel: true
+    commands:
+        format:
+            glob: "*.{ts,tsx,js,jsx,mjs,cjs,json,md,yml,yaml,css}"
+            run: pnpm prettier --check {staged_files}
+        lint:
+            glob: "*.{ts,tsx,js,jsx,mjs,cjs}"
+            run: pnpm eslint {staged_files}
 
 pre-push:
-  parallel: false
-  commands:
-    gate:
-      run: pnpm gate:all
-    # A merged migration is immutable — catch an in-place amend before it leaves the machine
-    # (mirrors the CI migration-guard job; needs origin/develop, fetched best-effort by the script).
-    migration-guard:
-      run: sh scripts/check-migrations.sh
+    parallel: false
+    commands:
+        gate:
+            run: pnpm gate:all
+        # A merged migration is immutable — catch an in-place amend before it leaves the machine
+        # (mirrors the CI migration-guard job; needs origin/develop, fetched best-effort by the script).
+        migration-guard:
+            run: sh scripts/check-migrations.sh
 
 # INVARIANT (ADR-0022 §Amendment to ADR-0014): graph freshness on LOCAL paths is owned by
 # `graphify hook install`'s own `post-commit` + `post-checkout` hooks, written directly to .git/hooks/
@@ -35,6 +35,6 @@ pre-push:
 # the "may not fire" premise the first retirement note repeated was a never-tested hedge. The script
 # guards to `develop` and no-ops without graphify. Boundary: `git pull --rebase` fires no post-merge.
 post-merge:
-  commands:
-    graph-refresh:
-      run: sh scripts/graph-refresh.sh
+    commands:
+        graph-refresh:
+            run: sh scripts/graph-refresh.sh

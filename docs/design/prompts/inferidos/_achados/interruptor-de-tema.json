@@ -1,17 +1,17 @@
 {
-  "id": "interruptor-de-tema",
-  "nome": "Interruptor (Switch) — a trilha, o polegar e o alvo escondido",
-  "escala": "COMPONENTE",
-  "arquivos": [
-    "apps/web/src/shared/ui/switch.tsx",
-    "apps/web/src/shared/ui/switch.css",
-    "apps/web/src/pages/conta/conta-page.tsx"
-  ],
-  "oQueFoiInferido": "As MEDIDAS e a relação entre alvo e visual: a raiz é o alvo de 44×44 (`min-width`/`min-height: var(--touch-min)`) e a trilha VISÍVEL (44×24, radius pill, polegar branco de 20px com sombra, `translateX(20px)` quando ligado) fica centralizada dentro dele — o vendedor toca numa área maior do que enxerga. Inferidos ainda o desabilitado (opacidade 0,55) e o foco (o anel vai na trilha, não na raiz).",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O mesmo ajuste tem dois corpos conforme a largura da janela, e a medida que resolve o alvo de toque foi decidida numa auditoria de acessibilidade, não num desenho.",
-  "prioridade": "BAIXA",
-  "refutacao": "As duas metades ESTÃO desenhadas, cada uma no seu lugar: `AccountScreen.jsx:45` põe `<Switch checked={dark} onChange={onToggleTheme}/>` numa linha com ícone sol/lua, título 'Tema escuro' e sub 'Alto contraste nos dois modos'; e o canvas do dono desenha a alternativa DESKTOP (pílulas Claro/Escuro com ícones, l.429-431, `thOn` na l.580). Conferi o código: `conta-page.tsx:227` é `isWide ? <Segmented … size=\"sm\" role=\"radiogroup\"> : <Switch aria-labelledby=…>` — as duas são mutuamente exclusivas por largura, então 'nunca desenhadas lado a lado' não é defeito. Sobrevive só a MEDIDA, que veio de auditoria e não de desenho: item 11 mediu 'switch 28', a V3 mediu '46×44', e o app chegou a raiz 44×44 com trilha visível 44×24 — o alvo maior que a peça, que nenhuma autoridade mostra. §E7 só diz 'toggle de tema (Dark↔Light)'.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "interruptor-de-tema",
+    "nome": "Interruptor (Switch) — a trilha, o polegar e o alvo escondido",
+    "escala": "COMPONENTE",
+    "arquivos": [
+        "apps/web/src/shared/ui/switch.tsx",
+        "apps/web/src/shared/ui/switch.css",
+        "apps/web/src/pages/conta/conta-page.tsx"
+    ],
+    "oQueFoiInferido": "As MEDIDAS e a relação entre alvo e visual: a raiz é o alvo de 44×44 (`min-width`/`min-height: var(--touch-min)`) e a trilha VISÍVEL (44×24, radius pill, polegar branco de 20px com sombra, `translateX(20px)` quando ligado) fica centralizada dentro dele — o vendedor toca numa área maior do que enxerga. Inferidos ainda o desabilitado (opacidade 0,55) e o foco (o anel vai na trilha, não na raiz).",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O mesmo ajuste tem dois corpos conforme a largura da janela, e a medida que resolve o alvo de toque foi decidida numa auditoria de acessibilidade, não num desenho.",
+    "prioridade": "BAIXA",
+    "refutacao": "As duas metades ESTÃO desenhadas, cada uma no seu lugar: `AccountScreen.jsx:45` põe `<Switch checked={dark} onChange={onToggleTheme}/>` numa linha com ícone sol/lua, título 'Tema escuro' e sub 'Alto contraste nos dois modos'; e o canvas do dono desenha a alternativa DESKTOP (pílulas Claro/Escuro com ícones, l.429-431, `thOn` na l.580). Conferi o código: `conta-page.tsx:227` é `isWide ? <Segmented … size=\"sm\" role=\"radiogroup\"> : <Switch aria-labelledby=…>` — as duas são mutuamente exclusivas por largura, então 'nunca desenhadas lado a lado' não é defeito. Sobrevive só a MEDIDA, que veio de auditoria e não de desenho: item 11 mediu 'switch 28', a V3 mediu '46×44', e o app chegou a raiz 44×44 com trilha visível 44×24 — o alvo maior que a peça, que nenhuma autoridade mostra. §E7 só diz 'toggle de tema (Dark↔Light)'.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

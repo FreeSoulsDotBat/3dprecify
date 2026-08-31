@@ -1,13 +1,13 @@
 {
-  "id": "salvar-simulacao-na-ficha-do-produto",
-  "nome": "\"Salvar simulação\" dentro da ficha de produto do Catálogo",
-  "escala": "COMPONENTE",
-  "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
-  "oQueFoiInferido": "Uma SEGUNDA entrada de criação de simulação, fora do Calcular. Em `produto-page.tsx:428-451`, no `tf-calc-footer`: primeiro `RecordSnapshotButton` (sem wrapper), logo abaixo `<div className=\"flex justify-center\"><SaveScenarioSheet …/></div>`, condicionado a `editing && result && input` (só produto já salvo, com preço válido), gerando `costBasis.kind = \"PRODUCT\"` e mandando para a folha o rótulo `\"{nome do produto} (referência do catálogo)\"`. Inferido inteiramente: que essa ação pertence à ficha do produto, sua posição (empilhada depois de \"Salvar no histórico\" — o mesmo par ambíguo do Calcular, reproduzido numa segunda tela), e o rótulo da base.",
-  "autoridade": "NENHUMA",
-  "impacto": "Existe um segundo caminho para criar simulação que nenhum desenho previu — e ele aparece exatamente ao lado de outro botão de salvar, num contexto (catálogo) onde o vendedor não está pensando em canais.",
-  "prioridade": "MEDIA",
-  "refutacao": "Fui checar se ao menos a spec textual cobre, para poder rebaixar de NENHUMA. Não cobre: grep por `produto-page` / \"ficha do produto\" / \"product page\" / \"produto salvo\" em `specs/010-e5-saved-scenarios/ux-scenarios.md` → ZERO ocorrências; §2.1/§2.2 e §11-F1 (\"Option A — inside Calcular\") colocam TODAS as entradas de E5 dentro do Calcular. O código admite a origem: o comentário diz que isto \"closes FR-606a on the UI side\" — um requisito de spec.md, não um desenho. Nas 4 autoridades: o protótipo E5 (Catálogo) desenha lista + formulário filamento/impressora + \"Salvar → dispara sheet Premium\", e `CatalogScreen.jsx` confirma que o único Sheet ali é o de adicionar item; o canvas 018 desenha a ficha do Catálogo à direita com AÇÕES EXPLÍCITAS — \"Duplicar\", \"Excluir\", \"Salvar alterações\", \"Usar no cálculo\" (linhas 124-125 e 224) — e NENHUMA delas é criar simulação. O dono desenhou essa ficha botão a botão e não pôs isso lá. Sobrevive, e a autoridade NENHUMA está confirmada.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "salvar-simulacao-na-ficha-do-produto",
+    "nome": "\"Salvar simulação\" dentro da ficha de produto do Catálogo",
+    "escala": "COMPONENTE",
+    "arquivos": ["apps/web/src/pages/catalogo/produto-page.tsx"],
+    "oQueFoiInferido": "Uma SEGUNDA entrada de criação de simulação, fora do Calcular. Em `produto-page.tsx:428-451`, no `tf-calc-footer`: primeiro `RecordSnapshotButton` (sem wrapper), logo abaixo `<div className=\"flex justify-center\"><SaveScenarioSheet …/></div>`, condicionado a `editing && result && input` (só produto já salvo, com preço válido), gerando `costBasis.kind = \"PRODUCT\"` e mandando para a folha o rótulo `\"{nome do produto} (referência do catálogo)\"`. Inferido inteiramente: que essa ação pertence à ficha do produto, sua posição (empilhada depois de \"Salvar no histórico\" — o mesmo par ambíguo do Calcular, reproduzido numa segunda tela), e o rótulo da base.",
+    "autoridade": "NENHUMA",
+    "impacto": "Existe um segundo caminho para criar simulação que nenhum desenho previu — e ele aparece exatamente ao lado de outro botão de salvar, num contexto (catálogo) onde o vendedor não está pensando em canais.",
+    "prioridade": "MEDIA",
+    "refutacao": "Fui checar se ao menos a spec textual cobre, para poder rebaixar de NENHUMA. Não cobre: grep por `produto-page` / \"ficha do produto\" / \"product page\" / \"produto salvo\" em `specs/010-e5-saved-scenarios/ux-scenarios.md` → ZERO ocorrências; §2.1/§2.2 e §11-F1 (\"Option A — inside Calcular\") colocam TODAS as entradas de E5 dentro do Calcular. O código admite a origem: o comentário diz que isto \"closes FR-606a on the UI side\" — um requisito de spec.md, não um desenho. Nas 4 autoridades: o protótipo E5 (Catálogo) desenha lista + formulário filamento/impressora + \"Salvar → dispara sheet Premium\", e `CatalogScreen.jsx` confirma que o único Sheet ali é o de adicionar item; o canvas 018 desenha a ficha do Catálogo à direita com AÇÕES EXPLÍCITAS — \"Duplicar\", \"Excluir\", \"Salvar alterações\", \"Usar no cálculo\" (linhas 124-125 e 224) — e NENHUMA delas é criar simulação. O dono desenhou essa ficha botão a botão e não pôs isso lá. Sobrevive, e a autoridade NENHUMA está confirmada.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

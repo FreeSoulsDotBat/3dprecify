@@ -1,17 +1,17 @@
 {
-  "id": "botao-carregando-e-desabilitado",
-  "nome": "Botão em carregamento, desabilitado e com brilho",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/shared/ui/button.tsx",
-    "apps/web/src/shared/ui/button.css",
-    "apps/web/src/shared/ui/spinner.tsx"
-  ],
-  "oQueFoiInferido": "O estado ocupado: `loading` INSERE um `<Spinner size=\"sm\">` ANTES do rótulo, mantém o texto inalterado, bloqueia o clique, marca `aria-busy` e troca o cursor para `progress` — a largura do botão muda ao aparecer o giro, porque o spinner entra no fluxo. O `disabled` é opacidade 0,55 e nada mais. O `glow` (halo roxo) é prop livre com a regra 'um CTA focal por zona' registrada só em prosa. E não existe slot de ícone: o DS tinha `iconLeft` e `full`, o app não — um ícone passado como filho cai DENTRO do `.tf-btn__label`.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "Salvar, exportar, assinar e sincronizar — as ações que realmente esperam a rede — mudam de largura enquanto o vendedor olha, e um botão desabilitado só fica pálido, sem dizer por quê.",
-  "prioridade": "MEDIA",
-  "refutacao": "Corrijo o mapeador num ponto que muda o achado. `LoginScreen.jsx:39-46` NÃO mostra o spinner 'solto, fora do botão': ele está DENTRO do `<button>`, no lugar do G do Google (`{loading ? <Spinner size={18}/> : GoogleG}`), com o rótulo trocando para 'Entrando…', `disabled` e `aria-busy`. Existe, portanto, UM botão em carregamento desenhado — e ele resolve exatamente o defeito descrito: o spinner SUBSTITUI o ícone (largura estável) em vez de ser inserido antes de um rótulo que não muda. O app diverge do único desenho que havia. Continua sem desenho: o desabilitado (o canvas coloca `disabled=\"{{ writeBlocked }}\"` em dois botões, l.82 e l.248, mas sem folha de estilo carregada nada pinta), o `glow` fora do CTA hero, e o slot de ícone (`iconLeft`/`full` aparecem em 4 telas do kit e não existem no `ButtonProps`). §D.2 não descreve carregando nem desabilitado; a auditoria item 8 registra 'loading skeletons' como lacuna do próprio protótipo.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "botao-carregando-e-desabilitado",
+    "nome": "Botão em carregamento, desabilitado e com brilho",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/shared/ui/button.tsx",
+        "apps/web/src/shared/ui/button.css",
+        "apps/web/src/shared/ui/spinner.tsx"
+    ],
+    "oQueFoiInferido": "O estado ocupado: `loading` INSERE um `<Spinner size=\"sm\">` ANTES do rótulo, mantém o texto inalterado, bloqueia o clique, marca `aria-busy` e troca o cursor para `progress` — a largura do botão muda ao aparecer o giro, porque o spinner entra no fluxo. O `disabled` é opacidade 0,55 e nada mais. O `glow` (halo roxo) é prop livre com a regra 'um CTA focal por zona' registrada só em prosa. E não existe slot de ícone: o DS tinha `iconLeft` e `full`, o app não — um ícone passado como filho cai DENTRO do `.tf-btn__label`.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "Salvar, exportar, assinar e sincronizar — as ações que realmente esperam a rede — mudam de largura enquanto o vendedor olha, e um botão desabilitado só fica pálido, sem dizer por quê.",
+    "prioridade": "MEDIA",
+    "refutacao": "Corrijo o mapeador num ponto que muda o achado. `LoginScreen.jsx:39-46` NÃO mostra o spinner 'solto, fora do botão': ele está DENTRO do `<button>`, no lugar do G do Google (`{loading ? <Spinner size={18}/> : GoogleG}`), com o rótulo trocando para 'Entrando…', `disabled` e `aria-busy`. Existe, portanto, UM botão em carregamento desenhado — e ele resolve exatamente o defeito descrito: o spinner SUBSTITUI o ícone (largura estável) em vez de ser inserido antes de um rótulo que não muda. O app diverge do único desenho que havia. Continua sem desenho: o desabilitado (o canvas coloca `disabled=\"{{ writeBlocked }}\"` em dois botões, l.82 e l.248, mas sem folha de estilo carregada nada pinta), o `glow` fora do CTA hero, e o slot de ícone (`iconLeft`/`full` aparecem em 4 telas do kit e não existem no `ButtonProps`). §D.2 não descreve carregando nem desabilitado; a auditoria item 8 registra 'loading skeletons' como lacuna do próprio protótipo.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

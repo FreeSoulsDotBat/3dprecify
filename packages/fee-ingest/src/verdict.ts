@@ -41,9 +41,9 @@ export type Mk = (typeof MARKETPLACE_COVERAGE)[number];
  * que escreve o `catalog.json` é a composição, depois de validar (ADR-0028 §3).
  */
 export type CollectorVerdict =
-  | { kind: "LIDO"; marketplace: Mk; collectedAt: string; sourceUrl: string; slice: CatalogSlice }
-  | { kind: "ABORTADO"; marketplace: Mk; reason: string; sourceUrl: string }
-  | { kind: "NAO_LIDO"; marketplace: Mk; reason: string };
+    | { kind: "LIDO"; marketplace: Mk; collectedAt: string; sourceUrl: string; slice: CatalogSlice }
+    | { kind: "ABORTADO"; marketplace: Mk; reason: string; sourceUrl: string }
+    | { kind: "NAO_LIDO"; marketplace: Mk; reason: string };
 
 /** O motivo literal de um marketplace que não deixou veredito no disco. */
 export const SEM_VEREDITO = "o job não produziu veredito";
@@ -62,25 +62,25 @@ export const SEM_VEREDITO = "o job não produziu veredito";
  * resposta honesta é não usar nenhuma.
  */
 export function resolverVereditos(
-  disco: readonly CollectorVerdict[],
+    disco: readonly CollectorVerdict[],
 ): Record<Mk, CollectorVerdict> {
-  const porMarketplace = new Map<Mk, CollectorVerdict[]>();
-  for (const v of disco) {
-    porMarketplace.set(v.marketplace, [...(porMarketplace.get(v.marketplace) ?? []), v]);
-  }
+    const porMarketplace = new Map<Mk, CollectorVerdict[]>();
+    for (const v of disco) {
+        porMarketplace.set(v.marketplace, [...(porMarketplace.get(v.marketplace) ?? []), v]);
+    }
 
-  const saida = {} as Record<Mk, CollectorVerdict>;
-  for (const mk of MARKETPLACE_COVERAGE) {
-    const achados = porMarketplace.get(mk) ?? [];
-    const unico = achados.length === 1 ? achados[0] : undefined;
-    saida[mk] = unico ?? {
-      kind: "NAO_LIDO",
-      marketplace: mk,
-      reason:
-        achados.length === 0
-          ? SEM_VEREDITO
-          : `dois vereditos para o mesmo marketplace (${achados.length}) — nenhum é confiável`,
-    };
-  }
-  return saida;
+    const saida = {} as Record<Mk, CollectorVerdict>;
+    for (const mk of MARKETPLACE_COVERAGE) {
+        const achados = porMarketplace.get(mk) ?? [];
+        const unico = achados.length === 1 ? achados[0] : undefined;
+        saida[mk] = unico ?? {
+            kind: "NAO_LIDO",
+            marketplace: mk,
+            reason:
+                achados.length === 0
+                    ? SEM_VEREDITO
+                    : `dois vereditos para o mesmo marketplace (${achados.length}) — nenhum é confiável`,
+        };
+    }
+    return saida;
 }

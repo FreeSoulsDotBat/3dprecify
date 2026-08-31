@@ -1,16 +1,16 @@
 {
-  "id": "barra-de-contexto-simulacao-carregada",
-  "nome": "Barra de contexto \"Simulação: {nome}\" (com a simulação aberta)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/scenarios/scenario-context-bar.tsx",
-    "apps/web/src/pages/calcular/calcular-page.tsx"
-  ],
-  "oQueFoiInferido": "O composto mais novo do E5 e o único sinal de que a calculadora está exibindo uma simulação salva. É um `Card padding=\"sm\"` NO FLUXO da página (verificado: nenhum `sticky`/`fixed` no componente — ele rola junto, enquanto a spec pede \"pinned at the top\") com: linha 1 = nome truncado + `Button ghost` \"Fechar simulação\"; linha 2 = \"Recalculado com os preços de hoje\" + `Badge` \"Alterações não salvas\"; alertas condicionais; e um `flex flex-wrap gap-2` com até QUATRO botões de pesos diferentes (\"Abrir origem\" ghost · \"Renomear\" ghost · \"Duplicar\" secondary · \"Salvar alterações\" primary) — cinco affordances contando o Fechar. Inferido: achatar o \"⋯\" da spec em botões soltos; a ordem e a hierarquia deles; a AUSÊNCIA da linha \"Base de custo: {…}\" que o wireframe da spec traz (`costBasis` só é usado para o alerta de degradação e para habilitar \"Abrir origem\"); e a distância entre a barra e os campos que ela governa.",
-  "autoridade": "SPEC_TEXTUAL",
-  "impacto": "O sinal de \"você está editando uma estratégia salva\" — e o único acesso a salvar/duplicar/renomear/fechar — é uma faixa improvisada que quebra em linhas no celular e rola para fora da tela.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei qualquer barra de contexto desenhada. O protótipo não tem o CONCEITO de cenário, então E4 (Calcular) não tem nada acima dos inputs além do par de PriceHero varejo/atacado — li o `CalculatorScreen.jsx` inteiro para confirmar: `TopBar` → grid de dois PriceHero → Alert de peso → Card de entradas. Nenhuma faixa de contexto, nenhum \"objeto carregado\". O canvas 018 exclui Calcular por escrito e o \"Calcular Desktop\" citado não existe no repo. A coisa mais próxima em qualquer autoridade é o cabeçalho da ficha de Orçamentos do canvas (nome + \"Editar rótulo\" ghost + linha de ações com Exportar/Recalcular/Comparar/Excluir separado por `margin-left:auto`) — outra aba, outro objeto (congelado), e ainda assim com a ação destrutiva DESLOCADA, o que a barra construída não faz. ux §10.1 classifica esta barra como item #1 \"Highest\" a prototipar; nunca foi. Sobrevive.",
-  "sobreviveu": true,
-  "area": "simulacoes"
+    "id": "barra-de-contexto-simulacao-carregada",
+    "nome": "Barra de contexto \"Simulação: {nome}\" (com a simulação aberta)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/scenarios/scenario-context-bar.tsx",
+        "apps/web/src/pages/calcular/calcular-page.tsx"
+    ],
+    "oQueFoiInferido": "O composto mais novo do E5 e o único sinal de que a calculadora está exibindo uma simulação salva. É um `Card padding=\"sm\"` NO FLUXO da página (verificado: nenhum `sticky`/`fixed` no componente — ele rola junto, enquanto a spec pede \"pinned at the top\") com: linha 1 = nome truncado + `Button ghost` \"Fechar simulação\"; linha 2 = \"Recalculado com os preços de hoje\" + `Badge` \"Alterações não salvas\"; alertas condicionais; e um `flex flex-wrap gap-2` com até QUATRO botões de pesos diferentes (\"Abrir origem\" ghost · \"Renomear\" ghost · \"Duplicar\" secondary · \"Salvar alterações\" primary) — cinco affordances contando o Fechar. Inferido: achatar o \"⋯\" da spec em botões soltos; a ordem e a hierarquia deles; a AUSÊNCIA da linha \"Base de custo: {…}\" que o wireframe da spec traz (`costBasis` só é usado para o alerta de degradação e para habilitar \"Abrir origem\"); e a distância entre a barra e os campos que ela governa.",
+    "autoridade": "SPEC_TEXTUAL",
+    "impacto": "O sinal de \"você está editando uma estratégia salva\" — e o único acesso a salvar/duplicar/renomear/fechar — é uma faixa improvisada que quebra em linhas no celular e rola para fora da tela.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei qualquer barra de contexto desenhada. O protótipo não tem o CONCEITO de cenário, então E4 (Calcular) não tem nada acima dos inputs além do par de PriceHero varejo/atacado — li o `CalculatorScreen.jsx` inteiro para confirmar: `TopBar` → grid de dois PriceHero → Alert de peso → Card de entradas. Nenhuma faixa de contexto, nenhum \"objeto carregado\". O canvas 018 exclui Calcular por escrito e o \"Calcular Desktop\" citado não existe no repo. A coisa mais próxima em qualquer autoridade é o cabeçalho da ficha de Orçamentos do canvas (nome + \"Editar rótulo\" ghost + linha de ações com Exportar/Recalcular/Comparar/Excluir separado por `margin-left:auto`) — outra aba, outro objeto (congelado), e ainda assim com a ação destrutiva DESLOCADA, o que a barra construída não faz. ux §10.1 classifica esta barra como item #1 \"Highest\" a prototipar; nunca foi. Sobrevive.",
+    "sobreviveu": true,
+    "area": "simulacoes"
 }

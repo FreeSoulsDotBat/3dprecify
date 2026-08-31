@@ -15,36 +15,36 @@ import type { ChannelFieldName, MarketplaceId } from "./calculator-schema";
 const t = messages.calculator;
 
 export interface ChannelFieldPlanDeterminant {
-  key: string;
-  kind: "SELECT" | "CATEGORY_PICKER";
-  label: string;
-  /** Absent for CATEGORY_PICKER (its options are the category spine, not a closed list). */
-  options?: { value: string; label: string }[];
+    key: string;
+    kind: "SELECT" | "CATEGORY_PICKER";
+    label: string;
+    /** Absent for CATEGORY_PICKER (its options are the category spine, not a closed list). */
+    options?: { value: string; label: string }[];
 }
 
 export interface ChannelFieldPlan {
-  determinants: ChannelFieldPlanDeterminant[];
-  /** Which of the 4 numeric fee fields render, IN THE CANONICAL ORDER (calculator-schema's
-   *  CHANNEL_FEE_FIELDS order) — never the catalog's own array order, which is curation detail. */
-  feeFields: readonly ChannelFieldName[];
-  /** 016/PR-F (US17, FR-926) — `true` sse the catalog declares a non-empty `determinantsSchema.
-   *  sellerProfile` for this marketplace (Shopee today). Drives the TWO-question seller-profile UI
-   *  ("Você vende como" +, se CPF, "mais de 450 pedidos?") — `sellerProfile` is excluded from the
-   *  generic SELECT loop below (like `category`) because it composes into ONE determinant from TWO
-   *  form answers, never a single closed-list select. */
-  sellerProfile: boolean;
-  /** 016/PR-F (US16, FR-923, ADR-0027 §3.2) — the marketplace's published optional per-item costs
-   *  (Shopee `MANUSEIO_VOLUMOSO`), verbatim from the catalog. Empty when the marketplace publishes
-   *  none — zero string/number invented here, only what `optionalSurcharges` declares. */
-  surcharges: readonly OptionalSurcharge[];
+    determinants: ChannelFieldPlanDeterminant[];
+    /** Which of the 4 numeric fee fields render, IN THE CANONICAL ORDER (calculator-schema's
+     *  CHANNEL_FEE_FIELDS order) — never the catalog's own array order, which is curation detail. */
+    feeFields: readonly ChannelFieldName[];
+    /** 016/PR-F (US17, FR-926) — `true` sse the catalog declares a non-empty `determinantsSchema.
+     *  sellerProfile` for this marketplace (Shopee today). Drives the TWO-question seller-profile UI
+     *  ("Você vende como" +, se CPF, "mais de 450 pedidos?") — `sellerProfile` is excluded from the
+     *  generic SELECT loop below (like `category`) because it composes into ONE determinant from TWO
+     *  form answers, never a single closed-list select. */
+    sellerProfile: boolean;
+    /** 016/PR-F (US16, FR-923, ADR-0027 §3.2) — the marketplace's published optional per-item costs
+     *  (Shopee `MANUSEIO_VOLUMOSO`), verbatim from the catalog. Empty when the marketplace publishes
+     *  none — zero string/number invented here, only what `optionalSurcharges` declares. */
+    surcharges: readonly OptionalSurcharge[];
 }
 
 /** The 4 fee fields, in the fixed display order — the plan filters this list, never reorders it. */
 const ALL_FEE_FIELDS: readonly ChannelFieldName[] = [
-  "commissionPct",
-  "fixedFee",
-  "minPerItem",
-  "freightCost",
+    "commissionPct",
+    "fixedFee",
+    "minPerItem",
+    "freightCost",
 ];
 
 /**
@@ -56,17 +56,17 @@ const ALL_FEE_FIELDS: readonly ChannelFieldName[] = [
  * plan (modality selector before the category picker).
  */
 const DETERMINANT_LABELS: Record<
-  string,
-  { label: string; optionLabel: (value: string) => string }
+    string,
+    { label: string; optionLabel: (value: string) => string }
 > = {
-  listingType: {
-    label: t.channels.modality,
-    optionLabel: (v) => t.modalityNames[v as keyof typeof t.modalityNames] ?? v,
-  },
-  plan: {
-    label: t.channels.modality,
-    optionLabel: (v) => t.modalityNames[v as keyof typeof t.modalityNames] ?? v,
-  },
+    listingType: {
+        label: t.channels.modality,
+        optionLabel: (v) => t.modalityNames[v as keyof typeof t.modalityNames] ?? v,
+    },
+    plan: {
+        label: t.channels.modality,
+        optionLabel: (v) => t.modalityNames[v as keyof typeof t.modalityNames] ?? v,
+    },
 };
 
 const CATALOG_MARKETPLACES: readonly string[] = ["MERCADO_LIVRE", "AMAZON", "SHOPEE"];
@@ -78,60 +78,78 @@ const CATALOG_MARKETPLACES: readonly string[] = ["MERCADO_LIVRE", "AMAZON", "SHO
  * IDENTICAL to what the calculator has always shown for it (I4: absence = today's behaviour).
  */
 export function channelFieldPlan(
-  catalog: FeeCatalog,
-  marketplace: MarketplaceId,
+    catalog: FeeCatalog,
+    marketplace: MarketplaceId,
 ): ChannelFieldPlan {
-  if (!CATALOG_MARKETPLACES.includes(marketplace)) {
-    return { determinants: [], feeFields: ALL_FEE_FIELDS, sellerProfile: false, surcharges: [] };
-  }
-  const mk = catalog.marketplaces.find((m) => m.marketplace === (marketplace as Marketplace));
-  if (!mk)
-    return { determinants: [], feeFields: ALL_FEE_FIELDS, sellerProfile: false, surcharges: [] };
-
-  // Rule 1: a determinant key appears sse `determinantsSchema` declares it with a NON-EMPTY option
-  // list. `category` is excluded here even when the schema echoes it (the seed ships
-  // `category: []`) — it is governed entirely by rule below, not by this generic loop.
-  // `sellerProfile` is excluded the SAME way (below): it composes ONE determinant from TWO form
-  // answers, not a single closed-list select — a generic SELECT would ask "CPF_ALTO_VOLUME? sim/não"
-  // verbatim, which is not the question FR-926 asks.
-  const determinants: ChannelFieldPlanDeterminant[] = [];
-  const schema = mk.determinantsSchema as Record<string, unknown> | null | undefined;
-  let sellerProfile = false;
-  if (schema) {
-    for (const [key, raw] of Object.entries(schema)) {
-      if (key === "category") continue;
-      if (key === "sellerProfile") {
-        if (Array.isArray(raw) && raw.length > 0) sellerProfile = true;
-        continue;
-      }
-      if (!Array.isArray(raw) || raw.length === 0) continue;
-      const options = raw.filter((v): v is string => typeof v === "string");
-      if (options.length === 0) continue;
-      const meta = DETERMINANT_LABELS[key];
-      determinants.push({
-        key,
-        kind: "SELECT",
-        label: meta?.label ?? key,
-        options: options.map((value) => ({ value, label: meta?.optionLabel(value) ?? value })),
-      });
+    if (!CATALOG_MARKETPLACES.includes(marketplace)) {
+        return {
+            determinants: [],
+            feeFields: ALL_FEE_FIELDS,
+            sellerProfile: false,
+            surcharges: [],
+        };
     }
-  }
+    const mk = catalog.marketplaces.find((m) => m.marketplace === (marketplace as Marketplace));
+    if (!mk)
+        return {
+            determinants: [],
+            feeFields: ALL_FEE_FIELDS,
+            sellerProfile: false,
+            surcharges: [],
+        };
 
-  // Rule 1 (category clause): sse the marketplace publishes a non-empty categorySpine.
-  if (mk.categorySpine != null && mk.categorySpine.length > 0) {
-    determinants.push({ key: "category", kind: "CATEGORY_PICKER", label: t.categoryPicker.label });
-  }
+    // Rule 1: a determinant key appears sse `determinantsSchema` declares it with a NON-EMPTY option
+    // list. `category` is excluded here even when the schema echoes it (the seed ships
+    // `category: []`) — it is governed entirely by rule below, not by this generic loop.
+    // `sellerProfile` is excluded the SAME way (below): it composes ONE determinant from TWO form
+    // answers, not a single closed-list select — a generic SELECT would ask "CPF_ALTO_VOLUME? sim/não"
+    // verbatim, which is not the question FR-926 asks.
+    const determinants: ChannelFieldPlanDeterminant[] = [];
+    const schema = mk.determinantsSchema as Record<string, unknown> | null | undefined;
+    let sellerProfile = false;
+    if (schema) {
+        for (const [key, raw] of Object.entries(schema)) {
+            if (key === "category") continue;
+            if (key === "sellerProfile") {
+                if (Array.isArray(raw) && raw.length > 0) sellerProfile = true;
+                continue;
+            }
+            if (!Array.isArray(raw) || raw.length === 0) continue;
+            const options = raw.filter((v): v is string => typeof v === "string");
+            if (options.length === 0) continue;
+            const meta = DETERMINANT_LABELS[key];
+            determinants.push({
+                key,
+                kind: "SELECT",
+                label: meta?.label ?? key,
+                options: options.map((value) => ({
+                    value,
+                    label: meta?.optionLabel(value) ?? value,
+                })),
+            });
+        }
+    }
 
-  // Rule 2: fee fields — sse the catalog declares `feeAxes` explicitly; ABSENT = the four fields
-  // (I4 — a cached catalog from before this axis existed renders exactly as it always did).
-  const feeAxes = (mk as { feeAxes?: readonly string[] | null }).feeAxes;
-  const feeFields =
-    feeAxes == null ? ALL_FEE_FIELDS : ALL_FEE_FIELDS.filter((f) => feeAxes.includes(f));
+    // Rule 1 (category clause): sse the marketplace publishes a non-empty categorySpine.
+    if (mk.categorySpine != null && mk.categorySpine.length > 0) {
+        determinants.push({
+            key: "category",
+            kind: "CATEGORY_PICKER",
+            label: t.categoryPicker.label,
+        });
+    }
 
-  const surcharges =
-    (mk as { optionalSurcharges?: readonly OptionalSurcharge[] | null }).optionalSurcharges ?? [];
+    // Rule 2: fee fields — sse the catalog declares `feeAxes` explicitly; ABSENT = the four fields
+    // (I4 — a cached catalog from before this axis existed renders exactly as it always did).
+    const feeAxes = (mk as { feeAxes?: readonly string[] | null }).feeAxes;
+    const feeFields =
+        feeAxes == null ? ALL_FEE_FIELDS : ALL_FEE_FIELDS.filter((f) => feeAxes.includes(f));
 
-  return { determinants, feeFields, sellerProfile, surcharges };
+    const surcharges =
+        (mk as { optionalSurcharges?: readonly OptionalSurcharge[] | null }).optionalSurcharges ??
+        [];
+
+    return { determinants, feeFields, sellerProfile, surcharges };
 }
 
 /**
@@ -149,13 +167,13 @@ export function channelFieldPlan(
  * over on an axis that still exists.
  */
 export function feeFieldsToBlankOnMarketplaceChange(
-  catalog: FeeCatalog,
-  marketplace: MarketplaceId,
+    catalog: FeeCatalog,
+    marketplace: MarketplaceId,
 ): Partial<Record<ChannelFieldName, string>> {
-  const plan = channelFieldPlan(catalog, marketplace);
-  const blanked: Partial<Record<ChannelFieldName, string>> = {};
-  for (const field of ALL_FEE_FIELDS) {
-    if (!plan.feeFields.includes(field)) blanked[field] = "";
-  }
-  return blanked;
+    const plan = channelFieldPlan(catalog, marketplace);
+    const blanked: Partial<Record<ChannelFieldName, string>> = {};
+    for (const field of ALL_FEE_FIELDS) {
+        if (!plan.feeFields.includes(field)) blanked[field] = "";
+    }
+    return blanked;
 }

@@ -1,16 +1,16 @@
 {
-  "id": "avisos-shopee",
-  "nome": "Os dois avisos honestos da Shopee (taxa não publicada e frete aferido)",
-  "escala": "BLOCO",
-  "arquivos": [
-    "apps/web/src/features/calculator/shopee-warnings.tsx",
-    "apps/web/src/features/calculator/shopee-warnings.css"
-  ],
-  "oQueFoiInferido": "Dois avisos com formas DIFERENTES no fim do mesmo cartão: um `Alert tone=\"info\"` completo (título + corpo) que só aparece na combinação CPF + alto volume + preço abaixo da faixa publicada, e um alerta compacto de uma linha (`.tf-alert--compact`: ícone + título + ⓘ InfoTip guardando o corpo) que é estático e nunca some. Inferido: a criação da variante compacta para caber, a decisão de esconder o corpo atrás de um InfoTip, o tom (info e não perigo) e o lugar dos dois no fim do slot.",
-  "autoridade": "NENHUMA",
-  "impacto": "São as duas frases em que o produto admite não saber um número — o coração da promessa de honestidade da marca ('verdade forjada'). Uma delas já foi espremida por medição (48% da altura da seção Shopee a 360px) e virou uma linha com o conteúdo escondido, sem que ninguém desenhasse quanto uma admissão dessas deve pesar na tela.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'Shopee' nas autoridades: só duas linhas em `claude-design-prototype.md` (243 e 348), ambas listando Shopee como OPÇÃO de canal com taxa fixa + comissão, e nada sobre taxa não publicada ou frete aferido. `prototype-audit` não menciona. `.design-import` tem `Alert` genérico, sem variante compacta. UMA correção ao mapeador: o `Abas-Desktop.dc.html` (linha 265) USA `tf-alert tf-alert--info tf-alert--compact` — o dono desenhou com essa variante na aba Orçamentos ('1 registro(s) pendente(s) neste dispositivo' + botão 'Sincronizar agora'). Isso RATIFICA a variante compacta como forma legítima do sistema (ela nasceu em 016/PR-F por medição e reapareceu num canvas do dono), mas não desenha estes dois avisos, nem a decisão de esconder uma admissão de ignorância atrás de um ⓘ. Sobrevive, NENHUMA.",
-  "sobreviveu": true,
-  "area": "calculadora"
+    "id": "avisos-shopee",
+    "nome": "Os dois avisos honestos da Shopee (taxa não publicada e frete aferido)",
+    "escala": "BLOCO",
+    "arquivos": [
+        "apps/web/src/features/calculator/shopee-warnings.tsx",
+        "apps/web/src/features/calculator/shopee-warnings.css"
+    ],
+    "oQueFoiInferido": "Dois avisos com formas DIFERENTES no fim do mesmo cartão: um `Alert tone=\"info\"` completo (título + corpo) que só aparece na combinação CPF + alto volume + preço abaixo da faixa publicada, e um alerta compacto de uma linha (`.tf-alert--compact`: ícone + título + ⓘ InfoTip guardando o corpo) que é estático e nunca some. Inferido: a criação da variante compacta para caber, a decisão de esconder o corpo atrás de um InfoTip, o tom (info e não perigo) e o lugar dos dois no fim do slot.",
+    "autoridade": "NENHUMA",
+    "impacto": "São as duas frases em que o produto admite não saber um número — o coração da promessa de honestidade da marca ('verdade forjada'). Uma delas já foi espremida por medição (48% da altura da seção Shopee a 360px) e virou uma linha com o conteúdo escondido, sem que ninguém desenhasse quanto uma admissão dessas deve pesar na tela.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'Shopee' nas autoridades: só duas linhas em `claude-design-prototype.md` (243 e 348), ambas listando Shopee como OPÇÃO de canal com taxa fixa + comissão, e nada sobre taxa não publicada ou frete aferido. `prototype-audit` não menciona. `.design-import` tem `Alert` genérico, sem variante compacta. UMA correção ao mapeador: o `Abas-Desktop.dc.html` (linha 265) USA `tf-alert tf-alert--info tf-alert--compact` — o dono desenhou com essa variante na aba Orçamentos ('1 registro(s) pendente(s) neste dispositivo' + botão 'Sincronizar agora'). Isso RATIFICA a variante compacta como forma legítima do sistema (ela nasceu em 016/PR-F por medição e reapareceu num canvas do dono), mas não desenha estes dois avisos, nem a decisão de esconder uma admissão de ignorância atrás de um ⓘ. Sobrevive, NENHUMA.",
+    "sobreviveu": true,
+    "area": "calculadora"
 }

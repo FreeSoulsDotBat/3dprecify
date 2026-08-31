@@ -28,84 +28,86 @@ export const CHECKOUT_RETURN_POLL_INTERVAL_MS = 3000;
 export const CHECKOUT_RETURN_MAX_ATTEMPTS = 15;
 
 function isVerifiedPaymentGrant(data: EntitlementView | undefined): boolean {
-  return data?.status === "active" && data.source === "payment";
+    return data?.status === "active" && data.source === "payment";
 }
 
 export function CheckoutReturnPanel() {
-  const entitlement = useEntitlement();
-  const navigate = useNavigate();
-  const [attempts, setAttempts] = useState(0);
+    const entitlement = useEntitlement();
+    const navigate = useNavigate();
+    const [attempts, setAttempts] = useState(0);
 
-  const success = isVerifiedPaymentGrant(entitlement.data);
-  const exhausted = !success && attempts >= CHECKOUT_RETURN_MAX_ATTEMPTS;
-  const pending = !success && !exhausted;
+    const success = isVerifiedPaymentGrant(entitlement.data);
+    const exhausted = !success && attempts >= CHECKOUT_RETURN_MAX_ATTEMPTS;
+    const pending = !success && !exhausted;
 
-  // Re-arms itself on every attempt while still pending; stops the instant either a verified
-  // grant lands or the bounded patience runs out — never an infinite silent poll.
-  useEffect(() => {
-    if (!pending) return;
-    const id = setTimeout(() => {
-      entitlement.refetch();
-      setAttempts((n) => n + 1);
-    }, CHECKOUT_RETURN_POLL_INTERVAL_MS);
-    return () => clearTimeout(id);
-    // `entitlement.refetch` is a fresh closure every render (react-query); `attempts` alone drives
-    // re-arming the timer, which is the only thing this effect needs to react to. (No
-    // exhaustive-deps lint rule is configured in this project — nothing to suppress.)
-  }, [pending, attempts]);
+    // Re-arms itself on every attempt while still pending; stops the instant either a verified
+    // grant lands or the bounded patience runs out — never an infinite silent poll.
+    useEffect(() => {
+        if (!pending) return;
+        const id = setTimeout(() => {
+            entitlement.refetch();
+            setAttempts((n) => n + 1);
+        }, CHECKOUT_RETURN_POLL_INTERVAL_MS);
+        return () => clearTimeout(id);
+        // `entitlement.refetch` is a fresh closure every render (react-query); `attempts` alone drives
+        // re-arming the timer, which is the only thing this effect needs to react to. (No
+        // exhaustive-deps lint rule is configured in this project — nothing to suppress.)
+    }, [pending, attempts]);
 
-  function backToConta() {
-    void navigate({ to: "/conta" });
-  }
+    function backToConta() {
+        void navigate({ to: "/conta" });
+    }
 
-  if (success) {
+    if (success) {
+        return (
+            <Card className="tf-billing-return">
+                <Icon name="crown" size={28} aria-hidden />
+                <h2>{t.returnSuccessTitle}</h2>
+                <p>{t.returnSuccessBody}</p>
+                <Button onClick={() => void navigate({ to: "/calcular" })}>
+                    {t.returnSuccessAction}
+                </Button>
+            </Card>
+        );
+    }
+
+    if (exhausted) {
+        return (
+            <Card className="tf-billing-return">
+                <Icon name="circle-alert" size={28} aria-hidden />
+                <h2>{t.returnUnconfirmedTitle}</h2>
+                <p>{t.returnUnconfirmedBody}</p>
+                <div className="tf-billing-return__actions">
+                    <Button
+                        variant="secondary"
+                        onClick={() => {
+                            setAttempts(0);
+                            entitlement.refetch();
+                        }}
+                    >
+                        {t.returnVerifyAgain}
+                    </Button>
+                    <Button variant="ghost" onClick={backToConta}>
+                        {t.returnBackToConta}
+                    </Button>
+                </div>
+            </Card>
+        );
+    }
+
     return (
-      <Card className="tf-billing-return">
-        <Icon name="crown" size={28} aria-hidden />
-        <h2>{t.returnSuccessTitle}</h2>
-        <p>{t.returnSuccessBody}</p>
-        <Button onClick={() => void navigate({ to: "/calcular" })}>{t.returnSuccessAction}</Button>
-      </Card>
+        <Card className="tf-billing-return">
+            <Spinner />
+            <h2>{t.returnPendingTitle}</h2>
+            <p>{t.returnPendingBody}</p>
+            <div className="tf-billing-return__actions">
+                <Button variant="secondary" onClick={() => entitlement.refetch()}>
+                    {t.returnRefresh}
+                </Button>
+                <Button variant="ghost" onClick={backToConta}>
+                    {t.returnBackToConta}
+                </Button>
+            </div>
+        </Card>
     );
-  }
-
-  if (exhausted) {
-    return (
-      <Card className="tf-billing-return">
-        <Icon name="circle-alert" size={28} aria-hidden />
-        <h2>{t.returnUnconfirmedTitle}</h2>
-        <p>{t.returnUnconfirmedBody}</p>
-        <div className="tf-billing-return__actions">
-          <Button
-            variant="secondary"
-            onClick={() => {
-              setAttempts(0);
-              entitlement.refetch();
-            }}
-          >
-            {t.returnVerifyAgain}
-          </Button>
-          <Button variant="ghost" onClick={backToConta}>
-            {t.returnBackToConta}
-          </Button>
-        </div>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="tf-billing-return">
-      <Spinner />
-      <h2>{t.returnPendingTitle}</h2>
-      <p>{t.returnPendingBody}</p>
-      <div className="tf-billing-return__actions">
-        <Button variant="secondary" onClick={() => entitlement.refetch()}>
-          {t.returnRefresh}
-        </Button>
-        <Button variant="ghost" onClick={backToConta}>
-          {t.returnBackToConta}
-        </Button>
-      </div>
-    </Card>
-  );
 }

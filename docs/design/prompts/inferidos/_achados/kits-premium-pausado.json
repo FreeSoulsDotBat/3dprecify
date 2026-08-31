@@ -1,13 +1,13 @@
 {
-  "id": "kits-premium-pausado",
-  "nome": "Superfícies de Premium pausado em Kits (painel de reativação e faixa no kit reaberto)",
-  "escala": "ESTADO",
-  "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
-  "oQueFoiInferido": "Duas superfícies distintas resolvidas com Alerts de propósito geral: (a) quem está com o Premium pausado e tenta CRIAR não vê compositor nenhum — vê um `Alert tone=\"info\"` titulado 'Premium pausado' com o corpo 'Seus kits salvos continuam aqui e podem ser reabertos e recalculados. Para criar ou editar, reative o Premium.' e um botão secundário 'Ver meus kits', sem nenhum CTA de reativação; (b) quem REABRE um kit salvo vê o compositor inteiro com uma faixa info no topo e o botão 'Salvar kit' VISÍVEL, que só ao ser tocado responde — e a recusa vem num Alert de tom `info`, não `danger`, por decisão explícita. Não foi desenhado: como uma tela em modo somente-leitura se anuncia sem parecer quebrada, como se apresenta um botão que existe-mas-vai-recusar (a decisão consciente foi NÃO desabilitar), e por onde se reativa.",
-  "autoridade": "NENHUMA",
-  "impacto": "É a superfície que um assinante vê quando o pagamento falha — o momento de maior risco de ele achar que perdeu os dados. Hoje é composta inteiramente de Alerts genéricos, e o caminho de volta ao Premium não existe nela.",
-  "prioridade": "MEDIA",
-  "refutacao": "Grep por 'pausado' e 'lapsed' no `.dc.html`: zero. O canvas só conhece `isPremium` e `isFree` — a fronteira desenhada é binária, e o próprio briefing de 2026-07 a fixa assim ('Entitlement binário: sem quota/contador; qualquer persistência é Premium', §J). §E7 desenha a Conta com 'plano atual (Free/Premium)' e §E8 o upsell; nenhuma das duas tem estado de lapso, e a matriz da §G também não. Auditoria de 2026-07-02: nada (o achado #15 fala de identidade hardcoded e de premium em localStorage, não de lapso). `.design-import/`: nada. Autoridade só textual: `ux-bom.md` §3 e FR-409/Q3 — requisito, não desenho.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "kits-premium-pausado",
+    "nome": "Superfícies de Premium pausado em Kits (painel de reativação e faixa no kit reaberto)",
+    "escala": "ESTADO",
+    "arquivos": ["apps/web/src/pages/bom/bom-page.tsx"],
+    "oQueFoiInferido": "Duas superfícies distintas resolvidas com Alerts de propósito geral: (a) quem está com o Premium pausado e tenta CRIAR não vê compositor nenhum — vê um `Alert tone=\"info\"` titulado 'Premium pausado' com o corpo 'Seus kits salvos continuam aqui e podem ser reabertos e recalculados. Para criar ou editar, reative o Premium.' e um botão secundário 'Ver meus kits', sem nenhum CTA de reativação; (b) quem REABRE um kit salvo vê o compositor inteiro com uma faixa info no topo e o botão 'Salvar kit' VISÍVEL, que só ao ser tocado responde — e a recusa vem num Alert de tom `info`, não `danger`, por decisão explícita. Não foi desenhado: como uma tela em modo somente-leitura se anuncia sem parecer quebrada, como se apresenta um botão que existe-mas-vai-recusar (a decisão consciente foi NÃO desabilitar), e por onde se reativa.",
+    "autoridade": "NENHUMA",
+    "impacto": "É a superfície que um assinante vê quando o pagamento falha — o momento de maior risco de ele achar que perdeu os dados. Hoje é composta inteiramente de Alerts genéricos, e o caminho de volta ao Premium não existe nela.",
+    "prioridade": "MEDIA",
+    "refutacao": "Grep por 'pausado' e 'lapsed' no `.dc.html`: zero. O canvas só conhece `isPremium` e `isFree` — a fronteira desenhada é binária, e o próprio briefing de 2026-07 a fixa assim ('Entitlement binário: sem quota/contador; qualquer persistência é Premium', §J). §E7 desenha a Conta com 'plano atual (Free/Premium)' e §E8 o upsell; nenhuma das duas tem estado de lapso, e a matriz da §G também não. Auditoria de 2026-07-02: nada (o achado #15 fala de identidade hardcoded e de premium em localStorage, não de lapso). `.design-import/`: nada. Autoridade só textual: `ux-bom.md` §3 e FR-409/Q3 — requisito, não desenho.",
+    "sobreviveu": true,
+    "area": "kits"
 }

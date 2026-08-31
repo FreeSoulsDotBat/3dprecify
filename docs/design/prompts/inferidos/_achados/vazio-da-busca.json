@@ -1,16 +1,16 @@
 {
-  "id": "vazio-da-busca",
-  "nome": "Estado \"nada encontrado\" da busca do Catálogo",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/features/catalog/catalog-panel.tsx",
-    "apps/web/src/shared/i18n/messages.pt-br.ts"
-  ],
-  "oQueFoiInferido": "Quando `visible.length === 0` com filtro ativo, a lista inteira é substituída por um `EmptyState icon=\"package\"` com título \"Nada encontrado para essa busca\", corpo \"Tente outro termo, ou limpe a busca para ver tudo de novo.\" e botão secundário \"Limpar busca\" (messages linhas 619-621). Inferido: trocar a lista inteira em vez de uma linha discreta; reaproveitar o MESMO `icon=\"package\"` do vazio de catálogo; a copy; e — o ponto que o próprio código admite num comentário (linhas 281-283) mas resolve só por texto — como esse vazio se DISTINGUE VISUALMENTE do vazio real, já que a única diferença entre os dois blocos é a frase.",
-  "autoridade": "NENHUMA",
-  "impacto": "O vendedor que digita errado vê um bloco grande e vazio graficamente idêntico ao \"não tenho nada salvo\" — o pior mal-entendido possível sobre o próprio catálogo.",
-  "prioridade": "MEDIA",
-  "refutacao": "Procurei nas 4 e não existe nada. (1)/(3) Não há busca no protótipo, logo não há vazio de busca: §E5 e `CatalogScreen.jsx` (linhas 50-55) só têm o `EmptyState` de catálogo vazio, e a matriz de estados §G linha \"Catálogo lista\" tem uma única coluna `empty` (\"empty educativo + seed\"). (2) A auditoria discute empties de Catálogo e Histórico (itens 18/21, V3 #10 FIXED) sem uma palavra sobre busca. (4) O canvas desenha o CAMPO (linha 102) e nenhum artboard do resultado zero — e nem poderia, já que o `<script>` não implementa filtro algum: `items` é sempre `rows.map(...)` completo. Autoridade NENHUMA confirmada; achado mantido integralmente.",
-  "sobreviveu": true,
-  "area": "catalogo"
+    "id": "vazio-da-busca",
+    "nome": "Estado \"nada encontrado\" da busca do Catálogo",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/features/catalog/catalog-panel.tsx",
+        "apps/web/src/shared/i18n/messages.pt-br.ts"
+    ],
+    "oQueFoiInferido": "Quando `visible.length === 0` com filtro ativo, a lista inteira é substituída por um `EmptyState icon=\"package\"` com título \"Nada encontrado para essa busca\", corpo \"Tente outro termo, ou limpe a busca para ver tudo de novo.\" e botão secundário \"Limpar busca\" (messages linhas 619-621). Inferido: trocar a lista inteira em vez de uma linha discreta; reaproveitar o MESMO `icon=\"package\"` do vazio de catálogo; a copy; e — o ponto que o próprio código admite num comentário (linhas 281-283) mas resolve só por texto — como esse vazio se DISTINGUE VISUALMENTE do vazio real, já que a única diferença entre os dois blocos é a frase.",
+    "autoridade": "NENHUMA",
+    "impacto": "O vendedor que digita errado vê um bloco grande e vazio graficamente idêntico ao \"não tenho nada salvo\" — o pior mal-entendido possível sobre o próprio catálogo.",
+    "prioridade": "MEDIA",
+    "refutacao": "Procurei nas 4 e não existe nada. (1)/(3) Não há busca no protótipo, logo não há vazio de busca: §E5 e `CatalogScreen.jsx` (linhas 50-55) só têm o `EmptyState` de catálogo vazio, e a matriz de estados §G linha \"Catálogo lista\" tem uma única coluna `empty` (\"empty educativo + seed\"). (2) A auditoria discute empties de Catálogo e Histórico (itens 18/21, V3 #10 FIXED) sem uma palavra sobre busca. (4) O canvas desenha o CAMPO (linha 102) e nenhum artboard do resultado zero — e nem poderia, já que o `<script>` não implementa filtro algum: `items` é sempre `rows.map(...)` completo. Autoridade NENHUMA confirmada; achado mantido integralmente.",
+    "sobreviveu": true,
+    "area": "catalogo"
 }

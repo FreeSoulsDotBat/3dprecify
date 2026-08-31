@@ -4,102 +4,102 @@ name: Deploy
 # develop is the intended UAT source, release the prod source — but shipping is always a deliberate trigger.
 # Each target is INERT until its GitHub Environment sets var DEPLOY_ENABLED=true and the secrets/vars below.
 on:
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: Target environment
-        type: choice
-        options: [uat, prod]
-        required: true
+    workflow_dispatch:
+        inputs:
+            environment:
+                description: Target environment
+                type: choice
+                options: [uat, prod]
+                required: true
 
 permissions:
-  contents: read
-  id-token: write # required for WIF
+    contents: read
+    id-token: write # required for WIF
 
 concurrency: deploy-${{ inputs.environment }}
 
 jobs:
-  deploy:
-    name: Deploy to ${{ inputs.environment }}
-    runs-on: ubuntu-latest
-    environment: ${{ inputs.environment }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+    deploy:
+        name: Deploy to ${{ inputs.environment }}
+        runs-on: ubuntu-latest
+        environment: ${{ inputs.environment }}
+        steps:
+            - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Guard — environment must be enabled
-        run: |
-          if [ "${{ vars.DEPLOY_ENABLED }}" != "true" ]; then
-            echo "Environment '${{ inputs.environment }}' is not enabled. Set its DEPLOY_ENABLED var to true."
-            exit 1
-          fi
+            - name: Guard — environment must be enabled
+              run: |
+                  if [ "${{ vars.DEPLOY_ENABLED }}" != "true" ]; then
+                    echo "Environment '${{ inputs.environment }}' is not enabled. Set its DEPLOY_ENABLED var to true."
+                    exit 1
+                  fi
 
-      - id: auth
-        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
-        with:
-          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
-          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
-      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
+            - id: auth
+              uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
+              with:
+                  workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+                  service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+            - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
 
-      - name: Deploy backend (Cloud Run)
-        id: backend
-        # Secrets/vars are mapped into env (not interpolated inline) to avoid shell injection and
-        # quoting issues. The full runtime config is set here — without it the service would fall
-        # back to settings.py dev defaults (CORS = localhost, demo Firebase project).
-        env:
-          APP_ENV: ${{ inputs.environment }}
-          GCP_REGION: ${{ vars.GCP_REGION }}
-          GCP_PROJECT: ${{ vars.GCP_PROJECT }}
-          FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
-          SPA_ORIGINS: ${{ vars.SPA_ORIGINS }} # optional JSON array override; see docs/environments.md
-          SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # optional
-          RELEASE_SHA: ${{ github.sha }}
-        run: |
-          # Allowed browser origins (A7). Explicit override wins; else derive the default
-          # Firebase Hosting domains from the project id. pydantic-settings parses list[str] as JSON.
-          ORIGINS="$SPA_ORIGINS"
-          if [ -z "$ORIGINS" ]; then
-            ORIGINS="[\"https://${FIREBASE_PROJECT}.web.app\",\"https://${FIREBASE_PROJECT}.firebaseapp.com\"]"
-          fi
-          # '@'-delimited (^@^) so the JSON array's commas don't split the env-var list.
-          ENV_VARS="^@^P3D_APP_ENV=${APP_ENV}@P3D_REGION=${GCP_REGION}@P3D_RELEASE=${RELEASE_SHA}"
-          ENV_VARS="${ENV_VARS}@P3D_FIREBASE_PROJECT_ID=${FIREBASE_PROJECT}@P3D_CORS_ORIGINS=${ORIGINS}"
-          if [ -n "$SENTRY_DSN" ]; then
-            ENV_VARS="${ENV_VARS}@P3D_SENTRY_DSN=${SENTRY_DSN}"
-          fi
-          gcloud run deploy precifica3d-backend \
-            --source ./backend \
-            --region "$GCP_REGION" \
-            --project "$GCP_PROJECT" \
-            --allow-unauthenticated \
-            --set-env-vars "$ENV_VARS"
-          URL=$(gcloud run services describe precifica3d-backend \
-            --region "$GCP_REGION" --project "$GCP_PROJECT" --format 'value(status.url)')
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
+            - name: Deploy backend (Cloud Run)
+              id: backend
+              # Secrets/vars are mapped into env (not interpolated inline) to avoid shell injection and
+              # quoting issues. The full runtime config is set here — without it the service would fall
+              # back to settings.py dev defaults (CORS = localhost, demo Firebase project).
+              env:
+                  APP_ENV: ${{ inputs.environment }}
+                  GCP_REGION: ${{ vars.GCP_REGION }}
+                  GCP_PROJECT: ${{ vars.GCP_PROJECT }}
+                  FIREBASE_PROJECT: ${{ vars.FIREBASE_PROJECT }}
+                  SPA_ORIGINS: ${{ vars.SPA_ORIGINS }} # optional JSON array override; see docs/environments.md
+                  SENTRY_DSN: ${{ secrets.SENTRY_DSN }} # optional
+                  RELEASE_SHA: ${{ github.sha }}
+              run: |
+                  # Allowed browser origins (A7). Explicit override wins; else derive the default
+                  # Firebase Hosting domains from the project id. pydantic-settings parses list[str] as JSON.
+                  ORIGINS="$SPA_ORIGINS"
+                  if [ -z "$ORIGINS" ]; then
+                    ORIGINS="[\"https://${FIREBASE_PROJECT}.web.app\",\"https://${FIREBASE_PROJECT}.firebaseapp.com\"]"
+                  fi
+                  # '@'-delimited (^@^) so the JSON array's commas don't split the env-var list.
+                  ENV_VARS="^@^P3D_APP_ENV=${APP_ENV}@P3D_REGION=${GCP_REGION}@P3D_RELEASE=${RELEASE_SHA}"
+                  ENV_VARS="${ENV_VARS}@P3D_FIREBASE_PROJECT_ID=${FIREBASE_PROJECT}@P3D_CORS_ORIGINS=${ORIGINS}"
+                  if [ -n "$SENTRY_DSN" ]; then
+                    ENV_VARS="${ENV_VARS}@P3D_SENTRY_DSN=${SENTRY_DSN}"
+                  fi
+                  gcloud run deploy precifica3d-backend \
+                    --source ./backend \
+                    --region "$GCP_REGION" \
+                    --project "$GCP_PROJECT" \
+                    --allow-unauthenticated \
+                    --set-env-vars "$ENV_VARS"
+                  URL=$(gcloud run services describe precifica3d-backend \
+                    --region "$GCP_REGION" --project "$GCP_PROJECT" --format 'value(status.url)')
+                  echo "url=$URL" >> "$GITHUB_OUTPUT"
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Build SPA
-        # Vite inlines VITE_* at build time, so the deployed bundle must be built with the real
-        # backend URL + Firebase config — not the localhost defaults in env.ts.
-        env:
-          VITE_API_BASE_URL: ${{ steps.backend.outputs.url }}
-          VITE_FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT }}
-          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_PROJECT }}.firebaseapp.com
-          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
-          VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
-          VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_WEB }} # optional
-          VITE_RELEASE: ${{ github.sha }} # 006 T020 (owner-accepted): symmetric web release correlation
-          VITE_USE_AUTH_EMULATOR: "false"
-        run: pnpm --filter @3dprecify/web build
+            - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+            - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+              with:
+                  node-version: 24
+                  cache: pnpm
+            - run: pnpm install --frozen-lockfile
+            - name: Build SPA
+              # Vite inlines VITE_* at build time, so the deployed bundle must be built with the real
+              # backend URL + Firebase config — not the localhost defaults in env.ts.
+              env:
+                  VITE_API_BASE_URL: ${{ steps.backend.outputs.url }}
+                  VITE_FIREBASE_PROJECT_ID: ${{ vars.FIREBASE_PROJECT }}
+                  VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.FIREBASE_PROJECT }}.firebaseapp.com
+                  VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_WEB_API_KEY }}
+                  VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_WEB_APP_ID }}
+                  VITE_SENTRY_DSN: ${{ secrets.SENTRY_DSN_WEB }} # optional
+                  VITE_RELEASE: ${{ github.sha }} # 006 T020 (owner-accepted): symmetric web release correlation
+                  VITE_USE_AUTH_EMULATOR: "false"
+              run: pnpm --filter @3dprecify/web build
 
-      - name: Deploy SPA (Firebase Hosting)
-        uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0
-        with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: ${{ vars.FIREBASE_PROJECT }}
-          channelId: live
+            - name: Deploy SPA (Firebase Hosting)
+              uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0
+              with:
+                  repoToken: ${{ secrets.GITHUB_TOKEN }}
+                  firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+                  projectId: ${{ vars.FIREBASE_PROJECT }}
+                  channelId: live

@@ -14,47 +14,47 @@ afterEach(() => cleanup());
 // semântico — quem chama escreve o próprio `thead`/`tbody` com as classes `tf-table__*` da folha.
 
 describe("Table (019/T012 — tf-table)", () => {
-  it("é uma table nativa com columnheaders e células", () => {
-    render(
-      <Table>
-        <thead>
-          <tr>
-            <th>Produto</th>
-            <th>Preço</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td className="tf-table__name">Vaso hexagonal grande</td>
-            <td className="tf-table__num">R$ 89,90</td>
-          </tr>
-        </tbody>
-      </Table>,
-    );
+    it("é uma table nativa com columnheaders e células", () => {
+        render(
+            <Table>
+                <thead>
+                    <tr>
+                        <th>Produto</th>
+                        <th>Preço</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td className="tf-table__name">Vaso hexagonal grande</td>
+                        <td className="tf-table__num">R$ 89,90</td>
+                    </tr>
+                </tbody>
+            </Table>,
+        );
 
-    expect(screen.getByRole("table")).toHaveClass("tf-table");
-    const headers = screen.getAllByRole("columnheader");
-    expect(headers).toHaveLength(2);
-    expect(headers[0]).toHaveTextContent("Produto");
-    const rows = screen.getAllByRole("row");
-    // 1 de cabeçalho + 1 de dado
-    expect(rows).toHaveLength(2);
-    expect(screen.getAllByRole("cell")).toHaveLength(2);
-  });
+        expect(screen.getByRole("table")).toHaveClass("tf-table");
+        const headers = screen.getAllByRole("columnheader");
+        expect(headers).toHaveLength(2);
+        expect(headers[0]).toHaveTextContent("Produto");
+        const rows = screen.getAllByRole("row");
+        // 1 de cabeçalho + 1 de dado
+        expect(rows).toHaveLength(2);
+        expect(screen.getAllByRole("cell")).toHaveLength(2);
+    });
 
-  it("preserva className extra sem apagar a classe do primitivo", () => {
-    render(
-      <Table className="tf-catalog-table">
-        <tbody>
-          <tr>
-            <td>x</td>
-          </tr>
-        </tbody>
-      </Table>,
-    );
+    it("preserva className extra sem apagar a classe do primitivo", () => {
+        render(
+            <Table className="tf-catalog-table">
+                <tbody>
+                    <tr>
+                        <td>x</td>
+                    </tr>
+                </tbody>
+            </Table>,
+        );
 
-    const table = screen.getByRole("table");
-    expect(table).toHaveClass("tf-table");
-    expect(table).toHaveClass("tf-catalog-table");
-  });
+        const table = screen.getByRole("table");
+        expect(table).toHaveClass("tf-table");
+        expect(table).toHaveClass("tf-catalog-table");
+    });
 });

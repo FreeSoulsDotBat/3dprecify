@@ -24,105 +24,107 @@ import "./segmented.css";
  * as setas percorrem — que é como um grupo de opções deve se comportar para quem usa teclado.
  */
 export interface SegmentedOption<T extends string> {
-  id: T;
-  label: string;
-  /** Ícone opcional à esquerda do rótulo (a Conta usa; o Catálogo não). */
-  icon?: ReactNode;
+    id: T;
+    label: string;
+    /** Ícone opcional à esquerda do rótulo (a Conta usa; o Catálogo não). */
+    icon?: ReactNode;
 }
 
 export interface SegmentedProps<T extends string> extends Omit<
-  HTMLAttributes<HTMLDivElement>,
-  "role" | "className" | "onChange"
+    HTMLAttributes<HTMLDivElement>,
+    "role" | "className" | "onChange"
 > {
-  options: readonly SegmentedOption<T>[];
-  value: T;
-  onChange: (id: T) => void;
-  /** Nome do grupo para leitor de tela — obrigatório: um grupo sem nome não se explica. */
-  ariaLabel: string;
-  /** `tablist` quando a escolha troca um painel; `radiogroup` quando ela é um valor. */
-  role?: "tablist" | "radiogroup";
-  /** Prefixo de `id` dos itens (necessário para `aria-controls` no modo tablist). */
-  idPrefix?: string;
-  /** Prefixo do painel controlado, no modo tablist. */
-  controlsPrefix?: string;
-  size?: "sm" | "md";
-  /** 019/PR-A — a bandeja ocupa a linha e divide em partes iguais (contracts/ui-porte.md §C0).
-   *  Só onde a largura é escassa (celular, par varejo/atacado); no desktop a bandeja volta a se
-   *  ajustar ao texto. */
-  split?: boolean;
-  className?: string;
+    options: readonly SegmentedOption<T>[];
+    value: T;
+    onChange: (id: T) => void;
+    /** Nome do grupo para leitor de tela — obrigatório: um grupo sem nome não se explica. */
+    ariaLabel: string;
+    /** `tablist` quando a escolha troca um painel; `radiogroup` quando ela é um valor. */
+    role?: "tablist" | "radiogroup";
+    /** Prefixo de `id` dos itens (necessário para `aria-controls` no modo tablist). */
+    idPrefix?: string;
+    /** Prefixo do painel controlado, no modo tablist. */
+    controlsPrefix?: string;
+    size?: "sm" | "md";
+    /** 019/PR-A — a bandeja ocupa a linha e divide em partes iguais (contracts/ui-porte.md §C0).
+     *  Só onde a largura é escassa (celular, par varejo/atacado); no desktop a bandeja volta a se
+     *  ajustar ao texto. */
+    split?: boolean;
+    className?: string;
 }
 
 export function Segmented<T extends string>({
-  options,
-  value,
-  onChange,
-  ariaLabel,
-  role = "tablist",
-  idPrefix,
-  controlsPrefix,
-  size = "md",
-  split = false,
-  className = "",
-  ...rest
+    options,
+    value,
+    onChange,
+    ariaLabel,
+    role = "tablist",
+    idPrefix,
+    controlsPrefix,
+    size = "md",
+    split = false,
+    className = "",
+    ...rest
 }: SegmentedProps<T>) {
-  const refs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
-  const isTabs = role === "tablist";
+    const refs = useRef<Partial<Record<string, HTMLButtonElement | null>>>({});
+    const isTabs = role === "tablist";
 
-  function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
-    const last = options.length - 1;
-    let next: number;
-    if (event.key === "ArrowRight" || event.key === "ArrowDown")
-      next = index === last ? 0 : index + 1;
-    else if (event.key === "ArrowLeft" || event.key === "ArrowUp")
-      next = index === 0 ? last : index - 1;
-    else if (event.key === "Home") next = 0;
-    else if (event.key === "End") next = last;
-    else return;
-    event.preventDefault();
-    const id = options[next].id;
-    onChange(id);
-    refs.current[id]?.focus();
-  }
+    function onKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number) {
+        const last = options.length - 1;
+        let next: number;
+        if (event.key === "ArrowRight" || event.key === "ArrowDown")
+            next = index === last ? 0 : index + 1;
+        else if (event.key === "ArrowLeft" || event.key === "ArrowUp")
+            next = index === 0 ? last : index - 1;
+        else if (event.key === "Home") next = 0;
+        else if (event.key === "End") next = last;
+        else return;
+        event.preventDefault();
+        const id = options[next].id;
+        onChange(id);
+        refs.current[id]?.focus();
+    }
 
-  return (
-    <div
-      role={role}
-      aria-label={ariaLabel}
-      className={[
-        "tf-segmented",
-        `tf-segmented--${size}`,
-        split && "tf-segmented--split",
-        className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      {...rest}
-    >
-      {options.map((option, index) => {
-        const selected = option.id === value;
-        return (
-          <button
-            key={option.id}
-            ref={(el) => {
-              refs.current[option.id] = el;
-            }}
-            type="button"
-            role={isTabs ? "tab" : "radio"}
-            id={idPrefix ? `${idPrefix}-${option.id}` : undefined}
-            aria-selected={isTabs ? selected : undefined}
-            aria-checked={isTabs ? undefined : selected}
-            aria-controls={isTabs && controlsPrefix ? `${controlsPrefix}-${option.id}` : undefined}
-            tabIndex={selected ? 0 : -1}
-            className={`tf-segmented__item${selected ? " tf-segmented__item--selected" : ""}`}
-            onClick={() => onChange(option.id)}
-            onKeyDown={(event) => onKeyDown(event, index)}
-          >
-            {option.icon}
-            <span className="tf-segmented__label">{option.label}</span>
-          </button>
-        );
-      })}
-    </div>
-  );
+    return (
+        <div
+            role={role}
+            aria-label={ariaLabel}
+            className={[
+                "tf-segmented",
+                `tf-segmented--${size}`,
+                split && "tf-segmented--split",
+                className,
+            ]
+                .filter(Boolean)
+                .join(" ")}
+            {...rest}
+        >
+            {options.map((option, index) => {
+                const selected = option.id === value;
+                return (
+                    <button
+                        key={option.id}
+                        ref={(el) => {
+                            refs.current[option.id] = el;
+                        }}
+                        type="button"
+                        role={isTabs ? "tab" : "radio"}
+                        id={idPrefix ? `${idPrefix}-${option.id}` : undefined}
+                        aria-selected={isTabs ? selected : undefined}
+                        aria-checked={isTabs ? undefined : selected}
+                        aria-controls={
+                            isTabs && controlsPrefix ? `${controlsPrefix}-${option.id}` : undefined
+                        }
+                        tabIndex={selected ? 0 : -1}
+                        className={`tf-segmented__item${selected ? " tf-segmented__item--selected" : ""}`}
+                        onClick={() => onChange(option.id)}
+                        onKeyDown={(event) => onKeyDown(event, index)}
+                    >
+                        {option.icon}
+                        <span className="tf-segmented__label">{option.label}</span>
+                    </button>
+                );
+            })}
+        </div>
+    );
 }

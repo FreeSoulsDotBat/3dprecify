@@ -1,13 +1,13 @@
 {
-  "id": "rollup-precos-por-canal-kit",
-  "nome": "Cartão 'Preços por canal (kit)'",
-  "escala": "BLOCO",
-  "arquivos": ["apps/web/src/features/bom/channel-rollup.tsx"],
-  "oQueFoiInferido": "A densidade real do cartão: um bloco por marketplace, separado por uma borda `--border-soft` com fallback transparente, cada bloco com QUATRO `BreakdownRow` cujos rótulos são concatenações de duas taxonomias ('Varejo · Preço do anúncio', 'Varejo · Recebido líquido', 'Atacado · Preço do anúncio', 'Atacado · Recebido líquido') mais a legenda de contribuição e, quando houver, a de peças puladas — 8 linhas de dinheiro e até 4 legendas com dois canais. Também não desenhados: o estado 'Nenhuma peça com preço neste canal.' e o bloco SINTÉTICO, um canal que só existe porque TODOS os seus slots eram inválidos e que aparece sem nenhum número, só com a legenda de exclusão.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O bloco cresce linearmente com os canais e é onde vive a honestidade de 'peça sem preço neste canal'. O desenho que existe mostra uma linha por canal; o app mostra quatro mais legendas — a densidade real nunca foi julgada por ninguém, e os dois estados de ausência (vazio e sintético) não existem em nenhum artboard.",
-  "prioridade": "MEDIA",
-  "refutacao": "O canvas cobre mais do que o mapeador registrou, e mesmo assim o achado fica de pé. Linhas 224-228: o cartão 'Preços por canal (kit)' está lá, com DUAS `tf-brow` — 'Mercado Livre · Clássico' e 'Shopee' — cada uma com um único valor e um subtítulo. E os subtítulos são justamente as legendas honestas, VERBATIM: `chContrib` = 'N peça(s) somaram neste canal' e `chSkipped` = 'N peça(s) sem preço neste canal — não entrou na soma.', idênticas a `messages.bom.channelContributing/channelSkipped`. Ou seja, a honestidade foi desenhada; a DENSIDADE não. Comparado com `channel-rollup.tsx`: o código emite 4 `BreakdownRow` por canal (varejo/atacado × anúncio/líquido) em vez de 1 valor, tem `channelNoContrib` ('Nenhuma peça com preço neste canal.') que não está no canvas, e monta blocos sintéticos a partir de `uiSkipped` — comportamento que nenhum artboard mostra. §E4 do protótipo trata marketplace como taxa negativa no breakdown de UMA peça e §E não tem kits; auditoria e `.design-import/`: nada. `ux-bom.md` §6.1 item 3 marcou este protótipo como 'honesty-critical', *High* — nunca foi feito.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "rollup-precos-por-canal-kit",
+    "nome": "Cartão 'Preços por canal (kit)'",
+    "escala": "BLOCO",
+    "arquivos": ["apps/web/src/features/bom/channel-rollup.tsx"],
+    "oQueFoiInferido": "A densidade real do cartão: um bloco por marketplace, separado por uma borda `--border-soft` com fallback transparente, cada bloco com QUATRO `BreakdownRow` cujos rótulos são concatenações de duas taxonomias ('Varejo · Preço do anúncio', 'Varejo · Recebido líquido', 'Atacado · Preço do anúncio', 'Atacado · Recebido líquido') mais a legenda de contribuição e, quando houver, a de peças puladas — 8 linhas de dinheiro e até 4 legendas com dois canais. Também não desenhados: o estado 'Nenhuma peça com preço neste canal.' e o bloco SINTÉTICO, um canal que só existe porque TODOS os seus slots eram inválidos e que aparece sem nenhum número, só com a legenda de exclusão.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O bloco cresce linearmente com os canais e é onde vive a honestidade de 'peça sem preço neste canal'. O desenho que existe mostra uma linha por canal; o app mostra quatro mais legendas — a densidade real nunca foi julgada por ninguém, e os dois estados de ausência (vazio e sintético) não existem em nenhum artboard.",
+    "prioridade": "MEDIA",
+    "refutacao": "O canvas cobre mais do que o mapeador registrou, e mesmo assim o achado fica de pé. Linhas 224-228: o cartão 'Preços por canal (kit)' está lá, com DUAS `tf-brow` — 'Mercado Livre · Clássico' e 'Shopee' — cada uma com um único valor e um subtítulo. E os subtítulos são justamente as legendas honestas, VERBATIM: `chContrib` = 'N peça(s) somaram neste canal' e `chSkipped` = 'N peça(s) sem preço neste canal — não entrou na soma.', idênticas a `messages.bom.channelContributing/channelSkipped`. Ou seja, a honestidade foi desenhada; a DENSIDADE não. Comparado com `channel-rollup.tsx`: o código emite 4 `BreakdownRow` por canal (varejo/atacado × anúncio/líquido) em vez de 1 valor, tem `channelNoContrib` ('Nenhuma peça com preço neste canal.') que não está no canvas, e monta blocos sintéticos a partir de `uiSkipped` — comportamento que nenhum artboard mostra. §E4 do protótipo trata marketplace como taxa negativa no breakdown de UMA peça e §E não tem kits; auditoria e `.design-import/`: nada. `ux-bom.md` §6.1 item 3 marcou este protótipo como 'honesty-critical', *High* — nunca foi feito.",
+    "sobreviveu": true,
+    "area": "kits"
 }

@@ -15,25 +15,25 @@ import type { CalcFormValues } from "./calculator-schema";
 
 /** The calculator fields a saved filament feeds (spec US5): cost, roll weight. */
 export function filamentToCalcFields(
-  filament: FilamentOut,
+    filament: FilamentOut,
 ): Pick<CalcFormValues, "costPerRoll" | "rollWeightKg"> {
-  return {
-    costPerRoll: wireToPtBr(filament.costPerRoll),
-    rollWeightKg: wireToPtBr(filament.rollWeightKg),
-  };
+    return {
+        costPerRoll: wireToPtBr(filament.costPerRoll),
+        rollWeightKg: wireToPtBr(filament.rollWeightKg),
+    };
 }
 
 /** The calculator fields a saved printer feeds: machine value, lifetime, draw, maintenance. */
 export function printerToCalcFields(
-  printer: PrinterOut,
+    printer: PrinterOut,
 ): Pick<
-  CalcFormValues,
-  "machineValue" | "machineLifetimeHours" | "avgPowerKw" | "maintenanceReservePerHour"
+    CalcFormValues,
+    "machineValue" | "machineLifetimeHours" | "avgPowerKw" | "maintenanceReservePerHour"
 > {
-  return {
-    machineValue: wireToPtBr(printer.machineValue),
-    machineLifetimeHours: wireToPtBr(printer.machineLifetimeHours),
-    avgPowerKw: wireToPtBr(printer.avgPowerKw),
-    maintenanceReservePerHour: wireToPtBr(printer.maintenanceReservePerHour ?? "0"),
-  };
+    return {
+        machineValue: wireToPtBr(printer.machineValue),
+        machineLifetimeHours: wireToPtBr(printer.machineLifetimeHours),
+        avgPowerKw: wireToPtBr(printer.avgPowerKw),
+        maintenanceReservePerHour: wireToPtBr(printer.maintenanceReservePerHour ?? "0"),
+    };
 }

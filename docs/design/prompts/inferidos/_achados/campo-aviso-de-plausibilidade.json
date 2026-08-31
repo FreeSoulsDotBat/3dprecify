@@ -1,17 +1,17 @@
 {
-  "id": "campo-aviso-de-plausibilidade",
-  "nome": "Campo — a terceira camada de mensagem (aviso de plausibilidade)",
-  "escala": "ESTADO",
-  "arquivos": [
-    "apps/web/src/shared/ui/field.tsx",
-    "apps/web/src/shared/ui/field.css",
-    "apps/web/src/shared/lib/plausibilidade.ts"
-  ],
-  "oQueFoiInferido": "O Field desenhado tem duas camadas (hint e erro, o erro SUBSTITUINDO o hint). O código inventou uma TERCEIRA: `.tf-field__aviso`, linha extra dentro do hint pintada com `--info-text`, para o aviso de plausibilidade que NÃO recusa o valor — datada no CSS como 'Homologação automatizada (2026-08-13)'. Junto vieram a reserva de DUAS linhas de altura no rótulo (cujo comentário declara o motivo: alinhar grades de 2 colunas) e a etiqueta 'opcional' empurrada para a direita com `margin-left:auto`. Falta desenhar: a hierarquia visual entre dica, aviso e erro — três tons no MESMO lugar, um deles vermelho e recusando, outro azul e não recusando.",
-  "autoridade": "PROTOTIPO_PARCIAL",
-  "impacto": "O aviso de plausibilidade é a única coisa entre o vendedor e um preço absurdo, e mora numa linha azul que ninguém desenhou — a um passo de ser lido como erro (e recusar) ou de sumir (e não avisar).",
-  "prioridade": "MEDIA",
-  "refutacao": "Duas das três peças do achado CAEM. (a) A `labelAddon` — o ⓘ como irmão do rótulo, na mesma linha — está desenhada em `CalculatorScreen.jsx:68-69`, onde o rótulo 'Markup' é um `<span display:inline-flex gap:5>` com o texto e o ⓘ. (b) O `tightLabel` está no canvas do DONO, duas vezes: `tf-field__label tf-field__label--tight` nas linhas 137-138 (Filamento/Impressora salvos) e 230 (Nome do kit). O que NÃO tem desenho em autoridade nenhuma é a terceira camada: §D.1 fixa o contrato do Field em `label / required / optional / hint / error` e §E4 só desenha o erro do peso do rolo; a auditoria não trata de níveis de mensagem; `.design-import` não traz Field.jsx e `CatalogScreen.jsx` usa `Field` sem nenhuma dessas props; o canvas usa `tf-field` sem hint, sem erro e sem aviso. Corrigi um caminho errado do mapeador: o módulo é `apps/web/src/shared/lib/plausibilidade.ts` — `features/calculator/plausibilidade.ts` NÃO EXISTE.",
-  "sobreviveu": true,
-  "area": "design-system"
+    "id": "campo-aviso-de-plausibilidade",
+    "nome": "Campo — a terceira camada de mensagem (aviso de plausibilidade)",
+    "escala": "ESTADO",
+    "arquivos": [
+        "apps/web/src/shared/ui/field.tsx",
+        "apps/web/src/shared/ui/field.css",
+        "apps/web/src/shared/lib/plausibilidade.ts"
+    ],
+    "oQueFoiInferido": "O Field desenhado tem duas camadas (hint e erro, o erro SUBSTITUINDO o hint). O código inventou uma TERCEIRA: `.tf-field__aviso`, linha extra dentro do hint pintada com `--info-text`, para o aviso de plausibilidade que NÃO recusa o valor — datada no CSS como 'Homologação automatizada (2026-08-13)'. Junto vieram a reserva de DUAS linhas de altura no rótulo (cujo comentário declara o motivo: alinhar grades de 2 colunas) e a etiqueta 'opcional' empurrada para a direita com `margin-left:auto`. Falta desenhar: a hierarquia visual entre dica, aviso e erro — três tons no MESMO lugar, um deles vermelho e recusando, outro azul e não recusando.",
+    "autoridade": "PROTOTIPO_PARCIAL",
+    "impacto": "O aviso de plausibilidade é a única coisa entre o vendedor e um preço absurdo, e mora numa linha azul que ninguém desenhou — a um passo de ser lido como erro (e recusar) ou de sumir (e não avisar).",
+    "prioridade": "MEDIA",
+    "refutacao": "Duas das três peças do achado CAEM. (a) A `labelAddon` — o ⓘ como irmão do rótulo, na mesma linha — está desenhada em `CalculatorScreen.jsx:68-69`, onde o rótulo 'Markup' é um `<span display:inline-flex gap:5>` com o texto e o ⓘ. (b) O `tightLabel` está no canvas do DONO, duas vezes: `tf-field__label tf-field__label--tight` nas linhas 137-138 (Filamento/Impressora salvos) e 230 (Nome do kit). O que NÃO tem desenho em autoridade nenhuma é a terceira camada: §D.1 fixa o contrato do Field em `label / required / optional / hint / error` e §E4 só desenha o erro do peso do rolo; a auditoria não trata de níveis de mensagem; `.design-import` não traz Field.jsx e `CatalogScreen.jsx` usa `Field` sem nenhuma dessas props; o canvas usa `tf-field` sem hint, sem erro e sem aviso. Corrigi um caminho errado do mapeador: o módulo é `apps/web/src/shared/lib/plausibilidade.ts` — `features/calculator/plausibilidade.ts` NÃO EXISTE.",
+    "sobreviveu": true,
+    "area": "design-system"
 }

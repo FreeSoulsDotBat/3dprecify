@@ -18,11 +18,11 @@ const t = messages.calculator.shopeeWarnings;
  * verbatim do art. 26839 (T057) e o contexto em que valem, e NUNCA aplica uma fórmula.
  */
 export function ShopeeRegressiveFeeWarning() {
-  return (
-    <Alert tone="info" title={t.regressiveTitle} data-testid="shopee-regressive-fee-warning">
-      {t.regressiveBody}
-    </Alert>
-  );
+    return (
+        <Alert tone="info" title={t.regressiveTitle} data-testid="shopee-regressive-fee-warning">
+            {t.regressiveBody}
+        </Alert>
+    );
 }
 
 /**
@@ -43,17 +43,17 @@ export function ShopeeRegressiveFeeWarning() {
  * linha continuar UMA (a razão de ser da A5); a diferença de geometria (~8px) é re-medida a 360px.
  */
 export function ShopeeMeasuredFreightWarning() {
-  return (
-    <Alert
-      tone="info"
-      compact
-      data-testid="shopee-measured-freight-warning"
-      title={
-        <>
-          {t.measuredFreightTitle}{" "}
-          <InfoTip label={t.measuredFreightTipLabel}>{t.measuredFreightBody}</InfoTip>
-        </>
-      }
-    />
-  );
+    return (
+        <Alert
+            tone="info"
+            compact
+            data-testid="shopee-measured-freight-warning"
+            title={
+                <>
+                    {t.measuredFreightTitle}{" "}
+                    <InfoTip label={t.measuredFreightTipLabel}>{t.measuredFreightBody}</InfoTip>
+                </>
+            }
+        />
+    );
 }

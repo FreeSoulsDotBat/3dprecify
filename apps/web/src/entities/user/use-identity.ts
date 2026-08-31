@@ -18,24 +18,24 @@ import { toUserIdentity, type UserIdentity } from "./user";
 export const ME_QUERY_KEY = ["me"] as const;
 
 export function useIdentity(): UseQueryResult<UserIdentity, ApiError> {
-  const status = useSessionStore((s) => s.status);
-  const uid = useSessionStore((s) => s.user?.uid);
-  return useQuery<UserIdentity, ApiError>({
-    // Keyed by uid (D1): a re-login as a DIFFERENT user gets a distinct cache entry, so the
-    // shell can never read the previous user's cached identity within staleTime. `enabled`
-    // also requires the uid so the query never fires with a partial `["me", undefined]` key.
-    queryKey: [...ME_QUERY_KEY, uid],
-    enabled: status === "authenticated" && !!uid,
-    retry: false,
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const res = await getMeApiV1MeGet();
-      // The transport throws a typed ApiError on any non-2xx, so only the 200 branch of the
-      // generated (honest) 200|401 union is reachable here — plain narrowing, no cast.
-      if (res.status !== 200) {
-        throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
-      }
-      return toUserIdentity(res.data);
-    },
-  });
+    const status = useSessionStore((s) => s.status);
+    const uid = useSessionStore((s) => s.user?.uid);
+    return useQuery<UserIdentity, ApiError>({
+        // Keyed by uid (D1): a re-login as a DIFFERENT user gets a distinct cache entry, so the
+        // shell can never read the previous user's cached identity within staleTime. `enabled`
+        // also requires the uid so the query never fires with a partial `["me", undefined]` key.
+        queryKey: [...ME_QUERY_KEY, uid],
+        enabled: status === "authenticated" && !!uid,
+        retry: false,
+        staleTime: 5 * 60_000,
+        queryFn: async () => {
+            const res = await getMeApiV1MeGet();
+            // The transport throws a typed ApiError on any non-2xx, so only the 200 branch of the
+            // generated (honest) 200|401 union is reachable here — plain narrowing, no cast.
+            if (res.status !== 200) {
+                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+            }
+            return toUserIdentity(res.data);
+        },
+    });
 }

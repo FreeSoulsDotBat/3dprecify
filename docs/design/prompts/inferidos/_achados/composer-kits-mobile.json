@@ -1,17 +1,17 @@
 {
-  "id": "composer-kits-mobile",
-  "nome": "Compositor de kits em mobile (a tela /kits inteira abaixo de 1280px)",
-  "escala": "TELA",
-  "arquivos": [
-    "apps/web/src/pages/bom/bom-page.tsx",
-    "apps/web/src/pages/bom/bom-page.css",
-    "apps/web/src/features/bom/assembly-summary.css"
-  ],
-  "oQueFoiInferido": "A composição inteira entre 360 e 1279px. Nessa faixa `.tf-kits-grid`, `.tf-kits-grid__lines` e `.tf-kits-grid__aside` são `display: contents` — os invólucros somem e TUDO vira filho direto da `<section>`, numa pilha única nesta ordem: PageHeader (título + subtítulo) → Alert de plano desatualizado → Alert de Premium pausado → Alert de falha do catálogo de tarifas com botão de retry → os cards de peça empilhados → botão 'Adicionar peça' → cartão 'Preços por canal (kit)' → barra 'Total do kit' colada no rodapé (`position: sticky; bottom: var(--pinned-bottom)`) → botão 'Salvar em Orçamentos' centralizado → caixa com 'Nome do kit' + 'Salvar kit' + recibo de materialização. Ninguém desenhou: a ordem dessa pilha, quanto ela empurra a primeira peça para fora da dobra, a densidade de cards expansíveis a 360px, a coexistência da barra fixa com a TabBar de 64px (resolvida em código por `--pinned-bottom`, 014/T118, depois que os dígitos apareceram cortados) e o que fica visível enquanto o vendedor edita uma peça aberta.",
-  "autoridade": "NENHUMA",
-  "impacto": "A tela onde o vendedor passa mais tempo montando um anúncio de kit nunca foi desenhada no formato em que 100% dos celulares a usam. A hierarquia e a densidade a 360px vieram de correções reativas de homologação (barra cortada pela TabBar em 014/T118; par varejo/atacado que não cabia em duas colunas em A5-b), não de uma decisão de desenho.",
-  "prioridade": "ALTA",
-  "refutacao": "Procurei nas quatro autoridades e não encontrei nada que derrube. (1) `claude-design-prototype.md` §E, lido inteiro (linhas 208-300): o shell prototipado tem QUATRO abas — 'Calcular · Catálogo · Histórico · Conta' (§E3 e §D.2) — e não há tela de kits; a seção H pedia mobile ~390px + desktop para E1-E9, ou seja, o mobile foi entregue para telas que não incluem esta. (2) `prototype-audit-2026-07-02.md`: nenhuma das 16 linhas de achado, nem V2, nem V3, menciona kit/BOM/montagem. (3) `.design-import/ui_kits/precifica3d/`: seis esqueletos, nenhum de kits (grep 'kit' só acha 'UI-kit' no readme). (4) `Abas-Desktop.dc.html`: artboard de `width:1920px` com `data-layout=\"desktop\"`, sem UMA media query no arquivo — o bloco Kits (linhas 155-243) não diz nada sobre largura menor. E `bom-page.css` prova a fronteira do lado do código: a grade só existe dentro de `@media (min-width: 1280px)`; abaixo disso o comentário do próprio arquivo declara que o mobile é o de antes, IDÊNTICO. `ux-bom.md` §6.1 item 1 pediu exatamente este protótipo ('valida densidade a 390px', *High*) e ele nunca foi feito.",
-  "sobreviveu": true,
-  "area": "kits"
+    "id": "composer-kits-mobile",
+    "nome": "Compositor de kits em mobile (a tela /kits inteira abaixo de 1280px)",
+    "escala": "TELA",
+    "arquivos": [
+        "apps/web/src/pages/bom/bom-page.tsx",
+        "apps/web/src/pages/bom/bom-page.css",
+        "apps/web/src/features/bom/assembly-summary.css"
+    ],
+    "oQueFoiInferido": "A composição inteira entre 360 e 1279px. Nessa faixa `.tf-kits-grid`, `.tf-kits-grid__lines` e `.tf-kits-grid__aside` são `display: contents` — os invólucros somem e TUDO vira filho direto da `<section>`, numa pilha única nesta ordem: PageHeader (título + subtítulo) → Alert de plano desatualizado → Alert de Premium pausado → Alert de falha do catálogo de tarifas com botão de retry → os cards de peça empilhados → botão 'Adicionar peça' → cartão 'Preços por canal (kit)' → barra 'Total do kit' colada no rodapé (`position: sticky; bottom: var(--pinned-bottom)`) → botão 'Salvar em Orçamentos' centralizado → caixa com 'Nome do kit' + 'Salvar kit' + recibo de materialização. Ninguém desenhou: a ordem dessa pilha, quanto ela empurra a primeira peça para fora da dobra, a densidade de cards expansíveis a 360px, a coexistência da barra fixa com a TabBar de 64px (resolvida em código por `--pinned-bottom`, 014/T118, depois que os dígitos apareceram cortados) e o que fica visível enquanto o vendedor edita uma peça aberta.",
+    "autoridade": "NENHUMA",
+    "impacto": "A tela onde o vendedor passa mais tempo montando um anúncio de kit nunca foi desenhada no formato em que 100% dos celulares a usam. A hierarquia e a densidade a 360px vieram de correções reativas de homologação (barra cortada pela TabBar em 014/T118; par varejo/atacado que não cabia em duas colunas em A5-b), não de uma decisão de desenho.",
+    "prioridade": "ALTA",
+    "refutacao": "Procurei nas quatro autoridades e não encontrei nada que derrube. (1) `claude-design-prototype.md` §E, lido inteiro (linhas 208-300): o shell prototipado tem QUATRO abas — 'Calcular · Catálogo · Histórico · Conta' (§E3 e §D.2) — e não há tela de kits; a seção H pedia mobile ~390px + desktop para E1-E9, ou seja, o mobile foi entregue para telas que não incluem esta. (2) `prototype-audit-2026-07-02.md`: nenhuma das 16 linhas de achado, nem V2, nem V3, menciona kit/BOM/montagem. (3) `.design-import/ui_kits/precifica3d/`: seis esqueletos, nenhum de kits (grep 'kit' só acha 'UI-kit' no readme). (4) `Abas-Desktop.dc.html`: artboard de `width:1920px` com `data-layout=\"desktop\"`, sem UMA media query no arquivo — o bloco Kits (linhas 155-243) não diz nada sobre largura menor. E `bom-page.css` prova a fronteira do lado do código: a grade só existe dentro de `@media (min-width: 1280px)`; abaixo disso o comentário do próprio arquivo declara que o mobile é o de antes, IDÊNTICO. `ux-bom.md` §6.1 item 1 pediu exatamente este protótipo ('valida densidade a 390px', *High*) e ele nunca foi feito.",
+    "sobreviveu": true,
+    "area": "kits"
 }
