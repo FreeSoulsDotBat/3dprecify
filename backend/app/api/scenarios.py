@@ -1,4 +1,4 @@
-"""E5 (US1/US2, FR-602..614) — saved marketplace scenarios: PR-A subset (T007/T011).
+"""E5 (US1/US2, FR-602..614) — saved marketplace scenarios: full CRUD + read-time resolver.
 
 Wire per `specs/010-e5-saved-scenarios/contracts/api-surface.md` + the config envelope per
 `specs/010-e5-saved-scenarios/data-model.md` §3/§4. THE GOVERNING SENTENCE (mirror of E4's
@@ -8,23 +8,23 @@ offline outbox and — the point this module exists to enforce — **no money co
 monetary leaf lives inside the ``config`` JSONB as a decimal STRING, and the backend never
 recomputes or stores a resolved price (VR-611, ADR-0008/ADR-0015).
 
-**This is the PR-A subset only** (T007 + T011): ``POST`` create, ``GET`` list (keyset), ``GET
-/{id}``. The read-time D3/D6 cost-basis resolver is explicitly OUT of scope here — T022 (PR-B)
-resolves ``config.costBasis`` against the live catalog; this module returns ``config`` exactly as
-stored (verbatim), consistent with "materializes nothing" (VR-607). ``PUT``/``PATCH``/``DELETE``/
-``duplicate`` are T028/T026 (PR-B).
+Routes: ``POST`` create · ``GET`` list (keyset) · ``GET /{id}`` · ``PUT`` · ``PATCH`` rename ·
+``POST /{id}/duplicate`` · ``DELETE``. Every read passes through ``_resolve_cost_basis_for_read``
+(the D3/D6 resolver): ``config`` is echoed exactly as stored (VR-607, "materializes nothing")
+EXCEPT ``costBasis``, which is resolved against the live catalog — live reference ⇒ D3
+live-reflect, missing reference ⇒ D6 last-known with ``degraded: true``.
 
 **The config validator is STRUCTURAL, not shape-pinning** (VR-602/603, the E4 §9.6 lesson):
 ``config`` is a raw ``dict[str, Any]``, walked generically for JSON-float leaves / non-finite
 decimal strings / an oversized document — never mirrored field-by-field against ``PriceInput``/
 ``BomResult``, so a pricing-core bump can never make this backend reject its own configs. It runs
-on every write (POST now; PUT in PR-B) per data-model §1 N1.
+on every write per data-model §1 N1.
 
-**T011 — the on-save re-snapshot (D6 groundwork, ADR-0017 §6 the ``_snapshot_line`` rule).** A
-``costBasis`` referencing a live, owned Product **or Kit** (the second kind added 2026-07-23, audit
-finding E5-01) has its ``lastKnown`` REWRITTEN from the live row on every save — so a later
-degradation (T022, when the reference is gone) is lossless. A ``ref`` that does not resolve is
-**not** an error (Q13, accept-and-degrade): the client-sent ``lastKnown`` is kept as-is.
+**The on-save re-snapshot (D6 groundwork, ADR-0017 §6 the ``_snapshot_line`` rule).** A
+``costBasis`` referencing a live, owned Product **or Kit** has its ``lastKnown`` REWRITTEN from
+the live row on every save — so a later degradation (when the reference is gone) is lossless. A
+``ref`` that does not resolve is **not** an error (Q13, accept-and-degrade): the client-sent
+``lastKnown`` is kept as-is.
 """
 
 from __future__ import annotations

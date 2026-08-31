@@ -58,9 +58,7 @@ class ErrorEnvelope(CamelModel):
 
 # A21 (FR-210): composable per-route ``responses=`` constants declaring ONLY the statuses a route
 # can actually return — the positive half of the honest error contract (the negative half, removing
-# FastAPI's auto-injected phantom 422, lives in ``main.py``'s ``openapi()`` override). No 403
-# constant exists on purpose: no route has authorization logic yet, so publishing one would itself
-# be a phantom (Principle II).
+# FastAPI's auto-injected phantom 422, lives in ``main.py``'s ``openapi()`` override).
 AUTH_ERRORS: dict[int | str, dict[str, Any]] = {
     401: {"model": ErrorEnvelope, "description": "Missing/invalid/expired bearer token"},
 }

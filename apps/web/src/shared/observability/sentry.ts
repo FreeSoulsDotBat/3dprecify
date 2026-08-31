@@ -61,10 +61,6 @@ export function initObservability({
     return true;
 }
 
-export function isObservabilityInitialised(): boolean {
-    return initialised;
-}
-
 /**
  * Report an error to Sentry with searchable tags. Safe when Sentry never initialised
  * (the SDK swallows the call). `null` / `undefined` tag values are dropped so we never

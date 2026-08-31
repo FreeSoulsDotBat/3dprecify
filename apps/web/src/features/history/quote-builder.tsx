@@ -12,14 +12,10 @@ import { buildQuotePayload } from "@/entities/history/frozen-payload";
 import { useRecordSnapshot } from "@/entities/history/use-history";
 import type {
     BomOut,
-    FilamentOut,
-    PrinterOut,
     ProductOut,
     SnapshotIn,
     SnapshotInHeadlineBasis,
 } from "@/shared/api/generated";
-import type { FeeCatalog } from "@/shared/fee-catalog/fee-catalog";
-import type { CatalogSource } from "@/shared/fee-catalog/use-fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL, parseDecimal } from "@/shared/lib/decimal-ptbr";
 import { formatDatePtBr, formatDayMonthPtBr } from "@/shared/lib/format-date";
@@ -87,12 +83,6 @@ export interface QuoteLineInputResult {
 export interface QuoteBuilderProps {
     products: ProductOut[];
     kits: BomOut[];
-    /** Não usados no PREÇO (o motor já recebeu tudo resolvido via `toLineInput`) — mantidos na
-     *  assinatura pela simetria do contrato (T088); nada aqui os lê. */
-    filaments: FilamentOut[];
-    printers: PrinterOut[];
-    catalog: FeeCatalog;
-    source: CatalogSource;
     /** T125 (ADR-0033) — o construtor NÃO lê observação de preço (esse vocabulário é só do
      *  recálculo do Catálogo); a data de "preço parado desde" vem de quando o REGISTRO do produto
      *  mudou pela última vez, uma por id — só isso, deliberadamente menos rico que o Catálogo. */
@@ -532,7 +522,7 @@ export function QuoteBuilder({
                 <h2 className="tf-title text-[var(--text-strong)]">{t.sendTitle}</h2>
                 <BreakdownRow
                     label={t.totalSent}
-                    value={formatBRL(quoteResult?.netTotal ?? 0)}
+                    value={formatBRL(quoteResult.netTotal)}
                     prefix=""
                 />
                 <Field label={th.validityField}>

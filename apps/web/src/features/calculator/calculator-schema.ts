@@ -483,11 +483,6 @@ export const LABOR_AND_FINISH_FIELDS: readonly CalcFieldMeta[] = [
     },
 ] as const;
 
-/** The plain labor-only subset — bom-line-editor's secondary-disclosure grouping keeps the same
- *  member fields as `LABOR_AND_FINISH_FIELDS` (it renders the whole array; kept as a named alias
- *  so a future split does not have to touch three call sites at once). */
-export const LABOR_FIELDS: readonly CalcFieldMeta[] = LABOR_AND_FINISH_FIELDS;
-
 // 016/T072-R5 (2026-08-07) — the SAME "which scalar/channel field is currency" knowledge
 // `NumberField`'s on-blur thousands mask reads via `meta.currency`/`CHANNEL_FEE_FIELDS[].currency`,
 // re-exposed as plain name sets so `scenario-bridge.ts` can apply the identical formatter at

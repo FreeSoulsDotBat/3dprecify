@@ -157,10 +157,6 @@ function QuoteBuilderRoute() {
                 <QuoteBuilder
                     products={products.items}
                     kits={boms.items}
-                    filaments={[]}
-                    printers={[]}
-                    catalog={catalog}
-                    source={source}
                     observations={observations}
                     toLineInput={toLine}
                     onSent={backToList}

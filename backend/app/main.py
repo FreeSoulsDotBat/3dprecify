@@ -1,6 +1,7 @@
 """FastAPI application factory (create_app + lifespan). camelCase wire via aliased models.
 
-Mounts ``/health`` (public, unversioned) and an empty ``/api/v1`` router — NO product routes here.
+Mounts ``/health`` (public, unversioned) and the ``/api/v1`` router tree — every product router
+(catalog, products, kits, history, export, scenarios, billing, …) is registered in ``create_app``.
 A dev-only ``/api/v1/_debug/boom`` demonstrates the error envelope + correlation id (SC-4).
 """
 
@@ -59,11 +60,12 @@ async def lifespan(_app: FastAPI) -> AsyncGenerator[None, None]:
 def _strip_phantom_422(schema: dict[str, Any]) -> dict[str, Any]:
     """Remove FastAPI's auto-injected 422 (``HTTPValidationError``) from the published contract.
 
-    A21/FR-210: none of our routes can actually fail request validation (their only params are
-    optional headers), so the auto-422 is a phantom — and per-route ``responses=`` can only
-    *replace* it, never remove it. Real validation failures (if a future route gains required
-    params) are handled by ``register_exception_handlers`` as a 422 ``ErrorEnvelope``; such a route
-    must then DECLARE that envelope explicitly instead of relying on the phantom default.
+    A21/FR-210: the auto-422 advertises FastAPI's ``HTTPValidationError`` shape, which this API
+    never emits — real validation failures are rendered by ``register_exception_handlers`` as a
+    422 ``ErrorEnvelope``, and a route whose 422 is REACHABLE declares that envelope explicitly
+    via ``VALIDATION_ERRORS`` (see ``errors.py``), which this strip preserves (it only removes
+    422s still typed as ``HTTPValidationError``). Per-route ``responses=`` can only *replace*
+    the phantom, never remove it — hence this post-processing.
     """
     for path_item in schema.get("paths", {}).values():
         for operation in path_item.values():

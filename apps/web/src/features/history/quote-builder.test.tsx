@@ -20,8 +20,6 @@ import { computeQuote, type PriceInput, type QuoteDiscount } from "@3dprecify/pr
 
 import { buildQuotePayload } from "@/entities/history/frozen-payload";
 import type { BomOut, ProductOut, SnapshotIn } from "@/shared/api/generated";
-import type { FeeCatalog } from "@/shared/fee-catalog/fee-catalog";
-import type { CatalogSource } from "@/shared/fee-catalog/use-fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatBRL } from "@/shared/lib/decimal-ptbr";
 import { Toaster } from "@/shared/ui";
@@ -212,8 +210,6 @@ const KIT = kitOf("k-1", "Kit Festa", [
     { n: PRATO_NUMBERS, qty: 1, degraded: true, pieceName: null },
 ]);
 
-const CATALOG = { catalogVersion: "2026-08-06.1", marketplaces: [] } as unknown as FeeCatalog;
-
 const OBSERVATIONS = new Map([
     ["p-parado", { observedPrice: 42.98, observedAt: "2026-07-30T12:00:00Z" }],
 ]);
@@ -298,10 +294,6 @@ function renderBuilder(props: Partial<Parameters<typeof QuoteBuilder>[0]> = {}) 
             <QuoteBuilder
                 products={[VASO, PRATO]}
                 kits={[KIT]}
-                filaments={[]}
-                printers={[]}
-                catalog={CATALOG}
-                source={"catalog" satisfies CatalogSource}
                 observations={OBSERVATIONS}
                 toLineInput={testToLineInput}
                 onSent={vi.fn()}

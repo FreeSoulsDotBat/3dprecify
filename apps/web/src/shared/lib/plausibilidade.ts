@@ -256,10 +256,3 @@ export function avisoDeCampo(nome: string, bruto: string, comErro = false): stri
 export function licaoDeCampo(nome: string): string | null {
     return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
 }
-
-/** Conveniência para a tela: os avisos indexados por campo. */
-export function avisosPorCampo(avisos: AvisoPlausibilidade[]): Partial<Record<string, string>> {
-    const mapa: Partial<Record<string, string>> = {};
-    for (const a of avisos) if (!mapa[a.campo]) mapa[a.campo] = a.texto;
-    return mapa;
-}

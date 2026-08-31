@@ -190,46 +190,28 @@ interface SlotProcessing {
 }
 
 /**
- * 013 / E1-02 — the override seam, as a SELECTIVE MERGE.
+ * The override seam, as a SELECTIVE MERGE (013/E1-02; band-drop rule corrected by audit F1;
+ * voucher attribution corrected by hotfix 016/A2 — history in those records).
  *
- * Typing ONE fee on a covered slot used to drop the catalog entry WHOLESALE (`priceBands:
- * undefined, freightVoucherBands: undefined`): the price bands vanished from the calculation, so
- * the price was computed at 0% commission — silently, under a seal that only claimed the fees had
- * been adjusted. That defect (the F1 note at the bottom) is the reason the merge is selective.
+ * The override overwrites ONLY the scalars the seller actually TYPED. The signal is
+ * `editedFields` (which fields were typed), NEVER truthiness — a typed `0` is a real override
+ * and must win over the entry's value. `freightIsEstimate` follows the same rule: the
+ * "estimativa" label belongs to the entry's subsidy, so it is dropped the moment the seller
+ * types their own freight.
  *
- * **CORREÇÃO 2026-08-07 (hotfix 016/A2).** This docstring used to justify preserving
- * `freightVoucherBands` by saying that losing it "overstated the recebido líquido by exactly the
- * voucher". That justification is now FALSE, and a false comment in a money seam is the debt the
- * next dev believes: the verbatim sources attribute the R$ 20/30/40 to SHOPEE, not to the seller
- * ("*A Shopee oferece subsídios de frete para todos os vendedores*", art. 26839/23431), so
- * deducting it was the defect, not preserving it the fix. The catalog no longer emits the voucher
- * (`freight: {kind: "NONE"}` on both Shopee entries), and the field is DEPRECATED in the engine.
+ * OVERRIDE RULE: a typed `commissionPct` means "my commission is X, not the catalog's" → the
+ * price-band schedule DROPS and the typed commission governs. Everything else — freight,
+ * minPerItem, AND a typed `fixedFee` — does NOT drop the schedule. WHY fixedFee must not drop
+ * it: Shopee's entry has NO top-level commissionPct (it lives in the bands), so dropping the
+ * bands on a fixedFee-only edit would fall back to 0% commission and silently overstate the
+ * seller's net by the full commission (the F1 bug). On a band entry the engine takes
+ * commissionPct+fixedFee from the band containing the announce, so the typed fixedFee is
+ * simply inert there; on a non-band entry it overrides the scalar as expected.
  *
- * The selective-merge RULE is unchanged and still right — it exists for `priceBands`. The
- * unconditional carry-through of `freightVoucherBands` also stays, for a different and still valid
- * reason: a scenario document saved BEFORE the hotfix (ADR-0021) may carry the field, and dropping
+ * `freightVoucherBands` is DEPRECATED in the engine (016/A2: the R$ 20/30/40 voucher is
+ * Shopee's cost, not the seller's; the catalog no longer emits it) but is still carried through
+ * unconditionally: a scenario document saved BEFORE the hotfix may hold the field, and dropping
  * it on an edit would change that document's number for a reason the seller never asked for.
- *
- * The override now overwrites ONLY the scalars the seller actually TYPED. The signal is
- * `editedFields` (which fields were typed), NEVER truthiness — a typed `0` is a real override and
- * must win over the entry's value. `freightIsEstimate` follows the same rule: the "estimativa"
- * label belongs to the entry's subsidy, so it is dropped the moment the seller types their own
- * freight.
- *
- * OVERRIDE RULE (owner decision 2026-07-23, corrected by the confirmation audit F1): a typed
- * `commissionPct` means "my commission is X, not the catalog's" → the price-band schedule DROPS and
- * the typed commission governs. Everything else — freight, minPerItem, AND a typed `fixedFee` — does
- * NOT drop the schedule: on a band entry `pricing-core/channels.ts` takes commissionPct+fixedFee from
- * the band containing the announce, so a typed fixedFee is simply inert there (the price stays
- * correct), and on a non-band entry (no schedule to drop) it overrides the scalar as expected.
- * `freightVoucherBands` (a freight dimension, orthogonal to commission) is preserved unconditionally
- * — DEPRECATED since the 016/A2 hotfix, carried only for documents saved before it (see above).
- *
- * WHY fixedFee must NOT trigger the drop (the F1 bug): Shopee's entry has NO top-level commissionPct
- * (`seed.ts` — it lives in the bands), so `entryToChannelFees` reads `null ?? 0`. Dropping the bands
- * on a fixedFee-only edit therefore fell back to commissionPct 0 → the gross-up charged 0% instead of
- * 14–20%, overstating the seller's net by the full commission. A silent-money defect: the exact class
- * E1-02 exists to kill. So only `commissionPct` drops the schedule.
  */
 function resolveSlotFees(
     entry: FeeEntry | null,
