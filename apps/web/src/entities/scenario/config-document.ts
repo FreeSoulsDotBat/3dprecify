@@ -1,4 +1,6 @@
-import { Decimal, type PriceInput } from "@3dprecify/pricing-core";
+import { type PriceInput } from "@3dprecify/pricing-core";
+
+import { stringifyLeaf, toExactString, type DecimalLeafValue } from "@/shared/lib/decimal-leaf";
 
 // 010/T004 (E5, PR-A foundational) — THE CONFIG INTENT DOCUMENT (data-model.md §3,
 // contracts/api-surface.md §Schemas).
@@ -38,11 +40,6 @@ export const SCENARIO_CONFIG_SCHEMA_VERSION = 1;
 /** A decimal number as an exact string, e.g. "12.50", "0.1". Never a float, never rounded (this is
  *  an INPUT/intent leaf, not a settled total — quantizing it would silently corrupt it). */
 export type DecimalString = string;
-
-/** Stringify a JS number EXACTLY (no 2dp rounding) — the `PriceInput` leaf idiom. */
-function toExactString(value: number): DecimalString {
-    return new Decimal(value).toString();
-}
 
 export interface ScenarioOtherCost {
     name: string;
@@ -92,12 +89,10 @@ export interface ScenarioChannelIntent {
     feeOverrides?: ScenarioChannelFeeOverrides;
 }
 
-/** A recursive money/rate/qty leaf: every JS number becomes an exact decimal STRING at any depth
- *  (mirrors `entities/history/frozen-payload.ts`'s `FrozenInputValue`, independently declared here —
- *  this is the concrete shape of N1's "structurally independent" requirement). Strings/null pass
- *  through; arrays and nested objects (a channel's `priceBands`, `freightVoucherBands`) recurse. */
-export type ScenarioLeafValue =
-    DecimalString | null | ScenarioLeafValue[] | { [field: string]: ScenarioLeafValue };
+/** A recursive money/rate/qty leaf: every JS number becomes an exact decimal STRING at any depth.
+ *  A serialização vive em `shared/lib/decimal-leaf.ts` (casa única); o ENVELOPE continua
+ *  independente de `PriceInput` aqui — a forma concreta do "structurally independent" de N1. */
+export type ScenarioLeafValue = DecimalLeafValue;
 
 /** A fully-resolved `PriceInput`-SHAPED value set, stringified leaf-by-leaf — NOT `PriceInput`
  *  itself (no `extends`/`Pick`/mapped reuse, the E4 §9.6 lesson). */
@@ -131,27 +126,8 @@ export interface ScenarioConfig {
     otherCosts: ScenarioOtherCost[];
 }
 
-/** Stringify one INPUT value RECURSIVELY: a numeric leaf → an exact decimal string (never rounded);
- *  strings/null pass through; arrays/objects descend (the E4 review PR-A I1 lesson — a shallow
- *  freeze lets a nested band leaf survive as a float). Booleans do not occur in a resolved
- *  `PriceInput` leaf set; invent nothing for one. */
-function stringifyLeaf(value: unknown): ScenarioLeafValue {
-    if (value === null || value === undefined) return null;
-    if (typeof value === "number") return toExactString(value);
-    if (typeof value === "string") return value;
-    if (Array.isArray(value)) return value.map(stringifyLeaf);
-    if (typeof value === "object") {
-        const out: { [field: string]: ScenarioLeafValue } = {};
-        for (const [key, child] of Object.entries(value)) {
-            if (child === undefined) continue;
-            out[key] = stringifyLeaf(child);
-        }
-        return out;
-    }
-    return null;
-}
-
-/** Stringify every numeric leaf of a resolved `PriceInput`, at any depth. */
+/** Stringify every numeric leaf of a resolved `PriceInput`, at any depth (folha:
+ *  `shared/lib/decimal-leaf.ts`). */
 function stringifyInput(input: PriceInput): ScenarioLastKnownInput {
     const out: ScenarioLastKnownInput = {};
     for (const [key, value] of Object.entries(input)) {

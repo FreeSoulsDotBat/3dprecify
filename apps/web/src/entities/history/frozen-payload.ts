@@ -6,6 +6,8 @@ import {
     type QuoteResult,
 } from "@3dprecify/pricing-core";
 
+import { stringifyLeaf, type DecimalLeafValue } from "@/shared/lib/decimal-leaf";
+
 // 009/T003 (E4, PR-A) — THE FROZEN DOCUMENT (data-model D1, ADR-0008, ADR-0020 §1).
 //
 // A snapshot CONTAINS its values; it never REFERENCES the catalog for them. That is the whole
@@ -40,12 +42,6 @@ export type MoneyString = string;
 /** Settled money: exactly 2dp, ROUND_HALF_UP (ADR-0008 / ADR-0004 — one money story end-to-end). */
 export function toMoneyString(value: number): MoneyString {
     return new Decimal(value).toFixed(2);
-}
-
-/** An input leaf (grams, hours, kW, %, rates): stringified WITHOUT rounding — quantizing an input
- *  to 2dp would silently corrupt it (0.125 kW is not 0.13 kW). */
-function toExactString(value: number): MoneyString {
-    return new Decimal(value).toString();
 }
 
 export interface FrozenOtherCost {
@@ -102,9 +98,9 @@ export interface FrozenChannel {
  * objects (a channel's `priceBands`, `freightVoucherBands`, `feeDeterminants`) are frozen
  * RECURSIVELY. The one-level-deep freeze that first shipped froze channel-band leaves as floats
  * inside the immutable document (review PR-A, finding I1) — a recursive value type forbids that.
+ * A serialização vive em `shared/lib/decimal-leaf.ts` (casa única); o ENVELOPE segue daqui.
  */
-export type FrozenInputValue =
-    MoneyString | null | FrozenInputValue[] | { [field: string]: FrozenInputValue };
+export type FrozenInputValue = DecimalLeafValue;
 
 /** The fully RESOLVED inputs (filament/printer values inlined, never references) — so a snapshot
  *  reproduces with nothing but itself, and "Recalcular hoje" has something to fall back on when the
@@ -309,33 +305,14 @@ function freezeRollupChannels(bom: BomResult): FrozenChannel[] {
     }));
 }
 
-/** Freeze one INPUT value RECURSIVELY: a numeric leaf → an exact decimal string (never rounded);
- *  strings/null pass through; arrays and nested objects are descended so no float can hide in a
- *  channel band (review PR-A, I1). A `PriceInput` has no integer-count leaves, so every number
- *  legitimately becomes a string here. */
-function freezeInputValue(value: unknown): FrozenInputValue {
-    if (value === null) return null;
-    if (typeof value === "number") return toExactString(value);
-    if (typeof value === "string") return value;
-    if (Array.isArray(value)) return value.map(freezeInputValue);
-    if (typeof value === "object") {
-        const out: { [field: string]: FrozenInputValue } = {};
-        for (const [key, child] of Object.entries(value)) {
-            if (child === undefined) continue;
-            out[key] = freezeInputValue(child);
-        }
-        return out;
-    }
-    // Booleans / other non-money leaves do not occur in a resolved PriceInput; invent nothing.
-    return null;
-}
-
-/** Stringify every numeric leaf of a resolved `PriceInput`, at any depth. */
+/** Stringify every numeric leaf of a resolved `PriceInput`, at any depth (a folha recursiva —
+ *  review PR-A I1 — vive em `shared/lib/decimal-leaf.ts`; um `PriceInput` resolvido não tem folha
+ *  inteira/booleana, então todo número legitimamente vira string aqui). */
 function freezeInput(input: PriceInput): FrozenPriceInput {
     const frozen: FrozenPriceInput = {};
     for (const [key, value] of Object.entries(input)) {
         if (value === undefined) continue;
-        frozen[key] = freezeInputValue(value);
+        frozen[key] = stringifyLeaf(value);
     }
     return frozen;
 }
