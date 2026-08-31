@@ -180,3 +180,40 @@ Colunas: categoria · problema · custo de debug · severidade (A/M/B) · esfor�
 - **Rede de segurança para refatorar:** `pnpm gate:all` verde na baseline; pricing-core com 100% de
   cobertura ratcheted + varredura de igualdade de 700 casos (`version-equality`), que é a prova de
   byte-identidade para a divisão do pacote; 31 imports do pacote, todos pela raiz (barrel seguro).
+
+---
+
+## Adendo — execução (Ondas 1–8, 2026-08-31, branch 019-polish)
+
+As oito ondas foram executadas em 24 commits (a7a1824..HEAD), `gate:all` verde em cada fechamento
+de onda e na baseline. Mapa do resultado: `docs/MAPA_DO_CODIGO.md` §7. Resumo do que cada onda
+entregou e do que ficou DE FORA por decisão:
+
+- **Executado:** tabWidth 4 (mecânico puro) · ruído/comentários falsos · renomes (grossUpOnce,
+  never-subscribed, billing EN, formatFrozenBRL, helpers por domínio) · fonte única
+  (bandFixedFee/bandContaining exportadas, decimal-leaf, uid-cache, preload, catalog_resolver,
+  SERVER_STATUSES) · quebra dos 10 monolitos (pricing-core, calculator-form, models, scenarios-
+  helpers, messages, catalog-panel, quote-builder, historico, bom-page, scenarios-list;
+  quote_render em helpers nomeados) · constantes/tipos (Claims, SubscriptionStatus,
+  PriceInputWire, NAME_INDEX, limites nomeados, mp_timeout_seconds) · logs de decisão (Onda 7,
+  §7 do MAPA) · ratchet max-lines 750 · pino de superfície + teste de caracterização.
+
+- **Pendências deliberadas (não são esquecimento):**
+  1. Os **11 bugs (B1–B11)** — intocados, regra de ouro; decidir e corrigir é trabalho novo.
+  2. `breakdown-row` fora do `formatBRL` (usa sinal U+2212 próprio — trocar muda pixels) e o
+     placeholder manuscrito de `channel-fee-field` (formatDecimal acrescentaria separador de
+     milhar) — as duas trocas NÃO são byte-idênticas; decisão de UI.
+  3. Toast por syncState triplicado e `honestWriteError` local — unificar CORRIGE B3/B10 (muda
+     comportamento); esperam a decisão dos bugs.
+  4. `products-panel` cinco `as unknown as` → mapper tipado (risco de dropar campo; merece teste
+     próprio) · typing do Out de channels/other_costs (mudaria OpenAPI → drift-guard; é mudança de
+     contrato, não de legibilidade).
+  5. Fusão `account`/`conta` no i18n e o nó quote/histórico/"Orçamentos" — vocabulário visível ao
+     usuário; decisão de produto.
+  6. `useEffect` de hidratação do bom-page (3 refs) e os 12 booleanos do HistoryLedger —
+     reestruturar estado é risco real; ficou nomeado e localizado, não reescrito.
+  7. `PriceResult.trace?`/`unpricedReason`/`appliedBand` no resultado do motor — proposta de
+     observabilidade do cálculo (aditiva, mas toca contrato do motor: MINOR + varredura).
+  8. Monólitos de TESTE (test_scenarios 1596 etc.) e a redução das 26 props do catalog-panel.
+  9. Paridade backend↔front dos 3 espelhos de desconto e do 5º espelho de headline_basis (B4) —
+     o teste de paridade é a correção estrutural; junto com B4.

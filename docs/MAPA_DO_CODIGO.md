@@ -76,17 +76,17 @@ que recusa documentos que não fecham, nunca produz número.)
 
 | # | arquivo | símbolo | o que faz |
 |---|---|---|---|
-| 23 | `packages/pricing-core/src/index.ts:224` | `computeCalculator(input)` | entrada do motor |
-| 23a | `index.ts:229-236` | `stripRetiredFields` | campos aposentados (`wasteGrams`) recusados **pelo nome**, antes de tudo |
-| 23b | `index.ts:250-266` | `assertNonNegative`/`assertPositive` | denominador ruim condena o cálculo inteiro (`ValidationError`) |
-| 23c | `index.ts:273` | `material` | `costPerRoll / (rollWeightKg*1000) * printGrams` |
-| 23d | `index.ts:279` | `energy` | `printTimeHours * avgPowerKw * tariffPerKwh` |
-| 23e | `index.ts:285-288` | `machine` | `(machineValue/lifetimeHours + manutenção/h) * printTimeHours` |
-| 23f | `index.ts:297-298` | `producaoR` / `falhaR` | falha = `failurePct` sobre material+energia+máquina **já arredondados** (sem teto, deliberado) |
-| 23g | `index.ts:301-310` | `finishingR`, `laborR`, `adminR` | fora da base de falha; admin = Σ otherCosts arredondados |
-| 23h | `index.ts:312` | `custoTotal = sumMoney([...])` | a soma fecha com as linhas exibidas (WYSIWYG) |
-| 23i | `index.ts:315-320` | `precoVarejo`/`precoAtacado` | `custoTotal × (1 + markup/100)` |
-| 23j | `index.ts:326` → `:353` | `computeChannel` | por canal, **isolado**: slot com erro devolve `error` + preços null, irmãos seguem |
+| 23 | `packages/pricing-core/src/calculator.ts` | `computeCalculator(input)` | entrada do motor (barrel: `index.ts`) |
+| 23a | `model-version.ts` + `calculator.ts` | `stripRetiredFields` | campos aposentados (`wasteGrams`) recusados **pelo nome**, antes de tudo |
+| 23b | `errors.ts` (usadas em `calculator.ts`) | `assertNonNegative`/`assertPositive` | denominador ruim condena o cálculo inteiro (`ValidationError`) |
+| 23c | `calculator.ts` (linha `material`) | `material` | `costPerRoll / (rollWeightKg*1000) * printGrams` |
+| 23d | `calculator.ts` | `energy` | `printTimeHours * avgPowerKw * tariffPerKwh` |
+| 23e | `calculator.ts` | `machine` | `(machineValue/lifetimeHours + manutenção/h) * printTimeHours` |
+| 23f | `calculator.ts` | `producaoR` / `falhaR` | falha = `failurePct` sobre material+energia+máquina **já arredondados** (sem teto, deliberado) |
+| 23g | `calculator.ts` | `finishingR`, `laborR`, `adminR` | fora da base de falha; admin = Σ otherCosts arredondados |
+| 23h | `calculator.ts` | `custoTotal = sumMoney([...])` | a soma fecha com as linhas exibidas (WYSIWYG) |
+| 23i | `calculator.ts` | `precoVarejo`/`precoAtacado` | `custoTotal × (1 + markup/100)` |
+| 23j | `channel-slot.ts` | `computeChannel` | por canal, **isolado**: slot com erro devolve `error` + preços null, irmãos seguem |
 | 23k | `channels.ts:416` | `grossUp(base, fees)` | o gross-up por nível (varejo e atacado separados) |
 | 23l | `channels.ts:461-481` | ramo `PROGRESSIVE` | `progressiveAnnounce` (`:259`) + `progressiveCommission` (`:233`) |
 | 23m | `channels.ts:483-493` | ramo `SELECTION` | `chooseBand` (`:330`) + `rankCandidate` (`:313`) |
@@ -100,11 +100,11 @@ que recusa documentos que não fecham, nunca produz número.)
 
 | # | arquivo | símbolo | o que faz |
 |---|---|---|---|
-| 25 | `features/calculator/calculator-form.tsx:724` | `CostsSection` | campos de custo (com `MachineCostFields` `:487` e `TimeHmField` `:409`) |
-| 26 | `calculator-form.tsx:816` | `PriceResults` | **a saída**: PriceHero, BreakdownRow por linha, CostProportionBar, derivação do markup |
-| 27 | `calculator-form.tsx:1565` / `:1166` | `MarketplaceSection` / `ChannelSlot` | "Preços por canal": anúncio + líquido por nível, `UnpricedLevel`, `FeeSeal` |
+| 25 | `features/calculator/form-organisms/costs-section.tsx` | `CostsSection` | campos de custo (com `MachineCostFields` `:487` e `TimeHmField` `:409`) |
+| 26 | `form-organisms/price-results.tsx` | `PriceResults` | **a saída**: PriceHero, BreakdownRow por linha, CostProportionBar, derivação do markup |
+| 27 | `form-organisms/{marketplace-section,channel-slot}.tsx` | `MarketplaceSection` / `ChannelSlot` | "Preços por canal": anúncio + líquido por nível, `UnpricedLevel`, `FeeSeal` |
 | 28 | `features/calculator/fee-seal.tsx` | `FeeSeal` | o selo de procedência |
-| 29 | `calculator-form.tsx:1772` | `OtherCostsSection` | linhas nomeadas de "Outros custos" |
+| 29 | `form-organisms/other-costs-section.tsx` | `OtherCostsSection` | linhas nomeadas de "Outros custos" |
 | 30 | `shared/lib/plausibilidade.ts` + `shared/ui/aviso.tsx` | avisos | heurísticas de plausibilidade (não bloqueiam) |
 | 31 | `shared/i18n/messages.pt-br.ts` | `messages.calculator` | **toda** a cópia da tela |
 
@@ -181,9 +181,9 @@ Nunca em branco. → `scenarios-list-sheet.tsx:497` `scenarioOpenArgs` →
 
 | quero mexer em | arquivo(s) de entrada | símbolo chave |
 |---|---|---|
-| **custo de material/energia/máquina** | `packages/pricing-core/src/index.ts` | `computeCalculator` (`:224`); linhas `:273/:279/:285-288`. UI: `calculator-form.tsx:487` `MachineCostFields`, `features/calculator/machine-cost.ts` |
-| **margem/lucro (markup)** | `packages/pricing-core/src/index.ts` | `percentMultiplier` (`:441`) + `:315-320`; campos em `calculator-schema.ts:427` `MARKUP_FIELDS` |
-| **comissão de marketplace** | `packages/pricing-core/src/channels.ts` | `grossUp` (`:416`), `grossUpOnce` (`:205`), piso `minPerItem`; entrada por `computeChannel` (`index.ts:353`) |
+| **custo de material/energia/máquina** | `packages/pricing-core/src/calculator.ts` | `computeCalculator` (linhas `material`/`energy`/`machine`). UI: `features/calculator/form-organisms/machine-cost-fields.tsx`, `features/calculator/machine-cost.ts` |
+| **margem/lucro (markup)** | `packages/pricing-core/src/calculator.ts` | `percentMultiplier` + os dois `toMoney(custoTotal × …)`; campos em `calculator-schema.ts` `MARKUP_FIELDS` |
+| **comissão de marketplace** | `packages/pricing-core/src/channels.ts` | `grossUp` (`:416`), `grossUpOnce` (`:205`), piso `minPerItem`; entrada por `computeChannel` (`channel-slot.ts`) |
 | **bandas de preço progressivas** | `packages/pricing-core/src/channels.ts` | `progressiveAnnounce` (`:259`), `progressiveCommission` (`:233`), `chooseBand` (`:330`), `validateBandRules` (`:172`), `BandMode` (`:59`) |
 | **frete/subsídio (voucher)** | `packages/pricing-core/src/channels.ts` | `finish` (`:424-439`) + `bandContaining` (`:124`); teto em `shared/fee-catalog/fee-catalog.ts:464` |
 | **catálogo de tarifas (fetch/cache/seed)** | `shared/fee-catalog/use-fee-catalog.ts` | `useFeeCatalog` (`:138`); schema `fee-catalog.ts:398`; served `backend/app/api/fee_catalog.py:219`; gerador `packages/fee-ingest/src/build.mjs` |
@@ -192,12 +192,12 @@ Nunca em branco. → `scenarios-list-sheet.tsx:497` `scenarioOpenArgs` →
 | **billing Mercado Pago** | `backend/app/api/billing.py` | `mercadopago_webhook` (`:81`), `create_checkout` (`:191`); regras em `backend/app/billing/{signature,checkout,grant_writer,subscription,reconcile}.py`; front `features/billing/` |
 | **snapshots / histórico** | `entities/history/frozen-payload.ts` + `use-history.ts` | `freezePriceResult` (`:336`), fila `outbox.ts` (`enqueueSnapshot` `:138`, `drainOutbox` `:303`); backend `history.py:375` |
 | **export PDF/CSV** | `entities/history/use-export.ts` + `backend/app/services/quote_render.py` | rotas `backend/app/api/export.py:44/:89`; UI `features/history/export-sheet.tsx` |
-| **kits / BOM** | `packages/pricing-core/src/index.ts` + `pages/bom/bom-page.tsx` | `computeBom` (`:515`); hooks `entities/bom/use-bom.ts`; backend `backend/app/api/boms.py` |
+| **kits / BOM** | `packages/pricing-core/src/bom.ts` + `pages/bom/bom-page.tsx` | `computeBom`; hooks `entities/bom/use-bom.ts`; backend `backend/app/api/boms.py` |
 | **cenários salvos** | `entities/scenario/config-document.ts` + `features/calculator/scenario-bridge.ts` | `serializeScenarioConfig` (`:247`), `applyScenarioConfig` (`:200`); backend `scenarios.py:385` |
 | **catálogo (filamentos/impressoras/produtos)** | `features/catalog/catalog-panel.tsx` + `entities/catalog/use-catalog.ts` | `useFilaments`/`usePrinters`/`useProducts`; pré-fill `features/calculator/catalog-prefill.ts`; backend `backend/app/api/{filaments,printers,products}.py` |
 | **design system tf-*** | `shared/ui/index.ts` + `apps/web/src/styles/tokens/*.css` | componentes `shared/ui/{button,card,field,alert,price-hero,breakdown-row,plist,segmented}.tsx`; guardas `styles/tf-class-uniqueness.test.ts`, `token-parity.test.ts` |
 | **rotas / navegação** | `apps/web/src/app/router.tsx` | `routeTree` (`:136`), `requireAuth` (`:52`); shell `app/app-shell.tsx`; nav `widgets/{app-nav,top-bar}/` |
-| **i18n / mensagens** | `shared/i18n/messages.pt-br.ts` | objeto único `messages`; erros de wire → pt-BR em `shared/api/error-messages.ts` |
+| **i18n / mensagens** | `shared/i18n/messages.pt-br.ts` (compositor) + `shared/i18n/messages/*.pt-br.ts` (um módulo por tela) | `messages`; erros de wire → pt-BR em `shared/api/error-messages.ts` |
 | **logging / correlação** | `backend/app/observability.py` + `shared/observability/sentry.ts` | `configure_observability` (`:40`), `CORRELATION_HEADER`; `ApiError.correlationId` em `shared/api/transport.ts:36`; runbook `docs/observability.md` |
 
 ---
@@ -321,16 +321,16 @@ Zod em `shared/lib/env.ts` (`VITE_API_BASE_URL` default `:8000` — troque para 
 
 ### Preço saiu errado: os 5 breakpoints (entrada → regras → saída)
 
-Hoje **não existe log nem trace no caminho de cômputo** (fato verificado; ver relatório de
-legibilidade, seção Observabilidade). O roteiro de debugger:
+O caminho de cômputo continua puro e sem trace (deliberado — ver Pendências no relatório); o que
+GANHOU log estruturado na Onda 7 foi todo o resto (ver §7). O roteiro de debugger:
 
 | ordem | breakpoint | o que inspecionar |
 |---|---|---|
 | 1. ENTRADA | `pages/calcular/calcular-page.tsx:264` `computeFromForm(values, catalogCtx)` | `values` (strings pt-BR), `catalogCtx.source` (`"seed"` vs `"catalog"`) e `catalogVersion`. **Metade dos "preço errado" morre aqui**: o servido não chegou e o seed antigo pré-preencheu |
 | 2. PARSE | `calculator-model.ts:443-452` | `parsed.data` — números convertidos. `NaN`/casa perdida = `parseDecimal` (`shared/lib/decimal-ptbr.ts`) |
 | 3. RESOLUÇÃO DE TARIFA (o mais provável) | `calculator-model.ts:273` `processSlot` | `manual.editedFields`, `resolution.entry`/`viaCatchAll`, e o retorno de `resolveSlotFees` — em particular `fees.priceBands` e `fees.bandMode`. Pegadinha campeã: *comissão digitada derruba a tabela de bandas inteira*; taxa fixa digitada é inerte sobre entrada bandada |
-| 4. COMPUTE | `pricing-core/src/index.ts:224` e por canal `channels.ts:461/:483/:495` (os 3 ramos) | cada valor é `Decimal` — no watch chame `.toString()`. `anuncio: null` = `unpriced` (nenhuma faixa cobre; intencional) |
-| 5. SAÍDA | `calculator-form.tsx:816` `PriceResults` | `result` e `channelOutcomes[i].result`. Breakdown que "não fecha" = soma de linhas já arredondadas (proposital, `rounding.ts`) |
+| 4. COMPUTE | `pricing-core/src/calculator.ts` `computeCalculator` e por canal os 3 ramos de `channels.ts` `grossUp` (PROGRESSIVE/SELECTION/plano) | cada valor é `Decimal` — no watch chame `.toString()`. `anuncio: null` = `unpriced` (nenhuma faixa cobre; intencional) |
+| 5. SAÍDA | `features/calculator/form-organisms/price-results.tsx` `PriceResults` | `result` e `channelOutcomes[i].result`. Breakdown que "não fecha" = soma de linhas já arredondadas (proposital, `rounding.ts`) |
 
 Bônus: se o preço está certo mas a **legenda** da faixa mente, o culpado é `appliedBandFees`
 (`fee-prefill.ts:296`) — re-derivação de exibição, não o engine.
@@ -338,3 +338,47 @@ Bônus: se o preço está certo mas a **legenda** da faixa mente, o culpado é `
 **Técnica de repro:** um snapshot gravado guarda `PriceInput` **e** `PriceResult` como strings exatas
 (`freezePriceResult`). Peça ao usuário para salvar o cálculo, leia `GET /api/v1/history/{id}` e
 reproduza o `input` num teste do `pricing-core` — é o melhor repro que existe hoje.
+
+---
+
+## 7. O que a refatoração de legibilidade mudou (Ondas 1–8, 2026-08-31)
+
+**Novas casas (tudo por movimento verbatim; comportamento idêntico, provado por suíte + guardas):**
+
+- `packages/pricing-core/src/` — `index.ts` é só o barrel (70 linhas): `model-version.ts` ·
+  `errors.ts` · `rounding.ts` · `channels.ts` · `channel-slot.ts` · `calculator.ts` · `bom.ts` ·
+  `quote.ts`. Guardas: `tests/public-surface.test.ts` (API pinada) + varredura version-equality.
+  `bandContaining`/`bandFixedFee` agora são exportadas — as reimplementações em
+  `fee-prefill`/`fee-catalog` morreram.
+- `features/calculator/` — `calculator-form.tsx` é barrel (27 linhas) sobre `form-atoms/` ·
+  `form-molecules/` · `form-organisms/` · `form-logic/` (24 arquivos). Novos módulos puros:
+  `form-signature.ts`, `catalog-prefill-apply.ts`, `marketplace-change.ts`.
+- `backend/app/models/` — pacote por agregado (`base/account/catalog/product/kit/observation/
+  snapshot/scenario/billing`); o listener de imutabilidade mora AO LADO do `Snapshot`.
+- `backend/app/api/catalog_resolver.py` — o lar público dos helpers compartilhados
+  (products↔kits↔cenários); os imports privados com pyright-ignore morreram.
+- `backend/app/billing/states.py` — `SubscriptionStatus(StrEnum)` + `NON_TERMINAL_STATUSES`.
+- `backend/app/auth.py::Claims` — dataclass congelada; rotas usam `claims.uid`, não `claims["uid"]`.
+- `shared/i18n/messages/` — o catálogo de strings dividido por tela; `messages.pt-br.ts` compõe.
+- `shared/lib/decimal-leaf.ts` (serializador único dos documentos) · `shared/lib/uid-cache.ts`
+  (fábrica dos 5 caches) · `shared/lib/use-cached-preload.ts` (pré-carga única).
+- Telas: `catalog-panel` por ramo · `quote-builder` → picker/review · `historico-page` →
+  ledger/master-detail/gate-states · `bom-page` → colunas/summary · `scenarios-list-sheet` →
+  rename/delete próprios.
+
+**Observabilidade nova (Onda 7 — aditiva, respostas byte-idênticas).** Eventos structlog:
+`unhandled_error` (500 com exc_info + Sentry) · `webhook_signature_rejected` (7 motivos) ·
+`grant_written`/`grace_opened`/`grants_revoked`/`event_unmatched`/`event_unboundable` ·
+`name_conflict_resolved` · `snapshot_replay` · `auth_rejected`/`entitlement_denied`; `_emit` agora
+carrega `excType`/`excMessage` e a rota por TEMPLATE (`/history/{snapshot_id}`), agregável. No
+front: `unreachableStatus(operacao)` distingue os 29 throws no Sentry; o seed loga as
+`ZodError.issues`.
+
+**Freios instalados:** prettier `tabWidth: 4` · eslint `max-lines: 750` em fontes não-teste
+(abaixe conforme os restantes encolherem) · pino de superfície do pricing-core · teste de
+caracterização dos serializadores (`pages/decimal-leaf-characterization.test.ts`).
+
+**O que NÃO mudou de propósito:** os 11 bugs registrados no relatório (B1–B11) seguem intocados —
+correção é decisão do dono; o vocabulário `account`/`conta` no i18n e o rótulo
+"Orçamentos"/rota `/historico` aguardam decisão de produto; o trace opcional do motor
+(`PriceResult.trace?`) segue como proposta.
