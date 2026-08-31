@@ -344,9 +344,9 @@ def play_router(settings: Settings) -> APIRouter | None:
     if not settings.play_billing_enabled:
         return None
 
-    novo = APIRouter(tags=["billing"])
+    play = APIRouter(tags=["billing"])
 
-    @novo.post("/billing/checkout/play", status_code=status.HTTP_200_OK)
+    @play.post("/billing/checkout/play", status_code=status.HTTP_200_OK)
     async def play_checkout(
         body: PlayCheckoutIn,
         claims: Annotated[dict[str, Any], Depends(current_claims)],
@@ -362,7 +362,7 @@ def play_router(settings: Settings) -> APIRouter | None:
             503,
         )
 
-    @novo.post("/billing/webhook/play-rtdn", status_code=status.HTTP_200_OK)
+    @play.post("/billing/webhook/play-rtdn", status_code=status.HTTP_200_OK)
     async def play_rtdn(
         request: Request,
         session: Annotated[AsyncSession, Depends(get_session)],
@@ -376,4 +376,4 @@ def play_router(settings: Settings) -> APIRouter | None:
             503,
         )
 
-    return novo
+    return play

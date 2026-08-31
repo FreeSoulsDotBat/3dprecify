@@ -214,7 +214,7 @@ async def _revoke_for_refund(
         await session.commit()
         return ProcessResult(matched=True, granted=False)
 
-    alvo = (
+    revocable_grants = (
         (
             await session.execute(
                 select(EntitlementGrant).where(
@@ -232,8 +232,8 @@ async def _revoke_for_refund(
         .all()
     )
 
-    for grant in alvo:
+    for grant in revocable_grants:
         grant.revoked_at = now
         grant.revoked_by = "mercadopago"
     await session.commit()
-    return ProcessResult(matched=True, granted=len(alvo) > 0)
+    return ProcessResult(matched=True, granted=len(revocable_grants) > 0)
