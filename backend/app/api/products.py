@@ -25,6 +25,7 @@ from pydantic.alias_generators import to_camel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.catalog_resolver import apply_product, live_links, product_to_out
 from app.api.naming import NAME_MAX_CHARS, flush_with_unique_name
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
@@ -36,7 +37,6 @@ from app.errors import (
     CamelModel,
     ErrorCode,
 )
-from app.lib.name_norm import name_norm_key
 from app.models import Filament, Printer, Product
 from app.validation import (
     CEIL_GRAMS,
@@ -267,63 +267,6 @@ class ProductOut(CamelModel):
     updated_at: datetime
 
 
-def _to_out(row: Product, filament: Filament | None, printer: Printer | None) -> ProductOut:
-    """Serialize with the D3 resolution rule: linked ⇒ the LIVE row wins; degraded ⇒ columns."""
-    if filament is not None:
-        filament_values = FilamentValues(
-            material=filament.material,
-            cost_per_roll=filament.cost_per_roll,
-            roll_weight_kg=filament.roll_weight_kg,
-        )
-    else:
-        filament_values = FilamentValues(
-            material=row.filament_material,
-            cost_per_roll=row.filament_cost_per_roll or Decimal("0"),
-            roll_weight_kg=row.filament_roll_weight_kg or Decimal("1"),
-        )
-    if printer is not None:
-        printer_values = PrinterValues(
-            machine_value=printer.machine_value,
-            machine_lifetime_hours=printer.machine_lifetime_hours,
-            avg_power_kw=printer.avg_power_kw,
-            maintenance_reserve_per_hour=printer.maintenance_reserve_per_hour,
-        )
-    else:
-        printer_values = PrinterValues(
-            machine_value=row.printer_machine_value or Decimal("0"),
-            machine_lifetime_hours=row.printer_machine_lifetime_hours or Decimal("1"),
-            avg_power_kw=row.printer_avg_power_kw or Decimal("0"),
-            maintenance_reserve_per_hour=row.printer_maintenance_reserve_per_hour or Decimal("0"),
-        )
-    return ProductOut(
-        id=row.id,
-        name=row.name,
-        filament_id=row.filament_id,
-        printer_id=row.printer_id,
-        filament_values=filament_values,
-        printer_values=printer_values,
-        piece_inputs=PieceInputs(
-            print_grams=row.print_grams,
-            print_time_hours=row.print_time_hours,
-            failure_pct=row.failure_pct,
-            finish_time_hours=row.finish_time_hours,
-            finish_rate_per_hour=row.finish_rate_per_hour,
-            labor_hours=row.labor_hours,
-            labor_rate_per_hour=row.labor_rate_per_hour,
-            markup_varejo_pct=row.markup_varejo_pct,
-            markup_atacado_pct=row.markup_atacado_pct,
-        ),
-        tariff_per_kwh=row.tariff_per_kwh,
-        include_marketplace=row.include_marketplace,
-        channels=row.channels,
-        other_costs=row.other_costs,
-        seller_fixed_price=row.seller_fixed_price,
-        seller_fixed_at=row.seller_fixed_at,
-        created_at=row.created_at,
-        updated_at=row.updated_at,
-    )
-
-
 def _not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Product not found", status_code=404)
 
@@ -387,103 +330,12 @@ async def _resolve_printer(session: AsyncSession, uid: str, printer_id: uuid.UUI
     return row
 
 
-def _apply(
-    row: Product, body: ProductIn, filament: Filament | None, printer: Printer | None
-) -> None:
-    """Write body → row. Linked refs re-snapshot from the LIVE row (D3 write rule (a));
-    degraded refs persist the submitted editable overrides (US6-4)."""
-    # 019/PR-D (T072, ADR-0033 §4): este é o FUNIL de nome dos produtos — POST, PUT e a
-    # materialização de kit passam todos por aqui. `name_norm` é derivada agora, e o nome FINAL
-    # (com sufixo, se houver conflito) é escrito por `flush_with_unique_name`, que chama esta
-    # função de dentro do savepoint.
-    row.name = body.name
-    row.name_norm = name_norm_key(body.name)
-    piece = body.piece_inputs
-    row.print_grams = piece.print_grams
-    row.print_time_hours = piece.print_time_hours
-    row.failure_pct = piece.failure_pct
-    row.finish_time_hours = piece.finish_time_hours
-    row.finish_rate_per_hour = piece.finish_rate_per_hour
-    row.labor_hours = piece.labor_hours
-    row.labor_rate_per_hour = piece.labor_rate_per_hour
-    row.markup_varejo_pct = piece.markup_varejo_pct
-    row.markup_atacado_pct = piece.markup_atacado_pct
-    row.tariff_per_kwh = body.tariff_per_kwh
-    row.include_marketplace = body.include_marketplace
-    # JSON mode dumps Decimal as string — money never becomes a JSON float (ADR-0008).
-    row.channels = [c.model_dump(mode="json", by_alias=True) for c in body.channels]
-    row.other_costs = [c.model_dump(mode="json", by_alias=True) for c in body.other_costs]
-
-    if filament is not None:
-        row.filament_id = filament.id
-        row.filament_material = filament.material
-        row.filament_cost_per_roll = filament.cost_per_roll
-        row.filament_roll_weight_kg = filament.roll_weight_kg
-    else:
-        values = body.filament_values
-        if values is None:  # unreachable — enforced by the link-or-snapshot model validator
-            raise _unresolvable("filamentId")
-        row.filament_id = None
-        row.filament_material = values.material
-        row.filament_cost_per_roll = values.cost_per_roll
-        row.filament_roll_weight_kg = values.roll_weight_kg
-
-    if printer is not None:
-        row.printer_id = printer.id
-        row.printer_machine_value = printer.machine_value
-        row.printer_machine_lifetime_hours = printer.machine_lifetime_hours
-        row.printer_avg_power_kw = printer.avg_power_kw
-        row.printer_maintenance_reserve_per_hour = printer.maintenance_reserve_per_hour
-    else:
-        pvalues = body.printer_values
-        if pvalues is None:  # unreachable — enforced by the link-or-snapshot model validator
-            raise _unresolvable("printerId")
-        row.printer_id = None
-        row.printer_machine_value = pvalues.machine_value
-        row.printer_machine_lifetime_hours = pvalues.machine_lifetime_hours
-        row.printer_avg_power_kw = pvalues.avg_power_kw
-        row.printer_maintenance_reserve_per_hour = pvalues.maintenance_reserve_per_hour
-
-
 async def _resolve_links(
     session: AsyncSession, uid: str, body: ProductIn
 ) -> tuple[Filament | None, Printer | None]:
     filament = await _resolve_filament(session, uid, body.filament_id) if body.filament_id else None
     printer = await _resolve_printer(session, uid, body.printer_id) if body.printer_id else None
     return filament, printer
-
-
-async def _live_links(
-    session: AsyncSession, uid: str, rows: list[Product]
-) -> tuple[dict[uuid.UUID, Filament], dict[uuid.UUID, Printer]]:
-    """Load the live rows the products link to (deleted links degrade in the delete txn, so a
-    present link points at a live row; missing rows simply fall back to the columns).
-
-    ``uid`` is REQUIRED (audit finding E2-03, 2026-07-23): this used to select by ID alone, the one
-    query in the read path without an ``owner_uid`` predicate. The write path never lets a product
-    point at another account's reference, so the hole was latent — but "unreachable by today's
-    writers" is not tenant isolation, and this is the function that decides which values a product
-    RENDERS. Scoped, an out-of-tenant link simply does not resolve and the product falls back to its
-    own snapshot columns, which is the same honest degradation a deleted link already gets."""
-    fil_ids = {r.filament_id for r in rows if r.filament_id is not None}
-    prn_ids = {r.printer_id for r in rows if r.printer_id is not None}
-    filaments: dict[uuid.UUID, Filament] = {}
-    printers: dict[uuid.UUID, Printer] = {}
-    if fil_ids:
-        for f in (
-            await session.execute(
-                select(Filament).where(Filament.id.in_(fil_ids), Filament.owner_uid == uid)
-            )
-        ).scalars():
-            filaments[f.id] = f
-    if prn_ids:
-        for p in (
-            await session.execute(
-                select(Printer).where(Printer.id.in_(prn_ids), Printer.owner_uid == uid)
-            )
-        ).scalars():
-            printers[p.id] = p
-    return filaments, printers
 
 
 @router.get("/products", responses=ENTITLEMENT_ERRORS)
@@ -500,9 +352,9 @@ async def list_products(
             )
         ).scalars()
     )
-    filaments, printers = await _live_links(session, claims["uid"], rows)
+    filaments, printers = await live_links(session, claims["uid"], rows)
     return [
-        _to_out(
+        product_to_out(
             r,
             filaments.get(r.filament_id) if r.filament_id else None,
             printers.get(r.printer_id) if r.printer_id else None,
@@ -536,11 +388,11 @@ async def create_product(
         row,
         body.name,
         index_name=_NAME_INDEX,
-        apply=lambda: _apply(row, body, filament, printer),
+        apply=lambda: apply_product(row, body, filament, printer),
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row, filament, printer)
+    return product_to_out(row, filament, printer)
 
 
 @router.get("/products/{product_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -550,8 +402,8 @@ async def get_product(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> ProductOut:
     row = await _owned(session, claims["uid"], product_id)
-    filaments, printers = await _live_links(session, claims["uid"], [row])
-    return _to_out(
+    filaments, printers = await live_links(session, claims["uid"], [row])
+    return product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
         printers.get(row.printer_id) if row.printer_id else None,
@@ -575,11 +427,11 @@ async def update_product(
         row,
         body.name,
         index_name=_NAME_INDEX,
-        apply=lambda: _apply(row, body, filament, printer),
+        apply=lambda: apply_product(row, body, filament, printer),
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row, filament, printer)
+    return product_to_out(row, filament, printer)
 
 
 class ProductPatchIn(CamelModel):
@@ -629,8 +481,8 @@ async def fix_product_price(
     row.seller_fixed_at = datetime.now(UTC) if body.seller_fixed_price is not None else None
     await session.commit()
     await session.refresh(row)
-    filaments, printers = await _live_links(session, claims["uid"], [row])
-    return _to_out(
+    filaments, printers = await live_links(session, claims["uid"], [row])
+    return product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
         printers.get(row.printer_id) if row.printer_id else None,

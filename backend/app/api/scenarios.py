@@ -41,22 +41,14 @@ from pydantic.alias_generators import to_camel
 from sqlalchemy import literal, select, tuple_
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.boms import (
-    _degraded_or as _bom_degraded_or,  # pyright: ignore[reportPrivateUsage]
+from app.api.catalog_resolver import (
+    degraded_or,
+    lines_of,
+    live_links,
+    product_to_out,
+    resolve_views,
 )
-from app.api.boms import (
-    _lines_of as _bom_lines_of,  # pyright: ignore[reportPrivateUsage]
-)
-from app.api.boms import (
-    _resolve_views as _bom_resolve_views,  # pyright: ignore[reportPrivateUsage]
-)
-from app.api.products import (
-    ProductOut,
-    _live_links,  # pyright: ignore[reportPrivateUsage]
-)
-from app.api.products import (
-    _to_out as _product_to_out,  # pyright: ignore[reportPrivateUsage]
-)
+from app.api.products import ProductOut
 from app.db import get_session
 from app.entitlement import require_catalog_read, require_entitlement
 from app.errors import (
@@ -280,30 +272,30 @@ def _price_input_dict(resolved: ProductOut) -> dict[str, Any]:
 def _price_input_dict_from_bom_line(line: BomLine) -> dict[str, Any]:
     """The SAME flat `PriceInput` contract shape (see `_price_input_dict` above), built from a
     `BomLine`'s OWN last-known snapshot COLUMNS — the E3 read path's degraded-line branch
-    (`boms.py::_to_out`), for a kit LINE whose own product ref is gone even though the KIT itself
-    still resolves (D6 one level down, mirrored verbatim via `_degraded_or` so a stored zero is
-    never corrupted to a dropped scale). The `BomLine` column NAMES stay prefixed (its own
-    internal storage idiom, unaffected by this fix); only the WIRE keys this function emits follow
-    the contract."""
+    (`catalog_resolver.product_to_out`), for a kit LINE whose own product ref is gone even though
+    the KIT itself still resolves (D6 one level down, mirrored verbatim via
+    `catalog_resolver.degraded_or` so a stored zero is never corrupted to a dropped scale). The
+    `BomLine` column NAMES stay prefixed (its own internal storage idiom, unaffected by this fix);
+    only the WIRE keys this function emits follow the contract."""
     return {
-        "costPerRoll": str(_bom_degraded_or(line.filament_cost_per_roll, "0")),
-        "rollWeightKg": str(_bom_degraded_or(line.filament_roll_weight_kg, "1")),
-        "printGrams": str(_bom_degraded_or(line.print_grams, "0")),
-        "printTimeHours": str(_bom_degraded_or(line.print_time_hours, "0")),
-        "avgPowerKw": str(_bom_degraded_or(line.printer_avg_power_kw, "0")),
-        "tariffPerKwh": str(_bom_degraded_or(line.tariff_per_kwh, "0")),
-        "machineValue": str(_bom_degraded_or(line.printer_machine_value, "0")),
-        "machineLifetimeHours": str(_bom_degraded_or(line.printer_machine_lifetime_hours, "1")),
+        "costPerRoll": str(degraded_or(line.filament_cost_per_roll, "0")),
+        "rollWeightKg": str(degraded_or(line.filament_roll_weight_kg, "1")),
+        "printGrams": str(degraded_or(line.print_grams, "0")),
+        "printTimeHours": str(degraded_or(line.print_time_hours, "0")),
+        "avgPowerKw": str(degraded_or(line.printer_avg_power_kw, "0")),
+        "tariffPerKwh": str(degraded_or(line.tariff_per_kwh, "0")),
+        "machineValue": str(degraded_or(line.printer_machine_value, "0")),
+        "machineLifetimeHours": str(degraded_or(line.printer_machine_lifetime_hours, "1")),
         "maintenanceReservePerHour": str(
-            _bom_degraded_or(line.printer_maintenance_reserve_per_hour, "0")
+            degraded_or(line.printer_maintenance_reserve_per_hour, "0")
         ),
-        "failurePct": str(_bom_degraded_or(line.failure_pct, "0")),
-        "finishTimeHours": str(_bom_degraded_or(line.finish_time_hours, "0")),
-        "finishRatePerHour": str(_bom_degraded_or(line.finish_rate_per_hour, "0")),
-        "laborHours": str(_bom_degraded_or(line.labor_hours, "0")),
-        "laborRatePerHour": str(_bom_degraded_or(line.labor_rate_per_hour, "0")),
-        "markupVarejoPct": str(_bom_degraded_or(line.markup_varejo_pct, "0")),
-        "markupAtacadoPct": str(_bom_degraded_or(line.markup_atacado_pct, "0")),
+        "failurePct": str(degraded_or(line.failure_pct, "0")),
+        "finishTimeHours": str(degraded_or(line.finish_time_hours, "0")),
+        "finishRatePerHour": str(degraded_or(line.finish_rate_per_hour, "0")),
+        "laborHours": str(degraded_or(line.labor_hours, "0")),
+        "laborRatePerHour": str(degraded_or(line.labor_rate_per_hour, "0")),
+        "markupVarejoPct": str(degraded_or(line.markup_varejo_pct, "0")),
+        "markupAtacadoPct": str(degraded_or(line.markup_atacado_pct, "0")),
     }
 
 
@@ -326,8 +318,8 @@ async def _resolve_product_last_known(
     ).scalar_one_or_none()
     if row is None:
         return None
-    filaments, printers = await _live_links(session, uid, [row])
-    resolved = _product_to_out(
+    filaments, printers = await live_links(session, uid, [row])
+    resolved = product_to_out(
         row,
         filaments.get(row.filament_id) if row.filament_id else None,
         printers.get(row.printer_id) if row.printer_id else None,
@@ -340,9 +332,10 @@ async def _resolve_kit_last_known(
 ) -> dict[str, Any] | None:
     """T022 (redirect 2026-07-20) — resolve an OWNED, LIVE Kit to the `{lines: [...]}` `lastKnown`
     shape (data-model §3/§8 VR-605/606, `api-surface.md` lines 74-80/99-102). REUSES the E3 seam
-    verbatim (`boms.py::_lines_of` + `_resolve_views`) rather than duplicating kit-line resolution
-    — a line whose OWN product ref is gone (even though the kit itself still resolves) degrades
-    the same way `boms.py`'s read path already does (D6 one level down), via
+    verbatim (`catalog_resolver.lines_of` + `catalog_resolver.resolve_views`) rather than
+    duplicating kit-line resolution — a line whose OWN product ref is gone (even though the kit
+    itself still resolves) degrades the same way `boms.py`'s read path already does (D6 one
+    level down), via
     `_price_input_dict_from_bom_line`. `None` when the KIT itself does not resolve (soft-deleted /
     cross-tenant / never-existed / malformed id) — the caller reports `degraded: true` and serves
     the scenario's own STORED `lastKnown`."""
@@ -355,9 +348,9 @@ async def _resolve_kit_last_known(
         return None
     # 015/A5 ([F05-002]) — o `uid` agora entra na consulta das linhas, e nao so na busca do kit
     # logo acima. O isolamento deixa de ser herdado da disciplina do chamador.
-    lines = await _bom_lines_of(session, uid, bom_id)
+    lines = await lines_of(session, uid, bom_id)
     product_ids = {line.product_id for line in lines if line.product_id is not None}
-    views = await _bom_resolve_views(session, uid, product_ids)
+    views = await resolve_views(session, uid, product_ids)
     out_lines: list[dict[str, Any]] = []
     for line in lines:
         resolved = views.get(line.product_id) if line.product_id is not None else None
@@ -385,8 +378,9 @@ async def _resolve_kit_last_known(
 async def _resolve_cost_basis_for_read(
     session: AsyncSession, uid: str, cost_basis: dict[str, Any]
 ) -> dict[str, Any]:
-    """T022 — the read-time D3/D6 resolver (VR-605/606), reusing the E3 `_resolve_views` seam
-    (owner + `deleted_at IS NULL`). Returns the `ResolvedCostBasis` shape (api-surface.md):
+    """T022 — the read-time D3/D6 resolver (VR-605/606), reusing the E3
+    `catalog_resolver.resolve_views` seam (owner + `deleted_at IS NULL`). Returns the
+    `ResolvedCostBasis` shape (api-surface.md):
     `{kind, ref, degraded, lastKnown}`. Called on EVERY read (`GET /{id}`, list, and every write
     response) — never mutates the stored row (that is `_resnapshot_cost_basis`, save-time only).
 
