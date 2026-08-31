@@ -103,7 +103,7 @@ class FilamentOut(CamelModel):
     updated_at: datetime
 
 
-def _to_out(row: Filament) -> FilamentOut:
+def _filament_to_out(row: Filament) -> FilamentOut:
     return FilamentOut(
         id=row.id,
         name=row.name,
@@ -128,16 +128,16 @@ def _apply(row: Filament, body: FilamentIn) -> None:
     row.roll_weight_kg = body.roll_weight_kg
 
 
-def _not_found() -> AppError:
+def _filament_not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Filament not found", status_code=404)
 
 
-async def _owned(session: AsyncSession, uid: str, filament_id: str) -> Filament:
+async def _owned_filament(session: AsyncSession, uid: str, filament_id: str) -> Filament:
     """Owner-scoped fetch (FR-307): wrong owner, soft-deleted or malformed id → 404."""
     try:
         fid = uuid.UUID(filament_id)
     except ValueError as exc:
-        raise _not_found() from exc
+        raise _filament_not_found() from exc
     row = (
         await session.execute(
             select(Filament).where(
@@ -148,7 +148,7 @@ async def _owned(session: AsyncSession, uid: str, filament_id: str) -> Filament:
         )
     ).scalar_one_or_none()
     if row is None:
-        raise _not_found()
+        raise _filament_not_found()
     return row
 
 
@@ -164,7 +164,7 @@ async def list_filaments(
             .order_by(Filament.created_at)
         )
     ).scalars()
-    return [_to_out(r) for r in rows]
+    return [_filament_to_out(r) for r in rows]
 
 
 @router.post(
@@ -183,7 +183,7 @@ async def create_filament(
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return _filament_to_out(row)
 
 
 @router.get("/filaments/{filament_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -192,7 +192,7 @@ async def get_filament(
     claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    return _to_out(await _owned(session, claims["uid"], filament_id))
+    return _filament_to_out(await _owned_filament(session, claims["uid"], filament_id))
 
 
 @router.put(
@@ -205,13 +205,13 @@ async def update_filament(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> FilamentOut:
-    row = await _owned(session, claims["uid"], filament_id)
+    row = await _owned_filament(session, claims["uid"], filament_id)
     await flush_with_unique_name(
         session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return _filament_to_out(row)
 
 
 @router.delete(
@@ -224,7 +224,7 @@ async def delete_filament(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    row = await _owned(session, claims["uid"], filament_id)
+    row = await _owned_filament(session, claims["uid"], filament_id)
     # D6/US6-4: the SAME txn writes last-known values into every referencing product and
     # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
     await session.execute(

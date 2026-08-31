@@ -88,7 +88,7 @@ class PrinterOut(CamelModel):
     updated_at: datetime
 
 
-def _to_out(row: Printer) -> PrinterOut:
+def _printer_to_out(row: Printer) -> PrinterOut:
     return PrinterOut(
         id=row.id,
         name=row.name,
@@ -112,15 +112,15 @@ def _apply(row: Printer, body: PrinterIn) -> None:
     row.maintenance_reserve_per_hour = body.maintenance_reserve_per_hour
 
 
-def _not_found() -> AppError:
+def _printer_not_found() -> AppError:
     return AppError(ErrorCode.NOT_FOUND, "Printer not found", status_code=404)
 
 
-async def _owned(session: AsyncSession, uid: str, printer_id: str) -> Printer:
+async def _owned_printer(session: AsyncSession, uid: str, printer_id: str) -> Printer:
     try:
         pid = uuid.UUID(printer_id)
     except ValueError as exc:
-        raise _not_found() from exc
+        raise _printer_not_found() from exc
     row = (
         await session.execute(
             select(Printer).where(
@@ -131,7 +131,7 @@ async def _owned(session: AsyncSession, uid: str, printer_id: str) -> Printer:
         )
     ).scalar_one_or_none()
     if row is None:
-        raise _not_found()
+        raise _printer_not_found()
     return row
 
 
@@ -147,7 +147,7 @@ async def list_printers(
             .order_by(Printer.created_at)
         )
     ).scalars()
-    return [_to_out(r) for r in rows]
+    return [_printer_to_out(r) for r in rows]
 
 
 @router.post(
@@ -166,7 +166,7 @@ async def create_printer(
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return _printer_to_out(row)
 
 
 @router.get("/printers/{printer_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -175,7 +175,7 @@ async def get_printer(
     claims: Annotated[dict[str, Any], Depends(require_catalog_read)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    return _to_out(await _owned(session, claims["uid"], printer_id))
+    return _printer_to_out(await _owned_printer(session, claims["uid"], printer_id))
 
 
 @router.put(
@@ -188,13 +188,13 @@ async def update_printer(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> PrinterOut:
-    row = await _owned(session, claims["uid"], printer_id)
+    row = await _owned_printer(session, claims["uid"], printer_id)
     await flush_with_unique_name(
         session, row, body.name, index_name=_NAME_INDEX, apply=lambda: _apply(row, body)
     )
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return _printer_to_out(row)
 
 
 @router.delete(
@@ -207,7 +207,7 @@ async def delete_printer(
     claims: Annotated[dict[str, Any], Depends(require_entitlement)],
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> None:
-    row = await _owned(session, claims["uid"], printer_id)
+    row = await _owned_printer(session, claims["uid"], printer_id)
     # D6/US6-4: the SAME txn writes last-known values into every referencing product and
     # unlinks it — the link-or-snapshot CHECK stays satisfied, the product never goes blank.
     await session.execute(

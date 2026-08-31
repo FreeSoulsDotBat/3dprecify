@@ -290,13 +290,13 @@ class SnapshotPage(CamelModel):
     next_cursor: str | None = None
 
 
-def _not_found() -> AppError:
+def _snapshot_not_found() -> AppError:
     # The SAME answer for nonexistent, deleted and cross-tenant ids — so the API is never an
     # existence oracle (FR-511/SC-509).
     return AppError(ErrorCode.NOT_FOUND, "Snapshot not found", status_code=404)
 
 
-def _to_out(row: Snapshot) -> SnapshotOut:
+def _snapshot_to_out(row: Snapshot) -> SnapshotOut:
     return SnapshotOut(
         id=row.id,
         client_snapshot_id=row.client_snapshot_id,
@@ -331,7 +331,7 @@ async def owned_snapshot(session: AsyncSession, uid: str, snapshot_id: uuid.UUID
         )
     ).scalar_one_or_none()
     if row is None:
-        raise _not_found()
+        raise _snapshot_not_found()
     return row
 
 
@@ -423,10 +423,10 @@ async def record_snapshot(
         # A replay. If the seller has since DELETED it, the honest answer is "gone" — resurrecting
         # it would silently undo a deliberate deletion.
         if existing.deleted_at is not None:
-            raise _not_found()
+            raise _snapshot_not_found()
         response.status_code = status.HTTP_200_OK
 
-    return _to_out(existing)
+    return _snapshot_to_out(existing)
 
 
 @router.get("/history", responses={**ENTITLEMENT_ERRORS, **VALIDATION_ERRORS})
@@ -493,7 +493,7 @@ async def list_history(
     has_more = len(rows) > limit
     page = rows[:limit]
     next_cursor = _encode_cursor(page[-1]) if has_more and page else None
-    return SnapshotPage(items=[_to_out(r) for r in page], next_cursor=next_cursor)
+    return SnapshotPage(items=[_snapshot_to_out(r) for r in page], next_cursor=next_cursor)
 
 
 @router.get("/history/{snapshot_id}", responses={**ENTITLEMENT_ERRORS, **NOT_FOUND_ERRORS})
@@ -503,7 +503,7 @@ async def get_snapshot(
     session: Annotated[AsyncSession, Depends(get_session)],
 ) -> SnapshotOut:
     """Serves the STORED document. No recomputation, ever — that is the whole promise."""
-    return _to_out(await owned_snapshot(session, claims["uid"], snapshot_id))
+    return _snapshot_to_out(await owned_snapshot(session, claims["uid"], snapshot_id))
 
 
 @router.patch(
@@ -525,14 +525,14 @@ async def relabel_snapshot(
     """
     row = await owned_snapshot(session, claims["uid"], snapshot_id)
     if "label" not in body.model_fields_set:
-        return _to_out(row)  # label omitted ⇒ untouched
+        return _snapshot_to_out(row)  # label omitted ⇒ untouched
     new_label = body.label
     if new_label is not None and not new_label.strip():
         raise AppError(ErrorCode.VALIDATION_ERROR, "label must not be blank", status_code=422)
     row.label = new_label
     await session.commit()
     await session.refresh(row)
-    return _to_out(row)
+    return _snapshot_to_out(row)
 
 
 @router.delete(
