@@ -115,7 +115,7 @@ varredura de igualdade 4.1.0↔4.2.0 sobre `computeCalculator`/`computeBom`.
 | --- | --- | --- | --- |
 | Dispensa do selo de procedência | `localStorage`, device-scoped, **sem uid** (identificador de fonte pública) | conjunto limitado de `(marketplace, source, effectiveDate)` | chave ausente ⇒ não dispensado ⇒ o selo reaparece quando a fonte muda (D3), sem comparação de datas (research §G) |
 | "Entendi" da plausibilidade | store em memória (`shared/lib/plausibility-dismiss-store.ts` — corrigido 27/08, fronteira `plausibilidade.ts:26-29`) | `${campo}:${valorNormalizado}` | morre ao recarregar; `850`→dispensado, `2.400`→volta (§H) |
-| `premiumGate` | função pura em `shared/billing` sobre `{status}` do entitlement + sessão | união `active \| lapsed \| free-nunca-teve \| signed-out \| unknown` (5 estados, 27/08) | decidida pelo LEDGER (o servidor já expõe `none\|lapsed\|active`); `unknown` nunca presume (§E-1) |
+| `premiumGate` | função pura em `shared/billing` sobre `{status}` do entitlement + sessão | união `active \| lapsed \| free-nunca-teve \| signed-out \| unknown` (5 estados, 27/08; **esclarecimento 2026-08-31**: `free-nunca-teve` renomeado no código para `never-subscribed`, chore de legibilidade — semântica idêntica) | decidida pelo LEDGER (o servidor já expõe `none\|lapsed\|active`); `unknown` nunca presume (§E-1) |
 | Resumo fixo do preço (T212) | CSS `position: sticky` no topo da coluna do formulário, mobile 390px | — | nunca `fixed` no rodapé (o slot é do toaster); guarda de geometria nos dois eixos (§I) |
 
 ## 7. O que continua vindo do servidor sem mudança

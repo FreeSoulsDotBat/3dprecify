@@ -52,6 +52,11 @@ premiumGate({status}, session) → "active" | "lapsed" | "free-nunca-teve" | "si
    (função PURA em shared/billing; decidida pelo LEDGER via GET /api/v1/entitlement; unknown nunca presume)
 ```
 
+> **Esclarecimento datado (2026-08-31, chore de legibilidade):** o literal `free-nunca-teve` foi
+> renomeado no código para `never-subscribed` (a união era o único identificador bilíngue do
+> repositório). Semântica, estados e comportamento inalterados; este contrato permanece o registro
+> do desenho de 27/08 com o nome da época.
+
 | estado | lista | formulário | ação primária | mensagem (verbatim da prancheta) |
 | --- | --- | --- | --- | --- |
 | `free-nunca-teve` | vazio didático (6 frases, D4) — ocupa também o ramo `ENTITLEMENT_REQUIRED` | `<Frozen>`, campos VAZIOS c/ placeholder, **sem `onSubmit`** | "Assinar Premium" secundário; "Salvar" desabilitado e visível | "Salvar faz parte do Premium." acima da linha de botões |

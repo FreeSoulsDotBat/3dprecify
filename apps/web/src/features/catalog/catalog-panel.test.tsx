@@ -225,7 +225,7 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
                     correlationId: null,
                 }),
             }),
-            gate: "free-nunca-teve",
+            gate: "never-subscribed",
         });
 
         const vazio = screen.getByTestId("vazio-didatico");
@@ -320,7 +320,7 @@ describe("CatalogPanel — lapsed com itens (019/PR-B T038)", () => {
 // botão desabilitado) não pode gerar um sucesso inventado.
 describe("CatalogPanel — sem toast falso quando create/update ausentes (019/PR-B T106)", () => {
     it("primeira camada: sem onSubmit ligado (gate não-active), um submit nativo no <form> não faz nada", async () => {
-        renderPanel({ list: listState({ items: [] }), gate: "free-nunca-teve" });
+        renderPanel({ list: listState({ items: [] }), gate: "never-subscribed" });
         fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
 
         const frozen = await screen.findByTestId("catalog-form-frozen");

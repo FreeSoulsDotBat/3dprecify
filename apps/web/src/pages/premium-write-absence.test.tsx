@@ -29,7 +29,7 @@ beforeAll(() => {
 // plano não é `active` — a barreira é a AUSÊNCIA do handler (research §E-2), nunca um `if` que
 // alguém pode esquecer de repetir num painel novo. Este arquivo varre `features/catalog/**` e
 // `pages/{catalogo,bom,historico}/**`, monta cada superfície nos QUATRO estados não-`active`
-// (`free-nunca-teve`, `lapsed`, `signed-out`, `unknown`), clica em tudo que está habilitado e prova
+// (`never-subscribed`, `lapsed`, `signed-out`, `unknown`), clica em tudo que está habilitado e prova
 // zero chamadas em TODO hook de escrita que o próprio código-fonte declara — enumerado por leitura
 // de arquivo (`readFileSync`), não por uma lista mantida à mão, para que um hook novo sem entrar na
 // guarda derrube o teste.
@@ -325,7 +325,7 @@ function setGate(gate: Exclude<PremiumGate, "active">, withItems = false) {
     const data =
         gate === "lapsed"
             ? { status: "lapsed" as const }
-            : gate === "free-nunca-teve"
+            : gate === "never-subscribed"
               ? { status: "none" as const }
               : undefined; // signed-out / unknown
     useEntitlementMock.mockReturnValue({
@@ -341,7 +341,7 @@ function setGate(gate: Exclude<PremiumGate, "active">, withItems = false) {
         usePrintersMock.mockReturnValue(listOf([printerA]));
         useProductsMock.mockReturnValue(listOf([productA]));
         useBomsMock.mockReturnValue(listOf([bomA]));
-    } else if (gate === "free-nunca-teve") {
+    } else if (gate === "never-subscribed") {
         // FR-... o servidor responde 403 ENTITLEMENT_REQUIRED — a lista lê isso, nunca "vazio".
         useFilamentsMock.mockReturnValue(entitlementRequiredList());
         usePrintersMock.mockReturnValue(entitlementRequiredList());
@@ -483,7 +483,7 @@ describe("T107 não-vácuo — em active, salvar de verdade CHAMA a escrita (pro
 // ── A guarda em si: 4 painéis × 4 estados não-active ────────────────────────────────────────────
 
 const NON_ACTIVE_GATES: Exclude<PremiumGate, "active">[] = [
-    "free-nunca-teve",
+    "never-subscribed",
     "lapsed",
     "signed-out",
     "unknown",
@@ -562,7 +562,7 @@ describe("T107 — pages/historico/historico-page.tsx: zero escrita sob gate ≠
             const data =
                 gate === "lapsed"
                     ? { status: "lapsed" as const }
-                    : gate === "free-nunca-teve"
+                    : gate === "never-subscribed"
                       ? { status: "none" as const }
                       : undefined;
             useEntitlementMock.mockReturnValue({

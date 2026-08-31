@@ -30,7 +30,7 @@ export interface SessionLike {
  * Os cinco estados. "-com-itens" NÃO é um valor daqui: é composição da TELA a partir de
  * `list.items.length` (a função pura não sabe de itens).
  */
-export type PremiumGate = "active" | "lapsed" | "free-nunca-teve" | "signed-out" | "unknown";
+export type PremiumGate = "active" | "lapsed" | "never-subscribed" | "signed-out" | "unknown";
 
 const SERVER_STATUSES: ReadonlySet<string> = new Set<ServerEntitlementStatus>([
     "none",
@@ -55,5 +55,5 @@ export function premiumGate(
     if (status === undefined || !SERVER_STATUSES.has(status)) return "unknown";
     if (status === "active") return "active";
     if (status === "lapsed") return "lapsed";
-    return "free-nunca-teve";
+    return "never-subscribed";
 }

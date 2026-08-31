@@ -224,8 +224,8 @@ export function ScenariosList({
     // cobre o caso raro em que `premiumGate` ainda não sabe dizer (ex.: entitlement sem resposta) mas
     // a PRÓPRIA lista já ouviu a recusa do servidor (o mesmo par que `use-history.ts`/T111 usa).
     const doorGate: PremiumGate =
-        gate === "unknown" && error?.code === "ENTITLEMENT_REQUIRED" ? "free-nunca-teve" : gate;
-    const showDoor = doorGate === "free-nunca-teve" || doorGate === "signed-out";
+        gate === "unknown" && error?.code === "ENTITLEMENT_REQUIRED" ? "never-subscribed" : gate;
+    const showDoor = doorGate === "never-subscribed" || doorGate === "signed-out";
 
     const rename = useRenameScenario();
     const duplicate = useDuplicateScenario();
@@ -522,7 +522,7 @@ export function ScenariosListSheet({
     // mais para o `PremiumTeaser` de página inteira. `ScenarioListBody` monta para todo mundo e é ELA
     // quem decide (com o próprio `error` da lista) mostrar o vazio didático no lugar do conteúdo.
     const gate = premiumGate(entitlement.data, { status: sessionStatus });
-    const showsDoor = gate === "free-nunca-teve" || gate === "signed-out";
+    const showsDoor = gate === "never-subscribed" || gate === "signed-out";
 
     return (
         <Sheet open={open} onOpenChange={onOpenChange}>

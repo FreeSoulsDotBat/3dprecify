@@ -81,7 +81,7 @@ export function HistoricoPage() {
     const search = useSearch({ strict: false }) as { snapshot?: string; construir?: boolean };
     // 018/US2 — o corte de 1280px decide entre mestre-detalhe e a tela de hoje.
     const isWide = useIsWide();
-    // 019/PR-B (T046, prancheta 32f) — a parede caiu: "free-nunca-teve" e "signed-out" NÃO saltam
+    // 019/PR-B (T046, prancheta 32f) — a parede caiu: "never-subscribed" e "signed-out" NÃO saltam
     // mais para um teaser de página inteira. A página segue com o cabeçalho normal e é a
     // `HistoryLedger` (e o corte mestre-detalhe, que a compõe) quem decide mostrar o vazio didático
     // no lugar da lista — exatamente como quem paga vê um vazio quando ainda não tem registro.
@@ -264,9 +264,9 @@ function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
     const gate = premiumGate(entitlement.data, { status: sessionStatus });
     const doorGate: PremiumGate =
         gate === "unknown" && history.error?.code === "ENTITLEMENT_REQUIRED"
-            ? "free-nunca-teve"
+            ? "never-subscribed"
             : gate;
-    const showDoor = doorGate === "free-nunca-teve" || doorGate === "signed-out";
+    const showDoor = doorGate === "never-subscribed" || doorGate === "signed-out";
     // hotfix 016/A3 (H4) — `HistoryLedger` only mounts past `HistoricoPage`'s own
     // `sessionStatus === "authenticated"` gate, so a mount here already means the session IS back:
     // an `unauthenticated` entry may always be retried from this screen (the mirror of `retryBlocked`,

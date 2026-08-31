@@ -73,7 +73,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 // SEMPRE renderizado (`type="button" disabled`), e o rodapé ganha a frase + o convite único —
 // mesma regra do FilamentForm/PrinterForm (`PremiumFooterNote`/`PremiumInviteCta`, sem duplicar a
 // lógica). `gate` chega pronto de CatalogoPage (o mesmo `premiumGate()` que os quatro painéis
-// leem) em vez de um `readOnly` binário — 013/FB-02 só cobria `lapsed`; um `free-nunca-teve` que
+// leem) em vez de um `readOnly` binário — 013/FB-02 só cobria `lapsed`; um `never-subscribed` que
 // abrisse esta URL direto via `?produto=` via chegava com o formulário VIVO (bug fechado aqui).
 // RecordSnapshotButton/SaveScenarioSheet já se auto-gateiam em `active`, sem mudança.
 

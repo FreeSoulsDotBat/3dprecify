@@ -19,8 +19,8 @@ import { premiumGate } from "./premium-gate";
 describe("premiumGate — a união de cinco estados (T036)", () => {
     const authed = { status: "authenticated" } as const;
 
-    it("logado + {status:'none'} → free-nunca-teve", () => {
-        expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
+    it("logado + {status:'none'} → never-subscribed", () => {
+        expect(premiumGate({ status: "none" }, authed)).toBe("never-subscribed");
     });
 
     it("logado + {status:'lapsed'} → lapsed (o ledger decide, nunca uma heurística de tela)", () => {
@@ -55,9 +55,9 @@ describe("premiumGate — a união de cinco estados (T036)", () => {
     it("resposta STALE do cache devolve o status LEMBRADO (ADR-0018 §9) — stale nunca promove none→active", () => {
         // O hook `useEntitlement()` entrega em `data` o que o servidor disse por último (fresco ou
         // lembrado do IndexedDB uid-scoped). A função recebe esse `data`: um `none` lembrado continua
-        // `free-nunca-teve`; a ausência de resposta continua `unknown`. Não existe caminho em que um
+        // `never-subscribed`; a ausência de resposta continua `unknown`. Não existe caminho em que um
         // valor lembrado vire MAIS permissivo do que o servidor disse.
-        expect(premiumGate({ status: "none" }, authed)).toBe("free-nunca-teve");
+        expect(premiumGate({ status: "none" }, authed)).toBe("never-subscribed");
         expect(premiumGate({ status: "active" }, authed)).toBe("active");
         // Um status que o servidor não emite não é "um plano que não reconhecemos" — é NÃO-RESPOSTA.
         expect(premiumGate({ status: "premium-forever" } as never, authed)).toBe("unknown");

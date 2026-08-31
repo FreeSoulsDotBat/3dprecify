@@ -22,7 +22,7 @@ export function PremiumFooterNote({ gate }: { gate: PremiumGate }) {
     if (gate === "lapsed") {
         return <p data-testid="premium-footer-note">{catalogo.reactivateBody}</p>;
     }
-    if (gate === "free-nunca-teve" || gate === "signed-out") {
+    if (gate === "never-subscribed" || gate === "signed-out") {
         return (
             <p data-testid="premium-footer-note">
                 {messages.premiumTeaser.salvarFazParteDoPremium}

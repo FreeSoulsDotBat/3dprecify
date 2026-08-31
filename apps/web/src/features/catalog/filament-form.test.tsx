@@ -117,8 +117,8 @@ describe("FilamentForm — os cinco estados do gate (019/PR-B T045, ex-013/FB-02
         expect(screen.queryByRole("button", { name: cf.cancel })).not.toBeInTheDocument();
     });
 
-    it("free-nunca-teve: mesma inércia, mas o convite é 'Assinar Premium' sem preço", () => {
-        renderForm({ gate: "free-nunca-teve" });
+    it("never-subscribed: mesma inércia, mas o convite é 'Assinar Premium' sem preço", () => {
+        renderForm({ gate: "never-subscribed" });
         expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
             messages.premiumTeaser.salvarFazParteDoPremium,
         );

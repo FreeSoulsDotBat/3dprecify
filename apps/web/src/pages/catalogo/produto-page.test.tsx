@@ -475,8 +475,8 @@ describe("ProdutoPage — gate não-active, inerte up front (019/PR-B T045, ex-0
         expect(screen.getAllByText(heroAmount("R$ 25,65")).length).toBeGreaterThan(0);
     });
 
-    it("free-nunca-teve: mesma inércia, convite 'Assinar Premium'", () => {
-        renderPage("prod-1", "free-nunca-teve");
+    it("never-subscribed: mesma inércia, convite 'Assinar Premium'", () => {
+        renderPage("prod-1", "never-subscribed");
         expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
         expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
             messages.premiumTeaser.salvarFazParteDoPremium,
