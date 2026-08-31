@@ -31,9 +31,14 @@ async def _run() -> None:
     try:
         async with session_factory() as session:
             summary = await reconcile_all(session, provider)
+        # Onda 7 (bug B6, REGISTRADO — não corrigido aqui): `subscriptions_unreachable` já vinha
+        # calculado por `reconcile_all` e não aparecia nesta linha, então "checked 12, healed 0"
+        # descrevia tanto "tudo em dia" quanto "as 12 consultas falharam". O operador agora VÊ o
+        # número; a decisão de virar exit≠0 é do dono (B6), e o exit code abaixo continua 0 sempre.
         print(
             f"reconcile: checked {summary.subscriptions_checked} subscription(s),"
-            f" healed {summary.grants_written} grant(s)"
+            f" healed {summary.grants_written} grant(s),"
+            f" unreachable {summary.subscriptions_unreachable}"
         )
     finally:
         await provider.aclose()

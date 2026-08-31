@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 
+import structlog
 from fastapi import Depends
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -27,6 +28,8 @@ from app.auth import Claims, current_claims
 from app.db import get_session
 from app.errors import AppError, ErrorCode
 from app.models import Account, EntitlementGrant
+
+log = structlog.get_logger(__name__)
 
 EntitlementStatus = Literal["none", "active", "lapsed"]
 
@@ -97,6 +100,9 @@ async def require_entitlement(
     await ensure_account(session, claims.uid, claims.email)
     state = await read_entitlement_state(session, claims.uid)
     if state.status != "active":
+        # Onda 7: sem `uid` (não logado hoje em nenhum ponto do repo — ver `app/observability.py`)
+        # — o status derivado já diz o motivo, e é o mesmo dado que o 403 devolve.
+        log.info("entitlement_denied", gate="write", status=state.status)
         raise _deny()
     return claims
 
@@ -109,5 +115,6 @@ async def require_catalog_read(
     await ensure_account(session, claims.uid, claims.email)
     state = await read_entitlement_state(session, claims.uid)
     if state.status == "none":
+        log.info("entitlement_denied", gate="read", status=state.status)
         raise _deny()
     return claims

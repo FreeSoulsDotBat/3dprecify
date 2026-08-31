@@ -22,6 +22,10 @@ import hmac
 import re
 import time
 
+import structlog
+
+log = structlog.get_logger(__name__)
+
 FRESHNESS_WINDOW_SECONDS = 300  # SEC-106 — see the dated-deviation note above.
 
 _SIGNATURE_RE = re.compile(r"^ts=(?P<ts>\d+),v1=(?P<v1>[0-9a-fA-F]{64})$")
@@ -44,16 +48,35 @@ def verify_signature(
     secret that is actually configured. Any other input — missing header, malformed
     `ts=…,v1=…`, stale `ts`, wrong `v1`, unset secret — is `False`. Never raises (deny is a plain
     boolean)."""
-    if not secret or not x_signature or not x_request_id or not data_id:
+    # Onda 7 (legibilidade): as 6+ causas abaixo colapsavam num `False` mudo — um 401 real do MP
+    # (secret girado, replay fora da janela, um proxy que reescreve headers) não deixava rastro
+    # nenhum além do próprio 401. Nada aqui muda o valor de retorno: cada `return False` já
+    # existente ganha só uma linha de log NOMEANDO o motivo, antes de sair.
+    if not secret:
+        log.info("webhook_signature_rejected", reason="missing_secret")
+        return False
+    if not x_signature:
+        log.info("webhook_signature_rejected", reason="missing_signature_header")
+        return False
+    if not x_request_id:
+        log.info("webhook_signature_rejected", reason="missing_request_id_header")
+        return False
+    if not data_id:
+        log.info("webhook_signature_rejected", reason="missing_data_id")
         return False
     match = _SIGNATURE_RE.match(x_signature.strip())
     if not match:
+        log.info("webhook_signature_rejected", reason="malformed_signature_header")
         return False
     ts_raw = match.group("ts")
     v1 = match.group("v1")
     when = now if now is not None else time.time()
     if abs(when - int(ts_raw)) > FRESHNESS_WINDOW_SECONDS:
+        log.info("webhook_signature_rejected", reason="stale_timestamp")
         return False
     manifest = canonical_manifest(data_id, request_id=x_request_id, ts=ts_raw)
     expected = hmac.new(secret.encode(), manifest.encode(), hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, v1)
+    valid = hmac.compare_digest(expected, v1)
+    if not valid:
+        log.info("webhook_signature_rejected", reason="hmac_mismatch")
+    return valid

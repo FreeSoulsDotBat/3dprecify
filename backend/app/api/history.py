@@ -39,6 +39,7 @@ import json
 import uuid
 from typing import Annotated, Any, Literal, cast
 
+import structlog
 from fastapi import APIRouter, Depends, Query, Response, status
 from pydantic import AwareDatetime, ConfigDict, field_validator, model_validator
 from sqlalchemy import literal, select, tuple_
@@ -66,6 +67,8 @@ from app.validation import (
 )
 
 router = APIRouter(tags=["history"])
+
+log = structlog.get_logger(__name__)
 
 # One frozen document has a maximum size (abuse/DoS guard, data-model §7 item 6 — owner-confirmed
 # 512 KB). A document over the cap is an HONEST 422, never a silent truncation: truncating an
@@ -433,7 +436,19 @@ async def record_snapshot(
         # A replay. If the seller has since DELETED it, the honest answer is "gone" — resurrecting
         # it would silently undo a deliberate deletion.
         if existing.deleted_at is not None:
+            log.info(
+                "snapshot_replay",
+                client_snapshot_id=str(body.client_snapshot_id),
+                resurrected=False,
+                outcome="deleted",
+            )
             raise _snapshot_not_found()
+        log.info(
+            "snapshot_replay",
+            client_snapshot_id=str(body.client_snapshot_id),
+            resurrected=False,
+            outcome="ok",
+        )
         response.status_code = status.HTTP_200_OK
 
     return _snapshot_to_out(existing)

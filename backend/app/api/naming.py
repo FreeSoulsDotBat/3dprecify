@@ -25,12 +25,15 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+import structlog
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.errors import AppError, ErrorCode
 from app.lib.name_norm import name_norm_key
 from app.models import Bom, Filament, Printer, Product
+
+log = structlog.get_logger(__name__)
 
 #: Teto de nome das ESCRITAS NOVAS (pydantic; precedente `scenarios.py:84`). Não há CHECK de
 #: comprimento no banco, de propósito: ele invalidaria o legado (Adendo 27/08 §3).
@@ -89,6 +92,17 @@ async def flush_with_unique_name(
             session.add(row)
             await session.flush()
             await savepoint.commit()
+            if attempt > 1:
+                # Onda 7: um sufixo aplicado em silêncio (por desenho — ver o docstring do
+                # módulo) ainda merece um rastro para quem opera a conta, mesmo sem aviso ao
+                # vendedor.
+                log.info(
+                    "name_conflict_resolved",
+                    index=index_name,
+                    base=base_name,
+                    final=candidate,
+                    attempt=attempt,
+                )
             return
         except IntegrityError as exc:
             await savepoint.rollback()

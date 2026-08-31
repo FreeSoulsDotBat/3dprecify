@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
+import structlog
 from sqlalchemy import or_, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +26,8 @@ from app.models import BillingEvent, EntitlementGrant, Subscription
 
 from .events import VerifiedEvent
 from .states import SubscriptionStatus
+
+log = structlog.get_logger(__name__)
 
 #: T003 — MEDIDO na doc oficial do MP (2026-07-21, fonte em `research.md` §D10): uma cobrança
 #: recusada entra num esquema de reciclagem de até 4 retentativas numa janela de ~10 dias, com
@@ -59,6 +62,9 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
         )
     ).scalar_one_or_none()
     if sub is None:
+        # SEC-105 deny-by-default: nenhuma assinatura local resolve este evento (conta isolada,
+        # ou o PSP falou de algo que não é nosso). Zero escrita.
+        log.info("event_unmatched", subscription_ref=event.subscription_ref, kind=event.kind)
         return ProcessResult(matched=False, granted=False)
 
     if event.kind == "payment_failed":
@@ -70,6 +76,7 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
     if event.kind != "payment":
         # Sobra `cancel`, que NAO passa por aqui: cancelar e acao do vendedor, nao evento do PSP, e
         # mora em `app.billing.subscription` (T022).
+        log.info("event_kind_not_processed", subscription_id=str(sub.id), kind=event.kind)
         return ProcessResult(matched=True, granted=False)
 
     now = datetime.now(UTC)
@@ -84,6 +91,7 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
     # payment we cannot bound is not a payment we grant: deny-by-default (matched, not granted), so
     # reconciliation retries rather than the seller getting free lifetime premium.
     if period_end is None:
+        log.info("event_unboundable", subscription_id=str(sub.id), kind=event.kind)
         return ProcessResult(matched=True, granted=False)
 
     stmt = (
@@ -113,6 +121,12 @@ async def process_verified_event(session: AsyncSession, event: VerifiedEvent) ->
         )
         sub.status = SubscriptionStatus.AUTHORIZED.value
         sub.current_period_end = period_end  # guaranteed non-null by the L2-N1 guard above
+        log.info(
+            "grant_written",
+            account_uid=sub.owner_uid,
+            subscription_id=str(sub.id),
+            expires_at=period_end.isoformat(),
+        )
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)
 
@@ -136,6 +150,7 @@ async def _open_grace(
     # ancorado em `hoje` seria premium de graça. Deny-by-default — a reconciliação tenta de novo
     # depois que um pagamento aprovado tiver estabelecido o período.
     if period_end is None:
+        log.info("event_unboundable", subscription_id=str(sub.id), kind=event.kind)
         return ProcessResult(matched=True, granted=False)
 
     stmt = (
@@ -166,6 +181,12 @@ async def _open_grace(
             )
         )
         sub.status = SubscriptionStatus.GRACE.value
+        log.info(
+            "grace_opened",
+            account_uid=sub.owner_uid,
+            subscription_id=str(sub.id),
+            expires_at=(period_end + timedelta(days=GRACE_WINDOW_DAYS)).isoformat(),
+        )
     await session.commit()
     return ProcessResult(matched=True, granted=inserted)
 
@@ -236,5 +257,11 @@ async def _revoke_for_refund(
     for grant in revocable_grants:
         grant.revoked_at = now
         grant.revoked_by = "mercadopago"
+    log.info(
+        "grants_revoked",
+        account_uid=sub.owner_uid,
+        subscription_id=str(sub.id),
+        count=len(revocable_grants),
+    )
     await session.commit()
     return ProcessResult(matched=True, granted=len(revocable_grants) > 0)

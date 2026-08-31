@@ -10,6 +10,8 @@ from __future__ import annotations
 from enum import StrEnum
 from typing import Any
 
+import sentry_sdk
+import structlog
 from asgi_correlation_id import correlation_id
 from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
@@ -17,6 +19,10 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, ConfigDict
 from pydantic.alias_generators import to_camel
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from .settings import get_settings
+
+_log = structlog.get_logger(__name__)
 
 
 class ErrorCode(StrEnum):
@@ -151,8 +157,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(status_code=exc.status_code, content=_envelope(code, message))
 
     @app.exception_handler(Exception)
-    async def _handle_unexpected(_request: Request, _exc: Exception) -> JSONResponse:
-        # Never leak internals; the correlationId ties this to the log + Sentry event.
+    async def _handle_unexpected(_request: Request, exc: Exception) -> JSONResponse:
+        # Never leak internals; the correlationId ties this to the log + Sentry event. Onda 7
+        # (legibilidade, aditivo): esta exceção antes era DESCARTADA em silêncio — nem log nem
+        # Sentry — e o correlationId prometido acima não amarrava a nada. `exc_info=exc` funciona
+        # independente do handler rodar dentro do `except` (structlog aceita a exceção explícita).
+        _log.error("unhandled_error", correlation_id=correlation_id.get(), exc_info=exc)
+        if get_settings().sentry_dsn is not None:
+            sentry_sdk.capture_exception(exc)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=_envelope(ErrorCode.INTERNAL, "Internal server error"),

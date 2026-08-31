@@ -18,12 +18,15 @@ from dataclasses import dataclass
 from typing import Any, cast
 
 import firebase_admin
+import structlog
 from fastapi import Header
 from fastapi.concurrency import run_in_threadpool
 from firebase_admin import auth as firebase_auth
 
 from .errors import AppError, ErrorCode
 from .settings import Settings
+
+log = structlog.get_logger(__name__)
 
 _app: firebase_admin.App | None = None
 
@@ -69,12 +72,16 @@ async def verify_id_token(token: str) -> dict[str, Any]:
     try:
         decoded = cast("dict[str, Any]", await run_in_threadpool(verify, token))
     except firebase_auth.ExpiredIdTokenError as exc:
+        # Onda 7 (legibilidade): NUNCA o token/claims — só o motivo nomeado (o repo não loga
+        # `uid` hoje em nenhum ponto; ver `app/observability.py` — este não é o lugar para começar).
+        log.info("auth_rejected", reason="token_expired")
         raise AppError(ErrorCode.TOKEN_EXPIRED, "Token expired", status_code=401) from exc
     except (
         firebase_auth.InvalidIdTokenError,
         firebase_auth.RevokedIdTokenError,
         ValueError,
     ) as exc:
+        log.info("auth_rejected", reason="invalid_token", exc_type=type(exc).__name__)
         raise AppError(ErrorCode.UNAUTHENTICATED, "Invalid token", status_code=401) from exc
     return decoded
 
@@ -82,6 +89,7 @@ async def verify_id_token(token: str) -> dict[str, Any]:
 async def current_claims(authorization: str | None = Header(default=None)) -> Claims:
     """Dependency yielding the verified Firebase token claims, TYPED. 401 if missing/invalid."""
     if not authorization or not authorization.startswith("Bearer "):
+        log.info("auth_rejected", reason="missing_bearer_token")
         raise AppError(ErrorCode.UNAUTHENTICATED, "Missing bearer token", status_code=401)
     decoded = await verify_id_token(authorization.removeprefix("Bearer "))
     return Claims(uid=decoded["uid"], email=decoded.get("email"), name=decoded.get("name"))
