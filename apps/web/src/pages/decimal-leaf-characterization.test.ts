@@ -29,25 +29,24 @@ const INPUT: PriceInput = {
     machineLifetimeHours: 12000,
     maintenanceReservePerHour: 0.31,
     failurePct: 10,
-    finishingCost: 2.5,
-    laborRate: 25,
+    finishTimeHours: 0.25,
+    finishRatePerHour: 10,
     laborHours: 0.5,
+    laborRatePerHour: 25,
     markupVarejoPct: 120,
     markupAtacadoPct: 60,
     otherCosts: [{ name: "embalagem", value: 1.05 }],
     channels: [
         {
             marketplace: "SHOPEE",
-            fees: {
-                commissionPct: 0,
-                priceBands: [
-                    { minPrice: 0, maxPrice: 8, commissionPct: 14, fixedFee: 0 },
-                    { minPrice: 8, maxPrice: null, commissionPct: 14, fixedFee: 4 },
-                ],
-                surcharges: [{ label: "volumoso", value: 50 }],
-            },
+            commissionPct: 0,
+            priceBands: [
+                { minPrice: 0, maxPrice: 8, commissionPct: 14, fixedFee: 0 },
+                { minPrice: 8, maxPrice: null, commissionPct: 14, fixedFee: 4 },
+            ],
+            surcharges: [{ label: "volumoso", value: 50 }],
         },
-        { marketplace: "ML", fees: { commissionPct: 16.5, fixedFee: 6.75, freightCost: 21.9 } },
+        { marketplace: "ML", commissionPct: 16.5, fixedFee: 6.75, freightCost: 21.9 },
     ],
     catalogVersion: "2026-08-06.1",
 };
@@ -66,8 +65,8 @@ describe("caracterização: os dois serializadores de folha decimal são o MESMO
         expect(inputs["printGrams"]).toBe("123.456");
         expect(inputs["avgPowerKw"]).toBe("0.125");
         const channels = inputs["channels"] as Array<Record<string, unknown>>;
-        const shopeeFees = channels[0]!["fees"] as Record<string, unknown>;
-        const bands = shopeeFees["priceBands"] as Array<Record<string, unknown>>;
+        const shopee = channels[0]!;
+        const bands = shopee["priceBands"] as Array<Record<string, unknown>>;
         expect(bands[0]).toEqual({
             minPrice: "0",
             maxPrice: "8",
@@ -75,7 +74,7 @@ describe("caracterização: os dois serializadores de folha decimal são o MESMO
             fixedFee: "0",
         });
         expect(bands[1]!["maxPrice"]).toBeNull();
-        const surcharges = shopeeFees["surcharges"] as Array<Record<string, unknown>>;
+        const surcharges = shopee["surcharges"] as Array<Record<string, unknown>>;
         expect(surcharges[0]).toEqual({ label: "volumoso", value: "50" });
     });
 });
