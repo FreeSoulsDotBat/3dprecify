@@ -422,6 +422,67 @@ function parseOtherCosts(forms: readonly { name: string; value: string }[]): {
  * throwing or emitting a NaN/Infinity (SC-008). Valid channel slots are passed to the engine and
  * their gross-up results mapped back onto their form position; invalid slots carry inline errors.
  */
+/**
+ * O desfecho de UM slot VÁLIDO já computado pelo motor (corpo movido verbatim da IIFE que vivia
+ * dentro do `.map()` de realinhamento — achado da auditoria; a regra não mudou, só ganhou nome).
+ *
+ * 016/PR-F homologação (A1) — once the level is priced, back-fill `commissionPct`/`fixedFee` FROM
+ * THE BAND THE ENGINE ACTUALLY APPLIED (never a second price computed here — `appliedBandFees`
+ * re-derives only WHICH band, from the same `grossUp`). Only for a field the seller did NOT type
+ * (same discipline as every other applied-fee field, 015/A8) and only while the slot is priced
+ * (unpriced clears `appliedFees` below — a band nobody can see behind is not a reference to vouch
+ * for).
+ */
+function pricedSlotOutcome(
+    p: SlotProcessing,
+    slotInput: ChannelInput,
+    computed: ChannelResult | null,
+    precoVarejo: number,
+): ChannelSlotOutcome {
+    const priced = !isUnpriced(computed);
+
+    let appliedFees = p.appliedFees;
+    let appliedFeesFromBand = false;
+    let appliedFixedFeeRulePct: number | null = null;
+    const wantsCommission = p.editedFields.commissionPct === undefined;
+    const wantsFixedFee = p.editedFields.fixedFee === undefined;
+    if (priced && (slotInput.priceBands?.length ?? 0) > 0 && (wantsCommission || wantsFixedFee)) {
+        const band = appliedBandFees(slotInput, precoVarejo);
+        if (band) {
+            appliedFeesFromBand = true;
+            appliedFixedFeeRulePct = wantsFixedFee ? band.fixedFeeRulePct : null;
+            appliedFees = {
+                ...appliedFees,
+                ...(wantsCommission ? { commissionPct: band.commissionPct } : {}),
+                ...(wantsFixedFee ? { fixedFee: band.fixedFee } : {}),
+            };
+        }
+    }
+
+    return {
+        errors: {},
+        result: computed,
+        hasFee: p.hasFee,
+        // SC-817 — a level the engine refused to price (its announce falls outside every published
+        // band) has no reference behind it, so the slot MUST NOT keep wearing the "Referência"
+        // seal: the seal would vouch for a number the screen is not showing. Degrading the whole
+        // slot to "sem referência" understates rather than overstates, which is the only safe
+        // direction here (Constitution II).
+        seal: priced ? p.seal : ({ kind: "none" } as const),
+        freightIsEstimate: p.freightIsEstimate,
+        editedFields: p.editedFields,
+        // 015/A8 — a referencia acompanha o SELO: quando a fatia deixa de ser precificada o selo
+        // cai para "sem referencia", e publicar uma aliquota "aplicada" ali vouchearia um numero
+        // que a tela nao esta mostrando (mesma razao do SC-817 acima).
+        appliedFees: priced ? appliedFees : {},
+        appliedFeesFromBand: priced && appliedFeesFromBand,
+        appliedFixedFeeRulePct: priced ? appliedFixedFeeRulePct : null,
+        // 016/PR-F — o mesmo argumento: um nível não precificado não tem procedência de fixo a
+        // mostrar (o selo principal já caiu para "sem referência").
+        fixedFeeSource: priced ? p.fixedFeeSource : null,
+    };
+}
+
 export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): CalcOutcome {
     const parsed = calculatorSchema.safeParse(values);
     if (!parsed.success) {
@@ -469,79 +530,41 @@ export function computeFromForm(values: CalcFormValues, ctx?: CatalogContext): C
             catalogVersion: usedCatalog ? ctx?.catalog.catalogVersion : undefined,
         };
         const result = computeCalculator(input);
-        // Re-align engine results (valid slots only, in order) back onto every form slot.
-        let ep = 0;
-        const channels: ChannelSlotOutcome[] = processed.map((p) =>
-            p.input === null
-                ? {
-                      errors: p.errors,
-                      result: null,
-                      hasFee: p.hasFee,
-                      seal: p.seal,
-                      freightIsEstimate: false,
-                      editedFields: p.editedFields,
-                      appliedFees: p.appliedFees,
-                      appliedFeesFromBand: false,
-                      appliedFixedFeeRulePct: null,
-                      fixedFeeSource: p.fixedFeeSource,
-                  }
-                : (() => {
-                      const slotInput = p.input;
-                      const computed = result.channels[ep++] ?? null;
-                      const priced = !isUnpriced(computed);
-
-                      // 016/PR-F homologação (A1) — once the level is priced, back-fill `commissionPct`/
-                      // `fixedFee` FROM THE BAND THE ENGINE ACTUALLY APPLIED (never a second price computed
-                      // here — `appliedBandFees` re-derives only WHICH band, from the same `grossUp`). Only
-                      // for a field the seller did NOT type (same discipline as every other applied-fee field,
-                      // 015/A8) and only while the slot is priced (unpriced already clears `appliedFees`
-                      // below — a band nobody can see behind is not a reference to vouch for).
-                      let appliedFees = p.appliedFees;
-                      let appliedFeesFromBand = false;
-                      let appliedFixedFeeRulePct: number | null = null;
-                      const wantsCommission = p.editedFields.commissionPct === undefined;
-                      const wantsFixedFee = p.editedFields.fixedFee === undefined;
-                      if (
-                          priced &&
-                          (slotInput.priceBands?.length ?? 0) > 0 &&
-                          (wantsCommission || wantsFixedFee)
-                      ) {
-                          const band = appliedBandFees(slotInput, result.precoVarejo);
-                          if (band) {
-                              appliedFeesFromBand = true;
-                              appliedFixedFeeRulePct = wantsFixedFee ? band.fixedFeeRulePct : null;
-                              appliedFees = {
-                                  ...appliedFees,
-                                  ...(wantsCommission ? { commissionPct: band.commissionPct } : {}),
-                                  ...(wantsFixedFee ? { fixedFee: band.fixedFee } : {}),
-                              };
-                          }
-                      }
-
-                      return {
-                          errors: {},
-                          result: computed,
-                          hasFee: p.hasFee,
-                          // SC-817 — a level the engine refused to price (its announce falls outside every
-                          // published band) has no reference behind it, so the slot MUST NOT keep wearing the
-                          // "Referência" seal: the seal would vouch for a number the screen is not showing.
-                          // Degrading the whole slot to "sem referência" understates rather than overstates,
-                          // which is the only safe direction here (Constitution II).
-                          seal: priced ? p.seal : ({ kind: "none" } as const),
-                          freightIsEstimate: p.freightIsEstimate,
-                          editedFields: p.editedFields,
-                          // 015/A8 — a referencia acompanha o SELO: quando a fatia deixa de ser precificada o
-                          // selo cai para "sem referencia", e publicar uma aliquota "aplicada" ali vouchearia
-                          // um numero que a tela nao esta mostrando (mesma razao do SC-817 acima).
-                          appliedFees: priced ? appliedFees : {},
-                          appliedFeesFromBand: priced && appliedFeesFromBand,
-                          appliedFixedFeeRulePct: priced ? appliedFixedFeeRulePct : null,
-                          // 016/PR-F — o mesmo argumento: um nível não precificado não tem procedência de fixo a
-                          // mostrar (o selo principal já caiu para "sem referência").
-                          fixedFeeSource: priced ? p.fixedFeeSource : null,
-                      };
-                  })(),
-        );
+        // Re-align engine results (valid slots only, in order) back onto every form slot. O motor
+        // recebe SÓ os slots válidos, então o i-ésimo válido do form casa com o i-ésimo resultado.
+        // O mapa de índices abaixo torna esse contrato posicional EXPLÍCITO e imutável — antes era
+        // um `ep++` mutado dentro do `.map()`, invisível (achado Altíssimo da auditoria: um slot
+        // inválido no meio deslocava os seguintes e nada avisava o leitor).
+        const engineIndexBySlot: (number | null)[] = [];
+        {
+            let nextEngineIndex = 0;
+            for (const p of processed) {
+                engineIndexBySlot.push(p.input === null ? null : nextEngineIndex++);
+            }
+        }
+        const channels: ChannelSlotOutcome[] = processed.map((p, slotIndex) => {
+            const engineIndex = engineIndexBySlot[slotIndex];
+            if (p.input === null || engineIndex == null) {
+                return {
+                    errors: p.errors,
+                    result: null,
+                    hasFee: p.hasFee,
+                    seal: p.seal,
+                    freightIsEstimate: false,
+                    editedFields: p.editedFields,
+                    appliedFees: p.appliedFees,
+                    appliedFeesFromBand: false,
+                    appliedFixedFeeRulePct: null,
+                    fixedFeeSource: p.fixedFeeSource,
+                };
+            }
+            return pricedSlotOutcome(
+                p,
+                p.input,
+                result.channels[engineIndex] ?? null,
+                result.precoVarejo,
+            );
+        });
         return { ok: true, fieldErrors: {}, result, input, channels, otherCostErrors };
     } catch (err) {
         if (err instanceof ValidationError) {
