@@ -10,15 +10,7 @@ import {
 } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { honestWriteError } from "@/shared/api/error-messages";
-import type {
-    ChannelSlot,
-    FilamentValuesInput,
-    OtherCost,
-    PieceInputsInput,
-    PrinterValuesInput,
-    ProductIn,
-    ProductOut,
-} from "@/shared/api/generated";
+import type { ChannelSlot, OtherCost, ProductIn, ProductOut } from "@/shared/api/generated";
 import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatDayMonthPtBr } from "@/shared/lib/format-date";
@@ -159,11 +151,15 @@ export function ProductsPanel({
             name: trimmed,
             filamentId: duplicateTarget.filamentId,
             printerId: duplicateTarget.printerId,
-            filamentValues: duplicateTarget.filamentValues as unknown as FilamentValuesInput,
-            printerValues: duplicateTarget.printerValues as unknown as PrinterValuesInput,
-            pieceInputs: duplicateTarget.pieceInputs as unknown as PieceInputsInput,
+            filamentValues: duplicateTarget.filamentValues,
+            printerValues: duplicateTarget.printerValues,
+            pieceInputs: duplicateTarget.pieceInputs,
             tariffPerKwh: duplicateTarget.tariffPerKwh,
             includeMarketplace: duplicateTarget.includeMarketplace,
+            // Os DOIS casts restantes têm causa raiz nomeada (pendência 4 do relatório): o Out do
+            // backend serializa channels/otherCosts como dict sem tipo, então o Orval gera um item
+            // solto sem `marketplace`. Tipar o Out mudaria o OpenAPI (drift-guard) — decisão de
+            // contrato, não de legibilidade. Os outros 3 casts deste bloco caíram: eram atribuíveis.
             channels: duplicateTarget.channels as unknown as ChannelSlot[],
             otherCosts: duplicateTarget.otherCosts as unknown as OtherCost[],
             // `sellerFixedPrice` não existe em `ProductIn` — a cópia NUNCA herda o preço fixado, por
