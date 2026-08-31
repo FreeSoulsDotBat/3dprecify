@@ -333,35 +333,45 @@ function rankCandidate(c: BandCandidate, base: number): number {
  * R$ 5,00 below the R$ 69,52 the seller really receives. Solving every band directly and ranking the
  * results removes the cap, the oscillation and the silent mislabel in one move.
  */
+/** Score one announce against the band that really contains it — `null` when none does. (Era o
+ *  arrow `at` de 18 linhas embutido em `chooseBand`; corpo verbatim, fechamentos viram parâmetros.) */
+function scoreCandidate(
+    bands: PriceBand[],
+    minPerItem: number,
+    surcharge: Decimal,
+    anuncio: number,
+    assumed: PriceBand | null,
+): BandCandidate | null {
+    const applied = bandContaining(bands, anuncio);
+    if (!applied) return null; // this announce lands in a gap — it is not a priceable answer
+    const pct = new Decimal(applied.commissionPct).dividedBy(100).times(anuncio);
+    const charged = pct.toNumber() >= minPerItem ? pct : new Decimal(minPerItem);
+    return {
+        assumed,
+        applied,
+        anuncio,
+        charged,
+        // O que o vendedor leva PARA CASA: fixo da banda que CONTÉM o anúncio — pela regra dela,
+        // quando ela tem uma — menos as sobretaxas que ele declarou (elas atravessam a banda).
+        net: new Decimal(anuncio)
+            .minus(charged)
+            .minus(bandFixedFee(applied, anuncio))
+            .minus(surcharge),
+    };
+}
+
 function chooseBand(
     base: number,
     bands: PriceBand[],
     minPerItem: number,
     surcharge: Decimal,
 ): BandCandidate | null {
-    /** Score one announce against the band that really contains it — `null` when none does. */
-    const at = (anuncio: number, assumed: PriceBand | null): BandCandidate | null => {
-        const applied = bandContaining(bands, anuncio);
-        if (!applied) return null; // this announce lands in a gap — it is not a priceable answer
-        const pct = new Decimal(applied.commissionPct).dividedBy(100).times(anuncio);
-        const charged = pct.toNumber() >= minPerItem ? pct : new Decimal(minPerItem);
-        return {
-            assumed,
-            applied,
-            anuncio,
-            charged,
-            // O que o vendedor leva PARA CASA: fixo da banda que CONTÉM o anúncio — pela regra dela,
-            // quando ela tem uma — menos as sobretaxas que ele declarou (elas atravessam a banda).
-            net: new Decimal(anuncio)
-                .minus(charged)
-                .minus(bandFixedFee(applied, anuncio))
-                .minus(surcharge),
-        };
-    };
-
     const fromSchedules = bands
         .map((b) =>
-            at(
+            scoreCandidate(
+                bands,
+                minPerItem,
+                surcharge,
                 toMoney(grossUpOnce(base, b.commissionPct, fixedShapeOf(b), minPerItem, surcharge)),
                 b,
             ),
@@ -380,7 +390,7 @@ function chooseBand(
     // answer — without these the engine overshot (ML base R$ 69,51 priced at R$ 84,67 when R$ 79,00
     // already netted R$ 69,52), which also broke monotonicity across the step.
     const fromThresholds = bands
-        .map((b) => at(b.minPrice, null))
+        .map((b) => scoreCandidate(bands, minPerItem, surcharge, b.minPrice, null))
         .filter((c): c is BandCandidate => c !== null);
 
     const ordered = [...fromSchedules, ...fromThresholds].sort(
