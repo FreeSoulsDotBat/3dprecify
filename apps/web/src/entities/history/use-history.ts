@@ -15,7 +15,7 @@ import {
     recordSnapshotApiV1HistoryPost,
     relabelSnapshotApiV1HistorySnapshotIdPatch,
 } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -69,7 +69,7 @@ export async function postSnapshot(body: SnapshotIn): Promise<SnapshotOut> {
     // The transport throws a typed ApiError on any non-2xx, so only the accepted branches are
     // reachable — 201 (created) and 200 (the row the server already had for this idempotency key).
     if (res.status !== 201 && res.status !== 200) {
-        throw new Error("unreachable: non-2xx surfaces as ApiError");
+        throw unreachableStatus("recordSnapshotApiV1HistoryPost");
     }
     return res.data;
 }
@@ -229,7 +229,7 @@ export function useHistory(filters: HistoryFilters = {}): HistoryListState {
             const res = await listHistoryApiV1HistoryGet(
                 Object.keys(params).length ? params : undefined,
             );
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("listHistoryApiV1HistoryGet");
             return res.data;
         },
         getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -308,7 +308,7 @@ export function useSnapshot(clientSnapshotId: string): SnapshotState {
         networkMode: "always",
         queryFn: async () => {
             const res = await listHistoryApiV1HistoryGet({ clientSnapshotId });
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("listHistoryApiV1HistoryGet");
             return res.data.items[0] ?? null;
         },
     });
@@ -349,7 +349,8 @@ export function useUpdateLabel(): UseMutationResult<
     return useMutation<SnapshotOut, Error, { id: string; label: string | null }>({
         mutationFn: async ({ id, label }) => {
             const res = await relabelSnapshotApiV1HistorySnapshotIdPatch(id, { label });
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("relabelSnapshotApiV1HistorySnapshotIdPatch");
             return res.data;
         },
         onSettled: () => {
@@ -367,7 +368,8 @@ export function useDeleteSnapshot(): UseMutationResult<void, Error, string> {
     return useMutation<void, Error, string>({
         mutationFn: async (id: string) => {
             const res = await deleteSnapshotApiV1HistorySnapshotIdDelete(id);
-            if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 204)
+                throw unreachableStatus("deleteSnapshotApiV1HistorySnapshotIdDelete");
         },
         onSettled: () => {
             void client.invalidateQueries({ queryKey: historyQueryPrefix(uid) });

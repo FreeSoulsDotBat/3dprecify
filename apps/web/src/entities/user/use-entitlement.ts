@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
 import { type EntitlementView, getEntitlementApiV1EntitlementGet } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -70,7 +70,7 @@ export function useEntitlement(): EntitlementState {
             const res = await getEntitlementApiV1EntitlementGet();
             // The transport throws a typed ApiError on any non-2xx — only 200 reaches here.
             if (res.status !== 200) {
-                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+                throw unreachableStatus("getEntitlementApiV1EntitlementGet");
             }
             return res.data;
         },

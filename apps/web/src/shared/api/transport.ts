@@ -191,6 +191,16 @@ async function request(path: string, init: RequestInit): Promise<RawResponse> {
  * Ergonomic authenticated JSON fetch. Resolves to the parsed body on 2xx; throws a typed
  * ApiError (with `code` + `correlationId`) on 4xx/5xx. Used for direct app calls.
  */
+/**
+ * A costura de estreitamento de tipo dos hooks: o transport converte todo non-2xx em `ApiError`
+ * tipada, então o ramo de status inesperado é inalcançável POR CONSTRUÇÃO — mas quando a
+ * construção quebrar, a mensagem precisa dizer QUAL operação quebrou (Onda 7 do chore de
+ * legibilidade: 30 throws idênticos viravam um Sentry indistinguível).
+ */
+export function unreachableStatus(operation: string): Error {
+    return new Error(`unreachable: non-2xx surfaces as ApiError (${operation})`);
+}
+
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const { body } = await request(path, init);
   return body as T;

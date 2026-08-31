@@ -14,7 +14,7 @@ import {
     listBomsApiV1BomsGet,
     updateBomApiV1BomsBomIdPut,
 } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -74,7 +74,7 @@ export function useBoms(): BomListState {
         queryFn: async () => {
             const res = await listBomsApiV1BomsGet();
             // The transport throws a typed ApiError on any non-2xx, so only the 200 branch is reachable.
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("listBomsApiV1BomsGet");
             return res.data;
         },
     });
@@ -114,7 +114,7 @@ export function useCreateBom(): UseMutationResult<BomOut, ApiError, BomIn> {
     return useMutation({
         mutationFn: async (body: BomIn) => {
             const res = await createBomApiV1BomsPost(body);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201) throw unreachableStatus("createBomApiV1BomsPost");
             return res.data;
         },
         onSuccess: invalidate,
@@ -126,7 +126,7 @@ export function useUpdateBom(): UseMutationResult<BomOut, ApiError, { id: string
     return useMutation({
         mutationFn: async ({ id, body }: { id: string; body: BomIn }) => {
             const res = await updateBomApiV1BomsBomIdPut(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("updateBomApiV1BomsBomIdPut");
             return res.data;
         },
         onSuccess: invalidate,

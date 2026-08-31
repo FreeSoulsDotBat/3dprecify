@@ -428,7 +428,12 @@ export function parseFeeCatalog(data: unknown): FeeCatalog {
 export function parseSeedResilient(data: unknown): FeeCatalog {
     try {
         return feeCatalogSchema.parse(data);
-    } catch {
+    } catch (parseError) {
+        // Onda 7 (legibilidade): o erro real do Zod era descartado — só a CONTAGEM aparecia, e
+        // "qual campo do seed quebrou" exigia depurar. As issues dizem o caminho exato.
+        if (parseError instanceof z.ZodError) {
+            console.error("[fee-catalog] seed validation issues:", parseError.issues);
+        }
         // Keep the marketplaces that stand on their own; drop the ones that do not.
         const doc = data as { marketplaces?: unknown[] } | null;
         const kept = Array.isArray(doc?.marketplaces)

@@ -6,6 +6,7 @@ import {
     cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost,
     getSubscriptionApiV1BillingSubscriptionGet,
 } from "@/shared/api/generated";
+import { unreachableStatus } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { toast } from "@/shared/ui";
@@ -37,7 +38,7 @@ export function useSubscription(): SubscriptionState {
             // estreitamento é o mesmo do `useEntitlement`, e existe porque o cliente gerado tipa a
             // resposta como união com o envelope de erro.
             if (res.status !== 200) {
-                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+                throw unreachableStatus("getSubscriptionApiV1BillingSubscriptionGet");
             }
             return res.data ?? null;
         },
@@ -60,7 +61,9 @@ export function useCancelSubscription() {
         mutationFn: async () => {
             const res = await cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost();
             if (res.status !== 200) {
-                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+                throw unreachableStatus(
+                    "cancelSubscriptionRouteApiV1BillingSubscriptionCancelPost",
+                );
             }
             return res.data;
         },

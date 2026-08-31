@@ -17,7 +17,7 @@ import {
     type ScenarioIn,
     type ScenarioOut,
 } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -101,7 +101,7 @@ export function useScenarios(filters: { q?: string } = {}): ScenarioListState {
             const res = await listScenariosApiV1ScenariosGet(
                 Object.keys(params).length ? params : undefined,
             );
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("listScenariosApiV1ScenariosGet");
             return res.data;
         },
         getNextPageParam: (last) => last.nextCursor ?? undefined,
@@ -144,7 +144,7 @@ export function useCreateScenario(): UseMutationResult<ScenarioOut, ApiError, Sc
         networkMode: "always",
         mutationFn: async (body: ScenarioIn) => {
             const res = await createScenarioApiV1ScenariosPost(body);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201) throw unreachableStatus("createScenarioApiV1ScenariosPost");
             return res.data;
         },
         onSuccess: () => {
@@ -171,7 +171,8 @@ export function useUpdateScenario(): UseMutationResult<
         networkMode: "always",
         mutationFn: async ({ id, body }) => {
             const res = await updateScenarioApiV1ScenariosScenarioIdPut(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("updateScenarioApiV1ScenariosScenarioIdPut");
             return res.data;
         },
         onSuccess: () => {
@@ -193,7 +194,8 @@ export function useRenameScenario(): UseMutationResult<
         networkMode: "always",
         mutationFn: async ({ id, body }) => {
             const res = await renameScenarioApiV1ScenariosScenarioIdPatch(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("renameScenarioApiV1ScenariosScenarioIdPatch");
             return res.data;
         },
         onSuccess: () => {
@@ -211,7 +213,8 @@ export function useDeleteScenario(): UseMutationResult<void, ApiError, string> {
         networkMode: "always",
         mutationFn: async (id: string) => {
             const res = await deleteScenarioApiV1ScenariosScenarioIdDelete(id);
-            if (res.status !== 204) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 204)
+                throw unreachableStatus("deleteScenarioApiV1ScenariosScenarioIdDelete");
         },
         onSuccess: () => {
             void client.invalidateQueries({ queryKey: scenarioQueryKey(uid) });
@@ -229,7 +232,8 @@ export function useDuplicateScenario(): UseMutationResult<ScenarioOut, ApiError,
         networkMode: "always",
         mutationFn: async (id: string) => {
             const res = await duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost(id);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201)
+                throw unreachableStatus("duplicateScenarioApiV1ScenariosScenarioIdDuplicatePost");
             return res.data;
         },
         onSuccess: () => {

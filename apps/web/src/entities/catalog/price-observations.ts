@@ -5,7 +5,7 @@ import {
     listPriceObservationsApiV1PriceObservationsGet,
     putPriceObservationsApiV1PriceObservationsPut,
 } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useOnline } from "@/shared/lib/use-online";
 import { useSessionStore } from "@/shared/session/session-store";
 import { PRICING_MODEL_VERSION } from "@3dprecify/pricing-core";
@@ -61,7 +61,8 @@ export function usePriceObservations(): UsePriceObservationsResult {
         staleTime: 30_000,
         queryFn: async () => {
             const res = await listPriceObservationsApiV1PriceObservationsGet();
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("listPriceObservationsApiV1PriceObservationsGet");
             return res.data.items;
         },
     });
@@ -186,7 +187,8 @@ export function useObservePrices(): UseObservePricesResult {
                     ...(catalogVersion ? { catalogVersion } : {}),
                 })),
             });
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("putPriceObservationsApiV1PriceObservationsPut");
             return res.data;
         },
         onSuccess: () => {

@@ -5,7 +5,7 @@ import {
     type CheckoutInPeriod,
     createCheckoutApiV1BillingCheckoutPost,
 } from "@/shared/api/generated";
-import { ApiError } from "@/shared/api/transport";
+import { ApiError, unreachableStatus } from "@/shared/api/transport";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button } from "@/shared/ui";
@@ -49,7 +49,7 @@ export function BillingCta({ period, signInRedirect = "/conta", className }: Bil
             if (res.status !== 200) {
                 // unreachable: the transport throws a typed ApiError on any non-2xx (transport.ts) — only
                 // a real 200 reaches here.
-                throw new Error("unreachable: non-2xx surfaces as ApiError from the transport");
+                throw unreachableStatus("createCheckoutApiV1BillingCheckoutPost");
             }
             // The browser is about to leave the app for MP's hosted checkout — stay "pending" (the
             // button keeps its spinner + "Abrindo o Mercado Pago…" affordance via `loading`) rather

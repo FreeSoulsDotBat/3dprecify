@@ -27,7 +27,7 @@ import {
     updatePrinterApiV1PrintersPrinterIdPut,
     updateProductApiV1ProductsProductIdPut,
 } from "@/shared/api/generated";
-import { type ApiError } from "@/shared/api/transport";
+import { type ApiError, unreachableStatus } from "@/shared/api/transport";
 import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
@@ -90,7 +90,7 @@ function useCatalogList<T extends CatalogItem>(
         queryFn: async () => {
             const res = await listFn();
             // The transport throws a typed ApiError on any non-2xx, so only the 200 branch is reachable.
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200) throw unreachableStatus("listFn");
             return res.data as T[];
         },
     });
@@ -169,7 +169,7 @@ export function useCreateFilament(): UseMutationResult<FilamentOut, ApiError, Fi
     return useMutation({
         mutationFn: async (body: FilamentIn) => {
             const res = await createFilamentApiV1FilamentsPost(body);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201) throw unreachableStatus("createFilamentApiV1FilamentsPost");
             return res.data;
         },
         onSuccess: invalidate,
@@ -185,7 +185,8 @@ export function useUpdateFilament(): UseMutationResult<
     return useMutation({
         mutationFn: async ({ id, body }: { id: string; body: FilamentIn }) => {
             const res = await updateFilamentApiV1FilamentsFilamentIdPut(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("updateFilamentApiV1FilamentsFilamentIdPut");
             return res.data;
         },
         onSuccess: invalidate,
@@ -214,7 +215,7 @@ export function useCreatePrinter(): UseMutationResult<PrinterOut, ApiError, Prin
     return useMutation({
         mutationFn: async (body: PrinterIn) => {
             const res = await createPrinterApiV1PrintersPost(body);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201) throw unreachableStatus("createPrinterApiV1PrintersPost");
             return res.data;
         },
         onSuccess: invalidate,
@@ -230,7 +231,8 @@ export function useUpdatePrinter(): UseMutationResult<
     return useMutation({
         mutationFn: async ({ id, body }: { id: string; body: PrinterIn }) => {
             const res = await updatePrinterApiV1PrintersPrinterIdPut(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("updatePrinterApiV1PrintersPrinterIdPut");
             return res.data;
         },
         onSuccess: invalidate,
@@ -259,7 +261,7 @@ export function useCreateProduct(): UseMutationResult<ProductOut, ApiError, Prod
     return useMutation({
         mutationFn: async (body: ProductIn) => {
             const res = await createProductApiV1ProductsPost(body);
-            if (res.status !== 201) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 201) throw unreachableStatus("createProductApiV1ProductsPost");
             return res.data;
         },
         onSuccess: invalidate,
@@ -275,7 +277,8 @@ export function useUpdateProduct(): UseMutationResult<
     return useMutation({
         mutationFn: async ({ id, body }: { id: string; body: ProductIn }) => {
             const res = await updateProductApiV1ProductsProductIdPut(id, body);
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("updateProductApiV1ProductsProductIdPut");
             return res.data;
         },
         onSuccess: invalidate,
@@ -302,7 +305,8 @@ export function useFixProductPrice(): UseMutationResult<
             sellerFixedPrice: string | null;
         }) => {
             const res = await fixProductPriceApiV1ProductsProductIdPatch(id, { sellerFixedPrice });
-            if (res.status !== 200) throw new Error("unreachable: non-2xx surfaces as ApiError");
+            if (res.status !== 200)
+                throw unreachableStatus("fixProductPriceApiV1ProductsProductIdPatch");
             return res.data;
         },
         onSuccess: invalidate,
