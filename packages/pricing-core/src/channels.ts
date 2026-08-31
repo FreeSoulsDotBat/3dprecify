@@ -121,7 +121,7 @@ export interface ChannelLevel {
 
 /** Half-open, lower-inclusive band selection: `price ∈ [minPrice, maxPrice)` (`maxPrice` null = ∞).
  *  Generic over any `{ minPrice, maxPrice }` band (price-fee bands AND freight voucher bands). */
-function bandContaining<T extends { minPrice: number; maxPrice: number | null }>(
+export function bandContaining<T extends { minPrice: number; maxPrice: number | null }>(
     bands: T[],
     price: number,
 ): T | null {
@@ -140,7 +140,7 @@ function bandContaining<T extends { minPrice: number; maxPrice: number | null }>
  *
  * Sempre sobre o anúncio JÁ arredondado nas chamadas de cobrança (WYSIWYG, como a comissão).
  */
-function bandFixedFee(band: PriceBand, anuncio: number): Decimal {
+export function bandFixedFee(band: PriceBand, anuncio: number): Decimal {
     return band.fixedFeeRule
         ? new Decimal(anuncio).times(band.fixedFeeRule.pct).dividedBy(100)
         : new Decimal(band.fixedFee);

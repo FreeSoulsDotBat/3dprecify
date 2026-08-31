@@ -31,6 +31,10 @@ import { Decimal, toMoney, sumMoney } from "./rounding.ts";
 // não mudam de resultado em nenhum centavo ⇒ MINOR, no precedente da 4.0.0 → 4.1.0. E a afirmação
 // não é de leitura: a varredura de igualdade `tests/version-equality-4.1-4.2.test.ts` recomputa 500
 // casos de calculadora e 200 de BOM contra uma fixture gerada com o motor 4.1.0 INTOCADO.
+// 2026-08-31 (chore de legibilidade, SEM bump deliberado): `bandContaining`/`bandFixedFee` passam a
+// ser exportadas (eram reimplementadas em fee-prefill/fee-catalog). Zero cômputo novo, zero centavo
+// diferente — e este rótulo é carimbado em snapshot imutável como "qual fórmula produziu o número",
+// então ele NÃO se move quando a fórmula não se move.
 export const PRICING_MODEL_VERSION = "4.2.0";
 
 /**
@@ -770,7 +774,10 @@ export function computeQuote(input: QuoteInput): QuoteResult {
 
 // The per-channel gross-up primitive (band fixed-point + commission floor) + its types live in
 // ./channels; re-export so consumers and tests reach them from the package entry.
-export { grossUp } from "./channels.ts";
+// `bandContaining`/`bandFixedFee` exportadas desde a Onda 4 do chore de legibilidade (2026-08-31):
+// eram regras reimplementadas fora do pacote (fee-prefill/fee-catalog) — a leitura da faixa e do
+// fixo tem UMA casa, aqui.
+export { bandContaining, bandFixedFee, grossUp } from "./channels.ts";
 export type {
     BandMode,
     ChannelFees,

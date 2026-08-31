@@ -1,3 +1,4 @@
+import { bandContaining } from "@3dprecify/pricing-core";
 import { z } from "zod";
 
 import { ancestorChain, categorySpineSchema, indexSpine } from "./category-tree";
@@ -452,11 +453,10 @@ export function parseSeedResilient(data: unknown): FeeCatalog {
 
 /**
  * Resolve o teto do cupom de frete da Shopee para o ANÚNCIO desta faixa — leitura pura, informativa
- * (hotfix 016/A2, H2c). Mesma seleção half-open, lower-inclusive de `bandContaining`
- * (`pricing-core/src/channels.ts`), reescrita aqui em vez de importada: é uma leitura de
- * `freightSubsidyInfo`, um campo NÃO-COMPUTANTE que `pricing-core` nunca vê (ele mora no nível do
- * marketplace, fora de `ChannelFees`) — não há função exportada do motor para isto, e não deveria
- * haver: o motor não sabe deste campo.
+ * (hotfix 016/A2, H2c). A seleção half-open, lower-inclusive é a `bandContaining` DO MOTOR
+ * (genérica sobre `{minPrice, maxPrice}`, exportada na Onda 4 do chore de legibilidade) — o motor
+ * continua sem saber de `freightSubsidyInfo` (campo não-computante, fora de `ChannelFees`); só o
+ * idioma de seleção de faixa tem uma casa única.
  *
  * `null` quando o anúncio não cai em nenhuma faixa publicada (ex.: um preço negativo, impossível na
  * prática) ou quando o marketplace não publica `freightSubsidyInfo` — em ambos os casos a legenda
@@ -467,10 +467,7 @@ export function resolveFreightSubsidyCeiling(
     anuncio: number,
 ): number | null {
     if (!info) return null;
-    const band = info.bands.find(
-        (b) => anuncio >= b.minPrice && (b.maxPrice === null || anuncio < b.maxPrice),
-    );
-    return band?.ceiling ?? null;
+    return bandContaining(info.bands, anuncio)?.ceiling ?? null;
 }
 
 /** Exact determinant equality — same keys, same values. NOT the old subset match (see below). */

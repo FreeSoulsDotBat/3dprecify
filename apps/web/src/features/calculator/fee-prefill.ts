@@ -1,8 +1,8 @@
 import {
+    bandFixedFee,
     type BandMode,
     type ChannelFees,
     type ChannelSurcharge,
-    Decimal,
     grossUp,
     type PriceBand,
     toMoney,
@@ -301,9 +301,9 @@ export function appliedBandFees(fees: ChannelFees, base: number): AppliedBandFee
     const band = fees.priceBands.find((b) => b.minPrice === minPrice && b.maxPrice === maxPrice);
     if (!band) return null;
     if (band.fixedFeeRule) {
-        const fixedFee = toMoney(
-            new Decimal(level.anuncio).times(band.fixedFeeRule.pct).dividedBy(100),
-        );
+        // A leitura do fixo é a DO MOTOR (`bandFixedFee`, casa única — ADR-0027 §3.1); aqui só se
+        // quantiza para exibição, como a legenda imprime.
+        const fixedFee = toMoney(bandFixedFee(band, level.anuncio));
         return {
             commissionPct: band.commissionPct,
             fixedFee,
