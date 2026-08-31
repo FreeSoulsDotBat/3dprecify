@@ -1,6 +1,5 @@
-import { del, get, set } from "idb-keyval";
-
 import type { BomOut } from "@/shared/api/generated";
+import { createUidCache } from "@/shared/lib/uid-cache";
 
 // Uid-keyed read-cache primitives for saved KITS (T014). Deliberately a MIRROR of
 // `entities/catalog/catalog-cache` rather than a reuse of it: FSD-Lite lets an entity import only
@@ -9,6 +8,7 @@ import type { BomOut } from "@/shared/api/generated";
 // query key (FR-309), there is NO seed (kits are user data), and the cache is READ-ONLY pre-fill
 // (every write goes online). Both copies of the rule are pinned by their own tests, so neither can
 // drift into leaking one account's data under another's uid.
+// (019/polish: the load/persist/purge primitives themselves are shared via `shared/lib/uid-cache`.)
 
 /** IndexedDB key — uid-scoped so a device shared by two accounts never crosses them (FR-309). */
 export function bomIdbKey(uid: string): string {
@@ -38,32 +38,21 @@ function isBomArray(raw: unknown): raw is BomOut[] {
     );
 }
 
+const cache = createUidCache<BomOut[]>({ key: bomIdbKey, guard: isBomArray });
+
 /** Load + shape-guard the uid's cached kits; null on empty/error/corrupt (non-blocking). */
 export async function loadCachedBoms(uid: string): Promise<BomOut[] | null> {
-    try {
-        const raw = await get(bomIdbKey(uid));
-        return isBomArray(raw) ? raw : null;
-    } catch {
-        return null;
-    }
+    return cache.load(uid);
 }
 
 /** Best-effort persist of a fresh online read (a failure is swallowed — the cache is never
  *  a source of truth; the online read already answered). */
 export async function persistCachedBoms(uid: string, items: BomOut[]): Promise<void> {
-    try {
-        await set(bomIdbKey(uid), items);
-    } catch {
-        /* ignore — the cache is a convenience, never authoritative */
-    }
+    return cache.persist(items, uid);
 }
 
 /** Purge the uid's kits — part of the sign-out privacy sweep (FR-309), called from the app layer
  *  alongside the catalog purge. */
 export async function purgeBomCache(uid: string): Promise<void> {
-    try {
-        await del(bomIdbKey(uid));
-    } catch {
-        /* ignore — a failed purge must never crash the sign-out flow */
-    }
+    return cache.purge(uid);
 }

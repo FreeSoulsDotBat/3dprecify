@@ -4,7 +4,7 @@ import {
     useQueryClient,
     type UseMutationResult,
 } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import {
     type BomIn,
@@ -15,6 +15,7 @@ import {
     updateBomApiV1BomsBomIdPut,
 } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
+import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { bomQueryKey, loadCachedBoms, persistCachedBoms } from "./bom-cache";
@@ -56,27 +57,14 @@ export function useBoms(): BomListState {
 
     // Pre-fill from the uid-keyed device cache. It resets to null whenever the uid changes, so
     // account B never flashes account A's kits.
-    const [cached, setCached] = useState<BomOut[] | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        setCached(null);
-        if (!uid) return;
-        void loadCachedBoms(uid)
-            .then((items) => {
-                if (!cancelled && items) setCached(items);
-            })
-            // 015/A5 ([F08-001]) — o pre-carregamento pode falhar (quota estourada, store corrompido,
-            // navegacao privada) e a tela sobrevive, porque a consulta online roda de qualquer jeito. O que
-            // nao pode e falhar em SILENCIO: sem este catch a rejeicao ficava sem tratador, e o vendedor
-            // perdia o pre-preenchimento e o boot offline sem ninguem ficar sabendo. O `outbox.ts:121` ja
-            // fazia o certo com `then(run, run)`; os seis pre-carregamentos nao herdaram.
-            .catch((erro: unknown) => {
-                console.warn("[cache] pre-carregamento de kits falhou; seguindo pela rede", erro);
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, [uid]);
+    const cached = useCachedPreload(
+        loadCachedBoms,
+        // `uid!`: safe — `enabled` below gates the actual call, so this is never dereferenced while
+        // undefined; it only needs to be a stable dep for the reset-on-change effect.
+        [uid!] as const,
+        !!uid,
+        "[cache] pre-carregamento de kits falhou; seguindo pela rede",
+    );
 
     const query = useQuery({
         queryKey: bomQueryKey(uid),

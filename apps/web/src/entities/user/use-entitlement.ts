@@ -1,8 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 
 import { type EntitlementView, getEntitlementApiV1EntitlementGet } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
+import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import { loadCachedEntitlement, persistCachedEntitlement } from "./entitlement-cache";
@@ -45,30 +46,14 @@ export function useEntitlement(): EntitlementState {
 
     // Pre-fill from the uid-keyed device cache. It resets to null whenever the uid changes, so
     // account B never reads account A's plan on a shared device.
-    const [cached, setCached] = useState<EntitlementView | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        setCached(null);
-        if (!uid) return;
-        void loadCachedEntitlement(uid)
-            .then((view) => {
-                if (!cancelled && view) setCached(view);
-            })
-            // 015/A5 ([F08-001]) — o pre-carregamento pode falhar (quota estourada, store corrompido,
-            // navegacao privada) e a tela sobrevive, porque a consulta online roda de qualquer jeito. O que
-            // nao pode e falhar em SILENCIO: sem este catch a rejeicao ficava sem tratador, e o vendedor
-            // perdia o pre-preenchimento e o boot offline sem ninguem ficar sabendo. O `outbox.ts:121` ja
-            // fazia o certo com `then(run, run)`; os seis pre-carregamentos nao herdaram.
-            .catch((erro: unknown) => {
-                console.warn(
-                    "[cache] pre-carregamento de entitlement falhou; seguindo pela rede",
-                    erro,
-                );
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, [uid]);
+    const cached = useCachedPreload(
+        loadCachedEntitlement,
+        // `uid!`: safe — `enabled` below gates the actual call, so this is never dereferenced while
+        // undefined; it only needs to be a stable dep for the reset-on-change effect.
+        [uid!] as const,
+        !!uid,
+        "[cache] pre-carregamento de entitlement falhou; seguindo pela rede",
+    );
 
     const query = useQuery<EntitlementView, ApiError>({
         queryKey: [...ENTITLEMENT_QUERY_KEY, uid],

@@ -1,6 +1,5 @@
-import { del, get, set } from "idb-keyval";
-
 import type { FilamentOut, PrinterOut, ProductOut } from "@/shared/api/generated";
+import { createUidCache } from "@/shared/lib/uid-cache";
 
 // Uid-keyed read-cache primitives for the personal catalog (T018). This mirrors the fee-catalog
 // store (TanStack Query + idb-keyval) with the CRITICAL differences the identity-leak lesson
@@ -8,6 +7,8 @@ import type { FilamentOut, PrinterOut, ProductOut } from "@/shared/api/generated
 // seed (the catalog is user data — empty until the first online read), and the cache is READ-ONLY
 // pre-fill (every write is online via the generated client). A device shared by two accounts can
 // never surface one account's catalog under the other's uid, and a sign-out sweeps the device.
+// (019/polish: the load/persist/purge primitives themselves are shared via `shared/lib/uid-cache`;
+// this cache is the one of the five with an extra `resource` dimension in the key.)
 
 export type CatalogResource = "filaments" | "printers" | "products";
 export type CatalogItem = FilamentOut | PrinterOut | ProductOut;
@@ -40,17 +41,18 @@ function isCatalogArray(raw: unknown): raw is CatalogItem[] {
     );
 }
 
+const cache = createUidCache<CatalogItem[], [resource: CatalogResource, uid: string]>({
+    key: catalogIdbKey,
+    guard: isCatalogArray,
+});
+
 /** Load + shape-guard the uid's cached list; null on empty/error/corrupt (non-blocking). */
 export async function loadCachedCatalog<T extends CatalogItem>(
     resource: CatalogResource,
     uid: string,
 ): Promise<T[] | null> {
-    try {
-        const raw = await get(catalogIdbKey(resource, uid));
-        return isCatalogArray(raw) ? (raw as T[]) : null;
-    } catch {
-        return null;
-    }
+    const raw = await cache.load(resource, uid);
+    return raw as T[] | null;
 }
 
 /** Best-effort persist of a fresh online read under the uid key (a write failure is swallowed —
@@ -60,11 +62,7 @@ export async function persistCachedCatalog<T extends CatalogItem>(
     uid: string,
     items: T[],
 ): Promise<void> {
-    try {
-        await set(catalogIdbKey(resource, uid), items);
-    } catch {
-        /* ignore — the cache is a convenience, never authoritative */
-    }
+    return cache.persist(items, resource, uid);
 }
 
 /**
@@ -84,13 +82,9 @@ export function readSellerFixedPrice(p: ProductOut): number | null {
 /** Purge EVERY resource cache for a uid — the sign-out privacy sweep (Q2/FR-309). Called from the
  *  app-layer session subscription the moment the session goes anonymous / the uid changes. */
 export async function purgeCatalogCache(uid: string): Promise<void> {
-    try {
-        await Promise.all([
-            del(catalogIdbKey("filaments", uid)),
-            del(catalogIdbKey("printers", uid)),
-            del(catalogIdbKey("products", uid)),
-        ]);
-    } catch {
-        /* ignore — a failed purge must never crash the sign-out flow */
-    }
+    await Promise.all([
+        cache.purge("filaments", uid),
+        cache.purge("printers", uid),
+        cache.purge("products", uid),
+    ]);
 }

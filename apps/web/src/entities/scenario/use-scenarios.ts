@@ -4,7 +4,7 @@ import {
     useQueryClient,
     type UseMutationResult,
 } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 
 import {
     createScenarioApiV1ScenariosPost,
@@ -18,6 +18,7 @@ import {
     type ScenarioOut,
 } from "@/shared/api/generated";
 import { type ApiError } from "@/shared/api/transport";
+import { useCachedPreload } from "@/shared/lib/use-cached-preload";
 import { useSessionStore } from "@/shared/session/session-store";
 
 import {
@@ -74,30 +75,14 @@ export function useScenarios(filters: { q?: string } = {}): ScenarioListState {
     const uid = useSessionStore((s) => s.user?.uid);
     const filtered = Boolean(filters.q?.trim());
 
-    const [cached, setCached] = useState<ScenarioOut[] | null>(null);
-    useEffect(() => {
-        let cancelled = false;
-        setCached(null);
-        if (!uid) return;
-        void loadCachedScenarios(uid)
-            .then((items) => {
-                if (!cancelled && items) setCached(items);
-            })
-            // 015/A5 ([F08-001]) — o pre-carregamento pode falhar (quota estourada, store corrompido,
-            // navegacao privada) e a tela sobrevive, porque a consulta online roda de qualquer jeito. O que
-            // nao pode e falhar em SILENCIO: sem este catch a rejeicao ficava sem tratador, e o vendedor
-            // perdia o pre-preenchimento e o boot offline sem ninguem ficar sabendo. O `outbox.ts:121` ja
-            // fazia o certo com `then(run, run)`; os seis pre-carregamentos nao herdaram.
-            .catch((erro: unknown) => {
-                console.warn(
-                    "[cache] pre-carregamento de cenarios falhou; seguindo pela rede",
-                    erro,
-                );
-            });
-        return () => {
-            cancelled = true;
-        };
-    }, [uid]);
+    const cached = useCachedPreload(
+        loadCachedScenarios,
+        // `uid!`: safe — `enabled` below gates the actual call, so this is never dereferenced while
+        // undefined; it only needs to be a stable dep for the reset-on-change effect.
+        [uid!] as const,
+        !!uid,
+        "[cache] pre-carregamento de cenarios falhou; seguindo pela rede",
+    );
 
     const query = useInfiniteQuery({
         queryKey: [...scenarioQueryKey(uid), filters],

@@ -1,6 +1,5 @@
-import { del, get, set } from "idb-keyval";
-
 import type { ScenarioOut } from "@/shared/api/generated";
+import { createUidCache } from "@/shared/lib/uid-cache";
 
 // 010/T012 (E5, PR-A) — the uid-keyed READ cache for "Meus cenários" (US2: readable offline).
 //
@@ -12,6 +11,7 @@ import type { ScenarioOut } from "@/shared/api/generated";
 // And the SAME deliberate difference the catalog cache has from the history OUTBOX (which this
 // entity has none of, VR-612/FR-613 — a scenario write has NO offline path): this cache swallows
 // write failures because it is a pure convenience — every row in it already exists on the server.
+// (019/polish: the load/persist/purge primitives themselves are shared via `shared/lib/uid-cache`.)
 
 /** IndexedDB key — uid-scoped (FR-309 identity-leak lesson). */
 export function scenarioIdbKey(uid: string): string {
@@ -39,32 +39,21 @@ function isScenarioArray(raw: unknown): raw is ScenarioOut[] {
     );
 }
 
+const cache = createUidCache<ScenarioOut[]>({ key: scenarioIdbKey, guard: isScenarioArray });
+
 /** The uid's cached (unfiltered) scenario list; null on empty/error/corrupt — never a broken list
  *  fed to the UI. */
 export async function loadCachedScenarios(uid: string): Promise<ScenarioOut[] | null> {
-    try {
-        const raw = await get(scenarioIdbKey(uid));
-        return isScenarioArray(raw) ? raw : null;
-    } catch {
-        return null;
-    }
+    return cache.load(uid);
 }
 
 /** Best-effort persist — the cache is a convenience, never authoritative (a write failure is
  *  swallowed; the online read still answered). */
 export async function persistCachedScenarios(uid: string, items: ScenarioOut[]): Promise<void> {
-    try {
-        await set(scenarioIdbKey(uid), items);
-    } catch {
-        /* a list that failed to cache is simply re-read online next time */
-    }
+    return cache.persist(items, uid);
 }
 
 /** Part of the sign-out privacy sweep (`app/providers.tsx`). */
 export async function purgeScenarioCache(uid: string): Promise<void> {
-    try {
-        await del(scenarioIdbKey(uid));
-    } catch {
-        /* a failed purge must never crash the sign-out flow */
-    }
+    return cache.purge(uid);
 }
