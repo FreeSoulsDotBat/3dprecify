@@ -26,6 +26,17 @@ export const scenarios = {
     saveInvalid: "Corrija os campos da calculadora antes de salvar.",
     // list (T013)
     updatedRelative: "Atualizado {quando}", // "há 2 dias" etc. — NUNCA uma data-alegação
+    // 019/Polish — as strings de `relativeLabel` (movidas verbatim de `scenarios-list-sheet.tsx`,
+    // texto final na tela byte-idêntico).
+    relative: {
+        now: "agora mesmo",
+        minutes: "há {n} min",
+        hours: "há {n} h",
+        day: "há {n} dia",
+        days: "há {n} dias",
+        week: "há {n} semana",
+        weeks: "há {n} semanas",
+    },
     emptyTitle: "Nenhuma simulação salva ainda",
     emptyBody:
         "Monte uma comparação de marketplaces na calculadora e toque em “Salvar simulação” para guardá-la e reabrir quando quiser.",

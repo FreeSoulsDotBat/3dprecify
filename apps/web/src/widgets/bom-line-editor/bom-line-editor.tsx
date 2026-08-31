@@ -13,7 +13,6 @@ import {
     TimeHmField,
 } from "@/features/calculator/calculator-form";
 import { computeFromForm } from "@/features/calculator/calculator-model";
-import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/channel-field-plan";
 import {
     type CalcFormValues,
     calculatorResolver,
@@ -21,11 +20,10 @@ import {
     COST_REQUIRED_FIELDS,
     defaultOtherCost,
     LABOR_AND_FINISH_FIELDS,
-    type ChannelFieldName,
     type MarketplaceId,
     MARKUP_FIELDS,
-    slotResetOnMarketplaceChange,
 } from "@/features/calculator/calculator-schema";
+import { applyMarketplaceChange } from "@/features/calculator/marketplace-change";
 import type { ProductOut } from "@/shared/api/generated";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { spineForMarketplace } from "@/features/calculator/fee-prefill";
@@ -88,21 +86,10 @@ export function BomLineEditor({
         otherCostErrors,
     } = computeFromForm(current, { catalog, source, now: Date.now() });
 
-    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
-        // 014/T097 — modality AND category: the category belongs to the OLD marketplace's taxonomy.
-        const next = slotResetOnMarketplaceChange(marketplace);
-        setValue(`channels.${index}.modality`, next.modality);
-        setValue(`channels.${index}.category`, next.category);
-        setValue(`channels.${index}.sellerType`, next.sellerType);
-        setValue(`channels.${index}.highVolume`, next.highVolume);
-        setValue(`channels.${index}.surcharges`, next.surcharges);
-        // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank the fee fields the new plan hides.
-        for (const [field, value] of Object.entries(
-            feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),
-        )) {
-            setValue(`channels.${index}.${field as ChannelFieldName}` as const, value);
-        }
-    };
+    // 019/Polish — shared with calcular-page.tsx and produto-page.tsx (`marketplace-change.ts`);
+    // this site does NOT pass `shouldValidate` (B2, registered divergence — unchanged here).
+    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) =>
+        applyMarketplaceChange(setValue, catalog, index, marketplace);
 
     const boundProduct = products.find((p) => p.id === productId);
     const sealTemplate = adjusted ? tb.fromCatalogAdjusted : tb.fromCatalog;

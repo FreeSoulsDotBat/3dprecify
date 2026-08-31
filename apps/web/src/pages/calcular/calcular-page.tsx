@@ -25,9 +25,13 @@ import {
     sectionLabel,
 } from "@/features/calculator/calculator-form";
 import { type CatalogContext, computeFromForm } from "@/features/calculator/calculator-model";
-import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
-import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/channel-field-plan";
+import {
+    applyFilamentFields,
+    applyPrinterFields,
+} from "@/features/calculator/catalog-prefill-apply";
+import { computeFormSignature } from "@/features/calculator/form-signature";
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
+import { applyMarketplaceChange } from "@/features/calculator/marketplace-change";
 import {
     applyScenarioConfig,
     buildScenarioConfig,
@@ -35,7 +39,6 @@ import {
     discardedFieldNotice,
 } from "@/features/calculator/scenario-bridge";
 import {
-    CALC_FIELD_NAMES,
     type CalcFieldName,
     type CalcFormValues,
     calculatorResolver,
@@ -43,10 +46,8 @@ import {
     defaultCalcValues,
     defaultOtherCost,
     LABOR_AND_FINISH_FIELDS,
-    type ChannelFieldName,
     type MarketplaceId,
     MARKUP_FIELDS,
-    slotResetOnMarketplaceChange,
 } from "@/features/calculator/calculator-schema";
 import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
@@ -80,28 +81,6 @@ import "@/features/scenarios/scenarios-wide.css";
 // route mounts the SAME body, keeping SC-305 identical on both surfaces.
 
 const t = messages.calculator;
-
-/**
- * Defect A fix (coordinator, 2026-07-20, T030 e2e finding) — the "unsaved changes" signature,
- * EXACTLY the subset `applyScenarioConfig` patches: the 17 scalar `CalcFieldName`s (were MISSING
- * entirely — a scalar edit never flipped `dirty`) + `includeMarketplace` + `channels` (incl.
- * `feeOverrides`) + `otherCosts`. Computed FRESH on every call from the CURRENT values, never
- * memoized against a `values.channels`/`values.otherCosts` array reference — RHF's `watch()` does
- * not guarantee a new array reference on a nested array-ITEM edit (a `channels.0.commissionPct`
- * change can mutate in place), so a `useMemo([values.channels])` silently never recomputed (the
- * confirmed e2e repro: an override edit moved the price 34,33→61,80 on screen while `dirty` stayed
- * false). `JSON.stringify` over ~20 short fields is cheap enough to run on every render.
- */
-function computeFormSignature(values: CalcFormValues): string {
-    const scalars: Partial<Record<CalcFieldName, string>> = {};
-    for (const name of CALC_FIELD_NAMES) scalars[name] = values[name];
-    return JSON.stringify({
-        scalars,
-        includeMarketplace: values.includeMarketplace,
-        channels: values.channels,
-        otherCosts: values.otherCosts,
-    });
-}
 
 export function CalcularPage() {
     const {
@@ -197,27 +176,13 @@ export function CalcularPage() {
         setPickedFilamentId(id);
         const picked = filaments.find((f) => f.id === id);
         if (!picked) return;
-        for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
-            setValue(field as "costPerRoll" | "rollWeightKg", value, {
-                shouldValidate: true,
-            });
-        }
+        applyFilamentFields(setValue, picked, { shouldValidate: true });
     };
     const applyPrinter = (id: string) => {
         setPickedPrinterId(id);
         const picked = printers.find((p) => p.id === id);
         if (!picked) return;
-        for (const [field, value] of Object.entries(printerToCalcFields(picked))) {
-            setValue(
-                field as
-                    | "machineValue"
-                    | "machineLifetimeHours"
-                    | "avgPowerKw"
-                    | "maintenanceReservePerHour",
-                value,
-                { shouldValidate: true },
-            );
-        }
+        applyPrinterFields(setValue, picked, { shouldValidate: true });
     };
     const showFilamentPicker = sessionStatus === "authenticated" && filaments.length > 0;
     const showPrinterPicker = sessionStatus === "authenticated" && printers.length > 0;
@@ -284,28 +249,13 @@ export function CalcularPage() {
         : null;
 
     // Switching a slot's marketplace resets its modality to that market's default (or none), so a
-    // stale ML "Clássico" never lingers on a Shopee slot.
-    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
-        // 014/T097 — modality AND category: the category belongs to the OLD marketplace's taxonomy.
-        const next = slotResetOnMarketplaceChange(marketplace);
-        setValue(`channels.${index}.modality`, next.modality, { shouldValidate: true });
-        setValue(`channels.${index}.category`, next.category, { shouldValidate: true });
-        // 016/PR-F (US17, FR-926) — sellerProfile/volumoso são PER MARKETPLACE, mesma razão da categoria.
-        setValue(`channels.${index}.sellerType`, next.sellerType, { shouldValidate: true });
-        setValue(`channels.${index}.highVolume`, next.highVolume, { shouldValidate: true });
-        setValue(`channels.${index}.surcharges`, next.surcharges, { shouldValidate: true });
-        // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank exactly the fee fields the NEW
-        // marketplace's plan does not show; a field the new plan still shows keeps its value. Closes
-        // the render/value pair: a hidden field can no longer keep charging (measured: R$50 "Frete" on
-        // ML → Amazon left freightCost invisible but still discounting the líquido by −R$50).
-        for (const [field, value] of Object.entries(
-            feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),
-        )) {
-            setValue(`channels.${index}.${field as ChannelFieldName}` as const, value, {
-                shouldValidate: true,
-            });
-        }
-    };
+    // stale ML "Clássico" never lingers on a Shopee slot; also blanks exactly the fee fields the
+    // NEW marketplace's plan does not show (016/US11, T044 homologação PR-E, RA5 — measured: R$50
+    // "Frete" on ML → Amazon left freightCost invisible but still discounting the líquido by −R$50).
+    // 019/Polish — shared with produto-page.tsx and bom-line-editor.tsx (`marketplace-change.ts`);
+    // this is the ONE call site that passes `shouldValidate: true` (B2, registered divergence).
+    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) =>
+        applyMarketplaceChange(setValue, catalog, index, marketplace, { shouldValidate: true });
 
     // 019/PR-F (T095, DECISÃO 2 — ADR-0031 §Emenda 2) — o único gate: acima do corte, "Minhas
     // simulações" monta ao lado da calculadora (a coluna larga de `/calcular`, prancheta 20g); abaixo,
@@ -332,6 +282,27 @@ export function CalcularPage() {
         } else {
             setScenariosOpen(true);
         }
+    };
+
+    // 019/Polish — `<MarketplaceSection>` rendered twice below with the same ~16 props (only the
+    // wrapper + `channelOutcomes` differ between the premium and free-gate branches); one shared
+    // props object, spread at each call site. DOM output unchanged.
+    const marketplaceSectionProps = {
+        control,
+        values,
+        fields,
+        included: values.includeMarketplace !== false,
+        onToggleInclude: (next: boolean) => setValue("includeMarketplace", next),
+        onAppend: append,
+        onRemove: remove,
+        onMarketplaceChange: handleMarketplaceChange,
+        refreshFailed: catalogRefreshFailed,
+        refreshing: catalogRefreshing,
+        onRetryCatalog: retryCatalog,
+        spineFor: (m: MarketplaceId) => spineForMarketplace(catalog, m),
+        catalog,
+        entitled: marketplaceEntitled,
+        signedOut,
     };
 
     const pageInner = (
@@ -415,13 +386,7 @@ export function CalcularPage() {
                     {/* 016/T036 — the KIT twin of the notice above: `computeScenarioKitChannels` already
               strips any retired leaf line-by-line (never `ok:false` for that reason alone) and
               rolls the discard up ONCE, deduped, across every line. */}
-                    {(() => {
-                        const notice = discardedFieldNotice(
-                            computeScenarioKitChannels(loadedScenario.config, catalogCtx)
-                                ?.discarded ?? [],
-                        );
-                        return notice ? <Alert tone="info">{notice}</Alert> : null;
-                    })()}
+                    <KitDiscardedNotice config={loadedScenario.config} ctx={catalogCtx} />
                     <KitBasisSummary
                         config={loadedScenario.config}
                         refName={loadedScenario.costBasis?.ref?.name ?? loadedScenario.name}
@@ -582,45 +547,14 @@ export function CalcularPage() {
               where it always was — the free GATE moves out below instead (R3). */}
                     {marketplaceEntitled && (
                         <MarketplaceSection
-                            control={control}
-                            values={values}
-                            fields={fields}
+                            {...marketplaceSectionProps}
                             channelOutcomes={channelOutcomes}
-                            included={values.includeMarketplace !== false}
-                            onToggleInclude={(next) => setValue("includeMarketplace", next)}
-                            onAppend={append}
-                            onRemove={remove}
-                            onMarketplaceChange={handleMarketplaceChange}
-                            refreshFailed={catalogRefreshFailed}
-                            refreshing={catalogRefreshing}
-                            onRetryCatalog={retryCatalog}
-                            spineFor={(m) => spineForMarketplace(catalog, m)}
-                            catalog={catalog}
-                            entitled={marketplaceEntitled}
-                            signedOut={signedOut}
                         />
                     )}
                 </div>
                 {!marketplaceEntitled && (
                     <div className="tf-calc-grid__full">
-                        <MarketplaceSection
-                            control={control}
-                            values={values}
-                            fields={fields}
-                            channelOutcomes={[]}
-                            included={values.includeMarketplace !== false}
-                            onToggleInclude={(next) => setValue("includeMarketplace", next)}
-                            onAppend={append}
-                            onRemove={remove}
-                            onMarketplaceChange={handleMarketplaceChange}
-                            refreshFailed={catalogRefreshFailed}
-                            refreshing={catalogRefreshing}
-                            onRetryCatalog={retryCatalog}
-                            spineFor={(m) => spineForMarketplace(catalog, m)}
-                            catalog={catalog}
-                            entitled={marketplaceEntitled}
-                            signedOut={signedOut}
-                        />
+                        <MarketplaceSection {...marketplaceSectionProps} channelOutcomes={[]} />
                     </div>
                 )}
             </div>
@@ -728,6 +662,17 @@ export function CalcularPage() {
             {pageInner}
         </section>
     );
+}
+
+/**
+ * 016/T036 — the KIT twin of the scalar `discardedNotice` above: `computeScenarioKitChannels`
+ * already strips any retired leaf line-by-line (never `ok:false` for that reason alone) and rolls
+ * the discard up ONCE, deduped, across every line. Named out of the render's IIFE (019/Polish),
+ * behavior unchanged.
+ */
+function KitDiscardedNotice({ config, ctx }: { config: ScenarioConfig; ctx: CatalogContext }) {
+    const notice = discardedFieldNotice(computeScenarioKitChannels(config, ctx)?.discarded ?? []);
+    return notice ? <Alert tone="info">{notice}</Alert> : null;
 }
 
 /**

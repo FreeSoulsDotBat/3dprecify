@@ -1,14 +1,20 @@
 // 019/PR-F — T091 (D2, ANTI-REGRESSÃO). A prancheta 30b diz: "as duas folhas de renomear leem o
 // mesmo título e o mesmo rótulo… se divergirem, vão divergir em silêncio" — um dev editando a
-// folha de `scenarios-list-sheet.tsx` (a lista) não tem motivo para abrir
-// `scenario-context-bar.tsx` (a barra do item aberto) na mesma revisão, e vice-versa.
+// folha de renomear da lista não tem motivo para abrir `scenario-context-bar.tsx` (a barra do item
+// aberto) na mesma revisão, e vice-versa.
 //
-// Não há defeito hoje: medido em 2026-08-29 (e antes, em 27/08) que `scenarios-list-sheet.tsx:413`
-// e `scenario-context-bar.tsx:233` leem `t.renameSheetTitle`, e `:150`/`:205` leem `t.rename`, do
-// MESMO módulo `@/shared/i18n/messages.pt-br`. Este teste fixa esse fato por REFERÊNCIA DE CHAVE
-// (leitura do texto-fonte, não do DOM renderizado) para que uma bifurcação futura — um dos dois
-// arquivos passando a ler uma chave nova/local em vez da compartilhada — vire vermelho aqui, sem
-// depender de alguém lembrar de revisar o outro arquivo.
+// 019/Polish — a folha de renomear da lista MOVEU de `scenarios-list-sheet.tsx` para
+// `rename-scenario-sheet.tsx` (extração verbatim, T104 do brief de legibilidade); o `SheetTitle`
+// que este teste fixa por referência de chave é o MESMO, só de arquivo novo — o rótulo de ação
+// `t.rename` (aria-label do botão-lápis no card) continua em `scenarios-list-sheet.tsx`.
+//
+// Não há defeito hoje: medido em 2026-08-31 que `rename-scenario-sheet.tsx` e
+// `scenario-context-bar.tsx:233` leem `t.renameSheetTitle`, e `scenarios-list-sheet.tsx`/
+// `scenario-context-bar.tsx:205` leem `t.rename`, do MESMO módulo `@/shared/i18n/messages.pt-br`.
+// Este teste fixa esse fato por REFERÊNCIA DE CHAVE (leitura do texto-fonte, não do DOM
+// renderizado) para que uma bifurcação futura — um dos dois arquivos passando a ler uma chave
+// nova/local em vez da compartilhada — vire vermelho aqui, sem depender de alguém lembrar de
+// revisar o outro arquivo.
 //
 // Por que readFileSync + regex, e não renderizar os dois componentes: os dois hosts têm árvores de
 // dependência pesadas (TanStack Query, sheets Radix, `useEntitlement`, `useScenarios`) — montá-los
@@ -27,9 +33,11 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const LIST_SHEET_PATH = join(__dirname, "scenarios-list-sheet.tsx");
+const RENAME_SHEET_PATH = join(__dirname, "rename-scenario-sheet.tsx");
 const CONTEXT_BAR_PATH = join(__dirname, "scenario-context-bar.tsx");
 
 const listSheetSource = readFileSync(LIST_SHEET_PATH, "utf-8");
+const renameSheetSource = readFileSync(RENAME_SHEET_PATH, "utf-8");
 const contextBarSource = readFileSync(CONTEXT_BAR_PATH, "utf-8");
 
 /** Extrai a chave `t.<algo>` dentro de um `<SheetTitle>{...}</SheetTitle>` — a folha de renomear
@@ -48,8 +56,8 @@ function countRenameActionLabelUses(source: string): number {
 }
 
 describe("019/PR-F T091 (D2) — as duas folhas de renomear leem a MESMA chave (anti-regressão)", () => {
-    it("scenarios-list-sheet.tsx importa do módulo compartilhado de i18n", () => {
-        expect(listSheetSource).toContain('from "@/shared/i18n/messages.pt-br"');
+    it("rename-scenario-sheet.tsx importa do módulo compartilhado de i18n", () => {
+        expect(renameSheetSource).toContain('from "@/shared/i18n/messages.pt-br"');
     });
 
     it("scenario-context-bar.tsx importa do módulo compartilhado de i18n", () => {
@@ -57,7 +65,7 @@ describe("019/PR-F T091 (D2) — as duas folhas de renomear leem a MESMA chave (
     });
 
     it("SheetTitle usa a mesma chave t.renameSheetTitle nos dois arquivos", () => {
-        const listSheetKey = extractSheetTitleKey(listSheetSource);
+        const listSheetKey = extractSheetTitleKey(renameSheetSource);
         const contextBarKey = extractSheetTitleKey(contextBarSource);
 
         expect(listSheetKey).toBe("renameSheetTitle");

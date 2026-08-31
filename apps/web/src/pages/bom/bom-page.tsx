@@ -3,37 +3,29 @@ import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import { useBoms, useCreateBom, useUpdateBom } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
-import { freezeBomResult, type FrozenProvenance } from "@/entities/history/frozen-payload";
+import { type FrozenProvenance } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
-import { AssemblySummary } from "@/features/bom/assembly-summary";
 import { composeBom, type ComposerLine } from "@/features/bom/bom-compute";
-import { BomLineCard } from "@/features/bom/bom-line-card";
 import { computeFromForm } from "@/features/calculator/calculator-model";
-import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
 import { type CalcFormValues, defaultCalcValues } from "@/features/calculator/calculator-schema";
 import { productToForm } from "@/features/calculator/product-mapping";
 import { honestWriteError } from "@/shared/api/error-messages";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import type { BomOut, Materialization } from "@/shared/api/generated";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
-import { TeaserUpgrade } from "@/shared/billing/teaser-upgrade";
 import { VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { useFeeCatalog } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Button, EmptyState, Field, Icon, Spinner, toast } from "@/shared/ui";
-import { BomLineEditor } from "@/widgets/bom-line-editor/bom-line-editor";
+import { Alert, Button, EmptyState, Icon, Spinner, toast } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
 
 import "./bom-page.css";
 
-import {
-    defaultPieceName,
-    type KitSaveLine,
-    lineToForm,
-    linesToBomIn,
-    savesAsReference,
-} from "./kit-save";
+import { BomLinesColumn } from "./bom-lines-column";
+import { BomSummaryPanel } from "./bom-summary-panel";
+import { defaultPieceName, type KitSaveLine, lineToForm, linesToBomIn } from "./kit-save";
+import { countSkippedByMarketplace } from "./skipped-by-marketplace";
 
 // 008/T005+T006 — the /kits page (module stays pages/bom, K1; research R7 wiring). The page owns
 // the line list; each line's editor is the calculator piece form hosted at the widgets layer;
@@ -52,7 +44,7 @@ import {
 const t = messages.bom;
 const tc = messages.calculator;
 
-interface LineState {
+export interface LineState {
     id: number;
     values: CalcFormValues;
     quantityRaw: string;
@@ -267,31 +259,9 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
     const kitProvenance: FrozenProvenance | null =
         openedKit && !duplicating ? { kind: "KIT", id: openedKit.id, name: openedKit.name } : null;
 
-    // T006b top nit (ux §1.7): a FORM-invalid channel slot is rejected by the per-slot validation
-    // BEFORE the engine, so it can never reach `skippedLines` — count those per marketplace (on
-    // lines that otherwise compute; a fully-invalid line already carries its own caption) and let
-    // the rollup surface them honestly. Counts are per LINE, aligned with the engine's rule
-    // (review, 2026-07-11): a line counts as skipped for a marketplace only when EVERY one of its
-    // slots there is invalid — a line that still summed is never "sem preço". Counts only — no
-    // money leaves pricing-core.
-    const uiSkippedCounts = new Map<string | null, number>();
-    lines.forEach((l, i) => {
-        if (parseQuantity(l.quantityRaw) === null || !outcomes[i].ok) return;
-        const lineFlags = new Map<string | null, { ok: boolean; bad: boolean }>();
-        outcomes[i].channels.forEach((slot, j) => {
-            const marketplace = l.values.channels[j]?.marketplace ?? null;
-            const flags = lineFlags.get(marketplace) ?? { ok: false, bad: false };
-            if (Object.keys(slot.errors).length > 0) flags.bad = true;
-            else flags.ok = true;
-            lineFlags.set(marketplace, flags);
-        });
-        lineFlags.forEach((flags, marketplace) => {
-            if (flags.bad && !flags.ok) {
-                uiSkippedCounts.set(marketplace, (uiSkippedCounts.get(marketplace) ?? 0) + 1);
-            }
-        });
-    });
-    const uiSkipped = [...uiSkippedCounts].map(([marketplace, count]) => ({ marketplace, count }));
+    // T006b top nit (ux §1.7) — see `countSkippedByMarketplace`'s own docstring (019/Polish: moved
+    // verbatim, pure function, no behavior change).
+    const uiSkipped = countSkippedByMarketplace(lines, outcomes, parseQuantity);
 
     const addLine = () => {
         dirty.current = true;
@@ -316,6 +286,11 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
     const updateLine = (id: number, patch: Partial<LineState>) => {
         dirty.current = true;
         setLines((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch } : l)));
+    };
+
+    const removeLine = (id: number) => {
+        dirty.current = true;
+        setLines((prev) => prev.filter((l) => l.id !== id));
     };
 
     const bindProduct = (id: number, productId: string) => {
@@ -362,9 +337,18 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
     const save = async () => {
         setSaveError(null);
         setMaterializations(null);
-        if (lines.length === 0) return setSaveError(t.saveEmpty);
-        if (!kitName.trim()) return setSaveError(t.kitNameRequired);
-        if (!allLinesValid) return setSaveError(t.saveInvalid);
+        if (lines.length === 0) {
+            setSaveError(t.saveEmpty);
+            return;
+        }
+        if (!kitName.trim()) {
+            setSaveError(t.kitNameRequired);
+            return;
+        }
+        if (!allLinesValid) {
+            setSaveError(t.saveInvalid);
+            return;
+        }
 
         const body = linesToBomIn(kitName, saveLines);
         // A CREATE must not stay a create: tapping Salvar again after a successful save would file the
@@ -406,6 +390,25 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
     // 018/US3 — o corte que decide se o resumo vira coluna ou continua barra no rodapé.
     const isWide = useIsWide();
 
+    // 019/Polish — `EmptyState`/`VazioDidatico` repeated the exact same two-button `action` block;
+    // one element, reused in both mutually-exclusive branches below.
+    const emptyActions = (
+        <div className="flex flex-col items-center gap-2">
+            <Button onClick={addLine}>
+                <Icon name="plus" size={16} aria-hidden /> {t.addLine}
+            </Button>
+            {/* A seller with saved kits should reach them from the empty composer, not only
+          from the nav tab (review IA nit, 2026-07-12). */}
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void navigate({ to: "/catalogo", search: { tab: "kits" } })}
+            >
+                {t.viewKits}
+            </Button>
+        </div>
+    );
+
     return (
         <section className="mx-auto flex w-full tf-page-wide flex-col gap-4">
             <PageHeader title={t.title} description={t.subtitle} />
@@ -445,49 +448,13 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
                         icon="package"
                         title={t.emptyTitle}
                         description={t.emptyBody}
-                        action={
-                            <div className="flex flex-col items-center gap-2">
-                                <Button onClick={addLine}>
-                                    <Icon name="plus" size={16} aria-hidden /> {t.addLine}
-                                </Button>
-                                {/* A seller with saved kits should reach them from the empty composer, not only
-                    from the nav tab (review IA nit, 2026-07-12). */}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                        void navigate({ to: "/catalogo", search: { tab: "kits" } })
-                                    }
-                                >
-                                    {t.viewKits}
-                                </Button>
-                            </div>
-                        }
+                        action={emptyActions}
                     />
                 ) : (
                     // 019/PR-B (T046, detalhe 2/prancheta 32c): o vazio didático troca o vazio "de quem
                     // paga" — a mesma forma, a frase mais longa, e o ÚNICO convite da tela (`teaser` default
                     // true — some quando ≥1 linha, cujo rodapé passa a carregar o convite).
-                    <VazioDidatico
-                        feature="kits"
-                        gate={gate}
-                        action={
-                            <div className="flex flex-col items-center gap-2">
-                                <Button onClick={addLine}>
-                                    <Icon name="plus" size={16} aria-hidden /> {t.addLine}
-                                </Button>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                        void navigate({ to: "/catalogo", search: { tab: "kits" } })
-                                    }
-                                >
-                                    {t.viewKits}
-                                </Button>
-                            </div>
-                        }
-                    />
+                    <VazioDidatico feature="kits" gate={gate} action={emptyActions} />
                 )
             ) : (
                 // 018/US3 — duas colunas no desktop: peças à esquerda, resumo à direita.
@@ -497,227 +464,45 @@ function BomComposer({ staleEntitlement, gate }: { staleEntitlement: boolean; ga
                 // da `<section>`, com o mesmo `gap`. Não é "parecido com antes": é a MESMA caixa. Foi a
                 // forma de reagrupar o DOM sem arriscar um pixel do mobile homologado.
                 <div className="tf-kits-grid">
-                    <div className="tf-kits-grid__lines">
-                        {lines.map((line, i) => {
-                            const qty = parseQuantity(line.quantityRaw);
-                            const invalid = qty === null || !outcomes[i].ok;
-                            return (
-                                <BomLineCard
-                                    key={line.id}
-                                    index={i + 1}
-                                    name={line.productName}
-                                    quantityRaw={line.quantityRaw}
-                                    onQuantityChange={(raw) =>
-                                        updateLine(line.id, { quantityRaw: raw })
-                                    }
-                                    expanded={expandedId === line.id}
-                                    onToggle={() =>
-                                        setExpandedId(expandedId === line.id ? null : line.id)
-                                    }
-                                    onRemove={() => {
-                                        dirty.current = true;
-                                        setLines((prev) => prev.filter((l) => l.id !== line.id));
-                                    }}
-                                    lineResult={lineResults[i]}
-                                    invalid={invalid}
-                                    // Caption only while the degraded line is still Manual — rebinding a saved product
-                                    // (productId set) resolves it live again and retires the caption (ux §1.2-D).
-                                    degraded={line.degraded && line.productId === ""}
-                                >
-                                    <BomLineEditor
-                                        key={`${line.id}:${line.productId}`}
-                                        values={line.values}
-                                        onValuesChange={(values) =>
-                                            updateLine(line.id, {
-                                                values,
-                                                adjusted: line.productId !== "",
-                                            })
-                                        }
-                                        products={products.items}
-                                        productId={line.productId}
-                                        onBindProduct={(productId) =>
-                                            bindProduct(line.id, productId)
-                                        }
-                                        adjusted={line.adjusted}
-                                    />
-                                    {/* Any line that does NOT save as a live reference becomes a catalog piece on
-                    save (K4), so it needs a name — and the seller sees that before it happens,
-                    never as a surprise row appearing in Produtos. */}
-                                    {!savesAsReference(saveLines[i]) && (
-                                        <div className="flex flex-col gap-1 pt-2">
-                                            {line.adjusted && line.productId !== "" && (
-                                                <p className="text-xs text-[var(--text-muted)]">
-                                                    {t.adjustedBecomesPiece}
-                                                </p>
-                                            )}
-                                            <Field label={t.pieceName}>
-                                                {(p) => (
-                                                    <div className="tf-inputwrap">
-                                                        <input
-                                                            {...p}
-                                                            type="text"
-                                                            className="tf-input"
-                                                            placeholder={defaultPieceName(
-                                                                i,
-                                                                kitName,
-                                                            )}
-                                                            value={line.pieceNameRaw}
-                                                            onChange={(e) =>
-                                                                updateLine(line.id, {
-                                                                    pieceNameRaw: e.target.value,
-                                                                })
-                                                            }
-                                                        />
-                                                    </div>
-                                                )}
-                                            </Field>
-                                        </div>
-                                    )}
-                                </BomLineCard>
-                            );
-                        })}
+                    <BomLinesColumn
+                        lines={lines}
+                        outcomes={outcomes}
+                        lineResults={lineResults}
+                        parseQuantity={parseQuantity}
+                        expandedId={expandedId}
+                        setExpandedId={setExpandedId}
+                        updateLine={updateLine}
+                        onRemoveLine={removeLine}
+                        products={products.items}
+                        bindProduct={bindProduct}
+                        saveLines={saveLines}
+                        kitName={kitName}
+                        addLine={addLine}
+                    />
 
-                        <Button variant="secondary" onClick={addLine}>
-                            <Icon name="plus" size={16} aria-hidden /> {t.addLine}
-                        </Button>
-                    </div>
-
-                    <div className="tf-kits-grid__aside">
-                        {/* ux §1.7/G4: AssemblySummary pins only its COMPACT total as the bottom bar (the
-                channel rollup scrolls in normal flow) — so the sticky lives inside it, not here.
-                018/US3: no desktop a barra do rodapé some e o resumo vira a coluna da direita. */}
-                        <AssemblySummary
-                            bom={bom}
-                            uiSkipped={uiSkipped}
-                            excludedLineCount={excludedLineCount}
-                            variant={isWide ? "column" : "pinned"}
-                        />
-
-                        {/* 009/T010 — record the kit as a quote (Q2: kits are recordable from PR-A). This is NOT
-              the kit save: saving a kit puts a LIVE, recomputing thing in the catalog; recording a
-              snapshot freezes what the seller quoted TODAY. The two coexist deliberately. Only the
-              lines that reached the total are frozen — a kit quote itemizes its pieces (SC-515),
-              and an excluded line has no numbers to itemize. */}
-                        <div className="flex justify-center">
-                            <RecordSnapshotButton
-                                disabled={frozenKitLines.length === 0}
-                                source={{
-                                    kind: "KIT",
-                                    // catalogVersion is fee-catalog provenance (I2/Option A). Mirror the SINGLE rule:
-                                    // null unless a line actually priced a channel from the catalog. Every line shares
-                                    // the same catalog, so the first non-null line version is the kit's.
-                                    freeze: () =>
-                                        freezeBomResult(
-                                            frozenKitLines,
-                                            bom,
-                                            kitProvenance,
-                                            frozenKitLines.find(
-                                                (l) => l.input.catalogVersion != null,
-                                            )?.input.catalogVersion ?? null,
-                                        ),
-                                }}
-                            />
-                        </div>
-
-                        {/* Save (§1.9). No optimistic fake: the toast and the catalog summary below appear only
-              after a real 2xx from the server, which is also the entitlement boundary. */}
-                        <div className="flex flex-col gap-3 rounded-[var(--radius-card)] border border-[var(--border)] p-4">
-                            <Field label={t.kitName} required>
-                                {(p) => (
-                                    <div className="tf-inputwrap">
-                                        <input
-                                            {...p}
-                                            type="text"
-                                            className="tf-input"
-                                            placeholder={t.kitNamePlaceholder}
-                                            value={kitName}
-                                            onChange={(e) => {
-                                                dirty.current = true;
-                                                setKitName(e.target.value);
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </Field>
-                            {/* While lapsed, a refused save is the EXPECTED answer, not a failure — the rest of
-                the lapse surface is calm and this must not be the one red thing on it. */}
-                            {saveError && (
-                                <Alert tone={lapsed ? "info" : "danger"}>{saveError}</Alert>
-                            )}
-                            {/* 019/PR-B (T046, detalhe 3/prancheta 32b/32e): a frase fica ACIMA da linha de
-                  botões (não cabe ao lado do Salvar a 390px) — e é o convite único desta tela
-                  enquanto há ≥1 linha (o vazio didático perde o dele, `teaser` default true não
-                  aparece aqui porque não há vazio). `unknown` nunca chega aqui (T046 detalhe 4) —
-                  os gates de topo da página seguram nesse estado antes do composer montar; ainda
-                  assim o `gate !== "active"` do botão abaixo cobre esse caso por segurança. */}
-                            {gate !== "active" && gate !== "unknown" && (
-                                <>
-                                    <p
-                                        data-testid="premium-footer-note"
-                                        className="text-sm text-[var(--text-body)]"
-                                    >
-                                        {messages.premiumTeaser.salvarFazParteDoPremium}
-                                    </p>
-                                    <TeaserUpgrade
-                                        variant="secondary"
-                                        price={false}
-                                        signedOut={gate === "signed-out"}
-                                        label={
-                                            gate === "lapsed"
-                                                ? messages.billing.reactivateAction
-                                                : undefined
-                                        }
-                                    />
-                                </>
-                            )}
-                            {/* 019/PR-B (T107): a barreira é a AUSÊNCIA do handler, não só o `disabled`. */}
-                            <Button
-                                onClick={gate === "active" ? () => void save() : undefined}
-                                disabled={gate !== "active" || saving}
-                            >
-                                {saving ? t.saving : t.save}
-                            </Button>
-
-                            {materializations && (
-                                <div className="flex flex-col gap-2">
-                                    <p className="text-sm font-medium">{t.savedTitle}</p>
-                                    <ul className="flex flex-col gap-1">
-                                        {materializations.map((m) => {
-                                            const name = saveLines[m.position]?.pieceName ?? "";
-                                            const copy =
-                                                m.action === "created"
-                                                    ? t.savedCreated
-                                                    : t.savedReferenced;
-                                            return (
-                                                <li
-                                                    key={m.position}
-                                                    className="text-sm text-[var(--text-muted)]"
-                                                >
-                                                    {copy.replace("{nome}", name)}
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                    {/* The reference wins over the values typed here — say it, never let the seller
-                    discover it by finding different numbers on reopen (ADR-0017 §3). */}
-                                    {materializations.some((m) => m.action === "referenced") && (
-                                        <Alert tone="info">{t.savedSuperseded}</Alert>
-                                    )}
-                                    <Button
-                                        variant="secondary"
-                                        onClick={() =>
-                                            void navigate({
-                                                to: "/catalogo",
-                                                search: { tab: "kits" },
-                                            })
-                                        }
-                                    >
-                                        {t.viewKits}
-                                    </Button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    <BomSummaryPanel
+                        bom={bom}
+                        uiSkipped={uiSkipped}
+                        excludedLineCount={excludedLineCount}
+                        isWide={isWide}
+                        frozenKitLines={frozenKitLines}
+                        kitProvenance={kitProvenance}
+                        kitName={kitName}
+                        onKitNameChange={(name) => {
+                            dirty.current = true;
+                            setKitName(name);
+                        }}
+                        saveError={saveError}
+                        lapsed={lapsed}
+                        gate={gate}
+                        onSave={() => void save()}
+                        saving={saving}
+                        materializations={materializations}
+                        saveLines={saveLines}
+                        onViewKits={() =>
+                            void navigate({ to: "/catalogo", search: { tab: "kits" } })
+                        }
+                    />
                 </div>
             )}
         </section>

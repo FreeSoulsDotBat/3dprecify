@@ -1,16 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { type ScenarioConfig } from "@/entities/scenario/config-document";
-import {
-    useDeleteScenario,
-    useDuplicateScenario,
-    useRenameScenario,
-    useScenarios,
-} from "@/entities/scenario/use-scenarios";
+import { useDuplicateScenario, useScenarios } from "@/entities/scenario/use-scenarios";
 import { useEntitlement } from "@/entities/user/use-entitlement";
-import { apiErrorMessage } from "@/shared/api/error-messages";
 import type { ScenarioOut } from "@/shared/api/generated";
-import { ApiError } from "@/shared/api/transport";
 import { premiumGate, type PremiumGate } from "@/shared/billing/premium-gate";
 import { VazioDidatico } from "@/shared/billing/vazio-didatico";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -21,10 +14,6 @@ import {
     Alert,
     Button,
     Card,
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogTitle,
     EmptyState,
     Field,
     Icon,
@@ -35,6 +24,10 @@ import {
     Spinner,
     toast,
 } from "@/shared/ui";
+
+import { DeleteScenarioDialog, type DeleteScenarioDialogHandle } from "./delete-scenario-dialog";
+import { RenameScenarioSheet, type RenameScenarioSheetHandle } from "./rename-scenario-sheet";
+import { honestWriteError } from "./scenarios-write-error";
 
 import "./scenario-list.css";
 
@@ -62,11 +55,6 @@ import "./scenario-list.css";
 
 const t = messages.scenarios;
 
-// 013 US4 (FB-03) — the create path (`save-scenario-sheet.tsx`) and the backend both validate note
-// <= 500; the rename path did not. Same limit, same message (`t.noteTooLong`) — never a second
-// string for the same rule.
-const NOTE_MAX = 500;
-
 export interface ScenariosListSheetProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -80,26 +68,16 @@ export interface ScenariosListSheetProps {
  *  date-as-claim (§0.2/§11-F6: the card states no date, only how long since it last changed). */
 function relativeLabel(iso: string, now: number): string {
     const diffMin = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000));
-    if (diffMin < 1) return "agora mesmo";
-    if (diffMin < 60) return `há ${diffMin} min`;
+    if (diffMin < 1) return t.relative.now;
+    if (diffMin < 60) return t.relative.minutes.replace("{n}", String(diffMin));
     const diffH = Math.floor(diffMin / 60);
-    if (diffH < 24) return `há ${diffH} h`;
+    if (diffH < 24) return t.relative.hours.replace("{n}", String(diffH));
     const diffDay = Math.floor(diffH / 24);
-    if (diffDay < 7) return `há ${diffDay} dia${diffDay === 1 ? "" : "s"}`;
-    const diffWeek = Math.floor(diffDay / 7);
-    return `há ${diffWeek} semana${diffWeek === 1 ? "" : "s"}`;
-}
-
-/** A failed write's honest, specific line — never a generic error, never a fake success (§0.1). */
-// 016/T072-A9 (2026-08-07): the non-`ApiError` fallback used to ALSO claim "precisa de conexão" —
-// an unmeasured cause (see `shared/api/error-messages.ts:honestWriteError`, the canonical version
-// of this same rule). `transport.ts` normalises every real request failure into a typed
-// `ApiError`, so anything else is unexpected and gets the generic honest phrase instead.
-export function honestWriteError(err: unknown): string {
-    if (err instanceof ApiError) {
-        return err.status === 0 ? t.writeOffline : apiErrorMessage(err);
+    if (diffDay < 7) {
+        return (diffDay === 1 ? t.relative.day : t.relative.days).replace("{n}", String(diffDay));
     }
-    return messages.apiError.unknown;
+    const diffWeek = Math.floor(diffDay / 7);
+    return (diffWeek === 1 ? t.relative.week : t.relative.weeks).replace("{n}", String(diffWeek));
 }
 
 function ScenarioCard({
@@ -227,52 +205,14 @@ export function ScenariosList({
         gate === "unknown" && error?.code === "ENTITLEMENT_REQUIRED" ? "never-subscribed" : gate;
     const showDoor = doorGate === "never-subscribed" || doorGate === "signed-out";
 
-    const rename = useRenameScenario();
     const duplicate = useDuplicateScenario();
-    const del = useDeleteScenario();
 
-    const [renameTarget, setRenameTarget] = useState<ScenarioOut | null>(null);
-    const [renameName, setRenameName] = useState("");
-    const [renameNote, setRenameNote] = useState("");
-    const [renameError, setRenameError] = useState<string | undefined>(undefined);
+    // 019/Polish — Renomear/Excluir moved to `RenameScenarioSheet`/`DeleteScenarioDialog` (own
+    // state, imperative `open(item)`); this component only holds the refs that reach them.
+    const renameSheetRef = useRef<RenameScenarioSheetHandle>(null);
+    const deleteDialogRef = useRef<DeleteScenarioDialogHandle>(null);
 
-    const [deleteTarget, setDeleteTarget] = useState<ScenarioOut | null>(null);
-    const [deleteError, setDeleteError] = useState<string | undefined>(undefined);
     const [duplicateError, setDuplicateError] = useState<string | undefined>(undefined);
-
-    const openRename = (item: ScenarioOut) => {
-        setRenameError(undefined);
-        setRenameName(item.name);
-        setRenameNote(item.note ?? "");
-        setRenameTarget(item);
-    };
-
-    const submitRename = async () => {
-        if (!renameTarget) return;
-        const trimmed = renameName.trim();
-        if (trimmed === "") {
-            setRenameError(t.nameRequired);
-            return;
-        }
-        if (trimmed.length > 120) {
-            setRenameError(t.nameTooLong);
-            return;
-        }
-        if (renameNote.length > NOTE_MAX) {
-            setRenameError(t.noteTooLong);
-            return;
-        }
-        try {
-            await rename.mutateAsync({
-                id: renameTarget.id,
-                body: { name: trimmed, note: renameNote.trim() || null },
-            });
-            toast(t.renamed, { tone: "success" }); // real 2xx only
-            setRenameTarget(null);
-        } catch (err) {
-            setRenameError(honestWriteError(err));
-        }
-    };
 
     const handleDuplicate = async (item: ScenarioOut) => {
         setDuplicateError(undefined);
@@ -283,18 +223,6 @@ export function ScenariosList({
             onOpenScenario(copy);
         } catch (err) {
             setDuplicateError(honestWriteError(err));
-        }
-    };
-
-    const handleDelete = async () => {
-        if (!deleteTarget) return;
-        setDeleteError(undefined);
-        try {
-            await del.mutateAsync(deleteTarget.id);
-            toast(t.deleted, { tone: "success" }); // real 2xx only
-            setDeleteTarget(null);
-        } catch (err) {
-            setDeleteError(honestWriteError(err));
         }
     };
 
@@ -404,12 +332,9 @@ export function ScenariosList({
                                 onOpen={() => onOpenScenario(item)}
                                 writesDisabled={writesDisabled}
                                 writesReason={writesReason}
-                                onRename={openRename}
+                                onRename={(i) => renameSheetRef.current?.open(i)}
                                 onDuplicate={(i) => void handleDuplicate(i)}
-                                onDeleteRequest={(i) => {
-                                    setDeleteError(undefined);
-                                    setDeleteTarget(i);
-                                }}
+                                onDeleteRequest={(i) => deleteDialogRef.current?.open(i)}
                             />
                         ))}
                     </div>
@@ -421,77 +346,8 @@ export function ScenariosList({
                 </>
             )}
 
-            {/* Rename (PATCH) — name/note ONLY; never re-sends the whole config (ux §6). */}
-            {/* SheetContent stays MOUNTED (like the delete Dialog below): unmounting it in the same
-          commit that flips `open` false skips Radix's layered close path and strands the overlay/
-          body pointer-events (the T030 frozen-app defect — nested-dialog conditional-unmount). */}
-            <Sheet open={renameTarget !== null} onOpenChange={(o) => !o && setRenameTarget(null)}>
-                <SheetContent>
-                    <div className="flex flex-col gap-4">
-                        <SheetTitle>{t.renameSheetTitle}</SheetTitle>
-                        <Field label={t.nameField} required>
-                            {(p) => (
-                                <div className="tf-inputwrap">
-                                    <input
-                                        {...p}
-                                        type="text"
-                                        className="tf-input"
-                                        maxLength={121}
-                                        value={renameName}
-                                        onChange={(e) => setRenameName(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                        </Field>
-                        <Field label={t.noteField} optional>
-                            {(p) => (
-                                <div className="tf-inputwrap">
-                                    <textarea
-                                        {...p}
-                                        className="tf-input"
-                                        rows={3}
-                                        value={renameNote}
-                                        onChange={(e) => setRenameNote(e.target.value)}
-                                    />
-                                </div>
-                            )}
-                        </Field>
-                        {renameError && (
-                            <p className="text-sm text-[var(--danger-text)]">{renameError}</p>
-                        )}
-                        <Button onClick={() => void submitRename()} loading={rename.isPending}>
-                            {t.saveChanges}
-                        </Button>
-                    </div>
-                </SheetContent>
-            </Sheet>
-
-            {/* Delete (soft) — always confirmed, never silent (ux §6). */}
-            <Dialog open={deleteTarget !== null} onOpenChange={(o) => !o && setDeleteTarget(null)}>
-                <DialogContent variant="center">
-                    {deleteTarget && (
-                        <div className="flex flex-col gap-3">
-                            <DialogTitle>
-                                {t.deleteTitle.replace("{nome}", deleteTarget.name)}
-                            </DialogTitle>
-                            <DialogDescription>{t.deleteBody}</DialogDescription>
-                            {deleteError && <Alert tone="danger">{deleteError}</Alert>}
-                            <div className="flex justify-end gap-2">
-                                <Button variant="ghost" onClick={() => setDeleteTarget(null)}>
-                                    {t.back}
-                                </Button>
-                                <Button
-                                    variant="danger"
-                                    loading={del.isPending}
-                                    onClick={() => void handleDelete()}
-                                >
-                                    {t.deleteConfirm}
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            <RenameScenarioSheet ref={renameSheetRef} />
+            <DeleteScenarioDialog ref={deleteDialogRef} />
         </div>
     );
 }

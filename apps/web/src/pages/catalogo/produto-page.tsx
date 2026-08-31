@@ -27,8 +27,10 @@ import {
     sectionLabel,
 } from "@/features/calculator/calculator-form";
 import { computeFromForm } from "@/features/calculator/calculator-model";
-import { filamentToCalcFields, printerToCalcFields } from "@/features/calculator/catalog-prefill";
-import { feeFieldsToBlankOnMarketplaceChange } from "@/features/calculator/channel-field-plan";
+import {
+    applyFilamentFields,
+    applyPrinterFields,
+} from "@/features/calculator/catalog-prefill-apply";
 import {
     type CalcFormValues,
     calculatorResolver,
@@ -36,11 +38,10 @@ import {
     defaultCalcValues,
     defaultOtherCost,
     LABOR_AND_FINISH_FIELDS,
-    type ChannelFieldName,
     type MarketplaceId,
     MARKUP_FIELDS,
-    slotResetOnMarketplaceChange,
 } from "@/features/calculator/calculator-schema";
+import { applyMarketplaceChange } from "@/features/calculator/marketplace-change";
 import { formToProductIn, productToForm } from "@/features/calculator/product-mapping";
 import { buildScenarioConfig } from "@/features/calculator/scenario-bridge";
 import { PremiumFooterNote, PremiumInviteCta } from "@/features/catalog/catalog-controls";
@@ -206,24 +207,13 @@ export function ProdutoPage({
         const picked = filaments.find((f) => f.id === id);
         if (!picked) return;
         setFilamentMaterial(picked.material ?? null);
-        for (const [field, value] of Object.entries(filamentToCalcFields(picked))) {
-            setValue(field as "costPerRoll" | "rollWeightKg", value);
-        }
+        applyFilamentFields(setValue, picked);
     };
     const applyPrinter = (id: string) => {
         setPrinterId(id);
         const picked = printers.find((p) => p.id === id);
         if (!picked) return;
-        for (const [field, value] of Object.entries(printerToCalcFields(picked))) {
-            setValue(
-                field as
-                    | "machineValue"
-                    | "machineLifetimeHours"
-                    | "avgPowerKw"
-                    | "maintenanceReservePerHour",
-                value,
-            );
-        }
+        applyPrinterFields(setValue, picked);
     };
 
     const { catalog, source, refreshFailed, refreshing, refetch: retryCatalog } = useFeeCatalog();
@@ -254,21 +244,10 @@ export function ProdutoPage({
               }
             : null;
 
-    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) => {
-        // 014/T097 — modality AND category: the category belongs to the OLD marketplace's taxonomy.
-        const next = slotResetOnMarketplaceChange(marketplace);
-        setValue(`channels.${index}.modality`, next.modality);
-        setValue(`channels.${index}.category`, next.category);
-        setValue(`channels.${index}.sellerType`, next.sellerType);
-        setValue(`channels.${index}.highVolume`, next.highVolume);
-        setValue(`channels.${index}.surcharges`, next.surcharges);
-        // 016/US11 (T044 homologação PR-E, bloqueador RA5) — blank the fee fields the new plan hides.
-        for (const [field, value] of Object.entries(
-            feeFieldsToBlankOnMarketplaceChange(catalog, marketplace),
-        )) {
-            setValue(`channels.${index}.${field as ChannelFieldName}` as const, value);
-        }
-    };
+    // 019/Polish — shared with calcular-page.tsx and bom-line-editor.tsx (`marketplace-change.ts`);
+    // this site does NOT pass `shouldValidate` (B2, registered divergence — unchanged here).
+    const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) =>
+        applyMarketplaceChange(setValue, catalog, index, marketplace);
 
     // An UNLINKED reference (US6-4 + K3): the product carries values with no live row behind them.
     // Two histories land here — a deletion severed the link, or a kit save materialized the product
