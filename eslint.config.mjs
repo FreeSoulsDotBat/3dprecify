@@ -112,6 +112,18 @@ export default tseslint.config(
             ],
         },
     },
+    // Ratchet de tamanho (chore de legibilidade 2026-08-31): a auditoria achou monolitos de até
+    // 1873 linhas porque nada os freava. Após a quebra por responsabilidade, a maior fonte
+    // não-teste tem 723 linhas — o teto 750 passa hoje e bloqueia o próximo monolito. ABAIXE o
+    // teto conforme os restantes encolherem (calcular-page é o atual detentor); nunca o suba sem
+    // decisão registrada. Testes/specs ficam de fora (suítes longas são outra discussão).
+    {
+        files: ["apps/web/src/**/*.{ts,tsx}", "packages/*/src/**/*.ts"],
+        ignores: ["**/*.test.*", "**/*.spec.*"],
+        rules: {
+            "max-lines": ["error", { max: 750, skipBlankLines: false, skipComments: false }],
+        },
+    },
     // Disable stylistic rules that conflict with Prettier (Prettier owns formatting).
     prettier,
 );
