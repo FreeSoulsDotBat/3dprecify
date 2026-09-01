@@ -1,18 +1,5 @@
-// 019/PR-B (T043, research §E-1) — a união de CINCO estados que as quatro telas premium leem.
-//
-// O servidor JÁ deriva do ledger `none | active | lapsed` (`backend/app/entitlement/__init__.py`),
-// e as duas portas já são diferentes (leitura aceita `lapsed`; escrita exige `active`). "Nunca
-// teve" × "teve e venceu" é, portanto, ESTRUTURAL do lado do servidor — esta função só LÊ esse
-// campo e o compõe com a sessão. Não é um gate (Constituição IV intocada; diff vazio em
-// `app/entitlement/`, SC-1903): é a forma de a tela decidir o que MOSTRA, nunca o que PODE.
-//
-// Pura e sem imports: recebe formas ESTRUTURAIS (`{status}`), como o `plan-view.ts` do E6 faz com
-// `EntitlementLike`. `shared` não pode importar `entities` — e é `shared/billing` (o vazio didático,
-// o rodapé do formulário inerte) quem precisa dela. Guarda de grafo em `premium-gate.test.ts`.
-//
-// O que ela NUNCA faz: presumir. Sem resposta do servidor (nem fresca, nem lembrada do cache
-// uid-scoped — ADR-0018 §9) o estado é `unknown`: nem "presume grátis" nem "presume premium". A
-// tela decide o que fazer com `unknown` (hoje cada uma mantém o próprio `GateChecking`/`GateError`).
+// ⚠ @doc DEC-037 — decide o que a tela MOSTRA, nunca o que ela PODE (o portão é do servidor).
+//   Sem resposta, o estado é `unknown`: nem presume grátis, nem presume premium.
 
 /** Os três estados que o servidor emite (ledger-derived, ADR-0012). */
 export type ServerEntitlementStatus = "none" | "active" | "lapsed";

@@ -209,21 +209,11 @@ function nonNullBandFixedFee(fixedFee: number | null): number {
 }
 
 /**
- * Map a resolved catalog entry → the pure engine's channel fees (SC-111 / FR-111a). A price-band entry
- * (Shopee) carries its `priceBands` through (the engine's fixed-point owns the price-keyed selection); a
- * single entry carries commission/fixed/minPerItem. Freight per its kind: the ML free-shipping
- * `ESTIMATE.defaultSubsidy` becomes an editable flat `freightCost` sealed "estimativa"; `NONE` → no
- * freight.
+ * Entrada resolvida do catálogo → tarifas de canal do motor (SC-111). Entrada com bandas leva
+ * `priceBands` adiante; entrada simples leva comissão/fixo/`minPerItem`. Frete conforme o `kind`.
  *
- * **`BAND_VOUCHER` is DEPRECATED (hotfix 016/A2, 2026-08-07) and no served catalog emits it.** The
- * branch below is NOT dead code and must not be deleted: a client that has not fetched yet still
- * reads a PERSISTED catalog from before the hotfix (the bundled seed wins by `catalogVersion`, but
- * the store is read first on some paths), and scenario documents (ADR-0021) carry the mapped shape.
- * Dropping the mapping would change what an old stored catalog computes — silently.
- *
- * This docstring used to justify the carry-through with "never dropping it — that overstated the
- * líquido". That is FALSE since the verbatim re-reading: the sources attribute the R$ 20/30/40 to
- * SHOPEE, so deducting it was the defect. The carry-through survives for compatibility only.
+ * ⚠ @doc DEC-039 — o ramo `BAND_VOUCHER` NÃO é código morto: catálogo persistido de antes do
+ *   hotfix ainda o lê, e largar o mapeamento mudaria em silêncio o que ele computa.
  */
 export function entryToChannelFees(entry: FeeEntry): ResolvedChannelFees {
     const freight = entry.freight;

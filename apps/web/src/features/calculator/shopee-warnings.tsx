@@ -26,21 +26,8 @@ export function ShopeeRegressiveFeeWarning() {
 }
 
 /**
- * US17-AC3 — o ajuste de frete aferido (art. 4478): peso/dimensões cadastrados menores que os
- * aferidos pela transportadora geram recobrança retroativa. Puramente informativo: não bloqueia o
- * cálculo, não fabrica um número e não desaparece quando o vendedor edita o formulário (é estático,
- * não depende de nenhum campo).
- *
- * 016/PR-F homologação (A5) — era o `Alert` completo (título + corpo sempre visíveis); a seção
- * Shopee media 1248px a 360px, 48% os dois avisos, e ESTE é o estático (US17-AC3: presente sempre,
- * mesmo depois de editar). Colapsa para UMA linha (título curto + ⓘ InfoTip com o corpo completo) —
- * continua presente, continua acessível (o InfoTip da casa já é teclado/toque), só não ocupa a
- * altura inteira até alguém pedir o detalhe.
- *
- * 019/T021 — a variante `compact` nasceu aqui, local, com uma geometria (8/12px, centrado); a folha
- * do design a redefiniu no DS com outra (12px/8px, `flex-start`). Promovida: `<Alert compact>` é o
- * dono; a cópia local morreu (guarda `tf-class-uniqueness`). O ⓘ segue INLINE no título para a
- * linha continuar UMA (a razão de ser da A5); a diferença de geometria (~8px) é re-medida a 360px.
+ * @doc DEC-041 — estático de propósito: não some quando o vendedor edita. Colapsa para UMA
+ *   linha (título + ⓘ inline) porque os dois avisos ocupavam 48% da seção a 360px.
  */
 export function ShopeeMeasuredFreightWarning() {
     return (

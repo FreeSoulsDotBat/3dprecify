@@ -445,26 +445,11 @@ function sameDeterminants(a: Record<string, string>, b: Record<string, string>):
 }
 
 /**
- * Resolve the fee entry for a `(marketplace, feeDeterminants)`. The price-keyed band/floor fixed-point
- * stays in pricing-core.
+ * Resolve a entrada de tarifa de um `(marketplace, feeDeterminants)`. O ponto fixo de banda e
+ * piso por preço fica no `pricing-core`. Nada casa ⇒ `null` (entrada manual + selo).
  *
- * 014 replaced two defects here:
- *
- * 1. **Subset matching that won by array order.** An entry `{listingType}` and an entry
- *    `{listingType, category}` BOTH matched a slot supplying both, and `.find()` returned whichever
- *    came first in the file — a commission decided by JSON ordering (SC-801 violated). Matching is now
- *    EXACT per level, and specificity is expressed by WALKING THE ANCESTOR CHAIN: the nearest ancestor
- *    with an entry wins. That ordering is structural — the chain is unique and most-specific-first —
- *    so there is no sorting, no tie-break, and no dependence on entry order. (Ties cannot even be
- *    represented: the schema rejects duplicate determinant sets.)
- *
- * 2. **`?? mk.entries[0]`** — a slot with no determinants (modality empty, which is exactly what
- *    scenarios and kits saved before 014 carry) received the FIRST entry in the array: an arbitrary
- *    category's commission, under a "referência" seal. Removed, not adjusted (FR-027): without
- *    determinants and without an explicit null-keyed entry the honest answer is "sem referência".
- *
- * Returns null when nothing matches → manual entry + a "sem referência" seal, never a fabricated
- * pre-fill (Constitution II).
+ * ⚠ @doc DEC-035 — a especificidade sobe a CADEIA DE ANCESTRAIS, não a ordem do array: o
+ *   casamento por subconjunto deixava a comissão ser decidida pela ordenação do JSON.
  */
 export function resolveEntry(
     catalog: FeeCatalog,

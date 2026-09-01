@@ -1023,3 +1023,214 @@ conversão explícita — só a checagem de PRESENÇA importa para
 
 - `apps/web/src/shared/lib/channel-fee.ts` → `channelHasDeclaredFee`
 
+---
+
+## DEC-035 — A especificidade da tarifa é ESTRUTURAL: sobe a cadeia de ancestrais, não a ordem do JSON
+
+**Data**: 2026-07-31 (014, FR-027, SC-801) · **Governa**: `resolveFeeEntry`
+
+Resolve a entrada de tarifa de um `(marketplace, feeDeterminants)`. O ponto fixo de banda/piso por
+preço fica no `pricing-core`.
+
+O 014 substituiu **dois defeitos**:
+
+**1. Casamento por SUBCONJUNTO, decidido pela ordem do array.** Uma entrada `{listingType}` e uma
+`{listingType, category}` casavam AMBAS com um slot que fornecia os dois, e o `.find()` devolvia a que
+viesse primeiro no arquivo — **uma comissão decidida pela ordenação do JSON** (SC-801 violado). Hoje o
+casamento é EXATO por nível, e a especificidade é expressa PERCORRENDO A CADEIA DE ANCESTRAIS: vence o
+ancestral mais próximo que tenha entrada. Essa ordenação é estrutural — a cadeia é única e
+mais-específico-primeiro — então não há ordenação, nem desempate, nem dependência da ordem das
+entradas. Empate nem é representável: o schema recusa conjuntos de determinantes duplicados.
+
+**2. `?? mk.entries[0]`.** Um slot sem determinantes (modalidade vazia, que é exatamente o que
+cenários e kits salvos antes do 014 carregam) recebia a PRIMEIRA entrada do array: a comissão de uma
+categoria arbitrária, sob selo de "referência". **Removido, não ajustado** (FR-027): sem determinantes
+e sem uma entrada explícita de chave nula, a resposta honesta é "sem referência".
+
+Devolve `null` quando nada casa → entrada manual + selo "sem referência", **nunca** um pré-preenchimento
+fabricado (Constituição II).
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `resolveEntry`
+
+---
+
+## DEC-036 — A normalização de nome usa classe de espaço EXPLÍCITA porque `\s` diverge entre JS e Python
+
+**Data**: 2026-08-29 (019/PR-D, T063, ADR-0033 §4) · **Governa**: `normalizeName` nos dois lados
+
+A regra, idêntica no cliente e no servidor: `normalize("NFD")` → remover marcas combinantes (`\p{Mn}`)
+→ `toLowerCase()` (**nunca** `toLocaleLowerCase`/casefold — "Straße" não vira "strasse") → trim →
+colapsar espaços internos em um.
+
+**A classe de espaço é EXPLÍCITA, escrita com escapes de codepoint, e nunca `\s` nem `.trim()`**: o
+`\s`/`.strip()` do Python casa `\x85` (NEL) e não casa BOM (U+FEFF); o `\s`/`.trim()` do JS faz o
+inverso. Sem a classe explícita as duas linguagens concordariam **por acidente** em alguns casos e
+divergiriam em silêncio noutros — exatamente o que o fixture compartilhado
+(`specs/019-porte-design/contracts/fixtures/name-norm.json`) existe para provar caso a caso.
+
+NEL (U+0085) fica DE FORA da classe por decisão: é preservado, não colapsado.
+
+Os pontos de código vêm por escape (`\uXXXX`), **nunca crus**: U+2028/U+2029 são LineTerminator em JS,
+e um caractere cru quebraria um regex literal.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/lib/name-norm.ts` → `nameNorm`, `nameNormKey`
+- `backend/app/lib/name_norm.py` → `name_norm`, `name_norm_key`
+
+---
+
+## DEC-037 — `premiumGate` decide o que a tela MOSTRA, nunca o que ela PODE — e nunca presume
+
+**Data**: 2026-08-28 (019/PR-B, T043, research §E-1) · **Governa**: `premiumGate`
+
+A união de CINCO estados que as quatro telas premium leem. O servidor JÁ deriva do ledger
+`none | active | lapsed`, e as duas portas já são diferentes (leitura aceita `lapsed`; escrita exige
+`active`). "Nunca teve" × "teve e venceu" é, portanto, ESTRUTURAL do lado do servidor — esta função só
+LÊ esse campo e o compõe com a sessão.
+
+**Não é um portão** (Constituição IV intocada; diff VAZIO em `app/entitlement/`, SC-1903): é a forma
+de a tela decidir o que MOSTRA, nunca o que PODE.
+
+Pura e sem imports: recebe formas ESTRUTURAIS (`{status}`), como o `plan-view.ts` do E6 faz com
+`EntitlementLike`. `shared` não pode importar `entities`, e é `shared/billing` (o vazio didático, o
+rodapé do formulário inerte) quem precisa dela. Guarda de grafo em `premium-gate.test.ts`.
+
+**O que ela NUNCA faz: presumir.** Sem resposta do servidor — nem fresca, nem lembrada do cache por
+uid ([[DEC-029]]) — o estado é `unknown`: nem "presume grátis" nem "presume premium". A tela decide o
+que fazer com `unknown`.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/billing/premium-gate.ts` → `premiumGate`, `PremiumGate`
+
+---
+
+## DEC-038 — O sign-out é INTERROMPÍVEL, e a costura mora em `shared` por fronteira
+
+**Data**: 2026-07-13 (009/T011, E4 PR-A, ADR-0018 §10) · **Governa**: `signOutUser` e a costura de
+registro
+
+Até o E4, sair era ação pura: derrubava caches de LEITURA por uid, e cache de leitura sempre se
+reconstrói do servidor. O outbox quebra isso: ele é a ÚNICA cópia de um orçamento que nunca chegou à
+conta, e a garantia de privacidade "purgar ao sair" (aparelho compartilhado não pode guardar dado da
+conta anterior) o destrói. **As duas propriedades estão certas; só o vendedor pode decidir entre
+elas** — então sair tem de virar interrompível.
+
+O ponto de interceptação mora em `shared` por razão estrutural: FSD-Lite proíbe `shared` importar
+`entities/history`, então a checagem da fila não pode viver dentro da própria função de sair.
+`shared` expõe a costura, e o app shell — a única camada que pode enxergar features — registra o que
+perguntar.
+
+**A alternativa é exatamente o buraco que isto fecha**: se cada ponto de chamada checasse a fila antes
+de sair, o `signOutUser()` (dois pontos de chamada hoje) ganharia um terceiro no mês que vem, e ele
+pularia a checagem em silêncio.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/session/sign-out-guard.ts` → `signOutUser`
+
+---
+
+## DEC-039 — O ramo `BAND_VOUCHER` do mapeamento não é código morto: catálogo persistido antigo o lê
+
+**Data**: 2026-08-07 (hotfix 016/A2) · **Governa**: o mapeamento entrada-do-catálogo → tarifas do motor
+
+Mapeia uma entrada resolvida do catálogo para as tarifas de canal do motor puro (SC-111). Entrada com
+bandas (Shopee) leva `priceBands` adiante — o ponto fixo do motor é dono da seleção por preço; entrada
+simples leva comissão/fixo/`minPerItem`. Frete conforme o `kind`: o `ESTIMATE.defaultSubsidy` do frete
+grátis do ML vira um `freightCost` plano e editável, selado "estimativa"; `NONE` → sem frete.
+
+**O ramo `BAND_VOUCHER` está DEPRECIADO e nenhum catálogo servido o emite — mas ele NÃO é código morto
+e não pode ser apagado** ([[DEC-024]]): um cliente que ainda não buscou lê um catálogo PERSISTIDO de
+antes do hotfix (a semente embutida vence por `catalogVersion`, mas a store é lida primeiro em alguns
+caminhos), e documentos de cenário (ADR-0021) carregam a forma já mapeada. Largar o mapeamento mudaria,
+**em silêncio**, o que um catálogo antigo guardado computa.
+
+> **Correção de registro (2026-08-07).** Este docstring justificava o carry-through com "nunca largar
+> — isso superestimaria o líquido". É FALSO desde a releitura verbatim: as fontes atribuem o
+> R$ 20/30/40 à SHOPEE ([[FONTE-001]]), então **descontar** é que era o defeito. O carry-through
+> sobrevive só por compatibilidade.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/fee-prefill.ts` → `BAND_VOUCHER`
+
+---
+
+## DEC-040 — A tabela de modalidades sobrevive PRIVADA, só para decidir o padrão de um slot novo
+
+**Data**: 2026-08-05 (016/US12, T052, FR-918/FR-919, arquitetura-016 §F.2) · **Governa**: a tabela
+privada de modalidades do `calculator-schema.ts`
+
+As opções de modalidade **voltadas ao RENDER** não são mais uma tabela aqui: o `channelFieldPlan` as
+deriva vivas do `determinantsSchema` do catálogo, que é o que "dirigido pelo schema" significa — um
+marketplace que muda os eixos declarados muda o formulário sem uma linha de código.
+
+A tabela sobrevive, privada, para **um** trabalho: em qual modalidade um slot NOVO começa — um padrão
+de UX, não uma lista de escolhas renderizada.
+
+**É desvio MEDIDO e deliberado de derivar também isso**: a ordem do `determinantsSchema` da Amazon é
+`["INDIVIDUAL", "PROFISSIONAL"]`, e a ÚNICA entrada catch-all da Amazon é chaveada em
+`plan: "PROFISSIONAL"`. Derivar o padrão da ordem do catálogo viraria a modalidade padrão da semente
+para INDIVIDUAL, para a qual não existe catch-all, e **mudaria em silêncio o preço-semente que todo
+teste deste repositório pina**. O FR-919 pede resultado byte-idêntico nas combinações suportadas hoje;
+esta tabela é o que impede o PADRÃO de sair do lugar.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-schema.ts` → `defaultChannelSlot`, `slotResetOnMarketplaceChange`
+
+---
+
+## DEC-041 — O aviso de frete aferido é estático e colapsa para UMA linha
+
+**Data**: 2026-08-06 (US17-AC3, art. 4478) · **atualizado** 2026-08-28 (019/T021) · **Governa**:
+`shopee-warnings.tsx`
+
+Peso e dimensões cadastrados menores que os aferidos pela transportadora geram recobrança retroativa.
+Puramente informativo: não bloqueia o cálculo, não fabrica número e **não desaparece quando o vendedor
+edita o formulário** — é estático, não depende de campo nenhum.
+
+**Homologação 016/PR-F (A5)** — era um `Alert` completo (título + corpo sempre visíveis); a seção
+Shopee media 1248px a 360px, e os dois avisos ocupavam 48% disso. Este é o estático (presente sempre,
+mesmo depois de editar), então colapsa para UMA linha: título curto + ⓘ `InfoTip` com o corpo
+completo. Continua presente, continua acessível (o `InfoTip` da casa já é teclado/toque), só não ocupa
+a altura inteira até alguém pedir o detalhe.
+
+**019/T021** — a variante `compact` nasceu aqui, local, com uma geometria (8/12px, centrado); a folha
+do design a redefiniu no DS com outra (12px/8px, `flex-start`). Promovida: `<Alert compact>` é o dono e
+a cópia local morreu (guarda `tf-class-uniqueness`). O ⓘ segue INLINE no título para a linha continuar
+UMA — que é a razão de ser da A5.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/shopee-warnings.tsx` → `InfoTip`
+
+---
+
+## DEC-042 — Um preço, uma fonte: as constantes de plano moram em `shared`, e os derivados são honestos
+
+**Data**: 2026-07-23 (E6/T014-T015, US1, ux-billing §0.2/§8) · **movidas** para `shared` em 2026-08-03
+(US7, T032) · **Governa**: `plans.ts`
+
+**A ÚNICA constante de produto**: toda superfície de cobrança — a oferta, o CTA "Assinar"
+compartilhado e os quatro teasers — lê preço daqui, nunca um número digitado localmente. Divergência
+entre dois preços renderizados seria bloqueador de release (FR-701/SC-707), e ter exatamente uma fonte
+é o que torna isso **impossível** em vez de apenas testado.
+
+**Por que em `shared`**: os quatro teasers são features IRMÃS, e `feature → feature` é proibido por
+desenho ([[DEC-030]]). Elevar era a saída já escrita no spec (ux-billing §9-G2) — e é a mais correta:
+uma constante de PRODUTO é transversal, como `messages`, não propriedade de uma feature.
+
+**Os derivados são fatos honestos, nunca números fabricados**: o "equivalente a R$ 12,99/mês" e os
+"~19% de economia" saem da conta (155,88 / 12 ≈ 12,99; 12×15,99 = 191,88 → (191,88−155,88)/191,88 ≈
+18,8%). E R$ 191,88 **nunca** renderiza como preço "de" riscado (§0.2, a proibição de/por). Nenhuma
+cópia de urgência em lugar nenhum daqui.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/billing/plans.ts` → `BILLING_PLANS`, `BillingPlanKey`
+

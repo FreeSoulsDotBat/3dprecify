@@ -208,20 +208,9 @@ export const MARKETPLACE_OPTIONS: readonly SelectOption[] = [
 ];
 
 /**
- * 016/US12 (T052, FR-918, arquitetura-016 §F.2) — the RENDER-facing modality options are no longer a
- * table here: `channel-field-plan.ts:channelFieldPlan` derives them live from the catalog's
- * `determinantsSchema`, which is what "dirigido pelo schema" means (a marketplace that changes its
- * declared axes changes the form with no code edit).
- *
- * This table SURVIVES, privately, for exactly one job: which modality a BRAND NEW slot starts on
- * (`defaultChannelSlot`/`slotResetOnMarketplaceChange`, below) — a UX default, not a rendered choice
- * list. Measured, deliberate deviation from deriving it too: the catalog's own `determinantsSchema`
- * order for Amazon is `["INDIVIDUAL", "PROFISSIONAL"]` (`seed.ts`/`catalog.json`), and Amazon's ONLY
- * catch-all fee entry is keyed to `plan: "PROFISSIONAL"` — deriving the default from catalog order
- * would flip the seed's default modality to INDIVIDUAL, for which no catch-all entry exists, and
- * silently change the seed price every test in this codebase pins (015/A11's own comment names this
- * exact dependency). FR-919 asks for byte-identical results on today's supported combinations; this
- * table is what keeps the DEFAULT one of them from moving.
+ * ⚠ @doc DEC-040 — esta tabela sobrevive PRIVADA só para decidir a modalidade de um slot NOVO.
+ *   Derivá-la da ordem do catálogo viraria o padrão da Amazon para INDIVIDUAL, que não tem
+ *   catch-all — e mudaria em silêncio o preço-semente que todo teste daqui pina.
  */
 const DEFAULT_MODALITY_ORDER: Record<MarketplaceId, readonly SelectOption[]> = {
     MERCADO_LIVRE: [
