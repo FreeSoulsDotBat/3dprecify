@@ -1,0 +1,208 @@
+{
+    "_comment": [
+        "019/PR-E — as TRÊS regras normativas do desconto de orçamento existem em DOIS lugares sem",
+        "nada que as obrigue a concordar: o MOTOR (packages/pricing-core/src/quote.ts,",
+        "resolveDiscountAmount + computeQuote) e o BACKEND (backend/app/api/history.py,",
+        "_validate_declared_discount, dentro do validador do documento congelado). Esta fixture é a",
+        "ÚNICA fonte dos casos: um teste TS (packages/pricing-core/tests/discount-parity.test.ts) e um",
+        "teste Python (backend/tests/test_discount_parity_mirror.py) leem o MESMO arquivo.",
+        "",
+        "Campos de cada caso:",
+        "  gross            — R$ bruto do orçamento (string 2dp).",
+        "  discount         — null (sem desconto) ou { mode, engineValue, wireValue, wireAmount }.",
+        "    engineValue    — o número EXATAMENTE como o vendedor digitou (o motor recebe isto como",
+        "                     `QuoteDiscount.value`, um `number`, ANTES de qualquer arredondamento).",
+        "    wireValue      — `engineValue` já congelado (toMoneyString, 2dp HALF_UP — ADR-0008) —",
+        "                     o que viaja em `payload.discount.value` no documento imutável.",
+        "    wireAmount     — o abatimento em R$ já congelado — `payload.discount.amount`. Nos casos",
+        "                     de REJEIÇÃO o motor nunca chega a produzir isto; aqui ele simula o",
+        "                     documento que um cliente poderia ter tentado congelar mesmo assim (a",
+        "                     única forma de exercitar a defesa PRÓPRIA do backend, independente do",
+        "                     motor já ter recusado no dispositivo).",
+        "  expected         — \"accept\" ou \"reject\".",
+        "  expectedDiscountAmount / expectedNet — só quando expected=\"accept\"; o que `computeQuote`",
+        "                     deve produzir e o que `_validate_declared_discount` deve fechar contra.",
+        "",
+        "As três regras cobertas: (a) PCT recusa valor > 100; (b) AMOUNT recusa valor > bruto;",
+        "(c) líquido = bruto − abatimento (a identidade que o backend amarra ao `headlineTotal`)."
+    ],
+    "cases": [
+        {
+            "id": "no-discount",
+            "description": "Sem bloco de desconto — o caso comum: bruto = líquido.",
+            "gross": "100.00",
+            "discount": null,
+            "expected": "accept",
+            "expectedDiscountAmount": null,
+            "expectedNet": "100.00"
+        },
+        {
+            "id": "pct-0",
+            "description": "PCT 0% — desconto declarado mas nulo.",
+            "gross": "100.00",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 0,
+                "wireValue": "0.00",
+                "wireAmount": "0.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "0.00",
+            "expectedNet": "100.00"
+        },
+        {
+            "id": "pct-50",
+            "description": "PCT 50% — o caso do meio.",
+            "gross": "100.00",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 50,
+                "wireValue": "50.00",
+                "wireAmount": "50.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "50.00",
+            "expectedNet": "50.00"
+        },
+        {
+            "id": "pct-100",
+            "description": "PCT 100% — zera o líquido sem nunca ficar negativo (fronteira aceita).",
+            "gross": "100.00",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 100,
+                "wireValue": "100.00",
+                "wireAmount": "100.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "100.00",
+            "expectedNet": "0.00"
+        },
+        {
+            "id": "pct-100.01",
+            "description": "PCT 100,01% — um centavo de percentual além do teto: recusa (regra a).",
+            "gross": "100.00",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 100.01,
+                "wireValue": "100.01",
+                "wireAmount": "0.00"
+            },
+            "expected": "reject",
+            "expectedDiscountAmount": null,
+            "expectedNet": null
+        },
+        {
+            "id": "pct-101",
+            "description": "PCT 101% — bem acima do teto: recusa (regra a).",
+            "gross": "100.00",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 101,
+                "wireValue": "101.00",
+                "wireAmount": "0.00"
+            },
+            "expected": "reject",
+            "expectedDiscountAmount": null,
+            "expectedNet": null
+        },
+        {
+            "id": "amount-0",
+            "description": "AMOUNT R$ 0,00 — desconto declarado mas nulo.",
+            "gross": "100.00",
+            "discount": {
+                "mode": "AMOUNT",
+                "engineValue": 0,
+                "wireValue": "0.00",
+                "wireAmount": "0.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "0.00",
+            "expectedNet": "100.00"
+        },
+        {
+            "id": "amount-half",
+            "description": "AMOUNT R$ 50,00 — metade do bruto.",
+            "gross": "100.00",
+            "discount": {
+                "mode": "AMOUNT",
+                "engineValue": 50,
+                "wireValue": "50.00",
+                "wireAmount": "50.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "50.00",
+            "expectedNet": "50.00"
+        },
+        {
+            "id": "amount-exact-gross",
+            "description": "AMOUNT exatamente igual ao bruto — fronteira aceita, líquido zero.",
+            "gross": "100.00",
+            "discount": {
+                "mode": "AMOUNT",
+                "engineValue": 100,
+                "wireValue": "100.00",
+                "wireAmount": "100.00"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "100.00",
+            "expectedNet": "0.00"
+        },
+        {
+            "id": "amount-gross-plus-cent",
+            "description": "AMOUNT um centavo acima do bruto — o líquido ficaria negativo: recusa (regra b).",
+            "gross": "100.00",
+            "discount": {
+                "mode": "AMOUNT",
+                "engineValue": 100.01,
+                "wireValue": "100.01",
+                "wireAmount": "100.01"
+            },
+            "expected": "reject",
+            "expectedDiscountAmount": null,
+            "expectedNet": null
+        },
+        {
+            "id": "pct-rounding-half-cent-down",
+            "description": "PCT 2,5% sobre 20,10 = 0,5025 -> arredonda para 0,50 (ADR-0008 HALF_UP na 3a casa < 5).",
+            "gross": "20.10",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 2.5,
+                "wireValue": "2.50",
+                "wireAmount": "0.50"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "0.50",
+            "expectedNet": "19.60"
+        },
+        {
+            "id": "pct-rounding-half-cent-up",
+            "description": "PCT 2,5% sobre 20,30 = 0,5075 -> arredonda para 0,51 (ADR-0008 HALF_UP na 3a casa >= 5).",
+            "gross": "20.30",
+            "discount": {
+                "mode": "PCT",
+                "engineValue": 2.5,
+                "wireValue": "2.50",
+                "wireAmount": "0.51"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "0.51",
+            "expectedNet": "19.79"
+        },
+        {
+            "id": "amount-subcent-rounds-up",
+            "description": "AMOUNT R$ 10,005 digitado -> quantiza para 10,01 ANTES de entrar na conta (ADR-0008).",
+            "gross": "150.00",
+            "discount": {
+                "mode": "AMOUNT",
+                "engineValue": 10.005,
+                "wireValue": "10.01",
+                "wireAmount": "10.01"
+            },
+            "expected": "accept",
+            "expectedDiscountAmount": "10.01",
+            "expectedNet": "139.99"
+        }
+    ]
+}
