@@ -7,49 +7,26 @@ import {
     type ResolvedCostBasisMeta,
 } from "@/entities/scenario/resolved-basis";
 import { useFilaments, usePrinters } from "@/entities/catalog/use-catalog";
-import {
-    freezeBomResult,
-    freezePriceResult,
-    type FrozenProvenance,
-} from "@/entities/history/frozen-payload";
+import { type FrozenProvenance } from "@/entities/history/frozen-payload";
 import { useEntitlement } from "@/entities/user/use-entitlement";
-import { RecordSnapshotButton } from "@/features/history/record-snapshot-sheet";
-import {
-    captionText,
-    CostsSection,
-    FieldGroup,
-    gridCard,
-    MarketplaceSection,
-    OtherCostsSection,
-    PriceResults,
-    sectionLabel,
-} from "@/features/calculator/calculator-form";
-import { type CatalogContext, computeFromForm } from "@/features/calculator/calculator-model";
-import {
-    applyFilamentFields,
-    applyPrinterFields,
-} from "@/features/calculator/catalog-prefill-apply";
+import { captionText, sectionLabel } from "@/features/calculator/calculator-form";
+import { computeFromForm } from "@/features/calculator/calculator-model";
 import { computeFormSignature } from "@/features/calculator/form-signature";
 import { KitBasisSummary } from "@/features/calculator/kit-basis-summary";
 import { applyMarketplaceChange } from "@/features/calculator/marketplace-change";
 import {
     applyScenarioConfig,
     buildScenarioConfig,
-    computeScenarioKitChannels,
     discardedFieldNotice,
 } from "@/features/calculator/scenario-bridge";
 import {
     type CalcFieldName,
     type CalcFormValues,
     calculatorResolver,
-    COST_FIELDS,
     defaultCalcValues,
     defaultOtherCost,
-    LABOR_AND_FINISH_FIELDS,
     type MarketplaceId,
-    MARKUP_FIELDS,
 } from "@/features/calculator/calculator-schema";
-import { SaveScenarioSheet } from "@/features/scenarios/save-scenario-sheet";
 import { ScenarioContextBar } from "@/features/scenarios/scenario-context-bar";
 import {
     ScenariosList,
@@ -64,8 +41,12 @@ import { useAvisoDeSaida } from "@/features/calculator/aviso-de-saida";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { useIsWide } from "@/shared/lib/use-is-wide";
 import { useSessionStore } from "@/shared/session/session-store";
-import { Alert, Button, Card, Field, Icon, Select } from "@/shared/ui";
+import { Alert, Button, Card, Icon } from "@/shared/ui";
 import { PageHeader } from "@/widgets/page-header/page-header";
+
+import { CalculatorFooter, CalculatorGrid } from "./calcular-page-body";
+import { CatalogPickerCard } from "./catalog-picker-card";
+import { KitDiscardedNotice, KitScenarioRecordButton } from "./calcular-page-kit-blocks";
 
 import "@/features/scenarios/scenarios-wide.css";
 
@@ -168,33 +149,6 @@ export function CalcularPage() {
     const sessionStatus = useSessionStore((s) => s.status);
     const filamentsList = useFilaments();
     const printersList = usePrinters();
-    const { items: filaments } = filamentsList;
-    const { items: printers } = printersList;
-    const [pickedFilamentId, setPickedFilamentId] = useState("");
-    const [pickedPrinterId, setPickedPrinterId] = useState("");
-    const applyFilament = (id: string) => {
-        setPickedFilamentId(id);
-        const picked = filaments.find((f) => f.id === id);
-        if (!picked) return;
-        applyFilamentFields(setValue, picked, { shouldValidate: true });
-    };
-    const applyPrinter = (id: string) => {
-        setPickedPrinterId(id);
-        const picked = printers.find((p) => p.id === id);
-        if (!picked) return;
-        applyPrinterFields(setValue, picked, { shouldValidate: true });
-    };
-    const showFilamentPicker = sessionStatus === "authenticated" && filaments.length > 0;
-    const showPrinterPicker = sessionStatus === "authenticated" && printers.length > 0;
-    // 016/T072-A8 — a genuine READ FAILURE with no cache (never "you have none yet", which is
-    // silent on purpose): `isError` already excludes the entitlement gate (a free/lapsed account's
-    // 403 is not a failure to explain here — that account never had catalog access to lose). Only
-    // fires when there is nothing to show at all — a `stale`-but-served list already renders its
-    // own honest "may be outdated" state inside the picker's own card (US5/T024).
-    const catalogPickerLoadError =
-        sessionStatus === "authenticated" &&
-        ((filamentsList.isError && filamentsList.error?.code !== "ENTITLEMENT_REQUIRED") ||
-            (printersList.isError && printersList.error?.code !== "ENTITLEMENT_REQUIRED"));
 
     // 016/US1 (T005/T007): free/signed-out users meet the unified premium teaser — the affordance
     // itself renders DISABLED and VISIBLE (US1-AC3, the one named exception), never hidden and
@@ -423,71 +377,12 @@ export function CalcularPage() {
                 </Card>
             )}
 
-            {/* 016/T072-A8 — the picker card simply VANISHED on a real read failure with no cache (empty
-          `items`, indistinguishable from "you have none yet"). This is the honest replacement:
-          shown only when there IS a failure to explain, never for a genuinely empty catalog. */}
-            {!showFilamentPicker && !showPrinterPicker && catalogPickerLoadError && (
-                <Card padding="md" className="flex flex-col gap-3">
-                    <Alert tone="danger" title={t.catalogPicker.loadError}>
-                        <Button
-                            variant="secondary"
-                            size="sm"
-                            className="mt-2"
-                            onClick={() => {
-                                filamentsList.refetch();
-                                printersList.refetch();
-                            }}
-                        >
-                            {t.catalogPicker.retry}
-                        </Button>
-                    </Alert>
-                </Card>
-            )}
-
-            {(showFilamentPicker || showPrinterPicker) && (
-                <Card padding="md" className="flex flex-col gap-3">
-                    <p style={sectionLabel}>{t.catalogPicker.title}</p>
-                    <p style={captionText}>{t.catalogPicker.hint}</p>
-                    <div style={gridCard}>
-                        {showFilamentPicker && (
-                            <Field label={t.catalogPicker.filament} tightLabel>
-                                {(p) => (
-                                    <Select
-                                        {...p}
-                                        options={[
-                                            { value: "", label: t.catalogPicker.placeholder },
-                                            ...filaments.map((f) => ({
-                                                value: f.id,
-                                                label: f.name,
-                                            })),
-                                        ]}
-                                        value={pickedFilamentId}
-                                        onChange={(e) => applyFilament(e.target.value)}
-                                    />
-                                )}
-                            </Field>
-                        )}
-                        {showPrinterPicker && (
-                            <Field label={t.catalogPicker.printer} tightLabel>
-                                {(p) => (
-                                    <Select
-                                        {...p}
-                                        options={[
-                                            { value: "", label: t.catalogPicker.placeholder },
-                                            ...printers.map((pr) => ({
-                                                value: pr.id,
-                                                label: pr.name,
-                                            })),
-                                        ]}
-                                        value={pickedPrinterId}
-                                        onChange={(e) => applyPrinter(e.target.value)}
-                                    />
-                                )}
-                            </Field>
-                        )}
-                    </div>
-                </Card>
-            )}
+            <CatalogPickerCard
+                sessionStatus={sessionStatus}
+                filamentsList={filamentsList}
+                printersList={printersList}
+                setValue={setValue}
+            />
 
             {/* 016/PR-B (US4/T015) — the input sections split into two columns from the desktop
           breakpoint up (single column, today's order, at 360/390): costs on the left, markup +
@@ -503,114 +398,26 @@ export function CalcularPage() {
           da grade (span 2) na posição da seção — nunca confinado a uma coluna curta. O caminho
           PREMIUM é byte-idêntico ao de antes (mesmo JSX, mesma ordem, `tf-calc-grid__full` nunca
           renderiza) — sem regressão nas guardas de geometria existentes. */}
-            <div className="tf-calc-grid">
-                <div className="tf-calc-grid__col">
-                    {/* 016/PR-C (US6/US7/US8/US9) — "Custos da peça" now carries the fused
-              MANDATORY+OPTIONAL fields, the h+min time input and the machine-cost question; the
-              old separate "Ajustes opcionais" section is gone (US9-AC2). */}
-                    <CostsSection control={control} fields={COST_FIELDS} />
-                    <FieldGroup
-                        control={control}
-                        title={t.sections.labor}
-                        info={t.sectionInfo.labor}
-                        fields={LABOR_AND_FINISH_FIELDS}
-                    />
-                    {marketplaceEntitled && (
-                        <OtherCostsSection
-                            control={control}
-                            fields={otherCostFields}
-                            errors={otherCostErrors}
-                            onAppend={() => appendOtherCost(defaultOtherCost())}
-                            onRemove={removeOtherCost}
-                        />
-                    )}
-                </div>
-                <div className="tf-calc-grid__col">
-                    <FieldGroup
-                        control={control}
-                        title={t.sections.markup}
-                        info={t.sectionInfo.markup}
-                        fields={MARKUP_FIELDS}
-                    />
-                    {!marketplaceEntitled && (
-                        <OtherCostsSection
-                            control={control}
-                            fields={otherCostFields}
-                            errors={otherCostErrors}
-                            onAppend={() => appendOtherCost(defaultOtherCost())}
-                            onRemove={removeOtherCost}
-                        />
-                    )}
-                    {/* (6) Marketplace — one slot per channel (add/remove); each channel's grossed-up
-              anúncio + líquido for varejo e atacado are read together in the footer's "Como
-              chegamos no preço" (US1, fused per US5). PREMIUM keeps this nested here, exactly
-              where it always was — the free GATE moves out below instead (R3). */}
-                    {marketplaceEntitled && (
-                        <MarketplaceSection
-                            {...marketplaceSectionProps}
-                            channelOutcomes={channelOutcomes}
-                        />
-                    )}
-                </div>
-                {!marketplaceEntitled && (
-                    <div className="tf-calc-grid__full">
-                        <MarketplaceSection {...marketplaceSectionProps} channelOutcomes={[]} />
-                    </div>
-                )}
-            </div>
+            <CalculatorGrid
+                control={control}
+                marketplaceEntitled={marketplaceEntitled}
+                otherCostFields={otherCostFields}
+                otherCostErrors={otherCostErrors}
+                onAppendOtherCost={() => appendOtherCost(defaultOtherCost())}
+                onRemoveOtherCost={removeOtherCost}
+                marketplaceSectionProps={marketplaceSectionProps}
+                channelOutcomes={channelOutcomes}
+            />
 
-            <div className="tf-calc-footer">
-                {result ? (
-                    <PriceResults
-                        result={result}
-                        values={values}
-                        channelOutcomes={marketplaceEntitled ? channelOutcomes : []}
-                    />
-                ) : (
-                    <Alert tone="danger">{t.invalidNote}</Alert>
-                )}
-
-                {/* 010/T010 (E5, PR-A US1) — "Salvar cenário": PREMIUM-ONLY inline, directly below "Preços
-            por canal" (ux §2.1), beside the existing freemium caption. `SaveScenarioSheet` mirrors
-            `RecordSnapshotButton` and returns null without an active entitlement — the free
-            calculator stays byte-untouched (SC-109), the honest door is "Meus cenários" above. */}
-                <div className="flex justify-center">
-                    <SaveScenarioSheet
-                        source={{
-                            disabled: !result || !input,
-                            buildConfig: () =>
-                                buildScenarioConfig({
-                                    values,
-                                    channelOutcomes,
-                                    parsedInput: input,
-                                }),
-                            basisLabel: messages.scenarios.basisKindAdhoc,
-                        }}
-                    />
-                </div>
-
-                {/* 009/T010 — record what you are quoting (US1). Below the results, beside the freemium
-            note: the offer sits exactly where the value is. Owner decision Q15 (2026-07-13): the
-            button is PREMIUM-ONLY and simply ABSENT otherwise — no teaser trigger here
-            (`RecordSnapshotButton` returns null), so the free calculator stays literally untouched
-            (SC-109 / SC-507 / SC-512). The honest door is the Histórico tab.
-            010/T036 (E5, PR-C, US7) — suppressed while a KIT-basis scenario is loaded: these
-            calculator fields are NOT what is on screen then (`KitBasisSummary`'s own rollup is),
-            so freezing them would record numbers the seller never saw; its own record button
-            lives with the rollup above. An AD_HOC/PRODUCT-basis scenario reuses this SAME button
-            — its provenance is simply `scenarioProvenance` instead of `null` ("originou-se do
-            cenário X"). */}
-                {result && input && loadedScenario?.config.costBasis.kind !== "KIT" && (
-                    <div className="flex justify-center">
-                        <RecordSnapshotButton
-                            source={{
-                                kind: "SINGLE",
-                                freeze: () => freezePriceResult(input, result, scenarioProvenance),
-                            }}
-                        />
-                    </div>
-                )}
-            </div>
+            <CalculatorFooter
+                result={result}
+                values={values}
+                channelOutcomes={channelOutcomes}
+                marketplaceEntitled={marketplaceEntitled}
+                input={input}
+                loadedScenario={loadedScenario}
+                scenarioProvenance={scenarioProvenance}
+            />
         </>
     );
 
@@ -661,63 +468,5 @@ export function CalcularPage() {
         <section className="tf-calc-page" data-testid="calc-content">
             {pageInner}
         </section>
-    );
-}
-
-/**
- * 016/T036 — the KIT twin of the scalar `discardedNotice` above: `computeScenarioKitChannels`
- * already strips any retired leaf line-by-line (never `ok:false` for that reason alone) and rolls
- * the discard up ONCE, deduped, across every line. Named out of the render's IIFE (019/Polish),
- * behavior unchanged.
- */
-function KitDiscardedNotice({ config, ctx }: { config: ScenarioConfig; ctx: CatalogContext }) {
-    const notice = discardedFieldNotice(computeScenarioKitChannels(config, ctx)?.discarded ?? []);
-    return notice ? <Alert tone="info">{notice}</Alert> : null;
-}
-
-/**
- * 010/T036 (E5, PR-C, US7) — the KIT-basis twin of the SINGLE record button above, freezing
- * `computeScenarioKitChannels`'s OWN rollup (the exact numbers `KitBasisSummary` renders) via
- * `freezeBomResult` — the SAME E4 freeze function `bom-page.tsx`'s kit composer already uses (US1,
- * no new snapshot machinery). Renders nothing when the rollup has no priceable line yet (mirrors the
- * kit composer's own `disabled={frozenKitLines.length === 0}`, but as an absence rather than a dead
- * disabled state, since `RecordSnapshotButton` itself decides visibility on entitlement).
- */
-function KitScenarioRecordButton({
-    loadedScenario,
-    ctx,
-}: {
-    loadedScenario: { id: string; name: string; config: ScenarioConfig };
-    ctx: CatalogContext;
-}) {
-    const rollup = computeScenarioKitChannels(loadedScenario.config, ctx);
-    if (!rollup?.bom) return null;
-    const bom = rollup.bom;
-
-    const provenance: FrozenProvenance = {
-        kind: "SCENARIO",
-        id: loadedScenario.id,
-        name: loadedScenario.name,
-    };
-
-    return (
-        <div className="flex justify-center">
-            <RecordSnapshotButton
-                source={{
-                    kind: "KIT",
-                    // catalogVersion mirrors the kit composer's own rule (I2/Option A): every line shares the
-                    // same catalog, so the first non-null line version is the kit's; `null` when every line
-                    // priced with manual fees only.
-                    freeze: () =>
-                        freezeBomResult(
-                            rollup.frozenLines,
-                            bom,
-                            provenance,
-                            rollup.frozenLines.find((l) => l.input.catalogVersion != null)?.input
-                                .catalogVersion ?? null,
-                        ),
-                }}
-            />
-        </div>
     );
 }

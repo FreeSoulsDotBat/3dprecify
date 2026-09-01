@@ -3,19 +3,10 @@ import { createContext, useContext } from "react";
 
 import { useBoms } from "@/entities/bom/use-bom";
 import { useProducts } from "@/entities/catalog/use-catalog";
-import {
-    type FrozenBreakdown,
-    type FrozenChannel,
-    frozenChannelHasFee,
-    frozenKitLines,
-    frozenQuoteLines,
-    type FrozenSnapshotPayload,
-} from "@/entities/history/frozen-payload";
-import { resolveOrigin, type OriginTarget } from "@/entities/history/origin";
-import type { HistoryItem, SyncState } from "@/entities/history/outbox";
+import { frozenKitLines } from "@/entities/history/frozen-payload";
+import { resolveOrigin } from "@/entities/history/origin";
 import { useSnapshot } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
-import { EntryActions } from "@/features/history/entry-actions";
 import { ExportButton } from "@/features/history/export-sheet";
 import { SnapshotManageActions } from "@/features/history/snapshot-manage";
 import { messages } from "@/shared/i18n/messages.pt-br";
@@ -31,11 +22,14 @@ import {
     quotedDate,
     quotedTime,
     SYNC_BADGE,
-    validUntil,
 } from "@/entities/history/history-format";
 
 import { CompareTodayBlock } from "./compare-today";
 import { RecalcTodayButton } from "./recalc-today";
+import { ChannelsBlock } from "./snapshot-detail-channels";
+import { KitLines, QuoteDocument } from "./snapshot-detail-quote";
+import { SyncAlert } from "./snapshot-detail-sync-alert";
+import { Breakdown, TechnicalSheet } from "./snapshot-detail-tech";
 
 import "./historico-page.css";
 
@@ -64,17 +58,6 @@ const t = messages.historico;
 // 019/PR-E — a cópia do orçamento é a da prancheta 18, verbatim (T087).
 const tq = messages.quote;
 const tr = messages.calculator.results;
-
-/** §1.2 — a copy de cada estado do `SyncAlert`, no mesmo idiom de `SYNC_BADGE`
- *  (`entities/history/history-format.ts`). `unauthenticated` tem a SUA própria linha (hotfix
- *  016/A3, H4b): cair no `failed` por omissão diria "Não foi possível registrar" sobre um registro
- *  que não foi rejeitado — a sessão é que morreu. */
-const SYNC_ALERT_COPY: Record<Exclude<SyncState, "synced">, { title: string; body: string }> = {
-    pending: { title: t.syncPendingTitle, body: t.syncPendingBody },
-    blocked: { title: t.syncBlockedTitle, body: t.syncBlockedBody },
-    unauthenticated: { title: t.syncUnauthenticatedTitle, body: t.syncUnauthenticatedBody },
-    failed: { title: t.syncFailedTitle, body: t.syncFailedBody },
-};
 
 export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
     // Resolve THIS record by its clientSnapshotId (the URL key). Under lazy pagination it need not be
@@ -236,149 +219,6 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
 }
 
 /**
- * §1.2 — the record's sync state in plain words, one calm reading per state. `pending` carries the
- * durability caveat (F4, detail-only, muted — never on the card); `failed` shows the support code so
- * the seller has something to report. All three offer [Tentar novamente]/[Descartar] (B2) except a
- * pending offline, where retry cannot work (handled inside `EntryActions`). Never rendered for a
- * synced record — a badge on everything would be noise.
- */
-function SyncAlert({ item }: { item: HistoryItem }) {
-    if (item.syncState === "synced") return null;
-
-    const state = item.syncState;
-    const { title, body } = SYNC_ALERT_COPY[state];
-    const supportCode = item.entry?.lastStatus;
-
-    return (
-        <Alert tone={state === "failed" ? "danger" : "info"} title={title}>
-            <p>{body}</p>
-            {/* F4 — true (IndexedDB eviction is best-effort) and the most alarming line in the app, so it
-          lives HERE only, muted, and never on the card. */}
-            {state === "pending" && <p className="tf-historico__meta">{t.syncPendingDurability}</p>}
-            {state === "failed" && supportCode != null && (
-                <p className="tf-historico__meta">
-                    {messages.error.supportCode} {supportCode}
-                </p>
-            )}
-            {/* hotfix 016/A3 (H5) — the way back lives right beside the actions: a dead session is only
-          ONE tap from being fixed. */}
-            {state === "unauthenticated" && (
-                <a
-                    className="tf-btn tf-btn--secondary tf-btn--sm mt-2"
-                    href={`/sign-in?redirect=${encodeURIComponent("/historico")}`}
-                >
-                    {t.signInAction}
-                </a>
-            )}
-            <EntryActions item={item} />
-        </Alert>
-    );
-}
-
-/**
- * The per-channel prices the seller actually quoted — frozen strings, only formatted (M11). A `null`
- * price renders ABSENT, never `R$ 0,00` (FR-507). A kit rollup additionally states its honest line
- * counts (how many pieces contributed, how many had no such channel).
- */
-function ChannelsBlock({ payload }: { payload: FrozenSnapshotPayload }) {
-    const channels = payload.channels ?? [];
-    return (
-        <div className="flex flex-col gap-2">
-            <h2 className="tf-historico__section">{t.channels}</h2>
-            {channels.map((channel, i) => {
-                // 014/T120 — prohibition 2 above ("an absent line is not a zero") applied to the channel
-                // block, which was the one place that did not honour it. A slot recorded with NO commission
-                // priced at anúncio == base: four rows asserting a marketplace price that was never
-                // computed, and that the calculator itself refuses to show. The channel stays — the seller
-                // DID choose that marketplace — and says what actually happened instead.
-                const semComissao = !frozenChannelHasFee(payload, i);
-                return <FrozenChannelRow key={i} channel={channel} semComissao={semComissao} />;
-            })}
-        </div>
-    );
-}
-
-/**
- * 014/R3 — o nome do marketplace como a Calcular o escreve. O congelado exibia o enum CRU
- * (`MERCADO_LIVRE`) enquanto a mesma sessão da Calcular mostrava "Mercado Livre · Clássico".
- *
- * O valor cru é FALLBACK, não alvo: um documento antigo pode trazer texto livre que este dicionário
- * não conhece, e traduzir só o que ele conhece mantém a regra desta tela — o que está gravado é
- * renderizado, nunca reescrito. `null` é o canal sem marketplace, que já tinha a sua própria cópia.
- */
-function marketplaceLabel(raw: string | null): string {
-    if (raw === null) return messages.calculator.channels.channelFallback;
-    const known: Record<string, string> = messages.calculator.marketplaceNames;
-    return known[raw] ?? raw;
-}
-
-function FrozenChannelRow({
-    channel,
-    semComissao,
-}: {
-    channel: FrozenChannel;
-    semComissao: boolean;
-}) {
-    return (
-        <div className="tf-historico__channel">
-            <span className="tf-historico__channel-name">
-                {marketplaceLabel(channel.marketplace)}
-            </span>
-            {!semComissao && (
-                <>
-                    {(
-                        [
-                            {
-                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.varejo}`,
-                                value: channel.precoAnuncioVarejo,
-                            },
-                            {
-                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.varejo}`,
-                                value: channel.recebidoLiquidoVarejo,
-                            },
-                            {
-                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.atacado}`,
-                                value: channel.precoAnuncioAtacado,
-                            },
-                            {
-                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.atacado}`,
-                                value: channel.recebidoLiquidoAtacado,
-                            },
-                        ] as const
-                    ).map(
-                        (piece, i) =>
-                            piece.value != null && (
-                                <span key={i} className="tf-historico__piece">
-                                    <span>{piece.label}</span>
-                                    <strong>{formatFrozenBRL(piece.value)}</strong>
-                                </span>
-                            ),
-                    )}
-                </>
-            )}
-            {/* Said in words, in the tense of the RECORD: there is nothing to inform now — what happened
-          is that this channel carried no commission on the day it was quoted. */}
-            {semComissao && <span className="tf-historico__meta">{t.channelNoFee}</span>}
-            {/* An honestly recorded per-slot failure, echoed as recorded — never hidden. Outside the gate
-          above: an error is not a price, and a slot can fail for reasons unrelated to its fee. */}
-            {channel.error && <span className="tf-historico__meta">{channel.error}</span>}
-            {/* Kit rollup: how many lines contributed to this channel, how many had none. Also outside —
-          the counts describe the composition, not the money. */}
-            {channel.contributingLines != null && (
-                <span className="tf-historico__meta">
-                    {t.channelContributing
-                        .replace("{n}", String(channel.contributingLines))
-                        .replace(
-                            "{total}",
-                            String((channel.contributingLines ?? 0) + (channel.skippedLines ?? 0)),
-                        )}
-                </span>
-            )}
-        </div>
-    );
-}
-
-/**
  * 018/US2 — quando o detalhe é a COLUNA DIREITA do mestre-detalhe, ele perde a moldura de página:
  * sem `<section>` própria, sem "Voltar para a lista" (a lista está ali, à esquerda) e sem um
  * segundo `<h1>` na mesma tela — dois `<h1>` seriam uma regressão de acessibilidade vestida de
@@ -401,198 +241,5 @@ function Shell({ title, children }: { title?: string; children: React.ReactNode 
             <PageHeader title={title ?? t.title} />
             {children}
         </section>
-    );
-}
-
-/**
- * 019/PR-E · US16 (T135, ADR-0034 §2) — o ORÇAMENTO enviado, como documento.
- *
- * Três coisas que esta tela faz e que valem por escrito:
- *
- *   1. Itemiza `lines` com o dinheiro JÁ escalado que o documento carrega (`unitPrice`,
- *      `subtotal`) — nenhuma multiplicação acontece aqui, do mesmo jeito que nenhuma acontece no
- *      PDF (ADR-0020 §1). `quote.lineMeta` é "{n} un. × {valor}".
- *   2. Mostra o DESCONTO declarado: bruto → desconto → total. Um documento que mostrasse só o
- *      líquido esconderia a conta que o vendedor fez — e é a conta que o cliente recebeu.
- *   3. "Válido até" é TEXTO derivado da coluna `quoteValidityDays` (Q7): data do registro + os
- *      dias prometidos. Não há estado de vencimento; um orçamento nunca "vence" na lista.
- */
-function QuoteDocument({
-    payload,
-    validity,
-    item,
-}: {
-    payload: FrozenSnapshotPayload;
-    validity: number | null;
-    item: HistoryItem;
-}) {
-    const lines = frozenQuoteLines(payload);
-    const discount = payload.discount;
-    const quoted = quotedDate(item.deviceQuotedAt, offsetOf(item));
-
-    return (
-        <div className="flex flex-col gap-2">
-            {validity !== null && (
-                <p className="tf-historico__meta" data-testid="quote-document-dates">
-                    {tq.documentDates
-                        .replace("{data}", quoted)
-                        .replace("{ate}", validUntil(item, validity))}
-                </p>
-            )}
-
-            <h2 className="tf-historico__section">
-                {lines.length === 1
-                    ? tq.itemCountOne
-                    : tq.itemCount.replace("{n}", String(lines.length))}
-            </h2>
-            {lines.map((line, i) => (
-                <span key={i} className="tf-historico__piece">
-                    <span>{line.name ?? t.adhocFallback}</span>
-                    <span className="tf-historico__qty">
-                        {tq.lineMeta
-                            .replace("{n}", String(line.quantity))
-                            .replace("{valor}", formatFrozenBRL(line.unitPrice))}
-                    </span>
-                    <strong>{formatFrozenBRL(line.subtotal)}</strong>
-                </span>
-            ))}
-
-            {/* O desconto só aparece quando foi DECLARADO — ausente não é zero (FR-507). */}
-            {discount && (
-                <>
-                    <BreakdownRow
-                        label={tq.subtotal}
-                        value={formatFrozenBRL(discount.grossTotal)}
-                    />
-                    <BreakdownRow
-                        label={
-                            discount.mode === "PCT"
-                                ? // O percentual é gravado com as duas casas da casa ("10.00"); na tela ele se lê
-                                  // como o vendedor o digitou — formatação, nunca reescrita do que está gravado.
-                                  tq.discountLine.replace(
-                                      "{pct}",
-                                      Number(discount.value).toLocaleString("pt-BR", {
-                                          maximumFractionDigits: 2,
-                                      }),
-                                  )
-                                : tq.discountAmountLine
-                        }
-                        value={`- ${formatFrozenBRL(discount.amount)}`}
-                    />
-                </>
-            )}
-            {payload.totals.precoOrcamento && (
-                <BreakdownRow
-                    label={tq.total}
-                    value={formatFrozenBRL(payload.totals.precoOrcamento)}
-                    emphasis="total"
-                />
-            )}
-        </div>
-    );
-}
-
-/** A kit quote ITEMIZES its pieces (SC-515) — with the names as CAPTURED, so the renderer never has
- *  to look anything up (and so a renamed product cannot rewrite a past quote). Each piece is priced
- *  at the SNAPSHOT'S headline basis (review PR-A, C1): a kit quoted at ATACADO itemizes at atacado,
- *  or the pieces would contradict the very total the seller charged (`freezeTotals` stores both). */
-function KitLines({ payload, basis }: { payload: FrozenSnapshotPayload; basis: string }) {
-    return (
-        <div className="flex flex-col gap-1">
-            <h2 className="tf-historico__section">{t.kitPieces}</h2>
-            {frozenKitLines(payload).map((line, i) => {
-                const total =
-                    basis === "PRECO_ATACADO" ? line.totals.precoAtacado : line.totals.precoVarejo;
-                return (
-                    <span key={i} className="tf-historico__piece">
-                        <span>{line.name ?? t.adhocFallback}</span>
-                        {/* A COUNT, not a "×" factor: `total` is ALREADY quantity-scaled (review PR-A, C2). */}
-                        <span className="tf-historico__qty">
-                            {t.kitPieceQty.replace("{n}", String(line.quantity))}
-                        </span>
-                        <strong>{total ? formatFrozenBRL(total) : "—"}</strong>
-                    </span>
-                );
-            })}
-        </div>
-    );
-}
-
-/** SOMENTE as linhas gravadas. A row the payload does not carry is simply not here (FR-507). */
-function Breakdown({ breakdown }: { breakdown: FrozenBreakdown }) {
-    const rows: [string, string | undefined][] = [
-        [tr.material, breakdown.material],
-        [tr.energy, breakdown.energy],
-        [tr.machine, breakdown.machine],
-        [tr.failure, breakdown.falha],
-        [tr.finishing, breakdown.finishing],
-        [tr.labor, breakdown.labor],
-    ];
-    const present = rows.filter((r): r is [string, string] => !!r[1]);
-    const others = breakdown.otherCosts ?? [];
-    if (present.length === 0 && others.length === 0) return null;
-
-    return (
-        <div className="flex flex-col gap-1">
-            <h2 className="tf-historico__section">{t.breakdown}</h2>
-            {present.map(([label, value]) => (
-                <BreakdownRow key={label} label={label} value={formatFrozenBRL(value)} />
-            ))}
-            {others.map((cost, i) => (
-                <BreakdownRow
-                    key={`other-${i}`}
-                    label={cost.name ?? messages.calculator.outrosCustos.lineFallback}
-                    value={formatFrozenBRL(cost.value)}
-                />
-            ))}
-        </div>
-    );
-}
-
-/** The date and the formula version, labelled (A29 / FR-506) — plus the two-shelf rule in plain
- *  words, because the seller has every reason to expect the number to have moved, and it did not.
- *  The "abrir origem" affordance (T019) appears ONLY when `origin` resolved: a captured name whose
- *  id no longer exists shows its name but offers no link — never a "produto excluído" claim. */
-function TechnicalSheet({
-    payload,
-    origin,
-}: {
-    payload: FrozenSnapshotPayload;
-    origin: OriginTarget | null;
-}) {
-    return (
-        <Card className="tf-historico__tech">
-            <h2 className="tf-historico__section">{t.techTitle}</h2>
-            <span className="tf-historico__meta">
-                {t.modelVersionLine.replace("{versao}", payload.modelVersion)}
-            </span>
-            {/* The CAPTURED name — what the thing was called THEN. It always shows; it is part of the
-          frozen document, not a live lookup. */}
-            {payload.provenance && (
-                <span className="tf-historico__meta">
-                    {t.originLine.replace("{nome}", payload.provenance.name)}
-                </span>
-            )}
-            {/* Resolved at read time: present iff the origin still exists. Its ABSENCE is silent — the
-          two-shelf rule means a gone origin is not a problem the seller has (FR-503). */}
-            {origin?.kind === "PRODUCT" && (
-                <Link
-                    to="/catalogo"
-                    search={{ produto: origin.id }}
-                    className="tf-historico__origin-link"
-                >
-                    {t.openProduct}
-                </Link>
-            )}
-            {origin?.kind === "KIT" && (
-                <Link to="/kits" search={{ id: origin.id }} className="tf-historico__origin-link">
-                    {t.openKit}
-                </Link>
-            )}
-            <p className="tf-historico__meta">{t.frozenExplainer}</p>
-            {/* FR-528, owner decision F2: the snapshot ASSERTS its date; it does not pretend the date was
-          VERIFIED. One muted line, here and nowhere else. */}
-            <span className="tf-historico__meta">{t.deviceClockNote}</span>
-        </Card>
     );
 }
