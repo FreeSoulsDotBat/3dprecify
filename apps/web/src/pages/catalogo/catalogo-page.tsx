@@ -72,19 +72,9 @@ export function CatalogoPage() {
     // saved kit lands the seller on its list, E3/K2); otherwise Filamentos.
     const search = useSearch({ strict: false }) as { tab?: string; produto?: string };
     const navigate = useNavigate();
-    // 013/F-02 follow-up — the tab is DERIVED from the URL, never frozen in `useState`.
-    //
-    // It used to be `useState(initializer)`, which only re-derives on MOUNT. That was fine while the
-    // product form lived at `/catalogo/produtos/*`: opening it left this route, so coming back always
-    // remounted and re-read `?tab=`. Now the form is `?produto=` on THIS route, so the component stays
-    // mounted across the whole visit — and a frozen `active` meant (a) `?tab=products` after a product
-    // save no longer selected Produtos, and (b) `/catalogo?tab=kits` as a deep link rendered whatever
-    // tab happened to be in stale state. A deep-link bug hiding inside the deep-link story; the e2e
-    // caught it as a filament row click that opened a product instead.
-    //
-    // Deriving makes the URL the single source of truth, so the tab survives reload/bookmark/back.
-    // Every TabId is round-trippable, so a tab click survives reload — including `printers`, which the
-    // old mount-time initializer silently dropped (it only ever recognised products/kits).
+    // ⚠ @doc DEC-068 — a aba é DERIVADA da URL, nunca congelada em `useState`: com o formulário
+    //   em `?produto=` o componente fica montado a visita inteira, e um `active` congelado
+    //   fazia `/catalogo?tab=kits` renderizar a aba do estado velho.
     const active: TabId = TABS.some((tab) => tab.id === search.tab)
         ? (search.tab as TabId)
         : "filaments";

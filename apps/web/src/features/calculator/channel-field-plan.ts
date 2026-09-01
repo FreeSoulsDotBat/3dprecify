@@ -153,18 +153,9 @@ export function channelFieldPlan(
 }
 
 /**
- * 016/US11 (T044 homologação PR-E, bloqueador) — closes the OTHER half of RA5 that the render-only
- * plan left open: `channelFieldPlan` decides what SHOWS, never what CHARGES. Switching a slot's
- * marketplace on an already-filled field (e.g. a typed "Frete" on ML) used to leave the value alone
- * — the field simply stopped rendering on the new marketplace (Amazon, `freightCost` outside its
- * `feeAxes`), and the number kept discounting the líquido with no control on screen naming it
- * (measured: −R$ 50, "Canal não-lucrativo", seal "ajustado por você", zero visible field).
- *
- * Returns ONLY the fields that must be blanked — every field the new plan still shows is left
- * untouched (its value, if any, keeps meaning what the seller typed). The caller (the marketplace
- * CHANGE handler) applies these onto the live form; a field with a value that survives a marketplace
- * switch because the NEW plan also shows it is not a leak, it is the seller's own number carrying
- * over on an axis that still exists.
+ * ⚠ @doc DEC-067 — devolve SÓ os campos que sumiram da tela. Um "Frete" digitado no ML seguia
+ *   descontando o líquido depois de trocar para a Amazon, sem controle nenhum que o nomeasse
+ *   (medido: −R$ 50, "Canal não-lucrativo", zero campo visível).
  */
 export function feeFieldsToBlankOnMarketplaceChange(
     catalog: FeeCatalog,

@@ -43,19 +43,9 @@ import {
  *  this local alias keeps the call sites reading in the scenario domain's own vocabulary. */
 const decimalStringToPtBr = wireToPtBr;
 
-// 016/T072-R5 (2026-08-07) — a CURRENCY leaf gets the SAME pt-BR thousands-grouping
-// `NumberField`'s on-blur mask applies ("12345.00" → "12.345,00"), instead of the plain dot→comma
-// swap above. MEASURED: reopening a saved scenario used to write the raw un-grouped string
-// straight into the form (`decimalStringToPtBr` alone), so a value ≥1000 rendered "12345,00" on
-// reopen — masked everywhere else, unmasked here. `formatDecimal(parseDecimal(x))` is a true
-// round-trip through the exact functions the mask itself uses (never a re-round: the wire string
-// already carries the field's real precision).
-//
-// 019/PR-C (T060) — R5's own `formatDecimal(n, 2)` was HARDCODED, so it re-truncated any leaf
-// with more than 2 real decimals — the tariff (R$/kWh) is the one currency field with 4
-// (FR-1912/SC-1905): a saved "0,8734" reopened as "0,87", a silent value cut reintroduced by the
-// fix meant to stop a DIFFERENT cut (missing thousands separator). `precision` defaults to 2 (the
-// R5 behaviour for every other money field, unchanged).
+// ⚠ @doc DEC-074 — a folha de moeda reabre com a MESMA máscara, e a `precision` vem por
+//   parâmetro: cravá-la em 2 re-truncava a tarifa de 4 casas — um corte silencioso
+//   reintroduzido pelo conserto feito para acabar com outro corte.
 function moneyLeafToPtBr(leaf: string, precision = 2): string {
     const n = parseDecimal(wireToPtBr(leaf));
     return Number.isFinite(n) ? formatDecimal(n, precision) : decimalStringToPtBr(leaf);

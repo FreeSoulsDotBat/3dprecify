@@ -100,21 +100,11 @@ export function checkBandCoverage(bands: readonly CoverableBand[]): SanityVerdic
 }
 
 /**
- * A próxima `catalogVersion` ("YYYY-MM-DD.n") — a data da LEITURA mais uma sequência dentro dela.
+ * A próxima `catalogVersion` ("YYYY-MM-DD.n"): a data da LEITURA mais uma sequência INTEIRA.
  *
- * 014 (revisão final adversarial, 2026-07-31): `build-amazon.mjs` cravava `${collectedAt}.0`, então
- * regerar na mesma data de coleta reescrevia conteúdo DIFERENTE sob rótulo IDÊNTICO. Foi o que
- * aconteceu nesta branch — o artefato foi de 77 para 79 entradas com `catalogVersion` parado em
- * `2026-07-28.0`.
- *
- * Isso não é higiene de versionamento: o rótulo é congelado dentro do payload que o ADR-0019 torna
- * IMUTÁVEL. Dois registros dizendo o mesmo nome descreviam tabelas diferentes, e a pergunta que o
- * campo existe para responder — QUAL tabela produziu este número — deixava de ter resposta, sem
- * conserto posterior possível, porque o registro não pode ser reescrito.
- *
- * Duas regras, e a segunda é a que evita o ruído: a sequência é INTEIRA (a mesma armadilha que
- * `freshest` pagou — texto faria ".9" perder para ".10"), e o rótulo só se move quando o CONTEÚDO
- * mudou. Ele nomeia o dado, não a execução: reler a mesma tabela não a torna uma tabela nova.
+ * ⚠ @doc DEC-073 — o rótulo nomeia o DADO, não a execução, e é congelado em payload imutável:
+ *   conteúdo diferente sob rótulo idêntico deixa "qual tabela produziu este número" sem
+ *   resposta possível, porque o registro não pode ser reescrito.
  */
 export function nextCatalogVersion(
     // Exigido, não `string | null`: o artefato SEMPRE carrega um rótulo, e um artefato sem ele é uma

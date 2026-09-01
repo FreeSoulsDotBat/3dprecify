@@ -1831,3 +1831,192 @@ como intenção de retorno ([[DEC-006]]).
 
 - `apps/web/src/pages/historico/history-queue-banner.tsx` → `QueueBanner`
 
+---
+
+## DEC-067 — Trocar de marketplace APAGA só o campo que sumiu da tela; o resto é número do vendedor
+
+**Data**: 2026-08-05 (016/US11, T044, bloqueador da homologação PR-E) · **Governa**:
+`channel-field-plan.ts`
+
+O plano de campos decide **o que APARECE, nunca o que COBRA**. Trocar o marketplace de um slot com
+campo já preenchido — por exemplo um "Frete" digitado no ML — deixava o valor lá: o campo
+simplesmente parava de renderizar no marketplace novo (Amazon, `freightCost` fora dos `feeAxes`
+dela), **e o número seguia descontando o líquido sem nenhum controle na tela que o nomeasse**.
+Medido: −R$ 50, "Canal não-lucrativo", selo "ajustado por você", zero campo visível.
+
+Devolve APENAS os campos que precisam ser zerados — todo campo que o plano novo ainda mostra fica
+intocado, e o valor dele, se houver, segue significando o que o vendedor digitou. **Um valor que
+sobrevive à troca porque o plano NOVO também o mostra não é vazamento: é o número do próprio vendedor
+seguindo num eixo que continua existindo.**
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/channel-field-plan.ts` → `channelFieldPlan`
+
+---
+
+## DEC-068 — A aba é DERIVADA da URL, nunca congelada em `useState`
+
+**Data**: 2026-07-31 (013/F-02 follow-up) · **Governa**: `catalogo-page.tsx`
+
+Era `useState(initializer)`, que só re-deriva na MONTAGEM. Isso funcionava enquanto o formulário de
+produto vivia em `/catalogo/produtos/*`: abri-lo saía desta rota, então voltar sempre remontava e
+relia o `?tab=`. Com o formulário virando `?produto=` NESTA rota, o componente fica montado a visita
+inteira — e um `active` congelado significava que (a) `?tab=products` depois de salvar um produto não
+selecionava mais Produtos, e (b) `/catalogo?tab=kits` como link profundo renderizava a aba que
+estivesse no estado velho.
+
+**Um bug de link profundo escondido dentro da história de link profundo** ([[DEC-016]]); o e2e o pegou
+como um clique numa linha de filamento que abria um produto.
+
+Derivar faz da URL a fonte única, então a aba sobrevive a reload, favorito e voltar. Todo `TabId` faz
+a ida e volta — inclusive `printers`, que o inicializador antigo largava em silêncio (ele só conhecia
+products/kits).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/catalogo/catalogo-page.tsx` → `TabId`
+
+---
+
+## DEC-069 — Salvar cenário congela a config na ABERTURA da Sheet, e o affordance é ausente sem premium
+
+**Data**: 2026-07-19 (010/T010, E5 PR-A US1) · **Governa**: `save-scenario-sheet.tsx`
+
+Espelha exatamente o idioma do `RecordSnapshotButton` do E4 ([[DEC-013]]): um affordance inline
+PREMIUM-ONLY que é simplesmente AUSENTE sem entitlement ativo de servidor — não acinzentado, não
+gatilho de teaser (a postura SC-109 que esta feature herda).
+
+É o guarda de rota honesto do CLIENTE que o ADR-0015 pede: **informativo apenas** — o
+`require_entitlement(ACTIVE)` do servidor no `POST /scenarios` é o portão de verdade, e um cliente com
+`active` velho ainda pode ser recusado lá (mostrado honestamente, nunca presumido).
+
+**`buildConfig()` é chamado UMA vez, na ABERTURA da Sheet** (o mesmo padrão de congelar do
+[[DEC-013]]): a config que é salva é a que o vendedor revisou na tela, não uma re-derivada depois que
+ele começou a digitar o nome.
+
+`features/scenarios` nunca importa `features/calculator`: quem monta o closure é a página, pelo
+[[DEC-009]].
+
+### Onde isso vive no código
+
+- `apps/web/src/features/scenarios/save-scenario-sheet.tsx` → `buildConfig`
+
+---
+
+## DEC-070 — O painel genérico é onde as regras de honestidade da escrita são IMPOSTAS
+
+**Data**: 2026-07-10 (T019/T022) · **atualizado** 2026-08-28 (019/PR-B, T044/T045) · **Governa**:
+`catalog-panel.tsx`
+
+O painel possui a apresentação de lista/vazio/carregando/erro/offline, mais a Sheet de criar-editar e
+o Dialog de confirmar exclusão; o que é específico da entidade (formulário, textos de linha,
+mapeamento de fio) entra por prop.
+
+**As regras de honestidade são impostas AQUI**: toast de sucesso dispara SÓ depois de um 2xx real; uma
+escrita que falha mantém a Sheet aberta com uma linha específica e honesta ([[DEC-061]]) e **nunca
+finge um salvamento**.
+
+**019/PR-B — "Premium sem parede"**: quem não paga não encontra mais uma parede. O corpo troca a coroa
+e o vazio curto pelo VAZIO DIDÁTICO ([[DEC-046]]) sempre que `gate !== "active"`, e "Adicionar" abre o
+MESMO formulário — inerte (`<Frozen>`, e **a barreira é a AUSÊNCIA do handler de submit**, nunca um
+segundo portão no cliente; Constituição IV intocada). A faixa "Premium pausado" saiu: o rodapé do
+formulário inerte já explica.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/catalog/catalog-panel.tsx` → `CatalogPanel`
+
+---
+
+## DEC-071 — O card do Histórico é uma LINHA DE LIVRO-RAZÃO, e o layout é quem impõe isso
+
+**Data**: 2026-07-12 (009/T013, E4 PR-A, US2 · FR-523/FR-524) · **Governa**: `historico-page.tsx`
+
+O card **não é um preço**, e não é a cópia que garante isso — é o layout:
+
+- **a DATA fica estruturalmente ACIMA do dinheiro** (FR-523): não dá para bater o olho no card e ler
+  preço vivo, porque a primeira coisa sob o rótulo é quando aquilo foi cotado;
+- o dinheiro é **"Valor cotado"**, nunca "Preço" — *preço* é o que a calculadora diz HOJE;
+- a base vem escrita embaixo (um total sem rótulo é afirmação ambígua — [[DEC-013]]);
+- sem `PriceHero`, sem tratamento de vivo, sem cor que leia como "atual".
+
+**A lista vem de UM seletor** (servidor ∪ outbox, servidor vence). Nenhum componente aqui pode ler a
+query do servidor sozinha — um registro na fila que a lista não mostrasse deixaria o vendedor
+acreditando que o orçamento nunca foi feito.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/historico/historico-page.tsx` → `HistoricoPage`
+
+---
+
+## DEC-072 — O campo de horas ganha rascunho local, e só enquanto o texto tem separador
+
+**Data**: 2026-08-15 (review do PR #58) · **Governa**: `campo-de-horas.tsx`
+
+O achado: `2:30` funcionava COLADO e não funcionava DIGITADO. A causa é o campo ser controlado por
+`String(h)` — ao teclar `0`, depois `:`, o texto `"0:"` não casa como relógio, cai no `parseInt` que
+devolve 0, o React re-renderiza com `"0"` e **o `:` que a pessoa acabou de digitar some**. Continuando,
+`"30"` vira **30 horas** — 60× o que ela quis dizer, calado ([[DEC-020]]).
+
+O conserto é dar um rascunho local ao campo **enquanto o texto contém um separador**: nesse estado ele
+NÃO commita nada e deixa a pessoa terminar de escrever. Assim que o relógio fecha (`0:30`), commita e
+devolve o controle ao valor derivado. No blur, um rascunho que nunca fechou cai no `parseInt` de
+sempre — **nada fica preso num estado que o motor não conhece**.
+
+Esta é a única parte do campo com estado próprio, e ela existe só para os caracteres intermediários.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/form-atoms/campo-de-horas.tsx` → `CampoDeHoras`
+
+---
+
+## DEC-073 — O rótulo nomeia o DADO, não a execução: só se move quando o conteúdo mudou
+
+**Data**: 2026-07-31 (014, revisão final adversarial) · **Governa**: `nextCatalogVersion`
+
+A próxima `catalogVersion` ("YYYY-MM-DD.n") é a data da LEITURA mais uma sequência dentro dela.
+
+O `build-amazon.mjs` cravava `${collectedAt}.0`, então **regerar na mesma data de coleta reescrevia
+conteúdo DIFERENTE sob rótulo IDÊNTICO**. Foi o que aconteceu: o artefato foi de 77 para 79 entradas
+com `catalogVersion` parado em `2026-07-28.0`.
+
+**Isso não é higiene de versionamento.** O rótulo é congelado dentro do payload que o ADR-0019 torna
+IMUTÁVEL. Dois registros dizendo o mesmo nome descreviam tabelas diferentes, e a pergunta que o campo
+existe para responder — QUAL tabela produziu este número — deixava de ter resposta, **sem conserto
+posterior possível, porque o registro não pode ser reescrito**.
+
+Duas regras, e a segunda é a que evita ruído: a sequência é INTEIRA (a mesma armadilha que o
+`freshest` pagou — texto faria ".9" perder para ".10"), e o rótulo **só se move quando o CONTEÚDO
+mudou**. Reler a mesma tabela não a torna uma tabela nova. Mesma família do [[DEC-004]].
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/guardrails.ts` → `nextCatalogVersion`
+
+---
+
+## DEC-074 — A folha de moeda reabre com a MESMA máscara, e a precisão vem por parâmetro
+
+**Data**: 2026-08-07 (016/T072-R5) · **corrigido** 2026-08-28 (019/PR-C, T060) · **Governa**: o
+sentido REABRIR do `scenario-bridge`
+
+Uma folha de MOEDA recebe a MESMA máscara de milhar pt-BR que o `NumberField` aplica no blur
+(`"12345.00"` → `"12.345,00"`), em vez da troca simples ponto→vírgula. MEDIDO: reabrir um cenário
+salvo escrevia a string crua sem agrupamento direto no formulário, então um valor ≥1000 renderizava
+`"12345,00"` na reabertura — mascarado em todo lugar, sem máscara ali. O round-trip passa pelas
+funções exatas que a própria máscara usa ([[DEC-002]]), nunca por um novo arredondamento: a string do
+fio já carrega a precisão real do campo.
+
+> **E a correção do R5 reintroduziu um corte diferente.** O `formatDecimal(n, 2)` dele estava
+> CRAVADO, então re-truncava qualquer folha com mais de 2 casas reais — e a tarifa (R$/kWh) é o único
+> campo de moeda com 4 (FR-1912/SC-1905): um `"0,8734"` salvo reabria como `"0,87"`. **Um corte
+> silencioso reintroduzido pelo conserto feito para acabar com OUTRO corte** (a falta do separador de
+> milhar). Hoje a `precision` vem por parâmetro e o padrão continua 2.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/scenario-bridge.ts` → `precision`
+

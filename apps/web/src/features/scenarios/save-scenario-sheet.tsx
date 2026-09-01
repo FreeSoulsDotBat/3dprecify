@@ -18,19 +18,8 @@ import {
     toast,
 } from "@/shared/ui";
 
-// 010/T010 (E5, PR-A US1) — the "Salvar cenário" affordance + the name/note Sheet.
-//
-// Mirrors the E4 `RecordSnapshotButton` idiom exactly (`features/history/record-snapshot-sheet.tsx`):
-// a PREMIUM-ONLY inline affordance that is simply ABSENT without an active server entitlement — not
-// greyed-out, not a teaser trigger (the SC-109 posture this feature inherits, §0.1/§11-F2 of
-// ux-scenarios.md). This is the honest CLIENT route-guard ADR-0015 asks for: it is informational only
-// — the server's `require_entitlement(ACTIVE)` on `POST /api/v1/scenarios` is the real gate, and a
-// stale-`active` client can still be refused there (surfaced honestly below, never assumed).
-//
-// `buildConfig()` is called once, at Sheet-OPEN time (the `RecordSource.freeze()` pattern) — the
-// config that gets saved is the one the seller reviewed on screen, not one re-derived after they
-// started typing the name. `features/scenarios` never imports `features/calculator`: the caller
-// (the Calcular page) builds the closure via `features/calculator/scenario-bridge.ts`.
+// ⚠ @doc DEC-069 — `buildConfig()` roda UMA vez, na ABERTURA da Sheet: salva-se o que o vendedor
+//   revisou, não algo re-derivado enquanto ele digitava o nome. Sem premium, o botão não existe.
 
 const t = messages.scenarios;
 

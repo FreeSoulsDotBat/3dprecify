@@ -33,18 +33,8 @@ import {
 
 import "./catalog-master-detail.css";
 
-// Generic premium catalog panel (T019, reused by T022). It owns the list/empty/loading/error/offline
-// presentation plus the create/edit Sheet and the delete confirm Dialog; the entity-specific bits
-// (form, row texts, wire mapping) come in as props. The honesty rules are enforced HERE: a success
-// toast fires ONLY after a real 2xx; a failed write keeps the Sheet open with a specific, honest line
-// (offline → "precisa de conexão"; a server code → its pt-BR phrase) and never fakes a save.
-//
-// 019/PR-B (T044/T045, "Premium sem parede") — não paga NÃO é mais uma parede: o corpo troca a
-// crown/`ENTITLEMENT_REQUIRED` de hoje e o vazio curto pelo VAZIO DIDÁTICO (`shared/billing/
-// vazio-didatico.tsx`) sempre que `gate !== "active"`, e "Adicionar" abre o MESMO formulário —
-// inerte (`<Frozen>`, barreira = ausência do handler de submit; nunca um 2º gate no cliente,
-// Constituição IV intocada). A faixa "Premium pausado" (T038) saiu: o rodapé do formulário inerte
-// já explica.
+// ⚠ @doc DEC-070 — as regras de honestidade da escrita são impostas AQUI: toast só depois de um
+//   2xx real, e a barreira do não-pagante é a AUSÊNCIA do handler de submit, nunca um 2º gate.
 
 const catalogo = messages.catalog;
 const cf = messages.catalogForm;

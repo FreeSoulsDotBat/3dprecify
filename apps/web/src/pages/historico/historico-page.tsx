@@ -26,20 +26,9 @@ import { toLineInput } from "@/pages/historico/quote-line-input";
 
 import "./historico-page.css";
 
-// 009/T013 (E4, PR-A) — the Histórico list (US2). It fills the honest "em breve" placeholder that
-// has stood here since 001: the tab already existed, and FR-524 forbids adding another.
-//
-// The card is a LEDGER ROW, not a price, and the layout is what enforces that:
-//
-//   * the DATE sits structurally ABOVE the money (FR-523) — a card cannot be skimmed as a live
-//     price, because the first thing under the label is when it was quoted;
-//   * the money is "Valor cotado", never "Preço" — *preço* is what the calculator says TODAY;
-//   * the basis is spelled out under it (an unlabelled total is an ambiguous claim);
-//   * no PriceHero, no live treatment, no colour that reads as "current".
-//
-// The list comes from ONE selector (server ∪ outbox, server-wins). No component here may read the
-// server query alone — a queued record the list did not show would leave the seller believing their
-// quote was never made.
+// ⚠ @doc DEC-071 — o card é LINHA DE LIVRO-RAZÃO e quem impõe isso é o LAYOUT: a data fica
+//   acima do dinheiro, e o dinheiro é "Valor cotado", nunca "Preço". A lista vem de UM
+//   seletor (servidor ∪ outbox) — ler só a query do servidor esconderia um registro na fila.
 
 const t = messages.history;
 
