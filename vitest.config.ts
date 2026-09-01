@@ -12,6 +12,12 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
     test: {
         projects: ["packages/*", "apps/web"],
+        // 2026-08-31 — teto medido, não palpite: sob a suíte COMPLETA com cobertura nesta máquina,
+        // testes de página pesados (premium-write-absence @ lapsed, calcular-scenario-*) que rodam
+        // em 1–1,5s isolados passam de 5s por contenção (679 módulos; import ~400s no run medido).
+        // O default de 5s virava um dado girado a cada push — o conjunto de vítimas trocava por
+        // carga. 20s não mascara um hang real (o run inteiro leva ~85s) e mata o flake na causa.
+        testTimeout: 20_000,
         coverage: {
             provider: "v8",
             reporter: ["text", "json-summary"],

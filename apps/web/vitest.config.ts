@@ -12,5 +12,9 @@ export default defineConfig({
         include: ["src/**/*.test.{ts,tsx}"],
         passWithNoTests: true,
         environment: "node",
+        // 2026-08-31 — teto MEDIDO (o root vitest.config.ts não propaga testTimeout para o
+        // projeto; a razão completa está lá): páginas pesadas rodam 1–1,5s isoladas e passam de
+        // 5s sob a suíte completa com cobertura nesta máquina — o default virava flake rotativo.
+        testTimeout: 20_000,
     },
 });
