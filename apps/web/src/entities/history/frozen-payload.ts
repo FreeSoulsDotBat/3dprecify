@@ -6,6 +6,7 @@ import {
     type QuoteResult,
 } from "@3dprecify/pricing-core";
 
+import { channelHasDeclaredFee } from "@/shared/lib/channel-fee";
 import { stringifyLeaf, type DecimalLeafValue } from "@/shared/lib/decimal-leaf";
 
 // 009/T003 (E4, PR-A) — THE FROZEN DOCUMENT (data-model D1, ADR-0008, ADR-0020 §1).
@@ -426,21 +427,15 @@ export function buildQuotePayload(
     };
 }
 
-/** Is this frozen channel INPUT carrying a fee at all? The six fields are the same ones the live
- *  calculator's `hasFee` reads (`calculator-model.ts`) — kept in sync by the shared meaning, not by
- *  a shared call, because this side reads exact decimal STRINGS out of an immutable document. */
+/** Is this frozen channel INPUT carrying a fee at all? B5 (2026-09-01): esta leitura costumava
+ *  reimplementar os campos "à mão" e esquecia `surcharges` — a MESMA pergunta que
+ *  `calculator-model.ts`'s `hasFee` responde no lado vivo, agora a MESMA função
+ *  (`channelHasDeclaredFee`, `shared/lib/channel-fee.ts`), não só o mesmo "significado". Este lado
+ *  lê exact decimal STRINGS de um documento imutável; a função aceita `unknown` exatamente por
+ *  isso — `Number("12.00") > 0` funciona igual a `Number(12) > 0`. */
 function feeBearing(slot: FrozenInputValue | undefined): boolean {
     if (slot === null || typeof slot !== "object" || Array.isArray(slot)) return false;
-    const positive = (key: string): boolean => Number(slot[key] ?? 0) > 0;
-    const filled = (key: string): boolean => Array.isArray(slot[key]) && slot[key].length > 0;
-    return (
-        positive("commissionPct") ||
-        positive("fixedFee") ||
-        positive("minPerItem") ||
-        positive("freightCost") ||
-        filled("priceBands") ||
-        filled("freightVoucherBands")
-    );
+    return channelHasDeclaredFee(slot);
 }
 
 /**

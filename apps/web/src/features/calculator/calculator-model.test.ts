@@ -781,6 +781,84 @@ describe("014 — category as a per-slot determinant", () => {
     });
 });
 
+// B5 (2026-09-01) — caracterização do lado VIVO: um canal cuja ÚNICA cobrança é uma sobretaxa
+// (016/PR-F, US16) já tem `hasFee: true` aqui HOJE (a divergência era só no lado CONGELADO,
+// `frozen-payload.test.ts`'s `feeBearing`, que ignorava `surcharges`). Este teste pina o
+// comportamento vivo (inalterado pelo B5) e serve de PAR ao caso congelado — as duas leituras
+// concordam depois do fix.
+describe("B5 — canal só-com-sobretaxa (o vivo já contava; o congelado não)", () => {
+    const catalog = feeCatalogSchema.parse({
+        catalogVersion: "2026-08-01.s",
+        schemaVersion: "1",
+        generatedAt: "2026-08-01T00:00:00.000Z",
+        marketplaces: [
+            {
+                marketplace: "AMAZON",
+                optionalSurcharges: [
+                    {
+                        id: "MANUSEIO_VOLUMOSO",
+                        label: "Manuseio de item volumoso",
+                        value: 50,
+                        appliesPer: "ORDER",
+                        source: "Central do Vendedor",
+                        sourceUrl: "https://sellercentral.amazon.com.br/",
+                        effectiveDate: "2026-08-01",
+                        lastReviewed: "2026-08-01",
+                    },
+                ],
+                entries: [
+                    {
+                        determinants: { plan: "PROFISSIONAL" },
+                        commissionPct: 0,
+                        fixedFee: 0,
+                        freight: { kind: "NONE" },
+                        source: "Tabela de comissões Amazon",
+                        sourceUrl:
+                            "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
+                        effectiveDate: "2026-08-01",
+                        lastReviewed: "2026-08-01",
+                    },
+                ],
+            },
+        ],
+    });
+    const ctx: CatalogContext = { catalog, source: "catalog", now: Date.parse("2026-08-01") };
+
+    it("comissão/fixo/mínimo/frete ZERADOS + uma sobretaxa marcada → hasFee true", () => {
+        const r = computeFromForm(
+            {
+                ...defaultCalcValues,
+                channels: [
+                    {
+                        ...defaultChannelSlot("AMAZON"),
+                        modality: "PROFISSIONAL",
+                        surcharges: ["MANUSEIO_VOLUMOSO"],
+                    },
+                ],
+            },
+            ctx,
+        );
+        expect(r.channels[0].errors).toEqual({});
+        expect(r.input?.channels?.[0]).toMatchObject({
+            commissionPct: 0,
+            fixedFee: 0,
+            surcharges: [{ label: "Manuseio de item volumoso", value: 50 }],
+        });
+        expect(r.channels[0].hasFee).toBe(true);
+    });
+
+    it("sem a sobretaxa marcada e sem nenhum outro campo, o mesmo slot é hasFee false", () => {
+        const r = computeFromForm(
+            {
+                ...defaultCalcValues,
+                channels: [{ ...defaultChannelSlot("AMAZON"), modality: "PROFISSIONAL" }],
+            },
+            ctx,
+        );
+        expect(r.channels[0].hasFee).toBe(false);
+    });
+});
+
 // 014/T114a (SC-817 / FR-014a) — a recusa do motor tem de ATRAVESSAR o adaptador. Provar só em
 // `pricing-core` prova a aritmética e não prova o trajeto: o defeito que este teste guarda não é
 // "o motor calculou errado", é "o motor recusou e a tela mostrou R$ 0,00 sob selo de Referência".

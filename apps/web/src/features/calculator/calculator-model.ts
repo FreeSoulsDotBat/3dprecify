@@ -26,6 +26,7 @@ import {
 import type { FeeSealState } from "@/features/calculator/fee-seal";
 import type { CatalogSource, FeeCatalog, FeeEntry } from "@/shared/fee-catalog";
 import { messages } from "@/shared/i18n/messages.pt-br";
+import { channelHasDeclaredFee } from "@/shared/lib/channel-fee";
 import { parseDecimal } from "@/shared/lib/decimal-ptbr";
 
 // Thin adapter for the E1 calculator. It is the ONLY seam between the pt-BR form strings and the
@@ -348,14 +349,19 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     // state: a checkbox is neither a typed fee nor a catalog pre-fill, so it survives both.
     const surcharges = ctx ? resolveSurcharges(ctx.catalog, slot.marketplace, slot.surcharges) : [];
 
-    const hasFee =
-        fees.commissionPct > 0 ||
-        fees.fixedFee > 0 ||
-        fees.minPerItem > 0 ||
-        fees.freightCost > 0 ||
-        (fees.priceBands?.length ?? 0) > 0 ||
-        (fees.freightVoucherBands?.length ?? 0) > 0 ||
-        surcharges.length > 0;
+    // B5 (2026-09-01) — mesma pergunta, mesma FUNÇÃO do lado congelado (`entities/history/
+    // frozen-payload.ts`'s `feeBearing`): `shared/lib/channel-fee.ts`'s `channelHasDeclaredFee`.
+    // Antes eram duas reimplementações "mantidas iguais pelo significado", e a congelada esquecia
+    // `surcharges` — um canal só-com-sobretaxa lia "sem taxa" lá e "com taxa" aqui.
+    const hasFee = channelHasDeclaredFee({
+        commissionPct: fees.commissionPct,
+        fixedFee: fees.fixedFee,
+        minPerItem: fees.minPerItem,
+        freightCost: fees.freightCost,
+        priceBands: fees.priceBands,
+        freightVoucherBands: fees.freightVoucherBands,
+        surcharges,
+    });
 
     return {
         input: {

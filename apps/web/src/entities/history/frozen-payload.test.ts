@@ -426,7 +426,7 @@ describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (
         expect(frozenChannelHasFee(single([semTaxa("MERCADO_LIVRE")]), 0)).toBe(false);
     });
 
-    it("basta UMA das seis entradas para o número significar alguma coisa", () => {
+    it("basta UMA das sete entradas para o número significar alguma coisa", () => {
         const casos = [
             { commissionPct: "12.00" },
             { fixedFee: "6.00" },
@@ -437,6 +437,16 @@ describe("frozenChannelHasFee — o congelado não afirma o que a origem negou (
                 freightVoucherBands: [
                     { minPrice: "0.00", maxPrice: null, voucherCeiling: "10.00" },
                 ],
+            },
+            // B5 (2026-09-01) — o caso que faltava aqui: um canal cuja ÚNICA cobrança é uma
+            // sobretaxa (Shopee "Manuseio de item volumoso", art. 3305, R$ 50) lia "sem taxa" antes
+            // do fix (`feeBearing` não olhava `surcharges`), enquanto o lado VIVO
+            // (`calculator-model.ts`'s `hasFee`) já contava desde 016/PR-F — a mesma pergunta, duas
+            // respostas. Caracterização: revertendo `feeBearing` para a versão anterior ao B5, este
+            // `it` fica VERMELHO só neste caso (os outros seis continuam verdes) — a prova de que a
+            // correção não moveu nenhum caso já coberto, só fechou o que faltava.
+            {
+                surcharges: [{ label: "Manuseio de item volumoso", value: "50.00" }],
             },
         ];
         for (const extra of casos) {
