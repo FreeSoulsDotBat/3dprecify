@@ -77,7 +77,14 @@ def product_to_out(row: Product, filament: Filament | None, printer: Printer | N
     # Local import (not TYPE_CHECKING-only): these are RUNTIME constructions below, and importing
     # them at module top would cycle with `products.py` importing `product_to_out` from here. By
     # call time (a request handler, long after app startup) `products.py` is always fully loaded.
-    from app.api.products import FilamentValues, PieceInputs, PrinterValues, ProductOut
+    from app.api.products import (
+        ChannelSlot,
+        FilamentValues,
+        OtherCost,
+        PieceInputs,
+        PrinterValues,
+        ProductOut,
+    )
 
     if filament is not None:
         filament_values = FilamentValues(
@@ -125,8 +132,11 @@ def product_to_out(row: Product, filament: Filament | None, printer: Printer | N
         ),
         tariff_per_kwh=row.tariff_per_kwh,
         include_marketplace=row.include_marketplace,
-        channels=row.channels,
-        other_costs=row.other_costs,
+        # As colunas JSONB guardam exatamente o dump destes dois modelos (`apply_product` abaixo),
+        # então revalidá-las na leitura é reler a MESMA forma, não impor uma nova. O ganho é que a
+        # forma do dinheiro passa a ter uma fonte só, da entrada à saída e ao contrato gerado.
+        channels=[ChannelSlot.model_validate(c) for c in row.channels],
+        other_costs=[OtherCost.model_validate(c) for c in row.other_costs],
         seller_fixed_price=row.seller_fixed_price,
         seller_fixed_at=row.seller_fixed_at,
         created_at=row.created_at,

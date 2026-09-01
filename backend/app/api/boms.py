@@ -33,7 +33,7 @@ import uuid
 from datetime import UTC, datetime
 from decimal import Decimal
 from functools import partial
-from typing import Annotated, Any, Literal
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, status
 from pydantic import Field, field_validator, model_validator
@@ -209,8 +209,10 @@ class BomLineOut(CamelModel):
     printer_values: PrinterValues
     tariff_per_kwh: Decimal
     include_marketplace: bool
-    channels: list[dict[str, Any]]
-    other_costs: list[dict[str, Any]]
+    #: Mesma reutilização de forma do `ProductOut` (ver o comentário lá): a linha de kit ecoa
+    #: exatamente os shapes que a entrada já valida, e não mais um dicionário sem campos.
+    channels: list[ChannelSlot]
+    other_costs: list[OtherCost]
 
 
 class Materialization(CamelModel):
@@ -322,8 +324,11 @@ def _snapshot_line(line: BomLine, resolved: ProductOut) -> None:
     line.printer_machine_lifetime_hours = resolved.printer_values.machine_lifetime_hours
     line.printer_avg_power_kw = resolved.printer_values.avg_power_kw
     line.printer_maintenance_reserve_per_hour = resolved.printer_values.maintenance_reserve_per_hour
-    line.channels = list(resolved.channels)
-    line.other_costs = list(resolved.other_costs)
+    # `resolved.channels`/`other_costs` são modelos agora; a coluna é JSONB. O dump é o MESMO de
+    # `catalog_resolver.apply_product` — `mode="json"` para dinheiro em string, nunca float JSON
+    # (ADR-0008) — para que a cópia last-known da linha nasça idêntica à do produto.
+    line.channels = [c.model_dump(mode="json", by_alias=True) for c in resolved.channels]
+    line.other_costs = [c.model_dump(mode="json", by_alias=True) for c in resolved.other_costs]
 
 
 async def _lines_by_bom(
@@ -490,8 +495,8 @@ def _to_out(
                 ),
                 tariff_per_kwh=degraded_or(line.tariff_per_kwh, "0"),
                 include_marketplace=line.include_marketplace,
-                channels=line.channels,
-                other_costs=line.other_costs,
+                channels=[ChannelSlot.model_validate(c) for c in line.channels],
+                other_costs=[OtherCost.model_validate(c) for c in line.other_costs],
             )
         )
 

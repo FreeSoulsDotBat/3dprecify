@@ -250,8 +250,13 @@ class ProductOut(CamelModel):
     piece_inputs: PieceInputs
     tariff_per_kwh: Decimal
     include_marketplace: bool
-    channels: list[dict[str, Any]]
-    other_costs: list[dict[str, Any]]
+    #: A MESMA forma da entrada, reusada (auditoria: "a forma do dinheiro tinha 3 fontes de
+    #: verdade"). Antes o Out ecoava `list[dict[str, Any]]`: o contrato descrevia um objeto sem
+    #: campos, o cliente gerado ganhava um item solto sem `marketplace`, e o duplicar-produto
+    #: precisava de `as unknown as` para reatribuir a resposta ao corpo do POST. Os NOMES de campo
+    #: do wire não mudam — são contrato ARMAZENADO (JSONB), e o que muda é só a declaração.
+    channels: list[ChannelSlot]
+    other_costs: list[OtherCost]
     #: 019/PR-D (ADR-0033 §3) — o número do ANÚNCIO, **declarado** pelo vendedor, e a data em que
     #: ele o declarou. NÃO é preço calculado: o app nunca exibe um preço que ele mesmo calculou no
     #: passado, e este payload segue sem nenhum campo derivado de cálculo (drift-guard é a prova).

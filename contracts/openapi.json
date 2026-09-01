@@ -3773,14 +3773,14 @@
           },
           "channels": {
             "items": {
-              "$ref": "#/components/schemas/ChannelSlot"
+              "$ref": "#/components/schemas/ChannelSlot-Input"
             },
             "type": "array",
             "title": "Channels"
           },
           "otherCosts": {
             "items": {
-              "$ref": "#/components/schemas/OtherCost"
+              "$ref": "#/components/schemas/OtherCost-Input"
             },
             "type": "array",
             "title": "Othercosts"
@@ -3855,16 +3855,14 @@
           },
           "channels": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ChannelSlot-Output"
             },
             "type": "array",
             "title": "Channels"
           },
           "otherCosts": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/OtherCost-Output"
             },
             "type": "array",
             "title": "Othercosts"
@@ -3972,7 +3970,7 @@
         "title": "CategoryNode",
         "description": "One node of a marketplace's category spine (014). Flat + `parent_id` — the client walks the\nancestor chain, because commission is piecewise-constant down the tree and ~87.5% of nodes\ninherit (ADR-0010 §A13/§A14)."
       },
-      "ChannelSlot": {
+      "ChannelSlot-Input": {
         "properties": {
           "marketplace": {
             "type": "string",
@@ -4046,6 +4044,86 @@
               {
                 "type": "number"
               },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Freightcost"
+          }
+        },
+        "type": "object",
+        "required": [
+          "marketplace"
+        ],
+        "title": "ChannelSlot",
+        "description": "One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).\n\nEvery fee is NULLABLE on purpose: in the calculator a BLANK fee means \"resolve from the\nlive fee catalog\", so persisting a fabricated 0 would dishonestly freeze today's fee.\nnull round-trips back to a blank field on reopen; a present value validates as before."
+      },
+      "ChannelSlot-Output": {
+        "properties": {
+          "marketplace": {
+            "type": "string",
+            "enum": [
+              "MERCADO_LIVRE",
+              "SHOPEE",
+              "AMAZON",
+              "OUTRO"
+            ],
+            "title": "Marketplace"
+          },
+          "modality": {
+            "type": "string",
+            "enum": [
+              "CLASSICO",
+              "PREMIUM",
+              "PROFISSIONAL",
+              "INDIVIDUAL",
+              ""
+            ],
+            "title": "Modality",
+            "default": ""
+          },
+          "commissionPct": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Commissionpct"
+          },
+          "fixedFee": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixedfee"
+          },
+          "minPerItem": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minperitem"
+          },
+          "freightCost": {
+            "anyOf": [
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -4948,7 +5026,7 @@
         "title": "OptionalSurcharge",
         "description": "016/US16 — a seller-DECLARED optional cost the marketplace publishes (Shopee: bulky-item\nhandling, R$ 50,00 per ORDER). Marketplace-level: it is not keyed by profile or price band."
       },
-      "OtherCost": {
+      "OtherCost-Input": {
         "properties": {
           "name": {
             "type": "string",
@@ -4965,6 +5043,26 @@
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
               }
             ],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "title": "OtherCost",
+        "description": "One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116)."
+      },
+      "OtherCost-Output": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "value": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Value"
           }
         },
@@ -5665,14 +5763,14 @@
           },
           "channels": {
             "items": {
-              "$ref": "#/components/schemas/ChannelSlot"
+              "$ref": "#/components/schemas/ChannelSlot-Input"
             },
             "type": "array",
             "title": "Channels"
           },
           "otherCosts": {
             "items": {
-              "$ref": "#/components/schemas/OtherCost"
+              "$ref": "#/components/schemas/OtherCost-Input"
             },
             "type": "array",
             "title": "Othercosts"
@@ -5741,16 +5839,14 @@
           },
           "channels": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/ChannelSlot-Output"
             },
             "type": "array",
             "title": "Channels"
           },
           "otherCosts": {
             "items": {
-              "additionalProperties": true,
-              "type": "object"
+              "$ref": "#/components/schemas/OtherCost-Output"
             },
             "type": "array",
             "title": "Othercosts"

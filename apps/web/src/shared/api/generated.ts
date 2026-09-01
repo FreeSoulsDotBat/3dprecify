@@ -61,20 +61,20 @@ export interface PrinterValuesInput {
   maintenanceReservePerHour?: number | string;
 }
 
-export type ChannelSlotMarketplace = typeof ChannelSlotMarketplace[keyof typeof ChannelSlotMarketplace];
+export type ChannelSlotInputMarketplace = typeof ChannelSlotInputMarketplace[keyof typeof ChannelSlotInputMarketplace];
 
 
-export const ChannelSlotMarketplace = {
+export const ChannelSlotInputMarketplace = {
   MERCADO_LIVRE: 'MERCADO_LIVRE',
   SHOPEE: 'SHOPEE',
   AMAZON: 'AMAZON',
   OUTRO: 'OUTRO',
 } as const;
 
-export type ChannelSlotModality = typeof ChannelSlotModality[keyof typeof ChannelSlotModality];
+export type ChannelSlotInputModality = typeof ChannelSlotInputModality[keyof typeof ChannelSlotInputModality];
 
 
-export const ChannelSlotModality = {
+export const ChannelSlotInputModality = {
   CLASSICO: 'CLASSICO',
   PREMIUM: 'PREMIUM',
   PROFISSIONAL: 'PROFISSIONAL',
@@ -89,9 +89,9 @@ export const ChannelSlotModality = {
  * live fee catalog", so persisting a fabricated 0 would dishonestly freeze today's fee.
  * null round-trips back to a blank field on reopen; a present value validates as before.
  */
-export interface ChannelSlot {
-  marketplace: ChannelSlotMarketplace;
-  modality?: ChannelSlotModality;
+export interface ChannelSlotInput {
+  marketplace: ChannelSlotInputMarketplace;
+  modality?: ChannelSlotInputModality;
   commissionPct?: number | string | null;
   fixedFee?: number | string | null;
   minPerItem?: number | string | null;
@@ -101,7 +101,7 @@ export interface ChannelSlot {
 /**
  * One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116).
  */
-export interface OtherCost {
+export interface OtherCostInput {
   name?: string;
   value: number | string;
 }
@@ -121,8 +121,8 @@ export interface BomLineIn {
   printerValues?: PrinterValuesInput | null;
   tariffPerKwh?: number | string | null;
   includeMarketplace?: boolean;
-  channels?: ChannelSlot[];
-  otherCosts?: OtherCost[];
+  channels?: ChannelSlotInput[];
+  otherCosts?: OtherCostInput[];
 }
 
 export interface BomIn {
@@ -131,10 +131,6 @@ export interface BomIn {
   /** @minItems 1 */
   lines: BomLineIn[];
 }
-
-export type BomLineOutChannelsItem = { [key: string]: unknown };
-
-export type BomLineOutOtherCostsItem = { [key: string]: unknown };
 
 /**
  * The product-owned E1 piece fields (data-model §2.5).
@@ -188,6 +184,52 @@ export interface PrinterValuesOutput {
   maintenanceReservePerHour?: string;
 }
 
+export type ChannelSlotOutputMarketplace = typeof ChannelSlotOutputMarketplace[keyof typeof ChannelSlotOutputMarketplace];
+
+
+export const ChannelSlotOutputMarketplace = {
+  MERCADO_LIVRE: 'MERCADO_LIVRE',
+  SHOPEE: 'SHOPEE',
+  AMAZON: 'AMAZON',
+  OUTRO: 'OUTRO',
+} as const;
+
+export type ChannelSlotOutputModality = typeof ChannelSlotOutputModality[keyof typeof ChannelSlotOutputModality];
+
+
+export const ChannelSlotOutputModality = {
+  CLASSICO: 'CLASSICO',
+  PREMIUM: 'PREMIUM',
+  PROFISSIONAL: 'PROFISSIONAL',
+  INDIVIDUAL: 'INDIVIDUAL',
+  '': '',
+} as const;
+
+/**
+ * One marketplace slot — the same shape the calculator form validates (D4/§2.5.1).
+ *
+ * Every fee is NULLABLE on purpose: in the calculator a BLANK fee means "resolve from the
+ * live fee catalog", so persisting a fabricated 0 would dishonestly freeze today's fee.
+ * null round-trips back to a blank field on reopen; a present value validates as before.
+ */
+export interface ChannelSlotOutput {
+  marketplace: ChannelSlotOutputMarketplace;
+  modality?: ChannelSlotOutputModality;
+  commissionPct?: string | null;
+  fixedFee?: string | null;
+  minPerItem?: string | null;
+  freightCost?: string | null;
+}
+
+/**
+ * One itemized sub-cost (§2.5.2) — blank name allowed (generic label, FR-116).
+ */
+export interface OtherCostOutput {
+  name?: string;
+  /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
+  value: string;
+}
+
 /**
  * A resolved line — self-sufficient for ``computeBom`` (no second round-trip).
  *
@@ -208,8 +250,8 @@ export interface BomLineOut {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   tariffPerKwh: string;
   includeMarketplace: boolean;
-  channels: BomLineOutChannelsItem[];
-  otherCosts: BomLineOutOtherCostsItem[];
+  channels: ChannelSlotOutput[];
+  otherCosts: OtherCostOutput[];
 }
 
 export type MaterializationAction = typeof MaterializationAction[keyof typeof MaterializationAction];
@@ -615,13 +657,9 @@ export interface ProductIn {
   pieceInputs: PieceInputsInput;
   tariffPerKwh: number | string;
   includeMarketplace?: boolean;
-  channels?: ChannelSlot[];
-  otherCosts?: OtherCost[];
+  channels?: ChannelSlotInput[];
+  otherCosts?: OtherCostInput[];
 }
-
-export type ProductOutChannelsItem = { [key: string]: unknown };
-
-export type ProductOutOtherCostsItem = { [key: string]: unknown };
 
 export interface ProductOut {
   id: string;
@@ -634,8 +672,8 @@ export interface ProductOut {
   /** @pattern ^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$ */
   tariffPerKwh: string;
   includeMarketplace: boolean;
-  channels: ProductOutChannelsItem[];
-  otherCosts: ProductOutOtherCostsItem[];
+  channels: ChannelSlotOutput[];
+  otherCosts: OtherCostOutput[];
   sellerFixedPrice: string | null;
   sellerFixedAt: string | null;
   createdAt: string;
