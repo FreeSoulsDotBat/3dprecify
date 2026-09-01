@@ -233,3 +233,48 @@ entregou e do que ficou DE FORA por decisão:
 - **4(2)** (trace do motor) e **B6/B7**: radar do módulo de pagamento, por instrução do dono.
 - Nomenclatura reafirmada pelo dono: ML/Shopee/Amazon são **marketplace** no visível; campos de
   wire (`channels`) não mudam por serem contrato armazenado.
+
+
+---
+
+## Rodada 4 — decisões do dono de 2026-09-01
+
+**Executado:**
+
+- **B10** — frase única para escrita sem conexão: **"Esta ação precisa de conexão."** (a escolhida
+  cobre também *excluir*). Eram TRÊS implementações de `honestWriteError` e DUAS frases; a frase
+  mora agora em `messages.apiError.offlineWrite` — a casa das mensagens que `shared/api` fala pelo
+  app todo (antes a função compartilhada lia a chave de UMA tela).
+- **B2** — a troca de marketplace passa a **revalidar nas três telas** (recomendação aceita). O
+  parâmetro `shouldValidate` morreu: a revalidação é da função, não do chamador, então nenhum sítio
+  novo pode esquecê-la.
+- **3(3)** — `breakdown-row` (o detalhamento de preço) usa o formatador oficial; o placeholder de
+  taxa ganha o separador de milhar. **O menos tipográfico (U+2212) NÃO foi trocado**: a prancheta o
+  especifica (`docs/design/prompts/inferidos/calculadora/estados-de-preco-por-canal.md:351`) e dois
+  testes o pinam — a aprovação veio da minha descrição dele como detalhe imperceptível, e a
+  evidência diz o contrário. Trocar continua sendo 1 caractere + 2 testes, se o dono quiser.
+- **B4, B5, 4(3)** — executados nesta mesma rodada (ver commits e §7 do MAPA).
+
+### 4(4) — Zod delegar ao `validateBandRules`: PENDÊNCIA REGISTRADA (decisão do dono: "deixa registrado")
+
+**O que é.** A regra de sanidade de uma tabela de faixas — `commissionPct + fixedFeeRule.pct < 100`,
+e `fixedFeeRule` só em `bandMode SELECTION` — existe em DUAS portas:
+
+| Porta | Onde | Papel |
+|---|---|---|
+| Motor | `packages/pricing-core/src/channels.ts` → `validateBandRules` | recusa na hora de CALCULAR (um denominador zerado devolveria `Infinity`, ou um preço negativo, com cara de resposta) |
+| Schema | `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `.refine()` do `priceBandSchema` | recusa o CATÁLOGO ao carregar, impedindo o dado ruim de existir |
+
+As duas portas são legítimas e devem continuar existindo — o que é duplicado é a **matemática**, e
+as mensagens das duas já divergiram no texto.
+
+**Por que NÃO foi feito.** Fazer o Zod chamar `validateBandRules` num `superRefine` muda o
+**caminho e o texto das `issues`** que o Zod emite. Essas issues não chegam ao vendedor (aparecem em
+log de dev e no build do `fee-ingest`), mas podem estar pinadas em testes/guardas do gerador. O
+ganho — uma matemática em vez de duas — não paga o risco enquanto as duas cópias estiverem
+comentadas apontando uma para a outra, que é o estado atual.
+
+**Gatilho para reabrir.** Quando (a) a regra mudar por qualquer motivo — aí unificar é mais barato
+que sincronizar; ou (b) alguém precisar de uma terceira porta (ex.: validação no backend do
+catálogo servido). Nesse dia: `superRefine` chamando `validateBandRules`, mensagens vindas do motor,
+e os testes do `fee-ingest` ajustados aos textos novos.
