@@ -1,6 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react";
 
 import type { FrozenSnapshotPayload, MoneyString } from "@/entities/history/frozen-payload";
+import { syncToastFor } from "@/entities/history/sync-toast";
 import { useRecordSnapshot } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import {
@@ -164,15 +165,8 @@ function RecordForm({ source, onDone }: { source: RecordSource; onDone: () => vo
         }
 
         onDone();
-        if (outcome.syncState === "synced") toast(t.saved, { tone: "success" });
-        else if (outcome.syncState === "pending") toast(t.syncPendingToast, { tone: "info" });
-        // Paused, not failed: the retry resumes by itself once the entitlement returns (ADR-0018 §9).
-        else if (outcome.syncState === "blocked") toast(t.syncBlockedToast, { tone: "info" });
-        // hotfix 016/A3 (H4) — its own branch, never the generic "failed" danger toast: a dead session
-        // is not a server rejection, and "conexão" never appears in its copy.
-        else if (outcome.syncState === "unauthenticated") {
-            toast(t.syncUnauthenticatedToast, { tone: "info" });
-        } else toast(t.syncFailedToast, { tone: "danger" });
+        const aviso = syncToastFor(outcome.syncState);
+        toast(aviso.message, { tone: aviso.tone });
     }
 
     return (

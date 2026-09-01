@@ -8,6 +8,7 @@ import {
     type FrozenSnapshotPayload,
 } from "@/entities/history/frozen-payload";
 import type { HistoryItem } from "@/entities/history/outbox";
+import { syncToastFor } from "@/entities/history/sync-toast";
 import { useRecordSnapshot } from "@/entities/history/use-history";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { composeBom } from "@/features/bom/bom-compute";
@@ -269,10 +270,8 @@ function RecalcDialog({
                 return;
             }
             setOpen(false);
-            if (outcome.syncState === "synced") toast(t.saved, { tone: "success" });
-            else if (outcome.syncState === "pending") toast(t.syncPendingToast, { tone: "info" });
-            else if (outcome.syncState === "blocked") toast(t.syncBlockedToast, { tone: "info" });
-            else toast(t.syncFailedToast, { tone: "danger" });
+            const aviso = syncToastFor(outcome.syncState);
+            toast(aviso.message, { tone: aviso.tone });
         } finally {
             setBusy(false);
         }

@@ -9,6 +9,7 @@ import {
 
 import type { FrozenProvenance } from "@/entities/history/frozen-payload";
 import { buildQuotePayload } from "@/entities/history/frozen-payload";
+import { syncToastFor } from "@/entities/history/sync-toast";
 import { useRecordSnapshot } from "@/entities/history/use-history";
 import type {
     BomOut,
@@ -247,12 +248,8 @@ export function QuoteBuilder({
             sentRef.current = true;
             setSent(true);
             onSent(outcome.clientSnapshotId);
-            if (outcome.syncState === "synced") toast(th.saved, { tone: "success" });
-            else if (outcome.syncState === "pending") toast(th.syncPendingToast, { tone: "info" });
-            else if (outcome.syncState === "blocked") toast(th.syncBlockedToast, { tone: "info" });
-            else if (outcome.syncState === "unauthenticated") {
-                toast(th.syncUnauthenticatedToast, { tone: "info" });
-            } else toast(th.syncFailedToast, { tone: "danger" });
+            const aviso = syncToastFor(outcome.syncState);
+            toast(aviso.message, { tone: aviso.tone });
         } finally {
             sendingRef.current = false;
             setSending(false);
