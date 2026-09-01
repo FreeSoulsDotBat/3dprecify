@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { compor } from "./compose.ts";
+import { compose } from "./compose.ts";
 import type { CatalogSlice } from "./slice.ts";
 import type { CollectorVerdict } from "./verdict.ts";
 
@@ -62,18 +62,18 @@ const padrao = {
 
 describe("compor — SEM_PR: nada leu, nada mudou, nada a publicar", () => {
     it("0 fatias admitidas + 0 vigias ⇒ SEM_PR com motivo (data-model §7)", () => {
-        const r = compor({ ...padrao, base: baseSintetica(), vereditos: [] });
+        const r = compose({ ...padrao, base: baseSintetica(), vereditos: [] });
         expect(r.kind).toBe("SEM_PR");
         expect(r.kind === "SEM_PR" && r.motivo).toMatch(/nada/i);
     });
 
     it("SEM_PR não carrega catálogo — não existe valor a escrever (FR-020a por tipo)", () => {
-        const r = compor({ ...padrao, base: baseSintetica(), vereditos: [] });
+        const r = compose({ ...padrao, base: baseSintetica(), vereditos: [] });
         expect(Object.keys(r)).toEqual(["kind", "motivo"]);
     });
 
     it("todos ABORTADOS também ⇒ SEM_PR, e o artefato fica intocado (I2/SC-806)", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             base: baseSintetica(),
             vereditos: [
@@ -92,7 +92,7 @@ describe("compor — SEM_PR: nada leu, nada mudou, nada a publicar", () => {
 describe("compor — PONTO FIXO: um mês sem mudança de fonte não move um byte", () => {
     it("fatia que reescreve os MESMOS valores ⇒ catálogo byte-idêntico, versão e generatedAt PARADOS", () => {
         const base = baseSintetica();
-        const r = compor({
+        const r = compose({
             ...padrao,
             base,
             vereditos: [
@@ -113,7 +113,7 @@ describe("compor — PONTO FIXO: um mês sem mudança de fonte não move um byte
 
 describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor", () => {
     it("2 fatias admitidas na mesma data ⇒ EXATAMENTE 1 incremento de catalogVersion", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             base: baseSintetica(),
             vereditos: [
@@ -131,14 +131,14 @@ describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor
             ],
         });
         expect(r.kind).toBe("PR");
-        const cat = r.kind === "PR" ? r.catalogo : {};
+        const cat = r.kind === "PR" ? r.catalog : {};
         // base era "2026-08-07.0"; a coleta é 2026-09-01 ⇒ data nova ⇒ ".0" da data nova, UMA vez.
         expect(cat.catalogVersion).toBe("2026-09-01.0");
         expect(cat.generatedAt).toBe("2026-09-01T06:00:00.000Z");
     });
 
     it("as DUAS fatias entraram — a segunda não apagou a primeira (o defeito §C.1)", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             base: baseSintetica(),
             vereditos: [
@@ -155,7 +155,7 @@ describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor
                 ]),
             ],
         });
-        const mks = (r.kind === "PR" ? r.catalogo.marketplaces : []) as Record<string, unknown>[];
+        const mks = (r.kind === "PR" ? r.catalog.marketplaces : []) as Record<string, unknown>[];
         const amazon = mks.find((m) => m.marketplace === "AMAZON")!;
         const shopee = mks.find((m) => m.marketplace === "SHOPEE")!;
         expect((amazon.entries as Record<string, unknown>[])[0]!.commissionPct).toBe(16);
@@ -176,13 +176,13 @@ describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor
                 },
             ]),
         ];
-        const a = compor({ ...padrao, base: baseSintetica(), vereditos: fatias });
-        const b = compor({ ...padrao, base: baseSintetica(), vereditos: [...fatias].reverse() });
+        const a = compose({ ...padrao, base: baseSintetica(), vereditos: fatias });
+        const b = compose({ ...padrao, base: baseSintetica(), vereditos: [...fatias].reverse() });
         expect(JSON.stringify(a)).toBe(JSON.stringify(b));
     });
 
     it("só data de reverificação avançou ⇒ PR (prova de vida), mas SEM bump de versão", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             base: baseSintetica(),
             vereditos: [
@@ -197,8 +197,8 @@ describe("compor — UM bump por EXECUÇÃO (decisão B.3), nunca um por coletor
             ],
         });
         expect(r.kind).toBe("PR");
-        expect(r.kind === "PR" && r.catalogo.catalogVersion).toBe("2026-08-07.0");
-        expect(r.kind === "PR" && r.corpo).toContain("Sem mudança de tarifa");
+        expect(r.kind === "PR" && r.catalog.catalogVersion).toBe("2026-08-07.0");
+        expect(r.kind === "PR" && r.body).toContain("Sem mudança de tarifa");
     });
 });
 
@@ -212,7 +212,7 @@ describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify 
         value: 19,
     }));
 
-    const r = compor({
+    const r = compose({
         ...padrao,
         base: baseSintetica(muitas),
         vereditos: [
@@ -225,18 +225,18 @@ describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify 
 
     it("a fatia reprovada é DESCARTADA — o artefato não recebe meia leitura", () => {
         expect(r.kind).toBe("PR");
-        const mks = (r.kind === "PR" ? r.catalogo.marketplaces : []) as Record<string, unknown>[];
+        const mks = (r.kind === "PR" ? r.catalog.marketplaces : []) as Record<string, unknown>[];
         const amazon = mks.find((m) => m.marketplace === "AMAZON")!;
         expect((amazon.entries as Record<string, unknown>[])[0]!.commissionPct).toBe(14);
     });
 
     it("e o veredito dela vira ABORTADO com o motivo do teto — no corpo do PR", () => {
-        expect(r.kind === "PR" && r.corpo).toContain("ABORTADO");
-        expect(r.kind === "PR" && r.corpo).toMatch(/acima do teto/);
+        expect(r.kind === "PR" && r.body).toContain("ABORTADO");
+        expect(r.kind === "PR" && r.body).toMatch(/acima do teto/);
     });
 
     it("a outra fatia entrou assim mesmo — é isso que 'PR parcial' quer dizer", () => {
-        const mks = (r.kind === "PR" ? r.catalogo.marketplaces : []) as Record<string, unknown>[];
+        const mks = (r.kind === "PR" ? r.catalog.marketplaces : []) as Record<string, unknown>[];
         const shopee = mks.find((m) => m.marketplace === "SHOPEE")!;
         expect((shopee.entries as Record<string, unknown>[])[0]!.commissionPct).toBe(21);
     });
@@ -246,7 +246,7 @@ describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify 
             ...baseSintetica(),
             marketplaces: [{ marketplace: "AMAZON", categorySpine: [], entries: [] }],
         };
-        const out = compor({
+        const out = compose({
             ...padrao,
             base: semShopee,
             vereditos: [
@@ -262,13 +262,13 @@ describe("compor — fatia REPROVADA vira ABORTADO, e o PR sai PARCIAL (clarify 
 describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
     const decisao = {
         titulo: "a página e a constante discordam",
-        fonteA: { rotulo: "página", valor: "R$ 2,50", url: "https://venda.amazon.com.br/precos" },
-        fonteB: { rotulo: "servido", valor: "R$ 2,00", url: "https://fonte/AMAZON" },
+        fonteA: { label: "página", valor: "R$ 2,50", url: "https://venda.amazon.com.br/precos" },
+        fonteB: { label: "servido", valor: "R$ 2,00", url: "https://fonte/AMAZON" },
         autoDatacao: null,
     };
 
     it("com decisão pendente, o TÍTULO ganha o prefixo e a dispensa é forçada a NÃO", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             dispensaPermitida: true,
             base: baseSintetica(),
@@ -291,7 +291,7 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
     });
 
     it("sem decisão, o título é o normal e a dispensa segue o classificador", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             dispensaPermitida: true,
             base: baseSintetica(),
@@ -312,7 +312,7 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
     });
 
     it("um vigia com notícia abre PR mesmo com o catálogo INTACTO (decisão E.3)", () => {
-        const r = compor({
+        const r = compose({
             ...padrao,
             base: baseSintetica(),
             vereditos: [],
@@ -325,7 +325,7 @@ describe("compor — o PR de DECISÃO e a dispensa (Q2/Q5)", () => {
             ],
         });
         expect(r.kind).toBe("PR");
-        expect(r.kind === "PR" && r.corpo).toContain("## Vigias (nenhum dado alterado)");
-        expect(r.kind === "PR" && r.catalogo.catalogVersion).toBe("2026-08-07.0");
+        expect(r.kind === "PR" && r.body).toContain("## Vigias (nenhum dado alterado)");
+        expect(r.kind === "PR" && r.catalog.catalogVersion).toBe("2026-08-07.0");
     });
 });

@@ -13,17 +13,17 @@
  * PROJEÇÃO dele (ADR-0029). Qualquer outro arquivo no PR — baseline, workflow, código — derruba a
  * dispensa pelo eixo (b), inclusive quando o diff do catálogo é impecável.
  */
-export const ARQUIVOS_DISPENSAVEIS = [
+export const EXEMPTABLE_FILES = [
     "backend/app/data/catalog.json",
     "apps/web/src/shared/fee-catalog/seed.data.json",
 ] as const;
 
-export type EixoDeDispensa = "FLAG" | "DIFF_MATERIAL" | "ARQUIVOS_FORA_DO_PAR" | "FOLHA_DE_OCR";
+export type ExemptionAxis = "FLAG" | "DIFF_MATERIAL" | "ARQUIVOS_FORA_DO_PAR" | "FOLHA_DE_OCR";
 
-export type DispensaDecisao = {
+export type ExemptionDecision = {
     concedida: boolean;
     /** TODOS os eixos que negaram — o revisor não conserta um e descobre o próximo no dia seguinte. */
-    eixosQueNegaram: EixoDeDispensa[];
+    eixosQueNegaram: ExemptionAxis[];
     /** O que o rodapé do corpo do PR imprime. Preenchido também quando concedida. */
     motivo: string;
 };
@@ -35,7 +35,7 @@ export type DispensaDecisao = {
  * digitado à mão, e um parser generoso transforma um dedo escorregando em "dinheiro entra sem
  * revisão". O padrão de um interruptor de dinheiro é a posição segura.
  */
-export function lerPermissaoDeDispensa(valor: string | undefined): boolean {
+export function readExemptionGrant(valor: string | undefined): boolean {
     return valor === "true";
 }
 
@@ -46,7 +46,7 @@ export function lerPermissaoDeDispensa(valor: string | undefined): boolean {
  * `contemFolhaDeOcr` já entra aqui, e não na PR-C onde o OCR chega: um eixo acrescentado depois é um
  * eixo que alguém precisa lembrar de acrescentar, e a lição de 014/U4-f é sobre exatamente isso.
  */
-export function classificarDispensa(args: {
+export function classifyExemption(args: {
     /** `ALLOW_FRESHNESS_EXEMPTION` — eixo do dono. */
     permitida: boolean;
     /** Eixo (a): o diff do catálogo é EXCLUSIVAMENTE inerte (`freshnessOnly`). */
@@ -55,9 +55,9 @@ export function classificarDispensa(args: {
     arquivosDoPr: readonly string[];
     /** §F.5: qualquer folha do diff veio de OCR. */
     contemFolhaDeOcr: boolean;
-}): DispensaDecisao {
+}): ExemptionDecision {
     const { permitida, diffSoInerte, arquivosDoPr, contemFolhaDeOcr } = args;
-    const eixosQueNegaram: EixoDeDispensa[] = [];
+    const eixosQueNegaram: ExemptionAxis[] = [];
     const detalhes: string[] = [];
 
     if (!permitida) {
@@ -72,7 +72,7 @@ export function classificarDispensa(args: {
         detalhes.push("o diff do catálogo tem mudança MATERIAL (não é só data de reverificação)");
     }
 
-    const dispensaveis = new Set<string>(ARQUIVOS_DISPENSAVEIS);
+    const dispensaveis = new Set<string>(EXEMPTABLE_FILES);
     const forasteiros = arquivosDoPr.filter((f) => !dispensaveis.has(f));
     // Zero arquivo não é "subconjunto vazio, logo dispensável": um PR sem arquivo não existe, e
     // conceder sobre o vazio é o jeito de a dispensa nascer ligada por acidente de aritmética.

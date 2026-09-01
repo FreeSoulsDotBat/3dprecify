@@ -125,12 +125,12 @@ export function computeQuote(input: QuoteInput): QuoteResult {
         bom,
         lines: lines.map((line, i) => {
             // O índice existe: `bom.lines` é o `map` das mesmas linhas, na mesma ordem.
-            const resultado = bom.lines[i]!;
+            const result = bom.lines[i]!;
             return {
                 name: line.name ?? null,
-                quantity: resultado.quantity,
-                unitPrice: resultado.line.precoVarejo,
-                subtotal: resultado.precoVarejo,
+                quantity: result.quantity,
+                unitPrice: result.line.precoVarejo,
+                subtotal: result.precoVarejo,
             };
         }),
         grossTotal,

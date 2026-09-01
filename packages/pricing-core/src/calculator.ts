@@ -138,7 +138,7 @@ export function computeCalculator(input: PriceInput): PriceResult {
     // material + energy + machine — never material alone. Taken over the (rounded) production
     // subtotal so the shown falha = failure% of the shown subtotal (21,50 → 2,15 for SC-001).
     const producaoR = sumMoney([materialR, energyR, machineR]);
-    const falhaR = toMoney(new Decimal(producaoR).times(failurePct).dividedBy(100)); // FR-027
+    const failureRate = toMoney(new Decimal(producaoR).times(failurePct).dividedBy(100)); // FR-027
 
     // Cost lines OUTSIDE the failure base (OQ-8).
     const finishingR = toMoney(new Decimal(finishTimeHours).times(finishRatePerHour)); // FR-028
@@ -152,7 +152,15 @@ export function computeCalculator(input: PriceInput): PriceResult {
     }));
     const adminR = sumMoney(otherCostsR.map((c) => c.value));
 
-    const custoTotal = sumMoney([materialR, energyR, machineR, falhaR, finishingR, laborR, adminR]); // FR-029
+    const custoTotal = sumMoney([
+        materialR,
+        energyR,
+        machineR,
+        failureRate,
+        finishingR,
+        laborR,
+        adminR,
+    ]); // FR-029
 
     // Markup over the displayed (rounded) custo_total — WYSIWYG (FR-030).
     const precoVarejo = toMoney(
@@ -172,7 +180,7 @@ export function computeCalculator(input: PriceInput): PriceResult {
         material: materialR,
         energy: energyR,
         machine: machineR,
-        falha: falhaR,
+        falha: failureRate,
         finishing: finishingR,
         labor: laborR,
         admin: adminR,

@@ -31,7 +31,7 @@ export function ehPodada(marketplace: CatalogJson): boolean {
  * Idempotente por construção — projetar uma projeção devolve a mesma projeção. Sem isso o
  * `pnpm fee:build` não teria ponto fixo e abriria um PR novo todo mês sobre a mesma tabela.
  */
-export function projetarSemente(servido: CatalogJson): CatalogJson {
+export function projectSeed(servido: CatalogJson): CatalogJson {
     const marketplaces = Array.isArray(servido.marketplaces)
         ? (servido.marketplaces as CatalogJson[])
         : [];
@@ -41,14 +41,14 @@ export function projetarSemente(servido: CatalogJson): CatalogJson {
             if (!ehPodada(m)) return m;
             // A espinha SAI (é o mapa por categoria que não cabe no bundle) e as entradas viram lista
             // vazia; o resto da seção viaja com as chaves na ordem original, para o JSON ser estável.
-            const semEspinha = Object.entries(m).filter(([k]) => k !== "categorySpine");
-            return { ...Object.fromEntries(semEspinha), entries: [] };
+            const withoutSpine = Object.entries(m).filter(([k]) => k !== "categorySpine");
+            return { ...Object.fromEntries(withoutSpine), entries: [] };
         }),
     };
 }
 
 /** O texto exato que vai para o disco — o MESMO formato do artefato servido (2 espaços + \n final),
  *  porque um diff de formatação num PR mensal de dinheiro é ruído que treina o revisor a não olhar. */
-export function serializarSemente(semente: CatalogJson): string {
+export function serializeSeed(semente: CatalogJson): string {
     return `${JSON.stringify(semente, null, 2)}\n`;
 }

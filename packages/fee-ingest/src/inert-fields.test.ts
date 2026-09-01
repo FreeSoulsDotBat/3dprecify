@@ -43,8 +43,8 @@ describe("as duas listas antigas deixaram de existir (a migração não é um al
     });
 
     it("os DOIS consumidores importam a lista única", () => {
-        for (const alvo of ["refresh.ts", "catalog-diff.ts"]) {
-            const texto = fontes.find((x) => x.f === alvo)!.texto;
+        for (const target of ["refresh.ts", "catalog-diff.ts"]) {
+            const texto = fontes.find((x) => x.f === target)!.texto;
             expect(texto).toContain("./inert-fields.ts");
         }
     });

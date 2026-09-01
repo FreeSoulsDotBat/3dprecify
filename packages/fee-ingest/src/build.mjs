@@ -14,11 +14,11 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 
 import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { compor } from "./compose.ts";
-import { lerPermissaoDeDispensa } from "./exemption.ts";
+import { compose } from "./compose.ts";
+import { readExemptionGrant } from "./exemption.ts";
 import { collectedAtFor } from "./guardrails.ts";
-import { escreverArtefatosDePr } from "./pr-artifacts.ts";
-import { projetarSemente, serializarSemente } from "./seed-projection.ts";
+import { writePrArtifacts } from "./pr-artifacts.ts";
+import { projectSeed, serializeSeed } from "./seed-projection.ts";
 
 const ARTEFATO = fileURLToPath(new URL("../../../backend/app/data/catalog.json", import.meta.url));
 const SEMENTE = fileURLToPath(
@@ -54,13 +54,13 @@ const vereditos = existsSync(VEREDITOS)
           .map((f) => JSON.parse(readFileSync(`${VEREDITOS}${f}`, "utf8")))
     : [];
 
-const desfecho = compor({
+const desfecho = compose({
     base,
     vereditos,
     collectedAt: data.date,
     generatedAt: `${data.date}T00:00:00.000Z`,
     vigias: [],
-    dispensaPermitida: lerPermissaoDeDispensa(process.env.ALLOW_FRESHNESS_EXEMPTION),
+    dispensaPermitida: readExemptionGrant(process.env.ALLOW_FRESHNESS_EXEMPTION),
     arquivosDoPr: [
         "backend/app/data/catalog.json",
         "apps/web/src/shared/fee-catalog/seed.data.json",
@@ -70,20 +70,20 @@ const desfecho = compor({
 // O artefato só é reescrito quando há PR — e o catálogo composto SÓ EXISTE dentro do caso PR
 // (FR-020a por tipo). Uma leitura que falhou não é "as taxas caíram" (I2/SC-806): o desfecho SEM_PR
 // deixa o artefato byte a byte intocado, e não há sequer um valor a escrever.
-const publicado = desfecho.kind === "PR" ? desfecho.catalogo : base;
+const publicado = desfecho.kind === "PR" ? desfecho.catalog : base;
 if (desfecho.kind === "PR") {
     writeFileSync(ARTEFATO, `${JSON.stringify(publicado, null, 2)}\n`);
 }
 // 017/T016 — o corpo/título saem como ARQUIVOS (`artifacts/pr-body.md` + `artifacts/pr-title.txt`),
 // nunca montados em shell dentro do job `publicar` (contrato `workflow-yaml.md`: "proíbe heredoc de
 // corpo de PR"). Um desfecho SEM_PR não escreve nada — não há título nem corpo a publicar.
-escreverArtefatosDePr(desfecho, VEREDITOS);
+writePrArtifacts(desfecho, VEREDITOS);
 
 // A semente é RECONCILIADA sempre, mesmo num run SEM_PR: ela é saída, não documento (ADR-0029), e
 // escrever os mesmos bytes é um no-op para o git. Fosse só no caminho PR, um artefato editado à mão
 // deixaria a semente divergindo até o mês seguinte — que é o estado que o P0-a existe para acabar.
 mkdirSync(dirname(SEMENTE), { recursive: true });
-writeFileSync(SEMENTE, serializarSemente(projetarSemente(publicado)));
+writeFileSync(SEMENTE, serializeSeed(projectSeed(publicado)));
 
 if (desfecho.kind === "SEM_PR") {
     console.log(`fee:build — SEM PR: ${desfecho.motivo}`);

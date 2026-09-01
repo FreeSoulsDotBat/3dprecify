@@ -53,7 +53,7 @@ function materialEntries(diff: CatalogDiff) {
  * é ele que o humano lê. Um campo novo no `CatalogDiff` que ninguém acrescente aqui volta a produzir
  * a contradição — por isso a lista está à vista, e não escondida atrás de uma flag.
  */
-function semNoticia(diff: CatalogDiff): boolean {
+function noNews(diff: CatalogDiff): boolean {
     return (
         diff.addedCategories.length === 0 &&
         diff.removedCategories.length === 0 &&
@@ -109,7 +109,7 @@ export function prBody(args: {
             }
         }
         out.push("");
-    } else if (semNoticia(diff)) {
+    } else if (noNews(diff)) {
         // A execução sem novidade é a PROVA MENSAL de que o robô está vivo (Q7). Dizer isso em palavras
         // é o que a distingue de uma execução que falhou em silêncio.
         //

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { ehPodada, projetarSemente, serializarSemente } from "./seed-projection.ts";
+import { ehPodada, projectSeed, serializeSeed } from "./seed-projection.ts";
 import type { CatalogJson } from "./slice.ts";
 
 // 017/T009 · P0-a — a paridade semente↔artefato, RELACIONAL (decisão B.3, ADR-0029 §2).
@@ -30,11 +30,11 @@ const secao = (c: CatalogJson, mk: string) =>
 
 describe("P0-a — a semente é a PROJEÇÃO do artefato servido, e nada além disso", () => {
     it("relação (i): `seed.data.json` é exatamente `projetarSemente(servido)`", () => {
-        expect(semente).toEqual(projetarSemente(servido));
+        expect(semente).toEqual(projectSeed(servido));
     });
 
     it("e byte a byte — uma edição à mão da semente reprova aqui, não no mês que vem", () => {
-        expect(sementeBruta).toBe(serializarSemente(projetarSemente(servido)));
+        expect(sementeBruta).toBe(serializeSeed(projectSeed(servido)));
     });
 
     it("os metadados viajam INTACTOS — nenhum rótulo é digitado duas vezes", () => {
@@ -88,12 +88,12 @@ describe("a POLÍTICA de poda, como propriedade e não como acidente curatorial"
 
 describe("projetarSemente — idempotente, e é isso que dá ponto fixo ao `fee:build`", () => {
     it("projetar uma projeção devolve a mesma projeção", () => {
-        const uma = projetarSemente(servido);
-        expect(projetarSemente(uma)).toEqual(uma);
+        const uma = projectSeed(servido);
+        expect(projectSeed(uma)).toEqual(uma);
     });
 
     it("um documento sem `marketplaces` não estoura — devolve lista vazia", () => {
-        expect(projetarSemente({ catalogVersion: "x" })).toEqual({
+        expect(projectSeed({ catalogVersion: "x" })).toEqual({
             catalogVersion: "x",
             marketplaces: [],
         });

@@ -176,7 +176,7 @@ describe("prBody — o contrato com o humano que revisa (§C3)", () => {
     });
 
     it("o corpo é montado a partir do diff, e um diff vazio não inventa tabela", () => {
-        const corpo = prBody({
+        const body = prBody({
             marketplace: "AMAZON",
             collectedAt: "2026-08-01",
             sourceUrl: SOURCE,
@@ -191,14 +191,14 @@ describe("prBody — o contrato com o humano que revisa (§C3)", () => {
                 freshnessOnly: true,
             },
         });
-        expect(corpo).not.toContain("| categoria |");
+        expect(body).not.toContain("| categoria |");
     });
 });
 
 // As demais seções do corpo. Cada uma é uma pergunta diferente para o revisor, e nenhuma pode sair
 // como um "algo mudou" mudo — que foi exatamente o defeito que a T104 corrigiu no comparador.
 describe("prBody — as seções que dirigem a atenção do revisor", () => {
-    const corpo = (diff: Partial<Parameters<typeof prBody>[0]["diff"]>) =>
+    const body = (diff: Partial<Parameters<typeof prBody>[0]["diff"]>) =>
         prBody({
             marketplace: "AMAZON",
             collectedAt: "2026-08-01",
@@ -217,7 +217,7 @@ describe("prBody — as seções que dirigem a atenção do revisor", () => {
         });
 
     it("categoria nova é nomeada com o id que ela recebeu", () => {
-        const b = corpo({
+        const b = body({
             addedCategories: [{ marketplace: "AMAZON", categoryId: "joias", name: "Joias" }],
         });
         expect(b).toMatch(/Categorias novas/i);
@@ -226,7 +226,7 @@ describe("prBody — as seções que dirigem a atenção do revisor", () => {
     });
 
     it("entrada que deixou de existir diz o que o vendedor perde: o slot para de resolver", () => {
-        const b = corpo({
+        const b = body({
             removedEntries: [
                 {
                     marketplace: "AMAZON",
@@ -242,7 +242,7 @@ describe("prBody — as seções que dirigem a atenção do revisor", () => {
     // FR-019a — muda a alíquota EFETIVA sem nenhum campo diferir. Sem esta seção o PR publicaria uma
     // mudança de preço sem uma linha que a descrevesse.
     it("mudança de pai tem seção própria, e a raiz é dita como raiz e não como vazio", () => {
-        const b = corpo({
+        const b = body({
             reparented: [
                 {
                     marketplace: "AMAZON",
@@ -258,7 +258,7 @@ describe("prBody — as seções que dirigem a atenção do revisor", () => {
     });
 
     it("sem nome de categoria, o id serve; sem os dois, o corpo diz isso em vez de imprimir vazio", () => {
-        const semNome = corpo({
+        const semNome = body({
             changedEntries: [
                 {
                     marketplace: "AMAZON",
@@ -271,7 +271,7 @@ describe("prBody — as seções que dirigem a atenção do revisor", () => {
         });
         expect(semNome).toContain("| calcados | commissionPct | 14 | 16 |");
 
-        const semNada = corpo({
+        const semNada = body({
             changedEntries: [
                 {
                     marketplace: "AMAZON",

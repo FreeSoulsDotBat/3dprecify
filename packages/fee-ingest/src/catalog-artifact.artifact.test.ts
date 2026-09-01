@@ -3,7 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { compor } from "./compose.ts";
+import { compose } from "./compose.ts";
 import { checkBandCoverage, checkCategoryIdCollisions } from "./guardrails.ts";
 import type { CatalogJson } from "./slice.ts";
 
@@ -112,7 +112,7 @@ describe("o artefato servido é publicável — sanidade das alíquotas", () => 
 
 describe("compor sobre o ARTEFATO REAL — ponto fixo (I9)", () => {
     it("fatia vazia sobre o artefato publicado ⇒ SEM_PR, e nenhum byte se move", () => {
-        const r = compor({
+        const r = compose({
             base: artefato,
             vereditos: [
                 {
@@ -174,19 +174,19 @@ const LE_O_ARTEFATO = /\.\.\/[^"'`\n]*backend\/app\/data\/catalog\.json/;
 
 /** Todo arquivo de teste do repositório (vitest), por caminho relativo à raiz. */
 function testesDoRepositorio(): string[] {
-    const saida: string[] = [];
+    const out: string[] = [];
     const ignorar = new Set(["node_modules", "dist", "coverage", ".git", "graphify-out"]);
     const andar = (rel: string) => {
         for (const item of readdirSync(`${RAIZ}${rel}`, { withFileTypes: true })) {
             if (ignorar.has(item.name)) continue;
             const filho = `${rel}${item.name}`;
             if (item.isDirectory()) andar(`${filho}/`);
-            else if (/\.test\.tsx?$/.test(item.name)) saida.push(filho);
+            else if (/\.test\.tsx?$/.test(item.name)) out.push(filho);
         }
     };
     andar("apps/");
     andar("packages/");
-    return saida;
+    return out;
 }
 
 describe("meta-guarda — quem lê o artefato roda no `gate:artifact`", () => {

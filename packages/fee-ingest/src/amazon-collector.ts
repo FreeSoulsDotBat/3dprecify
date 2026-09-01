@@ -33,8 +33,8 @@ import type { CollectorVerdict } from "./verdict.ts";
  *  descreveria meia remoção. */
 export const AMAZON_EXHAUSTIVE = ["entries", "categorySpine"] as const;
 
-export type ColetaAmazon = {
-    categorias: readonly ParsedCategory[];
+export type AmazonCollection = {
+    categories: readonly ParsedCategory[];
     /** A data da releitura REAL — vem de `collectedAtFor`, nunca de `new Date()` no chamador. */
     collectedAt: string;
     /** A MEMÓRIA da vigência anterior (T101). Sem ela, regerar carimba a data da execução em toda
@@ -48,19 +48,19 @@ export type ColetaAmazon = {
  * A ordem importa menos que o fato de serem PRÉ-CONDIÇÃO: uma fatia que não existe não remove nada.
  * Página quebrada, casca de SPA ou 403 abortam aqui, e o artefato fica byte a byte intocado (I2).
  */
-export function avaliarColetaAmazon(categorias: readonly ParsedCategory[]): {
+export function evaluateAmazonCollection(categories: readonly ParsedCategory[]): {
     ok: boolean;
     reason: string;
 } {
     // O piso de linhas e as canárias — a leitura que trocou de COLUNA devolve números plausíveis e
     // passaria por qualquer contagem; só o par (categoria, %, mínimo) a pega (014/T102).
-    const sanidade = checkParseSanity(categorias, {
+    const sanidade = checkParseSanity(categories, {
         minRows: MIN_PARSE_ROWS,
         canaries: CANARIES,
     });
     if (!sanidade.ok) return { ok: false, reason: sanidade.reason };
 
-    for (const c of categorias) {
+    for (const c of categories) {
         if (!c.bands) continue;
         const cobertura = checkBandCoverage(c.bands);
         if (!cobertura.ok) return { ok: false, reason: `"${c.name}" — ${cobertura.reason}` };
@@ -68,7 +68,7 @@ export function avaliarColetaAmazon(categorias: readonly ParsedCategory[]): {
 
     // Dois nomes que colapsam no mesmo `categoryId` derrubam o marketplace INTEIRO no cliente: um par
     // de acentos apaga a Amazon do app.
-    const colisao = checkCategoryIdCollisions(categorias);
+    const colisao = checkCategoryIdCollisions(categories);
     if (!colisao.ok) return { ok: false, reason: colisao.reason };
 
     return { ok: true, reason: "" };
@@ -81,11 +81,11 @@ export function avaliarColetaAmazon(categorias: readonly ParsedCategory[]): {
  * quando quem chamou provou uma releitura real (`collectedAtFor` recusa carimbar hoje sobre um
  * arquivo capturado). Esta função não conhece "hoje" — ela não tem como inventar uma data.
  */
-export function fatiaAmazon(coleta: ColetaAmazon): CatalogSlice {
-    const entradas = amazonEntries(coleta.categorias, {
-        collectedAt: coleta.collectedAt,
-        effectiveDate: coleta.collectedAt,
-        previousEffectiveDates: coleta.previousEffectiveDates,
+export function amazonSlice(collection: AmazonCollection): CatalogSlice {
+    const entradas = amazonEntries(collection.categories, {
+        collectedAt: collection.collectedAt,
+        effectiveDate: collection.collectedAt,
+        previousEffectiveDates: collection.previousEffectiveDates,
     });
 
     const leaves: LeafWrite[] = [];
@@ -102,12 +102,12 @@ export function fatiaAmazon(coleta: ColetaAmazon): CatalogSlice {
     leaves.push({
         level: "MARKETPLACE",
         field: "categorySpine",
-        value: amazonSpine(coleta.categorias),
+        value: amazonSpine(collection.categories),
     });
 
     return {
         marketplace: "AMAZON",
-        collectedAt: coleta.collectedAt,
+        collectedAt: collection.collectedAt,
         sourceUrl: AMAZON_SOURCE_URL,
         exhaustive: [...AMAZON_EXHAUSTIVE],
         leaves,
@@ -120,8 +120,8 @@ export function fatiaAmazon(coleta: ColetaAmazon): CatalogSlice {
  * Uma leitura que falhou sai ABORTADO com motivo NOMEADO, nunca como uma tabela pequena que o
  * compositor aceitaria: "0 categorias" jamais pode ser lido como "as taxas caíram" (SC-806).
  */
-export function veredictoAmazon(coleta: ColetaAmazon): CollectorVerdict {
-    const guardas = avaliarColetaAmazon(coleta.categorias);
+export function amazonVerdict(collection: AmazonCollection): CollectorVerdict {
+    const guardas = evaluateAmazonCollection(collection.categories);
     if (!guardas.ok) {
         return {
             kind: "ABORTADO",
@@ -133,17 +133,17 @@ export function veredictoAmazon(coleta: ColetaAmazon): CollectorVerdict {
     return {
         kind: "LIDO",
         marketplace: "AMAZON",
-        collectedAt: coleta.collectedAt,
+        collectedAt: collection.collectedAt,
         sourceUrl: AMAZON_SOURCE_URL,
-        slice: fatiaAmazon(coleta),
+        slice: amazonSlice(collection),
     };
 }
 
 /** As vigências anteriores lidas do artefato — o insumo do T101, sem que este módulo abra arquivo. */
-export function vigenciasAnteriores(secaoAmazon: {
+export function previousEffectiveDates(amazonSection: {
     entries?: unknown;
 }): ReadonlyMap<string, string> {
-    const entries = Array.isArray(secaoAmazon.entries) ? secaoAmazon.entries : [];
+    const entries = Array.isArray(amazonSection.entries) ? amazonSection.entries : [];
     return effectiveDatesOf(
         entries as { determinants: { plan: string; category?: string }; effectiveDate: string }[],
     );

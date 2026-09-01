@@ -181,8 +181,8 @@ function grossUpOnce(
 ): Decimal {
     // Nomes com unidade: `anuncio*` são VALORES EM R$ (o L da álgebra acima); `fator*` são os
     // denominadores adimensionais (1 − percentuais). Nada aqui é um percentual.
-    const fatorSemFixoPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
-    const fatorRetido = fatorSemFixoPct.minus(new Decimal(commissionPct).dividedBy(100));
+    const factorWithoutFixedPct = new Decimal(1).minus(new Decimal(fixed.pct).dividedBy(100));
+    const fatorRetido = factorWithoutFixedPct.minus(new Decimal(commissionPct).dividedBy(100));
     const anuncioRegimePct = new Decimal(base)
         .plus(fixed.constant)
         .plus(surcharge)
@@ -193,7 +193,7 @@ function grossUpOnce(
         .plus(minPerItem)
         .plus(fixed.constant)
         .plus(surcharge)
-        .dividedBy(fatorSemFixoPct);
+        .dividedBy(factorWithoutFixedPct);
 }
 
 /**

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ARQUIVOS_DISPENSAVEIS, classificarDispensa, lerPermissaoDeDispensa } from "./exemption.ts";
+import { EXEMPTABLE_FILES, classifyExemption, readExemptionGrant } from "./exemption.ts";
 
 // 017/T011 (desenho §I) — a dispensa de revisão, falha-fechada nos DOIS eixos.
 //
@@ -12,27 +12,27 @@ import { ARQUIVOS_DISPENSAVEIS, classificarDispensa, lerPermissaoDeDispensa } fr
 const base = {
     permitida: true,
     diffSoInerte: true,
-    arquivosDoPr: [...ARQUIVOS_DISPENSAVEIS],
+    arquivosDoPr: [...EXEMPTABLE_FILES],
     contemFolhaDeOcr: false,
 };
 
 describe("lerPermissaoDeDispensa — ela NASCE desligada (clarify Q5)", () => {
     it("sem a variável, é false", () => {
-        expect(lerPermissaoDeDispensa(undefined)).toBe(false);
-        expect(lerPermissaoDeDispensa("")).toBe(false);
+        expect(readExemptionGrant(undefined)).toBe(false);
+        expect(readExemptionGrant("")).toBe(false);
     });
 
     it("só a string exata `true` liga — nada de valor caprichoso ligando dispensa de dinheiro", () => {
-        expect(lerPermissaoDeDispensa("true")).toBe(true);
+        expect(readExemptionGrant("true")).toBe(true);
         for (const v of ["TRUE", "1", "yes", "sim", "false", "verdadeiro"]) {
-            expect(lerPermissaoDeDispensa(v)).toBe(false);
+            expect(readExemptionGrant(v)).toBe(false);
         }
     });
 });
 
 describe("classificarDispensa — o caso concedido, e ele é estreito", () => {
     it("flag ligada + diff só inerte + arquivos ⊆ par ⇒ CONCEDIDA, com o porquê escrito", () => {
-        const d = classificarDispensa(base);
+        const d = classifyExemption(base);
         expect(d.concedida).toBe(true);
         expect(d.eixosQueNegaram).toEqual([]);
         expect(d.motivo).toMatch(/lastReviewed|inerte/i);
@@ -40,7 +40,7 @@ describe("classificarDispensa — o caso concedido, e ele é estreito", () => {
 
     it("um SUBCONJUNTO do par também passa (mês em que só o artefato mudou)", () => {
         expect(
-            classificarDispensa({ ...base, arquivosDoPr: ["backend/app/data/catalog.json"] })
+            classifyExemption({ ...base, arquivosDoPr: ["backend/app/data/catalog.json"] })
                 .concedida,
         ).toBe(true);
     });
@@ -48,21 +48,21 @@ describe("classificarDispensa — o caso concedido, e ele é estreito", () => {
 
 describe("classificarDispensa — falha FECHADO, e nomeia o eixo que negou", () => {
     it("eixo FLAG: a permissão desligada nega sozinha, mesmo com tudo o resto limpo", () => {
-        const d = classificarDispensa({ ...base, permitida: false });
+        const d = classifyExemption({ ...base, permitida: false });
         expect(d.concedida).toBe(false);
         expect(d.eixosQueNegaram).toContain("FLAG");
         expect(d.motivo).toMatch(/ALLOW_FRESHNESS_EXEMPTION/);
     });
 
     it("eixo DIFF: qualquer mudança material nega", () => {
-        const d = classificarDispensa({ ...base, diffSoInerte: false });
+        const d = classifyExemption({ ...base, diffSoInerte: false });
         expect(d.concedida).toBe(false);
         expect(d.eixosQueNegaram).toContain("DIFF_MATERIAL");
     });
 
     // O caso do data-model §7 — o buraco que o desenho encontrou.
     it("eixo ARQUIVOS: baseline de vigia no PR ⇒ NEGADA, mesmo com o diff do catálogo só-lastReviewed", () => {
-        const d = classificarDispensa({
+        const d = classifyExemption({
             ...base,
             arquivosDoPr: [
                 "backend/app/data/catalog.json",
@@ -78,13 +78,13 @@ describe("classificarDispensa — falha FECHADO, e nomeia o eixo que negou", () 
     // §F.5 — proibição explícita do desenho. Fica declarada aqui desde já porque a folha de OCR chega
     // na PR-C, e um eixo acrescentado DEPOIS é um eixo que alguém precisa lembrar de acrescentar.
     it("eixo OCR: folha vinda de OCR nunca dispensa revisão, por mais inerte que o diff pareça", () => {
-        const d = classificarDispensa({ ...base, contemFolhaDeOcr: true });
+        const d = classifyExemption({ ...base, contemFolhaDeOcr: true });
         expect(d.concedida).toBe(false);
         expect(d.eixosQueNegaram).toContain("FOLHA_DE_OCR");
     });
 
     it("vários eixos negando aparecem TODOS — o revisor não conserta um e descobre o outro depois", () => {
-        const d = classificarDispensa({
+        const d = classifyExemption({
             permitida: false,
             diffSoInerte: false,
             arquivosDoPr: ["README.md"],
@@ -99,7 +99,7 @@ describe("classificarDispensa — falha FECHADO, e nomeia o eixo que negou", () 
     });
 
     it("um PR sem arquivo nenhum não é 'subconjunto vazio ⇒ dispensável' — não há PR a dispensar", () => {
-        const d = classificarDispensa({ ...base, arquivosDoPr: [] });
+        const d = classifyExemption({ ...base, arquivosDoPr: [] });
         expect(d.concedida).toBe(false);
         expect(d.eixosQueNegaram).toContain("ARQUIVOS_FORA_DO_PAR");
     });

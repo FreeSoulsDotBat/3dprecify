@@ -59,5 +59,5 @@ comentário.
 ## Onde isso vive no código
 
 - `apps/web/src/shared/fee-catalog/seed.ts` → `FEE_CATALOG_SEED`
-- `packages/fee-ingest/src/seed-projection.ts` → `projetarSemente`
+- `packages/fee-ingest/src/seed-projection.ts` → `projectSeed`
 

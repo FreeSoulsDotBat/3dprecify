@@ -1395,7 +1395,7 @@ leitura do piso, "Como sai no WhatsApp"/Copiar/Compartilhar (18f), e o "prazo de
 
 ## DEC-049 — A poda da semente é POLÍTICA DECLARADA, não acidente curatorial
 
-**Data**: 2026-08-07 (017/T009 · P0-a, ADR-0029 §B/§C.2.4) · **Governa**: `projetarSemente`
+**Data**: 2026-08-07 (017/T009 · P0-a, ADR-0029 §B/§C.2.4) · **Governa**: `projectSeed`
 
 O defeito é MEDIDO e já custou duas edições à mão em dois dias: um teste cravava `catalogVersion` numa
 literal, e todo bump de conteúdo obrigava alguém a reescrever uma string dentro de um teste. O
@@ -1413,7 +1413,7 @@ inteiro para dentro do bundle.**
 
 ### Onde isso vive no código
 
-- `packages/fee-ingest/src/seed-projection.ts` → `projetarSemente`
+- `packages/fee-ingest/src/seed-projection.ts` → `projectSeed`
 
 ---
 
@@ -1754,7 +1754,7 @@ tem caminho para o disco** — quem escreve é a composição, depois de validar
 
 ### Onde isso vive no código
 
-- `packages/fee-ingest/src/slice.ts` → `CatalogSlice`, `aplicarFatia`
+- `packages/fee-ingest/src/slice.ts` → `CatalogSlice`, `applySlice`
 
 ---
 
@@ -2175,7 +2175,7 @@ para não deixar sem teste.
 
 ### Onde isso vive no código
 
-- `packages/fee-ingest/src/pr-artifacts.ts` → `escreverArtefatosDePr`, `NOME_CORPO`
+- `packages/fee-ingest/src/pr-artifacts.ts` → `writePrArtifacts`, `BODY_FILENAME`
 
 ---
 

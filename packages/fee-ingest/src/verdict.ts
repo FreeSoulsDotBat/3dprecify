@@ -46,7 +46,7 @@ export type CollectorVerdict =
     | { kind: "NAO_LIDO"; marketplace: Mk; reason: string };
 
 /** O motivo literal de um marketplace que não deixou veredito no disco. */
-export const SEM_VEREDITO = "o job não produziu veredito";
+export const NO_VERDICT = "o job não produziu veredito";
 
 /**
  * Os vereditos lidos do disco, resolvidos contra a COBERTURA — total por construção.
@@ -64,23 +64,23 @@ export const SEM_VEREDITO = "o job não produziu veredito";
 export function resolverVereditos(
     disco: readonly CollectorVerdict[],
 ): Record<Mk, CollectorVerdict> {
-    const porMarketplace = new Map<Mk, CollectorVerdict[]>();
+    const byMarketplace = new Map<Mk, CollectorVerdict[]>();
     for (const v of disco) {
-        porMarketplace.set(v.marketplace, [...(porMarketplace.get(v.marketplace) ?? []), v]);
+        byMarketplace.set(v.marketplace, [...(byMarketplace.get(v.marketplace) ?? []), v]);
     }
 
-    const saida = {} as Record<Mk, CollectorVerdict>;
+    const out = {} as Record<Mk, CollectorVerdict>;
     for (const mk of MARKETPLACE_COVERAGE) {
-        const achados = porMarketplace.get(mk) ?? [];
+        const achados = byMarketplace.get(mk) ?? [];
         const unico = achados.length === 1 ? achados[0] : undefined;
-        saida[mk] = unico ?? {
+        out[mk] = unico ?? {
             kind: "NAO_LIDO",
             marketplace: mk,
             reason:
                 achados.length === 0
-                    ? SEM_VEREDITO
+                    ? NO_VERDICT
                     : `dois vereditos para o mesmo marketplace (${achados.length}) — nenhum é confiável`,
         };
     }
-    return saida;
+    return out;
 }

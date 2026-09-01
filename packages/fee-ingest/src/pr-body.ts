@@ -1,5 +1,5 @@
 import type { CatalogDiff } from "./catalog-diff.ts";
-import type { DispensaDecisao } from "./exemption.ts";
+import type { ExemptionDecision } from "./exemption.ts";
 import { isInerte } from "./inert-fields.ts";
 import { type CollectorVerdict, MARKETPLACE_COVERAGE, type Mk } from "./verdict.ts";
 
@@ -17,20 +17,20 @@ import { type CollectorVerdict, MARKETPLACE_COVERAGE, type Mk } from "./verdict.
 export const MARCADOR_MUDANCA = "→";
 
 /** O título da seção condicional §4. Exportado pela mesma razão. */
-export const TITULO_MUDANCAS = "## Mudanças de tarifa";
+export const CHANGES_HEADING = "## Mudanças de tarifa";
 
-const TITULO_ESTADO = "## Estado por marketplace";
+const STATE_HEADING = "## Estado por marketplace";
 
 /** A prova-de-vida mensal: uma execução sem novidade É a notícia (Adendo A14). */
-const SEM_NOTICIA = "Sem mudança de tarifa nesta leitura — apenas a data de reverificação avançou.";
+const NO_NEWS = "Sem mudança de tarifa nesta leitura — apenas a data de reverificação avançou.";
 
-export type FonteDeDecisao = { rotulo: string; valor: string; url: string };
+export type DecisionSource = { label: string; valor: string; url: string };
 
 /** clarify Q2 — duas fontes discordam sobre o mesmo número, e quem decide é o dono. */
 export type SecaoDeDecisao = {
     titulo: string;
-    fonteA: FonteDeDecisao;
-    fonteB: FonteDeDecisao;
+    fonteA: DecisionSource;
+    fonteB: DecisionSource;
     /** A data que a própria página declara, quando declara. */
     autoDatacao: string | null;
 };
@@ -38,7 +38,7 @@ export type SecaoDeDecisao = {
 /** clarify Q8 / US5-AC5 — uma folha de dinheiro que veio de OCR. O limiar do banner é decidido no
  *  módulo de OCR (PR-C), onde o dono o ratifica; aqui ele chega como FATO, e o corpo só RENDERIZA. */
 export type FolhaDeOcr = {
-    rotulo: string;
+    label: string;
     lido: number;
     anterior: number;
     imagemUrl: string;
@@ -53,16 +53,16 @@ export type RelatoDeVigia = {
     diffBaseline?: string;
 };
 
-export type CorpoArgs = {
+export type BodyArgs = {
     vereditos: Record<Mk, CollectorVerdict>;
     diff: CatalogDiff;
     vigias: readonly RelatoDeVigia[];
-    dispensa: DispensaDecisao;
+    dispensa: ExemptionDecision;
     folhasDeOcr?: readonly FolhaDeOcr[];
     decisao?: SecaoDeDecisao;
 };
 
-const rotulo = (e: { categoryName: string | null; categoryId: string | null }) =>
+const label = (e: { categoryName: string | null; categoryId: string | null }) =>
     e.categoryName ?? e.categoryId ?? "(sem categoria)";
 
 /** Um valor de folha na tabela. `undefined` é ausência e vira travessão, nunca a string "undefined". */
@@ -76,7 +76,7 @@ const celula = (v: unknown): string => {
  *
  *  Enumerada campo a campo e não derivada de `freshnessOnly`, pelo mesmo motivo do `refresh.ts`: no
  *  dia em que os dois divergirem, é o CORPO que precisa estar certo, porque é ele que o humano lê. */
-function semNoticia(diff: CatalogDiff): boolean {
+function noNews(diff: CatalogDiff): boolean {
     return (
         diff.addedCategories.length === 0 &&
         diff.removedCategories.length === 0 &&
@@ -88,7 +88,7 @@ function semNoticia(diff: CatalogDiff): boolean {
 }
 
 /** Fonte e data de coleta DECLARADAS pelo coletor daquele marketplace — nunca deduzidas. */
-function procedencia(vereditos: Record<Mk, CollectorVerdict>, marketplace: string): string {
+function provenance(vereditos: Record<Mk, CollectorVerdict>, marketplace: string): string {
     const v = (vereditos as Record<string, CollectorVerdict | undefined>)[marketplace];
     if (v?.kind === "LIDO") return `${v.sourceUrl} · coletado em ${v.collectedAt}`;
     // Uma mudança cujo coletor não declarou LIDO é uma contradição do próprio run, e ela aparece em
@@ -108,10 +108,7 @@ function procedencia(vereditos: Record<Mk, CollectorVerdict>, marketplace: strin
  * coletor tendo declarado exaustividade só pode ter vindo de edição à mão do artefato — e isso é
  * exatamente o que o revisor precisa ver escrito, em vez de deduzir.
  */
-function procedenciaDaRemocao(
-    vereditos: Record<Mk, CollectorVerdict>,
-    marketplace: string,
-): string {
+function removalProvenance(vereditos: Record<Mk, CollectorVerdict>, marketplace: string): string {
     const v = (vereditos as Record<string, CollectorVerdict | undefined>)[marketplace];
     if (v?.kind === "LIDO" && v.slice.exhaustive.length > 0) {
         const secoes = v.slice.exhaustive.map((s) => `\`${s}\``).join("+");
@@ -129,7 +126,7 @@ function procedenciaDaRemocao(
  * Pura: nenhum `new Date()`, nenhuma leitura de disco. Duas chamadas com o mesmo insumo produzem os
  * mesmos bytes — que é o que torna a idempotência do §C.4 verificável.
  */
-export function corpoDoPrMensal(args: CorpoArgs): string {
+export function monthlyPrBody(args: BodyArgs): string {
     const { vereditos, diff, vigias, dispensa } = args;
     const folhasDeOcr = args.folhasDeOcr ?? [];
     const out: string[] = [];
@@ -142,8 +139,8 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
             "",
             d.titulo,
             "",
-            `- **${d.fonteA.rotulo}**: ${d.fonteA.valor} — ${d.fonteA.url}`,
-            `- **${d.fonteB.rotulo}**: ${d.fonteB.valor} — ${d.fonteB.url}`,
+            `- **${d.fonteA.label}**: ${d.fonteA.valor} — ${d.fonteA.url}`,
+            `- **${d.fonteB.label}**: ${d.fonteB.valor} — ${d.fonteB.url}`,
             `- **Auto-datação da página**: ${d.autoDatacao ?? "a página não se auto-data"}`,
             "",
             "Nenhum dado foi alterado por esta divergência; a dispensa de revisão está forçada a NÃO.",
@@ -160,7 +157,7 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
     }
 
     // ── §3 Estado por marketplace (SEMPRE, 100% dos corpos — SC-1003) ──────────────────────────────
-    out.push(TITULO_ESTADO, "", "| marketplace | estado | detalhe |", "|---|---|---|");
+    out.push(STATE_HEADING, "", "| marketplace | estado | detalhe |", "|---|---|---|");
     for (const mk of MARKETPLACE_COVERAGE) {
         const v = vereditos[mk];
         if (v.kind === "LIDO") {
@@ -180,7 +177,7 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
 
     if (materiais.length > 0) {
         out.push(
-            TITULO_MUDANCAS,
+            CHANGES_HEADING,
             "",
             "| marketplace | categoria | campo | antes/depois | fonte |",
             "|---|---|---|---|---|",
@@ -188,7 +185,7 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
         for (const e of materiais) {
             for (const c of e.changes) {
                 out.push(
-                    `| ${e.marketplace} | ${rotulo(e)} | ${c.path} | ${celula(c.before)} ${MARCADOR_MUDANCA} ${celula(c.after)} | ${procedencia(vereditos, e.marketplace)} |`,
+                    `| ${e.marketplace} | ${label(e)} | ${c.path} | ${celula(c.before)} ${MARCADOR_MUDANCA} ${celula(c.after)} | ${provenance(vereditos, e.marketplace)} |`,
                 );
             }
         }
@@ -205,12 +202,12 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
         );
     }
     for (const c of diff.removedCategories) {
-        removidas.push(`- ${c.name} — ${procedenciaDaRemocao(vereditos, c.marketplace)}`);
+        removidas.push(`- ${c.name} — ${removalProvenance(vereditos, c.marketplace)}`);
     }
     for (const e of diff.removedEntries) {
         removidas.push(
             `- \`${JSON.stringify(e.determinants)}\` (o slot correspondente deixa de resolver) — ` +
-                procedenciaDaRemocao(vereditos, e.marketplace),
+                removalProvenance(vereditos, e.marketplace),
         );
     }
     for (const r of diff.reparented) {
@@ -229,7 +226,7 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
     if (outras.length > 0)
         out.push("## Notícias de cobertura (decisão humana necessária)", "", ...outras, "");
 
-    if (materiais.length === 0 && semNoticia(diff)) out.push(SEM_NOTICIA, "");
+    if (materiais.length === 0 && noNews(diff)) out.push(NO_NEWS, "");
 
     // AC5 — sem lido × anterior × link, a revisão humana de um número lido por OCR é teatro: as
     // guardas pegam ~35% do erro plausível de célula única (RA2), e o resto depende de alguém abrir a
@@ -238,7 +235,7 @@ export function corpoDoPrMensal(args: CorpoArgs): string {
         out.push("### Folhas lidas por OCR — confira contra a imagem", "");
         for (const f of folhasDeOcr) {
             out.push(
-                `- ${f.rotulo}: lido \`${f.lido}\` · anterior \`${f.anterior}\` · imagem: ${f.imagemUrl}`,
+                `- ${f.label}: lido \`${f.lido}\` · anterior \`${f.anterior}\` · imagem: ${f.imagemUrl}`,
             );
         }
         out.push("");

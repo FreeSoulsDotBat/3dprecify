@@ -1,14 +1,14 @@
 import { diffCatalogs } from "./catalog-diff.ts";
-import { classificarDispensa } from "./exemption.ts";
+import { classifyExemption } from "./exemption.ts";
 import { nextCatalogVersion } from "./guardrails.ts";
 import {
     type FolhaDeOcr,
     type RelatoDeVigia,
     type SecaoDeDecisao,
-    corpoDoPrMensal,
+    monthlyPrBody,
 } from "./pr-body.ts";
 import { decideRefresh } from "./refresh.ts";
-import { type CatalogJson, aplicarFatia } from "./slice.ts";
+import { type CatalogJson, applySlice } from "./slice.ts";
 import {
     type CollectorVerdict,
     MARKETPLACE_COVERAGE,
@@ -24,16 +24,16 @@ export type RunOutcome =
     | {
           kind: "PR";
           titulo: string;
-          corpo: string;
+          body: string;
           dispensa: boolean;
           decisaoDoDono: boolean;
           /** O documento a publicar. Só existe aqui — é a FR-020a em nível de tipo. */
-          catalogo: CatalogJson;
+          catalog: CatalogJson;
           /** Os vereditos DEPOIS da composição (uma fatia reprovada já chega aqui como ABORTADO). */
           vereditos: Record<Mk, CollectorVerdict>;
       };
 
-export type ComporArgs = {
+export type ComposeArgs = {
     base: CatalogJson;
     /** Os vereditos como saíram dos coletores (do disco). A resolução total acontece aqui dentro. */
     vereditos: readonly CollectorVerdict[];
@@ -51,7 +51,7 @@ export type ComporArgs = {
 };
 
 /** O documento sem os campos que a própria composição carimba — a base de comparação honesta. */
-const semMeta = (c: CatalogJson) =>
+const withoutMeta = (c: CatalogJson) =>
     JSON.stringify(
         Object.fromEntries(
             Object.entries(c).filter(([k]) => k !== "catalogVersion" && k !== "generatedAt"),
@@ -65,18 +65,18 @@ const semMeta = (c: CatalogJson) =>
  * terminaram, que é ruído de agendador. Um artefato cujo conteúdo dependesse dela produziria um diff
  * diferente a cada mês pelo mesmo dado.
  */
-export function compor(args: ComporArgs): RunOutcome {
+export function compose(args: ComposeArgs): RunOutcome {
     const { base, collectedAt, generatedAt, vigias, dispensaPermitida, arquivosDoPr } = args;
     const folhasDeOcr = args.folhasDeOcr ?? [];
 
     const resolvidos = resolverVereditos(args.vereditos);
-    let catalogo = base;
+    let catalog = base;
 
     for (const mk of MARKETPLACE_COVERAGE) {
         const v = resolvidos[mk];
         if (v.kind !== "LIDO") continue;
 
-        const aplicada = aplicarFatia(catalogo, v.slice);
+        const aplicada = applySlice(catalog, v.slice);
         if (!aplicada.ok) {
             // Uma fatia que nem se aplica não vira exceção nem meia escrita: vira o estado que o
             // relatório sabe declarar.
@@ -96,7 +96,7 @@ export function compor(args: ComporArgs): RunOutcome {
             collectedAt: v.collectedAt,
             sourceUrl: v.sourceUrl,
             sanity: { ok: true },
-            before: catalogo,
+            before: catalog,
             after: aplicada.catalog,
         });
         if (decisao.kind === "ABORT") {
@@ -108,11 +108,11 @@ export function compor(args: ComporArgs): RunOutcome {
             };
             continue;
         }
-        catalogo = aplicada.catalog;
+        catalog = aplicada.catalog;
     }
 
-    const mudouDocumento = semMeta(catalogo) !== semMeta(base);
-    const diff = diffCatalogs(base, catalogo);
+    const mudouDocumento = withoutMeta(catalog) !== withoutMeta(base);
+    const diff = diffCatalogs(base, catalog);
 
     if (!mudouDocumento && vigias.length === 0 && !args.decisao) {
         return {
@@ -132,10 +132,10 @@ export function compor(args: ComporArgs): RunOutcome {
     // `generatedAt` só avança se o documento avançou: senão o gerador não teria ponto fixo e abriria
     // um PR novo todo mês sobre a mesma tabela — e o revisor aprenderia a não olhar.
     const publicado: CatalogJson = mudouDocumento
-        ? { ...catalogo, catalogVersion, generatedAt }
-        : catalogo;
+        ? { ...catalog, catalogVersion, generatedAt }
+        : catalog;
 
-    const dispensaDecidida = classificarDispensa({
+    const exemptionDecided = classifyExemption({
         // O PR de decisão força a dispensa a NÃO (clarify Q2, item 4) — o dono é o portão, e um
         // interruptor não pode passar por cima dele.
         permitida: dispensaPermitida && !args.decisao,
@@ -144,23 +144,23 @@ export function compor(args: ComporArgs): RunOutcome {
         contemFolhaDeOcr: folhasDeOcr.length > 0,
     });
 
-    const corpo = corpoDoPrMensal({
+    const body = monthlyPrBody({
         vereditos: resolvidos,
         diff: diffCatalogs(base, publicado),
         vigias,
-        dispensa: dispensaDecidida,
+        dispensa: exemptionDecided,
         folhasDeOcr,
         ...(args.decisao ? { decisao: args.decisao } : {}),
     });
 
-    const tituloBase = `Tarifas — leitura de ${collectedAt}`;
+    const baseTitle = `Tarifas — leitura de ${collectedAt}`;
     return {
         kind: "PR",
-        titulo: args.decisao ? `DECISÃO — ${tituloBase}` : tituloBase,
-        corpo,
-        dispensa: dispensaDecidida.concedida,
+        titulo: args.decisao ? `DECISÃO — ${baseTitle}` : baseTitle,
+        body,
+        dispensa: exemptionDecided.concedida,
         decisaoDoDono: args.decisao !== undefined,
-        catalogo: publicado,
+        catalog: publicado,
         vereditos: resolvidos,
     };
 }

@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { type CatalogSlice, aplicarFatia } from "./slice.ts";
+import { type CatalogSlice, applySlice } from "./slice.ts";
 
 // O ARTEFATO REAL, não uma fixture parecida: a folha que este teste protege (`freightSubsidyInfo`)
 // só existe porque o hotfix 016/A2 a criou, e um teste escrito sobre uma cópia à mão perderia a
@@ -41,7 +41,7 @@ describe("aplicarFatia — a REGRA DA FOLHA LIDA (ADR-0028 §3)", () => {
         ],
     };
 
-    const aplicada = aplicarFatia(base, fatiaSoComissao);
+    const aplicada = applySlice(base, fatiaSoComissao);
 
     it("aplica a folha que o coletor DECLAROU ter lido", () => {
         expect(aplicada.ok).toBe(true);
@@ -95,7 +95,7 @@ describe("aplicarFatia — a REGRA DA FOLHA LIDA (ADR-0028 §3)", () => {
 
 describe("aplicarFatia — PONTO FIXO (I9 estendido a cada fonte nova)", () => {
     it("fatia VAZIA ⇒ artefato byte-idêntico", () => {
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "SHOPEE",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -109,7 +109,7 @@ describe("aplicarFatia — PONTO FIXO (I9 estendido a cada fonte nova)", () => {
     it("fatia que reescreve os MESMOS valores ⇒ artefato byte-idêntico (fonte inalterada)", () => {
         const shopee = secaoDe(base, "SHOPEE");
         const catchAll = (shopee.entries as Record<string, unknown>[])[0]!;
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "SHOPEE",
             collectedAt: "2026-08-06",
             sourceUrl: "https://exemplo",
@@ -136,7 +136,7 @@ describe("aplicarFatia — PONTO FIXO (I9 estendido a cada fonte nova)", () => {
 
     it("não muta a base — o chamador que a reusar não vê a escrita do vizinho", () => {
         const antes = JSON.stringify(base);
-        aplicarFatia(base, {
+        applySlice(base, {
             marketplace: "SHOPEE",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -149,7 +149,7 @@ describe("aplicarFatia — PONTO FIXO (I9 estendido a cada fonte nova)", () => {
 
 describe("aplicarFatia — folhas de nível de MARKETPLACE e entradas NOVAS", () => {
     it("uma folha de marketplace substitui só ela", () => {
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "AMAZON",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -163,7 +163,7 @@ describe("aplicarFatia — folhas de nível de MARKETPLACE e entradas NOVAS", ()
     });
 
     it("determinantes que a base não tem viram entrada NOVA no fim da lista", () => {
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "SHOPEE",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -197,7 +197,7 @@ describe("aplicarFatia — folhas de nível de MARKETPLACE e entradas NOVAS", ()
     });
 
     it("determinantes casam por CONTEÚDO, não por ordem de chave nem por identidade", () => {
-        const r = aplicarFatia(
+        const r = applySlice(
             {
                 marketplaces: [
                     {
@@ -235,7 +235,7 @@ describe("aplicarFatia — folhas de nível de MARKETPLACE e entradas NOVAS", ()
 
 describe("aplicarFatia — falha FECHADO (uma fatia que não se aplica não vira meia escrita)", () => {
     it("marketplace ausente da base ⇒ recusa nomeando o caso, sem inventar seção", () => {
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "AMERICANAS",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -247,7 +247,7 @@ describe("aplicarFatia — falha FECHADO (uma fatia que não se aplica não vira
     });
 
     it("artefato sem `marketplaces` ⇒ recusa em vez de estourar", () => {
-        const r = aplicarFatia(
+        const r = applySlice(
             {},
             {
                 marketplace: "SHOPEE",
@@ -262,7 +262,7 @@ describe("aplicarFatia — falha FECHADO (uma fatia que não se aplica não vira
     });
 
     it("uma seção cujo `entries` não é lista ⇒ recusa (forma quebrada não é dado)", () => {
-        const r = aplicarFatia(
+        const r = applySlice(
             { marketplaces: [{ marketplace: "SHOPEE", entries: "nada disso" }] },
             {
                 marketplace: "SHOPEE",

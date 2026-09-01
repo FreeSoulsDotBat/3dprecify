@@ -2,7 +2,7 @@ import { readdirSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { RAIZ, arquivosDeCodigo, existe, ler } from "./scan.ts";
+import { ROOT, sourceFiles, exists, read } from "./scan.ts";
 
 // O guarda do `docs/PADRAO_DE_COMENTARIOS.md`. Sem ele, aquele documento é uma convenção, e
 // convenção é lembrança: a explicação volta para dentro da linha no primeiro dia corrido.
@@ -18,190 +18,190 @@ import { RAIZ, arquivosDeCodigo, existe, ler } from "./scan.ts";
  * para caber num guarda. `{/*` idem, pelo JSX — e a falta dele era a mesma cegueira que o scanner
  * de densidade tinha: em JSX o comentário abre com `{` e o guarda não o via.
  */
-const GRAMATICA =
+const ANCHOR_GRAMMAR =
     /^\s*(?:\/\/|#:?|\{?\/\*+|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/\}?)?\s*$/u;
 
-const REGISTRO_DEC = "docs/decisoes-de-codigo.md";
-const REGISTRO_FONTE = "docs/fontes-verbatim.md";
-const LARGURA_MAXIMA = 100; // o `printWidth` do prettier neste repositório
+const DEC_REGISTRY = "docs/decisoes-de-codigo.md";
+const SOURCE_REGISTRY = "docs/fontes-verbatim.md";
+const MAX_COLUMNS = 100; // o `printWidth` do prettier neste repositório
 
-interface Ancora {
-    arquivo: string;
-    linha: number;
-    texto: string;
+interface Anchor {
+    file: string;
+    line: number;
+    text: string;
     id: string;
-    secao: string | undefined;
-    resumo: string;
+    section: string | undefined;
+    gist: string;
 }
 
-const arquivos = arquivosDeCodigo();
+const files = sourceFiles();
 
-const ancoras: Ancora[] = [];
-const malformadas: { arquivo: string; linha: number; texto: string; motivo: string }[] = [];
+const anchors: Anchor[] = [];
+const malformed: { file: string; line: number; text: string; reason: string }[] = [];
 
-for (const arquivo of arquivos) {
-    const linhas = ler(arquivo).split("\n");
-    linhas.forEach((texto, i) => {
-        if (!texto.includes("@doc")) return;
-        const m = GRAMATICA.exec(texto);
+for (const file of files) {
+    const lines = read(file).split("\n");
+    lines.forEach((text, i) => {
+        if (!text.includes("@doc")) return;
+        const m = ANCHOR_GRAMMAR.exec(text);
         if (!m) {
-            malformadas.push({
-                arquivo,
-                linha: i + 1,
-                texto: texto.trim(),
-                motivo: "não casa com `@doc <ID>[ §seção] — <resumo>`",
+            malformed.push({
+                file,
+                line: i + 1,
+                text: text.trim(),
+                reason: "não casa com `@doc <ID>[ §seção] — <gist>`",
             });
             return;
         }
-        if (texto.length > LARGURA_MAXIMA) {
-            malformadas.push({
-                arquivo,
-                linha: i + 1,
-                texto: texto.trim(),
-                motivo: `${String(texto.length)} colunas — o teto é ${String(LARGURA_MAXIMA)}`,
+        if (text.length > MAX_COLUMNS) {
+            malformed.push({
+                file,
+                line: i + 1,
+                text: text.trim(),
+                reason: `${String(text.length)} colunas — o ceiling é ${String(MAX_COLUMNS)}`,
             });
             return;
         }
-        ancoras.push({
-            arquivo,
-            linha: i + 1,
-            texto,
+        anchors.push({
+            file,
+            line: i + 1,
+            text,
             id: m[1] ?? "",
-            secao: m[2],
-            resumo: m[3] ?? "",
+            section: m[2],
+            gist: m[3] ?? "",
         });
     });
 }
 
-const arquivosAdr = readdirSync(`${RAIZ}docs/adr`)
+const adrFiles = readdirSync(`${ROOT}docs/adr`)
     .filter((f) => f.endsWith(".md"))
     .sort();
 
-const registro = existe(REGISTRO_DEC) ? ler(REGISTRO_DEC) : "";
-const registroFonte = existe(REGISTRO_FONTE) ? ler(REGISTRO_FONTE) : "";
+const decRegistry = exists(DEC_REGISTRY) ? read(DEC_REGISTRY) : "";
+const sourceRegistry = exists(SOURCE_REGISTRY) ? read(SOURCE_REGISTRY) : "";
 
 /** Resolve o ID de uma âncora para o texto do documento que ele endereça — ou `null` se não existe. */
-function resolver(id: string): { doc: string; texto: string } | null {
+function resolveId(id: string): { doc: string; text: string } | null {
     const adr = /^ADR-(\d{4})$/.exec(id);
     if (adr) {
-        const nome = arquivosAdr.find((f) => f.startsWith(`${adr[1] ?? ""}-`));
-        return nome ? { doc: `docs/adr/${nome}`, texto: ler(`docs/adr/${nome}`) } : null;
+        const name = adrFiles.find((f) => f.startsWith(`${adr[1] ?? ""}-`));
+        return name ? { doc: `docs/adr/${name}`, text: read(`docs/adr/${name}`) } : null;
     }
     const dec = /^DEC-(\d{3})$/.exec(id);
     if (dec) {
-        return registro.includes(`## DEC-${dec[1] ?? ""}`)
-            ? { doc: REGISTRO_DEC, texto: registro }
+        return decRegistry.includes(`## DEC-${dec[1] ?? ""}`)
+            ? { doc: DEC_REGISTRY, text: decRegistry }
             : null;
     }
-    const fonte = /^FONTE-(\d{3})$/.exec(id);
-    if (fonte) {
-        return registroFonte.includes(`## FONTE-${fonte[1] ?? ""}`)
-            ? { doc: REGISTRO_FONTE, texto: registroFonte }
+    const source = /^FONTE-(\d{3})$/.exec(id);
+    if (source) {
+        return sourceRegistry.includes(`## FONTE-${source[1] ?? ""}`)
+            ? { doc: SOURCE_REGISTRY, text: sourceRegistry }
             : null;
     }
     // ID de spec: `013/FA-01`, `016/A3`, `009/T034` — resolve para o diretório do incremento.
     const spec = /^(\d{3})\//.exec(id);
     if (spec) {
-        const dirs = readdirSync(`${RAIZ}specs`);
+        const dirs = readdirSync(`${ROOT}specs`);
         const dir = dirs.find((d) => d.startsWith(`${spec[1] ?? ""}-`));
-        return dir ? { doc: `specs/${dir}`, texto: "" } : null;
+        return dir ? { doc: `specs/${dir}`, text: "" } : null;
     }
     return null;
 }
 
 describe("âncoras `@doc` — os dois lados do link são verdade ao mesmo tempo", () => {
     it("há âncoras para auditar (senão tudo abaixo passaria por vacuidade)", () => {
-        expect(arquivos.length).toBeGreaterThan(100);
-        expect(ancoras.length).toBeGreaterThan(0);
+        expect(files.length).toBeGreaterThan(100);
+        expect(anchors.length).toBeGreaterThan(0);
     });
 
     it("1. toda âncora obedece à gramática e cabe em 100 colunas", () => {
         // É esta asserção que impede a âncora de voltar a virar parágrafo: quem escrever a segunda
         // linha de explicação não tem onde pendurar o `@doc`, e o teto de colunas recusa o resumo
         // que vira frase. O padrão volta a ser respeitado por construção, não por revisão.
-        expect(malformadas).toEqual([]);
+        expect(malformed).toEqual([]);
     });
 
     it("2. nenhuma âncora morta — todo ID resolve para um documento existente", () => {
-        const mortas = ancoras
-            .filter((a) => resolver(a.id) === null)
-            .map((a) => `${a.arquivo}:${String(a.linha)} → ${a.id}`);
-        expect(mortas).toEqual([]);
+        const dead = anchors
+            .filter((a) => resolveId(a.id) === null)
+            .map((a) => `${a.file}:${String(a.line)} → ${a.id}`);
+        expect(dead).toEqual([]);
     });
 
     it("2b. nenhuma seção morta — `§x` existe dentro do documento apontado", () => {
-        const mortas: string[] = [];
-        for (const a of ancoras) {
-            if (a.secao === undefined) continue;
-            const alvo = resolver(a.id);
-            // Specs não têm texto único (o ID endereça um diretório) — só ADR e DEC são conferidos.
-            if (!alvo || alvo.texto === "") continue;
-            if (!alvo.texto.includes(a.secao)) {
-                mortas.push(`${a.arquivo}:${String(a.linha)} → ${a.id} §${a.secao}`);
+        const dead: string[] = [];
+        for (const a of anchors) {
+            if (a.section === undefined) continue;
+            const target = resolveId(a.id);
+            // Specs não têm text único (o ID endereça um diretório) — só ADR e DEC são conferidos.
+            if (!target || target.text === "") continue;
+            if (!target.text.includes(a.section)) {
+                dead.push(`${a.file}:${String(a.line)} → ${a.id} §${a.section}`);
             }
         }
-        expect(mortas).toEqual([]);
+        expect(dead).toEqual([]);
     });
 
     it("3. nenhum DEC/FONTE órfão — todo verbete do registro é citado por algum ponto do código", () => {
-        // Um verbete que ninguém cita documenta código que não existe mais. Ele some do registro; não
+        // Um verbete que ninguém cita documenta código que não existe mais. Ele sai do registro; não
         // fica como documentação de um lugar que o leitor vai procurar e não achar.
-        const declarados = [
-            ...[...registro.matchAll(/^## (DEC-\d{3})\b/gm)].map((m) => m[1] ?? ""),
-            ...[...registroFonte.matchAll(/^## (FONTE-\d{3})\b/gm)].map((m) => m[1] ?? ""),
+        const declared = [
+            ...[...decRegistry.matchAll(/^## (DEC-\d{3})\b/gm)].map((m) => m[1] ?? ""),
+            ...[...sourceRegistry.matchAll(/^## (FONTE-\d{3})\b/gm)].map((m) => m[1] ?? ""),
         ];
-        expect(declarados.length).toBeGreaterThan(0);
-        const citados = new Set(ancoras.map((a) => a.id));
-        expect(declarados.filter((d) => !citados.has(d))).toEqual([]);
+        expect(declared.length).toBeGreaterThan(0);
+        const cited = new Set(anchors.map((a) => a.id));
+        expect(declared.filter((d) => !cited.has(d))).toEqual([]);
     });
 });
 
 describe("ponteiros de volta — `## Onde isso vive no código`", () => {
     /** `- \`caminho/arquivo.ts\` → \`simbolo\`, \`outro\`` */
-    const LINHA = /^-\s+`([^`]+)`\s*→\s*(.+)$/;
+    const POINTER_LINE = /^-\s+`([^`]+)`\s*→\s*(.+)$/;
 
-    const ponteiros: { doc: string; arquivo: string; simbolos: string[] }[] = [];
-    for (const doc of [...arquivosAdr.map((f) => `docs/adr/${f}`), REGISTRO_DEC, REGISTRO_FONTE]) {
-        if (!existe(doc)) continue;
-        const linhas = ler(doc).split("\n");
-        let dentro = false;
-        for (const linha of linhas) {
-            if (/^#{2,3}\s/.test(linha)) {
-                dentro = linha.includes("Onde isso vive no código");
+    const backPointers: { doc: string; file: string; symbols: string[] }[] = [];
+    for (const doc of [...adrFiles.map((f) => `docs/adr/${f}`), DEC_REGISTRY, SOURCE_REGISTRY]) {
+        if (!exists(doc)) continue;
+        const lines = read(doc).split("\n");
+        let inside = false;
+        for (const line of lines) {
+            if (/^#{2,3}\s/.test(line)) {
+                inside = line.includes("Onde isso vive no código");
                 continue;
             }
-            if (!dentro) continue;
-            const m = LINHA.exec(linha.trim());
+            if (!inside) continue;
+            const m = POINTER_LINE.exec(line.trim());
             if (!m) continue;
-            ponteiros.push({
+            backPointers.push({
                 doc,
-                arquivo: m[1] ?? "",
-                simbolos: [...(m[2] ?? "").matchAll(/`([^`]+)`/g)].map((s) => s[1] ?? ""),
+                file: m[1] ?? "",
+                symbols: [...(m[2] ?? "").matchAll(/`([^`]+)`/g)].map((s) => s[1] ?? ""),
             });
         }
     }
 
     it("há ponteiros para auditar", () => {
-        expect(ponteiros.length).toBeGreaterThan(0);
+        expect(backPointers.length).toBeGreaterThan(0);
     });
 
     it("4. todo `arquivo → símbolo` ainda existe (por símbolo, nunca por linha)", () => {
         // Por que símbolo e não linha: a refatoração de legibilidade de 2026-08/09 moveu milhares de
         // linhas de lugar. Um número de linha teria morrido no primeiro commit; um símbolo sobrevive
         // a mudar de arquivo — e quando não sobrevive, é exatamente isso que este teste diz.
-        const podres: string[] = [];
-        for (const p of ponteiros) {
-            if (!existe(p.arquivo)) {
-                podres.push(`${p.doc}: o arquivo \`${p.arquivo}\` não existe mais`);
+        const rotten: string[] = [];
+        for (const p of backPointers) {
+            if (!exists(p.file)) {
+                rotten.push(`${p.doc}: o file \`${p.file}\` não exists mais`);
                 continue;
             }
-            const texto = ler(p.arquivo);
-            for (const s of p.simbolos) {
-                if (!texto.includes(s)) {
-                    podres.push(`${p.doc}: \`${s}\` não existe mais em \`${p.arquivo}\``);
+            const text = read(p.file);
+            for (const s of p.symbols) {
+                if (!text.includes(s)) {
+                    rotten.push(`${p.doc}: \`${s}\` não exists mais em \`${p.file}\``);
                 }
             }
         }
-        expect(podres).toEqual([]);
+        expect(rotten).toEqual([]);
     });
 });

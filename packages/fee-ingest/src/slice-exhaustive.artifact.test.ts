@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { describe, expect, it } from "vitest";
 
-import { aplicarFatia } from "./slice.ts";
+import { applySlice } from "./slice.ts";
 
 // §C.2-bis — EXAUSTIVIDADE DECLARADA: a outra metade da regra da folha lida.
 //
@@ -36,7 +36,7 @@ const amazonBase = {
 
 describe("regra 1 — sem declaração, a base vence e NADA some", () => {
     it("Shopee com `exhaustive: []` sobre uma base COM duas entradas ⇒ as duas ficam", () => {
-        const r = aplicarFatia(base, {
+        const r = applySlice(base, {
             marketplace: "SHOPEE",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -50,7 +50,7 @@ describe("regra 1 — sem declaração, a base vence e NADA some", () => {
 });
 
 describe("regra 2 — declarada, a ausência REMOVE", () => {
-    const semColchoes = aplicarFatia(amazonBase, {
+    const semColchoes = applySlice(amazonBase, {
         marketplace: "AMAZON",
         collectedAt: "2026-09-01",
         sourceUrl: "https://sellercentral.amazon.com.br/help/hub/reference/external/G200336920",
@@ -94,7 +94,7 @@ describe("AS DUAS FECHADURAS sobre o hotfix A2", () => {
     // `exhaustive: ["freightSubsidyInfo"]` alguém autoriza aquela remoção — não há como dizê-lo. Esta
     // é a SEGUNDA fechadura: mesmo com `entries` declarada exaustiva (a declaração mais agressiva que
     // a Shopee poderia fazer), a curadoria de nível de marketplace fica intacta.
-    const exaustivaNaShopee = aplicarFatia(base, {
+    const exaustivaNaShopee = applySlice(base, {
         marketplace: "SHOPEE",
         collectedAt: "2026-09-01",
         sourceUrl: "https://seller.shopee.com.br/edu/article/26839",
@@ -132,7 +132,7 @@ describe("AS DUAS FECHADURAS sobre o hotfix A2", () => {
 
 describe("regras 3 e 4 — a declaração não pode virar faca", () => {
     it("declarar `entries` exaustiva sem endereçar entrada nenhuma é RECUSADO", () => {
-        const r = aplicarFatia(amazonBase, {
+        const r = applySlice(amazonBase, {
             marketplace: "AMAZON",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -144,7 +144,7 @@ describe("regras 3 e 4 — a declaração não pode virar faca", () => {
     });
 
     it("reescrever `categorySpine` SEM declará-la exaustiva é RECUSADO", () => {
-        const r = aplicarFatia(amazonBase, {
+        const r = applySlice(amazonBase, {
             marketplace: "AMAZON",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -164,7 +164,7 @@ describe("regras 3 e 4 — a declaração não pode virar faca", () => {
     });
 
     it("declarar `categorySpine` exaustiva sem escrevê-la é RECUSADO", () => {
-        const r = aplicarFatia(amazonBase, {
+        const r = applySlice(amazonBase, {
             marketplace: "AMAZON",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",
@@ -183,7 +183,7 @@ describe("regras 3 e 4 — a declaração não pode virar faca", () => {
     });
 
     it("PONTO FIXO sob exaustividade: a fatia COMPLETA devolve o documento byte-idêntico", () => {
-        const r = aplicarFatia(amazonBase, {
+        const r = applySlice(amazonBase, {
             marketplace: "AMAZON",
             collectedAt: "2026-09-01",
             sourceUrl: "https://exemplo",

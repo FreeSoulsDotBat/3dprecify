@@ -24,7 +24,7 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { veredictoAmazon, vigenciasAnteriores } from "./amazon-collector.ts";
+import { amazonVerdict, previousEffectiveDates } from "./amazon-collector.ts";
 import { parseAmazonTable } from "./amazon-parse.ts";
 import { AMAZON_SOURCE_URL } from "./amazon-to-catalog.ts";
 import { collectedAtFor } from "./guardrails.ts";
@@ -121,9 +121,9 @@ if (!amazon) {
 }
 
 emitir(
-    veredictoAmazon({
-        categorias: parseAmazonTable(rows),
+    amazonVerdict({
+        categories: parseAmazonTable(rows),
         collectedAt: quando.date,
-        previousEffectiveDates: vigenciasAnteriores(amazon),
+        previousEffectiveDates: previousEffectiveDates(amazon),
     }),
 );

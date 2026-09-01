@@ -40,9 +40,9 @@ describe("o pacote boota sob node puro", () => {
             stdio: ["ignore", "pipe", "pipe"],
         });
 
-        const resultado = JSON.parse(saida.trim()) as { versao: string; varejo: number };
-        expect(resultado.versao).toMatch(/^\d+\.\d+\.\d+$/);
+        const result = JSON.parse(saida.trim()) as { versao: string; varejo: number };
+        expect(result.versao).toMatch(/^\d+\.\d+\.\d+$/);
         // Guarda de não-vacuidade: um `undefined` aqui significaria que o módulo carregou pela metade.
-        expect(resultado.varejo).toBeGreaterThan(0);
+        expect(result.varejo).toBeGreaterThan(0);
     });
 });

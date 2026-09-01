@@ -165,7 +165,7 @@ export function collectedAtFor(opts: {
     envDate?: string | undefined;
     today: string;
 }): CollectedAtVerdict {
-    if (opts.envDate) return validarData(opts.envDate, opts.today);
+    if (opts.envDate) return validateDate(opts.envDate, opts.today);
     if (opts.fromFixture) {
         return {
             ok: false,
@@ -182,7 +182,7 @@ export function collectedAtFor(opts: {
  *   recusado: `COLLECTED_AT=banana` saía com exit 0, o schema aceitava, a suíte passava, e o
  *   `isStale` declarava aqueles valores frescos PARA SEMPRE.
  */
-function validarData(valor: string, today: string): CollectedAtVerdict {
+function validateDate(valor: string, today: string): CollectedAtVerdict {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {
         return { ok: false, reason: `COLLECTED_AT="${valor}" is not a date in YYYY-MM-DD form` };
     }
