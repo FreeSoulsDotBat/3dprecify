@@ -188,3 +188,11 @@ precisassem, cedo ou tarde, do mesmo valor por acaso (o que tornaria uma constan
 rejeitado porque as duas fatias que os nomearam não têm nenhuma dependência declarada uma da outra —
 uma coincidência numérica não é uma relação.
 
+## Onde isso vive no código
+
+> Ponteiro de volta do `docs/PADRAO_DE_COMENTARIOS.md` §6 — por SÍMBOLO, nunca por linha, e
+> conferido pelo guarda `packages/repo-audit`. As âncoras `@doc ADR-0031` no código apontam para as
+> seções acima; esta seção é o caminho inverso.
+
+- `apps/web/src/shared/lib/use-is-wide.ts` → `WIDE_QUERY`, `CALC_WIDE_QUERY`, `LIST_DENSE_QUERY`, `useMediaQuery`
+

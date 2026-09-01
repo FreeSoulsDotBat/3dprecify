@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "rootDir": ".",
+        "noEmit": true,
+        "resolveJsonModule": true,
+        // Mesma flag do pricing-core e do fee-ingest (015/A5): import relativo carrega a extensão
+        // explícita, e o tsc só aceita isso sob `noEmit`.
+        "allowImportingTsExtensions": true,
+        // Este pacote existe para LER o repositório do disco — `node:fs` é a sua ferramenta inteira.
+        "types": ["node"]
+    },
+    "include": ["tests"]
+}
