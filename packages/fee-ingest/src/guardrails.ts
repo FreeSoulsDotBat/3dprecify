@@ -123,18 +123,9 @@ export function nextCatalogVersion(
 }
 
 /**
- * 014/T106 — dois nomes da fonte que colapsam no MESMO `categoryId`.
- *
- * `categoryId` dobra acentos e caixa, o que é o que dá identidade estável a um marketplace que
- * publica só nomes — e é também o que permite a colisão: "Óculos" e "Oculos" viram `oculos`. O
- * gerador não conferia, então isso saía com exit 0 e "sucesso" impresso, enquanto o artefato com ids
- * duplicados derruba o marketplace INTEIRO no cliente (`categorySpineSchema` recusa id duplicado, e
- * `parseSeedResilient` responde descartando o marketplace — um par de acentos apaga a Amazon).
- *
- * O `gate:all` já pegaria o artefato inválido pelo truth-gate de `fee-catalog.test.ts`, então isto
- * não é a última linha de defesa. É a primeira, e é a única que fala com quem rodou o script: a
- * razão nomeia os dois colidentes e o id que eles disputam, porque "colisão" sem nomes não é
- * acionável.
+ * ⚠ @doc DEC-106 — "Óculos" e "Oculos" viram o mesmo id, e o artefato com id duplicado apaga o
+ *   marketplace INTEIRO no cliente. Saía com exit 0 e "sucesso" impresso. A razão nomeia os
+ *   dois colidentes: "colisão" sem nomes não é acionável.
  */
 export function checkCategoryIdCollisions(categories: readonly { name: string }[]): SanityVerdict {
     const byId = new Map<string, string[]>();
@@ -187,20 +178,9 @@ export function collectedAtFor(opts: {
 }
 
 /**
- * Uma data de coleta tem de ser uma DATA — achado da revisao adversarial de 2026-08-01, medido
- * executando o gerador: `COLLECTED_AT=banana` saia com exit 0 e escrevia `catalogVersion "banana.0"`,
- * `generatedAt "bananaT00:00:00.000Z"` e `lastReviewed "banana"` nas 78 entradas.
- *
- * O que torna isso DINHEIRO e nao tipografia: o schema aceita (`z.string().min(1)` nos tres campos),
- * a suite inteira passa sobre o artefato envenenado, e `isStale` devolve FALSE numa data ilegivel
- * ("never cry wolf"). O selo declara aqueles valores frescos PARA SEMPRE.
- *
- * O vetor e HERDADO — o gerador ja fazia `process.env.COLLECTED_AT ?? hoje` sem validar. A T053 o
- * ALARGOU ao tornar a variavel obrigatoria no caminho `--from`, promovendo uma string digitada a mao
- * a fluxo normal. Por isso a validacao vale para TODOS os caminhos, e nao so para o capturado.
- *
- * O futuro tambem e recusado: um `lastReviewed` amanha nunca envelhece, entao o selo ficaria fresco
- * por tempo indeterminado — o mesmo dano, por outra porta.
+ * ⚠ @doc DEC-096 — data de coleta tem de ser DATA, em TODOS os caminhos, e o futuro também é
+ *   recusado: `COLLECTED_AT=banana` saía com exit 0, o schema aceitava, a suíte passava, e o
+ *   `isStale` declarava aqueles valores frescos PARA SEMPRE.
  */
 function validarData(valor: string, today: string): CollectedAtVerdict {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(valor)) {

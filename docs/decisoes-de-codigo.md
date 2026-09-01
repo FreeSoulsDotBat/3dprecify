@@ -2381,3 +2381,570 @@ ajusta é a parcela que mudou, e a razão continua legível.
 
 - `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `isStale`, `lastReviewed`
 
+---
+
+## DEC-091 — A troca de marketplace REVALIDA, e a revalidação é da FUNÇÃO, não do chamador
+
+**Data**: 2026-08-31 (019/Polish) · **corrigido** 2026-09-01 (bug B2, decisão do dono) · **Governa**:
+`marketplace-change.ts`
+
+O handler estava triplicado VERBATIM em `calcular-page`, `produto-page` e `bom-line-editor`. Trocar o
+marketplace de um slot zera a modalidade para o padrão daquele mercado (ou nenhuma), para um "Clássico"
+velho do ML não sobrar num slot da Shopee, e apaga exatamente os campos de tarifa que o plano do
+marketplace NOVO não mostra ([[DEC-067]]) — campo que o plano novo ainda mostra mantém o valor.
+
+**O bug B2**: só a calculadora passava `{ shouldValidate: true }`. Nas outras duas telas, um erro
+antigo ("comissão inválida") continuava exibido **depois** que a troca já havia limpado o campo, até o
+próximo toque. **Não era decisão de ninguém: eram três cópias que divergiram.**
+
+A revalidação agora é da FUNÇÃO, não do chamador — **não há mais parâmetro para um sítio esquecer**.
+Mesma família estrutural do [[DEC-014]].
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/marketplace-change.ts` → `applyMarketplaceChange`
+
+---
+
+## DEC-092 — A taxa fixa tem procedência PRÓPRIA, em bloco separado, e diz "vigente desde"
+
+**Data**: 2026-08-06 (016/PR-F, T057) · **atualizado** 2026-08-28 (019/PR-C, 13b·9) · **Governa**: o
+selo de procedência da taxa fixa
+
+Quando a entrada do catálogo carrega uma ([[DEC-058]]): na Amazon Individual a comissão vem da tabela
+de categorias e a cobrança de R$ 2,00 por item vem de uma página oficial DIFERENTE.
+
+**Bloco SEPARADO, nunca dobrado no texto do selo principal**: o selo principal já nomeia a fonte da
+comissão, e citar uma segunda fonte dentro da mesma frase borraria **qual número ela sustenta**
+(Constituição II).
+
+Tom sempre `neutral`, nunca `info`: **não é "a referência viva para a categoria do vendedor"**, é uma
+segunda citação, datada à parte.
+
+E diz **"vigente desde"** — QUANDO a taxa passou a valer — nunca "atualizada em", que afirmaria ser a
+data em que nós a conferimos pela última vez. A entrada não tem um `lastReviewed` próprio ([[DEC-090]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/fee-seal.tsx` → `fixedFeeSource`
+
+---
+
+## DEC-093 — A sobretaxa é dirigida pelo catálogo, e o `Switch` do DS carrega o alvo de toque
+
+**Data**: 2026-08-06 (016/US16, FR-923, ADR-0027 §3.2) · **Governa**: `surcharge-checkbox.tsx`
+
+Um interruptor de sobretaxa opcional — Shopee "Item volumoso" hoje, mas **nada aqui a nomeia**:
+rótulo, valor e procedência vêm todos do `surcharge` que a entrada do catálogo carrega
+([[DEC-067]]). Marcado → o id entra em `channels.{index}.surcharges`; desmarcado ou nunca marcado → o
+array nunca recebe o id, **o que é byte-idêntico a todo cálculo anterior à existência deste eixo**
+(US16-AC2).
+
+**Homologação 016/PR-F (A2)**: era um `<input type="checkbox">` cru — o ÚNICO checkbox nativo do
+repositório, com 13×13px, bem abaixo do alvo de toque de ≥44×44px que a INV-2 garante para todos os
+outros controles. O `Switch` do DS já carrega esse contrato **por construção** (área de acerto maior
+em volta de um trilho visível menor), mais a pele correta do tema escuro de graça — então isto virou a
+mesma semântica liga/desliga sobre o primitivo do DS, em vez de um checkbox pequeno feito à mão.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/form-molecules/surcharge-checkbox.tsx` → `surcharges`
+
+---
+
+## DEC-094 — O modo "ritmo" é DERIVADO a cada render, e um valor fora das opções sempre abre "ajustar"
+
+**Data**: 2026-08-05 (016/US8, FR-910, SC-906) · **Governa**: `machine-cost-fields.tsx`
+
+A pergunta da máquina reescrita: o vendedor responde (1) quanto custou · (2) com que frequência ela
+roda (3 opções, sem digitar) · (3) em quantos anos quer que se pague, e o `machineLifetimeHours`
+derivado é dito EM VOZ ALTA como legenda de custo/hora. "Ajustar" revela o campo de horas cru.
+
+**Reatividade DERIVADA, nunca duplicada**: o modo é recalculado a cada render a partir do valor VIVO
+do campo, então um cenário ou catálogo que chame `setValue("machineLifetimeHours", …)` **de fora**
+deste componente é captado automaticamente — não existe cópia local de ritmo/payback para
+ressincronizar.
+
+O `manualOverride` só força o "ajustar" aberto quando o vendedor pediu explicitamente; **uma vida útil
+fora de toda combinação ritmo×payback SEMPRE mostra "ajustar"**, independentemente disso (US8-AC4): o
+valor que o documento guarda nunca é coagido em silêncio.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/form-organisms/machine-cost-fields.tsx` → `detectRitmoMode`, `manualOverride`
+
+---
+
+## DEC-095 — A linha de frete existe SÓ quando o vendedor a declarou, e cada informação aparece uma vez
+
+**Data**: 2026-08-07 (hotfix 016/A2, R4, FR-111b) · **atualizado** 2026-08-29 (019/PR-F, T142) ·
+**Governa**: `channel-level-rows.tsx`
+
+As linhas de um nível de markup: anúncio, uma linha OPCIONAL de dedução de frete, e líquido — marcado
+quando negativo, se um frete digitado exceder a margem.
+
+**A linha de frete existe SÓ quando o vendedor digitou `freightCost`** (FR-111b: "declarado OU com
+valor"). A redação antiga, "cupom co-financiado pela Shopee", descrevia o modelo do 005 que as fontes
+refutaram ([[FONTE-001]]: o subsídio é custo da Shopee, universal — nunca do vendedor).
+
+**019/PR-F — cada informação aparece uma vez.** Sumiu a legenda própria "Varejo"/"Atacado": o
+`<Segmented split>` acima já governa qual nível é este, e repeti-lo aqui seria a mesma informação duas
+vezes. E o aviso de frete migrou da legenda solta que existia ABAIXO do bloco para o `sublabel` da
+própria linha "Frete" — um único lugar em vez de dois.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/form-molecules/channel-level-rows.tsx` → `freightHint`
+
+---
+
+## DEC-096 — Uma data de coleta tem de ser uma DATA, em TODOS os caminhos, e o futuro também é recusado
+
+**Data**: 2026-08-01 (revisão adversarial) · **Governa**: a validação de `collectedAt`
+
+Medido executando o gerador: `COLLECTED_AT=banana` **saía com exit 0** e escrevia
+`catalogVersion "banana.0"`, `generatedAt "bananaT00:00:00.000Z"` e `lastReviewed "banana"` nas 78
+entradas.
+
+**O que torna isso DINHEIRO e não tipografia**: o schema aceita (`z.string().min(1)` nos três campos),
+a suíte inteira passa sobre o artefato envenenado, e o `isStale` devolve FALSE numa data ilegível
+("never cry wolf" — [[DEC-090]]). **O selo declara aqueles valores frescos PARA SEMPRE.**
+
+O vetor é HERDADO — o gerador já fazia `process.env.COLLECTED_AT ?? hoje` sem validar. A T053 o
+ALARGOU ao tornar a variável obrigatória no caminho `--from`, promovendo uma string digitada à mão a
+fluxo normal. **Por isso a validação vale para TODOS os caminhos**, não só para o capturado.
+
+**O futuro também é recusado**: um `lastReviewed` de amanhã nunca envelhece, então o selo ficaria
+fresco por tempo indeterminado — o mesmo dano, por outra porta.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/guardrails.ts` → `collectedAtFor`
+
+---
+
+## DEC-097 — Uma query `networkMode: "always"` que errou não se cura sozinha na reconexão
+
+**Data**: 2026-08-27 (regressão do mestre-detalhe do 018, B1/FR-527) · **Governa**: o dreno de
+reconexão do Histórico
+
+Em ≥1280px o primeiro registro abre sozinho na coluna de detalhe, então a query do snapshot pode já
+estar montada e assentada num erro de rede REAL enquanto offline (`retry: false`,
+`networkMode: "always"` — ela não pausa, ela falha de verdade — [[DEC-076]]).
+
+**E essa query nunca se cura sozinha na reconexão**: `networkMode: "always"` tira a query da maquinaria
+de pausar/retomar do online-manager, e o `refetchOnReconnect` automático do TanStack **pega carona
+nessa mesma maquinaria**. Uma query "always", uma vez errada, fica ali até algo a invalidar
+explicitamente.
+
+O gravar já fazia isso; este dreno de reconexão é o OUTRO caminho que pode assentar justamente a
+entrada que o detalhe está mostrando, e **tem de invalidar a MESMA chave** — senão a coluna de detalhe
+fica presa em "Não foi possível carregar seus orçamentos." para sempre, sobre um registro que a essa
+altura já sincronizou.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/use-history.ts` → `networkMode`
+
+---
+
+## DEC-098 — A observação de preço é escrita DEPOIS do commit, e a ausência da chamada é a barreira
+
+**Data**: 2026-08-29 (019/PR-D, T124, ADR-0033 §2, SC-709) · **Governa**: a escrita de
+`price_observations`
+
+O PUT em lote roda DEPOIS do commit, com a lista completa dos recomputáveis — **nunca durante o
+render**.
+
+**`gate === "active"` é a barreira de sempre** (Constituição IV): ler e recomputar sobrevive em
+QUALQUER gate (FR-409 — "lapsed com itens" continua mostrando preço), mas GRAVAR uma observação é uma
+escrita, e **a ausência da chamada é a barreira**, nunca um 403 do servidor como primeira linha de
+defesa ([[DEC-070]]).
+
+Três guardas a mais, da revisão do main loop:
+
+- **a "visita" é a LISTA** — com a ficha `?produto=` aberta ninguém viu a lista, e um deep-link na
+  ficha não pode marcar os outros itens como vistos;
+- **um GET que falhou por rede não avança a marca** (`observationsError`, nunca o 403) — senão o PUT
+  sobrescreve uma comparação "era" que o vendedor nunca chegou a ver;
+- **o `catalogVersion` do catálogo de taxas vai junto**, como o ADR-0033 §2 pede.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/catalogo/catalogo-page.tsx` → `useObservePrices`
+
+---
+
+## DEC-099 — Assinatura cancelada + cortesia mais longa: a frase precisa dizer que o corte não vem
+
+**Data**: 2026-07-24 (ux-billing §4.3, recomendação §10-F1) · **Status**: **pendente de ratificação do
+dono** · **Governa**: a costura de cancelamento no `plan-view`
+
+Um vendedor com assinatura CANCELADA que também carrega um grant de cortesia mais longo **não vai
+cair no fim do período**: a cortesia o segura. Dizer só "ativo até 31/12 · não renova" implica um
+corte em 31/12 que não vai acontecer — **uma desonestidade sutil, e do tipo que só aparece quando o
+dia chega e o vendedor não entende por que continua premium**.
+
+A detecção não precisa de campo novo: o `expiresAt` do ledger é o grant válido MAIS DISTANTE, e se ele
+passa do fim do período da assinatura, existe algo além dela ([[DEC-044]]).
+
+**A borda é ESTRITA**: empate significa que os dois acabam juntos, e aí a frase já está certa —
+acrescentar a linha prometeria um acesso que não existe no dia seguinte.
+
+> Este verbete cobre uma decisão que a clarificação de 2026-07-20 apenas MEIO-especifica, e a
+> recomendação está registrada com ~70% de confiança. **Aguarda ratificação do dono.**
+
+### Onde isso vive no código
+
+- `apps/web/src/features/billing/plan-view.ts` → `expiresAt`
+
+---
+
+## DEC-100 — `/historico` é PÚBLICA, e o detalhe virou `?snapshot=` com o gate condicionado ao parâmetro
+
+**Data**: 2026-07-15 (009/US5) · **atualizado** 2026-07-31 (013/F-02, D1=A) · **Governa**: as rotas do
+Histórico
+
+`/historico` acompanha `/catalogo` e `/kits` como PÚBLICA: um vendedor deslogado tem de VER o teaser
+honesto na aba, **nunca um bounce para o sign-in**. O próprio ledger faz o gate DENTRO da página sobre
+o entitlement autoritativo ([[DEC-045]]), e o servidor faz o gate de toda leitura e escrita de
+qualquer jeito (Princípio IV).
+
+O detalhe congelado era uma rota PRÓPRIA de 2 segmentos (`/historico/$snapshotId`) — **apagada pelo
+`base:'./'` em cold-load, refresh e favorito** ([[DEC-016]]). Hoje vive como `?snapshot=` NESTA rota:
+a página lê o parâmetro e renderiza o detalhe inline em vez da lista.
+
+**O gate de auth que a rota de detalhe carregava mudou-se para cá, condicionado ao parâmetro estar
+presente** — `/historico` sem `snapshot` continua pública.
+
+### Onde isso vive no código
+
+- `apps/web/src/app/router.tsx` → `historicoRoute`
+
+---
+
+## DEC-101 — Numa entrada com bandas, a referência vem da banda que o MOTOR já escolheu
+
+**Data**: 2026-08-06 (016/PR-F, homologação A1) · **Governa**: a referência de comissão em entrada
+bandada
+
+A lacuna que o mecanismo do [[DEC-060]] deixou aberta: numa entrada com BANDAS, os campos planos
+`commissionPct`/`fixedFee` leem `?? 0` (eles vivem por banda, não no topo da entrada), então o
+processamento do slot deliberadamente os PULA em vez de publicar um falso "Comissão 0,00%" sob selo de
+referência. Isso deixava o campo EM BRANCO — honesto, **mas calado sobre uma cobrança real** (Shopee:
+20% + R$ 4,00, ou +R$ 3,00, ou metade do preço abaixo de R$ 8 — [[FONTE-001]]).
+
+Depois que o motor precificou o nível, o `appliedBand` do gross-up **já sabe qual banda respondeu**.
+Isto busca ESSA MESMA banda de volta em `fees.priceBands` (byte-idêntica à entrada que o motor usou) e
+lê a comissão e o fixo dela.
+
+**Nenhum segundo preço é computado aqui**: só se descobre a qual banda a resposta do próprio motor
+pertence ([[DEC-079]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/fee-prefill.ts` → `appliedBand`
+
+---
+
+## DEC-102 — Cenário de base KIT reabre em recômputo SÓ-LEITURA, e o módulo orquestra sem precificar
+
+**Data**: 2026-07-20 (010/T024, E5 PR-B US3, Q12 decidido pelo dono) · **Governa**: a reabertura de
+base KIT
+
+Um patch escalar de peça única não consegue hidratar uma base multi-peça, então um cenário de base KIT
+ganha o PRÓPRIO recômputo só-leitura em vez de popular o formulário da calculadora:
+
+- a ÚNICA intenção `channels[]` compartilhada do cenário é aplicada UNIFORMEMENTE ao `lastKnown` de
+  cada linha do kit (Q12);
+- cada linha passa pelo MESMO caminho `computeFromForm` de uma reabertura escalar, então os casos de
+  honestidade caem de graça (slot não sobrescrito resolvendo no vivo, "sem referência" de um slot sem
+  cobertura, uma comissão ≥100% salva — FR-609, [[DEC-009]]);
+- os `PriceInput` resultantes descem para o `computeBom` para o rollup por marketplace.
+
+**Nenhuma mudança no `pricing-core`** — `computeCalculator` e `computeBom` são reusados verbatim.
+**Este módulo orquestra; ele não precifica.**
+
+Devolve `null` para base não-KIT: é a deixa do chamador para renderizar o formulário escalar comum.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/scenario-bridge.ts` → `computeBom`
+
+---
+
+## DEC-103 — Os candidatos são ORDENADOS por uma ordem total, e a falta nunca vence uma resposta honesta
+
+**Data**: 2026-08-01 · **Governa**: a ordenação de candidatos do `SELECTION` ([[DEC-079]])
+
+Cada candidato recebe uma posição, melhor primeiro:
+
+| posição | situação                                                                                | consequência |
+| ------- | --------------------------------------------------------------------------------------- | ------------ |
+| **0**   | autoconsistente: a banda que precificou o anúncio é a banda que o contém                  | fecha exatamente em `base` — a resposta ordinária, e o que o ponto fixo antigo convergia |
+| **1**   | não autoconsistente, mas a cobrança real não é maior que a assumida                       | o vendedor ainda leva ao menos `base`; o excedente é dinheiro real e é mostrado como tal |
+| **2**   | a cobrança real é MAIOR: o vendedor levaria MENOS que `base`                              | último recurso, e ordenado por último justamente para que uma falta nunca seja escolhida enquanto existir resposta honesta |
+
+**Uma ordem total em vez de uma cadeia de casos especiais**: não sobra um ramo de "nenhum candidato
+qualificou" para ficar sem cobertura, e o desempate pelo anúncio mais barato o torna independente da
+ordem das bandas.
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `chooseBand`
+
+---
+
+## DEC-104 — A semente é parseada com resiliência: marketplace inválido é DESCARTADO, nunca tela branca
+
+**Data**: 2026-07-31 (014, FR-026) · **Governa**: `parseSeedResilient`
+
+`parseFeeCatalog` lançar é o comportamento CERTO para o gerador e para o CI — artefato malformado não
+pode embarcar. É o comportamento ERRADO na carga do módulo no cliente: a semente era escrita à mão com
+uma entrada só, mas do 014 em diante ela é GERADA POR ROBÔ, e um conjunto de determinantes duplicado ou
+um `parentId` órfão significaria **tela branca no boot, online e offline, para todo usuário**, até um
+bundle novo embarcar.
+
+**A assimetria entregou o defeito**: os caminhos servido e persistido já engoliam os próprios erros e
+caíam de volta na semente. **A semente não tinha em que cair.**
+
+O rigor não diminuiu — um marketplace inválido é DESCARTADO, então os slots dele resolvem para `null` e
+selam "sem referência" ([[DEC-035]]). Ele nunca vira preço. O que muda é que um defeito detectável duas
+camadas antes deixa de chegar ao vendedor como um app em branco.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `parseSeedResilient`
+
+---
+
+## DEC-105 — O dreno assenta cada entrada SOZINHA, sob o lock, contra a fila daquele instante
+
+**Data**: 2026-07-15 (009, T016/B2 · M1) · **Governa**: o dreno do outbox
+
+Entradas são INDEPENDENTES — uma que falha nunca bloqueia as de trás.
+
+Devolve o `SyncState` FINAL de cada entrada processada, chaveado por `clientSnapshotId`, para o
+chamador ler o desfecho da PRÓPRIA entrada **sem uma releitura mentirosa** (M1). Uma entrada que o
+dreno nunca alcançou — porque a leitura da fila falhou ([[DEC-083]]) — simplesmente não está no mapa, e
+o chamador trata "ausente" como `pending`, **nunca como `synced`**.
+
+**Cada entrada é assentada SOZINHA, sob o lock, contra a fila COMO ELA ESTÁ NAQUELE MOMENTO.** A forma
+anterior — ler a lista inteira, postar, escrever a lista de volta — **destruía qualquer registro
+enfileirado durante a ida e volta**: ela gravava uma lista calculada antes de o vendedor sequer ter
+tocado em Salvar.
+
+A correção do ENVIO também não depende desta função: quem torna a retentativa idempotente é a chave
+única do banco ([[DEC-075]]). Um chamador pode drenar de vários gatilhos, e até de duas abas, sem
+arriscar duplicata.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/outbox.ts` → `SyncState`
+
+---
+
+## DEC-106 — Dois nomes que colapsam no mesmo `categoryId` apagam o marketplace inteiro no cliente
+
+**Data**: 2026-08-01 (014/T106) · **Governa**: `checkCategoryIdCollisions`
+
+O `categoryId` dobra acentos e caixa — é o que dá identidade estável a um marketplace que publica só
+nomes, **e é também o que permite a colisão**: "Óculos" e "Oculos" viram `oculos`.
+
+O gerador não conferia, então isso **saía com exit 0 e "sucesso" impresso**, enquanto o artefato com
+ids duplicados derruba o marketplace INTEIRO no cliente (o schema recusa id duplicado, e o parse
+resiliente responde descartando o marketplace — [[DEC-104]]). **Um par de acentos apaga a Amazon.**
+
+O `gate:all` pegaria o artefato inválido pelo truth-gate, então isto não é a última linha de defesa. **É
+a primeira, e é a única que fala com quem rodou o script**: a razão nomeia os dois colidentes e o id que
+eles disputam, porque "colisão" sem nomes não é acionável.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/guardrails.ts` → `checkCategoryIdCollisions`
+
+---
+
+## DEC-107 — O selo que sustenta um NÚMERO é `Alert`; os três qualificadores curtos seguem `Badge`
+
+**Data**: 2026-07-08 (US2, FR-107) · **atualizado** 2026-08-28 (019/PR-C, T052/T058) · **Governa**:
+`fee-seal.tsx`
+
+O selo de honestidade diz, por slot de canal, **de onde os números de tarifa vieram e quão frescos
+estão** — para que um número pré-preenchido nunca seja confundido com algo que o vendedor endossou.
+NUNCA afirma que um valor fabricado é exato (Constituição II): slot sem cobertura lê "sem referência".
+
+**O bloco que sustenta um NÚMERO** (a comissão ou a taxa fixa) é um `tf-alert--compact`, **não uma
+pílula `Badge`**: ele carrega uma citação de duas linhas, uma data de revisão, "Ver fonte" e
+"Dispensar" ([[DEC-082]]).
+
+**Os três qualificadores CURTOS** — `adjusted`/`estimate`/`none` — **continuam pílulas `Badge`**, por
+autoridade do desenho (13b·4/6/7), **mesmo que o texto da tarefa que abriu a fatia sugerisse dobrá-los
+em `Alert` também**. A prancheta vence (Princípio VIII), e esta divergência do enunciado da própria
+tarefa é deliberada.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/fee-seal.tsx` → `FeeSeal`
+
+---
+
+## DEC-108 — `SELECTION` × `PROGRESSIVE`, e ausência significa `SELECTION` por carga, não por conveniência
+
+**Data**: 2026-08-01 (ADR-0024) · **Governa**: `bandMode`
+
+- **`SELECTION`** — a banda que contém o preço define a alíquota do preço INTEIRO (Shopee, custo fixo
+  do ML).
+- **`PROGRESSIVE`** — a alíquota de cada banda vale só para a FATIA dela do preço. A Amazon publica
+  assim para algumas categorias: *"15% até R$ 200,00 e 10% para o **excedente** acima de R$ 200,00"*
+  ([[DEC-059]]).
+
+**Um modo AUSENTE significa `SELECTION`, e isso sustenta peso — não é conveniência.** `priceBands`
+viaja dentro de payload de snapshot congelado (imutável por trigger, ADR-0019) e de documento de
+cenário (ADR-0021). Se a ausência significasse outra coisa, um snapshot que o produto promete imutável
+**passaria a afirmar outro preço sem uma linha dele mudar** — a mesma disciplina do [[DEC-087]] e do
+[[DEC-024]].
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `bandMode`
+
+---
+
+## DEC-109 — Procedência que não procede é pior que nenhuma, e o segundo relógio envelheceria sozinho
+
+**Data**: 2026-08-06 (016/PR-F, US14) · **Governa**: `fixedFeeSource`
+
+Procedência PRÓPRIA do `fixedFee`, quando ele não vem da mesma página que a comissão. **ADITIVO**:
+ausente = o `source`/`sourceUrl`/`effectiveDate` da entrada respondem pelos dois números, que é o caso
+de toda entrada anterior a esta fatia.
+
+Existe porque a Amazon publica as duas coisas em páginas DIFERENTES: a comissão sai do Seller Central e
+a cobrança por item do plano Individual sai de `venda.amazon.com.br/precos` ([[DEC-058]]). **Um
+`sourceUrl` só apontaria o vendedor para uma página que não contém o número que ele está vendo — e uma
+procedência que não procede é pior que nenhuma.**
+
+**Sem `lastReviewed` próprio, de propósito**: a releitura mensal abre as duas páginas na MESMA passada,
+então a data de conferência da entrada responde pelas duas folhas. **Um segundo relógio aqui
+envelheceria sozinho e o selo de obsolescência não o leria** ([[DEC-090]], [[DEC-092]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `fixedFeeSource`
+
+---
+
+## DEC-110 — A referência da banda só é preenchida enquanto o slot ESTÁ precificado
+
+**Data**: 2026-08-06 (016/PR-F, homologação A1) · **Governa**: o desfecho de um slot válido no
+`calculator-model`
+
+Depois que o nível está precificado, a comissão e o fixo são preenchidos de volta **a partir da banda
+que o motor DE FATO aplicou** — nunca um segundo preço computado aqui: a rederivação descobre apenas
+QUAL banda, a partir do mesmo gross-up ([[DEC-101]]).
+
+Duas condições, e a segunda é a que fecha o caso:
+
+1. só para um campo que o vendedor NÃO digitou — a mesma disciplina de todo outro campo de tarifa
+   aplicada ([[DEC-060]]);
+2. **só enquanto o slot está precificado.** Sem preço, as tarifas aplicadas são limpas: **uma banda que
+   ninguém consegue enxergar atrás não é uma referência pela qual se possa responder.**
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-model.ts` → `appliedFees`
+
+---
+
+## DEC-111 — A lista é a UNIÃO, e o pendente fica no lugar CRONOLÓGICO dele
+
+**Data**: 2026-07-15 (009, lição do E3 PR-C) · **Governa**: o seletor da lista do Histórico
+
+(servidor) ∪ (outbox), deduplicado por `clientSnapshotId`, **servidor vence**.
+
+**Estrutural, não cosmético: NENHUM componente pode ler a query do servidor sozinha** ([[DEC-071]]). É
+a resposta direta à lição do E3 PR-C — *um componente correto, alimentado com dado errado, mente do
+mesmo jeito* —, onde um componente de linha degradada, correto, renderizou um produto apagado como vivo
+porque recebeu um cache velho. Aqui, nenhum intercalar de "o dreno removeu a entrada" com "a query foi
+invalidada" consegue renderizar uma linha duas vezes ou mostrar como pendente uma já sincronizada.
+
+**Entradas pendentes ficam no lugar CRONOLÓGICO delas**, mais nova primeiro, pela data do APARELHO — a
+data que É a afirmação do vendedor. Nunca escondidas numa gaveta separada (leria como "rascunho") e
+nunca colapsadas num contador (esse seria o descarte silencioso — [[DEC-085]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/outbox.ts` → `clientSnapshotId`
+
+---
+
+## DEC-112 — Toda entrada por categoria tem de estar na espinha; exigir espinha, NÃO
+
+**Data**: 2026-07-31 (014) · **Governa**: a validação de espinha × entradas no schema do catálogo
+
+**Quando uma espinha É enviada, toda entrada chaveada por categoria tem de aparecer nela**: uma
+categoria que a espinha não carrega jamais será alcançada por uma subida de ancestrais a partir de uma
+categoria real ([[DEC-035]]), então é dado morto **fingindo cobertura**.
+
+**Deliberadamente NÃO imposto: "entrada por categoria exige espinha".** Uma primeira versão deste
+guarda recusava essa combinação alegando que tais entradas "nunca resolveriam" — **e isso é falso**: a
+cadeia de ancestrais de uma categoria desconhecida devolve a própria categoria, então o casamento
+exato ainda encontra a entrada. O que se perde é a HERANÇA, não a resolução.
+
+Exigir espinha pertence à validação da INGESTÃO (fatal no gerador, FR-026 — [[DEC-104]]), **não a um
+schema que também precisa aceitar catálogos persistidos por clientes antigos** ([[DEC-039]]).
+
+O `!= null` cobre os DOIS casos: ausente (catálogo persistido de antes do 014) e um `null` explícito
+(como o backend serializa um marketplace sem espinha).
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `categorySpine`
+
+---
+
+## DEC-113 — FORA da tabela ≠ LACUNA dentro da tabela: abaixo do piso é "sem referência", nunca um preço
+
+**Data**: 2026-08-06 (arquitetura-016 §9.5, SC-817) · **Governa**: o ramo do piso da tabela em
+`channels.ts`
+
+**Uma lacuna ENTRE duas janelas publicadas** é uma faixa que a fonte deliberadamente não tarifa, e
+subir até a próxima janela é honesto: todo preço no meio ESTÁ publicado e nenhum entrega a base — é o
+platô do ML em R$ 79,00 ([[DEC-051]]).
+
+**Abaixo do PISO da tabela não é isso.** Ali a fonte declara outra regra e **não a publica por
+inteiro** (Shopee CPF de alto volume — o art. 26839 cita R$ 6,00 num item de R$ 8, mas não a fórmula:
+[[FONTE-001]]). Andar com o vendedor até o piso afirmaria "este é o preço mais barato que dá", **e a
+própria fonte desmente**. Então: sem referência + o aviso, nunca um preço.
+
+O teste é sobre a banda ESCOLHIDA: se a conta dela para esta base fecha abaixo do piso, o vendedor está
+fora da tabela e o anúncio devolvido seria um empurrão até a borda. **Com piso ZERO — toda tabela
+publicada até o 016 — o ramo é inalcançável, e é por isso que a regra é byte-idêntica por construção em
+tudo que já existia.**
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `publishedFloor`
+
+---
+
+## DEC-114 — O lock não é encanamento defensivo: sem ele o dreno APAGAVA registros recém-gravados
+
+**Data**: 2026-07-23 (T016, homologação visual · ADR-0018 §6) · **Governa**: o lock do outbox
+
+**Todo read-modify-write da fila roda sob este lock**, e isso conserta um bug real de destruição de
+registro. O dreno lia a fila, fazia o POST (lento) e escrevia de volta a lista que tinha calculado
+ANTES da ida e volta. **Qualquer coisa que o vendedor gravasse nessa janela não estava naquela lista,
+então a reescrita a APAGAVA** — enquanto a UI já tinha dito "Pendente neste dispositivo".
+
+**Um pendente falso é a pior mentira que esta feature pode contar, e a chave única do banco não o
+pega**: aquela chave impede DUPLICATAS, não um registro que nunca foi postado ([[DEC-105]]).
+
+`navigator.locks` serializa entre ABAS; a cadeia de promessas serializa dentro de uma aba e cobre
+navegadores (e o jsdom) onde a Web Locks API não existe. **A seção crítica é CURTA — nenhuma chamada de
+rede acontece dentro dela.**
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/outbox.ts` → `historyOutboxKey`, `LockManager`
+

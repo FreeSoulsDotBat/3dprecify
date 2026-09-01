@@ -324,3 +324,71 @@ não explica o abatimento impresso) que a imutabilidade depois preserva para sem
 **Nenhum bug registrado segue aberto.** O que resta em aberto nesta frente é decisão de produto
 (o nó "Orçamentos"/`/historico`), a pendência 4(4) documentada acima, e o item 5 (Rodada 1 de
 homologação, pranchetas da PR-C, sandbox MP, deploy).
+
+---
+
+## Onda 9 — a documentação sai da linha (2026-09-01, aprovada pelo dono)
+
+O dono apontou o problema que as oito ondas anteriores não tocaram: **o código carrega a documentação
+dentro de si**, em blocos de explicação que empurram o código para fora da tela. A estratégia está em
+`docs/PADRAO_DE_COMENTARIOS.md`; este é o registro do que ela produziu.
+
+### O diagnóstico, que mudou o desenho
+
+| medida (antes)                             | valor                           |
+| ------------------------------------------ | ------------------------------- |
+| linhas de comentário no front              | 7.792 de 31.691 — **24%**       |
+| blocos de ≥4 linhas seguidas               | 390 (664 contando JSDoc/Python) |
+| pior arquivo                               | `use-is-wide.ts` — 72/114 = 63% |
+| **ADRs que já existiam**                   | **34** (~370 KB)                |
+| **arquivos de código que já citavam um**   | **138 de 296 — 47%**            |
+
+O achado que decidiu tudo: **esses comentários não preenchiam um vazio — duplicavam documentação que
+já existia.** O `use-is-wide.ts` gastava 20 linhas explicando o ADR-0031 e citava o ADR-0031 na
+primeira delas. Confirmado caso a caso: o bloco de 27 linhas do `outbox.ts` estava no ADR-0018
+§Decision item 4 **incluindo a frase** *"No answer is not the same as not saved"*; o de 15 do
+`slice.ts` estava no ADR-0028 §Emenda.
+
+### O resultado
+
+| medida                                | antes | depois |
+| ------------------------------------- | ----- | ------ |
+| densidade de comentário (repositório) | 20,9% | **17,9%** |
+| **maior bloco do repositório**        | 48    | **9**     |
+| arquivos com bloco ≥10                | **80**| **0**     |
+| arquivos com bloco ≥8                 | 127   | 59        |
+| arquivos de código migrados           | —     | **84**    |
+| verbetes criados                      | —     | **114 DEC + 1 FONTE**, citados por 82 arquivos |
+
+### O que NÃO foi feito, e por quê
+
+**O alvo não é "zero comentário" — é zero DECISÃO dentro do código.** Dos 664 blocos de 4+ linhas,
+365 eram de 4–5 linhas e quase todos são JSDoc de CONTRATO ("o que a função recebe, devolve e
+recusa"). Isso pertence ao cursor, e o teto de arquivo novo é 6 justamente por isso: reprovar contrato
+legítimo ensinaria a driblar o guarda, que é o único jeito garantido de matá-lo.
+
+### O guarda pegou SEIS erros meus
+
+Todos de símbolo inventado no ponteiro de volta — `FrozenPayload`, `ScenarioConfigDocument`,
+`ExportSheet`, `parseTimeInput`, `entitlement-cache`, `checkBandShape` — mais um parágrafo de 4 linhas
+reintroduzido e um `#:` do Sphinx que a gramática não conhecia. **Nenhum deles seria pego por
+leitura**, e são exatamente a podridão silenciosa que este trabalho existe para matar: eu produzi seis
+em um dia.
+
+### Achados registrados, NÃO corrigidos
+
+1. **`packages/fee-ingest/src/slice.ts` ainda tem um byte NUL** (offset 4431, na sentinela
+   `"\x00catch-all"`, deliberada). O ground do 014 afirma que "o NUL sumiu" — não sumiu. Consequência
+   de legibilidade: `grep`/ripgrep tratam o arquivo como binário e **ninguém busca dentro dele**.
+2. **A §Emenda 2 do ADR-0031 conta errado**: enumera "os três limiares que hoje vivem em
+   `use-is-wide.ts`" e omite o `RAIL_FORCADO_QUERY`, de 2026-08-15 — são quatro. Registrado no DEC-001.
+3. **A condição RA4 do ADR-0029 nunca foi cumprida**: o ADR diz que os verbatims da Shopee "migram na
+   mesma fatia" para `packages/fee-ingest/data/` como âncoras EXECUTÁVEIS, e que "se a migração não
+   acontecer na mesma fatia, esta decisão reverte". Não aconteceu — segue pendente na PR-C do 017
+   (T026) desde 2026-08-07. O FONTE-001 dá casa à prosa e **não** satisfaz a condição.
+4. **DEC-099 aguarda ratificação do dono** (ux-billing §4.3, ~70%): a frase de assinatura cancelada com
+   cortesia mais longa.
+5. **DEC-057 registra uma decisão tomada com informação minha incorreta**: a aprovação para
+   "padronizar" o formatador veio da minha descrição do sinal de menos como imperceptível; a prancheta
+   diz o contrário. Os dígitos foram padronizados, o sinal ficou.
+

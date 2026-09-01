@@ -119,18 +119,9 @@ export const feeEntrySchema = z
         commissionPct: z.number().min(0).lt(100).nullable(),
         fixedFee: z.number().nonnegative().nullable(),
         /**
-         * 016/PR-F (US14) — procedência PRÓPRIA do `fixedFee`, quando ele não vem da mesma página que a
-         * comissão. ADITIVO; ausente = o `source`/`sourceUrl`/`effectiveDate` da entrada respondem
-         * pelos dois números, que é o caso de toda entrada de antes desta fatia.
-         *
-         * Existe porque a Amazon publica as duas coisas em páginas DIFERENTES: a comissão sai da
-         * G200336920 (Seller Central) e a cobrança por item do plano Individual sai de
-         * venda.amazon.com.br/precos. Um `sourceUrl` só apontaria o vendedor para uma página que não
-         * contém o número que ele está vendo — uma procedência que não procede é pior que nenhuma.
-         *
-         * Sem `lastReviewed` próprio de propósito: a releitura mensal abre as duas páginas na MESMA
-         * passada, então a data de conferência da entrada responde pelas duas folhas. Um segundo
-         * relógio aqui envelheceria sozinho e o selo de obsolescência (`isStale`) não o leria.
+         * ⚠ @doc DEC-109 — a Amazon publica comissão e taxa por item em páginas DIFERENTES, e uma
+         *   procedência que não procede é pior que nenhuma. Sem `lastReviewed` próprio: um
+         *   segundo relógio envelheceria sozinho e o selo de obsolescência não o leria.
          */
         fixedFeeSource: z
             .object({
@@ -317,18 +308,9 @@ const marketplaceCatalogSchema = z
             ids.add(s.id);
         }
 
-        // When a spine IS shipped, every category-keyed entry must appear in it: a category the spine
-        // does not carry can never be reached by an ancestor walk from a real category, so it is dead
-        // data pretending to be coverage.
-        //
-        // Deliberately NOT enforced: "category-keyed entries require a spine". A first draft of this
-        // guard rejected that combination claiming such entries "could never resolve" — which is false.
-        // `ancestorChain` of an unknown category yields the category itself, so the exact match still
-        // finds the entry; what is lost is inheritance, not resolution. Requiring a spine belongs in the
-        // INGESTION's own validation (fatal in the generator, FR-026), not in a schema that also has to
-        // accept catalogs persisted by older clients.
-        // `!= null` covers BOTH: absent (a persisted catalog from before 014) and an explicit `null`
-        // (how the backend serializes a marketplace with no spine).
+        // ⚠ @doc DEC-112 — entrada por categoria fora da espinha é dado morto fingindo cobertura.
+        //   Mas exigir espinha NÃO é imposto aqui: a cadeia de uma categoria desconhecida devolve
+        //   ela mesma, então o casamento exato acha — perde-se a herança, não a resolução.
         if (mk.categorySpine != null) {
             const ids = new Set(mk.categorySpine.map((n) => n.id));
             const categorised = mk.entries.filter((e) => e.determinants?.category != null);
@@ -362,20 +344,9 @@ export function parseFeeCatalog(data: unknown): FeeCatalog {
 }
 
 /**
- * Parse the BUNDLED SEED without ever taking the app down (FR-026).
- *
- * `parseFeeCatalog` throwing is the right behaviour for the generator and for CI — a malformed
- * artifact must not ship. It is the wrong behaviour at module load in the client: the seed used to be
- * hand-written with a single entry, but from 014 on it is ROBOT-GENERATED, and one duplicate
- * determinant set or one orphan `parentId` would mean a white screen at boot, online and offline, for
- * every user, until a new bundle ships.
- *
- * The asymmetry gave the defect away: the served and persisted paths already swallow their errors and
- * fall back to the seed. The seed had nothing to fall back to.
- *
- * Rigour is not reduced — an invalid marketplace is DROPPED, so its slots resolve to null and seal
- * "sem referência". It never becomes a price. What changes is that a defect detectable two layers
- * earlier stops reaching the seller as a blank app.
+ * ⚠ @doc DEC-104 — lançar é certo no gerador e no CI, e ERRADO na carga do cliente: a semente é
+ *   gerada por robô, e um id duplicado seria tela branca no boot para todo usuário. Marketplace
+ *   inválido é DESCARTADO e sela "sem referência" — ele nunca vira preço.
  */
 export function parseSeedResilient(data: unknown): FeeCatalog {
     try {

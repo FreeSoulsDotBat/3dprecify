@@ -13,17 +13,13 @@ import { captionText } from "../form-atoms/form-styles";
 
 const t = messages.calculator;
 
-/** One catalog-driven optional surcharge toggle (016/US16, FR-923, ADR-0027 §3.2) — Shopee
- *  "Item volumoso" today, but nothing here names it: label, value and provenance all come from
- *  `surcharge` (the catalog entry `channelFieldPlan.surcharges` carries). Checked → the id joins
- *  `channels.{index}.surcharges`; unchecked/never checked → the array never gets the id, which is
- *  byte-identical to every calculation before this axis existed (US16-AC2).
+/**
+ * Um interruptor de sobretaxa opcional, dirigido pelo catálogo — nada aqui nomeia a sobretaxa.
+ * Nunca marcado ⇒ o id nunca entra no array, byte-idêntico ao que havia antes deste eixo.
  *
- *  016/PR-F homologação (A2) — was a raw `<input type="checkbox">`, the ONLY native checkbox in the
- *  codebase and 13×13px, well under the ≥44×44px touch target INV-2 guarantees for every other
- *  control. The DS `Switch` (`shared/ui/switch.tsx`) already carries that contract by construction
- *  (a larger hit area around a smaller visible track) plus the correct dark-theme skin for free — so
- *  this becomes the same on/off semantics on the DS primitive instead of a bespoke small checkbox. */
+ * ⚠ @doc DEC-093 — `Switch` do DS e não checkbox nativo: o nativo tinha 13×13px, bem abaixo do
+ *   alvo de toque de 44×44px que todo outro controle garante.
+ */
 export function SurchargeCheckbox({
     control,
     index,

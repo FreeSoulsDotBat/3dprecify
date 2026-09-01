@@ -36,16 +36,11 @@ export interface ChannelSurcharge {
 }
 
 /**
- * How a band set combines into one commission (ADR-0024).
+ * `SELECTION`: a banda que contém o preço define a alíquota do preço INTEIRO. `PROGRESSIVE`: a
+ * alíquota de cada banda vale só para a FATIA dela.
  *
- * - `SELECTION` — the band containing the price sets the rate for the WHOLE price (Shopee, ML fixed cost).
- * - `PROGRESSIVE` — each band's rate applies only to its OWN slice of the price. Amazon publishes this
- *   for some categories: "15% até R$ 200,00 e 10% para o **excedente** acima de R$ 200,00".
- *
- * **An ABSENT mode means `SELECTION`, and that is load-bearing, not a convenience.** `priceBands`
- * travels inside frozen snapshot payloads (immutable by DB trigger, ADR-0019) and saved scenario
- * documents (ADR-0021). If absence meant anything else, a snapshot the product promises immutable
- * would silently start asserting a different price without one line of it changing.
+ * ⚠ @doc DEC-108 — AUSENTE significa `SELECTION`, e isso sustenta peso: `priceBands` viaja em
+ *   snapshot imutável, e outro significado o faria afirmar outro preço sem mudar.
  */
 export type BandMode = "SELECTION" | "PROGRESSIVE";
 
@@ -268,17 +263,8 @@ interface BandCandidate {
 }
 
 /**
- * Rank a candidate, best first:
- *
- *   0 — self-consistent: the band that priced the announce is the band that contains it. Nets `base`
- *       exactly; this is the ordinary answer and it is what the old fixed-point converged to.
- *   1 — not self-consistent, but the real charge is no bigger than the assumed one, so the seller
- *       still takes home at least `base`. The surplus is real money and is shown as such.
- *   2 — the real charge is bigger: the seller would take home LESS than `base`. Last resort, and
- *       ranked last precisely so a shortfall is never chosen while an honest answer exists.
- *
- * A total order rather than a chain of special cases: no "no candidate qualified" branch to leave
- * uncovered, and the tie-break on the cheapest announce makes it independent of band order.
+ * ⚠ @doc DEC-103 — ordem TOTAL, não cadeia de casos especiais: a falta (vendedor levaria menos
+ *   que `base`) é ordenada por último, para nunca vencer enquanto existir resposta honesta.
  */
 function rankCandidate(c: BandCandidate, base: number): number {
     if (c.applied === c.assumed) return 0;
@@ -355,18 +341,9 @@ function chooseBand(
     );
     const best = ordered[0]!;
 
-    // FORA DA TABELA ≠ lacuna DENTRO da tabela (arquitetura-016 §9.5, SC-817). Uma lacuna entre duas
-    // janelas publicadas é uma faixa que a fonte deliberadamente não tarifa, e subir até a próxima
-    // janela é honesto: todo preço no meio ESTÁ publicado e nenhum entrega a base (o platô do ML em
-    // R$ 79,00). Abaixo do PISO da tabela não é isso: a fonte declara ali outra regra e não a publica
-    // por inteiro (Shopee CPF alto volume — art. 26839 cita R$ 6,00 num item de R$ 8, mas não a
-    // fórmula). Andar com o vendedor até o piso afirmaria "este é o preço mais barato que dá", e a
-    // própria fonte desmente. Então: sem referência (I9) + o aviso da US17, nunca um preço.
-    //
-    // O teste é sobre a banda ESCOLHIDA: se a conta dela para esta base fecha abaixo do piso, o
-    // vendedor está fora da tabela e o anúncio devolvido seria um empurrão até a borda. Com piso
-    // ZERO — toda tabela publicada até 016 — o ramo é inalcançável, e é por isso que a regra é
-    // byte-idêntica por construção em tudo que já existia.
+    // ⚠ @doc DEC-113 — FORA da tabela ≠ LACUNA dentro dela: subir dentro de uma lacuna publicada
+    //   é honesto; abaixo do PISO a fonte declara outra regra e não a publica, então andar até o
+    //   piso afirmaria "é o mais barato que dá" e a própria fonte desmente.
     const publishedFloor = Math.min(...bands.map((b) => b.minPrice));
     const ownSchedule = toMoney(
         grossUpOnce(

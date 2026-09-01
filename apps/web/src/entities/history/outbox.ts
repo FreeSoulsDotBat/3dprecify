@@ -72,18 +72,9 @@ async function writeOutbox(uid: string, entries: OutboxEntry[]): Promise<void> {
     await set(historyOutboxKey(uid), entries);
 }
 
-// EVERY read-modify-write of the queue runs under this lock (ADR-0018 §6).
-//
-// This is not defensive plumbing — it fixes a real record-destroying bug the T016 visual
-// homologation caught. The drain used to read the queue, POST (slow), then write back the list it
-// had computed BEFORE the round-trip. Anything the seller recorded in that window was not in that
-// list, so the write-back ERASED it — while the UI had already said "Pendente neste dispositivo".
-// A false pending is the worst lie this feature can tell, and the DB's unique key cannot catch it:
-// that key prevents DUPLICATES, not a record that is never POSTed at all.
-//
-// `navigator.locks` serializes across TABS; the promise chain serializes within one tab and covers
-// browsers (and jsdom) where the Web Locks API is absent. The critical section stays SHORT — no
-// network call ever happens inside it.
+// ⚠ @doc DEC-114 — não é encanamento defensivo: sem o lock, a reescrita da lista APAGAVA o que
+//   fosse gravado durante o POST, com a UI já dizendo "Pendente". Um pendente falso é a pior
+//   mentira daqui, e a chave única do banco não pega — ela impede duplicata, não ausência.
 let tabChain: Promise<unknown> = Promise.resolve();
 
 async function withOutboxLock<T>(uid: string, fn: () => Promise<T>): Promise<T> {
@@ -241,20 +232,11 @@ export async function settleEntry(
 }
 
 /**
- * Drain the queue. Entries are INDEPENDENT — a failing entry never blocks the ones behind it.
+ * Drena a fila. Entradas são INDEPENDENTES, e o desfecho final de cada uma volta chaveado por
+ * `clientSnapshotId` — ausente do mapa significa `pending`, nunca `synced`.
  *
- * Returns each processed entry's FINAL `SyncState`, keyed by `clientSnapshotId`, so a caller (the
- * record action) can read the outcome of ITS entry without a lying re-read (M1). An entry the drain
- * never reached — because the queue read itself failed — is simply absent from the map, and the
- * caller treats "absent" as `pending`, never `synced`.
- *
- * Each entry is settled ON ITS OWN, under the lock, against the queue as it stands AT THAT MOMENT.
- * The earlier shape — read the whole list, post, write the list back — destroyed any record queued
- * during the round-trip (T016/B2): it wrote a list computed before the seller had even tapped Save.
- *
- * Correctness of the SEND does not rest on this function either: the DB's unique key is what makes a
- * retry idempotent. A caller may drain from several triggers (boot, `online`, focus, post-sign-in)
- * and even from two tabs without risking a duplicate.
+ * ⚠ @doc DEC-105 — cada entrada assenta SOZINHA, sob o lock, contra a fila DAQUELE instante: a
+ *   forma antiga (ler tudo, postar, reescrever) destruía o que fosse enfileirado no meio.
  */
 export async function drainOutbox(
     uid: string,
@@ -325,18 +307,9 @@ export interface HistoryItem {
 }
 
 /**
- * THE LIST IS THE UNION. (server) ∪ (outbox), deduped on `clientSnapshotId`, **server-wins**.
- *
- * This is structural, not cosmetic: **no component may read the server query alone.** It is the
- * direct answer to the E3 PR-C lesson — *a correct component starved of correct data still lies* —
- * where a correct degraded-line component rendered a deleted product as live because it was fed a
- * stale cache. Here, no interleaving of "drain removed the entry" and "the query was invalidated"
- * can render a row twice or show a synced row as pending: whichever side is fresher, server wins on
- * the key, and a still-queued entry is still shown.
- *
- * Pending entries sit in their CHRONOLOGICAL place, newest-first by the DEVICE's date — the date
- * that IS the seller's claim. They are never hidden away in a separate drawer (that would read as
- * "draft") and never collapsed into a counter chip (that would be the silent drop).
+ * ⚠ @doc DEC-111 — a lista é a UNIÃO (servidor ∪ outbox, servidor vence) e NENHUM componente lê
+ *   a query do servidor sozinha. O pendente fica no lugar cronológico dele, pela data do
+ *   APARELHO — nunca numa gaveta "rascunho", nunca colapsado num contador.
  */
 export function mergeHistory(server: SnapshotOut[], outbox: OutboxEntry[]): HistoryItem[] {
     const syncedKeys = new Set(server.map((s) => String(s.clientSnapshotId)));

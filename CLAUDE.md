@@ -221,6 +221,14 @@ Decided stack/standards (authoritative): ADR-0001..0014 + `docs/decisions/{tech-
   ruff/basedpyright/pytest/import-linter) — the SAME literal command runs in lefthook pre-push and the CI gate
   job (D4, no local↔CI drift). Pricing formula canonical in `packages/pricing-core` (TS, offline) — backend
   never recomputes (only e2e/docker/drift/secret-scan are CI-only).
+- **Comentários (2026-09-01, aprovado pelo dono): a explicação sai da linha, a âncora fica.** Regra em
+  `docs/PADRAO_DE_COMENTARIOS.md`. No código vai UMA linha, `// @doc <ID>[ §seção] — <resumo>`; a
+  explicação vive num ADR (`docs/adr/`), num DEC (`docs/decisoes-de-codigo.md`, decisão pequena e local)
+  ou num FONTE (`docs/fontes-verbatim.md`, citação literal da fonte que determinou um número). O caminho
+  de volta é a seção `## Onde isso vive no código`, **por símbolo, nunca por linha**. `packages/repo-audit`
+  roda no `gate:all` e derruba âncora morta, seção morta, verbete órfão, ponteiro podre e recaída de
+  densidade. O alvo NÃO é zero comentário — é zero DECISÃO dentro do código: JSDoc de contrato até 6
+  linhas fica.
 
 Knowledge graph — **graphify** (ADR-0014, amended 2026-07-10). A structural (AST) code graph lives in
 `graphify-out/` (gitignored; ~2877 nodes, built with **0 LLM tokens**). Standing rules:

@@ -201,17 +201,8 @@ export function applyScenarioConfig(config: ScenarioConfig): ScenarioFormPatch {
 }
 
 /**
- * 010/T024 (E5, PR-B US3, Q12 owner-decided) — the KIT-basis reopen. A single-piece scalar patch
- * cannot hydrate a multi-piece basis, so a KIT-basis scenario gets its OWN read-only recompute
- * instead of populating the calculator form: the scenario's ONE shared `channels[]` intent is
- * applied UNIFORMLY to every kit line's `lastKnown` input (Q12), each line goes through the SAME
- * `computeFromForm` path a scalar reopen uses (so the honesty cases — a non-overridden slot
- * re-resolving live, an uncovered slot's "sem referência", a saved ≥100% commission override —
- * fall out for free, FR-609), and the resulting `PriceInput`s are hard down `computeBom` for the
- * per-marketplace rollup. **No `pricing-core` change** (both `computeCalculator`/`computeBom` are
- * reused verbatim); this module orchestrates, it does not price.
- *
- * Returns `null` for a non-KIT basis (the caller's cue to render the ordinary scalar form instead).
+ * ⚠ @doc DEC-102 — base KIT reabre em recômputo SÓ-LEITURA: um patch escalar não hidrata uma
+ *   base multi-peça. Este módulo ORQUESTRA e não precifica — `pricing-core` reusado verbatim.
  */
 export interface ScenarioKitLineOutcome {
     name: string | null;

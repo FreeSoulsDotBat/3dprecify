@@ -154,17 +154,8 @@ const bomRoute = createRoute({
     component: BomPage,
 });
 
-// 009/US5: /historico joins /catalogo and /kits as PUBLIC — a signed-out seller must SEE the honest
-// teaser on the tab, never a bounce to sign-in. The ledger itself gates IN-PAGE on the authoritative
-// entitlement (server-informed, never a local flag), and the server gates every read and write
-// regardless (GC-5, Principle IV).
-//
-// 013/F-02 (D1=A): the frozen detail used to be its OWN 2-segment route
-// (`/historico/$snapshotId`) — blanked by `base:'./'` on cold-load/refresh/bookmark (the measured
-// trap this project already documented). It now lives as `?snapshot=<clientSnapshotId>` on THIS
-// route (same pattern as `/kits?id=`): HistoricoPage reads it and renders SnapshotDetailPage
-// inline instead of the ledger list. The auth gate the detail route used to carry moves here,
-// conditioned on the param being present — plain `/historico` (no `snapshot`) stays public.
+// ⚠ @doc DEC-100 — `/historico` é PÚBLICA (o deslogado vê o teaser honesto, nunca um bounce), e
+//   o gate de auth só existe quando o parâmetro `?snapshot=` está presente.
 const historicoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/historico",

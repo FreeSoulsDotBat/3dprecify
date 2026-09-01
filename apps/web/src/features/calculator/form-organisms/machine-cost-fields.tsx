@@ -27,17 +27,9 @@ const t = messages.calculator;
 type MachineMode = "estimar" | "ajustar";
 
 /**
- * 016/US8 (FR-910, SC-906) — the machine-cost question rewrite. The seller answers (1) quanto
- * custou (`machineValue`, unchanged) · (2) com que frequência ela roda (3 opções, sem digitar) ·
- * (3) em quantos anos quer que se pague, and the derived `machineLifetimeHours` is said OUT LOUD
- * as a cost/hour caption. "Ajustar" reveals the raw hours field directly (with its own tooltip).
- *
- * Reactivity is derived, not duplicated: `detectRitmoMode(currentHours)` re-runs on every render
- * off the LIVE `machineLifetimeHours` field value, so a scenario/catalog load that calls
- * `setValue("machineLifetimeHours", …)` from OUTSIDE this component is picked up automatically —
- * no stale local copy of ritmo/payback to resync. `manualOverride` only forces "ajustar" open when
- * the seller explicitly asked for it; a lifetime outside every ritmo×payback ALWAYS shows
- * "ajustar" regardless (US8-AC4 — the value the document holds is never silently coerced).
+ * ⚠ @doc DEC-094 — o modo é DERIVADO a cada render do valor VIVO do campo, então um `setValue`
+ *   de fora é captado sozinho. Vida útil fora das combinações SEMPRE abre "ajustar": o valor
+ *   que o documento guarda nunca é coagido em silêncio.
  */
 export function MachineCostFields({ control }: { control: Control<CalcFormValues> }) {
     const valueField = useController({ control, name: "machineValue" });

@@ -390,3 +390,24 @@ PULADA com registro (mudaria caminhos de issues; pendência mantida no relatóri
 correção é decisão do dono; o vocabulário `account`/`conta` no i18n e o rótulo
 "Orçamentos"/rota `/historico` aguardam decisão de produto; o trace opcional do motor
 (`PriceResult.trace?`) segue como proposta.
+
+## 8. Onde mora a EXPLICAÇÃO (2026-09-01)
+
+O código não explica mais a si mesmo em parágrafos. Quando encontrar uma âncora
+`// @doc <ID> — <resumo>`, o resumo é para você decidir se precisa abrir o documento; o ID é para
+abrir. A escada, e é só isso:
+
+| você viu     | abra                          | o que vai achar lá                                    |
+| ------------ | ----------------------------- | ----------------------------------------------------- |
+| `ADR-00xx`   | `docs/adr/00xx-*.md`          | a decisão estrutural, com alternativas e consequências |
+| `DEC-xxx`    | `docs/decisoes-de-codigo.md`  | a decisão pequena e local (~10 linhas)                 |
+| `FONTE-xxx`  | `docs/fontes-verbatim.md`     | a citação LITERAL da fonte que determinou um número     |
+| `013/FA-01`  | `specs/013-*/`                | o incremento que originou aquilo                       |
+
+O caminho inverso existe e é conferido: todo ADR/DEC/FONTE que recebeu texto tem uma seção
+`## Onde isso vive no código` apontando `arquivo → símbolo` — **por símbolo, nunca por linha**.
+
+O que segura os dois lados é `packages/repo-audit`, dentro do `pnpm gate:all`: âncora morta, seção
+morta, verbete órfão e ponteiro podre derrubam o portão, e a catraca de densidade impede a explicação
+de voltar para dentro da linha. A regra completa está em `docs/PADRAO_DE_COMENTARIOS.md`.
+

@@ -155,19 +155,9 @@ export function CatalogoPage() {
         [changed],
     );
 
-    // T124 — o PUT em lote roda DEPOIS do commit, com a lista completa dos recomputáveis (nunca
-    // durante o render). `useObservePrices` já deduplica por assinatura na sessão do hook.
-    //
-    // `gate === "active"` — a barreira de sempre (Constituição IV, SC-709): ler/recomputar sobrevive
-    // em QUALQUER gate (FR-409, "lapsed com itens" continua mostrando preço), mas GRAVAR uma
-    // observação é uma escrita, e a ausência da chamada é a barreira, nunca um 403 do servidor como
-    // primeira linha de defesa.
-    //
-    // Três guardas a mais (revisão do main loop): a "visita" é a LISTA — com a ficha `?produto=`
-    // aberta ninguém viu a lista, e um deep-link na ficha não pode marcar os outros itens como
-    // vistos; um GET que falhou por rede (`observationsError`, nunca o 403) também não avança a marca —
-    // senão o PUT sobrescreve uma comparação "era" que o vendedor nunca chegou a ver; e o
-    // `catalogVersion` do catálogo de taxas vai junto, como o ADR-0033 §2 pede.
+    // ⚠ @doc DEC-098 — a AUSÊNCIA da chamada é a barreira, nunca um 403 como primeira linha. E a
+    //   "visita" é a LISTA: com a ficha aberta ninguém viu a lista, e um GET que falhou por rede
+    //   não avança a marca — senão o PUT sobrescreve um "era" que o vendedor nunca viu.
     const listVisible = search.produto === undefined;
     useEffect(() => {
         if (gate !== "active" || !listVisible) return;

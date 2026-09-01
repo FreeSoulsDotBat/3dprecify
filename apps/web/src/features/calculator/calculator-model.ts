@@ -394,20 +394,10 @@ function parseOtherCosts(forms: readonly { name: string; value: string }[]): {
 }
 
 /**
- * Parse + validate the raw form strings, then compute. Returns per-field messages instead of ever
- * throwing or emitting a NaN/Infinity (SC-008). Valid channel slots are passed to the engine and
- * their gross-up results mapped back onto their form position; invalid slots carry inline errors.
- */
-/**
- * O desfecho de UM slot VÁLIDO já computado pelo motor (corpo movido verbatim da IIFE que vivia
- * dentro do `.map()` de realinhamento — achado da auditoria; a regra não mudou, só ganhou nome).
+ * O desfecho de UM slot VÁLIDO já computado pelo motor.
  *
- * 016/PR-F homologação (A1) — once the level is priced, back-fill `commissionPct`/`fixedFee` FROM
- * THE BAND THE ENGINE ACTUALLY APPLIED (never a second price computed here — `appliedBandFees`
- * re-derives only WHICH band, from the same `grossUp`). Only for a field the seller did NOT type
- * (same discipline as every other applied-fee field, 015/A8) and only while the slot is priced
- * (unpriced clears `appliedFees` below — a band nobody can see behind is not a reference to vouch
- * for).
+ * ⚠ @doc DEC-110 — a referência da banda só é preenchida enquanto o slot ESTÁ precificado: uma
+ *   banda que ninguém enxerga atrás não é referência pela qual se possa responder.
  */
 function pricedSlotOutcome(
     p: SlotProcessing,

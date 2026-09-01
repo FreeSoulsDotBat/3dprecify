@@ -271,17 +271,8 @@ export interface AppliedBandFees {
 }
 
 /**
- * 016/PR-F homologação (A1) — the placeholder gap the 015/A8 mechanism left open: a BANDED entry's
- * flat `commissionPct`/`fixedFee` read `entry.commissionPct ?? 0` / `entry.fixedFee ?? 0` (they live
- * per-band, not at the entry's top level), so `processSlot` deliberately skips them (`bandada` guard,
- * `calculator-model.ts`) rather than publish a false "Comissão 0,00%" under a reference seal. That
- * left the field BLANK instead — honest, but silent about a real charge (Shopee: 20% + R$ 4,00, or
- * +R$ 3,00, or half the listing price below R$ 8).
- *
- * Once the engine has priced the level, `grossUp`'s own `appliedBand` [F11a-007-esque] already knows
- * which band answered — this looks that SAME band back up in `fees.priceBands` (byte-identical to
- * the entry the engine used) and reads its commission/fixed fee. No second price is computed here:
- * only which band the engine's own answer belongs to.
+ * ⚠ @doc DEC-101 — numa entrada com bandas a referência vem da banda que o MOTOR já escolheu
+ *   (`appliedBand`), buscada de volta byte-idêntica. Nenhum segundo preço é computado aqui.
  */
 export function appliedBandFees(fees: ChannelFees, base: number): AppliedBandFees | null {
     if (!fees.priceBands || fees.priceBands.length === 0) return null;

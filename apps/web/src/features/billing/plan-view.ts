@@ -91,18 +91,9 @@ export function planView(args: {
 }
 
 /**
- * ux-billing §4.3 (recomendação §10-F1, ~70%, **pendente de ratificação do dono**) — a costura que a
- * clarificação de 2026-07-20 meio-especifica.
- *
- * Um vendedor com assinatura CANCELADA que também carrega um grant de cortesia mais longo não vai
- * cair no fim do período: a cortesia o segura. Dizer só "ativo até 31/12 · não renova" implica um
- * corte em 31/12 que não vai acontecer — uma desonestidade sutil, e do tipo que só aparece quando o
- * dia chega e o vendedor não entende por que continua premium.
- *
- * A detecção não precisa de campo novo: o `expiresAt` do ledger é o grant válido MAIS DISTANTE, e se
- * ele passa do fim do período da assinatura, existe algo além dela. A borda é ESTRITA — empate
- * significa que os dois acabam juntos, e aí a frase já está certa; acrescentar a linha prometeria um
- * acesso que não existe no dia seguinte.
+ * ⚠ @doc DEC-099 — assinatura cancelada + cortesia mais longa: dizer só "ativo até X · não
+ *   renova" implica um corte que não vem. Borda ESTRITA — empate já está certo. PENDENTE de
+ *   ratificação do dono.
  */
 function cortesiaSobrevive(ent: EntitlementLike, sub: SubscriptionLike): boolean {
     if (!ent.expiresAt || !sub.currentPeriodEnd) return false;

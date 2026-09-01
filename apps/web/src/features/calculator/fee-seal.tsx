@@ -18,17 +18,8 @@ import type { MarketplaceId } from "./calculator-schema";
 
 import "./fee-seal.css";
 
-// US2 honesty seal (FR-107): states, per channel slot, where its fee numbers came from and how
-// fresh they are — so a pre-filled number is never mistaken for something the user vouched for.
-// Domain copy (pt-BR) lives here in the feature. NEVER asserts a fabricated value is exact
-// (Constitution II) — an uncovered slot reads "sem referência".
-//
-// 019/PR-C (T052/T058, prancheta "Selo de Procedencia") — the block that backs a NUMBER (commission
-// or the fixed fee) is a `tf-alert--compact` (shared/ui, 019/PR-A), not a `Badge` pill: it carries a
-// two-line citation, a review date, "Ver fonte" and "Dispensar". The three SHORT qualifiers —
-// `adjusted`/`estimate`/`none` — stay `Badge` pills per the design authority (13b·4/6/7), even though
-// the task text that opened this slice suggested folding them into `Alert` too; the prancheta wins
-// (research §A / Principle VIII), and this divergence from the task's own wording is deliberate.
+// ⚠ @doc DEC-107 — o bloco que sustenta um NÚMERO é `Alert` (citação + data + fonte + dispensar);
+//   os três qualificadores curtos seguem `Badge`, por autoridade da prancheta.
 
 const t = messages.calculator.seals;
 const marketplaceNames = messages.calculator.marketplaceNames;
@@ -230,16 +221,8 @@ export function FeeSeal({
 }
 
 /**
- * 016/PR-F (T057) — the fixed fee's OWN provenance, when the catalog entry carries one (Amazon
- * Individual: the commission comes from the category table, the R$ 2,00 per-item charge comes from a
- * DIFFERENT official page — `venda.amazon.com.br/precos`). A SEPARATE block, never folded into the
- * main `FeeSeal`'s text: the main seal already names the commission's source, and citing a second
- * source inside the same sentence would blur which number it backs (Constitution II).
- *
- * 019/PR-C (13b·9) — also `tf-alert--compact`, always tone `neutral` (never `info`: it is not "the
- * live reference for the seller's category", just a second, separately-dated citation), and says
- * "vigente desde" — WHEN the fee took effect — never "atualizada em", which would claim it is the
- * date we last confirmed it (the entry has no second `lastReviewed` of its own — see `fee-catalog.ts`).
+ * ⚠ @doc DEC-092 — bloco SEPARADO e tom `neutral`: citar a segunda fonte dentro da frase do selo
+ *   principal borraria QUAL número ela sustenta. Diz "vigente desde", nunca "atualizada em".
  */
 export function FixedFeeSourceBadge({
     source,
