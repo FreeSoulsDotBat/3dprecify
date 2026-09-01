@@ -27,7 +27,7 @@ import {
 
 import { DeleteScenarioDialog, type DeleteScenarioDialogHandle } from "./delete-scenario-dialog";
 import { RenameScenarioSheet, type RenameScenarioSheetHandle } from "./rename-scenario-sheet";
-import { honestWriteError } from "./scenarios-write-error";
+import { honestWriteError } from "@/shared/api/error-messages";
 
 import "./scenario-list.css";
 
@@ -195,7 +195,11 @@ export function ScenariosList({
 
     const online = useOnline();
     const writesDisabled = lapsed || !online;
-    const writesReason = lapsed ? t.writeLapsed : !online ? t.writeOffline : undefined;
+    const writesReason = lapsed
+        ? t.writeLapsed
+        : !online
+          ? messages.apiError.offlineWrite
+          : undefined;
 
     // 019/PR-B (T112) — a parede caiu (`showTeaser` saiu): "nunca teve"/deslogado agora MONTAM esta
     // folha como todo mundo, e é AQUI que a decisão mora. O fallback do 403 (`ENTITLEMENT_REQUIRED`)

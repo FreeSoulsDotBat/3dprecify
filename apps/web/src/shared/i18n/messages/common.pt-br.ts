@@ -144,6 +144,11 @@ export const apiError = {
     // E2 (ADR-0012): the server-side premium gate. Honest — no price, no date (FR-014/US7);
     // final wording owner-ratified with the US7 teaser copy.
     entitlementRequired: "Salvar faz parte do Premium.",
+    // B10 (decisão do dono 2026-09-01): a frase ÚNICA da escrita sem conexão. Eram duas — "Criar e
+    // editar precisam de conexão." (catálogo) e esta (simulações) — para o mesmo fato, e a que o
+    // dono escolheu é a que também cobre excluir. Mora aqui, e não numa tela, porque `apiError` é a
+    // casa das frases que `honestWriteError` (shared/api) fala por todo o app.
+    offlineWrite: "Esta ação precisa de conexão.",
 };
 
 // 013/FC-02 — the `tf-*` design system must not hold copy; these are its default a11y labels,

@@ -76,7 +76,6 @@ export const catalog = {
     offlineTitle: "Modo leitura offline",
     offlineBody:
         "Seus itens salvos continuam aqui para usar no cálculo. Criar e editar precisam de conexão.",
-    offlineWriteBlocked: "Criar e editar precisam de conexão.",
     staleHint: "pode estar desatualizada",
     // 016/US1 (T004/T006) — o teaser do Catálogo passou a ser o padrão único
     // (`shared/billing/premium-teaser.tsx`, registro `premiumTeaser.CATALOG`); as chaves antigas

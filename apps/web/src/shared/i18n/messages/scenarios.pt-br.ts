@@ -67,7 +67,6 @@ export const scenarios = {
     saveAsNew: "Salvar como novo",
     discardChangesTitle: "Descartar as alterações não salvas desta simulação?",
     discardChanges: "Descartar",
-    writeOffline: "Esta ação precisa de conexão.", // renomear/duplicar/editar/excluir offline
     writeLapsed: "Premium pausado — reative para renomear, duplicar, editar ou excluir.",
     // manage (T029) — list card actions + rename + delete + search
     open: "Abrir",

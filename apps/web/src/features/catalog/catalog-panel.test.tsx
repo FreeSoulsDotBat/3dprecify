@@ -201,7 +201,7 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
         fireEvent.click(screen.getByRole("button", { name: cf.save }));
 
         // No fake success: the honest "precisa de conexão" line shows and the sheet stays open.
-        expect(await screen.findByText(catalogo.offlineWriteBlocked)).toBeInTheDocument();
+        expect(await screen.findByText(messages.apiError.offlineWrite)).toBeInTheDocument();
         expect(screen.getByText(cf.newFilament)).toBeInTheDocument();
     });
 });

@@ -173,7 +173,9 @@ describe("ScenarioContextBar — unsaved changes + 'Salvar alterações' (PUT, T
         );
         render(<ScenarioContextBar {...baseProps({ dirty: true })} />);
         await user.click(screen.getByRole("button", { name: t.saveChanges }));
-        await waitFor(() => expect(screen.getByText(t.writeOffline)).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText(messages.apiError.offlineWrite)).toBeInTheDocument(),
+        );
     });
 
     // 016/T072-A9: an unexpected failure that isn't a typed `ApiError` must not be relabelled
@@ -186,7 +188,7 @@ describe("ScenarioContextBar — unsaved changes + 'Salvar alterações' (PUT, T
         await waitFor(() =>
             expect(screen.getByText(messages.apiError.unknown)).toBeInTheDocument(),
         );
-        expect(screen.queryByText(t.writeOffline)).not.toBeInTheDocument();
+        expect(screen.queryByText(messages.apiError.offlineWrite)).not.toBeInTheDocument();
     });
 });
 
@@ -282,7 +284,7 @@ describe("ScenarioContextBar — lapse read-only freeze (VR-610) + offline", () 
         onlineState.value = false;
         render(<ScenarioContextBar {...baseProps()} />);
         expect(screen.getByRole("button", { name: t.rename })).toBeDisabled();
-        expect(screen.getByText(t.writeOffline)).toBeInTheDocument();
+        expect(screen.getByText(messages.apiError.offlineWrite)).toBeInTheDocument();
     });
 });
 

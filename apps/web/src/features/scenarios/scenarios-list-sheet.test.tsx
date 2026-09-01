@@ -194,7 +194,9 @@ describe("ScenariosListSheet — duplicate (T029, completes the T026 client gap)
         );
         renderSheet();
         await user.click(screen.getByRole("button", { name: `${t.duplicate} ${ROW.name}` }));
-        await waitFor(() => expect(screen.getByText(t.writeOffline)).toBeInTheDocument());
+        await waitFor(() =>
+            expect(screen.getByText(messages.apiError.offlineWrite)).toBeInTheDocument(),
+        );
     });
 
     // 016/T072-A9: an unexpected failure that isn't a typed `ApiError` must not be relabelled
@@ -207,7 +209,7 @@ describe("ScenariosListSheet — duplicate (T029, completes the T026 client gap)
         await waitFor(() =>
             expect(screen.getByText(messages.apiError.unknown)).toBeInTheDocument(),
         );
-        expect(screen.queryByText(t.writeOffline)).not.toBeInTheDocument();
+        expect(screen.queryByText(messages.apiError.offlineWrite)).not.toBeInTheDocument();
     });
 });
 
@@ -242,7 +244,7 @@ describe("ScenariosListSheet — lapse read-only freeze (VR-610/§0.1)", () => {
         onlineState.value = false;
         renderSheet();
         expect(screen.getByRole("button", { name: `${t.rename} ${ROW.name}` })).toBeDisabled();
-        expect(screen.getAllByText(t.writeOffline).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(messages.apiError.offlineWrite).length).toBeGreaterThan(0);
     });
 });
 

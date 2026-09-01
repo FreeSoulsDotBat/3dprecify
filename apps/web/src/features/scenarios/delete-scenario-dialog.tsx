@@ -13,7 +13,7 @@ import {
     toast,
 } from "@/shared/ui";
 
-import { honestWriteError } from "./scenarios-write-error";
+import { honestWriteError } from "@/shared/api/error-messages";
 
 const t = messages.scenarios;
 

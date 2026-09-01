@@ -5,7 +5,7 @@ import type { ScenarioOut } from "@/shared/api/generated";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { Button, Field, Sheet, SheetContent, SheetTitle, toast } from "@/shared/ui";
 
-import { honestWriteError } from "./scenarios-write-error";
+import { honestWriteError } from "@/shared/api/error-messages";
 
 const t = messages.scenarios;
 

@@ -36,7 +36,7 @@ describe("errorCodeMessage (T055 / US4 — D1)", () => {
 describe("honestWriteError (T072-A9)", () => {
   it("names the connection ONLY for a real transport-phase failure (status 0)", () => {
     const err = new ApiError({ status: 0, code: "UNKNOWN", message: "x", correlationId: null });
-    expect(honestWriteError(err)).toBe(messages.catalog.offlineWriteBlocked);
+    expect(honestWriteError(err)).toBe(messages.apiError.offlineWrite);
   });
 
   it("a coded server error gets its own honest phrase, never the connection line", () => {
@@ -47,12 +47,12 @@ describe("honestWriteError (T072-A9)", () => {
       correlationId: null,
     });
     expect(honestWriteError(err)).toBe(messages.apiError.entitlementRequired);
-    expect(honestWriteError(err)).not.toBe(messages.catalog.offlineWriteBlocked);
+    expect(honestWriteError(err)).not.toBe(messages.apiError.offlineWrite);
   });
 
   it("an unexpected non-ApiError failure gets the generic honest phrase, NOT the connection line", () => {
     expect(honestWriteError(new Error("boom"))).toBe(messages.apiError.unknown);
     expect(honestWriteError("not even an Error")).toBe(messages.apiError.unknown);
-    expect(honestWriteError(new Error("boom"))).not.toBe(messages.catalog.offlineWriteBlocked);
+    expect(honestWriteError(new Error("boom"))).not.toBe(messages.apiError.offlineWrite);
   });
 });

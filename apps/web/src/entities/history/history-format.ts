@@ -58,7 +58,12 @@ export function offsetOf(item: HistoryItem): number | undefined {
 // forma anterior (um ternário `=== "PRECO_ATACADO" ? … : varejo`) teria etiquetado todo orçamento
 // como "Preço de varejo" — silenciosamente, sem quebrar nada, num registro imutável. Um Record
 // sobre a união do contrato faz o compilador cobrar a decisão quando surgir a quarta base.
-const BASIS_CAPTION: Record<SnapshotInHeadlineBasis, string> = {
+// B4 (2026-09-01) — este mapa é o 5º espelho de `headline_basis` (os outros 4 vivem no backend:
+// `api.history._BASIS_TOTAL_KEY`, `services.quote_render._BASIS_TOTAL`/`_BASIS_CAPTION` e o CHECK
+// do banco, todos amarrados por `test_history_basis_mirror.py`). `basis-caption-parity.test.ts`
+// mantém as CHAVES deste mapa iguais ao enum publicado em `contracts/openapi.json`
+// (`SnapshotIn.headlineBasis`) — a mesma fonte que o backend exporta a partir do seu `Literal`.
+export const BASIS_CAPTION: Record<SnapshotInHeadlineBasis, string> = {
     PRECO_VAREJO: t.basisRetailCaption,
     PRECO_ATACADO: t.basisWholesaleCaption,
     // Prancheta 18e — o total de um orçamento ENVIADO. Não é varejo nem atacado: é o que o vendedor
@@ -68,9 +73,14 @@ const BASIS_CAPTION: Record<SnapshotInHeadlineBasis, string> = {
 
 /** An unlabelled total is an ambiguous claim — the basis is spelled out on every surface. */
 export function basisCaption(basis: string): string {
-    // Um documento gravado por uma versão futura pode trazer uma base que este cliente não conhece;
-    // aí a leitura cai no varejo, como sempre caiu — o que muda é que as bases CONHECIDAS não caem.
-    return BASIS_CAPTION[basis as SnapshotInHeadlineBasis] ?? t.basisRetailCaption;
+    // B4 fix (2026-09-01): um `headlineBasis` desconhecido NÃO pode ler como "preço de varejo" —
+    // esse fallback antigo era o mesmo tipo de mentira que o backend já recusa por design
+    // (`quote_render._basis_caption`/`_basis_key` — "refusing to guess/print a raw key"; o
+    // comentário lá chama o equivalente de bomba-relógio). A saída honesta para "não sei rotular
+    // isto" é o traço que o resto do Histórico já usa para ausência de valor (ex.:
+    // `snapshot-detail-quote.tsx` KitLines, `history-filter-bar.tsx`) — nunca um valor inventado, e
+    // nunca uma tela em branco: o card e o detalhe continuam renderizando, só a legenda vira "—".
+    return BASIS_CAPTION[basis as SnapshotInHeadlineBasis] ?? "—";
 }
 
 /**
