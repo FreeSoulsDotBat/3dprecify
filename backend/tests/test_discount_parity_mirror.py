@@ -97,7 +97,7 @@ def test_the_backend_mirror_agrees_with_the_engine_on_every_shared_case(
 # relatório de legibilidade), corrigido a pedido do dono.
 def test_B12_pct_amount_must_be_the_declared_percentage_of_gross() -> None:
     # 50% de R$ 100,00 são R$ 50,00 — o documento declara R$ 0,01 e AINDA ASSIM fecha a identidade
-    # (100,00 − 0,01 = 99,99), que era exatamente o buraco: as três regras antigas passavam todas.
+    # (100,00 - 0,01 = 99,99), que era exatamente o buraco: as três regras antigas passavam todas.
     payload = {
         "discount": {
             "mode": "PCT",

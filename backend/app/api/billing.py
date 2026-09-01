@@ -178,8 +178,22 @@ def _plan_id(settings: Settings, period: PlanPeriod) -> str | None:
 def _back_url(settings: Settings) -> str:
     """T013 constraint (`ux-billing.md` — the measured `base:'./'` cold-load trap applied to the
     external MP return): the returned route MUST be exactly ONE path segment. Base URL comes from
-    the CORS allowlist's first entry (settings-driven — never a hardcoded port, ADR-0022 lesson)."""
-    base = settings.cors_origins[0] if settings.cors_origins else "http://localhost:5173"
+    the CORS allowlist's first entry (settings-driven — never a hardcoded port, ADR-0022 lesson).
+
+    B7 (2026-09-01, `docs/RELATORIO_LEGIBILIDADE.md`): an empty ``cors_origins`` used to fall back
+    to the literal ``http://localhost:5173`` — in a real environment that sends the payer, on their
+    own phone, right after paying, to a blank page. `cors_origins` has a non-empty default
+    (`settings.py`), so this is unreachable in normal operation; it only fires on a genuine
+    provisioning gap. Fail honest instead of silently mislabeling the return trip: 503
+    BILLING_UNAVAILABLE, the same code this route already uses for "MP itself unreachable"
+    (§5 above) — from the payer's perspective both mean "checkout isn't usable right now"."""
+    if not settings.cors_origins:
+        raise AppError(
+            ErrorCode.BILLING_UNAVAILABLE,
+            "no configured origin to return the payer to after checkout",
+            503,
+        )
+    base = settings.cors_origins[0]
     return f"{base.rstrip('/')}/conta?checkout=retorno"
 
 

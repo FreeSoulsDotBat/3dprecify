@@ -177,7 +177,7 @@ def _validate_declared_discount(payload: dict[str, Any], net_total: decimal.Deci
     # B12 (achado pelo teste de paridade do 4(3), corrigido a pedido do dono 2026-09-01) — no modo
     # PCT o abatimento tem de SER o percentual declarado. Até aqui o servidor conferia que o
     # percentual era ≤ 100 e que a subtração fechava, e NADA MAIS: um documento dizendo
-    # `mode:"PCT", value:"50", amount:"0.01"` passava inteiro, desde que `gross − amount` batesse
+    # `mode:"PCT", value:"50", amount:"0.01"` passava inteiro, desde que `gross - amount` batesse
     # com o total. O papel que chega ao cliente imprime os três números, e os dois primeiros não
     # explicavam o terceiro — congelado assim para sempre.
     #

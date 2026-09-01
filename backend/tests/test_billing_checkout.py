@@ -199,3 +199,48 @@ def test_mp_unreachable_returns_503_and_leaves_no_partial_row(
 
     engine = sa.create_engine(migrated_db)
     assert _subscriptions(engine, uid) == []
+
+
+# ══ §6 B7 — empty CORS allowlist must not leak `localhost` as the payer's return URL ══════════════
+
+
+def test_empty_cors_origins_fails_checkout_honestly_instead_of_localhost(
+    migrated_db: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """B7 (`docs/RELATORIO_LEGIBILIDADE.md`): `_back_url` used to fall back to the literal
+    ``http://localhost:5173`` whenever `cors_origins` was empty — in a real deploy that sends the
+    payer, on their own device, to a blank page right after paying. A genuinely empty allowlist
+    (a provisioning gap; the shipped default is never empty) must now fail the checkout with an
+    honest 503 `BILLING_UNAVAILABLE`, never with a hardcoded localhost URL."""
+    monkeypatch.setenv("P3D_MP_WEBHOOK_SECRET", "whsec-local-test-only")
+    monkeypatch.setenv("P3D_MP_ACCESS_TOKEN", "tok-local-test-only")
+    monkeypatch.setenv("P3D_MP_PLAN_ID_MONTHLY", "plan-monthly-test")
+    monkeypatch.setenv("P3D_MP_PLAN_ID_ANNUAL", "plan-annual-test")
+    monkeypatch.setenv("P3D_APP_ENV", "dev")
+    monkeypatch.setenv("P3D_CORS_ORIGINS", "[]")
+    get_settings.cache_clear()
+    try:
+        app = create_app(Settings())
+        with TestClient(app, raise_server_exceptions=False) as client:
+            uid = f"u-checkout-{uuid.uuid4().hex[:8]}"
+            patch_verify(monkeypatch, uid, email="no-origin@example.com")
+
+            resp = client.post(
+                CHECKOUT_PATH, json={"period": "monthly"}, headers={"Authorization": "Bearer t"}
+            )
+
+            assert resp.status_code == 503, resp.text
+            assert resp.json()["error"]["code"] == "BILLING_UNAVAILABLE"
+
+            engine = sa.create_engine(migrated_db)
+            assert _subscriptions(engine, uid) == []  # no partial row left behind
+    finally:
+        get_settings.cache_clear()
+
+
+def test_default_cors_origins_is_never_empty(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pins the assumption `_back_url`'s fix (and every local/dev run) relies on: the SHIPPED
+    default keeps covering local Vite dev (5173) + preview (4173), so B7's guard only ever fires
+    on a genuine provisioning gap, never in normal operation."""
+    monkeypatch.delenv("P3D_CORS_ORIGINS", raising=False)
+    assert Settings().cors_origins == ["http://localhost:5173", "http://localhost:4173"]
