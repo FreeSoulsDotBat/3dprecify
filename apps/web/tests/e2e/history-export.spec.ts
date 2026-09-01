@@ -51,12 +51,12 @@ const t = messages;
  *  where the honest confirmation is "pendente", not "salvo". */
 async function recordAndWaitSaved(page: Page): Promise<void> {
     await recordFromCalculator(page);
-    await expect(page.getByText(t.historico.saved)).toBeVisible();
+    await expect(page.getByText(t.history.saved)).toBeVisible();
 }
 
 async function openFirstRecord(page: Page): Promise<void> {
     await page.goto("/historico");
-    await page.getByText(t.historico.quotedAt.split("{")[0]!.trim()).first().click();
+    await page.getByText(t.history.quotedAt.split("{")[0]!.trim()).first().click();
     // 013/F-02 (D1=A): `?snapshot=<id>` on `/historico`, not `/historico/<id>` (the migrated shape).
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
 }
@@ -76,14 +76,14 @@ test("US4: the export round trip — a real PDF, and the default asks for NO cos
     const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
     const download = page.waitForEvent("download");
 
-    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    await page.getByRole("button", { name: t.history.exportAction }).click();
     const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText(t.historico.exportContents)).toBeVisible();
+    await expect(sheet.getByText(t.history.exportContents)).toBeVisible();
     // Untouched — the default artifact is the one that goes to the seller's customer.
     await expect(
-        sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }),
+        sheet.getByRole("switch", { name: t.history.exportIncludeCosts }),
     ).not.toBeChecked();
-    await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
+    await sheet.getByRole("button", { name: t.history.exportGenerate }).click();
 
     expect((await quoteRequest).url()).toContain("includeCostBreakdown=false");
 
@@ -110,19 +110,19 @@ test("US4: the opt-in is the ONLY way the breakdown travels (Q4/FR-512)", async 
     const quoteRequest = page.waitForRequest((r) => r.url().includes("/quote.pdf"));
     const download = page.waitForEvent("download");
 
-    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    await page.getByRole("button", { name: t.history.exportAction }).click();
     const sheet = page.getByRole("dialog");
-    await sheet.getByRole("switch", { name: t.historico.exportIncludeCosts }).click();
-    await sheet.getByRole("button", { name: t.historico.exportGenerate }).click();
+    await sheet.getByRole("switch", { name: t.history.exportIncludeCosts }).click();
+    await sheet.getByRole("button", { name: t.history.exportGenerate }).click();
 
     expect((await quoteRequest).url()).toContain("includeCostBreakdown=true");
     await download;
 
     // Reopening starts OFF again: the decision to show a customer the cost lines is per-quote, and a
     // remembered "on" would leak the margin on the NEXT one silently.
-    await page.getByRole("button", { name: t.historico.exportAction }).click();
+    await page.getByRole("button", { name: t.history.exportAction }).click();
     await expect(
-        page.getByRole("dialog").getByRole("switch", { name: t.historico.exportIncludeCosts }),
+        page.getByRole("dialog").getByRole("switch", { name: t.history.exportIncludeCosts }),
     ).not.toBeChecked();
 });
 
@@ -149,10 +149,10 @@ test("SC-508: a lapse pauses the export and says so — the record itself stays 
     await openFirstRecord(page);
 
     // Visible, disabled, and it names which thing is paused (ux §6) — not a vanished button.
-    const button = page.getByRole("button", { name: t.historico.exportAction });
+    const button = page.getByRole("button", { name: t.history.exportAction });
     await expect(button).toBeVisible();
     await expect(button).toBeDisabled();
-    await expect(page.getByText(t.historico.exportLapsed)).toBeVisible();
+    await expect(page.getByText(t.history.exportLapsed)).toBeVisible();
     // The record is NOT gone and NOT degraded: a lapse pauses writes, it deletes nothing (FR-517).
     await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
 });
@@ -171,7 +171,7 @@ test("US4: offline, the affordance is disabled WITH ITS REASON — never a spinn
 
     await goOffline(page, context);
 
-    const button = page.getByRole("button", { name: t.historico.exportAction });
+    const button = page.getByRole("button", { name: t.history.exportAction });
     await expect(button).toBeDisabled();
-    await expect(page.getByText(t.historico.exportOffline)).toBeVisible();
+    await expect(page.getByText(t.history.exportOffline)).toBeVisible();
 });

@@ -8,7 +8,7 @@ import { Button, Field, Sheet, SheetContent, SheetTitle } from "@/shared/ui";
 // `PERIOD_LABELS`. No state/effect restructured — `history-ledger.tsx` keeps owning search/period/
 // custom as its own state, threaded down as props exactly as before.
 
-const t = messages.historico;
+const t = messages.history;
 
 // ── US6 período presets ──────────────────────────────────────────────────────────────────────
 // A preset maps to a device-date LOWER bound; "custom" carries an explicit [from, to] the seller

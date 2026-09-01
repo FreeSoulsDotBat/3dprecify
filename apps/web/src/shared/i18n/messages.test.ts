@@ -37,8 +37,8 @@ describe("019/T027 — o vocabulário visível", () => {
         }
     });
 
-    it("avisoAtacadoAcimaDoVarejo tem os acentos (preço · só · é)", () => {
-        const frase = messages.calculator.avisoAtacadoAcimaDoVarejo as string;
+    it("wholesaleAboveRetailWarning tem os acentos (preço · só · é)", () => {
+        const frase = messages.calculator.wholesaleAboveRetailWarning as string;
         expect(frase).toContain("preço");
         expect(frase).toContain("só");
         expect(frase).toContain(" é "); // `\b` do JS é ASCII — não vê fronteira antes de "é"

@@ -88,7 +88,7 @@ export function CheckoutReturnPanel() {
                         {t.returnVerifyAgain}
                     </Button>
                     <Button variant="ghost" onClick={backToConta}>
-                        {t.returnBackToConta}
+                        {t.returnBackToAccount}
                     </Button>
                 </div>
             </Card>
@@ -105,7 +105,7 @@ export function CheckoutReturnPanel() {
                     {t.returnRefresh}
                 </Button>
                 <Button variant="ghost" onClick={backToConta}>
-                    {t.returnBackToConta}
+                    {t.returnBackToAccount}
                 </Button>
             </div>
         </Card>

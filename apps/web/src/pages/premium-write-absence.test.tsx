@@ -452,7 +452,7 @@ describe("T107 não-vácuo — em active, salvar de verdade CHAMA a escrita (pro
         setActiveGate();
         render(<FilamentsPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: messages.catalogo.addFilament }));
+        fireEvent.click(screen.getByRole("button", { name: messages.catalog.addFilament }));
         fireEvent.change(screen.getByRole("textbox", { name: messages.catalogForm.name }), {
             target: { value: "PETG Preto" },
         });

@@ -25,7 +25,7 @@ import {
 import { QueueBanner } from "./history-queue-banner";
 import { SnapshotCard } from "./history-snapshot-card";
 
-const t = messages.historico;
+const t = messages.history;
 
 export function HistoryLedger({ embedded = false }: { embedded?: boolean } = {}) {
     const entitlement = useEntitlement();
@@ -145,7 +145,7 @@ export function HistoryLedger({ embedded = false }: { embedded?: boolean } = {})
             gate={doorGate}
             action={
                 <Button onClick={() => void navigate({ to: "/calcular" })}>
-                    {messages.premiumTeaser.fazerUmCalculo}
+                    {messages.premiumTeaser.makeACalculation}
                 </Button>
             }
         />

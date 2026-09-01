@@ -29,7 +29,7 @@ export function ChannelLevelRows({
 }) {
     return (
         <>
-            <BreakdownRow label={t.results.precoAnuncio} value={anuncio} />
+            <BreakdownRow label={t.results.listingPrice} value={anuncio} />
             {freight > 0 && (
                 <BreakdownRow
                     label={t.channels.freightLine}
@@ -39,11 +39,11 @@ export function ChannelLevelRows({
                 />
             )}
             <BreakdownRow
-                label={t.results.recebidoLiquido}
+                label={t.results.netReceived}
                 value={liquido}
                 emphasis={liquido < 0 ? "negative" : "default"}
             />
-            {liquido < 0 && <p style={warnCaption}>{t.channels.negativeLiquido}</p>}
+            {liquido < 0 && <p style={warnCaption}>{t.channels.negativeNet}</p>}
         </>
     );
 }

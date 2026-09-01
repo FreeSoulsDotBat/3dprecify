@@ -42,7 +42,7 @@ describe("AssemblySummary — honest headline states", () => {
         expect(screen.getByText(t.assemblyNoPriceTitle)).toBeInTheDocument();
         expect(screen.getByText(t.assemblyNoPriceBody)).toBeInTheDocument();
         // The custo row and the varejo/atacado heroes must NOT render a fabricated zero.
-        expect(screen.queryByText(t.assemblyCusto)).not.toBeInTheDocument();
+        expect(screen.queryByText(t.assemblyCost)).not.toBeInTheDocument();
         expect(screen.queryByText(/R\$\s?0,00/)).not.toBeInTheDocument();
     });
 
@@ -54,7 +54,7 @@ describe("AssemblySummary — honest headline states", () => {
             />,
         );
 
-        expect(screen.getByText(t.assemblyCusto)).toBeInTheDocument();
+        expect(screen.getByText(t.assemblyCost)).toBeInTheDocument();
         expect(screen.getAllByText(/R\$\s?27,55/).length).toBeGreaterThan(0);
         expect(screen.getByText(t.assemblyExcluded.replace("{n}", "2"))).toBeInTheDocument();
     });
@@ -62,7 +62,7 @@ describe("AssemblySummary — honest headline states", () => {
     it("a fully-valid kit shows the priced headline and no excluded note", () => {
         render(<AssemblySummary bom={computeBom([{ input: SC001, quantity: 1 }])} />);
 
-        expect(screen.getByText(t.assemblyCusto)).toBeInTheDocument();
+        expect(screen.getByText(t.assemblyCost)).toBeInTheDocument();
         expect(screen.queryByText(t.assemblyExcluded.replace("{n}", "0"))).not.toBeInTheDocument();
         expect(screen.queryByText(t.assemblyNoPriceTitle)).not.toBeInTheDocument();
     });

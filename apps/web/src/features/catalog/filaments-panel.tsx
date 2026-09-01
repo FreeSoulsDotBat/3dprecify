@@ -26,7 +26,7 @@ import { FilamentForm } from "./filament-form";
 // apresentação, ele agora também decide se `create`/`update` chegam ao painel — a barreira do
 // não-premium é a AUSÊNCIA do mutator, nunca uma checagem de `if` que alguém possa esquecer.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 
 export function FilamentsPanel() {

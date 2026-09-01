@@ -33,7 +33,7 @@ async function openCatalogItem(page: Page, text: string): Promise<void> {
         await page.getByTestId("master-item").filter({ hasText: text }).click();
         await page
             .getByTestId("detail-panel")
-            .getByRole("button", { name: t.catalogo.detailOpenEditor })
+            .getByRole("button", { name: t.catalog.detailOpenEditor })
             .click();
     } else {
         await page.getByText(text).click();
@@ -94,14 +94,14 @@ test("premium saves a kit: the ad-hoc piece materializes, reopening recomputes (
     // because it has no saved filament/printer behind it yet.
     await page.goto("/catalogo?tab=products");
     await expect(itemVisible(page, "Peça 1 · Kit Suporte")).toBeVisible();
-    await expect(page.getByText(t.catalogo.needsAttention).first()).toBeVisible();
+    await expect(page.getByText(t.catalog.needsAttention).first()).toBeVisible();
 
     // The kit is in the Kits tab, described by STRUCTURE — never a price (FR-407).
     await page.goto("/catalogo?tab=kits");
     await expect(itemVisible(page, "Kit Suporte")).toBeVisible();
     // 018 mestre-detalhe: a ≥1280px o resumo "1 peça(s)" também aparece na ficha (mesmo texto do
     // card) — escopado à linha da lista, nunca `.first()` às cegas.
-    await expect(itemVisible(page, t.catalogo.countKitPieces.replace("{n}", "1"))).toBeVisible();
+    await expect(itemVisible(page, t.catalog.countKitPieces.replace("{n}", "1"))).toBeVisible();
 
     // Reopen it: the inputs come back and the SAME money is RECOMPUTED from them (no stored price).
     await openCatalogItem(page, "Kit Suporte");
@@ -155,7 +155,7 @@ test("deleting a referenced product degrades the kit line on reopen — never a 
     // Delete the materialized product the kit line references.
     await page.goto("/catalogo?tab=products");
     await expect(itemVisible(page, piece)).toBeVisible();
-    await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
+    await page.getByRole("button", { name: `${t.catalog.remove} ${piece}` }).click();
     await page
         .getByRole("dialog")
         .getByRole("button", { name: t.catalogForm.deleteConfirm, exact: true })
@@ -187,7 +187,7 @@ test("a FREE account cannot save a kit — and nothing is materialized (SC-411)"
     // desabilitado e VISÍVEL — nada é materializado porque nenhum handler de escrita existe. O
     // servidor continua sendo a fronteira (SC-1903).
     await page.goto("/kits");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalog.educationalKitsBody);
     await page.getByRole("button", { name: t.bom.addLine }).first().click();
     const salvar = page.getByRole("button", { name: t.bom.save, exact: true });
     await expect(salvar).toBeVisible();

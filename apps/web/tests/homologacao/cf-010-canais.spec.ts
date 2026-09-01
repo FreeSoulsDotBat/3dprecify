@@ -47,9 +47,9 @@ async function lerCanal(page: Page): Promise<LeituraCanal> {
         return m ? brl(m[1]) : null;
     };
     return {
-        varejoBase: pega(t.calculator.results.varejo),
-        anuncio: pega(t.calculator.results.precoAnuncio),
-        liquido: pega(t.calculator.results.recebidoLiquido),
+        varejoBase: pega(t.calculator.results.retail),
+        anuncio: pega(t.calculator.results.listingPrice),
+        liquido: pega(t.calculator.results.netReceived),
     };
 }
 
@@ -440,7 +440,7 @@ test("CF-010-C — um canal com comissão inválida não pode apagar o preço do
     executado(info, SUB, "calculo");
 
     const corpo = await page.locator("body").innerText();
-    const quantosAnuncios = (corpo.match(new RegExp(t.calculator.results.precoAnuncio, "gi")) ?? [])
+    const quantosAnuncios = (corpo.match(new RegExp(t.calculator.results.listingPrice, "gi")) ?? [])
         .length;
     const recusou =
         corpo.includes(t.calculator.validation.commissionMax) || /menor que 100/i.test(corpo);

@@ -78,7 +78,7 @@ import { SnapshotDetailPage } from "./snapshot-detail-page";
 //      [Abrir produto] button is simply absent — and that absence IS the feature. The surface looks
 //      identical to a snapshot that never had an origin.
 
-const t = messages.historico;
+const t = messages.history;
 
 const PAYLOAD: FrozenSnapshotPayload = {
     schemaVersion: 1,

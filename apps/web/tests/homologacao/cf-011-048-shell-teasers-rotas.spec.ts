@@ -23,9 +23,9 @@ const PUBLICAS = ["/calcular", "/catalogo", "/kits", "/historico", "/privacidade
 // 019/PR-B (T109) — a parede saiu (FR-1906): o "teaser" que se conta agora é o VAZIO DIDÁTICO
 // (título da feature, não do plano) — e o convite único continua sendo "Assinar Premium".
 const TEASERS: { rota: string; titulo: string }[] = [
-    { rota: "/catalogo", titulo: t.catalogo.emptyFilamentsTitle },
-    { rota: "/kits", titulo: t.catalogo.emptyKitsTitle },
-    { rota: "/historico", titulo: t.historico.didaticoTitle },
+    { rota: "/catalogo", titulo: t.catalog.emptyFilamentsTitle },
+    { rota: "/kits", titulo: t.catalog.emptyKitsTitle },
+    { rota: "/historico", titulo: t.history.educationalTitle },
 ];
 
 /** Palavras que denunciam um erro sendo mostrado onde deveria haver uma oferta honesta. */
@@ -456,7 +456,7 @@ test("CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebr
             });
         }
         const navVisivel = await page
-            .getByRole("link", { name: t.nav.calcular })
+            .getByRole("link", { name: t.nav.calculate })
             .first()
             .isVisible()
             .catch(() => false);
@@ -464,7 +464,7 @@ test("CF-043-UI-03/04 — rail colapsa, persiste e nenhum corte de largura quebr
             defeito(info, {
                 subcenario: SUB,
                 categoria: "layout",
-                descricao: `A ${w}px o item de navegação "${t.nav.calcular}" deixou de ser visível`,
+                descricao: `A ${w}px o item de navegação "${t.nav.calculate}" deixou de ser visível`,
                 resultado_esperado: "A navegação existe em toda largura suportada",
                 resultado_obtido: "item não visível",
                 severidade: "alta",

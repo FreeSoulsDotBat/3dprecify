@@ -21,7 +21,7 @@ import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-he
 // de propósito (é o que testa a densidade em si).
 
 const t = messages.calculator;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 const pf = messages.productForm;
 

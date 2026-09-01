@@ -152,7 +152,7 @@ test.describe("Shopee seller profile + volumoso (premium)", () => {
         // E o aviso de "não-lucrativo" NÃO aparece: o líquido negativo que o T072 mediu era o voucher,
         // não a sobretaxa. Um vendedor que confiasse naquela tela recusaria a Shopee por uma conta que
         // não existe.
-        await expect(page.getByText(t.channels.negativeLiquido)).toHaveCount(0);
+        await expect(page.getByText(t.channels.negativeNet)).toHaveCount(0);
 
         await toggle.click();
         await expect(toggle).toHaveAttribute("aria-checked", "false");

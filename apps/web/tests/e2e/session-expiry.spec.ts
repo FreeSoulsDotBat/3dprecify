@@ -19,7 +19,7 @@ function ledgerCard(page: Page) {
 //   · the app-wide banner appears with a working way back (H5);
 //   · NOTHING is purged and the seller is NEVER signed out (the non-negotiable property).
 
-const t = messages.historico;
+const t = messages.history;
 const ts = messages.session;
 
 test("um 401 no /history: o outbox fala em sessão (nunca conexão), o banner oferece o caminho de volta, e nada é purgado", async ({

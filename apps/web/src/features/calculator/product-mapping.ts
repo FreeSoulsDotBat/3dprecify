@@ -2,10 +2,13 @@ import {
     type CalcFormValues,
     type ChannelSlotForm,
     defaultCalcValues,
-    type MarketplaceId,
-    type Modality,
 } from "@/features/calculator/calculator-schema";
-import type { ChannelSlot, OtherCost, ProductIn, ProductOut } from "@/shared/api/generated";
+import type {
+    ChannelSlotInput,
+    OtherCostInput,
+    ProductIn,
+    ProductOut,
+} from "@/shared/api/generated";
 import { ptBrToWireDecimal, wireToPtBr } from "@/shared/lib/decimal-ptbr";
 
 // US6/T030 — the wire⇄form mapping for products, same discipline as catalog-prefill (SC-305):
@@ -45,14 +48,10 @@ const PIECE_KEYS = [
     "markupAtacadoPct",
 ] as const;
 
-type WireChannel = {
-    marketplace?: unknown;
-    modality?: unknown;
-    commissionPct?: unknown;
-    fixedFee?: unknown;
-    minPerItem?: unknown;
-    freightCost?: unknown;
-};
+// `WireChannel` morreu aqui (2026-08-31): o Out do backend passou a declarar
+// `channels: list[ChannelSlot]` / `otherCosts: list[OtherCost]`, então o cliente gerado já traz a
+// forma inteira e não havia mais o que redeclarar por fora. As guardas de `typeof` continuam: elas
+// protegem de um item vindo do cache offline gravado por uma versão anterior, que é dado, não tipo.
 
 function feeToForm(fee: unknown): string {
     return typeof fee === "string" ? wireToPtBr(fee) : "";
@@ -87,15 +86,15 @@ export function productToForm(product: ProductOut): ProductFormBundle {
         markupAtacadoPct: wireToPtBr(product.pieceInputs.markupAtacadoPct),
         tariffPerKwh: wireToPtBr(product.tariffPerKwh),
         includeMarketplace: product.includeMarketplace,
-        channels: (product.channels as WireChannel[]).map((c): ChannelSlotForm => ({
-            marketplace: c.marketplace as MarketplaceId,
-            modality: (typeof c.modality === "string" ? c.modality : "") as Modality,
+        channels: product.channels.map((c): ChannelSlotForm => ({
+            marketplace: c.marketplace,
+            modality: typeof c.modality === "string" ? c.modality : "",
             commissionPct: feeToForm(c.commissionPct),
             fixedFee: feeToForm(c.fixedFee),
             minPerItem: feeToForm(c.minPerItem),
             freightCost: feeToForm(c.freightCost),
         })),
-        otherCosts: (product.otherCosts as { name?: unknown; value?: unknown }[]).map((c) => ({
+        otherCosts: product.otherCosts.map((c) => ({
             name: typeof c.name === "string" ? c.name : "",
             value: typeof c.value === "string" ? wireToPtBr(c.value) : "",
         })),
@@ -124,7 +123,7 @@ export function formToProductIn(bundle: ProductFormBundle): ProductIn {
         pieceInputs,
         tariffPerKwh: ptBrToWireDecimal(values.tariffPerKwh),
         includeMarketplace: values.includeMarketplace,
-        channels: values.channels.map((c): ChannelSlot => ({
+        channels: values.channels.map((c): ChannelSlotInput => ({
             marketplace: c.marketplace,
             modality: c.modality,
             commissionPct: feeToWire(c.commissionPct),
@@ -136,7 +135,7 @@ export function formToProductIn(bundle: ProductFormBundle): ProductIn {
         // blank value persists the 0 the calculator computes for it (FR-116 semantics).
         otherCosts: values.otherCosts
             .filter((c) => c.name.trim() !== "" || c.value.trim() !== "")
-            .map((c): OtherCost => ({
+            .map((c): OtherCostInput => ({
                 name: c.name,
                 value: c.value.trim() ? ptBrToWireDecimal(c.value) : "0",
             })),

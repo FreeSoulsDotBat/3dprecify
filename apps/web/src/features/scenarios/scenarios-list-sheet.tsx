@@ -234,7 +234,9 @@ export function ScenariosList({
             <VazioDidatico
                 feature="scenarios"
                 gate={doorGate}
-                action={<Button onClick={onClose}>{messages.premiumTeaser.fazerUmCalculo}</Button>}
+                action={
+                    <Button onClick={onClose}>{messages.premiumTeaser.makeACalculation}</Button>
+                }
                 teaser={teaser}
             />
         );

@@ -41,7 +41,7 @@ import { HistoricoPage } from "./historico-page";
 // e a promessa da calculadora grátis segue restatada — agora na frase do vazio didático em vez da
 // legenda do `PremiumTeaser`.
 
-const t = messages.historico;
+const t = messages.history;
 const tb = messages.billing;
 
 const emptyList = {
@@ -81,8 +81,8 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
         // O cabeçalho de sempre — a parede não é mais uma tela substituta.
         expect(screen.getByText(t.title)).toBeInTheDocument();
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
-        expect(screen.getByText(t.didaticoTitle)).toBeInTheDocument();
-        expect(screen.getByText(t.didaticoBody)).toBeInTheDocument();
+        expect(screen.getByText(t.educationalTitle)).toBeInTheDocument();
+        expect(screen.getByText(t.educationalBody)).toBeInTheDocument();
         // A demo row here would be a FAKE RECEIPT — the one thing this epic exists to make impossible.
         expect(screen.queryByText(t.quotedValue)).not.toBeInTheDocument();
         for (const n of (document.body.textContent ?? "").match(/\d+[.,]\d{2}/g) ?? []) {
@@ -95,7 +95,7 @@ describe("free and signed-out meet an explanation, never a broken list", () => {
         render(<HistoricoPage />);
 
         expect(
-            screen.getByRole("button", { name: messages.premiumTeaser.fazerUmCalculo }),
+            screen.getByRole("button", { name: messages.premiumTeaser.makeACalculation }),
         ).toBeInTheDocument();
     });
 

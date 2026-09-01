@@ -18,17 +18,17 @@ import { messages as t } from "./messages.pt-br";
 describe("019/PR-F T090 (D1) — o trio 'Premium pausado' (agora seis vivos, um apagado)", () => {
     // 1) conta.planLapsed (`:622`) — a linha de plano da Conta (E2). Rótulo NEUTRO deliberado (não
     //    "expirado"): ver o comentário histórico junto à chave (T038, causa não trafega no wire).
-    it("conta.planLapsed", () => {
-        expect(t.conta.planLapsed).toBe("Premium pausado");
+    it("account.planLapsed", () => {
+        expect(t.account.planLapsed).toBe("Premium pausado");
     });
 
-    // 2) catalogo.lapsedTitle — SAIU. Confirmado por grep hoje (2026-08-29): não existe mais
-    //    `lapsedTitle` no bloco `catalogo`. A prancheta 32e (019/PR-B/T038) moveu a mensagem para
-    //    `catalogo.reactivateBody`, junto ao botão que ela explica, em vez de uma faixa separada —
-    //    o comentário deixado no próprio arquivo (`messages.pt-br.ts` bloco `catalogo`, acima de
+    // 2) catalog.lapsedTitle — SAIU. Confirmado por grep hoje (2026-08-29): não existe mais
+    //    `lapsedTitle` no bloco `catalog`. A prancheta 32e (019/PR-B/T038) moveu a mensagem para
+    //    `catalog.reactivateBody`, junto ao botão que ela explica, em vez de uma faixa separada —
+    //    o comentário deixado no próprio arquivo (`messages.pt-br.ts` bloco `catalog`, acima de
     //    `readOnlyHint`) documenta a remoção e nomeia esta task (T090) como quem vigia a ausência.
-    it("catalogo.lapsedTitle não existe mais (apagada pela PR-B/T038 — prancheta 32e)", () => {
-        expect("lapsedTitle" in t.catalogo).toBe(false);
+    it("catalog.lapsedTitle não existe mais (apagada pela PR-B/T038 — prancheta 32e)", () => {
+        expect("lapsedTitle" in t.catalog).toBe(false);
     });
 
     // 3-4) bom.lapsedTitle (`:950`) + bom.lapsedBanner (`:953-955`) — Kits (E3). Título curto para o
@@ -47,9 +47,9 @@ describe("019/PR-F T090 (D1) — o trio 'Premium pausado' (agora seis vivos, um 
     //    grep: só o banner existe nesse bloco). O histórico é write-once por natureza (snapshot
     //    imutável), então o banner cobre mais ações negadas (salvar/renomear/excluir/exportar) que
     //    os outros dois.
-    it("historico.lapsedBanner (sem lapsedTitle irmão — histórico não tem um)", () => {
-        expect("lapsedTitle" in t.historico).toBe(false);
-        expect(t.historico.lapsedBanner).toBe(
+    it("history.lapsedBanner (sem lapsedTitle irmão — histórico não tem um)", () => {
+        expect("lapsedTitle" in t.history).toBe(false);
+        expect(t.history.lapsedBanner).toBe(
             "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
         );
     });
@@ -71,18 +71,18 @@ describe("019/PR-F T090 (D1) — o trio 'Premium pausado' (agora seis vivos, um 
     // isolada de qualquer uma seja visível no diff do snapshot, não apenas no diff do arquivo fonte.
     it("snapshot conjunto das seis ocorrências vivas", () => {
         expect({
-            "conta.planLapsed": t.conta.planLapsed,
+            "account.planLapsed": t.account.planLapsed,
             "bom.lapsedTitle": t.bom.lapsedTitle,
             "bom.lapsedBanner": t.bom.lapsedBanner,
-            "historico.lapsedBanner": t.historico.lapsedBanner,
+            "history.lapsedBanner": t.history.lapsedBanner,
             "scenarios.lapsedTitle": t.scenarios.lapsedTitle,
             "scenarios.writeLapsed": t.scenarios.writeLapsed,
         }).toMatchInlineSnapshot(`
       {
+        "account.planLapsed": "Premium pausado",
         "bom.lapsedBanner": "Premium pausado — você pode reabrir e recalcular este kit. Salvar precisa do Premium ativo.",
         "bom.lapsedTitle": "Premium pausado",
-        "conta.planLapsed": "Premium pausado",
-        "historico.lapsedBanner": "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
+        "history.lapsedBanner": "Premium pausado — seus registros continuam aqui e podem ser abertos. Para salvar, renomear, excluir ou exportar, reative o Premium.",
         "scenarios.lapsedTitle": "Premium pausado",
         "scenarios.writeLapsed": "Premium pausado — reative para renomear, duplicar, editar ou excluir.",
       }

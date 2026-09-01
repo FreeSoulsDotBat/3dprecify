@@ -46,7 +46,7 @@ import "./catalog-master-detail.css";
 // Constituição IV intocada). A faixa "Premium pausado" (T038) saiu: o rodapé do formulário inerte
 // já explica.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 
 /** O formulário passado por quem monta o painel (filamentos/impressoras, §0.2) — nomeado para ser

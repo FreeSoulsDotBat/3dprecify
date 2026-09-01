@@ -21,7 +21,7 @@ import {
 // Aqui o alvo é o FLUXO: o arquivo chega mesmo? o portão de entitlement é real? o que o produto diz
 // quando não pode exportar?
 
-const h = t.historico;
+const h = t.history;
 
 async function registrarOrcamento(page: Page, rotulo: string): Promise<boolean> {
     await page.goto("/calcular");

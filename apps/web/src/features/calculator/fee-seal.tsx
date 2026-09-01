@@ -66,7 +66,7 @@ export type FeeSealState =
 
 /** 13a·2 — "Ver fonte" aberto: a citação inteira, quando conferimos, e o link do catálogo (nunca
  *  mostrado antes desta fatia). Compartilhado entre o selo principal e o da taxa fixa — só existe
- *  UMA cópia transcrita de "Fonte da comissão" (messages.calculator.seals.fonteTitle), então os dois
+ *  UMA cópia transcrita de "Fonte da comissão" (messages.calculator.seals.sourceTitle), então os dois
  *  diálogos usam o mesmo título; ver o relatório da task sobre essa divergência de conteúdo. */
 function FeeSourceDialog({
     open,
@@ -86,7 +86,7 @@ function FeeSourceDialog({
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent variant="center" data-testid="fee-seal-source-dialog">
-                <DialogTitle>{t.fonteTitle}</DialogTitle>
+                <DialogTitle>{t.sourceTitle}</DialogTitle>
                 <DialogDescription>{citation}</DialogDescription>
                 <p className="fee-seal__source-date tf-tnum">{dateLine}</p>
                 {/* 13a·2 — o link sem o esquema ("seller.shopee.com.br/…"), e QUEBRÁVEL: a screenshot da
@@ -103,7 +103,7 @@ function FeeSourceDialog({
                     <Icon name="chevron-down" size={16} style={{ transform: "rotate(-90deg)" }} />
                 </a>
                 <p className="fee-seal__source-notice">
-                    {t.fonteAviso.replace("{marketplace}", marketplaceLabel)}
+                    {t.sourceDisclaimer.replace("{marketplace}", marketplaceLabel)}
                 </p>
             </DialogContent>
         </Dialog>
@@ -144,12 +144,12 @@ function FeeReferenceAlert({
                 icon={state.embedded ? "wifi" : undefined}
                 compact
                 data-testid="fee-seal"
-                dismissLabel={t.dispensar}
+                dismissLabel={t.dismiss}
                 onDismiss={() => dismissFeeSeal(key)}
                 action={
                     state.sourceUrl ? (
                         <button type="button" onClick={() => setSourceOpen(true)}>
-                            {t.verFonte}
+                            {t.viewSource}
                             {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
                             <Icon
                                 name="chevron-down"
@@ -187,7 +187,7 @@ function FeeReferenceAlert({
                     open={sourceOpen}
                     onOpenChange={setSourceOpen}
                     citation={state.source}
-                    dateLine={t.fonteConferida.replace("{data}", formatDatePtBr(state.reviewedOn))}
+                    dateLine={t.sourceCheckedOn.replace("{data}", formatDatePtBr(state.reviewedOn))}
                     sourceUrl={state.sourceUrl}
                     marketplaceLabel={marketplaceNames[marketplace]}
                 />
@@ -261,11 +261,11 @@ export function FixedFeeSourceBadge({
                 tone="neutral"
                 compact
                 data-testid="fixed-fee-source-seal"
-                dismissLabel={t.dispensar}
+                dismissLabel={t.dismiss}
                 onDismiss={() => dismissFeeSeal(key)}
                 action={
                     <button type="button" onClick={() => setSourceOpen(true)}>
-                        {t.verFonte}
+                        {t.viewSource}
                         {/* 019/PR-C — decisão do dono 28/08: chevron "como no design" (13a·2), decorativo. */}
                         <Icon
                             name="chevron-down"

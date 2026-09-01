@@ -89,8 +89,8 @@ export async function goOnline(page: Page, context: BrowserContext): Promise<voi
 
 /** Open the record Sheet from the calculator and confirm — retail is pre-selected. */
 export async function recordFromCalculator(page: Page): Promise<void> {
-    await page.getByRole("button", { name: t.historico.saveAction }).click();
+    await page.getByRole("button", { name: t.history.saveAction }).click();
     const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText(t.historico.saveSheetIntro)).toBeVisible();
-    await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+    await expect(sheet.getByText(t.history.saveSheetIntro)).toBeVisible();
+    await sheet.getByRole("button", { name: t.history.saveSheetSubmit }).click();
 }

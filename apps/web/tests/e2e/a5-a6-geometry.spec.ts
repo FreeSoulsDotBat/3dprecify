@@ -31,7 +31,7 @@ async function fillSixDigitPrice(page: import("@playwright/test").Page): Promise
     await fill(t.fields.grams, "1000");
     await fill(t.fields.avgPower, "0");
     await fill(t.fields.machineValue, "0");
-    await fill(t.fields.markupVarejo, "0");
+    await fill(t.fields.markupRetail, "0");
 }
 
 test.describe("A5 — preço-herói: centavos e símbolo com a base certa (360×800)", () => {
@@ -223,8 +223,8 @@ test.describe("A5-b — a barra fixada do kit é um READOUT de 1 coluna (emenda 
         // A5-d: os rótulos do readout são as chaves CURTAS por papel (bom.pinned), nunca os longos
         // de tc.results — copy exata + medição juntas (textContent sozinho passaria truncado).
         expect(five.pinned.map((g) => g.labelText)).toEqual([
-            messages.bom.pinned.varejo,
-            messages.bom.pinned.atacado,
+            messages.bom.pinned.retail,
+            messages.bom.pinned.wholesale,
         ]);
         expect(five.barH, "altura da barra INVARIANTE entre 24,24 e 24.215,76").toBe(seed.barH);
         expect(five.pageX, "documento sem overflow horizontal a 360px").toBeLessThanOrEqual(360);

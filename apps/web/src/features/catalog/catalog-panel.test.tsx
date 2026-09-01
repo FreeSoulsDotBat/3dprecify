@@ -34,7 +34,7 @@ afterEach(() => {
     toastSpy.mockClear();
 });
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 
@@ -208,7 +208,7 @@ describe("CatalogPanel — premium list + create/edit/delete (T019)", () => {
 
 // 019/PR-B (T037) — o vazio didático substitui a crown/`ENTITLEMENT_REQUIRED` e o vazio curto de
 // hoje nos dois ramos que o grátis alcança. Nota: `messages.apiError.entitlementRequired` e
-// `messages.premiumTeaser.salvarFazParteDoPremium` são o MESMO texto ("Salvar faz parte do
+// `messages.premiumTeaser.saveIsPartOfPremium` são o MESMO texto ("Salvar faz parte do
 // Premium.") — então NÃO dá para provar "não é mais a crown" checando ausência desse texto (ele
 // aparece de novo, legitimamente, como a frase do rodapé do formulário inerte). A prova estrutural
 // é a existência do botão "Adicionar filamento": a crown de hoje nunca teve `action` nenhuma.
@@ -230,7 +230,7 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
 
         const vazio = screen.getByTestId("vazio-didatico");
         expect(within(vazio).getByText(catalogo.emptyFilamentsTitle)).toBeInTheDocument();
-        expect(within(vazio).getByText(catalogo.didaticoFilamentsBody)).toBeInTheDocument();
+        expect(within(vazio).getByText(catalogo.educationalFilamentsBody)).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole("button", { name: catalogo.addFilament }));
 
@@ -239,7 +239,7 @@ describe("CatalogPanel — vazio didático para quem não paga (019/PR-B T037)",
         expect(frozen).toHaveAttribute("disabled");
 
         const note = screen.getByTestId("premium-footer-note");
-        expect(note).toHaveTextContent(messages.premiumTeaser.salvarFazParteDoPremium);
+        expect(note).toHaveTextContent(messages.premiumTeaser.saveIsPartOfPremium);
 
         const cta = screen.getByTestId("teaser-upgrade-cta");
         expect(cta.className).toContain("tf-btn--secondary");

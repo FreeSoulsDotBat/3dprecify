@@ -94,23 +94,23 @@ describe("AppNav — rail colapsável (018/US5)", () => {
 
         // O nome acessível sobrevive…
         for (const label of [
-            messages.nav.calcular,
-            messages.nav.catalogo,
+            messages.nav.calculate,
+            messages.nav.catalog,
             messages.nav.kits,
-            messages.nav.historico,
-            messages.nav.conta,
+            messages.nav.history,
+            messages.nav.account,
         ]) {
             expect(within(nav).getByRole("link", { name: label })).toBeInTheDocument();
         }
 
         // …e some da TELA por `sr-only`, nunca por `display:none` (que o apagaria da árvore).
-        const catalogo = within(nav).getByRole("link", { name: messages.nav.catalogo });
-        const label = within(catalogo).getByText(messages.nav.catalogo);
+        const catalogo = within(nav).getByRole("link", { name: messages.nav.catalog });
+        const label = within(catalogo).getByText(messages.nav.catalog);
         expect(label).toHaveClass("sr-only");
         expect(label).not.toHaveStyle({ display: "none" });
 
         // E a dica devolve o nome ao mouse.
-        expect(catalogo).toHaveAttribute("title", messages.nav.catalogo);
+        expect(catalogo).toHaveAttribute("title", messages.nav.catalog);
     });
 
     it("o botão de recolher fica FORA da lista — não entra na travessia por setas das seções", async () => {

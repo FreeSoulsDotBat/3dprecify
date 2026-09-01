@@ -121,9 +121,9 @@ async function lerTela(page: Page): Promise<Record<string, number | null>> {
         material: pega(t.calculator.results.material),
         energia: pega(t.calculator.results.energy),
         maquina: pega(t.calculator.results.machine),
-        custoTotal: pega(t.calculator.results.custoTotal),
-        varejo: pega(t.calculator.results.varejo),
-        atacado: pega(t.calculator.results.atacado),
+        custoTotal: pega(t.calculator.results.totalCost),
+        varejo: pega(t.calculator.results.retail),
+        atacado: pega(t.calculator.results.wholesale),
     };
 }
 
@@ -215,7 +215,7 @@ test("CF-001-UI-01 — mobile dark anônimo: aritmética da semente e resistênc
         { rotulo: t.calculator.fields.rollWeight, valor: "0", nota: "denominador zero" },
         { rotulo: t.calculator.fields.rollWeight, valor: "-1", nota: "denominador negativo" },
         { rotulo: t.calculator.fields.grams, valor: "999999999999", nota: "gramas absurdas" },
-        { rotulo: t.calculator.fields.markupVarejo, valor: "-10", nota: "markup negativo" },
+        { rotulo: t.calculator.fields.markupRetail, valor: "-10", nota: "markup negativo" },
         { rotulo: t.calculator.fields.tariff, valor: "1.234,56", nota: "milhar + decimal pt-BR" },
     ];
     for (const [i, l] of lixos.entries()) {
@@ -481,7 +481,7 @@ test("CF-003-UI-01 — modo ritmo: as combinações derivam a vida útil e o R$/
     await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
 
     // O controle de ritmo existe? (a primeira visita nasce nele — 016/PR-C B1)
-    const ritmo = page.getByText(t.calculator.machineCost.ritmoLabel);
+    const ritmo = page.getByText(t.calculator.machineCost.paceLabel);
     const temRitmo = await ritmo.isVisible().catch(() => false);
     executado(info, SUB, "fluxo");
     if (!temRitmo) {
@@ -490,7 +490,7 @@ test("CF-003-UI-01 — modo ritmo: as combinações derivam a vida útil e o R$/
             categoria: "fluxo",
             descricao:
                 "A primeira visita não nasce no modo ritmo (a pergunta de frequência não está visível)",
-            resultado_esperado: `Pergunta "${t.calculator.machineCost.ritmoLabel}" visível na primeira visita`,
+            resultado_esperado: `Pergunta "${t.calculator.machineCost.paceLabel}" visível na primeira visita`,
             resultado_obtido: "não encontrada",
             severidade: "media",
         });
@@ -569,7 +569,7 @@ test("CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoç�
     await page.goto("/calcular");
     await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
 
-    const adicionar = page.getByRole("button", { name: t.calculator.outrosCustos.addCost });
+    const adicionar = page.getByRole("button", { name: t.calculator.otherCosts.addCost });
     await expect(adicionar).toBeVisible();
 
     const valores: number[] = [];
@@ -637,7 +637,7 @@ test("CF-004-UI-02 — 20 sub-custos: soma, nomes gigantes, duplicados e remoç�
     executado(info, SUB, "seguranca");
 
     // T04 — remover uma linha do MEIO recalcula certo (a classe clássica de bug de índice).
-    const remover = page.getByRole("button", { name: t.calculator.outrosCustos.removeCost });
+    const remover = page.getByRole("button", { name: t.calculator.otherCosts.removeCost });
     if ((await remover.count()) >= 10) {
         await remover.nth(9).click();
         const restantes = valores.filter((_, i) => i !== 9);
@@ -693,9 +693,9 @@ test("CF-005-UI-01 — detalhamento: cada linha tem unidade legível e a soma fe
         t.calculator.results.material,
         t.calculator.results.energy,
         t.calculator.results.machine,
-        t.calculator.results.custoTotal,
-        t.calculator.results.varejo,
-        t.calculator.results.atacado,
+        t.calculator.results.totalCost,
+        t.calculator.results.retail,
+        t.calculator.results.wholesale,
     ]) {
         const re = new RegExp(`${rot}[\\s\\S]{0,40}?R\\$\\s*[\\d.]+,\\d{2}`);
         if (!re.test(corpo)) {

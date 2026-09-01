@@ -6,7 +6,7 @@ import { Button, Icon } from "@/shared/ui";
 
 import { captionText } from "./catalog-panel-styles";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 // 019/PR-D (T076, prancheta 16a; achado do e2e T069) — a lista mobile (<1024px). Extracted verbatim
 // from `catalog-panel.tsx`'s final `else` branch. A 390px a lista É a `tf-plist` de

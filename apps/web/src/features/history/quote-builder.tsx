@@ -67,7 +67,7 @@ export {
 // sufixo textual do `NumberField` (%, R$) em vez de um ícone, e `lock` (18e) não existe → `Aviso`
 // já usa `info` por padrão (mesma troca que o resto do 019 já fez noutras pranchetas).
 
-const th = messages.historico;
+const th = messages.history;
 
 const DAY_MS = 86_400_000;
 /** Default do campo "Válido até" — o mesmo número que a prancheta 18e usa no exemplo ("15 dias,

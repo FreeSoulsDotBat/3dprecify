@@ -63,7 +63,7 @@ describe("CheckoutReturnPanel — pending (US2, §3.3)", () => {
         useEntitlementMock.mockReturnValue({ data: { status: "none" }, refetch: vi.fn() });
         render(<CheckoutReturnPanel />);
 
-        fireEvent.click(screen.getByRole("button", { name: t.returnBackToConta }));
+        fireEvent.click(screen.getByRole("button", { name: t.returnBackToAccount }));
         expect(navigateMock).toHaveBeenCalledWith({ to: "/conta" });
     });
 });

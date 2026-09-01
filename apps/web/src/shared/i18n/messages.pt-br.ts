@@ -13,7 +13,6 @@ import {
     account,
     privacy,
     nav,
-    conta,
     state,
     session,
     notFound,
@@ -22,9 +21,9 @@ import {
     ds,
 } from "./messages/common.pt-br";
 import { calculator } from "./messages/calculator.pt-br";
-import { catalogo, catalogForm, productForm } from "./messages/catalogo.pt-br";
+import { catalog, catalogForm, productForm } from "./messages/catalog.pt-br";
 import { bom } from "./messages/bom.pt-br";
-import { historico } from "./messages/historico.pt-br";
+import { history } from "./messages/history.pt-br";
 import { quote } from "./messages/quote.pt-br";
 import { scenarios } from "./messages/scenarios.pt-br";
 import { billing, premiumTeaser } from "./messages/billing.pt-br";
@@ -38,12 +37,11 @@ export const messages = {
     account,
     privacy,
     nav,
-    conta,
-    catalogo,
+    catalog,
     catalogForm,
     productForm,
     bom,
-    historico,
+    history,
     quote,
     scenarios,
     state,

@@ -104,7 +104,7 @@ test("13-D — o MESMO mecanismo em /catalogo: leitura falha e a tela diz 'nenhu
         return r.abort("failed");
     });
     await page.reload();
-    await expect(page.getByText(t.catalogo.loadError)).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(t.catalog.loadError)).toBeVisible({ timeout: 20_000 });
     const texto = await page.evaluate(() => document.body.innerText);
     console.log(`[13-D] abortadas=${aborted}\n--- tela ---\n${texto.slice(0, 600)}`);
     // "Nenhum filamento salvo ainda" após uma leitura que FALHOU é uma afirmação falsa
@@ -132,7 +132,7 @@ test("N01 — /conta com /me falhando: erro empilhado, nada fora da viewport a 3
         r.fulfill({ status: 500, contentType: "application/json", body: "{}" }),
     );
     await page.goto("/conta");
-    await expect(page.getByText(t.conta.identityErrorTitle)).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByText(t.account.identityErrorTitle)).toBeVisible({ timeout: 15_000 });
     const geo = await page.evaluate(() => {
         const card = document.querySelector(".tf-conta__identity");
         const retry = [...document.querySelectorAll(".tf-conta__retry button")].at(0);

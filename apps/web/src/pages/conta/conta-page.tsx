@@ -66,7 +66,7 @@ function IdentitySection() {
             // fora do cartão E da viewport a 360px (right 378,5 > 360) — a classe E6/T028-B1, que o
             // comentário do __row--plan já citava e este cartão não tinha herdado.
             <Card className="tf-conta__identity tf-conta__identity--error">
-                <Alert tone="danger" title={messages.conta.identityErrorTitle}>
+                <Alert tone="danger" title={messages.account.identityErrorTitle}>
                     {isSession ? messages.apiError.tokenExpired : apiErrorMessage(err)}
                 </Alert>
                 {!isSession && (
@@ -76,7 +76,7 @@ function IdentitySection() {
                             onClick={() => void q.refetch()}
                             loading={q.isFetching}
                         >
-                            {messages.conta.retry}
+                            {messages.account.retry}
                         </Button>
                     </div>
                 )}
@@ -106,7 +106,7 @@ function IdentitySection() {
 function PlanSection() {
     const q = useEntitlement();
     const sub = useSubscription();
-    const t = messages.conta;
+    const t = messages.account;
     const tb = messages.billing;
     // 018/US4 — no desktop a oferta abre INLINE na coluna do plano (o desenho a mostra aberta), em vez
     // de dentro da gaveta. A gaveta continua existindo e continua sendo o caminho do mobile e do
@@ -234,7 +234,7 @@ function ThemeSection() {
     const theme = useThemeStore((s) => s.theme);
     const toggle = useThemeStore((s) => s.toggle);
     const isWide = useIsWide();
-    const t = messages.conta;
+    const t = messages.account;
 
     return (
         <Card className="tf-conta__row">
@@ -302,7 +302,7 @@ export function ContaPage() {
     if (search.checkout === "retorno") {
         return (
             <section className="tf-conta mx-auto flex w-full tf-page-wide flex-col">
-                <PageHeader title={messages.conta.title} />
+                <PageHeader title={messages.account.title} />
                 <CheckoutReturnPanel />
             </section>
         );
@@ -313,7 +313,7 @@ export function ContaPage() {
     // exatamente o empilhamento de hoje, na mesma ordem de DOM. Nenhuma seção muda de conteúdo.
     return (
         <section className="tf-conta mx-auto flex w-full tf-page-wide flex-col">
-            <PageHeader title={messages.conta.title} />
+            <PageHeader title={messages.account.title} />
             <div className="tf-conta__grid">
                 <div className="tf-conta__col">
                     <IdentitySection />

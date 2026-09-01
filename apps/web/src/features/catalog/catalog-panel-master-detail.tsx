@@ -7,7 +7,7 @@ import { Alert, Button, EmptyState, Icon } from "@/shared/ui";
 import { captionText, rowNameStyle, rowSummaryStyle } from "./catalog-panel-styles";
 import { type CatalogPanelRenderForm } from "./catalog-panel";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 // 018/US1 — mestre-detalhe (≥1280px), extracted verbatim from `catalog-panel.tsx`'s `isWide`
 // non-empty branch. Lista à esquerda, ficha do item à direita; a busca e a seleção seguem locais

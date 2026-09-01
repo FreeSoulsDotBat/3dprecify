@@ -88,7 +88,7 @@ test("a calculadora não rola na horizontal em nenhuma largura suportada, nem co
 
     // O dado adversarial: um sub-custo cujo nome é impossível de quebrar por espaço. Ele aparece no
     // detalhamento como rótulo de linha, que é exatamente onde os 2.100px nasceram.
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
     await page
         .getByRole("textbox", { name: /^Nome do custo$/ })
         .first()

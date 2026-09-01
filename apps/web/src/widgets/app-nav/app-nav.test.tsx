@@ -63,7 +63,7 @@ describe("AppNav (T025 / US1 — NAV-1)", () => {
         expect(within(nav).getByRole("link", { name: "Calcular" })).toBeInTheDocument();
         expect(within(nav).getByRole("link", { name: "Catálogo" })).toBeInTheDocument();
         expect(within(nav).getByRole("link", { name: "Kits" })).toBeInTheDocument();
-        expect(within(nav).getByRole("link", { name: messages.nav.historico })).toBeInTheDocument();
+        expect(within(nav).getByRole("link", { name: messages.nav.history })).toBeInTheDocument();
         expect(within(nav).getByRole("link", { name: "Conta" })).toBeInTheDocument();
 
         const active = activeLinks(nav);

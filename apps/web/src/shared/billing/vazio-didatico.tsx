@@ -30,29 +30,41 @@ interface VazioCopy {
     body: string;
 }
 
-const c = messages.catalogo;
+const c = messages.catalog;
 
 function copyOf(feature: VazioFeature): VazioCopy {
     switch (feature) {
         case "filaments":
-            return { icon: "package", title: c.emptyFilamentsTitle, body: c.didaticoFilamentsBody };
+            return {
+                icon: "package",
+                title: c.emptyFilamentsTitle,
+                body: c.educationalFilamentsBody,
+            };
         case "printers":
-            return { icon: "package", title: c.emptyPrintersTitle, body: c.didaticoPrintersBody };
+            return {
+                icon: "package",
+                title: c.emptyPrintersTitle,
+                body: c.educationalPrintersBody,
+            };
         case "products":
-            return { icon: "package", title: c.emptyProductsTitle, body: c.didaticoProductsBody };
+            return {
+                icon: "package",
+                title: c.emptyProductsTitle,
+                body: c.educationalProductsBody,
+            };
         case "kits":
-            return { icon: "package", title: c.emptyKitsTitle, body: c.didaticoKitsBody };
+            return { icon: "package", title: c.emptyKitsTitle, body: c.educationalKitsBody };
         case "quotes":
             return {
                 icon: "history",
-                title: messages.historico.didaticoTitle,
-                body: messages.historico.didaticoBody,
+                title: messages.history.educationalTitle,
+                body: messages.history.educationalBody,
             };
         case "scenarios":
             return {
                 icon: "boxes",
                 title: messages.scenarios.emptyTitle,
-                body: messages.scenarios.didaticoBody,
+                body: messages.scenarios.educationalBody,
             };
     }
 }

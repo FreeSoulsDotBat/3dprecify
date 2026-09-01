@@ -6,7 +6,7 @@ import { Table } from "@/shared/ui";
 
 import { captionText } from "./catalog-panel-styles";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 // 019/PR-D (T076/T130, prancheta 16g) — 1024–1279px: `tf-table`, a coluna "Antes" é o "era R$ X" da
 // lista promovida a coluna, e um travessão (`tableNoChange`) onde a linha não mudou. Extracted

@@ -108,7 +108,7 @@ afterEach(() => {
     cleanup();
     useSessionStore.setState({ status: "anonymous", user: null });
 });
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const pt = messages.premiumTeaser.CATALOG;
 
 // 013/F-02 follow-up — REGRESSION GUARD. The tab used to live in `useState`, re-derived only on

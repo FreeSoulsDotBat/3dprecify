@@ -129,7 +129,7 @@ export function BomSummaryPanel({
                             data-testid="premium-footer-note"
                             className="text-sm text-[var(--text-body)]"
                         >
-                            {messages.premiumTeaser.salvarFazParteDoPremium}
+                            {messages.premiumTeaser.saveIsPartOfPremium}
                         </p>
                         <TeaserUpgrade
                             variant="secondary"

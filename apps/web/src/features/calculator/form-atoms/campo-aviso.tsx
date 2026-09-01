@@ -18,7 +18,7 @@ export function CampoAviso({ aviso, testId }: { aviso: UseAvisoDeCampoResult; te
             action={
                 !aviso.comErro && (
                     <Button variant="ghost" size="sm" onClick={aviso.onEntendi}>
-                        {t.plausibilidade.entendi}
+                        {t.plausibility.understood}
                     </Button>
                 )
             }

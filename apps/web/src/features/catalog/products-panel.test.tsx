@@ -44,7 +44,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { ProductsPanel } from "./products-panel";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 function listState(items: unknown[]) {
     return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };

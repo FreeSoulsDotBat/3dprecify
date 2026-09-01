@@ -77,8 +77,8 @@ test("DIAG — outros custos: quais campos casam com /Valor/", async ({ page }) 
     await aplicarSubcenario(page, { viewport: "V3", tema: "dark" });
     await page.goto("/calcular");
     await page.getByRole("heading", { name: t.calculator.title }).waitFor();
-    await page.getByRole("button", { name: t.calculator.outrosCustos.addCost }).click();
-    await page.getByRole("button", { name: t.calculator.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.calculator.otherCosts.addCost }).click();
+    await page.getByRole("button", { name: t.calculator.otherCosts.addCost }).click();
 
     const casam = await page.getByRole("textbox", { name: /Valor/ }).all();
     console.log(`=== ${casam.length} textbox(es) casam com /Valor/ ===`);
@@ -101,9 +101,9 @@ test("DIAG — contraste a 1024px e overflow com nome gigante", async ({ page })
 
     // nome gigante isolado, para saber QUAL elemento estoura
     await page.setViewportSize({ width: 1440, height: 900 });
-    await page.getByRole("button", { name: t.calculator.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.calculator.otherCosts.addCost }).click();
     await page
-        .getByRole("textbox", { name: new RegExp(t.calculator.outrosCustos.name) })
+        .getByRole("textbox", { name: new RegExp(t.calculator.otherCosts.name) })
         .first()
         .fill("A".repeat(300));
     await page.keyboard.press("Tab");

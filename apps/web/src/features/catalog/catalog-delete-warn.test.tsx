@@ -35,7 +35,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { FilamentsPanel } from "./filaments-panel";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const pf = messages.productForm;
 
 const filament = {

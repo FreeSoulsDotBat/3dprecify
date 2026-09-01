@@ -388,7 +388,7 @@ describe("BomPage — catalog-referenced line (US1/Q2, live product → PriceInp
 // own title — bom-line-editor.tsx), so the composed label drops that name too.
 const advancedLabel = [
     messages.calculator.sections.labor,
-    messages.calculator.outrosCustos.title,
+    messages.calculator.otherCosts.title,
     messages.calculator.sections.marketplace,
 ].join(" · ");
 

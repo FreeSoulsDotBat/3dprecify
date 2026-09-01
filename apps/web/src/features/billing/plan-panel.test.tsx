@@ -21,7 +21,7 @@ import { type PlanState } from "./plan-view";
 // O que este arquivo NÃO julga é a tela: `toBeVisible` passa sobre um elemento ocluído. Quem
 // homologa layout é o T028, com imagem e geometria.
 
-const t = messages.conta;
+const t = messages.account;
 const b = messages.billing;
 
 const clientes: QueryClient[] = [];

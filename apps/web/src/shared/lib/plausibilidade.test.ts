@@ -169,12 +169,12 @@ describe("avisoDeCampo — a porta que a tela usa", () => {
 
 describe("licaoDeCampo — a lição SÓ, sem cabeça e sem o valor digitado (decisão do dono 28/08, 14b)", () => {
     it("os oito campos com faixa têm lição escrita, verbatim, terminando no fecho de recusa", () => {
-        const t = messages.calculator.plausibilidade;
-        for (const [nome, texto] of Object.entries(t.licao)) {
+        const t = messages.calculator.plausibility;
+        for (const [nome, texto] of Object.entries(t.lesson)) {
             expect(licaoDeCampo(nome)).toBe(texto);
-            expect(texto).toContain(t.fechoComRecusa);
+            expect(texto).toContain(t.closingRejected);
             expect(texto).not.toContain("Confira");
-            expect(texto).not.toContain(t.fechoNormal);
+            expect(texto).not.toContain(t.closingNormal);
         }
     });
     it("um campo sem lição escrita (ex.: comissão, quantidade) devolve null", () => {

@@ -7,7 +7,7 @@ import { Alert, Button, PriceHero } from "@/shared/ui";
 // block that reads it (PriceHero + o alerta de "parado" + as duas escolhas do 16b·2 + o aviso K3).
 // No state/effect moved — every handler here is a prop closed over by the caller.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const pf = messages.productForm;
 
 /** 019/PR-D (T076, prancheta 17g) — os quatro estados do cabeçalho: fixado > parado > mudou > sem
@@ -158,7 +158,7 @@ export function ProductPriceHeader({
           what is true (nothing linked, values kept) and never invents a removal it cannot know
           happened. Clears live, the moment both pickers are set (SC-412). */}
             {needsAttention && (
-                <Alert tone="info" title={messages.catalogo.needsAttention}>
+                <Alert tone="info" title={messages.catalog.needsAttention}>
                     {pf.manualValuesKept}
                 </Alert>
             )}

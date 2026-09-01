@@ -43,7 +43,7 @@ export const scenarios = {
     emptyAction: "Voltar para a calculadora",
     // 019/PR-B (T042) — prancheta 32c: a frase didática de Simulações (o título não foi desenhado no
     // lote 32 — fica `emptyTitle`); o botão do vazio leva à calculadora (32f).
-    didaticoBody:
+    educationalBody:
         "Salve uma simulação para reabrir sua estratégia de marketplaces e taxas com os preços de hoje.",
     loadError: "Não foi possível carregar suas simulações.",
     retry: "Tentar novamente",

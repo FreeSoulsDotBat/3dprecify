@@ -20,7 +20,7 @@ import { FilamentForm } from "./filament-form";
 // `useIsWide` responder `false` sem `matchMedia`: o silêncio do jsdom é o que garante que a suíte
 // inteira do app continue exercitando o ramo mobile sem que ninguém precise se lembrar disso.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 
 // O material entra no texto que a busca varre (`filamentSummary`), então ele precisa ser o material

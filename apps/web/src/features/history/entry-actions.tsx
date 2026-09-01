@@ -17,7 +17,7 @@ import { Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@
 // blocked/failed retry is always offered (blocked resumes on the next `active`; failed is the
 // seller's call).
 
-const t = messages.historico;
+const t = messages.history;
 
 /** Swallow the click so the surrounding `<Link>` card never navigates when a button is tapped. */
 function stop(e: MouseEvent) {

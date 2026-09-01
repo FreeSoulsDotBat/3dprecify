@@ -59,7 +59,7 @@ for (const theme of THEMES) {
         await expect(aviso).toBeVisible();
         await shot(page, `aviso-blur-390-${theme}`, aviso);
         await page.screenshot({ path: join(OUT, `aviso-blur-tela-390-${theme}.png`) });
-        await aviso.getByRole("button", { name: t.plausibilidade.entendi }).click();
+        await aviso.getByRole("button", { name: t.plausibility.understood }).click();
         await expect(page.getByTestId("aviso-avgPowerKw")).toHaveCount(0);
     });
 
@@ -70,20 +70,20 @@ for (const theme of THEMES) {
         await expect(readout).toBeVisible();
         await shot(page, `readout-estimar-390-${theme}`, readout);
         const modo = page.getByTestId("machine-mode");
-        await modo.getByRole("radio", { name: t.machineCost.ajustar }).click();
+        await modo.getByRole("radio", { name: t.machineCost.adjust }).click();
         const horas = page.getByRole("textbox", { name: new RegExp(t.fields.machineLifetime) });
         await horas.fill("2000");
         await horas.blur();
         await expect(readout).toBeVisible();
         await shot(page, `readout-ajustar-390-${theme}`, readout);
         // Voltar a "Estimar" com 2.000 h digitadas (não é produto de ritmo × payback) → a 15e.
-        await modo.getByRole("radio", { name: t.machineCost.estimar }).click();
+        await modo.getByRole("radio", { name: t.machineCost.estimate }).click();
         const confirm = page.getByTestId("machine-confirm");
         await expect(confirm).toBeVisible();
         await shot(page, `confirmacao-modo-390-${theme}`, confirm);
         await confirm.getByRole("button", { name: /^Manter/ }).click();
         await expect(page.getByTestId("machine-confirm")).toHaveCount(0);
-        await expect(modo.getByRole("radio", { name: t.machineCost.ajustar })).toBeChecked();
+        await expect(modo.getByRole("radio", { name: t.machineCost.adjust })).toBeChecked();
     });
 
     test(`selo compacto: aberto, Ver fonte, dispensado (${theme})`, async ({ page }, info) => {
@@ -100,11 +100,11 @@ for (const theme of THEMES) {
         // O BLOCO (Alert compact) — não a pílula: só ele tem o "Dispensar".
         const selo = page
             .getByTestId("fee-seal")
-            .filter({ has: page.getByRole("button", { name: t.seals.dispensar }) })
+            .filter({ has: page.getByRole("button", { name: t.seals.dismiss }) })
             .first();
         await expect(selo).toBeVisible();
         await shot(page, `selo-compact-390-${theme}`, selo);
-        const verFonte = selo.getByRole("button", { name: t.seals.verFonte });
+        const verFonte = selo.getByRole("button", { name: t.seals.viewSource });
         if (await verFonte.count()) {
             await verFonte.click();
             const dialog = page.getByTestId("fee-seal-source-dialog");
@@ -112,7 +112,7 @@ for (const theme of THEMES) {
             await shot(page, `selo-ver-fonte-390-${theme}`, dialog);
             await page.keyboard.press("Escape");
         }
-        await selo.getByRole("button", { name: t.seals.dispensar }).click();
+        await selo.getByRole("button", { name: t.seals.dismiss }).click();
         await expect(selo).toHaveCount(0);
         await page.reload();
         await page
@@ -124,7 +124,7 @@ for (const theme of THEMES) {
         await expect(
             page
                 .getByTestId("fee-seal")
-                .filter({ has: page.getByRole("button", { name: t.seals.dispensar }) }),
+                .filter({ has: page.getByRole("button", { name: t.seals.dismiss }) }),
         ).toHaveCount(0);
         await page.screenshot({ path: join(OUT, `selo-dispensado-390-${theme}.png`) });
     });

@@ -30,7 +30,7 @@ import { SnapshotManageActions } from "./snapshot-manage";
 // (ADR-0019); (2) managing is a WRITE, so it is offered ONLY on an ACTIVE premium and ONLY for a
 // SYNCED record (a pending record has no server id to PATCH/DELETE — it is removed via the outbox).
 
-const t = messages.historico;
+const t = messages.history;
 
 function syncedItem(over: Partial<HistoryItem> = {}): HistoryItem {
     return {

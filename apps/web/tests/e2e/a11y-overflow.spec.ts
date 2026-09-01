@@ -87,7 +87,7 @@ test.describe("no horizontal overflow at 360px — public surfaces", () => {
                 .fill("999999999999999");
             // markupVarejo (not the ambiguous "Markup" substring, which now matches both
             // "Markup varejo" and "Markup atacado" — E1 split the single markup into two).
-            await page.getByLabel(messages.calculator.fields.markupVarejo).fill("999999999");
+            await page.getByLabel(messages.calculator.fields.markupRetail).fill("999999999");
             await setTheme(page, theme);
             const { scrollWidth, clientWidth } = await overflow(page);
             expect(scrollWidth - clientWidth, `/calcular giant ${theme}`).toBeLessThanOrEqual(1);
@@ -124,7 +124,7 @@ test.describe("no horizontal overflow at 360px — public surfaces", () => {
                 await page
                     .getByRole("textbox", { name: messages.calculator.fields.grams, exact: true })
                     .fill("950");
-                await page.getByLabel(messages.calculator.fields.markupVarejo).fill("900");
+                await page.getByLabel(messages.calculator.fields.markupRetail).fill("900");
                 await setTheme(page, theme);
 
                 const int = page.locator(".tf-price__int").first();
@@ -196,9 +196,9 @@ test.describe("no horizontal overflow at 360px — public surfaces", () => {
 
 test.describe("no horizontal overflow at 360px — guarded surfaces (signed-in)", () => {
     const GUARDED = [
-        { path: "/catalogo", title: messages.nav.catalogo },
-        { path: "/historico", title: messages.nav.historico },
-        { path: "/conta", title: messages.conta.title },
+        { path: "/catalogo", title: messages.nav.catalog },
+        { path: "/historico", title: messages.nav.history },
+        { path: "/conta", title: messages.account.title },
     ] as const;
 
     for (const theme of THEMES) {

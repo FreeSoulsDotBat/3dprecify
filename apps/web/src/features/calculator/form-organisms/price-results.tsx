@@ -17,6 +17,14 @@ import { ChannelPriceBlocks } from "./channel-price-blocks";
 
 const t = messages.calculator;
 
+// `PriceLevel` is the domain enum ("varejo"/"atacado", pricing-core wire vocabulary — out of the
+// i18n rename's scope); the message catalog keys are English (`retail`/`wholesale`). This maps one
+// to the other at the one boundary that indexes message objects by the domain value.
+const CAPTION_KEY: Record<PriceLevel, "retail" | "wholesale"> = {
+    varejo: "retail",
+    atacado: "wholesale",
+};
+
 /** US1 hero price (um nível por vez) + US2 transparent breakdown. Rendered only for a fully
  *  valid form.
  *
@@ -83,7 +91,7 @@ export function PriceResults({
         // falls back to a neutral label); every one reads the SAME muted dot as "Embalagem" in 10a's
         // example (the prancheta names one example cost — the colour is generic for the whole slot).
         ...result.otherCosts.map((c) => ({
-            label: c.name.trim() || t.outrosCustos.lineFallback,
+            label: c.name.trim() || t.otherCosts.lineFallback,
             value: c.value,
             color: "var(--text-muted)",
             emphasis: "default" as const,
@@ -98,7 +106,7 @@ export function PriceResults({
     const summaryMarkupPct =
         (otherLevel === "varejo" ? values.markupVarejoPct : values.markupAtacadoPct) || "0";
     const summaryText = t.sections.summaryLine
-        .replace("{nivel}", t.captions[otherLevel])
+        .replace("{nivel}", t.captions[CAPTION_KEY[otherLevel]])
         .replace("{pct}", summaryMarkupPct);
 
     return (
@@ -131,7 +139,7 @@ export function PriceResults({
                             />
                         ))}
                         <BreakdownRow
-                            label={t.results.custoTotal}
+                            label={t.results.totalCost}
                             value={result.custoTotal}
                             emphasis="total"
                         />
@@ -149,8 +157,8 @@ export function PriceResults({
           próprio `Segmented`). */}
             <Segmented<PriceLevel>
                 options={[
-                    { id: "varejo", label: t.captions.varejo },
-                    { id: "atacado", label: t.captions.atacado },
+                    { id: "varejo", label: t.captions.retail },
+                    { id: "atacado", label: t.captions.wholesale },
                 ]}
                 value={level}
                 onChange={setLevel}
@@ -187,7 +195,7 @@ export function PriceResults({
           vendedor concluir que o produto RECUSOU — e o produto não recusou. Isto também é o que o
           separa visualmente de `.tf-field__error`, que é onde uma validação de verdade aparece. */}
             {result.precoAtacado > result.precoVarejo && (
-                <Alert tone="info">{t.avisoAtacadoAcimaDoVarejo}</Alert>
+                <Alert tone="info">{t.wholesaleAboveRetailWarning}</Alert>
             )}
 
             {/* (5) The suggested price — the user's final takeaway, so they close the screen.
@@ -197,7 +205,7 @@ export function PriceResults({
             <div className="flex flex-col gap-3">
                 {/* T016 — final price card reads centered (label/amount/caption), not left-aligned. */}
                 <PriceHero
-                    label={t.results[level]}
+                    label={t.results[CAPTION_KEY[level]]}
                     value={heroPrice}
                     caption={`${t.captions.markup} ${heroMarkupPct}%`}
                     tone={HERO_TONE[level]}

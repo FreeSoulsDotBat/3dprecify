@@ -121,7 +121,7 @@ describe('CalcularPage — "Minhas simulações" is the honest door (visible for
         // DIDÁTICO no lugar do `PremiumTeaser` de página inteira (mesma folha para todo mundo).
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
         expect(screen.getByText(s.emptyTitle)).toBeInTheDocument();
-        expect(screen.getByText(s.didaticoBody)).toBeInTheDocument();
+        expect(screen.getByText(s.educationalBody)).toBeInTheDocument();
         // Never a fabricated sample scenario row on the door surface (SC-607) — no card/list item.
         expect(screen.queryByTestId("scenario-card")).not.toBeInTheDocument();
     });

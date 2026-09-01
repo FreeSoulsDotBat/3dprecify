@@ -4,7 +4,7 @@ import { Alert, Button } from "@/shared/ui";
 
 // 019/Polish — moved verbatim out of history-ledger.tsx.
 
-const t = messages.historico;
+const t = messages.history;
 
 /**
  * The aggregate banner. Its TITLE follows the precedence failed > blocked > unauthenticated >

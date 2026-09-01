@@ -8,7 +8,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 import { HistoryLedger } from "@/pages/historico/history-ledger";
 
-const t = messages.historico;
+const t = messages.history;
 
 /**
  * 018/US2 — o mestre-detalhe: filtros + lista à esquerda, registro congelado à direita.

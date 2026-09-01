@@ -100,7 +100,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
 
         expect(await screen.findByRole("dialog")).toBeInTheDocument();
         expect(screen.getByText(/2 registro/)).toBeInTheDocument();
-        expect(screen.getByText(messages.historico.signOutQueueBody)).toBeInTheDocument();
+        expect(screen.getByText(messages.history.signOutQueueBody)).toBeInTheDocument();
         expect(signOutUser).not.toHaveBeenCalled();
     });
 
@@ -110,7 +110,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         void requestSignOut();
         await screen.findByRole("dialog");
 
-        await user.click(screen.getByRole("button", { name: messages.historico.back }));
+        await user.click(screen.getByRole("button", { name: messages.history.back }));
 
         await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
         expect(signOutUser).not.toHaveBeenCalled();
@@ -123,17 +123,17 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         void requestSignOut();
         await screen.findByRole("dialog");
 
-        await user.click(screen.getByRole("button", { name: messages.historico.signOutDiscard }));
+        await user.click(screen.getByRole("button", { name: messages.history.signOutDiscard }));
 
         // Not yet — the first click only escalates to the explicit confirm.
         expect(signOutUser).not.toHaveBeenCalled();
         expect(purgeOutbox).not.toHaveBeenCalled();
         expect(
-            await screen.findByText(messages.historico.signOutDiscardConfirmBody),
+            await screen.findByText(messages.history.signOutDiscardConfirmBody),
         ).toBeInTheDocument();
 
         await user.click(
-            screen.getByRole("button", { name: messages.historico.signOutDiscardConfirm }),
+            screen.getByRole("button", { name: messages.history.signOutDiscardConfirm }),
         );
 
         await waitFor(() => expect(signOutUser).toHaveBeenCalledTimes(1));
@@ -147,9 +147,9 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         await screen.findByRole("dialog");
 
         expect(
-            screen.getByRole("button", { name: messages.historico.signOutSyncNow }),
+            screen.getByRole("button", { name: messages.history.signOutSyncNow }),
         ).toBeDisabled();
-        expect(screen.getByText(messages.historico.signOutSyncOffline)).toBeInTheDocument();
+        expect(screen.getByText(messages.history.signOutSyncOffline)).toBeInTheDocument();
     });
 
     it("'Sincronizar agora' drains, and signs out once the queue is really empty", async () => {
@@ -161,7 +161,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         void requestSignOut();
         await screen.findByRole("dialog");
 
-        await user.click(screen.getByRole("button", { name: messages.historico.signOutSyncNow }));
+        await user.click(screen.getByRole("button", { name: messages.history.signOutSyncNow }));
 
         await waitFor(() => expect(signOutUser).toHaveBeenCalledTimes(1));
         expect(drainOutbox).toHaveBeenCalledTimes(1);
@@ -178,10 +178,10 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         void requestSignOut();
         await screen.findByRole("dialog");
 
-        await user.click(screen.getByRole("button", { name: messages.historico.signOutSyncNow }));
+        await user.click(screen.getByRole("button", { name: messages.history.signOutSyncNow }));
 
         expect(
-            await screen.findByText(messages.historico.signOutPartial.replace("{n}", "1")),
+            await screen.findByText(messages.history.signOutPartial.replace("{n}", "1")),
         ).toBeInTheDocument();
         expect(signOutUser).not.toHaveBeenCalled();
         expect(screen.getByRole("dialog")).toBeInTheDocument();
@@ -197,7 +197,7 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
         void requestSignOut();
         await screen.findByRole("dialog");
 
-        await user.click(screen.getByRole("button", { name: messages.historico.signOutSyncNow }));
+        await user.click(screen.getByRole("button", { name: messages.history.signOutSyncNow }));
 
         await waitFor(() => expect(spy).toHaveBeenCalled());
         const keys = spy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey ?? []));
@@ -213,14 +213,14 @@ describe("a NON-EMPTY queue blocks sign-out and says exactly what is at stake", 
 
         // Frozen `navigator.onLine` would leave this disabled forever, with only "Sair e descartar".
         expect(
-            screen.getByRole("button", { name: messages.historico.signOutSyncNow }),
+            screen.getByRole("button", { name: messages.history.signOutSyncNow }),
         ).toBeDisabled();
 
         await waitFor(() => {
             setOnline(true);
             window.dispatchEvent(new Event("online"));
             expect(
-                screen.getByRole("button", { name: messages.historico.signOutSyncNow }),
+                screen.getByRole("button", { name: messages.history.signOutSyncNow }),
             ).toBeEnabled();
         });
     });

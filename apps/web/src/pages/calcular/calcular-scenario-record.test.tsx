@@ -60,7 +60,7 @@ import type { FrozenSnapshotPayload } from "@/entities/history/frozen-payload";
 import { CalcularPage } from "./calcular-page";
 
 const s = messages.scenarios;
-const h = messages.historico;
+const h = messages.history;
 
 function listState(items: unknown[]) {
     return {

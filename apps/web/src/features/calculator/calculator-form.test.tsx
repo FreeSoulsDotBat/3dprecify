@@ -246,7 +246,7 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
 
         const aviso = await screen.findByTestId("aviso-rollWeightKg");
         expect(aviso).toHaveAttribute("role", "status");
-        const entendi = within(aviso).getByRole("button", { name: t.plausibilidade.entendi });
+        const entendi = within(aviso).getByRole("button", { name: t.plausibility.understood });
 
         await user.click(entendi);
         expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();
@@ -263,7 +263,7 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
         await user.tab();
         await user.click(
             within(screen.getByTestId("aviso-rollWeightKg")).getByRole("button", {
-                name: t.plausibilidade.entendi,
+                name: t.plausibility.understood,
             }),
         );
         expect(screen.queryByTestId("aviso-rollWeightKg")).not.toBeInTheDocument();
@@ -283,17 +283,17 @@ describe("T049 — o aviso de plausibilidade nasce no BLUR, não no change (019/
         await user.tab();
 
         const avisoOk = await screen.findByTestId("aviso-rollWeightKg");
-        expect(avisoOk).toHaveTextContent(t.plausibilidade.fechoNormal);
+        expect(avisoOk).toHaveTextContent(t.plausibility.closingNormal);
 
         await user.click(screen.getByRole("button", { name: "forçar erro" }));
 
         const avisoComErro = screen.getByTestId("aviso-rollWeightKg");
         expect(avisoComErro).toBeInTheDocument();
-        expect(avisoComErro).toHaveTextContent(t.plausibilidade.licao.rollWeightKg);
+        expect(avisoComErro).toHaveTextContent(t.plausibility.lesson.rollWeightKg);
         expect(avisoComErro).not.toHaveTextContent("Confira o peso do rolo");
-        expect(avisoComErro).not.toHaveTextContent(t.plausibilidade.fechoNormal);
+        expect(avisoComErro).not.toHaveTextContent(t.plausibility.closingNormal);
         expect(
-            within(avisoComErro).queryByRole("button", { name: t.plausibilidade.entendi }),
+            within(avisoComErro).queryByRole("button", { name: t.plausibility.understood }),
         ).not.toBeInTheDocument();
     });
 

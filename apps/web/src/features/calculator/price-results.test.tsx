@@ -102,14 +102,16 @@ describe("PriceResults — T142, prancheta 10a: a conta termina no custo total",
     it('não tem mais as linhas "Preço varejo"/"Preço atacado" no cartão do detalhamento', () => {
         renderWithForm({ ...defaultCalcValues, channels: [] });
 
-        const custoTotalRow = screen.getByText(t.results.custoTotal);
+        const custoTotalRow = screen.getByText(t.results.totalCost);
         const card = custoTotalRow.closest(".tf-card");
         expect(card).not.toBeNull();
         // Ausência DENTRO da conta — "Preço varejo" ainda existe (o cartão final), "Preço atacado" não
         // existe em lugar NENHUM da tela (a linha-resumo usa a copy combinada `summaryLine`).
-        expect(within(card as HTMLElement).queryByText(t.results.varejo)).not.toBeInTheDocument();
-        expect(within(card as HTMLElement).queryByText(t.results.atacado)).not.toBeInTheDocument();
-        expect(screen.queryByText(t.results.atacado)).not.toBeInTheDocument();
+        expect(within(card as HTMLElement).queryByText(t.results.retail)).not.toBeInTheDocument();
+        expect(
+            within(card as HTMLElement).queryByText(t.results.wholesale),
+        ).not.toBeInTheDocument();
+        expect(screen.queryByText(t.results.wholesale)).not.toBeInTheDocument();
     });
 
     it("mostra os dois percentuais reais no cabeçalho da seção (markupHeader)", () => {
@@ -194,17 +196,17 @@ describe("PriceResults — T142, prancheta 10a/10e: o Segmented Varejo|Atacado",
 
         const segmented = screen.getByTestId("price-level-segmented");
         expect(segmented).toHaveAttribute("role", "radiogroup");
-        const varejoOption = within(segmented).getByRole("radio", { name: t.captions.varejo });
+        const varejoOption = within(segmented).getByRole("radio", { name: t.captions.retail });
         expect(varejoOption).toHaveAttribute("aria-checked", "true");
 
         const hero = screen.getByTestId("price-hero");
-        expect(hero).toHaveTextContent(t.results.varejo);
+        expect(hero).toHaveTextContent(t.results.retail);
         expect(hero.className).toContain("tf-price--accent");
         expect(hero).toHaveTextContent(/R\$\s*24,24/);
 
         const summary = screen.getByTestId("price-summary-line");
         expect(summary).toHaveTextContent(
-            t.sections.summaryLine.replace("{nivel}", t.captions.atacado).replace("{pct}", "30"),
+            t.sections.summaryLine.replace("{nivel}", t.captions.wholesale).replace("{pct}", "30"),
         );
         expect(summary).toHaveTextContent(/R\$\s*21,01/);
     });
@@ -213,16 +215,16 @@ describe("PriceResults — T142, prancheta 10a/10e: o Segmented Varejo|Atacado",
         renderWithForm(oneAmazonSlot);
 
         const hero = screen.getByTestId("price-hero");
-        expect(hero).toHaveTextContent(t.results.varejo);
+        expect(hero).toHaveTextContent(t.results.retail);
         const channelBefore = screen.getByTestId("channel-price").textContent;
 
         fireEvent.click(
             within(screen.getByTestId("price-level-segmented")).getByRole("radio", {
-                name: t.captions.atacado,
+                name: t.captions.wholesale,
             }),
         );
 
-        expect(hero).toHaveTextContent(t.results.atacado);
+        expect(hero).toHaveTextContent(t.results.wholesale);
         // 10a/10d — o cartão do nível ESCOLHIDO que não é accent fica em superfície neutra (nunca o
         // `tone="energy"` cheio que os dois cartões de peso igual usavam antes desta fatia).
         expect(hero.className).toContain("tf-price--neutral");
@@ -230,7 +232,7 @@ describe("PriceResults — T142, prancheta 10a/10e: o Segmented Varejo|Atacado",
 
         const summary = screen.getByTestId("price-summary-line");
         expect(summary).toHaveTextContent(
-            t.sections.summaryLine.replace("{nivel}", t.captions.varejo).replace("{pct}", "50"),
+            t.sections.summaryLine.replace("{nivel}", t.captions.retail).replace("{pct}", "50"),
         );
 
         // O cartão do marketplace lia o varejo antes e o atacado agora — os números realmente mudam,
@@ -296,9 +298,9 @@ describe("PriceResults — T142, prancheta 10c: os seis estados", () => {
                 channelOutcomes={[]}
             />,
         );
-        expect(screen.getByText(t.avisoAtacadoAcimaDoVarejo)).toBeInTheDocument();
+        expect(screen.getByText(t.wholesaleAboveRetailWarning)).toBeInTheDocument();
         // O texto verbatim da prancheta 10c — acentuado ("está", "é", "só").
-        expect(t.avisoAtacadoAcimaDoVarejo).toContain("Nada foi recusado");
+        expect(t.wholesaleAboveRetailWarning).toContain("Nada foi recusado");
     });
 
     it("marketplace não-lucrativo com frete: líquido negativo, aviso e o sublabel do frete na própria linha", () => {
@@ -321,7 +323,7 @@ describe("PriceResults — T142, prancheta 10c: os seis estados", () => {
                 ]}
             />,
         );
-        expect(screen.getByText(t.channels.negativeLiquido)).toBeInTheDocument();
+        expect(screen.getByText(t.channels.negativeNet)).toBeInTheDocument();
         const freteRow = screen
             .getByText(t.channels.freightLine)
             .closest(".tf-brow") as HTMLElement;

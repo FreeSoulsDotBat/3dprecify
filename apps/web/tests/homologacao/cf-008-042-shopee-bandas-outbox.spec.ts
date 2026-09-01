@@ -20,7 +20,7 @@ import {
 
 const ch = t.calculator.channels;
 const cp = t.calculator.categoryPicker;
-const h = t.historico;
+const h = t.history;
 
 function brl(x: string): number {
     return Number(x.replace(/\./g, "").replace(",", "."));
@@ -35,9 +35,9 @@ async function leituraCanal(
         return m ? brl(m[1]) : null;
     };
     return {
-        varejo: pega(t.calculator.results.varejo),
-        anuncio: pega(t.calculator.results.precoAnuncio),
-        liquido: pega(t.calculator.results.recebidoLiquido),
+        varejo: pega(t.calculator.results.retail),
+        anuncio: pega(t.calculator.results.listingPrice),
+        liquido: pega(t.calculator.results.netReceived),
     };
 }
 
@@ -197,7 +197,7 @@ test("CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a leg
         [t.calculator.fields.costPerRoll, "1,00"],
         [t.calculator.fields.grams, "1"],
         [t.calculator.fields.machineValue, "0"],
-        [t.calculator.fields.markupVarejo, "10"],
+        [t.calculator.fields.markupRetail, "10"],
     ] as const) {
         const c = page.getByRole("textbox", { name: rotulo(campo) }).first();
         if (await c.isVisible().catch(() => false)) {
@@ -253,7 +253,7 @@ test("CF-010-UI-05 — taxa fixa como % do preço (Shopee abaixo de R$ 8): a leg
 
     // Sobe o preço atravessando o limiar: o número da taxa fixa TEM de mudar de faixa.
     const markup = page
-        .getByRole("textbox", { name: rotulo(t.calculator.fields.markupVarejo) })
+        .getByRole("textbox", { name: rotulo(t.calculator.fields.markupRetail) })
         .first();
     await markup.fill("5000");
     await markup.blur();
@@ -599,7 +599,7 @@ test("CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degr
     await page.goto("/catalogo?tab=products");
     await page.waitForTimeout(2000);
     const remover = page
-        .getByRole("button", { name: new RegExp(`${t.catalogo.remove}`, "i") })
+        .getByRole("button", { name: new RegExp(`${t.catalog.remove}`, "i") })
         .first();
     executado(info, SUB, "fluxo");
     if (!(await remover.isVisible().catch(() => false))) {
@@ -608,7 +608,7 @@ test("CF-024-UI-01 — apagar do catálogo a peça de um kit salvo: a linha degr
             categoria: "fluxo",
             descricao:
                 "Não há ação de excluir produto no catálogo para exercer a degradação da referência",
-            resultado_esperado: `Ação "${t.catalogo.remove}" por item`,
+            resultado_esperado: `Ação "${t.catalog.remove}" por item`,
             resultado_obtido: (await page.locator("body").innerText()).slice(0, 200),
             severidade: "media",
         });

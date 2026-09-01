@@ -14,7 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 const field = (name: string) => screen.getByRole("textbox", { name });
 

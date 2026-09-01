@@ -274,7 +274,7 @@ test("free/signed-out meets the honest UNIFIED teaser — NO inline 'Salvar simu
     // 019/PR-B — a parede saiu: a folha mostra o vazio DIDÁTICO (título da feature + a frase da 32c).
     await expect(listDialog.getByTestId("vazio-didatico")).toBeVisible();
     await expect(listDialog.getByText(s.emptyTitle)).toBeVisible();
-    await expect(listDialog.getByText(s.didaticoBody)).toBeVisible();
+    await expect(listDialog.getByText(s.educationalBody)).toBeVisible();
     // No price surprise, no availability date, no fabricated sample scenario.
     // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
     // sobra e a honestidade do numero: so os tres precos praticados.
@@ -303,7 +303,7 @@ test("a free (signed-in, no premium) account gets the same honest door — SC-10
 
     const listDialog = await openScenariosList(page);
     await expect(listDialog.getByTestId("vazio-didatico")).toBeVisible(); // 019/PR-B
-    await expect(listDialog.getByText(s.didaticoBody)).toBeVisible();
+    await expect(listDialog.getByText(s.educationalBody)).toBeVisible();
     // E6/US7 — o preco real entrou aqui; a proibicao valia enquanto a cobranca nao existia. O que
     // sobra e a honestidade do numero: so os tres precos praticados.
     for (const v of (await listDialog.innerText()).match(/\d+[.,]\d{2}/g) ?? []) {

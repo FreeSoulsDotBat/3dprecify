@@ -14,7 +14,7 @@ afterEach(() => cleanup());
 const cf = messages.catalogForm;
 const fields = messages.calculator.fields;
 const validation = messages.calculator.validation;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 // Inputs are queried by their ACCESSIBLE NAME (getByRole), like the calculator tests — the required
 // "*" is aria-hidden so the name is the bare label, and the value inputs are role="textbox".
@@ -120,7 +120,7 @@ describe("FilamentForm — os cinco estados do gate (019/PR-B T045, ex-013/FB-02
     it("never-subscribed: mesma inércia, mas o convite é 'Assinar Premium' sem preço", () => {
         renderForm({ gate: "never-subscribed" });
         expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            messages.premiumTeaser.salvarFazParteDoPremium,
+            messages.premiumTeaser.saveIsPartOfPremium,
         );
         const cta = screen.getByTestId("teaser-upgrade-cta");
         expect(cta).toHaveTextContent(messages.billing.subscribeAction);

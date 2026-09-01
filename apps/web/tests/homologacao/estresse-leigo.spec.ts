@@ -27,8 +27,8 @@ const BASE: { campo: string; valor: string }[] = [
     { campo: t.calculator.fields.machineValue, valor: "4.000,00" },
     { campo: t.calculator.fields.maintenance, valor: "0" },
     { campo: t.calculator.fields.failure, valor: "0" },
-    { campo: t.calculator.fields.markupVarejo, valor: "50" },
-    { campo: t.calculator.fields.markupAtacado, valor: "30" },
+    { campo: t.calculator.fields.markupRetail, valor: "50" },
+    { campo: t.calculator.fields.markupWholesale, valor: "30" },
 ];
 
 function brl(s: string): number {
@@ -38,7 +38,7 @@ function brl(s: string): number {
 async function preco(page: Page): Promise<number | null> {
     const texto = await page.locator("body").innerText();
     const m = new RegExp(
-        `${t.calculator.results.custoTotal}[\\s\\S]{0,40}?R\\$\\s*(-?[\\d.]+,\\d{2})`,
+        `${t.calculator.results.totalCost}[\\s\\S]{0,40}?R\\$\\s*(-?[\\d.]+,\\d{2})`,
         "i",
     ).exec(texto);
     return m ? brl(m[1]) : null;
@@ -136,7 +136,7 @@ test("LEIGO-B — formatação: '1,000' e '1.000' significam mil para o vendedor
         t.calculator.fields.costPerRoll,
         t.calculator.fields.grams,
         t.calculator.fields.tariff,
-        t.calculator.fields.markupVarejo,
+        t.calculator.fields.markupRetail,
     ];
 
     for (const campo of campos) {
@@ -450,7 +450,7 @@ test("LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e re
     await page.waitForTimeout(500);
     executado(info, SUB, "concorrencia");
     const abaUmSobreviveu = (await page.locator("body").innerText()).includes(
-        t.calculator.results.custoTotal,
+        t.calculator.results.totalCost,
     );
     if (!abaUmSobreviveu) {
         defeito(info, {
@@ -475,7 +475,7 @@ test("LEIGO-E — jornadas reais: recarrega, volta, abre outra aba, desiste e re
         );
         if (!alvo) return null;
         return { topo: Math.round(alvo.getBoundingClientRect().top), altura: window.innerHeight };
-    }, t.calculator.results.custoTotal);
+    }, t.calculator.results.totalCost);
     if (precoNaDobra && precoNaDobra.topo > precoNaDobra.altura * 3) {
         defeito(info, {
             subcenario: SUB,

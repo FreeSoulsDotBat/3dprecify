@@ -157,7 +157,7 @@ test.describe("019/T025 — o rótulo da TabBar @ 390", () => {
         await page.goto("/calcular");
         const labels = page.locator(".tf-nav--tabbar .tf-nav__label");
         await expect(labels).toHaveCount(5);
-        await expect(labels.filter({ hasText: messages.nav.historico })).toHaveCount(1);
+        await expect(labels.filter({ hasText: messages.nav.history })).toHaveCount(1);
 
         const medidas = await labels.evaluateAll((els) =>
             els.map((el) => {

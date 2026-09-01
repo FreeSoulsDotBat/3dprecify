@@ -35,7 +35,7 @@ async function fillNumeric(page: Page, label: RegExp | string, value: string): P
 async function fillAdversarialPrice(page: Page): Promise<void> {
     await fillNumeric(page, t.fields.costPerRoll, "99999");
     await fillNumeric(page, t.fields.grams, "950");
-    await fillNumeric(page, t.fields.markupVarejo, "900");
+    await fillNumeric(page, t.fields.markupRetail, "900");
 }
 
 async function priceCardGeometry(page: Page): Promise<{
@@ -170,7 +170,7 @@ test.describe("calculator desktop layout — o bloco da máquina (016/PR-C homol
             await page.goto("/calcular");
             await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
-            const ritmo = page.getByRole("combobox", { name: t.machineCost.ritmoLabel });
+            const ritmo = page.getByRole("combobox", { name: t.machineCost.paceLabel });
             const payback = page.getByRole("combobox", { name: t.machineCost.paybackLabel });
             await expect(ritmo).toBeVisible();
             await expect(payback).toBeVisible();
@@ -299,7 +299,7 @@ async function fillSixDigitPrice(page: Page): Promise<void> {
     await fillNumeric(page, t.fields.grams, "1000");
     await fillNumeric(page, t.fields.avgPower, "0");
     await fillNumeric(page, t.fields.machineValue, "0");
-    await fillNumeric(page, t.fields.markupVarejo, "0");
+    await fillNumeric(page, t.fields.markupRetail, "0");
 }
 
 async function heroGeometry(page: Page): Promise<{
@@ -489,7 +489,7 @@ test.describe("PR-F — evidência 1:1 do rodapé (T143)", () => {
             await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
             await page
                 .getByTestId("price-level-segmented")
-                .getByRole("radio", { name: t.captions.atacado })
+                .getByRole("radio", { name: t.captions.wholesale })
                 .click();
             await setTheme(page, theme);
             await shot(page, `rodape-atacado-390-${theme}`);

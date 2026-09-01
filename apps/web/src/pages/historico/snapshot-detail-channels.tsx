@@ -8,7 +8,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 
 // 019/Polish — moved verbatim out of snapshot-detail-page.tsx.
 
-const t = messages.historico;
+const t = messages.history;
 const tr = messages.calculator.results;
 
 /**
@@ -65,19 +65,19 @@ function FrozenChannelRow({
                     {(
                         [
                             {
-                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.varejo}`,
+                                label: `${tr.listingPrice} · ${messages.calculator.captions.retail}`,
                                 value: channel.precoAnuncioVarejo,
                             },
                             {
-                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.varejo}`,
+                                label: `${tr.netReceived} · ${messages.calculator.captions.retail}`,
                                 value: channel.recebidoLiquidoVarejo,
                             },
                             {
-                                label: `${tr.precoAnuncio} · ${messages.calculator.captions.atacado}`,
+                                label: `${tr.listingPrice} · ${messages.calculator.captions.wholesale}`,
                                 value: channel.precoAnuncioAtacado,
                             },
                             {
-                                label: `${tr.recebidoLiquido} · ${messages.calculator.captions.atacado}`,
+                                label: `${tr.netReceived} · ${messages.calculator.captions.wholesale}`,
                                 value: channel.recebidoLiquidoAtacado,
                             },
                         ] as const

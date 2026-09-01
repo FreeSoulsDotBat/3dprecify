@@ -23,7 +23,7 @@ import {
 // instead. On a lapsed premium the ledger stays readable and the lapse banner explains why renaming
 // and deleting are paused, so the affordances are simply absent here.
 
-const t = messages.historico;
+const t = messages.history;
 
 export function SnapshotManageActions({ item }: { item: HistoryItem }) {
     const { data } = useEntitlement();

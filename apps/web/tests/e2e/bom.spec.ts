@@ -28,15 +28,15 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     // Free (never granted): 019/PR-B — a parede saiu; /kits mostra o vazio didático de Kits (o
     // composer monta sem salvar — decisão do dono 27/08). Esta visita JIT-provisiona a conta.
     await page.goto("/kits");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalog.educationalKitsBody);
 
     grantPremium(email);
 
     // Build one saved product to reference (filament + printer + product — the E2 loop).
     await page.goto("/catalogo");
     await page.reload();
-    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
@@ -45,8 +45,8 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
     await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
-    await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
-    await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
+    await page.getByRole("tab", { name: t.catalog.tabPrinters }).click();
+    await page.getByRole("button", { name: t.catalog.addPrinter }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("Ender 3");
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) })
@@ -60,8 +60,8 @@ test("premium composes a 3-line BOM (ad-hoc + catalog-ref) with live totals (US1
     await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
     await expect(itemVisible(page, "Ender 3")).toBeVisible();
 
-    await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
-    await page.getByRole("button", { name: t.catalogo.addProduct }).click();
+    await page.getByRole("tab", { name: t.catalog.tabProducts }).click();
+    await page.getByRole("button", { name: t.catalog.addProduct }).click();
     await page.getByRole("textbox", { name: t.productForm.nameLabel }).fill("Vaso G");
     await page
         .getByRole("combobox", { name: t.calculator.catalogPicker.filament })
@@ -173,7 +173,7 @@ test("signed-out at /kits sees the honest UNIFIED teaser; the FREE calculator is
     // bounce, no dialog, no wall). The 5th nav tab "Kits" is the entry point (K1/SC-410).
     await page.goto("/kits");
     await expect(page.getByRole("link", { name: t.nav.kits })).toBeVisible();
-    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalogo.didaticoKitsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.catalog.educationalKitsBody);
     // NO price surprise, NO date, NO separate "Entrar"/"Entendi" (US1-AC2): the ONE CTA is
     // TeaserUpgrade's own "Assinar Premium" link, whose href already carries sign-in + redirect.
     // E6/US7 — a proibicao de PRECO caiu com a premissa dela ("cobranca e E6", e o E6 chegou). O

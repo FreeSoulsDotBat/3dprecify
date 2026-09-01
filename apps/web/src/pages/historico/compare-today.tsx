@@ -37,7 +37,7 @@ import { BASIS_TOTAL, recalcToday, structuralModelNote } from "./recalc-today";
 // It does NOT compute a difference. The delta is money arithmetic, and money arithmetic lives in
 // `pricing-core` (ADR-0008) — two labelled numbers answer the question without inventing a third.
 
-const t = messages.historico;
+const t = messages.history;
 
 export function CompareTodayBlock({
     item,

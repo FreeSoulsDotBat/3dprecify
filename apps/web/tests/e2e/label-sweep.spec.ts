@@ -33,7 +33,7 @@ test.describe("016/US2 — varredura de rótulos (nav, títulos, teasers) — gr
         // A navegação principal (as 5 abas) é renderizada em toda página — check it once here.
         await assertNoForbiddenLabels(page, "nav (Calcular)");
         await expect(
-            page.getByRole("link", { name: messages.nav.historico, exact: true }),
+            page.getByRole("link", { name: messages.nav.history, exact: true }),
         ).toBeVisible();
 
         for (const rota of ["/catalogo", "/kits", "/historico"]) {
@@ -65,7 +65,7 @@ test.describe("016/US2 — varredura de rótulos — conta PREMIUM (listas reais
         await recordFromCalculator(page);
         await page.goto("/historico");
         await assertNoForbiddenLabels(page, "/historico (Orçamentos, com registro)");
-        await expect(page.getByRole("heading", { name: messages.historico.title })).toBeVisible();
+        await expect(page.getByRole("heading", { name: messages.history.title })).toBeVisible();
 
         // Uma simulação real (o painel "Minhas simulações" com ao menos um card).
         await page.goto("/calcular");

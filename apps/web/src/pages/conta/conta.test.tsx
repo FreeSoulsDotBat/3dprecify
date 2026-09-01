@@ -120,7 +120,7 @@ describe("ContaPage identity from /api/v1/me (T056 / A23)", () => {
         renderConta();
 
         await screen.findByText("zeca@precifica.dev");
-        expect(screen.getByText(messages.conta.planFree)).toBeInTheDocument();
+        expect(screen.getByText(messages.account.planFree)).toBeInTheDocument();
     });
 });
 
@@ -139,7 +139,7 @@ describe("ContaPage identity failure states (T068 / A23)", () => {
         const fetchMock = stubMeNetworkError();
         renderConta();
 
-        const retry = await screen.findByRole("button", { name: messages.conta.retry });
+        const retry = await screen.findByRole("button", { name: messages.account.retry });
         expect(retry).toBeInTheDocument();
         // it does NOT fabricate a fallback identity
         expect(screen.queryByText("zeca@precifica.dev")).not.toBeInTheDocument();

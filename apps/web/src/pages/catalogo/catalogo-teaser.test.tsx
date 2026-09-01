@@ -83,7 +83,7 @@ vi.mock("@/shared/fee-catalog", async (importOriginal) => {
 import { CatalogoPage } from "./catalogo-page";
 
 const tb = messages.billing;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 afterEach(() => {
     cleanup();
@@ -110,7 +110,7 @@ describe("Catálogo tab — FREE signed-in: a MESMA IA, com o vazio didático (0
         render(<CatalogoPage />);
         const vazio = screen.getByTestId("vazio-didatico");
         expect(vazio).toHaveTextContent(catalogo.emptyFilamentsTitle);
-        expect(vazio).toHaveTextContent(catalogo.didaticoFilamentsBody);
+        expect(vazio).toHaveTextContent(catalogo.educationalFilamentsBody);
     });
 
     it("exatamente UM convite 'Assinar Premium', levando à oferta direto — sem preço-de-checkout, sem data", () => {

@@ -42,7 +42,7 @@ test("free/signed-out: the marketplace switch is disabled+off, TeaserUpgrade is 
     await expect(page.getByTestId("fee-seal")).toHaveCount(0);
 
     // The direct varejo/atacado headline the free calculator has always shown is untouched.
-    await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+    await expect(page.getByText(t.results.retail).first()).toBeVisible();
 
     // Clicking the disabled switch does nothing (still off, no channel appears).
     await toggle.click({ force: true }).catch(() => {});
@@ -94,7 +94,7 @@ test("premium: the switch is enabled, defaults ON, and channel pricing is byte-i
     // The default Amazon channel slot prices exactly as it always has (016/PR-C B1 seed): 15%
     // catch-all commission over the seed's R$ 24,24 varejo grosses up to R$ 28,52.
     await expect(page.getByTestId("channel-slot")).toHaveCount(1);
-    await expect(page.getByText(t.results.precoAnuncio).first()).toBeVisible();
+    await expect(page.getByText(t.results.listingPrice).first()).toBeVisible();
 
     // Toggling off/on still works exactly as before the gate (US4, untouched for premium).
     await toggle.click();
@@ -135,7 +135,7 @@ test("premium: a hidden fee field never keeps charging — ML+Frete → Amazon b
     // 019/PR-C — `exact`: a citação do selo da Amazon ("…comissão sobre base que inclui frete") agora
     // vive num `<p>` próprio, e o casamento por substring de `getByText` a confundia com a linha "Frete".
     await expect(page.getByText(t.channels.freightLine, { exact: true })).toHaveCount(0);
-    await expect(page.getByText(t.channels.negativeLiquido)).toHaveCount(0);
+    await expect(page.getByText(t.channels.negativeNet)).toHaveCount(0);
     await expect(page.getByText(/−R\$\s*50,00/)).toHaveCount(0);
 
     // (c) Switching BACK to ML proves the value itself was blanked, not merely hidden — a hidden but

@@ -46,7 +46,7 @@ import { recalcToday } from "./recalc-today";
 //   3. It records NOTHING. The comparison is informational; "Recalcular hoje" (US3) is still the only
 //      way a new number becomes a record.
 
-const t = messages.historico;
+const t = messages.history;
 
 const ctx: CatalogContext = { catalog: FEE_CATALOG_SEED, source: "seed", now: 1_800_000_000_000 };
 

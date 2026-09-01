@@ -97,8 +97,8 @@ test.describe("E6 PR-C — o estorno derruba o premium, visto pelo vendedor", ()
 
         await page.goto("/conta");
         // O premium cai NA HORA — sem esperar o fim do periodo, porque o dinheiro voltou.
-        await expect(page.getByText(messages.conta.planLapsed)).toBeVisible();
-        await expect(page.getByText(messages.conta.planPremium, { exact: true })).toHaveCount(0);
+        await expect(page.getByText(messages.account.planLapsed)).toBeVisible();
+        await expect(page.getByText(messages.account.planPremium, { exact: true })).toHaveCount(0);
     });
 });
 

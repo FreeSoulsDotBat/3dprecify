@@ -48,10 +48,10 @@ test.describe("016/T041 — a matriz de documentos (congelado antigo · simulaç
         await expect(page.getByText("R$ 24,24").first()).toBeVisible(); // 016/PR-C seed, sem desperdício
 
         await recordFromCalculator(page);
-        await expect(page.getByText(t.historico.saved)).toBeVisible();
+        await expect(page.getByText(t.history.saved)).toBeVisible();
 
         await page.goto("/historico");
-        await page.getByText(t.historico.title).first().waitFor();
+        await page.getByText(t.history.title).first().waitFor();
         // Reopen the just-recorded item — it is the only one for this throwaway account.
         await page.locator(".tf-historico__card, [data-testid='snapshot-card']").first().click();
         await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
@@ -222,8 +222,8 @@ test.describe("016/T041 — a matriz de documentos (congelado antigo · simulaç
 
         // "Comparar hoje": the live product resolves (cheaper — today's model drops the waste term),
         // and the structural note explains part of the gap.
-        await page.getByRole("button", { name: t.historico.compareAction }).click();
-        await expect(page.getByText(t.historico.compareToday, { exact: true })).toBeVisible();
+        await page.getByRole("button", { name: t.history.compareAction }).click();
+        await expect(page.getByText(t.history.compareToday, { exact: true })).toBeVisible();
         await expect(page.getByText(/calculado pelo modelo 3\.1\.0/)).toBeVisible();
         await expect(page.getByText(/O modelo atual não tem mais esse campo/)).toBeVisible();
     });

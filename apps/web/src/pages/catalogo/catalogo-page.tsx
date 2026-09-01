@@ -39,7 +39,7 @@ import "./catalogo-page.css";
 // auth no `beforeLoad` do router (não mexido aqui); dentro dele o formulário agora nasce inerte
 // para qualquer `gate !== "active"`, não só `lapsed` (013/FB-02 só cobria o vencido).
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 type TabId = "filaments" | "printers" | "products" | "kits";
 
@@ -215,7 +215,7 @@ export function CatalogoPage() {
           pílulas à direita do título). Abaixo do corte a faixa quebra em duas linhas sozinha, sem
           media query: é `flex-wrap` fazendo o trabalho, e o mobile continua exatamente como estava. */}
             <div className="tf-catalogo-head">
-                <PageHeader title={messages.nav.catalogo} />
+                <PageHeader title={messages.nav.catalog} />
                 <CatalogTabs active={active} onChange={setActive} />
             </div>
             <div

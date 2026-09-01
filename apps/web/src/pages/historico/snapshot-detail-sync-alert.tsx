@@ -6,7 +6,7 @@ import { Alert } from "@/shared/ui";
 // 019/Polish — moved verbatim out of snapshot-detail-page.tsx: `SYNC_ALERT_COPY` stays with its
 // one reader, `SyncAlert`, per the task's own instruction.
 
-const t = messages.historico;
+const t = messages.history;
 
 /** §1.2 — a copy de cada estado do `SyncAlert`, no mesmo idiom de `SYNC_BADGE`
  *  (`entities/history/history-format.ts`). `unauthenticated` tem a SUA própria linha (hotfix

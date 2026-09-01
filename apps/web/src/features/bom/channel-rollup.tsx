@@ -34,19 +34,19 @@ function RollupBlock({ rollup }: { rollup: BomChannelRollup }) {
             ) : (
                 <>
                     <BreakdownRow
-                        label={`${tc.captions.varejo} · ${tc.results.precoAnuncio}`}
+                        label={`${tc.captions.retail} · ${tc.results.listingPrice}`}
                         value={formatBRL(rollup.precoAnuncioVarejo ?? 0)}
                     />
                     <BreakdownRow
-                        label={`${tc.captions.varejo} · ${tc.results.recebidoLiquido}`}
+                        label={`${tc.captions.retail} · ${tc.results.netReceived}`}
                         value={formatBRL(rollup.recebidoLiquidoVarejo ?? 0)}
                     />
                     <BreakdownRow
-                        label={`${tc.captions.atacado} · ${tc.results.precoAnuncio}`}
+                        label={`${tc.captions.wholesale} · ${tc.results.listingPrice}`}
                         value={formatBRL(rollup.precoAnuncioAtacado ?? 0)}
                     />
                     <BreakdownRow
-                        label={`${tc.captions.atacado} · ${tc.results.recebidoLiquido}`}
+                        label={`${tc.captions.wholesale} · ${tc.results.netReceived}`}
                         value={formatBRL(rollup.recebidoLiquidoAtacado ?? 0)}
                     />
                     <p className="text-xs text-[var(--text-muted)]">

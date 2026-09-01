@@ -259,7 +259,7 @@ describe("ScenariosListSheet — o vazio didático substitui a parede (T046/T112
 
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
         expect(screen.getByText(t.emptyTitle)).toBeInTheDocument();
-        expect(screen.getByText(t.didaticoBody)).toBeInTheDocument();
+        expect(screen.getByText(t.educationalBody)).toBeInTheDocument();
         // A descrição da LISTA ("Estratégias salvas...") não faz sentido por cima do vazio.
         expect(screen.queryByText(t.listSubtitle)).not.toBeInTheDocument();
     });
@@ -272,7 +272,7 @@ describe("ScenariosListSheet — o vazio didático substitui a parede (T046/T112
         render(<ScenariosListSheet open onOpenChange={onOpenChange} onOpenScenario={vi.fn()} />);
 
         await user.click(
-            screen.getByRole("button", { name: messages.premiumTeaser.fazerUmCalculo }),
+            screen.getByRole("button", { name: messages.premiumTeaser.makeACalculation }),
         );
         expect(onOpenChange).toHaveBeenCalledWith(false);
     });

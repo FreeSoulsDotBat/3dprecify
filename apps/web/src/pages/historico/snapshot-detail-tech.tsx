@@ -11,7 +11,7 @@ import { BreakdownRow, Card } from "@/shared/ui";
 
 // 019/Polish — moved verbatim out of snapshot-detail-page.tsx.
 
-const t = messages.historico;
+const t = messages.history;
 const tr = messages.calculator.results;
 
 /** SOMENTE as linhas gravadas. A row the payload does not carry is simply not here (FR-507). */
@@ -37,7 +37,7 @@ export function Breakdown({ breakdown }: { breakdown: FrozenBreakdown }) {
             {others.map((cost, i) => (
                 <BreakdownRow
                     key={`other-${i}`}
-                    label={cost.name ?? messages.calculator.outrosCustos.lineFallback}
+                    label={cost.name ?? messages.calculator.otherCosts.lineFallback}
                     value={formatFrozenBRL(cost.value)}
                 />
             ))}

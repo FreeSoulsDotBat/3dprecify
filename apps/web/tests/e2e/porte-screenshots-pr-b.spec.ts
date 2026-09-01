@@ -80,7 +80,7 @@ for (const theme of THEMES) {
             await medir(page, `free-catalogo-vazio-390-${theme}`);
             await page.screenshot({ path: join(OUT, `free-catalogo-vazio-390-${theme}.png`) });
 
-            await page.getByRole("button", { name: t.catalogo.addFilament }).first().click();
+            await page.getByRole("button", { name: t.catalog.addFilament }).first().click();
             await expect(page.getByTestId("catalog-form-frozen")).toBeVisible();
             await medir(page, `free-catalogo-form-inerte-390-${theme}`);
             await page.screenshot({
@@ -89,7 +89,7 @@ for (const theme of THEMES) {
 
             await page.goto("/catalogo?tab=printers");
             await setTheme(page, theme);
-            await page.getByRole("button", { name: t.catalogo.addPrinter }).first().click();
+            await page.getByRole("button", { name: t.catalog.addPrinter }).first().click();
             await expect(page.getByTestId("catalog-form-frozen")).toBeVisible();
             await page.getByText(/potência de placa/).scrollIntoViewIfNeeded();
             await page.screenshot({ path: join(OUT, `free-impressora-dica-390-${theme}.png`) });
@@ -128,7 +128,7 @@ for (const theme of THEMES) {
             await expect(page.getByTestId("vazio-didatico")).toBeVisible();
             grantPremium(email);
             await page.reload();
-            await page.getByRole("button", { name: t.catalogo.addFilament }).first().click();
+            await page.getByRole("button", { name: t.catalog.addFilament }).first().click();
             await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
             await page
                 .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
@@ -156,7 +156,7 @@ for (const theme of THEMES) {
             await expect(page.getByTestId("vazio-didatico")).toBeVisible();
             await medir(page, `signedout-catalogo-vazio-390-${theme}`);
             await page.screenshot({ path: join(OUT, `signedout-catalogo-vazio-390-${theme}.png`) });
-            await page.getByRole("button", { name: t.catalogo.addFilament }).first().click();
+            await page.getByRole("button", { name: t.catalog.addFilament }).first().click();
             await expect(page.getByTestId("catalog-form-frozen")).toBeVisible();
             await medir(page, `signedout-catalogo-form-390-${theme}`);
             await page.screenshot({ path: join(OUT, `signedout-catalogo-form-390-${theme}.png`) });

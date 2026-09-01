@@ -58,12 +58,12 @@ export function KitBasisSummary({
                             </p>
                             {c.precoAnuncioVarejo !== null && (
                                 <p className="text-xs text-[var(--text-muted)]">
-                                    {tc.captions.varejo}: {formatBRL(c.precoAnuncioVarejo)}
+                                    {tc.captions.retail}: {formatBRL(c.precoAnuncioVarejo)}
                                 </p>
                             )}
                             {c.precoAnuncioAtacado !== null && (
                                 <p className="text-xs text-[var(--text-muted)]">
-                                    {tc.captions.atacado}: {formatBRL(c.precoAnuncioAtacado)}
+                                    {tc.captions.wholesale}: {formatBRL(c.precoAnuncioAtacado)}
                                 </p>
                             )}
                         </div>

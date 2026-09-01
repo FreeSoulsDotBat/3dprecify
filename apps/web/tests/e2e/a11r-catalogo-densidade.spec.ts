@@ -16,7 +16,7 @@ import { grantPremium, signUpThrowaway } from "./history-helpers";
 // criação em lote: `catalog-recalculo.spec.ts` (bearer capturado + POST direto contra o backend
 // real, sem passar pela UI 40 vezes).
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 const OUT = fileURLToPath(
     new URL("../../../../specs/019-porte-design/evidencias/pr-f/a11r.json", import.meta.url),

@@ -25,7 +25,7 @@ import { goOffline, goOnline, grantPremium, signUpThrowaway } from "./history-he
 
 const t = messages;
 const catalogo = messages.calculator.catalogPicker;
-const catalogTabs = messages.catalogo;
+const catalogTabs = messages.catalog;
 const cf = messages.catalogForm;
 const pf = messages.productForm;
 const f = messages.calculator.fields;
@@ -254,11 +254,8 @@ test("US16: 3 itens × (1, 2, 10) — o total bate com computeQuote rodado fora 
     // O export já lê kind=QUOTE (migração 0009 / quote_render.py) — o round-trip do PDF.
     const quoteRequest = page.waitForRequest((r) => r.url().includes(`/${snapshot.id}/quote.pdf`));
     const download = page.waitForEvent("download");
-    await page.getByRole("button", { name: t.historico.exportAction }).click();
-    await page
-        .getByRole("dialog")
-        .getByRole("button", { name: t.historico.exportGenerate })
-        .click();
+    await page.getByRole("button", { name: t.history.exportAction }).click();
+    await page.getByRole("dialog").getByRole("button", { name: t.history.exportGenerate }).click();
     await quoteRequest;
     const file = await download;
     const path = await file.path();
@@ -296,11 +293,11 @@ test("editar o rótulo continua (PATCH) — o payload congelado não muda", asyn
         .first()
         .textContent();
 
-    await page.getByRole("button", { name: t.historico.editLabel }).click();
+    await page.getByRole("button", { name: t.history.editLabel }).click();
     const dialog = page.getByRole("dialog");
-    await dialog.getByLabel(t.historico.labelField).fill("Rotulo Editado");
-    await dialog.getByRole("button", { name: t.historico.editLabelSave }).click();
-    await expect(page.getByText(t.historico.labelSaved)).toBeVisible();
+    await dialog.getByLabel(t.history.labelField).fill("Rotulo Editado");
+    await dialog.getByRole("button", { name: t.history.editLabelSave }).click();
+    await expect(page.getByText(t.history.labelSaved)).toBeVisible();
 
     await expect(page.getByText("Rotulo Editado")).toBeVisible();
     const totalAfter = await page

@@ -42,7 +42,7 @@ async function totalDoKit(page: Page): Promise<number | null> {
     const texto = await page.locator("body").innerText();
     const i = texto.indexOf(b.assemblyTitle);
     const alvo = i >= 0 ? texto.slice(i) : texto;
-    const m = new RegExp(`${b.assemblyCusto}[\\s\\S]{0,40}?R\\$\\s*([\\d.]+,\\d{2})`, "i").exec(
+    const m = new RegExp(`${b.assemblyCost}[\\s\\S]{0,40}?R\\$\\s*([\\d.]+,\\d{2})`, "i").exec(
         alvo,
     );
     return m ? brl(m[1]) : null;

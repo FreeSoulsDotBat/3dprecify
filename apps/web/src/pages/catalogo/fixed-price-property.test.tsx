@@ -139,7 +139,7 @@ vi.mock("@/entities/scenario/use-scenarios", () => ({
 
 import { ProdutoPage } from "./produto-page";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 function listState(items: unknown[]) {
     return { items, isLoading: false, isError: false, error: null, stale: false, refetch: vi.fn() };

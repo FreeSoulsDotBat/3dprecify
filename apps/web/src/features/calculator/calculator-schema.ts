@@ -437,12 +437,12 @@ export const COST_OPTIONAL_FIELDS: readonly CalcFieldMeta[] = COST_FIELDS.filter
 export const MARKUP_FIELDS: readonly CalcFieldMeta[] = [
     {
         name: "markupVarejoPct",
-        label: t.fields.markupVarejo,
+        label: t.fields.markupRetail,
         unit: "%",
         hint: t.hints.markup,
         required: true,
     },
-    { name: "markupAtacadoPct", label: t.fields.markupAtacado, unit: "%", required: true },
+    { name: "markupAtacadoPct", label: t.fields.markupWholesale, unit: "%", required: true },
 ] as const;
 
 /**
@@ -513,9 +513,9 @@ export const FIELD_PRECISION: Partial<Record<CalcFieldName, number>> = Object.fr
 
 /** 016/US8 (FR-910) — "com que frequência ela roda": 3 options, none typed (SC-906). */
 export const RITMO_OPTIONS: readonly SelectOption[] = [
-    { value: "0", label: t.machineCost.ritmoOptions.few },
-    { value: "1", label: t.machineCost.ritmoOptions.daily },
-    { value: "2", label: t.machineCost.ritmoOptions.always },
+    { value: "0", label: t.machineCost.paceOptions.few },
+    { value: "1", label: t.machineCost.paceOptions.daily },
+    { value: "2", label: t.machineCost.paceOptions.always },
 ];
 
 /** 016/US8 (FR-910) — "em quantos anos quer que ela se pague": 1–5 anos, sem digitar. */

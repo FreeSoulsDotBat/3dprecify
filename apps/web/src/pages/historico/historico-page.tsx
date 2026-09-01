@@ -41,7 +41,7 @@ import "./historico-page.css";
 // server query alone — a queued record the list did not show would leave the seller believing their
 // quote was never made.
 
-const t = messages.historico;
+const t = messages.history;
 
 export function HistoricoPage() {
     const sessionStatus = useSessionStore((s) => s.status);

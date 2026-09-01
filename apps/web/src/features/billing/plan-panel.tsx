@@ -21,7 +21,7 @@ const data = (iso: string | null): string | null =>
 
 /** Legenda + tom do badge para cada estado. Uma função, para que o `switch` seja exaustivo. */
 export function planCaption(state: PlanState): { badge: string; tone: "success" | "neutral" } {
-    const t = messages.conta;
+    const t = messages.account;
     switch (state.kind) {
         case "unknown":
             return { badge: t.planUnknown, tone: "neutral" };
@@ -58,7 +58,7 @@ export function planToneVar(state: PlanState): string {
 
 /** A frase sob o badge — a verdade do servidor em pt-BR. `null` quando não há o que acrescentar. */
 export function planDetail(state: PlanState): string | null {
-    const t = messages.conta;
+    const t = messages.account;
     const b = messages.billing;
     switch (state.kind) {
         case "subscription-active": {

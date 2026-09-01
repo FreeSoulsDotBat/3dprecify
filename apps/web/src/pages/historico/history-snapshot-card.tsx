@@ -19,7 +19,7 @@ import { useHistoricoSearch } from "@/pages/historico/historico-search";
 // reads from `entities/history/history-format` (unchanged imports, just re-sourced from this
 // sibling instead of the page).
 
-const t = messages.historico;
+const t = messages.history;
 
 export function SnapshotCard({ item }: { item: HistoryItem }) {
     // 019/PR-E (T135) — o rótulo do registro mora em `entities/history` (`kindLabel`): a lista e o

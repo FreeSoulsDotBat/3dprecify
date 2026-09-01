@@ -70,15 +70,15 @@ describe("the record Sheet (premium, active)", () => {
         const user = setup();
         renderButton();
 
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
 
-        expect(await screen.findByText(messages.historico.saveSheetIntro)).toBeInTheDocument();
+        expect(await screen.findByText(messages.history.saveSheetIntro)).toBeInTheDocument();
     });
 
     it("shows BOTH candidate totals, labelled, with varejo pre-selected", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
 
         const varejo = await screen.findByRole("radio", { name: /varejo/i });
         const atacado = screen.getByRole("radio", { name: /atacado/i });
@@ -93,14 +93,11 @@ describe("the record Sheet (premium, active)", () => {
     it("records the varejo total, the label and the validity as given", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
 
-        await user.type(
-            await screen.findByLabelText(messages.historico.labelField),
-            "Cliente João",
-        );
-        await user.type(screen.getByLabelText(messages.historico.validityField), "15");
-        await user.click(screen.getByRole("button", { name: messages.historico.saveSheetSubmit }));
+        await user.type(await screen.findByLabelText(messages.history.labelField), "Cliente João");
+        await user.type(screen.getByLabelText(messages.history.validityField), "15");
+        await user.click(screen.getByRole("button", { name: messages.history.saveSheetSubmit }));
 
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
         const body = mutateAsync.mock.calls[0]?.[0] as SnapshotIn;
@@ -118,10 +115,10 @@ describe("the record Sheet (premium, active)", () => {
     it("records the ATACADO total when the seller says that is what they quoted", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
 
         await user.click(await screen.findByRole("radio", { name: /atacado/i }));
-        await user.click(screen.getByRole("button", { name: messages.historico.saveSheetSubmit }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveSheetSubmit }));
 
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
         const body = mutateAsync.mock.calls[0]?.[0] as SnapshotIn;
@@ -132,9 +129,9 @@ describe("the record Sheet (premium, active)", () => {
     it("an empty label is NULL, never an empty string; an empty validity is absent", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
         await user.click(
-            await screen.findByRole("button", { name: messages.historico.saveSheetSubmit }),
+            await screen.findByRole("button", { name: messages.history.saveSheetSubmit }),
         );
 
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
@@ -146,9 +143,9 @@ describe("the record Sheet (premium, active)", () => {
     it("carries the device clock — the date the seller quoted, offset included (FR-528)", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
         await user.click(
-            await screen.findByRole("button", { name: messages.historico.saveSheetSubmit }),
+            await screen.findByRole("button", { name: messages.history.saveSheetSubmit }),
         );
 
         await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1));
@@ -171,8 +168,8 @@ describe("the payload is frozen ONCE, when the Sheet opens (review PR-A, minor)"
         );
         const { rerender } = render(tree);
 
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
-        await screen.findByText(messages.historico.saveSheetIntro);
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
+        await screen.findByText(messages.history.saveSheetIntro);
         expect(freeze).toHaveBeenCalledTimes(1);
 
         // Re-render with a fresh `source` while the Sheet is still open (the open state is preserved) —
@@ -192,36 +189,36 @@ describe("honest feedback — 'saved' is said only when it IS saved", () => {
         mutateAsync.mockResolvedValue({ clientSnapshotId: "csid-1", syncState: "pending" });
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
         await user.click(
-            await screen.findByRole("button", { name: messages.historico.saveSheetSubmit }),
+            await screen.findByRole("button", { name: messages.history.saveSheetSubmit }),
         );
 
-        expect(await screen.findByText(messages.historico.syncPendingToast)).toBeInTheDocument();
-        expect(screen.queryByText(messages.historico.saved)).not.toBeInTheDocument();
+        expect(await screen.findByText(messages.history.syncPendingToast)).toBeInTheDocument();
+        expect(screen.queryByText(messages.history.saved)).not.toBeInTheDocument();
     });
 
     it("says SAVED only on a real server answer", async () => {
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
         await user.click(
-            await screen.findByRole("button", { name: messages.historico.saveSheetSubmit }),
+            await screen.findByRole("button", { name: messages.history.saveSheetSubmit }),
         );
 
-        expect(await screen.findByText(messages.historico.saved)).toBeInTheDocument();
+        expect(await screen.findByText(messages.history.saved)).toBeInTheDocument();
     });
 
     it("says it did NOT record when the device could not keep it", async () => {
         mutateAsync.mockRejectedValue(new Error("QuotaExceeded"));
         const user = setup();
         renderButton();
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
         await user.click(
-            await screen.findByRole("button", { name: messages.historico.saveSheetSubmit }),
+            await screen.findByRole("button", { name: messages.history.saveSheetSubmit }),
         );
 
-        expect(await screen.findByText(messages.historico.saveDeviceFailed)).toBeInTheDocument();
+        expect(await screen.findByText(messages.history.saveDeviceFailed)).toBeInTheDocument();
     });
 });
 
@@ -236,7 +233,7 @@ describe("the gate is the SERVER's last word (Principle IV)", () => {
         renderButton();
 
         expect(
-            screen.queryByRole("button", { name: messages.historico.saveAction }),
+            screen.queryByRole("button", { name: messages.history.saveAction }),
         ).not.toBeInTheDocument();
     });
 
@@ -245,7 +242,7 @@ describe("the gate is the SERVER's last word (Principle IV)", () => {
         renderButton();
 
         expect(
-            screen.queryByRole("button", { name: messages.historico.saveAction }),
+            screen.queryByRole("button", { name: messages.history.saveAction }),
         ).not.toBeInTheDocument();
     });
 
@@ -254,7 +251,7 @@ describe("the gate is the SERVER's last word (Principle IV)", () => {
         renderButton();
 
         expect(
-            screen.queryByRole("button", { name: messages.historico.saveAction }),
+            screen.queryByRole("button", { name: messages.history.saveAction }),
         ).not.toBeInTheDocument();
     });
 });
@@ -297,11 +294,11 @@ describe("019/PR-E (T135) — o construtor de orçamento não passa por aqui", (
                 <Toaster />
             </>,
         );
-        await user.click(screen.getByRole("button", { name: messages.historico.saveAction }));
+        await user.click(screen.getByRole("button", { name: messages.history.saveAction }));
 
         expect(screen.queryByRole("radio")).not.toBeInTheDocument();
         expect(
-            screen.getByRole("button", { name: messages.historico.saveSheetSubmit }),
+            screen.getByRole("button", { name: messages.history.saveSheetSubmit }),
         ).toBeDisabled();
         expect(mutateAsync).not.toHaveBeenCalled();
     });

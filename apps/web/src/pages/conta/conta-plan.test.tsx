@@ -32,7 +32,7 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 
 import { ContaPage } from "./conta-page";
 
-const t = messages.conta;
+const t = messages.account;
 
 function queryState(over: Record<string, unknown>) {
     return { data: undefined, isError: false, isFetching: false, refetch: vi.fn(), ...over };

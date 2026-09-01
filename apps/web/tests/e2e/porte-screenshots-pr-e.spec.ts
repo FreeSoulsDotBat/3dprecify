@@ -27,7 +27,7 @@ const OUT = fileURLToPath(
     new URL("../../../../specs/019-porte-design/evidencias/pr-e/", import.meta.url),
 );
 const THEMES = ["dark", "light"] as const;
-const catalogTabs = messages.catalogo;
+const catalogTabs = messages.catalog;
 const cf = messages.catalogForm;
 const pf = messages.productForm;
 const f = messages.calculator.fields;

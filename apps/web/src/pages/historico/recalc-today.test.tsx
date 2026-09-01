@@ -49,7 +49,7 @@ import { recalcToday, RecalcTodayButton } from "./recalc-today";
 // layer, like pages/bom `kit-save`: the recompute needs `features/calculator`, and FSD-Lite forbids
 // a feature importing another feature.)
 
-const t = messages.historico;
+const t = messages.history;
 
 const ctx: CatalogContext = { catalog: FEE_CATALOG_SEED, source: "seed", now: 1_800_000_000_000 };
 

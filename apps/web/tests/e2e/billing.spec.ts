@@ -28,7 +28,7 @@ import { signUpThrowaway } from "./history-helpers";
 // Conta is covered separately (a11y-overflow.spec.ts's guarded-surfaces case).
 
 const t = messages.billing;
-const tc = messages.conta;
+const tc = messages.account;
 const tn = messages.nav;
 
 test.describe("E6 billing turnstile (MP stub)", () => {
@@ -135,8 +135,8 @@ test.describe("E6 billing turnstile (MP stub)", () => {
         await expect(page.getByText(tc.planPremium, { exact: true })).toBeVisible();
 
         // Spot-check: a premium surface unlocks WITHOUT re-login (same session, no new sign-in).
-        await page.getByRole("link", { name: tn.catalogo }).click();
-        await expect(page.getByRole("tab", { name: messages.catalogo.tabFilaments })).toBeVisible();
+        await page.getByRole("link", { name: tn.catalog }).click();
+        await expect(page.getByRole("tab", { name: messages.catalog.tabFilaments })).toBeVisible();
     });
 
     // Regression test for the cold-return defect this task found and `951d714` fixed: a HARD

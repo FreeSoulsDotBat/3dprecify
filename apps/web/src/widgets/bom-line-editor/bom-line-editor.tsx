@@ -102,7 +102,7 @@ export function BomLineEditor({
     // 016/US9 — "Ajustes opcionais" retired everywhere (its fields moved under this SAME
     // disclosure, alongside labor/outros/marketplace, so the composed label drops that name too).
     const [advancedOpen, setAdvancedOpen] = useState(false);
-    const advancedLabel = [t.sections.labor, t.outrosCustos.title, t.sections.marketplace].join(
+    const advancedLabel = [t.sections.labor, t.otherCosts.title, t.sections.marketplace].join(
         " · ",
     );
 

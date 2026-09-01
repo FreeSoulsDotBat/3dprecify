@@ -9,7 +9,7 @@ import { Field, NumberField } from "@/shared/ui";
 // calculator's `ControlledField` (Field render-fn → NumberField) so a saved value validates with the
 // same wiring the calculator uses — no new field mechanics, just the DS composed around RHF.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 // 019/PR-B (T045) — os dois pedaços do rodapé do formulário inerte (prancheta 32b/32e/32f),
 // extraídos aqui para não duplicar a regra "lapsed → reativar, free/deslogado → assinar, unknown →
@@ -24,9 +24,7 @@ export function PremiumFooterNote({ gate }: { gate: PremiumGate }) {
     }
     if (gate === "never-subscribed" || gate === "signed-out") {
         return (
-            <p data-testid="premium-footer-note">
-                {messages.premiumTeaser.salvarFazParteDoPremium}
-            </p>
+            <p data-testid="premium-footer-note">{messages.premiumTeaser.saveIsPartOfPremium}</p>
         );
     }
     return null;

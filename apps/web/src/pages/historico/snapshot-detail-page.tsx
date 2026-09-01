@@ -54,7 +54,7 @@ import "./historico-page.css";
 // (The origin's [Abrir produto] affordance and "Recalcular hoje" arrive in PR-B; the captured name
 // and the formula version are part of the frozen document and belong here from the start.)
 
-const t = messages.historico;
+const t = messages.history;
 // 019/PR-E — a cópia do orçamento é a da prancheta 18, verbatim (T087).
 const tq = messages.quote;
 const tr = messages.calculator.results;
@@ -185,7 +185,7 @@ export function SnapshotDetailPage({ snapshotId }: { snapshotId: string }) {
                     {payload.breakdown && <Breakdown breakdown={payload.breakdown} />}
                     {payload.totals.custoTotal && (
                         <BreakdownRow
-                            label={tr.custoTotal}
+                            label={tr.totalCost}
                             value={formatFrozenBRL(payload.totals.custoTotal)}
                             emphasis="total"
                         />

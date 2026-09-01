@@ -10,7 +10,7 @@ import { Alert, Button, EmptyState, Spinner } from "@/shared/ui";
 // (32a/32c/32g). Extracted verbatim from `catalog-panel.tsx` — same markup, same conditions, only
 // named and moved so the router in the panel reads as a router.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 export function CatalogPanelLoading() {
     return (

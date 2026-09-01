@@ -28,8 +28,8 @@ export function OtherCostsSection({
 }) {
     return (
         <div className="flex flex-col gap-3">
-            <SectionTitle title={t.outrosCustos.title} info={t.sectionInfo.outrosCustos} />
-            <p className="text-sm text-[var(--text-muted)]">{t.outrosCustos.hint}</p>
+            <SectionTitle title={t.otherCosts.title} info={t.sectionInfo.otherCosts} />
+            <p className="text-sm text-[var(--text-muted)]">{t.otherCosts.hint}</p>
             {fields.map((f, i) => (
                 <OtherCostRow
                     key={f.id}
@@ -40,7 +40,7 @@ export function OtherCostsSection({
                 />
             ))}
             <Button variant="secondary" size="sm" onClick={onAppend}>
-                {t.outrosCustos.addCost}
+                {t.otherCosts.addCost}
             </Button>
         </div>
     );

@@ -26,8 +26,8 @@ export const calculator = {
         finishRate: "Valor do acabamento",
         laborHours: "Mão de obra (horas)",
         laborRate: "Valor da hora",
-        markupVarejo: "Markup varejo",
-        markupAtacado: "Markup atacado",
+        markupRetail: "Markup varejo",
+        markupWholesale: "Markup atacado",
     },
     // avgPower tooltip is a mandated clarification (FR-022): the real average draw, not
     // the nameplate power printed on the machine.
@@ -77,7 +77,7 @@ export const calculator = {
             label: "Sobre mão de obra e custos",
             body: "Custos opcionais que somam ao total. Mão de obra = horas × valor da hora. Outros custos = um ou mais itens nomeados (embalagem, taxas, overhead), cada um somado ao custo total.",
         },
-        outrosCustos: {
+        otherCosts: {
             label: "Sobre outros custos",
             // 016/US12 (FR-918) — "frete até a transportadora" saiu dos exemplos: com o canal de
             // marketplace dirigido pelo catálogo, o frete já tem campo próprio dentro do canal — citá-lo
@@ -118,7 +118,7 @@ export const calculator = {
     //    dita ao usuário, e não só ao programador que lê `plausibilidade.ts`.
     // 3. Toda frase ENSINA a converter. O vendedor não errou por desatenção; ele errou porque a
     //    etiqueta da impressora fala em W e o campo pede kW. Dizer "valor alto" não resolve isso.
-    plausibilidade: {
+    plausibility: {
         // Review do PR #58 — a frase dizia "{v} kW é o de um chuveiro elétrico", e isso era FALSO
         // justamente nos dois valores para os quais o aviso foi escrito: 120 e 220 kW não são
         // chuveiro nenhum (um chuveiro fica em 4,5–7,5 kW, e é por isso que o limiar é 5). A frase
@@ -144,27 +144,27 @@ export const calculator = {
         printTime:
             "Confira o tempo: {v} horas equivalem a {d} dias imprimindo sem parar. Se você quis dizer minutos, use o campo de minutos ao lado. Nada foi recusado.",
         grams: "Confira as gramas: {v} g são mais de 50 kg de filamento numa peça só. Se você informou o peso do ROLO, o campo pede o que a PEÇA consome. Nada foi recusado.",
-        custoAbsurdo:
+        absurdCost:
             "Confira os custos: R$ {v} para uma peça é muito acima do que costuma acontecer. Normalmente é uma casa decimal a mais em algum campo. Nada foi recusado.",
-        precoZero:
+        zeroPrice:
             "O custo total ficou em R$ 0,00 e o preço de venda também — por esse preço não dá para vender. Confira os campos de custo que ficaram zerados. Nada foi recusado.",
-        comissaoBaixa:
+        lowCommission:
             "Confira a comissão: {v}%. Marketplaces costumam cobrar entre 10% e 20% — se você quis dizer 12%, escreva 12 e não 0,12. Nada foi recusado.",
-        quantidade:
+        quantity:
             "Confira a quantidade: {v}. O máximo por peça é {max}. Acima disso o kit não consegue ser salvo. Nada foi recusado.",
         // 019/PR-C (T055) — prancheta 14 ("Aviso de Plausibilidade"), cópia congelada em
         // `specs/019-porte-design/design/`. "Entendi" dispensa o aviso (some o aviso, não o valor; guarda
         // o par campo+valor pela sessão). Quando o aviso convive com uma RECUSA, o fecho "Nada foi
         // recusado." mentiria — troca por este, e o "Entendi" não aparece (14b: "não se dispensa uma
         // lição que acompanha uma recusa").
-        entendi: "Entendi",
-        fechoNormal: "Nada foi recusado.",
-        fechoComRecusa: "Corrija o campo acima para calcular.",
+        understood: "Entendi",
+        closingNormal: "Nada foi recusado.",
+        closingRejected: "Corrija o campo acima para calcular.",
         // 019/PR-C (decisão do dono 28/08, prancheta 14b "Erro e aviso juntos") — quando o campo TAMBÉM
         // foi recusado, o `tf-aviso` não repete "Confira {campo}: {valor}…"; ele guarda SÓ A LIÇÃO
         // (derivada das frases acima, mesmo fecho `fechoComRecusa`), sem cabeça e sem "Entendi" — não
         // se dispensa uma lição que acompanha uma recusa.
-        licao: {
+        lesson: {
             machineLifetimeHours:
                 "Se você pensou em anos, multiplique pelas horas que imprime por ano — 1.200 h/ano × 3 anos = 3.600 h. Corrija o campo acima para calcular.",
             avgPowerKw:
@@ -189,28 +189,28 @@ export const calculator = {
         failure: "Falha / perdas",
         finishing: "Acabamento",
         labor: "Mão de obra",
-        custoTotal: "Custo total",
-        varejo: "Preço varejo",
-        atacado: "Preço atacado",
-        precoAnuncio: "Preço para anunciar",
-        recebidoLiquido: "Recebido líquido",
+        totalCost: "Custo total",
+        retail: "Preço varejo",
+        wholesale: "Preço atacado",
+        listingPrice: "Preço para anunciar",
+        netReceived: "Recebido líquido",
     },
     captions: {
-        varejo: "Varejo",
-        atacado: "Atacado",
+        retail: "Varejo",
+        wholesale: "Atacado",
         markup: "markup",
     },
     // 015/A8 ([F03a-003], decisao do dono 2026-08-03) — atacado acima do varejo e ENTRADA VALIDA:
     // o numero e do vendedor e o motor calcula sem reclamar. O que faltava era dizer que aconteceu.
     // A frase e deliberadamente descritiva ("ficou acima"), nunca corretiva ("corrija"): quem le um
     // aviso escrito como erro conclui que o produto recusou, e o produto nao recusou.
-    avisoAtacadoAcimaDoVarejo:
+    wholesaleAboveRetailWarning:
         "O preço de atacado ficou acima do varejo. Nada foi recusado — só confira se é isso mesmo.",
     // US5 — "Outros custos" is a slot of 0..N named sub-costs (Embalagem, Etiqueta…); each value
     // soma ao custo_total exatamente como o campo único fazia, e aparece como sua própria linha no
     // detalhamento. `lineFallback` rotula uma linha cujo nome ficou em branco (FR-116).
     // 016/US12 (FR-918) — "frete até a transportadora" saiu do exemplo (ver `sectionInfo.outrosCustos`).
-    outrosCustos: {
+    otherCosts: {
         title: "Outros custos",
         hint: "Embalagem, etiqueta, taxas, etc. Cada item soma ao custo total.",
         addCost: "Adicionar custo",
@@ -237,7 +237,7 @@ export const calculator = {
         // estrutural mora em `freight-declared.test.ts`), então a linha nomeia o controle, não uma
         // forma de desconto que não existe mais no catálogo.
         freightLine: "Frete",
-        negativeLiquido: "Marketplace não-lucrativo neste preço (frete maior que a margem).",
+        negativeNet: "Marketplace não-lucrativo neste preço (frete maior que a margem).",
         // 014/SC-817 — o anúncio necessário cai numa faixa de preço para a qual o marketplace não
         // publica tarifa. Dizer isso é a única resposta honesta: a tarifa da faixa vizinha não vale
         // aqui, e um R$ 0,00 sob selo de referência seria pior que nenhum número.
@@ -401,11 +401,12 @@ export const calculator = {
         // nunca "Referência"); "Ver fonte" abre a citação inteira + o link do catálogo; "Dispensar" tira
         // o selo até a fonte (citação ou data) mudar.
         commissionLabel: "Comissão",
-        verFonte: "Ver fonte",
-        dispensar: "Dispensar",
-        fonteTitle: "Fonte da comissão",
-        fonteConferida: "Conferida por nós em {data}",
-        fonteAviso: "Abre fora do app. A tarifa é da {marketplace} — nós citamos, não garantimos.",
+        viewSource: "Ver fonte",
+        dismiss: "Dispensar",
+        sourceTitle: "Fonte da comissão",
+        sourceCheckedOn: "Conferida por nós em {data}",
+        sourceDisclaimer:
+            "Abre fora do app. A tarifa é da {marketplace} — nós citamos, não garantimos.",
     },
     marketplaceNames: {
         MERCADO_LIVRE: "Mercado Livre",
@@ -446,8 +447,8 @@ export const calculator = {
     // 016/US6 (FR-908) — the two numbers with an expiry date, named so the annual refresh is a
     // value edit (see the module-level consts + conteudo-tooltips.md §Notas de escopo #5).
     tooltipRefs: {
-        tarifaMediaNacional: TOOLTIP_REF_TARIFA_MEDIA_NACIONAL,
-        salarioMinimoHora: TOOLTIP_REF_SALARIO_MINIMO_HORA,
+        nationalAverageTariff: TOOLTIP_REF_TARIFA_MEDIA_NACIONAL,
+        minimumWagePerHour: TOOLTIP_REF_SALARIO_MINIMO_HORA,
     },
     // 016/US6 (FR-908, T023/T025) — the 9 field explanations researched + sourced in
     // conteudo-tooltips.md (verbatim text; procedência lives there, NOT here). `label` names the
@@ -516,8 +517,8 @@ export const calculator = {
     // `machineLifetimeHours` (machine-cost.ts owns the pure derivation); the engine keeps
     // receiving the SAME two fields it always has.
     machineCost: {
-        ritmoLabel: "Com que frequência ela roda?",
-        ritmoOptions: {
+        paceLabel: "Com que frequência ela roda?",
+        paceOptions: {
             few: "Poucas horas por semana",
             daily: "Quase todo dia",
             always: "Praticamente o dia todo",
@@ -536,11 +537,11 @@ export const calculator = {
         // TODAS as larguras com um ⓘ "Sobre o custo da máquina" cujo corpo a prancheta não traz —
         // o título entra; o ⓘ espera a copy do dono.
         blockTitle: "A máquina",
-        estimar: "Estimar",
-        ajustar: "Ajustar",
+        estimate: "Estimar",
+        adjust: "Ajustar",
         readoutLabel: "Custo da máquina por hora de impressão",
-        readoutDivisao: "de {valor} ÷ {horas} h",
-        ressalvaSemValor: "falta o valor da máquina",
+        readoutDivision: "de {valor} ÷ {horas} h",
+        missingValueCaveat: "falta o valor da máquina",
         confirmTitle: "A estimativa por ritmo vai substituir as suas {atual} h por {novo} h",
         // `{anos}` recebe o rótulo já flexionado ("3 anos" / "1 ano" — a lição do T031).
         confirmBody: '{ritmo} h/ano × {anos}. Seu número volta se você tocar "Ajustar" de novo.',

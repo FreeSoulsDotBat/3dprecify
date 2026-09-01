@@ -94,7 +94,7 @@ describe("KitBasisSummary", () => {
         ).toBeInTheDocument();
         expect(screen.getByText(tc.marketplaceNames.MERCADO_LIVRE)).toBeInTheDocument();
         // Both lines contributed (uniform channel application, Q12) — a real varejo price is shown.
-        expect(screen.getByText(new RegExp(`${tc.captions.varejo}: R\\$`))).toBeInTheDocument();
+        expect(screen.getByText(new RegExp(`${tc.captions.retail}: R\\$`))).toBeInTheDocument();
     });
 
     it("no fabricated all-zero rollup — every line invalid renders the honest invalidNote, not R$ 0,00", () => {

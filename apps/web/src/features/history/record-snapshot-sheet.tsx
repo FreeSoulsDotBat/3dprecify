@@ -45,7 +45,7 @@ import "./record-snapshot-sheet.css";
 // greyed affordance and not a teaser trigger (`RecordSnapshotButton` returns null). The free
 // calculator is not a sales floor (SC-109); the honest door lives on the Histórico tab (§7).
 
-const t = messages.historico;
+const t = messages.history;
 
 /** What the surface hands over: its kind, and how to freeze what is currently on screen. */
 export interface RecordSource {

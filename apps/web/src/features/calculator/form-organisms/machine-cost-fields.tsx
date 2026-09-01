@@ -127,8 +127,8 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
                     <p style={{ ...sectionLabel, flex: 1 }}>{t.machineCost.blockTitle}</p>
                     <Segmented<MachineMode>
                         options={[
-                            { id: "estimar", label: t.machineCost.estimar },
-                            { id: "ajustar", label: t.machineCost.ajustar },
+                            { id: "estimar", label: t.machineCost.estimate },
+                            { id: "ajustar", label: t.machineCost.adjust },
                         ]}
                         value={mode}
                         onChange={handleModeChange}
@@ -141,8 +141,8 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
             ) : (
                 <Segmented<MachineMode>
                     options={[
-                        { id: "estimar", label: t.machineCost.estimar },
-                        { id: "ajustar", label: t.machineCost.ajustar },
+                        { id: "estimar", label: t.machineCost.estimate },
+                        { id: "ajustar", label: t.machineCost.adjust },
                     ]}
                     value={mode}
                     onChange={handleModeChange}
@@ -165,7 +165,7 @@ export function MachineCostFields({ control }: { control: Control<CalcFormValues
               height (field.css), so a wrapped "Em quantos anos…" label no longer pushes its
               Select 15-16px below the sibling's. */}
                     <div className="tf-machine-ritmo-grid">
-                        <Field label={t.machineCost.ritmoLabel}>
+                        <Field label={t.machineCost.paceLabel}>
                             {(p) => (
                                 <Select
                                     {...p}

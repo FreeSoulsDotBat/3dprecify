@@ -16,7 +16,7 @@ import {
 // a silent purge without the guard). Both against the real stack, both about the outbox being the
 // ONLY copy of a quote.
 
-const t = messages.historico;
+const t = messages.history;
 
 // 018 mestre-detalhe: a ≥1280px o primeiro registro abre sozinho ao lado da lista (SC-002), então
 // o badge do card aparece duas vezes (o card `.tf-historico__link` da lista + a coluna

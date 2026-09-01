@@ -64,8 +64,8 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
     await page.reload();
 
     // Filaments tab (default): create "PLA Azul" 110.00 / 1.000 kg.
-    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
     await page.getByRole("textbox", { name: new RegExp(t.catalogForm.material) }).fill("PLA");
     await page
@@ -76,8 +76,8 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
     await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
     // Printers tab: create "Ender 3" 1200 / 2000 h / 0,12 kW / reserve 0,5.
-    await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
-    await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
+    await page.getByRole("tab", { name: t.catalog.tabPrinters }).click();
+    await page.getByRole("button", { name: t.catalog.addPrinter }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("Ender 3");
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) })
@@ -116,7 +116,7 @@ test("premium loop: grant → save filament+printer → calculator fills itself 
 
     // Conta reflects the plan honestly (T025b) — served by the real /entitlement.
     await page.goto("/conta");
-    await expect(page.getByText(t.conta.planPremium, { exact: true })).toBeVisible();
+    await expect(page.getByText(t.account.planPremium, { exact: true })).toBeVisible();
 
     // Offline read (Q2/FR-309): after the online loads above, the picker still answers from the
     // uid-keyed device cache with the network gone.
@@ -145,8 +145,8 @@ test("free signed-in account: catalog denies honestly, calculator stays fully us
     // lugar da lista, nunca uma tela substituta.
     await page.goto("/catalogo");
     await expect(page.getByTestId("vazio-didatico")).toBeVisible();
-    await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: t.catalogo.addFilament })).toBeVisible();
+    await expect(page.getByText(t.catalog.emptyFilamentsTitle).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: t.catalog.addFilament })).toBeVisible();
 
     // No picker renders for a never-granted account; the manual calculator is untouched.
     await page.goto("/calcular");
@@ -169,11 +169,11 @@ test("signed-out: Catálogo tab + calculator slot show the honest UNIFIED teaser
     // deslogado vê o MESMO tablist + o vazio didático (formulário inerte ao abrir "Adicionar"),
     // nunca uma tela substituta nem um dialog.
     await page.goto("/catalogo");
-    await expect(page.getByRole("tablist", { name: t.catalogo.tabsLabel })).toBeVisible();
+    await expect(page.getByRole("tablist", { name: t.catalog.tabsLabel })).toBeVisible();
     await expect(page.getByTestId("vazio-didatico")).toBeVisible();
     await expect(page.getByRole("dialog")).toHaveCount(0);
 
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await expect(page.locator("fieldset[disabled]")).toBeVisible();
     const saveBtn = page.getByRole("button", { name: t.catalogForm.save });
     await expect(saveBtn).toBeVisible();
@@ -214,14 +214,14 @@ for (const vp of [
     }, info) => {
         const email = await signUpThrowaway(page, `md${vp.width}-${info.workerIndex}`);
         await page.goto("/catalogo"); // JIT-provisiona a conta antes do grant (mesmo motivo do T025)
-        await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
+        await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible();
         grantPremium(email);
         await page.setViewportSize(vp);
         await page.reload(); // a concessão só é lida na próxima carga
 
         // Dois filamentos, para a troca de seleção ter o que trocar.
         for (const nome of ["PLA Mestre", "PETG Detalhe"]) {
-            await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+            await page.getByRole("button", { name: t.catalog.addFilament }).click();
             await page.getByRole("textbox", { name: t.catalogForm.name }).fill(nome);
             await page
                 .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })

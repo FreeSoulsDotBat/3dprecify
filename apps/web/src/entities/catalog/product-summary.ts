@@ -18,8 +18,8 @@ export function productSummary(
     printerName?: string,
     loading: ReferenceLoadState = { filaments: false, printers: false },
 ): string {
-    const manual = messages.catalogo.manualRef;
-    const resolving = messages.catalogo.resolvingRef;
+    const manual = messages.catalog.manualRef;
+    const resolving = messages.catalog.resolvingRef;
     const fil = product.filamentId
         ? (filamentName ?? (loading.filaments ? resolving : manual))
         : manual;

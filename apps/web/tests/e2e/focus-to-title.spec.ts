@@ -45,15 +45,15 @@ test("switching tabs moves focus to the destination section title", async ({ pag
     await expect(page).toHaveURL(/\/calcular$/);
 
     // Tab 1: Calcular → Catálogo.
-    await page.getByRole("link", { name: messages.nav.catalogo }).click();
+    await page.getByRole("link", { name: messages.nav.catalog }).click();
     await expect(page).toHaveURL(/\/catalogo$/);
     const header = page.locator("[data-page-header]");
     await expect(header).toBeFocused();
-    await expect(header).toHaveText(messages.nav.catalogo);
+    await expect(header).toHaveText(messages.nav.catalog);
 
     // Tab 2: Catálogo → Histórico — focus follows to the new title.
-    await page.getByRole("link", { name: messages.nav.historico }).click();
+    await page.getByRole("link", { name: messages.nav.history }).click();
     await expect(page).toHaveURL(/\/historico$/);
     await expect(page.locator("[data-page-header]")).toBeFocused();
-    await expect(page.locator("[data-page-header]")).toHaveText(messages.nav.historico);
+    await expect(page.locator("[data-page-header]")).toHaveText(messages.nav.history);
 });

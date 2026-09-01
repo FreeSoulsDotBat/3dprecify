@@ -74,7 +74,7 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
     // 019/PR-C (T057) — o par de botões virou o segmented "Estimar · Ajustar" (prancheta 15a).
     await page
         .getByTestId("machine-mode")
-        .getByRole("radio", { name: messages.calculator.machineCost.ajustar })
+        .getByRole("radio", { name: messages.calculator.machineCost.adjust })
         .click();
     await page.getByRole("textbox", { name: f.machineLifetime, exact: true }).fill("2000");
     // failure/finishTime/finishRate are OPTIONAL fields — their accessible name carries the "opcional"
@@ -82,8 +82,8 @@ test("authenticated user computes the full E1 model (SC-001 canonical vector)", 
     await page.getByRole("textbox", { name: f.failure }).fill("10");
     await page.getByRole("textbox", { name: f.finishTime }).fill("0,5");
     await page.getByRole("textbox", { name: f.finishRate }).fill("10");
-    await page.getByLabel(f.markupVarejo).fill("50");
-    await page.getByLabel(f.markupAtacado).fill("30");
+    await page.getByLabel(f.markupRetail).fill("50");
+    await page.getByLabel(f.markupWholesale).fill("30");
 
     // 019/PR-F (T142, adoção) — a linha de derivação "Preço varejo"/"Preço atacado" SAIU da conta
     // (10a); o cartão final agora quebra o valor em spans (R$/inteiro/decimais), então um
@@ -233,15 +233,12 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
     await page.getByRole("textbox", { name: t.fields.laborHours }).fill("2");
     await page.getByRole("textbox", { name: t.fields.laborRate }).fill("30");
 
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
     const costRows = page.getByTestId("other-cost-row");
-    await costRows
-        .nth(0)
-        .getByLabel(t.outrosCustos.name)
-        .fill("Frete até a transportadora parceira");
-    await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("15");
-    await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("-1"); // inline per-row error renders too
+    await costRows.nth(0).getByLabel(t.otherCosts.name).fill("Frete até a transportadora parceira");
+    await costRows.nth(0).getByLabel(t.otherCosts.value).fill("15");
+    await costRows.nth(1).getByLabel(t.otherCosts.value).fill("-1"); // inline per-row error renders too
 
     const slot0 = page.getByTestId("channel-slot").first();
     await slot0.getByLabel(/^Comissão(?! mínima)/).fill("20");
@@ -252,7 +249,7 @@ test("FULL US1–US5 model has no horizontal overflow at 390px (T040, FR-010)", 
 
     // 019/PR-F (T142, adoção) — o `<Segmented split>` Varejo|Atacado agora governa qual nível cada
     // marketplace mostra; um cartão por canal, UM nível por vez (default varejo).
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2); // 2 channels × 1 level
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(2); // 2 channels × 1 level
     await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded); // the long seal wraps
     await expect(costRows.nth(1).getByText(t.validation.negative)).toBeVisible();
 
@@ -289,13 +286,13 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
     // T142 adoção — o Segmented Varejo|Atacado troca as duas, nunca mostra as duas juntas; default
     // varejo ⇒ 2 canais × 1 nível = 2 linhas, não mais as 4 de antes).
     await expect(page.getByTestId("channel-price")).toHaveCount(2);
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
-    await expect(page.getByText(t.results.recebidoLiquido)).toHaveCount(2);
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(2);
+    await expect(page.getByText(t.results.netReceived)).toHaveCount(2);
 
     // Remove the Shopee slot → only its rows drop; Mercado Livre keeps computing.
     await slot1.getByRole("button", { name: t.channels.removeChannel }).click();
     await expect(page.getByTestId("channel-slot")).toHaveCount(1);
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(1);
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(1);
 
     // Re-add Shopee, then set Mercado Livre's commission to 100% — it errors ONLY its slot.
     await page.getByRole("button", { name: t.channels.addChannel }).click();
@@ -308,7 +305,7 @@ test("US1: prices several channels at once; add/remove isolates rows; commission
     // Honest inline per-slot error, never a NaN/Infinity; the Shopee slot still shows its prices.
     await expect(slot0.getByText(t.validation.commissionMax)).toBeVisible();
     await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
-    await expect(page.getByText(t.results.precoAnuncio).first()).toBeVisible();
+    await expect(page.getByText(t.results.listingPrice).first()).toBeVisible();
 });
 
 test("US2: a covered marketplace pre-fills fees with an honesty seal; editing flips to 'ajustado'; uncovered reads 'sem referência'", async ({
@@ -342,7 +339,7 @@ test("US2: a covered marketplace pre-fills fees with an honesty seal; editing fl
     await expect(slot0.getByTestId("fee-seal")).toContainText(seals.embedded);
     // The pre-filled catalog bands drive the per-channel prices with NO manual entry.
     await expect(page.getByTestId("channel-price")).toHaveCount(1);
-    await expect(page.getByText(t.results.precoAnuncio).first()).toBeVisible();
+    await expect(page.getByText(t.results.listingPrice).first()).toBeVisible();
 
     // Editing any fee is an override → the seal flips to "ajustado por você" (an edited number is
     // never silently trusted as the reference).
@@ -506,7 +503,7 @@ test("US4: the 'Incluir marketplaces no preço' toggle shows/hides the whole mar
     await expect(page.getByRole("button", { name: t.channels.addChannel })).toHaveCount(0);
     await expect(page.getByText(t.channels.pricesTitle)).toHaveCount(0);
     // …but the direct varejo/atacado headline the seller reads first is untouched, and never a NaN.
-    await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+    await expect(page.getByText(t.results.retail).first()).toBeVisible();
     await expect(page.getByText(/NaN|Infinity/)).toHaveCount(0);
 
     // Toggle back ON → the section (and its channel slot) return; the switch stays reachable throughout.
@@ -519,7 +516,7 @@ test("US5: itemized 'Outros custos' — named sub-costs each show as a breakdown
     page,
 }) => {
     const t = messages.calculator;
-    const oc = t.outrosCustos;
+    const oc = t.otherCosts;
     await page.goto("/calcular"); // public — no sign-in needed
     await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
@@ -565,16 +562,16 @@ test("US6 (free/signed-out): sub-costs surface has no bad numbers; the marketpla
     await expect(page.getByRole("heading", { name: t.title })).toBeVisible();
 
     // Itemized sub-costs: a named one and a BLANK-named one (falls back to the neutral label).
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
     const costRows = page.getByTestId("other-cost-row");
-    await costRows.nth(0).getByLabel(t.outrosCustos.name).fill("Embalagem");
-    await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("3,00");
-    await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("1,005"); // rounds HALF_UP → 1,01
+    await costRows.nth(0).getByLabel(t.otherCosts.name).fill("Embalagem");
+    await costRows.nth(0).getByLabel(t.otherCosts.value).fill("3,00");
+    await costRows.nth(1).getByLabel(t.otherCosts.value).fill("1,005"); // rounds HALF_UP → 1,01
 
     await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
     await expect(page.getByText("R$ 1,01")).toBeVisible(); // the HALF_UP-rounded blank-named line
-    await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+    await expect(page.getByText(t.results.retail).first()).toBeVisible();
     await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
 
     // The marketplace section is the GATE, never a partial/collapsed channel surface: disabled+off
@@ -616,27 +613,27 @@ test("US6 (premium): full multi-channel + sub-costs surface — no bad numbers, 
     await slot1.getByLabel(t.channels.marketplace, { exact: true }).selectOption("SHOPEE");
 
     // Itemized sub-costs: a named one and a BLANK-named one (falls back to the neutral label).
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
     const costRows = page.getByTestId("other-cost-row");
-    await costRows.nth(0).getByLabel(t.outrosCustos.name).fill("Embalagem");
-    await costRows.nth(0).getByLabel(t.outrosCustos.value).fill("3,00");
-    await costRows.nth(1).getByLabel(t.outrosCustos.value).fill("1,005"); // rounds HALF_UP → 1,01
+    await costRows.nth(0).getByLabel(t.otherCosts.name).fill("Embalagem");
+    await costRows.nth(0).getByLabel(t.otherCosts.value).fill("3,00");
+    await costRows.nth(1).getByLabel(t.otherCosts.value).fill("1,005"); // rounds HALF_UP → 1,01
 
     // Everything computes together: both channels price the SELECTED markup level (019/PR-F, T142
     // adoção — Segmented default varejo ⇒ 2×1 anúncio rows, not the old 2×2 side by side).
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(2);
     await expect(page.getByText("Embalagem", { exact: true })).toBeVisible();
     await expect(page.getByText("R$ 1,01")).toBeVisible(); // the HALF_UP-rounded blank-named line
 
     // Exercise the toggle across the full surface: off hides the channels (headline intact)…
     await page.getByRole("switch", { name: t.channels.includeToggle }).click();
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(0);
-    await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(0);
+    await expect(page.getByText(t.results.retail).first()).toBeVisible();
     // …and back on restores BOTH slots with their fees/prefill intact (RHF state survives).
     await page.getByRole("switch", { name: t.channels.includeToggle }).click();
     await expect(page.getByTestId("channel-slot")).toHaveCount(2);
-    await expect(page.getByText(t.results.precoAnuncio)).toHaveCount(2);
+    await expect(page.getByText(t.results.listingPrice)).toHaveCount(2);
 
     // SC-109's numeric half still holds for the full premium surface: never a NaN/Infinity/#DIV!.
     await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);
@@ -694,16 +691,16 @@ test("US6: offline + premium — channels, toggle and sub-costs all compute from
     await expect(slot1.getByTestId("fee-seal")).toContainText(t.seals.embedded);
 
     // Sub-cost folds into custo_total offline (016/PR-C B1 seed 16,16 + 3,00 = 19,16).
-    await page.getByRole("button", { name: t.outrosCustos.addCost }).click();
+    await page.getByRole("button", { name: t.otherCosts.addCost }).click();
     const costRow = page.getByTestId("other-cost-row").first();
-    await costRow.getByLabel(t.outrosCustos.name).fill("Embalagem");
-    await costRow.getByLabel(t.outrosCustos.value).fill("3,00");
+    await costRow.getByLabel(t.otherCosts.name).fill("Embalagem");
+    await costRow.getByLabel(t.otherCosts.value).fill("3,00");
     await expect(page.getByText("R$ 19,16")).toBeVisible();
 
     // The toggle works offline too: off → channels gone, direct headline intact.
     await page.getByRole("switch", { name: t.channels.includeToggle }).click();
     await expect(page.getByTestId("channel-slot")).toHaveCount(0);
-    await expect(page.getByText(t.results.varejo).first()).toBeVisible();
+    await expect(page.getByText(t.results.retail).first()).toBeVisible();
 
     // Offline the whole way: no bad numbers.
     await expect(page.getByText(/NaN|Infinity|#DIV/)).toHaveCount(0);

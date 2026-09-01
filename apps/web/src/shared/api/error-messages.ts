@@ -52,7 +52,7 @@ export function apiErrorMessage(error: ApiError): string {
  *  phrase instead. */
 export function honestWriteError(err: unknown): string {
   if (err instanceof ApiError) {
-    return err.status === 0 ? messages.catalogo.offlineWriteBlocked : apiErrorMessage(err);
+    return err.status === 0 ? messages.catalog.offlineWriteBlocked : apiErrorMessage(err);
   }
   return messages.apiError.unknown;
 }

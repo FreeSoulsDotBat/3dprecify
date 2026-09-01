@@ -66,10 +66,10 @@ test("collapsing the rail persists across navigation and reload, and frees ≥16
 
     // Navigate: the rail stays collapsed and every item keeps its accessible name (the label
     // leaves the SCREEN, never the accessibility tree — research §G).
-    await page.getByRole("link", { name: messages.nav.catalogo }).click();
+    await page.getByRole("link", { name: messages.nav.catalog }).click();
     await expect(page).toHaveURL(/\/catalogo/);
     await expect(page.getByRole("button", { name: messages.nav.expand })).toBeVisible();
-    await expect(page.getByRole("link", { name: messages.nav.historico })).toBeVisible();
+    await expect(page.getByRole("link", { name: messages.nav.history })).toBeVisible();
 
     // Reload: the choice survives a cold boot of the store.
     await page.reload();

@@ -89,14 +89,14 @@ export const ERROS_DE_UNIDADE: ErroDeUnidade[] = [
         fatorEsperado: 1000,
     },
     {
-        campo: t.fields.markupVarejo,
+        campo: t.fields.markupRetail,
         digitado: "1,5",
         correto: "50",
         porque: "Ele pensa markup como MULTIPLICADOR (1,5×) e não como porcentagem.",
         fatorEsperado: 1.5,
     },
     {
-        campo: t.fields.markupVarejo,
+        campo: t.fields.markupRetail,
         digitado: "500",
         correto: "50",
         porque: "Ele erra uma casa e não percebe, porque 500% ainda 'parece' um número de markup.",
@@ -183,8 +183,8 @@ export const PERSONAS: Persona[] = [
             { campo: t.fields.grams, valor: "85" },
             { campo: t.fields.avgPower, valor: "0,12" },
             { campo: t.fields.tariff, valor: "0,95" },
-            { campo: t.fields.markupVarejo, valor: "60" },
-            { campo: t.fields.markupAtacado, valor: "35" },
+            { campo: t.fields.markupRetail, valor: "60" },
+            { campo: t.fields.markupWholesale, valor: "35" },
         ],
     },
     {
@@ -223,7 +223,7 @@ export const PERSONAS: Persona[] = [
             { campo: t.fields.rollWeight, valor: "1.0" },
             { campo: t.fields.grams, valor: "120 g" },
             { campo: t.fields.tariff, valor: "0.98" },
-            { campo: t.fields.markupVarejo, valor: "1.5" },
+            { campo: t.fields.markupRetail, valor: "1.5" },
         ],
     },
     {
@@ -237,8 +237,8 @@ export const PERSONAS: Persona[] = [
             { campo: t.fields.avgPower, valor: "0" },
             { campo: t.fields.tariff, valor: "0" },
             { campo: t.fields.machineValue, valor: "0" },
-            { campo: t.fields.markupVarejo, valor: "0" },
-            { campo: t.fields.markupAtacado, valor: "0" },
+            { campo: t.fields.markupRetail, valor: "0" },
+            { campo: t.fields.markupWholesale, valor: "0" },
         ],
     },
     {
@@ -248,7 +248,7 @@ export const PERSONAS: Persona[] = [
         entradas: [
             { campo: t.fields.costPerRoll, valor: "12000" },
             { campo: t.fields.grams, valor: "50000" },
-            { campo: t.fields.markupVarejo, valor: "5000" },
+            { campo: t.fields.markupRetail, valor: "5000" },
             { campo: t.fields.failure, valor: "900" },
         ],
     },

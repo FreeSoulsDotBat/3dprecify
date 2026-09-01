@@ -46,7 +46,7 @@ async function openCatalogItem(page: Page, text: string): Promise<void> {
         await page.getByTestId("master-item").filter({ hasText: text }).click();
         await page
             .getByTestId("detail-panel")
-            .getByRole("button", { name: t.catalogo.detailOpenEditor })
+            .getByRole("button", { name: t.catalog.detailOpenEditor })
             .click();
     } else {
         await page.getByText(text).click();
@@ -57,7 +57,7 @@ async function openCatalogItem(page: Page, text: string): Promise<void> {
  *  compute "R$ 25,65", 016/US10 — sem Desperdício) — the minimum a product needs to save (FR-310). */
 async function createFilamentAndPrinter(page: Page): Promise<void> {
     await page.goto("/catalogo");
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("PLA Azul");
     await page.getByRole("textbox", { name: new RegExp(t.catalogForm.material) }).fill("PLA");
     await page
@@ -67,8 +67,8 @@ async function createFilamentAndPrinter(page: Page): Promise<void> {
     await page.getByRole("button", { name: t.catalogForm.save, exact: true }).click();
     await expect(itemVisible(page, "PLA Azul")).toBeVisible();
 
-    await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
-    await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
+    await page.getByRole("tab", { name: t.catalog.tabPrinters }).click();
+    await page.getByRole("button", { name: t.catalog.addPrinter }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill("Ender 3");
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) })
@@ -95,11 +95,11 @@ test("T020: /historico?snapshot=<id> renders on a COLD page.goto AND survives a 
     await page.goto("/calcular");
     await page.reload();
     await recordFromCalculator(page);
-    await expect(page.getByText(t.historico.saved)).toBeVisible();
+    await expect(page.getByText(t.history.saved)).toBeVisible();
 
     // Open it the normal way ONCE, to mint the real URL (the client-nav path every other spec uses).
     await page.goto("/historico");
-    await page.getByText(t.historico.quotedAt.split("{")[0]!.trim()).first().click();
+    await page.getByText(t.history.quotedAt.split("{")[0]!.trim()).first().click();
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
     const detailUrl = page.url();
 
@@ -107,12 +107,12 @@ test("T020: /historico?snapshot=<id> renders on a COLD page.goto AND survives a 
     // router involved, the browser requests it exactly as a bookmark/shared-link opener would.
     await page.goto(detailUrl);
     const painel = historicoDetail(page);
-    await expect(painel.getByText(t.historico.quotedValue)).toBeVisible();
-    await expect(painel.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
+    await expect(painel.getByText(t.history.quotedValue)).toBeVisible();
+    await expect(painel.getByRole("button", { name: t.history.editLabel })).toBeVisible();
 
     // And a reload of the already-open screen — the other half of F-02 (refresh, not just first load).
     await page.reload();
-    await expect(historicoDetail(page).getByText(t.historico.quotedValue)).toBeVisible();
+    await expect(historicoDetail(page).getByText(t.history.quotedValue)).toBeVisible();
 });
 
 test("T020: /catalogo?produto=<id> renders on a COLD page.goto AND survives a reload", async ({
@@ -123,8 +123,8 @@ test("T020: /catalogo?produto=<id> renders on a COLD page.goto AND survives a re
     await page.reload();
 
     await createFilamentAndPrinter(page);
-    await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
-    await page.getByRole("button", { name: t.catalogo.addProduct }).click();
+    await page.getByRole("tab", { name: t.catalog.tabProducts }).click();
+    await page.getByRole("button", { name: t.catalog.addProduct }).click();
     await page.getByRole("textbox", { name: t.productForm.nameLabel }).fill("Vaso Cold-Load");
     await page
         .getByRole("combobox", { name: t.calculator.catalogPicker.filament })
@@ -182,13 +182,13 @@ test("T072-A4: cold GET on the OLD /historico/:id (ghost id) renders honest not-
     // `crypto.randomUUID()`, T013) — a malformed id like a literal "id-fantasma" 422s the backend's
     // validation, which is a DIFFERENT, correct "could not load" branch, not the not-found one.
     await page.goto("/historico/00000000-0000-4000-8000-000000000000");
-    await expect(historicoDetail(page).getByText(t.historico.notFound)).toBeVisible();
+    await expect(historicoDetail(page).getByText(t.history.notFound)).toBeVisible();
     // 018 mestre-detalhe: a ≥1280px o link "Voltar" da Shell não existe DE PROPÓSITO (comentário em
     // snapshot-detail-page.tsx) — a lista já está ali, ao lado, e é ELA que prova que a tela não
     // ficou presa. Abaixo do corte a ficha toma a tela inteira e o link é o único caminho de volta.
     if ((page.viewportSize()?.width ?? 0) >= 1280) {
-        await expect(page.getByText(t.historico.emptyTitle)).toBeVisible();
+        await expect(page.getByText(t.history.emptyTitle)).toBeVisible();
     } else {
-        await expect(page.getByRole("link", { name: t.historico.backToList })).toBeVisible();
+        await expect(page.getByRole("link", { name: t.history.backToList })).toBeVisible();
     }
 });

@@ -45,7 +45,7 @@ test.use({ viewport: { width: 900, height: 900 } });
 const t = messages.calculator;
 const s = messages.scenarios;
 const pf = messages.productForm;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 const nav = messages.nav;
 
@@ -157,7 +157,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
         // D3 lever ("linked ⇒ the LIVE row wins", products.py::_to_out) one level below the scenario's
         // OWN D3 resolver (scenarios.py::_resolve_cost_basis_for_read), so a scenario reopen after this
         // edit is genuinely a two-hop live recompute, not a stub.
-        await page.getByRole("link", { name: nav.catalogo }).click();
+        await page.getByRole("link", { name: nav.catalog }).click();
         await expect(page.getByRole("tab", { name: catalogo.tabFilaments })).toBeVisible();
         // 018 mestre-detalhe: a ≥1280px filamento/impressora editam INLINE na ficha (sem gaveta —
         // "a ficha É o editor", catalog-panel.tsx); abaixo do corte o clique ainda abre a gaveta.
@@ -181,7 +181,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
         // Reopen the scenario from /calcular — the price reflects TODAY's product values (016/US10 —
         // sem Desperdício: material 220×100/1000=22,00 + energy 0,60 + machine 5,50 = 28,10 →
         // varejo ×1,5 = 42,15), never the R$ 25,65 captured at save time.
-        await page.getByRole("link", { name: nav.calcular }).click();
+        await page.getByRole("link", { name: nav.calculate }).click();
         await page.reload();
         const listDialog = await openScenariosList(page);
         await listDialog.getByText("Cenário Vaso D3").click();
@@ -204,7 +204,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
         await createProductWithScenario(page, "Vaso Cenário D6", "Cenário Vaso D6");
 
         // Delete the origin product through the catalog — the seller's own action.
-        await page.getByRole("link", { name: nav.catalogo }).click();
+        await page.getByRole("link", { name: nav.catalog }).click();
         await page.getByRole("tab", { name: catalogo.tabProducts }).click();
         await page.getByRole("button", { name: `${catalogo.remove} Vaso Cenário D6` }).click();
         await page
@@ -215,7 +215,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
 
         // Reopen the scenario — it degrades to last-known: the SAVE-TIME price (R$ 25,65), a calm
         // caption, and NEVER a claim of removal (F1 — the honesty class the E4 lineage guards).
-        await page.getByRole("link", { name: nav.calcular }).click();
+        await page.getByRole("link", { name: nav.calculate }).click();
         await page.reload();
         const listDialog = await openScenariosList(page);
         await listDialog.getByText("Cenário Vaso D6").click();
@@ -227,7 +227,7 @@ test.describe("D3/D6 — a scenario referencing a saved product", () => {
         await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0); // F1, never inferred
 
         // Stays editable + re-saveable: change a field, watch the unsaved badge, save it back (PUT).
-        const markupField = page.getByRole("textbox", { name: new RegExp(t.fields.markupVarejo) });
+        const markupField = page.getByRole("textbox", { name: new RegExp(t.fields.markupRetail) });
         await expect(markupField).toBeEditable();
         await markupField.fill("60");
         await expect(page.getByText(s.unsavedBadge)).toBeVisible();

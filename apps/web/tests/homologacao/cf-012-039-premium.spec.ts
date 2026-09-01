@@ -21,7 +21,7 @@ import {
 // de um seletor inventado por esta homologação.
 
 async function criarFilamento(page: Page, nome: string, custo = "110", peso = "1"): Promise<void> {
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill(nome);
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.costPerRoll) })
@@ -42,7 +42,7 @@ test("CF-015-UI-01/02/03 — filamentos: estado vazio, criação, entradas absur
     await aplicarSubcenario(page, { viewport: "V3", tema: "dark" });
     await premium(page, `cat-${info.workerIndex}`);
     await page.goto("/catalogo");
-    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible({
+    await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible({
         timeout: 20_000,
     });
     executado(info, SUB, "gate_premium");
@@ -202,7 +202,7 @@ test("CF-025/CF-026 — orçamento: registra online, registra offline e a fila �
     await expect(page.getByRole("heading", { name: t.calculator.title })).toBeVisible();
 
     // T01 — o botão de registrar existe para um Premium.
-    const registrar = page.getByRole("button", { name: t.historico.saveAction });
+    const registrar = page.getByRole("button", { name: t.history.saveAction });
     const temRegistrar = await registrar
         .first()
         .isVisible()
@@ -214,7 +214,7 @@ test("CF-025/CF-026 — orçamento: registra online, registra offline e a fila �
             categoria: "gate_premium",
             descricao:
                 "Um vendedor Premium não encontra a ação de registrar o orçamento na calculadora",
-            resultado_esperado: `Botão "${t.historico.saveAction}" visível`,
+            resultado_esperado: `Botão "${t.history.saveAction}" visível`,
             resultado_obtido: "não encontrado",
             severidade: "alta",
         });
@@ -225,7 +225,7 @@ test("CF-025/CF-026 — orçamento: registra online, registra offline e a fila �
     await registrar.first().click();
     const folha = page.getByRole("dialog");
     await expect.soft(folha, `${SUB}/T02 folha de registro abre`).toBeVisible();
-    await folha.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+    await folha.getByRole("button", { name: t.history.saveSheetSubmit }).click();
     await page.waitForTimeout(1200);
     executado(info, SUB, "fluxo");
 
@@ -250,10 +250,10 @@ test("CF-025/CF-026 — orçamento: registra online, registra offline e a fila �
     await page.goto("/calcular");
     await offline(page, context);
     await page.waitForTimeout(400);
-    await page.getByRole("button", { name: t.historico.saveAction }).first().click();
+    await page.getByRole("button", { name: t.history.saveAction }).first().click();
     const folha2 = page.getByRole("dialog");
     if (await folha2.isVisible().catch(() => false)) {
-        await folha2.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+        await folha2.getByRole("button", { name: t.history.saveSheetSubmit }).click();
         await page.waitForTimeout(1000);
         executado(info, "CF-025-UI-02", "rede");
         const corpo = await page.locator("body").innerText();
@@ -442,7 +442,7 @@ test("CF-012-UI-01 — usar do catálogo preenche os campos com os valores salvo
     await premium(page, `pref-${info.workerIndex}`);
 
     await page.goto("/catalogo");
-    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible({
+    await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible({
         timeout: 20_000,
     });
     await criarFilamento(page, "PETG Preto", "180", "1");

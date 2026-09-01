@@ -22,7 +22,7 @@ import {
 } from "./quote-catalog-item";
 
 const t = messages.quote;
-const th = messages.historico;
+const th = messages.history;
 const tb = messages.bom;
 
 // ── 019/PR-E — Revisão (18d + 18e num passo só — ver decisão de fidelidade em `quote-builder.tsx`) ──

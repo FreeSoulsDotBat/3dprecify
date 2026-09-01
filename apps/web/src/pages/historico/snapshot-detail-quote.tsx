@@ -17,7 +17,7 @@ import { BreakdownRow } from "@/shared/ui";
 // kit itemization (both "linhas do orçamento/kit"), discount block included where it always lived
 // (inside `QuoteDocument`, never restructured).
 
-const t = messages.historico;
+const t = messages.history;
 const tq = messages.quote;
 
 /**

@@ -39,7 +39,7 @@ import "./export-sheet.css";
 // a dialog whose only content is the sentence already shown here, and there is no reactivation FLOW
 // to offer before E6 (billing) — so it would promise a door that does not exist (Principle II).
 
-const t = messages.historico;
+const t = messages.history;
 
 type Format = "pdf" | "csv";
 

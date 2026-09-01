@@ -24,7 +24,7 @@ import { Alert, Button, Dialog, DialogContent, DialogDescription, DialogTitle } 
 // Mounted in the app shell because FSD-Lite forbids `shared` importing `entities/history` — the
 // interception seam lives in `shared/session`, and this is what registers into it.
 
-const t = messages.historico;
+const t = messages.history;
 const count = (s: string, n: number) => s.replace("{n}", String(n));
 
 type Decision = (proceed: boolean) => void;

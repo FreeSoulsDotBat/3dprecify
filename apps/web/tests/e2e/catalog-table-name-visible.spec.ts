@@ -20,13 +20,13 @@ async function setupPremium(page: Page, tag: string): Promise<void> {
     const email = await signUpThrowaway(page, tag);
     grantPremium(email);
     await page.goto("/catalogo");
-    await expect(page.getByRole("tab", { name: t.catalogo.tabFilaments })).toBeVisible();
+    await expect(page.getByRole("tab", { name: t.catalog.tabFilaments })).toBeVisible();
     await page.reload();
 }
 
 async function createFilament(page: Page, name: string): Promise<void> {
-    await page.getByRole("tab", { name: t.catalogo.tabFilaments }).click();
-    await page.getByRole("button", { name: t.catalogo.addFilament }).click();
+    await page.getByRole("tab", { name: t.catalog.tabFilaments }).click();
+    await page.getByRole("button", { name: t.catalog.addFilament }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill(name);
     await page.getByRole("textbox", { name: new RegExp(t.catalogForm.material) }).fill("PLA");
     await page
@@ -38,8 +38,8 @@ async function createFilament(page: Page, name: string): Promise<void> {
 }
 
 async function createPrinter(page: Page, name: string): Promise<void> {
-    await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
-    await page.getByRole("button", { name: t.catalogo.addPrinter }).click();
+    await page.getByRole("tab", { name: t.catalog.tabPrinters }).click();
+    await page.getByRole("button", { name: t.catalog.addPrinter }).click();
     await page.getByRole("textbox", { name: t.catalogForm.name }).fill(name);
     await page
         .getByRole("textbox", { name: new RegExp(t.calculator.fields.machineValue) })
@@ -63,8 +63,8 @@ async function createProduct(
     filamentName: string,
     printerName: string,
 ): Promise<void> {
-    await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
-    await page.getByRole("button", { name: t.catalogo.addProduct }).click();
+    await page.getByRole("tab", { name: t.catalog.tabProducts }).click();
+    await page.getByRole("button", { name: t.catalog.addProduct }).click();
     await page.getByRole("textbox", { name: t.productForm.nameLabel }).fill(name);
     await page
         .getByRole("combobox", { name: t.calculator.catalogPicker.filament })
@@ -74,7 +74,7 @@ async function createProduct(
         .selectOption({ label: printerName });
     await page.getByRole("button", { name: t.productForm.saveProduct }).click();
     await expect(page.getByText(t.productForm.savedProduct).last()).toBeVisible();
-    await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
+    await page.getByRole("tab", { name: t.catalog.tabProducts }).click();
 }
 
 /** O botão do nome, DENTRO da célula `tf-table__name` — nunca a própria célula (ela sempre foi
@@ -96,7 +96,7 @@ for (const width of [1024, 1279] as const) {
         await createProduct(page, "Produto Visível", "Filamento Visível", "Impressora Visível");
 
         // ---- Filamentos ----
-        await page.getByRole("tab", { name: t.catalogo.tabFilaments }).click();
+        await page.getByRole("tab", { name: t.catalog.tabFilaments }).click();
         let btn = nameButton(page, "Filamento Visível");
         await expect(btn).toBeVisible();
         // Não-vácuo: o repro da 1ª rodada media `btnOffsetWidth: 0` — aqui exigimos uma folga real,
@@ -109,7 +109,7 @@ for (const width of [1024, 1279] as const) {
         await page.keyboard.press("Escape");
 
         // ---- Impressoras ----
-        await page.getByRole("tab", { name: t.catalogo.tabPrinters }).click();
+        await page.getByRole("tab", { name: t.catalog.tabPrinters }).click();
         btn = nameButton(page, "Impressora Visível");
         await expect(btn).toBeVisible();
         expect(await btn.evaluate((el) => (el as HTMLElement).offsetWidth)).toBeGreaterThan(40);
@@ -120,7 +120,7 @@ for (const width of [1024, 1279] as const) {
         await page.keyboard.press("Escape");
 
         // ---- Produtos (o clique NAVEGA para a ficha de página cheia, não abre um Sheet) ----
-        await page.getByRole("tab", { name: t.catalogo.tabProducts }).click();
+        await page.getByRole("tab", { name: t.catalog.tabProducts }).click();
         btn = nameButton(page, "Produto Visível");
         await expect(btn).toBeVisible();
         expect(await btn.evaluate((el) => (el as HTMLElement).offsetWidth)).toBeGreaterThan(40);

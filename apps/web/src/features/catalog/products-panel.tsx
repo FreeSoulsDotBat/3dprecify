@@ -10,7 +10,7 @@ import {
 } from "@/entities/catalog/use-catalog";
 import { useEntitlement } from "@/entities/user/use-entitlement";
 import { honestWriteError } from "@/shared/api/error-messages";
-import type { ChannelSlot, OtherCost, ProductIn, ProductOut } from "@/shared/api/generated";
+import type { ProductIn, ProductOut } from "@/shared/api/generated";
 import { premiumGate } from "@/shared/billing/premium-gate";
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatDayMonthPtBr } from "@/shared/lib/format-date";
@@ -46,7 +46,7 @@ import { CatalogPanel } from "./catalog-panel";
 // vivem só no ITEM ABERTO (`pages/catalogo/produto-page.tsx`, prancheta 17c/16b·2) — nenhuma
 // prancheta desenha os dois blocos aqui.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const pf = messages.productForm;
 const cf = messages.catalogForm;
 
@@ -156,12 +156,8 @@ export function ProductsPanel({
             pieceInputs: duplicateTarget.pieceInputs,
             tariffPerKwh: duplicateTarget.tariffPerKwh,
             includeMarketplace: duplicateTarget.includeMarketplace,
-            // Os DOIS casts restantes têm causa raiz nomeada (pendência 4 do relatório): o Out do
-            // backend serializa channels/otherCosts como dict sem tipo, então o Orval gera um item
-            // solto sem `marketplace`. Tipar o Out mudaria o OpenAPI (drift-guard) — decisão de
-            // contrato, não de legibilidade. Os outros 3 casts deste bloco caíram: eram atribuíveis.
-            channels: duplicateTarget.channels as unknown as ChannelSlot[],
-            otherCosts: duplicateTarget.otherCosts as unknown as OtherCost[],
+            channels: duplicateTarget.channels,
+            otherCosts: duplicateTarget.otherCosts,
             // `sellerFixedPrice` não existe em `ProductIn` — a cópia NUNCA herda o preço fixado, por
             // construção do tipo, não por um `if` que alguém possa esquecer (17d).
         };

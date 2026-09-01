@@ -22,8 +22,8 @@ export const bom = {
     // — "Preço atacado" mede 111px e trunca; estas duas medem ~55/63px). O contexto ("Total
     // do kit" + o R$ na mesma linha) é o que nomeia o número; "Preço" ali é redundância.
     pinned: {
-        varejo: "Varejo",
-        atacado: "Atacado",
+        retail: "Varejo",
+        wholesale: "Atacado",
     },
     removeLine: "Remover peça",
     qtyZero: "Quantidade 0 — não entra no total.",
@@ -41,7 +41,7 @@ export const bom = {
     lineTotal: "Total da linha ({qty}×)",
     // Assembly total + per-channel rollup (§1.7)
     assemblyTitle: "Total do kit",
-    assemblyCusto: "Custo total",
+    assemblyCost: "Custo total",
     // Honest headline states (review 2026-07-12): with NO valid line the total is not "R$ 0,00",
     // it simply does not exist yet; a partial kit says how many pieces are out of the sum.
     assemblyNoPriceTitle: "Sem preço ainda",

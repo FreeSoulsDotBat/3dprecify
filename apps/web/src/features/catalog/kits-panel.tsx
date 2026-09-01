@@ -18,7 +18,7 @@ import { CatalogPanel } from "./catalog-panel";
 // 019/PR-B (T044) — o único dos quatro que ainda não lia `useEntitlement()` (não tinha faixa
 // lapsed nem vazio didático antes): ganha o MESMO `gate` dos irmãos agora.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 export function KitsPanel() {
     const list = useBoms();

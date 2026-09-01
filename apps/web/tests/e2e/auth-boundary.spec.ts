@@ -42,7 +42,7 @@ test("a guarded tab signed-out routes through sign-in and lands on the intended 
     // Select a guarded tab from the app-nav while signed out. (007/US7 moved /catalogo out of the
     // guarded set — signed-out sees its honest teaser — so the boundary contract is exercised on
     // Conta, which stays guarded.)
-    await page.getByRole("link", { name: messages.nav.conta }).click();
+    await page.getByRole("link", { name: messages.nav.account }).click();
 
     // GC-2: redirected to sign-in carrying the return-to-intent.
     await expect(page).toHaveURL(/\/sign-in\?redirect=%2Fconta/);
@@ -53,7 +53,7 @@ test("a guarded tab signed-out routes through sign-in and lands on the intended 
 
     // GC-3/GC-4: land on the originally requested section (Conta), not the calculator.
     await expect(page).toHaveURL(/\/conta$/);
-    await expect(page.getByRole("heading", { name: messages.conta.title })).toBeVisible();
+    await expect(page.getByRole("heading", { name: messages.account.title })).toBeVisible();
 });
 
 test("a signed-in user is bounced off /sign-in to the calculator by default", async ({

@@ -47,7 +47,7 @@ import { HistoricoPage } from "./historico-page";
 // starved of correct data still lies — is answered structurally: the page cannot read the server
 // query alone, because that is not what `useHistory()` returns.
 
-const t = messages.historico;
+const t = messages.history;
 const pt = messages.premiumTeaser.QUOTES;
 
 function item(over: Partial<HistoryItem> = {}): HistoryItem {

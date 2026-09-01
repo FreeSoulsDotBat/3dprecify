@@ -36,7 +36,7 @@ async function openCatalogItem(page: Page, text: string): Promise<void> {
         await page.getByTestId("master-item").filter({ hasText: text }).click();
         await page
             .getByTestId("detail-panel")
-            .getByRole("button", { name: t.catalogo.detailOpenEditor })
+            .getByRole("button", { name: t.catalog.detailOpenEditor })
             .click();
     } else {
         await page.getByText(text).click();
@@ -74,16 +74,16 @@ for (const vp of [
 
         await page.goto("/calcular");
         await page.reload(); // a concessão só é lida na próxima carga
-        await page.getByRole("button", { name: t.historico.saveAction }).click();
+        await page.getByRole("button", { name: t.history.saveAction }).click();
         const sheet = page.getByRole("dialog");
-        await expect(sheet.getByText(t.historico.saveSheetIntro)).toBeVisible();
-        await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(PALAVRA_120);
-        await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
+        await expect(sheet.getByText(t.history.saveSheetIntro)).toBeVisible();
+        await sheet.getByRole("textbox", { name: t.history.labelField }).fill(PALAVRA_120);
+        await sheet.getByRole("button", { name: t.history.saveSheetSubmit }).click();
         // ASSENTAR antes de navegar (online ⇒ synced) — senão o `goto` aborta o enfileiramento+drenagem
         // em voo e o registro se perde em silêncio. É a mesma espera que os dois testes abaixo já fazem,
         // e omiti-la produziu uma falha só na PRIMEIRA tentativa (a repetição passava com a máquina
         // quente), que é exatamente a forma como uma corrida real se disfarça de instabilidade.
-        await expect(page.getByText(t.historico.saved)).toBeVisible();
+        await expect(page.getByText(t.history.saved)).toBeVisible();
 
         // A LISTA primeiro: o card do razão carrega o mesmo rótulo.
         await page.goto("/historico");
@@ -137,15 +137,15 @@ test("T120: um canal sem comissão informada não ganha preço no congelado que 
     // A ORIGEM recusa: nenhuma linha de preço para o canal, e o motivo dito em palavras.
     await expect(page.getByText(t.calculator.channels.noFeeHint)).toBeVisible();
     const slotDaCalcular = page.getByTestId("channel-price").first();
-    await expect(slotDaCalcular).not.toContainText(t.calculator.results.precoAnuncio);
-    await expect(slotDaCalcular).not.toContainText(t.calculator.results.recebidoLiquido);
+    await expect(slotDaCalcular).not.toContainText(t.calculator.results.listingPrice);
+    await expect(slotDaCalcular).not.toContainText(t.calculator.results.netReceived);
 
-    await page.getByRole("button", { name: t.historico.saveAction }).click();
+    await page.getByRole("button", { name: t.history.saveAction }).click();
     const sheet = page.getByRole("dialog");
-    await expect(sheet.getByText(t.historico.saveSheetIntro)).toBeVisible();
-    await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(rotulo);
-    await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
-    await expect(page.getByText(t.historico.saved)).toBeVisible(); // assentar antes de navegar
+    await expect(sheet.getByText(t.history.saveSheetIntro)).toBeVisible();
+    await sheet.getByRole("textbox", { name: t.history.labelField }).fill(rotulo);
+    await sheet.getByRole("button", { name: t.history.saveSheetSubmit }).click();
+    await expect(page.getByText(t.history.saved)).toBeVisible(); // assentar antes de navegar
 
     await openFromLedger(page, rotulo);
 
@@ -153,9 +153,9 @@ test("T120: um canal sem comissão informada não ganha preço no congelado que 
     // números, e dizendo por quê.
     const canais = page.locator(".tf-historico__channel");
     await expect(canais.first()).toBeVisible();
-    await expect(canais.first()).not.toContainText(t.calculator.results.precoAnuncio);
-    await expect(canais.first()).not.toContainText(t.calculator.results.recebidoLiquido);
-    await expect(canais.first()).toContainText(t.historico.channelNoFee);
+    await expect(canais.first()).not.toContainText(t.calculator.results.listingPrice);
+    await expect(canais.first()).not.toContainText(t.calculator.results.netReceived);
+    await expect(canais.first()).toContainText(t.history.channelNoFee);
 });
 
 test("SC-502/US3: deleting the origin product never moves the snapshot's values — only its link goes", async ({
@@ -183,18 +183,18 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
     await recordFromCalculator(page); // the SAME RecordSnapshotButton + sheet as the calculator
     // Wait for the record to SETTLE (online ⇒ synced) before navigating — else the goto aborts the
     // in-flight enqueue+drain and the snapshot is silently lost.
-    await expect(page.getByText(t.historico.saved)).toBeVisible();
+    await expect(page.getByText(t.history.saved)).toBeVisible();
 
     // In the ledger the snapshot carries the frozen value AND a live "Abrir produto" origin link. (The
     // card is titled by the frozen origin name, since the record has no manual label.)
     await openFromLedger(page, piece);
     await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible();
-    await expect(page.getByRole("link", { name: t.historico.openProduct })).toBeVisible();
+    await expect(page.getByRole("link", { name: t.history.openProduct })).toBeVisible();
 
     // CHURN: delete the origin product through the catalog — the seller's own action (T023). The
     // server soft-deletes it, so it drops out of the LIVE catalog the origin resolver reads.
     await page.goto("/catalogo?tab=products");
-    await page.getByRole("button", { name: `${t.catalogo.remove} ${piece}` }).click();
+    await page.getByRole("button", { name: `${t.catalog.remove} ${piece}` }).click();
     await page
         .getByRole("dialog")
         .getByRole("button", { name: t.catalogForm.deleteConfirm, exact: true })
@@ -206,7 +206,7 @@ test("SC-502/US3: deleting the origin product never moves the snapshot's values 
     // link, never a "produto removido" claim on a document that records no such thing.
     await openFromLedger(page, piece);
     await expect(page.getByText(/R\$\s?24,24/).first()).toBeVisible(); // byte-identical claim
-    await expect(page.getByRole("link", { name: t.historico.openProduct })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: t.history.openProduct })).toHaveCount(0);
     await expect(page.getByText(/removid|excluíd|deletad/i)).toHaveCount(0);
 });
 
@@ -218,20 +218,20 @@ test("SC-508/US6: a lapse freezes rename+delete but never the reading — a re-g
 
     await page.goto("/calcular");
     await page.reload();
-    await expect(page.getByRole("button", { name: t.historico.saveAction })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.history.saveAction })).toBeVisible();
     await recordFromCalculator(page);
     // Settle before navigating (online ⇒ synced) — else the goto aborts the enqueue+drain.
-    await expect(page.getByText(t.historico.saved)).toBeVisible();
+    await expect(page.getByText(t.history.saved)).toBeVisible();
 
     // The card of an unlabelled calculator record is titled by the honest neutral fallback.
-    const card = t.historico.adhocFallback;
+    const card = t.history.adhocFallback;
 
     // While ACTIVE, both writes are offered on the detail (ADR-0019: the label is the one mutable
     // field; delete is soft + confirmed).
     await openFromLedger(page, card);
     await expect(page.getByText(/R\$/).first()).toBeVisible(); // the frozen document renders
-    await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
-    await expect(page.getByRole("button", { name: t.historico.deleteAction })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.history.editLabel })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.history.deleteAction })).toBeVisible();
 
     // LAPSE — revoke the grant. The record itself is untouched (nothing auto-deletes on a lapse).
     revokePremium(email);
@@ -239,13 +239,13 @@ test("SC-508/US6: a lapse freezes rename+delete but never the reading — a re-g
     // Reading stays open (require_catalog_read); writing is gone — neither affordance is offered, and
     // the server would deny it regardless.
     await expect(page.getByText(/R\$/).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: t.historico.editLabel })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: t.historico.deleteAction })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: t.history.editLabel })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: t.history.deleteAction })).toHaveCount(0);
 
     // RE-GRANT restores the manage surface — the record intact the whole time (SC-508).
     grantPremium(email);
     await openFromLedger(page, card);
-    await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.history.editLabel })).toBeVisible();
     await expect(page.getByText(/R\$/).first()).toBeVisible();
 });
 
@@ -262,11 +262,11 @@ test("T035: mestre-detalhe de Orçamentos a 1440px — lista + registro juntos, 
 
     await page.goto("/calcular");
     await page.reload(); // a concessão só é lida na próxima carga
-    await page.getByRole("button", { name: t.historico.saveAction }).click();
+    await page.getByRole("button", { name: t.history.saveAction }).click();
     const sheet = page.getByRole("dialog");
-    await sheet.getByRole("textbox", { name: t.historico.labelField }).fill(rotulo);
-    await sheet.getByRole("button", { name: t.historico.saveSheetSubmit }).click();
-    await expect(page.getByText(t.historico.saved)).toBeVisible(); // assentar antes de navegar (T119)
+    await sheet.getByRole("textbox", { name: t.history.labelField }).fill(rotulo);
+    await sheet.getByRole("button", { name: t.history.saveSheetSubmit }).click();
+    await expect(page.getByText(t.history.saved)).toBeVisible(); // assentar antes de navegar (T119)
 
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto("/historico");
@@ -276,10 +276,10 @@ test("T035: mestre-detalhe de Orçamentos a 1440px — lista + registro juntos, 
     await page.getByText(rotulo).first().click();
     await expect(page).toHaveURL(/\/historico\?snapshot=.+/);
     await expect(page.getByText(rotulo).first()).toBeVisible(); // o card da lista não saiu da tela
-    await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible(); // o detalhe abriu
+    await expect(page.getByRole("button", { name: t.history.editLabel })).toBeVisible(); // o detalhe abriu
 
     // O endereço com a seleção continua respondendo — um reload no MESMO URL reabre o registro.
     await page.reload();
-    await expect(page.getByRole("button", { name: t.historico.editLabel })).toBeVisible();
+    await expect(page.getByRole("button", { name: t.history.editLabel })).toBeVisible();
     await expect(page.getByText(rotulo).first()).toBeVisible();
 });

@@ -32,7 +32,7 @@ import { formatDecimal, parseDecimal } from "./decimal-ptbr";
 // que permite pinar cada limiar num teste unitário barato, e o que impede este arquivo de virar,
 // com o tempo, um segundo lugar onde o preço é decidido.
 
-const t = messages.calculator.plausibilidade;
+const t = messages.calculator.plausibility;
 
 /** Um aviso ancorado no campo que o causou. `campo` é o que a tela usa para colocá-lo no lugar. */
 export interface AvisoPlausibilidade {
@@ -174,7 +174,7 @@ export function avisosDePlausibilidade(
     // recém-aberto e ainda vazio não é um erro, é um formulário recém-aberto.
     const pecaExiste = (entrada.printGrams ?? 0) > 0 || (entrada.printTimeHours ?? 0) > 0;
     if (resultado && pecaExiste && resultado.custoTotal === 0 && resultado.precoVarejo === 0) {
-        avisos.push({ campo: "resultado", texto: t.precoZero });
+        avisos.push({ campo: "resultado", texto: t.zeroPrice });
     }
     // O outro extremo, e ele existe porque os limiares por campo NÃO o pegam: erros pequenos em
     // vários campos ao mesmo tempo (uma casa decimal aqui, outra ali) compõem um custo que nenhum
@@ -182,7 +182,7 @@ export function avisosDePlausibilidade(
     if (resultado && resultado.custoTotal > LIMIARES.custoTotalMax) {
         avisos.push({
             campo: "resultado",
-            texto: t.custoAbsurdo.replace("{v}", fmtMoney(resultado.custoTotal)),
+            texto: t.absurdCost.replace("{v}", fmtMoney(resultado.custoTotal)),
         });
     }
 
@@ -198,14 +198,14 @@ export function avisoDeComissao(commissionPct: number | undefined): string | nul
     if (commissionPct === undefined || !Number.isFinite(commissionPct)) return null;
     if (commissionPct <= 0) return null;
     if (commissionPct >= LIMIARES.commissionPctMin) return null;
-    return t.comissaoBaixa.replace("{v}", fmt(commissionPct));
+    return t.lowCommission.replace("{v}", fmt(commissionPct));
 }
 
 /** O aviso do campo de quantidade de uma peça de kit. */
 export function avisoDeQuantidade(quantity: number | undefined): string | null {
     if (quantity === undefined || !Number.isFinite(quantity)) return null;
     if (quantity <= LIMIARES.quantityMax) return null;
-    return t.quantidade.replace("{v}", fmt(quantity)).replace("{max}", fmt(LIMIARES.quantityMax));
+    return t.quantity.replace("{v}", fmt(quantity)).replace("{max}", fmt(LIMIARES.quantityMax));
 }
 
 /**
@@ -244,15 +244,15 @@ export function avisoDeCampo(nome: string, bruto: string, comErro = false): stri
     (entrada as Record<string, number>)[nome] = n;
     const texto = avisosDePlausibilidade(entrada)[0]?.texto ?? null;
     if (!texto) return null;
-    return comErro ? texto.replace(t.fechoNormal, t.fechoComRecusa) : texto;
+    return comErro ? texto.replace(t.closingNormal, t.closingRejected) : texto;
 }
 
 /**
  * 019/PR-C (decisão do dono 28/08, prancheta 14b) — a LIÇÃO de um campo, sem cabeça e sem o valor
  * digitado: quando o campo TAMBÉM está recusado, é isto (não `avisoDeCampo`) que a tela mostra —
  * puro pelo NOME do campo, nunca pelo valor comprometido. `null` para quem não tem lição escrita
- * (hoje, todo campo fora dos oito de `messages.calculator.plausibilidade.licao`).
+ * (hoje, todo campo fora dos oito de `messages.calculator.plausibility.lesson`).
  */
 export function licaoDeCampo(nome: string): string | null {
-    return (t.licao as Partial<Record<string, string>>)[nome] ?? null;
+    return (t.lesson as Partial<Record<string, string>>)[nome] ?? null;
 }

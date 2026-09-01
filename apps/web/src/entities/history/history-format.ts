@@ -10,7 +10,7 @@ import type { HistoryItem, SyncState } from "./outbox";
 // page. Precedent: `entities/catalog/product-summary.ts` (E2). Review PR-A, Minor (history-format
 // in a page slice).
 
-const t = messages.historico;
+const t = messages.history;
 
 /**
  * The frozen document, wherever the record currently lives — on the server or still in the queue.

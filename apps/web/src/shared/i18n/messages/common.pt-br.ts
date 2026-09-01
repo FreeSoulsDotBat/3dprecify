@@ -19,46 +19,11 @@ export const signIn = {
     notConfigured: "Login indisponível: Firebase não configurado neste ambiente.",
 };
 
+// `account` merges the former `account` (signedInAs/signOut) and `conta` (Conta page) namespaces
+// into one (owner decision 2026-08-31, i18n key cleanup). No internal key collided.
 export const account = {
     signedInAs: "Conectado como",
     signOut: "Sair",
-};
-
-// FR-214 (006) — minimal honest privacy notice (owner-decided Option A, 2026-07-08; final wording
-// ratified by the owner before the UAT URL is shared — T027). No consent library: a notice, not a
-// consent gate. Full LGPD (consent mgmt, data deletion) is deliberately deferred to E2 (persistence).
-export const privacy = {
-    title: "Como tratamos seus dados",
-    google: "Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.",
-    monitoring: "Registramos erros técnicos (Sentry) para corrigir falhas.",
-    noSale: "Não vendemos seus dados nem fazemos rastreamento para publicidade.",
-    calculatorFree: "A calculadora funciona sem login e não coleta nada.",
-    // E2 (007/T034): the catalog now stores user data (filaments, printers, products) per account.
-    // Honest, minimal — no consent library yet (full LGPD still deferred); a notice, not a gate.
-    catalogData:
-        "Se você usar o Premium, salvamos seu catálogo (filamentos, impressoras e produtos) na sua conta para você reutilizar nos cálculos.",
-};
-
-// App shell navigation (app-nav) — the fixed IA labels (ds-readme §2).
-// `ariaLabel` names the <nav> landmark for assistive tech (a11y copy, honest).
-export const nav = {
-    ariaLabel: "Navegação principal",
-    calcular: "Calcular",
-    catalogo: "Catálogo",
-    kits: "Kits", // 008/K1 — the 5th section (owner-approved IA change)
-    // 016/US2 (T008) — a MESMA rota `/historico`, o rótulo visível vira "Orçamentos": o par
-    // Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje).
-    historico: "Orçamentos",
-    conta: "Conta",
-    // 018/US5 — o rail colapsável. O botão diz o que VAI acontecer, não o estado atual: quem lê
-    // "Recolher" sabe o que o clique faz; quem lê "Recolhido" fica adivinhando.
-    collapse: "Recolher",
-    expand: "Expandir",
-};
-
-// Conta page. Plan indicator is a static, honest "Gratuito" (display-only,
-// gates nothing — no entitlement field exists yet; Principle IV).
-export const conta = {
     title: "Conta",
     planLabel: "Plano",
     planFree: "Gratuito",
@@ -103,6 +68,38 @@ export const conta = {
     // never a fabricated fallback identity. Honest copy (no provider/price/cancellation).
     identityErrorTitle: "Não foi possível carregar sua conta",
     retry: "Tentar novamente",
+};
+
+// FR-214 (006) — minimal honest privacy notice (owner-decided Option A, 2026-07-08; final wording
+// ratified by the owner before the UAT URL is shared — T027). No consent library: a notice, not a
+// consent gate. Full LGPD (consent mgmt, data deletion) is deliberately deferred to E2 (persistence).
+export const privacy = {
+    title: "Como tratamos seus dados",
+    google: "Para entrar, usamos o Login com Google, que nos informa seu e-mail — usado apenas para identificar sua conta.",
+    monitoring: "Registramos erros técnicos (Sentry) para corrigir falhas.",
+    noSale: "Não vendemos seus dados nem fazemos rastreamento para publicidade.",
+    calculatorFree: "A calculadora funciona sem login e não coleta nada.",
+    // E2 (007/T034): the catalog now stores user data (filaments, printers, products) per account.
+    // Honest, minimal — no consent library yet (full LGPD still deferred); a notice, not a gate.
+    catalogData:
+        "Se você usar o Premium, salvamos seu catálogo (filamentos, impressoras e produtos) na sua conta para você reutilizar nos cálculos.",
+};
+
+// App shell navigation (app-nav) — the fixed IA labels (ds-readme §2).
+// `ariaLabel` names the <nav> landmark for assistive tech (a11y copy, honest).
+export const nav = {
+    ariaLabel: "Navegação principal",
+    calculate: "Calcular",
+    catalog: "Catálogo",
+    kits: "Kits", // 008/K1 — the 5th section (owner-approved IA change)
+    // 016/US2 (T008) — a MESMA rota `/historico`, o rótulo visível vira "Orçamentos": o par
+    // Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje).
+    history: "Orçamentos",
+    account: "Conta",
+    // 018/US5 — o rail colapsável. O botão diz o que VAI acontecer, não o estado atual: quem lê
+    // "Recolher" sabe o que o clique faz; quem lê "Recolhido" fica adivinhando.
+    collapse: "Recolher",
+    expand: "Expandir",
 };
 
 // System states (offline / 404 / generic error). Honest pt-BR: no provider,

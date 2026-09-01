@@ -111,7 +111,7 @@ describe("FeeSeal — 'Ver fonte' (13a·6) só existe quando a entrada carrega s
                 marketplace="SHOPEE"
             />,
         );
-        expect(screen.queryByRole("button", { name: t.verFonte })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: t.viewSource })).not.toBeInTheDocument();
     });
 
     it("com sourceUrl: 'Ver fonte' abre o diálogo com a citação inteira, a data e o link (13a·2)", async () => {
@@ -129,21 +129,21 @@ describe("FeeSeal — 'Ver fonte' (13a·6) só existe quando a entrada carrega s
         );
         expect(screen.queryByTestId("fee-seal-source-dialog")).not.toBeInTheDocument();
 
-        await user.click(screen.getByRole("button", { name: t.verFonte }));
+        await user.click(screen.getByRole("button", { name: t.viewSource }));
 
         const dialog = await screen.findByTestId("fee-seal-source-dialog");
-        expect(within(dialog).getByText(t.fonteTitle)).toBeInTheDocument();
+        expect(within(dialog).getByText(t.sourceTitle)).toBeInTheDocument();
         expect(dialog).toHaveTextContent(
             "Central de Educação do Vendedor Shopee — Política de Comissão 2026",
         );
-        expect(dialog).toHaveTextContent(t.fonteConferida.replace("{data}", "06/08/2026"));
+        expect(dialog).toHaveTextContent(t.sourceCheckedOn.replace("{data}", "06/08/2026"));
         expect(within(dialog).getByRole("link")).toHaveAttribute(
             "href",
             "https://seller.shopee.com.br/edu/article/26839",
         );
         expect(within(dialog).getByRole("link")).toHaveAttribute("target", "_blank");
         expect(within(dialog).getByRole("link")).toHaveAttribute("rel", "noopener noreferrer");
-        expect(dialog).toHaveTextContent(t.fonteAviso.replace("{marketplace}", "Shopee"));
+        expect(dialog).toHaveTextContent(t.sourceDisclaimer.replace("{marketplace}", "Shopee"));
     });
 });
 
@@ -156,7 +156,7 @@ describe("FeeSeal — Dispensar (T058) some até a fonte mudar (decisão do dono
                 marketplace="SHOPEE"
             />,
         );
-        await user.click(screen.getByRole("button", { name: t.dispensar }));
+        await user.click(screen.getByRole("button", { name: t.dismiss }));
         expect(screen.queryByTestId("fee-seal")).not.toBeInTheDocument();
     });
 
@@ -168,7 +168,7 @@ describe("FeeSeal — Dispensar (T058) some até a fonte mudar (decisão do dono
             reviewedOn: "2026-07-06",
         };
         const { unmount } = render(<FeeSeal state={state} marketplace="SHOPEE" />);
-        await user.click(screen.getByRole("button", { name: t.dispensar }));
+        await user.click(screen.getByRole("button", { name: t.dismiss }));
         unmount();
 
         render(<FeeSeal state={state} marketplace="SHOPEE" />);
@@ -214,7 +214,7 @@ describe("FeeSeal — embutida (offline, 13b·3): sem citação, sem 'Ver fonte'
         expect(seal).toHaveTextContent(t.embedded);
         expect(seal).toHaveTextContent("06/07/2026"); // a data sobrevive (SC-807)
         expect(seal.className).toContain("tf-alert--neutral");
-        expect(screen.queryByRole("button", { name: t.verFonte })).not.toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: t.viewSource })).not.toBeInTheDocument();
         // decisão do dono 28/08 (13b·3) — o ícone "como no design" para a referência embutida: `wifi`,
         // não o `info` padrão do tone `neutral`. Identificado pelo glifo (o DS não marca `data-icon`).
         const glyph = container.querySelector(".tf-alert__icon");
@@ -452,7 +452,7 @@ describe("FixedFeeSourceBadge (T057) — a procedência própria da taxa fixa, n
                 marketplace="AMAZON"
             />,
         );
-        await user.click(screen.getByRole("button", { name: t.verFonte }));
+        await user.click(screen.getByRole("button", { name: t.viewSource }));
         const dialog = await screen.findByTestId("fee-seal-source-dialog");
         expect(within(dialog).getByRole("link")).toHaveAttribute(
             "href",
@@ -468,7 +468,7 @@ describe("FixedFeeSourceBadge (T057) — a procedência própria da taxa fixa, n
             effectiveDate: "2020-12-01",
         };
         render(<FixedFeeSourceBadge source={source} marketplace="AMAZON" />);
-        await user.click(screen.getByRole("button", { name: t.dispensar }));
+        await user.click(screen.getByRole("button", { name: t.dismiss }));
         expect(screen.queryByTestId("fixed-fee-source-seal")).not.toBeInTheDocument();
     });
 });

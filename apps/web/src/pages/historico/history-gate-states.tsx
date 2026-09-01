@@ -3,7 +3,7 @@ import { PageHeader } from "@/widgets/page-header/page-header";
 
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-const t = messages.historico;
+const t = messages.history;
 
 export function GateError({ onRetry }: { onRetry: () => void }) {
     return (

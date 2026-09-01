@@ -62,8 +62,8 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
         // varejo"/"Preço atacado" (elas saem para o cabeçalho + o cartão/linha-resumo finais). SC-010
         // continua satisfeita: os DOIS preços seguem visíveis juntos — um no cartão grande (varejo,
         // default), o outro na linha-resumo logo abaixo.
-        expect(screen.getByTestId("price-hero")).toHaveTextContent(t.results.varejo);
-        expect(screen.getByTestId("price-summary-line")).toHaveTextContent(t.captions.atacado);
+        expect(screen.getByTestId("price-hero")).toHaveTextContent(t.results.retail);
+        expect(screen.getByTestId("price-summary-line")).toHaveTextContent(t.captions.wholesale);
 
         // Breakdown lines (single-node currency strings) for the default seed.
         expect(screen.getByText("R$ 0,60")).toBeInTheDocument(); // energy
@@ -82,7 +82,7 @@ describe("CalcularPage — US1 correct retail + wholesale price", () => {
         const breakdown = screen.getByText(t.sections.breakdown);
         // "Preço varejo" appears in the breakdown derivation row AND the closing hero — the
         // LAST occurrence is the hero, which must be the final price block on the screen.
-        const varejoNodes = screen.getAllByText(t.results.varejo);
+        const varejoNodes = screen.getAllByText(t.results.retail);
         const priceHero = varejoNodes[varejoNodes.length - 1];
 
         expectDomOrder([inputs, markup, breakdown, priceHero]);
@@ -124,7 +124,7 @@ describe("CalcularPage — US2 transparency + validation", () => {
         expect(screen.getByText(t.results.material)).toBeInTheDocument();
         expect(screen.getByText(t.results.energy)).toBeInTheDocument();
         expect(screen.getByText(t.results.machine)).toBeInTheDocument();
-        expect(screen.getByText(t.results.custoTotal)).toBeInTheDocument();
+        expect(screen.getByText(t.results.totalCost)).toBeInTheDocument();
     });
 
     it("rejects an invalid roll weight with a pt-BR message and hides the price (SC-008)", async () => {
@@ -153,8 +153,8 @@ describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () 
         // "Mão de obra" (breakdown row) is unique. The "Outros custos" slot title is present even with 0
         // sub-costs (the slot is always shown so the user can add named costs), but no admin line yet.
         expect(screen.getByText(t.results.labor)).toBeInTheDocument();
-        expect(screen.getByText(t.outrosCustos.title)).toBeInTheDocument();
-        expect(screen.getByRole("button", { name: t.outrosCustos.addCost })).toBeInTheDocument();
+        expect(screen.getByText(t.otherCosts.title)).toBeInTheDocument();
+        expect(screen.getByRole("button", { name: t.otherCosts.addCost })).toBeInTheDocument();
     });
 
     it("shows an ⓘ info tip on the labor + marketplace section titles", () => {
@@ -200,8 +200,8 @@ describe("CalcularPage — US4 labor + US5 outros custos + US1 marketplace", () 
         // 016/PR-C homologação B1 — seed varejo 24,24 grossed up at 20% → 30,30 to advertise;
         // anúncio + líquido rows are shown.
         expect(screen.getByText("R$ 30,30")).toBeInTheDocument();
-        expect(screen.getAllByText(t.results.precoAnuncio).length).toBeGreaterThan(0);
-        expect(screen.getAllByText(t.results.recebidoLiquido).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(t.results.listingPrice).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(t.results.netReceived).length).toBeGreaterThan(0);
     });
 });
 
@@ -249,7 +249,7 @@ describe("CalcularPage — US4 'Incluir marketplaces no preço' visibility toggl
 // US5 — "Outros custos" is a slot of 0..N named sub-costs. Adding one shows it as its own breakdown
 // line; removing it drops the line; a bad value errors only its row while the price still computes.
 describe("CalcularPage — US5 itemized 'Outros custos' slot", () => {
-    const oc = t.outrosCustos;
+    const oc = t.otherCosts;
 
     it("starts empty; adding a named sub-cost shows it as its own breakdown line", () => {
         renderPage();
@@ -297,7 +297,7 @@ describe("CalcularPage — US5 itemized 'Outros custos' slot", () => {
 
         expect(within(row).getByText(t.validation.negative)).toBeInTheDocument();
         // No error wall — the headline varejo price is still shown, never a NaN.
-        expect(screen.getAllByText(t.results.varejo).length).toBeGreaterThan(0);
+        expect(screen.getAllByText(t.results.retail).length).toBeGreaterThan(0);
         expect(screen.queryByText(/NaN|Infinity/)).not.toBeInTheDocument();
     });
 });

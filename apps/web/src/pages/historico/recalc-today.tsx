@@ -45,7 +45,7 @@ import { frozenPayloadOf } from "@/entities/history/history-format";
 // Where the origin no longer resolves, it reprices the frozen inputs under the current formula and
 // SAYS SO — it must never present a frozen reprice as catalog-current.
 
-const t = messages.historico;
+const t = messages.history;
 
 /** Which leaf of `payload.totals` the recorded basis points at. Exported because `compare-today`
  *  reads the same leaf to answer "and what would it cost today?" — two copies of this map is two

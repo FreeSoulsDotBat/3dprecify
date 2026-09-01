@@ -76,7 +76,7 @@ export const billing = {
     returnPendingBody:
         "Estamos verificando com o Mercado Pago. Assim que confirmar, o Premium liga sozinho — você não precisa fazer mais nada.",
     returnRefresh: "Atualizar",
-    returnBackToConta: "Voltar para a Conta",
+    returnBackToAccount: "Voltar para a Conta",
     returnSuccessTitle: "Premium ativo!",
     returnSuccessBody:
         "Seu catálogo, kits, orçamentos e simulações agora salvam e exportam. Bom trabalho.",
@@ -97,11 +97,11 @@ export const premiumTeaser = {
     // 019/PR-B (T042) — prancheta 32b/32e/32f (Premium - O Caminho Sem Parede): a frase que fica
     // ACIMA da linha de botões do formulário inerte, e o rótulo do botão do vazio de Orçamentos e
     // Simulações (o destino, não "Adicionar" — "prometeria uma tela de cadastro que não existe").
-    salvarFazParteDoPremium: "Salvar faz parte do Premium.",
-    fazerUmCalculo: "Fazer um cálculo",
+    saveIsPartOfPremium: "Salvar faz parte do Premium.",
+    makeACalculation: "Fazer um cálculo",
     // 019/PR-D (T074) — brief US13 AC5 / prancheta 16d: sem consumidor nesta fatia (a 16d foi superada
     // pela PR-B); transcrita porque a T074 a lista — o dono decide onde entra.
-    calculoContinuaGratis: "O cálculo continua grátis",
+    calculationStaysFree: "O cálculo continua grátis",
     SCENARIOS: {
         title: "Salve suas simulações",
         // Texto EXATO aprovado pelo dono (spec 016 US1-AC5) — não parafrasear.

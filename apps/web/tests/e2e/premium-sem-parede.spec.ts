@@ -23,7 +23,7 @@ import { grantPremium, signUpThrowaway } from "./history-helpers";
 // itens e o formulário PREENCHIDO inerte com "Reative o Premium…" — nunca o vazio didático.
 
 const t = messages;
-const catalogo = t.catalogo;
+const catalogo = t.catalog;
 const cf = t.catalogForm;
 const backendDir = fileURLToPath(new URL("../../../../backend", import.meta.url));
 
@@ -141,7 +141,7 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
     const vazio = page.getByTestId("vazio-didatico");
     await expect(vazio).toBeVisible();
     await expect(vazio).toContainText(catalogo.emptyFilamentsTitle);
-    await expect(vazio).toContainText(catalogo.didaticoFilamentsBody);
+    await expect(vazio).toContainText(catalogo.educationalFilamentsBody);
     await expect(page.getByText(t.premiumTeaser.CATALOG.title)).toHaveCount(0); // a parede saiu
     await expect(cta(page)).toHaveCount(1); // um convite no estado de lista
 
@@ -149,7 +149,7 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
     await page.getByRole("button", { name: catalogo.addFilament }).first().click();
     await esperarFormularioInerte(page, cf.save, t.billing.subscribeAction);
     await expect(page.getByTestId("premium-footer-note")).toHaveText(
-        t.premiumTeaser.salvarFazParteDoPremium,
+        t.premiumTeaser.saveIsPartOfPremium,
     );
     // Campos VAZIOS com placeholder — "dados de exemplo seriam mais bonitos e mais mentirosos".
     await expect(formularioInerte(page).getByRole("textbox").first()).toHaveValue("");
@@ -168,7 +168,9 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
 
     // ---- Impressoras: a dica do consumo (a peça mais didática) continua LEGÍVEL dentro do frozen.
     await page.goto("/catalogo?tab=printers");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoPrintersBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(
+        catalogo.educationalPrintersBody,
+    );
     await page.getByRole("button", { name: catalogo.addPrinter }).first().click();
     await esperarFormularioInerte(page, cf.save, t.billing.subscribeAction);
     const dica = formularioInerte(page).getByText(/potência de placa/);
@@ -180,7 +182,7 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
 
     // ---- Kits: o composer monta e COMPÕE (decisão 3, 27/08) — só Salvar bloqueia.
     await page.goto("/kits");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoKitsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.educationalKitsBody);
     await expect(cta(page)).toHaveCount(1);
     await page.getByRole("button", { name: t.bom.addLine }).first().click();
     await expect(page.getByText(t.bom.lineLabel.replace("{n}", "1"))).toBeVisible();
@@ -191,9 +193,9 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
 
     // ---- Orçamentos e a folha de Simulações: o botão do vazio leva à calculadora (32f).
     await page.goto("/historico");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(t.historico.didaticoTitle);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.history.educationalTitle);
     await expect(cta(page)).toHaveCount(1);
-    await page.getByRole("button", { name: t.premiumTeaser.fazerUmCalculo }).click();
+    await page.getByRole("button", { name: t.premiumTeaser.makeACalculation }).click();
     await expect(page).toHaveURL(/\/calcular/);
     await page.getByRole("button", { name: t.scenarios.navEntry }).click();
     // 019/PR-F (T099, adoção) — ≥1280px "a folha" é a coluna larga sempre visível
@@ -203,7 +205,7 @@ test("grátis (nunca teve): vazio didático → formulário inerte → zero escr
     // gaveta) segue como estava — um `dialog` com o convite único (FR-1906). Molde
     // `porte-pr-f-t093.spec.ts`.
     const folha = largo(page) ? page.getByTestId("scenarios-wide-aside") : page.getByRole("dialog");
-    await expect(folha.getByTestId("vazio-didatico")).toContainText(t.scenarios.didaticoBody);
+    await expect(folha.getByTestId("vazio-didatico")).toContainText(t.scenarios.educationalBody);
     await expect(folha.getByTestId("teaser-upgrade-cta")).toHaveCount(largo(page) ? 0 : 1);
 
     // ---- O que NÃO aconteceu: nenhuma escrita, nenhuma fila.
@@ -261,7 +263,9 @@ test("deslogado (E-5): o MESMO caminho sem parede; 'Assinar Premium' leva a entr
 
     // Filamentos / Impressoras / Kits / Orçamentos / Simulações: o mesmo vazio + formulário inerte.
     await page.goto("/catalogo");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoFilamentsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(
+        catalogo.educationalFilamentsBody,
+    );
     await expect(page.getByText(t.premiumTeaser.CATALOG.title)).toHaveCount(0);
     await expect(cta(page)).toHaveCount(1);
     await page.getByRole("button", { name: catalogo.addFilament }).first().click();
@@ -269,12 +273,14 @@ test("deslogado (E-5): o MESMO caminho sem parede; 'Assinar Premium' leva a entr
     await expect(cta(page)).toHaveAttribute("href", /\/sign-in\?redirect=/);
 
     await page.goto("/catalogo?tab=printers");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoPrintersBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(
+        catalogo.educationalPrintersBody,
+    );
     await page.goto("/kits");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoKitsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.educationalKitsBody);
     await expect(cta(page)).toHaveCount(1);
     await page.goto("/historico");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(t.historico.didaticoTitle);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(t.history.educationalTitle);
     await expect(cta(page)).toHaveCount(1);
     await page.goto("/calcular");
     await page.getByRole("button", { name: t.scenarios.navEntry }).click();
@@ -282,12 +288,16 @@ test("deslogado (E-5): o MESMO caminho sem parede; 'Assinar Premium' leva a entr
     const folhaSims = largo(page)
         ? page.getByTestId("scenarios-wide-aside")
         : page.getByRole("dialog");
-    await expect(folhaSims.getByTestId("vazio-didatico")).toContainText(t.scenarios.didaticoBody);
+    await expect(folhaSims.getByTestId("vazio-didatico")).toContainText(
+        t.scenarios.educationalBody,
+    );
 
     // Produtos: o `beforeLoad` do `?produto=` continua exigindo conta — o clique leva ao sign-in
     // com a intenção preservada (nominal: o redirect carrega o `produto=novo`).
     await page.goto("/catalogo?tab=products");
-    await expect(page.getByTestId("vazio-didatico")).toContainText(catalogo.didaticoProductsBody);
+    await expect(page.getByTestId("vazio-didatico")).toContainText(
+        catalogo.educationalProductsBody,
+    );
     await page.getByRole("button", { name: catalogo.addProduct }).first().click();
     await expect(page).toHaveURL(/\/sign-in\?redirect=.*produto/);
 

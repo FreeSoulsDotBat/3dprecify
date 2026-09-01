@@ -34,7 +34,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
     }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto("/catalogo");
-        await expect(page.getByText(t.catalogo.emptyFilamentsTitle).first()).toBeVisible();
+        await expect(page.getByText(t.catalog.emptyFilamentsTitle).first()).toBeVisible();
         const ratio = await widthRatio(page);
         expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
     });
@@ -44,7 +44,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
     }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto("/historico");
-        await expect(page.getByText(t.historico.didaticoTitle)).toBeVisible();
+        await expect(page.getByText(t.history.educationalTitle)).toBeVisible();
         const ratio = await widthRatio(page);
         expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
     });
@@ -54,7 +54,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
     }) => {
         await page.setViewportSize({ width: 1440, height: 900 });
         await page.goto("/kits");
-        await expect(page.getByText(t.catalogo.emptyKitsTitle).first()).toBeVisible();
+        await expect(page.getByText(t.catalog.emptyKitsTitle).first()).toBeVisible();
         const ratio = await widthRatio(page);
         expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
     });
@@ -63,7 +63,7 @@ test.describe("T072-A11 — desktop content width outside the calculator (1440px
         await page.setViewportSize({ width: 1440, height: 900 });
         await signUpThrowaway(page, "a11-conta-width");
         await page.goto("/conta");
-        await expect(page.getByRole("heading", { name: t.conta.title })).toBeVisible();
+        await expect(page.getByRole("heading", { name: t.account.title })).toBeVisible();
         const ratio = await widthRatio(page);
         expect(ratio, `used ${(ratio * 100).toFixed(1)}% of main`).toBeGreaterThanOrEqual(0.4);
     });

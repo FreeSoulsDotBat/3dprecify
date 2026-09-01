@@ -25,11 +25,11 @@ const CTA = messages.billing.subscribeAction;
 const SCREENS: { route: string; title: string; abrir?: string }[] = [
     {
         route: "/catalogo",
-        title: messages.catalogo.emptyFilamentsTitle,
-        abrir: messages.catalogo.addFilament,
+        title: messages.catalog.emptyFilamentsTitle,
+        abrir: messages.catalog.addFilament,
     },
-    { route: "/kits", title: messages.catalogo.emptyKitsTitle },
-    { route: "/historico", title: messages.historico.didaticoTitle },
+    { route: "/kits", title: messages.catalog.emptyKitsTitle },
+    { route: "/historico", title: messages.history.educationalTitle },
 ];
 
 const VIEWPORTS = [

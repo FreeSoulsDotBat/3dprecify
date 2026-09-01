@@ -49,7 +49,7 @@ vi.mock("@/features/billing/use-subscription", () => ({
     useSubscription: () => ({ data: undefined, isLoading: false }),
 }));
 
-const t = messages.conta;
+const t = messages.account;
 
 afterEach(cleanup);
 

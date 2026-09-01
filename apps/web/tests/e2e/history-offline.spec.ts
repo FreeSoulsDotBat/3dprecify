@@ -30,7 +30,7 @@ function historicoDetail(page: Page) {
 //   · coming back online DRAINS it to `synced` (a real 2xx);
 //   · reopening the detail renders the SAME frozen values, with no recomputation.
 
-const t = messages.historico;
+const t = messages.history;
 
 test("a record made offline is pending, survives a reload, then drains to synced (B1/FR-527)", async ({
     page,

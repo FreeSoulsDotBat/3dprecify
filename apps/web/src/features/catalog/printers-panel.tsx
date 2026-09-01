@@ -24,7 +24,7 @@ import { PrinterForm } from "./printer-form";
 // printer read cache + online-only write mutations + the printer form. 019/PR-B (T044/T045): same
 // `gate` wiring as the sibling — presentation AND the create/update barrier by absence.
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 
 export function PrintersPanel() {

@@ -35,7 +35,7 @@ vi.mock("@/entities/user/use-entitlement", () => ({
 
 import { KitsPanel } from "./kits-panel";
 
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 
 function kit(over: Partial<BomOut> = {}): BomOut {
     return {

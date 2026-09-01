@@ -65,7 +65,7 @@ export function AssemblySummary({
                 <Card padding="md" className="flex flex-col gap-2">
                     <p className="text-sm font-semibold">{t.assemblyTitle}</p>
                     <BreakdownRow
-                        label={t.assemblyCusto}
+                        label={t.assemblyCost}
                         value={formatBRL(bom.custoTotal)}
                         emphasis="total"
                     />
@@ -80,13 +80,13 @@ export function AssemblySummary({
                 longo ("Preço atacado", 111px) tranca no orçamento de ~101px da linha e a
                 reticência apareceria no caso NORMAL de 5 dígitos. */}
                         <PriceHero
-                            label={t.pinned.varejo}
+                            label={t.pinned.retail}
                             value={bom.precoVarejo}
                             prefix="R$"
                             size="md"
                         />
                         <PriceHero
-                            label={t.pinned.atacado}
+                            label={t.pinned.wholesale}
                             value={bom.precoAtacado}
                             prefix="R$"
                             size="md"

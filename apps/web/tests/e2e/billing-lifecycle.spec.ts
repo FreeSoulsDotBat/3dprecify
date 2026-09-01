@@ -15,7 +15,7 @@ import { signUpThrowaway } from "./history-helpers";
 // MESMO banco de e2e, e dois projetos em paralelo poluem o candidato único do fallback do stub.
 
 const tb = messages.billing;
-const tc = messages.conta;
+const tc = messages.account;
 
 /** O id da preapproval que o app acabou de criar — sai da própria URL do hand-off do stub. */
 function preapprovalFromCheckoutUrl(url: string): string {

@@ -49,7 +49,7 @@ import { ExportButton } from "./export-sheet";
 // default-on switch here would not be a UX slip — it would leak the seller's margin to the person
 // they are negotiating against.
 
-const t = messages.historico;
+const t = messages.history;
 
 const SYNCED: HistoryItem = {
     clientSnapshotId: "csid-1",

@@ -39,8 +39,8 @@ export function OtherCostRow({
                                     {...p}
                                     type="text"
                                     className="tf-input"
-                                    aria-label={t.outrosCustos.name}
-                                    placeholder={t.outrosCustos.namePlaceholder}
+                                    aria-label={t.otherCosts.name}
+                                    placeholder={t.otherCosts.namePlaceholder}
                                     name={field.name}
                                     value={field.value}
                                     onChange={field.onChange}
@@ -61,7 +61,7 @@ export function OtherCostRow({
                             <NumberField
                                 {...p}
                                 currency
-                                aria-label={t.outrosCustos.value}
+                                aria-label={t.otherCosts.value}
                                 name={field.name}
                                 value={field.value}
                                 onChange={field.onChange}
@@ -77,7 +77,7 @@ export function OtherCostRow({
                 variant="ghost"
                 size="sm"
                 onClick={() => onRemove(index)}
-                aria-label={t.outrosCustos.removeCost}
+                aria-label={t.otherCosts.removeCost}
             >
                 ✕
             </Button>

@@ -29,7 +29,7 @@ const OUT = fileURLToPath(
 );
 const THEMES = ["dark", "light"] as const;
 const t = messages.calculator;
-const catalogo = messages.catalogo;
+const catalogo = messages.catalog;
 const cf = messages.catalogForm;
 const pf = messages.productForm;
 

@@ -85,7 +85,7 @@ describe("BOM teaser — free account (US5, SC-408) — unified PremiumTeaser (0
         renderAt("authenticated", "none");
         expect(screen.queryByText(pt.title)).not.toBeInTheDocument();
         expect(screen.getByTestId("vazio-didatico")).toBeInTheDocument();
-        expect(screen.getByText(messages.catalogo.didaticoKitsBody)).toBeInTheDocument();
+        expect(screen.getByText(messages.catalog.educationalKitsBody)).toBeInTheDocument();
         expect(screen.queryByText(t.emptyTitle)).not.toBeInTheDocument();
         // O composer está vivo por baixo do vazio — compor não é mais bloqueado, só "Salvar".
         expect(screen.getByRole("button", { name: new RegExp(t.addLine) })).toBeInTheDocument();
@@ -125,9 +125,7 @@ describe("BOM teaser — free account (US5, SC-408) — unified PremiumTeaser (0
         const save = screen.getByRole("button", { name: t.save });
         expect(save).toBeInTheDocument();
         expect(save).toBeDisabled();
-        expect(
-            screen.getByText(messages.premiumTeaser.salvarFazParteDoPremium),
-        ).toBeInTheDocument();
+        expect(screen.getByText(messages.premiumTeaser.saveIsPartOfPremium)).toBeInTheDocument();
         expect(screen.getByRole("link", { name: tb.reactivateAction })).toBeInTheDocument();
     });
 });

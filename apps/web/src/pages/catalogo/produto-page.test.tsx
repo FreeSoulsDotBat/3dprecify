@@ -316,7 +316,7 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
         useProductsMock.mockReturnValue(listState([{ ...savedProduct, filamentId: null }]));
         renderPage("prod-1");
 
-        expect(screen.getByText(messages.catalogo.needsAttention)).toBeInTheDocument();
+        expect(screen.getByText(messages.catalog.needsAttention)).toBeInTheDocument();
         expect(screen.getByText(pf.manualValuesKept)).toBeInTheDocument();
         const picker = screen.getByRole("combobox", { name: t.catalogPicker.filament });
         expect(picker).toHaveValue("");
@@ -335,7 +335,7 @@ describe("ProdutoPage — reopen/edit (US6-3/US6-4)", () => {
 });
 
 describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correção de fidelidade)", () => {
-    const catalogo = messages.catalogo;
+    const catalogo = messages.catalog;
 
     // Movido de `features/catalog/products-panel.test.tsx` — a prancheta 17c desenha este aviso só
     // no ITEM ABERTO, nunca na lista.
@@ -386,7 +386,7 @@ describe("ProdutoPage — o recálculo do Catálogo, na FICHA (019/PR-D, correç
 });
 
 describe("ProdutoPage — record a snapshot with PRODUCT provenance (US3/T019)", () => {
-    const h = messages.historico;
+    const h = messages.history;
     const setup = () => userEvent.setup({ pointerEventsCheck: 0 });
 
     it("a premium seller can record the on-screen price, tagged with the product as its origin", async () => {
@@ -464,7 +464,7 @@ describe("ProdutoPage — gate não-active, inerte up front (019/PR-B T045, ex-0
         expect(screen.getByRole("combobox", { name: t.catalogPicker.filament })).toBeDisabled();
         expect(screen.getByRole("combobox", { name: t.catalogPicker.printer })).toBeDisabled();
         expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            messages.catalogo.reactivateBody,
+            messages.catalog.reactivateBody,
         );
         const cta = screen.getByTestId("teaser-upgrade-cta");
         expect(cta).toHaveTextContent(messages.billing.reactivateAction);
@@ -479,7 +479,7 @@ describe("ProdutoPage — gate não-active, inerte up front (019/PR-B T045, ex-0
         renderPage("prod-1", "never-subscribed");
         expect(screen.getByRole("textbox", { name: pf.nameLabel })).toBeDisabled();
         expect(screen.getByTestId("premium-footer-note")).toHaveTextContent(
-            messages.premiumTeaser.salvarFazParteDoPremium,
+            messages.premiumTeaser.saveIsPartOfPremium,
         );
         expect(screen.getByTestId("teaser-upgrade-cta")).toHaveTextContent(
             messages.billing.subscribeAction,

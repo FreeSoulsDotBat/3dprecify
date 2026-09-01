@@ -72,7 +72,7 @@ import { SnapshotDetailPage } from "./snapshot-detail-page";
 // superfície, o que um orçamento FAZ e o que ele NÃO FAZ — e cada ausência é provada NÃO-VÁCUA
 // pelo mesmo teste com um documento SINGLE, onde a coisa aparece.
 
-const t = messages.historico;
+const t = messages.history;
 const tq = messages.quote;
 
 const QUOTE_PAYLOAD: FrozenSnapshotPayload = {

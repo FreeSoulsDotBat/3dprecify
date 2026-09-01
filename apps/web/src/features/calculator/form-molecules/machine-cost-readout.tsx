@@ -47,12 +47,12 @@ export function MachineCostReadout({
                 </span>
                 {semValor && (
                     <span style={{ fontSize: "var(--fs-caption)", color: "var(--warning-text)" }}>
-                        {t.machineCost.ressalvaSemValor}
+                        {t.machineCost.missingValueCaveat}
                     </span>
                 )}
             </div>
             <span className="tf-tnum" style={captionText}>
-                {t.machineCost.readoutDivisao
+                {t.machineCost.readoutDivision
                     .replace("{valor}", formatBRL(machineValueNum))
                     .replace("{horas}", fmtHoras(currentHours))}
             </span>
