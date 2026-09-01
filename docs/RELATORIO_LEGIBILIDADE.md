@@ -300,3 +300,27 @@ que de VERIFICAÇÃO e não de produção de valor). É decisão do dono.
 **Escopo real do risco.** Não é um caminho de fraude do vendedor contra terceiros: o documento é o
 registro do próprio vendedor. O dano é um congelado internamente inconsistente (o percentual impresso
 não explica o abatimento impresso) que a imutabilidade depois preserva para sempre.
+
+
+---
+
+## Todos os bugs FECHADOS (2026-09-01, "corrija os bugs que apareceram")
+
+| # | Como fechou |
+|---|---|
+| B1 | Falha do motor mostra ausência ("—" + legenda honesta); valor segue zero, decisão do dono |
+| B2 | Revalida nas três telas; o parâmetro que permitia divergir morreu |
+| B3 | `syncToastFor` com `switch` exaustivo — "Recalcular hoje" reconhece sessão expirada; um estado novo sem ramo não compila |
+| B4 | Fallback silencioso vira "—" + trava lendo o enum do `openapi.json` (mutação nas duas direções) |
+| B5 | `channelHasDeclaredFee` única; o congelado enxerga a sobretaxa. Em registro gravado nada recalcula |
+| B6 | Reconciliação com `unreachable > 0` termina em exit ≠ 0, dizendo o que não foi verificado |
+| B7 | `_back_url` 503 honesto em vez de devolver a localhost quem acabou de pagar |
+| B8 | `ROUND_HALF_UP` explícito no documento imutável |
+| B9 | Fechado de graça pela unificação do serializador (não há mais dois para divergir) |
+| B10 | Uma frase: "Esta ação precisa de conexão." As três implementações viraram uma |
+| B11 | Fechado pela Onda 7: o 500 loga com `exc_info` + Sentry |
+| B12 | O servidor confere que o abatimento É o percentual declarado (verificação, não recálculo — FR-118 intacto) |
+
+**Nenhum bug registrado segue aberto.** O que resta em aberto nesta frente é decisão de produto
+(o nó "Orçamentos"/`/historico`), a pendência 4(4) documentada acima, e o item 5 (Rodada 1 de
+homologação, pranchetas da PR-C, sandbox MP, deploy).
