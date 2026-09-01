@@ -3,25 +3,8 @@ import { type HTMLAttributes, type KeyboardEvent, type ReactNode, useRef } from 
 import "./segmented.css";
 
 /**
- * Grupo segmentado (018) — pílulas numa bandeja, uma selecionada.
- *
- * **Por que existe**: o padrão já vivia no app, escondido dentro de `catalogo-page.tsx` como um
- * `CatalogTabs` local. O 018 precisa dele em dois lugares (as seções do Catálogo e o tema da Conta),
- * e duas cópias do mesmo comportamento de teclado é como uma delas fica para trás numa correção.
- * Aqui ele passa a ter UM dono.
- *
- * **O que é honesto dizer sobre o DS**: isto acrescenta uma família de classes `tf-segmented*` ao
- * design system. Não é uma primitiva nova de interação — a interação é a que o Catálogo já tinha —,
- * mas também não é "zero CSS novo": o visual de bandeja com pílula selecionada não sai de
- * `Button` + tokens sem folha própria. A `research.md` §I registra isso.
- *
- * **A11y**: dois papéis, porque são duas semânticas diferentes.
- * - `tablist` — a escolha TROCA o painel abaixo (seções do Catálogo). Itens são `tab`, com
- *   `aria-selected` e `aria-controls`.
- * - `radiogroup` — a escolha é um VALOR (tema claro/escuro). Itens são `radio`, com `aria-checked`.
- *
- * Nos dois casos há **um único ponto de tabulação** (roving tabindex): Tab entra no grupo uma vez e
- * as setas percorrem — que é como um grupo de opções deve se comportar para quem usa teclado.
+ * @doc DEC-026 — dois papéis de a11y porque são duas semânticas: `tablist` quando a escolha
+ *   TROCA o painel, `radiogroup` quando ela é um VALOR. Um só ponto de tabulação nos dois.
  */
 export interface SegmentedOption<T extends string> {
     id: T;

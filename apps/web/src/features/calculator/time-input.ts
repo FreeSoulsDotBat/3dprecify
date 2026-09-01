@@ -60,26 +60,10 @@ export function hmToDecimalString(h: number, min: number): string {
 }
 
 /**
- * Homologação automatizada (CF-002-LEIGO-C) — o vendedor cola o tempo do fatiador.
- *
- * O achado não foi "o formato não é aceito"; foi que ele **não é aceito NEM explicado**: digitar
- * `2:30` ou `2h30` no campo de horas não movia o preço e não dizia nada. Um campo que engole a
- * entrada em silêncio é pior que um que recusa, porque o vendedor segue achando que informou.
- *
- * Aceitar é melhor que explicar aqui, e por um motivo concreto: `2:30` e `2h30` são EXATAMENTE como
- * PrusaSlicer, Cura e Bambu Studio imprimem o tempo estimado — é de lá que o número vem. Isto não
- * contradiz a decisão do 016/US7 (h e min separados, para tirar o decimal do caminho do leigo): o
- * destino continua sendo h+min, só ganhou uma porta de entrada a mais.
- *
- * Deliberadamente ESTREITO: só as duas formas acima, com minutos de 1–2 dígitos. Qualquer outra
- * coisa devolve `null` e o campo segue exatamente como antes — nada de heurística generosa num
- * campo que multiplica o custo.
+ * ⚠ @doc DEC-020 — aceita `2:30`/`2h30`/`2h30m` porque é assim que Prusa, Cura e Bambu
+ *   imprimem. ESTREITO de propósito: qualquer outra forma devolve `null` — um fallback
+ *   generoso já leu `parseInt("2h30m") = 2` e guardou 2h00 em silêncio.
  */
-// Review do PR #58 (2026-08-15) — o sufixo `m`/`min` entrou. A regex ancorada em `$` recusava
-// "2h30m" e "2h 30m", que é como Cura e Bambu Studio escrevem, e aí o FALLBACK do onChange lia
-// `parseInt("2h30m") = 2` e **preservava os minutos anteriores em silêncio**: o vendedor colava
-// 2h30m e ficava com 2h00 sem nenhum sinal. Recusar é aceitável; recusar e ficar com outro número
-// não é.
 const RE_RELOGIO = /^(\d{1,4})\s*[:hH]\s*(\d{1,2})\s*(?:m|min)?$/i;
 
 export function parseRelogio(bruto: string): HoursMinutes | null {

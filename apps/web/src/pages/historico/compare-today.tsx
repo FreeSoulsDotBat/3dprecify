@@ -17,25 +17,8 @@ import {
 
 import { BASIS_TOTAL, recalcToday, structuralModelNote } from "./recalc-today";
 
-// 009/T029 (E4, PR-C, US7) — *"meu custo subiu desde que cotei?"*, answered by putting the two
-// numbers next to each other. Purely informational: recording today's number is still the explicit
-// "Recalcular hoje" action (US3). Lives at the page layer for the same reason `recalc-today` does —
-// the recompute needs `features/calculator`, and FSD-Lite forbids a feature importing a feature.
-//
-// This is the only surface in the epic that shows a FROZEN value and a LIVE value together, which
-// makes it the easiest place to break the two-shelf rule. Three rules hold it:
-//
-//   1. Every number says what it is and WHEN (FR-523/SC-511). Two bare totals side by side is a
-//      riddle, not an insight — and the seller would have to guess which one they actually charged.
-//   2. It compares LIKE with LIKE. An atacado quote is compared against today's atacado; pairing it
-//      with today's varejo would manufacture an increase that never happened.
-//   3. It never prints a "hoje" it could not compute. `recalcToday` reports `fromFrozen` when it fell
-//      back to the frozen document — under an unchanged formula that yields the July numbers exactly,
-//      so labelling them "Hoje" would answer "não mudou" with the very number in question. The render
-//      keys off the ACTUAL outcome, never off `!!product` (the trap the PR-A review caught next door).
-//
-// It does NOT compute a difference. The delta is money arithmetic, and money arithmetic lives in
-// `pricing-core` (ADR-0008) — two labelled numbers answer the question without inventing a third.
+// ⚠ @doc DEC-022 — única tela com congelado E vivo juntos: compara IGUAL com IGUAL, nunca
+//   imprime um "hoje" que não calculou, e NÃO calcula a diferença (isso é `pricing-core`).
 
 const t = messages.history;
 

@@ -46,23 +46,9 @@ import { ProductFooter, ProductFormGrid } from "./produto-page-body";
 import { ProductPriceHeader, productHeaderState } from "./produto-page-header";
 import { ProductIdentitySection } from "./produto-page-identity-section";
 
-// US6/T030 — the product create/edit FULL PAGE route (ux §1.6b): the calculator body + a name +
-// the two catalog pickers, over the SAME RHF control and the SAME `computeFromForm` as Calcular.
-// NO stored price exists anywhere: every number on this page is recomputed live at the current
-// PRICING_MODEL_VERSION (FR-310/FR-313). Reopening a DEGRADED product (its reference was
-// deleted) shows a calm info alert, the picker at "— Manual —", and the last-known values as
-// ordinary editable inputs (US6-4) — never blank, never broken. Saving is honest: a real toast
-// only after a real 2xx; a failure keeps the page open with a specific pt-BR line.
-//
-// 019/PR-B (T045, ux-catalog §3 + prancheta 32b/32e/32f) — reads/recompute keep working for EVERY
-// gate (FR-409); only writes freeze. Fora de `active` os três `<fieldset>` viram `<Frozen>` (nunca
-// só um `disabled` isolado), Salvar some do rodapé de sempre e vira "Salvar"/"Salvar alterações"
-// SEMPRE renderizado (`type="button" disabled`), e o rodapé ganha a frase + o convite único —
-// mesma regra do FilamentForm/PrinterForm (`PremiumFooterNote`/`PremiumInviteCta`, sem duplicar a
-// lógica). `gate` chega pronto de CatalogoPage (o mesmo `premiumGate()` que os quatro painéis
-// leem) em vez de um `readOnly` binário — 013/FB-02 só cobria `lapsed`; um `never-subscribed` que
-// abrisse esta URL direto via `?produto=` via chegava com o formulário VIVO (bug fechado aqui).
-// RecordSnapshotButton/SaveScenarioSheet já se auto-gateiam em `active`, sem mudança.
+// ⚠ @doc DEC-023 — nenhum preço é guardado: tudo recomputa vivo. Só a ESCRITA congela fora de
+//   `active`, e o `gate` vem pronto da página — um `readOnly` binário já deixou passar
+//   `never-subscribed` com o formulário vivo.
 
 const t = messages.calculator;
 const pf = messages.productForm;

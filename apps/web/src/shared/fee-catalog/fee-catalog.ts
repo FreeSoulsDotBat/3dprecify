@@ -87,26 +87,8 @@ const freightSchema = z.discriminatedUnion("kind", [
     }),
     z.object({
         /**
-         * **DEPRECATED em 2026-08-07 (hotfix 016/A2) — sem emissores, NUNCA removido.**
-         *
-         * Era: "Shopee — o teto de cupom co-financiado pelo vendedor, por faixa de preço". A releitura
-         * VERBATIM das fontes (art. 26839 + art. 23431) diz o contrário do que esta forma assume: *"A
-         * Shopee **oferece** subsídios de frete para todos os vendedores"* e *"Cupons de frete grátis
-         * **válidos para fretes de até** R$20"* — o R$ 20/30/40 é o valor que a SHOPEE oferece e é um
-         * TETO DE VALIDADE do cupom, não uma cobrança do vendedor. O catálogo deixou de emitir esta
-         * forma (as duas entradas Shopee passaram a `{kind: "NONE"}`); o subsídio virou informação
-         * NÃO-COMPUTANTE em `freightSubsidyInfo`.
-         *
-         * **Por que o schema continua sabendo lê-la, e por que removê-la seria errado:** este `kind`
-         * viaja DENTRO de payload de snapshot congelado (ADR-0019, imutável por trigger de banco) e de
-         * documento de cenário (ADR-0021). Um schema que passasse a recusá-la faria um documento que o
-         * produto promete imutável parar de abrir — ou, pior, abrir afirmando outro número sem uma
-         * linha dele mudar. Mesma disciplina do `bandMode` (ADR-0024) e do `fixedFeeRule` (ADR-0027).
-         * O motor (`pricing-core`) também mantém a capacidade INTACTA, e por isso `PRICING_MODEL_VERSION`
-         * não foi bumpado: nada do que já foi gravado muda de valor.
-         *
-         * Reabre-se com o verbatim que falta (o artigo de coparticipação linkado no 26839 e o art. 7749)
-         * — e aí a decisão é do dono, não uma inferência sobre dinheiro (Princípio VIII).
+         * ⚠ @doc DEC-024 — sem emissores e NUNCA removido: o schema tem de seguir LENDO a forma,
+         *   senão um snapshot congelado (ADR-0019) para de abrir — ou abre com outro número.
          */
         kind: z.literal("BAND_VOUCHER"),
         bands: z.array(

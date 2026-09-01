@@ -597,3 +597,207 @@ reativação a oferecer antes do E6 (billing) — prometeria uma porta que não 
 
 - `apps/web/src/features/history/export-sheet.tsx` → `ExportButton`
 
+---
+
+## DEC-020 — O campo de tempo aceita `2:30` e `2h30` porque é assim que o fatiador imprime
+
+**Data**: 2026-08-13 (homologação automatizada, CF-002-LEIGO-C) · **Governa**: `parseTimeInput`
+
+O achado não foi "o formato não é aceito"; foi que ele **não era aceito NEM explicado**: digitar
+`2:30` ou `2h30` no campo de horas não movia o preço e não dizia nada. Um campo que engole a entrada
+em silêncio é pior que um que recusa, porque o vendedor segue achando que informou.
+
+Aceitar é melhor que explicar aqui, por um motivo concreto: `2:30` e `2h30` são EXATAMENTE como
+PrusaSlicer, Cura e Bambu Studio imprimem o tempo estimado — é de lá que o número vem. Não contradiz
+a decisão do 016/US7 (h e min separados, para tirar o decimal do caminho do leigo): o destino continua
+sendo h+min, só ganhou uma porta de entrada a mais.
+
+**Deliberadamente ESTREITO**: só essas formas, com minutos de 1–2 dígitos. Qualquer outra coisa
+devolve `null` e o campo segue exatamente como antes — nada de heurística generosa num campo que
+multiplica o custo.
+
+**Review do PR #58 (2026-08-15) — o sufixo `m`/`min`.** A regex ancorada em `$` recusava `"2h30m"` e
+`"2h 30m"`, que é como Cura e Bambu Studio escrevem, e aí o FALLBACK do `onChange` lia
+`parseInt("2h30m") = 2` e **preservava os minutos anteriores em silêncio**: o vendedor colava 2h30m e
+ficava com 2h00 sem nenhum sinal. Recusar é aceitável; recusar e ficar com outro número não é.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/time-input.ts` → `parseRelogio`, `decimalHoursToHm`, `hmToDecimalHours`
+
+---
+
+## DEC-021 — A fila drena sozinha, e disparar o dreno é seguro de qualquer lugar
+
+**Data**: 2026-07-15 (009/T013, E4 PR-A · ADR-0018 §7) · **Governa**: `outbox-syncer.tsx`
+
+Um registro pendente que só sincronizasse quando o vendedor por acaso abrisse o Histórico seria uma
+promessa cumprida pela metade: o app diz "sincroniza sozinho quando a conexão voltar", então tem de
+sincronizar. Os gatilhos são os do ADR-0018 §7 — boot / entrada (o uid aparece), reconexão (`online`),
+`focus` da janela e a aba ficar visível (`visibilitychange`) — mais o instante em que o entitlement
+volta a `active`, que desbloqueia uma fila recusada com 403.
+
+`focus`/`visibilitychange` eram os dois gatilhos que faltavam (review da PR-A, M5): eles também fecham
+o buraco do **portal cativo**, onde `navigator.onLine` continua `true`, nenhum evento `online` dispara
+e nada drenaria dentro da sessão.
+
+**Disparar daqui é seguro de qualquer lugar e quantas vezes for**: exatamente-uma-vez mora no BANCO
+(a chave única em `clientSnapshotId`), nunca neste componente. Um dreno redundante pode desperdiçar
+uma requisição; jamais duplicar um registro.
+
+**Invariante que qualquer recuperação por TEMPO precisa preservar** (adiado para a PR-B em
+2026-07-15, review M5 — backoff exponencial lendo `attempts`/`lastStatus`): um `status 0` (resposta
+perdida) é RETENTADO, **nunca** virado para `failed` por nenhum teto — a escrita pode ter chegado.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/history/outbox-syncer.tsx` → `OutboxSyncer`
+
+---
+
+## DEC-022 — O comparativo mostra congelado e vivo lado a lado sem inventar um terceiro número
+
+**Data**: 2026-07-15 (009/T029, E4 PR-C, US7) · **Governa**: `compare-today.tsx`
+
+*"Meu custo subiu desde que cotei?"*, respondido pondo os dois números um ao lado do outro. Puramente
+informativo: gravar o número de hoje continua sendo a ação explícita "Recalcular hoje" (US3). Mora na
+camada de página pelo mesmo motivo que o `recalc-today` — o recômputo precisa de `features/calculator`,
+e FSD-Lite proíbe uma feature importar outra ([[DEC-009]]).
+
+É a **única** superfície do épico que mostra um valor CONGELADO e um VIVO juntos, o que a torna o
+lugar mais fácil de quebrar a regra das duas prateleiras ([[DEC-008]]). Três regras a seguram:
+
+1. **Todo número diz o que é e QUANDO** (FR-523/SC-511). Dois totais pelados lado a lado são um
+   enigma, não uma informação — e o vendedor teria de adivinhar qual foi o que ele cobrou.
+2. **Compara IGUAL com IGUAL.** Um orçamento de atacado é comparado com o atacado de hoje; parear com
+   o varejo de hoje fabricaria um aumento que nunca aconteceu.
+3. **Nunca imprime um "hoje" que não conseguiu calcular.** O `recalcToday` reporta `fromFrozen` quando
+   caiu de volta no documento congelado — e sob fórmula inalterada isso devolve os números de julho
+   exatamente, então rotulá-los "Hoje" responderia "não mudou" com o próprio número em questão. O
+   render se apoia no DESFECHO REAL, nunca em `!!product` (a armadilha que a review da PR-A pegou ao
+   lado).
+
+**Não calcula diferença.** O delta é aritmética de dinheiro, e aritmética de dinheiro mora no
+`pricing-core` (ADR-0008) — dois números rotulados respondem a pergunta sem inventar um terceiro.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/historico/compare-today.tsx` → `CompareToday`
+
+---
+
+## DEC-023 — O produto não guarda preço: tudo é recomputado vivo, e só a ESCRITA congela
+
+**Data**: 2026-07-11 (US6/T030) · **atualizado** 2026-08-28 (019/PR-B, T045) · **Governa**:
+`produto-page.tsx`
+
+A rota de página inteira de criar/editar produto (ux §1.6b): o corpo da calculadora + um nome + os
+dois seletores do catálogo, sobre o MESMO controle RHF e o MESMO `computeFromForm` da Calcular.
+
+**Nenhum preço é guardado em lugar nenhum**: todo número desta página é recomputado vivo na
+`PRICING_MODEL_VERSION` corrente (FR-310/FR-313). Reabrir um produto DEGRADADO (a referência dele foi
+apagada) mostra um aviso calmo, o seletor em "— Manual —" e os últimos valores conhecidos como
+entradas editáveis comuns (US6-4) — nunca em branco, nunca quebrado. Salvar é honesto: toast de
+verdade só depois de um 2xx de verdade; a falha mantém a página aberta com uma linha pt-BR específica.
+
+**019/PR-B — leitura e recômputo funcionam em TODO portão** (FR-409); só a escrita congela. Fora de
+`active`, os três `<fieldset>` viram `<Frozen>` (nunca um `disabled` isolado), o Salvar sai do rodapé
+de sempre e vira "Salvar"/"Salvar alterações" SEMPRE renderizado (`type="button" disabled`), e o
+rodapé ganha a frase mais o convite único — mesma regra do `FilamentForm`/`PrinterForm`, sem duplicar
+a lógica.
+
+O `gate` chega pronto da `CatalogoPage` (o mesmo `premiumGate()` que os quatro painéis leem) em vez de
+um `readOnly` binário: **o 013/FB-02 só cobria `lapsed`**, e um `never-subscribed` que abrisse esta URL
+direto via `?produto=` chegava com o formulário VIVO — bug fechado ali.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/catalogo/produto-page.tsx` → `ProdutoPage`, `PremiumGate`
+
+---
+
+## DEC-024 — Forma DEPRECIADA nunca é removida: documento imutável a carrega
+
+**Data**: 2026-08-07 (hotfix 016/A2) · **Governa**: `VoucherBand` / `freight: BAND_VOUCHER` no schema
+e no motor
+
+O `BAND_VOUCHER` era descrito como "o teto de cupom co-financiado pelo vendedor, por faixa de preço".
+A releitura VERBATIM das fontes ([[FONTE-001]], arts. 26839 e 23431) diz o contrário do que a forma
+assume: o R$ 20/30/40 é o que a SHOPEE **oferece**, e é TETO DE VALIDADE do cupom, não cobrança do
+vendedor. O catálogo parou de emitir a forma (as duas entradas Shopee viraram `{kind: "NONE"}`) e o
+subsídio virou informação não-computante ([[DEC-012]]).
+
+**Por que o schema continua sabendo LER a forma, e por que removê-la seria errado:** este `kind`
+viaja DENTRO de payload de snapshot congelado (ADR-0019, imutável por trigger de banco) e de documento
+de cenário (ADR-0021). Um schema que passasse a recusá-la faria um documento que o produto promete
+imutável **parar de abrir** — ou, pior, abrir afirmando outro número sem uma linha dele mudar. O motor
+mantém a capacidade INTACTA pelo mesmo motivo, e é por isso que `PRICING_MODEL_VERSION` **não** subiu
+([[DEC-004]]): nada do que já foi gravado muda de valor.
+
+Mesma disciplina do `bandMode` (ADR-0024) e do `fixedFeeRule` (ADR-0027).
+
+**Reabre-se** com o verbatim que falta (o artigo de coparticipação linkado no 26839 e o art. 7749) — e
+aí a decisão é do dono, não uma inferência sobre dinheiro (Princípio VIII).
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `VoucherBand`
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `BAND_VOUCHER`
+
+---
+
+## DEC-025 — Avisar antes de sair, e NÃO persistir o rascunho — a semente é contrato de teste
+
+**Data**: 2026-08-13 (homologação automatizada, CF-001-LEIGO-E) · **Governa**: `aviso-de-saida.ts`
+
+Recarregar a página apagava tudo que o vendedor tinha digitado, **sem aviso**. Medido: o custo voltou
+de R$ 19,91 para a semente. Importa mais do que parece porque o reflexo de quem acha que a tela
+travou é justamente recarregar — a persona que perde o trabalho é a mesma que não entendeu o que
+estava vendo.
+
+**As duas correções resolveriam o achado.** Persistir o rascunho é a mais generosa e foi descartada
+por razão MEDIDA, não por preguiça: a semente da calculadora é um CONTRATO que boa parte da suíte
+existente assume depois de um `reload` (o preço-semente 16,16/24,24/21,01 aparece pinado em vários
+testes, e a própria homologação o confere). Restaurar um rascunho mudaria o que a tela mostra depois
+de recarregar, trocando um defeito de acolhimento por um risco de regressão em cima de um PR já
+pronto — e **a decisão sobre o que a primeira visita mostra é do dono**, não de uma correção de
+homologação.
+
+O `beforeunload` do navegador é o mecanismo padrão para "você vai perder o que digitou": não inventa
+UI nova, não guarda nada, e some sozinho quando não há o que perder.
+
+**Fronteira conhecida e aceita**: o navegador só mostra o diálogo se a pessoa já interagiu com a
+página (regra de user-activation) — que é exatamente o caso em que existe algo a perder.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/aviso-de-saida.ts` → `useAvisoDeSaida`
+
+---
+
+## DEC-026 — O grupo segmentado tem UM dono, e dois papéis de a11y porque são duas semânticas
+
+**Data**: 2026-08-26 (018) · **Governa**: `segmented.tsx`
+
+**Por que existe**: o padrão já vivia no app, escondido dentro de `catalogo-page.tsx` como um
+`CatalogTabs` local. O 018 precisa dele em dois lugares (as seções do Catálogo e o tema da Conta), e
+duas cópias do mesmo comportamento de teclado é como uma delas fica para trás numa correção.
+
+**O que é honesto dizer sobre o DS**: isto acrescenta uma família de classes `tf-segmented*`. Não é
+primitiva nova de interação — a interação é a que o Catálogo já tinha —, mas também não é "zero CSS
+novo": o visual de bandeja com pílula selecionada não sai de `Button` + tokens sem folha própria. A
+`research.md` §I registra isso.
+
+**A11y — dois papéis, porque são duas semânticas diferentes:**
+
+- `tablist` — a escolha TROCA o painel abaixo (seções do Catálogo). Itens são `tab`, com
+  `aria-selected` e `aria-controls`.
+- `radiogroup` — a escolha é um VALOR (tema claro/escuro). Itens são `radio`, com `aria-checked`.
+
+Nos dois casos há **um único ponto de tabulação** (roving tabindex): Tab entra no grupo uma vez e as
+setas percorrem — que é como um grupo de opções deve se comportar para quem usa teclado.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/ui/segmented.tsx` → `Segmented`
+
