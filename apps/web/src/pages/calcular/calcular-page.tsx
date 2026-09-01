@@ -217,26 +217,17 @@ export function CalcularPage() {
         <>
             <PageHeader title={t.title} className="tf-page-header--center" />
 
-            {/* 015/A8 ([F11a-003], decisão do dono 2026-08-03) — a promessa SOBE para a primeira dobra.
-          Medido na homologação: a frase vivia como último elemento da página, a 3.413px de 3.529 —
-          **97% da altura**, 4,6 telas de rolagem a 360px. A primeira dobra continha exatamente uma
-          afirmação de valor, e era a oposta: "Salvar faz parte do Premium." Quem abria e desistia
-          antes de rolar levava a mensagem contrária à que o produto quer dar.
-          A menção a Premium NÃO foi removida — ela é a outra metade da verdade, e a frase abaixo diz
-          as duas coisas na mesma linha. O que mudou foi só QUANDO ela é lida. */}
+            {/* ⚠ @doc DEC-120 — a promessa vivia a 97% da altura da página, 4,6 telas de rolagem,
+                e a primeira dobra dizia o OPOSTO. A menção a Premium não saiu, só mudou de hora. */}
             <p style={{ ...captionText, textAlign: "center" }}>{t.freemiumNote}</p>
 
-            {/* 010/T013 (E5) — "Meus cenários" is a NAV-LIKE entry, not a save button: it sits with the
-          page title (never inside the results block) and is VISIBLE for everyone, incl. free/
-          signed-out (the SC-109-safe honest door, ux §0.1/§2.2/§11-F1/F2). */}
+            {/* @doc DEC-121 — entrada NAV-LIKE, visível para todos: a porta honesta. */}
             <div className="flex justify-end">
                 <Button variant="ghost" size="sm" onClick={handleScenariosNavClick}>
                     <Icon name="boxes" size={16} aria-hidden /> {messages.scenarios.navEntry}
                 </Button>
             </div>
-            {/* 019/PR-F (T095) — a gaveta SÓ monta estreito: a coluna larga já tem `ScenariosList` sempre
-          visível ao lado (abaixo), e montar as duas seria a duplicata que a T092 provou impossível
-          no hospedeiro de teste — aqui é o hospedeiro real. */}
+            {/* @doc DEC-121 — a gaveta só monta estreito; no largo a lista já está ao lado. */}
             {!isWide && (
                 <ScenariosListSheet
                     open={scenariosOpen}
@@ -245,9 +236,7 @@ export function CalcularPage() {
                 />
             )}
 
-            {/* The "cenário carregado" context bar (ux §4.1) — NO date anywhere, ever (§0.2): the
-          subtitle states the LIVE promise instead. T023 adds the D3/D6 honest caption + "Abrir
-          origem"; T029 adds Renomear/Duplicar/"Salvar alterações"/the unsaved-changes badge. */}
+            {/* @doc DEC-121 — sem data em lugar nenhum: a simulação é viva, nunca datada. */}
             {loadedScenario && (
                 <ScenarioContextBar
                     scenario={loadedScenario}
@@ -275,23 +264,17 @@ export function CalcularPage() {
                 />
             )}
 
-            {/* 016/T036 (US10, FR-913) — a scalar (AD_HOC/PRODUCT) simulation saved before pricing-core
-          4.0.0 still carries a retired leaf (today only `wasteGrams`). The recompute below already
-          excludes it (the engine refuses the key); this PERSISTENT info notice — not a toast — says
-          why, for as long as the simulation stays open (role=status via Alert tone="info"). */}
+            {/* ⚠ @doc DEC-122 — aviso PERSISTENTE e não toast: um toast some, e a pergunta "por que
+                este número mudou?" não some junto. */}
             {loadedScenario?.discardedNotice && (
                 <Alert tone="info">{loadedScenario.discardedNotice}</Alert>
             )}
 
-            {/* 010/T024 (Q12) — a KIT-basis scenario has no scalar form to hydrate (multi-piece); its
-          OWN read-only per-marketplace rollup renders here instead of populating the fields below
-          (which stay whatever they were before the reopen — the seller edits a kit's LINES via
-          "Abrir origem", never here). */}
+            {/* ⚠ @doc DEC-123 — base KIT: rollup só-leitura aqui, e os campos abaixo ficam como
+                estavam. O vendedor edita as LINHAS por "Abrir origem", nunca aqui. */}
             {loadedScenario && loadedScenario.config.costBasis.kind === "KIT" && (
                 <>
-                    {/* 016/T036 — the KIT twin of the notice above: `computeScenarioKitChannels` already
-              strips any retired leaf line-by-line (never `ok:false` for that reason alone) and
-              rolls the discard up ONCE, deduped, across every line. */}
+                    {/* @doc DEC-122 — gêmeo do KIT: agrega o descarte UMA vez. */}
                     <KitDiscardedNotice config={loadedScenario.config} ctx={catalogCtx} />
                     <KitBasisSummary
                         config={loadedScenario.config}
@@ -301,20 +284,14 @@ export function CalcularPage() {
                 </>
             )}
 
-            {/* 010/T036 (E5, PR-C, US7) — the E4 bridge for a KIT-basis scenario: the displayed
-          computation here is `KitBasisSummary`'s OWN rollup, NOT the (stale, untouched) single-piece
-          calculator fields below — so this freezes `computeScenarioKitChannels`'s own `frozenLines`/
-          `bom` directly (the SAME rollup the seller is looking at), never the scalar form. The
-          ordinary SINGLE record button (below) is suppressed while a KIT scenario is loaded, so there
-          is never a second, wrong "Salvar no histórico" offering to freeze the untouched fields. */}
+            {/* ⚠ @doc DEC-123 — congela o rollup do PRÓPRIO KIT, que é o que está na tela; o botão
+                de gravar ESCALAR é suprimido, para não haver uma segunda oferta errada. */}
             {loadedScenario && loadedScenario.config.costBasis.kind === "KIT" && (
                 <KitScenarioRecordButton loadedScenario={loadedScenario} ctx={catalogCtx} />
             )}
 
-            {/* 016/T010-A3 — com a folha de Simulações aberta, o teaser do picker ficava visível atrás
-          do overlay com a SUA linha de preço e o SEU "Assinar": dois CTAs de compra na mesma tela,
-          a classe que o E6/T038-D4 já consertou uma vez (a guarda antiga morreu junto com o
-          componente deletado nesta fatia — esta é a reposição dela). */}
+            {/* ⚠ @doc DEC-124 — nunca dois CTAs de compra na mesma tela: o teaser do picker ficava
+                visível ATRÁS do overlay, com o próprio "Assinar". */}
             {showTeaserSlot && !scenariosOpen && (
                 <Card padding="md" className="flex flex-col gap-2">
                     <PremiumTeaser
@@ -336,20 +313,10 @@ export function CalcularPage() {
                 setValue={setValue}
             />
 
-            {/* 016/PR-B (US4/T015) — the input sections split into two columns from the desktop
-          breakpoint up (single column, today's order, at 360/390): costs on the left, markup +
-          marketplace channel editing on the right. The total/"Como chegamos no preço" — now
-          fused with "Preços por canal" (US5) — stays a single footer spanning both, always LAST
-          (T015 — "o total centralizado ao final"), so it reads after every input that feeds it,
-          channels included. */}
-            {/* 016/US11 (T044 homologação PR-E, R3) — a coluna direita não fica mais confinada ao
-          tamanho do GATE quando a conta é grátis. Medido: 850px de coluna direita (o gate, 205px
-          de altura, mais o markup) contra 2.521px de coluna esquerda a 1440px — 1.671px de buraco,
-          o gate substituiu um bloco de coluna inteira sem redistribuir nada. `otherCosts` migra
-          para a direita (ao lado de markup) quando não-entitulado, e o gate ocupa a largura TOTAL
-          da grade (span 2) na posição da seção — nunca confinado a uma coluna curta. O caminho
-          PREMIUM é byte-idêntico ao de antes (mesmo JSX, mesma ordem, `tf-calc-grid__full` nunca
-          renderiza) — sem regressão nas guardas de geometria existentes. */}
+            {/* @doc DEC-125 — duas colunas do desktop para cima; o total num rodapé único, sempre
+                por ÚLTIMO, para ser lido depois de toda entrada que o alimenta. */}
+            {/* ⚠ @doc DEC-125 — o gate ocupa a grade INTEIRA: confinado a uma coluna ele deixava
+                1.671px de buraco medidos a 1440px. O caminho premium é byte-idêntico. */}
             <CalculatorGrid
                 control={control}
                 marketplaceEntitled={marketplaceEntitled}

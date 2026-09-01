@@ -3070,3 +3070,126 @@ procedência nenhuma**.
 
 - `apps/web/src/pages/calcular/calcular-page.tsx` → `scenarioProvenance`, `storedBasis`
 
+---
+
+## DEC-120 — A promessa sobe para a PRIMEIRA DOBRA; a menção a Premium não sai, só muda de hora
+
+**Data**: 2026-08-03 (015/A8, `[F11a-003]`, decisão do dono) · **Governa**: a ordem do cabeçalho da
+Calcular
+
+Medido na homologação: a frase de promessa vivia como ÚLTIMO elemento da página, a 3.413px de 3.529
+— **97% da altura, 4,6 telas de rolagem a 360px**. A primeira dobra continha exatamente uma
+afirmação de valor, **e era a oposta**: "Salvar faz parte do Premium." Quem abria e desistia antes de
+rolar levava a mensagem contrária à que o produto quer dar.
+
+**A menção a Premium NÃO foi removida** — ela é a outra metade da verdade, e a frase diz as duas
+coisas na mesma linha. O que mudou foi só QUANDO ela é lida.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `PageHeader`
+
+---
+
+## DEC-121 — "Minhas simulações" é entrada NAV-LIKE e visível para todos; a gaveta só monta estreito
+
+**Data**: 2026-07-19 (010/T013) · **atualizado** 2026-08-29 (019/PR-F, T095) · **Governa**: a entrada
+de simulações na Calcular
+
+**Não é um botão de salvar**: fica junto do TÍTULO da página — nunca dentro do bloco de resultados —
+e é VISÍVEL para todos, incluindo grátis e deslogado. É a porta honesta que o SC-109 exige
+([[DEC-030]]).
+
+**A gaveta SÓ monta no estreito**: a coluna larga já tem a lista sempre visível ao lado
+([[DEC-118]]), e montar as duas seria a duplicata que o teste provou impossível no hospedeiro de
+teste — aqui é o hospedeiro real.
+
+A barra de contexto do cenário carregado **não tem data em lugar nenhum, jamais**: o subtítulo enuncia
+a promessa VIVA no lugar ([[DEC-048]] — simulação é viva, nunca datada).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenariosOpen`
+
+---
+
+## DEC-122 — O aviso de campo aposentado é PERSISTENTE, não um toast
+
+**Data**: 2026-08-05 (016/T036, US10, FR-913) · **Governa**: o aviso de descarte na Calcular
+
+Uma simulação escalar salva antes do `pricing-core` 4.0.0 ainda carrega uma folha aposentada (hoje só
+`wasteGrams` — ADR-0026). O recômputo já a exclui: **o motor recusa a chave**.
+
+Este aviso **informa, e é PERSISTENTE — não um toast**: ele diz por quê **enquanto a simulação
+estiver aberta**. Um toast some, e a pergunta "por que este número mudou?" não some junto.
+
+O gêmeo do KIT existe pelo mesmo motivo, com uma diferença: o rollup já tira a folha aposentada linha
+a linha (nunca reprovando a linha só por isso) e **agrega o descarte UMA vez, deduplicado**, através
+de todas as linhas.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `discardedNotice`
+
+---
+
+## DEC-123 — Com um cenário KIT carregado, o botão de gravar ESCALAR é suprimido
+
+**Data**: 2026-07-20 (010/T024 + T036, Q12) · **Governa**: o ramo KIT da Calcular
+
+Um cenário de base KIT não tem formulário escalar a hidratar ([[DEC-102]]): o rollup por marketplace
+dele, só-leitura, renderiza no lugar — **e os campos abaixo continuam com o que já tinham antes da
+reabertura**. O vendedor edita as LINHAS de um kit por "Abrir origem", nunca ali.
+
+Daí a consequência que fecha o caso: **o botão de gravar SINGLE é suprimido enquanto um cenário KIT
+está carregado**, para nunca existir uma segunda oferta — errada — de "Salvar no histórico"
+congelando os campos intocados.
+
+E o que se congela é o rollup do PRÓPRIO KIT (as linhas e o BOM que o vendedor está olhando), nunca o
+formulário escalar ([[DEC-119]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `KitBasisSummary`
+
+---
+
+## DEC-124 — Nunca dois CTAs de compra na mesma tela
+
+**Data**: 2026-08-04 (016/T010-A3) · **Governa**: o teaser do picker sob a folha de Simulações
+
+Com a folha de Simulações aberta, o teaser do picker ficava visível ATRÁS do overlay, com a própria
+linha de preço e o próprio "Assinar": **dois CTAs de compra na mesma tela** — a classe que o E6 já
+consertou uma vez ([[DEC-030]], o invariante um-teaser).
+
+A guarda antiga morreu junto com o componente apagado naquela fatia; esta é a reposição dela.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenariosOpen`
+
+---
+
+## DEC-125 — Duas colunas a partir do desktop, e o gate ocupa a grade INTEIRA em vez de encolher uma coluna
+
+**Data**: 2026-08-04 (016/PR-B, US4/T015) · **atualizado** 2026-08-05 (016/US11, T044 homologação
+PR-E, R3) · **Governa**: a grade da Calcular
+
+Do corte desktop para cima as seções de entrada viram duas colunas (uma só, na ordem de hoje, a
+360/390px): custos à esquerda, markup e edição de marketplace à direita. **O total fica num rodapé
+único, atravessando as duas, sempre por ÚLTIMO** — assim ele é lido depois de toda entrada que o
+alimenta, canais incluídos.
+
+**A correção R3, e ela é medida**: a coluna direita ficava confinada ao tamanho do GATE quando a conta
+era grátis. Medido a 1440px: **850px de coluna direita contra 2.521px de esquerda — 1.671px de
+buraco**, porque o gate substituía um bloco de coluna inteira sem redistribuir nada. Hoje
+`otherCosts` migra para a direita quando não-entitulado, e **o gate ocupa a largura TOTAL da grade**
+na posição da seção — nunca confinado a uma coluna curta.
+
+**O caminho PREMIUM é byte-idêntico ao de antes** (mesmo JSX, mesma ordem; a classe de largura total
+nunca renderiza), então nenhuma guarda de geometria existente regrediu.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `CalculatorGrid`
+

@@ -146,6 +146,15 @@ descer é sempre permitido. Prende também a densidade TOTAL do repositório —
 local (acrescentar uma âncora de uma linha não pode deixar o portão vermelho) sem permitir uma volta
 geral.
 
+> **O medidor era CEGO PARA JSX, e isso escondeu a metade mais visível do problema.** Um comentário
+> JSX abre com `{` e suas linhas de continuação **não carregam marcador nenhum** — nem `//`, nem `*`.
+> O scanner casava prefixo de linha, então não via nada disso: 14 linhas de comentário do
+> `calcular-page.tsx` (achado do dono, 2026-09-01, DUAS vezes no mesmo arquivo) ficaram invisíveis, e
+> com elas 86 blocos no repositório. O scanner passou a ter ESTADO — reconhece o abridor no INÍCIO da
+> linha e conta até o fechador —, e a mesma correção foi feita na gramática da âncora, que também não
+> aceitava `{/*`. Só se reconhece abridor no começo da linha, nunca no meio, para não confundir o
+> `//` de uma URL dentro de uma string com comentário.
+>
 > **A contagem de blocos entrou depois, e a falta dela custou caro.** A primeira versão prendia só o
 > PICO, e com isso a varredura deu por limpo um arquivo com **dezessete** blocos de 3 a 7 linhas
 > (`calcular-page.tsx`, apontado pelo dono em 2026-09-01 — nenhum bloco chegava ao corte de 10 que a

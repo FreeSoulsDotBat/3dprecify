@@ -1,11 +1,11 @@
 {
     "gerado": "2026-09-01",
-    "totalComentarios": 6953,
-    "totalLinhas": 39139,
+    "totalComentarios": 7377,
+    "totalLinhas": 39106,
     "arquivos": {
         "apps/web/src/app/app-shell.tsx": {
-            "maiorBloco": 7,
-            "blocosDeTres": 4
+            "maiorBloco": 9,
+            "blocosDeTres": 6
         },
         "apps/web/src/app/providers.tsx": {
             "maiorBloco": 8,
@@ -105,7 +105,7 @@
         },
         "apps/web/src/features/auth/sign-in-screen.tsx": {
             "maiorBloco": 6,
-            "blocosDeTres": 2
+            "blocosDeTres": 3
         },
         "apps/web/src/features/billing/billing-cta.tsx": {
             "maiorBloco": 8,
@@ -117,11 +117,11 @@
         },
         "apps/web/src/features/billing/offer-panel.tsx": {
             "maiorBloco": 6,
-            "blocosDeTres": 1
+            "blocosDeTres": 2
         },
         "apps/web/src/features/billing/plan-panel.tsx": {
             "maiorBloco": 8,
-            "blocosDeTres": 6
+            "blocosDeTres": 7
         },
         "apps/web/src/features/billing/plan-view.ts": {
             "maiorBloco": 8,
@@ -132,8 +132,8 @@
             "blocosDeTres": 4
         },
         "apps/web/src/features/bom/assembly-summary.tsx": {
-            "maiorBloco": 5,
-            "blocosDeTres": 4
+            "maiorBloco": 6,
+            "blocosDeTres": 6
         },
         "apps/web/src/features/bom/bom-compute.ts": {
             "maiorBloco": 4,
@@ -141,7 +141,7 @@
         },
         "apps/web/src/features/bom/bom-line-card.tsx": {
             "maiorBloco": 4,
-            "blocosDeTres": 2
+            "blocosDeTres": 4
         },
         "apps/web/src/features/bom/channel-rollup.tsx": {
             "maiorBloco": 5,
@@ -172,8 +172,8 @@
             "blocosDeTres": 1
         },
         "apps/web/src/features/calculator/category-picker.tsx": {
-            "maiorBloco": 9,
-            "blocosDeTres": 10
+            "maiorBloco": 13,
+            "blocosDeTres": 14
         },
         "apps/web/src/features/calculator/channel-field-plan.ts": {
             "maiorBloco": 7,
@@ -185,7 +185,7 @@
         },
         "apps/web/src/features/calculator/fee-seal.tsx": {
             "maiorBloco": 6,
-            "blocosDeTres": 3
+            "blocosDeTres": 4
         },
         "apps/web/src/features/calculator/form-atoms/campo-aviso.tsx": {
             "maiorBloco": 4,
@@ -229,7 +229,7 @@
         },
         "apps/web/src/features/calculator/form-molecules/cost-proportion-bar.tsx": {
             "maiorBloco": 7,
-            "blocosDeTres": 1
+            "blocosDeTres": 2
         },
         "apps/web/src/features/calculator/form-molecules/machine-cost-readout.tsx": {
             "maiorBloco": 6,
@@ -253,7 +253,7 @@
         },
         "apps/web/src/features/calculator/form-organisms/channel-slot.tsx": {
             "maiorBloco": 7,
-            "blocosDeTres": 5
+            "blocosDeTres": 13
         },
         "apps/web/src/features/calculator/form-organisms/costs-section.tsx": {
             "maiorBloco": 3,
@@ -264,12 +264,12 @@
             "blocosDeTres": 0
         },
         "apps/web/src/features/calculator/form-organisms/machine-cost-fields.tsx": {
-            "maiorBloco": 4,
-            "blocosDeTres": 4
+            "maiorBloco": 15,
+            "blocosDeTres": 7
         },
         "apps/web/src/features/calculator/form-organisms/marketplace-section.tsx": {
             "maiorBloco": 5,
-            "blocosDeTres": 3
+            "blocosDeTres": 7
         },
         "apps/web/src/features/calculator/form-organisms/other-costs-section.tsx": {
             "maiorBloco": 2,
@@ -277,7 +277,7 @@
         },
         "apps/web/src/features/calculator/form-organisms/price-results.tsx": {
             "maiorBloco": 9,
-            "blocosDeTres": 3
+            "blocosDeTres": 8
         },
         "apps/web/src/features/calculator/form-signature.ts": {
             "maiorBloco": 9,
@@ -316,16 +316,16 @@
             "blocosDeTres": 2
         },
         "apps/web/src/features/catalog/catalog-panel-dense-table.tsx": {
-            "maiorBloco": 3,
-            "blocosDeTres": 1
+            "maiorBloco": 5,
+            "blocosDeTres": 2
         },
         "apps/web/src/features/catalog/catalog-panel-master-detail.tsx": {
             "maiorBloco": 4,
-            "blocosDeTres": 3
+            "blocosDeTres": 5
         },
         "apps/web/src/features/catalog/catalog-panel-mobile-list.tsx": {
             "maiorBloco": 8,
-            "blocosDeTres": 2
+            "blocosDeTres": 3
         },
         "apps/web/src/features/catalog/catalog-panel-states.tsx": {
             "maiorBloco": 7,
@@ -337,7 +337,7 @@
         },
         "apps/web/src/features/catalog/catalog-panel.tsx": {
             "maiorBloco": 4,
-            "blocosDeTres": 13
+            "blocosDeTres": 14
         },
         "apps/web/src/features/catalog/catalog-schema.ts": {
             "maiorBloco": 5,
@@ -377,7 +377,7 @@
         },
         "apps/web/src/features/history/export-sheet.tsx": {
             "maiorBloco": 7,
-            "blocosDeTres": 3
+            "blocosDeTres": 4
         },
         "apps/web/src/features/history/outbox-syncer.tsx": {
             "maiorBloco": 7,
@@ -397,7 +397,7 @@
         },
         "apps/web/src/features/history/quote-review.tsx": {
             "maiorBloco": 3,
-            "blocosDeTres": 1
+            "blocosDeTres": 3
         },
         "apps/web/src/features/history/record-snapshot-sheet.tsx": {
             "maiorBloco": 6,
@@ -421,7 +421,7 @@
         },
         "apps/web/src/features/scenarios/save-scenario-sheet.tsx": {
             "maiorBloco": 5,
-            "blocosDeTres": 3
+            "blocosDeTres": 4
         },
         "apps/web/src/features/scenarios/scenario-context-bar.tsx": {
             "maiorBloco": 7,
@@ -429,23 +429,23 @@
         },
         "apps/web/src/features/scenarios/scenarios-list-sheet.tsx": {
             "maiorBloco": 6,
-            "blocosDeTres": 7
+            "blocosDeTres": 10
         },
         "apps/web/src/main.tsx": {
             "maiorBloco": 2,
             "blocosDeTres": 0
         },
         "apps/web/src/pages/bom/bom-lines-column.tsx": {
-            "maiorBloco": 2,
-            "blocosDeTres": 0
+            "maiorBloco": 3,
+            "blocosDeTres": 1
         },
         "apps/web/src/pages/bom/bom-page.tsx": {
             "maiorBloco": 7,
-            "blocosDeTres": 16
+            "blocosDeTres": 18
         },
         "apps/web/src/pages/bom/bom-summary-panel.tsx": {
-            "maiorBloco": 3,
-            "blocosDeTres": 2
+            "maiorBloco": 6,
+            "blocosDeTres": 5
         },
         "apps/web/src/pages/bom/kit-save.ts": {
             "maiorBloco": 7,
@@ -456,28 +456,28 @@
             "blocosDeTres": 0
         },
         "apps/web/src/pages/calcular/calcular-page-body.tsx": {
-            "maiorBloco": 3,
-            "blocosDeTres": 1
+            "maiorBloco": 11,
+            "blocosDeTres": 5
         },
         "apps/web/src/pages/calcular/calcular-page-kit-blocks.tsx": {
             "maiorBloco": 6,
             "blocosDeTres": 3
         },
         "apps/web/src/pages/calcular/calcular-page.tsx": {
-            "maiorBloco": 3,
-            "blocosDeTres": 1
+            "maiorBloco": 4,
+            "blocosDeTres": 2
         },
         "apps/web/src/pages/calcular/catalog-picker-card.tsx": {
             "maiorBloco": 5,
-            "blocosDeTres": 3
+            "blocosDeTres": 4
         },
         "apps/web/src/pages/catalogo/catalogo-page.tsx": {
             "maiorBloco": 9,
-            "blocosDeTres": 8
+            "blocosDeTres": 9
         },
         "apps/web/src/pages/catalogo/produto-page-body.tsx": {
-            "maiorBloco": 3,
-            "blocosDeTres": 1
+            "maiorBloco": 6,
+            "blocosDeTres": 3
         },
         "apps/web/src/pages/catalogo/produto-page-editable-section.tsx": {
             "maiorBloco": 3,
@@ -485,19 +485,19 @@
         },
         "apps/web/src/pages/catalogo/produto-page-header.tsx": {
             "maiorBloco": 4,
-            "blocosDeTres": 2
+            "blocosDeTres": 4
         },
         "apps/web/src/pages/catalogo/produto-page-identity-section.tsx": {
             "maiorBloco": 3,
-            "blocosDeTres": 1
+            "blocosDeTres": 2
         },
         "apps/web/src/pages/catalogo/produto-page.tsx": {
             "maiorBloco": 6,
-            "blocosDeTres": 7
+            "blocosDeTres": 10
         },
         "apps/web/src/pages/conta/conta-page.tsx": {
-            "maiorBloco": 5,
-            "blocosDeTres": 12
+            "maiorBloco": 7,
+            "blocosDeTres": 13
         },
         "apps/web/src/pages/error/error-page.tsx": {
             "maiorBloco": 4,
@@ -524,8 +524,8 @@
             "blocosDeTres": 0
         },
         "apps/web/src/pages/historico/history-ledger.tsx": {
-            "maiorBloco": 7,
-            "blocosDeTres": 8
+            "maiorBloco": 8,
+            "blocosDeTres": 11
         },
         "apps/web/src/pages/historico/history-master-detail.tsx": {
             "maiorBloco": 4,
@@ -553,7 +553,7 @@
         },
         "apps/web/src/pages/historico/snapshot-detail-page.tsx": {
             "maiorBloco": 7,
-            "blocosDeTres": 5
+            "blocosDeTres": 8
         },
         "apps/web/src/pages/historico/snapshot-detail-quote.tsx": {
             "maiorBloco": 9,
@@ -857,11 +857,11 @@
         },
         "apps/web/src/widgets/app-nav/app-nav.tsx": {
             "maiorBloco": 8,
-            "blocosDeTres": 4
+            "blocosDeTres": 5
         },
         "apps/web/src/widgets/bom-line-editor/bom-line-editor.tsx": {
-            "maiorBloco": 6,
-            "blocosDeTres": 3
+            "maiorBloco": 8,
+            "blocosDeTres": 5
         },
         "apps/web/src/widgets/offline-banner/offline-banner.tsx": {
             "maiorBloco": 6,
@@ -1012,8 +1012,8 @@
             "blocosDeTres": 6
         },
         "backend/app/models/__init__.py": {
-            "maiorBloco": 5,
-            "blocosDeTres": 2
+            "maiorBloco": 3,
+            "blocosDeTres": 1
         },
         "backend/app/models/account.py": {
             "maiorBloco": 2,

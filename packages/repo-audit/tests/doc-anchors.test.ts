@@ -15,10 +15,11 @@ import { RAIZ, arquivosDeCodigo, existe, ler } from "./scan.ts";
  *
  * `#:` entra junto: é a convenção Sphinx que o `backend/app/validation.py` usa para documentar
  * constante de módulo, e estender a gramática custa menos do que mudar a convenção de um arquivo
- * para caber num guarda.
+ * para caber num guarda. `{/*` idem, pelo JSX — e a falta dele era a mesma cegueira que o scanner
+ * de densidade tinha: em JSX o comentário abre com `{` e o guarda não o via.
  */
 const GRAMATICA =
-    /^\s*(?:\/\/|#:?|\/\*\*|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/)?\s*$/u;
+    /^\s*(?:\/\/|#:?|\{?\/\*+|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/\}?)?\s*$/u;
 
 const REGISTRO_DEC = "docs/decisoes-de-codigo.md";
 const REGISTRO_FONTE = "docs/fontes-verbatim.md";

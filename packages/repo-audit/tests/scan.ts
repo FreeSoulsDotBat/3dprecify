@@ -55,14 +55,64 @@ export function existe(rel: string): boolean {
     }
 }
 
-/** Uma linha é comentário quando começa por `//`, `#`, `/*` ou a continuação `*` de um bloco. */
-export function ehComentario(linha: string): boolean {
-    return /^\s*(?:\/\/|#|\/\*|\*(?!\/)|\*\/)/.test(linha);
+/** Linha de comentário de UMA linha: `//`, `#`, ou um bloco que abre e fecha nela mesma. */
+function ehComentarioDeLinha(linha: string): boolean {
+    const t = linha.trim();
+    return t.startsWith("//") || t.startsWith("#") || /^\{?\/\*.*\*\/\}?$/.test(t);
 }
 
-/** Linha de comentário que só carrega o delimitador de bloco, sem prosa nenhuma dentro dela. */
+/** Abre um comentário de bloco — inclusive o do JSX, que começa com `{` — sem fechá-lo na linha. */
+function abreBloco(linha: string): boolean {
+    const t = linha.trim();
+    return (t.startsWith("/*") || t.startsWith("{/*")) && !t.includes("*/");
+}
+
+function fechaBloco(linha: string): boolean {
+    return linha.includes("*/");
+}
+
+/**
+ * Linha de comentário que só carrega o delimitador, sem prosa nenhuma dentro dela.
+ *
+ * Os delimitadores do JSX entram na lista: lá o texto costuma começar na MESMA linha do abridor,
+ * então nem sempre existe uma linha só de delimitador — mas quando existe, ela não é prosa.
+ */
 function ehDelimitador(linha: string): boolean {
-    return /^\s*(?:\/\*+|\*\/|\*|\/\/)\s*$/.test(linha);
+    return /^\s*\{?(?:\/\*+|\*\/|\*|\/\/)\}?\s*$/.test(linha);
+}
+
+/**
+ * Uma linha conta como comentário.
+ *
+ * O scanner tem ESTADO de propósito: em JSX as linhas de continuação de um comentário não carregam
+ * marcador NENHUM, e um casador por prefixo é cego para elas — foi assim que 14 linhas escaparam da
+ * varredura no `calcular-page.tsx` (achado do dono, 2026-09-01). Só se reconhece um bloco cujo
+ * abridor está no INÍCIO da linha, nunca no meio, para não confundir o `//` de uma URL dentro de uma
+ * string com um comentário.
+ */
+export function marcarComentarios(conteudo: string): boolean[] {
+    const linhas = conteudo.split("\n");
+    const marcas: boolean[] = [];
+    let dentro = false;
+    for (const linha of linhas) {
+        if (dentro) {
+            marcas.push(true);
+            if (fechaBloco(linha)) dentro = false;
+            continue;
+        }
+        if (abreBloco(linha)) {
+            marcas.push(true);
+            dentro = true;
+            continue;
+        }
+        marcas.push(ehComentarioDeLinha(linha));
+    }
+    return marcas;
+}
+
+/** Compatibilidade com quem só tem UMA linha em mãos (sem contexto de bloco). */
+export function ehComentario(linha: string): boolean {
+    return ehComentarioDeLinha(linha) || abreBloco(linha) || /^\s*\*/.test(linha);
 }
 
 export interface MetricaDeArquivo {
@@ -87,6 +137,7 @@ export interface MetricaDeArquivo {
 
 export function medir(conteudo: string): MetricaDeArquivo {
     const linhas = conteudo.split("\n");
+    const marcas = marcarComentarios(conteudo);
     let comentarios = 0;
     let maiorBloco = 0;
     let blocosDeTres = 0;
@@ -95,16 +146,16 @@ export function medir(conteudo: string): MetricaDeArquivo {
         if (corrente >= 3) blocosDeTres++;
         corrente = 0;
     };
-    for (const linha of linhas) {
-        if (!ehComentario(linha)) {
+    linhas.forEach((linha, i) => {
+        if (marcas[i] !== true) {
             fecharBloco();
-            continue;
+            return;
         }
         comentarios++;
-        if (ehDelimitador(linha)) continue;
+        if (ehDelimitador(linha)) return;
         corrente++;
         if (corrente > maiorBloco) maiorBloco = corrente;
-    }
+    });
     fecharBloco();
     return { comentarios, linhas: linhas.length, maiorBloco, blocosDeTres };
 }
