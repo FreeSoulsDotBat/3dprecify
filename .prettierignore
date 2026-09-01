@@ -24,3 +24,8 @@ docs/homologacao/automatizada/resultados/
 # da saída do gerador e o guarda de paridade nasceria vermelho — a mesma classe de defeito que o
 # artefato servido já evita por `backend/**` estar aqui.
 apps/web/src/shared/fee-catalog/seed.data.json
+
+# Workflows do GitHub são ARTEFATO AUDITADO (017 contracts/workflow-yaml.md): o teste
+# packages/fee-ingest/src/workflow-audit.test.ts pina a indentação de 2 espaços do YAML.
+# A Onda 1 do chore de legibilidade (tabWidth 4) os reformatou e quebrou a auditoria — ficam fora.
+.github/**
