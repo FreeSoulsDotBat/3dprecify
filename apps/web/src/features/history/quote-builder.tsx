@@ -43,30 +43,8 @@ export {
     type QuoteLineInputResult,
 } from "./quote-catalog-item";
 
-// 019/PR-E (T088, US16/US17/US18-retirada, ADR-0034) — O CONSTRUTOR de orçamento (18b→18d→18e).
-//
-// DECISÃO DE FRONTEIRA (Princípio VIII, precedente T124 da PR-D): `features/history` não importa
-// `features/calculator` nem `features/bom` (eslint-boundaries). Quem sabe transformar um PRODUCT/
-// KIT do Catálogo num `PriceInput` é a PAGE (`pages/historico/quote-line-input.ts`), que injeta
-// `toLineInput`. Este arquivo só sabe SOMAR o que já veio pronto — nenhuma linha aqui chama
-// `computeFromForm`.
-//
-// DECISÃO DE FIDELIDADE (registrada, não inventada): a prancheta desenha 18d (desconto/piso) e 18e
-// (diálogo "Enviar congela") como DUAS pranchetas separadas. O contrato T083 pede as DUAS num único
-// passo de revisão — "Válido até" já visível ANTES de qualquer confirmação adicional, e um único
-// clique em "Enviar" grava (sem uma segunda tomada de decisão). A leitura do total, do piso e da
-// validade JÁ NA TELA, antes do clique, é a confirmação — não existe uma segunda camada de diálogo
-// Radix aqui. Registrado para o design revisar; não é um desvio silencioso.
-//
-// 18d·2 ("Aperta, mas passa" — sobra positiva mas pequena) FICOU DE FORA: a prancheta não decide o
-// limiar (quantos % é "aperta"), e a T088 pede para NÃO inventar regra de dinheiro. Só os dois
-// estados com limiar decidido entram: sobra normal (linha apagada) e abaixo do custo (aviso, Q10).
-//
-// Ícones do "conjunto curado" que a prancheta cita: `check`/`share-2` JÁ estavam no bundle estático
-// (`public/brand/icons/lucide`) e entraram no mapa inline (`shared/ui/icon.tsx`) nesta tarefa.
-// `percent`/`minus`/`user`/`folder` NÃO estão no bundle — não inventados; o campo de desconto usa o
-// sufixo textual do `NumberField` (%, R$) em vez de um ícone, e `lock` (18e) não existe → `Aviso`
-// já usa `info` por padrão (mesma troca que o resto do 019 já fez noutras pranchetas).
+// @doc DEC-011 — `features/history` não importa `calculator` nem `bom`: a PAGE injeta
+//   `toLineInput` e este arquivo só SOMA o que já veio pronto.
 
 const th = messages.history;
 

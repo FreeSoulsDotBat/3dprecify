@@ -24,27 +24,8 @@ import {
 
 import "./record-snapshot-sheet.css";
 
-// 009/T010 (E4, PR-A) — where a snapshot is born (US1/US2, FR-501/502/519/520).
-//
-// A snapshot is the seller's ASSERTION about what they charged, so this surface has one job: record
-// exactly what is on screen, with the date it was quoted, and never claim more than actually
-// happened. Three things are deliberate:
-//
-//   * The seller PICKS the basis (owner decision F1, 2026-07-13). Varejo is pre-selected because it
-//     is the common case, but atacado quotes are real — recording one as varejo would make the
-//     Histórico lie about what they charged. The chosen basis is then LABELLED on every surface: an
-//     unlabelled total is an ambiguous claim.
-//   * The payload is frozen when the Sheet OPENS — the numbers the seller reads before confirming
-//     are the numbers that get stored. Nothing is re-derived at send time.
-//   * The confirmation tells the truth about where the record actually got to. "Salvo" is said only
-//     on a real server answer; a record that only reached the device says so (`pendente`), and one
-//     the device could not even keep says THAT (and stays open).
-//
-// The gate is the SERVER's last word (Principle IV / ADR-0015 nuance): recording is offered on a
-// last-known server entitlement of `active` — a cached server answer, never a client-held flag.
-// Owner decision Q15 (2026-07-13): without an active premium the button does NOT exist — it is not a
-// greyed affordance and not a teaser trigger (`RecordSnapshotButton` returns null). The free
-// calculator is not a sales floor (SC-109); the honest door lives on the Histórico tab (§7).
+// ⚠ @doc DEC-013 — sem premium ATIVO o botão não existe (devolve `null`), e o portão é a
+//   última palavra do SERVIDOR: entitlement em cache, nunca flag de cliente.
 
 const t = messages.history;
 

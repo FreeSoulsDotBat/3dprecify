@@ -9,29 +9,9 @@ import {
 import { channelHasDeclaredFee } from "@/shared/lib/channel-fee";
 import { stringifyLeaf, type DecimalLeafValue } from "@/shared/lib/decimal-leaf";
 
-// 009/T003 (E4, PR-A) — THE FROZEN DOCUMENT (data-model D1, ADR-0008, ADR-0020 §1).
-//
-// A snapshot CONTAINS its values; it never REFERENCES the catalog for them. That is the whole
-// two-shelf rule, and this module is where it becomes true: everything the detail UI or the export
-// renderer will ever print must be inside this document, forever.
-//
-// Three rules encoded here, each of which prevents a LIE (not a crash):
-//
-//   1. MONEY IS A STRING. Postgres keeps a JSON number as `numeric` losslessly — but `json.loads`
-//      and `JSON.parse` hand it back as a FLOAT. The precision dies in the serializer, silently,
-//      app-side. So every money/quantity/rate leaf is a decimal string; the only JSON numbers are
-//      integer counts (FR-525).
-//
-//   2. THE TYPES ARE STRUCTURALLY INDEPENDENT OF `PriceResult`, and every breakdown line is
-//      OPTIONAL. This is not stylistic. If the frozen document were typed with the LIVE result, a
-//      future pricing-core field would make TypeScript *assert* that a 2026 snapshot carries it —
-//      the renderer would reach for `?? 0` and print a zero that was never recorded. FR-507's
-//      fabricated zero, produced by the type system itself. Here, absent is a first-class value.
-//
-//   3. THE DOCUMENT IS SELF-SUFFICIENT. Kit lines carry their NAME, their QUANTITY and their
-//      quantity-SCALED money, so the server-side quote renderer can PRINT instead of CALCULATE —
-//      which is precisely why the export does not fork the pricing engine, and why "the backend
-//      never recomputes" (ADR-0008) survives E4 intact.
+// ⚠ @doc DEC-008 — o snapshot CONTÉM os valores, nunca REFERENCIA o catálogo para obtê-los.
+//   Dinheiro é STRING (o serializador perde a precisão em float) e o tipo é independente
+//   do `pricing-core` — tipá-lo com o resultado VIVO imprimiria um zero nunca gravado.
 
 /** Bumped only when the ENVELOPE changes shape — never when the formula does (those are two
  *  different versions, and conflating them is how old snapshots start lying). */

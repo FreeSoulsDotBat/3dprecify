@@ -172,38 +172,26 @@ novo, zero centavo diferente ⇒ o rótulo **não** se moveu, pela regra do prim
 
 ---
 
-## DEC-005 — O documento de INTENÇÃO do cenário: três regras de codificação
+## DEC-005 — O documento de INTENÇÃO do cenário: o que o vendedor NÃO digitou fica de fora
 
 **Data**: 2026-07-19 (010/T004, E5 PR-A) · **Governa**: `ScenarioConfigDocument`,
 `ScenarioLastKnownInput`, `ScenarioChannelSlotState`
 
 Um cenário guarda a INTENÇÃO do vendedor, nunca um preço resolvido (Q3/FR-602/FR-607 — a estrutura da
-decisão é o ADR-0021). O documento é a imagem espelhada do payload congelado do E4
-(`entities/history/frozen-payload.ts`): lá as folhas de dinheiro/qtd/taxa/percentual são STRINGS
-porque um snapshot tem de sobreviver a Postgres → JSON sem perda; aqui são STRINGS pelo mesmo motivo
-de serialização, mas o que se guarda é um conjunto de entradas EDITÁVEL, não um resultado congelado.
+decisão é o ADR-0021). O documento é a imagem espelhada do payload congelado do E4: as duas regras de
+codificação que eles compartilham (dinheiro é string, tipo independente do `pricing-core`) estão no
+[[DEC-008]], que os dois arquivos citam. O que é só do cenário é a regra abaixo.
 
-**1. Dinheiro/taxa/qtd/percentual é STRING.** `JSON.parse`/`JSON.stringify` fazem uma folha numérica
-ir e voltar por binary64 em silêncio — a perda é do app, não do banco. Só CONTAGENS inteiras de
-verdade (`schemaVersion`, o `quantity` de uma linha de kit) são números JSON legítimos em qualquer
-lugar do `config`.
-
-**2. Uma chave `feeOverrides` AUSENTE é a fronteira vivo-vs-congelado.** Quais slots o vendedor
-realmente editou é decisão da camada de FEATURE (o estado editado/selado do `fee-prefill.ts` do 005)
-— este módulo só codifica a REGRA: uma folha em que o vendedor nunca digitou é OMITIDA, não guardada
-como zero, para o cenário reaberto resolvê-la de novo contra o catálogo de tarifas de hoje (FR-607).
-Um slot sem nenhuma folha editada omite a chave `feeOverrides` INTEIRA, não um objeto vazio.
-
-**3. O envelope é ESTRUTURALMENTE independente de `PriceInput`/`BomResult`** (a lição do E4 §9.6, um
-nível acima). Nada aqui faz `extends`/`Pick`/`map` sobre um tipo do `pricing-core` — todo tipo do
-envelope é declarado à mão, para que um campo futuro do `pricing-core` jamais alargue ou estreite a
-forma deste documento em silêncio. A base de custo carrega o SEU PRÓPRIO tipo recursivo de folhas em
-string (`ScenarioLastKnownInput`), não o `PriceInput`.
+**Uma chave `feeOverrides` AUSENTE é a fronteira vivo-vs-congelado.** Quais slots o vendedor realmente
+editou é decisão da camada de FEATURE (o estado editado/selado do `fee-prefill.ts` do 005) — este
+módulo só codifica a REGRA: uma folha em que o vendedor nunca digitou é OMITIDA, não guardada como
+zero, para o cenário reaberto resolvê-la de novo contra o catálogo de tarifas de hoje (FR-607). Um
+slot sem nenhuma folha editada omite a chave `feeOverrides` INTEIRA, não um objeto vazio.
 
 Este módulo não importa de `features/*` (FSD-Lite: uma entity fica abaixo de uma feature). A entrada
 "qual slot o vendedor editou" é, por isso, PARÂMETRO SIMPLES com a forma do estado de formulário do
 005, e não um import dos tipos de `features/calculator` — a camada de feature mapeia o próprio estado
-para `ScenarioChannelSlotState` no ponto de chamada (T009/T010).
+para `ScenarioChannelSlotState` no ponto de chamada (T009/T010), no costurado do [[DEC-009]].
 
 ### Onde isso vive no código
 
@@ -274,4 +262,338 @@ outra aba/fluxo) — o que vier primeiro.
 ### Onde isso vive no código
 
 - `apps/web/src/shared/session/session-expiry.ts` → `markSessionExpired`, `clearSessionExpired`, `useSessionExpired`
+
+---
+
+## DEC-008 — O envelope persistido: dinheiro é STRING e o tipo é independente do `pricing-core`
+
+**Data**: 2026-07-12 (009/T003, E4 PR-A · data-model D1, ADR-0008, ADR-0019, ADR-0020 §1) ·
+**Governa**: o payload congelado do Histórico e o documento de config do cenário ([[DEC-005]])
+
+Um snapshot CONTÉM os seus valores; ele nunca REFERENCIA o catálogo para obtê-los. É a regra das duas
+prateleiras inteira, e é aqui que ela vira verdade: tudo que a tela de detalhe ou o renderizador de
+exportação um dia imprimirem tem de estar dentro do documento, para sempre.
+
+Três regras, e cada uma impede uma MENTIRA — não um travamento:
+
+**1. Dinheiro é STRING.** O Postgres guarda um número JSON como `numeric` sem perda — mas `json.loads`
+e `JSON.parse` devolvem um FLOAT. A precisão morre no serializador, em silêncio, do lado do app. Então
+toda folha de dinheiro/quantidade/taxa é string decimal; os únicos números JSON são contagens inteiras
+(FR-525).
+
+**2. Os tipos são ESTRUTURALMENTE independentes de `PriceResult`, e toda linha de detalhamento é
+OPCIONAL.** Isso não é estilo. Se o documento congelado fosse tipado com o resultado VIVO, um campo
+futuro do `pricing-core` faria o TypeScript *afirmar* que um snapshot de 2026 o carrega — o
+renderizador alcançaria um `?? 0` e imprimiria um zero que nunca foi gravado. O zero fabricado do
+FR-507, produzido pelo próprio sistema de tipos. Aqui, ausente é valor de primeira classe.
+
+**3. O documento é AUTOSSUFICIENTE.** As linhas de kit carregam o NOME, a QUANTIDADE e o dinheiro já
+ESCALADO pela quantidade, para que o renderizador de orçamento do servidor possa IMPRIMIR em vez de
+CALCULAR — que é exatamente por que a exportação não bifurca o motor de preço, e por que "o backend
+nunca recomputa" (ADR-0008) sobrevive ao E4 intacto.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/frozen-payload.ts` → `FROZEN_PAYLOAD_SCHEMA_VERSION`, `MoneyString`, `FrozenTotals`, `FrozenKitLine`
+- `apps/web/src/entities/scenario/config-document.ts` → `ScenarioConfig`, `DecimalString`, `ScenarioChannelFeeOverrides`
+
+---
+
+## DEC-009 — O costurado calculadora↔cenário mora em `features/calculator`, e por fronteira
+
+**Data**: 2026-07-19 (010/T009+T010+T014, E5 PR-A) · **Governa**: `scenario-bridge.ts`
+
+A ÚNICA costura onde o estado vivo do formulário da calculadora encontra as formas de parâmetro da
+entity de cenário, nos DOIS sentidos (salvar + reabrir).
+
+Mora em `features/calculator` e NÃO em `features/scenarios` por razão estrutural (FSD-Lite/ADR-0004,
+cobrada pelo `eslint-boundaries`): uma feature pode importar `entities/*` e `shared/*`, **nunca uma
+feature IRMÃ**. `features/scenarios` não consegue importar os tipos `CalcFormValues` /
+`ChannelSlotOutcome` de `features/calculator` — então a feature da calculadora, que já é dona desses
+tipos, é a que sabe traduzi-los para as formas simples de `entities/scenario/config-document`
+([[DEC-005]]). `features/scenarios` nunca vê um `CalcFormValues`: só lida com um `ScenarioConfig` já
+montado (sentido salvar) ou com um patch de formulário já aplicado (sentido reabrir), e quem costura
+os dois é a PÁGINA, chamando estas funções no ponto de chamada.
+
+**O `pricing-core` não é tocado.** SALVAR reaproveita o que o `computeFromForm` já resolveu
+(`ChannelSlotOutcome.editedFields`, o rastreio por campo do T010); REABRIR só produz STRINGS de
+formulário pt-BR que voltam pelo mesmíssimo caminho `computeFromForm` → `fee-prefill.ts` de um
+cálculo novo — slot não sobrescrito fica EM BRANCO para resolver no vivo, slot sobrescrito recebe o
+valor salvo e lê "ajustado por você", e os casos de honestidade do 005 (slot sem cobertura → "sem
+referência"; comissão ≥ 100% → o mesmo erro na linha) caem do código EXISTENTE, com zero lógica de
+preço nova (FR-609, T014).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/scenario-bridge.ts` → `ChannelSlotOutcome`
+
+---
+
+## DEC-010 — A sobrescrita é um MERGE SELETIVO, e só `commissionPct` derruba a tabela de bandas
+
+**Data**: 2026-07-30 (013/E1-02; regra de derrubada corrigida pela auditoria F1; atribuição do cupom
+corrigida pelo hotfix 016/A2) · **Governa**: o costurado de override do `calculator-model.ts`
+
+A sobrescrita reescreve APENAS os escalares que o vendedor realmente DIGITOU. O sinal é
+`editedFields` (quais campos foram digitados), **nunca** veracidade do valor — um `0` digitado é
+override real e tem de vencer o valor da entrada. `freightIsEstimate` segue a mesma regra: o rótulo
+"estimativa" pertence ao subsídio da entrada, então cai no instante em que o vendedor digita o
+próprio frete.
+
+**A regra de derrubada.** Um `commissionPct` digitado significa "minha comissão é X, não a do
+catálogo" ⇒ a tabela de bandas de preço CAI e a comissão digitada governa. Todo o resto — frete,
+`minPerItem` **e um `fixedFee` digitado** — NÃO derruba a tabela.
+
+Por que o `fixedFee` não pode derrubar: a entrada da Shopee **não tem** `commissionPct` no topo (ele
+vive nas bandas), então derrubar as bandas numa edição só de `fixedFee` cairia para 0% de comissão e
+superestimaria o líquido do vendedor pela comissão inteira — **o bug F1**. Numa entrada com bandas o
+motor tira `commissionPct`+`fixedFee` da banda que contém o anúncio, então o `fixedFee` digitado é
+simplesmente inerte ali; numa entrada sem bandas ele sobrescreve o escalar, como se espera.
+
+`freightVoucherBands` está DEPRECIADO no motor ([[FONTE-001]]: o cupom de R$ 20/30/40 é custo da
+Shopee, não do vendedor, e o catálogo não o emite mais), mas segue sendo carregado
+incondicionalmente: um documento de cenário salvo ANTES do hotfix pode conter o campo, e largá-lo
+numa edição mudaria o número daquele documento por um motivo que o vendedor nunca pediu.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-model.ts` → `editedFields`, `freightIsEstimate`
+
+---
+
+## DEC-011 — O construtor de orçamento: fronteira, fidelidade à prancheta e o que ficou de fora
+
+**Data**: 2026-08-30 (019/PR-E, T088, US16/US17, ADR-0034) · **Governa**: `quote-builder.tsx`
+
+**Fronteira** (Princípio VIII, precedente T124 da PR-D): `features/history` não importa
+`features/calculator` nem `features/bom` (`eslint-boundaries`). Quem sabe transformar um PRODUCT/KIT
+do Catálogo num `PriceInput` é a PAGE (`pages/historico/quote-line-input.ts`), que injeta
+`toLineInput`. Este arquivo só sabe SOMAR o que já veio pronto — nenhuma linha dele chama
+`computeFromForm`.
+
+**Fidelidade, registrada e não inventada.** A prancheta desenha 18d (desconto/piso) e 18e (diálogo
+"Enviar congela") como DUAS pranchetas separadas. O contrato T083 pede as DUAS num único passo de
+revisão: "Válido até" já visível ANTES de qualquer confirmação adicional, e um único clique em
+"Enviar" grava, sem uma segunda tomada de decisão. A leitura do total, do piso e da validade JÁ NA
+TELA, antes do clique, é a confirmação — não existe uma segunda camada de diálogo Radix aqui.
+**Registrado para o design revisar; não é um desvio silencioso.**
+
+**18d·2 ("Aperta, mas passa" — sobra positiva mas pequena) FICOU DE FORA**: a prancheta não decide o
+limiar (quantos % é "aperta"), e a T088 pede para NÃO inventar regra de dinheiro. Só os dois estados
+com limiar decidido entram: sobra normal (linha apagada) e abaixo do custo (aviso, Q10).
+
+**Ícones**: `check`/`share-2` do conjunto curado já estavam no bundle estático
+(`public/brand/icons/lucide`) e entraram no mapa inline (`shared/ui/icon.tsx`).
+`percent`/`minus`/`user`/`folder` NÃO estão no bundle e não foram inventados — o campo de desconto usa
+o sufixo textual do `NumberField` (%, R$); `lock` (18e) não existe, e o `Aviso` já usa `info` por
+padrão (a mesma troca que o resto do 019 fez noutras pranchetas).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/history/quote-builder.tsx` → `toLineInput`
+
+---
+
+## DEC-012 — `freightSubsidyInfo` é INFORMAÇÃO, e é campo novo em vez de `kind` novo por compatibilidade
+
+**Data**: 2026-08-07 (hotfix 016/A2) · **Governa**: `freightSubsidyInfo` no catálogo de tarifas
+
+O subsídio de frete da Shopee no nível do MARKETPLACE — precedente exato de `optionalSurcharges`: não
+é tarifa por perfil nem por faixa; é política que vale para todos os vendedores ([[FONTE-001]], arts.
+23431 e 26839, literais nas duas: *"Todos os vendedores têm os benefícios do Programa de Frete
+Grátis"* — não há adesão a modelar).
+
+**NÃO-COMPUTANTE, e isso é a decisão inteira.** Nenhum consumidor multiplica, soma ou desconta nada
+daqui: `entryToChannelFees` não o lê. Ele existe para o vendedor SABER que a Shopee subsidia — a
+informação é boa notícia, e apagá-la em silêncio tiraria dele o que usa para decidir — sem que um teto
+de validade de cupom volte a virar aritmética (foi assim que nasceu o achado A2).
+
+**Por que um campo novo e NÃO um `kind: "SUBSIDY_INFO"` no union `freight`** — e esta é a armadilha
+que o campo existe para desviar: `freightSchema` é um `z.discriminatedUnion`. Um `kind` novo no
+artefato SERVIDO faria o cliente PWA **já instalado** RECUSAR o catálogo inteiro, e a recusa é
+SILENCIOSA (cai no seed embutido e ninguém vê erro). Uma propriedade extra num `z.object` não-strict é
+simplesmente DESCARTADA pelo cliente antigo, que então lê exatamente `freight: {kind: "NONE"}` — a
+verdade nova. Compatibilidade por construção, não por sorte.
+
+`nullish` e não `optional` pela razão de sempre: o backend serializa ausente como `null`.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `freightSubsidyInfo`, `entryToChannelFees`
+
+---
+
+## DEC-013 — Onde um snapshot nasce: o vendedor escolhe a base, e o botão não existe sem premium ativo
+
+**Data**: 2026-07-13 (009/T010, E4 PR-A · US1/US2 · FR-501/502/519/520) · **Governa**:
+`record-snapshot-sheet.tsx`
+
+Um snapshot é a AFIRMAÇÃO do vendedor sobre o que ele cobrou, então esta superfície tem um trabalho
+só: gravar exatamente o que está na tela, com a data em que foi orçado, e nunca afirmar mais do que
+de fato aconteceu. Três coisas são deliberadas:
+
+1. **O vendedor ESCOLHE a base** (decisão do dono F1, 2026-07-13). Varejo vem pré-selecionado por ser
+   o caso comum, mas orçamento de atacado é real — gravar um como varejo faria o Histórico mentir
+   sobre o que ele cobrou. A base escolhida é então ROTULADA em toda superfície: um total sem rótulo
+   é uma afirmação ambígua.
+2. **O payload é congelado quando a Sheet ABRE** — os números que o vendedor lê antes de confirmar são
+   os números que ficam gravados. Nada é rederivado na hora de enviar.
+3. **A confirmação diz a verdade sobre até onde o registro chegou.** "Salvo" só é dito com resposta
+   real do servidor; um registro que só chegou ao aparelho diz isso (`pendente`), e um que o aparelho
+   nem conseguiu guardar diz AQUILO (e continua aberto) — a regra única do [[DEC-014]].
+
+**O portão é a última palavra do SERVIDOR** (Princípio IV / nuance do ADR-0015): gravar é oferecido
+sobre um entitlement de servidor last-known `active` — resposta de servidor em cache, nunca uma flag
+de cliente. Decisão do dono Q15 (2026-07-13): **sem premium ativo o botão NÃO existe** — não é um
+affordance acinzentado nem gatilho de teaser (`RecordSnapshotButton` devolve `null`). A calculadora
+gratuita não é um salão de vendas (SC-109); a porta honesta vive na aba Histórico.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/history/record-snapshot-sheet.tsx` → `RecordSnapshotButton`
+
+---
+
+## DEC-014 — O aviso de sincronização é UMA regra, e o `switch` exaustivo é o guarda dela
+
+**Data**: 2026-09-01 (correção do bug B3) · **Governa**: `syncToastFor`
+
+Era a MESMA cadeia `if/else` copiada em três telas (`record-snapshot-sheet`, `quote-builder` e
+`recalc-today`), e a terceira cópia ficou para trás quando o hotfix 016/A3 acrescentou o ramo
+`unauthenticated`: com a sessão expirada, o "Recalcular hoje" caía no vermelho genérico de falha em
+vez de dizer que bastava entrar de novo — assustando, sem dizer o que fazer.
+
+O `switch` é EXAUSTIVO de propósito, e é isso que impede a próxima cópia de nascer: um estado novo em
+`SyncState` sem ramo aqui **não compila** (o retorno deixaria de ser `SyncToast`), em vez de escorregar
+para um `else` que fala a frase errada com convicção.
+
+Pausado não é falhado (ADR-0018 §9) e sessão morta não é recusa do servidor: os dois têm ramo próprio,
+em tom `info`, e a palavra "conexão" não aparece na cópia deles.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/sync-toast.ts` → `syncToastFor`, `SyncToast`
+
+---
+
+## DEC-015 — A tela do documento congelado: três proibições, cada uma uma mentira evitada
+
+**Data**: 2026-07-12 (009/T013, E4 PR-A, US2) · **Governa**: `snapshot-detail-page.tsx`
+
+Esta superfície renderiza um DOCUMENTO ([[DEC-008]]), e é definida por três proibições:
+
+1. **ZERO RECÔMPUTO (SC-501).** Todo número ali é uma string GUARDADA, formatada para leitura. Nada é
+   derivado, nada é somado, o `pricing-core` não é chamado. Recomputar uma linha que fosse faria o
+   snapshot passar a seguir o catálogo de hoje em silêncio — o oposto exato do que ele promete.
+2. **LINHA AUSENTE NÃO É ZERO (FR-507).** Um payload sem `finishing` significa que o vendedor não
+   cobrou acabamento. Imprimir "Acabamento R$ 0,00" inventaria um fato que ele nunca afirmou, então a
+   linha simplesmente não é renderizada.
+3. **NUNCA DEGRADA (FR-503).** Um snapshot CONTÉM seus valores e não referencia nada, então nada
+   nele pode apodrecer. Apagar o produto de origem não muda nada aqui: nem legenda, nem selo, nem
+   tom. A tela fica idêntica à de um cujo origem sempre foi avulsa — e **essa ausência é a feature**,
+   o inverso exato da linha de kit degradada do E3.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/historico/snapshot-detail-page.tsx` → `SnapshotDetailPage`
+
+---
+
+## DEC-016 — Rota de 2 segmentos abre em BRANCO no cold load: overlay ou query param, nunca sub-rota
+
+**Data**: 2026-07-19 (medido no E5) · **Governa**: toda superfície alcançada por navegação profunda
+
+Fato MEDIDO do repositório, não preferência de UX: com `base: './'` (exigência do Capacitor),
+**qualquer rota de 2 segmentos abre em branco num cold load ou refresh** — os assets resolvem
+relativos e dão 404. Foi o que atingiu `/historico/$id` e `/catalogo/produtos/$id`; `/kits?id=`
+desviou usando query param.
+
+Consequências, e as três valem sempre:
+
+- uma superfície nova nasce como **Sheet/overlay** ou **query param**, não como sub-rota;
+- num teste e2e, chega-se a ela por **navegação de cliente**, nunca por `page.goto(deep-link)`;
+- rota antiga de 2 segmentos que ainda exista é redirecionamento puro, sem checar auth ([[DEC-006]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/scenarios/scenarios-list-sheet.tsx` → `ScenariosListSheet`
+
+---
+
+## DEC-017 — Linha de ícones inline no lugar do menu "⋯": desvio datado, e por ausência de primitivo
+
+**Data**: 2026-07-20 (010/T029) · **Governa**: a linha de ações dos cards de cenário
+
+O wireframe de UX desenha um menu de transbordo "⋯" por card. Aqui ele é composto como botões de
+ícone inline (`pencil`/`copy`/`trash-2`): **não existe primitivo `DropdownMenu` no DS** (a própria ux
+§10.2 G3 marca isso como lacuna de compor-primeiro), e o `features/catalog/catalog-panel.tsx` já
+entrega a mesma convenção de linha de ícones para filamentos/impressoras/kits. Reusá-la mantém um
+idioma só, em vez de inventar um componente de menu para esta fatia.
+
+Funcionalmente equivalente (Abrir · Duplicar · Renomear · Excluir, cada um com o seu portão) — é
+questiúncula de design, não mudança de comportamento, e está registrado para o design ver.
+
+Nota do mesmo T029: o checkbox do T026 afirmava que o "Duplicar" já estava ligado no cliente; **não
+estava** (só existia o endpoint do backend). Foi completado junto com a linha de ações.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/scenarios/scenarios-list-sheet.tsx` → `ScenariosListSheet`
+
+---
+
+## DEC-018 — No modo PCT o servidor CONFERE que o abatimento é o percentual declarado (bug B12)
+
+**Data**: 2026-09-01 (achado pelo teste de paridade, corrigido a pedido do dono) · **Governa**:
+`_validate_declared_discount`
+
+Até aqui o servidor conferia que o percentual era ≤ 100 e que a subtração fechava, e **nada mais**:
+um documento dizendo `mode:"PCT", value:"50", amount:"0.01"` passava inteiro, desde que
+`gross - amount` batesse com o total. O papel que chega ao cliente imprime os três números, e os dois
+primeiros não explicavam o terceiro — congelado assim para sempre.
+
+**Isto NÃO é o backend recalculando preço** (FR-118 segue de pé): é a mesma classe da identidade logo
+acima — VERIFICAÇÃO de um número que o documento já traz, nunca produção de valor.
+
+A conta é EXATA nos dois lados por construção: `gross` e `value` são decimais finitos, o produto é
+finito e a divisão por 100 só desloca a vírgula (não há dízima), então o HALF_UP de 2 casas do
+ADR-0008 cai no mesmo centavo aqui e no motor (`resolveDiscountAmount`, `pricing-core/src/quote.ts`).
+Pinado dos dois lados por `contracts/discount-parity.json`.
+
+**A ordem é deliberada**: esta guarda vem DEPOIS das três anteriores, para que nenhum documento que
+já era recusado troque de mensagem — quem falhava por percentual > 100 continua falhando por
+percentual > 100.
+
+### Onde isso vive no código
+
+- `backend/app/api/history.py` → `_validate_declared_discount`
+- `packages/pricing-core/src/quote.ts` → `resolveDiscountAmount`
+
+---
+
+## DEC-019 — A exportação fica VISÍVEL e desabilitada, e o detalhamento de custo é OPT-IN
+
+**Data**: 2026-07-15 (009/T028, E4 PR-C, US4 · FR-512..516) · **Governa**: `export-sheet.tsx`
+
+O documento é renderizado pelo SERVIDOR (ADR-0020), e toda regra desta superfície decorre desse único
+fato:
+
+- **Não funciona offline, e não funciona para um registro que o servidor nunca viu.** Este app grava
+  offline por desenho, então os dois são ordinários — não são casos de borda. Por isso o affordance
+  fica VISÍVEL e DESABILITADO e diz QUAL dos dois é o caso, ali onde o vendedor toca. Escondê-lo o
+  mandaria caçar um botão que estava ali; um botão que gira e não dá em nada seria pior.
+- **O detalhamento de custo é OPT-IN e nasce desligado** (Q4/FR-512, SC-506). O artefato padrão vai
+  para o CLIENTE do vendedor, e um cliente que lê material/energia/máquina/falha consegue calcular a
+  margem contra a qual está negociando. A cópia acima do switch **nomeia esse dano** em vez de deixar
+  um rótulo neutro — switch sem explicação é switch que alguém liga "para ver o que faz".
+- **Num lapso o servidor recusa a exportação de qualquer jeito** (`require_entitlement`), então o
+  cliente nunca precisa ser confiável quanto ao portão; só precisa ser honesto sobre ele.
+
+**Desvio da ux §6** ("lapsed ⇒ visível → painel de reativação"), ratificado pelo dono: um painel
+abriria um diálogo cujo único conteúdo é a frase que já está na tela, e não existe FLUXO de
+reativação a oferecer antes do E6 (billing) — prometeria uma porta que não existe (Princípio II).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/history/export-sheet.tsx` → `ExportButton`
 

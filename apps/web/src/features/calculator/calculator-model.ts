@@ -191,28 +191,9 @@ interface SlotProcessing {
 }
 
 /**
- * The override seam, as a SELECTIVE MERGE (013/E1-02; band-drop rule corrected by audit F1;
- * voucher attribution corrected by hotfix 016/A2 — history in those records).
- *
- * The override overwrites ONLY the scalars the seller actually TYPED. The signal is
- * `editedFields` (which fields were typed), NEVER truthiness — a typed `0` is a real override
- * and must win over the entry's value. `freightIsEstimate` follows the same rule: the
- * "estimativa" label belongs to the entry's subsidy, so it is dropped the moment the seller
- * types their own freight.
- *
- * OVERRIDE RULE: a typed `commissionPct` means "my commission is X, not the catalog's" → the
- * price-band schedule DROPS and the typed commission governs. Everything else — freight,
- * minPerItem, AND a typed `fixedFee` — does NOT drop the schedule. WHY fixedFee must not drop
- * it: Shopee's entry has NO top-level commissionPct (it lives in the bands), so dropping the
- * bands on a fixedFee-only edit would fall back to 0% commission and silently overstate the
- * seller's net by the full commission (the F1 bug). On a band entry the engine takes
- * commissionPct+fixedFee from the band containing the announce, so the typed fixedFee is
- * simply inert there; on a non-band entry it overrides the scalar as expected.
- *
- * `freightVoucherBands` is DEPRECATED in the engine (016/A2: the R$ 20/30/40 voucher is
- * Shopee's cost, not the seller's; the catalog no longer emits it) but is still carried through
- * unconditionally: a scenario document saved BEFORE the hotfix may hold the field, and dropping
- * it on an edit would change that document's number for a reason the seller never asked for.
+ * ⚠ @doc DEC-010 — merge SELETIVO: sobrescreve só o que foi DIGITADO (`editedFields`, nunca
+ *   veracidade — um `0` digitado é override real). Só `commissionPct` derruba as bandas;
+ *   um `fixedFee` digitado NÃO derruba, senão a Shopee cairia para 0% de comissão (bug F1).
  */
 function resolveSlotFees(
     entry: FeeEntry | null,

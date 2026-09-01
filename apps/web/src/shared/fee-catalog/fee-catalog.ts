@@ -121,28 +121,9 @@ const freightSchema = z.discriminatedUnion("kind", [
 ]);
 
 /**
- * O subsídio de frete da Shopee como **INFORMAÇÃO**, nunca como parcela da conta
- * (hotfix 016/A2, 2026-08-07).
- *
- * Mora no nível do MARKETPLACE — precedente exato de `optionalSurcharges`: não é tarifa por perfil
- * nem por faixa de tarifa; é uma política que vale para todos os vendedores ("*Todos os vendedores
- * têm os benefícios do Programa de Frete Grátis*", art. 23431 e 26839, duas vezes literais — não há
- * adesão a modelar).
- *
- * **NÃO-COMPUTANTE, e isso é a decisão inteira.** Nenhum consumidor multiplica, soma ou desconta
- * nada daqui: `entryToChannelFees` não o lê. Ele existe para o vendedor SABER que a Shopee subsidia
- * — a informação é boa notícia e apagá-la em silêncio perderia o que ele usa para decidir — sem que
- * um teto de validade de cupom volte a virar aritmética.
- *
- * **Por que um campo novo e NÃO um `kind: "SUBSIDY_INFO"` no union `freight`:** `freightSchema` é
- * um `z.discriminatedUnion`. Um `kind` novo no artefato SERVIDO faria o cliente PWA já instalado
- * RECUSAR o catálogo inteiro — e a recusa aqui é SILENCIOSA (cai no seed embutido e ninguém vê
- * erro; `parseSeedResilient` e os comentários de `bandMode`/`fixedFeeRule` documentam a armadilha).
- * Uma propriedade extra num `z.object` não-strict é simplesmente DESCARTADA pelo cliente antigo,
- * que então lê exatamente `freight: {kind: "NONE"}` — a verdade nova. Compatibilidade por
- * construção, não por sorte.
- *
- * `nullish` e não `optional` pela mesma razão de sempre: o backend serializa ausente como `null`.
+ * ⚠ @doc DEC-012 — NÃO-COMPUTANTE: ninguém soma, multiplica ou desconta nada daqui. E é campo
+ *   novo, não `kind` novo no union: um `kind` inédito faria o PWA já instalado RECUSAR o
+ *   catálogo inteiro, em SILÊNCIO (cai no seed embutido e ninguém vê erro).
  */
 const freightSubsidyInfoSchema = z.object({
     /** Faixas `[minPrice, maxPrice)` do ANÚNCIO; `ceiling` = até quanto o cupom da Shopee vale. */

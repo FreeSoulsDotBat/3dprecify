@@ -33,26 +33,8 @@ import { Breakdown, TechnicalSheet } from "./snapshot-detail-tech";
 
 import "./historico-page.css";
 
-// 009/T013 (E4, PR-A) — the frozen detail (US2). This surface renders a DOCUMENT, and three
-// prohibitions define it — each one a lie it would otherwise tell:
-//
-//   1. ZERO RECOMPUTATION (SC-501). Every figure below is a STORED string, formatted for reading.
-//      Nothing is derived, nothing is summed, `pricing-core` is not called. Recomputing even one
-//      line would make the snapshot quietly track today's catalog — the precise opposite of what it
-//      promises.
-//   2. AN ABSENT LINE IS NOT A ZERO (FR-507). A payload with no `finishing` means the seller did not
-//      charge for finishing. Printing "Acabamento R$ 0,00" would invent a fact they never asserted,
-//      so the row is simply not rendered. (This is also why the frozen types are structurally
-//      independent of the live `PriceResult`: typed against the live one, a future field would make
-//      TypeScript *assert* that a 2026 snapshot has it, and the renderer would print `?? 0` — a zero
-//      fabricated by the type system.)
-//   3. NO DEGRADATION, EVER (FR-503). A snapshot CONTAINS its values; it references nothing, so
-//      nothing about it can rot. Deleting the origin product changes nothing here: no caption, no
-//      badge, no tone. The surface looks identical to one whose origin was always ad-hoc — and
-//      **that absence is the feature**, the exact inverse of E3's degraded kit line.
-//
-// (The origin's [Abrir produto] affordance and "Recalcular hoje" arrive in PR-B; the captured name
-// and the formula version are part of the frozen document and belong here from the start.)
+// ⚠ @doc DEC-015 — ZERO recômputo: todo número aqui é string GUARDADA. Linha ausente NÃO é
+//   zero (FR-507), e o snapshot nunca degrada — essa ausência é a feature.
 
 const t = messages.history;
 // 019/PR-E — a cópia do orçamento é a da prancheta 18, verbatim (T087).

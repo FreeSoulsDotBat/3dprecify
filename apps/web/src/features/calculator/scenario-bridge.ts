@@ -33,26 +33,8 @@ import {
     type OtherCostForm,
 } from "./calculator-schema";
 
-// 010/T009+T010+T014 (E5, PR-A) — the ONE seam where the calculator's live form state meets the
-// scenario entity's parameter shapes, in BOTH directions (save + reopen).
-//
-// It lives HERE, in `features/calculator`, and NOT in `features/scenarios` for a structural reason
-// (FSD-Lite/ADR-0004, `eslint-boundaries`): a feature may import `entities/*` + `shared/*`, never a
-// SIBLING feature. `features/scenarios` cannot import `features/calculator`'s `CalcFormValues` /
-// `ChannelSlotOutcome` types — so the calculator feature (which already owns those types) is the one
-// that knows how to translate them into `entities/scenario/config-document`'s plain parameter shapes.
-// `features/scenarios` never sees a `CalcFormValues`; it only ever handles an already-built
-// `ScenarioConfig` (save direction) or an already-applied form patch (reopen direction), both of
-// which the PAGE wires by calling the functions below at the call site — exactly the seam
-// `config-document.ts`'s header comment describes.
-//
-// `pricing-core` is NOT touched: SAVE reuses whatever `computeFromForm` already resolved
-// (`ChannelSlotOutcome.editedFields`, T010's per-field tracking); REOPEN only produces pt-BR form
-// STRINGS that flow back through the exact same `computeFromForm` → `fee-prefill.ts` path a fresh
-// calculation takes — a non-overridden slot is left BLANK so it re-resolves live, an overridden slot
-// is set to its saved value so it reads "ajustado por você", and the 005 honesty cases (uncovered
-// slot → "sem referência"; commission ≥ 100% → the same inline error) fall out of the EXISTING code
-// with zero new pricing logic (FR-609, T014).
+// @doc DEC-009 — a costura mora aqui e não em `features/scenarios` por fronteira: uma feature
+//   não importa uma IRMÃ, e é esta que é dona de `CalcFormValues`. `pricing-core` não é tocado.
 
 /** A decimal-string leaf ("12.5", "0.1", "100") has AT MOST one '.', never a thousands separator (it
  *  comes from `Decimal#toString`) — so swapping '.' → ',' is a lossless, unambiguous conversion into

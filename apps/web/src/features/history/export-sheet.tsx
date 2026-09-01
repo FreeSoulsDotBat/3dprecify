@@ -18,26 +18,8 @@ import {
 
 import "./export-sheet.css";
 
-// 009/T028 (E4, PR-C, US4) — the export affordance on a snapshot detail (FR-512..516; copy = ux §6).
-//
-// The document is rendered by the SERVER (ADR-0020), and every rule on this surface follows from
-// that one fact:
-//
-//   * It cannot work OFFLINE, and it cannot work for a record the server has never seen. This app
-//     records offline by design, so both are ordinary — not edge cases. The affordance therefore
-//     stays VISIBLE and DISABLED and says WHICH one is true, right where the seller taps. Hiding it
-//     would send them hunting for a button that used to be there; a button that spins into nothing
-//     would be worse.
-//   * The cost breakdown is OPT-IN and stays off (Q4/FR-512, SC-506). The default artifact goes to
-//     the seller's CUSTOMER, and a customer who can read material/energy/machine/falha can compute
-//     the margin they are negotiating against. The copy above the switch names that harm rather than
-//     leaving a neutral label — an unexplained switch gets flipped "to see what it does".
-//   * On a LAPSE the export is refused by the server anyway (`require_entitlement`), so the client
-//     never has to be trusted with the gate; it only has to be honest about it.
-//
-// Departs from ux §6 ("lapsed ⇒ visible → reactivation panel"), owner-ratified: a panel would open
-// a dialog whose only content is the sentence already shown here, and there is no reactivation FLOW
-// to offer before E6 (billing) — so it would promise a door that does not exist (Principle II).
+// ⚠ @doc DEC-019 — VISÍVEL e desabilitado, dizendo QUAL é o caso: offline e registro nunca
+//   visto pelo servidor são ordinários neste app, não bordas. Detalhamento de custo é OPT-IN.
 
 const t = messages.history;
 

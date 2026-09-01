@@ -31,27 +31,9 @@ import { honestWriteError } from "@/shared/api/error-messages";
 
 import "./scenario-list.css";
 
-// 010/T013+T029 (E5, PR-A US2 + PR-B US6) — "Meus cenários": the door (§0.1) + the list (§3) + the
-// honest teaser (§3.5/§7) + manage (search · rename · duplicate · delete) + the lapse read-only
-// freeze (§0.1/§6). This is the "Meus cenários" Sheet reached from the Calcular page header entry —
-// VISIBLE for everyone (free/signed-out included).
-//
-// ROUTING NOTE (a measured repo fact, not a UX-doc default): a Sheet/overlay, never a
-// `/calcular/cenarios` sub-route — `base:'./'` blanks any 2-segment route on cold load/refresh
-// (the same trap `/kits?id=` sidestepped). Reaching a scenario in an e2e test must use client-nav.
-//
-// Reopening a card CLOSES the sheet and hands the raw `ScenarioConfig` + `{id, name}` to the caller
-// (the Calcular page), which owns `applyScenarioConfig` (`features/calculator/scenario-bridge.ts`) —
-// this feature never touches calculator form types (the FSD-Lite boundary, see scenario-bridge.ts).
-//
-// T029 dated deviation (noted, owner-visible): the ux wireframe's per-card "⋯" overflow menu is
-// composed here as inline icon buttons (pencil/copy/trash-2) instead — there is no DropdownMenu DS
-// primitive (ux §10.2 G3 flags this as a compose-first gap), and `features/catalog/catalog-panel.tsx`
-// already ships the identical inline-icon-row convention for filaments/printers/kits; reusing it
-// keeps one idiom instead of inventing a menu component for this slice. Functionally equivalent
-// (Abrir · Duplicar · Renomear · Excluir, each gated per §0.1) — a design nit, not a behavior change.
-// T026's checkbox claimed the "Duplicar" affordance was already wired client-side; it was not (only
-// the backend endpoint existed) — completed here as part of the shared action row.
+// ⚠ @doc DEC-016 — Sheet e não sub-rota: com `base:'./'` uma rota de 2 segmentos abre em
+//   BRANCO no cold load. Em e2e, chega-se aqui por navegação de cliente, nunca `page.goto`.
+// @doc DEC-017 — linha de ícones inline no lugar do menu "⋯": não há `DropdownMenu` no DS.
 
 const t = messages.scenarios;
 
