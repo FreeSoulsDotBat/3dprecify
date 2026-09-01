@@ -16,18 +16,8 @@ import {
     resolverVereditos,
 } from "./verdict.ts";
 
-// 017/T008 (ADR-0028 §4/§5) — a COMPOSIÇÃO. É a única coisa neste laço que escreve, e ela escreve
-// depois de validar.
-//
-// O defeito que ela existe para matar está MEDIDO no `build-amazon.mjs` de hoje: ele lê e escreve o
-// `catalog.json` inteiro. Serial, funciona. Com jobs independentes em VMs isoladas (decisão A), o
-// último a escrever vence e a curadoria do outro some — em silêncio, sobre dinheiro.
-//
-// Duas propriedades estruturais, e nenhuma delas é um `if` que alguém possa esquecer:
-//   · uma fatia reprovada é DESCARTADA e seu veredito vira ABORTADO — o PR parcial da clarify Q4
-//     expresso por TIPO;
-//   · `RunOutcome` tem 2 casos e o catálogo composto só EXISTE dentro do caso PR. Não há como
-//     escrever a partir de um SEM_PR, porque o valor a escrever não está lá.
+// ⚠ @doc DEC-078 — escreve depois de validar, e o catálogo composto só EXISTE dentro do caso PR
+//   do `RunOutcome`: não há como escrever a partir de um SEM_PR, porque o valor não está lá.
 
 export type RunOutcome =
     | { kind: "SEM_PR"; motivo: string }

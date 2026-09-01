@@ -2,18 +2,8 @@ import { create } from "zustand";
 import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 
 /**
- * 019/PR-C (T052/T058, prancheta "Selo de Procedencia" §13a nota) — a dispensa do selo de
- * procedência. Decisão do dono (2026-08-26, verbatim na prancheta): dispensar vale ATÉ A FONTE
- * MUDAR, nunca para sempre — o que foi dispensado é *aquela* procedência conferida (uma citação +
- * uma data), não a ideia de mostrar procedência. Por isso a chave leva a citação e a data: uma
- * tabela que mudou reaparece sozinha, sem o vendedor precisar redescobrir o botão de mostrar.
- *
- * Sem uid — a mesma decisão do `theme-store`/`nav-rail-store` (018/T007): preferência POR
- * APARELHO, não de conta; não viaja entre aparelhos, não vai para o servidor.
- *
- * Molde idêntico a `nav-rail-store.ts`: mesma sonda de escrita (`safeStorage`), porque a LEITURA de
- * `localStorage` pode funcionar com a ESCRITA bloqueada (aba privada) — e é a escrita que precisa
- * falhar alto para o `persist` cair em memória em vez de estourar.
+ * ⚠ @doc DEC-082 — a dispensa vale ATÉ A FONTE MUDAR: a chave carrega a citação e a data, então
+ *   uma tabela que mudou reaparece sozinha. Sem uid — preferência por APARELHO.
  */
 export const FEE_SEAL_DISMISS_STORAGE_KEY = "precifica3d-fee-seal-dismiss";
 

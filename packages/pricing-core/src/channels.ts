@@ -295,19 +295,12 @@ function rankCandidate(c: BandCandidate, base: number): number {
 }
 
 /**
- * Pick the (band, announce) pair for `SELECTION` bands — or `null` when NO published band contains
- * any candidate announce (SC-817: the level is unpriced, never priced off a neighbour).
+ * Par (banda, anúncio) para bandas `SELECTION` — ou `null` quando nenhuma banda publicada
+ * contém candidato algum. Resolve TODA banda e ordena; sem teto, sem oscilação.
  *
- * This replaced a bounded fixed-point iteration. The iteration existed because SELECTION's fee
- * function JUMPS at each threshold, so the announce picks the band and the band picks the announce;
- * when the two never agree the loop exited on its iteration cap and the caller adopted whatever band
- * was left in the variable — charging the rate and the fixed fee of a band that does NOT contain the
- * announce. Measured: ML bands, base R$ 64,52 → announce R$ 79,00 shown with a R$ 64,52 líquido,
- * R$ 5,00 below the R$ 69,52 the seller really receives. Solving every band directly and ranking the
- * results removes the cap, the oscillation and the silent mislabel in one move.
+ * ⚠ @doc DEC-079 — o ponto fixo iterado saía pelo teto e o chamador adotava a banda que tivesse
+ *   sobrado na variável: R$ 5,00 a menos no líquido, com rótulo de banda errado, calado.
  */
-/** Score one announce against the band that really contains it — `null` when none does. (Era o
- *  arrow `at` de 18 linhas embutido em `chooseBand`; corpo verbatim, fechamentos viram parâmetros.) */
 function scoreCandidate(
     bands: PriceBand[],
     minPerItem: number,

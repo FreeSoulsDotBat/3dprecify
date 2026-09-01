@@ -28,17 +28,9 @@ import {
     scenarioQueryKey,
 } from "./scenario-cache";
 
-// 010/T012+T013 (E5, PR-A US2) — THE LIST: (server list, keyset `created_at DESC`) ∪ (uid-keyed
-// offline READ cache), purged on sign-out. Follows the shipped catalog/history read-hook shape
-// (idb pre-fill → online refresh → persist, honest staleness) — but with the ONE deliberate
-// difference E5 draws against E4's outbox (VR-612/FR-613, ADR-0021 §the-one-line): a scenario WRITE
-// has NO offline path. `useCreateScenario` is `networkMode: "always"` for the SAME underlying reason
-// `useEntitlement`/`useHistory`'s outbox query use it — the DEFAULT `networkMode: "online"` would
-// PAUSE the mutation the instant the browser reports offline, so it would never even attempt the
-// fetch and would sit "pending" forever. That is precisely the fake state E5 must not produce: a
-// save offline must FAIL, honestly, immediately — "always" makes the real fetch run, and the
-// generated client's transport throws a typed `ApiError`(status 0) that the caller (T010's Sheet)
-// turns into "Salvar um cenário precisa de conexão." — never a queue, never a silent drop.
+// ⚠ @doc DEC-076 — escrita de cenário NÃO tem caminho offline, e `networkMode: "always"` é o
+//   que torna a falha honesta: o padrão `"online"` PAUSARIA a mutação e ela ficaria
+//   "pendente" para sempre — o estado falso que esta feature não pode produzir.
 
 export { SCENARIO_QUERY_ROOT };
 

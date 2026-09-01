@@ -21,16 +21,9 @@ if (isFirebaseConfigured) {
     auth = getAuth(app);
     if (env.VITE_USE_AUTH_EMULATOR === "true") {
         connectAuthEmulator(auth, env.VITE_AUTH_EMULATOR_URL, { disableWarnings: true });
-        // E2E-only seam — present ONLY in emulator builds (the flag is off in prod, so this
-        // never ships). Lets Playwright create + sign in a throwaway user through the app's
-        // own emulator-connected auth instance, so the guarded calculator becomes reachable.
-        // Client-side only; the server boundary (FastAPI verifying the Firebase ID token,
-        // Principle IV) is untouched.
-        // Gate note: this seam is INTENTIONALLY gated on `VITE_USE_AUTH_EMULATOR === "true"`, NOT
-        // on `import.meta.env.DEV`. Playwright runs against a PRODUCTION `vite build` / `vite preview`
-        // (import.meta.env.DEV === false) with the emulator env injected — a DEV-mode gate would strip
-        // the seam from that build and break e2e/preview. The emulator flag is off in real prod, so
-        // this never ships there either way.
+        // ⚠ @doc DEC-077 — gateada pelo flag do EMULADOR, nunca por `import.meta.env.DEV`: o
+        //   Playwright roda contra um build de PRODUÇÃO, e um gate por DEV apagaria a costura
+        //   desse build e quebraria o e2e. Na produção real o flag está desligado.
         const emulatorAuth = auth;
         window.__e2eAuth = {
             signUp: (email, password) =>

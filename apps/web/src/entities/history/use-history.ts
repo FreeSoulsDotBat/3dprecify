@@ -35,17 +35,8 @@ import {
 /** Quanto tempo a lista/registro do histórico vale antes de refetch em foco (1 min). */
 const HISTORY_STALE_MS = 60_000;
 
-// 009/T010 (E4, PR-A) — RECORDING a snapshot; 009/T022 (PR-B) — LAZY reading + manage.
-//
-// Recording is ONE code path, online and offline. The record is ALWAYS queued durably first, then
-// the queue is drained immediately. Online, the drain finishes inside the same interaction and the
-// record comes back `synced`; offline, it stays `pending` and syncs itself later. There is no
-// separate "offline branch" that could rot: the only difference is whether the drain got an answer.
-//
-// Queue-then-drain (rather than post-then-queue-on-failure) is what makes the honesty possible. A
-// post that never answers (`status === 0`) may well have LANDED — with post-first we would not know
-// whether to queue it, and either choice lies. Queued first, the retry replays the same
-// `clientSnapshotId` and the database's unique key resolves it to the row it already created.
+// ⚠ @doc DEC-075 — enfileira ANTES de postar, sempre: um POST sem resposta pode ter chegado, e
+//   postar primeiro obrigaria a adivinhar se enfileira — qualquer escolha mente.
 
 export const HISTORY_QUERY_ROOT = ["history"] as const;
 

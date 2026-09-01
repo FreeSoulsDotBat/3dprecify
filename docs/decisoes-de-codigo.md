@@ -2020,3 +2020,183 @@ fio já carrega a precisão real do campo.
 
 - `apps/web/src/features/calculator/scenario-bridge.ts` → `precision`
 
+---
+
+## DEC-075 — Enfileirar-e-drenar, nunca postar-e-enfileirar-se-falhar
+
+**Data**: 2026-07-12 (009/T010, E4 PR-A) · **Governa**: o caminho de gravação do Histórico
+
+Gravar é UM caminho de código, online e offline. O registro é SEMPRE enfileirado de forma durável
+primeiro, e só então a fila é drenada de imediato. Online, o dreno termina dentro da mesma interação e
+o registro volta `synced`; offline, ele fica `pending` e sincroniza sozinho depois. **Não existe um
+"ramo offline" separado que possa apodrecer**: a única diferença é se o dreno recebeu resposta.
+
+**A ordem é o que torna a honestidade possível.** Um POST que nunca responde (`status === 0`) pode
+muito bem ter CHEGADO ([[DEC-031]]) — postando primeiro, não saberíamos se enfileirar, e qualquer
+escolha mente. Enfileirado antes, a retentativa reexecuta o mesmo `clientSnapshotId` e a chave única
+do banco o resolve para a linha que já criou.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/use-history.ts` → `clientSnapshotId`
+
+---
+
+## DEC-076 — Salvar cenário NÃO tem caminho offline, e `networkMode: "always"` é o que torna a falha honesta
+
+**Data**: 2026-07-19 (010/T012+T013, VR-612/FR-613, ADR-0021) · **Governa**: `useCreateScenario`
+
+A LISTA segue a forma dos hooks de leitura já entregues (pré-preenche do idb → atualiza online →
+persiste, com obsolescência honesta). Mas há UMA diferença deliberada que o E5 traça contra o outbox
+do E4: **uma ESCRITA de cenário não tem caminho offline.**
+
+`networkMode: "always"` pelo MESMO motivo que o `useEntitlement` e a query do outbox o usam: o padrão
+`"online"` **PAUSARIA a mutação** no instante em que o navegador se diz offline — ela nem tentaria o
+fetch, e ficaria "pendente" para sempre. **É exatamente o estado falso que o E5 não pode produzir.**
+
+Com `"always"`, o fetch real acontece, o transporte lança um `ApiError(status 0)` tipado
+([[DEC-043]]), e o chamador o transforma em "Salvar um cenário precisa de conexão." — **nunca uma
+fila, nunca um descarte silencioso**.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/scenario/use-scenarios.ts` → `useCreateScenario`
+
+---
+
+## DEC-077 — A costura de e2e é gateada pelo flag do EMULADOR, não por `import.meta.env.DEV`
+
+**Data**: 2026-07-05 · **Governa**: a costura de teste no `firebase.ts`
+
+Costura só de e2e, presente APENAS em builds de emulador: deixa o Playwright criar e autenticar um
+usuário descartável pela própria instância de auth do app, para a calculadora guardada ficar
+alcançável. Só do lado do cliente — a fronteira do servidor (FastAPI verificando o ID token,
+Princípio IV) fica intocada.
+
+**O gate é `VITE_USE_AUTH_EMULATOR === "true"`, e NÃO `import.meta.env.DEV`, e isso é deliberado**: o
+Playwright roda contra um `vite build`/`vite preview` de PRODUÇÃO (`DEV === false`) com o env do
+emulador injetado. **Um gate por modo DEV removeria a costura desse build e quebraria o e2e.** O flag
+do emulador está desligado na produção real, então de qualquer forma isto não embarca.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/lib/firebase.ts` → `VITE_USE_AUTH_EMULATOR`
+
+---
+
+## DEC-078 — A composição é a única coisa que ESCREVE, e o tipo impede escrever sem PR
+
+**Data**: 2026-08-07 (017/T008, ADR-0028 §4/§5) · **Governa**: `compose.ts`
+
+A composição é a única coisa neste laço que escreve, e escreve **depois** de validar. O defeito que ela
+mata é o mesmo do [[DEC-063]]: com jobs independentes em VMs isoladas, o último a escrever vence e a
+curadoria do outro some, em silêncio, sobre dinheiro.
+
+Duas propriedades ESTRUTURAIS, e nenhuma delas é um `if` que alguém possa esquecer:
+
+- uma fatia reprovada é DESCARTADA e o veredito dela vira ABORTADO — o "PR parcial" da clarify Q4
+  expresso por TIPO;
+- `RunOutcome` tem 2 casos e **o catálogo composto só EXISTE dentro do caso PR**. Não há como escrever
+  a partir de um SEM_PR, porque o valor a escrever não está lá.
+
+Mesma família do `RefreshOutcome` ([[DEC-044]]) e do gating por registro ([[DEC-055]]): a garantia é da
+forma do tipo, não da disciplina de quem edita.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/compose.ts` → `RunOutcome`
+
+---
+
+## DEC-079 — `SELECTION` resolve TODA banda e ordena; o ponto fixo iterado cobrava a taxa da banda errada
+
+**Data**: 2026-08-01 (SC-817) · **Governa**: `chooseBand`
+
+Escolhe o par (banda, anúncio) para bandas `SELECTION` — ou `null` quando NENHUMA banda publicada
+contém candidato algum de anúncio ([[DEC-059]]: o nível fica sem preço, nunca precificado pela
+vizinha).
+
+Isto substituiu uma **iteração de ponto fixo com teto**. A iteração existia porque a função de tarifa
+do `SELECTION` SALTA em cada limiar: o anúncio escolhe a banda e a banda escolhe o anúncio. **Quando
+os dois nunca concordam, o laço saía pelo teto de iterações e o chamador adotava a banda que tivesse
+sobrado na variável** — cobrando a taxa e o fixo de uma banda que NÃO contém o anúncio.
+
+Medido: bandas do ML, base R$ 64,52 → anúncio R$ 79,00 exibido com um líquido de R$ 64,52, **R$ 5,00
+abaixo dos R$ 69,52 que o vendedor realmente recebe.**
+
+Resolver toda banda diretamente e ordenar os resultados remove o teto, a oscilação e o rótulo errado
+silencioso de uma vez só.
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `chooseBand`
+
+---
+
+## DEC-080 — `calculator-form.tsx` é um BARRIL: a divisão foi mudança de arquivo, nunca de código
+
+**Data**: 2026-07-11 (T030, extração) · **dividido** 2026-08-31 (chore de legibilidade) · **Governa**:
+`calculator-form.tsx`
+
+O corpo do formulário da calculadora, extraído verbatim da página Calcular. Tanto a Calcular quanto a
+rota de página inteira de produto montam estas seções sobre o MESMO controle RHF e o MESMO
+`computeFromForm`, então a âncora de igualdade byte a byte do SC-305 vale nas duas superfícies **por
+construção** ([[DEC-023]]).
+
+**A divisão de 2026-08-31**: este arquivo virou um BARRIL. Todo componente e objeto de estilo que
+vivia aqui foi **MOVIDO, não reescrito**, para `form-atoms/`, `form-molecules/`, `form-organisms/` ou
+`form-logic/`, agrupados pela granularidade do atomic design. Todo consumidor (páginas, widgets,
+testes) segue importando de `"@/features/calculator/calculator-form"` sem mudança — o barril
+re-exporta exatamente os mesmos símbolos públicos de antes.
+
+O barril é o que torna a divisão **verificável**: se um símbolo tivesse mudado de forma, o consumidor
+quebraria no build, não em produção.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-form.tsx` → `calculator-form`
+
+---
+
+## DEC-081 — O corpo do PR sai como ARQUIVO, e a decisão de escrever mora num `.ts` testado
+
+**Data**: 2026-08-07 (017/T016, US2, contrato `workflow-yaml.md`) · **Governa**: `pr-artifacts.ts`
+
+O job de publicar **não pode montar o corpo do PR em shell** (§C.5/§H do desenho: proíbe corpo de PR
+montado por `echo`/heredoc no YAML). O `compose.ts` já produz `titulo`/`corpo` como texto puro dentro
+do caso `PR` do `RunOutcome` ([[DEC-078]]) — este módulo é só a PONTE de disco entre aquela decisão
+(testada, TS, sob a catraca) e o `gh pr create --body-file`/`--title` que roda depois.
+
+**Por que isto é um `.ts` testado e não uma linha a mais dentro do `.mjs`**: os `.mjs` são isentos de
+cobertura DE PROPÓSITO (014/US4 — a lição de que uma suíte verde não prova um programa que RODA), e
+**nenhuma decisão pode morar num lugar isento** ([[DEC-032]]). Aqui a única "decisão" é "`kind === PR`
+escreve, `SEM_PR` não escreve" — pequena, mas é exatamente o tipo de `if` esquecido que a lição pede
+para não deixar sem teste.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/pr-artifacts.ts` → `escreverArtefatosDePr`, `NOME_CORPO`
+
+---
+
+## DEC-082 — Dispensar o selo vale ATÉ A FONTE MUDAR, e a chave carrega a citação e a data
+
+**Data**: 2026-08-26 (019/PR-C, T052/T058, decisão do dono verbatim na prancheta) · **Governa**:
+`fee-seal-dismiss-store.ts`
+
+Dispensar vale **até a fonte mudar, nunca para sempre**: o que foi dispensado é *aquela* procedência
+conferida (uma citação + uma data), não a ideia de mostrar procedência. Por isso a chave leva a
+citação e a data — **uma tabela que mudou reaparece sozinha**, sem o vendedor precisar redescobrir o
+botão de mostrar.
+
+**Sem uid**, a mesma decisão do `theme-store`/`nav-rail-store`: preferência POR APARELHO, não de
+conta; não viaja entre aparelhos, não vai para o servidor.
+
+Molde idêntico ao `nav-rail-store`: a mesma sonda de escrita (`safeStorage`), porque **a LEITURA de
+`localStorage` pode funcionar com a ESCRITA bloqueada** (aba privada) — e é a escrita que precisa
+falhar alto, para o `persist` cair em memória em vez de estourar.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/lib/fee-seal-dismiss-store.ts` → `safeStorage`
+
