@@ -67,9 +67,7 @@ export function CalcularPage() {
         resolver: calculatorResolver,
         mode: "onChange",
     });
-    // Homologação automatizada (CF-001-LEIGO-E) — recarregar apagava o que o vendedor digitou sem
-    // dizer nada, e recarregar é o reflexo de quem acha que a tela travou. `isDirty` é o gatilho
-    // certo: quem não mexeu em nada não tem o que perder e não vê diálogo nenhum.
+    // @doc DEC-025 — avisa antes de sair; `isDirty` é o gatilho: quem não mexeu nada não vê nada.
     useAvisoDeSaida(isDirty);
     const {
         fields,
@@ -87,22 +85,16 @@ export function CalcularPage() {
         replace: replaceOtherCosts,
     } = useFieldArray({ control, name: "otherCosts" });
 
-    // 010/T014+T023+T029 (E5, PR-A US2 + PR-B US3/US6) — reopening a scenario loads its config INTO
-    // this same form (the reopened scenario IS the calculator, populated — ux §4). `costBasis` is the
-    // SERVER-resolved D3/D6 decision (`readResolvedBasis` off the fresh list-item config) — the same
-    // recompute path already re-resolves non-overridden fee slots live (VR-604, T014's suite). `note`
-    // rides along so "Salvar alterações" (PUT) never erases it. `KIT` basis has no scalar form to
-    // hydrate (T024 owns its own read-only rollup below); `dirty` compares against a signature taken
-    // right after load/save, so an edit AFTER that point — never a re-render — flips the badge.
+    // ⚠ @doc DEC-115 — o cenário reaberto É a calculadora populada, e o "alterado" compara
+    //   ASSINATURA tirada logo após carregar/salvar — nunca um re-render.
     const [loadedScenario, setLoadedScenario] = useState<{
         id: string;
         name: string;
         note: string | null;
         costBasis: ResolvedCostBasisMeta | null;
         config: ScenarioConfig;
-        /** 016/T036 (US10, FR-913) — the retired-field declaration for a SCALAR reopen (AD_HOC/PRODUCT).
-         *  `null` on a document with nothing retired (the common case) or on a KIT basis (its own
-         *  declaration is derived at render time from `computeScenarioKitChannels`, below). */
+        /** @doc DEC-115 — declaração de campo aposentado num reabrir ESCALAR; `null` no caso comum
+         *  e numa base KIT (a dela é derivada no render). */
         discardedNotice: string | null;
     } | null>(null);
     const [cleanSignature, setCleanSignature] = useState<string | null>(null);
@@ -125,41 +117,29 @@ export function CalcularPage() {
             config,
             discardedNotice: discardedFieldNotice(patch.discarded),
         });
-        // `getValues()` reads RHF's internal store SYNCHRONOUSLY — the `setValue`/`replace*` calls
-        // above already committed to it (React's render batching is irrelevant here), so this baseline
-        // is the exact same `computeFormSignature` shape the live comparison below uses. A KIT basis
-        // never sets a scalar patch (T024 owns its own read-only surface), so its scalars simply carry
-        // over whatever the form already held — self-consistent, never a false "dirty".
+        // ⚠ @doc DEC-115 — `getValues()` lê a store do RHF SINCRONAMENTE: os `setValue` acima já
+        //   commitaram, então esta baseline tem a forma exata da comparação viva.
         setCleanSignature(computeFormSignature(getValues()));
     };
 
-    // US5 (E2/T024) — the catalog pickers. Rendered ONLY for authenticated accounts WITH saved
-    // items, so the free manual flow is untouched (SC-310); the read hooks are uid-gated and
-    // answer from the offline cache after one online load (Q2). Picking pre-fills via setValue —
-    // fields stay ordinary editable inputs (pre-fill, never lock; byte-identity by construction,
-    // SC-305/catalog-prefill.ts).
+    // ⚠ @doc DEC-116 — só para conta autenticada COM itens (o fluxo manual grátis fica intocado),
+    //   e escolher PRÉ-PREENCHE: os campos seguem editáveis, nunca travados.
     const sessionStatus = useSessionStore((s) => s.status);
     const filamentsList = useFilaments();
     const printersList = usePrinters();
 
-    // 016/US1 (T005/T007): free/signed-out users meet the unified premium teaser — the affordance
-    // itself renders DISABLED and VISIBLE (US1-AC3, the one named exception), never hidden and
-    // never a fake save. Rendered only on a POSITIVELY known non-premium state; the manual
-    // calculator is untouched either way (SC-310).
+    // @doc DEC-116 — o affordance renderiza DESABILITADO e VISÍVEL, nunca escondido e nunca um
+    //   salvamento falso; só sobre um estado POSITIVAMENTE conhecido como não-premium.
     const entitlement = useEntitlement();
     const signedOut = sessionStatus !== "authenticated";
     const showTeaserSlot = signedOut || entitlement.data?.status === "none";
 
-    // 016/US11 (T048, FR-915) — the free calculator's marketplace switch. `active` ONLY — a
-    // checking/error read (`entitlement.data` undefined, or `stale`) degrades to "not entitled", the
-    // same honest guard every other premium surface already uses (`use-entitlement.ts`'s own
-    // docstring: never assume premium). Server remains the authority (ADR-0012); this only decides
-    // what the UI OFFERS.
+    // ⚠ @doc DEC-117 — `active` ONLY: checando ou em erro degrada para NÃO habilitado. Nunca
+    //   presuma premium; o servidor segue sendo a autoridade e isto só decide o que a UI OFERECE.
     const marketplaceEntitled = entitlement.data?.status === "active";
 
-    // The fee catalog (served → persisted store → bundled seed) pre-fills covered channels + drives the
-    // honesty seal. It NEVER blocks: seed/store always answer offline, and every price stays local. A
-    // failed online refresh is surfaced as a non-blocking retry (US3), never an error wall.
+    // @doc DEC-117 — o catálogo NUNCA bloqueia: semente e store respondem offline, e uma
+    //   atualização que falhou vira retentativa não-bloqueante, nunca um muro de erro.
     const {
         catalog,
         source,
@@ -177,49 +157,31 @@ export function CalcularPage() {
         otherCostErrors,
     } = computeFromForm(values, catalogCtx);
 
-    // 010/T023/T029 — the loaded scenario's "unsaved changes" signal: `computeFormSignature` taken
-    // right after load/save is the baseline; any later edit changes the LIVE signature and flips the
-    // badge + enables "Salvar alterações" (Defect A fix: recomputed FRESH every render from `values`
-    // — `watch()` already re-renders on any field change including a nested array-ITEM edit, so this
-    // needs no memoization; a `useMemo([values.channels])` was the bug, not a micro-opt worth keeping).
+    // ⚠ @doc DEC-115 — a assinatura é recomputada FRESCA a cada render: um `useMemo` sobre
+    //   `values.channels` era o BUG, não uma micro-otimização que valesse manter.
     const formSignature = computeFormSignature(values);
     const dirty =
         loadedScenario !== null && cleanSignature !== null && cleanSignature !== formSignature;
 
-    // 010/T036 (E5, PR-C, US7) — the E4 bridge's provenance: informational ONLY (id + the name AS
-    // LOADED), never a value source, never re-read at freeze time (the record button's `freeze()`
-    // closure captures this same reference). `null` when nothing is loaded — an ad-hoc calculation
-    // outside a scenario keeps recording with no provenance at all, exactly as before US7.
+    // @doc DEC-119 — procedência INFORMATIVA apenas, nunca fonte de valor e nunca relida no
+    //   congelamento. `null` fora de um cenário: grava sem procedência, como antes.
     const scenarioProvenance: FrozenProvenance | null = loadedScenario
         ? { kind: "SCENARIO", id: loadedScenario.id, name: loadedScenario.name }
         : null;
 
-    // Switching a slot's marketplace resets its modality to that market's default (or none), so a
-    // stale ML "Clássico" never lingers on a Shopee slot; also blanks exactly the fee fields the
-    // NEW marketplace's plan does not show (016/US11, T044 homologação PR-E, RA5 — measured: R$50
-    // "Frete" on ML → Amazon left freightCost invisible but still discounting the líquido by −R$50).
-    // 019/Polish — shared with produto-page.tsx and bom-line-editor.tsx (`marketplace-change.ts`);
-    // this is the ONE call site that passes `shouldValidate: true` (B2, registered divergence).
+    // @doc DEC-091 — trocar o marketplace zera a modalidade e apaga só os campos que sumiram da
+    //   tela. Este é o ÚNICO sítio que passa `shouldValidate: true` (divergência registrada).
     const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) =>
         applyMarketplaceChange(setValue, catalog, index, marketplace);
 
-    // 019/PR-F (T095, DECISÃO 2 — ADR-0031 §Emenda 2) — o único gate: acima do corte, "Minhas
-    // simulações" monta ao lado da calculadora (a coluna larga de `/calcular`, prancheta 20g); abaixo,
-    // a gaveta de sempre. `gate`/`lapsed` são a MESMA leitura que `ScenariosListSheet` já fazia por
-    // conta própria — computados aqui só para o hospedeiro largo, que monta `ScenariosList` direto.
+    // @doc DEC-118 — o único gate: acima do corte a lista monta AO LADO; abaixo, a gaveta.
     const isWide = useIsWide();
     const scenariosGate = premiumGate(entitlement.data, { status: sessionStatus });
     const scenariosLapsed = entitlement.data?.status === "lapsed";
 
-    // A referência da coluna PRINCIPAL (não a lista) — o "Fazer um cálculo" do vazio didático e o
-    // "Limpar busca" sem resultado, dentro de `ScenariosList`, chamam `onClose` esperando fechar uma
-    // gaveta; na coluna larga não existe gaveta para fechar, então o mesmo callback rola de volta ao
-    // topo da calculadora (o mesmo destino que "Fazer um cálculo" já significa: já se está em
-    // `/calcular`).
+    // @doc DEC-118 — na coluna larga não existe gaveta para fechar: o `onClose` rola ao topo.
     const wideMainRef = useRef<HTMLDivElement | null>(null);
-    // A referência da lista — o botão "Minhas simulações" do cabeçalho, na coluna larga, não abre
-    // nada: rola/foca a lista que já está sempre visível ao lado (decisão do dono, prancheta 20g:
-    // "a lista está sempre visível ao lado").
+    // @doc DEC-118 — na coluna larga o botão não abre nada: rola e foca a lista sempre visível.
     const wideAsideRef = useRef<HTMLElement | null>(null);
     const handleScenariosNavClick = () => {
         if (isWide) {
@@ -300,10 +262,8 @@ export function CalcularPage() {
                         });
                         if (!built) return null;
                         const storedBasis = loadedScenario.config.costBasis;
-                        // A PRODUCT/KIT basis keeps its REFERENCE — Calcular has no scalar form for a KIT line
-                        // (T024 owns the kit rollup, read-only here) and the server re-snapshots a PRODUCT's
-                        // `lastKnown` from the live row on every save anyway (T011) — never overwritten with a
-                        // client-derived guess. AD_HOC uses the freshly built ad-hoc basis (the edited inputs).
+                        // ⚠ @doc DEC-119 — base PRODUCT/KIT mantém a REFERÊNCIA: o servidor
+                        //   re-fotografa o `lastKnown` da linha viva, nunca um palpite do cliente.
                         return storedBasis.kind === "AD_HOC"
                             ? built
                             : { ...built, costBasis: storedBasis };
@@ -413,12 +373,8 @@ export function CalcularPage() {
         </>
     );
 
-    // 019/PR-F (T095, DECISÃO 2) — ≥1280px o hospedeiro é a PRÓPRIA `.tf-calc-page`: o corpo de
-    // sempre (`pageInner`, byte-idêntico ao ramo estreito abaixo) vira a coluna principal, e
-    // "Minhas simulações" (`ScenariosList`, extraída na T092) monta ao lado, sempre visível
-    // (prancheta 20g). `.tf-calc-page` continua sendo o ÚNICO filho de `.tf-shell__main`
-    // (`widthRatio()` em `pages-desktop-width.spec.ts`/T093 lê `.tf-shell__main > section` — um
-    // wrapper por fora quebraria essa leitura), então o `tf-scenarios-wide` mora DENTRO da section.
+    // ⚠ @doc DEC-118 — a `.tf-calc-page` continua o ÚNICO filho de `.tf-shell__main`: o teste de
+    //   largura lê `.tf-shell__main > section`, e um wrapper por fora quebraria a medição.
     if (isWide) {
         return (
             <section className="tf-calc-page" data-testid="calc-content">

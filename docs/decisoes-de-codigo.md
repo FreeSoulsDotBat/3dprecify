@@ -2948,3 +2948,125 @@ rede acontece dentro dela.**
 
 - `apps/web/src/entities/history/outbox.ts` → `historyOutboxKey`, `LockManager`
 
+---
+
+## DEC-115 — Reabrir um cenário carrega no MESMO formulário, e o "alterado" compara ASSINATURA
+
+**Data**: 2026-07-20 (010/T014+T023+T029, E5) · **Governa**: `openScenario`, `cleanSignature`,
+`dirty`
+
+Reabrir carrega a config DENTRO deste mesmo formulário — **o cenário reaberto É a calculadora,
+populada**. O `costBasis` é a decisão D3/D6 resolvida pelo SERVIDOR, e o mesmo caminho de recômputo já
+re-resolve no vivo os slots de tarifa não sobrescritos ([[DEC-009]]). A `note` vai junto para que
+"Salvar alterações" nunca a apague. Base `KIT` não tem formulário escalar a hidratar ([[DEC-102]]).
+
+**O "alterado" compara ASSINATURA, não re-render.** A baseline é o `computeFormSignature` tirado logo
+após carregar ou salvar; qualquer edição POSTERIOR muda a assinatura viva e acende o selo.
+
+Duas armadilhas fechadas aqui, e as duas custaram defeito:
+
+- **`getValues()` lê a store interna do RHF SINCRONAMENTE** — os `setValue`/`replace*` acima já
+  commitaram nela (o batching de render do React é irrelevante), então a baseline é exatamente a mesma
+  forma que a comparação viva usa. Uma base KIT nunca escreve patch escalar, então os escalares dela
+  carregam o que o formulário já tinha — autoconsistente, **nunca um "alterado" falso**.
+- **A assinatura é recomputada FRESCA a cada render** a partir de `values`: o `watch()` já re-renderiza
+  em qualquer mudança de campo, incluindo a edição de um ITEM de array aninhado. **Um
+  `useMemo([values.channels])` era o bug**, não uma micro-otimização que valesse manter.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `computeFormSignature`, `cleanSignature`
+
+---
+
+## DEC-116 — Os seletores do catálogo só existem para conta autenticada COM itens, e pré-preenchem sem travar
+
+**Data**: 2026-07-10 (E2/T024, US5, SC-310/SC-305) · **Governa**: os pickers na Calcular
+
+Renderizados APENAS para contas autenticadas **que já têm itens salvos**, então o fluxo manual gratuito
+fica intocado (SC-310). Os hooks de leitura são por uid e respondem do cache offline depois de uma
+carga online.
+
+Escolher **pré-preenche** via `setValue` — os campos seguem entradas editáveis comuns: **pré-preenche,
+nunca trava**, e a igualdade byte a byte é por construção (SC-305).
+
+O teaser premium unificado ([[DEC-030]]) aparece para grátis e deslogado, e o affordance renderiza
+**DESABILITADO e VISÍVEL** — a exceção nomeada da US1-AC3, nunca escondido e nunca um salvamento
+falso. Só sobre um estado POSITIVAMENTE conhecido como não-premium ([[DEC-037]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `showTeaserSlot`, `useFilaments`
+
+---
+
+## DEC-117 — O switch de marketplace exige `active`; "checando" e "erro" degradam para NÃO habilitado
+
+**Data**: 2026-08-05 (016/US11, T048, FR-915) · **Governa**: `marketplaceEntitled`
+
+`active` **ONLY**. Uma leitura em checagem ou em erro (`entitlement.data` indefinido, ou obsoleto)
+degrada para "não habilitado" — o mesmo guarda honesto que toda outra superfície premium já usa:
+**nunca presuma premium** ([[DEC-045]]).
+
+O servidor continua sendo a autoridade (ADR-0012); isto decide apenas **o que a UI OFERECE**
+([[DEC-037]]).
+
+O catálogo de tarifas que alimenta a tela (servido → store persistida → semente embutida) **NUNCA
+bloqueia**: semente e store sempre respondem offline, todo preço fica local, e uma atualização online
+que falhou vira uma retentativa não-bloqueante — **nunca um muro de erro** ([[DEC-104]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `marketplaceEntitled`, `useFeeCatalog`
+
+---
+
+## DEC-118 — Na coluna larga o hospedeiro é a PRÓPRIA `.tf-calc-page`, porque um wrapper quebraria a medição
+
+**Data**: 2026-08-29 (019/PR-F, T095, decisão 2 do dono — ADR-0031 §Emenda 2) · **Governa**: o ramo
+largo da Calcular
+
+Acima do corte, "Minhas simulações" monta AO LADO da calculadora (prancheta 20g); abaixo, a gaveta de
+sempre. É o único gate ([[DEC-016]] não se aplica: nada aqui vira sub-rota).
+
+**O corpo de sempre (`pageInner`) é byte-idêntico ao ramo estreito** e vira a coluna principal.
+
+**A `.tf-calc-page` continua sendo o ÚNICO filho de `.tf-shell__main`**, e isso não é estética: o teste
+de largura lê `.tf-shell__main > section` — **um wrapper por fora quebraria essa leitura**. Por isso o
+`tf-scenarios-wide` mora DENTRO da section.
+
+Duas referências, e cada uma existe por um motivo diferente:
+
+- **a da coluna PRINCIPAL** — "Fazer um cálculo" e "Limpar busca", dentro da lista, chamam `onClose`
+  esperando fechar uma gaveta; na coluna larga **não existe gaveta para fechar**, então o mesmo
+  callback rola de volta ao topo da calculadora (que é o mesmo destino que "Fazer um cálculo" já
+  significa);
+- **a da LISTA** — o botão "Minhas simulações" do cabeçalho, na coluna larga, **não abre nada**: rola e
+  foca a lista que já está sempre visível ao lado (decisão do dono: *"a lista está sempre visível ao
+  lado"*).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `wideMainRef`, `wideAsideRef`
+
+---
+
+## DEC-119 — Ao salvar, uma base PRODUCT/KIT mantém a REFERÊNCIA; só `AD_HOC` recebe a base recém-montada
+
+**Data**: 2026-07-20 (010, T011/T024) · **Governa**: o `freeze` do salvar na Calcular
+
+Uma base PRODUCT ou KIT **mantém a REFERÊNCIA**: a Calcular não tem formulário escalar para uma linha
+de KIT ([[DEC-102]]), e o servidor re-fotografa o `lastKnown` de um PRODUCT a partir da linha viva a
+cada salvamento de qualquer forma — **nunca sobrescrito por um palpite derivado do cliente**.
+
+`AD_HOC` usa a base recém-montada, com as entradas editadas.
+
+A procedência que vai para o snapshot é **informativa APENAS** (id + o nome COMO CARREGADO), nunca
+fonte de valor, e nunca relida no congelamento — o `freeze()` do botão de gravar captura esta mesma
+referência ([[DEC-013]]). `null` quando nada está carregado: um cálculo avulso continua gravando **sem
+procedência nenhuma**.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `scenarioProvenance`, `storedBasis`
+

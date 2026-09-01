@@ -140,10 +140,17 @@ Cada asserção é provada não-vacuosa por mutação, como o resto da casa.
 
 ## 8. A catraca de densidade
 
-`packages/repo-audit/comment-density.baseline.json` guarda, por arquivo, o maior bloco de prosa
-comentada no dia da migração. O guarda falha se um arquivo **subir**; descer é sempre permitido.
-Prende também a densidade TOTAL do repositório — um número só, que dá folga local (acrescentar uma
-âncora de uma linha não pode deixar o portão vermelho) sem permitir uma volta geral.
+`packages/repo-audit/comment-density.baseline.json` guarda, por arquivo, **quantos blocos de 3+
+linhas de prosa** ele tem e **qual o maior deles**. O guarda falha se qualquer um dos dois **subir**;
+descer é sempre permitido. Prende também a densidade TOTAL do repositório — um número só, que dá folga
+local (acrescentar uma âncora de uma linha não pode deixar o portão vermelho) sem permitir uma volta
+geral.
+
+> **A contagem de blocos entrou depois, e a falta dela custou caro.** A primeira versão prendia só o
+> PICO, e com isso a varredura deu por limpo um arquivo com **dezessete** blocos de 3 a 7 linhas
+> (`calcular-page.tsx`, apontado pelo dono em 2026-09-01 — nenhum bloco chegava ao corte de 10 que a
+> varredura usava). **Explicação não se mede pelo pico; mede-se pela quantidade.** Os dois números
+> ficam presos: a contagem pega o arquivo pulverizado, o pico pega o parágrafo único e enorme.
 
 **O alvo não é "zero comentário", e é importante dizer isso em voz alta.** É *zero DECISÃO dentro do
 código*. Um JSDoc de até 6 linhas dizendo o que a função recebe, devolve e recusa é CONTRATO, e

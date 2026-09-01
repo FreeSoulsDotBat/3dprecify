@@ -71,21 +71,33 @@ export interface MetricaDeArquivo {
     /** Linhas totais. */
     linhas: number;
     /**
-     * O maior bloco de linhas CONSECUTIVAS de prosa comentada — é o que mede "parágrafo no código",
-     * e é o número que a catraca prende. Delimitadores e linhas em branco de JSDoc não contam: o
-     * que se quer limitar é a explicação, não a moldura dela.
+     * O maior bloco de linhas CONSECUTIVAS de prosa comentada — é o que mede "parágrafo no código".
+     * Delimitadores e linhas em branco de JSDoc não contam: o que se quer limitar é a explicação,
+     * não a moldura dela.
      */
     maiorBloco: number;
+    /**
+     * Quantos blocos de 3+ linhas de prosa o arquivo tem. Esta é a métrica que FALTAVA, e a falta
+     * custou caro: prender só o `maiorBloco` deixou passar um arquivo com DEZESSETE blocos de 3 a 7
+     * linhas (`calcular-page.tsx`, apontado pelo dono em 2026-09-01) enquanto a varredura o dava por
+     * limpo. Explicação não se mede pelo pico; mede-se pela quantidade.
+     */
+    blocosDeTres: number;
 }
 
 export function medir(conteudo: string): MetricaDeArquivo {
     const linhas = conteudo.split("\n");
     let comentarios = 0;
     let maiorBloco = 0;
+    let blocosDeTres = 0;
     let corrente = 0;
+    const fecharBloco = () => {
+        if (corrente >= 3) blocosDeTres++;
+        corrente = 0;
+    };
     for (const linha of linhas) {
         if (!ehComentario(linha)) {
-            corrente = 0;
+            fecharBloco();
             continue;
         }
         comentarios++;
@@ -93,5 +105,6 @@ export function medir(conteudo: string): MetricaDeArquivo {
         corrente++;
         if (corrente > maiorBloco) maiorBloco = corrente;
     }
-    return { comentarios, linhas: linhas.length, maiorBloco };
+    fecharBloco();
+    return { comentarios, linhas: linhas.length, maiorBloco, blocosDeTres };
 }
