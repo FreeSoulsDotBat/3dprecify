@@ -278,3 +278,25 @@ comentadas apontando uma para a outra, que é o estado atual.
 que sincronizar; ou (b) alguém precisar de uma terceira porta (ex.: validação no backend do
 catálogo servido). Nesse dia: `superRefine` chamando `validateBandRules`, mensagens vindas do motor,
 e os testes do `fee-ingest` ajustados aos textos novos.
+
+
+### B12 (NOVO — achado pelo teste de paridade do 4(3), 2026-09-01, NÃO corrigido)
+
+**O servidor não reconfere a multiplicação do desconto percentual.** No modo `PCT`, o motor
+calcula `discountAmount = toMoney(gross × value / 100)` (`packages/pricing-core/src/quote.ts`). O
+backend (`backend/app/api/history.py`, `_validate_declared_discount`) verifica apenas duas coisas:
+que `value ≤ 100` e que a identidade final fecha (`gross − amount == netTotal`). Ele **nunca
+recalcula** `gross × value / 100`.
+
+**Consequência.** Um documento declarando `mode:"PCT", value:"50", amount:"0.01"` — um percentual
+que não tem relação nenhuma com o abatimento — é ACEITO, desde que a subtração declarada bata. O
+servidor confia na aritmética percentual do cliente.
+
+**Por que não foi corrigido aqui.** Está fora das 3 regras que o dono autorizou pinar em 4(3), e a
+correção não é um teste: é decidir se o backend passa a recomputar um número (hoje ele
+deliberadamente NUNCA calcula preço — FR-118; recomputar aqui seria uma exceção a essa regra, ainda
+que de VERIFICAÇÃO e não de produção de valor). É decisão do dono.
+
+**Escopo real do risco.** Não é um caminho de fraude do vendedor contra terceiros: o documento é o
+registro do próprio vendedor. O dano é um congelado internamente inconsistente (o percentual impresso
+não explica o abatimento impresso) que a imutabilidade depois preserva para sempre.
