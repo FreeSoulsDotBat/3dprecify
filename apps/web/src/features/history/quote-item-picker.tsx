@@ -109,6 +109,7 @@ export function QuoteItemPicker({
                     }
 
                     const baseTotal = itemBaseTotal(result);
+                    const priceLabel = baseTotal.failed ? "—" : formatBRL(baseTotal.value);
 
                     return (
                         <Card
@@ -131,16 +132,16 @@ export function QuoteItemPicker({
                                     {itemName(item)}
                                 </span>
                                 <span className="text-xs text-[var(--text-muted)]">
-                                    {item.kind === "KIT"
-                                        ? t.kitLineMeta
-                                              .replace("{n}", selected.get(id) ?? "1")
-                                              .replace("{pecas}", String(item.kit.lines.length))
-                                        : t.unitPriceMeta.replace("{valor}", formatBRL(baseTotal))}
+                                    {baseTotal.failed
+                                        ? t.basePriceUnavailable
+                                        : item.kind === "KIT"
+                                          ? t.kitLineMeta
+                                                .replace("{n}", selected.get(id) ?? "1")
+                                                .replace("{pecas}", String(item.kit.lines.length))
+                                          : t.unitPriceMeta.replace("{valor}", priceLabel)}
                                 </span>
                             </div>
-                            <span className="tf-tnum text-sm font-semibold">
-                                {formatBRL(baseTotal)}
-                            </span>
+                            <span className="tf-tnum text-sm font-semibold">{priceLabel}</span>
                             {isSelected && (
                                 <div onClick={(e) => e.stopPropagation()}>
                                     <NumberField

@@ -27,17 +27,19 @@ export function itemName(item: QuoteCatalogItem): string {
     return item.kind === "PRODUCT" ? item.product.name : item.kit.name;
 }
 
-/** O preço base de UM item (sem desconto), usado só como leitura no passo "select" (18b). O
- *  `catch { baseTotal = 0 }` é um bug conhecido REGISTRADO (dod-evidence B1) — NÃO corrigido aqui,
- *  só movido para um nome. */
-export function itemBaseTotal(result: QuoteLineInputResult | null | undefined): number {
-    let baseTotal = 0;
-    if (result && result.lines.length > 0) {
-        try {
-            baseTotal = computeQuote({ lines: result.lines }).netTotal;
-        } catch {
-            baseTotal = 0;
-        }
+/** O preço base de UM item (sem desconto), usado só como leitura no passo "select" (18b).
+ *
+ *  B1 (decisão do dono 2026-08-31): quando o motor FALHA ao computar, o valor segue **zero**
+ *  (melhor zero que um preço errado — e os totais nunca somam para cima), mas a falha agora é
+ *  DECLARADA em `failed` para a tela mostrar ausência em vez de "R$ 0,00" mudo. */
+export function itemBaseTotal(result: QuoteLineInputResult | null | undefined): {
+    value: number;
+    failed: boolean;
+} {
+    if (!result || result.lines.length === 0) return { value: 0, failed: false };
+    try {
+        return { value: computeQuote({ lines: result.lines }).netTotal, failed: false };
+    } catch {
+        return { value: 0, failed: true };
     }
-    return baseTotal;
 }

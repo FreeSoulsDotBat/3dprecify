@@ -19,6 +19,10 @@ export const quote = {
     clientLabel: "Cliente",
     searchPlaceholder: "Buscar no catálogo",
     unitPriceMeta: "{valor} a unidade",
+    // B1 (decisão do dono 2026-08-31): quando o motor não consegue computar o item, a linha mostra
+    // AUSÊNCIA (—) e esta legenda, e o valor segue zerado até o vendedor consertar — nunca um preço
+    // inventado. Copy sem prancheta (correção de bug); sujeita à segunda passada do dono.
+    basePriceUnavailable: "Sem preço — revise este item no Catálogo",
     lineMeta: "{n} un. × {valor}",
     kitLineMeta: "{n} un. · {pecas} peças",
     stoppedCannotQuote: "preço parado desde {data} — resolva para orçar",
