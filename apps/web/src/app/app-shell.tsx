@@ -35,19 +35,11 @@ function useIsMobile(): boolean {
 }
 
 /**
- * App shell (T023/T033) — the app-layer chrome that hosts pages via `<Outlet/>`.
- * Slots:
- *   - offline-banner (top, role=status)     → US4 / T052 (placeholder for now)
- *   - top-bar (brand + theme + account)     → widgets/top-bar (T029)
- *   - app-nav (TabBar mobile / side desktop) → widgets/app-nav (T028), variant by viewport
- * No auth guards live here — guards are router `beforeLoad` (US2). The former inline
- * 001 top-bar chrome is superseded by `widgets/top-bar`.
+ * O chrome da camada de app: offline-banner · top-bar · app-nav. Nenhum guarda de auth aqui —
+ * guardas são `beforeLoad` do router.
  *
- * Focus-to-title on navigation (T045 / NAV-2) is owned by `widgets/page-header`: each
- * section title focuses itself on mount (skipping the first, initial-load mount). That
- * mount is the only reliable "the new title is in the DOM" signal — a pathname-keyed
- * effect here fires before the `<Outlet/>` commits the destination page, so the shell
- * would focus the OUTGOING title. See page-header.tsx.
+ * ⚠ @doc DEC-053 — o foco-no-título é do `page-header`: um efeito aqui dispara ANTES de o
+ *   `<Outlet/>` comitar o destino, e o shell focaria o título que está saindo.
  */
 export function AppShell() {
     const isMobile = useIsMobile();

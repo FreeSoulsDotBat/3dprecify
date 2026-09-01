@@ -1439,3 +1439,198 @@ o rodapé de "Salvar" e o convite único (FR-1906).
 
 - `apps/web/src/pages/bom/bom-page.tsx` → `composeBom`
 
+---
+
+## DEC-051 — Um BURACO entre bandas é dado legítimo; o que se recusa é a forma que o disfarça
+
+**Data**: 2026-08-01 (014/T114, SC-817, FR-014a) · **Governa**: `checkBandCoverage`
+
+Um GAP é dado legítimo e **não** é recusado: a FR-014a é explícita — a janela que a fonte deixa sem
+preço fica sem preço, e o `pricing-core` recusa precificar dentro dela em vez de pegar emprestada a
+taxa da vizinha.
+
+O que este guarda pega são as formas que tornam um buraco INDISTINGUÍVEL de um erro de parse:
+
+- **SOBREPOSIÇÃO** — duas bandas reivindicando o mesmo preço. A busca do motor (limite inferior
+  inclusivo) escolheria em silêncio a que viesse primeiro, então **qual taxa o vendedor paga
+  dependeria da ordem das linhas de uma tabela raspada**.
+- **FORA DE ORDEM / limites invertidos** — um `maxPrice` igual ou menor que o próprio `minPrice` é uma
+  banda que nunca pode conter preço nenhum: erro de leitura vestido de dado.
+- **UMA SEGUNDA banda sem teto** — só a banda terminal pode ser aberta.
+
+Devolve VEREDITO em vez de lançar, pela mesma razão do [[DEC-032]]: o chamador tem de poder deixar o
+artefato publicado intocado, em vez de substituí-lo por algo malformado (SC-806).
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/guardrails.ts` → `checkBandCoverage`
+
+---
+
+## DEC-052 — "Este canal tinha taxa?" é respondido na LEITURA, para valer também para o já congelado
+
+**Data**: 2026-08-01 (014/T120, SC-815) · **Governa**: `feeBearing` no payload congelado
+
+Com comissão 0 o motor devolve anúncio == base e líquido == base: números reais, mas **não** um preço
+de marketplace. A calculadora já se recusa a mostrá-los ("Informe a comissão do canal para ver os
+preços"); o detalhe congelado imprimia as quatro linhas e portanto **afirmava o que a própria origem
+tinha negado** (Princípio II). Esta é a metade de LEITURA daquela recusa.
+
+**Na leitura e não na escrita, de propósito.** As entradas de tarifa já viajam dentro do documento
+(`inputs.channels` num SINGLE, `lines[].input.channels` num KIT), então o fato é recuperável de todo
+registro já escrito — inclusive os já congelados, que um trigger de banco torna irreescrevíveis
+(ADR-0019). Congelar nulos teria consertado só os registros futuros e deixado os existentes afirmando
+a mesma coisa para sempre.
+
+Responde `true` sempre que a AUSÊNCIA de taxa **não puder ser provada** pelo documento — payload sem
+nenhuma entrada de canal, ou rollup sem slot correspondente. Suprimir uma linha por palpite seria a
+mesma fabricação na direção oposta (SC-815).
+
+Complementa o [[DEC-034]]: aquele unifica *o que conta como taxa*, este decide *quando a pergunta é
+respondida*.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/frozen-payload.ts` → `feeBearing`
+
+---
+
+## DEC-053 — O foco no título pertence ao `page-header`, não ao shell — e por uma razão de ordem
+
+**Data**: 2026-07-06 (T023/T033, T045/NAV-2) · **Governa**: `app-shell.tsx`
+
+O chrome da camada de app que hospeda as páginas por `<Outlet/>`: banner de offline (topo,
+`role=status`), top-bar (marca + tema + conta) e app-nav (TabBar no mobile, lateral no desktop,
+variante por viewport). **Nenhum guarda de auth mora aqui** — guardas são `beforeLoad` do router.
+
+**Foco-no-título ao navegar pertence ao `widgets/page-header`**: cada título de seção foca a si mesmo
+ao montar (pulando a primeira montagem, a de carga inicial). Essa montagem é o único sinal confiável
+de "o título novo está no DOM" — um efeito aqui, chaveado pelo pathname, **dispara antes de o
+`<Outlet/>` comitar a página de destino**, e o shell focaria o título que está SAINDO.
+
+### Onde isso vive no código
+
+- `apps/web/src/app/app-shell.tsx` → `AppShell`
+
+---
+
+## DEC-054 — Exportar é uma AÇÃO (`useMutation`), e nada aqui monta documento
+
+**Data**: 2026-07-15 (009/T028, E4 PR-C, US4 · FR-515/516) · **Governa**: `use-export.ts`
+
+Busca o artefato que o SERVIDOR renderizou e o entrega ao aparelho. **Nada aqui monta um documento.**
+O renderizador vive no servidor (ADR-0020) precisamente para que o portão de entitlement seja real: um
+chamador grátis ou em lapso nunca chega nele, então "negado, e nenhum artefato parcial" vale por
+construção, não por um `if` do cliente ([[DEC-019]]).
+
+Os caminhos vêm dos construtores de URL GERADOS, para o contrato seguir sendo fonte única — uma rota
+renomeada quebra o build aqui, não a produção.
+
+**`useMutation` e não `useQuery`, de propósito**: exportar é uma AÇÃO que o vendedor toma, com efeito
+colateral no aparelho dele. Os hooks gerados são `useQuery`, que cachearia os bytes, os buscaria de
+novo no foco da janela e **rebaixaria um arquivo que ninguém pediu**.
+
+O transporte é `apiFetchFile` porque só ele lê o `Content-Disposition` que o servidor manda.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/use-export.ts` → `apiFetchFile`
+
+---
+
+## DEC-055 — A rota atrás de flag não é REGISTRADA; e responde 404, não 401
+
+**Data**: 2026-07-25 (E6/T035-T036, ADR-0023 §6, owner Q2 · VR-709/SC-711) · **Governa**: as rotas de
+Play Billing
+
+As duas rotas existem no CÓDIGO e não existem em nenhum ambiente do E6: elas só são registradas quando
+`P3D_PLAY_BILLING_ENABLED` é verdadeira. Com a flag desligada, **o próprio roteador responde 404** —
+não há handler que possa vazar por engano.
+
+**404 e não 401/403, de propósito**: um 401 diria "existe, mas você não está autenticado", confirmando
+a superfície para quem estiver sondando. 404 diz o que é verdade — não há rota aqui.
+
+**Gating por REGISTRO e não por `if` dentro do handler**: um `if` esquecido é um vazamento; uma rota
+que nunca foi registrada não tem como responder. Mesma família estrutural do [[DEC-044]] e da barreira
+por AUSÊNCIA de handler do 019/PR-B.
+
+### Onde isso vive no código
+
+- `backend/app/api/billing.py` → `play_billing_enabled`
+- `backend/app/settings.py` → `play_billing_enabled`
+
+---
+
+## DEC-056 — O banner de sessão expirada é `info`, mora no shell, e usa `<a>` puro
+
+**Data**: 2026-08-07 (hotfix 016/A3, H5) · **Governa**: `session-expiry-banner.tsx`
+
+O caminho de volta que a homologação T072 achou faltando ([[DEC-007]]): o servidor pode recusar uma
+sessão de cliente viva, e até esta fatia NENHUMA tela se movia quando isso acontecia — o guarda do
+`router.tsx` só reage à sessão do CLIENTE morrer, que não é este caso. Renderizado no `app-shell`
+(toda aba autenticada o monta), para ser alcançável de onde quer que o 401 tenha acontecido, não de
+uma página só.
+
+**Tom `info`, nunca `danger`**: nada foi destruído — o estado `unauthenticated` do outbox (H4) guarda
+todo orçamento não sincronizado — então isto é um convite, não um alarme.
+
+**Um `<a>` puro, mesmo padrão do `TeaserUpgrade`, nunca o `<Link>` do router**: assim ele renderiza e é
+testável sem nenhum `RouterProvider` montado. O `useRouterState` lê o `location.href` CORRENTE (campo
+do próprio TanStack: pathname + search, nunca a URL absoluta do navegador), então o redirect preserva
+a intenção do vendedor através da lista do `safeRedirect` ([[DEC-006]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/widgets/session-expiry-banner/session-expiry-banner.tsx` → `SessionExpiryBanner`
+
+---
+
+## DEC-057 — Os dígitos vêm do formatador oficial; o SINAL fica, porque o menos tipográfico é DESENHO
+
+**Data**: 2026-09-01 (chore de legibilidade, item 3(3)) · **Governa**: `breakdown-row.tsx`
+
+Os DÍGITOS passaram a vir do formatador oficial (`formatDecimal`, a mesma casa de `formatBRL`): este
+componente era o segundo `toLocaleString("pt-BR")` do app, e ele imprime justamente o detalhamento do
+preço ([[DEC-002]]).
+
+**O SINAL fica como está, e isso não é a exceção que sobrou.** O menos tipográfico (U+2212) é DESENHO,
+escrito na prancheta — *"Dinheiro em pt-BR com fonte tabular, sinal de menos tipográfico: R$ 24,24,
+R$ 1.234,56, − R$ 3,80"* (`docs/design/prompts/inferidos/calculadora/estados-de-preco-por-canal.md`)
+— e dois testes o pinam.
+
+> **Registro honesto de como a decisão foi tomada:** a aprovação do dono para "padronizar" veio da
+> MINHA descrição do sinal como detalhe imperceptível. A prancheta diz o contrário, então trocá-lo
+> seria divergir do desenho dele **sem decisão informada**. Fica como está até o dono decidir com a
+> prancheta à vista.
+
+A POSIÇÃO (sinal antes do prefixo) e `prefix`/`decimals` também seguem sendo deste componente.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/ui/breakdown-row.tsx` → `BreakdownRow`
+
+---
+
+## DEC-058 — As duas limitações do mapa da Amazon são DECLARADAS em cada entrada, não escondidas
+
+**Data**: 2026-07-31 (014, FR-014, Q9) · **atualizado** 2026-08-05 (016/US14) · **Governa**:
+`amazon-to-catalog.ts`
+
+**1. A base da comissão inclui o frete.** A Amazon cobra a comissão sobre uma base que INCLUI o frete;
+nosso motor cobra sobre o preço de anúncio. O número aqui, portanto, **subestima** a tarifa real de um
+item enviado. Declarado, não modelado — modelar é mudança no `pricing-core` e está explicitamente fora
+de escopo (Q9).
+
+**2. A tabela de referral NÃO varia por plano** (medido em 2026-07-28: zero menções a plano nas 38
+linhas), então os dois planos carregam a mesma comissão.
+
+A cobrança POR ITEM separada do plano Individual não está publicada naquela página — e até o 016 ela
+NÃO era incluída, que era a resposta honesta enquanto o número não tinha fonte. **O 016/US14 fechou
+isso**: os R$ 2,00 vêm de `venda.amazon.com.br/precos` e hoje viajam COM essa página como procedência
+própria (`fixedFeeSource`). A declaração permanece, mas agora declara a coisa certa: o número não está
+NAQUELA página, e a entrada diz onde ele está.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/amazon-to-catalog.ts` → `fixedFeeSource`
+

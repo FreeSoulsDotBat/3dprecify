@@ -419,22 +419,9 @@ function feeBearing(slot: FrozenInputValue | undefined): boolean {
 }
 
 /**
- * 014/T120 — did the channel at `index` of `payload.channels` stand on a fee?
- *
- * With a commission of 0 the engine returns anúncio == base and líquido == base: real numbers, but
- * NOT a marketplace price. The calculator already refuses to show them ("Informe a comissão do canal
- * para ver os preços"); the frozen detail printed all four lines and so asserted what its own origin
- * had denied (Princípio II). This is the read-time half of that refusal.
- *
- * READ-time and not write-time on purpose. The fee inputs travel inside the document already
- * (`inputs.channels` for a SINGLE, `lines[].input.channels` for a KIT), so the fact is recoverable
- * from every record ever written — including the ones already frozen, which a DB trigger makes
- * unrewritable anyway (ADR-0019). Freezing nulls instead would have fixed only future records and
- * left the existing ones asserting the same thing forever.
- *
- * It answers `true` whenever the absence of a fee cannot be PROVEN from the document — a payload
- * with no channel inputs at all, or a rollup with no matching slot. Suppressing a line on a guess
- * would be the same fabrication in the other direction (SC-815).
+ * ⚠ @doc DEC-052 — respondido na LEITURA, não na escrita: as entradas já viajam no documento,
+ *   então vale também para o que já está congelado. Responde `true` quando a AUSÊNCIA de taxa
+ *   não pode ser provada — suprimir por palpite é a mesma fabricação ao contrário.
  */
 export function frozenChannelHasFee(payload: FrozenSnapshotPayload, index: number): boolean {
     const rendered = payload.channels?.[index];

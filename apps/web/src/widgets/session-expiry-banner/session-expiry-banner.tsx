@@ -5,19 +5,8 @@ import { messages } from "@/shared/i18n/messages.pt-br";
 import { useSessionExpired } from "@/shared/session/session-expiry";
 import { Alert } from "@/shared/ui";
 
-// hotfix 016/A3 (H5, 2026-08-07) — the CAMINHO DE VOLTA the T072 homologação found missing: the
-// server can refuse a live client session (a 401 with a real session-expiry code), and until this
-// slice NO screen moved when that happened — `router.tsx`'s guard only reacts to the CLIENT
-// (Firebase) session dying, which this is not. Rendered in `app-shell` (every authenticated tab
-// mounts it) so it is reachable from wherever the 401 happened, not just one page.
-//
-// Tone "info", never "danger": nothing was destroyed (the outbox's `unauthenticated` state, H4,
-// keeps every unsynced quote), so this is an invitation, not an alarm.
-//
-// A plain `<a>`, same pattern as `TeaserUpgrade` — never the router's `<Link>` — so this renders and
-// is testable with no RouterProvider mounted; `useRouterState` reads the CURRENT `location.href`
-// (TanStack's own field: pathname + search, never the browser's absolute URL) so the redirect
-// preserves the seller's intent through `/sign-in`'s existing `safeRedirect` whitelist.
+// ⚠ @doc DEC-056 — tom `info`, nunca `danger`: nada foi destruído, o outbox guardou tudo. `<a>`
+//   puro e não `<Link>`, para renderizar sem `RouterProvider` montado.
 export function SessionExpiryBanner(): ReactNode {
     const expired = useSessionExpired();
     const href = useRouterState({ select: (s) => s.location.href });

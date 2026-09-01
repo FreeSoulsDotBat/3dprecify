@@ -326,17 +326,8 @@ async def cancel_subscription_route(
     return _out(view)
 
 
-# ══ T035/T036 — Play Billing atras de uma flag DESLIGADA (ADR-0023 §6, owner Q2) ══════════════
-#
-# As duas rotas existem no CODIGO e NAO existem em nenhum ambiente do E6: elas so sao registradas
-# quando `P3D_PLAY_BILLING_ENABLED` e verdadeira, entao com a flag desligada o proprio roteador
-# responde 404 — nao ha handler que possa vazar por engano (VR-709/SC-711).
-#
-# 404 e nao 401/403 de proposito: um 401 diria "existe, mas voce nao esta autenticado", confirmando
-# a superficie para quem estiver sondando. 404 diz o que e verdade — nao ha rota aqui.
-#
-# Gating por REGISTRO e nao por `if` dentro do handler: um `if` esquecido e um vazamento; uma rota
-# que nunca foi registrada nao tem como responder.
+# ⚠ @doc DEC-055 — gating por REGISTRO, não por `if` no handler: rota não registrada não tem
+#   como responder. E 404, não 401 — um 401 confirmaria a superfície para quem sonda.
 
 
 class PlayCheckoutIn(CamelModel):

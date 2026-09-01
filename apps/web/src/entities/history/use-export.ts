@@ -7,20 +7,8 @@ import {
 import { apiFetchFile } from "@/shared/api/transport";
 import { saveFile } from "@/shared/lib/save-file";
 
-// 009/T028 (E4, PR-C, US4) — fetch the artifact the SERVER rendered and hand it to the device.
-//
-// Nothing here builds a document. The renderer lives on the server (ADR-0020) precisely so the
-// entitlement gate is real: a lapsed or free caller never reaches it, so "denied, and no partial
-// artifact" (FR-515/516) holds by construction rather than by a client-side `if`. This module's
-// whole job is the two steps that cannot happen on the server: authenticate the request, and put
-// the resulting bytes somewhere the seller can find them.
-//
-// The paths come from the GENERATED url builders, so the contract stays the single source of truth
-// (a renamed route breaks the build here, not in production). The transport is `apiFetchFile`
-// because only it reads the `Content-Disposition` the server sets — and because these are
-// `useMutation`, not `useQuery`, on purpose: an export is an ACTION the seller takes, with a side
-// effect on their device. The generated hooks are `useQuery`, which would cache the bytes, refetch
-// them on window focus, and re-download a file nobody asked for.
+// ⚠ @doc DEC-054 — `useMutation` e NÃO `useQuery`: exportar é ação com efeito no aparelho, e um
+//   `useQuery` rebaixaria o arquivo de novo no foco da janela. Nada aqui monta documento.
 
 /** Fallbacks only — the server names the file via `Content-Disposition`; these cover its absence. */
 const QUOTE_FILENAME = "orcamento.pdf";

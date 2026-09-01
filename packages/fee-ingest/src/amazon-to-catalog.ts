@@ -30,19 +30,9 @@ export function amazonSpine(categories: readonly ParsedCategory[]) {
 }
 
 /**
- * The two limitations this map ships WITH, declared in every entry rather than hidden (FR-014):
- *
- * 1. Amazon charges its commission on a base that INCLUDES shipping; our engine charges on the
- *    announce price. So the number here understates the real fee for a shipped item. Declared, not
- *    modelled — modelling it is a `pricing-core` change and explicitly out of scope (Q9).
- * 2. The referral table does NOT vary by plan (measured 2026-07-28: zero mentions of plan across all
- *    38 rows), so both plans carry the same commission. The Individual plan's separate PER-ITEM
- *    charge is not published on this page — and until 016 it was therefore NOT included, which was
- *    the honest answer while the number had no source.
- *
- *    **016/US14 closed it**: the R$ 2,00 comes from `venda.amazon.com.br/precos` and now ships WITH
- *    that page as its own provenance (`fixedFeeSource`). The declaration stays, but it declares the
- *    right thing: the number is not on THIS page, and the entry says where it is.
+ * ⚠ @doc DEC-058 — as duas limitações são DECLARADAS em cada entrada (FR-014), não escondidas:
+ *   a base da comissão da Amazon inclui o frete (o número subestima), e a tabela de referral
+ *   não varia por plano. Modelar a primeira é mudança no `pricing-core`, fora de escopo.
  */
 export const AMAZON_FEE_BASE_CAVEAT = "comissão sobre base que inclui frete";
 
