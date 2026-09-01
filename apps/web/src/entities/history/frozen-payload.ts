@@ -39,9 +39,12 @@ export const FROZEN_PAYLOAD_SCHEMA_VERSION = 1;
 /** A decimal number as an exact string, e.g. "187.35". Never a float. */
 export type MoneyString = string;
 
-/** Settled money: exactly 2dp, ROUND_HALF_UP (ADR-0008 / ADR-0004 — one money story end-to-end). */
+/** Settled money: exactly 2dp, ROUND_HALF_UP (ADR-0008 / ADR-0004 — one money story end-to-end).
+ *  B8 (aprovado pelo dono 2026-08-31): o modo é EXPLÍCITO — o `toFixed(2)` puro dependia do
+ *  `Decimal.rounding` GLOBAL da lib, que coincide com o ADR-0008 por default e não por declaração;
+ *  um `Decimal.set({rounding})` em qualquer lugar mudaria o documento imutável em silêncio. */
 export function toMoneyString(value: number): MoneyString {
-    return new Decimal(value).toFixed(2);
+    return new Decimal(value).toFixed(2, Decimal.ROUND_HALF_UP);
 }
 
 export interface FrozenOtherCost {
