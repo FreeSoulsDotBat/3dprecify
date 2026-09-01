@@ -50,16 +50,8 @@ import { KitDiscardedNotice, KitScenarioRecordButton } from "./calcular-page-kit
 
 import "@/features/scenarios/scenarios-wide.css";
 
-// E1 calculator screen. RHF (form state) + Zod (calculatorResolver) own the pt-BR inputs; the price +
-// breakdown come from one synchronous computeFromForm pass over the canonical pricing-core engine
-// (recompute on every change, deterministic, offline — FR-036/FR-039). 004-US1 = a correct retail +
-// wholesale price (PriceHero); 004-US2 = the transparent per-line breakdown that visibly sums to
-// custo_total + the markup derivation (BreakdownRow); 004-US4 = the optional labor cost. The 005
-// multi-channel expansion layers on top: multi-channel marketplace gross-up + honesty seals (US1/US2),
-// non-blocking offline catalog refresh (US3), the "Incluir marketplaces no preço" visibility toggle
-// (US4), and the itemized "Outros custos" named sub-costs slot (US5). No persistence / paywall (US6).
-// The section components live in features/calculator/calculator-form (T030) — the product full-page
-// route mounts the SAME body, keeping SC-305 identical on both surfaces.
+// @doc DEC-089 — RHF + Zod donos da entrada; preço e detalhamento de UMA passada síncrona do
+//   `computeFromForm`. Sem persistência e sem paywall nesta tela.
 
 const t = messages.calculator;
 

@@ -5,17 +5,8 @@
 import { Decimal, toMoney } from "./rounding.ts";
 
 /**
- * How the FIXED fee of a band forms (ADR-0027 §3.1, pricing-core 4.1.0).
- *
- * **AUSENTE = a constante `fixedFee`** — o significado que todo payload gravado antes desta mudança
- * já tem (a mesma disciplina do `bandMode`, ADR-0024). `priceBands` viaja dentro de snapshot
- * congelado (imutável por trigger, ADR-0019) e de documento de cenário (ADR-0021): se a ausência
- * significasse outra coisa, um congelado que o produto promete imutável passaria a afirmar outro
- * preço sem uma linha dele mudar.
- *
- * `PCT_OF_PRICE` é o caso MÍNIMO que a fonte publica (Shopee art. 26839: abaixo de R$ 8 o adicional
- * por item é metade do preço do produto). Qualquer outra forma é decisão nova, não um `kind` a mais
- * por conveniência.
+ * ⚠ @doc DEC-087 — AUSENTE significa a constante `fixedFee`: é o significado que todo payload
+ *   já gravado tem, e mudá-lo faria um congelado imutável afirmar outro preço sem mudar.
  */
 export interface FixedFeeRule {
     kind: "PCT_OF_PRICE";

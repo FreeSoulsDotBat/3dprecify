@@ -1,17 +1,7 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
 
-// E6/US7 (T032/T037) — a linha de preco dos teasers, num modulo que NAO importa mais nada.
-//
-// Ela morava junto do componente e depois junto de `BILLING_PLANS`, e os dois lugares quebraram o
-// e2e por motivos diferentes: o componente importa CSS (o carregador de TS do Playwright nao
-// parseia), e `plans.ts` importa o cliente gerado, que valida env fora do navegador (ZodError na
-// carga). A saida NAO foi recompor o texto no spec — recompor e ter duas fontes, que e exatamente o
-// que a FR-710 proibe. E isto: um modulo sem dependencia nenhuma alem das mensagens, que a UI e o
-// e2e importam IGUAL.
-//
-// Os numeros continuam vindo de UM lugar: `messages.billing`, que e de onde `BILLING_PLANS` tambem
-// os le. E um teste de unidade afirma que esta linha CONTEM os valores de `BILLING_PLANS` — e esse
-// teste e o que mantem as duas leituras amarradas, em vez de apenas parecerem iguais.
+// ⚠ @doc DEC-086 — módulo SEM dependência nenhuma além das mensagens, para a UI e o e2e lerem
+//   IGUAL. Recompor o texto no spec seria ter duas fontes — o que a FR-710 proíbe.
 const t = messages.billing;
 
 /**

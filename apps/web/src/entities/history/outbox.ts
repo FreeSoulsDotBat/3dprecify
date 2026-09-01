@@ -55,20 +55,12 @@ export async function listOutbox(uid: string): Promise<OutboxEntry[]> {
 }
 
 /**
- * Read the queue for a READ-MODIFY-WRITE. Propagates a storage failure instead of pretending the
- * queue is empty (SC-816).
+ * Lê a fila para um read-modify-write. PROPAGA falha de armazenamento em vez de fingir fila
+ * vazia (SC-816).
  *
- * The distinction is load-bearing, not stylistic. `idb-keyval` documents that Safari's `db.onclose`
- * clears the cached connection: the next `get` REJECTS while a later `set` reopens the database and
- * SUCCEEDS. Rebasing a write on a swallowed read therefore erases every pending snapshot — and the
- * outbox is the ONLY copy of a quote recorded offline, so what disappears does not disappear from a
- * cache; it disappears from the seller. There is no error line either, because from the queue's
- * point of view nothing failed.
- *
- * This file already named the hazard — see `settleEntry`'s docstring, "`listOutbox` returns `[]` on
- * ANY read error" — and closed it on the settle path only. This closes it on the write path.
- *
- * A shape that READS FINE but is not ours is still discarded: that is knowledge, not ignorance.
+ * ⚠ @doc DEC-083 — no Safari o `get` rejeita e um `set` posterior DÁ CERTO: rebasear sobre uma
+ *   leitura engolida apaga todo pendente, sem uma linha de erro. Some do vendedor, não de um
+ *   cache — o outbox é a única cópia de um orçamento gravado offline.
  */
 async function readOutboxStrict(uid: string): Promise<OutboxEntry[]> {
     const raw = await get(historyOutboxKey(uid));

@@ -2,17 +2,8 @@ import type { CalcOutcome } from "@/features/calculator/calculator-model";
 
 import type { LineState } from "./bom-page";
 
-// 019/Polish — moved verbatim out of `bom-page.tsx` (`uiSkippedCounts`), pure function, no behavior
-// change. Kept as a sibling (not `features/bom/`) because it is typed against `LineState`, the
-// composer's own page-local shape.
-//
-// T006b top nit (ux §1.7): a FORM-invalid channel slot is rejected by the per-slot validation
-// BEFORE the engine, so it can never reach `skippedLines` — count those per marketplace (on
-// lines that otherwise compute; a fully-invalid line already carries its own caption) and let
-// the rollup surface them honestly. Counts are per LINE, aligned with the engine's rule
-// (review, 2026-07-11): a line counts as skipped for a marketplace only when EVERY one of its
-// slots there is invalid — a line that still summed is never "sem preço". Counts only — no
-// money leaves pricing-core.
+// ⚠ @doc DEC-084 — contagem por LINHA: uma linha só é "sem preço" num marketplace quando TODOS
+//   os slots dela ali são inválidos. Contagens apenas — nenhum dinheiro sai do `pricing-core`.
 export function countSkippedByMarketplace(
     lines: LineState[],
     outcomes: CalcOutcome[],

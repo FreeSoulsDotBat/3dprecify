@@ -22,20 +22,9 @@ const LOOP_CYCLE_DAYS = 31;
 const DELIVERY_SLACK_DAYS = 14;
 
 /**
- * Janela de obsolescencia: o selo avisa passados tantos dias desde `lastReviewed` (ADR-0010 Part 2).
- *
- * 014/T052 (FR-020b emendada, Clarification 2026-08-01) — eram 30 dias, e o laco roda MENSALMENTE.
- * A janela tinha exatamente o tamanho do ciclo, entao todo valor passava os ultimos dias gritando
- * "pode estar desatualizada" MESMO COM O ROBO FUNCIONANDO. Um alarme que dispara todo mes sobre
- * valores corretos e reverificados nao avisa: ele treina o vendedor a ignorar exatamente o aviso que
- * a US5 existe para dar.
- *
- * O relogio CONTINUA em `lastReviewed`, e de proposito: o risco que o selo mede e a Amazon ter mudado
- * a tarifa desde que CONFERIMOS. Medir a partir da entrega faria um numero nao-verificado ha meses
- * parecer fresco ao chegar num aparelho novo — a mentira inversa, e maior.
- *
- * Somado em vez de cravado para que o numero nao seja magico: se o laco mudar de cadencia, o que se
- * ajusta e a parcela que mudou, e a razao continua legivel.
+ * ⚠ @doc DEC-090 — a janela NÃO pode ter o tamanho do ciclo: um alarme que dispara todo mês
+ *   sobre valor reverificado treina o vendedor a ignorá-lo. O relógio fica em `lastReviewed`,
+ *   porque o risco medido é a fonte ter mudado desde que CONFERIMOS.
  */
 export const STALENESS_DAYS = LOOP_CYCLE_DAYS + DELIVERY_SLACK_DAYS;
 

@@ -9,20 +9,8 @@ import { registerSignOutGuard } from "@/shared/session/sign-out-guard";
 import { useSessionStore } from "@/shared/session/session-store";
 import { Alert, Button, Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui";
 
-// 009/T011 (E4, PR-A) — sign-out with a non-empty queue (ADR-0018 §10).
-//
-// Two guarantees collide here and BOTH are right:
-//
-//   * purge-on-sign-out is a privacy guarantee we already shipped — a shared device must not keep
-//     the previous account's data;
-//   * the outbox is the ONLY copy of a quote that never reached the account.
-//
-// So sign-out can now destroy the seller's work, and neither guarantee may be quietly dropped. The
-// seller decides, in a BLOCKING dialog that states the count. Never a toast after the fact: that is
-// a silent drop with a receipt attached.
-//
-// Mounted in the app shell because FSD-Lite forbids `shared` importing `entities/history` — the
-// interception seam lives in `shared/session`, and this is what registers into it.
+// ⚠ @doc DEC-085 — diálogo BLOQUEANTE com a contagem, nunca um toast depois: toast depois do
+//   fato é descarte silencioso com recibo anexado. Duas garantias colidem e as duas estão certas.
 
 const t = messages.history;
 const count = (s: string, n: number) => s.replace("{n}", String(n));

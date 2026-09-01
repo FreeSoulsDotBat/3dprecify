@@ -226,20 +226,10 @@ const DEFAULT_MODALITY_ORDER: Record<MarketplaceId, readonly SelectOption[]> = {
 };
 
 /**
- * A fresh channel slot — defaults to the marketplace's first modality (or none) + blank fees.
+ * Um slot novo: primeira modalidade do marketplace (ou nenhuma) + taxas em branco.
  *
- * 015/A11 (`[F11a-006]`, decisão do dono 2026-08-03) — o padrão era `MERCADO_LIVRE`, e o catálogo
- * servido devolve `entries: []` para ele enquanto a fatia ML (US6) não existir. A primeira
- * impressão do recurso, sem o vendedor tocar em nada, era um painel dizendo "sem referência —
- * informe as taxas" e **nenhum preço** — justamente sobre o canal mais usado no Brasil.
- *
- * Isto entra JUNTO com o `[F11a-007]`, e a ordem importa: sozinha, esta troca levaria o produto
- * para a metade PIOR do par — a Amazon sem categoria aplica "a maior alíquota da tabela", e o campo
- * "Comissão" ficaria em branco ao lado de um preço já descontado. Com o `[F11a-007]`, o campo passa
- * a mostrar a alíquota aplicada como referência, e aí a troca é ganho puro.
- *
- * É MITIGAÇÃO, não conserto: o ML continua sem tabela, e quem o escolher continua vendo a mensagem
- * honesta de sempre. O conserto é a US6. Quando houver tarifa, o padrão volta — é uma linha.
+ * ⚠ @doc DEC-088 — o padrão é Amazon como MITIGAÇÃO, e só faz sentido junto com o DEC-060: o ML
+ *   ainda não tem tabela, e a primeira impressão era "sem referência" e NENHUM preço.
  */
 export function defaultChannelSlot(marketplace: MarketplaceId = "AMAZON"): ChannelSlotForm {
     return {

@@ -2200,3 +2200,184 @@ falhar alto, para o `persist` cair em memória em vez de estourar.
 
 - `apps/web/src/shared/lib/fee-seal-dismiss-store.ts` → `safeStorage`
 
+---
+
+## DEC-083 — Ler a fila para reescrever PROPAGA a falha de armazenamento; `[]` engolido apaga o vendedor
+
+**Data**: 2026-08-01 (SC-816) · **Governa**: a leitura read-modify-write do outbox
+
+A distinção é estrutural, não estilística. O `idb-keyval` documenta que o `db.onclose` do Safari limpa
+a conexão em cache: **o `get` seguinte REJEITA enquanto um `set` posterior reabre o banco e DÁ CERTO.**
+Rebasear uma escrita sobre uma leitura engolida, portanto, **apaga todo snapshot pendente** — e o
+outbox é a ÚNICA cópia de um orçamento gravado offline, então o que some não some de um cache; some do
+vendedor. E não há nem linha de erro: do ponto de vista da fila, nada falhou.
+
+O arquivo já NOMEAVA o perigo — no docstring do `settleEntry`, *"`listOutbox` devolve `[]` em QUALQUER
+erro de leitura"* — e o tinha fechado só no caminho de assentar. Esta leitura o fecha no caminho de
+escrita.
+
+**Uma forma que LÊ BEM mas não é nossa continua sendo descartada**: isso é conhecimento, não
+ignorância.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/outbox.ts` → `settleEntry`
+
+---
+
+## DEC-084 — "Sem preço" é contado por LINHA, e só quando TODO slot dela naquele marketplace é inválido
+
+**Data**: 2026-07-11 (008/T006b, ux §1.7, review) · **Governa**: `skipped-by-marketplace.ts`
+
+Um slot de canal inválido pelo FORMULÁRIO é recusado pela validação por slot ANTES do motor, então
+nunca chega ao `skippedLines` do motor. Estes são contados aqui — sobre linhas que de resto computam;
+uma linha inteiramente inválida já carrega a própria legenda — para o rollup os mostrar honestamente.
+
+**A contagem é por LINHA, alinhada com a regra do motor**: uma linha conta como sem preço para um
+marketplace **somente quando TODOS os slots dela ali são inválidos**. Uma linha que ainda somou nunca é
+"sem preço".
+
+**Contagens apenas — nenhum dinheiro sai do `pricing-core`.** Vive como irmão da página (e não em
+`features/bom`) porque é tipado contra o `LineState`, a forma local do compositor.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/bom/skipped-by-marketplace.ts` → `LineState`
+
+---
+
+## DEC-085 — Sair com fila cheia pergunta num diálogo BLOQUEANTE, nunca avisa por toast depois
+
+**Data**: 2026-07-13 (009/T011, E4 PR-A, ADR-0018 §10) · **Governa**: `sign-out-outbox-guard.tsx`
+
+Duas garantias colidem aqui, e AS DUAS estão certas ([[DEC-038]]):
+
+- purgar ao sair é garantia de privacidade que já embarcou — aparelho compartilhado não pode guardar
+  dado da conta anterior;
+- o outbox é a ÚNICA cópia de um orçamento que nunca chegou à conta.
+
+Ou seja: sair passou a poder destruir o trabalho do vendedor, e **nenhuma das duas garantias pode ser
+largada em silêncio**. Quem decide é o vendedor, num diálogo BLOQUEANTE que diz a contagem.
+
+**Nunca um toast depois do fato** — isso é um descarte silencioso com recibo anexado.
+
+Montado no app shell porque FSD-Lite proíbe `shared` importar `entities/history`: a costura de
+interceptação vive em `shared/session`, e este componente é o que se registra nela.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/history/sign-out-outbox-guard.tsx` → `SignOutOutboxGuard`
+
+---
+
+## DEC-086 — A linha de preço vive num módulo SEM dependência nenhuma, para a UI e o e2e lerem IGUAL
+
+**Data**: 2026-08-03 (E6/US7, T032/T037, FR-710) · **Governa**: `price-line.ts`
+
+A linha morava junto do componente e depois junto do `BILLING_PLANS`, e os dois lugares quebraram o
+e2e por motivos DIFERENTES: o componente importa CSS (o carregador de TS do Playwright não parseia), e
+o `plans.ts` importa o cliente gerado, que valida env fora do navegador (ZodError na carga).
+
+**A saída NÃO foi recompor o texto no spec** — recompor é ter duas fontes, que é exatamente o que a
+FR-710 proíbe ([[DEC-042]]). É isto: um módulo sem dependência nenhuma além das mensagens, que a UI e o
+e2e importam IGUAL.
+
+Os números continuam vindo de UM lugar (`messages.billing`, de onde o `BILLING_PLANS` também os lê), e
+**um teste de unidade afirma que esta linha CONTÉM os valores do `BILLING_PLANS`** — é esse teste que
+mantém as duas leituras amarradas, em vez de apenas parecerem iguais.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/billing/price-line.ts` → `teaserPriceLine`
+
+---
+
+## DEC-087 — AUSENTE significa a constante `fixedFee`, e é isso que mantém o congelado dizendo o mesmo
+
+**Data**: 2026-08-06 (ADR-0027 §3.1, pricing-core 4.1.0) · **Governa**: `fixedFeeRule`
+
+**Ausente = a constante `fixedFee`** — o significado que todo payload gravado antes desta mudança já
+tem (a mesma disciplina do `bandMode`, ADR-0024, e do [[DEC-024]]). `priceBands` viaja dentro de
+snapshot congelado (imutável por trigger, ADR-0019) e de documento de cenário (ADR-0021): **se a
+ausência significasse outra coisa, um congelado que o produto promete imutável passaria a afirmar
+outro preço sem uma linha dele mudar.**
+
+`PCT_OF_PRICE` é o caso MÍNIMO que a fonte publica ([[FONTE-001]], art. 26839: abaixo de R$ 8 o
+adicional por item é metade do preço do produto). Qualquer outra forma é decisão nova, **não um `kind`
+a mais por conveniência**.
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `fixedFeeRule`, `PCT_OF_PRICE`
+
+---
+
+## DEC-088 — O padrão do slot mudou de ML para Amazon como MITIGAÇÃO, e junto com a referência
+
+**Data**: 2026-08-03 (015/A11, `[F11a-006]`, decisão do dono) · **Governa**: o marketplace padrão de
+um slot novo
+
+O padrão era `MERCADO_LIVRE`, e o catálogo servido devolve `entries: []` para ele enquanto a fatia ML
+não existir. **A primeira impressão do recurso, sem o vendedor tocar em nada, era um painel dizendo
+"sem referência — informe as taxas" e NENHUM preço** — justamente sobre o marketplace mais usado no
+Brasil.
+
+**A ordem importa**: sozinha, esta troca levaria o produto para a metade PIOR do par — a Amazon sem
+categoria aplica "a maior alíquota da tabela", e o campo "Comissão" ficaria em branco ao lado de um
+preço já descontado. Com o [[DEC-060]] junto, o campo passa a mostrar a alíquota aplicada como
+referência, **e aí a troca é ganho puro**.
+
+**É MITIGAÇÃO, não conserto**: o ML continua sem tabela, e quem o escolher continua vendo a mensagem
+honesta de sempre. O conserto é a US6 do 014. Quando houver tarifa, o padrão volta — é uma linha.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-schema.ts` → `defaultChannelSlot`
+
+---
+
+## DEC-089 — A Calcular recomputa a cada mudança, e o corpo do formulário é o MESMO da página de produto
+
+**Data**: 2026-07-08 (E1 · 004-US1/US2/US4 · 005-US1..US5 · FR-036/FR-039) · **Governa**:
+`calcular-page.tsx`
+
+RHF (estado do formulário) + Zod (`calculatorResolver`) são donos das entradas pt-BR; o preço e o
+detalhamento vêm de UMA passada síncrona de `computeFromForm` sobre o motor canônico do `pricing-core`
+— recomputado a cada mudança, determinístico, offline.
+
+O que a tela entrega, por incremento: preço de varejo e atacado corretos (`PriceHero`); o
+detalhamento por linha que **visivelmente soma** ao custo total mais a derivação do markup
+([[DEC-057]]); o custo opcional de mão de obra. Sobre isso, a expansão multicanal do 005: gross-up por
+marketplace com selos de honestidade, atualização offline não-bloqueante do catálogo, o interruptor de
+visibilidade dos marketplaces e o slot itemizado de "Outros custos". **Sem persistência e sem paywall**
+nesta tela.
+
+As seções vivem em `features/calculator/calculator-form` ([[DEC-080]]) — a rota de página inteira de
+produto monta o MESMO corpo, mantendo o SC-305 idêntico nas duas superfícies ([[DEC-023]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/calcular/calcular-page.tsx` → `computeFromForm`
+
+---
+
+## DEC-090 — A janela de obsolescência não pode ter o tamanho do ciclo, e o relógio fica em `lastReviewed`
+
+**Data**: 2026-08-01 (014/T052, FR-020b emendada) · **Governa**: a janela do selo de obsolescência
+
+Eram 30 dias, e o laço roda MENSALMENTE. **A janela tinha exatamente o tamanho do ciclo**, então todo
+valor passava os últimos dias gritando "pode estar desatualizada" MESMO COM O ROBÔ FUNCIONANDO. Um
+alarme que dispara todo mês sobre valores corretos e reverificados não avisa: **ele treina o vendedor a
+ignorar exatamente o aviso que a feature existe para dar.**
+
+**O relógio CONTINUA em `lastReviewed`, e de propósito**: o risco que o selo mede é a Amazon ter mudado
+a tarifa desde que CONFERIMOS. Medir a partir da entrega faria um número não verificado há meses
+parecer fresco ao chegar num aparelho novo — **a mentira inversa, e maior**.
+
+Somado em vez de cravado para que o número não seja mágico: se o laço mudar de cadência, o que se
+ajusta é a parcela que mudou, e a razão continua legível.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/fee-catalog.ts` → `isStale`, `lastReviewed`
+
