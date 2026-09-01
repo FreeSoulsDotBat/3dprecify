@@ -118,31 +118,8 @@ const catalogoRoute = createRoute({
     component: CatalogoPage,
 });
 
-// 013/F-02: the OLD 2-segment routes stay registered as CLIENT-SIDE REDIRECTS for ≥1 release
-// (research §2) — they forward to the new `?produto=` URL, preserving the id. This does NOT fix
-// a cold-load/bookmark of the OLD URL by itself (the app must boot before any client redirect can
-// run) — that half is `firebase.json`'s hosting-level 301 (T024).
-//
-// 016/T072-A4 (2026-08-07): these used to call `requireAuth` HERE, with `location.pathname` (the
-// OLD shape, e.g. `/catalogo/produtos/xxx`) as the sign-in return target. Two real bugs, both
-// MEASURED: (1) `requireAuth` runs inside `beforeLoad`, which can fire on a cold full navigation
-// BEFORE Firebase's `authStateReady()` resolves — `context.status` is transiently `"loading"`,
-// which `requireAuth` treats as unauthenticated and bounces to `/sign-in` even for an already
-// signed-in seller (measured: `requireAuth` invoked with status `"loading"` on a cold hit). That
-// race self-heals on `catalogoRoute`/`historicoRoute` below because their target is the NEW
-// `?produto=`/`?snapshot=` shape, which IS in `safeRedirect`'s whitelist — the seller bounces
-// through `/sign-in` invisibly and lands back exactly where they meant to go. (2) But THIS
-// route's target was a bare pathname in the OLD shape (`/catalogo/produtos/xxx`), which
-// `safeRedirect` never recognises (the whitelist only knows `/catalogo` and `/catalogo?…`) — so
-// even a genuinely signed-out seller opening an old bookmark, after signing in, landed on
-// `/calcular` instead of back on their product. Measured directly: a cold hit on
-// `/catalogo/produtos/id-fantasma` ended on `/calcular`, silently swallowing the id.
-//
-// The fix: these routes carry NO auth check of their own — they only translate the URL shape.
-// The unconditional redirect lands on `catalogoRoute`/`historicoRoute`, whose OWN `beforeLoad`
-// re-runs (TanStack re-evaluates `beforeLoad` down the new match) and gates auth correctly, with
-// a target that already round-trips safely — the exact mechanism `deep-links.spec.ts`'s T020
-// tests already prove cold-load-safe.
+// ⚠ @doc DEC-006 — estas rotas NÃO checam auth: só traduzem a forma da URL. O gate acontece no
+//   destino, cujo alvo o `safeRedirect` reconhece — checar aqui já engoliu o id duas vezes.
 const produtoNovoRoute = createRoute({
     getParentRoute: () => rootRoute,
     path: "/catalogo/produtos/novo",

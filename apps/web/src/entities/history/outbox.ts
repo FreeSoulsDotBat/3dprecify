@@ -2,33 +2,8 @@ import { del, get, set } from "idb-keyval";
 
 import type { SnapshotIn, SnapshotOut } from "@/shared/api/generated";
 
-// 009/T009 (E4, PR-A) — THE OFFLINE OUTBOX (ADR-0018). The product's FIRST offline write.
-//
-// Every write in E2/E3 is online-only, and the only offline substrate that exists is a uid-keyed
-// READ cache. This module reuses that SUBSTRATE (`idb-keyval`, uid-keyed, purged on sign-out) but
-// deliberately NOT its semantics:
-//
-//   the read cache swallows write failures by design — "the cache is a convenience, never
-//   authoritative". THE OUTBOX MUST NOT. It is the ONLY copy of the seller's quote, so a swallowed
-//   failure would drop a record while the UI cheerfully says "pendente".
-//
-// The honesty rules encoded below (each one prevents a lie, not a crash):
-//
-//   * A LOST RESPONSE IS NOT A FAILURE. `status === 0` means no answer came back — the write may
-//     well have landed. The entry stays PENDING and is retried with the SAME idempotency key, which
-//     the server resolves to the row it already created. *No answer is not the same as not saved.*
-//
-//   * A 403 AT SYNC ⇒ BLOCKED, retained and visible. An offline client cannot check entitlement —
-//     the server is the authority (Principle IV) — so the denial can only arrive here. It is never
-//     silently discarded: the seller decides (retry or discard).
-//
-//   * A 404 ⇒ the seller DELETED it elsewhere. Dropping the queued entry is not a silent data loss;
-//     it is their own later deletion winning (ADR-0018 §5). Resurrecting it would be the one
-//     outcome nobody could defend.
-//
-//   * EXACTLY-ONCE lives in the DATABASE, not here. `clientSnapshotId` is minted at RECORD time
-//     (minting at send time would regenerate after an app restart and DUPLICATE) and the unique
-//     constraint does the rest. This module never has to be clever about it.
+// ⚠ @doc ADR-0018 §Decision — o cache de leitura engole falha de escrita por desenho; o outbox NÃO:
+//   ele é a ÚNICA cópia do orçamento do vendedor. Sem resposta ≠ não salvo (item 4).
 
 // hotfix 016/A3 (H4, 2026-08-07) — "unauthenticated" tells the TRUE reason a 401 could not sync: the
 // SESSÃO expirou, not the network. Before this it fell into `pending`, whose copy promises "sincroniza

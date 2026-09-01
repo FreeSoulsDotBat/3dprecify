@@ -15,6 +15,7 @@ const GRAMATICA =
     /^\s*(?:\/\/|#|\/\*\*|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/)?\s*$/u;
 
 const REGISTRO_DEC = "docs/decisoes-de-codigo.md";
+const REGISTRO_FONTE = "docs/fontes-verbatim.md";
 const LARGURA_MAXIMA = 100; // o `printWidth` do prettier neste repositório
 
 interface Ancora {
@@ -70,6 +71,7 @@ const arquivosAdr = readdirSync(`${RAIZ}docs/adr`)
     .sort();
 
 const registro = existe(REGISTRO_DEC) ? ler(REGISTRO_DEC) : "";
+const registroFonte = existe(REGISTRO_FONTE) ? ler(REGISTRO_FONTE) : "";
 
 /** Resolve o ID de uma âncora para o texto do documento que ele endereça — ou `null` se não existe. */
 function resolver(id: string): { doc: string; texto: string } | null {
@@ -82,6 +84,12 @@ function resolver(id: string): { doc: string; texto: string } | null {
     if (dec) {
         return registro.includes(`## DEC-${dec[1] ?? ""}`)
             ? { doc: REGISTRO_DEC, texto: registro }
+            : null;
+    }
+    const fonte = /^FONTE-(\d{3})$/.exec(id);
+    if (fonte) {
+        return registroFonte.includes(`## FONTE-${fonte[1] ?? ""}`)
+            ? { doc: REGISTRO_FONTE, texto: registroFonte }
             : null;
     }
     // ID de spec: `013/FA-01`, `016/A3`, `009/T034` — resolve para o diretório do incremento.
@@ -128,10 +136,13 @@ describe("âncoras `@doc` — os dois lados do link são verdade ao mesmo tempo"
         expect(mortas).toEqual([]);
     });
 
-    it("3. nenhum DEC órfão — todo DEC do registro é citado por algum ponto do código", () => {
-        // Um DEC que ninguém cita é decisão sobre código que não existe mais. Ele some do registro;
-        // não fica como documentação de um lugar que o leitor vai procurar e não achar.
-        const declarados = [...registro.matchAll(/^## (DEC-\d{3})\b/gm)].map((m) => m[1] ?? "");
+    it("3. nenhum DEC/FONTE órfão — todo verbete do registro é citado por algum ponto do código", () => {
+        // Um verbete que ninguém cita documenta código que não existe mais. Ele some do registro; não
+        // fica como documentação de um lugar que o leitor vai procurar e não achar.
+        const declarados = [
+            ...[...registro.matchAll(/^## (DEC-\d{3})\b/gm)].map((m) => m[1] ?? ""),
+            ...[...registroFonte.matchAll(/^## (FONTE-\d{3})\b/gm)].map((m) => m[1] ?? ""),
+        ];
         expect(declarados.length).toBeGreaterThan(0);
         const citados = new Set(ancoras.map((a) => a.id));
         expect(declarados.filter((d) => !citados.has(d))).toEqual([]);
@@ -143,7 +154,7 @@ describe("ponteiros de volta — `## Onde isso vive no código`", () => {
     const LINHA = /^-\s+`([^`]+)`\s*→\s*(.+)$/;
 
     const ponteiros: { doc: string; arquivo: string; simbolos: string[] }[] = [];
-    for (const doc of [...arquivosAdr.map((f) => `docs/adr/${f}`), REGISTRO_DEC]) {
+    for (const doc of [...arquivosAdr.map((f) => `docs/adr/${f}`), REGISTRO_DEC, REGISTRO_FONTE]) {
         if (!existe(doc)) continue;
         const linhas = ler(doc).split("\n");
         let dentro = false;

@@ -2,35 +2,9 @@ import { type PriceInput } from "@3dprecify/pricing-core";
 
 import { stringifyLeaf, toExactString, type DecimalLeafValue } from "@/shared/lib/decimal-leaf";
 
-// 010/T004 (E5, PR-A foundational) — THE CONFIG INTENT DOCUMENT (data-model.md §3,
-// contracts/api-surface.md §Schemas).
-//
-// A scenario stores the seller's INTENT, never a resolved price (Q3/FR-602/FR-607). The whole
-// document is the mirror image of the E4 frozen payload (`entities/history/frozen-payload.ts`):
-// there money/qty/rate/percent leaves are STRINGS because a snapshot must survive Postgres → JSON
-// losslessly; here they are STRINGS for the same serializer reason, but what is being stored is an
-// EDITABLE input set, not a frozen result. Three rules encoded here:
-//
-//   1. MONEY/RATE/QTY/PERCENT IS A STRING. `JSON.parse`/`JSON.stringify` round-trip a JSON number
-//      through binary64 silently — the loss is app-side, not the database's. Only true integer
-//      COUNTS (`schemaVersion`, a kit line's `quantity`) are legal JSON numbers anywhere in `config`.
-//
-//   2. AN ABSENT `feeOverrides` KEY IS THE LIVE-VS-FROZEN BOUNDARY. Which slots the seller actually
-//      edited is decided by the FEATURE layer (the 005 `fee-prefill.ts` edited/seal state) — this
-//      module only encodes the RULE: a leaf the seller never typed into is OMITTED, not stored as
-//      zero, so the reopened scenario re-resolves it from today's fee catalog (FR-607). A slot with
-//      zero edited leaves omits the WHOLE `feeOverrides` key, not an empty object.
-//
-//   3. THE ENVELOPE IS STRUCTURALLY INDEPENDENT OF `PriceInput`/`BomResult` (the E4 §9.6 lesson, one
-//      level up). Nothing here `extends`/`Pick`s/maps over a pricing-core type — every envelope type
-//      is hand-declared, so a future pricing-core field can never silently widen or narrow this
-//      document's shape. The cost basis carries its OWN recursive string-leaf type
-//      (`ScenarioLastKnownInput`), not `PriceInput` itself.
-//
-// This module does not import from `features/*` (FSD-Lite: an entity sits below a feature). The
-// serializer's "which slot did the seller edit" input is therefore PLAIN PARAMETERS shaped like the
-// 005 form state, not an import of `features/calculator`'s types — the feature layer maps its own
-// state into `ScenarioChannelSlotState` at the call site (T009/T010).
+// ⚠ @doc DEC-005 — dinheiro/taxa/qtd/percentual é STRING: uma folha numérica ida e volta por
+//   JSON perde precisão em binary64, e a perda é do app, não do banco.
+// @doc ADR-0021 — o cenário guarda INTENÇÃO; chave `feeOverrides` ausente = resolve no vivo.
 
 /** Bumped only when the ENVELOPE changes shape — never when the pricing formula does (those are two
  *  different versions; conflating them is how a scenario would start claiming a formula it doesn't

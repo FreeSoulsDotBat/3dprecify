@@ -42,3 +42,22 @@
 
 - Só igualar `catalogVersion` (não guarda conteúdo — a semente poderia divergir para sempre).
 - Igualdade de documento (estoura SC-810 e muda a primeira pintura offline).
+
+## Nota de procedência migrada do código (2026-09-01)
+
+A medida que sustenta a poda do item 1 estava só no comentário de `seed.ts` e veio para cá inteira
+(`docs/PADRAO_DE_COMENTARIOS.md`): uma seção cujo `determinantsSchema` declara o eixo `category`
+viaja **sem** `categorySpine` e com `entries: []`. O mapa por categoria da Amazon são 78 entradas +
+38 nós — **94% do documento (45.858 → 2.720 bytes)**, e ele não cabe no orçamento de boot do SC-810.
+Marketplace categoria-INDEPENDENTE (Shopee) viaja inteiro.
+
+Os verbatims curatoriais do item 4 estão em `docs/fontes-verbatim.md` (FONTE-001). Isso **não**
+satisfaz a condição RA4 — ela pede âncoras EXECUTÁVEIS em `packages/fee-ingest/data/`, ainda
+pendentes na PR-C do 017 (T026); é só a casa provisória da prosa, que antes não existia fora do
+comentário.
+
+## Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/seed.ts` → `FEE_CATALOG_SEED`
+- `packages/fee-ingest/src/seed-projection.ts` → `projetarSemente`
+

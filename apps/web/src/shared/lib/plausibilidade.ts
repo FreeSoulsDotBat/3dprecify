@@ -1,36 +1,8 @@
 import { messages } from "@/shared/i18n/messages.pt-br";
 import { formatDecimal, parseDecimal } from "./decimal-ptbr";
 
-// Homologação automatizada (2026-08-13) — o AVISO DE PLAUSIBILIDADE.
-//
-// Nove dos onze achados de severidade ALTA daquela homologação são a mesma coisa: o vendedor digita
-// um número PLAUSÍVEL que significa outra coisa, e o produto devolve um preço com cara de preço,
-// calado. Ele lê "120 W" na etiqueta e escreve 120 num campo que pede kW (custo ×38). Ele pensa a
-// vida útil da máquina em ANOS e escreve 3 num campo que pede HORAS (×341). Ele zera o que não
-// entende e chega a um preço de venda de R$ 0,00.
-//
-// Nenhum desses é erro de cálculo: a aritmética está certa em todos. Nenhum é entrada inválida:
-// nenhum validador reprova 120. É por isso que só um aviso os pega — e é por isso que este módulo
-// existe separado do schema, que é onde mora a RECUSA.
-//
-// ════════════════════════════════════════════════════════════════════════════════════════════════
-// A REGRA QUE GOVERNA ESTE ARQUIVO, e ela não é estilística: **AVISO NUNCA VIRA VALIDAÇÃO.**
-//
-// O dono decidiu, em 2026-08-03, que `failurePct` NÃO tem teto — "300% representa legitimamente uma
-// peça que falha três vezes antes de sair" (está escrito no próprio `PriceInput` do pricing-core,
-// com o pedido explícito de que ninguém "conserte" o que foi decidido). Este módulo encosta na
-// mesma fronteira por todos os lados, então: um campo com aviso **continua calculando e continua
-// salvando**. Quem transformar um destes avisos num erro terá revogado aquela decisão sem perceber.
-// ════════════════════════════════════════════════════════════════════════════════════════════════
-//
-// MORA EM `shared/lib` e não em `features/calculator` por uma razão de FRONTEIRA, não de gosto:
-// `features/bom` precisa do aviso de quantidade e NÃO pode importar `features/calculator` — a regra
-// está escrita no topo do `bom-line-card.tsx` e é o `eslint-boundaries` que a cobra. Um módulo puro
-// consumido por duas features é, por definição, `shared`.
-//
-// Puro e determinístico de propósito: entra número, sai frase. Sem React, sem estado, sem I/O — o
-// que permite pinar cada limiar num teste unitário barato, e o que impede este arquivo de virar,
-// com o tempo, um segundo lugar onde o preço é decidido.
+// ⚠ @doc DEC-003 — AVISO NUNCA VIRA VALIDAÇÃO: campo com aviso segue calculando e salvando.
+//   Transformar um destes num erro revoga a decisão do dono de 2026-08-03 sem que ele saiba.
 
 const t = messages.calculator.plausibility;
 

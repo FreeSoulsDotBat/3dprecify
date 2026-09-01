@@ -61,6 +61,13 @@ ADR tem 10–30 KB de cerimônia. Ninguém abre um ADR para registrar por que um
 2. Mudar essa decisão mexeria em mais de um módulo, ou num contrato/schema/preço? → é ADR.
 3. Caso contrário → é DEC.
 
+**Fora da escada: `FONTE-xxx` (`docs/fontes-verbatim.md`).** A citação literal da fonte externa que
+determinou um número — um artigo de central de ajuda de marketplace, um trecho de documentação de
+PSP. Não é ADR (não decidimos nada) nem DEC (não é escolha local): é **procedência**. Descoberto na
+migração do `seed.ts`, cujo comentário dizia, corretamente, que era o único lugar do repositório a
+carregar os verbatims da Shopee. Regra própria: o texto entre aspas nunca é reescrito — fonte que
+muda entra como verbete novo, datado.
+
 ## 3. A gramática da âncora
 
 ```
@@ -122,9 +129,9 @@ existe.
 
 Sem guarda, isto é uma convenção, e convenção é lembrança. As quatro asserções, no `pnpm gate:all`:
 
-1. **Nenhuma âncora morta** — todo `@doc <ID>` no código resolve para um documento/seção existente.
-2. **Nenhum documento órfão** — todo `DEC-xxx` do registro é citado por ao menos um ponto do código.
-   DEC que ninguém mais cita é decisão sobre código que não existe mais: some.
+1. **Nenhuma âncora morta** — todo `@doc <ID>` (ADR, DEC, FONTE ou spec) resolve para um documento/seção existente.
+2. **Nenhum documento órfão** — todo `DEC-xxx` e `FONTE-xxx` do registro é citado por ao menos um ponto
+   do código. Verbete que ninguém mais cita documenta código que não existe mais: some.
 3. **Nenhum ponteiro de volta podre** — todo `arquivo → símbolo` das seções §6 ainda existe.
 4. **A gramática vale** — uma linha, dentro de 100 colunas, com resumo. **É esta que impede a âncora
    de voltar a virar parágrafo.**

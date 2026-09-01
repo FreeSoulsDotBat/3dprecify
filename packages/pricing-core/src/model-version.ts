@@ -2,27 +2,8 @@
 // Movido de index.ts na divisão por responsabilidade (chore de legibilidade 2026-08-31); corpo
 // verbatim, superfície pública inalterada (guarda: tests/public-surface.test.ts).
 
-// 3.0.0 (ADR-0011): itemized admin (`otherCosts[]`) + the multi-channel result (`channels[]`) are
-// breaking to the 2.0.0 result contract ⇒ MAJOR bump. The constant tracks the package.json major so
-// a saved calc records which formula produced it.
-// 3.1.0 (ADR-0016): E3 adds `computeBom` (assembly = independent per-piece sum + per-marketplace
-// rollup) and exports `toMoney`/`sumMoney`/`Decimal` — additive public surface ⇒ MINOR bump.
-// 4.0.0 (ADR-0026, 016/US10): `wasteGrams` SAI da entrada — o material passa de
-// `custo/kg × (gramas + desperdício)` para `custo/kg × gramas`. Remoção de campo de entrada é
-// quebra ⇒ MAJOR, e o rótulo é congelado dentro de um snapshot imutável (ADR-0019): ele precisa
-// continuar respondendo QUAL fórmula produziu aquele número.
-// 4.1.0 (ADR-0027, 016/PR-F): `PriceBand.fixedFeeRule` (a taxa fixa como FUNÇÃO do preço — Shopee
-// abaixo de R$ 8) e `ChannelInput.surcharges` (custo opcional declarado pelo vendedor). As duas
-// adições são OPCIONAIS e a ausência preserva o comportamento bit a bit ⇒ MINOR.
-// 4.2.0 (ADR-0034, 019/PR-E): nasce `computeQuote` — o orçamento montado (N linhas × quantidade,
-// desconto no TOTAL, piso de custo). É superfície pública NOVA; `computeCalculator` e `computeBom`
-// não mudam de resultado em nenhum centavo ⇒ MINOR, no precedente da 4.0.0 → 4.1.0. E a afirmação
-// não é de leitura: a varredura de igualdade `tests/version-equality-4.1-4.2.test.ts` recomputa 500
-// casos de calculadora e 200 de BOM contra uma fixture gerada com o motor 4.1.0 INTOCADO.
-// 2026-08-31 (chore de legibilidade, SEM bump deliberado): `bandContaining`/`bandFixedFee` passam a
-// ser exportadas (eram reimplementadas em fee-prefill/fee-catalog). Zero cômputo novo, zero centavo
-// diferente — e este rótulo é carimbado em snapshot imutável como "qual fórmula produziu o número",
-// então ele NÃO se move quando a fórmula não se move.
+// ⚠ @doc DEC-004 — este rótulo é carimbado em snapshot IMUTÁVEL: ele responde "qual fórmula
+//   produziu este número", então NÃO se move quando a fórmula não se move.
 export const PRICING_MODEL_VERSION = "4.2.0";
 
 /**
