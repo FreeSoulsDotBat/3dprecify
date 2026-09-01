@@ -378,6 +378,14 @@ front: `unreachableStatus(operacao)` distingue os 29 throws no Sentry; o seed lo
 (abaixe conforme os restantes encolherem) · pino de superfície do pricing-core · teste de
 caracterização dos serializadores (`pages/decimal-leaf-characterization.test.ts`).
 
+**Rodada 2 (continue do dono, 2026-08-31):** realinhamento do calculator-model com índice
+explícito (`engineIndexBySlot` + `pricedSlotOutcome` — morre o `ep++` posicional) ·
+`scoreCandidate` nomeada em `channels.ts` · 3 dos 5 `as unknown as` do duplicar-produto caem
+(os 2 restantes têm causa raiz comentada: Out sem tipo no wire) · as 4 últimas páginas >590
+encolhem para 245–472 linhas (14 irmãos novos em `pages/{calcular,catalogo,historico}/`) ·
+ratchet `max-lines` abaixado para 600. A delegação do Zod ao `validateBandRules` foi avaliada e
+PULADA com registro (mudaria caminhos de issues; pendência mantida no relatório).
+
 **O que NÃO mudou de propósito:** os 11 bugs registrados no relatório (B1–B11) seguem intocados —
 correção é decisão do dono; o vocabulário `account`/`conta` no i18n e o rótulo
 "Orçamentos"/rota `/historico` aguardam decisão de produto; o trace opcional do motor
