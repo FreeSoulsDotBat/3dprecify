@@ -26,22 +26,8 @@ export const useSessionStore = create<SessionState>(() => ({
     user: null,
 }));
 
-// E6/T016 (coordinator-reported HIGH defect): Firebase can emit a TRANSIENT pre-restore callback
-// (`onIdTokenChanged(null)`) before a persisted session finishes loading from IndexedDB (measured
-// against the Auth emulator). Subscribing immediately — the old behaviour — let that premature
-// callback flip `status` straight to "anonymous", which satisfies `main.tsx`'s "loading" gate and
-// lets a route guard redirect a REAL signed-in seller to /sign-in before Firebase genuinely knows
-// the answer (a cold navigation, exactly what an external redirect-back does).
-//
-// The fix: never leave "loading" until `auth.authStateReady()` — which resolves ONLY once
-// persistence has genuinely settled — has returned. The listener itself is not even attached
-// until then, so it structurally cannot react to the transient callback; `authStateReady()`'s own
-// promise settling is what supplies the FIRST honest answer, read straight off `auth.currentUser`.
-//
-// `bootFromAuth` takes the `Auth` handle as a parameter (rather than reading the module-level
-// `auth` singleton) purely for testability — `session-store.test.ts` drives it with a fake handle
-// with no need to mock `@/shared/lib/firebase`'s module-init-time singleton. Production code only
-// ever calls it through `initSessionListener()`.
+// ⚠ @doc DEC-028 — o listener não é anexado antes do `authStateReady()`: assim ele não CONSEGUE
+//   reagir ao callback transitório que mandava um vendedor logado para /sign-in.
 export async function bootFromAuth(authInstance: Auth): Promise<void> {
     await authInstance.authStateReady();
     const initialUser = authInstance.currentUser;

@@ -1,17 +1,5 @@
-// B5 (2026-09-01) — "este canal tem taxa?" tinha DUAS implementações que deviam significar a MESMA
-// coisa e não coincidiam: `entities/history/frozen-payload.ts` (o congelado, `feeBearing`) ignorava
-// sobretaxas (`surcharges`), enquanto `features/calculator/calculator-model.ts` (o vivo, `hasFee`)
-// já as contava desde 016/PR-F (US16, ADR-0027 §3.2). Um canal cuja ÚNICA cobrança é uma sobretaxa
-// (ex.: Shopee "Manuseio de item volumoso", R$ 50) lia "sem taxa" no congelado e a linha do canal
-// sumia do documento — o mesmo dado, duas respostas.
-//
-// FSD-Lite: `entities/history` e `features/calculator` não se importam um ao outro (eslint-
-// boundaries) — a casa comum é `shared/lib`, o mesmo precedente de `decimal-leaf.ts` (extraído
-// desta MESMA dupla de módulos, nesta mesma frente de correção). A forma aqui é NORMALIZADA: o
-// vivo carrega números; o congelado carrega strings decimais (a folha frozen — ver
-// `decimal-leaf.ts`). `Number(x)` lê as duas igualmente (`Number("12.00") === Number(12)`), então
-// a MESMA função serve aos dois lados sem conversão explícita — só a checagem de PRESENÇA importa
-// para `priceBands`/`freightVoucherBands`/`surcharges`, nunca o valor de cada item.
+// ⚠ @doc DEC-034 — UMA função para os dois lados: o congelado ignorava sobretaxa e a linha de
+//   um marketplace cuja única cobrança era sobretaxa SUMIA do documento. Só PRESENÇA importa.
 
 /** A forma mínima que as duas leituras (viva e congelada) de um canal têm em comum. Cada campo é
  *  `unknown` de propósito: o vivo passa `number`, o congelado passa `string | null` (uma folha

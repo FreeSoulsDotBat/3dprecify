@@ -53,19 +53,9 @@ MAX_QUOTE_VALIDITY_DAYS = 3650  # 10 anos
 #: extreme — Kiribati's Line Islands). Same mirror note as `MAX_QUOTE_VALIDITY_DAYS` above.
 MAX_UTC_OFFSET_MINUTES = 840  # UTC±14h
 
-#: Object keys whose SUBTREE is money by definition. Inside them a JSON integer is never a count,
-#: so it is rejected (E4-01): an int money leaf passed the float scan, froze into an immutable row,
-#: and then rendered as an EMPTY cell on the customer's PDF, because the renderer prints stored
-#: STRINGS and never coerces a number. Outside these keys an int is a legitimate count
-#: (`schemaVersion`, `quantity`, `contributingLines`, `skippedLines`) and passes untouched.
-#:
-#: 019/PR-E (ADR-0034 §2) — o documento do ORÇAMENTO trouxe dinheiro FORA de `totals`/`breakdown`,
-#: e ele entra aqui pelas FOLHAS, uma a uma. A marca é de SUBÁRVORE (`_walk` abaixo), e é por isso
-#: que `lines` e `discount` ficam de fora **por decisão, não por esquecimento**:
-#:
-#: * marcar `lines` recusaria o `quantity` INTEIRO de todo KIT já gravado — uma regressão do `kind`
-#:   antigo causada pelo `kind` novo;
-#: * marcar `discount` marcaria `value`, que em modo `PCT` é um PERCENTUAL, não dinheiro.
+#: ⚠ @doc DEC-033 — subárvore de dinheiro: lá dentro inteiro é RECUSADO (já congelou uma folha
+#:   que virou célula vazia no PDF do cliente). `lines` e `discount` ficam de fora por DECISÃO:
+#:   marcar `lines` recusaria o `quantity` de todo kit; `discount.value` em PCT é percentual.
 _MONEY_POSITION_KEYS = frozenset(
     {
         "totals",

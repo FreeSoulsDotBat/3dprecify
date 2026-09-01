@@ -21,7 +21,12 @@ import { RAIZ, arquivosDeCodigo, ler, medir } from "./scan.ts";
 //   ATUALIZAR_BASELINE=1 pnpm --filter @3dprecify/repo-audit test
 
 const CAMINHO = "packages/repo-audit/comment-density.baseline.json";
-const TETO_ARQUIVO_NOVO = 3; // §4: uma linha, ou até três quando é armadilha `⚠`
+// O teto do arquivo NOVO não é o tamanho da âncora (1 linha, 3 quando armadilha) — é a fronteira
+// entre CONTRATO e DECISÃO. Um JSDoc de até 6 linhas descrevendo o que a função recebe, devolve e
+// recusa é contrato, e contrato pertence ao cursor. Passou disso, é explicação: vai para o
+// documento. Medido em 2026-09-01, depois da migração dos maiores blocos: 365 blocos de 4–5 linhas
+// no repositório são exatamente esse contrato legítimo, e reprová-los ensinaria a driblar o guarda.
+const TETO_ARQUIVO_NOVO = 6;
 
 interface LinhaDeBase {
     gerado: string;

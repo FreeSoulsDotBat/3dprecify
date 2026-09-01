@@ -801,3 +801,225 @@ setas percorrem — que é como um grupo de opções deve se comportar para quem
 
 - `apps/web/src/shared/ui/segmented.tsx` → `Segmented`
 
+---
+
+## DEC-027 — A superfície pública do `pricing-core`, dividida por responsabilidade
+
+**Data**: 2026-08-31 (chore de legibilidade) · **Governa**: o barril `pricing-core/src/index.ts`
+
+O núcleo canônico de precificação: puro, determinístico, offline. **O backend nunca recomputa preço**
+(FR-118); este pacote é a fonte única da fórmula. ADR-0008 (dinheiro) · ADR-0009 (máquina) · ADR-0011
+(contrato de resultado).
+
+A divisão saiu de um arquivo único de 793 linhas. Os corpos foram movidos **VERBATIM**, e duas
+guardas provam que a superfície não mudou: `tests/public-surface.test.ts` (pina os exports exatos) e
+a varredura de igualdade `version-equality` ([[DEC-004]]).
+
+Grafo de dependência, **acíclico**:
+
+```
+rounding ← channels ← channel-slot ← calculator ← bom ← quote
+     ↖ errors ↗                 ↖ model-version ↗
+```
+
+| módulo            | responsabilidade                                                          |
+| ----------------- | ------------------------------------------------------------------------- |
+| `model-version`   | o rótulo `PRICING_MODEL_VERSION` + campos aposentados (ADR-0026)           |
+| `errors`          | `ValidationError` + asserções de entrada                                   |
+| `rounding`        | `toMoney`/`sumMoney`/`Decimal` — a única regra de arredondamento (ADR-0008) |
+| `channels`        | gross-up por faixa: bandas, piso, voucher, sobretaxa (ADR-0024/0027)       |
+| `channel-slot`    | `ChannelInput`→`ChannelFees`, validação POR SLOT + isolamento (SC-107)     |
+| `calculator`      | `computeCalculator` — peça única: custo por linha + markups + canais       |
+| `bom`             | `computeBom` — kit: linhas × quantidade + rollup por marketplace (ADR-0016) |
+| `quote`           | `computeQuote` — orçamento: venda direta, desconto no total, piso (ADR-0034) |
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/index.ts` → `computeCalculator`, `computeBom`, `computeQuote`
+
+---
+
+## DEC-028 — A sessão só sai de "loading" depois do `authStateReady()`, e o listener nem existe antes
+
+**Data**: 2026-07-23 (E6/T016, defeito ALTO reportado pelo coordenador) · **Governa**:
+`bootFromAuth`, `initSessionListener`
+
+O Firebase pode emitir um callback TRANSITÓRIO de pré-restauração (`onIdTokenChanged(null)`) antes de
+uma sessão persistida terminar de carregar do IndexedDB (medido contra o emulador de Auth). Assinar
+imediatamente — o comportamento antigo — deixava esse callback prematuro virar o `status` direto para
+`"anonymous"`, o que satisfaz o portão de "loading" do `main.tsx` e permite a um guarda de rota
+mandar um vendedor REALMENTE logado para `/sign-in` antes de o Firebase saber a resposta de verdade
+(navegação a frio — exatamente o que um redirect externo de volta faz).
+
+**A correção**: nunca sair de "loading" antes de `auth.authStateReady()` — que só resolve quando a
+persistência assentou de fato — ter retornado. O listener **nem é anexado** até lá, então ele
+estruturalmente não consegue reagir ao callback transitório; quem fornece a PRIMEIRA resposta honesta
+é a própria promessa do `authStateReady()`, lida direto de `auth.currentUser`.
+
+`bootFromAuth` recebe o handle `Auth` por parâmetro (em vez de ler o singleton de módulo) puramente
+para testabilidade: o teste o dirige com um handle falso, sem precisar mockar o singleton criado na
+inicialização do módulo. O código de produção só o chama por `initSessionListener()`.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/session/session-store.ts` → `bootFromAuth`, `initSessionListener`
+
+---
+
+## DEC-029 — O cache de entitlement só pode ECOAR o servidor; nunca CRIAR um plano
+
+**Data**: 2026-07-13 (009/T011b, E4 PR-A, decisão do dono) · **Governa**: `entitlement-cache.ts`
+
+O ADR-0018 §9 oferece gravar sobre o "entitlement de servidor last-known — resposta de servidor em
+cache, nunca uma flag de cliente" ([[DEC-013]]). Esse cache era o de memória do React Query, que está
+VAZIO num boot a frio: um vendedor premium abrindo o app **já offline** (a feira para a qual o outbox
+existe) encontrava o teaser e não conseguia gravar nada. A fila offline ficava inalcançável
+exatamente quando ela era o ponto inteiro.
+
+A distinção que este arquivo precisa manter afiada é aquela em que o Princípio IV se apoia:
+
+> esta store só pode **ECOAR** o que o servidor disse. Ela nunca pode **CRIAR** um plano.
+
+É por isso que a guarda de forma é estrita (valor corrompido ou forjado resolve para "sem resposta",
+nunca para premium), que a chave é por uid (aparelho compartilhado não concede a uma conta o premium
+de outra) e que a store é varrida no sign-out. O servidor segue com a última palavra onde importa:
+uma escrita tentada sobre um `active` velho é recusada na sincronização com 403 e a entrada vira
+`blocked` — visível, retida, nunca aceita em silêncio.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/user/entitlement-cache.ts` → `loadCachedEntitlement`, `persistCachedEntitlement`, `purgeEntitlementCache`
+- `apps/web/src/shared/lib/uid-cache.ts` → `createUidCache`
+
+---
+
+## DEC-030 — UM teaser para as cinco superfícies, com contrato FECHADO (sem props de texto)
+
+**Data**: 2026-08-04 (016/US1, T005, arquitetura-016 §E) · **Governa**: `premium-teaser.tsx`
+
+O único padrão de teaser das cinco superfícies premium (Simulações · "Usar do catálogo" · Catálogo ·
+Kits · Orçamentos). Substitui **quatro componentes divergentes** (`features/{catalog,history,scenarios,bom}/*-teaser.tsx`
+mais o `PremiumTeaserDialog`, todos APAGADOS naquela fatia), cada um com seu subtítulo, seu bloco "No
+Premium…", seus botões de dispensar/entrar — a divergência que a US1 existe para matar (SC-901).
+
+Mora em `shared/billing/` e não numa feature: os cinco chamadores são IRMÃOS FSD-Lite
+(`feature → feature` é proibido, ADR-0004/I8), e o `TeaserUpgrade` — o elemento "Assinar" — já tinha
+subido para cá pelo mesmo motivo. Este componente ABSORVE o `TeaserUpgrade` como está; ele nunca é
+bifurcado (a homologação do E6 que ele carrega — 100,5px de transbordo, um toast que nunca renderizou
+— é paga uma vez, não por teaser).
+
+**O contrato é FECHADO: quatro elementos, ordem fixa, nenhuma prop de texto.** O conteúdo vem de
+`messages.premiumTeaser`, chaveado por `PremiumFeatureId` — "mesma estrutura em cinco telas" é
+propriedade do TIPO (um caminho de render, um registro), não um resultado que cada chamador tem de
+acertar por conta própria.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/billing/premium-teaser.tsx` → `PremiumFeatureId`
+
+---
+
+## DEC-031 — Ler um 404 como "o vendedor apagou" exige DUAS provas independentes
+
+**Data**: 2026-07-15 (009, review PR-A) · **Governa**: o tratamento de 404 no dreno do outbox
+
+O ADR-0018 §5 manda largar a entrada em silêncio quando o vendedor apagou o snapshot noutro lugar:
+sumiu da conta E da fila, não sobrou nada a reportar como não-enviado.
+
+**Mas essa leitura exige PROVA**, porque 404 é o status que a infraestrutura mais produz: um proxy
+mal roteado, uma rota desmontada ou a página 404 da hospedagem chegam todos como
+`ApiError{status: 404, code: "UNKNOWN"}` (o `transport.ts` cai em `wire?.code ?? "UNKNOWN"` quando o
+corpo não é o envelope de erro da API). Tratar isso como exclusão apaga a entrada e responde
+`synced` — um "Salvo" verde sobre um registro que o servidor nunca recebeu, a mesma classe de mentira
+que o M1 já fechou no caminho de releitura.
+
+**Duas evidências independentes, as duas obrigatórias:**
+
+- `attempts > 0` — o §5 descreve um REPLAY. O arquivo já enunciava o invariante em prosa ("um id
+  recém-cunhado que o servidor nunca viu não pode dar 404") sem o cobrar de ninguém.
+- `code === "NOT_FOUND"` — a API disse, não um estranho carregando o mesmo status.
+
+Sem as duas, a entrada SOBREVIVE e é retentada. O custo de errar aqui é assimétrico: **entrada retida
+incomoda; entrada apagada acabou.**
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/history/outbox.ts` → `NOT_FOUND`, `attempts`
+
+---
+
+## DEC-032 — O piso de linhas mora onde a cobertura alcança, não no `.mjs` isento
+
+**Data**: 2026-08-01 (015/A5, [F10-001]) · **Governa**: `checkParseSanity`
+
+O piso de linhas que ACEITA ou REJEITA um parse do catálogo de tarifas morava em `build-amazon.mjs`,
+que é o ÚNICO arquivo isento da catraca de cobertura (o `vitest.config.ts` isenta todo `.mjs` sob
+`packages`). A `checkParseSanity` era testada com o piso vindo por PARÂMETRO: **a função estava
+coberta, o VALOR não.** Trocar 28 por 2 não derrubava nenhum teste, e o guarda que existe para pegar
+"a fonte encolheu" aceitaria um parse de 2 linhas.
+
+A equipe já tinha movido `nextCatalogVersion`, `collectedAtFor` e `decideRefresh` para cá por essa
+mesma razão, escrita nos próprios comentários: **a regra que decide o rótulo do dinheiro não pode
+morar num lugar isento.** A migração ficou incompleta em um ponto — este.
+
+**O número**: a leitura de 2026-07-28 tinha 38 linhas. Uma tabela que perde um quarto das linhas é
+mudança de FORMA, não a Amazon apagando dez categorias de um dia para o outro.
+
+Devolve um VEREDITO em vez de lançar, deliberadamente: o chamador precisa poder reagir deixando o
+artefato intocado e alertando — nunca escrevendo um mapa parcial (SC-806).
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/guardrails.ts` → `checkParseSanity`
+
+---
+
+## DEC-033 — Dentro de uma subárvore de dinheiro, inteiro é recusado; fora dela é contagem legítima
+
+**Data**: 2026-07-31 (E4-01) · **atualizado** 2026-08-30 (019/PR-E, ADR-0034 §2) · **Governa**: as
+chaves marcadas em `validation.py`
+
+Chaves de objeto cuja SUBÁRVORE é dinheiro por definição: lá dentro um inteiro JSON nunca é contagem,
+então é recusado. O defeito que originou a regra: uma folha de dinheiro inteira passou pela varredura
+de float, congelou numa linha imutável e depois renderizou como célula VAZIA no PDF do cliente, porque
+o renderizador imprime STRINGS guardadas e nunca coage um número ([[DEC-008]]). Fora dessas chaves um
+inteiro é contagem legítima (`schemaVersion`, `quantity`, `contributingLines`, `skippedLines`) e passa
+intocado.
+
+**019/PR-E** — o documento do ORÇAMENTO trouxe dinheiro FORA de `totals`/`breakdown`, e ele entra pelas
+FOLHAS, uma a uma. A marca é de SUBÁRVORE, e é por isso que `lines` e `discount` ficam de fora **por
+decisão, não por esquecimento**:
+
+- marcar `lines` recusaria o `quantity` INTEIRO de todo KIT já gravado — uma regressão do `kind` antigo
+  causada pelo `kind` novo;
+- marcar `discount` marcaria `value`, que em modo `PCT` é um PERCENTUAL, não dinheiro ([[DEC-018]]).
+
+### Onde isso vive no código
+
+- `backend/app/validation.py` → `_walk`
+
+---
+
+## DEC-034 — "Este marketplace tem taxa?" é UMA função, e a resposta conta sobretaxa
+
+**Data**: 2026-09-01 (correção do bug B5) · **Governa**: `channelHasDeclaredFee`
+
+Havia DUAS implementações que deviam significar a MESMA coisa e não coincidiam: a do congelado
+(`frozen-payload.ts`, `feeBearing`) ignorava sobretaxas, enquanto a do vivo (`calculator-model.ts`,
+`hasFee`) já as contava desde 016/PR-F (US16, ADR-0027 §3.2). Um marketplace cuja ÚNICA cobrança é uma
+sobretaxa — Shopee "Manuseio de item volumoso", R$ 50 — lia "sem taxa" no congelado e **a linha dele
+sumia do documento**: o mesmo dado, duas respostas.
+
+**Por que mora em `shared/lib`**: `entities/history` e `features/calculator` não se importam um ao
+outro (`eslint-boundaries`), então a casa comum é `shared` — mesmo precedente do `decimal-leaf.ts`,
+extraído desta MESMA dupla de módulos na mesma frente de correção.
+
+A forma aqui é NORMALIZADA: o vivo carrega números, o congelado carrega strings decimais. `Number(x)`
+lê os dois igualmente (`Number("12.00") === Number(12)`), então a MESMA função serve aos dois lados sem
+conversão explícita — só a checagem de PRESENÇA importa para
+`priceBands`/`freightVoucherBands`/`surcharges`, nunca o valor de cada item.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/lib/channel-fee.ts` → `channelHasDeclaredFee`
+

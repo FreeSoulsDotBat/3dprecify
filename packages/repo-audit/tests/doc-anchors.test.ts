@@ -10,9 +10,15 @@ import { RAIZ, arquivosDeCodigo, existe, ler } from "./scan.ts";
 // Ele afirma uma propriedade do REPOSITÓRIO — que os dois lados do link são verdade ao mesmo
 // tempo — e por isso lê do disco com `fs` em vez de importar (mesmo molde do `workflow-audit`).
 
-/** `// @doc ADR-0031 §3 — resumo` · `# ⚠ @doc DEC-003 — resumo` · também dentro de JSDoc. */
+/**
+ * `// @doc ADR-0031 §3 — resumo` · `# ⚠ @doc DEC-003 — resumo` · também dentro de JSDoc.
+ *
+ * `#:` entra junto: é a convenção Sphinx que o `backend/app/validation.py` usa para documentar
+ * constante de módulo, e estender a gramática custa menos do que mudar a convenção de um arquivo
+ * para caber num guarda.
+ */
 const GRAMATICA =
-    /^\s*(?:\/\/|#|\/\*\*|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/)?\s*$/u;
+    /^\s*(?:\/\/|#:?|\/\*\*|\*)\s*(?:⚠\s*)?@doc\s+([A-Za-z0-9/-]+)(?:\s+§(.+?))?\s+—\s+(\S.*?)(?:\s*\*\/)?\s*$/u;
 
 const REGISTRO_DEC = "docs/decisoes-de-codigo.md";
 const REGISTRO_FONTE = "docs/fontes-verbatim.md";

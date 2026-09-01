@@ -140,10 +140,20 @@ Cada asserção é provada não-vacuosa por mutação, como o resto da casa.
 
 ## 8. A catraca de densidade
 
-`packages/repo-audit/comment-density.baseline.json` guarda a densidade de comentário de cada arquivo
-no dia da migração. O guarda falha se um arquivo **subir**. Descer é sempre permitido e atualiza a
-linha de base. É o mesmo mecanismo do `max-lines` do ESLint, e serve ao mesmo propósito: impedir a
-recaída sem exigir um big-bang.
+`packages/repo-audit/comment-density.baseline.json` guarda, por arquivo, o maior bloco de prosa
+comentada no dia da migração. O guarda falha se um arquivo **subir**; descer é sempre permitido.
+Prende também a densidade TOTAL do repositório — um número só, que dá folga local (acrescentar uma
+âncora de uma linha não pode deixar o portão vermelho) sem permitir uma volta geral.
+
+**O alvo não é "zero comentário", e é importante dizer isso em voz alta.** É *zero DECISÃO dentro do
+código*. Um JSDoc de até 6 linhas dizendo o que a função recebe, devolve e recusa é CONTRATO, e
+contrato pertence ao cursor — por isso o teto do arquivo novo é 6, não 3. Medido em 2026-09-01,
+depois de migrados os maiores blocos: dos 664 blocos de 4+ linhas que restavam, **365 eram de 4–5
+linhas** e quase todos são esse contrato legítimo. Reprová-los ensinaria a driblar o guarda, que é o
+único jeito garantido de matá-lo.
+
+É o mesmo mecanismo do `max-lines` do ESLint, e serve ao mesmo propósito: impedir a recaída sem
+exigir um big-bang.
 
 ## 9. Ordem da migração
 

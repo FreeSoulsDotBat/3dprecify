@@ -1,20 +1,5 @@
-// Canonical 3D-print pricing core — a superfície pública inteira, legível de uma vez. Pure,
-// deterministic, offline. The backend never recomputes any price (FR-118); this package is the
-// single source of the formula. ADR-0008 (money) · ADR-0009 (machine) · ADR-0011 (result contract).
-//
-// Divisão por responsabilidade (chore de legibilidade 2026-08-31; corpos movidos VERBATIM, guarda
-// tests/public-surface.test.ts + a varredura de igualdade version-equality):
-//   rounding ← channels ← channel-slot ← calculator ← bom ← quote     (acíclico)
-//        ↖ errors ↗                ↖ model-version ↗
-//
-//   model-version.ts  o rótulo PRICING_MODEL_VERSION + campos aposentados (ADR-0026)
-//   errors.ts         ValidationError + asserções de entrada
-//   rounding.ts       toMoney/sumMoney/Decimal — a única regra de arredondamento (ADR-0008)
-//   channels.ts       gross-up por faixa: bandas, piso, voucher, sobretaxa (ADR-0024/0027)
-//   channel-slot.ts   ChannelInput→ChannelFees, validação POR SLOT + isolamento (SC-107)
-//   calculator.ts     computeCalculator — peça única: custo por linha + markups + canais
-//   bom.ts            computeBom — kit: linhas × quantidade + rollup por marketplace (ADR-0016)
-//   quote.ts          computeQuote — orçamento: venda direta, desconto no total, piso (ADR-0034)
+// @doc DEC-027 — a superfície pública dividida por responsabilidade, com o grafo acíclico.
+// ⚠ @doc ADR-0008 — o backend NUNCA recomputa preço (FR-118): este pacote é a fonte única.
 
 export {
     PRICING_MODEL_VERSION,

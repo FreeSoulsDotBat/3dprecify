@@ -2,24 +2,8 @@ import type { EntitlementView } from "@/shared/api/generated";
 import { SERVER_STATUSES } from "@/shared/billing/premium-gate";
 import { createUidCache } from "@/shared/lib/uid-cache";
 
-// 009/T011b (E4, PR-A) — the last-known SERVER entitlement, persisted (owner decision 2026-07-13).
-//
-// ADR-0018 §9 offers recording on the "last-known server entitlement — a cached server response,
-// never a client-held flag". That cache used to be React Query's in-memory one, which is empty on a
-// cold boot: a premium seller opening the app ALREADY offline (the feira the outbox exists for) met
-// the teaser and could not record at all. The offline queue was unreachable exactly when it was the
-// whole point.
-//
-// The distinction this file has to keep sharp is the one Principle IV rests on:
-//
-//   this store may only ECHO what the server said. It can never CREATE a plan.
-//
-// Which is why the shape guard is strict (a corrupt or forged value resolves to "no answer", never
-// to premium), the key is uid-scoped (a shared device cannot grant one account another's premium),
-// and the store is swept on sign-out. The server still gets the final word where it counts: a write
-// attempted on a stale `active` is refused at sync with a 403 and the entry becomes `blocked` —
-// visible, retained, never silently accepted.
-// (019/polish: the load/persist/purge primitives themselves are shared via `shared/lib/uid-cache`.)
+// ⚠ @doc DEC-029 — esta store só ECOA o que o servidor disse; ela nunca CRIA um plano. Valor
+//   corrompido ou forjado resolve para "sem resposta", nunca para premium.
 
 /** IndexedDB key — uid-scoped, like every persisted thing in this app (FR-309 lineage). */
 export function entitlementIdbKey(uid: string): string {
