@@ -1234,3 +1234,208 @@ cópia de urgência em lugar nenhum daqui.
 
 - `apps/web/src/shared/billing/plans.ts` → `BILLING_PLANS`, `BillingPlanKey`
 
+---
+
+## DEC-043 — Duas portas de entrada HTTP, um núcleo só, e falha de transporte também vira `ApiError`
+
+**Data**: 2026-07-08 (decisão A20 / R2-G2, fecha D1) · **Governa**: `orvalFetch`, `apiFetch`
+
+Duas entradas públicas compartilham um núcleo, para que o comportamento seja idêntico:
+
+- **`orvalFetch`** — o mutator de fetch do Orval: o cliente gerado chama ESTE em vez do `fetch` cru,
+  então toda requisição gerada ganha de graça um token Firebase fresco, a baseURL tipada e a
+  normalização de `ApiError` (A9/T067).
+- **`apiFetch`** — a entrada ergonômica escrita à mão: mesmo transporte, mas devolve o corpo já
+  parseado (usada onde o envelope `{data,…}` e a união de 422 fantasma do hook gerado só somariam
+  ruído).
+
+As duas injetam token fresco por requisição, resolvem a baseURL do env tipado e — o ponto que
+importa — normalizam **tanto as respostas 4xx/5xx quanto as falhas de FASE DE TRANSPORTE** (offline,
+DNS, conexão recusada, refresh de token que falhou) num `ApiError` tipado carregando o `code` do fio e
+o `correlationId`, reportado ao Sentry (no-op silencioso sem DSN).
+
+Normalizar os dois lados no mesmo tipo é o que permite ao resto do app parar de distinguir "o
+servidor recusou" de "não deu para perguntar" por acidente — quem precisa distinguir lê o `code`
+([[DEC-031]], [[DEC-007]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/api/transport.ts` → `orvalFetch`, `apiFetch`, `ApiError`
+
+---
+
+## DEC-044 — O painel da Conta é decisão PURA, e compor não é inferir
+
+**Data**: 2026-07-24 (E6 PR-B, T026/US6, SC-708) · **Governa**: `plan-view.ts`
+
+A Conta compõe DUAS verdades do servidor: o ledger (`GET /entitlement` — quem decide se há premium,
+Constituição IV) e o espelho do PSP (`GET /billing/subscription` — o que o vendedor contratou e pode
+gerenciar). A clarificação de 2026-07-20 dá a precedência: **a assinatura vence quando existe; a
+cortesia responde quando não há assinatura; a conta está ativa enquanto QUALQUER grant válido
+existir.**
+
+**Compor não é inferir** (SC-708): nenhum estado aqui nasce de palpite do cliente — cada um é a
+leitura de um campo que o servidor mandou. Por isso **o erro do ledger vence tudo**, inclusive uma
+assinatura em mãos: o espelho do PSP diz o que foi contratado, não se o premium está ligado.
+
+O resultado é uma união discriminada de propósito, pelo mesmo motivo do `RefreshOutcome` da 014: uma
+combinação não tratada **não é representável**, então nenhum `if` esquecido pode produzir um painel
+sem estado.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/billing/plan-view.ts` → `PlanState`
+
+---
+
+## DEC-045 — O plano vem do servidor e é PERSISTIDO, mas persistir não move o portão
+
+**Data**: 2026-07-10 (E2/T025b, FR-304, ADR-0012 R1b) · **atualizado** 2026-07-13 (009/T011b, decisão
+do dono) · **Governa**: `useEntitlement`
+
+O estado de plano da conta vem de `GET /api/v1/entitlement`. Derivado do servidor, nunca fabricado: a
+Conta renderiza exatamente o que isto devolve (`none`/`active`/`lapsed`) ou um `unknown` honesto em
+caso de erro. Chaveado por uid como o `["me"]`, para que um re-login como outro usuário nunca leia o
+plano cacheado do anterior.
+
+**A última resposta do servidor é PERSISTIDA** (IndexedDB por uid, varrido no sign-out), então
+sobrevive a um boot a frio. Sem isso, um vendedor premium que abrisse o app **já offline** não tinha
+resposta de servidor nenhuma e encontrava o teaser gratuito: o outbox offline ficava inalcançável
+exatamente no cenário para o qual existe ([[DEC-029]]).
+
+**Isso não move o portão.** O valor em cache é a última palavra do PRÓPRIO servidor, não uma flag de
+cliente (nuance do ADR-0015, ADR-0018 §9); ele só pode ecoar o que o servidor disse, e o servidor
+ainda decide na sincronização — uma escrita sobre um `active` velho é recusada com 403 e o registro
+vira `blocked`: visível e retido, nunca aceito em silêncio.
+
+### Onde isso vive no código
+
+- `apps/web/src/entities/user/use-entitlement.ts` → `useEntitlement`
+
+---
+
+## DEC-046 — O vazio didático: a lista não é substituída por parede, ela está vazia e EXPLICA
+
+**Data**: 2026-08-28 (019/PR-B, T043, research §E-4) · **Governa**: `vazio-didatico.tsx`
+
+Prancheta 32a/32c ("Premium — O Caminho Sem Parede", cópia congelada em
+`specs/019-porte-design/design/`): a lista não é substituída por parede nenhuma — ela está vazia
+porque nunca houve o que salvar, e o vazio EXPLICA a feature. Mesma forma do vazio de quem paga
+(ícone, título, frase, botão); só o comprimento da frase muda. **Sem coroa, sem preço no título.**
+
+COMPÕE o `EmptyState` que já existe e não tem CSS próprio — a guarda `tf-class-uniqueness` é o que
+mantém isso estrutural, não uma promessa.
+
+O **ÚNICO** convite da tela (FR-1906, o invariante um-teaser do 016/US1 — [[DEC-030]]) vive aqui
+enquanto a lista é o que está na tela; quando o formulário inerte abre, o rodapé DELE passa a ser o
+único (`teaser={false}`, com a contagem asserida nos dois estados).
+
+> **Divergência registrada para a segunda passada do dono**: a prancheta 32a diz "nenhuma menção a
+> plano" no vazio, e a FR-1906 exige um convite por tela. A FR ganhou (dod-evidence §T043).
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/billing/vazio-didatico.tsx` → `VazioDidatico`
+
+---
+
+## DEC-047 — A LISTA do Catálogo nunca escreve nada; o aviso de preço vive no ITEM ABERTO
+
+**Data**: 2026-07-11 (US6/T030) · **atualizado** 2026-08-29 (019/PR-D, T076/T124) · **Governa**:
+`products-panel.tsx`
+
+A aba Produtos: cache de leitura por uid ligado ao painel premium genérico em modo NAVEGAÇÃO —
+criar/editar vivem na rota de página inteira, e o excluir mantém o Dialog de confirmação aqui. O
+resumo da linha resolve os NOMES de referência dos caches irmãos; um vínculo degradado lê como
+manual. **Nunca um preço numa linha** (FR-310).
+
+**Nada aqui CHAMA `computeFromForm` nem os hooks de `price-observations`** — regra da fatia: hooks só
+na PAGE, e este painel permanece PURO e testável por prop; `recomputed`/`changed` chegam prontos da
+`catalogo-page.tsx`.
+
+**A LISTA nunca escreve nada** — correção de fidelidade, achado da homologação: o aviso "custo hoje >
+fixado" e os botões "Manter {valor}" / "Aceitar novo preço" vivem **só no ITEM ABERTO** (prancheta
+17c/16b·2). Nenhuma prancheta desenha os dois blocos na lista.
+
+O `gate` substituiu o `lapsed` binário: como o painel navega (não tem `renderForm`), ele só decide
+vazio didático × lista, e o intercept do excluir em `gate === "lapsed"` ([[DEC-037]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/features/catalog/products-panel.tsx` → `ProductsPanel`
+
+---
+
+## DEC-048 — A cópia das Simulações e dos Orçamentos é VERBATIM da prancheta, e o que ficou fora está listado
+
+**Data**: 2026-07-19 (010, E5 PR-A) · **atualizado** 2026-08-04 (016/US2) e 2026-08-30 (019/PR-E,
+T087) · **Governa**: `quote.pt-br.ts`
+
+**Um cenário é VIVO, nunca datado**: nenhum "salvo em"/"cotado em" em lugar nenhum daqui (§0.2). E
+"Cancelar" é banido (FR-014) — todo controle de dispensa é "Voltar".
+
+**016/US2** — "cenário" virou "simulação" em toda superfície visível: o par Histórico/Cenários não
+comunicava a diferença (congelado × recalculado hoje). A CHAVE do namespace (`scenarios`) e as chaves
+internas **não** mudam — só os VALORES pt-BR. É o que permite renomear no produto sem renomear no
+código.
+
+**019/PR-E** — prancheta 18 ("Orçamentos — Montar e Enviar"), cópia congelada em
+`specs/019-porte-design/design/`, **byte a byte**. Só o que a spec US6/US16/US17 abrange (Q6 venda
+direta, desconto no TOTAL; Q7 "Válido até" é texto; Q10 abaixo do custo AVISA; Q8 PDF pelo servidor).
+
+**Fora, e listado para não virar esquecimento**: a 18c inteira (US18 RETIRADA), os cinco estados da
+lista e "Marcar aceito/recusado" (18a/18e·2), frete (18d), "Sobra sobre o custo" como algo além de
+leitura do piso, "Como sai no WhatsApp"/Copiar/Compartilhar (18f), e o "prazo de produção".
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/i18n/messages/quote.pt-br.ts` → `scenarios`
+
+---
+
+## DEC-049 — A poda da semente é POLÍTICA DECLARADA, não acidente curatorial
+
+**Data**: 2026-08-07 (017/T009 · P0-a, ADR-0029 §B/§C.2.4) · **Governa**: `projetarSemente`
+
+O defeito é MEDIDO e já custou duas edições à mão em dois dias: um teste cravava `catalogVersion` numa
+literal, e todo bump de conteúdo obrigava alguém a reescrever uma string dentro de um teste. O
+primeiro PR mensal nasceria VERMELHO por construção — **com o dado CERTO**.
+
+A tentação seria "paridade estrita = igualdade de documento". Medido, e é falsa: **a semente não é
+cópia do servido.** No servido a Amazon tem 78 entradas e uma espinha de 38 categorias; na semente,
+`entries: []` e nenhuma espinha. É uma projeção PODADA, e a poda vale **94% do documento** — 45.858
+bytes servidos viram 2.720 (orçamento de boot SC-810).
+
+O que este módulo faz é transformar essa poda de ACIDENTE CURATORIAL em POLÍTICA DECLARADA. Até aqui
+ela era um comentário no `seed.ts` ("ML + Amazon stay empty pending their category-specific rates")
+que nenhum guarda verificava — **e um comentário não impede o mês em que alguém copie o servido
+inteiro para dentro do bundle.**
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/seed-projection.ts` → `projetarSemente`
+
+---
+
+## DEC-050 — Montar um kit é permitido para todos; só "Salvar" bloqueia
+
+**Data**: 2026-07-16 (008/T005+T006) · **atualizado** 2026-08-28 (019/PR-B, T046, decisão 3 do dono
+2026-08-27) · **Governa**: `bom-page.tsx`
+
+A página `/kits` é dona da lista de linhas; o editor de cada linha é o formulário de peça da
+calculadora hospedado na camada de widgets; **todo número de dinheiro vem de `computeFromForm` →
+`composeBom`** — a view não soma nada.
+
+**Decisão do dono (spec §Clarifications)**: *"a parede de /kits cai junto com a do Catálogo, e montar
+um kit sem salvar é permitido no grátis/lapsed — só 'Salvar' bloqueia."* O composer MONTA para
+qualquer sessão conhecida (deslogado, `none`, `lapsed`, `active`) e COMPÕE para todos — adicionar e
+remover linha é estado local, nunca rede. A única coisa que o `premiumGate` ([[DEC-037]]) decide aqui é
+o rodapé de "Salvar" e o convite único (FR-1906).
+
+**O que continua sendo um MURO é a AUSÊNCIA de resposta do servidor** sobre uma conta autenticada
+(`unknown`) — nunca presumido grátis, nunca presumido premium.
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/bom/bom-page.tsx` → `composeBom`
+

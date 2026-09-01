@@ -30,21 +30,8 @@ import { productNeedsAttention, productSummary } from "@/entities/catalog/produc
 
 import { CatalogPanel } from "./catalog-panel";
 
-// Produtos tab wiring (US6/T030): the uid-keyed read cache plugged into the generic premium
-// panel in NAVIGATION mode — create/edit live on the full-page route (ux §1.6b), delete keeps
-// the confirm Dialog here. The row summary resolves the reference NAMES from the sibling
-// caches; a degraded link reads as manual. Never a price in a row (FR-310).
-//
-// 019/PR-B (T044): `gate` substitui o `lapsed` binário — o painel navega (não tem `renderForm`),
-// então só decide vazio didático × lista e o intercept do delete em `gate === "lapsed"`.
-//
-// 019/PR-D (T076/T124) — o recálculo do Catálogo: nada aqui CHAMA `computeFromForm` nem os hooks
-// de `entities/catalog/price-observations` (regra da fatia — hooks só na PAGE, este painel
-// permanece PURO/testável por prop); `recomputed`/`changed` chegam prontos de
-// `pages/catalogo/catalogo-page.tsx`. A LISTA nunca escreve nada (correção de fidelidade,
-// achado da homologação): o aviso "custo hoje > fixado" e "Manter {valor}"/"Aceitar novo preço"
-// vivem só no ITEM ABERTO (`pages/catalogo/produto-page.tsx`, prancheta 17c/16b·2) — nenhuma
-// prancheta desenha os dois blocos aqui.
+// ⚠ @doc DEC-047 — a LISTA nunca escreve nada e nunca mostra preço numa linha: o aviso de
+//   "custo hoje > fixado" vive só no ITEM ABERTO. Hooks só na PAGE; este painel é puro.
 
 const catalogo = messages.catalog;
 const pf = messages.productForm;

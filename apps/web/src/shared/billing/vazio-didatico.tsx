@@ -6,21 +6,8 @@ import { EmptyState, type IconName } from "@/shared/ui";
 import type { PremiumGate } from "./premium-gate";
 import { TeaserUpgrade } from "./teaser-upgrade";
 
-// 019/PR-B (T043, research §E-4) — o VAZIO DIDÁTICO: o que quem não paga vê no lugar da parede.
-//
-// Prancheta 32a/32c ("Premium - O Caminho Sem Parede", cópia congelada em
-// `specs/019-porte-design/design/`): a lista não é substituída por parede nenhuma — ela está vazia
-// porque nunca houve o que salvar, e o vazio EXPLICA a feature. Mesma forma do vazio de quem paga
-// (ícone, título, frase, botão); só o comprimento da frase muda. Sem coroa, sem preço no título.
-//
-// Ele COMPÕE o `EmptyState` que já existe (`shared/ui/empty-state.tsx` é o `tf-empty`) e não tem
-// CSS próprio — a guarda `tf-class-uniqueness` (T006) é o que mantém isso estrutural.
-//
-// O ÚNICO convite da tela (FR-1906, invariante um-teaser do 016/US1) vive aqui enquanto a lista é
-// o que está na tela; quando o formulário inerte abre, o rodapé DELE passa a ser o único
-// (`teaser={false}` — T041 asserta a contagem nos dois estados). Divergência registrada para a
-// segunda passada do dono: a 32a diz "nenhuma menção a plano" no vazio, e a FR-1906 exige um convite
-// por tela — a FR ganhou (dod-evidence §T043).
+// @doc DEC-046 — a lista não vira parede: está vazia porque nunca houve o que salvar, e o
+//   vazio EXPLICA a feature. Sem coroa, sem preço no título, um convite só por tela.
 
 export type VazioFeature = "filaments" | "printers" | "products" | "kits" | "quotes" | "scenarios";
 

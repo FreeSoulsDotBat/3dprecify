@@ -27,19 +27,8 @@ import { BomSummaryPanel } from "./bom-summary-panel";
 import { defaultPieceName, type KitSaveLine, lineToForm, linesToBomIn } from "./kit-save";
 import { countSkippedByMarketplace } from "./skipped-by-marketplace";
 
-// 008/T005+T006 — the /kits page (module stays pages/bom, K1; research R7 wiring). The page owns
-// the line list; each line's editor is the calculator piece form hosted at the widgets layer;
-// every money number comes from `computeFromForm` → `composeBom` (pricing-core) — the view sums
-// nothing. The compute being offline is a SOFT boundary and nothing here implies otherwise.
-//
-// 019/PR-B (T046, DECISÃO 3 do dono 27/08 — spec §Clarifications): "a parede de /kits cai junto
-// com a do Catálogo, e montar um kit sem salvar é permitido no grátis/lapsed — só 'Salvar'
-// bloqueia." O composer MONTA para qualquer sessão conhecida (deslogado, `none`, `lapsed`,
-// `active`) e COMPÕE para todos — adicionar/remover linha é estado local, nunca rede. A única
-// coisa que o `premiumGate` (`shared/billing/premium-gate.ts`, servidor-informado, Constituição IV
-// intocada) decide aqui é o rodapé de "Salvar" e o convite único (FR-1906). O que continua sendo
-// um MURO é a AUSÊNCIA de resposta do servidor sobre uma conta autenticada (`unknown`) — nunca
-// presumido free nem premium.
+// ⚠ @doc DEC-050 — montar kit é permitido para TODOS; só "Salvar" bloqueia. O muro é a
+//   AUSÊNCIA de resposta do servidor (`unknown`): nem presume grátis, nem presume premium.
 
 const t = messages.bom;
 const tc = messages.calculator;

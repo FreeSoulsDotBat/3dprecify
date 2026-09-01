@@ -8,20 +8,8 @@ import { useSessionStore } from "@/shared/session/session-store";
 
 import { loadCachedEntitlement, persistCachedEntitlement } from "./entitlement-cache";
 
-// E2/T025b (FR-304) — the account's own plan state from GET /api/v1/entitlement (ADR-0012 R1b).
-// Server-derived, never fabricated: the Conta page renders exactly what this returns (none/active/
-// lapsed) or an honest unknown on error. uid-keyed like ["me"] (D1) so a re-login as a different
-// user never reads the previous user's cached plan.
-//
-// 009/T011b (owner decision 2026-07-13) — the last server answer is now PERSISTED (uid-keyed
-// IndexedDB, purged on sign-out), so it survives a cold boot. Without it, a premium seller who
-// opened the app already offline had NO server answer at all and met the free teaser: the offline
-// outbox (ADR-0018) was unreachable in exactly the scenario it exists for.
-//
-// This does not move the gate. The cached value is the SERVER's own last word, not a client-held
-// flag (ADR-0015's nuance, ADR-0018 §9), it can only echo what the server said, and the server
-// still decides at sync — a write on a stale `active` is refused with a 403 and its record becomes
-// `blocked`: visible and retained, never silently accepted.
+// ⚠ @doc DEC-045 — persistir a última resposta do servidor NÃO move o portão: é a palavra dele
+//   em cache, não flag de cliente, e a escrita sobre um `active` velho ainda leva 403.
 
 export const ENTITLEMENT_QUERY_KEY = ["entitlement"] as const;
 

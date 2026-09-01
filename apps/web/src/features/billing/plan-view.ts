@@ -1,18 +1,5 @@
-// E6 PR-B (T026/US6) — a regra do painel da Conta, como decisão PURA.
-//
-// A Conta compõe DUAS verdades do servidor: o ledger (`GET /entitlement` — quem decide se há
-// premium, Constituição IV) e o espelho do PSP (`GET /billing/subscription` — o que o vendedor
-// contratou e pode gerenciar). A clarificação de 2026-07-20 dá a precedência: **a assinatura vence
-// quando existe; a cortesia responde quando não há assinatura; a conta está ativa enquanto QUALQUER
-// grant válido existir.**
-//
-// Compor não é inferir (SC-708): nenhum estado aqui nasce de um palpite do cliente — cada um é a
-// leitura de um campo que o servidor mandou. Por isso o erro do ledger vence tudo, inclusive uma
-// assinatura em mãos: o espelho do PSP diz o que foi contratado, não se o premium está ligado.
-//
-// O resultado é uma união discriminada de propósito, pelo mesmo motivo do `RefreshOutcome` da 014:
-// uma combinação não tratada não é representável, então nenhum `if` esquecido pode produzir um
-// painel sem estado.
+// ⚠ @doc DEC-044 — COMPOR não é INFERIR (SC-708): o erro do ledger vence até uma assinatura em
+//   mãos, porque o espelho do PSP diz o que foi contratado, não se o premium está ligado.
 
 /** O que o ledger respondeu (`GET /entitlement`) — a forma servida, campos opcionais inclusos. */
 export interface EntitlementLike {

@@ -1,16 +1,5 @@
-// 010 (E5, PR-A) — "Minhas simulações": save/consult/reopen a saved multi-channel comparison.
-// Copy = ux-scenarios.md §9 (owner-ratified 2026-07-19), trimmed to the PR-A subset (US1/US2/US5).
-// A scenario is LIVE, never dated — no "salvo em"/"cotado em" anywhere here (§0.2); "Cancelar" is
-// banned (FR-014) — every dismissive control is "Voltar".
-// 016/US2 (T008/T009): "cenário" virou "simulação" em toda superfície visível — o par
-// Histórico/Cenários não comunicava a diferença (congelado × recalculado hoje). A CHAVE do
-// namespace (`scenarios`) e as chaves internas NÃO mudam — só os VALORES pt-BR.
-// 019/PR-E (T087) — prancheta 18 ("Orcamentos - Montar e Enviar"), cópia congelada em
-// `specs/019-porte-design/design/`, byte a byte. Só o que a spec US6/US16/US17 abrange (Q6 venda
-// direta, desconto no TOTAL; Q7 "Válido até" é texto; Q10 abaixo do custo AVISA; Q8 PDF pelo
-// servidor). Fora, e registrado em dod-evidence §T087: a 18c inteira (US18 RETIRADA), os cinco
-// estados da lista e "Marcar aceito/recusado" (18a/18e·2), frete (18d), "Sobra sobre o custo" só
-// como leitura do piso, "Como sai no WhatsApp"/Copiar/Compartilhar (18f), o "prazo de produção".
+// @doc DEC-048 — cópia VERBATIM da prancheta. Simulação é VIVA, nunca datada; "Cancelar" é
+//   banido (é "Voltar"); as CHAVES não mudam quando o nome no produto muda.
 export const quote = {
     // 18a — a entrada. A lista de orçamentos é a aba Orçamentos de sempre (decisão do dono: a
     // prancheta desenha um 3º segmento do Catálogo e chama a escolha de "decisão sua").

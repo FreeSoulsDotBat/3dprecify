@@ -1,20 +1,8 @@
 import type { CatalogJson } from "./slice.ts";
 
-// 017/T009 · P0-a (ADR-0029, desenho §B/§C.2.4) — a SEMENTE como PROJEÇÃO GERADA do artefato servido.
-//
-// O defeito é MEDIDO e já custou duas edições à mão em dois dias: `fee-catalog.test.ts` cravava
-// `catalogVersion` numa literal, e todo bump de conteúdo obrigava alguém a reescrever uma string
-// dentro de um teste. O primeiro PR mensal nasceria VERMELHO por construção — com o dado CERTO.
-//
-// A tentação seria "paridade estrita = igualdade de documento". MEDIDO hoje, e ela é falsa: a
-// semente NÃO é cópia do servido. No servido a Amazon tem 78 entradas e uma espinha de 38
-// categorias; na semente, `entries: []` e nenhuma espinha. Ela é uma projeção PODADA, e a poda vale
-// 94% do documento — 45.858 bytes servidos viram 2.720 (orçamento de boot SC-810).
-//
-// O que este módulo faz é transformar essa poda de ACIDENTE CURATORIAL em POLÍTICA DECLARADA. Até
-// aqui ela era um comentário no `seed.ts` ("ML + Amazon stay empty pending their category-specific
-// rates") que nenhum guarda verificava — e um comentário não impede o mês em que alguém copie o
-// servido inteiro para dentro do bundle.
+// ⚠ @doc DEC-049 — a semente NÃO é cópia do servido: é projeção PODADA, e a poda vale 94% do
+//   documento (45.858 → 2.720 bytes, orçamento de boot SC-810). Política declarada, não
+//   acidente curatorial — um comentário não impede alguém de copiar o servido inteiro.
 
 /**
  * A regra da poda, e ela é uma só: **uma seção cujo `determinantsSchema` declara o eixo `category`

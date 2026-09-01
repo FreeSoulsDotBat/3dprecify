@@ -1,15 +1,6 @@
-// HTTP transport (decision A20 / R2-G2; closes D1). Two public entry points share one
-// core so the behaviour is identical:
-//   - `orvalFetch` — the Orval custom fetch mutator: the generated client (`generated.ts`)
-//     calls THIS instead of raw `fetch`, so every generated request gets a fresh Firebase
-//     ID token, the typed baseURL, and the ApiError normalisation for free (A9/T067).
-//   - `apiFetch`   — the ergonomic hand-written entry: same transport, but returns the
-//     parsed body directly (used by `entities/user/use-identity` where the `{data,…}`
-//     envelope + phantom-422 union the generated hook carries would only add noise).
-// Both inject a fresh token per request, resolve the baseURL from the typed env, normalise
-// BOTH 4xx/5xx responses AND transport-phase failures (offline / DNS / connection refused /
-// a failed token refresh) into a typed ApiError carrying the wire `code` + `correlationId`,
-// and report that ApiError to Sentry (T069/D2; silent no-op with no DSN).
+// @doc DEC-043 — duas entradas (`orvalFetch`/`apiFetch`), um núcleo: comportamento idêntico.
+// ⚠ @doc DEC-043 — falha de TRANSPORTE (offline/DNS/token) vira `ApiError` como um 4xx vira:
+//   quem precisa distinguir "recusou" de "não deu para perguntar" lê o `code`.
 
 import { env } from "@/shared/lib/env";
 import { auth } from "@/shared/lib/firebase";
