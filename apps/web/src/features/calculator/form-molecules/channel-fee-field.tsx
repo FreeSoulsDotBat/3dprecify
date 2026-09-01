@@ -3,7 +3,7 @@
 import { type Control, Controller } from "react-hook-form";
 
 import type { CalcFormValues, CHANNEL_FEE_FIELDS } from "@/features/calculator/calculator-schema";
-import { parseDecimal } from "@/shared/lib/decimal-ptbr";
+import { formatDecimal, parseDecimal } from "@/shared/lib/decimal-ptbr";
 import { avisoDeComissao } from "@/shared/lib/plausibilidade";
 import { Field, NumberField } from "@/shared/ui";
 
@@ -41,8 +41,13 @@ export function ChannelFeeField({
         applied === undefined
             ? undefined
             : meta.currency
-              ? applied.toFixed(2).replace(".", ",")
-              : String(applied).replace(".", ",");
+              ? // 3(3) (dono 2026-09-01): dinheiro pelo formatador oficial — o `toFixed` manual
+                // aqui não punha separador de milhar, então uma tarifa de referência ≥ 1000
+                // aparecia "1234,50" enquanto o MESMO campo, digitado, mostra "1.234,50".
+                formatDecimal(applied, 2)
+              : // Percentual NÃO passa por `formatDecimal`: aqui as casas são variáveis de
+                // propósito (uma comissão de 14% é "14", não "14,00", num placeholder).
+                String(applied).replace(".", ",");
     return (
         <Controller
             control={control}
