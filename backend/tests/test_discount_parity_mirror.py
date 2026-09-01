@@ -83,3 +83,42 @@ def test_the_backend_mirror_agrees_with_the_engine_on_every_shared_case(
     # Não deve lançar — e o "aceito" só significa algo porque a identidade (regra c) é conferida
     # com o líquido REAL do caso, não com um valor que a tornaria trivialmente verdadeira.
     _validate_declared_discount(payload, net_total)
+
+
+# ── B12 — a defesa que a fixture NÃO cobre, e por que ela mora aqui ──────────────────────────────
+#
+# A fixture compartilhada é o conjunto dos casos em que os dois lados têm de CONCORDAR, e todo caso
+# dela nasce do motor. Um documento cujo `amount` não é o percentual declarado NÃO é um caso de
+# acordo: o motor não consegue produzi-lo (ele CALCULA o abatimento), então não há lado TS para
+# espelhar. É entrada forjada — ou corrompida — e a única pergunta é se o servidor a aceita.
+#
+# Até 2026-09-01 ele aceitava: conferia `value <= 100` e a identidade `gross - amount == net`, e
+# nada amarrava o percentual ao abatimento. Achado pelo próprio teste de paridade acima (B12 no
+# relatório de legibilidade), corrigido a pedido do dono.
+def test_B12_pct_amount_must_be_the_declared_percentage_of_gross() -> None:
+    # 50% de R$ 100,00 são R$ 50,00 — o documento declara R$ 0,01 e AINDA ASSIM fecha a identidade
+    # (100,00 − 0,01 = 99,99), que era exatamente o buraco: as três regras antigas passavam todas.
+    payload = {
+        "discount": {
+            "mode": "PCT",
+            "value": "50.00",
+            "amount": "0.01",
+            "grossTotal": "100.00",
+        }
+    }
+    with pytest.raises(ValueError, match="grossTotal x value / 100"):
+        _validate_declared_discount(payload, decimal.Decimal("99.99"))
+
+
+def test_B12_does_not_touch_AMOUNT_mode() -> None:
+    # No modo AMOUNT o valor digitado É o abatimento: não há percentual a conferir, e a guarda nova
+    # não pode inventar uma relação que o modo não tem.
+    payload = {
+        "discount": {
+            "mode": "AMOUNT",
+            "value": "0.01",
+            "amount": "0.01",
+            "grossTotal": "100.00",
+        }
+    }
+    _validate_declared_discount(payload, decimal.Decimal("99.99"))

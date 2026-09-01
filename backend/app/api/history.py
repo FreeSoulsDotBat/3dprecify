@@ -174,6 +174,32 @@ def _validate_declared_discount(payload: dict[str, Any], net_total: decimal.Deci
             "payload.discount.grossTotal minus payload.discount.amount must equal the basis total"
         )
 
+    # B12 (achado pelo teste de paridade do 4(3), corrigido a pedido do dono 2026-09-01) — no modo
+    # PCT o abatimento tem de SER o percentual declarado. Até aqui o servidor conferia que o
+    # percentual era ≤ 100 e que a subtração fechava, e NADA MAIS: um documento dizendo
+    # `mode:"PCT", value:"50", amount:"0.01"` passava inteiro, desde que `gross − amount` batesse
+    # com o total. O papel que chega ao cliente imprime os três números, e os dois primeiros não
+    # explicavam o terceiro — congelado assim para sempre.
+    #
+    # Isto NÃO é o backend recalculando preço (FR-118 segue de pé): é a mesma classe da identidade
+    # logo acima — VERIFICAÇÃO de um número que o documento já traz, nunca produção de valor. A
+    # conta é EXATA nos dois lados por construção: `gross` e `value` são decimais finitos, o produto
+    # é finito e a divisão por 100 só desloca a vírgula (não há dízima), então o HALF_UP de 2 casas
+    # do ADR-0008 cai no mesmo centavo aqui e no motor (`resolveDiscountAmount`,
+    # packages/pricing-core/src/quote.ts). Pinado nos dois lados por contracts/discount-parity.json.
+    #
+    # A ordem é deliberada: esta guarda vem DEPOIS das três anteriores, para que nenhum documento
+    # que já era recusado troque de mensagem — quem falhava por percentual > 100 continua falhando
+    # por percentual > 100.
+    if mode == "PCT":
+        expected_amount = (gross * value / 100).quantize(
+            decimal.Decimal("0.01"), rounding=decimal.ROUND_HALF_UP
+        )
+        if amount != expected_amount:
+            raise ValueError(
+                "payload.discount.amount must equal grossTotal x value / 100 in PCT mode"
+            )
+
 
 class SnapshotIn(CamelModel):
     """A recorded claim. Self-contained and frozen on the device at record time — the outbox stores
