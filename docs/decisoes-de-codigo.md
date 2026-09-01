@@ -1634,3 +1634,200 @@ NAQUELA página, e a entrada diz onde ele está.
 
 - `packages/fee-ingest/src/amazon-to-catalog.ts` → `fixedFeeSource`
 
+---
+
+## DEC-059 — `PROGRESSIVE` tem forma FECHADA por segmento; nenhum segmento serve ⇒ o nível fica SEM PREÇO
+
+**Data**: 2026-08-01 (ADR-0024, SC-817, ADR-0027 §3.2) · **Governa**: o anúncio progressivo em
+`channels.ts`
+
+O `SELECTION` precisa de ponto fixo iterado porque a função de tarifa dele SALTA em cada limiar: o
+anúncio escolhe a banda e a banda escolhe o anúncio. A função progressiva **não tem salto**, então a
+solução é fechada por segmento. No segmento `[min_k, max_k)`:
+
+```
+fee(L) = acc_k + pct_k·(L − min_k)          acc_k = Σ_{i<k} pct_i·(max_i − min_i)
+L − fee(L) − fixedFee_k − S = base          S = Σ sobretaxas (ADR-0027 §3.2)
+⇒ L = (base + fixedFee_k + S + acc_k − pct_k·min_k) / (1 − pct_k)
+```
+
+Resolve-se TODO segmento e fica-se com aquele cuja solução cai dentro do PRÓPRIO segmento. Exatamente
+um cai, quando as bandas cobrem a linha.
+
+**Se nenhum cai** — um conjunto de bandas que para antes do ∞, ou um com buraco publicado, ambos dados
+representáveis ([[DEC-051]]) — a resposta é `null`: **o nível fica SEM PREÇO** (SC-817). Responder com
+o último segmento inventaria a taxa do excedente que a fonte nunca publicou.
+
+### Onde isso vive no código
+
+- `packages/pricing-core/src/channels.ts` → `PROGRESSIVE`
+
+---
+
+## DEC-060 — A alíquota de referência só aparece sob TRÊS condições, e a terceira evita trocar mentira por mentira
+
+**Data**: 2026-08-03 (015/A8, `[F11a-007]`, decisão do dono) · **Governa**: a referência de comissão
+no campo em branco
+
+A tela foi MEDIDA: com Amazon e sem categoria, os quatro campos ficavam vazios com placeholder "0,00"
+— lendo-se `Comissão 0,00 %` — enquanto "Preços por canal" mostrava um preço com 15% já embutidos. **O
+número que o vendedor procura primeiro estava em branco, e o selo que o explicava era o elemento de
+menor peso visual do painel.**
+
+TRÊS condições, e cada uma existe para não trocar uma mentira por outra:
+
+1. **Só quando as taxas vieram do CATÁLOGO** — o que o vendedor digitou, ele já vê.
+2. **Só o campo que o vendedor NÃO digitou** — senão a referência competiria com o número dele.
+3. **Só quando o valor é ÚNICO.** Com `priceBands` a comissão varia por faixa e o mapeamento devolve
+   `commissionPct ?? 0` — ou seja, ZERO para uma entrada bandada. Publicar esse zero diria "Comissão
+   0,00%" com ar de verdade, **que é exatamente o defeito que se está consertando**.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/calculator-model.ts` → `commissionPct`
+
+---
+
+## DEC-061 — Uma causa NOMEADA é uma causa MEDIDA: erro sem `ApiError` não fala em conexão
+
+**Data**: 2026-08-07 (016/T072-A9) · **Governa**: `error-messages.ts`
+
+Mapeia uma ESCRITA QUE FALHOU numa linha pt-BR honesta e específica — nunca um erro genérico, nunca um
+salvamento falso. Falha de fase de transporte (status 0 = offline / DNS / recusada) diz que a escrita
+precisa de conexão; erro de servidor com código ganha a frase amigável dele (um 403 de lapso →
+"Salvar faz parte do Premium"). Vivia como cópia privada em dois lugares; o salvar do kit foi o
+terceiro chamador, e virou uma regra só para "como uma escrita negada fala".
+
+**A correção do A9**: o ramo de não-`ApiError` também dizia "precisa de conexão" — uma afirmação **não
+medida**. O `transport.ts` normaliza toda falha real de requisição, de rede E de servidor, num
+`ApiError` tipado ([[DEC-043]]); logo, um valor LANÇADO que não é um deles é, por construção, uma
+falha inesperada do lado do cliente. **A conexão não é a causa conhecida, então a cópia não pode
+nomeá-la** — a regra da casa é que causa nomeada é causa MEDIDA. Cai na frase genérica honesta.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/api/error-messages.ts` → `honestWriteError`, `apiErrorMessage`
+
+---
+
+## DEC-062 — A espinha de categorias é ESPARSA e viaja DENTRO do artefato, porque ela decide dinheiro
+
+**Data**: 2026-07-31 (014 / D2) · **Governa**: `category-tree.ts`
+
+A árvore tem DOIS consumidores com necessidades diferentes, e confundi-los foi o erro de desenho que a
+revisão adversarial pegou: o **RESOLVEDOR** precisa só de `id`+`parentId` dos nós cuja comissão diverge
+do pai (mais os ancestrais) — a "espinha" —, enquanto o **SELETOR** precisa do NOME de todo nó.
+
+A espinha viaja **DENTRO do artefato do catálogo**, para que o dado que decide dinheiro se mova num
+artefato só, com um `catalogVersion` só — matando o descompasso árvore↔catálogo por construção. O
+índice de nomes é buscado sob demanda.
+
+**Por que esparsa, e o número é medido** (2026-07-28, contra a API viva do ML): a comissão é
+CONSTANTE POR PARTES descendo a árvore. 84 de 96 filhos amostrados herdam a taxa da raiz; **12
+divergem, e as divergências são dinheiro** (Celulares 18% → Smartphones 16%; Games 18% → Consoles
+16%). Guardar todo nó repetiria o mesmo número dezenas de milhares de vezes; guardar só as raízes
+estaria errado uma vez a cada oito categorias — e justamente nas de maior volume.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/fee-catalog/category-tree.ts` → `categorySpine`
+
+---
+
+## DEC-063 — A fatia existe para tornar impossível um coletor reverter curadoria em silêncio
+
+**Data**: 2026-08-07 (017/T006, ADR-0028 §3, desenho §C.2) · **Governa**: o tipo `CatalogSlice`
+
+O defeito que este módulo torna impossível está MEDIDO no `build-amazon.mjs` de hoje: ele lê e escreve
+o `catalog.json` INTEIRO. Com um coletor serial isso funciona; com jobs independentes em VMs isoladas,
+**o último a escrever vence e a curadoria do outro some — em silêncio, sobre dinheiro.**
+
+E há um segundo defeito, pior, **que não precisa de concorrência nenhuma**: um coletor que REGENERA o
+marketplace apaga toda folha que ele não sabe produzir. O PNG do art. 26839 traz a tabela de comissão
+da Shopee e nada mais — nem `freight`, nem `freightSubsidyInfo`, nem `optionalSurcharges`. **Um
+coletor Shopee ingênuo reverteria o hotfix 016/A2 na PRIMEIRA execução real**, devolvendo ao líquido
+do vendedor o desconto de R$ 20 que acabou de sair de lá ([[FONTE-001]], [[DEC-012]]).
+
+A regra: o coletor emite as folhas que DECLAROU ter lido; toda outra folha vem da BASE. E o tipo **não
+tem caminho para o disco** — quem escreve é a composição, depois de validar. A outra metade da regra
+(remoção sob exaustividade declarada) está no ADR-0028 §Emenda.
+
+### Onde isso vive no código
+
+- `packages/fee-ingest/src/slice.ts` → `CatalogSlice`, `aplicarFatia`
+
+---
+
+## DEC-064 — O sentido SALVAR não re-deriva nada, e devolve `null` em vez de persistir intenção quebrada
+
+**Data**: 2026-07-19 (010/T009+T010) · **atualizado** 2026-07-20 (010/T021b) · **Governa**: o sentido
+salvar do `scenario-bridge`
+
+Monta o documento de config a partir do estado vivo da página Calcular: `values`/`channelOutcomes` vêm
+direto do `computeFromForm` — **nada é re-derivado, re-parseado ou recomputado aqui** ([[DEC-009]]).
+
+Devolve `null` quando não há nada válido a salvar (um formulário inválido não tem `parsedInput`: o
+`computeFromForm` só devolve um numa passada inteiramente válida), para o chamador **desabilitar o
+affordance de salvar em vez de persistir uma intenção quebrada**.
+
+**Nota de escopo, sinalizada e não inferida**: a página Calcular não tem vínculo persistente com
+produto do catálogo (ao contrário de uma linha de BOM), então todo cenário salvo a partir dela é
+`AD_HOC`.
+
+**T021b — `productRef`**: quando o chamador é a `ProdutoPage` (que monta ESTE MESMO corpo de
+formulário sobre um produto SALVO), ela entrega o `{id, name}` aqui e a base capturada vira `PRODUCT`
+em vez de `AD_HOC`, fechando a FR-606a do lado da UI. Base `KIT` está fora do escopo desta função —
+Calcular e ProdutoPage são superfícies de peça única.
+
+### Onde isso vive no código
+
+- `apps/web/src/features/calculator/scenario-bridge.ts` → `productRef`
+
+---
+
+## DEC-065 — O aviso nasce no BLUR, não no `change`, e um valor novo o traz de volta
+
+**Data**: 2026-08-28 (019/PR-C, T056, prancheta 14) · **Governa**: `use-aviso-de-campo.ts`
+
+O ciclo de vida que as pranchetas 14a/14b pedem: o aviso nasce no BLUR (nunca no `change`), é
+dispensável por "Entendi" — salvo quando acompanha uma recusa —, e **um valor novo faz o aviso voltar
+mesmo já dispensado**.
+
+Um `ref` segura o valor mais recente digitado, para o `onBlur` ler o valor certo mesmo que o
+componente tenha re-renderizado no meio do caminho; e só o valor COMPROMETIDO no blur (o `useState`)
+alimenta o aviso. **É essa a diferença entre "dispara a cada tecla" — o defeito — e "dispara ao sair
+do campo".**
+
+Vive em `shared/lib` e não em `features/calculator`: precisa de React e do store de dispensa, e os dois
+consumidores (`features/calculator` e `widgets/bom-line-editor`) importam do mesmo lugar que já
+hospeda o [[DEC-003]] — a mesma fronteira.
+
+### Onde isso vive no código
+
+- `apps/web/src/shared/lib/use-aviso-de-campo.ts` → `useAvisoDeCampo`
+
+---
+
+## DEC-066 — O banner escolhe o TÍTULO por precedência, mas nunca sequestra o botão de drenar
+
+**Data**: 2026-07-15 (009, review PR-A, C6) · **atualizado** 2026-08-07 (hotfix 016/A3, H4b) ·
+**Governa**: `history-queue-banner.tsx`
+
+O TÍTULO segue a precedência `failed > blocked > unauthenticated > pending` — vence o estado que
+precisa de decisão humana.
+
+**Mas a ação de DRENAR não fica mais refém dele.** Uma única entrada falhada ou bloqueada escondia o
+[Sincronizar agora] por inteiro, prendendo atrás dela todo `pending` saudável — o único dreno manual
+do app, sumido. Hoje o banner SEMPRE oferece sincronizar quando há um `pending` saudável e está
+online, mais um [Ver] para pular ao que precisa de decisão. Os selos por card contam a verdade
+completa independentemente do que o banner diz.
+
+**`unauthenticated` é ramo PRÓPRIO, nunca dobrado em `blocked`** ([[DEC-014]]): a cópia não pode dizer
+"conexão"/"online" — o achado A3 é exatamente a cópia antiga de `pending` prometendo isso com a
+conexão intacta — e ela oferece um caminho real de volta, [Entrar de novo] preservando `/historico`
+como intenção de retorno ([[DEC-006]]).
+
+### Onde isso vive no código
+
+- `apps/web/src/pages/historico/history-queue-banner.tsx` → `QueueBanner`
+

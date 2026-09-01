@@ -229,21 +229,11 @@ function progressiveCommission(bands: PriceBand[], price: number): Decimal {
 }
 
 /**
- * Announce (full precision, %-regime) for `PROGRESSIVE` bands, plus the band the solution lands in.
+ * Anúncio (precisão cheia, regime %) para bandas `PROGRESSIVE`, mais a banda em que a solução
+ * cai. Resolve todo segmento e fica com aquele cuja solução cai DENTRO do próprio segmento.
  *
- * `SELECTION` needs an iterated fixed point because its fee function JUMPS at each threshold: the
- * announce picks the band and the band picks the announce. The progressive fee function has no jump,
- * so the solution is closed-form per segment. On segment `[min_k, max_k)`:
- *
- *   fee(L) = acc_k + pct_k·(L − min_k)         acc_k = Σ_{i<k} pct_i·(max_i − min_i)
- *   L − fee(L) − fixedFee_k − S = base         S = Σ surcharges (ADR-0027 §3.2)
- *   ⇒ L = (base + fixedFee_k + S + acc_k − pct_k·min_k) / (1 − pct_k)
- *
- * Solve every segment, keep the one whose solution lands inside its OWN segment. Exactly one does
- * when the bands cover the line; if none does — a band set that stops short of ∞, or one with a
- * published gap, both representable data — the answer is `null`: the level is UNPRICED (SC-817).
- * Answering with the last segment instead would invent the rate for the excess the source never
- * published.
+ * ⚠ @doc DEC-059 — nenhum segmento serve ⇒ `null`, o nível fica SEM PREÇO (SC-817). Responder
+ *   com o último inventaria a taxa do excedente que a fonte nunca publicou.
  */
 function progressiveAnnounce(
     base: number,

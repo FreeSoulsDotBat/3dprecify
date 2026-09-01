@@ -15,19 +15,9 @@ export interface UseAvisoDeCampoResult {
 }
 
 /**
- * 019/PR-C (T056, prancheta 14) — o aviso de plausibilidade de UM campo, com o ciclo de vida que
- * as pranchetas 14a/14b pedem: nasce no BLUR (nunca no `change`), é dispensável por "Entendi" salvo
- * quando acompanha uma recusa (`temErro`), e um valor novo faz o aviso voltar mesmo já dispensado.
- *
- * Um `ref` segura o valor mais recente digitado — para o `onBlur` ler o valor certo mesmo que o
- * componente tenha re-renderizado no meio do caminho — e só o valor COMPROMETIDO no blur (o
- * `useState`) alimenta o aviso: é essa a diferença entre "dispara a cada tecla" (o defeito de hoje)
- * e "dispara ao sair do campo".
- *
- * Vive em `shared/lib`, não em `features/calculator`: precisa de React (`useRef`/`useState`) e do
- * store de dispensa, e os dois consumidores — `features/calculator` e `widgets/bom-line-editor` (via
- * `ControlledField`) — importam do mesmo lugar que já hospeda `plausibilidade.ts` (a mesma fronteira,
- * ver o cabeçalho daquele arquivo).
+ * ⚠ @doc DEC-065 — o aviso nasce no BLUR, nunca no `change`: só o valor COMPROMETIDO alimenta
+ *   o aviso, e é essa a diferença entre "dispara a cada tecla" e "dispara ao sair do campo".
+ *   Um valor novo traz o aviso de volta mesmo já dispensado.
  */
 export function useAvisoDeCampo(
     nome: string,

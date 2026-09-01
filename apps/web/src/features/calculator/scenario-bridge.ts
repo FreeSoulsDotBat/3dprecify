@@ -104,20 +104,11 @@ function stripBasisOnlyFields(input: PriceInput): PriceInput {
 }
 
 /**
- * SAVE direction (T009/T010). Builds the config document from the Calcular page's live state:
- * `values`/`channelOutcomes` come straight off `computeFromForm` — nothing is re-derived, re-parsed
- * or re-computed here. Returns `null` when there is nothing valid to save (an invalid form has no
- * `parsedInput` — `computeFromForm` only returns one on a fully valid pass), so the caller can
- * disable the save affordance rather than persist a broken intent.
+ * Sentido SALVAR: monta o documento de config a partir do estado vivo da Calcular. Nada é
+ * re-derivado aqui.
  *
- * PR-A scope note (flagged, not inferred): the Calcular page has no persistent catalog-product
- * binding (unlike a BOM line), so every scenario saved from Calcular itself is `AD_HOC`.
- *
- * 010/T021b (PR-B) — `productRef`: when the caller (`ProdutoPage`, which mounts this SAME form body
- * over a SAVED product, T030) is editing a saved product, it hands its `{id, name}` here so the
- * captured basis is `PRODUCT` instead of `AD_HOC` — closing FR-606a on the UI side (the backend
- * D3/D6 lifecycle, T011/T022, was already live). A `KIT` basis is out of THIS function's scope
- * (Calcular/ProdutoPage are single-piece surfaces); Q12 kit-basis composition is T024.
+ * ⚠ @doc DEC-064 — devolve `null` quando não há nada válido a salvar, para o chamador
+ *   DESABILITAR o salvar em vez de persistir uma intenção quebrada.
  */
 export function buildScenarioConfig(args: {
     values: CalcFormValues;

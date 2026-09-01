@@ -7,18 +7,8 @@ import { Alert, Button } from "@/shared/ui";
 const t = messages.history;
 
 /**
- * The aggregate banner. Its TITLE follows the precedence failed > blocked > unauthenticated >
- * pending — the state that needs a human decision wins the wording. But the DRAINAGE action is no
- * longer held hostage by it (review PR-A, C6): a single failed/blocked entry used to hide
- * [Sincronizar agora] entirely, trapping every healthy pending behind it — the app's only manual
- * drain, gone. Now the banner ALWAYS offers to sync when there is a healthy pending online, and a
- * [Ver] jump when something needs a decision. The per-card badges tell the full truth regardless of
- * what the banner says.
- *
- * hotfix 016/A3 (H4b) — `unauthenticated` is its OWN branch, never folded into `blocked`: the copy
- * must never say "conexão"/"online" (the achado A3: the old `pending` copy promised exactly that
- * with the connection intact), and it offers a real way back — [Entrar de novo] to `/sign-in`,
- * preserving `/historico` as the return-to-intent (`router.tsx`'s own whitelist).
+ * ⚠ @doc DEC-066 — o título segue a precedência, mas NUNCA sequestra o dreno: uma entrada
+ *   falhada escondia o [Sincronizar agora] e prendia todo `pending` saudável atrás dela.
  */
 export function QueueBanner({
     queued,

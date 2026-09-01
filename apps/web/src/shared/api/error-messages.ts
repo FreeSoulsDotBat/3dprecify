@@ -38,18 +38,13 @@ export function apiErrorMessage(error: ApiError): string {
   return errorCodeMessage(error.code);
 }
 
-/** Map a FAILED WRITE onto an honest, specific pt-BR line (never a generic error, never a fake
- *  save): a transport-phase failure (status 0 = offline / DNS / refused) says the write needs a
- *  connection; any coded server error gets its friendly phrase (a lapsed 403 → "Salvar faz parte
- *  do Premium."). Lived as a private copy in catalog-panel + produto-page; the kit save is the
- *  third caller, so it moved here — one rule for "how a denied write speaks".
+/**
+ * Escrita que falhou → linha pt-BR honesta e específica: nunca erro genérico, nunca salvamento
+ * falso. Uma regra só para "como uma escrita negada fala".
  *
- *  016/T072-A9 (2026-08-07): the non-`ApiError` branch used to ALSO say "precisa de conexão" —
- *  an unmeasured claim. `transport.ts` normalises every real request failure (network AND
- *  server) into a typed `ApiError`, so a THROWN value that isn't one is, by construction, an
- *  unexpected client-side failure — the connection is not the known cause, so the copy must not
- *  name it (the house rule: a named cause is a MEASURED cause). Falls back to the generic honest
- *  phrase instead. */
+ * ⚠ @doc DEC-061 — causa NOMEADA é causa MEDIDA: um valor lançado que não é `ApiError` é falha
+ *   inesperada do cliente, então a cópia NÃO pode dizer "precisa de conexão".
+ */
 export function honestWriteError(err: unknown): string {
   if (err instanceof ApiError) {
     return err.status === 0 ? messages.apiError.offlineWrite : apiErrorMessage(err);

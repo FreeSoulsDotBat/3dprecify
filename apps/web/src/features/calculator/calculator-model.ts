@@ -295,20 +295,9 @@ function processSlot(slot: ChannelSlotForm, ctx?: CatalogContext): SlotProcessin
     const feeSource = useCatalog && entry ? entry.source : undefined;
 
     /**
-     * 015/A8 (`[F11a-007]`, decisão do dono 2026-08-03) — a alíquota que ESTÁ sendo aplicada, para o
-     * campo em branco mostrá-la como REFERÊNCIA em vez de "0,00".
-     *
-     * A tela media: com Amazon e sem categoria os quatro campos ficavam vazios com placeholder
-     * "0,00" — lendo-se `Comissão 0,00 %` — enquanto "Preços por canal" mostrava um preço com 15%
-     * já embutidos. O número que o vendedor procura primeiro estava em branco, e o selo que o
-     * explicava era o elemento de menor peso visual do painel.
-     *
-     * TRÊS condições, e cada uma existe para não trocar uma mentira por outra:
-     *   1. só quando as taxas vieram do CATÁLOGO (`useCatalog`) — o que o vendedor digitou ele já vê;
-     *   2. só o campo que o vendedor NÃO digitou — senão a referência competiria com o número dele;
-     *   3. só quando o valor é ÚNICO. Com `priceBands` a comissão varia por faixa e
-     *      `entryToChannelFees` devolve `commissionPct ?? 0` — ou seja ZERO para uma entrada bandada.
-     *      Publicar esse zero diria "Comissão 0,00%" com ar de verdade, que é exatamente o defeito.
+     * ⚠ @doc DEC-060 — três condições, e a terceira é a que importa: só quando o valor é ÚNICO.
+     *   Numa entrada com bandas o mapeamento devolve `commissionPct ?? 0`, e publicar esse zero
+     *   diria "Comissão 0,00%" com ar de verdade — o defeito que isto conserta.
      */
     const bandada = (fees.priceBands?.length ?? 0) > 0;
     const appliedFees: Partial<Record<ChannelFieldName, number>> = {};

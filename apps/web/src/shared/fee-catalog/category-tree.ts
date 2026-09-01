@@ -1,17 +1,7 @@
 import { z } from "zod";
 
-// Category spine (014 / D2). The tree has TWO consumers with different needs, and conflating them was
-// the design error the adversarial review caught: the RESOLVER needs only `id`+`parentId` of the nodes
-// whose commission diverges from their parent (plus their ancestors) — the "spine" — while the PICKER
-// needs the NAME of every node. The spine travels INSIDE the catalog artifact, so the data that decides
-// money moves through one artifact with one `catalogVersion` (killing tree↔catalog skew by
-// construction); the name index is fetched on demand.
-//
-// Why sparse: measured 2026-07-28 against the live ML API — the commission is PIECEWISE-CONSTANT down
-// the tree. 84 of 96 sampled children inherit their root's rate; 12 diverge, and the divergences are
-// money (Celulares 18% → Smartphones 16%, Games 18% → Consoles 16%). Storing every node would repeat
-// the same number tens of thousands of times; storing only the roots would be wrong once every eight
-// categories, in the highest-volume ones.
+// ⚠ @doc DEC-062 — ESPARSA e dentro do artefato: 84 de 96 filhos herdam a taxa da raiz, 12
+//   divergem, e as divergências são DINHEIRO. Um artefato, um `catalogVersion`, sem descompasso.
 
 /** One node of a marketplace's category tree, flattened (`parentId` instead of nesting). */
 export const categoryNodeSchema = z.object({
