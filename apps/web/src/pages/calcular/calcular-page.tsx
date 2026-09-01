@@ -209,7 +209,7 @@ export function CalcularPage() {
     // 019/Polish — shared with produto-page.tsx and bom-line-editor.tsx (`marketplace-change.ts`);
     // this is the ONE call site that passes `shouldValidate: true` (B2, registered divergence).
     const handleMarketplaceChange = (index: number, marketplace: MarketplaceId) =>
-        applyMarketplaceChange(setValue, catalog, index, marketplace, { shouldValidate: true });
+        applyMarketplaceChange(setValue, catalog, index, marketplace);
 
     // 019/PR-F (T095, DECISÃO 2 — ADR-0031 §Emenda 2) — o único gate: acima do corte, "Minhas
     // simulações" monta ao lado da calculadora (a coluna larga de `/calcular`, prancheta 20g); abaixo,
