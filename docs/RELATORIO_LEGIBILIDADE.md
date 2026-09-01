@@ -18,7 +18,11 @@ Transversais que doem em todo debug: vocabulário não canônico (17 colisões m
 
 ## Bugs reais anotados (NÃO corrigidos — regra de ouro da auditoria)
 
-Achados de **comportamento** encontrados de passagem. Ficam registrados para decisão do dono; nenhum foi tocado.
+Achados de **comportamento** encontrados de passagem. **Status pós-decisões do dono (2026-08-31):**
+B1 CORRIGIDO (ausência visível + valor zero, decisão do dono) · B8 CORRIGIDO (rounding explícito,
+aprovado) · B9 e B11 FECHADOS de graça pela própria refatoração (serializador único; 500 logado) ·
+B6 e B7 → RADAR do módulo de pagamento ("ainda não vimos nada do módulo de pagamento") · B2/B3/B4/
+B5/B10 explicados ao dono, aguardando a decisão dele. Tabela original mantida como registro:
 
 | # | arquivo:linha | o que acontece |
 |---|---|---|
@@ -217,3 +221,15 @@ entregou e do que ficou DE FORA por decisão:
   8. Monólitos de TESTE (test_scenarios 1596 etc.) e a redução das 26 props do catalog-panel.
   9. Paridade backend↔front dos 3 espelhos de desconto e do 5º espelho de headline_basis (B4) —
      o teste de paridade é a correção estrutural; junto com B4.
+
+
+### Decisões do dono já executadas (2026-08-31, rodada 3)
+
+- **3(1)+3(2)**: chaves do i18n em inglês (profundidade total) + `conta` fundido em `account`
+  (commit `dac157c`); vocabulário de DOMÍNIO/wire preservado (precoVarejo, PriceLevel, rotas).
+- **4(1)**: Out de `channels`/`otherCosts` tipado (commit `177b4fc`) — os 2 últimos
+  `as unknown as` caíram. **Acoplamento novo registrado**: o Out agora VALIDA na leitura; aposentar
+  um marketplace do `Literal` um dia exige migração de dados, não só de código.
+- **4(2)** (trace do motor) e **B6/B7**: radar do módulo de pagamento, por instrução do dono.
+- Nomenclatura reafirmada pelo dono: ML/Shopee/Amazon são **marketplace** no visível; campos de
+  wire (`channels`) não mudam por serem contrato armazenado.

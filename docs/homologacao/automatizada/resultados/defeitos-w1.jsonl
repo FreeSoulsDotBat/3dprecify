@@ -1,0 +1,1 @@
+{"subcenario":"CF-025-UI-01","categoria":"gate_premium","descricao":"Um vendedor Premium não encontra a ação de registrar o orçamento na calculadora","resultado_esperado":"Botão \"Salvar em Orçamentos\" visível","resultado_obtido":"não encontrado","severidade":"alta","id":"D-w1-001","ts":"2026-08-15T18:14:57.070Z"}
